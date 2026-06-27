@@ -7,9 +7,10 @@
 		"emitDeclarationOnly": false,
 		"allowImportingTsExtensions": false
 	},
-	"exclude": ["./out/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---
+		{ "path": "../annotations" },
 		{ "path": "../core" }
 	]
 }

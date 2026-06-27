@@ -1,6 +1,6 @@
 # Cloudflare Wrangler Configuration
 
-name = "pmtiles-cloudflare"
+name = "mailwoman-tiles"
 main = "./out/_worker.js"
 compatibility_date = "2024-06-03"
 minify = false

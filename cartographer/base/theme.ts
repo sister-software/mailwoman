@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type Flavor } from "@protomaps/basemaps"
+import { type Flavor, namedFlavor } from "@protomaps/basemaps"
 import { TileSetSourceID } from "../styles/sources.js"
 
 /**
@@ -11,12 +11,18 @@ import { TileSetSourceID } from "../styles/sources.js"
  */
 export const MailwomanBaseTileSetID = TileSetSourceID("basemap-v4")
 
+const darkFlavor = namedFlavor("dark")
+
+console.log("MailwomanBaseFlavor:", darkFlavor)
+
 /**
  * The Mailwoman theme for Protomaps via MapLibre. Keys follow `@protomaps/basemaps@5.x` which
  * targets the v4 tile schema (`["==","kind","..."]` filters), matching the basemap-v4 PMTiles on
  * R2.
  */
 export const MailwomanBaseFlavor: Flavor = {
+	...darkFlavor,
+
 	//#region Base
 	background: "hsl(0deg 10% 5%)",
 	earth: "hsl(0deg 10% 5%)",
@@ -93,13 +99,7 @@ export const MailwomanBaseFlavor: Flavor = {
 	bridges_highway: "#474747",
 
 	//#endregion
-	//#region Roads
-	roads_label_minor: "hsl(240deg 100% 90%)",
-	roads_label_minor_halo: "#1f1f1f",
-	roads_label_major: "hsl(240deg 100% 90%)",
-	roads_label_major_halo: "#1f1f1f",
 
-	//#endregion
 	ocean_label: "#717784",
 	subplace_label: "hsl(50deg 50% 70%)",
 	subplace_label_halo: "hsl(40deg 100% 10%)",
@@ -112,4 +112,14 @@ export const MailwomanBaseFlavor: Flavor = {
 	country_label: "hsl(240deg 50% 80% / 0.5)",
 	address_label: "hsl(240deg 100% 90%)",
 	address_label_halo: "hsl(240deg 100% 10%)",
+
+	landcover: {
+		grassland: "hsl(120deg 45.75% 1%)",
+		barren: "hsl(0deg 100% 2.84%)",
+		farmland: "hsl(120deg 45.75% 1%)",
+		forest: "hsl(120deg 45.75% 1%)",
+		glacier: "hsl(240deg 100% 10%)",
+		scrub: "hsl(0deg 10% 5%)",
+		urban_area: "hsl(0deg 10% 5%)",
+	},
 }

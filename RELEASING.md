@@ -167,20 +167,34 @@ See `project-candidate-table-byte-range`.
 To get new admin coverage into the demo after a gazetteer rebuild:
 
 ```bash
-# 1. Build the candidate table from the (rebuilt) admin DB + the postcode shards.
-#    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + Overture-derived postcode
-#    centroids for the EU-coverage locales, each built with
+# 0. DURABLE upstream GeoNames-alias fold (#743/#193). Fold the bilingual / alt-language place-names
+#    into a COPY of the admin DB's canonical spr/names so the candidate build carries Karjaa↔Karis
+#    natively (FI hard-resolve 69.5→85.8%, coverage 74.4→94.0%) — the alt-name attaches to the real
+#    WOF place ("Karjaa" → Karis), not a duplicate row. Reuses ingestGeonamesAliases +
+#    buildPlaceSearchFts; the canonical admin DB is never mutated. Supersedes the candidate-side
+#    stopgap scripts/build-candidate-geonames-aliases.ts (which patched a built candidate.db to MEASURE
+#    the lift before this became the durable home).
+node --experimental-strip-types scripts/build-admin-geonames-fold.ts \
+  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+  --out /mnt/playpen/mailwoman-data/wof/admin-global-priority-geonames.db \
+  --countries FI,PL,NO,CZ,AT,LT,LV,SI,SK,HR,DK,BE,CH,LU
+# 1. Build the candidate table from the FOLDED admin DB + the postcode shards. The FTS5-trigram fuzzy
+#    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
+#    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames intl shard (PT/AU)
+#    + Overture-derived postcode centroids (CA + the EU-coverage locales), each built with
 #      node scripts/eval/overture-es-postcode-centroids.ts --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
 #    (--pc-len 0 = no lpad, the Overture-to-Overture / non-numeric-format case). Each ZIP becomes a
 #    `postalcode` candidate row so findPlace(postalcode) resolves directly, and postcodes resolve ~100%
 #    at ~1-2km even where the locality misses (LT 0→100%, NO 75→100%, FI/SK 80→100%). The demo cascade
 #    country-gates an ambiguous postcode (10115 = Berlin DE + NYC) by resolving the locality first. GB
-#    (2.6M) and PT (sparse Overture "XXXX-XXX" fill) are left out.
+#    (2.6M) is left out for size.
 node resolver-wof-sqlite/out/build-candidate-cli.js \
-  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority-geonames.db \
   --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-us.db \
   --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
-  $(for cc in at ch dk be fi hr lt lu lv no si sk; do echo --postcodes /mnt/playpen/mailwoman-data/wof/postcode-$cc-overture.db; done) \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-geonames-intl.db \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postcode-ca-overture.db \
+  $(for cc in at be ch cz dk es fi hr lt lu lv no pl pt si sk; do echo --postcodes /mnt/playpen/mailwoman-data/wof/postcode-$cc-overture.db; done) \
   --out /mnt/playpen/mailwoman-data/wof/candidate-global.db
 # 2. Bump ADMIN_GAZETTEER_VERSION in docs/src/shared/resources.tsx (the immutable cache needs a fresh URL).
 # 3. Upload to the new path:
@@ -233,6 +247,26 @@ Most releases are code-only (`yarn release` / the `publish` workflow at the next
 **Promoting a different trained model to be the new default is a bigger operation** — and it has bitten this
 pipeline more than once because the moving parts aren't obvious. This is the exact, ordered runbook
 (walked end-to-end for v4.11.0, the v1.8.0 fr-admin-split promotion). Do these in order; verify each.
+
+### Fast-path cheat sheet (lessons from the v4.15.0 promotion)
+
+Read this first — it's the 30-minute version once you know the shape. Three backends, decoupled, and a
+"promote" isn't done until all three agree on one md5:
+
+| backend       | tool                                   | what it feeds                                                                  |
+| ------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
+| **npm**       | `publish.yml` (CI, OIDC)               | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
+| **HF bucket** | `scripts/publish-release-to-hf.mjs`    | the npm fetch source + HF-direct `loadFromWeights`                             |
+| **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.sister.software`, NOT HF)                      |
+
+The end-to-end order that worked: **gate (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
+
+- **Only TWO model-card fields are pipeline-breaking**: `version` (publish.yml derives `MODEL_VERSION` from it) and `files_md5.model.onnx` (re-verified at `yarn pack`). Everything else in the card (`model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block) is provenance — get it honest, but a typo there won't break the publish. Move fast on the prose, slow on those two.
+- **The `neural-weights-fr-fr` card silently drifts.** It is NOT auto-bumped (release-it only touches `package.json`), so its `version` + `model_lineage` rot — found it stuck at `4.6.0` / "v1.5.0-fr-order" while it had long shipped the en-us binary. Reconcile both fields every model promotion.
+- **Gate floor comparison is `>=`** (`scripts/eval/promotion-gate.sh`). A floor set exactly AT the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A gate that needs a floor lowered gets a **new gate file** with a stated `$revision_*` reason (no silent drift); the full gate is ~12–15 min, so set the floors right the first time.
+- **The R2 demo repoint is "carry-forward + overwrite 2 files."** Between model versions ONLY `model.onnx` and `model-card.json` change — tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json`, `calibration.json` are byte-identical. Fastest path: boto3-`download` ALL of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend entry + `defaultVersion`), one `publish-demo-assets-to-r2.py --src`. ~60 MB, two commands. (The bucket is `mailwoman-public`, creds are `RCLONE_S3_PUBLIC_*`.)
+- **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation, NOT a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `/mnt/playpen source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
+- **Canonical artifact paths** (so you don't hunt): model int8 → `/mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `/mnt/playpen/mailwoman-data/models/tokenizer/<ver>/tokenizer.model`; FST → `/mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the gate ran against — use this, not the prior bucket's).
 
 ### Step 0 — figure out the version number (the divergence trap)
 

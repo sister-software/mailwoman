@@ -15,14 +15,15 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/fr-admin-split-gate.ts\
  *   --model <int8.onnx> --tokenizer <tok> --model-card neural-weights-en-us/model-card.json\
- *   --anchor-lookup /mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json\
+ *   --anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json\
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
  */
 
 import { type AddressNode, type AddressTree, decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/resolver"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync, writeFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
 const PLACETYPE_RANK: Record<string, number> = {
 	postalcode: 6,
@@ -73,24 +74,24 @@ const pct = (xs: number[], p: number): number => {
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN)
 const norm = (s: string | undefined): string => (s ?? "").normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
 
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
-
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 
 async function main() {
 	const goldenPath = arg("golden", "/tmp/reg/fr-admin-split-golden.jsonl")
 	const label = arg("label", "model")
-	const wofDb = arg("wof-db", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
+	const wofDb = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
 	const rows = readFileSync(goldenPath, "utf8")
 		.trim()
 		.split("\n")
 		.map((l) => JSON.parse(l))
 
-	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const anchorPath = arg("anchor-lookup", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")
+	const [{ WofSqlitePlaceLookup }, { createScorer }, { createWofResolver }] = await Promise.all([
+		import("@mailwoman/resolver-wof-sqlite"),
+		import("@mailwoman/neural/scorer"),
+		import("@mailwoman/resolver"),
+	])
+
+	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const neural = await createScorer({
 		modelPath: arg("model"),
 		tokenizerPath: arg("tokenizer"),
@@ -99,7 +100,6 @@ async function main() {
 		strict: true,
 		tier: "server",
 	})
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: wofDb }) as never)
 	const resolveOpts = { defaultCountry: arg("default-country", "FR") }
 

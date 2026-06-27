@@ -19,6 +19,7 @@
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
@@ -43,11 +44,11 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-const SOURCES = arg("sources", "/mnt/playpen/mailwoman-data/record-matcher/sources")
+const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
 const STATE = arg("state", "TX").toUpperCase()
 const NPIS = Number(arg("npis", "3000"))
-const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
-const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
+const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
+const DATA_ROOT = arg("data-root", mailwomanDataRoot())
 const OUT = arg("out", "registry/models/dedup-gbt-en-us.ts")
 const LOCALE = arg("locale", "en-US")
 // Cost-sensitive training (#625): up-weight the NEGATIVE (distinct-pair) class by this factor so the
@@ -220,7 +221,7 @@ async function main(): Promise<void> {
 	const { pairs } = block(records, defaultBlockingKeys())
 	const X = pairs.map(([a, b]) => featurize(a, b))
 	const Y = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
-	const posRate = Y.reduce((s, v) => s + v, 0) / Math.max(1, Y.length)
+	const posRate = Y.reduce<number>((s, v) => s + v, 0) / Math.max(1, Y.length)
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced; COST up-weights negatives
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 	if (COST !== 1) console.error(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)

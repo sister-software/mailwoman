@@ -2,29 +2,49 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { ResourceError } from "@mailwoman/core/errors"
+import type { GeoFeature, PointLiteral } from "@mailwoman/spatial"
 import { applyAccessControlAllowOrigin } from "../cors.js"
 import { WorkerRoute } from "../routing.js"
 
-export const GeolocateRoute = WorkerRoute.GET("/geolocate", ({ request }) => {
-	if (!request.cf) throw ResourceError.from(424, "Cannot geolocate without Cloudflare data.")
-	const cf = request.cf as IncomingRequestCfProperties
+const CFGeolocationProperties = [
+	"country",
+	"isEUCountry",
+	"continent",
+	"city",
+	"postalCode",
+	"latitude",
+	"longitude",
+	"timezone",
+	"region",
+	"regionCode",
+	"metroCode",
+] as const satisfies Array<keyof IncomingRequestCfPropertiesGeographicInformation>
 
-	const geolocation: IncomingRequestCfPropertiesGeographicInformation = {
-		latitude: cf.latitude,
-		longitude: cf.longitude,
-		city: cf.city,
-		country: cf.country,
-		region: cf.region,
-		regionCode: cf.regionCode,
-		continent: cf.continent,
-		postalCode: cf.postalCode,
-		timezone: cf.timezone,
+export const GeolocateRoute = WorkerRoute.GET("/geolocate", ({ request }) => {
+	const { cf } = request
+
+	if (!cf) throw ResourceError.from(424, "Cannot geolocate without Cloudflare data.")
+
+	const geolocation = Object.fromEntries(
+		CFGeolocationProperties.map((key) => [key, cf[key]])
+	) as IncomingRequestCfPropertiesGeographicInformation
+
+	const latitude = (geolocation.latitude ? parseFloat(geolocation.latitude) : 0) || 0
+	const longitude = (geolocation.longitude ? parseFloat(geolocation.longitude) : 0) || 0
+
+	const feature: GeoFeature<PointLiteral, IncomingRequestCfPropertiesGeographicInformation> = {
+		type: "Feature",
+		geometry: {
+			type: "Point",
+			coordinates: [longitude, latitude],
+		},
+		properties: geolocation,
 	}
 
-	const response = new Response(JSON.stringify(geolocation, null, "\t"), {
+	const response = new Response(JSON.stringify(feature, null, "\t"), {
 		headers: {
 			"Content-Type": "application/json",
-			"Cached-Control": `public, max-age=${60 * 60}`,
+			"Cache-Control": `public, max-age=${60 * 60}`,
 		},
 	})
 

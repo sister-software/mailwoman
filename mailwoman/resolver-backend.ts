@@ -45,6 +45,11 @@ export function resolvePostalCityAliasDbPath(explicit?: string): string | undefi
 	return p && existsSync(p) ? p : undefined
 }
 
+// The data-root helpers now live centrally in `@mailwoman/core/utils/data-root` — the ONE place the
+// `/mnt/playpen` default appears. Re-exported here so the server routers + CLI commands keep
+// importing them from this module unchanged.
+export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
+
 /**
  * The lookup constructors this selector needs — a structural subset of
  * `@mailwoman/resolver-wof-sqlite`.

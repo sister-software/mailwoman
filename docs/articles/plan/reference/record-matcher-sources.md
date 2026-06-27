@@ -14,7 +14,7 @@ within-dataset repetition — resolving them into deduplicated, cross-linked ent
 analyzable. Our scope is the **resolution**; whatever correlations surface are the data consumer's to
 interpret.
 
-Data lives at `/mnt/playpen/mailwoman-data/record-matcher/sources/` (persistent — not `/tmp`). The NPPES
+Data lives at `$MAILWOMAN_DATA_ROOT/record-matcher/sources/` (persistent — not `/tmp`). The NPPES
 registry is 4.8 GB / 9.6M rows, so everything streams (`streamRows`, #616) — never `readFileSync`.
 
 The committed `ColumnMapping`s live in the benchmark + correlation scripts

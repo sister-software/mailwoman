@@ -26,13 +26,14 @@
  *   scripts/eval/resolver-eval.ts\
  *   --eval /tmp/wof-bootstrap/eval.jsonl\
  *   --model /tmp/v072-eval/model.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card /tmp/v072-eval/model-card.json\
  *   --wof
- *   /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postalcode-us.db
+ *   $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,$MAILWOMAN_DATA_ROOT/wof/postalcode-us.db
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
@@ -117,7 +118,7 @@ interface RowResult {
 async function main(): Promise<void> {
 	const evalPath = arg("eval", "/tmp/wof-bootstrap/eval.jsonl")
 	const limit = Number(arg("limit", "0")) || Infinity
-	const wofPaths = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
+	const wofPaths = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
 		.split(",")
 		.map((s) => s.trim())
 
@@ -191,7 +192,7 @@ async function main(): Promise<void> {
 	}
 
 	// --- derive baselines per subset ---
-	const subsets: Record<string, RowResult[]> = {
+	const subsets = {
 		canonical: results.filter((r) => r.perturb === "canonical"),
 		perturbed: results.filter((r) => r.perturb !== "canonical"),
 		all: results,

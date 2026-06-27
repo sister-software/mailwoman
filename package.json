@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/universe",
-	"version": "4.15.0",
+	"version": "4.16.0",
 	"description": "Mailwoman monorepo workspace root.",
 	"license": "AGPL-3.0-only",
 	"private": true,
@@ -15,13 +15,14 @@
 		"url": "https://github.com/sister-software/mailwoman.git"
 	},
 	"scripts": {
-		"build-docs": "yarn workspace @mailwoman/docs build",
-		"build-site": "run-s compile build-docs",
+		"ci:docs": "run-s compile docs:build",
 		"ci:smoke": "node scripts/smoke-clean-install.mjs",
 		"ci:test": "vitest --run",
 		"ci:test:fast": "vitest --run --exclude './mailwoman/test/**' --exclude './resolver-wof-sqlite/fst-serialize.test.ts' --exclude './resolver-wof-sqlite/fst-builder.test.ts' --exclude './resolver-wof-sqlite/fst-autocomplete.test.ts' --exclude './neural-web/web-onnx-runner.test.ts'",
+		"ci:tile-worker": "run-s compile",
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
+		"docs:build": "yarn workspace @mailwoman/docs build",
 		"lint": "run-s lint:prettier:check lint:eslint:check",
 		"lint:eslint:check": "eslint .",
 		"lint:eslint:fix": "eslint --fix .",
@@ -34,7 +35,8 @@
 		"test": "vitest",
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --dir ./mailwoman/test",
-		"test:unit": "vitest --exclude ./mailwoman/test"
+		"test:unit": "vitest --exclude ./mailwoman/test",
+		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit"
 	},
 	"type": "module",
 	"devDependencies": {
@@ -46,7 +48,7 @@
 		"@sister.software/tsconfig": "^8.0.1",
 		"@types/express": "^5.0.6",
 		"@types/geojson": "^7946.0.16",
-		"@types/node": "^25.9.2",
+		"@types/node": "^26.0.1",
 		"@types/pluralize": "^0.0.33",
 		"@types/react": "^19.2.17",
 		"@types/regenerate": "^1.4.3",
@@ -75,6 +77,13 @@
 	},
 	"workspaces": [
 		"mailwoman",
+		"annotations",
+		"nominatim",
+		"photon",
+		"libpostal",
+		"timezone-lookup",
+		"un-locode-lookup",
+		"nuts-lookup",
 		"core",
 		"resolver",
 		"spatial",
@@ -108,7 +117,7 @@
 		"@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch"
 	},
 	"engines": {
-		"node": ">= 10.0.0"
+		"node": ">=24.18.0"
 	},
 	"packageManager": "yarn@4.14.1+sha512.64df448055b2d37ba269d7db535a469b8da93f8ef1140c25fd7a83c00a8fbaacb214ca0e02553b92a2c54cef78bb67d0b4817fab02001df0e24fac0faccc3b42",
 	"prettier": "@sister.software/prettier-config"

@@ -1,0 +1,61 @@
+---
+title: Switching from OpenCage
+sidebar_label: Switching from OpenCage
+description: OpenCage's annotations block, self-hosted — no API key, no per-request fee.
+---
+
+# Switching from OpenCage
+
+[OpenCage](https://opencagedata.com) is a pleasure to use: forward and reverse geocoding plus a rich
+`annotations` block — timezone, coordinate formats, calling code, currency, flag, and more — on every
+result. It's also a hosted API with a key to guard and a per-request bill that grows with you.
+
+Mailwoman's whole annotations layer exists to give you that same block, self-hosted, with **no API key
+and no monthly fee**. You run `@mailwoman/nominatim`, and the OpenCage-keyed annotations come attached.
+
+## One command
+
+```bash
+npx @mailwoman/nominatim serve --port 8080
+```
+
+```bash
+curl "http://localhost:8080/search?q=Boston MA"
+```
+
+```json
+{
+	"lat": "42.332235",
+	"lon": "-71.016397",
+	"display_name": "Boston, MA",
+	"annotations": {
+		"DMS": { "lat": "42° 19′ 56.05″ N", "lng": "71° 0′ 59.03″ W" },
+		"Maidenhead": "FN42lh",
+		"Mercator": { "x": -7905509, "y": 5210877 },
+		"geohash": "drt2zfr7n",
+		"flag": "🇺🇸",
+		"timezone": { "name": "America/New_York", "offset_sec": -14400 }
+	}
+}
+```
+
+The `annotations` keys mirror OpenCage's (`DMS`, `Maidenhead`, `Mercator`, `timezone.offset_sec`, …), so
+code that reads OpenCage annotations reads these.
+
+## What's different
+
+- **No key, no fee, no rate limit.** It runs on your box, from a SQLite file. That's the headline.
+- The forward search uses the Nominatim response shape with the OpenCage `annotations` block layered on
+  — close to, but not byte-identical to, OpenCage's envelope.
+
+## The honest gaps
+
+- **Annotation coverage is growing.** Shipped: coordinate formats (DMS, geohash, Maidenhead, Mercator,
+  qibla), flag, ISO, and the IANA timezone with a DST-correct offset. Calling code, currency, UN/LOCODE,
+  and NUTS are on the way; what3words is proprietary and out of scope.
+- **Aggregated coverage.** OpenCage blends several backends, so it can resolve some places Mailwoman
+  doesn't yet. Where that matters, OpenCage's multi-service guidance and Mailwoman's free first pass
+  compose well.
+
+See [how Mailwoman compares](./how-mailwoman-compares) for the capability matrix, and [Switching from
+Nominatim](./switching-from-nominatim) for the full endpoint contract.

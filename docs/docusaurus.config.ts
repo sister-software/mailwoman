@@ -118,6 +118,14 @@ const config: Config = {
 					routeBasePath: "docs",
 					sidebarPath: "./sidebars.ts",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
+					// Internal-only content — kept in the repo for the record but NOT rendered on the public
+					// site (globs are relative to `path: "articles"`). `reviews/` is AI-consult transcripts +
+					// the public-readiness review; the `*postmortem*` / session-report files are candid
+					// night-shift narratives with spend + autonomous-operation notes — neither is for a public
+					// audience. The technical eval reports stay published (concept pages cite them as
+					// evidence). Where a kept page linked to one of these, the link was reduced to plain text
+					// (onBrokenLinks is "throw"). To re-publish a doc, remove its pattern here.
+					exclude: ["reviews/**", "evals/*postmortem*", "evals/*night-shift-session-report*"],
 					remarkPlugins: [
 						[
 							glossaryRemarkPlugin,

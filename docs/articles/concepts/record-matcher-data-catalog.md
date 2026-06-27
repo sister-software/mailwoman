@@ -17,7 +17,7 @@ There is **no shared key across publishers**. The NPI is internal to NPPES; the 
 
 ## Sources
 
-The files live under `/mnt/playpen/mailwoman-data/record-matcher/sources/`. Snapshot dates are encoded in each filename (`…_YYYYMMDD.tsv`).
+The files live under `$MAILWOMAN_DATA_ROOT/record-matcher/sources/`. Snapshot dates are encoded in each filename (`…_YYYYMMDD.tsv`).
 
 ### TX HHSC nursing facilities
 
@@ -65,4 +65,4 @@ Carried alongside the primaries, used for enrichment rather than as primary reco
 
 The datasets are published on a rolling basis. To refresh: download the new per-program file, keep the `…_YYYYMMDD.tsv` naming (the date is the snapshot of record), drop it under the source root, and update the `snapshot` / `rows` fields in `registry/configs/record-matcher-sources.json`. The column mappings are stable across snapshots unless a publisher renames a column — if a run's geocode rate drops, check the header against the committed mapping first.
 
-The persistent home is the lab data volume (`/mnt/playpen/mailwoman-data/record-matcher/sources/`); the files are too large for git (NPPES alone is 5.1 GB), so the catalog config is the version-controlled record of what was used, and the snapshot date pins reproducibility.
+The persistent home is the lab data volume (`$MAILWOMAN_DATA_ROOT/record-matcher/sources/`); the files are too large for git (NPPES alone is 5.1 GB), so the catalog config is the version-controlled record of what was used, and the snapshot date pins reproducibility.

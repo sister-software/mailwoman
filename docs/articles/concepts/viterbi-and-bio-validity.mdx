@@ -154,7 +154,7 @@ would be additive improvement, not a replacement for the encoder.
 ## Why learned CRF was disabled in v0.6.x
 
 The
-[2026-05-28 night-shift postmortem](../evals/2026-05-28-night-2-postmortem.mdx)
+2026-05-28 night-shift postmortem
 captured the story: enabling learned CRF transitions in Stage 3 (33×33
 transition matrix with masked `-∞` entries) caused NaN gradients
 twice during training. The

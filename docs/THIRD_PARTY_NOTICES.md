@@ -4,52 +4,105 @@ sidebar_label: Third Party Notices
 id: third-party-notices
 ---
 
-Mailwoman is distributed under the [AGPL-3.0 license](https://www.gnu.org/licenses/agpl-3.0.html),
-and is made possible through the countless contributions of the open-source community.
+Mailwoman is distributed under the [AGPL-3.0 license](https://www.gnu.org/licenses/agpl-3.0.html)
+(with a commercial license available — contact `teffen@sister.software`), and is made
+possible through the contributions of the open-source community.
 
-## Third Party Notices
+The notices below are split by where each dependency reaches you:
 
-Mailwoman includes or partly uses code from the following open source software
-subject to the following open source licenses.
+- **Code** and **Data bundled in the published packages** travel inside the npm tarballs and
+  are redistributed to everyone who installs Mailwoman.
+- **Used only when developing Mailwoman** covers sources that build the model, corpus, evals,
+  and this documentation site — none are redistributed in any published npm package.
+
+## Code
 
 ### Pelias Parser
 
-Mailwoman originated as a TypeScript fork of [Pelias Parser](https://github.com/pelias/parser), a library for parsing and normalizing addresses.
-Pelias Parser is licensed under [MIT](https://github.com/pelias/parser/blob/master/LICENSE)
+Mailwoman originated as a TypeScript fork of [Pelias Parser](https://github.com/pelias/parser).
+Portions derived from it (the tokenizer, rule-based classifiers, and the solver) remain under
+the [MIT license](https://github.com/pelias/parser/blob/master/LICENSE).
 
-### Who's on First
+## Data bundled in the published packages
 
-Mailwoman uses data from [Who's on First](https://whosonfirst.org/), a gazetteer of places and their relationships. Data from Who's on First is derived from several sources which have their own licenses. See [Who's on First License](https://www.whosonfirst.org/docs/licenses/) for details.
+These ship inside `@mailwoman/core`, with the upstream license text vendored beside each
+dataset in the package.
 
-### OpenStreetMap
+### libpostal
 
-Mailwoman uses data from [OpenStreetMap](https://www.openstreetmap.org/), which is licensed under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/). Usage may require attribution, and any derived databases must be shared under the same license.
+`@mailwoman/core` bundles address-component dictionaries from
+[libpostal](https://github.com/openvenues/libpostal) (© 2015 openvenues), under the
+[MIT license](https://github.com/openvenues/libpostal/blob/master/LICENSE).
+
+### Google libaddressinput
+
+`@mailwoman/core` bundles per-country address metadata from Google's
+[libaddressinput](https://github.com/google/libaddressinput) (the `chromium-i18n`
+`ssl-address` data), under the
+[Apache-2.0 license](https://github.com/google/libaddressinput/blob/master/LICENSE).
+
+### Who's On First
+
+Mailwoman uses reference data from [Who's On First](https://whosonfirst.org/), a gazetteer of
+places and their relationships. Its data is derived from several sources with their own
+licenses. See the [Who's On First licenses](https://www.whosonfirst.org/docs/licenses/).
+
+## The model
+
+The `@mailwoman/neural-weights-*` packages ship an ONNX model trained from scratch by Sister
+Software. Its training corpus is derived from the open data below (Who's On First,
+OpenAddresses, GeoNames); the weights are a first-party artifact and the corpus provenance is
+tracked per row.
+
+## Used only when developing Mailwoman
+
+The following build the corpus, gazetteer shards, evaluations, and this site. They are **not**
+redistributed in any published npm package.
+
+### GeoNames
+
+[GeoNames](https://www.geonames.org/) postal and centroid data builds gazetteer postcode
+shards and training corpus, under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ### OpenAddresses
 
-Mailwoman uses data from [OpenAddresses](https://openaddresses.io/). The license for each individual source within OpenAddresses differs, and many require attribution and share-alike clauses.
+[OpenAddresses](https://openaddresses.io/) address points are used in the training corpus and
+evaluations. The license for each source differs, and many require attribution and
+share-alike.
+
+### OpenStreetMap
+
+[OpenStreetMap](https://www.openstreetmap.org/) data is licensed under the
+[Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/). Usage may
+require attribution, and derived databases must be shared under the same license.
 
 ### MapLibre
 
-Mailwoman uses [MapLibre GL JS](https://maplibre.org/) for rendering maps on the web. MapLibre GL JS is licensed under the [BSD 3-Clause License](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt)
+This site renders maps with [MapLibre GL JS](https://maplibre.org/), under the
+[BSD 3-Clause License](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt).
 
-## Protomaps
+### Protomaps
 
-Mailwoman uses PMTiles provided by [Protomaps](https://protomaps.com/) to render vector tiles. The PMTiles data format is licensed is in the public domain, however Earth-sized tilesets are derived from OpenStreetMap and share it's attribution requirements. See [Protomaps License](https://protomaps.com/legal) for details.
+This site renders vector tiles via [Protomaps](https://protomaps.com/). The PMTiles format is
+public-domain; Earth-scale tilesets derive from OpenStreetMap and share its attribution. See
+[Protomaps legal](https://protomaps.com/legal).
 
 ### MDN Web Docs
 
-Mailwoman includes documentation and examples from [MDN](https://developer.mozilla.org//en-US/docs/MDN/About)
-by [Mozilla Contributors](https://developer.mozilla.org//en-US/docs/MDN/About/contributors.txt),
-and is licensed under [CC-BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/).
+Some documentation examples derive from [MDN](https://developer.mozilla.org/) by
+[Mozilla Contributors](https://developer.mozilla.org/en-US/docs/MDN/Community/Contributing),
+under [CC-BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/).
 
 ### TypeDoc
 
-Mailwoman uses [TypeDoc](https://typedoc.org) and the [TypeDoc Markdown Plugin](https://github.com/tgreyuk/typedoc-plugin-markdown) to generate documentation.
+Mailwoman generates API documentation with [TypeDoc](https://typedoc.org) and the
+[TypeDoc Markdown plugin](https://github.com/tgreyuk/typedoc-plugin-markdown).
 
 ## A special thanks to...
 
-- The folks at OpenStreetMap for their tireless work in building and maintaining the world's largest open map.
-- Julian Simioni from [Geocode Earth](https://geocode.earth) for their guidance, support, and kindness in all things geo-spatial.
-- The brilliant engineers and maintainers of [code-server](https://github.com/coder/code-server)
-- And [all the wonderful people](https://github.com/sister-software/mailwoman/graphs/contributors) who've contributed to Mailwoman
+- The folks at OpenStreetMap for building and maintaining the world's largest open map.
+- Julian Simioni from [Geocode Earth](https://geocode.earth) for guidance, support, and
+  kindness in all things geospatial.
+- The brilliant engineers and maintainers of [code-server](https://github.com/coder/code-server).
+- And [all the wonderful people](https://github.com/sister-software/mailwoman/graphs/contributors)
+  who've contributed to Mailwoman.

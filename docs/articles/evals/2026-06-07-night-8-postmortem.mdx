@@ -75,7 +75,7 @@ not just unit-tested — the gated re-measure happened this shift:
 
 - An early passive-wait turn (DeepSeek flagged it) → switched to event-driven monitors + backlog-in-window.
 - Three docs-build CI misses (MDX bare `<` ×1, blog broken-link `/articles` vs `/docs` ×1, plus tag
-  warnings) — a local `yarn build-docs` before pushing docs would've caught them.
+  warnings) — a local `yarn ci:docs` before pushing docs would've caught them.
 - Completion monitors false-positived twice on stale prior-run `step-020000` checkpoints → switched to
   app-task detection.
 - **The eval loads compiled `core/out/`, not source.** The first #387 before/after showed _zero_ effect —

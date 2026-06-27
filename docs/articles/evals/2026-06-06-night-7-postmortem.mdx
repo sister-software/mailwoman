@@ -50,7 +50,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **Multi-locale tooling (#332 / #333 / #335)** — `build-locale-shard.mjs` rebuilt registry-driven, with a
   streaming Algorithm-R reservoir so FR/US-scale OA CSVs (2.5 GB+) sample without OOM; NL postcode
   normalization; and **Italy + Spain OA data acquired** (IT 468 MB, ES 451 MB, durable backups on
-  `/mnt/playpen`). **DE / NL / FR / IT / ES are all shard-ready.** _(Correction: an earlier note here called ES
+  `$MAILWOMAN_DATA_ROOT`). **DE / NL / FR / IT / ES are all shard-ready.** _(Correction: an earlier note here called ES
   "no clean countrywide aggregate." That was wrong — I'd only checked the `results.../latest/run/es` path, which
   404s. The `es/countrywide` source points to a cached upstream CSV on `data.openaddresses.io` that downloads
   fine; it's the raw CNIG schema rather than OA-conformed, so the builder gained a per-part `conform` map —

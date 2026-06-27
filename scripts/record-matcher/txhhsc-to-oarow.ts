@@ -14,14 +14,11 @@
  *   --src <tsv> --out /tmp/txhhsc-oarow.jsonl
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync, writeFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
-const arg = (name: string, fallback = "") => {
-	const i = process.argv.indexOf(`--${name}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
-const src = arg("src", "/mnt/playpen/mailwoman-data/record-matcher/sources/txhhsc_nursing-facilities_20260611.tsv")
+const src = arg("src", dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv"))
 const out = arg("out", "/tmp/txhhsc-oarow.jsonl")
 
 const lines = readFileSync(src, "utf8")

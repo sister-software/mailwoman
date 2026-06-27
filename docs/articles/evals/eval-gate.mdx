@@ -11,7 +11,7 @@ default), applies a two-dimensional threshold, and exits non-zero if any tag vio
 dimension.
 
 The shape of the gate is the lesson the
-[2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) and the
+2026-05-28 night-2 postmortem and the
 [Layer 1 eval](2026-05-28-layer-1-morphology-fst.mdx) both pointed at: a recall-only gate
 would have **passed** v0.6.1 (no tag regressed > 2pp in recall on tags where the model
 already had > 10% baseline), letting the 1066 `dependent_locality` hallucinations through.
@@ -59,10 +59,10 @@ holds up.
 
    ```bash
    node --experimental-strip-types scripts/eval-morphology-fst.ts \
-     --model /mnt/playpen/.../model-v060.onnx \
-     --tokenizer /mnt/playpen/.../v0.6.0-a0/tokenizer.model \
+     --model $MAILWOMAN_DATA_ROOT/.../model-v060.onnx \
+     --tokenizer $MAILWOMAN_DATA_ROOT/.../v0.6.0-a0/tokenizer.model \
      --model-card neural-weights-en-us/model-card.json \
-     --admin-fst /mnt/playpen/.../fst-en-us.bin \
+     --admin-fst $MAILWOMAN_DATA_ROOT/.../fst-en-us.bin \
      --golden data/eval/golden/v0.1.2 \
      --name v0.6.0-default \
      --out-json /tmp/eval-v060.json
@@ -104,5 +104,5 @@ The gate is one slice of the pre-publish protocol, not the whole thing.
   emits the format this gate consumes
 - [v0-vs-neural harness](2026-05-28-v0-vs-neural-harness.mdx) — the complementary breadth
   metric
-- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) — DeepSeek-turn-1
+- 2026-05-28 night-2 postmortem — DeepSeek-turn-1
   rubric this gate operationalizes

@@ -43,6 +43,13 @@
 		{ "path": "./resolver-wof-sqlite" },
 		{ "path": "./resolver-wof-wasm" },
 		{ "path": "./mailwoman" },
+		{ "path": "./annotations" },
+		{ "path": "./nominatim" },
+		{ "path": "./photon" },
+		{ "path": "./libpostal" },
+		{ "path": "./timezone-lookup" },
+		{ "path": "./un-locode-lookup" },
+		{ "path": "./nuts-lookup" },
 		{ "path": "./tile-worker" }
 	]
 }

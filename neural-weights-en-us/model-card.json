@@ -114,7 +114,11 @@
 		"gate_2026_06_25_v415_anchor_absorption": {
 			"promotion_gate": "v4.15.0-boundary gate PASS after a stated, operator-approved revision of two postcode floors (us.postcode 97→95, fr.postcode 99.5→99.3). The #723 fix (SLICE-H anchor-ON 20→100) trades −2pp us.postcode LABEL-F1 on the rare leading-5-digit-postcode (VT E911) case. The trade is COORDINATE-INVISIBLE — proven by the non-circular oa-resolver-eval below, not asserted. Every other floor holds with margin (us.locality 76.7/62.2, us.street 82.3/74, us.region 88.6/80.1, de.native_locality 89.3/83.8, arena.perturb 78/71); mask-regression gate (#718) PASS; int8↔fp32 delta 0. No silent drift: the revision is in scripts/eval/gates/v4.15.0-boundary.json with the reason, mirrored here and in the promotion doc.",
 			"gate_doc": "docs/articles/evals/2026-06-25-v4.15.0-promotion.md",
-			"slice_h_anchor_on": { "v192": 20, "v193a3": 100, "$note": "leading-5-digit house# correctly labeled house_number (not postcode) with the anchor ON — the #723 production bug" },
+			"slice_h_anchor_on": {
+				"v192": 20,
+				"v193a3": 100,
+				"$note": "leading-5-digit house# correctly labeled house_number (not postcode) with the anchor ON — the #723 production bug"
+			},
 			"oa_resolver_eval_us": {
 				"n": 2000,
 				"$note": "non-circular: real OA gov lat/lon vs resolved admin centroid, full ship-config (anchor+gazetteer+suppress)",
@@ -123,7 +127,11 @@
 				"coord_p50_km": { "v192": 3.4, "v193a3": 3.4 },
 				"coord_p90_km": { "v192": 10.7, "v193a3": 10.7 },
 				"coord_p99_km": { "v192": 275.3, "v193a3": 259.1 },
-				"vt_locality_match": { "v192": 0.926, "v193a3": 0.926, "$note": "VT = the E911 leading-postcode state where the postcode label trade lives — FLAT at the coordinate" },
+				"vt_locality_match": {
+					"v192": 0.926,
+					"v193a3": 0.926,
+					"$note": "VT = the E911 leading-postcode state where the postcode label trade lives — FLAT at the coordinate"
+				},
 				"sd_locality_match": { "v192": 0.965, "v193a3": 0.975 }
 			},
 			"label_deltas_coordinate_invisible": [

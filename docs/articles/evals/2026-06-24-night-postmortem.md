@@ -16,17 +16,21 @@ Plan: `nightshift/2026-06-24-NIGHT-SHIFT-PLAN.md`. Lead with the differentiator 
 - **npm (DeepSeek-assisted, short-lived creds):** `@mailwoman/resolver` + `@mailwoman/resolver-wof-sqlite` bootstrap-published; Trusted Publishing configured (and a reversed org/repo config fixed). The v4.14.0 release then republished the whole set consistently. (DeepSeek = the consult advisor who held publish creds, distinct from the operator.)
 
 ### Partial-publish recovery (the release landmine, recovered)
+
 The real publish ran **alphabetically + fail-fast**: 21 workspaces reached 4.14.0, then `resolver-wof-sqlite` hit an OIDC `404/permission` (Trusted Publishing config) and the run exited 1, leaving spatial/resolver unpublished too. A `publish_only=true` retry recovered **spatial + resolver** to 4.14.0; `resolver-wof-sqlite` held out (its trusted-publisher config had reversed org/repo names). DeepSeek fixed the config, a second `publish_only` retry shipped `resolver-wof-sqlite@4.14.0`, and **all 22 workspaces are now consistent at 4.14.0** — RESOLVED in-shift. (`mailwoman` declares resolver-wof-sqlite a peerDependency, so it installed + ran throughout regardless.)
 
 ### SECONDARY (bonus): #370 rescore reach with the -20j gazetteer
+
 Measured the span-rescore lever (#370) with the `-20j` candidate gazetteer (CZ/PT/AU/AT postcodes) on clean EU+AU OA coords (demo resolver, n=40/locale). The lever reaches **beyond IT**: rescore lifts PT 80→83, PL 85→88, AT 70→73, CZ 93→95 @25km (IT/AU flat); aggregate 83→85%, no-result 5→3%.
 
 **The standing-run** (the leak fix made it crash-free, so Nominatim got clean steady-paced data — no repeat of the earlier 0%-null corruption): mailwoman (v4.14.0 + rescore + `-20j`) vs Nominatim on the same clean EU+AU panel — **mailwoman+rescore ALL @25km 86% vs Nominatim 80%**, no-result **3% vs 17%**. mailwoman wins IT (98/73), PT (83/45), FR (95/63), CZ (95/85); Nominatim wins PL (98/88), AT (98/73), AU (100/75). **mailwoman now BEATS Nominatim on the EU+AU aggregate**, a reversal of the 06-23 cross-harness "EU trails 59 vs 79" — the `-20j` gazetteer + rescore lever close the gap. **The strongest case yet for re-staging `-20j` to R2 (#213).** Caveat: this is the demo `-20j` config (pending the R2 re-stage), not the shipped CLI resolver.
 
 ### Validated: the shipped v192's calibration (the precision-lever thesis transfers)
+
 PRIMARY A's precision-lever was measured on v191; the now-shipped v192 is a from-scratch retrain carrying forward v4.13.0's isotonic table (card flags "re-fit recommended"). Bounded check (300-address subsample, 1357 spans, under the leak threshold): v192's **raw ECE 0.072** — the same under-confidence pattern as v4.13.0 (raw 0.060) — calibrates to **0.009 combined / 0.017 OA-only**, comparable to v4.13.0 (0.0055 / 0.0193). Since v192's raw confidence curve nearly matches v4.13.0's, the carried-forward table fits it; the routable-confidence thesis transfers to what's actually live. No re-fit needed (a fresh fit would be a marginal gain). Verify-before-verdict on the headline.
 
 ### Caught + fixed a broken published state
+
 The resolver bootstrap-publish (DeepSeek, from post-haversine-dedup code) had skewed against the pre-dedup `spatial@4.13.0` (no `haversineKm` export) → `mailwoman@4.13.0` was transiently uninstallable. The v4.14.0 release republished spatial+resolver+all consistently, restoring a working set. Final state: all 22 workspaces at 4.14.0, `mailwoman@4.14.0` installs + runs.
 
 ## The headline result (PRIMARY A)
@@ -75,16 +79,16 @@ main's clean-install smoke test has been **red since #215** (resolver extraction
 
 ---
 
-| metric | value |
-| --- | --- |
-| shift window | 04:37 → 15:00 UTC |
-| npm shipped | **v4.14.0 (v192 AU model live)** — 22/22 workspaces after the resolver-wof-sqlite recovery |
-| models trained | 0 (promoted the pre-trained v192) |
-| Modal time / $ | $0 |
-| local compute | conf-discrimination (472 parses, 2 leak-crashes recovered) + v192 gate battery + canary + AU coord |
-| NaN incidents | 0 |
-| release landmines hit / recovered | 1 partial-publish (OIDC trusted-publishing) / recovered via publish_only |
-| regressions shipped | 0 |
-| stale-compile phantoms caught | 1 (us.postcode 86.9 → 97.5) |
-| PRs opened | 3 (#784 cleanup, #785 lever, #786 release-prep merged) |
-| GPU lost to error | 0 |
+| metric                            | value                                                                                              |
+| --------------------------------- | -------------------------------------------------------------------------------------------------- |
+| shift window                      | 04:37 → 15:00 UTC                                                                                  |
+| npm shipped                       | **v4.14.0 (v192 AU model live)** — 22/22 workspaces after the resolver-wof-sqlite recovery         |
+| models trained                    | 0 (promoted the pre-trained v192)                                                                  |
+| Modal time / $                    | $0                                                                                                 |
+| local compute                     | conf-discrimination (472 parses, 2 leak-crashes recovered) + v192 gate battery + canary + AU coord |
+| NaN incidents                     | 0                                                                                                  |
+| release landmines hit / recovered | 1 partial-publish (OIDC trusted-publishing) / recovered via publish_only                           |
+| regressions shipped               | 0                                                                                                  |
+| stale-compile phantoms caught     | 1 (us.postcode 86.9 → 97.5)                                                                        |
+| PRs opened                        | 3 (#784 cleanup, #785 lever, #786 release-prep merged)                                             |
+| GPU lost to error                 | 0                                                                                                  |

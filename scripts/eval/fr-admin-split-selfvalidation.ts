@@ -25,14 +25,16 @@
  *   the premise is false and no retrain can fix it.
  *
  *   Run (compiled CLI): node --experimental-strip-types scripts/eval/fr-admin-split-selfvalidation.ts\
- *   --db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
+ *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 
 import { type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { ClassificationRecord } from "mailwoman"
 import { DatabaseSync } from "node:sqlite"
+import { arg } from "../lib/cli-args.ts"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
 // --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------
@@ -81,11 +83,7 @@ const pct = (xs: number[], p: number): number => {
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN)
 
 // --- args ----------------------------------------------------------------------------------------
-const arg = (k: string, d: string): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
-const DB = arg("db", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
+const DB = arg("db", dataRootPath("wof", "admin-global-priority.db"))
 const N = Number(arg("n", "200")) // per stratum
 
 // --- sample FR communes (collision + unique strata) ----------------------------------------------

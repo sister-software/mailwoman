@@ -5,14 +5,15 @@
  * municipality through the coordinate-first path (vs an exact-name tiering override). Gold =
  * KEN_ALL (independent, authoritative).
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { readFileSync } from "node:fs"
 
-const KENALL = "/mnt/playpen/mailwoman-data/KEN_ALL_ROME/KEN_ALL_ROME.CSV"
+const KENALL = dataRootPath("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
 const backend = new WofSqlitePlaceLookup({
 	databasePath: [
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
-		"/mnt/playpen/mailwoman-data/wof/postcode-locality-jp.db",
+		dataRootPath("wof", "admin-global-priority.db"),
+		dataRootPath("wof", "postcode-locality-jp.db"),
 	],
 })
 
@@ -43,7 +44,7 @@ const sample = rows.filter((_, i) => i % step === 0).slice(0, N)
 
 // Independent cross-check gold: GeoNames admin2 (sourced separately from KEN_ALL).
 const gnAdmin2 = new Map<string, string>()
-for (const line of readFileSync("/mnt/playpen/mailwoman-data/geonames/JP.txt", "utf8").split("\n")) {
+for (const line of readFileSync(dataRootPath("geonames", "JP.txt"), "utf8").split("\n")) {
 	const f = line.split("\t")
 	if (f.length > 5 && f[1]) gnAdmin2.set(f[1]!, f[5]!)
 }

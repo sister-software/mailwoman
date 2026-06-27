@@ -1,0 +1,56 @@
+---
+title: How Mailwoman compares
+sidebar_label: How it compares
+description: A capability comparison against the geocoders and parsers you might be replacing — and the two columns the hosted services can't check.
+---
+
+# How Mailwoman compares
+
+If you're geocoding addresses, you've already met the trade-off. The hosted APIs (Google, Mapbox,
+OpenCage) are easy to start with and bill you forever, with a key you have to guard and a rate limit you
+have to design around. The self-hosted stacks (Nominatim, Photon, Pelias) are free, but they ask you to
+run PostgreSQL or Elasticsearch and feed it the planet before you can resolve a single address.
+
+Mailwoman is the calibrated neural parser plus a geocoder that runs from a SQLite file — and, when you
+want them, the same drop-in HTTP APIs those tools expose, so you can repoint an existing client and keep
+going. The two rows that matter most are the ones a hosted service can never check:
+
+- **No API key required.**
+- **No monthly fee.**
+
+## Capability matrix
+
+| Capability                                                     |             Mailwoman             | Nominatim | Photon | OpenCage | Pelias | libpostal | Google / Mapbox |
+| -------------------------------------------------------------- | :-------------------------------: | :-------: | :----: | :------: | :----: | :-------: | :-------------: |
+| **No API key required**                                        |                ✅                 |    ✅     |   ✅   |    ❌    |   ✅   |    ✅     |       ❌        |
+| **No monthly fee (self-host free)**                            |                ✅                 |    ✅     |   ✅   |    ❌    |   ✅   |    ✅     |       ❌        |
+| Open source                                                    |              ✅ AGPL              |    ✅     |   ✅   |    ❌    |   ✅   |  ✅ MIT   |       ❌        |
+| No Elasticsearch / no PostgreSQL import                        |             ✅ SQLite             |    ❌     |   ❌   |   n/a    |   ❌   |    ✅     |       n/a       |
+| Runs in the browser (WASM)                                     |                ✅                 |    ❌     |   ❌   |    ❌    |   ❌   |    ❌     |       ❌        |
+| Forward geocoding                                              |                ✅                 |    ✅     |   ✅   |    ✅    |   ✅   |    ❌     |       ✅        |
+| Reverse geocoding                                              |                ✅                 |    ✅     |   ✅   |    ✅    |   ✅   |    ❌     |       ✅        |
+| Autocomplete / type-ahead                                      |                ✅                 |    ➖     |   ✅   |    ➖    |   ✅   |    ❌     |       ✅        |
+| Structured address parsing                                     |             ✅ neural             |    ➖     |   ❌   |    ➖    |   ✅   |    ✅     |       ➖        |
+| Annotations (timezone, UN/LOCODE, coordinate formats, flag, …) |                ✅                 |    ❌     |   ❌   |    ✅    |   ❌   |    ❌     |       ➖        |
+| Calibrated, routable confidence                                |                ✅                 |    ❌     |   ❌   |    ➖    |   ➖   |    ❌     |       ➖        |
+| Drop-in compatible API                                         | ✅ Nominatim · Photon · libpostal |     —     |   —    |    —     |   —    |     —     |        —        |
+
+✅ supported · ➖ partial · ❌ not supported · n/a not applicable (hosted-only)
+
+## What that buys you
+
+You can run the whole thing on one box, ship it inside your application, or compile it to WebAssembly and
+geocode in the browser. You get forward and reverse geocoding, autocomplete, and structured parsing from
+the same model — and the OpenCage-style **annotations** block (timezone, coordinate formats, calling
+code, flag, and more) attached to every result, which the other self-hosted stacks don't return at all.
+
+And when you're migrating, you don't rewrite your client. Point it at the matching package:
+
+```bash
+npx @mailwoman/nominatim serve   # Nominatim-compatible /search, /reverse, /lookup, /status
+npx @mailwoman/photon serve      # Photon-compatible /api, /reverse (GeoJSON)
+npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
+```
+
+Where each tool still does something better, the switching guides say so plainly. The goal isn't to claim
+Mailwoman wins every row. It's to let you keep your stack, your client, and your budget.

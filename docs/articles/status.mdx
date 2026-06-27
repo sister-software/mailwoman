@@ -8,20 +8,24 @@ description: What ships today, what's behind a flag, and what's still experiment
 
 This page is the single source of truth for what works in Mailwoman right now.
 
-:::info[Verified as of 2026-06-20 — release 4.11.0]
-The package version + model lineage below are from the shipped `model-card.json` (v4.11.0 =
-`v1.8.0-fr-admin-split`). v4.11.0's headline is the **assembled coordinate**, not label-F1: it's the
-first model to surpass v1.5.0 on the shipped anchor-ON coordinate — held-out FR golden **coord p50
-42.5 → 2.2 km (−95%)**, region-emit 39.6 → 99.6%, with the US coordinate flat (locality 97.5 → 97.6,
-p50 3.3 = 3.3 km). The per-tag **F1 tables below are from the v4.4.0 ship gate** (2026-06-11) — the
-last full per-tag scorecard; treat them as the v4.4.0 baseline, not v4.11.0. The
+:::info[Verified as of 2026-06-25 — release 4.15.0]
+The package version + model lineage below are from the shipped `model-card.json` (v4.15.0 =
+`v1.9.3a3-anchor-absorption`). v4.15.0's headline is the **#723 postcode-anchor fix**: a leading
+5-digit token that is actually a US house number which happens to look like a ZIP (`12345 Main St`)
+is now correctly labeled `house_number` with the postcode anchor ON — the `SLICE-H` case went
+**20 → 100**, at **zero coordinate cost** (non-circular oa-resolver-eval, 2000 real OA-US points:
+whole-US locality-match 97.7 → 97.8, region 99.9 flat, coord p50 3.4 km flat). It trades
+us.postcode label-F1 −2 — a rare leading-postcode (VT E911) case that is coordinate-invisible (VT
+locality flat 92.6 = 92.6); the gate floor was revised with an operator-approved, stated reason. The
+per-tag **F1 tables below are still from the v4.4.0 ship gate** (2026-06-11) — the last full per-tag
+scorecard; treat them as the v4.4.0 baseline, not v4.15.0. The
 [parity scorecard](./evals/parity-scorecard-2026-06-11.md) is the live per-tag truth; for which
 release added which capability, see [Releases & capabilities](./releases.mdx).
 :::
 
 ## Packages
 
-All publishable workspaces release in lockstep; the current npm version is **4.11.0**.
+All publishable workspaces release in lockstep; the current npm version is **4.15.0**.
 
 | Package                                                                                       | Description                                                         |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -35,18 +39,18 @@ All publishable workspaces release in lockstep; the current npm version is **4.1
 | `@mailwoman/resolver-wof-sqlite` / `-wasm`                                                    | WOF gazetteer resolver (Node SQLite / browser WASM)                 |
 | `@mailwoman/neural-web`                                                                       | Browser-side neural classifier (onnxruntime-web)                    |
 
-## Model weights (4.11.0)
+## Model weights (4.15.0)
 
-| Property             | Value                                                                                                                                                                                                                                                                        |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Lineage**          | `v1.8.0-fr-admin-split` @ step 40k, from scratch — clones `v1.5.0-fr-order` + one lever: the fr-admin-split shard (real BAN commune+postcode, locality split from its département). First to beat v1.5.0 on the shipped coordinate: FR coord p50 42 → 2.2 km, US flat (#728) |
-| **Architecture**     | 29.3M params — 6-layer encoder, 384 hidden, 6 heads, 48K-vocab SentencePiece embedding                                                                                                                                                                                       |
-| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`)                                                                                                                                                                 |
-| **Training corpus**  | `corpus-v0.5.0` (char-offset span labels #519) + synth-fr-order + the fr-admin-split shard (real BAN commune+postcode+département) · tokenizer `v0.6.0-a0` (byte-identical to v1.5.0)                                                                                        |
-| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                                                                                                                                                                              |
-| **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`)                                                                               |
-| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                                                                                                 |
-| **Size**             | 29.8 MB int8 ONNX (118.4 MB fp32) · opset 17 · max sequence 128                                                                                                                                                                                                              |
+| Property             | Value                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lineage**          | `v1.9.3a3-anchor-absorption` @ step 80k — RESUMED from `v1.9.2-multilocale-au` (v4.14.0, AU G-NAF), which built on `v1.8.0-fr-admin-split` (v4.11.0, FR coord p50 42 → 2.2 km). `anchor_paint_mode=shaped` + a locality-discriminator counter-shard fix the leading-5-digit house# / ZIP confusion (`SLICE-H` 20 → 100) at zero coordinate cost (#220/#723) |
+| **Architecture**     | 29.6M params — 6-layer encoder, 384 hidden, 6 heads, 48K-vocab SentencePiece embedding                                                                                                                                                                                                                                                                      |
+| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`)                                                                                                                                                                                                                                                |
+| **Training corpus**  | `corpus-v0.9.3a3` = the `v0.9.2-multilocale-au` base + the synth-anchor-absorption counter-shard (source-weight 6.0, the #723 leading-5-digit discriminator, built from 42,312 real US ZIPs) · tokenizer `v0.6.0-a0` (byte-identical)                                                                                                                       |
+| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                                                                                                                                                                                                                                                             |
+| **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`)                                                                                                                                                              |
+| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                                                                                                                                                                                |
+| **Size**             | 29.8 MB int8 ONNX (118.4 MB fp32) · opset 17 · max sequence 128                                                                                                                                                                                                                                                                                             |
 
 ### Per-tag health (summary)
 
@@ -118,7 +122,7 @@ calls the classifier's argmax path directly; joint reconcile is not active in th
 
 ## Model line (June 2026)
 
-The shipped weights are **4.11.0** — `v1.8.0-fr-admin-split`: the first model in the arc to beat v1.5.0 on the **shipped assembled coordinate** (not label-F1), by teaching the locality↔adjacent-admin-token split on non-US formats. Held-out FR golden: coord p50 42 → 2.2 km (−95%), region-emit 39.6 → 99.6%; US coordinate flat (#728). It builds on the v4.4.0 boundary consolidation (every starved tag alive, the arena debt closed). The parity campaign's remaining gaps are quality gradients, not missing capabilities. Next: the post-parity agenda — arbitration ([#478](https://github.com/sister-software/mailwoman/issues/478)), geocoder table stakes (interpolation, reverse), and the char-offset corpus format (the structural cure for what the span bridge contains). The ordered
+The shipped weights are **4.15.0** — `v1.9.3a3-anchor-absorption`, the latest step in a coordinate-first arc. The lineage stacks three single-lever moves, each held to the **shipped assembled coordinate** (not label-F1): v4.11.0 (`v1.8.0-fr-admin-split`) taught the locality↔adjacent-admin split on non-US formats (FR coord p50 42 → 2.2 km); v4.14.0 (`v1.9.2-multilocale-au`) added AU word-order via G-NAF (AU @25km 65 → 87); v4.15.0 closes the #220/#723 postcode-anchor-pollution bug — a leading 5-digit house number that looks like a ZIP is now labeled `house_number` with the anchor ON (`SLICE-H` 20 → 100), at zero coordinate cost (oa-resolver-eval, 2000 real OA-US points: whole-US locality 97.7 → 97.8, p50 3.4 km flat). The trade is a coordinate-invisible −2 us.postcode label-F1 on the rare VT-E911 leading-postcode case. The parity campaign's remaining gaps are quality gradients, not missing capabilities. Next: the post-parity agenda — arbitration ([#478](https://github.com/sister-software/mailwoman/issues/478)), geocoder table stakes (interpolation, reverse), and the char-offset corpus format (the structural cure for what the span bridge contains). The ordered
 work queue to the full geocoder is
 [epic #488](https://github.com/sister-software/mailwoman/issues/488).
 

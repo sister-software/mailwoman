@@ -1,191 +1,161 @@
 # Mailwoman
 
-A natural language classification engine for geocoding.
+**A calibrated, retrieval-augmented postal-address parser.**
 
 ![GitHub License](https://img.shields.io/github/license/sister-software/mailwoman)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/sister-software/mailwoman)
 
-```js
-// npx mailwoman debug "Mt Tabor Park, 6220 SE Salmon St, Portland, OR 97215, USA"
+Mailwoman turns free-text postal addresses into structured components — house number,
+street, locality, region, postcode, country — and resolves them to coordinates against an
+open gazetteer. It is a small transformer encoder (~30M params) doing BIO token
+classification over a 33-label schema. It is **not** an LLM and nothing about it is
+generative — boring NER, which is the point for short, structured strings.
 
-;[
-	{ venue: "Mt Tabor Park", confidence: 0.8, offset: 0, penalty: 0 },
-	{ house_number: "6220", confidence: 0.9, offset: 15, penalty: 0 },
-	{ street: "SE Salmon St", confidence: 0.98, offset: 20, penalty: 0 },
-	{ locality: "Portland", confidence: 1, offset: 34, penalty: 0 },
-	{ region: "OR", confidence: 1, offset: 44, penalty: 0 },
-	{ postcode: "97215", confidence: 1, offset: 47, penalty: 0 },
-	{ country: "USA", confidence: 0.9, offset: 54, penalty: 0 },
-]
+It runs in Node.js and the browser, with no Elasticsearch and no multi-gigabyte libpostal
+install. The model is about 30 MB and resolves admin/postcode coordinates from a SQLite
+gazetteer.
+
+```bash
+npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 ```
 
-## Quick Start
-
-A quick and easy way to get started with the library is to use the command-line interface:
-
-```
-npx mailwoman parse "West 26th Street, New York, NYC, 10010"
-```
-
-# Architecture Description
-
-## Tokenization
-
-Tokenization is the process of splitting text into individual words.
-
-The splitting process used by the engine maintains token positions, so it's able to 'remember' where each character was in the original input text.
-
-> Tokenization is coloured `blue` on the command-line.
-
-### Span
-
-The most primitive element is called a `span`, this is essentially just a single string of text with some metadata attached.
-
-The terms `word`, `phrase` and `section` (explained below) are all just ways of using a `span`.
-
-### Section Boundaries
-
-Some parsers like [libpostal](https://github.com/openvenues/libpostal) ignore characters such as `comma`, `tab`, `newline` and `quote`.
-
-While it's unrealistic to expect commas always being present, it's very useful to record their positions when they are.
-
-These boundary positions help to avoid parsing errors for queries such as `Main St, East Village` being parsed as `Main St East` in `Village`.
-
-Once sections are established there is no 'bleeding' of information between sections, avoiding the issue above.
-
-### Word Splitting
-
-Each section is then split in to individual `words`, by default this simply considers whitespace as a word boundary.
-
-As per the `section`, the original token positions are maintained.
-
-### Phrase Generation
-
-May terms such as 'New York City' span multiple words, these multi-word tokens are called `phrases`.
-
-In order to be able to classify `phrase` terms, permutations of adjacent words are generated.
-
-Phrase generation is performed per-section, so it will not generate a `phrase` which contains words from more than one `section`.
-
-Phrase generation is controlled by a configuration which specifies things like the minimum & maximum amount of words allowed in a `phrase`.
-
-### Token Graph
-
-A graph is used to associate `word`, `phrase` and `section` elements to each other.
-
-The graph is free-form, so it's easy to add a new relationship between terms in the future, as required.
-
-Graph Example:
-
-```js
-// Find the next word in this section
-word.next
-
-// Find all words in this phrase
-phrase.children
+```json
+{
+	"region": "CA",
+	"locality": "Mountain View",
+	"street": "Amphitheatre",
+	"house_number": "1600",
+	"street_suffix": "Parkway",
+	"postcode": "94043"
+}
 ```
 
-## Classification
+**Try it live (in your browser):** https://mailwoman.sister.software/demo
 
-Classification is the process of establishing that a `word` or `phrase` represents a 'concept' (such as a street name).
+## Installation
 
-Classification can be based on:
-
-- Dictionary matching (usually with normalization applied)
-- Pattern matching (such as regular expressions)
-- Composite matching (such as relative positioning)
-- External API calls (such as calling other services)
-- Other semantic matching techniques
-
-> Classification is coloured `green` and `red` on the command-line.
-
-### Classifier Types
-
-The library comes with three generic classifiers which can be extended in order to create a new `classifier`:
-
-- WordClassifier
-- PhraseClassifier
-- SectionClassifier
-
-### Classifiers
-
-The library comes bundled with a range of classifiers out-of-the box.
-
-You can find them in the `/classifier` directory, dictionary-based classifiers usually store their data in the `/resources` directory.
-
-Example of some of the included classifiers:
-
-- Word Classifiers
-  - `house_number`
-  - `postcode`
-  - `street_prefix`
-  - `street_suffix`
-  - `compound_street`
-  - `directional`
-  - `ordinal`
-  - `stop_word`
-- Phrase Classifiers
-  - `intersection`
-  - `person`
-  - `given_name`
-  - `surname`
-  - `personal_suffix`
-  - `personal_title`
-  - `chain`
-  - `place`
-  - `whos_on_first`
-
-## Solvers
-
-Solving is the final process, where `solutions` are generated based on all the classifications that have been made.
-
-Each parse can contain multiple `solutions`, each is provided with a `confidence` score and is displayed sorted from highest scoring solution to lowest scoring.
-
-The core of this process is the `ExclusiveCartesianSolver` module.
-
-This `solver` generates all the possible permutations of the different classifications while taking care to:
-
-- ensure the same `span` position is not used more than once
-- ensure that the same `classification` is not used more than once.
-
-After the `ExclusiveCartesianSolver` has run there are additional solvers which can:
-
-- filter the `solutions` to remove inconsistencies
-- add new `solutions` to provide additional functionality (such as intersections)
-
-### Solution Masks
-
-It is possible to produce a simple `mask` for any generated solution, this is useful for comparing the `solution` to the original text:
-
-```
-VVV VVVV NN SSSSSSS AAAAAA PPPPP
-Foo Cafe 10 Main St London 10010 Earth
+```bash
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 ```
 
-# Contributing
+That installs the CLI, the neural runtime, and the US-English model weights. For French
+addresses, add `@mailwoman/neural-weights-fr-fr`. For coordinate resolution, add
+`@mailwoman/resolver-wof-sqlite`. Requires Node.js ≥ 22.5.1.
 
-Please fork and pull request against upstream master on a feature branch. Pretty please; provide unit tests.
+## CLI
 
-## Unit tests
+```bash
+# Parse an address into components
+mailwoman parse "350 5th Ave, New York, NY 10118"
 
-You can run the unit test suite using the command:
+# Other output formats
+mailwoman parse "350 5th Ave, New York, NY 10118" --format tuple   # or: xml
 
-```sh
-$ npm test
+# Resolve components to a Who's On First place + coordinate (needs a gazetteer DB)
+mailwoman parse "350 5th Ave, New York, NY 10118" --resolve --resolve-db ./wof.sqlite
+
+# Geocode (admin/postcode coordinate)
+mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 ```
 
-# License
+## Library
 
-Mailwoman is distributed under the AGPL-3.0 license. Generally,
-this means that you can use the software for free, but you must share
-any modifications you make to the software.
+```ts
+import { createRuntimePipeline, decodeAsJson } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-Unmodified portions of Mailwoman derived from Pelias Parser remain under the
-MIT license.
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
 
-For more information on commercial usage licensing, please contact us at
-`hello@sister.software`
+const { tree } = await parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
+console.log(decodeAsJson(tree))
+// { region: "CA", locality: "Mountain View", street: "Amphitheatre",
+//   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }
+```
 
-# Acknowledgements
+The full library surface — confidence, the per-stage pipeline result, resolution, browser
+loading, and configuration — is documented in the [`mailwoman` package
+README](./mailwoman/README.md) and in [Getting
+started](https://mailwoman.sister.software/articles/getting-started/).
 
-This project was made possible by contributions of the Pelias community.
+## How it works
+
+The problem splits in two:
+
+- **The model learns the grammar.** A sequence labeler trained from scratch on a diverse
+  corpus of real and synthetic addresses decides which span is a street, a locality, a
+  postcode.
+- **The gazetteer knows the atlas.** A provenance-tracked Who's On First database resolves
+  parsed components to real-world places and coordinates.
+
+Knowledge reaches the model at inference as _soft input features_ (anchors) — it informs,
+never overrides. If you know RAG from the LLM world, this is RAG for token classification.
+The confidence numbers the parser returns are calibrated probabilities, not heuristic
+scores: when it says `0.88`, it is right about 88% of the time.
+
+For the longer version, read [What Mailwoman
+Is](https://mailwoman.sister.software/articles/concepts/what-mailwoman-is/).
+
+## Documentation
+
+- [Documentation & blog](https://mailwoman.sister.software)
+- [Getting started](https://mailwoman.sister.software/articles/getting-started/)
+- [Live demo](https://mailwoman.sister.software/demo)
+
+## License
+
+Mailwoman is dual-licensed:
+
+- **[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)** for open-source use. You
+  may use, modify, and redistribute the software, but you must share your modifications and,
+  for network services, your source.
+- **A commercial license** for closed-source/commercial use without the AGPL's source-sharing
+  obligation. Contact `teffen@sister.software`.
+
+Portions of Mailwoman derived from [Pelias Parser](https://github.com/pelias/parser) remain
+under the MIT license, and Mailwoman bundles third-party data under its own terms. See
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) for the full attribution list.
+
+---
+
+## Developing Mailwoman
+
+> **This section is for working _on_ Mailwoman in this repository.** If you only want to
+> _use_ Mailwoman, the published packages above are all you need — you do not need to clone
+> the repo, build anything, or read any further.
+
+Mailwoman is a Yarn 4 monorepo: one root package (`mailwoman`) plus the scoped
+`@mailwoman/*` workspaces that compose it. Start with [`AGENTS.md`](./AGENTS.md) for the
+orientation map (workspaces, where to read next, the release pipeline) and
+[`docs/articles/plan/`](./docs/articles/plan/) for the design record.
+
+```bash
+git clone https://github.com/sister-software/mailwoman.git
+cd mailwoman
+yarn install
+yarn compile        # tsc -b across all workspaces
+yarn test           # vitest (runs from source, no precompile)
+```
+
+### The legacy rule engine
+
+Mailwoman began as a TypeScript fork of [Pelias Parser](https://github.com/pelias/parser), a
+rule-based engine: a tokenizer, a set of dictionary/pattern classifiers, and an
+`ExclusiveCartesianSolver` that enumerates consistent solutions. That rule engine still
+lives in the tree (mostly under `@mailwoman/core` and `@mailwoman/classifiers`) and runs as
+a fallback and as one arbitration input. The neural sequence labeler is the primary path
+now; the rules are being migrated out gradually as the model and its surrounding stages
+replace them, so expect that code to shrink over time. It is repository-internal — consumers
+of the published package interact with the neural pipeline, not the solver.
+
+### Contributing
+
+Fork and open a pull request against `main` on a feature branch. Please include unit tests.
+The model-work runbook (which evals gate a change, how to add a shard) is
+[`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx).
+
+## Acknowledgements
+
+This project stands on the work of the Pelias community, OpenStreetMap, Who's On First,
+OpenAddresses, and the wider open-geo ecosystem. See
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).

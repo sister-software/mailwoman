@@ -14,13 +14,16 @@ npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 
 ```ts
 // Library — parse programmatically
-import { AddressParser } from "mailwoman"
+import { createRuntimePipeline, decodeAsJson } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-const parser = new AddressParser()
-const result = await parser.parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
-// result.components.house_number → "1600"
-// result.components.street → "Amphitheatre Parkway"
-// result.components.locality → "Mountain View"
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+
+const { tree } = await parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
+console.log(decodeAsJson(tree))
+// { region: "CA", locality: "Mountain View", street: "Amphitheatre",
+//   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }
 ```
 
 ## What it does
@@ -43,13 +46,18 @@ for token classification.
 ## Installation
 
 ```bash
-npm install mailwoman
+# Parser: CLI + neural runtime + US-English model weights
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 
-# For the geocoder (optional — enables `geocode` command and coordinate resolution)
+# Optional: coordinate resolution (the `geocode` command + `--resolve`)
 npm install @mailwoman/resolver-wof-sqlite
+
+# Optional: French model
+npm install @mailwoman/neural-weights-fr-fr
 ```
 
-Requires Node.js ≥ 22.5.1.
+Requires Node.js ≥ 22.5.1. Without a `neural-weights-*` package the CLI still runs but falls
+back to the legacy rule parser (weaker); install the weights to use the neural model.
 
 ## CLI
 
@@ -72,44 +80,94 @@ mailwoman parse --tui
 
 ## Library API
 
-```ts
-import { AddressParser } from "mailwoman"
-
-const parser = new AddressParser({
-	locale: "en-US", // "en-US" | "fr-FR"
-	defaultCountry: "US", // ISO-3166 country for gazetteer scope
-})
-
-const result = await parser.parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
-
-// Structured components
-result.components.house_number // "1600"
-result.components.street // "Amphitheatre Parkway"
-result.components.locality // "Mountain View"
-result.components.region // "CA"
-result.components.postcode // "94043"
-result.components.country // "US"
-
-// Resolved coordinate (when gazetteer is available)
-result.coordinate // { lat: 37.4224, lon: -122.0842 }
-
-// Per-component confidence
-result.confidence.house_number // 0.99
-result.confidence.street // 0.95
-```
-
-## Configuration
+You supply a neural classifier loaded from a weights package; `createRuntimePipeline` wires
+up normalization, locale detection, kind classification, phrase grouping, and token
+classification with production-ready defaults.
 
 ```ts
-const parser = new AddressParser({
-	locale: "en-US",
-	defaultCountry: "US",
-	calibrate: true, // Enable isotonic confidence calibration
-	normalizeCase: false, // Detect + title-case all-caps input (default: off)
-	jointReconcile: false, // Use joint decoding (default: argmax)
-	arbitrate: false, // Enable rule-vs-neural arbitration (default: off)
+import { createRuntimePipeline, decodeAsJson, decodeAsTuples } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+
+const result = await parse("350 5th Ave, New York, NY 10118")
+```
+
+`result` is a `PipelineResult`:
+
+```ts
+result.tree // the parsed address as a hierarchical AddressTree
+result.kind // { kind: "structured_address" | "postcode_only" | "locality_only" | …, confidence }
+result.locale // detected (or asserted) locale
+result.queryShape // structural input priors
+result.timing // per-stage wall-clock breakdown
+```
+
+Project the tree into the shape you need:
+
+```ts
+decodeAsJson(result.tree)
+// { region: "NY", locality: "New York", street: "5th",
+//   house_number: "350", street_suffix: "Ave", postcode: "10118" }
+
+decodeAsTuples(result.tree)
+// [["house_number", "350"], ["street", "5th"], …]
+```
+
+The tree is hierarchical and carries calibrated confidence per node:
+
+```ts
+for (const root of result.tree.roots) {
+	console.log(`${root.tag}: "${root.value}" (${root.confidence.toFixed(2)})`)
+	// region: "NY" (0.91) — locality, street, house_number, postcode nest beneath it
+}
+```
+
+Confidence calibration ships with the weights: `loadFromWeights` applies the bundled
+per-locale calibrator, so node confidences are calibrated probabilities (a `0.88` is
+right about 88% of the time), not raw scores.
+
+### Options
+
+Factory options configure the pipeline; per-call `PipelineOpts` tune a single parse. The
+ones you'll reach for most:
+
+```ts
+const parse = createRuntimePipeline({
+	classifier,
+	resolver, // optional — see "Geocoding" below
+	normalizeCase: true, // title-case detected all-caps input before the model (default: off)
+})
+
+await parse("350 5TH AVE, NEW YORK, NY 10118", {
+	locale: "en-US", // assert a locale instead of detecting it
+	hardPlaceCountry: true, // confine resolution to a confidently-detected country (default: on)
+	jointReconcile: false, // beam-search decode instead of argmax (default: off)
+	arbitrate: false, // union the neural parse with the legacy rule parse (default: off)
 })
 ```
+
+## Geocoding
+
+Resolution turns parsed components into a Who's On First place ID and coordinate. It needs a
+gazetteer SQLite database — build one with the bundled `mailwoman-wof-build-slim` +
+`mailwoman-wof-build-fts` tools, or point at a prebuilt shard. The resolver is
+administrative/postcode-level, not rooftop: it returns place centroids (locality, region,
+postcode), not delivery-point coordinates.
+
+```bash
+# CLI — resolve while parsing, or geocode directly
+mailwoman parse "350 5th Ave, New York, NY 10118" --resolve --resolve-db ./wof.sqlite
+mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
+```
+
+Programmatically, build a `WofSqlitePlaceLookup` backend (from
+`@mailwoman/resolver-wof-sqlite`), pass it to `createWofResolver` (from `@mailwoman/resolver`),
+and hand the resolver to `createRuntimePipeline({ classifier, resolver })`. The resolved
+`result.tree` roots then carry a `wof:id` and coordinate. See
+[Getting started → Adding resolution](https://mailwoman.sister.software/articles/getting-started/)
+for the worked example.
 
 ## Architecture
 
@@ -154,4 +212,9 @@ package is the umbrella that wires them together as a single `npm install`.
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+Dual-licensed: **[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)** for
+open-source use, or a **commercial license** for closed-source use without the AGPL's
+source-sharing obligation (contact `teffen@sister.software`). Portions derived from
+[Pelias Parser](https://github.com/pelias/parser) remain under MIT, and `@mailwoman/core`
+bundles third-party reference data under its own terms — see
+[THIRD_PARTY_NOTICES](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md).

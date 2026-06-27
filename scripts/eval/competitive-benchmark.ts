@@ -25,25 +25,23 @@
  *   Run: GEOCODE_EARTH_API_KEY=… node --experimental-strip-types scripts/eval/competitive-benchmark.ts \
  *          [--n 40] [--locales it,pt,pl,at,cz,fr,au] [--systems mailwoman,nominatim,pelias] [--out <md>]
  */
-import type { AddressNode, AddressTree } from "@mailwoman/resolver"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
+import { arg } from "../lib/cli-args.ts"
 
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 // Production-representative resolver: admin gazetteer + the intl postcode→locality shard (the
 // oa-resolver-eval default). admin-ONLY handicaps mailwoman — the postcode-coordinate-first path
 // resolves localities the admin gazetteer misses. --wof overrides (comma-separated shard paths).
 const WOF = arg(
 	"wof",
-	"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+	`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 ).split(",")
 const MODEL = arg("model", "out/v191/model.onnx") // v4.13.0 int8
 const N = Number(arg("n", "40"))
@@ -91,7 +89,7 @@ const PLACETYPE_RANK: Record<string, number> = {
 }
 type Resolved = { placetype: string; lat: number; lon: number }
 function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | null {
-	let best: Resolved | null = null
+	let best: Resolved | null = null as Resolved | null
 	const visit = (n: AddressNode): void => {
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
@@ -124,7 +122,12 @@ async function queryNominatim(raw: string, cc: string): Promise<Coord> {
 async function loadPelias(): Promise<((q: string, country: string) => Promise<Coord>) | null> {
 	if (!process.env.GEOCODE_EARTH_API_KEY) return null
 	try {
-		const mod = await import("../diag-geocode-earth.ts")
+		// `diag-geocode-earth.ts` is the operator's local, git-excluded geocode.earth probe — present
+		// only when GEOCODE_EARTH_API_KEY is set, absent in a clean checkout / CI. Indirect the
+		// specifier through a variable so the type-checker doesn't resolve a file that isn't there
+		// (the result is cast structurally below regardless).
+		const earthDiagModule = "../diag-geocode-earth.ts"
+		const mod = await import(earthDiagModule)
 		const fetchGeocodeData = (
 			mod as {
 				fetchGeocodeData?: (
@@ -164,7 +167,7 @@ function record(t: Tally, err: number | null) {
 		return
 	}
 	t.resolvedErrs.push(err)
-	for (const th of THRESHOLDS) if (err <= th) t.within[th]++
+	for (const th of THRESHOLDS) if (err <= th) t.within[th]!++
 }
 
 async function main() {

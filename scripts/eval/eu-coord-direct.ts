@@ -16,8 +16,9 @@
  *   Usage: node --experimental-strip-types scripts/eval/eu-coord-direct.ts\
  *   --eval /tmp/reg/eu-eval-pt.jsonl --country PT\
  *   --wof-db
- *   /mnt/playpen/mailwoman-data/wof/admin-overture-eu.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db
+ *   $MAILWOMAN_DATA_ROOT/wof/admin-overture-eu.db,$MAILWOMAN_DATA_ROOT/wof/postcode-locality-intl.db
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { createWofResolver } from "@mailwoman/resolver"
 import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -32,16 +33,16 @@ const { values: a } = parseArgs({
 		"wof-db": { type: "string" },
 		model: {
 			type: "string",
-			default: "/mnt/playpen/mailwoman-data/models/quantized/model-v180-step-40000-int8.onnx",
+			default: dataRootPath("models", "quantized", "model-v180-step-40000-int8.onnx"),
 		},
 		tokenizer: {
 			type: "string",
-			default: "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model",
+			default: dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"),
 		},
 		"model-card": { type: "string", default: "neural-weights-en-us/model-card.json" },
 		"anchor-lookup": {
 			type: "string",
-			default: "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json",
+			default: dataRootPath("anchor", "pilot-anchor-lookup.json"),
 		},
 		limit: { type: "string" },
 	},
@@ -93,7 +94,7 @@ for (const r of rows) {
 	const nodes: { pt: string; name?: string; lat: number; lon: number }[] = []
 	const visit = (n: any): void => {
 		if (typeof n.lat === "number" && typeof n.lon === "number" && (n.placeId || n.sourceId)) {
-			nodes.push({ pt: String(n.sourceId ?? "").split(":")[0], name: n.value, lat: n.lat, lon: n.lon })
+			nodes.push({ pt: String(n.sourceId ?? "").split(":")[0]!, name: n.value, lat: n.lat, lon: n.lon })
 		}
 		for (const c of n.children ?? []) visit(c)
 	}

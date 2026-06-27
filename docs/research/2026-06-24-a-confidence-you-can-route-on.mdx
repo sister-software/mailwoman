@@ -8,7 +8,7 @@ date: 2026-06-24
 
 You've got a hundred thousand addresses to reconcile. Two databases, the same clinics and providers scattered across both, each one spelled a dozen ways: abbreviated here, reordered there, a postcode dropped, a suite number glued to the street. You run them through a geocoder, match on the resolved coordinate, and it works. Mostly. Some fraction land on the wrong building, the wrong block, the wrong town, and the geocoder won't tell you which fraction. It hands back a pin for every row and the same silent confidence for all of them: none.
 
-That's the gap we set out to close. Every geocoder chases accuracy, be-right-more-often, and so do we. The piece almost nobody hands you is the one underneath it: a number on each answer that tells you *which* ones to trust, so you can keep the good ones and send the rest to a human.
+That's the gap we set out to close. Every geocoder chases accuracy, be-right-more-often, and so do we. The piece almost nobody hands you is the one underneath it: a number on each answer that tells you _which_ ones to trust, so you can keep the good ones and send the rest to a human.
 
 {/* truncate */}
 
@@ -18,7 +18,7 @@ Think about a weather forecaster. A good one who says "70% chance of rain" is ri
 
 We fixed that part first (it's [its own story](/docs/concepts/confidence-calibration)). The short version: a small post-hoc correction maps the model's raw confidence onto an honest one, so when a parsed span reads `conf="0.94"` it's right about 94% of the time, measured on addresses the fit never saw. When the model says it's sure, now you can believe it.
 
-A calibrated number per *span* still isn't a number you can act on per *answer*, though. So we carried it the last step, to the resolved coordinate.
+A calibrated number per _span_ still isn't a number you can act on per _answer_, though. So we carried it the last step, to the resolved coordinate.
 
 ## Dialing precision
 
@@ -26,11 +26,11 @@ Here's the move that makes it pay rent. mailwoman returns a coordinate and a con
 
 On a deliberately messy held-out set (lowercased, abbreviated, postcodes stripped, the real-world soup), graded by whether the resolved point lands within 25 km of the truth, the dial does what you'd want:
 
-| accept above…    | right-place @25km | share of rows answered |
-| ---------------- | ----------------: | ---------------------: |
-| anything (τ=0)   |               84% |                    67% |
-| 0.80             |               92% |                    49% |
-| 0.94             |               97% |                    16% |
+| accept above…  | right-place @25km | share of rows answered |
+| -------------- | ----------------: | ---------------------: |
+| anything (τ=0) |               84% |                    67% |
+| 0.80           |               92% |                    49% |
+| 0.94           |               97% |                    16% |
 
 Raise the bar and the precision of what you keep climbs from 84% to 97%. The price is coverage: you answer fewer rows, and you pay it knowingly, because the number is honest about where it stands. A search index returns one best guess and one confidence, which is to say no dial at all. You take what it gives and hope.
 

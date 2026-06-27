@@ -1,6 +1,7 @@
+import { dataRootPath } from "@mailwoman/core/utils"
 import { DatabaseSync } from "node:sqlite"
 
-const f = process.argv[2] || "/mnt/playpen/mailwoman-data/address-points/address-points-us-ca.db"
+const f = process.argv[2] || dataRootPath("address-points", "address-points-us-ca.db")
 const d = new DatabaseSync(f, { readOnly: true })
 const PS = d.prepare("PRAGMA page_size").get().page_size
 

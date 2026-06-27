@@ -1,9 +1,9 @@
 /**
- * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The load-bearing checks:
- * (1) every slice aligns cleanly (no quarantine) so the shard is trainable, and (2) the LEADING
- * 5-digit gets the CONTEXT-correct label — house_number when a trailing postcode is present (CASE-H),
- * postcode when not (CASE-P). That contrast is exactly what the model must learn instead of flipping
- * the default (the Probe A0 erosion this shard fixes).
+ * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The load-bearing
+ * checks: (1) every slice aligns cleanly (no quarantine) so the shard is trainable, and (2) the
+ * LEADING 5-digit gets the CONTEXT-correct label — house_number when a trailing postcode is present
+ * (CASE-H), postcode when not (CASE-P). That contrast is exactly what the model must learn instead
+ * of flipping the default (the Probe A0 erosion this shard fixes).
  */
 
 import { describe, expect, it } from "vitest"
@@ -22,7 +22,13 @@ function seeded(seed: number): () => number {
 
 function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 	const synth = synthesizeAnchorAbsorptionRow({ random: seeded(seed), forceTemplate: template })
-	const aligned = alignRow({ raw: synth.raw, components: synth.components, country: synth.locale.slice(-2), source: "test", source_id: "t" })
+	const aligned = alignRow({
+		raw: synth.raw,
+		components: synth.components,
+		country: synth.locale.slice(-2),
+		source: "test",
+		source_id: "t",
+	})
 	return { synth, aligned }
 }
 
@@ -34,7 +40,15 @@ function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 }
 
 describe("synthesize-anchor-absorption", () => {
-	const templates: AnchorAbsorptionTemplate[] = ["h-adversarial", "h-no-trailing-locality", "p-us-rural", "p-de", "anchor-fp", "locale-ambig", "standard"]
+	const templates: AnchorAbsorptionTemplate[] = [
+		"h-adversarial",
+		"h-no-trailing-locality",
+		"p-us-rural",
+		"p-de",
+		"anchor-fp",
+		"locale-ambig",
+		"standard",
+	]
 
 	it("every slice aligns cleanly (no quarantine) across seeds", () => {
 		for (const t of templates) {

@@ -1,7 +1,7 @@
 {
 	"name": "mailwoman",
-	"version": "4.15.0",
-	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
+	"version": "4.16.0",
+	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"license": "AGPL-3.0-only",
 	"contributors": [
 		{
@@ -26,6 +26,7 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./geocode-core": "./out/geocode-core.js",
+		"./resolver-backend": "./out/resolver-backend.js",
 		"./server": "./out/server/index.js",
 		"./sdk/test": "./out/sdk/test/index.js",
 		"./sdk/repo": "./out/sdk/repo.js",
@@ -81,6 +82,9 @@
 		"out/**/*.d.ts.map",
 		"out/**/*.json"
 	],
+	"engines": {
+		"node": ">=24.18.0"
+	},
 	"keywords": [
 		"address",
 		"parser",

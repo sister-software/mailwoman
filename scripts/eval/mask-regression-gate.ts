@@ -35,8 +35,8 @@
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
  *   Node --experimental-strip-types scripts/eval/mask-regression-gate.ts\
- *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json
  *
  *   Exit 0 = no tag regresses more than the threshold under the mask (PASS). Exit 1 = at least one
@@ -48,33 +48,31 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
 // -------------------------------------------------------------------------------------------------
 // Args
 // -------------------------------------------------------------------------------------------------
 
 const argv = process.argv.slice(2)
-const arg = (k: string, d?: string): string | undefined => {
-	const i = argv.indexOf(k)
-	return i >= 0 ? argv[i + 1] : d
-}
 
-const MODEL = arg("--model", "/mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx")!
-const TOKENIZER = arg("--tokenizer", "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model")!
-const MODEL_CARD = arg("--model-card", "neural-weights-en-us/model-card.json")!
-const ANCHOR_LOOKUP = arg("--anchor-lookup", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")!
-const GAZETTEER_LEXICON = arg("--gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!
-const JSON_OUT = arg("--json")
+const MODEL = arg("model", dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))!
+const TOKENIZER = arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))!
+const MODEL_CARD = arg("model-card", "neural-weights-en-us/model-card.json")!
+const ANCHOR_LOOKUP = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))!
+const GAZETTEER_LEXICON = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!
+const JSON_OUT = arg("json")
 
 /**
  * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than
  * the load-time delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose
  * mask-on F1 is within this band of its mask-off F1 is considered unharmed by the mask.
  */
-const THRESHOLD = Number(arg("--threshold", "0.02"))
+const THRESHOLD = Number(arg("threshold", "0.02"))
 
 // -------------------------------------------------------------------------------------------------
 // Locale matrix (mirrors gen-capability-manifest.ts)

@@ -107,14 +107,14 @@ Independent review identified several issues, two of which were fixed immediatel
 ### Acknowledged but not fixed
 
 - **State-name penalty is English-only and doesn't cover multi-word state names** (e.g., "New York"). DeepSeek calls it "principled as a 0.20 defensive patch" but warns against adding more without a systematic framework (gazetteer lookup vs hardcoded strings).
-- **FST binary build is not reproducible.** Depends on `/mnt/playpen` paths, produces an artifact with no hash or provenance metadata. Two machines produce different binaries.
+- **FST binary build is not reproducible.** Depends on `$MAILWOMAN_DATA_ROOT` paths, produces an artifact with no hash or provenance metadata. Two machines produce different binaries.
 - **Pre-commit hook productivity cost.** 2-minute full test suite on every `main` commit creates `--no-verify` pressure. Should split into fast (lint + unit) and slow (integration) tiers.
 - **ESLint commit bundled unrelated changes.** Three orthogonal fixes in one commit makes bisect/blame less useful.
 
 ### Risks flagged
 
 - CRF export pipeline has no versioning contract — no `requires_trained_crf` flag. TS side can't distinguish trained from untrained transitions.
-- Demo-assets plugin reveals an existing coupling to `/mnt/playpen` paths. External contributors can't build the docs site.
+- Demo-assets plugin reveals an existing coupling to `$MAILWOMAN_DATA_ROOT` paths. External contributors can't build the docs site.
 
 ## Open items
 

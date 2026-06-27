@@ -7,5 +7,5 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": []
+	"references": [{ "path": "../annotations" }]
 }

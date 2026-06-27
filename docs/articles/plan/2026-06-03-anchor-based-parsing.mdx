@@ -11,7 +11,7 @@ keeps anchors from laundering errors. DeepSeek-signed across two consults (Germa
 
 ## Why now
 
-The v0.8.0 German order-shard experiment ([postmortem](../evals/2026-06-02-night-4-postmortem.mdx))
+The v0.8.0 German order-shard experiment (postmortem)
 taught two things at once. The order _is_ learnable cheaply: a 5,000-row shard roughly doubled German
 street and house-number F1. But the continue-train re-triggered the Saint-Albans span-fragmentation bug
 at end-of-string. The model bled the postcode span into the adjacent city (`München` → `chen`, `Berlin`
@@ -185,7 +185,7 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
 
 ## Related
 
-- [German order-shard postmortem](../evals/2026-06-02-night-4-postmortem.mdx) — the failure that motivated
+- German order-shard postmortem — the failure that motivated
   this.
 - [Resolver routing plan](./2026-05-30-resolver-routing-plan.mdx) — Direction C; the router this builds on.
 - [Exotic-POI understanding docs](../understanding/exotic-poi/landmark-queries.mdx) — the landmark /

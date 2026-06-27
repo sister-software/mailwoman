@@ -26,18 +26,15 @@
  *   Run (resolver-wof-sqlite must be compiled — `yarn compile`): node --experimental-strip-types
  *   scripts/eval/three-gap-matrix.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl\
- *   --wof-db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db\
+ *   --wof-db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\
  *   --limit 3000 --out /tmp/reg/three-gap-us.json
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { type FindPlaceQuery, WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync, writeFileSync } from "node:fs"
-
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
+import { arg } from "../lib/cli-args.ts"
 
 interface OaRow {
 	input: string
@@ -76,7 +73,7 @@ async function main(): Promise<void> {
 	// without the shard). Comma-separated, like the eval.
 	const wofDb = arg(
 		"wof-db",
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 	const limit = parseInt(arg("limit", "3000"), 10)
 	const universeK = parseInt(arg("universe", "200"), 10) // deep ranked candidate set per query

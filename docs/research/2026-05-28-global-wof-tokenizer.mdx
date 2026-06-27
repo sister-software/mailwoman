@@ -66,7 +66,7 @@ v0.5.4 is now running on a Modal A100 with the new tokenizer. It uses the v0.5.1
 
 ## The pipeline
 
-The global WOF build pipeline follows the [WAL + Freeze design brief](/docs/reviews/2026-05-28-sqlite-wal-strategy):
+The global WOF build pipeline follows the WAL + Freeze design brief:
 
 1. **Enumerate**: glob `**/data/**/*.geojson` across all country repos
 2. **Ingest**: WAL mode, parallel file reads (asyncParallelIterator), single-thread writer, batched transactions

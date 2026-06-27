@@ -81,7 +81,7 @@ Per the reconcile-retirement lesson (grade the pipeline against truth, never a c
 
 ## Prerequisite — the model must ship
 
-The coarse-placer int8 model (0.79 MB) currently lives only on `/mnt/playpen`; nothing ships it. Wiring it
+The coarse-placer int8 model (0.79 MB) currently lives only on `$MAILWOMAN_DATA_ROOT`; nothing ships it. Wiring it
 for installed consumers needs it packaged. **Recommended:** commit the int8 artifact under `core/data/` and
 add it to `@mailwoman/core`'s `files` (it already ships ~9 MB of dictionaries; +0.79 MB is negligible), with
 `CoarsePlacer.fromArtifactDir` resolving the bundled path by default + an env/opt override. (Alternative: a

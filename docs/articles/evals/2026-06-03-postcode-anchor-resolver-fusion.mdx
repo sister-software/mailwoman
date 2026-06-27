@@ -70,6 +70,6 @@ Reproduce:
 node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
   --eval data/eval/external/openaddresses-de-sample.jsonl --limit 1500 --default-country DE \
   --model <onnx> --tokenizer <tok> --model-card <card> \
-  --wof /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+  --wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db \
   --postcode-shards <us.db>,<intl.db> --postcode-anchor
 ```
