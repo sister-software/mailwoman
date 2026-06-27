@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/record",
-	"version": "4.16.0",
+	"version": "4.16.1",
 	"description": "Lean, plain-TypeScript record schema + per-field normalizers for the geocode-first matcher. Address-first: the canonical PostalAddress record composes parser components, the formatter's match key, and a resolved geocode; organization + contact records build on the same canonical record.",
 	"license": "AGPL-3.0-only",
 	"repository": {

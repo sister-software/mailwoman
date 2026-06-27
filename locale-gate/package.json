@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/locale-gate",
-	"version": "4.16.0",
+	"version": "4.16.1",
 	"description": "Stage 2 of the runtime pipeline — derive a LocaleHint from QueryShape (script + known-format hits). Rule-based v1; trained classifier deferred to v0.6.0.",
 	"license": "AGPL-3.0-only",
 	"repository": {
