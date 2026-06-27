@@ -70,7 +70,7 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 				if (options.fold) {
 					const foldOut = adminIn.replace(/\.db$/, "-geonames.db")
 					console.error(`▸ fold (${countries.join(",")}) → ${foldOut}`)
-					const f = foldGeonamesIntoAdmin({
+					const f = await foldGeonamesIntoAdmin({
 						adminIn,
 						adminOut: foldOut,
 						countries,

@@ -17,8 +17,12 @@
  *   passed in.
  */
 
-import { buildPlaceSearchFts, ingestGeonamesAliases, type GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
-import { buildCandidateTable, type BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+// resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
+// DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
+// loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
+// when the peer isn't installed. Types are erased, so type-only imports are safe at module level.
+import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
+import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { execFileSync } from "node:child_process"
 import {
 	copyFileSync,
@@ -77,8 +81,10 @@ export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
 /** The conventional candidate-build output. */
 export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
 
-/** `<data-root>/wof`, where the admin DB, candidate DB, postcode shards, and the convention symlink
-live. */
+/**
+ * `<data-root>/wof`, where the admin DB, candidate DB, postcode shards, and the convention symlink
+ * live.
+ */
 export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
 	return join(dataRoot, "wof")
 }
@@ -120,11 +126,13 @@ export interface FoldResult {
  * into its canonical `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox` so
  * the candidate build carries them. Build-on-copy — `adminIn` is never touched.
  */
-export function foldGeonamesIntoAdmin(opts: FoldOptions): FoldResult {
+export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
 	if (opts.adminIn === opts.adminOut) {
 		throw new Error("fold must write a distinct adminOut (build-on-copy, never in place)")
 	}
 	if (!existsSync(opts.adminIn)) throw new Error(`admin DB not found: ${opts.adminIn}`)
+
+	const { ingestGeonamesAliases, buildPlaceSearchFts } = await import("@mailwoman/resolver-wof-sqlite")
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
 	copyFileSync(opts.adminIn, opts.adminOut)
@@ -159,6 +167,7 @@ export interface BuildOptions {
  * fuzzy index is baked in by `buildCandidateTable`. Pure pass-through to the canonical builder.
  */
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
+	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
 	return buildCandidateTable({
 		input: opts.adminDb,
 		output: opts.out,

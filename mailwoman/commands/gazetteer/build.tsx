@@ -66,7 +66,7 @@ const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 				if (options.fold) {
 					const foldOut = options.foldOut ?? adminIn.replace(/\.db$/, "-geonames.db")
 					console.error(`▸ GeoNames upstream fold (${countries.join(",")}) → ${foldOut}`)
-					const f = foldGeonamesIntoAdmin({
+					const f = await foldGeonamesIntoAdmin({
 						adminIn,
 						adminOut: foldOut,
 						countries,
