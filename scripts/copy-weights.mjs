@@ -22,7 +22,7 @@
  *   load path serves the model anchor-OFF — the #566/#685 OOD crater):
  *
  *   - `postcode-<cc>.bin` — the compact PCB1 postcode-anchor binary, built from the WOF postcode shard
- *       (`softFeed.postcodeDbByCountry[<cc>]`) via `scripts/build-postcode-binary.ts`.
+ *       (`softFeed.postcodeDbByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
  *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon
  *       (`softFeed.gazetteerLexicon`).
  *
@@ -139,16 +139,18 @@ async function materializeSoftFeed(workspace, dir) {
 	}
 	const binDest = resolve(dir, `postcode-${country}.bin`)
 	await removeIfPresent(binDest)
-	// build-postcode-binary.ts is a TS script run under node --experimental-strip-types; --out is the
-	// workspace dir, so it writes postcode-<cc>.bin directly where the `files` array expects it.
-	const buildScript = resolve(repoRoot, "scripts/build-postcode-binary.ts")
+	// `gazetteer postcode-binary` is the compiled Pastel command (ported from the old
+	// scripts/build-postcode-binary.ts). `.release-it.json` runs `yarn compile` right before this
+	// script, so mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
+	// postcode-<cc>.bin directly where the `files` array expects it.
+	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
 	const r = spawnSync(
 		process.execPath,
-		["--experimental-strip-types", buildScript, "--out", dir, "--locale", `${country.toUpperCase()}:${db}`],
+		[cli, "gazetteer", "postcode-binary", "--out", dir, "--locale", `${country.toUpperCase()}:${db}`],
 		{ stdio: "inherit" }
 	)
-	if (r.status !== 0) throw new Error(`build-postcode-binary.ts failed for ${country} (exit ${r.status})`)
-	if (!existsSync(binDest)) throw new Error(`build-postcode-binary.ts ran but ${binDest} was not produced`)
+	if (r.status !== 0) throw new Error(`gazetteer postcode-binary failed for ${country} (exit ${r.status})`)
+	if (!existsSync(binDest)) throw new Error(`gazetteer postcode-binary ran but ${binDest} was not produced`)
 	process.stderr.write(`built soft-feed → ${workspace}/postcode-${country}.bin\n`)
 }
 

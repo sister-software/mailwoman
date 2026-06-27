@@ -3,76 +3,66 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a postcode → point shard from GeoNames postal data, for countries WhosOnFirst does not
- *   cover (#193). The existing pipeline (`scripts/backfill-postcode-centroids.ts`) treats GeoNames
- *   as a COORDINATE source keyed by string onto WOF-sourced postcode _records_. That works wherever
- *   WOF ships the postcode entities (US/NL/FR/DE/IT/ES…). For PL/CZ/PT/AU and the rest of the #193
- *   gap, WOF has zero postcode records — there's nothing to backfill onto — so GeoNames must supply
- *   the RECORD too, not just the coordinate.
+ *   `mailwoman gazetteer postcode-intl` — build a postcode → point shard from GeoNames postal data,
+ *   for countries WhosOnFirst does not cover (#193). The existing pipeline
+ *   (`scripts/backfill-postcode-centroids.ts`) treats GeoNames as a COORDINATE source keyed by
+ *   string onto WOF-sourced postcode _records_. That works wherever WOF ships the postcode entities
+ *   (US/NL/FR/DE/IT/ES…). For PL/CZ/PT/AU and the rest of the #193 gap, WOF has zero postcode
+ *   records — there's nothing to backfill onto — so GeoNames must supply the RECORD too, not just
+ *   the coordinate.
  *
  *   This emits a standalone `spr` shard in the exact schema `build-candidate`'s `--postcodes` pass
  *   consumes (placetype='postalcode', real centroid + bbox), so it drops into a candidate rebuild
- *   alongside `postalcode-intl.db` with no other change:
- *
- *   Build-candidate ... --postcodes postalcode-intl.db --postcodes <this shard>
+ *   alongside `postalcode-intl.db` with no other change.
  *
  *   Provenance: GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute
- *   "GeoNames (CC-BY 4.0)". These records carry NO WOF id (GeoNames is the source, not just the
- *   coordinate), so they get synthetic ids in a high range (`SYNTH_ID_BASE`, well above WOF's ~907M
- *   ceiling) that can never be mistaken for — or collide with — a WOF entity id. This keeps the
- *   eval-WOF-id integrity rule intact for the WOF-sourced countries while filling the gap.
+ *   "GeoNames (CC-BY 4.0)". These records carry NO WOF id, so they get synthetic ids in a high
+ *   range (`SYNTH_ID_BASE`, well above WOF's ~907M ceiling) that can never be mistaken for — or
+ *   collide with — a WOF entity id.
  *
  *   Separator variants: a postcode is stored under BOTH its written forms so the candidate name_key
  *   matches whichever form the parse emits — PL writes "26-300" (hyphen), CZ writes "58001" (no
- *   space) though GeoNames stores "580 01". Each distinct `fold()`-form gets its own row (same
- *   coordinate), so the lookup hits regardless of how the address spelled the code.
+ *   space) though GeoNames stores "580 01".
  *
  *   Optionally folds the shard straight into a COPY of an existing candidate gazetteer (`--fold-into
  *   <src> --fold-out <dst>`), mirroring `build-candidate` pass-4's row construction, so a
- *   demo-ready DB falls out without a full (heavy) rebuild. The shard itself is the durable
- *   artifact for the canonical rebuild; the fold is the fast path to verify + stage.
+ *   demo-ready DB falls out without a full rebuild. The shard itself is the durable artifact for
+ *   the canonical rebuild; the fold is the fast path to verify + stage.
  *
- *   Usage: node --experimental-strip-types scripts/build-geonames-postcode-shard.ts\
- *   --geonames /mnt/playpen/mailwoman-data/geonames/allCountries-postal.txt\
- *   --countries PL,CZ\
- *   --out /mnt/playpen/mailwoman-data/wof/postalcode-geonames-intl.db\
- *   [--fold-into /mnt/playpen/mailwoman-data/wof/candidate-global-20h.db\
- *   --fold-out /mnt/playpen/mailwoman-data/wof/candidate-global-20i.db]
+ *   Progress streams to stderr; the final summary is on stdout.
+ *
+ *   NOTE: the shard `--out` DB is written DIRECTLY (the table is dropped + recreated in place on
+ *   re-run), and `--fold-out` is a build-on-copy of `--fold-into` — neither uses an atomic
+ *   temp-swap. This preserves the original `scripts/build-geonames-postcode-shard.ts` behavior
+ *   verbatim.
  */
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { dataRootPath } from "@mailwoman/core/utils"
+import { Box, Text } from "ink"
 import { copyFileSync, createReadStream, existsSync } from "node:fs"
 import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
+import { useEffect, useState } from "react"
+import zod from "zod"
 
-interface Args {
-	geonames: string
-	countries: string[]
-	out: string
-	foldInto?: string
-	foldOut?: string
-}
+import type { CommandComponent } from "../../sdk/cli.js"
 
-function parseArgs(): Args {
-	const a = process.argv.slice(2)
-	let geonames = "/mnt/playpen/mailwoman-data/geonames/allCountries-postal.txt"
-	let countries = ["PL", "CZ"]
-	let out = "/mnt/playpen/mailwoman-data/wof/postalcode-geonames-intl.db"
-	let foldInto: string | undefined
-	let foldOut: string | undefined
-	for (let i = 0; i < a.length; i++) {
-		if (a[i] === "--geonames" && a[i + 1]) geonames = a[++i]!
-		else if (a[i] === "--countries" && a[i + 1])
-			countries = a[++i]!.split(",")
-				.map((s) => s.trim().toUpperCase())
-				.filter(Boolean)
-		else if (a[i] === "--out" && a[i + 1]) out = a[++i]!
-		else if (a[i] === "--fold-into" && a[i + 1]) foldInto = a[++i]!
-		else if (a[i] === "--fold-out" && a[i + 1]) foldOut = a[++i]!
-	}
-	return { geonames, countries, out, foldInto, foldOut }
-}
+const OptionsSchema = zod.object({
+	geonames: zod
+		.string()
+		.optional()
+		.describe("GeoNames postal TSV. Default <data-root>/geonames/allCountries-postal.txt"),
+	countries: zod.string().optional().describe("Comma-separated ISO codes to extract. Default: PL,CZ"),
+	out: zod.string().optional().describe("Shard output path. Default <data-root>/wof/postalcode-geonames-intl.db"),
+	foldInto: zod.string().optional().describe("Existing candidate DB to fold the shard into (a copy, never mutated)"),
+	foldOut: zod.string().optional().describe("Destination for the folded candidate DB (required with --fold-into)"),
+})
+
+export { OptionsSchema as options }
+
+/** The street-normalize key function, threaded in after a dynamic import of the optional peer. */
+type NormalizeKey = (value: string) => string
 
 /**
  * Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced records never collide
@@ -128,14 +118,14 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
  * The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped
  * form.
  */
-function nameVariants(pc: string): string[] {
+function nameVariants(pc: string, normalizeKey: NormalizeKey): string[] {
 	const stripped = pc.replace(/[\s-]/g, "")
 	const variants = [pc]
 	if (stripped && stripped !== pc) variants.push(stripped)
 	// Dedup by fold() — two forms that normalize identically need only one row.
 	const seen = new Set<string>()
 	return variants.filter((v) => {
-		const k = normalizeLocalityForKey(v)
+		const k = normalizeKey(v)
 		if (seen.has(k)) return false
 		seen.add(k)
 		return true
@@ -162,7 +152,7 @@ const SPR_COLUMNS = [
 	"lastmodified",
 ] as const
 
-async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string): Promise<number> {
+async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normalizeKey: NormalizeKey): Promise<number> {
 	if (existsSync(outPath)) {
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
@@ -204,7 +194,7 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string): Promi
 	for (const a of acc.values()) {
 		const lat = a.sumLat / a.n
 		const lon = a.sumLon / a.n
-		for (const name of nameVariants(a.pc)) {
+		for (const name of nameVariants(a.pc, normalizeKey)) {
 			ins.run(++id, -1, name, "postalcode", a.cc, lat, lon, a.minLat, a.minLon, a.maxLat, a.maxLon, 1, 0, 0, 0, 0, 0)
 			rows++
 		}
@@ -220,7 +210,12 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string): Promi
  * is_primary=1, bbox falls back to the centroid). The fast path to a demo-ready DB without a full
  * rebuild.
  */
-async function foldIntoCandidate(shardPath: string, srcPath: string, dstPath: string): Promise<number> {
+async function foldIntoCandidate(
+	shardPath: string,
+	srcPath: string,
+	dstPath: string,
+	normalizeKey: NormalizeKey
+): Promise<number> {
 	copyFileSync(srcPath, dstPath)
 	const out = new DatabaseSync(dstPath)
 	const shard = new DatabaseSync(shardPath, { readOnly: true })
@@ -264,7 +259,7 @@ async function foldIntoCandidate(shardPath: string, srcPath: string, dstPath: st
 		)
 		.iterate()) {
 		const name = String(r.name ?? "")
-		const key = normalizeLocalityForKey(name)
+		const key = normalizeKey(name)
 		if (!key) continue
 		const lat = r.latitude as number
 		const lon = r.longitude as number
@@ -295,34 +290,89 @@ async function foldIntoCandidate(shardPath: string, srcPath: string, dstPath: st
 	return n
 }
 
-async function main(): Promise<void> {
-	const { geonames, countries, out, foldInto, foldOut } = parseArgs()
-	if (!existsSync(geonames)) {
-		console.error(`Missing GeoNames file: ${geonames}`)
-		process.exit(1)
-	}
-	console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
-	const acc = await readGeonames(geonames, new Set(countries))
-	const byCc = new Map<string, number>()
-	for (const a of acc.values()) byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
-	console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
+const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+	const [error, setError] = useState<string>()
+	const [summary, setSummary] = useState<string[]>()
 
-	const rows = await buildShard(acc, out)
-	console.error(`Wrote ${rows} spr rows (both separator variants) → ${out}`)
+	useEffect(() => {
+		void (async () => {
+			try {
+				const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
+				const out = options.out ?? dataRootPath("wof", "postalcode-geonames-intl.db")
+				const countries = options.countries
+					? options.countries
+							.split(",")
+							.map((s) => s.trim().toUpperCase())
+							.filter(Boolean)
+					: ["PL", "CZ"]
+				const foldInto = options.foldInto
+				const foldOut = options.foldOut
 
-	if (foldInto && foldOut) {
-		if (!existsSync(foldInto)) {
-			console.error(`Missing --fold-into candidate DB: ${foldInto}`)
-			process.exit(1)
-		}
-		console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
-		const n = await foldIntoCandidate(out, foldInto, foldOut)
-		console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
-	} else {
-		console.error(
-			`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`
+				if (!existsSync(geonames)) {
+					setError(`Missing GeoNames file: ${geonames}`)
+					return
+				}
+
+				// street-normalize lives in the optional `@mailwoman/resolver-wof-sqlite` peer — load it
+				// dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault when
+				// the peer isn't installed.
+				const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
+
+				console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
+				const acc = await readGeonames(geonames, new Set(countries))
+				const byCc = new Map<string, number>()
+				for (const a of acc.values()) byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
+				console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
+
+				const rows = await buildShard(acc, out, normalizeLocalityForKey)
+				console.error(`Wrote ${rows} spr rows (both separator variants) → ${out}`)
+
+				const lines = [
+					`postcode shard: ${out}`,
+					`${rows.toLocaleString()} spr rows — ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")} (total ${acc.size})`,
+				]
+
+				if (foldInto && foldOut) {
+					if (!existsSync(foldInto)) {
+						setError(`Missing --fold-into candidate DB: ${foldInto}`)
+						return
+					}
+					console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
+					const n = await foldIntoCandidate(out, foldInto, foldOut, normalizeLocalityForKey)
+					console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
+					lines.push(`folded ${n.toLocaleString()} postcode candidate rows → ${foldOut}`)
+				} else {
+					console.error(
+						`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`
+					)
+					lines.push(`shard only — feed it to build-candidate via --postcodes for the canonical rebuild`)
+				}
+
+				setSummary(lines)
+			} catch (e) {
+				setError(e instanceof Error ? e.message : String(e))
+			}
+		})()
+	}, [options])
+
+	useEffect(() => {
+		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+	}, [summary, error])
+
+	if (error) return <Text color="red">✗ {error}</Text>
+	if (summary) {
+		return (
+			<Box flexDirection="column">
+				{summary.map((line, i) => (
+					<Text key={i} color={i === 0 ? "green" : undefined}>
+						{i === 0 ? "✓ " : "  "}
+						{line}
+					</Text>
+				))}
+			</Box>
 		)
 	}
+	return null // progress streams to stderr until the summary lands
 }
 
-await main()
+export default GazetteerPostcodeIntl

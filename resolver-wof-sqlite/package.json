@@ -27,7 +27,10 @@
 		"./geo": "./out/geo.js",
 		"./street-normalize": "./out/street-normalize.js",
 		"./build-candidate": "./out/build-candidate.js",
-		"./candidate-schema": "./out/candidate-schema.js"
+		"./candidate-schema": "./out/candidate-schema.js",
+		"./postal-city-alias-schema": "./out/postal-city-alias-schema.js",
+		"./address-point-schema": "./out/address-point-schema.js",
+		"./street-segment-schema": "./out/street-segment-schema.js"
 	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",

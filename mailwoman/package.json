@@ -36,6 +36,7 @@
 		"@fragaria/address-formatter": "^6.7.1",
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/classifiers": "workspace:*",
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",

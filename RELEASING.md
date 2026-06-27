@@ -217,7 +217,7 @@ ln -s /mnt/playpen/mailwoman-data/wof/candidate-global.db /tmp/stage/gazetteer/<
 set -a; . ./.env; set +a
 python3 scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
 # 4. The map-highlight sibling (wof-polygons.db) builds from --admin now (the --points wof-hot.db source is
-#    gone): node scripts/build-wof-polygons.mjs --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
+#    gone): mailwoman gazetteer polygons --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
 ```
 
 `hasWofDb: true` stays in `releases.json` — the demo gates the admin tier on it, and it now means "this
