@@ -10,7 +10,7 @@
  */
 
 import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "../synthesize-po-box.js"
-import { alignAndWrite, readTuples, shardSourceId, type ShardRecipe } from "./scaffold.js"
+import { alignAndWrite, makeLcg, readTuples, shardSourceId, type ShardRecipe } from "./scaffold.js"
 
 const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
@@ -22,8 +22,9 @@ export const poBoxRecipe: ShardRecipe = {
 		{ flag: "--pmb-ratio <p>", description: "P(private-mailbox layout). Default 0.15" },
 		{ flag: "--military-ratio <p>", description: "P(emit one US military/diplomatic row per input, #517). Default 0" },
 	],
-	async run(opts, write, random) {
+	async run(opts, write) {
 		if (!opts.input) throw new Error("po-box recipe requires --input <tuples.jsonl>")
+		const random = makeLcg(opts.seed)
 		const pmbRatio = opts.pmbRatio ?? 0.15
 		const militaryRatio = opts.militaryRatio ?? 0
 		let read = 0

@@ -11,7 +11,7 @@
  *   corpus/src/shard-recipes.
  */
 
-import { getShardRecipe, listShardRecipes, makeRandom, type ShardRecipeOpts } from "@mailwoman/corpus"
+import { getShardRecipe, listShardRecipes, type ShardRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 import { createWriteStream } from "node:fs"
 import { useEffect, useState } from "react"
@@ -103,7 +103,7 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 				const write = (line: string): void => {
 					stream.write(line)
 				}
-				const stats = await recipe.run(opts, write, makeRandom(seed))
+				const stats = await recipe.run(opts, write)
 				stream.end()
 				await new Promise<void>((res) => stream.on("finish", () => res()))
 

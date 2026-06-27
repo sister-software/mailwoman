@@ -9,15 +9,16 @@
 
 import { stableSourceId } from "../adapter.js"
 import { synthesizeStreetRow, type StreetBaseTuple } from "../synthesize-street.js"
-import { alignAndWrite, readTuples, type ShardRecipe } from "./scaffold.js"
+import { alignAndWrite, makeLcg, readTuples, type ShardRecipe } from "./scaffold.js"
 
 export const streetRecipe: ShardRecipe = {
 	name: "street",
 	description: "Street-decomposition rows (US): tuples → synthesizeStreetRow → aligned LabeledRow",
 	mode: "tuples",
 	options: [{ flag: "--house-number-prob <p>", description: "P(emit a house number). Default 0.85" }],
-	async run(opts, write, random) {
+	async run(opts, write) {
 		if (!opts.input) throw new Error("street recipe requires --input <tuples.jsonl>")
+		const random = makeLcg(opts.seed)
 		const includeHouseNumberProb = opts.houseNumberProb ?? 0.85
 		let read = 0
 		let emitted = 0
