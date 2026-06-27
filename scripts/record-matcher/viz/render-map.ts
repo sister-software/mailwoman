@@ -17,7 +17,7 @@
  *   The map paints asynchronously after the network settles; we wait for networkidle, then a fixed
  *   beat for the basemap tiles + marker layer to finish compositing.
  *
- *   Run: node scripts/record-matcher/viz/render-map.mjs <served-url> <out.png>
+ *   Run: node scripts/record-matcher/viz/render-map.ts <served-url> <out.png>
  */
 
 import { chromium } from "playwright"
@@ -25,7 +25,7 @@ import { chromium } from "playwright"
 const url = process.argv[2]
 const out = process.argv[3]
 if (!url || !out) {
-	console.error("usage: render-map.mjs <served-localhost-url> <out.png>")
+	console.error("usage: render-map.ts <served-localhost-url> <out.png>")
 	process.exit(1)
 }
 
@@ -34,7 +34,7 @@ const browser = await chromium.launch({
 })
 const page = await browser.newPage({ viewport: { width: 1100, height: 760 }, deviceScaleFactor: 2 })
 
-const errors = []
+const errors: string[] = []
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()))
 page.on("pageerror", (e) => errors.push(String(e)))
 

@@ -11,16 +11,17 @@
  *   on the 2D canvas regardless. We wait for Plotly's `plotly_afterplot` to fire on every graph div
  *   rather than a fixed sleep, so the screenshot can't race the (async) WebGL paint.
  *
- *   Run: node scripts/record-matcher/viz/render.mjs <in.html> <out.png> [width] [height]
+ *   Run: node scripts/record-matcher/viz/render.ts <in.html> <out.png> [width] [height]
  */
 
 import { resolve } from "node:path"
 import { pathToFileURL } from "node:url"
+
 import { chromium } from "playwright"
 
 const [, , inHtml, outPng, w = "1160", h = "1000"] = process.argv
 if (!inHtml || !outPng) {
-	console.error("usage: render.mjs <in.html> <out.png> [width] [height]")
+	console.error("usage: render.ts <in.html> <out.png> [width] [height]")
 	process.exit(1)
 }
 
@@ -29,7 +30,7 @@ const browser = await chromium.launch({
 })
 const page = await browser.newPage({ viewport: { width: Number(w), height: Number(h) }, deviceScaleFactor: 2 })
 
-const errors = []
+const errors: string[] = []
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()))
 page.on("pageerror", (e) => errors.push(String(e)))
 
@@ -38,13 +39,21 @@ await page.goto(pathToFileURL(resolve(inHtml)).href, { waitUntil: "networkidle" 
 // Resolve once every Plotly graph div has fired plotly_afterplot (3D paints land async, after
 // newPlot's promise resolves), with a per-div fallback so an already-painted div can't hang us.
 await page.evaluate(async () => {
-	const divs = [...document.querySelectorAll("div")].filter((d) => d._fullLayout && typeof d.on === "function")
+	// Runs in the BROWSER — reach DOM/Plotly globals via globalThis so the script needs no DOM lib.
+	interface PlotlyDiv {
+		_fullLayout?: unknown
+		on?: (event: string, cb: () => void) => void
+	}
+	const doc = (globalThis as { document: { querySelectorAll(s: string): Iterable<unknown> } }).document
+	const divs = [...doc.querySelectorAll("div")]
+		.map((d) => d as PlotlyDiv)
+		.filter((d) => d._fullLayout && typeof d.on === "function")
 	await Promise.all(
 		divs.map(
 			(d) =>
-				new Promise((res) => {
-					d.on("plotly_afterplot", res)
-					setTimeout(res, 2000)
+				new Promise<void>((res) => {
+					d.on!("plotly_afterplot", () => res())
+					setTimeout(() => res(), 2000)
 				})
 		)
 	)
