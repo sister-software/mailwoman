@@ -13,7 +13,7 @@
  *   single suffix completes the code (GB `+4` + `4` = 44); NANP members share root `+1` with their
  *   area code as the suffix, so they map to 1.
  *
- *   Usage: node scripts/build-country-reference.mjs
+ *   Usage: node scripts/build-country-reference.ts
  */
 
 import { writeFileSync } from "node:fs"
@@ -21,7 +21,20 @@ import { writeFileSync } from "node:fs"
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 const OUT = new URL("../codex/country/reference-data.ts", import.meta.url)
 
-function callingCode(country) {
+/** A single country record from mledoze/countries, narrowed to the fields this script reads. */
+interface MledozeCountry {
+	cca2?: string
+	idd?: { root?: string; suffixes?: string[] }
+	currencies?: Record<string, { name?: string; symbol?: string }>
+}
+
+/** The emitted per-country reference row. */
+interface CountryReferenceEntry {
+	callingCode?: number
+	currency?: { isoCode: string; name?: string; symbol?: string }
+}
+
+function callingCode(country: MledozeCountry): number | undefined {
 	const root = (country.idd?.root ?? "").replace("+", "")
 	const suffixes = country.idd?.suffixes ?? []
 	if (!root) return undefined
@@ -36,19 +49,19 @@ function callingCode(country) {
 
 const response = await fetch(SOURCE)
 if (!response.ok) throw new Error(`fetch ${SOURCE} failed: ${response.status}`)
-const countries = await response.json()
+const countries = (await response.json()) as MledozeCountry[]
 
-const rows = {}
+const rows: Record<string, CountryReferenceEntry> = {}
 for (const country of countries) {
 	const alpha2 = country.cca2
 	if (!alpha2) continue
-	const entry = {}
+	const entry: CountryReferenceEntry = {}
 	const cc = callingCode(country)
 	if (cc != null) entry.callingCode = cc
 	const currencyCodes = Object.keys(country.currencies ?? {}).sort()
 	if (currencyCodes.length) {
 		const code = currencyCodes[0]
-		const info = country.currencies[code] ?? {}
+		const info = country.currencies![code] ?? {}
 		entry.currency = { isoCode: code }
 		if (info.name) entry.currency.name = info.name
 		if (info.symbol) entry.currency.symbol = info.symbol
@@ -56,7 +69,7 @@ for (const country of countries) {
 	if (Object.keys(entry).length) rows[alpha2] = entry
 }
 
-const serialize = (o) =>
+const serialize = (o: CountryReferenceEntry): string =>
 	JSON.stringify(o, null, 0)
 		.replace(/"isoCode"/g, "isoCode")
 		.replace(/"callingCode"/g, "callingCode")
@@ -76,7 +89,7 @@ const header = `/**
  *
  *   GENERATED — do not edit by hand. Country calling codes (E.164) + currencies (ISO 4217), derived
  *   from mledoze/countries (https://github.com/mledoze/countries, ODbL). NANP members map to 1.
- *   Regenerate with scripts/build-country-reference.mjs.
+ *   Regenerate with scripts/build-country-reference.ts.
  */
 
 /** Static per-country reference: calling code + currency. */
