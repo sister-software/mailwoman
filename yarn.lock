@@ -5022,15 +5022,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/spike-sqlite-wasm@workspace:resolver-wof-sqlite/spike":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/spike-sqlite-wasm@workspace:resolver-wof-sqlite/spike"
-  dependencies:
-    playwright: "npm:^1.60.0"
-    sql.js-httpvfs: "npm:^0.8.12"
-  languageName: unknown
-  linkType: soft
-
 "@mailwoman/tiger@workspace:*, @mailwoman/tiger@workspace:tiger":
   version: 0.0.0-use.local
   resolution: "@mailwoman/tiger@workspace:tiger"
@@ -19696,15 +19687,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.60.0":
-  version: 1.60.0
-  resolution: "playwright-core@npm:1.60.0"
-  bin:
-    playwright-core: cli.js
-  checksum: 10/66c0f83d627e673261c848dd6fe1f2856d5b5b6859268acb61a45c00f5bf926e596a351a9c481a3a4e82a45022c7c6b5d99ebc3906fc6876ac582ed6f7e16190
-  languageName: node
-  linkType: hard
-
 "playwright-core@npm:1.61.0":
   version: 1.61.0
   resolution: "playwright-core@npm:1.61.0"
@@ -19726,21 +19708,6 @@ __metadata:
   bin:
     playwright: cli.js
   checksum: 10/b5faf97391315334a30e88e03216fd6090988b99896e71b341995a27c49d49dcebc825ec389dabc9b2d2cab6368c418cad9cbb925a88de35fb3b26a19bf05bea
-  languageName: node
-  linkType: hard
-
-"playwright@npm:^1.60.0":
-  version: 1.60.0
-  resolution: "playwright@npm:1.60.0"
-  dependencies:
-    fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.60.0"
-  dependenciesMeta:
-    fsevents:
-      optional: true
-  bin:
-    playwright: cli.js
-  checksum: 10/8569770637ee35d08cca3b53a5b56c21e9236bd1ac4718456d5988fb8acd51c5b3cc2cf90748363a36199529e870a9b6c68d6fc9e19571261cd867005d6331c1
   languageName: node
   linkType: hard
 

@@ -110,8 +110,8 @@ export interface HttpvfsOptions {
 	/**
 	 * Bytes per HTTP range request. Default 65536 (64 KiB = 16 SQLite pages). Fetches inside the worker are SYNCHRONOUS
 	 * XHR, so cold latency ≈ uncached-chunk-count × RTT: bigger chunks cut round-trips on FTS-walk-heavy access (the hot
-	 * DB) at the cost of over-fetching on sparse single-row access (the polygon DB). Measure against the spike baseline
-	 * (38 req / 3.6 MB per session, `resolver-wof-sqlite/spike/RESULTS.md`) before changing.
+	 * DB) at the cost of over-fetching on sparse single-row access (the polygon DB). Measure against the measured
+	 * baseline (38 req / 3.6 MB per session) before changing.
 	 */
 	requestChunkSize?: number
 }

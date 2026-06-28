@@ -24,9 +24,6 @@ const config = createOxlintConfig({
 		// Python venv + egg-info under corpus-python/ (vendored JS we don't own).
 		"**/.venv/**",
 		"**/*.egg-info/**",
-		// Frozen exploratory spike (already tsconfig-excluded) — a self-contained browser benchmark
-		// whose RESULTS.md is cited as a perf baseline; not maintained source, so not linted.
-		"resolver-wof-sqlite/spike/**",
 	],
 })
 

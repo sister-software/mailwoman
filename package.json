@@ -47,7 +47,6 @@
 		"phrase-grouper",
 		"query-shape",
 		"resolver-wof-sqlite",
-		"resolver-wof-sqlite/spike",
 		"resolver-wof-wasm",
 		"tile-worker",
 		"docs"
