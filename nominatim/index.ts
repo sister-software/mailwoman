@@ -132,6 +132,45 @@ function asString(raw: unknown): string | undefined {
 	return typeof raw === "string" && raw.length > 0 ? raw : undefined
 }
 
+/** A GeoJSON `FeatureCollection` — the `format=geojson` envelope. */
+export interface NominatimFeatureCollection {
+	type: "FeatureCollection"
+	features: Array<{
+		type: "Feature"
+		properties: Record<string, unknown>
+		geometry: unknown
+		bbox?: [number, number, number, number]
+	}>
+}
+
+/**
+ * Render results as a GeoJSON `FeatureCollection` (`format=geojson`). Nominatim moves the coordinate into `geometry` (a
+ * Point, or the place polygon when one is present), `boundingbox` ([south, north, west, east]) into a GeoJSON `bbox`
+ * ([west, south, east, north]), and the remaining result fields into `properties`. Rows without a coordinate are
+ * dropped — a Feature needs a geometry.
+ */
+export function toFeatureCollection(results: readonly NominatimResult[]): NominatimFeatureCollection {
+	const features: NominatimFeatureCollection["features"] = []
+
+	for (const r of results) {
+		if (r.lat == null || r.lon == null) continue
+		const { lat, lon, boundingbox, geojson, ...properties } = r
+		const feature: NominatimFeatureCollection["features"][number] = {
+			type: "Feature",
+			properties,
+			geometry: geojson ?? { type: "Point", coordinates: [Number(lon), Number(lat)] },
+		}
+
+		if (boundingbox?.length === 4) {
+			// boundingbox is [south, north, west, east]; GeoJSON bbox is [west, south, east, north].
+			feature.bbox = [Number(boundingbox[2]), Number(boundingbox[0]), Number(boundingbox[3]), Number(boundingbox[1])]
+		}
+		features.push(feature)
+	}
+
+	return { type: "FeatureCollection", features }
+}
+
 /**
  * Build the Nominatim-compatible router around an injected {@link NominatimEngine}. Query-param parsing lives here; the
  * result _formatting_ (jsonv2 vs geojson envelope, `address` projection) is #804 and currently passes the engine's
@@ -162,7 +201,8 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 			format: parseFormat(q["format"]),
 			acceptLanguage: asString(q["accept-language"]),
 		}
-		res.json(await engine.search(params))
+		const results = await engine.search(params)
+		res.json(params.format === "geojson" ? toFeatureCollection(results) : results)
 	}
 
 	const reverse: RequestHandler = async (req, res) => {
@@ -194,7 +234,8 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 			format: parseFormat(q["format"]),
 			acceptLanguage: asString(q["accept-language"]),
 		}
-		res.json(await engine.reverse(params))
+		const result = await engine.reverse(params)
+		res.json(params.format === "geojson" ? toFeatureCollection(result ? [result] : []) : result)
 	}
 
 	const lookup: RequestHandler = async (req, res) => {
@@ -208,7 +249,8 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 			addressdetails: parseBool(req.query["addressdetails"]),
 			format: parseFormat(req.query["format"]),
 		}
-		res.json(await engine.lookup(params))
+		const results = await engine.lookup(params)
+		res.json(params.format === "geojson" ? toFeatureCollection(results) : results)
 	}
 
 	const status: RequestHandler = async (_req, res) => {

@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { MAILWOMAN_LICENCE, type ResolvedAddress, toNominatimResult } from "./index.js"
+import { MAILWOMAN_LICENCE, type ResolvedAddress, toFeatureCollection, toNominatimResult } from "./index.js"
 
 const dc: ResolvedAddress = {
 	lat: 38.8977,
@@ -21,6 +21,24 @@ const dc: ResolvedAddress = {
 		country_code: "us",
 	},
 }
+
+test("toFeatureCollection: wraps results as a GeoJSON FeatureCollection (geometry + bbox + properties)", () => {
+	const r = toNominatimResult({ ...dc, boundingbox: ["38.89", "38.90", "-77.04", "-77.03"] })
+	const fc = toFeatureCollection([r, { ...r, lat: null as never, lon: null as never }])
+
+	expect(fc.type).toBe("FeatureCollection")
+	// the row without a coordinate is dropped — a Feature needs a geometry.
+	expect(fc.features).toHaveLength(1)
+	const f = fc.features[0]!
+	expect(f.type).toBe("Feature")
+	expect(f.geometry).toEqual({ type: "Point", coordinates: [-77.0365, 38.8977] })
+	// boundingbox [south, north, west, east] → GeoJSON bbox [west, south, east, north]
+	expect(f.bbox).toEqual([-77.04, 38.89, -77.03, 38.9])
+	// the coordinate + boundingbox move OUT of properties; the rest stays.
+	expect(f.properties["display_name"]).toBeDefined()
+	expect(f.properties["lat"]).toBeUndefined()
+	expect(f.properties["boundingbox"]).toBeUndefined()
+})
 
 test("toNominatimResult: renders lat/lon as strings + a joined display_name + licence", () => {
 	const r = toNominatimResult(dc)
