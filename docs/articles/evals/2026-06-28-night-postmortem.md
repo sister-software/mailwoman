@@ -42,16 +42,38 @@ swap (`mailwoman gazetteer promote`) is the operator's morning call.
   avoids re-folding the EU set into the wrong base and a synthetic-id collision; keeps the canonical
   geonames dir clean (synthesized `<CC>.txt` live in scratchpad).
 
+## Phase D (#825) — GO for a multilocale parse retrain
+
+Oracle-locality injection (PT/PL/AU, real-OA goldens, resolved against staged-B). The model RESOLVES
+these locales at decent rates but to **wildly wrong places** (p50 PT 47 / PL 116 / AU 798 km); a perfect
+locality resolves the SAME gazetteer to ~1 km (Δp50 99–100%). Verify-before-verdict (`d-confound-check`)
+found the dominant failure is the en-US model **extracting the street as the locality** on PT's city-first
+formats (`R Dr Simões Junior` → locality; `Rosário` → `rio`). ~15% is a separate ranking confound. **GO** —
+the coordinate evidence cleanly justifies the #825 GPU retrain. (PT/PL/AU are B-invariant; staged-B ==
+canonical for them.)
+
+## Phase C (#781) — measure-first killed the lever
+
+Span-rescore is **+0.0 pp** on the staged-B candidate gazetteer across every EU locale. Coverage (the
+alt-name fold + B) subsumed its recovery surface (resolved 97.9%), and the remaining EU gap is
+mis-resolution (the #685 brake means span-rescore never fires on a resolved tree). No recovery triples →
+no calibration to fit. **Recommend re-scoping/closing #781**; the EU lever is #825 (Phase D).
+
 ## Open questions (operator)
 
-1. **Promote the staged B DB?** Gate passes do-no-harm + existence; coordinate confirmation pending.
-   147 previously-unreachable countries become reachable with zero supported-set regression.
+1. **Promote the staged B DB?** Gate PASSES all three halves (do-no-harm zero regression, existence
+   44.1→0.2% absent, coordinate residual 92→6). 147 previously-unreachable countries become reachable.
 2. **Phase A (placer): DATA GAP — defer to a class-set-widening retrain (branch-b).** The deployed
    placer is 28-class (US + EU-mostly); only CN/SK/LV of the 36 recoverable countries are classes
    (in_class_set false 31.6%). Crucially the placer is **99.6% correct at confidence 1.000 on its
    in-set countries** — so no threshold/M2 change helps; the only lever is adding classes (gated). And
    B already cut namesake misroutes 11.5% → 6.1% (the recoverable cities now resolve bare via
    population-first), so the placer retrain is lower-priority than it was.
+3. **Greenlight #825 (multilocale parse retrain) for a GPU shift?** Phase D is a clean GO — PT/PL/AU
+   resolve to wrong towns (p50 47–798 km) that a perfect parse fixes to ~1 km. This is the EU coordinate
+   lever. (Both A's placer-widening and #825 are placer/model retrains — could share one GPU session.)
+4. **Re-scope or close #781 (span-rescore v2)?** Measure-first shows it is inert (+0.0 pp) on the
+   candidate gazetteer. Keep only if wanted as an admin-only-backend safety net.
 
 ## Numbers
 
