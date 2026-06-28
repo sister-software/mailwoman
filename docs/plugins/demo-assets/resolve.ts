@@ -217,7 +217,7 @@ export function readModelCard(): { version: string; modelSize: number; tokenizer
 
 /**
  * Resolve a binary artifact from the weights package, dereferencing symlinks. Returns the real path to the file
- * (following symlinks from link-dev-weights.sh).
+ * (following symlinks from link-dev-weights.ts).
  *
  * @param filename - E.g. "model.onnx" or "tokenizer.model"
  */

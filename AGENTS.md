@@ -67,8 +67,8 @@ Local: `yarn release`. CI: GitHub Actions → `publish` workflow → manual disp
 
 The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `tokenizer.model`) that are **not** committed to git. Multiple pieces cooperate to get those files in place — be careful when changing any of them:
 
-- `<workspace>/scripts/link-dev-weights.sh` — symlinks the artifacts from `/mnt/playpen/mailwoman-data/...` into the workspace so `@mailwoman/neural` can find them during local dev.
-- `neural/test/weights.test.ts` — invokes `link-dev-weights.sh` to verify auto-resolve. **Running `yarn test` re-creates the symlinks** in `neural-weights-en-us/` as a side effect.
+- `<workspace>/scripts/link-dev-weights.ts` — symlinks the artifacts from `$MAILWOMAN_DATA_ROOT/...` into the workspace so `@mailwoman/neural` can find them during local dev.
+- `neural/test/weights.test.ts` — invokes `link-dev-weights.ts` to verify auto-resolve. **Running `yarn test` re-creates the symlinks** in `neural-weights-en-us/` as a side effect.
 - `scripts/copy-weights.ts` — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace. Skipped in CI when `MAILWOMAN_SKIP_WEIGHTS_COPY=1` (the default for the `publish` workflow when `release_weights=false`).
 - `scripts/publish-workspace.ts` — invoked per workspace by release-it. Calls `yarn pack -o <tmp>` (translates `workspace:*` → concrete versions) then `npm publish <tmp>` (npm CLI handles npm-side auth, including Trusted Publishing OIDC in CI).
 
@@ -77,7 +77,7 @@ The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `t
 `yarn npm publish` (and `npm publish`) refuse to upload tarballs containing symlinks — the registry returns HTTP 415 (`YN0035: Symbolic link is not allowed`). Two specific traps make this easy to hit:
 
 1. **`fs.copyFile` follows symlinks at the destination.** A naïve `fs.copyFile(SOURCE, dest)` where `dest` is a symlink writes through the symlink — the symlink stays in place. `scripts/copy-weights.ts` mitigates this by `unlink`ing each destination first. Any new script that materializes files into these workspaces **must do the same** (or use `cp --remove-destination` / `fs.cp` with equivalent semantics).
-2. **Tests re-create symlinks.** `weights.test.ts` calls `link-dev-weights.sh` on every run. Even if `copy-weights.ts` was already run, a subsequent `yarn test` (manual or otherwise) re-symlinks `neural-weights-en-us/`.
+2. **Tests re-create symlinks.** `weights.test.ts` calls `link-dev-weights.ts` on every run. Even if `copy-weights.ts` was already run, a subsequent `yarn test` (manual or otherwise) re-symlinks `neural-weights-en-us/`.
 
 To make publish robust regardless of repo state, `scripts/publish-workspace.ts` walks the workspace's `package.json` `files` array right before publishing and dereferences any symlinks (`readlink` → `unlink` → `copyFile`). **Do not remove this safety net** — it closes the window between `copy-weights.ts` (one-shot, at `before:init`) and the actual publish.
 

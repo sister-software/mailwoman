@@ -16,7 +16,7 @@
  *
  *   1. Pass explicit `modelPath` + `tokenizerPath` to `loadFromWeights`, or
  *   2. Symlink the dev model files into the weights package directory — see
- *        `scripts/link-dev-weights.sh` in each weights package.
+ *        `scripts/link-dev-weights.ts` in each weights package.
  *
  *   The resolver checks for both files and throws a single actionable error when neither is findable,
  *   naming all the paths it tried.
@@ -124,7 +124,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 		throw new Error(
 			`Weights package ${packageName} resolved at ${packageDir} but is missing model files.\n` +
 				`Tried:\n  ${tried.join("\n  ")}\n` +
-				`Run \`scripts/link-dev-weights.sh\` inside the package to symlink dev weights, ` +
+				`Run \`scripts/link-dev-weights.ts\` inside the package to symlink dev weights, ` +
 				`or pass --model + --tokenizer with explicit paths.`
 		)
 	}

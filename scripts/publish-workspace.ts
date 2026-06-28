@@ -61,7 +61,7 @@ const cwd = resolve(repoRoot, workspacePath)
 // Dereference any symlinks among the workspace's `files` entries before
 // publishing — npm/yarn refuse to upload tarballs containing symlinks
 // (registry returns HTTP 415). The neural-weights workspaces in particular
-// can end up with symlinks from `scripts/link-dev-weights.sh`.
+// can end up with symlinks from `scripts/link-dev-weights.ts`.
 dereferenceWorkspaceSymlinks(cwd)
 
 const tmpDir = mkdtempSync(join(tmpdir(), "mailwoman-publish-"))

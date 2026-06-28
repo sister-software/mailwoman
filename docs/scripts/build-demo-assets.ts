@@ -59,7 +59,7 @@ async function main(): Promise<void> {
 
 	if (!(await exists(modelSrc))) {
 		process.stderr.write(`ERROR: ${modelSrc} missing.\n`)
-		process.stderr.write("Run neural-weights-en-us/scripts/link-dev-weights.sh first or pass --weights.\n")
+		process.stderr.write("Run neural-weights-en-us/scripts/link-dev-weights.ts first or pass --weights.\n")
 		process.exitCode = 1
 
 		return

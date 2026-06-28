@@ -27,7 +27,7 @@ import { describe, expect, test } from "vitest"
 import { WebOnnxRunner } from "./web-onnx-runner.js"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via
-// `scripts/link-dev-weights.sh` after a training run. Skip the real-model tests when the weights
+// `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights
 // package's `model.onnx` isn't on disk; the runner's structural behavior still gets exercised by
 // the unit suite under neural/test/.
 function probeWeights(): { modelPath: string; tokenizerPath: string } | null {

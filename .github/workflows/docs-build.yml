@@ -7,7 +7,7 @@
 # fetched at runtime from the HF Bucket (sister-software/mailwoman), NOT bundled
 # into the static site. The demo-assets plugin still runs loadContent() to
 # validate the model card, but binary staging is skipped in CI because the
-# neural-weights-en-us package has no model files without link-dev-weights.sh.
+# neural-weights-en-us package has no model files without link-dev-weights.ts.
 name: Docs
 
 on:

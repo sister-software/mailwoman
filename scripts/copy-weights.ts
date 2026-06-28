@@ -84,7 +84,7 @@ async function main() {
 		await mkdir(dir, { recursive: true })
 		const modelDest = resolve(dir, "model.onnx")
 		const tokenizerDest = resolve(dir, "tokenizer.model")
-		// Unlink first so a pre-existing symlink (from link-dev-weights.sh) is
+		// Unlink first so a pre-existing symlink (from link-dev-weights.ts) is
 		// replaced with a real file. Otherwise copyFile follows the symlink and
 		// writes through it, leaving the symlink in place — which yarn refuses
 		// to publish (npm registry rejects symlinks with HTTP 415).
