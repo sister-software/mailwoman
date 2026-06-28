@@ -14,6 +14,9 @@
 import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 
+import type { Calibrator, ReleasesManifest } from "../shared/demo-helpers.ts"
+import { createCalibrator, DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
+import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 import type {
 	FstMatcherLike,
 	FstProvenanceLike,
@@ -21,10 +24,6 @@ import type {
 	MailwomanLookupLike,
 } from "../shared/resources.tsx"
 import { adminGazetteerUrl, assetUrl, loadFstGazetteer } from "../shared/resources.tsx"
-
-import type { Calibrator, ReleasesManifest } from "../shared/demo-helpers.ts"
-import { createCalibrator, DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
-import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,10 +45,10 @@ export interface DemoEmbedState {
 	/** The instantiated, cached WOF HTTP-VFS lookup. Loaded eagerly by the provider. */
 	lookup: MailwomanLookupLike | null
 	/**
-	 * Maps a raw span confidence → its calibrated probability of correctness, built from the
-	 * version's `calibration.json` (isotonic table). `null` while loading or for a release that ships
-	 * no calibration table. The demo applies it so a displayed "97%" means ~97% correct — the
-	 * capability a search index can't offer (`docs/articles/evals/*-calibration-*.md`).
+	 * Maps a raw span confidence → its calibrated probability of correctness, built from the version's `calibration.json`
+	 * (isotonic table). `null` while loading or for a release that ships no calibration table. The demo applies it so a
+	 * displayed "97%" means ~97% correct — the capability a search index can't offer
+	 * (`docs/articles/evals/*-calibration-*.md`).
 	 */
 	calibrator: Calibrator | null
 	/** Human-readable loading progress string. */
@@ -80,9 +79,11 @@ const DemoEmbedContext = createContext<DemoEmbedState | null>(null)
 
 export function useDemoEmbed(): DemoEmbedState {
 	const ctx = useContext(DemoEmbedContext)
+
 	if (!ctx) {
 		throw new Error("useDemoEmbed must be used within a <DemoEmbedProvider>")
 	}
+
 	return ctx
 }
 
@@ -130,7 +131,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			try {
 				const res = await fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"))
 				const data: ReleasesManifest | null = res.ok ? await res.json() : null
+
 				if (cancelled) return
+
 				if (data) {
 					setManifest(data)
 					setSelectedVersion(data.defaultVersion)
@@ -141,6 +144,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				setErrorMessage(error instanceof Error ? error.message : String(error))
 			}
 		})()
+
 		return () => {
 			cancelled = true
 		}
@@ -165,7 +169,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 
 				// Build staged step labels based on what this release includes.
 				const steps: string[] = ["Loading classifier"]
+
 				if (release?.hasFst) steps.push("Loading FST gazetteer")
+
 				if (release?.hasWofDb) steps.push("Loading WOF database")
 				setLoadingStepLabels(steps)
 
@@ -212,8 +218,10 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// OWN held-out reliability, so it must match the loaded version.
 				try {
 					const calRes = await fetch(assetUrl(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
+
 					if (calRes.ok) {
 						const calTable = await calRes.json()
+
 						if (!cancelled) setCalibrator(() => createCalibrator(calTable))
 					}
 				} catch {
@@ -224,6 +232,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 					try {
 						const fstResult = await loadFstGazetteer(DEFAULT_LOCALE, selectedVersion)
 						setFstMatcher(fstResult.matcher)
+
 						if (fstResult.provenance) setFstProvenance(fstResult.provenance)
 					} catch {
 						// FST not available for this version
@@ -238,6 +247,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 						const { loadHttpvfsDb, WofCandidateTableLookup: WOFCandidateTableLookup } =
 							await import("../shared/httpvfs-resolver")
 						const worker = await loadHttpvfsDb(adminGazetteerUrl(), sqljsBaseUrl)
+
 						if (cancelled) return
 						const wofLookup = new WofCandidateTableLookup(worker)
 						// Fire-and-forget: pull the schema/FTS/dual-role pages through the VFS now so the

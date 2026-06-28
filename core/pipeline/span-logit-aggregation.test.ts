@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { aggregateSpanLogits, type SpanBounds, type TokenPiece } from "./span-logit-aggregation.js"
 
 // Minimal 5-label vocab for testing: O, B-locality, I-locality, B-region, I-region

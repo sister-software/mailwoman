@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "./country.js"
 
 describe("GB_COUNTRIES", () => {

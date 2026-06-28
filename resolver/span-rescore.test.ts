@@ -7,10 +7,10 @@
  *   stability when the flag is unset). A fixture backend stands in for the gazetteer.
  */
 
-import { describe, expect, it } from "vitest"
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { describe, expect, it } from "vitest"
+
 import { createWofResolver } from "./resolve.js"
 import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 
@@ -63,6 +63,7 @@ function makeBackend(): ResolverBackend {
 	return {
 		async findPlace(query) {
 			const key = norm(query.text)
+
 			return PLACES.filter((p) => norm(p.name) === key && (!query.country || p.country === query.country)).map((p) => ({
 				...p,
 			}))

@@ -1,16 +1,17 @@
 /**
  * Mailwoman Eval Viewer Extension
  *
- * Registers /eval-viewer command that opens an interactive overlay displaying the latest parity
- * scorecard as a sortable table with regression highlighting.
+ * Registers /eval-viewer command that opens an interactive overlay displaying the latest parity scorecard as a sortable
+ * table with regression highlighting.
  *
  * Pattern from: overlay-test.ts (overlay command), questionnaire.ts (interactive)
  */
 
-import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@earendil-works/pi-coding-agent"
-import { Key, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui"
 import { readFileSync, readdirSync } from "node:fs"
 import { resolve } from "node:path"
+
+import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@earendil-works/pi-coding-agent"
+import { Key, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui"
 
 const PROJECT_ROOT = process.cwd()
 
@@ -39,6 +40,7 @@ function parseScorecard(markdown: string): ParsedScorecard | null {
 
 	// Find Lens 2 table
 	let tableStart = -1
+
 	for (let i = 0; i < lines.length; i++) {
 		if (lines[i].includes("Lens 2") || lines[i].includes("per-tag")) {
 			// Scan forward for the table header
@@ -65,8 +67,10 @@ function parseScorecard(markdown: string): ParsedScorecard | null {
 
 	// Parse data rows — skip separator, parse until we hit a blank line or non-table content
 	const rows: ScoreRow[] = []
+
 	for (let i = tableStart + 2; i < lines.length; i++) {
 		const line = lines[i].trim()
+
 		if (!line.startsWith("|")) break
 
 		const cells = line
@@ -84,6 +88,7 @@ function parseScorecard(markdown: string): ParsedScorecard | null {
 			const isBold = boldMatch !== null
 			const raw = isBold ? boldMatch[1] : cell
 			const value = raw === "—" || raw === "" ? null : parseFloat(raw)
+
 			return {
 				version: versionHeaders[idx] || `v${idx}`,
 				value: isNaN(value as number) ? null : value,
@@ -100,6 +105,7 @@ function parseScorecard(markdown: string): ParsedScorecard | null {
 function findLatestScorecard(): string | null {
 	const evalsDir = resolve(PROJECT_ROOT, "docs/articles/evals")
 	let files: string[]
+
 	try {
 		files = readdirSync(evalsDir)
 	} catch {
@@ -112,12 +118,14 @@ function findLatestScorecard(): string | null {
 		.reverse()
 
 	if (scorecards.length === 0) return null
+
 	return resolve(evalsDir, scorecards[0])
 }
 
 function readScorecard(path: string): ParsedScorecard | null {
 	try {
 		const content = readFileSync(path, "utf-8")
+
 		return parseScorecard(content)
 	} catch {
 		return null
@@ -152,7 +160,9 @@ class EvalViewerComponent {
 
 	private getDelta(row: ScoreRow): number | null {
 		const vals = row.versions.filter((v) => v.value !== null).map((v) => v.value!)
+
 		if (vals.length < 2) return null
+
 		// Delta = latest - previous (positive = improvement)
 		return vals[vals.length - 1] - vals[vals.length - 2]
 	}
@@ -160,16 +170,19 @@ class EvalViewerComponent {
 	private sort(): void {
 		this.rows.sort((a, b) => {
 			let cmp = 0
+
 			if (this.sortKey === "tag") {
 				cmp = a.tag.localeCompare(b.tag)
 			} else {
 				const da = this.getDelta(a)
 				const db = this.getDelta(b)
+
 				if (da === null && db === null) cmp = 0
 				else if (da === null) cmp = 1
 				else if (db === null) cmp = -1
 				else cmp = da - db
 			}
+
 			return this.sortAsc ? cmp : -cmp
 		})
 	}
@@ -235,6 +248,7 @@ class EvalViewerComponent {
 
 			// Determine row color based on delta
 			let rowColor = (s: string) => s
+
 			if (delta !== null && Math.abs(delta) > 2) {
 				rowColor = delta >= 0 ? t.fg("success") : t.fg("error")
 			}
@@ -268,6 +282,7 @@ class EvalViewerComponent {
 
 		this.cachedLines = lines
 		this.cachedWidth = width
+
 		return lines
 	}
 
@@ -277,6 +292,7 @@ class EvalViewerComponent {
 		const versionCount = Math.min(this.versionHeaders.length, 3)
 		const remaining = available - tagWidth - evalWidth - 4
 		const versionWidth = Math.max(10, Math.floor(remaining / versionCount))
+
 		return [tagWidth, evalWidth, ...Array(versionCount).fill(versionWidth)]
 	}
 
@@ -284,9 +300,12 @@ class EvalViewerComponent {
 		const parts = cells.slice(0, widths.length).map((c, i) => {
 			const w = widths[i]
 			const vis = visibleWidth(c)
+
 			if (vis > w) return c.slice(0, Math.max(0, w - 1)) + "…"
+
 			return c + " ".repeat(w - vis)
 		})
+
 		return color(parts.join(" │ "))
 	}
 
@@ -304,18 +323,23 @@ export default function (pi: ExtensionAPI) {
 		handler: async (_args: string, ctx: ExtensionCommandContext) => {
 			if (ctx.mode !== "tui") {
 				ctx.ui.notify("/eval-viewer requires TUI mode", "error")
+
 				return
 			}
 
 			const scorecardPath = findLatestScorecard()
+
 			if (!scorecardPath) {
 				ctx.ui.notify("No parity scorecards found in docs/articles/evals/", "error")
+
 				return
 			}
 
 			const scorecard = readScorecard(scorecardPath)
+
 			if (!scorecard || scorecard.rows.length === 0) {
 				ctx.ui.notify(`Failed to parse scorecard: ${scorecardPath}`, "error")
+
 				return
 			}
 

@@ -14,10 +14,12 @@
  *   <path> to override.
  */
 
-import { Text } from "ink"
 import { readFileSync } from "node:fs"
+
+import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../sdk/cli.js"
 
 export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
@@ -57,8 +59,8 @@ export interface AutocompleteEntry {
 }
 
 /**
- * Load the FST from `fstPath` and run prefix autocomplete. Throws with a human-readable message on
- * any IO or format error so callers can surface it cleanly.
+ * Load the FST from `fstPath` and run prefix autocomplete. Throws with a human-readable message on any IO or format
+ * error so callers can surface it cleanly.
  */
 export async function runAutocomplete(
 	prefix: string,
@@ -76,6 +78,7 @@ export async function runAutocomplete(
 	}
 
 	let buf: Buffer
+
 	try {
 		buf = readFileSync(fstPath)
 	} catch (err) {
@@ -89,6 +92,7 @@ export async function runAutocomplete(
 	const { autocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
 
 	let matcher
+
 	try {
 		matcher = deserializeFst(buf)
 	} catch (err) {
@@ -109,10 +113,12 @@ export async function runAutocomplete(
 
 function formatSuggestions(entries: AutocompleteEntry[]): string {
 	if (entries.length === 0) return "(no completions)"
+
 	return entries
 		.map((e, i) => {
 			const completion = e.completionTokens.length > 0 ? ` [+${e.completionTokens.join(" ")}]` : ""
 			const imp = e.importance.toFixed(4)
+
 			return `${String(i + 1).padStart(2)}. ${e.name}${completion}  (${e.placetype}, wof:${e.wofID}, imp:${imp})`
 		})
 		.join("\n")
@@ -127,12 +133,14 @@ const AutocompleteCommand: CommandComponent<typeof AutocompleteConfigSchema, typ
 
 	useEffect(() => {
 		const prefix = args[0]
+
 		if (!prefix) {
 			// Intentional: surface the usage error through the same render-then-exit pattern as parse.tsx.
 			// The "cascading renders" the rule warns about are not a real cost here — the effect
 			// short-circuits with `return`.
 			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setError("Usage: mailwoman autocomplete <prefix> [--limit N] [--fst <path>]")
+
 			return
 		}
 

@@ -7,6 +7,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { describe, expect, test } from "vitest"
 
 import {
@@ -50,6 +51,7 @@ function buildBaseSchema(): DatabaseSync {
 		INSERT INTO names (id, language, name) VALUES (1, 'und', 'パリ');
 		INSERT INTO names (id, language, name) VALUES (1, 'und', 'París');
 	`)
+
 	return db
 }
 

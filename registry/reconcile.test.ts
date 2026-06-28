@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import {
 	bucketOf,
 	reconcileCoverage,
@@ -22,6 +23,7 @@ function rec(id: string, source: string): SourceRecord {
 
 function entity(id: string, sources: string[], coordinate?: { latitude: number; longitude: number }): ResolvedEntity {
 	const records = sources.map((s, i) => rec(`${s}:${i}`, s))
+
 	return {
 		id,
 		records,

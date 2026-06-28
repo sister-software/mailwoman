@@ -28,8 +28,10 @@
  *   terms.
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
@@ -39,10 +41,9 @@ export const USGOV_HRSA_FQHC_ADAPTER_ID = "usgov-hrsa-fqhc"
 export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * Subset of HRSA "Health Center Service Delivery Site Locations" CSV columns consulted by the
- * adapter. Column names match the canonical HRSA Data Warehouse export header. Operators
- * substituting a closely-related extract should rename columns to match; the README has the mapping
- * cheatsheet.
+ * Subset of HRSA "Health Center Service Delivery Site Locations" CSV columns consulted by the adapter. Column names
+ * match the canonical HRSA Data Warehouse export header. Operators substituting a closely-related extract should rename
+ * columns to match; the README has the mapping cheatsheet.
  */
 interface HrsaSiteRow {
 	"Site Name": string
@@ -55,23 +56,24 @@ interface HrsaSiteRow {
 }
 
 /**
- * Split a "123 Main St Suite 4" surface form into `(house_number, street)`. The regex tolerates one
- * trailing letter on the number (`"123A Main St"`) and a hyphenated form (`"40-12 Bell Blvd"`);
- * anything else falls back to street-only.
+ * Split a "123 Main St Suite 4" surface form into `(house_number, street)`. The regex tolerates one trailing letter on
+ * the number (`"123A Main St"`) and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
  *
- * Suite / Apt / Unit designators stay on `street` for Phase 1 — Mailwoman's `unit` component exists
- * but the address-formatter does not have a clean slot for it, and HRSA addresses do not separate
- * the suite into its own column. Leaving the surface form intact in `street` preserves the
- * adversarial training signal (the model learns that a trailing "Suite 4" is part of the road line
- * in this distribution).
+ * Suite / Apt / Unit designators stay on `street` for Phase 1 — Mailwoman's `unit` component exists but the
+ * address-formatter does not have a clean slot for it, and HRSA addresses do not separate the suite into its own
+ * column. Leaving the surface form intact in `street` preserves the adversarial training signal (the model learns that
+ * a trailing "Suite 4" is part of the road line in this distribution).
  */
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
 
 function splitAddress(address: string): { house_number?: string; street: string } | null {
 	const trimmed = address.trim()
+
 	if (!trimmed) return null
 	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (m) return { house_number: m[1], street: m[2]!.trim() }
+
 	return { street: trimmed }
 }
 
@@ -80,8 +82,8 @@ function splitAddress(address: string): { house_number?: string; street: string 
  *
  * "<Site Name>, <house> <street>, <city>, <state> <postcode>"
  *
- * The site name leads (US conventional addressee-then-address ordering) so a downstream model sees
- * the venue-prefix-then-address shape that HRSA users actually type into geocoders.
+ * The site name leads (US conventional addressee-then-address ordering) so a downstream model sees the
+ * venue-prefix-then-address shape that HRSA users actually type into geocoders.
  */
 function composeRaw(
 	venue: string,
@@ -93,6 +95,7 @@ function composeRaw(
 ): string {
 	const streetPart = [house, street].filter(Boolean).join(" ").trim()
 	const cityPart = [city.trim(), [state, postcode].filter(Boolean).join(" ").trim()].filter(Boolean).join(", ")
+
 	return [venue.trim(), streetPart, cityPart].filter(Boolean).join(", ")
 }
 
@@ -119,9 +122,11 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const record of parser as AsyncIterable<HrsaSiteRow>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const venue = (record["Site Name"] ?? "").trim()
@@ -132,6 +137,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 
 					if (!venue || !split || !city || !postcode) continue
 					const state = lookupStateAbbreviation(stateAbbr)
+
 					if (!state) continue
 
 					// Insertion order matters here. `venue` first so alignment claims its span
@@ -148,9 +154,11 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 					}
 
 					const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
+
 					if (!raw) continue
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length === 0) continue
 
 					const siteId = (record["Site ID"] ?? "").trim()

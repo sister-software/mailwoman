@@ -8,6 +8,12 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "codex"
 	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
@@ -22,19 +28,13 @@
 		"./au": "./out/au/index.js",
 		"./nz": "./out/nz/index.js"
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"dependencies": {
 		"type-fest": "^5.7.0"
 	},
 	"devDependencies": {
 		"@mailwoman/annotations": "workspace:*"
-	},
-	"files": [
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map"
-	],
-	"publishConfig": {
-		"access": "public"
 	}
 }

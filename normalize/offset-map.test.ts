@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { composeMaps, identityMap } from "./offset-map.js"
 
 test("identityMap: [0, 1, …, n-1]", () => {

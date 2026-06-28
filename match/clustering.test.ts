@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { cluster, representative } from "./clustering.js"
 
 const r1 = { id: "1" }

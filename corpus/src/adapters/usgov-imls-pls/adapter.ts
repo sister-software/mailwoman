@@ -8,7 +8,7 @@
  *   row per library outlet (~17K rows). Each row carries the library name, street address, city,
  *   ZIP, county, and geocoordinates.
  *
- *   The adapter consumes the outlet CSV the operator pre-downloads via `fetch-imls-pls.sh`. Column
+ *   The adapter consumes the outlet CSV the operator pre-downloads via `fetch-imls-pls.ts`. Column
  *   names match the IMLS PLS outlet file header.
  *
  *   Output: one row per outlet with `venue` (library name), `(house_number, street, locality,
@@ -17,8 +17,10 @@
  *   License: stamped `"Public Domain"` per IMLS federal government distribution terms.
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
@@ -41,9 +43,12 @@ interface ImlsOutletRow {
 
 function splitAddress(address: string): { house_number?: string; street: string } | null {
 	const trimmed = address.trim()
+
 	if (!trimmed) return null
 	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (m) return { house_number: m[1], street: m[2]!.trim() }
+
 	return { street: trimmed }
 }
 
@@ -69,9 +74,11 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const record of parser as AsyncIterable<ImlsOutletRow>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const libName = (record.LIBNAME ?? "").trim()
@@ -84,9 +91,11 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 					if (!libName || !city || !zip) continue
 
 					const state = lookupStateAbbreviation(stateAbbr)
+
 					if (!state) continue
 
 					const split = splitAddress(address)
+
 					if (!split) continue
 
 					const components: CanonicalRow["components"] = {
@@ -112,6 +121,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 						.join(", ")
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length <= 2) continue
 
 					const fscsKey = (record.FSCSKEY ?? "").trim()

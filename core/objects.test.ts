@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { flattenObject, isRecordLike, omitNullable, pick, tryParsingJSON } from "./objects.js"
 
 test("pick: selects the listed keys from an array of keys", () => {

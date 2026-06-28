@@ -1,14 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "node:sqlite"
+
 import {
 	Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha3bLanguageCode,
 } from "@mailwoman/core/resources/languages"
-import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "node:sqlite"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
+
 import { tryWithBackoff } from "./DataSourceCache.js"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.js"
 

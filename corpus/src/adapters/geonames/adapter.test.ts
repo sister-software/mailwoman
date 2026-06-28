@@ -4,7 +4,9 @@
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { beforeEach, describe, expect, it } from "vitest"
+
 import type { CanonicalRow } from "../../types.js"
 import { createGeonamesAdapter, GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE } from "./adapter.js"
 
@@ -35,12 +37,14 @@ function gnRow(o: {
 	cols[7] = o.featureCode
 	cols[8] = o.country
 	cols[10] = o.admin1 ?? ""
+
 	return cols.join("\t")
 }
 
 function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boolean }): string {
 	const country = join(scratch, "US.txt")
 	writeFileSync(country, rows.join("\n") + "\n", "utf8")
+
 	if (opts?.admin1 !== false) {
 		writeFileSync(
 			join(scratch, "admin1CodesASCII.txt"),
@@ -48,6 +52,7 @@ function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boo
 			"utf8"
 		)
 	}
+
 	if (opts?.countries !== false) {
 		writeFileSync(
 			join(scratch, "countryInfo.txt"),
@@ -55,12 +60,15 @@ function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boo
 			"utf8"
 		)
 	}
+
 	return country
 }
 
 async function collect(inputPath: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
+
 	for await (const r of createGeonamesAdapter().rows({ inputPath, ...extra })) out.push(r)
+
 	return out
 }
 
@@ -84,6 +92,7 @@ describe("geonames adapter", () => {
 			region: "Vermont",
 			country: "United States",
 		})
+
 		for (const r of rows) {
 			expect(r.country).toBe("US")
 			expect(r.source).toBe(GEONAMES_ADAPTER_ID)

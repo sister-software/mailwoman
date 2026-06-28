@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { Span, TokenContext } from "@mailwoman/core/tokenization"
+
 import type { Classifier } from "./BaseClassifier.js"
 
 export interface SectionClassifierUtils {

@@ -8,6 +8,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import {
@@ -25,8 +26,7 @@ interface FixtureRow {
 	lat: number
 	lon: number
 	/**
-	 * Half-extent in degrees → bbox = [lat±d, lon±d]. Bigger d ⇒ bigger bbox ⇒ looser relative
-	 * tolerance.
+	 * Half-extent in degrees → bbox = [lat±d, lon±d]. Bigger d ⇒ bigger bbox ⇒ looser relative tolerance.
 	 */
 	d: number
 	population?: number
@@ -132,11 +132,14 @@ beforeEach(() => {
 			VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`
 	)
 	const insPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
+
 	for (const r of FIXTURE) {
 		insSpr.run(r.id, r.name, r.placetype, r.country, r.lat, r.lon, r.lat - r.d, r.lon - r.d, r.lat + r.d, r.lon + r.d)
+
 		if (r.population !== undefined) insPop.run(r.id, r.population)
 	}
 	const insAnc = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, 'region')`)
+
 	for (const [id, anc] of ANCESTRY) insAnc.run(id, anc)
 })
 

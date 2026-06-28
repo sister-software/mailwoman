@@ -17,7 +17,6 @@
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
-
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
@@ -27,6 +26,7 @@ import type React from "react"
 import { DemoApp } from "./_app.tsx"
 import { useBrowserGeolocation } from "./_hooks.tsx"
 import { TILE_WORKER_URL } from "./_map-helpers.ts"
+
 import styles from "./styles.module.css"
 
 const LoadingFallback: React.FC = () => {

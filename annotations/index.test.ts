@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { type AnnotationSet, type Annotator, composeAnnotators, toNative, toOpenCage } from "./index.js"
 
 test("composeAnnotators: merges partial results from multiple annotators", async () => {

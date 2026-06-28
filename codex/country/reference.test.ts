@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { countryFlag, countryReferenceAnnotator } from "./reference.js"
 
 test("countryFlag: alpha-2 → regional-indicator emoji, case-insensitive", () => {

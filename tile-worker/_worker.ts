@@ -7,6 +7,7 @@
 
 import type { ExportedHandler } from "@cloudflare/workers-types"
 import { ResourceError } from "@mailwoman/core/errors"
+
 import { applyAccessControlAllowOrigin } from "./cors.js"
 import { DatabaseRetrieveRoute } from "./routes/db.js"
 import { GeolocateRoute } from "./routes/geolocation.js"

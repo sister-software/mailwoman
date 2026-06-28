@@ -26,6 +26,7 @@ import type {
 	ProposalClassifier,
 	Section,
 } from "@mailwoman/core/types"
+
 import type { NeuralAddressClassifier } from "./classifier.js"
 import { STAGE2_TAGS } from "./labels.js"
 
@@ -35,9 +36,9 @@ export interface NeuralProposalClassifierConfig {
 	/** The underlying neural classifier instance. */
 	classifier: NeuralAddressClassifier
 	/**
-	 * Component tags this classifier may emit. Defaults to the Stage 2 tag set (coarse +
-	 * venue/street/house_number). v0.2.0 Stage 1 models never decode to the fine tags anyway, so the
-	 * broader default is forwards-compat without back-compat risk.
+	 * Component tags this classifier may emit. Defaults to the Stage 2 tag set (coarse + venue/street/house_number).
+	 * v0.2.0 Stage 1 models never decode to the fine tags anyway, so the broader default is forwards-compat without
+	 * back-compat risk.
 	 */
 	emits?: readonly ComponentTag[]
 	/** Locales this classifier is active for. `["*"]` (locale-agnostic) by default. */
@@ -81,10 +82,12 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 					penalty,
 				})
 			}
+
 			for (const child of node.children) visit(child)
 		}
 
 		for (const root of tree.roots) visit(root)
+
 		return proposals
 	}
 

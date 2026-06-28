@@ -17,15 +17,15 @@ function fmt(ms: number): string {
 }
 
 /**
- * Per-stage timing breakdown for a parse — a stacked bar (shape+kind / classify / resolve) sized by
- * each stage's wall-clock, with a small legend showing the split in ms. Companion to the
- * FailureDiagnostic: turns the demo into a teaching tool (you see the model inference dominate) and
- * surfaces perf regressions at a glance. The DB-load cost is deliberately excluded — only the
- * per-parse cascade is timed.
+ * Per-stage timing breakdown for a parse — a stacked bar (shape+kind / classify / resolve) sized by each stage's
+ * wall-clock, with a small legend showing the split in ms. Companion to the FailureDiagnostic: turns the demo into a
+ * teaching tool (you see the model inference dominate) and surfaces perf regressions at a glance. The DB-load cost is
+ * deliberately excluded — only the per-parse cascade is timed.
  */
 export const TimingPanel: React.FC<TimingPanelProps> = ({ timing }) => {
 	const present = STAGES.filter((s) => typeof timing[s.key] === "number") as Array<(typeof STAGES)[number]>
 	const total = present.reduce((sum, s) => sum + (timing[s.key] as number), 0)
+
 	if (total <= 0) return null
 
 	return (
@@ -37,6 +37,7 @@ export const TimingPanel: React.FC<TimingPanelProps> = ({ timing }) => {
 				{present.map((s) => {
 					const ms = timing[s.key] as number
 					const pct = (ms / total) * 100
+
 					// Floor the rendered width so a sub-millisecond stage stays visible as a sliver.
 					return (
 						<div

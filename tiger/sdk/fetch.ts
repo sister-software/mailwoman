@@ -23,8 +23,6 @@
  *   inserts. Re-running a state replaces its rows.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { spawn } from "node:child_process"
 import { createWriteStream, existsSync } from "node:fs"
 import { mkdir, rename } from "node:fs/promises"
@@ -33,6 +31,10 @@ import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
+
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "./schema.js"
 import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.js"
 
@@ -40,8 +42,7 @@ const CENSUS_HOST = "https://www2.census.gov"
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 /**
- * Supported TIGER levels. `tabblock20` is per state + carries geometry; `place`/`addrfeat` are
- * attribute-only.
+ * Supported TIGER levels. `tabblock20` is per state + carries geometry; `place`/`addrfeat` are attribute-only.
  */
 export type TIGERFetchLevel = "tabblock20" | "place" | "addrfeat"
 
@@ -64,8 +65,7 @@ export interface FetchTIGEROptions {
 	/** Vintage. Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current). */
 	vintage?: number
 	/**
-	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (the name the corpus `tiger` adapter
-	 * reads).
+	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (the name the corpus `tiger` adapter reads).
 	 */
 	outPath?: string
 	/** Download cache + default output root. */
@@ -90,6 +90,7 @@ export interface FetchTIGERResult {
 /** The earlier-draft column map for `tabblock20`. Geometry rides along implicitly. */
 function blockSelectSQL(layer: string, county?: string): string {
 	const where = county ? ` WHERE COUNTYFP20 = '${county}'` : ""
+
 	return (
 		`SELECT GEOID20 AS GEOID, STATEFP20 AS state_code, COUNTYFP20 AS county_code, ` +
 		`SUBSTR(GEOID20, 6, 6) AS tract_code, ` +
@@ -170,6 +171,7 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	if (existsSync(dest)) {
 		try {
 			await runCapture("unzip", ["-tq", dest])
+
 			return true
 		} catch {
 			// corrupt cache — re-download
@@ -177,26 +179,30 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	}
 	const tmp = dest + ".tmp"
 	const res = await fetch(url, { redirect: "follow" })
+
 	if (!res.ok || !res.body) throw new Error(`HTTP ${res.status} fetching ${url}`)
 	await pipeline(Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]), createWriteStream(tmp))
 	await rename(tmp, dest)
+
 	return false
 }
 
 /** Scrape the ADDRFEAT directory listing for a state's county FIPS codes. */
 async function discoverCounties(state: string, vintage: number): Promise<string[]> {
 	const res = await fetch(`${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, { redirect: "follow" })
+
 	if (!res.ok) throw new Error(`HTTP ${res.status} listing ADDRFEAT for vintage ${vintage}`)
 	const html = await res.text()
 	const re = new RegExp(`tl_${vintage}_${state}(\\d{3})_addrfeat\\.zip`, "g")
 	const counties = new Set<string>()
+
 	for (let m = re.exec(html); m; m = re.exec(html)) counties.add(m[1]!)
+
 	return [...counties].sort()
 }
 
 /**
- * Fetch one state's TIGER data at `level` into a SQLite DB. Yields progress; returns the final
- * tally.
+ * Fetch one state's TIGER data at `level` into a SQLite DB. Yields progress; returns the final tally.
  */
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
 	const level = options.level ?? "tabblock20"
@@ -217,6 +223,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 	// Source units: one (per-state) for block/place; one per county for addrfeat.
 	const geoCodes = level === "addrfeat" ? await discoverCounties(state, vintage) : [""]
+
 	if (level === "addrfeat" && geoCodes.length === 0) {
 		throw new Error(`No ADDRFEAT counties found for state ${state} vintage ${vintage}`)
 	}
@@ -295,14 +302,18 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 			for await (const line of createInterface({ input: child.stdout, crlfDelay: Infinity })) {
 				if (!line) continue
 				let feat: { properties?: Record<string, unknown>; geometry?: unknown }
+
 				try {
 					feat = JSON.parse(line)
 				} catch {
 					continue
 				}
+
 				if (!feat.properties) continue
+
 				if (level === "tabblock20" && !feat.geometry) continue
 				batch.push(buildRow(level, feat.properties, feat.geometry, state))
+
 				if (batch.length >= batchSize) {
 					await flush()
 					yield { phase: "load", inserted, total: 0 }
@@ -311,11 +322,13 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 			await flush()
 
 			const code = await exited
+
 			if (code !== 0) throw new Error(`ogr2ogr exited ${code} on ${layer}: ${stderr.slice(0, 500)}`)
 			yield { phase: "load", inserted, total: 0 }
 		}
 
 		db.exec("PRAGMA wal_checkpoint(TRUNCATE);")
+
 		return { outPath, table, inserted }
 	} finally {
 		await kdb.destroy()

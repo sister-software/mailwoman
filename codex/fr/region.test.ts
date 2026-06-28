@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { FR_DEPARTEMENTS } from "./departement.js"
 import { FR_REGIONS, isFrenchRegionCode, lookupFrenchRegion } from "./region.js"
 

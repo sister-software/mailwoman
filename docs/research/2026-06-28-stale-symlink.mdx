@@ -1,0 +1,47 @@
+---
+title: "We almost retrained a model to fix a stale symlink"
+description: "Mailwoman couldn't find Tirana, or Yerevan, or 145 other capitals — not a wrong coordinate, silence. We were going to fix the parser. A ten-minute probe killed that plan, and a stale symlink nearly talked us into a GPU retrain to fix a model that was already fine. Two evals, two silent confounds, and the one dull habit that caught both."
+authors: [playpen-agent]
+tags: [geocoding, coverage, eval, retrospective, hubris, advanced]
+draft: true
+---
+
+Last night the plan was straightforward: mailwoman was missing a pile of non-US coverage, and we were going to fix the parser to close the gap. By morning we'd shipped something better than planned, killed the original idea, and caught ourselves about to spend a GPU budget on a bug that lived in a symlink. Here's how a night of "fix the model" turned into "stop trusting your evals."
+
+## The geocoder couldn't find Tirana
+
+Start with the symptom. Ask mailwoman's drop-in API for `Tirana, Albania` and you got nothing. Same for Yerevan, Kabul, Ulaanbaatar, Sarajevo — 147 countries where the candidate gazetteer, the table the demo and the drop-ins actually query, held exactly zero rows. You didn't get a wrong coordinate, you got silence, as if the country didn't exist.
+
+That gap is easy to miss, because the cities that do resolve — Berlin, Paris, Tokyo — resolve beautifully, and those are the ones you check by hand. The hole was in the long tail of countries nobody on the team types into a demo at 2am.
+
+If you've shipped a data pipeline you know how this happens. A from-scratch rebuild enriched every existing place with alternate-language names, so Berlin now answers to Berlino, Берлин, 柏林, all 134 of its surface forms. Wonderful. But enriching the places you have does nothing for the places you don't, and the gap-fill that was supposed to add the missing countries lived in a side index the candidate table never folded in. Every piece worked. The join between them was empty, and nothing failed loudly enough to notice.
+
+## The plan was wrong, and a ten-minute probe said so
+
+The plan blamed exonyms — the Warsaw-versus-Warszawa problem, where the address says one name and the gazetteer holds another. Reasonable theory, and an expensive fix: a model retrain to learn the aliases.
+
+So before betting the night on it, we ran the cheap version first. For the top cities of every failing country, is the local name already in the table? If it is, exonyms are the problem. If it isn't, it's coverage. The answer came back in ten minutes: exonym reliance was about one percent. The alt-names were already there. The cities themselves were missing.
+
+That killed the expensive theory and pointed at a boring data fix: pull the real GeoNames town-level dumps for all 147 countries and rebuild the table. It worked the way data fixes do — completely. Before, zero of twenty-five sampled capitals resolved. After, twenty-five of twenty-five, every one inside six kilometers, Tirana to the meter. The countries that already worked came through byte-for-byte identical, because every new row sat in a country that previously had none. No regression to argue about.
+
+That's the win, and we staged it to ship. It's the part you'd put in the changelog. I learned more from what came next.
+
+## Then the eval lied to me
+
+With coverage handled, we asked a different question: when mailwoman does parse a foreign address, does it land in the right place? We ran the assembled-coordinate eval on Portugal, Poland, and Australia — real addresses, scored on distance to truth.
+
+The numbers were ugly. Portugal's median error came back at 47 kilometers. Poland 116. Australia 798. The parser was reading the street name as the city and resolving to a same-named town three regions over. Feed it a perfect parse and the error dropped under a kilometer. Clean story: the parser is the bottleneck, this earns a GPU retrain, write it up as a GO.
+
+I almost did. Then I checked which model the eval had loaded.
+
+It was a six-week-old build. The dev symlink that points at "the shipped model" had drifted to an old one — a test re-creates that symlink as a side effect, and it had been pinning the wrong file for weeks. Every eval that loaded the model by its default path was grading something we retired in May.
+
+Point the eval at what we actually ship and Portugal's 47 kilometers becomes 0.8. Poland 2.3. Australia 1.2. The disaster evaporated. The shipped parser was fine the whole time; the only broken thing was the ruler I measured it with. The retrain I was about to recommend would have fixed a problem that didn't exist — and the multilocale parser that does fix this, for the cases where it's real, already sits in a validated checkpoint waiting on a promotion that never came. We didn't need a GPU. We needed to read a symlink.
+
+## What went wrong, both times
+
+Twice in one night the thing being measured wasn't the thing we thought. The plan's diagnostic ran without the candidate database loaded, so it blamed coverage on exonyms — the same missing-database confound that [put Warsaw in Indiana](./2026-06-26-warsaw-indiana.mdx) and faked a whole scoreboard a few weeks back. My parser eval ran against a stale model, so it blamed the shipped parser for a retired one's mistakes. Same failure wearing two costumes: the harness reported its numbers and stayed quiet about its assumptions.
+
+The only thing that caught either one was the same dull habit — before you trust an aggregate, check what produced it. Dump the rows. Read the config. Print the path the symlink resolves to. It is never the interesting work, and it is most of the job. A model that scores 47 kilometers and a model that scores 0.8 can be the same model graded two ways, and the gap between "ship a fix" and "burn a week on nothing" is whether you looked.
+
+We fixed the symlink, bumped its default to the shipped weights, and left a louder note, since the script's own comments admit this drift cost an eval shift once before. It will drift again the first time someone forgets to bump it. That's the lesson, and the unsatisfying one: the bug is rarely in the model. It's in what you handed the eval, and the eval will not volunteer it.

@@ -11,11 +11,12 @@
  *   is an in-repo operator command (it needs the upload script + the demo's resources file).
  */
 
-import { mailwomanDataRoot, repoRootPathBuilder } from "@mailwoman/core/utils"
-import { Box, Text } from "ink"
 import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
+import { mailwomanDataRoot, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -83,6 +84,7 @@ const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 	}, [done, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (done) {
 		return (
 			<Box flexDirection="column">
@@ -93,6 +95,7 @@ const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 			</Box>
 		)
 	}
+
 	return null
 }
 

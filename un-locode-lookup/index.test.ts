@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { DatabaseSync } from "node:sqlite"
+
 import { expect, test } from "vitest"
+
 import { foldName, makeUnLocodeAnnotator, parseUnLocodeCoords, UnLocodeLookup } from "./index.js"
 
 test("foldName: strips diacritics, lowercases, collapses whitespace", () => {
@@ -26,6 +28,7 @@ function fixtureDb(): DatabaseSync {
 	const ins = db.prepare("INSERT INTO un_locode VALUES (?,?,?,?,?,?)")
 	ins.run("NL", "RTM", "Rotterdam", "rotterdam", 51.92, 4.48)
 	ins.run("US", "NYC", "New York", "new york", 40.7, -74.0)
+
 	return db
 }
 

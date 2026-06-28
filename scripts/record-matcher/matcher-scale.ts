@@ -15,11 +15,13 @@
  *   [--sizes 10000,50000,100000,250000,500000] [--dup 3] [--em] [--out-md <md>]
  */
 
-import { resolveEntities, type SourceRecord } from "@mailwoman/registry"
 import { writeFileSync } from "node:fs"
+
+import { resolveEntities, type SourceRecord } from "@mailwoman/registry"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -34,22 +36,25 @@ const OUT_MD = arg("out-md", "")
 /** Deterministic LCG so the eval is reproducible run to run (no Math.random). */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0
+
 	return () => {
 		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+
 		return s / 0x100000000
 	}
 }
 
 /**
- * Generate N synthetic records clustered into ~N/DUP distinct "places". Each place gets a
- * coordinate in the continental-US box, a canonical key, and an org name; its DUP duplicates carry
- * a lightly-varied name and a jittered coordinate, so geo-cell + canonical-key blocking groups them
- * and scoring links them — the realistic shape of a dedup workload.
+ * Generate N synthetic records clustered into ~N/DUP distinct "places". Each place gets a coordinate in the
+ * continental-US box, a canonical key, and an org name; its DUP duplicates carry a lightly-varied name and a jittered
+ * coordinate, so geo-cell + canonical-key blocking groups them and scoring links them — the realistic shape of a dedup
+ * workload.
  */
 function generate(n: number, seed = 1): SourceRecord[] {
 	const rnd = lcg(seed)
 	const places = Math.max(1, Math.round(n / DUP))
 	const records: SourceRecord[] = new Array(n)
+
 	for (let i = 0; i < n; i++) {
 		const place = i % places
 		const latitude = 25 + rnd() * 24 // ~25–49 N
@@ -70,6 +75,7 @@ function generate(n: number, seed = 1): SourceRecord[] {
 			},
 		} as SourceRecord
 	}
+
 	return records
 }
 
@@ -103,6 +109,7 @@ async function main(): Promise<void> {
 		console.error(
 			`    N=${n}: ${sec(wallMs)}, ${candidatePairs} pairs → ${entities.length} entities, RSS ${mb(rssBytes)}`
 		)
+
 		// Encourage reclamation between sizes (RSS is a shared-process high-water — see the report note).
 		if (global.gc) global.gc()
 	}
@@ -119,6 +126,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`| records | candidate pairs | entities | wall-clock | resolve rate | RSS (high-water) |`)
 	lines.push(`|---:|---:|---:|---:|---:|---:|`)
+
 	for (const r of rows) {
 		const rate = Math.round(r.records / (r.wallMs / 1000))
 		lines.push(
@@ -156,6 +164,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`[written] ${OUT_MD}`)

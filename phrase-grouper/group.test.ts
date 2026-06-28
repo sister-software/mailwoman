@@ -7,6 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { groupPhrases, groupPhrasesSync } from "./group.js"
 import {
 	scoreHyphenatedCompound,
@@ -63,9 +64,11 @@ describe("phrase-grouper — contract", () => {
 				segments: [{ body: "350 5th Ave", index: 0, span: { start: 0, end: 11 } }],
 			})
 		)
+
 		for (let i = 1; i < out.length; i++) {
 			const prev = out[i - 1]!
 			const cur = out[i]!
+
 			if (prev.confidence !== cur.confidence) {
 				expect(prev.confidence).toBeGreaterThanOrEqual(cur.confidence)
 			} else {

@@ -8,6 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { isAllCapsInput, normalizeInputCase, titleCaseInput } from "../case-normalize.js"
 
 describe("isAllCapsInput", () => {

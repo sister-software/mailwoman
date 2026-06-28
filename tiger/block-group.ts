@@ -34,12 +34,12 @@ export interface TIGERBlockGroup {
 	COUSUBFP: string
 
 	/**
-	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
 	 * @title County Subdivision GNIS Code
 	 *
 	 * @minLength 8
 	 * @maxLength 8
 	 * @pattern ^\d{8}$
+	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
 	 */
 	COUSUBNS: string
 
@@ -63,8 +63,7 @@ export interface TIGERBlockGroup {
 	GEOIDFQ: string
 
 	/**
-	 * Current name and the translated legal/statistical area description code for county
-	 * sub-division.
+	 * Current name and the translated legal/statistical area description code for county sub-division.
 	 *
 	 * @title Name/Legal Statistical Area Description
 	 * @minLength 1

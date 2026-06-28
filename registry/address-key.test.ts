@@ -4,6 +4,7 @@
 import { isPostalAddressID } from "@mailwoman/address-id"
 import { block } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
+
 import { addressIdBlockingKey, postalAddressId } from "./address-key.js"
 import type { SourceRecord } from "./types.js"
 

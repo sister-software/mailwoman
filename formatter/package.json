@@ -8,6 +8,12 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "formatter"
 	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
@@ -15,20 +21,14 @@
 		"./format": "./out/format.js",
 		"./key": "./out/key.js"
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"dependencies": {
 		"@fragaria/address-formatter": "^6.7.1",
 		"@mailwoman/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": ">=26.0.1"
-	},
-	"files": [
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map"
-	],
-	"publishConfig": {
-		"access": "public"
 	}
 }

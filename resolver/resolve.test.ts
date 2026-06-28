@@ -6,8 +6,6 @@
  *   walk + decoration semantics without depending on any concrete WOF data.
  */
 
-import { describe, expect, test, vi } from "vitest"
-
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
 import { decodeAsXml } from "@mailwoman/core/decoder"
 import type {
@@ -18,6 +16,8 @@ import type {
 	ResolverBackend,
 } from "@mailwoman/core/resolver"
 import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
+import { describe, expect, test, vi } from "vitest"
+
 import { createWofResolver } from "./resolve.js"
 
 function node(
@@ -30,8 +30,11 @@ function node(
 	sourceId?: string
 ): AddressNode {
 	const n: AddressNode = { tag, value, start, end, confidence: 0.9, children }
+
 	if (source) n.source = source
+
 	if (sourceId) n.sourceId = sourceId
+
 	return n
 }
 
@@ -62,6 +65,7 @@ class FakeResolverBackend implements ResolverBackend {
 		// Mirror the concrete backends (lookup.ts / wasm): expand the placetype filter through the
 		// shared PLACETYPE_FILTER_GROUPS so a `region` query also reaches `macroregion`, etc. (#718).
 		const types = expandPlacetypeFilter(requested)
+
 		return this.#places
 			.filter((p) => p.name.toLowerCase().includes(text))
 			.filter((p) => !types || types.includes(p.placetype))
@@ -893,6 +897,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const recorder: InterpolationLookup = {
 			find: ({ street }) => {
 				queried = street
+
 				return null
 			},
 		}
@@ -916,6 +921,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const recorder: InterpolationLookup = {
 			find: ({ street }) => {
 				queried = street
+
 				return null
 			},
 		}
@@ -938,6 +944,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const recorder: InterpolationLookup = {
 			find: ({ street }) => {
 				queried = street
+
 				return null
 			},
 		}
@@ -957,6 +964,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const spy: InterpolationLookup = {
 			find: (q) => {
 				called = true
+
 				return fakeInterp.find(q)
 			},
 		}

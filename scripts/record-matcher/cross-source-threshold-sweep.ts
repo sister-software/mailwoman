@@ -26,7 +26,10 @@
  *   [--cap 2000] [--state TX] [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
@@ -42,13 +45,13 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { writeFileSync } from "node:fs"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -125,33 +128,41 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
 const normPhone = (p?: string | null): string => {
 	if (!p) return ""
 	const d = p.replace(/\D/g, "")
+
 	return d.length >= 10 ? d.slice(-10) : ""
 }
 
 /**
- * Label-free precision proxy: does this cross-source entity carry the SAME phone in records from
- * two DIFFERENT sources? (Phone isn't the join key, so a match is independent corroboration of
- * same-facility.) Entities where no two cross-source records both have a phone are "unknown" — we
- * only count corroborated / contradicted among those that CAN be checked.
+ * Label-free precision proxy: does this cross-source entity carry the SAME phone in records from two DIFFERENT sources?
+ * (Phone isn't the join key, so a match is independent corroboration of same-facility.) Entities where no two
+ * cross-source records both have a phone are "unknown" — we only count corroborated / contradicted among those that CAN
+ * be checked.
  */
 function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "unknown" {
 	const bySource = new Map<string, Set<string>>()
+
 	for (const r of e.records) {
 		const ph = normPhone(r.phone)
+
 		if (!ph) continue
 		const s = r.source ?? "?"
+
 		if (!bySource.has(s)) bySource.set(s, new Set())
 		bySource.get(s)!.add(ph)
 	}
 	const sources = [...bySource.keys()]
+
 	if (sources.length < 2) return "unknown"
 	let any = false
+
 	for (let i = 0; i < sources.length; i++) {
 		for (let j = i + 1; j < sources.length; j++) {
 			any = true
+
 			for (const ph of bySource.get(sources[i]!)!) if (bySource.get(sources[j]!)!.has(ph)) return "corroborated"
 		}
 	}
+
 	return any ? "contradicted" : "unknown"
 }
 
@@ -172,12 +183,16 @@ function measure(label: string, threshold: number | null, entities: ResolvedEnti
 	let phoneCorrob = 0
 	let phoneContradict = 0
 	let phoneCheckable = 0
+
 	for (const e of entities) {
 		const n = entitySources(e).size
+
 		if (n < 2) continue
 		crossSource++
+
 		if (n >= 3) tripleSource++
 		const ev = phoneEvidence(e)
+
 		if (ev === "corroborated") {
 			phoneCorrob++
 			phoneCheckable++
@@ -186,6 +201,7 @@ function measure(label: string, threshold: number | null, entities: ResolvedEnti
 			phoneCheckable++
 		}
 	}
+
 	return {
 		label,
 		threshold,
@@ -201,12 +217,15 @@ function measure(label: string, threshold: number | null, entities: ResolvedEnti
 async function main(): Promise<void> {
 	// --- Ingest + geocode each source ONCE. ---
 	const rawBySource = new Map<string, Record<string, string>[]>()
+
 	for (const spec of SPECS) {
 		console.error(`[A] ${spec.source}: streaming + ${STATE} filter (cap ${CAP})…`)
 		const kept: Record<string, string>[] = []
+
 		for await (const row of streamRows(spec.path)) {
 			if (!spec.inState(row)) continue
 			kept.push(row)
+
 			if (kept.length >= CAP) break
 		}
 		rawBySource.set(spec.source, kept)
@@ -234,8 +253,10 @@ async function main(): Promise<void> {
 
 	console.error("[C] geocoding + ingesting…")
 	const records: SourceRecord[] = []
+
 	for (const spec of SPECS) {
 		const recs = await ingestRows(rawBySource.get(spec.source)!, spec.mapping, { geocodeAddress: seam })
+
 		for (const r of recs) r.id = `${spec.source}:${r.id}`
 		records.push(...recs)
 	}
@@ -247,6 +268,7 @@ async function main(): Promise<void> {
 	// --- The bundled GBT scorer over the input-scoped address-frequency basis (eval convention). ---
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
+
 	for (const r of records) {
 		if (!r.address?.raw) continue
 		addrCounts.set(addressFrequencyKey(r.address.raw), (addrCounts.get(addressFrequencyKey(r.address.raw)) ?? 0) + 1)
@@ -272,6 +294,7 @@ async function main(): Promise<void> {
 	// cross-source pairs sit at strongly NEGATIVE logits). ---
 	const SWEEP = [-8, -6, -5, -4, -3, -2, -1, 0, 1, 2, DEDUP_GBT_META.recommendedThreshold]
 	const gbtArms: ArmMetrics[] = []
+
 	for (const t of SWEEP) {
 		console.error(`[D] resolving — GBT @ threshold ${t}…`)
 		const { entities } = resolveEntities(records, {
@@ -308,6 +331,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`| arm | threshold | total entities | cross-source links | triple-source | phone-corrob (of checkable) |`)
 	lines.push(`|---|---:|---:|---:|---:|---|`)
+
 	for (const r of rows) {
 		lines.push(
 			`| ${r.label} | ${r.threshold === null ? "—" : r.threshold} | ${r.entities} | ${r.crossSource} | ` +
@@ -321,6 +345,7 @@ async function main(): Promise<void> {
 		`FS baseline: **${fs.crossSource}** cross-source links (${fs.tripleSource} triple), ` +
 			`phone-corrob ${pct(fs.phoneCorrob, fs.phoneCheckable)} (${fs.phoneCorrob}/${fs.phoneCheckable}).`
 	)
+
 	if (!dominating) {
 		lines.push("")
 		lines.push(
@@ -345,6 +370,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`[written] ${OUT_MD}`)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { alignRow } from "./align.js"
 import {
 	composePoBoxPhrase,
@@ -16,8 +17,10 @@ import type { CanonicalRow } from "./types.js"
 // Deterministic RNG for reproducible tests.
 function seededRandom(seed: number): () => number {
 	let s = seed
+
 	return () => {
 		s = (s * 1664525 + 1013904223) % 4294967296
+
 		return s / 4294967296
 	}
 }
@@ -150,6 +153,7 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 		expect(["APO", "FPO", "DPO"]).toContain(row.components.locality)
 		expect(["AA", "AE", "AP"]).toContain(row.components.region)
 		expect(row.components.postcode!).toMatch(/^\d{5}$/)
+
 		// Every component must be a verbatim substring of raw (the BIO aligner needs this).
 		for (const v of [row.components.po_box, row.components.locality, row.components.region, row.components.postcode]) {
 			expect(row.raw).toContain(v!)
@@ -163,6 +167,7 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 			const canonical = { ...row, source: "synth-po-box", source_id: `mil:${seed}` } as CanonicalRow
 			const result = alignRow(canonical)
 			expect(result.kind, `should align, raw=${row.raw}`).toBe("labeled")
+
 			if (result.kind !== "labeled") continue
 			expect(result.row.labels).toContain("B-po_box")
 			expect(result.row.labels).toContain("B-locality")
@@ -180,9 +185,10 @@ describe("maybeNoisifyBoxNumber", () => {
 	it("applies noise when random <= 0.1", () => {
 		// Force noise application; verify SOMETHING changes for a non-trivial number
 		let attempts = 0
-		let sawChange = false
+		const sawChange = false
 		const rng = (() => {
 			const seq = [0.05, 0.5, 0.05, 0.99, 0.05, 0.01]
+
 			return () => seq[attempts++ % seq.length]!
 		})()
 		const result = maybeNoisifyBoxNumber("12345", rng)

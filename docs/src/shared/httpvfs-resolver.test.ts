@@ -10,6 +10,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, describe, expect, test } from "vitest"
 
 import { WOFCandidateTableLookup } from "./httpvfs-resolver.js"
@@ -20,8 +21,10 @@ function stubWorker(db: DatabaseSync) {
 		db: {
 			async exec(sql: string) {
 				const rows = db.prepare(sql).all() as Record<string, unknown>[]
+
 				if (rows.length === 0) return []
 				const columns = Object.keys(rows[0]!)
+
 				return [{ columns, values: rows.map((r) => columns.map((c) => r[c])) }]
 			},
 		},
@@ -46,6 +49,7 @@ function makeDb(withSideIndex: boolean): DatabaseSync {
 		INSERT INTO candidate VALUES ('nashville', 1, 0, 1, -5.84, 1, 'Nashville', 36.17, -86.78, 36.0, -87.0, 36.4, -86.5, 700000, 1);
 		INSERT INTO candidate VALUES ('antioch', 1, 0, 1, -5.07, 2, 'Antioch', 38.0, -121.8, 37.9, -121.9, 38.1, -121.7, 117000, 1);
 	`)
+
 	if (withSideIndex) {
 		d.exec(`
 			CREATE TABLE postal_city_candidate (
@@ -57,6 +61,7 @@ function makeDb(withSideIndex: boolean): DatabaseSync {
 		`)
 	}
 	openDbs.push(d)
+
 	return d
 }
 afterEach(() => {

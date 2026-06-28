@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { type AddressGeocode, type PostalAddress, toPostalAddress, withGeocode } from "./address.js"
 
 const US: PostalAddress["components"] = {

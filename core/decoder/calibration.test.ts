@@ -4,7 +4,9 @@
 import { readFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { describe, expect, test } from "vitest"
+
 import type { BioLabel } from "../types/component.js"
 import { buildAddressTree } from "./build-tree.js"
 import { createCalibrator, type CalibrationTable } from "./calibration.js"
@@ -18,8 +20,10 @@ function findByTag(nodes: AddressNode[], tag: string): AddressNode | undefined {
 	for (const n of nodes) {
 		if (n.tag === tag) return n
 		const c = findByTag(n.children, tag)
+
 		if (c) return c
 	}
+
 	return undefined
 }
 
@@ -57,6 +61,7 @@ describe("createCalibrator", () => {
 	test("is monotone non-decreasing", () => {
 		const cal = createCalibrator(TABLE)
 		let prev = -Infinity
+
 		for (let x = 0; x <= 1.0001; x += 0.02) {
 			const y = cal(x)
 			expect(y).toBeGreaterThanOrEqual(prev - 1e-9)
@@ -98,6 +103,7 @@ describe("shipped isotonic table sanity", () => {
 		const here = dirname(fileURLToPath(import.meta.url))
 		const path = resolve(here, "../../data/eval/calibration/isotonic-en-us-v4.0.0.json")
 		let table: CalibrationTable
+
 		try {
 			table = JSON.parse(readFileSync(path, "utf8"))
 		} catch {
@@ -106,6 +112,7 @@ describe("shipped isotonic table sanity", () => {
 		const cal = createCalibrator(table)
 		expect(cal(0.5)).toBeLessThan(cal(0.99))
 		let prev = -Infinity
+
 		for (let x = 0; x <= 1.0001; x += 0.05) {
 			const y = cal(x)
 			expect(y).toBeGreaterThanOrEqual(prev - 1e-9)

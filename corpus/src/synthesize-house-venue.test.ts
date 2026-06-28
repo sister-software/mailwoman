@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { type HouseVenueBaseTuple, hasHouseNumberAndVenue, synthesizeHouseVenueRow } from "./synthesize-house-venue.js"
 
 function seededRandom(seed: number): () => number {
 	let s = seed
+
 	return () => {
 		s = (s * 1664525 + 1013904223) % 4294967296
+
 		return s / 4294967296
 	}
 }
@@ -63,6 +66,7 @@ describe("synthesizeHouseVenueRow", () => {
 
 	it("ALWAYS emits both house_number AND venue across 500 random invocations", () => {
 		const rng = seededRandom(42)
+
 		for (let i = 0; i < 500; i++) {
 			const row = synthesizeHouseVenueRow(TUPLE, { random: rng })
 			expect(row).not.toBeNull()
@@ -78,6 +82,7 @@ describe("synthesizeHouseVenueRow", () => {
 	it("template distribution is balanced across 1000 invocations", () => {
 		const rng = seededRandom(99)
 		const counts = { "venue-after-street": 0, "venue-before-street": 0 }
+
 		for (let i = 0; i < 1000; i++) {
 			const row = synthesizeHouseVenueRow(TUPLE, { random: rng })
 			counts[row!.template]++

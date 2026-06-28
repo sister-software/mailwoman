@@ -30,7 +30,7 @@ node mailwoman/out/cli.js wof prepare /mnt/playpen/mailwoman-data/wof/repos/ \
 Downloads wikimedia-importance.csv.gz, joins WOF concordances, writes `place_importance` table.
 
 ```bash
-node scripts/build-importance.js --db /mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db
+node mailwoman/out/cli.js gazetteer importance --db /mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db
 ```
 
 ### 3. Build FST gazetteer binary (~3s)

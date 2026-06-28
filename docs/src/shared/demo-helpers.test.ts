@@ -29,10 +29,14 @@ function stubLookup(handler: (q: FindPlaceQuery) => Hit[]): MailwomanLookupLike 
 describe("runCascade", () => {
 	test("warns and stays on the fuzzy backstop when the parsed region cannot be resolved", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
 		try {
 			const lookup = stubLookup((q) => {
-				if (q.placetype === "region") return [] // unresolvable region
+				if (q.placetype === "region") return []
+
+				// unresolvable region
 				if (q.placetype === "locality") return [hit({ id: 1, name: "Brooklyn Park" })]
+
 				return []
 			})
 			const hits = await runCascade(
@@ -54,13 +58,16 @@ describe("runCascade", () => {
 
 	test("warns when the region-bbox pass finds no exact locality and the cascade widens", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
 		try {
 			const lookup = stubLookup((q) => {
 				if (q.placetype === "region") return [hit({ id: 10, name: "New York", placetype: "region", bbox: NY_BBOX })]
+
 				if (q.placetype === "locality") {
 					// Nothing inside the bbox; a fuzzy match only when unconstrained.
 					return q.bbox ? [] : [hit({ id: 2, name: "Brooklyn Park" })]
 				}
+
 				return []
 			})
 			const hits = await runCascade(
@@ -88,9 +95,11 @@ describe("runCascade", () => {
 			if (q.placetype === "locality" && q.text === "New York City") {
 				return [hit({ id: 85977539, name: "New York", exactMatch: true })]
 			}
+
 			// A later node with a canonical-name match — pre-fix the cascade would skip past the
 			// alias-exact hit (treating it as fuzzy) and land here instead.
 			if (q.placetype === "locality" && q.text === "Decoy") return [hit({ id: 999, name: "Decoy" })]
+
 			return []
 		})
 		const hits = await runCascade(
@@ -110,8 +119,11 @@ describe("runCascade", () => {
 		const seen: FindPlaceQuery[] = []
 		const lookup = stubLookup((q) => {
 			seen.push(q)
+
 			if (q.placetype === "region") return [hit({ id: 10, name: "New York", placetype: "region", bbox: NY_BBOX })]
+
 			if (q.placetype === "locality" && q.bbox) return [hit({ id: 3, name: "Brooklyn", placetype: "borough" })]
+
 			return []
 		})
 		const hits = await runCascade(

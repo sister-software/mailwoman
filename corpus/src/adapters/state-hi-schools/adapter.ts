@@ -10,7 +10,7 @@
  *   single-line street address, city, ZIP, a numeric `code`, and HI-specific administrative columns
  *   (complex, complex_area, district, island, charter).
  *
- *   The adapter consumes a flat CSV the operator pre-builds via `fetch-state-hi-schools.sh`, which
+ *   The adapter consumes a flat CSV the operator pre-builds via `fetch-state-hi-schools.ts`, which
  *   concatenates both sheets under one shared header. Column names match the workbook header
  *   verbatim (lower-snake-case: `code`, `name`, `address`, `city`, `zip`, ...).
  *
@@ -28,8 +28,10 @@
  *   License: stamped `"Public Domain"` per Hawaii state government open-data terms.
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
@@ -51,19 +53,25 @@ interface HiSchoolRow {
 
 function splitAddress(address: string): { house_number?: string; street: string } | null {
 	const trimmed = address.trim()
+
 	if (!trimmed) return null
 	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (m) return { house_number: m[1], street: m[2]!.trim() }
+
 	return { street: trimmed }
 }
 
 function normalizeZip(raw: string): string {
 	const trimmed = raw.trim()
+
 	if (!trimmed) return ""
+
 	// XLSX → CSV conversion may emit numeric ZIPs without leading zeros. HI ZIPs all begin
 	// with 96, so a 4-digit value indicates a leading-zero stripped during numeric coercion
 	// (defensive — has not been observed in the published file as of 2026-05).
 	if (/^\d{4}$/.test(trimmed)) return `0${trimmed}`
+
 	return trimmed
 }
 
@@ -89,14 +97,17 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 			)
 
 			const state = lookupStateAbbreviation(HI_STATE_ABBR)
+
 			if (!state) {
 				throw new Error(`state-hi-schools adapter: HI not found in state codex (corpus bug)`)
 			}
 
 			let emitted = 0
+
 			try {
 				for await (const record of parser as AsyncIterable<HiSchoolRow>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const name = (record.name ?? "").trim()
@@ -107,6 +118,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					if (!name || !address || !city || !zip) continue
 
 					const split = splitAddress(address)
+
 					if (!split) continue
 
 					const components: CanonicalRow["components"] = {
@@ -128,6 +140,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 						.join(", ")
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length <= 2) continue
 
 					const code = (record.code ?? "").toString().trim()

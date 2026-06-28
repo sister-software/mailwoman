@@ -26,13 +26,15 @@
  *   [--nad-mod 700] [--oa-mod 120] [--cap 7000]
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
-import { toMapHTML } from "@mailwoman/registry"
 import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
+import { dataRootPath } from "@mailwoman/core/utils"
+import { toMapHTML } from "@mailwoman/registry"
+
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -48,10 +50,13 @@ const CAP = Number(arg("cap", "7000")) // per-source marker cap
 // publisher, which is what we want to color by (the "overture:" prefix is just the theme it arrived in).
 function categorize(source: string): { bucket: string; publisher: string } {
 	if (source === "overture:NAD") return { bucket: "National Address Database", publisher: "NAD (federal)" }
+
 	if (source.startsWith("overture:OpenAddresses")) {
 		const publisher = source.split("/").slice(-1)[0] || "OpenAddresses"
+
 		return { bucket: "OpenAddresses", publisher: `OpenAddresses · ${publisher}` }
 	}
+
 	return { bucket: source, publisher: source }
 }
 
@@ -78,6 +83,7 @@ const features = rows.map((r) => {
 	const { bucket, publisher } = categorize(r.source)
 	counts.set(bucket, (counts.get(bucket) ?? 0) + 1)
 	const addr = [r.number, r.street_raw].filter(Boolean).join(" ").trim()
+
 	return {
 		type: "Feature" as const,
 		geometry: { type: "Point" as const, coordinates: [r.lon, r.lat] },
@@ -101,5 +107,6 @@ const html = toMapHTML(geojson as never, {
 
 writeFileSync(OUT, html)
 console.error(`[written] ${OUT}  (${features.length} points)`)
+
 for (const [bucket, n] of [...counts.entries()].sort((a, b) => b[1] - a[1]))
 	console.error(`  ${n.toString().padStart(5)}  ${bucket}`)

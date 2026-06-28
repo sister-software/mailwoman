@@ -3,6 +3,7 @@
 
 import { ClassificationsMatchMap } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { LevelDesignatorClassifier } from "./LevelDesignatorClassifier.js"
 
 const classifier = await new LevelDesignatorClassifier().ready()

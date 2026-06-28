@@ -15,7 +15,9 @@ import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { describe, expect, test } from "vitest"
+
 import { NeuralAddressClassifier, resolveWeights } from "../index.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -53,9 +55,9 @@ describe("NeuralAddressClassifier.loadFromWeights — explicit-path mode", () =>
 })
 
 describe("resolveWeights — package auto-resolve", () => {
-	test.skipIf(!haveModel)("finds model.onnx + tokenizer.model after running link-dev-weights.sh", () => {
-		const linkScript = resolve(here, "../../neural-weights-en-us/scripts/link-dev-weights.sh")
-		execFileSync("bash", [linkScript], { stdio: "pipe" })
+	test.skipIf(!haveModel)("finds model.onnx + tokenizer.model after running link-dev-weights.ts", () => {
+		const linkScript = resolve(here, "../../neural-weights-en-us/scripts/link-dev-weights.ts")
+		execFileSync(process.execPath, ["--experimental-strip-types", linkScript], { stdio: "pipe" })
 
 		const r = resolveWeights({ locale: "en-us" })
 		expect(r.source).toBe("package:@mailwoman/neural-weights-en-us")

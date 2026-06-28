@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { existsSync, readFileSync } from "node:fs"
+
 /**
  *   #370 RESCORE-CEILING probe — sizes how much of the unresolved tail a parse<->resolve rescoring
  *   loop could recover, vs a true gazetteer coverage gap. For each coord-golden row: parse (the shipped
@@ -21,7 +23,7 @@ import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { existsSync, readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -46,6 +48,7 @@ const hasWof = (n: N9): boolean => !!n.placeId?.startsWith("wof:") || ((n.childr
 const pctile = (xs: number[], p: number): number => {
 	if (!xs.length) return NaN
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 
@@ -70,6 +73,7 @@ async function main() {
 	// if same-name disambiguation picks the right candidate from the top 5.
 	const swapTop1: number[] = []
 	const swapBest5: number[] = []
+
 	for (const [cc, file] of LOCALES) {
 		if (!existsSync(file)) {
 			console.log(`${cc}: golden missing — skipped`)
@@ -83,10 +87,12 @@ async function main() {
 		const s = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
 		const sT1: number[] = []
 		const sB5: number[] = []
+
 		for (const row of rows) {
 			s.n++
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
 			const r = await resolver.resolveTree(tree as never, { defaultCountry: cc })
+
 			if ((r.roots as N9[]).some(hasWof)) {
 				s.res++
 				continue
@@ -95,6 +101,7 @@ async function main() {
 			const emitted = ((decodeAsJson(tree) as Record<string, string>).locality ?? "").toString().trim()
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()
 			const goldCands = gold ? await lookup.findPlace({ text: gold, country: cc, limit: 5 }) : []
+
 			if (goldCands.length === 0) s.cov++
 			else if (emitted && emitted.toLowerCase() !== gold.toLowerCase()) {
 				s.swap++
@@ -104,6 +111,7 @@ async function main() {
 				// the #685 trap). (0,0) placeholders are dropped — WOF ships them on some rows.
 				const tLat = Number(row.lat),
 					tLon = Number(row.lon)
+
 				if (Number.isFinite(tLat) && Number.isFinite(tLon)) {
 					const pc = ((row.components?.postcode ?? row.components?.postal_code ?? "") as string).toString().trim()
 					const dis = pc ? await lookup.findPlace({ text: gold, country: cc, postcode: pc, limit: 5 }) : goldCands
@@ -111,6 +119,7 @@ async function main() {
 					const dists = (dis as unknown as { lat: number; lon: number }[])
 						.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon) && (c.lat !== 0 || c.lon !== 0))
 						.map((c) => haversineKm(tLat, tLon, c.lat, c.lon))
+
 					if (dists.length) {
 						sT1.push(dists[0]!)
 						sB5.push(Math.min(...dists))
@@ -126,6 +135,7 @@ async function main() {
 		console.log(
 			`${cc.padEnd(3)} | ${String(s.n).padEnd(3)} ${String(s.res).padEnd(3)}  ${String(s.unres).padEnd(4)} | ${String(s.swap).padEnd(3)}  ${String(s.needsK).padEnd(5)}  ${String(s.emitUn).padEnd(8)}  ${String(s.cov).padEnd(2)} | ${swapKm}`
 		)
+
 		for (const k of Object.keys(s) as (keyof typeof s)[]) T[k] += s[k]
 		swapTop1.push(...sT1)
 		swapBest5.push(...sB5)

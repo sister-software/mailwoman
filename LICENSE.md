@@ -1,15 +1,21 @@
 # Mailwoman
 
-- Copyright: Sister Software. All rights reserved.
-- Authors: Teffen Ellis, et al.
+Copyright © Sister Software. Authors: Teffen Ellis, et al.
 
-Mailwoman is free software for non-commercial purposes.
+Mailwoman is **dual-licensed**:
 
-You can be released from the requirements of the license by purchasing a commercial license.
-Buying such a license is mandatory as soon as you develop commercial activities
-involving the Mailwoman software without disclosing the source code of your own applications.
+- **[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)** for open-source use. You may use,
+  modify, and redistribute the software, but you must share your modifications and, for network
+  services, your source. The full license text follows below.
+- **A commercial license** for closed-source or commercial use without the AGPL's source-sharing
+  obligation. Buying one becomes mandatory once you develop commercial activities involving
+  Mailwoman without disclosing the source of your own applications. Contact `teffen@sister.software`.
 
-Contact `teffen [at] sister [dot] software` for business inquiries.
+Portions of Mailwoman derived from [Pelias Parser](https://github.com/pelias/parser) remain under the
+MIT license, and Mailwoman bundles third-party data under its own terms — see
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) for the full attribution list.
+
+---
 
 GNU Affero General Public License
 =================================

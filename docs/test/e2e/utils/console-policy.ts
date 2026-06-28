@@ -1,11 +1,8 @@
 /**
- * @file Console message classification policy for e2e tests.
- *
- *   FAIL_PATTERNS — substrings / regexes that indicate a real bug. Add entries when the operator
- *   reports a new symptom so the next regression fails the suite instead of slipping through.
- *
- *   IGNORE_PATTERNS — known-noisy but harmless messages (onnxruntime initializer cleanup, WebGL GPU
- *   stall warnings, etc.). Stripped from capture entirely.
+ * @file Console message classification policy for e2e tests. FAIL_PATTERNS — substrings / regexes that indicate a real
+ *   bug. Add entries when the operator reports a new symptom so the next regression fails the suite instead of slipping
+ *   through. IGNORE_PATTERNS — known-noisy but harmless messages (onnxruntime initializer cleanup, WebGL GPU stall
+ *   warnings, etc.). Stripped from capture entirely.
  */
 
 /** Real failures — the test SHOULD fail when one of these surfaces. */
@@ -41,6 +38,7 @@ export type Classification = "fail" | "noise"
 
 export function classify(text: string): Classification {
 	for (const p of FAIL_PATTERNS) if (p.test(text)) return "fail"
+
 	return "noise"
 }
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { collapseWhitespace } from "./whitespace.js"
 
 describe("collapseWhitespace", () => {
@@ -63,6 +64,7 @@ describe("collapseWhitespace", () => {
 
 	it("offsetMap length always matches text length", () => {
 		const inputs = ["abc", "  abc  ", "a  b", "abc\ndef"]
+
 		for (const inp of inputs) {
 			const r = collapseWhitespace(inp)
 			expect(r.map.length).toBe(r.text.length)

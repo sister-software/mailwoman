@@ -1,5 +1,6 @@
 import CodeBlock from "@theme/CodeBlock"
 import { Fragment, useCallback, useState } from "react"
+
 import { DemoResult } from "../../shared/resources.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
@@ -15,14 +16,14 @@ export interface ConfidenceCellProps {
 }
 
 /**
- * Render confidence as a horizontal bar (0–1 → 0–100% width) + numeric value. Color shifts from
- * red→amber→green at .5 / .8 thresholds so eyeballing the table surfaces low-confidence predictions
- * without reading every number.
+ * Render confidence as a horizontal bar (0–1 → 0–100% width) + numeric value. Color shifts from red→amber→green at .5 /
+ * .8 thresholds so eyeballing the table surfaces low-confidence predictions without reading every number.
  */
 export const ConfidenceCell: React.FC<ConfidenceCellProps> = ({ confidence }) => {
 	if (confidence == null) return <span className={styles.confDash}>—</span>
 	const pct = Math.max(0, Math.min(1, confidence)) * 100
 	const tier = confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+
 	return (
 		<div className={styles.confCell}>
 			<div className={`${styles.confBar} ${styles[`conf_${tier}`]}`} style={{ width: `${pct}%` }} />
@@ -46,6 +47,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 	const onToggle = useCallback(async () => {
 		if (xml) {
 			setShowXml((v) => !v)
+
 			return
 		}
 		const { decodeAsXml } = await import("@mailwoman/core/decoder")
@@ -77,6 +79,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 				: null,
 		}
 		const json = JSON.stringify(payload, null, 2)
+
 		try {
 			await navigator.clipboard.writeText(json)
 		} catch {
@@ -86,6 +89,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 			ta.style.opacity = "0"
 			document.body.appendChild(ta)
 			ta.select()
+
 			try {
 				document.execCommand("copy")
 			} catch {

@@ -11,6 +11,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import type { FstNode } from "./fst-matcher.js"
 import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
 import type { BuildFstOpts, BuildFstResult, FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
@@ -76,6 +77,7 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 
 	// Phase 2: Build a lookup for parent chain resolution.
 	const sprByID = new Map<number, SprRow>()
+
 	for (const row of sprRows) sprByID.set(row.id, row)
 
 	// Also load parent rows that might be outside our placetype filter (e.g., country for region).
@@ -83,6 +85,7 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 
 	// Fallback: use ancestors table when parent_id is a sentinel (-1, -4, etc.).
 	let ancestorStmt: ReturnType<typeof db.prepare> | null = null
+
 	try {
 		ancestorStmt = db.prepare(
 			`SELECT DISTINCT ancestor_id FROM ancestors
@@ -99,11 +102,13 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 
 	function resolveParentChain(id: number): number[] {
 		const row = sprByID.get(id)
+
 		if (!row) return []
 
 		// If parent_id is a sentinel (≤ 0), use ancestors table.
 		if (row.parent_id <= 0 && ancestorStmt) {
 			const ancestors = ancestorStmt.all(id) as unknown as Array<{ ancestor_id: number }>
+
 			return ancestors.map((a) => a.ancestor_id).filter((aid) => aid !== id)
 		}
 
@@ -111,22 +116,27 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 		const chain: number[] = []
 		let current = row.parent_id
 		const seen = new Set<number>([id])
+
 		while (current > 0 && !seen.has(current)) {
 			seen.add(current)
 			chain.push(current)
 			let parentRow = sprByID.get(current)
+
 			if (!parentRow) {
 				const fetched = parentStmt.get(current) as unknown as SprRow | undefined
+
 				if (!fetched) break
 				parentRow = fetched
 				sprByID.set(current, parentRow)
 			}
+
 			if (parentRow.parent_id > 0 && parentRow.parent_id !== current) {
 				current = parentRow.parent_id
 			} else {
 				break
 			}
 		}
+
 		return chain
 	}
 
@@ -134,16 +144,20 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 	// See docs/articles/concepts/importance-vs-population.md for the two-signal contract.
 	progress("importance", "Loading importance data")
 	const importanceMap = new Map<number, number>()
+
 	try {
 		const impStmt = db.prepare("SELECT id, importance FROM place_importance")
 		const impRows = impStmt.all() as unknown as Array<{ id: number; importance: number }>
+
 		for (const row of impRows) importanceMap.set(row.id, row.importance)
 		progress("importance", `Loaded ${importanceMap.size} importance scores`)
 	} catch {
 		progress("importance", "No place_importance table — falling back to population")
+
 		try {
 			const popStmt = db.prepare("SELECT id, population FROM place_population")
 			const popRows = popStmt.all() as unknown as PopulationRow[]
+
 			for (const row of popRows) {
 				const normalized = row.population > 0 ? Math.min(1.0, Math.log2(1 + row.population / 1000) / 14) : 0
 				importanceMap.set(row.id, normalized)
@@ -159,6 +173,7 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 	const namesByPlace = new Map<number, string[]>()
 
 	const allLanguages = languages.includes("*")
+
 	for (let i = 0; i < placeIds.length; i += 500) {
 		const chunk = placeIds.slice(i, i + 500)
 		const idPlaceholders = chunk.map(() => "?").join(",")
@@ -170,8 +185,10 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 		const nameRows = (allLanguages
 			? nameStmt.all(...chunk)
 			: nameStmt.all(...chunk, ...languages)) as unknown as NameRow[]
+
 		for (const row of nameRows) {
 			const existing = namesByPlace.get(row.id) ?? []
+
 			if (!existing.includes(row.name)) existing.push(row.name)
 			namesByPlace.set(row.id, existing)
 		}
@@ -185,9 +202,11 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 	function insertName(tokens: string[], entry: PlaceEntry): void {
 		if (tokens.length === 0) return
 		let stateId = 0
+
 		for (const t of tokens) {
 			const node = nodes[stateId]!
 			let next = node.edges.get(t)
+
 			if (next === undefined) {
 				next = nodes.length
 				nodes.push({ edges: new Map(), places: [] })
@@ -197,12 +216,14 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 		}
 		// Deduplicate: don't add the same wofID twice at the same state.
 		const existing = nodes[stateId]!.places
+
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
 			existing.push(entry)
 		}
 	}
 
 	let insertCount = 0
+
 	for (const row of sprRows) {
 		const parentChain = resolveParentChain(row.id)
 		const entry: PlaceEntry = {
@@ -222,9 +243,11 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 
 		// Insert alt names from the names table.
 		const altNames = namesByPlace.get(row.id) ?? []
+
 		for (const altName of altNames) {
 			if (altName === row.name) continue
 			const altTokens = normalizeTokens(altName)
+
 			if (altTokens.length > 0 && altTokens.join(" ") !== primaryTokens.join(" ")) {
 				insertName(altTokens, entry)
 				insertCount++
@@ -247,6 +270,7 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 		importanceMatches: importanceMap.size,
 		sourceDb: opts.dbPath,
 	}
+
 	return {
 		matcher,
 		provenance,

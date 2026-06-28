@@ -28,6 +28,9 @@
 		"./race-dots": "./out/race-dots/index.js",
 		".": "./out/index.js"
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
@@ -44,8 +47,5 @@
 	},
 	"engines": {
 		"node": ">=24.18.0"
-	},
-	"publishConfig": {
-		"access": "public"
 	}
 }

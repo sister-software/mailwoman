@@ -24,12 +24,13 @@
  *   [--gazetteer-lexicon <path>]
  */
 
+import { readFileSync } from "node:fs"
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { readFileSync } from "node:fs"
 
 // ---------------------------------------------------------------------------
 // Args
@@ -37,6 +38,7 @@ import { readFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -75,18 +77,21 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
 
 /**
  * Reassemble the full street string from a street node's subtree. Mirrors `assembleStreetValue` in
- * core/resolver/resolve.ts exactly — DFS over children, collect STREET_NAME_TAGS members (trimmed +
- * non-empty), sort by .start, join with spaces.
+ * core/resolver/resolve.ts exactly — DFS over children, collect STREET_NAME_TAGS members (trimmed + non-empty), sort by
+ * .start, join with spaces.
  */
 function assembleStreetValue(streetNode: AddressNode): string {
 	const parts: AddressNode[] = []
 	const stack: AddressNode[] = [streetNode]
+
 	while (stack.length > 0) {
 		const n = stack.pop()!
+
 		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) parts.push(n)
 		stack.push(...n.children)
 	}
 	parts.sort((a, b) => a.start - b.start)
+
 	return parts.map((n) => n.value.trim()).join(" ")
 }
 
@@ -97,6 +102,7 @@ function assembleStreetValue(streetNode: AddressNode): string {
 /** Walk all nodes in the tree (depth-first). */
 function* walkTree(roots: AddressNode[]): Generator<AddressNode> {
 	const stack = [...roots]
+
 	while (stack.length > 0) {
 		const n = stack.pop()!
 		yield n
@@ -109,6 +115,7 @@ function findTag(roots: AddressNode[], tag: string): AddressNode | undefined {
 	for (const n of walkTree(roots)) {
 		if (n.tag === tag) return n
 	}
+
 	return undefined
 }
 
@@ -146,6 +153,7 @@ function analyzeRow(input: string, state: string, tree: AddressTree): RowResult 
 
 	let reassembled_street = ""
 	let reassembly_differs = false
+
 	if (streetNode) {
 		reassembled_street = assembleStreetValue(streetNode)
 		reassembly_differs = reassembled_street !== streetNode.value.trim()
@@ -153,6 +161,7 @@ function analyzeRow(input: string, state: string, tree: AddressTree): RowResult 
 
 	// Collect unique tags found (for failure samples)
 	const tagSet = new Set<string>()
+
 	for (const n of walkTree(roots)) {
 		if (n.value.trim()) tagSet.add(n.tag)
 	}
@@ -208,11 +217,13 @@ const [tokenizer, runner] = await Promise.all([
 ])
 
 const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined
+
 if (anchorPath) console.error(`[parser-coverage-audit] anchor-lookup  : ${anchorPath}`)
 
 const gazetteerLexicon = gazetteerPath
 	? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerPath, "utf8")))
 	: undefined
+
 if (gazetteerPath) console.error(`[parser-coverage-audit] gazetteer     : ${gazetteerPath}`)
 
 const neural = new NeuralAddressClassifier({
@@ -231,9 +242,11 @@ const rows: OaRow[] = readFileSync(evalPath, "utf8")
 
 // Per-state cap: keep first N rows per state
 const rowsByState = new Map<string, OaRow[]>()
+
 for (const row of rows) {
 	if (!row.state) continue
 	const bucket = rowsByState.get(row.state) ?? []
+
 	if (bucket.length < perStateCap) bucket.push(row)
 	rowsByState.set(row.state, bucket)
 }
@@ -245,6 +258,7 @@ console.error(`[parser-coverage-audit] total rows  : ${totalRows}`)
 
 // Per-state buckets
 const stateStats = new Map<string, StateStats>()
+
 for (const s of stateKeys) {
 	stateStats.set(s, {
 		state: s,
@@ -260,6 +274,7 @@ for (const s of stateKeys) {
 
 // Run
 let processed = 0
+
 for (const state of stateKeys) {
 	const bucket = rowsByState.get(state)!
 	const stats = stateStats.get(state)!
@@ -269,10 +284,15 @@ for (const state of stateKeys) {
 		const result = analyzeRow(row.input, state, tree)
 
 		stats.n++
+
 		if (result.has_house_number) stats.has_hn++
+
 		if (result.has_street) stats.has_street++
+
 		if (result.has_postcode) stats.has_postcode++
+
 		if (result.precondition) stats.precondition++
+
 		if (result.reassembly_differs) stats.reassembly_differs++
 
 		if (!result.precondition && stats.failures.length < MAX_FAILURE_SAMPLES) {
@@ -280,6 +300,7 @@ for (const state of stateKeys) {
 		}
 
 		processed++
+
 		if (processed % 50 === 0) {
 			process.stderr.write(`\r[parser-coverage-audit] ${processed}/${totalRows} rows parsed...`)
 		}
@@ -313,6 +334,7 @@ for (const state of stateKeys) {
 
 // Global aggregate
 const total = { n: 0, precondition: 0, has_street: 0, has_hn: 0, has_postcode: 0, reassembly_differs: 0 }
+
 for (const s of stateStats.values()) {
 	total.n += s.n
 	total.precondition += s.precondition
@@ -335,6 +357,7 @@ console.log()
 
 for (const state of stateKeys) {
 	const s = stateStats.get(state)!
+
 	if (s.failures.length === 0) {
 		console.log(`### ${state} — no failures`)
 		continue
@@ -342,10 +365,14 @@ for (const state of stateKeys) {
 	const failPct = (((s.n - s.precondition) / s.n) * 100).toFixed(1)
 	console.log(`### ${state} — ${s.n - s.precondition} failures (${failPct}%)`)
 	console.log()
+
 	for (const f of s.failures) {
 		const missingParts: string[] = []
+
 		if (!f.tags.includes("house_number")) missingParts.push("house_number")
+
 		if (!f.tags.includes("street")) missingParts.push("street")
+
 		if (!f.tags.includes("postcode")) missingParts.push("postcode")
 		console.log(`- \`${f.input}\``)
 		console.log(`  - got tags: \`${f.tags.join(", ") || "(none)"}\``)

@@ -4,7 +4,9 @@
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { beforeEach, describe, expect, it } from "vitest"
+
 import { InMemoryAdapterRegistry } from "../../adapter.js"
 import {
 	createStateHiSchoolsAdapter,
@@ -42,6 +44,7 @@ function writeCsv(...lines: string[]): string {
 	const p = join(scratch, "test.csv")
 	const header = CSV_HEADER + "\n"
 	writeFileSync(p, header + lines.join("\n"), "utf8")
+
 	return p
 }
 
@@ -58,6 +61,7 @@ describe("state-hi-schools adapter", () => {
 		)
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
@@ -80,6 +84,7 @@ describe("state-hi-schools adapter", () => {
 		)
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
@@ -107,6 +112,7 @@ describe("state-hi-schools adapter", () => {
 		)
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 10 })) rows.push(r)
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.components.venue).toBe("Real School")
@@ -135,6 +141,7 @@ describe("state-hi-schools adapter", () => {
 		)
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 2 })) rows.push(r)
 		expect(rows).toHaveLength(2)
 	})

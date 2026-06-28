@@ -8,10 +8,21 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "nominatim"
 	},
+	"bin": "./out/cli.js",
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js"
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"dependencies": {
 		"@mailwoman/annotations": "workspace:*",
@@ -25,16 +36,5 @@
 		"@mailwoman/un-locode-lookup": "workspace:*",
 		"express": "^5.2.1",
 		"mailwoman": "workspace:*"
-	},
-	"files": [
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map",
-		"README.md"
-	],
-	"bin": "./out/cli.js",
-	"publishConfig": {
-		"access": "public"
 	}
 }

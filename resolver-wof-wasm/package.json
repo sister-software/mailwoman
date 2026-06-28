@@ -8,17 +8,6 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "resolver-wof-wasm"
 	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js"
-	},
-	"dependencies": {
-		"@mailwoman/core": "workspace:*",
-		"@mailwoman/resolver": "workspace:*",
-		"@mailwoman/resolver-wof-sqlite": "workspace:*",
-		"@sqlite.org/sqlite-wasm": "^3.53.0-build1"
-	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
@@ -26,7 +15,18 @@
 		"out/**/*.d.ts.map",
 		"README.md"
 	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@sqlite.org/sqlite-wasm": "^3.53.0-build1"
 	}
 }

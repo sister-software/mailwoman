@@ -25,12 +25,12 @@ export interface TIGERCounty {
 	COUNTYFP: string
 
 	/**
-	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
 	 * @title County GNIS Code
 	 *
 	 * @minLength 8
 	 * @maxLength 8
 	 * @pattern ^\d{8}$
+	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
 	 */
 	GEOID: string
 
@@ -45,8 +45,7 @@ export interface TIGERCounty {
 	GEOIDFQ: string
 
 	/**
-	 * Current name and the translated legal/statistical area description code for county
-	 * sub-division.
+	 * Current name and the translated legal/statistical area description code for county sub-division.
 	 *
 	 * @title Name/Legal Statistical Area Description
 	 * @minLength 1

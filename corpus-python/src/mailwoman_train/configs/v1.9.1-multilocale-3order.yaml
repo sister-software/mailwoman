@@ -18,7 +18,7 @@
 # countries listed below at 1.0 (acceptance filter relative to max_weight, NOT a 1/N split).
 #
 # GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
-# scripts/eval/nonus-coord-panel.sh — the in-shard locales (PT/PL/AT/CZ/IT) resolve rate must RECOVER
+# scripts/eval/nonus-coord-panel.ts — the in-shard locales (PT/PL/AT/CZ/IT) resolve rate must RECOVER
 # toward / above the v1.8.0 baseline (PT 52, PL 53, AT 50, CZ 43, IT 79), AND the US per-locale-F1
 # guardrail must hold (not worse >1pp) + FR centroid flat. If in-shard resolve is still BELOW v1.8.0 at
 # 2-4k, KILL (the order fix didn't take). NOT promoted without operator GO (model swap).

@@ -36,7 +36,7 @@
 #     street >=82; cross_pollution <1%.
 #   DECISION: unit>=80 AND house_number>=82 AND FR holds -> PROMOTE v3 to default. Else escalate.
 # Measure (fp32-to-fp32 to kill the int8 confound that muddied v2's FR read):
-#   per-locale-f1.ts (US/FR) + the real-designator unit eval + de-order-eval.sh (DE 2x2 tripwire).
+#   per-locale-f1.ts (US/FR) + the real-designator unit eval + de-order-eval.ts (DE 2x2 tripwire).
 #
 # CORPUS: v0.4.5-unit-v2 (SAME as v2 — no rebuild). Launch:
 #   modal run -d scripts/modal/train_remote.py \

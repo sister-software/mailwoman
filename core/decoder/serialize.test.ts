@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, test } from "vitest"
+
 import type { BioLabel } from "../types/component.js"
 import { buildAddressTree } from "./build-tree.js"
 import { decodeAsJson } from "./serialize-json.js"
@@ -199,6 +200,7 @@ describe("interpretations (multi-role nodes, #413)", () => {
 		;(region as { interpretations?: unknown }).interpretations = [
 			{ tag: "locality", placeId: "wof:101909779", lat: 52.52, lon: 13.4 },
 		]
+
 		return tree
 	}
 

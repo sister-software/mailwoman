@@ -82,11 +82,11 @@ government address points. This set is _independent of the WOF gazetteer_ the
 resolver consults, so it can measure the great-circle error from the resolver's
 admin centroid to OA's real point without circularity.
 
-Built by [`scripts/eval/ingest-openaddresses.mjs`](../../../scripts/eval/ingest-openaddresses.mjs).
+Built by [`scripts/eval/ingest-openaddresses.ts`](../../../scripts/eval/ingest-openaddresses.ts).
 Gathered 2026-05-30. Regenerate with:
 
 ```bash
-node scripts/eval/ingest-openaddresses.mjs \
+node scripts/eval/ingest-openaddresses.ts \
   --out data/eval/external/openaddresses-us-sample.jsonl \
   --cache /tmp/oa-cache --target 10000 --per-state 1500 --seed 42
 ```
@@ -178,7 +178,7 @@ for kv in us/ca/berkeley us/ca/marin us/il/cook us/dc/statewide \
   ! curl -sSL -o "/tmp/oa-cache/$(echo "$kv" | sed 's#/#__#g').zip" \
       "https://results.openaddresses.io/latest/run/$kv.zip"
 done
-node scripts/eval/ingest-openaddresses.mjs --offline \
+node scripts/eval/ingest-openaddresses.ts --offline \
   --out data/eval/external/openaddresses-us-sample.jsonl --cache /tmp/oa-cache
 ```
 
@@ -188,7 +188,7 @@ Two German sets from OpenAddresses Berlin + Saxony support the multi-locale work
 
 - **`openaddresses-de-sample.jsonl`** (3,000 records) is the _resolver_ eval set
   (admin-level: `expected` carries `locality`/`region`/`postcode`). Built by the
-  same `ingest-openaddresses.mjs`, selected with `--sources de/berlin,de/sn/statewide`.
+  same `ingest-openaddresses.ts`, selected with `--sources de/berlin,de/sn/statewide`.
 - **`openaddresses-de-golden.jsonl`** (1,500 records, held-out seed 7) is the
   _parser_ eval set (`{raw, components}` with street + house_number), rendered in
   idiomatic German order. Built by `build-german-shard.mjs --golden`.
@@ -206,7 +206,7 @@ Two changes make non-US OpenAddresses usable here:
 The German _training_ shard (`synth-german`, `corpus/src/synthesize-german.ts`)
 renders these real DE tuples in German order via the OpenCage `DE` template, so the
 model learns house-number-after-street and postcode-before-city. Run the German
-before/after with `scripts/eval-de-coverage.sh <model> <tokenizer> <model-card>`.
+before/after with `node scripts/eval-de-coverage.ts <model> <tokenizer> <model-card>`.
 
 ## Running the arenas
 
@@ -215,22 +215,22 @@ All three arenas run through one push-button script:
 ```bash
 yarn compile   # harness resolves @mailwoman/neural to its compiled out/ tree
 # default shipped weights:
-scripts/eval/external-arenas.sh
+node --experimental-strip-types scripts/eval/external-arenas.ts
 # against a fresh export (e.g. v0.7.2 int8):
 MODEL=/path/model.int8.onnx TOKENIZER=/path/tokenizer.model \
-  MODELCARD=/path/model-card.json scripts/eval/external-arenas.sh
+  MODELCARD=/path/model-card.json node --experimental-strip-types scripts/eval/external-arenas.ts
 ```
 
 It regenerates the perturbation arena, runs each arena with `--symmetric-match
 --postcode-repair`, and prints the three-bucket table (neural-only / both /
 v0-only / both-fail) per arena plus a by-edge_class breakdown for the postal
-arena (`scripts/eval/summarize-arenas.py`).
+arena (`scripts/eval/summarize-arenas.ts`).
 
 ## Done / next
 
 1. ✅ Harvested `libpostal/test/test_parser.c` → `libpostal-cases.jsonl` (69).
 2. ✅ Labeled the in-scope catalog subset → `postal-cases.jsonl` (38).
-3. ✅ Push-button runner (`external-arenas.sh`) + three-bucket summarizer.
+3. ✅ Push-button runner (`external-arenas.ts`) + three-bucket summarizer.
 4. ✅ Wired `openaddresses-us-sample.jsonl` into the resolver end-to-end eval
    (`scripts/eval/resolver-eval.ts` + the OA admin-match runner): resolve each
    `input` → admin centroid, great-circle error to `lat`/`lon` by state.

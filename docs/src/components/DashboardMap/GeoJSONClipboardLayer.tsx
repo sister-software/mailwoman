@@ -4,6 +4,7 @@
 import { ResourceError } from "@mailwoman/core/errors"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { Feature, FeatureCollection } from "geojson"
+
 import "maplibre-gl/dist/maplibre-gl.css"
 import React, { memo, useCallback, useEffect, useRef, useState } from "react"
 import { Layer, Source, useMap } from "react-map-gl/maplibre"
@@ -62,12 +63,14 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 			if (textDataIndex === -1) return
 
 			const item = clipboardData.items[textDataIndex]
+
 			if (!item) return
 
 			const data = await new Promise<string>((resolve) => item.getAsString(resolve))
 
 			if (!data) {
 				console.log("No clipboard data")
+
 				return
 			}
 
@@ -75,6 +78,7 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 
 			if (!possibleJSON) {
 				console.log("Clipboard doesn't appear to be GeoJSON")
+
 				return
 			}
 
@@ -90,6 +94,7 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 
 	useEffect(() => {
 		const mapInstance = map.current
+
 		if (!mapInstance) return
 
 		const canvasContainer = mapInstance.getCanvasContainer()
@@ -113,6 +118,7 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 			event.preventDefault()
 
 			const { dataTransfer } = event
+
 			if (!dataTransfer) return
 
 			for (const file of dataTransfer.files) {
@@ -123,6 +129,7 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 				if (!possibleJSON) continue
 
 				appendGeoJSON(possibleJSON)
+
 				return
 			}
 

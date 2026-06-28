@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { type LatLon, block, conjunction, exactKey, geoCellKey } from "./blocking.js"
 
 type Rec = { id: string; coord?: LatLon; canonical?: string; postcode?: string }

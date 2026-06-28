@@ -26,14 +26,14 @@ locales live in one DB.
 
 ## Build recipe (per locale, then finalize)
 
-`scripts/build-postcode-locality.py` point-in-polygons each postcode centroid against the WOF locality
+`scripts/build-postcode-locality.ts` point-in-polygons each postcode centroid against the WOF locality
 polygons (+ a ~10km nearby candidate set), accumulating per country into one DB (idempotent:
 re-running a country replaces just its rows). It needs the country's `whosonfirst-data-admin-<cc>`
 GeoJSON repo (locality polygons) and a postcode SQLite (centroids).
 
 ```bash
 # one per country into the shared asset
-python3 scripts/build-postcode-locality.py --country DE \
+node --experimental-strip-types scripts/build-postcode-locality.ts --country DE \
   --admin-repo   .../whosonfirst-data/whosonfirst-data-admin-de \
   --postcode-db  .../postalcode-intl.db \
   --output       .../postcode-locality-intl.db
@@ -41,12 +41,12 @@ python3 scripts/build-postcode-locality.py --country DE \
 # GB: postcodes aren't in postalcode-intl.db — build a GB postcode DB from source first
 node --experimental-strip-types scripts/build-unified-wof.ts \
   --data .../whosonfirst-data-postalcode-gb --output .../postalcode-gb.db --placetypes postalcode
-python3 scripts/build-postcode-locality.py --country GB \
+node --experimental-strip-types scripts/build-postcode-locality.ts --country GB \
   --admin-repo .../whosonfirst-data-admin-gb --postcode-db .../postalcode-gb.db \
   --output .../postcode-locality-intl.db
 
 # freeze into the read-only distributable asset (meta + VACUUM + integrity)
-python3 scripts/build-postcode-locality.py --output .../postcode-locality-intl.db --finalize
+node --experimental-strip-types scripts/build-postcode-locality.ts --output .../postcode-locality-intl.db --finalize
 ```
 
 ## Coverage (built 2026-06-04)
@@ -61,7 +61,7 @@ python3 scripts/build-postcode-locality.py --output .../postcode-locality-intl.d
 | IT      |    18,349 |                        2,081 (42.2%) | WOF orphan-heavy — sparse; inert until IT localities are in the admin DB                                                                                                                                      |
 | JP      |   297,874 |              114,154 matched (94.9%) | **name-match build, NOT PIP** — see below. End-to-end resolver **98.5%** vs KEN_ALL, **93.9%** vs independent GeoNames gold                                                                                   |
 
-## CJK: a different build (name-match, not PIP) — `build-postcode-locality-cjk.py`
+## CJK: a different build (name-match, not PIP) — `build-postcode-locality-cjk.ts`
 
 WOF admin geometry in CJK (JP/KR/TW) is **point-based at the municipality/locality level** — there are no
 municipality POLYGONS — so the point-in-polygon build above is structurally inapplicable (it gives only

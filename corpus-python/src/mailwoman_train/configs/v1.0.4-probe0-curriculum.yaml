@@ -48,7 +48,7 @@
 #     dilution isn't budget-bound; fall back to weight-merge (#466's titled approach) or raise that
 #     shard's weight/budget. Measure: score-country-homograph.ts + score-affix.ts (incl. unit) +
 #     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
-#     de-order-eval.sh, all fp32.
+#     de-order-eval.ts, all fp32.
 #
 # REQUIRES on the volume (synced before launch): the #468 choreography modules (gazetteer_anchor.py
 # suppress_gazetteer_near_postcode + tokenizer/config/data_loader threading), the gazetteer lexicon at

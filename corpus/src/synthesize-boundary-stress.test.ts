@@ -20,11 +20,13 @@ import type { CanonicalRow } from "./types.js"
 
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
+
 	return () => {
 		a |= 0
 		a = (a + 0x6d2b79f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 }
@@ -37,7 +39,9 @@ const labelsFor = (template: BoundaryStressTemplate, seed: number): readonly str
 	const row = synthesizeBoundaryStressRow(undefined, { random: mulberry32(seed), forceTemplate: template })
 	const result = alignRow(asCanonical(row))
 	expect(result.kind, `${template} should align, raw=${row.raw}`).toBe("labeled")
+
 	if (result.kind !== "labeled") return []
+
 	return result.row.labels
 }
 
@@ -57,6 +61,7 @@ describe("synthesizeBoundaryStressRow", () => {
 		expect(row.raw).not.toContain(",") // the whole point — no delimiter cue
 		const result = alignRow(asCanonical(row))
 		expect(result.kind, `raw=${row.raw}`).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.labels).toContain("B-locality")
 		expect(result.row.labels).toContain("B-region")
@@ -84,6 +89,7 @@ describe("synthesizeBoundaryStressRow", () => {
 		)
 		const result = alignRow(asCanonical(row))
 		expect(result.kind, `raw=${row.raw}`).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.labels).toContain("B-locality")
 		expect(result.row.labels).toContain("B-region")
@@ -106,9 +112,11 @@ describe("synthesizeBoundaryStressRow", () => {
 	it("bulk: ≥97% of 400 rows align cleanly, each carrying its stress tag", () => {
 		const rng = mulberry32(123)
 		let labeled = 0
+
 		for (let i = 0; i < 400; i++) {
 			const row = synthesizeBoundaryStressRow(undefined, { random: rng })
 			const result = alignRow(asCanonical(row))
+
 			if (result.kind !== "labeled") continue
 			labeled++
 		}

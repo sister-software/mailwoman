@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import {
 	buildBioEndMask,
 	buildBioStartMask,
@@ -77,10 +78,12 @@ describe("viterbi — basic", () => {
 			transitions: buildBioTransitionMask(LABELS),
 			startTransitions: buildBioStartMask(LABELS),
 		}).path
+
 		// Verify no orphan-I.
 		for (let t = 1; t < path.length; t++) {
 			const cur = LABELS[path[t]!]!
 			const prev = LABELS[path[t - 1]!]!
+
 			if (cur.startsWith("I-")) {
 				const tag = cur.slice(2)
 				expect(prev === `B-${tag}` || prev === `I-${tag}`).toBe(true)

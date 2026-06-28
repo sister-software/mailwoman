@@ -14,11 +14,12 @@
  *   -fx resources/whosonfirst
  */
 
+import { mkdir, writeFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
+
 // import { Presets, SingleBar } from "cli-progress"
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import { resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
-import { mkdir, writeFile } from "node:fs/promises"
 
 const resourceDictionaryDirectory = resourceDictionaryPathBuilder("whosonfirst")
 
@@ -109,6 +110,7 @@ for (const row of stmt.iterate() as IterableIterator<WOFRow>) {
 	// rowProgress.render()
 
 	await Promise.resolve()
+
 	if (!row.placetype.length) {
 		console.error("invalid placetype: %d '%s' '%s'", row.id, row.path, row.placetype)
 		continue

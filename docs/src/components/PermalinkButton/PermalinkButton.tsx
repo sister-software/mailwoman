@@ -3,10 +3,9 @@ import { useCallback, useState } from "react"
 import styles from "./styles.module.css"
 
 /**
- * Copy a `https://mailwoman.sister.software/demo/?q=<encoded>` link to clipboard. Falls back to a
- * transient textarea hack on older browsers (Safari < 13.4 still misbehaves with the async
- * Clipboard API in non-secure contexts). Visible feedback is a 1.5s checkmark swap so the operator
- * knows the click landed.
+ * Copy a `https://mailwoman.sister.software/demo/?q=<encoded>` link to clipboard. Falls back to a transient textarea
+ * hack on older browsers (Safari < 13.4 still misbehaves with the async Clipboard API in non-secure contexts). Visible
+ * feedback is a 1.5s checkmark swap so the operator knows the click landed.
  */
 export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 	const [copied, setCopied] = useState(false)
@@ -14,9 +13,11 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 	const onClick = useCallback(async () => {
 		if (typeof window === "undefined") return
 		const url = new URL(window.location.href)
+
 		if (text) url.searchParams.set("q", text)
 		else url.searchParams.delete("q")
 		const href = url.toString()
+
 		try {
 			await navigator.clipboard.writeText(href)
 		} catch {
@@ -26,6 +27,7 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 			ta.style.opacity = "0"
 			document.body.appendChild(ta)
 			ta.select()
+
 			try {
 				document.execCommand("copy")
 			} catch {

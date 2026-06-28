@@ -3,6 +3,7 @@
 
 import { ClassificationsMatchMap } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { PostcodeClassifier } from "./PostcodeClassifier.js"
 
 const classifier = await new PostcodeClassifier().ready()

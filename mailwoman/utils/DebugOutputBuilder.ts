@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { inspect } from "node:util"
+
 import {
 	type ClassificationMatch,
 	pluckLanguageLabel,
@@ -10,10 +12,10 @@ import {
 	type VerboseParseResult,
 } from "@mailwoman/core"
 import chalk from "chalk"
-import { inspect } from "node:util"
 
 function formatClassificationLanguages(classification: ClassificationMatch): string {
 	const { languages } = classification
+
 	if (!languages) return ""
 
 	let block = ""

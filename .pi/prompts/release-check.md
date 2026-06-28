@@ -52,7 +52,7 @@ Scrub for: breaking changes that need migration notes; new workspace dirs that n
 yarn release --dry-run
 ```
 
-If the dry run passes, the CI workflow at `.github/workflows/publish.yml` can publish code-only from OIDC. Model artifacts go to Hugging Face first (`scripts/publish-release-to-hf.mjs`).
+If the dry run passes, the CI workflow at `.github/workflows/publish.yml` can publish code-only from OIDC. Model artifacts go to Hugging Face first (`scripts/publish-release-to-hf.ts`).
 
 ## 6. Demo assets (if model is changing)
 

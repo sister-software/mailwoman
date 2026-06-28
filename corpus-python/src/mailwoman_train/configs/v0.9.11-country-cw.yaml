@@ -26,11 +26,11 @@
 #   - `country` F1 >> 0 (was 0) AND over-fire = 0 (NO region/locality token mistagged as country).
 #   - `region` / `locality` F1 HELD vs v4.1.0 baseline (region 76.9, locality 62.1 on the homograph eval).
 #   - NO-REGRESSION (within ~1pp, fp32-to-fp32): US house_number / postcode / street / locality;
-#     FR per-class floors; DE native-order (de-order-eval.sh). RETAIN unit >= 88 (unit-real-designators).
+#     FR per-class floors; DE native-order (de-order-eval.ts). RETAIN unit >= 88 (unit-real-designators).
 #   DECISION: country alive + over-fire 0 + region/locality held + no tripwire -> candidate.
 #     If long-tail recall lags: bump class-weight B/I-country 2->3-4 + add the soft gazetteer anchor.
 #     If it over-fires: raise the homograph/negative balance (HOMOGRAPH_FRAC/ABBREV_FRAC) + rerun.
-# Measure: scripts/eval/score-country-homograph.ts + per-locale-f1.ts (US/FR) + de-order-eval.sh +
+# Measure: scripts/eval/score-country-homograph.ts + per-locale-f1.ts (US/FR) + de-order-eval.ts +
 #   unit-real-designators (fp32-to-fp32).
 #
 # CORPUS: v0.4.10-country-bal (v0.4.5-unit-v2 base + balanced country shard). Launch:

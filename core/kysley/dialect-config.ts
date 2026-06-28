@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { DatabaseConnection } from "kysely"
 import type { DatabaseSync } from "node:sqlite"
+
+import type { DatabaseConnection } from "kysely"
 
 /**
  * Config for the SQLite dialect.

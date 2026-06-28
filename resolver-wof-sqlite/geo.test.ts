@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import type { GeojsonPosition } from "./geo.js"
 import { bboxAround, geometryContains, pointInPolygonRings, pointInRing } from "./geo.js"
 

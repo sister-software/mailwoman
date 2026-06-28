@@ -1,56 +1,51 @@
 # AGENTS.md
 
-Notes for AI agents (and humans) working on this repo.
+Mailwoman is a postal-address parser shipped as the unscoped entry package `mailwoman` (CLI + library) plus **34 scoped `@mailwoman/*` workspaces**. The repo root is the private orchestration package `@mailwoman/universe` (not published). 33 of the 35 workspaces publish to npm — `docs` and `tile-worker` stay private. The table groups them by role:
 
-## Orientation
-
-Mailwoman is a postal-address parser shipped as the unscoped entry package `mailwoman` (CLI + library) plus **35 scoped `@mailwoman/*` workspaces**. The repo root is the private orchestration package `@mailwoman/universe` (not published). 33 of the 36 workspaces publish to npm — `docs`, `tile-worker`, and `spike-sqlite-wasm` stay private. The table groups them by role:
-
-| Workspace                                                                    | npm package                              | Purpose                                                                                                                            |
-| ---------------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `mailwoman/`                                                                 | `mailwoman`                              | CLI + the high-level runtime pipeline (`createRuntimePipeline`) — the user-facing entry                                            |
-| **Runtime pipeline (staged preprocessing → parse → resolve)**                |                                          |                                                                                                                                    |
-| `normalize/`                                                                 | `@mailwoman/normalize`                   | Stage 1 — deterministic preprocessing (Unicode NFC, punctuation, whitespace, abbreviation); pure, no ML                            |
-| `query-shape/`                                                               | `@mailwoman/query-shape`                 | Cheap structural priors — character class, segmentation, known-format detection                                                    |
-| `locale-gate/`                                                               | `@mailwoman/locale-gate`                 | Stage 2 — derive a `LocaleHint` from the query shape                                                                               |
-| `kind-classifier/`                                                           | `@mailwoman/kind-classifier`             | Stage 2.5 — categorize by query shape (`postcode_only` / `structured_address` / `po_box` / `intersection` / …)                     |
-| `phrase-grouper/`                                                            | `@mailwoman/phrase-grouper`              | Stage 2.7 — propose coherent input units (boundary discovery) with a kind hypothesis                                               |
-| **Model + core**                                                             |                                          |                                                                                                                                    |
-| `core/`                                                                      | `@mailwoman/core`                        | Tokenization, classification, solver/decoder, policy registry. Ships ~9 MB libpostal + WOF + chromium-i18n data under `core/data/` |
-| `classifiers/`                                                               | `@mailwoman/classifiers`                 | Rule-based classifiers                                                                                                             |
-| `neural/`                                                                    | `@mailwoman/neural`                      | SentencePiece tokenizer + ONNX inference + decoder wiring                                                                          |
-| `neural-web/`                                                                | `@mailwoman/neural-web`                  | Browser neural runtime (onnxruntime-web; WebGPU primary, WASM fallback)                                                            |
-| `neural-weights-en-us/`                                                      | `@mailwoman/neural-weights-en-us`        | Trained model bundle (en-us) — data-only, loaded by `@mailwoman/neural`                                                            |
-| `neural-weights-fr-fr/`                                                      | `@mailwoman/neural-weights-fr-fr`        | Trained model bundle (fr-fr) — data-only                                                                                           |
-| `corpus/`                                                                    | `@mailwoman/corpus`                      | BIO-labeled training-corpus pipeline                                                                                               |
-| **Reference data**                                                           |                                          |                                                                                                                                    |
-| `codex/`                                                                     | `@mailwoman/codex`                       | Per-address-system postal reference + branded types (USPS suffixes, US ZIPs). Pure, zero-runtime-dep                               |
-| `variant-aliases/`                                                           | `@mailwoman/variant-aliases`             | Regional variant alias table (`servo` → fuel en-AU, `PFK` → KFC fr-CA), gated by locale                                            |
-| **Resolver + geo**                                                           |                                          |                                                                                                                                    |
-| `resolver/`                                                                  | `@mailwoman/resolver`                    | Walk an `AddressTree`, decorate nodes with gazetteer coords + attribution; backend-agnostic, owns the span-rescore levers          |
-| `resolver-wof-sqlite/`                                                       | `@mailwoman/resolver-wof-sqlite`         | WOF SQLite resolver — FTS5/candidate-table `PlaceLookup` (the geocoding backend)                                                   |
-| `resolver-wof-wasm/`                                                         | `@mailwoman/resolver-wof-wasm`           | WOF WASM resolver — browser `PlaceLookup` over `@sqlite.org/sqlite-wasm`                                                           |
-| `spatial/`                                                                   | `@mailwoman/spatial`                     | Spatial/geo utilities — haversine, bbox, projection (the math home)                                                                |
-| `cartographer/`                                                              | `@mailwoman/cartographer`                | Mapping utilities for the geo data pipeline                                                                                        |
-| `tiger/`                                                                     | `@mailwoman/tiger`                       | US Census TIGER/Line processing                                                                                                    |
-| **Formatter + record matcher (geocode-first entity resolution)**             |                                          |                                                                                                                                    |
-| `formatter/`                                                                 | `@mailwoman/formatter`                   | The inverse of the parser — render `ComponentTag` components to an address string + a canonical match key                          |
-| `record/`                                                                    | `@mailwoman/record`                      | Record schema + per-field normalizers for the matcher                                                                              |
-| `match/`                                                                     | `@mailwoman/match`                       | The geocode-first matcher — block → score → cluster (string comparators + the Fellegi-Sunter scorer)                               |
-| `registry/`                                                                  | `@mailwoman/registry`                    | The record-matching app — resolve messy records to geocoded entities, export GeoJSON                                               |
-| `address-id/`                                                                | `@mailwoman/address-id`                  | Stable address primary key (`<state>.<H3-cell>.<hash>`) — the exact-match complement to the fuzzy matcher                          |
-| **Drop-in APIs + annotations (replace Nominatim/Photon/libpostal/OpenCage)** |                                          |                                                                                                                                    |
-| `annotations/`                                                               | `@mailwoman/annotations`                 | The annotation contract — native `AnnotationSet` + `toOpenCage()`/`toNative()`; the seam every annotator plugs into                |
-| `nominatim/`                                                                 | `@mailwoman/nominatim`                   | Nominatim-compatible drop-in (`/search`, `/reverse`, `/status`) — returns the OpenCage-style `annotations` block                   |
-| `photon/`                                                                    | `@mailwoman/photon`                      | Photon-compatible autocomplete drop-in (`/api`, `/reverse`) — GeoJSON FeatureCollections                                           |
-| `libpostal/`                                                                 | `@mailwoman/libpostal`                   | libpostal-compatible drop-in (`/parse`, `/expand`)                                                                                 |
-| `timezone-lookup/`                                                           | `@mailwoman/timezone-lookup`             | Server-side IANA timezone PIP lookup (node:sqlite); data built like the gazetteer                                                  |
-| `un-locode-lookup/`                                                          | `@mailwoman/un-locode-lookup`            | UN/LOCODE nearest-code lookup (node:sqlite)                                                                                        |
-| `nuts-lookup/`                                                               | `@mailwoman/nuts-lookup`                 | EU NUTS region PIP lookup (node:sqlite)                                                                                            |
-| **Private / infra**                                                          |                                          |                                                                                                                                    |
-| `docs/`                                                                      | `@mailwoman/docs` (private)              | Docusaurus site → https://mailwoman.sister.software                                                                                |
-| `tile-worker/`                                                               | `@mailwoman/tile-worker` (private)       | Tile worker for the demo-map coverage overlay                                                                                      |
-| `spike-sqlite-wasm/`                                                         | `@mailwoman/spike-sqlite-wasm` (private) | SQLite-WASM spike — exploratory, not published                                                                                     |
+| Workspace                                                                    | npm package                        | Purpose                                                                                                                            |
+| ---------------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `mailwoman/`                                                                 | `mailwoman`                        | CLI + the high-level runtime pipeline (`createRuntimePipeline`) — the user-facing entry                                            |
+| **Runtime pipeline (staged preprocessing → parse → resolve)**                |                                    |                                                                                                                                    |
+| `normalize/`                                                                 | `@mailwoman/normalize`             | Stage 1 — deterministic preprocessing (Unicode NFC, punctuation, whitespace, abbreviation); pure, no ML                            |
+| `query-shape/`                                                               | `@mailwoman/query-shape`           | Cheap structural priors — character class, segmentation, known-format detection                                                    |
+| `locale-gate/`                                                               | `@mailwoman/locale-gate`           | Stage 2 — derive a `LocaleHint` from the query shape                                                                               |
+| `kind-classifier/`                                                           | `@mailwoman/kind-classifier`       | Stage 2.5 — categorize by query shape (`postcode_only` / `structured_address` / `po_box` / `intersection` / …)                     |
+| `phrase-grouper/`                                                            | `@mailwoman/phrase-grouper`        | Stage 2.7 — propose coherent input units (boundary discovery) with a kind hypothesis                                               |
+| **Model + core**                                                             |                                    |                                                                                                                                    |
+| `core/`                                                                      | `@mailwoman/core`                  | Tokenization, classification, solver/decoder, policy registry. Ships ~9 MB libpostal + WOF + chromium-i18n data under `core/data/` |
+| `classifiers/`                                                               | `@mailwoman/classifiers`           | Rule-based classifiers                                                                                                             |
+| `neural/`                                                                    | `@mailwoman/neural`                | SentencePiece tokenizer + ONNX inference + decoder wiring                                                                          |
+| `neural-web/`                                                                | `@mailwoman/neural-web`            | Browser neural runtime (onnxruntime-web; WebGPU primary, WASM fallback)                                                            |
+| `neural-weights-en-us/`                                                      | `@mailwoman/neural-weights-en-us`  | Trained model bundle (en-us) — data-only, loaded by `@mailwoman/neural`                                                            |
+| `neural-weights-fr-fr/`                                                      | `@mailwoman/neural-weights-fr-fr`  | Trained model bundle (fr-fr) — data-only                                                                                           |
+| `corpus/`                                                                    | `@mailwoman/corpus`                | BIO-labeled training-corpus pipeline                                                                                               |
+| **Reference data**                                                           |                                    |                                                                                                                                    |
+| `codex/`                                                                     | `@mailwoman/codex`                 | Per-address-system postal reference + branded types (USPS suffixes, US ZIPs). Pure, zero-runtime-dep                               |
+| `variant-aliases/`                                                           | `@mailwoman/variant-aliases`       | Regional variant alias table (`servo` → fuel en-AU, `PFK` → KFC fr-CA), gated by locale                                            |
+| **Resolver + geo**                                                           |                                    |                                                                                                                                    |
+| `resolver/`                                                                  | `@mailwoman/resolver`              | Walk an `AddressTree`, decorate nodes with gazetteer coords + attribution; backend-agnostic, owns the span-rescore levers          |
+| `resolver-wof-sqlite/`                                                       | `@mailwoman/resolver-wof-sqlite`   | WOF SQLite resolver — FTS5/candidate-table `PlaceLookup` (the geocoding backend)                                                   |
+| `resolver-wof-wasm/`                                                         | `@mailwoman/resolver-wof-wasm`     | WOF WASM resolver — browser `PlaceLookup` over `@sqlite.org/sqlite-wasm`                                                           |
+| `spatial/`                                                                   | `@mailwoman/spatial`               | Spatial/geo utilities — haversine, bbox, projection (the math home)                                                                |
+| `cartographer/`                                                              | `@mailwoman/cartographer`          | Mapping utilities for the geo data pipeline                                                                                        |
+| `tiger/`                                                                     | `@mailwoman/tiger`                 | US Census TIGER/Line processing                                                                                                    |
+| **Formatter + record matcher (geocode-first entity resolution)**             |                                    |                                                                                                                                    |
+| `formatter/`                                                                 | `@mailwoman/formatter`             | The inverse of the parser — render `ComponentTag` components to an address string + a canonical match key                          |
+| `record/`                                                                    | `@mailwoman/record`                | Record schema + per-field normalizers for the matcher                                                                              |
+| `match/`                                                                     | `@mailwoman/match`                 | The geocode-first matcher — block → score → cluster (string comparators + the Fellegi-Sunter scorer)                               |
+| `registry/`                                                                  | `@mailwoman/registry`              | The record-matching app — resolve messy records to geocoded entities, export GeoJSON                                               |
+| `address-id/`                                                                | `@mailwoman/address-id`            | Stable address primary key (`<state>.<H3-cell>.<hash>`) — the exact-match complement to the fuzzy matcher                          |
+| **Drop-in APIs + annotations (replace Nominatim/Photon/libpostal/OpenCage)** |                                    |                                                                                                                                    |
+| `annotations/`                                                               | `@mailwoman/annotations`           | The annotation contract — native `AnnotationSet` + `toOpenCage()`/`toNative()`; the seam every annotator plugs into                |
+| `nominatim/`                                                                 | `@mailwoman/nominatim`             | Nominatim-compatible drop-in (`/search`, `/reverse`, `/status`) — returns the OpenCage-style `annotations` block                   |
+| `photon/`                                                                    | `@mailwoman/photon`                | Photon-compatible autocomplete drop-in (`/api`, `/reverse`) — GeoJSON FeatureCollections                                           |
+| `libpostal/`                                                                 | `@mailwoman/libpostal`             | libpostal-compatible drop-in (`/parse`, `/expand`)                                                                                 |
+| `timezone-lookup/`                                                           | `@mailwoman/timezone-lookup`       | Server-side IANA timezone PIP lookup (node:sqlite); data built like the gazetteer                                                  |
+| `un-locode-lookup/`                                                          | `@mailwoman/un-locode-lookup`      | UN/LOCODE nearest-code lookup (node:sqlite)                                                                                        |
+| `nuts-lookup/`                                                               | `@mailwoman/nuts-lookup`           | EU NUTS region PIP lookup (node:sqlite)                                                                                            |
+| **Private / infra**                                                          |                                    |                                                                                                                                    |
+| `docs/`                                                                      | `@mailwoman/docs` (private)        | Docusaurus site → https://mailwoman.sister.software                                                                                |
+| `tile-worker/`                                                               | `@mailwoman/tile-worker` (private) | Tile worker for the demo-map coverage overlay                                                                                      |
 
 Source files live at each workspace's root (no `src/` nesting). The repo root holds workspace config + `scripts/` + `docs/` only.
 
@@ -66,40 +61,40 @@ Source files live at each workspace's root (no `src/` nesting). The repo root ho
 
 ## Release pipeline pitfalls
 
-Local: `yarn release`. CI: GitHub Actions → `publish` workflow → manual dispatch. See `RELEASING.md` for setup + flow. The notes below cover the gotchas that have bitten this pipeline before — read before touching `scripts/copy-weights.mjs`, `scripts/publish-workspace.mjs`, or `.release-it.json`.
+Local: `yarn release`. CI: GitHub Actions → `publish` workflow → manual dispatch. See `RELEASING.md` for setup + flow. The notes below cover the gotchas that have bitten this pipeline before — read before touching `scripts/copy-weights.ts`, `scripts/publish-workspace.ts`, or `.release-it.json`.
 
 ### The weights workspaces have moving binaries
 
 The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `tokenizer.model`) that are **not** committed to git. Multiple pieces cooperate to get those files in place — be careful when changing any of them:
 
-- `<workspace>/scripts/link-dev-weights.sh` — symlinks the artifacts from `/mnt/playpen/mailwoman-data/...` into the workspace so `@mailwoman/neural` can find them during local dev.
-- `neural/test/weights.test.ts` — invokes `link-dev-weights.sh` to verify auto-resolve. **Running `yarn test` re-creates the symlinks** in `neural-weights-en-us/` as a side effect.
-- `scripts/copy-weights.mjs` — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace. Skipped in CI when `MAILWOMAN_SKIP_WEIGHTS_COPY=1` (the default for the `publish` workflow when `release_weights=false`).
-- `scripts/publish-workspace.mjs` — invoked per workspace by release-it. Calls `yarn pack -o <tmp>` (translates `workspace:*` → concrete versions) then `npm publish <tmp>` (npm CLI handles npm-side auth, including Trusted Publishing OIDC in CI).
+- `<workspace>/scripts/link-dev-weights.ts` — symlinks the artifacts from `$MAILWOMAN_DATA_ROOT/...` into the workspace so `@mailwoman/neural` can find them during local dev.
+- `neural/test/weights.test.ts` — invokes `link-dev-weights.ts` to verify auto-resolve. **Running `yarn test` re-creates the symlinks** in `neural-weights-en-us/` as a side effect.
+- `scripts/copy-weights.ts` — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace. Skipped in CI when `MAILWOMAN_SKIP_WEIGHTS_COPY=1` (the default for the `publish` workflow when `release_weights=false`).
+- `scripts/publish-workspace.ts` — invoked per workspace by release-it. Calls `yarn pack -o <tmp>` (translates `workspace:*` → concrete versions) then `npm publish <tmp>` (npm CLI handles npm-side auth, including Trusted Publishing OIDC in CI).
 
 ### Pitfall: symlinks in the publish tarball
 
 `yarn npm publish` (and `npm publish`) refuse to upload tarballs containing symlinks — the registry returns HTTP 415 (`YN0035: Symbolic link is not allowed`). Two specific traps make this easy to hit:
 
-1. **`fs.copyFile` follows symlinks at the destination.** A naïve `fs.copyFile(SOURCE, dest)` where `dest` is a symlink writes through the symlink — the symlink stays in place. `scripts/copy-weights.mjs` mitigates this by `unlink`ing each destination first. Any new script that materializes files into these workspaces **must do the same** (or use `cp --remove-destination` / `fs.cp` with equivalent semantics).
-2. **Tests re-create symlinks.** `weights.test.ts` calls `link-dev-weights.sh` on every run. Even if `copy-weights.mjs` was already run, a subsequent `yarn test` (manual or otherwise) re-symlinks `neural-weights-en-us/`.
+1. **`fs.copyFile` follows symlinks at the destination.** A naïve `fs.copyFile(SOURCE, dest)` where `dest` is a symlink writes through the symlink — the symlink stays in place. `scripts/copy-weights.ts` mitigates this by `unlink`ing each destination first. Any new script that materializes files into these workspaces **must do the same** (or use `cp --remove-destination` / `fs.cp` with equivalent semantics).
+2. **Tests re-create symlinks.** `weights.test.ts` calls `link-dev-weights.ts` on every run. Even if `copy-weights.ts` was already run, a subsequent `yarn test` (manual or otherwise) re-symlinks `neural-weights-en-us/`.
 
-To make publish robust regardless of repo state, `scripts/publish-workspace.mjs` walks the workspace's `package.json` `files` array right before publishing and dereferences any symlinks (`readlink` → `unlink` → `copyFile`). **Do not remove this safety net** — it closes the window between `copy-weights.mjs` (one-shot, at `before:init`) and the actual publish.
+To make publish robust regardless of repo state, `scripts/publish-workspace.ts` walks the workspace's `package.json` `files` array right before publishing and dereferences any symlinks (`readlink` → `unlink` → `copyFile`). **Do not remove this safety net** — it closes the window between `copy-weights.ts` (one-shot, at `before:init`) and the actual publish.
 
 ### Pitfall: provenance attestation on a private repo
 
-`scripts/publish-workspace.mjs` only adds `--provenance` to `npm publish` when `MAILWOMAN_NPM_PROVENANCE=1` is set. npm rejects provenance signatures from private source repositories (the sigstore attestation would be unverifiable by third parties). Trusted Publishing itself works fine on private repos — it's only the attestation that needs a public source. Flip the env on once `sister-software/mailwoman` is public.
+`scripts/publish-workspace.ts` only adds `--provenance` to `npm publish` when `MAILWOMAN_NPM_PROVENANCE=1` is set. npm rejects provenance signatures from private source repositories (the sigstore attestation would be unverifiable by third parties). Trusted Publishing itself works fine on private repos — it's only the attestation that needs a public source. Flip the env on once `sister-software/mailwoman` is public.
 
 ### Pitfall: `workspace:*` doesn't survive `npm publish`
 
-`yarn 4`'s `workspace:*` protocol is yarn-specific. `npm publish` ships the literal string and consumers hit `EUNSUPPORTEDPROTOCOL`. `yarn pack` translates `workspace:*` to the concrete sibling version in the tarball. That's why `publish-workspace.mjs` does pack-then-publish instead of either tool alone.
+`yarn 4`'s `workspace:*` protocol is yarn-specific. `npm publish` ships the literal string and consumers hit `EUNSUPPORTEDPROTOCOL`. `yarn pack` translates `workspace:*` to the concrete sibling version in the tarball. That's why `publish-workspace.ts` does pack-then-publish instead of either tool alone.
 
 ### Recovering from a partial release
 
 If a release fails partway through publishing:
 
 - The git commit + tag are already created by release-it.
-- `yarn npm publish --tolerate-republish` (used by `scripts/publish-workspace.mjs`) makes re-publishing already-published versions a no-op.
+- `yarn npm publish --tolerate-republish` (used by `scripts/publish-workspace.ts`) makes re-publishing already-published versions a no-op.
 - Fix the underlying issue, then resume by invoking the publish script directly for each remaining workspace:
 
   ```bash
@@ -108,7 +103,7 @@ If a release fails partway through publishing:
     RELEASE_IT_WORKSPACES_TAG=latest \
     RELEASE_IT_WORKSPACES_ACCESS=public \
     RELEASE_IT_WORKSPACES_OTP=<otp-if-needed> \
-    node scripts/publish-workspace.mjs || break
+    node scripts/publish-workspace.ts || break
   done
   ```
 
@@ -122,6 +117,11 @@ If a release fails partway through publishing:
 - The **bare-import + subpath-import cycle** is a fragility surface. When a test file imports `@mailwoman/core` bare AND a subpath, Vite can leave the bare re-exports unbound while the slices interleave — classifier base classes evaluate as `undefined`. (`core/resources/libpostal.ts` had a top-level `await readdir` that contributed until #481 made it a lazy `getAvailableLanguages()` getter; the cycle turned out to be **structural** — Vite's bare/subpath interleaving — not TLA-driven, so it persists after the TLA removal.) Workaround: a side-effect `import "@mailwoman/core"` at the top of the affected test file forces full init first. See `classifiers/adapter.test.ts`. Full fix = import-graph hygiene (tracked on #481).
 
 ## Database / inline SQL
+
+If you're building building a database, remember that they are readonly artifacts which should not be modified after creation. If the script builds a database, take care to build it successfully, then move the previous version to a temp directory, and then move the new version into place. This ensures that the database is always in a consistent state, even if the build script fails halfway through.
+
+When making a database, use Kysley as the database connector. It is a thin wrapper around SQLite that provides a simple interface for creating and querying databases and is backed by the native `node:sqlite` module. It is the only supported database connector for this repo.
+If you're building building a database, remember that they are readonly artifacts which should not be modified after creation. If the script builds a database, take care to build it successfully, then move the previous version to a temp directory, and then move the new version into place. This ensures that the database is always in a consistent state, even if the build script fails halfway through.
 
 Table DDL goes through Kysely's schema-builder, not raw `db.exec("CREATE TABLE …")`. The idiom, established across #745–#749:
 
@@ -146,3 +146,7 @@ On the query side, the migratable remainder is the cold, already-`async` `SELECT
 ## When in doubt
 
 Read the workspace-local docstrings before changing infrastructure files. The headers in `scripts/*.mjs`, `.release-it.json`, and `.github/workflows/*.yml` explain why each piece exists. If a file's purpose isn't documented inline and you're about to touch it, add the docstring as part of your change — future-you (or future-claude) will thank you.
+
+## Addendum
+
+- We use a version of Node.js that can strip types without any additional CLI flags. This is appropriate for everything but the Ink/Pastel commands, which are TSX and require compiling.

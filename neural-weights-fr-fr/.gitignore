@@ -4,7 +4,7 @@
 /model.onnx
 /tokenizer.model
 
-# Soft-feed artifacts materialized at publish time by scripts/copy-weights.mjs (#718 D1):
+# Soft-feed artifacts materialized at publish time by scripts/copy-weights.ts (#718 D1):
 # the compact PCB1 postcode-anchor binary + the gazetteer-anchor lexicon.
 /postcode-*.bin
 /anchor-lexicon-v1.json

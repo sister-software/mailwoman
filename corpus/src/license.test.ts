@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { compileLicenseExcludes, licenseExcluded, SHARE_ALIKE_PATTERN } from "./license.js"
 
 describe("license exclusion (#26)", () => {
@@ -9,6 +10,7 @@ describe("license exclusion (#26)", () => {
 		for (const l of ["ODbL-1.0", "Open Database License v1.0", "CC-BY-SA-4.0", "CC-SA-1.0"]) {
 			expect(SHARE_ALIKE_PATTERN.test(l)).toBe(true)
 		}
+
 		// Tier A (PD/CC0) + Tier B (CC-BY / Licence Ouverte) must NOT match — they're allowed.
 		for (const l of ["CC0-1.0", "Public Domain", "CC-BY-4.0", "Licence Ouverte 2.0"]) {
 			expect(SHARE_ALIKE_PATTERN.test(l)).toBe(false)

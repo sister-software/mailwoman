@@ -9,9 +9,10 @@
  * Pattern from: dynamic-tools.ts (tool registration)
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { lstatSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
+
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { Type } from "typebox"
 
 const PROJECT_ROOT = process.cwd()
@@ -45,6 +46,7 @@ interface CheckReleaseResult {
 function parseReleaseConfig(): ReleaseConfig | null {
 	try {
 		const raw = readFileSync(resolve(PROJECT_ROOT, "release.config.json"), "utf-8")
+
 		return JSON.parse(raw) as ReleaseConfig
 	} catch {
 		return null
@@ -62,8 +64,10 @@ function checkWeights(): {
 
 	for (const rel of WEIGHTS_FILES) {
 		const abs = resolve(PROJECT_ROOT, rel)
+
 		try {
 			const stat = lstatSync(abs)
+
 			if (stat.isSymbolicLink()) {
 				symlinked.push(rel)
 			} else if (stat.isFile()) {
@@ -125,11 +129,13 @@ export default function (pi: ExtensionAPI) {
 			})
 
 			const releaseConfig = parseReleaseConfig()
+
 			if (!releaseConfig) {
 				result.passed = false
 				result.issues.push("release.config.json not found or unparseable")
 			} else {
 				result.version = releaseConfig.version
+
 				if (!releaseConfig.version) {
 					result.passed = false
 					result.issues.push("release.config.json missing version field")
@@ -147,6 +153,7 @@ export default function (pi: ExtensionAPI) {
 			result.weightsSymlinked = weights.symlinked
 
 			const skipWeights = process.env.MAILWOMAN_SKIP_WEIGHTS_COPY || process.env.MAILWOMAN_SKIP_WEIGHTS
+
 			if (skipWeights) {
 				result.issues.push(`Weights checks skipped (MAILWOMAN_SKIP_WEIGHTS_COPY/MAILWOMAN_SKIP_WEIGHTS set)`)
 			} else {
@@ -154,6 +161,7 @@ export default function (pi: ExtensionAPI) {
 					result.passed = false
 					result.issues.push(`Missing weights: ${weights.missing.join(", ")}`)
 				}
+
 				if (weights.symlinked.length > 0) {
 					result.passed = false
 					result.issues.push(`Symlinked weights (will break npm publish): ${weights.symlinked.join(", ")}`)
@@ -176,6 +184,7 @@ export default function (pi: ExtensionAPI) {
 			} else {
 				const dirty = gitResult.stdout.trim()
 				result.gitClean = dirty.length === 0
+
 				if (!result.gitClean) {
 					result.passed = false
 					const fileCount = dirty.split("\n").filter(Boolean).length
@@ -197,6 +206,7 @@ export default function (pi: ExtensionAPI) {
 				})
 
 				result.compileSuccess = compileResult.code === 0
+
 				if (!result.compileSuccess) {
 					result.passed = false
 					result.issues.push(`yarn compile failed (code ${compileResult.code})`)
@@ -217,6 +227,7 @@ export default function (pi: ExtensionAPI) {
 				})
 
 				result.testSuccess = testResult.code === 0
+
 				if (!result.testSuccess) {
 					result.passed = false
 					result.issues.push(`yarn ci:test failed (code ${testResult.code})`)
@@ -233,9 +244,11 @@ export default function (pi: ExtensionAPI) {
 			lines.push(
 				`Weights: ${result.weightsPresent.length} present, ${result.weightsMissing.length} missing, ${result.weightsSymlinked.length} symlinked`
 			)
+
 			if (result.weightsMissing.length > 0) {
 				lines.push(`  Missing: ${result.weightsMissing.join(", ")}`)
 			}
+
 			if (result.weightsSymlinked.length > 0) {
 				lines.push(`  Symlinked: ${result.weightsSymlinked.join(", ")}`)
 			}
@@ -246,6 +259,7 @@ export default function (pi: ExtensionAPI) {
 			if (result.issues.length > 0) {
 				lines.push("")
 				lines.push("Issues:")
+
 				for (const issue of result.issues) {
 					lines.push(`  - ${issue}`)
 				}
@@ -290,6 +304,7 @@ export default function (pi: ExtensionAPI) {
 			if (params.locale) {
 				args.push("--locale", params.locale)
 			}
+
 			if (params.defaultCountry !== undefined) {
 				args.push("--default-country", params.defaultCountry)
 			}
@@ -302,6 +317,7 @@ export default function (pi: ExtensionAPI) {
 
 			if (result.code !== 0) {
 				const errorOutput = result.stderr.trim() || result.stdout.trim() || "unknown error"
+
 				return {
 					content: [
 						{
@@ -321,6 +337,7 @@ export default function (pi: ExtensionAPI) {
 			const stdout = result.stdout.trim()
 
 			let parsed: unknown
+
 			try {
 				parsed = JSON.parse(stdout)
 			} catch {
@@ -345,6 +362,7 @@ export default function (pi: ExtensionAPI) {
 
 			const isArray = Array.isArray(parsed)
 			let summary: string
+
 			if (isArray) {
 				const n = (parsed as unknown[]).length
 				summary = `${n} candidate${n !== 1 ? "s" : ""} returned`

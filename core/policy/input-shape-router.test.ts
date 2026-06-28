@@ -17,6 +17,7 @@
 import { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
+
 import { filterByPolicy } from "../parser/proposal-pipeline.js"
 import { policyRegistryFromRoute } from "./from-config.js"
 import {

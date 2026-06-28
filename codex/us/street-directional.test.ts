@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import {
 	isStreetDirectionalToken,
 	lookupDirectional,
@@ -62,6 +63,7 @@ test("isStreetDirectionalToken: true for any directional surface, false otherwis
 	for (const tok of ["N", "n", "NW", "north", "South East", "southwest"]) {
 		expect(isStreetDirectionalToken(tok)).toBe(true)
 	}
+
 	for (const tok of ["Main", "Street", "", 7, null]) {
 		expect(isStreetDirectionalToken(tok)).toBe(false)
 	}

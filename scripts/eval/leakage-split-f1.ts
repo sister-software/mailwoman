@@ -23,11 +23,13 @@
  *   [--model neural-weights-en-us/model.onnx --tokenizer ... --model-card ... --out-md <path>]
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { readFileSync, writeFileSync } from "node:fs"
+
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -50,11 +52,14 @@ function norm(s: string): string {
 function valueMatch(pred: string, gold: string): boolean {
 	const a = norm(pred)
 	const b = norm(gold)
+
 	if (!a || !b) return false
+
 	if (a === b) return true
 	const aset = new Set(a.split(" "))
 	const bset = new Set(b.split(" "))
 	const subset = (xs: Set<string>, ys: Set<string>): boolean => [...xs].every((t) => ys.has(t))
+
 	return subset(aset, bset) || subset(bset, aset)
 }
 
@@ -62,10 +67,13 @@ function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 	let found: AddressNode | undefined
 	const walk = (n: AddressNode): void => {
 		if (found) return
+
 		if (n.tag === tag) found = n
 		else for (const c of n.children) walk(c)
 	}
+
 	for (const r of tree.roots) walk(r)
+
 	return found
 }
 
@@ -85,6 +93,7 @@ function grade(tree: AddressTree, expected: OaRow["expected"], acc: Record<strin
 	for (const tag of GRADED) {
 		const gold = expected[tag]
 		const pred = firstByTag(tree, tag)
+
 		if (gold && pred) {
 			if (valueMatch(pred.value, gold)) acc[tag]!.tp++
 			else {
@@ -102,6 +111,7 @@ function grade(tree: AddressTree, expected: OaRow["expected"], acc: Record<strin
 function f1(c: Counts): { p: number; r: number; f1: number } {
 	const p = c.tp + c.fp ? c.tp / (c.tp + c.fp) : 0
 	const r = c.tp + c.fn ? c.tp / (c.tp + c.fn) : 0
+
 	return { p, r, f1: p + r ? (2 * p * r) / (p + r) : 0 }
 }
 
@@ -137,10 +147,13 @@ async function main(): Promise<void> {
 	let heldN = 0
 	let inN = 0
 	let i = 0
+
 	for (const row of rows) {
 		i++
+
 		if (i % 1000 === 0) console.error(`  ${i}/${rows.length}`)
 		let tree: AddressTree
+
 		try {
 			tree = await neural.parse(row.input, parseOpts)
 		} catch {
@@ -149,8 +162,10 @@ async function main(): Promise<void> {
 		const st = (row.state || "??").toUpperCase()
 		const isHeld = held.has(st)
 		grade(tree, row.expected, isHeld ? heldAcc : inAcc)
+
 		if (!perState[st]) perState[st] = newCounts()
 		grade(tree, row.expected, perState[st]!)
+
 		if (isHeld) heldN++
 		else inN++
 	}
@@ -171,6 +186,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push("| tag | held-out F1 | in-training F1 | gap (in − held) |")
 	lines.push("| --- | ---: | ---: | ---: |")
+
 	for (const t of GRADED) {
 		const h = f1(heldAcc[t]!).f1
 		const inF = f1(inAcc[t]!).f1
@@ -187,9 +203,11 @@ async function main(): Promise<void> {
 	const stateRows = Object.entries(perState)
 		.map(([st, acc]) => {
 			const n = GRADED.reduce((s, t) => s + acc[t]!.tp + acc[t]!.fn, 0)
+
 			return { st, n, m: macro(acc), held: held.has(st) }
 		})
 		.sort((a, b) => a.m - b.m)
+
 	for (const s of stateRows) {
 		lines.push(`| ${s.st} | ${s.n} | ${s.m.toFixed(3)} | ${s.held ? "✅ held-out" : ""} |`)
 	}
@@ -197,6 +215,7 @@ async function main(): Promise<void> {
 
 	const out = lines.join("\n") + "\n"
 	const outMd = arg("out-md")
+
 	if (outMd) {
 		writeFileSync(outMd, out)
 		console.error(`wrote → ${outMd}`)

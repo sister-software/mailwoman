@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
 
 test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-service regex", () => {
 	const lex = buildCodexSpanLexicon(["us"])
 	expect(lex.systems).toEqual(new Set(["us"]))
 	expect(lex.unitDesignators.size).toBeGreaterThan(0)
+
 	// every entry is lower-cased (the proposer matches case-folded)
 	for (const d of lex.unitDesignators) expect(d).toBe(d.toLowerCase())
 	expect(lex.deliveryService).toBeInstanceOf(RegExp)

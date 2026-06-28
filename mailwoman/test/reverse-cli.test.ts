@@ -16,6 +16,7 @@ import { execFile } from "node:child_process"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
@@ -31,6 +32,7 @@ function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()
 	const objStart = cleaned.search(/[{[]/)
+
 	return objStart >= 0 ? cleaned.slice(objStart) : cleaned
 }
 

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { existsSync } from "node:fs"
+
 import { beforeAll, describe, expect, it } from "vitest"
+
 import { buildFstFromWof } from "./fst-builder.js"
 import { FstMatcher, type FstNode } from "./fst-matcher.js"
 import { deserializeFst, serializeFst } from "./fst-serialize.js"

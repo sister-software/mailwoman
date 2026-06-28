@@ -6,6 +6,6 @@
 		"allowImportingTsExtensions": false
 	},
 	"include": ["./**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./spike/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [{ "path": "../core" }, { "path": "../resolver" }, { "path": "../spatial" }]
 }

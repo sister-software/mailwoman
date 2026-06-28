@@ -157,3 +157,8 @@ scripts/diag-*.sh
 data/coarse-placer/
 
 nightshift
+
+## Conventions
+
+### Never commit shell scripts. Use a `.ts` or `.tsx` file instead.
+.sh

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { Span } from "@mailwoman/core/tokenization"
+
 import type { Classification } from "./Classification.js"
 
 /**

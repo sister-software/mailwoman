@@ -14,7 +14,7 @@ country codes: `ca`, `us-west`, `us-south`, `us-northeast`, `us-midwest`,
 `global`).
 
 **Authentication required (as of 2026-05-18):** bulk collection downloads
-now require a free registered account. Use the `fetch-openaddresses.sh`
+now require a free registered account. Use the `fetch-openaddresses.ts`
 script which handles auth via `OA_BATCH_TOKEN` — see
 `packages/corpus/scripts/fetch-sources/README.md` for setup steps.
 

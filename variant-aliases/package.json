@@ -8,11 +8,6 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "variant-aliases"
 	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js"
-	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
@@ -20,6 +15,11 @@
 		"out/**/*.d.ts.map",
 		"data/**/*.json"
 	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
 	"publishConfig": {
 		"access": "public"
 	}

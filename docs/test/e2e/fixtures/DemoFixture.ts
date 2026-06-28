@@ -1,11 +1,8 @@
 /**
- * @file High-level page object for the /demo page.
- *
- *   Encapsulates address input, submit, result read-back, theme toggling, and example-button clicks.
- *   Tests stay focused on intent (`await demo.setAddress(...); await demo.submit()`) instead of
- *   selector boilerplate.
- *
- *   All assertions live in the spec files — this class is purely action + state read.
+ * @file High-level page object for the /demo page. Encapsulates address input, submit, result read-back, theme
+ *   toggling, and example-button clicks. Tests stay focused on intent (`await demo.setAddress(...); await
+ *   demo.submit()`) instead of selector boilerplate. All assertions live in the spec files — this class is purely
+ *   action + state read.
  */
 
 import { expect, type Page } from "@playwright/test"
@@ -39,6 +36,7 @@ export class DemoFixture {
 		await this.page.waitForFunction(
 			() => {
 				const btn = document.querySelector("button[type='submit']")
+
 				return btn instanceof HTMLButtonElement && !btn.disabled
 			},
 			{ timeout: 180_000 }
@@ -51,13 +49,14 @@ export class DemoFixture {
 	}
 
 	/**
-	 * Type a partial address to trigger the place-autocomplete typeahead (#587), then read the "Did
-	 * you mean" suggestion texts once the debounced FST walk renders them.
+	 * Type a partial address to trigger the place-autocomplete typeahead (#587), then read the "Did you mean" suggestion
+	 * texts once the debounced FST walk renders them.
 	 */
 	async readSuggestions(text: string): Promise<string[]> {
 		await this.setAddress(text)
 		const list = this.page.locator("#addr-suggest-list")
 		await list.waitFor({ state: "visible", timeout: 5000 }).catch(() => {})
+
 		return this.page.locator("#addr-suggest-list [role='option']").allTextContents()
 	}
 
@@ -89,16 +88,20 @@ export class DemoFixture {
 		return this.page.evaluate<ResolvedResult>(() => {
 			const parsedRows = [...document.querySelectorAll("tbody tr")].map((tr) => {
 				const cells = [...tr.querySelectorAll("td")].map((td) => td.textContent ?? "")
+
 				return { tag: cells[0] ?? "", value: cells[1] ?? "", confidence: cells[2] ?? "" }
 			})
 			const resolved: Record<string, string> = {}
+
 			for (const dt of document.querySelectorAll("dl dt")) {
 				const dd = dt.nextElementSibling
+
 				if (dt.textContent && dd?.textContent) {
 					resolved[dt.textContent] = dd.textContent
 				}
 			}
 			const markerCount = document.querySelectorAll(".maplibregl-marker").length
+
 			return { parsedRows, resolved, markerCount }
 		})
 	}

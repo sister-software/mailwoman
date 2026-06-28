@@ -26,7 +26,7 @@
 #     regression on what already works (the position-0 cue must not hurt native/US/FR).
 #   - If intl-ON still trails by >10pp: dual-injection insufficient -> reconsider the always-on anchor
 #     design (order-conditioned anchor), operator's call.
-# Measure with scripts/eval/de-order-eval.sh (the 2×2 native/intl × anchor on/off + US/FR harness).
+# Measure with scripts/eval/de-order-eval.ts (the 2×2 native/intl × anchor on/off + US/FR harness).
 #
 # CORPUS: v0.4.3-de-regiontail — v0.4.0 (US/FR) base overlaid with a BOTH-ORDER synth-german shard
 # (200K train + 4K val, real OpenAddresses Berlin/Saxony tuples). Reproduce + deploy to the Modal volume:

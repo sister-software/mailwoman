@@ -7,6 +7,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { bboxAround, haversineKm } from "./geo.js"
@@ -91,6 +92,7 @@ function buildFixtureDb(): DatabaseSync {
 		                 is_current, is_deprecated)
 		VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
+
 	for (const p of FIXTURE) {
 		insertSpr.run(
 			p.id,
@@ -105,6 +107,7 @@ function buildFixtureDb(): DatabaseSync {
 			p.bbox.maxLon
 		)
 	}
+
 	return db
 }
 
@@ -232,6 +235,7 @@ describe("findPlace — backwards compat", () => {
 			INSERT INTO place_search (wof_id, name, alt_names) SELECT id, name, '' FROM spr;
 		`)
 		const oldLookup = new WofSqlitePlaceLookup({ database: db })
+
 		try {
 			// bbox option should be silently ignored — without the R*Tree we can't filter at SQL level,
 			// and dropping the option to ensure no-crash is the chosen contract (documented in types.ts).

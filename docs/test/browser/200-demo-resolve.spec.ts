@@ -126,6 +126,7 @@ test.describe("Demo — resolution cascade", () => {
 			lon: [151.0, 151.4],
 		},
 	]
+
 	for (const c of newPostcodeCases) {
 		test(`-20j postcode coverage — ${c.name}`, async ({ demo }) => {
 			await demo.goto(c.query)

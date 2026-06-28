@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import FastGlob from "fast-glob"
 import * as fs from "node:fs/promises"
+
+import FastGlob from "fast-glob"
 import { PathBuilder } from "path-ts"
+
 import { takeInParallel } from "../../collections.js"
 import { prepareRepositoryDirectories, type RepositorySource } from "../../git.js"
 import {
@@ -112,8 +114,7 @@ export class Placetype implements Disposable {
 	/**
 	 * Compare two placetypes, sorting less specific (i.e. bigger or higher) placetypes first.
 	 *
-	 * Note that the two placetype IDs have no affect on the comparison as they are not sequential,
-	 * only unique.
+	 * Note that the two placetype IDs have no affect on the comparison as they are not sequential, only unique.
 	 */
 	static comparatorAsc(a: Placetype, b: Placetype): number {
 		if (a.siblings.has(b)) {
@@ -121,6 +122,7 @@ export class Placetype implements Disposable {
 		}
 
 		if (a.children.has(b)) return -1
+
 		if (b.children.has(a)) return 1
 
 		return 0
@@ -129,8 +131,7 @@ export class Placetype implements Disposable {
 	/**
 	 * Compare two placetypes, sorting more specific (i.e. smaller or lower) placetypes first.
 	 *
-	 * Note that the two placetype IDs have no affect on the comparison as they are not sequential,
-	 * only unique.
+	 * Note that the two placetype IDs have no affect on the comparison as they are not sequential, only unique.
 	 */
 	static comparatorDesc(a: Placetype, b: Placetype): number {
 		if (a.siblings.has(b)) {
@@ -138,6 +139,7 @@ export class Placetype implements Disposable {
 		}
 
 		if (a.children.has(b)) return 1
+
 		if (b.children.has(a)) return -1
 
 		return 0
@@ -155,8 +157,7 @@ export class Placetype implements Disposable {
 	/**
 	 * The Brooklyn Integers ID of this placetype.
 	 *
-	 * This is effectively a unique identifier for the placetype, but any pattern of sequential
-	 * integers is coincidental.
+	 * This is effectively a unique identifier for the placetype, but any pattern of sequential integers is coincidental.
 	 */
 	public get id(): number {
 		return this.#definition.id
@@ -172,8 +173,7 @@ export class Placetype implements Disposable {
 	/**
 	 * The role of this placetype, indicating its level of requirement to represent a full hierarchy.
 	 *
-	 * Some placetypes only exist to provide a supplementary role and are not required for a full
-	 * hierarchy.
+	 * Some placetypes only exist to provide a supplementary role and are not required for a full hierarchy.
 	 */
 	public get role(): PlacetypeRole {
 		return this.#definition.role
@@ -182,7 +182,8 @@ export class Placetype implements Disposable {
 	/**
 	 * The parent names of this placetype, i.e. those that this Placetype is a child of.
 	 *
-	 * @example Continent is a parent of "country"
+	 * @example
+	 * 	Continent is a parent of "country"
 	 */
 	public parentNames: Set<string>
 
@@ -424,6 +425,7 @@ export class Placetype implements Disposable {
 
 	public toString() {
 		const { name, id, role } = this.#definition
+
 		return `Placetype[${name}][${id}][${role}]`
 	}
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { formatAddress, toOpenCageComponents } from "./format.js"
 
 describe("formatAddress", () => {

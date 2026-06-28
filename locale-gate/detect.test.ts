@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { detectLocaleSync } from "./detect.js"
 import type { NormalizedInputLite, QueryShapeLike } from "./types.js"
 
@@ -125,6 +126,7 @@ describe("detectLocale — fallback + always-decisive", () => {
 
 	it("alternatives are sorted descending by confidence", () => {
 		const r = detectLocaleSync(input("東京"), shape({ characterClass: "cjk" }))
+
 		for (let i = 1; i < r.alternatives.length; i++) {
 			expect(r.alternatives[i]?.confidence).toBeLessThanOrEqual(r.alternatives[i - 1]?.confidence ?? 1)
 		}

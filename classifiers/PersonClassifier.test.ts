@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { assertClassification } from "mailwoman/sdk/test"
+
 import { PersonClassifier } from "./PersonClassifier.js"
 
 const classifier = await new PersonClassifier().ready()

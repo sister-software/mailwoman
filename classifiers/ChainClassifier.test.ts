@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { assertClassification } from "mailwoman/sdk/test"
+
 import { ChainClassifier } from "./ChainClassifier.js"
 
 const classifier = await new ChainClassifier().ready()

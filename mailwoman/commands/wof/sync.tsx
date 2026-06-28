@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { availableParallelism } from "node:os"
+
 import { ProgressBar } from "@inkjs/ui"
 import {
 	formatQuantity,
@@ -11,11 +13,11 @@ import {
 	takeInParallel,
 } from "@mailwoman/core"
 import { Box, Text } from "ink"
-import { availableParallelism } from "node:os"
 import { PathBuilder } from "path-ts"
 import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const BATCH_SIZE = availableParallelism()
@@ -24,13 +26,12 @@ const WOF_REPO_OWNER = "whosonfirst-data"
 const ArgumentsSchema = zod.array(zod.string().describe("Path to the Who's On First repository admin directory"))
 
 /**
- * `--repos` is a comma-separated allow-list of repo names. When set, the discovery step still
- * queries `gh repo list` for `whosonfirst-data/*` but filters down to only repos whose `name` is
- * present in the list. When absent, every non-archived repo in the org is synced (the original
- * behavior).
+ * `--repos` is a comma-separated allow-list of repo names. When set, the discovery step still queries `gh repo list`
+ * for `whosonfirst-data/*` but filters down to only repos whose `name` is present in the list. When absent, every
+ * non-archived repo in the org is synced (the original behavior).
  *
- * The corpus build only needs a small subset (4 repos for US+FR admin+postalcode + the placetypes
- * codex). Cloning all ~100 whosonfirst-data repos is otherwise ~2.9 GB of git for no reason.
+ * The corpus build only needs a small subset (4 repos for US+FR admin+postalcode + the placetypes codex). Cloning all
+ * ~100 whosonfirst-data repos is otherwise ~2.9 GB of git for no reason.
  */
 const OptionsSchema = zod.object({
 	repos: zod
@@ -51,6 +52,7 @@ function parseReposFilter(raw: string | undefined): Set<string> | undefined {
 			.map((s) => s.trim())
 			.filter(Boolean)
 	)
+
 	return allow.size > 0 ? allow : undefined
 }
 
@@ -97,6 +99,7 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 
 	useEffect(() => {
 		if (!repos) return
+
 		if (syncCount < repos.length) return
 
 		Placetype.prepare({

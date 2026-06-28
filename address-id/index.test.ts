@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { createPostalAddressID, isPostalAddressID, parsePostalAddressID } from "./index.js"
 
 const AUSTIN = { latitude: 30.2672, longitude: -97.7431 }

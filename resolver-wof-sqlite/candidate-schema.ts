@@ -17,9 +17,9 @@
 import { sql, type Kysely } from "kysely"
 
 /**
- * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the
- * clustered primary key; the rest is denormalized so a resolve is one probe (no join to `spr`).
- * Coordinates + bbox + name are nullable at the SQL level (a postcode shard row may lack a bbox).
+ * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key; the
+ * rest is denormalized so a resolve is one probe (no join to `spr`). Coordinates + bbox + name are nullable at the SQL
+ * level (a postcode shard row may lack a bbox).
  */
 export interface CandidateTable {
 	/** The shared {@link normalizeLocalityForKey} of the name/alias — the probe key. */
@@ -31,8 +31,7 @@ export interface CandidateTable {
 	/** Small int from {@link PlacetypeCodeTable}. */
 	placetype_id: number
 	/**
-	 * `-log10(population + 1)` — ASC order = highest-population first. 0 for postcodes (no
-	 * population).
+	 * `-log10(population + 1)` — ASC order = highest-population first. 0 for postcodes (no population).
 	 */
 	neg_rank: number
 	/** WOF id of the place this row resolves to. */
@@ -72,9 +71,9 @@ export interface CandidateDatabase {
 }
 
 /**
- * The `candidate`/`cand_stage` columns in clustered-key order. The materialization `INSERT INTO
- * candidate SELECT … FROM cand_stage` derives its column list from this, so the two tables can't
- * drift. Keep in sync with {@link CandidateTable}.
+ * The `candidate`/`cand_stage` columns in clustered-key order. The materialization `INSERT INTO candidate SELECT … FROM
+ * cand_stage` derives its column list from this, so the two tables can't drift. Keep in sync with
+ * {@link CandidateTable}.
  */
 export const CANDIDATE_COLUMNS = [
 	"name_key",
@@ -95,9 +94,9 @@ export const CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * Create the code dictionaries + the transient staging table — called before the build's load
- * passes. `cand_stage` mirrors {@link CandidateTable} but every column is nullable (the loader fills
- * them positionally). Pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
+ * Create the code dictionaries + the transient staging table — called before the build's load passes. `cand_stage`
+ * mirrors {@link CandidateTable} but every column is nullable (the loader fills them positionally). Pass a
+ * {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
  */
 export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -131,8 +130,8 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 }
 
 /**
- * Create the clustered `WITHOUT ROWID` lookup table — called after staging, before the VACUUM. The
- * first six columns form the clustered primary key (population-ranked via `neg_rank`).
+ * Create the clustered `WITHOUT ROWID` lookup table — called after staging, before the VACUUM. The first six columns
+ * form the clustered primary key (population-ranked via `neg_rank`).
  */
 export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema

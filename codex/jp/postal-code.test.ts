@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { firstDigitRegion, isJpPostalCode, normalizeJpPostalCode } from "./postal-code.js"
 
 describe("normalizeJpPostalCode", () => {

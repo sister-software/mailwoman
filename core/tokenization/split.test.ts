@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { Span } from "./Span.js"
 import { fieldsFuncBoundary, fieldsFuncWhiteSpace, splitByField } from "./split.js"
 

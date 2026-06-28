@@ -95,7 +95,7 @@ Training runs in Python on the lab's GPU (AMD Radeon 780M). The training script:
 7. Every 250 steps: evaluate on the val shard, log val loss + macro F1.
 8. Every 100 steps: save a full checkpoint (model + optimizer + scheduler + RNG state).
 
-Save-every-100 is a defensive measure for the lab's GPU: it has a firmware quirk that fires a `GPU Hang` exception every 30–60 minutes under sustained load. The `train_with_resume.sh` wrapper auto-restarts on hang and resumes from the latest checkpoint. With this in place, training is robust to multiple hangs per session.
+Save-every-100 is a defensive measure for the lab's GPU: it has a firmware quirk that fires a `GPU Hang` exception every 30–60 minutes under sustained load. The `train_with_resume.ts` wrapper auto-restarts on hang and resumes from the latest checkpoint. With this in place, training is robust to multiple hangs per session.
 
 The v3.0.0 run trained for 1,800 steps (out of a planned 50,000) before the val metric peaked and started degrading. We early-stopped at 1,800 to ship the best checkpoint.
 

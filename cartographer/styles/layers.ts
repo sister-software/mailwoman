@@ -132,6 +132,7 @@ export class LayerSpecificationList {
 
 	public remove(layerID: string) {
 		const item = this.#layersByID.get(layerID)
+
 		if (!item) return
 
 		const prev = item[kPrev]

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { isNzPostcode, normalizeNzPostcode, NZ_POSTCODE_PATTERN } from "./postcode.js"
 
 test("NZ_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {

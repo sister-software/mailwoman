@@ -37,6 +37,7 @@ function render(response) {
 		const cell = document.createElement("th")
 
 		let char = response.input.body.charAt(characterIndex)
+
 		if (char.trim().length > 0) {
 			cell.classList.add("kb")
 		} else {
@@ -199,7 +200,7 @@ function loadAddress() {
 	return "1389a County Road 42 IA"
 }
 
-let updateID = null
+let updateID = -1
 let controller = new AbortController()
 
 function update() {
@@ -208,7 +209,7 @@ function update() {
 
 	controller = new AbortController()
 
-	updateID = setTimeout(async () => {
+	updateID = self.setTimeout(async () => {
 		const nextAddress = searchInput.value.trim()
 
 		if (!nextAddress) return

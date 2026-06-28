@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { isUniformlyCased, smartCamelCase, smartCapitalCase, smartSnakeCase } from "./identifiers.js"
 
 test("smartSnakeCase: snake-cases mixed-case names", () => {

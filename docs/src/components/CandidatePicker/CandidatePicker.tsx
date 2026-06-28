@@ -9,9 +9,9 @@ interface CandidatePickerProps {
 }
 
 /**
- * Lets the operator see WOF's runner-up hits and switch the rendered marker to any of them. Helpful
- * when the parser found e.g. "Portland" and WOF returned both Portland-OR and Portland-ME with
- * similar scores — picker disambiguates without re-typing the query.
+ * Lets the operator see WOF's runner-up hits and switch the rendered marker to any of them. Helpful when the parser
+ * found e.g. "Portland" and WOF returned both Portland-OR and Portland-ME with similar scores — picker disambiguates
+ * without re-typing the query.
  */
 export const CandidatePicker: React.FC<CandidatePickerProps> = ({ candidates, selectedIndex, onSelect }) => {
 	return (

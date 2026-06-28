@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { isJapanesePrefectureCode, JP_PREFECTURES, lookupJapanesePrefecture } from "./prefecture.js"
 
 describe("JP_PREFECTURES", () => {
@@ -13,6 +14,7 @@ describe("JP_PREFECTURES", () => {
 
 	it("has the legal to/dō/fu/ken split (1 to, 1 do, 2 fu, 43 ken)", () => {
 		const counts = { to: 0, do: 0, fu: 0, ken: 0 }
+
 		for (const info of Object.values(JP_PREFECTURES)) counts[info.type]++
 		expect(counts).toEqual({ to: 1, do: 1, fu: 2, ken: 43 })
 	})

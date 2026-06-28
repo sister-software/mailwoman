@@ -8,9 +8,10 @@
  *   the canonical `candidate-global.db`.
  */
 
+import { join } from "node:path"
+
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { join } from "node:path"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -44,6 +45,7 @@ const GazetteerPromote: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 	}, [link, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (link) {
 		return (
 			<Box flexDirection="column">
@@ -54,6 +56,7 @@ const GazetteerPromote: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 			</Box>
 		)
 	}
+
 	return null
 }
 

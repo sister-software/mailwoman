@@ -4,7 +4,9 @@
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { beforeEach, describe, expect, it } from "vitest"
+
 import { InMemoryAdapterRegistry } from "../../adapter.js"
 import { createUsgovNppesAdapter, USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE } from "./adapter.js"
 
@@ -31,6 +33,7 @@ function writeCsv(...lines: string[]): string {
 	const p = join(scratch, "test.csv")
 	const header = CSV_HEADER + "\n"
 	writeFileSync(p, header + lines.join("\n"), "utf8")
+
 	return p
 }
 
@@ -45,6 +48,7 @@ describe("usgov-nppes adapter", () => {
 		const p = writeCsv("1000000001,2,METRO HEALTH SYSTEM,,,1234 MAIN ST,SUITE 200,NASHVILLE,TN,37203")
 		const a = createUsgovNppesAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
@@ -62,6 +66,7 @@ describe("usgov-nppes adapter", () => {
 		const p = writeCsv("1000000002,1,,SMITH,JANE,5678 OAK AVE,,PORTLAND,OR,97201")
 		const a = createUsgovNppesAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
@@ -77,6 +82,7 @@ describe("usgov-nppes adapter", () => {
 		)
 		const a = createUsgovNppesAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.components.venue).toBe("ACME CORP")
@@ -86,6 +92,7 @@ describe("usgov-nppes adapter", () => {
 		const p = writeCsv("1000000005,2,BAD CORP,,,1 FAKE ST,,NOWHERE,ZZ,00000")
 		const a = createUsgovNppesAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
 		expect(rows).toHaveLength(0)
 	})
@@ -113,6 +120,7 @@ describe("usgov-nppes adapter", () => {
 		)
 		const a = createUsgovNppesAdapter()
 		const rows = []
+
 		for await (const r of a.rows({ inputPath: p, limit: 2 })) rows.push(r)
 		expect(rows).toHaveLength(2)
 	})

@@ -19,6 +19,7 @@ export class LeadingAreaDeclassifier implements Solver {
 
 			for (const { classification, span } of solution.matches) {
 				if (LeadingArea.Admin.has(classification)) continue
+
 				if (LeadingArea.Netural.has(classification)) continue
 
 				lastNonAdminCursorPosition = span.end

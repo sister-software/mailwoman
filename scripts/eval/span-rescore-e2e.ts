@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { existsSync, readFileSync } from "node:fs"
+
 /**
  *   #370 span-rescore — END-TO-END production validation (#780).
  *
@@ -18,7 +20,7 @@
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { existsSync, readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -41,8 +43,10 @@ async function queryNominatim(raw: string, cc: string): Promise<{ lat: number; l
 		u.searchParams.set("limit", "1")
 		u.searchParams.set("countrycodes", cc.toLowerCase())
 		const r = await fetch(u, { headers: { "User-Agent": NOMINATIM_UA } })
+
 		if (!r.ok) return null
 		const j = (await r.json()) as Array<{ lat: string; lon: string }>
+
 		return j[0] ? { lat: Number(j[0].lat), lon: Number(j[0].lon) } : null
 	} catch {
 		return null
@@ -64,14 +68,19 @@ const RANK: Record<string, number> = { house_number: 5, street: 4, locality: 3, 
 function bestCoord(roots: N9[]): { lat: number; lon: number } | null {
 	let best: { lat: number; lon: number; rank: number } | null = null
 	const stack = [...roots]
+
 	while (stack.length) {
 		const n = stack.pop()!
+
 		if (n.placeId && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0)) {
 			const rank = RANK[n.tag ?? ""] ?? 0
+
 			if (!best || rank > best.rank) best = { lat: n.lat, lon: n.lon, rank }
 		}
+
 		if (n.children?.length) stack.push(...n.children)
 	}
+
 	return best ? { lat: best.lat, lon: best.lon } : null
 }
 
@@ -100,6 +109,7 @@ async function main() {
 
 	console.log(`loc |  n  | @25km% base → lever${NOM ? " | nominatim" : ""}`)
 	const T: Stat = { n: 0, resBase: 0, res25Base: 0, resLever: 0, res25Lever: 0, nom25: 0 }
+
 	for (const [cc, file] of LOCALES) {
 		if (!existsSync(file)) continue
 		const rows = readFileSync(file, "utf8")
@@ -108,9 +118,11 @@ async function main() {
 			.slice(0, N)
 			.map((l) => JSON.parse(l))
 		const s: Stat = { n: 0, resBase: 0, res25Base: 0, resLever: 0, res25Lever: 0, nom25: 0 }
+
 		for (const row of rows) {
 			const tLat = Number(row.lat),
 				tLon = Number(row.lon)
+
 			if (!Number.isFinite(tLat) || !Number.isFinite(tLon)) continue
 			s.n++
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
@@ -122,16 +134,22 @@ async function main() {
 			})
 			const cB = bestCoord((base.roots as N9[]) ?? [])
 			const cL = bestCoord((lever.roots as N9[]) ?? [])
+
 			if (cB) {
 				s.resBase++
+
 				if (haversineKm(tLat, tLon, cB.lat, cB.lon) <= 25) s.res25Base++
 			}
+
 			if (cL) {
 				s.resLever++
+
 				if (haversineKm(tLat, tLon, cL.lat, cL.lon) <= 25) s.res25Lever++
 			}
+
 			if (NOM) {
 				const cN = await queryNominatim(row.raw, cc)
+
 				if (cN && haversineKm(tLat, tLon, cN.lat, cN.lon) <= 25) s.nom25++
 				await sleep(1100) // Nominatim ~1 req/s policy
 			}
@@ -140,6 +158,7 @@ async function main() {
 		console.log(
 			`${cc.padEnd(3)} | ${String(s.n).padStart(3)} | ${pct(s.res25Base).padStart(4)} → ${pct(s.res25Lever).padStart(4)}${NOM ? ` | ${pct(s.nom25).padStart(4)}` : ""}`
 		)
+
 		for (const k of Object.keys(s) as (keyof Stat)[]) T[k] += s[k]
 	}
 	const p = (x: number) => ((100 * x) / Math.max(T.n, 1)).toFixed(1)

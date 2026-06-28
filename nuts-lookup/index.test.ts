@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { DatabaseSync } from "node:sqlite"
+
 import { expect, test } from "vitest"
+
 import { makeNutsAnnotator, nutsFromId, NutsLookup, pointInMultiPolygon } from "./index.js"
 
 test("nutsFromId: derives nested levels by prefix", () => {
@@ -45,6 +47,7 @@ function fixtureDb(): DatabaseSync {
 		],
 	])
 	ins.run("XX300", 3, 0, 10, 0, 10, square)
+
 	return db
 }
 

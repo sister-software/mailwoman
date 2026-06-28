@@ -48,6 +48,7 @@ import styles from "./styles.module.css"
 
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
+
 	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
 }
 
@@ -55,6 +56,7 @@ const ConfidenceCell: React.FC<{ confidence?: number }> = ({ confidence }) => {
 	if (confidence == null) return <span className={styles.confDash}>—</span>
 	const pct = Math.max(0, Math.min(1, confidence)) * 100
 	const t = tier(confidence)
+
 	return (
 		<div className={styles.confCell}>
 			<div className={`${styles.confBar} ${styles[`conf_${t}`]}`} style={{ width: `${pct}%` }} />
@@ -115,6 +117,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 	const onSubmit = useCallback(
 		async (e: React.FormEvent) => {
 			e.preventDefault()
+
 			if (!classifier) return
 			setBusy(true)
 			setParseStage(0)
@@ -151,6 +154,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 				const wofLookup = lookup
+
 				if (!wofLookup) {
 					setResult({
 						input: text,
@@ -164,6 +168,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 						fstProvenance,
 						timing: { shape: tShape - tStart, classify: tClassify - tShape },
 					})
+
 					return
 				}
 
@@ -184,9 +189,11 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 
 				let dualRoles: DualRole[] | undefined
 				const primaryHit = candidates[0]
+
 				if (primaryHit && wofLookup.coincidentRolesFor) {
 					try {
 						const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
+
 						if (roles.length > 0) dualRoles = roles
 					} catch {
 						/* relation absent → no dual-role badge */
@@ -246,6 +253,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				: null,
 		}
 		const json = JSON.stringify(payload, null, 2)
+
 		try {
 			await navigator.clipboard.writeText(json)
 		} catch {
@@ -255,6 +263,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 			ta.style.opacity = "0"
 			document.body.appendChild(ta)
 			ta.select()
+
 			try {
 				document.execCommand("copy")
 			} catch {

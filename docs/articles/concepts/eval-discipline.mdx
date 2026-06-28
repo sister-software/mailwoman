@@ -96,7 +96,7 @@ Three metrics survive a name collision:
 - **coordinate error** (great-circle, gold point to resolved centroid, p50/p90) — handles point geometry natively and exposes the wrong-instance resolves that name-match ties.
 - **PIP-containment** — is the gold point inside the resolved place's polygon? Name-surface-independent, but report it _with a polygon-coverage denominator_: WOF point-geometry localities have no polygon and would otherwise count as silent failures, and tight municipal polygons reject rural addresses ascribed to the nearest town. Lead with region-match and coordinate; treat locality-PIP as a coverage-adjusted secondary.
 
-`scripts/eval/honest-eval.sh` + `scripts/eval/pip-containment.py` implement this; see [the honest-eval report](../evals/2026-06-08-honest-eval.mdx) for the full run.
+`scripts/eval/honest-eval.ts` + `scripts/eval/pip-containment.py` implement this; see [the honest-eval report](../evals/2026-06-08-honest-eval.mdx) for the full run.
 
 ### When aggregate and functional disagree, functional wins
 
@@ -138,7 +138,7 @@ Before shipping a model release:
 4. **Inspect borderline regressions manually.** A 0.5–1.5pt macro_F1 shift could be annotator noise. Look at the actual disagreements before deciding.
 5. **Run verdict smokes at full-run geometry with constant LR.** Cosine decay and mismatched batch sizes produce false confidence.
 6. **Build diagnostic tooling before you need it.** `corpus-audit` and `diagnose_regression.py` were built during the v0.4.0 campaign — they would have saved most of v0.3.0's investigation time if they'd existed earlier.
-7. **Grade the resolver by coordinate on a leakage-free slice.** Never ship a resolver change on name-match alone — it ties same-named places in different states. Evaluate on held-out geography (`honest-eval.sh`), lead with region-match + coordinate error, and read the demo presets before the verdict.
+7. **Grade the resolver by coordinate on a leakage-free slice.** Never ship a resolver change on name-match alone — it ties same-named places in different states. Evaluate on held-out geography (`honest-eval.ts`), lead with region-match + coordinate error, and read the demo presets before the verdict.
 8. **Score in the production SHIP-CONFIG, and oracle to attribute error.** Always feed the model the same soft channels (anchor + gazetteer + conventions) it ships with — an anchor-trained model scored anchor-off silently mis-reports the admin tags (country, region, locality, postcode). When you cannot tell which stage owns a failure, oracle-substitute one — feed it the gold answer and re-measure — and the surviving error isolates the rest.
 
 ## See also

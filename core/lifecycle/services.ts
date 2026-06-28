@@ -22,11 +22,12 @@ import { ServiceSymbol } from "./ServiceSymbol.js"
 export type ServiceConstructor<T> = new (...args: any[]) => T & AsyncDisposable
 
 /**
- * Type-predicate to determine if a given input is a ServiceConstructor, i.e. a function which is a
- * constructor for a class which implements the AsyncDisposable interface.
+ * Type-predicate to determine if a given input is a ServiceConstructor, i.e. a function which is a constructor for a
+ * class which implements the AsyncDisposable interface.
  */
 export function isServiceConstructor<T>(input: unknown): input is ServiceConstructor<T> {
 	if (typeof input !== "function") return false
+
 	if (!input.prototype || typeof input.prototype !== "object") return false
 
 	return Object.hasOwn(input.prototype, Symbol.asyncDispose) || Object.hasOwn(input.prototype, ServiceSymbol.asyncInit)
@@ -46,8 +47,7 @@ export interface ServiceRegistryContext {
 }
 
 /**
- * Type definition for a function which returns an instance which implements the AsyncDisposable
- * interface.
+ * Type definition for a function which returns an instance which implements the AsyncDisposable interface.
  *
  * @category Utilities
  * @internal
@@ -66,8 +66,8 @@ const kResolver = Symbol.for("ServiceResolver")
 const kRegistryMap = Symbol.for("ServiceRepositoryMap")
 
 /**
- * Given a service which may not yet be resolved, intercept any method calls and resolve the service
- * before invoking the method.
+ * Given a service which may not yet be resolved, intercept any method calls and resolve the service before invoking the
+ * method.
  *
  * @category Services
  */
@@ -111,8 +111,8 @@ export class Service<T extends AsyncDisposable = AsyncDisposable> implements Pro
 	/**
 	 * Given an instance of a service, attach it to the resolver.
 	 *
-	 * This can be used to attach a service that was created outside of the resolver, such as when a
-	 * resolver is defined from a TypeScript interface.
+	 * This can be used to attach a service that was created outside of the resolver, such as when a resolver is defined
+	 * from a TypeScript interface.
 	 *
 	 * @internal
 	 */
@@ -137,6 +137,7 @@ export class Service<T extends AsyncDisposable = AsyncDisposable> implements Pro
 		if (typeof this[kResolver] === "function") {
 			if (isServiceConstructor(this[kResolver])) {
 				this[kInstance] = new this[kResolver]()
+
 				return this[kInstance]
 			}
 
@@ -147,6 +148,7 @@ export class Service<T extends AsyncDisposable = AsyncDisposable> implements Pro
 			}
 
 			this[kInstance] = nextInstance
+
 			return this[kInstance]
 		}
 
@@ -168,6 +170,7 @@ export class Service<T extends AsyncDisposable = AsyncDisposable> implements Pro
 	/**
 	 * Resolve the service instance. Called implicitly when the service is awaited.
 	 */
+	// oxlint-disable-next-line unicorn/no-thenable -- intentional: a Service is awaitable by design (the await resolves the instance)
 	public then<TResult1 = T, TResult2 = never>(
 		onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
 		onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
@@ -179,6 +182,7 @@ export class Service<T extends AsyncDisposable = AsyncDisposable> implements Pro
 				}
 
 				ServiceRepository[kRegistryMap].set(this[kResolver], this)
+
 				return instance
 			})
 			.then(onfulfilled, onrejected)
@@ -187,11 +191,13 @@ export class Service<T extends AsyncDisposable = AsyncDisposable> implements Pro
 	public async [Symbol.asyncDispose](): Promise<void> {
 		if (!this[kInstance]) {
 			ConsoleLogger.warn("Attempted to dispose a service resolver without a service!")
+
 			return
 		}
 
 		if (typeof this[kInstance][Symbol.asyncDispose] !== "function") {
 			ConsoleLogger.warn("Attempted to dispose a service resolver without a disposable service!")
+
 			return
 		}
 

@@ -22,14 +22,14 @@
 #   - `street` F1 >= v4.1.0 (no loss; negative space) on golden US + the real-affix eval.
 #   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl.
 #   - NO-REGRESSION (within ~1pp, fp32): US house_number / postcode / locality / region; DE native-order
-#     locality (de-order-eval.sh). The balance rows ADD FR/DE order signal — DE should hold or improve.
+#     locality (de-order-eval.ts). The balance rows ADD FR/DE order signal — DE should hold or improve.
 #   DECISION: FR postcode recovered + affix retained + no tripwire → PROMOTE candidate (v4.2.0) and the
 #     affix lever is BANKED for consolidation. If affix slips below v0.9.8: too much balance crowded the
 #     US dose — raise synth-affix to 2.5 or lower --multilocale-count and rerun. If FR still dilutes:
 #     raise --multilocale-count (more FR balance).
 # Measure: per-locale-f1.ts (US/FR golden, fp32 — needs --tokenizer + --model-card) + score-affix.ts
 #   (the UNFOLDED affix scorer — per-locale-f1's foldToComponents joins affixes into `street` and can't
-#   measure the split) + the street-affix-real + unit-real-designators evals + de-order-eval.sh.
+#   measure the split) + the street-affix-real + unit-real-designators evals + de-order-eval.ts.
 #
 # CORPUS: v0.4.11-affix-ml (shard swap, no base rebuild). Reproduce:
 #   node scripts/build-street-affix-shard.mjs --output /tmp/affix-ml-train.jsonl --count 50000 --multilocale-count 40000 --seed 42

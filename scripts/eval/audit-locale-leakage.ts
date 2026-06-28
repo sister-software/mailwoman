@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+
 // One-off (#478 slice 2 evidence): does the SHIPPED v4.3.0 model emit US-convention tags on
 // DE/GB-shaped rows (the cross-locale leakage class the fr conventions row fixed for French)?
 // Counts affix-tag emissions + postcode-shape violations per locale slice, WITHOUT the
@@ -8,7 +10,6 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { readFileSync } from "node:fs"
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
@@ -30,6 +31,7 @@ const slices: Array<[string, string, number]> = [
 	["DE native", "data/eval/external/openaddresses-de-sample-native-order.jsonl", 300],
 	["DE intl", "data/eval/external/openaddresses-de-sample.jsonl", 300],
 ]
+
 for (const [label, file, cap] of slices) {
 	const rows = readFileSync(file, "utf8")
 		.split("\n")
@@ -40,18 +42,23 @@ for (const [label, file, cap] of slices) {
 	let badPostcode = 0
 	let n = 0
 	const samples: string[] = []
+
 	for (const row of rows) {
 		n++
 		const text = row.raw ?? row.input
 		const got = decodeAsJson(await neural.parse(text)) as Record<string, string>
+
 		if (got.street_prefix || got.street_suffix) {
 			affix++
+
 			if (samples.length < 4)
 				samples.push(`${text.slice(0, 60)} → prefix="${got.street_prefix ?? ""}" suffix="${got.street_suffix ?? ""}"`)
 		}
+
 		// DE postcodes are exactly 5 digits (same shape as FR).
 		if (got.postcode && !/^\d{5}$/.test(got.postcode.trim())) {
 			badPostcode++
+
 			if (samples.length < 6) samples.push(`${text.slice(0, 60)} → postcode="${got.postcode}"`)
 		}
 	}
@@ -59,5 +66,6 @@ for (const [label, file, cap] of slices) {
 	console.log(
 		`affix-tag emissions: ${affix} (${((100 * affix) / n).toFixed(1)}%) · postcode-shape violations: ${badPostcode} (${((100 * badPostcode) / n).toFixed(1)}%)`
 	)
+
 	for (const s of samples) console.log(`  ${s}`)
 }

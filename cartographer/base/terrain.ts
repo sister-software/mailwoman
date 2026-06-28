@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { type RasterDEMSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
+
 import { TileSetSourceID } from "../styles/sources.js"
 
 /**

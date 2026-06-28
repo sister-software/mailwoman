@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { readFileSync } from "node:fs"
+
 /**
  *   #148 diagnostic — dump-and-read why v1.9.0 (multi-locale retrain) REGRESSED EU resolve. For each
  *   golden row, parse with TWO models (baseline + candidate), extract the emitted `locality` span, and
@@ -15,7 +17,7 @@
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
-import { readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -50,6 +52,7 @@ async function main() {
 		const r = await resolver.resolveTree(tree as never, opts)
 		const has = (n: { placeId?: string; children: unknown[] }): boolean =>
 			!!n.placeId?.startsWith("wof:") || (n.children as { placeId?: string; children: unknown[] }[]).some(has)
+
 		return (r.roots as { placeId?: string; children: unknown[] }[]).some(has)
 	}
 
@@ -57,6 +60,7 @@ async function main() {
 		baseRes = 0,
 		candRes = 0,
 		candLostThatBaseHad = 0
+
 	for (const row of rows) {
 		const bt = await base.parse(row.raw, { postcodeRepair: true })
 		const ct = await cand.parse(row.raw, { postcodeRepair: true })
@@ -64,9 +68,13 @@ async function main() {
 		const cl = (decodeAsJson(ct) as Record<string, string>).locality ?? ""
 		const br = await didResolve(bt)
 		const cr = await didResolve(ct)
+
 		if (bl !== cl) diff++
+
 		if (br) baseRes++
+
 		if (cr) candRes++
+
 		if (br && !cr) candLostThatBaseHad++
 		const flag = br && !cr ? " <<< base resolved, cand DIDN'T" : ""
 		console.log(

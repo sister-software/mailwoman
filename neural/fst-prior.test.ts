@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { buildFstEmissionPriors, type FstMatcherLike, type FstMatchLike, type FstPlaceEntryLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 
@@ -21,32 +22,40 @@ function mockFst(entries: Map<string, FstPlaceEntryLike[]>): FstMatcherLike {
 		walk(tokens: string[]): FstMatchLike | null {
 			const key = tokens.join(" ")
 			const state = states.get(key)
+
 			if (state) return { stateId: state.id, accepted: state.entries.length > 0, depth: tokens.length }
+
 			for (const [path] of states) {
 				if (path.startsWith(key + " ") || path === key) {
 					return { stateId: 0, accepted: false, depth: tokens.length }
 				}
 			}
+
 			return null
 		},
 		walkFrom(prev: FstMatchLike, token: string): FstMatchLike | null {
 			for (const [path, state] of states) {
 				const parts = path.split(" ")
+
 				if (parts.length > prev.depth && parts[prev.depth] === token) {
 					const subpath = parts.slice(0, prev.depth + 1).join(" ")
 					const exactState = states.get(subpath)
+
 					if (exactState) {
 						return { stateId: exactState.id, accepted: exactState.entries.length > 0, depth: prev.depth + 1 }
 					}
+
 					return { stateId: 0, accepted: false, depth: prev.depth + 1 }
 				}
 			}
+
 			return null
 		},
 		accepting(stateId: number): FstPlaceEntryLike[] {
 			for (const [, state] of states) {
 				if (state.id === stateId) return state.entries
 			}
+
 			return []
 		},
 	}
@@ -56,11 +65,13 @@ function makePieces(text: string): Array<{ piece: string; start: number; end: nu
 	const words = text.split(/\s+/)
 	const pieces: Array<{ piece: string; start: number; end: number }> = []
 	let cursor = 0
+
 	for (const word of words) {
 		const start = text.indexOf(word, cursor)
 		pieces.push({ piece: `▁${word}`, start, end: start + word.length })
 		cursor = start + word.length
 	}
+
 	return pieces
 }
 
@@ -69,6 +80,7 @@ describe("buildFstEmissionPriors", () => {
 		const fst = mockFst(new Map())
 		const pieces = makePieces("hello world")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
+
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
@@ -115,6 +127,7 @@ describe("buildFstEmissionPriors", () => {
 		const fst = mockFst(new Map([["cook", [{ wofID: 5, placetype: "county", importance: 0.88 }]]]))
 		const pieces = makePieces("Cook")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
+
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}

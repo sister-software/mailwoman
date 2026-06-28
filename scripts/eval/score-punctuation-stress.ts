@@ -1,3 +1,5 @@
+import { readFileSync, writeFileSync } from "node:fs"
+
 // Per-class scorer for the punctuation-stress eval (#518). Grades EVERY component key present in
 // each row's gold (exact match, case-insensitive) and reports per-class component accuracy plus
 // parse SURVIVAL (a thrown parse fails every component in its row — the unbalanced-delimiter
@@ -21,7 +23,7 @@ import {
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createAddressParser } from "mailwoman"
-import { readFileSync, writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const argv = process.argv.slice(2)
@@ -85,11 +87,14 @@ function foldGoldForV0(components: Record<string, string>): Record<string, strin
 		.map((t) => components[t])
 		.filter(Boolean)
 		.join(" ")
+
 	for (const [tag, v] of Object.entries(components)) {
 		if (tag === "cedex" || tag === "street_prefix" || tag === "street_suffix") continue
 		out[tag] = tag === "street" ? street : v
 	}
+
 	if (street && !out.street) out.street = street
+
 	return out
 }
 
@@ -97,18 +102,22 @@ async function parseWith(raw: string): Promise<Record<string, string>> {
 	if (engine === "v0") {
 		const solutions = await v0!.parse(raw)
 		const rec = (solutions[0]?.classifications ?? {}) as Record<string, string[]>
+
 		return Object.fromEntries(Object.entries(rec).map(([t, vs]) => [t, vs.join(" ")]))
 	}
 	const flat = decodeAsJson(await neural.parse(raw)) as Record<string, string>
+
 	return argv.includes("--fold-gold") ? foldGoldForV0(flat) : flat
 }
 
 const byClass: Record<string, { components: number; correct: number; rows: number; died: number; samples: string[] }> =
 	{}
+
 for (const row of rows) {
 	const c = (byClass[row.class] ??= { components: 0, correct: 0, rows: 0, died: 0, samples: [] })
 	c.rows++
 	let got: Record<string, string> = {}
+
 	try {
 		got = await parseWith(row.raw)
 	} catch {
@@ -116,8 +125,10 @@ for (const row of rows) {
 	}
 	// --fold-gold grades neural on the same folded view as v0 (apples-to-apples head-to-head).
 	const goldView = engine === "v0" || argv.includes("--fold-gold") ? foldGoldForV0(row.components) : row.components
+
 	for (const [tag, gold] of Object.entries(goldView)) {
 		c.components++
+
 		if (norm(got[tag]) === norm(gold)) c.correct++
 		else if (c.samples.length < 2)
 			c.samples.push(`"${row.raw.slice(0, 55)}" [${tag}] exp="${gold}" got="${got[tag] ?? "(none)"}"`)
@@ -131,6 +142,7 @@ console.log("| class | rows | died | component acc |\n| --- | --: | --: | --: |"
 const sidecar: Record<string, { rows: number; died: number; acc: number }> = {}
 let totC = 0
 let totOk = 0
+
 for (const [cls, c] of Object.entries(byClass).sort()) {
 	const acc = c.components ? (100 * c.correct) / c.components : 0
 	sidecar[cls] = { rows: c.rows, died: c.died, acc: +acc.toFixed(1) }
@@ -142,7 +154,9 @@ console.log(
 	`| **overall** | ${rows.length} | ${Object.values(byClass).reduce((a, c) => a + c.died, 0)} | **${((100 * totOk) / totC).toFixed(1)}%** |`
 )
 console.log("\n## sample misses (≤2/class)")
+
 for (const [cls, c] of Object.entries(byClass).sort()) for (const s of c.samples) console.log(`- [${cls}] ${s}`)
 
 const jsonOut = arg("json")
+
 if (jsonOut) writeFileSync(jsonOut, JSON.stringify({ n: rows.length, classes: sidecar }, null, "\t") + "\n")

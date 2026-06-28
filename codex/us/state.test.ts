@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { isUsStateAbbreviation, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION, US_STATE_NAMES } from "./state.js"
 
 test("isUsStateAbbreviation: true for a sample of states, DC, and territories", () => {
@@ -46,6 +47,7 @@ test("US_STATE_ABBREVIATIONS: holds 56 entries (50 states + DC + 5 territories, 
 
 test("every abbreviation has a name, and every abbreviation in the list keys the name map", () => {
 	expect(Object.keys(US_STATE_BY_ABBREVIATION)).toHaveLength(US_STATE_ABBREVIATIONS.length)
+
 	for (const abbr of US_STATE_ABBREVIATIONS) {
 		expect(US_STATE_BY_ABBREVIATION[abbr]).toBeTruthy()
 	}

@@ -2,6 +2,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { copyFileSync, existsSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
+
 /**
  *   #743/#193 — the DURABLE upstream GeoNames-alias fold. Folds GeoNames bilingual / alt-language
  *   place-names into a COPY of the admin (unified-WOF) DB's CANONICAL tables (`spr` / `names` /
@@ -30,9 +34,6 @@
  *   <...> --out candidate-global-<v>.db
  */
 import { buildPlaceSearchFts, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite"
-import { copyFileSync, existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
 
 const { values: a } = parseArgs({
 	options: {
@@ -57,6 +58,7 @@ if (!existsSync(input)) {
 	console.error(`input admin DB missing: ${input}`)
 	process.exit(1)
 }
+
 if (input === output) {
 	console.error("refusing to write over the input — pick a distinct --out (build-on-copy, never in place)")
 	process.exit(1)

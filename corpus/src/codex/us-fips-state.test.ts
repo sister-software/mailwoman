@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
-import {
-	lookupFipsState,
-	lookupStateAbbreviation,
-	US_FIPS_STATE,
-	US_STATE_BY_ABBREVIATION,
-} from "./us-fips-state.js"
+
+import { lookupFipsState, lookupStateAbbreviation, US_FIPS_STATE, US_STATE_BY_ABBREVIATION } from "./us-fips-state.js"
 
 //#region US_FIPS_STATE table
 

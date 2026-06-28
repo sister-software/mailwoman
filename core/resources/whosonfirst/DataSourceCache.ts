@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { mkdirSync } from "node:fs"
 import { setTimeout } from "node:timers/promises"
+
+import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { dirname } from "path-ts"
+
 import { PlacetypeDataSource, type PlacetypeDataSourceOptions } from "./PlacetypeDataSource.js"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.js"
 

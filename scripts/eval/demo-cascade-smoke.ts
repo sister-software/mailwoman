@@ -33,6 +33,9 @@
  *   Measurement only: this script changes no pipeline or resolver behavior.
  */
 
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import * as path from "node:path"
+
 import { runPipeline } from "@mailwoman/core/pipeline"
 import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
@@ -42,13 +45,11 @@ import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-import { arg } from "../lib/cli-args.ts"
 
 // The demo's own composition helpers — imported (read-only) from the demo source so the smoke eval
 // measures the REAL cascade, not a re-implementation that can drift from it.
 import { flattenTree, runCascade } from "../../docs/src/shared/demo-helpers.ts"
+import { arg } from "../lib/cli-args.ts"
 import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
 
 const argv = process.argv.slice(2)
@@ -76,15 +77,17 @@ const missing = Object.entries({
 })
 	.filter(([, p]) => !existsSync(p))
 	.map(([k, p]) => `  ${k}: ${p}`)
+
 if (missing.length > 0) {
 	console.error(
 		`✗ demo-cascade smoke: missing artifacts —\n${missing.join("\n")}\n` +
-			"  Stage a demo release (build-demo-assets) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
+			"  Stage a demo release (node docs/scripts/build-demo-assets.ts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
 	)
 	process.exit(2)
 }
 
 let rows: SmokeRow[]
+
 try {
 	rows = parseSmokeRows(readFileSync(FILE, "utf8"), FILE)
 } catch (error) {
@@ -100,14 +103,18 @@ const card = JSON.parse(readFileSync(CARD, "utf8"))
 function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 	if (lookups.length === 1) return lookups[0]!
 	const merged: AnchorLookup = new Map()
+
 	for (const lookup of lookups) {
 		for (const [postcode, entry] of lookup) {
 			const existing = merged.get(postcode)
+
 			if (!existing) {
 				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
 				continue
 			}
+
 			for (const country of Object.keys(entry.posterior)) existing.posterior[country] = 1
+
 			if (entry.lat !== 0 || entry.lon !== 0) {
 				if (existing.lat === 0 && existing.lon === 0) {
 					existing.lat = entry.lat
@@ -119,12 +126,14 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 			}
 		}
 	}
+
 	return merged
 }
 
 const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
 	.map((f) => path.join(STAGE, f))
 	.filter((p) => existsSync(p))
+
 if (postcodeBinaries.length === 0) {
 	console.warn(`⚠ no postcode-*.bin under ${STAGE} — anchor channel unfed (anchor-trained models will degrade)`)
 }
@@ -157,6 +166,7 @@ interface RowResult {
 }
 
 const results: RowResult[] = []
+
 for (const row of rows) {
 	const { tree } = await runPipeline(row.input, {
 		computeQueryShape,
@@ -185,8 +195,10 @@ for (const row of rows) {
 	// The demo's anchor-centroid fallback for postcode-only dead ends (WOF placeholder zeros / the
 	// slim DB's absent postalcode rows): synthesize the approximate hit from the anchor channel.
 	let anchorCentroid = false
+
 	if (hits.length === 0 && postcodeNode?.value && anchorLookup) {
 		const anchorHit = anchorLookup.get(String(postcodeNode.value).toUpperCase())
+
 		if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) anchorCentroid = true
 	}
 
@@ -205,6 +217,7 @@ for (const row of rows) {
 		console.error(
 			`   parse: postcode=${JSON.stringify(postcodeNode?.value)} localities=${JSON.stringify(localityNodes.map((n) => n.value))} region=${JSON.stringify(stateNode?.value)}`
 		)
+
 		for (const h of hits.slice(0, 3)) {
 			console.error(`   hit: id=${h.id} ${h.name} (${h.placetype}) score=${h.score?.toFixed?.(2)}`)
 		}

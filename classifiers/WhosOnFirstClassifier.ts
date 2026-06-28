@@ -9,7 +9,6 @@ import {
 	type WhosOnFirstPlacetype,
 	WOFPlacenameCache,
 } from "@mailwoman/core"
-
 import { resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
 const wofPlacetypeDictionary = resourceDictionaryPathBuilder("whosonfirst")
 const wofInternalPlacetypeDictionary = resourceDictionaryPathBuilder("internal", "whosonfirst")
@@ -118,6 +117,7 @@ export class WhosOnFirstClassifier extends PhraseClassifier {
 
 			if (placetype === "locality") {
 				const localityTokens = this.placetypeToCacheMap.get("locality")!
+
 				// Remove locality names that sound like streets.
 
 				for (const [token] of localityTokens) {

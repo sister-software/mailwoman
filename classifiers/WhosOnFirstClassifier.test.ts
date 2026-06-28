@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { WhosOnFirstClassifier } from "./WhosOnFirstClassifier.js"
 
 const classifier = await new WhosOnFirstClassifier().ready()

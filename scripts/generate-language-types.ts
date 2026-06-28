@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { createReadStream } from "node:fs"
+import * as fs from "node:fs/promises"
+
 import { repoRootPathBuilder, resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
 import { pascalCase } from "change-case"
 import * as csv from "csv-parse"
-import { createReadStream } from "node:fs"
-import * as fs from "node:fs/promises"
 
 const outfile = repoRootPathBuilder("core", "resources", "languages", "types.gen.ts")
 

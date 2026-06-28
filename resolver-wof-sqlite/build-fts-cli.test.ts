@@ -10,6 +10,7 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 import { main } from "./build-fts-cli.js"
@@ -52,6 +53,7 @@ describe("build-fts-cli main()", () => {
 		stderrSpy.mockRestore()
 
 		const db = new DatabaseSync(dbPath)
+
 		try {
 			expect(placeSearchFtsExists(db)).toBe(true)
 		} finally {

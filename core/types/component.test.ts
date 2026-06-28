@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, test } from "vitest"
+
 import { BIO_LABELS, BioLabel, COMPONENT_TAGS, ComponentTag } from "./component.js"
 
 describe("COMPONENT_TAGS", () => {
@@ -12,6 +13,7 @@ describe("COMPONENT_TAGS", () => {
 
 	test("includes universal tags from #5", () => {
 		const required: ComponentTag[] = ["country", "region", "locality", "dependent_locality", "postcode", "subregion"]
+
 		for (const tag of required) {
 			expect(COMPONENT_TAGS).toContain(tag)
 		}
@@ -31,6 +33,7 @@ describe("COMPONENT_TAGS", () => {
 			"building_number",
 			"building_name",
 		]
+
 		for (const tag of jp) {
 			expect(COMPONENT_TAGS).toContain(tag)
 		}

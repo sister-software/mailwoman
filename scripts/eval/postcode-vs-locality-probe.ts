@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { readFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
+
 /**
  *   Coordinate probe for a candidate-gazetteer postcode-coverage experiment: for a country's OA
  *   holdout, resolve each row's POSTCODE and its LOCALITY against the candidate table and grade
@@ -11,15 +15,13 @@
  *   --db <candidate.db> --eval /tmp/reg/eu-eval-at.jsonl --country AT
  */
 import { haversineKm } from "@mailwoman/spatial"
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
 
 import { normalizeLocalityForKey, stripLocalityQualifier } from "../../resolver-wof-sqlite/street-normalize.ts"
 
 const { values: a } = parseArgs({
 	options: { db: { type: "string" }, eval: { type: "string" }, country: { type: "string" } },
 })
+
 if (!a.db || !a.eval || !a.country) {
 	console.error("--db, --eval, --country required")
 	process.exit(1)
@@ -29,6 +31,7 @@ const CC = a.country.toUpperCase()
 function pct(xs: number[], p: number): number {
 	if (!xs.length) return NaN
 	const s = [...xs].sort((x, y) => x - y)
+
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 
@@ -44,6 +47,7 @@ const q = db.prepare(
 )
 const resolve = (key: string, pts: number[]): { lat: number; lon: number } | undefined => {
 	if (ccId === undefined || !key) return undefined
+
 	return q.get(key, ccId, JSON.stringify(pts)) as { lat: number; lon: number } | undefined
 }
 
@@ -52,26 +56,34 @@ const locErr: number[] = []
 let n = 0,
 	pcHit = 0,
 	locHit = 0
+
 for (const line of readFileSync(a.eval, "utf8").trim().split("\n")) {
 	if (!line) continue
 	const r = JSON.parse(line) as { lat: number; lon: number; expected?: { locality?: string; postcode?: string } }
+
 	if (typeof r.lat !== "number" || typeof r.lon !== "number") continue
 	n++
 	const pc = r.expected?.postcode
+
 	if (pc && PC_PT !== undefined) {
 		const hit = resolve(normalizeLocalityForKey(pc), [PC_PT])
+
 		if (hit) {
 			pcHit++
 			pcErr.push(haversineKm(hit.lat, hit.lon, r.lat, r.lon))
 		}
 	}
 	const loc = r.expected?.locality
+
 	if (loc) {
 		let hit = resolve(normalizeLocalityForKey(loc), LOC_PTS)
+
 		if (!hit) {
 			const s = normalizeLocalityForKey(stripLocalityQualifier(loc))
+
 			if (s) hit = resolve(s, LOC_PTS)
 		}
+
 		if (hit) {
 			locHit++
 			locErr.push(haversineKm(hit.lat, hit.lon, r.lat, r.lon))

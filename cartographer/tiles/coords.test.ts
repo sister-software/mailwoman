@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { parseTileCoordParams, pointToTile, pointToTileFraction } from "./coords.js"
 
 // Web Mercator slippy-map math: at zoom z there are z2 = 2^z tiles per axis. The X fraction is

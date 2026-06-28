@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { type Flavor, namedFlavor } from "@protomaps/basemaps"
+
 import { TileSetSourceID } from "../styles/sources.js"
 
 /**
- * Identifier for the Mailwoman base tileset. Matches the R2 object basename
- * (`mailwoman-tiles/tiles/basemap-v4.pmtiles`) — `tiles.sister.software/basemap-v4.json` returns its
- * tilejson, `tiles.sister.software/basemap-v4/{z}/{x}/{y}.mvt` returns vector tiles.
+ * Identifier for the Mailwoman base tileset. Matches the R2 object basename (`mailwoman-tiles/tiles/basemap-v4.pmtiles`) —
+ * `tiles.sister.software/basemap-v4.json` returns its tilejson, `tiles.sister.software/basemap-v4/{z}/{x}/{y}.mvt`
+ * returns vector tiles.
  */
 export const MailwomanBaseTileSetID = TileSetSourceID("basemap-v4")
 
@@ -16,9 +17,8 @@ const darkFlavor = namedFlavor("dark")
 console.log("MailwomanBaseFlavor:", darkFlavor)
 
 /**
- * The Mailwoman theme for Protomaps via MapLibre. Keys follow `@protomaps/basemaps@5.x` which
- * targets the v4 tile schema (`["==","kind","..."]` filters), matching the basemap-v4 PMTiles on
- * R2.
+ * The Mailwoman theme for Protomaps via MapLibre. Keys follow `@protomaps/basemaps@5.x` which targets the v4 tile
+ * schema (`["==","kind","..."]` filters), matching the basemap-v4 PMTiles on R2.
  */
 export const MailwomanBaseFlavor: Flavor = {
 	...darkFlavor,

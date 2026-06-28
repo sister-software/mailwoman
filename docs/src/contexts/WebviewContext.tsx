@@ -69,6 +69,7 @@ export function pluckSerializedState(): PlaypenWebviewState {
 		serializedState = JSON.parse(localStorage.getItem("webview-state") || "null")
 	} catch (error) {
 		console.warn("Failed to parse serialized state", error)
+
 		return DEFAULT_SERIALIZED_STATE
 	}
 
@@ -78,10 +79,12 @@ export function pluckSerializedState(): PlaypenWebviewState {
 		const message = error instanceof Error ? error.message : "Unknown error"
 
 		console.warn("Failed to pluck serialized state", message)
+
 		return DEFAULT_SERIALIZED_STATE
 	}
 
 	console.log("Plucked serialized state", serializedState)
+
 	return serializedState
 }
 
@@ -101,6 +104,7 @@ export const PlaypenStateProvider: React.FC<PlaypenStateProviderProps> = ({ init
 			validateSerializedState(value)
 		} catch (error) {
 			console.warn("Failed to persist serialized state", error)
+
 			return
 		}
 

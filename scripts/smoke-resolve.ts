@@ -1,7 +1,7 @@
 /**
- * Smoke test: confirm WofSqlitePlaceLookup works against our CUSTOM unified DB
- * (admin-global-priority.db) now that ancestors + FTS are built. Tests plain text lookup AND
- * ancestors-based parent-constraint scoping (the Springfield problem).
+ * Smoke test: confirm WofSqlitePlaceLookup works against our CUSTOM unified DB (admin-global-priority.db) now that
+ * ancestors + FTS are built. Tests plain text lookup AND ancestors-based parent-constraint scoping (the Springfield
+ * problem).
  *
  * Run: node --experimental-strip-types scripts/smoke-resolve.ts
  */

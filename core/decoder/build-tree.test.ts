@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, test } from "vitest"
+
 import type { BioLabel } from "../types/component.js"
 import { buildAddressTree } from "./build-tree.js"
 import type { AddressNode, DecoderToken } from "./types.js"
@@ -37,8 +38,10 @@ describe("buildAddressTree", () => {
 		const allTags: string[] = []
 		const collect = (n: AddressNode): void => {
 			allTags.push(n.tag)
+
 			for (const c of n.children) collect(c)
 		}
+
 		for (const r of tree.roots) collect(r)
 		expect(allTags.sort()).toEqual(["house_number", "locality", "postcode", "region", "street"])
 	})
@@ -171,9 +174,12 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 		const out: AddressNode[] = []
 		const walk = (n: AddressNode): void => {
 			if (n.tag === "locality") out.push(n)
+
 			for (const c of n.children) walk(c)
 		}
+
 		for (const n of nodes) walk(n)
+
 		return out
 	}
 
@@ -262,7 +268,9 @@ function findByTag(nodes: AddressNode[], tag: string): AddressNode | null {
 	for (const n of nodes) {
 		if (n.tag === tag) return n
 		const inChild = findByTag(n.children, tag)
+
 		if (inChild) return inChild
 	}
+
 	return null
 }

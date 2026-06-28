@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { COMPONENT_TO_LIBPOSTAL, type ParseMatch, toLibpostalComponents } from "./index.js"
 
 test("toLibpostalComponents: maps our classifications to libpostal labels, in order", () => {

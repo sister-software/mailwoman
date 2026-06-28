@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { readFile } from "node:fs/promises"
+
 import { type PostcodeSpec, Span, WordClassifier } from "@mailwoman/core"
 import { corePackagePathBuilder } from "@mailwoman/core/utils"
-import { readFile } from "node:fs/promises"
 
 const dictPath = corePackagePathBuilder("data", "chromium-i18n", "ssl-address")
 

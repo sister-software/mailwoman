@@ -11,6 +11,7 @@
  */
 
 import { describe, expect, test } from "vitest"
+
 import { deserializeFstWeb, readFstProvenanceWeb } from "./fst-deserialize-web.js"
 
 const HEADER_SIZE = 32
@@ -54,9 +55,9 @@ interface BuildOpts {
 }
 
 /**
- * Builds a minimal valid FST binary buffer in the v1/v2 layout. Mirrors fst-serialize.ts closely
- * enough to round-trip through the web deserializer, but kept hand-rolled so the test asserts the
- * format the reader actually expects (not whatever the Node serializer happens to emit at v4).
+ * Builds a minimal valid FST binary buffer in the v1/v2 layout. Mirrors fst-serialize.ts closely enough to round-trip
+ * through the web deserializer, but kept hand-rolled so the test asserts the format the reader actually expects (not
+ * whatever the Node serializer happens to emit at v4).
  */
 function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array {
 	const version = opts.version ?? 2
@@ -66,15 +67,19 @@ function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 	const strings: string[] = []
 	const intern = (s: string): number => {
 		let idx = stringMap.get(s)
+
 		if (idx === undefined) {
 			idx = strings.length
 			strings.push(s)
 			stringMap.set(s, idx)
 		}
+
 		return idx
 	}
+
 	for (const node of nodes) {
 		for (const [token] of node.edges) intern(token)
+
 		for (const place of node.places) intern(place.name)
 	}
 
@@ -84,6 +89,7 @@ function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 
 	let totalEdges = 0
 	let totalPlaces = 0
+
 	for (const node of nodes) {
 		totalEdges += node.edges.length
 		totalPlaces += node.places.length
@@ -125,6 +131,7 @@ function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 
 	// --- String table: offsets[stringCount + 1], then concatenated UTF-8 ---
 	let strOffset = 0
+
 	for (const encoded of encodedStrings) {
 		view.setUint32(pos, strOffset, true)
 		pos += 4
@@ -132,6 +139,7 @@ function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 	}
 	view.setUint32(pos, strOffset, true) // sentinel
 	pos += 4
+
 	for (const encoded of encodedStrings) {
 		bytes.set(encoded, pos)
 		pos += encoded.length
@@ -144,13 +152,16 @@ function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 
 	let edgeIdx = 0
 	let placeIdx = 0
+
 	for (let si = 0; si < nodes.length; si++) {
 		const node = nodes[si]!
 		const sp = stateTableStart + si * STATE_ENTRY_SIZE_V2
 		view.setUint32(sp, edgeIdx, true) // edgeStart
 		view.setUint32(sp + 4, placeIdx, true) // placeStart
 		view.setUint16(sp + 8, node.edges.length, true) // edgeCount (u16)
-		view.setUint16(sp + 10, node.places.length, true) // placeCount (u16)
+		view.setUint16(sp + 10, node.places.length, true)
+
+		// placeCount (u16)
 
 		for (const [token, target] of node.edges) {
 			const ep = edgeTableStart + edgeIdx * EDGE_ENTRY_SIZE
@@ -167,6 +178,7 @@ function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 			view.setUint8(pp + 5, chain.length)
 			view.setUint16(pp + 6, 0, true) // pad
 			view.setUint32(pp + 8, intern(place.name), true)
+
 			// importance: float32 for v2; for v1 the field is interpreted as a raw population u32.
 			if (version >= 2) {
 				view.setFloat32(pp + 12, place.importance, true)
@@ -175,6 +187,7 @@ function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 			}
 			view.setFloat32(pp + 16, place.lat, true)
 			view.setFloat32(pp + 20, place.lon, true)
+
 			for (let ci = 0; ci < chain.length; ci++) {
 				view.setUint32(pp + 24 + ci * 4, chain[ci]!, true)
 			}

@@ -16,6 +16,7 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildSlimWofDatabase } from "./build-slim.js"
@@ -98,6 +99,7 @@ describe("buildSlimWofDatabase", () => {
 		expect(result.rowCounts.placeBbox).toBe(6)
 
 		const slim = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const names = slim
 				.prepare(`SELECT name FROM spr ORDER BY id`)
@@ -122,6 +124,7 @@ describe("buildSlimWofDatabase", () => {
 		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 1 })
 
 		const slim = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const nameIds = slim
 				.prepare(`SELECT DISTINCT id FROM names ORDER BY id`)
@@ -160,6 +163,7 @@ describe("buildSlimWofDatabase", () => {
 		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
 
 		const slim = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const rows = slim
 				.prepare(`SELECT id, population FROM place_population ORDER BY population DESC LIMIT 3`)
@@ -201,6 +205,7 @@ describe("buildSlimWofDatabase", () => {
 		expect(result.rowCounts.placeSearch).toBe(6)
 
 		const slim = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const namesExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'`).get()
 			expect(namesExists).toBeUndefined()
@@ -220,7 +225,7 @@ describe("buildSlimWofDatabase", () => {
 		const output = join(scratch, "slim.db")
 		buildFixtureWof(source)
 
-		// Both the demo plugin and build-demo-assets.sh pass `--in ""` when the custom postcode DB
+		// Both the demo plugin and build-demo-assets.ts pass `--in ""` when the custom postcode DB
 		// isn't built yet. The empty path must be skipped, not treated as a missing file.
 		const result = await buildSlimWofDatabase({ inputs: ["", source, ""], output, topLocalitiesPerCountry: 1 })
 		expect(result.rowCounts.spr).toBe(5) // 1 country + 1 region + 1 locality + 2 postcodes
@@ -243,6 +248,7 @@ describe("buildSlimWofDatabase", () => {
 		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 }) // keeps Springfield, drops Mascoutah
 
 		const slim = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const rows = slim.prepare(`SELECT admin_id, locality_id FROM coincident_roles ORDER BY locality_id`).all()
 			// Only the surviving pair — Mascoutah's row is dropped because 202 was trimmed from spr.
@@ -265,6 +271,7 @@ describe("buildSlimWofDatabase", () => {
 		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
 
 		const slim = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
 			// Illinois keeps its abbr; the trimmed locality's is gone (names was pre-filtered to surviving

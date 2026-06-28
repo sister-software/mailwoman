@@ -7,6 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import type { ComponentTag } from "../types/index.js"
 import { proposalsToTree, treeToProposals } from "./proposals-to-tree.js"
 import type { AddressTree } from "./types.js"

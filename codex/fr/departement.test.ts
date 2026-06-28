@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { departementInfo, FR_DEPARTEMENTS } from "./departement.js"
 
 test("departementInfo: metropolitan code → name + région", () => {

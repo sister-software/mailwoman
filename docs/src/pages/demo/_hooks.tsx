@@ -1,5 +1,6 @@
 import type { Coordinates2D, GeoFeature, PointLiteral } from "@mailwoman/spatial"
 import { useEffect, useState } from "react"
+
 import { TILE_WORKER_URL } from "./_map-helpers.ts"
 
 /**

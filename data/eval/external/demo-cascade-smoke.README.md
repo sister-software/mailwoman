@@ -10,7 +10,7 @@ does — the operator's browser glance found all three in five minutes.
 Runner: [`scripts/eval/demo-cascade-smoke.ts`](../../../scripts/eval/demo-cascade-smoke.ts)
 (compose `runPipeline` + the demo's `runCascade` over the Node lookup against the
 slim `wof-hot.db` the demo serves). Wired as an env-gated leg of
-`scripts/eval/promotion-gate.sh` — it runs whenever the hot DB is present and
+`scripts/eval/promotion-gate.ts` — it runs whenever the hot DB is present and
 skips with a loud note when it isn't.
 
 ## The convention

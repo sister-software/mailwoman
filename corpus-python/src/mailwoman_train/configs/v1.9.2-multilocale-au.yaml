@@ -20,7 +20,7 @@
 # CRITICAL (data_loader.py:244): country_weights.get(country) is None -> the row is EXCLUDED.
 #
 # GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
-# scripts/eval/nonus-coord-panel.sh + the AU coord panel — AU @25km must LIFT toward the 87% ceiling,
+# scripts/eval/nonus-coord-panel.ts + the AU coord panel — AU @25km must LIFT toward the 87% ceiling,
 # AND the EU in-shard locales (PT/PL/AT/CZ/IT) + US per-locale-F1 must HOLD (not worse >1pp) + FR
 # centroid flat. If AU is flat OR US/EU regress at 2-4k, KILL (overfit/dilution — the #148 failure mode).
 # NOT promoted without operator GO (model swap).

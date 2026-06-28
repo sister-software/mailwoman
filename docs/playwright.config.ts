@@ -6,7 +6,7 @@
  *
  *   - **local baseline (default)** — no `MAILWOMAN_DEMO_URL`. A `docusaurus serve` webServer is
  *     started against a freshly-built local site, and `baseURL` points at it. This is the mode that
- *     gives a meaningful pre-/post-refactor baseline: it exercises the code in *this* checkout, not
+ *     gives a meaningful pre-/post-refactor baseline: it exercises the code in _this_ checkout, not
  *     whatever is deployed. The `build` project additionally asserts the production build emits no
  *     warnings or errors.
  *   - **remote smoke** — set `MAILWOMAN_DEMO_URL` (e.g. the production deploy or a staging preview).

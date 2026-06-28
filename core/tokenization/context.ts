@@ -7,6 +7,7 @@ import {
 	type SerializedSolution,
 	type Solution,
 } from "@mailwoman/core/solver"
+
 import { permutate } from "./permutate.js"
 import { type SerializedSpan, Span } from "./Span.js"
 import { fieldsFuncBoundary, fieldsFuncHyphenOrWhiteSpace, fieldsFuncWhiteSpace, splitByField } from "./split.js"
@@ -82,8 +83,7 @@ export class TokenContext {
 	/**
 	 * Evaluate and rank the solutions.
 	 *
-	 * This method is called after the solver has generated solutions, modifying the solutions
-	 * in-place.
+	 * This method is called after the solver has generated solutions, modifying the solutions in-place.
 	 */
 	public evaluateAndRank(solutionLimit: number): void {
 		if (this.#solutions.length === 0) return

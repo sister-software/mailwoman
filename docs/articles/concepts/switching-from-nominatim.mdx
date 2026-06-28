@@ -33,11 +33,14 @@ geo.reverse((38.8977, -77.0365))
 | -------------- | -------------- | -------------------------------------------------------- |
 | `GET /search`  | `GET /search`  | free-text `q` and the structured fields                  |
 | `GET /reverse` | `GET /reverse` | `lat` / `lon`, point-in-polygon over the same admin data |
-| `GET /lookup`  | `GET /lookup`  | by id (see the id-scheme note below)                     |
+| `GET /lookup`  | `501`          | Nominatim looks up by OSM id; Mailwoman is WOF/Overture-keyed, so there are no OSM ids to look up |
 | `GET /status`  | `GET /status`  | `{ status: 0, message: "OK" }`                           |
 
 Parameters honored: `q`, the structured set (`street`, `city`, `county`, `state`, `country`,
-`postalcode`), `countrycodes`, `limit`, `addressdetails`, `format`.
+`postalcode`), `countrycodes`, `limit`, `viewbox`, `bounded`, `addressdetails`, `accept-language`, and
+`format` — `jsonv2` (the default), `json`, or `geojson` (a GeoJSON `FeatureCollection`; coordinate in
+`geometry`, `boundingbox` in `bbox`, the rest in `properties`). Long-tail params Nominatim has and
+Mailwoman ignores: `extratags`, `namedetails`, `dedupe`, `polygon_text`/`_svg`/`_kml`, `exclude_place_ids`.
 
 ## What's different
 
@@ -57,14 +60,14 @@ Parameters honored: `q`, the structured set (`street`, `city`, `county`, `state`
   `/search` returns the rooftop or an interpolated point — `1600 Pennsylvania Avenue NW` resolves to the
   building, with `addressdetails` down to `house_number` and `road`. Where they don't, you get the admin
   centroid: the right place, not the right doorstep. The `addressdetails` always reflect what was parsed.
-- **Some countries don't resolve yet.** The coarse country router confidently routes the US and the
-  well-covered EU set (ES / IT / NL / DE / FR), so `Berlin, Germany` lands in Berlin. It does not yet
-  emit Austria, Australia, the UK, or Canada, so `Vienna, Austria` collides with the US `Vienna` and
-  resolves there. That's the model's country coverage still growing
-  ([#822](https://github.com/sister-software/mailwoman/issues/822)), not a parser limit. You can force
-  the right answer with `countrycodes` — `?q=Sydney&countrycodes=au` lands in Australia. It clears the
-  namesake collisions; an exonym like `Wien`/`Vienna` still needs the model. US coverage leads; the EU
-  recall work is active.
+- **Bare ambiguous names can still collide.** The worldwide gazetteer resolves international cities by
+  population-weighted ranking, so `Vienna, Austria`, `Sydney`, and `Tirana, Albania` all land in the
+  right place — coverage now spans the long tail of countries that used to return nothing. Where a US
+  namesake outweighs the place you meant, a bare query can still resolve to the American twin;
+  `countrycodes` forces the right one (`?q=Sydney&countrycodes=au`). Teaching the coarse country router
+  to emit a country prior for those bare cases is active work
+  ([#822](https://github.com/sister-software/mailwoman/issues/822)); an exonym like `Wien`/`Vienna`
+  needs the model, not the gazetteer.
 
 See [how Mailwoman compares](./how-mailwoman-compares) for the capability matrix across Nominatim,
 Photon, OpenCage, Pelias, and libpostal — including the two rows the hosted services can't check.

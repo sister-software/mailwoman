@@ -8,16 +8,7 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "libpostal"
 	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js"
-	},
-	"dependencies": {
-		"@mailwoman/normalize": "workspace:*",
-		"express": "^5.2.1",
-		"mailwoman": "workspace:*"
-	},
+	"bin": "./out/cli.js",
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
@@ -25,8 +16,17 @@
 		"out/**/*.d.ts.map",
 		"README.md"
 	],
-	"bin": "./out/cli.js",
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/normalize": "workspace:*",
+		"express": "^5.2.1",
+		"mailwoman": "workspace:*"
 	}
 }

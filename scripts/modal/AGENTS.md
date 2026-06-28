@@ -97,7 +97,7 @@ node --experimental-strip-types scripts/eval/boundary-stress-gate.ts \
 
 # 4b. The per-locale FLOORS gate (guardrail non-regression). score-affix.ts hardcodes the repo card +
 #     tokenizer — both already correct for v1.6.0 (labels identical, same v0.6.0-a0 tokenizer).
-scripts/eval/promotion-gate.sh \
+node --experimental-strip-types scripts/eval/promotion-gate.ts \
   --model ./out/v160/model.onnx --int8 ./out/v160/model.onnx \
   --gate scripts/eval/gates/v1.6.0-boundary-stress.json \
   --tokenizer "$TOK" --card neural-weights-en-us/model-card.json \

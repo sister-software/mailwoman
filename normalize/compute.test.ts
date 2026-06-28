@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { normalize } from "./compute.js"
 
 describe("normalize — defaults", () => {
@@ -64,6 +65,7 @@ describe("normalize — opts", () => {
 describe("normalize — offsetMap invariants", () => {
 	it("offsetMap length === normalized length", () => {
 		const inputs = ["350 5th Ave", "350  5th Ave", "  hello  ", "St", "Ave"]
+
 		for (const inp of inputs) {
 			const r = normalize(inp)
 			expect(r.offsetMap.length).toBe(r.normalized.length)
@@ -72,6 +74,7 @@ describe("normalize — offsetMap invariants", () => {
 
 	it("offsetMap entries are all valid indices into raw", () => {
 		const r = normalize("350  5th Ave")
+
 		for (const idx of r.offsetMap) {
 			expect(idx).toBeGreaterThanOrEqual(0)
 			expect(idx).toBeLessThan(r.raw.length)
@@ -102,6 +105,7 @@ describe("normalize — offsetMap invariants", () => {
 	it("offsetMap correctness after abbreviation expansion", () => {
 		const r = normalize("Ave", { expandAbbreviations: true })
 		expect(r.normalized).toBe("Avenue")
+
 		// All chars point back into the source "Ave" range (0..2)
 		for (const idx of r.offsetMap) {
 			expect(idx).toBeGreaterThanOrEqual(0)

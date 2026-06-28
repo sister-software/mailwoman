@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { isIndexedIterable, isIterable, iterateInParallel, pivot, sumOf, take } from "./collections.js"
 
 test("sumOf: totals the named numeric property across an iterable", () => {
@@ -27,9 +28,9 @@ test("sumOf: handles negative and fractional values", () => {
 })
 
 /**
- * `take` yields a single reused buffer (it mutates `batch.length = 0` between yields), so it must
- * be consumed one batch at a time. Snapshot each batch as it arrives — exactly how a batched async
- * loop uses it — rather than retaining references via a spread.
+ * `take` yields a single reused buffer (it mutates `batch.length = 0` between yields), so it must be consumed one batch
+ * at a time. Snapshot each batch as it arrives — exactly how a batched async loop uses it — rather than retaining
+ * references via a spread.
  */
 function drainTake<T>(collection: Iterable<T>, batchSize: number): T[][] {
 	const out: T[][] = []

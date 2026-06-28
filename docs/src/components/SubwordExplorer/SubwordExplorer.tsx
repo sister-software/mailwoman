@@ -13,6 +13,7 @@
  */
 
 import type React from "react"
+
 import type { KindResult, ResultNode, StageTiming } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
@@ -53,19 +54,24 @@ interface WordToken {
 function tokenizeWords(input: string): WordToken[] {
 	const words: WordToken[] = []
 	let i = 0
+
 	while (i < input.length) {
 		let ws = ""
+
 		while (i < input.length && /\s/.test(input[i])) {
 			ws += input[i]
 			i++
 		}
+
 		if (i >= input.length) break
 		const start = i
+
 		while (i < input.length && !/\s/.test(input[i])) {
 			i++
 		}
 		words.push({ text: input.slice(start, i), start, end: i, whitespace: ws })
 	}
+
 	return words
 }
 
@@ -96,8 +102,7 @@ interface AnnotatedWord {
 }
 
 /**
- * Assign each word to its most specific covering span (shortest-span owner) and derive BIO labels +
- * phrase groups.
+ * Assign each word to its most specific covering span (shortest-span owner) and derive BIO labels + phrase groups.
  */
 function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[] {
 	// Filter to well-formed spans.
@@ -110,13 +115,16 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 
 	// Per-word: index of the shortest covering span.
 	const owner: number[] = new Array(words.length).fill(-1)
+
 	for (let w = 0; w < words.length; w++) {
 		const wStart = words[w].start
 		const wEnd = words[w].end
 		let best = -1
 		let bestLen = Infinity
+
 		for (let s = 0; s < spans.length; s++) {
 			const sp = spans[s]
+
 			if (wStart < sp.end && wEnd > sp.start && sp.end - sp.start < bestLen) {
 				bestLen = sp.end - sp.start
 				best = s
@@ -128,6 +136,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 	// Assign phrase groups: consecutive words with the same span index form a group.
 	let nextGroup = 0
 	const result: AnnotatedWord[] = []
+
 	for (let w = 0; w < words.length; w++) {
 		const spanIdx = owner[w]
 		const prevSpanIdx = w > 0 ? owner[w - 1] : -1
@@ -136,6 +145,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 		// BIO label assignment.
 		let label: string
 		let tag: string | null
+
 		if (!span) {
 			label = "O"
 			tag = null
@@ -148,6 +158,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 		// Phrase group: same span index = same phrase group.
 		let phraseGroup: number
 		let phraseGroupStart: boolean
+
 		if (spanIdx === -1) {
 			// O words get their own isolated group.
 			phraseGroup = nextGroup++
@@ -163,6 +174,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 
 		result.push({ word: words[w], span, label, tag, phraseGroup, phraseGroupStart })
 	}
+
 	return result
 }
 
@@ -172,6 +184,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
+
 	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
 }
 

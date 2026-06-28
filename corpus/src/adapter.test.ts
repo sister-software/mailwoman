@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
+
 import { InMemoryAdapterRegistry, canonicalDedupKey, stableSourceId, streamingSha256 } from "./adapter.js"
 import type { CanonicalRow, CorpusAdapter } from "./types.js"
 

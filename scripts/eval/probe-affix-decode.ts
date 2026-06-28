@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+
 // Probe: does a model emit street_prefix/street_suffix in the RAW (unfolded) decode?
 // per-locale-f1's foldToComponents joins prefix+street+suffix into one `street`, hiding the split.
 // This prints decodeAsJson(tree) verbatim so we can see what the model actually tags.
@@ -7,7 +9,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const argv = process.argv.slice(2)
@@ -26,11 +28,14 @@ const rows = readFileSync(file, "utf8")
 	.map((l) => JSON.parse(l))
 let prefixHits = 0,
 	suffixHits = 0
+
 for (const row of rows.slice(0, 10)) {
 	const tree = await neural.parse(row.raw)
 	const got = decodeAsJson(tree) as Record<string, string>
 	const aff = ["street_prefix", "street", "street_suffix"].filter((t) => got[t]).map((t) => `${t}=${got[t]!}`)
+
 	if (got.street_prefix) prefixHits++
+
 	if (got.street_suffix) suffixHits++
 	console.log(`${row.raw}\n   → ${aff.join(" · ") || "(no street tags)"}`)
 }

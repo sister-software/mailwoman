@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { applyNfc } from "./nfc.js"
 
 // Combining acute accent (U+0301) and the composed forms, by codepoint — so the test's intent

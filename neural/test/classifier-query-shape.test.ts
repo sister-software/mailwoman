@@ -10,7 +10,9 @@
 
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { describe, expect, it } from "vitest"
+
 import { NeuralAddressClassifier, type NeuralRunner } from "../classifier.js"
 import { STAGE2_BIO_LABELS } from "../labels.js"
 import type { InferResult } from "../onnx-runner.js"
@@ -33,11 +35,14 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 	const numLabels = STAGE2_BIO_LABELS.length
 	const labelIdx = STAGE2_BIO_LABELS.indexOf(boostLabel as (typeof STAGE2_BIO_LABELS)[number])
 	const matrix: number[][] = []
+
 	for (let t = 0; t < numTokens; t++) {
 		const row = new Array<number>(numLabels).fill(0)
+
 		if (t === boostIdx && labelIdx >= 0) row[labelIdx] = boostMagnitude
 		matrix.push(row)
 	}
+
 	return matrix
 }
 
@@ -51,6 +56,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		// Encoder slightly favors O on every token (small uniform boost).
 		const logits: number[][] = []
 		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
+
 		for (let t = 0; t < numTokens; t++) {
 			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
 			row[oIdx] = 0.5
@@ -73,6 +79,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		// All-O emissions — encoder has zero signal.
 		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
 		const logits: number[][] = []
+
 		for (let t = 0; t < numTokens; t++) {
 			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
 			row[oIdx] = 0.5
@@ -104,6 +111,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		// Encoder is very confident every token is B-locality (5.0 boost — saturates).
 		const localityIdx = STAGE2_BIO_LABELS.indexOf("B-locality")
 		const logits: number[][] = []
+
 		for (let t = 0; t < numTokens; t++) {
 			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
 			row[localityIdx] = 5.0
@@ -134,6 +142,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 
 		// Encoder is uncertain (uniform logits).
 		const logits: number[][] = []
+
 		for (let t = 0; t < numTokens; t++) {
 			logits.push(new Array<number>(STAGE2_BIO_LABELS.length).fill(0))
 		}
@@ -148,6 +157,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		// Even if Viterbi picked B-postcode (thanks to prior), the reported confidence reflects the
 		// encoder's actual uncertainty — softmax over uniform logits = 1/numLabels.
 		const allNodes = flattenNodes(tree.roots)
+
 		for (const node of allNodes) {
 			expect(node.confidence).toBeCloseTo(1 / STAGE2_BIO_LABELS.length, 2)
 		}
@@ -156,10 +166,12 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 
 function collectTags(nodes: ReadonlyArray<{ tag: string; children: ReadonlyArray<unknown> }>): string[] {
 	const out: string[] = []
+
 	for (const n of nodes) {
 		out.push(n.tag)
 		out.push(...collectTags(n.children as Parameters<typeof collectTags>[0]))
 	}
+
 	return out
 }
 
@@ -167,9 +179,11 @@ function flattenNodes(
 	nodes: ReadonlyArray<{ tag: string; confidence: number; children: ReadonlyArray<unknown> }>
 ): Array<{ tag: string; confidence: number }> {
 	const out: Array<{ tag: string; confidence: number }> = []
+
 	for (const n of nodes) {
 		out.push({ tag: n.tag, confidence: n.confidence })
 		out.push(...flattenNodes(n.children as Parameters<typeof flattenNodes>[0]))
 	}
+
 	return out
 }

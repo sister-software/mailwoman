@@ -11,6 +11,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "./address-system-conventions.js"
 
 describe("FR address-system conventions (#719)", () => {

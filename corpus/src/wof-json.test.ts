@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import type { WofRecord } from "./wof-json.js"
 import { buildAncestryIndex, extractNameVariants, isCurrentFeature, normalizeNameKey } from "./wof-json.js"
 

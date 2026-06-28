@@ -15,11 +15,13 @@
  *   - 1 bad arguments or DB path missing / wrong
  */
 
+import { setImmediate } from "node:timers/promises"
+
 import { Spinner } from "@inkjs/ui"
 import { Text } from "ink"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../sdk/cli.js"
 
 const ArgumentsSchema = zod
@@ -53,6 +55,7 @@ export { ArgumentsSchema as args, OptionsSchema as options }
 
 function resolveAdminDbPath(options: zod.infer<typeof OptionsSchema>): string {
 	const path = options.adminDb ?? process.env["MAILWOMAN_WOF_ADMIN_DB"]
+
 	if (!path) {
 		throw new Error(
 			"reverse needs an admin DB path. Set $MAILWOMAN_WOF_ADMIN_DB or pass --admin-db <path>. " +
@@ -60,6 +63,7 @@ function resolveAdminDbPath(options: zod.infer<typeof OptionsSchema>): string {
 				"distribution with `mailwoman-wof-build-slim`."
 		)
 	}
+
 	return path
 }
 
@@ -69,6 +73,7 @@ function resolvePolygonsDbPath(options: zod.infer<typeof OptionsSchema>): string
 
 async function runReverse(lat: number, lon: number, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
+
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
@@ -82,12 +87,14 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 	const polygonDbPath = resolvePolygonsDbPath(options)
 
 	const geocoder = new mod.WofReverseGeocoder({ adminDbPath, polygonDbPath })
+
 	try {
 		const result = await geocoder.reverseGeocode(lat, lon)
 
 		if (options.format === "text") {
 			const lines: string[] = []
 			lines.push(`containment: ${result.containment}`)
+
 			if (result.hierarchy.length === 0) {
 				lines.push("(no admin hierarchy — point may be in open ocean or outside the gazetteer coverage)")
 			} else {
@@ -96,6 +103,7 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 					lines.push(`  ${place.placetype.padEnd(16)} ${place.name} [wof:${place.id}]${distStr}`)
 				}
 			}
+
 			return lines.join("\n")
 		}
 
@@ -139,6 +147,7 @@ const ReverseCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 
 		if (!rawLat || !rawLon) {
 			setError("reverse requires two positional arguments: <lat> <lon>  (e.g. mailwoman reverse 40.7128 -74.0060)")
+
 			return
 		}
 
@@ -147,10 +156,13 @@ const ReverseCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 
 		if (!Number.isFinite(lat) || Math.abs(lat) > 90) {
 			setError(`Invalid latitude ${JSON.stringify(rawLat)} — must be a number in [-90, 90].`)
+
 			return
 		}
+
 		if (!Number.isFinite(lon) || Math.abs(lon) > 180) {
 			setError(`Invalid longitude ${JSON.stringify(rawLon)} — must be a number in [-180, 180].`)
+
 			return
 		}
 

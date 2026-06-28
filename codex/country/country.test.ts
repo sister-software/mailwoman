@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expect, test } from "vitest"
+
 import { countrySurfaceForms, isCountryToken, matchCountry } from "./country.js"
 
 test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to the iso2", () => {
@@ -28,6 +29,7 @@ test("matchCountry: returns the canonical name + the matched surface; null when 
 test("countrySurfaceForms: curated forms round-trip back through matchCountry", () => {
 	const forms = countrySurfaceForms("US")
 	expect(forms.length).toBeGreaterThan(0)
+
 	for (const form of forms) {
 		expect(matchCountry(form)?.iso2).toBe("US")
 	}
@@ -39,6 +41,7 @@ test("isCountryToken: true for any recognized form, false otherwise", () => {
 	for (const tok of ["US", "usa", "DE", "deu", "GB"]) {
 		expect(isCountryToken(tok)).toBe(true)
 	}
+
 	for (const tok of ["Narnia", "", 7, null, undefined]) {
 		expect(isCountryToken(tok)).toBe(false)
 	}

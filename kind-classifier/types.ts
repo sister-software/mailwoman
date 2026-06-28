@@ -5,8 +5,7 @@
 export type { LocaleHint, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
 
 /**
- * Minimal `NormalizedInput` shape consumed by `classifyKind`. Compatible with
- * `@mailwoman/normalize`'s output.
+ * Minimal `NormalizedInput` shape consumed by `classifyKind`. Compatible with `@mailwoman/normalize`'s output.
  */
 export interface NormalizedInputLite {
 	raw: string
@@ -15,8 +14,7 @@ export interface NormalizedInputLite {
 }
 
 /**
- * Minimal `QueryShape` shape consumed by `classifyKind`. Compatible with `@mailwoman/query-shape`'s
- * output.
+ * Minimal `QueryShape` shape consumed by `classifyKind`. Compatible with `@mailwoman/query-shape`'s output.
  */
 export interface QueryShapeLike {
 	knownFormats: ReadonlyArray<{

@@ -4,7 +4,7 @@ CMS National Plan and Provider Enumeration System adapter. Consumes the monthly 
 
 ## Input
 
-The operator pre-downloads the CSV via `fetch-nppes.sh`. The adapter expects columns matching the canonical
+The operator pre-downloads the CSV via `fetch-nppes.ts`. The adapter expects columns matching the canonical
 "NPPES Full Replacement Monthly NPI File" header.
 
 ## Output
