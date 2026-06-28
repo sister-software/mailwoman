@@ -113,7 +113,10 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 }
 
 /**
- * Char ranges of confident street/house_number/postcode constituents — a locality span must not overlap them.
+ * Char ranges of confident street / house_number / postcode constituents, including the street affixes (`street_prefix`
+ * / `street_suffix`) — a locality span must not overlap them. The affixes matter: a confident "Ave" in "350 5th Ave,
+ * NY" is a street suffix, not a locality, and without this guard the recovery exact-matches it against a same-named
+ * place ("Ave", France) and injects a bogus locality.
  */
 function confidentRanges(roots: readonly AddressNode[], threshold: number): Array<[number, number]> {
 	const out: Array<[number, number]> = []
@@ -123,7 +126,11 @@ function confidentRanges(roots: readonly AddressNode[], threshold: number): Arra
 		const n = stack.pop()!
 
 		if (
-			(n.tag === "postcode" || n.tag === "house_number" || n.tag === "street") &&
+			(n.tag === "postcode" ||
+				n.tag === "house_number" ||
+				n.tag === "street" ||
+				n.tag === "street_prefix" ||
+				n.tag === "street_suffix") &&
 			(n.confidence ?? 0) >= threshold &&
 			Number.isFinite(n.start) &&
 			Number.isFinite(n.end)
