@@ -90,24 +90,32 @@ const targets = [...byCountry.keys()].filter((cc) => !covered.has(cc)).sort()
 console.error(`[coverage] ${targets.length} zero-row target countries; ${covered.size} already covered`)
 console.error(`[coverage] targets: ${targets.join(" ")}`)
 
-// 3. Build the merge GeoNames dir: REAL EU dumps (symlinked, full coverage) + cities15000-synthesized
-//    `<CC>.txt` for the zero-row targets. The canonical geonames dir is never written.
+// 3. Build the merge GeoNames dir. For EACH country (DEFAULT EU set + the zero-row targets) prefer the
+//    REAL per-country GeoNames dump in the geonames dir (village-level, full P-class coverage); fall back
+//    to cities15000-synthesized `<CC>.txt` only where the real dump is absent (a download failure). The
+//    canonical geonames dir is read, never written here.
 rmSync(MERGE, { recursive: true, force: true })
 mkdirSync(MERGE, { recursive: true })
-
-for (const cc of DEFAULT_FOLD_COUNTRIES) {
-	const src = join(GN, `${cc}.txt`)
-
-	if (existsSync(src)) symlinkSync(src, join(MERGE, `${cc}.txt`))
-}
+let realDumps = 0
+let synthDumps = 0
 let synthCities = 0
 
-for (const cc of targets) {
-	const lines = byCountry.get(cc)!
-	writeFileSync(join(MERGE, `${cc}.txt`), `${lines.join("\n")}\n`)
-	synthCities += lines.length
+for (const cc of new Set([...DEFAULT_FOLD_COUNTRIES, ...targets])) {
+	const real = join(GN, `${cc}.txt`)
+
+	if (existsSync(real)) {
+		symlinkSync(real, join(MERGE, `${cc}.txt`))
+		realDumps++
+	} else if (byCountry.has(cc)) {
+		const lines = byCountry.get(cc)!
+		writeFileSync(join(MERGE, `${cc}.txt`), `${lines.join("\n")}\n`)
+		synthDumps++
+		synthCities += lines.length
+	}
 }
-console.error(`[coverage] synthesized ${synthCities} cities across ${targets.length} <CC>.txt files in ${MERGE}`)
+console.error(
+	`[coverage] merge dir: ${realDumps} real dumps (village-level) + ${synthDumps} cities15000 fallbacks (${synthCities} cities) in ${MERGE}`
+)
 
 // 4. Durable GeoNames fold (build-on-copy) — DEFAULT EU set (real dumps) + the targets, one id sequence.
 const countries = [...new Set([...DEFAULT_FOLD_COUNTRIES, ...targets])]

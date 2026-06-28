@@ -11,21 +11,25 @@ _Living document — sketched during the shift. Window: 05:32 UTC → (in progre
   rows — Berlin carries 134+ surface forms). The real gap is **country-level absence**: 147 non-US
   countries had **zero** candidate rows. The 2026-06-26 frontier diagnostic that drove the plan ran
   admin-only and predates the fold, so it conflated "no candidate DB" with "no coverage."
-- **B re-scoped to coverage expansion** (`scripts/build-coverage-expansion.ts`) — ingest cities15000 for
-  the 147 zero-row countries via the SHIPPED pipeline (`foldGeonamesIntoAdmin` → `buildCandidate`), no
-  package change, no model change. Staged DB: `candidate-global-coverage.db` (9.17M rows, +147
-  countries). Build-on-copy; canonical symlink untouched.
+- **B re-scoped to coverage expansion** (`scripts/build-coverage-expansion.ts`) — ingest **real
+  per-country GeoNames dumps (village-level)** for the 147 zero-row countries via the SHIPPED pipeline
+  (`foldGeonamesIntoAdmin` → `buildCandidate`), no package change, no model change. Staged DB:
+  `candidate-global-coverage.db` (**10.14M rows, +988k places, +147 countries**; e.g. Albania
+  395→16,647, Afghanistan 671→115,184). cities15000 is a download-failure fallback (0 used — all 147
+  downloaded). Build-on-copy; canonical symlink untouched.
 
 ## Gate (against the staged DB)
 
 - **do-no-harm: PASS.** Supported-set (US/ES/IT/NL/DE/FR) candidate row counts byte-identical
   canonical vs staged; parity harness supported 10/10 @ 4.6 km median with **per-query coords identical**
-  (zero regression). Staged adds only +18,898 rows, all in the 147 new countries.
-- **did-it-help (existence): PASS.** `frontier-existence` on staged: country-absent **44.1% → 0.2%**,
-  english-reachable **53.4% → 97.0%**, zero-coverage countries **91 → 1**.
+  (zero regression, even with +988k places).
+- **did-it-help (existence): PASS.** `frontier-existence` on staged: country-absent **44.1% → 0.0%**,
+  english-reachable **53.4% → 97.0%**, zero-coverage countries **91 → 0**.
 - **did-it-help (coordinate): PASS.** frontier-gap staged vs canonical (same candidate-DB config):
-  bare resolve-rate **41.7% → 75.5%**, +hint **51.0% → 94.1%**, residual countries **92 → 6**,
-  bare-supported countries **77 → 150**, US-namesake misroutes **11.5% → 6.1%**.
+  bare resolve-rate **41.7% → 75.3%**, +hint **51.0% → 94.1%**, residual countries **92 → 7**,
+  bare-supported countries **77 → 150**, US-namesake misroutes **11.5% → 6.1%**. (The frontier samples
+  top-3 cities, so it is equivalent to a cities15000-only build; the village dumps' added win is the
+  long tail — smaller towns — the frontier can't see.)
 
 **B gate: PASS on all three halves.** Staged at `candidate-global-coverage.db`; the canonical symlink
 swap (`mailwoman gazetteer promote`) is the operator's morning call.
@@ -62,7 +66,9 @@ no calibration to fit. **Recommend re-scoping/closing #781**; the EU lever is #8
 ## Open questions (operator)
 
 1. **Promote the staged B DB?** Gate PASSES all three halves (do-no-harm zero regression, existence
-   44.1→0.2% absent, coordinate residual 92→6). 147 previously-unreachable countries become reachable.
+   44.1→0.0% absent, coordinate residual 92→7). 147 previously-unreachable countries become reachable,
+   with village-level (full town) coverage. `mailwoman gazetteer promote` does the symlink swap; the
+   demo/R2 re-stage is a separate follow-up.
 2. **Phase A (placer): DATA GAP — defer to a class-set-widening retrain (branch-b).** The deployed
    placer is 28-class (US + EU-mostly); only CN/SK/LV of the 36 recoverable countries are classes
    (in_class_set false 31.6%). Crucially the placer is **99.6% correct at confidence 1.000 on its
@@ -81,6 +87,7 @@ no calibration to fit. **Recommend re-scoping/closing #781**; the EU lever is #8
 | --- | --- |
 | Shift window | 05:32 UTC → (in progress) |
 | GPU | $0 (CPU-only) |
-| Staged build | candidate-global-coverage.db, 9.17M rows, +147 countries |
-| Supported-set regression | 0 (per-query coords identical) |
-| Peak heat | 91.2°C (during VACUUM; cooled to 84°C) |
+| Staged build | candidate-global-coverage.db, 10.14M rows, +988k places, +147 countries (village-level) |
+| Supported-set regression | 0 (per-query coords identical, +988k places) |
+| Peak heat | 91°C (during VACUUM; cooled to 84°C between jobs) |
+| GeoNames dumps | 147/147 target countries downloaded (real, village-level) |
