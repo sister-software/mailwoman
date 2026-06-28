@@ -1,6 +1,6 @@
 # Night shift 2026-06-28 — non-US recall levers (postmortem)
 
-_Living document — sketched during the shift. Window: 05:32 UTC → (in progress). CPU-only by design ($0 GPU)._
+_Drafted during the shift; finalized at hand-off. Window: 05:32–14:15 UTC. CPU-only by design ($0 GPU)._
 
 ## What shipped (verified)
 
