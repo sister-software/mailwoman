@@ -45,15 +45,16 @@ import { fileURLToPath } from "node:url"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-// --- current default (releases.json defaultVersion = v4.4.0) ---------------
-// v4.3.0 en-us ships the v1.1.0-relabel-consolidation model (step 40000, from
-// scratch on the label-consistent mix — #511 affix relabel; affix 93.6/96.6) with
-// the locale head exported (locale_logits) for the conventions mask (#478 slice 1),
-// + the 0.6.0-a0 tokenizer. These md5s are the authoritative bytes the demo serves
-// at .../mailwoman/en-us/v4.11.0/{model,tokenizer} — the v1.8.0-fr-admin-split model the
-// current model-card certifies, so the capability-gate's maskOff F1 matches the card.
-const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v180-step-40000-int8.onnx")
-const DEFAULT_MODEL_MD5 = "d163396ce30869e117bf29ffb939177b"
+// --- current default (releases.json defaultVersion = v4.15.0) --------------
+// v4.15.0 en-us ships the v1.9.3a3 anchor-absorption model (step 80000). These md5s
+// are the authoritative bytes the demo serves at .../mailwoman/en-us/v4.15.0/{model,
+// tokenizer} and match `neural-weights-en-us/model-card.json` `files_md5.model.onnx`,
+// so the capability-gate certifies the SHIPPED model. (2026-06-28: this default had
+// drifted to the stale v180 step-40000 bytes while the card moved to v4.15.0 — every
+// `loadFromWeights` eval was silently grading the old model. Bump these two lines on
+// each ship; the #397 guard below only checks self-consistency, not vs the card.)
+const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v193a3-step-80000-int8.onnx")
+const DEFAULT_MODEL_MD5 = "4dec4f460a934949580d8e7b43adae7e"
 const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const DEFAULT_TOKENIZER_MD5 = "b6137e8c52914c9715374268ecaa4bc6"
 

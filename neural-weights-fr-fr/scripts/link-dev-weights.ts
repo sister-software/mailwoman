@@ -20,8 +20,10 @@ import { fileURLToPath } from "node:url"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 const PKG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+// In lockstep with en-us's DEFAULT_MODEL (one multilingual artifact serves both). 2026-06-28: this had
+// drifted to the stale v097 step-20000 bytes; bumped to the v4.15.0 / v1.9.3a3 shipped model.
 const SRC_MODEL =
-	process.env.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v097-step-20000-int8.onnx")
+	process.env.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v193a3-step-80000-int8.onnx")
 const SRC_TOKENIZER =
 	process.env.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 
