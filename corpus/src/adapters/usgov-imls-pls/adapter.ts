@@ -9,7 +9,7 @@
  *   row per library outlet (~17K rows). Each row carries the library name, street address, city,
  *   ZIP, county, and geocoordinates.
  *
- *   The adapter consumes the outlet CSV the operator pre-downloads via `fetch-imls-pls.sh`. Column
+ *   The adapter consumes the outlet CSV the operator pre-downloads via `fetch-imls-pls.ts`. Column
  *   names match the IMLS PLS outlet file header.
  *
  *   Output: one row per outlet with `venue` (library name), `(house_number, street, locality,

@@ -226,7 +226,7 @@ describe("buildSlimWofDatabase", () => {
 		const output = join(scratch, "slim.db")
 		buildFixtureWof(source)
 
-		// Both the demo plugin and build-demo-assets.sh pass `--in ""` when the custom postcode DB
+		// Both the demo plugin and build-demo-assets.ts pass `--in ""` when the custom postcode DB
 		// isn't built yet. The empty path must be skipped, not treated as a missing file.
 		const result = await buildSlimWofDatabase({ inputs: ["", source, ""], output, topLocalitiesPerCountry: 1 })
 		expect(result.rowCounts.spr).toBe(5) // 1 country + 1 region + 1 locality + 2 postcodes

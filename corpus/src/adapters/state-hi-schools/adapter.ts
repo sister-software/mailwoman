@@ -11,7 +11,7 @@
  *   single-line street address, city, ZIP, a numeric `code`, and HI-specific administrative columns
  *   (complex, complex_area, district, island, charter).
  *
- *   The adapter consumes a flat CSV the operator pre-builds via `fetch-state-hi-schools.sh`, which
+ *   The adapter consumes a flat CSV the operator pre-builds via `fetch-state-hi-schools.ts`, which
  *   concatenates both sheets under one shared header. Column names match the workbook header
  *   verbatim (lower-snake-case: `code`, `name`, `address`, `city`, `zip`, ...).
  *

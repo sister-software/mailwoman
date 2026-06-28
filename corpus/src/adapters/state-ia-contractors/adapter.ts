@@ -8,7 +8,7 @@
  *   Iowa Workforce Development publishes a public registry of active construction contractors. Each
  *   row carries a business name, street address, city/state/zip, and contact info.
  *
- *   The adapter consumes the CSV the operator pre-downloads via `fetch-state-sources.sh`.
+ *   The adapter consumes the CSV the operator pre-downloads via `fetch-state-sources.ts`.
  *
  *   Output: one row per contractor with `venue` (business name) and address quad `(house_number,
  *   street, locality, region, postcode)`.

@@ -11,7 +11,7 @@
  *   available.
  *
  *   The adapter consumes the monthly full-replacement CSV (operator pre-downloads via
- *   `fetch-nppes.sh`). Column names match the canonical NPPES "Full Replacement Monthly NPI File"
+ *   `fetch-nppes.ts`). Column names match the canonical NPPES "Full Replacement Monthly NPI File"
  *   header published at `https://download.cms.gov/nppes/NPI_Files.html`.
  *
  *   Output: one row per CSV record where the practice location address is populated. Organization

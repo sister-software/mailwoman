@@ -8,7 +8,7 @@
  *   The New York Department of State publishes a registry of commissioned notaries public. Each row
  *   optionally carries a business name and business address (~1-5% fill rate).
  *
- *   The adapter consumes the CSV the operator pre-downloads via `fetch-state-sources.sh`. Column
+ *   The adapter consumes the CSV the operator pre-downloads via `fetch-state-sources.ts`. Column
  *   names match the data.ny.gov export header (note: some columns have leading spaces).
  *
  *   License: stamped `"Public Domain"` per New York state government open-data terms.
