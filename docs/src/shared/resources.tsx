@@ -169,7 +169,7 @@ export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
  * Cache-Control means a fresh DB needs a fresh URL). See RELEASING.md "Rebuilding + swapping the canonical admin
  * gazetteer".
  */
-export const ADMIN_GAZETTEER_VERSION = "2026-06-27a"
+export const ADMIN_GAZETTEER_VERSION = "2026-06-28a"
 
 /**
  * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~1.19 GB; US + intl postcodes incl. PT/PL/CZ/AU +
