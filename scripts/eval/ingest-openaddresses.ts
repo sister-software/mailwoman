@@ -287,8 +287,7 @@ function parseArgs(): Options {
 		else if (a === "--seed") out.seed = parseInt(args[++i]!, 10)
 		else if (a === "--offline") out.offline = true
 		else if (a === "--sources")
-			out.sources = args[++i]!
-				.split(",")
+			out.sources = args[++i]!.split(",")
 				.map((s) => s.trim())
 				.filter(Boolean)
 		else throw new Error(`Unknown flag: ${a}`)
@@ -437,7 +436,7 @@ function cleanPostcode(s: string): string {
 	const t = s.trim().replace(/\.0+$/, "")
 	// Keep US ZIP or ZIP+4. Reject obvious garbage.
 	const m = t.match(/^(\d{5})(?:-\d{4})?$/)
-	return m ? m[1] : ""
+	return m ? (m[1] ?? "") : ""
 }
 
 function looksLikeNumber(s: string): boolean {
@@ -482,12 +481,14 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 	const lines = unzip.stdout.toString("utf8").split(/\r?\n/)
 	if (lines.length < 2) return { error: "empty CSV" }
 
-	const header = splitCsv(lines[0])
+	const header = splitCsv(lines[0]!)
 	const idx = buildHeaderIndex(header)
 	if (idx.lon === -1 || idx.lat === -1) return { error: "no LON/LAT columns" }
 
-	const get = (cells: string[], k: string): string =>
-		idx[k] >= 0 && idx[k] < cells.length ? (cells[idx[k]] ?? "").trim() : ""
+	const get = (cells: string[], k: string): string => {
+		const i = idx[k]
+		return i !== undefined && i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : ""
+	}
 
 	let read = 0
 	let kept = 0
@@ -642,7 +643,7 @@ function main(): void {
 	for (const arr of byState.values()) {
 		for (let i = arr.length - 1; i > 0; i--) {
 			const j = Math.floor(rng() * (i + 1))
-			;[arr[i], arr[j]] = [arr[j], arr[i]]
+			;[arr[i], arr[j]] = [arr[j]!, arr[i]!]
 		}
 	}
 	const pools = [...byState.entries()].map(([state, arr]) => ({ state, arr, i: 0 }))
@@ -652,7 +653,7 @@ function main(): void {
 		progress = false
 		for (const p of pools) {
 			if (p.i < p.arr.length) {
-				final.push(p.arr[p.i++])
+				final.push(p.arr[p.i++]!)
 				progress = true
 				if (final.length >= opts.target) break
 			}

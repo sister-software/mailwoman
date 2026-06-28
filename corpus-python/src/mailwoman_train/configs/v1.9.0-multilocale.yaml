@@ -14,7 +14,7 @@
 # so US/FR are not starved — every 1.0 row is accepted).
 #
 # GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1 (the panel's whole lesson). Diagnostic-
-# first: at the step-2000/4000 checkpoint, run scripts/eval/nonus-coord-panel.sh — mid-tier resolve
+# first: at the step-2000/4000 checkpoint, run scripts/eval/nonus-coord-panel.ts — mid-tier resolve
 # (PT/PL/AT/CZ, pre-registered ~50%) must MOVE UP, AND the US/FR golden guardrail must hold (US
 # per-locale-f1 not worse >1pp; FR centroid flat). If mid-tier resolve is flat at 2-4k, KILL (the
 # lever or the weight is wrong) before the full 40k. NOT promoted without operator GO (model swap).

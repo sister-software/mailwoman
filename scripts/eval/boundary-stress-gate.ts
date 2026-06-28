@@ -157,5 +157,5 @@ console.log(`\n  street-span floor: ≥${STREET_SPAN_FLOOR}% on every shape  · 
 console.log(`\n  VERDICT: ${allPass ? "✅ PROMOTE (4-shape gate met)" : "⛔ NO-PROMOTE (target/floor miss above)"}`)
 console.log(`  NOTE: this is the 4-shape TARGET gate only. The per-locale non-regression FLOORS (US street ≥80.4,`)
 console.log(`        locality ≥72.9, fr.house_number ≥87, FR postcode ≥99.5, affix, DE locality ≥83.8) are a`)
-console.log(`        SEPARATE gate — run scripts/promotion-gate.sh. Both must hold to ship.\n`)
+console.log(`        SEPARATE gate — run scripts/eval/promotion-gate.ts. Both must hold to ship.\n`)
 process.exit(allPass ? 0 : 1)

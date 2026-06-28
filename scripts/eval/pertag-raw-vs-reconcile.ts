@@ -83,10 +83,10 @@ for (const f of files) {
 		const recT = collect((await pipeline(r.raw)).tree)
 		for (const [tag, gv] of Object.entries(r.components)) {
 			if (!tags.includes(tag)) continue
-			acc.raw[tag].n++
-			if (hit(rawT, tag, gv)) acc.raw[tag].h++
-			acc.rec[tag].n++
-			if (hit(recT, tag, gv)) acc.rec[tag].h++
+			acc.raw[tag]!.n++
+			if (hit(rawT, tag, gv)) acc.raw[tag]!.h++
+			acc.rec[tag]!.n++
+			if (hit(recT, tag, gv)) acc.rec[tag]!.h++
 		}
 	}
 }
@@ -94,8 +94,8 @@ const pct = (h: number, n: number): string => (n ? ((100 * h) / n).toFixed(1) : 
 console.log(`per-tag recall  raw-neural  vs  runtime-pipeline   (n=${n} addresses)\n`)
 console.log(`tag             raw      pipeline   delta(pipe-raw)`)
 for (const t of tags) {
-	const r = acc.raw[t],
-		c = acc.rec[t]
+	const r = acc.raw[t]!,
+		c = acc.rec[t]!
 	if (r.n === 0) continue
 	const rp = (100 * r.h) / r.n,
 		cp = (100 * c.h) / c.n,

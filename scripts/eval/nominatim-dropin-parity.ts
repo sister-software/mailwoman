@@ -171,11 +171,11 @@ try {
 		let result: NominatimResult | undefined
 		try {
 			const res = await fetch(`http://127.0.0.1:${PORT}/reverse?lat=${fx.lat}&lon=${fx.lon}&addressdetails=1`)
-			result = await res.json()
+			result = (await res.json()) as NominatimResult
 		} catch {
 			result = undefined
 		}
-		const ok = result && typeof result === "object" && !Array.isArray(result)
+		const ok = !!(result && typeof result === "object" && !Array.isArray(result))
 		const missing = ok ? checkContract(result!, true) : ["(no result)"]
 		const cc = ok ? result!.address?.country_code : undefined
 		revRows.push({

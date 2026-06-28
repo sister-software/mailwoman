@@ -85,7 +85,7 @@ def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, fl
     is ``{country: weight}`` (uniform over the countries the code exists in) and the optional 4th
     element is the centroid's provenance label (#525 — e.g. ``"wof"`` / ``"census-zcta-2024"`` /
     ``null``), ignored here. Returns the tuple form ``realign_anchor_to_pieces`` consumes. Built
-    offline by ``scripts/build-pilot-anchor-lookup.py`` so the training loop carries no gazetteer
+    offline by ``scripts/build-pilot-anchor-lookup.ts`` so the training loop carries no gazetteer
     dependency.
     """
     with open(path, encoding="utf-8") as fh:

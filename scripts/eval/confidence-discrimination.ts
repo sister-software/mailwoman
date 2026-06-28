@@ -62,10 +62,7 @@ process.on("uncaughtException", (e) => console.error("UNCAUGHT EXCEPTION:", e))
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const WOF = [
-	dataRootPath("wof", "admin-global-priority.db"),
-	dataRootPath("wof", "postcode-locality-intl.db"),
-]
+const WOF = [dataRootPath("wof", "admin-global-priority.db"), dataRootPath("wof", "postcode-locality-intl.db")]
 const CALIB = "data/eval/calibration/isotonic-en-us-v4.13.0.json"
 const MODEL = arg("model", "out/v191/model.onnx") // shipped v4.13.0 int8
 const LOCALES = arg("locales", "us,it,pt,pl,fr,au").split(",")

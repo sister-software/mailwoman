@@ -11,10 +11,7 @@ import { readFileSync } from "node:fs"
 
 const KENALL = dataRootPath("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
 const backend = new WofSqlitePlaceLookup({
-	databasePath: [
-		dataRootPath("wof", "admin-global-priority.db"),
-		dataRootPath("wof", "postcode-locality-jp.db"),
-	],
+	databasePath: [dataRootPath("wof", "admin-global-priority.db"), dataRootPath("wof", "postcode-locality-jp.db")],
 })
 
 function norm(s: string): string {

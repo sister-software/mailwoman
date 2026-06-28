@@ -20,7 +20,7 @@
 # VERMONT OA rows (the corpus defaultHoldout, never trained), measured separately via per-locale-f1 on
 # /tmp/unit-val.jsonl. Geographic split = no leakage. NOTE: designators are injected in both, so the VT
 # eval measures designator RECOGNITION on held-out addresses; the real-in-the-wild designator signal is
-# the libpostal/postal arenas (scripts/eval/external-arenas.sh). Read BOTH lenses at the gate.
+# the libpostal/postal arenas (scripts/eval/external-arenas.ts). Read BOTH lenses at the gate.
 #
 # PRE-REGISTERED GATE (DeepSeek-signed; stop at 20k):
 #   - `unit` F1 >= 20% (token-level) on the held-out VT unit eval — minimally measurable (was ~0%, but
@@ -30,8 +30,8 @@
 #     street >=86; FR comparable per-class floors; DE native postcode >=83 / street >=82; cross_pollution <1%.
 #   If unit moves but street precision is flat/down: negative space refuted for our model — keep the
 #     unit lift, note the result. If a US/FR/DE tripwire trips: lower synth-unit weight (2.5 -> 1.5) + rerun.
-# Measure: per-locale-f1.ts (US/FR + the VT unit eval) + external-arenas.sh (real-designator arenas) +
-#   de-order-eval.sh (the DE native/intl × anchor 2x2 tripwire).
+# Measure: per-locale-f1.ts (US/FR + the VT unit eval) + external-arenas.ts (real-designator arenas) +
+#   de-order-eval.ts (the DE native/intl × anchor 2x2 tripwire).
 #
 # CORPUS: v0.4.4-unit — v0.4.3-de-regiontail base (686 shards) + 1 synth-unit shard (50K). Reproduce:
 #   node scripts/build-unit-shard.mjs --output /tmp/unit-train.jsonl --count 50000 --seed 42

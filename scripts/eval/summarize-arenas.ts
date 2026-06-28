@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Summarize-arenas.ts — three-bucket capability table from external-arenas.sh output.
+ *   Summarize-arenas.ts — three-bucket capability table from external-arenas.ts output.
  *
  *   Reads the per-arena `*.results.json` sidecars written by harness-v0-neural and prints the
  *   neural-only / both-pass / v0-only / both-fail buckets per arena. For the postal-standards arena

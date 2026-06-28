@@ -44,7 +44,7 @@ await page.evaluate(async () => {
 		_fullLayout?: unknown
 		on?: (event: string, cb: () => void) => void
 	}
-	const doc = (globalThis as { document: { querySelectorAll(s: string): Iterable<unknown> } }).document
+	const doc = (globalThis as unknown as { document: { querySelectorAll(s: string): Iterable<unknown> } }).document
 	const divs = [...doc.querySelectorAll("div")]
 		.map((d) => d as PlotlyDiv)
 		.filter((d) => d._fullLayout && typeof d.on === "function")

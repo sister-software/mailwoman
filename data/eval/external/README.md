@@ -206,7 +206,7 @@ Two changes make non-US OpenAddresses usable here:
 The German _training_ shard (`synth-german`, `corpus/src/synthesize-german.ts`)
 renders these real DE tuples in German order via the OpenCage `DE` template, so the
 model learns house-number-after-street and postcode-before-city. Run the German
-before/after with `scripts/eval-de-coverage.sh <model> <tokenizer> <model-card>`.
+before/after with `node scripts/eval-de-coverage.ts <model> <tokenizer> <model-card>`.
 
 ## Running the arenas
 
@@ -215,22 +215,22 @@ All three arenas run through one push-button script:
 ```bash
 yarn compile   # harness resolves @mailwoman/neural to its compiled out/ tree
 # default shipped weights:
-scripts/eval/external-arenas.sh
+node --experimental-strip-types scripts/eval/external-arenas.ts
 # against a fresh export (e.g. v0.7.2 int8):
 MODEL=/path/model.int8.onnx TOKENIZER=/path/tokenizer.model \
-  MODELCARD=/path/model-card.json scripts/eval/external-arenas.sh
+  MODELCARD=/path/model-card.json node --experimental-strip-types scripts/eval/external-arenas.ts
 ```
 
 It regenerates the perturbation arena, runs each arena with `--symmetric-match
 --postcode-repair`, and prints the three-bucket table (neural-only / both /
 v0-only / both-fail) per arena plus a by-edge_class breakdown for the postal
-arena (`scripts/eval/summarize-arenas.py`).
+arena (`scripts/eval/summarize-arenas.ts`).
 
 ## Done / next
 
 1. ✅ Harvested `libpostal/test/test_parser.c` → `libpostal-cases.jsonl` (69).
 2. ✅ Labeled the in-scope catalog subset → `postal-cases.jsonl` (38).
-3. ✅ Push-button runner (`external-arenas.sh`) + three-bucket summarizer.
+3. ✅ Push-button runner (`external-arenas.ts`) + three-bucket summarizer.
 4. ✅ Wired `openaddresses-us-sample.jsonl` into the resolver end-to-end eval
    (`scripts/eval/resolver-eval.ts` + the OA admin-match runner): resolve each
    `input` → admin centroid, great-circle error to `lat`/`lon` by state.

@@ -44,10 +44,7 @@ import { messify, resolvedResult } from "./confidence-discrimination.ts"
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const WOF = [
-	dataRootPath("wof", "admin-global-priority.db"),
-	dataRootPath("wof", "postcode-locality-intl.db"),
-]
+const WOF = [dataRootPath("wof", "admin-global-priority.db"), dataRootPath("wof", "postcode-locality-intl.db")]
 const CALIB = "data/eval/calibration/isotonic-en-us-v4.13.0.json"
 const SHIPPED = arg("shipped", "out/v191/model.onnx")
 const CANDIDATE = arg("candidate", "out/v192/model-int8.onnx")

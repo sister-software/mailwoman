@@ -93,19 +93,19 @@ for (const f of files) {
 		const recT = collect((await pipeline(r.raw, { jointReconcile: true })).tree)
 		for (const [tag, gv] of Object.entries(r.components)) {
 			if (!TAGS.includes(tag)) continue
-			;(acc.raw[tag].n++, (acc.argmax[tag].n++, acc.rec[tag].n++))
-			if (hit(rawT, tag, gv)) acc.raw[tag].h++
-			if (hit(argT, tag, gv)) acc.argmax[tag].h++
-			if (hit(recT, tag, gv)) acc.rec[tag].h++
+			;(acc.raw[tag]!.n++, (acc.argmax[tag]!.n++, acc.rec[tag]!.n++))
+			if (hit(rawT, tag, gv)) acc.raw[tag]!.h++
+			if (hit(argT, tag, gv)) acc.argmax[tag]!.h++
+			if (hit(recT, tag, gv)) acc.rec[tag]!.h++
 		}
 	}
 	console.log(`\n=== ${basename(f)}  (n=${n} addresses) ===`)
 	console.log(`tag             raw      argmax   reconcile   Δ(rec−argmax)`)
 	let worst = 0
 	for (const t of TAGS) {
-		const a = acc.argmax[t],
-			c = acc.rec[t],
-			rw = acc.raw[t]
+		const a = acc.argmax[t]!,
+			c = acc.rec[t]!,
+			rw = acc.raw[t]!
 		if (a.n === 0) continue
 		const ap = (100 * a.h) / a.n,
 			cp = (100 * c.h) / c.n,

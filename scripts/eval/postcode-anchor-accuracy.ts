@@ -32,10 +32,7 @@ function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	let evalPath = "data/eval/external/openaddresses-de-sample.jsonl"
 	let country = "DE"
-	const shards = [
-		dataRootPath("wof", "postalcode-us.db"),
-		dataRootPath("wof", "postalcode-intl.db"),
-	]
+	const shards = [dataRootPath("wof", "postalcode-us.db"), dataRootPath("wof", "postalcode-intl.db")]
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--eval" && args[i + 1]) evalPath = args[++i]!
 		else if (args[i] === "--country" && args[i + 1]) country = args[++i]!

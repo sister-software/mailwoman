@@ -24,7 +24,7 @@
 #     P drops): lower clue exposure — drop gazetteer confidence to 0 on a random ~20% of training
 #     rows (curriculum) — and consult DeepSeek before more knobs.
 # Measure: score-country-homograph.ts + per-locale-f1.ts (US/FR, --tokenizer) + unit-real +
-#   de-order-eval.sh (fp32-to-fp32).
+#   de-order-eval.ts (fp32-to-fp32).
 #
 # CORPUS: v0.4.10-country-bal (UNCHANGED — single-variable discipline; the lexicon is a side input).
 # LEXICON: /data/gazetteer/anchor-lexicon-v1.json (scripts/build-gazetteer-anchor-lexicon.mjs from

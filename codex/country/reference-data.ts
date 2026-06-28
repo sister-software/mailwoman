@@ -5,7 +5,7 @@
  *
  *   GENERATED — do not edit by hand. Country calling codes (E.164) + currencies (ISO 4217), derived
  *   from mledoze/countries (https://github.com/mledoze/countries, ODbL). NANP members map to 1.
- *   Regenerate with scripts/build-country-reference.mjs.
+ *   Regenerate with scripts/build-country-reference.ts.
  */
 
 /** Static per-country reference: calling code + currency. */

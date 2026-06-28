@@ -74,7 +74,7 @@ data:
   coarse_filter: true
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
-  # Postcode-anchor lookup (built by scripts/build-pilot-anchor-lookup.py, modal-volume-put to /data/anchor/).
+  # Postcode-anchor lookup (built by scripts/build-pilot-anchor-lookup.ts, modal-volume-put to /data/anchor/).
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
 
 model:

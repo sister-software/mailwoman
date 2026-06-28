@@ -37,8 +37,10 @@ function toStringArray(value: unknown): string[] {
 	return []
 }
 
-/** True when `s` contains at least one Unicode letter or number (Python `c.isdigit() or
-c.isalpha()`). */
+/**
+ * True when `s` contains at least one Unicode letter or number (Python `c.isdigit() or
+ * c.isalpha()`).
+ */
 function hasAlnum(s: string): boolean {
 	return /[\p{L}\p{N}]/u.test(s)
 }

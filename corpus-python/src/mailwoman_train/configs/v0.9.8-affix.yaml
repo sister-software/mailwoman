@@ -24,13 +24,13 @@
 #   - `street` F1 >= v4.1.0 (no loss; ideally +; negative space) on golden US + the real-affix eval.
 #   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl (was 92.3%).
 #   - NO-REGRESSION (within ~1pp vs v4.1.0 / v0.9.7, fp32-to-fp32): US house_number / postcode /
-#     locality / region; FR per-class floors; DE native-order locality (de-order-eval.sh).
+#     locality / region; FR per-class floors; DE native-order locality (de-order-eval.ts).
 #   DECISION: affixes clear + street holds + unit retained + no tripwire → promote candidate.
 #     If street/house_number slips or affixes over-fire: lower synth-affix 2.0 -> 1.5 + rerun
 #     (the unit-v3 remedy). If affixes move but `street` drops: negative space refuted here — keep
 #     the affix lift, note it.
 # Measure: per-locale-f1.ts (US/FR golden) + the street-affix-real + unit-real-designators evals
-#   (fp32) + de-order-eval.sh (DE 2x2 tripwire).
+#   (fp32) + de-order-eval.ts (DE 2x2 tripwire).
 #
 # CORPUS: v0.4.6-affix (no rebuild of base). Reproduce:
 #   node scripts/build-street-affix-shard.mjs --output /tmp/affix-train.jsonl --count 50000 --seed 42

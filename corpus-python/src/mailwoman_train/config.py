@@ -41,7 +41,7 @@ class DataConfig:
     # split the fused surface at the SP-piece level. 0 = disabled (rng-stream bit-identical).
     augment_glue_prob: float = 0.0
     # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
-    # (built by scripts/build-pilot-anchor-lookup.py). When set AND model.use_postcode_anchor is on,
+    # (built by scripts/build-pilot-anchor-lookup.ts). When set AND model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
     anchor_lookup_path: str | None = None
     # Gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). Path to the codex-generated

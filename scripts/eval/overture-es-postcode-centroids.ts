@@ -26,10 +26,7 @@ import { arg } from "../lib/cli-args.ts"
 const CC = arg("country", "ES")
 // Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK.
 const PC_LEN = Number(arg("pc-len", "5"))
-const PARQUET = arg(
-	"parquet",
-	dataRootPath("overture", "2026-05-20.0", `addresses-${CC.toLowerCase()}.parquet`)
-)
+const PARQUET = arg("parquet", dataRootPath("overture", "2026-05-20.0", `addresses-${CC.toLowerCase()}.parquet`))
 const OUT_DB = arg("out", dataRootPath("wof", `postcode-${CC.toLowerCase()}-overture.db`))
 
 const instance = await DuckDBInstance.create()

@@ -9,7 +9,7 @@
 # Steps:
 #   1. Export step-40000 checkpoint to ONNX on Modal
 #   2. Download ONNX + model card + tokenizer to local
-#   3. Run promotion-gate.sh against v0.5.0-bridge.json
+#   3. Run promotion-gate.ts against v0.5.0-bridge.json
 #   4. Apply MAILWOMAN_DUMP_MISS_TAG=house_number lens for the FR diagnostic
 set -euo pipefail
 
@@ -50,7 +50,7 @@ echo ""
 
 # Step 4: Run the promotion gate (bridge OFF — the acceptance contract)
 echo "--- Step 4: Promotion gate (bridge OFF) ---"
-scripts/eval/promotion-gate.sh \
+node --experimental-strip-types scripts/eval/promotion-gate.ts \
   --model "${LOCAL_DIR}/model.onnx" \
   --gate "${GATE}" \
   --tokenizer "${TOKENIZER_LOCAL}" \

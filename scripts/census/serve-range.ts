@@ -27,7 +27,7 @@ const TYPES: Record<string, string> = {
 }
 
 createServer((req: IncomingMessage, res: ServerResponse) => {
-	const rel = normalize(decodeURIComponent((req.url || "/").split("?")[0])).replace(/^(\.\.[/\\])+/, "")
+	const rel = normalize(decodeURIComponent((req.url || "/").split("?")[0]!)).replace(/^(\.\.[/\\])+/, "")
 	const path = join(DIR, rel)
 	let st: Stats
 	try {

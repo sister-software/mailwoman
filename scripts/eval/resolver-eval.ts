@@ -29,8 +29,7 @@
  *   --model /tmp/v072-eval/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card /tmp/v072-eval/model-card.json\
- *   --wof
- *   $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,$MAILWOMAN_DATA_ROOT/wof/postalcode-us.db
+ *   --wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,$MAILWOMAN_DATA_ROOT/wof/postalcode-us.db
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

@@ -56,16 +56,16 @@ classes (#513).
 ## The standard gate set
 
 Run for _every_ candidate, regardless of what you changed (this is what
-[`promotion-gate.sh`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
+[`promotion-gate.ts`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
 
 | Check               | Command                                                                            | Bar                                     |
 | ------------------- | ---------------------------------------------------------------------------------- | --------------------------------------- |
 | Per-locale floors   | `scripts/eval/per-locale-f1.ts` (US/FR, `--tokenizer`) + `per-locale-f1-floors.py` | within 1pp, fp32-to-fp32                |
-| German native order | `scripts/eval/de-order-eval.sh`                                                    | NO-REGRESSION                           |
+| German native order | `scripts/eval/de-order-eval.ts`                                                    | NO-REGRESSION                           |
 | Unit retention      | unit-real designators eval                                                         | ≥ 88                                    |
 | Affix split         | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold gated numbers                      |
 | Demo smoke          | `eval-model` skill / `demo-preset-compare.ts`                                      | presets stable                          |
-| Honest geography    | `scripts/eval/honest-eval.sh`                                                      | region-match + coord p50/p90 + PIP hold |
+| Honest geography    | `scripts/eval/honest-eval.ts`                                                      | region-match + coord p50/p90 + PIP hold |
 
 The ship-config channels are part of the contract: a gaz-trained model is graded with
 `--gazetteer-lexicon` + `--suppress-gaz-near-postcode`, and (v4.3.0+) `--conventions auto` —

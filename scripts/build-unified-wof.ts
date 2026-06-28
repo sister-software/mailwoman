@@ -36,7 +36,6 @@ import {
 import FastGlob from "fast-glob"
 import { existsSync, statSync, unlinkSync } from "node:fs"
 import { readFile } from "node:fs/promises"
-import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { asyncParallelIterator } from "spliterator"
 

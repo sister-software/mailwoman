@@ -30,6 +30,10 @@
 		"./server": "./out/server/index.js",
 		"./sdk/test": "./out/sdk/test/index.js",
 		"./sdk/repo": "./out/sdk/repo.js",
+		"./sdk/runtime": "./out/sdk/runtime/index.js",
+		"./sdk/runtime/paths": "./out/sdk/runtime/paths.js",
+		"./sdk/runtime/load": "./out/sdk/runtime/load.js",
+		"./sdk/scripting": "./out/sdk/scripting.js",
 		"./sdk/cli": "./out/sdk/cli.js"
 	},
 	"dependencies": {
@@ -50,6 +54,7 @@
 		"chalk": "^5.6.2",
 		"change-case": "^5.4.4",
 		"d3-scale-chromatic": "^3.1.0",
+		"es-main": "^1.4.0",
 		"express": "^5.2.1",
 		"fast-glob": "^3.3.3",
 		"geojson": "^0.5.0",

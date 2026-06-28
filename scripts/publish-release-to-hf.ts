@@ -54,14 +54,17 @@ const DEMO_BASE = "https://public.sister.software/mailwoman"
 /**
  * HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the
  * truth for demo flags).
+ *
+ * FIXME (pre-existing latent bug — preserved, do not "fix" without an operator + release review):
+ * the original `.mjs` referenced an out-of-scope `args` here, so this ALWAYS threw → caught →
+ * returned `false`; the probe never actually ran. The `.sh`/`.mjs`→`.ts` conversion keeps that
+ * exact behavior so release output is byte-identical. The real fix is to HEAD-probe
+ * `${DEMO_BASE}/${locale}/${version}/${name}` and return `r.ok` — but that can flip `hasAnchor` /
+ * `hasPolygons` in releases.json (only in the postcodeBins-empty / no-`--polygons` fallback path),
+ * so it needs a deliberate review before a release dispatch, not a silent change inside a cleanup.
  */
-async function servedOnDemoPath(name: string) {
-	try {
-		const r = await fetch(`${DEMO_BASE}/${args.locale}/${args.version}/${name}`, { method: "HEAD" })
-		return r.ok
-	} catch {
-		return false
-	}
+async function servedOnDemoPath(_name: string, _locale: string, _version: string): Promise<boolean> {
+	return false
 }
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
@@ -69,11 +72,11 @@ function parseArgs() {
 	const args = process.argv.slice(2)
 	const out: Record<string, any> = { setDefault: false }
 	for (let i = 0; i < args.length; i++) {
-		const arg = args[i]
+		const arg = args[i]!
 		if (arg === "--set-default") {
 			out.setDefault = true
 		} else if (arg.startsWith("--") && i + 1 < args.length) {
-			const key = arg.slice(2).replace(/-./g, (m) => m[1].toUpperCase())
+			const key = arg.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
 			out[key] = args[++i]
 		}
 	}
@@ -104,6 +107,11 @@ async function checkRemoteFileExists(url: string) {
 	}
 }
 
+interface ReleaseManifest {
+	releases: Array<Record<string, unknown>>
+	defaultVersion?: string
+}
+
 async function main() {
 	const args = parseArgs()
 
@@ -121,13 +129,13 @@ async function main() {
 		.map((part: string, i: number) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
 		.join("-")
 	const fstRemoteName = `fst-${bcp47}.bin`
-	REQUIRED_FILES[3].remoteName = fstRemoteName
+	REQUIRED_FILES[3]!.remoteName = fstRemoteName
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
 
 	// --- Phase 1: verify all local files exist ---
 	for (const f of REQUIRED_FILES) {
-		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1].toUpperCase())
+		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
 		const localPath = args[flagKey]
 		if (!localPath) fail(`${f.flag} (${f.description}) is required`)
 		if (!existsSync(localPath)) fail(`${localPath} does not exist`)
@@ -170,7 +178,7 @@ async function main() {
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`
 	for (const f of REQUIRED_FILES) {
-		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1].toUpperCase())
+		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
 		const localPath = args[flagKey]
 		const dst = `${BUCKET_PATH}/${remoteBase}/${f.remoteName}`
 		console.error(`  → ${dst}`)
@@ -206,7 +214,7 @@ async function main() {
 	const releasesUrl = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
 	const res = await fetch(releasesUrl, { redirect: "follow" })
 	if (!res.ok) fail(`failed to fetch ${releasesUrl}`)
-	const releases = await res.json()
+	const releases = (await res.json()) as ReleaseManifest
 
 	const newEntry: Record<string, any> = {
 		version: args.version,
@@ -220,8 +228,8 @@ async function main() {
 		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
 		// truth by PROBING the demo's serving path (the four-release hasPolygons:false rectangle bug,
 		// 2026-06-11). CLI args still count; either source sets the flag.
-		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin")),
-		hasPolygons: !!polygonsDb || (await servedOnDemoPath("wof-polygons.db")),
+		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin", args.locale, args.version)),
+		hasPolygons: !!polygonsDb || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 	}
 	for (const flag of ["hasAnchor", "hasPolygons"]) {
 		if (!newEntry[flag])

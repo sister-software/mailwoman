@@ -28,6 +28,7 @@
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
@@ -43,7 +44,6 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { writeFileSync } from "node:fs"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"

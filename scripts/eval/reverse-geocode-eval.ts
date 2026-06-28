@@ -10,7 +10,7 @@
  *   PIP → approximate descent → ancestor chain).
  *
  *   Default slice: the US/VT corpus holdout (`SPLIT_MANIFEST defaultHoldouts`), the same leakage-free
- *   geography honest-eval.sh grades forward resolution on. Leakage matters less here (no trained
+ *   geography honest-eval.ts grades forward resolution on. Leakage matters less here (no trained
  *   model is involved), but using the same slice keeps the numbers comparable.
  *
  *   Metrics:

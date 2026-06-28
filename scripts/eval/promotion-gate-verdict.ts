@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Verdict assembler for promotion-gate.sh (#479). Parses the battery outputs the runner teed into
+ *   Verdict assembler for promotion-gate.ts (#479). Parses the battery outputs the runner teed into
  *   --out-dir, checks every number against the gate spec's floors, enforces the fp32↔int8 delta
  *   cap, and writes verdict.json. Exit 0 = all floors met; exit 1 = any miss.
  *

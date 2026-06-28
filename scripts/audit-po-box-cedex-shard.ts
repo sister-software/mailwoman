@@ -73,7 +73,7 @@ function parseArgs(): AuditOptions {
 	const out: { input?: string; samples: number } = { samples: 8 }
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--input") out.input = args[++i]
-		else if (args[i] === "--samples") out.samples = parseInt(args[++i], 10)
+		else if (args[i] === "--samples") out.samples = parseInt(args[++i] ?? "", 10)
 	}
 	if (!out.input) {
 		console.error("Usage: audit-po-box-cedex-shard.ts --input <labeled.jsonl> [--samples N]")
@@ -99,15 +99,17 @@ function spanSlices(row: ShardRow): SpanSlicesResult {
 	}
 	const byTag = new Map<string, string[]>()
 	for (let i = 0; i < span_starts.length; i++) {
-		if (!(span_starts[i] >= 0 && span_starts[i] < span_ends[i] && span_ends[i] <= raw.length)) {
-			return { ok: false, reason: `span ${span_tags[i]}@[${span_starts[i]}, ${span_ends[i]}) out of bounds` }
+		const start = span_starts[i]!
+		const end = span_ends[i]!
+		const tag = span_tags[i]!
+		if (!(start >= 0 && start < end && end <= raw.length)) {
+			return { ok: false, reason: `span ${tag}@[${start}, ${end}) out of bounds` }
 		}
-		if (i > 0 && span_starts[i] < span_ends[i - 1]) {
+		if (i > 0 && start < span_ends[i - 1]!) {
 			return { ok: false, reason: `spans unsorted/overlapping at index ${i}` }
 		}
-		const tag = span_tags[i]
 		if (!byTag.has(tag)) byTag.set(tag, [])
-		byTag.get(tag)!.push(raw.slice(span_starts[i], span_ends[i]))
+		byTag.get(tag)!.push(raw.slice(start, end))
 	}
 	return { ok: true, byTag }
 }
@@ -156,7 +158,7 @@ async function main(): Promise<void> {
 				tagCounts[tag]++
 				const slices = sliced.byTag.get(tag) ?? []
 				if (slices.length !== 1) fail(row, `${tag}: expected 1 span, got ${slices.length}`)
-				else if (slices[0].toLowerCase() !== c[tag]!.toLowerCase())
+				else if (slices[0]!.toLowerCase() !== c[tag]!.toLowerCase())
 					fail(row, `${tag} span "${slices[0]}" != component "${c[tag]}" (raw-surface, verbatim)`)
 			}
 		}
@@ -172,7 +174,7 @@ async function main(): Promise<void> {
 		if (row.country === "CA" && c.postcode) {
 			const pc = normalizeCaPostalCode(c.postcode)
 			if (!pc) fail(row, `invalid CA postcode "${c.postcode}"`)
-			else if (c.region && FSA_LETTER_TO_PROVINCE[pc[0]] !== c.region) fail(row, `FSA ${pc[0]} != region ${c.region}`)
+			else if (c.region && FSA_LETTER_TO_PROVINCE[pc[0]!] !== c.region) fail(row, `FSA ${pc[0]} != region ${c.region}`)
 		}
 
 		if (samples.length < opts.samples && rows % 977 === 1) {

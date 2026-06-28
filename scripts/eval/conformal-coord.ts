@@ -97,8 +97,10 @@ interface ResolvedRow {
 	lon?: number | null
 }
 
-/** Per resolved row: haversine(gold, resolved-locality centroid). Returns [scores, nTotal,
-nAbstain]. */
+/**
+ * Per resolved row: haversine(gold, resolved-locality centroid). Returns [scores, nTotal,
+ * nAbstain].
+ */
 function loadScores(dumpPath: string, dbPath: string): [number[], number, number] {
 	const data = JSON.parse(readFileSync(dumpPath, "utf-8"))
 	const rows: ResolvedRow[] = Array.isArray(data) ? data : (data.resolved ?? data.rows ?? [])

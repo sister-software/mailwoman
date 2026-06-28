@@ -59,16 +59,16 @@ async function main(): Promise<void> {
 	const quarantineReasons: Record<string, number> = {}
 	for await (const line of rl) {
 		if (!line.trim()) continue
-		const canonical = JSON.parse(line) as Record<string, unknown>
+		const canonical = JSON.parse(line) as Parameters<typeof alignRow>[0]
 		// Stamp the target corpus version so the emitted row's provenance matches the run it joins.
 		canonical.corpus_version = args.corpusVersion
-		const result = alignRow(canonical as Parameters<typeof alignRow>[0])
+		const result = alignRow(canonical)
 		if (result.kind === "labeled") {
 			outStream.write(JSON.stringify(result.row) + "\n")
 			labeled++
 		} else {
 			quarantined++
-			const r = result.reason ?? "unknown"
+			const r = result.row.reason ?? "unknown"
 			quarantineReasons[r] = (quarantineReasons[r] ?? 0) + 1
 		}
 	}
