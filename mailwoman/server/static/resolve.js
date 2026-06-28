@@ -3,29 +3,34 @@
  * exposed by `ResolveRouter.ts`.
  */
 
-const form = /** @type {HTMLFormElement} */ (document.getElementById("resolve-form"))
-const input = /** @type {HTMLInputElement} */ (document.getElementById("text"))
-const button = /** @type {HTMLButtonElement} */ (form.querySelector("button"))
-const status = /** @type {HTMLElement} */ (document.getElementById("status"))
-const results = /** @type {HTMLElement} */ (document.getElementById("results"))
-const xmlEl = /** @type {HTMLPreElement} */ (document.getElementById("xml"))
-const nodesBody = /** @type {HTMLTableSectionElement} */ (document.getElementById("nodes-body"))
+const $form = /** @type {HTMLFormElement} */ (document.getElementById("resolve-form"))
+const $input = /** @type {HTMLInputElement} */ (document.getElementById("text"))
+const $button = /** @type {HTMLButtonElement} */ ($form.querySelector("button"))
+const $status = /** @type {HTMLElement} */ (document.getElementById("status"))
+const $results = /** @type {HTMLElement} */ (document.getElementById("results"))
+const $xmlEl = /** @type {HTMLPreElement} */ (document.getElementById("xml"))
+const $nodesBody = /** @type {HTMLTableSectionElement} */ (document.getElementById("nodes-body"))
 
 /**
  * @param {"loading" | "error"} kind
  * @param {string} message
  */
 function showStatus(kind, message) {
-	status.hidden = false
-	status.className = `status ${kind}`
-	status.textContent = message
+	$status.hidden = false
+	$status.className = `status ${kind}`
+	$status.textContent = message
 }
 
 function clearStatus() {
-	status.hidden = true
-	status.textContent = ""
+	$status.hidden = true
+	$status.textContent = ""
 }
 
+/**
+ * @param {number} n
+ *
+ * @returns {string}
+ */
 function pad(n) {
 	return String(Math.round(n * 1000) / 1000)
 }
@@ -95,23 +100,23 @@ function renderRow(node) {
  */
 function render(response) {
 	clearStatus()
-	results.hidden = false
+	$results.hidden = false
 
-	xmlEl.textContent = response.xml
+	$xmlEl.textContent = response.xml
 
-	nodesBody.innerHTML = ""
+	$nodesBody.innerHTML = ""
 
 	for (const node of response.nodes) {
-		nodesBody.append(renderRow(node))
+		$nodesBody.append(renderRow(node))
 	}
 }
 
 async function submit() {
-	const text = input.value.trim()
+	const text = $input.value.trim()
 
 	if (!text) return
 
-	button.disabled = true
+	$button.disabled = true
 	showStatus("loading", "Resolving…")
 
 	try {
@@ -124,20 +129,20 @@ async function submit() {
 
 		if (!r.ok) {
 			showStatus("error", data?.error ?? `HTTP ${r.status}`)
-			results.hidden = true
+			$results.hidden = true
 
 			return
 		}
 		render(data)
 	} catch (err) {
 		showStatus("error", `Request failed: ${err instanceof Error ? err.message : String(err)}`)
-		results.hidden = true
+		$results.hidden = true
 	} finally {
-		button.disabled = false
+		$button.disabled = false
 	}
 }
 
-form.addEventListener("submit", (e) => {
+$form.addEventListener("submit", (e) => {
 	e.preventDefault()
 	void submit()
 })
@@ -146,6 +151,6 @@ form.addEventListener("submit", (e) => {
 const urlText = new URLSearchParams(window.location.search).get("text")
 
 if (urlText) {
-	input.value = urlText
+	$input.value = urlText
 	void submit()
 }
