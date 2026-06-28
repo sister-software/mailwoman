@@ -29,20 +29,19 @@ export interface StreetMorphologyPriorOpts {
 	/** Multiplier on the base bias before {@linkcode maxBias} is applied. Default 1.0. */
 	biasScale?: number
 	/**
-	 * Maximum bias magnitude (logits) on the affix span itself. Default 3.0 — same as the admin FST.
-	 * The morphology signal is structurally less ambiguous than admin names (`Avenue` is almost never
-	 * anything but street-typing), so equal magnitude is justified.
+	 * Maximum bias magnitude (logits) on the affix span itself. Default 3.0 — same as the admin FST. The morphology
+	 * signal is structurally less ambiguous than admin names (`Avenue` is almost never anything but street-typing), so
+	 * equal magnitude is justified.
 	 */
 	maxAffixBias?: number
 	/**
-	 * Maximum bias magnitude (logits) on the adjacent (neighbour) tokens for the `street` label.
-	 * Default 2.0 — a touch weaker than the affix bias because the neighbour is inferred from
-	 * adjacency, not direct match.
+	 * Maximum bias magnitude (logits) on the adjacent (neighbour) tokens for the `street` label. Default 2.0 — a touch
+	 * weaker than the affix bias because the neighbour is inferred from adjacency, not direct match.
 	 */
 	maxNeighbourStreetBias?: number
 	/**
-	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the adjacent
-	 * tokens. Default 2.0. This is the essential piece.
+	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the adjacent tokens. Default 2.0. This
+	 * is the essential piece.
 	 */
 	dependentLocalityPenalty?: number
 }
@@ -67,9 +66,11 @@ export function buildStreetMorphologyEmissionPriors(
 	const dependentLocalityPenalty = opts.dependentLocalityPenalty ?? 2.0
 
 	const matrix: number[][] = []
+
 	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
 
 	const labelToCol = new Map<string, number>()
+
 	for (let k = 0; k < labels.length; k++) labelToCol.set(labels[k]!, k)
 
 	const bStreetPrefix = labelToCol.get("B-street_prefix")
@@ -88,6 +89,7 @@ export function buildStreetMorphologyEmissionPriors(
 	}
 
 	const wordGroups = groupPiecesIntoWords(pieces)
+
 	if (wordGroups.length === 0) return matrix
 
 	// Track which word-group indices are matched as affixes (and which spans they cover) so the
@@ -102,25 +104,32 @@ export function buildStreetMorphologyEmissionPriors(
 	// the affix bias to matched tokens.
 	for (let start = 0; start < wordGroups.length; start++) {
 		const group = wordGroups[start]!
+
 		if (group.fstToken === "") continue
 
 		const initial = fst.walk([group.fstToken])
+
 		if (!initial) continue
 
 		let bestEnd = -1
 		let bestStateId = -1
+
 		if (initial.accepted) {
 			bestEnd = start
 			bestStateId = initial.stateId
 		}
 
 		let current = initial
+
 		for (let end = start + 1; end < wordGroups.length; end++) {
 			const nextGroup = wordGroups[end]!
+
 			if (nextGroup.fstToken === "") continue
 
 			const next = fst.walkFrom(current, nextGroup.fstToken)
+
 			if (!next) break
+
 			if (next.accepted) {
 				bestEnd = end
 				bestStateId = next.stateId
@@ -134,15 +143,19 @@ export function buildStreetMorphologyEmissionPriors(
 		// other placetypes if the binary format is reused for related priors).
 		const entries = fst.accepting(bestStateId)
 		const hasAffix = entries.some((e) => e.placetype === "street_affix")
+
 		if (!hasAffix) continue
 
 		affixMatches.push({ startGroupIdx: start, endGroupIdx: bestEnd })
 
 		// Collect piece indices for the matched span.
 		const affixPieceIndices: number[] = []
+
 		for (let g = start; g <= bestEnd; g++) {
 			const wg = wordGroups[g]!
+
 			if (wg.fstToken === "") continue
+
 			for (const pi of wg.pieceIndices) affixPieceIndices.push(pi)
 		}
 
@@ -150,6 +163,7 @@ export function buildStreetMorphologyEmissionPriors(
 		// tokens. The model's existing logits + the QueryShape prior + the adjacent context (via
 		// pass 2) determine which of {prefix, suffix} actually wins. We don't pre-commit to one.
 		const affixBias = biasScale * maxAffixBias
+
 		for (let k = 0; k < affixPieceIndices.length; k++) {
 			const pi = affixPieceIndices[k]!
 			const prefixCol = k === 0 ? bStreetPrefix : (iStreetPrefix ?? bStreetPrefix)
@@ -165,6 +179,7 @@ export function buildStreetMorphologyEmissionPriors(
 	// empty/punctuation groups) on either side and bias them toward street, away from
 	// dependent_locality.
 	const neighbourStreetBias = biasScale * maxNeighbourStreetBias
+
 	for (const match of affixMatches) {
 		const before = findNeighbour(wordGroups, match.startGroupIdx, -1)
 		const after = findNeighbour(wordGroups, match.endGroupIdx, +1)
@@ -172,6 +187,7 @@ export function buildStreetMorphologyEmissionPriors(
 		for (const neighbour of [before, after]) {
 			if (!neighbour) continue
 			const indices = neighbour.pieceIndices
+
 			for (let k = 0; k < indices.length; k++) {
 				const pi = indices[k]!
 				const streetCol = k === 0 ? bStreet : (iStreet ?? bStreet)
@@ -189,14 +205,15 @@ export function buildStreetMorphologyEmissionPriors(
 }
 
 /**
- * Walk word groups outward from `fromGroupIdx` in `direction` (+1 or -1), skipping empty groups
- * (whitespace / punctuation), and return the first non-empty group encountered — or `null` if no
- * such neighbour exists.
+ * Walk word groups outward from `fromGroupIdx` in `direction` (+1 or -1), skipping empty groups (whitespace /
+ * punctuation), and return the first non-empty group encountered — or `null` if no such neighbour exists.
  */
 function findNeighbour(groups: WordGroup[], fromGroupIdx: number, direction: 1 | -1): WordGroup | null {
 	for (let i = fromGroupIdx + direction; i >= 0 && i < groups.length; i += direction) {
 		const g = groups[i]!
+
 		if (g.fstToken !== "") return g
 	}
+
 	return null
 }

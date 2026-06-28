@@ -6,6 +6,7 @@
 
 import { scorePair, type TermFrequencyTable } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
+
 import { toGeoJSON } from "./geojson.js"
 import { addressFrequencyKey, buildDefaultModel, resolveEntities } from "./resolve.js"
 import type { SourceRecord } from "./types.js"
@@ -63,7 +64,9 @@ describe("resolveEntities", () => {
 	})
 
 	it("picks a representative and a coordinate per entity", () => {
-		const { entities } = resolveEntities(records, { learnedScorer: false }) // FS-baseline pipeline assertion
+		const { entities } = resolveEntities(records, { learnedScorer: false })
+
+		// FS-baseline pipeline assertion
 		for (const entity of entities) {
 			expect(entity.representative).toBeDefined()
 			expect(entity.coordinate).toBeDefined()
@@ -90,6 +93,7 @@ describe("resolveEntities", () => {
 		const { entities } = resolveEntities(records, { learnedScorer: true })
 		expect(entities.length).toBeGreaterThanOrEqual(1)
 		expect(entities.length).toBeLessThanOrEqual(records.length)
+
 		for (const e of entities) expect(e.representative).toBeDefined()
 	})
 

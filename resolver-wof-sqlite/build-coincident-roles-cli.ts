@@ -41,10 +41,12 @@ function printUsageAndExit(code: number): never {
 function buildOne(path: string, drop: boolean): number {
 	if (!existsSync(path)) {
 		stderr.write(`mailwoman-wof-build-coincident-roles: file not found: ${path}\n`)
+
 		return 1
 	}
 	stderr.write(`Opening ${path}…\n`)
 	const db = new DatabaseSync(path)
+
 	try {
 		const result = buildCoincidentRoles(db, {
 			drop,
@@ -57,9 +59,11 @@ function buildOne(path: string, drop: boolean): number {
 		stderr.write(
 			`Built: ${result.rowCount} coincident-role rows (${(result.durationMs / 1000).toFixed(2)}s)\n  by country: ${top}\n`
 		)
+
 		return 0
 	} catch (err) {
 		stderr.write(`mailwoman-wof-build-coincident-roles: ${err instanceof Error ? err.message : String(err)}\n`)
+
 		return 1
 	} finally {
 		db.close()
@@ -71,6 +75,7 @@ export function main(argv: readonly string[]): number {
 	// The relation is a cheap (~2 s) derived table that must reflect the current spr/ancestors, so it
 	// rebuilds by default (idempotent). `--no-drop` appends instead — only useful for incremental tests.
 	let drop = true
+
 	for (const a of argv) {
 		if (a === "--drop") drop = true
 		else if (a === "--no-drop") drop = false
@@ -80,12 +85,16 @@ export function main(argv: readonly string[]): number {
 			printUsageAndExit(2)
 		} else paths.push(a)
 	}
+
 	if (paths.length === 0) printUsageAndExit(2)
 	let worst = 0
+
 	for (const path of paths) {
 		const rc = buildOne(path, drop)
+
 		if (rc > worst) worst = rc
 	}
+
 	return worst
 }
 

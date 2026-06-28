@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { PLACETYPE_DEPTH, placetypeDepth } from "./ancestry.js"
 
 // `ancestorLineage` takes a live `DatabaseSync` handle + queries `ancestors`/`spr`, so it's out of
@@ -34,6 +35,7 @@ test("placetypeDepth: depth strictly increases from country down to microhood", 
 		"microhood",
 	]
 	const depths = order.map(placetypeDepth)
+
 	for (let i = 1; i < depths.length; i++) {
 		expect(depths[i]).toBeGreaterThan(depths[i - 1]!)
 	}

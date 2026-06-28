@@ -1,3 +1,6 @@
+import { mkdirSync } from "node:fs"
+import { parseArgs } from "node:util"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -19,8 +22,6 @@
  */
 import { DuckDBInstance } from "@duckdb/node-api"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { mkdirSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 const { values: a } = parseArgs({
 	options: {
@@ -32,6 +33,7 @@ const { values: a } = parseArgs({
 		seed: { type: "string", default: "100" },
 	},
 })
+
 if (!a.countries) {
 	console.error("--countries is required (e.g. BE,AT,CH,DK)")
 	process.exit(1)
@@ -72,6 +74,7 @@ for (const cc of countries) {
 			USING SAMPLE ${limit} ROWS (reservoir, ${a.seed})
 		) TO '${out}' (FORMAT JSON)
 	`
+
 	try {
 		await con.run(sql)
 		const n = await con.runAndReadAll(`SELECT count(*) AS n FROM read_json_auto('${out}')`)

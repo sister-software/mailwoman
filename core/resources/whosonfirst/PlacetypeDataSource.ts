@@ -4,14 +4,16 @@
  * @author Teffen Ellis, et al.
  */
 
+import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "node:sqlite"
+
 import {
 	Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha3bLanguageCode,
 } from "@mailwoman/core/resources/languages"
-import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "node:sqlite"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
+
 import { tryWithBackoff } from "./DataSourceCache.js"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.js"
 

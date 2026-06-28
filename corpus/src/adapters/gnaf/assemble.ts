@@ -29,6 +29,7 @@
 import { createWriteStream } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import { join } from "node:path"
+
 import { PSVSpliterator } from "spliterator"
 
 export interface GnafAssembleOptions {
@@ -39,8 +40,7 @@ export interface GnafAssembleOptions {
 	/** Output JSONL path. */
 	out: string
 	/**
-	 * Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode)
-	 * are excluded.
+	 * Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode) are excluded.
 	 */
 	holdoutPath?: string
 	/** Progress sink (the CLI passes a setter). */
@@ -75,12 +75,15 @@ async function* psvObjects(path: string): AsyncIterable<Row> {
 /** Load a small lookup table fully into a Map keyed by `keyCol`. */
 async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V): Promise<Map<string, V>> {
 	const m = new Map<string, V>()
+
 	for (const p of paths) {
 		for await (const r of psvObjects(p)) {
 			const k = r[keyCol]
+
 			if (k != null && k !== "") m.set(String(k), pick(r))
 		}
 	}
+
 	return m
 }
 
@@ -88,15 +91,19 @@ async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V):
 async function loadHoldout(path: string): Promise<Set<string>> {
 	const keys = new Set<string>()
 	const text = await readFile(path, "utf8")
+
 	for (const line of text.split("\n")) {
 		if (!line.trim()) continue
+
 		try {
 			const c = (JSON.parse(line) as { components?: Record<string, string> }).components
+
 			if (c?.street && c?.locality && c?.postcode) keys.add(gnafHoldoutKey(c.street, c.locality, c.postcode))
 		} catch {
 			/* skip malformed */
 		}
 	}
+
 	return keys
 }
 
@@ -112,6 +119,7 @@ export async function assembleGnaf(opts: GnafAssembleOptions): Promise<GnafAssem
 	const addressPaths = pick(/_ADDRESS_DETAIL_psv\.psv$/)
 
 	const holdout = opts.holdoutPath ? await loadHoldout(opts.holdoutPath) : new Set<string>()
+
 	if (opts.holdoutPath) progress(`held-out eval keys: ${holdout.size}`)
 
 	progress(`loading STREET_LOCALITY (${streetPaths.length} files) + LOCALITY (${localityPaths.length})…`)
@@ -127,29 +135,38 @@ export async function assembleGnaf(opts: GnafAssembleOptions): Promise<GnafAssem
 		[]
 	let seen = 0
 	let heldOut = 0
+
 	for (const p of addressPaths) {
 		const state = (p.match(/\/([A-Z]+)_ADDRESS_DETAIL/) ?? [])[1] ?? ""
+
 		for await (const r of psvObjects(p)) {
 			const numberFirst = String(r.NUMBER_FIRST ?? "")
+
 			if (!numberFirst || r.DATE_RETIRED || !r.POSTCODE) continue
 			const st = streetMap.get(String(r.STREET_LOCALITY_PID ?? ""))
 			const suburbRaw = localityMap.get(String(r.LOCALITY_PID ?? ""))
+
 			if (!st?.name || !suburbRaw) continue
 			const street = `${titlecase(st.name)} ${titlecase(st.type)}${st.suffix ? " " + titlecase(st.suffix) : ""}`.trim()
 			const locality = titlecase(suburbRaw)
 			const postcode = String(r.POSTCODE)
+
 			if (holdout.has(gnafHoldoutKey(street, locality, postcode))) {
 				heldOut++
 				continue
 			}
 			let house = numberFirst + (r.NUMBER_FIRST_SUFFIX ? String(r.NUMBER_FIRST_SUFFIX) : "")
+
 			if (r.NUMBER_LAST) house = `${house}-${String(r.NUMBER_LAST)}`
+
 			if (r.FLAT_NUMBER) house = `${String(r.FLAT_NUMBER)}/${house}`
 			const tuple = { house_number: house, street, locality, region: state, postcode }
 			seen++
+
 			if (reservoir.length < opts.sampleSize) reservoir.push(tuple)
 			else {
 				const j = Math.floor(Math.random() * seen)
+
 				if (j < opts.sampleSize) reservoir[j] = tuple
 			}
 		}
@@ -158,11 +175,13 @@ export async function assembleGnaf(opts: GnafAssembleOptions): Promise<GnafAssem
 
 	const out = createWriteStream(opts.out)
 	const byState: Record<string, number> = {}
+
 	for (const t of reservoir) {
 		out.write(JSON.stringify(t) + "\n")
 		byState[t.region] = (byState[t.region] ?? 0) + 1
 	}
 	await new Promise<void>((res) => out.end(res))
 	progress(`wrote ${reservoir.length.toLocaleString()} tuples → ${opts.out}`)
+
 	return { written: reservoir.length, seen, heldOut, byState }
 }

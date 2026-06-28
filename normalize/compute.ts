@@ -33,6 +33,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	// forms, before punctuation/whitespace so any gap left by 〒 is then collapsed. No-op off-script.
 	{
 		const r = applyCjkNormalization(text)
+
 		if (r.folded > 0 || r.stripped > 0) {
 			text = r.text
 			map = composeMaps(map, r.map)
@@ -43,6 +44,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	// 2. Punctuation
 	{
 		const r = applyPunctuation(text)
+
 		if (r.replacements > 0) {
 			text = r.text
 			map = composeMaps(map, r.map)
@@ -53,6 +55,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	// 3. Whitespace
 	{
 		const r = collapseWhitespace(text)
+
 		if (r.runs > 0 || r.text.length !== text.length) {
 			text = r.text
 			map = composeMaps(map, r.map)
@@ -64,9 +67,11 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	// expansion form (e.g. "Street") gives a consistent final case.
 	if (opts?.expandAbbreviations) {
 		const r = expandAbbreviations(text, opts.locale)
+
 		if (r.expansions.length > 0) {
 			text = r.text
 			map = composeMaps(map, r.map)
+
 			for (const e of r.expansions) {
 				transforms.push({ kind: "expand_abbreviation", from: e.from, to: e.to, at: e.at })
 			}
@@ -76,6 +81,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	// 5. Case fold (opt-in)
 	if (opts?.caseFold) {
 		const lc = text.toLocaleLowerCase(opts.locale)
+
 		if (lc !== text) {
 			text = lc
 			// Case-fold is identity-length for ASCII + most Latin; map unchanged.

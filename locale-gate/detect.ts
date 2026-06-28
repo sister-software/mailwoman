@@ -22,8 +22,10 @@ export function detectLocaleSync(
 ): LocaleHint {
 	const scored: LocaleCandidate[] = []
 	const script = scoreByScript(shape)
+
 	if (script) scored.push(script)
 	const postcode = scoreByPostcode(shape)
+
 	if (postcode) scored.push(postcode)
 	scored.push(scoreFallback(shape))
 
@@ -36,6 +38,7 @@ export function detectLocaleSync(
 	const deduped = scored.filter((c) => {
 		if (seen.has(c.locale)) return false
 		seen.add(c.locale)
+
 		return true
 	})
 
@@ -50,6 +53,7 @@ export function detectLocaleSync(
 	}
 
 	const top = deduped[0]!
+
 	return {
 		locale: top.locale,
 		confidence: top.confidence,
@@ -59,8 +63,8 @@ export function detectLocaleSync(
 }
 
 /**
- * Async variant matching `RuntimePipelineStages.detectLocale`. Wraps the sync impl so the pipeline
- * coordinator can use it as-is.
+ * Async variant matching `RuntimePipelineStages.detectLocale`. Wraps the sync impl so the pipeline coordinator can use
+ * it as-is.
  */
 export async function detectLocale(
 	input: NormalizedInputLite,

@@ -24,15 +24,19 @@ interface Args {
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	const out: Partial<Args> = {}
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--input" && args[i + 1]) out.input = args[++i]
 		else if (a === "--output" && args[i + 1]) out.output = args[++i]
 	}
+
 	if (!out.input || !out.output) {
 		console.error("Usage: log-scale-chart.ts --input <svg> --output <svg>")
 		process.exit(1)
 	}
+
 	return out as Args
 }
 
@@ -43,15 +47,19 @@ function extractYTicks(svg: string): number[] {
 	// Y-axis tick labels: <text x="64" y="...">value</text>
 	const re = /<text x="64" y="([\d.]+)"[^>]*>([\d.]+)<\/text>/g
 	let m: RegExpExecArray | null
+
 	while ((m = re.exec(svg)) !== null) {
 		ticks.push(parseFloat(m[2]!))
 	}
+
 	return ticks.sort((a, b) => a - b)
 }
 
 function fmt(n: number): string {
 	if (Math.abs(n) >= 1000) return n.toLocaleString()
+
 	if (Math.abs(n) >= 1) return n.toFixed(3).replace(/\.?0+$/, "")
+
 	return n.toFixed(3)
 }
 
@@ -60,21 +68,26 @@ function niceTicksLog(min: number, max: number): number[] {
 	const ticks: number[] = []
 	const lo = Math.floor(min)
 	const hi = Math.ceil(max)
+
 	for (let exp = lo; exp <= hi; exp++) {
 		ticks.push(Math.pow(10, exp))
 	}
 	// Add intermediate ticks (2×, 5×)
 	const iticks: number[] = []
+
 	for (let exp = lo; exp <= hi; exp++) {
 		const base = Math.pow(10, exp)
+
 		for (const m of [2, 3, 5, 7]) {
 			const v = m * base
+
 			if (v >= Math.pow(10, min) && v <= Math.pow(10, max)) {
 				iticks.push(v)
 			}
 		}
 	}
 	ticks.push(...iticks)
+
 	return ticks.sort((a, b) => a - b)
 }
 
@@ -87,6 +100,7 @@ function transformSVG(svg: string): string {
 
 	// Extract original y-axis ticks to discover yMin/yMax
 	const yTicks = extractYTicks(svg)
+
 	if (yTicks.length < 2) throw new Error("Could not extract y-axis ticks from SVG")
 	const yMin = yTicks[0]!
 	const yMax = yTicks[yTicks.length - 1]!
@@ -104,6 +118,7 @@ function transformSVG(svg: string): string {
 	let result = svg.replace(/([ML])([\d.]+),([\d.]+)/g, (_, cmd: string, xStr: string, yStr: string) => {
 		const y = parseFloat(yStr)
 		const newY = valueToLogPixel(pixelToValue(y))
+
 		return `${cmd}${xStr},${newY.toFixed(1)}`
 	})
 
@@ -111,15 +126,17 @@ function transformSVG(svg: string): string {
 	result = result.replace(/cy="([\d.]+)"/g, (_, yStr: string) => {
 		const y = parseFloat(yStr)
 		const newY = valueToLogPixel(pixelToValue(y))
+
 		return `cy="${newY.toFixed(1)}"`
 	})
 
 	// Transform y-coordinates in grid lines and y-axis tick text positions
 	result = result.replace(
 		/<line x1="70" y1="([\d.]+)" x2="520" y2="[\d.]+" stroke="#e5e7eb"[^>]*\/>/g,
-		(_, y1Str: string, y2Str: string) => {
+		(_, y1Str: string, _y2Str: string) => {
 			const y1 = parseFloat(y1Str)
 			const newY = valueToLogPixel(pixelToValue(y1))
+
 			return `<line x1="70" y1="${newY.toFixed(1)}" x2="520" y2="${newY.toFixed(1)}" stroke="#e5e7eb"`
 		}
 	)
@@ -134,9 +151,11 @@ function transformSVG(svg: string): string {
 	// Generate new log-scale ticks and insert them
 	const logTicks = niceTicksLog(logMin, logMax)
 	const newYElements: string[] = []
+
 	for (const t of logTicks) {
 		const v = Math.log10(t)
 		const py = padding.top + plotH - ((v - logMin) / (logMax - logMin)) * plotH
+
 		if (py < padding.top || py > padding.top + plotH) continue
 		newYElements.push(
 			`<line x1="70" y1="${py.toFixed(1)}" x2="520" y2="${py.toFixed(1)}" stroke="#e5e7eb" stroke-width="1" />`

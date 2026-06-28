@@ -32,10 +32,9 @@
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 
-import { $ } from "zx"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
+import { $ } from "zx"
 
 runIfScript(import.meta, async () => {
 	// zx: capture output ourselves and slice/parse in JS the way the bash awk/jq/grep pipes did.
@@ -51,6 +50,7 @@ runIfScript(import.meta, async () => {
 	let TMP = "/tmp/honest"
 
 	const argv = process.argv.slice(2)
+
 	for (let i = 0; i < argv.length; i++) {
 		switch (argv[i]) {
 			case "--model":
@@ -87,20 +87,24 @@ runIfScript(import.meta, async () => {
 
 	// --- build the US held-out slice (leakage-free: never in training) ---
 	const US_SLICE = `${TMP}/us-heldout.jsonl`
-	writeFileSync(US_SLICE, "") // : > "$US_SLICE"
+	writeFileSync(US_SLICE, "")
+
+	// : > "$US_SLICE"
 	for (const st of US_HELD_REGIONS) {
 		const r = await $({ nothrow: true })`jq -c --arg st ${st} ${"select((.state|ascii_upcase) == $st)"} ${US_SAMPLE}`
+
 		if (r.stdout) appendFileSync(US_SLICE, r.stdout)
 	}
 	const US_N = (readFileSync(US_SLICE, "utf8").match(/\n/g) || []).length
 	console.error(`US held-out slice (${US_HELD_REGIONS.join("/")}): ${US_N} rows`)
 
 	/**
-	 * Run_locale <name> <slice.jsonl> <default-country> <out-tag> Returns a TSV row: name n
-	 * regionMatch localityMatch coordP50 coordP90 pipAll pipPoly polyCov
+	 * Run_locale <name> <slice.jsonl> <default-country> <out-tag> Returns a TSV row: name n regionMatch localityMatch
+	 * coordP50 coordP90 pipAll pipPoly polyCov
 	 */
 	const runLocale = async (name: string, slice: string, cc: string, tag: string): Promise<string> => {
 		const n = (existsSync(slice) ? readFileSync(slice, "utf8").match(/\n/g) || [] : []).length
+
 		if (n < TRUST_FLOOR) {
 			return `${name}\t${n}\tUNTRUSTED\t-\t-\t-\t-\t-\t-`
 		}
@@ -110,7 +114,7 @@ runIfScript(import.meta, async () => {
 		writeFileSync(`${TMP}/${tag}.eval.md`, evalOut.stdout)
 		writeFileSync(`${TMP}/${tag}.log`, evalOut.stderr)
 		// neural row: | **neural** | loc% | reg% | resolved% | p50 | p90 | p99 |
-		const row = evalOut.stdout.split("\n").find((l) => /^\| \*\*neural\*\* \|/.test(l)) ?? ""
+		const row = evalOut.stdout.split("\n").find((l) => l.startsWith("| **neural** |")) ?? ""
 		const cols = row.split("|").map((c) => c.replace(/ /g, ""))
 		const loc = cols[2] ?? ""
 		const reg = cols[3] ?? ""
@@ -124,11 +128,13 @@ runIfScript(import.meta, async () => {
 		// jq: percent rounded to 1 decimal, "-" when the field is null/missing, "" when the file can't be read.
 		const jqPct = async (field: string): Promise<string> => {
 			const r = await $({ nothrow: true })`jq -r ${`(.${field}*100|.*10|round/10) // "-"`} ${pipJson}`
+
 			return r.stdout.trim()
 		}
 		const pipAll = await jqPct("pip_all")
 		const pipPoly = await jqPct("pip_poly")
 		const polyCov = await jqPct("poly_coverage")
+
 		return `${name}\t${n}\t${reg}\t${loc}\t${p50}\t${p90}\t${pipAll}%\t${pipPoly}%\t${polyCov}%`
 	}
 

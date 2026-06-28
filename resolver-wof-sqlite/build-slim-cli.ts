@@ -51,22 +51,29 @@ function printUsageAndExit(code: number): never {
 
 function parseArgs(argv: string[]): CliArgs {
 	const out: CliArgs = { inputs: [], output: "", topLocalities: 1000, countries: ["US"], dropNames: false }
+
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
+
 		if (a === "--in") {
 			// Consume the value even when empty — callers pass `--in ""` for a shard (e.g. a custom
 			// postcode DB) that isn't built yet. Push only non-empty paths; build-slim skips the rest.
 			const v = argv[++i]
+
 			if (v === undefined) printUsageAndExit(2)
+
 			if (v) out.inputs.push(v)
 		} else if (a === "--out") {
 			const v = argv[++i]
+
 			if (!v) printUsageAndExit(2)
 			out.output = v
 		} else if (a === "--top") {
 			const v = argv[++i]
+
 			if (!v) printUsageAndExit(2)
 			const n = Number(v)
+
 			if (!Number.isFinite(n) || n <= 0) {
 				stderr.write(`--top must be a positive number; got '${v}'\n`)
 				exit(2)
@@ -74,6 +81,7 @@ function parseArgs(argv: string[]): CliArgs {
 			out.topLocalities = n
 		} else if (a === "--countries") {
 			const v = argv[++i]
+
 			if (!v) printUsageAndExit(2)
 			out.countries = v
 				.split(",")
@@ -88,12 +96,15 @@ function parseArgs(argv: string[]): CliArgs {
 			printUsageAndExit(2)
 		}
 	}
+
 	if (out.inputs.length === 0 || !out.output) printUsageAndExit(2)
+
 	return out
 }
 
 export async function main(rawArgv: string[]): Promise<number> {
 	let args: CliArgs
+
 	try {
 		args = parseArgs(rawArgv)
 	} catch {
@@ -122,9 +133,11 @@ export async function main(rawArgv: string[]): Promise<number> {
 				`  bbox=${result.rowCounts.placeBbox}` +
 				`  pop=${result.rowCounts.placePopulation}\n`
 		)
+
 		return 0
 	} catch (err) {
 		stderr.write(`build-slim failed: ${(err as Error).message}\n`)
+
 		return 1
 	}
 }

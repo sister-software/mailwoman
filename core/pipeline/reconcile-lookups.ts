@@ -28,11 +28,11 @@ export interface ReconcileLookups {
 /**
  * Build the reconciler's concordance lookups from one bounded pre-fetch pass over the backend.
  *
- * @param backend The gazetteer backend (Stage 6's `WofSqlitePlaceLookup.asResolverBackend()` in
- *   production; any structural match in tests).
+ * @param backend The gazetteer backend (Stage 6's `WofSqlitePlaceLookup.asResolverBackend()` in production; any
+ *   structural match in tests).
  * @param raw The normalized input text — span bounds index into this.
- * @param classifierTopK The aggregated per-span tag candidates (score-descending preferred; the
- *   budget follows this order).
+ * @param classifierTopK The aggregated per-span tag candidates (score-descending preferred; the budget follows this
+ *   order).
  * @param opts.maxLookups Hard cap on `findPlace` calls (default 12).
  * @param opts.candidatesPerPair Max places retained per (span, tag) pair (default 3).
  */
@@ -50,15 +50,20 @@ export async function prefetchReconcileLookups(
 	const pairKey = (span: { start: number; end: number }, tag: string) => `${span.start}:${span.end}:${tag}`
 
 	let budget = maxLookups
+
 	for (const candidate of classifierTopK) {
 		if (budget <= 0) break
+
 		if (!RESOLVABLE_TAGS.has(candidate.tag)) continue
 		const key = pairKey(candidate.span, candidate.tag)
+
 		if (candidateTable.has(key)) continue
 		const text = raw.slice(candidate.span.start, candidate.span.end).trim()
+
 		if (!text) continue
 		budget--
 		let places: ResolvedPlace[] = []
+
 		try {
 			places = await backend.findPlace({
 				text,

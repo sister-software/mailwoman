@@ -25,16 +25,17 @@
  *   build.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { Box, Text } from "ink"
 import { mkdirSync, rmSync } from "node:fs"
 import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { dataRootPath } from "@mailwoman/core/utils"
+import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
@@ -109,6 +110,7 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 				)
 				db.exec("BEGIN")
 				let divergent = 0
+
 				for (const r of rows) {
 					const isDivergent = r.postal_city !== r.geo_locality ? 1 : 0
 					divergent += isDivergent
@@ -143,6 +145,7 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -155,6 +158,7 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

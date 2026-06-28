@@ -39,8 +39,8 @@ export interface JapanesePrefectureInfo {
 }
 
 /**
- * ISO 3166-2:JP numeric code → info, for all 47 prefectures. Ordered by code, which is also the
- * conventional north-to-south-ish ordering (Hokkaido `01` at the top, Okinawa `47` at the bottom).
+ * ISO 3166-2:JP numeric code → info, for all 47 prefectures. Ordered by code, which is also the conventional
+ * north-to-south-ish ordering (Hokkaido `01` at the top, Okinawa `47` at the bottom).
  */
 export const JP_PREFECTURES = {
 	"01": { code: "01", kanji: "北海道", romaji: "Hokkaido", type: "do" },
@@ -105,14 +105,13 @@ export function isJapanesePrefectureCode(input: unknown): input is JapanesePrefe
 /**
  * Fold a romaji surface form so `Tōkyō`, `Tokyo`, and `Tokyo-to` all key alike: strip macrons (NFD
  *
- * - Drop the combining marks), lowercase, peel off an appended `-to`/`-do`/`-fu`/`-ken` type-suffix,
- *   then drop everything but `a-z`. `Tōkyō-to` and `tokyo` both → `tokyo`.
+ * - Drop the combining marks), lowercase, peel off an appended `-to`/`-do`/`-fu`/`-ken` type-suffix, then drop everything
+ *   but `a-z`. `Tōkyō-to` and `tokyo` both → `tokyo`.
  *
- * The suffix is only stripped when it is a genuine appendage — separated by a
- * hyphen/space/middle-dot (`Tokyo-to`, `Osaka fu`) or trailing the macron-bearing long-vowel form.
- * That guard is essential: four bare romaji names already END in a suffix syllable (Kyo**to**,
- * Gi**fu**, Hokkai**do**, Kumamo**to**), and a blind trailing-strip would maim them. We never strip
- * from an unseparated bare name, so `kyoto` stays `kyoto`.
+ * The suffix is only stripped when it is a genuine appendage — separated by a hyphen/space/middle-dot (`Tokyo-to`,
+ * `Osaka fu`) or trailing the macron-bearing long-vowel form. That guard is essential: four bare romaji names already
+ * END in a suffix syllable (Kyo**to**, Gi**fu**, Hokkai**do**, Kumamo**to**), and a blind trailing-strip would maim
+ * them. We never strip from an unseparated bare name, so `kyoto` stays `kyoto`.
  */
 function foldRomaji(s: string): string {
 	const lowered = s
@@ -121,31 +120,35 @@ function foldRomaji(s: string): string {
 		.replace(/[\u0300-\u036f]/g, "")
 	// Strip an appended type-suffix only when a separator (hyphen / space / middle dot) precedes it.
 	const desuffixed = lowered.replace(/[-\s·][\s]*(to|do|fu|ken)$/, "")
+
 	return desuffixed.replace(/[^a-z]/g, "")
 }
 
 /**
- * Strip the trailing 都/道/府/県 admin kanji from a prefecture name (`東京都` → `東京`). Hokkaido is the
- * exception: `北海道` ends in 道 but is a single indivisible name, so it is left whole.
+ * Strip the trailing 都/道/府/県 admin kanji from a prefecture name (`東京都` → `東京`). Hokkaido is the exception: `北海道` ends
+ * in 道 but is a single indivisible name, so it is left whole.
  */
 function stripKanjiSuffix(kanji: string): string {
 	if (kanji === "北海道") return kanji
+
 	return kanji.replace(/[都道府県]$/, "")
 }
 
 /**
- * Folded romaji / kanji surface form → ISO 3166-2:JP code. Every prefecture contributes several
- * keys: the macron-folded romaji (and the suffixed `name-ken` form folds to the same key), the full
- * kanji (`東京都`), and the suffix-less kanji (`東京`). Hokkaido keeps its 道 in both kanji keys.
+ * Folded romaji / kanji surface form → ISO 3166-2:JP code. Every prefecture contributes several keys: the macron-folded
+ * romaji (and the suffixed `name-ken` form folds to the same key), the full kanji (`東京都`), and the suffix-less kanji
+ * (`東京`). Hokkaido keeps its 道 in both kanji keys.
  */
 export const JP_PREFECTURE_NAME_TO_CODE: ReadonlyMap<string, JapanesePrefectureCode> = (() => {
 	const out = new Map<string, JapanesePrefectureCode>()
+
 	for (const code of Object.keys(JP_PREFECTURES) as JapanesePrefectureCode[]) {
 		const info = JP_PREFECTURES[code]
 		out.set(foldRomaji(info.romaji), code)
 		out.set(info.kanji, code)
 		out.set(stripKanjiSuffix(info.kanji), code)
 	}
+
 	return out
 })()
 
@@ -153,8 +156,8 @@ export const JP_PREFECTURE_NAME_TO_CODE: ReadonlyMap<string, JapanesePrefectureC
  * Resolve a Japanese prefecture surface form to its ISO 3166-2:JP code, accepting:
  *
  * - A code directly (`"13"` → `"13"`),
- * - A romaji name, case-insensitive, macrons optional, with OR without the romaji type-suffix
- *   (`Tōkyō` / `Tokyo` / `tokyo` / `Tokyo-to` → `"13"`),
+ * - A romaji name, case-insensitive, macrons optional, with OR without the romaji type-suffix (`Tōkyō` / `Tokyo` /
+ *   `tokyo` / `Tokyo-to` → `"13"`),
  * - A kanji name, with or without its 都/道/府/県 suffix (`東京都` / `東京` → `"13"`).
  *
  * Returns null for anything it cannot place.
@@ -162,7 +165,9 @@ export const JP_PREFECTURE_NAME_TO_CODE: ReadonlyMap<string, JapanesePrefectureC
 export function lookupJapanesePrefecture(input: string | null | undefined): JapanesePrefectureCode | null {
 	if (!input || typeof input !== "string") return null
 	const trimmed = input.trim()
+
 	if (PREFECTURE_CODE_SET.has(trimmed)) return trimmed as JapanesePrefectureCode
+
 	// Try kanji first (exact, then suffix-less), then fall back to the macron-folded romaji.
 	return JP_PREFECTURE_NAME_TO_CODE.get(trimmed) ?? JP_PREFECTURE_NAME_TO_CODE.get(foldRomaji(trimmed)) ?? null
 }

@@ -11,6 +11,7 @@
 
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+
 import type { MultiPolygonCoords } from "./index.js"
 
 interface TimezoneFeature {
@@ -31,6 +32,7 @@ export function buildTimezoneDb(geojsonPath: string, dbPath: string): { features
 	)
 
 	db.exec("BEGIN")
+
 	for (const feature of data.features) {
 		const polygons: MultiPolygonCoords =
 			feature.geometry.type === "Polygon"
@@ -41,14 +43,19 @@ export function buildTimezoneDb(geojsonPath: string, dbPath: string): { features
 		let maxLat = -90
 		let minLon = 180
 		let maxLon = -180
+
 		for (const polygon of polygons) {
 			for (const ring of polygon) {
 				for (const point of ring) {
 					const lon = point[0]!
 					const lat = point[1]!
+
 					if (lat < minLat) minLat = lat
+
 					if (lat > maxLat) maxLat = lat
+
 					if (lon < minLon) minLon = lon
+
 					if (lon > maxLon) maxLon = lon
 				}
 			}
@@ -58,5 +65,6 @@ export function buildTimezoneDb(geojsonPath: string, dbPath: string): { features
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_tz_bbox ON timezone_polygons (minLat, maxLat, minLon, maxLon)")
 	db.close()
+
 	return { features: data.features.length }
 }

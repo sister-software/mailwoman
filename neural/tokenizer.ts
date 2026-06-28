@@ -59,27 +59,28 @@ export class MailwomanTokenizer {
 	static async loadFromBase64(b64: string): Promise<MailwomanTokenizer> {
 		const processor = new SentencePieceProcessor()
 		await processor.loadFromB64StringModel(b64)
+
 		return new MailwomanTokenizer(processor)
 	}
 
 	/**
-	 * Load from a path to a `tokenizer.model` file on disk. **Node-only** — the dynamic `node:fs`
-	 * import keeps this method out of the static dependency graph so the rest of the tokenizer
-	 * bundles cleanly for the browser. Calling it in a browser throws at runtime; use
-	 * `loadFromBase64` (or the URL-fetching loaders in `@mailwoman/neural-web`) instead.
+	 * Load from a path to a `tokenizer.model` file on disk. **Node-only** — the dynamic `node:fs` import keeps this
+	 * method out of the static dependency graph so the rest of the tokenizer bundles cleanly for the browser. Calling it
+	 * in a browser throws at runtime; use `loadFromBase64` (or the URL-fetching loaders in `@mailwoman/neural-web`)
+	 * instead.
 	 */
 	static async loadFromFile(modelPath: string): Promise<MailwomanTokenizer> {
 		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
 		const buf = await readFile(modelPath)
+
 		return MailwomanTokenizer.loadFromBase64(buf.toString("base64"))
 	}
 
 	/**
 	 * Tokenize `text` to pieces + ids + realigned char offsets.
 	 *
-	 * The returned `pieces[i].piece` matches what the Python `sp.EncodeAsPieces(text)[i]` returns,
-	 * and `pieces[i].id` matches `sp.EncodeAsIds(text)[i]`. The offsets are reconstructed in TS — see
-	 * file header for the algorithm.
+	 * The returned `pieces[i].piece` matches what the Python `sp.EncodeAsPieces(text)[i]` returns, and `pieces[i].id`
+	 * matches `sp.EncodeAsIds(text)[i]`. The offsets are reconstructed in TS — see file header for the algorithm.
 	 */
 	encode(text: string): EncodeResult {
 		const pieces = this.processor.encodePieces(text)
@@ -111,6 +112,7 @@ export class MailwomanTokenizer {
 	/** Decode a list of ids back to a string. Delegates to the underlying processor. */
 	decode(ids: number[] | Int32Array): string {
 		const arr = ids instanceof Int32Array ? ids : Int32Array.from(ids)
+
 		return this.processor.decodeIds(arr) as string
 	}
 }

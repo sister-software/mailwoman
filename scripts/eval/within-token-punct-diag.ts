@@ -10,9 +10,10 @@
  *   scripts/eval/within-token-punct-diag.ts
  */
 
+import { readFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { readFileSync } from "node:fs"
 
 const CLASSES = new Set(["apostrophe", "hyphen", "slash"])
 const rows = readFileSync("data/eval/external/punctuation-stress.jsonl", "utf8")
@@ -24,6 +25,7 @@ const rows = readFileSync("data/eval/external/punctuation-stress.jsonl", "utf8")
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 const tally: Record<string, { n: number; miss: number; missKeys: Record<string, number> }> = {}
+
 for (const r of rows) {
 	const t = (tally[r.class] ??= { n: 0, miss: 0, missKeys: {} })
 	t.n++
@@ -38,21 +40,26 @@ for (const r of rows) {
 	}
 	collect(json)
 	const diffs: string[] = []
+
 	for (const [k, gold] of Object.entries(r.components)) {
 		const g = (got[k] ?? "").toLowerCase().trim()
+
 		if (g !== String(gold).toLowerCase().trim()) {
 			diffs.push(`${k}: gold=${JSON.stringify(gold)} got=${JSON.stringify(got[k] ?? "∅")}`)
 			t.missKeys[k] = (t.missKeys[k] ?? 0) + 1
 		}
 	}
+
 	if (diffs.length) {
 		t.miss++
 		console.log(`\n[${r.class}] ${r.raw}`)
 		console.log(`  got: ${JSON.stringify(got)}`)
+
 		for (const d of diffs) console.log(`  ✗ ${d}`)
 	}
 }
 console.log("\n=== summary ===")
+
 for (const [cls, t] of Object.entries(tally)) {
 	const topKeys = Object.entries(t.missKeys)
 		.sort((a, b) => b[1] - a[1])

@@ -23,8 +23,9 @@
  *   the live demo drives through its httpvfs lookup — same SQL + ranking as the WASM lookup).
  */
 
-import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { readFile } from "node:fs/promises"
+
+import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
 import { runCascade } from "../docs/src/shared/demo-helpers.js"
@@ -99,6 +100,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 
 		test("an unresolvable parsed region fails LOUD (console.warn), not silent", async () => {
 			const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
 			try {
 				await runCascade(
 					wasmLookup,
@@ -117,6 +119,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 	describe("Node lookup (resolver-wof-sqlite) — parity on the same DB", () => {
 		test('"Brooklyn" locality query → the borough (placetype expansion + alias-bag exact tier)', async () => {
 			const lookup = new WofSqlitePlaceLookup({ databasePath: HOT_DB_PATH! })
+
 			try {
 				const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
 				expect(matches[0]).toMatchObject({ id: BROOKLYN_BOROUGH, name: "Brooklyn", placetype: "borough" })
@@ -128,6 +131,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 
 		test('"New York City" → the New York locality via the alias bag (no names table on the slim DB)', async () => {
 			const lookup = new WofSqlitePlaceLookup({ databasePath: HOT_DB_PATH! })
+
 			try {
 				const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
 				expect(matches[0]).toMatchObject({ id: NEW_YORK_LOCALITY, name: "New York" })

@@ -12,7 +12,9 @@ import { execFile } from "node:child_process"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+
 import { describe, expect, test } from "vitest"
+
 import { options as debugOptions } from "../commands/debug.js"
 import { options as parseOptions } from "../commands/parse.js"
 
@@ -87,6 +89,7 @@ describe("npx mailwoman parse --isolated --locale <bcp47> '<input>' (legacy rule
 		const json = (stdout: string) => {
 			const clean = stdout.replace(ansi, "")
 			const jsonStart = clean.indexOf("[\n")
+
 			return clean.slice(jsonStart)
 		}
 		expect(json(withLocale.stdout)).toEqual(json(withoutLocale.stdout))

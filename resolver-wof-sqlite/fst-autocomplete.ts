@@ -41,9 +41,9 @@ export interface AutocompleteOpts {
 	maxSuggestions?: number
 	maxExpansionDepth?: number
 	/**
-	 * Collapse same-name suggestions to the single highest-importance one. Off by default (the CLI
-	 * surfaces distinct same-name places — New York the city vs the county); a typeahead wants it ON
-	 * so the dropdown isn't four "New London"s. (#587)
+	 * Collapse same-name suggestions to the single highest-importance one. Off by default (the CLI surfaces distinct
+	 * same-name places — New York the city vs the county); a typeahead wants it ON so the dropdown isn't four "New
+	 * London"s. (#587)
 	 */
 	dedupeByName?: boolean
 }
@@ -58,11 +58,11 @@ interface BfsItem {
 const PER_BRANCH = 4
 
 /**
- * The top-`k` entries by importance (descending). Avoids sorting/allocating when `entries` is
- * small.
+ * The top-`k` entries by importance (descending). Avoids sorting/allocating when `entries` is small.
  */
 function topByImportance(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]
+
 	return [...entries].sort((a, b) => b.importance - a.importance).slice(0, k)
 }
 
@@ -83,10 +83,13 @@ export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteO
 	let depth = 0
 
 	const match = fst.walk(normalizedTokens)
+
 	if (match) {
 		// COMPLETE-token prefix landed on a state. Seed at the match state (accepting + continuations).
 		depth = match.depth
+
 		for (const entry of fst.accepting(match.stateId)) addSuggestion(seen, entry, match.depth, [])
+
 		for (const cont of fst.continuations(match.stateId)) {
 			queue.push({ stateId: cont.targetState, depth: 1, tokens: [cont.token] })
 		}
@@ -95,12 +98,15 @@ export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteO
 		const complete = normalizedTokens.slice(0, -1)
 		const partial = normalizedTokens[normalizedTokens.length - 1]!
 		const prefixState = complete.length === 0 ? 0 : (fst.walk(complete)?.stateId ?? undefined)
+
 		if (prefixState === undefined) {
 			return { query, normalizedTokens, depth: 0, suggestions: [] }
 		}
 		depth = complete.length
+
 		for (const cont of fst.continuations(prefixState)) {
 			if (!cont.token.startsWith(partial)) continue
+
 			// This edge completes the typed partial token — its target is a real match at depth+1.
 			for (const entry of topByImportance(fst.accepting(cont.targetState), PER_BRANCH))
 				addSuggestion(seen, entry, complete.length + 1, [cont.token])
@@ -115,9 +121,12 @@ export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteO
 	// (the "new" state has 311 continuations). Per-branch capping keeps the search broad. (#587)
 	while (queue.length > 0 && seen.size < maxSuggestions * 4) {
 		const item = queue.shift()!
+
 		if (item.depth > maxExpansionDepth) continue
+
 		for (const entry of topByImportance(fst.accepting(item.stateId), PER_BRANCH))
 			addSuggestion(seen, entry, depth + item.depth, item.tokens)
+
 		if (item.depth < maxExpansionDepth) {
 			for (const cont of fst.continuations(item.stateId)) {
 				queue.push({ stateId: cont.targetState, depth: item.depth + 1, tokens: [...item.tokens, cont.token] })
@@ -126,7 +135,9 @@ export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteO
 	}
 
 	let suggestions = [...seen.values()].sort((a, b) => b.importance - a.importance)
+
 	if (opts.dedupeByName) suggestions = dedupeByName(suggestions)
+
 	return { query, normalizedTokens, depth, suggestions: suggestions.slice(0, maxSuggestions) }
 }
 
@@ -137,6 +148,7 @@ function addSuggestion(
 	completionTokens: string[]
 ): void {
 	const existing = seen.get(entry.wofID)
+
 	if (existing && existing.matchDepth <= matchDepth) return
 	seen.set(entry.wofID, {
 		name: entry.name,
@@ -150,17 +162,20 @@ function addSuggestion(
 }
 
 /**
- * Keep one suggestion per name — the highest-importance. Input is already importance-sorted, so the
- * first occurrence per name wins; order is preserved.
+ * Keep one suggestion per name — the highest-importance. Input is already importance-sorted, so the first occurrence
+ * per name wins; order is preserved.
  */
 function dedupeByName(suggestions: AutocompleteSuggestion[]): AutocompleteSuggestion[] {
 	const seenNames = new Set<string>()
 	const out: AutocompleteSuggestion[] = []
+
 	for (const s of suggestions) {
 		const key = s.name.toLowerCase()
+
 		if (seenNames.has(key)) continue
 		seenNames.add(key)
 		out.push(s)
 	}
+
 	return out
 }

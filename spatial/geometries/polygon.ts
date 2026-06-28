@@ -5,6 +5,7 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
+
 import type { GeoObjectLiteral } from "../objects.js"
 import type { LineStringPath } from "./line-string.js"
 
@@ -12,23 +13,22 @@ import type { LineStringPath } from "./line-string.js"
  * An array of positions forming a closed shape, such as a country or a lake.
  *
  * @example
+ * 	A polygon without holes:
  *
- * A polygon without holes:
- *
- * ```json
- * {
+ * 	```json
+ * 	{
  * 	"type": "Polygon",
  * 	"coordinates": [
- * 		[
- * 			[100, 0],
- * 			[101, 0],
- * 			[101, 1],
- * 			[100, 1],
- * 			[100, 0]
- * 		]
+ * 	[
+ * 	[100, 0],
+ * 	[101, 0],
+ * 	[101, 1],
+ * 	[100, 1],
+ * 	[100, 0]
  * 	]
- * }
- * ```
+ * 	]
+ * 	}
+ * 	```
  */
 export type SolidPolygonPath = [
 	/**
@@ -39,34 +39,32 @@ export type SolidPolygonPath = [
 ]
 
 /**
- * An array of positions forming a closed shape with holes, such as a country with islands or a lake
- * with islands.
+ * An array of positions forming a closed shape with holes, such as a country with islands or a lake with islands.
  *
  * @example
+ * 	A polygon with holes:
  *
- * A polygon with holes:
- *
- * ```json
- * {
+ * 	```json
+ * 	{
  * 	"type": "Polygon",
  * 	"coordinates": [
- * 		[
- * 			[100.0, 0.0],
- * 			[101.0, 0.0],
- * 			[101.0, 1.0],
- * 			[100.0, 1.0],
- * 			[100.0, 0.0]
- * 		],
- * 		[
- * 			[100.8, 0.8],
- * 			[100.8, 0.2],
- * 			[100.2, 0.2],
- * 			[100.2, 0.8],
- * 			[100.8, 0.8]
- * 		]
+ * 	[
+ * 	[100.0, 0.0],
+ * 	[101.0, 0.0],
+ * 	[101.0, 1.0],
+ * 	[100.0, 1.0],
+ * 	[100.0, 0.0]
+ * 	],
+ * 	[
+ * 	[100.8, 0.8],
+ * 	[100.8, 0.2],
+ * 	[100.2, 0.2],
+ * 	[100.2, 0.8],
+ * 	[100.8, 0.8]
  * 	]
- * }
- * ```
+ * 	]
+ * 	}
+ * 	```
  */
 export type NestedPolygonPath = [
 	/**

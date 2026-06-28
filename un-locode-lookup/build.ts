@@ -8,9 +8,11 @@
  *   IATA, Coordinates, Remarks). One row per assigned location; coordinates parsed where present.
  */
 
-import { parse } from "csv-parse/sync"
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+
+import { parse } from "csv-parse/sync"
+
 import { foldName, parseUnLocodeCoords } from "./index.js"
 
 interface CsvRow {
@@ -37,9 +39,11 @@ export function buildUnLocodeDb(csvPath: string, dbPath: string): { rows: number
 
 	let withCoords = 0
 	db.exec("BEGIN")
+
 	for (const r of records) {
 		if (!r.Country || !r.Location) continue // header/country rows carry no Location
 		const coords = r.Coordinates ? parseUnLocodeCoords(r.Coordinates) : null
+
 		if (coords) withCoords++
 		const name = r.NameWoDiacritics || r.Name || ""
 		insert.run(r.Country, r.Location, r.Name || name, foldName(name), coords?.lat ?? null, coords?.lon ?? null)
@@ -48,5 +52,6 @@ export function buildUnLocodeDb(csvPath: string, dbPath: string): { rows: number
 	db.exec("CREATE INDEX idx_locode_name ON un_locode (country, nameNorm)")
 	db.exec("CREATE INDEX idx_locode_bbox ON un_locode (lat, lon)")
 	db.close()
+
 	return { rows: records.length, withCoords }
 }

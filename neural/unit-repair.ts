@@ -40,10 +40,9 @@ interface UnitMatch {
 }
 
 /**
- * Secondary-unit shape patterns, ordered most-specific → least. Case-insensitive (unit designators
- * appear in every casing in real data). The identifier is a 1-5 digit number with an optional
- * trailing letter ("4B"), a single letter ("STE D"), or a letter+digits — kept tight so we don't
- * swallow following words.
+ * Secondary-unit shape patterns, ordered most-specific → least. Case-insensitive (unit designators appear in every
+ * casing in real data). The identifier is a 1-5 digit number with an optional trailing letter ("4B"), a single letter
+ * ("STE D"), or a letter+digits — kept tight so we don't swallow following words.
  */
 const UNIT_DESIGNATORS =
 	"APARTMENT|APT|SUITE|STE|UNIT|ROOM|RM|FLOOR|FLR|FL|BUILDING|BLDG|DEPARTMENT|DEPT|LOT|TRAILER|TRLR|SLIP|HANGAR|PIER|FLAT|PH|PENTHOUSE"
@@ -71,14 +70,12 @@ const UNIT_I = "I-unit" as DecoderToken["label"]
 const OUTSIDE = "O" as DecoderToken["label"]
 
 /**
- * Tags a unit span is allowed to overwrite on the ADD path. The v0.7.2 arena showed the dominant
- * failure for bare designator-led units ("Flat 2 14 Smith St", "APT 2 …") is the model labeling the
- * WHOLE designator+identifier run as `locality` — not leaving it `O`. An explicit designator +
- * identifier is a high-confidence "this is a unit" shape (a real locality/suburb name never has
- * that form), so — exactly like postcode-repair's ADD_OVER_TAGS — we let it reclaim a
- * `locality`/`dependent_locality` span. Structural tags (house_number, street*, postcode, po_box,
- * region, country, venue) stay off the list so a confident parse is never clobbered. (`O` is always
- * eligible.)
+ * Tags a unit span is allowed to overwrite on the ADD path. The v0.7.2 arena showed the dominant failure for bare
+ * designator-led units ("Flat 2 14 Smith St", "APT 2 …") is the model labeling the WHOLE designator+identifier run as
+ * `locality` — not leaving it `O`. An explicit designator + identifier is a high-confidence "this is a unit" shape (a
+ * real locality/suburb name never has that form), so — exactly like postcode-repair's ADD_OVER_TAGS — we let it reclaim
+ * a `locality`/`dependent_locality` span. Structural tags (house_number, street*, postcode, po_box, region, country,
+ * venue) stay off the list so a confident parse is never clobbered. (`O` is always eligible.)
  */
 const ADD_OVER_TAGS = new Set<string>(["locality", "dependent_locality"])
 
@@ -96,6 +93,7 @@ function collectMatches(text: string): UnitMatch[] {
 	const candidates: UnitMatch[] = []
 	UNIT_PATTERNS.forEach((pat, priority) => {
 		pat.re.lastIndex = 0
+
 		for (let m = pat.re.exec(text); m; m = pat.re.exec(text)) {
 			candidates.push({ start: m.index, end: m.index + m[0].length, priority })
 		}
@@ -103,10 +101,12 @@ function collectMatches(text: string): UnitMatch[] {
 	// Longest-match-wins, then most-specific; reject anything overlapping an accepted match.
 	candidates.sort((a, b) => b.end - b.start - (a.end - a.start) || a.priority - b.priority)
 	const accepted: UnitMatch[] = []
+
 	for (const c of candidates) {
 		if (accepted.some((a) => c.start < a.end && a.start < c.end)) continue
 		accepted.push(c)
 	}
+
 	return accepted
 }
 
@@ -117,12 +117,13 @@ export interface RepairResult {
 }
 
 /**
- * Repair secondary-unit label spans in a decoded token sequence using designator regexes. Returns a
- * NEW token array (inputs are not mutated) plus a change count.
+ * Repair secondary-unit label spans in a decoded token sequence using designator regexes. Returns a NEW token array
+ * (inputs are not mutated) plus a change count.
  */
 export function repairUnitLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	const matches = collectMatches(text)
 	const tokens = input.map((t) => ({ ...t }))
+
 	if (matches.length === 0) return { tokens, changed: 0 }
 
 	let changed = 0
@@ -136,13 +137,17 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 	for (const m of matches) {
 		// Tokens whose char span intersects the match.
 		const overlap: number[] = []
+
 		for (let i = 0; i < tokens.length; i++) {
 			const t = tokens[i]!
+
 			if (t.start < m.end && m.start < t.end) overlap.push(i)
 		}
+
 		if (overlap.length === 0) continue
 
 		const hasUnit = overlap.some((i) => isUnitLabel(tokens[i]!.label))
+
 		if (!hasUnit) {
 			// ADD path — explicit designators are high-confidence, but only ever over O or a
 			// geographic-container tag (locality/dependent_locality — the tags the model
@@ -150,8 +155,10 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 			// po_box/region/country/venue.
 			const safe = overlap.every((i) => {
 				const tag = tagOf(tokens[i]!.label)
+
 				return tag === null || ADD_OVER_TAGS.has(tag)
 			})
+
 			if (!safe) continue
 		}
 
@@ -160,6 +167,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 
 		// Local smear clip: clear unit tokens immediately flanking the snapped run.
 		for (let j = overlap[0]! - 1; j >= 0 && isUnitLabel(tokens[j]!.label); j--) setLabel(j, OUTSIDE)
+
 		for (let j = overlap[overlap.length - 1]! + 1; j < tokens.length && isUnitLabel(tokens[j]!.label); j++) {
 			setLabel(j, OUTSIDE)
 		}

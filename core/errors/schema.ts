@@ -14,8 +14,7 @@ export type ExtractResourceErrorStatusCode<T> = T extends ResourceError<infer S>
 const kResourceError = "_kResourceError"
 
 /**
- * An entity registered with the Federal Communications Commission (FCC) that provides
- * telecommunications services.
+ * An entity registered with the Federal Communications Commission (FCC) that provides telecommunications services.
  */
 export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 	static DefaultStatus = 500
@@ -27,6 +26,7 @@ export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 
 	static override [Symbol.hasInstance](input: unknown): input is ResourceError {
 		if (!input) return false
+
 		if (typeof input !== "object") return false
 
 		if (kResourceError in input) return true

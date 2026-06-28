@@ -26,9 +26,9 @@ export interface GeoCoordinate {
 }
 
 /**
- * The resolution tier that produced a coordinate, mirroring mailwoman's geocoder (`address_point` >
- * `interpolated` > `admin`). Kept as a local plain union so this package stays decoupled from the
- * heavy geocoder runtime; a `GeocodeResult.resolution_tier` maps in directly.
+ * The resolution tier that produced a coordinate, mirroring mailwoman's geocoder (`address_point` > `interpolated` >
+ * `admin`). Kept as a local plain union so this package stays decoupled from the heavy geocoder runtime; a
+ * `GeocodeResult.resolution_tier` maps in directly.
  */
 export type ResolutionTier = "address_point" | "interpolated" | "admin"
 
@@ -54,8 +54,8 @@ export interface AddressGeocode {
 }
 
 /**
- * The canonical address record. Composes the parser's components, the formatter's match key, an
- * optional human-readable form, and an optional resolved geocode. Plain data — no behavior.
+ * The canonical address record. Composes the parser's components, the formatter's match key, an optional human-readable
+ * form, and an optional resolved geocode. Plain data — no behavior.
  */
 export interface PostalAddress {
 	/** Parsed address components (`ComponentTag`-keyed). */
@@ -83,9 +83,8 @@ export interface ToPostalAddressOptions {
 }
 
 /**
- * Build a canonical {@linkcode PostalAddress} from parsed components: fills the match key (always)
- * and a human-readable form (unless disabled). Attach a geocode separately with
- * {@linkcode withGeocode} once the address is resolved.
+ * Build a canonical {@linkcode PostalAddress} from parsed components: fills the match key (always) and a human-readable
+ * form (unless disabled). Attach a geocode separately with {@linkcode withGeocode} once the address is resolved.
  */
 export function toPostalAddress(components: ComponentDict, opts: ToPostalAddressOptions = {}): PostalAddress {
 	const country = opts.country ?? components.country ?? ""
@@ -99,6 +98,7 @@ export function toPostalAddress(components: ComponentDict, opts: ToPostalAddress
 
 	if (opts.format !== false) {
 		const formatted = formatAddress(components, country, opts.formatOptions ?? { separator: ", " })
+
 		if (formatted) record.formatted = formatted
 	}
 

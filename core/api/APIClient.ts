@@ -12,6 +12,7 @@ import {
 	type CacheOptions,
 	setupCache,
 } from "axios-cache-interceptor"
+
 import { ServiceSymbol } from "../lifecycle/ServiceSymbol.js"
 import { delegateAxiosError } from "./responses.js"
 
@@ -43,8 +44,8 @@ export interface APIClientConfig {
 }
 
 /**
- * A base class for API clients used in Mailwoman, providing features like request cooldowns,
- * response caching, and integrated logging.
+ * A base class for API clients used in Mailwoman, providing features like request cooldowns, response caching, and
+ * integrated logging.
  */
 export class APIClient<C extends APIClientConfig = APIClientConfig> extends EventTarget implements AsyncDisposable {
 	public readonly config: C
@@ -116,6 +117,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 		const method = options.method?.toUpperCase() || "GET"
 		this.logger.debug(`${method}: ${options.url}`)
+
 		return this.axios(options)
 	}
 

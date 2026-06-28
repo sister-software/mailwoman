@@ -1,13 +1,13 @@
+import { readFileSync } from "node:fs"
+
 /**
- * End-to-end JP resolver eval (#292): sample KEN_ALL postcodes, feed (city-or-ward text + postcode)
- * to the real backend, and check the resolved place name-agrees with KEN_ALL's authoritative
- * municipality. Measures whether the postcode actually carries the resolve to the right
- * municipality through the coordinate-first path (vs an exact-name tiering override). Gold =
- * KEN_ALL (independent, authoritative).
+ * End-to-end JP resolver eval (#292): sample KEN_ALL postcodes, feed (city-or-ward text + postcode) to the real
+ * backend, and check the resolved place name-agrees with KEN_ALL's authoritative municipality. Measures whether the
+ * postcode actually carries the resolve to the right municipality through the coordinate-first path (vs an exact-name
+ * tiering override). Gold = KEN_ALL (independent, authoritative).
  */
 import { dataRootPath } from "@mailwoman/core/utils"
 import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
-import { readFileSync } from "node:fs"
 
 const KENALL = dataRootPath("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
 const backend = new WofSqlitePlaceLookup({
@@ -25,8 +25,10 @@ function norm(s: string): string {
 // KEN_ALL (CP932 → we read latin1 bytes; col6 romaji is ASCII so latin1 is safe for the romaji column)
 const buf = readFileSync(KENALL, "latin1")
 const rows: Array<{ pc: string; muni: string; city: string }> = []
+
 for (const line of buf.split(/\r?\n/)) {
 	const f = line.split(",").map((c) => c.replace(/^"|"$/g, ""))
+
 	if (f.length >= 6 && /^\d{7}$/.test(f[0]!)) {
 		const pc = `${f[0]!.slice(0, 3)}-${f[0]!.slice(3)}`
 		const muni = f[5]!
@@ -41,8 +43,10 @@ const sample = rows.filter((_, i) => i % step === 0).slice(0, N)
 
 // Independent cross-check gold: GeoNames admin2 (sourced separately from KEN_ALL).
 const gnAdmin2 = new Map<string, string>()
+
 for (const line of readFileSync(dataRootPath("geonames", "JP.txt"), "utf8").split("\n")) {
 	const f = line.split("\t")
+
 	if (f.length > 5 && f[1]) gnAdmin2.set(f[1]!, f[5]!)
 }
 
@@ -50,16 +54,21 @@ let resolved = 0
 let agreeKen = 0
 let crossN = 0
 let crossAgree = 0
+
 for (const r of sample) {
 	const cands = await backend.findPlace({ text: r.city, placetype: "locality", postcode: r.pc, country: "JP" } as never)
-	const top = cands[0] as any
+	const top = cands[0]
+
 	if (!top) continue
 	resolved += 1
 	const nm = norm(top.name)
+
 	if (nm.length >= 2 && norm(r.muni).includes(nm)) agreeKen += 1
 	const gn = gnAdmin2.get(r.pc)
+
 	if (gn) {
 		crossN += 1
+
 		if (nm.length >= 2 && norm(gn).includes(nm)) crossAgree += 1
 	}
 }

@@ -6,14 +6,14 @@
 
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { VenueCaptureSolver } from "./VenueCaptureSolver.js"
 
 /**
- * NOTE: In its current form `VenueCaptureSolver` is effectively a no-op. Its loop bodies only
- * `continue` and never mutate the solution, the matches, or the context. The strongest honest
- * assertion we can make is therefore that it leaves the solutions completely untouched — both when
- * a venue is present and when it is absent. (See report: this solver's intended capture behavior is
- * unimplemented and these tests pin the current contract.)
+ * NOTE: In its current form `VenueCaptureSolver` is effectively a no-op. Its loop bodies only `continue` and never
+ * mutate the solution, the matches, or the context. The strongest honest assertion we can make is therefore that it
+ * leaves the solutions completely untouched — both when a venue is present and when it is absent. (See report: this
+ * solver's intended capture behavior is unimplemented and these tests pin the current contract.)
  */
 
 test("venue present (not at start): leaves the solution unchanged", () => {

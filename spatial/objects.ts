@@ -36,12 +36,12 @@ export const GeometryType = {
 /**
  * The base GeoJSON object.
  *
- * The GeoJSON specification also allows foreign members
- * (https://tools.ietf.org/html/rfc7946#section-6.1) to be included in the object.
+ * The GeoJSON specification also allows foreign members (https://tools.ietf.org/html/rfc7946#section-6.1) to be
+ * included in the object.
  *
- * @see {@link https://tools.ietf.org/html/rfc7946#section-3 GeoJSON Object}
  * @title Geo Object
  * @public
+ * @see {@link https://tools.ietf.org/html/rfc7946#section-3 GeoJSON Object}
  */
 export interface GeoObjectLiteral {
 	/**
@@ -55,11 +55,10 @@ export interface GeoObjectLiteral {
 	id?: string | number | undefined | null
 
 	/**
-	 * A bounding box of the coordinate range of the object's Geometries, Features, or Feature
-	 * Collections.
+	 * A bounding box of the coordinate range of the object's Geometries, Features, or Feature Collections.
 	 *
-	 * This is useful when defining the extent of a GeoJSON object, i.e. the minimum and maximum
-	 * coordinates of the object's Geometries, Features, or Feature Collections.
+	 * This is useful when defining the extent of a GeoJSON object, i.e. the minimum and maximum coordinates of the
+	 * object's Geometries, Features, or Feature Collections.
 	 *
 	 * @see {@link https://tools.ietf.org/html/rfc7946#section-5 GeoJSON Bounding Boxes}
 	 */
@@ -68,8 +67,8 @@ export interface GeoObjectLiteral {
 	/**
 	 * Coordinate reference system for GeoJSON objects.
 	 *
-	 * @see {@link https://tools.ietf.org/html/rfc7946#section-4 Coordinate Reference Systems}
 	 * @title Coordinate Reference System
+	 * @see {@link https://tools.ietf.org/html/rfc7946#section-4 Coordinate Reference Systems}
 	 */
 	crs?: {
 		type: "name"

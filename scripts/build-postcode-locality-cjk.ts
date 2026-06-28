@@ -36,11 +36,12 @@
  *   behavior.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readFileSync, realpathSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 const MATCH_RADIUS_KM = 15.0
 const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set
@@ -51,6 +52,7 @@ const SUFFIX = /(shi|ku|cho|machi|gun|ken|fu|to|son|mura|ward|si|gu|dong|eup|mye
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
+
 	for (; i >= 0; i--) {
 		if (a[i] === "9") a[i] = "0"
 		else {
@@ -58,28 +60,33 @@ function incDecimalString(s: string): string {
 			break
 		}
 	}
+
 	if (i < 0) a.unshift("1")
+
 	return a.join("")
 }
 
 /**
- * Python `round()` — correctly-rounded, round-half-to-EVEN. Works off the double's EXACT
- * (terminating) decimal expansion via `toFixed(80)`, so it matches Python both on ordinary values
- * (where a naïve `x * 10**nd` would diverge by a ULP) and on exact half-way ties like `40.890625` →
- * `40.89062` (where `toFixed(nd)` rounds half-UP and would diverge). `nd === 0` keeps a fast
- * half-even path on the double.
+ * Python `round()` — correctly-rounded, round-half-to-EVEN. Works off the double's EXACT (terminating) decimal
+ * expansion via `toFixed(80)`, so it matches Python both on ordinary values (where a naïve `x * 10**nd` would diverge
+ * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
+ * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
 function pyRound(x: number, nd: number = 0): number {
 	if (!Number.isFinite(x)) return x
+
 	if (nd === 0) {
 		const floor = Math.floor(x)
 		const diff = x - floor
+
 		if (diff < 0.5) return floor
+
 		if (diff > 0.5) return floor + 1
+
 		return floor % 2 === 0 ? floor : floor + 1
 	}
 	const neg = x < 0
-	const digits = Math.abs(x).toFixed(80) // exact expansion for any coord/distance-range double
+	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
 	const intPart = digits.slice(0, dot)
 	const frac = digits.slice(dot + 1)
@@ -87,6 +94,7 @@ function pyRound(x: number, nd: number = 0): number {
 	const rest = frac.slice(nd)
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
+
 	if (first > 5) roundUp = true
 	else if (first === 5) {
 		if (/[1-9]/.test(rest.slice(1))) roundUp = true
@@ -97,8 +105,10 @@ function pyRound(x: number, nd: number = 0): number {
 		}
 	}
 	let combined = intPart + keep
+
 	if (roundUp) combined = incDecimalString(combined)
 	const num = Number(combined) / 10 ** nd
+
 	return neg ? -num : num
 }
 
@@ -106,8 +116,10 @@ function pyRound(x: number, nd: number = 0): number {
 function pyFloat(s: string | undefined): number | null {
 	if (s === undefined) return null
 	const t = s.trim()
+
 	if (t === "") return null
 	const n = Number(t)
+
 	return Number.isNaN(n) ? null : n
 }
 
@@ -116,11 +128,12 @@ function norm(s: string): string {
 }
 
 /**
- * The WOF place name (suffix-stripped) appears as a token in the authoritative municipality string
- * (which carries city+ward, e.g. 'SAPPORO SHI CHUO KU').
+ * The WOF place name (suffix-stripped) appears as a token in the authoritative municipality string (which carries
+ * city+ward, e.g. 'SAPPORO SHI CHUO KU').
  */
 function nameMatches(wofName: string, postalMuni: string): boolean {
 	const nw = norm(wofName).replace(SUFFIX, "")
+
 	return nw.length >= 2 && norm(postalMuni).includes(nw)
 }
 
@@ -136,6 +149,7 @@ function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): nu
 	const p2 = toRad(cLat)
 	const dp = toRad(cLat - aLat)
 	const dl = toRad(dLon - bLon)
+
 	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
 }
 
@@ -143,28 +157,35 @@ function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): nu
 function loadKenall(path: string): Map<string, string> {
 	const out = new Map<string, string>()
 	const text = new TextDecoder("shift_jis").decode(readFileSync(path))
+
 	for (const raw of text.split("\n")) {
 		const line = raw.replace(/[\r\n]+$/, "")
 		const f = line.split(",").map((c) => c.replace(/^"+/, "").replace(/"+$/, ""))
+
 		if (f.length >= 6 && f[0]!.length === 7 && /^[0-9]+$/.test(f[0]!)) {
 			out.set(`${f[0]!.slice(0, 3)}-${f[0]!.slice(3)}`, f[5]!)
 		}
 	}
+
 	return out
 }
 
 /** GeoNames postal file → {postcode (NNN-NNNN): [lat, lon]} (last row for a postcode wins). */
 function loadGeonamesPoints(path: string): Map<string, [number, number]> {
 	const out = new Map<string, [number, number]>()
+
 	for (const line of readFileSync(path, "utf8").split("\n")) {
 		const f = line.replace(/\n$/, "").split("\t")
+
 		if (f.length > 10 && f[1]) {
 			const lat = pyFloat(f[9])
 			const lon = pyFloat(f[10])
+
 			if (lat === null || lon === null) continue
 			out.set(f[1]!, [lat, lon])
 		}
 	}
+
 	return out
 }
 
@@ -191,12 +212,14 @@ function parseCliArgs(): Args {
 			output: { type: "string" },
 		},
 	})
+
 	if (!values.country || !values["postal-names"] || !values.geonames || !values["admin-db"] || !values.output) {
 		console.error(
 			"Usage: build-postcode-locality-cjk.ts --country JP --postal-names <KEN_ALL_ROME.CSV> --geonames <CC.txt> --admin-db <admin.db> --output <db>"
 		)
 		process.exit(2)
 	}
+
 	return {
 		country: values.country,
 		postalNames: values["postal-names"],
@@ -210,6 +233,7 @@ async function main(): Promise<void> {
 	const args = parseCliArgs()
 
 	const postal = args.country === "JP" ? loadKenall(args.postalNames) : new Map<string, string>()
+
 	if (postal.size === 0) {
 		console.error(`no postal names loaded for ${args.country} (only KEN_ALL/JP wired so far)`)
 		process.exit(1)
@@ -227,10 +251,12 @@ async function main(): Promise<void> {
 	admin.close()
 
 	const grid = new Map<string, Array<{ pid: number; nm: string; la: number; lo: number }>>()
+
 	for (const { id, name, latitude, longitude } of places) {
 		const key = `${pyRound(longitude * 2)}|${pyRound(latitude * 2)}`
 		const bucket = grid.get(key)
 		const entry = { pid: id, nm: name, la: latitude, lo: longitude }
+
 		if (bucket) bucket.push(entry)
 		else grid.set(key, [entry])
 	}
@@ -239,15 +265,18 @@ async function main(): Promise<void> {
 		const cx = pyRound(lon * 2)
 		const cy = pyRound(lat * 2)
 		const out: Array<{ d: number; pid: number; nm: string }> = []
+
 		for (const dx of [-1, 0, 1]) {
 			for (const dy of [-1, 0, 1]) {
 				for (const { pid, nm, la, lo } of grid.get(`${cx + dx}|${cy + dy}`) ?? []) {
 					const d = haversineKm(lat, lon, la, lo)
+
 					if (d <= MATCH_RADIUS_KM) out.push({ d, pid, nm })
 				}
 			}
 		}
 		out.sort((a, b) => a.d - b.d || a.pid - b.pid || (a.nm < b.nm ? -1 : a.nm > b.nm ? 1 : 0))
+
 		return out
 	}
 
@@ -268,15 +297,19 @@ async function main(): Promise<void> {
 	const rows: Array<[string, string, number, string, string, number, number]> = []
 	let matched = 0
 	const keys = [...postal.keys()].filter((k) => points.has(k))
+
 	for (const pc of keys) {
 		const muni = postal.get(pc)!
 		const [lat, lon] = points.get(pc)!
 		const cands = nearby(lat, lon)
+
 		if (cands.length === 0) continue
 		const hit = cands.find((c) => nameMatches(c.nm, muni))
+
 		if (hit) {
 			matched++
 			rows.push([pc, args.country, hit.pid, hit.nm, muni, pyRound(hit.d, 3), 1])
+
 			for (const c2 of cands.slice(0, NEARBY_KEEP)) {
 				if (c2.pid !== hit.pid) rows.push([pc, args.country, c2.pid, c2.nm, muni, pyRound(c2.d, 3), 0])
 			}
@@ -289,6 +322,7 @@ async function main(): Promise<void> {
 
 	const insert = db.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
 	db.exec("BEGIN")
+
 	for (const r of rows) insert.run(...r)
 	db.exec("COMMIT")
 
@@ -317,11 +351,13 @@ async function main(): Promise<void> {
 		["built_at", isoSeconds()],
 	]
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+
 	for (const [k, v] of meta) insMeta.run(k, v)
 
 	db.exec("PRAGMA journal_mode=DELETE")
 	db.exec("ANALYZE")
 	const ok = (db.prepare("PRAGMA integrity_check").get() as Record<string, string>)["integrity_check"]
+
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
 		process.exit(1)
@@ -339,6 +375,7 @@ async function main(): Promise<void> {
 // "__main__"`), so importing this module evaluates it without running the build.
 const selfPath = realpathSync(fileURLToPath(import.meta.url))
 const entryPath = process.argv[1] ? realpathSync(process.argv[1]) : ""
+
 if (entryPath && entryPath === selfPath) {
 	await main()
 }

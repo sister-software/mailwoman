@@ -15,6 +15,7 @@ function combinePatterns(...patterns: RegExp[]) {
 	const components = patterns.map((arg) => arg.source)
 
 	const combined = new RegExp("(?:" + components.join(")|(?:") + ")")
+
 	return combined
 }
 

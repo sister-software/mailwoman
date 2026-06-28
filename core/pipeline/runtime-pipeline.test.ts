@@ -8,6 +8,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest"
+
 import type { AddressNode, AddressTree } from "../decoder/types.js"
 import type { Resolver } from "../resolver/types.js"
 import type { Span } from "../tokenization/index.js"
@@ -96,29 +97,35 @@ describe("runPipeline — stage composition", () => {
 		const stages: RuntimePipelineStages = {
 			normalize: vi.fn((raw) => {
 				order.push("normalize")
+
 				return { raw, normalized: raw }
 			}),
 			computeQueryShape: vi.fn((_input) => {
 				order.push("queryShape")
+
 				return { knownFormats: [] }
 			}),
 			detectLocale: vi.fn(async (_in, _sh, opts) => {
 				order.push("detectLocale")
+
 				return { locale: opts?.hint ?? "und", confidence: 1, alternatives: [], source: "caller" as const }
 			}),
 			classifyKind: vi.fn(async (_in, _sh, _lo) => {
 				order.push("classifyKind")
+
 				return { kind: "structured_address" as const, confidence: 0, alternatives: [] }
 			}),
 			classifier: {
 				parse: vi.fn(async (text) => {
 					order.push("classifier")
+
 					return fakeTree(text)
 				}),
 			},
 			resolver: {
 				resolveTree: vi.fn(async (tree) => {
 					order.push("resolver")
+
 					return tree
 				}),
 			},
@@ -326,6 +333,7 @@ describe("runPipeline — abort signal", () => {
 		const normalize = vi.fn((raw: string) => {
 			// Abort during normalize — coordinator catches it on the next checkpoint (before queryShape).
 			controller.abort()
+
 			return { raw, normalized: raw }
 		})
 
@@ -342,6 +350,7 @@ describe("runPipeline — abort signal", () => {
 		const resolver = fakeResolver((t) => t)
 		const classifyKind = vi.fn(async () => {
 			controller.abort()
+
 			return { kind: "structured_address" as const, confidence: 0, alternatives: [] }
 		})
 
@@ -357,6 +366,7 @@ describe("runPipeline — abort signal", () => {
 		const classifier: AddressClassifier = {
 			parse: vi.fn(async (text) => {
 				controller.abort()
+
 				return fakeTree(text)
 			}),
 		}
@@ -443,6 +453,7 @@ describe("runPipeline — timing budget shape", () => {
 
 	it("timing values are non-negative numbers", async () => {
 		const result = await runPipeline("hello", {})
+
 		for (const [stage, ms] of Object.entries(result.timing)) {
 			expect(ms, `${stage} timing must be finite + non-negative`).toBeGreaterThanOrEqual(0)
 			expect(Number.isFinite(ms), `${stage} timing must be finite`).toBe(true)
@@ -537,9 +548,11 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		const resolver: Resolver = {
 			resolveTree: vi.fn(async (t, opts) => {
 				seen.push(opts)
+
 				return t
 			}),
 		}
+
 		return { resolver, seen }
 	}
 

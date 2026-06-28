@@ -52,27 +52,47 @@ const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
 const DEMO_BASE = "https://public.sister.software/mailwoman"
 
 /**
- * HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the
- * truth for demo flags).
+ * HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the truth for demo
+ * flags).
  *
- * FIXME (pre-existing latent bug — preserved, do not "fix" without an operator + release review):
- * the original `.mjs` referenced an out-of-scope `args` here, so this ALWAYS threw → caught →
- * returned `false`; the probe never actually ran. The `.sh`/`.mjs`→`.ts` conversion keeps that
- * exact behavior so release output is byte-identical. The real fix is to HEAD-probe
- * `${DEMO_BASE}/${locale}/${version}/${name}` and return `r.ok` — but that can flip `hasAnchor` /
- * `hasPolygons` in releases.json (only in the postcodeBins-empty / no-`--polygons` fallback path),
- * so it needs a deliberate review before a release dispatch, not a silent change inside a cleanup.
+ * FIXME (pre-existing latent bug — preserved, do not "fix" without an operator + release review): the original `.mjs`
+ * referenced an out-of-scope `args` here, so this ALWAYS threw → caught → returned `false`; the probe never actually
+ * ran. The `.sh`/`.mjs`→`.ts` conversion keeps that exact behavior so release output is byte-identical. The real fix is
+ * to HEAD-probe `${DEMO_BASE}/${locale}/${version}/${name}` and return `r.ok` — but that can flip `hasAnchor` /
+ * `hasPolygons` in releases.json (only in the postcodeBins-empty / no-`--polygons` fallback path), so it needs a
+ * deliberate review before a release dispatch, not a silent change inside a cleanup.
  */
 async function servedOnDemoPath(_name: string, _locale: string, _version: string): Promise<boolean> {
 	return false
 }
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
-function parseArgs() {
+/**
+ * Parsed CLI flags. The known flags are string-valued; `setDefault` is the only boolean. The index signature carries
+ * the dynamically-keyed reads (`args[flagKey]` from REQUIRED_FILES).
+ */
+interface ParsedArgs {
+	setDefault: boolean
+	version?: string
+	locale?: string
+	label?: string
+	description?: string
+	model?: string
+	modelSize?: string
+	steps?: string
+	postcodes?: string
+	gazetteerLexicon?: string
+	polygons?: string
+	[flag: string]: string | boolean | undefined
+}
+
+function parseArgs(): ParsedArgs {
 	const args = process.argv.slice(2)
-	const out: Record<string, any> = { setDefault: false }
+	const out: ParsedArgs = { setDefault: false }
+
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i]!
+
 		if (arg === "--set-default") {
 			out.setDefault = true
 		} else if (arg.startsWith("--") && i + 1 < args.length) {
@@ -80,6 +100,7 @@ function parseArgs() {
 			out[key] = args[++i]
 		}
 	}
+
 	return out
 }
 
@@ -90,17 +111,20 @@ function fail(msg: string): never {
 
 function run(cmd: string, args: string[]) {
 	const r = spawnSync(cmd, args, { stdio: "inherit", env: { ...process.env } })
+
 	if (r.status !== 0) fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)
 }
 
 function runCapture(cmd: string, args: string[]) {
 	const r = spawnSync(cmd, args, { encoding: "utf8" })
+
 	return { ok: r.status === 0, stdout: r.stdout || "", stderr: r.stderr || "" }
 }
 
 async function checkRemoteFileExists(url: string) {
 	try {
 		const res = await fetch(url, { method: "HEAD", redirect: "follow" })
+
 		return res.ok
 	} catch {
 		return false
@@ -116,8 +140,11 @@ async function main() {
 	const args = parseArgs()
 
 	if (!args.version) fail("--version required (e.g. v0.5.4)")
+
 	if (!args.locale) fail("--locale required (e.g. en-us)")
+
 	if (!args.label) fail("--label required")
+
 	if (!args.description) fail("--description required")
 
 	// Adapt remote FST filename to the locale, in BCP-47 casing (lowercase language subtag,
@@ -136,10 +163,13 @@ async function main() {
 	// --- Phase 1: verify all local files exist ---
 	for (const f of REQUIRED_FILES) {
 		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
-		const localPath = args[flagKey]
+		const localPath = args[flagKey] as string | undefined
+
 		if (!localPath) fail(`${f.flag} (${f.description}) is required`)
+
 		if (!existsSync(localPath)) fail(`${localPath} does not exist`)
 		const size = statSync(localPath).size
+
 		if (size === 0) fail(`${localPath} is empty`)
 		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
 	}
@@ -153,6 +183,7 @@ async function main() {
 				.map((s: string) => s.trim())
 				.filter(Boolean)
 		: []
+
 	for (const localPath of postcodeBins) {
 		if (!existsSync(localPath) || statSync(localPath).size === 0) fail(`postcode binary ${localPath} missing/empty`)
 	}
@@ -162,6 +193,7 @@ async function main() {
 	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
 	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
 	const gazetteerLexicon = args.gazetteerLexicon || null
+
 	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || statSync(gazetteerLexicon).size === 0)) {
 		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
 	}
@@ -171,30 +203,36 @@ async function main() {
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
 	// via build-wof-polygons.mjs --admin (the --points wof-hot.db source is retired).
 	const polygonsDb = args.polygons || null
+
 	if (polygonsDb && (!existsSync(polygonsDb) || statSync(polygonsDb).size === 0)) {
 		fail(`polygon DB ${polygonsDb} missing/empty`)
 	}
 
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`
+
 	for (const f of REQUIRED_FILES) {
 		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
-		const localPath = args[flagKey]
+		// Existence already enforced in Phase 1's guard loop, so this flag is present.
+		const localPath = args[flagKey] as string
 		const dst = `${BUCKET_PATH}/${remoteBase}/${f.remoteName}`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
+
 	for (const localPath of postcodeBins) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
+
 	if (gazetteerLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/anchor-lexicon-v1.json`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", gazetteerLexicon, dst])
 	}
+
 	if (polygonsDb) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/wof-polygons.db`
 		console.error(`  → ${dst}`)
@@ -203,9 +241,11 @@ async function main() {
 
 	// --- Phase 3: verify each artifact is reachable via the resolve URL ---
 	console.error(`Verifying ${REQUIRED_FILES.length} artifacts via HTTPS...`)
+
 	for (const f of REQUIRED_FILES) {
 		const url = `${BUCKET_RESOLVE}/${remoteBase}/${f.remoteName}`
 		const ok = await checkRemoteFileExists(url)
+
 		if (!ok) fail(`${f.remoteName} unreachable at ${url}`)
 		console.error(`  ✓ ${url}`)
 	}
@@ -213,14 +253,15 @@ async function main() {
 	// --- Phase 4: update releases.json ---
 	const releasesUrl = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
 	const res = await fetch(releasesUrl, { redirect: "follow" })
+
 	if (!res.ok) fail(`failed to fetch ${releasesUrl}`)
 	const releases = (await res.json()) as ReleaseManifest
 
-	const newEntry: Record<string, any> = {
+	const newEntry: Record<string, unknown> = {
 		version: args.version,
 		label: args.label,
 		description: args.description,
-		modelSize: args.modelSize ?? `${Math.round(statSync(args.model).size / 1024 / 1024)} MB`,
+		modelSize: args.modelSize ?? `${Math.round(statSync(args.model as string).size / 1024 / 1024)} MB`,
 		tokenizerVocab: 48000,
 		steps: args.steps ? parseInt(args.steps, 10) : 100000,
 		hasFst: true,
@@ -231,6 +272,7 @@ async function main() {
 		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin", args.locale, args.version)),
 		hasPolygons: !!polygonsDb || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 	}
+
 	for (const flag of ["hasAnchor", "hasPolygons"]) {
 		if (!newEntry[flag])
 			console.warn(
@@ -238,7 +280,8 @@ async function main() {
 			)
 	}
 
-	releases.releases = [newEntry, ...releases.releases.filter((r: any) => r.version !== args.version)]
+	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]
+
 	if (args.setDefault) releases.defaultVersion = args.version
 
 	const tmpReleases = resolve(tmpdir(), `releases-${args.locale}-${Date.now()}.json`)

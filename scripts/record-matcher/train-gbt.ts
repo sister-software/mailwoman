@@ -19,6 +19,9 @@
  *   [--out registry/models/dedup-gbt-en-us.ts]
  */
 
+import { mkdirSync, writeFileSync } from "node:fs"
+import { dirname } from "node:path"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
@@ -36,12 +39,12 @@ import {
 	type SourceRecord,
 } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -92,8 +95,10 @@ interface MessyRow {
 /** Deterministic LCG (no Math.random — reproducible split + commit). */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
+
 	return () => {
 		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+
 		return s / 0x100000000
 	}
 }
@@ -102,7 +107,9 @@ function lcg(seed: number): () => number {
 function uniqueQuantiles(sorted: number[], n: number): number[] {
 	if (sorted.length === 0) return [0]
 	const ts = new Set<number>()
+
 	for (let k = 0; k <= n; k++) ts.add(sorted[Math.floor((k / n) * (sorted.length - 1))]!)
+
 	return [...ts]
 }
 
@@ -112,19 +119,24 @@ function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 	const npiTotals = new Map<string, number>()
 	let tp = 0
 	let sumCluster = 0
+
 	for (const e of entities) {
 		const byNpi = new Map<string, number>()
+
 		for (const rec of e.records) byNpi.set(rec.id, (byNpi.get(rec.id) ?? 0) + 1)
 		sumCluster += choose2(e.records.length)
+
 		for (const [npi, c] of byNpi) {
 			tp += choose2(c)
 			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
 		}
 	}
 	let sumClass = 0
+
 	for (const total of npiTotals.values()) sumClass += choose2(total)
 	const precision = sumCluster > 0 ? tp / sumCluster : 0
 	const recall = sumClass > 0 ? tp / sumClass : 0
+
 	return precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
 }
 
@@ -132,11 +144,14 @@ async function main(): Promise<void> {
 	// --- Phase A: NPIs with ≥1 alternate organization name (the variation set). ---
 	console.error("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
+
 	for await (const r of streamRows(OTHER_NAMES)) {
 		const npi = norm(r[C.npi])
 		const alt = norm(r[C.otherOrg])
+
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
+
 		if (list.length < 5) list.push(alt)
 		altNames.set(npi, list)
 	}
@@ -148,15 +163,18 @@ async function main(): Promise<void> {
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 	let scanned = 0
+
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
+
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
 			addrTotal++
 		}
 		const npi = norm(r[C.npi])
+
 		if (
 			kept.size < NPIS &&
 			npi &&
@@ -167,12 +185,15 @@ async function main(): Promise<void> {
 		) {
 			const isOrg = norm(r[C.entityType]) === "2"
 			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
+
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
 				kept.add(npi)
 				rows.push({ npi, name: primaryName, org, address: practice })
+
 				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice })
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
+
 				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing })
 			}
 		}
@@ -225,6 +246,7 @@ async function main(): Promise<void> {
 	const posRate = Y.reduce<number>((s, v) => s + v, 0) / Math.max(1, Y.length)
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced; COST up-weights negatives
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
+
 	if (COST !== 1) console.error(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 
 	// --- Phase E: calibrate the default link threshold. The GBT logit is NOT in FS-weight units — it's
@@ -235,6 +257,7 @@ async function main(): Promise<void> {
 	console.error("[E] calibrating the default link threshold on a held-out NPI split…")
 	const rnd = lcg(20260615)
 	const split = new Map<string, "fit" | "holdout">()
+
 	for (const npi of kept) split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
 	const fitPairs = pairs.filter(([a, b]) => split.get(a.id) === "fit" && split.get(b.id) === "fit")
 	const calibGbt = trainGBT(
@@ -249,6 +272,7 @@ async function main(): Promise<void> {
 	const holdoutScores = holdoutPairs.map(([a, b]) => calibScorer(a, b)).sort((p, q) => p - q)
 	let recommendedThreshold = 0
 	let bestF1 = -1
+
 	for (const t of uniqueQuantiles(holdoutScores, 40)) {
 		const { entities } = resolveEntities(holdoutRecords, {
 			addressFrequency,
@@ -257,6 +281,7 @@ async function main(): Promise<void> {
 			threshold: t,
 		})
 		const f1 = clusterF1(entities)
+
 		if (f1 > bestF1) {
 			bestF1 = f1
 			recommendedThreshold = t

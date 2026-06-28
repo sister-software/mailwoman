@@ -27,15 +27,15 @@ const execFileAsync = promisify(execFile)
 const DOCS_ROOT = fileURLToPath(new URL("../..", import.meta.url))
 
 /**
- * Build into a throwaway dir, not the workspace `build/`. The Playwright webServer serves `build/`
- * for the browser specs; building the health check there too would clobber the served site.
+ * Build into a throwaway dir, not the workspace `build/`. The Playwright webServer serves `build/` for the browser
+ * specs; building the health check there too would clobber the served site.
  */
 const CHECK_OUT_DIR = join(tmpdir(), "mailwoman-docs-build-check")
 
 /**
- * Lines Docusaurus prints for genuine problems. We scan combined stdout+stderr for these markers
- * rather than relying solely on exit code, because broken-link warnings (the most common docs
- * regression) are emitted as `[WARNING]` without failing the build by default.
+ * Lines Docusaurus prints for genuine problems. We scan combined stdout+stderr for these markers rather than relying
+ * solely on exit code, because broken-link warnings (the most common docs regression) are emitted as `[WARNING]`
+ * without failing the build by default.
  */
 const PROBLEM_MARKERS = [/\[ERROR\]/, /\[WARNING\]/, /Broken link/i, /Error: /]
 

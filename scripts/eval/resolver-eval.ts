@@ -32,16 +32,19 @@
  *   --wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,$MAILWOMAN_DATA_ROOT/wof/postalcode-us.db
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
-import { readFileSync, writeFileSync } from "node:fs"
+
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -92,11 +95,15 @@ function extractResolution(tree: AddressTree): Resolution | null {
 				score: Number((n.metadata as Record<string, unknown> | undefined)?.["resolver_score"] ?? 0),
 				placetype,
 			}
+
 			if (!best || (PLACETYPE_RANK[placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = cand
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return best
 }
 
@@ -106,6 +113,7 @@ function pct(x: number, n: number): string {
 function percentile(xs: number[], p: number): number | null {
 	if (xs.length === 0) return null
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 
@@ -132,6 +140,7 @@ async function main(): Promise<void> {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const modelPath = arg("model")
 	let neural: InstanceType<typeof NeuralAddressClassifier>
+
 	if (modelPath) {
 		const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
 		const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
@@ -162,11 +171,14 @@ async function main(): Promise<void> {
 	console.error(`exactMatchTiering=${exactTiering} parentFallback=${parentFallback}`)
 	const results: RowResult[] = []
 	let i = 0
+
 	for (const row of rows) {
 		i++
+
 		if (i % 250 === 0) console.error(`  ${i}/${rows.length}`)
 		// neural
 		let nRes: Resolution | null = null
+
 		try {
 			nRes = extractResolution(await resolver.resolveTree(await neural.parse(row.input, parseOpts), resolveOpts))
 		} catch {
@@ -174,6 +186,7 @@ async function main(): Promise<void> {
 		}
 		// v0-via-adapter
 		let vRes: Resolution | null = null
+
 		try {
 			const sol = await v0.parse(row.input)
 			const rec = (sol[0]?.classifications ?? {}) as ClassificationRecord
@@ -186,6 +199,7 @@ async function main(): Promise<void> {
 		const score = (res: Resolution | null) => {
 			const matched = !!res && row.acceptable_ids.includes(res.id)
 			const err = res ? haversineKm(res.lat, res.lon, row.lat, row.lon) : null
+
 			return { id: res?.id ?? null, matched, err, score: res?.score ?? -Infinity, resolved: !!res }
 		}
 		results.push({ perturb: row.perturb, neural: score(nRes), v0: score(vRes) })
@@ -208,6 +222,7 @@ async function main(): Promise<void> {
 	console.log(`# Resolver end-to-end eval (${results.length} rows, WOF=${wofPaths.length} shard(s))\n`)
 	console.log("| baseline | canonical Acc@1 | perturbed Acc@1 | all Acc@1 |")
 	console.log("|---|--:|--:|--:|")
+
 	for (const [name, pick] of Object.entries(baselines)) {
 		const c = subsets.canonical,
 			p = subsets.perturbed,
@@ -240,17 +255,21 @@ async function main(): Promise<void> {
 		let matched = 0
 		let unresolved = 0
 		let wrong = 0
+
 		for (const r of results) {
 			const x = pick(r)
+
 			if (x.matched) matched++
 			else if (!x.resolved) unresolved++
 			else wrong++
 		}
+
 		return { matched, unresolved, wrong }
 	}
 	console.log(`\n## Failure attribution (parser vs resolver)`)
 	console.log(`| baseline | matched | unresolved (parser) | resolved-but-wrong (resolver) |`)
 	console.log(`|---|--:|--:|--:|`)
+
 	for (const [name, pick] of [
 		["neural", (r: RowResult) => r.neural],
 		["v0-via-adapter", (r: RowResult) => r.v0],

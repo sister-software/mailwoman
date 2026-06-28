@@ -59,6 +59,7 @@ function printUsageAndExit(code: number): never {
 function parseArgs(argv: readonly string[]): CliArgs {
 	const args: string[] = []
 	let drop = false
+
 	for (const a of argv) {
 		if (a === "--drop") drop = true
 		else if (a === "--help" || a === "-h") printUsageAndExit(0)
@@ -67,24 +68,28 @@ function parseArgs(argv: readonly string[]): CliArgs {
 			printUsageAndExit(2)
 		} else args.push(a)
 	}
+
 	if (args.length === 0) {
 		stderr.write(`mailwoman-wof-build-fts: expected at least one positional arg\n`)
 		printUsageAndExit(2)
 	}
+
 	return { databasePaths: args, drop }
 }
 
 /**
- * Build indexes on a single DB. Returns 0 on success, 1 on failure. Errors are written to stderr
- * but the call doesn't throw — `main()` aggregates the exit code across multi-DB invocations.
+ * Build indexes on a single DB. Returns 0 on success, 1 on failure. Errors are written to stderr but the call doesn't
+ * throw — `main()` aggregates the exit code across multi-DB invocations.
  */
 function buildOne(path: string, drop: boolean): number {
 	if (!existsSync(path)) {
 		stderr.write(`mailwoman-wof-build-fts: file not found: ${path}\n`)
+
 		return 1
 	}
 	stderr.write(`Opening ${path}…\n`)
 	const db = new DatabaseSync(path)
+
 	try {
 		const result = buildPlaceSearchFts(db, {
 			drop,
@@ -98,10 +103,12 @@ function buildOne(path: string, drop: boolean): number {
 			`${verb}: place_search has ${result.indexedRows.toLocaleString()} rows ` +
 				`(${(result.durationMs / 1000).toFixed(2)}s)\n`
 		)
+
 		return 0
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err)
 		stderr.write(`mailwoman-wof-build-fts: ${message}\n`)
+
 		return 1
 	} finally {
 		db.close()
@@ -112,10 +119,13 @@ export function main(argv: readonly string[]): number {
 	const args = parseArgs(argv)
 	// Process every DB; if any fail, the worst exit code wins (so CI / scripts see failure).
 	let worst = 0
+
 	for (const path of args.databasePaths) {
 		const rc = buildOne(path, args.drop)
+
 		if (rc > worst) worst = rc
 	}
+
 	return worst
 }
 

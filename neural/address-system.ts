@@ -18,9 +18,8 @@ import type { SystemCode } from "@mailwoman/codex"
 import { softmax } from "./viterbi.js"
 
 /**
- * Locale-head class order — MUST mirror `corpus-python/src/mailwoman_train/labels.py`
- * `LOCALE_COUNTRIES` exactly (same never-reorder/append-only discipline; a drift here silently
- * mislabels every detection).
+ * Locale-head class order — MUST mirror `corpus-python/src/mailwoman_train/labels.py` `LOCALE_COUNTRIES` exactly (same
+ * never-reorder/append-only discipline; a drift here silently mislabels every detection).
  */
 export const LOCALE_COUNTRIES = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
 
@@ -44,8 +43,8 @@ export interface DetectedSystem {
  * Read the locale head's posterior into a confident `SystemCode`, or null.
  *
  * @param localeLogits The raw `locale_logits` output (LOCALE_COUNTRIES order).
- * @param threshold Minimum softmax probability to act on (default 0.8 — the head's held-out
- *   accuracy is ~0.98, so 0.8 trades a little recall for never masking on a coin flip).
+ * @param threshold Minimum softmax probability to act on (default 0.8 — the head's held-out accuracy is ~0.98, so 0.8
+ *   trades a little recall for never masking on a coin flip).
  */
 export function detectAddressSystem(
 	localeLogits: readonly number[] | undefined,
@@ -54,11 +53,15 @@ export function detectAddressSystem(
 	if (!localeLogits || localeLogits.length !== LOCALE_COUNTRIES.length) return null
 	const probs = softmax(localeLogits as number[])
 	let best = 0
+
 	for (let i = 1; i < probs.length; i++) if (probs[i]! > probs[best]!) best = i
 	const confidence = probs[best]!
+
 	if (confidence < threshold) return null
 	const country = LOCALE_COUNTRIES[best]!
 	const system = COUNTRY_TO_SYSTEM[country]
+
 	if (!system) return null
+
 	return { system, country, confidence }
 }

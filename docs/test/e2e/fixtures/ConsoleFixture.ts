@@ -1,12 +1,9 @@
 /**
- * @file Console + page-error capture fixture.
- *
- *   Buffers every console message, pageerror, and matching requestfailed event for the test's
- *   lifetime. Test bodies call `assertNoFailEvents()` to enforce the blocklist + ignorelist defined
- *   in `console-policy.ts`, or pull the raw `events` array for ad-hoc inspection.
- *
- *   Pattern ported from authentik's PageFixture base class — minus the pino logger (we let
- *   Playwright's `list` reporter handle stdout instead).
+ * @file Console + page-error capture fixture. Buffers every console message, pageerror, and matching requestfailed
+ *   event for the test's lifetime. Test bodies call `assertNoFailEvents()` to enforce the blocklist + ignorelist
+ *   defined in `console-policy.ts`, or pull the raw `events` array for ad-hoc inspection. Pattern ported from
+ *   authentik's PageFixture base class — minus the pino logger (we let Playwright's `list` reporter handle stdout
+ *   instead).
  */
 
 import type { Page, Request } from "@playwright/test"
@@ -36,6 +33,7 @@ export class ConsoleFixture {
 
 		page.on("console", (msg) => {
 			const text = msg.text()
+
 			if (isIgnored(text)) return
 			this.events.push({
 				kind: "console",
@@ -51,6 +49,7 @@ export class ConsoleFixture {
 		page.on("requestfailed", (req: Request) => {
 			wireBaseURL()
 			const url = req.url()
+
 			// Only capture failures we care about — first-party assets + the /mailwoman/* bundle.
 			// Third-party CDN flakiness shouldn't fail the suite.
 			if (!url.includes(this.#baseHost) && !url.includes("/mailwoman/")) return
@@ -64,11 +63,12 @@ export class ConsoleFixture {
 	}
 
 	/**
-	 * Throw if any captured event matches the FAIL_PATTERNS list (style/terrain races, MapLibre
-	 * teardown errors, sqlite/onnx unhandled throws). Pass-through for events that are merely noisy.
+	 * Throw if any captured event matches the FAIL_PATTERNS list (style/terrain races, MapLibre teardown errors,
+	 * sqlite/onnx unhandled throws). Pass-through for events that are merely noisy.
 	 */
 	assertNoFailEvents(): void {
 		const failures = listFailures(this.events.map((e) => e.text))
+
 		if (failures.length === 0) return
 		const lines = failures.map((f, i) => `  ${i + 1}. ${f}`).join("\n")
 		throw new Error(`Captured ${failures.length} console/page error(s):\n${lines}`)
@@ -83,10 +83,12 @@ export class ConsoleFixture {
 	summary(): { failures: string[]; noise: string[] } {
 		const failures: string[] = []
 		const noise: string[] = []
+
 		for (const e of this.events) {
 			if (classify(e.text) === "fail") failures.push(e.text)
 			else noise.push(e.text)
 		}
+
 		return { failures, noise }
 	}
 }

@@ -30,6 +30,7 @@
 
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
+
 import { stableSourceId } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -47,12 +48,13 @@ interface GnafTuple {
 }
 
 /**
- * The address layouts an AU address actually arrives in. The model already handles
- * postcode-TRAILING (canonical); the two postcode-LEADING forms are the ones it fails, so they
- * carry the lever. We keep the canonical form too so the retrain doesn't forget it.
+ * The address layouts an AU address actually arrives in. The model already handles postcode-TRAILING (canonical); the
+ * two postcode-LEADING forms are the ones it fails, so they carry the lever. We keep the canonical form too so the
+ * retrain doesn't forget it.
  */
 function renderOrders(c: GnafTuple): string[] {
 	const region = c.region ? ` ${c.region}` : ""
+
 	return [
 		// real-AU canonical: number-first, street, suburb [state] postcode — "50 Barry Street, Carlton NSW 2000"
 		`${c.house_number} ${c.street}, ${c.locality}${region} ${c.postcode}`,
@@ -64,8 +66,8 @@ function renderOrders(c: GnafTuple): string[] {
 }
 
 /**
- * Build the G-NAF adapter. `inputPath` is the assembled component JSONL (see {@link ./assemble}); it
- * is country-pinned to AU regardless of `opts.country` (G-NAF is Australia-only).
+ * Build the G-NAF adapter. `inputPath` is the assembled component JSONL (see {@link ./assemble}); it is country-pinned
+ * to AU regardless of `opts.country` (G-NAF is Australia-only).
  */
 export function createGnafAdapter(): CorpusAdapter {
 	return {
@@ -78,19 +80,25 @@ export function createGnafAdapter(): CorpusAdapter {
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
 			const lines = createInterface({ input: stream, crlfDelay: Infinity })
 			let emitted = 0
-			let idx = 0 // rotates the render order (i % 3), matching v1.9.1's rerender
+			let idx = 0
+
+			// rotates the render order (i % 3), matching v1.9.1's rerender
 			try {
 				for await (const line of lines) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
+
 					if (!line.trim()) continue
 
 					let t: GnafTuple
+
 					try {
 						t = JSON.parse(line) as GnafTuple
 					} catch {
 						continue
 					}
+
 					if (!t.house_number || !t.street || !t.locality || !t.postcode) continue
 
 					const orders = renderOrders(t)
@@ -103,11 +111,13 @@ export function createGnafAdapter(): CorpusAdapter {
 						locality: t.locality,
 						postcode: t.postcode,
 					}
+
 					// region (state) rides only the canonical render (order 0); the postcode-leading layouts
 					// omit it (matching the eval's serialization) so it never breaks verbatim alignment.
 					if (order === 0 && t.region) components.region = t.region
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length === 0) continue
 					yield {
 						raw,

@@ -35,6 +35,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -55,14 +56,14 @@ interface BdcLocationRow {
 /**
  * Split `address_primary` into a `(house_number, street)` pair.
  *
- * BDC's `address_primary` follows USPS Publication 28 conventions but with hand-entry drift. The
- * canonical leading-digit prefix is the house number (`"123 Main St"`, `"6450 W Indian School Rd"`,
- * even hyphenated forms `"40-12 Bell Blvd"`). Anything that doesn't match the prefix shape (`"PO
- * Box 1234"`, `"RR 2 Box 67"`, `"HC 1"`) is left as a single `street` value — the model sees the
- * original surface form, and downstream classifiers/po-box handling can pick it up.
+ * BDC's `address_primary` follows USPS Publication 28 conventions but with hand-entry drift. The canonical
+ * leading-digit prefix is the house number (`"123 Main St"`, `"6450 W Indian School Rd"`, even hyphenated forms `"40-12
+ * Bell Blvd"`). Anything that doesn't match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC 1"`) is left as a
+ * single `street` value — the model sees the original surface form, and downstream classifiers/po-box handling can pick
+ * it up.
  *
- * The regex tolerates one trailing letter (`"123A Main St"`) and an optional hyphenated half
- * (`"40-12"`) which is common in NYC + suburban garden-apartment numbering.
+ * The regex tolerates one trailing letter (`"123A Main St"`) and an optional hyphenated half (`"40-12"`) which is
+ * common in NYC + suburban garden-apartment numbering.
  */
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
 
@@ -73,19 +74,22 @@ interface SplitAddress {
 
 export function splitAddressPrimary(address: string): SplitAddress | null {
 	const trimmed = address.trim()
+
 	if (!trimmed) return null
 	const match = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (match) {
 		return { house_number: match[1], street: match[2]!.trim() }
 	}
+
 	return { street: trimmed }
 }
 
 /**
  * Combine `zip` + optional `zip_suffix` into the canonical USPS postcode surface form.
  *
- * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone or the full
- * ZIP+4 string. This handles both:
+ * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone or the full ZIP+4 string. This
+ * handles both:
  *
  * - Bare 4-digit extension (`zip="94103"`, `zip_suffix="1234"`) → `"94103-1234"`
  * - Already-joined form (`zip_suffix="94103-1234"`) → returned as-is
@@ -95,10 +99,14 @@ export function splitAddressPrimary(address: string): SplitAddress | null {
  */
 export function buildPostcode(zip: string, suffix: string | null): string {
 	const z = zip.trim()
+
 	if (!z) return ""
 	const s = suffix?.trim() ?? ""
+
 	if (!s) return z
+
 	if (s.includes("-")) return s
+
 	return `${z}-${s}`
 }
 
@@ -117,6 +125,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 
 			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
 			let emitted = 0
+
 			try {
 				const stmt = db.prepare(
 					`SELECT location_id, address_primary, city, state, zip, zip_suffix
@@ -126,15 +135,20 @@ export function createFccBdcAdapter(): CorpusAdapter {
 
 				for (const row of stmt.iterate() as IterableIterator<BdcLocationRow>) {
 					if (opts.signal?.aborted) return
+
 					if (opts.limit !== undefined && emitted >= opts.limit) return
 
 					const split = splitAddressPrimary(row.address_primary ?? "")
+
 					if (!split) continue
 					const state = lookupStateAbbreviation(row.state)
+
 					if (!state) continue
 					const locality = row.city?.trim()
+
 					if (!locality) continue
 					const postcode = buildPostcode(row.zip ?? "", row.zip_suffix ?? null)
+
 					if (!postcode) continue
 
 					const components: CanonicalRow["components"] = {
@@ -146,8 +160,10 @@ export function createFccBdcAdapter(): CorpusAdapter {
 					}
 
 					const raw = formatAddress(components, "US", { separator: ", " })
+
 					if (!raw) continue
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length === 0) continue
 
 					yield {

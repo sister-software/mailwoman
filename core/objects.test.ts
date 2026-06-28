@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { flattenObject, isRecordLike, omitNullable, pick, tryParsingJSON } from "./objects.js"
 
 test("pick: selects the listed keys from an array of keys", () => {

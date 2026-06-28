@@ -19,6 +19,8 @@
  *   [--cap 300] [--wof <admin.db>] [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -34,11 +36,12 @@ import {
 	type SourceRecord,
 } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { writeFileSync } from "node:fs"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 function hasFlag(name: string): boolean {
@@ -62,13 +65,13 @@ const CORPUS_FREQ = !hasFlag("no-corpus-frequency")
 const norm = (s: string | undefined) => (s ?? "").trim()
 
 /**
- * Compose a row's address the SAME way {@link ingestRows} does (`pick`: join the mapped columns with
- * a space, drop empties), so a frequency key built here matches the geocoded record's
- * `address.raw`.
+ * Compose a row's address the SAME way {@link ingestRows} does (`pick`: join the mapped columns with a space, drop
+ * empties), so a frequency key built here matches the geocoded record's `address.raw`.
  */
 function composeAddress(row: Record<string, string>, columns: string | string[] | undefined): string {
 	if (!columns) return ""
 	const list = Array.isArray(columns) ? columns : [columns]
+
 	return list
 		.map((c) => norm(row[c]))
 		.filter(Boolean)
@@ -77,9 +80,8 @@ function composeAddress(row: Record<string, string>, columns: string | string[] 
 }
 
 /**
- * One source to ingest: where it lives, the column mapping, a TX filter, and an optional row
- * "explode" for files that carry two addressable entities per row (the FCC commitments Filing +
- * Participating HCP).
+ * One source to ingest: where it lives, the column mapping, a TX filter, and an optional row "explode" for files that
+ * carry two addressable entities per row (the FCC commitments Filing + Participating HCP).
  */
 interface SourceSpec {
 	source: string
@@ -160,6 +162,7 @@ const SPECS: SourceSpec[] = [
 			const add = (prefix: string, role: string): void => {
 				const id = norm(r[`${prefix} HCP`])
 				const state = norm(r[`${prefix} HCP State`]).toUpperCase()
+
 				if (id && state === STATE)
 					out.push({
 						hcpId: `${role}-${id}`,
@@ -172,6 +175,7 @@ const SPECS: SourceSpec[] = [
 			}
 			add("Filing", "filing")
 			add("Participating", "participating")
+
 			return out
 		},
 	},
@@ -186,25 +190,31 @@ async function main(): Promise<void> {
 	const rawBySource = new Map<string, Record<string, string>[]>()
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
+
 	for (const spec of SPECS) {
 		console.error(
 			`[A] ${spec.source}: streaming + ${STATE} filter (sample ${CAP}${CORPUS_FREQ ? ", full freq scan" : ""})…`
 		)
 		const kept: Record<string, string>[] = []
+
 		for await (const row of streamRows(spec.path)) {
 			if (!spec.inState(row)) continue
 			const exploded = spec.explode ? spec.explode(row) : [row]
+
 			for (const e of exploded) {
 				if (CORPUS_FREQ) {
 					const a = composeAddress(e, spec.mapping.address)
+
 					if (a) {
 						const k = addressFrequencyKey(a)
 						addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
 						addrTotal++
 					}
 				}
+
 				if (kept.length < CAP) kept.push(e)
 			}
+
 			// Stop early only when we DON'T need the full frequency pass (otherwise scan to EOF).
 			if (!CORPUS_FREQ && kept.length >= CAP) break
 		}
@@ -219,6 +229,7 @@ async function main(): Promise<void> {
 				frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 			}
 		: undefined
+
 	if (CORPUS_FREQ)
 		console.error(`    address-frequency table: ${addrCounts.size} distinct over ${addrTotal} ${STATE} addresses`)
 
@@ -243,7 +254,9 @@ async function main(): Promise<void> {
 				placeCountry: false,
 			})
 			total++
+
 			if (g.lat !== null) geo++
+
 			return g
 		},
 		country: "US",
@@ -252,6 +265,7 @@ async function main(): Promise<void> {
 	// --- Phase C: ingest each source (its own mapping + source label) into one combined record set. ---
 	console.error("[C] geocoding + ingesting all sources…")
 	const records: SourceRecord[] = []
+
 	for (const spec of SPECS) {
 		const rows = rawBySource.get(spec.source)!
 		// Per-source geocode-rate snapshot (#694 diagnostic): the seam counters are global, so delta
@@ -262,6 +276,7 @@ async function main(): Promise<void> {
 		const dg = geo - g0
 		const dt = total - t0
 		console.error(`    ${spec.source}: geocoded ${dg}/${dt} (${dt ? ((100 * dg) / dt).toFixed(1) : "0"}%)`)
+
 		// Namespace ids by source so cross-source ids never collide.
 		for (const r of recs) r.id = `${spec.source}:${r.id}`
 		records.push(...recs)
@@ -295,8 +310,10 @@ async function main(): Promise<void> {
 
 	// Source-pair co-occurrence matrix.
 	const pairCounts = new Map<string, number>()
+
 	for (const { sources } of crossSource) {
 		const list = [...sources].sort()
+
 		for (let i = 0; i < list.length; i++)
 			for (let j = i + 1; j < list.length; j++) {
 				const k = `${list[i]} ↔ ${list[j]}`
@@ -331,6 +348,7 @@ async function main(): Promise<void> {
 	}
 	lines.push(`| source | rows | what it is |`)
 	lines.push(`|---|---:|---|`)
+
 	for (const spec of SPECS) {
 		lines.push(`| \`${spec.source}\` | ${rawBySource.get(spec.source)!.length} | ${blurb[spec.source] ?? ""} |`)
 	}
@@ -361,19 +379,23 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`**${crossSource.length}** entities resolve across ≥2 sources.`)
 	lines.push("")
+
 	if (pairCounts.size) {
 		lines.push(`| source pair | entities linked |`)
 		lines.push(`|---|---:|`)
+
 		for (const [k, v] of [...pairCounts.entries()].sort((a, b) => b[1] - a[1])) lines.push(`| ${k} | ${v} |`)
 		lines.push("")
 	}
 	const triple = crossSource.filter((x) => x.sources.size >= 3).length
+
 	if (triple) lines.push(`Of those, **${triple}** span all three sources.`)
 	lines.push("")
 	lines.push(`## Spot-check — the first 12 cross-source entities (verify by eye)`)
 	lines.push("")
 	lines.push(`| entity | sources | name (representative) | coordinate |`)
 	lines.push(`|---|---|---|---|`)
+
 	for (const { e, sources } of crossSource.slice(0, 12)) {
 		const coord = e.coordinate ? `${e.coordinate.latitude.toFixed(4)}, ${e.coordinate.longitude.toFixed(4)}` : "—"
 		lines.push(`| ${e.id} | ${[...sources].sort().join(", ")} | ${repName(e)} | ${coord} |`)
@@ -393,6 +415,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`\n[written] ${OUT_MD}`)

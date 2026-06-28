@@ -5,8 +5,10 @@
  */
 
 import * as fs from "node:fs/promises"
+
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { $ } from "zx"
+
 import { tryStat } from "./fs.js"
 
 /**

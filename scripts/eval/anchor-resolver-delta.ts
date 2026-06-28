@@ -33,14 +33,16 @@
  *   [--anchor-weight 2.0 --candidates 10 --out-json /tmp/anchor-delta-de.json]
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { ResolvedPlace } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -56,6 +58,7 @@ interface OaRow {
 function median(xs: number[]): number | null {
 	if (xs.length === 0) return null
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.floor(s.length / 2)]!
 }
 
@@ -72,11 +75,14 @@ function nameMatch(a: string | undefined, b: string | undefined): boolean {
 	if (!a || !b) return false
 	const x = norm(a)
 	const y = norm(b)
+
 	if (!x || !y) return false
+
 	if (x === y) return true
 	const xs = new Set(x.split(" "))
 	const ys = new Set(y.split(" "))
 	const subset = (small: Set<string>, big: Set<string>): boolean => [...small].every((t) => big.has(t))
+
 	return subset(xs, ys) || subset(ys, xs)
 }
 
@@ -84,13 +90,18 @@ function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 	let found: AddressNode | undefined
 	const walk = (n: AddressNode): void => {
 		if (found) return
+
 		if (n.tag === tag) {
 			found = n
+
 			return
 		}
+
 		for (const c of n.children) walk(c)
 	}
+
 	for (const r of tree.roots) walk(r)
+
 	return found
 }
 
@@ -156,17 +167,21 @@ async function main(): Promise<void> {
 	const results: DeltaRow[] = []
 	const skip = { noLocality: 0, noCandidates: 0, noAnchor: 0 }
 	let i = 0
+
 	for (const row of rows) {
 		i++
+
 		if (i % 500 === 0) console.error(`  ${i}/${rows.length}  (${results.length} eligible)`)
 
 		let tree: AddressTree
+
 		try {
 			tree = await neural.parse(row.input, parseOpts)
 		} catch {
 			continue
 		}
 		const locNode = firstByTag(tree, "locality")
+
 		if (!locNode) {
 			skip.noLocality++
 			continue
@@ -178,6 +193,7 @@ async function main(): Promise<void> {
 			placetype: "locality",
 			limit: K,
 		})) as ResolvedPlace[]
+
 		if (candsOff.length === 0) {
 			skip.noCandidates++
 			continue
@@ -186,13 +202,16 @@ async function main(): Promise<void> {
 		// Postcode anchor → country posterior. Pick the highest-confidence placed anchor.
 		let posterior: Record<string, number> | null = null
 		let anchorConf = 0
+
 		for (const a of extractPostcodeAnchors(row.input, postcodeLookup)) {
 			if (a.candidates.length === 0) continue
+
 			if (!posterior || a.confidence > anchorConf) {
 				posterior = a.posterior
 				anchorConf = a.confidence
 			}
 		}
+
 		if (!posterior) {
 			skip.noAnchor++
 			continue
@@ -309,6 +328,7 @@ async function main(): Promise<void> {
 	lines.push("")
 
 	const outMd = arg("out-md")
+
 	if (outMd) {
 		writeFileSync(outMd, lines.join("\n") + "\n")
 		console.error(`wrote report → ${outMd}`)
@@ -316,6 +336,7 @@ async function main(): Promise<void> {
 		console.log(lines.join("\n"))
 	}
 	const outJson = arg("out-json")
+
 	if (outJson) {
 		writeFileSync(outJson, JSON.stringify({ evalPath, anchorWeight, K, n, skip, results }, null, 2))
 		console.error(`wrote per-row deltas → ${outJson}`)

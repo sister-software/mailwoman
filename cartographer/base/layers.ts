@@ -6,6 +6,7 @@
 
 import { layers } from "@protomaps/basemaps"
 import { type LayerSpecification } from "maplibre-gl"
+
 import { MailwomanBaseFlavor, MailwomanBaseTileSetID } from "../base/theme.js"
 import { LayerID } from "../styles/layers.js"
 import { BuildingLayers } from "./buildings.js"
@@ -14,10 +15,9 @@ import { HillshadeTileSetID } from "./terrain.js"
 export const HillsLayerID = LayerID(HillshadeTileSetID, "hills")
 
 /**
- * Splits `layers()` into non-label + label groups so building footprints, water outlines, and
- * hillshade sit between base geometry and labels. `@protomaps/basemaps@5.x` doesn't expose a
- * `noLabels` helper — `labelsOnly: true` gives only the label layers; subtracting that set from the
- * full list yields the non-label group.
+ * Splits `layers()` into non-label + label groups so building footprints, water outlines, and hillshade sit between
+ * base geometry and labels. `@protomaps/basemaps@5.x` doesn't expose a `noLabels` helper — `labelsOnly: true` gives
+ * only the label layers; subtracting that set from the full list yields the non-label group.
  */
 const allBaseLayers = layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, { lang: "en" })
 const labelLayers = layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, { lang: "en", labelsOnly: true })

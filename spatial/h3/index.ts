@@ -6,6 +6,7 @@
 
 import { cellToLatLng } from "h3-js"
 import type { Tagged } from "type-fest"
+
 import { GeoPoint, type PointLiteral } from "../geometries/point.js"
 
 /**

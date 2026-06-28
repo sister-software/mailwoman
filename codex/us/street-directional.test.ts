@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import {
 	isStreetDirectionalToken,
 	lookupDirectional,
@@ -65,6 +66,7 @@ test("isStreetDirectionalToken: true for any directional surface, false otherwis
 	for (const tok of ["N", "n", "NW", "north", "South East", "southwest"]) {
 		expect(isStreetDirectionalToken(tok)).toBe(true)
 	}
+
 	for (const tok of ["Main", "Street", "", 7, null]) {
 		expect(isStreetDirectionalToken(tok)).toBe(false)
 	}

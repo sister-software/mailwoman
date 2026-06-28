@@ -20,6 +20,7 @@
  */
 
 import { existsSync } from "node:fs"
+
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { WofSqlitePlaceLookup } from "./lookup.js"
@@ -48,6 +49,7 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 			// match rather than exact equality.
 			const candidates = await lookup.findPlace({ text: "Paris", placetype: "locality", limit: 20 })
 			expect(candidates.length).toBeGreaterThan(0)
+
 			for (const c of candidates) {
 				expect(c.name).toMatch(/Paris/)
 				expect(c.placetype).toBe("locality")
@@ -72,6 +74,7 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 		test("placetype: 'neighbourhood' actually narrows to neighbourhoods", async () => {
 			const candidates = await lookup.findPlace({ text: "Mission", placetype: "neighbourhood", limit: 10 })
 			expect(candidates.length).toBeGreaterThan(0)
+
 			for (const c of candidates) {
 				expect(c.placetype).toBe("neighbourhood")
 			}
@@ -85,6 +88,7 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 		test("country: 'US' filter passes through all admin-us rows", async () => {
 			const candidates = await lookup.findPlace({ text: "Springfield", country: "US", placetype: "locality", limit: 5 })
 			expect(candidates.length).toBeGreaterThan(0)
+
 			for (const c of candidates) {
 				expect(c.country).toBe("US")
 			}

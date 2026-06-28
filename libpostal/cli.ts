@@ -13,10 +13,12 @@
  *   variants.
  */
 
+import { parseArgs } from "node:util"
+
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
 import express from "express"
 import { createAddressParser } from "mailwoman"
-import { parseArgs } from "node:util"
+
 import { createLibpostalRouter, type LibpostalEngine, type ParseMatch } from "./index.js"
 
 function serve(): void {
@@ -37,13 +39,16 @@ function serve(): void {
 		async parse(query) {
 			const result = await parser.parse(query, { verbose: true })
 			const solution = result.solutions[0]
+
 			if (!solution) return []
 			const json = solution.toJSON() as { matches?: ParseMatch[] }
+
 			return (json.matches ?? []).map((m) => ({ classification: m.classification, value: m.value }))
 		},
 		async expand(address) {
 			const normalized = normalize(address).normalized
 			const expanded = expandAbbreviations(normalized).text
+
 			// Deterministic forms only; dedup while preserving order.
 			return [...new Set([address, normalized, expanded])]
 		},

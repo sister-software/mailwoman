@@ -11,13 +11,12 @@
  */
 export enum TIGERFunctionalStatus {
 	/**
-	 * Active government providing primary general-purpose functions. Active entity (federally
-	 * recognized entities only).
+	 * Active government providing primary general-purpose functions. Active entity (federally recognized entities only).
 	 */
 	ActiveGovernment = "A",
 	/**
-	 * Active government that is partially consolidated with another government but with separate
-	 * officials providing primary general-purpose functions.
+	 * Active government that is partially consolidated with another government but with separate officials providing
+	 * primary general-purpose functions.
 	 */
 	PartiallyConsolidatedActiveGovernment = "B",
 	/**
@@ -41,8 +40,7 @@ export enum TIGERFunctionalStatus {
 	 */
 	InActiveGovernmentalUnit = "I",
 	/**
-	 * Inactive, nonfunctioning legal real property entity with potential quasi-legal administrative
-	 * functions.
+	 * Inactive, nonfunctioning legal real property entity with potential quasi-legal administrative functions.
 	 */
 	InactiveNonFunctioningLegalRealPropertyEntity = "L",
 	/**

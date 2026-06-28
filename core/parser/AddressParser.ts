@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { PerformanceMeasure } from "node:perf_hooks"
+
 import { Alpha2LanguageCode } from "@mailwoman/core"
 import type { Classifier, ClassifierConstructor } from "@mailwoman/core/classification"
 import type { PolicyRegistry } from "@mailwoman/core/policy"
@@ -16,7 +18,7 @@ import {
 } from "@mailwoman/core/solver"
 import { TokenContext } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ProposalClassifier } from "@mailwoman/core/types"
-import type { PerformanceMeasure } from "node:perf_hooks"
+
 import { runProposalPipeline, type WritebackResult } from "./proposal-pipeline.js"
 
 export interface AddressParserOptions {
@@ -30,17 +32,15 @@ export interface AddressParserOptions {
 	solutionLimit?: number
 	mustNotFollow?: FilterRelation[]
 	/**
-	 * Proposal-based classifiers (rule classifiers via `wrapLegacyClassifier`, the neural classifier
-	 * via `createNeuralProposalClassifier`, or any custom impl). When provided, they run AFTER the
-	 * legacy `classifiers` mutation pass; surviving proposals are written back to the same
-	 * `TokenContext` for the solver. The legacy `classifiers` array still runs unchanged so existing
-	 * setups stay byte-compatible.
+	 * Proposal-based classifiers (rule classifiers via `wrapLegacyClassifier`, the neural classifier via
+	 * `createNeuralProposalClassifier`, or any custom impl). When provided, they run AFTER the legacy `classifiers`
+	 * mutation pass; surviving proposals are written back to the same `TokenContext` for the solver. The legacy
+	 * `classifiers` array still runs unchanged so existing setups stay byte-compatible.
 	 */
 	proposalClassifiers?: Iterable<ProposalClassifier>
 	/**
-	 * Policy registry consulted to filter the merged proposal stream before writeback. When absent,
-	 * every proposal survives. Typically `InMemoryPolicyRegistry.withDefaults()` plus per-component
-	 * overrides set at startup.
+	 * Policy registry consulted to filter the merged proposal stream before writeback. When absent, every proposal
+	 * survives. Typically `InMemoryPolicyRegistry.withDefaults()` plus per-component overrides set at startup.
 	 */
 	policy?: PolicyRegistry
 }
@@ -49,10 +49,9 @@ export interface ParseOptions {
 	verbose?: boolean
 
 	/**
-	 * BCP-47 locale tag (e.g. `"en-US"`, `"fr-FR"`). When provided, downstream locale-aware pipelines
-	 * (Phase 1+) narrow classification to the registered `LocaleProfile`. Accepted but ignored by the
-	 * legacy rule-only pipeline in Phase 0; the field exists so the CLI and library callers can begin
-	 * tagging their requests now.
+	 * BCP-47 locale tag (e.g. `"en-US"`, `"fr-FR"`). When provided, downstream locale-aware pipelines (Phase 1+) narrow
+	 * classification to the registered `LocaleProfile`. Accepted but ignored by the legacy rule-only pipeline in Phase 0;
+	 * the field exists so the CLI and library callers can begin tagging their requests now.
 	 */
 	locale?: string
 }
@@ -66,9 +65,8 @@ export interface VerboseParseResult {
 		solver: PerformanceMeasure
 	}
 	/**
-	 * Present when proposal classifiers ran. `proposals` is the policy-filtered list; `writeback` is
-	 * a small summary of how many proposals reached the context's span graph. Omitted when no
-	 * `proposalClassifiers` were configured.
+	 * Present when proposal classifiers ran. `proposals` is the policy-filtered list; `writeback` is a small summary of
+	 * how many proposals reached the context's span graph. Omitted when no `proposalClassifiers` were configured.
 	 */
 	proposals?: {
 		filtered: ClassificationProposal[]
@@ -152,6 +150,7 @@ export class AddressParser {
 		this.classify(context)
 
 		let proposalsSummary: VerboseParseResult["proposals"] | undefined
+
 		if (this.proposalClassifiers.length > 0) {
 			const { proposals, writeback } = await runProposalPipeline(context, this.proposalClassifiers, {
 				policy: this.policy,

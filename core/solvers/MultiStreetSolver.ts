@@ -18,26 +18,21 @@ const MORE_GRANULAR_THAN_STREET = new Set<Classification>([
 ])
 
 /**
- * If a 'multistreet' classification was detected then add a new solution which covers all streets
- * included.
+ * If a 'multistreet' classification was detected then add a new solution which covers all streets included.
  *
- * The ExclusiveCartesianSolver ensures that each public classification can exist only once per
- * solution (ie. we can't have two postalcodes).
+ * The ExclusiveCartesianSolver ensures that each public classification can exist only once per solution (ie. we can't
+ * have two postalcodes).
  *
- * Intersections are the only exception to this rule, so rather than modifying the
- * ExclusiveCartesianSolver we use this solver to create the missing intersection solutions (those
- * with 2x 'street' labels).
+ * Intersections are the only exception to this rule, so rather than modifying the ExclusiveCartesianSolver we use this
+ * solver to create the missing intersection solutions (those with 2x 'street' labels).
  *
- * One of the challenges is that there could be many different interpretations of the admin tokens,
- * so we need to ensure that each of those permutations is also represented by a distinct
- * intersection solution.
+ * One of the challenges is that there could be many different interpretations of the admin tokens, so we need to ensure
+ * that each of those permutations is also represented by a distinct intersection solution.
  *
- * The solver works by iterating over existing solutions looking for any which identified a street,
- * it then clones that solution, removes any tokens less granular than street and attempts to add
- * the new street token in its place.
+ * The solver works by iterating over existing solutions looking for any which identified a street, it then clones that
+ * solution, removes any tokens less granular than street and attempts to add the new street token in its place.
  *
- * Care is taken to ensure that the resulting solution does not contain tokens in overlapping
- * positions.
+ * Care is taken to ensure that the resulting solution does not contain tokens in overlapping positions.
  */
 export class MultiStreetSolver extends HashMapSolver {
 	solve(context: TokenContext): void {

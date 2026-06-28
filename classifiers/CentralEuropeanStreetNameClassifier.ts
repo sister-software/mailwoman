@@ -7,8 +7,7 @@
 import { SectionClassifier, Span } from "@mailwoman/core"
 
 /**
- * Classifies street names with no suffix or prefix when accompanied by a house number in the same
- * section.
+ * Classifies street names with no suffix or prefix when accompanied by a house number in the same section.
  *
  * @see {@link https://github.com/pelias/parser/issues/83 | Issue #83}
  */

@@ -5,6 +5,7 @@
  */
 
 import { assertClassification } from "mailwoman/sdk/test"
+
 import { StreetProperNameClassifier } from "./StreetProperNameClassifier.js"
 
 const classifier = new StreetProperNameClassifier()

@@ -20,6 +20,7 @@ import { pathToFileURL } from "node:url"
 import { chromium } from "playwright"
 
 const [, , inHtml, outPng, w = "1160", h = "1000"] = process.argv
+
 if (!inHtml || !outPng) {
 	console.error("usage: render.ts <in.html> <out.png> [width] [height]")
 	process.exit(1)
@@ -66,6 +67,7 @@ await browser.close()
 
 if (errors.length) {
 	console.error(`[render] ${errors.length} console error(s):`)
+
 	for (const e of errors.slice(0, 8)) console.error("  " + e)
 }
 console.error(`[render] ${outPng}`)

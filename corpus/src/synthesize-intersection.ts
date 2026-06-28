@@ -71,8 +71,8 @@ const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkw
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
 
 /**
- * Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment. `@`
- * added in v0.7.2 — the harness uses it ("Main St @ Second Ave") and v0.7.1 had never seen it.
+ * Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment. `@` added in v0.7.2 —
+ * the harness uses it ("Main St @ Second Ave") and v0.7.1 had never seen it.
  */
 const CONNECTORS = [" & ", " and ", " at ", " / ", " @ "] as const
 
@@ -104,28 +104,33 @@ function buildStreetName(random: () => number): string {
 	if (random() < 0.2) return pick(BARE_NAMES, random)
 
 	const parts: string[] = []
+
 	if (random() < 0.35) parts.push(pick(DIRECTIONALS, random))
 	parts.push(random() < 0.45 ? pick(ORDINALS, random) : pick(STREET_CORES, random))
 	parts.push(pick(SUFFIXES, random))
+
 	return parts.join(" ")
 }
 
 /**
- * Synthesize one US intersection row. Returns null on the rare degenerate case where the two
- * streets collide (so alignment never has two identical surface forms to disambiguate).
+ * Synthesize one US intersection row. Returns null on the rare degenerate case where the two streets collide (so
+ * alignment never has two identical surface forms to disambiguate).
  */
 export function synthesizeIntersectionRow(
 	base: IntersectionBaseTuple,
 	opts: IntersectionSynthesisOpts = {}
 ): SynthesizedIntersectionRow | null {
 	const random = opts.random ?? Math.random
+
 	if (base.country !== "US") return null
 
 	const a = buildStreetName(random)
 	let b = buildStreetName(random)
 	// Ensure distinct surface forms (and not a substring of each other — alignment needs unambiguous spans).
 	let tries = 0
+
 	while ((b === a || a.includes(b) || b.includes(a)) && tries++ < 8) b = buildStreetName(random)
+
 	if (b === a || a.includes(b) || b.includes(a)) return null
 
 	const connector = pick(CONNECTORS, random)
@@ -139,6 +144,7 @@ export function synthesizeIntersectionRow(
 	// (mislabeling the second street as a locality). Match the eval distribution.
 	const bare = random() < 0.6
 	let raw: string
+
 	if (bare) {
 		raw = `${cornerPrefix}${a}${connector}${b}`
 	} else {
@@ -149,6 +155,7 @@ export function synthesizeIntersectionRow(
 		raw = `${cornerPrefix}${a}${connector}${b}${tail}`
 		components.locality = base.locality
 		components.region = base.region
+
 		if (includePostcode) components.postcode = base.postcode
 	}
 
@@ -178,10 +185,13 @@ export function generateIntersectionRows(
 	const random = opts.random ?? Math.random
 	const out: SynthesizedIntersectionRow[] = []
 	let guard = 0
+
 	while (out.length < count && guard++ < count * 4) {
 		const base = bases[out.length % bases.length]!
 		const row = synthesizeIntersectionRow(base, { random })
+
 		if (row) out.push(row)
 	}
+
 	return out
 }

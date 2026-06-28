@@ -26,11 +26,13 @@ const startedAt = Date.now()
 /** Record one completed geocode: its wall-clock latency and which tier produced it (or `"error"`). */
 export function recordGeocode(latencyMs: number, tier: ResolutionTier | "error"): void {
 	total++
+
 	if (tier === "error") {
 		errors++
 	} else {
 		tierCounts[tier]++
 	}
+
 	if (latencies.length < MAX_SAMPLES) {
 		latencies.push(latencyMs)
 	} else {
@@ -42,6 +44,7 @@ export function recordGeocode(latencyMs: number, tier: ResolutionTier | "error")
 function percentile(sorted: number[], p: number): number {
 	if (sorted.length === 0) return 0
 	const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length))
+
 	return Math.round(sorted[idx]! * 100) / 100
 }
 
@@ -59,6 +62,7 @@ export interface MetricsSnapshot {
 /** Current metrics snapshot — sorted-reservoir percentiles + counters. */
 export function metricsSnapshot(): MetricsSnapshot {
 	const sorted = [...latencies].sort((a, b) => a - b)
+
 	return {
 		uptime_s: Math.round((Date.now() - startedAt) / 1000),
 		geocode: {

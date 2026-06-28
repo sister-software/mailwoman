@@ -24,13 +24,14 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
+import { existsSync, globSync, mkdirSync, renameSync, rmSync } from "node:fs"
+import { basename, dirname } from "node:path"
+import { DatabaseSync } from "node:sqlite"
+
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
-import { existsSync, globSync, mkdirSync, renameSync, rmSync } from "node:fs"
-import { basename, dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -113,26 +114,33 @@ export { OptionsSchema as options }
 function parseHn(raw: unknown): number | null {
 	if (raw === null || raw === undefined) return null
 	const s = String(raw).trim()
+
 	if (!/^\d+$/.test(s)) return null
+
 	return Number(s)
 }
 
 function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 	const f = from % 2
+
 	if (f !== to % 2) return "mixed"
+
 	return f === 1 ? "odd" : "even"
 }
 
 /**
- * Scripts/AGENTS.md atomic swap: the build wrote to a temp path, so a mid-build crash never leaves
- * a half-written DB at finalPath. Move any prior version aside, slot the new one in, then drop the
- * old. (The original script rebuilt in place — `rmSync(OUT)` then `new DatabaseSync(OUT)`.)
+ * Scripts/AGENTS.md atomic swap: the build wrote to a temp path, so a mid-build crash never leaves a half-written DB at
+ * finalPath. Move any prior version aside, slot the new one in, then drop the old. (The original script rebuilt in
+ * place — `rmSync(OUT)` then `new DatabaseSync(OUT)`.)
  */
 function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 	const aside = `${finalPath}.old-${process.pid}`
+
 	if (existsSync(finalPath)) renameSync(finalPath, aside)
+
 	for (const sfx of ["-wal", "-shm"]) rmSync(finalPath + sfx, { force: true })
 	renameSync(tmpPath, finalPath)
+
 	for (const sfx of ["-wal", "-shm"]) rmSync(tmpPath + sfx, { force: true })
 	rmSync(aside, { force: true })
 }
@@ -157,6 +165,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				// published CLI doesn't force them on every consumer.
 				let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
 				let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street-normalize")
+
 				try {
 					segmentSchema = await import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
 					streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
@@ -166,6 +175,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 					)
 				}
 				let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
+
 				try {
 					;({ DuckDBInstance } = await import("@duckdb/node-api"))
 				} catch {
@@ -177,6 +187,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
 				const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).sort()
+
 				if (shapefiles.length === 0) {
 					throw new Error(
 						`no tl_*_${STATE_FIPS[STATE]}???_edges.shp under ${options.edgesDir} — download TIGER EDGES first`
@@ -187,6 +198,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				mkdirSync(dirname(finalOut), { recursive: true })
 				// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
 				const tmpOut = `${finalOut}.building-${process.pid}.db`
+
 				for (const sfx of ["", "-wal", "-shm"]) rmSync(tmpOut + sfx, { force: true })
 
 				const db = new DatabaseSync(tmpOut)
@@ -209,6 +221,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				const parityCounts = { odd: 0, even: 0, mixed: 0 }
 
 				db.exec("BEGIN")
+
 				for (const shp of shapefiles) {
 					const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
 					// Address-carrying road edges only; geometry as GeoJSON text so the JS side stays
@@ -220,11 +233,14 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 						WHERE MTFCC LIKE 'S1%' AND FULLNAME IS NOT NULL
 							AND (LFROMADD IS NOT NULL OR RFROMADD IS NOT NULL)
 					`)
+
 					for (const r of result.getRowObjects() as Record<string, unknown>[]) {
 						const streetRaw = String(r.name)
 						const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(streetRaw))
+
 						if (!streetNorm) continue
 						const geom = JSON.parse(String(r.geojson)) as { type: string; coordinates: number[][] }
+
 						if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
 						// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
 						const polyline = JSON.stringify(
@@ -238,6 +254,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 							if (fromRaw === null && toRaw === null) continue
 							const from = parseHn(fromRaw)
 							const to = parseHn(toRaw)
+
 							if (from === null || to === null) {
 								skippedNonNumeric++
 								continue
@@ -293,6 +310,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -305,6 +323,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

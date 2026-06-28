@@ -49,7 +49,8 @@ if (!workspacePath) {
 }
 
 const SKIP_WEIGHTS = !!process.env.MAILWOMAN_SKIP_WEIGHTS
-const isWeightsWorkspace = /^\.\/neural-weights-/.test(workspacePath)
+const isWeightsWorkspace = workspacePath.startsWith("./neural-weights-")
+
 if (SKIP_WEIGHTS && isWeightsWorkspace) {
 	console.error(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
 	process.exit(0)
@@ -72,6 +73,7 @@ try {
 	const packArgs = ["pack", "-o", tarballPath]
 	console.error(`publish-workspace: yarn ${packArgs.join(" ")} (cwd: ${cwd})`)
 	const packResult = spawnSync("yarn", packArgs, { cwd, stdio: "inherit" })
+
 	if (packResult.status !== 0) {
 		console.error(`publish-workspace: yarn pack failed (exit ${packResult.status})`)
 		process.exit(packResult.status ?? 1)
@@ -80,8 +82,11 @@ try {
 	// Step 2: npm publish <tarball> — npm CLI auto-detects OIDC environment
 	// in GitHub Actions and uses it for Trusted Publishing.
 	const publishArgs = ["publish", tarballPath, "--tag", tag]
+
 	if (access) publishArgs.push("--access", access)
+
 	if (otp) publishArgs.push("--otp", otp)
+
 	// --provenance is opt-in via MAILWOMAN_NPM_PROVENANCE=1. The npm registry
 	// rejects --provenance on private source repositories with E422 because
 	// sigstore attestations link to source code that third parties can't
@@ -90,6 +95,7 @@ try {
 	if (process.env.MAILWOMAN_NPM_PROVENANCE === "1") publishArgs.push("--provenance")
 
 	console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
+
 	if (dryRun) {
 		process.exit(0)
 	}
@@ -115,10 +121,12 @@ try {
  */
 function dereferenceWorkspaceSymlinks(workspaceDir: string) {
 	const pkg = JSON.parse(readFileSync(resolve(workspaceDir, "package.json"), "utf8"))
+
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
 		const target = resolve(workspaceDir, entry)
 		const st = lstatSync(target, { throwIfNoEntry: false })
+
 		if (!st?.isSymbolicLink()) continue
 		const linkDest = readlinkSync(target)
 		const resolved = resolve(dirname(target), linkDest)

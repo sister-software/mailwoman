@@ -24,9 +24,11 @@
  *   legacy script used.
  */
 
+import { spawnSync } from "node:child_process"
+
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { spawnSync } from "node:child_process"
+
 import { stableSourceId } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
@@ -37,7 +39,9 @@ import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
 // so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
 const COUNTRY_FORM_POOL = (() => {
 	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat() // endonyms + abbrevs + canonical (curated)
-	const names = [...CountryNames] // all ~249 ISO canonical English names (breadth)
+	const names = [...CountryNames]
+
+	// all ~249 ISO canonical English names (breadth)
 	return { surface, names }
 })()
 const COUNTRY_ABSENT_PROB = 0.3 // negatives: rows with NO country token → teach golden precision
@@ -86,8 +90,10 @@ function splitCsv(line: string): string[] {
 	const out: string[] = []
 	let cur = "",
 		inQ = false
+
 	for (let i = 0; i < line.length; i++) {
 		const c = line[i]
+
 		if (inQ) {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
@@ -102,6 +108,7 @@ function splitCsv(line: string): string[] {
 		} else cur += c
 	}
 	out.push(cur)
+
 	return out
 }
 
@@ -113,11 +120,14 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
 	})
+
 	if (r.status !== 0) {
 		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+
 		return []
 	}
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return []
 	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string): number => header.indexOf(n)
@@ -129,14 +139,17 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: CountryTuple[] = []
 	const seen = new Set<string>()
+
 	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
 		if (!lines[li]) continue
 		const cells = splitCsv(lines[li]!)
 		const street = get(cells, iStreet),
 			locality = get(cells, iCity),
 			house_number = get(cells, iNum)
+
 		if (!street || !locality || !house_number) continue
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		tuples.push({
@@ -149,6 +162,7 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 			order: source.order,
 		})
 	}
+
 	return tuples
 }
 
@@ -157,6 +171,7 @@ function pickCountry(random: () => number): string | null {
 	if (random() < COUNTRY_ABSENT_PROB) return null // negative — teaches "trailing token != always country"
 	// 60% curated surface forms (endonym/abbrev variety), 40% broad ISO canonical names (coverage).
 	const pool = random() < 0.6 ? COUNTRY_FORM_POOL.surface : COUNTRY_FORM_POOL.names
+
 	return pool[Math.floor(random() * pool.length)]!
 }
 
@@ -168,9 +183,12 @@ function renderCountry(
 ): { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> } {
 	const { house_number: hn, street, locality: loc, region: reg, postcode: pc, order } = t
 	const components: Partial<Record<ComponentTag, string>> = { house_number: hn, street, locality: loc }
+
 	if (reg) components.region = reg
+
 	if (pc) components.postcode = pc
 	let body: string
+
 	if (order === "us") {
 		const regPc = [reg, pc].filter(Boolean).join(" ")
 		body = `${hn} ${street}, ${loc}${regPc ? ", " + regPc : ""}`
@@ -182,6 +200,7 @@ function renderCountry(
 		const pcCity = [pc, loc].filter(Boolean).join(" ")
 		body = `${street} ${hn}, ${pcCity}`
 	}
+
 	if (!country) {
 		// Negative: a normal address, NO country token/component. Teaches that a trailing region/city/
 		// postcode is NOT a country (counters the v1 golden over-firing).
@@ -189,9 +208,12 @@ function renderCountry(
 	}
 	const withC: Partial<Record<ComponentTag, string>> = { ...components, country }
 	const r = random()
+
 	if (r < 0.8) return { fmt: "full", raw: `${body}, ${country}`, components: withC }
+
 	if (r < 0.92) return { fmt: "full-nl", raw: `${body}\n${country}`, components: withC }
 	const bareBody = order === "us" || order === "fr" ? `${hn} ${street}, ${loc}` : `${street} ${hn}, ${loc}`
+
 	return {
 		fmt: "bare",
 		raw: `${bareBody}, ${country}`,
@@ -277,8 +299,8 @@ const pick = <T>(random: () => number, arr: readonly T[]): T => arr[Math.floor(r
 const houseNo = (random: () => number): string => String(1 + Math.floor(random() * 998))
 
 /**
- * A homograph CONTRAST row: ~half render the surface as `country` (foreign city), half as the US
- * `region`/`locality` (US ZIP, NO country). Returns iso2 for provenance.
+ * A homograph CONTRAST row: ~half render the surface as `country` (foreign city), half as the US `region`/`locality`
+ * (US ZIP, NO country). Returns iso2 for provenance.
  */
 function renderHomograph(random: () => number): {
 	fmt: string
@@ -289,6 +311,7 @@ function renderHomograph(random: () => number): {
 	const h = pick(random, HOMOGRAPHS)
 	const hn = houseNo(random),
 		street = pick(random, STREET_POOL)
+
 	if (random() < 0.5) {
 		const city = pick(random, h.cities)
 		const withStreet = random() < 0.6
@@ -296,9 +319,11 @@ function renderHomograph(random: () => number): {
 		const components: Partial<Record<ComponentTag, string>> = withStreet
 			? { house_number: hn, street, locality: city, country: h.surface }
 			: { locality: city, country: h.surface }
+
 		return { fmt: "homograph-country", raw, components, iso2: h.iso2 }
 	}
 	const pc = pick(random, h.us.postcodes)
+
 	if (h.us.role === "region") {
 		// surface is the US STATE: "123 Oak Ave, Atlanta, Georgia 30309" → region, no country
 		return {
@@ -308,6 +333,7 @@ function renderHomograph(random: () => number): {
 			iso2: "US",
 		}
 	}
+
 	// surface is the US CITY: "123 Oak Ave, Lebanon, TN 37087" → locality, no country
 	return {
 		fmt: "homograph-us-locality",
@@ -329,6 +355,7 @@ function renderAbbrevRegion(random: () => number): {
 		street = pick(random, STREET_POOL),
 		locality = pick(random, a.localities),
 		postcode = pick(random, a.postcodes)
+
 	return {
 		fmt: "abbrev-region",
 		raw: `${hn} ${street}, ${locality}, ${a.code} ${postcode}`,
@@ -355,11 +382,14 @@ export const countryBalancedRecipe: ShardRecipe = {
 		const perSource = Math.ceil((count * 3) / sources.length) // over-read; balance locales
 
 		const pool: CountryTuple[] = []
+
 		for (const s of sources) {
 			const t = readTuples(s, perSource)
 			console.error(`  ${s.csv} (${s.iso2}): ${t.length} tuples`)
+
 			for (const x of t) pool.push(x)
 		}
+
 		if (pool.length === 0) {
 			throw new Error("No tuples — are the cached OA zips present in /tmp/oa-cache?")
 		}
@@ -368,12 +398,14 @@ export const countryBalancedRecipe: ShardRecipe = {
 		let skipped = 0
 		let guard = 0
 		const N = pool.length
+
 		while (emitted < count && guard++ < count * 8) {
 			// Mix three row types: homograph contrast (the distinction), code-as-region negatives, and the
 			// breadth/recall main path (random ISO form on an OA skeleton, ~30% country-absent).
 			const roll = random()
 			let rendered: { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> }
 			let rowIso2: string
+
 			if (roll < HOMOGRAPH_FRAC) {
 				const h = renderHomograph(random)
 				rendered = h
@@ -387,6 +419,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 				const country = pickCountry(random) // may be null → a country-absent negative row
 				rendered = renderCountry(random, t, country)
 				rowIso2 = t.iso2
+
 				if (country && !rendered.raw.includes(country)) {
 					skipped++
 					continue
@@ -394,6 +427,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 			}
 			const { raw, components } = rendered
 			const localeTag = rowIso2 === "US" ? "en-US" : `${rowIso2.toLowerCase()}-${rowIso2}`
+
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components, country: rowIso2 }) + "\n")
 				emitted++
@@ -410,6 +444,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 				license: "OpenAddresses multi-locale skeletons + injected ISO-3166 country surface forms (codex)",
 			}
 			const aligned = alignRow(canonical)
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue
@@ -417,6 +452,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 			write(JSON.stringify({ ...aligned.row, synth_method: "country", synth_base_id: null }) + "\n")
 			emitted++
 		}
+
 		return { emitted, skipped }
 	},
 }

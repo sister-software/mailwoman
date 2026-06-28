@@ -35,6 +35,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { lookupFipsState } from "../../codex/us-fips-state.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -44,8 +45,8 @@ export const TIGER_ADAPTER_ID = "tiger"
 export const TIGER_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * The country surface form used in `formatAddress` for US. Matches the canonical OpenCage US
- * template output so reconciliation doesn't strip it when the row carries `country` explicitly.
+ * The country surface form used in `formatAddress` for US. Matches the canonical OpenCage US template output so
+ * reconciliation doesn't strip it when the row carries `country` explicitly.
  */
 const US_COUNTRY_DISPLAY = "United States of America"
 
@@ -76,8 +77,10 @@ function* streetVariants(row: TigerStreetRow): Iterable<{
 	variantKey: string
 }> {
 	const fullname = row.fullname.trim()
+
 	if (!fullname) return
 	const state = lookupFipsState(row.statefp)
+
 	if (!state) return
 
 	const zipl = row.zipl?.trim() ?? ""
@@ -89,21 +92,28 @@ function* streetVariants(row: TigerStreetRow): Iterable<{
 		region: state.abbreviation,
 		street: decomposed.street,
 	}
+
 	if (decomposed.prefix) baseComponents.street_prefix = decomposed.prefix
+
 	if (decomposed.suffix) baseComponents.street_suffix = decomposed.suffix
 
 	if (!zipl && !zipr) {
 		yield { components: baseComponents, variantKey: "no-zip" }
+
 		return
 	}
+
 	if (zipl && zipr && zipl === zipr) {
 		yield {
 			components: { ...baseComponents, postcode: zipl },
 			variantKey: `zip-${zipl}`,
 		}
+
 		return
 	}
+
 	if (zipl) yield { components: { ...baseComponents, postcode: zipl }, variantKey: `zipl-${zipl}` }
+
 	if (zipr && zipr !== zipl) yield { components: { ...baseComponents, postcode: zipr }, variantKey: `zipr-${zipr}` }
 }
 
@@ -113,8 +123,10 @@ function* placeVariants(row: TigerPlaceRow): Iterable<{
 	variantKey: string
 }> {
 	const name = row.name.trim()
+
 	if (!name) return
 	const state = lookupFipsState(row.statefp)
+
 	if (!state) return
 
 	yield {
@@ -146,17 +158,21 @@ export function createTigerAdapter(): CorpusAdapter {
 
 			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
 			let emitted = 0
+
 			try {
 				const streetStmt = db.prepare(`SELECT linearid, fullname, zipl, zipr, statefp FROM tiger_streets`)
 				const placeStmt = db.prepare(`SELECT geoid, name, statefp, lsad FROM tiger_places`)
 
 				for (const row of streetStmt.iterate() as IterableIterator<TigerStreetRow>) {
 					if (opts.signal?.aborted) return
+
 					for (const variant of streetVariants(row)) {
 						if (opts.limit !== undefined && emitted >= opts.limit) return
 						const raw = formatAddress(variant.components, "US", { separator: ", " })
+
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
+
 						if (Object.keys(aligned).length === 0) continue
 
 						yield {
@@ -175,11 +191,14 @@ export function createTigerAdapter(): CorpusAdapter {
 
 				for (const row of placeStmt.iterate() as IterableIterator<TigerPlaceRow>) {
 					if (opts.signal?.aborted) return
+
 					for (const variant of placeVariants(row)) {
 						if (opts.limit !== undefined && emitted >= opts.limit) return
 						const raw = formatAddress(variant.components, "US", { separator: ", " })
+
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
+
 						if (Object.keys(aligned).length === 0) continue
 
 						yield {

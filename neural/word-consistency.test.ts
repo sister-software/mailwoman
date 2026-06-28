@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { enforceWordConsistency } from "./word-consistency.js"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"] as const

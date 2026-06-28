@@ -78,6 +78,7 @@ interface ChunkManifest {
 
 function envInt(name: string, fallback: number): number {
 	const v = process.env[name]
+
 	return v ? Number.parseInt(v, 10) : fallback
 }
 
@@ -94,6 +95,7 @@ function parseCliArgs() {
 			"end-oid": { type: "string", default: process.env.FS_END_OID },
 		},
 	})
+
 	return {
 		outRoot: values["out-root"]!,
 		mode: values.mode!,
@@ -109,6 +111,7 @@ function parseCliArgs() {
 async function sha256OfFile(path: string): Promise<string> {
 	const hash = createHash("sha256")
 	hash.update(await readFile(path))
+
 	return hash.digest("hex")
 }
 
@@ -123,9 +126,12 @@ async function fetchPage(startOid: number, endOid: number, pageSize: number): Pr
 		headers: { "Accept-Encoding": "gzip, br" },
 		signal: AbortSignal.timeout(120_000),
 	})
+
 	if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} on OID ${startOid}-${endOid}`)
 	const data = (await res.json()) as { features?: Array<{ attributes: unknown }>; error?: { message: string } }
+
 	if (data.error) throw new Error(`ArcGIS error on OID ${startOid}-${endOid}: ${data.error.message}`)
+
 	return (data.features ?? []).map((f) => f.attributes)
 }
 
@@ -135,16 +141,18 @@ async function discoverTotalCount(): Promise<number> {
 	url.searchParams.set("returnCountOnly", "true")
 	url.searchParams.set("f", "json")
 	const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
+
 	if (!res.ok) throw new Error(`Failed to discover NAD record count: HTTP ${res.status}`)
 	const data = (await res.json()) as { count?: number }
+
 	if (typeof data.count !== "number") throw new Error("NAD count query returned no count field")
+
 	return data.count
 }
 
 /**
- * Fetch a single chunk by paging through its OID range with bounded concurrency. Returns the count
- * of records written and the count of pages that errored. The caller decides whether to mark the
- * chunk complete based on errors === 0.
+ * Fetch a single chunk by paging through its OID range with bounded concurrency. Returns the count of records written
+ * and the count of pages that errored. The caller decides whether to mark the chunk complete based on errors === 0.
  */
 async function fetchChunk(
 	chunkPath: string,
@@ -154,6 +162,7 @@ async function fetchChunk(
 	concurrency: number
 ): Promise<{ recordCount: number; errors: number }> {
 	const pageRanges: Array<[number, number]> = []
+
 	for (let cursor = chunkStart; cursor <= chunkEnd; cursor += pageSize) {
 		pageRanges.push([cursor, Math.min(cursor + pageSize - 1, chunkEnd)])
 	}
@@ -167,8 +176,10 @@ async function fetchChunk(
 	const workers = Array.from({ length: Math.min(concurrency, pageRanges.length) }, async () => {
 		while (true) {
 			const slot = nextSlot++
+
 			if (slot >= pageRanges.length) return
 			const [s, e] = pageRanges[slot]!
+
 			try {
 				pageResults[slot]!.rows = await fetchPage(s, e, pageSize)
 			} catch (err) {
@@ -182,14 +193,17 @@ async function fetchChunk(
 	// Single-writer phase — write all pages in OID order to keep NDJSON deterministic.
 	const lines: string[] = []
 	let errors = 0
+
 	for (const { rows, error } of pageResults) {
 		if (error) {
 			errors++
 			continue
 		}
+
 		for (const row of rows) lines.push(JSON.stringify(row))
 	}
 	await writeFile(chunkPath, lines.length === 0 ? "" : lines.join("\n") + "\n")
+
 	return { recordCount: lines.length, errors }
 }
 
@@ -223,6 +237,7 @@ async function featureserverMode(opts: ReturnType<typeof parseCliArgs>): Promise
 		if (existsSync(manifestPath) && existsSync(chunkPath)) {
 			try {
 				const m = JSON.parse(await readFile(manifestPath, "utf8")) as ChunkManifest
+
 				if (m.complete) {
 					skipped++
 					continue
@@ -266,6 +281,7 @@ async function featureserverMode(opts: ReturnType<typeof parseCliArgs>): Promise
 	process.stderr.write(`total records: ${totalRecords.toLocaleString()}\n`)
 	process.stderr.write(`page errors:   ${totalErrors}\n`)
 	process.stderr.write(`output:        ${chunkDir}\n`)
+
 	if (totalErrors > 0) process.exitCode = 1
 }
 
@@ -277,6 +293,7 @@ async function bulkMode(opts: ReturnType<typeof parseCliArgs>): Promise<void> {
 				`accept the disclaimer, and re-run with the pre-signed S3 URL.\n`
 		)
 		process.exitCode = 2
+
 		return
 	}
 	const destDir = join(opts.outRoot, SLUG)
@@ -288,6 +305,7 @@ async function bulkMode(opts: ReturnType<typeof parseCliArgs>): Promise<void> {
 	process.stderr.write(`  URL: ${opts.nadUrl.slice(0, 100)}${opts.nadUrl.length > 100 ? "…" : ""}\n`)
 
 	const res = await fetch(opts.nadUrl, { signal: AbortSignal.timeout(3 * 3600 * 1000) })
+
 	if (!res.ok || !res.body) throw new Error(`HTTP ${res.status} on bulk download`)
 	const { writeFile: writeStream } = await import("node:fs/promises")
 	const buf = Buffer.from(await res.arrayBuffer())
@@ -314,6 +332,7 @@ async function bulkMode(opts: ReturnType<typeof parseCliArgs>): Promise<void> {
 
 async function main(): Promise<void> {
 	const opts = parseCliArgs()
+
 	if (opts.mode === "featureserver") await featureserverMode(opts)
 	else if (opts.mode === "bulk") await bulkMode(opts)
 	else {

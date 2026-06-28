@@ -1,22 +1,21 @@
 /**
- * German coverage eval (DE-4/DE-5) — measures whether a model learned German order, and whether
- * US/FR regressed (the interference tripwire). Run against the v0.7.2 baseline AND the
- * v0.8.0-german model for a before/after. Usage: node scripts/eval-de-coverage.ts <model.onnx>
- * <tokenizer.model> <model-card.json> Defaults to the v0.7.2 artifacts in /tmp/v072-eval.
+ * German coverage eval (DE-4/DE-5) — measures whether a model learned German order, and whether US/FR regressed (the
+ * interference tripwire). Run against the v0.7.2 baseline AND the v0.8.0-german model for a before/after. Usage: node
+ * scripts/eval-de-coverage.ts <model.onnx> <tokenizer.model> <model-card.json> Defaults to the v0.7.2 artifacts in
+ * /tmp/v072-eval.
  */
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
-import { runIfScript } from "mailwoman/sdk/scripting"
-
 /**
- * Mirror `grep -A<after> <needle>` for the single-match case: the match line + `after` lines below
- * it.
+ * Mirror `grep -A<after> <needle>` for the single-match case: the match line + `after` lines below it.
  */
 function printGrepAfter(stdout: string, needle: string, after: number): void {
 	const lines = stdout.split("\n")
 	const idx = lines.findIndex((l) => l.includes(needle))
+
 	if (idx >= 0) console.log(lines.slice(idx, idx + after + 1).join("\n"))
 }
 

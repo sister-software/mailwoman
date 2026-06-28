@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs"
+
 // Country homograph scorer — the TRUE baseline for the model-first country lever.
 // Measures country/region/locality P/R/F1 (unfolded decodeAsJson) on the hard homograph eval,
 // PLUS the over-fire confusion: how often a gold region/locality span is mistagged as `country`
@@ -8,7 +10,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync, readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const argv = process.argv.slice(2)
@@ -40,6 +42,7 @@ const rows = readFileSync(file, "utf8")
 	.map((l) => JSON.parse(l))
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
+
 for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
 
 // over-fire diagnostics
@@ -51,23 +54,28 @@ const missedCases: string[] = []
 for (const row of rows) {
 	const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
 	const exp = row.components as Record<string, string>
+
 	for (const t of TAGS) {
 		const e = norm(exp[t]),
 			g = norm(got[t])
+
 		if (e && g && e === g) stat[t]!.tp++
 		else {
 			if (g) stat[t]!.fp++
+
 			if (e) stat[t]!.fn++
 		}
 	}
 	// over-fire: model emitted a country that is actually the gold region or locality
 	const gc = norm(got.country)
+
 	if (gc && !norm(exp.country) && (gc === norm(exp.region) || gc === norm(exp.locality))) {
 		overfire++
 		overfireCases.push(
 			`  ${row.raw}  → country="${got.country}" (gold ${norm(exp.region) === gc ? "region" : "locality"})`
 		)
 	}
+
 	if (norm(exp.country) && !gc) {
 		missedCountry++
 		missedCases.push(`  ${row.raw}  → no country emitted (gold "${exp.country}")`)
@@ -77,6 +85,7 @@ for (const row of rows) {
 console.log(`# country homograph baseline — ${arg("model")!.split("/").slice(-1)[0]} · n=${rows.length}`)
 const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
+
 for (const t of TAGS) {
 	const { tp, fp, fn } = stat[t]!
 	const p = tp + fp ? tp / (tp + fp) : 0
@@ -89,6 +98,7 @@ for (const t of TAGS) {
 }
 // JSON sidecar — the machine-readable contract for the gate verdict (markdown = presentation).
 const jsonOut = arg("json")
+
 if (jsonOut) {
 	const { writeFileSync } = await import("node:fs")
 	writeFileSync(
@@ -98,5 +108,7 @@ if (jsonOut) {
 }
 console.log(`\nover-fire (region/locality tagged as country): ${overfire}`)
 console.log(`missed country (gold country, none emitted): ${missedCountry}`)
+
 if (overfireCases.length) console.log("\n-- over-fire cases --\n" + overfireCases.join("\n"))
+
 if (missedCases.length) console.log("\n-- missed-country cases --\n" + missedCases.join("\n"))

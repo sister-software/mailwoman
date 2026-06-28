@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -19,13 +22,12 @@
  *   --wof-db
  *   $MAILWOMAN_DATA_ROOT/wof/admin-overture-eu.db,$MAILWOMAN_DATA_ROOT/wof/postcode-locality-intl.db
  */
+import type { AddressNode } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { createWofResolver } from "@mailwoman/resolver"
 import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 const { values: a } = parseArgs({
 	options: {
@@ -48,6 +50,7 @@ const { values: a } = parseArgs({
 		limit: { type: "string" },
 	},
 })
+
 if (!a.eval || !a.country || !a["wof-db"]) {
 	console.error("--eval, --country, --wof-db are required")
 	process.exit(1)
@@ -55,6 +58,7 @@ if (!a.eval || !a.country || !a["wof-db"]) {
 
 function pct(sorted: number[], p: number): number {
 	if (sorted.length === 0) return NaN
+
 	return sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))]!
 }
 function norm(s: string): string {
@@ -93,13 +97,16 @@ for (const r of rows) {
 	const resolved = await resolver.resolveTree(tree, { defaultCountry: a.country!.toUpperCase() })
 	// Collect every resolved node carrying a coordinate, with its placetype.
 	const nodes: { pt: string; name?: string; lat: number; lon: number }[] = []
-	const visit = (n: any): void => {
+	const visit = (n: AddressNode): void => {
 		if (typeof n.lat === "number" && typeof n.lon === "number" && (n.placeId || n.sourceId)) {
 			nodes.push({ pt: String(n.sourceId ?? "").split(":")[0]!, name: n.value, lat: n.lat, lon: n.lon })
 		}
+
 		for (const c of n.children ?? []) visit(c)
 	}
+
 	for (const root of resolved.roots) visit(root)
+
 	if (nodes.length === 0) continue
 	anyCoord++
 
@@ -110,9 +117,11 @@ for (const r of rows) {
 	finest.push(haversineKm(r.lat, r.lon, fine.lat, fine.lon))
 
 	const loc = pick(["locality", "localadmin"])
+
 	if (loc && (loc.pt === "locality" || loc.pt === "localadmin")) {
 		locResolved++
 		adminLoc.push(haversineKm(r.lat, r.lon, loc.lat, loc.lon))
+
 		if (r.expected?.locality && loc.name && norm(loc.name) === norm(r.expected.locality)) locNameMatch++
 	}
 }

@@ -21,47 +21,47 @@ import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
 /**
  * Provenance + augmentation metadata that travels with every corpus row.
  *
- * `synth` is `undefined` for natural (un-augmented) rows; present only when a row was produced by
- * the synthesis pipeline (see `synthesize.ts`).
+ * `synth` is `undefined` for natural (un-augmented) rows; present only when a row was produced by the synthesis
+ * pipeline (see `synthesize.ts`).
  */
 export interface SourceProvenance {
 	/** Adapter id that emitted this row, e.g. `"wof-admin"`, `"ban"`, `"openaddresses"`. */
 	source: string
 
 	/**
-	 * Stable id within the adapter's source. For SQLite-backed adapters this is the row's primary
-	 * key; for CSV/GeoJSON, a hash of the canonical components. Must be stable across reruns so that
-	 * dedup and holdout manifests are reproducible.
+	 * Stable id within the adapter's source. For SQLite-backed adapters this is the row's primary key; for CSV/GeoJSON, a
+	 * hash of the canonical components. Must be stable across reruns so that dedup and holdout manifests are
+	 * reproducible.
 	 */
 	source_id: string
 
 	/**
-	 * Corpus version string. Stamped by the runner, not the adapter. Locked together with the
-	 * tokenizer version: `corpus-v0.1.0` ships with `tokenizer-v0.1.0`.
+	 * Corpus version string. Stamped by the runner, not the adapter. Locked together with the tokenizer version:
+	 * `corpus-v0.1.0` ships with `tokenizer-v0.1.0`.
 	 */
 	corpus_version: string
 
 	/**
-	 * Short license label or SPDX id for _this_ row. Defaults to the adapter's `defaultLicense`, but
-	 * per-row sources (OpenAddresses) override.
+	 * Short license label or SPDX id for _this_ row. Defaults to the adapter's `defaultLicense`, but per-row sources
+	 * (OpenAddresses) override.
 	 */
 	license: string
 }
 
 /**
- * Marker placed on rows produced by `synthesize.ts`. Allows downstream code to weight, stratify, or
- * exclude augmentations.
+ * Marker placed on rows produced by `synthesize.ts`. Allows downstream code to weight, stratify, or exclude
+ * augmentations.
  */
 export interface SynthMarker {
 	/**
-	 * Pipeline id describing what augmentation produced this row. Free-form but stable — e.g.
-	 * `"case-perturb"`, `"accent-strip"`, `"abbrev-swap"`, `"compose:case-perturb+typo"`.
+	 * Pipeline id describing what augmentation produced this row. Free-form but stable — e.g. `"case-perturb"`,
+	 * `"accent-strip"`, `"abbrev-swap"`, `"compose:case-perturb+typo"`.
 	 */
 	method: string
 
 	/**
-	 * `source_id` of the un-augmented row this was derived from. Allows tracing every synthetic row
-	 * back to its natural ancestor.
+	 * `source_id` of the un-augmented row this was derived from. Allows tracing every synthetic row back to its natural
+	 * ancestor.
 	 */
 	base_source_id: string
 }
@@ -69,20 +69,20 @@ export interface SynthMarker {
 /**
  * One address row, before tokenization + BIO labeling.
  *
- * `raw` is what a parser would see in the wild — possibly multi-line, with arbitrary whitespace.
- * `components` is the ground-truth tagging: every `ComponentTag` present in the source data, mapped
- * to its surface form _as it appears in `raw`_. Alignment uses this to assign BIO labels.
+ * `raw` is what a parser would see in the wild — possibly multi-line, with arbitrary whitespace. `components` is the
+ * ground-truth tagging: every `ComponentTag` present in the source data, mapped to its surface form _as it appears in
+ * `raw`_. Alignment uses this to assign BIO labels.
  *
- * Country is ISO 3166-1 alpha-2 (`"US"`, `"FR"`). Locale is BCP-47 (`"en-US"`, `"fr-FR"`) and is
- * optional; adapters that can't be sure leave it empty and let the runner default by country.
+ * Country is ISO 3166-1 alpha-2 (`"US"`, `"FR"`). Locale is BCP-47 (`"en-US"`, `"fr-FR"`) and is optional; adapters
+ * that can't be sure leave it empty and let the runner default by country.
  */
 export interface CanonicalRow extends SourceProvenance {
 	/** Address string as it might appear in source data. */
 	raw: string
 
 	/**
-	 * Component-by-tag ground truth. Surface forms must occur in `raw` (within the alignment edit
-	 * distance threshold) or the row will land in the quarantine pile.
+	 * Component-by-tag ground truth. Surface forms must occur in `raw` (within the alignment edit distance threshold) or
+	 * the row will land in the quarantine pile.
 	 */
 	components: Partial<Record<ComponentTag, string>>
 
@@ -97,13 +97,13 @@ export interface CanonicalRow extends SourceProvenance {
 }
 
 /**
- * Output of `align.ts`. Carries everything `CanonicalRow` does, plus parallel `tokens` and `labels`
- * arrays of identical length (`labels[i]` is the BIO tag for `tokens[i]`) and — as of the v0.5.0
- * char-offset migration (#519) — parallel char-span arrays addressing `raw` directly.
+ * Output of `align.ts`. Carries everything `CanonicalRow` does, plus parallel `tokens` and `labels` arrays of identical
+ * length (`labels[i]` is the BIO tag for `tokens[i]`) and — as of the v0.5.0 char-offset migration (#519) — parallel
+ * char-span arrays addressing `raw` directly.
  *
- * The span triple is the v0.5.0 source of truth; `tokens`/`labels` remain emitted during the
- * transition (and stay derivable afterwards: whitespace split + span lookup). The reverse
- * derivation — today's token labels — is the lossy direction (punctuation-mute).
+ * The span triple is the v0.5.0 source of truth; `tokens`/`labels` remain emitted during the transition (and stay
+ * derivable afterwards: whitespace split + span lookup). The reverse derivation — today's token labels — is the lossy
+ * direction (punctuation-mute).
  */
 export interface LabeledRow extends CanonicalRow {
 	/** SentencePiece subword tokens for `raw`. */
@@ -113,15 +113,13 @@ export interface LabeledRow extends CanonicalRow {
 	labels: readonly BioLabel[]
 
 	/**
-	 * Char-offset label spans over `raw` (parallel arrays, per the #519 ruling): `span_starts[i]` is
-	 * the inclusive start offset (UTF-16 code units) of span `i`, `span_ends[i]` its exclusive end,
-	 * `span_tags[i]` its component tag. Invariants — enforced loudly by `alignRow`, documented for
-	 * every other producer: sorted ascending by start, non-overlapping. `raw` must be NFC-normalized
-	 * or the offsets are ambiguous (also enforced by `alignRow`).
+	 * Char-offset label spans over `raw` (parallel arrays, per the #519 ruling): `span_starts[i]` is the inclusive start
+	 * offset (UTF-16 code units) of span `i`, `span_ends[i]` its exclusive end, `span_tags[i]` its component tag.
+	 * Invariants — enforced loudly by `alignRow`, documented for every other producer: sorted ascending by start,
+	 * non-overlapping. `raw` must be NFC-normalized or the offsets are ambiguous (also enforced by `alignRow`).
 	 *
-	 * Optional during the v0.4.x → v0.5.0 transition only: alignment always emits the triple; frozen
-	 * historical corpora and not-yet-migrated synthesis paths may lack it. Required once v0.5.0 lands
-	 * and the token path is deleted.
+	 * Optional during the v0.4.x → v0.5.0 transition only: alignment always emits the triple; frozen historical corpora
+	 * and not-yet-migrated synthesis paths may lack it. Required once v0.5.0 lands and the token path is deleted.
 	 */
 	span_starts?: readonly number[]
 
@@ -135,9 +133,9 @@ export interface LabeledRow extends CanonicalRow {
 /**
  * A row that alignment refused to label. Lands in `/data/corpus/quarantine/` for human review.
  *
- * The `reason` is human-readable; common values are `"component-not-found:<tag>"`,
- * `"edit-distance-exceeded:<tag>"`, `"raw-empty"`. Re-running alignment after a fix should re-emit
- * the quarantined rows; the runner keys them by `source_id`.
+ * The `reason` is human-readable; common values are `"component-not-found:<tag>"`, `"edit-distance-exceeded:<tag>"`,
+ * `"raw-empty"`. Re-running alignment after a fix should re-emit the quarantined rows; the runner keys them by
+ * `source_id`.
  */
 export interface QuarantinedRow {
 	row: CanonicalRow
@@ -147,12 +145,12 @@ export interface QuarantinedRow {
 /**
  * Per-invocation knobs handed to an adapter by the runner.
  *
- * `inputPath` is interpreted by the adapter — it might be a single file path, a directory of
- * shards, or even an HTTPS URL. Each adapter documents its own expected shape in its README.
+ * `inputPath` is interpreted by the adapter — it might be a single file path, a directory of shards, or even an HTTPS
+ * URL. Each adapter documents its own expected shape in its README.
  *
- * `country` filters to a single ISO 3166-1 alpha-2 country _at the adapter level_. Adapters that
- * hold multi-country data (OSM PBF, OpenAddresses) MUST honor this; single-country adapters (BAN)
- * may ignore it but should reject mismatches.
+ * `country` filters to a single ISO 3166-1 alpha-2 country _at the adapter level_. Adapters that hold multi-country
+ * data (OSM PBF, OpenAddresses) MUST honor this; single-country adapters (BAN) may ignore it but should reject
+ * mismatches.
  *
  * `limit` is a soft cap on rows emitted; useful for fixture-driven tests and smoke runs.
  *
@@ -178,12 +176,12 @@ export interface AdapterOptions {
 /**
  * The contract every data source implements.
  *
- * Adapters are async generators: they yield `CanonicalRow`s one at a time, the runner consumes them
- * (writing JSONL + maintaining checksums + driving alignment). Streaming is mandatory — many
- * sources are tens of millions of rows and cannot be buffered.
+ * Adapters are async generators: they yield `CanonicalRow`s one at a time, the runner consumes them (writing JSONL +
+ * maintaining checksums + driving alignment). Streaming is mandatory — many sources are tens of millions of rows and
+ * cannot be buffered.
  *
- * `defaultLicense` is stamped onto every emitted row's `license` field unless the adapter sets
- * `license` explicitly (e.g. OpenAddresses, which carries per-source licenses).
+ * `defaultLicense` is stamped onto every emitted row's `license` field unless the adapter sets `license` explicitly
+ * (e.g. OpenAddresses, which carries per-source licenses).
  */
 export interface CorpusAdapter {
 	/** Stable, machine-friendly id used in paths and CLI args. E.g. `"wof-admin"`. */

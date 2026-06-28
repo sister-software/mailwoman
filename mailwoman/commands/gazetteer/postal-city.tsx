@@ -20,14 +20,15 @@
  *   streams to stderr; the final summary is on stdout.
  */
 
+import { DatabaseSync } from "node:sqlite"
+
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { DatabaseSync } from "node:sqlite"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
@@ -49,6 +50,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 		void (async () => {
 			try {
 				const candidateDb = options.candidateDb
+
 				if (!candidateDb) {
 					throw new Error("--candidate-db is required (modified in place — run on a copy first)")
 				}
@@ -65,6 +67,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 				console.error(`▸ loading postcode → locality from ${postcodeLocalityDb}`)
 				const pcl = new DatabaseSync(postcodeLocalityDb, { readOnly: true })
 				const pcToLocality = new Map<string, number>()
+
 				for (const r of pcl
 					.prepare("SELECT postcode, locality_id FROM postcode_locality WHERE is_containing = 1")
 					.all() as unknown as Array<{ postcode: string; locality_id: number }>) {
@@ -76,6 +79,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 				// spr_id → {name, lat, lon} from the candidate table's own rows (the coord bridge).
 				console.error(`▸ loading candidate coordinates from ${candidateDb}`)
 				const sprToPlace = new Map<number, { name: string; lat: number; lon: number }>()
+
 				for (const r of db
 					.prepare("SELECT spr_id, name, latitude AS lat, longitude AS lon FROM candidate WHERE latitude IS NOT NULL")
 					.all() as unknown as Array<{ spr_id: number; name: string | null; lat: number; lon: number }>) {
@@ -106,18 +110,22 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 				let noLocality = 0
 				let noCoord = 0
 				db.exec("BEGIN")
+
 				for (const e of edges) {
 					const localityId = pcToLocality.get(String(e.postcode))
+
 					if (localityId === undefined) {
 						noLocality++
 						continue
 					}
 					const place = sprToPlace.get(localityId)
+
 					if (!place) {
 						noCoord++
 						continue
 					}
 					const key = normalizeLocalityForKey(e.postal_city)
+
 					if (!key) continue
 					insert.run(key, String(e.postcode), localityId, place.name, place.lat, place.lon)
 					inserted++
@@ -148,6 +156,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -160,6 +169,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

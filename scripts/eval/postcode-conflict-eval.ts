@@ -1,3 +1,5 @@
+import { readFileSync, writeFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -19,10 +21,10 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
-import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -44,10 +46,14 @@ function flagged(tree: AddressTree): boolean {
 	let hit = false
 	const walk = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
+
 		if (meta?.["postcode_city_mismatch"] === true) hit = true
+
 		for (const c of n.children) walk(c)
 	}
+
 	for (const r of tree.roots) walk(r)
+
 	return hit
 }
 
@@ -65,9 +71,12 @@ const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ?
 const resolver = createWofResolver(backend as never)
 
 const results: Array<{ row: Row; flag: boolean; ok: boolean }> = []
+
 for (const row of rows) {
 	const roots: AddressNode[] = []
+
 	if (row.components.locality) roots.push(node("locality", row.components.locality))
+
 	if (row.components.postcode) roots.push(node("postcode", row.components.postcode))
 	// Country from the row's locale tag ("de-DE" → "DE") so the test set can mix locales.
 	const defaultCountry = (row.locale?.split("-")[1] ?? "").toUpperCase() || undefined
@@ -91,6 +100,7 @@ lines.push(
 )
 lines.push(`| input | kind | expect flag | got flag | ok |`)
 lines.push(`|---|---|:--:|:--:|:--:|`)
+
 for (const r of results) {
 	lines.push(
 		`| ${r.row.input} | ${r.row.conflict ? "conflict" : "control"} | ${r.row.expect_flag} | ${r.flag} | ${r.ok ? "✅" : "❌"} |`
@@ -98,6 +108,7 @@ for (const r of results) {
 }
 const report = lines.join("\n")
 console.log(report)
+
 if (arg("out-md")) {
 	writeFileSync(arg("out-md"), report + "\n")
 	console.error(`wrote markdown → ${arg("out-md")}`)

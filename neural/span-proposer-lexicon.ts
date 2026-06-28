@@ -21,9 +21,9 @@ import { au, nz, us, type SystemCode } from "@mailwoman/codex"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
 /**
- * USPS Pub-28 C2 canonicals whose designator is DESCRIPTIVE rather than addressing ("Building A"
- * describes the building; "Suite 9" addresses a unit). Inside a bracketed group, these read as
- * annotation content (gold convention 2 of the punctuation-stress eval).
+ * USPS Pub-28 C2 canonicals whose designator is DESCRIPTIVE rather than addressing ("Building A" describes the
+ * building; "Suite 9" addresses a unit). Inside a bracketed group, these read as annotation content (gold convention 2
+ * of the punctuation-stress eval).
  */
 const WEAK_CANONICALS: ReadonlySet<string> = new Set([
 	"BUILDING",
@@ -50,10 +50,10 @@ const SCAN_EXCLUDED_DELIVERY: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Convert one designator phrase from a codex table into a scan-pattern fragment. Short alphabetic
- * words (≤ 3 chars: "PO", "GPO", "RMB") are treated as initialisms with optional periods/spacing —
- * the punctuation AMAS tells mailers to strip but deliverable mail still carries ("P.O. Box",
- * "R.M.B 4600"). Longer words match literally with flexible whitespace.
+ * Convert one designator phrase from a codex table into a scan-pattern fragment. Short alphabetic words (≤ 3 chars:
+ * "PO", "GPO", "RMB") are treated as initialisms with optional periods/spacing — the punctuation AMAS tells mailers to
+ * strip but deliverable mail still carries ("P.O. Box", "R.M.B 4600"). Longer words match literally with flexible
+ * whitespace.
  */
 function phraseToPattern(phrase: string): string {
 	return phrase
@@ -71,9 +71,8 @@ function phraseToPattern(phrase: string): string {
 }
 
 /**
- * Build the span-proposer lexicon from the codex tables of the requested systems. Defaults to every
- * system with designator tables in the codex today. The result is pure data — safe to share across
- * parses.
+ * Build the span-proposer lexicon from the codex tables of the requested systems. Defaults to every system with
+ * designator tables in the codex today. The result is pure data — safe to share across parses.
  */
 export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "au", "nz"]): SpanProposerLexicon {
 	const sys = new Set<string>(systems)
@@ -86,24 +85,31 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 		for (const canonical of Object.keys(us.US_UNIT_DESIGNATOR_VARIANTS)) {
 			const variants = [canonical, ...us.US_UNIT_DESIGNATOR_VARIANTS[canonical as us.UsUnitDesignator]]
 			const target = LEVEL_CANONICALS.has(canonical) ? levelDesignators : unitDesignators
+
 			for (const v of variants) {
 				target.add(v.toLowerCase())
+
 				if (WEAK_CANONICALS.has(canonical)) weakDesignators.add(v.toLowerCase())
 			}
 		}
+
 		for (const phrase of us.US_PO_BOX_DESIGNATORS) deliveryPhrases.add(phrase)
 	}
+
 	if (sys.has("au")) {
 		for (const row of au.AU_DELIVERY_SERVICE_DESIGNATORS) {
 			if (SCAN_EXCLUDED_DELIVERY.has(row.abbreviation)) continue
+
 			if (!row.requiresNumber) continue
 			deliveryPhrases.add(row.abbreviation)
 			deliveryPhrases.add(row.name)
 		}
 	}
+
 	if (sys.has("nz")) {
 		for (const row of nz.NZ_DELIVERY_SERVICE_TYPES) {
 			if (SCAN_EXCLUDED_DELIVERY.has(row.type)) continue
+
 			if (row.identifier === "not-used") continue
 			deliveryPhrases.add(row.type)
 		}

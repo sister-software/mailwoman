@@ -12,6 +12,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { afterAll, describe, expect, test } from "vitest"
 
 import { CoarsePlacer, dequantizeInt8Weights, FEATURE_DIM, featurize } from "./coarse-placer.js"
@@ -23,10 +24,12 @@ afterAll(() => rmSync(tmpRoot, { recursive: true, force: true }))
 function seededWeights(classCount: number, dim: number, seed: number): Float32Array {
 	const w = new Float32Array(classCount * dim)
 	let s = seed >>> 0
+
 	for (let i = 0; i < w.length; i++) {
 		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
 		w[i] = (s / 0xffffffff - 0.5) * 0.1
 	}
+
 	return w
 }
 
@@ -34,14 +37,18 @@ function seededWeights(classCount: number, dim: number, seed: number): Float32Ar
 function quantize(w: Float32Array, classCount: number, dim: number) {
 	const int8 = new Int8Array(classCount * dim)
 	const scales: number[] = []
+
 	for (let c = 0; c < classCount; c++) {
 		const base = c * dim
 		let maxAbs = 0
+
 		for (let i = 0; i < dim; i++) maxAbs = Math.max(maxAbs, Math.abs(w[base + i]!))
 		const scale = maxAbs / 127 || 1
 		scales.push(scale)
+
 		for (let i = 0; i < dim; i++) int8[base + i] = Math.max(-127, Math.min(127, Math.round(w[base + i]! / scale)))
 	}
+
 	return { int8, scales }
 }
 
@@ -59,6 +66,7 @@ function writeArtifacts(classes: string[], dim: number, weights: Float32Array, b
 	const { int8, scales } = quantize(weights, classes.length, dim)
 	writeFileSync(join(int8Dir, "meta.json"), JSON.stringify({ ...baseMeta, quantization: "int8-per-row", scales }))
 	writeFileSync(join(int8Dir, "weights.bin"), Buffer.from(int8.buffer))
+
 	return { fp32Dir, int8Dir }
 }
 
@@ -68,6 +76,7 @@ describe("featurize", () => {
 		const b = featurize("123 Main St, Springfield")
 		expect(a).toEqual(b)
 		expect(a.length).toBeGreaterThan(0)
+
 		for (const i of a) {
 			expect(i).toBeGreaterThanOrEqual(0)
 			expect(i).toBeLessThan(FEATURE_DIM)
@@ -92,6 +101,7 @@ describe("dequantizeInt8Weights", () => {
 		const int8 = Int8Array.from([127, -127, 0, 64, 10, -10, 100, -50])
 		const scales = [0.01, 0.5]
 		const out = dequantizeInt8Weights(int8, scales, 2, 4)
+
 		// Float32 storage, so compare with tolerance (1.27 round-trips to 1.26999998…).
 		for (const [i, want] of [1.27, -1.27, 0, 0.64].entries()) expect(out[i]).toBeCloseTo(want, 6)
 		expect(out[4]).toBeCloseTo(5, 6)
@@ -113,6 +123,7 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 
 	test("loads the fp32 artifact and predicts", async () => {
 		const placer = await CoarsePlacer.fromArtifactDir(fp32Dir, { abstainBelow: 0 })
+
 		for (const s of samples) {
 			const p = placer.predict(s)
 			expect(classes).toContain(p.country)
@@ -125,6 +136,7 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 	test("int8 artifact predicts the same class with near-identical confidence", async () => {
 		const fp32 = await CoarsePlacer.fromArtifactDir(fp32Dir, { abstainBelow: 0 })
 		const int8 = await CoarsePlacer.fromArtifactDir(int8Dir, { abstainBelow: 0 })
+
 		for (const s of samples) {
 			const a = fp32.predict(s)
 			const b = int8.predict(s)

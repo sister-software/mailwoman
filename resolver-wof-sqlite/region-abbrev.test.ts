@@ -21,6 +21,7 @@
  *   work.
  */
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { WofSqlitePlaceLookup } from "./lookup.js"
@@ -71,6 +72,7 @@ function buildDb(): DatabaseSync {
 	const anc = db.prepare(
 		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
 	)
+
 	for (const [id, county, region] of [
 		[30, 20, 10],
 		[31, 21, 11],
@@ -80,6 +82,7 @@ function buildDb(): DatabaseSync {
 		anc.run(id, region, "region")
 		anc.run(id, 1, "country")
 	}
+
 	return db
 }
 

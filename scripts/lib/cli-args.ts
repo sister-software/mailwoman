@@ -13,19 +13,21 @@
  */
 
 /**
- * Read `--name <value>` from `process.argv`. Returns the token after `--name` when present and
- * non-empty, else `fallback` (default `""`). Always a string — matching the dominant local copy it
- * replaces, `(k, d = ""): string`: `argv.indexOf("--name")`, then the next token if truthy.
+ * Read `--name <value>` from `process.argv`. Returns the token after `--name` when present and non-empty, else
+ * `fallback` (default `""`). Always a string — matching the dominant local copy it replaces, `(k, d = ""): string`:
+ * `argv.indexOf("--name")`, then the next token if truthy.
  */
 export function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
 	const value = i >= 0 ? process.argv[i + 1] : undefined
+
 	return value ? value : fallback
 }
 
 /** Like {@link arg} but coerced to a number (`Number(...)`); `fallback` when the flag is absent. */
 export function numArg(name: string, fallback: number): number {
 	const raw = arg(name)
+
 	return raw === "" ? fallback : Number(raw)
 }
 

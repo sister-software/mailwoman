@@ -25,12 +25,13 @@
  *   Output: data/gazetteer/anchor-lexicon-v1.json (small, committed, provenance-tracked).
  */
 
+import { mkdirSync, writeFileSync } from "node:fs"
+import { dirname } from "node:path"
+
 import { COUNTRY_LOOKUP } from "@mailwoman/codex/country"
 import { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -46,10 +47,10 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 /**
- * THE shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher —
- * documented in `rules.word_norm` below): per whitespace-word, strip LEADING/TRAILING characters
- * that are not Unicode letters or digits (keep internal ones: "timor-leste", "u.s.a"), then rejoin
- * single-spaced. Entry keys and scanned tokens both pass through it, so "U.S.A." ≡ "u.s.a".
+ * THE shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
+ * `rules.word_norm` below): per whitespace-word, strip LEADING/TRAILING characters that are not Unicode letters or
+ * digits (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced. Entry keys and scanned tokens both
+ * pass through it, so "U.S.A." ≡ "u.s.a".
  */
 const wordNorm = (s: string): string =>
 	s
@@ -62,6 +63,7 @@ const norm = (s: string): string => wordNorm(s).toLowerCase()
 /** Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching. */
 const isShortCode = (s: string): boolean => {
 	const letters = s.replace(/[^\p{L}]/gu, "")
+
 	return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
 }
 
@@ -81,13 +83,18 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 
 				const add = (surface: string, bit: number): void => {
 					const s = surface.trim()
+
 					if (!s) return
+
 					if ((bit === BIT.country || bit === BIT.region) && isShortCode(s)) {
 						const key = wordNorm(s).toUpperCase()
+
 						if (key) codeEntries.set(key, (codeEntries.get(key) ?? 0) | bit)
+
 						return
 					}
 					const key = norm(s)
+
 					if (!key) return
 					maxNgram = Math.max(maxNgram, key.split(" ").length)
 					entries.set(key, (entries.get(key) ?? 0) | bit)
@@ -99,6 +106,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 
 				// ── region (US first cut): state names + USPS abbreviations ──────────────────────────────────
 				for (const name of Object.values(US_STATE_BY_ABBREVIATION)) add(name, BIT.region)
+
 				for (const abbrev of US_STATE_ABBREVIATIONS) add(abbrev, BIT.region)
 
 				// ── po_box designators (case-insensitive even when short — "Box 17" is titlecase) ────────────
@@ -160,6 +168,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -172,6 +181,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 			</Box>
 		)
 	}
+
 	return null
 }
 

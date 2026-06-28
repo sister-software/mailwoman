@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
+import { createReadStream } from "node:fs"
+import * as fs from "node:fs/promises"
+
 import { repoRootPathBuilder, resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
 import { pascalCase } from "change-case"
 import * as csv from "csv-parse"
-import { createReadStream } from "node:fs"
-import * as fs from "node:fs/promises"
 
 const outfile = repoRootPathBuilder("core", "resources", "languages", "types.gen.ts")
 

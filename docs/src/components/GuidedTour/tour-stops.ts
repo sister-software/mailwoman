@@ -34,9 +34,8 @@ export interface TourStop {
 }
 
 /**
- * The 9 guided-tour stops. Each exercises a documented failure mode from
- * `addresses-that-break-geocoders.mdx` or `eval-discipline.mdx`, mapped to the pipeline stage most
- * responsible for handling it.
+ * The 9 guided-tour stops. Each exercises a documented failure mode from `addresses-that-break-geocoders.mdx` or
+ * `eval-discipline.mdx`, mapped to the pipeline stage most responsible for handling it.
  */
 export const TOUR_STOPS: TourStop[] = [
 	{

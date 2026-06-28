@@ -70,8 +70,7 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
 export interface FstPriorOpts {
 	biasScale?: number
 	/**
-	 * Maximum bias magnitude (logits). Prevents large-population places from overriding the model.
-	 * Default 3.0.
+	 * Maximum bias magnitude (logits). Prevents large-population places from overriding the model. Default 3.0.
 	 */
 	maxBias?: number
 	suppressionScale?: number
@@ -80,8 +79,8 @@ export interface FstPriorOpts {
 /**
  * Build a `[seqLen][numLabels]` bias matrix from FST gazetteer matches.
  *
- * Walks all contiguous subpaths of the reconstructed whitespace-token sequence through the FST. For
- * each accepting state, biases the corresponding BIO labels on the matched pieces.
+ * Walks all contiguous subpaths of the reconstructed whitespace-token sequence through the FST. For each accepting
+ * state, biases the corresponding BIO labels on the matched pieces.
  */
 export function buildFstEmissionPriors(
 	fst: FstMatcherLike,
@@ -96,19 +95,24 @@ export function buildFstEmissionPriors(
 	const maxBias = opts.maxBias ?? 3.0
 	const suppressionScale = opts.suppressionScale ?? 1.5
 	const matrix: number[][] = []
+
 	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
 
 	const labelToCol = new Map<string, number>()
+
 	for (let k = 0; k < labels.length; k++) labelToCol.set(labels[k]!, k)
 
 	const wordGroups = groupPiecesIntoWords(pieces)
+
 	if (wordGroups.length === 0) return matrix
 
 	for (let start = 0; start < wordGroups.length; start++) {
 		const group = wordGroups[start]!
+
 		if (group.fstToken === "") continue
 
 		const match = fst.walk([group.fstToken])
+
 		if (!match) continue
 
 		if (match.accepted) {
@@ -125,11 +129,14 @@ export function buildFstEmissionPriors(
 		}
 
 		let current = match
+
 		for (let end = start + 1; end < wordGroups.length; end++) {
 			const nextGroup = wordGroups[end]!
+
 			if (nextGroup.fstToken === "") continue
 
 			const next = fst.walkFrom(current, nextGroup.fstToken)
+
 			if (!next) break
 
 			if (next.accepted) {
@@ -154,13 +161,12 @@ export function buildFstEmissionPriors(
 }
 
 /**
- * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is
- * reconstructed by concatenating pieces (minus leading ▁), then normalized through the same
- * pipeline the FST builder uses.
+ * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is reconstructed by
+ * concatenating pieces (minus leading ▁), then normalized through the same pipeline the FST builder uses.
  *
- * Exported (alongside {@linkcode normalizeFstToken} and the {@linkcode WordGroup} type) so the
- * street-morphology prior can reuse the same piece-grouping/normalization pipeline without
- * duplication. Internal helper signature; not part of the public neural API.
+ * Exported (alongside {@linkcode normalizeFstToken} and the {@linkcode WordGroup} type) so the street-morphology prior
+ * can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper signature; not part of
+ * the public neural API.
  */
 export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
 	const groups: WordGroup[] = []
@@ -172,6 +178,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 
 		if (p.piece.startsWith(SPACE_SENTINEL) || i === 0 || !hasAlnum) {
 			if (current) groups.push(current)
+
 			if (!hasAlnum) {
 				groups.push({ fstToken: "", pieceIndices: [i] })
 				current = null
@@ -186,6 +193,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 			}
 		}
 	}
+
 	if (current) groups.push(current)
 
 	for (const g of groups) {
@@ -202,6 +210,7 @@ function normalizeFstToken(s: string): string {
 		.normalize("NFKC")
 		.toLowerCase()
 		.replace(/[\p{P}\p{S}]/gu, "")
+
 	return cleaned.length > 0 ? cleaned : ""
 }
 
@@ -221,15 +230,18 @@ function applyBias(
 		if (seenWOFIDs.has(entry.wofID)) continue
 		seenWOFIDs.add(entry.wofID)
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
+
 		if (!bioTag) continue
 		const impBias = entry.importance * biasScale * maxBias
 		const existing = seenTags.get(bioTag) ?? 0
+
 		if (impBias > existing) seenTags.set(bioTag, impBias)
 	}
 
 	if (seenTags.size === 0) return
 
 	const allPieceIndices: number[] = []
+
 	for (const group of groups) {
 		for (const pi of group.pieceIndices) allPieceIndices.push(pi)
 	}
@@ -237,6 +249,7 @@ function applyBias(
 	for (const [bioTag, bias] of seenTags) {
 		const bCol = labelToCol.get(`B-${bioTag}`)
 		const iCol = labelToCol.get(`I-${bioTag}`)
+
 		if (bCol === undefined) continue
 
 		for (let k = 0; k < allPieceIndices.length; k++) {
@@ -250,6 +263,7 @@ function applyBias(
 		for (const pi of allPieceIndices) {
 			for (const label of SUPPRESS_WHEN_PLACE) {
 				const col = labelToCol.get(label)
+
 				if (col !== undefined) {
 					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -suppressionScale)
 				}

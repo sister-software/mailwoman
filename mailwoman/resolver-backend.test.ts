@@ -5,7 +5,9 @@
  */
 
 import { fileURLToPath } from "node:url"
+
 import { afterEach, expect, test } from "vitest"
+
 import { mailwomanDataRoot, resolveCandidateDbPath, wofShardPaths } from "./resolver-backend.js"
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.

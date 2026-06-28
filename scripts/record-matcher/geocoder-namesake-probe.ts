@@ -17,10 +17,12 @@ import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
@@ -63,16 +65,19 @@ async function main(): Promise<void> {
 	console.error("[B] probing TX namesake cities (with ZIP / without ZIP)…\n")
 	let wrongRegion = 0
 	let total = 0
+
 	for (const c of CASES) {
 		for (const variant of [`${c.city}, TX ${c.zip}`, `${c.city}, TX`, `${c.city}, Texas`]) {
 			total++
 			const g = await geo(variant)
+
 			if (g.lat === null || g.lon === null) {
 				console.log(`  ✗ "${variant}"  → UNPLACED`)
 				continue
 			}
 			const ok = inTexas(g.lat, g.lon)
 			const km = haversineKm(c.tx[0], c.tx[1], g.lat, g.lon)
+
 			if (!ok) wrongRegion++
 			console.log(
 				`  ${ok ? "✓" : "✗ WRONG-REGION"}  "${variant}"  → ${g.lat.toFixed(3)},${g.lon.toFixed(3)} ` +

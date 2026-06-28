@@ -17,7 +17,9 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { wofAdminAdapter } from "./adapters/wof-admin-json/adapter.js"
 import { buildCorpus, type BuildStage } from "./build.js"
 import { ParquetReader } from "./parquet-wrapper/index.js"
@@ -118,6 +120,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		const trainIds = new Set(
 			(await readFile(join(outDir, "splits", "train.txt"), "utf8")).trim().split("\n").filter(Boolean)
 		)
+
 		for (const r of vermontHeldOut) {
 			expect(trainIds.has(r.source_id)).toBe(false)
 		}

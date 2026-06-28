@@ -10,9 +10,9 @@
  *   no bias at all.
  */
 
+import { proposeSpans, type ProposedSpan } from "@mailwoman/core/pipeline"
 import { describe, expect, it } from "vitest"
 
-import { proposeSpans, type ProposedSpan } from "@mailwoman/core/pipeline"
 import { buildSpanProposalPriors } from "../span-proposal-prior.js"
 import { buildCodexSpanLexicon } from "../span-proposer-lexicon.js"
 
@@ -32,6 +32,7 @@ describe("buildCodexSpanLexicon", () => {
 
 	it("scan regex matches the Commonwealth + USPS delivery-service surfaces", () => {
 		const re = lexicon.deliveryService!
+
 		for (const s of ["PO Box 19", "P.O. Box 19", "GPO Box 2890", "Private Bag 39990", "Locked Bag 1797", "CMB B99"]) {
 			re.lastIndex = 0
 			expect(re.test(s), s).toBe(true)
@@ -40,6 +41,7 @@ describe("buildCodexSpanLexicon", () => {
 
 	it("never matches the AU 'MS' honorific trap or numberless types", () => {
 		const re = lexicon.deliveryService!
+
 		for (const s of ["Ms Smith", "Counter Delivery", "Poste Restante"]) {
 			re.lastIndex = 0
 			expect(re.test(s), s).toBe(false)

@@ -11,6 +11,8 @@
  *   Run: node --experimental-strip-types scripts/eval/probe-arbitration.ts
  */
 
+import { readFileSync } from "node:fs"
+
 import { proposalsToTree, resolveProposalOverlaps, treeToProposals } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
 import { policyRegistryFromRoute, routeInputShape } from "@mailwoman/core/policy"
@@ -21,7 +23,6 @@ import { detectLocale } from "@mailwoman/locale-gate"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createAddressParser } from "mailwoman"
-import { readFileSync } from "node:fs"
 
 const MODEL = dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -91,11 +92,15 @@ for (const input of inputs) {
 	const neuralHadStreet = has(nProps, "street")
 	const finalHasStreet = has(coherent, "street")
 	const arbHadStreet = has(arbitrated, "street")
+
 	if (neuralHadStreet && !finalHasStreet) {
 		nStreetDropped++
+
 		if (arbHadStreet) nStreetDroppedBySuffix++ // present after arbitration, gone after coherence = overlap eviction
 	}
+
 	if (val(nProps, "locality") !== val(coherent, "locality")) nLocChanged++
+
 	if (val(nProps, "region") !== val(coherent, "region")) nRegChanged++
 
 	if (verbose) {

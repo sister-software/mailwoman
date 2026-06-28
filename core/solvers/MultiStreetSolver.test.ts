@@ -6,11 +6,12 @@
 
 import { Solution, SolutionMatch, TokenContext } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { MultiStreetSolver } from "./MultiStreetSolver.js"
 
 /**
- * Helper: build a TokenContext, tag two of its words as `street`, and tag the phrase that spans
- * both of them as `multistreet`. Returns the context plus references to the tagged street spans.
+ * Helper: build a TokenContext, tag two of its words as `street`, and tag the phrase that spans both of them as
+ * `multistreet`. Returns the context plus references to the tagged street spans.
  */
 function buildIntersection(input: string) {
 	const context = new TokenContext(input)

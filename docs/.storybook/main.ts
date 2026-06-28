@@ -9,9 +9,8 @@
  *   Storybook runs an independent Vite pipeline so the two don't interfere.
  */
 
-import react from "@vitejs/plugin-react"
-
 import type { StorybookConfig } from "@storybook/react-vite"
+import react from "@vitejs/plugin-react"
 
 const config: StorybookConfig = {
 	stories: ["../src/**/*.stories.@(ts|tsx|mdx)"],
@@ -31,6 +30,7 @@ const config: StorybookConfig = {
 	// JSX/Fast-Refresh deterministic regardless of preset-detection order.
 	viteFinal: (viteConfig) => {
 		viteConfig.plugins = [...(viteConfig.plugins ?? []), react()]
+
 		return viteConfig
 	},
 }

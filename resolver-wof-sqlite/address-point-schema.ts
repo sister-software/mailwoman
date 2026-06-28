@@ -19,10 +19,9 @@
 import type { Kysely } from "kysely"
 
 /**
- * One rooftop address point. `(street_norm, number)` within a `postcode` (preferred) or
- * `locality_norm` scope is the lookup; `street_key` is the #483 route-fold key for interpolation.
- * Coordinates are non-null (the builder drops non-finite coords). `unit`/`postcode`/`locality_norm`
- * are nullable (not every source carries all three).
+ * One rooftop address point. `(street_norm, number)` within a `postcode` (preferred) or `locality_norm` scope is the
+ * lookup; `street_key` is the #483 route-fold key for interpolation. Coordinates are non-null (the builder drops
+ * non-finite coords). `unit`/`postcode`/`locality_norm` are nullable (not every source carries all three).
  */
 export interface AddressPointTable {
 	/** Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key. */
@@ -51,8 +50,8 @@ export interface AddressPointDatabase {
 }
 
 /**
- * The `address_point` columns in INSERT order. The builder's positional prepared statement derives
- * its placeholder list from this, so the positional order can't drift from the DDL / the reader.
+ * The `address_point` columns in INSERT order. The builder's positional prepared statement derives its placeholder list
+ * from this, so the positional order can't drift from the DDL / the reader.
  */
 export const ADDRESS_POINT_COLUMNS = [
 	"street_norm",

@@ -18,8 +18,7 @@ export interface LocaleIndexOptions {
 /**
  * Index mapping a specific value to originating languages.
  *
- * If a value is present in this index, it means that the value is a valid value in at least one
- * language.
+ * If a value is present in this index, it means that the value is a valid value in at least one language.
  */
 export class LocaleIndex<LanguageCodes extends string> extends Map<string, Set<LanguageCodes>> {
 	/**

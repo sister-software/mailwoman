@@ -22,6 +22,9 @@
  *   final summary lands on stdout.
  */
 
+import { readFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
@@ -29,8 +32,6 @@ import { dataRootPath } from "@mailwoman/core/utils"
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -55,29 +56,35 @@ interface AuthoredConvention {
 const WEIGHT_KEYS = new Set(["pc", "name", "pop"])
 
 /**
- * Reject malformed or code-incoherent conventions at BUILD time (loud), so the runtime never has
- * to.
+ * Reject malformed or code-incoherent conventions at BUILD time (loud), so the runtime never has to.
  */
 function validate(rows: AuthoredConvention[], known: Set<string>): void {
 	const errors: string[] = []
 	const seen = new Set<number>()
+
 	for (const [i, r] of rows.entries()) {
 		const at = `entry ${i} (wof_id=${r?.wof_id})`
+
 		if (typeof r?.wof_id !== "number") errors.push(`${at}: wof_id must be a number`)
 		else if (seen.has(r.wof_id)) errors.push(`${at}: duplicate wof_id`)
 		else seen.add(r.wof_id)
+
 		if (typeof r?.source !== "string" || !r.source.trim())
 			errors.push(`${at}: every row needs non-empty 'source' provenance`)
 		const c = r?.convention
+
 		if (!c || typeof c !== "object") {
 			errors.push(`${at}: missing convention object`)
 			continue
 		}
+
 		for (const s of c.candidateStrategies ?? [])
 			if (!known.has(s)) errors.push(`${at}: names unknown strategy "${s}" (known: ${[...known].join(", ")})`)
+
 		for (const k of Object.keys(c.scoringWeights ?? {}))
 			if (!WEIGHT_KEYS.has(k)) errors.push(`${at}: unknown scoringWeights key "${k}"`)
 	}
+
 	if (errors.length) throw new Error(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
 }
 
@@ -95,6 +102,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 				const output = options.output ?? dataRootPath("wof", "conventions.db")
 
 				const rows = JSON.parse(readFileSync(src, "utf8")) as AuthoredConvention[]
+
 				if (!Array.isArray(rows)) throw new Error(`${src} must be a JSON array of authored conventions`)
 				validate(rows, KNOWN)
 
@@ -112,6 +120,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 					.addColumn("source", "text", (c) => c.notNull())
 					.execute()
 				const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
+
 				for (const r of rows) ins.run(r.wof_id, JSON.stringify(r.convention), r.source)
 
 				// Freeze into the read-only distributable asset — same discipline as our other WOF tables.
@@ -130,11 +139,13 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 					strategies_known: [...KNOWN].join(","),
 				}
 				const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
+
 				for (const [k, v] of Object.entries(meta)) insMeta.run(k, v)
 
 				db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
 				db.exec("ANALYZE")
 				const ok = (db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }).integrity_check
+
 				if (ok !== "ok") throw new Error(`integrity_check failed: ${ok}`)
 				db.exec("VACUUM")
 				await kdb.destroy() // closes the underlying `db` handle
@@ -151,6 +162,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -163,6 +175,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 			</Box>
 		)
 	}
+
 	return null // the build is quiet until the summary lands
 }
 

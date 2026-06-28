@@ -49,10 +49,11 @@
  *   [--mode tiger|ladder] [--sample 5000] [--seed 42]
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { createHash } from "node:crypto"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
+
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { AddressPointInterpolator } from "../../resolver-wof-sqlite/out/address-point-interpolation.js"
 import { haversineKm } from "../../resolver-wof-sqlite/out/geo.js"
@@ -75,6 +76,7 @@ const { values: args } = parseArgs({
 })
 const SAMPLE = Number(args.sample)
 const MODE = args.mode as "tiger" | "ladder"
+
 if (MODE !== "tiger" && MODE !== "ladder") {
 	console.error(`--mode must be tiger or ladder, got ${String(args.mode)}`)
 	process.exit(1)
@@ -83,8 +85,8 @@ if (MODE !== "tiger" && MODE !== "ladder") {
 /**
  * Banded gate definition — #483 operator ruling 2026-06-12.
  *
- * Formula: gate_p50 = C / 2, gate_p90 = 1.5 × C, where C is the band ceiling in metres. The
- * open-ended top band (> 500 m) carries no gate cap — those rows are reported honestly.
+ * Formula: gate_p50 = C / 2, gate_p90 = 1.5 × C, where C is the band ceiling in metres. The open-ended top band (> 500
+ * m) carries no gate cap — those rows are reported honestly.
  */
 interface BandDef {
 	/** Label shown in output. */
@@ -113,6 +115,7 @@ function assignBand(uncertaintyM: number): BandDef {
 	for (const band of BANDS) {
 		if (band.ceiling === null || uncertaintyM <= band.ceiling) return band
 	}
+
 	return BANDS[BANDS.length - 1]!
 }
 
@@ -175,9 +178,11 @@ const hits: Outcome[] = []
 // Ladder mode also runs the TIGER tier alone on the same sample — the coverage/error shift.
 const tigerAlone: number[] = []
 let misses = 0
+
 for (const row of gold) {
 	const query = { street: row.street_raw, number: row.number, postcode: row.postcode }
 	const hit = (ladder ?? interpolator).find(query)
+
 	if (hit) {
 		hits.push({
 			errorM: haversineKm(row.lat, row.lon, hit.lat, hit.lon) * 1000,
@@ -189,8 +194,10 @@ for (const row of gold) {
 	} else {
 		misses++
 	}
+
 	if (ladder) {
 		const tigerHit = interpolator.find(query)
+
 		if (tigerHit) tigerAlone.push(haversineKm(row.lat, row.lon, tigerHit.lat, tigerHit.lon) * 1000)
 	}
 }
@@ -200,6 +207,7 @@ interpolator.close()
 function percentile(sorted: number[], p: number): number {
 	if (sorted.length === 0) return NaN
 	const idx = Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)
+
 	return sorted[Math.max(0, idx)]!
 }
 
@@ -208,8 +216,10 @@ function report(label: string, outcomes: Outcome[]): void {
 		.map((o) => o.errorM)
 		.slice()
 		.sort((a, b) => a - b)
+
 	if (errors.length === 0) {
 		console.log(`  ${label}: 0 rows`)
+
 		return
 	}
 	const fmt = (v: number) => `${Math.round(v)}m`
@@ -232,6 +242,7 @@ console.log("")
 console.log(`coverage: ${hits.length}/${queried} answered (${(100 * coverage).toFixed(1)}%)`)
 console.log(`coord error vs truth (haversine):`)
 report("all hits", hits)
+
 if (MODE === "ladder") {
 	const both = hits.filter((h) => h.method === "address_point" && h.bracket === "both")
 	const single = hits.filter((h) => h.method === "address_point" && h.bracket === "single")
@@ -277,6 +288,7 @@ console.log("banded gate (#483 ruling 2026-06-12) — formula: gate_p50 = C/2, g
 console.log("  bands by claimed uncertaintyM | gate thresholds | measured p50 / p90 | verdict")
 
 let allBandedPass = true
+
 for (const band of BANDS) {
 	const bandHits = hits.filter((h) => assignBand(h.uncertaintyM) === band)
 	const errors = bandHits
@@ -286,6 +298,7 @@ for (const band of BANDS) {
 
 	if (errors.length === 0) {
 		console.log(`  ${band.label}: 0 rows — FLAG: no rows in this band`)
+
 		// An empty gated band is not a pass — it means we have no data to grade.
 		if (band.gateP50 !== null) allBandedPass = false
 		continue
@@ -304,6 +317,7 @@ for (const band of BANDS) {
 		const p50Pass = p50 <= band.gateP50
 		const p90Pass = p90 <= band.gateP90
 		const verdict = p50Pass && p90Pass ? "PASS" : "MISS"
+
 		if (!p50Pass || !p90Pass) allBandedPass = false
 		console.log(
 			`  ${band.label}: n=${errors.length} · gate p50 ≤ ${fmt(band.gateP50)} → ${fmt(p50)} ${p50Pass ? "PASS" : "MISS"} · gate p90 ≤ ${fmt(band.gateP90)} → ${fmt(p90)} ${p90Pass ? "PASS" : "MISS"} · band ${verdict}`

@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { DE_BUNDESLAENDER, isGermanStateCode, lookupGermanState } from "./bundesland.js"
 
 describe("DE_BUNDESLAENDER", () => {

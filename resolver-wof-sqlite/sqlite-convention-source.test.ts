@@ -10,14 +10,15 @@
  *   asset.
  */
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { WofSqlitePlaceLookup } from "./lookup.js"
 import { SqliteConventionSource } from "./sqlite-convention-source.js"
 
 /**
- * A minimal WOF fixture (DE country #90 + Plauen) WITH an attached `address_convention` table in
- * the same schema, so the lookup auto-detects it.
+ * A minimal WOF fixture (DE country #90 + Plauen) WITH an attached `address_convention` table in the same schema, so
+ * the lookup auto-detects it.
  */
 function buildDb(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
@@ -39,7 +40,9 @@ function buildDb(conventions: Array<{ wof_id: number; convention: object }> = []
 	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12.0, 12.3)
 	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0.0, 1)
 	const ins = db.prepare(`INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)`)
+
 	for (const c of conventions) ins.run(c.wof_id, JSON.stringify(c.convention), "test")
+
 	return db
 }
 

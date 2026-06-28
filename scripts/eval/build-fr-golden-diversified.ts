@@ -111,13 +111,18 @@ async function loadOaSamples(): Promise<Map<string, OaAddr[]>> {
 
 		// Basic quality filters
 		if (!(city && num && street && postcode)) continue
+
 		if (postcode.length !== 5 || !/^[0-9]+$/.test(postcode)) continue
 		// Skip numbers like "5000" (no-geometry placeholder in BAN)
 		const stripped = num.replace(/[A-Za-z]+$/, "")
-		if (!/^[+-]?[0-9]+$/.test(stripped)) continue // Python int() ValueError -> continue
+
+		if (!/^[+-]?[0-9]+$/.test(stripped)) continue
+
+		// Python int() ValueError -> continue
 		if (parseInt(stripped, 10) >= 5000) continue
 
 		let bucket = cityPool.get(city)
+
 		if (!bucket) {
 			bucket = []
 			cityPool.set(city, bucket)
@@ -125,11 +130,13 @@ async function loadOaSamples(): Promise<Map<string, OaAddr[]>> {
 		bucket.push({ number: num, street, postcode, city })
 
 		scanned += 1
+
 		if (scanned % 5_000_000 === 0) {
 			process.stderr.write(
 				`  scanned ${scanned.toLocaleString("en-US")} rows, ${cityPool.size.toLocaleString("en-US")} cities so far\n`
 			)
 		}
+
 		// Stop after 20M rows — enough to cover all of France
 		if (scanned >= 20_000_000) break outer
 	}
@@ -137,6 +144,7 @@ async function loadOaSamples(): Promise<Map<string, OaAddr[]>> {
 	process.stderr.write(
 		`Done: ${scanned.toLocaleString("en-US")} rows, ${cityPool.size.toLocaleString("en-US")} distinct cities\n`
 	)
+
 	return cityPool
 }
 
@@ -145,6 +153,7 @@ function selectCities(cityPool: Map<string, OaAddr[]>, rng: SeededRandom): strin
 	const foundPreferred = [...PREFERRED_CITIES].filter((c) => cityPool.has(c))
 	const remaining = [...cityPool.keys()].filter((c) => !PREFERRED_CITIES.has(c))
 	rng.shuffle(remaining)
+
 	// Combine: prefer famous cities but cap total at CITIES_PER_BATCH
 	return [...foundPreferred, ...remaining].slice(0, CITIES_PER_BATCH)
 }
@@ -160,6 +169,7 @@ function makeRow(num: string, street: string, postcode: string, city: string, or
 
 	let raw: string
 	let note: string
+
 	if (order === "canonical") {
 		raw = `${num} ${street}, ${postcode} ${city}`
 		note = "FR canonical order: house_number street, postcode locality (OA/BAN source)"
@@ -209,19 +219,23 @@ function reportDistribution(rows: Record<string, unknown>[]): void {
 		// Determine order from notes
 		const note = (r.notes as string) ?? ""
 		let order: string | null = null
+
 		if (note.includes("canonical")) order = "canonical"
 		else if (note.includes("reversed")) order = "pc-first"
 		else if (note.includes("locality-first")) order = "city-pc-nn"
+
 		if (order) orderCounts.set(order, (orderCounts.get(order) ?? 0) + 1)
 	}
 
 	console.log(`\n=== Distribution report (${rows.length} new rows) ===`)
 	console.log(`\nOrder mix:`)
+
 	for (const [order, count] of [...orderCounts.entries()].sort((a, b) => b[1] - a[1])) {
 		console.log(`  ${order}: ${count}`)
 	}
 
 	console.log(`\nTop localities (by count):`)
+
 	for (const [loc, count] of [...localityCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20)) {
 		console.log(`  ${loc}: ${count}`)
 	}
@@ -239,11 +253,13 @@ async function main(): Promise<void> {
 	reportDistribution(rows)
 
 	const dest = inplace ? GOLDEN_FILE : OUT_FILE
+
 	if (inplace) process.stderr.write(`\nAppending ${rows.length} rows to ${dest} ...\n`)
 	else process.stderr.write(`\nWriting ${rows.length} rows to ${dest} ...\n`)
 
 	mkdirSync(dirname(dest), { recursive: true })
 	const content = rows.map((row) => pyJsonDumps(row, { ensureAscii: false }) + "\n").join("")
+
 	if (inplace) appendFileSync(dest, content)
 	else writeFileSync(dest, content)
 
@@ -252,8 +268,11 @@ async function main(): Promise<void> {
 	// Validate JSON parse of every written line
 	if (!inplace) {
 		const lines = readFileSync(dest, "utf-8").split("\n")
+
 		for (let i = 0; i < lines.length; i++) {
-			if (lines[i] === "" && i === lines.length - 1) continue // trailing newline
+			if (lines[i] === "" && i === lines.length - 1) continue
+
+			// trailing newline
 			try {
 				JSON.parse(lines[i]!)
 			} catch (e) {

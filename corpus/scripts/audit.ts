@@ -31,9 +31,9 @@ interface AuditOpts {
 	corpusDir: string
 	configPath?: string
 	/**
-	 * Sample at most N shards per split when counting sources. Default 100 for speed; bump to read
-	 * the full set on a slow run. The first row of each shard determines its source — corpus-v0.2.0+
-	 * shards are 100% source-segregated, so a one-row read is authoritative.
+	 * Sample at most N shards per split when counting sources. Default 100 for speed; bump to read the full set on a slow
+	 * run. The first row of each shard determines its source — corpus-v0.2.0+ shards are 100% source-segregated, so a
+	 * one-row read is authoritative.
 	 */
 	sampleShardCount?: number
 }
@@ -52,9 +52,9 @@ interface ParsedConfig {
 }
 
 /**
- * Try parsing a training YAML's source_weights as a minimal regex-based extract. We don't pull in a
- * YAML lib for this script — the syntax is so small that a regex over the source_weights block is
- * sufficient + keeps the script dep-free.
+ * Try parsing a training YAML's source_weights as a minimal regex-based extract. We don't pull in a YAML lib for this
+ * script — the syntax is so small that a regex over the source_weights block is sufficient + keeps the script
+ * dep-free.
  */
 function parseConfig(configPath: string): ParsedConfig | null {
 	if (!existsSync(configPath)) return null
@@ -63,36 +63,45 @@ function parseConfig(configPath: string): ParsedConfig | null {
 	const weights: Record<string, number> = {}
 	let inBlock = false
 	let blockIndent = -1
+
 	for (const raw of lines) {
 		const sourceWeightsMatch = raw.match(/^([\t ]*)source_weights:\s*$/)
+
 		if (sourceWeightsMatch) {
 			inBlock = true
 			blockIndent = sourceWeightsMatch[1]!.length
 			continue
 		}
+
 		if (!inBlock) continue
+
 		// Skip blank lines and comments.
 		if (/^[\t ]*(#|$)/.test(raw)) continue
 		// Lines indented MORE than `source_weights:` are entries; lines with ≤ indent end the block.
 		const indent = raw.match(/^[\t ]*/)![0].length
+
 		if (indent <= blockIndent) {
 			inBlock = false
 			continue
 		}
 		const m = raw.match(/^[\t ]+([\w-]+):\s*([\d.]+)/)
+
 		if (m) weights[m[1]!] = parseFloat(m[2]!)
 	}
+
 	return { sourceWeights: weights }
 }
 
 /**
- * Scan a corpus directory's shards (typically under <corpus_dir>/train, /val, /test) and count
- * shards per source per split.
+ * Scan a corpus directory's shards (typically under <corpus_dir>/train, /val, /test) and count shards per source per
+ * split.
  */
 function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 	const stats: ShardStats = { bySplit: {}, totalShards: 0, totalFiles: 0 }
+
 	for (const split of ["train", "val", "test"]) {
 		const splitDir = join(corpusDir, split)
+
 		if (!existsSync(splitDir)) continue
 		const files = readdirSync(splitDir)
 			.filter((f) => f.endsWith(".parquet"))
@@ -101,6 +110,7 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))
 		const sampled = files.filter((_, i) => i % sampleEvery === 0).slice(0, sampleCount)
 		const splitMap: Record<string, number> = {}
+
 		// We can't read parquet without a dep, so we infer source from filenames where possible.
 		// The corpus build typically writes deterministically by source — fall back to "<unknown>"
 		// when filename gives no hint. For accurate per-source counts on real corpora, the
@@ -111,10 +121,12 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 		}
 		// Scale to estimated full-shard counts.
 		const scale = files.length / Math.max(sampled.length, 1)
+
 		for (const k of Object.keys(splitMap)) splitMap[k] = Math.round(splitMap[k]! * scale)
 		stats.bySplit[split] = splitMap
 		stats.totalShards += files.length
 	}
+
 	return stats
 }
 
@@ -123,16 +135,18 @@ function inferSourceFromFilename(filename: string): string {
 	// build at corpus-v0.3.0) gives no source signal in the filename — see manifestScan() for the
 	// authoritative path. Return "<unknown>" so the caller flags this case.
 	const m = basename(filename).match(/part-([\w-]+)-\d+\.parquet$/)
+
 	if (m && m[1] !== undefined) return m[1]
+
 	return "<unknown>"
 }
 
 /**
- * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes; matching against
- * the longest prefix that fits a given `first_source_id` recovers the canonical source name.
+ * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes; matching against the longest prefix
+ * that fits a given `first_source_id` recovers the canonical source name.
  *
- * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches `usgov-nad` rather
- * than `usgov`. Sorted descending by length at use site.
+ * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches `usgov-nad` rather than `usgov`. Sorted
+ * descending by length at use site.
  */
 const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 	"wof-admin",
@@ -160,30 +174,34 @@ const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 function sourceFromId(sourceId: string, knownPrefixes: readonly string[]): string {
 	// Sort longest-first so usgov-nad beats usgov, wof-admin beats wof.
 	const sorted = [...knownPrefixes].sort((a, b) => b.length - a.length)
+
 	for (const prefix of sorted) {
 		if (sourceId.startsWith(prefix + "-") || sourceId === prefix) return prefix
 	}
+
 	return "<unknown>"
 }
 
 /**
- * Prefer reading MANIFEST.json when present — uses each shard's `first_source_id` + prefix matching
- * to recover the source name. Falls back to scanShards when MANIFEST is absent.
+ * Prefer reading MANIFEST.json when present — uses each shard's `first_source_id` + prefix matching to recover the
+ * source name. Falls back to scanShards when MANIFEST is absent.
  *
- * NOTE: corpus-v0.3.0 shards can mix sources (see `last_source_id` differing from
- * `first_source_id`). The first-row source is an approximation; reading the parquet's full source
- * column would be authoritative but requires a parquet dep. For audit purposes the first-row
- * approximation is accurate within ~5% for the corpus-v0.3.0 shape (most shards are >95% one
- * source).
+ * NOTE: corpus-v0.3.0 shards can mix sources (see `last_source_id` differing from `first_source_id`). The first-row
+ * source is an approximation; reading the parquet's full source column would be authoritative but requires a parquet
+ * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most shards
+ * are >95% one source).
  */
 function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): ShardStats | null {
 	const manifestPath = join(corpusDir, "MANIFEST.json")
+
 	if (!existsSync(manifestPath)) return null
 	const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
 		shards?: Array<{ split: string; source?: string | null; first_source_id?: string | null }>
 	}
+
 	if (!Array.isArray(manifest.shards)) return null
 	const bySplit: Record<string, Record<string, number>> = {}
+
 	for (const shard of manifest.shards) {
 		const split = shard.split
 		const src = shard.source ?? sourceFromId(shard.first_source_id ?? "", knownPrefixes)
@@ -191,6 +209,7 @@ function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): Shar
 		bySplit[split][src] = (bySplit[split][src] ?? 0) + 1
 	}
 	const total = Object.values(bySplit).reduce((sum, m) => sum + Object.values(m).reduce((a, b) => a + b, 0), 0)
+
 	return { bySplit, totalShards: total, totalFiles: total }
 }
 
@@ -210,6 +229,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	// Compute effective sample weight: shard_count × source_weight. Sources with no weight get the
 	// "—" marker (loader skips them).
 	const sampleWeights: Array<[string, number]> = []
+
 	for (const src of allSources) {
 		const shards = stats[src] ?? 0
 		const weight = weights[src]
@@ -217,6 +237,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 		sampleWeights.push([src, effective])
 	}
 	const totalSampleWeight = sampleWeights.reduce((a, [, w]) => a + w, 0)
+
 	for (const src of allSources) {
 		const shards = stats[src] ?? 0
 		const weight = weights[src] ?? "—"
@@ -237,30 +258,36 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 		AuditRow & { effectiveSamplePct: number }
 	>
 	numeric.sort((a, b) => b.effectiveSamplePct - a.effectiveSamplePct)
+
 	if (numeric.length >= 1) {
 		const top = numeric[0]!
 		const next = numeric[1]?.effectiveSamplePct ?? 0
+
 		if (top.effectiveSamplePct > 0.4 || (next > 0 && top.effectiveSamplePct / next > 1.5)) {
 			top.overweightFactor = next > 0 ? top.effectiveSamplePct / next : Infinity
 		}
 	}
 	rows.sort((a, b) => b.shards - a.shards)
+
 	return rows
 }
 
 function formatPct(v: number | "—"): string {
 	if (v === "—") return "—"
+
 	return `${(v * 100).toFixed(1)}%`
 }
 
 function printReport(corpusDir: string, configPath: string | undefined, stats: ShardStats, rows: AuditRow[]): void {
 	console.log(`\nCorpus audit — ${corpusDir}`)
+
 	if (configPath) console.log(`Config:        ${configPath}`)
 	console.log(
 		`Total shards:  ${stats.totalShards}${stats.totalFiles !== stats.totalShards ? ` (${stats.totalFiles} files on disk)` : ""}`
 	)
 	console.log("")
 	const trainStats = stats.bySplit["train"]
+
 	if (trainStats) {
 		const total = Object.values(trainStats).reduce((a, b) => a + b, 0)
 		console.log(`Train split: ${total} shards`)
@@ -270,6 +297,7 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 		const fmtRow = (cells: string[]) => cells.map((c, i) => c.padEnd(widths[i]!)).join("  ")
 		console.log(fmtRow(headers))
 		console.log(fmtRow(widths.map((w) => "─".repeat(w))))
+
 		for (const row of rows) {
 			console.log(
 				fmtRow([
@@ -283,6 +311,7 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 		}
 		console.log("")
 		const dominator = rows.find((r) => r.overweightFactor !== undefined)
+
 		if (dominator) {
 			const factor = dominator.overweightFactor
 			const factorStr = factor === Infinity ? "∞" : factor?.toFixed(1)
@@ -296,6 +325,7 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 			console.log("✓ No single-source concentration (top source < 40% effective sample AND < 1.5× next).")
 		}
 		const missingWeights = rows.filter((r) => r.weight === "—" && r.shards > 0)
+
 		if (missingWeights.length > 0 && configPath) {
 			console.error(
 				`⚠ Sources present in corpus but absent from config.source_weights ` +
@@ -303,6 +333,7 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 			)
 		}
 		const orphanWeights = rows.filter((r) => typeof r.weight === "number" && r.shards === 0)
+
 		if (orphanWeights.length > 0) {
 			console.error(
 				`⚠ Sources weighted in config but no shards found in corpus ` +
@@ -329,6 +360,7 @@ function parseArgv(argv: readonly string[]): AuditOpts {
 		process.exit(2)
 	}
 	const opts: AuditOpts = { corpusDir: argv[0]! }
+
 	for (let i = 1; i < argv.length; i++) {
 		if (argv[i] === "--config" && argv[i + 1]) {
 			opts.configPath = argv[i + 1]
@@ -338,6 +370,7 @@ function parseArgv(argv: readonly string[]): AuditOpts {
 			i++
 		}
 	}
+
 	return opts
 }
 

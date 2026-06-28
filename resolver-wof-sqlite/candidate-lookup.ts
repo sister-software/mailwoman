@@ -23,8 +23,10 @@
  *   `bbox` field on {@link FindPlaceQuery}).
  */
 
-import { expandPlacetypeFilter } from "@mailwoman/resolver"
 import { DatabaseSync } from "node:sqlite"
+
+import { expandPlacetypeFilter } from "@mailwoman/resolver"
+
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.js"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.js"
 import { trigramJaccard } from "./lookup.js"
@@ -41,9 +43,8 @@ export interface WofCandidateTableLookupOpts {
 }
 
 /**
- * The candidate columns this lookup probes — a typed projection of the SHARED
- * {@link CandidateTable}, so a column rename in `build-candidate` (the writer) is a compile error
- * here (the reader).
+ * The candidate columns this lookup probes — a typed projection of the SHARED {@link CandidateTable}, so a column rename
+ * in `build-candidate` (the writer) is a compile error here (the reader).
  */
 type CandidateRow = Pick<
 	CandidateTable,
@@ -61,30 +62,32 @@ type CandidateRow = Pick<
 >
 
 /**
- * FTS5-trigram over-fetch before the trigram-Jaccard re-rank, and the minimum similarity to count
- * as a fuzzy hit (below it the trigram overlap is noise, e.g. unrelated same-trigram names).
- * Tunable.
+ * FTS5-trigram over-fetch before the trigram-Jaccard re-rank, and the minimum similarity to count as a fuzzy hit (below
+ * it the trigram overlap is noise, e.g. unrelated same-trigram names). Tunable.
  */
 const FUZZY_FETCH = 40
 const FUZZY_MIN = 0.34
 
 /**
- * Unpadded character-trigrams of `s`, OR'd into an FTS5 trigram MATCH query (each quoted so FTS
- * treats it as a literal term). Returns "" when `s` is shorter than a trigram or yields no clean
- * grams — the caller then skips the fuzzy probe.
+ * Unpadded character-trigrams of `s`, OR'd into an FTS5 trigram MATCH query (each quoted so FTS treats it as a literal
+ * term). Returns "" when `s` is shorter than a trigram or yields no clean grams — the caller then skips the fuzzy
+ * probe.
  */
 function ftsTrigramQuery(s: string): string {
 	const grams = new Set<string>()
+
 	for (let i = 0; i + 3 <= s.length; i++) {
 		const g = s.slice(i, i + 3)
+
 		if (/^[\p{L}\p{N} ]{3}$/u.test(g)) grams.add(g)
 	}
+
 	return [...grams].map((g) => `"${g}"`).join(" OR ")
 }
 
 /**
- * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WofSqlitePlaceLookup} in
- * `createWofResolver(backend)` — same `findPlace` contract, population-first ranking.
+ * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WofSqlitePlaceLookup} in `createWofResolver(backend)`
+ * — same `findPlace` contract, population-first ranking.
  */
 export class WofCandidateTableLookup implements PlaceLookup {
 	#db: DatabaseSync
@@ -94,24 +97,21 @@ export class WofCandidateTableLookup implements PlaceLookup {
 	readonly #placetypeToId = new Map<string, number>()
 	readonly #idToPlacetype = new Map<number, string>()
 	/**
-	 * Prepared `(name_key, postcode)` probe for the #741 postal-city side-index — `undefined` when
-	 * the `postal_city_candidate` table isn't present, so a candidate.db built without it is
-	 * byte-stable.
+	 * Prepared `(name_key, postcode)` probe for the #741 postal-city side-index — `undefined` when the
+	 * `postal_city_candidate` table isn't present, so a candidate.db built without it is byte-stable.
 	 */
 	readonly #postalCityProbe: ReturnType<DatabaseSync["prepare"]> | undefined
 	/**
-	 * Prepared FTS5-trigram MATCH probe for the typo-tolerant fallback — `undefined` when the
-	 * `candidate_fts` index isn't present, so a candidate.db built without it is byte-stable (the
-	 * fuzzy path is skipped, exactly like today).
+	 * Prepared FTS5-trigram MATCH probe for the typo-tolerant fallback — `undefined` when the `candidate_fts` index isn't
+	 * present, so a candidate.db built without it is byte-stable (the fuzzy path is skipped, exactly like today).
 	 */
 	readonly #ftsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
 	/**
-	 * Prepared UNFILTERED existence probe (`name_key` present anywhere, ignoring
-	 * country/placetype/bbox). Gates the fuzzy fallback: fuzzy is a TYPO corrector, so it engages
-	 * only when the name doesn't exist in the gazetteer at all. A name that DOES exist but missed
-	 * under the active filter is a filter miss (e.g. a placer misroute "Vienna, Austria"→IT), not a
-	 * spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the
-	 * cascade's country-agnostic retry. Prepared only alongside `#ftsProbe`.
+	 * Prepared UNFILTERED existence probe (`name_key` present anywhere, ignoring country/placetype/bbox). Gates the fuzzy
+	 * fallback: fuzzy is a TYPO corrector, so it engages only when the name doesn't exist in the gazetteer at all. A name
+	 * that DOES exist but missed under the active filter is a filter miss (e.g. a placer misroute "Vienna, Austria"→IT),
+	 * not a spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the cascade's
+	 * country-agnostic retry. Prepared only alongside `#ftsProbe`.
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
 
@@ -133,6 +133,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			this.#countryToId.set(code, Number(r.id))
 			this.#idToCountry.set(Number(r.id), code)
 		}
+
 		for (const r of this.#db
 			.prepare("SELECT id, placetype FROM placetype_codes")
 			.all() as unknown as PlacetypeCodeTable[]) {
@@ -162,13 +163,16 @@ export class WofCandidateTableLookup implements PlaceLookup {
 	#wantsLocality(placetype: FindPlaceQuery["placetype"]): boolean {
 		if (!placetype) return true
 		const want = Array.isArray(placetype) ? placetype : [placetype]
+
 		return expandPlacetypeFilter(want as readonly string[]).includes("locality")
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
 		const text = (query.text ?? "").trim()
+
 		if (!text) return []
 		const nameKey = normalizeLocalityForKey(text)
+
 		if (!nameKey) return []
 
 		// #741: postcode-keyed postal-city alias. An exact `(name_key, postcode)` hit resolves a
@@ -181,6 +185,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			const hit = this.#postalCityProbe.get(nameKey, query.postcode.trim()) as
 				| Pick<PostalCityCandidateTable, "spr_id" | "name" | "latitude" | "longitude">
 				| undefined
+
 			if (hit) {
 				return [
 					{
@@ -202,12 +207,15 @@ export class WofCandidateTableLookup implements PlaceLookup {
 		// Filter conds shared by the exact-key + strip-fallback probes (everything but name_key).
 		const filters: string[] = []
 		const filterParams: Array<string | number> = []
+
 		if (query.country) {
 			const cid = this.#countryToId.get(query.country.toUpperCase())
+
 			if (cid === undefined) return [] // a country the candidate table doesn't carry
 			filters.push("country_id = ?")
 			filterParams.push(cid)
 		}
+
 		if (query.placetype) {
 			// Shared placetype-equivalence expansion (a `locality` query must also reach borough /
 			// localadmin). `postalcode` maps to no admin placetype here → empty → no rows.
@@ -215,10 +223,12 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			const ids = expandPlacetypeFilter(want as readonly string[])
 				.map((t) => this.#placetypeToId.get(t))
 				.filter((v): v is number => v !== undefined)
+
 			if (ids.length === 0) return []
 			filters.push(`placetype_id IN (${ids.map(() => "?").join(",")})`)
 			filterParams.push(...ids)
 		}
+
 		if (query.bbox) {
 			const b = query.bbox
 			filters.push("latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?")
@@ -230,15 +240,18 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			const sql =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank " +
 				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
+
 			return this.#db.prepare(sql).all(nk, ...filterParams, limit) as unknown as CandidateRow[]
 		}
 
 		let rows = probe(nameKey)
+
 		if (rows.length === 0) {
 			// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
 			// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried ONLY on an exact
 			// miss; the cascade's region bbox disambiguates any base-name ambiguity.
 			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
+
 			if (strippedKey && strippedKey !== nameKey) rows = probe(strippedKey)
 		}
 
@@ -255,6 +268,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 		// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
 		if (rows.length === 0 && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
 			const match = ftsTrigramQuery(nameKey)
+
 			if (match) {
 				const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
 				const ranked = hits
@@ -262,10 +276,12 @@ export class WofCandidateTableLookup implements PlaceLookup {
 					.filter((h) => h.s >= FUZZY_MIN)
 					.sort((a, b) => b.s - a.s)
 				const seen = new Set<string>()
+
 				for (const h of ranked) {
 					if (seen.has(h.nk)) continue
 					seen.add(h.nk)
 					rows.push(...probe(h.nk))
+
 					if (rows.length >= limit) break
 				}
 				rows = rows.slice(0, limit)
@@ -274,6 +290,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 
 		return rows.map((row): PlaceCandidate => {
 			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
+
 			return {
 				id: Number(row.spr_id),
 				name: String(row.name ?? ""),

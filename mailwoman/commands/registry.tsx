@@ -19,6 +19,9 @@
  *   operator-verifiable (not CI).
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+import { setImmediate } from "node:timers/promises"
+
 import { Spinner } from "@inkjs/ui"
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -42,10 +45,9 @@ import {
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
-import { readFileSync, writeFileSync } from "node:fs"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import { geocodeAddress, ShardProvider, type ShardResolver } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath } from "../resolver-backend.js"
@@ -149,9 +151,7 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.default(mailwomanDataRoot())
-		.describe(
-			"Root directory for per-state address-point + interpolation shards. Defaults to $MAILWOMAN_DATA_ROOT."
-		),
+		.describe("Root directory for per-state address-point + interpolation shards. Defaults to $MAILWOMAN_DATA_ROOT."),
 })
 
 export { ArgumentsSchema as args, OptionsSchema as options }
@@ -161,10 +161,10 @@ export { ArgumentsSchema as args, OptionsSchema as options }
 // ---------------------------------------------------------------------------
 
 /**
- * Built-in best-effort mapping for tidy contact/org CSVs. Multi-column fields are joined (so a CSV
- * that splits the address across columns composes one string). Real datasets with bespoke headers
- * (e.g. NPPES "Provider First Line Business Practice Location Address") pass an explicit --mapping;
- * inferring it from the header is the #603 fast-follow.
+ * Built-in best-effort mapping for tidy contact/org CSVs. Multi-column fields are joined (so a CSV that splits the
+ * address across columns composes one string). Real datasets with bespoke headers (e.g. NPPES "Provider First Line
+ * Business Practice Location Address") pass an explicit --mapping; inferring it from the header is the #603
+ * fast-follow.
  */
 export const DEFAULT_MAPPING: ColumnMapping = {
 	id: "id",
@@ -176,8 +176,7 @@ export const DEFAULT_MAPPING: ColumnMapping = {
 }
 
 /**
- * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default
- * {@link DEFAULT_MAPPING}).
+ * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default {@link DEFAULT_MAPPING}).
  */
 export function loadMapping(
 	option: string | undefined,
@@ -185,29 +184,34 @@ export function loadMapping(
 	base: ColumnMapping = DEFAULT_MAPPING
 ): ColumnMapping {
 	let provided: Partial<ColumnMapping> = {}
+
 	if (option) {
 		const text = option.trim().startsWith("{") ? option : readFileSync(option, "utf8")
+
 		try {
 			provided = JSON.parse(text) as Partial<ColumnMapping>
 		} catch (err) {
 			throw new Error(`--mapping is neither a readable file nor valid JSON: ${(err as Error).message}`)
 		}
 	}
+
 	return { ...base, ...provided, ...(source ? { source } : {}) }
 }
 
 function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
 	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+
 	if (!path) {
 		throw new Error("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")
 	}
+
 	return path
 }
 
 /**
- * Construct the heavy geocoder once (neural parser + WOF resolver + per-state shards) and wire it
- * into the matcher's {@link GeocodeAddress} seam. Returns the seam plus a `close` to release the DB
- * handles. Shared by the single-CSV and multi-source paths.
+ * Construct the heavy geocoder once (neural parser + WOF resolver + per-state shards) and wire it into the matcher's
+ * {@link GeocodeAddress} seam. Returns the seam plus a `close` to release the DB handles. Shared by the single-CSV and
+ * multi-source paths.
  */
 async function buildGeocoder(
 	options: zod.infer<typeof OptionsSchema>
@@ -215,6 +219,7 @@ async function buildGeocoder(
 	const wofPath = resolveWofPath(options)
 
 	let classifier: NeuralAddressClassifier
+
 	try {
 		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
 	} catch {
@@ -224,6 +229,7 @@ async function buildGeocoder(
 	}
 
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
+
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
@@ -261,8 +267,7 @@ async function buildGeocoder(
 }
 
 /**
- * One dataset in a `--sources` config: where it lives, its mapping, an optional provenance label +
- * row cap.
+ * One dataset in a `--sources` config: where it lives, its mapping, an optional provenance label + row cap.
  */
 interface MultiSourceSpec {
 	path: string
@@ -272,8 +277,7 @@ interface MultiSourceSpec {
 	/** For --reconcile: whether this dataset denotes eligibility/membership or funding/enrollment. */
 	role?: "eligibility" | "funding"
 	/**
-	 * Read at most this many rows (the head of the file) — sampling a huge source without
-	 * pre-filtering.
+	 * Read at most this many rows (the head of the file) — sampling a huge source without pre-filtering.
 	 */
 	limit?: number
 }
@@ -282,21 +286,24 @@ interface MultiSourceSpec {
 export function loadSources(option: string): MultiSourceSpec[] {
 	const text = /^[[{]/.test(option.trim()) ? option : readFileSync(option, "utf8")
 	let parsed: unknown
+
 	try {
 		parsed = JSON.parse(text)
 	} catch (err) {
 		throw new Error(`--sources is neither a readable file nor valid JSON: ${(err as Error).message}`)
 	}
+
 	if (!Array.isArray(parsed) || parsed.some((s) => !s || typeof (s as MultiSourceSpec).path !== "string")) {
 		throw new Error("--sources must be a JSON array of { path, mapping, source?, delimiter?, limit? }.")
 	}
+
 	return parsed as MultiSourceSpec[]
 }
 
 /**
- * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone HTML map),
- * returning the lines to append to the run summary. Returns `null` when neither is set — the signal
- * to dump GeoJSON to stdout (the original default). Shared by both pipeline paths.
+ * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone HTML map), returning the lines to
+ * append to the run summary. Returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original
+ * default). Shared by both pipeline paths.
  */
 function writeOutputs(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
@@ -304,27 +311,32 @@ function writeOutputs(
 ): string | null {
 	if (!options.out && !options.mapOut) return null
 	const lines: string[] = []
+
 	if (options.out) {
 		writeFileSync(options.out, JSON.stringify(geojson, null, 2))
 		lines.push(`wrote ${geojson.features.length} features → ${options.out}`)
 	}
+
 	if (options.mapOut) {
 		writeFileSync(options.mapOut, toMapHTML(geojson, options.source ? { title: `Mailwoman — ${options.source}` } : {}))
 		lines.push(`wrote map → ${options.mapOut} (serve over localhost to view)`)
 	}
+
 	return lines.join("\n")
 }
 
 /**
- * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into ONE
- * combined record set, geocode, resolve, and report the entities that span ≥2 sources — the
- * cross-dataset links. No shared key required; geography is the join.
+ * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into ONE combined record set,
+ * geocode, resolve, and report the entities that span ≥2 sources — the cross-dataset links. No shared key required;
+ * geography is the join.
  */
 async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	const { seam, close } = await buildGeocoder(options)
+
 	try {
 		const records: SourceRecord[] = []
 		const perSource: string[] = []
+
 		for (const spec of specs) {
 			const label = spec.source ?? spec.path
 			const mapping: ColumnMapping = { ...spec.mapping, source: label }
@@ -337,6 +349,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 				}
 			})()
 			const recs = await ingestRows(rows, mapping, { geocodeAddress: seam })
+
 			for (const record of recs) record.id = `${label}:${record.id}` // namespace ids so cross-source ids never collide
 			records.push(...recs)
 			perSource.push(`${label} ${recs.length}`)
@@ -360,6 +373,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 			const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
 			const fundingSources = specs.filter((s) => s.role === "funding").map(labelOf)
+
 			if (!eligibilitySources.length || !fundingSources.length) {
 				throw new Error(
 					'--reconcile needs each --sources entry tagged with `role: "eligibility"` or `role: "funding"` ' +
@@ -379,6 +393,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 					"cross-source signal, so it is pinned off here. See #655.",
 			})
 			const written = writeOutputs(geojson, options)
+
 			return written === null ? report : `${report}\n\n${written}`
 		}
 
@@ -391,6 +406,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
 
 		const written = writeOutputs(geojson, options)
+
 		return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
 	} finally {
 		close()
@@ -431,6 +447,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 			`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
 
 		const written = writeOutputs(geojson, options)
+
 		return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
 	} finally {
 		close()
@@ -457,6 +474,7 @@ const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSc
 			? Promise.resolve().then(() => runMultiSource(loadSources(options.sources!), options))
 			: (() => {
 					const csv = args?.[0]
+
 					if (!csv || csv.trim().length === 0) {
 						return Promise.reject(
 							new Error(
@@ -465,6 +483,7 @@ const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSc
 							)
 						)
 					}
+
 					return runRegistry(csv.trim(), options)
 				})()
 

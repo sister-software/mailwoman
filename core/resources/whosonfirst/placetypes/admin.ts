@@ -12,6 +12,7 @@ import {
 	isAlpha3bLanguageCode,
 } from "@mailwoman/core/resources/languages"
 import type { Feature, Geometry } from "geojson"
+
 import type { WhosOnFirstPlacetype } from "./definition.js"
 
 export interface WOFBaseProperties {
@@ -104,6 +105,7 @@ export function pluckPlacetypeSpec({
 
 	for (const [key, value] of Object.entries(props)) {
 		if (!value) continue
+
 		if (!value || typeof value === "number") continue
 
 		const { languageCode, nameKind } = parsePlacetypeSource(key)
@@ -154,8 +156,7 @@ export function pluckPlacetypeSpec({
 }
 
 /**
- * Given a WhosOnFirst filename, plucks and normalizes the language code into an ISO 639-1 alpha-2
- * code.
+ * Given a WhosOnFirst filename, plucks and normalizes the language code into an ISO 639-1 alpha-2 code.
  *
  * @deprecated
  */
@@ -165,6 +166,7 @@ export function pluckFileNameLanguageCode(filename: string): Alpha2LanguageCode 
 	if (!languageCode) return null
 
 	if (isAlpha2LanguageCode(languageCode)) return languageCode
+
 	if (isAlpha3bLanguageCode(languageCode)) return Alpha3bToAlpha2.get(languageCode) ?? null
 
 	return null

@@ -61,9 +61,8 @@ export interface Nuts {
 }
 
 /**
- * The native enrichment set. Every field is optional; an annotator fills the slice it owns.
- * camelCase throughout, structured sub-objects — the internal representation the serializers map
- * from.
+ * The native enrichment set. Every field is optional; an annotator fills the slice it owns. camelCase throughout,
+ * structured sub-objects — the internal representation the serializers map from.
  */
 export interface AnnotationSet {
 	dms?: DMS
@@ -108,10 +107,9 @@ export interface AnnotatorInput {
 export type Annotator = (input: AnnotatorInput) => Partial<AnnotationSet> | Promise<Partial<AnnotationSet>>
 
 /**
- * Compose a set of annotators into a single runner. Calling the returned function runs all
- * annotators (concurrently) over one input and merges their results into one {@link AnnotationSet}.
- * Later annotators win on key collisions. An annotator that throws is skipped, so one failing
- * enrichment never sinks the rest.
+ * Compose a set of annotators into a single runner. Calling the returned function runs all annotators (concurrently)
+ * over one input and merges their results into one {@link AnnotationSet}. Later annotators win on key collisions. An
+ * annotator that throws is skipped, so one failing enrichment never sinks the rest.
  */
 export function composeAnnotators(annotators: Annotator[]): (input: AnnotatorInput) => Promise<AnnotationSet> {
 	return async (input) => {
@@ -124,6 +122,7 @@ export function composeAnnotators(annotators: Annotator[]): (input: AnnotatorInp
 				}
 			})
 		)
+
 		return Object.assign({}, ...parts) as AnnotationSet
 	}
 }
@@ -148,43 +147,68 @@ export interface OpenCageAnnotations {
 }
 
 /**
- * Serialize the native set to OpenCage's `annotations` key names + casing, for the compat APIs.
- * Only the populated fields are emitted.
+ * Serialize the native set to OpenCage's `annotations` key names + casing, for the compat APIs. Only the populated
+ * fields are emitted.
  */
 export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 	const out: OpenCageAnnotations = {}
+
 	if (set.dms) out.DMS = { lat: set.dms.lat, lng: set.dms.lon }
+
 	if (set.mgrs != null) out.MGRS = set.mgrs
+
 	if (set.maidenhead != null) out.Maidenhead = set.maidenhead
+
 	if (set.mercator) out.Mercator = { x: set.mercator.x, y: set.mercator.y }
+
 	if (set.geohash != null) out.geohash = set.geohash
+
 	if (set.qiblaBearing != null) out.qibla = set.qiblaBearing
+
 	if (set.sun) {
 		out.sun = {}
+
 		if (set.sun.rise != null) out.sun.rise = { apparent: set.sun.rise }
+
 		if (set.sun.set != null) out.sun.set = { apparent: set.sun.set }
 	}
+
 	if (set.callingCode != null) out.callingcode = set.callingCode
+
 	if (set.currency) {
 		out.currency = { iso_code: set.currency.isoCode }
+
 		if (set.currency.name != null) out.currency.name = set.currency.name
+
 		if (set.currency.symbol != null) out.currency.symbol = set.currency.symbol
 	}
+
 	if (set.flag != null) out.flag = set.flag
+
 	if (set.timezone) {
 		out.timezone = { name: set.timezone.name }
+
 		if (set.timezone.offsetSec != null) out.timezone.offset_sec = set.timezone.offsetSec
+
 		if (set.timezone.offsetString != null) out.timezone.offset_string = set.timezone.offsetString
 	}
+
 	if (set.nuts) {
 		out.NUTS = {}
+
 		if (set.nuts.level1 != null) out.NUTS.NUTS1 = { code: set.nuts.level1 }
+
 		if (set.nuts.level2 != null) out.NUTS.NUTS2 = { code: set.nuts.level2 }
+
 		if (set.nuts.level3 != null) out.NUTS.NUTS3 = { code: set.nuts.level3 }
 	}
+
 	if (set.unLocode != null) out.UN_LOCODE = set.unLocode
+
 	if (set.wikidata != null) out.wikidata = set.wikidata
+
 	if (set.fips != null) out.FIPS = { county: set.fips }
+
 	return out
 }
 

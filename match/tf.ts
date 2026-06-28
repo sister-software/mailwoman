@@ -33,10 +33,9 @@ export interface TermFrequencyTable {
 const defaultNormalize = (value: string): string => value.trim().toLowerCase().replace(/\s+/g, " ")
 
 /**
- * Build a {@link TermFrequencyTable} from an iterable of values (e.g. every `given` name in the
- * dataset). Values are normalized (default: trim + lowercase + collapse whitespace) before
- * counting, and `frequency()` normalizes its argument the same way, so callers pass raw field
- * values.
+ * Build a {@link TermFrequencyTable} from an iterable of values (e.g. every `given` name in the dataset). Values are
+ * normalized (default: trim + lowercase + collapse whitespace) before counting, and `frequency()` normalizes its
+ * argument the same way, so callers pass raw field values.
  */
 export function buildTermFrequencyTable(
 	values: Iterable<string | null | undefined>,
@@ -49,6 +48,7 @@ export function buildTermFrequencyTable(
 	for (const value of values) {
 		if (value == null) continue
 		const key = normalize(value)
+
 		if (!key) continue
 		counts.set(key, (counts.get(key) ?? 0) + 1)
 		total++
@@ -59,16 +59,17 @@ export function buildTermFrequencyTable(
 		distinct: counts.size,
 		frequency(value) {
 			if (total === 0) return 0
+
 			return (counts.get(normalize(value)) ?? 0) / total
 		},
 	}
 }
 
 /**
- * Attach a term-frequency adjustment to a comparison. By default it applies to the exact level
- * (index 0) and looks up the value via `value(a, b)` — usually the agreeing field extracted from
- * one side. Returns a new comparison; the underlying `assess` and levels are untouched, so this
- * composes with EM (which re-estimates the base `m`/`u` the adjustment sits on top of).
+ * Attach a term-frequency adjustment to a comparison. By default it applies to the exact level (index 0) and looks up
+ * the value via `value(a, b)` — usually the agreeing field extracted from one side. Returns a new comparison; the
+ * underlying `assess` and levels are untouched, so this composes with EM (which re-estimates the base `m`/`u` the
+ * adjustment sits on top of).
  */
 export function withTermFrequency<R>(
 	comparison: Comparison<R>,

@@ -6,6 +6,7 @@
 
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { PostcodePositionPenalty } from "./PostcodePositionPenalty.js"
 
 const basePenalty = 0.1

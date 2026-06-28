@@ -9,6 +9,7 @@
 // matchCountry/matchPOBox, fed into the shared ClosedVocabTagger.
 // Usage: node scripts/eval/probe-deterministic-cedex.ts [--file <jsonl>]
 import { readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 interface EvalRow {
@@ -23,6 +24,7 @@ const file = arg("file", "data/eval/external/cedex-real.jsonl")
 const CEDEX_RE = /\bCEDEX(?:\s+\d{1,2})?\b/i
 const matchCedex = (s: unknown): string | null => {
 	const m = typeof s === "string" ? CEDEX_RE.exec(s) : null
+
 	return m ? m[0].replace(/\s+/g, " ").trim() : null
 }
 
@@ -36,15 +38,18 @@ let tp = 0,
 	fp = 0,
 	fn = 0
 const misses: string[] = []
+
 for (const row of rows) {
 	const predicted = matchCedex(row.raw) // scan the whole address; CEDEX is unambiguous
 	const gold = row.components.cedex ?? null
+
 	if (predicted && gold && norm(predicted) === norm(gold)) tp++
 	else {
 		if (predicted) {
 			fp++
 			misses.push(`FP  ${row.raw}  → "${predicted}" (gold cedex=${gold ?? "∅"})`)
 		}
+
 		if (gold) {
 			fn++
 			misses.push(`FN  ${row.raw}  → gold "${gold}" not caught (got ${predicted ?? "∅"})`)
@@ -59,7 +64,9 @@ console.log(`# deterministic cedex (CEDEX regex on raw, FR) — n=${rows.length}
 console.log(
 	`P=${(100 * p).toFixed(1)}  R=${(100 * r).toFixed(1)}  F1=${(100 * f1).toFixed(1)}  (tp=${tp} fp=${fp} fn=${fn})`
 )
+
 if (misses.length) {
 	console.log("\n-- misses --")
+
 	for (const m of misses) console.log(m)
 }

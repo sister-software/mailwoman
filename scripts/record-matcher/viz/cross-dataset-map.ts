@@ -27,12 +27,14 @@
  *   [--in <links.geojson>] [--out-html /tmp/cross-dataset-map.html] [--cross-agency-only]
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
-import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -76,10 +78,13 @@ const geojson = CROSS_AGENCY_ONLY
 // TYPE (two-source vs the rarer all-three-source spans) rather than the binary cross/single status.
 let triple = 0
 const comboCounts = new Map<string, number>()
+
 for (const f of geojson.features) {
 	const combo = [...new Set(sourcesOf(f))].sort()
 	const bucket = combo.map(label).join(" + ") || "unlinked"
+
 	if (f.properties) f.properties["bucket"] = bucket
+
 	if (new Set(combo.map(agencyOf)).size >= 3) triple++
 	comboCounts.set(bucket, (comboCounts.get(bucket) ?? 0) + 1)
 }
@@ -95,6 +100,7 @@ const html = toMapHTML(geojson as never, {
 writeFileSync(OUT, html)
 console.error(`[written] ${OUT}  (${kept}${CROSS_AGENCY_ONLY ? ` of ${total} cross-AGENCY` : ""} entities)`)
 console.error(`  source combinations:`)
+
 for (const [combo, n] of [...comboCounts.entries()].sort((a, b) => b[1] - a[1]))
 	console.error(`    ${n.toString().padStart(4)}  ${combo}`)
 console.error(`  spanning all three agencies: ${triple}`)

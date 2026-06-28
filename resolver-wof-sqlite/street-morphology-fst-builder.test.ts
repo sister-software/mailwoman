@@ -13,7 +13,9 @@
  */
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { describe, expect, it } from "vitest"
+
 import { deserializeFst, readFstProvenance, serializeFst } from "./fst-serialize.js"
 import { buildStreetMorphologyFst } from "./street-morphology-fst-builder.js"
 

@@ -50,19 +50,18 @@ export interface Comparison<R> {
 	/** Index into {@link levels}, or `-1` when either value is missing (no evidence → weight 0). */
 	assess(a: R, b: R): number
 	/**
-	 * Optional term-frequency adjustment: on the levels it names, replace the level's average `u`
-	 * with the agreeing value's actual frequency, so agreement on a rare value (`Vijayan`) outweighs
-	 * agreement on a common one (`Smith`). See `withTermFrequency`.
+	 * Optional term-frequency adjustment: on the levels it names, replace the level's average `u` with the agreeing
+	 * value's actual frequency, so agreement on a rare value (`Vijayan`) outweighs agreement on a common one (`Smith`).
+	 * See `withTermFrequency`.
 	 */
 	termFrequency?: TermFrequencyAdjustment<R>
 }
 
 /**
- * Per-value term-frequency adjustment for a comparison (the Splink/Winkler mechanism). `m` is
- * unchanged; on an agreement level the effective `u` becomes the value's own frequency, adding
- * `log2(u_level / frequency)` to the weight — large and positive for rare values, negative for
- * common ones. Floored at {@link TermFrequencyAdjustment.minimumFrequency} so an ultra-rare value
- * can't produce an unbounded boost.
+ * Per-value term-frequency adjustment for a comparison (the Splink/Winkler mechanism). `m` is unchanged; on an
+ * agreement level the effective `u` becomes the value's own frequency, adding `log2(u_level / frequency)` to the weight
+ * — large and positive for rare values, negative for common ones. Floored at
+ * {@link TermFrequencyAdjustment.minimumFrequency} so an ultra-rare value can't produce an unbounded boost.
  */
 export interface TermFrequencyAdjustment<R> {
 	/** Relative frequency of a value in the data, in (0, 1]. Typically computed on-the-fly. */
@@ -100,13 +99,16 @@ export type MatchDecision = "match" | "review" | "non-match"
 /** The Bayes-factor weight of a single level, in bits: `log2(m / u)`. */
 export function levelWeight(level: ComparisonLevel): number {
 	if (level.u <= 0) return level.m > 0 ? Infinity : 0
+
 	return Math.log2(level.m / level.u)
 }
 
 /** The prior match weight in bits: `log2(λ / (1 - λ))`. */
 export function priorWeight(lambda: number): number {
 	if (lambda <= 0) return -Infinity
+
 	if (lambda >= 1) return Infinity
+
 	return Math.log2(lambda / (1 - lambda))
 }
 
@@ -116,10 +118,9 @@ export function probabilityFromWeight(weight: number): number {
 }
 
 /**
- * A comparison driven by a similarity function and a tier of `minSimilarity` thresholds (the
- * StatCan/Splink recipe). Levels must be ordered highest → lowest similarity, the last acting as
- * the `different` catch-all (`minSimilarity` 0). A missing value on either side yields no
- * evidence.
+ * A comparison driven by a similarity function and a tier of `minSimilarity` thresholds (the StatCan/Splink recipe).
+ * Levels must be ordered highest → lowest similarity, the last acting as the `different` catch-all (`minSimilarity` 0).
+ * A missing value on either side yields no evidence.
  */
 export function similarityComparison<R>(config: {
 	name: string
@@ -136,12 +137,15 @@ export function similarityComparison<R>(config: {
 		assess(a, b) {
 			const va = config.extract(a)
 			const vb = config.extract(b)
+
 			if (!va || !vb || !va.trim() || !vb.trim()) return -1
 
 			const sim = similarity(va, vb)
+
 			for (let i = 0; i < config.levels.length; i++) {
 				if (sim >= (config.levels[i]!.minSimilarity ?? 0)) return i
 			}
+
 			return config.levels.length - 1
 		},
 	}
@@ -154,6 +158,7 @@ export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScor
 
 	for (const comparison of model.comparisons) {
 		const index = comparison.assess(a, b)
+
 		if (index < 0) {
 			contributions.push({ name: comparison.name, level: null, weight: 0 })
 			continue
@@ -163,10 +168,13 @@ export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScor
 
 		// Term-frequency adjustment: swap the level's average u for the agreeing value's own frequency.
 		const tf = comparison.termFrequency
+
 		if (tf && tf.levels.has(index) && level.u > 0) {
 			const value = tf.value(a, b)
+
 			if (value) {
 				const frequency = Math.max(tf.frequency(value), tf.minimumFrequency ?? 1e-4)
+
 				if (frequency > 0) w += Math.log2(level.u / frequency) * (tf.weight ?? 1)
 			}
 		}
@@ -179,11 +187,13 @@ export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScor
 }
 
 /**
- * Classify a score against upper / lower match-weight thresholds (in bits): at or above `upper` is
- * a link, at or below `lower` a non-link, and the band between is clerical review (abstain).
+ * Classify a score against upper / lower match-weight thresholds (in bits): at or above `upper` is a link, at or below
+ * `lower` a non-link, and the band between is clerical review (abstain).
  */
 export function decide(score: PairScore, thresholds: { upper: number; lower: number }): MatchDecision {
 	if (score.weight >= thresholds.upper) return "match"
+
 	if (score.weight <= thresholds.lower) return "non-match"
+
 	return "review"
 }

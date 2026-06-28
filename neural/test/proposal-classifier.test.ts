@@ -10,12 +10,14 @@
  *   weights when `MAILWOMAN_TEST_ONNX_MODEL` (or the default host path) is present.
  */
 
-import type { AddressTree } from "@mailwoman/core/decoder"
-import type { Section } from "@mailwoman/core/types"
 import { existsSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
+import type { AddressTree } from "@mailwoman/core/decoder"
+import type { Section } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
+
 import { NeuralAddressClassifier } from "../classifier.js"
 import { createNeuralProposalClassifier } from "../proposal-classifier.js"
 
@@ -88,6 +90,7 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 			classifier: stubClassifier(tree),
 		})
 		const proposals = await cls.classify(makeSection("Paris 75004"), {})
+
 		for (const p of proposals) {
 			expect(p.source).toBe("neural")
 			expect(p.source_id).toBe("neural-v0.2.0-en-us")
@@ -132,6 +135,7 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 			penalty: 0.25,
 		})
 		const proposals = await cls.classify(makeSection("Paris 75004"), {})
+
 		for (const p of proposals) expect(p.penalty).toBe(0.25)
 	})
 })
@@ -148,6 +152,7 @@ describe.skipIf(!haveModel)("createNeuralProposalClassifier — e2e with v0.2.0 
 		// Don't over-assert — the v0.2.0 model can miss country/region; insist on at least one of them.
 		const coarseHit = ["region", "locality", "postcode"].some((t) => tags.has(t as never))
 		expect(coarseHit).toBe(true)
+
 		for (const p of proposals) {
 			expect(p.source).toBe("neural")
 			expect(p.source_id).toBe("neural-v0.2.0-en-us")

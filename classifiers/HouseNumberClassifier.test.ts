@@ -6,6 +6,7 @@
 
 import { ClassificationsMatchMap } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { HouseNumberClassifier, HouseNumberFlag } from "./HouseNumberClassifier.js"
 
 const classifier = new HouseNumberClassifier()

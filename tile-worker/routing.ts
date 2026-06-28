@@ -5,6 +5,7 @@
  */
 
 import { type URLPatternPathParameters, URLRoutePattern } from "@mailwoman/core/routing"
+
 import { retrieveCachedResponse } from "./caching.js"
 import { applyAccessControlAllowOrigin } from "./cors.js"
 
@@ -72,6 +73,7 @@ export async function delegateRequest(context: RouteContext, routes: Iterable<Wo
 		if (!methods.has(method)) continue
 
 		const params = pattern.matchParams(context.url)
+
 		if (!params) continue
 
 		const cachedResponse = await retrieveCachedResponse(context.request)
@@ -79,6 +81,7 @@ export async function delegateRequest(context: RouteContext, routes: Iterable<Wo
 		if (cachedResponse) {
 			const clone = new Response(cachedResponse.body, cachedResponse)
 			applyAccessControlAllowOrigin(context.request, clone)
+
 			return clone
 		}
 

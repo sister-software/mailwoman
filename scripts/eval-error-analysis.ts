@@ -30,12 +30,13 @@
  *   <spm> --model-card <json>
  */
 
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
 
 interface GoldenEntry {
 	raw: string
@@ -62,8 +63,10 @@ interface Args {
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	const out: Partial<Args> = { postcodeRepair: false, strict: true }
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--golden" && args[i + 1]) out.goldenDir = args[++i]
 		else if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
 		else if (a === "--tokenizer" && args[i + 1]) out.tokenizerPath = args[++i]
@@ -71,6 +74,7 @@ function parseArgs(): Args {
 		else if (a === "--postcode-repair") out.postcodeRepair = true
 		else if (a === "--no-strict") out.strict = false
 	}
+
 	if (!out.goldenDir) {
 		console.error(
 			"Usage: node scripts/eval-error-analysis.ts --golden <golden-dir> " +
@@ -78,20 +82,25 @@ function parseArgs(): Args {
 		)
 		process.exit(1)
 	}
+
 	// --model requires the tokenizer + card to build a non-default classifier.
 	if (out.modelPath && (!out.tokenizerPath || !out.modelCardPath)) {
 		console.error("--model requires --tokenizer and --model-card")
 		process.exit(1)
 	}
+
 	return out as Args
 }
 
 function loadGolden(dir: string): GoldenEntry[] {
 	const entries: GoldenEntry[] = []
+
 	for (const file of ["us.jsonl", "fr.jsonl", "adversarial.jsonl"]) {
 		const path = resolve(dir, file)
+
 		try {
 			const text = readFileSync(path, "utf8")
+
 			for (const line of text.split("\n")) {
 				if (!line.trim()) continue
 				entries.push(JSON.parse(line))
@@ -100,6 +109,7 @@ function loadGolden(dir: string): GoldenEntry[] {
 			// file may not exist
 		}
 	}
+
 	return entries
 }
 
@@ -119,6 +129,7 @@ async function main() {
 	const resolved = args.modelPath
 		? { modelPath: args.modelPath, tokenizerPath: args.tokenizerPath!, modelCardPath: args.modelCardPath! }
 		: resolveWeights({ locale: "en-us" })
+
 	if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
 		throw new Error("createScorer needs model + tokenizer + model-card; resolveWeights returned incomplete paths")
 	const classifier = await createScorer({
@@ -149,10 +160,12 @@ async function main() {
 	const perTag = new Map<string, TagStats>()
 	function tagStat(tag: string): TagStats {
 		let s = perTag.get(tag)
+
 		if (!s) {
 			s = { expected: 0, correct: 0, missed: 0, boundary: 0, confused: 0, hallucinated: 0 }
 			perTag.set(tag, s)
 		}
+
 		return s
 	}
 
@@ -174,6 +187,7 @@ async function main() {
 			if (!predValue) {
 				missed.total++
 				tagStat(tag).missed++
+
 				if (missed.examples.length < 10) {
 					missed.examples.push({ raw: entry.raw, detail: `missing ${tag}="${value}"` })
 				}
@@ -181,9 +195,11 @@ async function main() {
 			} else if (predValue !== value) {
 				const predNorm = String(predValue).toLowerCase().trim()
 				const expNorm = value.toLowerCase().trim()
+
 				if (predNorm.includes(expNorm) || expNorm.includes(predNorm)) {
 					boundaryErrors.total++
 					tagStat(tag).boundary++
+
 					if (boundaryErrors.examples.length < 10) {
 						boundaryErrors.examples.push({
 							raw: entry.raw,
@@ -193,6 +209,7 @@ async function main() {
 				} else {
 					confused.total++
 					tagStat(tag).confused++
+
 					if (confused.examples.length < 10) {
 						confused.examples.push({
 							raw: entry.raw,
@@ -210,6 +227,7 @@ async function main() {
 			if (!(tag in expected)) {
 				hallucinated.total++
 				tagStat(tag).hallucinated++
+
 				if (hallucinated.examples.length < 10) {
 					hallucinated.examples.push({
 						raw: entry.raw,
@@ -254,6 +272,7 @@ async function main() {
 	console.log("| Tag | Expected | Correct | Missed | Boundary | Confused | Hallucinated | Recall |")
 	console.log("|-----|----------|---------|--------|----------|----------|--------------|--------|")
 	const sortedTags = [...perTag.entries()].sort((a, b) => b[1].expected - a[1].expected)
+
 	for (const [tag, s] of sortedTags) {
 		const recall = s.expected > 0 ? ((100 * s.correct) / s.expected).toFixed(1) + "%" : "—"
 		console.log(
@@ -271,6 +290,7 @@ async function main() {
 		if (stats.total === 0) continue
 		console.log(`## ${name} (${stats.total})`)
 		console.log("")
+
 		for (const ex of stats.examples.slice(0, 5)) {
 			console.log(`- \`${ex.raw}\` — ${ex.detail}`)
 		}

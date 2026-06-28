@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { countryFlag, countryReferenceAnnotator } from "./reference.js"
 
 test("countryFlag: alpha-2 → regional-indicator emoji, case-insensitive", () => {

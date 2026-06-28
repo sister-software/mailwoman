@@ -27,14 +27,18 @@ export const noStreetRecipe: ShardRecipe = {
 		let read = 0
 		let emitted = 0
 		let skipped = 0
+
 		for await (const tuple of readTuples(opts.input)) {
 			read++
+
 			if (!tuple.locality || !tuple.region || !tuple.postcode || !tuple.country) {
 				skipped++
 				continue
 			}
+
 			for (let v = 0; v < opts.variants; v++) {
 				const synth = synthesizeNoStreetRow(tuple as NoStreetBaseTuple, { random })
+
 				if (!synth) {
 					skipped++
 					continue
@@ -60,10 +64,12 @@ export const noStreetRecipe: ShardRecipe = {
 					},
 					synth.template
 				)
+
 				if (ok) emitted++
 				else skipped++
 			}
 		}
+
 		return { read, emitted, skipped }
 	},
 }

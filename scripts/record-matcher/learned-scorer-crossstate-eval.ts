@@ -21,6 +21,8 @@
  *   [--train-state TX] [--eval-state CA] [--npis 2000] [--out-md <md>]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
@@ -41,11 +43,12 @@ import {
 	type SourceRecord,
 } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { writeFileSync } from "node:fs"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
@@ -98,33 +101,42 @@ function scoreClusters(entities: ResolvedEntity[]): {
 	let sumCK = 0
 	let sumCluster = 0
 	let overMerged = 0
+
 	for (const e of entities) {
 		const byNpi = new Map<string, number>()
+
 		for (const rec of e.records) byNpi.set(rec.id, (byNpi.get(rec.id) ?? 0) + 1)
 		sumCluster += choose2(e.records.length)
+
 		if (byNpi.size > 1) overMerged++
+
 		for (const [npi, c] of byNpi) {
 			sumCK += choose2(c)
 			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
 		}
 	}
 	let sumClass = 0
+
 	for (const total of npiTotals.values()) sumClass += choose2(total)
 	const tp = sumCK
 	const precision = sumCluster > 0 ? tp / sumCluster : 0
 	const recall = sumClass > 0 ? tp / sumClass : 0
 	const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
+
 	return { precision, recall, f1, overMerged }
 }
 
 async function main(): Promise<void> {
 	console.error("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
+
 	for await (const r of streamRows(OTHER_NAMES)) {
 		const npi = norm(r[C.npi])
 		const alt = norm(r[C.otherOrg])
+
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
+
 		if (list.length < 5) list.push(alt)
 		altNames.set(npi, list)
 	}
@@ -138,9 +150,11 @@ async function main(): Promise<void> {
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 	let scanned = 0
+
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M`)
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
+
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
@@ -149,15 +163,19 @@ async function main(): Promise<void> {
 		const npi = norm(r[C.npi])
 		const st = norm(r[C.pState]).toUpperCase()
 		const bucket = samples[st]
+
 		if (bucket && bucket.kept.size < NPIS && npi && !bucket.kept.has(npi) && altNames.has(npi) && practice) {
 			const isOrg = norm(r[C.entityType]) === "2"
 			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
+
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
 				bucket.kept.add(npi)
 				bucket.rows.push({ npi, name: primaryName, org, address: practice })
+
 				for (const alt of altNames.get(npi)!) bucket.rows.push({ npi, name: alt, org: alt, address: practice })
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
+
 				if (mailing && mailing !== practice) bucket.rows.push({ npi, name: primaryName, org, address: mailing })
 			}
 		}
@@ -214,22 +232,29 @@ async function main(): Promise<void> {
 	const w = new Array<number>(dim).fill(0)
 	let bias = 0
 	const sigmoid = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
+
 	for (let epoch = 0; epoch < 400; epoch++) {
 		const gw = new Array<number>(dim).fill(0)
 		let gb = 0
+
 		for (let i = 0; i < trainX.length; i++) {
 			let z = bias
+
 			for (let j = 0; j < dim; j++) z += w[j]! * trainX[i]![j]!
 			const err = (sigmoid(z) - trainY[i]!) * trainW[i]!
+
 			for (let j = 0; j < dim; j++) gw[j]! += err * trainX[i]![j]!
 			gb += err
 		}
+
 		for (let j = 0; j < dim; j++) w[j]! -= 0.1 * (gw[j]! / trainX.length + 1e-3 * w[j]!)
 		bias -= 0.1 * (gb / trainX.length)
 	}
 	const lrSc = (x: number[]) => {
 		let z = bias
+
 		for (let j = 0; j < x.length; j++) z += w[j]! * x[j]!
+
 		return z
 	}
 	const gbtScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(gbt, featurize(a, b))
@@ -244,17 +269,22 @@ async function main(): Promise<void> {
 	}
 	const bestOver = (thresholds: number[], cfg: (t: number) => Parameters<typeof resolveEntities>[1]): ArmScore => {
 		let best: ArmScore = { precision: 0, recall: 0, f1: -1, overMerged: 0 }
+
 		for (const t of thresholds) {
 			const s = scoreClusters(resolveEntities(evalRecords, cfg(t)).entities)
+
 			if (s.f1 > best.f1) best = s
 		}
+
 		return best
 	}
 	const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
 	const quantileThresholds = (scores: number[]): number[] => {
 		const sorted = [...scores].sort((p, q) => p - q)
 		const ts = new Set<number>()
+
 		for (let k = 0; k <= 32; k++) ts.add(sorted[Math.floor((0.2 + (0.999 - 0.2) * (k / 32)) * (sorted.length - 1))]!)
+
 		return [...ts]
 	}
 	const fs = bestOver(
@@ -299,6 +329,7 @@ async function main(): Promise<void> {
 	const row = (label: string, a: ArmScore, d: number | null, bold: boolean) => {
 		const dCell = d === null ? "—" : `${sgn(d * 100)}${(d * 100).toFixed(1)}pp`
 		const f1 = bold ? `**${pct(a.f1)}%**` : `${pct(a.f1)}%`
+
 		return `| ${bold ? `**${label}**` : label} | ${pct(a.precision)}% | ${pct(a.recall)}% | ${f1} | ${bold ? `**${dCell}**` : dCell} | ${a.overMerged} |`
 	}
 	const lines: string[] = []
@@ -353,6 +384,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`[written] ${OUT_MD}`)

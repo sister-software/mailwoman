@@ -38,12 +38,14 @@
  *   omit it for a dry run that only prints the block.
  */
 
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 // -------------------------------------------------------------------------------------------------
@@ -132,13 +134,16 @@ interface Row {
 
 function loadRows(files: string[]): Row[] {
 	const rows: Row[] = []
+
 	for (const f of files) {
 		if (!existsSync(f)) throw new Error(`eval file not found: ${f}`)
+
 		for (const line of readFileSync(f, "utf8").split("\n")) {
 			if (!line.trim()) continue
 			rows.push(JSON.parse(line) as Row)
 		}
 	}
+
 	return rows
 }
 
@@ -147,21 +152,27 @@ const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
 /** Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts. */
 async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<Record<string, number>> {
 	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
+
 	for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
+
 	for (const row of rows) {
 		const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
 		const exp = row.components
+
 		for (const t of TAGS) {
 			const e = norm(exp[t])
 			const g = norm(got[t])
+
 			if (e && g && e === g) stat[t]!.tp++
 			else {
 				if (g) stat[t]!.fp++
+
 				if (e) stat[t]!.fn++
 			}
 		}
 	}
 	const out: Record<string, number> = {}
+
 	for (const t of TAGS) {
 		const { tp, fp, fn } = stat[t]!
 		const p = tp + fp ? tp / (tp + fp) : 0
@@ -169,6 +180,7 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 		const f1 = p + r ? (2 * p * r) / (p + r) : 0
 		out[t] = +(100 * f1).toFixed(1)
 	}
+
 	return out
 }
 
@@ -189,6 +201,7 @@ async function buildManifest(): Promise<Capabilities> {
 
 	for (const [tier, tierOverrides] of Object.entries(TIERS)) {
 		capabilities[tier] = {}
+
 		for (const spec of LOCALES) {
 			const rows = loadRows(spec.files)
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
@@ -223,12 +236,14 @@ async function buildManifest(): Promise<Capabilities> {
 			const on = await perTagF1(onScorer, rows)
 
 			const perTag: Record<string, TagCapability> = {}
+
 			for (const t of TAGS) {
 				// Skip tags the model never emits AND never sees in gold under either mask — a 0/0 F1 is
 				// not a capability claim, just noise. (maskOffF1 0 with the tag genuinely present in gold
 				// IS a real claim and is kept.)
 				if (off[t] === 0 && on[t] === 0 && !rowsHaveTag(rows, t)) continue
 				const cap: TagCapability = { maskOffF1: off[t]! }
+
 				// maskOnF1 only for forbidden-set tags — the only tags the loader's delta-gate consults.
 				if (FORBIDDEN_TAGS.has(t)) cap.maskOnF1 = on[t]!
 				perTag[t] = cap
@@ -244,11 +259,13 @@ async function buildManifest(): Promise<Capabilities> {
 			}
 		}
 	}
+
 	return capabilities
 }
 
 function rowsHaveTag(rows: Row[], tag: string): boolean {
 	for (const r of rows) if (norm(r.components[tag])) return true
+
 	return false
 }
 
@@ -278,7 +295,9 @@ if (WRITE) {
 	// before that final brace, one indent level deep (each block line tab-prefixed).
 	const original = readFileSync(MODEL_CARD, "utf8")
 	const lastBrace = original.lastIndexOf("}")
+
 	if (lastBrace < 0) throw new Error(`model-card has no closing brace: ${MODEL_CARD}`)
+
 	if (JSON.parse(original).capabilities !== undefined) {
 		// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
 		throw new Error(

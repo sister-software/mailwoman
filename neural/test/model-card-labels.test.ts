@@ -20,7 +20,9 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
+
 import { readLabelsFromModelCard, resolveWeights } from "../weights.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -39,6 +41,7 @@ afterEach(() => {
 function writeCard(payload: unknown): string {
 	const p = join(dir, "model-card.json")
 	writeFileSync(p, JSON.stringify(payload, null, 2), "utf8")
+
 	return p
 }
 

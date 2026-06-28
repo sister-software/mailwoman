@@ -30,6 +30,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
 export const WOF_ADMIN_JP_ADAPTER_ID = "wof-admin-jp"
@@ -49,16 +50,19 @@ interface NameRow {
 }
 
 /** Walk parent chain up to 6 levels. */
-function chainOf(db: DatabaseSync, startId: number, jpnNames: Map<number, string>): PlaceRow[] {
+function chainOf(db: DatabaseSync, startId: number, _jpnNames: Map<number, string>): PlaceRow[] {
 	const stmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
 	const out: PlaceRow[] = []
 	let id = startId
+
 	for (let i = 0; i < 6 && id > 0; i++) {
 		const row = stmt.get(id) as PlaceRow | undefined
+
 		if (!row) break
 		out.push(row)
 		id = row.parent_id
 	}
+
 	return out
 }
 
@@ -83,6 +87,7 @@ export function synthesizeJpAddress(
 } | null {
 	const region = chain.find((r) => r.placetype === "region")
 	const locality = chain.find((r) => r.placetype === "locality" || r.placetype === "county")
+
 	if (!region || !locality) return null
 
 	const neighbourhood = chain.find((r) => r.placetype === "neighbourhood")
@@ -96,6 +101,7 @@ export function synthesizeJpAddress(
 		locality: localityName,
 		country: "JP",
 	}
+
 	if (neighbourhoodName) components.dependent_locality = neighbourhoodName
 
 	const raw = [regionName, localityName, neighbourhoodName].filter(Boolean).join("")
@@ -104,8 +110,8 @@ export function synthesizeJpAddress(
 }
 
 /**
- * Build the JP adapter. Reads from the unified global WOF SQLite, walks admin chains starting from
- * neighbourhoods, and yields canonical rows.
+ * Build the JP adapter. Reads from the unified global WOF SQLite, walks admin chains starting from neighbourhoods, and
+ * yields canonical rows.
  */
 export function createWofAdminJpAdapter(): CorpusAdapter {
 	return {
@@ -119,9 +125,11 @@ export function createWofAdminJpAdapter(): CorpusAdapter {
 			}
 
 			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
+
 			try {
 				const jpnNamesStmt = db.prepare(`SELECT id, name FROM names WHERE language = 'jpn'`)
 				const jpnNames = new Map<number, string>()
+
 				for (const row of jpnNamesStmt.all() as { id: number; name: string }[]) {
 					if (!jpnNames.has(row.id)) jpnNames.set(row.id, row.name)
 				}
@@ -131,12 +139,15 @@ export function createWofAdminJpAdapter(): CorpusAdapter {
 				}[]
 
 				let emitted = 0
+
 				for (const seed of seeds) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const chain = chainOf(db, seed.id, jpnNames)
 					const synth = synthesizeJpAddress(chain, jpnNames)
+
 					if (!synth) continue
 
 					yield {

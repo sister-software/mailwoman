@@ -15,10 +15,12 @@
  *   endpoint; the first `/api/resolve` call surfaces the missing-dep error cleanly to the client.
  */
 
+import { existsSync } from "node:fs"
+
 import { type AddressTree, decodeAsXml } from "@mailwoman/core/decoder"
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
-import { existsSync } from "node:fs"
+
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.js"
 
 /** One node in the response's flat list — what the UI renders for each resolved component. */
@@ -47,18 +49,20 @@ export interface ResolveErrorResponse {
 }
 
 /**
- * Resolves a WOF DB path the same way the CLI does — explicit env override wins, else the canonical
- * lab path. Multi-shard: comma-separated paths in `MAILWOMAN_WOF_DB` are split and routed through
- * the multi-shard ATTACH machinery.
+ * Resolves a WOF DB path the same way the CLI does — explicit env override wins, else the canonical lab path.
+ * Multi-shard: comma-separated paths in `MAILWOMAN_WOF_DB` are split and routed through the multi-shard ATTACH
+ * machinery.
  */
 function resolveWofPaths(): string[] {
 	const env = process.env["MAILWOMAN_WOF_DB"]
+
 	if (env) {
 		return env
 			.split(",")
 			.map((p) => p.trim())
 			.filter(Boolean)
 	}
+
 	// Canonical gazetteer is our CUSTOM-built unified DBs (from cloned WOF GeoJSON repos via
 	// scripts/build-unified-wof.ts) — never the off-the-shelf geocode.earth dumps (different WOF
 	// ids; see the feedback-custom-wof-db-only memory + scripts/wof-build-manifest.json). Multi-shard:
@@ -68,8 +72,8 @@ function resolveWofPaths(): string[] {
 }
 
 /**
- * One-time lazy initialization of the neural parser + resolver. Returns null when dependencies
- * aren't installed (optional peer deps); the handler converts that into a 503.
+ * One-time lazy initialization of the neural parser + resolver. Returns null when dependencies aren't installed
+ * (optional peer deps); the handler converts that into a 503.
  */
 let resolverPipeline: Promise<{ parse: (text: string) => Promise<AddressTree>; resolver: Resolver } | null> | null =
 	null
@@ -79,24 +83,28 @@ async function getResolverPipeline() {
 	resolverPipeline = (async () => {
 		let neuralMod: typeof import("@mailwoman/neural")
 		let resolverMod: typeof import("@mailwoman/resolver-wof-sqlite")
+
 		try {
 			neuralMod = await import("@mailwoman/neural")
 		} catch {
 			console.error("ResolveRouter: @mailwoman/neural not installed")
+
 			return null
 		}
+
 		try {
 			resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 		} catch {
 			console.error("ResolveRouter: @mailwoman/resolver-wof-sqlite not installed")
+
 			return null
 		}
 
 		const wofPaths = resolveWofPaths()
+
 		if (wofPaths.length === 0) {
-			console.error(
-				`ResolveRouter: no WOF DBs found. Set MAILWOMAN_WOF_DB or place shards at ${dataRootPath("wof")}/`
-			)
+			console.error(`ResolveRouter: no WOF DBs found. Set MAILWOMAN_WOF_DB or place shards at ${dataRootPath("wof")}/`)
+
 			return null
 		}
 
@@ -104,11 +112,13 @@ async function getResolverPipeline() {
 		const lookup = createResolverBackend(resolverMod, { wofPaths })
 		// The lookup is structurally compatible with `ResolverBackend` — same shape.
 		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+
 		return {
 			parse: (text: string) => neural.parse(text),
 			resolver,
 		}
 	})()
+
 	return resolverPipeline
 }
 
@@ -129,9 +139,12 @@ function flatten(tree: AddressTree): ResolveResponseNode[] {
 			placeId: node.placeId,
 			depth,
 		})
+
 		for (const child of node.children) walk(child, depth + 1)
 	}
+
 	for (const root of tree.roots) walk(root, 0)
+
 	return out
 }
 
@@ -142,18 +155,22 @@ const handler: RequestHandler = async (req, res) => {
 			: typeof req.query?.text === "string"
 				? (req.query.text as string).trim()
 				: ""
+
 	if (!text) {
 		res.status(400).json({ error: "Missing `text` parameter" } satisfies ResolveErrorResponse)
+
 		return
 	}
 
 	const pipeline = await getResolverPipeline()
+
 	if (!pipeline) {
 		res.status(503).json({
 			error:
 				"Resolver not available. Install @mailwoman/neural + @mailwoman/resolver-wof-sqlite, " +
 				"and set MAILWOMAN_WOF_DB to a WOF SQLite distribution path.",
 		} satisfies ResolveErrorResponse)
+
 		return
 	}
 

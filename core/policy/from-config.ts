@@ -45,12 +45,11 @@ export interface PolicyConfigEntry {
 export type PolicyConfig = Record<string, Record<string, PolicyConfigEntry>>
 
 /**
- * Build a registry from a parsed policy-config object. Starts from `withDefaults(defaultMode)`
- * (every tag at `defaultMode`, historically `rule_only`) and overlays the config's entries — so an
- * absent tag falls to `defaultMode`. The input-shape router (#478 increment 2) passes its
- * shape-derived default as `defaultMode` so config entries still win per-tag while un-configured
- * tags follow the route. Throws on ANY unrecognized key or value; the error names the offending
- * JSON path.
+ * Build a registry from a parsed policy-config object. Starts from `withDefaults(defaultMode)` (every tag at
+ * `defaultMode`, historically `rule_only`) and overlays the config's entries — so an absent tag falls to `defaultMode`.
+ * The input-shape router (#478 increment 2) passes its shape-derived default as `defaultMode` so config entries still
+ * win per-tag while un-configured tags follow the route. Throws on ANY unrecognized key or value; the error names the
+ * offending JSON path.
  */
 export function policyRegistryFromConfig(
 	config: PolicyConfig,
@@ -69,12 +68,15 @@ export function policyRegistryFromConfig(
 
 		for (const [tag, entry] of Object.entries(tags)) {
 			const path = `"${localeKey}"."${tag}"`
+
 			if (!TAG_SET.has(tag)) {
 				throw new Error(`policy config: ${path} is not a ComponentTag (see core/types/component.ts)`)
 			}
+
 			if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
 				throw new Error(`policy config: ${path} must be an object with a "mode" field`)
 			}
+
 			for (const field of Object.keys(entry)) {
 				if (!ENTRY_FIELDS.has(field)) {
 					throw new Error(
@@ -82,11 +84,14 @@ export function policyRegistryFromConfig(
 					)
 				}
 			}
+
 			if (!POLICY_MODES.includes(entry.mode)) {
 				throw new Error(`policy config: ${path}.mode "${entry.mode}" is not one of ${POLICY_MODES.join(" | ")}`)
 			}
+
 			if (entry.confidence_threshold !== undefined) {
 				const t = entry.confidence_threshold
+
 				if (typeof t !== "number" || Number.isNaN(t) || t < 0 || t > 1) {
 					throw new Error(`policy config: ${path}.confidence_threshold must be a number in [0, 1], got ${t}`)
 				}
@@ -105,9 +110,9 @@ export function policyRegistryFromConfig(
 }
 
 /**
- * Build a registry whose default layer is an input-shape route's `defaultMode` (#478 increment 2),
- * with optional per-tag `config` overlaid on top — so the routed prior fills every un-configured
- * tag while explicit policy still wins per-tag. Thin wrapper over {@link policyRegistryFromConfig}.
+ * Build a registry whose default layer is an input-shape route's `defaultMode` (#478 increment 2), with optional
+ * per-tag `config` overlaid on top — so the routed prior fills every un-configured tag while explicit policy still wins
+ * per-tag. Thin wrapper over {@link policyRegistryFromConfig}.
  */
 export function policyRegistryFromRoute(route: InputShapeRoute, config: PolicyConfig = {}): InMemoryPolicyRegistry {
 	return policyRegistryFromConfig(config, route.defaultMode)

@@ -49,9 +49,8 @@ export interface RouterShapeSignal {
 }
 
 /**
- * Minimal coarse-placer signal (#244). Compatible with `CoarsePrediction`
- * (`core/coarse-placer/coarse-placer.ts`). `null` means no placer ran — treated as "no OOD signal",
- * never as an abstention.
+ * Minimal coarse-placer signal (#244). Compatible with `CoarsePrediction` (`core/coarse-placer/coarse-placer.ts`).
+ * `null` means no placer ran — treated as "no OOD signal", never as an abstention.
  */
 export interface RouterPlacerSignal {
 	/** The in-map country argmax, `null` when abstained, or `"OTHER"` when off-map. */
@@ -71,10 +70,9 @@ export interface InputShapeRoute {
 	 */
 	defaultMode: PolicyMode
 	/**
-	 * True when both sources are weak (low kind confidence and/or the placer abstained on a non-clean
-	 * shape). A first-class outcome reserved for the resolver/admin honest-radius downgrade — but it
-	 * has NO consumer until #478 increment 3, so for now it is computed and reported only.
-	 * `defaultMode` is `both` when this is set (drop nothing).
+	 * True when both sources are weak (low kind confidence and/or the placer abstained on a non-clean shape). A
+	 * first-class outcome reserved for the resolver/admin honest-radius downgrade — but it has NO consumer until #478
+	 * increment 3, so for now it is computed and reported only. `defaultMode` is `both` when this is set (drop nothing).
 	 */
 	abstain: boolean
 	/** Human-readable trace of which branch fired — for telemetry and test assertions. */
@@ -85,8 +83,7 @@ export interface InputShapeRoute {
 const RULE_CLEAN_KINDS: ReadonlySet<string> = new Set(["structured_address", "intersection", "po_box", "postcode_only"])
 
 /**
- * Non-Latin scripts where the Latin-centric rules system is weak — hand to neural regardless of
- * kind.
+ * Non-Latin scripts where the Latin-centric rules system is weak — hand to neural regardless of kind.
  */
 const OOD_SCRIPTS: ReadonlySet<string> = new Set(["cjk", "cyrillic", "arabic"])
 
@@ -94,9 +91,9 @@ const OOD_SCRIPTS: ReadonlySet<string> = new Set(["cjk", "cyrillic", "arabic"])
 const LATIN_CLASSES: ReadonlySet<string> = new Set(["numeric", "alpha", "alphanumeric"])
 
 /**
- * Minimum kind confidence to route a clean kind to `rule_preferred`. Strict by design: below this,
- * v0's rules are brittle on structured input and a confident wrong preference is worse than keeping
- * both sources (DeepSeek-coordinated, 2026-06-17 — 0.7 invited false-preference).
+ * Minimum kind confidence to route a clean kind to `rule_preferred`. Strict by design: below this, v0's rules are
+ * brittle on structured input and a confident wrong preference is worse than keeping both sources
+ * (DeepSeek-coordinated, 2026-06-17 — 0.7 invited false-preference).
  */
 export const CLEAN_KIND_CONFIDENCE = 0.8
 
@@ -105,15 +102,13 @@ export const CLEAN_KIND_CONFIDENCE = 0.8
  *
  * The decision tree (first match wins):
  *
- * 0. **OOD script** (`cjk` / `cyrillic` / `arabic`) → `neural_preferred`. Script dominates — rules are
- *    Latin-centric, so non-Latin input is neural's regardless of kind.
- * 1. **Clean structured** — a {@link RULE_CLEAN_KINDS} kind at confidence ≥
- *    {@link CLEAN_KIND_CONFIDENCE}, a Latin/unknown character class, and the placer not abstained →
- *    `rule_preferred`. v0's home turf.
- * 2. **Both weak** — the placer abstained, or kind confidence is below the cutoff → `abstain` (mode
- *    `both`, drop nothing).
- * 3. **Otherwise** (confident, Latin, placer-OK, but not a clean kind — `landmark`, `vague`,
- *    `locality_only`) → `neural_preferred`.
+ * 0. **OOD script** (`cjk` / `cyrillic` / `arabic`) → `neural_preferred`. Script dominates — rules are Latin-centric, so
+ *    non-Latin input is neural's regardless of kind.
+ * 1. **Clean structured** — a {@link RULE_CLEAN_KINDS} kind at confidence ≥ {@link CLEAN_KIND_CONFIDENCE}, a Latin/unknown
+ *    character class, and the placer not abstained → `rule_preferred`. v0's home turf.
+ * 2. **Both weak** — the placer abstained, or kind confidence is below the cutoff → `abstain` (mode `both`, drop nothing).
+ * 3. **Otherwise** (confident, Latin, placer-OK, but not a clean kind — `landmark`, `vague`, `locality_only`) →
+ *    `neural_preferred`.
  *
  * @param kind Kind-classifier signal.
  * @param shape Query-shape signal.
@@ -134,6 +129,7 @@ export function routeInputShape(
 
 	// 1. Clean structured Latin address with a confident clean kind and no placer abstention → rules.
 	const latinOrUnknown = cc === undefined || LATIN_CLASSES.has(cc)
+
 	if (
 		RULE_CLEAN_KINDS.has(kind.kind) &&
 		kind.confidence >= CLEAN_KIND_CONFIDENCE &&

@@ -51,8 +51,8 @@ export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivEleme
 	steps?: string[]
 
 	/**
-	 * Index of the currently active step (0-based). Steps before this index are marked complete
-	 * (checkmark). Steps after this index are pending (dimmed).
+	 * Index of the currently active step (0-based). Steps before this index are marked complete (checkmark). Steps after
+	 * this index are pending (dimmed).
 	 *
 	 * @default -1 (all pending)
 	 */

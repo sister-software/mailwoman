@@ -28,9 +28,8 @@ import { containmentFor } from "./containment.js"
 import type { AddressNode, AddressTree } from "./types.js"
 
 /**
- * Tags that cannot stand alone: each is a sub-component of a specific structural anchor (street /
- * locality / venue / postcode). If none of a tag's allowed parents appear anywhere in the tree, the
- * node is an orphan fragment.
+ * Tags that cannot stand alone: each is a sub-component of a specific structural anchor (street / locality / venue /
+ * postcode). If none of a tag's allowed parents appear anywhere in the tree, the node is an orphan fragment.
  */
 const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"street_prefix",

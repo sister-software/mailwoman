@@ -57,8 +57,10 @@ interface Args {
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	const out: Partial<Args> = { inputs: [], width: 720, height: 380, log: false }
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--input" && args[i + 1]) out.inputs!.push(args[++i]!)
 		else if (a === "--metric" && args[i + 1]) out.metric = args[++i] as Metric
 		else if (a === "--title" && args[i + 1]) out.title = args[++i]
@@ -69,10 +71,12 @@ function parseArgs(): Args {
 		else if (a === "--y-max" && args[i + 1]) out.yMax = Number(args[++i])
 		else if (a === "--log") out.log = true
 	}
+
 	if (!out.inputs || out.inputs.length === 0 || !out.metric || !out.output) {
 		console.error("Usage: training-chart.ts --input <json>... --metric val_loss|macro_f1|train_loss --output <svg>")
 		process.exit(1)
 	}
+
 	return out as Args
 }
 
@@ -86,12 +90,16 @@ interface RunSeries {
 
 function loadAndGroup(args: Args): RunSeries[] {
 	const byRun = new Map<string, Array<[number, number]>>()
+
 	for (const path of args.inputs) {
 		const data: TrainPoint[] = JSON.parse(readFileSync(path, "utf8"))
+
 		for (const p of data) {
 			const v = p[args.metric] as number | string | undefined
+
 			if (typeof v !== "number") continue
 			let arr = byRun.get(p.run)
+
 			if (!arr) {
 				arr = []
 				byRun.set(p.run, arr)
@@ -101,22 +109,26 @@ function loadAndGroup(args: Args): RunSeries[] {
 	}
 	let i = 0
 	const series: RunSeries[] = []
+
 	for (const [run, points] of byRun) {
 		points.sort((a, b) => a[0] - b[0])
 		series.push({ run, color: PALETTE[i % PALETTE.length]!, points })
 		i++
 	}
+
 	return series
 }
 
 function niceTicks(min: number, max: number, count = 5): number[] {
 	const span = max - min
+
 	if (span <= 0) return [min]
 	const raw = span / count
 	const exp = Math.floor(Math.log10(raw))
 	const base = Math.pow(10, exp)
 	const candidates = [1, 2, 2.5, 5, 10]
 	let step = base
+
 	for (const c of candidates) {
 		if (c * base >= raw) {
 			step = c * base
@@ -125,16 +137,20 @@ function niceTicks(min: number, max: number, count = 5): number[] {
 	}
 	const ticks: number[] = []
 	const start = Math.ceil(min / step) * step
+
 	for (let v = start; v <= max + 1e-9; v += step) {
 		// Trim floating-point drift
 		ticks.push(Math.round(v / step) * step)
 	}
+
 	return ticks
 }
 
 function fmt(n: number): string {
 	if (Math.abs(n) >= 1000) return n.toLocaleString()
+
 	if (Math.abs(n) >= 1) return n.toFixed(3).replace(/\.?0+$/, "")
+
 	return n.toFixed(3)
 }
 
@@ -150,20 +166,28 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 	let xMax = -Infinity
 	let yMin = Infinity
 	let yMax = -Infinity
+
 	for (const s of series) {
 		for (const [x, y] of s.points) {
 			if (x < xMin) xMin = x
+
 			if (x > xMax) xMax = x
+
 			if (y < yMin) yMin = y
+
 			if (y > yMax) yMax = y
 		}
 	}
+
 	if (args.yMin !== undefined) yMin = args.yMin
+
 	if (args.yMax !== undefined) yMax = args.yMax
 
 	// Pad the Y range a touch so the lines don't graze the plot edges.
 	const ySpan = yMax - yMin
+
 	if (args.yMin === undefined) yMin -= ySpan * 0.05
+
 	if (args.yMax === undefined) yMax += ySpan * 0.05
 
 	// Log-scale transformation: map y through log10, then to pixel space.
@@ -175,6 +199,7 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 	const yToPx = (y: number) => {
 		if (!args.log) return padding.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH
 		const logY = Math.log10(Math.max(y, yMin > 0 ? yMin * 1e-3 : 1e-9))
+
 		return padding.top + plotH - ((logY - logYMin) / logYSpan) * plotH
 	}
 
@@ -184,13 +209,17 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 				const ticks: number[] = []
 				const lo = Math.floor(logYMin)
 				const hi = Math.ceil(logYMax)
+
 				for (let exp = lo; exp <= hi; exp++) {
 					ticks.push(Math.pow(10, exp))
+
 					for (const m of [2, 3, 5, 7]) {
 						const v = m * Math.pow(10, exp)
+
 						if (v >= Math.pow(10, logYMin) && v <= Math.pow(10, logYMax)) ticks.push(v)
 					}
 				}
+
 				return ticks.sort((a, b) => a - b)
 			})()
 		: niceTicks(yMin, yMax, 5)
@@ -220,14 +249,17 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 	// Grid + axis ticks.
 	for (const t of yTicks) {
 		const y = yToPx(t)
+
 		if (y < padding.top || y > padding.top + plotH) continue
 		parts.push(
 			`<line x1="${padding.left}" y1="${y}" x2="${padding.left + plotW}" y2="${y}" stroke="#e5e7eb" stroke-width="1" />`
 		)
 		parts.push(`<text x="${padding.left - 6}" y="${y + 3}" text-anchor="end">${fmt(t)}</text>`)
 	}
+
 	for (const t of xTicks) {
 		const x = xToPx(t)
+
 		if (x < padding.left || x > padding.left + plotW) continue
 		parts.push(
 			`<line x1="${x}" y1="${padding.top + plotH}" x2="${x}" y2="${padding.top + plotH + 4}" stroke="#374151" stroke-width="1" />`
@@ -247,6 +279,7 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 			.map(([x, y], i) => `${i === 0 ? "M" : "L"}${xToPx(x).toFixed(1)},${yToPx(y).toFixed(1)}`)
 			.join(" ")
 		parts.push(`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="1.5" stroke-linejoin="round" />`)
+
 		// Small dots at data points for clarity at low cadence
 		for (const [x, y] of s.points) {
 			parts.push(`<circle cx="${xToPx(x).toFixed(1)}" cy="${yToPx(y).toFixed(1)}" r="2.5" fill="${s.color}" />`)
@@ -258,6 +291,7 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 	let legendY = padding.top + 8
 	parts.push(`<text x="${legendX}" y="${legendY}" font-size="12" font-weight="600">runs</text>`)
 	legendY += 18
+
 	for (const s of series) {
 		parts.push(
 			`<line x1="${legendX}" y1="${legendY - 4}" x2="${legendX + 18}" y2="${legendY - 4}" stroke="${s.color}" stroke-width="2" />`
@@ -269,6 +303,7 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 	}
 
 	parts.push(`</svg>\n`)
+
 	return parts.join("")
 }
 

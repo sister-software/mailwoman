@@ -16,11 +16,13 @@
  *   --pmtiles-url http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html
  */
 
-import { layers, namedFlavor } from "@protomaps/basemaps"
 import { writeFileSync } from "node:fs"
+
+import { layers, namedFlavor } from "@protomaps/basemaps"
 
 function arg(name: string, fb = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fb
 }
 
@@ -66,6 +68,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 }
 
 const colorMatch: unknown[] = ["match", ["get", "cat"]]
+
 for (const [cat, color] of Object.entries(CATEGORY_COLOR)) colorMatch.push(cat, color)
 colorMatch.push("#9e9e9e")
 

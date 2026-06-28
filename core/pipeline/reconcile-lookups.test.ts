@@ -20,12 +20,16 @@ function fakeBackend(calls: Array<{ text: string; placetype?: string | string[] 
 	return {
 		async findPlace(query) {
 			calls.push({ text: query.text, placetype: query.placetype })
+
 			if (query.text === "Springfield") return [place(1, "Springfield"), place(2, "Springfield")]
+
 			if (query.text === "Illinois") return [place(10, "Illinois")]
+
 			return []
 		},
 		ancestors(id) {
 			if (id === 1) return [{ id: 10, placetype: "region", name: "Illinois" }]
+
 			return []
 		},
 	}

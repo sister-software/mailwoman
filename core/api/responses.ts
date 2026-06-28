@@ -7,6 +7,7 @@
  */
 
 import { AxiosError, HttpStatusCode, isAxiosError } from "axios"
+
 import { ResourceError } from "../errors/schema.js"
 import { ConsoleLogger } from "../logging/index.js"
 

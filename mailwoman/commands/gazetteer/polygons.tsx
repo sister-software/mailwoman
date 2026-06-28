@@ -27,11 +27,12 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
+import { existsSync, readFileSync, renameSync, rmSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { existsSync, readFileSync, renameSync, rmSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -86,6 +87,7 @@ interface RawGeometry {
 function geojsonPath(repos: string, country: string, id: number): string {
 	const s = String(id)
 	const shard = s.match(/.{1,3}/g)!.join("/")
+
 	return `${repos}/whosonfirst-data-admin-${country.toLowerCase()}/data/${shard}/${s}.geojson`
 }
 
@@ -93,9 +95,11 @@ function geojsonPath(repos: string, country: string, id: number): string {
 function segDist(p: Position, a: Position, b: Position): number {
 	const dx = b[0]! - a[0]!
 	const dy = b[1]! - a[1]!
+
 	if (dx === 0 && dy === 0) return Math.hypot(p[0]! - a[0]!, p[1]! - a[1]!)
 	const t = ((p[0]! - a[0]!) * dx + (p[1]! - a[1]!) * dy) / (dx * dx + dy * dy)
 	const tc = Math.max(0, Math.min(1, t))
+
 	return Math.hypot(p[0]! - (a[0]! + tc * dx), p[1]! - (a[1]! + tc * dy))
 }
 
@@ -105,43 +109,53 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 	const keep = new Uint8Array(ring.length)
 	keep[0] = keep[ring.length - 1] = 1
 	const stack: Array<[number, number]> = [[0, ring.length - 1]]
+
 	while (stack.length) {
 		const [lo, hi] = stack.pop()!
 		let maxD = -1
 		let idx = -1
+
 		for (let i = lo + 1; i < hi; i++) {
 			const d = segDist(ring[i]!, ring[lo]!, ring[hi]!)
+
 			if (d > maxD) {
 				maxD = d
 				idx = i
 			}
 		}
+
 		if (maxD > tol && idx > 0) {
 			keep[idx] = 1
 			stack.push([lo, idx], [idx, hi])
 		}
 	}
 	const out: LinearRing = []
+
 	for (let i = 0; i < ring.length; i++) if (keep[i]) out.push(ring[i]!)
+
 	// A degenerate ring (<4 pts after simplify) can't render — drop it by signalling null.
 	return out.length >= 4 ? out : null
 }
 
 /**
- * Simplify a Polygon / MultiPolygon geometry; drop rings that collapse. Returns null if nothing
- * left.
+ * Simplify a Polygon / MultiPolygon geometry; drop rings that collapse. Returns null if nothing left.
  */
 function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	const ringSet = (poly: LinearRing[]): LinearRing[] =>
 		poly.map((ring) => dp(ring, tol)).filter((r): r is LinearRing => r !== null)
+
 	if (geom.type === "Polygon") {
 		const rings = ringSet(geom.coordinates as LinearRing[])
+
 		return rings.length ? { type: "Polygon", coordinates: rings } : null
 	}
+
 	if (geom.type === "MultiPolygon") {
 		const polys = (geom.coordinates as LinearRing[][]).map((p) => ringSet(p)).filter((rings) => rings.length)
+
 		return polys.length ? { type: "MultiPolygon", coordinates: polys } : null
 	}
+
 	return null // Points / lines: no polygon to draw.
 }
 
@@ -155,11 +169,13 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 				const out = options.out
 				const points = options.points ?? ""
 				const admin = options.admin ?? ""
+
 				if (!out) {
 					throw new Error(
 						"usage: mailwoman gazetteer polygons (--points <wof-hot.db> | --admin <admin.db> [--countries US,DE]) --out <wof-polygons.db> [--tol 0.004]"
 					)
 				}
+
 				if ((!points && !admin) || (points && admin)) {
 					throw new Error("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
 				}
@@ -188,6 +204,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 				// readonly artifact — never write the live path in case the build dies halfway). The
 				// original .mjs wrote `out` directly; this hardens it without changing the result.
 				const tmpOut = `${out}.tmp-${process.pid}`
+
 				for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
 					if (existsSync(stale)) rmSync(stale)
 				}
@@ -206,15 +223,19 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 				let missing = 0
 				let dropped = 0
 				dbOut.exec("BEGIN")
+
 				for (const r of rows) {
 					const path = geojsonPath(repos, r.country, r.id)
+
 					if (!existsSync(path)) {
 						missing++
 						continue
 					}
+
 					try {
 						const feat = JSON.parse(readFileSync(path, "utf8")) as { geometry?: RawGeometry }
 						const simp = feat.geometry ? simplify(feat.geometry, tol) : null
+
 						if (!simp) {
 							dropped++
 							continue
@@ -224,6 +245,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 					} catch {
 						dropped++
 					}
+
 					if ((done + missing + dropped) % 2000 === 0)
 						console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
 				}
@@ -237,8 +259,10 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 				// Atomic swap: move the previous DB aside, slide the new one into place, drop the backup.
 				const backup = `${out}.old-${process.pid}`
+
 				if (existsSync(out)) renameSync(out, backup)
 				renameSync(tmpOut, out)
+
 				if (existsSync(backup)) rmSync(backup)
 
 				const mb = Math.round((bytes.b || 0) / 1024 / 1024)
@@ -254,6 +278,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -266,6 +291,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

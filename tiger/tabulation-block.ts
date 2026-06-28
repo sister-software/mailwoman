@@ -5,6 +5,7 @@
  */
 
 import { type MultiPolygonLiteral } from "@mailwoman/spatial"
+
 import { TIGERProperty, type TIGERPropertyRecord } from "./constants.js"
 import { GeoIDPart, type FIPSBlockGeoID, type ParsedGeoIDBlockLevel } from "./geoid.js"
 
@@ -59,8 +60,8 @@ export interface TIGERTabulatedBlock extends ParsedGeoIDBlockLevel, TIGERTabulat
 	GEOID: FIPSBlockGeoID
 
 	/**
-	 * The geometry of the tabulated block, typically a polygon, but may be a multi-polygon for blocks
-	 * with holes, or islands.
+	 * The geometry of the tabulated block, typically a polygon, but may be a multi-polygon for blocks with holes, or
+	 * islands.
 	 *
 	 * @title Geometry
 	 */

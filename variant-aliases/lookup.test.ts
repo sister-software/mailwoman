@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { getAllAliases, lookupVariantAliases } from "./lookup.js"
 
 describe("lookupVariantAliases", () => {
@@ -13,6 +14,7 @@ describe("lookupVariantAliases", () => {
 		expect(r).toHaveLength(1)
 		expect(r[0]!.confidence).toBe(1.0)
 		expect(r[0]!.alias.kind).toBe("amenity")
+
 		if (r[0]!.alias.kind === "amenity") {
 			expect(r[0]!.alias.category).toBe("fuel")
 		}
@@ -38,6 +40,7 @@ describe("lookupVariantAliases", () => {
 		const r = lookupVariantAliases("マクド", "ja-JP")
 		expect(r).toHaveLength(1)
 		expect(r[0]!.alias.kind).toBe("brand")
+
 		if (r[0]!.alias.kind === "brand") {
 			expect(r[0]!.alias.brand).toBe("McDonald's")
 		}
@@ -67,6 +70,7 @@ describe("lookupVariantAliases", () => {
 	it("PFK in Quebec → KFC", () => {
 		const r = lookupVariantAliases("pfk", "fr-CA")
 		expect(r).toHaveLength(1)
+
 		if (r[0]!.alias.kind === "brand") {
 			expect(r[0]!.alias.brand).toBe("KFC")
 		}

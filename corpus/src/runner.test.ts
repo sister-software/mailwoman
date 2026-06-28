@@ -7,7 +7,9 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { runAdapter, type RunnerProgress } from "./runner.js"
 import type { CanonicalRow, CorpusAdapter } from "./types.js"
 
@@ -19,12 +21,14 @@ function makeAdapter(opts: {
 }): CorpusAdapter {
 	const id = opts.id ?? "test"
 	const license = opts.defaultLicense ?? "CC0-1.0"
+
 	return {
 		id,
 		defaultLicense: license,
 		description: `synthetic adapter ${id}`,
 		async *rows() {
 			let i = 0
+
 			for (const row of opts.rows) {
 				if (opts.throwAfter !== undefined && i >= opts.throwAfter) {
 					throw new Error("adapter exploded")

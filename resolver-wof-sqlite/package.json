@@ -8,6 +8,19 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "resolver-wof-sqlite"
 	},
+	"bin": {
+		"mailwoman-wof-build-candidate": "./out/build-candidate-cli.js",
+		"mailwoman-wof-build-coincident-roles": "./out/build-coincident-roles-cli.js",
+		"mailwoman-wof-build-fts": "./out/build-fts-cli.js",
+		"mailwoman-wof-build-slim": "./out/build-slim-cli.js"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
@@ -32,27 +45,14 @@
 		"./address-point-schema": "./out/address-point-schema.js",
 		"./street-segment-schema": "./out/street-segment-schema.js"
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"kysely": "^0.29.2"
-	},
-	"files": [
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map",
-		"README.md"
-	],
-	"bin": {
-		"mailwoman-wof-build-candidate": "./out/build-candidate-cli.js",
-		"mailwoman-wof-build-coincident-roles": "./out/build-coincident-roles-cli.js",
-		"mailwoman-wof-build-fts": "./out/build-fts-cli.js",
-		"mailwoman-wof-build-slim": "./out/build-slim-cli.js"
-	},
-	"publishConfig": {
-		"access": "public"
 	}
 }

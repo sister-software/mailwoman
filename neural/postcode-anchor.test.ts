@@ -9,6 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import {
 	editDistance1Variants,
 	extractPostcodeAnchors,

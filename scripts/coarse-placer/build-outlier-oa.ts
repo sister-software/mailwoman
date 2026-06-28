@@ -1,3 +1,8 @@
+import { appendFileSync, writeFileSync } from "node:fs"
+import * as path from "node:path"
+import { parseArgs } from "node:util"
+
+import { DuckDBInstance } from "@duckdb/node-api"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -29,11 +34,6 @@
  *   6000] [--data data/coarse-placer]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
-import { appendFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-import { parseArgs } from "node:util"
-
-import { DuckDBInstance } from "@duckdb/node-api"
 
 interface OaTestRow {
 	raw: string
@@ -79,10 +79,12 @@ const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 /** FNV-1a → uint32, deterministic ordering/variant choice. */
 function hash(s: string): number {
 	let h = 2166136261
+
 	for (let i = 0; i < s.length; i++) {
 		h ^= s.charCodeAt(i)
 		h = Math.imul(h, 16777619)
 	}
+
 	return h >>> 0
 }
 
@@ -92,11 +94,15 @@ function assemble(r: Record<string, unknown>): string | null {
 	const street = (r.street ?? "").toString().trim()
 	const pc = (r.postcode ?? "").toString().trim()
 	const locality = (r.city ?? "").toString().trim()
-	if (!street && !locality) return null // nothing distinctive
+
+	if (!street && !locality) return null
+
+	// nothing distinctive
 	// Drop raw-coord-only / PO-box-ish noise (DeepSeek gotcha): need a real street or locality token.
 	if (!street && !/[a-z]/i.test(locality)) return null
 	const head = [num, street].filter(Boolean).join(" ")
 	const h = hash(`${num}|${street}|${pc}|${locality}`)
+
 	switch (h % 3) {
 		case 0:
 			return [head, [pc, locality].filter(Boolean).join(" ")].filter(Boolean).join(", ")
@@ -110,8 +116,7 @@ function assemble(r: Record<string, unknown>): string | null {
 const duck = await (await DuckDBInstance.create()).connect()
 
 /**
- * Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under the per-country
- * dir).
+ * Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under the per-country dir).
  */
 async function rowsFor(cc: string): Promise<string[]> {
 	const lc = cc.toLowerCase()
@@ -119,6 +124,7 @@ async function rowsFor(cc: string): Promise<string[]> {
 	// rooting the glob at <cc>). `**` matches zero-or-more dirs → handles both flat + region-nested.
 	const glob = path.join(args["oa-dir"], lc, "**", "*.csv")
 	let res
+
 	try {
 		res = await duck.runAndReadAll(
 			// union_by_name aligns the differing per-source schemas; LOWER the header access so NUMBER /
@@ -127,20 +133,26 @@ async function rowsFor(cc: string): Promise<string[]> {
 		)
 	} catch (e) {
 		console.error(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
+
 		return []
 	}
 	const seen = new Set<string>()
 	const out: string[] = []
+
 	for (const r of res.getRowObjects()) {
 		// COLUMNS() preserves source-case keys; normalize to lowercase access.
 		const row: Record<string, unknown> = {}
+
 		for (const [k, v] of Object.entries(r)) row[k.toLowerCase()] = v
 		const raw = assemble(row)
+
 		if (!raw || raw.length < 6 || seen.has(raw)) continue
 		seen.add(raw)
 		out.push(raw)
+
 		if (out.length >= PER) break
 	}
+
 	return out.sort((a, b) => hash(a) - hash(b))
 }
 
@@ -152,10 +164,13 @@ let heldCC = 0
 
 for (const [family, countries] of Object.entries(FAMILIES)) {
 	const heldout = HELDOUT_FAMILIES.has(family)
+
 	for (const cc of countries) {
 		if (IN_MAP.has(cc)) continue
 		const rows = await rowsFor(cc)
+
 		if (rows.length === 0) continue
+
 		if (heldout) {
 			for (const raw of rows) testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc, family })
 			heldCC++
@@ -163,9 +178,12 @@ for (const [family, countries] of Object.entries(FAMILIES)) {
 		} else {
 			const nVal = Math.floor(rows.length * 0.1)
 			const nTest = Math.floor(rows.length * 0.1)
+
 			for (const raw of rows.slice(0, nVal)) valAppend.push(raw)
+
 			for (const raw of rows.slice(nVal, nVal + nTest))
 				testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc, family })
+
 			for (const raw of rows.slice(nVal + nTest)) trainAppend.push(raw)
 			trainCC++
 			console.log(`  TRAIN ${cc} (${family}): ${rows.length}`)

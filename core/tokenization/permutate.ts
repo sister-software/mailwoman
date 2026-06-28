@@ -11,8 +11,8 @@ const JOIN_CHAR = " "
 /**
  * Produce all the possible token groups from adjacent input tokens (without reordering tokens)
  *
- * WindowMin: the minimum amount of tokens which can be returned in a single window windowMax: the
- * maximum amount of tokens which can be returned in a single window
+ * WindowMin: the minimum amount of tokens which can be returned in a single window windowMax: the maximum amount of
+ * tokens which can be returned in a single window
  *
  * Note: we should honor word boundary delimiters (such as comma) when creating permutations ported:
  * https://github.com/pelias/placeholder/blob/master/lib/permutations.js
@@ -84,9 +84,8 @@ export interface PermutateOptions {
 /**
  * Produce all the possible token groups from adjacent input tokens (without reordering tokens).
  *
- * Example: ['soho', 'new', 'york', 'usa'] [ ['soho', 'new', 'york', 'usa'], ['soho', 'new',
- * 'york'], ['soho', 'new'], ['soho'], ['new', 'york', 'usa'], ['new', 'york'], ['new'], ['york',
- * 'usa'], ['york'], ['usa'], ]
+ * Example: ['soho', 'new', 'york', 'usa'] [ ['soho', 'new', 'york', 'usa'], ['soho', 'new', 'york'], ['soho', 'new'],
+ * ['soho'], ['new', 'york', 'usa'], ['new', 'york'], ['new'], ['york', 'usa'], ['york'], ['usa'], ]
  *
  * @param spans - The spans to permutate
  *

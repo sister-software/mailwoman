@@ -46,6 +46,9 @@
  *   (postalcode-*.db) to also resolve the postcode node.
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+
 import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
@@ -59,12 +62,12 @@ import {
 	createRuntimePipeline,
 	loadDefaultPlaceCountry,
 } from "mailwoman"
-import { readFileSync, writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
+
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -100,24 +103,30 @@ interface Resolved {
 /** Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any. */
 function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
+
 	while (stack.length > 0) {
 		const n = stack.pop()!
 		const ap = n.metadata?.address_point as { lat: number; lon: number } | undefined
+
 		if (n.tag === "street" && ap) return ap
 		stack.push(...n.children)
 	}
+
 	return null
 }
 
 /** Pull the #483 interpolated estimate (street-node metadata) out of a resolved tree, if any. */
 function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
+
 	while (stack.length > 0) {
 		const n = stack.pop()!
 		const ip = n.metadata?.interpolated_point as { lat: number; lon: number } | undefined
+
 		if (n.tag === "street" && ip) return ip
 		stack.push(...n.children)
 	}
+
 	return null
 }
 
@@ -125,11 +134,13 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
+
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
 			out.push({ id: Number(n.placeId.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
+
 		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
 		// INTERPRETATIONS on the same node, not separate children. Surface each resolved interpretation as
 		// its own Resolved so the eval finds the completed locality (placetype/coord/name come from the
@@ -148,29 +159,33 @@ function collectResolved(tree: AddressTree): Resolved[] {
 				out.push({ id: Number(interp.placeId.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
 			}
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return out
 }
 
 function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
+
 	for (const r of rs) {
 		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
 	}
+
 	return best
 }
 
 const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
 
 /**
- * Aggressive name normalization for gazetteer-alias locality matching. Lowercases, strips
- * diacritics + punctuation, expands the universal US place abbreviations (St→Saint, Mt→Mount,
- * Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX". Deliberately does NOT strip civic suffixes
- * (City/Town/Township/Village): in New England "Barre City" and "Barre Town" are DISTINCT
- * municipalities, so collapsing them would over-credit genuine wrong-place misses. Pair with the
- * WOF altname set (a place's own recorded variants) rather than loosening here.
+ * Aggressive name normalization for gazetteer-alias locality matching. Lowercases, strips diacritics + punctuation,
+ * expands the universal US place abbreviations (St→Saint, Mt→Mount, Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX".
+ * Deliberately does NOT strip civic suffixes (City/Town/Township/Village): in New England "Barre City" and "Barre Town"
+ * are DISTINCT municipalities, so collapsing them would over-credit genuine wrong-place misses. Pair with the WOF
+ * altname set (a place's own recorded variants) rather than loosening here.
  */
 const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
 const normName = (s: string | undefined): string => {
@@ -185,6 +200,7 @@ const normName = (s: string | undefined): string => {
 		.split(" ")
 		.filter(Boolean)
 		.map((t) => ABBR[t] ?? t)
+
 	return toks
 		.join(" ")
 		.replace(/\bmc (\w)/g, "mc$1")
@@ -252,39 +268,42 @@ const STATE_NAME_TO_ABBR: Record<string, string> = {
 }
 
 /**
- * True if the resolved region matches the expected one, comparing like-for-like across the surface
- * forms each side uses. Three paths, tried in order:
+ * True if the resolved region matches the expected one, comparing like-for-like across the surface forms each side
+ * uses. Three paths, tried in order:
  *
  * 1. Verbatim — both already the same string (US `Berlin`==`Berlin`, or two identical abbrevs).
- * 2. US — the resolver returns a state's CANONICAL full name (`California`) while OA's expected is the
- *    USPS abbrev (`CA`); map full name → abbrev so they compare.
- * 3. DE — the resolver returns WOF's ENGLISH exonym (`Saxony`) while OA's expected is the German name
- *    (`Sachsen`); `lookupGermanState` folds code / German name / English name → one ISO 3166-2:DE
- *    code on BOTH sides. Strict: distinct states (Bavaria vs Saxony) still miss, so this corrects
- *    the cross-language mismatch without loosening a genuine wrong-region.
- * 4. FR — `lookupFrenchRegion` folds an ISO 3166-2:FR code or a région name (accents optional) to one
- *    code on both sides, the same diacritic-insensitive fix for `Île-de-France` vs
- *    `Ile-de-France`.
+ * 2. US — the resolver returns a state's CANONICAL full name (`California`) while OA's expected is the USPS abbrev (`CA`);
+ *    map full name → abbrev so they compare.
+ * 3. DE — the resolver returns WOF's ENGLISH exonym (`Saxony`) while OA's expected is the German name (`Sachsen`);
+ *    `lookupGermanState` folds code / German name / English name → one ISO 3166-2:DE code on BOTH sides. Strict:
+ *    distinct states (Bavaria vs Saxony) still miss, so this corrects the cross-language mismatch without loosening a
+ *    genuine wrong-region.
+ * 4. FR — `lookupFrenchRegion` folds an ISO 3166-2:FR code or a région name (accents optional) to one code on both sides,
+ *    the same diacritic-insensitive fix for `Île-de-France` vs `Ile-de-France`.
  *
- * The code spaces don't overlap on real inputs (a USPS abbrev is never a German or French region
- * name, and the German/French names are disjoint), so trying all of them is safe regardless of the
- * row's country.
+ * The code spaces don't overlap on real inputs (a USPS abbrev is never a German or French region name, and the
+ * German/French names are disjoint), so trying all of them is safe regardless of the row's country.
  */
 function regionMatches(resolvedName: string | undefined, expected: string | undefined): boolean {
 	if (!resolvedName || !expected) return false
 	const exp = norm(expected)
 	const got = norm(resolvedName)
+
 	if (got === exp) return true
+
 	if (STATE_NAME_TO_ABBR[got]?.toLowerCase() === exp) return true
 	const gotDe = lookupGermanState(resolvedName)
+
 	if (gotDe !== null && gotDe === lookupGermanState(expected)) return true
 	const gotFr = lookupFrenchRegion(resolvedName)
+
 	return gotFr !== null && gotFr === lookupFrenchRegion(expected)
 }
 
 function percentile(xs: number[], p: number): number | null {
 	if (xs.length === 0) return null
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 
@@ -356,7 +375,9 @@ async function main(): Promise<void> {
 				databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
 				postalCityAliases,
 			})
+
 	if (candidateDb) console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
+
 	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDb}`)
 	const resolver = createWofResolver(backend as never)
 
@@ -372,14 +393,18 @@ async function main(): Promise<void> {
 	const altCache = new Map<number, Set<string>>()
 	const altNamesFor = (id: number): Set<string> => {
 		let set = altCache.get(id)
+
 		if (!set) {
 			set = new Set<string>()
+
 			for (const r of namesStmt.all(id) as { name: string }[]) {
 				const n = normName(r.name)
+
 				if (n) set.add(n)
 			}
 			altCache.set(id, set)
 		}
+
 		return set
 	}
 	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
@@ -397,32 +422,40 @@ async function main(): Promise<void> {
 	const ancestorTokCache = new Map<number, Set<string>>()
 	const ancestorTokensFor = (id: number): Set<string> => {
 		let set = ancestorTokCache.get(id)
+
 		if (!set) {
 			set = new Set<string>()
+
 			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
 				for (const t of normName(r.name).split(" ")) if (t.length >= 4) set.add(t)
 			}
 			ancestorTokCache.set(id, set)
 		}
+
 		return set
 	}
 	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
 		if (!expected || !locNode) return false
 		const e = normName(expected)
+
 		if (!e) return false
+
 		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
 		// Near-miss: gold `<resolved name> <qualifier…>`. Credit only when EVERY trailing qualifier is an
 		// abbreviation-prefix (≥3 chars) of one of the resolved place's ancestor-name tokens. The base
 		// must equal the resolved name exactly, so this can only ADD credit to an already-correct place.
 		const base = normName(locNode.name)
+
 		if (base && e.startsWith(base + " ")) {
 			const quals = e
 				.slice(base.length + 1)
 				.split(" ")
 				.filter(Boolean)
 			const anc = ancestorTokensFor(locNode.id)
+
 			if (quals.length > 0 && quals.every((q) => q.length >= 3 && [...anc].some((a) => a.startsWith(q)))) return true
 		}
+
 		return false
 	}
 
@@ -459,6 +492,7 @@ async function main(): Promise<void> {
 	// the address-point hit when present (the tier's whole contribution is "where", street-level).
 	const addressPointsDb = arg("address-points", "")
 	let addressPoints: import("@mailwoman/resolver").AddressPointLookup | null = null
+
 	if (addressPointsDb) {
 		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
 		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
@@ -470,6 +504,7 @@ async function main(): Promise<void> {
 	// long tail of valid-but-unlisted numbers the exact tier misses.
 	const interpolationDb = arg("interpolation", "")
 	let interpolation: import("@mailwoman/resolver").InterpolationLookup | null = null
+
 	if (interpolationDb) {
 		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
@@ -486,6 +521,7 @@ async function main(): Promise<void> {
 	const cascadeOn = process.argv.includes("--cascade")
 	const dataRoot = arg("data-root", mailwomanDataRoot())
 	let cascadeProvider: import("mailwoman/geocode-core").ShardProvider | null = null
+
 	if (cascadeOn) {
 		const { ShardProvider } = await import("mailwoman/geocode-core")
 		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
@@ -504,6 +540,7 @@ async function main(): Promise<void> {
 		close(): void
 	} | null = null
 	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
+
 	if (useAnchor || anchorRerank) {
 		const shards = arg(
 			"postcode-shards",
@@ -531,33 +568,41 @@ async function main(): Promise<void> {
 		// out-ranks an earlier house number on its own merit — no "take the last span" crutch needed.
 		// Ties break toward the later span (the postcode trails the locality in a rendered address).
 		let best: { lat: number; lon: number; conf: number; start: number } | null = null
+
 		for (const a of extractAnchors(input, postcodeLookup)) {
 			if (a.confidence < anchorMinConf) continue
 			const placed = a.candidates.filter((c) => c.lat !== 0 || c.lon !== 0)
+
 			if (placed.length === 0) continue
 			// When the eval fixes a country, accept ONLY a placed candidate from it — never fall back to
 			// another country's centroid (a US ZIP that is coordless here but a valid 5-digit shape in
 			// DE/FR/IT must not borrow Europe's point). With no country fixed, take the first placed.
 			const pick = prefer ? placed.find((c) => c.country.toUpperCase() === prefer) : placed[0]
+
 			if (!pick) continue
+
 			if (!best || a.confidence > best.conf || (a.confidence === best.conf && a.span.start >= best.start)) {
 				best = { lat: pick.lat, lon: pick.lon, conf: a.confidence, start: a.span.start }
 			}
 		}
+
 		return best ? { lat: best.lat, lon: best.lon } : null
 	}
 
 	/**
-	 * The postcode anchor's country posterior for a raw address (highest-confidence placed anchor),
-	 * fed into the resolver's locality re-rank via `ResolveOpts.anchorPosterior` (#369 S8).
+	 * The postcode anchor's country posterior for a raw address (highest-confidence placed anchor), fed into the
+	 * resolver's locality re-rank via `ResolveOpts.anchorPosterior` (#369 S8).
 	 */
 	const anchorPosteriorFor = (input: string): Record<string, number> | undefined => {
 		if (!postcodeLookup || !extractAnchors) return undefined
 		let best: { posterior: Record<string, number>; conf: number } | null = null
+
 		for (const a of extractAnchors(input, postcodeLookup)) {
 			if (a.candidates.length === 0) continue
+
 			if (!best || a.confidence > best.conf) best = { posterior: a.posterior, conf: a.confidence }
 		}
+
 		return best?.posterior
 	}
 
@@ -572,9 +617,13 @@ async function main(): Promise<void> {
 	const newAgg = (): Agg => ({ n: 0, localityMatch: 0, regionMatch: 0, resolved: 0, errs: [] })
 	const bump = (a: Agg, locMatch: boolean, regMatch: boolean, resolved: boolean, err: number | null): void => {
 		a.n++
+
 		if (locMatch) a.localityMatch++
+
 		if (regMatch) a.regionMatch++
+
 		if (resolved) a.resolved++
+
 		if (err !== null) a.errs.push(err)
 	}
 
@@ -605,6 +654,7 @@ async function main(): Promise<void> {
 			resolved.find((r) => expandPlacetypeFilter(["locality"]).includes(r.placetype))
 		const locRaw = locNode?.name
 		const regResolved = resolved.find((r) => r.placetype === "region")
+
 		return {
 			locMatch: localityMatches(row.expected.locality, locNode),
 			regMatch: regionMatches(regResolved?.name, row.expected.region),
@@ -658,6 +708,7 @@ async function main(): Promise<void> {
 	const useHardCountry = process.argv.includes("--place-country-hard") || useHardCountryAll
 	const usePlaceCountry = process.argv.includes("--place-country") || useHardCountry
 	const evalPlacer = runAssembled && usePlaceCountry ? await loadDefaultPlaceCountry() : null
+
 	if (usePlaceCountry && !evalPlacer) {
 		console.warn("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
 	}
@@ -672,10 +723,14 @@ async function main(): Promise<void> {
 		let hn = false
 		const visit = (n: AddressNode): void => {
 			if (n.tag === "street") street = true
+
 			if (n.tag === "house_number") hn = true
+
 			for (const c of n.children) visit(c)
 		}
+
 		for (const r of tree.roots) visit(r)
+
 		return street && hn
 	}
 	const assembledPipeline = runAssembled
@@ -702,6 +757,7 @@ async function main(): Promise<void> {
 	): void => {
 		const st = row.state || "??"
 		const m = agg[who].byState
+
 		if (!m.has(st)) m.set(st, newAgg())
 		bump(m.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 		bump(agg[who].overall, s.locMatch, s.regMatch, s.resolved, s.err)
@@ -727,9 +783,12 @@ async function main(): Promise<void> {
 	const outRows: Record<string, unknown>[] = []
 
 	let i = 0
+
 	for (const row of rows) {
 		i++
+
 		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
+
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
 		// (~380-parse SIGKILL on the lab box — it crashed the promotion-gate's de-order step tonight).
 		// Periodic forced GC reclaims it; run with `node --expose-gc`. No-op without the flag. (#787 pattern.)
@@ -750,6 +809,7 @@ async function main(): Promise<void> {
 		// neural
 		let nResolved: Resolved[] = []
 		let nDecorated: AddressTree | null = null
+
 		try {
 			const nTree = await neural.parse(row.input, parseOpts)
 			nDecorated = await resolver.resolveTree(nTree, nOpts)
@@ -759,6 +819,7 @@ async function main(): Promise<void> {
 		}
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
+
 		if (runAssembled && hasStreetHN(nDecorated)) neuralPrecond++
 
 		if (collectResolvedDump) {
@@ -778,8 +839,10 @@ async function main(): Promise<void> {
 		if (runAddrPt) {
 			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
 			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
+
 			if (hit) addressPointHits++
 			const st = row.state || "??"
+
 			if (!neuralAddrPtAgg.byState.has(st)) neuralAddrPtAgg.byState.set(st, newAgg())
 			bump(neuralAddrPtAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 			bump(neuralAddrPtAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, apErr)
@@ -792,8 +855,10 @@ async function main(): Promise<void> {
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
 			const coord = exact ?? interp
 			const ipErr = coord ? haversineKm(coord.lat, coord.lon, row.lat, row.lon) : ns.err
+
 			if (interp) interpHits++
 			const st = row.state || "??"
+
 			if (!neuralInterpAgg.byState.has(st)) neuralInterpAgg.byState.set(st, newAgg())
 			bump(neuralInterpAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
 			bump(neuralInterpAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
@@ -807,17 +872,24 @@ async function main(): Promise<void> {
 				let hn: string | undefined
 				let pc: string | undefined
 				const stk = [...nDecorated.roots]
+
 				while (stk.length > 0) {
 					const n = stk.pop()!
+
 					if (n.tag === "street" && !s && n.value.trim()) s = n.value.trim()
+
 					if (n.tag === "house_number" && !hn && n.value.trim()) hn = n.value.trim()
+
 					if (n.tag === "postcode" && !pc && n.value.trim()) pc = n.value.trim()
 					stk.push(...n.children)
 				}
 				const precond = !!(s && hn && pc)
+
 				if (precond) interpPrecond++
+
 				if (precond && !exact && !interp) {
 					interpFullParseMiss++
+
 					if (diagMisses.length < 5000) diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
 				}
 			}
@@ -828,6 +900,7 @@ async function main(): Promise<void> {
 			const ac = anchorCoordFor(row.input)
 			const fusedErr = ac ? haversineKm(ac.lat, ac.lon, row.lat, row.lon) : ns.err
 			const st = row.state || "??"
+
 			if (!neuralAnchorAgg.byState.has(st)) neuralAnchorAgg.byState.set(st, newAgg())
 			bump(neuralAnchorAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
 			bump(neuralAnchorAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
@@ -835,6 +908,7 @@ async function main(): Promise<void> {
 
 		// v0 (Pelias parser) via the flat→tree adapter
 		let vResolved: Resolved[] = []
+
 		try {
 			const sol = await v0.parse(row.input)
 			const rec = (sol[0]?.classifications ?? {}) as ClassificationRecord
@@ -858,22 +932,28 @@ async function main(): Promise<void> {
 		// #478 inc 3 leg 2: assembled (no-arb) + assembled+arb, through the same resolver + nOpts.
 		if (assembledPipeline) {
 			const st = row.state || "??"
+
 			try {
 				const { tree } = await assembledPipeline(row.input, { resolveOpts: nOpts })
 				const s = scoreTree(row, collectResolved(tree))
+
 				if (!assembledAgg.byState.has(st)) assembledAgg.byState.set(st, newAgg())
 				bump(assembledAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 				bump(assembledAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
+
 				if (hasStreetHN(tree)) asmPrecond++
 			} catch {
 				/* unresolved */
 			}
+
 			try {
 				const { tree } = await assembledPipeline(row.input, { arbitrate: true, resolveOpts: nOpts })
 				const s = scoreTree(row, collectResolved(tree))
+
 				if (!assembledArbAgg.byState.has(st)) assembledArbAgg.byState.set(st, newAgg())
 				bump(assembledArbAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 				bump(assembledArbAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
+
 				if (hasStreetHN(tree)) arbPrecond++
 			} catch {
 				/* unresolved */
@@ -902,14 +982,17 @@ async function main(): Promise<void> {
 			})
 		}
 	}
+
 	if (collectErrors) {
 		writeFileSync(arg("errors-json"), JSON.stringify(errorRows, null, 2))
 		console.error(`wrote ${errorRows.length} failure rows → ${arg("errors-json")}`)
 	}
+
 	if (collectRows) {
 		writeFileSync(arg("out-rows"), JSON.stringify(outRows))
 		console.error(`wrote ${outRows.length} per-row outcomes → ${arg("out-rows")}`)
 	}
+
 	if (collectResolvedDump) {
 		writeFileSync(arg("out-resolved"), JSON.stringify(resolvedRows))
 		console.error(`wrote ${resolvedRows.length} resolved rows → ${arg("out-resolved")}`)
@@ -931,11 +1014,14 @@ async function main(): Promise<void> {
 		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
 	lines.push(overallRow("**neural**", agg.neural.overall))
 	lines.push(overallRow("v0 (Pelias)", agg.v0.overall))
+
 	if (runAssembled) {
 		lines.push(overallRow("assembled (no arb)", assembledAgg.overall))
 		lines.push(overallRow("**assembled + arb**", assembledArbAgg.overall))
 	}
+
 	if (useAnchor) lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
+
 	if (runAddrPt) {
 		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
 		lines.push("")
@@ -943,6 +1029,7 @@ async function main(): Promise<void> {
 			`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`
 		)
 	}
+
 	if (runInterp) {
 		lines.push(
 			overallRow(cascadeOn ? "**neural+cascade (SHIPPED coord)**" : "**neural+interp**", neuralInterpAgg.overall)
@@ -951,6 +1038,7 @@ async function main(): Promise<void> {
 		lines.push(
 			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
 		)
+
 		if (cascadeOn) {
 			const Nc = neuralInterpAgg.overall.n
 			const adminTier = Math.max(0, Nc - addressPointHits - interpHits)
@@ -962,6 +1050,7 @@ async function main(): Promise<void> {
 				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state shards) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${pct(addressPointHits, Nc)}, interpolated ${pct(interpHits, Nc)}, admin ${pct(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
 			)
 		}
+
 		if (diagInterp) {
 			const N = neuralInterpAgg.overall.n
 			lines.push("")
@@ -980,10 +1069,12 @@ async function main(): Promise<void> {
 			const ierrs = neuralInterpAgg.overall.errs
 			lines.push("")
 			lines.push(`error CDF (neural+interp, n=${ierrs.length}) — cumulative % within radius:`)
+
 			for (const m of [10, 25, 50, 100, 200, 500, 1000, 5000]) {
 				const within = ierrs.filter((e) => e <= m / 1000).length
 				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
 			}
+
 			// Dump ALL full-parse misses for the standalone shard-membership categorization (segment-not-found
 			// vs in-shard-range-miss vs normalization). Bump cap done at collection site.
 			if (diagMisses.length > 0) {
@@ -991,10 +1082,12 @@ async function main(): Promise<void> {
 				lines.push("")
 				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
 				lines.push("sample (house_number | street | postcode ← input):")
+
 				for (const m of diagMisses.slice(0, 12)) lines.push(`  - ${m}`)
 			}
 		}
 	}
+
 	if (runAssembled) {
 		const N = agg.neural.overall.n
 		lines.push("")
@@ -1017,6 +1110,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`| state | n | neural loc | v0 loc | neural reg | v0 reg |`)
 	lines.push(`|---|--:|--:|--:|--:|--:|`)
+
 	for (const st of [...agg.neural.byState.keys()].sort()) {
 		const nn = agg.neural.byState.get(st)!
 		const vv = agg.v0.byState.get(st) ?? newAgg()
@@ -1039,6 +1133,7 @@ async function main(): Promise<void> {
 		writeFileSync(arg("out-md"), report + "\n")
 		console.error(`wrote markdown → ${arg("out-md")}`)
 	}
+
 	if (arg("out-json")) {
 		const dump = (g: { overall: Agg; byState: Map<string, Agg> }) => ({
 			overall: { ...g.overall, errs: undefined, errN: g.overall.errs.length },

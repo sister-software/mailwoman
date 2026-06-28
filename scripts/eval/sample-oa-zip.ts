@@ -42,6 +42,7 @@ const BBOX: Record<string, [number, number, number, number]> = {
 function normalizeRow(country: string, r: Row): Row {
 	if (country === "ES") {
 		const via = `${(r.tipo_vial ?? "").trim()} ${(r.nombre_via ?? "").trim()}`.trim()
+
 		return {
 			LAT: r.Y,
 			LON: r.X,
@@ -52,6 +53,7 @@ function normalizeRow(country: string, r: Row): Row {
 			REGION: (r.provincia ?? "").trim(),
 		}
 	}
+
 	return r
 }
 
@@ -66,22 +68,27 @@ function render(country: string, r: Row): string {
 	const street = (r.STREET ?? "").trim()
 	const pc = (r.POSTCODE ?? "").trim()
 	const city = (r.CITY ?? "").trim()
-	if (country === "FR") return stripCommaSpace(`${num} ${street}, ${pc} ${city}`) // "12 Rue de Rivoli, 75001 Paris"
+
+	if (country === "FR") return stripCommaSpace(`${num} ${street}, ${pc} ${city}`)
+
+	// "12 Rue de Rivoli, 75001 Paris"
 	// number after street: "Via Roma 12, 20121 Milano" / "Calle de Alcalá 1, 28014 Madrid"
 	if (country === "NL" || country === "IT" || country === "ES")
 		return stripCommaSpace(`${street} ${num}, ${pc} ${city}`)
+
 	return `${num} ${street}, ${pc} ${city}`
 }
 
 /**
- * Python `float(s)`: empty/non-numeric -> null (covers the ValueError/KeyError/TypeError ->
- * continue).
+ * Python `float(s)`: empty/non-numeric -> null (covers the ValueError/KeyError/TypeError -> continue).
  */
 function pyFloat(s: string | undefined): number | null {
 	if (s == null) return null
 	const t = s.trim()
+
 	if (t === "") return null
 	const v = Number(t)
+
 	return Number.isNaN(v) ? null : v
 }
 
@@ -95,6 +102,7 @@ async function main(): Promise<void> {
 			out: { type: "string" },
 		},
 	})
+
 	for (const req of ["zip", "country", "out"] as const) {
 		if (!values[req]) {
 			process.stderr.write(`error: the following arguments are required: --${req}\n`)
@@ -108,20 +116,25 @@ async function main(): Promise<void> {
 
 	const rng = new SeededRandom(Number(values.seed))
 	const bbox = BBOX[country]
+
 	if (!bbox) throw new Error(`no bbox for country ${country}`)
 	const [minlat, maxlat, minlon, maxlon] = bbox
 
 	const csvName = firstCsvEntry(zip)
 	const reservoir: Record<string, unknown>[] = []
 	let seen = 0
+
 	for await (const rawRow of csvRecordsFromZip(zip, csvName)) {
 		const r = normalizeRow(country, rawRow)
 		const lat = pyFloat(r.LAT)
 		const lon = pyFloat(r.LON)
+
 		if (lat === null || lon === null) continue
+
 		if (!(minlat! <= lat && lat <= maxlat! && minlon! <= lon && lon <= maxlon!)) continue
 		const city = (r.CITY ?? "").trim()
 		const pc = (r.POSTCODE ?? "").trim()
+
 		if (!city || !pc) continue // admin-level eval needs city + postcode
 		seen += 1
 		const region = (r.REGION ?? "").trim() || null
@@ -133,10 +146,12 @@ async function main(): Promise<void> {
 			state: country,
 			source: `openaddresses:${country.toLowerCase()}/countrywide`,
 		}
+
 		if (reservoir.length < target) {
 			reservoir.push(row)
 		} else {
 			const j = rng.randint(0, seen - 1)
+
 			if (j < target) reservoir[j] = row
 		}
 	}

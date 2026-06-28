@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { Span } from "./Span.js"
 import { fieldsFuncBoundary, fieldsFuncWhiteSpace, splitByField } from "./split.js"
 

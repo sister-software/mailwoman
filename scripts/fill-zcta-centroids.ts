@@ -24,6 +24,7 @@
 
 import { existsSync, readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+
 import {
 	fillGeonamesPlaceholders,
 	fillPlaceholderCentroids,
@@ -36,6 +37,7 @@ function main(): void {
 	let dbPath = "/mnt/playpen/mailwoman-data/wof/postalcode-us.db"
 	let zctaPath = "/mnt/playpen/mailwoman-data/census/2024_Gaz_zcta_national.txt"
 	let geonamesPath: string | undefined
+
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--db" && args[i + 1]) dbPath = args[++i]!
 		else if (args[i] === "--zcta" && args[i + 1]) zctaPath = args[++i]!
@@ -46,10 +48,12 @@ function main(): void {
 		console.error(`Missing DB: ${dbPath}`)
 		process.exit(1)
 	}
+
 	if (!existsSync(zctaPath)) {
 		console.error(`Missing ZCTA file: ${zctaPath}`)
 		process.exit(1)
 	}
+
 	if (geonamesPath && !existsSync(geonamesPath)) {
 		console.error(`Missing GeoNames file: ${geonamesPath}`)
 		process.exit(1)
@@ -80,6 +84,7 @@ function main(): void {
 
 	// Pass 2: GeoNames fill (residual PO-box/unique ZIPs only — runs only on lat=0 rows).
 	let geoFilled = 0
+
 	if (geonamesPath) {
 		const geonames = parseGeonamesCentroids(readFileSync(geonamesPath, "utf8"))
 		const geoBefore = count("country='US' AND latitude=0 AND longitude=0")

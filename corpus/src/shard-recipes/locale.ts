@@ -24,8 +24,8 @@ import { type LocaleBaseTuple, synthesizeLocaleRow } from "../synthesize-german.
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
 
 /**
- * A conform map ({number, street, city, region, postcode} → raw column names; `street` as an array
- * space-joins) for an upstream that isn't OA-conformed — ES uses it (the raw CNIG schema).
+ * A conform map ({number, street, city, region, postcode} → raw column names; `street` as an array space-joins) for an
+ * upstream that isn't OA-conformed — ES uses it (the raw CNIG schema).
  */
 interface ConformMap {
 	number: string
@@ -49,11 +49,10 @@ interface LocaleCountrySource {
 }
 
 /**
- * Per-country OA sources (cached zips) + the source name used in the corpus. A part may carry a
- * `region` fallback (the admin region the file covers) for countries whose OA REGION column is
- * empty — DE's is, so the international-order tail needs it set per-state (#327). FR/NL/IT leave it
- * unset (their REGION column is populated, used per-row). ES carries a `conform` map (the raw CNIG
- * schema).
+ * Per-country OA sources (cached zips) + the source name used in the corpus. A part may carry a `region` fallback (the
+ * admin region the file covers) for countries whose OA REGION column is empty — DE's is, so the international-order
+ * tail needs it set per-state (#327). FR/NL/IT leave it unset (their REGION column is populated, used per-row). ES
+ * carries a `conform` map (the raw CNIG schema).
  */
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
@@ -88,10 +87,9 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 }
 
 /**
- * Per-part reservoir cap. Streaming + Algorithm-R reservoir sampling to this size keeps memory
- * bounded regardless of source size, where buffering the whole CSV OOMs / overflows on FR/ES
- * countrywide (~2.5 GB, ~25M rows). DE/NL-scale sources (≤ ~1.2M) fit entirely, so they're sampled
- * losslessly.
+ * Per-part reservoir cap. Streaming + Algorithm-R reservoir sampling to this size keeps memory bounded regardless of
+ * source size, where buffering the whole CSV OOMs / overflows on FR/ES countrywide (~2.5 GB, ~25M rows). DE/NL-scale
+ * sources (≤ ~1.2M) fit entirely, so they're sampled losslessly.
  */
 const RESERVOIR_CAP = 1_200_000
 
@@ -100,8 +98,10 @@ function splitCsv(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
+
 	for (let i = 0; i < line.length; i++) {
 		const c = line[i]!
+
 		if (inQ) {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
@@ -116,6 +116,7 @@ function splitCsv(line: string): string[] {
 		} else cur += c
 	}
 	out.push(cur)
+
 	return out
 }
 
@@ -128,11 +129,10 @@ interface ColumnIndex {
 }
 
 /**
- * Stream real tuples out of a cached OA zip and reservoir-sample to {@link RESERVOIR_CAP}. Reads the
- * CSV line-by-line via `unzip -p | readline` (bounded memory) and keeps a uniform random sample
- * (Algorithm R) seeded by `rng` — separate from the emit loop's PRNG. NO global dedup (a 25M-key
- * Set would OOM; OA rows are near-unique). The region falls back to `part.region` when the row's
- * REGION cell is empty (DE).
+ * Stream real tuples out of a cached OA zip and reservoir-sample to {@link RESERVOIR_CAP}. Reads the CSV line-by-line
+ * via `unzip -p | readline` (bounded memory) and keeps a uniform random sample (Algorithm R) seeded by `rng` — separate
+ * from the emit loop's PRNG. NO global dedup (a 25M-key Set would OOM; OA rows are near-unique). The region falls back
+ * to `part.region` when the row's REGION cell is empty (DE).
  */
 function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
 	return new Promise((resolve) => {
@@ -145,6 +145,7 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 		let seen = 0
 		rl.on("line", (line) => {
 			if (!line) return
+
 			if (header === null) {
 				header = splitCsv(line).map((h) => h.trim().toLowerCase())
 				const ix = (name: string): number => header!.indexOf(String(name).toLowerCase())
@@ -166,8 +167,10 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 							region: ix("region"),
 							post: ix("postcode"),
 						}
+
 				return
 			}
+
 			if (cols === null) return
 			const cells = splitCsv(line)
 			const street = cols.streetParts
@@ -176,6 +179,7 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 				.join(" ")
 				.trim()
 			const locality = get(cells, cols.city)
+
 			if (!street || !locality) return
 			const tuple: LocaleBaseTuple = {
 				house_number: get(cells, cols.num),
@@ -185,10 +189,13 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 				postcode: get(cells, cols.post),
 			}
 			seen++
+
 			if (reservoir.length < RESERVOIR_CAP) {
 				reservoir.push(tuple)
 			} else {
-				const j = Math.floor(rng() * seen) // 0 .. seen-1
+				const j = Math.floor(rng() * seen)
+
+				// 0 .. seen-1
 				if (j < RESERVOIR_CAP) reservoir[j] = tuple
 			}
 		})
@@ -217,12 +224,14 @@ export const localeRecipe: ShardRecipe = {
 		const random = makeMulberry32(opts.seed)
 		const country = (opts.country ?? "DE").toUpperCase()
 		const countrySource = COUNTRY_SOURCES[country]
+
 		if (!countrySource) {
 			throw new Error(
 				`No OA sources registered for --country ${country}. Known: ${Object.keys(COUNTRY_SOURCES).join(", ")}.`
 			)
 		}
 		const intlFraction = opts.intlFraction ?? 0.4
+
 		if (!(intlFraction >= 0 && intlFraction <= 1)) {
 			throw new Error(`--intl-fraction must be in [0, 1], got ${intlFraction}`)
 		}
@@ -231,13 +240,16 @@ export const localeRecipe: ShardRecipe = {
 		const { parts } = countrySource
 
 		const pool: LocaleBaseTuple[] = []
+
 		for (let pi = 0; pi < parts.length; pi++) {
 			// A reservoir PRNG per part, seeded but independent of the emit loop's `random`, so the sample is
 			// reproducible without perturbing the synth/order draws.
 			const reservoirRng = makeMulberry32((opts.seed ^ (0x9e3779b9 * (pi + 1))) >>> 0)
 			const t = await readTuples(parts[pi]!, reservoirRng)
+
 			for (const x of t) pool.push(x) // NOT pool.push(...t) — spreading huge arrays overflows the stack
 		}
+
 		if (pool.length === 0) {
 			throw new Error(`No ${country} tuples found — are the cached zips present in /tmp/oa-cache?`)
 		}
@@ -246,14 +258,17 @@ export const localeRecipe: ShardRecipe = {
 		let skipped = 0
 		let guard = 0
 		const N = pool.length
+
 		while (emitted < count && guard++ < count * 6) {
 			const base = pool[Math.floor(random() * N)]!
 			const order = random() < intlFraction ? "international" : "native"
 			const synth = synthesizeLocaleRow(base, country, { random, order })
+
 			if (!synth) {
 				skipped++
 				continue
 			}
+
 			if (opts.golden) {
 				write(JSON.stringify({ raw: synth.raw, components: synth.components, country, order }) + "\n")
 				emitted++
@@ -276,6 +291,7 @@ export const localeRecipe: ShardRecipe = {
 				license: `OpenAddresses ${country} tuples, rendered ${order}-order — see ingest SOURCES`,
 			}
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue

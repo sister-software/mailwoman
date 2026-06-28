@@ -49,16 +49,18 @@
  *   --default-country US [--limit N] [--oracle-only] [--out-md <path>] [--examples-json <path>]
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { ParseOpts } from "@mailwoman/neural"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { readFileSync, writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -104,6 +106,7 @@ const normName = (s: string | undefined): string => {
 		.split(" ")
 		.filter(Boolean)
 		.map((t) => ABBR[t] ?? t)
+
 	return toks
 		.join(" ")
 		.replace(/\bmc (\w)/g, "mc$1")
@@ -114,6 +117,7 @@ const normName = (s: string | undefined): string => {
 function percentile(xs: number[], p: number): number | null {
 	if (xs.length === 0) return null
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 
@@ -121,11 +125,13 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
+
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
 			out.push({ id: Number(n.placeId.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
+
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
 			tag: string
 			placeId?: string
@@ -140,17 +146,22 @@ function collectResolved(tree: AddressTree): Resolved[] {
 				out.push({ id: Number(interp.placeId.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
 			}
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return out
 }
 
 function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
+
 	for (const r of rs) {
 		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
 	}
+
 	return best
 }
 
@@ -166,8 +177,10 @@ const localityStrict = (rs: Resolved[]): Resolved | undefined => rs.find((r) => 
 const localityExpanded = (rs: Resolved[]): Resolved | undefined => {
 	const hits = rs.filter((r) => LOCALITY_EXPANDED.has(r.placetype))
 	let best: Resolved | undefined
+
 	for (const r of hits)
 		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+
 	return best
 }
 
@@ -188,6 +201,7 @@ async function main(): Promise<void> {
 	const oracleOnly = process.argv.includes("--oracle-only")
 	let neural: { parse: (text: string, opts?: ParseOpts) => Promise<AddressTree> } | null = null
 	let parseOpts: ParseOpts = {}
+
 	if (!oracleOnly) {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
@@ -215,14 +229,18 @@ async function main(): Promise<void> {
 	const altCache = new Map<number, Set<string>>()
 	const altNamesFor = (id: number): Set<string> => {
 		let set = altCache.get(id)
+
 		if (!set) {
 			set = new Set<string>()
+
 			for (const r of namesStmt.all(id) as { name: string }[]) {
 				const n = normName(r.name)
+
 				if (n) set.add(n)
 			}
 			altCache.set(id, set)
 		}
+
 		return set
 	}
 	const ancestorNamesStmt = adminDb.prepare(
@@ -232,29 +250,37 @@ async function main(): Promise<void> {
 	const ancestorTokCache = new Map<number, Set<string>>()
 	const ancestorTokensFor = (id: number): Set<string> => {
 		let set = ancestorTokCache.get(id)
+
 		if (!set) {
 			set = new Set<string>()
+
 			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
 				for (const t of normName(r.name).split(" ")) if (t.length >= 4) set.add(t)
 			}
 			ancestorTokCache.set(id, set)
 		}
+
 		return set
 	}
 	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
 		if (!expected || !locNode) return false
 		const e = normName(expected)
+
 		if (!e) return false
+
 		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
 		const base = normName(locNode.name)
+
 		if (base && e.startsWith(base + " ")) {
 			const quals = e
 				.slice(base.length + 1)
 				.split(" ")
 				.filter(Boolean)
 			const anc = ancestorTokensFor(locNode.id)
+
 			if (quals.length > 0 && quals.every((q) => q.length >= 3 && [...anc].some((a) => a.startsWith(q)))) return true
 		}
+
 		return false
 	}
 
@@ -291,7 +317,9 @@ async function main(): Promise<void> {
 			.replace(/[^a-z0-9\s]+/g, " ")
 			.split(/\s+/)
 			.filter(Boolean)
+
 		if (toks.length === 0) return ""
+
 		return toks.map((t) => `"${t}"`).join(" ")
 	}
 	// region abbrev (OA gold) -> WOF region id, resolved once per state via the resolver path.
@@ -310,6 +338,7 @@ async function main(): Promise<void> {
 		const reg = collectResolved(out).find((r) => r.placetype === "region")
 		const id = reg ? reg.id : null
 		regionIdCache.set(abbrev, id)
+
 		return id
 	}
 
@@ -323,8 +352,11 @@ async function main(): Promise<void> {
 	const newAgg = (): Agg => ({ n: 0, locMatch: 0, resolved: 0, errs: [] })
 	const bump = (a: Agg, loc: boolean, resolved: boolean, err: number | null): void => {
 		a.n++
+
 		if (loc) a.locMatch++
+
 		if (resolved) a.resolved++
+
 		if (err !== null) a.errs.push(err)
 	}
 	// Three arms:
@@ -339,6 +371,7 @@ async function main(): Promise<void> {
 	type ArmKey = keyof typeof arm
 	const recordTo = (which: ArmKey, state: string, loc: boolean, resolved: boolean, err: number | null): void => {
 		const m = arm[which].byState
+
 		if (!m.has(state)) m.set(state, newAgg())
 		bump(m.get(state)!, loc, resolved, err)
 		bump(arm[which].overall, loc, resolved, err)
@@ -379,12 +412,15 @@ async function main(): Promise<void> {
 				children: [],
 			}
 			cursor += value.length + 1
+
 			return n
 		}
+
 		// region as PARENT of locality (so the resolver scopes the locality lookup to the region's
 		// descendants + inherits its country) — mirrors the western containment the resolver expects.
 		if (goldReg) {
 			const region = mk("region", goldReg)
+
 			if (goldLoc) {
 				const loc = mk("locality", goldLoc)
 				region.children.push(loc)
@@ -393,19 +429,24 @@ async function main(): Promise<void> {
 		} else if (goldLoc) {
 			roots.push(mk("locality", goldLoc))
 		}
+
 		if (goldPc) roots.push(mk("postcode", goldPc))
+
 		return { raw: `${goldLoc} ${goldReg} ${goldPc}`.trim(), roots }
 	}
 
 	let i = 0
+
 	for (const row of rows) {
 		i++
+
 		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
 		const state = row.state || "??"
 
 		// --- CURRENT arm: model parse (skipped under --oracle-only) ---
 		if (neural) {
 			let cResolved: Resolved[] = []
+
 			try {
 				const tree = await neural.parse(row.input, parseOpts)
 				cResolved = collectResolved(await resolver.resolveTree(tree, resolveOpts))
@@ -425,6 +466,7 @@ async function main(): Promise<void> {
 
 		// --- ORACLE arm: gold locality ---
 		let oResolved: Resolved[] = []
+
 		try {
 			oResolved = collectResolved(await resolver.resolveTree(buildOracleTree(row), resolveOpts))
 		} catch {
@@ -441,6 +483,7 @@ async function main(): Promise<void> {
 
 		// --- bucket rows where even the EXPANDED oracle fails (the true resolver/gazetteer ceiling miss) ---
 		const oLocNode = oLocExpanded
+
 		if (!oMatchExpanded) {
 			const goldLoc = row.expected.locality ?? ""
 			const goldReg = row.expected.region ?? ""
@@ -458,13 +501,17 @@ async function main(): Promise<void> {
 			let inRegionByName: { id: number; name: string; lat: number; lon: number } | null = null
 			let anyByName = false
 			const regionId = await regionIdFor(goldReg)
+
 			if (ftsQ) {
 				const cands = ftsStmt.all(ftsQ) as { id: number; name: string; placetype: string; lat: number; lon: number }[]
+
 				for (const c of cands) {
 					// require the gold name to actually MATCH this candidate (FTS is fuzzy/prefix-ish).
 					const nameHits = normName(c.name) === normName(goldLoc) || altNamesFor(c.id).has(normName(goldLoc))
+
 					if (!nameHits) continue
 					anyByName = true
+
 					if (regionId !== null && regionAncestorStmt.get(c.id, regionId)) {
 						if (!inRegionByName) inRegionByName = { id: c.id, name: c.name, lat: c.lat, lon: c.lon }
 					}
@@ -474,6 +521,7 @@ async function main(): Promise<void> {
 			// Independent of the resolved node: a small bbox query over in-region localities/localadmins.
 			const DEG = 0.18 // ~20 km bbox pre-filter at US latitudes
 			let nearest: { id: number; name: string; placetype: string; lat: number; lon: number; km: number } | null = null
+
 			if (regionId !== null) {
 				const r = nearestInRegionStmt.get(
 					regionId,
@@ -486,6 +534,7 @@ async function main(): Promise<void> {
 					row.lon,
 					row.lon
 				) as { id: number; name: string; placetype: string; lat: number; lon: number } | undefined
+
 				if (r) nearest = { ...r, km: haversineKm(r.lat, r.lon, row.lat, row.lon) }
 			}
 			const NEAR_KM = 12 // a town centroid within this radius of the gold address ⇒ the place IS covered
@@ -503,6 +552,7 @@ async function main(): Promise<void> {
 					.filter((t) => t && !CIVIC.has(t))
 			const isNameVariant = (gold: string, cand: string): boolean => {
 				const g = new Set(baseToks(gold))
+
 				return baseToks(cand).some((t) => g.has(t))
 			}
 
@@ -555,9 +605,11 @@ async function main(): Promise<void> {
 	const states = [...new Set([...arm.current.byState.keys(), ...arm.oracleExpanded.byState.keys()])].sort()
 	const mkRow = (label: string, c: Agg, os: Agg, oe: Agg): string => {
 		const gap = c.n ? ((100 * oe.locMatch) / Math.max(1, oe.n) - (100 * c.locMatch) / c.n).toFixed(1) : "0.0"
+
 		return `| ${label} | ${c.n} | ${pct(c.locMatch, c.n)} | ${pct(os.locMatch, os.n)} | ${pct(oe.locMatch, oe.n)} | +${gap}pp | ${p(c.errs, 50)} / ${p(c.errs, 90)} | ${p(oe.errs, 50)} / ${p(oe.errs, 90)} |`
 	}
 	lines.push(mkRow("**overall**", arm.current.overall, arm.oracleStrict.overall, arm.oracleExpanded.overall))
+
 	for (const st of states) {
 		lines.push(
 			mkRow(
@@ -594,7 +646,9 @@ async function main(): Promise<void> {
 	// Per-state bucket split (focus SD/VT).
 	const stateOfBucket = (arr: OracleFail[]): Record<string, number> => {
 		const m: Record<string, number> = {}
+
 		for (const f of arr) m[f.state] = (m[f.state] ?? 0) + 1
+
 		return m
 	}
 	lines.push(`### Bucket counts by state`)
@@ -605,6 +659,7 @@ async function main(): Promise<void> {
 	const nm = stateOfBucket(buckets.nameMismatch)
 	const rk = stateOfBucket(buckets.ranking)
 	const ot = stateOfBucket(buckets.other)
+
 	for (const st of states) {
 		lines.push(`| ${st} | ${cov[st] ?? 0} | ${nm[st] ?? 0} | ${rk[st] ?? 0} | ${ot[st] ?? 0} |`)
 	}
@@ -612,6 +667,7 @@ async function main(): Promise<void> {
 	const examples = (label: string, arr: OracleFail[], k = 5): void => {
 		lines.push(`### ${label} — examples (${Math.min(k, arr.length)} of ${arr.length})`)
 		lines.push("")
+
 		for (const f of arr.slice(0, k)) {
 			lines.push(`- [${f.state}] gold loc **${f.goldLoc}** (${f.goldRegion}) — ${f.note}`)
 			lines.push(`  - input: \`${f.input}\``)
@@ -621,14 +677,17 @@ async function main(): Promise<void> {
 	examples("COVERAGE", buckets.coverage)
 	examples("NAME-MISMATCH", buckets.nameMismatch)
 	examples("RANKING", buckets.ranking)
+
 	if (buckets.other.length > 0) examples("OTHER", buckets.other)
 
 	const report = lines.join("\n")
 	console.log(report)
+
 	if (arg("out-md")) {
 		writeFileSync(arg("out-md"), report + "\n")
 		console.error(`wrote markdown → ${arg("out-md")}`)
 	}
+
 	if (arg("examples-json")) {
 		writeFileSync(
 			arg("examples-json"),

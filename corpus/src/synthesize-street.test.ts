@@ -5,12 +5,15 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { synthesizeStreetRow } from "./synthesize-street.js"
 
 function seededRandom(seed: number): () => number {
 	let s = seed
+
 	return () => {
 		s = (s * 1664525 + 1013904223) % 4294967296
+
 		return s / 4294967296
 	}
 }
@@ -40,12 +43,15 @@ describe("synthesizeStreetRow", () => {
 		let hasPrefix = 0
 		let hasSuffix = 0
 		const rng = seededRandom(42)
+
 		for (let i = 0; i < 50; i++) {
 			const r = synthesizeStreetRow(
 				{ locality: "Boston", region: "MA", postcode: "02101", country: "US" },
 				{ random: rng }
 			)
+
 			if (r!.components.street_prefix) hasPrefix++
+
 			if (r!.components.street_suffix) hasSuffix++
 		}
 		// At least some should have prefix (directional sampling = ~13/18) and most should have suffix
@@ -56,11 +62,13 @@ describe("synthesizeStreetRow", () => {
 	it("house_number is included most of the time", () => {
 		const rng = seededRandom(7)
 		let withHN = 0
+
 		for (let i = 0; i < 100; i++) {
 			const r = synthesizeStreetRow(
 				{ locality: "Chicago", region: "IL", postcode: "60601", country: "US" },
 				{ random: rng }
 			)
+
 			if (r!.components.house_number) withHN++
 		}
 		// Default 0.85 — allow noise

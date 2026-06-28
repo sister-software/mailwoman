@@ -8,22 +8,22 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "classifiers"
 	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./*": "./out/*"
-	},
-	"dependencies": {
-		"@mailwoman/core": "workspace:*"
-	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map"
 	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js",
+		"./*": "./out/*"
+	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*"
 	}
 }

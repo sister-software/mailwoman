@@ -5,33 +5,37 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { buildThresholds, type GBT, gbtScore, trainGBT } from "./gbt.js"
 
 /** Deterministic LCG so the synthetic data + the test are reproducible (no Math.random). */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0
+
 	return () => {
 		s = (s * 1664525 + 1013904223) >>> 0
+
 		return s / 0x100000000
 	}
 }
 
 /**
- * A non-linearly-separable target: positive IFF x0 XOR x1 — the interaction a linear model can't
- * capture but a depth-2+ tree ensemble can. x0/x1 are BINARY (matching the matcher's one-hot
- * agreement-level features, which get clean midpoint splits); x2 is pure continuous noise that
- * carries no signal, so the trees should ignore it.
+ * A non-linearly-separable target: positive IFF x0 XOR x1 — the interaction a linear model can't capture but a depth-2+
+ * tree ensemble can. x0/x1 are BINARY (matching the matcher's one-hot agreement-level features, which get clean
+ * midpoint splits); x2 is pure continuous noise that carries no signal, so the trees should ignore it.
  */
 function makeXor(n: number, seed: number): { X: number[][]; y: number[] } {
 	const rnd = lcg(seed)
 	const X: number[][] = []
 	const y: number[] = []
+
 	for (let i = 0; i < n; i++) {
 		const a = rnd() < 0.5 ? 0 : 1
 		const b = rnd() < 0.5 ? 0 : 1
 		X.push([a, b, rnd()])
 		y.push(a !== b ? 1 : 0)
 	}
+
 	return { X, y }
 }
 
@@ -100,6 +104,7 @@ describe("trainGBT / gbtScore", () => {
 			{ rounds: 20, depth: 2, lr: 0.3, minLeaf: 10 }
 		)
 		const reloaded = JSON.parse(JSON.stringify(model)) as GBT
+
 		for (const x of X) expect(gbtScore(reloaded, x)).toBeCloseTo(gbtScore(model, x), 10)
 	})
 })

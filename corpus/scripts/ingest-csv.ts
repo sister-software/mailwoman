@@ -40,11 +40,14 @@ import { SQLInputValue } from "node:sqlite"
 function parseArgs(): Record<string, string> {
 	const args = process.argv.slice(2)
 	const out: Record<string, string> = {}
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]!
+
 		if (a.startsWith("--")) {
 			const key = a.slice(2)
 			const next = args[i + 1]
+
 			if (next && !next.startsWith("--")) {
 				out[key] = next
 				i++
@@ -53,6 +56,7 @@ function parseArgs(): Record<string, string> {
 			}
 		}
 	}
+
 	return out
 }
 
@@ -70,6 +74,7 @@ function splitCSVLine(line: string, separator: number = COMMA): string[] {
 
 	for (let i = 0; i < line.length; i++) {
 		const ch = line.charCodeAt(i)
+
 		if (ch === DOUBLE_QUOTE) {
 			inQuotes = !inQuotes
 		} else if (ch === separator && !inQuotes) {
@@ -78,14 +83,17 @@ function splitCSVLine(line: string, separator: number = COMMA): string[] {
 		}
 	}
 	fields.push(line.slice(start))
+
 	return fields
 }
 
 function stripQuotes(field: string): string {
 	const trimmed = field.trim()
+
 	if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
 		return trimmed.slice(1, -1).replace(/""/g, '"')
 	}
+
 	return trimmed
 }
 
@@ -106,9 +114,11 @@ function normalizeColumnName(raw: string): string {
 
 function dedupColumns(names: string[]): string[] {
 	const seen = new Map<string, number>()
+
 	return names.map((name) => {
 		const count = seen.get(name) ?? 0
 		seen.set(name, count + 1)
+
 		return count === 0 ? name : `${name}_${count + 1}`
 	})
 }
@@ -127,13 +137,16 @@ interface ColumnInfo {
 
 function normalizeField(raw: string): string | null {
 	let s = raw.trim()
+
 	if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
 		s = s.slice(1, -1).replace(/""/g, '"')
 	}
+
 	// Normalize common null-like values
 	if (!s || s === "null" || s === "NULL" || s === "N/A" || s === "n/a" || s === "-" || s === "<UNAVAIL>") {
 		return null
 	}
+
 	return s
 }
 
@@ -148,6 +161,7 @@ function inferColumnType(samples: (string | null)[]): ColumnInfo {
 			nullCount++
 			continue
 		}
+
 		if (/^-?\d+$/.test(s)) {
 			intCount++
 		} else if (/^-?\d+\.?\d+$/.test(s)) {
@@ -193,6 +207,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 
 	for await (const line of rl) {
 		lineNum++
+
 		// Skip lines before header
 		if (lineNum <= opts.skipLines) continue
 
@@ -216,6 +231,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 
 	// --- Determine column names ---
 	let rawHeaders: string[]
+
 	if (opts.hasHeader && headerLine) {
 		rawHeaders = splitCSVLine(headerLine, sep).map(stripQuotes)
 	} else {
@@ -230,10 +246,12 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	const columns: ColumnInfo[] = colNames.map((name, i) => {
 		const samples = sampleRows.map((row) => {
 			const raw = row[i] ?? ""
+
 			return normalizeField(raw)
 		})
 		const info = inferColumnType(samples)
 		info.name = name
+
 		return info
 	})
 
@@ -251,6 +269,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 
 	if (opts.dryRun) {
 		process.stderr.write("--dry-run: stopping before import\n")
+
 		return
 	}
 
@@ -292,6 +311,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	// node:sqlite has no `db.transaction(fn)` wrapper; use raw BEGIN/COMMIT around the batch.
 	const doInsert = () => {
 		db.exec("BEGIN")
+
 		try {
 			for (const row of batch) {
 				insertStmt.run(...row)
@@ -308,7 +328,9 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 
 	for await (const line of rl2) {
 		lineNum++
+
 		if (lineNum <= opts.skipLines) continue
+
 		if (opts.hasHeader && !headerSkipped) {
 			headerSkipped = true
 			continue
@@ -317,10 +339,14 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 		const fields = splitCSVLine(line, sep).map(stripQuotes)
 		const values = fields.map((f, i) => {
 			const v = normalizeField(f)
+
 			if (v === null) return null
 			const col = columns[i]
+
 			if (col?.type === "INTEGER" && /^-?\d+$/.test(v)) return parseInt(v, 10)
+
 			if (col?.type === "REAL" && /^-?\d+\.?\d+$/.test(v)) return parseFloat(v)
+
 			return v
 		})
 
@@ -329,10 +355,12 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 		values.length = columns.length
 
 		batch.push(values)
+
 		if (batch.length >= BATCH_SIZE) {
 			doInsert()
 			imported += batch.length
 			batch.length = 0
+
 			if (imported % 100000 === 0) {
 				process.stderr.write(`  ${(imported / 1_000_000).toFixed(1)}M rows...\n`)
 			}
@@ -352,6 +380,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 
 	// Build a basic index on the first TEXT column (likely the primary key)
 	const firstTextCol = columns.find((c) => c.type === "TEXT")
+
 	if (firstTextCol) {
 		process.stderr.write(`Building index on "${firstTextCol.name}"...\n`)
 		db.exec(
@@ -387,6 +416,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 const cliArgs = parseArgs()
 
 const inputPath = cliArgs.input
+
 if (!inputPath) {
 	process.stderr.write(
 		"Usage: npx tsx ingest-csv.ts --input <path.csv> [--table <name>] [--output <path.db>] [--dry-run]\n"

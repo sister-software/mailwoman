@@ -9,6 +9,7 @@ import {
 	type FillExtrusionLayerSpecification,
 	type LayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
+
 import { LayerID } from "../styles/layers.js"
 import { MailwomanBaseTileSetID } from "./theme.js"
 

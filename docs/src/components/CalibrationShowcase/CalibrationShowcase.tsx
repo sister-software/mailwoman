@@ -73,13 +73,16 @@ export default function CalibrationShowcase({
 		void (async () => {
 			try {
 				const res = await fetch(assetUrl(locale, version, "calibration.json"))
+
 				if (!res.ok) throw new Error(`calibration.json ${res.status}`)
 				const json = (await res.json()) as CalibrationData
+
 				if (!cancelled) setData(json)
 			} catch (e) {
 				if (!cancelled) setError(e instanceof Error ? e.message : String(e))
 			}
 		})()
+
 		return () => {
 			cancelled = true
 		}
@@ -88,6 +91,7 @@ export default function CalibrationShowcase({
 	if (error) {
 		return <div style={{ color: "var(--ifm-color-danger)", fontSize: 14 }}>Couldn’t load calibration data: {error}</div>
 	}
+
 	if (!data) {
 		return <div style={{ color: "var(--ifm-color-emphasis-600)", fontSize: 14 }}>Loading calibration data…</div>
 	}

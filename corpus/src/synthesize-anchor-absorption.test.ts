@@ -1,9 +1,8 @@
 /**
- * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The load-bearing
- * checks: (1) every slice aligns cleanly (no quarantine) so the shard is trainable, and (2) the
- * LEADING 5-digit gets the CONTEXT-correct label — house_number when a trailing postcode is present
- * (CASE-H), postcode when not (CASE-P). That contrast is exactly what the model must learn instead
- * of flipping the default (the Probe A0 erosion this shard fixes).
+ * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The load-bearing checks: (1) every slice
+ * aligns cleanly (no quarantine) so the shard is trainable, and (2) the LEADING 5-digit gets the CONTEXT-correct label
+ * — house_number when a trailing postcode is present (CASE-H), postcode when not (CASE-P). That contrast is exactly
+ * what the model must learn instead of flipping the default (the Probe A0 erosion this shard fixes).
  */
 
 import { describe, expect, it } from "vitest"
@@ -14,8 +13,10 @@ import { synthesizeAnchorAbsorptionRow, type AnchorAbsorptionTemplate } from "./
 // A deterministic RNG so the assertions are stable.
 function seeded(seed: number): () => number {
 	let s = seed >>> 0
+
 	return () => {
 		s = (s * 1664525 + 1013904223) >>> 0
+
 		return s / 0x100000000
 	}
 }
@@ -29,6 +30,7 @@ function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 		source: "test",
 		source_id: "t",
 	})
+
 	return { synth, aligned }
 }
 
@@ -36,6 +38,7 @@ function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 	if (aligned.kind !== "labeled") return null
 	const l = aligned.row.labels[0]
+
 	return l && l !== "O" ? l.slice(2) : (l ?? null)
 }
 

@@ -12,8 +12,8 @@ import { GeoPoint, type GeoPointInput } from "@mailwoman/spatial"
 /**
  * An ordered pair of coordinates in the form of [longitude, latitude].
  *
- * Note that unlike the typical order, GeoJSON coordinates are in the order of [longitude, latitude]
- * to match the order of [x, y] in Cartesian coordinates.
+ * Note that unlike the typical order, GeoJSON coordinates are in the order of [longitude, latitude] to match the order
+ * of [x, y] in Cartesian coordinates.
  *
  * @category Position
  * @category GeoJSON
@@ -61,8 +61,8 @@ export function orderGeoJSONToCoordPair([longitude, latitude]: Coordinates2D): [
 }
 
 /**
- * Given an input which appears to be reversed GeoJSON coordinates (i.e. [latitude, longitude]),
- * returns the coordinates in the correct order of [longitude, latitude].
+ * Given an input which appears to be reversed GeoJSON coordinates (i.e. [latitude, longitude]), returns the coordinates
+ * in the correct order of [longitude, latitude].
  *
  * Note that this is a heuristic and is only accurate for North American coordinates.
  *
@@ -176,6 +176,7 @@ export function isInterpolatedCoordinates(input: unknown): input is InternalPoin
 	if (!input || typeof input !== "object") return false
 
 	if (!("x" in input)) return false
+
 	if (!("y" in input)) return false
 
 	return typeof input.x === "number" && typeof input.y === "number"
@@ -265,14 +266,12 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 }
 
 /**
- * Great-circle distance in kilometres between two lat/lon pairs given as raw scalars. The formula's
- * one true home — every resolver + eval consumer of the `(aLat, aLon, bLat, bLon)` shape imports
- * this instead of re-declaring it.
+ * Great-circle distance in kilometres between two lat/lon pairs given as raw scalars. The formula's one true home —
+ * every resolver + eval consumer of the `(aLat, aLon, bLat, bLon)` shape imports this instead of re-declaring it.
  *
- * Unlike {@link haversine}, this is pure math with NO Null-Island sentinel: `(0, 0)` is the Gulf of
- * Guinea — a real point, not "missing coordinate". That sentinel convention belongs to the
- * `GeoPointInput` object form (where a 0/0 input means "no coordinate"), not to a raw scalar
- * distance.
+ * Unlike {@link haversine}, this is pure math with NO Null-Island sentinel: `(0, 0)` is the Gulf of Guinea — a real
+ * point, not "missing coordinate". That sentinel convention belongs to the `GeoPointInput` object form (where a 0/0
+ * input means "no coordinate"), not to a raw scalar distance.
  *
  * @category Position
  */

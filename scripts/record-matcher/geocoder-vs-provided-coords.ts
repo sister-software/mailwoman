@@ -20,16 +20,19 @@
  *   [--max 1176] [--wof <admin.db>] [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { streamRows } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { writeFileSync } from "node:fs"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -46,14 +49,18 @@ const norm = (s: string | undefined) => (s ?? "").trim()
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null
 	const [a, b] = raw.split(",").map((x) => Number(x.trim()))
+
 	if (!Number.isFinite(a) || !Number.isFinite(b)) return null
+
 	if (Math.abs(a!) > 90 || Math.abs(b!) > 180) return null
+
 	return { latitude: a!, longitude: b! }
 }
 
 function quantile(sorted: number[], q: number): number {
 	if (sorted.length === 0) return NaN
 	const i = Math.min(sorted.length - 1, Math.floor(q * sorted.length))
+
 	return sorted[i]!
 }
 
@@ -82,6 +89,7 @@ async function main(): Promise<void> {
 		const city = norm(r["Physical Address CITY"])
 		const state = norm(r["Physical Address State"])
 		const zip = norm(r["Physical Address Zipcode"])
+
 		if (!provided || !line) {
 			noCoord++
 			continue
@@ -95,6 +103,7 @@ async function main(): Promise<void> {
 			defaultCountry: "US",
 			placeCountry: false,
 		})
+
 		if (g.lat === null || g.lon === null) {
 			noPlace++
 			continue
@@ -109,6 +118,7 @@ async function main(): Promise<void> {
 	// Overall + per-tier percentiles.
 	const all = results.map((r) => r.deltaM).sort((a, b) => a - b)
 	const byTier = new Map<string, number[]>()
+
 	for (const r of results) {
 		const list = byTier.get(r.tier) ?? []
 		list.push(r.deltaM)
@@ -145,6 +155,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`| tier | n | p50 | p90 |`)
 	lines.push(`|---|---:|---:|---:|`)
+
 	for (const [tier, list] of [...byTier.entries()].sort((a, b) => b[1].length - a[1].length)) {
 		const s = [...list].sort((a, b) => a - b)
 		lines.push(`| ${tier} | ${list.length} | ${m(quantile(s, 0.5))} | ${m(quantile(s, 0.9))} |`)
@@ -166,6 +177,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`\n[written] ${OUT_MD}`)

@@ -28,6 +28,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import type { ComponentTag } from "../decoder/types.js"
 import type { ResolvedPlace } from "../resolver/types.js"
 import { Span } from "../tokenization/index.js"
@@ -51,6 +52,7 @@ function proposal(
 	confidence: number
 ): PhraseProposal {
 	const sp = s instanceof Span ? s : Span.from(s.body, { start: s.start })
+
 	return { span: sp as PhraseProposal["span"], kindHypothesis: kind, confidence }
 }
 
@@ -76,16 +78,18 @@ function place(
 }
 
 /**
- * Build a `ResolverCandidatesLookup` from a list of `(spanStart, spanEnd, tag, ResolvedPlace[])`
- * tuples. Order in the place array is preserved — first place wins ties.
+ * Build a `ResolverCandidatesLookup` from a list of `(spanStart, spanEnd, tag, ResolvedPlace[])` tuples. Order in the
+ * place array is preserved — first place wins ties.
  */
 function mockResolver(
 	entries: Array<[start: number, end: number, tag: ComponentTag, places: ResolvedPlace[]]>
 ): ResolverCandidatesLookup {
 	const table = new Map<string, ResolvedPlace[]>()
+
 	for (const [s, e, t, places] of entries) {
 		table.set(`${s}:${e}:${t}`, places)
 	}
+
 	return {
 		candidatesFor(span, tag) {
 			return table.get(`${span.start}:${span.end}:${tag}`) ?? []
@@ -94,33 +98,38 @@ function mockResolver(
 }
 
 /**
- * Build a `ParentChainLookup` from a list of WOF-like places where each carries a `parent_id`.
- * Walks `parent_id` up the chain until null/missing.
+ * Build a `ParentChainLookup` from a list of WOF-like places where each carries a `parent_id`. Walks `parent_id` up the
+ * chain until null/missing.
  */
 function mockChain(places: ResolvedPlace[]): ParentChainLookup {
 	const byId = new Map<string, ResolvedPlace>()
+
 	for (const p of places) {
 		byId.set(String(p.id), p)
 	}
+
 	return {
 		parentsOf(place) {
 			const chain: ResolvedPlace[] = []
 			let cur: ResolvedPlace | undefined = place
+
 			while (cur && cur.parent_id !== undefined && cur.parent_id !== null) {
 				const next = byId.get(String(cur.parent_id))
+
 				if (!next || chain.some((c) => String(c.id) === String(next.id))) break
 				chain.push(next)
 				cur = next
 			}
+
 			return chain
 		},
 	}
 }
 
 /**
- * Simulate the existing Stage 5 (pre-reconcile): take the highest-scoring classifier candidate per
- * span (argmax over tags), keep them in start order. No concordance, no resolver disambiguation.
- * Returns the chosen tags in source order for assertion against the post-reconcile output.
+ * Simulate the existing Stage 5 (pre-reconcile): take the highest-scoring classifier candidate per span (argmax over
+ * tags), keep them in start order. No concordance, no resolver disambiguation. Returns the chosen tags in source order
+ * for assertion against the post-reconcile output.
  */
 function preReconcileTags(
 	phraseProposals: ReadonlyArray<PhraseProposal>,
@@ -129,16 +138,20 @@ function preReconcileTags(
 	const seen = new Set<string>()
 	const out: Array<{ start: number; end: number; tag: ComponentTag }> = []
 	const ordered = classifierTopK.slice().sort((a, b) => b.score - a.score)
+
 	for (const c of ordered) {
 		const key = `${c.span.start}:${c.span.end}`
+
 		if (seen.has(key)) continue
 		// Only keep the candidate if it backs a real phrase proposal.
 		const hasPhrase = phraseProposals.some((p) => p.span.start === c.span.start && p.span.end === c.span.end)
+
 		if (!hasPhrase) continue
 		seen.add(key)
 		out.push({ start: c.span.start, end: c.span.end, tag: c.tag })
 	}
 	out.sort((a, b) => a.start - b.start)
+
 	return out
 }
 
@@ -413,6 +426,7 @@ describe("kryptonite catalogue — Buffalo Buffalo (post-reconcile keeps both as
 		// Either one combined span (length 15) OR two non-overlapping spans (lengths 7+7).
 		expect(localityRoots.length).toBeGreaterThan(0)
 		expect(localityRoots.length).toBeLessThanOrEqual(2)
+
 		// Whatever the search picks, the spans don't overlap.
 		for (let i = 0; i < localityRoots.length; i++) {
 			for (let j = i + 1; j < localityRoots.length; j++) {
@@ -489,6 +503,7 @@ describe("kryptonite catalogue — New York City (bare multiword famous name, no
 
 	it("post-reconcile leaves no span uncovered for the grouper-audit to mis-promote", () => {
 		const result = reconcileSpans({ raw, phraseProposals, classifierTopK })
+
 		// Every phrase proposal must overlap a chosen root — an uncovered `York` proposal is what
 		// produced the spurious `region` node in the original bug.
 		for (const p of phraseProposals) {

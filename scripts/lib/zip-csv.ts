@@ -42,7 +42,9 @@ export function firstCsvEntry(zipPath: string): string {
 		.map((s) => s.trim())
 		.filter(Boolean)
 	const csv = names.find((n) => n.endsWith(".csv"))
+
 	if (!csv) throw new Error(`no .csv entry found in ${zipPath}`)
+
 	return csv
 }
 
@@ -59,11 +61,13 @@ export async function* csvRecordsFromZip(
 	// errors DURING iteration still reject into the consumer's for-await.
 	parser.on("error", () => {})
 	child.stdout!.pipe(parser)
+
 	try {
 		for await (const rec of parser) yield rec as Record<string, string | undefined>
 	} finally {
 		parser.destroy()
 		child.stdout?.destroy()
+
 		try {
 			child.kill("SIGKILL")
 		} catch {
@@ -75,5 +79,6 @@ export async function* csvRecordsFromZip(
 /** Stream header-keyed CSV records from a loose CSV file on disk. */
 export async function* csvRecordsFromFile(path: string): AsyncGenerator<Record<string, string | undefined>> {
 	const parser = createReadStream(path).pipe(parse(CSV_OPTS))
+
 	for await (const rec of parser) yield rec as Record<string, string | undefined>
 }

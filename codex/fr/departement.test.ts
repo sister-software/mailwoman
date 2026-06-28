@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { departementInfo, FR_DEPARTEMENTS } from "./departement.js"
 
 test("departementInfo: metropolitan code → name + région", () => {

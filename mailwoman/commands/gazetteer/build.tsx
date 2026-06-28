@@ -9,9 +9,10 @@
  *   streams to stderr; the final summary is on stdout. See RELEASING.md Step 5.
  */
 
+import { join } from "node:path"
+
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { join } from "node:path"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -63,6 +64,7 @@ const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 					: DEFAULT_FOLD_COUNTRIES
 
 				let adminDb = adminIn
+
 				if (options.fold) {
 					const foldOut = options.foldOut ?? adminIn.replace(/\.db$/, "-geonames.db")
 					console.error(`▸ GeoNames upstream fold (${countries.join(",")}) → ${foldOut}`)
@@ -107,6 +109,7 @@ const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -119,6 +122,7 @@ const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

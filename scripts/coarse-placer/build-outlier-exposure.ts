@@ -16,12 +16,12 @@
  *   [--per-lang 2500]
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { appendFileSync } from "node:fs"
 import * as path from "node:path"
+import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { DatabaseSync } from "node:sqlite"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 const { values: args } = parseArgs({
 	options: {
@@ -70,8 +70,10 @@ const OFF_MAP_LANGS = [
 function isOffMapScript(s: string): boolean {
 	let off = 0
 	let total = 0
+
 	for (const ch of s) {
 		const cp = ch.codePointAt(0)!
+
 		if (cp <= 0x40 || (cp >= 0x5b && cp <= 0x60) || cp === 0x20) continue // punct/space/digits
 		total++
 		const latin = (cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x24f)
@@ -80,8 +82,10 @@ function isOffMapScript(s: string): boolean {
 			(cp >= 0x4e00 && cp <= 0x9fff) ||
 			(cp >= 0xac00 && cp <= 0xd7af) ||
 			(cp >= 0x3400 && cp <= 0x4dbf)
+
 		if (!latin && !cjk && cp > 0x2ff) off++
 	}
+
 	return total > 0 && off / total > 0.6
 }
 
@@ -92,6 +96,7 @@ function isOffMapScript(s: string): boolean {
 function addressVariant(name: string, h: number): string {
 	const n = (h % 4) + 1 // 1–4 digit house number
 	const num = String(h % Math.pow(10, n) || 7)
+
 	switch (h % 3) {
 		case 0:
 			return `${name} ${num}`
@@ -106,12 +111,15 @@ const db = new DatabaseSync(args.wof, { readOnly: true })
 const PER = Number(args["per-lang"])
 const pool: string[] = []
 const seen = new Set<string>()
+
 for (const lang of OFF_MAP_LANGS) {
 	const rows = db.prepare(`SELECT name FROM names WHERE language = ? AND length(name) >= 4 LIMIT ?`).all(lang, PER * 2)
 	let kept = 0
+
 	for (const r of rows) {
 		if (kept >= PER) break
 		const name = String(r.name).trim()
+
 		if (!name || seen.has(name) || !isOffMapScript(name)) continue
 		seen.add(name)
 		pool.push(name)
@@ -131,6 +139,7 @@ const splits: Record<string, string[]> = {
 	test: pool.slice(nVal, nVal + nTest),
 	train: pool.slice(nVal + nTest),
 }
+
 for (const [split, names] of Object.entries(splits)) {
 	const lines = names.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
 	appendFileSync(path.join(args.data, `${split}.jsonl`), lines)
@@ -140,9 +149,11 @@ console.log(`total OTHER pool: ${pool.length}`)
 
 function hash(s: string): number {
 	let h = 2166136261
+
 	for (let i = 0; i < s.length; i++) {
 		h ^= s.charCodeAt(i)
 		h = Math.imul(h, 16777619)
 	}
+
 	return h >>> 0
 }

@@ -117,6 +117,7 @@ function randomHouseNumber(random: () => number): string {
 	const digits = Math.floor(random() * 4) + 1
 	const max = Math.pow(10, digits)
 	const n = Math.floor(random() * max) + 1
+
 	return String(n)
 }
 
@@ -169,6 +170,7 @@ export function synthesizeHouseVenueRow(
 	}
 
 	let raw: string
+
 	switch (template) {
 		case "venue-after-street":
 			raw = `${houseNumber} ${street}, ${venue}, ${base.locality}, ${base.region} ${base.postcode}`
@@ -182,9 +184,8 @@ export function synthesizeHouseVenueRow(
 }
 
 /**
- * Contract: every synthesized row carries BOTH house_number AND venue (the co-occurrence signal
- * that synth-no-street's distributional shift cost the model). Used by tests + downstream
- * consumers.
+ * Contract: every synthesized row carries BOTH house_number AND venue (the co-occurrence signal that synth-no-street's
+ * distributional shift cost the model). Used by tests + downstream consumers.
  */
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {
 	return components.house_number !== undefined && components.venue !== undefined

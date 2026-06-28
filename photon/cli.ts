@@ -14,6 +14,10 @@
  *   autocomplete tier is the eventual front for `/api`; geocode resolution is the MVP path.
  */
 
+import { existsSync } from "node:fs"
+import { join } from "node:path"
+import { parseArgs } from "node:util"
+
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
@@ -23,9 +27,7 @@ import {
 	resolveCandidateDbPath,
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
-import { existsSync } from "node:fs"
-import { join } from "node:path"
-import { parseArgs } from "node:util"
+
 import {
 	createPhotonRouter,
 	photonCollection,
@@ -81,11 +83,13 @@ async function serve(): Promise<void> {
 		async search(params) {
 			// Empty/whitespace → no query; absurdly long → not an address (and would blow the model's input).
 			const query = params.q?.trim()
+
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
 			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
 			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for })
+
 			if (result.lat == null || result.lon == null) return photonCollection([])
 			const properties: PhotonProperties = {
 				name: result.locality ?? result.region ?? undefined,
@@ -93,20 +97,26 @@ async function serve(): Promise<void> {
 				state: result.region ?? undefined,
 				postcode: result.postcode ?? undefined,
 			}
+
 			for (const h of result.hierarchy) if (h.tag === "country") properties.country = h.value
+
 			return photonCollection([photonFeature(result.lon, result.lat, properties)])
 		},
 
 		async reverse(params) {
 			if (!reverseGeo) return photonCollection([])
 			const { hierarchy } = await reverseGeo.reverseGeocode(params.lat, params.lon)
+
 			if (hierarchy.length === 0) return photonCollection([])
 			const deepest = hierarchy[0]!
 			const properties: PhotonProperties = { name: deepest.name, countrycode: deepest.country?.toLowerCase() }
+
 			for (const place of hierarchy) {
 				const key = PLACETYPE_TO_KEY[place.placetype]
+
 				if (key && properties[key] == null) properties[key] = place.name
 			}
+
 			return photonCollection([photonFeature(deepest.lon, deepest.lat, properties)])
 		},
 	}

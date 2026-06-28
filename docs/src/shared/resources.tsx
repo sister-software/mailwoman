@@ -41,25 +41,24 @@ export interface MailwomanLookupLike {
 			name: string
 			placetype: string
 			/**
-			 * ISO country code of the resolved place — lets the cascade country-gate an ambiguous
-			 * postcode.
+			 * ISO country code of the resolved place — lets the cascade country-gate an ambiguous postcode.
 			 */
 			country?: string
 			lat: number
 			lon: number
 			score: number
 			/**
-			 * True when the candidate's name, abbreviation, or an alias EXACTLY matched the query (vs a
-			 * partial token match). The cascade accepts alias-exact hits ("New York City" → New York) the
-			 * same way it accepts canonical-name matches.
+			 * True when the candidate's name, abbreviation, or an alias EXACTLY matched the query (vs a partial token match).
+			 * The cascade accepts alias-exact hits ("New York City" → New York) the same way it accepts canonical-name
+			 * matches.
 			 */
 			exactMatch?: boolean
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}>
 	>
 	/**
-	 * Dual-role partner roles for a resolved place id (#402). Optional — absent on lookups built from
-	 * a slim DB that predates the `coincident_roles` relation.
+	 * Dual-role partner roles for a resolved place id (#402). Optional — absent on lookups built from a slim DB that
+	 * predates the `coincident_roles` relation.
 	 */
 	coincidentRolesFor?: (placeId: number) => Promise<DualRole[]>
 }
@@ -104,17 +103,15 @@ export interface DemoResult {
 	fstActive: boolean
 	fstProvenance?: FstProvenanceLike | null
 	/**
-	 * Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state
-	 * etc.).
+	 * Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state etc.).
 	 */
 	dualRoles?: DualRole[]
 }
 
 /**
- * One additional admin role a resolved place ALSO fulfils — the dual-role / city-state relation
- * (#402). Berlin resolves as a locality but `role: "region"` here surfaces that it is also a
- * federal state. `relationshipType` is the gazetteer-derived class (`city-state`, `capital-seat`,
- * …).
+ * One additional admin role a resolved place ALSO fulfils — the dual-role / city-state relation (#402). Berlin resolves
+ * as a locality but `role: "region"` here surfaces that it is also a federal state. `relationshipType` is the
+ * gazetteer-derived class (`city-state`, `capital-seat`, …).
  */
 export interface DualRole {
 	id: number
@@ -133,14 +130,13 @@ export interface ResolvedHit {
 	score: number
 	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 	/**
-	 * Street-level resolution tier (#377), when this hit came from the situs/interp tier rather than
-	 * the WOF admin cascade. `address_point` = exact building; `interpolated` = TIGER estimate.
-	 * Drives the "exact / ±N m" caption + the uncertainty circle.
+	 * Street-level resolution tier (#377), when this hit came from the situs/interp tier rather than the WOF admin
+	 * cascade. `address_point` = exact building; `interpolated` = TIGER estimate. Drives the "exact / ±N m" caption + the
+	 * uncertainty circle.
 	 */
 	tier?: "address_point" | "interpolated"
 	/**
-	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated
-	 * interp).
+	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated interp).
 	 */
 	uncertaintyM?: number
 }
@@ -157,33 +153,31 @@ export function assetUrl(locale: string, version: string, filename: string): str
 }
 
 /**
- * Per-state street shard URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs
- * are hosted byte-range at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a
- * multi-GB shard, so they're loaded lazily by parsed region, not bundled. Independent of the
- * locale/version WOF asset layout (street shards are per-state, not per-model-version).
+ * Per-state street shard URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs are hosted byte-range
+ * at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB shard, so they're loaded lazily by
+ * parsed region, not bundled. Independent of the locale/version WOF asset layout (street shards are per-state, not
+ * per-model-version).
  */
 export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
 	return `${ASSET_BASE_URL}street/us/${slug}/${kind}.db`
 }
 
 /**
- * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is MODEL-INDEPENDENT —
- * it changes when WOF/Overture coverage is rebuilt, NOT on every model release — so it lives on its
- * own dated path, not under `<locale>/<model-version>/`. Bump this when `admin-global-priority.db`
- * is rebuilt + re-uploaded (the immutable Cache-Control means a fresh DB needs a fresh URL). See
- * RELEASING.md "Rebuilding + swapping the canonical admin gazetteer".
+ * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is MODEL-INDEPENDENT — it changes when
+ * WOF/Overture coverage is rebuilt, NOT on every model release — so it lives on its own dated path, not under
+ * `<locale>/<model-version>/`. Bump this when `admin-global-priority.db` is rebuilt + re-uploaded (the immutable
+ * Cache-Control means a fresh DB needs a fresh URL). See RELEASING.md "Rebuilding + swapping the canonical admin
+ * gazetteer".
  */
 export const ADMIN_GAZETTEER_VERSION = "2026-06-27a"
 
 /**
- * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~1.19 GB; US + intl postcodes
- * incl. PT/PL/CZ/AU + the GeoNames bilingual alt-name fold as of 2026-06-27a) — the
- * single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` AND the full-DB
- * FTS. A resolve touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full
- * DB), with GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a co-located
- * FTS5-trigram fuzzy index, consulted ONLY on an exact-name miss (typo tolerance, e.g.
- * Manchestr→Manchester) so the contiguous fast path is untouched. Resolved by
- * {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at
+ * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~1.19 GB; US + intl postcodes incl. PT/PL/CZ/AU +
+ * the GeoNames bilingual alt-name fold as of 2026-06-27a) — the single-B-tree-probe lookup that replaces the slim
+ * per-model-version `wof-hot.db` AND the full-DB FTS. A resolve touches a handful of contiguous pages (~12 range
+ * fetches/session vs 243 on the full DB), with GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a
+ * co-located FTS5-trigram fuzzy index, consulted ONLY on an exact-name miss (typo tolerance, e.g. Manchestr→Manchester)
+ * so the contiguous fast path is untouched. Resolved by {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at
  * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
  */
 export function adminGazetteerUrl(): string {
@@ -191,11 +185,11 @@ export function adminGazetteerUrl(): string {
 }
 
 /**
- * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the
- * WOF admin centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US
- * address points) + TIGER interp shards are hosted, so any US address resolves to its building
- * (`address_point`, ≤10 m) or a calibrated interp estimate — not a city centroid. `vi` = US Virgin
- * Islands. (`il` is the whole state incl. Cook; the separate `il-cook` build shard is not hosted.)
+ * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the WOF admin centroid.
+ * National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + TIGER interp shards
+ * are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or a calibrated interp estimate — not
+ * a city centroid. `vi` = US Virgin Islands. (`il` is the whole state incl. Cook; the separate `il-cook` build shard is
+ * not hosted.)
  */
 export const HOSTED_STREET_SLUGS = new Set([
 	"ak",
@@ -307,20 +301,22 @@ const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 }
 
 /**
- * US state/territory name OR abbreviation → 2-letter shard slug, or null if not a US region we
- * recognize.
+ * US state/territory name OR abbreviation → 2-letter shard slug, or null if not a US region we recognize.
  */
 export function regionToStateSlug(region: string | undefined): string | null {
 	if (!region) return null
 	const r = region.trim().toLowerCase()
-	if (/^[a-z]{2}$/.test(r)) return r // already a 2-letter abbreviation (how US addresses usually write it)
+
+	if (/^[a-z]{2}$/.test(r)) return r
+
+	// already a 2-letter abbreviation (how US addresses usually write it)
 	return US_STATE_NAME_TO_SLUG[r] ?? null
 }
 
 /**
- * Build the URL bag handed to `loadNeuralClassifierFromUrls` for a release. Shared by the demo's
- * primary and compare classifier loaders so the per-file asset layout (model / tokenizer / card /
- * gazetteer lexicon, plus the optional US/DE/FR postcode-anchor binaries) is defined exactly once.
+ * Build the URL bag handed to `loadNeuralClassifierFromUrls` for a release. Shared by the demo's primary and compare
+ * classifier loaders so the per-file asset layout (model / tokenizer / card / gazetteer lexicon, plus the optional
+ * US/DE/FR postcode-anchor binaries) is defined exactly once.
  */
 export function neuralClassifierLoadUrls(
 	locale: string,
@@ -357,11 +353,13 @@ export async function loadFstGazetteer(
 		import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web"),
 		fetch(assetUrl(locale, version, "fst-en-US.bin")).then((r) => {
 			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
+
 			return r.arrayBuffer()
 		}),
 	])
 	const matcher = fstModule.deserializeFstWeb(fstBinary) as FstMatcherLike
 	let provenance: FstProvenanceLike | undefined
+
 	try {
 		provenance = fstModule.readFstProvenanceWeb(fstBinary) as FstProvenanceLike | undefined
 	} catch {

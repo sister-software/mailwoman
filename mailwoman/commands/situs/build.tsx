@@ -33,15 +33,17 @@
  *   regardless.
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
-import { Box, Text } from "ink"
 import { spawn } from "node:child_process"
 import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
+import { dataRootPath } from "@mailwoman/core/utils"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
@@ -177,6 +179,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				// index is the last build step, so its presence means insert + index + VACUUM all finished.
 				const isComplete = (dbPath: string): boolean => {
 					if (!existsSync(dbPath)) return false
+
 					try {
 						const db = new DatabaseSync(dbPath, { readOnly: true })
 						const n = (db.prepare("SELECT count(*) AS n FROM address_point").get() as { n: number }).n
@@ -186,6 +189,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 								.get() as { n: number }
 						).n
 						db.close()
+
 						return n > 0 && idx > 0
 					} catch {
 						return false
@@ -194,7 +198,9 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 
 				const buildOneState = (state: string): Promise<StateResult> => {
 					const dbPath = path.join(outDir, `address-points-us-${state.toLowerCase()}.db`)
+
 					if (!options.force && isComplete(dbPath)) return Promise.resolve({ state, skipped: true })
+
 					return new Promise((resolve) => {
 						const argv = [
 							cliEntry,
@@ -209,6 +215,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 							"--threads",
 							String(threads),
 						]
+
 						if (options.licenseFilter) argv.push("--license-filter", options.licenseFilter)
 						const t = Date.now()
 						const child = spawn(process.execPath, argv)
@@ -251,6 +258,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 						skipped++
 						continue
 					}
+
 					if (r.code !== 0) {
 						console.error(`[FAIL] ${r.state} (${r.seconds}s)\n${stripAnsi(r.err || "").slice(-600)}`)
 						manifest.states[r.state] = { ok: false }
@@ -263,6 +271,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					const text = stripAnsi(`${r.out ?? ""}\n${r.err ?? ""}`)
 					const pts = Number(text.match(/(\d+) points →/)?.[1] ?? 0)
 					const datasets: Record<string, number> = {}
+
 					for (const m of text.matchAll(/overture:(\S+)\s+([\d,]+) rows/g)) {
 						const ds = m[1]!,
 							n = Number(m[2]!.replace(/,/g, ""))
@@ -283,6 +292,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					`built ${built} · skipped ${skipped} · failed ${failed} · ${totalRows.toLocaleString()} total points · ${mins} min`,
 					`dataset families:`,
 				]
+
 				for (const [ds, n] of Object.entries(manifest.datasetTotals)
 					.sort((a, b) => b[1] - a[1])
 					.slice(0, 8)) {
@@ -301,6 +311,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -313,6 +324,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

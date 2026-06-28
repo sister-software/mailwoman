@@ -17,10 +17,11 @@
  *       output shape, no API divergence.
  */
 
-import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural"
-import { resolveWeights } from "@mailwoman/neural/weights"
 import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
+
+import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural"
+import { resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, test } from "vitest"
 
 import { WebOnnxRunner } from "./web-onnx-runner.js"
@@ -32,7 +33,9 @@ import { WebOnnxRunner } from "./web-onnx-runner.js"
 function probeWeights(): { modelPath: string; tokenizerPath: string } | null {
 	try {
 		const r = resolveWeights({})
+
 		if (!existsSync(r.modelPath) || !existsSync(r.tokenizerPath)) return null
+
 		return r
 	} catch {
 		return null
@@ -51,6 +54,7 @@ describe.skipIf(!haveWeights)("WebOnnxRunner", () => {
 		expect(result.numLabels).toBeGreaterThan(0)
 		expect(result.logits.length).toBe(tokenIds.length)
 		expect(result.logits[0]?.length).toBe(result.numLabels)
+
 		// Logits should be finite numbers (no NaN/Infinity from a misconfigured runtime).
 		for (const row of result.logits) {
 			for (const v of row) expect(Number.isFinite(v)).toBe(true)
@@ -79,12 +83,15 @@ describe.skipIf(!haveWeights)("WebOnnxRunner", () => {
 function collectTags(nodes: Array<{ tag: string; children?: unknown[] }>): Set<string> {
 	const out = new Set<string>()
 	const stack = [...nodes]
+
 	while (stack.length) {
 		const n = stack.pop()!
 		out.add(n.tag)
+
 		if (Array.isArray(n.children)) {
 			for (const c of n.children) stack.push(c as { tag: string; children?: unknown[] })
 		}
 	}
+
 	return out
 }

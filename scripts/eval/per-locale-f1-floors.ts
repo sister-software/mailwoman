@@ -60,11 +60,13 @@ function localeOf(fileName: string): string | null {
 	// `.jsonl` file matches "nl" (it lives inside "jso-NL"), which the self-test caught. Longest alias
 	// first so "en-us" wins over "us".
 	const stem = fileName.toLowerCase().replace(/\.[a-z0-9]+$/, "")
+
 	for (const alias of Object.keys(FILE_ALIASES).sort((a, b) => b.length - a.length)) {
 		if (new RegExp(`(?<![a-z0-9])${escapeRegExp(alias)}(?![a-z0-9])`).test(stem)) {
 			return FILE_ALIASES[alias]!
 		}
 	}
+
 	return null
 }
 
@@ -79,17 +81,20 @@ interface Row {
 /** One row per report: locale, micro-F1, floor, status (PASS / BELOW / SKIP / UNKNOWN_LOCALE). */
 function evaluate(reports: Array<Record<string, unknown>>, floors: Record<string, number | null>): Row[] {
 	const rows: Row[] = []
+
 	for (const r of reports) {
 		const fileName = (r.file as string) ?? "?"
 		const micro = Number(r.microF1 ?? 0.0)
 		const loc = localeOf(fileName)
 		let status: string
 		let floor: number | null
+
 		if (loc === null) {
 			status = "UNKNOWN_LOCALE"
 			floor = null
 		} else {
 			floor = loc in floors ? floors[loc]! : null
+
 			if (floor === null) {
 				status = "SKIP"
 			} else {
@@ -98,6 +103,7 @@ function evaluate(reports: Array<Record<string, unknown>>, floors: Record<string
 		}
 		rows.push({ file: fileName, locale: loc, microF1: micro, floor, status })
 	}
+
 	return rows
 }
 
@@ -105,15 +111,18 @@ function evaluate(reports: Array<Record<string, unknown>>, floors: Record<string
 function pyFixed(x: number, d: number): string {
 	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
 	const neg = x < 0 || Object.is(x, -0)
-	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(99).split(".")
-	let frac = fracRaw
+	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(20).split(".")
+	const frac = fracRaw
+
 	if (frac.length <= d) {
 		const body = d > 0 ? `${intPart}.${frac.padEnd(d, "0")}` : intPart!
+
 		return (neg ? "-" : "") + body
 	}
 	const keep = frac.slice(0, d)
 	const rest = frac.slice(d)
 	let roundUp: boolean
+
 	if (rest[0]! > "5") roundUp = true
 	else if (rest[0]! < "5") roundUp = false
 	else if (rest.slice(1).replace(/0+$/, "").length > 0) roundUp = true
@@ -122,9 +131,11 @@ function pyFixed(x: number, d: number): string {
 		roundUp = parseInt(lastKept, 10) % 2 === 1
 	}
 	let digits = intPart! + keep
+
 	if (roundUp) {
 		const arr = digits.split("")
 		let i = arr.length - 1
+
 		for (; i >= 0; i--) {
 			if (arr[i] === "9") arr[i] = "0"
 			else {
@@ -132,11 +143,13 @@ function pyFixed(x: number, d: number): string {
 				break
 			}
 		}
+
 		if (i < 0) arr.unshift("1")
 		digits = arr.join("")
 	}
 	const di = digits.length - d
 	const body = d > 0 ? `${digits.slice(0, di) || "0"}.${digits.slice(di)}` : digits.slice(0, di) || "0"
+
 	return (neg ? "-" : "") + body
 }
 
@@ -155,12 +168,14 @@ function render(rows: Row[]): string {
 		"-".repeat(60),
 		`${padL("file", 26)} ${padL("locale", 7)} ${padR("micro-F1", 9)} ${padR("floor", 7)}  status`,
 	]
+
 	for (const r of rows) {
 		const floor = r.floor !== null ? pyFixed(r.floor, 3) : "  —  "
 		out.push(
 			`${padL(r.file, 26)} ${padL(r.locale ?? "?", 7)} ${padR(pyFixed(r.microF1, 3), 9)} ${padR(floor, 7)}  ${r.status}`
 		)
 	}
+
 	return out.join("\n")
 }
 
@@ -175,6 +190,7 @@ function runSelfTest(): number {
 	}
 	const rows = evaluate(fixture.reports, DEFAULT_FLOORS)
 	const got: Record<string, string> = {}
+
 	for (const r of rows) got[r.file] = r.status
 	const expected: Record<string, string> = {
 		"canonical-en-us.jsonl": "PASS",
@@ -185,6 +201,7 @@ function runSelfTest(): number {
 	console.log(render(rows))
 	const ok = JSON.stringify(got) === JSON.stringify(expected)
 	console.log("\nself-test:", ok ? "PASS" : `FAIL got=${JSON.stringify(got)} expected=${JSON.stringify(expected)}`)
+
 	return ok ? 0 : 1
 }
 
@@ -198,13 +215,16 @@ interface Args {
 function parseArgs(): Args {
 	const argv = process.argv.slice(2)
 	const a: Args = { blocking: false, selfTest: false }
+
 	for (let i = 0; i < argv.length; i++) {
 		const k = argv[i]
+
 		if (k === "--report") a.report = argv[++i]
 		else if (k === "--floors") a.floors = argv[++i]
 		else if (k === "--blocking") a.blocking = true
 		else if (k === "--self-test") a.selfTest = true
 	}
+
 	return a
 }
 
@@ -212,12 +232,15 @@ function main(): number {
 	const args = parseArgs()
 
 	if (args.selfTest) return runSelfTest()
+
 	if (!args.report) {
 		console.error("error: --report is required (or pass --self-test)")
+
 		return 2
 	}
 
 	let floors = DEFAULT_FLOORS
+
 	if (args.floors) {
 		floors = { ...DEFAULT_FLOORS, ...JSON.parse(readFileSync(args.floors, "utf-8")) }
 	}
@@ -228,13 +251,16 @@ function main(): number {
 	console.log(render(rows))
 
 	const below = rows.filter((r) => r.status === "BELOW")
+
 	if (below.length > 0) {
 		const names = below.map((r) => `${r.locale} (${pyFixed(r.microF1, 3)} < ${pyFixed(r.floor!, 3)})`).join(", ")
 		console.error(`\n⚠ ${below.length} locale(s) below floor: ${names}`)
+
 		if (args.blocking) return 1
 	} else {
 		console.error("\n✓ all floored locales at or above their floor")
 	}
+
 	return 0
 }
 

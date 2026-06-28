@@ -1,7 +1,7 @@
 /**
- * Loads `sql.js-httpvfs` from the local server, opens the WOF .db over byte-range fetches, and runs
- * the same FTS5 + R*Tree queries the production WofSqlitePlaceLookup uses. Reports cold + warm
- * latency per query to the page (the orchestrator scrapes console output too).
+ * Loads `sql.js-httpvfs` from the local server, opens the WOF .db over byte-range fetches, and runs the same FTS5 +
+ * R*Tree queries the production WofSqlitePlaceLookup uses. Reports cold + warm latency per query to the page (the
+ * orchestrator scrapes console output too).
  *
  * The page expects the .db to live at `/wof.db` and the sql.js-httpvfs worker bundle at
  * `/node_modules/sql.js-httpvfs/dist/...` (relative paths from the server root).
@@ -11,6 +11,7 @@
 // classic script that assigns `createDbWorker` onto window. (A bare ESM `import` from the dist
 // fails with "does not provide an export named 'createDbWorker'".)
 const { createDbWorker } = /** @type {{ createDbWorker: Function }} */ (window)
+
 if (typeof createDbWorker !== "function") {
 	throw new Error("createDbWorker not on window — sql.js-httpvfs UMD bundle failed to load")
 }
@@ -92,6 +93,7 @@ async function main() {
 		const start = performance.now()
 		let rows
 		let error = null
+
 		try {
 			rows = await worker.db.exec(q.sql)
 		} catch (e) {

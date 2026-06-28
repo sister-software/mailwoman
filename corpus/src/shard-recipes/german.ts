@@ -22,8 +22,9 @@ import { alignRow } from "../align.js"
 import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
 
-/** A German OA source (cached zip) + the Bundesland the file covers (OA's REGION column is empty for
-DE). */
+/**
+ * A German OA source (cached zip) + the Bundesland the file covers (OA's REGION column is empty for DE).
+ */
 interface GermanSource {
 	zip: string
 	csv: string
@@ -43,8 +44,10 @@ function splitCsv(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
+
 	for (let i = 0; i < line.length; i++) {
 		const c = line[i]!
+
 		if (inQ) {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
@@ -59,17 +62,21 @@ function splitCsv(line: string): string[] {
 		} else cur += c
 	}
 	out.push(cur)
+
 	return out
 }
 
 /** Stream real German tuples out of a cached OA zip (buffered `unzip -p`). */
 function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
+
 	if (r.status !== 0) {
 		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+
 		return []
 	}
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return []
 	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
@@ -81,22 +88,27 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: LocaleBaseTuple[] = []
 	const seen = new Set<string>()
+
 	for (let li = 1; li < lines.length; li++) {
 		const lineStr = lines[li]
+
 		if (!lineStr) continue
 		const cells = splitCsv(lineStr)
 		const street = get(cells, iStreet)
 		const locality = get(cells, iCity)
+
 		if (!street || !locality) continue
 		const house_number = get(cells, iNum)
 		const postcode = get(cells, iPost)
 		// OA's REGION column is empty for DE — fall back to the source's Bundesland (set per file).
 		const region = get(cells, iRegion) || source.region || ""
 		const key = `${house_number}|${street}|${locality}|${postcode}`.toLowerCase()
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		tuples.push({ house_number, street, locality, region, postcode })
 	}
+
 	return tuples
 }
 
@@ -110,6 +122,7 @@ export const germanRecipe: ShardRecipe = {
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-german"
 		const intlFraction = opts.intlFraction ?? 0.4
+
 		if (!(intlFraction >= 0 && intlFraction <= 1)) {
 			throw new Error(`--intl-fraction must be in [0, 1], got ${intlFraction}`)
 		}
@@ -117,11 +130,14 @@ export const germanRecipe: ShardRecipe = {
 
 		// Pool real tuples from every German source, then sample `count` rows from it.
 		const pool: LocaleBaseTuple[] = []
+
 		for (const s of SOURCES) {
 			const t = readGermanTuples(s)
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
+
 			for (const x of t) pool.push(x) // NOT pool.push(...t) — spreading ~840K args overflows the stack
 		}
+
 		if (pool.length === 0) {
 			throw new Error("No German tuples found — are the cached zips present in /tmp/oa-cache?")
 		}
@@ -130,16 +146,19 @@ export const germanRecipe: ShardRecipe = {
 		let skipped = 0
 		let guard = 0
 		const N = pool.length
+
 		while (emitted < count && guard++ < count * 6) {
 			const base = pool[Math.floor(random() * N)]!
 			// Per-row order: `--intl-fraction` of rows render house-first / postcode-after-city (the US/feed
 			// layout), the rest in idiomatic German order. Same components either way.
 			const order = random() < intlFraction ? "international" : "native"
 			const synth = synthesizeGermanRow(base, { random, order })
+
 			if (!synth) {
 				skipped++
 				continue
 			}
+
 			// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO. `order`
 			// rides along so the eval can stratify native vs international.
 			if (opts.golden) {
@@ -164,6 +183,7 @@ export const germanRecipe: ShardRecipe = {
 				license: `OpenAddresses DE (Berlin/Saxony) tuples, rendered ${order}-order — see ingest SOURCES`,
 			}
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue

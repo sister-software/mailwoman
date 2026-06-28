@@ -52,35 +52,42 @@ interface Args {
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	const out: Partial<Args> = {}
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--shards" && args[i + 1]) out.shardsArg = args[++i]
 		else if (a === "--output" && args[i + 1]) out.outputPath = args[++i]
 		else if (a === "--limit-per-shard" && args[i + 1]) out.limitPerShard = Number(args[++i])
 	}
+
 	if (!out.shardsArg || !out.outputPath) {
 		console.error("Usage: build-corpus-stats.ts --shards <dir-or-glob> --output <stats.json>")
 		process.exit(1)
 	}
+
 	return out as Args
 }
 
 function discoverShards(shardsArg: string): string[] {
 	const stat = statSync(shardsArg)
+
 	if (stat.isDirectory()) {
 		return readdirSync(shardsArg)
 			.filter((f) => f.endsWith(".parquet"))
 			.map((f) => join(shardsArg, f))
 	}
+
 	if (stat.isFile() && shardsArg.endsWith(".parquet")) return [shardsArg]
+
 	// Otherwise treat as a literal path list (one per line if it's stdin-friendly).
 	return [shardsArg]
 }
 
 /**
- * Use a Python subprocess to read parquet (pyarrow is heavier than parquet-wasm but already on the
- * path here, and we have nothing in the JS ecosystem that reads parquet cleanly at this scale).
- * Emits one JSON object per line: `{tokens: [...], labels: [...]}`.
+ * Use a Python subprocess to read parquet (pyarrow is heavier than parquet-wasm but already on the path here, and we
+ * have nothing in the JS ecosystem that reads parquet cleanly at this scale). Emits one JSON object per line: `{tokens:
+ * [...], labels: [...]}`.
  */
 function streamShardRows(shardPath: string, limit?: number): Array<{ tokens: string[]; labels: string[] }> {
 	// Pipe the python script via stdin instead of `-c` to preserve newlines verbatim
@@ -97,10 +104,12 @@ for i in range(n):
 `
 	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
 	const rows: Array<{ tokens: string[]; labels: string[] }> = []
+
 	for (const line of buf.toString("utf8").split("\n")) {
 		if (!line) continue
 		rows.push(JSON.parse(line))
 	}
+
 	return rows
 }
 
@@ -117,22 +126,29 @@ function main(): void {
 		console.error(`Reading ${path}...`)
 		const rows = streamShardRows(path, args.limitPerShard)
 		totalRows += rows.length
+
 		for (const row of rows) {
 			const { tokens, labels } = row
-			if (tokens.length !== labels.length) continue // skip malformed
+
+			if (tokens.length !== labels.length) continue
+
+			// skip malformed
 			for (let i = 0; i < tokens.length; i++) {
 				const tk = tokens[i]!
 				const lb = labels[i]!
 				let labelMap = tokenStats.get(tk)
+
 				if (!labelMap) {
 					labelMap = new Map()
 					tokenStats.set(tk, labelMap)
 				}
 				labelMap.set(lb, (labelMap.get(lb) ?? 0) + 1)
+
 				if (i + 1 < tokens.length) {
 					const bigramKey = tk + SEP + tokens[i + 1]!
 					const bigramLabel = lb + SEP + labels[i + 1]!
 					let bMap = bigramStats.get(bigramKey)
+
 					if (!bMap) {
 						bMap = new Map()
 						bigramStats.set(bigramKey, bMap)
@@ -150,9 +166,12 @@ function main(): void {
 	// stay complete — they're cheap and we need accuracy at the long tail for label-vacuum
 	// detection.
 	let prunedBigrams = 0
+
 	for (const [k, labelMap] of bigramStats) {
 		let total = 0
+
 		for (const v of labelMap.values()) total += v
+
 		if (total < MIN_BIGRAM_COUNT) {
 			bigramStats.delete(k)
 			prunedBigrams++
@@ -166,9 +185,11 @@ function main(): void {
 		tokens: {} as Record<string, Record<string, number>>,
 		bigrams: {} as Record<string, Record<string, number>>,
 	}
+
 	for (const [tk, labelMap] of tokenStats) {
 		out.tokens[tk] = Object.fromEntries(labelMap)
 	}
+
 	for (const [k, labelMap] of bigramStats) {
 		out.bigrams[k] = Object.fromEntries(labelMap)
 	}

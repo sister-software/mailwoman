@@ -15,8 +15,10 @@
  *   --src <tsv> --out /tmp/txhhsc-oarow.jsonl
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync, writeFileSync } from "node:fs"
+
+import { dataRootPath } from "@mailwoman/core/utils"
+
 import { arg } from "../lib/cli-args.ts"
 
 const src = arg("src", dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv"))
@@ -37,18 +39,21 @@ const GEO = /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/
 
 const records: string[] = []
 let skipped = 0
+
 for (const line of lines.slice(1)) {
 	const f = line.split("\t")
 	const addr = (f[cAddr] ?? "").trim()
 	const city = (f[cCity] ?? "").trim()
 	const zip = (f[cZip] ?? "").trim()
 	const m = GEO.exec(f[cGeo] ?? "")
+
 	if (!addr || !city || !m) {
 		skipped++
 		continue
 	}
 	const lat = Number(m[1])
 	const lon = Number(m[2])
+
 	// Sanity: TX bounding box (rejects swapped/garbage coords).
 	if (lat < 25 || lat > 37 || lon > -93 || lon < -107) {
 		skipped++

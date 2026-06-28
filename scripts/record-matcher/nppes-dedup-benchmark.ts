@@ -26,6 +26,10 @@
  *   [--out-md docs/articles/evals/<date>-nppes-dedup-benchmark.md]
  */
 
+import { writeFileSync } from "node:fs"
+import { resolve as resolvePath } from "node:path"
+import { pathToFileURL } from "node:url"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { haversineKm, type GBT } from "@mailwoman/match"
@@ -42,13 +46,12 @@ import {
 } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { latLngToCell } from "h3-js"
-import { writeFileSync } from "node:fs"
-import { resolve as resolvePath } from "node:path"
-import { pathToFileURL } from "node:url"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -128,14 +131,16 @@ const orgTokens = (s: string): Set<string> =>
 function orgJaccard(a: Set<string>, b: Set<string>): number {
 	if (a.size === 0 || b.size === 0) return 0
 	let inter = 0
+
 	for (const t of a) if (b.has(t)) inter++
+
 	return inter / (a.size + b.size - inter)
 }
 const ORG_TAU = 0.7 // gold-set threshold
 
 /**
- * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityId` the
- * site-level entity-level truth (subpart-collapsed).
+ * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityId` the site-level entity-level
+ * truth (subpart-collapsed).
  */
 interface MessyRow {
 	npi: string
@@ -150,11 +155,14 @@ async function main(): Promise<void> {
 	// --- Phase A: the variation set — NPIs that carry ≥1 alternate organization name. ---
 	console.error("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
+
 	for await (const r of streamRows(OTHER_NAMES)) {
 		const npi = norm(r[C.npi])
 		const alt = norm(r[C.otherOrg])
+
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
+
 		if (list.length < 5) list.push(alt) // cap fan-out per NPI
 		altNames.set(npi, list)
 	}
@@ -170,9 +178,11 @@ async function main(): Promise<void> {
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 	let scanned = 0
+
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M rows, kept ${kept.size}`)
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
+
 		// Global address-frequency: count every practice address (one row ≈ one distinct NPI).
 		if (practice) {
 			const k = addressFrequencyKey(practice)
@@ -182,6 +192,7 @@ async function main(): Promise<void> {
 
 		// Sample: in-state NPIs with ≥1 alternate name, up to MAX_NPIS — NO early break (the table needs the full pass).
 		const npi = norm(r[C.npi])
+
 		if (
 			kept.size < MAX_NPIS &&
 			npi &&
@@ -192,6 +203,7 @@ async function main(): Promise<void> {
 		) {
 			const isOrg = norm(r[C.entityType]) === "2"
 			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
+
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
 				const auth = `${norm(r[C.authFirst])} ${norm(r[C.authLast])}`.trim() // the NPI's registrant — shared across its records
@@ -204,12 +216,16 @@ async function main(): Promise<void> {
 				const parentKey = `${norm(r[C.parentLBN])}|${norm(r[C.parentTIN])}`.toLowerCase()
 				const orgKey = isSubpart && parentKey !== "|" ? `p:${parentKey}` : `n:${npi}`
 				const eid = (a: string) => `${addressFrequencyKey(a)}|${orgKey}`
+
 				if (org) npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
 				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice, auth, entityId: eid(practice) }) // primary
+				rows.push({ npi, name: primaryName, org, address: practice, auth, entityId: eid(practice) })
+
+				// primary
 				for (const alt of altNames.get(npi)!)
 					rows.push({ npi, name: alt, org: alt, address: practice, auth, entityId: eid(practice) }) // name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
+
 				if (mailing && mailing !== practice)
 					rows.push({ npi, name: primaryName, org, address: mailing, auth, entityId: eid(mailing) }) // address variation
 			}
@@ -254,7 +270,9 @@ async function main(): Promise<void> {
 				placeCountry: false,
 				normalizeCase: !LEGACY,
 			})
+
 			if (g.lat !== null) geo++
+
 			return g
 		},
 		country: "US",
@@ -306,21 +324,26 @@ async function main(): Promise<void> {
 		let maxNpisFused = 0
 		entities.forEach((e, ci) => {
 			const byNpi = new Map<string, number>()
+
 			for (const rec of e.records) {
 				const lbl = labelOf(rec)
 				byNpi.set(lbl, (byNpi.get(lbl) ?? 0) + 1)
 			}
 			sumCluster += choose2(e.records.length)
+
 			if (e.records.length === 1) singletons++
+
 			if (byNpi.size > 1) {
 				overMergedClusters++
 				recordsInOverMerged += e.records.length
 				maxNpisFused = Math.max(maxNpisFused, byNpi.size)
 			}
+
 			for (const [npi, n] of byNpi) {
 				sumCK += choose2(n)
 				npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + n)
 			}
+
 			for (const rec of e.records) {
 				const lbl = labelOf(rec)
 				const s = npiClusters.get(lbl) ?? new Set<number>()
@@ -328,7 +351,9 @@ async function main(): Promise<void> {
 				npiClusters.set(lbl, s)
 			}
 		})
-		let sumClass = 0 // Σ_k C(|k|, 2)
+		let sumClass = 0
+
+		// Σ_k C(|k|, 2)
 		for (const total of npiTotals.values()) sumClass += choose2(total)
 
 		const tp = sumCK
@@ -339,6 +364,7 @@ async function main(): Promise<void> {
 		const maxIndex = (sumCluster + sumClass) / 2
 		const ari = maxIndex - expected !== 0 ? (tp - expected) / (maxIndex - expected) : 1
 		const splitNpis = [...npiClusters.values()].filter((s) => s.size > 1).length
+
 		return {
 			precision,
 			recall,
@@ -367,27 +393,37 @@ async function main(): Promise<void> {
 	const find = (x: string): string => {
 		if (!parent.has(x)) parent.set(x, x)
 		let root = x
+
 		while (parent.get(root)! !== root) root = parent.get(root)!
+
 		while (parent.get(x)! !== root) {
 			const next = parent.get(x)!
 			parent.set(x, root)
 			x = next
 		}
+
 		return root
 	}
 	const union = (a: string, b: string) => {
 		const ra = find(a)
 		const rb = find(b)
+
 		if (ra !== rb) parent.set(ra, rb)
 	}
+
 	{
 		const byAddr = new Map<string, string[]>()
+
 		for (const [npi, info] of npiPrimary) {
-			find(npi) // seed
+			find(npi)
+
+			// seed
 			if (!info.addrKey) continue
+
 			if (!byAddr.has(info.addrKey)) byAddr.set(info.addrKey, [])
 			byAddr.get(info.addrKey)!.push(npi)
 		}
+
 		for (const group of byAddr.values()) {
 			for (let i = 0; i < group.length; i++) {
 				for (let j = i + 1; j < group.length; j++) {
@@ -409,8 +445,10 @@ async function main(): Promise<void> {
 	// one. The Jaccard gate still prevents collapsing distinct co-located orgs (the gold-set safety). ---
 	const COLOCATION_KM = 0.05
 	const npiCoord = new Map<string, { latitude: number; longitude: number }>()
+
 	for (const rec of records) {
 		const c = rec.address?.geocode?.coordinate
+
 		// first geocoded record per NPI ≈ its primary practice address (primary row is pushed first)
 		if (c && !npiCoord.has(rec.id)) npiCoord.set(rec.id, c)
 	}
@@ -418,27 +456,37 @@ async function main(): Promise<void> {
 	const findC = (x: string): string => {
 		if (!parentC.has(x)) parentC.set(x, x)
 		let root = x
+
 		while (parentC.get(root)! !== root) root = parentC.get(root)!
+
 		while (parentC.get(x)! !== root) {
 			const next = parentC.get(x)!
 			parentC.set(x, root)
 			x = next
 		}
+
 		return root
 	}
 	const unionC = (a: string, b: string) => {
 		const ra = findC(a)
 		const rb = findC(b)
+
 		if (ra !== rb) parentC.set(ra, rb)
 	}
+
 	{
 		const coLocated = [...npiPrimary.keys()].filter((n) => npiCoord.has(n))
-		for (const n of npiPrimary.keys()) findC(n) // seed every NPI (un-geocoded ones stay singletons)
+
+		for (const n of npiPrimary.keys()) findC(n)
+
+		// seed every NPI (un-geocoded ones stay singletons)
 		for (let i = 0; i < coLocated.length; i++) {
 			for (let j = i + 1; j < coLocated.length; j++) {
 				const a = coLocated[i]!
 				const b = coLocated[j]!
+
 				if (haversineKm(npiCoord.get(a)!, npiCoord.get(b)!) > COLOCATION_KM) continue
+
 				if (orgJaccard(npiPrimary.get(a)!.tokens, npiPrimary.get(b)!.tokens) >= ORG_TAU) unionC(a, b)
 			}
 		}
@@ -458,29 +506,38 @@ async function main(): Promise<void> {
 	const findH = (x: string): string => {
 		if (!parentH.has(x)) parentH.set(x, x)
 		let root = x
+
 		while (parentH.get(root)! !== root) root = parentH.get(root)!
+
 		while (parentH.get(x)! !== root) {
 			const next = parentH.get(x)!
 			parentH.set(x, root)
 			x = next
 		}
+
 		return root
 	}
 	const unionH = (a: string, b: string) => {
 		const ra = findH(a)
 		const rb = findH(b)
+
 		if (ra !== rb) parentH.set(ra, rb)
 	}
+
 	{
 		const byCell = new Map<string, string[]>()
+
 		for (const n of npiPrimary.keys()) {
 			findH(n) // seed every NPI (un-geocoded ones stay singletons)
 			const c = npiCoord.get(n)
+
 			if (!c) continue
 			const cell = latLngToCell(c.latitude, c.longitude, H3_RES)
+
 			if (!byCell.has(cell)) byCell.set(cell, [])
 			byCell.get(cell)!.push(n)
 		}
+
 		for (const group of byCell.values()) {
 			for (let i = 0; i < group.length; i++) {
 				for (let j = i + 1; j < group.length; j++) {
@@ -561,6 +618,7 @@ async function main(): Promise<void> {
 	// GBT; the learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
 	const progression = LEVERS.map((l) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0, ...l.config })
+
 		return { ...l, res, score: scoreEntities(res.entities, npiLabel) }
 	})
 	const baseline = progression[0]! // no levers — the prior-prior behaviour
@@ -574,12 +632,14 @@ async function main(): Promise<void> {
 	// CLI passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
 	const defaultOutOfBox = (() => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
+
 		return { res, score: scoreEntities(res.entities, npiLabel) }
 	})()
 
 	const THRESHOLDS = [0, 4, 8, 12, 16, 20]
 	const sweep = THRESHOLDS.map((t) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: t, ...bestLever.config })
+
 		return { t, res, score: scoreEntities(res.entities, npiLabel) }
 	})
 	const base = sweep[0]! // threshold 0, full lever stack
@@ -615,6 +675,7 @@ async function main(): Promise<void> {
 	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
 	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. corroboration features).
 	let cand: { label: string; npi: Score; entity: Score } | null = null
+
 	if (CANDIDATE) {
 		const mod = (await import(pathToFileURL(resolvePath(CANDIDATE)).href)) as {
 			DEDUP_GBT_MODEL: GBT
@@ -702,6 +763,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`| link threshold (bits) | precision | recall | F1 | ARI | clusters | over-merged |`)
 	lines.push(`|---:|---:|---:|---:|---:|---:|---:|`)
+
 	for (const s of sweep) {
 		const star = s === best ? " ⭐" : ""
 		lines.push(
@@ -761,6 +823,7 @@ async function main(): Promise<void> {
 	dualRow("GBT (shipped default)", "**org-name**", gbtOrg, gbtOrg.f1 - gbtNpi.f1)
 	dualRow("GBT (shipped default)", "**org-name (coord)**", gbtOrgCoord, gbtOrgCoord.f1 - gbtNpi.f1)
 	dualRow("GBT (shipped default)", `org-name (H3 res ${H3_RES})`, gbtOrgH3, gbtOrgH3.f1 - gbtNpi.f1)
+
 	if (cand) {
 		dualRow(cand.label, "NPI", cand.npi)
 		dualRow(cand.label, "**entity**", cand.entity, cand.entity.f1 - cand.npi.f1)
@@ -844,6 +907,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`\n[written] ${OUT_MD}`)

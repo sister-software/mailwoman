@@ -24,8 +24,8 @@ export function registerRangeCacheServiceWorker(baseUrl: string): void {
 }
 
 /**
- * Ask the service worker to drop cached DB range chunks from versions other than `keepVersion`. The
- * asset URLs are versioned + immutable, so stale versions' chunks never expire on their own.
+ * Ask the service worker to drop cached DB range chunks from versions other than `keepVersion`. The asset URLs are
+ * versioned + immutable, so stale versions' chunks never expire on their own.
  */
 export function pruneDbRangeCache(keepVersion: string): void {
 	if (typeof window === "undefined" || !("serviceWorker" in navigator)) return

@@ -41,27 +41,35 @@ function inRing(x: number, y: number, ring: Ring): boolean {
 	let inside = false
 	const n = ring.length
 	let j = n - 1
+
 	for (let i = 0; i < n; i++) {
 		const xi = ring[i]![0]!
 		const yi = ring[i]![1]!
 		const xj = ring[j]![0]!
 		const yj = ring[j]![1]!
+
 		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside
 		j = i
 	}
+
 	return inside
 }
 function inPoly(x: number, y: number, poly: Ring[]): boolean {
 	let c = false
+
 	for (const ring of poly) {
 		if (inRing(x, y, ring)) c = !c
 	}
+
 	return c
 }
 function inGeom(x: number, y: number, geom: Geometry): boolean {
 	const t = geom.type
+
 	if (t === "Polygon") return inPoly(x, y, geom.coordinates as Ring[])
+
 	if (t === "MultiPolygon") return (geom.coordinates as Ring[][]).some((p) => inPoly(x, y, p))
+
 	return false
 }
 
@@ -78,18 +86,22 @@ interface Loc {
 // ---- load DE current locality polygons (from SOURCE GeoJSON) with bbox prefilter ----
 console.log("loading DE locality polygons from source GeoJSON...")
 const locs: Loc[] = []
+
 for (const fp of globSync(ADMIN_DE + "/**/*.geojson")) {
 	try {
 		const g = JSON.parse(readFileSync(fp, "utf-8"))
 		const p = g.properties ?? {}
+
 		if (p["wof:placetype"] !== "locality" || (p["mz:is_current"] ?? 1) === 0) continue
 		const geom = g.geometry as Geometry | undefined
+
 		if (!geom || (geom.type !== "Polygon" && geom.type !== "MultiPolygon")) continue
 		// bbox from coords
 		const xs: number[] = []
 		const ys: number[] = []
 		const walk = (c: unknown): void => {
 			const arr = c as unknown[]
+
 			if (typeof arr[0] === "number") {
 				xs.push(arr[0] as number)
 				ys.push(arr[1] as number)
@@ -120,12 +132,14 @@ function pipLocality(lon: number, lat: number): [number, string] | null {
 			return [l.id, l.name]
 		}
 	}
+
 	return null
 }
 
 // ---- postcode centroids from our custom postalcode-intl.db ----
 const con = new DatabaseSync(PC_DB, { readOnly: true })
 const pcCentroid = new Map<string, [number, number]>()
+
 for (const row of con
 	.prepare("SELECT name, latitude, longitude FROM spr WHERE country='DE' AND placetype='postalcode'")
 	.all() as Array<{ name: string; latitude: number; longitude: number }>) {
@@ -137,6 +151,7 @@ console.log(`  ${pcCentroid.size} DE postcode centroids loaded`)
 // resolved-v072-de.json carries the neural-resolved locality WOF id per row; "name-correct" means
 // that resolved locality IS the true containing locality (== name-match PIP-containment from #273).
 let dump: Record<string, unknown> = {}
+
 try {
 	const arr = JSON.parse(readFileSync("/tmp/resolved-v072-de.json", "utf-8")) as Array<Record<string, unknown>>
 	dump = Object.fromEntries(arr.map((d) => [d.input as string, d.neuralLocId]))
@@ -154,14 +169,18 @@ const adminRoots = [
 const gcache = new Map<string, Geometry | null>()
 function geomForId(wid: unknown): Geometry | null {
 	const key = String(wid)
+
 	if (gcache.has(key)) return gcache.get(key)!
 	const s = String(Math.trunc(Number(wid)))
 	const chunks: string[] = []
+
 	for (let i = 0; i < s.length; i += 3) chunks.push(s.slice(i, i + 3))
 	const rel = chunks.join("/") + `/${s}.geojson`
 	let g: Geometry | null = null
+
 	for (const root of adminRoots) {
 		const fp = join(root, rel)
+
 		if (existsSync(fp)) {
 			try {
 				g = (JSON.parse(readFileSync(fp, "utf-8")).geometry as Geometry) ?? null
@@ -172,6 +191,7 @@ function geomForId(wid: unknown): Geometry | null {
 		}
 	}
 	gcache.set(key, g)
+
 	return g
 }
 
@@ -192,9 +212,11 @@ const rows = readFileSync(SAMPLE, "utf-8")
 	.map((l) => JSON.parse(l) as Record<string, unknown>)
 const ov = newCounts()
 const by = new Map<string, Counts>()
+
 for (const r of rows) {
 	const st = (r.state as string) || "??"
 	let byst = by.get(st)
+
 	if (!byst) {
 		byst = newCounts()
 		by.set(st, byst)
@@ -205,6 +227,7 @@ for (const r of rows) {
 	const glat = r.lat as number
 	// ground truth: which DE locality actually contains the gold point
 	const truth = pipLocality(glon, glat)
+
 	if (truth) {
 		ov.truth += 1
 		byst.truth += 1
@@ -214,12 +237,14 @@ for (const r of rows) {
 	const nlid = dump[r.input as string]
 	const ngeom = nlid ? geomForId(nlid) : null
 	const nameOk = ngeom !== null && ngeom !== undefined && inGeom(glon, glat, ngeom)
+
 	if (nameOk) {
 		ov.name += 1
 		byst.name += 1
 	}
 	const pc = (r.expected as Record<string, unknown> | undefined)?.postcode as string | undefined
 	const cen = pc ? pcCentroid.get(pc) : undefined
+
 	if (!cen) {
 		if (nameOk) {
 			ov.hybrid += 1
@@ -232,10 +257,12 @@ for (const r of rows) {
 	const cand = pipLocality(cen[1], cen[0]) // cen=(lat,lon) -> pip(lon,lat)
 	// coordinate-first containment: does the gold point fall inside the centroid-PIP'd locality?
 	const cfOk = cand !== null && truthId !== null && cand[0] === truthId
+
 	if (cfOk) {
 		ov.cf += 1
 		byst.cf += 1
 	}
+
 	// HYBRID ceiling: name signal OR coordinate signal lands the true locality
 	if (nameOk || cfOk) {
 		ov.hybrid += 1
@@ -245,13 +272,16 @@ for (const r of rows) {
 
 function line(label: string, c: Counts): string {
 	const n = c.n
+
 	if (!n) return `  ${label}: n=0`
 	const pct = (k: keyof Counts): string => ((100 * c[k]) / n).toFixed(1) + "%"
+
 	return `  ${label.padEnd(10)} n=${String(n).padEnd(5)} name=${pct("name").padEnd(7)} coord-first=${pct("cf").padEnd(7)} HYBRID(name OR coord)=${pct("hybrid")}`
 }
 
 console.log("\n=== Resolver containment by signal (gold point inside the chosen locality) ===")
 console.log(line("OVERALL", ov))
+
 for (const st of [...by.keys()].sort()) console.log(line(st, by.get(st)!))
 console.log("\n  name = resolver's current name-match resolution; coord-first = postcode centroid -> PIP locality;")
 console.log("  HYBRID = either signal lands the true locality (the soft-scoring ceiling).")

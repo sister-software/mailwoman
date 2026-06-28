@@ -16,8 +16,10 @@
  *   License: stamped `"Public Domain"` per Iowa state government open-data terms.
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
@@ -42,9 +44,12 @@ interface IaContractorRow {
 
 function splitAddress(address: string): { house_number?: string; street: string } | null {
 	const trimmed = address.trim()
+
 	if (!trimmed) return null
 	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (m) return { house_number: m[1], street: m[2]!.trim() }
+
 	return { street: trimmed }
 }
 
@@ -71,9 +76,11 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const record of parser as AsyncIterable<IaContractorRow>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const businessName = (record["Business Name"] ?? "").trim()
@@ -86,10 +93,12 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 					if (!city || !zip) continue
 
 					const state = lookupStateAbbreviation(stateAbbr)
+
 					if (!state) continue
 
 					const fullAddress = [address1, address2].filter(Boolean).join(" ")
 					const split = splitAddress(fullAddress)
+
 					if (!split) continue
 
 					const venue = businessName || undefined
@@ -109,6 +118,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 						.join(", ")
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length <= 2) continue
 
 					const regNum = (record["Registration #"] ?? "").trim()

@@ -128,6 +128,7 @@ describe("normalizeAuLevelDesignator", () => {
 
 	it("round-trips: every normalized form still matches", () => {
 		const samples = ["L 3", "G", "B 2", "M", "LG", "UG", "P 1", "RT"]
+
 		for (const raw of samples) {
 			expect(isAuLevelDesignator(normalizeAuLevelDesignator(raw)), `round-trip for "${raw}"`).toBe(true)
 		}

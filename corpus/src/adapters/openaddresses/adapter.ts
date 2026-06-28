@@ -38,6 +38,7 @@
 
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
+
 import { stableSourceId } from "../../adapter.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import { SHARE_ALIKE_PATTERN } from "../../license.js"
@@ -47,8 +48,8 @@ export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts UPPERCASE or
- * lowercase keys; this interface documents the canonical lowercase form after normalization.
+ * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts UPPERCASE or lowercase keys;
+ * this interface documents the canonical lowercase form after normalization.
  */
 interface OaProperties {
 	hash?: string
@@ -67,50 +68,55 @@ interface OaProperties {
 function normalizeProperties(raw: unknown): OaProperties {
 	if (!raw || typeof raw !== "object") return {}
 	const out: Record<string, string> = {}
+
 	for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
 		if (typeof v === "string") out[k.toLowerCase()] = v
 		else if (typeof v === "number") out[k.toLowerCase()] = String(v)
 	}
+
 	return out as OaProperties
 }
 
 /** Parse a single ND-GeoJSON line; return null for blanks, comments, or non-Feature shapes. */
 function parseFeatureLine(line: string): OaProperties | null {
 	const trimmed = line.trim()
+
 	if (!trimmed || trimmed.startsWith("#")) return null
 	let parsed: unknown
+
 	try {
 		parsed = JSON.parse(trimmed)
 	} catch {
 		return null
 	}
+
 	if (!parsed || typeof parsed !== "object") return null
 	const obj = parsed as { type?: string; properties?: unknown }
+
 	if (obj.type !== "Feature") return null
+
 	return normalizeProperties(obj.properties)
 }
 
 export interface OpenaddressesAdapterOptions {
 	/**
-	 * Per-row license used when a Feature lacks an explicit `LICENSE` property. Defaults to
-	 * `CC-BY-4.0` — the most common license across the OpenAddresses collection. Override per dump
-	 * via the runner's adapter-options passthrough.
+	 * Per-row license used when a Feature lacks an explicit `LICENSE` property. Defaults to `CC-BY-4.0` — the most common
+	 * license across the OpenAddresses collection. Override per dump via the runner's adapter-options passthrough.
 	 */
 	defaultLicense?: string
 
 	/**
-	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a
-	 * deliberate BUILD-level act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), NOT
-	 * a silent adapter default (#26 — "purposely exclude, don't opt in to include"). Set false only
-	 * for an explicit adapter-scoped drop; the build-level `--exclude-share-alike` is the normal
-	 * path.
+	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a deliberate BUILD-level
+	 * act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), NOT a silent adapter default (#26 — "purposely
+	 * exclude, don't opt in to include"). Set false only for an explicit adapter-scoped drop; the build-level
+	 * `--exclude-share-alike` is the normal path.
 	 */
 	allowShareAlike?: boolean
 }
 
 /**
- * Build an OpenAddresses adapter. The optional `defaultLicense` lets callers stamp a non-default
- * fallback for dumps known to carry a single license throughout (e.g. a PDDL-only state slice).
+ * Build an OpenAddresses adapter. The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
+ * known to carry a single license throughout (e.g. a PDDL-only state slice).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
@@ -134,12 +140,15 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 			let emitted = 0
 			let shareAlikeBlocked = 0
+
 			try {
 				for await (const line of lines) {
 					if (adapterOpts.signal?.aborted) break
+
 					if (adapterOpts.limit !== undefined && emitted >= adapterOpts.limit) break
 
 					const props = parseFeatureLine(line)
+
 					if (!props) continue
 
 					const houseNumber = props.number?.trim() ?? ""
@@ -152,6 +161,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					// A row is only useful if it has, at minimum, a street + (postcode OR locality).
 					// Pure point-only rows would land in quarantine anyway.
 					if (!street) continue
+
 					if (!city && !postcode) continue
 
 					const license = (props.license?.trim() || defaultLicense).trim()
@@ -162,17 +172,25 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					}
 
 					const components: CanonicalRow["components"] = {}
+
 					if (houseNumber) components.house_number = houseNumber
+
 					if (street) components.street = street
+
 					if (unit) components.unit = unit
+
 					if (city) components.locality = city
+
 					if (region) components.region = region
+
 					if (postcode) components.postcode = postcode
 
 					const raw = formatAddress(components, country, { separator: ", " })
+
 					if (!raw) continue
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length === 0) continue
 
 					const sourceIdSeed = props.hash?.trim() || props.id?.trim()
@@ -194,6 +212,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 			} finally {
 				lines.close()
 				stream.destroy()
+
 				if (shareAlikeBlocked > 0) {
 					process.stderr.write(`  openaddresses: ${shareAlikeBlocked} share-alike rows dropped, ${emitted} kept\n`)
 				}

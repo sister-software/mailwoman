@@ -18,9 +18,10 @@
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 
+import { readFileSync } from "node:fs"
+
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm, WofPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
-import { readFileSync } from "node:fs"
 
 interface Args {
 	evalPath: string
@@ -33,17 +34,20 @@ function parseArgs(): Args {
 	let evalPath = "data/eval/external/openaddresses-de-sample.jsonl"
 	let country = "DE"
 	const shards = [dataRootPath("wof", "postalcode-us.db"), dataRootPath("wof", "postalcode-intl.db")]
+
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--eval" && args[i + 1]) evalPath = args[++i]!
 		else if (args[i] === "--country" && args[i + 1]) country = args[++i]!
 		else if (args[i] === "--shard" && args[i + 1]) shards.push(args[++i]!)
 	}
+
 	return { evalPath, country, shards }
 }
 
 function pct(sorted: number[], p: number): number {
 	if (sorted.length === 0) return NaN
 	const i = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))
+
 	return sorted[i]!
 }
 
@@ -63,15 +67,18 @@ function main(): void {
 		const postcode: string | undefined = row.expected?.postcode ?? row.postcode ?? row.components?.postcode
 		const lat: number | undefined = row.lat
 		const lon: number | undefined = row.lon
+
 		if (!postcode || typeof lat !== "number" || typeof lon !== "number") continue
 		withPostcode++
 
 		const hits = lookup.lookup(String(postcode)).filter((h) => h.country === country)
+
 		if (hits.length === 0) {
 			notInGazetteer++
 			continue
 		}
 		const placedHit = hits.find((h) => h.lat !== 0 && h.lon !== 0)
+
 		if (!placedHit) {
 			inGazetteerNoCentroid++
 			continue

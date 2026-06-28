@@ -126,9 +126,9 @@ const US_STATE_ABBREV: Record<string, string> = {
 export const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
 
 /**
- * USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French
- * département) before "Illinois", so its France bbox filters out the actual US city — expanding to
- * the full name resolves the right region. Full names pass through unchanged.
+ * USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French département) before
+ * "Illinois", so its France bbox filters out the actual US city — expanding to the full name resolves the right region.
+ * Full names pass through unchanged.
  */
 export function expandUsRegion(text: string): string {
 	return US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
@@ -139,8 +139,7 @@ export function expandUsRegion(text: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source
- * order.
+ * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
  */
 export function flattenTree(
 	tree: unknown
@@ -148,17 +147,21 @@ export function flattenTree(
 	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
 	const stack = [...(roots as TreeNode[])]
+
 	while (stack.length) {
 		const n = stack.pop()!
+
 		if (typeof n.tag === "string") {
 			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
 		}
+
 		if (Array.isArray(n.children)) {
 			for (const c of n.children) {
 				stack.push(c as TreeNode)
 			}
 		}
 	}
+
 	return out.reverse()
 }
 
@@ -175,41 +178,51 @@ interface CalibrationBin {
 }
 
 /**
- * Browser-safe twin of `@mailwoman/core/decoder/calibration`'s `createCalibrator`. The canonical
- * lives in core for the Node parse path; we can't import it into the docs webpack bundle (the
- * `core/decoder` barrel pulls in node-only siblings like `build-tree`, and the deep subpath isn't a
- * published export), so the ~15-line piecewise-linear interp is mirrored here verbatim. Keep the
- * two in sync — both are pure, monotone, and clamp to the table's range outside it.
+ * Browser-safe twin of `@mailwoman/core/decoder/calibration`'s `createCalibrator`. The canonical lives in core for the
+ * Node parse path; we can't import it into the docs webpack bundle (the `core/decoder` barrel pulls in node-only
+ * siblings like `build-tree`, and the deep subpath isn't a published export), so the ~15-line piecewise-linear interp
+ * is mirrored here verbatim. Keep the two in sync — both are pure, monotone, and clamp to the table's range outside
+ * it.
  */
 export function createCalibrator(table: { table: CalibrationBin[] } | CalibrationBin[]): Calibrator {
 	const bins = Array.isArray(table) ? table : table.table
+
 	if (!bins || bins.length === 0) throw new Error("createCalibrator: empty calibration table")
 	const sorted = [...bins].sort((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
 	const cals = sorted.map((b) => clamp01(b.calibrated))
 	const n = centers.length
+
 	return (raw: number): number => {
 		const x = clamp01(raw)
+
 		if (x <= centers[0]!) return cals[0]!
+
 		if (x >= centers[n - 1]!) return cals[n - 1]!
 		let lo = 0
 		let hi = n - 1
+
 		while (hi - lo > 1) {
 			const mid = (lo + hi) >> 1
+
 			if (centers[mid]! <= x) lo = mid
 			else hi = mid
 		}
 		const x0 = centers[lo]!
 		const x1 = centers[hi]!
 		const t = x1 === x0 ? 0 : (x - x0) / (x1 - x0)
+
 		return cals[lo]! + t * (cals[hi]! - cals[lo]!)
 	}
 }
 
 function clamp01(v: number): number {
 	if (Number.isNaN(v)) return 0
+
 	if (v < 0) return 0
+
 	if (v > 1) return 1
+
 	return v
 }
 
@@ -220,17 +233,17 @@ function clamp01(v: number): number {
 type RegionBbox = { minLat: number; maxLat: number; minLon: number; maxLon: number }
 
 /**
- * Per-lookup-instance cache of region → bbox resolutions ("NY" → New York's bounds). Users iterate
- * on addresses within one region, and the region query re-ran on every submit — a worker round trip
- * each time. Misses are cached too (entry present, `bbox` undefined) so a region the gazetteer
- * can't bound isn't re-queried; the stored `warning` is replayed so the unconstrained-lookup signal
- * stays loud on every submit. WeakMap-keyed so a version switch (new lookup instance) drops it.
+ * Per-lookup-instance cache of region → bbox resolutions ("NY" → New York's bounds). Users iterate on addresses within
+ * one region, and the region query re-ran on every submit — a worker round trip each time. Misses are cached too (entry
+ * present, `bbox` undefined) so a region the gazetteer can't bound isn't re-queried; the stored `warning` is replayed
+ * so the unconstrained-lookup signal stays loud on every submit. WeakMap-keyed so a version switch (new lookup
+ * instance) drops it.
  */
 const regionBboxCache = new WeakMap<MailwomanLookupLike, Map<string, { bbox?: RegionBbox; warning?: string }>>()
 
 /**
- * Cascade: postcode first (most precise), fall back to locality, then raw text. Drop (lat=0, lon=0)
- * hits — WOF ships placeholder zeros on ~22% of US postcodes.
+ * Cascade: postcode first (most precise), fall back to locality, then raw text. Drop (lat=0, lon=0) hits — WOF ships
+ * placeholder zeros on ~22% of US postcodes.
  */
 export async function runCascade(
 	lookup: MailwomanLookupLike,
@@ -255,15 +268,21 @@ export async function runCascade(
 		// retry is the safety net for a mis-resolved region (e.g. "IL" → a French département): a bad
 		// bbox can't cause a total miss.
 		let fuzzy: Hits = []
+
 		for (const bbox of regionBbox ? [regionBbox, undefined] : [undefined]) {
 			for (const node of localityNodes) {
 				const text = String(node.value ?? "").trim()
+
 				if (!text) continue
 				const cs = usable(await lookup.findPlace({ text, placetype: "locality", bbox, limit: 5 }))
+
 				if (cs.length === 0) continue
+
 				if (cs.some((c) => c.exactMatch || normName(c.name) === normName(text))) return cs
+
 				if (fuzzy.length === 0) fuzzy = cs
 			}
+
 			// Fail loud when the region constraint produced nothing and we're about to widen — a silent
 			// fallback here is how "brooklyn, new york" quietly resolved to Brooklyn Park, MN.
 			if (bbox) {
@@ -272,6 +291,7 @@ export async function runCascade(
 				)
 			}
 		}
+
 		return fuzzy
 	}
 
@@ -282,15 +302,18 @@ export async function runCascade(
 	// → the Roseville inside Michigan's bounds, not the larger Roseville, CA the population boost
 	// would otherwise pick).
 	let regionBbox: RegionBbox | undefined
+
 	if (stateNode?.value) {
 		const regionText = expandUsRegion(String(stateNode.value))
 		const cacheKey = regionText.toLowerCase().trim()
 		let perLookup = regionBboxCache.get(lookup)
+
 		if (!perLookup) {
 			perLookup = new Map()
 			regionBboxCache.set(lookup, perLookup)
 		}
 		let entry = perLookup.get(cacheKey)
+
 		if (!entry) {
 			const regions = await lookup.findPlace({
 				text: regionText,
@@ -298,6 +321,7 @@ export async function runCascade(
 				limit: 1,
 			})
 			entry = { bbox: regions[0]?.bbox }
+
 			// Fail loud: a region the parser found but the gazetteer can't resolve (or one resolved
 			// without a bbox) means the locality lookup runs UNCONSTRAINED — same-name places anywhere
 			// in the world can win. Don't let that degrade silently.
@@ -310,6 +334,7 @@ export async function runCascade(
 			perLookup.set(cacheKey, entry)
 		}
 		regionBbox = entry.bbox
+
 		if (entry.warning) console.warn(entry.warning)
 	}
 
@@ -332,6 +357,7 @@ export async function runCascade(
 				limit: 5,
 			})
 		)
+
 		if (cs.length > 0) return cs
 	}
 
@@ -350,8 +376,7 @@ export interface StreetResolution {
 	lon: number
 	tier: "address_point" | "interpolated"
 	/**
-	 * Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region
-	 * factor).
+	 * Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region factor).
 	 */
 	uncertaintyM: number
 }
@@ -374,12 +399,11 @@ interface InterpLike {
 }
 
 /**
- * Street tier: exact situs point first (10 m floor), then TIGER interpolation (honest calibrated
- * radius), else null so the caller falls back to the admin cascade ({@link runCascade}). Mirrors the
- * node `geocode-core` tier order (address_point > interpolated > admin) — but async, on the main
- * thread, over the demo's httpvfs handles. `interpRadiusCalibration` is the per-region conformal
- * factor (#374 / data/calibration/interp-radius-conformal.json); default 1.95 (the conservative
- * national default — under-coverage is the harmful error).
+ * Street tier: exact situs point first (10 m floor), then TIGER interpolation (honest calibrated radius), else null so
+ * the caller falls back to the admin cascade ({@link runCascade}). Mirrors the node `geocode-core` tier order
+ * (address_point > interpolated > admin) — but async, on the main thread, over the demo's httpvfs handles.
+ * `interpRadiusCalibration` is the per-region conformal factor (#374 / data/calibration/interp-radius-conformal.json);
+ * default 1.95 (the conservative national default — under-coverage is the harmful error).
  */
 export async function resolveStreet(
 	street: string | undefined,
@@ -392,16 +416,22 @@ export async function resolveStreet(
 ): Promise<StreetResolution | null> {
 	const st = (street ?? "").trim()
 	const num = (houseNumber ?? "").trim()
-	if (!st || !num) return null // not a street-level query — let the admin cascade handle it
+
+	if (!st || !num) return null
+
+	// not a street-level query — let the admin cascade handle it
 
 	if (situs) {
 		const hit = await situs.find({ street: st, number: num, postcode, locality })
+
 		if (hit && !(hit.lat === 0 && hit.lon === 0)) {
 			return { lat: hit.lat, lon: hit.lon, tier: "address_point", uncertaintyM: 10 }
 		}
 	}
+
 	if (interp) {
 		const hit = await interp.find({ street: st, number: num, postcode })
+
 		if (hit && !(hit.lat === 0 && hit.lon === 0)) {
 			return {
 				lat: hit.lat,
@@ -411,5 +441,6 @@ export async function resolveStreet(
 			}
 		}
 	}
+
 	return null
 }

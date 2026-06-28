@@ -28,9 +28,11 @@
  *   License: stamped `"CC-BY-4.0"` per row (GeoNames' terms); provenance is the `geonames-<id>` key.
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream, existsSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -56,12 +58,16 @@ const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 function loadAdmin1(dir: string): Map<string, string> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "admin1CodesASCII.txt")
+
 	if (!existsSync(fp)) return map
+
 	for (const line of readFileSync(fp, "utf8").split("\n")) {
 		if (!line) continue
 		const cols = line.split("\t")
+
 		if (cols[0] && cols[1]) map.set(cols[0], cols[1])
 	}
+
 	return map
 }
 
@@ -69,13 +75,17 @@ function loadAdmin1(dir: string): Map<string, string> {
 function loadCountries(dir: string): Map<string, string> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "countryInfo.txt")
+
 	if (!existsSync(fp)) return map
+
 	for (const line of readFileSync(fp, "utf8").split("\n")) {
 		if (!line || line.startsWith("#")) continue
 		const cols = line.split("\t")
+
 		// ISO(0), ISO3(1), iso-numeric(2), fips(3), Country(4), ...
 		if (cols[0] && cols[4]) map.set(cols[0], cols[4])
 	}
+
 	return map
 }
 
@@ -97,19 +107,25 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const rec of parser as AsyncIterable<string[]>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					if (rec[COL.featureClass] !== "P") continue
+
 					if (NON_CURRENT_PPL.has(rec[COL.featureCode] ?? "")) continue
 
 					const cc = (rec[COL.country] ?? "").trim()
+
 					if (!cc) continue
+
 					if (opts.country && cc !== opts.country) continue
 
 					const locality = (rec[COL.name] ?? "").trim()
+
 					if (!locality) continue
 					const geonameid = (rec[COL.geonameid] ?? "").trim()
 					const region = admin1.get(`${cc}.${(rec[COL.admin1] ?? "").trim()}`)
@@ -118,8 +134,10 @@ export function createGeonamesAdapter(): CorpusAdapter {
 					// Two hierarchy variants (domestic + international order) — but only emit the
 					// distinct ones the available names support.
 					const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = []
+
 					if (region) {
 						variants.push({ slot: "lr", comp: { locality, region }, raw: `${locality}, ${region}` })
+
 						if (country) {
 							variants.push({
 								slot: "lrc",
@@ -136,6 +154,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 					for (const v of variants) {
 						if (opts.limit !== undefined && emitted >= opts.limit) break
 						const aligned = reconcileComponents(v.comp, v.raw)
+
 						if (Object.keys(aligned).length === 0) continue
 						const sourceId = geonameid
 							? `${GEONAMES_ADAPTER_ID}-${geonameid}-${v.slot}`

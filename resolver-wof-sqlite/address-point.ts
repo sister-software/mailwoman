@@ -24,15 +24,14 @@ import { hasTable } from "./sqlite-utils.js"
 import { normalizeLocalityForKey, normalizeStreetForKey } from "./street-normalize.js"
 
 /**
- * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a
- * column rename in `build-address-point-shard.ts` (the writer) is a compile error here (the
- * reader).
+ * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a column rename in
+ * `build-address-point-shard.ts` (the writer) is a compile error here (the reader).
  */
 type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "release">
 
 /**
- * The 4 columns the reader SELECTs, in the schema's order — referenced by the prepared SELECTs so
- * the projected `AddressPointRow` stays in lockstep with the shared schema.
+ * The 4 columns the reader SELECTs, in the schema's order — referenced by the prepared SELECTs so the projected
+ * `AddressPointRow` stays in lockstep with the shared schema.
  */
 const SELECT_COLS = "lat, lon, source, release"
 
@@ -43,6 +42,7 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 
 	constructor(dbPath: string) {
 		this.#db = new DatabaseSync(dbPath, { readOnly: true })
+
 		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
 		// `address_point` table this lookup is a no-op miss, not a crash that loses the whole state (#568).
 		if (hasTable(this.#db, "address_point")) {
@@ -61,18 +61,23 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 		if (!this.#byPostcode || !this.#byLocality) return null
 		const streetNorm = normalizeStreetForKey(query.street)
 		const number = query.number.trim().toLowerCase()
+
 		if (!streetNorm || !number) return null
 
 		let row: AddressPointRow | undefined
+
 		if (query.postcode) {
 			row = this.#byPostcode.get(query.postcode.trim(), streetNorm, number) as AddressPointRow | undefined
 		}
+
 		if (!row && query.locality) {
 			row = this.#byLocality.get(normalizeLocalityForKey(query.locality), streetNorm, number) as
 				| AddressPointRow
 				| undefined
 		}
+
 		if (!row) return null
+
 		return { lat: row.lat, lon: row.lon, source: row.source, release: row.release }
 	}
 

@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs"
+import * as path from "node:path"
+import { parseArgs } from "node:util"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -13,9 +17,6 @@
  *   Usage: node scripts/coarse-placer/eval-latin-offmap.ts --model <dir> [--abstain 0.5]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "node:fs"
-import * as path from "node:path"
-import { parseArgs } from "node:util"
 
 import type { CoarsePlacerMeta, CoarsePrediction } from "../../core/coarse-placer/coarse-placer.ts"
 
@@ -43,15 +44,18 @@ const meta = JSON.parse(readFileSync(path.join(args.model, "meta.json"), "utf8")
 const buf = readFileSync(path.join(args.model, "weights.bin"))
 const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 let weights: Float32Array
+
 if (meta.quantization === "int8-per-row") {
 	const int8 = new Int8Array(ab)
 	const C = meta.classes.length
 	const dim = meta.featureDim
 	const scales = meta.scales!
 	weights = new Float32Array(C * dim)
+
 	for (let c = 0; c < C; c++) {
 		const s = scales[c]!
 		const base = c * dim
+
 		for (let i = 0; i < dim; i++) weights[base + i] = int8[base + i]! * s
 	}
 } else {
@@ -71,18 +75,22 @@ const bump = (k: string): { n: number; ok: number } => (by[k] ??= { n: 0, ok: 0 
 let n = 0
 let ok = 0
 const samples: string[] = []
+
 for (const r of rows) {
 	const p = placer.predict(r.raw)
 	const h = handled(p)
 	n++
+
 	if (h) ok++
 	bump(`group:${r.group}`).n++
 	bump(`cc:${r.srcCountry}`).n++
+
 	if (h) {
 		bump(`group:${r.group}`).ok++
 		bump(`cc:${r.srcCountry}`).ok++
 	} else {
 		missTo[p.country!] = (missTo[p.country!] ?? 0) + 1
+
 		if (samples.length < 8)
 			samples.push(`    ${r.srcCountry} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 38)}»`)
 	}
@@ -91,15 +99,19 @@ const pct = (o: number, m: number): string => `${((100 * o) / m).toFixed(1)}%`
 console.log(`Latin off-map handling — model ${path.basename(args.model)} (abstain ${args.abstain}, n=${n})`)
 console.log(`  OVERALL handled (OTHER-or-abstain): ${ok}/${n} (${pct(ok, n)})  ← want ≥90%`)
 console.log(`  by group:`)
+
 for (const k of Object.keys(by)
 	.filter((k) => k.startsWith("group:"))
 	.sort())
 	console.log(`    ${k.slice(6).padEnd(8)} ${pct(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
 console.log(`  by source country:`)
+
 for (const k of Object.keys(by)
 	.filter((k) => k.startsWith("cc:"))
 	.sort())
 	console.log(`    ${k.slice(3).padEnd(4)} ${pct(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
 const misses = Object.entries(missTo).sort((a, b) => b[1] - a[1])
+
 if (misses.length) console.log(`  misses land on: ${misses.map(([c, m]) => `${c}:${m}`).join(", ")}`)
+
 if (samples.length) console.log(`  sample misplacements:\n${samples.join("\n")}`)

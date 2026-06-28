@@ -18,13 +18,12 @@
  *   rather than convention-driven.
  */
 
-import type { Database } from "@sqlite.org/sqlite-wasm"
-
 import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "@mailwoman/resolver-wof-sqlite"
 // Browser-safe subpath import (fts.ts's only node:sqlite import is type-only) — the shared
 // alias-bag parser keeps this backend's exact tier byte-identical to the Node resolver's.
 import { aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
+import type { Database } from "@sqlite.org/sqlite-wasm"
 
 export interface WofWasmPlaceLookupOpts {
 	/** Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWofDatabase`). */
@@ -32,11 +31,11 @@ export interface WofWasmPlaceLookupOpts {
 }
 
 /**
- * Population-boost tunables, mirroring `resolver-wof-sqlite/lookup.ts` defaults. The boost is
- * `POPULATION_BOOST * min(1, log10(1 + pop) / POPULATION_SCALE_LOG10)`, subtracted from bm25 (lower
- * = better, matching SQLite's convention). A 1M-population city earns the full boost — enough to
- * surface the famous same-name place ("New York" over "West New York") without steamrolling a
- * clearly-better text match, because exact-name tiering is consulted FIRST.
+ * Population-boost tunables, mirroring `resolver-wof-sqlite/lookup.ts` defaults. The boost is `POPULATION_BOOST *
+ * min(1, log10(1 + pop) / POPULATION_SCALE_LOG10)`, subtracted from bm25 (lower = better, matching SQLite's
+ * convention). A 1M-population city earns the full boost — enough to surface the famous same-name place ("New York"
+ * over "West New York") without steamrolling a clearly-better text match, because exact-name tiering is consulted
+ * FIRST.
  */
 const POPULATION_BOOST = 4.0
 const POPULATION_SCALE_LOG10 = 6.0
@@ -51,8 +50,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 	#hasPopulationCache?: boolean
 	#hasPlaceAbbrCache?: boolean
 	/**
-	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (the slim DB carries
-	 * it).
+	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (the slim DB carries it).
 	 */
 	#coincidentRolesCache?: Map<number, CoincidentLocality[]>
 
@@ -68,6 +66,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			)
 			this.#hasPopulationCache = r.length > 0
 		}
+
 		return this.#hasPopulationCache
 	}
 
@@ -77,27 +76,32 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			const r = this.#db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_abbr' LIMIT 1`)
 			this.#hasPlaceAbbrCache = r.length > 0
 		}
+
 		return this.#hasPlaceAbbrCache
 	}
 
 	/**
-	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from `place_abbr`. The
-	 * exact-abbrev tier signal — see the `findPlace` call site. Empty on slim DBs without the table.
+	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from `place_abbr`. The exact-abbrev tier
+	 * signal — see the `findPlace` call site. Empty on slim DBs without the table.
 	 */
 	#abbrExactIds(text: string): Set<number> {
 		const t = text.trim()
+
 		if (!t || !this.#hasPlaceAbbr()) return new Set()
 		const rows = this.#db.selectObjects(`SELECT id FROM place_abbr WHERE abbr = ? COLLATE NOCASE`, [t]) as Array<{
 			id: number
 		}>
+
 		return new Set(rows.map((r) => Number(r.id)))
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
 		const text = (query.text ?? "").trim()
+
 		if (!text) return []
 
 		const ftsQuery = sanitizeFtsQuery(text)
+
 		if (!ftsQuery) return []
 
 		const limit = Math.max(1, query.limit ?? 10)
@@ -112,14 +116,17 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		// match) was unreachable and the fuzzy "Brooklyn Park, MN" won. Same table the Node resolver
 		// uses — the two backends can't drift.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WofPlacetype[] | null
+
 		if (placetypes && placetypes.length > 0) {
 			conditions.push(`spr.placetype IN (${placetypes.map(() => "?").join(",")})`)
 			params.push(...placetypes)
 		}
+
 		if (query.country) {
 			conditions.push("spr.country = ?")
 			params.push(query.country.toUpperCase())
 		}
+
 		// Point-in-bbox filter. Used to constrain a locality lookup to a parsed region/state's bounds
 		// (e.g. "Roseville, Michigan" → only the Roseville whose centroid sits in Michigan's bbox),
 		// which the broken-in-the-slim-DB parent_id chain can't do via descendant filtering.
@@ -178,6 +185,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		const strictExact = (row: { name: string; id: number }): boolean =>
 			normalizeName(row.name) === normQuery || abbrIds.has(row.id)
 		const anyStrictExact = rows.some(strictExact)
+
 		return rows
 			.map((row) => {
 				// Alias tier: `alt_names` is the FTS row's alias bag (the slim DB's only surviving alias
@@ -195,6 +203,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 						: 0
 				// Lower adjScore = better, matching SQLite's bm25 convention (more negative = better).
 				const adjScore = row.bm25 - popBoost
+
 				return { row, exactTier, adjScore }
 			})
 			.sort((a, b) => a.exactTier - b.exactTier || a.adjScore - b.adjScore)
@@ -226,20 +235,22 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 	}
 
 	/**
-	 * Dual-role localities coincident with an admin id, from the `coincident_roles` relation (#403)
-	 * carried into the slim DB by build-slim. Backs the resolver's hierarchy completion (on by
-	 * default) in the browser — mirrors `WofSqlitePlaceLookup.coincidentLocalitiesFor`. Returns `[]`
-	 * when the slim DB predates the relation. Loaded once + memoized (the relation is ~hundreds of
-	 * rows).
+	 * Dual-role localities coincident with an admin id, from the `coincident_roles` relation (#403) carried into the slim
+	 * DB by build-slim. Backs the resolver's hierarchy completion (on by default) in the browser — mirrors
+	 * `WofSqlitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates the relation. Loaded once +
+	 * memoized (the relation is ~hundreds of rows).
 	 */
 	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
 		const id = typeof adminId === "number" ? adminId : Number(adminId)
+
 		if (!Number.isFinite(id)) return []
+
 		if (!this.#coincidentRolesCache) {
 			const map = new Map<number, CoincidentLocality[]>()
 			const exists = this.#db.selectObjects(
 				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='coincident_roles' LIMIT 1`
 			)
+
 			if (exists.length > 0) {
 				const rows = this.#db.selectObjects(
 					`SELECT cr.admin_id AS adminId, s.id AS id, s.name AS name, s.country AS country,
@@ -257,6 +268,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 					population: number
 					distanceKm: number
 				}>
+
 				for (const r of rows) {
 					const candidate: CoincidentLocality = {
 						id: r.id,
@@ -271,12 +283,14 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 						distanceKm: r.distanceKm,
 					}
 					const list = map.get(r.adminId)
+
 					if (list) list.push(candidate)
 					else map.set(r.adminId, [candidate])
 				}
 			}
 			this.#coincidentRolesCache = map
 		}
+
 		return this.#coincidentRolesCache.get(id) ?? []
 	}
 
@@ -286,25 +300,29 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 }
 
 /**
- * Trim raw user input into something FTS5 will accept. Preserves trailing `*` as the FTS5 prefix
- * operator (matching the resolver-wof-sqlite implementation). Strips characters FTS5 treats as
- * punctuation or operators so a user typing `Paris's` or `St. (Petersburg)` doesn't trigger an
- * "fts5: syntax error" inside the WASM runtime.
+ * Trim raw user input into something FTS5 will accept. Preserves trailing `*` as the FTS5 prefix operator (matching the
+ * resolver-wof-sqlite implementation). Strips characters FTS5 treats as punctuation or operators so a user typing
+ * `Paris's` or `St. (Petersburg)` doesn't trigger an "fts5: syntax error" inside the WASM runtime.
  */
 function sanitizeFtsQuery(text: string): string {
 	const out: string[] = []
+
 	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {
 		const trimmed = rawToken.trim()
+
 		if (!trimmed) continue
 		const hasPrefixStar = trimmed.endsWith("*")
 		const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+
 		if (!body) continue
 		out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
 	}
+
 	return out.join(" ")
 }
 
 function normalizePlacetypes(input: FindPlaceQuery["placetype"]): WofPlacetype[] | null {
 	if (!input) return null
+
 	return Array.isArray(input) ? input : [input]
 }

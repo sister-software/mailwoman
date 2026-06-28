@@ -29,19 +29,25 @@ function loadDictionary(filename: string): Set<string> {
 		resolve(moduleDir, "../../../../../core/data/libpostal/dictionaries/en", filename),
 		resolve(process.cwd(), "core/data/libpostal/dictionaries/en", filename),
 	]
+
 	for (const path of candidates) {
 		try {
 			const text = readFileSync(path, "utf8")
 			const set = new Set<string>()
+
 			for (const line of text.split("\n")) {
 				const trimmed = line.trim()
+
 				if (!trimmed || trimmed.startsWith("#")) continue
+
 				// libpostal format: canonical|abbr|abbr|... — index all forms
 				for (const form of trimmed.split("|")) {
 					const f = form.trim().toLowerCase()
+
 					if (f) set.add(f)
 				}
 			}
+
 			return set
 		} catch {
 			// try next candidate
@@ -62,14 +68,16 @@ export interface DecomposedStreet {
 /**
  * Decompose a US street name into prefix/name/suffix components.
  *
- * Conservative — only emits prefix/suffix when there's a clear directional or street-type keyword.
- * Returns the original as `street` if nothing matches.
+ * Conservative — only emits prefix/suffix when there's a clear directional or street-type keyword. Returns the original
+ * as `street` if nothing matches.
  */
 export function decomposeStreet(fullname: string): DecomposedStreet {
 	const trimmed = fullname.trim()
+
 	if (!trimmed) return { prefix: null, street: "", suffix: null }
 
 	const tokens = trimmed.split(/\s+/)
+
 	if (tokens.length === 1) return { prefix: null, street: trimmed, suffix: null }
 
 	const norm = (s: string) => s.toLowerCase().replace(/\.$/, "")
@@ -102,6 +110,7 @@ export function decomposeStreet(fullname: string): DecomposedStreet {
 	}
 
 	const street = tokens.slice(startIdx, endIdx).join(" ").trim()
+
 	if (!street) {
 		return { prefix: null, street: trimmed, suffix: null }
 	}

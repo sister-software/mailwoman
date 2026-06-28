@@ -30,8 +30,7 @@ export interface HttpvfsDb {
 }
 
 /**
- * Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over
- * Comlink).
+ * Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over Comlink).
  */
 const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
 
@@ -39,6 +38,7 @@ const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
 	if (!res || res.length === 0) return []
 	const { columns, values } = res[0]!
+
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
 }
 
@@ -50,8 +50,7 @@ export interface StreetPointHit {
 }
 
 /**
- * Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality
- * fallback.
+ * Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality fallback.
  */
 export class HttpvfsAddressPointLookup {
 	#worker: HttpvfsDb
@@ -62,8 +61,7 @@ export class HttpvfsAddressPointLookup {
 	}
 
 	/**
-	 * One round trip to confirm the shard carries `address_point` (graceful on a tableless shard,
-	 * #568).
+	 * One round trip to confirm the shard carries `address_point` (graceful on a tableless shard, #568).
 	 */
 	#hasTable(): Promise<boolean> {
 		if (!this.#available) {
@@ -74,6 +72,7 @@ export class HttpvfsAddressPointLookup {
 				this.#available = undefined
 			})
 		}
+
 		return this.#available
 	}
 
@@ -86,11 +85,13 @@ export class HttpvfsAddressPointLookup {
 		if (!(await this.#hasTable())) return null
 		const streetNorm = normalizeStreetForKey(query.street)
 		const number = query.number.trim().toLowerCase()
+
 		if (!streetNorm || !number) return null
 
 		const select = (where: string): string =>
 			`SELECT lat, lon, source, release FROM address_point WHERE ${where} LIMIT 1`
 		let rows: Record<string, unknown>[] = []
+
 		if (query.postcode) {
 			rows = rowsFromExec(
 				await this.#worker.db.exec(
@@ -100,6 +101,7 @@ export class HttpvfsAddressPointLookup {
 				)
 			)
 		}
+
 		if (rows.length === 0 && query.locality) {
 			rows = rowsFromExec(
 				await this.#worker.db.exec(
@@ -110,7 +112,9 @@ export class HttpvfsAddressPointLookup {
 			)
 		}
 		const r = rows[0]
+
 		if (!r) return null
+
 		return { lat: Number(r.lat), lon: Number(r.lon), source: String(r.source), release: String(r.release) }
 	}
 }
@@ -127,8 +131,7 @@ export interface StreetInterpHit {
 }
 
 /**
- * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on
- * cross-ZIP ambiguity.
+ * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on cross-ZIP ambiguity.
  */
 export class HttpvfsInterpolator {
 	#worker: HttpvfsDb
@@ -147,6 +150,7 @@ export class HttpvfsInterpolator {
 				this.#available = undefined
 			})
 		}
+
 		return this.#available
 	}
 
@@ -154,11 +158,13 @@ export class HttpvfsInterpolator {
 		if (!(await this.#hasTable())) return null
 		const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(query.street))
 		const numberRaw = query.number.trim()
+
 		if (!streetNorm || !/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 		const cols = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
 
 		let rows: Record<string, unknown>[]
+
 		if (query.postcode) {
 			rows = rowsFromExec(
 				await this.#worker.db.exec(
@@ -171,9 +177,11 @@ export class HttpvfsInterpolator {
 					`SELECT ${cols} FROM street_segment WHERE street_norm = ${sqlStr(streetNorm)} AND min_hn <= ${n} AND max_hn >= ${n}`
 				)
 			)
+
 			// No scope: a name matching ranges across several ZIPs is ambiguous — abstain.
 			if (new Set(rows.map((r) => String(r.postcode ?? ""))).size > 1) return null
 		}
+
 		if (rows.length === 0) return null
 
 		// Parity preference: exact side → 'mixed' → opposite side (flagged). Mirrors StreetInterpolator.
@@ -192,6 +200,7 @@ export class HttpvfsInterpolator {
 		const span = Number(best.to_hn) - Number(best.from_hn)
 		const t = span === 0 ? 0.5 : clamp01((n - Number(best.from_hn)) / span)
 		const [lon, lat, lengthKm] = pointAlong(polyline, t)
+
 		return {
 			lat,
 			lon,
@@ -210,12 +219,12 @@ function clamp01(t: number): number {
 }
 
 /**
- * Point at fraction `t` of the polyline's arc length (haversine), + total length km. Mirrors
- * StreetInterpolator.
+ * Point at fraction `t` of the polyline's arc length (haversine), + total length km. Mirrors StreetInterpolator.
  */
 function pointAlong(polyline: readonly [number, number][], t: number): [lon: number, lat: number, lengthKm: number] {
 	const legs: number[] = []
 	let total = 0
+
 	for (let i = 1; i < polyline.length; i++) {
 		const [aLon, aLat] = polyline[i - 1]!
 		const [bLon, bLat] = polyline[i]!
@@ -223,21 +232,27 @@ function pointAlong(polyline: readonly [number, number][], t: number): [lon: num
 		legs.push(d)
 		total += d
 	}
+
 	if (total === 0) {
 		const [lon, lat] = polyline[0]!
+
 		return [lon, lat, 0]
 	}
 	let remaining = t * total
+
 	for (let i = 0; i < legs.length; i++) {
 		const leg = legs[i]!
+
 		if (remaining <= leg || i === legs.length - 1) {
 			const f = leg === 0 ? 0 : clamp01(remaining / leg)
 			const [aLon, aLat] = polyline[i]!
 			const [bLon, bLat] = polyline[i + 1]!
+
 			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
 		}
 		remaining -= leg
 	}
 	const [lon, lat] = polyline[polyline.length - 1]!
+
 	return [lon, lat, total]
 }

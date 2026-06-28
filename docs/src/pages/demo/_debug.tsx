@@ -5,10 +5,12 @@
  */
 
 import { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
+
 import "maplibre-gl/dist/maplibre-gl.css"
 import { Fragment, memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { IControl, MapInstance } from "react-map-gl/maplibre"
+
 import styles from "./_debug.module.css"
 
 class DebugControlBase implements IControl {
@@ -105,6 +107,7 @@ export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
 		if (!map) return
 
 		map.addControl(debugControl)
+
 		return () => {
 			map.removeControl(debugControl)
 		}

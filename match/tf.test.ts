@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { estimateParameters } from "./em.js"
 import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.js"
 import { buildTermFrequencyTable, withTermFrequency } from "./tf.js"

@@ -12,7 +12,9 @@ import { execFile } from "node:child_process"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+
 import { describe, expect, test } from "vitest"
+
 import { options as runOptions } from "../commands/corpus/run.js"
 
 const exec = promisify(execFile)

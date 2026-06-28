@@ -13,12 +13,14 @@
  *   dispose calls don't race.
  */
 
+import * as fs from "node:fs/promises"
+import * as path from "node:path"
+
 import { ParquetWriter as BaseParquetWriter } from "@dsnp/parquetjs"
 import type { WriterOptions } from "@dsnp/parquetjs/dist/lib/declare.js"
 import { osopen, type WriteStreamMinimal } from "@dsnp/parquetjs/dist/lib/util.js"
 import { ParquetEnvelopeWriter } from "@dsnp/parquetjs/dist/lib/writer.js"
-import * as fs from "node:fs/promises"
-import * as path from "node:path"
+
 import {
 	type ParquetRecordLike,
 	ParquetSchema,
@@ -58,6 +60,7 @@ export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWrite
 		}
 
 		const outputStream = await osopen(sourcePath, opts)
+
 		return ParquetWriter.openStream<T>(schemaLike, outputStream, opts)
 	}
 
@@ -75,6 +78,7 @@ export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWrite
 	/** Flush all buffered data to disk, close the file, and release resources. */
 	public override async close(): Promise<void> {
 		await this.#flushing
+
 		if (this.closed) return
 
 		const { promise, resolve, reject } = Promise.withResolvers<void>()

@@ -35,6 +35,7 @@
 
 import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
 import { distance as levenshteinDistance } from "fastest-levenshtein"
+
 import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "./tokenize.js"
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.js"
 
@@ -44,17 +45,17 @@ export interface AlignOptions {
 	tokenizer?: Tokenizer
 
 	/**
-	 * Max Levenshtein edit distance to accept when a verbatim substring match fails. Set `0` to
-	 * require verbatim matches only. Default `2`.
+	 * Max Levenshtein edit distance to accept when a verbatim substring match fails. Set `0` to require verbatim matches
+	 * only. Default `2`.
 	 *
-	 * Distance is computed against same-length windows in `raw`, so the threshold scales naturally
-	 * with the component value length.
+	 * Distance is computed against same-length windows in `raw`, so the threshold scales naturally with the component
+	 * value length.
 	 */
 	maxEditDistance?: number
 
 	/**
-	 * Case-insensitive comparison for substring search. Default `true`. The retained span in `raw` is
-	 * the original case; only matching is case-insensitive.
+	 * Case-insensitive comparison for substring search. Default `true`. The retained span in `raw` is the original case;
+	 * only matching is case-insensitive.
 	 */
 	caseInsensitive?: boolean
 }
@@ -63,9 +64,8 @@ export interface AlignOptions {
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
 /**
- * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The
- * element type behind the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on
- * `LabeledRow` (#519).
+ * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind
+ * the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
  */
 export interface ComponentSpan {
 	tag: ComponentTag
@@ -89,8 +89,10 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 	// store the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
 	const raw = row.raw.normalize("NFC")
 	const components = { ...row.components }
-	for (const key in components) {
+
+	for (const key of Object.keys(components)) {
 		const v = components[key as keyof typeof components]
+
 		if (typeof v === "string") components[key as keyof typeof components] = v.normalize("NFC")
 	}
 
@@ -106,6 +108,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).sort(
 		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
 	)
+
 	for (const [tag, value] of entries) {
 		if (!value) continue
 
@@ -153,18 +156,18 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		span_ends: componentSpans.map((s) => s.end),
 		span_tags: componentSpans.map((s) => s.tag),
 	}
+
 	return { kind: "labeled", row: labeled }
 }
 
 /**
- * Enforce the #519 span-triple invariants — in-bounds, sorted ascending by start, non-overlapping —
- * loudly.
+ * Enforce the #519 span-triple invariants — in-bounds, sorted ascending by start, non-overlapping — loudly.
  *
- * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and
- * the caller sorts, so a violation here is a bug in this file, not bad source data: throw (naming
- * the row) rather than quarantine, so the corruption can't ride into a corpus. Exported for every
- * OTHER span producer (`composeAdversarialRow`'s offset arithmetic, future synthesis paths) — any
- * code that emits the triple without going through `alignRow` must pass its output through this.
+ * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and the caller sorts, so
+ * a violation here is a bug in this file, not bad source data: throw (naming the row) rather than quarantine, so the
+ * corruption can't ride into a corpus. Exported for every OTHER span producer (`composeAdversarialRow`'s offset
+ * arithmetic, future synthesis paths) — any code that emits the triple without going through `alignRow` must pass its
+ * output through this.
  */
 export function assertSpanInvariants(
 	spans: readonly ComponentSpan[],
@@ -172,20 +175,24 @@ export function assertSpanInvariants(
 ): void {
 	for (let i = 0; i < spans.length; i++) {
 		const s = spans[i]!
+
 		if (!(s.start >= 0 && s.start < s.end && s.end <= row.raw.length)) {
 			throw new Error(
 				`alignRow: span out of bounds (source=${row.source}, source_id=${row.source_id}): ` +
 					`${s.tag}@[${s.start}, ${s.end}) over raw of length ${row.raw.length}`
 			)
 		}
+
 		if (i === 0) continue
 		const prev = spans[i - 1]!
+
 		if (s.start < prev.start) {
 			throw new Error(
 				`alignRow: spans not sorted (source=${row.source}, source_id=${row.source_id}): ` +
 					`${prev.tag}@[${prev.start}, ${prev.end}) precedes ${s.tag}@[${s.start}, ${s.end})`
 			)
 		}
+
 		if (s.start < prev.end) {
 			throw new Error(
 				`alignRow: spans overlap (source=${row.source}, source_id=${row.source_id}): ` +
@@ -196,10 +203,9 @@ export function assertSpanInvariants(
 }
 
 /**
- * Locate `needle` in `haystack` (both already normalized for case if requested), preferring
- * verbatim substring match. Falls back to a fuzzy window scan when verbatim fails and
- * `maxEditDistance > 0`. Already-claimed spans are skipped so two components don't grab overlapping
- * ranges.
+ * Locate `needle` in `haystack` (both already normalized for case if requested), preferring verbatim substring match.
+ * Falls back to a fuzzy window scan when verbatim fails and `maxEditDistance > 0`. Already-claimed spans are skipped so
+ * two components don't grab overlapping ranges.
  *
  * Returns the span in the original `raw` (not the lower-cased `haystack`).
  */
@@ -211,6 +217,7 @@ function locateSpan(args: {
 	maxEditDistance: number
 }): { start: number; end: number } | undefined {
 	const { haystack, needle, claimed, maxEditDistance } = args
+
 	if (needle.length === 0) return undefined
 
 	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
@@ -221,16 +228,20 @@ function locateSpan(args: {
 	// sub-word spans are the point of the char-offset format).
 	let intraWord: { start: number; end: number } | undefined
 	let from = 0
+
 	while (true) {
 		const idx = haystack.indexOf(needle, from)
+
 		if (idx < 0) break
 		const end = idx + needle.length
+
 		if (!overlapsClaimed(idx, end, claimed)) {
 			if (isBoundaryAligned(haystack, idx, end)) return { start: idx, end }
 			intraWord ??= { start: idx, end }
 		}
 		from = idx + 1
 	}
+
 	if (intraWord) return intraWord
 
 	if (maxEditDistance <= 0) return undefined
@@ -238,11 +249,14 @@ function locateSpan(args: {
 	// Pass 2: fuzzy sliding-window. Walk over candidate windows of length `needle.length`
 	// across haystack, compute Levenshtein, pick the leftmost window under the threshold.
 	const len = needle.length
+
 	for (let i = 0; i + len <= haystack.length; i++) {
 		if (overlapsClaimed(i, i + len, claimed)) continue
 		const window = haystack.slice(i, i + len)
+
 		if (window === needle) return { start: i, end: i + len } // covered by pass 1, but cheap
 		const d = levenshteinDistance(window, needle)
+
 		if (d <= maxEditDistance) return { start: i, end: i + len }
 	}
 
@@ -255,6 +269,7 @@ const WORD_CHAR = /[\p{L}\p{N}]/u
 function isBoundaryAligned(haystack: string, start: number, end: number): boolean {
 	const before = start === 0 || !WORD_CHAR.test(haystack[start - 1]!)
 	const after = end === haystack.length || !WORD_CHAR.test(haystack[end]!)
+
 	return before && after
 }
 
@@ -262,22 +277,27 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
 	for (const [a, b] of claimed) {
 		if (start < b && a < end) return true
 	}
+
 	return false
 }
 
 /**
- * Assign BIO labels to tokens given the component spans. Components MUST be sorted by start offset.
- * For each token, find the first component span that contains the token's start offset; if the
- * token is the first one inside that span emit `B-<tag>`, else `I-<tag>`.
+ * Assign BIO labels to tokens given the component spans. Components MUST be sorted by start offset. For each token,
+ * find the first component span that contains the token's start offset; if the token is the first one inside that span
+ * emit `B-<tag>`, else `I-<tag>`.
  */
 function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BioLabel[] {
 	const out: BioLabel[] = []
-	const seenSpan = new Set<number>() // index into `spans`
+	const seenSpan = new Set<number>()
+
+	// index into `spans`
 
 	for (const token of tokens) {
 		let assigned: BioLabel = "O"
+
 		for (let i = 0; i < spans.length; i++) {
 			const s = spans[i]!
+
 			if (token.start >= s.start && token.end <= s.end) {
 				if (!seenSpan.has(i)) {
 					assigned = `B-${s.tag}` as BioLabel

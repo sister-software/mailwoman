@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { decomposeFrStreet } from "./street-decompose.js"
 
 describe("decomposeFrStreet", () => {

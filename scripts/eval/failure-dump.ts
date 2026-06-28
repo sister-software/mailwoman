@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -15,7 +17,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { existsSync, readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -60,12 +62,17 @@ function walk(tree: AddressTree): { best: { lat: number; lon: number; placetype:
 			n.lon !== undefined &&
 			(n.lat !== 0 || n.lon !== 0)
 		)
+
 		if (n.tag) nodes.push({ tag: String(n.tag), value: String(n.value ?? ""), resolved, placetype })
+
 		if (resolved && (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5)))
 			best = { lat: n.lat!, lon: n.lon!, placetype }
+
 		for (const c of n.children ?? []) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return { best, nodes }
 }
 
@@ -77,19 +84,26 @@ function classify(nodes: NodeInfo[], best: { placetype: string } | null, dist: n
 	const pcResolved = resolvedTag("postcode")
 	const loc = has("locality") || has("city")
 	const locResolved = resolvedTag("locality") || resolvedTag("city")
+
 	if (dist !== null && best) {
 		// resolved but too far — what placed it, and was it a coarse fallback?
 		if (best.placetype === "country" || best.placetype === "region")
 			return "WRONG_coarse-only (no locality/postcode resolved → coarse fallback)"
+
 		// Did a postcode ALSO resolve? If so this is lever-A-fixable: prefer/disambiguate by the postcode.
 		if (best.placetype !== "postalcode" && pcResolved)
 			return "WRONG_locality_postcode-AVAILABLE (lever A: prefer/disambiguate by the resolved postcode)"
+
 		return `WRONG_${best.placetype}_no-postcode (no postcode anchor to disambiguate)`
 	}
+
 	// no-result
 	if (pc && !pcResolved && !locResolved) return "EMPTY_postcode-parsed-unresolved (coverage gap)"
+
 	if (loc && !locResolved && !pcResolved) return "EMPTY_locality-parsed-unresolved (gazetteer miss / fragmentation)"
+
 	if (!loc && !pc) return "EMPTY_no-place-tag-parsed (parse produced no locality/postcode)"
+
 	return "EMPTY_other"
 }
 
@@ -108,8 +122,10 @@ async function main() {
 	})
 
 	const globalTally: Record<string, number> = {}
+
 	for (const cc of LOCALES) {
 		const file = `data/eval/external/oa-${cc}-coord-150.jsonl`
+
 		if (!existsSync(file)) continue
 		const rows = readFileSync(file, "utf8")
 			.trim()
@@ -118,6 +134,7 @@ async function main() {
 			.map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
 		const tally: Record<string, number> = {}
 		const samples: string[] = []
+
 		for (const row of rows) {
 			const truth = { lat: row.lat, lon: row.lon }
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
@@ -128,10 +145,12 @@ async function main() {
 			})
 			const { best, nodes } = walk(r as never)
 			const dist = best ? haversineKm(best.lat, best.lon, truth.lat, truth.lon) : null
+
 			if (dist !== null && dist <= 25) continue // hit — skip
 			const cat = classify(nodes, best, dist)
 			tally[cat] = (tally[cat] ?? 0) + 1
 			globalTally[cat] = (globalTally[cat] ?? 0) + 1
+
 			if (samples.length < SHOW) {
 				const parse = nodes.map((n) => `${n.tag}=${JSON.stringify(n.value)}${n.resolved ? "✓" : "✗"}`).join(" ")
 				samples.push(
@@ -142,10 +161,13 @@ async function main() {
 		console.log(
 			`\n=== ${cc.toUpperCase()} misses (${Object.values(tally).reduce((a, b) => a + b, 0)}/${rows.length}) ===`
 		)
+
 		for (const [k, v] of Object.entries(tally).sort((a, b) => b[1] - a[1])) console.log(`  ${v}  ${k}`)
+
 		if (samples.length) console.log(samples.join("\n"))
 	}
 	console.log(`\n=== ALL-LOCALE failure tally ===`)
+
 	for (const [k, v] of Object.entries(globalTally).sort((a, b) => b[1] - a[1])) console.log(`  ${v}  ${k}`)
 }
 await main()

@@ -26,12 +26,14 @@ const WOF_REPOS = "/mnt/playpen/mailwoman-data/wof/repos"
 
 function adminRoots(): string[] {
 	let matched: string[] = []
+
 	try {
 		matched = [...globSync(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)]
 	} catch {
 		matched = []
 	}
 	matched.sort()
+
 	return [...matched, `${WOF_REPOS}/whosonfirst-data-admin-us/data`]
 }
 
@@ -48,14 +50,17 @@ function geomForId(wofId: number): Geometry {
 	// WOF path: split the id into 3-char chunks (last chunk is the remainder).
 	const chunks: string[] = []
 	let i = 0
+
 	while (i < s.length) {
 		chunks.push(s.slice(i, i + 3))
 		i += 3
 	}
 	const rel = chunks.join("/") + `/${s}.geojson`
 	let geom: Geometry = null
+
 	for (const root of ADMIN_ROOTS) {
 		const fp = join(root, rel)
+
 		if (existsSync(fp)) {
 			try {
 				geom = (JSON.parse(readFileSync(fp, "utf-8")).geometry as Geometry) ?? null
@@ -66,6 +71,7 @@ function geomForId(wofId: number): Geometry {
 		}
 	}
 	geomCache.set(wofId, geom)
+
 	return geom
 }
 
@@ -73,33 +79,41 @@ function inRing(x: number, y: number, ring: Ring): boolean {
 	let inside = false
 	const n = ring.length
 	let j = n - 1
+
 	for (let i = 0; i < n; i++) {
 		const xi = ring[i]![0]!
 		const yi = ring[i]![1]!
 		const xj = ring[j]![0]!
 		const yj = ring[j]![1]!
+
 		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
 			inside = !inside
 		}
 		j = i
 	}
+
 	return inside
 }
 
 function inPolygon(x: number, y: number, poly: Ring[]): boolean {
 	// poly = [outer, hole1, ...] — even-odd handles holes
 	let c = false
+
 	for (const ring of poly) {
 		if (inRing(x, y, ring)) c = !c
 	}
+
 	return c
 }
 
 function contains(geom: Geometry, lon: number, lat: number): boolean | null {
 	if (!geom) return null // no polygon available
 	const t = geom.type
+
 	if (t === "Polygon") return inPolygon(lon, lat, geom.coordinates as Ring[])
+
 	if (t === "MultiPolygon") return (geom.coordinates as Ring[][]).some((p) => inPolygon(lon, lat, p))
+
 	return null // Point geometry etc. — can't contain
 }
 
@@ -115,15 +129,18 @@ function get(c: Counter, k: string): number {
 function pyFixed(x: number, d: number): string {
 	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
 	const neg = x < 0 || Object.is(x, -0)
-	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(99).split(".")
+	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(20).split(".")
 	const frac = fracRaw
+
 	if (frac.length <= d) {
 		const body = d > 0 ? `${intPart}.${frac.padEnd(d, "0")}` : intPart!
+
 		return (neg ? "-" : "") + body
 	}
 	const keep = frac.slice(0, d)
 	const rest = frac.slice(d)
 	let roundUp: boolean
+
 	if (rest[0]! > "5") roundUp = true
 	else if (rest[0]! < "5") roundUp = false
 	else if (rest.slice(1).replace(/0+$/, "").length > 0) roundUp = true
@@ -132,9 +149,11 @@ function pyFixed(x: number, d: number): string {
 		roundUp = parseInt(lastKept, 10) % 2 === 1
 	}
 	let digits = intPart! + keep
+
 	if (roundUp) {
 		const arr = digits.split("")
 		let i = arr.length - 1
+
 		for (; i >= 0; i--) {
 			if (arr[i] === "9") arr[i] = "0"
 			else {
@@ -142,17 +161,20 @@ function pyFixed(x: number, d: number): string {
 				break
 			}
 		}
+
 		if (i < 0) arr.unshift("1")
 		digits = arr.join("")
 	}
 	const di = digits.length - d
 	const body = d > 0 ? `${digits.slice(0, di) || "0"}.${digits.slice(di)}` : digits.slice(0, di) || "0"
+
 	return (neg ? "-" : "") + body
 }
 
 /** Python `f"{x:+.1f}"` — fixed precision with an always-present sign. */
 function pySigned(x: number, d: number): string {
 	const s = pyFixed(x, d)
+
 	return s.startsWith("-") ? s : "+" + s
 }
 
@@ -170,7 +192,9 @@ function pct(num: number, den: number): string {
 
 function line(label: string, c: Counter): string {
 	const n = get(c, "n")
+
 	if (!n) return `  ${label}: n=0`
+
 	// PIP-containment is reported two ways: over ALL rows (strict) and over rows
 	// that HAVE a polygon (coverage-adjusted), since WOF point-geometry localities
 	// can never PIP-contain and would otherwise count as silent failures.
@@ -199,8 +223,10 @@ function main(): number {
 	let labelArg: string | null = null
 	let jsonOut: string | null = null
 	let i = 0
+
 	while (i < args.length) {
 		const a = args[i]
+
 		if (a === "--label") {
 			labelArg = args[i + 1]!
 			i += 2
@@ -212,8 +238,10 @@ function main(): number {
 			i += 1
 		}
 	}
+
 	if (!src) {
 		console.error("usage: pip-containment.ts <resolved.json> [--label NAME] [--json OUT]")
+
 		return 2
 	}
 
@@ -222,18 +250,21 @@ function main(): number {
 	const byState: Record<string, Counter> = {}
 	const artifactExamples: string[] = []
 	let noPoly = 0
+
 	for (const r of rows) {
 		const st = r.state || "??"
 		inc(overall, "n")
 		byState[st] ??= {}
 		inc(byState[st], "n")
 		const nameOk = Boolean(r.nameMatch)
+
 		if (nameOk) {
 			inc(overall, "name")
 			inc(byState[st]!, "name")
 		}
 		const lid = r.neuralLocId
 		const contained = lid ? contains(geomForId(lid), r.lon, r.lat) : null
+
 		if (contained !== null) {
 			// a polygon existed and was tested (True or False)
 			inc(overall, "poly")
@@ -241,9 +272,11 @@ function main(): number {
 		} else if (lid) {
 			noPoly += 1
 		}
+
 		if (contained) {
 			inc(overall, "pip")
 			inc(byState[st]!, "pip")
+
 			if (!nameOk && artifactExamples.length < 12) {
 				artifactExamples.push(`  "${r.input}"  gold="${pyStr(r.expectedLoc)}"  resolved="${pyStr(r.neuralLoc)}"`)
 			}
@@ -252,11 +285,13 @@ function main(): number {
 
 	console.log(`\n=== PIP-containment vs name-match (${src}${labelArg ? " · " + labelArg : ""}) ===`)
 	console.log(line("OVERALL", overall))
+
 	for (const st of Object.keys(byState).sort()) {
 		console.log(line(st, byState[st]!))
 	}
 	console.log(`\n  rows resolved-but-polygon-missing: ${noPoly}`)
 	console.log(`\nMETRIC-ARTIFACT cases (name-match FAILED but gold point IS inside the resolved locality):`)
+
 	for (const e of artifactExamples) console.log(e)
 
 	if (jsonOut) {
@@ -274,6 +309,7 @@ function main(): number {
 		writeFileSync(jsonOut, JSON.stringify(summary, null, 2))
 		console.error(`\nwrote summary → ${jsonOut}`)
 	}
+
 	return 0
 }
 

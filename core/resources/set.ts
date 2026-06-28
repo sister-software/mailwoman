@@ -117,8 +117,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 	}
 
 	/**
-	 * Given a property key of the items in the sequence, return an iterator of the values of that
-	 * property.
+	 * Given a property key of the items in the sequence, return an iterator of the values of that property.
 	 *
 	 * This is useful when building nested maps of properties.
 	 */

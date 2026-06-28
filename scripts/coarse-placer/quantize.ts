@@ -1,3 +1,7 @@
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import * as path from "node:path"
+import { parseArgs } from "node:util"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -17,9 +21,6 @@
  *   Usage: node scripts/coarse-placer/quantize.ts [--in <fp32 dir>] [--out <int8 dir>]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-import { parseArgs } from "node:util"
 
 import type { CoarsePlacerMeta } from "../../core/coarse-placer/coarse-placer.ts"
 
@@ -36,27 +37,34 @@ const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 const w = new Float32Array(ab)
 const C = meta.classes.length
 const dim = meta.featureDim
+
 if (w.length !== C * dim) throw new Error(`weights length ${w.length} ≠ classes×dim ${C * dim}`)
 
 const int8 = new Int8Array(C * dim)
 const scales: number[] = []
 let maxAbsErr = 0
 let sumSqErr = 0
+
 for (let c = 0; c < C; c++) {
 	const base = c * dim
 	let maxAbs = 0
+
 	for (let i = 0; i < dim; i++) {
 		const a = Math.abs(w[base + i]!)
+
 		if (a > maxAbs) maxAbs = a
 	}
 	const scale = maxAbs / 127 || 1 // all-zero row → scale 1 (q stays 0)
 	scales.push(scale)
+
 	for (let i = 0; i < dim; i++) {
 		let q = Math.round(w[base + i]! / scale)
+
 		if (q > 127) q = 127
 		else if (q < -127) q = -127 // symmetric range; avoid -128 so |q|≤127
 		int8[base + i] = q
 		const err = Math.abs(q * scale - w[base + i]!)
+
 		if (err > maxAbsErr) maxAbsErr = err
 		sumSqErr += err * err
 	}

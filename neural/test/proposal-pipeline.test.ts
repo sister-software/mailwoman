@@ -58,6 +58,7 @@ function stubClassifier(id: string, emitFor: (section: Section) => Classificatio
 describe("componentTagToLegacyClassification — inverse mapping", () => {
 	test("round-trips every legacy tag that has a component mapping", () => {
 		const tags: ComponentTag[] = ["country", "region", "locality", "postcode", "house_number", "street", "venue"]
+
 		for (const tag of tags) {
 			const legacy = componentTagToLegacyClassification(tag)
 			expect(legacy, `expected an inverse for ${tag}`).not.toBeNull()
@@ -126,6 +127,7 @@ describe("filterByPolicy — policy passthrough", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		const filtered = filterByPolicy(proposals, registry, "en-us")
 		expect(filtered).toHaveLength(2)
+
 		for (const p of filtered) expect(p.source).toBe("rule")
 	})
 
@@ -152,6 +154,7 @@ describe("filterByPolicy — policy passthrough", () => {
 			"en-us"
 		)
 		const sources = new Map<ComponentTag, Set<string>>()
+
 		for (const p of filtered) {
 			const set = sources.get(p.component) ?? new Set()
 			set.add(p.source)

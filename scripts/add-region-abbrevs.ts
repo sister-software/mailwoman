@@ -40,16 +40,21 @@ const insert = db.prepare(
 )
 
 let added = 0
+
 for (const cc of countries) {
 	const specPath = join(specsDir, `${cc}.json`)
+
 	if (!existsSync(specPath)) continue
 	const spec = JSON.parse(readFileSync(specPath, "utf8")) as { sub_keys?: string; sub_names?: string }
+
 	if (!spec.sub_keys || !spec.sub_names) continue
 	const keys = spec.sub_keys.split("~")
 	const names = spec.sub_names.split("~")
 	const nameToAbbr = new Map<string, string>()
+
 	for (let i = 0; i < Math.min(keys.length, names.length); i++) {
 		const n = names[i]?.trim().toLowerCase()
+
 		if (n && keys[i]) nameToAbbr.set(n, keys[i]!)
 	}
 	const regions = db.prepare("SELECT id, name FROM spr WHERE placetype='region' AND country = ?").all(cc) as Array<{
@@ -57,8 +62,10 @@ for (const cc of countries) {
 		name: string
 	}>
 	db.exec("BEGIN")
+
 	for (const r of regions) {
 		const abbr = nameToAbbr.get(String(r.name).trim().toLowerCase())
+
 		if (abbr && abbr.toLowerCase() !== String(r.name).toLowerCase()) {
 			insert.run(r.id, abbr, cc)
 			added++

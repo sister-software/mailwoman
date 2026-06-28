@@ -6,8 +6,9 @@
 
 import { assertDeepSerialized } from "mailwoman/sdk/test"
 import { expect, test } from "vitest"
-import { Span } from "./Span.js"
+
 import { permutate } from "./permutate.js"
+import { Span } from "./Span.js"
 
 function selectByIndex<T>(items: Iterable<T>, ...selectedIndices: number[]): T[] {
 	const indexedItems = Array.from(items)

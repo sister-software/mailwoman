@@ -29,8 +29,9 @@
  *   silently emitted zero rows from the real corpus.
  */
 
-import FastGlob from "fast-glob"
 import { readFile } from "node:fs/promises"
+
+import FastGlob from "fast-glob"
 
 /** A WOF GeoJSON feature, as published by the per-record bundles. */
 export interface WofFeature {
@@ -40,8 +41,8 @@ export interface WofFeature {
 }
 
 /**
- * Lightweight in-memory shape both adapters keep per record. Geometry is intentionally dropped —
- * it's 95% of the file weight and the adapters never consult it.
+ * Lightweight in-memory shape both adapters keep per record. Geometry is intentionally dropped — it's 95% of the file
+ * weight and the adapters never consult it.
  */
 export interface WofRecord {
 	id: number
@@ -54,9 +55,9 @@ export interface WofRecord {
 	/**
 	 * Localized name variants from `name:*` properties.
 	 *
-	 * Keys are the raw `name:eng_x_preferred` form; values are the first non-empty string from the
-	 * underlying array (WOF stores variants as arrays even when only one form is present). The
-	 * canonical `wof:name` is NOT included here — adapters add a synthetic `"default"` slot for it.
+	 * Keys are the raw `name:eng_x_preferred` form; values are the first non-empty string from the underlying array (WOF
+	 * stores variants as arrays even when only one form is present). The canonical `wof:name` is NOT included here —
+	 * adapters add a synthetic `"default"` slot for it.
 	 */
 	nameVariants: Map<string, string>
 }
@@ -64,25 +65,25 @@ export interface WofRecord {
 /**
  * `mz:is_current` ∈ {`1`, `-1`} → keep. `0` → drop.
  *
- * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active"); the Pelias
- * importer accepts `-1` alongside `1`. The previous SpatiaLite-backed adapters filtered on `= 1`
- * only and silently emitted zero rows from the corpus — this loosened predicate is the critical
- * fix.
+ * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active"); the Pelias importer accepts `-1`
+ * alongside `1`. The previous SpatiaLite-backed adapters filtered on `= 1` only and silently emitted zero rows from the
+ * corpus — this loosened predicate is the critical fix.
  */
 export function isCurrentFeature(props: Record<string, unknown>): boolean {
 	const raw = props["mz:is_current"]
 	const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : 1
+
 	return n !== 0
 }
 
 /**
- * Pull `name:*` localized variants off a WOF feature's properties. WOF stores variants as arrays
- * (`["Saint Petersburg"]`); we lift the first non-empty string. Multiple-value variants (rare;
- * usually historical aliases) are not split into separate rows by this helper — adapters can opt in
- * by iterating the underlying array if they need it.
+ * Pull `name:*` localized variants off a WOF feature's properties. WOF stores variants as arrays (`["Saint
+ * Petersburg"]`); we lift the first non-empty string. Multiple-value variants (rare; usually historical aliases) are
+ * not split into separate rows by this helper — adapters can opt in by iterating the underlying array if they need it.
  */
 export function extractNameVariants(props: Record<string, unknown>): Map<string, string> {
 	const out = new Map<string, string>()
+
 	for (const [key, value] of Object.entries(props)) {
 		if (!key.startsWith("name:")) continue
 		const candidate = Array.isArray(value)
@@ -90,16 +91,18 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 			: typeof value === "string" && value.trim().length > 0
 				? value
 				: undefined
+
 		if (candidate) out.set(key, candidate.trim())
 	}
+
 	return out
 }
 
 /**
  * Turn a `name:*` property key into a hyphen-safe suffix fragment for `source_id`.
  *
- * `"name:eng_x_colloquial"` → `"name-eng-x-colloquial"`. `:` and `_` both become `-` because both
- * collide with the existing source_id separator vocabulary and downstream consumers split on `-`.
+ * `"name:eng_x_colloquial"` → `"name-eng-x-colloquial"`. `:` and `_` both become `-` because both collide with the
+ * existing source_id separator vocabulary and downstream consumers split on `-`.
  */
 export function normalizeNameKey(rawKey: string): string {
 	return rawKey.replace(/[:_]/g, "-")
@@ -112,15 +115,19 @@ function recordFromFeature(feature: WofFeature): WofRecord | null {
 
 	const rawId = typeof feature.id === "number" ? feature.id : props["wof:id"]
 	const id = typeof rawId === "number" ? rawId : typeof rawId === "string" ? Number(rawId) : NaN
+
 	if (!Number.isFinite(id)) return null
 
 	const name = props["wof:name"]
+
 	if (typeof name !== "string" || !name.trim()) return null
 
 	const placetype = props["wof:placetype"]
+
 	if (typeof placetype !== "string" || !placetype) return null
 
 	const country = props["wof:country"]
+
 	if (typeof country !== "string" || !country) return null
 
 	if (!isCurrentFeature(props)) return null
@@ -146,13 +153,13 @@ function recordFromFeature(feature: WofFeature): WofRecord | null {
 /**
  * Stream every canonical GeoJSON file under `repoDir` and yield parsed `WofRecord`s.
  *
- * `repoDir` may point at a single cloned `whosonfirst-data-*` repo OR at a parent directory holding
- * several such repos (the corpus pipeline clones all four into a shared `wof/repos/` root and runs
- * the adapter against that root). `**\/*.geojson` walks the whole tree; `-alt-` siblings are
- * skipped since they're alternate-geometry exports, not new records.
+ * `repoDir` may point at a single cloned `whosonfirst-data-*` repo OR at a parent directory holding several such repos
+ * (the corpus pipeline clones all four into a shared `wof/repos/` root and runs the adapter against that root).
+ * `**\/*.geojson` walks the whole tree; `-alt-` siblings are skipped since they're alternate-geometry exports, not new
+ * records.
  *
- * Errors per-file (unreadable, malformed JSON, missing properties) are swallowed so one bad file
- * doesn't poison a 3 GB walk. Adapters can add stricter validation downstream if they need it.
+ * Errors per-file (unreadable, malformed JSON, missing properties) are swallowed so one bad file doesn't poison a 3 GB
+ * walk. Adapters can add stricter validation downstream if they need it.
  */
 export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WofRecord> {
 	const stream = FastGlob.stream(["**/*.geojson"], {
@@ -165,9 +172,11 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 	for await (const entry of stream) {
 		if (opts.signal?.aborted) return
 		const filePath = String(entry)
+
 		if (filePath.includes("-alt-")) continue
 
 		let text: string
+
 		try {
 			text = await readFile(filePath, "utf8")
 		} catch {
@@ -175,6 +184,7 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 		}
 
 		let parsed: WofFeature
+
 		try {
 			parsed = JSON.parse(text) as WofFeature
 		} catch {
@@ -182,29 +192,34 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 		}
 
 		const rec = recordFromFeature(parsed)
+
 		if (rec) yield rec
 	}
 }
 
 /**
- * Build an in-memory ancestry index: `Map<wof_id, [parent, grandparent, ...]>` walking `parent_id`
- * upward and stopping at the first missing link. A cycle guard halts at any re-visit (defensive —
- * WOF data is acyclic by construction but corrupt fixtures shouldn't infinite-loop the adapter).
+ * Build an in-memory ancestry index: `Map<wof_id, [parent, grandparent, ...]>` walking `parent_id` upward and stopping
+ * at the first missing link. A cycle guard halts at any re-visit (defensive — WOF data is acyclic by construction but
+ * corrupt fixtures shouldn't infinite-loop the adapter).
  *
- * Records whose ancestors aren't in `byId` (e.g. an FR locality whose region wasn't included in the
- * cloned repo set) get a shorter chain; the variant emission gracefully degrades.
+ * Records whose ancestors aren't in `byId` (e.g. an FR locality whose region wasn't included in the cloned repo set)
+ * get a shorter chain; the variant emission gracefully degrades.
  */
 export type AncestryIndex = Map<number, WofRecord[]>
 
 export function buildAncestryIndex(byId: Map<number, WofRecord>): AncestryIndex {
 	const index: AncestryIndex = new Map()
+
 	for (const [id, rec] of byId) {
 		const chain: WofRecord[] = []
 		const guard = new Set<number>([id])
 		let cur: number | null = rec.parent_id
+
 		while (cur !== null && cur > 0) {
 			const parent = byId.get(cur)
+
 			if (!parent) break
+
 			if (guard.has(parent.id)) break
 			chain.push(parent)
 			guard.add(parent.id)
@@ -212,5 +227,6 @@ export function buildAncestryIndex(byId: Map<number, WofRecord>): AncestryIndex 
 		}
 		index.set(id, chain)
 	}
+
 	return index
 }

@@ -40,6 +40,7 @@ function render(response) {
 		const cell = document.createElement("th")
 
 		let char = response.input.body.charAt(characterIndex)
+
 		if (char.trim().length > 0) {
 			cell.classList.add("kb")
 		} else {

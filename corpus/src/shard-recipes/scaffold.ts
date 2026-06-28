@@ -13,10 +13,9 @@ import { stableSourceId } from "../adapter.js"
 import { alignRow } from "../align.js"
 
 /**
- * {@link stableSourceId}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that
- * aren't `ComponentTag`s. `stableSourceId` sorts + hashes EVERY key it's given, so passing extra
- * keys is how the legacy builders kept per-variant ids unique — the strict typing is just too
- * narrow for that. Centralizes the one cast.
+ * {@link stableSourceId}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that aren't
+ * `ComponentTag`s. `stableSourceId` sorts + hashes EVERY key it's given, so passing extra keys is how the legacy
+ * builders kept per-variant ids unique — the strict typing is just too narrow for that. Centralizes the one cast.
  */
 export function shardSourceId(adapterId: string, parts: Record<string, string | undefined>): string {
 	return stableSourceId(adapterId, parts as unknown as Parameters<typeof stableSourceId>[1])
@@ -32,14 +31,15 @@ export interface ShardTuple {
 }
 
 /**
- * The deterministic LCG (`s = s*1664525 + 1013904223 mod 2^32`) the street/po-box/anchor builders
- * used. A recipe whose legacy `.mjs` seeded this must create it here so `--seed N` is
- * byte-reproducible.
+ * The deterministic LCG (`s = s*1664525 + 1013904223 mod 2^32`) the street/po-box/anchor builders used. A recipe whose
+ * legacy `.mjs` seeded this must create it here so `--seed N` is byte-reproducible.
  */
 export function makeLcg(seed: number): () => number {
 	let s = seed >>> 0
+
 	return () => {
 		s = (s * 1664525 + 1013904223) % 4294967296
+
 		return s / 4294967296
 	}
 }
@@ -48,17 +48,18 @@ export function makeLcg(seed: number): () => number {
 export const makeRandom = makeLcg
 
 /**
- * Mulberry32 — the PRNG the MAJORITY of the legacy `build-*-shard` scripts used (german, locale,
- * boundary-stress, unit, fr-order, country-balanced, intersection, fr-admin-split, street-affix,
- * street-bare, po-box-cedex). A recipe must seed it EXACTLY as its `.mjs` did (usually `seed`, but
- * some derive a per-stream seed) to stay byte-reproducible.
+ * Mulberry32 — the PRNG the MAJORITY of the legacy `build-*-shard` scripts used (german, locale, boundary-stress, unit,
+ * fr-order, country-balanced, intersection, fr-admin-split, street-affix, street-bare, po-box-cedex). A recipe must
+ * seed it EXACTLY as its `.mjs` did (usually `seed`, but some derive a per-stream seed) to stay byte-reproducible.
  */
 export function makeMulberry32(seed: number): () => number {
 	let a = seed >>> 0
+
 	return () => {
 		a = (a + 0x6d2b79f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 }
@@ -68,9 +69,12 @@ export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
 	const { createReadStream } = await import("node:fs")
 	const { createInterface } = await import("node:readline")
 	const rl = createInterface({ input: createReadStream(input, { encoding: "utf8" }), crlfDelay: Infinity })
+
 	for await (const line of rl) {
 		const trimmed = line.trim()
+
 		if (!trimmed) continue
+
 		try {
 			yield JSON.parse(trimmed) as ShardTuple
 		} catch {
@@ -92,9 +96,8 @@ export interface CanonicalShardRow {
 }
 
 /**
- * Run a canonical row through `alignRow` and, on success, write the `LabeledRow` (+ `synth_method`
- * / `synth_base_id`) as one JSONL line. Returns true if emitted, false if alignment quarantined
- * it.
+ * Run a canonical row through `alignRow` and, on success, write the `LabeledRow` (+ `synth_method` / `synth_base_id`)
+ * as one JSONL line. Returns true if emitted, false if alignment quarantined it.
  */
 export function alignAndWrite(
 	write: (line: string) => void,
@@ -103,8 +106,10 @@ export function alignAndWrite(
 	synthBaseId: string | null = null
 ): boolean {
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
+
 	if (!aligned.row) return false
 	write(JSON.stringify({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseId }) + "\n")
+
 	return true
 }
 
@@ -155,8 +160,8 @@ export interface ShardRecipe {
 	/** Recipe-specific flags this recipe honors (documentation only). */
 	options?: ShardRecipeOption[]
 	/**
-	 * Do the build: create the recipe's PRNG from `opts.seed` (its LEGACY generator — `makeLcg` or
-	 * `makeMulberry32` — for byte-reproducibility), synthesize, and emit each row via `write`.
+	 * Do the build: create the recipe's PRNG from `opts.seed` (its LEGACY generator — `makeLcg` or `makeMulberry32` — for
+	 * byte-reproducibility), synthesize, and emit each row via `write`.
 	 */
 	run(opts: ShardRecipeOpts, write: (line: string) => void): Promise<ShardStats>
 }

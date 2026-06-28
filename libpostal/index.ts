@@ -28,8 +28,8 @@ export interface ParseMatch {
 }
 
 /**
- * Mailwoman `ComponentTag` → libpostal label. libpostal's label set is OSM-derived; ours is close
- * but not identical, so map the overlap and pass unmapped classifications through unchanged.
+ * Mailwoman `ComponentTag` → libpostal label. libpostal's label set is OSM-derived; ours is close but not identical, so
+ * map the overlap and pass unmapped classifications through unchanged.
  */
 export const COMPONENT_TO_LIBPOSTAL: Record<string, string> = {
 	house_number: "house_number",
@@ -57,9 +57,8 @@ export function toLibpostalComponents(matches: ParseMatch[]): LibpostalComponent
 }
 
 /**
- * The parsing engine the router delegates to. `parse` is required; `expand` is optional (a missing
- * one answers `501`). The CLI wires `parse` to Mailwoman's `createAddressParser` and `expand` to
- * `@mailwoman/normalize`.
+ * The parsing engine the router delegates to. `parse` is required; `expand` is optional (a missing one answers `501`).
+ * The CLI wires `parse` to Mailwoman's `createAddressParser` and `expand` to `@mailwoman/normalize`.
  */
 export interface LibpostalEngine {
 	parse(query: string): Promise<ParseMatch[]>
@@ -74,8 +73,10 @@ export function createLibpostalRouter(engine: LibpostalEngine): Router {
 		const query = (
 			(req.body?.query ?? req.query?.query ?? req.body?.address ?? req.query?.address) as string | undefined
 		)?.trim()
+
 		if (!query) {
 			res.status(400).json({ error: "query is required" })
+
 			return
 		}
 		res.json(toLibpostalComponents(await engine.parse(query)))
@@ -84,11 +85,14 @@ export function createLibpostalRouter(engine: LibpostalEngine): Router {
 	const expand: RequestHandler = async (req, res) => {
 		if (!engine.expand) {
 			res.status(501).json({ error: "expand not implemented" })
+
 			return
 		}
 		const address = ((req.body?.address ?? req.query?.address) as string | undefined)?.trim()
+
 		if (!address) {
 			res.status(400).json({ error: "address is required" })
+
 			return
 		}
 		res.json({ expansions: await engine.expand(address) })

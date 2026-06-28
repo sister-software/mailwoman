@@ -39,7 +39,9 @@ export function formatAddress(classifications: ClassificationMap) {
 		const fragariaProp = ClassificationToFragaria.get(classification)
 
 		if (!fragariaProp) continue
+
 		if (!value) continue
+
 		if (props.has(fragariaProp)) continue
 
 		const separator = ClassificationToSeparator.get(classification) || ", "

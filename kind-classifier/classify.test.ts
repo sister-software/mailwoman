@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { classifyKindSync } from "./classify.js"
 import type { NormalizedInputLite, QueryShapeLike } from "./types.js"
 
@@ -381,6 +382,7 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 				segments: [{ body: "Paris", index: 0 }],
 			})
 		)
+
 		// Verify the alternatives are sorted descending.
 		for (let i = 1; i < result.alternatives.length; i++) {
 			expect(result.alternatives[i]?.confidence).toBeLessThanOrEqual(result.alternatives[i - 1]?.confidence ?? 1)
@@ -415,6 +417,7 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 				],
 			})
 		)
+
 		for (const alt of result.alternatives) {
 			expect(alt.confidence).toBeLessThanOrEqual(result.confidence)
 		}

@@ -54,8 +54,7 @@ export type BBox2DLiteral = [
 ]
 
 /**
- * A 3-dimensional rectangular area that can be determined by two longitudes, two latitudes, and two
- * altitudes.
+ * A 3-dimensional rectangular area that can be determined by two longitudes, two latitudes, and two altitudes.
  *
  * @category GeoJSON
  * @category Bounding Box
@@ -145,9 +144,8 @@ export function isBBox(input: unknown): input is BBox2DLiteral | BBox3DLiteral {
 /**
  * Type-predicate to determine if the given input is a GeoBoundingBox instance.
  *
- * Note that this function only checks if the input is an instance of the GeoBoundingBox class.
- * `instanceof` checks are not reliable in JavaScript, so this function should be used with
- * caution.
+ * Note that this function only checks if the input is an instance of the GeoBoundingBox class. `instanceof` checks are
+ * not reliable in JavaScript, so this function should be used with caution.
  *
  * @category GeoJSON
  */
@@ -167,8 +165,8 @@ export type GeoBoundingBoxInput = BBox2DLiteral | BBox3DLiteral | GeoBoundingBox
 /**
  * A bounding box to represent the coordinate range of a GeoJSON object.
  *
- * This is useful when defining the extent of a GeoJSON object, such as the minimum and maximum
- * coordinates of the object's Geometries, Features, or Feature Collections.
+ * This is useful when defining the extent of a GeoJSON object, such as the minimum and maximum coordinates of the
+ * object's Geometries, Features, or Feature Collections.
  */
 export class GeoBoundingBox {
 	//#region Properties

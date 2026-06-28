@@ -10,6 +10,7 @@
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+
 import type { LocaleProfile, LocaleRegistry } from "./locale.js"
 
 const COMPONENT_TAG_SET = new Set<ComponentTag>(COMPONENT_TAGS)
@@ -42,6 +43,7 @@ function assertValidProfile(profile: LocaleProfile): void {
 	}
 
 	const supported = new Set<ComponentTag>(profile.componentsSupported)
+
 	for (const tag of supported) {
 		if (!COMPONENT_TAG_SET.has(tag)) {
 			throw new RangeError(
@@ -56,6 +58,7 @@ function assertValidProfile(profile: LocaleProfile): void {
 				`LocaleProfile ${profile.locale}: policy targets unknown ComponentTag ${JSON.stringify(policy.component)}`
 			)
 		}
+
 		if (!supported.has(policy.component)) {
 			throw new RangeError(
 				`LocaleProfile ${profile.locale}: policy targets ${policy.component} which is not in componentsSupported`

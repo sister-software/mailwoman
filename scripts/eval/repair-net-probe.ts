@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -16,7 +18,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync, readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const MODEL = arg("model", "out/v192/model.onnx")
@@ -52,26 +54,33 @@ async function main() {
 
 	const tags = ["postcode", "house_number"] as const
 	const stat: Record<string, { help: number; hurt: number; helpRows: string[]; hurtRows: string[] }> = {}
+
 	for (const t of tags) stat[t] = { help: 0, hurt: 0, helpRows: [], hurtRows: [] }
 
 	for (const row of rows) {
 		const off = flat(decodeAsJson(await neural.parse(row.raw, {})))
 		const on = flat(decodeAsJson(await neural.parse(row.raw, { addressSystemConventions: "auto" })))
+
 		// Only rows the repair actually changed are interesting.
 		if (norm(off.postcode) === norm(on.postcode) && norm(off.house_number) === norm(on.house_number)) continue
+
 		for (const t of tags) {
 			const gold = norm(row.components[t])
+
 			if (!gold) continue
 			const offOk = norm(off[t]) === gold
 			const onOk = norm(on[t]) === gold
+
 			if (offOk && !onOk) {
 				stat[t]!.hurt++
+
 				if (stat[t]!.hurtRows.length < 18)
 					stat[t]!.hurtRows.push(
 						`  raw=${JSON.stringify(row.raw)} gold.${t}=${JSON.stringify(row.components[t])} off=${JSON.stringify(off[t] ?? null)} on=${JSON.stringify(on[t] ?? null)} | on.hn=${JSON.stringify(on.house_number ?? null)} on.pc=${JSON.stringify(on.postcode ?? null)}`
 					)
 			} else if (!offOk && onOk) {
 				stat[t]!.help++
+
 				if (stat[t]!.helpRows.length < 12)
 					stat[t]!.helpRows.push(
 						`  raw=${JSON.stringify(row.raw)} gold.${t}=${JSON.stringify(row.components[t])} off=${JSON.stringify(off[t] ?? null)} on=${JSON.stringify(on[t] ?? null)}`
@@ -81,6 +90,7 @@ async function main() {
 	}
 
 	console.log(`\n#723 repairLeadingHouseNumber net effect — ${MODEL} (n=${rows.length} US golden rows)`)
+
 	for (const t of tags) {
 		const s = stat[t]!
 		console.log(`\n[${t}]  HELP ${s.help}  HURT ${s.hurt}  NET ${s.help - s.hurt >= 0 ? "+" : ""}${s.help - s.hurt}`)

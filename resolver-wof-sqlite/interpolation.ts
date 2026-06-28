@@ -39,8 +39,8 @@ import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.
  *
  * - `address_point` — bracketed/extrapolated between REAL neighbor points from the #476 shard
  *   (`AddressPointInterpolator`), replacing TIGER's uniform-spacing assumption with occupancy.
- * - `tiger_range` — linear position within a TIGER segment's theoretical house-number range
- *   (`StreetInterpolator`), the fallback for streets too sparse to bracket.
+ * - `tiger_range` — linear position within a TIGER segment's theoretical house-number range (`StreetInterpolator`), the
+ *   fallback for streets too sparse to bracket.
  */
 export type InterpolationMethod = "address_point" | "tiger_range"
 
@@ -53,20 +53,18 @@ export interface InterpolatedHit {
 	/** Which rung answered — see {@link InterpolationMethod}. */
 	method: InterpolationMethod
 	/**
-	 * `tiger_range` only. True when the matched segment side's parity agrees with the house number
-	 * (or the side is `mixed`). False = opposite-side fallback: usually the right block, wrong side
-	 * of the street.
+	 * `tiger_range` only. True when the matched segment side's parity agrees with the house number (or the side is
+	 * `mixed`). False = opposite-side fallback: usually the right block, wrong side of the street.
 	 */
 	parityMatched?: boolean
 	/**
-	 * `address_point` only. `both` = the query number sits between two known neighbor numbers;
-	 * `single` = neighbors exist on one side only (extrapolated, larger `uncertaintyM`).
+	 * `address_point` only. `both` = the query number sits between two known neighbor numbers; `single` = neighbors exist
+	 * on one side only (extrapolated, larger `uncertaintyM`).
 	 */
 	bracket?: "both" | "single"
 	/**
-	 * Honest uncertainty radius in meters: half the matched segment's polyline length
-	 * (`tiger_range`), half the bracket span (`address_point`/`both`), or the explicitly larger
-	 * extrapolation penalty (`address_point`/`single`).
+	 * Honest uncertainty radius in meters: half the matched segment's polyline length (`tiger_range`), half the bracket
+	 * span (`address_point`/`both`), or the explicitly larger extrapolation penalty (`address_point`/`single`).
 	 */
 	uncertaintyM: number
 	/** Provenance, e.g. `"tiger:edges"`. */
@@ -110,6 +108,7 @@ export class StreetInterpolator implements InterpolationLookup {
 		} else {
 			throw new Error("StreetInterpolator: one of dbPath or database is required")
 		}
+
 		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
 		// `street_segment` table this interpolator is a no-op miss, not a crash that loses the state (#568).
 		if (hasTable(this.#db, "street_segment")) {
@@ -129,12 +128,14 @@ export class StreetInterpolator implements InterpolationLookup {
 		if (!this.#byPostcode || !this.#byStreet) return null
 		const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(query.street))
 		const numberRaw = query.number.trim()
+
 		// Strictly-numeric house numbers only — this tier estimates, it doesn't guess at
 		// hyphenated/alphanumeric schemes the ranges don't model.
 		if (!streetNorm || !/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 
 		let rows: SegmentRow[]
+
 		if (query.postcode) {
 			// A given ZIP that scopes to nothing is a MISS, not a statewide guess: the retry was
 			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
@@ -144,8 +145,10 @@ export class StreetInterpolator implements InterpolationLookup {
 			// No scope given: a name matching ranges across several ZIPs is ambiguous — abstain.
 			rows = this.#byStreet.all(streetNorm, n, n) as unknown as SegmentRow[]
 			const postcodes = new Set(rows.map((r) => r.postcode ?? ""))
+
 			if (postcodes.size > 1) return null
 		}
+
 		if (rows.length === 0) return null
 
 		// Parity preference: exact side first, then 'mixed' (matches either), then the
@@ -164,6 +167,7 @@ export class StreetInterpolator implements InterpolationLookup {
 		const span = best.to_hn - best.from_hn
 		const t = span === 0 ? 0.5 : clamp01((n - best.from_hn) / span)
 		const [lon, lat, lengthKm] = pointAlong(polyline, t)
+
 		return {
 			lat,
 			lon,
@@ -186,12 +190,13 @@ function clamp01(t: number): number {
 }
 
 /**
- * Point at fraction `t` of the polyline's total arc length (haversine), plus the total length in
- * km. `t` is assumed clamped to [0, 1].
+ * Point at fraction `t` of the polyline's total arc length (haversine), plus the total length in km. `t` is assumed
+ * clamped to [0, 1].
  */
 function pointAlong(polyline: readonly [number, number][], t: number): [lon: number, lat: number, lengthKm: number] {
 	const legs: number[] = []
 	let total = 0
+
 	for (let i = 1; i < polyline.length; i++) {
 		const [aLon, aLat] = polyline[i - 1]!
 		const [bLon, bLat] = polyline[i]!
@@ -199,21 +204,27 @@ function pointAlong(polyline: readonly [number, number][], t: number): [lon: num
 		legs.push(d)
 		total += d
 	}
+
 	if (total === 0) {
 		const [lon, lat] = polyline[0]!
+
 		return [lon, lat, 0]
 	}
 	let remaining = t * total
+
 	for (let i = 0; i < legs.length; i++) {
 		const leg = legs[i]!
+
 		if (remaining <= leg || i === legs.length - 1) {
 			const f = leg === 0 ? 0 : clamp01(remaining / leg)
 			const [aLon, aLat] = polyline[i]!
 			const [bLon, bLat] = polyline[i + 1]!
+
 			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
 		}
 		remaining -= leg
 	}
 	const [lon, lat] = polyline[polyline.length - 1]!
+
 	return [lon, lat, total]
 }

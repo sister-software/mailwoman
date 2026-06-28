@@ -31,21 +31,24 @@ const NEG_INF = -1e9
  * - `X → B-Y` always permitted (0)
  * - `X → I-Y` permitted only if `X` is `B-Y` or `I-Y` (0); otherwise -inf
  *
- * Returns a `numLabels × numLabels` matrix where `mask[from][to]` is the additive log-score (0 for
- * permitted, NEG_INF for forbidden).
+ * Returns a `numLabels × numLabels` matrix where `mask[from][to]` is the additive log-score (0 for permitted, NEG_INF
+ * for forbidden).
  */
 export function buildBioTransitionMask(labels: readonly string[]): number[][] {
 	const n = labels.length
 	const mask: number[][] = []
+
 	for (let from = 0; from < n; from++) {
 		const row = new Array<number>(n)
 		const fromLabel = labels[from]!
+
 		for (let to = 0; to < n; to++) {
 			const toLabel = labels[to]!
 			row[to] = isValidTransition(fromLabel, toLabel) ? 0 : NEG_INF
 		}
 		mask.push(row)
 	}
+
 	return mask
 }
 
@@ -55,8 +58,8 @@ export function buildBioStartMask(labels: readonly string[]): number[] {
 }
 
 /**
- * End-of-sequence transitions. By default all labels are valid endings (returns zeros). Override if
- * the trained model has learned end transitions.
+ * End-of-sequence transitions. By default all labels are valid endings (returns zeros). Override if the trained model
+ * has learned end transitions.
  */
 export function buildBioEndMask(labels: readonly string[]): number[] {
 	return labels.map(() => 0)
@@ -64,11 +67,15 @@ export function buildBioEndMask(labels: readonly string[]): number[] {
 
 function isValidTransition(from: string, to: string): boolean {
 	if (to === "O") return true
+
 	if (to.startsWith("B-")) return true
+
 	if (to.startsWith("I-")) {
 		const tag = to.slice(2)
+
 		return from === `B-${tag}` || from === `I-${tag}`
 	}
+
 	return true
 }
 
@@ -98,6 +105,7 @@ export interface ViterbiResult {
 export function viterbi(input: ViterbiInput): ViterbiResult {
 	const { emissions, transitions } = input
 	const T = emissions.length
+
 	if (T === 0) return { path: [], score: 0 }
 
 	const numLabels = emissions[0]!.length
@@ -110,6 +118,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 
 	// t = 0
 	const first = new Array<number>(numLabels)
+
 	for (let k = 0; k < numLabels; k++) {
 		first[k] = startTrans[k]! + emissions[0]![k]!
 	}
@@ -119,11 +128,14 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	for (let t = 1; t < T; t++) {
 		const cur = new Array<number>(numLabels)
 		const ptr = new Array<number>(numLabels)
+
 		for (let k = 0; k < numLabels; k++) {
 			let bestScore = NEG_INF
 			let bestPrev = 0
+
 			for (let j = 0; j < numLabels; j++) {
 				const s = dp[t - 1]![j]! + transitions[j]![k]!
+
 				if (s > bestScore) {
 					bestScore = s
 					bestPrev = j
@@ -139,8 +151,10 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	// Pick the best ending state.
 	let bestEndScore = NEG_INF
 	let bestEnd = 0
+
 	for (let k = 0; k < numLabels; k++) {
 		const s = dp[T - 1]![k]! + endTrans[k]!
+
 		if (s > bestEndScore) {
 			bestEndScore = s
 			bestEnd = k
@@ -150,6 +164,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	// Trace back.
 	const path = new Array<number>(T)
 	path[T - 1] = bestEnd
+
 	for (let t = T - 1; t > 0; t--) {
 		path[t - 1] = back[t]![path[t]!]!
 	}
@@ -158,19 +173,21 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 }
 
 /**
- * Convenience: argmax over per-token softmax (existing behavior). Provided so callers can opt in to
- * Viterbi only when transitions are available, falling back to this cleanly.
+ * Convenience: argmax over per-token softmax (existing behavior). Provided so callers can opt in to Viterbi only when
+ * transitions are available, falling back to this cleanly.
  */
 export function perTokenArgmax(emissions: readonly number[][]): number[] {
 	return emissions.map((row) => {
 		let bestIdx = 0
 		let bestVal = row[0]!
+
 		for (let k = 1; k < row.length; k++) {
 			if (row[k]! > bestVal) {
 				bestVal = row[k]!
 				bestIdx = k
 			}
 		}
+
 		return bestIdx
 	})
 }
@@ -178,13 +195,15 @@ export function perTokenArgmax(emissions: readonly number[][]): number[] {
 /**
  * Softmax of a logit row (returns probabilities summing to 1).
  *
- * Used to compute per-token confidence after Viterbi picks the label sequence — the confidence is
- * the softmax probability of the Viterbi-chosen label at that timestep.
+ * Used to compute per-token confidence after Viterbi picks the label sequence — the confidence is the softmax
+ * probability of the Viterbi-chosen label at that timestep.
  */
 export function softmax(row: readonly number[]): number[] {
 	let max = row[0]!
+
 	for (let i = 1; i < row.length; i++) if (row[i]! > max) max = row[i]!
 	const exps = row.map((v) => Math.exp(v - max))
 	const sum = exps.reduce((a, b) => a + b, 0)
+
 	return exps.map((e) => e / sum)
 }

@@ -5,6 +5,7 @@
  */
 
 import { assertClassification } from "mailwoman/sdk/test"
+
 import { StopWordClassifier } from "./StopWordClassifier.js"
 
 const classifier = await new StopWordClassifier().ready()

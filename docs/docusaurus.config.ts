@@ -1,7 +1,8 @@
+import { execSync } from "node:child_process"
+
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
 import { GlossaryPluginOptions, remarkPlugin as glossaryRemarkPlugin } from "docusaurus-plugin-glossary"
-import { execSync } from "node:child_process"
 import { themes as prismThemes } from "prism-react-renderer"
 
 const gitHash = (() => {
@@ -23,6 +24,7 @@ const buildTimeDisplay = (() => {
 	const D = pad(buildDate.getUTCDate())
 	const h = pad(buildDate.getUTCHours())
 	const m = pad(buildDate.getUTCMinutes())
+
 	return `${Y}-${M}-${D} ${h}:${m} UTC`
 })()
 

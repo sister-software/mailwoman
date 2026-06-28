@@ -27,6 +27,9 @@
  *   [--per-country 200] [--abstain-below 0.9] [--out-md <path>]
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+
 import { CoarsePlacer, inMapPosterior } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -34,11 +37,10 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createWofResolver, type ResolveOpts } from "@mailwoman/resolver"
-import { readFileSync, writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -56,7 +58,9 @@ const COUNTRY_TOKENS =
 
 function stripCountry(raw: string): string {
 	let s = raw
+
 	for (let i = 0; i < 2; i++) s = s.replace(COUNTRY_TOKENS, "").trim()
+
 	return s
 }
 
@@ -78,9 +82,12 @@ function resolvedWofNodes(tree: AddressTree): Array<{ id: number; rank: number }
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
 			out.push({ id: Number(n.placeId.slice(4)), rank: PLACETYPE_RANK[placetype] ?? -1 })
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return out
 }
 
@@ -99,10 +106,13 @@ async function main(): Promise<void> {
 		.map((l) => JSON.parse(l) as { raw: string; country: string })
 	const sample: Array<{ raw: string; country: string }> = []
 	const taken: Record<string, number> = {}
+
 	for (const r of all) {
 		if (!COUNTRIES.includes(r.country)) continue
+
 		if ((taken[r.country] ?? 0) >= PER_COUNTRY) continue
 		const stripped = stripCountry(r.raw)
+
 		if (!stripped) continue // nothing left after stripping → skip
 		taken[r.country] = (taken[r.country] ?? 0) + 1
 		sample.push({ raw: stripped, country: r.country })
@@ -125,18 +135,22 @@ async function main(): Promise<void> {
 	const countryCache = new Map<number, string>()
 	const countryOf = (id: number): string => {
 		let c = countryCache.get(id)
+
 		if (c === undefined) {
 			const r = countryStmt.get(id) as { country?: string } | undefined
 			c = (r?.country ?? "").toUpperCase()
 			countryCache.set(id, c)
 		}
+
 		return c
 	}
 	const resolvedCountry = async (parsed: AddressTree, opts: ResolveOpts): Promise<string> => {
 		const resolved = await resolver.resolveTree(structuredClone(parsed), opts)
 		const nodes = resolvedWofNodes(resolved)
+
 		if (nodes.length === 0) return ""
 		nodes.sort((a, b) => b.rank - a.rank)
+
 		return countryOf(nodes[0]!.id)
 	}
 
@@ -148,6 +162,7 @@ async function main(): Promise<void> {
 	}
 	const rows: Row[] = []
 	let done = 0
+
 	for (const s of sample) {
 		const parsed = await neural.parse(s.raw, { postcodeRepair: true })
 		const pred = placer.predict(s.raw)
@@ -157,20 +172,27 @@ async function main(): Promise<void> {
 		const off = await resolvedCountry(parsed, {})
 		const on = await resolvedCountry(parsed, onOpts)
 		rows.push({ gold: s.country, placer: pred.country, off, on })
+
 		if (++done % 200 === 0) console.error(`  ${done}/${sample.length}`)
 	}
 
 	// Per-country + global tallies.
 	const perCountry: Record<string, { n: number; offR: number; onR: number; win: number; reg: number }> = {}
-	const regressionBuckets: Record<string, number> = {} // `${gold}->${onWrong}` → count
+	const regressionBuckets: Record<string, number> = {}
+
+	// `${gold}->${onWrong}` → count
 	for (const r of rows) {
 		const pc = (perCountry[r.gold] ??= { n: 0, offR: 0, onR: 0, win: 0, reg: 0 })
 		pc.n++
 		const offRight = r.off === r.gold
 		const onRight = r.on === r.gold
+
 		if (offRight) pc.offR++
+
 		if (onRight) pc.onR++
+
 		if (!offRight && onRight) pc.win++
+
 		if (offRight && !onRight) {
 			pc.reg++
 			regressionBuckets[`${r.gold}→${r.on || "—"}`] = (regressionBuckets[`${r.gold}→${r.on || "—"}`] ?? 0) + 1
@@ -202,8 +224,10 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`| country | n | OFF right | ON right | wins | regressions |`)
 	lines.push(`|---|---:|---:|---:|---:|---:|`)
+
 	for (const c of COUNTRIES) {
 		const p = perCountry[c]
+
 		if (!p) continue
 		lines.push(`| ${c} | ${p.n} | ${pct(p.offR, p.n)}% | ${pct(p.onR, p.n)}% | ${p.win} | ${p.reg} |`)
 	}
@@ -211,6 +235,7 @@ async function main(): Promise<void> {
 	lines.push(`## Regression buckets (gold → wrong-country the prior introduced)`)
 	lines.push("")
 	const buckets = Object.entries(regressionBuckets).sort((a, b) => b[1] - a[1])
+
 	if (buckets.length === 0) lines.push(`_None — the prior introduced no in-map misroutes._`)
 	else for (const [k, v] of buckets) lines.push(`- \`${k}\`: ${v}`)
 	lines.push("")
@@ -230,6 +255,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (outMd) {
 		writeFileSync(outMd, md)
 		console.error(`\n[written] ${outMd}`)

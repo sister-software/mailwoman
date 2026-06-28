@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { isCanadianDirectional, isCanadianStreetWord } from "./street-type.js"
 
 describe("isCanadianStreetWord", () => {

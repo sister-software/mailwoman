@@ -14,9 +14,8 @@ import { defaultAdapterRegistry } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 
 /**
- * Per-line output is rendered as a single `Text` node so Ink does not column-wrap the adapter id
- * when the host stdout is non-TTY (CI, spawned tests). The list is meant to be grep-friendly, not
- * pretty.
+ * Per-line output is rendered as a single `Text` node so Ink does not column-wrap the adapter id when the host stdout
+ * is non-TTY (CI, spawned tests). The list is meant to be grep-friendly, not pretty.
  */
 const CorpusList = () => {
 	const adapters = defaultAdapterRegistry.list()

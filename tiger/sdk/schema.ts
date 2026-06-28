@@ -30,9 +30,9 @@ export interface TIGERBlockTable {
 }
 
 /**
- * Kysely row type for `pl_block` — Census 2020 P.L. 94-171 table P2 (Hispanic-or-Latino by race),
- * one row per tabulation block, keyed on the same 15-char `GEOID` as {@link TIGERBlockTable}. The
- * eight category columns partition `pop_total`.
+ * Kysely row type for `pl_block` — Census 2020 P.L. 94-171 table P2 (Hispanic-or-Latino by race), one row per
+ * tabulation block, keyed on the same 15-char `GEOID` as {@link TIGERBlockTable}. The eight category columns partition
+ * `pop_total`.
  */
 export interface PLBlockTable {
 	GEOID: string
@@ -78,9 +78,9 @@ export interface TIGERDatabase {
 export type { Generated }
 
 /**
- * Build-tuning PRAGMAs, run raw before any table is created (`page_size`/`auto_vacuum` only take
- * effect on an empty DB, and PRAGMA has no Kysely builder). The consumer execs this, then calls
- * {@link initializeTIGERSchema} for the tables + indexes.
+ * Build-tuning PRAGMAs, run raw before any table is created (`page_size`/`auto_vacuum` only take effect on an empty DB,
+ * and PRAGMA has no Kysely builder). The consumer execs this, then calls {@link initializeTIGERSchema} for the tables +
+ * indexes.
  */
 export const TIGER_PRAGMAS = /* sql */ `
 PRAGMA auto_vacuum = INCREMENTAL;
@@ -90,13 +90,13 @@ PRAGMA journal_mode = WAL;
 `
 
 /**
- * Create the TIGER tables + indexes via the Kysely schema-builder (the house idiom). Idempotent
- * (`IF NOT EXISTS`). Pass a {@link DatabaseClient} (or any `Kysely`) over the TIGER DB; run
- * {@link TIGER_PRAGMAS} first. `us_state`/`tract` aren't in {@link TIGERDatabase} (created here but
- * not queried via Kysely) — `createTable` takes any table name, so that's fine.
+ * Create the TIGER tables + indexes via the Kysely schema-builder (the house idiom). Idempotent (`IF NOT EXISTS`). Pass
+ * a {@link DatabaseClient} (or any `Kysely`) over the TIGER DB; run {@link TIGER_PRAGMAS} first. `us_state`/`tract`
+ * aren't in {@link TIGERDatabase} (created here but not queried via Kysely) — `createTable` takes any table name, so
+ * that's fine.
  *
- * The `text(N)` length hints in the prior raw DDL were documentary only (SQLite uses TEXT affinity
- * regardless); the lengths live on the {@link TIGERBlockTable} interface instead.
+ * The `text(N)` length hints in the prior raw DDL were documentary only (SQLite uses TEXT affinity regardless); the
+ * lengths live on the {@link TIGERBlockTable} interface instead.
  */
 export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<void> {
 	await db.schema

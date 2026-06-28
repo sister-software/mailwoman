@@ -38,9 +38,8 @@ export const STAGE1_BIO_LABELS: readonly BioLabel[] = Object.freeze([
 ])
 
 /**
- * Fine-grained tags added in Phase 2 Stage 2 (v0.3.0). venue covers organization/POI/landmark
- * names; street + house_number break out the street-address components that Stage 1 collapsed to
- * `O`.
+ * Fine-grained tags added in Phase 2 Stage 2 (v0.3.0). venue covers organization/POI/landmark names; street +
+ * house_number break out the street-address components that Stage 1 collapsed to `O`.
  */
 export const STAGE2_FINE_TAGS = ["venue", "street", "house_number"] as const
 
@@ -50,9 +49,9 @@ export const STAGE2_TAGS = [...STAGE1_COARSE_TAGS, ...STAGE2_FINE_TAGS] as const
 /**
  * BIO label vocabulary for Stage 2 (v0.3.0) — O + (B-/I- per Stage 2 tag). 1 + 20 = 21 labels.
  *
- * Index parity vs Stage 1: STAGE2_BIO_LABELS[i] === STAGE1_BIO_LABELS[i] for i ∈ [0, 15). Anyone
- * loading a Stage 1 model with this vocabulary still decodes correctly; the tail (15..20) just
- * never gets argmax'd because Stage 1 only emits 15 logits.
+ * Index parity vs Stage 1: STAGE2_BIO_LABELS[i] === STAGE1_BIO_LABELS[i] for i ∈ [0, 15). Anyone loading a Stage 1
+ * model with this vocabulary still decodes correctly; the tail (15..20) just never gets argmax'd because Stage 1 only
+ * emits 15 logits.
  */
 export const STAGE2_BIO_LABELS: readonly BioLabel[] = Object.freeze([
 	"O" as BioLabel,

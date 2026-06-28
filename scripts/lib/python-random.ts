@@ -29,6 +29,7 @@ export class SeededRandom {
 		let t = (this.#state += 0x6d2b79f5)
 		t = Math.imul(t ^ (t >>> 15), t | 1)
 		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 
@@ -45,14 +46,15 @@ export class SeededRandom {
 	/** `k` elements chosen with replacement. Mirrors Python `random.choices(seq, k=k)`. */
 	choices<T>(seq: readonly T[], k: number): T[] {
 		const out: T[] = []
+
 		for (let i = 0; i < k; i++) out.push(this.choice(seq))
+
 		return out
 	}
 
 	/**
-	 * In-place Fisher-Yates shuffle. Mirrors Python `random.shuffle(x)` — distribution-correct, but
-	 * NOT bit-identical to CPython's `_randbelow` stream (see the module header on the
-	 * seeded-but-not- MT19937 tradeoff).
+	 * In-place Fisher-Yates shuffle. Mirrors Python `random.shuffle(x)` — distribution-correct, but NOT bit-identical to
+	 * CPython's `_randbelow` stream (see the module header on the seeded-but-not- MT19937 tradeoff).
 	 */
 	shuffle<T>(arr: T[]): void {
 		for (let i = arr.length - 1; i > 0; i--) {
@@ -64,15 +66,15 @@ export class SeededRandom {
 	}
 
 	/**
-	 * `k` distinct elements without replacement, as a NEW array. Mirrors Python `random.sample(seq,
-	 * k)` semantics (uniform, no mutation of the input); the selection ORDER is partial-Fisher-Yates,
-	 * which — like {@link shuffle} — is uniform but not CPython-bit-identical. `k` must be `<=
-	 * seq.length`.
+	 * `k` distinct elements without replacement, as a NEW array. Mirrors Python `random.sample(seq, k)` semantics
+	 * (uniform, no mutation of the input); the selection ORDER is partial-Fisher-Yates, which — like {@link shuffle} — is
+	 * uniform but not CPython-bit-identical. `k` must be `<= seq.length`.
 	 */
 	sample<T>(seq: readonly T[], k: number): T[] {
 		const pool = seq.slice()
 		const n = pool.length
 		const out: T[] = []
+
 		for (let i = 0; i < k; i++) {
 			const j = this.randint(i, n - 1)
 			const tmp = pool[i]!
@@ -80,6 +82,7 @@ export class SeededRandom {
 			pool[j] = tmp
 			out.push(pool[i]!)
 		}
+
 		return out
 	}
 }

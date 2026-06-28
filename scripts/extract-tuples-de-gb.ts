@@ -133,6 +133,7 @@ function genDePostcode(region: string, rng: SeededRandom): string {
 	const [lo, hi] = DE_REGION_POSTCODES[region] ?? DE_DEFAULT_RANGE
 	const prefix = rng.randint(lo, hi)
 	const suffix = rng.randint(0, 99)
+
 	return `${String(prefix).padStart(3, "0")}${String(suffix).padStart(2, "0")}`
 }
 
@@ -141,9 +142,11 @@ function genGbPostcode(region: string, rng: SeededRandom): string {
 	const area = rng.choice(areas)
 	// District: 1-2 digits, sometimes with a trailing letter (W1A, E14, EC1V).
 	let district = String(rng.randint(1, 99))
+
 	if (rng.random() < 0.2) district += rng.choice(ASCII_UPPERCASE)
 	const sector = String(rng.randint(0, 9))
 	const unit = rng.choices(ASCII_UPPERCASE, 2).join("")
+
 	return `${area}${district} ${sector}${unit}`
 }
 
@@ -185,39 +188,50 @@ function extractCountry(dbPath: string, country: string, limit: number, rng: See
 	const resolveRegion = (startId: number | null): string | null => {
 		const seen = new Set<number>()
 		let curId = startId
+
 		while (curId != null && curId > 0 && !seen.has(curId)) {
 			seen.add(curId)
 			const cached = regionCache.get(curId)
+
 			if (cached !== undefined) return cached
 			const row = sprById.get(curId) as
 				| { name: string | null; placetype: string | null; parent_id: number | null }
 				| undefined
+
 			if (!row) return null
 			const { name, placetype, parent_id } = row
+
 			if (placetype === "region") {
 				regionCache.set(curId, name as string)
+
 				return name
 			}
 			curId = parent_id
 		}
+
 		return null
 	}
 
 	const pcGen = country === "DE" ? genDePostcode : country === "GB" ? genGbPostcode : null
+
 	if (!pcGen) throw new Error(`unsupported country ${country}`)
 
 	const out: Tuple[] = []
+
 	for (const row of mainRows) {
 		const sid = row.id
 		const locality = row.name
 		const parentName = row.parent_name
 		const parentPlacetype = row.placetype
+
 		if (!locality) continue
 		let region: string | null
+
 		if (parentPlacetype === "region" && parentName) {
 			region = parentName
 		} else {
 			region = resolveRegion(sid)
+
 			if (!region) continue
 		}
 		const postcode = pcGen(region, rng)
@@ -230,6 +244,7 @@ function extractCountry(dbPath: string, country: string, limit: number, rng: See
 	}
 
 	conn.close()
+
 	return out
 }
 
@@ -262,12 +277,14 @@ function main(): number {
 	console.error(`  GB: ${gb.length} tuples`)
 
 	const fd = openSync(values.output, "w")
+
 	try {
 		for (const row of [...de, ...gb]) writeSync(fd, JSON.stringify(row) + "\n")
 	} finally {
 		closeSync(fd)
 	}
 	console.error(`Wrote ${de.length + gb.length} tuples to ${values.output}`)
+
 	return 0
 }
 

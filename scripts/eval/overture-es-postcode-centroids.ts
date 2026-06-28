@@ -18,9 +18,11 @@
  *   <path>] [--out <db>] [--country ES]
  */
 
+import { DatabaseSync } from "node:sqlite"
+
 import { DuckDBInstance } from "@duckdb/node-api"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { DatabaseSync } from "node:sqlite"
+
 import { arg } from "../lib/cli-args.ts"
 
 const CC = arg("country", "ES")
@@ -100,6 +102,7 @@ const ins = out.prepare(
 )
 let id = 1
 out.exec("BEGIN")
+
 for (const r of rows) ins.run(id++, String(r.postcode), CC, Number(r.lat), Number(r.lon), Number(r.n))
 out.exec("COMMIT")
 out.exec(`CREATE INDEX spr_by_name ON spr(name); CREATE INDEX spr_by_country ON spr(country);`)

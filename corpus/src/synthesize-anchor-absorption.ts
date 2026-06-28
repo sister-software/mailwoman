@@ -51,9 +51,8 @@ export interface AnchorAbsorptionSynthesisOpts {
 	random?: () => number
 	forceTemplate?: AnchorAbsorptionTemplate
 	/**
-	 * Real US ZIPs (in the anchor lookup) to use as the LEADING 5-digit house number — so the painted
-	 * anchor fires on it, the CASE-H/anchor-fp trigger. Builder loads these from
-	 * pilot-anchor-lookup.json.
+	 * Real US ZIPs (in the anchor lookup) to use as the LEADING 5-digit house number — so the painted anchor fires on it,
+	 * the CASE-H/anchor-fp trigger. Builder loads these from pilot-anchor-lookup.json.
 	 */
 	realZips?: ReadonlyArray<string>
 }
@@ -70,11 +69,12 @@ function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 }
 
 /**
- * A realistic US house number: mostly 1–4 digits (the common range), 25% a real 5-digit ZIP (the
- * HARD case — a 5-digit leading number that is still a house number when a locality is present).
+ * A realistic US house number: mostly 1–4 digits (the common range), 25% a real 5-digit ZIP (the HARD case — a 5-digit
+ * leading number that is still a house number when a locality is present).
  */
 function houseNum(random: () => number, realZips: ReadonlyArray<string>): string {
 	if (random() < 0.25) return pick(realZips, random)
+
 	return String(1 + Math.floor(random() * 9999))
 }
 
@@ -140,6 +140,7 @@ export function synthesizeAnchorAbsorptionRow(
 		const zip = pick(realZips, random)
 		const t = pick(US_TUPLES, random)
 		const raw = `${zip} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
+
 		return {
 			raw,
 			components: { house_number: zip, street, locality: t.locality, region: t.region, postcode: t.postcode },
@@ -147,11 +148,13 @@ export function synthesizeAnchorAbsorptionRow(
 			template,
 		}
 	}
+
 	if (template === "p-us-rural") {
 		// US rural, leading postcode, NO trailing postcode → the leading IS the postcode (the A0-erosion fix).
 		const zip = pick(realZips, random)
 		const region = pick(RURAL_REGIONS, random)
 		const raw = `${zip} ${street}, ${region}`
+
 		return {
 			raw,
 			components: { postcode: zip, street, region },
@@ -159,11 +162,13 @@ export function synthesizeAnchorAbsorptionRow(
 			template,
 		}
 	}
+
 	if (template === "p-de") {
 		// German leading postcode "{pc} {city}, {street} {hn}" → the leading is the postcode.
 		const d = pick(DE_TUPLES, random)
 		const hn = pick(HOUSE_NUMS, random)
 		const raw = `${d.postcode} ${d.locality}, ${d.street} ${hn}`
+
 		return {
 			raw,
 			components: { postcode: d.postcode, locality: d.locality, street: d.street, house_number: hn },
@@ -171,11 +176,13 @@ export function synthesizeAnchorAbsorptionRow(
 			template,
 		}
 	}
+
 	if (template === "anchor-fp") {
 		// Leading 5-digit that is NOT a real ZIP (anchor MISSES) + trailing postcode → still house_number.
 		const fake = pick(FAKE_ZIPS, random)
 		const t = pick(US_TUPLES, random)
 		const raw = `${fake} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
+
 		return {
 			raw,
 			components: { house_number: fake, street, locality: t.locality, region: t.region, postcode: t.postcode },
@@ -183,14 +190,17 @@ export function synthesizeAnchorAbsorptionRow(
 			template,
 		}
 	}
+
 	if (template === "locale-ambig") {
 		// Minimal context — the LOCAL token decides. Half: "{realZip} {street}" (street-type → house#);
 		// half: "{realZip} {locality}" (no street, leading postcode → postcode). No trailing, no region.
 		const zip = pick(realZips, random)
+
 		if (random() < 0.5) {
 			return { raw: `${zip} ${street}`, components: { house_number: zip, street }, locale: "en-US", template }
 		}
 		const t = pick(US_TUPLES, random)
+
 		return {
 			raw: `${zip} ${t.locality}`,
 			components: { postcode: zip, locality: t.locality },
@@ -198,6 +208,7 @@ export function synthesizeAnchorAbsorptionRow(
 			template,
 		}
 	}
+
 	if (template === "h-no-trailing-locality") {
 		// The A3 fix (#220): the common US format "{house#} {street}, {locality}, {STATE}" with NO trailing
 		// postcode → the leading number is the HOUSE NUMBER. The CONTRAST to p-us-rural (same no-trailing,
@@ -209,6 +220,7 @@ export function synthesizeAnchorAbsorptionRow(
 		const t = pick(US_TUPLES, random)
 		const region = random() < 0.5 ? pick(RURAL_REGIONS, random) : t.region
 		const raw = `${hn} ${street}, ${t.locality}, ${region}`
+
 		return {
 			raw,
 			components: { house_number: hn, street, locality: t.locality, region },
@@ -220,6 +232,7 @@ export function synthesizeAnchorAbsorptionRow(
 	const hn = houseNum(random, realZips)
 	const t = pick(US_TUPLES, random)
 	const raw = `${hn} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
+
 	return {
 		raw,
 		components: { house_number: hn, street, locality: t.locality, region: t.region, postcode: t.postcode },

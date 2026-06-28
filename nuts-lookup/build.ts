@@ -10,6 +10,7 @@
 
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+
 import type { MultiPolygonCoords } from "./index.js"
 
 interface NutsFeature {
@@ -30,6 +31,7 @@ export function buildNutsDb(geojsonPath: string, dbPath: string): { regions: num
 	)
 
 	db.exec("BEGIN")
+
 	for (const feature of data.features) {
 		const polygons: MultiPolygonCoords =
 			feature.geometry.type === "Polygon"
@@ -39,14 +41,19 @@ export function buildNutsDb(geojsonPath: string, dbPath: string): { regions: num
 		let maxLat = -90
 		let minLon = 180
 		let maxLon = -180
+
 		for (const polygon of polygons) {
 			for (const ring of polygon) {
 				for (const point of ring) {
 					const lon = point[0]!
 					const lat = point[1]!
+
 					if (lat < minLat) minLat = lat
+
 					if (lat > maxLat) maxLat = lat
+
 					if (lon < minLon) minLon = lon
+
 					if (lon > maxLon) maxLon = lon
 				}
 			}
@@ -64,5 +71,6 @@ export function buildNutsDb(geojsonPath: string, dbPath: string): { regions: num
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_nuts_level_bbox ON nuts_regions (level, minLat, maxLat, minLon, maxLon)")
 	db.close()
+
 	return { regions: data.features.length }
 }

@@ -34,9 +34,11 @@
  *   --limit 1500 --out /tmp/reg/eu-parse-blocker.json
  */
 
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 interface OaRow {
@@ -71,8 +73,10 @@ async function main(): Promise<void> {
 	})
 
 	const results: Record<string, unknown>[] = []
+
 	for (const loc of LOCALES) {
 		const path = `data/eval/external/openaddresses-${loc}-sample.jsonl`
+
 		if (!existsSync(path)) {
 			results.push({ locale: loc, error: "sample missing" })
 			continue
@@ -90,7 +94,9 @@ async function main(): Promise<void> {
 		let nWithLoc = 0
 		let locEmitted = 0
 		let locCorrect = 0
-		const fusionExamples: Record<string, unknown>[] = [] // region IN input but parser dropped it (true admin-split miss)
+		const fusionExamples: Record<string, unknown>[] = []
+
+		// region IN input but parser dropped it (true admin-split miss)
 
 		for (const row of rows) {
 			const tree = await neural.parse(row.input, { normalizeCase: true, postcodeRepair: true })
@@ -98,21 +104,28 @@ async function main(): Promise<void> {
 			const truthRegion = row.expected.region
 			const truthLoc = row.expected.locality
 			const inputNorm = norm(row.input)
+
 			if (truthLoc) {
 				nWithLoc++
+
 				if (flat.locality) locEmitted++
+
 				if (flat.locality && norm(flat.locality) === norm(truthLoc)) locCorrect++
 			}
+
 			if (truthRegion) {
 				nWithRegion++
 				// The admin-split lever only applies when the admin token is ACTUALLY in the input text
 				// (like FR's "Commune, Département"). For OA "street, postcode locality" the province is
 				// metadata implied by the postcode, NOT a token — there is nothing for the parser to split.
 				const inInput = norm(truthRegion).length > 0 && inputNorm.includes(norm(truthRegion))
+
 				if (inInput) {
 					nRegionInInput++
+
 					if (flat.region) {
 						splitEmitted++
+
 						if (norm(flat.region) === norm(truthRegion)) splitCorrect++
 					} else if (fusionExamples.length < 12) {
 						// admin IS in the input but the parser emitted no region → a TRUE fusion/drop.
@@ -134,6 +147,7 @@ async function main(): Promise<void> {
 		const p = (x: number | null): string => (x === null ? "n/a" : (100 * x).toFixed(0))
 
 		let route: string
+
 		if (regionInInputRate === null) route = "N/A — no region truth (FR: see v1.8.0 BAN gate, région-emit 99.6%)"
 		else if (regionInInputRate < 0.15)
 			route = `COVERAGE — admin token absent from input (${p(regionInInputRate)}%); no split to learn. Lever = locality resolution + postcode→region. Parse-readiness loc-correct=${p(locCorrectRate)}%`
@@ -162,6 +176,7 @@ async function main(): Promise<void> {
 
 	console.log(JSON.stringify({ limit, results }, null, 2))
 	const out = arg("out")
+
 	if (out) {
 		writeFileSync(out, JSON.stringify({ limit, results }, null, 2))
 		console.error(`wrote ${out}`)

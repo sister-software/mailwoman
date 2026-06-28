@@ -18,9 +18,9 @@
 import type { TokenizedPiece } from "./tokenizer.js"
 
 /**
- * The candidate-tag-set feature width: country/region/po_box/cedex/homograph (the lexicon's slot
- * count). Used for the ONNX zero-fallback when a gazetteer-trained model is run with no clue data.
- * MUST match the lexicon JSON's `feature_dim` and the trained model's `gazetteer_feature_dim`.
+ * The candidate-tag-set feature width: country/region/po_box/cedex/homograph (the lexicon's slot count). Used for the
+ * ONNX zero-fallback when a gazetteer-trained model is run with no clue data. MUST match the lexicon JSON's
+ * `feature_dim` and the trained model's `gazetteer_feature_dim`.
  */
 export const GAZETTEER_FEATURE_DIM = 5
 
@@ -51,17 +51,21 @@ export function parseGazetteerLexicon(raw: {
 	if (typeof raw?.feature_dim !== "number" || raw.feature_dim <= 0) {
 		throw new Error(`gazetteer lexicon: feature_dim must be a positive number, got ${raw?.feature_dim}`)
 	}
+
 	if (!Array.isArray(raw.slots) || raw.slots.length === 0) {
 		throw new Error("gazetteer lexicon: slots must be a non-empty array")
 	}
+
 	if (typeof raw.max_ngram !== "number" || raw.max_ngram < 1) {
 		throw new Error(`gazetteer lexicon: max_ngram must be >= 1, got ${raw.max_ngram}`)
 	}
+
 	for (const field of ["bits", "entries", "code_entries"] as const) {
 		if (typeof raw[field] !== "object" || raw[field] === null) {
 			throw new Error(`gazetteer lexicon: ${field} must be an object`)
 		}
 	}
+
 	return {
 		featureDim: raw.feature_dim,
 		slots: raw.slots,
@@ -77,8 +81,11 @@ function stripWord(word: string): string {
 	let start = 0
 	let end = word.length
 	const alnum = (c: string) => /[\p{L}\p{N}]/u.test(c)
+
 	while (start < end && !alnum(word[start]!)) start++
+
 	while (end > start && !alnum(word[end - 1]!)) end--
+
 	return word.slice(start, end)
 }
 
@@ -98,20 +105,24 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 	const wordRe = /\S+/g
 	const words: NormWord[] = []
 	let m: RegExpExecArray | null
+
 	while ((m = wordRe.exec(text)) !== null) {
 		const surface = m[0]
 		const stripped = stripWord(surface)
+
 		if (!stripped) {
 			words.push({ begin: m.index, end: m.index, text: "" })
 			continue
 		}
 		let head = 0
 		const alnum = (c: string) => /[\p{L}\p{N}]/u.test(c)
+
 		while (head < surface.length && !alnum(surface[head]!)) head++
 		words.push({ begin: m.index + head, end: m.index + head + stripped.length, text: stripped })
 	}
 
 	let i = 0
+
 	while (i < words.length) {
 		if (!words[i]!.text) {
 			i++
@@ -120,9 +131,11 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 		let matchedN = 0
 		let matchedBits = 0
 		const maxN = Math.min(lexicon.maxNgram, words.length - i)
+
 		for (let n = maxN; n >= 1; n--) {
 			const parts: string[] = []
 			let ok = true
+
 			for (let k = i; k < i + n; k++) {
 				if (!words[k]!.text) {
 					ok = false
@@ -130,39 +143,43 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 				}
 				parts.push(words[k]!.text)
 			}
+
 			if (!ok) continue
 			const key = parts.join(" ").toLowerCase()
 			let bits = lexicon.entries.get(key) ?? 0
+
 			// code_entries is case-SENSITIVE: the surface must already BE uppercase ("IN" ≠ "in").
 			if (n === 1) bits |= lexicon.codeEntries.get(parts[0]!) ?? 0
+
 			if (bits) {
 				matchedN = n
 				matchedBits = bits
 				break
 			}
 		}
+
 		if (matchedN) {
 			const begin = words[i]!.begin
 			const end = words[i + matchedN - 1]!.end
+
 			for (let c = begin; c < Math.min(end, text.length); c++) charBits[c] = matchedBits
 			i += matchedN
 		} else {
 			i++
 		}
 	}
+
 	return charBits
 }
 
 /**
- * Channel choreography (#464, v0.9.13 postcode fix; DeepSeek 2026-06-10): zero the gazetteer clue
- * on pieces within `window` of a postcode-anchor hit. The clue fires on the region token
- * (`CA`/`GA`) immediately before a US postcode; its additive vector strengthens `B-region`, which
- * makes the `B-region → B-postcode` CRF transition less competitive and drops the postcode (~3pp,
- * US-only — FR postcode precedes the locality, no region neighbor). Suppressing the clue adjacent
- * to the postcode removes the interference while leaving every other clue intact. Returns a NEW
- * features/confidence pair (does not mutate). `anchorConfidence[i] > 0` marks postcode-span pieces.
- * PAIRS WITH the train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable
- * both or neither.
+ * Channel choreography (#464, v0.9.13 postcode fix; DeepSeek 2026-06-10): zero the gazetteer clue on pieces within
+ * `window` of a postcode-anchor hit. The clue fires on the region token (`CA`/`GA`) immediately before a US postcode;
+ * its additive vector strengthens `B-region`, which makes the `B-region → B-postcode` CRF transition less competitive
+ * and drops the postcode (~3pp, US-only — FR postcode precedes the locality, no region neighbor). Suppressing the clue
+ * adjacent to the postcode removes the interference while leaving every other clue intact. Returns a NEW
+ * features/confidence pair (does not mutate). `anchorConfidence[i] > 0` marks postcode-span pieces. PAIRS WITH the
+ * train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable both or neither.
  */
 export function suppressGazetteerNearPostcode(
 	gazetteer: { features: number[][]; confidence: number[] },
@@ -171,15 +188,18 @@ export function suppressGazetteerNearPostcode(
 ): { features: number[][]; confidence: number[] } {
 	const n = gazetteer.confidence.length
 	const suppress = new Array<boolean>(n).fill(false)
+
 	for (let i = 0; i < n; i++) {
 		if ((anchorConfidence[i] ?? 0) > 0) {
 			for (let d = -window; d <= window; d++) {
 				const j = i + d
+
 				if (j >= 0 && j < n && d !== 0) suppress[j] = true
 			}
 		}
 	}
 	const dim = gazetteer.features[0]?.length ?? 0
+
 	return {
 		features: gazetteer.features.map((row, i) => (suppress[i] ? new Array<number>(dim).fill(0) : row)),
 		confidence: gazetteer.confidence.map((c, i) => (suppress[i] ? 0 : c)),
@@ -187,10 +207,9 @@ export function suppressGazetteerNearPostcode(
 }
 
 /**
- * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the SAME
- * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it
- * covers). Returns `(pieces × featureDim)` features + `(pieces,)` confidence (1.0 wherever any bit
- * fires).
+ * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the SAME char→piece rule the
+ * labels use (a piece takes the bits of the first non-whitespace char it covers). Returns `(pieces × featureDim)`
+ * features + `(pieces,)` confidence (1.0 wherever any bit fires).
  */
 export function buildGazetteerFeatures(
 	text: string,
@@ -201,8 +220,10 @@ export function buildGazetteerFeatures(
 	const zero = () => new Array<number>(lexicon.featureDim).fill(0)
 	const features: number[][] = []
 	const confidence: number[] = []
+
 	for (const p of pieces) {
 		let bits = 0
+
 		for (let c = p.start; c < p.end; c++) {
 			if (c < text.length && !/\s/.test(text[c]!)) {
 				bits = charBits[c]!
@@ -212,5 +233,6 @@ export function buildGazetteerFeatures(
 		features.push(bits ? bitsToRow(bits, lexicon) : zero())
 		confidence.push(bits ? 1.0 : 0)
 	}
+
 	return { features, confidence }
 }

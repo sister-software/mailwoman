@@ -18,14 +18,17 @@ function buildApp() {
 	const app = express()
 	app.use(express.json())
 	app.use(HealthRouter)
+
 	return app
 }
 
 async function getJson(app: express.Express, path: string) {
 	const server = app.listen(0)
+
 	try {
 		const port = (server.address() as { port: number }).port
 		const r = await fetch(`http://127.0.0.1:${port}${path}`)
+
 		return { status: r.status, body: await r.json() }
 	} finally {
 		await new Promise<void>((resolve) => server.close(() => resolve()))

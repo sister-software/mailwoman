@@ -150,7 +150,9 @@ function loadRegions(con: DatabaseSync): Map<number, string> {
 		name: string
 	}>
 	const out = new Map<number, string>()
+
 	for (const r of rows) out.set(r.id, r.name)
+
 	return out
 }
 
@@ -165,8 +167,10 @@ function sampleLocalities(con: DatabaseSync, perRegion: number, rng: SeededRando
 		)
 		.all() as unknown as SprRow[]
 	const byRegion = new Map<number, SprRow[]>()
+
 	for (const r of rows) {
 		let group = byRegion.get(r.ancestor_id)
+
 		if (!group) {
 			group = []
 			byRegion.set(r.ancestor_id, group)
@@ -174,9 +178,11 @@ function sampleLocalities(con: DatabaseSync, perRegion: number, rng: SeededRando
 		group.push(r)
 	}
 	const out: SprRow[] = []
+
 	for (const group of byRegion.values()) {
 		out.push(...rng.sample(group, Math.min(perRegion, group.length)))
 	}
+
 	return out
 }
 
@@ -190,13 +196,16 @@ function samplePostcodes(con: DatabaseSync, n: number, rng: SeededRandom): SprRo
 		)
 		.all() as unknown as SprRow[]
 	const filtered = rows.filter((r) => ZIP_RE.test(String(r.name ?? "")))
+
 	return rng.sample(filtered, Math.min(n, filtered.length))
 }
 
 /** Insertion-ordered Counter, rendered like Python's `dict(Counter(...))`. */
 function counter(values: Iterable<string>): Map<string, number> {
 	const m = new Map<string, number>()
+
 	for (const v of values) m.set(v, (m.get(v) ?? 0) + 1)
+
 	return m
 }
 
@@ -222,6 +231,7 @@ async function main(): Promise<void> {
 	ca.close()
 	// Postcodes are opt-in (the custom build is admin-only).
 	let pcs: SprRow[] = []
+
 	if (values.postcode && existsSync(values.postcode)) {
 		const cp = new DatabaseSync(values.postcode, { readOnly: true })
 		pcs = samplePostcodes(cp, nPostcodes, rng)
@@ -235,6 +245,7 @@ async function main(): Promise<void> {
 		for (const [pname, fn] of PERTURBATIONS) {
 			if (!perturbTargets.includes(pname)) continue
 			const s = fn(baseString)
+
 			if (pname !== "canonical" && s === baseString) continue // perturbation was a no-op
 			rows.push({ template, ...label, input: s, perturb: pname })
 		}
@@ -242,6 +253,7 @@ async function main(): Promise<void> {
 
 	for (const loc of locs) {
 		const regionName = regions.get(loc.ancestor_id)
+
 		if (!regionName) continue
 		const abbr = STATE_ABBREV[regionName] ?? regionName
 		const label: Record<string, unknown> = {
@@ -272,6 +284,7 @@ async function main(): Promise<void> {
 			expected: abbr ? { postcode: pc.name, region: abbr } : { postcode: pc.name },
 			source: "wof-bootstrap",
 		}
+
 		if (abbr) {
 			// region+postcode exercises the glue perturbation ("NY 10025" -> "NY10025")
 			emit(`${abbr} ${pc.name}`, ["canonical", "lowercase", "glued"], "region_postcode", label)

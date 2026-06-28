@@ -22,9 +22,9 @@ import { type RequestHandler, Router } from "express"
 export type NominatimFormat = "jsonv2" | "json" | "geojson"
 
 /**
- * The structured address breakdown returned under `address` when `addressdetails=1`. Keys mirror
- * Nominatim's OSM-derived tag names; populated from Mailwoman's `ComponentTag` / resolved ancestor
- * lineage (mapping owned by #804).
+ * The structured address breakdown returned under `address` when `addressdetails=1`. Keys mirror Nominatim's
+ * OSM-derived tag names; populated from Mailwoman's `ComponentTag` / resolved ancestor lineage (mapping owned by
+ * #804).
  */
 export interface NominatimAddressDetails {
 	house_number?: string
@@ -107,9 +107,9 @@ export interface NominatimStatus {
 }
 
 /**
- * The geocoding engine the router delegates to. Each method is optional; a route whose method is
- * not provided answers `501 Not Implemented`. The real implementation (Mailwoman parse → resolve,
- * plus `WofReverseGeocoder`) is wired by the CLI and fleshed out across #802–#805.
+ * The geocoding engine the router delegates to. Each method is optional; a route whose method is not provided answers
+ * `501 Not Implemented`. The real implementation (Mailwoman parse → resolve, plus `WofReverseGeocoder`) is wired by the
+ * CLI and fleshed out across #802–#805.
  */
 export interface NominatimEngine {
 	search?(params: NominatimSearchParams): Promise<NominatimResult[]>
@@ -133,9 +133,9 @@ function asString(raw: unknown): string | undefined {
 }
 
 /**
- * Build the Nominatim-compatible router around an injected {@link NominatimEngine}. Query-param
- * parsing lives here; the result _formatting_ (jsonv2 vs geojson envelope, `address` projection) is
- * #804 and currently passes the engine's results through verbatim.
+ * Build the Nominatim-compatible router around an injected {@link NominatimEngine}. Query-param parsing lives here; the
+ * result _formatting_ (jsonv2 vs geojson envelope, `address` projection) is #804 and currently passes the engine's
+ * results through verbatim.
  */
 export function createNominatimRouter(engine: NominatimEngine): Router {
 	const router = Router()
@@ -143,6 +143,7 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 	const search: RequestHandler = async (req, res) => {
 		if (!engine.search) {
 			res.status(501).json({ error: "search not implemented (see #802)" })
+
 			return
 		}
 		const q = req.query
@@ -167,17 +168,22 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 	const reverse: RequestHandler = async (req, res) => {
 		if (!engine.reverse) {
 			res.status(501).json({ error: "reverse not implemented (see #803)" })
+
 			return
 		}
 		const q = req.query
 		const lat = Number(q["lat"])
 		const lon = Number(q["lon"])
+
 		if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
 			res.status(400).json({ error: "lat and lon are required" })
+
 			return
 		}
+
 		if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
 			res.status(400).json({ error: "lat must be in [-90, 90] and lon in [-180, 180]" })
+
 			return
 		}
 		const params: NominatimReverseParams = {
@@ -194,6 +200,7 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 	const lookup: RequestHandler = async (req, res) => {
 		if (!engine.lookup) {
 			res.status(501).json({ error: "lookup not implemented (see #805)" })
+
 			return
 		}
 		const params: NominatimLookupParams = {
@@ -207,6 +214,7 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 	const status: RequestHandler = async (_req, res) => {
 		if (!engine.status) {
 			res.json({ status: 0, message: "OK" } satisfies NominatimStatus)
+
 			return
 		}
 		res.json(await engine.status())
@@ -234,10 +242,9 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 }
 
 /**
- * A resolved address in a neutral shape, the input to {@link toNominatimResult}. The engine maps its
- * native geocode/reverse result into this; the formatter renders it as a Nominatim result. This is
- * the #804 mapping seam, kept dependency-free (no `@mailwoman/*` import) so it stays
- * unit-testable.
+ * A resolved address in a neutral shape, the input to {@link toNominatimResult}. The engine maps its native
+ * geocode/reverse result into this; the formatter renders it as a Nominatim result. This is the #804 mapping seam, kept
+ * dependency-free (no `@mailwoman/*` import) so it stays unit-testable.
  */
 export interface ResolvedAddress {
 	lat: number | null
@@ -259,14 +266,15 @@ export const MAILWOMAN_LICENCE = "Data © Who's On First, Overture Maps, OpenAdd
 
 function stableId(seed: string): number {
 	let h = 5381
+
 	for (let i = 0; i < seed.length; i++) h = (h * 33) ^ seed.charCodeAt(i)
+
 	return h >>> 0
 }
 
 /**
- * Render a {@link ResolvedAddress} as a Nominatim result. `addressdetails` gates the `address`
- * block, matching Nominatim. The `annotations` block is attached by the caller (empty until the
- * annotations layer lands).
+ * Render a {@link ResolvedAddress} as a Nominatim result. `addressdetails` gates the `address` block, matching
+ * Nominatim. The `annotations` block is attached by the caller (empty until the annotations layer lands).
  */
 export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean } = {}): NominatimResult {
 	const displayName = r.displayName ?? Object.values(r.address).filter(Boolean).join(", ")
@@ -279,11 +287,18 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 		lon,
 		display_name: displayName,
 	}
+
 	if (r.category != null) result.class = r.category
+
 	if (r.type != null) result.type = r.type
+
 	if (r.importance != null) result.importance = r.importance
+
 	if (r.placeRank != null) result.place_rank = r.placeRank
+
 	if (r.boundingbox) result.boundingbox = r.boundingbox
+
 	if (opts.addressdetails) result.address = r.address
+
 	return result
 }

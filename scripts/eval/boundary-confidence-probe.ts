@@ -39,6 +39,7 @@ const { values: args } = parseArgs({
 	},
 })
 const N = Number(args.n)
+
 if (args.model && !args.tokenizer) throw new Error("--tokenizer required with --model")
 
 // The boundary token we probe per shape, and where it sits relative to the street (for disambiguating
@@ -59,6 +60,7 @@ function softmax(logits: number[]): number[] {
 	const m = Math.max(...logits)
 	const ex = logits.map((x) => Math.exp(x - m))
 	const s = ex.reduce((a, b) => a + b, 0)
+
 	return ex.map((x) => x / s)
 }
 
@@ -68,12 +70,16 @@ function locateSpan(raw: string, value: string, prefer: "first" | "last"): [numb
 	if (!value) return null
 	const re = new RegExp(`\\b${esc(value)}\\b`, "g")
 	const hits: number[] = []
+
 	for (let m = re.exec(raw); m; m = re.exec(raw)) hits.push(m.index)
+
 	if (hits.length === 0) {
 		const i = raw.indexOf(value)
+
 		return i < 0 ? null : [i, i + value.length]
 	}
 	const start = prefer === "last" ? hits[hits.length - 1]! : hits[0]!
+
 	return [start, start + value.length]
 }
 
@@ -83,11 +89,13 @@ const loadOpts = args.model
 const classifier = await NeuralAddressClassifier.loadFromWeights(loadOpts)
 const random = (() => {
 	let a = 20260618 >>> 0
+
 	return () => {
 		a |= 0
 		a = (a + 0x6d2b79f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 })()
@@ -102,21 +110,26 @@ for (const template of Object.keys(PROBES) as BoundaryStressTemplate[]) {
 	const pCorrectAll: number[] = []
 	const pArgmaxWhenWrong: number[] = []
 	const confusedFor: Record<string, number> = {}
+
 	for (let i = 0; i < N; i++) {
 		const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: template })
 		const goldVal = String(row.components[tag as keyof typeof row.components] ?? "")
 		const span = locateSpan(row.raw, goldVal, prefer)
+
 		if (!span) continue
 		const { logits, pieces } = await classifier.parseWithLogits(row.raw)
 		const pi = pieces.findIndex((p) => p.end > span[0] && p.start < span[1])
+
 		if (pi < 0 || !logits[pi]) continue
 		located++
 		const probs = softmax(logits[pi]!)
 		const pCorrect = probs[bIdx] ?? 0
 		pCorrectAll.push(pCorrect)
 		let argmax = 0
+
 		for (let k = 1; k < probs.length; k++) if (probs[k]! > probs[argmax]!) argmax = k
 		const argmaxLabel = LABELS[argmax] ?? "?"
+
 		if (argmax === bIdx) correct++
 		else {
 			pArgmaxWhenWrong.push(probs[argmax]!)
@@ -135,6 +148,7 @@ for (const template of Object.keys(PROBES) as BoundaryStressTemplate[]) {
 	// Heuristic read: confidently-wrong (signal) when the model is mostly wrong AND, when wrong, very
 	// sure of the wrong tag. High-entropy (capacity) when the wrong mass is smeared (low argmax prob).
 	let verdict: string
+
 	if (acc >= 80) verdict = "✓ mostly right (not the bottleneck)"
 	else if (meanPwrong >= 0.6) verdict = "SIGNAL — confidently wrong → augmentation can flip it"
 	else if (meanPwrong < 0.5) verdict = "CAPACITY — high-entropy/uncertain → wants a bigger model"

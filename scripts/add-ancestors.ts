@@ -15,12 +15,13 @@
  * @mailwoman/resolver-wof-sqlite first so the import resolves to the updated out/)
  */
 
+import { DatabaseSync } from "node:sqlite"
+
 import {
 	createUnifiedIndexes,
 	createUnifiedSchema,
 	populateAncestors,
 } from "@mailwoman/resolver-wof-sqlite/unified-schema"
-import { DatabaseSync } from "node:sqlite"
 
 const dbPath = process.argv[2] ?? "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
 console.error(`Adding ancestors to ${dbPath} ...`)

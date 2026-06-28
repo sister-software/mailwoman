@@ -270,7 +270,7 @@ Read this first — it's the 30-minute version once you know the shape. Three ba
 | backend       | tool                                   | what it feeds                                                                  |
 | ------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
 | **npm**       | `publish.yml` (CI, OIDC)               | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
-| **HF bucket** | `scripts/publish-release-to-hf.ts`    | the npm fetch source + HF-direct `loadFromWeights`                             |
+| **HF bucket** | `scripts/publish-release-to-hf.ts`     | the npm fetch source + HF-direct `loadFromWeights`                             |
 | **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.sister.software`, NOT HF)                      |
 
 The end-to-end order that worked: **gate (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
@@ -399,12 +399,12 @@ the recovery loop below can finish stragglers from here without OIDC.
 
 ## Common failures
 
-| Symptom                                   | Cause                                              | Fix                                                                                                              |
-| ----------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `403 Forbidden` from npm publish          | Token missing publish rights on `@mailwoman` scope | npmjs.com → tokens → check scope coverage                                                                        |
-| `requireCleanWorkingDir` aborts           | Uncommitted changes                                | `git status`, commit or stash                                                                                    |
-| `requireBranch` aborts                    | Not on `main`                                      | `git switch main`                                                                                                |
-| Hook `yarn test --run` fails              | Pre-existing test breakage                         | Fix tests OR temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
+| Symptom                                  | Cause                                              | Fix                                                                                                              |
+| ---------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `403 Forbidden` from npm publish         | Token missing publish rights on `@mailwoman` scope | npmjs.com → tokens → check scope coverage                                                                        |
+| `requireCleanWorkingDir` aborts          | Uncommitted changes                                | `git status`, commit or stash                                                                                    |
+| `requireBranch` aborts                   | Not on `main`                                      | `git switch main`                                                                                                |
+| Hook `yarn test --run` fails             | Pre-existing test breakage                         | Fix tests OR temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
 | `copy-weights.ts` `Missing source model` | Running from a machine without `/mnt/playpen/`     | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
 
 ## Releasing from CI (manual dispatch + npm Trusted Publishing)

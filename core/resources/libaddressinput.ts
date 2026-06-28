@@ -21,8 +21,8 @@ export const AddressFieldCode = {
 	 *
 	 * Indicates as to the data expected can be read from the `state_name_type` field.
 	 *
-	 * If this is missing, it is assumed to be "province" - but it may be overridden with values such
-	 * as "state", "island" etc.
+	 * If this is missing, it is assumed to be "province" - but it may be overridden with values such as "state", "island"
+	 * etc.
 	 */
 	AdministrativeArea: "S",
 	ZipOrPostalCode: "Z",

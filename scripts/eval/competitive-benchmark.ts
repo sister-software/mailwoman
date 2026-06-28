@@ -1,3 +1,6 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { setTimeout as sleep } from "node:timers/promises"
+
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -28,8 +31,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { setTimeout as sleep } from "node:timers/promises"
+
 import { arg } from "../lib/cli-args.ts"
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -67,7 +69,9 @@ function messify(raw: string): string {
 		.replace(/\bstreet\b/g, "st")
 		.replace(/\bvia\b/g, "v")
 		.replace(/\bavenue\b/g, "ave")
-	s = s.replace(/,/g, " ").replace(/\s+/g, " ").trim() // drop the comma structure, collapse spaces
+	s = s.replace(/,/g, " ").replace(/\s+/g, " ").trim()
+
+	// drop the comma structure, collapse spaces
 	return s
 }
 
@@ -92,12 +96,16 @@ function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | nu
 	const visit = (n: AddressNode): void => {
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+
 			if (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5))
 				best = { placetype, lat: n.lat, lon: n.lon }
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return best ? { lat: best.lat, lon: best.lon } : null
 }
 const p50 = (xs: number[]): number => (xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]! : NaN)
@@ -111,8 +119,10 @@ async function queryNominatim(raw: string, cc: string): Promise<Coord> {
 		u.searchParams.set("limit", "1")
 		u.searchParams.set("countrycodes", cc.toLowerCase())
 		const r = await fetch(u, { headers: { "User-Agent": NOMINATIM_UA } })
+
 		if (!r.ok) return null
 		const j = (await r.json()) as Array<{ lat: string; lon: string }>
+
 		return j[0] ? { lat: Number(j[0].lat), lon: Number(j[0].lon) } : null
 	} catch {
 		return null
@@ -120,6 +130,7 @@ async function queryNominatim(raw: string, cc: string): Promise<Coord> {
 }
 async function loadPelias(): Promise<((q: string, country: string) => Promise<Coord>) | null> {
 	if (!process.env.GEOCODE_EARTH_API_KEY) return null
+
 	try {
 		// `diag-geocode-earth.ts` is the operator's local, git-excluded geocode.earth probe — present
 		// only when GEOCODE_EARTH_API_KEY is set, absent in a clean checkout / CI. Indirect the
@@ -135,11 +146,14 @@ async function loadPelias(): Promise<((q: string, country: string) => Promise<Co
 				) => Promise<{ features?: Array<{ geometry?: { coordinates?: [number, number] } }> }>
 			}
 		).fetchGeocodeData
+
 		if (!fetchGeocodeData) return null
+
 		return async (q: string, country: string) => {
 			try {
 				const fc = await fetchGeocodeData(q, country)
 				const c = fc.features?.[0]?.geometry?.coordinates
+
 				return c ? { lat: c[1], lon: c[0] } : null
 			} catch {
 				return null
@@ -161,11 +175,14 @@ const newTally = (): Tally => ({
 })
 function record(t: Tally, err: number | null) {
 	t.n++
+
 	if (err === null) {
 		t.noResult++
+
 		return
 	}
 	t.resolvedErrs.push(err)
+
 	for (const th of THRESHOLDS) if (err <= th) t.within[th]!++
 }
 
@@ -190,6 +207,7 @@ async function main() {
 			})
 		: null
 	const pelias = SYSTEMS.includes("pelias") ? await loadPelias() : null
+
 	if (SYSTEMS.includes("pelias") && !pelias)
 		console.error("⚠ pelias: GEOCODE_EARTH_API_KEY or diag-geocode-earth.ts unavailable — skipping that row")
 	const sys0 = SYSTEMS.filter((s) => s !== "pelias" || pelias)
@@ -199,12 +217,17 @@ async function main() {
 			? sys0.flatMap((s) => (s === "mailwoman" ? ["mailwoman", "mailwoman+rescore"] : [s]))
 			: sys0
 
-	const tallies: Record<string, Record<string, Tally>> = {} // system -> locale -> tally
+	const tallies: Record<string, Record<string, Tally>> = {}
+
+	// system -> locale -> tally
 	for (const s of sys) tallies[s] = {}
 
-	let totalParses = 0 // global across locales — the periodic-GC trigger (see the loop body)
+	let totalParses = 0
+
+	// global across locales — the periodic-GC trigger (see the loop body)
 	for (const cc of LOCALES) {
 		const file = `data/eval/external/oa-${cc}-coord-150.jsonl`
+
 		if (!existsSync(file)) {
 			console.error(`${cc}: golden missing — skipped`)
 			continue
@@ -214,18 +237,22 @@ async function main() {
 			.split("\n")
 			.slice(0, N)
 			.map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
+
 		for (const s of sys) tallies[s]![cc] = newTally()
 		console.error(`\n[${cc.toUpperCase()}] ${rows.length} rows…`)
 		let i = 0
+
 		for (const row of rows) {
 			const truth = { lat: row.lat, lon: row.lon }
 			const input = MESSY ? messify(row.raw) : row.raw
+
 			if (model) {
 				const tree = await model.parse(input, { postcodeRepair: true })
 				// resolveTree decorates in place — clone per config so base + lever are independent.
 				const base = await resolver.resolveTree(structuredClone(tree) as never, { defaultCountry: cc.toUpperCase() })
 				const cBase = mostSpecificCoord(base as never)
 				record(tallies["mailwoman"]![cc]!, cBase ? haversineKm(cBase.lat, cBase.lon, truth.lat, truth.lon) : null)
+
 				if (RESCORE) {
 					const lever = await resolver.resolveTree(structuredClone(tree) as never, {
 						defaultCountry: cc.toUpperCase(),
@@ -238,20 +265,24 @@ async function main() {
 					)
 				}
 			}
+
 			if (sys.includes("nominatim")) {
 				const c = await queryNominatim(input, cc)
 				record(tallies["nominatim"]![cc]!, c ? haversineKm(c.lat, c.lon, truth.lat, truth.lon) : null)
 				await sleep(1100) // respect Nominatim's ~1 req/s policy
 			}
+
 			if (pelias) {
 				const c = await pelias(input, cc)
 				record(tallies["pelias"]![cc]!, c ? haversineKm(c.lat, c.lon, truth.lat, truth.lon) : null)
 				await sleep(PELIAS_GRACE_MS) // graceful: stay well under geocode.earth's 10/s + 1000/day
 			}
+
 			// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
 			// (~380-parse SIGKILL on the lab box). Periodic forced GC reclaims it; run with `node
 			// --expose-gc` for long panels. No-op without the flag.
 			if (++totalParses % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
+
 			if (++i % 10 === 0) console.error(`  ${i}/${rows.length}`)
 		}
 	}
@@ -266,14 +297,17 @@ async function main() {
 	const head = `| locale | ${sys.map((s) => s).join(" | ")} |`
 	lines.push(head, `|${"---|".repeat(sys.length + 1)}`)
 	const agg: Record<string, Tally> = Object.fromEntries(sys.map((s) => [s, newTally()]))
+
 	for (const cc of LOCALES) {
 		if (!tallies[sys[0]!]?.[cc]) continue
 		const cells = sys.map((s) => {
 			const t = tallies[s]![cc]!
+
 			for (const th of THRESHOLDS) agg[s]!.within[th]! += t.within[th]!
 			agg[s]!.n += t.n
 			agg[s]!.resolvedErrs.push(...t.resolvedErrs)
 			agg[s]!.noResult += t.noResult
+
 			return t.n ? `${((100 * t.within[25]!) / t.n).toFixed(0)}%` : "—"
 		})
 		lines.push(`| ${cc.toUpperCase()} | ${cells.join(" | ")} |`)
@@ -284,6 +318,7 @@ async function main() {
 	lines.push(`\n## Full two-axis (aggregate)\n`)
 	lines.push(`| system | n | @1km | @5km | @25km | cond. p50 (km) | no-result |`)
 	lines.push(`|---|--:|--:|--:|--:|--:|--:|`)
+
 	for (const s of sys) {
 		const t = agg[s]!
 		lines.push(
@@ -292,6 +327,7 @@ async function main() {
 	}
 	const md = lines.join("\n") + "\n"
 	console.log(md)
+
 	if (OUT) {
 		writeFileSync(OUT, md)
 		console.error(`\nwrote ${OUT}`)

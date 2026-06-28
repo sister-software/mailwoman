@@ -150,18 +150,23 @@ const US_STATES_SET = new Set([
 function nonEmpty(...values: Array<string | null | undefined>): string | undefined {
 	for (const v of values) {
 		const trimmed = (v ?? "").toString().trim()
+
 		if (trimmed) return trimmed
 	}
+
 	return undefined
 }
 
 function composeHouseNumber(r: NadRecord): string | undefined {
 	const full = (r.AddNo_Full ?? "").toString().trim()
+
 	if (full) return full
 	const num = r.Add_Number == null ? "" : String(r.Add_Number).trim()
+
 	if (!num) return undefined
 	const pre = (r.AddNum_Pre ?? "").toString().trim()
 	const suf = (r.AddNum_Suf ?? "").toString().trim()
+
 	return [pre, num, suf].filter(Boolean).join(" ").trim() || undefined
 }
 
@@ -174,6 +179,7 @@ interface DecomposedNadStreet {
 
 function decomposeNadStreet(r: NadRecord): DecomposedNadStreet | undefined {
 	const name = (r.St_Name ?? "").toString().trim()
+
 	if (name) {
 		const preDir = (r.St_PreDir ?? "").toString().trim()
 		const preTyp = (r.St_PreTyp ?? "").toString().trim()
@@ -183,10 +189,13 @@ function decomposeNadStreet(r: NadRecord): DecomposedNadStreet | undefined {
 		const prefix = [preDir, preTyp, preSep].filter(Boolean).join(" ") || undefined
 		const suffix = [posTyp, posDir].filter(Boolean).join(" ") || undefined
 		const full = [prefix, name, suffix].filter(Boolean).join(" ")
+
 		return { prefix, street: name, suffix, full }
 	}
 	const full = (r.StNam_Full ?? "").toString().trim()
+
 	if (full) return { full, street: full }
+
 	return undefined
 }
 
@@ -196,8 +205,10 @@ function composeLocality(r: NadRecord): string | undefined {
 
 function composePostcode(r: NadRecord): string | undefined {
 	const zip = (r.Zip_Code ?? "").toString().trim()
+
 	if (!zip) return undefined
 	const plus4 = (r.Plus_4 ?? "").toString().trim()
+
 	return plus4 ? `${zip}-${plus4}` : zip
 }
 
@@ -212,6 +223,7 @@ function composeRaw(parts: {
 }): string {
 	const streetLine = [parts.houseNumber, parts.street, parts.unit].filter(Boolean).join(" ").trim()
 	const tail = `${parts.locality}, ${parts.region} ${parts.postcode}`
+
 	return [parts.venue, streetLine || undefined, tail].filter(Boolean).join(", ")
 }
 
@@ -238,13 +250,17 @@ export function createUsgovNadAdapter(): CorpusAdapter {
 				if (opts.signal?.aborted) break
 				const stream = createReadStream(join(opts.inputPath, shard), { encoding: "utf8" })
 				const rl = createInterface({ input: stream, crlfDelay: Infinity })
+
 				try {
 					for await (const line of rl) {
 						if (opts.signal?.aborted) break outer
+
 						if (opts.limit !== undefined && emitted >= opts.limit) break outer
+
 						if (!line) continue
 
 						let record: NadRecord
+
 						try {
 							record = JSON.parse(line) as NadRecord
 						} catch {
@@ -252,12 +268,15 @@ export function createUsgovNadAdapter(): CorpusAdapter {
 						}
 
 						const state = (record.State ?? "").toString().trim().toUpperCase()
+
 						if (!US_STATES_SET.has(state)) continue
 
 						const locality = composeLocality(record)
+
 						if (!locality) continue
 
 						const postcode = composePostcode(record)
+
 						if (!postcode) continue
 
 						const decomposed = decomposeNadStreet(record)
@@ -286,9 +305,11 @@ export function createUsgovNadAdapter(): CorpusAdapter {
 							region: state,
 							postcode,
 						})
+
 						if (!raw) continue
 
 						const aligned = reconcileComponents(components, raw)
+
 						if (Object.keys(aligned).length <= 2) continue
 
 						const sourceId = record.UUID

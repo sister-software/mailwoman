@@ -28,6 +28,8 @@
  *   [--npis 2000] [--split 0.67] [--seed 1] [--out-md <md>]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
@@ -46,11 +48,12 @@ import {
 	type SourceRecord,
 } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { writeFileSync } from "node:fs"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -90,8 +93,10 @@ const addr = (line: string, city: string, st: string, zip: string) =>
 /** Deterministic LCG (no Math.random — reproducible split). */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
+
 	return () => {
 		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+
 		return s / 0x100000000
 	}
 }
@@ -114,23 +119,29 @@ function scoreClusters(
 	let sumCK = 0
 	let sumCluster = 0
 	let overMerged = 0
+
 	for (const e of entities) {
 		const byNpi = new Map<string, number>()
+
 		for (const rec of e.records) byNpi.set(rec.id, (byNpi.get(rec.id) ?? 0) + 1)
 		sumCluster += choose2(e.records.length)
+
 		if (byNpi.size > 1) overMerged++
+
 		for (const [npi, c] of byNpi) {
 			sumCK += choose2(c)
 			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
 		}
 	}
 	let sumClass = 0
+
 	for (const total of npiTotals.values()) sumClass += choose2(total)
 	void n
 	const tp = sumCK
 	const precision = sumCluster > 0 ? tp / sumCluster : 0
 	const recall = sumClass > 0 ? tp / sumClass : 0
 	const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
+
 	return { precision, recall, f1, overMerged }
 }
 
@@ -138,11 +149,14 @@ async function main(): Promise<void> {
 	// --- Data-gen: the same NPI-keyed records as the dedup benchmark + the pairwise probe. ---
 	console.error("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
+
 	for await (const r of streamRows(OTHER_NAMES)) {
 		const npi = norm(r[C.npi])
 		const alt = norm(r[C.otherOrg])
+
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
+
 		if (list.length < 5) list.push(alt)
 		altNames.set(npi, list)
 	}
@@ -153,15 +167,18 @@ async function main(): Promise<void> {
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 	let scanned = 0
+
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
+
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
 			addrTotal++
 		}
 		const npi = norm(r[C.npi])
+
 		if (
 			kept.size < NPIS &&
 			npi &&
@@ -172,12 +189,15 @@ async function main(): Promise<void> {
 		) {
 			const isOrg = norm(r[C.entityType]) === "2"
 			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
+
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
 				kept.add(npi)
 				rows.push({ npi, name: primaryName, org, address: practice })
+
 				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice })
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
+
 				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing })
 			}
 		}
@@ -235,14 +255,15 @@ async function main(): Promise<void> {
 	}
 
 	/**
-	 * One held-out-NPI split: train the GBT + LR on TRAIN pairs, then cluster the EVAL records three
-	 * ways (FS baseline, GBT scorer, LR scorer) through the same `resolveEntities` pipeline, sweeping
-	 * the link threshold finely for each and taking best F1. The geocode is shared across seeds; only
-	 * the split, the trained scorers, and the eval subset move with the seed.
+	 * One held-out-NPI split: train the GBT + LR on TRAIN pairs, then cluster the EVAL records three ways (FS baseline,
+	 * GBT scorer, LR scorer) through the same `resolveEntities` pipeline, sweeping the link threshold finely for each and
+	 * taking best F1. The geocode is shared across seeds; only the split, the trained scorers, and the eval subset move
+	 * with the seed.
 	 */
 	function runSeed(seed: number): SeedResult {
 		const rnd = lcg(seed)
 		const npiSplit = new Map<string, "train" | "eval">()
+
 		for (const npi of kept) npiSplit.set(npi, rnd() < SPLIT ? "train" : "eval")
 		const trainRecords = records.filter((r) => npiSplit.get(r.id) === "train")
 		const evalRecords = records.filter((r) => npiSplit.get(r.id) === "eval")
@@ -260,22 +281,29 @@ async function main(): Promise<void> {
 		const w = new Array<number>(dim).fill(0)
 		let bias = 0
 		const sigmoid = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
+
 		for (let epoch = 0; epoch < 400; epoch++) {
 			const gw = new Array<number>(dim).fill(0)
 			let gb = 0
+
 			for (let i = 0; i < trainX.length; i++) {
 				let z = bias
+
 				for (let j = 0; j < dim; j++) z += w[j]! * trainX[i]![j]!
 				const err = (sigmoid(z) - trainY[i]!) * trainW[i]!
+
 				for (let j = 0; j < dim; j++) gw[j]! += err * trainX[i]![j]!
 				gb += err
 			}
+
 			for (let j = 0; j < dim; j++) w[j]! -= 0.1 * (gw[j]! / trainX.length + 1e-3 * w[j]!)
 			bias -= 0.1 * (gb / trainX.length)
 		}
 		const lrSc = (x: number[]) => {
 			let z = bias
+
 			for (let j = 0; j < x.length; j++) z += w[j]! * x[j]!
+
 			return z
 		}
 
@@ -284,10 +312,13 @@ async function main(): Promise<void> {
 
 		const bestOver = (thresholds: number[], cfg: (t: number) => Parameters<typeof resolveEntities>[1]): ArmScore => {
 			let best: ArmScore = { precision: 0, recall: 0, f1: -1, overMerged: 0 }
+
 			for (const t of thresholds) {
 				const s = scoreClusters(resolveEntities(evalRecords, cfg(t)).entities, N)
+
 				if (s.f1 > best.f1) best = s
 			}
+
 			return best
 		}
 
@@ -297,7 +328,9 @@ async function main(): Promise<void> {
 		const quantileThresholds = (scores: number[]): number[] => {
 			const sorted = [...scores].sort((p, q) => p - q)
 			const ts = new Set<number>()
+
 			for (let k = 0; k <= 32; k++) ts.add(sorted[Math.floor((0.2 + (0.999 - 0.2) * (k / 32)) * (sorted.length - 1))]!)
+
 			return [...ts]
 		}
 		const fs = bestOver(
@@ -318,6 +351,7 @@ async function main(): Promise<void> {
 			scorer: lrScorer,
 			threshold: t,
 		}))
+
 		return { seed, trainN: trainRecords.length, evalN: N, fs, lr: lrArm, gbt: gbtArm }
 	}
 
@@ -326,12 +360,14 @@ async function main(): Promise<void> {
 	const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
 	const std = (xs: number[]) => {
 		const m = mean(xs)
+
 		return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)))
 	}
 
 	const SEEDS = Number(arg("seeds", "4"))
 	console.error(`[D-F] ${SEEDS} held-out-NPI splits: FS baseline vs GBT vs LR…`)
 	const results: SeedResult[] = []
+
 	for (let k = 0; k < SEEDS; k++) {
 		const r = runSeed(SEED + k)
 		results.push(r)
@@ -355,6 +391,7 @@ async function main(): Promise<void> {
 		const d = dArr ? `${sgn(mean(dArr) * 100)}${(mean(dArr) * 100).toFixed(1)}pp` : "—"
 		const f1cell = `${pct(mean(f1s))}% ± ${pct(std(f1s))}`
 		const cells = `${pct(P)}% | ${pct(R)}% | ${bold ? `**${f1cell}**` : f1cell} | ${bold ? `**${d}**` : d} | ${om.toFixed(0)}`
+
 		return `| ${bold ? `**${label}**` : label} | ${cells} |`
 	}
 	const avgEval = Math.round(mean(results.map((r) => r.evalN)))
@@ -411,6 +448,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`| seed | eval records | FS | LR | GBT |`)
 	lines.push(`|---:|---:|---:|---:|---:|`)
+
 	for (const r of results)
 		lines.push(`| ${r.seed} | ${r.evalN} | ${pct(r.fs.f1)}% | ${pct(r.lr.f1)}% | ${pct(r.gbt.f1)}% |`)
 	lines.push("")
@@ -429,6 +467,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`[written] ${OUT_MD}`)

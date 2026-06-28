@@ -11,8 +11,9 @@
  *   "Workers return parsed data to a single main-thread writer."
  */
 
-import { pluckPlacetypeSpec, type WOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { readFileSync } from "node:fs"
+
+import { pluckPlacetypeSpec, type WOFFeature } from "@mailwoman/core/resources/whosonfirst"
 
 const ADMIN_PLACETYPES = new Set([
 	"country",
@@ -73,6 +74,7 @@ async function processFiles(input: WorkerInput): Promise<WorkerOutput> {
 		}
 
 		let fileContent: string
+
 		try {
 			fileContent = readFileSync(filePath, "utf8")
 		} catch {
@@ -81,6 +83,7 @@ async function processFiles(input: WorkerInput): Promise<WorkerOutput> {
 		}
 
 		let feature: WOFFeature
+
 		try {
 			feature = JSON.parse(fileContent)
 		} catch {
@@ -89,6 +92,7 @@ async function processFiles(input: WorkerInput): Promise<WorkerOutput> {
 		}
 
 		const superseded_by = feature.properties["wof:superseded_by"]
+
 		if (superseded_by && superseded_by.length !== 0) {
 			skipped++
 			continue
@@ -102,6 +106,7 @@ async function processFiles(input: WorkerInput): Promise<WorkerOutput> {
 		}
 
 		const names: ParsedPlace["names"] = []
+
 		for (const [languageCode, nameKindMap] of localizedPropMap) {
 			names.push({
 				language: languageCode,
@@ -114,6 +119,7 @@ async function processFiles(input: WorkerInput): Promise<WorkerOutput> {
 		}
 
 		const concordances: Record<string, string> = {}
+
 		if (props.concordances) {
 			for (const [source, value] of Object.entries(props.concordances)) {
 				concordances[source] = String(value)

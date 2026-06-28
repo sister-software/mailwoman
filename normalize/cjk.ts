@@ -54,16 +54,19 @@ export function applyCjkNormalization(input: string): CjkResult {
 	// passed through verbatim, so a per-unit walk is safe for surrogate-pair input too.
 	for (let i = 0; i < input.length; i++) {
 		const code = input.charCodeAt(i)
+
 		if (code === POSTAL_MARK) {
 			stripped += 1
 			continue // drop — no addressing content; whitespace collapse later tidies any gap
 		}
+
 		if (code >= FULLWIDTH_START && code <= FULLWIDTH_END) {
 			out.push(String.fromCharCode(code - FULLWIDTH_TO_ASCII))
 			map.push(i)
 			folded += 1
 			continue
 		}
+
 		if (code === IDEOGRAPHIC_SPACE) {
 			out.push(" ")
 			map.push(i)
@@ -77,5 +80,6 @@ export function applyCjkNormalization(input: string): CjkResult {
 	if (folded === 0 && stripped === 0) {
 		return { text: input, map: identityMap(input.length), folded: 0, stripped: 0 }
 	}
+
 	return { text: out.join(""), map, folded, stripped }
 }

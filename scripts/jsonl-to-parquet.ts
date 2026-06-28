@@ -30,7 +30,6 @@
  *   /tmp/part-po-box.parquet
  */
 
-import { DuckDBInstance } from "@duckdb/node-api"
 import { randomUUID } from "node:crypto"
 import { createReadStream, createWriteStream } from "node:fs"
 import { unlink } from "node:fs/promises"
@@ -38,6 +37,8 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
 import { parseArgs } from "node:util"
+
+import { DuckDBInstance } from "@duckdb/node-api"
 
 const REQUIRED_COLUMNS = [
 	"raw",
@@ -61,11 +62,10 @@ const SPAN_COLUMNS = ["span_starts", "span_ends", "span_tags"] as const
 /**
  * The v0.5.0 DuckDB type for each column, in {@link REQUIRED_COLUMNS} order.
  *
- * Mirrors the PyArrow schema the Python original declared: `pa.string()` → `VARCHAR`,
- * `pa.list_(pa.string())` → `VARCHAR[]`, `pa.list_(pa.int32())` → `INTEGER[]`. The span offsets are
- * INT32 (#519): parallel arrays over `raw` (UTF-16 code units, `[start, end)` exclusive-end,
- * sorted, non-overlapping); `raw` is a short address string, so INT32 round-trips as a plain
- * integer where INT64 would surface as bigint.
+ * Mirrors the PyArrow schema the Python original declared: `pa.string()` → `VARCHAR`, `pa.list_(pa.string())` →
+ * `VARCHAR[]`, `pa.list_(pa.int32())` → `INTEGER[]`. The span offsets are INT32 (#519): parallel arrays over `raw`
+ * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping); `raw` is a short address string, so INT32
+ * round-trips as a plain integer where INT64 would surface as bigint.
  */
 const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
 	raw: "VARCHAR",
@@ -106,6 +106,7 @@ function parseCliArgs(): Args {
 	}
 
 	const rowGroupSize = Number(values["row-group-size"])
+
 	if (!Number.isInteger(rowGroupSize) || rowGroupSize <= 0) {
 		throw new Error(`--row-group-size must be a positive integer (got ${JSON.stringify(values["row-group-size"])})`)
 	}
@@ -120,6 +121,7 @@ function parseCliArgs(): Args {
  */
 function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 	const present = SPAN_COLUMNS.filter((c) => row[c] != null)
+
 	if (present.length !== SPAN_COLUMNS.length) {
 		const missing = SPAN_COLUMNS.filter((c) => row[c] == null)
 		throw new Error(
@@ -129,6 +131,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 		)
 	}
 	const n = (row.span_starts as unknown[]).length
+
 	if ((row.span_ends as unknown[]).length !== n || (row.span_tags as unknown[]).length !== n) {
 		throw new Error(
 			`line ${lineNo}: span triple arrays are not parallel — ` +
@@ -156,9 +159,11 @@ async function main(): Promise<void> {
 		const rl = createInterface({ input: createReadStream(args.input, { encoding: "utf8" }), crlfDelay: Infinity })
 		let rows = 0
 		let lineNo = 0
+
 		for await (const rawLine of rl) {
 			lineNo++
 			const line = rawLine.trim()
+
 			if (!line) continue
 			const row = JSON.parse(line) as Record<string, unknown>
 			assertSpanTriple(row, lineNo)

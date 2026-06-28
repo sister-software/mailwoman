@@ -8,6 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import {
 	hasAnyStreetSideTag,
 	type NoStreetBaseTuple,
@@ -18,8 +19,10 @@ import {
 
 function seededRandom(seed: number): () => number {
 	let s = seed
+
 	return () => {
 		s = (s * 1664525 + 1013904223) % 4294967296
+
 		return s / 4294967296
 	}
 }
@@ -114,9 +117,11 @@ describe("synthesizeNoStreetRow", () => {
 
 	it("never emits ANY street-side tag across 500 random invocations", () => {
 		const rng = seededRandom(42)
+
 		for (let i = 0; i < 500; i++) {
 			const row = synthesizeNoStreetRow(SAMPLE_BASE, { random: rng })
 			expect(row).not.toBeNull()
+
 			for (const tag of STREET_SIDE_TAGS) {
 				expect(row!.components[tag]).toBeUndefined()
 			}
@@ -133,12 +138,14 @@ describe("synthesizeNoStreetRow", () => {
 			"postcode-only": 0,
 			"country-only": 0,
 		}
+
 		for (let i = 0; i < 1000; i++) {
 			const row = synthesizeNoStreetRow(SAMPLE_BASE, { random: rng })
 			counts[row!.template]++
 		}
 		// venue-adversarial is the critical slice — should be the largest single bucket.
 		expect(counts["venue-adversarial"]).toBeGreaterThan(counts["venue-plain"])
+
 		// All templates should fire at least once at this sample size.
 		for (const t of Object.keys(counts) as NoStreetTemplate[]) {
 			expect(counts[t]).toBeGreaterThan(0)
@@ -154,6 +161,7 @@ describe("synthesizeNoStreetRow", () => {
 			["CA", "en-CA"],
 			["AU", "en-AU"],
 		]
+
 		for (const [country, expectedLocale] of cases) {
 			const row = synthesizeNoStreetRow(
 				{ ...SAMPLE_BASE, country },

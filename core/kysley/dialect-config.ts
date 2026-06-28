@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { DatabaseConnection } from "kysely"
 import type { DatabaseSync } from "node:sqlite"
+
+import type { DatabaseConnection } from "kysely"
 
 /**
  * Config for the SQLite dialect.

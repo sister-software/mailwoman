@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { agreementPattern, estimateParameters } from "./em.js"
 import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.js"
 
@@ -80,6 +81,7 @@ describe("estimateParameters (EM)", () => {
 
 	it("never emits a zero m/u (which would be an infinite weight)", () => {
 		const { model } = estimateParameters(buildModel(0.2), patterns, { maxIterations: 100 })
+
 		for (const comparison of model.comparisons) {
 			for (const level of comparison.levels) {
 				expect(level.m).toBeGreaterThan(0)

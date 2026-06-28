@@ -9,16 +9,16 @@
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+
 import type { ClassifierPolicy, PolicyMode } from "./policy.js"
 
 /**
- * Build a fresh array of policies — one per `ComponentTag`, all in `mode`. Returns a new array on
- * each call; callers may mutate it freely.
+ * Build a fresh array of policies — one per `ComponentTag`, all in `mode`. Returns a new array on each call; callers
+ * may mutate it freely.
  *
- * `mode` defaults to `rule_only` (the historical default — every component rule-sourced until a
- * per-tag migration). The input-shape router (#478 increment 2) passes a shape-derived default
- * (e.g. `neural_preferred` for OOD-script input) so the whole table starts from the routed prior
- * before per-tag config overlays.
+ * `mode` defaults to `rule_only` (the historical default — every component rule-sourced until a per-tag migration). The
+ * input-shape router (#478 increment 2) passes a shape-derived default (e.g. `neural_preferred` for OOD-script input)
+ * so the whole table starts from the routed prior before per-tag config overlays.
  */
 export function buildDefaultPolicies(mode: PolicyMode = "rule_only"): ClassifierPolicy[] {
 	return COMPONENT_TAGS.map<ClassifierPolicy>((component) => ({

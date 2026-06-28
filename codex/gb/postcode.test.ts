@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { inwardCode, isUkPostcode, normalizeUkPostcode, outwardCode, postcodeArea } from "./postcode.js"
 
 describe("normalizeUkPostcode", () => {

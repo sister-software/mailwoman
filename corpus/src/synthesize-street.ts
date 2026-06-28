@@ -168,12 +168,11 @@ export interface StreetSynthesisOpts {
 	/** Probability of emitting house_number alongside the street. Default 0.85. */
 	includeHouseNumberProb?: number
 	/**
-	 * Probability of emitting the street BARE — no `, City, ST ZIP` tail and no region/locality/
-	 * postcode components (just `street_prefix`/`street`/`street_suffix` + optional `house_number`).
-	 * Default 0 (preserves the original full-address behavior exactly, including the RNG sequence).
-	 * Set >0 to teach the model that a bare `10th Ave` / `Main St` is a STREET, not a locality — the
-	 * functional-test failure cluster (bare streets mislabeled `locality`), the bare-format analogue
-	 * of the v0.7.x intersection-bare fix.
+	 * Probability of emitting the street BARE — no `, City, ST ZIP` tail and no region/locality/ postcode components
+	 * (just `street_prefix`/`street`/`street_suffix` + optional `house_number`). Default 0 (preserves the original
+	 * full-address behavior exactly, including the RNG sequence). Set >0 to teach the model that a bare `10th Ave` /
+	 * `Main St` is a STREET, not a locality — the functional-test failure cluster (bare streets mislabeled `locality`),
+	 * the bare-format analogue of the v0.7.x intersection-bare fix.
 	 */
 	bareProb?: number
 }
@@ -186,16 +185,20 @@ function randomHouseNumber(random: () => number): string {
 	// US house number distribution: skewed low. 1-99 (30%), 100-999 (40%),
 	// 1000-9999 (25%), 10000+ (5%).
 	const r = random()
+
 	if (r < 0.3) return String(1 + Math.floor(random() * 99))
+
 	if (r < 0.7) return String(100 + Math.floor(random() * 900))
+
 	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
+
 	return String(10000 + Math.floor(random() * 89999))
 }
 
 /**
- * Synthesize a US street address with decomposed Stage 3 components. The street is built from
- * PREFIX + NAME + SUFFIX, then passed through the same `decomposeStreet()` utility the TIGER
- * adapter uses — guarantees the synthetic distribution matches the canonical decomposition logic.
+ * Synthesize a US street address with decomposed Stage 3 components. The street is built from PREFIX + NAME + SUFFIX,
+ * then passed through the same `decomposeStreet()` utility the TIGER adapter uses — guarantees the synthetic
+ * distribution matches the canonical decomposition logic.
  */
 export function synthesizeStreetRow(
 	base: StreetBaseTuple,
@@ -234,11 +237,15 @@ export function synthesizeStreetRow(
 				locality: base.locality,
 				postcode: base.postcode,
 			}
+
 	if (decomposed.prefix) components.street_prefix = decomposed.prefix
+
 	if (decomposed.street) components.street = decomposed.street
+
 	if (decomposed.suffix) components.street_suffix = decomposed.suffix
 
 	let raw: string
+
 	if (random() < includeHN) {
 		const hn = randomHouseNumber(random)
 		components.house_number = hn

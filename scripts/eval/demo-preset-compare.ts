@@ -23,6 +23,7 @@ const modelPath = process.argv.find((a) => a.startsWith("--model-path="))?.split
 async function run() {
 	const baseline = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	console.log("=== BASELINE (v0.5.1 current weights) ===\n")
+
 	for (const addr of PRESETS) {
 		const r = await baseline.parseJson(addr)
 		const comps = Object.entries(r)
@@ -33,9 +34,11 @@ async function run() {
 	}
 
 	const tokenizerPath = process.argv.find((a) => a.startsWith("--tokenizer-path="))?.split("=")[1]
+
 	if (modelPath) {
 		const candidate = await NeuralAddressClassifier.loadFromWeights({ modelPath, tokenizerPath })
 		console.log(`\n=== CANDIDATE (${modelPath}) ===\n`)
+
 		for (const addr of PRESETS) {
 			const r = await candidate.parseJson(addr)
 			const comps = Object.entries(r)

@@ -27,6 +27,7 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -48,6 +49,7 @@ const norm = (v: string | undefined): string => (v ?? "").trim().toLowerCase()
 async function build(model: string) {
 	const card = JSON.parse(readFileSync(CARD, "utf8"))
 	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(model)])
+
 	return new NeuralAddressClassifier({
 		tokenizer,
 		runner,
@@ -59,33 +61,42 @@ async function build(model: string) {
 }
 
 /**
- * Which tag did the model assign the gold house-number VALUE to? (postcode / street / … /
- * "DROPPED").
+ * Which tag did the model assign the gold house-number VALUE to? (postcode / street / … / "DROPPED").
  */
 function whereDidItGo(pred: Record<string, string>, goldHn: string): string {
 	const g = norm(goldHn)
+
 	for (const [tag, val] of Object.entries(pred)) {
 		if (tag === "house_number") continue
+
 		if (norm(val).split(/\s+/).includes(g) || norm(val) === g) return tag
 	}
+
 	return "DROPPED/O"
 }
 
 function loadUsRows(dir: string): Row[] {
 	const out: Row[] = []
+
 	for (const sub of ["dev", "test", "."]) {
 		const d = join(dir, sub)
+
 		if (!existsSync(d)) continue
+
 		for (const f of readdirSync(d)) {
 			if (!f.endsWith(".jsonl")) continue
+
 			if (!/us|en-us/i.test(f) && f !== "us.jsonl") continue
+
 			for (const line of readFileSync(join(d, f), "utf8").split("\n")) {
 				if (!line.trim()) continue
 				const r = JSON.parse(line) as Row
+
 				if (r.components?.house_number) out.push(r)
 			}
 		}
 	}
+
 	return out
 }
 
@@ -100,6 +111,7 @@ async function main() {
 	const regressions: { raw: string; gold: string; went: string }[] = []
 	const wentCounts: Record<string, number> = {}
 	let i = 0
+
 	for (const row of rows) {
 		if (++i % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
 		const gold = norm(row.components.house_number)
@@ -107,11 +119,15 @@ async function main() {
 		const pC = decodeAsJson(await cand.parse(row.raw, {})) as Record<string, string>
 		const bOk = norm(pB.house_number) === gold
 		const cOk = norm(pC.house_number) === gold
+
 		if (bOk) baseRight++
+
 		if (cOk) candRight++
+
 		if (bOk && !cOk) {
 			const went = whereDidItGo(pC, row.components.house_number!)
 			wentCounts[went] = (wentCounts[went] ?? 0) + 1
+
 			if (regressions.length < 40) regressions.push({ raw: row.raw, gold, went })
 		}
 	}
@@ -124,6 +140,7 @@ async function main() {
 	)
 	console.log(`Where the candidate sent the house number instead:`, JSON.stringify(wentCounts))
 	console.log(`\n--- regressed rows (gold house_number → what the candidate called it) ---`)
+
 	for (const r of regressions) console.log(`  [${r.went}]  gold.hn=${r.gold}  raw=${JSON.stringify(r.raw)}`)
 }
 

@@ -17,6 +17,7 @@
 import "@mailwoman/core"
 import { TokenContext } from "@mailwoman/core/tokenization"
 import { describe, expect, test } from "vitest"
+
 import { wrapLegacyClassifier } from "./adapter.js"
 import { HouseNumberClassifier } from "./HouseNumberClassifier.js"
 
@@ -44,6 +45,7 @@ describe("wrapLegacyClassifier — HouseNumberClassifier", () => {
 		legacy.classifyTokens(referenceContext)
 
 		const referenceSpans: string[] = []
+
 		for (const section of referenceContext.sections) {
 			for (const child of section.children) {
 				if (child.classifications.has("house_number")) {
@@ -65,6 +67,7 @@ describe("wrapLegacyClassifier — HouseNumberClassifier", () => {
 		const proposals = await wrapped.classify(section, {})
 
 		expect(proposals.length).toBeGreaterThan(0)
+
 		for (const p of proposals) {
 			expect(p.source).toBe("rule")
 			expect(p.source_id).toBe("house_number")

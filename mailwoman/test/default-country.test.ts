@@ -23,7 +23,9 @@ import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+
 import { describe, expect, test } from "vitest"
+
 import { localeToCountry, options as parseOptions, resolverDefaultCountry } from "../commands/parse.js"
 
 const exec = promisify(execFile)
@@ -84,6 +86,7 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 	// The resolver prints lat/lon on the line after the opening tag; `[^>]*` spans that newline.
 	const localityLat = (xml: string): number | null => {
 		const m = /<locality[^>]*lat="([-0-9.]+)"/.exec(xml)
+
 		return m ? Number(m[1]) : null
 	}
 

@@ -30,10 +30,11 @@
  *   scar is positional, not universal).
  */
 
-import { departementForCodePostal } from "@mailwoman/codex/fr"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
+
+import { departementForCodePostal } from "@mailwoman/codex/fr"
+import type { ComponentTag } from "@mailwoman/core/types"
 
 import { stableSourceId } from "../adapter.js"
 import { alignRow } from "../align.js"
@@ -63,24 +64,27 @@ interface AdminSplitVariant {
 async function readCommunes(path: string): Promise<CommuneRow[]> {
 	const rows: CommuneRow[] = []
 	const rl = createInterface({ input: createReadStream(path, { encoding: "utf8" }), crlfDelay: Infinity })
+
 	for await (const line of rl) {
 		if (!line) continue
 		const [commune, postcode, lon, lat] = line.split("\t")
+
 		if (!commune || !postcode) continue
 		const dep = departementForCodePostal(postcode)
+
 		if (!dep) continue // bad/unmappable postcode — skip (CEDEX, etc.)
 		// Substring invariant: a département whose name isn't a clean token (none are) or a commune
 		// containing the département name would confuse alignment — both are vanishingly rare here.
 		rows.push({ commune, postcode, departement: dep.name, lon, lat })
 	}
+
 	return rows
 }
 
 /**
- * Render one admin-split variant. The CORE teaching signal: the département, even as a full word
- * after a comma or a space, is `region` — never folded into `locality`. Variants 1-3 are the
- * failure class; 4-5 are canonical-FR preservation so the model doesn't over-fire region on every
- * trailing token (and the bare commune still resolves).
+ * Render one admin-split variant. The CORE teaching signal: the département, even as a full word after a comma or a
+ * space, is `region` — never folded into `locality`. Variants 1-3 are the failure class; 4-5 are canonical-FR
+ * preservation so the model doesn't over-fire region on every trailing token (and the bare commune still resolves).
  */
 function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	const r = random()
@@ -88,6 +92,7 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	const dep = c.departement
 	const pc = c.postcode
 	let out: AdminSplitVariant
+
 	if (r < 0.25) {
 		// 1. bare comma, NO postcode — the Thauron/#727 shape (anchor off)
 		out = { raw: `${loc}, ${dep}`, components: { locality: loc, region: dep }, order: "bare-comma" }
@@ -108,6 +113,7 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 		// 5. commune + postcode (NO département) — preservation, anchor ON
 		out = { raw: `${loc} ${pc}`, components: { locality: loc, postcode: pc }, order: "commune-pc" }
 	}
+
 	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 shard's bare rows carried NO country
 	// token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows now append an
 	// explicit "France" + a `country` component — the model relearns to emit country WHEN the token is
@@ -119,6 +125,7 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 			order: `${out.order}+fr`,
 		}
 	}
+
 	return out
 }
 
@@ -138,6 +145,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 
 		const pool = await readCommunes(communesPath)
 		console.error(`  ${communesPath}: ${pool.length} communes with derived département`)
+
 		if (pool.length === 0) {
 			throw new Error("No communes — build the TSV from BAN first (see the recipe header).")
 		}
@@ -154,6 +162,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 
 			// Alignment precondition: every component surface appears verbatim in raw.
 			const values = Object.values(components).filter((v): v is string => Boolean(v))
+
 			if (!values.every((v) => raw.includes(v))) {
 				skipped++
 				continue
@@ -183,6 +192,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 				license: LICENSE,
 			}
 			const aligned = alignRow(canonical)
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue
@@ -196,6 +206,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 		}
 
 		console.error(`  emitted=${emitted} skipped=${skipped} order-mix=${JSON.stringify(orderCounts)}`)
+
 		return { emitted, skipped }
 	},
 }

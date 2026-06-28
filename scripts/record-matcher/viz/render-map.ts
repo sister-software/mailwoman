@@ -24,6 +24,7 @@ import { chromium } from "playwright"
 
 const url = process.argv[2]
 const out = process.argv[3]
+
 if (!url || !out) {
 	console.error("usage: render-map.ts <served-localhost-url> <out.png>")
 	process.exit(1)
@@ -45,4 +46,5 @@ await page.screenshot({ path: out })
 await browser.close()
 
 console.error(`[map-render] ${out}; console errors=${errors.length}`)
+
 for (const e of errors.slice(0, 6)) console.error("  " + e)

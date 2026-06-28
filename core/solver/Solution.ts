@@ -13,6 +13,7 @@ import {
 } from "@mailwoman/core/classification"
 import { formatAddress } from "@mailwoman/core/formatter"
 import type { TokenContext } from "@mailwoman/core/tokenization"
+
 import { type SerializedSolutionMatch, SolutionMatch } from "./SolutionMatch.js"
 
 export interface SerializedSolution {
@@ -77,8 +78,8 @@ export class Solution {
 	}
 
 	/**
-	 * Predicate to determine if this solution covers another solution, i.e. the target solution is a
-	 * subset of this solution without any unique ranges.
+	 * Predicate to determine if this solution covers another solution, i.e. the target solution is a subset of this
+	 * solution without any unique ranges.
 	 */
 	covers(that: Solution): boolean {
 		return that.matches.every((pair) => this.matches.some(({ span }) => span.covers(pair.span)))

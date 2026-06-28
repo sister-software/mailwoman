@@ -19,10 +19,11 @@
  *   Env: MAILWOMAN_DOCS_URL base URL (default http://localhost:7770)
  */
 
-import { chromium, type Page } from "@playwright/test"
 import { mkdir } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { parseArgs } from "node:util"
+
+import { chromium, type Page } from "@playwright/test"
 
 const BASE = process.env.MAILWOMAN_DOCS_URL ?? "http://localhost:7770"
 const SCREENSHOT_DIR = "/tmp/mailwoman-docs"
@@ -57,6 +58,7 @@ async function cmdScreenshot(path: string, outArg?: string) {
 	const result = await withPage(async (page) => {
 		const resp = await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
 		await page.screenshot({ path: out, fullPage: true })
+
 		return { status: resp?.status() ?? 0, title: await page.title() }
 	})
 	console.log(`screenshot ${path} → ${out} (HTTP ${result.status}, "${result.title}")`)
@@ -72,6 +74,7 @@ async function checkRoute(path: string) {
 			.textContent()
 			.catch(() => null)
 		const soft404 = (heading ?? "").trim() === "Page Not Found"
+
 		return {
 			status: resp?.status() ?? 0,
 			title: await page.title(),
@@ -91,14 +94,17 @@ interface RouteResult {
 
 function reportRoute(path: string, result: RouteResult) {
 	const flags = [`HTTP ${result.status}`, `title="${result.title}"`, `console errors=${result.errors.length}`]
+
 	if (result.soft404) flags.push("SOFT-404")
 	console.log(`check ${path}: ${flags.join(", ")}`)
+
 	for (const e of result.errors) console.log(`  ${e.split("\n")[0]}`)
 }
 
 async function cmdCheck(path: string) {
 	const result = await checkRoute(path)
 	reportRoute(path, result)
+
 	if (result.status >= 400 || result.errors.length || result.soft404) process.exit(1)
 }
 
@@ -111,9 +117,11 @@ async function cmdSmoke() {
 		try {
 			const result = await checkRoute(r)
 			reportRoute(r, result)
+
 			if (result.status >= 400 || result.errors.length || result.soft404) fail++
 		} catch (e) {
 			fail++
+
 			if (e instanceof Error) {
 				console.log(`check ${r}: THREW ${e.message.split("\n")[0]}`)
 			} else {
@@ -128,6 +136,7 @@ async function cmdSmoke() {
 async function cmdEval(path: string, js: string) {
 	const result = await withPage(async (page) => {
 		await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
+
 		return await page.evaluate(`(async () => { ${js} })()`)
 	})
 	console.log(JSON.stringify(result, null, 2))
@@ -153,6 +162,7 @@ if (values.smoke) {
 	await cmdCheck(values.check)
 } else if (values.eval) {
 	const [path, ...jsParts] = positionals
+
 	if (!path || !jsParts.length) {
 		console.error(`eval requires a path and JS code\nsee header of ${import.meta.url} for usage`)
 		process.exit(2)

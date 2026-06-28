@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs"
+import { basename } from "node:path"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -17,8 +20,6 @@
  *   compiled out/ (yarn compile).
  */
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { readFileSync } from "node:fs"
-import { basename } from "node:path"
 
 interface NeuralClassifier {
 	parse(input: string, opts?: { postcodeRepair?: boolean }): Promise<AddressTree>
@@ -54,23 +55,29 @@ function collect(tree: AddressTree): ByTag {
 	const byTag: ByTag = {}
 	const st = [...tree.roots]
 	const streetParts: Array<{ s: number; v: string }> = []
+
 	while (st.length) {
 		const n = st.pop()!
+
 		if (STREET.has(n.tag) && n.value?.trim()) streetParts.push({ s: n.start, v: n.value.trim() })
 		;(byTag[n.tag] ??= []).push(n.value?.trim() || "")
 		st.push(...(n.children || []))
 	}
 	streetParts.sort((a, b) => a.s - b.s)
 	byTag.__street_assembled = [streetParts.map((p) => p.v).join(" ")]
+
 	return byTag
 }
 function hit(byTag: ByTag, tag: string, goldVal: string): boolean {
 	const g = norm(goldVal)
+
 	if (tag === "street") {
 		const a = norm(byTag.__street_assembled?.[0])
+
 		if (a && (a === g || a.includes(g) || g.includes(a))) return true
 	}
 	const vals = (byTag[tag] || []).map(norm)
+
 	return vals.some((v) => v && (v === g || v.includes(g) || g.includes(v)))
 }
 
@@ -82,34 +89,46 @@ type TagAcc = Record<string, Counts>
 
 for (const f of files) {
 	const acc: { raw: TagAcc; argmax: TagAcc; rec: TagAcc } = { raw: {}, argmax: {}, rec: {} }
+
 	for (const t of TAGS) for (const k of ["raw", "argmax", "rec"] as const) acc[k][t] = { h: 0, n: 0 }
 	let n = 0
+
 	for (const line of readFileSync(f, "utf8").trim().split("\n")) {
 		const r = JSON.parse(line) as GoldenRow
+
 		if (!r.raw || !r.components) continue
 		n++
 		const rawT = collect(await classifier.parse(r.raw, { postcodeRepair: true }))
 		const argT = collect((await pipeline(r.raw, { jointReconcile: false })).tree)
 		const recT = collect((await pipeline(r.raw, { jointReconcile: true })).tree)
+
 		for (const [tag, gv] of Object.entries(r.components)) {
 			if (!TAGS.includes(tag)) continue
-			;(acc.raw[tag]!.n++, (acc.argmax[tag]!.n++, acc.rec[tag]!.n++))
+			acc.raw[tag]!.n++
+			acc.argmax[tag]!.n++
+			acc.rec[tag]!.n++
+
 			if (hit(rawT, tag, gv)) acc.raw[tag]!.h++
+
 			if (hit(argT, tag, gv)) acc.argmax[tag]!.h++
+
 			if (hit(recT, tag, gv)) acc.rec[tag]!.h++
 		}
 	}
 	console.log(`\n=== ${basename(f)}  (n=${n} addresses) ===`)
 	console.log(`tag             raw      argmax   reconcile   Δ(rec−argmax)`)
 	let worst = 0
+
 	for (const t of TAGS) {
 		const a = acc.argmax[t]!,
 			c = acc.rec[t]!,
 			rw = acc.raw[t]!
+
 		if (a.n === 0) continue
 		const ap = (100 * a.h) / a.n,
 			cp = (100 * c.h) / c.n,
 			d = cp - ap
+
 		if (d < worst) worst = d
 		const flag = d <= -2 ? "  <-- reconcile WORSE" : d >= 2 ? "  <-- reconcile better" : ""
 		console.log(

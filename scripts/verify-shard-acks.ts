@@ -74,15 +74,19 @@ interface Args {
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	const out: Partial<Args> = { verbose: false }
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--manifest" && args[i + 1]) out.manifestPath = args[++i]
 		else if (a === "--verbose" || a === "-v") out.verbose = true
 	}
+
 	if (!out.manifestPath) {
 		console.error("Usage: verify-shard-acks.ts --manifest <MANIFEST.json> [--verbose]")
 		process.exit(2)
 	}
+
 	return out as Args
 }
 
@@ -94,18 +98,23 @@ function main(): void {
 	const unacknowledged: ShardEntry[] = []
 	const acknowledged: ShardEntry[] = []
 	const clean: ShardEntry[] = []
-	let untracked = 0 // shards predating the linter (no lint_flags field)
+	let untracked = 0
+
+	// shards predating the linter (no lint_flags field)
 
 	for (const s of shards) {
 		const flags = s.lint_flags
+
 		if (flags === undefined) {
 			untracked++
 			continue
 		}
+
 		if (flags === 0) {
 			clean.push(s)
 			continue
 		}
+
 		if (s.lint_acknowledged === true) {
 			acknowledged.push(s)
 		} else {
@@ -126,6 +135,7 @@ function main(): void {
 	if (args.verbose && acknowledged.length > 0) {
 		console.log(`## Acknowledged flagged shards (${acknowledged.length})`)
 		console.log("")
+
 		for (const s of acknowledged) {
 			const note = s.lint_ack_note ? ` — _${s.lint_ack_note}_` : ""
 			console.log(`- \`${s.path}\` (${s.lint_flags} flags)${note}`)
@@ -142,6 +152,7 @@ function main(): void {
 			"- Set `lint_acknowledged: true` in the MANIFEST entry with a `lint_ack_note` explaining why the flagged patterns are intentional."
 		)
 		console.log("")
+
 		for (const s of unacknowledged) {
 			console.log(`- \`${s.path}\` (${s.lint_flags} flag(s), source=${s.first_source_id ?? "?"})`)
 		}

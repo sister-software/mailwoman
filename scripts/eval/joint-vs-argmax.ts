@@ -1,3 +1,5 @@
+import { readFileSync, writeFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -26,10 +28,10 @@ import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createWofResolver } from "@mailwoman/resolver"
 import { createRuntimePipeline } from "mailwoman"
-import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -48,17 +50,21 @@ const norm = (s: string | undefined | null): string =>
 		.trim()
 
 /**
- * Did the projected output match gold on a field (subset-tolerant: gold token-subset of resolved or
- * vice-versa)?
+ * Did the projected output match gold on a field (subset-tolerant: gold token-subset of resolved or vice-versa)?
  */
 function fieldMatch(resolved: string | undefined, gold: string | undefined | null): boolean {
 	const r = norm(resolved)
 	const g = norm(gold)
-	if (!g) return true // nothing to match → not a miss
+
+	if (!g) return true
+
+	// nothing to match → not a miss
 	if (!r) return false
+
 	if (r === g) return true
 	const rt = new Set(r.split(" "))
 	const gt = g.split(" ")
+
 	return gt.every((t) => rt.has(t)) || r.split(" ").every((t) => new Set(gt).has(t))
 }
 
@@ -69,6 +75,7 @@ function pct(n: number, d: number): string {
 function percentile(xs: number[], p: number): number {
 	if (xs.length === 0) return 0
 	const sorted = [...xs].sort((a, b) => a - b)
+
 	return sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))]!
 }
 
@@ -84,6 +91,7 @@ async function main(): Promise<void> {
 		"wof",
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
+
 	if (!evalPath || !modelPath || !cardPath) throw new Error("need --eval, --model, --model-card")
 
 	const card = JSON.parse(readFileSync(cardPath, "utf8"))
@@ -126,12 +134,14 @@ async function main(): Promise<void> {
 	const jointLat: number[] = []
 
 	const dumpReg = !!process.env.MW_DUMP_REGRESSIONS
+
 	for (const row of rows) {
 		const score = async (
 			forceJointReconcile: boolean
 		): Promise<{ loc: boolean; reg: boolean; ms: number; locVal?: string }> => {
 			const t0 = performance.now()
 			let json: Partial<Record<string, string>> = {}
+
 			try {
 				const result = await pipeline(row.input, { forceJointReconcile, resolveOpts })
 				json = decodeAsJson(result.tree)
@@ -139,6 +149,7 @@ async function main(): Promise<void> {
 				/* leave json empty → miss */
 			}
 			const ms = performance.now() - t0
+
 			return {
 				loc: fieldMatch(json.locality, row.expected.locality),
 				reg: fieldMatch(json.region, row.expected.region),
@@ -150,6 +161,7 @@ async function main(): Promise<void> {
 		const argmaxFirst = argmaxLat.length % 2 === 0
 		let a: { loc: boolean; reg: boolean; ms: number; locVal?: string }
 		let j: { loc: boolean; reg: boolean; ms: number; locVal?: string }
+
 		if (argmaxFirst) {
 			a = await score(false)
 			j = await score(true)
@@ -159,9 +171,13 @@ async function main(): Promise<void> {
 		}
 		argmaxLat.push(a.ms)
 		jointLat.push(j.ms)
+
 		if (a.loc) argmaxLocOk++
+
 		if (j.loc) jointLocOk++
+
 		if (a.reg) argmaxRegOk++
+
 		if (j.reg) jointRegOk++
 		// Per-FIELD regression/improvement: did joint make a field WORSE (or better) than argmax had it?
 		// Per-field (not combined loc&&reg) so a low overall region-match doesn't mask a locality change.
@@ -169,9 +185,13 @@ async function main(): Promise<void> {
 		const regRegressed = a.reg && !j.reg
 		const locImproved = !a.loc && j.loc
 		const regImproved = !a.reg && j.reg
+
 		if (locRegressed || regRegressed || locImproved || regImproved) changed++
+
 		if (locRegressed || regRegressed) regressed++
+
 		if (locImproved || regImproved) improved++
+
 		if (dumpReg && locRegressed) {
 			console.error(
 				`[REG] gold="${row.expected.locality}"  argmax="${a.locVal ?? ""}"  joint="${j.locVal ?? ""}"  | ${row.input}`
@@ -216,6 +236,7 @@ async function main(): Promise<void> {
 	)
 
 	const outJson = arg("out-json")
+
 	if (outJson) {
 		writeFileSync(outJson, JSON.stringify(report, null, 2))
 		console.error(`wrote ${outJson}`)

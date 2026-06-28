@@ -5,6 +5,7 @@
  */
 
 import type { Span } from "@mailwoman/core/tokenization"
+
 import type { Classification } from "./Classification.js"
 
 /**

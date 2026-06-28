@@ -5,6 +5,7 @@
  */
 
 import { Span, TokenContext } from "@mailwoman/core/tokenization"
+
 import type { Classifier } from "./BaseClassifier.js"
 
 export interface SectionClassifierUtils {

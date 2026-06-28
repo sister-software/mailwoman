@@ -20,6 +20,7 @@ import BrowserOnly from "@docusaurus/BrowserOnly"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
+
 import styles from "./styles.module.css"
 
 // ── Constants ───────────────────────────────────────────────────────────
@@ -105,19 +106,23 @@ async function apiPost<T = unknown>(path: string, body: Record<string, unknown>)
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(body),
 	})
+
 	if (!res.ok) {
 		throw new Error(`Trackio ${path} returned ${res.status}: ${await res.text().catch(() => "unknown")}`)
 	}
+
 	return res.json() as Promise<T>
 }
 
 async function fetchRuns(): Promise<RunInfo[]> {
 	const data = await apiPost<{ data?: RunInfo[] }>("/api/get_runs_for_project", { project: PROJECT })
+
 	return data.data ?? []
 }
 
 async function fetchRunSummary(run: string): Promise<RunSummary> {
 	const data = await apiPost<{ data?: RunSummary }>("/api/get_run_summary", { project: PROJECT, run })
+
 	return data.data ?? ({} as RunSummary)
 }
 
@@ -127,6 +132,7 @@ async function fetchMetricValues(run: string, metric: string): Promise<MetricPoi
 		run,
 		metric_name: metric,
 	})
+
 	return data.data ?? []
 }
 
@@ -139,6 +145,7 @@ function niceTicks(min: number, max: number, count: number): number[] {
 	const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)))
 	const residual = roughStep / magnitude
 	let niceStep: number
+
 	if (residual <= 1.5) niceStep = 1 * magnitude
 	else if (residual <= 3) niceStep = 2 * magnitude
 	else if (residual <= 7) niceStep = 5 * magnitude
@@ -147,18 +154,25 @@ function niceTicks(min: number, max: number, count: number): number[] {
 	const niceMin = Math.floor(min / niceStep) * niceStep
 	const niceMax = Math.ceil(max / niceStep) * niceStep
 	const ticks: number[] = []
+
 	for (let v = niceMin; v <= niceMax + niceStep * 0.5; v += niceStep) {
 		ticks.push(Math.round(v * 1e10) / 1e10)
 	}
+
 	return ticks
 }
 
 function formatValue(v: number): string {
 	if (v === 0) return "0"
+
 	if (Math.abs(v) < 0.001) return v.toExponential(2)
+
 	if (Math.abs(v) < 1) return v.toFixed(4)
+
 	if (Math.abs(v) < 100) return v.toFixed(3)
+
 	if (Math.abs(v) < 10_000) return v.toFixed(1)
+
 	return v.toExponential(2)
 }
 
@@ -189,29 +203,37 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 			xmx = -Infinity,
 			ymn = Infinity,
 			ymx = -Infinity
+
 		for (const p of allPoints) {
 			if (p.step < xmn) xmn = p.step
+
 			if (p.step > xmx) xmx = p.step
+
 			if (p.value < ymn) ymn = p.value
+
 			if (p.value > ymx) ymx = p.value
 		}
 		const yPad = (ymx - ymn) * 0.05 || 0.01
 		const yMinData = ymn - yPad
 		const yMaxData = ymx + yPad
+
 		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: yMinData, yMax: yMaxData, yMinData }
 		// Log scale: the floor must come from the smallest *positive* data value, not the
 		// linearly-padded minimum — otherwise a metric that touches/approaches zero (F1 scores
 		// start near 0, val_loss can be tiny) drags the floor to ~0 and the axis spans many
 		// empty decades, squashing the real data into a sliver. Pad in log-space, not linear.
 		let posMin = Infinity
+
 		for (const p of allPoints) {
 			if (p.value > 0 && p.value < posMin) posMin = p.value
 		}
+
 		if (!Number.isFinite(posMin)) posMin = 1e-6 // all values non-positive; nominal floor
 		const posMax = Math.max(ymx, posMin * 10)
 		const logMin = Math.log10(posMin)
 		const logMax = Math.log10(posMax)
 		const logPad = (logMax - logMin) * 0.05 || 0.05
+
 		return {
 			xMin: xmn,
 			xMax: xmx,
@@ -232,6 +254,7 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 		(y: number) => {
 			// Clamp ≤0 values to the positive floor so they rest on the axis bottom (log10(0) = -∞).
 			const vy = isLog ? Math.log10(Math.max(y, yMinData)) : y
+
 			return SVG_PAD.top + plotH - ((vy - yMin) / (yMax - yMin || 1)) * plotH
 		},
 		[yMin, yMax, plotH, isLog, yMinData]
@@ -243,13 +266,17 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 		const ticks: number[] = []
 		const lo = Math.floor(yMin)
 		const hi = Math.ceil(yMax)
+
 		for (let exp = lo; exp <= hi; exp++) {
 			ticks.push(Math.pow(10, exp))
+
 			for (const m of [2, 3, 5, 7]) {
 				const v = m * Math.pow(10, exp)
+
 				if (Math.log10(v) >= yMin && Math.log10(v) <= yMax) ticks.push(v)
 			}
 		}
+
 		return ticks.sort((a, b) => a - b)
 	}, [yMin, yMax, isLog])
 	const xTicks = useMemo(() => niceTicks(xMin, xMax, 8), [xMin, xMax])
@@ -258,6 +285,7 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 	const polyPoints = useMemo(() => {
 		return series.map((s) => {
 			if (s.points.length === 0) return ""
+
 			return s.points.map((p) => `${xScale(p.step).toFixed(1)},${yScale(p.value).toFixed(1)}`).join(" ")
 		})
 	}, [series, xScale, yScale])
@@ -278,10 +306,12 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 
 			for (let si = 0; si < series.length; si++) {
 				const s = series[si]
+
 				for (const p of s.points) {
 					const px = xScale(p.step)
 					const py = yScale(p.value)
 					const dist = Math.abs(mx - px) + Math.abs(my - py) * 2
+
 					if (dist < bestDist && dist < 40) {
 						bestDist = dist
 						// Convert viewBox coords to wrapper-relative CSS pixels
@@ -359,6 +389,7 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 			{/* Data lines */}
 			{series.map((s, si) => {
 				if (s.points.length < 2) return null
+
 				return (
 					<g key={`${s.run}:${s.metric}`}>
 						<polyline
@@ -423,6 +454,7 @@ const TrainingChartsInner: React.FC = () => {
 		async function load() {
 			try {
 				const runList = await fetchRuns()
+
 				if (cancelled) return
 				setRuns(runList)
 				setError(null)
@@ -437,6 +469,7 @@ const TrainingChartsInner: React.FC = () => {
 			}
 		}
 		load()
+
 		return () => {
 			cancelled = true
 		}
@@ -453,16 +486,20 @@ const TrainingChartsInner: React.FC = () => {
 		async function loadRunData(runName: string) {
 			try {
 				const summary = await fetchRunSummary(runName)
+
 				if (cancelled) return
 				const metrics = summary.metrics ?? []
 				const runData = new Map<string, MetricPoint[]>()
 
 				// Fetch data for each metric this run has
 				const metricKeys = metrics
+
 				for (const mk of metricKeys) {
 					newAvailable.add(mk)
+
 					try {
 						const values = await fetchMetricValues(runName, mk)
+
 						if (!cancelled) runData.set(mk, values)
 					} catch {
 						// Individual metric fetch failure is non-fatal
@@ -477,12 +514,14 @@ const TrainingChartsInner: React.FC = () => {
 
 		async function loadAll() {
 			await Promise.all(Array.from(selectedRuns).map(loadRunData))
+
 			if (cancelled) return
 			setAvailableMetrics(newAvailable)
 			setMetricData(newData)
 		}
 
 		loadAll()
+
 		return () => {
 			cancelled = true
 		}
@@ -492,6 +531,7 @@ const TrainingChartsInner: React.FC = () => {
 	useEffect(() => {
 		// Clear any existing intervals
 		if (pollRef.current) clearInterval(pollRef.current)
+
 		if (countdownRef.current) clearInterval(countdownRef.current)
 
 		// eslint-disable-next-line react-hooks/set-state-in-effect
@@ -501,6 +541,7 @@ const TrainingChartsInner: React.FC = () => {
 		countdownRef.current = setInterval(() => {
 			setPollCountdown((prev) => {
 				if (prev <= 1) return POLL_INTERVAL_MS / 1000
+
 				return prev - 1
 			})
 		}, 1000)
@@ -510,8 +551,10 @@ const TrainingChartsInner: React.FC = () => {
 			if (selectedRuns.size === 0) return
 
 			const newData = new Map(metricData)
+
 			for (const runName of selectedRuns) {
 				const runMap = new Map(newData.get(runName) ?? [])
+
 				for (const mk of selectedMetrics) {
 					try {
 						const values = await fetchMetricValues(runName, mk)
@@ -527,6 +570,7 @@ const TrainingChartsInner: React.FC = () => {
 
 		return () => {
 			if (pollRef.current) clearInterval(pollRef.current)
+
 			if (countdownRef.current) clearInterval(countdownRef.current)
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -536,11 +580,15 @@ const TrainingChartsInner: React.FC = () => {
 	const chartSeries = useMemo(() => {
 		const series: ChartSeries[] = []
 		let colorIdx = 0
+
 		for (const runName of selectedRuns) {
 			const runData = metricData.get(runName)
+
 			if (!runData) continue
+
 			for (const mk of selectedMetrics) {
 				const points = runData.get(mk)
+
 				if (!points || points.length === 0) continue
 				series.push({
 					run: runName,
@@ -552,6 +600,7 @@ const TrainingChartsInner: React.FC = () => {
 				colorIdx++
 			}
 		}
+
 		return series
 	}, [selectedRuns, selectedMetrics, metricData])
 
@@ -559,8 +608,10 @@ const TrainingChartsInner: React.FC = () => {
 	const handleRunToggle = useCallback((name: string) => {
 		setSelectedRuns((prev) => {
 			const next = new Set(prev)
+
 			if (next.has(name)) next.delete(name)
 			else next.add(name)
+
 			return next
 		})
 	}, [])
@@ -568,8 +619,10 @@ const TrainingChartsInner: React.FC = () => {
 	const handleMetricToggle = useCallback((key: string) => {
 		setSelectedMetrics((prev) => {
 			const next = new Set(prev)
+
 			if (next.has(key)) next.delete(key)
 			else next.add(key)
+
 			return next
 		})
 	}, [])
@@ -583,11 +636,13 @@ const TrainingChartsInner: React.FC = () => {
 		const available = KNOWN_METRICS.filter((m) => availableMetrics.has(m.key))
 		// Add any metrics from the API not in KNOWN_METRICS
 		const knownKeys = new Set(KNOWN_METRICS.map((m) => m.key))
+
 		for (const mk of availableMetrics) {
 			if (!knownKeys.has(mk)) {
 				available.push({ key: mk, label: mk, group: "f1" })
 			}
 		}
+
 		return available
 	}, [availableMetrics])
 

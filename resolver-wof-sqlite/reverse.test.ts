@@ -17,6 +17,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { geometryContains, pointInPolygonRings, pointInRing, type GeojsonPosition } from "./geo.js"
@@ -64,10 +65,9 @@ describe("point-in-polygon primitives", () => {
 /**
  * Fixture gazetteer — a miniature Vermont-like geography around (44.0, -72.0):
  *
- * Country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B (6, bbox overlaps A but polygon
- * rejects — the bbox-false-positive case) ⊃ localadmin town (4, point geometry, centroid near the
- * query point) ⊃ locality village (5, point geometry, degenerate bbox — reachable only via the
- * ancestors-table descent, never via the R*Tree).
+ * Country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B (6, bbox overlaps A but polygon rejects — the
+ * bbox-false-positive case) ⊃ localadmin town (4, point geometry, centroid near the query point) ⊃ locality village (5,
+ * point geometry, degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
  */
 function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
 	const admin = new DatabaseSync(":memory:")
@@ -116,6 +116,7 @@ function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
 	insert.run(3, JSON.stringify({ type: "Polygon", coordinates: [square(-72.5, 43.8, -71.8, 44.3)] }))
 	// …county B's polygon does NOT (its bbox row lies — DP-simplified bboxes overlap).
 	insert.run(6, JSON.stringify({ type: "Polygon", coordinates: [square(-72.45, 43.85, -71.85, 43.95)] }))
+
 	return { admin, polygons }
 }
 

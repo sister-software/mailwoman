@@ -27,6 +27,8 @@
  *   FR/DE postcode (the v0.9.8 blemish).
  */
 
+import { spawnSync } from "node:child_process"
+
 import {
 	DirectionalAbbreviation,
 	lookupDirectional,
@@ -37,7 +39,6 @@ import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
 } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { spawnSync } from "node:child_process"
 
 import { stableSourceId } from "../adapter.js"
 import { alignRow } from "../align.js"
@@ -113,8 +114,10 @@ function splitCsv(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
+
 	for (let i = 0; i < line.length; i++) {
 		const c = line[i]
+
 		if (inQ) {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
@@ -129,17 +132,21 @@ function splitCsv(line: string): string[] {
 		} else cur += c
 	}
 	out.push(cur)
+
 	return out
 }
 
 /** Stream real US tuples (number/street/city/postcode) out of a cached OA zip. */
 function readTuples(source: UsSource): UsTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
+
 	if (r.status !== 0) {
 		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+
 		return []
 	}
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return []
 	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
@@ -150,18 +157,22 @@ function readTuples(source: UsSource): UsTuple[] {
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: UsTuple[] = []
 	const seen = new Set<string>()
+
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
 		const cells = splitCsv(lines[li]!)
 		const street = get(cells, iStreet)
 		const locality = get(cells, iCity)
 		const house_number = get(cells, iNum)
+
 		if (!street || !locality || !house_number) continue
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		tuples.push({ house_number, street, locality, region: source.region, postcode: get(cells, iPost) })
 	}
+
 	return tuples
 }
 
@@ -176,32 +187,35 @@ const isSuffixOrDirectional = (word: string): boolean =>
 	matchTrailingSuffix(word) !== null || matchLeadingDirectional(word) !== null
 
 /**
- * Split an OA street into { prefix?, name, suffix } using the codex. Requires a trailing suffix and
- * a non-empty name that isn't itself an affix token. Returns null when the street has no usable
- * suffix.
+ * Split an OA street into { prefix?, name, suffix } using the codex. Requires a trailing suffix and a non-empty name
+ * that isn't itself an affix token. Returns null when the street has no usable suffix.
  */
 function parseStreet(street: string): { prefix: Prefix | null; name: string; suffix: string } | null {
 	let words = street.trim().split(/\s+/)
+
 	if (words.length < 2) return null
 	let prefix: Prefix | null = null
 	// Leading directional — only if it leaves ≥2 words behind (room for a name + suffix).
 	const lead = matchLeadingDirectional(street)
+
 	if (lead && words.length > 2) {
 		prefix = { canonical: lead.canonical, abbreviation: lead.abbreviation }
 		words = words.slice(1)
 	}
 	// Trailing USPS suffix — only if it leaves ≥1 word for the name.
 	const trail = matchTrailingSuffix(words.join(" "))
+
 	if (!trail || words.length < 2) return null
 	const suffix = trail.canonical
 	const name = words.slice(0, -1).join(" ")
+
 	if (!name || isSuffixOrDirectional(name)) return null
+
 	return { prefix, name, suffix }
 }
 
 /**
- * Render the affix-split street in random surface forms (abbrev vs expanded per affix),
- * Title-cased.
+ * Render the affix-split street in random surface forms (abbrev vs expanded per affix), Title-cased.
  */
 function renderStreet(
 	random: () => number,
@@ -213,10 +227,12 @@ function renderStreet(
 
 	// Prefix: natural (from parse) or injected onto a prefix-less street to boost street_prefix signal.
 	let prefix = parsed.prefix
+
 	if (!prefix && random() < INJECT_PREFIX_PROB) {
 		const m = lookupDirectional(DIRECTIONAL_ABBRS[Math.floor(random() * DIRECTIONAL_ABBRS.length)])!
 		prefix = { canonical: m.directional, abbreviation: m.abbreviation }
 	}
+
 	if (prefix) {
 		const rendered = renderDirectional(prefix, random() < 0.5 ? "abbr" : "full", "Aa") // "Aa" → Title-case
 		components.street_prefix = rendered
@@ -244,8 +260,8 @@ const VENUES = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Mari
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 
 /**
- * Embed the rendered street in a RANDOM layout so the model recognizes affixes wherever the street
- * sits: full address, bare house+street, street-only (pure affix parse), or venue-prefixed.
+ * Embed the rendered street in a RANDOM layout so the model recognizes affixes wherever the street sits: full address,
+ * bare house+street, street-only (pure affix parse), or venue-prefixed.
  */
 function renderRow(
 	random: () => number,
@@ -260,15 +276,19 @@ function renderRow(
 	const road = `${hn} ${street}`
 	const withRoad: Partial<Record<ComponentTag, string>> = { house_number: hn, ...streetComponents }
 	const r = random()
+
 	if (r < 0.4)
 		return {
 			fmt: "full",
 			raw: `${road}, ${tail(loc, reg, pc)}`,
 			components: { ...withRoad, locality: loc, region: reg, ...(pc ? { postcode: pc } : {}) },
 		}
+
 	if (r < 0.65) return { fmt: "bare", raw: road, components: withRoad }
+
 	if (r < 0.85) return { fmt: "street-only", raw: street, components: { ...streetComponents } }
 	const v = VENUES[Math.floor(random() * VENUES.length)]!
+
 	return {
 		fmt: "venue",
 		raw: `${v}, ${road}, ${tail(loc, reg, pc)}`,
@@ -277,9 +297,9 @@ function renderRow(
 }
 
 /**
- * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are
- * GB-scale; reading the whole CSV blows V8's string limit, so cap the bytes with `head` (mirrors
- * build-country-shard-balanced.mjs). Only keeps tuples that carry a POSTCODE.
+ * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale; reading the whole
+ * CSV blows V8's string limit, so cap the bytes with `head` (mirrors build-country-shard-balanced.mjs). Only keeps
+ * tuples that carry a POSTCODE.
  */
 function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[] {
 	const maxLines = Math.max(limit * 8, 20000) + 1
@@ -287,11 +307,14 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
 	})
+
 	if (r.status !== 0) {
 		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+
 		return []
 	}
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return []
 	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string): number => header.indexOf(n)
@@ -303,6 +326,7 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: BalanceTuple[] = []
 	const seen = new Set<string>()
+
 	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
 		if (!lines[li]) continue
 		const cells = splitCsv(lines[li]!)
@@ -310,8 +334,10 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 			locality = get(cells, iCity),
 			house_number = get(cells, iNum),
 			postcode = get(cells, iPost)
+
 		if (!street || !locality || !house_number || !postcode) continue // postcode is required for balance
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		tuples.push({
@@ -324,13 +350,13 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 			order: source.order,
 		})
 	}
+
 	return tuples
 }
 
 /**
- * Render a non-US BALANCE row in native order — NO affix split, NO country token. `street` is the
- * OA value verbatim. The sole job is to put a postcode in its native position so the shard doesn't
- * pull the model US-ward.
+ * Render a non-US BALANCE row in native order — NO affix split, NO country token. `street` is the OA value verbatim.
+ * The sole job is to put a postcode in its native position so the shard doesn't pull the model US-ward.
  */
 function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<Record<ComponentTag, string>> } {
 	const { house_number: hn, street, locality: loc, postcode: pc, order } = t
@@ -339,7 +365,9 @@ function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<R
 	const raw =
 		order === "fr"
 			? `${hn} ${street}, ${pc} ${loc}` // French: number-street, postcode-city
-			: `${street} ${hn}, ${pc} ${loc}` // DE/IT/NL: street-number, postcode-city
+			: `${street} ${hn}, ${pc} ${loc}`
+
+	// DE/IT/NL: street-number, postcode-city
 	return { raw, components }
 }
 
@@ -362,11 +390,14 @@ export const streetAffixRecipe: ShardRecipe = {
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
 
 		const pool: UsTuple[] = []
+
 		for (const s of sources) {
 			const t = readTuples(s)
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
+
 			for (const x of t) pool.push(x)
 		}
+
 		if (pool.length === 0) {
 			throw new Error("No US tuples found — are the cached OA zips present in /tmp/oa-cache?")
 		}
@@ -378,9 +409,11 @@ export const streetAffixRecipe: ShardRecipe = {
 		const formatCounts: Record<string, number> = {}
 		const affixCounts = { prefix: 0, suffix: 0, both: 0 }
 		const N = pool.length
+
 		while (emitted < count && guard++ < count * 10) {
 			const base = pool[Math.floor(random() * N)]!
 			const parsed = parseStreet(base.street)
+
 			if (!parsed) {
 				noAffix++
 				continue
@@ -391,12 +424,14 @@ export const streetAffixRecipe: ShardRecipe = {
 			const surfaces = [streetComponents.street_prefix, streetComponents.street, streetComponents.street_suffix].filter(
 				(s): s is string => Boolean(s)
 			)
+
 			if (!surfaces.every((s) => raw.includes(s))) {
 				skipped++
 				continue
 			}
 			formatCounts[fmt] = (formatCounts[fmt] ?? 0) + 1
 			const hasP = !!streetComponents.street_prefix
+
 			if (hasP && streetComponents.street_suffix) affixCounts.both++
 			else if (hasP) affixCounts.prefix++
 			else affixCounts.suffix++
@@ -417,6 +452,7 @@ export const streetAffixRecipe: ShardRecipe = {
 				license: "OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
 			}
 			const aligned = alignRow(canonical)
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue
@@ -431,20 +467,25 @@ export const streetAffixRecipe: ShardRecipe = {
 		let balanceEmitted = 0
 		let balanceSkipped = 0
 		const balanceIso: Record<string, number> = {}
+
 		if (multilocaleCount > 0) {
 			const mlSources = opts.golden ? MULTILOCALE_EVAL_SOURCES : MULTILOCALE_SOURCES
 			const perSource = Math.ceil((multilocaleCount * 3) / mlSources.length) // over-read; balance locales
 			const mlPool: BalanceTuple[] = []
+
 			for (const s of mlSources) {
 				const t = readBalanceTuples(s, perSource)
 				console.error(`  balance ${s.csv} (${s.iso2}): ${t.length} tuples`)
+
 				for (const x of t) mlPool.push(x)
 			}
 			const M = mlPool.length
 			let mlGuard = 0
+
 			while (M > 0 && balanceEmitted < multilocaleCount && mlGuard++ < multilocaleCount * 10) {
 				const t = mlPool[Math.floor(random() * M)]!
 				const { raw, components } = renderBalanceRow(t)
+
 				// Every component surface must survive in raw, else alignment can't label it.
 				if (![components.street, components.locality, components.postcode].every((s) => !!s && raw.includes(s))) {
 					balanceSkipped++
@@ -452,6 +493,7 @@ export const streetAffixRecipe: ShardRecipe = {
 				}
 				balanceIso[t.iso2] = (balanceIso[t.iso2] ?? 0) + 1
 				const locale = `${t.iso2.toLowerCase()}-${t.iso2}`
+
 				if (opts.golden) {
 					write(JSON.stringify({ raw, components, country: t.iso2 }) + "\n")
 					balanceEmitted++
@@ -468,6 +510,7 @@ export const streetAffixRecipe: ShardRecipe = {
 					license: "OpenAddresses non-US skeletons (native-order postcode balance for the affix shard)",
 				}
 				const aligned = alignRow(canonical)
+
 				if (aligned.kind !== "labeled" || !aligned.row) {
 					balanceSkipped++
 					continue
@@ -485,6 +528,7 @@ export const streetAffixRecipe: ShardRecipe = {
 					? `\n  balance: emitted ${balanceEmitted}, skipped ${balanceSkipped}, iso ${JSON.stringify(balanceIso)}`
 					: "")
 		)
+
 		return { emitted: emitted + balanceEmitted, skipped: skipped + balanceSkipped }
 	},
 }

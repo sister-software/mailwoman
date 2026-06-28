@@ -7,6 +7,7 @@
 import type { ClassificationMatch } from "@mailwoman/core/classification"
 import { Span } from "@mailwoman/core/tokenization"
 import { expect, test } from "vitest"
+
 import { calculateRangeScore, compareMatchesByStart, SolutionMatch } from "./SolutionMatch.js"
 
 //#region Construction from a bare Classification string

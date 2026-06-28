@@ -16,6 +16,7 @@ try {
 	await page.waitForFunction(
 		() => {
 			const btn = document.querySelector("button[type='submit']")
+
 			return btn && !btn.disabled
 		},
 		{ timeout: 90_000 }
@@ -28,6 +29,7 @@ try {
 }
 
 console.log("\n--- Console logs ---")
+
 for (const line of consoleLines) console.log(line)
 
 await browser.close()

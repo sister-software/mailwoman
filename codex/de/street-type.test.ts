@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { DE_STREET_SUFFIXES, isGermanStreetToken } from "./street-type.js"
 
 describe("isGermanStreetToken", () => {

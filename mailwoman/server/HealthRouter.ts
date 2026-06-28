@@ -12,9 +12,10 @@
  *   - `GET /metrics` — the live geocode metrics snapshot (latency percentiles + per-tier counts).
  */
 
-import { type RequestHandler, Router } from "express"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
+
+import { type RequestHandler, Router } from "express"
 
 import { readReleaseManifest } from "../data-release.js"
 import { mailwomanDataRoot, wofShardPaths } from "../resolver-backend.js"
@@ -26,13 +27,16 @@ const startedAt = Date.now()
 /** Best-effort model-card read: env override → installed weights package → dev-tree fallback. */
 function readModelCard(): Record<string, unknown> | null {
 	const candidates: string[] = []
+
 	if (process.env["MAILWOMAN_MODEL_CARD"]) candidates.push(process.env["MAILWOMAN_MODEL_CARD"]!)
+
 	try {
 		candidates.push(createRequire(import.meta.url).resolve("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
 		/* package not resolvable from here — fall through */
 	}
 	candidates.push("neural-weights-en-us/model-card.json")
+
 	for (const p of candidates) {
 		try {
 			if (existsSync(p)) return JSON.parse(readFileSync(p, "utf8")) as Record<string, unknown>
@@ -40,6 +44,7 @@ function readModelCard(): Record<string, unknown> | null {
 			/* unreadable / malformed — try the next candidate */
 		}
 	}
+
 	return null
 }
 
@@ -47,6 +52,7 @@ function readModelCard(): Record<string, unknown> | null {
 function countShards(subdir: string, prefix: string): number {
 	try {
 		const re = new RegExp(`^${prefix}-us-[a-z]{2}\\.db$`)
+
 		return readdirSync(`${DATA_ROOT}/${subdir}`).filter((f) => re.test(f)).length
 	} catch {
 		return 0
@@ -61,6 +67,7 @@ function wofPaths(): string[] {
 				.map((p) => p.trim())
 				.filter(Boolean)
 		: wofShardPaths()
+
 	return paths.filter((p) => existsSync(p))
 }
 

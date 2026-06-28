@@ -27,6 +27,7 @@ import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
+
 import { loadDefaultPlaceCountry } from "./default-placer.js"
 import { createAddressParser } from "./utils/parser.js"
 
@@ -36,8 +37,7 @@ export interface CreateRuntimePipelineOpts {
 	/** The Stage 6 resolver — typically a `WofResolver` from `@mailwoman/resolver-wof-sqlite`. */
 	resolver?: RuntimePipelineStages["resolver"]
 	/**
-	 * Pre-built FST gazetteer matcher. Produces additive emission biases during neural
-	 * classification.
+	 * Pre-built FST gazetteer matcher. Produces additive emission biases during neural classification.
 	 */
 	fst?: RuntimePipelineStages["fst"]
 	/**
@@ -53,21 +53,19 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	classifyKind?: RuntimePipelineStages["classifyKind"]
 	/**
-	 * Phrase grouper override (Stage 2.7). Defaults to the rule-based `@mailwoman/phrase-grouper`.
-	 * v0.5.0 wires this in as a required stage; callers should normally NOT override unless they have
-	 * a learned span proposer (planned for v0.5.1).
+	 * Phrase grouper override (Stage 2.7). Defaults to the rule-based `@mailwoman/phrase-grouper`. v0.5.0 wires this in
+	 * as a required stage; callers should normally NOT override unless they have a learned span proposer (planned for
+	 * v0.5.1).
 	 *
 	 * @see RuntimePipelineStages.groupPhrases
 	 */
 	groupPhrases?: RuntimePipelineStages["groupPhrases"]
 	/**
-	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute gate).** A
-	 * confident in-map guess becomes a soft country prior the resolver re-rank boosts (never
-	 * filters).
+	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute gate).** A confident in-map
+	 * guess becomes a soft country prior the resolver re-rank boosts (never filters).
 	 *
-	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is
-	 *   lazy-loaded on the first pipeline call and applied (no prior if the model can't be
-	 *   resolved).
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded on the
+	 *   first pipeline call and applied (no prior if the model can't be resolved).
 	 * - A function → use it (a custom placer / threshold).
 	 * - `false` → disabled (no prior; byte-stable pre-M2 behavior).
 	 *
@@ -75,35 +73,32 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
-	 * The "rule source" for per-component arbitration (#478 increment 3). Defaults to a lazily-built
-	 * v0 `createAddressParser` whose solved output is projected to proposals via
-	 * `solutionToProposals` — constructed on the first `arbitrate: true` call and never if
-	 * arbitration is never used. Override to inject a custom rule parser or a fake in tests.
+	 * The "rule source" for per-component arbitration (#478 increment 3). Defaults to a lazily-built v0
+	 * `createAddressParser` whose solved output is projected to proposals via `solutionToProposals` — constructed on the
+	 * first `arbitrate: true` call and never if arbitration is never used. Override to inject a custom rule parser or a
+	 * fake in tests.
 	 *
 	 * @see RuntimePipelineStages.ruleProposer
 	 */
 	ruleProposer?: RuntimePipelineStages["ruleProposer"]
 	/**
-	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps
-	 * ASCII input before the model (helps on all-caps registry/compliance data; detection-gated,
-	 * mixed-case untouched). Off by default. A per-call `runOpts.normalizeCase` overrides this.
+	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII input before the
+	 * model (helps on all-caps registry/compliance data; detection-gated, mixed-case untouched). Off by default. A
+	 * per-call `runOpts.normalizeCase` overrides this.
 	 */
 	normalizeCase?: boolean
 	/**
-	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a CONFIDENT
-	 * coarse-placer guess from the soft prior to a HARD country filter (empty→unresolved).
-	 * **DEFAULT-ON** (#743, 2026-06-22): the built-in coverage safelist
-	 * (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries
-	 * (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage
-	 * tail (FI/PL) — no recall regression. Pass `false` to opt out entirely; a per-call
-	 * `runOpts.hardPlaceCountry` overrides this.
+	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a CONFIDENT coarse-placer guess from
+	 * the soft prior to a HARD country filter (empty→unresolved). **DEFAULT-ON** (#743, 2026-06-22): the built-in
+	 * coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries
+	 * (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage tail (FI/PL) — no
+	 * recall regression. Pass `false` to opt out entirely; a per-call `runOpts.hardPlaceCountry` overrides this.
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that
-	 * gates the hard country filter. Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`. Used by
-	 * the resolver eval to measure ungated hard-resolve-rates (the full in-map set) when growing the
-	 * list.
+	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that gates the hard
+	 * country filter. Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`. Used by the resolver eval to measure
+	 * ungated hard-resolve-rates (the full in-map set) when growing the list.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 }
@@ -113,10 +108,11 @@ export interface CreateRuntimePipelineOpts {
  *
  * Returns a function that takes raw input + per-call opts and runs the full pipeline.
  *
- * @example Const pipeline = createRuntimePipeline({ classifier: await
- * NeuralAddressClassifier.loadFromWeights({ locale: "en-US" }), resolver:
- * createWofResolver(backend), }) const result = await pipeline("350 5th Ave, New York, NY 10118", {
- * locale: "en-US" })
+ * @example
+ * 	Const pipeline = createRuntimePipeline({ classifier: await
+ * 	NeuralAddressClassifier.loadFromWeights({ locale: "en-US" }), resolver:
+ * 	createWofResolver(backend), }) const result = await pipeline("350 5th Ave, New York, NY 10118", {
+ * 	locale: "en-US" })
  */
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
@@ -129,6 +125,7 @@ export function createRuntimePipeline(
 		v0Parser ??= createAddressParser()
 		const solutions = await v0Parser.parse(normalizedText, { locale })
 		const top = solutions[0]
+
 		return top ? solutionToProposals(top, "v0-rules") : []
 	}
 
@@ -163,10 +160,12 @@ export function createRuntimePipeline(
 	// (async) function so the factory itself stays synchronous.
 	const autoPlaceCountry = opts.placeCountry === undefined
 	let placeCountryResolved = !autoPlaceCountry
+
 	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
 		if (!placeCountryResolved) {
 			placeCountryResolved = true
 			const fn = await loadDefaultPlaceCountry()
+
 			if (fn) stages.placeCountry = fn
 		}
 		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry); a per-call
@@ -175,15 +174,19 @@ export function createRuntimePipeline(
 		// no-op (soft) for the rest. A caller passes `hardPlaceCountry: false` to opt back out entirely.
 		const factoryHardPlaceCountry = opts.hardPlaceCountry ?? true
 		let effectiveRunOpts = runOpts
+
 		if (opts.normalizeCase && effectiveRunOpts?.normalizeCase === undefined) {
 			effectiveRunOpts = { ...effectiveRunOpts, normalizeCase: true }
 		}
+
 		if (factoryHardPlaceCountry && effectiveRunOpts?.hardPlaceCountry === undefined) {
 			effectiveRunOpts = { ...effectiveRunOpts, hardPlaceCountry: true }
 		}
+
 		if (opts.hardCountrySafelist && effectiveRunOpts?.hardCountrySafelist === undefined) {
 			effectiveRunOpts = { ...effectiveRunOpts, hardCountrySafelist: opts.hardCountrySafelist }
 		}
+
 		return runPipeline(raw, stages, effectiveRunOpts)
 	}
 }

@@ -30,15 +30,16 @@ import { createReadStream, createWriteStream } from "node:fs"
 import { mkdir, unlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
+
 import type { CanonicalRow, LabeledRow } from "./types.js"
 
 export type SplitName = "train" | "val" | "test"
 
 export interface SplitOptions {
 	/**
-	 * Region-name → holdout policy, keyed by ISO 3166-1 alpha-2 country. The values are the
-	 * region-component strings the splitter looks for in `row.components.region`. Override to change
-	 * the holdout for an experiment; defaults to `defaultHoldouts()`.
+	 * Region-name → holdout policy, keyed by ISO 3166-1 alpha-2 country. The values are the region-component strings the
+	 * splitter looks for in `row.components.region`. Override to change the holdout for an experiment; defaults to
+	 * `defaultHoldouts()`.
 	 */
 	holdouts?: Record<string, readonly string[]>
 }
@@ -61,12 +62,10 @@ export interface SplitManifest {
  *
  * - US: Vermont, Wyoming, North Dakota (low density, easy to identify in WOF/admin sources).
  * - FR: Corse, Lozère, Creuse (small departments / regions).
- * - DE (added 2026-06-11, night-11): Saarland + Mecklenburg-Vorpommern — small Länder so the training
- *   cost is low while the slice clears the honest-eval 1000-row trust floor. DE has had NO
- *   trustable honest-eval slice since the harness shipped (flagged 2026-06-08); this takes effect
- *   at the NEXT base corpus rebuild — existing versioned corpora keep their committed
- *   SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering, not a
- *   holdout).
+ * - DE (added 2026-06-11, night-11): Saarland + Mecklenburg-Vorpommern — small Länder so the training cost is low while
+ *   the slice clears the honest-eval 1000-row trust floor. DE has had NO trustable honest-eval slice since the harness
+ *   shipped (flagged 2026-06-08); this takes effect at the NEXT base corpus rebuild — existing versioned corpora keep
+ *   their committed SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering, not a holdout).
  */
 export function defaultHoldouts(): Record<string, readonly string[]> {
 	return {
@@ -79,10 +78,9 @@ export function defaultHoldouts(): Record<string, readonly string[]> {
 type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
- * Pure per-row split decision. Used by both the in-memory `splitRows` and by the streaming
- * `buildCorpus` align loop (`build.ts`) to decide each row's split without retaining the row in
- * heap. Identical hash bucketing semantics to the array-based path so the decision is stable
- * regardless of caller.
+ * Pure per-row split decision. Used by both the in-memory `splitRows` and by the streaming `buildCorpus` align loop
+ * (`build.ts`) to decide each row's split without retaining the row in heap. Identical hash bucketing semantics to the
+ * array-based path so the decision is stable regardless of caller.
  */
 export function splitForRow(
 	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
@@ -91,18 +89,20 @@ export function splitForRow(
 	const region = row.components.region
 	const countryHoldouts = holdouts[row.country] ?? []
 	const isHeldOut = region !== undefined && countryHoldouts.includes(region)
+
 	if (!isHeldOut) return "train"
+
 	// 50/50 deterministic by source_id hash. Same input always lands in the same split.
 	return hashBucket(row.source_id, 2) === 0 ? "val" : "test"
 }
 
 /**
- * Compute a `SplitManifest` from an iterable of labeled (or canonical) rows. Both shapes are
- * accepted — only `source_id`, `country`, `corpus_version`, and `components.region` are consulted.
+ * Compute a `SplitManifest` from an iterable of labeled (or canonical) rows. Both shapes are accepted — only
+ * `source_id`, `country`, `corpus_version`, and `components.region` are consulted.
  *
- * Retained for in-memory callers (tests; small-scale fixture runs). Real-data builds via
- * `buildCorpus` use the streaming path (`splitForRow` + `writeSplitManifestsFromLabeledFiles`) to
- * avoid materializing every aligned row's split membership in heap.
+ * Retained for in-memory callers (tests; small-scale fixture runs). Real-data builds via `buildCorpus` use the
+ * streaming path (`splitForRow` + `writeSplitManifestsFromLabeledFiles`) to avoid materializing every aligned row's
+ * split membership in heap.
  */
 export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}): SplitManifest {
 	const holdouts = opts.holdouts ?? defaultHoldouts()
@@ -114,12 +114,14 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 	for (const row of rows) {
 		if (!corpus_version && row.corpus_version) corpus_version = row.corpus_version
 		const split = splitForRow(row, holdouts)
+
 		if (split === "train") train.push(row.source_id)
 		else if (split === "val") val.push(row.source_id)
 		else test.push(row.source_id)
 	}
 
 	const total = train.length + val.length + test.length
+
 	return {
 		train,
 		val,
@@ -135,19 +137,20 @@ export function hashBucket(id: string, n: number): number {
 	const digest = createHash("sha256").update(id).digest()
 	// Read 4 bytes as uint32 to avoid bigint overhead.
 	const u = digest[0]! * 0x01_00_00_00 + digest[1]! * 0x01_00_00 + digest[2]! * 0x01_00 + digest[3]!
+
 	return u % n
 }
 
 /**
- * Write a `SplitManifest` to `<outputDir>/{train,val,test}.json`. The manifests are line-separated
- * source_id lists (one id per line) so they diff cleanly in git. Also writes
- * `<outputDir>/MANIFEST.json` with the full structured manifest including holdouts + counts +
- * corpus version.
+ * Write a `SplitManifest` to `<outputDir>/{train,val,test}.json`. The manifests are line-separated source_id lists (one
+ * id per line) so they diff cleanly in git. Also writes `<outputDir>/MANIFEST.json` with the full structured manifest
+ * including holdouts + counts + corpus version.
  *
  * Reruns produce byte-identical files (the underlying `splitRows` is deterministic).
  */
 export async function writeSplitManifests(manifest: SplitManifest, outputDir: string): Promise<void> {
 	await mkdir(outputDir, { recursive: true })
+
 	for (const name of ["train", "val", "test"] as const) {
 		const sorted = [...manifest[name]].sort()
 		await writeFile(join(outputDir, `${name}.txt`), sorted.join("\n") + (sorted.length ? "\n" : ""), "utf8")
@@ -164,14 +167,12 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: st
 export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
- * Streaming variant of `writeSplitManifests`: derives the per-split source-id .txt manifests +
- * `SPLIT_MANIFEST.json` by streaming three per-split labeled-row JSONL files (one per split).
- * Memory cost is O(1) — `sort(1)` from coreutils handles the deterministic sort with disk spill for
- * files that exceed in-memory thresholds.
+ * Streaming variant of `writeSplitManifests`: derives the per-split source-id .txt manifests + `SPLIT_MANIFEST.json` by
+ * streaming three per-split labeled-row JSONL files (one per split). Memory cost is O(1) — `sort(1)` from coreutils
+ * handles the deterministic sort with disk spill for files that exceed in-memory thresholds.
  *
- * Used by `buildCorpus` after the align loop has already partitioned labeled rows into
- * `labeled-{train,val,test}.jsonl` via `splitForRow`. Counts are pre-computed by the align loop and
- * passed in (zero re-scan).
+ * Used by `buildCorpus` after the align loop has already partitioned labeled rows into `labeled-{train,val,test}.jsonl`
+ * via `splitForRow`. Counts are pre-computed by the align loop and passed in (zero re-scan).
  */
 export async function writeSplitManifestsFromLabeledFiles(opts: {
 	labeledPaths: Record<SplitName, string>
@@ -196,13 +197,13 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 		counts: { ...opts.counts, total },
 	}
 	await writeFile(join(opts.outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
+
 	return summary.counts
 }
 
 /**
- * Extract `source_id`s from a labeled JSONL file, write them sorted to `outPath`. Empty input →
- * empty output file (not absent). Uses `sort(1)` for disk-spilling external sort so peak memory
- * stays O(1) regardless of labeled-row count.
+ * Extract `source_id`s from a labeled JSONL file, write them sorted to `outPath`. Empty input → empty output file (not
+ * absent). Uses `sort(1)` for disk-spilling external sort so peak memory stays O(1) regardless of labeled-row count.
  */
 async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string): Promise<void> {
 	const unsortedPath = `${outPath}.unsorted`
@@ -212,8 +213,10 @@ async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string):
 	await new Promise<void>((resolve, reject) => {
 		rl.on("line", (line) => {
 			if (!line) return
+
 			try {
 				const obj = JSON.parse(line) as { source_id?: string }
+
 				if (typeof obj.source_id === "string") out.write(`${obj.source_id}\n`)
 			} catch (err) {
 				reject(err as Error)

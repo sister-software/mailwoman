@@ -33,6 +33,7 @@ vi.mock("onnxruntime-web/webgpu", () => {
 			public readonly dims: readonly number[]
 		) {}
 	}
+
 	return {
 		Tensor,
 		InferenceSession: { create: sessionCreateMock },
@@ -62,16 +63,19 @@ function mockSession(inputNames: string[], opts: { localeLogits?: number[]; numL
 			const output: Record<string, { data: Float32Array; dims: number[] }> = {
 				logits: { data: new Float32Array(SEQ * numLabels), dims: [1, SEQ, numLabels] },
 			}
+
 			if (opts.localeLogits) {
 				output.locale_logits = {
 					data: new Float32Array(opts.localeLogits),
 					dims: [1, opts.localeLogits.length],
 				}
 			}
+
 			return Promise.resolve(output)
 		}),
 	}
 	sessionCreateMock.mockResolvedValue(session)
+
 	return session
 }
 

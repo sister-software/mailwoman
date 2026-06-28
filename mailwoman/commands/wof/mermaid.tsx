@@ -11,6 +11,10 @@
  *   `--output` to write the markup to a file instead of stdout.
  */
 
+import * as fs from "node:fs/promises"
+import { availableParallelism } from "node:os"
+import { setImmediate } from "node:timers/promises"
+
 import { Spinner } from "@inkjs/ui"
 import {
 	generateMermaidMarkup,
@@ -21,12 +25,10 @@ import {
 } from "@mailwoman/core"
 import * as d3Chromatic from "d3-scale-chromatic"
 import { Box, Text } from "ink"
-import * as fs from "node:fs/promises"
-import { availableParallelism } from "node:os"
-import { setImmediate } from "node:timers/promises"
 import { PathBuilder } from "path-ts"
 import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const BATCH_SIZE = availableParallelism()
@@ -36,10 +38,12 @@ const BATCH_SIZE = availableParallelism()
 // scales (`scheme*`) are deliberately excluded — they're string[]s, not (t)=>string.
 const D3_INTERPOLATORS: Record<string, InterpolateColorCallback> = (() => {
 	const out: Record<string, InterpolateColorCallback> = {}
+
 	for (const [key, value] of Object.entries(d3Chromatic)) {
 		if (!key.startsWith("interpolate") || typeof value !== "function") continue
 		out[key.slice("interpolate".length).toLowerCase()] = value as InterpolateColorCallback
 	}
+
 	return out
 })()
 const D3_INTERPOLATOR_NAMES = Object.keys(D3_INTERPOLATORS).sort()
@@ -72,9 +76,11 @@ export { ArgumentsSchema as args, OptionsSchema as options }
 function resolveInterpolator(raw: string | undefined): InterpolateColorCallback | undefined {
 	if (!raw) return undefined
 	const fn = D3_INTERPOLATORS[raw.toLowerCase()]
+
 	if (!fn) {
 		throw new Error(`Unknown interpolator '${raw}'. Available: ${D3_INTERPOLATOR_NAMES.join(", ")}.`)
 	}
+
 	return fn
 }
 
@@ -106,21 +112,25 @@ const WOFMermaid: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 	useEffect(() => {
 		if (!localRepoDirectory) {
 			setError("Missing required positional argument: <localRepoDirectory>")
+
 			return
 		}
 
 		if (!placetypeName) {
 			setError("Missing required positional argument: <placetype>")
+
 			return
 		}
 
 		let roles: PlacetypeRole[] | undefined
 		let interpolator: InterpolateColorCallback | undefined
+
 		try {
 			roles = parseRoles(options.roles)
 			interpolator = resolveInterpolator(options.interpolator)
 		} catch (err) {
 			setError((err as Error).message)
+
 			return
 		}
 
@@ -156,6 +166,7 @@ const WOFMermaid: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 
 	useEffect(() => {
 		if (markup === undefined) return
+
 		if (options.output) return // let Ink render the success summary; exit naturally
 		setImmediate().then(() => process.exit(0))
 	}, [markup, options.output])

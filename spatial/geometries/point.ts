@@ -9,6 +9,7 @@ import type { LatLng, LatLngLiteral } from "@googlemaps/google-maps-services-js"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { convert as convertCoords } from "geo-coordinates-parser"
 import { latLngToCell } from "h3-js"
+
 import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "../bbox.js"
 import { type H3Cell, shortenH3Cell } from "../h3/index.js"
 import { type GeoObjectLiteral, GeometryType } from "../objects.js"
@@ -25,8 +26,7 @@ import {
 } from "../position.js"
 
 /**
- * A JSON-serializeable single point geometry, such as a specific location, address, or longitude,
- * latitude pair.
+ * A JSON-serializeable single point geometry, such as a specific location, address, or longitude, latitude pair.
  *
  * ```js
  * {
@@ -58,7 +58,9 @@ export function isPointLiteral(input: PointLiteral | null | undefined | unknown)
 	if (!input || typeof input !== "object") return false
 
 	if (!("type" in input)) return false
+
 	if (!("coordinates" in input)) return false
+
 	if (input.type !== GeometryType.Point) return false
 
 	return isCoordPairLiteral(input.coordinates)
@@ -76,14 +78,15 @@ export interface GeolocationCoordinatesLike {
 }
 
 /**
- * Type-predicate to determine if the given input appears to be a {@linkcode GeolocationCoordinates}
- * object.
+ * Type-predicate to determine if the given input appears to be a {@linkcode GeolocationCoordinates} object.
  */
 export function isGeolocationCoordinatesLike(input: unknown): input is GeolocationCoordinatesLike {
 	if (!input || typeof input !== "object") return false
 
 	if (!("latitude" in input)) return false
+
 	if (!("longitude" in input)) return false
+
 	if (!("altitude" in input)) return false
 
 	return true
@@ -223,8 +226,7 @@ export class GeoPoint implements PointLiteral {
 	constructor(geoLocationCoordinates: GeolocationCoordinatesLike, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 
 	/**
-	 * Creates a new GeoPoint instance from a Google Maps API
-	 * {@linkcode google.LatLngLiteral | LatLngLiteral} object.
+	 * Creates a new GeoPoint instance from a Google Maps API {@linkcode google.LatLngLiteral | LatLngLiteral} object.
 	 */
 	constructor(latLngLiteral: google.LatLngLiteral, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 
@@ -233,8 +235,7 @@ export class GeoPoint implements PointLiteral {
 	 */
 	constructor(interpolatedCoords: InternalPointCoordinates, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 	/**
-	 * Creates a new GeoPoint instance from a Google Maps API {@linkcode google.LatLng | LatLng}
-	 * object.
+	 * Creates a new GeoPoint instance from a Google Maps API {@linkcode google.LatLng | LatLng} object.
 	 */
 	constructor(latLng: LatLngLiteral, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 	/**
@@ -283,6 +284,7 @@ export class GeoPoint implements PointLiteral {
 	 */
 	static from(input: unknown): GeoPoint | null {
 		if (!input) return null
+
 		if (input instanceof GeoPoint) return input
 
 		if (typeof input === "string") {
@@ -295,6 +297,7 @@ export class GeoPoint implements PointLiteral {
 
 		try {
 			const point = new GeoPoint(input as GeoPointInput)
+
 			if (point.isNullIsland()) return null
 
 			return point
@@ -348,8 +351,7 @@ export class GeoPoint implements PointLiteral {
 	}
 
 	/**
-	 * Converts the GeoPoint to a Google Maps API {@linkcode google.LatLngLiteral | LatLngLiteral}
-	 * object.
+	 * Converts the GeoPoint to a Google Maps API {@linkcode google.LatLngLiteral | LatLngLiteral} object.
 	 */
 	public toGoogleLatLngLiteral(): google.LatLngLiteral {
 		return {

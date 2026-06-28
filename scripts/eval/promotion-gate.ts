@@ -43,10 +43,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import { $ } from "zx"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
+import { $ } from "zx"
 
 interface GateSpec {
 	label: string
@@ -75,6 +74,7 @@ runIfScript(import.meta, async () => {
 	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 	const argv = process.argv.slice(2)
+
 	for (let i = 0; i < argv.length; i++) {
 		switch (argv[i]) {
 			case "--model":
@@ -112,12 +112,14 @@ runIfScript(import.meta, async () => {
 	const gate = JSON.parse(readFileSync(GATE, "utf8")) as GateSpec
 	const LABEL = gate.label
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
+
 	if (!OUT_DIR) OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
 	mkdirSync(OUT_DIR, { recursive: true })
 
 	// --- lore guard: tokenizer comparability -----------------------------------
 	const card = JSON.parse(readFileSync(CARD, "utf8")) as ModelCard
 	const CARD_TOK = card.training.tokenizer_version
+
 	if (!TOK.includes(CARD_TOK)) {
 		console.error(
 			`✗ tokenizer path '${TOK}' does not contain card tokenizer_version '${CARD_TOK}' — F1 would be incomparable`
@@ -128,6 +130,7 @@ runIfScript(import.meta, async () => {
 	// --- lore guard: recompile-before-eval --------------------------------------
 	if (existsSync("core/out")) {
 		const found = await $({ nothrow: true })`find core -maxdepth 2 -name ${"*.ts"} -newer core/out -print -quit`
+
 		if (found.stdout.trim()) {
 			console.error("⚠ core/ sources newer than core/out — run 'yarn compile' or the harness grades stale code")
 		}
@@ -142,10 +145,12 @@ runIfScript(import.meta, async () => {
 	// grep -c prints 0 + exits 1 on no-match; nothrow keeps the single "0".
 	const dql = async (p: string): Promise<string> => {
 		const r = await $({ nothrow: true })`grep -c -a DynamicQuantizeLinear ${p}`
+
 		return r.stdout.trim()
 	}
 	const md5 = async (p: string): Promise<string> => {
 		const r = await $`md5sum ${p}`
+
 		return r.stdout.trim().split(/\s+/)[0] ?? ""
 	}
 
@@ -155,23 +160,28 @@ runIfScript(import.meta, async () => {
 		`MODEL  ${await md5(MODEL)}  dql=${modelDql}  ${MODEL}`,
 	]
 	let int8Dql = ""
+
 	if (INT8) {
 		int8Dql = await dql(INT8)
 		provLines.push(`INT8   ${await md5(INT8)}  dql=${int8Dql}  ${INT8}`)
 	}
 	const provenance = provLines.join("\n") + "\n"
 	writeFileSync(`${OUT_DIR}/provenance.txt`, provenance) // tee → file …
-	process.stdout.write(provenance) //                       … and stdout
+	process.stdout.write(provenance)
+
+	//                       … and stdout
 
 	if (modelDql !== "0") {
 		console.error(`✗ --model '${MODEL}' carries int8 quant nodes — it is not an fp32 artifact`)
 		process.exit(2)
 	}
+
 	if (INT8) {
 		if (int8Dql === "0") {
 			console.error(`✗ --int8 '${INT8}' has no quant nodes — it is not a quantized artifact`)
 			process.exit(2)
 		}
+
 		if ((await md5(MODEL)) === (await md5(INT8))) {
 			console.error("✗ --model and --int8 are byte-identical — one is mislabeled")
 			process.exit(2)
@@ -179,6 +189,7 @@ runIfScript(import.meta, async () => {
 	}
 
 	const GAZ_ARGS: string[] = []
+
 	if (gate.requires_gazetteer_lexicon === true) {
 		GAZ_ARGS.push("--gazetteer-lexicon", GAZ, "--suppress-gaz-near-postcode")
 	}
@@ -186,11 +197,13 @@ runIfScript(import.meta, async () => {
 	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head
 	// detection). Same contract discipline as the gaz flags — the spec IS the ship config.
 	const CONV_MODE = gate.requires_conventions ?? ""
+
 	if (CONV_MODE) {
 		GAZ_ARGS.push("--conventions", CONV_MODE)
 	}
 	// Span-bridge channel (v4.4.0 corrective): spec-declared like the conventions mask.
 	let BRIDGE_MODE = ""
+
 	if (gate.requires_bridge === true) {
 		GAZ_ARGS.push("--bridge-gaps")
 		BRIDGE_MODE = "1"
@@ -235,6 +248,7 @@ runIfScript(import.meta, async () => {
 	}
 
 	await runBattery(MODEL, "fp32")
+
 	if (INT8) await runBattery(INT8, "int8")
 	const presets = await $`node --experimental-strip-types scripts/eval/demo-preset-compare.ts --model-path=${shipModel}`
 	writeFileSync(`${OUT_DIR}/presets.md`, presets.stdout)
@@ -246,11 +260,13 @@ runIfScript(import.meta, async () => {
 	// gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
 	const HOT_DB = process.env["MAILWOMAN_WOF_HOT_DB"] || "/tmp/v440-stage/en-us/v4.4.0/wof-hot.db"
 	const HOT_STAGE = dirname(HOT_DB)
+
 	if (existsSync(HOT_DB)) {
 		const cascade = await $({
 			nothrow: true,
 		})`node --experimental-strip-types scripts/eval/demo-cascade-smoke.ts --db ${HOT_DB} --stage-dir ${HOT_STAGE} --model ${shipModel} --tokenizer ${TOK} --card ${CARD} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/cascade-smoke.json`}`
 		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, cascade.stdout)
+
 		if (cascade.exitCode !== 0) {
 			console.error(
 				`✗ demo-cascade smoke errored (see ${OUT_DIR}/cascade-smoke.md) — no sidecar; a floored gate spec will FAIL`
@@ -284,6 +300,7 @@ runIfScript(import.meta, async () => {
 			},
 		})`node --experimental-strip-types scripts/eval/external-arenas.ts`
 		writeFileSync(`${OUT_DIR}/arenas.md`, `${arena.stdout}${arena.stderr}`)
+
 		// set -e: a non-zero arena run aborts the gate before the verdict.
 		if (arena.exitCode !== 0) process.exit(1)
 	}
@@ -295,6 +312,7 @@ runIfScript(import.meta, async () => {
 	// on the release path here, NOT Test CI (#582). Only meaningful when the spec declares a conventions
 	// mask; skipped = PASS otherwise. Its exit folds into the final verdict below.
 	let MASK_GATE_STATUS = 0
+
 	if (CONV_MODE) {
 		console.log("== mask-regression gate (#718) ==")
 		const mask = await $({
@@ -302,6 +320,7 @@ runIfScript(import.meta, async () => {
 		})`node --experimental-strip-types scripts/eval/mask-regression-gate.ts --model ${shipModel} --tokenizer ${TOK} --model-card ${CARD} --anchor-lookup ${LK} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/mask-regression.json`}`
 		writeFileSync(`${OUT_DIR}/mask-regression.md`, `${mask.stdout}${mask.stderr}`)
 		MASK_GATE_STATUS = mask.exitCode ?? 0
+
 		if (MASK_GATE_STATUS === 0) {
 			console.log("✓ mask-regression gate PASS (no tag regresses >2pp under the conventions mask)")
 		} else {
@@ -316,11 +335,14 @@ runIfScript(import.meta, async () => {
 	// --- collect + verify (node does the parsing; this orchestrates) ------------
 	// Folds BOTH locks: the floor verdict AND the mask-regression gate above. Either miss fails the gate.
 	const verdictArgs = ["--gate", GATE, "--out-dir", OUT_DIR]
+
 	if (INT8) verdictArgs.push("--with-int8")
 	const verdict = await $({
 		nothrow: true,
 	})`node --experimental-strip-types scripts/eval/promotion-gate-verdict.ts ${verdictArgs}`
+
 	if (verdict.stdout) process.stdout.write(verdict.stdout)
+
 	if (verdict.stderr) process.stderr.write(verdict.stderr)
 	const VERDICT_STATUS = verdict.exitCode ?? 0
 

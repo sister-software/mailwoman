@@ -21,8 +21,8 @@
 import { sql, type Kysely } from "kysely"
 
 /**
- * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`. The probe returns
- * the geographic locality directly; the denormalized name/coord avoid a join back to `candidate`.
+ * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`. The probe returns the geographic
+ * locality directly; the denormalized name/coord avoid a join back to `candidate`.
  */
 export interface PostalCityCandidateTable {
 	/** {@link normalizeLocalityForKey} of the postal-city name — the build/query-consistent probe key. */
@@ -38,16 +38,14 @@ export interface PostalCityCandidateTable {
 }
 
 /**
- * The postal-city-candidate database schema for `new
- * DatabaseClient<PostalCityCandidateDatabase>(...)`.
+ * The postal-city-candidate database schema for `new DatabaseClient<PostalCityCandidateDatabase>(...)`.
  */
 export interface PostalCityCandidateDatabase {
 	postal_city_candidate: PostalCityCandidateTable
 }
 
 /**
- * The table name the lookup probes (existence-gated, so an old candidate.db without it is
- * byte-stable).
+ * The table name the lookup probes (existence-gated, so an old candidate.db without it is byte-stable).
  */
 export const POSTAL_CITY_CANDIDATE_TABLE = "postal_city_candidate"
 
@@ -62,10 +60,9 @@ export const POSTAL_CITY_CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * Create the side-index — a clustered `WITHOUT ROWID` B-tree on `(name_key, postcode)` so the
- * resolve is a single exact probe. Idempotent (`IF NOT EXISTS`); pass a {@link DatabaseClient} (or
- * any `Kysely`) over the candidate DB. The Kysely schema-builder is the house idiom for table
- * creation — see `AGENTS.md` (inline-SQL → Kysely).
+ * Create the side-index — a clustered `WITHOUT ROWID` B-tree on `(name_key, postcode)` so the resolve is a single exact
+ * probe. Idempotent (`IF NOT EXISTS`); pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB. The
+ * Kysely schema-builder is the house idiom for table creation — see `AGENTS.md` (inline-SQL → Kysely).
  */
 export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandidateDatabase>): Promise<void> {
 	await db.schema

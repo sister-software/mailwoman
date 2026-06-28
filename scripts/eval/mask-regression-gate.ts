@@ -47,12 +47,14 @@
  *   delta table (every locale × tag, not just violations) for the release record.
  */
 
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 // -------------------------------------------------------------------------------------------------
@@ -69,9 +71,9 @@ const GAZETTEER_LEXICON = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexico
 const JSON_OUT = arg("json")
 
 /**
- * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than
- * the load-time delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose
- * mask-on F1 is within this band of its mask-off F1 is considered unharmed by the mask.
+ * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time
+ * delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of its
+ * mask-off F1 is considered unharmed by the mask.
  */
 const THRESHOLD = Number(arg("threshold", "0.02"))
 
@@ -127,13 +129,16 @@ interface Row {
 
 function loadRows(files: string[]): Row[] {
 	const rows: Row[] = []
+
 	for (const f of files) {
 		if (!existsSync(f)) throw new Error(`eval file not found: ${f}`)
+
 		for (const line of readFileSync(f, "utf8").split("\n")) {
 			if (!line.trim()) continue
 			rows.push(JSON.parse(line) as Row)
 		}
 	}
+
 	return rows
 }
 
@@ -142,27 +147,34 @@ const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
 /** Whether any gold row carries this tag — distinguishes a real 0 F1 from a tag never in scope. */
 function rowsHaveTag(rows: Row[], tag: string): boolean {
 	for (const r of rows) if (norm(r.components[tag])) return true
+
 	return false
 }
 
 /** Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts. */
 async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<Record<string, number>> {
 	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
+
 	for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
+
 	for (const row of rows) {
 		const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
 		const exp = row.components
+
 		for (const t of TAGS) {
 			const e = norm(exp[t])
 			const g = norm(got[t])
+
 			if (e && g && e === g) stat[t]!.tp++
 			else {
 				if (g) stat[t]!.fp++
+
 				if (e) stat[t]!.fn++
 			}
 		}
 	}
 	const out: Record<string, number> = {}
+
 	for (const t of TAGS) {
 		const { tp, fp, fn } = stat[t]!
 		const p = tp + fp ? tp / (tp + fp) : 0
@@ -170,6 +182,7 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 		const f1 = p + r ? (2 * p * r) / (p + r) : 0
 		out[t] = +(100 * f1).toFixed(1)
 	}
+
 	return out
 }
 
@@ -242,6 +255,7 @@ async function run(): Promise<number> {
 	// --- report the full per-tag delta table (every in-scope tag) ---------------------------------
 	console.error(`\n--- per-tag mask-off vs mask-on F1 (in-scope tags) ---`)
 	console.error(`  locale  tag                    maskOff   maskOn     Δpp`)
+
 	for (const d of deltas) {
 		if (!d.inScope) continue
 		const flag = d.delta > THRESHOLD * 100 ? "  ✗ REGRESSION" : ""
@@ -280,6 +294,7 @@ async function run(): Promise<number> {
 		console.error(
 			`\n✗ FAIL — ${violations.length} tag(s) regress more than ${thresholdPp.toFixed(1)}pp under the conventions mask:`
 		)
+
 		for (const v of violations) {
 			console.error(
 				`  (${v.locale}, ${v.tag}): maskOff ${v.maskOff} → maskOn ${v.maskOn}  Δ=${v.delta.toFixed(1)}pp > ${thresholdPp.toFixed(1)}pp`
@@ -289,6 +304,7 @@ async function run(): Promise<number> {
 			`\nThe conventions mask provably harms a tag the model emits. Either narrow the codex ` +
 				`forbiddenTags for the offending locale, or re-certify and prove the mask is benign.`
 		)
+
 		return 1
 	}
 
@@ -296,6 +312,7 @@ async function run(): Promise<number> {
 		`\n✓ PASS — no tag regresses more than ${thresholdPp.toFixed(1)}pp under the conventions mask ` +
 			`(${LOCALES.length} locale(s), ${TAGS.length} tags each).`
 	)
+
 	return 0
 }
 

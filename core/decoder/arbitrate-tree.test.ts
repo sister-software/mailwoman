@@ -11,6 +11,7 @@
 import { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
+
 import { applyRuleArbitration } from "./arbitrate-tree.js"
 import type { AddressNode, AddressTree } from "./types.js"
 

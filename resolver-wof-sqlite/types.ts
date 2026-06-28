@@ -11,9 +11,8 @@
  */
 
 /**
- * The placetype taxonomy used by Who's On First. Ordered roughly from coarsest (country) to finest
- * (address). See https://github.com/whosonfirst/whosonfirst-placetypes for the authoritative
- * definitions of each.
+ * The placetype taxonomy used by Who's On First. Ordered roughly from coarsest (country) to finest (address). See
+ * https://github.com/whosonfirst/whosonfirst-placetypes for the authoritative definitions of each.
  *
  * Phase 4.2 only emits the ones we actually look up; the union is open enough to extend later.
  */
@@ -36,15 +35,15 @@ export type WofPlacetype =
 /**
  * One candidate match for a place lookup.
  *
- * `score` is the post-boost ranking number — higher is better, but the scale is implementation-
- * defined. Callers should treat it as ordinal, not absolute.
+ * `score` is the post-boost ranking number — higher is better, but the scale is implementation- defined. Callers should
+ * treat it as ordinal, not absolute.
  *
- * `id` is the WOF place id. It's named generically (not `wof_id`) so the shape stays structurally
- * compatible with `@mailwoman/resolver`'s `ResolvedPlace` — `WofSqlitePlaceLookup` satisfies the
- * generic `ResolverBackend` contract without an adapter shim.
+ * `id` is the WOF place id. It's named generically (not `wof_id`) so the shape stays structurally compatible with
+ * `@mailwoman/resolver`'s `ResolvedPlace` — `WofSqlitePlaceLookup` satisfies the generic `ResolverBackend` contract
+ * without an adapter shim.
  *
- * `distanceKm` is populated only when the query carried `near` (and the place has a centroid).
- * Useful for downstream UIs that want to show "X km from you" alongside the result.
+ * `distanceKm` is populated only when the query carried `near` (and the place has a centroid). Useful for downstream
+ * UIs that want to show "X km from you" alongside the result.
  */
 export interface PlaceCandidate {
 	id: number
@@ -59,31 +58,28 @@ export interface PlaceCandidate {
 	distanceKm?: number
 	/**
 	 * True when this candidate's name OR an alias EXACTLY equals the query (the exact-match tier from
-	 * {@link RankingWeights.exactMatchTiering}). Surfaced so a downstream country re-rank (#369's
-	 * postcode anchor in `resolveTree`) can pin the country without crossing the tier — see the
-	 * `exactMatch` field on `@mailwoman/core`'s `ResolvedPlace`.
+	 * {@link RankingWeights.exactMatchTiering}). Surfaced so a downstream country re-rank (#369's postcode anchor in
+	 * `resolveTree`) can pin the country without crossing the tier — see the `exactMatch` field on `@mailwoman/core`'s
+	 * `ResolvedPlace`.
 	 */
 	exactMatch?: boolean
 	/**
-	 * Population from WOF's `wof:population` property. Only present when the candidate has it on
-	 * record — WOF carries population for ~15% of localities (mostly larger ones). Absent does NOT
-	 * mean zero, just unknown.
+	 * Population from WOF's `wof:population` property. Only present when the candidate has it on record — WOF carries
+	 * population for ~15% of localities (mostly larger ones). Absent does NOT mean zero, just unknown.
 	 */
 	population?: number
 	/**
-	 * Bounding box from WOF's `spr.{min,max}_{latitude,longitude}` columns. Coarse outline for the
-	 * place — a city's bbox is the city's full extent, a postcode's is roughly the postcode polygon's
-	 * envelope. Optional because not all callers ask for it; implementations are free to omit when
-	 * the underlying schema lacks the columns.
+	 * Bounding box from WOF's `spr.{min,max}_{latitude,longitude}` columns. Coarse outline for the place — a city's bbox
+	 * is the city's full extent, a postcode's is roughly the postcode polygon's envelope. Optional because not all
+	 * callers ask for it; implementations are free to omit when the underlying schema lacks the columns.
 	 */
 	bbox?: GeoBbox
 	/**
-	 * Set by the coordinate-first path when the chosen locality and the sibling postcode's containing
-	 * locality are geographically far apart — the postcode and the parsed city name disagree (a
-	 * transposed / wrong-for-the-city postcode). The candidate is still returned (the name wins for
-	 * the locality), but the flag lets callers lower confidence / surface the conflict rather than
-	 * silently mislocate. A retrieval/BM25 geocoder can't raise this — it's the falsehood-detection
-	 * differentiator.
+	 * Set by the coordinate-first path when the chosen locality and the sibling postcode's containing locality are
+	 * geographically far apart — the postcode and the parsed city name disagree (a transposed / wrong-for-the-city
+	 * postcode). The candidate is still returned (the name wins for the locality), but the flag lets callers lower
+	 * confidence / surface the conflict rather than silently mislocate. A retrieval/BM25 geocoder can't raise this — it's
+	 * the falsehood-detection differentiator.
 	 */
 	mismatch?: boolean
 }
@@ -109,17 +105,16 @@ export interface GeoBbox {
 /**
  * Query against the resolver.
  *
- * `text` is the only required field; everything else narrows the search. When `country` and
- * `parentId` are both set, `parentId` wins (it's more specific).
+ * `text` is the only required field; everything else narrows the search. When `country` and `parentId` are both set,
+ * `parentId` wins (it's more specific).
  *
- * `near` and `bbox` are independent. `near` is a soft signal — candidates close to the point get a
- * ranking boost but distant candidates aren't dropped. `bbox` is a hard filter — only candidates
- * whose bbox intersects the query bbox are returned (uses the package-built R*Tree index when
- * present; if the index is missing the option is silently ignored to preserve backwards
- * compatibility).
+ * `near` and `bbox` are independent. `near` is a soft signal — candidates close to the point get a ranking boost but
+ * distant candidates aren't dropped. `bbox` is a hard filter — only candidates whose bbox intersects the query bbox are
+ * returned (uses the package-built R*Tree index when present; if the index is missing the option is silently ignored to
+ * preserve backwards compatibility).
  *
- * `near` may carry `maxDistanceKm` to escalate from a boost to a hard filter — candidates further
- * than that distance from the point are dropped at the SQL level via an R*Tree pre-filter.
+ * `near` may carry `maxDistanceKm` to escalate from a boost to a hard filter — candidates further than that distance
+ * from the point are dropped at the SQL level via an R*Tree pre-filter.
  */
 export interface FindPlaceQuery {
 	text: string
@@ -129,10 +124,10 @@ export interface FindPlaceQuery {
 	/** WOF place id — narrows to descendants of this place. */
 	parentId?: number
 	/**
-	 * Sibling postcode. When set on a `locality` query AND a `postcode_locality` table is present,
-	 * triggers the coordinate-first soft-score path: postcode→candidate localities are injected and
-	 * scored `0.6·S_pc + 0.3·S_name + 0.1·S_pop` against the FTS name-match set, recovering small
-	 * localities the name-match alone misses. Ignored when no postcode_locality shard is present.
+	 * Sibling postcode. When set on a `locality` query AND a `postcode_locality` table is present, triggers the
+	 * coordinate-first soft-score path: postcode→candidate localities are injected and scored `0.6·S_pc + 0.3·S_name +
+	 * 0.1·S_pop` against the FTS name-match set, recovering small localities the name-match alone misses. Ignored when no
+	 * postcode_locality shard is present.
 	 */
 	postcode?: string
 	/** Proximity hint — candidates close to this point get a ranking boost. */
@@ -144,9 +139,9 @@ export interface FindPlaceQuery {
 }
 
 /**
- * The pull-based lookup surface. Implementations resolve a `FindPlaceQuery` to a ranked list of
- * `PlaceCandidate`s. The interface is async even though `node:sqlite` is sync — leaves room for
- * `Worker`-backed implementations later without a public API break.
+ * The pull-based lookup surface. Implementations resolve a `FindPlaceQuery` to a ranked list of `PlaceCandidate`s. The
+ * interface is async even though `node:sqlite` is sync — leaves room for `Worker`-backed implementations later without
+ * a public API break.
  */
 export interface PlaceLookup {
 	findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]>

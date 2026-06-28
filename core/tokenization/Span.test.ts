@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { Span } from "./Span.js"
 
 test("constructor: defaults", () => {

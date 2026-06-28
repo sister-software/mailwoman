@@ -12,6 +12,7 @@
 import { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
+
 import { resolveProposalOverlaps } from "./resolve-proposal-overlaps.js"
 
 /** Build a proposal with an explicit span (`new Span(body, start)` derives `end = start + len`). */
@@ -33,6 +34,7 @@ function noOverlaps(out: readonly ClassificationProposal[]): boolean {
 			if (out[i]!.span.start < out[j]!.span.end && out[j]!.span.start < out[i]!.span.end) return false
 		}
 	}
+
 	return true
 }
 

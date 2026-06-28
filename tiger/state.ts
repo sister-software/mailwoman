@@ -5,6 +5,7 @@
  */
 
 import type { GeoFeature, MultiPolygonLiteral } from "@mailwoman/spatial"
+
 import { GeoIDPart } from "./geoid.js"
 import type { TIGERTabulatedBlockProperties } from "./tabulation-block.js"
 
@@ -180,10 +181,10 @@ export enum FIPSStateCode {
  * @category FIPS
  * @category Territories
  * @category Census
- * @see {@linkcode FIPSStateCode} for states.
- * @see {@linkcode AdminLevel1Code} for a combined set of states and territories.
  * @minLength 2
  * @maxLength 2
+ * @see {@linkcode FIPSStateCode} for states.
+ * @see {@linkcode AdminLevel1Code} for a combined set of states and territories.
  */
 export enum FIPSTerritoryCode {
 	/**
@@ -214,11 +215,11 @@ export enum FIPSTerritoryCode {
  * @category States
  * @category Territories
  * @category Census
- * @see {@linkcode FIPSStateCode} for states.
- * @see {@linkcode FIPSTerritoryCode} for territories.
  * @minLength 2
  * @maxLength 2
  * @public
+ * @see {@linkcode FIPSStateCode} for states.
+ * @see {@linkcode FIPSTerritoryCode} for territories.
  */
 export const AdminLevel1Code = {
 	...FIPSStateCode,
@@ -434,8 +435,8 @@ export enum StateName {
 //#region State Utilities
 
 /**
- * Predicate for checking if a string is a proper abbreviation for a US State or territory, rather
- * than a random 2-letter string.
+ * Predicate for checking if a string is a proper abbreviation for a US State or territory, rather than a random
+ * 2-letter string.
  *
  * @see {@link isStateAbbreviation} for a specific check for US States.
  * @see {@link isStateTerritoryAbbreviation} for a specific check for US Territories.
@@ -447,8 +448,7 @@ export function isStateLevelAbbreviation(input: unknown): input is AdminLevel1Ab
 }
 
 /**
- * Predicate for checking if a string is a proper abbreviation for a US State, rather than a random
- * 2-letter string.
+ * Predicate for checking if a string is a proper abbreviation for a US State, rather than a random 2-letter string.
  *
  * @see {@link isStateLevelAbbreviation} for a general check for US States and Territories.
  * @see {@link isStateTerritoryAbbreviation} for a specific check for US Territories.
@@ -460,8 +460,7 @@ export function isStateAbbreviation(input: unknown): input is StateAbbreviation 
 }
 
 /**
- * Predicate for checking if a string is a proper abbreviation for a US Territory, rather than a
- * random 2-letter string.
+ * Predicate for checking if a string is a proper abbreviation for a US Territory, rather than a random 2-letter string.
  *
  * @see {@link isStateLevelAbbreviation} for a general check for US States and Territories.
  * @see {@link isStateAbbreviation} for a specific check for US States.
@@ -540,8 +539,8 @@ export interface TIGERState {
 	[GeoIDPart.State]: AdminLevel1Code
 
 	/**
-	 * The geometry of the tabulated block, typically a polygon, but may be a multi-polygon for blocks
-	 * with holes, or islands.
+	 * The geometry of the tabulated block, typically a polygon, but may be a multi-polygon for blocks with holes, or
+	 * islands.
 	 *
 	 * @title Geometry
 	 */

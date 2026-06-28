@@ -15,8 +15,6 @@
  *   stdout.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { Box, Text } from "ink"
 import { createReadStream, existsSync, writeFileSync } from "node:fs"
 import { get as httpsGet } from "node:https"
 import { tmpdir } from "node:os"
@@ -24,6 +22,9 @@ import { join } from "node:path"
 import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { createGunzip } from "node:zlib"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -43,6 +44,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 		httpsGet(url, (res) => {
 			if (res.statusCode === 301 || res.statusCode === 302) {
 				const location = res.headers.location
+
 				if (location) {
 					httpsGet(location, (res2) => {
 						const chunks: Buffer[] = []
@@ -53,6 +55,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 						})
 						res2.on("error", reject)
 					}).on("error", reject)
+
 					return
 				}
 			}
@@ -87,10 +90,12 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				// Step 1: Load Wikidata concordances from WOF
 				console.error("Loading Wikidata concordances from WOF...")
 				let concordances: Map<string, number[]>
+
 				try {
 					const stmt = db.prepare("SELECT id, other_id FROM concordances WHERE other_source = 'wd:id'")
 					const rows = stmt.all() as unknown as Array<{ id: number; other_id: string }>
 					concordances = new Map<string, number[]>()
+
 					for (const row of rows) {
 						const existing = concordances.get(row.other_id) ?? []
 						existing.push(row.id)
@@ -103,8 +108,10 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 				// Step 2: Get or download the Wikipedia importance TSV
 				let gzPath = tsvPath
+
 				if (!gzPath) {
 					gzPath = join(tmpdir(), "wikimedia-importance.csv.gz")
+
 					if (existsSync(gzPath)) {
 						console.error(`  Using cached TSV: ${gzPath}`)
 					} else {
@@ -125,17 +132,21 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 				for await (const line of rl) {
 					totalRows++
+
 					if (totalRows === 1 && line.startsWith("language")) continue
 					const parts = line.split("\t")
+
 					if (parts.length < 5) continue
 
 					const importance = Number(parts[3]!)
 					const wikidataID = parts[4]!
 
 					if (!wikidataID || !concordances.has(wikidataID)) continue
+
 					if (isNaN(importance)) continue
 
 					const existing = importanceMap.get(wikidataID) ?? 0
+
 					if (importance > existing) {
 						importanceMap.set(wikidataID, importance)
 					}
@@ -156,9 +167,12 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				let importanceCount = 0
 
 				db.exec("BEGIN TRANSACTION")
+
 				for (const [wikidataID, importance] of importanceMap) {
 					const wofIDs = concordances.get(wikidataID)
+
 					if (!wofIDs) continue
+
 					for (const wofID of wofIDs) {
 						insertStmt.run(wofID, importance)
 						importanceCount++
@@ -169,11 +183,13 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				// Step 5: Population fallback for places without Wikipedia data
 				console.error("Adding population fallback for unmatched places...")
 				let fallbackCount = 0
+
 				try {
 					const popStmt = db.prepare("SELECT id, population FROM place_population")
 					const fallbackInsert = db.prepare("INSERT OR IGNORE INTO place_importance (id, importance) VALUES (?, ?)")
 					const popRows = popStmt.all() as unknown as Array<{ id: number; population: number }>
 					db.exec("BEGIN TRANSACTION")
+
 					for (const row of popRows) {
 						if (row.population > 0) {
 							const pseudoImportance = Math.min(1.0, Math.log2(1 + row.population / 1000) / 14)
@@ -206,6 +222,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -218,6 +235,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			</Box>
 		)
 	}
+
 	return null // step progress streams to stderr until the tally lands
 }
 

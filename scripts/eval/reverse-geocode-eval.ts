@@ -74,11 +74,10 @@ function normalizeName(s: string): string {
 }
 
 /**
- * The SURFACE-normalized variant (reported as a separate, labeled metric — never silently folded
- * into the strict one): expands the St↔Saint abbreviation and strips the trailing Town/City/Village
- * status suffix. Both are gold-surface artifacts the honest-eval work already documented (OA says
- * "Saint Albans Town" / "Barre City", WOF says "St. Albans" / "Barre" — same place, different
- * convention), the name-match analogue of the PIP-vs-name-match artifact class.
+ * The SURFACE-normalized variant (reported as a separate, labeled metric — never silently folded into the strict one):
+ * expands the St↔Saint abbreviation and strips the trailing Town/City/Village status suffix. Both are gold-surface
+ * artifacts the honest-eval work already documented (OA says "Saint Albans Town" / "Barre City", WOF says "St. Albans"
+ * / "Barre" — same place, different convention), the name-match analogue of the PIP-vs-name-match artifact class.
  */
 function normalizeNameLoose(s: string): string {
 	return normalizeName(s)
@@ -89,6 +88,7 @@ function normalizeNameLoose(s: string): string {
 
 function percentile(sorted: number[], p: number): number {
 	if (sorted.length === 0) return 0
+
 	return sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))]!
 }
 
@@ -103,13 +103,17 @@ const maxApproximateKm = args["max-approx-km"] ? Number(args["max-approx-km"]) :
 
 const rows: EvalRow[] = []
 const rl = createInterface({ input: createReadStream(args.eval), crlfDelay: Infinity })
+
 for await (const line of rl) {
 	if (!line.trim()) continue
 	const row = JSON.parse(line) as EvalRow
+
 	if (!states.has(row.state?.toUpperCase())) continue
 	rows.push(row)
+
 	if (rows.length >= limit) break
 }
+
 if (rows.length === 0) {
 	console.error(`no rows matched states=${[...states].join(",")} in ${args.eval}`)
 	process.exit(1)
@@ -124,10 +128,12 @@ function nameOrAliasMatches(id: number | string, canonicalName: string, gold: st
 	if (normalizeName(canonicalName) === normalizeName(gold)) return true
 	const key = `${id}\u0000${gold.toLowerCase()}`
 	let hit = aliasCache.get(key)
+
 	if (hit === undefined) {
 		hit = aliasStmt.get(Number(id), gold) !== undefined
 		aliasCache.set(key, hit)
 	}
+
 	return hit
 }
 
@@ -153,6 +159,7 @@ for (const row of rows) {
 	timesMs.push(performance.now() - t0)
 
 	const deepest = result.hierarchy[0]
+
 	if (!deepest) {
 		empty++
 		continue
@@ -163,8 +170,10 @@ for (const row of rows) {
 	if (row.expected.region) {
 		regionScored++
 		const region = result.hierarchy.find((p) => p.placetype === "region")
+
 		if (region && nameOrAliasMatches(region.id, region.name, row.expected.region)) regionMatch++
 	}
+
 	if (row.expected.locality) {
 		localityScored++
 		const bucket = localityMatchByContainment.get(result.containment) ?? { n: 0, match: 0 }
@@ -172,7 +181,9 @@ for (const row of rows) {
 		const fine = result.hierarchy.filter((p) => placetypeDepth(p.placetype) >= placetypeDepth("localadmin"))
 		const matched = fine.some((p) => nameOrAliasMatches(p.id, p.name, row.expected.locality!))
 		const matchedLoose = matched || fine.some((p) => looseMatches(p.name, row.expected.locality!))
+
 		if (matchedLoose) localityMatchLoose++
+
 		if (matched) {
 			localityMatch++
 			bucket.match++
@@ -211,6 +222,7 @@ console.log(
 )
 console.log("")
 console.log(`Containment histogram:`)
+
 for (const [kind, n] of [...containmentCounts].sort((a, b) => b[1] - a[1])) {
 	const bucket = localityMatchByContainment.get(kind)
 	console.log(
@@ -219,11 +231,14 @@ for (const [kind, n] of [...containmentCounts].sort((a, b) => b[1] - a[1])) {
 }
 console.log("")
 console.log(`Deepest-placetype distribution (the granularity question):`)
+
 for (const [pt, n] of [...deepestCounts].sort((a, b) => b[1] - a[1])) {
 	console.log(`- \`${pt}\`: ${n} (${pct(n, rows.length - empty)})`)
 }
+
 if (misses.length > 0) {
 	console.log("")
 	console.log(`First locality misses (surface-normalized misses excluded — these are the genuine wrong-place class):`)
+
 	for (const m of misses) console.log(m)
 }

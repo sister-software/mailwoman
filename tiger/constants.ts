@@ -166,11 +166,9 @@ export interface TIGERPropertyRecord<GeoID extends string = string> {
 	[TIGERProperty.UrbanRuralCode]: TIGERGeographicClassification
 
 	/**
-	 * A code indicating a specific urban area, such as a specific city, or a specific region of
-	 * cities.
+	 * A code indicating a specific urban area, such as a specific city, or a specific region of cities.
 	 *
-	 * For example, 23824 references Detroit, MI. 63217 references the region of New York City, Jersey
-	 * City, and Newark.
+	 * For example, 23824 references Detroit, MI. 63217 references the region of New York City, Jersey City, and Newark.
 	 *
 	 * @title Urban Area Code
 	 * @minLength 5

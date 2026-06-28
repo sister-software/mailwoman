@@ -7,6 +7,7 @@
  */
 
 import { readFileSync } from "node:fs"
+
 import Pastel from "pastel"
 
 // Read the real version from this package's package.json rather than hardcoding it (it drifted to

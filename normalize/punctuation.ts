@@ -37,12 +37,14 @@ export function applyPunctuation(input: string): PunctuationResult {
 	for (let i = 0; i < input.length; i++) {
 		const ch = input[i]!
 		const sub = REPLACEMENTS.get(ch)
+
 		if (sub === undefined) {
 			out.push(ch)
 			map.push(i)
 		} else {
 			changed = true
 			replacements += 1
+
 			for (let k = 0; k < sub.length; k++) {
 				out.push(sub[k]!)
 				map.push(i)
@@ -53,5 +55,6 @@ export function applyPunctuation(input: string): PunctuationResult {
 	if (!changed) {
 		return { text: input, map: identityMap(input.length), replacements: 0 }
 	}
+
 	return { text: out.join(""), map, replacements }
 }

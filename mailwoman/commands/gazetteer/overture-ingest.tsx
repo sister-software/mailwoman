@@ -28,10 +28,11 @@
  *   `scripts/ingest-overture-addresses.ts` behavior verbatim.
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
-import { Box, Text } from "ink"
 import { mkdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
+
+import { dataRootPath } from "@mailwoman/core/utils"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -74,6 +75,7 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 		"| country | rows | postcode | street | number | unit | postal_city | address_levels | OA-lineage |",
 		"| --- | --: | --: | --: | --: | --: | --: | --: | --: |",
 	]
+
 	for (const p of probes) {
 		lines.push(
 			`| ${p.country} | ${p.rows.toLocaleString("en-US")} | ${p.fill_pct.postcode}% | ${p.fill_pct.street}% | ` +
@@ -82,13 +84,16 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 		)
 	}
 	lines.push("", "## Observed source datasets (per country)", "")
+
 	for (const p of probes) {
 		lines.push(`### ${p.country}`, "")
+
 		for (const [ds, n] of Object.entries(p.datasets)) {
 			lines.push(`- \`${ds}\` — ${n.toLocaleString("en-US")} rows`)
 		}
 		lines.push("")
 	}
+
 	return lines.join("\n")
 }
 
@@ -101,6 +106,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 			try {
 				if (!options.countries) {
 					setError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")
+
 					return
 				}
 
@@ -126,9 +132,8 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 				const countryParquet = (cc: string) => path.join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
 
 				/**
-				 * Materialize one country into local Parquet. Column set preserves the Overture schema
-				 * verbatim (nested `sources` + `address_levels` included) plus lon/lat decoded from the WKB
-				 * point via the spatial extension.
+				 * Materialize one country into local Parquet. Column set preserves the Overture schema verbatim (nested
+				 * `sources` + `address_levels` included) plus lon/lat decoded from the WKB point via the spatial extension.
 				 */
 				const ingestCountry = async (cc: string): Promise<void> => {
 					const limitClause = limit ? `LIMIT ${limit}` : ""
@@ -159,11 +164,10 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 				}
 
 				/**
-				 * Emit the flattened corpus-input JSONL the `overture` corpus adapter consumes (`{ street,
-				 * number, unit, postcode, locality }`), so `@mailwoman/corpus` stays free of the heavy
-				 * native DuckDB binding. `street` is kept WHOLE (keyword included); the downstream
-				 * affix-relabel splits `street_prefix`. `locality` flattens the `address_levels`
-				 * municipality (the deepest level) with a `postal_city` fallback.
+				 * Emit the flattened corpus-input JSONL the `overture` corpus adapter consumes (`{ street, number, unit,
+				 * postcode, locality }`), so `@mailwoman/corpus` stays free of the heavy native DuckDB binding. `street` is
+				 * kept WHOLE (keyword included); the downstream affix-relabel splits `street_prefix`. `locality` flattens the
+				 * `address_levels` municipality (the deepest level) with a `postal_city` fallback.
 				 */
 				const emitCorpusJsonl = async (cc: string): Promise<void> => {
 					const src = countryParquet(cc)
@@ -206,6 +210,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 						FROM read_parquet('${src}')
 					`)
 					const row = totals.getRowObjects()[0] as Record<string, unknown>
+
 					if (!row || Number(row.rows) === 0) return null
 
 					const datasetRows = await db.runAndReadAll(`
@@ -214,11 +219,13 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 						GROUP BY 1 ORDER BY n DESC
 					`)
 					const datasets: Record<string, number> = {}
+
 					for (const d of datasetRows.getRowObjects() as { dataset: string; n: bigint }[]) {
 						datasets[d.dataset ?? "(null)"] = Number(d.n)
 					}
 
 					const fill_pct: Record<string, number> = {}
+
 					for (const f of FILL_FIELDS) fill_pct[f] = Number(row[`${f}_pct`])
 
 					return {
@@ -232,10 +239,13 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 				}
 
 				const probes: CountryProbe[] = []
+
 				for (const cc of countries) {
 					if (!options.probeOnly) await ingestCountry(cc)
+
 					if (options.corpusJsonl) await emitCorpusJsonl(cc)
 					const probe = await probeCountry(cc)
+
 					if (probe) {
 						probes.push(probe)
 						console.error(
@@ -274,6 +284,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -286,6 +297,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

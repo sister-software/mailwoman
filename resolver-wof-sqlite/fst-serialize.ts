@@ -50,6 +50,7 @@ const PLACETYPE_ORDER: readonly PlacetypeId[] = [
 ]
 
 const placetypeToIdx = new Map<string, number>()
+
 for (let i = 0; i < PLACETYPE_ORDER.length; i++) {
 	placetypeToIdx.set(PLACETYPE_ORDER[i]!, i)
 }
@@ -63,16 +64,19 @@ export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): B
 
 	function intern(s: string): number {
 		let idx = stringMap.get(s)
+
 		if (idx === undefined) {
 			idx = strings.length
 			strings.push(s)
 			stringMap.set(s, idx)
 		}
+
 		return idx
 	}
 
 	for (const node of nodes) {
 		for (const token of node.edges.keys()) intern(token)
+
 		for (const place of node.places) intern(place.name)
 	}
 
@@ -82,6 +86,7 @@ export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): B
 	// --- Counts ---
 	let totalEdges = 0
 	let totalPlaces = 0
+
 	for (const node of nodes) {
 		totalEdges += node.edges.size
 		totalPlaces += node.places.length
@@ -121,13 +126,16 @@ export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): B
 
 	// --- String table ---
 	let strOffset = 0
+
 	for (let i = 0; i < encodedStrings.length; i++) {
 		buf.writeUInt32LE(strOffset, pos)
 		pos += 4
 		strOffset += encodedStrings[i]!.length
 	}
 	buf.writeUInt32LE(strOffset, pos)
-	pos += 4 // sentinel
+	pos += 4
+
+	// sentinel
 
 	for (const encoded of encodedStrings) {
 		encoded.copy(buf, pos)
@@ -171,6 +179,7 @@ export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): B
 			buf.writeFloatLE(place.importance, pp + 12)
 			buf.writeFloatLE(place.lat, pp + 16)
 			buf.writeFloatLE(place.lon, pp + 20)
+
 			for (let ci = 0; ci < MAX_CHAIN_LEN; ci++) {
 				buf.writeUInt32LE(ci < chainLen ? validChain[ci]! : 0, pp + 24 + ci * 4)
 			}
@@ -190,8 +199,10 @@ export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): B
 export function deserializeFst(buf: Buffer): FstMatcher {
 	// --- Header ---
 	if (buf.length < HEADER_SIZE) throw new Error("FST buffer too small for header")
+
 	if (!buf.subarray(0, 4).equals(MAGIC)) throw new Error("FST magic mismatch")
 	const version = buf.readUInt16LE(4)
+
 	if (version < 1 || version > VERSION) throw new Error(`FST version ${version} unsupported (expected 1..${VERSION})`)
 	const isV2 = version >= 2
 
@@ -205,12 +216,14 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 
 	// --- String table ---
 	const strOffsets = new Uint32Array(stringCount + 1)
+
 	for (let i = 0; i <= stringCount; i++) {
 		strOffsets[i] = buf.readUInt32LE(pos)
 		pos += 4
 	}
 	const strDataStart = pos
 	const strings: string[] = new Array(stringCount)
+
 	for (let i = 0; i < stringCount; i++) {
 		const start = strDataStart + strOffsets[i]!
 		const end = strDataStart + strOffsets[i + 1]!
@@ -234,6 +247,7 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 		const placeCountForState = version >= 4 ? buf.readUInt32LE(sp + 12) : buf.readUInt16LE(sp + 10)
 
 		const edges = new Map<string, number>()
+
 		for (let ei = 0; ei < edgeCountForState; ei++) {
 			const ep = edgeTableStart + (edgeStart + ei) * EDGE_ENTRY_SIZE
 			const stringIdx = buf.readUInt32LE(ep)
@@ -242,10 +256,12 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 		}
 
 		const places: PlaceEntry[] = new Array(placeCountForState)
+
 		for (let pi = 0; pi < placeCountForState; pi++) {
 			const pp = placeTableStart + (placeStart + pi) * PLACE_ENTRY_SIZE
 			const chainLen = buf.readUInt8(pp + 5)
 			const parentChain: number[] = []
+
 			for (let ci = 0; ci < chainLen; ci++) {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
@@ -271,14 +287,19 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 
 export function readFstProvenance(buf: Buffer): FstProvenance | undefined {
 	if (buf.length < HEADER_SIZE) return undefined
+
 	if (!buf.subarray(0, 4).equals(MAGIC)) return undefined
 	const version = buf.readUInt16LE(4)
+
 	if (version < 3) return undefined
 	const provenanceOffset = buf.readUInt32LE(28)
+
 	if (provenanceOffset === 0 || provenanceOffset >= buf.length) return undefined
+
 	try {
 		const jsonLen = buf.readUInt32LE(provenanceOffset)
 		const jsonStr = buf.toString("utf8", provenanceOffset + 4, provenanceOffset + 4 + jsonLen)
+
 		return JSON.parse(jsonStr) as FstProvenance
 	} catch {
 		return undefined

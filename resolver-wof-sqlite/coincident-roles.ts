@@ -38,8 +38,9 @@
  *   be wired as a post-step of the main `scripts/build-unified-wof.ts`.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseSync } from "node:sqlite"
+
+import { haversineKm } from "@mailwoman/spatial"
 
 export const COINCIDENT_ROLES_TABLE = "coincident_roles"
 
@@ -56,15 +57,13 @@ export interface BuildCoincidentRolesOpts {
 	/** Drop + rebuild the table if it already exists. Default true (the build is cheap + idempotent). */
 	drop?: boolean
 	/**
-	 * Relative tolerance: a pair is kept when centroid distance ≤ `toleranceFraction ×
-	 * bbox-diagonal`. Default 0.15.
+	 * Relative tolerance: a pair is kept when centroid distance ≤ `toleranceFraction × bbox-diagonal`. Default 0.15.
 	 */
 	toleranceFraction?: number
 	/** Floor (km) under the relative tolerance, so small-bbox city-states still qualify. Default 12. */
 	minToleranceKm?: number
 	/**
-	 * Centroid distance (km) below which a region-tier pair is classed `city-state` (metadata only).
-	 * Default 2.
+	 * Centroid distance (km) below which a region-tier pair is classed `city-state` (metadata only). Default 2.
 	 */
 	cityStateMaxKm?: number
 	onProgress?: (phase: string, detail?: string) => void
@@ -98,8 +97,8 @@ function tableExists(db: DatabaseSync, name: string): boolean {
 }
 
 /**
- * Derive the coincident-roles relation into `db`. Additive — only creates/replaces the
- * `coincident_roles` table; never touches `spr`/`names`/`ancestors`. Idempotent.
+ * Derive the coincident-roles relation into `db`. Additive — only creates/replaces the `coincident_roles` table; never
+ * touches `spr`/`names`/`ancestors`. Idempotent.
  */
 export function buildCoincidentRoles(
 	db: DatabaseSync,
@@ -162,11 +161,13 @@ export function buildCoincidentRoles(
 	const byCountry: Record<string, number> = {}
 	let rowCount = 0
 	db.exec("BEGIN")
+
 	try {
 		for (const c of candidates) {
 			const dist = haversineKm(c.rlat, c.rlon, c.llat, c.llon)
 			const diag = haversineKm(c.min_latitude, c.min_longitude, c.max_latitude, c.max_longitude)
 			const tolerance = Math.max(toleranceFraction * diag, minToleranceKm)
+
 			if (dist > tolerance) continue
 			// v1 is region-tier only: a place is a `city-state` when its centroid coincides with the
 			// region's (Berlin/Hamburg), else `capital-seat` (a region named after its principal city, e.g.
@@ -186,6 +187,7 @@ export function buildCoincidentRoles(
 	db.exec(`CREATE INDEX IF NOT EXISTS coincident_roles_by_admin ON ${COINCIDENT_ROLES_TABLE} (admin_id)`)
 
 	onProgress("done", `${rowCount} coincident-role rows`)
+
 	return { created: true, rowCount, byCountry, durationMs: Date.now() - start }
 }
 
@@ -195,12 +197,13 @@ export function coincidentRolesExists(db: DatabaseSync): boolean {
 }
 
 /**
- * Load the relation into an in-memory map keyed by `admin_id` for O(1) runtime lookup (#405). Each
- * admin may map to MULTIPLE same-name descendants; the consumer disambiguates (min distance →
- * population → abstain). Returns an empty map when the table is absent.
+ * Load the relation into an in-memory map keyed by `admin_id` for O(1) runtime lookup (#405). Each admin may map to
+ * MULTIPLE same-name descendants; the consumer disambiguates (min distance → population → abstain). Returns an empty
+ * map when the table is absent.
  */
 export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRole[]> {
 	const map = new Map<number, CoincidentRole[]>()
+
 	if (!coincidentRolesExists(db)) return map
 	const rows = db
 		.prepare(
@@ -215,6 +218,7 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
 		distance_km: number
 		locality_population: number
 	}>
+
 	for (const r of rows) {
 		const entry: CoincidentRole = {
 			localityId: r.locality_id,
@@ -224,8 +228,10 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
 			population: r.locality_population,
 		}
 		const list = map.get(r.admin_id)
+
 		if (list) list.push(entry)
 		else map.set(r.admin_id, [entry])
 	}
+
 	return map
 }

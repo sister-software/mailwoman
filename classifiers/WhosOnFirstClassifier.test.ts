@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { WhosOnFirstClassifier } from "./WhosOnFirstClassifier.js"
 
 const classifier = await new WhosOnFirstClassifier().ready()

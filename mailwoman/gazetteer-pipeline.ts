@@ -17,12 +17,6 @@
  *   passed in.
  */
 
-// resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
-// DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
-// loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
-// when the peer isn't installed. Types are erased, so type-only imports are safe at module level.
-import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
-import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { execFileSync } from "node:child_process"
 import {
 	copyFileSync,
@@ -37,11 +31,18 @@ import {
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+// resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
+// DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
+// loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
+// when the peer isn't installed. Types are erased, so type-only imports are safe at module level.
+import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
+import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+
 import { mailwomanDataRoot } from "./resolver-backend.js"
 
 /**
- * The bilingual / alt-name EU set the GeoNames fold lifts (FI hard-resolve 69.5 → 85.8 %). GeoNames
- * `<CC>.txt` dumps from download.geonames.org/export/dump must be present under the geonames dir.
+ * The bilingual / alt-name EU set the GeoNames fold lifts (FI hard-resolve 69.5 → 85.8 %). GeoNames `<CC>.txt` dumps
+ * from download.geonames.org/export/dump must be present under the geonames dir.
  */
 export const DEFAULT_FOLD_COUNTRIES = [
 	"FI",
@@ -61,10 +62,10 @@ export const DEFAULT_FOLD_COUNTRIES = [
 ]
 
 /**
- * The canonical postcode-shard set (filenames under `<data-root>/wof/`) that reproduces the shipped
- * gazetteer's ~1.79 M postcode coverage: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames
- * intl shard (PT/AU) + Overture postcode centroids (CA + the EU-coverage locales). GB (2.6 M) and
- * JP are left out for size. Missing shards are skipped, not fatal.
+ * The canonical postcode-shard set (filenames under `<data-root>/wof/`) that reproduces the shipped gazetteer's ~1.79 M
+ * postcode coverage: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames intl shard (PT/AU) + Overture postcode
+ * centroids (CA + the EU-coverage locales). GB (2.6 M) and JP are left out for size. Missing shards are skipped, not
+ * fatal.
  */
 export const DEFAULT_POSTCODE_SHARDS = [
 	"postalcode-us.db",
@@ -82,8 +83,7 @@ export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
 export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
 
 /**
- * `<data-root>/wof`, where the admin DB, candidate DB, postcode shards, and the convention symlink
- * live.
+ * `<data-root>/wof`, where the admin DB, candidate DB, postcode shards, and the convention symlink live.
  */
 export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
 	return join(dataRoot, "wof")
@@ -122,14 +122,15 @@ export interface FoldResult {
 }
 
 /**
- * Durable GeoNames upstream fold: copy the admin DB, fold the GeoNames places + Latin alt-names
- * into its canonical `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox` so
- * the candidate build carries them. Build-on-copy — `adminIn` is never touched.
+ * Durable GeoNames upstream fold: copy the admin DB, fold the GeoNames places + Latin alt-names into its canonical
+ * `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox` so the candidate build carries them.
+ * Build-on-copy — `adminIn` is never touched.
  */
 export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
 	if (opts.adminIn === opts.adminOut) {
 		throw new Error("fold must write a distinct adminOut (build-on-copy, never in place)")
 	}
+
 	if (!existsSync(opts.adminIn)) throw new Error(`admin DB not found: ${opts.adminIn}`)
 
 	const { ingestGeonamesAliases, buildPlaceSearchFts } = await import("@mailwoman/resolver-wof-sqlite")
@@ -163,11 +164,12 @@ export interface BuildOptions {
 }
 
 /**
- * Build the byte-range candidate gazetteer from an admin DB + postcode shards. The FTS5-trigram
- * fuzzy index is baked in by `buildCandidateTable`. Pure pass-through to the canonical builder.
+ * Build the byte-range candidate gazetteer from an admin DB + postcode shards. The FTS5-trigram fuzzy index is baked in
+ * by `buildCandidateTable`. Pure pass-through to the canonical builder.
  */
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
+
 	return buildCandidateTable({
 		input: opts.adminDb,
 		output: opts.out,
@@ -177,13 +179,13 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 }
 
 /**
- * Point the drop-in convention path `<data-root>/wof/candidate.db` at `candidateDb` (a symlink — a
- * POINTER swap, never a DB mutation). The nominatim/photon CLIs auto-use this path. Returns the
- * link.
+ * Point the drop-in convention path `<data-root>/wof/candidate.db` at `candidateDb` (a symlink — a POINTER swap, never
+ * a DB mutation). The nominatim/photon CLIs auto-use this path. Returns the link.
  */
 export function promoteCandidate(candidateDb: string, dataRoot: string = mailwomanDataRoot()): string {
 	if (!existsSync(candidateDb)) throw new Error(`candidate DB not found: ${candidateDb}`)
 	const linkPath = join(wofDir(dataRoot), "candidate.db")
+
 	// Replace any existing pointer (symlink or stray file) — never the build it points at.
 	try {
 		if (lstatSync(linkPath)) rmSync(linkPath)
@@ -191,6 +193,7 @@ export function promoteCandidate(candidateDb: string, dataRoot: string = mailwom
 		// nothing there yet
 	}
 	symlinkSync(candidateDb, linkPath)
+
 	return linkPath
 }
 
@@ -219,18 +222,20 @@ export interface PublishResult {
 }
 
 /**
- * Publish the candidate gazetteer to R2 (the demo's byte-range source) and bump the demo's
- * `ADMIN_GAZETTEER_VERSION`. Shells out to the proven `publish-demo-assets-to-r2.py` (boto3 + R2
- * cache-control); RCLONE_S3_PUBLIC_* creds must be in the process env (source `.env` first).
+ * Publish the candidate gazetteer to R2 (the demo's byte-range source) and bump the demo's `ADMIN_GAZETTEER_VERSION`.
+ * Shells out to the proven `publish-demo-assets-to-r2.py` (boto3 + R2 cache-control); RCLONE_S3_PUBLIC_* creds must be
+ * in the process env (source `.env` first).
  */
 export function publishGazetteer(opts: PublishOptions): PublishResult {
 	if (!existsSync(opts.candidateDb)) throw new Error(`candidate DB not found: ${opts.candidateDb}`)
+
 	if (!existsSync(opts.uploadScript)) throw new Error(`upload script not found: ${opts.uploadScript}`)
 
 	const prefix = opts.prefix ?? "mailwoman"
 	const versionDir = join(opts.stageDir, "gazetteer", opts.version)
 	mkdirSync(versionDir, { recursive: true })
 	const staged = join(versionDir, "candidate.db")
+
 	try {
 		rmSync(staged)
 	} catch {
@@ -241,15 +246,19 @@ export function publishGazetteer(opts: PublishOptions): PublishResult {
 	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
 	const args = [opts.uploadScript, "--src", opts.stageDir, "--prefix", prefix]
+
 	if (opts.bucket) args.push("--bucket", opts.bucket)
+
 	if (opts.dryRun) args.push("--dry-run")
 	execFileSync("python3", args, { stdio: "inherit" })
 
 	let bumped = false
+
 	if (opts.resourcesFile && !opts.dryRun && existsSync(opts.resourcesFile)) {
 		opts.onPhase?.("demo", `ADMIN_GAZETTEER_VERSION → ${opts.version}`)
 		const src = readFileSync(opts.resourcesFile, "utf8")
 		const next = src.replace(/(ADMIN_GAZETTEER_VERSION = ")[^"]+(")/, `$1${opts.version}$2`)
+
 		if (next !== src) {
 			writeFileSync(opts.resourcesFile, next)
 			bumped = true
@@ -260,12 +269,13 @@ export function publishGazetteer(opts: PublishOptions): PublishResult {
 }
 
 /**
- * A dated, immutable gazetteer version: `YYYY-MM-DD` + a lowercase suffix letter, e.g.
- * `2026-06-27a`. Pass a `Date` (the CLI does; the module never reads the clock implicitly).
+ * A dated, immutable gazetteer version: `YYYY-MM-DD` + a lowercase suffix letter, e.g. `2026-06-27a`. Pass a `Date`
+ * (the CLI does; the module never reads the clock implicitly).
  */
 export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 	const y = now.getUTCFullYear()
 	const m = String(now.getUTCMonth() + 1).padStart(2, "0")
 	const d = String(now.getUTCDate()).padStart(2, "0")
+
 	return `${y}-${m}-${d}${suffix}`
 }

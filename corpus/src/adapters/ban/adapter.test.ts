@@ -8,7 +8,9 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { BAN_ADAPTER_ID, createBanAdapter } from "./adapter.js"

@@ -32,6 +32,7 @@ export const NZ_POSTCODE_PATTERN = /^\d{4}$/
 export function normalizeNzPostcode(raw: unknown): NzPostcode | null {
 	if (typeof raw !== "string") return null
 	const s = raw.trim()
+
 	return NZ_POSTCODE_PATTERN.test(s) ? (s as NzPostcode) : null
 }
 

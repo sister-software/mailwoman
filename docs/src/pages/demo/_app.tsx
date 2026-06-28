@@ -18,8 +18,6 @@
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
-import styles from "./styles.module.css"
-
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
@@ -34,6 +32,18 @@ import { LoadingIndicator } from "../../components/LoadingIndicator/LoadingIndic
 import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
+import type { Calibrator, ReleasesManifest, StreetResolution } from "../../shared/demo-helpers.ts"
+import {
+	createCalibrator,
+	DEFAULT_ADDRESS,
+	DEFAULT_LOCALE,
+	EXAMPLE_ADDRESSES,
+	flattenTree,
+	resolveStreet,
+	runCascade,
+} from "../../shared/demo-helpers.ts"
+import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
+import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 import {
 	adminGazetteerUrl,
 	assetUrl,
@@ -51,27 +61,14 @@ import {
 	streetShardUrl,
 } from "../../shared/resources.tsx"
 
-import type { Calibrator, ReleasesManifest, StreetResolution } from "../../shared/demo-helpers.ts"
-import {
-	createCalibrator,
-	DEFAULT_ADDRESS,
-	DEFAULT_LOCALE,
-	EXAMPLE_ADDRESSES,
-	flattenTree,
-	resolveStreet,
-	runCascade,
-} from "../../shared/demo-helpers.ts"
-
-import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
-import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
+import styles from "./styles.module.css"
 
 /** Per-region interp-radius conformal factor (#374); default for unmeasured regions. */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
 
 /**
- * Spans that together make up the street name — assembled in source order for the situs/interp
- * query.
+ * Spans that together make up the street name — assembled in source order for the situs/interp query.
  */
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
@@ -98,6 +95,7 @@ import {
 function initialAddress(): string {
 	if (typeof window === "undefined") return DEFAULT_ADDRESS
 	const url = new URL(window.location.href)
+
 	return url.searchParams.get("q") ?? DEFAULT_ADDRESS
 }
 
@@ -167,6 +165,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	// the toggle is on. A fresh copy — never mutates `result` (the resolver + compare read the raw nodes).
 	const displayResult = useMemo(() => {
 		if (!result || !calibrateConfidence || !calibrator) return result
+
 		return {
 			...result,
 			nodes: result.nodes.map((n) => ({
@@ -201,6 +200,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	useEffect(() => {
 		if (typeof window === "undefined") return
 		const url = new URL(window.location.href)
+
 		if (text === DEFAULT_ADDRESS) {
 			url.searchParams.delete("q")
 		} else {
@@ -244,6 +244,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				])
 
 				if (cancelled) return
+
 				if (manifestRes) {
 					setManifest(manifestRes)
 					setSelectedVersion(manifestRes.defaultVersion)
@@ -297,13 +298,16 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					const wireCoverage = (): void => {
 						if (!map.isStyleLoaded()) {
 							map.once("styledata", wireCoverage)
+
 							return
 						}
+
 						try {
 							if (!map.getSource(CoverageTileSetID)) {
 								map.addSource(CoverageTileSetID, createCoverageSource(coverageSourceUrl))
 							}
 							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
+
 							for (const layer of CoverageLayers) {
 								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
 							}
@@ -327,6 +331,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 								map.addSource(RaceDotsTileSetID, createRaceDotsSource(raceDotsSourceUrl))
 							}
 							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
+
 							for (const layer of RaceDotsLayers) {
 								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
 							}
@@ -393,6 +398,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					try {
 						const fstResult = await loadFstGazetteer(DEFAULT_LOCALE, selectedVersion)
 						setFstMatcher(fstResult.matcher)
+
 						if (fstResult.provenance) setFstProvenance(fstResult.provenance)
 					} catch {
 						// FST not available for this version
@@ -410,11 +416,13 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						const poll = onProgress
 							? window.setInterval(() => void worker.bytesRead().then(onProgress), 300)
 							: undefined
+
 						try {
 							await wofLookup.warmUp()
 						} finally {
 							if (poll !== undefined) window.clearInterval(poll)
 						}
+
 						return wofLookup
 					})
 				}
@@ -426,8 +434,10 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// bundles ship none, in which case the toggle stays hidden and the demo shows raw scores.
 				try {
 					const calRes = await fetch(assetUrl(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
+
 					if (calRes.ok) {
 						const calTable = await calRes.json()
+
 						// Functional updater: setState would otherwise CALL a bare function arg as an updater.
 						if (!cancelled) setCalibrator(() => createCalibrator(calTable))
 					}
@@ -465,6 +475,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			setCompareResult(null)
 			setCompareErrorMessage(null)
 			setCompareBackend("")
+
 			/* eslint-enable react-hooks/set-state-in-effect */
 			return
 		}
@@ -513,8 +524,10 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 		let lastTheme = currentDocusaurusTheme()
 		const observer = new MutationObserver(() => {
 			const next = currentDocusaurusTheme()
+
 			if (next === lastTheme) return
 			lastTheme = next
+
 			// The cartographer theme is currently dark-only; both light + dark land on the same
 			// MailwomanBaseFlavor. Re-running setStyle still rebinds the canvas correctly when the
 			// operator toggles, and re-wires terrain after the style swap.
@@ -537,6 +550,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			})
 		})
 		observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
+
 		return () => observer.disconnect()
 	}, [map])
 
@@ -551,6 +565,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				markerRef.current.remove()
 				markerRef.current = null
 			}
+
 			if (map) {
 				clearBbox(map)
 			}
@@ -567,6 +582,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				markerRef.current.remove()
 				markerRef.current = null
 			}
+
 			if (!map) return
 			clearBbox(map)
 			const maplibre = await import("maplibre-gl")
@@ -579,6 +595,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			if (candidate.tier && candidate.uncertaintyM != null) {
 				drawRadiusCircle(map, candidate.lat, candidate.lon, candidate.uncertaintyM)
 				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: candidate.tier === "address_point" ? 17 : 15 })
+
 				return
 			}
 
@@ -586,6 +603,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			// DB only carries min/max lat-lon, so without this the map draws a box around the place; the
 			// polygon DB ships the real, simplified boundary keyed by the same WOF id.
 			const release = manifest?.releases.find((r) => r.version === selectedVersion)
+
 			if (release?.hasPolygons && selectedVersion && candidate.id) {
 				try {
 					if (!polygonDbRef.current) {
@@ -595,6 +613,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						)
 					}
 					const geom = await (await polygonDbRef.current).get(candidate.id)
+
 					if (geom) {
 						drawPlaceGeometry(map, geom)
 						const gb = geomBounds(geom)
@@ -605,6 +624,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 							],
 							{ padding: 40 }
 						)
+
 						return
 					}
 				} catch (err) {
@@ -616,13 +636,16 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			}
 
 			const b = candidate.bbox
+
 			if (!b && candidate.placetype === "postcode") {
 				// Anchor-centroid postcode: no bbox, no polygon — a default ~3 km circle says
 				// "approximately here" without inventing a boundary.
 				drawApproxCircle(map, candidate.lat, candidate.lon)
 				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: 11 })
+
 				return
 			}
+
 			if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
 				// No crisp polygon for this place — draw an approximate CIRCLE sized from the bbox
 				// rather than the bbox rectangle itself: a rectangle reads as a (wrong) real boundary,
@@ -643,7 +666,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
+
 		if (!lookupLoader) return null
+
 		if (!lookupPromiseRef.current) {
 			// Honest copy: the DB is range-loaded, so a session transfers a few MB of it — not the
 			// whole file. The bytesRead poll below shows the real number as it grows.
@@ -657,6 +682,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			const l = await lookupPromiseRef.current
 			setLookup(l)
 			setLoadingProgress("")
+
 			return l
 		} catch (error) {
 			lookupPromiseRef.current = null
@@ -674,6 +700,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	const ensureStreetLookups = useCallback(
 		async (slug: string): Promise<StreetLookups | null> => {
 			let p = streetLookupsRef.current.get(slug)
+
 			if (!p) {
 				p = (async () => {
 					const { loadHttpvfsDb } = await import("../../shared/httpvfs-resolver")
@@ -682,11 +709,13 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						loadHttpvfsDb(streetShardUrl(slug, "situs"), sqljsBaseUrl),
 						loadHttpvfsDb(streetShardUrl(slug, "interp"), sqljsBaseUrl),
 					])
+
 					return { situs: new HttpvfsAddressPointLookup(situsW), interp: new HttpvfsInterpolator(interpW) }
 				})()
 				p.catch(() => streetLookupsRef.current.delete(slug))
 				streetLookupsRef.current.set(slug, p)
 			}
+
 			return p
 		},
 		[sqljsBaseUrl]
@@ -700,6 +729,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	useEffect(() => {
 		if (!lookupLoader || lookup) return
 		const connection = (navigator as { connection?: { saveData?: boolean } }).connection
+
 		if (connection?.saveData) return
 		let cancelled = false
 		const warm = (): void => {
@@ -707,6 +737,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			void ensureLookup().then(() => {
 				if (cancelled) return
 				const release = manifest?.releases.find((r) => r.version === selectedVersion)
+
 				if (release?.hasPolygons && selectedVersion && !polygonDbRef.current) {
 					const loading = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseUrl)
 					polygonDbRef.current = loading
@@ -719,8 +750,10 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 		}
 		const hasIdleCallback = typeof window.requestIdleCallback === "function" // Safari ships without it
 		const idleId = hasIdleCallback ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 1500)
+
 		return () => {
 			cancelled = true
+
 			if (hasIdleCallback) window.cancelIdleCallback(idleId)
 			else window.clearTimeout(idleId)
 		}
@@ -734,13 +767,16 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			suppressAutocompleteRef.current = false
 			setSuggestions([])
 			setActiveSuggestion(-1)
+
 			return
 		}
 		const acQuery = (text.includes(",") ? text.slice(text.lastIndexOf(",") + 1) : text).trim()
+
 		if (!fstMatcher || acQuery.length < 2 || /^\d/.test(acQuery)) {
 			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setSuggestions([])
 			setActiveSuggestion(-1)
+
 			return
 		}
 		const handle = window.setTimeout(async () => {
@@ -757,6 +793,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				setActiveSuggestion(-1)
 			}
 		}, 150)
+
 		return () => window.clearTimeout(handle)
 	}, [text, fstMatcher])
 
@@ -771,14 +808,14 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	}, [])
 
 	/**
-	 * Combobox keyboard nav over the "Did you mean" suggestions: ↓/↑ move the highlight (clamped),
-	 * Enter accepts the highlighted one (and suppresses the form submit), Esc dismisses the list.
-	 * With nothing highlighted, Enter falls through to the normal submit so typing an address + Enter
-	 * still parses.
+	 * Combobox keyboard nav over the "Did you mean" suggestions: ↓/↑ move the highlight (clamped), Enter accepts the
+	 * highlighted one (and suppresses the form submit), Esc dismisses the list. With nothing highlighted, Enter falls
+	 * through to the normal submit so typing an address + Enter still parses.
 	 */
 	const onInputKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLInputElement>) => {
 			if (suggestions.length === 0) return
+
 			switch (e.key) {
 				case "ArrowDown":
 					e.preventDefault()
@@ -807,6 +844,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	const onSubmit = useCallback(
 		async (e: React.SubmitEvent<HTMLFormElement>) => {
 			e.preventDefault()
+
 			if (!classifier) return
 			setBusy(true)
 			setParseStage(0)
@@ -874,9 +912,11 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
 				const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
 				const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
+
 				if (streetValue && houseNumberNode?.value && stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)) {
 					try {
 						const street = await ensureStreetLookups(stateSlug)
+
 						if (street) {
 							streetResolution = await resolveStreet(
 								streetValue,
@@ -928,6 +968,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					}
 				}
 				const wofLookup = await ensureLookup()
+
 				if (!wofLookup) {
 					setResult({
 						input: text,
@@ -941,6 +982,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						fstProvenance,
 						timing: { shape: tShape - tStart, classify: tClassify - tShape },
 					})
+
 					return
 				}
 
@@ -950,6 +992,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// overlap the cascade below — by the time a candidate renders, the geometry query is the
 				// only cold work left. The idle warm-up usually got here first; this covers a fast submit.
 				const releaseForResolve = manifest?.releases.find((r) => r.version === selectedVersion)
+
 				if (releaseForResolve?.hasPolygons && selectedVersion && !polygonDbRef.current) {
 					const loading = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseUrl)
 					polygonDbRef.current = loading
@@ -964,6 +1007,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
 				const tResolve = performance.now()
+
 				// Span-rescore fallback (#370 — the demo opts the lever ON). When the admin cascade resolved
 				// NOTHING, recover a dropped/fragmented locality from the RAW text — the model splits accented
 				// towns ("Grudziądz" → "Grudzi"+"dz") so they never resolve, but the word is intact in the input.
@@ -973,6 +1017,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				if (cascadeHits.length === 0) {
 					const pc = postcodeNode?.value ? String(postcodeNode.value).trim() : undefined
 					const rescued = await findRescoreCandidate(text, tree.roots as never, wofLookup as never, { postcode: pc })
+
 					if (rescued) {
 						cascadeHits.push({
 							id: rescued.place.id,
@@ -984,6 +1029,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						} as (typeof cascadeHits)[number])
 					}
 				}
+
 				// Anchor-centroid fallback (postcode-only dead ends): WOF ships placeholder (0,0) for
 				// ~22% of US postcodes and the cascade rightly drops those — but postcode-us.bin (the
 				// model's anchor channel, already loaded) carries a real centroid for every US ZIP.
@@ -991,6 +1037,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// instead of nothing. id=0 → the polygon path skips it; bbox omitted → default radius.
 				if (cascadeHits.length === 0 && postcodeNode?.value && anchorLookupRef.current) {
 					const anchorHit = anchorLookupRef.current.get(String(postcodeNode.value).toUpperCase())
+
 					if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
 						cascadeHits.push({
 							id: 0,
@@ -1036,9 +1083,11 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// lookup returns [] when the slim DB predates the coincident_roles relation.
 				let dualRoles: DualRole[] | undefined
 				const primaryHit = candidates[0]
+
 				if (primaryHit && wofLookup.coincidentRolesFor) {
 					try {
 						const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
+
 						if (roles.length > 0) dualRoles = roles
 					} catch {
 						/* relation absent / query failed → no dual-role badge */
@@ -1167,6 +1216,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 								checked={compareMode}
 								onChange={(e) => {
 									setCompareMode(e.target.checked)
+
 									if (!e.target.checked) {
 										setCompareResult(null)
 										setCompareErrorMessage(null)

@@ -25,15 +25,17 @@
  *   lands on stdout.
  */
 
-import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
-import { Box, Text } from "ink"
 import { spawnSync } from "node:child_process"
 import { createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import * as https from "node:https"
 import * as path from "node:path"
 import { pipeline } from "node:stream/promises"
+
+import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
@@ -143,8 +145,8 @@ type CountyRecord = {
 }
 
 /**
- * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county list.
- * SUMLEV=050 rows are county-level; STATE + COUNTY form the 5-digit GEOID (zero-padded).
+ * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county list. SUMLEV=050 rows are
+ * county-level; STATE + COUNTY form the 5-digit GEOID (zero-padded).
  */
 async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	console.error("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
@@ -161,10 +163,13 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	const iPop = idx("POPESTIMATE2023")
 
 	const records: CountyRecord[] = []
+
 	for (let i = 1; i < lines.length; i++) {
 		const line = lines[i]!.trim()
+
 		if (!line) continue
 		const cols = line.split(",")
+
 		if (cols[iSumlev] !== "050") continue // county rows only
 		const stateFips = cols[iState]!.padStart(2, "0")
 		const countyFips = cols[iCounty]!.padStart(3, "0")
@@ -176,12 +181,13 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 
 	// Sort descending by population (highest first → most coverage early)
 	records.sort((a, b) => b.pop2023 - a.pop2023)
+
 	return records
 }
 
 /**
- * Load (or generate) the ranked county list. On first run this downloads the Census CSV; on
- * subsequent runs it reads the cached JSON file.
+ * Load (or generate) the ranked county list. On first run this downloads the Census CSV; on subsequent runs it reads
+ * the cached JSON file.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (existsSync(RANKED_FILE)) {
@@ -191,6 +197,7 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 	mkdirSync(path.dirname(RANKED_FILE), { recursive: true })
 	writeFileSync(RANKED_FILE, JSON.stringify(records, null, 2))
 	console.error(`Saved county ranking → ${RANKED_FILE} (${records.length} counties)`)
+
 	return records
 }
 
@@ -203,11 +210,14 @@ function fetchText(url: string, redirectsLeft = 3): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const req = https.get(url, (res) => {
 			const status = res.statusCode ?? 0
+
 			if (status >= 300 && status < 400 && res.headers.location) {
 				if (redirectsLeft <= 0) return reject(new Error(`Too many redirects: ${url}`))
 				resolve(fetchText(res.headers.location, redirectsLeft - 1))
+
 				return
 			}
+
 			if (status !== 200) {
 				return reject(new Error(`HTTP ${status} for ${url}`))
 			}
@@ -224,11 +234,13 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		try {
 			await _downloadOnce(url, dest)
+
 			return
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err)
 			const status = message.match(/HTTP (\d+)/)?.[1]
 			const retryable = !status || Number(status) >= 500
+
 			if (!retryable || attempt === retries) throw err
 			const delay = attempt * 2000
 			console.error(`  [retry ${attempt}/${retries}] ${path.basename(dest)}: ${message} — waiting ${delay}ms`)
@@ -243,13 +255,17 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 			if (hopsLeft <= 0) return reject(new Error(`Too many redirects: ${url}`))
 			const req = https.get(u, (res) => {
 				const status = res.statusCode ?? 0
+
 				if (status >= 300 && status < 400 && res.headers.location) {
 					res.resume()
 					follow(res.headers.location, hopsLeft - 1)
+
 					return
 				}
+
 				if (status !== 200) {
 					res.resume()
+
 					return reject(new Error(`HTTP ${status} for ${u}`))
 				}
 				const out = createWriteStream(dest)
@@ -266,15 +282,16 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Unpack a TIGER EDGES ZIP into --edges-dir using the system `unzip` command. Only extracts files
- * whose names end with `.shp`, `.dbf`, `.prj`, `.shx` — the shapefile components DuckDB needs.
- * Silently overwrites existing files (idempotent at the shapefile level).
+ * Unpack a TIGER EDGES ZIP into --edges-dir using the system `unzip` command. Only extracts files whose names end with
+ * `.shp`, `.dbf`, `.prj`, `.shx` — the shapefile components DuckDB needs. Silently overwrites existing files
+ * (idempotent at the shapefile level).
  */
 function extractEdgesZip(zipPath: string, destDir: string): void {
 	// unzip -o (overwrite) -j (junk paths) <zip> *.shp *.dbf *.prj *.shx -d <dest>
 	const result = spawnSync("unzip", ["-o", "-j", zipPath, "*.shp", "*.dbf", "*.prj", "*.shx", "-d", destDir], {
 		stdio: ["ignore", "pipe", "pipe"],
 	})
+
 	if (result.status !== 0) {
 		throw new Error(`unzip failed for ${zipPath}: ${result.stderr.toString().trim()}`)
 	}
@@ -332,6 +349,7 @@ async function downloadParallel(
 	}
 
 	await Promise.all(Array.from({ length: concurrency }, worker))
+
 	return { downloaded, skipped, failed }
 }
 
@@ -342,8 +360,8 @@ async function downloadParallel(
 type ShardBuildResult = { wallMs: number; segments: number; counties: number }
 
 /**
- * Build one state's interpolation shard DB. Returns wall-clock ms + segment count from the script's
- * stdout, or `null` when the shard already exists and `--force` was not passed.
+ * Build one state's interpolation shard DB. Returns wall-clock ms + segment count from the script's stdout, or `null`
+ * when the shard already exists and `--force` was not passed.
  */
 function buildStateShard(
 	stateAbbr: string,
@@ -353,8 +371,10 @@ function buildStateShard(
 	force: boolean
 ): ShardBuildResult | null {
 	const outDb = path.join(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
+
 	if (existsSync(outDb) && !force) {
 		console.error(`  [skip] ${stateAbbr}: shard already exists at ${outDb} (--force to rebuild)`)
+
 		return null
 	}
 
@@ -385,6 +405,7 @@ function buildStateShard(
 	if (result.status !== 0) {
 		console.error(`  [fail] ${stateAbbr}: situs interpolation-shard exited ${result.status}`)
 		console.error(stripAnsi(result.stderr ?? "").trim())
+
 		return { wallMs, segments: 0, counties: 0 }
 	}
 
@@ -403,6 +424,7 @@ function buildStateShard(
 	for (const line of stdout.trim().split("\n")) {
 		if (line) console.error(`  [${stateAbbr}] ${line}`)
 	}
+
 	if (stderr.trim()) {
 		for (const line of stderr.trim().split("\n")) {
 			if (line) console.error(`  [${stateAbbr}:stderr] ${line}`)
@@ -448,6 +470,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 				console.error(`out-dir:     ${OUT_DIR}`)
 				console.error(`concurrency: ${CONCURRENCY}`)
 				console.error(`release:     ${RELEASE}`)
+
 				if (FORCE) console.error("force:       true (re-building existing shards)")
 				console.error("")
 
@@ -465,6 +488,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 				// Apply --top-counties cap if set
 				const topN = options.topCounties ?? null
+
 				if (topN !== null) {
 					counties = counties.slice(0, topN)
 					console.error(`  capped to top ${topN} counties by population`)
@@ -480,6 +504,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 					const tasks: DownloadTask[] = counties.map((c) => {
 						const geoid = c.geoid // 5-digit: stateFips + countyFips
 						const zipFile = `tl_2023_${geoid}_edges.zip`
+
 						return {
 							geoid,
 							zipUrl: `${BASE}/${zipFile}`,
@@ -488,6 +513,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 					})
 					const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR)
 					console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
+
 					if (failed.length > 0) {
 						console.error(`  failed GEOIDs: ${failed.slice(0, 20).join(", ")}${failed.length > 20 ? " …" : ""}`)
 					}
@@ -497,6 +523,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 				if (DOWNLOAD_ONLY) {
 					console.error("--download-only: stopping after downloads.")
 					setSummary([`interpolation: ${OUT_DIR}`, "--download-only: stopped after downloads."])
+
 					return
 				}
 
@@ -506,6 +533,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 				const availableStates = TARGET_STATES.filter((abbr) => {
 					const fips = STATE_FIPS[abbr]
 					const pattern = new RegExp(`tl_\\d+_${fips}\\d{3}_edges\\.shp$`)
+
 					return readdirSync(EDGES_DIR).some((f) => pattern.test(f))
 				})
 
@@ -527,6 +555,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 				for (const abbr of availableStates) {
 					console.error(`Building ${abbr}…`)
 					const result = buildStateShard(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
+
 					if (result === null) {
 						// skipped (already exists, no --force)
 						stateResults.push({ state: abbr, counties: 0, segments: 0, wallMs: 0, skipped: true })
@@ -556,6 +585,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 					`Wall clock:      ${(totalWallMs / 1000).toFixed(1)}s`,
 					`Per-state:`,
 				]
+
 				for (const r of stateResults) {
 					if (r.skipped) {
 						lines.push(`  ${r.state}: SKIPPED (already built)`)
@@ -577,6 +607,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -589,6 +620,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

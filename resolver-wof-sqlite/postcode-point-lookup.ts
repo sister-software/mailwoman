@@ -22,8 +22,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 /**
- * A gazetteer hit. `lat`/`lon` of 0 means the postcode is known but has no centroid (no admin
- * parent).
+ * A gazetteer hit. `lat`/`lon` of 0 means the postcode is known but has no centroid (no admin parent).
  */
 export interface PostcodePlace {
 	country: string
@@ -47,11 +46,13 @@ export class WofPostcodeLookup {
 	/** Exact-match the postcode across every shard and union the rows. */
 	lookup(postcode: string): PostcodePlace[] {
 		const out: PostcodePlace[] = []
+
 		for (const stmt of this.#stmts) {
 			for (const row of stmt.all(postcode)) {
 				out.push({ country: String(row.country), lat: Number(row.lat), lon: Number(row.lon) })
 			}
 		}
+
 		return out
 	}
 

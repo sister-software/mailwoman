@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, test } from "vitest"
+
 import { enUS, frFR, jaJP } from "./profiles/index.js"
 import { InMemoryLocaleRegistry } from "./registry.js"
 
@@ -102,6 +103,7 @@ describe("LocaleProfile — bundled profiles", () => {
 			"intersection_a",
 			"intersection_b",
 		]
+
 		for (const tag of expected) {
 			expect(enUS.componentsSupported).toContain(tag)
 		}

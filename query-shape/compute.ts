@@ -15,8 +15,10 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 	let hasDouble = false
 	let hasSingle = false
 	let prevSpace = false
+
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i]
+
 		if (ch === "\t") {
 			hasTab = true
 		} else if (ch === " ") {
@@ -27,18 +29,24 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 		}
 		prevSpace = false
 	}
+
 	if (hasTab && (hasDouble || hasSingle)) return "mixed"
+
 	if (hasTab) return "tab"
+
 	if (hasDouble) return "double"
+
 	if (hasSingle) return "single"
+
 	return "none"
 }
 
 /**
  * Compute a `QueryShape` from a string or normalized input. Microseconds-cheap, pure-function.
  *
- * @example Const shape = computeQueryShape("350 5th Ave, New York, NY 10118") //
- * shape.knownFormats.find((f) => f.format === "us_zip") → defined // shape.segments.length === 4
+ * @example
+ * 	Const shape = computeQueryShape("350 5th Ave, New York, NY 10118") //
+ * 	shape.knownFormats.find((f) => f.format === "us_zip") → defined // shape.segments.length === 4
  */
 export function computeQueryShape(input: string | NormalizedInputLite, opts?: ComputeQueryShapeOpts): QueryShape {
 	const text = typeof input === "string" ? input : input.normalized

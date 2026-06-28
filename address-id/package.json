@@ -8,10 +8,19 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "address-id"
 	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js"
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
@@ -20,14 +29,5 @@
 	},
 	"devDependencies": {
 		"@types/node": ">=26.0.1"
-	},
-	"files": [
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map"
-	],
-	"publishConfig": {
-		"access": "public"
 	}
 }

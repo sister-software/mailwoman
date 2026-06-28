@@ -31,6 +31,7 @@ export type OpenResourceResult<F> =
  */
 function isConstructor<T>(value: unknown): value is T {
 	if (typeof value !== "function") return false
+
 	return Boolean(value.prototype && value.prototype.constructor === value)
 }
 
@@ -39,6 +40,7 @@ function isConstructor<T>(value: unknown): value is T {
  */
 export function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
 	if (typeof value !== "object" || value === null) return false
+
 	return typeof (value as PromiseLike<T>).then === "function"
 }
 

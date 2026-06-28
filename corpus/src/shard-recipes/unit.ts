@@ -21,9 +21,11 @@
  *   framework LCG) is consumed in the exact call order the legacy script used.
  */
 
+import { spawnSync } from "node:child_process"
+
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type UsUnitDesignator } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { spawnSync } from "node:child_process"
+
 import { stableSourceId } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
@@ -90,8 +92,10 @@ function splitCsv(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
+
 	for (let i = 0; i < line.length; i++) {
 		const c = line[i]
+
 		if (inQ) {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
@@ -106,17 +110,21 @@ function splitCsv(line: string): string[] {
 		} else cur += c
 	}
 	out.push(cur)
+
 	return out
 }
 
 /** Stream real US tuples (number/street/city/postcode + the bare OA unit id) out of a cached OA zip. */
 function readTuples(source: UnitSource): UnitTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
+
 	if (r.status !== 0) {
 		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+
 		return []
 	}
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return []
 	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
@@ -128,14 +136,17 @@ function readTuples(source: UnitSource): UnitTuple[] {
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: UnitTuple[] = []
 	const seen = new Set<string>()
+
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
 		const cells = splitCsv(lines[li]!)
 		const street = get(cells, iStreet)
 		const locality = get(cells, iCity)
 		const house_number = get(cells, iNum)
+
 		if (!street || !locality || !house_number) continue
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		tuples.push({
@@ -147,6 +158,7 @@ function readTuples(source: UnitSource): UnitTuple[] {
 			oaUnit: get(cells, iUnit),
 		})
 	}
+
 	return tuples
 }
 
@@ -160,8 +172,10 @@ function makeUnit(random: () => number, oaUnit: string): string {
 	const canonical = pool[Math.floor(random() * pool.length)]!
 	// Vary the surface form 50/50 (this is the #454 expand/abbreviate variety, baked into the shard).
 	const designator = random() < 0.5 ? title(canonical) : title(US_UNIT_DESIGNATOR_PREFERRED_ABBR[canonical])
+
 	if (standalone) return designator
 	const id = oaUnit && oaUnit.length <= 6 ? oaUnit : SYNTH_IDS[Math.floor(random() * SYNTH_IDS.length)]!
+
 	return `${designator} ${id}`
 }
 
@@ -183,9 +197,9 @@ const VENUES: readonly string[] = [
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 
 /**
- * Render a unit row in a RANDOM layout — units spread across positions, the city/state tail dropped
- * on bare rows, a recipient/venue prefixed on the venue format — so the model learns to RECOGNIZE
- * the designator wherever it sits. Returns {fmt, raw, components}.
+ * Render a unit row in a RANDOM layout — units spread across positions, the city/state tail dropped on bare rows, a
+ * recipient/venue prefixed on the venue format — so the model learns to RECOGNIZE the designator wherever it sits.
+ * Returns {fmt, raw, components}.
  */
 function renderUnit(
 	random: () => number,
@@ -207,11 +221,16 @@ function renderUnit(
 		...(pc ? { postcode: pc } : {}),
 	}
 	const r = random()
+
 	if (r < 0.34) return { fmt: "full-after", raw: `${road} ${unit}, ${tail(loc, reg, pc)}`, components: full }
+
 	if (r < 0.52) return { fmt: "full-first", raw: `${unit}, ${road}, ${tail(loc, reg, pc)}`, components: full }
+
 	if (r < 0.68) return { fmt: "bare-after", raw: `${road} ${unit}`, components: { house_number: hn, street, unit } }
+
 	if (r < 0.84) return { fmt: "bare-first", raw: `${unit} ${road}`, components: { house_number: hn, street, unit } }
 	const v = VENUES[Math.floor(random() * VENUES.length)]!
+
 	return { fmt: "venue", raw: `${v}, ${road} ${unit}, ${tail(loc, reg, pc)}`, components: { venue: v, ...full } }
 }
 
@@ -229,11 +248,14 @@ export const unitRecipe: ShardRecipe = {
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
 
 		const pool: UnitTuple[] = []
+
 		for (const s of sources) {
 			const t = readTuples(s)
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
+
 			for (const x of t) pool.push(x)
 		}
+
 		if (pool.length === 0) {
 			throw new Error("No US tuples found — are the cached OA zips present in /tmp/oa-cache?")
 		}
@@ -242,10 +264,12 @@ export const unitRecipe: ShardRecipe = {
 		let skipped = 0
 		let guard = 0
 		const N = pool.length
+
 		while (emitted < count && guard++ < count * 6) {
 			const base = pool[Math.floor(random() * N)]!
 			const unit = makeUnit(random, base.oaUnit)
 			const { raw, components } = renderUnit(random, base, unit)
+
 			// The unit must survive verbatim in raw, else alignment can't label it.
 			if (!raw.includes(unit)) {
 				skipped++
@@ -268,6 +292,7 @@ export const unitRecipe: ShardRecipe = {
 				license: "OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
 			}
 			const aligned = alignRow(canonical)
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue

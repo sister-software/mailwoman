@@ -1,8 +1,7 @@
 /**
- * Cross-language parity for the gazetteer-anchor matcher (#464). These assertions MIRROR
- * corpus-python's test_gazetteer_anchor.py — if the TS matcher drifts from the Python one, the
- * model sees different clues at inference than it trained on. The inline lexicon matches the Python
- * fixture exactly.
+ * Cross-language parity for the gazetteer-anchor matcher (#464). These assertions MIRROR corpus-python's
+ * test_gazetteer_anchor.py — if the TS matcher drifts from the Python one, the model sees different clues at inference
+ * than it trained on. The inline lexicon matches the Python fixture exactly.
  */
 
 import { describe, expect, it } from "vitest"
@@ -39,8 +38,10 @@ const LEXICON = parseGazetteerLexicon({
 function paintedWords(raw: string): Record<string, number> {
 	const charBits = gazetteerCharPaint(raw, LEXICON)
 	const out: Record<string, number> = {}
+
 	for (const m of raw.matchAll(/\S+/g)) {
 		const word = m[0].replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "")
+
 		for (let c = m.index; c < m.index + m[0].length; c++) {
 			if (/[A-Za-z0-9]/.test(raw[c]!)) {
 				out[word] = charBits[c]!
@@ -48,6 +49,7 @@ function paintedWords(raw: string): Record<string, number> {
 			}
 		}
 	}
+
 	return out
 }
 

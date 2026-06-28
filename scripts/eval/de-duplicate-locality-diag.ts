@@ -21,12 +21,14 @@
  *   [--anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json]
  */
 
+import { readFileSync } from "node:fs"
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -45,21 +47,27 @@ function norm(s: string): string {
 function valueMatch(pred: string, gold: string): boolean {
 	const a = norm(pred)
 	const b = norm(gold)
+
 	if (!a || !b) return false
+
 	if (a === b) return true
 	const aset = new Set(a.split(" "))
 	const bset = new Set(b.split(" "))
 	const subset = (xs: Set<string>, ys: Set<string>): boolean => [...xs].every((t) => ys.has(t))
+
 	return subset(aset, bset) || subset(bset, aset)
 }
 function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 	let found: AddressNode | undefined
 	const walk = (n: AddressNode): void => {
 		if (found) return
+
 		if (n.tag === tag) found = n
 		else for (const c of n.children) walk(c)
 	}
+
 	for (const r of tree.roots) walk(r)
+
 	return found
 }
 
@@ -87,22 +95,27 @@ async function main(): Promise<void> {
 
 	const acc = { dup: { ok: 0, n: 0 }, distinct: { ok: 0, n: 0 } }
 	let i = 0
+
 	for (const row of rows) {
 		i++
+
 		if (i % 1000 === 0) console.error(`  ${i}/${rows.length}`)
 		const loc = row.expected.locality
 		const reg = row.expected.region
+
 		if (!loc) continue
 		const isDup = !!reg && norm(loc) === norm(reg)
 		const bucket = isDup ? acc.dup : acc.distinct
 		bucket.n++
 		let tree: AddressTree
+
 		try {
 			tree = await neural.parse(row.input, parseOpts)
 		} catch {
 			continue
 		}
 		const pred = firstByTag(tree, "locality")
+
 		if (pred && valueMatch(pred.value, loc)) bucket.ok++
 	}
 

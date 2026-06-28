@@ -7,6 +7,7 @@
  */
 
 import type { JsonObject } from "type-fest"
+
 import { isIterable } from "./collections.js"
 
 type SetLike<T> = { has(value: T): boolean } | Iterable<T>
@@ -20,8 +21,8 @@ export type StringKeyOf<O> = Extract<keyof O, string>
 
 /**
  * @param input Source object.
- * @param scalarEnum Unconstrained scalar enum whose values present in `input` will be used as keys,
- *   such as an enum-like object.
+ * @param scalarEnum Unconstrained scalar enum whose values present in `input` will be used as keys, such as an
+ *   enum-like object.
  *
  * @returns A subset of the source object with only properties present in `scalarEnum`.
  */
@@ -101,6 +102,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 	const picked: Partial<Pick<O, keyof O>> = {}
 
 	if (!input) return picked as Pick<O, K>
+
 	if (!constraints) return input as Pick<O, K>
 
 	const keys = isIterable(constraints) ? Array.from(constraints) : Object.values(constraints)
@@ -114,8 +116,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 }
 
 /**
- * Type-predicate for checking if a value appears to be a record, i.e. an object that is not an
- * array.
+ * Type-predicate for checking if a value appears to be a record, i.e. an object that is not an array.
  *
  * @category Type Guard
  * @category Object

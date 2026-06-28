@@ -46,11 +46,10 @@ export interface SerializeXmlOpts {
 	/** Include `place` resolver-supplied normalized place URI when set. Default true. */
 	includePlace?: boolean
 	/**
-	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node. When
-	 * set + node.alternatives is populated, each runner-up is emitted as a self-closing element with
-	 * `place`, `name`, `lat`, `lon`, `score` attributes. Default false — keeps output
-	 * libpostal-compat when not explicitly requested (Springfield-class disambiguation surfaces only
-	 * when the caller asks).
+	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node. When set +
+	 * node.alternatives is populated, each runner-up is emitted as a self-closing element with `place`, `name`, `lat`,
+	 * `lon`, `score` attributes. Default false — keeps output libpostal-compat when not explicitly requested
+	 * (Springfield-class disambiguation surfaces only when the caller asks).
 	 */
 	includeAlternatives?: boolean
 }
@@ -61,39 +60,50 @@ function escapeXml(s: string): string {
 
 function srcAttrValue(node: AddressNode): string | null {
 	if (node.source && node.sourceId) return `${node.source}:${node.sourceId}`
+
 	if (node.source) return node.source
+
 	if (node.sourceId) return node.sourceId
+
 	return null
 }
 
 /**
- * Centroid precision for resolver-supplied lat/lon. 6 decimal places is ~11 cm at the equator —
- * more than enough for any postal-address resolver and short enough to stay readable.
+ * Centroid precision for resolver-supplied lat/lon. 6 decimal places is ~11 cm at the equator — more than enough for
+ * any postal-address resolver and short enough to stay readable.
  */
 const GEO_PRECISION = 6
 
 function attrs(node: AddressNode, opts: Required<SerializeXmlOpts>): string {
 	const parts: string[] = []
+
 	if (opts.includeOffsets) parts.push(`start="${node.start}"`, `end="${node.end}"`)
+
 	if (opts.includeConf) parts.push(`conf="${node.confidence.toFixed(2)}"`)
+
 	if (opts.includeSrc) {
 		const src = srcAttrValue(node)
+
 		if (src !== null) parts.push(`src="${escapeXml(src)}"`)
 	}
+
 	// Emit lat + lon together — a centroid is meaningless with only one coordinate. Resolvers that
 	// can produce one but not the other shouldn't decorate the node at all.
 	if (opts.includeGeo && node.lat !== undefined && node.lon !== undefined) {
 		parts.push(`lat="${node.lat.toFixed(GEO_PRECISION)}"`, `lon="${node.lon.toFixed(GEO_PRECISION)}"`)
 	}
+
 	if (opts.includePlace && node.placeId !== undefined) {
 		parts.push(`place="${escapeXml(node.placeId)}"`)
 	}
+
 	// Multi-role node (#413): a city-state span tagged `region` that also plays `locality` lists every
 	// role it holds, primary first — `roles="region locality"`. Emitted only when extra roles exist.
 	if (node.interpretations && node.interpretations.length > 0) {
 		const roles = [node.tag, ...node.interpretations.map((i) => i.tag)]
 		parts.push(`roles="${escapeXml(roles.join(" "))}"`)
 	}
+
 	return parts.length === 0 ? "" : " " + parts.join(" ")
 }
 
@@ -119,8 +129,10 @@ function serializeAlternatives(node: AddressNode, indent: string): string {
 			`lon="${alt.lon.toFixed(GEO_PRECISION)}"`,
 			`score="${alt.score.toFixed(3)}"`,
 		]
+
 		return `${indent}<alternative ${parts.join(" ")} />`
 	})
+
 	return lines.join("\n")
 }
 
@@ -140,6 +152,7 @@ function serializeNode(node: AddressNode, indent: string, opts: Required<Seriali
 
 	const childrenStr = node.children.map((c) => serializeNode(c, childIndent, opts)).join(nl)
 	const inner = [childrenStr, altsBlock].filter(Boolean).join(nl)
+
 	return `${indent}<${node.tag}${a}>${text}${nl}${inner}${nl}${indent}</${node.tag}>`
 }
 
@@ -158,5 +171,6 @@ export function decodeAsXml(tree: AddressTree, opts: SerializeXmlOpts = {}): str
 	const nl = full.pretty ? "\n" : ""
 	const indent = full.pretty ? "\t" : ""
 	const children = tree.roots.map((r) => serializeNode(r, indent, full)).join(nl)
+
 	return `<address raw="${rawAttr}">${nl}${children}${nl}</address>`
 }

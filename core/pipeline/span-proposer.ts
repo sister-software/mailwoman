@@ -39,8 +39,7 @@ export type ProposedSpanKind =
 	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
 	| "ANNOTATION_SPAN"
 	/**
-	 * A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's
-	 * job.
+	 * A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's job.
 	 */
 	| "QUOTED_SPAN"
 	/** Delivery-service designator + identifier ("PO Box 19", "GPO Box 2890", "Private Bag 7"). */
@@ -64,26 +63,24 @@ export interface ProposedSpan {
 	/** 0..1. Confidence is shape-derived; consumers weight or floor it (it is never a verdict). */
 	confidence: number
 	/**
-	 * Alternative readings of ONE surface share a group id (M3 dual-path: the fused and split
-	 * readings of `2/14` carry the same group). Absent for single-reading proposals.
+	 * Alternative readings of ONE surface share a group id (M3 dual-path: the fused and split readings of `2/14` carry
+	 * the same group). Absent for single-reading proposals.
 	 */
 	alternativeGroup?: number
 	/**
-	 * Provenance: which cue family + rule emitted this ("paired:()", "designator:unit",
-	 * "slash:au-split").
+	 * Provenance: which cue family + rule emitted this ("paired:()", "designator:unit", "slash:au-split").
 	 */
 	source: string
 }
 
 /**
- * Vocabulary the proposer conditions on — built from `@mailwoman/codex` tables by the caller
- * (`buildCodexSpanLexicon` in `@mailwoman/neural`). All token sets are lowercase. An empty lexicon
- * (the default) limits the proposer to the paired-delimiter cue family.
+ * Vocabulary the proposer conditions on — built from `@mailwoman/codex` tables by the caller (`buildCodexSpanLexicon`
+ * in `@mailwoman/neural`). All token sets are lowercase. An empty lexicon (the default) limits the proposer to the
+ * paired-delimiter cue family.
  */
 export interface SpanProposerLexicon {
 	/**
-	 * Codex system codes the lexicon was built from ("us", "au", "nz", …) — drives M3 locale
-	 * conditioning.
+	 * Codex system codes the lexicon was built from ("us", "au", "nz", …) — drives M3 locale conditioning.
 	 */
 	systems: ReadonlySet<string>
 	/** Leading secondary-unit designator tokens (USPS Pub-28 C2 variants: "apt", "ste", "unit", …). */
@@ -91,13 +88,13 @@ export interface SpanProposerLexicon {
 	/** Level-class designator tokens ("floor", "fl", "bsmt", "ph", …) — typed LEVEL_PHRASE. */
 	levelDesignators: ReadonlySet<string>
 	/**
-	 * Descriptive designators ("building", "rear", "side", …) that, inside a bracketed group, read as
-	 * annotation content rather than a unit ("[Building A]" describes; "[Suite 9]" addresses).
+	 * Descriptive designators ("building", "rear", "side", …) that, inside a bracketed group, read as annotation content
+	 * rather than a unit ("[Building A]" describes; "[Suite 9]" addresses).
 	 */
 	weakDesignators: ReadonlySet<string>
 	/**
-	 * Global scan regex for delivery-service designator+identifier phrases, built from the codex
-	 * po_box / delivery-service tables. Must carry the `g` flag.
+	 * Global scan regex for delivery-service designator+identifier phrases, built from the codex po_box /
+	 * delivery-service tables. Must carry the `g` flag.
 	 */
 	deliveryService?: RegExp
 }
@@ -130,15 +127,20 @@ const EDGE_PUNCT = /[\s,;:.()[\]"'«»„“”]/
 function tokenize(text: string): RawToken[] {
 	const out: RawToken[] = []
 	let i = 0
+
 	while (i < text.length) {
 		while (i < text.length && /\s/.test(text[i]!)) i++
+
 		if (i >= text.length) break
 		const start = i
+
 		while (i < text.length && !/\s/.test(text[i]!)) i++
 		const body = text.slice(start, i)
 		let s = 0
 		let e = body.length
+
 		while (s < e && EDGE_PUNCT.test(body[s]!)) s++
+
 		while (e > s && EDGE_PUNCT.test(body[e - 1]!)) e--
 		out.push({
 			body,
@@ -149,6 +151,7 @@ function tokenize(text: string): RawToken[] {
 			strippedEnd: start + e,
 		})
 	}
+
 	return out
 }
 
@@ -157,57 +160,70 @@ function tokenize(text: string): RawToken[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Find balanced pairs for one open/close class. Returns null when ANY delimiter of the class is
- * unbalanced (stray opener or closer) — the caller emits nothing for the class.
+ * Find balanced pairs for one open/close class. Returns null when ANY delimiter of the class is unbalanced (stray
+ * opener or closer) — the caller emits nothing for the class.
  */
 function findBalancedPairs(text: string, open: string, close: string): Array<{ open: number; close: number }> | null {
 	const stack: number[] = []
 	const out: Array<{ open: number; close: number }> = []
+
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i]!
+
 		if (ch === open) stack.push(i)
 		else if (ch === close) {
 			const o = stack.pop()
+
 			if (o === undefined) return null
 			out.push({ open: o, close: i })
 		}
 	}
+
 	return stack.length > 0 ? null : out
 }
 
 /** Same-character quote pairing ("…"): consecutive occurrences pair up; an odd count is unbalanced. */
 function findSameCharPairs(text: string, ch: string): Array<{ open: number; close: number }> | null {
 	const positions: number[] = []
+
 	for (let i = 0; i < text.length; i++) if (text[i] === ch) positions.push(i)
+
 	if (positions.length % 2 !== 0) return null
 	const out: Array<{ open: number; close: number }> = []
+
 	for (let i = 0; i < positions.length; i += 2) out.push({ open: positions[i]!, close: positions[i + 1]! })
+
 	return out
 }
 
 /**
  * Shape-derived annotation confidence (M2: "confidence from balance + content shape"):
  *
- * - Content that is EXACTLY a strong designator + identifier ("Suite 9") is probably a real component
- *   written in brackets (gold convention 2) → very low annotation confidence, letting the
- *   designator cue own the span.
- * - Lowercase- or digit-leading content ("rear entrance", "2nd floor", "code 2580") is the
- *   instruction/aside shape → high.
- * - A short capitalized group at the very END of the input ("(Australia)", "[New Zealand]") is the
- *   trailing-component shape (often a country) → low, below typical consumer floors.
+ * - Content that is EXACTLY a strong designator + identifier ("Suite 9") is probably a real component written in brackets
+ *   (gold convention 2) → very low annotation confidence, letting the designator cue own the span.
+ * - Lowercase- or digit-leading content ("rear entrance", "2nd floor", "code 2580") is the instruction/aside shape →
+ *   high.
+ * - A short capitalized group at the very END of the input ("(Australia)", "[New Zealand]") is the trailing-component
+ *   shape (often a country) → low, below typical consumer floors.
  * - Everything else (capitalized mid-string: "[Building A]", "(The White House)") → moderate.
  */
 function annotationConfidence(content: string, atEndOfInput: boolean, lexicon: SpanProposerLexicon): number {
 	const tokens = content.split(/\s+/).filter(Boolean)
+
 	if (tokens.length === 0) return 0
+
 	if (tokens.length === 2) {
 		const lead = tokens[0]!.toLowerCase().replace(/\.$/, "")
 		const strong =
 			(lexicon.unitDesignators.has(lead) || lexicon.levelDesignators.has(lead)) && !lexicon.weakDesignators.has(lead)
+
 		if (strong && isShortIdentifier(tokens[1]!)) return 0.25
 	}
+
 	if (/^[\p{Ll}0-9]/u.test(content)) return 0.9
+
 	if (atEndOfInput && tokens.length <= 3) return 0.45
+
 	return 0.75
 }
 
@@ -219,11 +235,16 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 		["(", ")"],
 		["[", "]"],
 	]
+
 	for (const [open, close] of bracketClasses) {
 		const pairs = findBalancedPairs(text, open, close)
-		if (!pairs) continue // unbalanced — never guess the missing pair
+
+		if (!pairs) continue
+
+		// unbalanced — never guess the missing pair
 		for (const p of pairs) {
 			const content = text.slice(p.open + 1, p.close).trim()
+
 			if (!content) continue
 			const atEnd = p.close >= lastNonSpace - 1
 			out.push({
@@ -244,26 +265,34 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 		// “ ” class above (which would see a stray “) is skipped for such inputs.
 	]
 	const hasLow9 = text.includes("„")
+
 	for (const [idx, find] of quotePairFinders.entries()) {
 		if (hasLow9 && idx === 1) continue
 		const pairs = find()
+
 		if (!pairs) continue
+
 		for (const p of pairs) {
 			const content = text.slice(p.open + 1, p.close).trim()
+
 			if (!content) continue
 			out.push({ start: p.open, end: p.close + 1, kind: "QUOTED_SPAN", confidence: 0.8, source: "paired:quote" })
 		}
 	}
+
 	if (hasLow9) {
 		const pairs = findBalancedPairs(text, "„", "“")
+
 		if (pairs) {
 			for (const p of pairs) {
 				const content = text.slice(p.open + 1, p.close).trim()
+
 				if (!content) continue
 				out.push({ start: p.open, end: p.close + 1, kind: "QUOTED_SPAN", confidence: 0.8, source: "paired:quote" })
 			}
 		}
 	}
+
 	return out
 }
 
@@ -287,9 +316,13 @@ function proposeDesignatorPhrases(
 		const lead = tokens[i]!.stripped.toLowerCase()
 		const isUnit = lexicon.unitDesignators.has(lead)
 		const isLevel = lexicon.levelDesignators.has(lead)
+
 		if (!isUnit && !isLevel) continue
 		const next = tokens[i + 1]!
-		if (next.stripped.includes("/") || next.stripped.includes("-")) continue // cue family 3 owns punctuated ids
+
+		if (next.stripped.includes("/") || next.stripped.includes("-")) continue
+
+		// cue family 3 owns punctuated ids
 		if (!isShortIdentifier(next.stripped)) continue
 		const weak = lexicon.weakDesignators.has(lead)
 		out.push({
@@ -304,6 +337,7 @@ function proposeDesignatorPhrases(
 	if (lexicon.deliveryService) {
 		// Fresh lastIndex per call — the lexicon regex is shared.
 		const re = new RegExp(lexicon.deliveryService.source, lexicon.deliveryService.flags)
+
 		for (const m of text.matchAll(re)) {
 			out.push({
 				start: m.index,
@@ -314,6 +348,7 @@ function proposeDesignatorPhrases(
 			})
 		}
 	}
+
 	return out
 }
 
@@ -326,10 +361,9 @@ const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
 const FRACTION = /^\d\/\d$/
 
 /**
- * Words that lead NUMBERED ROADS ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural category
- * (road-type leaders), mirroring the phrase grouper's street-type sets. The
- * leading-designator-shape fallback must not read them as sub-premise designators: a slash after a
- * road leader is a route concurrency, not an AU unit/house split.
+ * Words that lead NUMBERED ROADS ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural category (road-type
+ * leaders), mirroring the phrase grouper's street-type sets. The leading-designator-shape fallback must not read them
+ * as sub-premise designators: a slash after a road leader is a route concurrency, not an AU unit/house split.
  */
 const ROAD_LEADERS: ReadonlySet<string> = new Set(["hwy", "highway", "route", "rte", "sr", "cr", "interstate", "loop"])
 
@@ -360,6 +394,7 @@ function proposeNumericReadings(
 		}
 
 		const slash = SLASH_COMPOUND.exec(t.stripped)
+
 		if (slash) {
 			const leftEnd = t.strippedStart + slash[1]!.length
 			const rightStart = leftEnd + 1
@@ -374,6 +409,7 @@ function proposeNumericReadings(
 				/^\p{Lu}[\p{L}]{1,7}$/u.test(prev.stripped) &&
 				!ROAD_LEADERS.has(prevLead) &&
 				hasAuNz
+
 			if (prevIsDesignator || leadingShape) {
 				const group = nextGroup()
 				const conf = prevIsDesignator ? (hasAuNz ? 0.85 : 0.6) : 0.7
@@ -442,11 +478,13 @@ function proposeNumericReadings(
 		}
 
 		const hyphen = HYPHEN_COMPOUND.exec(t.stripped)
+
 		if (hyphen) {
 			// ZIP+4 shape is a postcode, not a house number — never propose a reading for it.
 			if (hyphen[1]!.length === 5) continue
 			const next = i + 1 < tokens.length ? tokens[i + 1] : undefined
 			const leftEnd = t.strippedStart + hyphen[1]!.length
+
 			if (prevIsDesignator) {
 				const group = nextGroup()
 				out.push({
@@ -488,6 +526,7 @@ function proposeNumericReadings(
 			}
 		}
 	}
+
 	return out
 }
 
@@ -496,14 +535,13 @@ function proposeNumericReadings(
 // ---------------------------------------------------------------------------
 
 /**
- * Propose typed spans over `text`. Pure and synchronous; safe to run on every parse. Proposals may
- * overlap freely ("possibilities not constraints"); alternatives of one surface share an
- * `alternativeGroup`. Sorted by `start`, then descending confidence.
+ * Propose typed spans over `text`. Pure and synchronous; safe to run on every parse. Proposals may overlap freely
+ * ("possibilities not constraints"); alternatives of one surface share an `alternativeGroup`. Sorted by `start`, then
+ * descending confidence.
  *
- * Designator and numeric proposals fully inside a confident (≥ 0.6) `ANNOTATION_SPAN` are
- * suppressed — bracketed asides describe the address ("(Apt 4 around back)"), and the annotation
- * proposal already carries the span. Content inside QUOTED_SPANs is NOT suppressed (quotes wrap
- * names, not asides).
+ * Designator and numeric proposals fully inside a confident (≥ 0.6) `ANNOTATION_SPAN` are suppressed — bracketed asides
+ * describe the address ("(Apt 4 around back)"), and the annotation proposal already carries the span. Content inside
+ * QUOTED_SPANs is NOT suppressed (quotes wrap names, not asides).
  */
 export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_SPAN_PROPOSER_LEXICON): ProposedSpan[] {
 	if (text.length === 0) return []
@@ -522,5 +560,6 @@ export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_
 
 	const out = [...paired, ...survivors]
 	out.sort((a, b) => (a.start !== b.start ? a.start - b.start : b.confidence - a.confidence))
+
 	return out
 }

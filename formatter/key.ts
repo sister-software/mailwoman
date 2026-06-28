@@ -20,11 +20,12 @@
  */
 
 import type { ComponentTag } from "@mailwoman/core/types"
+
 import type { ComponentDict } from "./format.js"
 
 /**
- * The address-identifying components, in canonical key order. Venue / attention are intentionally
- * excluded — those carry organization identity, which the record layer keys separately.
+ * The address-identifying components, in canonical key order. Venue / attention are intentionally excluded — those
+ * carry organization identity, which the record layer keys separately.
  */
 const KEY_FIELD_ORDER = [
 	"po_box",
@@ -51,10 +52,9 @@ export interface CanonicalKeyOptions {
 }
 
 /**
- * Normalize a single token for matching: Unicode-decompose and strip combining marks (so `é` →
- * `e`), lowercase, replace `&`/`+`/`/` with spaces, drop every non-alphanumeric character, and
- * collapse whitespace. Deterministic and reversible-free — the same input always yields the same
- * output.
+ * Normalize a single token for matching: Unicode-decompose and strip combining marks (so `é` → `e`), lowercase, replace
+ * `&`/`+`/`/` with spaces, drop every non-alphanumeric character, and collapse whitespace. Deterministic and
+ * reversible-free — the same input always yields the same output.
  */
 export function normalizeAddressToken(input: string): string {
 	return (
@@ -75,10 +75,9 @@ export function normalizeAddressToken(input: string): string {
 }
 
 /**
- * Derive the canonical match key from an address component dict: each present, address-identifying
- * field normalized via {@linkcode normalizeAddressToken}, in fixed order, joined by the separator.
- * Empty / whitespace-only fields are skipped. Returns an empty string if nothing identifying
- * remains.
+ * Derive the canonical match key from an address component dict: each present, address-identifying field normalized via
+ * {@linkcode normalizeAddressToken}, in fixed order, joined by the separator. Empty / whitespace-only fields are
+ * skipped. Returns an empty string if nothing identifying remains.
  */
 export function canonicalKey(components: ComponentDict, opts: CanonicalKeyOptions = {}): string {
 	const separator = opts.separator ?? "|"
@@ -86,8 +85,10 @@ export function canonicalKey(components: ComponentDict, opts: CanonicalKeyOption
 
 	for (const tag of KEY_FIELD_ORDER) {
 		const value = components[tag]
+
 		if (!value) continue
 		const normalized = normalizeAddressToken(value)
+
 		if (normalized) parts.push(normalized)
 	}
 

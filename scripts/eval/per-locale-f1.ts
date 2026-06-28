@@ -39,13 +39,14 @@
  *   --out-json /tmp/per-locale-f1.json
  */
 
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { basename, resolve } from "node:path"
+
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, resolve } from "node:path"
 
 // Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict
 // `oa-resolver-eval` runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs
@@ -88,8 +89,10 @@ function parseArgs(): Args {
 		goldenDir: "data/eval/golden/v0.1.2/dev",
 		files: ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
 	}
+
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
+
 		if (a === "--golden-dir" && argv[i + 1]) out.goldenDir = argv[++i]
 		else if (a === "--files" && argv[i + 1])
 			out.files = argv[++i]!.split(",")
@@ -110,6 +113,7 @@ function parseArgs(): Args {
 		else if (a === "--bridge-gaps") out.bridgeGaps = true
 		else if (a === "--out-json" && argv[i + 1]) out.outJson = argv[++i]
 	}
+
 	return out as Args
 }
 
@@ -128,14 +132,20 @@ interface GoldenRow {
 function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<string, string> {
 	const out: Record<string, string> = {}
 	const streetParts: string[] = []
+
 	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
 		const v = flat[tag]
+
 		if (v) streetParts.push(v)
 	}
+
 	if (streetParts.length > 0) out.street = streetParts.join(" ")
 	const xs: string[] = []
+
 	if (flat.intersection_a) xs.push(flat.intersection_a)
+
 	if (flat.intersection_b) xs.push(flat.intersection_b)
+
 	if (xs.length > 0) out.street = [out.street, ...xs].filter(Boolean).join(" ")
 
 	for (const [tag, value] of Object.entries(flat) as Array<[ComponentTag, string]>) {
@@ -148,8 +158,10 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 			tag === "intersection_b"
 		)
 			continue
+
 		if (value) out[tag] = value
 	}
+
 	return out
 }
 
@@ -157,7 +169,9 @@ const norm = (v: string | undefined): string => (v ?? "").trim().toLowerCase()
 
 function exactMatch(pred: Record<string, string>, gold: Record<string, string>): boolean {
 	const keys = new Set([...Object.keys(pred), ...Object.keys(gold)])
+
 	for (const k of keys) if (norm(pred[k]) !== norm(gold[k])) return false
+
 	return true
 }
 
@@ -185,7 +199,9 @@ interface FileReport {
 
 function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, string>>): FileReport {
 	const tags = new Set<string>()
+
 	for (const r of rows) for (const k of Object.keys(r.components)) tags.add(k)
+
 	for (const p of preds) for (const k of Object.keys(p)) tags.add(k)
 
 	const perTag: Record<string, TagMetric> = {}
@@ -193,15 +209,19 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 	let microTp = 0,
 		microFp = 0,
 		microFn = 0
+
 	for (const tag of tags) {
 		let tp = 0,
 			fp = 0,
 			fn = 0
+
 		for (let i = 0; i < rows.length; i++) {
 			const pred = norm(preds[i]![tag]),
 				gold = norm(rows[i]!.components[tag])
+
 			if (pred && gold && pred === gold) tp++
 			else if (pred && (!gold || pred !== gold)) fp++
+
 			if (gold && (!pred || pred !== gold)) fn++
 		}
 		const p = tp / Math.max(tp + fp, 1)
@@ -218,6 +238,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 	const microF1 = microP + microR > 0 ? (2 * microP * microR) / (microP + microR) : 0
 
 	let exact = 0
+
 	for (let i = 0; i < rows.length; i++) if (exactMatch(preds[i]!, rows[i]!.components)) exact++
 
 	return {
@@ -243,6 +264,7 @@ async function main(): Promise<void> {
 	console.error("Model:     ", args.modelPath ?? "(default weights)")
 
 	let neural: NeuralAddressClassifier
+
 	// FOOTGUN GUARD: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
 	// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
 	// different checkpoints scored byte-identical. Refuse to guess; fail loud.
@@ -296,9 +318,11 @@ async function main(): Promise<void> {
 	}
 
 	const reports: FileReport[] = []
+
 	for (const file of args.files) {
 		const path = resolve(args.goldenDir, file)
 		let rows: GoldenRow[]
+
 		try {
 			rows = readFileSync(path, "utf8")
 				.split("\n")
@@ -314,6 +338,7 @@ async function main(): Promise<void> {
 		// differs (false-neg or mislabel). A diagnostic lens for "which surfaces does the model drop"
 		// — added for the #560 fr.house_number investigation; harmless when the env is unset.
 		const dumpTag = process.env.MAILWOMAN_DUMP_MISS_TAG
+
 		for (const row of rows) {
 			const tree = await neural.parse(
 				row.raw,
@@ -321,8 +346,10 @@ async function main(): Promise<void> {
 			)
 			const pred = foldToComponents(decodeAsJson(tree))
 			preds.push(pred)
+
 			if (dumpTag) {
 				const gold = (row as { components?: Record<string, string> }).components?.[dumpTag]
+
 				if (gold && gold !== pred[dumpTag]) {
 					console.error(
 						`MISS[${dumpTag}] ${basename(file, ".jsonl")} raw=${JSON.stringify(row.raw)} gold=${JSON.stringify(gold)} pred=${JSON.stringify(pred[dumpTag] ?? null)} all=${JSON.stringify(pred)}`
@@ -345,6 +372,7 @@ async function main(): Promise<void> {
 	console.log("# Per-locale F1 tripwire\n")
 	console.log("| Locale | n | Macro-F1 | Micro-F1 | Exact-match |")
 	console.log("|---|--:|--:|--:|--:|")
+
 	for (const r of reports) {
 		console.log(
 			`| ${r.file} | ${r.n} | ${(100 * r.macroF1).toFixed(1)}% | ${(100 * r.microF1).toFixed(1)}% | ${(100 * r.exactRate).toFixed(1)}% |`
@@ -356,10 +384,12 @@ async function main(): Promise<void> {
 
 	// Per-tag F1 side by side across the locale files (where the interference, if any, concentrates)
 	const allTags = new Set<string>()
+
 	for (const r of localeReports) for (const k of Object.keys(r.perTag)) allTags.add(k)
 	console.log("## Per-tag F1 by locale\n")
 	console.log(`| Tag | ${localeReports.map((r) => r.file).join(" | ")} | Δ |`)
 	console.log(`|---|${localeReports.map(() => "--:").join("|")}|--:|`)
+
 	for (const tag of [...allTags].sort()) {
 		const cells = localeReports.map((r) => r.perTag[tag])
 		const f1s = cells.map((c) => (c ? c.f1 : 0))

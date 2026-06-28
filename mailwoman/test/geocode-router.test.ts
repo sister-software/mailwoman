@@ -8,8 +8,9 @@
  *   resolver integration tests). Success-path tests also need the neural weights installed.
  */
 
-import express from "express"
 import { existsSync } from "node:fs"
+
+import express from "express"
 import { describe, expect, test } from "vitest"
 
 import { GeocodeRouter } from "../server/GeocodeRouter.js"
@@ -23,11 +24,13 @@ function buildApp() {
 	const app = express()
 	app.use(express.json({ limit: "2mb" }))
 	app.use(GeocodeRouter)
+
 	return app
 }
 
 async function postJson(app: express.Express, path: string, body: unknown) {
 	const server = app.listen(0)
+
 	try {
 		const port = (server.address() as { port: number }).port
 		const r = await fetch(`http://127.0.0.1:${port}${path}`, {
@@ -35,6 +38,7 @@ async function postJson(app: express.Express, path: string, body: unknown) {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		})
+
 		return { status: r.status, body: await r.json() }
 	} finally {
 		await new Promise<void>((resolve) => server.close(() => resolve()))
@@ -85,6 +89,7 @@ describeIfStack("GeocodeRouter — success path against real WOF + TX shards", (
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const { RemoteResolver } = await import("@mailwoman/resolver")
 		const server = buildApp().listen(0)
+
 		try {
 			const port = (server.address() as { port: number }).port
 			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })

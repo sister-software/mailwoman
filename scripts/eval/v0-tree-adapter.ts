@@ -37,30 +37,35 @@ export interface AdaptResult {
 function locate(raw: string, value: string, from: number): [number, number] | null {
 	if (!value) return null
 	let i = raw.indexOf(value, from)
+
 	if (i < 0) {
 		// case-insensitive fallback (v0 may upper/lower-case components)
 		const lower = raw.toLowerCase().indexOf(value.toLowerCase(), from)
+
 		if (lower < 0) {
 			// last resort: search from the start (value may appear before the cursor)
 			const any = raw.toLowerCase().indexOf(value.toLowerCase())
+
 			if (any < 0) return null
 			i = any
 		} else {
 			i = lower
 		}
 	}
+
 	return [i, i + value.length]
 }
 
 /**
- * Convert a v0 flat `ClassificationRecord` into an `AddressTree` by synthesizing char-aligned
- * `B-<tag>` tokens and running the canonical tree builder. Values are placed left-to-right with a
- * cursor so repeated values ("New York, New York") don't collide on the same span.
+ * Convert a v0 flat `ClassificationRecord` into an `AddressTree` by synthesizing char-aligned `B-<tag>` tokens and
+ * running the canonical tree builder. Values are placed left-to-right with a cursor so repeated values ("New York, New
+ * York") don't collide on the same span.
  */
 export function v0RecordToTree(raw: string, record: ClassificationRecord): AdaptResult {
 	// Collect (tag, value) pairs, then place them in order of first appearance so the cursor walk
 	// assigns leftmost-first (matches how the string reads).
 	const pairs: Array<{ tag: string; value: string }> = []
+
 	for (const [tag, values] of Object.entries(record)) {
 		for (const value of values ?? []) pairs.push({ tag, value })
 	}
@@ -72,11 +77,14 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 	pairs.sort((a, b) => {
 		const ia = raw.toLowerCase().indexOf(a.value.toLowerCase())
 		const ib = raw.toLowerCase().indexOf(b.value.toLowerCase())
+
 		return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib)
 	})
 	let cursor = 0
+
 	for (const { tag, value } of pairs) {
 		const span = locate(raw, value, cursor)
+
 		if (!span) {
 			dropped++
 			continue

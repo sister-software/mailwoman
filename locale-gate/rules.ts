@@ -42,17 +42,19 @@ export function scoreByScript(shape: QueryShapeLike): LocaleCandidate | null {
 /**
  * Postcode-format scorer: maps a high-confidence postcode format hit to the country it implies.
  *
- * Ambiguous 5-digit hits (`us_zip`/`fr_postcode`/`de_postcode` all matching at confidence 0.6) are
- * treated as low-confidence US (the most common 5-digit reading globally) — the caller can override
- * with `--locale fr-FR`/`--locale de-DE` when the disambiguating context isn't in the string.
+ * Ambiguous 5-digit hits (`us_zip`/`fr_postcode`/`de_postcode` all matching at confidence 0.6) are treated as
+ * low-confidence US (the most common 5-digit reading globally) — the caller can override with `--locale
+ * fr-FR`/`--locale de-DE` when the disambiguating context isn't in the string.
  */
 export function scoreByPostcode(shape: QueryShapeLike): LocaleCandidate | null {
 	// Prefer unambiguous (confidence ≥ 0.9) hits over ambiguous (0.6) — among them, pick the one
 	// with the highest confidence + most-specific country mapping.
 	const unambiguous = shape.knownFormats.filter((f) => f.confidence >= 0.9)
+
 	if (unambiguous.length > 0) {
 		// Pick the first unambiguous hit (callers typically have one postcode per address).
 		const hit = unambiguous[0]!
+
 		switch (hit.format) {
 			case "us_zip4":
 				return { locale: "en-US", confidence: 0.95, reason: `format=${hit.format}` }
@@ -67,17 +69,19 @@ export function scoreByPostcode(shape: QueryShapeLike): LocaleCandidate | null {
 	}
 	// Ambiguous 5-digit fallback.
 	const fivedigit = shape.knownFormats.find((f) => f.format === "us_zip" || f.format === "fr_postcode")
+
 	if (fivedigit) {
 		// Low confidence — US is the global plurality interpretation. Returns en-US so a downstream
 		// consumer without a stronger signal still gets a sensible default; alternatives surface FR/DE.
 		return { locale: "en-US", confidence: 0.5, reason: "ambiguous-5digit-postcode" }
 	}
+
 	return null
 }
 
 /**
- * Whole-input fallback: when nothing else fires, return en-US at low confidence. Keeps the gate
- * always-decisive (no `null` to the caller, ever).
+ * Whole-input fallback: when nothing else fires, return en-US at low confidence. Keeps the gate always-decisive (no
+ * `null` to the caller, ever).
  */
 export function scoreFallback(_shape: QueryShapeLike): LocaleCandidate {
 	return { locale: "en-US", confidence: 0.3, reason: "fallback" }

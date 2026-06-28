@@ -23,6 +23,7 @@
  *   --out data/eval/external/openaddresses-de-sample-native-order.jsonl
  */
 import { readFileSync, writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 interface DeRow {
@@ -38,32 +39,37 @@ const inPath = arg("in", "data/eval/external/openaddresses-de-sample.jsonl")
 const outPath = arg("out", "data/eval/external/openaddresses-de-sample-native-order.jsonl")
 
 /**
- * `"27 Straußstraße, Berlin, Berlin 12623"` → `"Straußstraße 27, 12623 Berlin"`. House number is
- * the leading `\d+` (optionally a unit letter, `27a` / `27 A`) of the first comma-segment; the rest
- * is the street. Locality and postcode come from the gold `expected` so we never depend on the
- * US-order string's trailing layout. Rows with no leading house number render street-only (still
- * German order).
+ * `"27 Straußstraße, Berlin, Berlin 12623"` → `"Straußstraße 27, 12623 Berlin"`. House number is the leading `\d+`
+ * (optionally a unit letter, `27a` / `27 A`) of the first comma-segment; the rest is the street. Locality and postcode
+ * come from the gold `expected` so we never depend on the US-order string's trailing layout. Rows with no leading house
+ * number render street-only (still German order).
  */
 function toNativeOrder(r: DeRow): string | null {
 	const first = r.input.split(",")[0]?.trim()
+
 	if (!first) return null
 	const locality = r.expected.locality
 	const postcode = r.expected.postcode
+
 	if (!locality || !postcode) return null
 
 	const m = /^(\d+\s*[A-Za-z]?)\s+(.+)$/.exec(first)
 	const tail = `${postcode} ${locality}`
+
 	if (!m) return `${first}, ${tail}` // no leading house number — street-only
 	const [, house, street] = m
+
 	return `${street!.trim()} ${house!.trim()}, ${tail}`
 }
 
 const lines = readFileSync(inPath, "utf8").split("\n").filter(Boolean)
 const out: string[] = []
 let skipped = 0
+
 for (const line of lines) {
 	const r = JSON.parse(line) as DeRow
 	const native = toNativeOrder(r)
+
 	if (!native) {
 		skipped++
 		continue

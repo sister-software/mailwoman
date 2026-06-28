@@ -69,6 +69,7 @@ interface Crossing {
 }
 
 const crossings: Crossing[] = []
+
 for (const county of COUNTIES) {
 	const shp = `${args["edges-dir"]}/tl_2023_${county.fips}_edges.shp`
 	// Every (node, name) incidence: an edge touches its from-node at the line start and its
@@ -94,6 +95,7 @@ for (const county of COUNTIES) {
 		WHERE len(names[1]) >= 6 AND len(names[2]) >= 6  -- skip ramps/letters; keep real street names
 		ORDER BY h LIMIT ${PER_COUNTY}
 	`)
+
 	for (const r of result.getRowObjects() as Record<string, unknown>[]) {
 		crossings.push({
 			a: String(r.a),
@@ -115,6 +117,7 @@ crossings.forEach((c, i) => {
 		const form = FORMS[(i * 2 + offset) % FORMS.length]!
 		const input = form.render(c.a, c.b, c.state)
 		const expected: Record<string, string> = { intersection_a: c.a, intersection_b: c.b }
+
 		if (input.includes(`, ${c.state}`)) expected.region = c.state
 		lines.push(
 			JSON.stringify({

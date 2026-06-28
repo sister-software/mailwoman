@@ -41,6 +41,7 @@ export const AU_POSTCODE_PATTERN = /^\d{4}$/
 export function normalizeAuPostcode(raw: unknown): AuPostcode | null {
 	if (typeof raw !== "string") return null
 	const s = raw.trim()
+
 	return AU_POSTCODE_PATTERN.test(s) ? (s as AuPostcode) : null
 }
 

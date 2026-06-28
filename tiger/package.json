@@ -2,6 +2,15 @@
 	"name": "@mailwoman/tiger",
 	"version": "4.16.2",
 	"description": "US Census TIGER/Line data processing and analysis.",
+	"keywords": [
+		"census",
+		"geospatial",
+		"tiger"
+	],
+	"homepage": "https://github.com/sister-software/mailwoman",
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
 	"license": "AGPL-3.0-only",
 	"contributors": [
 		{
@@ -14,13 +23,6 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "tiger"
 	},
-	"bugs": {
-		"url": "https://github.com/sister-software/mailwoman/issues"
-	},
-	"homepage": "https://github.com/sister-software/mailwoman",
-	"scripts": {
-		"test": "node ./out/sdk/TIGERService.test.js"
-	},
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
@@ -28,6 +30,12 @@
 		"./scripts/*": "./out/scripts/*.js",
 		"./sdk": "./out/sdk/index.js",
 		".": "./out/index.js"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "node ./out/sdk/TIGERService.test.js"
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
@@ -39,13 +47,5 @@
 	},
 	"engines": {
 		"node": ">=24.18.0"
-	},
-	"keywords": [
-		"census",
-		"tiger",
-		"geospatial"
-	],
-	"publishConfig": {
-		"access": "public"
 	}
 }

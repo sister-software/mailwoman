@@ -6,6 +6,7 @@
 
 import { COMPONENT_TAGS } from "@mailwoman/core/types"
 import { expect, test } from "vitest"
+
 import { buildDefaultPolicies, defaultPolicyFor } from "./defaults.js"
 
 test("buildDefaultPolicies: one entry per ComponentTag, all rule_only by default", () => {

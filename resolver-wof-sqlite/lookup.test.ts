@@ -13,6 +13,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { WofSqlitePlaceLookup } from "./lookup.js"
@@ -268,9 +269,11 @@ function buildFixtureDb(): DatabaseSync {
 			p.lon - 0.05,
 			p.lon + 0.05
 		)
+
 		for (const alt of p.alt_names ?? []) {
 			insertName.run(p.id, "und", alt)
 		}
+
 		for (const aid of p.ancestor_ids ?? []) {
 			insertAncestor.run(p.id, aid, "ancestor")
 		}
@@ -396,6 +399,7 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 		withFts.close() // releases nothing we need — the FTS table now exists on `db`, which we own
 		db.exec(`DROP TABLE names`)
 		const lookup2 = new WofSqlitePlaceLookup({ database: db })
+
 		try {
 			const candidates = await lookup2.findPlace({ text: "Brooklyn", placetype: "locality" })
 			expect(candidates[0]).toMatchObject({ id: 421205765, name: "Brooklyn", placetype: "borough" })
@@ -415,6 +419,7 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 		withFts.close()
 		db.exec(`DROP TABLE names`)
 		const lookup2 = new WofSqlitePlaceLookup({ database: db })
+
 		try {
 			const straddle = await lookup2.findPlace({ text: "York New", placetype: "locality" })
 			expect(straddle.some((c) => c.exactMatch === true)).toBe(false)
@@ -429,6 +434,7 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 
 	test("Disposable: Symbol.dispose closes the lookup", async () => {
 		const db = buildFixtureDb()
+
 		{
 			using disposable = new WofSqlitePlaceLookup({ database: db, buildFts: true })
 			const cands = await disposable.findPlace({ text: "Paris" })

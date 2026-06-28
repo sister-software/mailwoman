@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { type AddressGeocode, type PostalAddress, toPostalAddress, withGeocode } from "./address.js"
 
 const US: PostalAddress["components"] = {

@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import type { LatLon } from "./blocking.js"
 import {
 	DEFAULT_DISTANCE_LEVELS,

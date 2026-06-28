@@ -5,7 +5,6 @@
  */
 
 import "./styles.css"
-
 import {
 	fetchTileSetSources,
 	MailwomanBaseTileSetID,
@@ -16,9 +15,11 @@ import {
 	TileSetSourceID,
 	TileSetSourceRecord,
 } from "@mailwoman/cartographer"
+
 import "maplibre-gl/dist/maplibre-gl.css"
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Map, MapRef, NavigationControl, ViewStateChangeEvent } from "react-map-gl/maplibre"
+
 import { useWebviewContext } from "../../contexts/WebviewContext.tsx"
 import { SplashScreen } from "../SplashScreen/index.tsx"
 import { DebugControl } from "./DebugControl.tsx"

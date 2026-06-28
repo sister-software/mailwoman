@@ -15,10 +15,10 @@ import { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "./codes.js
 import { type CountryName } from "./names.js"
 
 /**
- * Common real-address surface forms per ISO 3166-1 alpha-2, **canonical English name first** then
- * endonym + abbreviations. Curated for the corpus locales + frequent countries (NOT a full
- * 249-entry variant table — the ISO base below catches the canonical name/code for everything
- * else). Forms are matched case-insensitively; the first entry is the preferred render form.
+ * Common real-address surface forms per ISO 3166-1 alpha-2, **canonical English name first** then endonym +
+ * abbreviations. Curated for the corpus locales + frequent countries (NOT a full 249-entry variant table — the ISO base
+ * below catches the canonical name/code for everything else). Forms are matched case-insensitively; the first entry is
+ * the preferred render form.
  */
 export const COUNTRY_SURFACE_FORMS = {
 	US: ["United States", "USA", "US", "U.S.A.", "U.S.", "United States of America", "America"],
@@ -46,27 +46,39 @@ export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
 )
 
 /**
- * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code. Built
- * once at module load, lowercase-keyed. Canonical names + codes from the ISO base, plus the curated
- * surface forms (surface forms win on collision — they're the address-facing spellings).
+ * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code. Built once at module load,
+ * lowercase-keyed. Canonical names + codes from the ISO base, plus the curated surface forms (surface forms win on
+ * collision — they're the address-facing spellings).
  */
 export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	const out = new Map<string, string>()
 	const put = (k: string, iso2: string) => {
 		const key = k.trim().toLowerCase()
+
 		if (key && !out.has(key)) out.set(key, iso2)
 	}
+
 	// ISO base: canonical name + alpha-2 + alpha-3.
-	for (const [name, code] of Object.entries(CountryISO2)) put(name, code as string)
-	for (const [code] of Object.entries(CountryISO2)) put(code, code as string) // "US" -> US
+	for (const [name, code] of Object.entries(CountryISO2)) {
+		put(name, code as string)
+	}
+
+	for (const [code] of Object.entries(CountryISO2)) {
+		put(code, code as string)
+	}
+
+	// "US" -> US
 	for (const [alpha3, name] of Object.entries(Alpha3ToCountryRecord)) {
 		const iso2 = CountryISO2[name as keyof typeof CountryISO2]
+
 		if (iso2) put(alpha3, iso2) // "USA" -> US, "DEU" -> DE
 	}
+
 	// Curated surface forms (override — address spellings beat the ISO base on collision).
 	for (const [iso2, forms] of Object.entries(COUNTRY_SURFACE_FORMS)) {
 		for (const f of forms) out.set(f.trim().toLowerCase(), iso2)
 	}
+
 	return out
 })()
 
@@ -78,14 +90,16 @@ export interface CountryMatch {
 }
 
 /**
- * Resolve a token (surface form, canonical name, alpha-2, or alpha-3) to a country.
- * Case-insensitive. Returns null if unrecognized. Multi-word names ("United States", "Great
- * Britain") must be passed as the whole phrase — the caller decides the span; this matches it.
+ * Resolve a token (surface form, canonical name, alpha-2, or alpha-3) to a country. Case-insensitive. Returns null if
+ * unrecognized. Multi-word names ("United States", "Great Britain") must be passed as the whole phrase — the caller
+ * decides the span; this matches it.
  */
 export function matchCountry(token: string | null | undefined): CountryMatch | null {
 	if (!token || typeof token !== "string") return null
 	const iso2 = COUNTRY_LOOKUP.get(token.trim().toLowerCase())
+
 	if (!iso2) return null
+
 	return { iso2, canonical: ISO2_TO_NAME.get(iso2), matched: token.trim() }
 }
 
@@ -95,8 +109,7 @@ export function isCountryToken(token: unknown): boolean {
 }
 
 /**
- * The preferred render forms for an alpha-2 (canonical first), for synth shards. Empty if none
- * curated.
+ * The preferred render forms for an alpha-2 (canonical first), for synth shards. Empty if none curated.
  */
 export function countrySurfaceForms(iso2: string): readonly string[] {
 	return (COUNTRY_SURFACE_FORMS as Record<string, readonly string[]>)[iso2.toUpperCase()] ?? []

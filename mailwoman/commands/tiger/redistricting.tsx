@@ -11,11 +11,13 @@
  *   rows.
  */
 
+import { setImmediate } from "node:timers/promises"
+
 import { Spinner } from "@inkjs/ui"
 import { Box, Text } from "ink"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
@@ -38,6 +40,7 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 	useEffect(() => {
 		if (!/^\d{2}$/.test(options.state)) {
 			setError(`--state must be a two-digit FIPS code (got "${options.state}")`)
+
 			return
 		}
 
@@ -45,12 +48,14 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 			// Optional `@mailwoman/tiger` (operator street-tier tooling) — lazy-imported so the geocoding
 			// CLI never loads it at startup and a missing optional dep degrades gracefully. See fetch.tsx.
 			let fetchRedistricting: typeof import("@mailwoman/tiger/sdk").fetchRedistricting
+
 			try {
 				;({ fetchRedistricting } = await import("@mailwoman/tiger/sdk"))
 			} catch {
 				setError(
 					"`tiger redistricting` needs the optional @mailwoman/tiger package — install it with: npm install @mailwoman/tiger"
 				)
+
 				return
 			}
 			const gen = fetchRedistricting({
@@ -61,8 +66,10 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 			})
 
 			let next = await gen.next()
+
 			while (!next.done) {
 				const ev = next.value
+
 				if (ev.phase === "download") setStatus(ev.cached ? `Using cached ${ev.file}` : `Downloaded ${ev.file}`)
 				else if (ev.phase === "extract") setStatus(`Extracted ${ev.file}`)
 				else if (ev.phase === "header") setStatus(`Header parsed: ${ev.blocks.toLocaleString()} blocks`)

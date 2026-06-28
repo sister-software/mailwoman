@@ -8,17 +8,17 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "normalize"
 	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js"
-	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map"
 	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
 	"publishConfig": {
 		"access": "public"
 	}

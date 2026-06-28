@@ -141,8 +141,8 @@ const SUFFIXES = new Set([
 ])
 
 /**
- * Surname particles. Consecutive particles fold together (`de` + `la` → `de la`), and the next
- * non-particle token begins the bare surname.
+ * Surname particles. Consecutive particles fold together (`de` + `la` → `de la`), and the next non-particle token
+ * begins the bare surname.
  */
 const PARTICLES = new Set([
 	"al",
@@ -184,8 +184,8 @@ const norm = (token: string): string => token.replace(/\.$/, "").toLowerCase()
 const countChar = (s: string, c: string): number => s.split(c).length - 1
 
 /**
- * Parse a full name into components. Returns `null` for empty input. Best-effort and non-throwing —
- * ambiguous input degrades gracefully rather than erroring.
+ * Parse a full name into components. Returns `null` for empty input. Best-effort and non-throwing — ambiguous input
+ * degrades gracefully rather than erroring.
  */
 export function parsePersonName(input: string | null | undefined): PersonName | null {
 	if (!isPresent(input)) return null
@@ -196,10 +196,12 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	let working = input
 		.replace(/\s*\(([^)]+)\)\s*/g, (_m, n: string) => {
 			if (!result.nickname) result.nickname = n.trim()
+
 			return " "
 		})
 		.replace(/\s*"([^"]+)"\s*/g, (_m, n: string) => {
 			if (!result.nickname) result.nickname = n.trim()
+
 			return " "
 		})
 		.replace(/\s+/g, " ")
@@ -209,6 +211,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	//    ("John Smith, Jr."), in which case keep order and treat the tail as a suffix.
 	if (countChar(working, ",") === 1) {
 		const [head, tail] = working.split(",").map((p) => p.trim())
+
 		if (tail && tail.split(/\s+/).every((t) => SUFFIXES.has(norm(t)))) {
 			result.suffix = tail
 			working = head!
@@ -218,20 +221,25 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	}
 
 	const tokens = working.split(/\s+/).filter(Boolean)
+
 	if (tokens.length === 0) return Object.keys(result).length ? result : null
 
 	// 3. Leading titles → prefix.
 	const prefixParts: string[] = []
+
 	while (tokens.length > 1 && TITLES.has(norm(tokens[0]!))) {
 		prefixParts.push(tokens.shift()!)
 	}
+
 	if (prefixParts.length) result.prefix = prefixParts.join(" ")
 
 	// 4. Trailing suffixes → suffix (a single name token must remain).
 	const suffixParts: string[] = []
+
 	while (tokens.length > 1 && SUFFIXES.has(norm(tokens[tokens.length - 1]!))) {
 		suffixParts.unshift(tokens.pop()!)
 	}
+
 	if (suffixParts.length) {
 		result.suffix = isPresent(result.suffix) ? `${suffixParts.join(" ")} ${result.suffix}` : suffixParts.join(" ")
 	}
@@ -240,6 +248,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	// 5. Locate the surname particle run; everything from it onward is the (particled) surname.
 	let particleStart = -1
+
 	for (let i = 0; i < tokens.length; i++) {
 		// A particle only starts a surname if a bare-surname token follows it.
 		if (PARTICLES.has(norm(tokens[i]!)) && i < tokens.length - 1) {
@@ -251,6 +260,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	if (particleStart >= 0) {
 		let i = particleStart
 		const particleParts: string[] = []
+
 		while (i < tokens.length - 1 && PARTICLES.has(norm(tokens[i]!))) {
 			particleParts.push(tokens[i]!)
 			i++
@@ -258,18 +268,23 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		result.familyParticle = particleParts.join(" ")
 		result.family = tokens.slice(i).join(" ")
 		const before = tokens.slice(0, particleStart)
+
 		if (before.length) result.given = before[0]
+
 		if (before.length > 1) result.middle = before.slice(1).join(" ")
+
 		return result
 	}
 
 	// 6. No particle: last token is the surname, first is given, the rest is middle.
 	if (tokens.length === 1) {
 		result.given = tokens[0]
+
 		return result
 	}
 	result.given = tokens[0]
 	result.family = tokens[tokens.length - 1]
+
 	if (tokens.length > 2) result.middle = tokens.slice(1, -1).join(" ")
 
 	return result

@@ -31,10 +31,11 @@
  *   `yarn compile` (imports the compiled featurizer).
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
+
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import type { CoarsePlacerMeta } from "../../core/coarse-placer/coarse-placer.ts"
 
@@ -88,12 +89,15 @@ if (W.length !== C * D) throw new Error(`weights ${W.length} ≠ ${C}×${D}`)
 function logits(raw: string): Float64Array {
 	const feats = featurize(raw)
 	const z = new Float64Array(C)
+
 	for (let c = 0; c < C; c++) {
 		let s = bias[c]!
 		const base = c * D
+
 		for (const i of feats) s += W[base + i]!
 		z[c] = s
 	}
+
 	return z
 }
 
@@ -102,9 +106,12 @@ const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 
 function logsumexp(xs: number[]): number {
 	let m = -Infinity
+
 	for (const x of xs) if (x > m) m = x
 	let s = 0
+
 	for (const x of xs) s += Math.exp(x - m)
+
 	return m + Math.log(s)
 }
 
@@ -113,6 +120,7 @@ function softmax(z: Float64Array): Float64Array {
 	const m = Math.max(...z)
 	const e = z.map((x) => Math.exp(x - m))
 	const s = e.reduce((a, b) => a + b, 0)
+
 	return e.map((x) => x / s)
 }
 
@@ -131,21 +139,27 @@ console.error("fitting Mahalanobis on in-map train logits…")
 const fitPerClass = Number(args["fit-per-class"])
 const trainRows = load("train.jsonl")
 const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
+
 for (const r of trainRows) {
 	if (r.country === "OTHER") continue
 	const arr = byClass.get(r.country)
+
 	if (arr && arr.length < fitPerClass) arr.push(r.raw)
 }
 const means = new Map<string, Float64Array>() // country -> Float64Array(nIn)
 const counts = new Map<string, number>()
+
 // Accumulate per-class means.
 for (const [country, raws] of byClass) {
 	if (raws.length === 0) continue
 	const mu = new Float64Array(nIn)
+
 	for (const raw of raws) {
 		const v = inVec(logits(raw))
+
 		for (let k = 0; k < nIn; k++) mu[k] = mu[k]! + v[k]!
 	}
+
 	for (let k = 0; k < nIn; k++) mu[k] = mu[k]! / raws.length
 	means.set(country, mu)
 	counts.set(country, raws.length)
@@ -153,18 +167,25 @@ for (const [country, raws] of byClass) {
 // Tied covariance over centered in-map train logits.
 const Sigma = Array.from({ length: nIn }, () => new Float64Array(nIn))
 let nTot = 0
+
 for (const [country, raws] of byClass) {
 	const mu = means.get(country)
+
 	if (!mu) continue
+
 	for (const raw of raws) {
 		const v = inVec(logits(raw))
 		const d = new Float64Array(nIn)
+
 		for (let k = 0; k < nIn; k++) d[k] = v[k]! - mu[k]!
+
 		for (let a = 0; a < nIn; a++) for (let b = 0; b < nIn; b++) Sigma[a]![b] = Sigma[a]![b]! + d[a]! * d[b]!
 		nTot++
 	}
 }
+
 for (let a = 0; a < nIn; a++) for (let b = 0; b < nIn; b++) Sigma[a]![b] = Sigma[a]![b]! / nTot
+
 // Ridge for invertibility.
 for (let a = 0; a < nIn; a++) Sigma[a]![a] = Sigma[a]![a]! + 1e-3
 
@@ -173,22 +194,30 @@ function inverse(M: Float64Array[]): number[][] {
 	const n = M.length
 	const A = M.map((row, i) => {
 		const r = new Float64Array(2 * n)
+
 		for (let j = 0; j < n; j++) r[j] = row[j]!
 		r[n + i] = 1
+
 		return r
 	})
+
 	for (let col = 0; col < n; col++) {
 		let piv = col
+
 		for (let r = col + 1; r < n; r++) if (Math.abs(A[r]![col]!) > Math.abs(A[piv]![col]!)) piv = r
 		;[A[col], A[piv]] = [A[piv]!, A[col]!]
 		const d = A[col]![col]!
+
 		for (let j = 0; j < 2 * n; j++) A[col]![j] = A[col]![j]! / d
+
 		for (let r = 0; r < n; r++) {
 			if (r === col) continue
 			const f = A[r]![col]!
+
 			for (let j = 0; j < 2 * n; j++) A[r]![j] = A[r]![j]! - f * A[col]![j]!
 		}
 	}
+
 	return A.map((r) => Array.from(r.slice(n)))
 }
 const SigmaInv = inverse(Sigma)
@@ -197,17 +226,23 @@ const SigmaInv = inverse(Sigma)
 function mahaScore(z: Float64Array): number {
 	const v = inVec(z)
 	let best = Infinity
+
 	for (const mu of means.values()) {
 		const d = new Float64Array(nIn)
+
 		for (let k = 0; k < nIn; k++) d[k] = v[k]! - mu[k]!
 		let q = 0
+
 		for (let a = 0; a < nIn; a++) {
 			let row = 0
+
 			for (let b = 0; b < nIn; b++) row += SigmaInv[a]![b]! * d[b]!
 			q += d[a]! * row
 		}
+
 		if (q < best) best = q
 	}
+
 	return -best
 }
 
@@ -226,6 +261,7 @@ function scoreRow(raw: string, trueCountry: string | undefined): ScoredRow {
 	// argmax over in-map classes (the FIXED routing).
 	let amIdx = 0,
 		am = -Infinity
+
 	for (let k = 0; k < nIn; k++)
 		if (zin[k]! > am) {
 			am = zin[k]!
@@ -233,6 +269,7 @@ function scoreRow(raw: string, trueCountry: string | undefined): ScoredRow {
 		}
 	const routedCountry = COARSE_CLASSES[IN[amIdx]!]!
 	const inmapProbMax = Math.max(...IN.map((c) => probs[c]!))
+
 	return {
 		correctRoute: trueCountry !== undefined && routedCountry === trueCountry,
 		s: {
@@ -262,9 +299,12 @@ const heldTest = heldoutScored.filter((_, i) => i % 2 === 1)
 /** (inMapAcc, heldCaught) at threshold t over a given in-map/heldout split. */
 function pointAt(scoreKey: ScoreKey, t: number, inSplit: ScoredRow[], heldSplit: ScoredRow[]): ParetoPoint {
 	let keepCorrect = 0
+
 	for (const o of inSplit) if (o.s[scoreKey] >= t && o.correctRoute) keepCorrect++
 	let caught = 0
+
 	for (const o of heldSplit) if (o.s[scoreKey] < t) caught++
+
 	return { t, inMapAcc: (100 * keepCorrect) / inSplit.length, heldCaught: (100 * caught) / heldSplit.length }
 }
 
@@ -276,33 +316,44 @@ function paretoFor(scoreKey: ScoreKey) {
 	// Candidate thresholds: quantiles of the union of scores.
 	const all = [...inVals.map((x) => x.v), ...heldVals].sort((a, b) => a - b)
 	const ts: number[] = []
+
 	for (let q = 0; q <= 200; q++) ts.push(all[Math.min(all.length - 1, Math.floor((q / 200) * (all.length - 1)))]!)
 	const uniq = [...new Set(ts)]
 	const nIn = inVals.length
 	const nHeld = heldVals.length
 	const pts: ParetoPoint[] = uniq.map((t) => {
 		let keepCorrect = 0
+
 		for (const x of inVals) if (x.v >= t && x.ok) keepCorrect++
 		let caught = 0
+
 		for (const v of heldVals) if (v < t) caught++
+
 		return { t, inMapAcc: (100 * keepCorrect) / nIn, heldCaught: (100 * caught) / nHeld }
 	})
 	// Summaries.
 	let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the FULL probe
 	let atHeld90: ParetoPoint | null = null // highest inMapAcc with heldCaught >= 90
-	let atIn90: ParetoPoint | null = null // highest heldCaught with inMapAcc >= 90
+	let atIn90: ParetoPoint | null = null
+
+	// highest heldCaught with inMapAcc >= 90
 	for (const p of pts) {
 		const m = Math.min(p.inMapAcc, p.heldCaught)
+
 		if (m > balanced.val) balanced = { val: m, pt: p }
+
 		if (p.heldCaught >= 90 && (!atHeld90 || p.inMapAcc > atHeld90.inMapAcc)) atHeld90 = p
+
 		if (p.inMapAcc >= 90 && (!atIn90 || p.heldCaught > atIn90.heldCaught)) atIn90 = p
 	}
 
 	// HONEST point: pick t* on DEV (max balanced min), freeze + report on TEST.
 	let devBest: { val: number; t: number | null } = { val: -1, t: null }
+
 	for (const p of pts) {
 		const d = pointAt(scoreKey, p.t, inDev, heldDev)
 		const m = Math.min(d.inMapAcc, d.heldCaught)
+
 		if (m > devBest.val) devBest = { val: m, t: p.t }
 	}
 	const heldoutTestPt = pointAt(scoreKey, devBest.t!, inTest, heldTest)
@@ -329,6 +380,7 @@ lines.push(
 lines.push("")
 function atStr(p: ParetoPoint | null): string {
 	if (!p) return "— (unreachable)"
+
 	return `in ${f(p.inMapAcc)} / held ${f(p.heldCaught)}`
 }
 
@@ -336,6 +388,7 @@ lines.push(`## Honest dev→test point (threshold picked on dev, frozen on test)
 lines.push("")
 lines.push(`| score | TEST in-map | TEST held-caught | min | full-probe balanced |`)
 lines.push(`|---|---:|---:|---:|---:|`)
+
 for (const k of SCORES) {
 	const r = results[k]
 	const h = r.honest
@@ -348,6 +401,7 @@ lines.push(`## Full-probe corners (the achievable Pareto), per score`)
 lines.push("")
 lines.push(`| score | balanced min(in,held) | in-map @ held≥90 | held @ in-map≥90 |`)
 lines.push(`|---|---:|---:|---:|`)
+
 for (const k of SCORES) {
 	const r = results[k]
 	const bal = r.balanced.pt
@@ -379,6 +433,7 @@ lines.push("")
 
 const md = lines.join("\n")
 console.log(md)
+
 if (args["out-md"]) {
 	writeFileSync(args["out-md"], md)
 	console.error(`\n[written] ${args["out-md"]}`)

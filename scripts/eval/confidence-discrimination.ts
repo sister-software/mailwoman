@@ -1,3 +1,7 @@
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs"
+import { setTimeout as sleep } from "node:timers/promises"
+import { pathToFileURL } from "node:url"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -49,9 +53,7 @@ import { createCalibrator } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs"
-import { setTimeout as sleep } from "node:timers/promises"
-import { pathToFileURL } from "node:url"
+
 import { arg } from "../lib/cli-args.ts"
 
 // The first collection died silently at PL ~60/80 (no JS stack → a process-level kill). Surface it
@@ -88,6 +90,7 @@ export function messify(raw: string): string {
 		.replace(/\bvia\b/g, "v")
 		.replace(/\bavenue\b/g, "ave")
 	s = s.replace(/,/g, " ").replace(/\s+/g, " ").trim()
+
 	return s
 }
 
@@ -108,8 +111,8 @@ const PLACETYPE_RANK: Record<string, number> = {
 }
 
 /**
- * Most-specific resolved node's coordinate + its calibrated parse confidence (`nodeConf`) AND the
- * min calibrated confidence across ALL resolved nodes (`minConf`, the weakest driving component).
+ * Most-specific resolved node's coordinate + its calibrated parse confidence (`nodeConf`) AND the min calibrated
+ * confidence across ALL resolved nodes (`minConf`, the weakest driving component).
  */
 export function resolvedResult(
 	tree: AddressTree
@@ -123,11 +126,15 @@ export function resolvedResult(
 			const rank = PLACETYPE_RANK[placetype] ?? 5
 			const conf = n.confidence ?? 0
 			confs.push(conf)
+
 			if (!best || rank > best.rank) best = { rank, lat: n.lat, lon: n.lon, conf }
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return best ? { lat: best.lat, lon: best.lon, nodeConf: best.conf, minConf: Math.min(...confs) } : null
 }
 
@@ -136,8 +143,10 @@ type NomCache = Record<string, { lat: number; lon: number } | null>
 
 async function queryNominatim(raw: string, cc: string, cache: NomCache): Promise<{ coord: Coord; hit: boolean }> {
 	const key = `${cc}:${raw}`
+
 	if (key in cache) return { coord: cache[key] ?? null, hit: true }
 	let out: Coord = null
+
 	try {
 		const u = new URL("https://nominatim.openstreetmap.org/search")
 		u.searchParams.set("q", raw)
@@ -145,6 +154,7 @@ async function queryNominatim(raw: string, cc: string, cache: NomCache): Promise
 		u.searchParams.set("limit", "1")
 		u.searchParams.set("countrycodes", cc.toLowerCase())
 		const r = await fetch(u, { headers: { "User-Agent": NOMINATIM_UA } })
+
 		if (r.ok) {
 			const j = (await r.json()) as Array<{ lat: string; lon: string }>
 			out = j[0] ? { lat: Number(j[0].lat), lon: Number(j[0].lon) } : null
@@ -153,6 +163,7 @@ async function queryNominatim(raw: string, cc: string, cache: NomCache): Promise
 		out = null
 	}
 	cache[key] = out
+
 	return { coord: out, hit: false }
 }
 
@@ -199,11 +210,13 @@ async function collect(): Promise<ScoredRow[]> {
 	const done = new Set(rows.map((r) => r.cc)) // locales already fully collected in a prior partial run
 	const append = (r: ScoredRow): void => {
 		rows.push(r)
+
 		if (ckpt) appendFileSync(ckpt, JSON.stringify(r) + "\n")
 	}
 
 	for (const cc of LOCALES) {
 		const file = `data/eval/external/oa-${cc}-coord-150.jsonl`
+
 		if (!existsSync(file)) {
 			console.error(`${cc}: golden missing — skipped`)
 			continue
@@ -218,16 +231,19 @@ async function collect(): Promise<ScoredRow[]> {
 			lon: number
 		}>
 		const already = rows.filter((r) => r.cc === cc).length
+
 		if (already >= goldens.length) {
 			console.error(`\n[${cc.toUpperCase()}] ${already} rows already checkpointed — skip`)
 			continue
 		}
 		console.error(`\n[${cc.toUpperCase()}] ${goldens.length} rows (resuming from ${already})…`)
 		let i = 0
+
 		for (const g of goldens) {
 			if (i++ < already) continue // resume past checkpointed rows
 			const truth = { lat: g.lat, lon: g.lon }
 			const input = MESSY ? messify(g.raw) : g.raw
+
 			try {
 				const tree = await model.parse(input, { postcodeRepair: true, calibrate })
 				const resolved = await resolver.resolveTree(tree as never, { defaultCountry: cc.toUpperCase() })
@@ -248,6 +264,7 @@ async function collect(): Promise<ScoredRow[]> {
 					nomAnswered: !!nom,
 					nomRight,
 				})
+
 				// Rate-limit ONLY on a real Nominatim hit (cache miss); cached re-run skips it.
 				if (!hit) await sleep(1100)
 			} catch (e) {
@@ -255,11 +272,13 @@ async function collect(): Promise<ScoredRow[]> {
 				console.error(`  ⚠ row failed (${cc} "${input.slice(0, 40)}"): ${(e as Error).message}`)
 				append({ cc, mwAnswered: false, errKm: null, nodeConf: 0, minConf: 0, nomAnswered: false, nomRight: false })
 			}
+
 			// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims
 			// it (~380-parse SIGKILL on the lab box). A periodic forced GC reclaims it; run the harness
 			// with `node --expose-gc` to enable. No-op without the flag (the checkpoint+resume still
 			// covers a crash). Keyed off the GLOBAL row count, not the per-locale `i`.
 			if (rows.length % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
+
 			if (i % 20 === 0) {
 				console.error(`  ${i}/${goldens.length}`)
 				writeFileSync(cachePath, JSON.stringify(cache))
@@ -268,6 +287,7 @@ async function collect(): Promise<ScoredRow[]> {
 	}
 	void done
 	writeFileSync(cachePath, JSON.stringify(cache))
+
 	return rows
 }
 
@@ -283,6 +303,7 @@ function analyze(rows: ScoredRow[]): string {
 		TAU_GRID.map((tau) => {
 			const accepted = set.filter((r) => r.mwAnswered && confOf(r) >= tau)
 			const correct = accepted.filter(right).length
+
 			return {
 				tau,
 				accepted: accepted.length,
@@ -292,6 +313,7 @@ function analyze(rows: ScoredRow[]): string {
 		})
 	const nomPoint = (set: ScoredRow[]) => {
 		const ans = set.filter((r) => r.nomAnswered)
+
 		return {
 			precision: ans.length ? ans.filter((r) => r.nomRight).length / ans.length : NaN,
 			recall: set.length ? ans.length / set.length : NaN,
@@ -325,12 +347,14 @@ function analyze(rows: ScoredRow[]): string {
 	L.push(`## Precision–recall by confidence threshold τ (mailwoman, draw split)\n`)
 	L.push(`| τ | accepted | precision @25km | recall |`)
 	L.push(`|--:|--:|--:|--:|`)
+
 	for (const p of curve) L.push(`| ${p.tau.toFixed(3)} | ${p.accepted} | ${pct(p.precision)} | ${pct(p.recall)} |`)
 	L.push(`\n**Nominatim (single point, same set):** precision ${pct(nom.precision)} · recall ${pct(nom.recall)}\n`)
 
 	const beats = curve.filter((p) => !Number.isNaN(p.precision) && p.precision > nom.precision && p.recall >= 0.25)
 	const head = beats.length ? beats[0]! : null
 	L.push(`## Headline\n`)
+
 	if (head) {
 		L.push(
 			`At **τ=${head.tau.toFixed(3)}**, mailwoman holds **${pct(head.precision)}** precision while still answering ` +
@@ -356,16 +380,17 @@ function analyze(rows: ScoredRow[]): string {
 	)
 
 	const svgPath = arg("svg", "")
+
 	if (svgPath) {
 		writeFileSync(svgPath, renderSvg(curve, nom))
 		console.error(`wrote ${svgPath}`)
 	}
+
 	return L.join("\n") + "\n"
 }
 
 /**
- * Minimal self-contained precision–recall SVG: mailwoman curve (recall x, precision y) + Nominatim
- * point.
+ * Minimal self-contained precision–recall SVG: mailwoman curve (recall x, precision y) + Nominatim point.
  */
 function renderSvg(
 	curve: Array<{ precision: number; recall: number }>,
@@ -384,6 +409,7 @@ function renderSvg(
 		.map((t) => {
 			const x = xs(t),
 				y = ys(t)
+
 			return (
 				`<line x1="${x}" y1="${ys(0)}" x2="${x}" y2="${ys(1)}" stroke="#eee"/>` +
 				`<line x1="${xs(0)}" y1="${y}" x2="${xs(1)}" y2="${y}" stroke="#eee"/>` +
@@ -392,6 +418,7 @@ function renderSvg(
 			)
 		})
 		.join("")
+
 	return (
 		`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" font-family="system-ui, sans-serif">` +
 		`<rect width="${W}" height="${H}" fill="white"/>` +
@@ -415,12 +442,14 @@ async function main(): Promise<void> {
 				.map((l) => JSON.parse(l) as ScoredRow)
 		: await collect()
 	const rowsOut = arg("rows-out", "")
+
 	if (rowsOut && !rowsIn) {
 		writeFileSync(rowsOut, rows.map((r) => JSON.stringify(r)).join("\n") + "\n")
 		console.error(`wrote ${rowsOut} (${rows.length} rows)`)
 	}
 	const md = analyze(rows)
 	const out = arg("out", "")
+
 	if (out) {
 		writeFileSync(out, md)
 		console.error(`wrote ${out}`)

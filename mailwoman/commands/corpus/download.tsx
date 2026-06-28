@@ -16,6 +16,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
@@ -54,45 +55,53 @@ const CorpusDownload: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 
 			// Step 0: Download v0.3.0 corpus
 			updateStep(0, { status: "running" })
+
 			try {
 				await $`rclone sync ${rcloneBase}/corpus/v0.3.0/ ${out}/corpus/versioned/v0.3.0/corpus-v0.3.0/ --progress --transfers 8 --checkers 16 ${dryFlag}`.quiet()
 				updateStep(0, { status: "done" })
 			} catch (_e: unknown) {
 				const e = _e as Record<string, unknown>
 				updateStep(0, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+
 				return
 			}
 
 			// Step 1: Download v0.4.0 adapter shards
 			updateStep(1, { status: "running" })
+
 			try {
 				await $`rclone sync ${rcloneBase}/corpus/v0.4.0/ ${out}/corpus/versioned/v0.4.0/corpus-v0.4.0/ --progress --transfers 4 ${dryFlag}`.quiet()
 				updateStep(1, { status: "done" })
 			} catch (_e: unknown) {
 				const e = _e as Record<string, unknown>
 				updateStep(1, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+
 				return
 			}
 
 			// Step 2: Download tokenizer
 			updateStep(2, { status: "running" })
+
 			try {
 				await $`rclone sync ${rcloneBase}/models/tokenizer/ ${out}/models/tokenizer/ --progress ${dryFlag}`.quiet()
 				updateStep(2, { status: "done" })
 			} catch (_e: unknown) {
 				const e = _e as Record<string, unknown>
 				updateStep(2, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+
 				return
 			}
 
 			// Step 3: Download training code
 			updateStep(3, { status: "running" })
+
 			try {
 				await $`rclone sync ${rcloneBase}/corpus-python/ ./corpus-python/ --progress ${dryFlag}`.quiet()
 				updateStep(3, { status: "done" })
 			} catch (_e: unknown) {
 				const e = _e as Record<string, unknown>
 				updateStep(3, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+
 				return
 			}
 		}

@@ -23,6 +23,7 @@
  */
 
 import type { CircleLayerSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
+
 import { TileSetSourceID } from "../styles/sources.js"
 
 export const RaceDotsTileSetID = TileSetSourceID("race-dots-la")
@@ -62,8 +63,8 @@ function dotLayer(id: string, color: string, cats: readonly string[]): CircleLay
 }
 
 /**
- * One default-off circle layer per category. Plain MapLibre specs — the demo adds them imperatively
- * on map-load with a `beforeId` of the first symbol layer, so the dots sit beneath place labels.
+ * One default-off circle layer per category. Plain MapLibre specs — the demo adds them imperatively on map-load with a
+ * `beforeId` of the first symbol layer, so the dots sit beneath place labels.
  */
 export const RaceDotsLayers: CircleLayerSpecification[] = RaceDotsCategories.map((c) =>
 	dotLayer(c.id, c.color, c.match)

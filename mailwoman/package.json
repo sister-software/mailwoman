@@ -2,6 +2,17 @@
 	"name": "mailwoman",
 	"version": "4.16.2",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
+	"keywords": [
+		"address",
+		"parser",
+		"pelias",
+		"postal",
+		"usps"
+	],
+	"homepage": "https://github.com/sister-software/mailwoman",
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
 	"license": "AGPL-3.0-only",
 	"contributors": [
 		{
@@ -17,10 +28,18 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "mailwoman"
 	},
-	"bugs": {
-		"url": "https://github.com/sister-software/mailwoman/issues"
-	},
-	"homepage": "https://github.com/sister-software/mailwoman",
+	"bin": "./out/cli.js",
+	"files": [
+		"!out/test/**/*",
+		"!**/*.ts",
+		"out/**/*.js",
+		"out/**/*.mjs",
+		"out/**/*.js.map",
+		"out/**/*.mjs.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"out/**/*.json"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
@@ -35,6 +54,9 @@
 		"./sdk/runtime/load": "./out/sdk/runtime/load.js",
 		"./sdk/scripting": "./out/sdk/scripting.js",
 		"./sdk/cli": "./out/sdk/cli.js"
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"dependencies": {
 		"@fragaria/address-formatter": "^6.7.1",
@@ -74,31 +96,6 @@
 		"@duckdb/node-api": "1.5.3-r.3",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*"
 	},
-	"optionalDependencies": {
-		"@mailwoman/tiger": "workspace:*"
-	},
-	"files": [
-		"!out/test/**/*",
-		"!**/*.ts",
-		"out/**/*.js",
-		"out/**/*.mjs",
-		"out/**/*.js.map",
-		"out/**/*.mjs.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map",
-		"out/**/*.json"
-	],
-	"engines": {
-		"node": ">=24.18.0"
-	},
-	"keywords": [
-		"address",
-		"parser",
-		"usps",
-		"postal",
-		"pelias"
-	],
-	"bin": "./out/cli.js",
 	"peerDependenciesMeta": {
 		"@duckdb/node-api": {
 			"optional": true
@@ -116,7 +113,10 @@
 			"optional": true
 		}
 	},
-	"publishConfig": {
-		"access": "public"
+	"optionalDependencies": {
+		"@mailwoman/tiger": "workspace:*"
+	},
+	"engines": {
+		"node": ">=24.18.0"
 	}
 }

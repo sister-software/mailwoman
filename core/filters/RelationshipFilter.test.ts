@@ -6,6 +6,7 @@
 
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { RelationshipFilter } from "./RelationshipFilter.js"
 
 test("postcode_preceeds_street: remove postcode", () => {

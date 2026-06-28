@@ -5,6 +5,7 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
+
 import { cacheResponse } from "../caching.js"
 import { applyAccessControlAllowOrigin } from "../cors.js"
 import { parseRangeHeader } from "../ranges.js"
@@ -18,6 +19,7 @@ export const DatabaseRetrieveRoute = WorkerRoute.GET(DB_ROUTE_PATTERN, async ({ 
 	const { databaseName, fileExtension } = params
 
 	if (!databaseName) throw ResourceError.from(400, "Missing database name")
+
 	if (!fileExtension) throw ResourceError.from(400, "Missing file extension")
 
 	if (request.method === "HEAD") {

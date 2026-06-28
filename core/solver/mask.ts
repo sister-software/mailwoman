@@ -6,6 +6,7 @@
 
 import type { Classification } from "@mailwoman/core/classification"
 import { TokenContext } from "@mailwoman/core/tokenization"
+
 import { SolutionMatch } from "./SolutionMatch.js"
 
 type MaskCode = "V" | "N" | "S" | "P" | "L" | "U" | "A"

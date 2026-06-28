@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { classifyToken, tokenizeForClass } from "./character-class.js"
 import { detectKnownFormats } from "./known-formats.js"
 import type { KnownFormat, TokenClass } from "./types.js"

@@ -11,9 +11,10 @@
  *   corpus/src/shard-recipes.
  */
 
+import { createWriteStream } from "node:fs"
+
 import { getShardRecipe, listShardRecipes, type ShardRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
-import { createWriteStream } from "node:fs"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -64,16 +65,21 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 						"",
 						"usage: mailwoman corpus shard <recipe> --output <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
 					])
+
 					return
 				}
 
 				const name = args[0]!
 				const recipe = getShardRecipe(name)
+
 				if (!recipe) {
 					throw new Error(`unknown recipe "${name}". Run \`mailwoman corpus shard --list\`.`)
 				}
+
 				if (!options.output) throw new Error("--output <out.jsonl> required")
+
 				if (recipe.mode === "tuples" && !options.input) throw new Error(`recipe "${name}" needs --input <tuples.jsonl>`)
+
 				if (recipe.mode === "generate" && !options.count) throw new Error(`recipe "${name}" needs --count <N>`)
 
 				const seed = options.seed != null ? Number(options.seed) : Date.now()
@@ -122,6 +128,7 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 	}, [lines, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (lines) {
 		return (
 			<Box flexDirection="column">
@@ -131,6 +138,7 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 			</Box>
 		)
 	}
+
 	return null
 }
 

@@ -10,10 +10,10 @@
  *   Byte-stable when the flag is unset.
  */
 
-import { describe, expect, it } from "vitest"
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { describe, expect, it } from "vitest"
+
 import { createWofResolver } from "./resolve.js"
 
 const PC = {
@@ -48,14 +48,14 @@ const SP_NEAR = {
 } // ~6 km from PC
 
 /**
- * A backend that returns the given places in order, filtered by name-substring + placetype +
- * country.
+ * A backend that returns the given places in order, filtered by name-substring + placetype + country.
  */
 function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 	return {
 		async findPlace(query) {
 			const text = query.text.toLowerCase()
 			const types = Array.isArray(query.placetype) ? query.placetype : query.placetype ? [query.placetype] : null
+
 			return places
 				.filter((p) => p.name.toLowerCase().includes(text))
 				.filter((p) => !types || types.includes(p.placetype))

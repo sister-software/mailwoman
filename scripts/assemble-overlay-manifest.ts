@@ -23,11 +23,12 @@
  *   # then push the overlay to R2 + sync + `modal run -d ... --config <recipe>.yaml --resume none`.
  */
 
-import { DuckDBInstance } from "@duckdb/node-api"
 import { createHash } from "node:crypto"
 import { readFileSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
+
+import { DuckDBInstance } from "@duckdb/node-api"
 
 interface ShardDescriptor {
 	split: string
@@ -107,6 +108,7 @@ function parseCliArgs(): Args {
 
 	const required = ["base", "new-dir", "modal-root", "version", "shard-parquet", "source"] as const
 	const missing = required.filter((k) => !values[k])
+
 	if (missing.length > 0) {
 		throw new Error(
 			`Usage: assemble-overlay-manifest.ts --base <MANIFEST.json> --new-dir <dir> --modal-root <path> ` +
@@ -137,6 +139,7 @@ async function main(): Promise<void> {
 
 	const reroot = (p: string): string => {
 		const i = p.indexOf("/corpus/versioned/")
+
 		return i >= 0 ? "/data" + p.slice(i) : p
 	}
 

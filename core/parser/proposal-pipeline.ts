@@ -30,9 +30,9 @@ import {
 /**
  * Run every classifier against every section, concatenate the results.
  *
- * Classifiers that throw are isolated — their failure logs but does not block other classifiers'
- * proposals from being collected. (Per the `ProposalClassifier` contract, implementations are
- * supposed to swallow errors, but defense-in-depth lives here.)
+ * Classifiers that throw are isolated — their failure logs but does not block other classifiers' proposals from being
+ * collected. (Per the `ProposalClassifier` contract, implementations are supposed to swallow errors, but
+ * defense-in-depth lives here.)
  */
 export async function collectProposals(
 	sections: readonly Span[],
@@ -40,17 +40,20 @@ export async function collectProposals(
 	context: ClassifierContext = {}
 ): Promise<ClassificationProposal[]> {
 	const tasks: Array<Promise<ClassificationProposal[]>> = []
+
 	for (const classifier of classifiers) {
 		for (const section of sections) {
 			tasks.push(
 				classifier.classify(section, context).catch((err) => {
 					console.warn(`[proposal-pipeline] ${classifier.id} threw on section "${section.body}":`, err)
+
 					return []
 				})
 			)
 		}
 	}
 	const results = await Promise.all(tasks)
+
 	return results.flat()
 }
 
@@ -60,13 +63,13 @@ export async function collectProposals(
  * Resolution order:
  *
  * 1. An explicit `policy` registry is authoritative (the operator's config wins entirely).
- * 2. Otherwise, when an input-shape `routerPrior` is supplied (#478 increment 2), build a registry
- *    whose default mode is the routed prior and apply that.
+ * 2. Otherwise, when an input-shape `routerPrior` is supplied (#478 increment 2), build a registry whose default mode is
+ *    the routed prior and apply that.
  * 3. Otherwise return the input unchanged.
  *
- * Increment 2 ships with no production caller passing `routerPrior` (the production `runPipeline`
- * does not yet feed live signals — that is increment 3), so this stays byte-stable by default. The
- * seam is exercised by the router/proposal-pipeline tests.
+ * Increment 2 ships with no production caller passing `routerPrior` (the production `runPipeline` does not yet feed
+ * live signals — that is increment 3), so this stays byte-stable by default. The seam is exercised by the
+ * router/proposal-pipeline tests.
  */
 export function filterByPolicy(
 	proposals: readonly ClassificationProposal[],
@@ -75,7 +78,9 @@ export function filterByPolicy(
 	routerPrior?: InputShapeRoute
 ): ClassificationProposal[] {
 	const effective = policy ?? (routerPrior ? policyRegistryFromRoute(routerPrior) : undefined)
+
 	if (!effective) return [...proposals]
+
 	return effective.apply(proposals, locale)
 }
 
@@ -91,35 +96,44 @@ export function filterByPolicy(
 export function findSpanByRange(context: TokenContext, start: number, end: number): Span | null {
 	let best: Span | null = null
 	let bestWidth = Infinity
+
 	for (const span of iterateContextSpans(context)) {
 		if (span.start === start && span.end === end) return span
+
 		if (span.start <= start && span.end >= end) {
 			const width = span.end - span.start
+
 			if (width < bestWidth) {
 				best = span
 				bestWidth = width
 			}
 		}
 	}
+
 	return best
 }
 
 /**
- * Walk every span attached to a `TokenContext` — sections, words, phrases — in a single flat pass.
- * Order isn't guaranteed.
+ * Walk every span attached to a `TokenContext` — sections, words, phrases — in a single flat pass. Order isn't
+ * guaranteed.
  */
 export function* iterateContextSpans(context: TokenContext): Generator<Span> {
 	const visited = new Set<number>()
 	const queue: Span[] = []
+
 	if (context.span) queue.push(context.span)
+
 	for (const section of context.sections) queue.push(section)
 
 	while (queue.length > 0) {
 		const span = queue.pop()!
+
 		if (visited.has(span.id)) continue
 		visited.add(span.id)
 		yield span
+
 		for (const child of span.children) queue.push(child)
+
 		for (const phrase of span.phrases) queue.push(phrase)
 	}
 }
@@ -131,8 +145,8 @@ export interface WritebackResult {
 }
 
 /**
- * Write each surviving proposal back to the context's span graph as a legacy `Classification` so
- * the solver can read it. Returns a small summary useful for telemetry and tests.
+ * Write each surviving proposal back to the context's span graph as a legacy `Classification` so the solver can read
+ * it. Returns a small summary useful for telemetry and tests.
  */
 export function writeProposalsToContext(
 	proposals: readonly ClassificationProposal[],
@@ -144,11 +158,13 @@ export function writeProposalsToContext(
 
 	for (const proposal of proposals) {
 		const legacy = componentTagToLegacyClassification(proposal.component as ComponentTag)
+
 		if (!legacy) {
 			skippedNoLegacyMap++
 			continue
 		}
 		const span = findSpanByRange(context, proposal.span.start, proposal.span.end)
+
 		if (!span) {
 			skippedNoSpan++
 			continue
@@ -175,5 +191,6 @@ export async function runProposalPipeline(
 	const raw = await collectProposals(context.sections, classifiers, options.classifierContext ?? {})
 	const filtered = filterByPolicy(raw, options.policy, options.locale, options.routerPrior)
 	const writeback = writeProposalsToContext(filtered, context)
+
 	return { proposals: filtered, writeback }
 }

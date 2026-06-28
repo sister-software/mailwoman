@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { formatAddress, toOpenCageComponents } from "./format.js"
 
 describe("formatAddress", () => {

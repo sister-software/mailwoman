@@ -37,12 +37,13 @@
  *   verbatim.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { Box, Text } from "ink"
 import { copyFileSync, createReadStream, existsSync } from "node:fs"
 import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { dataRootPath } from "@mailwoman/core/utils"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -65,8 +66,7 @@ export { OptionsSchema as options }
 type NormalizeKey = (value: string) => string
 
 /**
- * Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced records never collide
- * with a WOF id.
+ * Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced records never collide with a WOF id.
  */
 const SYNTH_ID_BASE = 8_000_000_000
 
@@ -87,47 +87,59 @@ interface PostcodeAcc {
 async function readGeonames(file: string, want: Set<string>): Promise<Map<string, PostcodeAcc>> {
 	const acc = new Map<string, PostcodeAcc>()
 	const rl = createInterface({ input: createReadStream(file, "utf8"), crlfDelay: Infinity })
+
 	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy
 	for await (const line of rl) {
 		if (!line) continue
 		const f = line.split("\t")
 		const cc = f[0]
+
 		if (!cc || !want.has(cc)) continue
 		const pc = f[1]
 		const lat = Number(f[9])
 		const lon = Number(f[10])
+
 		if (!pc || !Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) continue
 		const key = `${cc}\t${pc}`
 		const cur = acc.get(key)
+
 		if (cur) {
 			cur.sumLat += lat
 			cur.sumLon += lon
 			cur.n++
+
 			if (lat < cur.minLat) cur.minLat = lat
+
 			if (lat > cur.maxLat) cur.maxLat = lat
+
 			if (lon < cur.minLon) cur.minLon = lon
+
 			if (lon > cur.maxLon) cur.maxLon = lon
 		} else {
 			acc.set(key, { cc, pc, sumLat: lat, sumLon: lon, n: 1, minLat: lat, minLon: lon, maxLat: lat, maxLon: lon })
 		}
 	}
+
 	return acc
 }
 
 /**
- * The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped
- * form.
+ * The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped form.
  */
 function nameVariants(pc: string, normalizeKey: NormalizeKey): string[] {
 	const stripped = pc.replace(/[\s-]/g, "")
 	const variants = [pc]
+
 	if (stripped && stripped !== pc) variants.push(stripped)
 	// Dedup by fold() — two forms that normalize identically need only one row.
 	const seen = new Set<string>()
+
 	return variants.filter((v) => {
 		const k = normalizeKey(v)
+
 		if (seen.has(k)) return false
 		seen.add(k)
+
 		return true
 	})
 }
@@ -191,9 +203,11 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	let id = SYNTH_ID_BASE
 	let rows = 0
 	db.exec("BEGIN")
+
 	for (const a of acc.values()) {
 		const lat = a.sumLat / a.n
 		const lon = a.sumLon / a.n
+
 		for (const name of nameVariants(a.pc, normalizeKey)) {
 			ins.run(++id, -1, name, "postalcode", a.cc, lat, lon, a.minLat, a.minLon, a.maxLat, a.maxLon, 1, 0, 0, 0, 0, 0)
 			rows++
@@ -201,14 +215,14 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	}
 	db.exec("COMMIT")
 	db.close()
+
 	return rows
 }
 
 /**
- * Fold the freshly-built shard into a COPY of an existing candidate gazetteer, mirroring
- * `build-candidate` pass-4's row construction (placetype_id=9, region_id=0, neg_rank=0,
- * is_primary=1, bbox falls back to the centroid). The fast path to a demo-ready DB without a full
- * rebuild.
+ * Fold the freshly-built shard into a COPY of an existing candidate gazetteer, mirroring `build-candidate` pass-4's row
+ * construction (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid). The fast path
+ * to a demo-ready DB without a full rebuild.
  */
 async function foldIntoCandidate(
 	shardPath: string,
@@ -223,6 +237,7 @@ async function foldIntoCandidate(
 	const ptRow = out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'").get() as
 		| { id: number }
 		| undefined
+
 	if (!ptRow) throw new Error("candidate DB has no 'postalcode' placetype_code")
 	const pcPtid = ptRow.id
 
@@ -234,15 +249,19 @@ async function foldIntoCandidate(
 	const insCc = out.prepare("INSERT INTO country_codes (id, code) VALUES (?, ?)")
 	const ccId = (code: string): number => {
 		let id = ccCache.get(code)
+
 		if (id !== undefined) return id
 		const r = getCc.get(code) as { id: number } | undefined
+
 		if (r) {
 			ccCache.set(code, r.id)
+
 			return r.id
 		}
 		id = nextCc++
 		insCc.run(id, code)
 		ccCache.set(code, id)
+
 		return id
 	}
 
@@ -252,6 +271,7 @@ async function foldIntoCandidate(
 	)
 	let n = 0
 	out.exec("BEGIN")
+
 	for (const r of shard
 		.prepare(
 			"SELECT id, name, country, latitude, longitude, min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon " +
@@ -260,6 +280,7 @@ async function foldIntoCandidate(
 		.iterate()) {
 		const name = String(r.name ?? "")
 		const key = normalizeKey(name)
+
 		if (!key) continue
 		const lat = r.latitude as number
 		const lon = r.longitude as number
@@ -287,6 +308,7 @@ async function foldIntoCandidate(
 	out.exec("VACUUM")
 	shard.close()
 	out.close()
+
 	return n
 }
 
@@ -310,6 +332,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 
 				if (!existsSync(geonames)) {
 					setError(`Missing GeoNames file: ${geonames}`)
+
 					return
 				}
 
@@ -321,6 +344,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 				console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
 				const acc = await readGeonames(geonames, new Set(countries))
 				const byCc = new Map<string, number>()
+
 				for (const a of acc.values()) byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
 				console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
 
@@ -335,6 +359,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 				if (foldInto && foldOut) {
 					if (!existsSync(foldInto)) {
 						setError(`Missing --fold-into candidate DB: ${foldInto}`)
+
 						return
 					}
 					console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
@@ -360,6 +385,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -372,6 +398,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

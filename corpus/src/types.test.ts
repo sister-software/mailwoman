@@ -6,11 +6,13 @@
 
 import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
+
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow, QuarantinedRow } from "./types.js"
 
 describe("corpus types", () => {
 	it("CanonicalRow accepts every COMPONENT_TAG as a component key", () => {
 		const components: CanonicalRow["components"] = {}
+
 		for (const tag of COMPONENT_TAGS) {
 			components[tag] = `value for ${tag}`
 		}
@@ -107,6 +109,7 @@ describe("corpus types", () => {
 			},
 		}
 		const collected: CanonicalRow[] = []
+
 		for await (const row of adapter.rows({ inputPath: "" })) {
 			collected.push(row)
 		}

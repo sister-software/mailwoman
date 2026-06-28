@@ -27,19 +27,21 @@ import {
 import type { GroupPhrasesOpts, LocaleHint, NormalizedInputLite, PhraseProposal, QueryShapeLike } from "./types.js"
 
 /**
- * Walk every QueryShape segment and emit one `tokens-by-segment` list. Falls back to treating the
- * whole input as a single segment when QueryShape didn't supply segmentation (e.g. callers wiring
- * the grouper into a path that bypasses QueryShape).
+ * Walk every QueryShape segment and emit one `tokens-by-segment` list. Falls back to treating the whole input as a
+ * single segment when QueryShape didn't supply segmentation (e.g. callers wiring the grouper into a path that bypasses
+ * QueryShape).
  */
 function tokensPerSegment(
 	text: string,
 	shape: QueryShapeLike
 ): Array<{ tokens: SegmentToken[]; isFirst: boolean; isLast: boolean }> {
 	const segs = shape.segments
+
 	if (segs && segs.length > 0) {
 		return segs.map((s, idx) => {
 			const start = s.span?.start ?? 0
 			const end = s.span?.end ?? text.length
+
 			return {
 				tokens: tokenizeSegment(text.slice(start, end), start),
 				isFirst: idx === 0,
@@ -47,18 +49,19 @@ function tokensPerSegment(
 			}
 		})
 	}
+
 	return [{ tokens: tokenizeSegment(text, 0), isFirst: true, isLast: true }]
 }
 
 /**
  * Synchronous, pure rule-based implementation. The async wrapper matches the pipeline contract.
  *
- * Emits overlapping proposals freely — the consumer (Stage 5 reconcile) picks the best
- * non-overlapping subset under semantic+hierarchical constraints. Confidence is a [0,1] score per
- * proposal; relative ordering is what matters more than absolute calibration at v0.5.0.
+ * Emits overlapping proposals freely — the consumer (Stage 5 reconcile) picks the best non-overlapping subset under
+ * semantic+hierarchical constraints. Confidence is a [0,1] score per proposal; relative ordering is what matters more
+ * than absolute calibration at v0.5.0.
  *
- * The `_locale` parameter is reserved for future locale-aware rule packs (Japanese
- * postcode/honorific patterns, French preposition-bound localities) — currently unused.
+ * The `_locale` parameter is reserved for future locale-aware rule packs (Japanese postcode/honorific patterns, French
+ * preposition-bound localities) — currently unused.
  */
 export function groupPhrasesSync(
 	input: NormalizedInputLite,
@@ -67,6 +70,7 @@ export function groupPhrasesSync(
 	_opts: GroupPhrasesOpts = {}
 ): PhraseProposal[] {
 	const text = input.normalized
+
 	if (text.length === 0) return []
 
 	const proposals: PhraseProposal[] = []
@@ -89,6 +93,7 @@ export function groupPhrasesSync(
 	// can rely on this ordering for top-k selection without re-sorting.
 	proposals.sort((a, b) => {
 		if (a.confidence !== b.confidence) return b.confidence - a.confidence
+
 		return a.span.start - b.span.start
 	})
 
@@ -96,8 +101,8 @@ export function groupPhrasesSync(
 }
 
 /**
- * Async variant matching `RuntimePipelineStages.groupPhrases`. Wraps the sync impl so the pipeline
- * coordinator can use it as-is.
+ * Async variant matching `RuntimePipelineStages.groupPhrases`. Wraps the sync impl so the pipeline coordinator can use
+ * it as-is.
  */
 export async function groupPhrases(
 	input: NormalizedInputLite,

@@ -18,8 +18,8 @@
  */
 
 /**
- * Canonical French voie type → common written abbreviations. The leading word of a French street
- * name. The first entry of each list is the most common abbreviation where one exists.
+ * Canonical French voie type → common written abbreviations. The leading word of a French street name. The first entry
+ * of each list is the most common abbreviation where one exists.
  */
 export const FR_VOIE_TYPES = {
 	rue: ["r"],
@@ -59,8 +59,8 @@ export const FR_VOIE_TYPES = {
 export type FrenchVoieType = keyof typeof FR_VOIE_TYPES
 
 /**
- * Set of every French voie token — each canonical type plus each abbreviation — folded to
- * lowercase/diacritic-free for matching. `Allée`/`allee`/`all` all resolve here.
+ * Set of every French voie token — each canonical type plus each abbreviation — folded to lowercase/diacritic-free for
+ * matching. `Allée`/`allee`/`all` all resolve here.
  */
 const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 	const fold = (s: string): string =>
@@ -69,17 +69,20 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 			.normalize("NFD")
 			.replace(/[\u0300-\u036f]/g, "")
 	const out = new Set<string>()
+
 	for (const canonical of Object.keys(FR_VOIE_TYPES) as FrenchVoieType[]) {
 		out.add(fold(canonical))
+
 		for (const abbr of FR_VOIE_TYPES[canonical]) out.add(fold(abbr))
 	}
+
 	return out
 })()
 
 /**
- * True when a token is a French voie type word or abbreviation (case- and accent-insensitive) —
- * `Rue`, `BD`, `Allée`, `impasse`. Matches the WHOLE token (French types lead the street name, they
- * are not fused suffixes), so a city or surname is not caught the way a suffix test might.
+ * True when a token is a French voie type word or abbreviation (case- and accent-insensitive) — `Rue`, `BD`, `Allée`,
+ * `impasse`. Matches the WHOLE token (French types lead the street name, they are not fused suffixes), so a city or
+ * surname is not caught the way a suffix test might.
  */
 export function isFrenchStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
@@ -88,5 +91,6 @@ export function isFrenchStreetWord(token: unknown): boolean {
 		.normalize("NFD")
 		.replace(/[\u0300-\u036f]/g, "")
 		.replace(/[^a-z-]/g, "")
+
 	return t.length > 0 && VOIE_TOKEN_SET.has(t)
 }

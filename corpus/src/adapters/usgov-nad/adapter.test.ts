@@ -6,6 +6,7 @@
 
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "../../types.js"
@@ -16,9 +17,11 @@ const FIXTURE_DIR = join(HERE, "fixtures")
 
 async function collect(adapter = createUsgovNadAdapter(), opts: { country?: string; limit?: number } = {}) {
 	const out: CanonicalRow[] = []
+
 	for await (const row of adapter.rows({ inputPath: FIXTURE_DIR, ...opts })) {
 		out.push(row)
 	}
+
 	return out
 }
 
@@ -115,6 +118,7 @@ describe("usgov-nad adapter", () => {
 
 	it("stamps source, locale, country, license consistently", async () => {
 		const rows = await collect()
+
 		for (const r of rows) {
 			expect(r.source).toBe(USGOV_NAD_ADAPTER_ID)
 			expect(r.country).toBe("US")

@@ -18,12 +18,12 @@
  *   data/coarse-placer/{train,val,test}.jsonl (rows: {raw, country})
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { mkdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 interface DatasetRow {
 	raw: string
@@ -60,6 +60,7 @@ await duck.run("SET memory_limit='4GB'; SET threads=4;")
 const train: DatasetRow[] = [],
 	val: DatasetRow[] = [],
 	test: DatasetRow[] = []
+
 for (const country of COUNTRIES) {
 	// filter-THEN-sample: the subquery restricts to the country, SAMPLE draws from that filtered set.
 	const q = `SELECT raw FROM (
@@ -68,9 +69,11 @@ for (const country of COUNTRIES) {
 	const res = await duck.runAndReadAll(q)
 	const seen = new Set<string>()
 	const rows: string[] = []
+
 	for (const r of res.getRowObjects()) {
 		if (rows.length >= PER) break
 		const raw = String(r.raw).trim()
+
 		if (!raw || seen.has(raw)) continue
 		seen.add(raw)
 		rows.push(raw)
@@ -80,8 +83,11 @@ for (const country of COUNTRIES) {
 	const valRows = rows.slice(0, nVal)
 	const testRows = rows.slice(nVal, nVal + nTest)
 	const trainRows = rows.slice(nVal + nTest)
+
 	for (const raw of trainRows) train.push({ raw, country })
+
 	for (const raw of valRows) val.push({ raw, country })
+
 	for (const raw of testRows) test.push({ raw, country })
 	console.log(`  ${country}: train ${trainRows.length}  val ${valRows.length}  test ${testRows.length}`)
 }
@@ -95,6 +101,7 @@ function formatEu(street: unknown, number: unknown, postcode: unknown, loc: stri
 	const s = String(street).trim()
 	const num = number != null && String(number).trim() !== "" ? ` ${String(number).trim()}` : ""
 	const pc = postcode != null && String(postcode).trim() !== "" ? String(postcode).trim() : ""
+
 	switch (t) {
 		case 1:
 			return `${s}${num} ${loc}` // no postcode, no comma
@@ -106,6 +113,7 @@ function formatEu(street: unknown, number: unknown, postcode: unknown, loc: stri
 			return `${s}${num}, ${pc ? `${pc} ` : ""}${loc}` // {street number, postcode locality}
 	}
 }
+
 for (const country of [...NEW_EU, ...IN_MAP_EU]) {
 	const parquet = `${OVERTURE_DIR}/addresses-${country.toLowerCase()}.parquet`
 	const q = `SELECT street, number, postcode,
@@ -114,6 +122,7 @@ for (const country of [...NEW_EU, ...IN_MAP_EU]) {
 		WHERE street IS NOT NULL AND trim(street) <> ''
 		USING SAMPLE ${Math.ceil(PER * 1.4)} ROWS`
 	let res
+
 	try {
 		res = await duck.runAndReadAll(q)
 	} catch (e) {
@@ -122,19 +131,25 @@ for (const country of [...NEW_EU, ...IN_MAP_EU]) {
 	}
 	const seen = new Set<string>()
 	const rows: string[] = []
+
 	for (const r of res.getRowObjects()) {
 		if (rows.length >= PER) break
 		const loc = r.loc == null ? "" : String(r.loc).trim()
+
 		if (!loc) continue
 		const raw = formatEu(r.street, r.number, r.postcode, loc, hash(`${r.street}|${loc}`) % 4)
+
 		if (!raw || seen.has(raw)) continue
 		seen.add(raw)
 		rows.push(raw)
 	}
 	const nVal = Math.floor(rows.length * VAL_FRAC)
 	const nTest = Math.floor(rows.length * TEST_FRAC)
+
 	for (const raw of rows.slice(0, nVal)) val.push({ raw, country })
+
 	for (const raw of rows.slice(nVal, nVal + nTest)) test.push({ raw, country })
+
 	for (const raw of rows.slice(nVal + nTest)) train.push({ raw, country })
 	console.log(`  ${country} (overture): train ${rows.length - nVal - nTest}  val ${nVal}  test ${nTest}`)
 }
@@ -144,6 +159,7 @@ const splits: [string, DatasetRow[]][] = [
 	["val", val],
 	["test", test],
 ]
+
 for (const [name, rows] of splits) {
 	rows.sort((a, b) => hash(a.raw + a.country) - hash(b.raw + b.country)) // deterministic class-interleave
 	const p = path.join(OUT_DIR, `${name}.jsonl`)
@@ -153,9 +169,11 @@ for (const [name, rows] of splits) {
 
 function hash(s: string): number {
 	let h = 2166136261
+
 	for (let i = 0; i < s.length; i++) {
 		h ^= s.charCodeAt(i)
 		h = Math.imul(h, 16777619)
 	}
+
 	return h >>> 0
 }

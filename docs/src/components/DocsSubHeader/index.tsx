@@ -11,14 +11,14 @@ import clsx from "clsx"
 import { type FC, type Ref, useEffect, useRef } from "react"
 
 import { DOCS_SECTIONS, type DocsSectionDef } from "./sections.ts"
+
 import styles from "./styles.module.css"
 
 export { DOCS_SECTIONS } from "./sections.ts"
 
 /**
- * True when the active sidebar is one of the switcher's sections — i.e. a docs page that should
- * show the band. The single-category licensing sidebar is excluded, so its pages keep the stock
- * layout (no band, no offsets).
+ * True when the active sidebar is one of the switcher's sections — i.e. a docs page that should show the band. The
+ * single-category licensing sidebar is excluded, so its pages keep the stock layout (no band, no offsets).
  */
 export function useIsDocsSection(): boolean {
 	const sidebar = useDocsSidebar()
@@ -32,13 +32,13 @@ interface SectionLinkProps {
 }
 
 /**
- * One section tab. Its own hook (`useLayoutDocsSidebar`) resolves the destination from the _target_
- * sidebar's entry link — so cross-section links work even though only the active sidebar's items
- * are in context. One hook per instance keeps the rules-of-hooks contract clean across the fixed
- * `DOCS_SECTIONS` list.
+ * One section tab. Its own hook (`useLayoutDocsSidebar`) resolves the destination from the _target_ sidebar's entry
+ * link — so cross-section links work even though only the active sidebar's items are in context. One hook per instance
+ * keeps the rules-of-hooks contract clean across the fixed `DOCS_SECTIONS` list.
  */
 const SectionLink: FC<SectionLinkProps> = ({ section, active }) => {
 	const href = useLayoutDocsSidebar(section.id).link?.path
+
 	if (!href) return null
 
 	return (
@@ -63,13 +63,11 @@ export interface DocsSubHeaderProps {
 }
 
 /**
- * Sticky, horizontally-scrollable switcher for the docs' top-level categories, rendered as a
- * sub-header band between the navbar and the sidebar/content row (mounted from the ejected
- * `theme/DocRoot/Layout`).
+ * Sticky, horizontally-scrollable switcher for the docs' top-level categories, rendered as a sub-header band between
+ * the navbar and the sidebar/content row (mounted from the ejected `theme/DocRoot/Layout`).
  *
- * Each section is its own sidebar (see sidebars.ts), so this bar — not a collapsible sidebar
- * category — is how a reader moves between sections; the active sidebar's contents sit one level
- * shallower as a result.
+ * Each section is its own sidebar (see sidebars.ts), so this bar — not a collapsible sidebar category — is how a reader
+ * moves between sections; the active sidebar's contents sit one level shallower as a result.
  */
 export const DocsSubHeader: FC<DocsSubHeaderProps> = ({ navbarRef, hidden }) => {
 	const activeName = useDocsSidebar()?.name

@@ -15,7 +15,7 @@
 
 /**
  * Empty schema marker. Consumers declare their own schema interface and pass it directly to `new
- * Kysely<MySchema>({...})` or instantiate `new DatabaseClient<MySchema>(...)` once `DatabaseClient`
- * becomes generic (Phase 4.2 work).
+ * Kysely<MySchema>({...})` or instantiate `new DatabaseClient<MySchema>(...)` once `DatabaseClient` becomes generic
+ * (Phase 4.2 work).
  */
 export type Database = Record<string, never>

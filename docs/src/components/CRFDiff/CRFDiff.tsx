@@ -26,15 +26,14 @@ import styles from "./styles.module.css"
  *
  * Three labels: B-locality, I-locality, O.
  *
- * From → to B-locality I-locality O ────────────────────────────────────────── B-locality -2.0 +1.5
- * 0 I-locality -1.0 +2.0 0 O +0.5 -∞ +1.0
+ * From → to B-locality I-locality O ────────────────────────────────────────── B-locality -2.0 +1.5 0 I-locality -1.0
+ * +2.0 0 O +0.5 -∞ +1.0
  *
  * Key insight:
  *
- * - B-locality → I-locality (+1.5) is strongly preferred over B-locality → B-locality (-2.0), so
- *   Viterbi chains "Saint" and "Petersburg" into a single span (B → I).
- * - O → I-locality (-∞) is structurally forbidden — an I-X label can never follow an O label,
- *   preventing orphan-I bugs.
+ * - B-locality → I-locality (+1.5) is strongly preferred over B-locality → B-locality (-2.0), so Viterbi chains "Saint"
+ *   and "Petersburg" into a single span (B → I).
+ * - O → I-locality (-∞) is structurally forbidden — an I-X label can never follow an O label, preventing orphan-I bugs.
  * - I-locality → I-locality (+2.0) encourages multi-token continuations.
  */
 const TRANSITION_MATRIX: Array<{

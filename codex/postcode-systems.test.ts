@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { candidateSystemsForPostcode } from "./postcode-systems.js"
 
 describe("candidateSystemsForPostcode", () => {

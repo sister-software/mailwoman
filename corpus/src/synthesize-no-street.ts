@@ -76,8 +76,8 @@ export interface SynthesizedNoStreetRow {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Plain venue names — businesses without street-typing words in the name. Used as the easy-mode
- * positive class for venue detection.
+ * Plain venue names — businesses without street-typing words in the name. Used as the easy-mode positive class for
+ * venue detection.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
@@ -103,16 +103,15 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 ]
 
 /**
- * Adversarial venue names — businesses whose names contain street-typing tokens (Avenue, Street,
- * Highway, Lane, Drive, Court, Plaza, Park, ...) but are themselves venues, not streets. The model
- * must learn that these are venues despite the street-typing tokens.
+ * Adversarial venue names — businesses whose names contain street-typing tokens (Avenue, Street, Highway, Lane, Drive,
+ * Court, Plaza, Park, ...) but are themselves venues, not streets. The model must learn that these are venues despite
+ * the street-typing tokens.
  *
- * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro"). The v0.6.2
- * 2026-05-29 step-20K eval showed that synthesized rows starting with `<digits><ordinal>` confused
- * the model about house_number recognition — tokens like "5th" (which should be `B-house_number` in
- * real addresses) were being labeled `B-venue` because adversarial venues placed them in venue
- * position. v0.6.3 omits these patterns; the `synth-house-venue` shard separately teaches that
- * house_number and venue coexist.
+ * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro"). The v0.6.2 2026-05-29 step-20K
+ * eval showed that synthesized rows starting with `<digits><ordinal>` confused the model about house_number recognition
+ * — tokens like "5th" (which should be `B-house_number` in real addresses) were being labeled `B-venue` because
+ * adversarial venues placed them in venue position. v0.6.3 omits these patterns; the `synth-house-venue` shard
+ * separately teaches that house_number and venue coexist.
  */
 const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Wall Street Industries",
@@ -194,9 +193,9 @@ function countryToLocale(country: string): string {
 }
 
 /**
- * Generate one no-street counter-example row for a base (locality, region, postcode, country)
- * tuple. Picks a template by weighted random; the venue templates are the critical
- * counter-distribution against synth-street's decompose-mode pressure.
+ * Generate one no-street counter-example row for a base (locality, region, postcode, country) tuple. Picks a template
+ * by weighted random; the venue templates are the critical counter-distribution against synth-street's decompose-mode
+ * pressure.
  */
 export function synthesizeNoStreetRow(
 	base: NoStreetBaseTuple,
@@ -211,6 +210,7 @@ export function synthesizeNoStreetRow(
 		case "venue-plain": {
 			const venue = pick(PLAIN_VENUES, random)
 			const raw = `${venue}, ${base.locality}, ${base.region} ${base.postcode}`
+
 			return {
 				raw,
 				components: {
@@ -230,6 +230,7 @@ export function synthesizeNoStreetRow(
 			// once we're inside this branch the choice is already made.
 			const venue = pick(ADVERSARIAL_VENUES, random)
 			const raw = `${venue}, ${base.locality}, ${base.region} ${base.postcode}`
+
 			return {
 				raw,
 				components: {
@@ -244,6 +245,7 @@ export function synthesizeNoStreetRow(
 		}
 		case "locality-region-postcode": {
 			const raw = `${base.locality}, ${base.region} ${base.postcode}`
+
 			return {
 				raw,
 				components: {
@@ -257,6 +259,7 @@ export function synthesizeNoStreetRow(
 		}
 		case "locality-region": {
 			const raw = `${base.locality}, ${base.region}`
+
 			return {
 				raw,
 				components: {
@@ -278,6 +281,7 @@ export function synthesizeNoStreetRow(
 		case "country-only": {
 			const names = COUNTRY_NAMES.get(base.country) ?? [base.country]
 			const country = pick(names, random)
+
 			return {
 				raw: country,
 				components: { country },
@@ -289,22 +293,33 @@ export function synthesizeNoStreetRow(
 }
 
 /**
- * Template weights chosen so that the venue-* templates dominate (they're the counter-example shape
- * that matters), with the minimal templates as long-tail noise.
+ * Template weights chosen so that the venue-* templates dominate (they're the counter-example shape that matters), with
+ * the minimal templates as long-tail noise.
  */
 function pickTemplate(random: () => number): NoStreetTemplate {
 	const r = random()
-	if (r < 0.35) return "venue-adversarial" // 35% — the critical slice
-	if (r < 0.6) return "venue-plain" // 25%
-	if (r < 0.8) return "locality-region-postcode" // 20%
-	if (r < 0.92) return "locality-region" // 12%
-	if (r < 0.98) return "postcode-only" // 6%
+
+	if (r < 0.35) return "venue-adversarial"
+
+	// 35% — the critical slice
+	if (r < 0.6) return "venue-plain"
+
+	// 25%
+	if (r < 0.8) return "locality-region-postcode"
+
+	// 20%
+	if (r < 0.92) return "locality-region"
+
+	// 12%
+	if (r < 0.98) return "postcode-only"
+
+	// 6%
 	return "country-only" // 2%
 }
 
 /**
- * Convenience: assert at type-level that a synthesized row carries no street-side components. Used
- * by tests + downstream consumers who want to verify the contract at runtime.
+ * Convenience: assert at type-level that a synthesized row carries no street-side components. Used by tests +
+ * downstream consumers who want to verify the contract at runtime.
  */
 export const STREET_SIDE_TAGS = [
 	"street",
@@ -321,5 +336,6 @@ export function hasAnyStreetSideTag(components: CanonicalRow["components"]): boo
 	for (const t of STREET_SIDE_TAGS) {
 		if (components[t]) return true
 	}
+
 	return false
 }

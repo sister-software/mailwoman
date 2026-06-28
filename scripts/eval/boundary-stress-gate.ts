@@ -65,11 +65,13 @@ const STREET_SPAN_FLOOR = 65
 
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
+
 	return () => {
 		a |= 0
 		a = (a + 0x6d2b79f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 }
@@ -81,6 +83,7 @@ function mulberry32(seed: number): () => number {
 // shapes this gate measures (the #566/#685 trap). createScorer in `strict` mode FAILS CLOSED if a
 // declared channel can't actually be fed, so a silent OOD re-grade can't recur.
 if (args.model && !args.tokenizer) throw new Error("--tokenizer is required when --model is passed")
+
 if (args.model && !args["model-card"])
 	throw new Error("--model-card is required when --model is passed (createScorer reads its `requires` SHIP-CONFIG)")
 
@@ -89,6 +92,7 @@ if (args.model && !args["model-card"])
 const resolved = args.model
 	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
 	: resolveWeights({ locale: "en-us" })
+
 if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
 	throw new Error("createScorer needs model + tokenizer + model-card paths; resolveWeights returned incomplete paths")
 
@@ -115,6 +119,7 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 	const { tag, baseline, target } = TARGETS[template]!
 	let stressHit = 0
 	const perKey: Record<string, { hit: number; n: number }> = {}
+
 	for (let i = 0; i < N; i++) {
 		const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: template })
 		const json = decodeAsJson(await classifier.parse(row.raw, { postcodeRepair: true })) as Record<string, unknown>
@@ -126,12 +131,15 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 			}
 		}
 		collect(json)
+
 		for (const [k, gold] of Object.entries(row.components)) {
 			const a = (perKey[k] ??= { hit: 0, n: 0 })
 			a.n++
+
 			if ((got[k] ?? "").toLowerCase().trim() === String(gold).toLowerCase().trim()) a.hit++
 		}
 		const goldStress = String(row.components[tag as keyof typeof row.components] ?? "")
+
 		if ((got[tag] ?? "").toLowerCase().trim() === goldStress.toLowerCase().trim()) stressHit++
 	}
 	const stressPct = (100 * stressHit) / N
@@ -146,6 +154,7 @@ console.log(`\n== boundary-stress gate — model: ${args.model ?? "dev weights (
 console.log(
 	`  ${pad("shape", 28)} ${pad("tag", 14)} ${pad("base→target", 13)} ${pad("actual", 8)} ${pad("street", 8)} verdict`
 )
+
 for (const r of results) {
 	const street = Number.isNaN(r.streetPct) ? "  n/a " : `${r.streetPct.toFixed(1)}%`
 	console.log(

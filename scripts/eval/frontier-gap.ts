@@ -37,12 +37,14 @@
  *   <md>]
  */
 
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+
 import { ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 interface City {
@@ -87,6 +89,7 @@ function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): nu
 	const s =
 		Math.sin(dLat / 2) ** 2 +
 		Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+
 	return 2 * R * Math.asin(Math.sqrt(s))
 }
 const inUs = (lat: number, lon: number): boolean =>
@@ -94,6 +97,7 @@ const inUs = (lat: number, lon: number): boolean =>
 const pct = (a: number, b: number): string => ((a / b) * 100).toFixed(1)
 
 const gc = (globalThis as { gc?: () => void }).gc
+
 if (typeof gc !== "function") {
 	console.error("Run with --expose-gc (the onnxruntime batch leak SIGKILLs ~380 parses otherwise).")
 	process.exit(1)
@@ -101,6 +105,7 @@ if (typeof gc !== "function") {
 
 // --- build the city sample: top-K by population per country ---
 const byCountry = new Map<string, City[]>()
+
 for (const line of readFileSync(CITIES, "utf8").split("\n")) {
 	if (!line) continue
 	const f = line.split("\t")
@@ -109,13 +114,18 @@ for (const line of readFileSync(CITIES, "utf8").split("\n")) {
 	const lon = Number(f[5])
 	const cc = f[8]
 	const pop = Number(f[14])
+
 	if (!name || !cc || !Number.isFinite(lat) || pop < MIN_POP) continue
 	const countryName = ISO2_TO_NAME.get(cc)
-	if (!countryName) continue // skip codes codex doesn't name
+
+	if (!countryName) continue
+
+	// skip codes codex doesn't name
 	if (!byCountry.has(cc)) byCountry.set(cc, [])
 	byCountry.get(cc)!.push({ name, lat, lon, cc, countryName, pop })
 }
 const sample: City[] = []
+
 for (const [, cities] of byCountry) {
 	cities.sort((a, b) => b.pop - a.pop)
 	sample.push(...cities.slice(0, PER_COUNTRY))
@@ -131,7 +141,9 @@ const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 const resolvesWithin = async (query: string, opts: { defaultCountry?: string }, c: City): Promise<ResolveOutcome> => {
 	try {
 		const r = await geocodeAddress(query, { classifier, resolver, shards: shards.for, ...opts })
+
 		if (r.lat == null || r.lon == null) return { ok: false, us: false, got: false }
+
 		return {
 			ok: haversineKm(r.lat, r.lon, c.lat, c.lon) <= RESOLVE_KM,
 			us: c.cc !== "US" && inUs(r.lat, r.lon),
@@ -144,19 +156,25 @@ const resolvesWithin = async (query: string, opts: { defaultCountry?: string }, 
 
 const perCountry = new Map<string, CountryEntry>() // cc -> { n, bare, withCc, namesake, name }
 let done = 0
+
 for (const c of sample) {
 	const query = `${c.name}, ${c.countryName}`
 	const bare = await resolvesWithin(query, {}, c)
 	const hint = await resolvesWithin(query, { defaultCountry: c.cc }, c)
 	const e = perCountry.get(c.cc) ?? { n: 0, bare: 0, withCc: 0, namesake: 0, hintEmpty: 0, name: c.countryName }
 	e.n++
+
 	if (bare.ok) e.bare++
+
 	if (hint.ok) e.withCc++
+
 	if (bare.us) e.namesake++
+
 	// A hint that resolves nothing means the queried name matches no place in that country — the record
 	// is under another surface form (exonym). A hint that resolves the WRONG place is a coverage miss.
 	if (!hint.ok && !hint.got) e.hintEmpty++
 	perCountry.set(c.cc, e)
+
 	if (++done % 25 === 0) {
 		gc()
 		process.stderr.write(`\r[frontier] ${done}/${sample.length}`)
@@ -215,6 +233,7 @@ L.push(`## Placer-recoverable (#822) — a country hint fixes it; growing the pl
 L.push("")
 L.push("| Country | ISO2 | Bare | +hint |")
 L.push("| --- | --- | ---: | ---: |")
+
 for (const r of placerRecoverable) {
 	L.push(`| ${r.name} | ${r.cc} | ${r.bare}/${r.n} | ${r.withCc}/${r.n} |`)
 }
@@ -229,6 +248,7 @@ L.push(`\`hint→∅\` = of the hint-unresolved cities, how many returned no res
 L.push("")
 L.push("| Country | ISO2 | Bare | +hint | hint→∅ |")
 L.push("| --- | --- | ---: | ---: | ---: |")
+
 for (const r of altNameLike) {
 	L.push(`| ${r.name} | ${r.cc} | ${r.bare}/${r.n} | ${r.withCc}/${r.n} | ${r.hintEmpty}/${r.n - r.withCc} |`)
 }
@@ -240,6 +260,7 @@ L.push(`candidate gazetteer, or loses disambiguation. Needs more data, not alt-n
 L.push("")
 L.push("| Country | ISO2 | Bare | +hint | hint→∅ |")
 L.push("| --- | --- | ---: | ---: | ---: |")
+
 for (const r of coverageLike) {
 	L.push(`| ${r.name} | ${r.cc} | ${r.bare}/${r.n} | ${r.withCc}/${r.n} | ${r.hintEmpty}/${r.n - r.withCc} |`)
 }
@@ -248,11 +269,13 @@ L.push(`## Bare-supported (≥50% resolve with no hint) — US + the #743 safeli
 L.push("")
 L.push("| Country | ISO2 | Bare |")
 L.push("| --- | --- | ---: |")
+
 for (const r of bareSupported) {
 	L.push(`| ${r.name} | ${r.cc} | ${r.bare}/${r.n} |`)
 }
 const report = L.join("\n")
 console.log(`\n${report.split("\n").slice(0, 16).join("\n")}\n…`)
+
 if (OUT) {
 	writeFileSync(OUT, `${report}\n`)
 	console.error(`[frontier] wrote ${OUT}`)

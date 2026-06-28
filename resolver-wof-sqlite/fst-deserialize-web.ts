@@ -54,6 +54,7 @@ export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
 	}
 
 	const version = view.getUint16(4, true)
+
 	if (version < 1 || version > MAX_VERSION) {
 		throw new Error(`FST version ${version} unsupported (expected 1..${MAX_VERSION})`)
 	}
@@ -69,12 +70,14 @@ export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
 
 	// --- String table ---
 	const strOffsets = new Uint32Array(stringCount + 1)
+
 	for (let i = 0; i <= stringCount; i++) {
 		strOffsets[i] = view.getUint32(pos, true)
 		pos += 4
 	}
 	const strDataStart = pos
 	const strings: string[] = new Array(stringCount)
+
 	for (let i = 0; i < stringCount; i++) {
 		const start = strDataStart + strOffsets[i]!
 		const end = strDataStart + strOffsets[i + 1]!
@@ -98,6 +101,7 @@ export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
 		const placeCountForState = version >= 4 ? view.getUint32(sp + 12, true) : view.getUint16(sp + 10, true)
 
 		const edges = new Map<string, number>()
+
 		for (let ei = 0; ei < edgeCountForState; ei++) {
 			const ep = edgeTableStart + (edgeStart + ei) * EDGE_ENTRY_SIZE
 			const stringIdx = view.getUint32(ep, true)
@@ -106,10 +110,12 @@ export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
 		}
 
 		const places: PlaceEntry[] = new Array(placeCountForState)
+
 		for (let pi = 0; pi < placeCountForState; pi++) {
 			const pp = placeTableStart + (placeStart + pi) * PLACE_ENTRY_SIZE
 			const chainLen = view.getUint8(pp + 5)
 			const parentChain: number[] = []
+
 			for (let ci = 0; ci < chainLen; ci++) {
 				parentChain.push(view.getUint32(pp + 24 + ci * 4, true))
 			}
@@ -141,12 +147,16 @@ export function readFstProvenanceWeb(input: ArrayBuffer | Uint8Array): FstProven
 
 	if (bytes.byteLength < HEADER_SIZE) return undefined
 	const version = view.getUint16(4, true)
+
 	if (version < 3) return undefined
 	const provenanceOffset = view.getUint32(28, true)
+
 	if (provenanceOffset === 0 || provenanceOffset >= bytes.byteLength) return undefined
+
 	try {
 		const jsonLen = view.getUint32(provenanceOffset, true)
 		const jsonStr = decoder.decode(bytes.subarray(provenanceOffset + 4, provenanceOffset + 4 + jsonLen))
+
 		return JSON.parse(jsonStr) as FstProvenance
 	} catch {
 		return undefined

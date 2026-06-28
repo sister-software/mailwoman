@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { toMapHTML } from "./map-html.js"
 import type { GeoJsonFeatureCollection } from "./types.js"
 

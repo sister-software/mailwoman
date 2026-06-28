@@ -11,7 +11,9 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { describe, expect, it } from "vitest"
+
 import {
 	fillGeonamesPlaceholders,
 	fillPlaceholderCentroids,
@@ -62,7 +64,9 @@ function seedDb(): DatabaseSync {
 	insert.run(1, "90210", "postalcode", "US", 0, 0) // placeholder, ZCTA exists → filled by ZCTA
 	insert.run(2, "10001", "postalcode", "US", 40.750634, -73.997177) // real WOF coord → untouched
 	insert.run(3, "21638", "postalcode", "US", 0, 0) // placeholder, no ZCTA but GeoNames → filled by GeoNames
-	insert.run(4, "00601", "postalcode", "DE", 0, 0) // non-US → out of scope, stays
+	insert.run(4, "00601", "postalcode", "DE", 0, 0)
+
+	// non-US → out of scope, stays
 	return db
 }
 

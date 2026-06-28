@@ -21,10 +21,9 @@
  */
 
 /**
- * Canonical German street type → recognized written variants (including the `Str.` abbreviation and
- * the `ß`/`ss` spelling split). The full reference table, used for synthesis/expansion. For the "is
- * this token part of a street" test, use {@link DE_STREET_SUFFIXES} / {@link isGermanStreetToken},
- * which exclude the place-name-colliding suffixes.
+ * Canonical German street type → recognized written variants (including the `Str.` abbreviation and the `ß`/`ss`
+ * spelling split). The full reference table, used for synthesis/expansion. For the "is this token part of a street"
+ * test, use {@link DE_STREET_SUFFIXES} / {@link isGermanStreetToken}, which exclude the place-name-colliding suffixes.
  */
 export const DE_STREET_TYPE_VARIANTS = {
 	Straße: ["Str.", "Str", "Strasse"],
@@ -46,10 +45,10 @@ export const DE_STREET_TYPE_VARIANTS = {
 export type GermanStreetType = keyof typeof DE_STREET_TYPE_VARIANTS
 
 /**
- * Place-name-SAFE street suffixes for "is this token part of a street" detection, lowercase, with
- * the `ß`/`ss` split spelled out and `str` for the `Str.` abbreviation. Deliberately EXCLUDES the
- * suffixes that also end German city names — `-berg`, `-burg`, `-dorf`, `-feld`, `-hof`, `-stadt`,
- * `-heim`, `-bach`, `-tal` — so a city token in a `PLZ City` segment is not mistaken for a street.
+ * Place-name-SAFE street suffixes for "is this token part of a street" detection, lowercase, with the `ß`/`ss` split
+ * spelled out and `str` for the `Str.` abbreviation. Deliberately EXCLUDES the suffixes that also end German city names
+ * — `-berg`, `-burg`, `-dorf`, `-feld`, `-hof`, `-stadt`, `-heim`, `-bach`, `-tal` — so a city token in a `PLZ City`
+ * segment is not mistaken for a street.
  */
 export const DE_STREET_SUFFIXES = [
 	"straße",
@@ -71,12 +70,14 @@ export const DE_STREET_SUFFIXES = [
 
 /**
  * True when a token reads as (part of) a German street: it ends with one of the place-name-safe
- * {@link DE_STREET_SUFFIXES}. Handles both the fused compound (`Straußstraße` → ends `straße`) and
- * the standalone type word or `Str.` abbreviation (`Platz`, `Str` → end `platz` / `str`).
+ * {@link DE_STREET_SUFFIXES}. Handles both the fused compound (`Straußstraße` → ends `straße`) and the standalone type
+ * word or `Str.` abbreviation (`Platz`, `Str` → end `platz` / `str`).
  */
 export function isGermanStreetToken(token: unknown): boolean {
 	if (typeof token !== "string") return false
 	const t = token.toLowerCase().replace(/[^a-zà-ÿß]/g, "")
+
 	if (t.length < 3) return false
+
 	return DE_STREET_SUFFIXES.some((s) => t.endsWith(s))
 }

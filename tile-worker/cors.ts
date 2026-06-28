@@ -38,12 +38,15 @@ export function applyAccessControlAllowOrigin(request: Request, response: Respon
 		response.headers.set("Access-Control-Allow-Origin", "*")
 	} else {
 		const requestOrigin = request.headers.get("Origin")
+
 		if (!requestOrigin) return
 
 		const permittedOrigin =
 			AllowedOrigins.has(requestOrigin) || // Known origin?
 			LOCALHOST_PATTERN.test(requestOrigin) || // Local development?
-			requestOrigin.startsWith(VSCODE_WEBVIEW_PROTOCOL) // Coming from a VSCode webview?
+			requestOrigin.startsWith(VSCODE_WEBVIEW_PROTOCOL)
+
+		// Coming from a VSCode webview?
 
 		if (!permittedOrigin) return
 

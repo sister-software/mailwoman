@@ -37,35 +37,48 @@ interface CountryReferenceEntry {
 function callingCode(country: MledozeCountry): number | undefined {
 	const root = (country.idd?.root ?? "").replace("+", "")
 	const suffixes = country.idd?.suffixes ?? []
+
 	if (!root) return undefined
+
 	if (root === "1") return 1
+
 	if (suffixes.length === 1) {
 		const n = Number(root + suffixes[0])
+
 		return Number.isFinite(n) ? n : undefined
 	}
 	const n = Number(root)
+
 	return Number.isFinite(n) ? n : undefined
 }
 
 const response = await fetch(SOURCE)
+
 if (!response.ok) throw new Error(`fetch ${SOURCE} failed: ${response.status}`)
 const countries = (await response.json()) as MledozeCountry[]
 
 const rows: Record<string, CountryReferenceEntry> = {}
+
 for (const country of countries) {
 	const alpha2 = country.cca2
+
 	if (!alpha2) continue
 	const entry: CountryReferenceEntry = {}
 	const cc = callingCode(country)
+
 	if (cc != null) entry.callingCode = cc
 	const currencyCodes = Object.keys(country.currencies ?? {}).sort()
+
 	if (currencyCodes.length) {
 		const code = currencyCodes[0]!
 		const info = country.currencies![code] ?? {}
 		entry.currency = { isoCode: code }
+
 		if (info.name) entry.currency.name = info.name
+
 		if (info.symbol) entry.currency.symbol = info.symbol
 	}
+
 	if (Object.keys(entry).length) rows[alpha2] = entry
 }
 

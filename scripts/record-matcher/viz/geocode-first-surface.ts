@@ -41,6 +41,7 @@ import { writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -83,12 +84,14 @@ const probabilityFromWeight = (w: number) => 1 / (1 + 2 ** -w)
 /** Assign a name-similarity score to its agreement-level weight (levels ordered high→low sim). */
 function nameWeight(sim: number): number {
 	for (const lvl of NAME_LEVELS) if (sim >= (lvl.minSimilarity ?? 0)) return levelWeight(lvl)
+
 	return levelWeight(NAME_LEVELS[NAME_LEVELS.length - 1]!)
 }
 
 /** Assign a distance (km) to its agreement-level weight (levels ordered near→far). */
 function distanceWeight(km: number): number {
 	for (const lvl of DISTANCE_LEVELS) if (km <= (lvl.maxKm ?? Infinity)) return levelWeight(lvl)
+
 	return levelWeight(DISTANCE_LEVELS[DISTANCE_LEVELS.length - 1]!)
 }
 
@@ -110,6 +113,7 @@ const simAxis = Array.from({ length: NX }, (_, i) => i / (NX - 1))
 // log-spaced distance: 0.005 km (5 m) → 50 km, plus a literal 0 at the front
 const kmAxis = Array.from({ length: NY }, (_, j) => {
 	const t = j / (NY - 1)
+
 	return 0.005 * Math.pow(KM_MAX / 0.005, t)
 })
 
@@ -275,6 +279,7 @@ document.getElementById("cap").innerHTML =
 writeFileSync(OUT_HTML, html)
 console.error(`[written] ${OUT_HTML}`)
 console.error(`λ=${LAMBDA}  prior=${PRIOR.toFixed(2)} bits`)
+
 for (const t of trapRows) {
 	console.error(
 		`  ${t.label}: string-first ${(t.stringP * 100).toFixed(1)}% (${verdict(t.stringP)}) | geocode-first ${(t.geoP * 100).toFixed(1)}% (${verdict(t.geoP)})`

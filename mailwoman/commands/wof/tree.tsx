@@ -11,15 +11,17 @@
  *   `--compact` disables pretty-printing.
  */
 
-import { Spinner } from "@inkjs/ui"
-import { generatePlacetypeTree, Placetype, type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
-import { Box, Text } from "ink"
 import * as fs from "node:fs/promises"
 import { availableParallelism } from "node:os"
 import { setImmediate } from "node:timers/promises"
+
+import { Spinner } from "@inkjs/ui"
+import { generatePlacetypeTree, Placetype, type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
+import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const BATCH_SIZE = availableParallelism()
@@ -75,19 +77,23 @@ const WOFTree: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 	useEffect(() => {
 		if (!localRepoDirectory) {
 			setError("Missing required positional argument: <localRepoDirectory>")
+
 			return
 		}
 
 		if (!placetypeName) {
 			setError("Missing required positional argument: <placetype>")
+
 			return
 		}
 
 		let roles: PlacetypeRole[] | undefined
+
 		try {
 			roles = parseRoles(options.roles)
 		} catch (err) {
 			setError((err as Error).message)
+
 			return
 		}
 
@@ -124,6 +130,7 @@ const WOFTree: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 
 	useEffect(() => {
 		if (!done) return
+
 		if (options.output) return // let Ink render the success summary; exit naturally
 		setImmediate().then(() => process.exit(0))
 	}, [done, options.output])

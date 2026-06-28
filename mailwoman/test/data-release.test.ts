@@ -11,6 +11,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { afterAll, describe, expect, test } from "vitest"
 
 import { readReleaseManifest, resolveShardPath } from "../data-release.js"
@@ -20,6 +21,7 @@ const dirs: string[] = []
 function tmp(): string {
 	const d = mkdtempSync(join(tmpdir(), "mw-data-release-"))
 	dirs.push(d)
+
 	return d
 }
 afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
@@ -50,6 +52,7 @@ const factory = { AddressPointSqliteLookup: FakeAddressPoints, StreetInterpolato
 /** Ensure a directory exists and return it. */
 function dirEnsure(d: string): string {
 	mkdirSync(d, { recursive: true })
+
 	return d
 }
 

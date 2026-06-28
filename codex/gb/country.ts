@@ -51,20 +51,24 @@ function foldName(s: string): string {
 /** Folded country name / code → ISO 3166-2:GB code, so a surface form maps regardless of casing. */
 const COUNTRY_NAME_TO_CODE: ReadonlyMap<string, UkCountryCode> = (() => {
 	const out = new Map<string, UkCountryCode>()
+
 	for (const code of Object.keys(GB_COUNTRIES) as UkCountryCode[]) {
 		out.set(foldName(GB_COUNTRIES[code].name), code)
 		out.set(code.toLowerCase(), code)
 	}
+
 	return out
 })()
 
 /**
- * Resolve a UK constituent-country surface form (ISO code or English name) to its ISO code; null if
- * unknown. Accepts `ENG`, `England`, `Northern Ireland`, `scotland`, etc.
+ * Resolve a UK constituent-country surface form (ISO code or English name) to its ISO code; null if unknown. Accepts
+ * `ENG`, `England`, `Northern Ireland`, `scotland`, etc.
  */
 export function lookupUkCountry(input: string | null | undefined): UkCountryCode | null {
 	if (!input || typeof input !== "string") return null
 	const upper = input.trim().toUpperCase()
+
 	if (COUNTRY_CODE_SET.has(upper)) return upper as UkCountryCode
+
 	return COUNTRY_NAME_TO_CODE.get(foldName(input)) ?? null
 }

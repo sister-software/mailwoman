@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { segment } from "./segmentation.js"
 
 describe("segment", () => {

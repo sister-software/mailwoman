@@ -23,9 +23,10 @@
  *   Usage: node --experimental-strip-types scripts/eval/postcode-posterior-ab.ts
  */
 
-import { DuckDBInstance } from "@duckdb/node-api"
 import { globSync, readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+
+import { DuckDBInstance } from "@duckdb/node-api"
 
 const V010 = "/mnt/playpen/mailwoman-data/corpus/versioned/v0.1.0/corpus-v0.1.0/train"
 const US_DB = "/mnt/playpen/mailwoman-data/wof/postalcode-us.db"
@@ -39,15 +40,19 @@ const ALPHA = 0.5 // add-α smoothing for f̂
 
 function fiveDigit(pc: string | null | undefined): string | null {
 	const s = (pc || "").trim()
+
 	return s.length === 5 && /^[0-9]+$/.test(s) ? s : null
 }
 
 /** Coerce a DuckDB list column (a `DuckDBListValue` with `.items`, or a plain array) to `string[]`. */
 function toStringArray(value: unknown): string[] {
 	if (value == null) return []
+
 	if (Array.isArray(value)) return value.map((v) => String(v))
 	const items = (value as { items?: unknown[] }).items
+
 	if (Array.isArray(items)) return items.map((v) => String(v))
+
 	return []
 }
 
@@ -60,15 +65,18 @@ function pyComma(n: number): string {
 function pyFixed(x: number, d: number): string {
 	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
 	const neg = x < 0 || Object.is(x, -0)
-	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(99).split(".")
+	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(20).split(".")
 	const frac = fracRaw
+
 	if (frac.length <= d) {
 		const body = d > 0 ? `${intPart}.${frac.padEnd(d, "0")}` : intPart!
+
 		return (neg ? "-" : "") + body
 	}
 	const keep = frac.slice(0, d)
 	const rest = frac.slice(d)
 	let roundUp: boolean
+
 	if (rest[0]! > "5") roundUp = true
 	else if (rest[0]! < "5") roundUp = false
 	else if (rest.slice(1).replace(/0+$/, "").length > 0) roundUp = true
@@ -77,9 +85,11 @@ function pyFixed(x: number, d: number): string {
 		roundUp = parseInt(lastKept, 10) % 2 === 1
 	}
 	let digits = intPart! + keep
+
 	if (roundUp) {
 		const arr = digits.split("")
 		let i = arr.length - 1
+
 		for (; i >= 0; i--) {
 			if (arr[i] === "9") arr[i] = "0"
 			else {
@@ -87,29 +97,34 @@ function pyFixed(x: number, d: number): string {
 				break
 			}
 		}
+
 		if (i < 0) arr.unshift("1")
 		digits = arr.join("")
 	}
 	const di = digits.length - d
 	const body = d > 0 ? `${digits.slice(0, di) || "0"}.${digits.slice(di)}` : digits.slice(0, di) || "0"
+
 	return (neg ? "-" : "") + body
 }
 
 function collisionSet(): Set<string> {
 	const us = new Set<string>()
 	const usDb = new DatabaseSync(US_DB, { readOnly: true })
+
 	for (const r of usDb.prepare("SELECT name FROM spr WHERE placetype='postalcode'").iterate()) {
 		us.add((r as { name: string }).name)
 	}
 	usDb.close()
 	const fr = new Set<string>()
 	const intlDb = new DatabaseSync(INTL_DB, { readOnly: true })
+
 	for (const r of intlDb.prepare("SELECT name FROM spr WHERE placetype='postalcode' AND country='FR'").iterate()) {
 		fr.add((r as { name: string }).name)
 	}
 	intlDb.close()
 	const us5 = new Set<string>([...us].filter((p) => fiveDigit(p)))
 	const fr5 = new Set<string>([...fr].filter((p) => fiveDigit(p)))
+
 	return new Set<string>([...us5].filter((p) => fr5.has(p)))
 }
 
@@ -131,21 +146,26 @@ async function buildFhat(): Promise<FHat> {
 	const total = new Map<string, number>()
 	const instance = await DuckDBInstance.create()
 	const db = await instance.connect()
+
 	for (const shard of globSync(`${V010}/*.parquet`).sort()) {
 		const escaped = shard.replace(/'/g, "''")
 		const result = await db.runAndReadAll(`SELECT tokens, labels, country FROM read_parquet('${escaped}')`)
 		const rows = result.getRowObjects() as Array<Record<string, unknown>>
+
 		for (const row of rows) {
 			const ctry = row.country as string
+
 			if (ctry !== "US" && ctry !== "FR") continue
 			const toks = toStringArray(row.tokens)
 			const labs = toStringArray(row.labels)
 			const parts: string[] = []
 			const m = Math.min(toks.length, labs.length)
+
 			for (let i = 0; i < m; i++) {
 				if (labs[i] === "B-postcode" || labs[i] === "I-postcode") parts.push(toks[i]!)
 			}
 			const pc = fiveDigit(parts.join(""))
+
 			if (pc) {
 				const cm = count.get(ctry)!
 				cm.set(pc, (cm.get(pc) ?? 0) + 1)
@@ -153,6 +173,7 @@ async function buildFhat(): Promise<FHat> {
 			}
 		}
 	}
+
 	return { count, total }
 }
 
@@ -169,49 +190,61 @@ function posteriors(
 	out.uniform = { US: 0.5, FR: 0.5 }
 	// B. naive count-weighted
 	const raw: Posterior = {}
+
 	for (const c of cands) raw[c] = countGet(count, c, pc) + ALPHA
 	let z = cands.reduce((s, c) => s + raw[c]!, 0)
 	out.naive_count = {}
+
 	for (const c of cands) out.naive_count[c] = raw[c]! / z
 	// C. de-biased: f̂ · prior
 	const priorZ = cands.reduce((s, c) => s + ADDR_VOLUME[c]!, 0)
 	const deb: Posterior = {}
+
 	for (const c of cands) {
 		const fhat = (countGet(count, c, pc) + ALPHA) / ((total.get(c) ?? 0) + ALPHA)
 		deb[c] = fhat * (ADDR_VOLUME[c]! / priorZ)
 	}
 	z = cands.reduce((s, c) => s + deb[c]!, 0)
 	out.de_biased = {}
+
 	for (const c of cands) out.de_biased[c] = deb[c]! / z
+
 	return out
 }
 
 /** (postcode, true_country) for held-out OA addresses whose postcode is a collision. */
 function loadTest(coll: Set<string>): Array<[string, string]> {
 	const rows: Array<[string, string]> = []
+
 	for (const [cc, country] of [
 		["us", "US"],
 		["fr", "FR"],
 	] as Array<[string, string]>) {
 		const text = readFileSync(OA(cc), "utf-8")
+
 		for (const line of text.split("\n")) {
 			if (!line) continue
 			let pc: string | null
+
 			try {
 				pc = fiveDigit(JSON.parse(line).expected?.postcode ?? "")
 			} catch {
 				continue
 			}
+
 			if (pc && coll.has(pc)) rows.push([pc, country])
 		}
 	}
+
 	return rows
 }
 
 /** Python `max(p, key=p.get)` over the candidate set: first key with the strictly-greatest value. */
 function argmax(p: Posterior, cands: string[]): string {
 	let best = cands[0]!
+
 	for (const c of cands) if (p[c]! > p[best]!) best = c
+
 	return best
 }
 
@@ -233,6 +266,7 @@ async function main(): Promise<void> {
 
 	const test = loadTest(coll)
 	const byCountry: Record<string, number> = { US: 0, FR: 0 }
+
 	for (const [, c] of test) byCountry[c] = (byCountry[c] ?? 0) + 1
 	console.log(
 		`  held-out collision test addresses: ${pyComma(test.length)}  (US=${pyComma(byCountry.US!)}, FR=${pyComma(byCountry.FR!)})\n`
@@ -242,15 +276,19 @@ async function main(): Promise<void> {
 	const cands = ["US", "FR"]
 	// per (method, true_country): [logloss_sum, n, top1, highconf_err]
 	const agg: Record<string, Record<string, [number, number, number, number]>> = {}
+
 	for (const m of methods) agg[m] = { US: [0.0, 0, 0, 0], FR: [0.0, 0, 0, 0] }
+
 	for (const [pc, truth] of test) {
 		const post = posteriors(pc, count, total)
+
 		for (const m of methods) {
 			const p = post[m]!
 			const a = agg[m]![truth]!
 			a[0] += -Math.log(Math.max(p[truth]!, 1e-12))
 			a[1] += 1
 			const arg = argmax(p, cands)
+
 			if (arg === truth) a[2] += 1
 			else if (p[arg]! > 0.8) a[3] += 1
 		}
@@ -260,6 +298,7 @@ async function main(): Promise<void> {
 		`    ${padL(label, 8)} logloss=${pyFixed(ll / Math.max(n, 1), 4)}  top1=${padR(pyFixed((100 * t1) / Math.max(n, 1), 1), 5)}%  highconf-err=${padR(pyFixed((100 * hce) / Math.max(n, 1), 1), 4)}%  (n=${n})`
 
 	console.log("=".repeat(78))
+
 	for (const m of methods) {
 		const us = agg[m]!.US!
 		const fr = agg[m]!.FR!

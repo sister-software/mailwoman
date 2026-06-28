@@ -10,11 +10,12 @@
  *   Run: node --experimental-strip-types scripts/eval/compare-parsers.ts
  */
 
+import { readFileSync } from "node:fs"
+
 import { decodeAsJson, proposalsToTree } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createAddressParser } from "mailwoman"
-import { readFileSync } from "node:fs"
 
 const MODEL = dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")

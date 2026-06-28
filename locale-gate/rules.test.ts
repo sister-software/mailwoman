@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { scoreByPostcode, scoreByScript, scoreFallback } from "./rules.js"
 import type { QueryShapeLike } from "./types.js"
 

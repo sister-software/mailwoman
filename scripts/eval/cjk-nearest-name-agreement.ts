@@ -45,12 +45,14 @@ function norm(s: string): string {
 		.join("")
 		.toLowerCase()
 	out = out.replace(/[\s-]/g, "")
+
 	return out.replace(SUFFIXES, "")
 }
 
 function agree(a: string, b: string): boolean {
 	const na = norm(a)
 	const nb = norm(b)
+
 	return Boolean(na && nb && (na === nb || nb.includes(na) || na.includes(nb)))
 }
 
@@ -62,6 +64,7 @@ function haversine(a: number, b: number, c: number, d: number): number {
 	const p2 = radians(c)
 	const dp = radians(c - a)
 	const dl = radians(d - b)
+
 	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
 }
 
@@ -69,8 +72,11 @@ function haversine(a: number, b: number, c: number, d: number): number {
 function pyRound(x: number): number {
 	const f = Math.floor(x)
 	const diff = x - f
+
 	if (diff < 0.5) return f
+
 	if (diff > 0.5) return f + 1
+
 	return f % 2 === 0 ? f : f + 1
 }
 
@@ -87,6 +93,7 @@ function main(): void {
 			seed: { type: "string", default: "7" },
 		},
 	})
+
 	for (const req of ["geonames", "country", "admin-db"] as const) {
 		if (!values[req]) {
 			process.stderr.write(`error: the following arguments are required: --${req}\n`)
@@ -103,9 +110,11 @@ function main(): void {
 		.all(country, placetype) as Array<{ name: string; latitude: number; longitude: number }>
 	// 0.5deg grid for nearest-neighbour
 	const grid = new Map<string, Pt[]>()
+
 	for (const { name: nm, latitude: la, longitude: lo } of pts) {
 		const key = `${pyRound(lo * 2)},${pyRound(la * 2)}`
 		let cell = grid.get(key)
+
 		if (!cell) {
 			cell = []
 			grid.set(key, cell)
@@ -118,12 +127,15 @@ function main(): void {
 		let bd = 1e9
 		const cx = pyRound(lon * 2)
 		const cy = pyRound(lat * 2)
+
 		for (let r = 0; r < 6; r++) {
 			for (let dx = -r; dx <= r; dx++) {
 				for (let dy = -r; dy <= r; dy++) {
 					if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue
+
 					for (const [nm, la, lo] of grid.get(`${cx + dx},${cy + dy}`) ?? []) {
 						const dd = haversine(lat, lon, la, lo)
+
 						if (dd < bd) {
 							bd = dd
 							best = nm
@@ -131,17 +143,22 @@ function main(): void {
 					}
 				}
 			}
+
 			if (best && r >= 1) break
 		}
+
 		return [best, bd]
 	}
 
 	const gold: Array<[string, string, number, number]> = []
+
 	for (const line of readFileSync(values.geonames!, "utf-8").split("\n")) {
 		const f = line.split("\t")
+
 		if (f.length > 10 && f[5]) {
 			const lat = Number(f[9])
 			const lon = Number(f[10])
+
 			if (Number.isNaN(lat) || Number.isNaN(lon)) continue // Python float() ValueError -> pass
 			gold.push([f[2]!, f[5]!, lat, lon]) // town, municipality, lat, lon
 		}
@@ -152,12 +169,16 @@ function main(): void {
 	let agreeMuni = 0
 	let agreeAny = 0
 	const dists: number[] = []
+
 	for (const [town, muni, lat, lon] of sample) {
 		const [nm, d] = nearest(lat, lon)
+
 		if (nm === null) continue
 		dists.push(d)
 		const am = agree(nm, muni)
+
 		if (am) agreeMuni += 1
+
 		if (am || agree(nm, town)) agreeAny += 1
 	}
 	const n = sample.length

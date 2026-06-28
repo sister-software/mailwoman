@@ -10,11 +10,12 @@
  *   `.env`) for the publish step.
  */
 
-import { mailwomanDataRoot, repoRootPathBuilder } from "@mailwoman/core/utils"
-import { Box, Text } from "ink"
 import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
+import { mailwomanDataRoot, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -67,6 +68,7 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 				const lines: string[] = []
 
 				let adminDb = adminIn
+
 				if (options.fold) {
 					const foldOut = adminIn.replace(/\.db$/, "-geonames.db")
 					console.error(`▸ fold (${countries.join(",")}) → ${foldOut}`)
@@ -126,6 +128,7 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -136,6 +139,7 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 			</Box>
 		)
 	}
+
 	return null
 }
 

@@ -6,12 +6,12 @@
 
 import { Alpha2LanguageCode, Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { HouseNumberPositionPenalty } from "./HouseNumberPositionPenalty.js"
 
 /**
- * Build a `street` match carrying a single language so the solver can read `street.languages`. The
- * solver keys its language maps on Alpha2LanguageCode values (e.g. "de", "en"), so the set must
- * contain those codes.
+ * Build a `street` match carrying a single language so the solver can read `street.languages`. The solver keys its
+ * language maps on Alpha2LanguageCode values (e.g. "de", "en"), so the set must contain those codes.
  */
 function streetMatch(span: Span, lang: string): SolutionMatch {
 	return new SolutionMatch(span, {

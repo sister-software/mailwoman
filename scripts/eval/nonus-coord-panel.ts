@@ -38,9 +38,8 @@ import { existsSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { $ } from "zx"
-
 import { runIfScript } from "mailwoman/sdk/scripting"
+import { $ } from "zx"
 
 /** Locale → a zip-entry source or a CSV glob. Mirrors the bash `src_for`; extend as needed. */
 type Src = { kind: "zip"; zip: string; entry: string } | { kind: "glob"; glob: string }
@@ -73,19 +72,23 @@ runIfScript(import.meta, async () => {
 
 	const args = process.argv.slice(2)
 	let buildOnly = false
+
 	if (args[0] === "--build-only") {
 		buildOnly = true
 		args.shift()
 	}
+
 	if (args.length === 0) {
 		console.error("usage: nonus-coord-panel.ts [--build-only] <cc> [cc...]")
 		process.exit(2)
 	}
 
 	console.log(`${"loc".padEnd(4)} ${"resolve".padEnd(7)} ${"p50_resolved".padEnd(13)} ${"p90_resolved".padEnd(13)}`)
+
 	for (const cc of args) {
 		const CC = cc.toUpperCase()
 		const out = join(outDir, `oa-${cc}-coord-150.jsonl`)
+
 		if (!existsSync(out) || statSync(out).size === 0) {
 			const src = srcFor(cc)
 			// Builder noise goes to stderr (the bash `>&2`) so it never pollutes the table on stdout.
@@ -93,15 +96,19 @@ runIfScript(import.meta, async () => {
 				src.kind === "zip"
 					? await $`node --experimental-strip-types scripts/eval/build-oa-coord-golden.ts --country ${cc} --zip ${src.zip} --entry ${src.entry} --out ${out} --n 150`
 					: await $`node --experimental-strip-types scripts/eval/build-oa-coord-golden.ts --country ${cc} --csv-glob ${src.glob} --out ${out} --n 150`
+
 			if (built.stdout.trim()) console.error(built.stdout.trimEnd())
+
 			if (built.stderr.trim()) console.error(built.stderr.trimEnd())
 		}
+
 		if (buildOnly) continue
 		const jsonPath = `/tmp/nonus-panel-${cc}.json`
 		// A grade failure for one locale must not abort the whole panel (the bash `set -e`), so guard it.
 		const graded = await $({
 			nothrow: true,
 		})`node --experimental-strip-types scripts/eval/fr-admin-split-gate.ts --model ${model} --tokenizer ${tok} --model-card ${card} --anchor-lookup ${anchor} --golden ${out} --default-country ${CC} --label ${cc} --out ${jsonPath}`
+
 		if (graded.exitCode === 0) {
 			const g = JSON.parse(readFileSync(jsonPath, "utf-8"))
 			console.log(`${g.label}\t${g.resolve_rate}\t${g.coord_p50_resolved_km}\t${g.coord_p90_resolved_km}`)

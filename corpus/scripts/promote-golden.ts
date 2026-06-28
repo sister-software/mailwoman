@@ -83,8 +83,11 @@ function parseCli() {
 			"dry-run": { type: "boolean", default: false },
 		},
 	})
+
 	if (!values.input) throw new Error("--input is required")
+
 	if (!values["bump-to"]) throw new Error("--bump-to is required (e.g. v0.1.1)")
+
 	return {
 		inputPath: values.input,
 		bumpTo: values["bump-to"],
@@ -102,43 +105,54 @@ function normalize(s: string): string {
 }
 
 /**
- * Heuristic: an address with 5+ components but fewer than 2 separators (commas/newlines/dashes) is
- * most likely glued together rather than human-typed.
+ * Heuristic: an address with 5+ components but fewer than 2 separators (commas/newlines/dashes) is most likely glued
+ * together rather than human-typed.
  */
 function isComponentsGlued(entry: GoldenEntry): boolean {
 	const componentCount = Object.keys(entry.components).length
+
 	if (componentCount < 5) return false
 	const separators = (entry.raw.match(/[,\n;]/g) ?? []).length
+
 	return separators < 2
 }
 
 /**
- * Heuristic: in US/UK conventions, postcode goes at the END of the address. If postcode appears in
- * the first third of a multi-component raw AND there are 4+ components, the LLM probably
- * over-aggressively reordered. FR is exempt (postcode often precedes locality there).
+ * Heuristic: in US/UK conventions, postcode goes at the END of the address. If postcode appears in the first third of a
+ * multi-component raw AND there are 4+ components, the LLM probably over-aggressively reordered. FR is exempt (postcode
+ * often precedes locality there).
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
 	if (Object.keys(entry.components).length < 4) return false
+
 	if (entry.country === "FR" || entry.country === "France") return false
 	const postcode = entry.components.postcode
+
 	if (!postcode) return false
 	const postcodeIdx = entry.raw.indexOf(postcode)
+
 	if (postcodeIdx === -1) return false
+
 	return postcodeIdx < entry.raw.length / 3
 }
 
 /**
- * Heuristic: catch-all for visually-bad outputs — unmatched brackets, control chars, suspicious
- * punctuation that suggests the LLM emitted markup instead of an address.
+ * Heuristic: catch-all for visually-bad outputs — unmatched brackets, control chars, suspicious punctuation that
+ * suggests the LLM emitted markup instead of an address.
  */
 function isSuspicious(entry: GoldenEntry): boolean {
 	const raw = entry.raw
+
 	// eslint-disable-next-line no-control-regex
 	if (/[\x00-\x1f\x7f]/.test(raw)) return true
 	const openBrackets = (raw.match(/[[({<]/g) ?? []).length
 	const closeBrackets = (raw.match(/[\])}>]/g) ?? []).length
+
 	if (openBrackets !== closeBrackets) return true
-	if (raw.split('"').length > 3) return true // too many quote marks
+
+	if (raw.split('"').length > 3) return true
+
+	// too many quote marks
 	return false
 }
 
@@ -146,6 +160,7 @@ function isSuspicious(entry: GoldenEntry): boolean {
 
 function readJsonl<T>(path: string): T[] {
 	if (!existsSync(path)) return []
+
 	return readFileSync(path, "utf8")
 		.split("\n")
 		.filter((l) => l.trim().length > 0)
@@ -175,11 +190,13 @@ function main() {
 	const priorDir = join(opts.goldenRoot, opts.prior)
 	const priorEntries: { country: string; entries: GoldenEntry[] }[] = []
 	const seenNormalized = new Set<string>()
+
 	if (existsSync(priorDir)) {
 		for (const f of readdirSync(priorDir).filter((n) => n.endsWith(".jsonl"))) {
 			const country = f.replace(".jsonl", "").toUpperCase()
 			const entries = readJsonl<GoldenEntry>(join(priorDir, f))
 			priorEntries.push({ country, entries })
+
 			for (const e of entries) seenNormalized.add(normalize(e.raw))
 			process.stderr.write(`  prior ${country}: ${entries.length} entries (forward-copy base)\n`)
 		}
@@ -205,6 +222,7 @@ function main() {
 			stats.filteredOut.forwardDup++
 			continue
 		}
+
 		// Dedup pass 2: against this batch
 		if (seenInBatch.has(norm)) {
 			stats.filteredOut.duplicate++
@@ -216,10 +234,12 @@ function main() {
 				stats.filteredOut.glued++
 				continue
 			}
+
 			if (isPostcodeBadlyLeading(cand)) {
 				stats.filteredOut.postcodeLeading++
 				continue
 			}
+
 			if (isSuspicious(cand)) {
 				stats.filteredOut.suspicious++
 				continue
@@ -235,12 +255,15 @@ function main() {
 
 	// Bucket per country, including forward-copied entries
 	const buckets = new Map<string, GoldenEntry[]>()
+
 	for (const { country, entries } of priorEntries) {
 		// Existing files keyed by filename uppercase (us.jsonl → US, adversarial.jsonl → ADVERSARIAL)
 		buckets.set(country, [...entries])
 	}
+
 	for (const cand of accepted) {
 		const key = (cand.country || "OTHER").toUpperCase()
+
 		if (!buckets.has(key)) buckets.set(key, [])
 		buckets.get(key)!.push(cand)
 	}
@@ -249,6 +272,7 @@ function main() {
 	const outDir = join(opts.goldenRoot, opts.bumpTo)
 	process.stderr.write(`\n=== plan ===\n`)
 	process.stderr.write(`output dir: ${outDir}${opts.dryRun ? " (dry-run)" : ""}\n`)
+
 	for (const [key, entries] of buckets) {
 		process.stderr.write(`  ${key.toLowerCase()}.jsonl: ${entries.length} entries\n`)
 	}
@@ -261,12 +285,14 @@ function main() {
 	process.stderr.write(`  filtered (dup-vs-prior):    ${stats.filteredOut.forwardDup}\n`)
 	process.stderr.write(`  kept:                       ${stats.kept}\n`)
 	process.stderr.write(`per-country (kept):\n`)
+
 	for (const [c, n] of Object.entries(stats.perCountry).sort((a, b) => b[1] - a[1])) {
 		process.stderr.write(`  ${c}: ${n}\n`)
 	}
 
 	if (opts.dryRun) {
 		process.stderr.write(`\n(dry-run: no files written)\n`)
+
 		return
 	}
 
@@ -282,6 +308,7 @@ function main() {
 		from_sha256: sha256(opts.inputPath),
 		files: {},
 	}
+
 	for (const [key, entries] of buckets) {
 		const filename = `${key.toLowerCase()}.jsonl`
 		const path = join(outDir, filename)

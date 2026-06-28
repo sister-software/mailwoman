@@ -44,9 +44,9 @@ export interface PostcodeMatch {
 }
 
 /**
- * Per-country postcode shape patterns, ordered most-specific → least. Alphanumeric patterns require
- * uppercase letters (postcodes are conventionally uppercase, and the eval data has them uppercase)
- * — this keeps them from matching ordinary lowercase prose.
+ * Per-country postcode shape patterns, ordered most-specific → least. Alphanumeric patterns require uppercase letters
+ * (postcodes are conventionally uppercase, and the eval data has them uppercase) — this keeps them from matching
+ * ordinary lowercase prose.
  */
 export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"; re: RegExp }> = [
 	// --- Alphanumeric (eligible to ADD) ---
@@ -68,11 +68,10 @@ export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"
 ]
 
 /**
- * Labels a postcode span is allowed to overwrite when the model emitted no postcode at all (ADD
- * path). These are the geographic-container tags postcodes get confused with per the diagnostic
- * ("often labeled as locality or O"). Structural tags (house_number, street*, unit, po_box, venue,
- * …) are intentionally absent so we never clobber a confidently-labeled street/number with a false
- * postcode.
+ * Labels a postcode span is allowed to overwrite when the model emitted no postcode at all (ADD path). These are the
+ * geographic-container tags postcodes get confused with per the diagnostic ("often labeled as locality or O").
+ * Structural tags (house_number, street*, unit, po_box, venue, …) are intentionally absent so we never clobber a
+ * confidently-labeled street/number with a false postcode.
  */
 const ADD_OVER_TAGS = new Set<string>(["locality", "dependent_locality", "region", "subregion", "country"])
 
@@ -96,6 +95,7 @@ export function collectMatches(text: string): PostcodeMatch[] {
 	const candidates: PostcodeMatch[] = []
 	POSTCODE_PATTERNS.forEach((pat, priority) => {
 		pat.re.lastIndex = 0
+
 		for (let m = pat.re.exec(text); m; m = pat.re.exec(text)) {
 			candidates.push({ start: m.index, end: m.index + m[0].length, kind: pat.kind, priority })
 		}
@@ -105,10 +105,12 @@ export function collectMatches(text: string): PostcodeMatch[] {
 	// before the shorter NL-shaped false positive in its tail ("2737 CA") can.
 	candidates.sort((a, b) => b.end - b.start - (a.end - a.start) || a.priority - b.priority)
 	const accepted: PostcodeMatch[] = []
+
 	for (const c of candidates) {
 		if (accepted.some((a) => c.start < a.end && a.start < c.end)) continue
 		accepted.push(c)
 	}
+
 	return accepted
 }
 
@@ -119,12 +121,13 @@ export interface RepairResult {
 }
 
 /**
- * Repair postcode label spans in a decoded token sequence using per-country regexes. Returns a NEW
- * token array (inputs are not mutated) plus a change count.
+ * Repair postcode label spans in a decoded token sequence using per-country regexes. Returns a NEW token array (inputs
+ * are not mutated) plus a change count.
  */
 export function repairPostcodeLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	const matches = collectMatches(text)
 	const tokens = input.map((t) => ({ ...t }))
+
 	if (matches.length === 0) return { tokens, changed: 0 }
 
 	let changed = 0
@@ -138,20 +141,26 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 	for (const m of matches) {
 		// Tokens whose char span intersects the match.
 		const overlap: number[] = []
+
 		for (let i = 0; i < tokens.length; i++) {
 			const t = tokens[i]!
+
 			if (t.start < m.end && m.start < t.end) overlap.push(i)
 		}
+
 		if (overlap.length === 0) continue
 
 		const hasPostcode = overlap.some((i) => isPostcodeLabel(tokens[i]!.label))
+
 		if (!hasPostcode) {
 			// ADD path — only for high-confidence alphanumeric shapes, only over safe labels.
 			if (m.kind !== "alnum") continue
 			const safe = overlap.every((i) => {
 				const tag = tagOf(tokens[i]!.label)
+
 				return tag === null || ADD_OVER_TAGS.has(tag)
 			})
+
 			if (!safe) continue
 		}
 
@@ -173,14 +182,18 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		// absorption diagnosed in the PR3 Pilot A postmortem (+36pp DE exact-locality, no-op on US,
 		// where the postcode sits at the end with nothing to trim).
 		const trailing: number[] = []
+
 		for (let j = overlap[overlap.length - 1]! + 1; j < tokens.length && isPostcodeLabel(tokens[j]!.label); j++) {
 			trailing.push(j)
 		}
+
 		if (trailing.length > 0) {
 			const after = trailing[trailing.length - 1]! + 1
 			const connectsToCity = after < tokens.length && tagOf(tokens[after]!.label) === "locality"
+
 			if (connectsToCity) {
 				trailing.forEach((j, k) => setLabel(j, k === 0 ? LOCALITY_B : LOCALITY_I))
+
 				if (tokens[after]!.label === "B-locality") setLabel(after, LOCALITY_I)
 			} else {
 				for (const j of trailing) setLabel(j, OUTSIDE)

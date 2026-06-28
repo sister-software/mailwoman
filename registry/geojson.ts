@@ -11,22 +11,26 @@
  */
 
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
+
 import type { EntityGeoData, ResolvedEntity, SourceRecord } from "./types.js"
 
 /** Assemble a display name from a record's parsed person name, if any. */
 function displayName(record: SourceRecord): string | null {
 	const name = record.name
+
 	if (!name) return null
 	const joined = [name.prefix, name.given, name.middle, name.familyParticle, name.family, name.suffix]
 		.filter(Boolean)
 		.join(" ")
 		.trim()
+
 	return joined || null
 }
 
 /** One entity → one GeoJSON Point feature. */
 function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoData> {
 	const rep = entity.representative
+
 	return {
 		type: "Feature",
 		id: undefined, // Consider using entity.id here.
@@ -50,8 +54,8 @@ function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoDa
 }
 
 /**
- * Convert resolved entities into a GeoJSON `FeatureCollection` of points, ready for QGIS. Entities
- * with no resolved coordinate are skipped.
+ * Convert resolved entities into a GeoJSON `FeatureCollection` of points, ready for QGIS. Entities with no resolved
+ * coordinate are skipped.
  */
 export function toGeoJSON(entities: readonly ResolvedEntity[]): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {

@@ -32,18 +32,18 @@ import * as ort from "onnxruntime-web/webgpu"
 
 export interface WebOnnxRunnerOpts {
 	/**
-	 * Try the WebGPU execution provider first. Defaults to true. Set false to skip the WebGPU probe —
-	 * useful in test environments where WebGPU isn't available and the probe failure adds latency.
+	 * Try the WebGPU execution provider first. Defaults to true. Set false to skip the WebGPU probe — useful in test
+	 * environments where WebGPU isn't available and the probe failure adds latency.
 	 */
 	useWebGpu?: boolean
 	/**
-	 * Fixed sequence length the model expects. Matches `OnnxRunner.DEFAULT_FIXED_SEQ_LEN` (128) by
-	 * default. Re-quantized models can override.
+	 * Fixed sequence length the model expects. Matches `OnnxRunner.DEFAULT_FIXED_SEQ_LEN` (128) by default. Re-quantized
+	 * models can override.
 	 */
 	fixedSeqLen?: number
 	/**
-	 * Optional override for where onnxruntime-web should load its `.wasm` assets from. Defaults to
-	 * the package's CDN paths; bundlers usually want to point this at a self-hosted copy.
+	 * Optional override for where onnxruntime-web should load its `.wasm` assets from. Defaults to the package's CDN
+	 * paths; bundlers usually want to point this at a self-hosted copy.
 	 *
 	 * Example: `setWasmPaths("/static/ort/")` and put the .wasm files at /static/ort/.
 	 */
@@ -82,22 +82,27 @@ export class WebOnnxRunner implements NeuralRunner {
 	static async fromBytes(modelBytes: Uint8Array, opts: WebOnnxRunnerOpts = {}): Promise<WebOnnxRunner> {
 		configureWasmPaths(opts.wasmPathsRoot)
 		const runner = new WebOnnxRunner(modelBytes, opts)
+
 		return runner
 	}
 
 	/** Fetch the model from a URL and construct. */
 	static async fromUrl(modelUrl: string, opts: WebOnnxRunnerOpts = {}): Promise<WebOnnxRunner> {
 		const res = await fetch(modelUrl)
+
 		if (!res.ok) throw new Error(`fetch ${modelUrl} failed: ${res.status} ${res.statusText}`)
 		const bytes = new Uint8Array(await res.arrayBuffer())
+
 		return WebOnnxRunner.fromBytes(bytes, opts)
 	}
 
 	async #ensureSession(): Promise<ort.InferenceSession> {
 		if (this.#session) return this.#session
+
 		if (!this.#loadPromise) {
 			this.#loadPromise = (async () => {
 				const wantWebGpu = this.opts.useWebGpu !== false
+
 				if (wantWebGpu) {
 					try {
 						const session = await ort.InferenceSession.create(this.modelBytes, {
@@ -106,6 +111,7 @@ export class WebOnnxRunner implements NeuralRunner {
 						})
 						this.#session = session
 						this.diagnostics = { backend: "webgpu", modelBytes: this.modelBytes.byteLength }
+
 						return session
 					} catch {
 						// WebGPU probe failed — fall through to WASM
@@ -117,18 +123,19 @@ export class WebOnnxRunner implements NeuralRunner {
 				})
 				this.#session = session
 				this.diagnostics = { backend: "wasm", modelBytes: this.modelBytes.byteLength }
+
 				return session
 			})()
 		}
+
 		return this.#loadPromise
 	}
 
 	/**
-	 * Names of the inputs the loaded ONNX graph declares. `null` until the session has been created
-	 * (first `infer()` call). Lets callers (e.g. the neural-web loader) detect
-	 * anchor/gazetteer-trained models and warn loudly when the corresponding feature source wasn't
-	 * provided — running such a model on the zero-filled fallback is the measured train/inference
-	 * mismatch ("the zero-fill trap"), not a quality-neutral degrade.
+	 * Names of the inputs the loaded ONNX graph declares. `null` until the session has been created (first `infer()`
+	 * call). Lets callers (e.g. the neural-web loader) detect anchor/gazetteer-trained models and warn loudly when the
+	 * corresponding feature source wasn't provided — running such a model on the zero-filled fallback is the measured
+	 * train/inference mismatch ("the zero-fill trap"), not a quality-neutral degrade.
 	 */
 	get inputNames(): readonly string[] | null {
 		return this.#session?.inputNames ?? null
@@ -143,6 +150,7 @@ export class WebOnnxRunner implements NeuralRunner {
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
 		const padded = new BigInt64Array(this.fixedSeqLen)
 		const mask = new BigInt64Array(this.fixedSeqLen)
+
 		for (let i = 0; i < seqLen; i++) {
 			padded[i] = BigInt(tokenIds[i]!)
 			mask[i] = 1n
@@ -161,9 +169,11 @@ export class WebOnnxRunner implements NeuralRunner {
 			const dim = anchor.features[0]?.length ?? 0
 			const af = new Float32Array(this.fixedSeqLen * dim)
 			const ac = new Float32Array(this.fixedSeqLen)
+
 			for (let i = 0; i < seqLen; i++) {
 				ac[i] = anchor.confidence[i] ?? 0
 				const row = anchor.features[i]
+
 				if (row) for (let d = 0; d < dim; d++) af[i * dim + d] = row[d] ?? 0
 			}
 			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
@@ -185,9 +195,11 @@ export class WebOnnxRunner implements NeuralRunner {
 			const dim = gazetteer.features[0]?.length ?? 0
 			const gf = new Float32Array(this.fixedSeqLen * dim)
 			const gc = new Float32Array(this.fixedSeqLen)
+
 			for (let i = 0; i < seqLen; i++) {
 				gc[i] = gazetteer.confidence[i] ?? 0
 				const row = gazetteer.features[i]
+
 				if (row) for (let d = 0; d < dim; d++) gf[i * dim + d] = row[d] ?? 0
 			}
 			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
@@ -203,14 +215,17 @@ export class WebOnnxRunner implements NeuralRunner {
 
 		const output = await session.run(feeds)
 		const logitsTensor = output["logits"]
+
 		if (!logitsTensor) throw new Error("ONNX model did not return a `logits` output")
 		const data = logitsTensor.data as Float32Array
 		const [, , numLabels] = logitsTensor.dims as readonly [number, number, number]
 
 		const logits: number[][] = []
+
 		for (let t = 0; t < seqLen; t++) {
 			const row: number[] = new Array(numLabels)
 			const base = t * numLabels
+
 			for (let l = 0; l < numLabels; l++) row[l] = data[base + l]!
 			logits.push(row)
 		}

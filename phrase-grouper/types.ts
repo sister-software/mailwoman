@@ -11,8 +11,7 @@ export type { LocaleHint, PhraseGrouper, PhraseKind, PhraseProposal } from "@mai
 export type { Section } from "@mailwoman/core/types"
 
 /**
- * Minimal `NormalizedInput` shape consumed by `groupPhrases`. Compatible with
- * `@mailwoman/normalize`'s output.
+ * Minimal `NormalizedInput` shape consumed by `groupPhrases`. Compatible with `@mailwoman/normalize`'s output.
  */
 export interface NormalizedInputLite {
 	raw: string
@@ -21,8 +20,7 @@ export interface NormalizedInputLite {
 }
 
 /**
- * Minimal `QueryShape` shape consumed by `groupPhrases`. Compatible with `@mailwoman/query-shape`'s
- * output.
+ * Minimal `QueryShape` shape consumed by `groupPhrases`. Compatible with `@mailwoman/query-shape`'s output.
  */
 export interface QueryShapeLike {
 	knownFormats: ReadonlyArray<{

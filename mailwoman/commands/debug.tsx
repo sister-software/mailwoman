@@ -9,6 +9,7 @@ import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport } from "mailwoman"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../sdk/cli.js"
 
 const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address"))

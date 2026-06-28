@@ -12,6 +12,7 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
 import { afterAll, describe, expect, it } from "vitest"
 
 import { AddressPointInterpolator } from "./address-point-interpolation.js"
@@ -28,6 +29,7 @@ function tablelessDbFile(): string {
 	const seed = new DatabaseSync(path)
 	seed.exec("CREATE TABLE unrelated (x)") // a valid db file, but no address_point / street_segment table
 	seed.close()
+
 	return path
 }
 

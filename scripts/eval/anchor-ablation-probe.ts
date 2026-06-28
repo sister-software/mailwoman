@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -16,7 +18,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync, readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const MODEL = arg("model", "out/v192/model.onnx")
@@ -36,6 +38,7 @@ const flat = (t: Partial<Record<ComponentTag, string>>) => t as Record<string, s
 async function build(withAnchor: boolean) {
 	const card = JSON.parse(readFileSync(CARD, "utf8"))
 	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+
 	return new NeuralAddressClassifier({
 		tokenizer,
 		runner,
@@ -64,6 +67,7 @@ async function main() {
 	let onAsPC = 0,
 		offAsPC = 0 // leading 5-digit MISlabelled postcode
 	const flips: string[] = []
+
 	for (const row of rows) {
 		const hn = norm(row.components.house_number)
 		n++
@@ -71,10 +75,15 @@ async function main() {
 		const pOff = flat(decodeAsJson(await off.parse(row.raw, {})))
 		const onOk = norm(pOn.house_number) === hn
 		const offOk = norm(pOff.house_number) === hn
+
 		if (onOk) onHN++
+
 		if (offOk) offHN++
+
 		if (norm(pOn.postcode) === hn) onAsPC++
+
 		if (norm(pOff.postcode) === hn) offAsPC++
+
 		if (!onOk && offOk && flips.length < 12)
 			flips.push(
 				`  raw=${JSON.stringify(row.raw)} gold.hn=${hn} | anchorON.hn=${JSON.stringify(pOn.house_number ?? null)} pc=${JSON.stringify(pOn.postcode ?? null)} → anchorOFF.hn=${JSON.stringify(pOff.house_number ?? null)} pc=${JSON.stringify(pOff.postcode ?? null)}`

@@ -5,6 +5,7 @@
  */
 
 import { assertClassification } from "mailwoman/sdk/test"
+
 import { GivenNameClassifier } from "./GivenNameClassifier.js"
 
 const classifier = await new GivenNameClassifier().ready()

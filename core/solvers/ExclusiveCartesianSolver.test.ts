@@ -6,11 +6,12 @@
 
 import { Solution, SolutionMatch, Span, TokenContext } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { ExclusiveCartesianSolver } from "./ExclusiveCartesianSolver.js"
 
 /**
- * The static `exclusiveCartesian` is the pure core of this solver: it computes the cartesian
- * product across classification solutions, keeping only combinations whose spans do not overlap.
+ * The static `exclusiveCartesian` is the pure core of this solver: it computes the cartesian product across
+ * classification solutions, keeping only combinations whose spans do not overlap.
  */
 
 test("exclusiveCartesian: combines one match from each classification", () => {

@@ -21,8 +21,8 @@ import type { Span } from "../tokenization/index.js"
 import { type ClassificationProposal, legacyClassificationToComponentTag } from "../types/index.js"
 
 /**
- * Project a solved v0 solution's matches into `rule`-sourced proposals. Matches whose legacy
- * classification has no `ComponentTag` mapping (e.g. structural-only tags) are skipped.
+ * Project a solved v0 solution's matches into `rule`-sourced proposals. Matches whose legacy classification has no
+ * `ComponentTag` mapping (e.g. structural-only tags) are skipped.
  *
  * @param solution A `SerializedSolution` from `AddressParser.parse()` (typically the top solution).
  * @param sourceId Stable id surfaced as `source_id` (default `"rule"`).
@@ -32,6 +32,7 @@ export function solutionToProposals(solution: SerializedSolution, sourceId = "ru
 
 	for (const match of solution.matches) {
 		const component = legacyClassificationToComponentTag(match.classification)
+
 		if (!component) continue
 
 		const span = { start: match.start, end: match.end, body: match.value } as unknown as Span

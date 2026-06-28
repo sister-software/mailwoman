@@ -28,19 +28,22 @@
  *   --country US [--limit 0] [--near-km 50]
  */
 
+import { DatabaseSync } from "node:sqlite"
+
 import { dataRootPath } from "@mailwoman/core/utils"
 import { WofPostalCityAliasLookup, WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
-import { DatabaseSync } from "node:sqlite"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
 const pct = (xs: number[], p: number): number => {
 	if (xs.length === 0) return NaN
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 
@@ -58,6 +61,7 @@ async function main(): Promise<void> {
 	// Truth: postcode → centroid (independent of the alias table).
 	const pcDb = new DatabaseSync(postcodeDbPath, { readOnly: true })
 	const centroid = new Map<string, { lat: number; lon: number }>()
+
 	for (const r of pcDb
 		.prepare("SELECT name, latitude AS lat, longitude AS lon FROM spr WHERE latitude IS NOT NULL")
 		.all() as unknown as Array<{ name: string; lat: number; lon: number }>) {
@@ -71,6 +75,7 @@ async function main(): Promise<void> {
 		.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1 ORDER BY n DESC")
 		.all() as unknown as Array<{ postcode: string; postal_city: string }>
 	aliasDb.close()
+
 	if (limit > 0) rows = rows.slice(0, limit)
 
 	const off = new WofSqlitePlaceLookup({ databasePath: wof })
@@ -91,29 +96,38 @@ async function main(): Promise<void> {
 	const leverDistOn: number[] = []
 
 	let i = 0
+
 	for (const row of rows) {
 		i++
 		const truth = centroid.get(row.postcode)
+
 		if (!truth) continue // no independent truth for this postcode → skip
 		const q = { text: row.postal_city, placetype: "locality" as const, postcode: row.postcode, country }
 		const rOff = (await off.findPlace(q))[0]
 		const rOn = (await on.findPlace(q))[0]
+
 		if (!rOff || !rOn) continue
 		tested++
 		const dOff = haversineKm(rOff.lat, rOff.lon, truth.lat, truth.lon)
 		const dOn = haversineKm(rOn.lat, rOn.lon, truth.lat, truth.lon)
 		distOff.push(dOff)
 		distOn.push(dOn)
+
 		if (rOff.mismatch) mismOff++
+
 		if (rOn.mismatch) mismOn++
 		const changed = rOff.id !== rOn.id || Math.abs(dOff - dOn) > 0.01
+
 		if (changed) {
 			leverActive++
 			leverDistOff.push(dOff)
 			leverDistOn.push(dOn)
 		}
+
 		if (dOff > nearKm && dOn <= nearKm) fixed++
+
 		if (dOff <= nearKm && dOn > nearKm) regressed++
+
 		if (i % 1000 === 0)
 			console.error(`  …${i}/${rows.length} (tested ${tested}, lever-active ${leverActive}, fixed ${fixed})`)
 	}

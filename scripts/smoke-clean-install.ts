@@ -77,6 +77,7 @@ const run = (cmd: string, args: string[], cwd: string) =>
 try {
 	console.log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
 	const deps: Record<string, string> = {}
+
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
 		const tgz = join(tarDir, `${dir}.tgz`)
 		run("yarn", ["workspace", name, "pack", "-o", tgz], repoRoot)
@@ -93,25 +94,29 @@ try {
 	const cli = join(proj, "node_modules", "mailwoman", "out", "cli.js")
 	console.log("[smoke] mailwoman --help (loads every command module)…")
 	const help = run("node", [cli, "--help"], proj)
+
 	for (const c of ["parse", "geocode", "autocomplete", "reverse", "wof", "corpus", "registry"]) {
 		if (!help.includes(c)) throw new Error(`--help missing command "${c}"`)
 	}
 
 	console.log("[smoke] mailwoman parse --isolated (exercises bundled core/data dictionaries)…")
 	const out = run("node", [cli, "parse", "--isolated", "350 5th Ave, New York, NY 10118"], proj)
+
 	if (!out.includes("New York") || !out.includes("10118"))
 		throw new Error(`parse output unexpected:\n${out.slice(0, 400)}`)
 
 	console.log("[smoke] importing the drop-in + annotation package entrypoints…")
+
 	for (const pkg of IMPORT_CHECK) {
 		run("node", ["--input-type=module", "-e", `await import("${pkg}")`], proj)
 	}
 
 	console.log("\n[smoke] ✅ clean install + CLI run succeeded")
-} catch (err: any) {
+} catch (err: unknown) {
+	const e = err as { stdout?: string; stderr?: string; message?: string }
 	console.error("\n[smoke] ❌ FAILED — a published package does not clean-install/run:")
 	console.error(
-		err.stdout ? `${err.message}\n--- stdout ---\n${err.stdout}\n--- stderr ---\n${err.stderr}` : (err.message ?? err)
+		e.stdout ? `${e.message}\n--- stdout ---\n${e.stdout}\n--- stderr ---\n${e.stderr}` : (e.message ?? err)
 	)
 	process.exitCode = 1
 } finally {

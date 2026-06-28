@@ -16,13 +16,12 @@
  *   opens CA's situs shard once, not per row.
  */
 
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
-import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath, wofShardPaths } from "../resolver-backend.js"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import type { ResolveOpts } from "@mailwoman/resolver"
+import { type RequestHandler, Router } from "express"
 
 import {
 	geocodeAddress,
@@ -32,6 +31,7 @@ import {
 	ShardProvider,
 } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp-calibration.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath, wofShardPaths } from "../resolver-backend.js"
 import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
@@ -50,11 +50,13 @@ interface GeocodeDepsBundle {
 
 function wofPaths(): string[] {
 	const env = process.env["MAILWOMAN_WOF_DB"]
+
 	if (env)
 		return env
 			.split(",")
 			.map((p) => p.trim())
 			.filter(Boolean)
+
 	return wofShardPaths().filter((p) => existsSync(p))
 }
 
@@ -65,26 +67,32 @@ async function getDeps(): Promise<GeocodeDepsBundle | null> {
 	depsPromise = (async () => {
 		let neuralMod: typeof import("@mailwoman/neural")
 		let resolverMod: typeof import("@mailwoman/resolver-wof-sqlite")
+
 		try {
 			neuralMod = await import("@mailwoman/neural")
 			resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 		} catch {
 			console.error("GeocodeRouter: @mailwoman/neural + @mailwoman/resolver-wof-sqlite are required")
+
 			return null
 		}
 		const paths = wofPaths()
+
 		if (paths.length === 0) {
 			console.error("GeocodeRouter: no WOF DBs found — set MAILWOMAN_WOF_DB")
+
 			return null
 		}
 		const classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const backend = createResolverBackend(resolverMod, { wofPaths: paths })
 		const resolver = createWofResolver(backend as unknown as ResolverBackend)
 		const shards = new ShardProvider(resolverMod, DATA_ROOT)
+
 		// Candidate backend → country-agnostic default (demo's global, population-first behavior); a
 		// per-request `country` still scopes. FTS backend keeps the US default. (#170)
 		return { classifier, resolver, shards, defaultCountry: resolveCandidateDbPath() ? undefined : "US" }
 	})()
+
 	return depsPromise
 }
 
@@ -104,16 +112,21 @@ const DEPS_UNAVAILABLE = {
 
 const singleHandler: RequestHandler = async (req, res) => {
 	const address = typeof req.body?.address === "string" ? req.body.address.trim() : ""
+
 	if (!address) {
 		res.status(400).json({ error: "Missing `address` (string)" })
+
 		return
 	}
 	const deps = await getDeps()
+
 	if (!deps) {
 		res.status(503).json(DEPS_UNAVAILABLE)
+
 		return
 	}
 	const t0 = performance.now()
+
 	try {
 		const result = await oneGeocode(deps, address)
 		recordGeocode(performance.now() - t0, result.resolution_tier)
@@ -125,28 +138,35 @@ const singleHandler: RequestHandler = async (req, res) => {
 }
 
 /**
- * Per-row result: the GeocodeResult, OR an `{ input, error }` slot so one bad row never fails the
- * batch.
+ * Per-row result: the GeocodeResult, OR an `{ input, error }` slot so one bad row never fails the batch.
  */
 type BatchRow = GeocodeResult | { input: string; error: string }
 
 const batchHandler: RequestHandler = async (req, res) => {
 	const addresses = req.body?.addresses
+
 	if (!Array.isArray(addresses) || addresses.some((a) => typeof a !== "string")) {
 		res.status(400).json({ error: "Body must be `{ addresses: string[] }`" })
+
 		return
 	}
+
 	if (addresses.length === 0) {
 		res.status(200).json({ results: [] })
+
 		return
 	}
+
 	if (addresses.length > BATCH_MAX) {
 		res.status(413).json({ error: `Batch too large: ${addresses.length} > ${BATCH_MAX} (MAILWOMAN_BATCH_MAX)` })
+
 		return
 	}
 	const deps = await getDeps()
+
 	if (!deps) {
 		res.status(503).json(DEPS_UNAVAILABLE)
+
 		return
 	}
 
@@ -160,6 +180,7 @@ const batchHandler: RequestHandler = async (req, res) => {
 		for (let i = cursor++; i < inputs.length; i = cursor++) {
 			const input = inputs[i]!
 			const t0 = performance.now()
+
 			try {
 				const result = await oneGeocode(deps, input)
 				recordGeocode(performance.now() - t0, result.resolution_tier)
@@ -176,24 +197,29 @@ const batchHandler: RequestHandler = async (req, res) => {
 }
 
 /**
- * `POST /api/resolve-tree` — the resolver-service endpoint that `RemoteResolver` (core) calls.
- * Accepts an already-parsed `{ tree, opts? }`, selects this region's situs/interpolation shards
- * (the data lives here, not on the caller), runs the FULL cascade, and returns `{ tree }`. This is
- * what lets a stateless parser node geocode at street level against a shared resolver service.
+ * `POST /api/resolve-tree` — the resolver-service endpoint that `RemoteResolver` (core) calls. Accepts an
+ * already-parsed `{ tree, opts? }`, selects this region's situs/interpolation shards (the data lives here, not on the
+ * caller), runs the FULL cascade, and returns `{ tree }`. This is what lets a stateless parser node geocode at street
+ * level against a shared resolver service.
  */
 const resolveTreeHandler: RequestHandler = async (req, res) => {
 	const tree = req.body?.tree as AddressTree | undefined
+
 	if (!tree || !Array.isArray(tree.roots)) {
 		res.status(400).json({ error: "Body must be `{ tree: AddressTree, opts?: ResolveOpts }`" })
+
 		return
 	}
 	const incomingOpts = (req.body?.opts ?? {}) as ResolveOpts
 	const deps = await getDeps()
+
 	if (!deps) {
 		res.status(503).json(DEPS_UNAVAILABLE)
+
 		return
 	}
 	const t0 = performance.now()
+
 	try {
 		const slug = regionSlugFromTree(tree)
 		const { addressPoints, interpolation } = deps.shards.for(slug)
@@ -224,25 +250,30 @@ const resolveTreeHandler: RequestHandler = async (req, res) => {
 /** Pull the street node's resolution tier (if any) for the metric — mirrors extractGeocodeResult. */
 function collectStreetTier(node: AddressTree["roots"][number]): Array<"address_point" | "interpolated" | "admin"> {
 	const out: Array<"address_point" | "interpolated" | "admin"> = []
+
 	if (node.tag === "street") {
 		const tier = node.metadata?.["resolution_tier"]
+
 		if (tier === "address_point" || tier === "interpolated") out.push(tier)
 	}
+
 	for (const child of node.children) out.push(...collectStreetTier(child))
+
 	return out
 }
 
 /**
- * `POST /api/reload` — versioned data switchover (#485). Re-reads `releases.json` and atomically
- * swaps any per-state shard whose pinned version changed (zero-downtime, one-generation grace on
- * the old handles). Call this after publishing a new shard build to cut traffic over without a
- * restart. Returns the new version map. (Deploy-only; gate it behind your ingress — no auth here by
- * design, per #485.)
+ * `POST /api/reload` — versioned data switchover (#485). Re-reads `releases.json` and atomically swaps any per-state
+ * shard whose pinned version changed (zero-downtime, one-generation grace on the old handles). Call this after
+ * publishing a new shard build to cut traffic over without a restart. Returns the new version map. (Deploy-only; gate
+ * it behind your ingress — no auth here by design, per #485.)
  */
 const reloadHandler: RequestHandler = async (_req, res) => {
 	const deps = await getDeps()
+
 	if (!deps) {
 		res.status(503).json(DEPS_UNAVAILABLE)
+
 		return
 	}
 	const versions = deps.shards.reload()

@@ -8,8 +8,7 @@
 export type { LocaleHint, LocaleTag } from "@mailwoman/core/pipeline"
 
 /**
- * Minimal `NormalizedInput` shape consumed by `detectLocale`. Compatible with
- * `@mailwoman/normalize`'s output.
+ * Minimal `NormalizedInput` shape consumed by `detectLocale`. Compatible with `@mailwoman/normalize`'s output.
  */
 export interface NormalizedInputLite {
 	raw: string
@@ -18,8 +17,7 @@ export interface NormalizedInputLite {
 }
 
 /**
- * Minimal `QueryShape` shape consumed by `detectLocale`. Compatible with `@mailwoman/query-shape`'s
- * output.
+ * Minimal `QueryShape` shape consumed by `detectLocale`. Compatible with `@mailwoman/query-shape`'s output.
  */
 export interface QueryShapeLike {
 	knownFormats: ReadonlyArray<{
@@ -35,8 +33,7 @@ export interface DetectLocaleOpts {
 	/** Caller's locale hint. When set, returned at confidence 1.0 with source="caller". */
 	hint?: string
 	/**
-	 * Below this confidence, the detector returns the top candidate but also surfaces alternatives.
-	 * Default 0.7.
+	 * Below this confidence, the detector returns the top candidate but also surfaces alternatives. Default 0.7.
 	 */
 	confidenceFloor?: number
 }

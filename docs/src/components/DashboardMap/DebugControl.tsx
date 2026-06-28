@@ -5,6 +5,7 @@
  */
 
 import { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
+
 import "maplibre-gl/dist/maplibre-gl.css"
 import { memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
@@ -41,6 +42,7 @@ export const DebugControl: React.FC = memo(() => {
 
 	useEffect(() => {
 		const mapInstance = map.current
+
 		if (!mapInstance) return
 
 		const handleMouseMove = (event: MapLayerMouseEvent) => {

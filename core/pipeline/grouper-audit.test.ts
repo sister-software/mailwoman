@@ -6,6 +6,7 @@
 
 import { Span } from "@mailwoman/core/tokenization"
 import { describe, expect, it } from "vitest"
+
 import type { AddressTree } from "../decoder/types.js"
 import type { ClassifierCandidate } from "./reconcile.js"
 import { grouperAudit, runPipeline } from "./runtime-pipeline.js"

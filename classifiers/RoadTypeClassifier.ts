@@ -15,6 +15,7 @@ export class RoadTypeClassifier extends WordClassifier {
 
 	public explore(span: Span): void {
 		if (span.flags.has("numeral")) return
+
 		if (!this.index.has(span.normalized)) return
 
 		span.classifications.add("road_type", span.normalized.length < 2 ? 0.2 : 1)

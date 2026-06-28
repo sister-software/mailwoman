@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { isAllCapsInput, normalizeInputCase, titleCaseInput } from "./case-normalize.js"
 
 test("isAllCapsInput: a pure-ASCII shouting address qualifies", () => {

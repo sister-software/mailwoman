@@ -6,6 +6,7 @@
 
 import { Alpha2LanguageCode, pluckLanguageLabel } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { StreetSuffixClassifier } from "./StreetSuffixClassifier.js"
 
 const classifier = await new StreetSuffixClassifier().ready()

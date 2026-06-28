@@ -54,6 +54,7 @@ export class RelationshipFilter implements Solver {
 			const matchedSubjects = solution.filter(relation.subject)
 
 			if (!matchedObject || matchedSubjects.length === 0) return true
+
 			// Solution contains both object & subject classifications.
 			// Does the object comes before the subject(s)?
 			if (!matchedSubjects.some((p) => p.span.start < matchedObject.span.end)) return true

@@ -24,6 +24,7 @@ const { values: args } = parseArgs({
 		"with-int8": { type: "boolean", default: false },
 	},
 })
+
 if (!args.gate || !args["out-dir"]) throw new Error("--gate and --out-dir required")
 
 const gate = JSON.parse(readFileSync(args.gate, "utf8")) as {
@@ -37,27 +38,40 @@ const read = (f: string) => readFileSync(path.join(dir, f), "utf8")
 /** Pull `| <tag> | … | <F1> |`-style F1 from an affix/country scorer table (P, R, F1 columns). */
 function scorerF1(md: string, tag: string): number | undefined {
 	const m = md.match(new RegExp(`\\|\\s*${tag}\\s*\\|\\s*[\\d.]+\\s*\\|\\s*[\\d.]+\\s*\\|\\s*([\\d.]+)`))
+
 	return m ? Number(m[1]) : undefined
 }
 
 /** Pull the per-locale table's per-tag percentage for a locale column (US first, FR second). */
 function perLocale(md: string, tag: string, locale: "us" | "fr"): number | undefined {
 	const m = md.match(new RegExp(`\\|\\s*${tag}\\s*\\|\\s*([\\d.]+)%\\s*\\|\\s*([\\d.—-]+)%?`))
+
 	if (!m) return undefined
+
 	return Number(locale === "us" ? m[1] : m[2]) || undefined
 }
 
 /**
- * Sidecar-first reads (the scorers emit JSON beside the markdown since night-11; the regex fallback
- * keeps old out-dirs replayable). A sidecar that exists but can't parse is a loud throw — never a
- * silent fallback to presentation parsing.
+ * Sidecar-first reads (the scorers emit JSON beside the markdown since night-11; the regex fallback keeps old out-dirs
+ * replayable). A sidecar that exists but can't parse is a loud throw — never a silent fallback to presentation
+ * parsing.
  */
-function sidecar(f: string): any | undefined {
+/** Parsed scorer sidecar JSON — only the fields this gate reads are modeled. */
+interface ScorerSidecar {
+	tags?: Record<string, { f1?: number } | undefined>
+	summary?: { pass_rate_pct?: number }
+}
+
+function sidecar(f: string): ScorerSidecar | undefined {
 	const raw = maybeRead(f)
+
 	return raw === undefined ? undefined : JSON.parse(raw)
 }
-function tagF1(side: any | undefined, md: string, tag: string): number | undefined {
-	if (side?.tags?.[tag]?.f1 !== undefined) return side.tags[tag].f1
+function tagF1(side: ScorerSidecar | undefined, md: string, tag: string): number | undefined {
+	const f1 = side?.tags?.[tag]?.f1
+
+	if (f1 !== undefined) return f1
+
 	return scorerF1(md, tag)
 }
 
@@ -81,6 +95,7 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 	const deNative = deorder.match(/native DE\s*\|[^|]*\|\s*([\d.]+)%/)
 	// Locale summary row: `| us | <n> | <macro>% | <micro>% | <exact>% |`
 	const micro = pl.match(/\|\s*us\s*\|\s*\d+\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
+
 	return {
 		"us.postcode": perLocale(pl, "postcode", "us"),
 		"us.locality": perLocale(pl, "locality", "us"),
@@ -108,6 +123,7 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 		"arena.perturb": (() => {
 			const md = maybeRead("arenas.md")
 			const m = md?.match(/\|\s*perturb\s*\|\s*\d+\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
+
 			return m ? Number(m[1]) : undefined
 		})(),
 		// Demo-cascade smoke pass rate (#524) — whole-stack parse→reconcile→resolve against the slim
@@ -133,21 +149,26 @@ const graded = int8 ?? fp32 // floors are graded on the ship artifact when prese
 
 const results: Record<string, { floor: number; actual: number | undefined; pass: boolean }> = {}
 let failed = false
+
 for (const [key, floor] of Object.entries(gate.floors)) {
 	const actual = graded[key]
 	const pass = actual !== undefined && actual >= floor
+
 	if (!pass) failed = true
 	results[key] = { floor, actual, pass }
 }
 
 const deltas: Record<string, number> = {}
+
 if (int8 && gate.int8_vs_fp32_max_delta_pp !== undefined) {
 	for (const key of Object.keys(gate.floors)) {
 		const a = fp32[key]
 		const b = int8[key]
+
 		if (a === undefined || b === undefined) continue
 		const d = Math.abs(a - b)
 		deltas[key] = Number(d.toFixed(2))
+
 		if (d > gate.int8_vs_fp32_max_delta_pp) {
 			failed = true
 			results[`int8_delta.${key}`] = { floor: gate.int8_vs_fp32_max_delta_pp, actual: d, pass: false }
@@ -166,6 +187,7 @@ const verdict = {
 writeFileSync(path.join(dir, "verdict.json"), JSON.stringify(verdict, null, "\t"))
 
 console.log(`\n== promotion gate [${gate.label}] — ${verdict.verdict} ==`)
+
 for (const [k, r] of Object.entries(results)) {
 	console.log(`  ${r.pass ? "✓" : "✗"} ${k}: ${r.actual ?? "NOT FOUND"} (floor ${r.floor})`)
 }

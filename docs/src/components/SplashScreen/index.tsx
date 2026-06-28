@@ -6,6 +6,7 @@
 
 import classNames from "classnames"
 import { memo, useEffect, useState } from "react"
+
 import "./style.css"
 
 export interface SplashScreenProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -20,6 +21,7 @@ export const SplashScreen = memo<SplashScreenProps>(({ children = "Loading...", 
 
 	useEffect(() => {
 		const timer = setTimeout(() => setVisible(true), graceTime)
+
 		return () => clearTimeout(timer)
 	}, [graceTime])
 

@@ -66,8 +66,8 @@ export interface FSTWalkerProps {
 // ---------------------------------------------------------------------------
 
 /**
- * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. Mirrors
- * `normalizeTokens` in resolver-wof-sqlite/fst-matcher.ts.
+ * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. Mirrors `normalizeTokens` in
+ * resolver-wof-sqlite/fst-matcher.ts.
  */
 function normalizeTokens(text: string): string[] {
 	return text
@@ -95,7 +95,9 @@ function fmtImportance(imp: number): string {
 /** Importance tier for color coding. */
 function importanceTier(imp: number): "high" | "mid" | "low" {
 	if (imp >= 0.7) return "high"
+
 	if (imp >= 0.3) return "mid"
+
 	return "low"
 }
 
@@ -105,6 +107,7 @@ function importanceTier(imp: number): "high" | "mid" | "low" {
 
 const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
 	const tier = importanceTier(place.importance)
+
 	return (
 		<div className={`${styles.placeRow} ${styles[`importance_${tier}`]}`}>
 			<span className={styles.placeName} title={place.name ?? `WOF ${place.wofID}`}>
@@ -157,6 +160,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		// Subsequent tokens: walkFrom(prev, token)
 		for (let i = 1; i < tokens.length; i++) {
 			const prev = steps[i - 1]!.result
+
 			if (!prev) {
 				// Previous token already broke the path — all subsequent steps are null
 				steps.push({ token: tokens[i]!, result: null, isFirst: false })
@@ -172,8 +176,10 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 	// Places at each accepting step
 	const stepPlaces = useMemo((): (PlaceEntryLike[] | null)[] => {
 		if (!fstMatcher) return []
+
 		return walkSteps.map((step) => {
 			if (!step.result || !step.result.accepted) return null
+
 			return fstMatcher.accepting(step.result.stateId) as PlaceEntryLike[]
 		})
 	}, [fstMatcher, walkSteps])
@@ -184,18 +190,21 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 
 		// Walk from the last valid step
 		let lastValidStep: WalkStep | null = null
+
 		for (let i = walkSteps.length - 1; i >= 0; i--) {
 			if (walkSteps[i]!.result) {
 				lastValidStep = walkSteps[i]!
 				break
 			}
 		}
+
 		if (!lastValidStep?.result) return null
 
 		// Try to use continuations() if available (runtime duck check — the deserialized
 		// matcher is a full FstMatcher instance with this method).
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const matcher = fstMatcher as any
+
 		if (typeof matcher.continuations === "function") {
 			return matcher.continuations(lastValidStep.result.stateId) as ContinuationLike[]
 		}
@@ -360,8 +369,8 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 /**
  * FSTWalker — interactive FST gazetteer trie walker.
  *
- * Walks the FST token-by-token for the given input, showing state transitions, accepting places,
- * and valid continuations. Wraps BrowserOnly for SSR safety.
+ * Walks the FST token-by-token for the given input, showing state transitions, accepting places, and valid
+ * continuations. Wraps BrowserOnly for SSR safety.
  *
  * Must be used inside a `<DemoEmbedProvider>`.
  */

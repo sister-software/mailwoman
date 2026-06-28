@@ -4,16 +4,17 @@
  * @author Teffen Ellis, et al.
  */
 
-import { describe, expect, it } from "vitest"
-// Re-export the internals for testing. The script's CLI entry is gated on
-// `import.meta.url === file:// process.argv[1]`, so importing the module is side-effect-free.
-import { audit } from "./audit.js"
-
 // Lightweight integration smoke against the actual corpus on this host. Skipped when the data
 // isn't present (CI / fresh clones); only the file-format-parsing tests run unconditionally.
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
+import { describe, expect, it } from "vitest"
+
+// Re-export the internals for testing. The script's CLI entry is gated on
+// `import.meta.url === file:// process.argv[1]`, so importing the module is side-effect-free.
+import { audit } from "./audit.js"
 
 const CORPUS_PATH = "/mnt/playpen/mailwoman-data/corpus/versioned/v0.3.0/corpus-v0.3.0"
 const hasCorpus = existsSync(CORPUS_PATH)
@@ -76,6 +77,7 @@ describe("audit — config parser", () => {
 		const logLines: string[] = []
 		console.error = (...args: unknown[]) => errLines.push(args.join(" "))
 		console.log = (...args: unknown[]) => logLines.push(args.join(" "))
+
 		try {
 			audit({ corpusDir: tmp, configPath })
 		} finally {

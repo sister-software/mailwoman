@@ -51,6 +51,7 @@ import { createReadStream, createWriteStream, existsSync, readFileSync, type Wri
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
+
 import { defaultAdapterRegistry } from "./adapter.js"
 import { alignRow } from "./align.js"
 import { licenseExcluded } from "./license.js"
@@ -78,14 +79,14 @@ export interface BuildCorpusOptions {
 	corpusVersion: string
 
 	/**
-	 * Adapters to drive, in order. Defaults to `defaultAdapterRegistry.list()`. Pass an explicit list
-	 * to filter (e.g. `[wofAdminAdapter]` for a smoke run).
+	 * Adapters to drive, in order. Defaults to `defaultAdapterRegistry.list()`. Pass an explicit list to filter (e.g.
+	 * `[wofAdminAdapter]` for a smoke run).
 	 */
 	adapters?: readonly CorpusAdapter[]
 
 	/**
-	 * Per-adapter `AdapterOptions` — looked up by adapter id. Adapters whose id is missing from this
-	 * map are skipped (and noted in the manifest).
+	 * Per-adapter `AdapterOptions` — looked up by adapter id. Adapters whose id is missing from this map are skipped (and
+	 * noted in the manifest).
 	 */
 	adapterInputs: Record<string, AdapterOptions>
 
@@ -99,11 +100,10 @@ export interface BuildCorpusOptions {
 	onProgress?: (stage: BuildStage, message: string) => void
 
 	/**
-	 * License kinds to PURPOSELY exclude from this build (#26). Compiled patterns (see
-	 * `compileLicenseExcludes` / `SHARE_ALIKE_PATTERN` in `license.ts`); a row whose `license`
-	 * matches any is dropped at ingest. Default (omitted) includes EVERYTHING — exclusion is a
-	 * deliberate act, not a silent default. A proprietary-weights build passes the share-alike set
-	 * (`--exclude-share-alike`).
+	 * License kinds to PURPOSELY exclude from this build (#26). Compiled patterns (see `compileLicenseExcludes` /
+	 * `SHARE_ALIKE_PATTERN` in `license.ts`); a row whose `license` matches any is dropped at ingest. Default (omitted)
+	 * includes EVERYTHING — exclusion is a deliberate act, not a silent default. A proprietary-weights build passes the
+	 * share-alike set (`--exclude-share-alike`).
 	 */
 	excludeLicenses?: readonly RegExp[]
 }
@@ -119,8 +119,8 @@ export interface BuildCorpusManifest {
 	quarantine_count: number
 	total_aligned_rows: number
 	/**
-	 * Resolved license set across all INCLUDED rows (license string → row count), + the count dropped
-	 * by `excludeLicenses` (#26). The model card derives its data-attribution table from `licenses`.
+	 * Resolved license set across all INCLUDED rows (license string → row count), + the count dropped by
+	 * `excludeLicenses` (#26). The model card derives its data-attribution table from `licenses`.
 	 */
 	licenses: Record<string, number>
 	excluded_by_license: number
@@ -129,10 +129,9 @@ export interface BuildCorpusManifest {
 /**
  * Drive the full corpus build to completion.
  *
- * Memory profile: the function maintains an in-memory `Map<source_id, SplitName>` to bridge the
- * align → shard hand-off. For Phase 1 fixture-scale runs (≤ 10⁴ rows) this is trivial. For real 5M+
- * runs, the map fits comfortably in a few hundred MB; the canonical.jsonl and labeled.jsonl
- * payloads stream and never sit in memory.
+ * Memory profile: the function maintains an in-memory `Map<source_id, SplitName>` to bridge the align → shard hand-off.
+ * For Phase 1 fixture-scale runs (≤ 10⁴ rows) this is trivial. For real 5M+ runs, the map fits comfortably in a few
+ * hundred MB; the canonical.jsonl and labeled.jsonl payloads stream and never sit in memory.
  */
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
@@ -147,8 +146,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// 1. Adapter runs.
 	const adapterRuns: AdapterRunManifest[] = []
 	const skipped: string[] = []
+
 	for (const adapter of adapters) {
 		const adapterOptions = opts.adapterInputs[adapter.id]
+
 		if (!adapterOptions) {
 			skipped.push(adapter.id)
 			opts.onProgress?.("adapter-run", `skipped ${adapter.id} (no input configured)`)
@@ -161,6 +162,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		// redoing the (expensive) emit phase. Default (unset) re-emits, preserving correctness. (2026-06-12.)
 		const adapterDir = join(intermediateDir, adapter.id)
 		const cachedManifest = join(adapterDir, "MANIFEST.json")
+
 		if (
 			process.env.MAILWOMAN_RESUME === "1" &&
 			existsSync(cachedManifest) &&
@@ -216,8 +218,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	for (const adapterRun of adapterRuns) {
 		opts.onProgress?.("align", `aligning ${adapterRun.adapter_id}`)
+
 		for await (const row of streamJsonl<CanonicalRow>(adapterRun.jsonl_path)) {
 			licenseCounts.set(row.license, (licenseCounts.get(row.license) ?? 0) + 1)
+
 			// Deliberate license exclusion (#26): drop a row ONLY when the operator named its license
 			// kind via `excludeLicenses`. Default (no patterns) keeps everything — exclusion is a
 			// purposeful act, not a silent default. Counted BEFORE the drop so the manifest's license
@@ -227,13 +231,16 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 				continue
 			}
 			const fanned: CanonicalRow[] = [row]
+
 			if (synthesize) {
 				for (const aug of synthesizeRow(row, defaultAugmentationsForCountry(row.country))) {
 					fanned.push(aug)
 				}
 			}
+
 			for (const r of fanned) {
 				let result: ReturnType<typeof alignRow>
+
 				try {
 					result = alignRow(r)
 				} catch (err) {
@@ -245,6 +252,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 					quarantined++
 					continue
 				}
+
 				if (result.kind === "labeled") {
 					const split = splitForRow(result.row, holdouts)
 					labeledStreams[split].write(`${JSON.stringify(result.row)}\n`)
@@ -317,14 +325,17 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		excluded_by_license: excludedByLicense,
 	}
 	await writeFile(join(opts.outputDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+
 	return manifest
 }
 
 async function* streamJsonl<T>(path: string): AsyncIterable<T> {
 	const stream = createReadStream(path, { encoding: "utf8" })
 	const rl = createInterface({ input: stream, crlfDelay: Infinity })
+
 	for await (const line of rl) {
 		const trimmed = line.trim()
+
 		if (!trimmed) continue
 		yield JSON.parse(trimmed) as T
 	}

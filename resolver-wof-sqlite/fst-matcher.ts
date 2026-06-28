@@ -28,29 +28,38 @@ export class FstMatcher {
 
 	get placeCount(): number {
 		let count = 0
+
 		for (const n of this.nodes) count += n.places.length
+
 		return count
 	}
 
 	walk(tokens: string[]): FstMatchResult | null {
 		let stateId = 0
+
 		for (let i = 0; i < tokens.length; i++) {
 			const node = this.nodes[stateId]
+
 			if (!node) return null
 			const next = node.edges.get(tokens[i]!)
+
 			if (next === undefined) return null
 			stateId = next
 		}
 		const node = this.nodes[stateId]!
+
 		return { stateId, accepted: node.places.length > 0, depth: tokens.length }
 	}
 
 	walkFrom(prev: FstMatchResult, token: string): FstMatchResult | null {
 		const node = this.nodes[prev.stateId]
+
 		if (!node) return null
 		const next = node.edges.get(token)
+
 		if (next === undefined) return null
 		const target = this.nodes[next]!
+
 		return { stateId: next, accepted: target.places.length > 0, depth: prev.depth + 1 }
 	}
 
@@ -60,8 +69,10 @@ export class FstMatcher {
 
 	continuations(stateId: number): FstContinuation[] {
 		const node = this.nodes[stateId]
+
 		if (!node) return []
 		const result: FstContinuation[] = []
+
 		for (const [token, targetId] of node.edges) {
 			const target = this.nodes[targetId]!
 			result.push({
@@ -70,24 +81,30 @@ export class FstMatcher {
 				acceptingCount: target.places.length,
 			})
 		}
+
 		return result
 	}
 
 	query(text: string): FstQueryResult {
 		const tokens = normalizeTokens(text)
 		const match = this.walk(tokens)
+
 		if (!match) {
 			// Walk as far as possible to find where we fall off
 			let stateId = 0
 			let depth = 0
+
 			for (const t of tokens) {
 				const node = this.nodes[stateId]
+
 				if (!node) break
 				const next = node.edges.get(t)
+
 				if (next === undefined) break
 				stateId = next
 				depth++
 			}
+
 			return {
 				path: tokens.slice(0, depth),
 				stateId,
@@ -95,6 +112,7 @@ export class FstMatcher {
 				continuations: this.continuations(stateId),
 			}
 		}
+
 		return {
 			path: tokens,
 			stateId: match.stateId,

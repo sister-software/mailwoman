@@ -28,8 +28,8 @@ import type { UkCountryCode } from "./country.js"
 const NORTHERN_IRELAND_AREAS = ["BT"] as const
 
 /**
- * Scotland's postcode areas. TD (Galashiels) straddles the border with England and is assigned to
- * Scotland as its majority country.
+ * Scotland's postcode areas. TD (Galashiels) straddles the border with England and is assigned to Scotland as its
+ * majority country.
  */
 const SCOTLAND_AREAS = [
 	"AB", // Aberdeen
@@ -51,8 +51,8 @@ const SCOTLAND_AREAS = [
 ] as const
 
 /**
- * Wales's postcode areas. SY (Shrewsbury) straddles the border with England and is assigned to
- * Wales as its majority country.
+ * Wales's postcode areas. SY (Shrewsbury) straddles the border with England and is assigned to Wales as its majority
+ * country.
  */
 const WALES_AREAS = [
 	"CF", // Cardiff
@@ -64,10 +64,9 @@ const WALES_AREAS = [
 ] as const
 
 /**
- * The explicit non-England postcode areas, area → constituent country. England is intentionally
- * absent: it is the DEFAULT (the great majority of UK areas are English), so listing it would be
- * both enormous and a maintenance trap. Keeping only the non-England set makes the default
- * transparent — anything not named here is England.
+ * The explicit non-England postcode areas, area → constituent country. England is intentionally absent: it is the
+ * DEFAULT (the great majority of UK areas are English), so listing it would be both enormous and a maintenance trap.
+ * Keeping only the non-England set makes the default transparent — anything not named here is England.
  */
 export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 	...Object.fromEntries(NORTHERN_IRELAND_AREAS.map((a) => [a, "NIR" as const])),
@@ -81,26 +80,28 @@ function isAreaShape(area: unknown): area is string {
 }
 
 /**
- * The constituent country a postcode AREA belongs to. Returns the explicit country for a known
- * non-England area (e.g. `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`), and `ENG` as the default for any
- * other validly-shaped area — England is by far the largest, so the default is transparent and the
- * non-England exceptions live in {@link GB_POSTCODE_AREA_COUNTRY}. Returns null for clearly-invalid
- * input (not one-or-two letters), so a malformed token is not silently called England.
+ * The constituent country a postcode AREA belongs to. Returns the explicit country for a known non-England area (e.g.
+ * `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`), and `ENG` as the default for any other validly-shaped area — England is by
+ * far the largest, so the default is transparent and the non-England exceptions live in
+ * {@link GB_POSTCODE_AREA_COUNTRY}. Returns null for clearly-invalid input (not one-or-two letters), so a malformed
+ * token is not silently called England.
  */
 export function countryOfPostcodeArea(area: unknown): UkCountryCode | null {
 	if (!isAreaShape(area)) return null
+
 	return GB_POSTCODE_AREA_COUNTRY[area.toUpperCase()] ?? "ENG"
 }
 
 /**
- * The constituent country a whole postcode resolves to, by extracting its area. `BT1 1AA` → `NIR`,
- * `EH1 1BB` → `SCT`, `CF10 1AA` → `WLS`, `SW1A 1AA` → `ENG`. Null if the input has no extractable
- * postcode area.
+ * The constituent country a whole postcode resolves to, by extracting its area. `BT1 1AA` → `NIR`, `EH1 1BB` → `SCT`,
+ * `CF10 1AA` → `WLS`, `SW1A 1AA` → `ENG`. Null if the input has no extractable postcode area.
  */
 export function countryOfPostcode(postcode: unknown): UkCountryCode | null {
 	if (typeof postcode !== "string") return null
 	// Extract the leading 1-2 letters directly, tolerating the inward code / spacing.
 	const match = /^\s*([A-Z]{1,2})/i.exec(postcode)
+
 	if (!match) return null
+
 	return countryOfPostcodeArea(match[1])
 }

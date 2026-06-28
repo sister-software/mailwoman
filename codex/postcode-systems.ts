@@ -34,10 +34,9 @@ import { isZipCode } from "./us/index.js"
 export type SystemCode = "us" | "de" | "fr" | "ca" | "gb" | "jp" | "au" | "nz"
 
 /**
- * Per-system membership test: each entry returns true when the string is accepted by that system's
- * own postcode shape (after that system's normalization — so `D-68161` reaches `de`, `1012 LM`
- * reaches nothing here since NL has no slice yet, etc.). Ordered for a stable, alphabetical-ish
- * result.
+ * Per-system membership test: each entry returns true when the string is accepted by that system's own postcode shape
+ * (after that system's normalization — so `D-68161` reaches `de`, `1012 LM` reaches nothing here since NL has no slice
+ * yet, etc.). Ordered for a stable, alphabetical-ish result.
  */
 const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean]> = [
 	["us", (s) => isZipCode(s)],
@@ -51,15 +50,17 @@ const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean
 ]
 
 /**
- * Every address system whose own postcode shape accepts `postcode`. Empty when no system recognizes
- * the shape (e.g. a bare `27`, or a 7-digit run). O(number of systems) — a handful of cheap regex
- * tests, run only on the few postcode-shaped spans an address contains.
+ * Every address system whose own postcode shape accepts `postcode`. Empty when no system recognizes the shape (e.g. a
+ * bare `27`, or a 7-digit run). O(number of systems) — a handful of cheap regex tests, run only on the few
+ * postcode-shaped spans an address contains.
  */
 export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
 	if (typeof postcode !== "string" || postcode.length === 0) return []
 	const out: SystemCode[] = []
+
 	for (const [system, accepts] of SYSTEM_ACCEPTS) {
 		if (accepts(postcode)) out.push(system)
 	}
+
 	return out
 }

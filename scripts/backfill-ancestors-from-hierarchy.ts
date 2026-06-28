@@ -35,6 +35,7 @@ const reposRoot = process.argv[3] ?? "/mnt/playpen/mailwoman-data/wof/repos"
 
 // WOF geojson lives sharded under several admin repos; an id resolves to <root>/<3-char chunks>/<id>.geojson.
 const adminRoots: string[] = []
+
 for (const sub of [
 	"whosonfirst-data/whosonfirst-data-admin-cn",
 	"whosonfirst-data/whosonfirst-data-admin-de",
@@ -49,16 +50,20 @@ for (const sub of [
 	"whosonfirst-data-admin-us",
 ]) {
 	const p = join(reposRoot, sub, "data")
+
 	if (existsSync(p)) adminRoots.push(p)
 }
 
 function geojsonForId(id: number): Record<string, unknown> | null {
 	const s = String(id)
 	const chunks: string[] = []
+
 	for (let i = 0; i < s.length; i += 3) chunks.push(s.slice(i, i + 3))
 	const rel = join(chunks.join("/"), `${s}.geojson`)
+
 	for (const root of adminRoots) {
 		const fp = join(root, rel)
+
 		if (existsSync(fp)) {
 			try {
 				return JSON.parse(readFileSync(fp, "utf8")) as Record<string, unknown>
@@ -67,6 +72,7 @@ function geojsonForId(id: number): Record<string, unknown> | null {
 			}
 		}
 	}
+
 	return null
 }
 
@@ -76,6 +82,7 @@ function geojsonForId(id: number): Record<string, unknown> | null {
 // candidate `locality_id` is its PARENT locality — a real ancestor we must keep.
 function placetypeFromKey(key: string): string | null {
 	if (!key.endsWith("_id")) return null
+
 	return key.slice(0, -3)
 }
 
@@ -99,32 +106,40 @@ let placesFixed = 0
 let rowsAdded = 0
 let noGeojson = 0
 db.exec("BEGIN")
+
 for (const { id, placetype } of candidates) {
 	if (TOP.has(placetype)) continue
 	const gj = geojsonForId(id)
 	const props = (gj?.["properties"] ?? null) as Record<string, unknown> | null
 	const hierarchy = (props?.["wof:hierarchy"] ?? null) as Array<Record<string, number>> | null
+
 	if (!hierarchy || hierarchy.length === 0) {
 		if (!gj) noGeojson++
 		continue
 	}
 	// Collect distinct (ancestor_id, placetype) across all hierarchy branches, excluding self.
 	const seen = new Map<number, string>()
+
 	for (const branch of hierarchy) {
 		for (const [key, val] of Object.entries(branch)) {
 			const pt = placetypeFromKey(key)
+
 			if (!pt) continue
 			const aid = Number(val)
+
 			if (!Number.isFinite(aid) || aid <= 0 || aid === id) continue
+
 			if (!seen.has(aid)) seen.set(aid, pt)
 		}
 	}
 	let added = 0
+
 	for (const [aid, pt] of seen) {
 		if (hasRow.get(id, aid)) continue
 		insert.run(id, aid, pt)
 		added++
 	}
+
 	if (added > 0) {
 		placesFixed++
 		rowsAdded += added

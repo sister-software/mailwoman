@@ -6,6 +6,7 @@
 
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { OrphanedUnitTypeDeclassifier } from "./OrphanedUnitTypeDeclassifier.js"
 
 test("UnitClassification missing: remove unit_type", () => {

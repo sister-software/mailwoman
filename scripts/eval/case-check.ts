@@ -8,9 +8,10 @@
  *   node --experimental-strip-types scripts/eval/case-check.ts
  */
 
+import { readFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "node:fs"
 
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
@@ -32,6 +33,7 @@ const samples = [
 ]
 let capsLoc = 0
 let titleLoc = 0
+
 for (const caps of samples) {
 	const tc = title(caps)
 	const recCaps = decodeAsJson(await neural.parse(caps, { postcodeRepair: true })) as Record<string, string>
@@ -39,7 +41,9 @@ for (const caps of samples) {
 	const wantLoc = caps.split(",")[1]!.trim()
 	const capsOk = (recCaps.locality ?? "").toUpperCase() === wantLoc
 	const titleOk = (recTitle.locality ?? "").toUpperCase() === wantLoc
+
 	if (capsOk) capsLoc++
+
 	if (titleOk) titleLoc++
 	console.log(
 		`CAPS  loc=${recCaps.locality ?? "—"}  | TITLE loc=${recTitle.locality ?? "—"}  (want ${wantLoc})  ${capsOk ? "" : "CAPS-MISS"}${titleOk ? "" : " TITLE-MISS"}`

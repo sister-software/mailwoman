@@ -23,14 +23,15 @@
  *   behavior). Per-locale progress streams to stderr; the roll-up lands on stdout.
  */
 
+import { existsSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
+import { DatabaseSync } from "node:sqlite"
+
 import { dataRootPath } from "@mailwoman/core/utils"
 // @mailwoman/neural is a direct dep and this subpath is a self-contained serializer (type-only
 // imports), so the value import is safe at module level — no heavy ONNX runtime is pulled in.
 import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
 import { Box, Text } from "ink"
-import { existsSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -58,29 +59,32 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 /**
- * GB outward code: the part before the space when the inward half is `\d[A-Z]{2}` (`SO4 3RX` →
- * `SO4`).
+ * GB outward code: the part before the space when the inward half is `\d[A-Z]{2}` (`SO4 3RX` → `SO4`).
  */
 function gbOutward(name: string): string | null {
 	const sp = name.indexOf(" ")
+
 	if (sp < 1) return null
 	const inward = name.slice(sp + 1)
+
 	return /^\d[A-Z]{2}$/.test(inward) ? name.slice(0, sp) : null
 }
 
 /**
- * Aggregate GB unit postcodes to outward codes, averaging the placed-unit centroids. Drops units
- * that don't parse as a GB unit postcode (kept verbatim is wrong at this granularity). Returns one
- * entry per outward code.
+ * Aggregate GB unit postcodes to outward codes, averaging the placed-unit centroids. Drops units that don't parse as a
+ * GB unit postcode (kept verbatim is wrong at this granularity). Returns one entry per outward code.
  */
 function aggregateGbOutward(
 	rows: Array<{ name: string; country: string; lat: number; lon: number }>
 ): PostcodeBinaryEntry[] {
 	const acc = new Map<string, { latSum: number; lonSum: number; placed: number }>()
+
 	for (const r of rows) {
 		const out = gbOutward(String(r.name).toUpperCase())
+
 		if (!out) continue
 		const a = acc.get(out) ?? { latSum: 0, lonSum: 0, placed: 0 }
+
 		if (r.lat !== 0 || r.lon !== 0) {
 			a.latSum += Number(r.lat)
 			a.lonSum += Number(r.lon)
@@ -89,6 +93,7 @@ function aggregateGbOutward(
 		acc.set(out, a)
 	}
 	const entries: PostcodeBinaryEntry[] = []
+
 	for (const [out, a] of acc) {
 		entries.push({
 			postcode: out,
@@ -97,6 +102,7 @@ function aggregateGbOutward(
 			lon: a.placed > 0 ? a.lonSum / a.placed : 0,
 		})
 	}
+
 	return entries
 }
 
@@ -111,10 +117,13 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 				const outDir = options.out
 
 				const locales: LocaleSource[] = []
+
 				for (const spec of options.locale ?? []) {
 					const [country, db] = spec.split(":")
+
 					if (country && db) locales.push({ country, db: db.startsWith("/") ? db : join(wof, db) })
 				}
+
 				if (locales.length === 0) {
 					locales.push(
 						{ country: "US", db: join(wof, "postalcode-us.db") },
@@ -128,6 +137,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 				}
 
 				let written = 0
+
 				for (const { country, db } of locales) {
 					if (!existsSync(db)) {
 						console.error(`skip ${country}: missing ${db}`)
@@ -173,6 +183,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -185,6 +196,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 			</Box>
 		)
 	}
+
 	return null // per-locale progress streams to stderr until the roll-up lands
 }
 

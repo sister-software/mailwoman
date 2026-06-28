@@ -8,16 +8,7 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "un-locode-lookup"
 	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./build": "./out/build.js"
-	},
-	"dependencies": {
-		"@mailwoman/annotations": "workspace:*",
-		"csv-parse": "^5.6.0"
-	},
+	"bin": "./out/cli.js",
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
@@ -25,8 +16,17 @@
 		"out/**/*.d.ts.map",
 		"README.md"
 	],
-	"bin": "./out/cli.js",
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js",
+		"./build": "./out/build.js"
+	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/annotations": "workspace:*",
+		"csv-parse": "^5.6.0"
 	}
 }

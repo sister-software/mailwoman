@@ -22,23 +22,24 @@
  *   --countries CA [--release 2026-06-17.0]
  */
 
+import { copyFileSync, existsSync, readFileSync, unlinkSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import type { WofDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite/fts"
 import { createUnifiedIndexes, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { haversineKm } from "@mailwoman/spatial"
-import { copyFileSync, existsSync, readFileSync, unlinkSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
+
 import { ingestOvertureDivisions } from "./build-unified-wof.ts"
 
 /**
- * Set `place_population` for Overture-backfilled cities from a GeoNames cities dump (tab-separated:
- * geonameid, name, asciiname, altnames, lat, lon, fclass, fcode, country, …, population at index
- * 14). Match each GeoNames city by name/asciiname + country against the `names` table, nearest
- * centroid within 50 km. ONLY touches Overture rows (`id >= 2e9`; WOF ids are < 2e9, so their
- * populations are left intact). This is what lets a major foreign city outrank its small US homonym
- * — without a population the cascade ranks Moscow RU below Moscow, Idaho.
+ * Set `place_population` for Overture-backfilled cities from a GeoNames cities dump (tab-separated: geonameid, name,
+ * asciiname, altnames, lat, lon, fclass, fcode, country, …, population at index 14). Match each GeoNames city by
+ * name/asciiname + country against the `names` table, nearest centroid within 50 km. ONLY touches Overture rows (`id >=
+ * 2e9`; WOF ids are < 2e9, so their populations are left intact). This is what lets a major foreign city outrank its
+ * small US homonym — without a population the cascade ranks Moscow RU below Moscow, Idaho.
  */
 async function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): Promise<number> {
 	// The match probe stays a reused prepared statement (read-heavy loop). The WRITE goes through a
@@ -52,6 +53,7 @@ async function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): Pr
 	// id → population; last write wins, matching the original INSERT OR REPLACE (also dedupes two
 	// GeoNames cities that match the same place).
 	const pops = new Map<number, number>()
+
 	for (const line of lines) {
 		if (!line) continue
 		const f = line.split("\t")
@@ -59,22 +61,27 @@ async function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): Pr
 		const lon = Number(f[5])
 		const country = f[8]
 		const pop = Number(f[14])
+
 		if (!pop || !country || !Number.isFinite(lat)) continue
 		let best: number | null = null
 		let bestD = Infinity
+
 		for (const nm of new Set([f[1], f[2]].filter((x): x is string => Boolean(x)))) {
 			for (const r of findByName.all(nm, country) as Array<{ id: number; lat: number; lon: number }>) {
 				const d = haversineKm(lat, lon, Number(r.lat), Number(r.lon))
+
 				if (d < bestD) {
 					bestD = d
 					best = Number(r.id)
 				}
 			}
 		}
+
 		if (best != null && bestD < 50) pops.set(best, pop)
 	}
 
 	const rows = [...pops].map(([id, population]) => ({ id, population }))
+
 	for (let i = 0; i < rows.length; i += 1000) {
 		await kdb
 			.insertInto("place_population")
@@ -82,11 +89,13 @@ async function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): Pr
 			.onConflict((oc) => oc.column("id").doUpdateSet({ population: (eb) => eb.ref("excluded.population") }))
 			.execute()
 	}
+
 	return pops.size
 }
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -97,7 +106,9 @@ const COUNTRIES = arg("countries")
 	.map((c) => c.trim().toUpperCase())
 	.filter(Boolean)
 const RELEASE = arg("release", "2026-06-17.0")
-const GEONAMES = arg("geonames") // optional GeoNames cities dump → population for the backfilled cities
+const GEONAMES = arg("geonames")
+
+// optional GeoNames cities dump → population for the backfilled cities
 
 if (!OUT || COUNTRIES.length === 0) {
 	console.error(
@@ -107,6 +118,7 @@ if (!OUT || COUNTRIES.length === 0) {
 }
 
 const WORK = `${OUT}.work`
+
 if (existsSync(WORK)) unlinkSync(WORK)
 console.error(`Copying ${IN} → ${WORK} (preserves all existing coverage) ...`)
 copyFileSync(IN, WORK)
@@ -170,10 +182,12 @@ console.error(`spr: ${before.toLocaleString()} → ${after.toLocaleString()} (+$
 console.error(`  added: ${added.map((r) => `${r.country}=${Number(r.n).toLocaleString()}`).join(", ")}`)
 
 const integrity = (db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }).integrity_check
+
 if (integrity !== "ok") throw new Error(`integrity_check failed: ${integrity}`)
 
 if (existsSync(OUT)) unlinkSync(OUT)
 db.prepare("VACUUM INTO ?").run(OUT)
 db.close()
+
 if (existsSync(WORK)) unlinkSync(WORK)
 console.error(`Wrote ${OUT}`)

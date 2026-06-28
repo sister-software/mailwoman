@@ -132,11 +132,11 @@ export const FR_DEPARTEMENTS = {
 export type DepartementCode = keyof typeof FR_DEPARTEMENTS
 
 /**
- * Look up a département by code (case-insensitive for the Corsica `2A`/`2B` letters); null if
- * unknown.
+ * Look up a département by code (case-insensitive for the Corsica `2A`/`2B` letters); null if unknown.
  */
 export function departementInfo(code: string | null | undefined): DepartementInfo | null {
 	if (!code || typeof code !== "string") return null
 	const key = code.trim().toUpperCase()
+
 	return (FR_DEPARTEMENTS as Record<string, DepartementInfo>)[key] ?? null
 }

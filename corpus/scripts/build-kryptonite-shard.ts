@@ -23,6 +23,7 @@ import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
+
 import { alignRow } from "../src/align.js"
 import { PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, type ShardManifest, writeShards } from "../src/parquet.js"
 import type { CanonicalRow, LabeledRow } from "../src/types.js"
@@ -40,9 +41,11 @@ function parseArgs(argv: readonly string[]): Args {
 		corpusVersion: "0.4.0",
 		source: "deepseek-kryptonite",
 	}
+
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]!
 		const next = argv[i + 1]
+
 		switch (a) {
 			case "--jsonl":
 				out.jsonl = next
@@ -68,14 +71,19 @@ function parseArgs(argv: readonly string[]): Args {
 				throw new Error(`unknown arg ${a}`)
 		}
 	}
+
 	if (!out.jsonl) throw new Error("--jsonl required")
+
 	if (!out.baseManifest) throw new Error("--base-manifest required")
+
 	if (!out.outDir) throw new Error("--out-dir required")
+
 	return out as Args
 }
 
 async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
 	const rl = createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })
+
 	for await (const line of rl) {
 		if (!line.trim()) continue
 		const raw = JSON.parse(line) as Record<string, unknown>
@@ -98,6 +106,7 @@ async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterab
 async function* labeledRows(jsonl: string, corpusVersion: string, quarantineLog: string[]): AsyncIterable<LabeledRow> {
 	for await (const row of canonicalRows(jsonl, corpusVersion)) {
 		const result = alignRow(row)
+
 		if (result.kind === "labeled") {
 			yield result.row
 		} else {
@@ -110,6 +119,7 @@ async function main(): Promise<void> {
 	const args = parseArgs(process.argv.slice(2))
 
 	if (!existsSync(args.jsonl)) throw new Error(`jsonl not found: ${args.jsonl}`)
+
 	if (!existsSync(args.baseManifest)) throw new Error(`base-manifest not found: ${args.baseManifest}`)
 
 	await mkdir(args.outDir, { recursive: true })
@@ -124,6 +134,7 @@ async function main(): Promise<void> {
 		`wrote ${newManifest.total_rows} rows into ${newManifest.shards.length} shard(s); ` +
 			`quarantined ${quarantine.length}`
 	)
+
 	if (quarantine.length > 0) {
 		const qPath = join(args.outDir, `corpus-v${args.corpusVersion}`, "quarantine-kryptonite.tsv")
 		writeFileSync(qPath, quarantine.join("\n") + "\n", "utf8")

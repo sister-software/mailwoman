@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { canonicalKey, normalizeAddressToken } from "./key.js"
 
 describe("normalizeAddressToken", () => {

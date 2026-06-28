@@ -30,12 +30,14 @@
  *   [--cap 50000] [--state TX] [--sources <dir>] [--tau 0.7] [--out-md <md>]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { dataRootPath } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
-import { writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -79,11 +81,14 @@ function orgTokens(s: string): Set<string> {
 function jaccard(a: Set<string>, b: Set<string>): number {
 	if (a.size === 0 || b.size === 0) return 0
 	let inter = 0
+
 	for (const t of a) if (b.has(t)) inter++
+
 	return inter / (a.size + b.size - inter)
 }
 const normPhone = (p?: string): string => {
 	const d = (p ?? "").replace(/\D/g, "")
+
 	return d.length >= 10 ? d.slice(-10) : ""
 }
 
@@ -94,8 +99,7 @@ interface Provider {
 	/** Authorized official (last + first), lowercased — same official ⇒ almost certainly one org. */
 	auth: string
 	/**
-	 * Primary taxonomy (specialty) code — different specialty ⇒ likely a genuinely different
-	 * provider.
+	 * Primary taxonomy (specialty) code — different specialty ⇒ likely a genuinely different provider.
 	 */
 	taxonomy: string
 }
@@ -106,17 +110,23 @@ async function main(): Promise<void> {
 	const byAddr = new Map<string, Provider[]>()
 	let kept = 0
 	let scanned = 0
+
 	for await (const r of streamRows(REGISTRY)) {
 		scanned++
+
 		if (norm(r["Entity Type Code"]) !== "2") continue
+
 		if (norm(r["Provider Business Practice Location Address State Name"]).toUpperCase() !== STATE) continue
 		const org = norm(r["Provider Organization Name (Legal Business Name)"])
+
 		if (!org) continue
 		const line1 = norm(r["Provider First Line Business Practice Location Address"])
 		const city = norm(r["Provider Business Practice Location Address City Name"])
 		const zip = norm(r["Provider Business Practice Location Address Postal Code"])
+
 		if (!line1) continue
 		const addrKey = addressFrequencyKey(`${line1}, ${city}, ${STATE} ${zip}`)
+
 		if (!addrKey) continue
 		const npi = norm(r["NPI"])
 		const auth = `${norm(r["Authorized Official Last Name"])} ${norm(r["Authorized Official First Name"])}`
@@ -129,9 +139,11 @@ async function main(): Promise<void> {
 			auth: auth === "" ? "" : auth,
 			taxonomy: norm(r["Healthcare Provider Taxonomy Code_1"]),
 		}
+
 		if (!byAddr.has(addrKey)) byAddr.set(addrKey, [])
 		byAddr.get(addrKey)!.push(p)
 		kept++
+
 		if (kept >= CAP) break
 	}
 	console.error(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
@@ -148,16 +160,21 @@ async function main(): Promise<void> {
 	// genuinely-distinct co-located providers (the TRUE irreducible over-merge):
 	let collideSameAuth = 0 // share an authorized official ⇒ one org, multiple NPIs ⇒ correct to merge
 	let collideDistinct = 0 // different official AND different specialty ⇒ genuinely different providers
-	const PAIR_BUDGET = 5_000_000 // guard against a pathological mega-address (PO-box farms)
+	const PAIR_BUDGET = 5_000_000
+
+	// guard against a pathological mega-address (PO-box farms)
 
 	for (const provs of byAddr.values()) {
 		// distinct NPIs at this address
 		const distinct = new Map<string, Provider>()
+
 		for (const p of provs) if (!distinct.has(p.npi)) distinct.set(p.npi, p)
 		const list = [...distinct.values()]
+
 		if (list.length < 2) continue
 		sharedAddresses++
 		providersAtSharedAddr += list.length
+
 		for (let i = 0; i < list.length; i++) {
 			for (let j = i + 1; j < list.length; j++) {
 				if (pairs >= PAIR_BUDGET) break
@@ -165,11 +182,14 @@ async function main(): Promise<void> {
 				const a = list[i]!
 				const b = list[j]!
 				const sim = jaccard(a.tokens, b.tokens)
+
 				if (sim >= TAU) {
 					collide++
+
 					if (a.phone && a.phone === b.phone) collideSharePhone++
 					const sameAuth = a.auth !== "" && a.auth === b.auth
 					const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
+
 					if (sameAuth) collideSameAuth++
 					else if (!sameTax) collideDistinct++
 				} else if (sim >= 0.3) mid++
@@ -297,6 +317,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`[written] ${OUT_MD}`)

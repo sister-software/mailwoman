@@ -23,9 +23,10 @@
 import { existsSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type AddressSystemConventions } from "@mailwoman/codex"
+import { afterEach, beforeEach, describe, expect, test } from "vitest"
+
 import { createScorer } from "../scorer.js"
 
 const here = dirname(fileURLToPath(import.meta.url))

@@ -7,7 +7,9 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import {
 	defaultHoldouts,
 	hashBucket,
@@ -55,7 +57,9 @@ describe("hashBucket", () => {
 
 	it("distributes roughly evenly across buckets", () => {
 		const counts = [0, 0, 0]
+
 		for (let i = 0; i < 3000; i++) counts[hashBucket(`id-${i}`, 3)]!++
+
 		for (const c of counts) {
 			expect(c).toBeGreaterThan(800)
 			expect(c).toBeLessThan(1200)
@@ -170,8 +174,10 @@ describe("splitForRow (pure per-row decision)", () => {
 			row("fr-2", "FR", "Île-de-France"),
 		]
 		const manifest = splitRows(rows)
+
 		for (const r of rows) {
 			const split = splitForRow(r)
+
 			if (split === "train") expect(manifest.train).toContain(r.source_id)
 			else if (split === "val") expect(manifest.val).toContain(r.source_id)
 			else expect(manifest.test).toContain(r.source_id)

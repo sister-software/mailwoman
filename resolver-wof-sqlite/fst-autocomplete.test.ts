@@ -5,7 +5,9 @@
  */
 
 import { existsSync } from "node:fs"
+
 import { beforeAll, describe, expect, it } from "vitest"
+
 import { autocomplete } from "./fst-autocomplete.js"
 import { buildFstFromWof } from "./fst-builder.js"
 import { FstMatcher } from "./fst-matcher.js"
@@ -49,6 +51,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 	it("ranks by importance (prominent places first)", () => {
 		const result = autocomplete(matcher, "New York", { maxSuggestions: 5 })
 		const localities = result.suggestions.filter((s) => s.placetype === "locality")
+
 		if (localities.length >= 2) {
 			expect(localities[0]!.importance).toBeGreaterThanOrEqual(localities[1]!.importance)
 		}

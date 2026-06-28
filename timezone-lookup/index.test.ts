@@ -5,7 +5,9 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { expect, test } from "vitest"
+
 import { makeTimezoneAnnotator, offsetSecForTimezone, pointInMultiPolygon, TimezoneLookup } from "./index.js"
 
 const SQUARE: number[][][][] = [
@@ -46,6 +48,7 @@ function fixtureDb(): DatabaseSync {
 		10,
 		JSON.stringify(SQUARE)
 	)
+
 	return db
 }
 

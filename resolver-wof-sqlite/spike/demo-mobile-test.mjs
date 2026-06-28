@@ -1,6 +1,6 @@
 /**
- * Mobile-viewport smoke for https://mailwoman.sister.software/demo/. Emulates iPhone 12 + a desktop
- * viewport, screenshots both, checks for layout overflow.
+ * Mobile-viewport smoke for https://mailwoman.sister.software/demo/. Emulates iPhone 12 + a desktop viewport,
+ * screenshots both, checks for layout overflow.
  */
 
 import { chromium, devices } from "playwright"
@@ -22,6 +22,7 @@ for (const c of cases) {
 	await page.waitForFunction(
 		() => {
 			const btn = document.querySelector("button[type='submit']")
+
 			return btn && !btn.disabled
 		},
 		{ timeout: 120_000 }
@@ -30,6 +31,7 @@ for (const c of cases) {
 	const overflow = await page.evaluate(() => {
 		const docW = document.documentElement.scrollWidth
 		const viewW = document.documentElement.clientWidth
+
 		return { docW, viewW, horizontalScroll: docW > viewW }
 	})
 	console.log(

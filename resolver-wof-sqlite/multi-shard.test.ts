@@ -14,6 +14,7 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildPlaceSearchFts } from "./fts.js"
@@ -72,6 +73,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
 		buildAdminShard(adminPath)
 		const lookup = new WofSqlitePlaceLookup({ databasePath: adminPath })
+
 		try {
 			const r = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
 			expect(r.length).toBeGreaterThan(0)
@@ -88,6 +90,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildPostcodeShard(pcPath)
 
 		const lookup = new WofSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+
 		try {
 			// Locality query → admin shard
 			const localities = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
@@ -114,6 +117,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		const lookup = new WofSqlitePlaceLookup({
 			databasePath: [adminPath, { path: oddlyNamed, schemaName: "pc", placetypes: ["postalcode"] }],
 		})
+
 		try {
 			// Even though the filename derives `wherever_they_put_postcodes`, the override gave it
 			// a `pc` schema name with explicit `postalcode` routing.
@@ -132,6 +136,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildPostcodeShard(pcPath)
 
 		const lookup = new WofSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+
 		try {
 			// "62701" near Illinois coords with a 10km hard filter — only 62701 and 62702 in fixture
 			// are near these coords, but the FTS phrase exact-match on "62701" picks just one.
@@ -155,6 +160,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildPostcodeShard(pcPath)
 
 		const lookup = new WofSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+
 		try {
 			// No placetype → main only. "62701" won't match (it's in postcode shard); Springfield will.
 			const r = await lookup.findPlace({ text: "Springfield" })
@@ -171,6 +177,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		// Only admin shard — no postcode shard. A postalcode query falls back to main, returns
 		// nothing because admin has no postalcodes.
 		const lookup = new WofSqlitePlaceLookup({ databasePath: [adminPath] })
+
 		try {
 			const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
 			expect(r).toEqual([])

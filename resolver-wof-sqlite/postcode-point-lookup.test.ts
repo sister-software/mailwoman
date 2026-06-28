@@ -12,7 +12,9 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
 import { WofPostcodeLookup } from "./postcode-point-lookup.js"
 
 /** Create a minimal postcode shard with the columns the lookup reads. */
@@ -24,6 +26,7 @@ function seedShard(path: string, rows: Array<[number, string, string, string, nu
 	const ins = db.prepare(
 		`INSERT INTO spr (id, name, placetype, country, latitude, longitude, is_current) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	for (const r of rows) ins.run(...r)
 	db.close()
 }

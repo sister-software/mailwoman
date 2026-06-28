@@ -28,6 +28,7 @@
  */
 
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
+
 import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.js"
 
 /** Which source labels denote eligibility vs funding/enrollment. */
@@ -53,28 +54,34 @@ export interface ReconciliationResult {
 }
 
 /**
- * Bucket an entity from the source labels its records span. Returns `null` when the entity carries
- * NO eligibility- or funding-tagged source (it is outside this reconciliation — e.g. a source the
- * caller didn't assign a role) so callers can exclude it rather than silently miscount it.
+ * Bucket an entity from the source labels its records span. Returns `null` when the entity carries NO eligibility- or
+ * funding-tagged source (it is outside this reconciliation — e.g. a source the caller didn't assign a role) so callers
+ * can exclude it rather than silently miscount it.
  */
 export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): ReconciliationBucket | null {
 	const elig = new Set(config.eligibilitySources)
 	const fund = new Set(config.fundingSources)
 	let hasEligibility = false
 	let hasFunding = false
+
 	for (const s of sources) {
 		if (elig.has(s)) hasEligibility = true
+
 		if (fund.has(s)) hasFunding = true
 	}
+
 	if (hasEligibility && hasFunding) return "enrolled"
+
 	if (hasEligibility) return "eligible-not-enrolled"
+
 	if (hasFunding) return "funded-not-eligible"
+
 	return null
 }
 
 /**
- * Classify resolved entities into reconciliation buckets. Entities with no eligibility- or
- * funding-tagged source are excluded (see {@link bucketOf}).
+ * Classify resolved entities into reconciliation buckets. Entities with no eligibility- or funding-tagged source are
+ * excluded (see {@link bucketOf}).
  */
 export function reconcileCoverage(entities: readonly ResolvedEntity[], config: ReconcileConfig): ReconciliationResult {
 	const reconciled: ReconciledEntity[] = []
@@ -83,6 +90,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 		"eligible-not-enrolled": 0,
 		"funded-not-eligible": 0,
 	}
+
 	for (const entity of entities) {
 		const sources = [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].sort()
 		const bucket = bucketOf(sources, config)
@@ -93,6 +101,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 
 		counts[bucket]++
 	}
+
 	return { reconciled, counts }
 }
 
@@ -100,13 +109,13 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
 	const person = [rep.name?.given, rep.name?.family].filter(Boolean).join(" ")
+
 	return rep.organization?.canonical ?? (person || rep.id)
 }
 
 /**
- * GeoJSON of every located reconciled entity, each feature tagged with its `bucket` + `sources` —
- * the shape {@link toMapHTML} colors categorically by bucket. Entities without a coordinate are
- * skipped.
+ * GeoJSON of every located reconciled entity, each feature tagged with its `bucket` + `sources` — the shape
+ * {@link toMapHTML} colors categorically by bucket. Entities without a coordinate are skipped.
  */
 export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
@@ -149,9 +158,8 @@ export interface ReconciliationReportOptions {
 }
 
 /**
- * A markdown reconciliation report: the bucket counts, the enrolled-rate floor, an anti-join
- * spot-check, and — always, by construction — the neutral caveat. The deliverable is the anti-join
- * SET, not a rate, and never an allegation.
+ * A markdown reconciliation report: the bucket counts, the enrolled-rate floor, an anti-join spot-check, and — always,
+ * by construction — the neutral caveat. The deliverable is the anti-join SET, not a rate, and never an allegation.
  */
 export function reconciliationReport(result: ReconciliationResult, options: ReconciliationReportOptions = {}): string {
 	const { counts, reconciled } = result
@@ -163,10 +171,12 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 	const lines: string[] = []
 	lines.push(`# ${title}`)
 	lines.push("")
+
 	if (options.scopeNote) {
 		lines.push(`_${options.scopeNote}_`)
 		lines.push("")
 	}
+
 	if (options.scorerNote) {
 		lines.push(options.scorerNote)
 		lines.push("")
@@ -193,6 +203,7 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 	lines.push("")
 	lines.push(`| entity | sources | name | coordinate |`)
 	lines.push(`|---|---|---|---|`)
+
 	for (const c of reconciled.filter((x) => x.bucket === "eligible-not-enrolled").slice(0, spotCheckLimit)) {
 		const coord = c.entity.coordinate
 			? `${c.entity.coordinate.latitude.toFixed(4)}, ${c.entity.coordinate.longitude.toFixed(4)}`
@@ -210,5 +221,6 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 			`entirely the data consumer's call.** Nothing here is an allegation.`
 	)
 	lines.push("")
+
 	return lines.join("\n")
 }

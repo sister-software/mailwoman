@@ -13,12 +13,12 @@
 
 import { basename } from "node:path"
 
-import { $ } from "zx"
-
 import { runIfScript } from "mailwoman/sdk/scripting"
+import { $ } from "zx"
 
 runIfScript(import.meta, async () => {
 	const step = process.argv[2]
+
 	if (!step) throw new Error("usage: read-relabel-checkpoint.ts <zero-padded-step, e.g. 020000>")
 
 	const outDir = "/data/output-v110-relabel-s42"

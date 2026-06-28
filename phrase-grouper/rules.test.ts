@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import {
 	scoreHyphenatedCompound,
 	scoreLocalityPhrase,
@@ -19,9 +20,9 @@ import {
 import type { PhraseProposal, QueryShapeLike } from "./types.js"
 
 /**
- * Build the `SegmentToken[]` for a single segment string the same way `tokenizeSegment` does, but
- * keep it explicit in tests so each token's offsets are visible. `tokenizeSegment` is itself tested
- * directly below; the other rule tests reuse it as the trusted tokenizer.
+ * Build the `SegmentToken[]` for a single segment string the same way `tokenizeSegment` does, but keep it explicit in
+ * tests so each token's offsets are visible. `tokenizeSegment` is itself tested directly below; the other rule tests
+ * reuse it as the trusted tokenizer.
  */
 const tokens = (segmentBody: string, segmentStart = 0): SegmentToken[] => tokenizeSegment(segmentBody, segmentStart)
 
@@ -42,8 +43,8 @@ const summarize = (p: PhraseProposal) => ({
 })
 
 /**
- * Span/kind shape without the confidence (which accumulates IEEE-754 rounding from the additive
- * bonus chain — assert it separately with `toBeCloseTo`).
+ * Span/kind shape without the confidence (which accumulates IEEE-754 rounding from the additive bonus chain — assert it
+ * separately with `toBeCloseTo`).
  */
 const spanShape = (p: PhraseProposal) => ({
 	body: p.span.body,
@@ -324,6 +325,7 @@ test("scoreLocalityPhrase: confidence is capped at 0.95", () => {
 	// is defensive. Confirm no proposal ever exceeds 0.95 for a normal multi-word place name.
 	const text = "Las Palmas de Gran Canaria"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
+
 	for (const p of out) expect(p.confidence).toBeLessThanOrEqual(0.95)
 })
 

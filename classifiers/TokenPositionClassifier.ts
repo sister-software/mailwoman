@@ -9,8 +9,8 @@ import { type Classifier, Span, TokenContext } from "@mailwoman/core"
 /**
  * Classify the first and last tokens in a section.
  *
- * This is used to identify the start and end of a section, as well as improving autocomplete by
- * identifying single-character tokens.
+ * This is used to identify the start and end of a section, as well as improving autocomplete by identifying
+ * single-character tokens.
  */
 export class TokenPositionClassifier implements Classifier {
 	public classifyTokens(context: TokenContext): void {

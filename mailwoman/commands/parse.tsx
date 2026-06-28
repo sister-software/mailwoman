@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { setImmediate } from "node:timers/promises"
+
 import { Spinner } from "@inkjs/ui"
 import { type AddressTree, decodeAsJson, decodeAsTuples, decodeAsXml, proposalsToTree } from "@mailwoman/core/decoder"
 import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
@@ -13,9 +15,9 @@ import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwo
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 
@@ -122,15 +124,19 @@ interface PolicyOverride {
 
 function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 	const out: PolicyOverride[] = []
+
 	for (const spec of specs) {
 		const m = POLICY_SPEC_RE.exec(spec)
+
 		if (!m) throw new Error(`Invalid --policy spec ${spec}; expected <component>=<mode>`)
 		const [, component, mode] = m
+
 		if (!POLICY_MODES.includes(mode as PolicyMode)) {
 			throw new Error(`Unknown policy mode ${mode}; valid: ${POLICY_MODES.join(", ")}`)
 		}
 		out.push({ component: component as ComponentTag, mode: mode as PolicyMode })
 	}
+
 	return out
 }
 
@@ -160,11 +166,13 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 				setError(
 					"--benchmark requires the default runtime-pipeline path (incompatible with --isolated / --policy / --neural)"
 				)
+
 				return
 			}
 			runBenchmark(input, options, options.benchmark)
 				.then(setOutput)
 				.catch((err) => setError(err.message))
+
 			return
 		}
 
@@ -173,6 +181,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 			runIsolated(input, options)
 				.then(setOutput)
 				.catch((err) => setError(err.message))
+
 			return
 		}
 
@@ -182,6 +191,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 			runNeural(input, options, policyOverrides)
 				.then(setOutput)
 				.catch((err) => setError(err.message))
+
 			return
 		}
 
@@ -190,6 +200,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 			runNeural(input, options, [])
 				.then(setOutput)
 				.catch((err) => setError(err.message))
+
 			return
 		}
 
@@ -211,42 +222,43 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 }
 
 /**
- * ISO-3166 country for the resolver's `defaultCountry`, inferred from a BCP-47 locale's region
- * subtag (en-US → US, fr-FR → FR, de-DE → DE). Returns `undefined` when the locale carries no
- * 2-letter region subtag (so the resolver stays global rather than guessing from a language alone).
- * Script subtags (`Hant`, `Latn`) are ignored.
+ * ISO-3166 country for the resolver's `defaultCountry`, inferred from a BCP-47 locale's region subtag (en-US → US,
+ * fr-FR → FR, de-DE → DE). Returns `undefined` when the locale carries no 2-letter region subtag (so the resolver stays
+ * global rather than guessing from a language alone). Script subtags (`Hant`, `Latn`) are ignored.
  */
 export function localeToCountry(locale: string | undefined): string | undefined {
 	if (!locale) return undefined
 	const parts = locale.split("-")
 	const region = parts.length > 1 ? parts[parts.length - 1] : undefined
+
 	return region && /^[A-Za-z]{2}$/.test(region) ? region.toUpperCase() : undefined
 }
 
 /**
- * The resolver's `defaultCountry` for this invocation: the explicit `--default-country` if set
- * (with `none` meaning "no filter"), otherwise inferred from `--locale`. Without it, a bare region
- * abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often a foreign
- * homonym (a Scottish locality) rather than the US state. The FTS backend therefore needs the
- * locale default to match the demo.
+ * The resolver's `defaultCountry` for this invocation: the explicit `--default-country` if set (with `none` meaning "no
+ * filter"), otherwise inferred from `--locale`. Without it, a bare region abbreviation (`NY`) resolves to whatever the
+ * gazetteer ranks highest globally — often a foreign homonym (a Scottish locality) rather than the US state. The FTS
+ * backend therefore needs the locale default to match the demo.
  *
- * `candidateActive` flips that off: the candidate-table backend resolves population-first AND
- * country-agnostic (the demo's GLOBAL behavior — bare "Moscow" → the Russian city), so when it's
- * the backend AND the user gave no explicit country we impose NO default. An explicit
- * `--default-country` (or `none`) still wins. This is what makes the candidate-backed CLI match the
- * demo out of the box.
+ * `candidateActive` flips that off: the candidate-table backend resolves population-first AND country-agnostic (the
+ * demo's GLOBAL behavior — bare "Moscow" → the Russian city), so when it's the backend AND the user gave no explicit
+ * country we impose NO default. An explicit `--default-country` (or `none`) still wins. This is what makes the
+ * candidate-backed CLI match the demo out of the box.
  */
 export function resolverDefaultCountry(
 	options: { defaultCountry?: string; locale?: string },
 	candidateActive = false
 ): string | undefined {
 	if (options.defaultCountry === "none") return undefined
+
 	if (options.defaultCountry) return options.defaultCountry
+
 	return candidateActive ? undefined : localeToCountry(options.locale)
 }
 
 function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+
 	if (!path) {
 		throw new Error(
 			"--resolve needs a WOF SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
@@ -254,6 +266,7 @@ function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
 				"with `npx mailwoman-wof-build-fts <path>`."
 		)
 	}
+
 	return path
 }
 
@@ -261,12 +274,16 @@ async function tryBuildFst(
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FstMatcher | undefined> {
 	const dbPath = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+
 	if (!dbPath) return undefined
+
 	try {
 		const { existsSync } = await import("node:fs")
+
 		if (!existsSync(dbPath)) return undefined
 		const { buildFstFromWof } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
 		const { matcher } = buildFstFromWof({ dbPath })
+
 		return matcher
 	} catch {
 		return undefined
@@ -274,9 +291,9 @@ async function tryBuildFst(
 }
 
 /**
- * Tree → resolved tree via the WOF backend. When `options.candidates` is set, asks the resolver for
- * top-(N+1) candidates per node so the runner-ups land on `AddressNode.alternatives` (where N is
- * the requested alternative count; +1 because the top winner is also in the limit).
+ * Tree → resolved tree via the WOF backend. When `options.candidates` is set, asks the resolver for top-(N+1)
+ * candidates per node so the runner-ups land on `AddressNode.alternatives` (where N is the requested alternative count;
+ * +1 because the top winner is also in the limit).
  */
 async function resolveWithCandidates(
 	resolver: Resolver,
@@ -284,9 +301,12 @@ async function resolveWithCandidates(
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<AddressTree> {
 	const opts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
+
 	if (options.candidates !== undefined) opts.candidatesPerLookup = options.candidates + 1
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDbPath())
+
 	if (dc) opts.defaultCountry = dc
+
 	return resolver.resolveTree(tree, opts)
 }
 
@@ -297,6 +317,7 @@ async function withResolver<T>(
 	// Dynamic import so `@mailwoman/resolver-wof-sqlite` stays a true optional peer dep — users who
 	// never set --resolve don't pay for kysely + the resolver bundle.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
+
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
@@ -310,10 +331,12 @@ async function withResolver<T>(
 	const lookup = createResolverBackend(mod, {
 		wofPaths: resolveCandidateDbPath() ? "" : resolveWofPath(options),
 	})
+
 	try {
 		// PlaceLookup is structurally compatible with ResolverBackend — the cast is just to satisfy
 		// the type, no runtime conversion.
 		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+
 		return await fn(resolver)
 	} finally {
 		lookup.close()
@@ -341,16 +364,17 @@ function serializeTree(
 async function runIsolated(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	const parser = createAddressParser()
 	const parseOpts = options.locale ? { locale: options.locale } : {}
+
 	if (options.debug) {
 		return parser.parse(input, { verbose: true, ...parseOpts }).then(createDiagnosticReport)
 	}
+
 	return parser.parse(input, parseOpts).then((results) => JSON.stringify(results, null, 2))
 }
 
 /**
- * Default path: runtime pipeline. Lazy-loads neural classifier (graceful fallback to the legacy
- * rule-only path if weights aren't present) + optional resolver. Returns the parsed tree serialized
- * in the requested format.
+ * Default path: runtime pipeline. Lazy-loads neural classifier (graceful fallback to the legacy rule-only path if
+ * weights aren't present) + optional resolver. Returns the parsed tree serialized in the requested format.
  */
 async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
@@ -369,17 +393,21 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 
 	const wantAlternatives = options.candidates !== undefined
 	const resolveOpts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
+
 	if (wantAlternatives) resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
+
 	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended country's place
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
 		const dc = resolverDefaultCountry(options, !!resolveCandidateDbPath())
+
 		if (dc) resolveOpts.defaultCountry = dc
 	}
 	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string } } = {
 		locale: options.locale,
 	}
+
 	if (resolveOpts.candidatesPerLookup !== undefined || resolveOpts.defaultCountry !== undefined) {
 		pipelineOpts.resolveOpts = resolveOpts
 	}
@@ -389,6 +417,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 			const fst = await tryBuildFst(options)
 			const pipeline = createRuntimePipeline({ classifier, resolver, fst })
 			const result = await pipeline(input, pipelineOpts)
+
 			return options.debug
 				? JSON.stringify(serializeResult(result, options.format), null, 2)
 				: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
@@ -398,6 +427,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	const fst = await tryBuildFst(options)
 	const pipeline = createRuntimePipeline({ classifier, fst })
 	const result = await pipeline(input, pipelineOpts)
+
 	return options.debug
 		? JSON.stringify(serializeResult(result, options.format), null, 2)
 		: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
@@ -408,29 +438,35 @@ const BENCHMARK_WARMUP_ITERATIONS = 5
 function percentile(sortedAsc: ReadonlyArray<number>, p: number): number {
 	if (sortedAsc.length === 0) return 0
 	const idx = Math.min(sortedAsc.length - 1, Math.floor((p / 100) * sortedAsc.length))
+
 	return sortedAsc[idx]!
 }
 
 function formatMs(ms: number): string {
 	if (ms < 1) return `${(ms * 1000).toFixed(0)}µs`
+
 	if (ms < 10) return `${ms.toFixed(2)}ms`
+
 	if (ms < 100) return `${ms.toFixed(1)}ms`
+
 	return `${Math.round(ms)}ms`
 }
 
 function formatBytes(b: number): string {
 	const sign = b < 0 ? "-" : "+"
 	const abs = Math.abs(b)
+
 	if (abs < 1024) return `${sign}${abs}B`
+
 	if (abs < 1024 * 1024) return `${sign}${(abs / 1024).toFixed(1)}KB`
+
 	return `${sign}${(abs / 1024 / 1024).toFixed(1)}MB`
 }
 
 /**
- * Run the runtime pipeline N times against a single input and report per-stage timing percentiles +
- * heap delta. The first 5 iterations are warmup (excluded from stats) so JIT + lazy-imports settle
- * before measurement. Useful for catching regressions when training models or coordinator changes
- * affect inference cost.
+ * Run the runtime pipeline N times against a single input and report per-stage timing percentiles + heap delta. The
+ * first 5 iterations are warmup (excluded from stats) so JIT + lazy-imports settle before measurement. Useful for
+ * catching regressions when training models or coordinator changes affect inference cost.
  */
 async function runBenchmark(
 	input: string,
@@ -445,6 +481,7 @@ async function runBenchmark(
 		const t0 = performance.now()
 		const result = await pipeline(input, { locale: options.locale })
 		const total = performance.now() - t0
+
 		return { timing: { ...result.timing }, total, path: result.path }
 	}
 
@@ -464,12 +501,15 @@ async function runBenchmark(
 		const stageRuns = new Map<string, number[]>()
 		const totals: number[] = []
 		const paths = new Map<string, number>()
+
 		for (let i = 0; i < iterations; i++) {
 			const r = await runOne(pipeline)
 			totals.push(r.total)
 			paths.set(r.path, (paths.get(r.path) ?? 0) + 1)
+
 			for (const [stage, ms] of Object.entries(r.timing)) {
 				let arr = stageRuns.get(stage)
+
 				if (!arr) {
 					arr = []
 					stageRuns.set(stage, arr)
@@ -479,6 +519,7 @@ async function runBenchmark(
 		}
 
 		const heapAfter = process.memoryUsage().heapUsed
+
 		return { stageRuns, totals, paths, heapDelta: heapAfter - heapBefore }
 	}
 
@@ -499,6 +540,7 @@ async function runBenchmark(
 	lines.push("")
 	lines.push("stage              p50       p95       p99       max")
 	lines.push("─────────────────  ────────  ────────  ────────  ────────")
+
 	for (const [stage, ms] of Array.from(collected.stageRuns.entries()).sort()) {
 		const sorted = [...ms].sort((a, b) => a - b)
 		lines.push(
@@ -524,6 +566,7 @@ async function runBenchmark(
 	)
 	lines.push("")
 	lines.push(`heap delta (post-warmup → post-bench): ${formatBytes(collected.heapDelta)}`)
+
 	return lines.join("\n")
 }
 
@@ -546,8 +589,8 @@ async function tryLoadNeural(
 }
 
 /**
- * Serialize the full pipeline result for `--debug`. Shows tree + timing + path + kind so callers
- * can see which stage owned which output.
+ * Serialize the full pipeline result for `--debug`. Shows tree + timing + path + kind so callers can see which stage
+ * owned which output.
  */
 function serializeResult(
 	result: Awaited<ReturnType<ReturnType<typeof createRuntimePipeline>>>,
@@ -591,6 +634,7 @@ async function runNeural(
 
 	// Slow paths build the tree explicitly so we can resolve / re-project before serialization.
 	let tree: AddressTree
+
 	if (policyOverrides.length > 0) {
 		// Policy path: containment nesting is lost — see proposals-to-tree.ts for why.
 		const proposalCls = createNeuralProposalClassifier({ id: `neural-cli-${options.locale}`, classifier: neural })
@@ -598,9 +642,11 @@ async function runNeural(
 		// neural proposal and produce empty output. Default every component to neural_only when
 		// --neural --policy is used, then layer the user's overrides on top.
 		const policy = InMemoryPolicyRegistry.withDefaults()
+
 		for (const entry of policy.entries()) {
 			policy.set({ component: entry.component, mode: "neural_only" })
 		}
+
 		for (const o of policyOverrides) {
 			policy.set({ component: o.component, mode: o.mode })
 		}

@@ -6,6 +6,7 @@
 
 import { ResourceError } from "@mailwoman/core/errors"
 import { EtagMismatch, type RangeResponse, type Source } from "pmtiles"
+
 import { assertR2KeyMatch, assertR2ObjectBody } from "../storage.js"
 
 export class KeyNotFoundError extends Error {
@@ -31,7 +32,9 @@ export class R2Source implements Source {
 
 	constructor({ bucket, tileSetName, pathPrefix }: R2SourceConfig) {
 		if (!bucket) throw ResourceError.from(400, "Cannot create R2Source without a bucket")
+
 		if (!tileSetName) throw ResourceError.from(400, "Cannot create R2Source without a tile set name")
+
 		if (!pathPrefix) throw ResourceError.from(400, "Cannot create R2Source without a path prefix")
 
 		this.bucket = bucket

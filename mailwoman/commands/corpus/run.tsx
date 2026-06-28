@@ -10,12 +10,14 @@
  *   registered ids). On success, prints a one-line summary and the path to the manifest file.
  */
 
+import { setImmediate } from "node:timers/promises"
+
 import { ProgressBar } from "@inkjs/ui"
 import { defaultAdapterRegistry, runAdapter, type AdapterRunManifest } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const ArgumentsSchema = zod.array(zod.string().describe("Adapter id (e.g. wof-admin, ban, openaddresses)"))
@@ -69,17 +71,21 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 
 	useEffect(() => {
 		const adapterId = args[0]
+
 		if (!adapterId) {
 			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
 			setError("missing positional argument: <adapter-id>")
+
 			return
 		}
 
 		const adapter = defaultAdapterRegistry.get(adapterId)
+
 		if (!adapter) {
 			const ids = defaultAdapterRegistry.ids()
 			const hint = ids.length === 0 ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
 			setError(`unknown adapter id ${JSON.stringify(adapterId)}; ${hint}`)
+
 			return
 		}
 
@@ -129,6 +135,7 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 	}
 
 	const ratio = progress.written && progress.yielded ? (progress.written / progress.yielded) * 100 : 0
+
 	return (
 		<Box flexDirection="column">
 			<Text>

@@ -11,6 +11,7 @@
 
 import type { BioLabel, DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
+
 import { repairPostcodeLabels } from "./postcode-repair.js"
 
 /** Build a char-aligned token. */
@@ -22,6 +23,7 @@ function tok(piece: string, start: number, end: number, label: BioLabel): Decode
 function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
 	let start = -1
 	let end = -1
+
 	for (const t of tokens) {
 		if (t.label === "B-postcode") {
 			if (start === -1) {
@@ -34,6 +36,7 @@ function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
 			break // run ended
 		}
 	}
+
 	return start === -1 ? null : text.slice(start, end)
 }
 
@@ -41,6 +44,7 @@ function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
 function localityValue(text: string, tokens: DecoderToken[]): string | null {
 	let start = -1
 	let end = -1
+
 	for (const t of tokens) {
 		if (t.label === "B-locality") {
 			if (start === -1) {
@@ -53,6 +57,7 @@ function localityValue(text: string, tokens: DecoderToken[]): string | null {
 			break
 		}
 	}
+
 	return start === -1 ? null : text.slice(start, end)
 }
 

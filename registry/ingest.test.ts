@@ -7,7 +7,9 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { afterAll, describe, expect, it } from "vitest"
+
 import {
 	type GeocodeAddress,
 	type RawGeocode,
@@ -134,6 +136,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 	const tmp = (): string => {
 		const d = mkdtempSync(join(tmpdir(), "mw-stream-"))
 		dirs.push(d)
+
 		return d
 	}
 	afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
@@ -152,6 +155,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 			"Facility Name\tPhysical Address\tCITY\nAVIR\t214 Jones Rd\tElkhart\nFoo Clinic\t1 Main St\tPalestine\n"
 		)
 		const rows: Record<string, string>[] = []
+
 		for await (const r of streamRows(file)) rows.push(r)
 		expect(rows).toHaveLength(2)
 		expect(Object.keys(rows[0]!)).toEqual(["Facility Name", "Physical Address", "CITY"])
@@ -165,6 +169,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 		const file = join(tmp(), "f.tsv")
 		writeFileSync(file, "npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n")
 		const rows: Record<string, string>[] = []
+
 		for await (const r of streamRows(file)) rows.push(r)
 		expect(rows).toHaveLength(1)
 		expect(rows[0]).toEqual({ npi: "123", org: "", last: "", first: "", state: "NE" })
@@ -174,13 +179,16 @@ describe("streamRows (lazy delimited ingest)", () => {
 		const file = join(tmp(), "f.tsv")
 		writeFileSync(file, "a\tb\n1\t2\n3\t4\n5\t6\n")
 		let count = 0
+
 		for await (const _ of streamRows(file)) {
 			count++
+
 			if (count === 1) break // abandon the generator early → finally must close the handle
 		}
 		expect(count).toBe(1)
 		// Re-stream the same file fully — succeeds because the prior handle was released.
 		const all: Record<string, string>[] = []
+
 		for await (const r of streamRows(file)) all.push(r)
 		expect(all).toHaveLength(3)
 	})

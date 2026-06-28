@@ -48,11 +48,12 @@
  *   DO NOT change the resolver or parser — this script only READS stamped metadata.
  */
 
+import { readFileSync } from "node:fs"
+
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
-import { readFileSync } from "node:fs"
 
 // ---------------------------------------------------------------------------
 // CLI helpers
@@ -60,6 +61,7 @@ import { readFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -70,6 +72,7 @@ function arg(name: string, fallback = ""): string {
 function percentile(xs: number[], p: number): number {
 	if (xs.length === 0) return NaN
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.min(s.length - 1, Math.floor(p * s.length))]!
 }
 
@@ -83,9 +86,13 @@ function median(xs: number[]): number {
 
 function conformalThreshold(calScores: number[], targetCoverage: number): number {
 	const n = calScores.length
+
 	if (n === 0) return Infinity
 	const rank = Math.ceil((n + 1) * targetCoverage)
-	if (rank > n) return Infinity // can't guarantee at this level
+
+	if (rank > n) return Infinity
+
+	// can't guarantee at this level
 	return [...calScores].sort((a, b) => a - b)[rank - 1]!
 }
 
@@ -96,11 +103,13 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
 	let state = (seed * 2654435761 + 1) & 0xffffffff
+
 	for (let i = out.length - 1; i > 0; i--) {
 		state = (state * 1103515245 + 12345) & 0x7fffffff
 		const j = state % (i + 1)
 		;[out[i], out[j]] = [out[j]!, out[i]!]
 	}
+
 	return out
 }
 
@@ -121,19 +130,25 @@ interface StreetHit {
 
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	const stack = [...tree.roots]
+
 	while (stack.length > 0) {
 		const n = stack.pop()!
+
 		if (n.tag === "street") {
 			const meta = n.metadata as Record<string, unknown> | undefined
+
 			if (meta?.["resolution_tier"] === "address_point") {
 				const ap = meta["address_point"] as { lat: number; lon: number } | undefined
+
 				if (ap) {
 					return { tier: "address_point", lat: ap.lat, lon: ap.lon, claimedRadiusM: SITUS_FLOOR_M }
 				}
 			}
+
 			if (meta?.["resolution_tier"] === "interpolated") {
 				const ip = meta["interpolated_point"] as { lat: number; lon: number } | undefined
 				const uM = meta["uncertainty_m"]
+
 				if (ip && typeof uM === "number") {
 					return { tier: "interpolated", lat: ip.lat, lon: ip.lon, claimedRadiusM: uM }
 				}
@@ -141,6 +156,7 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 		}
 		stack.push(...n.children)
 	}
+
 	return null
 }
 
@@ -224,11 +240,14 @@ async function main(): Promise<void> {
 
 	for (const row of rows) {
 		nTotal++
+
 		if (nTotal % 200 === 0) console.error(`  ${nTotal}/${rows.length}`)
+
 		try {
 			const tree = await neural.parse(row.input, parseOpts)
 			const decorated: AddressTree = await resolver.resolveTree(tree, resolveOpts)
 			const hit = findStreetHit(decorated)
+
 			if (!hit) {
 				nNoStreetHit++
 				continue
@@ -271,14 +290,17 @@ async function main(): Promise<void> {
 	type Tier = "address_point" | "interpolated"
 	const tiers: Tier[] = ["address_point", "interpolated"]
 	const byTier: Record<Tier, Row[]> = { address_point: [], interpolated: [] }
+
 	for (const r of resolved) byTier[r.tier].push(r)
 
 	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on ALL resolved rows
 	const tierStats = tiers.map((t) => {
 		const rows = byTier[t]
+
 		if (rows.length === 0) return { tier: t, n: 0, medianClaimedM: NaN, medianCalibratedM: NaN, medianErrorM: NaN }
 		const claimedMeds = median(rows.map((r) => r.claimedRadiusM))
 		const errMeds = median(rows.map((r) => r.errorM))
+
 		return {
 			tier: t,
 			n: rows.length,
@@ -307,6 +329,7 @@ async function main(): Promise<void> {
 		const covT = testT.length > 0 ? testT.filter((r) => r.errorM / r.claimedRadiusM <= QT).length / testT.length : NaN
 		const uncalCovT =
 			allRows.length > 0 ? allRows.filter((r) => r.errorM <= r.claimedRadiusM).length / allRows.length : NaN
+
 		return {
 			tier: t,
 			nAll: allRows.length,
@@ -359,6 +382,7 @@ async function main(): Promise<void> {
 	console.log(
 		`  ${"".padEnd(14, "-")} ${"".padStart(5, "-")} ${"".padStart(8, "-")} ${"".padStart(10, "-")} ${"".padStart(10, "-")} ${"".padStart(12, "-")} ${"".padStart(14, "-")} ${"".padStart(12, "-")}`
 	)
+
 	for (const ts of tierStats) {
 		const tc = tierConformal.find((x) => x.tier === ts.tier)!
 		const calRadM = isFinite(tc.Q) ? ts.medianClaimedM * tc.Q : Infinity
@@ -377,6 +401,7 @@ async function main(): Promise<void> {
 	console.log("")
 	console.log("CALIBRATION SUMMARY")
 	console.log("")
+
 	// Line 1: overall verdict on the heuristic prior
 	if (!isFinite(Q)) {
 		console.log(

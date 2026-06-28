@@ -8,12 +8,21 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "corpus"
 	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/src/index.js",
 		"./types": "./out/src/types.js",
 		"./format": "./out/src/format.js"
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"dependencies": {
 		"@dsnp/parquetjs": "1.8.7",
@@ -28,14 +37,5 @@
 	},
 	"devDependencies": {
 		"@types/node": ">=24.18.0"
-	},
-	"files": [
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map"
-	],
-	"publishConfig": {
-		"access": "public"
 	}
 }

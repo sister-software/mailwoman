@@ -25,6 +25,7 @@ export class GivenNameClassifier extends PhraseClassifier {
 		if (span.flags.has("numeral")) return
 
 		const languages = this.index.get(span.normalized)
+
 		if (!languages) return
 
 		const firstChild = span.children.first || span

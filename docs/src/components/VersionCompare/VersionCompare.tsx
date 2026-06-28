@@ -11,7 +11,6 @@
 import { useMemo } from "react"
 
 import type { DemoResult, ResultNode } from "../../shared/resources.tsx"
-
 import { ConfidenceCell } from "../ResultPanel/ResultPanel.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
@@ -51,10 +50,9 @@ interface CompareRow {
 // ---------------------------------------------------------------------------
 
 /**
- * Build a unified diff table of component rows across two parses. Row identity is by source-order
- * position (primary-first, then interleaving). For each primary node we look for a compare node
- * covering the same character span; when the tag differs, both sides are shown as a "tag-changed"
- * row.
+ * Build a unified diff table of component rows across two parses. Row identity is by source-order position
+ * (primary-first, then interleaving). For each primary node we look for a compare node covering the same character
+ * span; when the tag differs, both sides are shown as a "tag-changed" row.
  */
 function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRow[] {
 	const rows: CompareRow[] = []
@@ -65,6 +63,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 	// Nodes without a span are collected separately for positional fallback.
 	const cBySpan = new Map<string, ResultNode>()
 	const cUnspanned: ResultNode[] = []
+
 	for (const n of cNodes) {
 		if (typeof n.start === "number" && typeof n.end === "number") {
 			cBySpan.set(`${n.start}:${n.end}`, n)
@@ -77,15 +76,19 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 	// surface as compare-only. Unspanned nodes are matched positionally.
 	const handledSpans = new Set<string>()
 	let cUnspannedIdx = 0
+
 	for (const pn of pNodes) {
 		const spanKey = typeof pn.start === "number" && typeof pn.end === "number" ? `${pn.start}:${pn.end}` : null
 		let cn: ResultNode | null = null
+
 		if (spanKey) {
 			cn = cBySpan.get(spanKey) ?? null
+
 			if (cn) handledSpans.add(spanKey)
 		} else {
 			// Positional fallback for nodes without character spans.
 			cn = cUnspanned[cUnspannedIdx] ?? null
+
 			if (cn) cUnspannedIdx++
 		}
 
@@ -149,6 +152,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 
 function diffConfidence(c: number | undefined, p: number | undefined): number | null {
 	if (c == null || p == null) return null
+
 	return parseFloat((c - p).toFixed(3))
 }
 
@@ -159,9 +163,11 @@ function diffConfidence(c: number | undefined, p: number | undefined): number | 
 const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKind"] }> = ({ delta, diffKind }) => {
 	if (delta === null || diffKind === "primary-only" || diffKind === "compare-only") return null
 	const abs = Math.abs(delta)
+
 	if (abs < 0.01) return <span className={styles.deltaNeutral}>≈</span>
 	const sign = delta >= 0 ? "+" : "−"
 	const cls = delta >= 0 ? styles.deltaUp : styles.deltaDown
+
 	return (
 		<span className={cls}>
 			{sign}

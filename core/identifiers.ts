@@ -51,6 +51,7 @@ export function isUniformlyCased(input: string | null): boolean {
  */
 export function smartCapitalCase(input: string): string {
 	if (input.includes("@")) return input
+
 	if (isUniformlyCased(input)) return input
 
 	return capitalCase(input)

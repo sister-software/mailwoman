@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { isNzPostcode, normalizeNzPostcode, NZ_POSTCODE_PATTERN } from "./postcode.js"
 
 test("NZ_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {

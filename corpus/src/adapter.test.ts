@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { InMemoryAdapterRegistry, canonicalDedupKey, stableSourceId, streamingSha256 } from "./adapter.js"
 import type { CanonicalRow, CorpusAdapter } from "./types.js"
 

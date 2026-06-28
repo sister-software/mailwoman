@@ -28,13 +28,13 @@ export interface CedexMatch {
 }
 
 /**
- * Find the CEDEX phrase in a line, if any. Returns the LAST match — a CEDEX line places the phrase
- * terminally (NF Z 10-011), and any earlier occurrence in pathological input is more likely a venue
- * name fragment.
+ * Find the CEDEX phrase in a line, if any. Returns the LAST match — a CEDEX line places the phrase terminally (NF Z
+ * 10-011), and any earlier occurrence in pathological input is more likely a venue name fragment.
  */
 export function matchCedex(text: string): CedexMatch | null {
 	let match: CedexMatch | null = null
 	const re = new RegExp(CEDEX_PATTERN.source, "gi")
+
 	for (const m of text.matchAll(re)) {
 		match = {
 			matched: m[0],
@@ -43,6 +43,7 @@ export function matchCedex(text: string): CedexMatch | null {
 			...(m[1] ? { office: m[1] } : {}),
 		}
 	}
+
 	return match
 }
 
@@ -50,5 +51,6 @@ export function matchCedex(text: string): CedexMatch | null {
 export function isCedex(input: unknown): boolean {
 	if (typeof input !== "string") return false
 	const m = input.trim().match(CEDEX_PATTERN)
+
 	return m !== null && m[0].length === input.trim().length
 }

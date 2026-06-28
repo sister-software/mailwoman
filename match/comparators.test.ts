@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { jaro, jaroWinkler, levenshteinSimilarity, nameSimilarity } from "./comparators.js"
 
 describe("jaro", () => {

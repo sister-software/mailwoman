@@ -19,9 +19,10 @@
  *   [--limit 50000]
  */
 
-import { DuckDBInstance } from "@duckdb/node-api"
 import { closeSync, openSync, writeSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+
+import { DuckDBInstance } from "@duckdb/node-api"
 
 import { SeededRandom } from "./lib/python-random.ts"
 
@@ -31,15 +32,17 @@ type WriteFn = (chunk: string) => void
 /** Coerce a DuckDB list column (a `DuckDBListValue` with `.items`, or a plain array) to `string[]`. */
 function toStringArray(value: unknown): string[] {
 	if (value == null) return []
+
 	if (Array.isArray(value)) return value.map((v) => String(v))
 	const items = (value as { items?: unknown[] }).items
+
 	if (Array.isArray(items)) return items.map((v) => String(v))
+
 	return []
 }
 
 /**
- * True when `s` contains at least one Unicode letter or number (Python `c.isdigit() or
- * c.isalpha()`).
+ * True when `s` contains at least one Unicode letter or number (Python `c.isdigit() or c.isalpha()`).
  */
 function hasAlnum(s: string): boolean {
 	return /[\p{L}\p{N}]/u.test(s)
@@ -54,21 +57,25 @@ async function extractFromParquet(shardPath: string, write: WriteFn, limit: numb
 	const rows = result.getRowObjects() as Array<Record<string, unknown>>
 
 	let emitted = 0
+
 	for (const row of rows) {
 		if (limit != null && emitted >= limit) break
 
 		const tokens = toStringArray(row.tokens)
 		const labels = toStringArray(row.labels)
 		const country = (row.country as string | null) || "US"
+
 		if (tokens.length === 0 || labels.length === 0) continue
 
 		// Group tokens by component tag (B-tag starts new span; I-tag continues).
 		const components: Record<string, string[]> = {}
 		let currentTag: string | null = null
 		const n = Math.min(tokens.length, labels.length)
+
 		for (let i = 0; i < n; i++) {
 			const tok = tokens[i]!
 			const lab = labels[i]!
+
 			if (lab === "O") {
 				currentTag = null
 				continue
@@ -76,6 +83,7 @@ async function extractFromParquet(shardPath: string, write: WriteFn, limit: numb
 			const dash = lab.indexOf("-")
 			const prefix = dash >= 0 ? lab.slice(0, dash) : lab
 			const tag = dash >= 0 ? lab.slice(dash + 1) : ""
+
 			if (prefix === "B" || tag !== currentTag) {
 				if (!(tag in components)) components[tag] = []
 				components[tag]!.push(tok)
@@ -91,6 +99,7 @@ async function extractFromParquet(shardPath: string, write: WriteFn, limit: numb
 		const loc = components.locality ? components.locality[0] : undefined
 		const reg = components.region ? components.region[0] : undefined
 		const pc = components.postcode ? components.postcode[0] : undefined
+
 		if (!loc || !reg || !pc) continue
 
 		// Drop any rows whose postcode is bogus (test-data hallucinations).
@@ -104,7 +113,9 @@ async function extractFromParquet(shardPath: string, write: WriteFn, limit: numb
 		}
 		const street = components.street ? components.street[0] : undefined
 		const hn = components.house_number ? components.house_number[0] : undefined
+
 		if (street) tupleOut.street = street
+
 		if (hn) tupleOut.houseNumber = hn
 
 		write(JSON.stringify(tupleOut) + "\n")
@@ -117,10 +128,9 @@ async function extractFromParquet(shardPath: string, write: WriteFn, limit: numb
 /**
  * Pull tuples directly from the WOF SQLite admin DB.
  *
- * For US: pair localities with sampled US postcodes (we don't have the postalcode WOF repo locally
- * yet). For now, synthesize plausible 5-digit postcodes from the parent state's known ZIP range.
- * This is acceptable because the model trains on the SHAPE, not on geocoder-correctness of
- * locality↔postcode pairs.
+ * For US: pair localities with sampled US postcodes (we don't have the postalcode WOF repo locally yet). For now,
+ * synthesize plausible 5-digit postcodes from the parent state's known ZIP range. This is acceptable because the model
+ * trains on the SHAPE, not on geocoder-correctness of locality↔postcode pairs.
  */
 function extractFromSqlite(dbPath: string, write: WriteFn, limit: number | undefined): number {
 	// State ZIP code first-digit ranges. Approximate, not exhaustive.
@@ -250,19 +260,23 @@ function extractFromSqlite(dbPath: string, write: WriteFn, limit: number | undef
 	`)
 
 	let emitted = 0
+
 	for (const r of stmt.iterate(limit != null ? limit : 100000)) {
 		const row = r as { locality: string | null; region_name: string | null }
 		const locality = row.locality
 		const regionName = row.region_name
+
 		if (!locality || !regionName) continue
 
 		// Best-effort: convert "California" → "CA". If region_name is already an abbrev, use as-is.
 		let abbr: string | undefined
+
 		if (regionName.length === 2 && regionName.toUpperCase() in STATE_ZIP_PREFIXES) {
 			abbr = regionName.toUpperCase()
 		} else {
 			abbr = FROM_NAME[regionName]
 		}
+
 		if (!abbr || !(abbr in STATE_ZIP_PREFIXES)) continue
 
 		const [lo, hi] = STATE_ZIP_PREFIXES[abbr]!
@@ -282,6 +296,7 @@ function extractFromSqlite(dbPath: string, write: WriteFn, limit: number | undef
 	}
 
 	conn.close()
+
 	return emitted
 }
 
@@ -301,6 +316,7 @@ function parseArgs(): Args {
 
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
+
 		if (a === "--shards") {
 			// argparse nargs="*": greedily consume following non-flag tokens.
 			while (i + 1 < argv.length && !argv[i + 1]!.startsWith("-")) shards.push(argv[++i]!)
@@ -318,6 +334,7 @@ function parseArgs(): Args {
 
 async function main(): Promise<number> {
 	const args = parseArgs()
+
 	if (!args.output) {
 		console.error("error: the following arguments are required: --output")
 		process.exit(2)
@@ -329,11 +346,13 @@ async function main(): Promise<number> {
 	}
 
 	let total = 0
+
 	try {
 		for (const shard of args.shards) {
 			console.error(`  reading ${shard}...`)
 			total += await extractFromParquet(shard, write, args.limit)
 		}
+
 		if (args.sqlite) {
 			console.error(`  reading ${args.sqlite}...`)
 			total += extractFromSqlite(args.sqlite, write, args.limit)
@@ -343,6 +362,7 @@ async function main(): Promise<number> {
 	}
 
 	console.error(`Wrote ${total} tuples to ${args.output}`)
+
 	return 0
 }
 

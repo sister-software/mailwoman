@@ -61,7 +61,7 @@
 			"yarn compile",
 			"node scripts/copy-weights.ts"
 		],
-		"after:bump": "yarn prettier --write --log-level warn -u package.json '**/package.json'",
+		"after:bump": "yarn oxfmt package.json '**/package.json'",
 		"after:release": "echo 'Released v${version}'"
 	}
 }

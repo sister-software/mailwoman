@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { classifyCodepoint, classifyToken, foldInputClass, tokenizeForClass } from "./character-class.js"
 import type { TokenClass } from "./types.js"
 

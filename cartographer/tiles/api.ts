@@ -6,6 +6,7 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import type { VectorSourceSpecification } from "maplibre-gl"
+
 import type { TileSetSourceID, TileSetSourceRecord } from "../styles/sources.js"
 import type { TileJSON } from "./schema.js"
 

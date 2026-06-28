@@ -22,9 +22,9 @@ export type NormalizationTransform =
 /**
  * Result of running `normalize()` on a raw input string.
  *
- * `offsetMap[i]` is the index in `raw` from which `normalized[i]` came. For multi-character source
- * sequences (NFC composition, whitespace collapse, abbreviation expansion), each output char points
- * to the FIRST source char by convention.
+ * `offsetMap[i]` is the index in `raw` from which `normalized[i]` came. For multi-character source sequences (NFC
+ * composition, whitespace collapse, abbreviation expansion), each output char points to the FIRST source char by
+ * convention.
  */
 export interface NormalizedInput {
 	/** The input as the caller sent it. */

@@ -28,9 +28,11 @@
  *   session (the full DB needs 243); US locality 96.8% (region bbox), EU coord parity 88.6%.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { existsSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+
 import { createCandidateFts } from "./candidate-fts.js"
 import {
 	CANDIDATE_COLUMNS,
@@ -49,10 +51,9 @@ export interface BuildCandidateOptions {
 	/** Output candidate DB path (overwritten if present). */
 	output: string
 	/**
-	 * Optional postcode shards (`spr` rows with `placetype='postalcode'` + real coords, e.g.
-	 * postalcode-us.db) — folded in as `postalcode` candidate rows so `findPlace(postalcode)`
-	 * resolves a ZIP directly (the demo's primary postcode path; the postcode-*.bin anchor stays the
-	 * fallback). Matches the slim wof-hot.db, which took one such postcode DB.
+	 * Optional postcode shards (`spr` rows with `placetype='postalcode'` + real coords, e.g. postalcode-us.db) — folded
+	 * in as `postalcode` candidate rows so `findPlace(postalcode)` resolves a ZIP directly (the demo's primary postcode
+	 * path; the postcode-*.bin anchor stays the fallback). Matches the slim wof-hot.db, which took one such postcode DB.
 	 */
 	postcodes?: string[]
 	/** Optional progress callback for CLI / test introspection. */
@@ -86,6 +87,7 @@ interface PlaceAttrs {
 
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
 	const progress = opts.onProgress ?? (() => {})
+
 	if (existsSync(opts.output)) rmSync(opts.output)
 
 	const src = new DatabaseSync(opts.input, { readOnly: true })
@@ -103,25 +105,30 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	const ccId = (code: string | null): number => {
 		const c = (code || "??").toUpperCase()
 		let id = ccodes.get(c)
+
 		if (id === undefined) {
 			id = ccodes.size
 			ccodes.set(c, id)
 		}
+
 		return id
 	}
 	const ptId = (pt: string | null): number => {
 		const p = pt || ""
 		let id = ptcodes.get(p)
+
 		if (id === undefined) {
 			id = ptcodes.size
 			ptcodes.set(p, id)
 		}
+
 		return id
 	}
 
 	// --- region_id per place (its region-tier ancestor) for same-name disambiguation ---
 	progress("region", "loading region ancestry")
 	const regionOf = new Map<number, number>()
+
 	for (const r of src.prepare("SELECT id, ancestor_id FROM ancestors WHERE ancestor_placetype='region'").iterate()) {
 		regionOf.set(Number(r.id), Number(r.ancestor_id))
 	}
@@ -137,6 +144,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	const attrs = new Map<number, PlaceAttrs>()
 	let nPrim = 0
 	out.exec("BEGIN")
+
 	for (const r of src
 		.prepare(
 			`SELECT s.id AS id, s.name AS name, s.placetype AS placetype, s.country AS country,
@@ -171,6 +179,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			pkey,
 		}
 		attrs.set(sid, a)
+
 		if (pkey) {
 			insStage.run(pkey, cid, rid, ptid, neg, sid, name, a.lat, a.lon, a.mnLat, a.mnLon, a.mxLat, a.mxLon, pop, 1)
 			nPrim++
@@ -203,13 +212,17 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	progress("aliases", "exploding alias bags")
 	let nAlias = 0
 	out.exec("BEGIN")
+
 	for (const r of src.prepare("SELECT wof_id, alt_names FROM place_search").iterate()) {
 		const a = attrs.get(Number(r.wof_id))
 		const alt = r.alt_names as string | null
+
 		if (!a || !alt) continue
 		const seen = new Set<string>([a.pkey])
+
 		for (const piece of alt.split(ALIAS_SEP)) {
 			const k = normalizeLocalityForKey(piece)
+
 			if (!k || seen.has(k)) continue
 			seen.add(k)
 			stageRow(k, a, Number(r.wof_id), 0)
@@ -222,10 +235,13 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// --- pass 3: region abbreviations (place_abbr) ---
 	let nAbbr = 0
 	out.exec("BEGIN")
+
 	for (const r of src.prepare("SELECT id, abbr FROM place_abbr").iterate()) {
 		const a = attrs.get(Number(r.id))
+
 		if (!a) continue
 		const k = normalizeLocalityForKey(String(r.abbr ?? ""))
+
 		if (!k) continue
 		stageRow(k, a, Number(r.id), 1)
 		nAbbr++
@@ -235,11 +251,13 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	// --- pass 4: postcodes (separate shards: spr placetype='postalcode' with real coords) ---
 	let nPostcode = 0
+
 	for (const pcDb of opts.postcodes ?? []) {
 		progress("postcodes", `reading ${pcDb}`)
 		const pc = new DatabaseSync(pcDb, { readOnly: true })
 		const pcPtid = ptId("postalcode")
 		out.exec("BEGIN")
+
 		for (const r of pc
 			.prepare(
 				`SELECT id, name, country, latitude, longitude,
@@ -249,6 +267,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			.iterate()) {
 			const name = String(r.name ?? "")
 			const key = normalizeLocalityForKey(name)
+
 			if (!key) continue
 			const lat = r.latitude as number
 			const lon = r.longitude as number
@@ -276,6 +295,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		out.exec("COMMIT")
 		pc.close()
 	}
+
 	if (nPostcode > 0) progress("postcodes", `${nPostcode.toLocaleString()} postcodes`)
 
 	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---
@@ -285,6 +305,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			.values([...ccodes].map(([code, id]) => ({ id, code })))
 			.execute()
 	}
+
 	if (ptcodes.size > 0) {
 		await kdb
 			.insertInto("placetype_codes")
@@ -319,6 +340,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		.select((eb) => eb.fn.countAll<number>().as("n"))
 		.executeTakeFirstOrThrow()
 	src.close()
-	await kdb.destroy() // closes the underlying `out` connection
+	await kdb.destroy()
+
+	// closes the underlying `out` connection
 	return { rows, places: attrs.size, primaries: nPrim, aliases: nAlias, abbrevs: nAbbr, postcodes: nPostcode }
 }

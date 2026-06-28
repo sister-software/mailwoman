@@ -7,6 +7,7 @@
 import { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
+
 import { InMemoryPolicyRegistry } from "./registry.js"
 
 function makeProposal(

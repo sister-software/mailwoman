@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { composeMaps, identityMap } from "./offset-map.js"
 
 test("identityMap: [0, 1, …, n-1]", () => {

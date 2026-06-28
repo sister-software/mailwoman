@@ -27,9 +27,11 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 	const resolver: Resolver = {
 		resolveTree: vi.fn(async (tree, opts) => {
 			seen.push(opts ?? {})
+
 			return tree
 		}),
 	}
+
 	return { resolver, seen }
 }
 
@@ -56,6 +58,7 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 		const entries = Object.entries(post ?? {})
 		// Residual upgrade: a full per-in-map-country DISTRIBUTION, not the one-hot argmax.
 		expect(entries.length).toBeGreaterThan(1)
+
 		for (const [c, p] of entries) {
 			expect(c).toMatch(/^[A-Z]{2}$/) // 2-letter in-map country (never OTHER)
 			expect(p).toBeGreaterThanOrEqual(0)

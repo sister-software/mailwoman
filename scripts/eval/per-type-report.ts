@@ -21,11 +21,13 @@
  *   --rows /tmp/oa-rows.json --out docs/articles/evals/2026-06-17-per-type-headtohead.md
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+
 import { decodeAsJson, proposalsToTree } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createAddressParser } from "mailwoman"
-import { readFileSync, writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const MODEL = dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")
@@ -42,6 +44,7 @@ interface OutRow {
 
 const median = (xs: number[]): number | null => {
 	const a = xs.filter((x) => Number.isFinite(x)).sort((p, q) => p - q)
+
 	return a.length ? a[Math.floor((a.length - 1) / 2)]! : null
 }
 const pct = (k: number, n: number) => (n ? `${((100 * k) / n).toFixed(1)}%` : "—")
@@ -56,6 +59,7 @@ function sliceStats(rows: OutRow[], pick: (r: OutRow) => boolean) {
 	const vLoc = sel.filter((r) => r.v0.loc).length
 	const nErr = median(sel.map((r) => r.neural.err).filter((x): x is number => x !== null))
 	const vErr = median(sel.map((r) => r.v0.err).filter((x): x is number => x !== null))
+
 	return { n: sel.length, nLoc, vLoc, nErr, vErr }
 }
 
@@ -79,12 +83,14 @@ function partA(rowsPath: string): string[] {
 	out.push("")
 	out.push("| bucket | n | neural loc-match | v0 loc-match | neural coord p50 km | v0 coord p50 km |")
 	out.push("|---|--:|--:|--:|--:|--:|")
+
 	for (const [label, pickFn] of buckets) {
 		const s = sliceStats(rows, pickFn)
 		partAStats[label] = { n: s.n, nLoc: s.nLoc, vLoc: s.vLoc }
 		out.push(`| ${label} | ${s.n} | ${pct(s.nLoc, s.n)} | ${pct(s.vLoc, s.n)} | ${km(s.nErr)} | ${km(s.vErr)} |`)
 	}
 	out.push("")
+
 	return out
 }
 
@@ -98,7 +104,9 @@ function pickPlaces(n: number): Array<{ city: string; state: string; zip: string
 	// Deterministic spread across the list (no Math.random — reproducible).
 	const step = Math.max(1, Math.floor(places.length / n))
 	const out: Array<{ city: string; state: string; zip: string }> = []
+
 	for (let i = 0; i < places.length && out.length < n; i += step) out.push(places[i]!)
+
 	return out
 }
 
@@ -116,6 +124,7 @@ async function partB(): Promise<string[]> {
 	const places = pickPlaces(Number(arg("gen", "150")))
 	const parseV0 = async (s: string) => {
 		const sols = await v0.parse(s)
+
 		return sols[0] ? (decodeAsJson(proposalsToTree(s, solutionToProposals(sols[0]!))) as Record<string, string>) : {}
 	}
 	const parseNeural = async (s: string) =>
@@ -154,12 +163,16 @@ async function partB(): Promise<string[]> {
 	out.push("")
 	out.push("| type | n | neural correct | v0 correct |")
 	out.push("|---|--:|--:|--:|")
+
 	for (const t of types) {
 		let nOk = 0
 		let vOk = 0
+
 		for (let i = 0; i < places.length; i++) {
 			const addr = t.gen(places[i]!, i)
+
 			if (t.ok(await parseNeural(addr))) nOk++
+
 			if (t.ok(await parseV0(addr))) vOk++
 		}
 		partBStats.push({ name: t.name, n: places.length, nOk, vOk })
@@ -167,6 +180,7 @@ async function partB(): Promise<string[]> {
 		console.error(`  ${t.name}: neural ${nOk}/${places.length}, v0 ${vOk}/${places.length}`)
 	}
 	out.push("")
+
 	return out
 }
 
@@ -175,6 +189,7 @@ async function partB(): Promise<string[]> {
 function reading(): string[] {
 	const deltaPp = (b: string): number => {
 		const s = partAStats[b]
+
 		return s && s.n ? (100 * s.nLoc) / s.n - (100 * s.vLoc) / s.n : 0
 	}
 	const fmt = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(1)}pp`
@@ -196,6 +211,7 @@ function reading(): string[] {
 		`- _Caveat:_ Part B is templated (real OA cities, synthetic forms) — it measures parse-structure capability, not real-world frequency.`
 	)
 	out.push("")
+
 	return out
 }
 

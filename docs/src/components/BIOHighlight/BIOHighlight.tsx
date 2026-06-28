@@ -35,31 +35,36 @@ interface BIOWord {
 function tokenizeWords(input: string): Array<{ text: string; start: number; end: number; whitespace: string }> {
 	const words: Array<{ text: string; start: number; end: number; whitespace: string }> = []
 	let i = 0
+
 	while (i < input.length) {
 		// Skip leading whitespace for this word.
 		let ws = ""
+
 		while (i < input.length && /\s/.test(input[i])) {
 			ws += input[i]
 			i++
 		}
+
 		if (i >= input.length) break
 
 		// Collect the word (non-whitespace run).
 		const start = i
+
 		while (i < input.length && !/\s/.test(input[i])) {
 			i++
 		}
 		words.push({ text: input.slice(start, i), start, end: i, whitespace: ws })
 	}
+
 	return words
 }
 
 /**
  * Assign BIO labels to each word based on span coverage.
  *
- * For each word we find the shortest covering span (same per-character shortest-span owner
- * algorithm SpanHighlight uses). The first word of each span gets B-{tag}; subsequent words of the
- * same span get I-{tag}. Words with no covering span get O.
+ * For each word we find the shortest covering span (same per-character shortest-span owner algorithm SpanHighlight
+ * uses). The first word of each span gets B-{tag}; subsequent words of the same span get I-{tag}. Words with no
+ * covering span get O.
  */
 function assignBIOLabels(
 	words: ReturnType<typeof tokenizeWords>,
@@ -67,13 +72,16 @@ function assignBIOLabels(
 ): BIOWord[] {
 	// Per-word: index of the shortest covering span.
 	const owner: number[] = new Array(words.length).fill(-1)
+
 	for (let w = 0; w < words.length; w++) {
 		const wStart = words[w].start
 		const wEnd = words[w].end
 		let best = -1
 		let bestLen = Infinity
+
 		for (let s = 0; s < spans.length; s++) {
 			const sp = spans[s]
+
 			// The word is covered if any part of it falls within the span.
 			if (wStart < sp.end && wEnd > sp.start && sp.end - sp.start < bestLen) {
 				bestLen = sp.end - sp.start
@@ -85,8 +93,10 @@ function assignBIOLabels(
 
 	// Assign BIO labels.
 	const result: BIOWord[] = []
+
 	for (let w = 0; w < words.length; w++) {
 		const spanIdx = owner[w]
+
 		if (spanIdx === -1) {
 			result.push({ text: words[w].text, whitespace: words[w].whitespace, label: "O", tag: null })
 			continue
@@ -97,6 +107,7 @@ function assignBIOLabels(
 		const prefix = isFirst ? "B" : "I"
 		result.push({ text: words[w].text, whitespace: words[w].whitespace, label: `${prefix}-${span.tag}`, tag: span.tag })
 	}
+
 	return result
 }
 
@@ -123,6 +134,7 @@ export const BIOHighlight: React.FC<BIOHighlightProps> = ({ input, nodes }) => {
 			n.end > n.start &&
 			n.end <= input.length
 	)
+
 	if (spans.length === 0) return null
 
 	const words = tokenizeWords(input)
@@ -142,6 +154,7 @@ export const BIOHighlight: React.FC<BIOHighlightProps> = ({ input, nodes }) => {
 						: w.label.startsWith("I-")
 							? styles.bioI
 							: styles.bioO
+
 					return (
 						<span key={i} className={styles.wordCol} title={w.label}>
 							{w.whitespace ? <span className={styles.ws}>{w.whitespace}</span> : null}

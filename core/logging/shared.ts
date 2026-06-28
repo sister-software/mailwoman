@@ -118,9 +118,9 @@ export function createLogger(prefix?: string, ...args: string[][]): Logger {
  * A singleton logger instance for the browser.
  *
  * ```js
- * import { ConsoleLogger } from "#logger/browser";
+ * import { ConsoleLogger } from "#logger/browser"
  *
- * ConsoleLogger.info("Hello, world!");
+ * ConsoleLogger.info("Hello, world!")
  * ```
  *
  * @implements {IRuntimeLogger}

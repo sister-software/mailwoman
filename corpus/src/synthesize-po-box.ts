@@ -41,10 +41,10 @@ export interface LocaleTemplate {
 }
 
 /**
- * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so
- * shard builders (scripts/build-po-box-cedex-shard.mjs) can reuse THIS list as the single source of
- * truth for non-US leaders instead of re-deriving it — the US slice additionally has
- * `@mailwoman/codex/us` `US_PO_BOX_DESIGNATORS`/`isPOBox` as its matcher-side truth.
+ * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so shard builders
+ * (scripts/build-po-box-cedex-shard.mjs) can reuse THIS list as the single source of truth for non-US leaders instead
+ * of re-deriving it — the US slice additionally has `@mailwoman/codex/us` `US_PO_BOX_DESIGNATORS`/`isPOBox` as its
+ * matcher-side truth.
  */
 export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 	{
@@ -94,8 +94,8 @@ export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 
 /**
- * Inject number-format noise into a box number string. Returns the noisy variant or the original
- * (10% probability of noise per the design).
+ * Inject number-format noise into a box number string. Returns the noisy variant or the original (10% probability of
+ * noise per the design).
  */
 export function maybeNoisifyBoxNumber(num: string, random: () => number): string {
 	if (random() > 0.1) return num
@@ -108,14 +108,14 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 		(s) => s.split("").join(" "),
 	]
 	const f = variants[Math.floor(random() * variants.length)]!
+
 	return f(num)
 }
 
 /**
  * Compose a PO box phrase like "PO Box 123" or "PMB 200".
  *
- * Returns both the phrase and the canonical leader+number so the BIO aligner can mark the entire
- * span as `po_box`.
+ * Returns both the phrase and the canonical leader+number so the BIO aligner can mark the entire span as `po_box`.
  */
 export function composePoBoxPhrase(leader: string, number: string): string {
 	return `${leader} ${number}`
@@ -140,16 +140,22 @@ export interface PoBoxSynthesisOpts {
 function defaultPickNumber(random: () => number): string {
 	// 70% of real PO boxes are 1-5 digits; long ones exist (USPS allows up to ~6 digits).
 	const r = random()
-	if (r < 0.3) return String(1 + Math.floor(random() * 99)) // 1-99
-	if (r < 0.7) return String(100 + Math.floor(random() * 900)) // 100-999
-	if (r < 0.95) return String(1000 + Math.floor(random() * 9000)) // 1000-9999
+
+	if (r < 0.3) return String(1 + Math.floor(random() * 99))
+
+	// 1-99
+	if (r < 0.7) return String(100 + Math.floor(random() * 900))
+
+	// 100-999
+	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
+
+	// 1000-9999
 	return String(10000 + Math.floor(random() * 90000)) // 10000-99999
 }
 
 /**
- * Generate one PO box row for a base (locality, region, postcode, country) tuple. Picks a
- * locale-appropriate leader and number. Optionally generates a PMB variant when the base tuple
- * includes a street.
+ * Generate one PO box row for a base (locality, region, postcode, country) tuple. Picks a locale-appropriate leader and
+ * number. Optionally generates a PMB variant when the base tuple includes a street.
  */
 export function synthesizePoBoxRow(
 	base: PoBoxBaseTuple & { street?: string; houseNumber?: string },
@@ -161,6 +167,7 @@ export function synthesizePoBoxRow(
 
 	const locale = countryToLocale(base.country)
 	const tpl = LEADERS_BY_LOCALE.get(locale)
+
 	if (!tpl) return null
 
 	const number = maybeNoisifyBoxNumber(pickNumber(random), random)
@@ -169,11 +176,13 @@ export function synthesizePoBoxRow(
 
 	// PMB variant: requires both a street and a PMB-supporting locale.
 	const wantPmb = base.street && tpl.pmb && random() < pmbRatio
+
 	if (wantPmb) {
 		const pmbLeader = tpl.pmb![Math.floor(random() * tpl.pmb!.length)]!
 		const pmbPhrase = composePoBoxPhrase(pmbLeader, number)
 		const streetLine = base.houseNumber ? `${base.houseNumber} ${base.street}` : base.street!
 		const raw = `${streetLine}, ${pmbPhrase}, ${base.locality}, ${base.region} ${base.postcode}`
+
 		return {
 			raw,
 			components: {
@@ -195,6 +204,7 @@ export function synthesizePoBoxRow(
 	const hasRegion = Boolean(base.region && base.region.trim())
 	const tail = hasRegion ? `${base.locality}, ${base.region} ${base.postcode}` : `${base.locality} ${base.postcode}`
 	const raw = `${poBoxPhrase}, ${tail}`
+
 	return {
 		raw,
 		components: {
@@ -210,11 +220,10 @@ export function synthesizePoBoxRow(
 }
 
 /**
- * The US military/diplomatic PO-box class (#517). A distinct shape the leader-based locale
- * templates can't express: a unit line (`PSC <id> Box <box>`, `CMR <id> Box <box>`, `Unit <id> [Box
- * <box>]`) tagged `po_box`, then the post-office code (APO/FPO/DPO) as the locality and the
- * armed-forces region (AA/AE/AP) as the region, with a theatre-specific ZIP. Authoritative
- * reference + citations: `@mailwoman/codex` `codex/us/military-address.ts`; the small constants are
+ * The US military/diplomatic PO-box class (#517). A distinct shape the leader-based locale templates can't express: a
+ * unit line (`PSC <id> Box <box>`, `CMR <id> Box <box>`, `Unit <id> [Box <box>]`) tagged `po_box`, then the post-office
+ * code (APO/FPO/DPO) as the locality and the armed-forces region (AA/AE/AP) as the region, with a theatre-specific ZIP.
+ * Authoritative reference + citations: `@mailwoman/codex` `codex/us/military-address.ts`; the small constants are
  * inlined here so the generator is self-contained.
  */
 const MIL_UNITS: ReadonlyArray<{ code: string; boxRequired: boolean }> = [
@@ -241,6 +250,7 @@ export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): Synth
 	const hasBox = unit.boxRequired || random() < 0.5
 	const unitLine = hasBox ? `${unit.code} ${unitId} Box ${1 + Math.floor(random() * 9999)}` : `${unit.code} ${unitId}`
 	const raw = `${unitLine}, ${po} ${region} ${zipStr}`
+
 	return {
 		raw,
 		components: {
@@ -256,20 +266,30 @@ export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): Synth
 }
 
 /**
- * Map a country code (ISO-3166-1 alpha-2 or alpha-3, or country display name) to the locale code we
- * have a PO box template for.
+ * Map a country code (ISO-3166-1 alpha-2 or alpha-3, or country display name) to the locale code we have a PO box
+ * template for.
  */
 export function countryToLocale(country: string): string {
 	const c = country.trim().toUpperCase()
+
 	if (c === "US" || c === "USA" || c === "UNITED STATES") return "en-US"
+
 	if (c === "CA" || c === "CAN" || c === "CANADA") return "en-CA"
+
 	if (c === "GB" || c === "UK" || c === "GBR" || c === "UNITED KINGDOM") return "en-GB"
+
 	if (c === "AU" || c === "AUS" || c === "AUSTRALIA") return "en-AU"
+
 	if (c === "NZ" || c === "NZL" || c === "NEW ZEALAND") return "en-NZ"
+
 	if (c === "FR" || c === "FRA" || c === "FRANCE") return "fr-FR"
+
 	if (c === "ES" || c === "ESP" || c === "SPAIN") return "es-ES"
+
 	if (c === "MX" || c === "MEX" || c === "MEXICO") return "es-MX"
+
 	if (c === "AR" || c === "ARG" || c === "ARGENTINA") return "es-AR"
+
 	return "en-US"
 }
 
@@ -279,9 +299,9 @@ export function supportedLocales(): ReadonlyArray<string> {
 }
 
 /**
- * Locales whose standard PO-box delivery line carries NO region token — the address reads
- * `<po_box>, <locality> <postcode>` with nothing between locality and postcode (#517). NZ is the
- * canonical case (`Private Bag 12, Auckland 1010`). Consumers (e.g. the synth-po-box adapter) use
- * this to avoid discarding region-less input tuples for these locales as "missing region".
+ * Locales whose standard PO-box delivery line carries NO region token — the address reads `<po_box>, <locality>
+ * <postcode>` with nothing between locality and postcode (#517). NZ is the canonical case (`Private Bag 12, Auckland
+ * 1010`). Consumers (e.g. the synth-po-box adapter) use this to avoid discarding region-less input tuples for these
+ * locales as "missing region".
  */
 export const REGION_OPTIONAL_LOCALES: ReadonlySet<string> = new Set(["en-NZ"])

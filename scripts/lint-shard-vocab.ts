@@ -34,11 +34,12 @@
  *   50]
  */
 
-import { DuckDBInstance } from "@duckdb/node-api"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { readdirSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
+
+import { DuckDBInstance } from "@duckdb/node-api"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 /** A column-projected base/shard row: parallel token + label lists plus the row's country. */
 interface CorpusRow {
@@ -50,28 +51,31 @@ interface CorpusRow {
 /** Strip a BIO prefix ("B-"/"I-") off a label, matching the Python `strip_bio`. */
 function stripBio(label: string): string {
 	const head = label.slice(0, 2)
+
 	return head === "B-" || head === "I-" ? label.slice(2) : label
 }
 
 /**
- * Python `str.isdigit()`: non-empty and every character a Unicode digit. Pure-numeric tokens
- * (house_number / postcode) are context-determined, not lexical vocab, so they're excluded.
- * `\p{Nd}` covers the decimal digits these address corpora actually contain.
+ * Python `str.isdigit()`: non-empty and every character a Unicode digit. Pure-numeric tokens (house_number / postcode)
+ * are context-determined, not lexical vocab, so they're excluded. `\p{Nd}` covers the decimal digits these address
+ * corpora actually contain.
  */
 function isDigit(token: string): boolean {
 	return token.length > 0 && /^\p{Nd}+$/u.test(token)
 }
 
 /**
- * Round half to even (banker's rounding) — Python's built-in `round()` and `format(..., ".0%")`
- * both use it, so percent strings and the proportional `--fraction` slice match the Python output
- * exactly.
+ * Round half to even (banker's rounding) — Python's built-in `round()` and `format(..., ".0%")` both use it, so percent
+ * strings and the proportional `--fraction` slice match the Python output exactly.
  */
 function pyRound(x: number): number {
 	const floor = Math.floor(x)
 	const diff = x - floor
+
 	if (diff < 0.5) return floor
+
 	if (diff > 0.5) return floor + 1
+
 	return floor % 2 === 0 ? floor : floor + 1
 }
 
@@ -81,9 +85,9 @@ function pct(frac: number): string {
 }
 
 /**
- * Format a float the way a Python f-string renders it: integer-valued floats keep one decimal (1.0
- * -> "1.0"), everything else is its shortest decimal (0.5 -> "0.5"). Used for the `--fraction` echo
- * so the banner matches the Python print.
+ * Format a float the way a Python f-string renders it: integer-valued floats keep one decimal (1.0 -> "1.0"),
+ * everything else is its shortest decimal (0.5 -> "0.5"). Used for the `--fraction` echo so the banner matches the
+ * Python print.
  */
 function pyFloat(n: number): string {
 	return Number.isInteger(n) ? n.toFixed(1) : String(n)
@@ -95,27 +99,32 @@ function pad(value: string, width: number): string {
 }
 
 /**
- * The dominant tag of a counter: (tag, total, fraction). Empty counter -> ("", 0, 0.0). Ties go to
- * the first-inserted tag, mirroring `Counter.most_common(1)` (stable on equal counts).
+ * The dominant tag of a counter: (tag, total, fraction). Empty counter -> ("", 0, 0.0). Ties go to the first-inserted
+ * tag, mirroring `Counter.most_common(1)` (stable on equal counts).
  */
 function dominant(counter: Map<string, number>): [string, number, number] {
 	let total = 0
 	let bestTag = ""
 	let bestCount = -1
+
 	for (const [tag, count] of counter) {
 		total += count
+
 		if (count > bestCount) {
 			bestCount = count
 			bestTag = tag
 		}
 	}
+
 	if (total === 0) return ["", 0, 0.0]
+
 	return [bestTag, total, bestCount / total]
 }
 
 /** Bump a (key -> count) tally, creating the inner counter on first sight. */
 function bump(table: Map<string, Map<string, number>>, key: string, sub: string): void {
 	let counter = table.get(key)
+
 	if (!counter) {
 		counter = new Map()
 		table.set(key, counter)
@@ -124,9 +133,9 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 }
 
 /**
- * Read a corpus parquet into rows, projecting only tokens/labels/country. The list columns ride out
- * as JSON text (DuckDB `to_json`) — the same trick build-unified-wof.ts uses for nested columns —
- * and parse back to string arrays here.
+ * Read a corpus parquet into rows, projecting only tokens/labels/country. The list columns ride out as JSON text
+ * (DuckDB `to_json`) — the same trick build-unified-wof.ts uses for nested columns — and parse back to string arrays
+ * here.
  */
 async function readRows(con: Awaited<ReturnType<DuckDBInstance["connect"]>>, path: string): Promise<CorpusRow[]> {
 	const result = await con.runAndReadAll(
@@ -134,9 +143,11 @@ async function readRows(con: Awaited<ReturnType<DuckDBInstance["connect"]>>, pat
 	)
 	const raw = result.getRowObjects() as Array<{ tokens: unknown; labels: unknown; country: unknown }>
 	const rows: CorpusRow[] = []
+
 	for (const r of raw) {
 		const tokens = JSON.parse(String(r.tokens)) as unknown
 		const labels = JSON.parse(String(r.labels)) as unknown
+
 		if (!Array.isArray(tokens) || !Array.isArray(labels)) continue
 		rows.push({
 			tokens: tokens as string[],
@@ -144,6 +155,7 @@ async function readRows(con: Awaited<ReturnType<DuckDBInstance["connect"]>>, pat
 			country: r.country == null ? null : String(r.country),
 		})
 	}
+
 	return rows
 }
 
@@ -151,17 +163,20 @@ async function readRows(con: Awaited<ReturnType<DuckDBInstance["connect"]>>, pat
 async function readSource(con: Awaited<ReturnType<DuckDBInstance["connect"]>>, path: string): Promise<string> {
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)
 	const rows = result.getRowObjects() as Array<{ source: unknown }>
+
 	return rows.length ? String(rows[0]!.source) : ""
 }
 
 /** Non-recursive `*.parquet` glob, sorted lexicographically — the Python `sorted(glob.glob(...))`. */
 function globParquet(dir: string): string[] {
 	let names: string[]
+
 	try {
 		names = readdirSync(dir)
 	} catch {
 		return []
 	}
+
 	return names
 		.filter((f) => f.endsWith(".parquet"))
 		.map((f) => join(dir, f))
@@ -216,14 +231,18 @@ async function main(): Promise<void> {
 	const shardRows = await readRows(con, args.shard)
 	const shardTags = new Map<string, Map<string, number>>()
 	const shardCountries = new Map<string, Set<string | null>>()
+
 	for (const { tokens, labels, country } of shardRows) {
 		const n = Math.min(tokens.length, labels.length)
+
 		for (let i = 0; i < n; i++) {
 			const w = tokens[i]!
 			const l = labels[i]!
+
 			if (isDigit(w)) continue // numbers are context-determined (house_number/postcode), not lexical vocab
 			bump(shardTags, w, stripBio(l))
 			let set = shardCountries.get(w)
+
 			if (!set) {
 				set = new Set()
 				shardCountries.set(w, set)
@@ -237,15 +256,19 @@ async function main(): Promise<void> {
 	// 2. base parts — FULL by default; --fraction<1 takes a proportional per-source slice (still big)
 	const trainDir = join(args.baseRoot, args.baseVersion, `corpus-${args.baseVersion}`, "train")
 	let parts = globParquet(trainDir)
+
 	if (!parts.length) {
 		console.error("no base parts found")
 		process.exit(1)
 	}
+
 	if (args.fraction < 1.0) {
 		const bysrc = new Map<string, string[]>()
+
 		for (const p of parts) {
 			const src = await readSource(con, p)
 			let list = bysrc.get(src)
+
 			if (!list) {
 				list = []
 				bysrc.set(src, list)
@@ -253,8 +276,10 @@ async function main(): Promise<void> {
 			list.push(p)
 		}
 		const sliced: string[] = []
+
 		for (const ps of bysrc.values()) {
 			const take = Math.max(2, pyRound(ps.length * args.fraction))
+
 			for (const p of ps.slice(0, take)) sliced.push(p)
 		}
 		parts = sliced
@@ -265,17 +290,22 @@ async function main(): Promise<void> {
 
 	// 3. tally each shard token's base tag, SCOPED to the country the shard uses it in
 	const baseTags = new Map<string, Map<string, number>>()
+
 	for (let i = 0; i < parts.length; i++) {
 		const rows = await readRows(con, parts[i]!)
+
 		for (const { tokens, labels, country } of rows) {
 			const n = Math.min(tokens.length, labels.length)
+
 			for (let j = 0; j < n; j++) {
 				const w = tokens[j]!
+
 				if (shardVocab.has(w) && shardCountries.get(w)!.has(country)) {
 					bump(baseTags, w, stripBio(labels[j]!))
 				}
 			}
 		}
+
 		if ((i + 1) % 100 === 0) console.log(`  ...${i + 1}/${parts.length} parts`)
 	}
 
@@ -283,11 +313,14 @@ async function main(): Promise<void> {
 	type Row = [string, string, string, number, number] // w, s_tag, b_tag, b_frac, b_total
 	const flagged: Row[] = []
 	const affix: Row[] = []
+
 	for (const w of shardVocab) {
 		const [sTag] = dominant(shardTags.get(w)!)
 		const [bTag, bTotal, bFrac] = dominant(baseTags.get(w) ?? new Map())
+
 		if (bTotal < args.minCount || !bTag || bTag === sTag || bFrac < args.threshold) continue
 		const row: Row = [w, sTag, bTag, bFrac, bTotal]
+
 		if ((sTag === "street_suffix" || sTag === "street_prefix") && bTag === "street") affix.push(row)
 		else flagged.push(row)
 	}
@@ -296,14 +329,17 @@ async function main(): Promise<void> {
 		["CONTRADICTION", flagged],
 		["affix-split (EXPECTED — affix-relabel handles)", affix],
 	]
+
 	for (const [label, rows] of sections) {
 		if (!rows.length) continue
 		rows.sort((a, b) => b[4] - a[4] || b[3] - a[3])
 		console.log(`\n${label.startsWith("CONTRA") ? "⚠️ " : "· "}${rows.length} ${label}:`)
+
 		for (const [w, sTag, bTag, bFrac, bTotal] of rows) {
 			console.log(`  ${pad(w, 18)} shard=${pad(sTag, 14)} base=${bTag} (${pct(bFrac)}, n=${bTotal})`)
 		}
 	}
+
 	if (!flagged.length) {
 		console.log(
 			`\n✅ NO real contradictions (country-scoped, threshold ${pct(args.threshold)}, support ${args.minCount}) — shard base-consistent`

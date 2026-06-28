@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -11,7 +13,6 @@
  *   Usage: node scripts/eval/reconcile-precondition-audit.ts <holdout.jsonl> [cap]
  */
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { readFileSync } from "node:fs"
 
 interface NeuralClassifier {
 	parse(input: string, opts?: { postcodeRepair?: boolean }): Promise<AddressTree>
@@ -41,13 +42,18 @@ interface TagVals {
 const tagvals = (tree: AddressTree): TagVals => {
 	const o: TagVals = { street: null, house_number: null, postcode: null }
 	const st = [...tree.roots]
+
 	while (st.length) {
 		const n = st.pop()!
+
 		if (n.tag === "street" && o.street === null && n.value.trim()) o.street = n.value.trim()
+
 		if (n.tag === "house_number" && o.house_number === null && n.value.trim()) o.house_number = n.value.trim()
+
 		if (n.tag === "postcode" && o.postcode === null && n.value.trim()) o.postcode = n.value.trim()
 		st.push(...n.children)
 	}
+
 	return o
 }
 const rows = readFileSync(process.argv[2] || "/tmp/ood-truth.jsonl", "utf8")
@@ -65,22 +71,29 @@ let rawPrecond = 0,
 	rawOnlyPrecond = 0,
 	recOnlyPrecond = 0
 const lost: string[] = []
+
 for (const r of rows.slice(0, cap)) {
 	n++
 	const raw = tagvals(await classifier.parse(r.input, { postcodeRepair: true }))
 	const rec = tagvals((await pipeline(r.input)).tree)
 	const rp = !!(raw.street && raw.house_number && raw.postcode),
 		cp = !!(rec.street && rec.house_number && rec.postcode)
+
 	if (rp) rawPrecond++
+
 	if (cp) recPrecond++
+
 	if (rp && !cp) {
 		rawOnlyPrecond++
+
 		if (lost.length < 14)
 			lost.push(
 				`${r.input}\n      raw: hn=${raw.house_number} st=${raw.street} pc=${raw.postcode}\n      rec: hn=${rec.house_number} st=${rec.street} pc=${rec.postcode}`
 			)
 	}
+
 	if (cp && !rp) recOnlyPrecond++
+
 	if (raw.street === rec.street && raw.house_number === rec.house_number) identical++
 	else if (raw.street && !rec.street) recLostStreet++
 	else if (!raw.street && rec.street) recGainedStreet++
@@ -96,7 +109,9 @@ console.log(`  pipeline FIXES it (pipeline had it, raw didn't):   ${recOnlyPreco
 console.log(
 	`  street/HN tags identical: ${identical} (${pc(identical)})  | pipeline lost street: ${recLostStreet} | pipeline gained street: ${recGainedStreet} | hn differs: ${hnDiffers}`
 )
+
 if (lost.length) {
 	console.log(`\n  sample pipeline-broke-the-geocode cases:`)
+
 	for (const s of lost) console.log(`   - ${s}`)
 }

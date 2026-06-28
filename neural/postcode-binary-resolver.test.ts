@@ -10,6 +10,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { extractPostcodeAnchors } from "./postcode-anchor.js"
 import {
 	PostcodeBinaryResolver,

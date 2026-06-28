@@ -9,6 +9,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildPlaceSearchFts } from "./fts.js"
@@ -55,10 +56,13 @@ function buildFixtureDb(): DatabaseSync {
 		VALUES (?, NULL, ?, 'locality', ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
 	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
+
 	for (const p of FIXTURE) {
 		insertSpr.run(p.id, p.name, p.country, p.lat, p.lon, p.lat - 0.05, p.lat + 0.05, p.lon - 0.05, p.lon + 0.05)
+
 		if (p.population !== undefined) insertPop.run(p.id, p.population)
 	}
+
 	return db
 }
 
@@ -112,6 +116,7 @@ describe("findPlace — population boost", () => {
 
 	test("the population boost can be tuned to 0 — falls back to BM25-only ordering", async () => {
 		const dbg = new WofSqlitePlaceLookup({ database: buildFixtureDb(), buildFts: true }, { populationBoost: 0 })
+
 		try {
 			const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
 			const springfields = candidates.filter((c) => c.name === "Springfield")
@@ -142,11 +147,13 @@ describe("findPlace — population boost", () => {
 		buildPlaceSearchFts(db)
 		db.exec(`DROP TABLE place_population`)
 		const fallback = new WofSqlitePlaceLookup({ database: db })
+
 		try {
 			const candidates = await fallback.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
 			// All 4 Springfields returned, none with `population` field (the aux table was dropped).
 			const springfields = candidates.filter((c) => c.name === "Springfield")
 			expect(springfields.length).toBe(4)
+
 			for (const c of springfields) expect(c.population).toBeUndefined()
 			// Their scores should all be equal (no population boost differentiation).
 			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))

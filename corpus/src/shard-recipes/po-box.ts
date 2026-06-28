@@ -30,16 +30,20 @@ export const poBoxRecipe: ShardRecipe = {
 		let read = 0
 		let emitted = 0
 		let skipped = 0
+
 		for await (const tuple of readTuples(opts.input)) {
 			read++
 			// Region required EXCEPT region-less locales (NZ: "Private Bag 12, Auckland 1010", #517).
 			const regionOptional = ["NZ", "NZL", "NEW ZEALAND"].includes(String(tuple.country || "").toUpperCase())
+
 			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && !regionOptional)) {
 				skipped++
 				continue
 			}
+
 			for (let v = 0; v < opts.variants; v++) {
 				const synth = synthesizePoBoxRow(tuple as PoBoxBaseTuple, { random, pmbRatio })
+
 				if (!synth) continue
 				const ok = alignAndWrite(
 					write,
@@ -61,6 +65,7 @@ export const poBoxRecipe: ShardRecipe = {
 					},
 					synth.template
 				)
+
 				if (ok) emitted++
 				else skipped++
 			}
@@ -89,10 +94,12 @@ export const poBoxRecipe: ShardRecipe = {
 					},
 					mil.template
 				)
+
 				if (ok) emitted++
 				else skipped++
 			}
 		}
+
 		return { read, emitted, skipped }
 	},
 }

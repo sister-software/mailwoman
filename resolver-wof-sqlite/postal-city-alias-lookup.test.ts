@@ -15,9 +15,10 @@
  *   The 37013 antioch→nashville edge is a real top row of the built `postal-city-alias-us.db`.
  */
 import { DatabaseSync } from "node:sqlite"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { WofSqlitePlaceLookup } from "./lookup.js"
 import { WofPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
 import { createPostalCityAliasTable, type PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
@@ -38,6 +39,7 @@ async function buildAliasDb(): Promise<DatabaseSync> {
 	ins.run("22191", "Woodbridge", "Prince William County", 30975, 1, "overture:US", "2026-04")
 	// A non-divergent row (postal name == geo name) — must NEVER surface as an alias.
 	ins.run("90210", "Beverly Hills", "Beverly Hills", 12000, 0, "overture:US", "2026-04")
+
 	return db
 }
 
@@ -63,6 +65,7 @@ function buildMainDb(): DatabaseSync {
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 700_000)
 	// 37013's centroid sits in Nashville (containing); the parsed name "Antioch" does NOT match it.
 	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("37013", "US", 1, "Nashville", "", 0.0, 1)
+
 	return db
 }
 

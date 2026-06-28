@@ -13,6 +13,7 @@
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 const titleCaseInput = (t: string) => t.replace(/[A-Za-z]+/g, (w) => w[0]!.toUpperCase() + w.slice(1).toLowerCase())
@@ -30,6 +31,7 @@ const SRC = process.argv[2] ?? "txhhsc"
 const N = Number(process.argv[3] ?? "200")
 const NOCOMMA = process.argv.includes("nocomma") // #694: ingestRows space-joins columns (no commas)
 let addrs: string[]
+
 if (SRC === "fcc") {
 	const lines = readFileSync("/tmp/fcc-rhc-tx.csv", "utf8")
 		.split("\n")
@@ -56,13 +58,14 @@ const latOf = async (raw: string): Promise<number | null> => {
 		defaultCountry: "US",
 		placeCountry: false,
 	})
+
 	return g.lat
 }
 
 let rawLat = 0
 let tcLat = 0
-let rawTier: Record<string, number> = {}
-let tcTier: Record<string, number> = {}
+const rawTier: Record<string, number> = {}
+const tcTier: Record<string, number> = {}
 const tierOf = async (raw: string) => {
 	const g = await geocodeAddress(raw, {
 		classifier,
@@ -71,14 +74,18 @@ const tierOf = async (raw: string) => {
 		defaultCountry: "US",
 		placeCountry: false,
 	})
+
 	return { lat: g.lat, tier: g.resolution_tier }
 }
 const prep = (s: string) => (NOCOMMA ? s.replace(/,/g, "") : s)
+
 for (const raw0 of addrs) {
 	const raw = prep(raw0)
 	const a = await tierOf(raw)
 	const b = await tierOf(titleCaseInput(raw))
+
 	if (a.lat !== null) rawLat++
+
 	if (b.lat !== null) tcLat++
 	rawTier[a.tier] = (rawTier[a.tier] ?? 0) + 1
 	tcTier[b.tier] = (tcTier[b.tier] ?? 0) + 1

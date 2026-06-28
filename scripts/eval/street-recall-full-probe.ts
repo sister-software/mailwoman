@@ -36,6 +36,7 @@ const { values: args } = parseArgs({
 	},
 })
 const N = Number(args.n)
+
 for (const k of ["baseline", "candidate", "tokenizer"] as const) if (!args[k]) throw new Error(`--${k} required`)
 
 const norm = (s?: string) => (s ?? "").toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim()
@@ -62,19 +63,25 @@ let baseOk = 0
 let candOk = 0
 let regr = 0
 let eaten = 0
+
 for (const row of rows) {
 	const gs = norm(row.components.street)
 	const gl = norm(row.components.locality)
+
 	if (!gs || !gl) continue // full-address rows only: gold has BOTH street and locality
 	full++
 	const bp = (await base.parseJson(row.raw)) as Record<string, string>
 	const cp = (await cand.parseJson(row.raw)) as Record<string, string>
 	const bOk = norm(bp.street) === gs
 	const cOk = norm(cp.street) === gs
+
 	if (bOk) baseOk++
+
 	if (cOk) candOk++
+
 	if (bOk && !cOk) {
 		regr++
+
 		// the "eat" mechanism: the gold street's leading token landed in the candidate's locality span
 		if (wordIncludes(norm(cp.locality), gs.split(" ")[0]!)) eaten++
 	}

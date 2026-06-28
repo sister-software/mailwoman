@@ -22,15 +22,15 @@ export interface InterpCalibrationTable {
 	/** Uppercase USPS region code → conformal multiplier. */
 	byRegion: Record<string, number>
 	/**
-	 * Multiplier for regions not in the measured set. Deliberately high (near the rural end):
-	 * under-coverage (overconfidence) is the harmful error and most unmeasured states skew rural.
+	 * Multiplier for regions not in the measured set. Deliberately high (near the rural end): under-coverage
+	 * (overconfidence) is the harmful error and most unmeasured states skew rural.
 	 */
 	default: number
 }
 
 /**
- * Measured 12-state seed table (a partial sweep; the full 50 was abandoned at the >85 °C heat
- * ceiling). Mirrors `data/calibration/interp-radius-conformal.json` (#584).
+ * Measured 12-state seed table (a partial sweep; the full 50 was abandoned at the >85 °C heat ceiling). Mirrors
+ * `data/calibration/interp-radius-conformal.json` (#584).
  */
 export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 	byRegion: {
@@ -52,13 +52,14 @@ export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 
 /**
  * The conformal multiplier for a parsed region. `stateSlug` is the lowercase 2-letter slug from
- * {@link regionToStateSlug} (e.g. `"tx"`); falls back to the table's conservative `default` for an
- * unmeasured or absent region.
+ * {@link regionToStateSlug} (e.g. `"tx"`); falls back to the table's conservative `default` for an unmeasured or absent
+ * region.
  */
 export function interpCalibrationForRegion(
 	table: InterpCalibrationTable,
 	stateSlug: string | null | undefined
 ): number {
 	if (!stateSlug) return table.default
+
 	return table.byRegion[stateSlug.toUpperCase()] ?? table.default
 }

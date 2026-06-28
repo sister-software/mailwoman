@@ -35,18 +35,20 @@
  *   `--country` runs (a temp-build would wipe prior countries' rows).
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
+
 /** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
+
 	for (; i >= 0; i--) {
 		if (a[i] === "9") a[i] = "0"
 		else {
@@ -54,28 +56,33 @@ function incDecimalString(s: string): string {
 			break
 		}
 	}
+
 	if (i < 0) a.unshift("1")
+
 	return a.join("")
 }
 
 /**
- * Python `round()` — correctly-rounded, round-half-to-EVEN. Works off the double's EXACT
- * (terminating) decimal expansion via `toFixed(80)`, so it matches Python both on ordinary values
- * (where a naïve `x * 10**nd` would diverge by a ULP) and on exact half-way ties like `40.890625` →
- * `40.89062` (where `toFixed(nd)` rounds half-UP and would diverge). `nd === 0` keeps a fast
- * half-even path on the double.
+ * Python `round()` — correctly-rounded, round-half-to-EVEN. Works off the double's EXACT (terminating) decimal
+ * expansion via `toFixed(80)`, so it matches Python both on ordinary values (where a naïve `x * 10**nd` would diverge
+ * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
+ * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
 function pyRound(x: number, nd: number = 0): number {
 	if (!Number.isFinite(x)) return x
+
 	if (nd === 0) {
 		const floor = Math.floor(x)
 		const diff = x - floor
+
 		if (diff < 0.5) return floor
+
 		if (diff > 0.5) return floor + 1
+
 		return floor % 2 === 0 ? floor : floor + 1
 	}
 	const neg = x < 0
-	const digits = Math.abs(x).toFixed(80) // exact expansion for any coord/distance-range double
+	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
 	const intPart = digits.slice(0, dot)
 	const frac = digits.slice(dot + 1)
@@ -83,6 +90,7 @@ function pyRound(x: number, nd: number = 0): number {
 	const rest = frac.slice(nd)
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
+
 	if (first > 5) roundUp = true
 	else if (first === 5) {
 		if (/[1-9]/.test(rest.slice(1))) roundUp = true
@@ -93,8 +101,10 @@ function pyRound(x: number, nd: number = 0): number {
 		}
 	}
 	let combined = intPart + keep
+
 	if (roundUp) combined = incDecimalString(combined)
 	const num = Number(combined) / 10 ** nd
+
 	return neg ? -num : num
 }
 
@@ -111,6 +121,7 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 	const dp = toRad(lat2 - lat1)
 	const dl = toRad(lon2 - lon1)
 	const a = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2
+
 	return 2 * R * Math.asin(Math.sqrt(a))
 }
 
@@ -119,8 +130,10 @@ const ALT_NAME_KEYS = new Set(["wof:label"]) // plus name:* / label:* props, gat
 /** WOF alt-name aliases from name:* / label:* props (+ `wof:label`), minus the canonical. */
 function aliasesFor(props: Record<string, unknown>, canonical: string): string[] {
 	const out = new Set<string>()
+
 	for (const [k, v] of Object.entries(props)) {
 		const isNameLabel = k.startsWith("name:") || k.startsWith("label:")
+
 		if ((isNameLabel || ALT_NAME_KEYS.has(k)) && typeof v === "string") {
 			out.add(v)
 		} else if (isNameLabel && Array.isArray(v)) {
@@ -128,12 +141,14 @@ function aliasesFor(props: Record<string, unknown>, canonical: string): string[]
 		}
 	}
 	out.delete(canonical)
+
 	return [...out].sort()
 }
 
 /** Push `v` into the array bucket at `k`, creating it on first touch (Python `defaultdict(list)`). */
 function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 	const a = m.get(k)
+
 	if (a) a.push(v)
 	else m.set(k, [v])
 }
@@ -175,12 +190,14 @@ function parseCliArgs(): Args {
 			finalize: { type: "boolean", default: false },
 		},
 	})
+
 	if (!values.output) {
 		console.error(
 			"Usage: build-postcode-locality.ts --output <db> [--country DE --admin-repo <dir> --postcode-db <db>] [--radius-km 10] [--max-candidates 4] [--finalize]"
 		)
 		process.exit(2)
 	}
+
 	return {
 		country: values.country,
 		adminRepo: values["admin-repo"],
@@ -193,10 +210,9 @@ function parseCliArgs(): Args {
 }
 
 /**
- * Freeze the accumulated table into a self-contained, read-only, distributable sqlite asset (the
- * same shape as our other WOF tables): a provenance/license `meta` table, query-planner stats, an
- * integrity check, a rollback (non-WAL) journal mode so there's no sidecar, and a VACUUM to
- * compact.
+ * Freeze the accumulated table into a self-contained, read-only, distributable sqlite asset (the same shape as our
+ * other WOF tables): a provenance/license `meta` table, query-planner stats, an integrity check, a rollback (non-WAL)
+ * journal mode so there's no sidecar, and a VACUUM to compact.
  */
 async function finalize(output: string): Promise<void> {
 	const db = new DatabaseSync(output)
@@ -208,6 +224,7 @@ async function finalize(output: string): Promise<void> {
 
 	// Ordered (SQL ORDER BY country) summary of {rows, containing}.
 	const summary = new Map<string, { rows: number; containing: number }>()
+
 	for (const c of counts) summary.set(c.country, { rows: Number(c.n), containing: Number(c.con || 0) })
 
 	// `countries` meta value: Python `json.dumps(summary, sort_keys=True)` → sorted keys, inner keys
@@ -218,6 +235,7 @@ async function finalize(output: string): Promise<void> {
 			.sort()
 			.map((c) => {
 				const s = summary.get(c)!
+
 				return `${JSON.stringify(c)}: {"containing": ${s.containing}, "rows": ${s.rows}}`
 			})
 			.join(", ") +
@@ -249,11 +267,13 @@ async function finalize(output: string): Promise<void> {
 		["countries", countriesJson],
 	]
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
+
 	for (const [k, v] of meta) insMeta.run(k, v)
 
 	db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
 	db.exec("ANALYZE")
 	const ok = (db.prepare("PRAGMA integrity_check").get() as Record<string, string>)["integrity_check"]
+
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
 		process.exit(1)
@@ -272,6 +292,7 @@ async function finalize(output: string): Promise<void> {
 /** Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`). */
 function geojsonFiles(dir: string): string[] {
 	if (!existsSync(dir)) return []
+
 	return (readdirSync(dir, { recursive: true }) as string[])
 		.filter((p) => p.endsWith(".geojson"))
 		.map((p) => join(dir, p))
@@ -282,12 +303,15 @@ async function build(args: Args): Promise<void> {
 
 	console.log(`loading ${country} locality polygons from source GeoJSON…`)
 	const locs: Locality[] = []
+
 	for (const fp of geojsonFiles(join(adminRepo!, "data"))) {
 		try {
 			const g = JSON.parse(readFileSync(fp, "utf8"))
 			const p: Record<string, unknown> = g.properties ?? {}
+
 			if (p["wof:placetype"] !== "locality" || (p["mz:is_current"] ?? 1) === 0) continue
 			const geom = g.geometry as GeojsonGeometry | undefined
+
 			if (!geom || (geom.type !== "Polygon" && geom.type !== "MultiPolygon")) continue
 			const xs: number[] = []
 			const ys: number[] = []
@@ -328,10 +352,12 @@ async function build(args: Args): Promise<void> {
 	// difference between minutes and ~an hour.
 	const grid = new Map<string, number[]>()
 	const bgrid = new Map<string, number[]>()
+
 	for (let idx = 0; idx < locs.length; idx++) {
 		const l = locs[idx]!
 		pushTo(grid, `${pyRound(l.clon * 10)}|${pyRound(l.clat * 10)}`, idx)
 		const [minx, miny, maxx, maxy] = l.bbox
+
 		for (let cx = Math.floor(minx * 10); cx <= Math.floor(maxx * 10); cx++) {
 			for (let cy = Math.floor(miny * 10); cy <= Math.floor(maxy * 10); cy++) {
 				pushTo(bgrid, `${cx}|${cy}`, idx)
@@ -368,17 +394,21 @@ async function build(args: Args): Promise<void> {
 	let rows = 0
 	let nContained = 0
 	out.exec("BEGIN")
+
 	for (const pcRow of postcodes) {
 		const pc = pcRow.name
 		const plat = pcRow.latitude
 		const plon = pcRow.longitude
+
 		if (plat == null || plon == null) continue
 
 		// containing locality via bbox-grid-prefiltered PIP (only localities whose bbox spans this cell)
 		let containingIdx: number | null = null
+
 		for (const idx of bgrid.get(`${Math.floor(plon * 10)}|${Math.floor(plat * 10)}`) ?? []) {
 			const l = locs[idx]!
 			const [minx, miny, maxx, maxy] = l.bbox
+
 			if (
 				minx <= plon &&
 				plon <= maxx &&
@@ -395,10 +425,12 @@ async function build(args: Args): Promise<void> {
 		const cand: Array<{ d: number; idx: number }> = []
 		const gx = pyRound(plon * 10)
 		const gy = pyRound(plat * 10)
+
 		for (const dx of [-1, 0, 1]) {
 			for (const dy of [-1, 0, 1]) {
 				for (const idx of grid.get(`${gx + dx}|${gy + dy}`) ?? []) {
 					const d = haversineKm(plat, plon, locs[idx]!.clat, locs[idx]!.clon)
+
 					if (d <= radiusKm) cand.push({ d, idx })
 				}
 			}
@@ -406,15 +438,19 @@ async function build(args: Args): Promise<void> {
 		cand.sort((a, b) => a.d - b.d || a.idx - b.idx)
 
 		const chosen: Array<{ d: number; idx: number; isc: number }> = []
+
 		if (containingIdx !== null) {
 			chosen.push({ d: 0.0, idx: containingIdx, isc: 1 })
 			nContained++
 		}
+
 		for (const { d, idx } of cand) {
 			if (idx === containingIdx) continue
+
 			if (chosen.filter((c) => c.isc === 0).length >= maxCandidates) break
 			chosen.push({ d, idx, isc: 0 })
 		}
+
 		for (const { d, idx, isc } of chosen) {
 			const l = locs[idx]!
 			insert.run(pc, country!, l.id, l.name, l.aliases.join("|"), pyRound(d, 3), isc)
@@ -437,10 +473,13 @@ async function build(args: Args): Promise<void> {
 
 async function main(): Promise<void> {
 	const args = parseCliArgs()
+
 	if (args.finalize) {
 		await finalize(args.output)
+
 		return
 	}
+
 	if (!(args.country && args.adminRepo && args.postcodeDb)) {
 		console.error("build mode needs --country, --admin-repo, --postcode-db (or pass --finalize)")
 		process.exit(1)
@@ -452,6 +491,7 @@ async function main(): Promise<void> {
 // "__main__"`), so `import("./build-postcode-locality.ts")` evaluates the module without running it.
 const selfPath = realpathSync(fileURLToPath(import.meta.url))
 const entryPath = process.argv[1] ? realpathSync(process.argv[1]) : ""
+
 if (entryPath && entryPath === selfPath) {
 	await main()
 }

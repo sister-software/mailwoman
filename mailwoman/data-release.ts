@@ -24,11 +24,14 @@ export type DataReleaseManifest = Record<string, string>
 export function readReleaseManifest(dataRoot: string): DataReleaseManifest | null {
 	try {
 		const raw = JSON.parse(readFileSync(`${dataRoot}/releases.json`, "utf8")) as unknown
+
 		if (!raw || typeof raw !== "object") return null
 		const out: DataReleaseManifest = {}
+
 		for (const [family, version] of Object.entries(raw as Record<string, unknown>)) {
 			if (typeof version === "string" && version) out[family] = version
 		}
+
 		return Object.keys(out).length > 0 ? out : null
 	} catch {
 		return null
@@ -36,8 +39,8 @@ export function readReleaseManifest(dataRoot: string): DataReleaseManifest | nul
 }
 
 /**
- * Resolve a shard's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db` when
- * present, else the legacy unversioned `<family>-us-<slug>.db`, else null if neither exists.
+ * Resolve a shard's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db` when present, else the legacy
+ * unversioned `<family>-us-<slug>.db`, else null if neither exists.
  */
 export function resolveShardPath(
 	dataRoot: string,
@@ -46,10 +49,13 @@ export function resolveShardPath(
 	manifest: DataReleaseManifest | null
 ): string | null {
 	const version = manifest?.[family]
+
 	if (version) {
 		const versioned = `${dataRoot}/${family}/${family}-us-${slug}-${version}.db`
+
 		if (existsSync(versioned)) return versioned
 	}
 	const legacy = `${dataRoot}/${family}/${family}-us-${slug}.db`
+
 	return existsSync(legacy) ? legacy : null
 }

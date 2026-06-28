@@ -15,8 +15,10 @@
  *   License: stamped `"Public Domain"` per Texas state government open-data terms.
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
@@ -39,9 +41,12 @@ interface TxNotaryRow {
 
 function splitAddress(address: string): { house_number?: string; street: string } | null {
 	const trimmed = address.trim()
+
 	if (!trimmed) return null
 	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (m) return { house_number: m[1], street: m[2]!.trim() }
+
 	return { street: trimmed }
 }
 
@@ -68,12 +73,15 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const record of parser as AsyncIterable<TxNotaryRow>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const rawAddress = (record.Address ?? "").trim()
+
 					if (!rawAddress) continue
 
 					const firstName = (record["First Name"] ?? "").trim()
@@ -84,6 +92,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 					// Addresses look like: "1215 MCMILLAN DR\nCEDAR HILL, TX 75104"
 					const addrSingleLine = rawAddress.replace(/\n/g, ", ")
 					const cszMatch = CITY_STATE_ZIP_SUFFIX.exec(addrSingleLine)
+
 					if (!cszMatch) continue
 
 					const city = (cszMatch[1] ?? "").trim()
@@ -93,13 +102,16 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 					if (!city || !stateAbbr) continue
 
 					const state = lookupStateAbbreviation(stateAbbr)
+
 					if (!state) continue
 
 					// Extract the street portion (everything before the city/state/zip)
 					const streetPortion = addrSingleLine.slice(0, cszMatch.index).replace(/,\s*$/, "").trim()
+
 					if (!streetPortion) continue
 
 					const split = splitAddress(streetPortion)
+
 					if (!split) continue
 
 					const venue = [firstName, lastName].filter(Boolean).join(" ") || undefined
@@ -119,6 +131,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 						.join(", ")
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length <= 2) continue
 
 					const sourceId = notaryId

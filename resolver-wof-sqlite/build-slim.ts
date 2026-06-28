@@ -35,12 +35,13 @@
  *   as a custom postcode DB, isn't built yet).
  */
 
-import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
-import { Kysely, sql } from "kysely"
 import { copyFileSync, existsSync, mkdtempSync, rmSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
+import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
+import { Kysely, sql } from "kysely"
 
 import { buildPlaceSearchFts, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.js"
 import type { NamesTable, SprTable } from "./schema.js"
@@ -55,12 +56,11 @@ export interface BuildSlimOptions {
 	/** Cap on the number of localities to keep per country, by descending population. */
 	topLocalitiesPerCountry?: number
 	/**
-	 * Drop the `names` table after the FTS index is built (default false). `place_search` is a
-	 * self-contained FTS5 (no external `content=`), so once it's built `names` is only the build-time
-	 * source — the resolver queries `place_search` + `spr` + `place_population` + `coincident_roles`
-	 * and never reads `names` at runtime. Dropping it is the single biggest size win (~2/3 of the
-	 * file for a multi-locale build; see #359). A future consumer that needs raw alt-names at runtime
-	 * should ship a SEPARATE shard rather than re-bloat the hot DB.
+	 * Drop the `names` table after the FTS index is built (default false). `place_search` is a self-contained FTS5 (no
+	 * external `content=`), so once it's built `names` is only the build-time source — the resolver queries
+	 * `place_search` + `spr` + `place_population` + `coincident_roles` and never reads `names` at runtime. Dropping it is
+	 * the single biggest size win (~2/3 of the file for a multi-locale build; see #359). A future consumer that needs raw
+	 * alt-names at runtime should ship a SEPARATE shard rather than re-bloat the hot DB.
 	 */
 	dropNames?: boolean
 	/** Optional progress callback for CLI / test introspection. */
@@ -111,10 +111,10 @@ interface PlacePopulationTable {
 }
 
 /**
- * Kysely schema for the build phase. Mirrors the resolver-facing tables, plus the ATTACHed `src.*`
- * tables so the row-copying queries can name the source schema in `selectFrom` without falling back
- * to raw SQL. ATTACH itself is still raw — Kysely doesn't model it — but everything downstream (the
- * SELECT-INSERT step that does the actual filtering work) goes through the builder.
+ * Kysely schema for the build phase. Mirrors the resolver-facing tables, plus the ATTACHed `src.*` tables so the
+ * row-copying queries can name the source schema in `selectFrom` without falling back to raw SQL. ATTACH itself is
+ * still raw — Kysely doesn't model it — but everything downstream (the SELECT-INSERT step that does the actual
+ * filtering work) goes through the builder.
  */
 interface BuildSchema {
 	spr: SprTable
@@ -133,12 +133,15 @@ export async function buildSlimWofDatabase(opts: BuildSlimOptions): Promise<Buil
 	// Callers pass `""` for shards that don't exist yet (e.g. a not-yet-built custom postcode DB).
 	// Skip empties up front; require every remaining path to exist.
 	const inputs = opts.inputs.filter((p) => p.length > 0)
+
 	if (inputs.length === 0) throw new Error("no input WOF dbs provided")
+
 	for (const input of inputs) {
 		if (!existsSync(input)) throw new Error(`input WOF db not found: ${input}`)
 	}
 
 	progress("init", `${inputs.length} input(s) → ${opts.output}`)
+
 	if (existsSync(opts.output)) rmSync(opts.output)
 
 	// Open the output DB and create the empty schema. We discover the schema from the FIRST input
@@ -146,14 +149,18 @@ export async function buildSlimWofDatabase(opts: BuildSlimOptions): Promise<Buil
 	// ordering / types. `CREATE TABLE AS SELECT` flattens types to dynamic, which would break
 	// callers that rely on column-affinity behavior.
 	const out = new DatabaseSync(opts.output)
+
 	try {
 		const firstSource = new DatabaseSync(inputs[0]!, { readOnly: true })
+
 		try {
 			progress("schema", "copying spr / names / place_population schemas from first input")
+
 			for (const table of COPIED_TABLES) {
 				const createSql = firstSource
 					.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`)
 					.get(table) as { sql?: string } | undefined
+
 				if (createSql?.sql) {
 					// Raw DDL by design (introspect-and-replay): we exec the SOURCE DB's own CREATE TABLE
 					// string read from sqlite_master, so a static Kysely builder can't express it. See AGENTS.md.
@@ -256,8 +263,10 @@ async function copyFromSource(
 	const tmpScratch = mkdtempSync(join(tmpdir(), "mailwoman-slim-src-"))
 	const scratchPath = join(tmpScratch, "src.db")
 	copyFileSync(inputPath, scratchPath)
+
 	try {
 		out.exec(`ATTACH DATABASE '${scratchPath.replace(/'/g, "''")}' AS src;`)
+
 		try {
 			// Does this shard carry the pre-built population aux table? The admin source does; a bare
 			// postcode shard might not. The locality ranking + population copy below adapt accordingly.
@@ -352,6 +361,7 @@ async function copyFromSource(
 			const relationSchema = out
 				.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)
 				.get() as { sql?: string } | undefined
+
 			if (relationSchema?.sql) {
 				progress("coincident_roles", `${inputPath}: copying dual-role relation`)
 				out.exec(relationSchema.sql.replace(/CREATE TABLE/i, "CREATE TABLE IF NOT EXISTS"))
@@ -371,5 +381,6 @@ async function copyFromSource(
 
 function countRows(db: DatabaseSync, table: string): number {
 	const row = db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n?: number } | undefined
+
 	return Number(row?.n ?? 0)
 }

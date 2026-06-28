@@ -24,6 +24,7 @@ const { values: a } = parseArgs({
 		out: { type: "string", default: "" },
 	},
 })
+
 if (!a.shard) throw new Error("--shard <situs.db> required")
 const N = Number(a.n)
 const region = a.region!.toUpperCase()
@@ -51,11 +52,13 @@ const rows = db
 }>
 
 const lines: string[] = []
+
 for (const r of rows) {
 	const number = String(r.number).trim()
 	const street = String(r.street_raw).trim()
 	const postcode = String(r.postcode).trim()
 	const locality = String(r.locality_norm || "").trim()
+
 	if (!number || !street || !postcode) continue
 	// Realistic input: number street, locality REGION postcode. Interp is postcode-scoped, so the
 	// postcode is what matters; locality/region help the parser route + resolve admin.

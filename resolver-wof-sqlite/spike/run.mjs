@@ -1,6 +1,6 @@
 /**
- * Spike orchestrator. Spawns the local Range-aware HTTP server, launches a headless Chromium via
- * Playwright, loads the spike page, captures console events + network log, writes results to disk.
+ * Spike orchestrator. Spawns the local Range-aware HTTP server, launches a headless Chromium via Playwright, loads the
+ * spike page, captures console events + network log, writes results to disk.
  *
  * Usage: node run.mjs --db /path/to/whosonfirst-data-admin-us-latest.db
  *
@@ -17,20 +17,25 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 
 function parseArgs(argv) {
 	const out = { db: null, port: 8765, headless: true }
+
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
+
 		if (a === "--db") out.db = argv[++i]
 		else if (a === "--port") out.port = Number(argv[++i])
 		else if (a === "--headed") out.headless = false
 	}
+
 	if (!out.db) {
 		console.error("usage: node run.mjs --db <path-to-wof.db> [--port 8765] [--headed]")
 		process.exit(2)
 	}
+
 	if (!existsSync(out.db)) {
 		console.error(`db not found: ${out.db}`)
 		process.exit(2)
 	}
+
 	return out
 }
 
@@ -44,6 +49,7 @@ async function main() {
 	const fs = await import("node:fs/promises")
 	const dbSize = (await fs.stat(args.db)).size
 	await fs.symlink(args.db, join(root, "wof.db"))
+
 	// Copy the harness files (small) so the server sees them under root.
 	for (const f of ["index.html", "client.mjs"]) {
 		copyFileSync(join(HERE, f), join(root, f))
@@ -52,6 +58,7 @@ async function main() {
 	// is transparent (modules land in the repo root, not the spike dir).
 	const sqlJsHttpvfsEntry = fileURLToPath(import.meta.resolve("sql.js-httpvfs"))
 	const distSrc = dirname(sqlJsHttpvfsEntry)
+
 	if (!existsSync(join(distSrc, "sqlite.worker.js"))) {
 		console.error(`sql.js-httpvfs dist incomplete at ${distSrc}. Run \`yarn install\` from the repo root.`)
 		rmSync(root, { recursive: true, force: true })
@@ -72,13 +79,17 @@ async function main() {
 		server.stdout.on("data", (chunk) => {
 			buf += chunk
 			let nl
+
 			while ((nl = buf.indexOf("\n")) !== -1) {
 				const line = buf.slice(0, nl)
 				buf = buf.slice(nl + 1)
+
 				if (!line) continue
+
 				try {
 					const event = JSON.parse(line)
 					serverEvents.push(event)
+
 					if (event.kind === "ready" && !serverReady) {
 						serverReady = true
 						resolve()
@@ -106,6 +117,7 @@ async function main() {
 	const consoleEvents = []
 	page.on("console", (msg) => {
 		const text = msg.text()
+
 		if (text.startsWith("SPIKE ")) {
 			try {
 				consoleEvents.push(JSON.parse(text.slice("SPIKE ".length)))
@@ -167,6 +179,7 @@ async function main() {
 	lines.push(`\n## Per-query latency\n`)
 	lines.push(`| Query | ms | rows | error |`)
 	lines.push(`|---|---:|---:|---|`)
+
 	for (const q of queries) {
 		lines.push(`| ${q.label} | ${q.ms} | ${q.rows ?? "—"} | ${q.error ?? "—"} |`)
 	}

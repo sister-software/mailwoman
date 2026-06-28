@@ -44,20 +44,26 @@ const ORDERS = ["canonical", "pc-first", "city-first"]
 
 function render(street: string, num: string, cp: string, city: string, order: string): string {
 	if (order === "canonical") return `${street} ${num}, ${cp} ${city}`
+
 	if (order === "pc-first") return `${cp} ${city}, ${street} ${num}`
+
 	return `${city}, ${cp}, ${street} ${num}`
 }
 
 /** Python `str.isupper()`: at least one cased char, and every cased char is uppercase. */
 function pyIsUpper(s: string): boolean {
 	let hasCased = false
+
 	for (const ch of s) {
 		const lo = ch.toLowerCase()
 		const up = ch.toUpperCase()
+
 		if (lo === up) continue // not a cased character
 		hasCased = true
+
 		if (ch !== up) return false // a cased char that isn't uppercase
 	}
+
 	return hasCased
 }
 
@@ -65,11 +71,13 @@ function pyIsUpper(s: string): boolean {
 function pyTitle(s: string): string {
 	let out = ""
 	let prevCased = false
+
 	for (const ch of s) {
 		const cased = ch.toLowerCase() !== ch.toUpperCase()
 		out += prevCased ? ch.toLowerCase() : ch.toUpperCase()
 		prevCased = cased
 	}
+
 	return out
 }
 
@@ -78,14 +86,15 @@ function titlecaseIfUpper(s: string): string {
 }
 
 /**
- * Python `float(s)` for coordinate strings: empty/non-numeric -> null (the ValueError -> continue
- * path).
+ * Python `float(s)` for coordinate strings: empty/non-numeric -> null (the ValueError -> continue path).
  */
 function pyFloat(s: string | undefined): number | null {
 	if (s == null) return null
 	const t = s.trim()
+
 	if (t === "") return null
 	const v = Number(t)
+
 	return Number.isNaN(v) ? null : v
 }
 
@@ -111,6 +120,7 @@ async function main(): Promise<void> {
 			seed: { type: "string", default: "722" },
 		},
 	})
+
 	for (const req of ["country", "out"] as const) {
 		if (!values[req]) {
 			process.stderr.write(`error: the following arguments are required: --${req}\n`)
@@ -138,6 +148,7 @@ async function main(): Promise<void> {
 
 	let total = 0
 	let done = false
+
 	for await (const row of rowStreams()) {
 		if (done) break
 		const num = (row.NUMBER ?? "").trim()
@@ -147,23 +158,29 @@ async function main(): Promise<void> {
 		const region = (row.REGION ?? "").trim()
 		const lat = pyFloat(row.LAT)
 		const lon = pyFloat(row.LON)
+
 		if (lat === null || lon === null) continue
+
 		if (!(num && street && city && cp && num !== "0" && /^\p{L}/u.test(street))) continue
 		const key = region || cp.slice(0, 2) // geographic diversity bucket
 		let bucket = buckets.get(key)
+
 		if (!bucket) {
 			bucket = []
 			buckets.set(key, bucket)
 		}
+
 		if (bucket.length < perBucket) {
 			bucket.push({ street: titlecaseIfUpper(street), num, cp, city: titlecaseIfUpper(city), lat, lon })
 			total += 1
 		}
+
 		if (total >= n * 2) done = true
 	}
 
 	const rows: Record<string, unknown>[] = []
 	let i = 0
+
 	for (const key of [...buckets.keys()].sort()) {
 		for (const r of buckets.get(key)!) {
 			const order = ORDERS[i % 3]!

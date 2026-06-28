@@ -31,10 +31,11 @@
  *   Outputs JSON report to stdout, human-readable summary to stderr.
  */
 
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createAddressParser, createRuntimePipeline } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
+
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createAddressParser, createRuntimePipeline } from "mailwoman"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,15 +85,19 @@ interface ModeReport {
 
 function loadGolden(dir: string): GoldenRow[] {
 	const rows: GoldenRow[] = []
+
 	for (const file of ["us.jsonl", "fr.jsonl", "adversarial.jsonl"]) {
 		const path = resolve(dir, file)
+
 		try {
 			const lines = readFileSync(path, "utf-8").split("\n").filter(Boolean)
+
 			for (const line of lines) rows.push(JSON.parse(line))
 		} catch {
 			// file may not exist
 		}
 	}
+
 	return rows
 }
 
@@ -106,9 +111,11 @@ function normalizeComponent(v: string | undefined): string {
 
 function exactMatch(predicted: Record<string, string>, expected: Record<string, string>): boolean {
 	const allKeys = new Set([...Object.keys(predicted), ...Object.keys(expected)])
+
 	for (const key of allKeys) {
 		if (normalizeComponent(predicted[key]) !== normalizeComponent(expected[key])) return false
 	}
+
 	return true
 }
 
@@ -118,35 +125,48 @@ function extractFailureClasses(row: GoldenRow): string[] {
 
 	if (/kryptonite/i.test(notes)) {
 		const match = notes.match(/kryptonite\/([a-z-]+)/i)
+
 		if (match) classes.push(`kryptonite/${match[1]}`)
 		else classes.push("kryptonite/general")
 	}
 
 	// Map to the "addresses that break geocoders" taxonomy
 	if (/ambiguous|springfield|paris.*texas/i.test(notes)) classes.push("failure/ambiguous-locality")
+
 	if (/repeated.*admin|NY-NY/i.test(notes)) classes.push("failure/repeated-admin")
+
 	if (/tokeniz|whitespace/i.test(notes)) classes.push("failure/tokenization-trap")
+
 	if (/street.*local|collisi/i.test(notes)) classes.push("failure/street-locality-collision")
+
 	if (/numeric|house.*number.*postcode/i.test(notes)) classes.push("failure/numeric-chaos")
+
 	if (/unicode|transliter|non.?latin/i.test(notes)) classes.push("failure/unicode-trap")
+
 	if (/language.*switch|mixed.*script/i.test(notes)) classes.push("failure/language-switch")
+
 	if (/admin.*nightmare|hierarchy/i.test(notes)) classes.push("failure/admin-nightmare")
 
 	if (classes.length === 0) classes.push("normal")
+
 	return classes
 }
 
 function treeToComponents(tree: { roots: Array<{ tag?: string; value?: string }> }): Record<string, string> {
 	const out: Record<string, string> = {}
+
 	for (const node of tree.roots ?? []) {
 		if (node.tag && node.value) out[node.tag] = node.value
 	}
+
 	return out
 }
 
 function averageConfidence(tree: { roots: Array<{ confidence?: number }> }): number {
 	const confs = (tree.roots ?? []).map((n) => n.confidence ?? 0).filter((c) => c > 0)
+
 	if (confs.length === 0) return 0
+
 	return confs.reduce((a, b) => a + b, 0) / confs.length
 }
 
@@ -167,6 +187,7 @@ function computeMetrics(
 
 	// Exact match
 	let exactMatchCount = 0
+
 	for (const r of results) {
 		if (exactMatch(r.predicted, r.expected)) exactMatchCount++
 	}
@@ -195,20 +216,24 @@ function computeMetrics(
 						? "conf:0.5-0.7"
 						: "conf<0.5"
 		buckets[bucket]!.total++
+
 		if (isCorrect) buckets[bucket]!.correct++
 
 		if (r.confidence > 0.9 && !isCorrect) overconfidentWrongCount++
 	}
 
 	const calibration: Record<string, { total: number; correct: number; accuracy: number }> = {}
+
 	for (const [k, v] of Object.entries(buckets)) {
 		calibration[k] = { ...v, accuracy: v.total > 0 ? v.correct / v.total : 0 }
 	}
 
 	// Per-tag P/R/F1
 	const allTags = new Set<string>()
+
 	for (const r of results) {
 		for (const k of Object.keys(r.expected)) allTags.add(k)
+
 		for (const k of Object.keys(r.predicted)) allTags.add(k)
 	}
 
@@ -220,11 +245,14 @@ function computeMetrics(
 		let tp = 0,
 			fp = 0,
 			fn = 0
+
 		for (const r of results) {
 			const pred = normalizeComponent(r.predicted[tag])
 			const gold = normalizeComponent(r.expected[tag])
+
 			if (pred && gold && pred === gold) tp++
 			else if (pred && (!gold || pred !== gold)) fp++
+
 			if (gold && (!pred || pred !== gold)) fn++
 		}
 		const precision = tp / Math.max(tp + fp, 1)
@@ -239,17 +267,21 @@ function computeMetrics(
 
 	// Per-failure-class
 	const failureClassMap = new Map<string, { total: number; exactMatch: number }>()
+
 	for (const r of results) {
 		const isCorrect = exactMatch(r.predicted, r.expected)
+
 		for (const fc of r.failureClasses) {
 			const entry = failureClassMap.get(fc) ?? { total: 0, exactMatch: 0 }
 			entry.total++
+
 			if (isCorrect) entry.exactMatch++
 			failureClassMap.set(fc, entry)
 		}
 	}
 
 	const perFailureClass: Record<string, { total: number; exactMatch: number; rate: number }> = {}
+
 	for (const [fc, v] of failureClassMap) {
 		perFailureClass[fc] = { ...v, rate: v.total > 0 ? v.exactMatch / v.total : 0 }
 	}
@@ -278,17 +310,21 @@ type ModeRunner = (row: GoldenRow) => Promise<{ components: Record<string, strin
 
 function createRuleOnlyRunner(): ModeRunner {
 	const parser = createAddressParser()
+
 	return async (row) => {
 		const solutions = await parser.parse(row.raw)
+
 		if (!solutions || solutions.length === 0) return { components: {}, confidence: 0 }
 		const top = solutions[0]!
 		const components: Record<string, string> = {}
+
 		// classifications is Partial<Record<VisibleClassification, string[]>>
 		for (const [tag, values] of Object.entries(top.classifications ?? {})) {
 			if (values && values.length > 0) {
 				components[tag] = values.join(" ")
 			}
 		}
+
 		return { components, confidence: top.score ?? 0 }
 	}
 }
@@ -311,8 +347,10 @@ async function loadClassifier(opts: WeightsOpts): Promise<NeuralAddressClassifie
 
 async function createNeuralArgmaxRunner(opts: WeightsOpts): Promise<ModeRunner> {
 	const classifier = await loadClassifier(opts)
+
 	return async (row) => {
 		const tree = await classifier.parse(row.raw)
+
 		return { components: treeToComponents(tree), confidence: averageConfidence(tree) }
 	}
 }
@@ -320,8 +358,10 @@ async function createNeuralArgmaxRunner(opts: WeightsOpts): Promise<ModeRunner> 
 async function createHybridRunner(opts: WeightsOpts): Promise<ModeRunner> {
 	const classifier = await loadClassifier(opts)
 	const pipeline = createRuntimePipeline({ classifier })
+
 	return async (row) => {
 		const result = await pipeline(row.raw)
+
 		return { components: treeToComponents(result.tree), confidence: averageConfidence(result.tree) }
 	}
 }
@@ -329,8 +369,10 @@ async function createHybridRunner(opts: WeightsOpts): Promise<ModeRunner> {
 async function createHybridJointRunner(opts: WeightsOpts): Promise<ModeRunner> {
 	const classifier = await loadClassifier(opts)
 	const pipeline = createRuntimePipeline({ classifier })
+
 	return async (row) => {
 		const result = await pipeline(row.raw, { forceJointReconcile: true })
+
 		return { components: treeToComponents(result.tree), confidence: averageConfidence(result.tree) }
 	}
 }
@@ -352,6 +394,7 @@ function formatMarkdown(reports: ModeReport[]): string {
 	lines.push("")
 	lines.push("| Mode | Exact Match | Macro F1 | Empty Parse | Overconf Wrong |")
 	lines.push("|---|---|---|---|---|")
+
 	for (const r of reports) {
 		lines.push(
 			`| ${r.mode} | ${(r.exactMatchRate * 100).toFixed(1)}% | ${(r.macroF1 * 100).toFixed(1)}% | ${(r.emptyParseRate * 100).toFixed(1)}% | ${(r.overconfidentWrongRate * 100).toFixed(1)}% |`
@@ -367,6 +410,7 @@ function formatMarkdown(reports: ModeReport[]): string {
 		lines.push("")
 		lines.push("| Tag | P | R | F1 | TP | FP | FN |")
 		lines.push("|---|---|---|---|---|---|---|")
+
 		for (const [tag, m] of Object.entries(r.perTag).sort((a, b) => b[1].f1 - a[1].f1)) {
 			lines.push(
 				`| ${tag} | ${(m.precision * 100).toFixed(1)}% | ${(m.recall * 100).toFixed(1)}% | ${(m.f1 * 100).toFixed(1)}% | ${m.tp} | ${m.fp} | ${m.fn} |`
@@ -378,6 +422,7 @@ function formatMarkdown(reports: ModeReport[]): string {
 		lines.push("")
 		lines.push("| Bucket | Total | Correct | Accuracy |")
 		lines.push("|---|---|---|---|")
+
 		for (const [bucket, v] of Object.entries(r.calibration)) {
 			lines.push(`| ${bucket} | ${v.total} | ${v.correct} | ${(v.accuracy * 100).toFixed(1)}% |`)
 		}
@@ -388,6 +433,7 @@ function formatMarkdown(reports: ModeReport[]): string {
 			lines.push("")
 			lines.push("| Class | Total | Exact Match | Rate |")
 			lines.push("|---|---|---|---|")
+
 			for (const [fc, v] of Object.entries(r.perFailureClass).sort((a, b) => a[1].rate - b[1].rate)) {
 				lines.push(`| ${fc} | ${v.total} | ${v.exactMatch} | ${(v.rate * 100).toFixed(1)}% |`)
 			}
@@ -413,8 +459,11 @@ async function main() {
 
 	const rows = loadGolden(goldenDir)
 	console.error(`loaded ${rows.length} golden rows`)
+
 	if (modelPath) console.error(`using custom model: ${modelPath}`)
+
 	if (tokenizerPath) console.error(`using custom tokenizer: ${tokenizerPath}`)
+
 	if (modelCardPath) console.error(`using custom model-card: ${modelCardPath}`)
 
 	// Build runners
@@ -464,6 +513,7 @@ async function main() {
 			}
 
 			processed++
+
 			if (processed % 500 === 0) console.error(`  ${processed}/${rows.length}...`)
 		}
 
@@ -484,6 +534,7 @@ async function main() {
 
 	// Optionally write markdown to file
 	const outPath = process.argv.find((a) => a.startsWith("--out="))?.split("=")[1]
+
 	if (outPath) {
 		writeFileSync(outPath, markdown, "utf-8")
 		console.error(`\nMarkdown report written to ${outPath}`)

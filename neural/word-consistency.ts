@@ -53,16 +53,17 @@ export interface WordConsistencyResult {
 function labelType(label: string): string {
 	if (label === "O") return "O"
 	const dash = label.indexOf("-")
+
 	return dash >= 0 ? label.slice(dash + 1) : label
 }
 
 /**
- * Rewrite per-piece label indices so every `▁`-delimited word carries one tag, chosen by a
- * confidence-weighted vote over the post-prior `emissions`. See the module docstring.
+ * Rewrite per-piece label indices so every `▁`-delimited word carries one tag, chosen by a confidence-weighted vote
+ * over the post-prior `emissions`. See the module docstring.
  *
  * @param pieces SentencePiece pieces (the `▁`-marked surface is the word-boundary signal).
- * @param emissions Per-piece × per-label scores AFTER all priors/masks (the distribution the argmax
- *   would see). Softmaxed per piece for the vote so each piece's confidence carries its weight.
+ * @param emissions Per-piece × per-label scores AFTER all priors/masks (the distribution the argmax would see).
+ *   Softmaxed per piece for the vote so each piece's confidence carries its weight.
  * @param labels The BIO label vocabulary (index ↔ label).
  * @param labelIndices The current per-piece decision (viterbi path or argmax). Not mutated.
  */
@@ -77,8 +78,10 @@ export function enforceWordConsistency(
 	const typeI = new Map<string, number>()
 	const idxType = labels.map((l, idx) => {
 		const t = labelType(l)
+
 		if (l.startsWith("B-")) typeB.set(t, idx)
 		else if (l.startsWith("I-")) typeI.set(t, idx)
+
 		return t
 	})
 	const oIdx = labels.indexOf("O")
@@ -96,15 +99,18 @@ export function enforceWordConsistency(
 		if (cur.length) words.push(cur)
 		cur = []
 	}
+
 	for (let i = 0; i < pieces.length; i++) {
 		const pc = pieces[i]!.piece
 		const isSentinel = pc.startsWith(SPACE_SENTINEL)
 		const content = isSentinel ? pc.slice(SPACE_SENTINEL.length) : pc
+
 		if (content.trim() === "") {
 			// Separator (bare `▁` or whitespace) — ends the current word, belongs to none.
 			flush()
 			continue
 		}
+
 		if (isSentinel) {
 			flush()
 			cur = [i]
@@ -119,8 +125,10 @@ export function enforceWordConsistency(
 	for (const w of words) {
 		// Confidence-weighted vote: sum each piece's softmax mass per TYPE (B-X + I-X) across the word.
 		const score = new Map<string, number>()
+
 		for (const pi of w) {
 			const probs = softmax([...emissions[pi]!])
+
 			for (let li = 0; li < probs.length; li++) {
 				const t = idxType[li]!
 				score.set(t, (score.get(t) ?? 0) + probs[li]!)
@@ -128,6 +136,7 @@ export function enforceWordConsistency(
 		}
 		let bestType = "O"
 		let bestScore = -1
+
 		for (const [t, s] of score) {
 			if (s > bestScore) {
 				bestScore = s
@@ -137,9 +146,11 @@ export function enforceWordConsistency(
 		// Target label index per piece: B-<type> for the first piece, I-<type> for the rest (or O).
 		const targets = w.map((_pi, k) => {
 			if (bestType === "O") return oIdx
+
 			return k === 0 ? (typeB.get(bestType) ?? oIdx) : (typeI.get(bestType) ?? oIdx)
 		})
 		const changed = w.some((pi, k) => out[pi] !== targets[k])
+
 		if (!changed) continue // word already consistent → byte-identical, leave it
 		healedWords++
 		const meanConf = bestScore / w.length // mean p(bestType) — length-invariant (DeepSeek t3)

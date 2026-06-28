@@ -39,6 +39,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("message", (event) => {
 	const data = event.data
+
 	if (data && data.type === "mailwoman-prune-db-ranges" && typeof data.keepVersion === "string") {
 		event.waitUntil(pruneOtherVersions(data.keepVersion))
 	}
@@ -46,18 +47,22 @@ self.addEventListener("message", (event) => {
 
 self.addEventListener("fetch", (event) => {
 	const request = event.request
+
 	if (request.method !== "GET") return
 	let url
+
 	try {
 		url = new URL(request.url)
 	} catch {
 		return
 	}
+
 	// Only the DB files, and only their plain URLs — a `?cb=` cache-busting retry from the app means
 	// "give me untouched fresh bytes", so it bypasses this cache entirely.
 	if (url.hostname !== DB_HOST || !url.pathname.endsWith(".db") || url.search !== "") return
 	const range = request.headers.get("range")
 	const match = range ? /^bytes=(\d+)-(\d+)$/.exec(range) : null
+
 	if (!match) return
 	event.respondWith(respondWithCachedRange(request, url.href, Number(match[1]), Number(match[2])))
 })
@@ -70,9 +75,11 @@ async function respondWithCachedRange(request, href, start, end) {
 		// URL, with the real Content-Range stashed in a header for reconstruction.
 		const cacheKey = `${href}?mwrange=${start}-${end}`
 		const hit = await cache.match(cacheKey)
+
 		if (hit) {
 			const contentRange = hit.headers.get("x-mw-content-range")
 			const body = await hit.arrayBuffer()
+
 			if (contentRange && body.byteLength === rangeLength(contentRange)) {
 				return rangeResponse(body, contentRange)
 			}
@@ -81,6 +88,7 @@ async function respondWithCachedRange(request, href, start, end) {
 
 		let response = await fetch(request)
 		let chunk = response.status === 206 ? await validatedChunk(response) : null
+
 		if (!chunk && response.status === 206) {
 			// Torn chunk out of the HTTP cache (the Safari failure mode) — force fresh bytes once.
 			response = await fetch(href, {
@@ -92,6 +100,7 @@ async function respondWithCachedRange(request, href, start, end) {
 			})
 			chunk = response.status === 206 ? await validatedChunk(response) : null
 		}
+
 		if (!chunk) return response // 200/4xx/5xx or still torn — hand it to the app untouched
 
 		await cache.put(
@@ -104,6 +113,7 @@ async function respondWithCachedRange(request, href, start, end) {
 				},
 			})
 		)
+
 		return rangeResponse(chunk.body, chunk.contentRange)
 	} catch {
 		return fetch(request)
@@ -111,23 +121,28 @@ async function respondWithCachedRange(request, href, start, end) {
 }
 
 /**
- * Read a 206 response's body and verify its length against the Content-Range header. The final
- * chunk of a file is legitimately shorter than requested — the header, not the request, is truth.
- * Returns null for a torn body or an unparsable header.
+ * Read a 206 response's body and verify its length against the Content-Range header. The final chunk of a file is
+ * legitimately shorter than requested — the header, not the request, is truth. Returns null for a torn body or an
+ * unparsable header.
  */
 async function validatedChunk(response) {
 	const contentRange = response.headers.get("content-range")
 	const expected = contentRange ? rangeLength(contentRange) : null
+
 	if (expected === null) return null
 	const body = await response.arrayBuffer()
+
 	if (body.byteLength !== expected) return null
+
 	return { body, contentRange }
 }
 
 /** Byte count described by a `bytes start-end/total` Content-Range header, or null. */
 function rangeLength(contentRange) {
 	const parsed = /^bytes (\d+)-(\d+)\/(?:\d+|\*)$/.exec(contentRange)
+
 	if (!parsed) return null
+
 	return Number(parsed[2]) - Number(parsed[1]) + 1
 }
 
@@ -148,6 +163,7 @@ function rangeResponse(body, contentRange) {
 async function pruneOtherVersions(keepVersion) {
 	const cache = await caches.open(CACHE_NAME)
 	const keepSegment = `/${keepVersion}/`
+
 	for (const request of await cache.keys()) {
 		if (!new URL(request.url).pathname.includes(keepSegment)) {
 			await cache.delete(request)

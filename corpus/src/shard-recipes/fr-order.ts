@@ -30,8 +30,10 @@
  *   inlined the variant logic and never called it).
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
 import { spawnSync } from "node:child_process"
+
+import type { ComponentTag } from "@mailwoman/core/types"
+
 import { stableSourceId } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
@@ -59,8 +61,10 @@ function splitCsv(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
+
 	for (let i = 0; i < line.length; i++) {
 		const c = line[i]
+
 		if (inQ) {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
@@ -75,13 +79,14 @@ function splitCsv(line: string): string[] {
 		} else cur += c
 	}
 	out.push(cur)
+
 	return out
 }
 
 /**
- * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale; cap with `head`
- * to stay under V8's string limit. Only keeps rows with a house_number (the shard's core signal)
- * and a postcode (required for reversed-order rendering to be meaningful).
+ * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale; cap with `head` to stay under V8's
+ * string limit. Only keeps rows with a house_number (the shard's core signal) and a postcode (required for
+ * reversed-order rendering to be meaningful).
  */
 function readTuples(limit: number): FrTuple[] {
 	const maxLines = Math.max(limit * 8, 40000) + 1
@@ -89,11 +94,14 @@ function readTuples(limit: number): FrTuple[] {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
 	})
+
 	if (r.status !== 0) {
 		console.error(`  WARN: unzip failed for ${SOURCE.zip} (status ${r.status})`)
+
 		return []
 	}
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return []
 	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
@@ -104,6 +112,7 @@ function readTuples(limit: number): FrTuple[] {
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
+
 	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
 		if (!lines[li]) continue
 		const cells = splitCsv(lines[li]!)
@@ -111,23 +120,27 @@ function readTuples(limit: number): FrTuple[] {
 		const locality = get(cells, iCity)
 		const house_number = get(cells, iNum)
 		const postcode = get(cells, iPost)
+
 		// Require all four fields: HN is the signal; postcode drives reversed-order variants.
 		if (!street || !locality || !house_number || !postcode) continue
 		const key = `${house_number}|${street}|${locality}|${postcode}`.toLowerCase()
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		tuples.push({ house_number, street, locality, postcode })
 	}
+
 	return tuples
 }
 
 /**
- * Optionally augment a house_number with a French ordinal suffix ("59 bis", "4 ter"). Appended with
- * a space so it forms one multi-token house_number string that alignRow can still locate verbatim.
+ * Optionally augment a house_number with a French ordinal suffix ("59 bis", "4 ter"). Appended with a space so it forms
+ * one multi-token house_number string that alignRow can still locate verbatim.
  */
 function maybeAddOrdinal(random: () => number, house_number: string): string {
 	if (random() >= ORDINAL_PROB) return house_number
 	const suffix = ORDINAL_SUFFIXES[Math.floor(random() * ORDINAL_SUFFIXES.length)]!
+
 	// Vary suffix case: "bis" (lower) vs "BIS" (upper) — a real-world split in the golden.
 	return `${house_number} ${random() < 0.5 ? suffix : suffix.toUpperCase()}`
 }
@@ -140,6 +153,7 @@ function renderCanonical(
 	locality: string
 ): { raw: string; components: Partial<Record<ComponentTag, string>> } {
 	const raw = `${hn} ${street}, ${postcode} ${locality}`
+
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
@@ -164,6 +178,7 @@ export const frOrderRecipe: ShardRecipe = {
 		const poolLimit = Math.max(count * 8, 40000)
 		const pool = readTuples(poolLimit)
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
+
 		if (pool.length === 0) {
 			throw new Error("No FR tuples found — is /tmp/oa-cache/fr__countrywide.zip present?")
 		}
@@ -183,9 +198,11 @@ export const frOrderRecipe: ShardRecipe = {
 			const isReversed = random() < reversedFraction
 
 			let rendered: { raw: string; components: Partial<Record<ComponentTag, string>> }
+
 			if (isReversed) {
 				const variantRoll = random()
 				let raw: string
+
 				if (variantRoll < 0.25) {
 					// Variant A: postcode+city as a unit, then HN+street
 					raw = `${postcode} ${locality}, ${house_number} ${street}`
@@ -208,6 +225,7 @@ export const frOrderRecipe: ShardRecipe = {
 
 			// Safety check: every component must appear verbatim in raw (alignment precondition).
 			const componentValues = Object.values(components).filter(Boolean) as string[]
+
 			if (!componentValues.every((v) => raw.includes(v))) {
 				skipped++
 				continue
@@ -237,6 +255,7 @@ export const frOrderRecipe: ShardRecipe = {
 				license: "OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE",
 			}
 			const aligned = alignRow(canonical)
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue

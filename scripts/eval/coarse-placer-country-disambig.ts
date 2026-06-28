@@ -37,6 +37,9 @@
  *   --out-md docs/articles/evals/2026-06-14-coarse-placer-country-disambig.md
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+
 import { CoarsePlacer, inMapPosterior } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -44,11 +47,10 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createWofResolver, type ResolveOpts } from "@mailwoman/resolver"
-import { readFileSync, writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -89,9 +91,12 @@ function resolvedWofNodes(tree: AddressTree): Array<{ id: number; rank: number; 
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
 			out.push({ id: Number(n.placeId.slice(4)), rank: PLACETYPE_RANK[placetype] ?? -1, placetype })
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return out
 }
 
@@ -127,11 +132,13 @@ async function main(): Promise<void> {
 	const countryCache = new Map<number, string>()
 	const countryOf = (id: number): string => {
 		let c = countryCache.get(id)
+
 		if (c === undefined) {
 			const r = countryStmt.get(id) as { country?: string } | undefined
 			c = (r?.country ?? "").toUpperCase()
 			countryCache.set(id, c)
 		}
+
 		return c
 	}
 
@@ -140,8 +147,10 @@ async function main(): Promise<void> {
 		const clone = structuredClone(parsed)
 		const resolved = await resolver.resolveTree(clone, opts)
 		const nodes = resolvedWofNodes(resolved)
+
 		if (nodes.length === 0) return ""
 		nodes.sort((a, b) => b.rank - a.rank)
+
 		return countryOf(nodes[0]!.id)
 	}
 
@@ -158,6 +167,7 @@ async function main(): Promise<void> {
 	}
 
 	const outcomes: Outcome[] = []
+
 	for (const row of rows) {
 		const parsed = await neural.parse(row.raw, { postcodeRepair: true })
 		const pred = placer.predict(row.raw)
@@ -187,6 +197,7 @@ async function main(): Promise<void> {
 		const n = subset.length
 		const offR = subset.filter((o) => o.offRight).length
 		const onR = subset.filter((o) => o.onRight).length
+
 		return { n, off: offR, on: onR, offPct: n ? (100 * offR) / n : 0, onPct: n ? (100 * onR) / n : 0 }
 	}
 	const all = tally(outcomes)
@@ -252,6 +263,7 @@ async function main(): Promise<void> {
 		lines.push("")
 		lines.push(`| input | gold | placer | OFF | ON |`)
 		lines.push(`|---|---|---|---|---|`)
+
 		for (const o of subset) {
 			const placer = o.abstained ? `_(abstain)_` : `${o.placerCountry} ${o.placerConf.toFixed(2)}`
 			lines.push(`| ${o.row.raw} | ${o.row.country} | ${placer} | ${o.off || "—"} | ${o.on || "—"} |`)
@@ -273,10 +285,12 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (outMd) {
 		writeFileSync(outMd, md)
 		console.error(`\n[written] ${outMd}`)
 	}
+
 	if (invariantViolations.length > 0) {
 		console.error(`\n[FAIL] ${invariantViolations.length} byte-stability invariant violations`)
 		process.exitCode = 1

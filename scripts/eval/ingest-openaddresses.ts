@@ -278,8 +278,10 @@ function parseArgs(): Options {
 		offline: false,
 		sources: null,
 	}
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--out") out.out = args[++i]!
 		else if (a === "--cache") out.cache = args[++i]!
 		else if (a === "--target") out.target = parseInt(args[++i]!, 10)
@@ -292,17 +294,20 @@ function parseArgs(): Options {
 				.filter(Boolean)
 		else throw new Error(`Unknown flag: ${a}`)
 	}
+
 	return out
 }
 
 // Deterministic PRNG (mulberry32) so sampling is reproducible from --seed.
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
+
 	return function () {
 		a |= 0
 		a = (a + 0x6d2b79f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 }
@@ -313,47 +318,58 @@ function zipPathFor(cache: string, source: Source): string {
 
 function download(source: Source, cache: string, offline: boolean): DownloadResult {
 	const dest = zipPathFor(cache, source)
+
 	if (existsSync(dest) && statSync(dest).size > 0) {
 		return { dest, downloaded: false }
 	}
+
 	if (offline) {
 		return { dest, downloaded: false, missing: true }
 	}
 	const url = `${RESULTS_BASE}/${source.key}.zip`
 	process.stderr.write(`  downloading ${source.key} (~${(source.zipBytes / 1e6).toFixed(1)} MB)...\n`)
 	const r = spawnSync("curl", ["-sSL", "-m", "600", "-o", dest, url], { stdio: ["ignore", "ignore", "inherit"] })
+
 	if (r.status !== 0) {
 		return { dest, downloaded: false, error: `curl exit ${r.status}` }
 	}
+
 	if (!existsSync(dest) || statSync(dest).size === 0) {
 		return { dest, downloaded: false, error: "empty download" }
 	}
+
 	return { dest, downloaded: true }
 }
 
 // List the CSV entry inside a zip (the data file is `<key>.csv`, e.g. us/dc/statewide.csv).
 function csvEntryName(zipPath: string): string | null {
 	const r = spawnSync("unzip", ["-Z1", zipPath], { encoding: "utf8" })
+
 	if (r.status !== 0) return null
 	const lines = r.stdout
 		.split("\n")
 		.map((s) => s.trim())
 		.filter(Boolean)
+
 	return lines.find((l) => l.toLowerCase().endsWith(".csv")) || null
 }
 
 // Read the packaged README.txt's "License:" line for the operator's records (best-effort).
 function readPackagedLicense(zipPath: string): string | null {
 	const entryR = spawnSync("unzip", ["-Z1", zipPath], { encoding: "utf8" })
+
 	if (entryR.status !== 0) return null
 	const readme = entryR.stdout
 		.split("\n")
 		.map((s) => s.trim())
 		.find((l) => l.toLowerCase().endsWith("readme.txt"))
+
 	if (!readme) return null
 	const r = spawnSync("unzip", ["-p", zipPath, readme], { encoding: "utf8" })
+
 	if (r.status !== 0) return null
 	const line = r.stdout.split("\n").find((l) => l.toLowerCase().startsWith("license:"))
+
 	return line ? line.replace(/^license:\s*/i, "").trim() : null
 }
 
@@ -362,8 +378,10 @@ function splitCsv(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQuotes = false
+
 	for (let i = 0; i < line.length; i++) {
 		const c = line[i]
+
 		if (inQuotes) {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
@@ -385,6 +403,7 @@ function splitCsv(line: string): string[] {
 		}
 	}
 	out.push(cur)
+
 	return out
 }
 
@@ -404,16 +423,20 @@ const FIELD_ALIASES: Record<string, string[]> = {
 function buildHeaderIndex(headerCells: string[]): Record<string, number> {
 	const lower = headerCells.map((h) => h.trim().toLowerCase())
 	const idx: Record<string, number> = {}
+
 	for (const [canon, aliases] of Object.entries(FIELD_ALIASES)) {
 		idx[canon] = -1
+
 		for (const alias of aliases) {
 			const at = lower.indexOf(alias)
+
 			if (at !== -1) {
 				idx[canon] = at
 				break
 			}
 		}
 	}
+
 	return idx
 }
 
@@ -422,11 +445,14 @@ function buildHeaderIndex(headerCells: string[]): Record<string, number> {
 function tidyText(s: string): string {
 	if (!s) return s
 	const t = s.trim().replace(/\s+/g, " ")
+
 	if (!t) return t
 	// If it's mixed case already, leave it. If all-caps or all-lower, title-case it.
 	const hasLower = /[a-z]/.test(t)
 	const hasUpper = /[A-Z]/.test(t)
+
 	if (hasLower && hasUpper) return t
+
 	return t.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase())
 }
 
@@ -436,6 +462,7 @@ function cleanPostcode(s: string): string {
 	const t = s.trim().replace(/\.0+$/, "")
 	// Keep US ZIP or ZIP+4. Reject obvious garbage.
 	const m = t.match(/^(\d{5})(?:-\d{4})?$/)
+
 	return m ? (m[1] ?? "") : ""
 }
 
@@ -461,14 +488,19 @@ function renderInput({
 	const regionPost = [region, postcode].filter(Boolean).join(" ").trim()
 	// "402 Constitution Avenue NE, Washington, DC 20002"
 	const parts: string[] = []
+
 	if (line1) parts.push(line1)
+
 	if (cityPart) parts.push(cityPart)
+
 	if (regionPost) parts.push(regionPost)
+
 	return parts.join(", ")
 }
 
 function processSource(source: Source, zipPath: string, rng: () => number, perState: number): ProcessResult {
 	const csvName = csvEntryName(zipPath)
+
 	if (!csvName) return { error: "no CSV entry in zip" }
 
 	// Stream the CSV out of the zip via `unzip -p` so we never extract the (large) file to disk.
@@ -476,17 +508,21 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
 	})
+
 	if (unzip.status !== 0) return { error: `unzip -p failed (status ${unzip.status})` }
 
 	const lines = unzip.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return { error: "empty CSV" }
 
 	const header = splitCsv(lines[0]!)
 	const idx = buildHeaderIndex(header)
+
 	if (idx.lon === -1 || idx.lat === -1) return { error: "no LON/LAT columns" }
 
 	const get = (cells: string[], k: string): string => {
 		const i = idx[k]
+
 		return i !== undefined && i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : ""
 	}
 
@@ -503,12 +539,14 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 
 	for (let li = 1; li < lines.length; li++) {
 		const raw = lines[li]
+
 		if (!raw) continue
 		read++
 		const cells = splitCsv(raw)
 
 		const lon = Number(get(cells, "lon"))
 		const lat = Number(get(cells, "lat"))
+
 		if (!Number.isFinite(lon) || !Number.isFinite(lat) || (lon === 0 && lat === 0)) {
 			droppedBadGeo++
 			continue
@@ -516,6 +554,7 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 		// Per-source geo-sanity box (US sources default to the continental-US box; non-US sources set
 		// their own `bbox`). Drops projection/garbage points.
 		const box = source.bbox ?? US_BBOX
+
 		if (lat < box.minLat || lat > box.maxLat || lon < box.minLon || lon > box.maxLon) {
 			droppedBadGeo++
 			continue
@@ -525,6 +564,7 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 		const street = tidyText(get(cells, "street"))
 		const city = tidyText(get(cells, "city"))
 		let region = get(cells, "region").trim().toUpperCase()
+
 		if (!region) region = source.state // OA region is usually populated; fall back to source state.
 		const postcode = cleanPostcode(get(cells, "postcode"))
 
@@ -533,11 +573,13 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 			droppedNoCityOrPost++
 			continue
 		}
+
 		// Strip obviously bad rows: a house number with no street.
 		if (number && !street) {
 			droppedBadStreet++
 			continue
 		}
+
 		// A street value that's just a number is junk.
 		if (street && !/[a-z]/i.test(street)) {
 			droppedBadStreet++
@@ -546,6 +588,7 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 
 		// Dedup within source on the address identity.
 		const dk = `${number}|${street.toLowerCase()}|${city.toLowerCase()}|${postcode}`
+
 		if (seen.has(dk)) {
 			droppedDup++
 			continue
@@ -553,6 +596,7 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 		seen.add(dk)
 
 		const input = renderInput({ number, street, city, region, postcode })
+
 		if (!input || !looksLikeNumber(input)) {
 			// Require at least a house number somewhere so the string reads like a real address.
 			droppedBadStreet++
@@ -569,11 +613,13 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 		}
 
 		kept++
+
 		// Reservoir sampling (Vitter algorithm R) over the surviving stream.
 		if (reservoir.length < perState) {
 			reservoir.push(record)
 		} else {
 			const j = Math.floor(rng() * kept)
+
 			if (j < perState) reservoir[j] = record
 		}
 	}
@@ -590,8 +636,10 @@ function main(): void {
 	mkdirSync(opts.cache, { recursive: true })
 
 	let sources = SOURCES
+
 	if (opts.sources) {
 		sources = SOURCES.filter((s) => opts.sources!.includes(s.key))
+
 		if (sources.length === 0) throw new Error(`No known sources match --sources ${opts.sources.join(",")}`)
 	}
 
@@ -604,11 +652,13 @@ function main(): void {
 	for (const source of sources) {
 		process.stderr.write(`\n[${source.state}] ${source.key} (${source.tier})\n`)
 		const dl = download(source, opts.cache, opts.offline)
+
 		if (dl.missing) {
 			blocked.push({ source: source.key, reason: "offline: zip not found in cache" })
 			process.stderr.write(`  SKIP (offline, missing from cache: ${dl.dest})\n`)
 			continue
 		}
+
 		if (dl.error) {
 			blocked.push({ source: source.key, reason: dl.error })
 			process.stderr.write(`  SKIP (download failed: ${dl.error})\n`)
@@ -617,6 +667,7 @@ function main(): void {
 
 		const packagedLicense = readPackagedLicense(dl.dest)
 		const result = processSource(source, dl.dest, rng, opts.perState)
+
 		if (result.error) {
 			blocked.push({ source: source.key, reason: result.error })
 			process.stderr.write(`  SKIP (parse failed: ${result.error})\n`)
@@ -635,10 +686,12 @@ function main(): void {
 
 	// Overall trim to --target, keeping per-state balance: round-robin across sources.
 	const byState = new Map<string, OaRecord[]>()
+
 	for (const { source, records } of perSourceRecords) {
 		if (!byState.has(source.state)) byState.set(source.state, [])
 		byState.get(source.state)!.push(...records)
 	}
+
 	// Shuffle each state's pool deterministically, then round-robin draw until target.
 	for (const arr of byState.values()) {
 		for (let i = arr.length - 1; i > 0; i--) {
@@ -649,12 +702,15 @@ function main(): void {
 	const pools = [...byState.entries()].map(([state, arr]) => ({ state, arr, i: 0 }))
 	const final: OaRecord[] = []
 	let progress = true
+
 	while (final.length < opts.target && progress) {
 		progress = false
+
 		for (const p of pools) {
 			if (p.i < p.arr.length) {
 				final.push(p.arr[p.i++]!)
 				progress = true
+
 				if (final.length >= opts.target) break
 			}
 		}
@@ -668,12 +724,15 @@ function main(): void {
 
 	// Final summary to stderr.
 	const stateCounts: Record<string, number> = {}
+
 	for (const r of final) stateCounts[r.state] = (stateCounts[r.state] || 0) + 1
 	process.stderr.write(`\n=== DONE ===\n`)
 	process.stderr.write(`wrote ${final.length} records → ${outPath}\n`)
 	process.stderr.write(`by state: ${JSON.stringify(stateCounts)}\n`)
+
 	if (blocked.length) {
 		process.stderr.write(`\nBLOCKED sources (${blocked.length}):\n`)
+
 		for (const b of blocked) process.stderr.write(`  - ${b.source}: ${b.reason}\n`)
 		process.stderr.write(
 			`\nTo fetch a blocked source manually, run:\n` +

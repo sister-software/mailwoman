@@ -7,9 +7,9 @@
 import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { TextNormalizer } from "@mailwoman/core/tokenization"
 import FastGlob, { type Entry } from "fast-glob"
-
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+
 import type { Displayable } from "../debugging.js"
 import { ResourceMapCache } from "../ResourceMapCache.js"
 import { DisposableSet } from "../set.js"
@@ -18,8 +18,7 @@ import { parsePlacetypeSource } from "./placetypes/admin.js"
 /**
  * Index mapping a specific value to originating languages.
  *
- * If a value is present in this index, it means that the value is a valid value in at least one
- * language.
+ * If a value is present in this index, it means that the value is a valid value in at least one language.
  */
 export type WhosOnFirstLocaleIndex = Map<string, Set<string>>
 export type ReadonlyWhosOnFirstIndex = ReadonlyMap<string, ReadonlySet<string>>
@@ -76,6 +75,7 @@ export class WOFPlacenameCache extends ResourceMapCache<string, DisposableSet<Al
 		}
 
 		if (!placename) return
+
 		if (this.blacklist?.has(placename)) return
 
 		const placenameIndex = this.open(placename)

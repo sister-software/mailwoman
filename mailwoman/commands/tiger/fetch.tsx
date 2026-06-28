@@ -11,11 +11,13 @@
  *   `--county <FIPS3>` to load just one county (handy for downstream per-county work).
  */
 
+import { setImmediate } from "node:timers/promises"
+
 import { Spinner } from "@inkjs/ui"
 import { Box, Text } from "ink"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
@@ -42,6 +44,7 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	useEffect(() => {
 		if (!/^\d{2}$/.test(options.state)) {
 			setError(`--state must be a two-digit FIPS code (got "${options.state}")`)
+
 			return
 		}
 
@@ -51,12 +54,14 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			// clean geocoding-only install of the CLI never loads it at startup, and a missing optional
 			// dep degrades to a friendly message instead of crashing the whole CLI.
 			let fetchTIGER: typeof import("@mailwoman/tiger/sdk").fetchTIGER
+
 			try {
 				;({ fetchTIGER } = await import("@mailwoman/tiger/sdk"))
 			} catch {
 				setError(
 					"`tiger fetch` needs the optional @mailwoman/tiger package — install it with: npm install @mailwoman/tiger"
 				)
+
 				return
 			}
 			const gen = fetchTIGER({
@@ -68,8 +73,10 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			})
 
 			let next = await gen.next()
+
 			while (!next.done) {
 				const ev = next.value
+
 				if (ev.phase === "download") setStatus(ev.cached ? `Using cached ${ev.file}` : `Downloaded ${ev.file}`)
 				else if (ev.phase === "extract") setStatus(`Extracted ${ev.file}`)
 				else if (ev.phase === "load")
@@ -81,7 +88,7 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 
 			setResult({ inserted: next.value.inserted, outPath: next.value.outPath, table: next.value.table })
 		})().catch((err) => setError((err as Error).message))
-	}, [options.state, options.vintage, options.county, options.out])
+	}, [options.state, options.level, options.vintage, options.county, options.out])
 
 	useEffect(() => {
 		if (!error) return

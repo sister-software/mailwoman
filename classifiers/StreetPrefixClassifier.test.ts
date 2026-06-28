@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { StreetPrefixClassifier } from "./StreetPrefixClassifier.js"
 
 const classifier = await new StreetPrefixClassifier().ready()

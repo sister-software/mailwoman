@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { TextNormalizer } from "./normalizer.js"
 
 test("normalizerr: hyphen", () => {

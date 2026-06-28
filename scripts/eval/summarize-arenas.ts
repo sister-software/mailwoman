@@ -32,6 +32,7 @@ function buckets(results: Result[]): [number, number, number, number, number, nu
 	const onlyV0 = results.filter((r) => r.v0_pass && !r.neural_pass).length
 	const neither = results.filter((r) => !r.v0_pass && !r.neural_pass).length
 	const treeOk = results.filter((r) => r.neural_tree_valid).length
+
 	return [n, both, onlyN, onlyV0, neither, treeOk]
 }
 
@@ -39,15 +40,18 @@ function buckets(results: Result[]): [number, number, number, number, number, nu
 function pyFixed(x: number, d: number): string {
 	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
 	const neg = x < 0 || Object.is(x, -0)
-	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(99).split(".")
-	let frac = fracRaw
+	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(20).split(".")
+	const frac = fracRaw
+
 	if (frac.length <= d) {
 		const body = d > 0 ? `${intPart}.${frac.padEnd(d, "0")}` : intPart!
+
 		return (neg ? "-" : "") + body
 	}
 	const keep = frac.slice(0, d)
 	const rest = frac.slice(d)
 	let roundUp: boolean
+
 	if (rest[0]! > "5") roundUp = true
 	else if (rest[0]! < "5") roundUp = false
 	else if (rest.slice(1).replace(/0+$/, "").length > 0) roundUp = true
@@ -56,9 +60,11 @@ function pyFixed(x: number, d: number): string {
 		roundUp = parseInt(lastKept, 10) % 2 === 1
 	}
 	let digits = intPart! + keep
+
 	if (roundUp) {
 		const arr = digits.split("")
 		let i = arr.length - 1
+
 		for (; i >= 0; i--) {
 			if (arr[i] === "9") arr[i] = "0"
 			else {
@@ -66,11 +72,13 @@ function pyFixed(x: number, d: number): string {
 				break
 			}
 		}
+
 		if (i < 0) arr.unshift("1")
 		digits = arr.join("")
 	}
 	const di = digits.length - d
 	const body = d > 0 ? `${digits.slice(0, di) || "0"}.${digits.slice(di)}` : digits.slice(0, di) || "0"
+
 	return (neg ? "-" : "") + body
 }
 
@@ -85,8 +93,10 @@ function main(): void {
 	console.log("| arena | n | v0 | neural | both | neural-only | v0-only | both-fail | tree-valid |")
 	console.log("| --- | --: | --: | --: | --: | --: | --: | --: | --: |")
 	const loaded: Record<string, Result[]> = {}
+
 	for (const a of arenas) {
 		let res: Result[]
+
 		try {
 			res = JSON.parse(readFileSync(`${outDir}/${a}.results.json`, "utf-8"))
 		} catch (e) {
@@ -109,12 +119,14 @@ function main(): void {
 	// postal edge-class breakdown (join on input)
 	if ("postal" in loaded) {
 		const ec: Record<string, string> = {}
+
 		for (const line of readFileSync(postalSrc, "utf-8").split("\n")) {
 			if (!line) continue
 			const row = JSON.parse(line)
 			ec[row.input] = row.edge_class ?? "?"
 		}
 		const by: Record<string, Result[]> = {}
+
 		for (const r of loaded.postal!) {
 			const cls = ec[r.input] ?? "?"
 			;(by[cls] ??= []).push(r)
@@ -122,6 +134,7 @@ function main(): void {
 		console.log("\n### postal arena by edge_class")
 		console.log("| edge_class | n | v0 | neural | both | neural-only | v0-only |")
 		console.log("| --- | --: | --: | --: | --: | --: | --: |")
+
 		for (const cls of Object.keys(by).sort()) {
 			const res = by[cls]!
 			const [n, both, onlyN, onlyV0] = buckets(res)

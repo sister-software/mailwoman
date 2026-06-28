@@ -5,6 +5,7 @@
  */
 
 import { assertClassification } from "mailwoman/sdk/test"
+
 import { ChainClassifier } from "./ChainClassifier.js"
 
 const classifier = await new ChainClassifier().ready()

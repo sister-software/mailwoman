@@ -7,7 +7,9 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { OVERTURE_ADAPTER_ID, OVERTURE_DEFAULT_LICENSE, createOvertureAdapter } from "./adapter.js"
@@ -21,17 +23,18 @@ afterEach(async () => {
 })
 
 /**
- * Write a per-country Overture corpus JSONL fixture (the shape `ingest-overture-addresses.ts
- * --corpus-jsonl` emits).
+ * Write a per-country Overture corpus JSONL fixture (the shape `ingest-overture-addresses.ts --corpus-jsonl` emits).
  */
 async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
 	const p = join(scratch, "overture-es.corpus.jsonl")
 	await writeFile(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf8")
+
 	return p
 }
 
 async function loadRows(): Promise<CanonicalRow[]> {
 	const jsonl = await readFile(join(scratch, OVERTURE_ADAPTER_ID, "canonical.jsonl"), "utf8")
+
 	return jsonl
 		.trim()
 		.split("\n")

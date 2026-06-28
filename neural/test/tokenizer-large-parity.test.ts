@@ -21,7 +21,9 @@
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { describe, expect, test } from "vitest"
+
 import { MailwomanTokenizer, SPACE_SENTINEL } from "../tokenizer.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -53,6 +55,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 
 			if (!piecesMatch || !idsMatch) {
 				divergences++
+
 				if (failures.length < MAX_REPORTED) {
 					failures.push(
 						`raw=${JSON.stringify(raw)}\n  expected pieces=${JSON.stringify(expectedPieces)}\n  TS pieces=${JSON.stringify(tsPieces)}\n  expected ids=${JSON.stringify(expectedIds)}\n  TS ids=${JSON.stringify(result.ids)}`
@@ -85,14 +88,18 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 
 		for (const { raw, pieces: expectedPieces } of fixture) {
 			if (ZERO_WIDTH_RE.test(raw)) continue
+
 			if (expectedPieces.some((p) => BYTE_FALLBACK_RE.test(p))) continue
 			supported++
 
 			const { pieces } = tokenizer.encode(raw)
+
 			for (const p of pieces) {
 				const literal = p.piece.startsWith(SPACE_SENTINEL) ? p.piece.slice(SPACE_SENTINEL.length) : p.piece
+
 				if (raw.slice(p.start, p.end) !== literal) {
 					mismatches++
+
 					if (failures.length < MAX_REPORTED) {
 						failures.push(
 							`raw=${JSON.stringify(raw)}\n  piece=${JSON.stringify(p.piece)} literal=${JSON.stringify(literal)} start=${p.start} end=${p.end}\n  raw.slice=${JSON.stringify(raw.slice(p.start, p.end))}`
@@ -112,6 +119,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 		// so the piece TEXT may differ from raw.slice even when the offset itself is correct.
 		// Properly handling this needs an NFKC-aware comparator; current sweep shows ≤ 0.05% rate.
 		const mismatchRate = mismatches / supported
+
 		if (mismatchRate >= 0.001) {
 			throw new Error(
 				`${mismatches} of ${supported} supported entries had at least one offset-mismatch (${(mismatchRate * 100).toFixed(3)}%, threshold 0.1%).\nFirst ${failures.length}:\n${failures.join("\n---\n")}`

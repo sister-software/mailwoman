@@ -13,6 +13,7 @@
  *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
  */
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
@@ -95,6 +96,7 @@ function buildDb(): DatabaseSync {
 	spr.run(90, 0, "Germany", "country", "DE", 51.0, 10.0, 47.0, 55.0, 6.0, 15.0)
 	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12.0, 12.3)
 	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0.0, 1)
+
 	return db
 }
 

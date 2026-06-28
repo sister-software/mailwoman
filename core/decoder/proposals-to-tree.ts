@@ -30,18 +30,19 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
 		sourceId: p.source_id,
 	}))
 	roots.sort((a, b) => a.start - b.start)
+
 	return { raw, roots }
 }
 
 /**
- * The inverse of {@link proposalsToTree}: walk an `AddressTree` into a flat list of
- * `ClassificationProposal`s (one per node, depth-first), tagged with the given `source` (#478
- * increment 3). Used to bring the whole-text neural parse into the arbitration layer's proposal
- * currency so it can be unioned with rule proposals and filtered by the policy registry.
+ * The inverse of {@link proposalsToTree}: walk an `AddressTree` into a flat list of `ClassificationProposal`s (one per
+ * node, depth-first), tagged with the given `source` (#478 increment 3). Used to bring the whole-text neural parse into
+ * the arbitration layer's proposal currency so it can be unioned with rule proposals and filtered by the policy
+ * registry.
  *
- * The spans are structural (`{ start, end, body }`) — we intentionally avoid `Span.from(...)`
- * (which forces the tokenization module's filesystem-bound init); downstream proposal consumers
- * read only `start` / `end` / `body`. Same convention as the neural proposal-classifier adapter.
+ * The spans are structural (`{ start, end, body }`) — we intentionally avoid `Span.from(...)` (which forces the
+ * tokenization module's filesystem-bound init); downstream proposal consumers read only `start` / `end` / `body`. Same
+ * convention as the neural proposal-classifier adapter.
  *
  * @param tree The parsed tree (e.g. the neural argmax tree).
  * @param source Provenance stamped on every emitted proposal (`"neural"` here).
@@ -68,9 +69,11 @@ export function treeToProposals(
 				penalty: 0,
 			})
 		}
+
 		for (const child of node.children) visit(child)
 	}
 
 	for (const root of tree.roots) visit(root)
+
 	return proposals
 }

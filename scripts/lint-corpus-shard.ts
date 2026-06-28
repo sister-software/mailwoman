@@ -66,14 +66,17 @@ interface Args {
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	const out: Partial<Args> = {}
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--shard" && args[i + 1]) out.shardPath = args[++i]
 		else if (a === "--stats" && args[i + 1]) out.statsPath = args[++i]
 		else if (a === "--rules" && args[i + 1]) out.rulesPath = args[++i]
 		else if (a === "--out-md" && args[i + 1]) out.outMd = args[++i]
 		else if (a === "--out-json" && args[i + 1]) out.outJson = args[++i]
 	}
+
 	if (!out.shardPath || !out.statsPath) {
 		console.error(
 			"Usage: lint-corpus-shard.ts --shard <parquet> --stats <stats.json> [--rules <rules.json>] [--out-md <path>] [--out-json <path>]"
@@ -81,6 +84,7 @@ function parseArgs(): Args {
 		process.exit(2)
 	}
 	out.rulesPath = out.rulesPath ?? resolve(__dirname, "lint-rules.json")
+
 	return out as Args
 }
 
@@ -121,10 +125,12 @@ for i in range(len(tokens_col)):
 `
 	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
 	const rows: ShardRow[] = []
+
 	for (const line of buf.toString("utf8").split("\n")) {
 		if (!line) continue
 		rows.push(JSON.parse(line))
 	}
+
 	return rows
 }
 
@@ -144,25 +150,31 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 		truncatedRows: 0,
 		allORows: 0,
 	}
+
 	for (const row of rows) {
 		if (row.tokens.length !== row.labels.length) {
 			out.truncatedRows++
 			continue
 		}
+
 		if (row.labels.every((l) => l === "O")) out.allORows++
+
 		for (let i = 0; i < row.tokens.length; i++) {
 			const tk = row.tokens[i]!
 			const lb = row.labels[i]!
 			let labelMap = out.tokens.get(tk)
+
 			if (!labelMap) {
 				labelMap = new Map()
 				out.tokens.set(tk, labelMap)
 			}
 			labelMap.set(lb, (labelMap.get(lb) ?? 0) + 1)
+
 			if (i + 1 < row.tokens.length) {
 				const bigramKey = tk + SEP + row.tokens[i + 1]!
 				const bigramLabel = lb + SEP + row.labels[i + 1]!
 				let bMap = out.bigrams.get(bigramKey)
+
 				if (!bMap) {
 					bMap = new Map()
 					out.bigrams.set(bigramKey, bMap)
@@ -171,6 +183,7 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 			}
 		}
 	}
+
 	return out
 }
 
@@ -184,13 +197,16 @@ function majorityLabel(distribution: Map<string, number> | Record<string, number
 	let bestLabel = ""
 	let bestCount = 0
 	let total = 0
+
 	for (const [label, count] of entries) {
 		total += count
+
 		if (count > bestCount) {
 			bestCount = count
 			bestLabel = label
 		}
 	}
+
 	return { label: bestLabel, count: bestCount, total, confidence: total === 0 ? 0 : bestCount / total }
 }
 
@@ -209,11 +225,14 @@ interface Flag {
 
 function checkDistributionOutliers(shard: ShardStats, corpus: CorpusStats): Flag[] {
 	const flags: Flag[] = []
+
 	for (const [token, shardLabelMap] of shard.tokens) {
 		const corpusLabelMap = corpus.tokens[token]
+
 		if (!corpusLabelMap) continue
 		const shardMaj = majorityLabel(shardLabelMap)
 		const corpusMaj = majorityLabel(corpusLabelMap)
+
 		if (
 			corpusMaj.confidence >= CORPUS_CONFIDENCE_FLOOR &&
 			shardMaj.label !== corpusMaj.label &&
@@ -232,18 +251,24 @@ function checkDistributionOutliers(shard: ShardStats, corpus: CorpusStats): Flag
 			})
 		}
 	}
+
 	return flags
 }
 
 function checkLabelVacuum(shard: ShardStats, corpus: CorpusStats): Flag[] {
 	const flags: Flag[] = []
+
 	for (const [token, shardLabelMap] of shard.tokens) {
 		const corpusLabelMap = corpus.tokens[token]
+
 		if (!corpusLabelMap) continue
 		const corpusTotal = Object.values(corpusLabelMap).reduce((a, b) => a + b, 0)
+
 		if (corpusTotal < VACUUM_CORPUS_MIN_COUNT) continue
+
 		for (const [label, shardCount] of shardLabelMap) {
 			if (shardCount < VACUUM_SHARD_MIN_COUNT) continue
+
 			if (corpusLabelMap[label] === undefined || corpusLabelMap[label] === 0) {
 				flags.push({
 					check: "label-vacuum",
@@ -257,16 +282,20 @@ function checkLabelVacuum(shard: ShardStats, corpus: CorpusStats): Flag[] {
 			}
 		}
 	}
+
 	return flags
 }
 
 function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): Flag[] {
 	const flags: Flag[] = []
+
 	for (const [bigram, shardLabelMap] of shard.bigrams) {
 		const corpusLabelMap = corpus.bigrams[bigram]
+
 		if (!corpusLabelMap) continue
 		const shardMaj = majorityLabel(shardLabelMap)
 		const corpusMaj = majorityLabel(corpusLabelMap)
+
 		if (
 			shardMaj.label !== corpusMaj.label &&
 			shardMaj.count >= BIGRAM_MIN_COUNT &&
@@ -287,6 +316,7 @@ function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): Flag[] {
 			})
 		}
 	}
+
 	return flags
 }
 
@@ -296,9 +326,11 @@ function checkRules(shard: ShardStats, rulesFile: LintRulesFile): Flag[] {
 		rule: r,
 		regex: new RegExp(r.pattern, r.pattern_case_sensitive ? "" : "i"),
 	}))
+
 	for (const [token, labelMap] of shard.tokens) {
 		for (const { rule, regex } of compiled) {
 			if (!regex.test(token)) continue
+
 			for (const [label, count] of labelMap) {
 				if (rule.forbidden_labels.includes(label) && count >= 5) {
 					flags.push({
@@ -314,11 +346,13 @@ function checkRules(shard: ShardStats, rulesFile: LintRulesFile): Flag[] {
 			}
 		}
 	}
+
 	return flags
 }
 
 function checkSanity(shard: ShardStats): Flag[] {
 	const flags: Flag[] = []
+
 	if (shard.truncatedRows > 0) {
 		flags.push({
 			check: "truncated-rows",
@@ -327,6 +361,7 @@ function checkSanity(shard: ShardStats): Flag[] {
 		})
 	}
 	const allORatio = shard.allORows / Math.max(1, shard.rowCount)
+
 	if (allORatio >= ALL_O_RATIO_CEILING) {
 		flags.push({
 			check: "all-O-shard",
@@ -334,6 +369,7 @@ function checkSanity(shard: ShardStats): Flag[] {
 			detail: `${shard.allORows}/${shard.rowCount} rows (${(allORatio * 100).toFixed(0)}%) are entirely O-labeled. Shard contributes no signal.`,
 		})
 	}
+
 	return flags
 }
 
@@ -356,27 +392,34 @@ function renderReport(args: Args, shard: ShardStats, flags: Flag[]): string {
 	)
 	lines.push(`**Warnings:** ${warns.length} (advisory)`)
 	lines.push("")
+
 	if (flags.length === 0) {
 		lines.push("No anomalies detected.")
+
 		return lines.join("\n")
 	}
 	const byCheck = new Map<string, Flag[]>()
+
 	for (const f of flags) {
 		const arr = byCheck.get(f.check) ?? []
 		arr.push(f)
 		byCheck.set(f.check, arr)
 	}
+
 	for (const [check, list] of byCheck) {
 		lines.push(`## ${check} (${list.length})`)
 		lines.push("")
 		// Sort by shardCount desc — highest-volume issues first
 		list.sort((a, b) => (b.shardCount ?? 0) - (a.shardCount ?? 0))
+
 		for (const f of list.slice(0, 20)) {
 			lines.push(`- **[${f.severity.toUpperCase()}]** ${f.detail}`)
 		}
+
 		if (list.length > 20) lines.push(`- ... and ${list.length - 20} more`)
 		lines.push("")
 	}
+
 	return lines.join("\n")
 }
 
@@ -411,6 +454,7 @@ function main(): void {
 	console.log(report)
 
 	if (args.outMd) writeFileSync(args.outMd, report)
+
 	if (args.outJson) {
 		writeFileSync(
 			args.outJson,
@@ -431,6 +475,7 @@ function main(): void {
 	}
 
 	const errorCount = flags.filter((f) => f.severity === "error").length
+
 	if (errorCount > 0) {
 		console.error(`LINT FAILED: ${errorCount} error(s).`)
 		process.exit(1)

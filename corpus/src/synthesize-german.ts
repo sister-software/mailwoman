@@ -47,12 +47,11 @@ export type SynthesizedGermanRow = SynthesizedLocaleRow
 export interface LocaleSynthesisOpts {
 	random?: () => number
 	/**
-	 * Rendering order for the SAME components. `"native"` (default) uses the country's own template
-	 * (DE → house-AFTER-street, postcode-BEFORE-city). `"international"` renders house-FIRST,
-	 * postcode-AFTER-city — the US/GB layout that international feeds, US-centric systems, and our
-	 * own OpenAddresses de-sample impose on non-US addresses. Training both teaches the model that a
-	 * German address can arrive either way, so the eval's US-order rendering stops reading as a
-	 * collapse. See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact
+	 * Rendering order for the SAME components. `"native"` (default) uses the country's own template (DE →
+	 * house-AFTER-street, postcode-BEFORE-city). `"international"` renders house-FIRST, postcode-AFTER-city — the US/GB
+	 * layout that international feeds, US-centric systems, and our own OpenAddresses de-sample impose on non-US
+	 * addresses. Training both teaches the model that a German address can arrive either way, so the eval's US-order
+	 * rendering stops reading as a collapse. See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact
 	 * correction).
 	 */
 	order?: "native" | "international"
@@ -72,16 +71,18 @@ const LOCALE_TAG: Record<string, string> = {
 }
 
 /**
- * Canonicalize a postcode to the form the country's template renders, so the stored component
- * aligns verbatim against `raw`. NL is the case that needs it: OA stores `1011AB` but the OpenCage
- * NL template emits the conventional spaced `1011 AB` (4 digits + space + 2 letters), which
- * otherwise fails verbatim alignment and drops the row. Other countries pass through unchanged.
+ * Canonicalize a postcode to the form the country's template renders, so the stored component aligns verbatim against
+ * `raw`. NL is the case that needs it: OA stores `1011AB` but the OpenCage NL template emits the conventional spaced
+ * `1011 AB` (4 digits + space + 2 letters), which otherwise fails verbatim alignment and drops the row. Other countries
+ * pass through unchanged.
  */
 function normalizePostcode(postcode: string, country: string): string {
 	if (country === "NL") {
 		const m = /^(\d{4})\s*([A-Za-z]{2})$/.exec(postcode)
+
 		if (m) return `${m[1]} ${m[2]!.toUpperCase()}`
 	}
+
 	return postcode
 }
 
@@ -93,26 +94,25 @@ function tokenPresent(raw: string, value: string): boolean {
 	const before = raw[i - 1]
 	const after = raw[i + value.length]
 	const isDigit = (c: string | undefined) => c !== undefined && c >= "0" && c <= "9"
+
 	if (/^\d+$/.test(value) && (isDigit(before) || isDigit(after))) return false
+
 	return true
 }
 
 /**
- * Render one real tuple into an idiomatic, locale-ordered `{raw, components}` row via the OpenCage
- * `country` template (DE → house-after-street + postcode-before-city; ES/IT the same; GB
- * house-first; NL carries the `1012 LM` postcode), with light variation (drop house number /
- * postcode some of the time). Returns `null` when the tuple is too thin or a component wouldn't
- * align cleanly.
+ * Render one real tuple into an idiomatic, locale-ordered `{raw, components}` row via the OpenCage `country` template
+ * (DE → house-after-street + postcode-before-city; ES/IT the same; GB house-first; NL carries the `1012 LM` postcode),
+ * with light variation (drop house number / postcode some of the time). Returns `null` when the tuple is too thin or a
+ * component wouldn't align cleanly.
  *
- * Region handling is order-dependent: NATIVE order omits it (the native template absorbs the admin
- * region into the postcode/city line, so it rarely renders verbatim and would break BIO alignment),
- * while INTERNATIONAL order includes it in the tail ("City, Region Postcode" — the US/feed layout
- * the eval uses; v0.9.3 / #327).
+ * Region handling is order-dependent: NATIVE order omits it (the native template absorbs the admin region into the
+ * postcode/city line, so it rarely renders verbatim and would break BIO alignment), while INTERNATIONAL order includes
+ * it in the tail ("City, Region Postcode" — the US/feed layout the eval uses; v0.9.3 / #327).
  *
- * Pass `opts.order: "international"` to render the same components house-first /
- * postcode-after-city instead (see {@link LocaleSynthesisOpts.order}) — the layout international
- * feeds impose on foreign addresses, and the one a native-order-trained model treats as a
- * "collapse."
+ * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city instead (see
+ * {@link LocaleSynthesisOpts.order}) — the layout international feeds impose on foreign addresses, and the one a
+ * native-order-trained model treats as a "collapse."
  */
 export function synthesizeLocaleRow(
 	base: LocaleBaseTuple,
@@ -121,13 +121,17 @@ export function synthesizeLocaleRow(
 ): SynthesizedLocaleRow | null {
 	const random = opts.random ?? Math.random
 	const order = opts.order ?? "native"
+
 	if (!base.street || !base.locality) return null
 
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
+
 	// ~80% keep the house number (the rest are street-only forms, also idiomatic).
 	if (base.house_number && random() < 0.8) components.house_number = base.house_number
+
 	// ~85% keep the postcode (canonicalized to the country's rendered form — NL spaces it).
 	if (base.postcode && random() < 0.85) components.postcode = normalizePostcode(base.postcode, country)
+
 	// International order carries the REGION in the tail ("City, Region Postcode") — the layout real
 	// US/feed renderings (and our OA eval) use. v0.9.2 rendered international order WITHOUT the region,
 	// so the model never learned to segment the tail and mangled it at eval (region absorbed into the
@@ -140,6 +144,7 @@ export function synthesizeLocaleRow(
 	// `random()` draw for the template, so the RNG sequence existing callers/tests depend on is stable.
 	const renderCountry = order === "international" ? "US" : country
 	const raw = formatAddress(components, renderCountry, { separator: ", " })
+
 	if (!raw) return null
 
 	// Every component must align — drop the row if the template didn't surface one verbatim, or a

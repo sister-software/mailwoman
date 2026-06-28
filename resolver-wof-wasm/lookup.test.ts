@@ -9,11 +9,12 @@
  *   Node too (it's the same .wasm built once and used everywhere).
  */
 
-import { buildSlimWofDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
+import { buildSlimWofDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { loadSlimWofDatabase } from "./loader.js"
@@ -130,6 +131,7 @@ describe("WofWasmPlaceLookup", () => {
 		// End-to-end: the fixture source had coincident_roles → build-slim carried it → the WASM lookup reads it.
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			const roles = lookup.coincidentLocalitiesFor(101) // Illinois
 			expect(roles).toHaveLength(1)
@@ -148,6 +150,7 @@ describe("WofWasmPlaceLookup", () => {
 	test("opens a slim DB and resolves a locality", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			const matches = await lookup.findPlace({ text: "Chicago", placetype: "locality", limit: 3 })
 			expect(matches.length).toBeGreaterThan(0)
@@ -163,6 +166,7 @@ describe("WofWasmPlaceLookup", () => {
 	test("exact-abbreviation tiering via place_abbr beats a populous token match (#189)", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			const matches = await lookup.findPlace({ text: "VT", placetype: "region", limit: 5 })
 			// 'Vermontstate' holds the exact abbrev "VT" (place_abbr 110→VT, tiny pop); 'Vt Plains' only
@@ -179,6 +183,7 @@ describe("WofWasmPlaceLookup", () => {
 	test("resolves a postcode via the postalcode placetype filter", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			const matches = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
 			expect(matches.length).toBe(1)
@@ -191,6 +196,7 @@ describe("WofWasmPlaceLookup", () => {
 	test("population surfaces the larger of two same-name localities", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			const matches = await lookup.findPlace({ text: "Greenville", placetype: "locality", country: "US", limit: 5 })
 			// Both are exact-name matches (same tier), so the population boost is the tiebreak. The
@@ -204,6 +210,7 @@ describe("WofWasmPlaceLookup", () => {
 	test("exact-name match outranks a larger partial-name place", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			// "York" matches both 'York' and 'New York'; exact-name tiering must keep 'York' on top
 			// even though 'New York' has a far larger population (the ME->Maine-not-Missouri guard).
@@ -217,6 +224,7 @@ describe("WofWasmPlaceLookup", () => {
 	test('"Brooklyn" locality query reaches the exact-named borough over the fuzzy "Brooklyn Park" (placetype expansion)', async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			// Live-demo bug (2026-06-11): a strict placetype='locality' filter excluded the borough, so
 			// "Brooklyn" resolved to Brooklyn Park, MN. The shared expansion (locality → locality +
@@ -232,6 +240,7 @@ describe("WofWasmPlaceLookup", () => {
 	test('"Brooklyn" + a New-York-ish bbox returns the borough (the region-constrained cascade path)', async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			// Mirrors "brooklyn, new york, ny": the parsed region's bbox constrains the locality lookup.
 			// Pre-expansion this returned NOTHING (the borough was filtered out, Brooklyn Park is outside
@@ -251,6 +260,7 @@ describe("WofWasmPlaceLookup", () => {
 	test('alias-exact tier: "New York City" resolves the New York locality via its WOF alias', async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
 			expect(matches[0]).toMatchObject({ id: 221, name: "New York" })
@@ -264,6 +274,7 @@ describe("WofWasmPlaceLookup", () => {
 	test('alias-bag boundary: "York New" straddling two aliases never claims the exact tier (#523)', async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			// "York New" token-matches both Twin Hamlet (bag "Old York <sep> New City") and New York
 			// (name + alias "New York City"). Pre-#523, the space-joined bags let the padded containment
@@ -284,6 +295,7 @@ describe("WofWasmPlaceLookup", () => {
 	test("bbox filter constrains same-name localities to a region's bounds", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			// Both Greenvilles match by name, but only id 210 (34.85,-82.39) sits in this box — the
 			// 'Roseville, Michigan' disambiguation path (constrain a locality to a parsed region's bbox).
@@ -302,6 +314,7 @@ describe("WofWasmPlaceLookup", () => {
 	test("country filter rejects out-of-scope matches", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			const matches = await lookup.findPlace({ text: "Springfield", country: "FR" })
 			expect(matches).toEqual([])
@@ -313,6 +326,7 @@ describe("WofWasmPlaceLookup", () => {
 	test("returns [] for empty / whitespace-only text", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })
+
 		try {
 			expect(await lookup.findPlace({ text: "" })).toEqual([])
 			expect(await lookup.findPlace({ text: "   " })).toEqual([])

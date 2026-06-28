@@ -9,6 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { type FstMatcherLike, type FstMatchLike, type FstPlaceEntryLike } from "./fst-prior.js"
 import { STAGE3_BIO_LABELS } from "./labels.js"
 import { buildStreetMorphologyEmissionPriors } from "./street-morphology-prior.js"
@@ -20,17 +21,21 @@ function labelCol(label: string): number {
 function mockAffixFst(affixSurfaces: string[]): FstMatcherLike {
 	const states = new Map<string, { id: number; entries: FstPlaceEntryLike[] }>()
 	let nextId = 1
+
 	for (const surface of affixSurfaces) {
 		states.set(surface, {
 			id: nextId++,
 			entries: [{ wofID: 1_900_000_000 + nextId, placetype: "street_affix", importance: 1.0 }],
 		})
 	}
+
 	return {
 		walk(tokens: string[]): FstMatchLike | null {
 			const key = tokens.join(" ")
 			const state = states.get(key)
+
 			if (state) return { stateId: state.id, accepted: true, depth: tokens.length }
+
 			return null
 		},
 		walkFrom(): FstMatchLike | null {
@@ -40,6 +45,7 @@ function mockAffixFst(affixSurfaces: string[]): FstMatcherLike {
 			for (const [, state] of states) {
 				if (state.id === stateId) return state.entries
 			}
+
 			return []
 		},
 	}
@@ -49,11 +55,13 @@ function makePieces(text: string): Array<{ piece: string; start: number; end: nu
 	const words = text.split(/\s+/)
 	const pieces: Array<{ piece: string; start: number; end: number }> = []
 	let cursor = 0
+
 	for (const word of words) {
 		const start = text.indexOf(word, cursor)
 		pieces.push({ piece: `▁${word}`, start, end: start + word.length })
 		cursor = start + word.length
 	}
+
 	return pieces
 }
 
@@ -62,6 +70,7 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 		const fst = mockAffixFst([])
 		const pieces = makePieces("hello world")
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS)
+
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}

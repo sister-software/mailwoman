@@ -39,6 +39,7 @@
 
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
+
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WofRecord } from "../../wof-json.js"
@@ -76,8 +77,8 @@ interface VariantSpec {
 }
 
 /**
- * Compute hierarchy variants for a postcode record. `selfName` is the postcode surface form
- * (canonical `wof:name` for the `default` slot, a `name:*` localized variant otherwise).
+ * Compute hierarchy variants for a postcode record. `selfName` is the postcode surface form (canonical `wof:name` for
+ * the `default` slot, a `name:*` localized variant otherwise).
  */
 export function postcodeVariantsFor(row: WofRecord, ancestry: WofRecord[], selfName: string): VariantSpec[] {
 	if (placetypeToTag(row.placetype) !== "postcode") return []
@@ -95,12 +96,14 @@ export function postcodeVariantsFor(row: WofRecord, ancestry: WofRecord[], selfN
 			components: { postcode: selfName, locality: locality.name },
 		})
 	}
+
 	if (locality && region) {
 		variants.push({
 			suffix: "with-locality-region",
 			components: { postcode: selfName, locality: locality.name, region: region.name },
 		})
 	}
+
 	if (locality && region && country) {
 		variants.push({
 			suffix: "with-locality-region-country",
@@ -117,17 +120,19 @@ export function postcodeVariantsFor(row: WofRecord, ancestry: WofRecord[], selfN
 }
 
 /**
- * Build the per-record name-slot list. The `default` slot uses `wof:name` verbatim (postcode
- * digits); subsequent slots come from `name:*` variants dedup'd against the default.
+ * Build the per-record name-slot list. The `default` slot uses `wof:name` verbatim (postcode digits); subsequent slots
+ * come from `name:*` variants dedup'd against the default.
  */
 export function nameSlotsFor(rec: WofRecord): Array<{ key: string; value: string }> {
 	const seen = new Set<string>([rec.name])
 	const slots: Array<{ key: string; value: string }> = [{ key: "default", value: rec.name }]
+
 	for (const [rawKey, value] of rec.nameVariants) {
 		if (seen.has(value)) continue
 		seen.add(value)
 		slots.push({ key: normalizeNameKey(rawKey), value })
 	}
+
 	return slots
 }
 
@@ -145,9 +150,12 @@ export function createWofPostalcodeAdapter(): CorpusAdapter {
 			// postcode adapter needs locality / region / country admin records in the index so it
 			// can resolve postcode ancestry, even though it only emits rows for postcode records.
 			const byId = new Map<number, WofRecord>()
+
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
 				if (opts.signal?.aborted) return
+
 				if (opts.country && rec.country !== opts.country) continue
+
 				if (!placetypeToTag(rec.placetype)) continue
 				byId.set(rec.id, rec)
 			}
@@ -161,6 +169,7 @@ export function createWofPostalcodeAdapter(): CorpusAdapter {
 			for (const id of ids) {
 				if (opts.signal?.aborted) return
 				const rec = byId.get(id)!
+
 				if (placetypeToTag(rec.placetype) !== "postcode") continue
 
 				const chain = ancestry.get(id) ?? []
@@ -168,12 +177,15 @@ export function createWofPostalcodeAdapter(): CorpusAdapter {
 
 				for (const slot of slots) {
 					const variants = postcodeVariantsFor(rec, chain, slot.value)
+
 					for (const variant of variants) {
 						if (opts.limit !== undefined && emitted >= opts.limit) return
 
 						const raw = formatAddress(variant.components, rec.country, { separator: ", " })
+
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
+
 						if (Object.keys(aligned).length === 0) continue
 
 						yield {

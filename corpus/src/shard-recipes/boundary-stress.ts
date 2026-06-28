@@ -31,13 +31,16 @@ const WEIGHTS: Record<BoundaryStressTemplate, number> = {
 }
 const CUM: Array<[BoundaryStressTemplate, number]> = (() => {
 	let acc = 0
+
 	return (Object.entries(WEIGHTS) as Array<[BoundaryStressTemplate, number]>).map(
 		([t, w]) => [t, (acc += w)] as [BoundaryStressTemplate, number]
 	)
 })()
 function pickTemplate(r: () => number): BoundaryStressTemplate {
 	const x = r()
+
 	for (const [t, c] of CUM) if (x <= c) return t
+
 	return CUM[CUM.length - 1]![0]
 }
 
@@ -51,6 +54,7 @@ export const boundaryStressRecipe: ShardRecipe = {
 		const count = opts.count ?? 20000
 		let emitted = 0
 		let skipped = 0
+
 		for (let i = 0; i < count; i++) {
 			const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: pickTemplate(random) })
 			const country = row.locale.split("-")[1] ?? "US"
@@ -66,6 +70,7 @@ export const boundaryStressRecipe: ShardRecipe = {
 				license: "Synthetic — boundary-stress; derived from public-domain locality/region tuples",
 			}
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
+
 			if (aligned.kind !== "labeled") {
 				skipped++
 				continue
@@ -76,6 +81,7 @@ export const boundaryStressRecipe: ShardRecipe = {
 			)
 			emitted++
 		}
+
 		return { emitted, skipped }
 	},
 }

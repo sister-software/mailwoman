@@ -38,27 +38,24 @@ export interface WrapLegacyClassifierOptions {
 	classifier: LegacyClassifier | LegacyClassifierConstructor
 
 	/**
-	 * Constructor options forwarded when `classifier` is a constructor. Ignored when it's already an
-	 * instance.
+	 * Constructor options forwarded when `classifier` is a constructor. Ignored when it's already an instance.
 	 */
 	classifierOptions?: LegacyClassifierOptions
 
 	/**
-	 * `ComponentTag`s this classifier may emit. Proposals carrying a tag not in this set are dropped
-	 * (with a console warning in development).
+	 * `ComponentTag`s this classifier may emit. Proposals carrying a tag not in this set are dropped (with a console
+	 * warning in development).
 	 */
 	emits: readonly ComponentTag[]
 
 	/**
-	 * Legacy classification tags this classifier is known to produce. The wrapper traverses the span
-	 * graph for spans bearing one of these tags. Defaults to "any tag with a `ComponentTag`
-	 * mapping."
+	 * Legacy classification tags this classifier is known to produce. The wrapper traverses the span graph for spans
+	 * bearing one of these tags. Defaults to "any tag with a `ComponentTag` mapping."
 	 */
 	legacyTags?: readonly Classification[]
 
 	/**
-	 * Locales this classifier is active for. `["*"]` (locale-agnostic) by default — matches the
-	 * pre-refactor behavior.
+	 * Locales this classifier is active for. `["*"]` (locale-agnostic) by default — matches the pre-refactor behavior.
 	 */
 	locales?: readonly (string | "*")[]
 
@@ -66,8 +63,7 @@ export interface WrapLegacyClassifierOptions {
 	penalty?: number
 
 	/**
-	 * Override the default mapping for a legacy → component pair. Returning `null` drops the
-	 * proposal.
+	 * Override the default mapping for a legacy → component pair. Returning `null` drops the proposal.
 	 */
 	mapTag?: (legacy: Classification) => ComponentTag | null
 }
@@ -78,17 +74,16 @@ export interface WrapLegacyClassifierOptions {
  * Mechanics:
  *
  * 1. The legacy classifier is instantiated (if a constructor) and its `ready()` step is awaited.
- * 2. On `classify(section)`, a fresh local `TokenContext` is built around the section's body text so
- *    legacy mutations don't bleed into the caller's graph.
- * 3. After `classifyTokens(localContext)` runs, the wrapper walks all spans (sections, words, phrases)
- *    and collects spans bearing any of the wrapper's `legacyTags`.
- * 4. Each such (span, classification) pair becomes a `ClassificationProposal`. The span is re-anchored
- *    to the caller's section so character offsets are correct relative to the original input.
+ * 2. On `classify(section)`, a fresh local `TokenContext` is built around the section's body text so legacy mutations
+ *    don't bleed into the caller's graph.
+ * 3. After `classifyTokens(localContext)` runs, the wrapper walks all spans (sections, words, phrases) and collects spans
+ *    bearing any of the wrapper's `legacyTags`.
+ * 4. Each such (span, classification) pair becomes a `ClassificationProposal`. The span is re-anchored to the caller's
+ *    section so character offsets are correct relative to the original input.
  *
- * Note on isolation: building a fresh `TokenContext` is deliberately coarse — it ignores any prior
- * classifications from earlier classifiers in the pipeline. Composite classifiers that depend on
- * upstream tags will need a different bridge; that lives in a higher-level orchestrator, not in
- * this adapter.
+ * Note on isolation: building a fresh `TokenContext` is deliberately coarse — it ignores any prior classifications from
+ * earlier classifiers in the pipeline. Composite classifiers that depend on upstream tags will need a different bridge;
+ * that lives in a higher-level orchestrator, not in this adapter.
  */
 export function wrapLegacyClassifier(options: WrapLegacyClassifierOptions): ProposalClassifier {
 	const {
@@ -109,6 +104,7 @@ export function wrapLegacyClassifier(options: WrapLegacyClassifierOptions): Prop
 		mapTag ??
 		((legacy) => {
 			const mapped = legacyClassificationToComponentTag(legacy)
+
 			return mapped && emits.includes(mapped) ? mapped : null
 		})
 
@@ -119,6 +115,7 @@ export function wrapLegacyClassifier(options: WrapLegacyClassifierOptions): Prop
 	function ensureReady(): Promise<void> {
 		if (!instance.ready) return Promise.resolve()
 		readyPromise ??= instance.ready().then(() => undefined)
+
 		return readyPromise
 	}
 
@@ -136,7 +133,9 @@ export function wrapLegacyClassifier(options: WrapLegacyClassifierOptions): Prop
 				if (expectedLegacy && !expectedLegacy.has(legacy)) continue
 
 				const component = tagFilter(legacy)
+
 				if (!component) continue
+
 				if (!emits.includes(component)) continue
 
 				proposals.push({
@@ -170,35 +169,38 @@ export function wrapLegacyClassifier(options: WrapLegacyClassifierOptions): Prop
 }
 
 /**
- * Walk every span attached to a `TokenContext` — sections, words, and phrases — in a single flat
- * pass. Order is not guaranteed.
+ * Walk every span attached to a `TokenContext` — sections, words, and phrases — in a single flat pass. Order is not
+ * guaranteed.
  */
 export function* iterateSpans(context: TokenContext): Generator<Span> {
 	const visited = new Set<number>()
 	const queue: Span[] = []
 
 	if (context.span) queue.push(context.span)
+
 	for (const section of context.sections) queue.push(section)
 
 	while (queue.length > 0) {
 		const span = queue.pop()!
+
 		if (visited.has(span.id)) continue
 		visited.add(span.id)
 		yield span
 
 		for (const child of span.children) queue.push(child)
+
 		for (const phrase of span.phrases) queue.push(phrase)
 	}
 }
 
 /**
- * Produce a Span whose character offsets are anchored to the caller's original input (not the local
- * context's). The returned span is a thin clone for use in proposals; the source span continues to
- * live in the local TokenContext.
+ * Produce a Span whose character offsets are anchored to the caller's original input (not the local context's). The
+ * returned span is a thin clone for use in proposals; the source span continues to live in the local TokenContext.
  */
 function rebaseSpan(span: Span, sectionOffset: number): Span {
 	if (sectionOffset === 0) return span
 
 	const rebased = Span.from(span.body, { start: span.start + sectionOffset })
+
 	return rebased
 }

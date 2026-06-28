@@ -20,6 +20,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, describe, expect, test } from "vitest"
 
 import type { RankingWeights } from "./lookup.js"
@@ -36,11 +37,10 @@ interface SeedRegion {
 }
 
 /**
- * Build a fixture in the production shape: a pre-built `place_population` aux table (no geojson —
- * `build-unified-wof` extracts `wof:population` into this table at ingest), so the population boost
- * is actually active (the plain lookup.test.ts seed has no population path). Opened with `buildFts:
- * true` by the lookup; the lazy FTS build leaves the pre-existing `place_population` untouched (it
- * only (re)builds it from geojson, which we don't carry).
+ * Build a fixture in the production shape: a pre-built `place_population` aux table (no geojson — `build-unified-wof`
+ * extracts `wof:population` into this table at ingest), so the population boost is actually active (the plain
+ * lookup.test.ts seed has no population path). Opened with `buildFts: true` by the lookup; the lazy FTS build leaves
+ * the pre-existing `place_population` untouched (it only (re)builds it from geojson, which we don't carry).
  */
 function buildDb(regions: SeedRegion[]): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
@@ -62,12 +62,16 @@ function buildDb(regions: SeedRegion[]): DatabaseSync {
 	`)
 	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
 	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
+
 	for (const r of regions) {
 		insertSpr.run(r.id, r.name, r.country, r.lat, r.lon, r.lat - 0.5, r.lat + 0.5, r.lon - 0.5, r.lon + 0.5)
 		insertName.run(r.id, "eng", r.name)
+
 		for (const a of r.aliases ?? []) insertName.run(r.id, "abbr", a)
+
 		if (r.population !== undefined) insertPop.run(r.id, r.population)
 	}
+
 	return db
 }
 

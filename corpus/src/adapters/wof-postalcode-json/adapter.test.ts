@@ -8,7 +8,9 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { WOF_POSTALCODE_ADAPTER_ID, createWofPostalcodeAdapter, postcodeVariantsFor } from "./adapter.js"
@@ -26,6 +28,7 @@ afterEach(async () => {
 
 async function loadRows(): Promise<CanonicalRow[]> {
 	const jsonl = await readFile(join(scratch, WOF_POSTALCODE_ADAPTER_ID, "canonical.jsonl"), "utf8")
+
 	return jsonl
 		.trim()
 		.split("\n")
@@ -152,6 +155,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			corpusVersion: "0.1.0",
 		})
 		const rows = await loadRows()
+
 		// Every postcode row should be of the form wof-postalcode-<id>-<name-slot>-<hierarchy>.
 		for (const row of rows) {
 			expect(row.source_id).toMatch(/^wof-postalcode-\d+-(?:default|name-[a-z0-9-]+)-(?:self|with-[a-z-]+)$/)

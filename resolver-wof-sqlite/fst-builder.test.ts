@@ -5,7 +5,9 @@
  */
 
 import { existsSync } from "node:fs"
+
 import { beforeAll, describe, expect, it } from "vitest"
+
 import { buildFstFromWof } from "./fst-builder.js"
 import type { FstMatcher } from "./fst-matcher.js"
 import type { BuildFstResult } from "./fst-types.js"

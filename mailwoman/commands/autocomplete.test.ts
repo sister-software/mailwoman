@@ -13,7 +13,9 @@
 import { writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { beforeAll, describe, expect, it } from "vitest"
+
 import { autocomplete } from "../../resolver-wof-sqlite/fst-autocomplete.js"
 import { FstMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.js"
 import { serializeFst } from "../../resolver-wof-sqlite/fst-serialize.js"
@@ -41,11 +43,14 @@ function buildFixtureMatcher(places: FixturePlace[]): FstMatcher {
 
 	for (const entry of entries) {
 		const tokens = normalizeTokens(entry.name)
+
 		if (tokens.length === 0) continue
 		let stateId = 0
+
 		for (const t of tokens) {
 			const node = nodes[stateId]!
 			let next = node.edges.get(t)
+
 			if (next === undefined) {
 				next = nodes.length
 				nodes.push({ edges: new Map(), places: [] })
@@ -54,6 +59,7 @@ function buildFixtureMatcher(places: FixturePlace[]): FstMatcher {
 			stateId = next
 		}
 		const node = nodes[stateId]!
+
 		if (!node.places.some((p) => p.wofID === entry.wofID)) {
 			node.places.push(entry)
 		}
@@ -144,6 +150,7 @@ describe("autocomplete — in-memory fixture", () => {
 	it("ranks by importance (prominent places first)", () => {
 		const result = autocomplete(fixtureMatcher, "San", { maxSuggestions: 5 })
 		expect(result.suggestions.length).toBeGreaterThan(0)
+
 		if (result.suggestions.length >= 2) {
 			expect(result.suggestions[0]!.importance).toBeGreaterThanOrEqual(result.suggestions[1]!.importance)
 		}
@@ -226,6 +233,7 @@ describe("resolveFstPath", () => {
 	it("falls back to the staged default when no explicit path and no env var", () => {
 		const saved = process.env["MAILWOMAN_FST_BIN"]
 		delete process.env["MAILWOMAN_FST_BIN"]
+
 		try {
 			expect(resolveFstPath()).toBe("/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin")
 		} finally {
@@ -236,6 +244,7 @@ describe("resolveFstPath", () => {
 	it("prefers $MAILWOMAN_FST_BIN over the staged default", () => {
 		const saved = process.env["MAILWOMAN_FST_BIN"]
 		process.env["MAILWOMAN_FST_BIN"] = "/env/path.bin"
+
 		try {
 			expect(resolveFstPath()).toBe("/env/path.bin")
 		} finally {
@@ -250,6 +259,7 @@ describe("resolveFstPath", () => {
 	it("explicit path takes precedence over env var", () => {
 		const saved = process.env["MAILWOMAN_FST_BIN"]
 		process.env["MAILWOMAN_FST_BIN"] = "/env/path.bin"
+
 		try {
 			expect(resolveFstPath("/explicit/path.bin")).toBe("/explicit/path.bin")
 		} finally {

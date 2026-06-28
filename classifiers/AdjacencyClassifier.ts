@@ -9,8 +9,7 @@ import { SectionClassifier, Span } from "@mailwoman/core"
 /**
  * An adjacency classifier is used to find three adjacent words in a section.
  *
- * The first word must be a house number, the second word must be a street, and the third word must
- * be a street suffix.
+ * The first word must be a house number, the second word must be a street, and the third word must be a street suffix.
  */
 export class AdjacencyClassifier extends SectionClassifier {
 	explore(section: Span): void {

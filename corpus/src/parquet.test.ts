@@ -7,7 +7,9 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { ParquetReader } from "./parquet-wrapper/index.js"
 import {
 	LABELED_ROW_SCHEMA,
@@ -46,8 +48,10 @@ async function readParquet(path: string): Promise<ParquetRow[]> {
 	const cursor = reader.getCursor()
 	const out: ParquetRow[] = []
 	let row: ParquetRow | null
+
 	while ((row = (await cursor.next()) as ParquetRow | null)) out.push(row)
 	await reader.close()
+
 	return out
 }
 

@@ -7,6 +7,7 @@
  */
 
 import { describe, expect, test } from "vitest"
+
 import { Span } from "../tokenization/Span.js"
 import type { BioLabel } from "../types/component.js"
 import type { ClassificationProposal } from "../types/index.js"
@@ -108,6 +109,7 @@ describe("Phase 4.1 source provenance", () => {
 			})
 			// Locality is wrapped by region per containment rules; walk both.
 			const all = [...tree.roots, ...tree.roots.flatMap((r) => r.children)]
+
 			for (const node of all) {
 				expect(node.source).toBe("neural")
 				expect(node.sourceId).toBe("neural-v0.3.1-en-us")

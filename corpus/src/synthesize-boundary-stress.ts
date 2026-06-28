@@ -361,10 +361,9 @@ const ALL_TEMPLATES: readonly BoundaryStressTemplate[] = [
 ]
 
 /**
- * Synthesize one boundary-stress row. `base` is optional — when omitted, a locale-appropriate tuple
- * is drawn from the internal pools (so the generator is self-contained; a build script can pass
- * real tuples for scale + diversity). Every component value is a verbatim substring of `raw`, so
- * `alignRow` locates + BIO-labels it.
+ * Synthesize one boundary-stress row. `base` is optional — when omitted, a locale-appropriate tuple is drawn from the
+ * internal pools (so the generator is self-contained; a build script can pass real tuples for scale + diversity). Every
+ * component value is a verbatim substring of `raw`, so `alignRow` locates + BIO-labels it.
  */
 export function synthesizeBoundaryStressRow(
 	base: BoundaryStressBaseTuple | undefined,
@@ -384,9 +383,11 @@ export function synthesizeBoundaryStressRow(
 		// "City, STATE" bare rows carry NO country token, which cost ~4pp on us.country_homograph in v1.7.0;
 		// teaching "…, USA"/"…, France" recovers it as a single-variable additive without diluting locality.
 		const withCountry = random() < 0.12
+
 		if (b.country === "FR") {
 			// FR carries no region token; "{postcode} {locality}" is the bare FR form.
 			const core = `${b.postcode} ${b.locality}${withCountry ? ", France" : ""}`
+
 			return {
 				raw: venue ? `${venue}, ${core}` : core,
 				components: {
@@ -405,6 +406,7 @@ export function synthesizeBoundaryStressRow(
 		// "USA" is locality-DOMINANT (75%, only 6% country) in the base; labeling it country would contradict.
 		const countryName = "United States"
 		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}${withCountry ? `, ${countryName}` : ""}`
+
 		return {
 			raw: venue ? `${venue}, ${core}` : core,
 			components: {
@@ -428,6 +430,7 @@ export function synthesizeBoundaryStressRow(
 		const b = base ?? pick(FR_TUPLES, random)
 		const name = pick(FR_NAMES, random)
 		const hn = houseNumber(random)
+
 		if (template === "house-number-before-street") {
 			// The confounding MIRROR of house-number-after-street: the SAME FR street vocab with the number
 			// BEFORE the name. A balanced before:after mix (the build/recipe sets the ratio, ~7:3 to keep US
@@ -435,6 +438,7 @@ export function synthesizeBoundaryStressRow(
 			// not position — the probe found v1.6.0 confidently absorbs the TRAILING number into street (I-street
 			// P=0.96), the order-bias.
 			const raw = `${hn} ${name}, ${b.postcode} ${b.locality}`
+
 			return {
 				raw,
 				components: { house_number: hn, street: name, postcode: b.postcode, locality: b.locality },
@@ -442,10 +446,12 @@ export function synthesizeBoundaryStressRow(
 				template,
 			}
 		}
+
 		if (template === "fr-prefix") {
 			const prefix = pick(FR_PREFIXES, random)
 			// "{hn} {prefix} {name}, {postcode} {locality}" — postcode-first, prefix split from the name.
 			const raw = `${hn} ${prefix} ${name}, ${b.postcode} ${b.locality}`
+
 			return {
 				raw,
 				components: {
@@ -461,6 +467,7 @@ export function synthesizeBoundaryStressRow(
 		}
 		// house-number-after-street: "{name} {hn}, {postcode} {locality}" — number FOLLOWS the street.
 		const raw = `${name} ${hn}, ${b.postcode} ${b.locality}`
+
 		return {
 			raw,
 			components: { street: name, house_number: hn, postcode: b.postcode, locality: b.locality },
@@ -492,5 +499,6 @@ export function synthesizeBoundaryStressRow(
 				`${hn} ${streetCore} ${b.locality} ${b.region} ${b.postcode}`
 			: // standard delimited, multi-word street stresses the suffix boundary
 				`${hn} ${streetCore}, ${b.locality}, ${b.region} ${b.postcode}`
+
 	return { raw, components, locale: localeFor[b.country] ?? "en-US", template }
 }

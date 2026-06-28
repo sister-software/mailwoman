@@ -13,9 +13,9 @@
  */
 
 /**
- * USPS designator phrases that introduce a post-office-box identifier, longest-first so the matcher
- * prefers the most specific phrase ("Post Office Box" before "Box"). Each is matched
- * case-insensitively with flexible internal punctuation/spacing.
+ * USPS designator phrases that introduce a post-office-box identifier, longest-first so the matcher prefers the most
+ * specific phrase ("Post Office Box" before "Box"). Each is matched case-insensitively with flexible internal
+ * punctuation/spacing.
  */
 export const US_PO_BOX_DESIGNATORS = [
 	"POST OFFICE BOX",
@@ -36,9 +36,9 @@ const PO_BOX_RE =
 	/^\s*(?:(p\.?\s*o\.?\s*box)|(post\s+office\s+box)|(firm\s+caller)|(caller)|(drawer)|(lockbox)|(box))\s*#?\s*([\dA-Za-z][\dA-Za-z-]*)\s*$/i
 
 /**
- * Type-predicate: does the input look like a standalone PO Box address? Case-insensitive and
- * tolerant of "P.O. Box", "Post Office Box", "Box 12", "PMB"-style ids. (Widens the original
- * isp-nexus `/^PO BOX [\d-]+$/`, which only matched all-caps "PO BOX 123".)
+ * Type-predicate: does the input look like a standalone PO Box address? Case-insensitive and tolerant of "P.O. Box",
+ * "Post Office Box", "Box 12", "PMB"-style ids. (Widens the original isp-nexus `/^PO BOX [\d-]+$/`, which only matched
+ * all-caps "PO BOX 123".)
  */
 export function isPOBox(input: unknown): boolean {
 	return typeof input === "string" && PO_BOX_RE.test(input)
@@ -53,26 +53,30 @@ export interface PoBoxMatch {
 }
 
 /**
- * If `input` is a PO-box phrase ("PO Box 123", "P.O. Box 12-A", "Post Office Box 7"), return the
- * designator phrase and the id. Null otherwise. Useful for the corpus po_box shard (split the
- * designator from the number) and for resolver/parsing reuse.
+ * If `input` is a PO-box phrase ("PO Box 123", "P.O. Box 12-A", "Post Office Box 7"), return the designator phrase and
+ * the id. Null otherwise. Useful for the corpus po_box shard (split the designator from the number) and for
+ * resolver/parsing reuse.
  */
 export function matchPOBox(input: unknown): PoBoxMatch | null {
 	if (typeof input !== "string") return null
 	const m = PO_BOX_RE.exec(input)
+
 	if (!m) return null
 	const matched = (m[1] ?? m[2] ?? m[3] ?? m[4] ?? m[5] ?? m[6] ?? m[7] ?? "").trim()
 	const id = m[8]!
+
 	return { matched, id }
 }
 
 /**
- * Normalize any recognized PO-box phrase to the canonical USPS "PO BOX <id>" form. Returns the
- * input unchanged if it isn't a PO box. (Widens the original isp-nexus normalizer, which only
- * collapsed the "P.O. BOX" spelling and left the id/casing alone.)
+ * Normalize any recognized PO-box phrase to the canonical USPS "PO BOX <id>" form. Returns the input unchanged if it
+ * isn't a PO box. (Widens the original isp-nexus normalizer, which only collapsed the "P.O. BOX" spelling and left the
+ * id/casing alone.)
  */
 export function normalizePOBox(input: string): string {
 	const m = matchPOBox(input)
+
 	if (!m) return input
+
 	return `PO BOX ${m.id.toUpperCase()}`
 }

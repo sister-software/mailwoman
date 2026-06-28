@@ -173,7 +173,6 @@ export class Span extends Graph<Span> {
 	 * Returns the distance between two Spans
 	 *
 	 * @todo Use graph to find prev and next spans for a more accurate result
-	 *
 	 * @todo Or base 'distance' on word distance (slop) rather than characters
 	 */
 	public distance(that: Pick<Span, "start" | "end">): number {
@@ -182,12 +181,12 @@ export class Span extends Graph<Span> {
 		if (this.end < that.start) {
 			return that.start - this.end
 		}
+
 		return this.start - that.end
 	}
 
 	/**
-	 * Returns the coverage of the span, i.e. the number of characters covered by the span and its
-	 * children.
+	 * Returns the coverage of the span, i.e. the number of characters covered by the span and its children.
 	 */
 	public get coverage(): number {
 		if (this.children.size) {
@@ -198,6 +197,7 @@ export class Span extends Graph<Span> {
 					.reduce((sum, child) => sum + (child.end - child.start), 0)
 			)
 		}
+
 		return this.end - this.start
 	}
 

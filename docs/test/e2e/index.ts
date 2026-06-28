@@ -1,9 +1,7 @@
 /**
- * @file Playwright e2e test helpers for the mailwoman /demo page.
- *
- *   Mirrors the authentik web/e2e/ structure: re-export a `test` object extended with named fixtures,
- *   plus the standard `expect`. Spec files import as `import { expect, test } from "#e2e"` via the
- *   package.json imports map.
+ * @file Playwright e2e test helpers for the mailwoman /demo page. Mirrors the authentik web/e2e/ structure: re-export a
+ *   `test` object extended with named fixtures, plus the standard `expect`. Spec files import as `import { expect, test
+ *   } from "#e2e"` via the package.json imports map.
  */
 
 import { test as base } from "@playwright/test"

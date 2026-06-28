@@ -16,9 +16,8 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { $ } from "zx"
-
 import { runIfScript } from "mailwoman/sdk/scripting"
+import { $ } from "zx"
 
 runIfScript(import.meta, async () => {
 	let MODEL = ""
@@ -28,6 +27,7 @@ runIfScript(import.meta, async () => {
 	let OUT = "/tmp/de-pip"
 
 	const argv = process.argv.slice(2)
+
 	for (let i = 0; i < argv.length; i++) {
 		switch (argv[i]) {
 			case "--model":
@@ -49,6 +49,7 @@ runIfScript(import.meta, async () => {
 				throw new Error(`unknown arg: ${argv[i]}`)
 		}
 	}
+
 	if (!MODEL || !CARD) throw new Error("need --model and --card")
 
 	$.verbose = false
@@ -70,6 +71,7 @@ runIfScript(import.meta, async () => {
 	// OVERALL`, so a python error or a no-match is tolerated (empty) rather than aborting -> nothrow.
 	const pip = async (name: string): Promise<string> => {
 		const r = await $({ nothrow: true })`python3 scripts/eval/pip-containment.py ${`${OUT}/${name}.json`}`
+
 		return r.stdout
 			.split("\n")
 			.filter((l) => l.includes("OVERALL"))

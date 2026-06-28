@@ -54,9 +54,9 @@ function isPostcodeFormat(format: string): boolean {
 }
 
 /**
- * Anchor weight for the coarse-placer's country prior (#244). Lower than the postcode anchor's 2.0
- * default — a whole-string country guess is a broader, softer signal than a postcode that pins the
- * country, so it blends more gently with the candidate score.
+ * Anchor weight for the coarse-placer's country prior (#244). Lower than the postcode anchor's 2.0 default — a
+ * whole-string country guess is a broader, softer signal than a postcode that pins the country, so it blends more
+ * gently with the candidate score.
  */
 const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
 
@@ -78,12 +78,11 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set(["US", "ES", "IT", "NL", "DE", "FR"])
 
 /**
- * #743/#194: the shared coverage-guard gate — decide whether a confident coarse-placer country
- * should become a HARD candidate filter. Exported so the two production placeCountry call sites
- * (the runtime pipeline AND `geocodeAddress`) apply the SAME three gates and can't drift:
- * confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the safelist (override or the default
- * {@link HARD_PLACE_COUNTRY_SAFELIST}), and no caller-set hard/default country to respect. Returns
- * the country to hard-filter, or `undefined` to stay on the soft prior.
+ * #743/#194: the shared coverage-guard gate — decide whether a confident coarse-placer country should become a HARD
+ * candidate filter. Exported so the two production placeCountry call sites (the runtime pipeline AND `geocodeAddress`)
+ * apply the SAME three gates and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the safelist
+ * (override or the default {@link HARD_PLACE_COUNTRY_SAFELIST}), and no caller-set hard/default country to respect.
+ * Returns the country to hard-filter, or `undefined` to stay on the soft prior.
  */
 export function hardCountryFor(
 	placedCountry: string,
@@ -93,9 +92,13 @@ export function hardCountryFor(
 	safelist: ReadonlySet<string> | undefined
 ): string | undefined {
 	if (!hardPlaceCountry) return undefined
+
 	if (placedConfidence < HARD_PLACE_COUNTRY_MIN_CONF) return undefined
+
 	if (!(safelist ?? HARD_PLACE_COUNTRY_SAFELIST).has(placedCountry)) return undefined
+
 	if (existing.hardCountry || existing.defaultCountry) return undefined
+
 	return placedCountry
 }
 
@@ -120,6 +123,7 @@ async function defaultDetectLocale(
 	opts?: { hint?: LocaleTag }
 ): Promise<LocaleHint> {
 	const locale = opts?.hint ?? "und"
+
 	return {
 		locale,
 		confidence: opts?.hint ? 1.0 : 0.0,
@@ -142,29 +146,33 @@ async function defaultClassifyKind(
 }
 
 /**
- * Decide whether to short-circuit stages 3-5 and go straight to resolve. Conservative: requires
- * high kind-classifier confidence AND a matching QueryShape known-format hit. See
- * `STAGES.md#fast-path-routing` for the rationale.
+ * Decide whether to short-circuit stages 3-5 and go straight to resolve. Conservative: requires high kind-classifier
+ * confidence AND a matching QueryShape known-format hit. See `STAGES.md#fast-path-routing` for the rationale.
  */
 function canShortCircuit(kind: QueryKindResult, shape: QueryShapeLite, opts?: PipelineOpts): boolean {
 	if (opts?.forceFullPipeline) return false
+
 	if (kind.confidence < 0.95) return false
+
 	if (kind.kind === "postcode_only") {
 		return shape.knownFormats.some(isPostcodeFormatHit)
 	}
+
 	if (kind.kind === "locality_only") {
 		return (shape.totalLength ?? Infinity) <= 30 && shape.characterClass === "alpha"
 	}
+
 	return false
 }
 
 /**
- * Build a stub `AddressTree` for the fast-path case (no classifier ran). Single root node tagged by
- * the QueryShape's known-format hit.
+ * Build a stub `AddressTree` for the fast-path case (no classifier ran). Single root node tagged by the QueryShape's
+ * known-format hit.
  */
 function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShapeLite): AddressTree {
 	if (kind.kind === "postcode_only") {
 		const hit = shape.knownFormats.find((f) => isPostcodeFormat(f.format))
+
 		if (hit) {
 			return {
 				raw: text,
@@ -183,6 +191,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
 			}
 		}
 	}
+
 	if (kind.kind === "locality_only") {
 		return {
 			raw: text,
@@ -200,6 +209,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
 			],
 		}
 	}
+
 	return { raw: text, roots: [] }
 }
 
@@ -240,11 +250,13 @@ export async function runPipeline(
 	let effectiveOpts = opts
 	// Captured for the arbitration router signal (#478 inc 3) as well as the resolver anchor below.
 	let placedPrediction: { country: string | null; confidence: number; posterior?: Record<string, number> } | undefined
+
 	if (stages.placeCountry) {
 		const tPlace = performance.now()
 		const placed = stages.placeCountry(normalized.normalized)
 		placedPrediction = placed
 		timing["place-country"] = performance.now() - tPlace
+
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
 			// #194/#743: promote a CONFIDENT placement to a HARD country filter (empty→unresolved) when the
 			// caller opts in, the confidence clears the bar, AND the country is in the coverage SAFELIST. The
@@ -296,12 +308,14 @@ export async function runPipeline(
 	// classifier).
 	if (canShortCircuit(kind, queryShape, opts)) {
 		let tree = buildFastPathTree(normalized.normalized, kind, queryShape)
+
 		if (stages.resolver) {
 			throwIfAborted(opts)
 			const tResolve = performance.now()
 			tree = await safeResolve(stages.resolver, tree, effectiveOpts)
 			timing["resolve"] = performance.now() - tResolve
 		}
+
 		return {
 			input: raw,
 			normalized,
@@ -319,6 +333,7 @@ export async function runPipeline(
 	// Stage 2.7 — phrase grouper. Optional injection; runs when wired. Proposals flow forward to
 	// stages 3 + 5 (today: surfaced on the result; tomorrow: passed in as classifier conditioning).
 	let phraseProposals: PhraseProposal[] = []
+
 	if (stages.groupPhrases) {
 		throwIfAborted(opts)
 		const tGroup = performance.now()
@@ -389,9 +404,12 @@ export async function runPipeline(
 			// und-like tags pass no constraint (ranking alone decides — matches resolveTree's default).
 			const localeCountry = locale.locale.split("-")[1]?.toUpperCase()
 			const lookups = stages.resolverBackend
-				? await prefetchReconcileLookups(stages.resolverBackend, normalized.normalized, classifierTopK, {
-						...(localeCountry && localeCountry.length === 2 ? { defaultCountry: localeCountry } : {}),
-					})
+				? await prefetchReconcileLookups(
+						stages.resolverBackend,
+						normalized.normalized,
+						classifierTopK,
+						localeCountry && localeCountry.length === 2 ? { defaultCountry: localeCountry } : {}
+					)
 				: undefined
 			const result = reconcileSpans({
 				raw: normalized.normalized,
@@ -439,6 +457,7 @@ export async function runPipeline(
 			{ characterClass: queryShape.characterClass },
 			placerSignal
 		)
+
 		if (route.defaultMode === "rule_preferred") {
 			const ruleProposals = await stages.ruleProposer(normalized.normalized, locale.locale)
 			tree = applyRuleArbitration(tree, ruleProposals)
@@ -473,11 +492,11 @@ export async function runPipeline(
 }
 
 /**
- * Throws the signal's reason if aborted. Coarse-grained cancellation: we check between stages, so
- * the longest cancellation latency is one stage's runtime. Fine-grained mid-stage cancellation
- * requires plumbing `signal` into each stage's contract (`detectLocale`, `classifyKind`,
- * `classifier.parse`, `resolver.resolveTree`) — a future enhancement once stage authors are ready
- * for it. For now, in-flight stages always run to completion before the abort takes effect.
+ * Throws the signal's reason if aborted. Coarse-grained cancellation: we check between stages, so the longest
+ * cancellation latency is one stage's runtime. Fine-grained mid-stage cancellation requires plumbing `signal` into each
+ * stage's contract (`detectLocale`, `classifyKind`, `classifier.parse`, `resolver.resolveTree`) — a future enhancement
+ * once stage authors are ready for it. For now, in-flight stages always run to completion before the abort takes
+ * effect.
  */
 function throwIfAborted(opts?: PipelineOpts): void {
 	if (opts?.signal?.aborted) {
@@ -531,17 +550,16 @@ const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
 ])
 
 /**
- * Post-classification audit: for each phrase-grouper proposal whose span is entirely unlabeled
- * (all-O) in the classifier output, inject a provisional node using the grouper's structural
- * hypothesis. This rescues spans the neural model couldn't type — primarily venue text.
+ * Post-classification audit: for each phrase-grouper proposal whose span is entirely unlabeled (all-O) in the
+ * classifier output, inject a provisional node using the grouper's structural hypothesis. This rescues spans the neural
+ * model couldn't type — primarily venue text.
  *
- * When `classifierTopK` is supplied (the joint-reconcile path), the audit defers to the
- * classifier's own verdict for the orphaned span: if the classifier confidently typed it as a
- * DIFFERENT component than the phrase kind, we inject the classifier's tag rather than the
- * structural guess. Without this, a reconciler that leaves a street-prefix word like `Via` orphaned
- * (because it picked the single `Trento` street span) would see the audit promote `Via`'s
- * LOCALITY_PHRASE to a spurious `locality` node — burying the real trailing city. The classifier
- * said `street:0.73` for `Via`; trust it (#425).
+ * When `classifierTopK` is supplied (the joint-reconcile path), the audit defers to the classifier's own verdict for
+ * the orphaned span: if the classifier confidently typed it as a DIFFERENT component than the phrase kind, we inject
+ * the classifier's tag rather than the structural guess. Without this, a reconciler that leaves a street-prefix word
+ * like `Via` orphaned (because it picked the single `Trento` street span) would see the audit promote `Via`'s
+ * LOCALITY_PHRASE to a spurious `locality` node — burying the real trailing city. The classifier said `street:0.73` for
+ * `Via`; trust it (#425).
  */
 export function grouperAudit(
 	tree: AddressTree,
@@ -557,6 +575,7 @@ export function grouperAudit(
 	const collectNodes = (nodes: typeof roots): void => {
 		for (const n of nodes) {
 			allNodes.push({ start: n.start, end: n.end })
+
 			if (n.children) collectNodes(n.children as typeof roots)
 		}
 	}
@@ -565,9 +584,11 @@ export function grouperAudit(
 	// Index the classifier's single best tag per exact span (start:end) so the audit can defer to it.
 	const CLASSIFIER_OVERRIDE_MIN = 0.4
 	const bestTagBySpan = new Map<string, { tag: ComponentTag; score: number }>()
+
 	for (const c of classifierTopK ?? []) {
 		const k = `${c.span.start}:${c.span.end}`
 		const cur = bestTagBySpan.get(k)
+
 		if (!cur || c.score > cur.score) bestTagBySpan.set(k, { tag: c.tag, score: c.score })
 	}
 
@@ -581,20 +602,25 @@ export function grouperAudit(
 	const collectSingletons = (nodes: typeof roots): void => {
 		for (const n of nodes) {
 			if (SINGLETON_TAGS.has(n.tag)) presentSingletons.add(n.tag)
+
 			if (n.children) collectSingletons(n.children as typeof roots)
 		}
 	}
 	collectSingletons(roots)
-	const dedupeSingletons = classifierTopK !== undefined // joint path only — argmax stays byte-stable
+	const dedupeSingletons = classifierTopK !== undefined
+
+	// joint path only — argmax stays byte-stable
 
 	for (const proposal of proposals) {
 		const phraseTag = PHRASE_KIND_TO_TAG.get(proposal.kindHypothesis)
+
 		if (!phraseTag) continue
 
 		const pStart = proposal.span.start
 		const pEnd = pStart + proposal.span.body.length
 
 		const covered = allNodes.some((node) => node.start < pEnd && pStart < node.end)
+
 		if (covered) continue
 
 		// Defer to the classifier when it confidently typed this exact span as something else.
@@ -617,6 +643,7 @@ export function grouperAudit(
 		}
 
 		roots.push(provisionalNode)
+
 		if (SINGLETON_TAGS.has(tag)) presentSingletons.add(tag)
 	}
 

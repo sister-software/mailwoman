@@ -34,6 +34,7 @@ interface Args {
 function parseArgs(): Args {
 	const a = process.argv.slice(2)
 	const out: Partial<Args> = { backoffMs: 3000 }
+
 	for (let i = 0; i < a.length; i++) {
 		if (a[i] === "--harness" && a[i + 1]) out.harnessPath = a[++i]
 		else if (a[i] === "--out-md" && a[i + 1]) out.outMd = a[++i]
@@ -41,10 +42,12 @@ function parseArgs(): Args {
 		else if (a[i] === "--geocode-earth-key" && a[i + 1]) out.geocodeEarthKey = a[++i]
 		else if (a[i] === "--backoff-ms" && a[i + 1]) out.backoffMs = Number(a[++i])
 	}
+
 	if (!out.harnessPath) {
 		console.error("--harness <harness.json> required")
 		process.exit(1)
 	}
+
 	return out as Args
 }
 
@@ -57,6 +60,7 @@ function tagHit(expected: string, actual: string | undefined): boolean {
 	if (!actual) return false
 	const e = norm(expected),
 		x = norm(actual)
+
 	return e === x || e.includes(x) || x.includes(e)
 }
 
@@ -100,46 +104,71 @@ interface ResultRow {
 function mapPhoton(p: Props | undefined): Rec {
 	if (!p) return {}
 	const out: Rec = {}
+
 	if (p.housenumber) out.house_number = p.housenumber
+
 	if (p.street) out.street = p.street
 	else if ((p.type === "street" || p.osm_key === "highway") && p.name) out.street = p.name
+
 	if (p.city) out.locality = p.city
 	else if (p.district) out.locality = p.district
+
 	if (p.state) out.region = p.state
+
 	if (p.postcode) out.postcode = p.postcode
+
 	if (p.country) out.country = p.country
-	if (!out.street && !out.house_number && p.name) out.venue = p.name // POI fallback
+
+	if (!out.street && !out.house_number && p.name) out.venue = p.name
+
+	// POI fallback
 	return out
 }
 function mapNominatim(a: Props | undefined): Rec {
 	if (!a) return {}
 	const out: Rec = {}
+
 	if (a.house_number) out.house_number = a.house_number
+
 	if (a.road) out.street = a.road
 	const loc = a.city || a.town || a.village || a.municipality || a.suburb
+
 	if (loc) out.locality = loc
+
 	if (a.state) out.region = a.state
+
 	if (a.postcode) out.postcode = a.postcode
+
 	if (a.country) out.country = a.country
+
 	return out
 }
 function mapGeocodeEarth(props: Props | undefined): Rec {
 	if (!props) return {}
 	const out: Rec = {}
+
 	if (props.housenumber) out.house_number = props.housenumber
+
 	if (props.street) out.street = props.street
 	else if (props.layer === "street" && props.name) out.street = props.name
+
 	if (props.locality) out.locality = props.locality
+
 	if (props.region) out.region = props.region
+
 	if (props.postalcode) out.postcode = props.postalcode
+
 	if (props.country) out.country = props.country
+
 	return out
 }
 
 async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
 	try {
 		const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) })
+
 		if (!res.ok) return { __error: `HTTP ${res.status}` }
+
 		return await res.json()
 	} catch (err) {
 		return { __error: (err as Error).message }
@@ -161,6 +190,7 @@ async function main(): Promise<void> {
 		const q = encodeURIComponent(c.input)
 		// Harness expected values are string[] (e.g. {"street":["Main St"]}); flatten to strings.
 		const expected: Rec = {}
+
 		for (const [k, v] of Object.entries((c.expected[0] ?? {}) as Record<string, unknown>)) {
 			expected[k] = Array.isArray(v) ? v.join(" ") : String(v)
 		}
@@ -173,6 +203,7 @@ async function main(): Promise<void> {
 			}
 		)) as NominatimResp | null
 		let geRaw: FeatureResp | null = null
+
 		if (args.geocodeEarthKey) {
 			// The compare-tool demo key is origin-locked to pelias.github.io; send the same
 			// Referer/Origin a browser does (Node's fetch allows these; browsers forbid them).
@@ -190,6 +221,7 @@ async function main(): Promise<void> {
 		const score = (mapped: Rec) => {
 			const tags = Object.keys(expected)
 			const hits = tags.filter((t) => tagHit(expected[t]!, mapped[t]))
+
 			return { hits: hits.length, total: tags.length, hitTags: hits }
 		}
 		const row = {
@@ -209,6 +241,7 @@ async function main(): Promise<void> {
 		console.error(
 			`       photon ${row.photonScore.hits}/${row.photonScore.total}  nominatim ${row.nominatimScore.hits}/${row.nominatimScore.total}`
 		)
+
 		if (i < bothFail.length - 1) await sleep(args.backoffMs)
 	}
 
@@ -225,6 +258,7 @@ async function main(): Promise<void> {
 	).length
 	const eitherStreet = results.filter((r) => {
 		if (!r.expected.street) return false
+
 		return tagHit(r.expected.street, r.photon.street) || tagHit(r.expected.street, r.nominatim.street)
 	}).length
 	const withStreet = results.filter((r) => r.expected.street).length
@@ -234,6 +268,7 @@ async function main(): Promise<void> {
 	)
 	md.push("| Locale | Input | Expected | Photon (mapped) | Nominatim (mapped) | P | N |")
 	md.push("|---|---|---|---|---|--:|--:|")
+
 	for (const r of results) {
 		const fmt = (o: Rec) =>
 			Object.entries(o)
@@ -244,7 +279,9 @@ async function main(): Promise<void> {
 		)
 	}
 	const mdText = md.join("\n") + "\n"
+
 	if (args.outMd) writeFileSync(args.outMd, mdText)
+
 	if (args.outJson) writeFileSync(args.outJson, JSON.stringify(results, null, 2))
 	console.log(mdText)
 	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)

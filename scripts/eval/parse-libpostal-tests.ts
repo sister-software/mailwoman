@@ -69,19 +69,24 @@ function main(): void {
 	const pairRe = /\(labeled_component_t\)\{\s*"([^"]+)"\s*,\s*"((?:[^"\\]|\\.)*)"\s*\}/g
 
 	const cases: Array<Record<string, unknown>> = []
+
 	for (const call of src.matchAll(callRe)) {
 		const inp = call[1]!
 		const body = call[2]!
 		const pairs = [...body.matchAll(pairRe)].map((m) => [m[1]!, m[2]!] as const)
+
 		if (pairs.length === 0) continue
 		const hasCity = pairs.some(([l]) => l === "city")
 		const exp: Record<string, string[]> = {}
+
 		for (const [lbl, val] of pairs) {
 			if (DROP.has(lbl)) continue
 			const tag = lbl === "city_district" ? (hasCity ? "dependent_locality" : "locality") : REMAP[lbl]
+
 			if (!tag) continue
 			;(exp[tag] ??= []).push(val.toLowerCase())
 		}
+
 		if (Object.keys(exp).length > 0) {
 			cases.push({ input: inp.replaceAll('\\"', '"'), locale: "en-US", expected: exp, source: "libpostal" })
 		}

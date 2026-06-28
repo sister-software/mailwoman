@@ -19,10 +19,11 @@
  *   Outputs a JSON report to stdout; human-readable summary to stderr.
  */
 
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
+
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
 
 interface GoldenRow {
 	raw: string
@@ -44,10 +45,13 @@ interface EvalResult {
 
 function loadGolden(dir: string): GoldenRow[] {
 	const rows: GoldenRow[] = []
+
 	for (const file of ["us.jsonl", "fr.jsonl", "adversarial.jsonl"]) {
 		const path = resolve(dir, file)
+
 		try {
 			const lines = readFileSync(path, "utf-8").split("\n").filter(Boolean)
+
 			for (const line of lines) {
 				rows.push(JSON.parse(line))
 			}
@@ -55,6 +59,7 @@ function loadGolden(dir: string): GoldenRow[] {
 			// file may not exist for all locales
 		}
 	}
+
 	return rows
 }
 
@@ -64,26 +69,31 @@ function isKryptonite(row: GoldenRow): boolean {
 
 function treeToComponents(tree: { roots: Array<{ tag?: string; value?: string }> }): Record<string, string> {
 	const out: Record<string, string> = {}
+
 	for (const node of tree.roots ?? []) {
 		if (node.tag && node.value) {
 			out[node.tag] = node.value
 		}
 	}
+
 	return out
 }
 
 function exactMatch(predicted: Record<string, string>, expected: Record<string, string>): boolean {
 	const allKeys = new Set([...Object.keys(predicted), ...Object.keys(expected)])
+
 	for (const key of allKeys) {
 		if ((predicted[key] ?? "").trim().toLowerCase() !== (expected[key] ?? "").trim().toLowerCase()) {
 			return false
 		}
 	}
+
 	return true
 }
 
 function macroF1(results: EvalResult[], useReconciled: boolean): number {
 	const tags = new Set<string>()
+
 	for (const r of results) {
 		for (const k of Object.keys(r.expected)) tags.add(k)
 	}
@@ -95,9 +105,11 @@ function macroF1(results: EvalResult[], useReconciled: boolean): number {
 		let tp = 0,
 			fp = 0,
 			fn = 0
+
 		for (const r of results) {
 			const pred = useReconciled ? r.reconciled[tag] : r.argmax[tag]
 			const gold = r.expected[tag]
+
 			if (pred && gold && pred.trim().toLowerCase() === gold.trim().toLowerCase()) {
 				tp++
 			} else if (pred && !gold) {
@@ -152,6 +164,7 @@ async function main() {
 		})
 
 		processed++
+
 		if (processed % 500 === 0) {
 			console.error(`  ${processed}/${rows.length}...`)
 		}
@@ -174,6 +187,7 @@ async function main() {
 
 	// Decision matrix
 	let verdict: string
+
 	if (krypDelta >= 15 && goldenDelta >= -1) {
 		verdict = "GO — architecture validated. Train v0.5.0 weights to beat this."
 	} else if (krypDelta >= 15 && goldenDelta < -1) {

@@ -64,27 +64,30 @@ function foldName(s: string): string {
 }
 
 /**
- * Folded region name / code → ISO 3166-2:FR code. Built diacritic-insensitive so the resolver's
- * surface form (`Île-de-France`, or an unaccented `Ile-de-France`) maps regardless of accents.
- * Mirrors `de/bundesland.ts`'s `lookupGermanState`, the same role: fold a region surface form to
- * one code so a resolver eval can compare like-for-like without a US-USPS-shaped matcher.
+ * Folded region name / code → ISO 3166-2:FR code. Built diacritic-insensitive so the resolver's surface form
+ * (`Île-de-France`, or an unaccented `Ile-de-France`) maps regardless of accents. Mirrors `de/bundesland.ts`'s
+ * `lookupGermanState`, the same role: fold a region surface form to one code so a resolver eval can compare
+ * like-for-like without a US-USPS-shaped matcher.
  */
 export const FR_REGION_NAME_TO_CODE: ReadonlyMap<string, FrenchRegionCode> = (() => {
 	const out = new Map<string, FrenchRegionCode>()
+
 	for (const code of Object.keys(FR_REGIONS) as FrenchRegionCode[]) {
 		out.set(foldName(FR_REGIONS[code].name), code)
 		out.set(code.toLowerCase(), code)
 	}
+
 	return out
 })()
 
 /**
- * Resolve a French region surface form (ISO code or name, accents optional) to its ISO code; null
- * if unknown.
+ * Resolve a French region surface form (ISO code or name, accents optional) to its ISO code; null if unknown.
  */
 export function lookupFrenchRegion(input: string | null | undefined): FrenchRegionCode | null {
 	if (!input || typeof input !== "string") return null
 	const upper = input.trim().toUpperCase()
+
 	if (REGION_CODE_SET.has(upper)) return upper as FrenchRegionCode
+
 	return FR_REGION_NAME_TO_CODE.get(foldName(input)) ?? null
 }

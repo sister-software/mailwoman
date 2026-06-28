@@ -15,7 +15,9 @@ import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+
 import { describe, expect, test } from "vitest"
+
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
@@ -152,6 +154,7 @@ function stripAnsiSpinner(stdout: string): string {
 	const cleaned = stdout.replace(ansi, "").trim()
 	// Find the start of the JSON payload (`{` or `[`).
 	const objStart = cleaned.search(/[{[]/)
+
 	return objStart >= 0 ? cleaned.slice(objStart) : cleaned
 }
 

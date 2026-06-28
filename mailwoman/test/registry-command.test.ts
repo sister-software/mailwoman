@@ -11,6 +11,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { afterAll, describe, expect, test } from "vitest"
 
 import { DEFAULT_MAPPING, loadMapping, loadSources } from "../commands/registry.js"
@@ -19,6 +20,7 @@ const dirs: string[] = []
 function tmp(): string {
 	const d = mkdtempSync(join(tmpdir(), "mw-registry-"))
 	dirs.push(d)
+
 	return d
 }
 afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))

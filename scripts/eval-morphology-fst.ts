@@ -21,15 +21,16 @@
  *   from `core/data/libpostal/dictionaries/`.
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+import { dirname, basename as pathBasename, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFst } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
-import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, basename as pathBasename, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -54,25 +55,22 @@ interface Args {
 	maxNeighbourStreetBias?: number
 	dependentLocalityPenalty?: number
 	/**
-	 * Optional JSON output path. When set, emits structured per-tag stats consumable by
-	 * `eval-gate.ts`.
+	 * Optional JSON output path. When set, emits structured per-tag stats consumable by `eval-gate.ts`.
 	 */
 	outJson?: string
 	/**
-	 * Optional human-readable name written into the JSON output's `name` field. Defaults to the model
-	 * basename.
+	 * Optional human-readable name written into the JSON output's `name` field. Defaults to the model basename.
 	 */
 	evalName?: string
 	/**
-	 * When set, fold the neural model's Stage 3 component tags back to Stage 2 conventions before
-	 * comparing against the golden set. The v0.1.2 golden set uses Stage 2's single "street" spans
-	 * (e.g. golden street = "Main St", not separate street + street_suffix). Without the fold, a
-	 * Stage 3 model that correctly decomposes "Main St" → street="Main"
+	 * When set, fold the neural model's Stage 3 component tags back to Stage 2 conventions before comparing against the
+	 * golden set. The v0.1.2 golden set uses Stage 2's single "street" spans (e.g. golden street = "Main St", not
+	 * separate street + street_suffix). Without the fold, a Stage 3 model that correctly decomposes "Main St" →
+	 * street="Main"
 	 *
-	 * - Street_suffix="St" is counted as a `street` boundary error PLUS a `street_suffix` hallucination
-	 *   — a double penalty for legitimate decomposition. The fold combines street_prefix +
-	 *   street_prefix_particle + street + street_suffix into a single `street` value (space-joined in
-	 *   document order, matching the original raw text).
+	 * - Street_suffix="St" is counted as a `street` boundary error PLUS a `street_suffix` hallucination — a double penalty
+	 *   for legitimate decomposition. The fold combines street_prefix + street_prefix_particle + street + street_suffix
+	 *   into a single `street` value (space-joined in document order, matching the original raw text).
 	 */
 	stage3Fold?: boolean
 }
@@ -95,6 +93,7 @@ function parseArgs(): Args {
 
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--model" && args[i + 1]) modelPath = args[++i]
 		else if (a === "--tokenizer" && args[i + 1]) tokenizerPath = args[++i]
 		else if (a === "--model-card" && args[i + 1]) modelCardPath = args[++i]
@@ -135,34 +134,41 @@ function parseArgs(): Args {
 }
 
 /**
- * Fold the neural classifier's Stage 3 component tags down to Stage 2 conventions for comparison
- * against the v0.1.2 golden set. See {@linkcode Args.stage3Fold} for the full rationale.
+ * Fold the neural classifier's Stage 3 component tags down to Stage 2 conventions for comparison against the v0.1.2
+ * golden set. See {@linkcode Args.stage3Fold} for the full rationale.
  *
- * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → single `street` value
- *   (space-joined in declared order; the underlying tree spans are character-adjacent so the joined
- *   string approximates the original raw substring).
- * - `intersection_a` + `intersection_b` → folded to `street` (golden encodes intersections as a
- *   single street span per the v0 rule-based parser's convention).
+ * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → single `street` value (space-joined in
+ *   declared order; the underlying tree spans are character-adjacent so the joined string approximates the original raw
+ *   substring).
+ * - `intersection_a` + `intersection_b` → folded to `street` (golden encodes intersections as a single street span per
+ *   the v0 rule-based parser's convention).
  *
  * Returns a flat record consumable by the existing comparison loop.
  */
 function foldStage3ToStage2(flat: Partial<Record<ComponentTag, string>>): Partial<Record<ComponentTag, string>> {
 	const out: Partial<Record<ComponentTag, string>> = { ...flat }
 	const streetParts: string[] = []
+
 	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
 		const v = out[tag]
+
 		if (v) streetParts.push(v)
 	}
+
 	if (streetParts.length > 0) {
 		out.street = streetParts.join(" ")
 		delete out.street_prefix
 		delete out.street_prefix_particle
 		delete out.street_suffix
 	}
+
 	if (out.intersection_a || out.intersection_b) {
 		const xs: string[] = []
+
 		if (out.intersection_a) xs.push(out.intersection_a)
+
 		if (out.intersection_b) xs.push(out.intersection_b)
+
 		// Combine into street if there's no existing street; otherwise leave intersection_a/b alone
 		// since the golden uses a single street value per address.
 		if (!out.street && xs.length > 0) {
@@ -171,15 +177,19 @@ function foldStage3ToStage2(flat: Partial<Record<ComponentTag, string>>): Partia
 		delete out.intersection_a
 		delete out.intersection_b
 	}
+
 	return out
 }
 
 function loadGolden(dir: string): GoldenEntry[] {
 	const entries: GoldenEntry[] = []
+
 	for (const file of ["us.jsonl", "fr.jsonl", "adversarial.jsonl"]) {
 		const path = resolve(dir, file)
+
 		try {
 			const text = readFileSync(path, "utf8")
+
 			for (const line of text.split("\n")) {
 				if (!line.trim()) continue
 				entries.push(JSON.parse(line))
@@ -188,6 +198,7 @@ function loadGolden(dir: string): GoldenEntry[] {
 			// file may not exist
 		}
 	}
+
 	return entries
 }
 
@@ -219,6 +230,7 @@ async function main() {
 
 	// Admin FST (if provided).
 	let adminFst: ReturnType<typeof deserializeFst> | undefined
+
 	if (args.adminFstPath) {
 		console.error("Loading admin FST...")
 		adminFst = deserializeFst(readFileSync(args.adminFstPath))
@@ -226,6 +238,7 @@ async function main() {
 
 	// Morphology FST.
 	let morphologyFst: ReturnType<typeof deserializeFst> | undefined
+
 	if (args.morphologyEnabled) {
 		if (args.morphologyBinPath) {
 			console.error("Loading morphology FST from", args.morphologyBinPath)
@@ -252,10 +265,12 @@ async function main() {
 	const perTag = new Map<string, TagStats>()
 	function tagStat(tag: string): TagStats {
 		let s = perTag.get(tag)
+
 		if (!s) {
 			s = { expected: 0, correct: 0, missed: 0, boundary: 0, confused: 0, hallucinated: 0 }
 			perTag.set(tag, s)
 		}
+
 		return s
 	}
 
@@ -269,8 +284,11 @@ async function main() {
 	console.error("Running eval...")
 	const t0 = performance.now()
 	const morphologyOpts: Record<string, number> = {}
+
 	if (args.maxAffixBias !== undefined) morphologyOpts.maxAffixBias = args.maxAffixBias
+
 	if (args.maxNeighbourStreetBias !== undefined) morphologyOpts.maxNeighbourStreetBias = args.maxNeighbourStreetBias
+
 	if (args.dependentLocalityPenalty !== undefined)
 		morphologyOpts.dependentLocalityPenalty = args.dependentLocalityPenalty
 
@@ -316,6 +334,7 @@ async function main() {
 			} else if (predValue !== value) {
 				const predNorm = String(predValue).toLowerCase().trim()
 				const expNorm = value.toLowerCase().trim()
+
 				if (predNorm.includes(expNorm) || expNorm.includes(predNorm)) {
 					boundaryTotal++
 					tagStat(tag).boundary++
@@ -372,6 +391,7 @@ async function main() {
 	console.log("| Tag | Expected | Correct | Missed | Boundary | Confused | Hallucinated | Recall |")
 	console.log("|-----|----------|---------|--------|----------|----------|--------------|--------|")
 	const sortedTags = [...perTag.entries()].sort((a, b) => b[1].expected - a[1].expected)
+
 	for (const [tag, s] of sortedTags) {
 		const recall = s.expected > 0 ? ((100 * s.correct) / s.expected).toFixed(1) + "%" : "—"
 		console.log(

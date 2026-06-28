@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "./country.js"
 
 describe("GB_COUNTRIES", () => {

@@ -24,30 +24,29 @@
  */
 
 import { agreementPattern, type Comparison, type GBT, gbtScore, type TermFrequencyTable } from "@mailwoman/match"
+
 import type { SourceRecord } from "./types.js"
 
 /** Inputs shared by the featurizer + the scorer factory. */
 export interface LearnedFeatureConfig {
 	/**
-	 * The comparison set the features are built over — MUST be `buildDefaultModel({ collapseSpatial:
-	 * true, addressFrequency }).comparisons` so the feature layout matches the trained model.
-	 * (`usePhone` / `discriminators` are NOT part of the learned feature model — the GBT replaces the
-	 * FS weight wholesale and owns its own feature vector.)
+	 * The comparison set the features are built over — MUST be `buildDefaultModel({ collapseSpatial: true,
+	 * addressFrequency }).comparisons` so the feature layout matches the trained model. (`usePhone` / `discriminators`
+	 * are NOT part of the learned feature model — the GBT replaces the FS weight wholesale and owns its own feature
+	 * vector.)
 	 */
 	comparisons: Comparison<SourceRecord>[]
 	/**
-	 * Address-frequency table for the crowdedness feature (a crowded shared address is weak
-	 * identity).
+	 * Address-frequency table for the crowdedness feature (a crowded shared address is weak identity).
 	 */
 	addressFrequency: TermFrequencyTable
 }
 
 /**
- * Build the per-pair feature extractor. The vector is: one-hot of each comparison's agreement
- * level, then the two over-merge interaction terms (spatial-exact × name-disagree, spatial-exact ×
- * org-disagree — the "same place, different names" signature that drives co-located over-merges),
- * then address crowdedness scaled into [0, 1]. Deterministic and EM-independent, so it is identical
- * across train / eval / inference.
+ * Build the per-pair feature extractor. The vector is: one-hot of each comparison's agreement level, then the two
+ * over-merge interaction terms (spatial-exact × name-disagree, spatial-exact × org-disagree — the "same place,
+ * different names" signature that drives co-located over-merges), then address crowdedness scaled into [0, 1].
+ * Deterministic and EM-independent, so it is identical across train / eval / inference.
  */
 export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceRecord, b: SourceRecord) => number[] {
 	const { comparisons, addressFrequency } = config
@@ -62,8 +61,10 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 	return (a, b) => {
 		const pat = agreementPattern(comparisons, a, b)
 		const f: number[] = []
+
 		for (let i = 0; i < pat.length; i++) {
 			const lvl = pat[i]!
+
 			for (let l = 0; l < levelCounts[i]!; l++) f.push(lvl === l ? 1 : 0)
 		}
 		// Interaction: co-located (spatial exact = level 0) AND names/org disagree (catch-all level).
@@ -80,21 +81,23 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		f.push(spatialExact * orgDisagree)
 		// Address crowdedness (how shared this address is) — high → "same address" is weak evidence.
 		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
-		f.push(Math.min(1, freq * 1000)) // scale into a usable range
+		f.push(Math.min(1, freq * 1000))
+
+		// scale into a usable range
 		return f
 	}
 }
 
 /**
- * Wrap a trained {@link GBT} into the `(a, b) => number` link scorer for
- * {@link ResolveConfig.scorer}. The returned weight is the model's logit — same threshold-comparable
- * units as the Fellegi-Sunter weight it replaces, so the pipeline's clustering + threshold
- * semantics are unchanged.
+ * Wrap a trained {@link GBT} into the `(a, b) => number` link scorer for {@link ResolveConfig.scorer}. The returned
+ * weight is the model's logit — same threshold-comparable units as the Fellegi-Sunter weight it replaces, so the
+ * pipeline's clustering + threshold semantics are unchanged.
  */
 export function createGbtScorer(
 	config: LearnedFeatureConfig & { model: GBT }
 ): (a: SourceRecord, b: SourceRecord) => number {
 	const featurize = createMatchFeaturizer(config)
 	const { model } = config
+
 	return (a, b) => gbtScore(model, featurize(a, b))
 }

@@ -29,12 +29,14 @@
  *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 
+import { DatabaseSync } from "node:sqlite"
+
 import { type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { ClassificationRecord } from "mailwoman"
-import { DatabaseSync } from "node:sqlite"
+
 import { arg } from "../lib/cli-args.ts"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
@@ -59,26 +61,33 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
+
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
 			out.push({ id: Number(n.placeId.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return out
 }
 function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
+
 	for (const r of rs) {
 		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
 	}
+
 	return best
 }
 const pct = (xs: number[], p: number): number => {
 	if (xs.length === 0) return NaN
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN)
@@ -135,6 +144,7 @@ type State = "dropped" | "merged" | "split"
 async function resolveState(c: Commune, state: State): Promise<{ km: number; resolved: boolean }> {
 	let raw: string
 	let record: ClassificationRecord
+
 	if (state === "dropped") {
 		raw = c.commune
 		record = { locality: [c.commune] } as ClassificationRecord
@@ -148,6 +158,7 @@ async function resolveState(c: Commune, state: State): Promise<{ km: number; res
 	const { tree } = v0RecordToTree(raw, record)
 	const decorated = await resolver.resolveTree(tree, resolveOpts)
 	const best = mostSpecific(collectResolved(decorated))
+
 	return best
 		? { km: haversineKm(best.lat, best.lon, c.lat, c.lon), resolved: true }
 		: { km: haversineKm(FR_CENTROID.lat, FR_CENTROID.lon, c.lat, c.lon), resolved: false }
@@ -171,6 +182,7 @@ async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg>
 		splitBeatsDroppedBy2km: 0,
 		n: 0,
 	}
+
 	for (const c of sample) {
 		const [d, m, s] = await Promise.all([
 			resolveState(c, "dropped"),
@@ -181,12 +193,17 @@ async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg>
 		agg.dropped.push(d.km)
 		agg.merged.push(m.km)
 		agg.split.push(s.km)
+
 		if (d.resolved) agg.res.dropped++
+
 		if (m.resolved) agg.res.merged++
+
 		if (s.resolved) agg.res.split++
+
 		if (d.km - s.km > 2) agg.splitBeatsDroppedBy2km++
 	}
 	console.error(`  ${label}: n=${agg.n} resolve-rate(d/m/s)=${agg.res.dropped}/${agg.res.merged}/${agg.res.split}`)
+
 	return agg
 }
 
@@ -200,6 +217,7 @@ const row = (label: string, a: StratumAgg): string => {
 		sM = mean(a.split)
 	const reduction = dM > 0 ? (100 * (dM - sM)) / dM : 0
 	const rr = (k: number): string => `${((100 * k) / a.n).toFixed(0)}%`
+
 	return [
 		`### ${label} (n=${a.n}) — error in km, unresolved penalized to FR centroid`,
 		"",
@@ -234,6 +252,7 @@ const out = [
 ].join("\n")
 
 const outPath = arg("out", "")
+
 if (outPath) {
 	const { writeFileSync } = await import("node:fs")
 	writeFileSync(outPath, out)

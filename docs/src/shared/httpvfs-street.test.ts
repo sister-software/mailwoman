@@ -12,6 +12,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, describe, expect, test } from "vitest"
 
 import { resolveStreet } from "./demo-helpers.js"
@@ -23,8 +24,10 @@ function stubWorker(db: DatabaseSync) {
 		db: {
 			async exec(sql: string) {
 				const rows = db.prepare(sql).all() as Record<string, unknown>[]
+
 				if (rows.length === 0) return []
 				const columns = Object.keys(rows[0]!)
+
 				return [{ columns, values: rows.map((r) => columns.map((c) => r[c])) }]
 			},
 		},
@@ -36,6 +39,7 @@ function db(setup: (d: DatabaseSync) => void): DatabaseSync {
 	const d = new DatabaseSync(":memory:")
 	setup(d)
 	openDbs.push(d)
+
 	return d
 }
 afterEach(() => {

@@ -24,13 +24,15 @@
  *   SECRET/ENDPOINT) before running.
  */
 
-import { Spinner } from "@inkjs/ui"
-import { Text } from "ink"
 import { existsSync, statSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
+
+import { Spinner } from "@inkjs/ui"
+import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
@@ -47,6 +49,7 @@ const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S
 
 async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	if (!existsSync(options.file)) throw new Error(`--file not found: ${options.file}`)
+
 	if (!options.file.endsWith(".pmtiles")) throw new Error(`--file must be a .pmtiles archive: ${options.file}`)
 
 	const key = `${options.prefix}/${options.tileset}.pmtiles`
@@ -58,6 +61,7 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 	}
 
 	const missing = REQUIRED_ENV.filter((v) => !process.env[v])
+
 	if (missing.length) {
 		throw new Error(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
 	}
@@ -67,6 +71,7 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 	const remote = `:s3:${options.bucket}/${key}`
 	const flags = ["--s3-no-head", "--s3-disable-checksum", "--no-update-modtime"]
 	const result = await $({ nothrow: true, quiet: true })`rclone copyto ${options.file} ${remote} ${flags}`
+
 	if (result.exitCode !== 0) {
 		throw new Error(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
 	}
@@ -89,7 +94,9 @@ const TilesPublish: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	}, [options])
 
 	if (error) return <Text color="red">{error}</Text>
+
 	if (!output) return <Spinner label={`publishing ${options.tileset}.pmtiles to R2…`} />
+
 	return <Text>{output}</Text>
 }
 

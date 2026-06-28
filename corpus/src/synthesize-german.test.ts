@@ -10,6 +10,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { alignRow } from "./align.js"
 import { type LocaleBaseTuple, synthesizeGermanRow, synthesizeLocaleRow } from "./synthesize-german.js"
 import type { CanonicalRow } from "./types.js"
@@ -119,6 +120,7 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 		const seq = () => {
 			let i = 0
 			const vals = [0.1, 0.2, 0.3, 0.4]
+
 			return () => vals[i++ % vals.length]!
 		}
 		const withoutOpt = synthesizeLocaleRow(BERLIN, "DE", { random: seq() })!

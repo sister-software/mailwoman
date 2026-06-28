@@ -52,6 +52,7 @@ const TARGETS = config.locales.map((locale: string) => `neural-weights-${locale}
 async function exists(path: PathLike) {
 	try {
 		await stat(path)
+
 		return true
 	} catch {
 		return false
@@ -66,12 +67,14 @@ async function main() {
 	// copy is correct.
 	if (process.env.MAILWOMAN_SKIP_WEIGHTS_COPY) {
 		process.stderr.write("copy-weights: MAILWOMAN_SKIP_WEIGHTS_COPY set — skipping.\n")
+
 		return
 	}
 
 	if (!(await exists(SOURCE_MODEL))) {
 		throw new Error(`Missing source model: ${SOURCE_MODEL}\nSet MAILWOMAN_PUBLISH_MODEL to override.`)
 	}
+
 	if (!(await exists(SOURCE_TOKENIZER))) {
 		throw new Error(`Missing source tokenizer: ${SOURCE_TOKENIZER}\nSet MAILWOMAN_PUBLISH_TOKENIZER to override.`)
 	}
@@ -96,10 +99,9 @@ async function main() {
 }
 
 /**
- * Materialize the #718 D1 soft-feed artifacts into a weights workspace: the gazetteer-anchor
- * lexicon (a verbatim copy) + the per-country PCB1 postcode-anchor binary (built fresh from the WOF
- * shard). Both `removeIfPresent` first — same symlink-in-tarball trap the model/tokenizer copy
- * guards against.
+ * Materialize the #718 D1 soft-feed artifacts into a weights workspace: the gazetteer-anchor lexicon (a verbatim copy)
+ * + the per-country PCB1 postcode-anchor binary (built fresh from the WOF shard). Both `removeIfPresent` first — same
+ * symlink-in-tarball trap the model/tokenizer copy guards against.
  */
 async function materializeSoftFeed(workspace: string, dir: string) {
 	// Gazetteer-anchor lexicon (#464) — a small JSON, copied verbatim from the repo source.
@@ -119,13 +121,16 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	// region subtag (`en-us` → `us`) names both the binary and the postcodeDbByCountry source entry.
 	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
 	const dbRel = SOFT_FEED.postcodeDbByCountry?.[country]
+
 	if (!dbRel) {
 		process.stderr.write(
 			`soft-feed: no postcodeDbByCountry entry for "${country}" — skipping ${workspace}/postcode-${country}.bin\n`
 		)
+
 		return
 	}
 	const db = dbRel.startsWith("/") ? dbRel : resolve(dataRoot, "wof", dbRel)
+
 	if (!existsSync(db)) {
 		throw new Error(
 			`Missing postcode shard for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDbByCountry.`
@@ -143,7 +148,9 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		[cli, "gazetteer", "postcode-binary", "--out", dir, "--locale", `${country.toUpperCase()}:${db}`],
 		{ stdio: "inherit" }
 	)
+
 	if (r.status !== 0) throw new Error(`gazetteer postcode-binary failed for ${country} (exit ${r.status})`)
+
 	if (!existsSync(binDest)) throw new Error(`gazetteer postcode-binary ran but ${binDest} was not produced`)
 	process.stderr.write(`built soft-feed → ${workspace}/postcode-${country}.bin\n`)
 }

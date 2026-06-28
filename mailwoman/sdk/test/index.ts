@@ -29,6 +29,7 @@ export function assert(input: string, ...expectedClassifications: Classification
 
 			return
 		}
+
 		for (let i = 0; i < expectedClassifications.length; i++) {
 			const expectedClassification = expectedClassifications[i]
 			const bestMatch = solutions[i]
@@ -92,8 +93,7 @@ export function* zip<T, U>(
 }
 
 /**
- * Given two iterables, assert that they are congruent, i.e. that they have the same elements in the
- * same order.
+ * Given two iterables, assert that they are congruent, i.e. that they have the same elements in the same order.
  */
 export function assertCongruent<Item>(
 	actualItemIterators: Iterable<Iterable<Item>>,
@@ -148,6 +148,7 @@ export function assertClassification(
 				}
 
 				expect(true, `"${input}" is not classified as ${classificationTarget}`).toBe(true)
+
 				return
 			}
 

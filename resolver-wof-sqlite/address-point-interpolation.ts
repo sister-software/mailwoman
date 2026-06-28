@@ -43,8 +43,8 @@ import { hasTable } from "./sqlite-utils.js"
 import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
 
 /**
- * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known
- * point (`t = 2`). Past it, the two-point line carries no evidence about the query number.
+ * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known point (`t = 2`). Past
+ * it, the two-point line carries no evidence about the query number.
  */
 const MAX_EXTRAPOLATION_T = 2
 
@@ -82,6 +82,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 			throw new Error("AddressPointInterpolator: one of dbPath or database is required")
 		}
 		this.#fallback = opts.fallback
+
 		// Degrade gracefully on an empty/tableless shard (#568): with no `address_point` table this tier
 		// is skipped, deferring to the segment fallback rather than crashing at construction.
 		if (hasTable(this.#db, "address_point")) {
@@ -100,6 +101,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 	find(query: InterpolationQuery): InterpolatedHit | null {
 		const streetKey = canonicalizeRouteKey(normalizeStreetForKey(query.street))
 		const numberRaw = query.number.trim()
+
 		if (!streetKey || !/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 
@@ -108,6 +110,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 
 		const rows = this.#byPostcode.all(query.postcode.trim(), streetKey, n) as unknown as PointRow[]
 		const hit = rows.length >= 2 ? interpolateFromNeighbors(rows, n) : null
+
 		return hit ?? this.#fallback?.find(query) ?? null
 	}
 
@@ -119,11 +122,14 @@ export class AddressPointInterpolator implements InterpolationLookup {
 /** Collapse rows to one centroid anchor per distinct house number, sorted ascending. */
 function anchorsByNumber(rows: readonly PointRow[]): NumberAnchor[] {
 	const byN = new Map<number, PointRow[]>()
+
 	for (const row of rows) {
 		const group = byN.get(row.n)
+
 		if (group) group.push(row)
 		else byN.set(row.n, [row])
 	}
+
 	return [...byN.entries()]
 		.map(([n, group]) => ({
 			n,
@@ -141,6 +147,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 	// Nearest known number below and above the query (the rows never contain n itself).
 	let below: NumberAnchor | undefined
 	let above: NumberAnchor | undefined
+
 	for (const anchor of anchors) {
 		if (anchor.n < n) below = anchor
 		else {
@@ -152,6 +159,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 	if (below && above) {
 		const t = (n - below.n) / (above.n - below.n)
 		const spanM = haversineKm(below.lat, below.lon, above.lat, above.lon) * 1000
+
 		return {
 			lat: below.lat + (above.lat - below.lat) * t,
 			lon: below.lon + (above.lon - below.lon) * t,
@@ -167,15 +175,18 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 	// Single-sided: extrapolate along the two nearest known numbers on the populated side.
 	// `near` is the anchor closest to n, `far` the next one out; t > 1 by construction.
 	const side = below ? anchors.slice(-2) : anchors.slice(0, 2)
+
 	if (side.length < 2) return null
 	const [far, near] = below ? [side[0]!, side[1]!] : [side[1]!, side[0]!]
 	const t = (n - far.n) / (near.n - far.n)
+
 	if (t > MAX_EXTRAPOLATION_T) return null
 
 	const lat = far.lat + (near.lat - far.lat) * t
 	const lon = far.lon + (near.lon - far.lon) * t
 	const pairM = haversineKm(near.lat, near.lon, far.lat, far.lon) * 1000
 	const overshootM = haversineKm(lat, lon, near.lat, near.lon) * 1000
+
 	return {
 		lat,
 		lon,

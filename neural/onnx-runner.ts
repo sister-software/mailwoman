@@ -14,6 +14,7 @@
  */
 
 import { promises as fs } from "node:fs"
+
 import ort from "onnxruntime-node"
 
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.js"
@@ -23,10 +24,9 @@ export interface OnnxRunnerOpts {
 	/** If true, load the model immediately in `create()`. Default false. */
 	warmup?: boolean
 	/**
-	 * Fixed sequence length the model expects. v0.1.0 / v0.2.0 quantization baked in 128 (the
-	 * training-time max position) even though the fp32 export specified dynamic axes — re-quantize
-	 * with a different shape to override. Inputs shorter than this are padded with id `0` and masked
-	 * out via attention_mask=0; inputs longer are truncated.
+	 * Fixed sequence length the model expects. v0.1.0 / v0.2.0 quantization baked in 128 (the training-time max position)
+	 * even though the fp32 export specified dynamic axes — re-quantize with a different shape to override. Inputs shorter
+	 * than this are padded with id `0` and masked out via attention_mask=0; inputs longer are truncated.
 	 */
 	fixedSeqLen?: number
 }
@@ -40,9 +40,8 @@ export interface InferResult {
 	/** Number of label classes (the inner-dim of the logits tensor). */
 	numLabels: number
 	/**
-	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order), when the model
-	 * exports it (v1.1.0+, #511 Tier A). Absent on older bundles — consumers must treat undefined as
-	 * "no address-system detection available".
+	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order), when the model exports it (v1.1.0+,
+	 * #511 Tier A). Absent on older bundles — consumers must treat undefined as "no address-system detection available".
 	 */
 	localeLogits?: number[]
 }
@@ -63,19 +62,24 @@ export class OnnxRunner {
 	/** Load by path. Reads the model lazily unless `warmup` is true. */
 	static async create(modelPath: string, opts: OnnxRunnerOpts = {}): Promise<OnnxRunner> {
 		const runner = new OnnxRunner(modelPath, null, opts)
+
 		if (opts.warmup) await runner.ensureSession()
+
 		return runner
 	}
 
 	/** Load from an already-read byte buffer. */
 	static async fromBytes(modelBytes: Uint8Array, opts: OnnxRunnerOpts = {}): Promise<OnnxRunner> {
 		const runner = new OnnxRunner("(bytes)", modelBytes, opts)
+
 		if (opts.warmup) await runner.ensureSession()
+
 		return runner
 	}
 
 	private async ensureSession(): Promise<ort.InferenceSession> {
 		if (this.session) return this.session
+
 		if (!this.loadPromise) {
 			this.loadPromise = (async () => {
 				const bytes = this.modelBytes ?? new Uint8Array(await fs.readFile(this.modelPath))
@@ -84,23 +88,24 @@ export class OnnxRunner {
 					graphOptimizationLevel: "all",
 				})
 				this.session = session
+
 				return session
 			})()
 		}
+
 		return this.loadPromise
 	}
 
 	/**
 	 * Run inference on a single token id sequence.
 	 *
-	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0; truncates if longer. Output is sliced
-	 * back to the actual input length.
+	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0; truncates if longer. Output is sliced back to the actual
+	 * input length.
 	 *
 	 * @param tokenIds The id sequence produced by the tokenizer (no special tokens added).
-	 * @param anchor Optional postcode-anchor channel (#239/#240). When supplied (only for anchor
-	 *   models — exported with the `anchor_features`/`anchor_confidence` inputs), per-piece features
-	 *   `(seqLen × dim)` + confidence `(seqLen,)` are fed, zero-padded to `fixedSeqLen`. Omit for
-	 *   plain models, whose ONNX has no anchor inputs.
+	 * @param anchor Optional postcode-anchor channel (#239/#240). When supplied (only for anchor models — exported with
+	 *   the `anchor_features`/`anchor_confidence` inputs), per-piece features `(seqLen × dim)` + confidence `(seqLen,)`
+	 *   are fed, zero-padded to `fixedSeqLen`. Omit for plain models, whose ONNX has no anchor inputs.
 	 */
 	async infer(
 		tokenIds: number[],
@@ -111,6 +116,7 @@ export class OnnxRunner {
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
 		const padded = new BigInt64Array(this.fixedSeqLen)
 		const mask = new BigInt64Array(this.fixedSeqLen)
+
 		for (let i = 0; i < seqLen; i++) {
 			padded[i] = BigInt(tokenIds[i]!)
 			mask[i] = 1n
@@ -125,9 +131,11 @@ export class OnnxRunner {
 			const dim = anchor.features[0]?.length ?? 0
 			const af = new Float32Array(this.fixedSeqLen * dim)
 			const ac = new Float32Array(this.fixedSeqLen)
+
 			for (let i = 0; i < seqLen; i++) {
 				ac[i] = anchor.confidence[i] ?? 0
 				const row = anchor.features[i]
+
 				if (row) for (let d = 0; d < dim; d++) af[i * dim + d] = row[d] ?? 0
 			}
 			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
@@ -151,9 +159,11 @@ export class OnnxRunner {
 			const dim = gazetteer.features[0]?.length ?? 0
 			const gf = new Float32Array(this.fixedSeqLen * dim)
 			const gc = new Float32Array(this.fixedSeqLen)
+
 			for (let i = 0; i < seqLen; i++) {
 				gc[i] = gazetteer.confidence[i] ?? 0
 				const row = gazetteer.features[i]
+
 				if (row) for (let d = 0; d < dim; d++) gf[i * dim + d] = row[d] ?? 0
 			}
 			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
@@ -169,14 +179,17 @@ export class OnnxRunner {
 
 		const output = await session.run(feeds)
 		const logitsTensor = output.logits
+
 		if (!logitsTensor) throw new Error("ONNX model did not return a `logits` output")
 		const data = logitsTensor.data as Float32Array
 		const [, , numLabels] = logitsTensor.dims as readonly [number, number, number]
 
 		const logits: number[][] = []
+
 		for (let t = 0; t < seqLen; t++) {
 			const row: number[] = new Array(numLabels)
 			const base = t * numLabels
+
 			for (let l = 0; l < numLabels; l++) row[l] = data[base + l]!
 			logits.push(row)
 		}
@@ -189,13 +202,14 @@ export class OnnxRunner {
 	}
 
 	/**
-	 * The model's declared input names (loads the session if not already loaded). Used by the
-	 * ProductionScorer (#718) back-compat path: when a model-card has no `requires` block, the
-	 * required soft-feature channels are INFERRED from the graph — a model exporting
-	 * `anchor_features` / `gazetteer_features` declared those channels mandatory at train time.
+	 * The model's declared input names (loads the session if not already loaded). Used by the ProductionScorer (#718)
+	 * back-compat path: when a model-card has no `requires` block, the required soft-feature channels are INFERRED from
+	 * the graph — a model exporting `anchor_features` / `gazetteer_features` declared those channels mandatory at train
+	 * time.
 	 */
 	async inputNames(): Promise<readonly string[]> {
 		const session = await this.ensureSession()
+
 		return session.inputNames
 	}
 }

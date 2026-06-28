@@ -6,6 +6,7 @@
 
 import { ClassificationMatch } from "@mailwoman/core"
 import { assertClassification } from "mailwoman/sdk/test"
+
 import { PersonalTitleClassifier } from "./PersonalTitleClassifier.js"
 
 const classifier = await new PersonalTitleClassifier().ready()

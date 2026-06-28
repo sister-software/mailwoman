@@ -15,6 +15,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
@@ -52,6 +53,7 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 
 			// Step 0: Create bucket
 			updateStep(0, { status: "running" })
+
 			try {
 				await $`rclone mkdir ${rcloneBase} ${dryFlag}`.quiet()
 				updateStep(0, { status: "done" })
@@ -61,6 +63,7 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 
 			// Step 1: Sync v0.3.0 corpus
 			updateStep(1, { status: "running" })
+
 			try {
 				const result =
 					await $`rclone sync ${options.corpusDir}/v0.3.0/corpus-v0.3.0/ ${rcloneBase}/corpus/v0.3.0/ --progress --transfers 8 --checkers 16 ${dryFlag}`.quiet()
@@ -68,39 +71,46 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			} catch (_e: unknown) {
 				const e = _e as Record<string, unknown>
 				updateStep(1, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+
 				return
 			}
 
 			// Step 2: Sync v0.4.0 adapter shards
 			updateStep(2, { status: "running" })
+
 			try {
 				await $`rclone sync ${options.corpusDir}/v0.4.0/corpus-v0.4.0/ ${rcloneBase}/corpus/v0.4.0/ --progress --transfers 4 ${dryFlag}`.quiet()
 				updateStep(2, { status: "done", detail: "v0.4.0 synced" })
 			} catch (_e: unknown) {
 				const e = _e as Record<string, unknown>
 				updateStep(2, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+
 				return
 			}
 
 			// Step 3: Sync tokenizer
 			updateStep(3, { status: "running" })
+
 			try {
 				await $`rclone sync ${options.tokenizerDir}/ ${rcloneBase}/models/tokenizer/ --progress ${dryFlag}`.quiet()
 				updateStep(3, { status: "done", detail: "tokenizer synced" })
 			} catch (_e: unknown) {
 				const e = _e as Record<string, unknown>
 				updateStep(3, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+
 				return
 			}
 
 			// Step 4: Sync training code
 			updateStep(4, { status: "running" })
+
 			try {
 				await $`rclone sync ./corpus-python/ ${rcloneBase}/corpus-python/ --exclude '.venv/**' --exclude '__pycache__/**' --exclude '*.egg-info/**' --progress ${dryFlag}`.quiet()
 				updateStep(4, { status: "done", detail: "training code synced" })
 			} catch (_e: unknown) {
 				const e = _e as Record<string, unknown>
 				updateStep(4, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+
 				return
 			}
 		}

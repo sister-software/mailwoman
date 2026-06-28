@@ -63,9 +63,12 @@ const OA_TAGS = ["locality", "region", "postcode"] as const
 /** Coerce a DuckDB list column (a `DuckDBListValue` with `.items`, or a plain array) to `string[]`. */
 function toStringArray(value: unknown): string[] {
 	if (value == null) return []
+
 	if (Array.isArray(value)) return value.map((v) => String(v))
 	const items = (value as { items?: unknown[] }).items
+
 	if (Array.isArray(items)) return items.map((v) => String(v))
+
 	return []
 }
 
@@ -77,15 +80,19 @@ function loadOa(country: string, n: number, rng: SeededRandom): Record<string, u
 		.map((line) => JSON.parse(line) as Record<string, unknown>)
 	rng.shuffle(rows)
 	const out: Record<string, unknown>[] = []
+
 	for (const r of rows.slice(0, n)) {
 		const expected = (r.expected ?? {}) as Record<string, unknown>
 		const gold: string[][] = []
+
 		for (const t of OA_TAGS) {
 			if (expected[t]) gold.push([t, String(expected[t])])
 		}
+
 		if (gold.length === 0) continue
 		out.push({ raw: r.input, gold, country, source: "oa", partial: true })
 	}
+
 	return out
 }
 
@@ -100,9 +107,11 @@ function reconstructSpans(tokens: string[], labels: string[]): string[][] {
 		curToks = []
 	}
 	const n = Math.min(tokens.length, labels.length)
+
 	for (let i = 0; i < n; i++) {
 		const tok = tokens[i]!
 		const lab = labels[i]!
+
 		if (lab === "O" || !lab.includes("-")) {
 			flush()
 			continue
@@ -110,6 +119,7 @@ function reconstructSpans(tokens: string[], labels: string[]): string[][] {
 		const dash = lab.indexOf("-")
 		const prefix = lab.slice(0, dash)
 		const tag = lab.slice(dash + 1)
+
 		if (prefix === "B" || tag !== curTag) {
 			flush()
 			curTag = tag
@@ -120,6 +130,7 @@ function reconstructSpans(tokens: string[], labels: string[]): string[][] {
 		}
 	}
 	flush()
+
 	return spans
 }
 
@@ -134,14 +145,17 @@ async function loadCorpus(parquetPath: string, n: number, rng: SeededRandom): Pr
 	const order = Array.from({ length: total }, (_, i) => i)
 	rng.shuffle(order)
 	const out: Record<string, unknown>[] = []
+
 	for (const idx of order) {
 		if (out.length >= n) break
 		const row = table[idx]!
 		const gold = reconstructSpans(toStringArray(row.tokens), toStringArray(row.labels))
 		const distinctTags = new Set(gold.map(([t]) => t))
+
 		if (distinctTags.size < 2) continue // bare admin-name row — skip, see module docstring
 		out.push({ raw: row.raw, gold, country: row.country, source: "corpus", partial: false })
 	}
+
 	return out
 }
 
@@ -158,6 +172,7 @@ async function main(): Promise<void> {
 			seed: { type: "string", default: "20260607" },
 		},
 	})
+
 	if (!values.corpus) {
 		process.stderr.write("error: the following arguments are required: --corpus\n")
 		process.exit(2)
@@ -179,6 +194,7 @@ async function main(): Promise<void> {
 	writeFileSync(outPath, rows.map((r) => pyJsonDumps(r, { ensureAscii: false }) + "\n").join(""))
 
 	const byCountry = new Map<string, number>()
+
 	for (const r of rows) {
 		const c = String(r.country)
 		byCountry.set(c, (byCountry.get(c) ?? 0) + 1)

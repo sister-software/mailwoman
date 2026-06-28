@@ -7,6 +7,7 @@
 import { parseTileCoordParams } from "@mailwoman/cartographer/tiles/coords"
 import { ResourceError } from "@mailwoman/core/errors"
 import { TileType } from "pmtiles"
+
 import { cacheResponse } from "../caching.js"
 import { applyAccessControlAllowOrigin } from "../cors.js"
 import { TileFileExtensionMap, type TileTypeFileExtension } from "../protomaps/files.js"
@@ -19,6 +20,7 @@ export const TileRoute = WorkerRoute.GET(
 	"/:tileSetName([a-zA-Z0-9_\\-]+)/:z(\\d+)/:x(\\d+)/:y(\\d+).:fileExtension([a-z0-9]+)",
 	async ({ request, params, env, ctx }) => {
 		const tileCoords = parseTileCoordParams(params)!
+
 		if (!tileCoords) throw ResourceError.from(400, "Invalid tile coordinates")
 
 		const { tileSetName, fileExtension } = params

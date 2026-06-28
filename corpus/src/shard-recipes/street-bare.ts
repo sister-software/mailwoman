@@ -40,6 +40,7 @@ export const streetBareRecipe: ShardRecipe = {
 		let emitted = 0
 		let skipped = 0
 		let guard = 0
+
 		while (emitted < count && guard++ < count * 5) {
 			const base = DEFAULT_US_BASES[emitted % DEFAULT_US_BASES.length]!
 			const synth = synthesizeStreetRow(base as StreetBaseTuple, {
@@ -47,6 +48,7 @@ export const streetBareRecipe: ShardRecipe = {
 				bareProb,
 				includeHouseNumberProb: hnProb,
 			})
+
 			if (!synth) {
 				skipped++
 				continue
@@ -74,6 +76,7 @@ export const streetBareRecipe: ShardRecipe = {
 			// (labeled OR quarantined), so the scaffold's `alignAndWrite` would write quarantined rows
 			// too — call alignRow directly and skip anything not "labeled".
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue

@@ -17,8 +17,8 @@
 import { type RequestHandler, Router } from "express"
 
 /**
- * Photon feature properties — OSM-derived tag names, populated from Mailwoman's `ComponentTag` /
- * resolved place. `extent` is `[minLon, maxLat, maxLon, minLat]` per Photon's convention.
+ * Photon feature properties — OSM-derived tag names, populated from Mailwoman's `ComponentTag` / resolved place.
+ * `extent` is `[minLon, maxLat, maxLon, minLat]` per Photon's convention.
  */
 export interface PhotonProperties {
 	osm_id?: number | string
@@ -79,9 +79,8 @@ export interface PhotonReverseParams {
 }
 
 /**
- * The engine the router delegates to. Each method is optional; a missing one answers `501`. The
- * real implementation backs `/api` with the FST autocomplete tier + parse→resolve, and `/reverse`
- * with the `WofReverseGeocoder`.
+ * The engine the router delegates to. Each method is optional; a missing one answers `501`. The real implementation
+ * backs `/api` with the FST autocomplete tier + parse→resolve, and `/reverse` with the `WofReverseGeocoder`.
  */
 export interface PhotonEngine {
 	search?(params: PhotonSearchParams): Promise<PhotonFeatureCollection>
@@ -97,14 +96,15 @@ function asString(raw: unknown): string | undefined {
 function asStringArray(raw: unknown): string[] | undefined {
 	if (Array.isArray(raw)) return raw.filter((v): v is string => typeof v === "string")
 	const s = asString(raw)
+
 	return s ? [s] : undefined
 }
 
 const EMPTY: PhotonFeatureCollection = { type: "FeatureCollection", features: [] }
 
 /**
- * Build the Photon-compatible router around an injected {@link PhotonEngine}. Param parsing lives
- * here; the feature _projection_ (resolved place → {@link PhotonProperties}) is the staged work.
+ * Build the Photon-compatible router around an injected {@link PhotonEngine}. Param parsing lives here; the feature
+ * _projection_ (resolved place → {@link PhotonProperties}) is the staged work.
  */
 export function createPhotonRouter(engine: PhotonEngine): Router {
 	const router = Router()
@@ -112,12 +112,15 @@ export function createPhotonRouter(engine: PhotonEngine): Router {
 	const search: RequestHandler = async (req, res) => {
 		if (!engine.search) {
 			res.status(501).json({ ...EMPTY, message: "search not implemented" })
+
 			return
 		}
 		const q = req.query
 		const query = asString(q["q"])
+
 		if (!query) {
 			res.status(400).json({ ...EMPTY, message: "q is required" })
+
 			return
 		}
 		const params: PhotonSearchParams = {
@@ -135,17 +138,22 @@ export function createPhotonRouter(engine: PhotonEngine): Router {
 	const reverse: RequestHandler = async (req, res) => {
 		if (!engine.reverse) {
 			res.status(501).json({ ...EMPTY, message: "reverse not implemented" })
+
 			return
 		}
 		const q = req.query
 		const lat = Number(q["lat"])
 		const lon = Number(q["lon"])
+
 		if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
 			res.status(400).json({ ...EMPTY, message: "lat and lon are required" })
+
 			return
 		}
+
 		if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
 			res.status(400).json({ ...EMPTY, message: "lat must be in [-90, 90] and lon in [-180, 180]" })
+
 			return
 		}
 		const params: PhotonReverseParams = {

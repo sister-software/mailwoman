@@ -13,8 +13,8 @@
  */
 
 /**
- * USPS two-letter abbreviations: the 50 states, the District of Columbia, and the five primary
- * territories (Puerto Rico, Guam, US Virgin Islands, Northern Mariana Islands, American Samoa).
+ * USPS two-letter abbreviations: the 50 states, the District of Columbia, and the five primary territories (Puerto
+ * Rico, Guam, US Virgin Islands, Northern Mariana Islands, American Samoa).
  */
 export const US_STATE_ABBREVIATIONS = [
 	"AL",
@@ -81,18 +81,17 @@ export type UsStateAbbreviation = (typeof US_STATE_ABBREVIATIONS)[number]
 const STATE_ABBREVIATION_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
 
 /**
- * Type-predicate for a USPS state-or-territory abbreviation. Case-insensitive (`"ca"` and `"CA"`
- * both pass), since the abbreviation arrives from raw address text.
+ * Type-predicate for a USPS state-or-territory abbreviation. Case-insensitive (`"ca"` and `"CA"` both pass), since the
+ * abbreviation arrives from raw address text.
  */
 export function isUsStateAbbreviation(input: unknown): input is UsStateAbbreviation {
 	return typeof input === "string" && STATE_ABBREVIATION_SET.has(input.toUpperCase())
 }
 
 /**
- * Full names for the 50 states, DC, and the five primary territories, keyed by USPS abbreviation.
- * The names half of the closed region vocabulary — where the country/state homographs live
- * ("Georgia", "Washington"), which the gazetteer-anchor lexicon needs to flag candidate-tag
- * collisions. Source: USPS Publication 28, Appendix B.
+ * Full names for the 50 states, DC, and the five primary territories, keyed by USPS abbreviation. The names half of the
+ * closed region vocabulary — where the country/state homographs live ("Georgia", "Washington"), which the
+ * gazetteer-anchor lexicon needs to flag candidate-tag collisions. Source: USPS Publication 28, Appendix B.
  */
 export const US_STATE_BY_ABBREVIATION = {
 	AL: "Alabama",

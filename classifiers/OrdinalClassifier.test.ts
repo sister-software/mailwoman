@@ -6,6 +6,7 @@
 
 import { ClassificationsMatchMap } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { OrdinalClassifier } from "./OrdinalClassifier.js"
 
 const classifier = new OrdinalClassifier()

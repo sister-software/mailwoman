@@ -30,12 +30,13 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
+import { spawnSync } from "node:child_process"
+
 import { isAuDeliveryService, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
 import { isNzDeliveryService, isNzPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
-import { spawnSync } from "node:child_process"
 
 import { alignRow } from "../align.js"
 import {
@@ -153,7 +154,9 @@ interface Rendered {
 function localityHash(name: string): number {
 	let h = 5381
 	const s = name.toLowerCase()
+
 	for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
+
 	return h
 }
 const isHoldoutLocality = (name: string): boolean => localityHash(name) % 10 === 0
@@ -163,8 +166,10 @@ function splitCsv(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
+
 	for (let i = 0; i < line.length; i++) {
 		const c = line[i]!
+
 		if (inQ) {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
@@ -179,6 +184,7 @@ function splitCsv(line: string): string[] {
 		} else cur += c
 	}
 	out.push(cur)
+
 	return out
 }
 
@@ -187,11 +193,14 @@ const cleanLocality = (loc: string) => loc && loc.length <= 40 && !/\d|,/.test(l
 /** Stream real US tuples (number/street/city/postcode) out of a cached OA zip. */
 function readUsTuples(source: { zip: string; csv: string; region: string }): UsTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
+
 	if (r.status !== 0) {
 		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+
 		return []
 	}
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return []
 	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string) => header.indexOf(name)
@@ -202,27 +211,31 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UsT
 	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: UsTuple[] = []
 	const seen = new Set<string>()
+
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
 		const cells = splitCsv(lines[li]!)
 		const locality = get(cells, iCity)
+
 		if (!cleanLocality(locality)) continue
 		const key = locality.toLowerCase()
 		const street = get(cells, iStreet),
 			house_number = get(cells, iNum)
 		// One tuple per (locality, street) pair keeps the pool varied without ballooning memory.
 		const pairKey = `${key}|${street}`.toLowerCase()
+
 		if (seen.has(pairKey)) continue
 		seen.add(pairKey)
 		tuples.push({ house_number, street, locality, region: source.region, postcode: get(cells, iPost) })
 	}
+
 	return tuples
 }
 
 /**
- * Stride-sampled FR tuples (number/street/city/postcode). The countrywide CSV is 2.5 GB and
- * insee-ordered; `awk NR%K` strides the whole country instead of reading one département. Quoted
- * commas survive because awk only FILTERS lines — parsing stays in splitCsv.
+ * Stride-sampled FR tuples (number/street/city/postcode). The countrywide CSV is 2.5 GB and insee-ordered; `awk NR%K`
+ * strides the whole country instead of reading one département. Quoted commas survive because awk only FILTERS lines —
+ * parsing stays in splitCsv.
  */
 function readFrTuples(limit: number): FrTuple[] {
 	const r = spawnSync(
@@ -230,11 +243,14 @@ function readFrTuples(limit: number): FrTuple[] {
 		["-c", `unzip -p "${FR_SOURCE.zip}" "${FR_SOURCE.csv}" | awk 'NR==1 || NR%211==3' | head -n ${limit + 1}`],
 		{ maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" }
 	)
+
 	if (r.status !== 0 && r.stdout.length === 0) {
 		console.error(`  WARN: unzip failed for ${FR_SOURCE.zip}`)
+
 		return []
 	}
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+
 	if (lines.length < 2) return []
 	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string) => header.indexOf(n)
@@ -245,6 +261,7 @@ function readFrTuples(limit: number): FrTuple[] {
 	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
+
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
 		const cells = splitCsv(lines[li]!)
@@ -252,18 +269,21 @@ function readFrTuples(limit: number): FrTuple[] {
 			postcode = get(cells, iPost),
 			street = get(cells, iStreet),
 			house_number = get(cells, iNum)
+
 		if (!cleanLocality(locality) || !/^\d{5}$/.test(postcode) || !street || !house_number) continue
 		const key = `${locality}|${street}`.toLowerCase()
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		tuples.push({ house_number, street, locality, postcode })
 	}
+
 	return tuples
 }
 
 /**
- * Canadian locality pools from the GeoNames dump (CC-BY 4.0): feature class P, admin1 10 (Québec) /
- * 08 (Ontario), population > 1000. GeoNames is the provenance-tracked source — no hand list.
+ * Canadian locality pools from the GeoNames dump (CC-BY 4.0): feature class P, admin1 10 (Québec) / 08 (Ontario),
+ * population > 1000. GeoNames is the provenance-tracked source — no hand list.
  */
 function readCaLocalities(admin1: string): string[] {
 	const r = spawnSync(
@@ -274,45 +294,55 @@ function readCaLocalities(admin1: string): string[] {
 		],
 		{ maxBuffer: 1024 * 1024 * 256, encoding: "utf8" }
 	)
+
 	if (r.status !== 0) {
 		console.error(`  WARN: GeoNames read failed (admin1=${admin1}) — is ${GEONAMES_CA} present?`)
+
 		return []
 	}
+
 	return [...new Set(r.stdout.split("\n").filter(cleanLocality))]
 }
 
 /**
- * Real (locality, state?, postcode) tuples from a GeoNames postal-code dump (CC-BY 4.0). Tab
- * format: country, postal_code, place_name, admin1_name, admin1_code, … — for AU the admin1_code IS
- * the postal state abbreviation (NSW/VIC/…), validated against the codex table; NZ has no region
- * line so the state column is ignored. Postcodes are validated against the codex 4-digit shape — a
- * dump row that fails the contract is skipped, not emitted as a junk label.
+ * Real (locality, state?, postcode) tuples from a GeoNames postal-code dump (CC-BY 4.0). Tab format: country,
+ * postal_code, place_name, admin1_name, admin1_code, … — for AU the admin1_code IS the postal state abbreviation
+ * (NSW/VIC/…), validated against the codex table; NZ has no region line so the state column is ignored. Postcodes are
+ * validated against the codex 4-digit shape — a dump row that fails the contract is skipped, not emitted as a junk
+ * label.
  */
 function readPostalTuples(
 	source: { zip: string; txt: string },
 	opts: { withState: boolean }
 ): Array<AuTuple | NzTuple> {
 	const r = spawnSync("unzip", ["-p", source.zip, source.txt], { maxBuffer: 1024 * 1024 * 64, encoding: "utf8" })
+
 	if (r.status !== 0) {
 		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+
 		return []
 	}
 	const tuples: Array<AuTuple | NzTuple> = []
 	const seen = new Set<string>()
 	const validPostcode = opts.withState ? isAuPostcode : isNzPostcode
+
 	for (const line of r.stdout.split("\n")) {
 		if (!line) continue
 		const cols = line.split("\t")
 		const postcode = (cols[1] ?? "").trim()
 		const locality = (cols[2] ?? "").trim()
 		const region = (cols[4] ?? "").trim()
+
 		if (!cleanLocality(locality) || !validPostcode(postcode)) continue
+
 		if (opts.withState && !isAuStateAbbreviation(region)) continue
 		const key = `${locality}|${postcode}`.toLowerCase()
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		tuples.push(opts.withState ? { locality, region, postcode } : { locality, postcode })
 	}
+
 	return tuples
 }
 
@@ -321,17 +351,24 @@ function readPostalTuples(
 /** Box-number distribution (mirrors the corpus defaultPickNumber bands: 70% are 1-3 digits). */
 function pickBoxNumber(random: () => number): string {
 	const r = random()
+
 	if (r < 0.3) return String(1 + Math.floor(random() * 99))
+
 	if (r < 0.7) return String(100 + Math.floor(random() * 900))
+
 	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
+
 	return String(10000 + Math.floor(random() * 90000))
 }
 
 /** Case dial for the designator phrase: mostly template casing, sometimes UPPER, rarely lower. */
 function caseDial(random: () => number, s: string): string {
 	const r = random()
+
 	if (r < 0.7) return s
+
 	if (r < 0.92) return s.toUpperCase()
+
 	return s.toLowerCase()
 }
 
@@ -348,21 +385,24 @@ function makePoBoxPhrase(
 	rareLeaders?: ReadonlyArray<string>
 ): string {
 	let leader = leaders[Math.floor(random() * leaders.length)]!
+
 	if (rareLeaders && random() < 0.1) leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
 	const num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 	const phrase = leader === "#" ? `#${num}` : `${caseDial(random, leader)} ${num}`
+
 	// Codex round-trip: a phrase built from a codex-known designator and a clean id must satisfy the
 	// matcher (the noisy ids — commas/spaces — are corpus-designed adversarial forms the regex rightly
 	// rejects, so they're exempt). A failure here is a generation bug; fail loud.
 	if (CODEX_COVERED_LEADERS.has(leader.toLowerCase()) && /^[\dA-Za-z][\dA-Za-z-]*$/.test(num) && !isPOBox(phrase)) {
 		throw new Error(`generated a po_box phrase the codex matcher rejects: "${phrase}"`)
 	}
+
 	return phrase
 }
 
 /**
- * A CEDEX designation: "CEDEX 08" / "Cedex 8" / bare "CEDEX". Shape contract = codex fr/cedex —
- * every emitted phrase must satisfy isCedex, loud.
+ * A CEDEX designation: "CEDEX 08" / "Cedex 8" / bare "CEDEX". Shape contract = codex fr/cedex — every emitted phrase
+ * must satisfy isCedex, loud.
  */
 function makeCedex(random: () => number): string {
 	const r = random()
@@ -371,17 +411,20 @@ function makeCedex(random: () => number): string {
 		if (random() < 0.2) return word // "33077 BORDEAUX CEDEX" — un-numbered offices are common
 		const n = 1 + Math.floor(random() * 20)
 		const id = random() < 0.5 ? String(n).padStart(2, "0") : String(n)
+
 		return `${word} ${id}`
 	})()
+
 	if (!isCedex(phrase)) throw new Error(`makeCedex emitted a phrase the codex matcher rejects: "${phrase}"`)
+
 	return phrase
 }
 
 /**
- * Compose an AU or NZ delivery-service phrase from the codex-sourced leaders. Same contract as
- * makePoBoxPhrase: a phrase built from a codex-known designator and a clean id must round-trip the
- * codex matcher (isAuDeliveryService / isNzDeliveryService) — a failure is a generation bug, loud.
- * Noisy ids (commas / embedded spaces) are corpus-designed adversarial forms, exempt.
+ * Compose an AU or NZ delivery-service phrase from the codex-sourced leaders. Same contract as makePoBoxPhrase: a
+ * phrase built from a codex-known designator and a clean id must round-trip the codex matcher (isAuDeliveryService /
+ * isNzDeliveryService) — a failure is a generation bug, loud. Noisy ids (commas / embedded spaces) are corpus-designed
+ * adversarial forms, exempt.
  */
 function makeAuNzPoBoxPhrase(
 	random: () => number,
@@ -390,17 +433,21 @@ function makeAuNzPoBoxPhrase(
 	validate: (input: unknown) => boolean
 ): string {
 	let leader = leaders[Math.floor(random() * leaders.length)]!
+
 	if (rareLeaders && random() < 0.1) leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
 	let num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
+
 	// NZ CMB identifiers are alpha-led per the ADV358 example ("CMB B99").
 	if (leader === "CMB" && validate === isNzDeliveryService) num = `B${num}`
 	const phrase = `${caseDial(random, leader)} ${num}`
 	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the AU
 	// AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
 	const cleanId = validate === isNzDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
+
 	if (cleanId.test(num) && !validate(phrase)) {
 		throw new Error(`generated a phrase the codex matcher rejects: "${phrase}"`)
 	}
+
 	return phrase
 }
 
@@ -410,8 +457,10 @@ function makeCaPostcode(random: () => number, fsaLetters: string[]): string {
 	const D = () => String(Math.floor(random() * 10))
 	const first = fsaLetters[Math.floor(random() * fsaLetters.length)]!
 	const pc = `${first}${D()}${L()} ${D()}${L()}${D()}`
+
 	// The codex pattern is the contract — a generation bug should fail loud, not emit junk labels.
 	if (!normalizeCaPostalCode(pc)) throw new Error(`generated an invalid CA postcode: ${pc}`)
+
 	return pc
 }
 
@@ -424,12 +473,17 @@ function renderPoBoxUs(random: () => number, t: UsTuple): Rendered {
 	const { locality: loc, region: reg, postcode: pc } = t
 	const base = { po_box: phrase, locality: loc, region: reg }
 	const r = random()
+
 	if (r < 0.4 && pc)
 		return { fmt: "full", raw: `${phrase}, ${loc}, ${reg} ${pc}`, components: { ...base, postcode: pc } }
+
 	if (r < 0.55) return { fmt: "no-postcode", raw: `${phrase}, ${loc}, ${reg}`, components: base }
+
 	if (r < 0.75) return { fmt: "bare", raw: phrase, components: { po_box: phrase } }
+
 	if (r < 0.9) {
 		const v = pick(random, VENUES_EN)
+
 		return {
 			fmt: "venue",
 			raw: pc ? `${v}, ${phrase}, ${loc}, ${reg} ${pc}` : `${v}, ${phrase}, ${loc}, ${reg}`,
@@ -438,6 +492,7 @@ function renderPoBoxUs(random: () => number, t: UsTuple): Rendered {
 	}
 	// USPS label form: comma-less, all-caps ("PO BOX 123 BURLINGTON VT 05401").
 	const up = (s: string) => s.toUpperCase()
+
 	return {
 		fmt: "label-nocomma",
 		raw: pc ? `${up(phrase)} ${up(loc)} ${reg} ${pc}` : `${up(phrase)} ${up(loc)} ${reg}`,
@@ -451,8 +506,11 @@ function renderPmbUs(random: () => number, t: UsTuple): Rendered {
 	const road = `${hn} ${street}`
 	const components = { house_number: hn, street, po_box: phrase, locality: loc, region: reg, postcode: pc }
 	const r = random()
+
 	if (r < 0.5) return { fmt: "pmb-after-street", raw: `${road} ${phrase}, ${loc}, ${reg} ${pc}`, components }
+
 	if (r < 0.85) return { fmt: "pmb-comma", raw: `${road}, ${phrase}, ${loc}, ${reg} ${pc}`, components }
+
 	return { fmt: "pmb-bare", raw: `${road} ${phrase}`, components: { house_number: hn, street, po_box: phrase } }
 }
 
@@ -462,17 +520,21 @@ function renderBpFr(random: () => number, t: FrTuple): Rendered {
 	const upper = random() < 0.5
 	const loc = upper ? locality.toUpperCase() : locality
 	const r = random()
+
 	if (r < 0.45)
 		return {
 			fmt: "bp-tail",
 			raw: `${phrase}, ${pc} ${loc}`,
 			components: { po_box: phrase, postcode: pc, locality: loc },
 		}
+
 	if (r < 0.6) return { fmt: "bp-bare", raw: phrase, components: { po_box: phrase } }
+
 	if (r < 0.8) {
 		// The institutional combo line — a BP and a CEDEX routing on the same last line.
 		const cedex = makeCedex(random)
 		const locUp = locality.toUpperCase()
+
 		return {
 			fmt: "bp-cedex",
 			raw: `${phrase}, ${pc} ${locUp} ${cedex}`,
@@ -480,6 +542,7 @@ function renderBpFr(random: () => number, t: FrTuple): Rendered {
 		}
 	}
 	const v = pick(random, VENUES_FR)
+
 	return {
 		fmt: "bp-venue",
 		raw: `${v}, ${phrase}, ${pc} ${loc}`,
@@ -493,15 +556,19 @@ function renderCedexFr(random: () => number, t: FrTuple): Rendered {
 	const loc = random() < 0.6 ? locality.toUpperCase() : locality
 	const line = { postcode: pc, locality: loc, cedex }
 	const r = random()
+
 	if (r < 0.4) return { fmt: "cedex-line", raw: `${pc} ${loc} ${cedex}`, components: line }
+
 	if (r < 0.75)
 		return {
 			fmt: "cedex-full",
 			raw: `${hn} ${street}, ${pc} ${loc} ${cedex}`,
 			components: { house_number: hn, street, ...line },
 		}
+
 	if (r < 0.85) return { fmt: "cedex-golden-order", raw: `${pc} ${cedex} ${loc}`, components: line }
 	const v = pick(random, VENUES_FR)
+
 	return { fmt: "cedex-venue", raw: `${v}, ${pc} ${loc} ${cedex}`, components: { venue: v, ...line } }
 }
 
@@ -510,11 +577,15 @@ function renderCaFr(random: () => number, loc: string): Rendered {
 	const pc = makeCaPostcode(random, QC_FSA_LETTERS)
 	const components = { po_box: phrase, postcode: pc, locality: loc, region: "QC" }
 	const r = random()
+
 	// The #511 golden order: postcode BEFORE locality, region trailing.
 	if (r < 0.4) return { fmt: "ca-fr-golden-order", raw: `${phrase}, ${pc} ${loc}, QC`, components }
+
 	if (r < 0.7) return { fmt: "ca-fr-native", raw: `${phrase}, ${loc} QC ${pc}`, components }
+
 	if (r < 0.85) return { fmt: "ca-fr-bare", raw: phrase, components: { po_box: phrase } }
 	const v = pick(random, VENUES_FR)
+
 	return { fmt: "ca-fr-venue", raw: `${v}, ${phrase}, ${loc} QC ${pc}`, components: { venue: v, ...components } }
 }
 
@@ -523,8 +594,11 @@ function renderCaEn(random: () => number, loc: string): Rendered {
 	const pc = makeCaPostcode(random, ON_FSA_LETTERS)
 	const components = { po_box: phrase, locality: loc, region: "ON", postcode: pc }
 	const r = random()
+
 	if (r < 0.5) return { fmt: "ca-en-standard", raw: `${phrase}, ${loc}, ON ${pc}`, components }
+
 	if (r < 0.8) return { fmt: "ca-en-golden-order", raw: `${phrase}, ${pc} ${loc}, ON`, components }
+
 	return { fmt: "ca-en-bare", raw: phrase, components: { po_box: phrase } }
 }
 
@@ -535,24 +609,30 @@ function renderAuPoBox(random: () => number, t: AuTuple): Rendered {
 	// The guideline last line is capitals ("SYDNEY NSW 2000"); mixed case rides as a softer variant.
 	const loc = r < 0.6 ? locality.toUpperCase() : locality
 	const base = { po_box: phrase, locality: loc, region: reg, postcode: pc }
+
 	if (r < 0.45) return { fmt: "au-standard", raw: `${phrase}, ${loc} ${reg} ${pc}`, components: base }
+
 	if (r < 0.6) {
 		// The envelope label form: comma-less, designator upper-cased ("GPO BOX 123 SYDNEY NSW 2001").
 		const up = phrase.toUpperCase()
+
 		return {
 			fmt: "au-label-nocomma",
 			raw: `${up} ${locality.toUpperCase()} ${reg} ${pc}`,
 			components: { po_box: up, locality: locality.toUpperCase(), region: reg, postcode: pc },
 		}
 	}
+
 	if (r < 0.75)
 		return {
 			fmt: "au-no-postcode",
 			raw: `${phrase}, ${loc} ${reg}`,
 			components: { po_box: phrase, locality: loc, region: reg },
 		}
+
 	if (r < 0.88) return { fmt: "au-bare", raw: phrase, components: { po_box: phrase } }
 	const v = pick(random, VENUES_EN)
+
 	return { fmt: "au-venue", raw: `${v}, ${phrase}, ${loc} ${reg} ${pc}`, components: { venue: v, ...base } }
 }
 
@@ -562,27 +642,34 @@ function renderNzPoBox(random: () => number, t: NzTuple): Rendered {
 	// NZ addresses are written mixed-case ("PO Box 4099, Timaru 7942") — no region line (ADV358).
 	const base = { po_box: phrase, locality, postcode: pc }
 	const r = random()
+
 	if (r < 0.55) return { fmt: "nz-standard", raw: `${phrase}, ${locality} ${pc}`, components: base }
+
 	if (r < 0.7) return { fmt: "nz-no-postcode", raw: `${phrase}, ${locality}`, components: { po_box: phrase, locality } }
+
 	if (r < 0.85) return { fmt: "nz-bare", raw: phrase, components: { po_box: phrase } }
 	const v = pick(random, VENUES_EN)
+
 	return { fmt: "nz-venue", raw: `${v}, ${phrase}, ${locality} ${pc}`, components: { venue: v, ...base } }
 }
 
 // ── Component ordering ───────────────────────────────────────────────────────────────────────────
 
 /**
- * Order components so short, collision-prone needles (2-letter regions) are located AFTER the long
- * anchored ones — alignRow claims spans greedily in insertion order, and a leading "on" inside
- * "London" must already be claimed by `locality` before `region: "ON"` goes looking.
+ * Order components so short, collision-prone needles (2-letter regions) are located AFTER the long anchored ones —
+ * alignRow claims spans greedily in insertion order, and a leading "on" inside "London" must already be claimed by
+ * `locality` before `region: "ON"` goes looking.
  */
 const COMPONENT_ORDER = ["house_number", "street", "po_box", "venue", "locality", "postcode", "region", "cedex"]
 function orderComponents(components: Record<string, string>): Record<string, string> {
 	const out: Record<string, string> = {}
+
 	for (const k of COMPONENT_ORDER) {
 		const v = components[k]
+
 		if (v) out[k] = v
 	}
+
 	return out
 }
 
@@ -598,9 +685,11 @@ export const poBoxCedexRecipe: ShardRecipe = {
 
 		// US pool: VT only for golden, non-VT for train (the established geographic holdout).
 		const usPool: UsTuple[] = []
+
 		for (const s of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {
 			const t = readUsTuples(s)
 			console.error(`  ${s.csv}: ${t.length} tuples`)
+
 			for (const x of t) usPool.push(x)
 		}
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
@@ -618,6 +707,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		const auPool = auAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		const nzPool = nzAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		console.error(`  GeoNames postal: AU ${auAll.length}→${auPool.length}, NZ ${nzAll.length}→${nzPool.length}`)
+
 		if (
 			usPool.length === 0 ||
 			frPool.length === 0 ||
@@ -633,27 +723,33 @@ export const poBoxCedexRecipe: ShardRecipe = {
 
 		const pickClass = (r: number): string => {
 			let acc = 0
+
 			for (const [name, w] of CLASS_MIX) {
 				acc += w
+
 				if (r < acc) return name
 			}
+
 			return CLASS_MIX[CLASS_MIX.length - 1]![0]
 		}
 
 		let emitted = 0
 		let skipped = 0
 		let guard = 0
+
 		while (emitted < count && guard++ < count * 10) {
 			const cls = pickClass(random())
 			let rendered: Rendered
 			let country: string
 			let locale: string
+
 			if (cls === "po-box-us") {
 				rendered = renderPoBoxUs(random, pick(random, usPool))
 				country = "US"
 				locale = "en-US"
 			} else if (cls === "pmb-us") {
 				const t = pick(random, usPool)
+
 				if (!t.postcode || !t.street || !t.house_number) continue
 				rendered = renderPmbUs(random, t)
 				country = "US"
@@ -692,6 +788,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				locale = "en-CA"
 			}
 			const { raw, components } = rendered
+
 			// Every component surface must survive verbatim in raw, else alignment can't label it.
 			if (!Object.values(components).every((s) => raw.includes(s))) {
 				skipped++
@@ -723,6 +820,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 									: "OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
 			}
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
+
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
 				continue

@@ -41,8 +41,8 @@ const SCORERS: ReadonlyArray<KindScorer> = [
 ]
 
 /**
- * Classify the query shape into a `QueryKind`. Synchronous + pure — produces the same result for
- * the same `(input, shape)` pair.
+ * Classify the query shape into a `QueryKind`. Synchronous + pure — produces the same result for the same `(input,
+ * shape)` pair.
  */
 export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLike): QueryKindResult {
 	const scored = SCORERS.map((s) => ({ kind: s.kind, confidence: s.score(input, shape) })).filter(
@@ -63,8 +63,7 @@ export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLi
 /**
  * Async variant matching the runtime-pipeline's `classifyKind` contract.
  *
- * The locale parameter is accepted for future locale-aware rules (Japanese honorifics, etc.) but
- * not currently used.
+ * The locale parameter is accepted for future locale-aware rules (Japanese honorifics, etc.) but not currently used.
  */
 export async function classifyKind(
 	input: NormalizedInputLite,

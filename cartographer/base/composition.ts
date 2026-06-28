@@ -6,6 +6,7 @@
 
 import type { SourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 import type { LightSpecification, SkySpecification, StyleSpecification, TerrainSpecification } from "maplibre-gl"
+
 import {
 	LayerSpecificationList,
 	type LayerSpecificationListInput,

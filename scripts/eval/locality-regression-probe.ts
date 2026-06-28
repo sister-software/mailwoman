@@ -35,6 +35,7 @@ const { values: args } = parseArgs({
 	},
 })
 const N = Number(args.n)
+
 for (const k of ["baseline", "candidate", "tokenizer"] as const) if (!args[k]) throw new Error(`--${k} required`)
 
 const norm = (s?: string) => (s ?? "").toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim()
@@ -69,19 +70,25 @@ const examples: string[] = []
 
 for (const row of rows) {
 	const gold = norm(row.components.locality)
+
 	if (!gold) continue
 	const bp = (await base.parseJson(row.raw)) as Record<string, string>
 	const cp = (await cand.parseJson(row.raw)) as Record<string, string>
 	const baseOk = norm(bp.locality) === gold
 	const candOk = norm(cp.locality) === gold
+
 	if (baseOk) baseLocOk++
+
 	if (candOk) candLocOk++
+
 	if (candOk && !baseOk) improvements++
+
 	if (baseOk && !candOk) {
 		regressions++
 		const goldRegion = norm(row.components.region)
 		const cl = norm(cp.locality)
 		let mode: string
+
 		if (!cp.locality) mode = "dropped (no locality emitted)"
 		else if (wordIncludes(streetFamily(cp), gold)) mode = "absorbed-into-street"
 		else if (goldRegion && wordIncludes(cl, goldRegion)) mode = "locality+region MERGED (state not split off)"
@@ -89,6 +96,7 @@ for (const row of rows) {
 		else if (cl.includes(gold) || gold.includes(cl)) mode = "partial (truncated/extended span)"
 		else mode = "other (org/venue name or unrelated span)"
 		failMode[mode] = (failMode[mode] ?? 0) + 1
+
 		if (examples.length < 10)
 			examples.push(
 				`  [${mode.split(" ")[0]}] "${row.raw.slice(0, 70)}"  gold loc=${row.components.locality} | got loc='${cp.locality ?? ""}'`
@@ -102,7 +110,9 @@ console.log(`  base (v1.5.1) locality exact: ${baseLocOk}/${scored} (${((100 * b
 console.log(`  cand (v1.6.0) locality exact: ${candLocOk}/${scored} (${((100 * candLocOk) / scored).toFixed(1)}%)`)
 console.log(`  net: ${improvements} improved, ${regressions} regressed  (Δ ${candLocOk - baseLocOk})`)
 console.log(`\n  REGRESSION failure modes (base-right → v1.6.0-wrong, ${regressions} rows):`)
+
 for (const [m, c] of Object.entries(failMode).sort((a, b) => b[1] - a[1]))
 	console.log(`    ${((100 * c) / regressions).toFixed(0).padStart(3)}%  ${m}  (${c})`)
+
 if (examples.length) console.log(`\n  examples:\n${examples.join("\n")}`)
 console.log()

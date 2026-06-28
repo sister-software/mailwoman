@@ -4,16 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
+import { DatabaseSync } from "node:sqlite"
+import { setImmediate } from "node:timers/promises"
+
 import { ProgressBar } from "@inkjs/ui"
 import { formatMinutes, formatQuantity, takeAsync, tallyPatternCount } from "@mailwoman/core/resources"
 import FastGlob from "fast-glob"
 import { Box, Text } from "ink"
-import { DatabaseSync } from "node:sqlite"
-import { setImmediate } from "node:timers/promises"
 import { PathBuilder } from "path-ts"
 import { Piscina } from "piscina"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../../sdk/cli.js"
 import type { WorkerInput, WorkerOutput } from "./_app_worker.mjs"
 
@@ -75,6 +77,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 			// same graceful-optional pattern as `parse --resolve`. Without it, the standalone CLI would crash
 			// on startup importing an unpublished workspace (#481 follow-up / clean-install fix).
 			let unifiedSchema: typeof import("@mailwoman/resolver-wof-sqlite/unified-schema") | undefined
+
 			if (unifiedDbPath) {
 				try {
 					unifiedSchema = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
@@ -124,6 +127,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 				const task = piscina.run({ filePaths }).then((result: WorkerOutput) => {
 					if (unifiedDb && result.places.length > 0) {
 						unifiedDb.exec("BEGIN TRANSACTION")
+
 						for (const p of result.places) {
 							sprInsert!.run(
 								p.id,
@@ -140,14 +144,18 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 								p.isSuperseding,
 								p.lastmodified
 							)
+
 							for (const n of p.names) {
 								if (n.preferred) namesInsert!.run(p.id, n.preferred, p.placetype, p.country, n.language, p.lastmodified)
+
 								if (n.variant && n.variant !== n.preferred)
 									namesInsert!.run(p.id, n.variant, p.placetype, p.country, n.language, p.lastmodified)
 							}
+
 							for (const [source, value] of Object.entries(p.concordances)) {
 								concordancesInsert!.run(p.id, value, source, p.lastmodified)
 							}
+
 							if (p.population > 0) populationInsert!.run(p.id, p.population)
 						}
 						unifiedDb.exec("COMMIT")
@@ -176,6 +184,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 		}
 
 		const interval = setInterval(refreshStats, 1000)
+
 		return () => clearInterval(interval)
 	}, [insertionCount])
 

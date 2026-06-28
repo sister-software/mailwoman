@@ -16,13 +16,15 @@
  *   streams to stderr; the summary lands on stdout.
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
-import { Box, Text } from "ink"
 import { readdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
+import { dataRootPath } from "@mailwoman/core/utils"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
@@ -69,12 +71,14 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 				for (const file of shardFiles) {
 					const slug = file.replace(/^address-points-us-/, "").replace(/\.db$/, "")
 					let db: DatabaseSync
+
 					try {
 						db = new DatabaseSync(path.join(outDir, file), { readOnly: true })
 					} catch {
 						manifest.states[slug] = { ok: false, error: "unreadable" }
 						continue
 					}
+
 					try {
 						const rows = db.prepare("SELECT source, count(*) AS n FROM address_point GROUP BY source").all() as Array<{
 							source: string
@@ -82,6 +86,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 						}>
 						const datasets: Record<string, number> = {}
 						let points = 0
+
 						for (const { source, n } of rows) {
 							const ds = String(source).replace(/^overture:/, "")
 							datasets[ds] = Number(n)
@@ -107,6 +112,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 					`${shardFiles.length} shards · ${manifest.totalPoints.toLocaleString()} total points`,
 					`top sources:`,
 				]
+
 				for (const [ds, n] of Object.entries(manifest.datasetTotals).slice(0, 6)) {
 					lines.push(`  ${ds.padEnd(40)} ${n.toLocaleString()}`)
 				}
@@ -122,6 +128,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -134,6 +141,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

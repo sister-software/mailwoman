@@ -10,12 +10,14 @@
  *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
  */
 
-import { Kysely, sql } from "kysely"
 import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
-
 import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
+import { Kysely, sql } from "kysely"
+
+import { ancestorLineage } from "./ancestry.js"
+import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.js"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -25,9 +27,6 @@ import {
 	type ResolvedConvention,
 	type Strategy,
 } from "./convention.js"
-
-import { ancestorLineage } from "./ancestry.js"
-import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.js"
 import {
 	aliasBagExactMatch,
 	buildPlaceSearchFts,
@@ -50,51 +49,50 @@ export interface WofSqlitePlaceLookupOpts {
 	 *
 	 * **Single string** — opens that one DB as the main shard.
 	 *
-	 * **Array** — opens the first entry as main, then ATTACHes each subsequent entry as a separate
-	 * SQLite schema. Schema names are derived from the filename (`whosonfirst-data-postalcode-
-	 * us-latest.db` → `postalcode_us`); override with `ShardConfig.schemaName` when the filename
-	 * doesn't follow WOF convention. See `sharding.ts` for the derivation rules.
+	 * **Array** — opens the first entry as main, then ATTACHes each subsequent entry as a separate SQLite schema. Schema
+	 * names are derived from the filename (`whosonfirst-data-postalcode- us-latest.db` → `postalcode_us`); override with
+	 * `ShardConfig.schemaName` when the filename doesn't follow WOF convention. See `sharding.ts` for the derivation
+	 * rules.
 	 *
-	 * Routing: queries with a `placetype` matching a shard's name (or explicit `placetypes` hint) are
-	 * sent to that shard; everything else hits main. Cross-shard UNION is NOT done — BM25 isn't
-	 * comparable across separately-indexed corpora.
+	 * Routing: queries with a `placetype` matching a shard's name (or explicit `placetypes` hint) are sent to that shard;
+	 * everything else hits main. Cross-shard UNION is NOT done — BM25 isn't comparable across separately-indexed
+	 * corpora.
 	 */
 	databasePath?: string | ReadonlyArray<string | ShardConfig>
 	/**
-	 * Pre-opened DatabaseSync — primarily for tests against an inline fixture DB. Mutually exclusive
-	 * with `databasePath`. Multi-shard requires `databasePath` (so the lookup owns the ATTACH).
+	 * Pre-opened DatabaseSync — primarily for tests against an inline fixture DB. Mutually exclusive with `databasePath`.
+	 * Multi-shard requires `databasePath` (so the lookup owns the ATTACH).
 	 */
 	database?: DatabaseSync
 	/**
-	 * If true, build the FTS5 `place_search` virtual table on construction if it doesn't already
-	 * exist. The upstream WOF distribution does NOT ship FTS5, so callers either set this once on
-	 * first open or pre-build it via the operator-side CLI documented in the README. Default false —
-	 * the resolver assumes the index already exists and errors loudly if it doesn't.
+	 * If true, build the FTS5 `place_search` virtual table on construction if it doesn't already exist. The upstream WOF
+	 * distribution does NOT ship FTS5, so callers either set this once on first open or pre-build it via the
+	 * operator-side CLI documented in the README. Default false — the resolver assumes the index already exists and
+	 * errors loudly if it doesn't.
 	 *
-	 * With multi-shard, `buildFts: true` builds the index on the **main** shard only. Other shards
-	 * must be pre-built via `mailwoman-wof-build-fts` — operator script for predictable cost.
+	 * With multi-shard, `buildFts: true` builds the index on the **main** shard only. Other shards must be pre-built via
+	 * `mailwoman-wof-build-fts` — operator script for predictable cost.
 	 */
 	buildFts?: boolean
 	/**
-	 * Geographic Rule Engine convention source (Direction E, #289). Per-WOF-polygon resolution
-	 * profiles, either as a ready `ConventionSource` or a plain `{ wofId: Convention }` seed map.
-	 * Default empty — every query rides `WORLD_DEFAULT` (the EU coordinate-first behavior). JP/KR/TW
-	 * add rows; #290 wires a build-from-source sqlite-backed source here.
+	 * Geographic Rule Engine convention source (Direction E, #289). Per-WOF-polygon resolution profiles, either as a
+	 * ready `ConventionSource` or a plain `{ wofId: Convention }` seed map. Default empty — every query rides
+	 * `WORLD_DEFAULT` (the EU coordinate-first behavior). JP/KR/TW add rows; #290 wires a build-from-source sqlite-backed
+	 * source here.
 	 */
 	conventions?: ConventionSource | Record<number, Convention>
 	/**
-	 * Opt-in postal-city alias reader (#475). When supplied, the coordinate-first locality scorer
-	 * treats an observed `postal_city` ("Antioch", postcode 37013) as a name-match alias for the
-	 * geographic locality the postcode sits in ("Nashville"), recovering the chronic postal-vs-
-	 * geographic-city mismatch. Absent (the default), the resolver is byte-identical — every alias
-	 * code path is gated on this being non-null, so an unprovided reader changes no score.
+	 * Opt-in postal-city alias reader (#475). When supplied, the coordinate-first locality scorer treats an observed
+	 * `postal_city` ("Antioch", postcode 37013) as a name-match alias for the geographic locality the postcode sits in
+	 * ("Nashville"), recovering the chronic postal-vs- geographic-city mismatch. Absent (the default), the resolver is
+	 * byte-identical — every alias code path is gated on this being non-null, so an unprovided reader changes no score.
 	 */
 	postalCityAliases?: WofPostalCityAliasLookup
 }
 
 /**
- * Ranking weights for `findPlace`. Tweakable per-instance but defaults match the values declared in
- * the Phase 4.2 plan doc.
+ * Ranking weights for `findPlace`. Tweakable per-instance but defaults match the values declared in the Phase 4.2 plan
+ * doc.
  */
 export interface RankingWeights {
 	/** Boost when the candidate's placetype matches an explicit `placetype` filter. */
@@ -110,50 +108,46 @@ export interface RankingWeights {
 	/** Multiplier on the length-penalty term (penalizes much-longer-than-query names). */
 	lengthPenaltyWeight: number
 	/**
-	 * Magnitude of the proximity boost when the query carries `near`. The contribution is
-	 * `proximityBoost / (1 + distanceKm / proximityScaleKm)` — at distance 0 the boost is full
-	 * magnitude, at `proximityScaleKm` it's half, decaying further with distance. Default tuned so
-	 * proximity can overcome a typical FTS rank tie but not dominate a strong text match.
+	 * Magnitude of the proximity boost when the query carries `near`. The contribution is `proximityBoost / (1 +
+	 * distanceKm / proximityScaleKm)` — at distance 0 the boost is full magnitude, at `proximityScaleKm` it's half,
+	 * decaying further with distance. Default tuned so proximity can overcome a typical FTS rank tie but not dominate a
+	 * strong text match.
 	 */
 	proximityBoost: number
 	/** Distance (km) at which the proximity boost halves. Tune to the typical query radius. */
 	proximityScaleKm: number
 	/**
-	 * Magnitude of the population boost when the candidate has a known `wof:population`. The
-	 * contribution is `populationBoost * log10(1 + population) / populationScaleLog10`, capped at
-	 * `populationBoost`. WOF only carries population for ~15% of localities (mostly larger ones);
-	 * places without it get +0 (never a penalty). Default tuned so the famous Springfield, IL (pop
-	 * ~112k) gets ~0.42 boost — enough to nudge past tiny same-name peers.
+	 * Magnitude of the population boost when the candidate has a known `wof:population`. The contribution is
+	 * `populationBoost * log10(1 + population) / populationScaleLog10`, capped at `populationBoost`. WOF only carries
+	 * population for ~15% of localities (mostly larger ones); places without it get +0 (never a penalty). Default tuned
+	 * so the famous Springfield, IL (pop ~112k) gets ~0.42 boost — enough to nudge past tiny same-name peers.
 	 */
 	populationBoost: number
 	/**
-	 * Population (in log10) at which the boost reaches its full magnitude. Default 6 — i.e. a
-	 * population of 1,000,000 gives `populationBoost` exactly. Larger populations cap at the same
-	 * value (no compounding effect for megacities).
+	 * Population (in log10) at which the boost reaches its full magnitude. Default 6 — i.e. a population of 1,000,000
+	 * gives `populationBoost` exactly. Larger populations cap at the same value (no compounding effect for megacities).
 	 */
 	populationScaleLog10: number
 	/**
-	 * Tier candidates with an EXACT name/alias match above candidates that only match partially,
-	 * BEFORE the weighted-sum score is consulted. Default true.
+	 * Tier candidates with an EXACT name/alias match above candidates that only match partially, BEFORE the weighted-sum
+	 * score is consulted. Default true.
 	 *
-	 * Why this is needed (and why it ALIGNS with — rather than overrides — the population/importance
-	 * signal): the weighted sum adds population as a large additive boost (`populationBoost`, up to
-	 * +4) so that famous places surface for unambiguous full-name queries. But population is a
-	 * _prominence prior_ — its job is to break ties among candidates that match the query EQUALLY
-	 * WELL (e.g. "Springfield" → Springfield IL over Springfield MA, both exact name matches). It was
-	 * never meant to promote a place that matches the query WORSE. For a 2-letter region abbreviation
-	 * that backfires: querying "ME" returns Maine (which has the exact alias `ME`) AND Missouri/
-	 * Michigan/etc. (which do not), and Missouri's larger population (+4) overcomes Maine's bm25 edge
-	 * — so "Portland, ME" resolves its region to Missouri and the locality then cascades to the wrong
-	 * state. Tiering restores the intended ordering: **match quality is the primary key, prominence
-	 * (population) the secondary key WITHIN a tier.** Springfield-IL-over-MA still works (both exact
-	 * → same tier → population decides); ME→Maine now works (only Maine is exact → higher tier →
-	 * population never gets to override it). See
+	 * Why this is needed (and why it ALIGNS with — rather than overrides — the population/importance signal): the
+	 * weighted sum adds population as a large additive boost (`populationBoost`, up to +4) so that famous places surface
+	 * for unambiguous full-name queries. But population is a _prominence prior_ — its job is to break ties among
+	 * candidates that match the query EQUALLY WELL (e.g. "Springfield" → Springfield IL over Springfield MA, both exact
+	 * name matches). It was never meant to promote a place that matches the query WORSE. For a 2-letter region
+	 * abbreviation that backfires: querying "ME" returns Maine (which has the exact alias `ME`) AND Missouri/
+	 * Michigan/etc. (which do not), and Missouri's larger population (+4) overcomes Maine's bm25 edge — so "Portland, ME"
+	 * resolves its region to Missouri and the locality then cascades to the wrong state. Tiering restores the intended
+	 * ordering: **match quality is the primary key, prominence (population) the secondary key WITHIN a tier.**
+	 * Springfield-IL-over-MA still works (both exact → same tier → population decides); ME→Maine now works (only Maine is
+	 * exact → higher tier → population never gets to override it). See
 	 * docs/articles/evals/2026-05-30-resolver-exact-match.md.
 	 *
-	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`); a pathological
-	 * exact match that falls outside that window is not rescued. For the region-abbrev case the
-	 * window is comfortably sufficient (a handful of states match a 2-letter query).
+	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`); a pathological exact match that
+	 * falls outside that window is not rescued. For the region-abbrev case the window is comfortably sufficient (a
+	 * handful of states match a 2-letter query).
 	 */
 	exactMatchTiering: boolean
 }
@@ -186,12 +180,11 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 }
 
 /**
- * Over-fetch floor for SHORT (≤3-char) queries — region abbreviations like "NY"/"VT". An
- * exact-abbrev holder's BM25 is poor (long multilingual alt-name document), so the normal `limit *
- * 4` window can drop it before `exactMatchTiering` promotes it. 200 comfortably covers every
- * same-abbrev region across the 12-country gazetteer (a 2-letter token matches a few dozen regions
- * at most) while staying a cheap region-placetype fetch. See the `#fuzzyNameMatch` over-fetch
- * comment.
+ * Over-fetch floor for SHORT (≤3-char) queries — region abbreviations like "NY"/"VT". An exact-abbrev holder's BM25 is
+ * poor (long multilingual alt-name document), so the normal `limit * 4` window can drop it before `exactMatchTiering`
+ * promotes it. 200 comfortably covers every same-abbrev region across the 12-country gazetteer (a 2-letter token
+ * matches a few dozen regions at most) while staying a cheap region-placetype fetch. See the `#fuzzyNameMatch`
+ * over-fetch comment.
  */
 const SHORT_QUERY_OVERFETCH = 200
 
@@ -219,18 +212,16 @@ interface RawSearchRow {
 const POSTCODE_LOCALITY_TABLE = "postcode_locality"
 
 /**
- * Tunables for the coordinate-first locality soft-score `Score = pc·S_pc + name·S_name + pop·S_pop`
- * (each S in [0,1]). The pc/name/pop WEIGHTS now come from the resolved convention's
- * `scoringWeights` (`WORLD_DEFAULT` = 0.6/0.3/0.1 — the EU values), so a locale can retune them as
- * data. PC_DECAY_KM sets how fast S_pc falls with distance.
+ * Tunables for the coordinate-first locality soft-score `Score = pc·S_pc + name·S_name + pop·S_pop` (each S in [0,1]).
+ * The pc/name/pop WEIGHTS now come from the resolved convention's `scoringWeights` (`WORLD_DEFAULT` = 0.6/0.3/0.1 — the
+ * EU values), so a locale can retune them as data. PC_DECAY_KM sets how fast S_pc falls with distance.
  */
 const CF_PC_DECAY_KM = 8
 /**
- * The chosen locality must be within this distance of the postcode's containing locality, else the
- * postcode and the parsed city name are judged to disagree (a transposed / wrong-for-the-city
- * postcode) and the `mismatch` flag fires. Generous enough that a city-state Ortsteil (~15km from
- * the city centroid) and an abutting town (~few km) are NOT flagged, tight enough to catch a wrong
- * city (hundreds of km).
+ * The chosen locality must be within this distance of the postcode's containing locality, else the postcode and the
+ * parsed city name are judged to disagree (a transposed / wrong-for-the-city postcode) and the `mismatch` flag fires.
+ * Generous enough that a city-state Ortsteil (~15km from the city centroid) and an abutting town (~few km) are NOT
+ * flagged, tight enough to catch a wrong city (hundreds of km).
  */
 const CF_MISMATCH_KM = 50
 const CF_MISMATCH_DELTA = 0.5
@@ -249,35 +240,45 @@ function cfNormalize(s: string): string {
 export function trigrams(s: string): Set<string> {
 	const t = ` ${s} `
 	const out = new Set<string>()
+
 	for (let i = 0; i + 3 <= t.length; i++) out.add(t.slice(i, i + 3))
+
 	return out
 }
 
 /**
- * Character-trigram Jaccard ∈ [0,1] — tolerant of the swallowed-leading-char fragments ("auen" vs
- * "plauen") and minor misspellings without a heavyweight edit-distance pass. Shared with the
- * candidate backend's FTS5-trigram fuzzy fallback so both lookups rank typos identically.
+ * Character-trigram Jaccard ∈ [0,1] — tolerant of the swallowed-leading-char fragments ("auen" vs "plauen") and minor
+ * misspellings without a heavyweight edit-distance pass. Shared with the candidate backend's FTS5-trigram fuzzy
+ * fallback so both lookups rank typos identically.
  */
 export function trigramJaccard(a: string, b: string): number {
 	const A = trigrams(a)
 	const B = trigrams(b)
+
 	if (A.size === 0 || B.size === 0) return 0
 	let inter = 0
+
 	for (const x of A) if (B.has(x)) inter++
+
 	return inter / (A.size + B.size - inter)
 }
 
 /** Soft name-match score ∈ [0,1]: exact (normalized) name/alias → 1, else best trigram-Jaccard. */
 function softNameScore(text: string, name: string, aliases: readonly string[]): number {
 	const q = cfNormalize(text)
+
 	if (!q) return 0
 	let best = 0
+
 	for (const raw of [name, ...aliases]) {
 		const n = cfNormalize(raw)
+
 		if (!n) continue
+
 		if (n === q) return 1
 		best = Math.max(best, trigramJaccard(q, n))
 	}
+
 	return best
 }
 
@@ -287,36 +288,34 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #kysely: Kysely<WofDatabase>
 	readonly #weights: RankingWeights
 	/**
-	 * Cached at construction so we don't `sqlite_master` query on every findPlace call. Bbox + near-
-	 * with-radius queries fall back to no-filter when this is false, preserving compatibility with
-	 * DBs that were FTS-built before the R*Tree shipped.
+	 * Cached at construction so we don't `sqlite_master` query on every findPlace call. Bbox + near- with-radius queries
+	 * fall back to no-filter when this is false, preserving compatibility with DBs that were FTS-built before the R*Tree
+	 * shipped.
 	 *
 	 * Per-shard: a shard is only considered to have the bbox index if its own R*Tree table exists.
 	 */
 	readonly #hasBboxIndex: Map<string, boolean>
 	/**
-	 * Per-shard probe for the `place_population` aux table. When false, the LEFT JOIN is omitted from
-	 * the SELECT and population boost is 0 for every row — preserves compatibility with DBs built
-	 * before this feature shipped.
+	 * Per-shard probe for the `place_population` aux table. When false, the LEFT JOIN is omitted from the SELECT and
+	 * population boost is 0 for every row — preserves compatibility with DBs built before this feature shipped.
 	 */
 	readonly #hasPopulationIndex: Map<string, boolean>
 	/**
-	 * Per-shard probe for the `postcode_locality` table (the coordinate-first candidate table, built
-	 * by scripts/build-postcode-locality.ts). Cached at construction; null'd out when absent so the
-	 * coord-first path silently no-ops on a deployment that didn't ship the table.
+	 * Per-shard probe for the `postcode_locality` table (the coordinate-first candidate table, built by
+	 * scripts/build-postcode-locality.ts). Cached at construction; null'd out when absent so the coord-first path
+	 * silently no-ops on a deployment that didn't ship the table.
 	 */
 	readonly #postcodeLocalityShard: string | null
 	/**
-	 * Resolved shard list. Always at least one entry; first is `main`. Multi-shard adds extras with
-	 * their own derived (or override) schema names.
+	 * Resolved shard list. Always at least one entry; first is `main`. Multi-shard adds extras with their own derived (or
+	 * override) schema names.
 	 */
 	readonly #shards: ResolvedShard[]
 	/**
-	 * The Geographic Rule Engine (Direction E, #289). `#conventionSource` supplies per-WOF-polygon
-	 * resolution profiles; `#strategies` is the named-primitive registry the merged convention
-	 * dispatches. Empty source → every query resolves to `WORLD_DEFAULT` → byte-identical to the
-	 * pre-engine coordinate-first path. `#countryWofIdCache` memoizes the country-code →
-	 * country-WOF-id lookup that seeds the convention ancestor chain (one query per country, then
+	 * The Geographic Rule Engine (Direction E, #289). `#conventionSource` supplies per-WOF-polygon resolution profiles;
+	 * `#strategies` is the named-primitive registry the merged convention dispatches. Empty source → every query resolves
+	 * to `WORLD_DEFAULT` → byte-identical to the pre-engine coordinate-first path. `#countryWofIdCache` memoizes the
+	 * country-code → country-WOF-id lookup that seeds the convention ancestor chain (one query per country, then
 	 * cached).
 	 */
 	readonly #conventionSource: ConventionSource
@@ -325,15 +324,14 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	/** Strategy names already warned about — so an unknown name surfaces once, not once per query. */
 	readonly #warnedUnknownStrategies = new Set<string>()
 	/**
-	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (null until first
-	 * use).
+	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (null until first use).
 	 */
 	#coincidentRolesCache: Map<number, CoincidentLocality[]> | null = null
 	/** Per-id memoized ancestor lineages (#404) — a hot chain is queried once. */
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
 	/**
-	 * Opt-in postal-city alias reader (#475). `null` unless `opts.postalCityAliases` was supplied —
-	 * every alias code path is gated on this, so the default resolver is byte-identical.
+	 * Opt-in postal-city alias reader (#475). `null` unless `opts.postalCityAliases` was supplied — every alias code path
+	 * is gated on this, so the default resolver is byte-identical.
 	 */
 	readonly #postalCityAliases: WofPostalCityAliasLookup | null
 
@@ -341,6 +339,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		if (opts.database && opts.databasePath) {
 			throw new Error("WofSqlitePlaceLookup: pass either `database` or `databasePath`, not both")
 		}
+
 		if (!opts.database && !opts.databasePath) {
 			throw new Error("WofSqlitePlaceLookup: one of `database` or `databasePath` is required")
 		}
@@ -354,6 +353,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			this.#shards = shards
 			this.#db = new DatabaseSync(shards[0]!.path, { readOnly: false })
 			this.#ownsDb = true
+
 			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
 			// interpolate directly (SQLite ATTACH doesn't accept parameters for the schema name).
 			for (const s of shards.slice(1)) {
@@ -373,12 +373,13 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		this.#kysely = new Kysely<WofDatabase>({
 			dialect: new SqliteDialect({ database: this.#db }),
 		})
-		this.#weights = { ...DEFAULT_WEIGHTS, ...(weights ?? {}) }
+		this.#weights = { ...DEFAULT_WEIGHTS, ...weights }
 
 		// Probe each shard's aux-table presence — driven by per-shard table existence in
 		// sqlite_master. Cached at construction so findPlace doesn't query sqlite_master per call.
 		this.#hasBboxIndex = new Map()
 		this.#hasPopulationIndex = new Map()
+
 		for (const s of this.#shards) {
 			this.#hasBboxIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_BBOX_TABLE))
 			this.#hasPopulationIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_POPULATION_TABLE))
@@ -418,11 +419,13 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// schema-qualified `sqlite_master` view.
 		if (schemaName === "main") {
 			if (tableName === PLACE_BBOX_TABLE) return placeBboxExists(this.#db)
+
 			if (tableName === PLACE_POPULATION_TABLE) return placePopulationExists(this.#db)
 		}
 		const row = this.#db
 			.prepare(`SELECT name FROM ${schemaName}.sqlite_master WHERE type = 'table' AND name = ?`)
 			.get(tableName) as { name: string } | undefined
+
 		return Boolean(row)
 	}
 
@@ -434,30 +437,36 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// first → FTS fall-through exactly. Unknown strategy names are skipped, so a convention may name
 		// a primitive a future phase will register.
 		const convention = this.#conventionFor(query)
+
 		for (const name of convention.candidateStrategies) {
 			const strategy = this.#strategies.get(name)
+
 			if (!strategy) {
 				this.#warnUnknownStrategy(name)
 				continue
 			}
 			const result = await strategy(query, convention)
+
 			if (result !== null) return result
 		}
+
 		return []
 	}
 
 	/**
-	 * Dual-role localities coincident with an admin id, from the precomputed `coincident_roles`
-	 * relation (#403). Backs {@link ResolveOpts.hierarchyCompletion} (#405): O(1) once the relation is
-	 * loaded. Returns `[]` when the relation table is absent (older DB) or the admin isn't a
-	 * dual-role place, so completion degrades gracefully. The relation + `spr` join is loaded once
-	 * and memoized.
+	 * Dual-role localities coincident with an admin id, from the precomputed `coincident_roles` relation (#403). Backs
+	 * {@link ResolveOpts.hierarchyCompletion} (#405): O(1) once the relation is loaded. Returns `[]` when the relation
+	 * table is absent (older DB) or the admin isn't a dual-role place, so completion degrades gracefully. The relation +
+	 * `spr` join is loaded once and memoized.
 	 */
 	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
 		const id = typeof adminId === "number" ? adminId : Number(adminId)
+
 		if (!Number.isFinite(id)) return []
+
 		if (!this.#coincidentRolesCache) {
 			const map = new Map<number, CoincidentLocality[]>()
+
 			if (coincidentRolesExists(this.#db)) {
 				const rows = this.#db
 					.prepare(
@@ -478,6 +487,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 					population: number
 					distanceKm: number
 				}>
+
 				for (const r of rows) {
 					const candidate: CoincidentLocality = {
 						id: r.id,
@@ -492,29 +502,32 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 						distanceKm: r.distanceKm,
 					}
 					const list = map.get(r.adminId)
+
 					if (list) list.push(candidate)
 					else map.set(r.adminId, [candidate])
 				}
 			}
 			this.#coincidentRolesCache = map
 		}
+
 		return this.#coincidentRolesCache.get(id) ?? []
 	}
 
 	/**
-	 * The ancestor lineage of a place — its containment chain joined with `spr` for canonical names,
-	 * ordered NEAREST-FIRST (localadmin → county → region → … → country). Backs
-	 * {@link ResolveOpts.includeAncestors} (#404). Self is excluded; memoized per id. Returns `[]`
-	 * when the place has no recorded ancestry.
+	 * The ancestor lineage of a place — its containment chain joined with `spr` for canonical names, ordered
+	 * NEAREST-FIRST (localadmin → county → region → … → country). Backs {@link ResolveOpts.includeAncestors} (#404). Self
+	 * is excluded; memoized per id. Returns `[]` when the place has no recorded ancestry.
 	 *
-	 * The walk itself lives in `ancestry.ts` (shared with the reverse geocoder, #484); the ordering
-	 * is its `PLACETYPE_DEPTH` table — same ranking as the previous inline SQL CASE, extended below
-	 * `localadmin` so locality/neighbourhood ancestors order correctly instead of sorting last.
+	 * The walk itself lives in `ancestry.ts` (shared with the reverse geocoder, #484); the ordering is its
+	 * `PLACETYPE_DEPTH` table — same ranking as the previous inline SQL CASE, extended below `localadmin` so
+	 * locality/neighbourhood ancestors order correctly instead of sorting last.
 	 */
 	ancestors(id: number | string): Ancestor[] {
 		const pid = typeof id === "number" ? id : Number(id)
+
 		if (!Number.isFinite(pid)) return []
 		const cached = this.#ancestorsCache.get(pid)
+
 		if (cached) return cached
 		const lineage: Ancestor[] = ancestorLineage(this.#db, pid).map((r) => ({
 			id: r.id,
@@ -522,15 +535,15 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			name: r.name,
 		}))
 		this.#ancestorsCache.set(pid, lineage)
+
 		return lineage
 	}
 
 	/**
-	 * Surface an unknown strategy name LOUDLY (once per name) rather than swallowing it silently — an
-	 * invisible no-op is exactly the hidden-dependency failure mode we avoid (see the
-	 * provenance-first design value). We warn rather than throw so a convention asset built against a
-	 * newer code revision (one that adds a strategy) degrades gracefully on an older build instead of
-	 * taking down resolution.
+	 * Surface an unknown strategy name LOUDLY (once per name) rather than swallowing it silently — an invisible no-op is
+	 * exactly the hidden-dependency failure mode we avoid (see the provenance-first design value). We warn rather than
+	 * throw so a convention asset built against a newer code revision (one that adds a strategy) degrades gracefully on
+	 * an older build instead of taking down resolution.
 	 */
 	#warnUnknownStrategy(name: string): void {
 		if (this.#warnedUnknownStrategies.has(name)) return
@@ -543,21 +556,22 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	}
 
 	/**
-	 * Strategy `postcode_area_resolution` — the coordinate-first locality path, strictly gated (a
-	 * sibling postcode AND a postcode_locality table AND a locality query). Returns `null` — so the
-	 * dispatcher falls through to the next strategy — when the gate is unmet or the postcode isn't in
-	 * the table; otherwise the soft-scored postcode∪name candidate set.
+	 * Strategy `postcode_area_resolution` — the coordinate-first locality path, strictly gated (a sibling postcode AND a
+	 * postcode_locality table AND a locality query). Returns `null` — so the dispatcher falls through to the next
+	 * strategy — when the gate is unmet or the postcode isn't in the table; otherwise the soft-scored postcode∪name
+	 * candidate set.
 	 */
 	#postcodeAreaResolution(query: FindPlaceQuery, convention: ResolvedConvention): Promise<PlaceCandidate[] | null> {
 		if (!(query.postcode && this.#postcodeLocalityShard && this.#isLocalityQuery(query))) {
 			return Promise.resolve(null)
 		}
+
 		return this.#findLocalityCoordFirst(query, this.#postcodeLocalityShard, convention)
 	}
 
 	/**
-	 * Strategy `fallback_fuzzy_name_match` — the BM25 FTS name-match over the gazetteer, the
-	 * universal fallback. Always returns an array (never null), so it terminates the dispatch chain.
+	 * Strategy `fallback_fuzzy_name_match` — the BM25 FTS name-match over the gazetteer, the universal fallback. Always
+	 * returns an array (never null), so it terminates the dispatch chain.
 	 */
 	async #fuzzyNameMatch(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
 		const limit = query.limit ?? 10
@@ -579,6 +593,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// requested placetype, which is what shard routing keys off below.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WofPlacetype[] | null
 		const ftsQuery = sanitizeFtsQuery(query.text)
+
 		if (!ftsQuery) return []
 
 		// Pick the shard for this query. Multi-shard routing is placetype-driven; a query without
@@ -600,10 +615,12 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			where.push(`spr.placetype IN (${placetypes.map(() => "?").join(", ")})`)
 			params.push(...placetypes)
 		}
+
 		if (query.country) {
 			where.push("spr.country = ?")
 			params.push(query.country)
 		}
+
 		if (query.parentId !== undefined) {
 			where.push(`(spr.parent_id = ? OR spr.id IN (SELECT id FROM ${sch}.ancestors WHERE ancestor_id = ?))`)
 			params.push(query.parentId, query.parentId)
@@ -615,6 +632,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const shardHasBbox = this.#hasBboxIndex.get(sch) === true
 		const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && shardHasBbox
 		let joinClause = `JOIN ${sch}.spr ON spr.id = place_search.wof_id`
+
 		if (useBboxJoin) {
 			joinClause += ` JOIN ${sch}.${PLACE_BBOX_TABLE} bbox ON bbox.id = spr.id`
 			// AABB intersection — both bbox sides must overlap. R*Tree handles this in O(log n).
@@ -667,6 +685,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			ORDER BY ${orderByExpr} ASC
 			LIMIT ?
 		`)
+
 		if (shardHasPopulation) {
 			params.push(this.#weights.populationBoost, this.#weights.populationScaleLog10)
 		}
@@ -679,15 +698,19 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// SQLite's bm25() returns a lower-is-better score (negative for matches). Negate so we
 			// start from a higher-is-better baseline.
 			let score = -row.rank
+
 			if (placetypes && placetypes.length > 0 && placetypes.includes(row.placetype as WofPlacetype)) {
 				score += this.#weights.placetypeMatchBoost
 			}
+
 			if (!placetypes && row.placetype === "locality") {
 				score += this.#weights.localityImplicitBoost
 			}
+
 			if (query.country && row.country === query.country) {
 				score += this.#weights.countryMatchBoost
 			}
+
 			if (query.parentId !== undefined) {
 				if (row.parent_id === query.parentId) {
 					score += this.#weights.directChildBoost
@@ -702,6 +725,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// coordinates. The formula decays smoothly with distance so close-but-not-exact hits
 			// still benefit; tunable via proximityBoost + proximityScaleKm.
 			let distanceKm: number | undefined
+
 			if (query.near && row.lat !== null && row.lon !== null && !(row.lat === 0 && row.lon === 0)) {
 				distanceKm = haversineKm(query.near.lat, query.near.lon, row.lat, row.lon)
 				score += this.#weights.proximityBoost / (1 + distanceKm / this.#weights.proximityScaleKm)
@@ -725,8 +749,11 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				parent_id: row.parent_id ?? undefined,
 				score,
 			}
+
 			if (distanceKm !== undefined) candidate.distanceKm = distanceKm
+
 			if (row.population !== null && row.population > 0) candidate.population = row.population
+
 			// Candidate bbox — parity with the WASM lookup (resolver-wof-wasm/lookup.ts), whose
 			// consumers (the demo cascade's region constraint) read it. Without this the Node
 			// backend's region→bbox constraint is dead and disambiguation falls to population
@@ -744,6 +771,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 					maxLon: row.max_longitude,
 				}
 			}
+
 			return candidate
 		})
 
@@ -760,55 +788,64 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				candidates.map((c) => c.id as number),
 				query.text
 			)
+
 			// Stamp the tier onto every candidate (not just when the tiering sort fires) so a downstream
 			// re-rank — #369's postcode-anchor country pin in `resolveTree` — can keep the country pin from
 			// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
 			for (const c of candidates) c.exactMatch = exactIds.has(c.id as number)
+
 			if (exactIds.size > 0 && exactIds.size < candidates.length) {
 				candidates.sort((a, b) => {
 					const ax = exactIds.has(a.id as number) ? 1 : 0
 					const bx = exactIds.has(b.id as number) ? 1 : 0
+
 					return bx - ax || b.score - a.score
 				})
+
 				return Promise.resolve(candidates.slice(0, limit))
 			}
 		}
 
 		candidates.sort((a, b) => b.score - a.score)
+
 		return Promise.resolve(candidates.slice(0, limit))
 	}
 
 	#isLocalityQuery(query: FindPlaceQuery): boolean {
 		const pts = normalizePlacetypes(query.placetype)
+
 		return !pts || pts.includes("locality")
 	}
 
 	/**
-	 * Resolve the effective convention for a query (the Geographic Rule Engine entry point). The
-	 * ancestor chain is keyed by WOF polygon id; for #289 it carries just the country level —
-	 * resolved from `query.country` via the cached code→WOF-id lookup — so the EU locales, which have
-	 * no override rows, resolve to `WORLD_DEFAULT` and dispatch is byte-identical to the pre-engine
-	 * path. E4 (JP) extends the chain with the resolved locality's `ancestors` row, so a
+	 * Resolve the effective convention for a query (the Geographic Rule Engine entry point). The ancestor chain is keyed
+	 * by WOF polygon id; for #289 it carries just the country level — resolved from `query.country` via the cached
+	 * code→WOF-id lookup — so the EU locales, which have no override rows, resolve to `WORLD_DEFAULT` and dispatch is
+	 * byte-identical to the pre-engine path. E4 (JP) extends the chain with the resolved locality's `ancestors` row, so a
 	 * region/locality-level convention (e.g. Sapporo's grid) deep-merges over the country one.
 	 */
 	#conventionFor(query: FindPlaceQuery): ResolvedConvention {
 		const chain: number[] = []
+
 		if (query.country) {
 			const cid = this.#countryWofId(query.country)
+
 			if (cid !== null) chain.push(cid)
 		}
+
 		return resolveConvention(this.#conventionSource, chain)
 	}
 
 	/**
-	 * Country ISO code → its WOF polygon id (the coarsest convention key). Cached — one indexed `spr`
-	 * query per distinct country, then memoized (including a not-found `null`) so findPlace never
-	 * pays for it twice.
+	 * Country ISO code → its WOF polygon id (the coarsest convention key). Cached — one indexed `spr` query per distinct
+	 * country, then memoized (including a not-found `null`) so findPlace never pays for it twice.
 	 */
 	#countryWofId(code: string): number | null {
 		const cached = this.#countryWofIdCache.get(code)
+
 		if (cached !== undefined) return cached
 		let id: number | null = null
+
 		try {
 			const row = this.#db
 				.prepare(`SELECT id FROM main.spr WHERE placetype = 'country' AND country = ? AND is_current != 0 LIMIT 1`)
@@ -818,16 +855,16 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			id = null
 		}
 		this.#countryWofIdCache.set(code, id)
+
 		return id
 	}
 
 	/**
-	 * Coordinate-first locality resolution. The postcode_locality table maps the sibling postcode to
-	 * the locality whose polygon contains the postcode centroid (+ a few nearby ones for the
-	 * abutting- postcode case). We union those COORDINATE candidates with the FTS NAME candidates and
-	 * soft-score the union `0.6·S_pc + 0.3·S_name + 0.1·S_pop` — so a small town the name-match never
-	 * finds is recovered by the postcode, while an unambiguous name (Berlin) still wins on name +
-	 * population. Returns null when the postcode isn't in the table (→ caller falls back to the FTS
+	 * Coordinate-first locality resolution. The postcode_locality table maps the sibling postcode to the locality whose
+	 * polygon contains the postcode centroid (+ a few nearby ones for the abutting- postcode case). We union those
+	 * COORDINATE candidates with the FTS NAME candidates and soft-score the union `0.6·S_pc + 0.3·S_name + 0.1·S_pop` —
+	 * so a small town the name-match never finds is recovered by the postcode, while an unambiguous name (Berlin) still
+	 * wins on name + population. Returns null when the postcode isn't in the table (→ caller falls back to the FTS
 	 * path).
 	 */
 	async #findLocalityCoordFirst(
@@ -845,6 +882,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				 FROM ${sch}.${POSTCODE_LOCALITY_TABLE} WHERE ${pcWhere}`
 			)
 			.all(...pcParams) as unknown as Array<{ id: number; aliases: string | null; dist: number; containing: number }>
+
 		if (pcRows.length === 0) return null
 
 		const limit = query.limit ?? 10
@@ -852,6 +890,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const ftsCands = await this.findPlace({ ...query, postcode: undefined, limit: Math.max(limit, 10) })
 
 		const pcInfo = new Map<number, { dist: number; containing: boolean; aliases: string[] }>()
+
 		for (const r of pcRows) {
 			pcInfo.set(r.id, { dist: r.dist, containing: r.containing === 1, aliases: r.aliases ? r.aliases.split("|") : [] })
 		}
@@ -861,22 +900,28 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// alias for the geographic locality the postcode sits in ("Nashville"). Empty when the reader
 		// isn't supplied → the scoring loop below is byte-identical to pre-#475.
 		const postalAliasByGeo = new Map<string, string[]>()
+
 		if (this.#postalCityAliases) {
 			for (const a of await this.#postalCityAliases.getDivergentAliases(pc)) {
 				const key = cfNormalize(a.geoLocality)
+
 				if (!key) continue
 				const bag = postalAliasByGeo.get(key)
+
 				if (bag) bag.push(a.postalCity)
 				else postalAliasByGeo.set(key, [a.postalCity])
 			}
 		}
 
 		const merged = new Map<number, PlaceCandidate>()
+
 		for (const c of ftsCands) merged.set(c.id as number, c)
 		const missing = [...pcInfo.keys()].filter((id) => !merged.has(id))
+
 		for (const row of this.#fetchLocalitiesById(missing)) merged.set(row.id, row)
 
 		const scored: Array<PlaceCandidate & { exact: boolean }> = []
+
 		for (const cand of merged.values()) {
 			const info = pcInfo.get(cand.id as number)
 			const sPc = info ? (info.containing ? 1 : Math.exp(-info.dist / CF_PC_DECAY_KM)) : 0
@@ -903,6 +948,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// from it, the postcode and the city name disagree (a transposed / wrong-for-the-city postcode).
 		// We keep the name-chosen locality but flag it — the falsehood signal a BM25 geocoder can't give.
 		const top = scored[0]
+
 		if (top) {
 			// The postcode's geographic anchor: among the postcode's candidate localities that actually
 			// resolved (some — e.g. unnamed Ortsteile — are in the postcode table but not the admin DB),
@@ -912,6 +958,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				.filter((r) => merged.has(r.id))
 				.sort((a, b) => b.containing - a.containing || a.dist - b.dist)[0]
 			const anchor = anchorRow ? merged.get(anchorRow.id) : undefined
+
 			if (anchor && (top.id as number) !== anchorRow!.id) {
 				if (haversineKm(top.lat, top.lon, anchor.lat, anchor.lon) > CF_MISMATCH_KM) top.mismatch = true
 			}
@@ -919,6 +966,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 		return scored.slice(0, limit).map(({ exact, ...c }) => {
 			void exact
+
 			return c
 		})
 	}
@@ -938,6 +986,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				 WHERE s.id IN (${ph}) AND s.is_current != 0`
 			)
 			.all(...ids) as unknown as Array<RawSearchRow>
+
 		return rows.map((row) => {
 			const c: PlaceCandidate = {
 				id: row.id,
@@ -949,35 +998,41 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				parent_id: row.parent_id ?? undefined,
 				score: 0,
 			}
+
 			if (row.population !== null && row.population > 0) c.population = row.population
+
 			return c
 		})
 	}
 
 	/**
-	 * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the
-	 * exact-match tier for ranking. One indexed query over `<schema>.names`. When the shard has no
-	 * `names` table (a slim DB built with `dropNames`, or a postcode-only shard), fall back to the
-	 * self-contained `place_search` FTS content: its `alt_names` column is the same alias set joined
-	 * on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch` recovers the exact
-	 * alias tier ("New York City" → New York) that the dropped `names` table used to provide.
+	 * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the exact-match tier for
+	 * ranking. One indexed query over `<schema>.names`. When the shard has no `names` table (a slim DB built with
+	 * `dropNames`, or a postcode-only shard), fall back to the self-contained `place_search` FTS content: its `alt_names`
+	 * column is the same alias set joined on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch`
+	 * recovers the exact alias tier ("New York City" → New York) that the dropped `names` table used to provide.
 	 */
 	#exactMatchIds(schemaName: string, ids: number[], text: string): Set<number> {
 		const out = new Set<number>()
 		const trimmed = text.trim()
+
 		if (ids.length === 0 || !trimmed) return out
 		const placeholders = ids.map(() => "?").join(", ")
+
 		try {
 			const rows = this.#db
 				.prepare(
 					`SELECT DISTINCT id FROM ${schemaName}.names WHERE id IN (${placeholders}) AND name = ? COLLATE NOCASE`
 				)
 				.all(...ids, trimmed) as Array<{ id: number }>
+
 			for (const r of rows) out.add(r.id)
+
 			return out
 		} catch {
 			// No `names` table on this shard — fall through to the place_search alias bag.
 		}
+
 		try {
 			const rows = this.#db
 				.prepare(
@@ -986,6 +1041,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				.all(...ids) as Array<{ id: number; name: string | null; alt_names: string | null }>
 			const norm = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
 			const needle = norm(trimmed)
+
 			for (const r of rows) {
 				if (r.name !== null && norm(r.name) === needle) out.add(r.id)
 			}
@@ -996,12 +1052,14 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// lost boundaries would otherwise false-promote interior fragments ("York" inside the alias
 			// "New York City") or cross-alias fragments ("York New" across "…York" + "New City…").
 			const anyCanonicalExact = out.size > 0
+
 			for (const r of rows) {
 				if (aliasBagExactMatch(r.alt_names, needle, anyCanonicalExact)) out.add(r.id)
 			}
 		} catch {
 			// Shard without place_search either → no exact-match tier. Falls back to weighted-sum order.
 		}
+
 		return out
 	}
 
@@ -1009,6 +1067,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// Destroying the Kysely instance closes the underlying connection IF we own it. If the caller
 		// passed in a pre-opened DatabaseSync (test fixture), respect their ownership.
 		void this.#kysely.destroy()
+
 		if (this.#ownsDb) {
 			this.#db.close()
 		}
@@ -1034,23 +1093,23 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WofPlacetype[] | null {
 	if (!p) return null
+
 	return Array.isArray(p) ? p : [p]
 }
 
 /**
  * Make an arbitrary user-typed string safe for FTS5 MATCH.
  *
- * FTS5 has its own query syntax (`"phrase"`, `term1 OR term2`, `prefix*`, NEAR/N, etc.). Letting
- * raw user input through means a user typing `Paris's` or `St. (Petersburg)` causes a syntax
- * error.
+ * FTS5 has its own query syntax (`"phrase"`, `term1 OR term2`, `prefix*`, NEAR/N, etc.). Letting raw user input through
+ * means a user typing `Paris's` or `St. (Petersburg)` causes a syntax error.
  *
  * Per-token rules:
  *
  * - Strip all punctuation except trailing `*` from each whitespace-separated token.
- * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*`
- *   (unquoted). The caller signaled they want a prefix; respect that.
- * - All other tokens are wrapped in `"..."` as a single-word phrase. Conservative — handles
- *   apostrophes, parens, accented input, etc. safely.
+ * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*` (unquoted). The caller
+ *   signaled they want a prefix; respect that.
+ * - All other tokens are wrapped in `"..."` as a single-word phrase. Conservative — handles apostrophes, parens, accented
+ *   input, etc. safely.
  * - Multiple tokens join with implicit AND.
  *
  * Examples:
@@ -1063,16 +1122,20 @@ function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WofPlacetype[] | n
  */
 function sanitizeFtsQuery(text: string): string {
 	const out: string[] = []
+
 	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {
 		const trimmed = rawToken.trim()
+
 		if (!trimmed) continue
 		const hasPrefixStar = trimmed.endsWith("*")
 		// Strip everything except letters + numbers from the token body. Apostrophes / hyphens /
 		// any embedded `*` all go. The trailing `*` (if any) is reapplied separately below.
 		const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+
 		if (!body) continue
 		out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
 	}
+
 	return out.join(" ")
 }
 

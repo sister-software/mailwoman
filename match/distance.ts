@@ -19,22 +19,22 @@
  */
 
 import { haversineKm as greatCircleKm } from "@mailwoman/spatial"
+
 import type { LatLon } from "./blocking.js"
 import type { Comparison, ComparisonLevel } from "./fellegi-sunter.js"
 
 /**
- * Great-circle (haversine) distance in km between two coordinates. The formula's one true home is
- * `@mailwoman/spatial`; this is a thin domain-typed adapter from `match`'s `LatLon` ({ latitude,
- * longitude }) onto the canonical scalar helper — not a second implementation.
+ * Great-circle (haversine) distance in km between two coordinates. The formula's one true home is `@mailwoman/spatial`;
+ * this is a thin domain-typed adapter from `match`'s `LatLon` ({ latitude, longitude }) onto the canonical scalar
+ * helper — not a second implementation.
  */
 export const haversineKm = (a: LatLon, b: LatLon): number =>
 	greatCircleKm(a.latitude, a.longitude, b.latitude, b.longitude)
 
 /**
- * A geo-distance comparison: bucket the great-circle distance between two records' coordinates into
- * ordered agreement levels. Levels must be ordered NEAREST first by `maxKm`, the last acting as the
- * `far` catch-all (`maxKm` omitted → unbounded). A missing/invalid coordinate on either side yields
- * no evidence.
+ * A geo-distance comparison: bucket the great-circle distance between two records' coordinates into ordered agreement
+ * levels. Levels must be ordered NEAREST first by `maxKm`, the last acting as the `far` catch-all (`maxKm` omitted →
+ * unbounded). A missing/invalid coordinate on either side yields no evidence.
  */
 export function distanceComparison<R>(config: {
 	name: string
@@ -50,21 +50,23 @@ export function distanceComparison<R>(config: {
 		assess(a, b) {
 			const ca = config.extract(a)
 			const cb = config.extract(b)
+
 			if (!valid(ca) || !valid(cb)) return -1
 
 			const km = haversineKm(ca, cb)
+
 			for (let i = 0; i < config.levels.length; i++) {
 				if (km <= (config.levels[i]!.maxKm ?? Infinity)) return i
 			}
+
 			return config.levels.length - 1
 		},
 	}
 }
 
 /**
- * Default distance levels, nearest → far, with boundaries at rooftop / block / locality scale. The
- * m/u are illustrative seeds (EM re-estimates them); the boundaries reflect typical geocoder
- * error.
+ * Default distance levels, nearest → far, with boundaries at rooftop / block / locality scale. The m/u are illustrative
+ * seeds (EM re-estimates them); the boundaries reflect typical geocoder error.
  */
 export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
 	{ label: "same-building", maxKm: 0.05, m: 0.7, u: 0.001 },
@@ -76,22 +78,20 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
 /**
  * The collapsed spatial-agreement comparison — ONE non-redundant geographic signal.
  *
- * The first matcher carried TWO spatial comparisons: canonical-address-key similarity AND
- * great-circle distance. They double-count — an exact key match implies distance ≈ 0, so a
- * co-located pair banked the same evidence twice, and the redundant vote is exactly what
- * over-merges distinct providers at a shared clinic address. This folds them into one comparison:
+ * The first matcher carried TWO spatial comparisons: canonical-address-key similarity AND great-circle distance. They
+ * double-count — an exact key match implies distance ≈ 0, so a co-located pair banked the same evidence twice, and the
+ * redundant vote is exactly what over-merges distinct providers at a shared clinic address. This folds them into one
+ * comparison:
  *
- * - **level 0 `same-key`** — an EXACT canonical-key match: the strongest tier, and the one the
- *   inverse-address-frequency adjustment rides ({@link withTermFrequency} on level 0), so agreement
- *   on a crowded shared key is down-weighted toward worthless while a rare one keeps full weight.
- * - **levels 1…n** — great-circle distance buckets for pairs whose keys DIFFER, so "123 Main St" vs
- *   "123 Main Street Apt 2" that geocode to the same rooftop still earns near-agreement (the
- *   geo-first point of the whole design).
+ * - **level 0 `same-key`** — an EXACT canonical-key match: the strongest tier, and the one the inverse-address-frequency
+ *   adjustment rides ({@link withTermFrequency} on level 0), so agreement on a crowded shared key is down-weighted
+ *   toward worthless while a rare one keeps full weight.
+ * - **levels 1…n** — great-circle distance buckets for pairs whose keys DIFFER, so "123 Main St" vs "123 Main Street Apt
+ *   2" that geocode to the same rooftop still earns near-agreement (the geo-first point of the whole design).
  * - Keys differ and no usable coordinate → no evidence.
  *
- * Exactly one spatial vote, no redundancy. Pass {@link DEFAULT_SPATIAL_LEVELS} or your own; index 0
- * must be the exact-key tier, indices 1…n the distance buckets nearest → far by `maxKm` (last =
- * `far`).
+ * Exactly one spatial vote, no redundancy. Pass {@link DEFAULT_SPATIAL_LEVELS} or your own; index 0 must be the
+ * exact-key tier, indices 1…n the distance buckets nearest → far by `maxKm` (last = `far`).
  */
 export function spatialComparison<R>(config: {
 	name: string
@@ -108,25 +108,28 @@ export function spatialComparison<R>(config: {
 		assess(a, b) {
 			const ka = config.key(a)
 			const kb = config.key(b)
+
 			if (ka && kb && ka.trim() && ka === kb) return 0 // exact canonical-key match — one strong vote
 
 			const ca = config.coordinate(a)
 			const cb = config.coordinate(b)
+
 			if (!valid(ca) || !valid(cb)) return -1 // keys differ and no coordinate → no spatial evidence
 
 			const km = haversineKm(ca, cb)
+
 			for (let i = 1; i < config.levels.length; i++) {
 				if (km <= (config.levels[i]!.maxKm ?? Infinity)) return i
 			}
+
 			return config.levels.length - 1
 		},
 	}
 }
 
 /**
- * Default levels for {@link spatialComparison}: an exact same-key tier on top of the distance
- * buckets. `m`/`u` are EM-estimable seeds (m decreasing, u increasing down the tiers; each column ≈
- * sums to 1).
+ * Default levels for {@link spatialComparison}: an exact same-key tier on top of the distance buckets. `m`/`u` are
+ * EM-estimable seeds (m decreasing, u increasing down the tiers; each column ≈ sums to 1).
  */
 export const DEFAULT_SPATIAL_LEVELS: ComparisonLevel[] = [
 	{ label: "same-key", m: 0.85, u: 0.01 },

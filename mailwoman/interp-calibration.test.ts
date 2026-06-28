@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.js"
 
 describe("interpCalibrationForRegion (#374/#584 per-region wiring)", () => {

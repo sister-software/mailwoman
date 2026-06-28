@@ -9,11 +9,12 @@
  *   Runs in Node.js only (Docusaurus config / plugin context). Never bundled into the client.
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "node:child_process"
 import { copyFileSync, existsSync, lstatSync, readFileSync, readlinkSync, statSync } from "node:fs"
 import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
+
+import { dataRootPath } from "@mailwoman/core/utils"
 
 // ---------------------------------------------------------------------------
 // Workspace resolution helpers
@@ -33,14 +34,17 @@ export function resolveWorkspaceDir(packageName: string): string | null {
 }
 
 /**
- * Resolve a workspace package's entry file. Prefers the source `.ts` file so Docusaurus's
- * swc-loader can transpile it inline — avoids requiring a pre-compile step.
+ * Resolve a workspace package's entry file. Prefers the source `.ts` file so Docusaurus's swc-loader can transpile it
+ * inline — avoids requiring a pre-compile step.
  */
 export function resolveWorkspaceEntry(packageName: string): string {
 	const dir = resolveWorkspaceDir(packageName)
+
 	if (!dir) throw new Error(`Cannot resolve ${packageName}/package.json`)
 	const sourceEntry = resolve(dir, "index.ts")
+
 	if (existsSync(sourceEntry)) return sourceEntry
+
 	return resolve(dir, "out", "index.js")
 }
 
@@ -49,7 +53,9 @@ export function resolveWorkspaceEntry(packageName: string): string {
  */
 export function resolveWorkspaceFile(workspaceDir: string, sub: string): string {
 	const sourceEntry = resolve(workspaceDir, `${sub}.ts`)
+
 	if (existsSync(sourceEntry)) return sourceEntry
+
 	return resolve(workspaceDir, "out", `${sub}.js`)
 }
 
@@ -58,7 +64,9 @@ export function resolveWorkspaceFile(workspaceDir: string, sub: string): string 
  */
 export function resolveWorkspaceDirEntry(workspaceDir: string, sub: string): string {
 	const sourceEntry = resolve(workspaceDir, sub, "index.ts")
+
 	if (existsSync(sourceEntry)) return sourceEntry
+
 	return resolve(workspaceDir, "out", sub, "index.js")
 }
 
@@ -67,8 +75,8 @@ export function resolveWorkspaceDirEntry(workspaceDir: string, sub: string): str
 // ---------------------------------------------------------------------------
 
 /**
- * Build the full workspace alias map for webpack. Centralises the alias logic that was previously
- * inlined in docusaurus.config.ts.
+ * Build the full workspace alias map for webpack. Centralises the alias logic that was previously inlined in
+ * docusaurus.config.ts.
  */
 export function buildWorkspaceAliases(): Record<string, string> {
 	const aliases: Record<string, string> = {}
@@ -90,6 +98,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 
 	// @mailwoman/cartographer — only browser-safe sub-entrypoints.
 	const cartographerDir = resolveWorkspaceDir("@mailwoman/cartographer")
+
 	if (cartographerDir) {
 		aliases["@mailwoman/cartographer/base"] = resolveWorkspaceDirEntry(cartographerDir, "base")
 		aliases["@mailwoman/cartographer/styles"] = resolveWorkspaceDirEntry(cartographerDir, "styles")
@@ -102,6 +111,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	// (pure, imports only @mailwoman/codex) + `geo` (pure math) back the httpvfs STREET lookups
 	// (httpvfs-street.ts) so the demo's situs/interp normalization can't drift from the Node tiers.
 	const resolverWofDir = resolveWorkspaceDir("@mailwoman/resolver-wof-sqlite")
+
 	if (resolverWofDir) {
 		for (const sub of [
 			"fst-deserialize-web",
@@ -118,12 +128,14 @@ export function buildWorkspaceAliases(): Record<string, string> {
 
 	// @mailwoman/neural/browser — browser entry that excludes onnxruntime-node.
 	const neuralDir = resolveWorkspaceDir("@mailwoman/neural")
+
 	if (neuralDir) {
 		aliases["@mailwoman/neural/browser"] = resolveWorkspaceFile(neuralDir, "browser")
 	}
 
 	// @mailwoman/core sub-entrypoints (transitive deps from neural / resolver).
 	const coreDir = resolveWorkspaceDir("@mailwoman/core")
+
 	if (coreDir) {
 		for (const sub of [
 			"decoder",
@@ -173,6 +185,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	// imports the rescue from this SUBPATH, aliased straight to the real resolver package's source
 	// (browser-safe: span-rescore.ts pulls only `@mailwoman/spatial` haversine + type-only core imports).
 	const resolverDir = resolveWorkspaceDir("@mailwoman/resolver")
+
 	if (resolverDir) {
 		aliases["@mailwoman/resolver/span-rescore"] = resolveWorkspaceFile(resolverDir, "span-rescore")
 	}
@@ -189,9 +202,12 @@ export function buildWorkspaceAliases(): Record<string, string> {
  */
 export function readModelCard(): { version: string; modelSize: number; tokenizerVocab: number; step: string } | null {
 	const weightsDir = resolveWorkspaceDir("@mailwoman/neural-weights-en-us")
+
 	if (!weightsDir) return null
 	const cardPath = resolve(weightsDir, "model-card.json")
+
 	if (!existsSync(cardPath)) return null
+
 	try {
 		return JSON.parse(readFileSync(cardPath, "utf8"))
 	} catch {
@@ -200,23 +216,28 @@ export function readModelCard(): { version: string; modelSize: number; tokenizer
 }
 
 /**
- * Resolve a binary artifact from the weights package, dereferencing symlinks. Returns the real path
- * to the file (following symlinks from link-dev-weights.sh).
+ * Resolve a binary artifact from the weights package, dereferencing symlinks. Returns the real path to the file
+ * (following symlinks from link-dev-weights.sh).
  *
  * @param filename - E.g. "model.onnx" or "tokenizer.model"
  */
 export function resolveWeightsArtifact(filename: string): string | null {
 	const weightsDir = resolveWorkspaceDir("@mailwoman/neural-weights-en-us")
+
 	if (!weightsDir) return null
 	const filePath = resolve(weightsDir, filename)
+
 	if (!existsSync(filePath)) return null
 
 	const st = lstatSync(filePath)
+
 	if (st.isSymbolicLink()) {
 		const target = readlinkSync(filePath)
 		const resolved = resolve(dirname(filePath), target)
+
 		return existsSync(resolved) ? resolved : null
 	}
+
 	return filePath
 }
 
@@ -230,47 +251,55 @@ export function resolveWeightsArtifact(filename: string): string | null {
 export function syncArtifact(sourcePath: string, destPath: string, label: string): boolean {
 	if (!existsSync(sourcePath)) {
 		console.warn(`[demo-assets] ${label}: source missing at ${sourcePath}`)
+
 		return false
 	}
 	const sourceSize = statSync(sourcePath).size
 
 	if (existsSync(destPath)) {
 		const destSize = statSync(destPath).size
+
 		if (sourceSize === destSize) return false
 	}
 
 	copyFileSync(sourcePath, destPath)
 	const sizeMB = (sourceSize / 1024 / 1024).toFixed(1)
 	console.log(`[demo-assets] ${label}: synced (${sizeMB} MB)`)
+
 	return true
 }
 
 /**
- * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + WASM) into `destDir`. The
- * demo loads these at RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to
- * createDbWorker — so webpack never sees them. That's deliberate: bundling sql.js-httpvfs (a
- * webpack UMD bundle with dynamic Worker/wasm requires) is exactly what produces "Critical
- * dependency" build warnings, so we keep it out of the graph entirely.
+ * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + WASM) into `destDir`. The demo loads these at
+ * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
+ * them. That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is exactly
+ * what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
  *
  * @param destDir - E.g. static/mailwoman/sqljs
  */
 export function stageSqlJsHttpvfs(destDir: string): boolean {
 	let distDir: string
+
 	try {
 		distDir = dirname(requireFromPlugin.resolve("sql.js-httpvfs/dist/index.js"))
 	} catch {
 		console.warn("[demo-assets] sql.js-httpvfs not resolvable — HTTP-VFS assets not staged")
+
 		return false
 	}
 	const files = ["index.js", "sqlite.worker.js", "sql-wasm.wasm"]
 	let copied = 0
+
 	for (const f of files) {
 		const src = resolve(distDir, f)
+
 		if (!existsSync(src)) {
 			console.warn(`[demo-assets] sql.js-httpvfs: missing ${f} in dist`)
+
 			return false
 		}
 		const dest = resolve(destDir, f)
+
 		// Idempotent stage: skip when the destination already matches (by size). This runs in
 		// loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes on reload — and
 		// `destDir` lives under the watched `static/` tree. An UNCONDITIONAL copyFileSync rewrites the
@@ -282,7 +311,9 @@ export function stageSqlJsHttpvfs(destDir: string): boolean {
 		copyFileSync(src, dest)
 		copied++
 	}
+
 	if (copied > 0) console.log(`[demo-assets] sql.js-httpvfs: staged ${copied} runtime asset(s)`)
+
 	return true
 }
 
@@ -304,6 +335,7 @@ export function buildFstBinary(fstPath: string, opts: { repoRoot: string; wofDb?
 
 	if (!existsSync(wofDb)) {
 		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDb} — skipping FST build`)
+
 		return false
 	}
 
@@ -335,10 +367,12 @@ export function buildFstBinary(fstPath: string, opts: { repoRoot: string; wofDb?
 
 	if (result.status !== 0) {
 		console.warn(`[demo-assets] FST: build failed (exit ${result.status})`)
+
 		return false
 	}
 
 	console.log(`[demo-assets] FST: built successfully`)
+
 	return true
 }
 
@@ -360,12 +394,15 @@ export function buildSlimWofDb(destPath: string, opts: { repoRoot: string }): bo
 
 	if (!existsSync(adminDb)) {
 		console.warn("[demo-assets] wof-hot.db: WOF admin DB not found — skipping slim build")
+
 		return false
 	}
 
 	const slimCli = resolve(opts.repoRoot, "resolver-wof-sqlite/out/build-slim-cli.js")
+
 	if (!existsSync(slimCli)) {
 		console.warn("[demo-assets] wof-hot.db: build-slim-cli not compiled — skipping")
+
 		return false
 	}
 

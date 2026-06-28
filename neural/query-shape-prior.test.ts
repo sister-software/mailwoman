@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-postcode", "I-postcode", "B-po_box", "I-po_box"]
@@ -56,6 +57,7 @@ describe("buildEmissionPriors", () => {
 		const toks = tokens([0, 5], [5, 6], [6, 10])
 		const m = buildEmissionPriors(shape, toks, LABELS)
 		const postcodeCol = LABELS.indexOf("B-postcode")
+
 		for (let t = 0; t < toks.length; t++) {
 			expect(m[t]?.[postcodeCol]).toBeCloseTo(0.95, 6)
 		}

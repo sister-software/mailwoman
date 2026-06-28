@@ -11,6 +11,7 @@
  */
 
 import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
+
 import { buildDefaultPolicies, defaultPolicyFor } from "./defaults.js"
 import type { ClassifierPolicy, PolicyMode, PolicyRegistry } from "./policy.js"
 
@@ -21,22 +22,23 @@ function policyKey(component: ComponentTag, locale: string | undefined): string 
 }
 
 /**
- * Concrete registry implementation. Construct empty with `new InMemoryPolicyRegistry()` and load
- * entries via `set()`, or pre-load defaults via `InMemoryPolicyRegistry.withDefaults()`.
+ * Concrete registry implementation. Construct empty with `new InMemoryPolicyRegistry()` and load entries via `set()`,
+ * or pre-load defaults via `InMemoryPolicyRegistry.withDefaults()`.
  */
 export class InMemoryPolicyRegistry implements PolicyRegistry {
 	#entries = new Map<string, ClassifierPolicy>()
 
 	/**
-	 * Build a registry pre-loaded with `mode` for every component (default `rule_only`). The
-	 * input-shape router (#478) passes a shape-derived default so the whole table starts from the
-	 * routed prior.
+	 * Build a registry pre-loaded with `mode` for every component (default `rule_only`). The input-shape router (#478)
+	 * passes a shape-derived default so the whole table starts from the routed prior.
 	 */
 	static withDefaults(mode: PolicyMode = "rule_only"): InMemoryPolicyRegistry {
 		const registry = new InMemoryPolicyRegistry()
+
 		for (const policy of buildDefaultPolicies(mode)) {
 			registry.set(policy)
 		}
+
 		return registry
 	}
 
@@ -58,10 +60,13 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 	lookup(component: ComponentTag, locale?: string): ClassifierPolicy {
 		if (locale) {
 			const localized = this.#entries.get(policyKey(component, locale))
+
 			if (localized) return localized
 		}
 		const global = this.#entries.get(policyKey(component, undefined))
+
 		if (global) return global
+
 		return defaultPolicyFor(component)
 	}
 
@@ -76,6 +81,7 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 			if (typeof policy.confidence_threshold === "number" && proposal.confidence < policy.confidence_threshold) {
 				continue
 			}
+
 			if (!matchesMode(proposal, policy.mode)) continue
 
 			passedThreshold.push(proposal)
@@ -99,14 +105,15 @@ function matchesMode(proposal: ClassificationProposal, mode: PolicyMode): boolea
 }
 
 /**
- * Second pass for `rule_preferred` / `neural_preferred`: within each component, drop the
- * dispreferred source when the preferred source has at least one survivor.
+ * Second pass for `rule_preferred` / `neural_preferred`: within each component, drop the dispreferred source when the
+ * preferred source has at least one survivor.
  */
 function applyPreferenceFilters(
 	proposals: readonly ClassificationProposal[],
 	policyByComponent: ReadonlyMap<ComponentTag, ClassifierPolicy>
 ): ClassificationProposal[] {
 	const grouped = new Map<ComponentTag, ClassificationProposal[]>()
+
 	for (const proposal of proposals) {
 		const list = grouped.get(proposal.component) ?? []
 		list.push(proposal)
@@ -114,8 +121,10 @@ function applyPreferenceFilters(
 	}
 
 	const out: ClassificationProposal[] = []
+
 	for (const [component, list] of grouped) {
 		const policy = policyByComponent.get(component)
+
 		if (!policy) {
 			out.push(...list)
 			continue
@@ -126,6 +135,7 @@ function applyPreferenceFilters(
 			out.push(...(hasNeural ? list.filter((p) => p.source !== "rule") : list))
 			continue
 		}
+
 		if (policy.mode === "rule_preferred") {
 			const hasRule = list.some((p) => p.source === "rule")
 			out.push(...(hasRule ? list.filter((p) => p.source !== "neural") : list))

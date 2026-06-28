@@ -26,6 +26,7 @@ const handler: RequestHandler = async (req, res) => {
 	if (!parser) {
 		console.error("Address parser not available")
 		res.status(500).json({ error: "Address parser not available" })
+
 		return
 	}
 
@@ -34,6 +35,7 @@ const handler: RequestHandler = async (req, res) => {
 
 	if (!address) {
 		res.status(400).json({ error: "Missing address parameter" })
+
 		return
 	}
 

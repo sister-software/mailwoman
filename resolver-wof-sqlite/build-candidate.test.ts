@@ -21,6 +21,7 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "./build-candidate.js"
@@ -142,6 +143,7 @@ describe("buildCandidateTable", () => {
 		expect(result.places).toBe(5)
 
 		const db = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const [chi] = probe(db, normalizeLocalityForKey("Chicago"))
 			expect(chi).toBeDefined()
@@ -167,6 +169,7 @@ describe("buildCandidateTable", () => {
 		await buildCandidateTable({ input, output })
 
 		const db = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			// The query side normalizes the user's input the same way; "Saint-Étienne" → "saint-etienne".
 			const key = normalizeLocalityForKey("Saint-Étienne")
@@ -188,6 +191,7 @@ describe("buildCandidateTable", () => {
 		expect(result.aliases).toBe(3)
 
 		const db = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const [windy] = probe(db, normalizeLocalityForKey("Windy City"))
 			expect(windy?.name).toBe("Chicago") // alias row carries the primary's display name + coords
@@ -206,6 +210,7 @@ describe("buildCandidateTable", () => {
 		expect(result.abbrevs).toBe(1)
 
 		const db = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const [il] = probe(db, normalizeLocalityForKey("IL"))
 			expect(il?.name).toBe("Illinois")
@@ -227,6 +232,7 @@ describe("buildCandidateTable", () => {
 		expect(result.postcodes).toBe(1)
 
 		const db = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const [zip] = probe(db, normalizeLocalityForKey("60601"))
 			expect(zip?.placetype).toBe("postalcode")
@@ -244,6 +250,7 @@ describe("buildCandidateTable", () => {
 		await buildCandidateTable({ input, output })
 
 		const db = new DatabaseSync(output, { readOnly: true })
+
 		try {
 			const { page_size } = db.prepare("PRAGMA page_size").get() as { page_size: number }
 			expect(page_size).toBe(8192)

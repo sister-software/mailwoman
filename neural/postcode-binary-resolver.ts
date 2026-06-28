@@ -40,17 +40,16 @@ export interface PostcodeBinaryEntry {
 }
 
 /**
- * Right-pad an ASCII postcode to `width` with NUL; `\0` sorts below any real char, so shorter keys
- * order before longer ones with the same prefix, which is what we want.
+ * Right-pad an ASCII postcode to `width` with NUL; `\0` sorts below any real char, so shorter keys order before longer
+ * ones with the same prefix, which is what we want.
  */
 function encodeKey(s: string, width: number, out: Uint8Array, offset: number): void {
 	for (let i = 0; i < width; i++) out[offset + i] = i < s.length ? s.charCodeAt(i) & 0x7f : 0
 }
 
 /**
- * Serialize postcode entries into the flat binary. Entries are sorted by (postcode, country) so
- * equal postcodes land in adjacent records. Run in Node; consumed by
- * {@link PostcodeBinaryResolver}.
+ * Serialize postcode entries into the flat binary. Entries are sorted by (postcode, country) so equal postcodes land in
+ * adjacent records. Run in Node; consumed by {@link PostcodeBinaryResolver}.
  */
 export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[]): Uint8Array {
 	const sorted = [...entries].sort((a, b) =>
@@ -79,6 +78,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 	view.setUint32(o, sorted.length, true)
 	o += 4
 	buf[o++] = countries.length
+
 	for (const c of countries) {
 		buf[o++] = c.charCodeAt(0) & 0x7f
 		buf[o++] = c.charCodeAt(1) & 0x7f
@@ -94,12 +94,13 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 		view.setInt16(o, Math.max(-32767, Math.min(32767, Math.round(e.lon * LON_Q))), true)
 		o += 2
 	}
+
 	return buf
 }
 
 /**
- * Pure-JS, browser-safe postcode resolver over the flat binary. Implements the same `lookup()` seam
- * as the SQLite `WofPostcodeLookup`, so `extractPostcodeAnchors` is agnostic to which backs it.
+ * Pure-JS, browser-safe postcode resolver over the flat binary. Implements the same `lookup()` seam as the SQLite
+ * `WofPostcodeLookup`, so `extractPostcodeAnchors` is agnostic to which backs it.
  */
 export class PostcodeBinaryResolver {
 	readonly #buf: Uint8Array
@@ -113,11 +114,13 @@ export class PostcodeBinaryResolver {
 	constructor(bytes: Uint8Array) {
 		this.#buf = bytes
 		this.#view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+
 		if (this.#view.getUint32(0, true) !== MAGIC) throw new Error("postcode binary: bad magic")
 		this.#count = this.#view.getUint32(4, true)
 		let o = 8
 		const countryCount = bytes[o++]!
 		this.#countries = []
+
 		for (let i = 0; i < countryCount; i++) {
 			this.#countries.push(String.fromCharCode(bytes[o]!, bytes[o + 1]!))
 			o += 2
@@ -130,10 +133,13 @@ export class PostcodeBinaryResolver {
 	/** Compare the keyWidth bytes of record `i` against a padded query key. */
 	#cmpKey(i: number, key: Uint8Array): number {
 		const base = this.#recBase + i * this.#recSize
+
 		for (let j = 0; j < this.#keyWidth; j++) {
 			const d = this.#buf[base + j]! - key[j]!
+
 			if (d !== 0) return d
 		}
+
 		return 0
 	}
 
@@ -145,14 +151,17 @@ export class PostcodeBinaryResolver {
 		// Binary search for the first record whose key >= the query.
 		let lo = 0
 		let hi = this.#count
+
 		while (lo < hi) {
 			const mid = (lo + hi) >>> 1
+
 			if (this.#cmpKey(mid, key) < 0) lo = mid + 1
 			else hi = mid
 		}
 
 		// Collect the contiguous run of equal keys (one per country).
 		const out: PostcodePlace[] = []
+
 		for (let i = lo; i < this.#count && this.#cmpKey(i, key) === 0; i++) {
 			const base = this.#recBase + i * this.#recSize + this.#keyWidth
 			out.push({
@@ -161,28 +170,30 @@ export class PostcodeBinaryResolver {
 				lon: this.#view.getInt16(base + 3, true) / LON_Q,
 			})
 		}
+
 		return out
 	}
 
 	/**
-	 * Decode the whole binary into an {@link AnchorLookup} (`Map<postcode, AnchorEntry>`) for the
-	 * neural anchor channel (#239/#240): each postcode → a uniform posterior over its member
-	 * countries
+	 * Decode the whole binary into an {@link AnchorLookup} (`Map<postcode, AnchorEntry>`) for the neural anchor channel
+	 * (#239/#240): each postcode → a uniform posterior over its member countries
 	 *
-	 * - The mean of its non-zero centroids. This is the browser-side equivalent of the pilot
-	 *   postcode→anchor lookup the model trained against, built live from the shipped binary instead
-	 *   of a precomputed JSON. Records are stored sorted by (postcode, country), so equal keys are
-	 *   contiguous.
+	 * - The mean of its non-zero centroids. This is the browser-side equivalent of the pilot postcode→anchor lookup the
+	 *   model trained against, built live from the shipped binary instead of a precomputed JSON. Records are stored
+	 *   sorted by (postcode, country), so equal keys are contiguous.
 	 */
 	toAnchorLookup(): AnchorLookup {
 		const out: AnchorLookup = new Map()
 		let i = 0
+
 		while (i < this.#count) {
 			// Decode this record's postcode key (ASCII, 0x00-right-padded).
 			const keyBase = this.#recBase + i * this.#recSize
 			let postcode = ""
+
 			for (let j = 0; j < this.#keyWidth; j++) {
 				const c = this.#buf[keyBase + j]!
+
 				if (c === 0) break
 				postcode += String.fromCharCode(c)
 			}
@@ -192,20 +203,24 @@ export class PostcodeBinaryResolver {
 			let lonSum = 0
 			let centroidCount = 0
 			let k = i
+
 			for (; k < this.#count; k++) {
 				const base = this.#recBase + k * this.#recSize
 				let same = true
+
 				for (let j = 0; j < this.#keyWidth; j++) {
 					if (this.#buf[base + j] !== this.#buf[keyBase + j]) {
 						same = false
 						break
 					}
 				}
+
 				if (!same) break
 				const tail = base + this.#keyWidth
 				posterior[this.#countries[this.#buf[tail]!]!] = 1 // uniform — anchorFeatureVector renormalizes
 				const lat = this.#view.getInt16(tail + 1, true) / LAT_Q
 				const lon = this.#view.getInt16(tail + 3, true) / LON_Q
+
 				if (lat !== 0 || lon !== 0) {
 					latSum += lat
 					lonSum += lon
@@ -219,6 +234,7 @@ export class PostcodeBinaryResolver {
 			})
 			i = k
 		}
+
 		return out
 	}
 }

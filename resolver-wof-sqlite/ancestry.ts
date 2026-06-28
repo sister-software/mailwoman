@@ -18,9 +18,9 @@
 import type { DatabaseSync } from "node:sqlite"
 
 /**
- * WOF placetype → containment depth, coarsest = 1. Higher = finer. Placetypes we never resolve
- * (continent, empire, …) map to 0 and sort last. NOT the same table as the FST's `PLACETYPE_ORDER`
- * (fst-serialize.ts) — that one is a serialization order, this one is containment depth.
+ * WOF placetype → containment depth, coarsest = 1. Higher = finer. Placetypes we never resolve (continent, empire, …)
+ * map to 0 and sort last. NOT the same table as the FST's `PLACETYPE_ORDER` (fst-serialize.ts) — that one is a
+ * serialization order, this one is containment depth.
  */
 export const PLACETYPE_DEPTH: Readonly<Record<string, number>> = {
 	country: 1,
@@ -52,8 +52,8 @@ export interface AncestorPlaceRow {
 }
 
 /**
- * The ancestor lineage of `id` — self excluded, nearest-first. Returns `[]` when the place has no
- * recorded ancestry. NOT memoized here; `WofSqlitePlaceLookup` keeps its own per-id cache.
+ * The ancestor lineage of `id` — self excluded, nearest-first. Returns `[]` when the place has no recorded ancestry.
+ * NOT memoized here; `WofSqlitePlaceLookup` keeps its own per-id cache.
  */
 export function ancestorLineage(db: DatabaseSync, id: number, schemaName = "main"): AncestorPlaceRow[] {
 	const rows = db
@@ -65,5 +65,6 @@ export function ancestorLineage(db: DatabaseSync, id: number, schemaName = "main
 		)
 		.all(id) as unknown as AncestorPlaceRow[]
 	rows.sort((a, b) => placetypeDepth(b.placetype) - placetypeDepth(a.placetype))
+
 	return rows
 }

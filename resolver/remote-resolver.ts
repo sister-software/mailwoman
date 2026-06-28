@@ -31,13 +31,13 @@ export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "inter
 export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolveOpts | undefined {
 	if (!opts) return undefined
 	const { addressPoints: _ap, interpolation: _ip, ...rest } = opts
+
 	return rest
 }
 
 export interface RemoteResolverOpts {
 	/**
-	 * Full URL of the resolver service's resolve-tree endpoint, e.g.
-	 * `http://resolver:7081/api/resolve-tree`.
+	 * Full URL of the resolver service's resolve-tree endpoint, e.g. `http://resolver:7081/api/resolve-tree`.
 	 */
 	endpoint: string
 	/** Injectable fetch (tests / custom agents). Defaults to the global `fetch`. */
@@ -76,6 +76,7 @@ export class RemoteResolver implements Resolver {
 	async resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree> {
 		const controller = new AbortController()
 		const timer = setTimeout(() => controller.abort(), this.#timeoutMs)
+
 		try {
 			const body: ResolveTreeRequest = { tree, opts: serializableResolveOpts(opts) }
 			const res = await this.#fetch(this.#endpoint, {
@@ -84,13 +85,16 @@ export class RemoteResolver implements Resolver {
 				body: JSON.stringify(body),
 				signal: controller.signal,
 			})
+
 			if (!res.ok) {
 				throw new Error(`RemoteResolver: ${this.#endpoint} → HTTP ${res.status} ${res.statusText}`)
 			}
 			const json = (await res.json()) as Partial<ResolveTreeResponse>
+
 			if (!json || !json.tree || !Array.isArray(json.tree.roots)) {
 				throw new Error("RemoteResolver: malformed response (missing `tree.roots`)")
 			}
+
 			return json.tree
 		} finally {
 			clearTimeout(timer)

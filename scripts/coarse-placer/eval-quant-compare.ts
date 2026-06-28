@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs"
+import * as path from "node:path"
+import { parseArgs } from "node:util"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -13,9 +17,6 @@
  *   0.5]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "node:fs"
-import * as path from "node:path"
-import { parseArgs } from "node:util"
 
 import type { CoarsePlacer as CoarsePlacerClass, CoarsePlacerMeta } from "../../core/coarse-placer/coarse-placer.ts"
 
@@ -44,6 +45,7 @@ function loadFp32(dir: string): CoarsePlacerClass {
 	const buf = readFileSync(path.join(dir, "weights.bin"))
 	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 	const weights = new Float32Array(ab)
+
 	return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
 }
 function loadInt8(dir: string): CoarsePlacerClass {
@@ -55,11 +57,14 @@ function loadInt8(dir: string): CoarsePlacerClass {
 	const dim = meta.featureDim
 	const scales = meta.scales!
 	const weights = new Float32Array(C * dim)
+
 	for (let c = 0; c < C; c++) {
 		const s = scales[c]!
 		const base = c * dim
+
 		for (let i = 0; i < dim; i++) weights[base + i] = int8[base + i]! * s
 	}
+
 	return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
 }
 
@@ -78,6 +83,7 @@ let agree = 0
 let confMae = 0
 const perF: Record<string, { n: number; ok: number }> = {}
 const perI: Record<string, { n: number; ok: number }> = {}
+
 for (const r of test) {
 	const pf = fp32.predict(r.raw)
 	const pi = int8.predict(r.raw)
@@ -85,8 +91,17 @@ for (const r of test) {
 	const ci = pi.country ?? "(abstain)"
 	;(perF[r.country] ??= { n: 0, ok: 0 }).n++
 	;(perI[r.country] ??= { n: 0, ok: 0 }).n++
-	if (cf === r.country) (okF++, perF[r.country]!.ok++)
-	if (ci === r.country) (okI++, perI[r.country]!.ok++)
+
+	if (cf === r.country) {
+		okF++
+		perF[r.country]!.ok++
+	}
+
+	if (ci === r.country) {
+		okI++
+		perI[r.country]!.ok++
+	}
+
 	if (cf === ci) agree++
 	confMae += Math.abs(pf.confidence - pi.confidence)
 }
@@ -100,9 +115,11 @@ console.log(
 console.log(`  prediction agreement (same top class): ${((100 * agree) / N).toFixed(2)}%`)
 console.log(`  confidence MAE: ${(confMae / N).toFixed(4)}`)
 console.log(`  per-class recall (fp32 → int8):`)
+
 for (const c of classes) {
 	const f = perF[c]
 	const i = perI[c]!
+
 	if (!f) continue
 	const rf = (100 * f.ok) / f.n
 	const ri = (100 * i.ok) / i.n

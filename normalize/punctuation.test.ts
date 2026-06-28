@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { applyPunctuation } from "./punctuation.js"
 
 test("applyPunctuation: input with no fancy punctuation is unchanged (identity map)", () => {

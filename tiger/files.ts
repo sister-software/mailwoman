@@ -156,6 +156,7 @@ export function TIGERNationZIPPath<Vintage extends number = TIGERCurrentVintage>
 	const fileName = `tl_${vintage}_${TIGERLevel.State}${TIGERFileExtension.Zip}` as const
 
 	const path = `/geo/tiger/TIGER${vintage}/STATE/${fileName}` as const
+
 	// https://www2.census.gov/geo/tiger/TIGER2023/STATE/tl_2023_us_state.zip
 
 	return path

@@ -5,6 +5,7 @@
  */
 
 import { type RasterDEMSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
+
 import { TileSetSourceID } from "../styles/sources.js"
 
 /**

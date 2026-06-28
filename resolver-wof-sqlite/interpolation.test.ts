@@ -10,7 +10,9 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
 import { StreetInterpolator } from "./interpolation.js"
 
 interface SeedSegment {
@@ -46,6 +48,7 @@ function seed(db: DatabaseSync, segments: SeedSegment[]): void {
 		 (street_norm, side, from_hn, to_hn, min_hn, max_hn, parity, postcode, county_fips, street_raw, geometry, source, release)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, '50023', ?, ?, 'tiger:edges', 'TIGER2023')`
 	)
+
 	for (const s of segments) {
 		ins.run(
 			s.street_norm,

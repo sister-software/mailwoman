@@ -24,8 +24,8 @@
  */
 
 /**
- * English Canadian street-type words (Canada Post's recognized set, lowercase). Appear as the
- * TRAILING token of an English street name (`Maple Avenue`, `Sunset Crescent`).
+ * English Canadian street-type words (Canada Post's recognized set, lowercase). Appear as the TRAILING token of an
+ * English street name (`Maple Avenue`, `Sunset Crescent`).
  */
 export const CA_STREET_TYPES_EN: ReadonlySet<string> = new Set([
 	"street",
@@ -60,10 +60,9 @@ export const CA_STREET_TYPES_EN: ReadonlySet<string> = new Set([
 ])
 
 /**
- * French Canadian street-type words (Canada Post's recognized set, lowercase, accent-bearing).
- * Appear as the LEADING token of a French street name (`Rue Sainte-Catherine`, `Chemin du Roy`).
- * Folded for matching in {@link isCanadianStreetWord}, so `Côte`/`cote` and `Allée`/`allee` key
- * alike.
+ * French Canadian street-type words (Canada Post's recognized set, lowercase, accent-bearing). Appear as the LEADING
+ * token of a French street name (`Rue Sainte-Catherine`, `Chemin du Roy`). Folded for matching in
+ * {@link isCanadianStreetWord}, so `Côte`/`cote` and `Allée`/`allee` key alike.
  */
 export const CA_STREET_TYPES_FR: ReadonlySet<string> = new Set([
 	"rue",
@@ -98,28 +97,31 @@ function foldToken(s: string): string {
 /** The English + French street-type vocabularies, both folded, for one position-agnostic lookup. */
 const STREET_WORD_SET: ReadonlySet<string> = (() => {
 	const out = new Set<string>()
+
 	for (const w of CA_STREET_TYPES_EN) out.add(foldToken(w))
+
 	for (const w of CA_STREET_TYPES_FR) out.add(foldToken(w))
+
 	return out
 })()
 
 /**
- * True when a token is a Canadian street-type word in EITHER language (case- and
- * accent-insensitive) — `Street`, `Crescent`, `Rue`, `Chemin`, `Côte`. Position-agnostic, because
- * an English type trails the name and a French type leads it; the matcher cannot lean on a side.
+ * True when a token is a Canadian street-type word in EITHER language (case- and accent-insensitive) — `Street`,
+ * `Crescent`, `Rue`, `Chemin`, `Côte`. Position-agnostic, because an English type trails the name and a French type
+ * leads it; the matcher cannot lean on a side.
  */
 export function isCanadianStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
 	const t = foldToken(token)
+
 	return t.length > 0 && STREET_WORD_SET.has(t)
 }
 
 /**
- * Bilingual directional words → canonical compass letter. Covers the bare letters (`N S E W`), the
- * full English words (`North`/`South`/`East`/`West`), and the full French words
- * (`Nord`/`Sud`/`Est`/`Ouest`). The bilingual twist is `O`: French `Ouest` abbreviates to `O`, NOT
- * `W`, so an English-only matcher silently drops the quadrant on a French address line. Keys are
- * folded (lowercase, accent-free); values are the English compass letter.
+ * Bilingual directional words → canonical compass letter. Covers the bare letters (`N S E W`), the full English words
+ * (`North`/`South`/`East`/`West`), and the full French words (`Nord`/`Sud`/`Est`/`Ouest`). The bilingual twist is `O`:
+ * French `Ouest` abbreviates to `O`, NOT `W`, so an English-only matcher silently drops the quadrant on a French
+ * address line. Keys are folded (lowercase, accent-free); values are the English compass letter.
  */
 export const CA_DIRECTIONALS: Record<string, "N" | "S" | "E" | "W"> = {
 	n: "N",
@@ -138,19 +140,24 @@ export const CA_DIRECTIONALS: Record<string, "N" | "S" | "E" | "W"> = {
 }
 
 /**
- * True when a token is a Canadian directional in either language (case- and accent-insensitive) —
- * `N`, `NW`, `Nord`, `Ouest`, `O`. Compound English quadrants (`NW`, `SE`) are accepted by
- * decomposing into their single-letter halves; the lone French `O` resolves to West.
+ * True when a token is a Canadian directional in either language (case- and accent-insensitive) — `N`, `NW`, `Nord`,
+ * `Ouest`, `O`. Compound English quadrants (`NW`, `SE`) are accepted by decomposing into their single-letter halves;
+ * the lone French `O` resolves to West.
  */
 export function isCanadianDirectional(token: unknown): boolean {
 	if (typeof token !== "string") return false
 	const t = foldToken(token)
+
 	if (t.length === 0) return false
+
 	if (t in CA_DIRECTIONALS) return true
+
 	// Compound English quadrants like NW / SE / NE / SW: each half must be a single-letter directional.
 	if (t.length === 2) {
 		const isLetter = (h: string): boolean => h === "n" || h === "s" || h === "e" || h === "w"
+
 		return isLetter(t[0]!) && isLetter(t[1]!)
 	}
+
 	return false
 }

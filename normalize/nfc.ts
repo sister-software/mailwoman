@@ -23,30 +23,36 @@ export interface NfcResult {
 
 export function applyNfc(input: string): NfcResult {
 	const normalized = input.normalize("NFC")
+
 	if (normalized === input) {
 		return { text: input, map: identityMap(input.length), changed: false }
 	}
+
 	return { text: normalized, map: estimateNfcMap(input, normalized), changed: true }
 }
 
 /**
- * Estimate per-output-codepoint offsets. Walks both strings in parallel; emits the next source
- * index for each output position. Imprecise for combining sequences but correct for length-equal
- * NFC outputs (the common length-changing case is when a sequence shortens).
+ * Estimate per-output-codepoint offsets. Walks both strings in parallel; emits the next source index for each output
+ * position. Imprecise for combining sequences but correct for length-equal NFC outputs (the common length-changing case
+ * is when a sequence shortens).
  */
 function estimateNfcMap(input: string, output: string): number[] {
 	const map: number[] = []
 	let inIdx = 0
+
 	for (let outIdx = 0; outIdx < output.length; outIdx++) {
 		map.push(inIdx)
 		const outCp = output.codePointAt(outIdx)!
 		const outStep = outCp > 0xffff ? 2 : 1
+
 		// Walk the input forward by at least one codepoint; absorb any combining marks (0x0300–0x036f).
 		if (inIdx < input.length) {
 			const inCp = input.codePointAt(inIdx)!
 			inIdx += inCp > 0xffff ? 2 : 1
+
 			while (inIdx < input.length) {
 				const nextCp = input.codePointAt(inIdx)!
+
 				if (nextCp >= 0x0300 && nextCp <= 0x036f) {
 					inIdx += nextCp > 0xffff ? 2 : 1
 				} else {
@@ -54,7 +60,9 @@ function estimateNfcMap(input: string, output: string): number[] {
 				}
 			}
 		}
+
 		if (outStep === 2) outIdx += 1
 	}
+
 	return map
 }

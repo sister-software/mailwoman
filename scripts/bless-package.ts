@@ -11,6 +11,7 @@ import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { createInterface } from "node:readline/promises"
 import { parseArgs } from "node:util"
+
 import { $ } from "zx"
 
 const { values: flags, positionals: dirs } = parseArgs({
@@ -57,6 +58,7 @@ async function withOTP(run: (otpArgs: string[]) => Promise<unknown>): Promise<vo
 
 		try {
 			await run(otpArgs)
+
 			return
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err)
@@ -82,14 +84,17 @@ async function readPkg(dir: string): Promise<Pkg> {
 function parseRepo(repository: Pkg["repository"]): string | undefined {
 	if (!repository) return
 	const url = typeof repository === "string" ? repository : repository.url
+
 	if (!url) return
 	const m = url.match(/github\.com[/:]([^/]+\/[^/.]+)/i) ?? url.match(/^github:([^/]+\/[^/.]+)/i)
+
 	return m?.[1]
 }
 
 async function existsOnRegistry(name: string): Promise<boolean> {
 	try {
 		await $`npm view ${name} version`.quiet()
+
 		return true
 	} catch {
 		return false
@@ -104,8 +109,10 @@ async function packAndPublish(dir: string): Promise<void> {
 	}
 
 	const exists = await existsOnRegistry(pkg.name)
+
 	if (exists && !flags.version) {
 		console.log(`• ${pkg.name} already on registry — skip publish`)
+
 		return
 	}
 
@@ -114,6 +121,7 @@ async function packAndPublish(dir: string): Promise<void> {
 
 	if (flags["dry-run"]) {
 		console.log(`• dry-run, would publish ${tgz}`)
+
 		return
 	}
 
@@ -139,8 +147,10 @@ async function trust(dir: string): Promise<void> {
 		"--allow-publish",
 		"--yes",
 	]
+
 	if (flags["dry-run"]) {
 		console.log(`• dry-run: npm ${args.join(" ")}`)
+
 		return
 	}
 
@@ -158,6 +168,7 @@ async function trust(dir: string): Promise<void> {
 
 		if (/already|exists|configured/i.test(msg)) {
 			console.log(`• ${pkg.name}: trusted publisher already configured — skip`)
+
 			return
 		}
 		console.warn(`⚠ ${pkg.name}: trust not set (needs interactive 2FA). Run by hand:`)

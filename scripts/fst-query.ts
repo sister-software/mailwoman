@@ -1,7 +1,6 @@
 /**
- * Quick CLI for querying the FST. Run with: npx tsx scripts/fst-query.ts "New York" npx tsx
- * scripts/fst-query.ts --db /path/to/wof.db "Portland" npx tsx scripts/fst-query.ts
- * --show-continuations "New"
+ * Quick CLI for querying the FST. Run with: npx tsx scripts/fst-query.ts "New York" npx tsx scripts/fst-query.ts --db
+ * /path/to/wof.db "Portland" npx tsx scripts/fst-query.ts --show-continuations "New"
  */
 
 import { buildFstFromWof } from "../resolver-wof-sqlite/fst-builder.js"
@@ -14,6 +13,7 @@ const queries: string[] = []
 
 for (let i = 0; i < args.length; i++) {
 	const arg = args[i]!
+
 	if (arg === "--db" && args[i + 1]) {
 		dbPath = args[++i]!
 	} else if (arg === "--show-continuations") {
@@ -53,11 +53,13 @@ for (const query of queries) {
 		const sorted = [...q.accepting].sort((a, b) => b.importance - a.importance)
 		const shown = sorted.slice(0, maxResults)
 		console.log(`  Top by importance:`)
+
 		for (const p of shown) {
 			const imp = p.importance > 0 ? ` imp ${p.importance.toFixed(4)}` : ""
 			const chain = p.parentChain.length > 0 ? ` chain=[${p.parentChain.join("→")}]` : ""
 			console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofID}`)
 		}
+
 		if (sorted.length > maxResults) {
 			console.log(`    ... and ${sorted.length - maxResults} more`)
 		}
@@ -66,6 +68,7 @@ for (const query of queries) {
 	if (showContinuations && q.continuations.length > 0) {
 		const shown = q.continuations.sort((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
 		console.log(`  Continuations (${q.continuations.length} total):`)
+
 		for (const c of shown) {
 			const acc = c.acceptingCount > 0 ? ` → ${c.acceptingCount} places` : ""
 			console.log(`    "${c.token}"${acc}`)

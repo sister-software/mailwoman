@@ -71,26 +71,31 @@ type SpanSlicesResult = { ok: false; reason: string } | { ok: true; byTag: Map<s
 function parseArgs(): AuditOptions {
 	const args = process.argv.slice(2)
 	const out: { input?: string; samples: number } = { samples: 8 }
+
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--input") out.input = args[++i]
 		else if (args[i] === "--samples") out.samples = parseInt(args[++i] ?? "", 10)
 	}
+
 	if (!out.input) {
 		console.error("Usage: audit-po-box-cedex-shard.ts --input <labeled.jsonl> [--samples N]")
 		process.exit(1)
 	}
+
 	return out as AuditOptions
 }
 
 /**
- * Validate the #519 char-offset span triple's structure (present, parallel, sorted, in-bounds) and
- * return the raw slices per tag. Returns `{ ok: false, reason }` on a structural violation.
+ * Validate the #519 char-offset span triple's structure (present, parallel, sorted, in-bounds) and return the raw
+ * slices per tag. Returns `{ ok: false, reason }` on a structural violation.
  */
 function spanSlices(row: ShardRow): SpanSlicesResult {
 	const { raw, span_starts, span_ends, span_tags } = row
+
 	if (!span_starts || !span_ends || !span_tags) {
 		return { ok: false, reason: "missing the char-offset span triple (#519)" }
 	}
+
 	if (span_starts.length !== span_ends.length || span_starts.length !== span_tags.length) {
 		return {
 			ok: false,
@@ -98,31 +103,39 @@ function spanSlices(row: ShardRow): SpanSlicesResult {
 		}
 	}
 	const byTag = new Map<string, string[]>()
+
 	for (let i = 0; i < span_starts.length; i++) {
 		const start = span_starts[i]!
 		const end = span_ends[i]!
 		const tag = span_tags[i]!
+
 		if (!(start >= 0 && start < end && end <= raw.length)) {
 			return { ok: false, reason: `span ${tag}@[${start}, ${end}) out of bounds` }
 		}
+
 		if (i > 0 && start < span_ends[i - 1]!) {
 			return { ok: false, reason: `spans unsorted/overlapping at index ${i}` }
 		}
+
 		if (!byTag.has(tag)) byTag.set(tag, [])
 		byTag.get(tag)!.push(raw.slice(start, end))
 	}
+
 	return { ok: true, byTag }
 }
 
 function bioWellFormed(labels: string[]): boolean {
 	let prev = "O"
+
 	for (const l of labels) {
 		if (l.startsWith("I-")) {
 			const tag = l.slice(2)
+
 			if (prev !== `B-${tag}` && prev !== `I-${tag}`) return false
 		}
 		prev = l
 	}
+
 	return true
 }
 
@@ -145,11 +158,14 @@ async function main(): Promise<void> {
 		const { tokens, labels, components: c } = row
 
 		if (tokens.length !== labels.length) fail(row, "tokens/labels length mismatch")
+
 		if (!bioWellFormed(labels)) fail(row, "malformed BIO")
+
 		if (!c.po_box && !c.cedex) fail(row, "row carries neither po_box nor cedex")
 
 		// RAW-surface comparison via the #519 span triple — punctuation preserved, never stripped.
 		const sliced = spanSlices(row)
+
 		if (!sliced.ok) {
 			fail(row, sliced.reason)
 		} else {
@@ -157,6 +173,7 @@ async function main(): Promise<void> {
 				if (!c[tag]) continue
 				tagCounts[tag]++
 				const slices = sliced.byTag.get(tag) ?? []
+
 				if (slices.length !== 1) fail(row, `${tag}: expected 1 span, got ${slices.length}`)
 				else if (slices[0]!.toLowerCase() !== c[tag]!.toLowerCase())
 					fail(row, `${tag} span "${slices[0]}" != component "${c[tag]}" (raw-surface, verbatim)`)
@@ -167,12 +184,14 @@ async function main(): Promise<void> {
 
 		if (c.po_box && row.country === "US") {
 			const m = CODEX_COVERED.exec(c.po_box)
+
 			if (m && CLEAN_ID.test(c.po_box.slice(m[0].length).trim()) && !isPOBox(c.po_box))
 				fail(row, `codex rejects US po_box "${c.po_box}"`)
 		}
 
 		if (row.country === "CA" && c.postcode) {
 			const pc = normalizeCaPostalCode(c.postcode)
+
 			if (!pc) fail(row, `invalid CA postcode "${c.postcode}"`)
 			else if (c.region && FSA_LETTER_TO_PROVINCE[pc[0]!] !== c.region) fail(row, `FSA ${pc[0]} != region ${c.region}`)
 		}
@@ -186,9 +205,12 @@ async function main(): Promise<void> {
 	console.log(`by synth_method: ${JSON.stringify(byMethod)}`)
 	console.log(`tag coverage: ${JSON.stringify(tagCounts)}`)
 	console.log(`\nsamples:`)
+
 	for (const s of samples) console.log(`  ${s.raw}\n    ${s.labeled}`)
+
 	if (failures.length > 0) {
 		console.error(`\nFAIL: ${failures.length} rows`)
+
 		for (const f of failures.slice(0, 20)) console.error(`  [${f.reason}] ${f.raw}`)
 		process.exit(1)
 	}

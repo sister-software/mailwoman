@@ -3,6 +3,7 @@
 // vs gold `country` on the curated real-OOD eval. Closed vocab → precision should be ~perfect.
 // Usage: node scripts/eval/probe-deterministic-country.ts [--file <jsonl>]
 import { readFileSync } from "node:fs"
+
 import { matchCountry } from "../../codex/out/country/country.js"
 import { arg } from "../lib/cli-args.ts"
 
@@ -23,6 +24,7 @@ let tp = 0,
 	fp = 0,
 	fn = 0
 const misses: string[] = []
+
 for (const row of rows) {
 	const segs = row.raw
 		.split(",")
@@ -39,6 +41,7 @@ for (const row of rows) {
 			fp++
 			misses.push(`FP  ${row.raw}  → tagged "${predicted}" (gold country=${gold ?? "∅"})`)
 		}
+
 		if (gold) {
 			fn++
 			misses.push(`FN  ${row.raw}  → gold "${gold}" not caught on trailing segment "${last}"`)
@@ -52,7 +55,9 @@ console.log(`# deterministic country (matchCountry on trailing segment) — n=${
 console.log(
 	`P=${(100 * p).toFixed(1)}  R=${(100 * r).toFixed(1)}  F1=${(100 * f1).toFixed(1)}  (tp=${tp} fp=${fp} fn=${fn})`
 )
+
 if (misses.length) {
 	console.log("\n-- misses --")
+
 	for (const m of misses) console.log(m)
 }

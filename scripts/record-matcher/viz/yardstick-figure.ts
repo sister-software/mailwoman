@@ -28,6 +28,7 @@ import { writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 const OUT = arg("out-svg", "docs/articles/evals/charts/dedup-yardstick.svg")
@@ -153,6 +154,7 @@ for (const m of MODELS) {
 // Legend (top-right, in the right margin).
 const lx = plotR + 16
 let ly = plotT + 6
+
 for (const m of MODELS) {
 	push(
 		`<line x1="${lx}" y1="${ly}" x2="${lx + 22}" y2="${ly}" stroke="${m.color}" stroke-width="${m.width}"${m.dash ? ` stroke-dasharray="${m.dash}"` : ""}/>`

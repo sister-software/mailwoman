@@ -41,6 +41,7 @@ import { createHash } from "node:crypto"
 import { createReadStream } from "node:fs"
 import { mkdir, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path"
+
 import { ParquetWriter, type ParquetSchemaDefinition } from "./parquet-wrapper/index.js"
 import type { SplitName } from "./split.js"
 import type { LabeledRow } from "./types.js"
@@ -52,9 +53,8 @@ export const ROW_GROUP_SIZE = 50_000
 export const SHARD_COMPRESSION = "SNAPPY" as const
 
 /**
- * A single Parquet-style row shape. The `[key: string]: unknown` index signature is required for
- * compatibility with `ParquetRecordLike` in the wrapper — parquetjs accepts any string key on
- * rows.
+ * A single Parquet-style row shape. The `[key: string]: unknown` index signature is required for compatibility with
+ * `ParquetRecordLike` in the wrapper — parquetjs accepts any string key on rows.
  */
 export interface ParquetRow {
 	raw: string
@@ -93,8 +93,8 @@ export const PARQUET_COLUMNS = [
 ] as const
 
 /**
- * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`; repeated UTF8
- * columns capture tokens/labels arrays. Compression is per-column SNAPPY.
+ * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`; repeated UTF8 columns capture
+ * tokens/labels arrays. Compression is per-column SNAPPY.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: SHARD_COMPRESSION },
@@ -151,9 +151,9 @@ export interface WriteShardsOptions {
 }
 
 /**
- * Pre-partitioned labeled-row streams, one per split. Callers (`buildCorpus`) decide each row's
- * split inline at align time via `splitForRow` and route rows to the matching stream, eliminating
- * the prior `Map<source_id, SplitName>` O(n) lookup table.
+ * Pre-partitioned labeled-row streams, one per split. Callers (`buildCorpus`) decide each row's split inline at align
+ * time via `splitForRow` and route rows to the matching stream, eliminating the prior `Map<source_id, SplitName>` O(n)
+ * lookup table.
  *
  * Splits with no rows can be omitted (or passed as an empty iterable); `writeShards` skips them.
  */
@@ -162,13 +162,13 @@ export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 /**
  * Project a labeled row to the Parquet schema.
  *
- * The span triple is REQUIRED here (#519): `alignRow` emits it on every labeled row, so a row
- * arriving without it came from a producer that hasn't migrated — writing it would silently drop
- * the v0.5.0 labels from the shard (the "builders before parquet = silent loss" hazard). Loud
- * failure, naming the row, instead.
+ * The span triple is REQUIRED here (#519): `alignRow` emits it on every labeled row, so a row arriving without it came
+ * from a producer that hasn't migrated — writing it would silently drop the v0.5.0 labels from the shard (the "builders
+ * before parquet = silent loss" hazard). Loud failure, naming the row, instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {
 	const { span_starts, span_ends, span_tags } = row
+
 	if (span_starts === undefined || span_ends === undefined || span_tags === undefined) {
 		throw new Error(
 			`rowToParquet: row is missing the char-offset span triple (#519) — ` +
@@ -178,6 +178,7 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 				`producers that emit tokens/labels only have not migrated to the v0.5.0 format.`
 		)
 	}
+
 	if (span_starts.length !== span_ends.length || span_starts.length !== span_tags.length) {
 		throw new Error(
 			`rowToParquet: span triple arrays are not parallel — ` +
@@ -185,6 +186,7 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 				`(source=${row.source}, source_id=${row.source_id})`
 		)
 	}
+
 	return {
 		raw: row.raw,
 		tokens: row.tokens,
@@ -204,9 +206,9 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 }
 
 /**
- * Project a `ParquetRow` for `appendRow`. parquetjs treats `null` as "skip" for `optional` columns;
- * passing it explicitly is fine, but cleaner to omit so the on-disk Definition Levels match what
- * PyArrow / DuckDB / etc. produce for the same logical row.
+ * Project a `ParquetRow` for `appendRow`. parquetjs treats `null` as "skip" for `optional` columns; passing it
+ * explicitly is fine, but cleaner to omit so the on-disk Definition Levels match what PyArrow / DuckDB / etc. produce
+ * for the same logical row.
  */
 function appendShape(row: ParquetRow): Record<string, unknown> {
 	const out: Record<string, unknown> = {
@@ -222,20 +224,24 @@ function appendShape(row: ParquetRow): Record<string, unknown> {
 		corpus_version: row.corpus_version,
 		license: row.license,
 	}
+
 	if (row.locale !== null) out.locale = row.locale
+
 	if (row.synth_method !== null) out.synth_method = row.synth_method
+
 	if (row.synth_base_id !== null) out.synth_base_id = row.synth_base_id
+
 	return out
 }
 
 /**
- * Stream labeled rows into `.parquet` shards, one set of shards per split. Splits are processed
- * sequentially so that only one shard writer is open at a time — memory cost is bounded by the
- * parquetjs row-group buffer (~`ROW_GROUP_SIZE × row_size`), not by the labeled-row count.
+ * Stream labeled rows into `.parquet` shards, one set of shards per split. Splits are processed sequentially so that
+ * only one shard writer is open at a time — memory cost is bounded by the parquetjs row-group buffer (~`ROW_GROUP_SIZE
+ * × row_size`), not by the labeled-row count.
  *
- * Callers pass per-split `AsyncIterable<LabeledRow>` (`PerSplitRows`); the prior
- * `splitFor(sourceId)` callback is gone because pre-partitioning at the caller eliminates the O(n)
- * `Map<source_id, SplitName>` it required. See `buildCorpus` for the new wire-up.
+ * Callers pass per-split `AsyncIterable<LabeledRow>` (`PerSplitRows`); the prior `splitFor(sourceId)` callback is gone
+ * because pre-partitioning at the caller eliminates the O(n) `Map<source_id, SplitName>` it required. See `buildCorpus`
+ * for the new wire-up.
  */
 export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptions): Promise<ShardManifest> {
 	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
@@ -248,6 +254,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 	for (const split of ["train", "val", "test"] as const) {
 		const rows = perSplit[split]
+
 		if (!rows) continue
 
 		let shardIndex = 0
@@ -275,6 +282,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 		const closeShard = async (): Promise<void> => {
 			if (!writer) return
 			await writer.close()
+
 			if (shardRows > 0) {
 				const fileStat = await stat(path)
 				const sha256 = await hashFile(path)
@@ -297,6 +305,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			if (!writer) await openShard()
 			const pq = rowToParquet(row)
 			await writer!.appendRow(appendShape(pq) as unknown as ParquetRow)
+
 			if (shardRows === 0) firstSourceId = row.source_id
 			lastSourceId = row.source_id
 			shardRows++
@@ -324,6 +333,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 		total_rows: totalRows,
 	}
 	await writeFile(join(corpusDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+
 	return manifest
 }
 
@@ -331,6 +341,8 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 async function hashFile(path: string): Promise<string> {
 	const hash = createHash("sha256")
 	const stream = createReadStream(path)
+
 	for await (const chunk of stream) hash.update(chunk as Buffer)
+
 	return hash.digest("hex")
 }

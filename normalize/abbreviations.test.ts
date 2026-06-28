@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { expandAbbreviations } from "./abbreviations.js"
 
 describe("expandAbbreviations — en-US", () => {

@@ -25,8 +25,7 @@
 import type { Comparison, FellegiSunterModel } from "./fellegi-sunter.js"
 
 /**
- * Tiny floor mixed into the M-step so an unobserved level never produces a zero (→ infinite
- * weight).
+ * Tiny floor mixed into the M-step so an unobserved level never produces a zero (→ infinite weight).
  */
 const EPSILON = 1e-9
 
@@ -56,9 +55,9 @@ export interface EmResult<R> {
 }
 
 /**
- * Estimate `m`/`u` and the prior `λ` from unlabeled agreement patterns via EM. The patterns are
- * per-comparison level indices (as produced by {@link agreementPattern}); a `-1` (missing) field
- * contributes no evidence to either class. The model's existing level `m`/`u` seed the iteration.
+ * Estimate `m`/`u` and the prior `λ` from unlabeled agreement patterns via EM. The patterns are per-comparison level
+ * indices (as produced by {@link agreementPattern}); a `-1` (missing) field contributes no evidence to either class. The
+ * model's existing level `m`/`u` seed the iteration.
  */
 export function estimateParameters<R>(
 	model: FellegiSunterModel<R>,
@@ -93,8 +92,10 @@ export function estimateParameters<R>(
 		for (const pattern of patterns) {
 			let matchLikelihood = lambda
 			let nonMatchLikelihood = 1 - lambda
+
 			for (let i = 0; i < comparisons.length; i++) {
 				const level = pattern[i]!
+
 				if (level < 0) continue
 				matchLikelihood *= m[i]![level]!
 				nonMatchLikelihood *= u[i]![level]!
@@ -105,6 +106,7 @@ export function estimateParameters<R>(
 
 			for (let i = 0; i < comparisons.length; i++) {
 				const level = pattern[i]!
+
 				if (level < 0) continue
 				mNumerator[i]![level]! += g
 				uNumerator[i]![level]! += 1 - g
@@ -120,6 +122,7 @@ export function estimateParameters<R>(
 
 		for (let i = 0; i < comparisons.length; i++) {
 			const levels = levelCounts[i]!
+
 			for (let l = 0; l < levels; l++) {
 				const newM =
 					mDenominator[i]! > 0 ? (mNumerator[i]![l]! + EPSILON) / (mDenominator[i]! + EPSILON * levels) : m[i]![l]!

@@ -8,7 +8,9 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { OPENADDRESSES_ADAPTER_ID, OPENADDRESSES_DEFAULT_LICENSE, createOpenaddressesAdapter } from "./adapter.js"
@@ -26,6 +28,7 @@ afterEach(async () => {
 
 async function loadRows(): Promise<CanonicalRow[]> {
 	const jsonl = await readFile(join(scratch, OPENADDRESSES_ADAPTER_ID, "canonical.jsonl"), "utf8")
+
 	return jsonl
 		.trim()
 		.split("\n")
@@ -264,6 +267,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		})
 		const dropped = await loadRows()
 		expect(dropped.find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeUndefined()
+
 		for (const r of dropped) expect(r.license).not.toMatch(/^ODbL|^CC-BY-SA|^CC-SA/i)
 	})
 

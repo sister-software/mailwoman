@@ -33,9 +33,9 @@ export interface SoftFeatures {
 	/** Postcode-anchor channel (#239/#240) — present iff `postcodeAnchorLookup` was supplied. */
 	anchor?: SoftFeatureChannel
 	/**
-	 * Gazetteer-anchor channel (#464) — present iff `gazetteerLexicon` was supplied. Already
-	 * choreographed: when `suppressGazetteerNearPostcode` is set AND an anchor channel exists, the
-	 * clue is zeroed adjacent to postcode-anchor hits before it's returned here.
+	 * Gazetteer-anchor channel (#464) — present iff `gazetteerLexicon` was supplied. Already choreographed: when
+	 * `suppressGazetteerNearPostcode` is set AND an anchor channel exists, the clue is zeroed adjacent to postcode-anchor
+	 * hits before it's returned here.
 	 */
 	gazetteer?: SoftFeatureChannel
 }
@@ -47,26 +47,24 @@ export interface SoftFeatureSources {
 	/** Gazetteer-anchor lexicon (#464). Omit to skip the gazetteer channel. */
 	gazetteerLexicon?: GazetteerLexicon
 	/**
-	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent
-	 * to a postcode-anchor hit. Needs BOTH a `gazetteerLexicon` and a `postcodeAnchorLookup` to take
-	 * effect (the suppression is keyed off the anchor's confidence). PAIRING IS ESSENTIAL — enable
-	 * this IFF the model was trained with the matching train-time choreography. See
-	 * `suppressGazetteerNearPostcode` in `gazetteer-inference.ts`.
+	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent to a postcode-anchor
+	 * hit. Needs BOTH a `gazetteerLexicon` and a `postcodeAnchorLookup` to take effect (the suppression is keyed off the
+	 * anchor's confidence). PAIRING IS ESSENTIAL — enable this IFF the model was trained with the matching train-time
+	 * choreography. See `suppressGazetteerNearPostcode` in `gazetteer-inference.ts`.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 }
 
 /**
- * Build the soft-feature channels for `text`/`pieces` from the configured sources — the EXACT
- * choreography previously inlined in `NeuralAddressClassifier.#decode`:
+ * Build the soft-feature channels for `text`/`pieces` from the configured sources — the EXACT choreography previously
+ * inlined in `NeuralAddressClassifier.#decode`:
  *
  * 1. Anchor channel from `postcodeAnchorLookup` (no-op when unset).
  * 2. Gazetteer channel from `gazetteerLexicon` (no-op when unset).
- * 3. If both channels exist AND `suppressGazetteerNearPostcode`, zero the gazetteer clue adjacent to
- *    postcode-anchor hits.
+ * 3. If both channels exist AND `suppressGazetteerNearPostcode`, zero the gazetteer clue adjacent to postcode-anchor hits.
  *
- * Pure + byte-stable: the returned channels are identical to the pre-#718 inline path, so wiring
- * this into `#decode` is a behavior-preserving refactor.
+ * Pure + byte-stable: the returned channels are identical to the pre-#718 inline path, so wiring this into `#decode` is
+ * a behavior-preserving refactor.
  */
 export function buildSoftFeatures(
 	text: string,

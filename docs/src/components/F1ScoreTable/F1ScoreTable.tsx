@@ -14,6 +14,7 @@
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import React, { useMemo, useState } from "react"
+
 import styles from "./styles.module.css"
 
 // ---------------------------------------------------------------------------
@@ -183,14 +184,18 @@ const F1_DATA: F1Row[] = [
 /** Color a cell based on the score range: red < 30, amber 30–80, green ≥ 80. */
 function scoreClass(value: number | null): string {
 	if (value == null) return styles.cellNA
+
 	if (value >= 80) return styles.cellHigh
+
 	if (value >= 30) return styles.cellMid
+
 	return styles.cellLow
 }
 
 /** Draw an arrow for the sort direction. */
 function sortArrow(key: SortKey, current: SortKey, dir: "asc" | "desc"): string {
 	if (key !== current) return ""
+
 	return dir === "asc" ? " ▲" : " ▼"
 }
 
@@ -223,7 +228,9 @@ const F1ScoreTableInner: React.FC = () => {
 
 			// Treat null as -Infinity so it sorts to the bottom in both directions.
 			if (av == null && bv == null) return 0
+
 			if (av == null) return 1
+
 			if (bv == null) return -1
 
 			if (typeof av === "string" && typeof bv === "string") {
@@ -232,8 +239,10 @@ const F1ScoreTableInner: React.FC = () => {
 
 			const an = av as number
 			const bn = bv as number
+
 			return sortDir === "asc" ? an - bn : bn - an
 		})
+
 		return rows
 	}, [sortKey, sortDir])
 

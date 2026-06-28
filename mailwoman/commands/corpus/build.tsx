@@ -14,23 +14,24 @@
  *   the CLI handles partial builds during development.
  */
 
+import { setImmediate } from "node:timers/promises"
+
 import { buildCorpus, defaultAdapterRegistry, type BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 /**
  * `--inputs` accepts either:
  *
  * - A bare string (path-only, for adapters that need no extra options): `"wof-admin": "/data/wof.db"`
- * - A full AdapterOptions object: `"openaddresses": { "inputPath": "/data/oa.geojsonl", "country":
- *   "US" }`
+ * - A full AdapterOptions object: `"openaddresses": { "inputPath": "/data/oa.geojsonl", "country": "US" }`
  *
- * The object form is required by adapters that need a country filter (OpenAddresses), or for
- * fixture runs that want a `limit`.
+ * The object form is required by adapters that need a country filter (OpenAddresses), or for fixture runs that want a
+ * `limit`.
  */
 const AdapterInputSchema = zod.union([
 	zod.string(),
@@ -80,11 +81,13 @@ const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) =>
 
 	useEffect(() => {
 		let inputsParsed: Record<string, zod.infer<typeof AdapterInputSchema>>
+
 		try {
 			inputsParsed = InputsSchema.parse(JSON.parse(options.inputs))
 		} catch (err) {
 			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
 			setError(`invalid --inputs JSON: ${(err as Error).message}`)
+
 			return
 		}
 

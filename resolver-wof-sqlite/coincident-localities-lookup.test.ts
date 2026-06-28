@@ -9,6 +9,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildCoincidentRoles } from "./coincident-roles.js"

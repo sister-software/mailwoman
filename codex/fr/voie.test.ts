@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { isFrenchStreetWord } from "./voie.js"
 
 describe("isFrenchStreetWord", () => {

@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { alignRow } from "./align.js"
 import { whitespaceTokenizer } from "./tokenize.js"
 import type { CanonicalRow } from "./types.js"
@@ -47,6 +48,7 @@ describe("whitespaceTokenizer", () => {
 	it("token spans align to the original string slice", () => {
 		const raw = "Paris, France"
 		const t = whitespaceTokenizer().tokenize(raw)
+
 		for (const tok of t) {
 			expect(raw.slice(tok.start, tok.end)).toBe(tok.text)
 		}
@@ -68,6 +70,7 @@ describe("alignRow — verbatim matches", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.tokens).toEqual(["1600", "Pennsylvania", "Ave", "NW", "Washington", "DC", "20500"])
 		expect(result.row.labels).toEqual([
@@ -95,6 +98,7 @@ describe("alignRow — verbatim matches", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.tokens).toEqual(["10", "Rue", "de", "la", "République", "75008", "Paris"])
 		expect(result.row.labels).toEqual([
@@ -119,6 +123,7 @@ describe("alignRow — verbatim matches", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		// First "Paris" → locality, second "Paris" → unclaimed O
 		expect(result.row.tokens).toEqual(["Paris", "Paris", "France"])
@@ -133,6 +138,7 @@ describe("alignRow — verbatim matches", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.tokens.length).toBe(result.row.labels.length)
 	})
@@ -149,6 +155,7 @@ describe("alignRow — fuzzy fallback", () => {
 			{ maxEditDistance: 2 }
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.labels).toContain("B-locality")
 	})
@@ -161,6 +168,7 @@ describe("alignRow — fuzzy fallback", () => {
 			})
 		)
 		expect(result.kind).toBe("quarantined")
+
 		if (result.kind !== "quarantined") return
 		expect(result.row.reason).toBe("component-not-found:region")
 	})
@@ -181,6 +189,7 @@ describe("alignRow — edge cases", () => {
 	it("quarantines on empty raw", () => {
 		const result = alignRow(baseRow({ raw: "", components: { locality: "X" } }))
 		expect(result.kind).toBe("quarantined")
+
 		if (result.kind !== "quarantined") return
 		expect(result.row.reason).toBe("raw-empty")
 	})
@@ -188,6 +197,7 @@ describe("alignRow — edge cases", () => {
 	it("empty components → labels are all O", () => {
 		const result = alignRow(baseRow({ raw: "Anywhere", components: {} }))
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.tokens).toEqual(["Anywhere"])
 		expect(result.row.labels).toEqual(["O"])
@@ -202,6 +212,7 @@ describe("alignRow — edge cases", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.tokens).toEqual(["PARIS", "FRANCE"])
 		expect(result.row.labels).toEqual(["B-locality", "B-country"])
@@ -228,6 +239,7 @@ describe("alignRow — edge cases", () => {
 		})
 		const result = alignRow(row)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.source).toBe("wof-admin")
 		expect(result.row.source_id).toBe("wof-admin-2011-self")
@@ -254,6 +266,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		// Token path untouched.
 		expect(result.row.tokens.length).toBe(result.row.labels.length)
@@ -277,6 +290,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.span_starts).toEqual([0, 13])
 		expect(result.row.span_ends).toEqual([11, 15])
@@ -294,6 +308,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.span_tags).toEqual(["house_number", "street", "postcode", "locality"])
 		const streetStart = result.row.span_starts![1]!
@@ -314,13 +329,16 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 			}),
 			baseRow({ raw: "Anywhere", components: {} }),
 		]
+
 		for (const row of rows) {
 			const result = alignRow(row)
 			expect(result.kind).toBe("labeled")
+
 			if (result.kind !== "labeled") continue
 			const { span_starts, span_ends, span_tags } = result.row
 			expect(span_starts!.length).toBe(span_ends!.length)
 			expect(span_starts!.length).toBe(span_tags!.length)
+
 			for (let i = 1; i < span_starts!.length; i++) {
 				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!) // sorted AND non-overlapping
 			}
@@ -330,6 +348,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 	it("empty components → empty span arrays (all-O row)", () => {
 		const result = alignRow(baseRow({ raw: "Anywhere", components: {} }))
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.span_starts).toEqual([])
 		expect(result.row.span_ends).toEqual([])
@@ -349,6 +368,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		// Stored raw is the NFC form (single normalization form — #519 principle preserved).
 		const nfcRaw = nfdRaw.normalize("NFC")
@@ -378,6 +398,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		const { raw, span_starts, span_ends, span_tags } = result.row
 		const byTag = Object.fromEntries(span_tags!.map((t, i) => [t, raw.slice(span_starts![i]!, span_ends![i]!)]))
@@ -404,6 +425,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		const { raw, span_starts, span_ends, span_tags } = result.row
 		const suffixIdx = span_tags!.indexOf("street_suffix")
@@ -422,6 +444,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		const { raw, span_starts, span_ends, span_tags } = result.row
 		const byTag = Object.fromEntries(span_tags!.map((t, i) => [t, [span_starts![i]!, span_ends![i]!]]))
@@ -437,8 +460,10 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 			})
 		)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		const { raw, span_starts, span_ends, span_tags } = result.row
+
 		for (let i = 0; i < span_tags!.length; i++) {
 			const slice = raw.slice(span_starts![i]!, span_ends![i]!)
 			expect(slice.trim()).toBe(slice) // no span carries edge whitespace
@@ -458,9 +483,11 @@ describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {
 		// the stored raw and the row ALIGNS rather than quarantining as `span-out-of-bounds` (the
 		// build's tens-of-thousands non-Latin coverage nick).
 		const precomposed = "দক্ষিণ কোরিয়া"
+
 		for (const input of [precomposed, precomposed.normalize("NFC")]) {
 			const result = alignRow(baseRow({ raw: input, country: "KR", components: { country: input } }))
 			expect(result.kind).toBe("labeled")
+
 			if (result.kind !== "labeled") return
 			const { raw, span_starts, span_ends, span_tags } = result.row
 			expect(raw).toBe(input.normalize("NFC")) // stored raw is the single NFC form

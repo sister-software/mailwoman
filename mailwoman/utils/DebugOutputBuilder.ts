@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { inspect } from "node:util"
+
 import {
 	type ClassificationMatch,
 	pluckLanguageLabel,
@@ -13,10 +15,10 @@ import {
 	type VerboseParseResult,
 } from "@mailwoman/core"
 import chalk from "chalk"
-import { inspect } from "node:util"
 
 function formatClassificationLanguages(classification: ClassificationMatch): string {
 	const { languages } = classification
+
 	if (!languages) return ""
 
 	let block = ""

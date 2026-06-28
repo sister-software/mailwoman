@@ -13,10 +13,11 @@
  *   featurizer).
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
+
+import { dataRootPath } from "@mailwoman/core/utils"
 
 interface Sample {
 	x: Int32Array
@@ -49,11 +50,14 @@ function load(split: string): Sample[] {
 		.map((l) => JSON.parse(l) as { raw: string; country: string })
 	// Precompute features once: Int32Array of active indices + label id per row.
 	const out: Sample[] = []
+
 	for (const r of rows) {
 		const y = classIdx.get(r.country)
+
 		if (y === undefined) continue
 		out.push({ x: Int32Array.from(featurize(r.raw)), y })
 	}
+
 	return out
 }
 
@@ -81,44 +85,58 @@ function forward(x: Int32Array): void {
 	for (let c = 0; c < C; c++) {
 		let s = b[c]!
 		const base = c * D
+
 		for (let k = 0; k < x.length; k++) s += W[base + x[k]!]!
 		logits[c] = s
 	}
 	let mx = -Infinity
+
 	for (let c = 0; c < C; c++) if (logits[c]! > mx) mx = logits[c]!
 	let sum = 0
+
 	for (let c = 0; c < C; c++) {
 		const e = Math.exp(logits[c]! - mx)
 		probs[c] = e
 		sum += e
 	}
+
 	for (let c = 0; c < C; c++) probs[c] = probs[c]! / sum
 }
 
 function accuracy(set: Sample[]): number {
 	let ok = 0
+
 	for (const { x, y } of set) {
 		forward(x)
 		let top = 0
+
 		for (let c = 1; c < C; c++) if (probs[c]! > probs[top]!) top = c
+
 		if (top === y) ok++
 	}
+
 	return ok / set.length
 }
 
 const epochs = Number(args.epochs)
 const lr0 = Number(args.lr)
 const l2 = Number(args.l2)
+
 for (let ep = 0; ep < epochs; ep++) {
 	shuffle(train)
-	const lr = lr0 / (1 + 0.5 * ep) // simple decay
+	const lr = lr0 / (1 + 0.5 * ep)
+
+	// simple decay
 	for (const { x, y } of train) {
 		forward(x)
+
 		for (let c = 0; c < C; c++) {
 			const g = probs[c]! - (c === y ? 1 : 0)
+
 			if (g === 0 && c !== y) continue
 			b[c] = b[c]! - lr * g
 			const base = c * D
+
 			for (let k = 0; k < x.length; k++) {
 				const idx = base + x[k]!
 				W[idx] = W[idx]! - lr * (g + l2 * W[idx]!)
@@ -133,25 +151,32 @@ for (let ep = 0; ep < epochs; ep++) {
 // --- Temperature calibration: minimize val NLL over T by coarse-then-fine 1-D search. ---
 function valNLL(T: number): number {
 	let nll = 0
+
 	for (const { x, y } of val) {
 		for (let c = 0; c < C; c++) {
 			let s = b[c]!
 			const base = c * D
+
 			for (let k = 0; k < x.length; k++) s += W[base + x[k]!]!
 			logits[c] = s / T
 		}
 		let mx = -Infinity
+
 		for (let c = 0; c < C; c++) if (logits[c]! > mx) mx = logits[c]!
 		let sum = 0
+
 		for (let c = 0; c < C; c++) sum += Math.exp(logits[c]! - mx)
 		nll += -(logits[y]! - mx - Math.log(sum))
 	}
+
 	return nll / val.length
 }
 let bestT = 1
 let bestNLL = Infinity
+
 for (let T = 0.5; T <= 4.01; T += 0.1) {
 	const nll = valNLL(T)
+
 	if (nll < bestNLL) {
 		bestNLL = nll
 		bestT = T

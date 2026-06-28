@@ -31,27 +31,23 @@ import { haversineKm } from "@mailwoman/spatial"
 
 export interface SpanRescoreOptions {
 	/**
-	 * ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default
-	 * country).
+	 * ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default country).
 	 */
 	country?: string
 	/**
-	 * Sibling postcode — used both as the backend disambiguation hint AND the consistency-gate
-	 * anchor.
+	 * Sibling postcode — used both as the backend disambiguation hint AND the consistency-gate anchor.
 	 */
 	postcode?: string
 	/**
-	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor. The
-	 * gate only fires when the postcode resolves to a point in the backend; otherwise it can't and
-	 * the match is accepted (so it never penalizes a backend without postcode coverage). 0 disables.
-	 * Default 50.
+	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor. The gate only fires when
+	 * the postcode resolves to a point in the backend; otherwise it can't and the match is accepted (so it never
+	 * penalizes a backend without postcode coverage). 0 disables. Default 50.
 	 */
 	gateKm?: number
 	/** Max contiguous raw tokens to treat as one locality span. Default 4. */
 	maxSpanTokens?: number
 	/**
-	 * Min confidence for a street/house_number/postcode node to count as a span-blocking constituent.
-	 * Default 0.7.
+	 * Min confidence for a street/house_number/postcode node to count as a span-blocking constituent. Default 0.7.
 	 */
 	confidentThreshold?: number
 }
@@ -66,14 +62,12 @@ export interface RescoreCandidate {
 	/** The resolved gazetteer place (decorate a node with this). */
 	place: ResolvedPlace
 	/**
-	 * Whether the postcode-consistency gate FIRED for this recovery — i.e. the postcode resolved to a
-	 * point and the match was validated within `gateKm` of it. `true` = high-precision (postcode-
-	 * consistent); `false` = ungated (no postcode→point coverage for this country, so the match
-	 * wasn't geo-validated — the ~83%-precision case). The caller surfaces this as
-	 * `metadata.rescore_gated` so a consumer can threshold on it WITHOUT a hidden per-country
-	 * coverage map. Deliberately NOT folded into the calibrated `confidence` — that would break the
-	 * isotonic guarantee (a true calibrated 0.83 must not be confused with a rescore plug-in
-	 * estimate).
+	 * Whether the postcode-consistency gate FIRED for this recovery — i.e. the postcode resolved to a point and the match
+	 * was validated within `gateKm` of it. `true` = high-precision (postcode- consistent); `false` = ungated (no
+	 * postcode→point coverage for this country, so the match wasn't geo-validated — the ~83%-precision case). The caller
+	 * surfaces this as `metadata.rescore_gated` so a consumer can threshold on it WITHOUT a hidden per-country coverage
+	 * map. Deliberately NOT folded into the calibrated `confidence` — that would break the isotonic guarantee (a true
+	 * calibrated 0.83 must not be confused with a rescore plug-in estimate).
 	 */
 	gated: boolean
 }
@@ -97,30 +91,37 @@ function tokenizeRaw(raw: string): RawTok[] {
 	const toks: RawTok[] = []
 	const re = /[^\s,;/]+/g
 	let m: RegExpExecArray | null
+
 	while ((m = re.exec(raw)) !== null) toks.push({ text: m[0], start: m.index, end: m.index + m[0].length })
+
 	return toks
 }
 
 /** True if any node in the tree already carries a resolved place id — the #685 brake. */
 export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 	const stack: AddressNode[] = [...roots]
+
 	while (stack.length) {
 		const n = stack.pop()!
+
 		if (n.placeId) return true
+
 		if (n.children?.length) stack.push(...n.children)
 	}
+
 	return false
 }
 
 /**
- * Char ranges of confident street/house_number/postcode constituents — a locality span must not
- * overlap them.
+ * Char ranges of confident street/house_number/postcode constituents — a locality span must not overlap them.
  */
 function confidentRanges(roots: readonly AddressNode[], threshold: number): Array<[number, number]> {
 	const out: Array<[number, number]> = []
 	const stack: AddressNode[] = [...roots]
+
 	while (stack.length) {
 		const n = stack.pop()!
+
 		if (
 			(n.tag === "postcode" || n.tag === "house_number" || n.tag === "street") &&
 			(n.confidence ?? 0) >= threshold &&
@@ -129,14 +130,16 @@ function confidentRanges(roots: readonly AddressNode[], threshold: number): Arra
 		) {
 			out.push([n.start, n.end])
 		}
+
 		if (n.children?.length) stack.push(...n.children)
 	}
+
 	return out
 }
 
 /**
- * Find the best locality the raw text exact-matches in the gazetteer. Returns null when nothing
- * matches (or the postcode gate rejects every match). Callers gate on `hasResolvedPlace` first.
+ * Find the best locality the raw text exact-matches in the gazetteer. Returns null when nothing matches (or the
+ * postcode gate rejects every match). Callers gate on `hasResolvedPlace` first.
  */
 export async function findRescoreCandidate(
 	raw: string,
@@ -153,9 +156,11 @@ export async function findRescoreCandidate(
 	// Postcode-consistency anchor: where does the postcode itself resolve? (No-op when the backend has
 	// no postcode coverage — findPlace returns nothing → no anchor → gate can't fire → match accepted.)
 	let anchor: { lat: number; lon: number } | null = null
+
 	if (postcode && gateKm > 0) {
 		const pcHits = await backend.findPlace({ text: postcode, country, limit: 2 })
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
+
 		if (a) anchor = { lat: a.lat, lon: a.lon }
 	}
 
@@ -172,10 +177,12 @@ export async function findRescoreCandidate(
 		len: number
 	}
 	const spans: Span[] = []
+
 	for (let len = Math.min(maxSpan, toks.length); len >= 1; len--) {
 		for (let i = 0; i + len <= toks.length; i++) {
 			const start = toks[i]!.start
 			const end = toks[i + len - 1]!.end
+
 			if (overlapsAvoid(start, end)) continue
 			spans.push({ text: raw.slice(start, end), start, end, len })
 		}
@@ -184,15 +191,19 @@ export async function findRescoreCandidate(
 
 	for (const sp of spans) {
 		const key = norm(sp.text)
+
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
 		const hits = await backend.findPlace({ text: sp.text, country, postcode, placetype: "locality", limit: 5 })
 		const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
+
 		for (const h of exact) {
 			if (anchor && gateKm > 0 && haversineKm(anchor.lat, anchor.lon, h.lat, h.lon) > gateKm) continue
+
 			// gated = the postcode anchor existed AND validated this match (within gateKm). When no anchor
 			// (no postcode→point coverage), the match is ungated — returned, but flagged lower-precision.
 			return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: anchor !== null }
 		}
 	}
+
 	return null
 }

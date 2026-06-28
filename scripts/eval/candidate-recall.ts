@@ -16,9 +16,9 @@
  */
 import { execSync } from "node:child_process"
 import { readFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { DatabaseSync } from "node:sqlite"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "../../resolver-wof-sqlite/street-normalize.ts"
 
 const { values: a } = parseArgs({
@@ -29,6 +29,7 @@ const { values: a } = parseArgs({
 		"strip-fallback": { type: "boolean", default: false },
 	},
 })
+
 if (!a.db || !a.eval) {
 	console.error("--db and --eval are required")
 	process.exit(1)
@@ -70,21 +71,27 @@ for (const file of files) {
 		}
 		const loc = row.expected?.locality
 		const country = (row.source?.split(":")[1] ?? "").toUpperCase()
+
 		if (!loc || !country) continue
 		const st = stats.get(country) ?? { n: 0, hit: 0, missAbsent: 0, missElsewhere: 0, recovered: 0, misses: [] }
 		st.n++
 		const key = normalizeLocalityForKey(loc)
+
 		if (key && hitInCountry.get(key, country)) {
 			st.hit++
 		} else {
 			const absent = !key || !keyExistsAnywhere.get(key)
+
 			if (absent) st.missAbsent++
 			else st.missElsewhere++
+
 			// strip-fallback: would a qualifier-stripped retry resolve this miss in-country?
 			if (STRIP) {
 				const stripped = normalizeLocalityForKey(stripLocalityQualifier(loc))
+
 				if (stripped && stripped !== key && hitInCountry.get(stripped, country)) st.recovered++
 			}
+
 			if (st.misses.length < sampleN) st.misses.push({ raw: loc, key, absent })
 		}
 		stats.set(country, st)
@@ -99,6 +106,7 @@ let tot = 0,
 const countries = [...stats.keys()].sort()
 console.log(`\ncandidate-table locality recall (db: ${a.db})${STRIP ? " [+strip-fallback]" : ""}\n`)
 console.log(`country  n      recall   miss:absent  miss:wrong-country/pt${STRIP ? "  strip-recov  recall+strip" : ""}`)
+
 for (const c of countries) {
 	const s = stats.get(c)!
 	tot += s.n
@@ -127,10 +135,13 @@ console.log(
 )
 
 console.log("=== sample misses (raw → normalized key; ABSENT = key not in table at all) ===")
+
 for (const c of countries) {
 	const s = stats.get(c)!
+
 	if (!s.misses.length) continue
 	console.log(`\n[${c}]`)
+
 	for (const m of s.misses)
 		console.log(`  ${m.absent ? "ABSENT " : "elsewhr"}  ${JSON.stringify(m.raw)} → ${JSON.stringify(m.key)}`)
 }

@@ -121,6 +121,7 @@ function parseCli() {
 		},
 	})
 	const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
+
 	return {
 		corpusPath: values.corpus!,
 		count: Number.parseInt(values.count!, 10),
@@ -138,9 +139,9 @@ function parseCli() {
 // ── Seed loading ──────────────────────────────────────────────────────────
 
 /**
- * Decode BIO labels + tokens into a verified components map. Mirrors the Python `decode_components`
- * in mailwoman_train/eval.py — first-occurrence-wins per tag, contiguous B-X/I-X runs concatenated
- * with a single space (the canonical separator used by corpus alignment).
+ * Decode BIO labels + tokens into a verified components map. Mirrors the Python `decode_components` in
+ * mailwoman_train/eval.py — first-occurrence-wins per tag, contiguous B-X/I-X runs concatenated with a single space
+ * (the canonical separator used by corpus alignment).
  */
 function decodeComponents(tokens: string[], labels: string[]): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -153,14 +154,17 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 		currentTag = null
 		currentTokens = []
 	}
+
 	for (let i = 0; i < labels.length; i++) {
 		const label = labels[i]!
 		const tok = tokens[i] ?? ""
+
 		if (label === "O") {
 			flush()
 			continue
 		}
 		const [prefix, tag] = label.split("-", 2)
+
 		if (prefix === "B" || currentTag !== tag) {
 			flush()
 			currentTag = tag!
@@ -170,6 +174,7 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 		}
 	}
 	flush()
+
 	return out
 }
 
@@ -179,6 +184,7 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 		.map((p) => p.trim())
 		.filter(Boolean)
 	process.stderr.write(`reading seeds from ${paths.length} shard(s) (target: ${count}, stratified)\n`)
+
 	if (includeSources) {
 		process.stderr.write(`  include-sources filter: ${Array.from(includeSources).join(", ")}\n`)
 	}
@@ -194,13 +200,17 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 	for (const path of paths) {
 		const reader = await ParquetReader.openFile(path)
 		const cursor = reader.getCursor()
+
 		while (true) {
 			const row = (await cursor.next()) as CorpusRow | null
+
 			if (!row) break
 			scanned++
+
 			// Source allow-list (CLI --include-sources) — applied early to skip parsing rows we won't use
 			if (includeSources && !includeSources.has(row.source)) continue
 			const components = decodeComponents(row.tokens ?? [], row.labels ?? [])
+
 			// Skip rows with too few components — single-name wof-admin entries don't make useful seeds
 			if (Object.keys(components).length < 2) {
 				skippedThinComponents++
@@ -214,10 +224,12 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 				source_id: row.source_id,
 			}
 			let bucket = bySource.get(row.source)
+
 			if (!bucket) {
 				bucket = []
 				bySource.set(row.source, bucket)
 			}
+
 			if (bucket.length < PER_SOURCE_CAP) bucket.push(seed)
 		}
 		await reader.close()
@@ -227,6 +239,7 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 		`  scanned ${scanned} rows across ${paths.length} shard(s); thin-components dropped: ${skippedThinComponents}\n`
 	)
 	process.stderr.write(`  per-source pool sizes:\n`)
+
 	for (const [src, pool] of bySource) process.stderr.write(`    ${src}: ${pool.length}\n`)
 
 	// Round-robin sample. Each source gives floor(count / nSources) seeds; rounding goes
@@ -235,10 +248,12 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 	const perSource = Math.floor(count / sources.length)
 	const remainder = count - perSource * sources.length
 	const picked: Seed[] = []
+
 	for (let i = 0; i < sources.length; i++) {
 		const src = sources[i]!
 		const pool = bySource.get(src)!
 		const target = perSource + (i < remainder ? 1 : 0)
+
 		// Random subsample without replacement — deterministic via shuffle then slice
 		for (let j = pool.length - 1; j > 0; j--) {
 			const k = Math.floor(Math.random() * (j + 1))
@@ -246,11 +261,13 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 		}
 		const take = Math.min(target, pool.length)
 		picked.push(...pool.slice(0, take))
+
 		if (take < target) {
 			process.stderr.write(`    ⚠ ${src}: requested ${target}, pool had ${pool.length}\n`)
 		}
 	}
 	process.stderr.write(`  → loaded ${picked.length} seeds across ${sources.length} sources\n`)
+
 	return picked
 }
 
@@ -295,7 +312,9 @@ N: ${n}`
 
 function makeDeepseekProvider(model: string): LlmProvider {
 	const apiKey = process.env.DEEPSEEK_API_KEY
+
 	if (!apiKey) throw new Error("DEEPSEEK_API_KEY env var is required for --provider deepseek")
+
 	return {
 		name: "deepseek",
 		model,
@@ -315,9 +334,11 @@ function makeDeepseekProvider(model: string): LlmProvider {
 				}),
 				signal: AbortSignal.timeout(60_000),
 			})
+
 			if (!res.ok) throw new Error(`DeepSeek HTTP ${res.status}: ${await res.text()}`)
 			const data = (await res.json()) as { choices?: Array<{ message: { content: string } }> }
 			const content = data.choices?.[0]?.message.content ?? "{}"
+
 			return parseCandidates(content)
 		},
 	}
@@ -325,7 +346,9 @@ function makeDeepseekProvider(model: string): LlmProvider {
 
 function makeAnthropicProvider(model: string): LlmProvider {
 	const apiKey = process.env.ANTHROPIC_API_KEY
+
 	if (!apiKey) throw new Error("ANTHROPIC_API_KEY env var is required for --provider anthropic")
+
 	return {
 		name: "anthropic",
 		model,
@@ -345,9 +368,11 @@ function makeAnthropicProvider(model: string): LlmProvider {
 				}),
 				signal: AbortSignal.timeout(60_000),
 			})
+
 			if (!res.ok) throw new Error(`Anthropic HTTP ${res.status}: ${await res.text()}`)
 			const data = (await res.json()) as { content?: Array<{ type: string; text: string }> }
 			const text = data.content?.find((c) => c.type === "text")?.text ?? "[]"
+
 			return parseCandidates(text)
 		},
 	}
@@ -356,19 +381,24 @@ function makeAnthropicProvider(model: string): LlmProvider {
 function parseCandidates(text: string): Candidate[] {
 	// Strip markdown fences the model sometimes wraps around JSON
 	const cleaned = text.replace(/^```(?:json)?\n?|\n?```$/g, "").trim()
+
 	try {
 		const parsed = JSON.parse(cleaned) as unknown
+
 		if (Array.isArray(parsed)) return parsed as Candidate[]
+
 		// Some providers wrap in {"variants": [...]} or {"candidates": [...]}
 		if (typeof parsed === "object" && parsed !== null) {
 			for (const key of ["variants", "candidates", "results"]) {
 				const v = (parsed as Record<string, unknown>)[key]
+
 				if (Array.isArray(v)) return v as Candidate[]
 			}
 		}
 	} catch {
 		// fall through
 	}
+
 	return []
 }
 
@@ -383,7 +413,9 @@ const REQUIRED_COMPONENT_TAGS = new Set(["locality", "region", "street", "house_
 
 function validate(seed: Seed, candidate: Candidate): boolean {
 	if (!candidate.raw || typeof candidate.raw !== "string") return false
+
 	if (candidate.raw.length > 500) return false
+
 	if (/```|<\/?\w+>|^\s*\{/.test(candidate.raw)) return false
 	const normRaw = normalize(candidate.raw)
 	const dropped = new Set(candidate.dropped ?? [])
@@ -395,9 +427,12 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 
 	// Every kept component value must appear verbatim (post-normalization) in the candidate raw.
 	let keptCount = 0
+
 	for (const [tag, value] of Object.entries(seed.components)) {
 		if (dropped.has(tag)) continue
+
 		if (!value) continue
+
 		if (!normRaw.includes(normalize(value))) return false
 		keptCount++
 	}
@@ -416,9 +451,11 @@ async function main() {
 	process.stderr.write(`provider: ${provider.name}  model: ${provider.model}\n`)
 
 	const seeds = await loadSeeds(opts.corpusPath, opts.count, opts.includeSources)
+
 	if (seeds.length === 0) {
 		process.stderr.write("no seeds loaded — corpus path or filter is wrong\n")
 		process.exitCode = 2
+
 		return
 	}
 
@@ -433,10 +470,13 @@ async function main() {
 	const workers = Array.from({ length: Math.min(opts.concurrency, seeds.length) }, async () => {
 		while (true) {
 			const i = cursor++
+
 			if (i >= seeds.length) return
 			const seed = seeds[i]!
+
 			try {
 				const candidates = await provider.generateVariants(seed, opts.variants)
+
 				for (const cand of candidates) {
 					if (validate(seed, cand)) {
 						const goldenCandidate: GoldenCandidate = {
@@ -449,6 +489,7 @@ async function main() {
 							dropped_components: cand.dropped ?? [],
 							provenance: { provider: provider.name, model: provider.model },
 						}
+
 						// Remove dropped components from the components map
 						for (const tag of goldenCandidate.dropped_components) delete goldenCandidate.components[tag]
 						outLines.push(JSON.stringify(goldenCandidate))
@@ -461,6 +502,7 @@ async function main() {
 				errored++
 				process.stderr.write(`  ✗ seed ${seed.source_id}: ${(err as Error).message}\n`)
 			}
+
 			if ((i + 1) % 10 === 0) {
 				process.stderr.write(
 					`  progress: ${i + 1}/${seeds.length}  kept=${kept}  dropped=${dropped}  errored=${errored}\n`

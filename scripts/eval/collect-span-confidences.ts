@@ -39,12 +39,14 @@
  *   --out data/eval/calibration/confidences.jsonl
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -82,20 +84,22 @@ function norm(s: string): string {
 }
 
 /**
- * Normalized exact, or either-direction TOKEN-subset (fragmentation + decomposition tolerant).
- * Token subset, not raw substring, so "Saint" ⊆ "Saint Paul" and "Ave" ⊆ "Elm Ave" match while
- * "Park" does NOT spuriously match "Parkway".
+ * Normalized exact, or either-direction TOKEN-subset (fragmentation + decomposition tolerant). Token subset, not raw
+ * substring, so "Saint" ⊆ "Saint Paul" and "Ave" ⊆ "Elm Ave" match while "Park" does NOT spuriously match "Parkway".
  */
 function valueMatch(pred: string, gold: string): boolean {
 	const a = norm(pred)
 	const b = norm(gold)
+
 	if (!a || !b) return false
+
 	if (a === b) return true
 	const at = a.split(" ")
 	const bt = b.split(" ")
 	const aset = new Set(at)
 	const bset = new Set(bt)
 	const subset = (xs: string[], ys: Set<string>): boolean => xs.every((t) => ys.has(t))
+
 	return subset(at, bset) || subset(bt, aset)
 }
 
@@ -104,26 +108,35 @@ function flattenSpans(tree: AddressTree): { tag: string; value: string; conf: nu
 	const out: { tag: string; value: string; conf: number }[] = []
 	const walk = (n: AddressNode): void => {
 		out.push({ tag: n.tag, value: n.value, conf: n.confidence })
+
 		for (const c of n.children) walk(c)
 	}
+
 	for (const r of tree.roots) walk(r)
+
 	return out
 }
 
 /**
- * Grade one predicted span against a row's gold. Returns `null` when the span is unlabelable (OA
- * can't see this tag), else `true`/`false`.
+ * Grade one predicted span against a row's gold. Returns `null` when the span is unlabelable (OA can't see this tag),
+ * else `true`/`false`.
  */
 function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean | null {
 	if (row.partial) {
 		if (!OA_GRADABLE.has(predTag)) return null
 		const goldVals = row.gold.filter(([t]) => t === predTag).map(([, v]) => v)
-		if (goldVals.length === 0) return null // OA row lacks this tag entirely → unlabelable
+
+		if (goldVals.length === 0) return null
+
+		// OA row lacks this tag entirely → unlabelable
 		return goldVals.some((g) => valueMatch(predValue, g))
 	}
 	const cls = tagClass(predTag)
 	const goldVals = row.gold.filter(([t]) => tagClass(t) === cls).map(([, v]) => v)
-	if (goldVals.length === 0) return false // hallucinated tag the address doesn't have
+
+	if (goldVals.length === 0) return false
+
+	// hallucinated tag the address doesn't have
 	return goldVals.some((g) => valueMatch(predValue, g))
 }
 
@@ -166,21 +179,27 @@ async function main(): Promise<void> {
 	const records: ConfRecord[] = []
 	let unlabelable = 0
 	let i = 0
+
 	for (const row of rows) {
 		i++
+
 		if (i % 1000 === 0) console.error(`  ${i}/${rows.length}  (${records.length} gradable spans)`)
+
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
 		// (~380-parse SIGKILL on the lab box). Periodic forced GC reclaims it; run with `node
 		// --expose-gc` for full calibration sets (8000 rows). No-op without the flag. (#787 pattern.)
 		if (i % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
 		let tree: AddressTree
+
 		try {
 			tree = await neural.parse(row.raw, parseOpts)
 		} catch {
 			continue
 		}
+
 		for (const span of flattenSpans(tree)) {
 			const correct = gradeSpan(span.tag, span.value, row)
+
 			if (correct === null) {
 				unlabelable++
 				continue

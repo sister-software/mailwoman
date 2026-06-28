@@ -8,8 +8,8 @@
  * List of all countries in the world.
  *
  * @category Geographic
- * @see https://en.wikipedia.org/wiki/List_of_countries
  * @internal
+ * @see https://en.wikipedia.org/wiki/List_of_countries
  */
 export const CountryNames = [
 	"Afghanistan",

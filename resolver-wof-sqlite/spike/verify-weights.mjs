@@ -13,6 +13,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 const dbPath = process.argv[2]
+
 if (!dbPath) {
 	console.error("Usage: verify-weights.mjs <wof-hot.db>")
 	process.exit(1)
@@ -32,6 +33,7 @@ function query(match, placetype) {
 		   JOIN spr ON spr.id = place_search.wof_id
 		   WHERE place_search MATCH ?
 		   ORDER BY rank ASC LIMIT 3`
+
 	return db.prepare(sql).all(...(placetype ? [match, placetype] : [match]))
 }
 
@@ -41,6 +43,7 @@ let fail = 0
 function check(label, rows, predicate) {
 	const top = rows[0]
 	const ok = top && predicate(top)
+
 	if (ok) {
 		console.log(`✓ ${label}`)
 		console.log(`    top: ${top.name} (${top.placetype}) rank=${top.rank.toFixed(2)}`)

@@ -63,17 +63,21 @@ interface Args {
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	const out: Partial<Args> = {}
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--input" && args[i + 1]) out.inputPath = args[++i]
 		else if (a === "--out" && args[i + 1]) out.outPath = args[++i]
 		else if (a === "--run-name" && args[i + 1]) out.runName = args[++i]
 	}
+
 	if (!out.runName) {
 		console.error("Usage: parse-training-log.ts --run-name <label> [--input <file>] [--out <json>]")
 		console.error("Without --input, reads from stdin.")
 		process.exit(1)
 	}
+
 	return out as Args
 }
 
@@ -82,17 +86,18 @@ const EVAL_RE = /\[eval\]\s+val_loss=([\d.]+)\s+macro_f1=([\d.]+)\s+val_rows=(\d
 
 function readInput(args: Args): string {
 	if (args.inputPath) return readFileSync(args.inputPath, "utf8")
+
 	return readFileSync("/dev/stdin", "utf8")
 }
 
 /**
- * Parse the structured training-log CSV that the training loop writes via `csv_log_path`. Schema:
- * step, wall_seconds, train_loss, lr, val_loss, val_macro_f1, f1.<tag>... Train-only rows have
- * val_loss/val_macro_f1 empty; eval rows fill them in. One row per record (no need to pair train +
- * eval lines like in the modal-log case).
+ * Parse the structured training-log CSV that the training loop writes via `csv_log_path`. Schema: step, wall_seconds,
+ * train_loss, lr, val_loss, val_macro_f1, f1.<tag>... Train-only rows have val_loss/val_macro_f1 empty; eval rows fill
+ * them in. One row per record (no need to pair train + eval lines like in the modal-log case).
  */
 function parseCsv(text: string, runName: string): TrainPoint[] {
 	const lines = text.split("\n").filter((l) => l.trim())
+
 	if (lines.length === 0) return []
 	const header = lines[0]!.split(",").map((h) => h.trim())
 	const stepIdx = header.indexOf("step")
@@ -103,38 +108,50 @@ function parseCsv(text: string, runName: string): TrainPoint[] {
 	// Identify per-tag F1 columns dynamically — schema has `f1.<tag>` columns whose set
 	// depends on Stage 1 vs Stage 2 vs Stage 3. Index them once.
 	const perTagIdx: Array<{ key: string; idx: number }> = []
+
 	for (let i = 0; i < header.length; i++) {
 		if (header[i]!.startsWith("f1.")) perTagIdx.push({ key: header[i]!, idx: i })
 	}
 
 	const out: TrainPoint[] = []
+
 	for (let i = 1; i < lines.length; i++) {
 		const cells = lines[i]!.split(",")
 		const step = parseInt(cells[stepIdx]!, 10)
+
 		if (Number.isNaN(step)) continue
 		const point: TrainPoint = { run: runName, step }
 		const tl = trainLossIdx >= 0 ? cells[trainLossIdx] : ""
+
 		if (tl) point.train_loss = parseFloat(tl)
 		const vl = valLossIdx >= 0 ? cells[valLossIdx] : ""
+
 		if (vl) point.val_loss = parseFloat(vl)
 		const mf = macroF1Idx >= 0 ? cells[macroF1Idx] : ""
+
 		if (mf) point.macro_f1 = parseFloat(mf)
 		const lr = lrIdx >= 0 ? cells[lrIdx] : ""
+
 		if (lr) point.lr = parseFloat(lr)
+
 		for (const { key, idx } of perTagIdx) {
 			const v = cells[idx]
+
 			if (v) point[key as `f1.${string}`] = parseFloat(v)
 		}
 		out.push(point)
 	}
+
 	return out
 }
 
 function parse(text: string, runName: string): TrainPoint[] {
 	const out: TrainPoint[] = []
 	let lastStep = 0
+
 	for (const line of text.split("\n")) {
 		const stepMatch = STEP_RE.exec(line)
+
 		if (stepMatch) {
 			lastStep = parseInt(stepMatch[1]!, 10)
 			out.push({
@@ -147,6 +164,7 @@ function parse(text: string, runName: string): TrainPoint[] {
 			continue
 		}
 		const evalMatch = EVAL_RE.exec(line)
+
 		if (evalMatch && lastStep > 0) {
 			out.push({
 				run: runName,
@@ -161,12 +179,15 @@ function parse(text: string, runName: string): TrainPoint[] {
 	// same line in our streaming-poll monitor pattern).
 	const seen = new Set<string>()
 	const deduped: TrainPoint[] = []
+
 	for (const p of out) {
 		const key = `${p.step}|${p.train_loss ?? ""}|${p.val_loss ?? ""}|${p.macro_f1 ?? ""}`
+
 		if (seen.has(key)) continue
 		seen.add(key)
 		deduped.push(p)
 	}
+
 	return deduped
 }
 
@@ -177,6 +198,7 @@ function main(): void {
 	const isCsv = text.split("\n", 1)[0]!.startsWith("step,wall_seconds")
 	const points = isCsv ? parseCsv(text, args.runName) : parse(text, args.runName)
 	const json = JSON.stringify(points, null, 2)
+
 	if (args.outPath) writeFileSync(args.outPath, json)
 	else process.stdout.write(json + "\n")
 	console.error(`Parsed ${points.length} records for run '${args.runName}' (${isCsv ? "csv" : "modal-log"} format).`)

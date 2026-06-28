@@ -36,6 +36,7 @@ import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
+
 import { alignRow } from "../src/align.js"
 import { ParquetWriter } from "../src/parquet-wrapper/index.js"
 import {
@@ -65,9 +66,11 @@ function parseArgs(argv: readonly string[]): Args {
 		canonicalPathPrefix: "/data/",
 		legacyPathPrefix: "/mnt/playpen/mailwoman-data/",
 	}
+
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]!
 		const next = argv[i + 1]
+
 		switch (a) {
 			case "--jsonl":
 				out.jsonl = next
@@ -97,14 +100,19 @@ function parseArgs(argv: readonly string[]): Args {
 				throw new Error(`unknown arg ${a}`)
 		}
 	}
+
 	if (!out.jsonl) throw new Error("--jsonl required")
+
 	if (!out.baseManifest) throw new Error("--base-manifest required")
+
 	if (!out.outDir) throw new Error("--out-dir required")
+
 	return out as Args
 }
 
 async function* readJsonl(jsonl: string): AsyncIterable<Record<string, unknown>> {
 	const rl = createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })
+
 	for await (const line of rl) {
 		if (!line.trim()) continue
 		yield JSON.parse(line) as Record<string, unknown>
@@ -136,17 +144,23 @@ function appendShape(row: ParquetRow): Record<string, unknown> {
 		corpus_version: row.corpus_version,
 		license: row.license,
 	}
+
 	if (row.locale !== null) out.locale = row.locale
+
 	if (row.synth_method !== null) out.synth_method = row.synth_method
+
 	if (row.synth_base_id !== null) out.synth_base_id = row.synth_base_id
+
 	return out
 }
 
 async function hashFile(path: string): Promise<string> {
 	const hash = createHash("sha256")
+
 	for await (const chunk of createReadStream(path)) {
 		hash.update(chunk as Buffer)
 	}
+
 	return hash.digest("hex")
 }
 
@@ -157,8 +171,8 @@ interface ScriptShardResult {
 }
 
 /**
- * Write one shard for a single source slug. Returns the populated ShardDescriptor + a list of
- * quarantine reasons for rows that failed alignment.
+ * Write one shard for a single source slug. Returns the populated ShardDescriptor + a list of quarantine reasons for
+ * rows that failed alignment.
  */
 async function writeOneShard(
 	rows: readonly LabeledRow[],
@@ -175,9 +189,11 @@ async function writeOneShard(
 
 	let firstSourceId = ""
 	let lastSourceId = ""
+
 	for (const row of rows) {
 		const pq = rowToParquet(row)
 		await writer.appendRow(appendShape(pq) as unknown as ParquetRow)
+
 		if (firstSourceId === "") firstSourceId = row.source_id
 		lastSourceId = row.source_id
 	}
@@ -185,6 +201,7 @@ async function writeOneShard(
 
 	const fileStat = await stat(outPath)
 	const sha256 = await hashFile(outPath)
+
 	return {
 		split: "train",
 		path: outPath,
@@ -203,6 +220,7 @@ async function writeOneShard(
 
 function canonicalizeShardPath(path: string, legacyPrefix: string, canonicalPrefix: string): string {
 	if (path.startsWith(legacyPrefix)) return canonicalPrefix + path.slice(legacyPrefix.length)
+
 	return path
 }
 
@@ -210,6 +228,7 @@ async function main(): Promise<void> {
 	const args = parseArgs(process.argv.slice(2))
 
 	if (!existsSync(args.jsonl)) throw new Error(`jsonl not found: ${args.jsonl}`)
+
 	if (!existsSync(args.baseManifest)) throw new Error(`base-manifest not found: ${args.baseManifest}`)
 
 	const corpusDir = join(args.outDir, `corpus-v${args.corpusVersion}`)
@@ -220,15 +239,18 @@ async function main(): Promise<void> {
 	const buckets = new Map<string, LabeledRow[]>()
 	const quarantine: string[] = []
 	let totalIn = 0
+
 	for await (const raw of readJsonl(args.jsonl)) {
 		totalIn++
 		const canon = toCanonicalRow(raw, args.corpusVersion)
 		const result = alignRow(canon)
+
 		if (result.kind !== "labeled") {
 			quarantine.push(`${canon.source_id}\t${result.row.reason}`)
 			continue
 		}
 		const bucket = buckets.get(canon.source)
+
 		if (bucket) bucket.push(result.row)
 		else buckets.set(canon.source, [result.row])
 	}
@@ -236,6 +258,7 @@ async function main(): Promise<void> {
 
 	const newShards: ShardDescriptor[] = []
 	const sortedKeys = [...buckets.keys()].sort()
+
 	for (const source of sortedKeys) {
 		const rows = buckets.get(source)!
 		const slug = source.startsWith("deepseek-translit-") ? source.slice("deepseek-translit-".length) : source
@@ -281,6 +304,7 @@ async function main(): Promise<void> {
 	console.error(`  shards=${combined.shards.length} (base=${base.shards.length}, added=${newShards.length})`)
 	console.error(`  compression=${SHARD_COMPRESSION}`)
 	const pathFix = rewrittenBase.filter((s, i) => s.path !== base.shards[i]!.path).length
+
 	if (pathFix > 0)
 		console.error(
 			`  path-canonicalized base shards: ${pathFix} (legacy '${args.legacyPathPrefix}' → '${args.canonicalPathPrefix}')`

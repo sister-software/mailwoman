@@ -12,9 +12,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { $ } from "zx"
-
 import { runIfScript } from "mailwoman/sdk/scripting"
+import { $ } from "zx"
 
 runIfScript(import.meta, async () => {
 	const EMPTY = "/tmp/empty-situs.db"
@@ -37,6 +36,7 @@ runIfScript(import.meta, async () => {
 		// >/dev/null dropped stdout; stderr went to the terminal — forward it.
 		const built =
 			await $`node --experimental-strip-types scripts/eval/build-situs-holdout.ts --shard ${dataRootPath("address-points", `address-points-us-${slug}.db`)} --region ${reg} --n ${N}`
+
 		if (built.stderr) process.stderr.write(built.stderr)
 
 		const r =

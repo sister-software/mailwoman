@@ -6,6 +6,7 @@
 
 import { Span, TokenContext } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { TokenPositionClassifier } from "./TokenPositionClassifier.js"
 
 const classifier = new TokenPositionClassifier()
@@ -23,9 +24,11 @@ function classify(body: string) {
 			if (c.is("start_token")) {
 				start_token.push(c)
 			}
+
 			if (c.is("end_token")) {
 				end_token.push(c)
 			}
+
 			if (c.is("end_token_single_character")) {
 				end_token_single_character.push(c)
 			}

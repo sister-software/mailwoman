@@ -4,13 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
-import { TextNormalizer, type TextNormalizerInit } from "@mailwoman/core/tokenization"
 import { readdir } from "node:fs/promises"
 import { availableParallelism } from "node:os"
+
+import { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
+import { TextNormalizer, type TextNormalizerInit } from "@mailwoman/core/tokenization"
 import { PathBuilder } from "path-ts"
 import pluralize from "pluralize"
 import { TextSpliterator } from "spliterator"
+
 import { resourceDictionaryPathBuilder } from "../utils/repo.js"
 import { takeAsync } from "./collections.js"
 import { tryStat } from "./fs.js"
@@ -25,11 +27,10 @@ export type LibPostalLanguageCode = Alpha2LanguageCode | "all"
 let _availableLanguages: Promise<LibPostalLanguageCode[]> | undefined
 
 /**
- * Languages with a libpostal dictionary directory on disk. Lazily resolved and memoized — this was
- * a top-level `await` until #481, which made any bare-import + subpath-import combination a TLA
- * cycle under Vite's loader (classifier base classes evaluated as `undefined`; see the old
- * workaround note in `classifiers/adapter.test.ts`). The promise is shared, so concurrent first
- * callers do one `readdir`.
+ * Languages with a libpostal dictionary directory on disk. Lazily resolved and memoized — this was a top-level `await`
+ * until #481, which made any bare-import + subpath-import combination a TLA cycle under Vite's loader (classifier base
+ * classes evaluated as `undefined`; see the old workaround note in `classifiers/adapter.test.ts`). The promise is
+ * shared, so concurrent first callers do one `readdir`.
  */
 export function getAvailableLanguages(): Promise<LibPostalLanguageCode[]> {
 	_availableLanguages ??= readdir(libPostalDataDirectory).then((directories) => {
@@ -43,6 +44,7 @@ export function getAvailableLanguages(): Promise<LibPostalLanguageCode[]> {
 
 		return Array.from(languageCodeDirectories) as LibPostalLanguageCode[]
 	})
+
 	return _availableLanguages
 }
 
@@ -132,6 +134,7 @@ export async function prepareLocaleIndex(
 					if (!line) continue
 
 					const firstCharacter = line[0]
+
 					// Skip comments.
 					if (firstCharacter === "#") continue
 

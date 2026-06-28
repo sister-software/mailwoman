@@ -70,9 +70,9 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 /**
  * The containment map for a given addressing system.
  *
- * Currently every system maps to {@link WESTERN_PARENT_OF} — the indirection exists so a future
- * system-specific map (e.g. Japanese block addressing) can be introduced without touching the tree
- * builder or validator. `undefined` (the common case — system not yet detected) uses the default.
+ * Currently every system maps to {@link WESTERN_PARENT_OF} — the indirection exists so a future system-specific map
+ * (e.g. Japanese block addressing) can be introduced without touching the tree builder or validator. `undefined` (the
+ * common case — system not yet detected) uses the default.
  */
 export function containmentFor(_system?: AddressSystem): Partial<Record<ComponentTag, ComponentTag[]>> {
 	// Single system today. The parameter is intentionally consumed lazily — adding `case "japanese":`
@@ -81,8 +81,7 @@ export function containmentFor(_system?: AddressSystem): Partial<Record<Componen
 }
 
 /**
- * Backwards-compatible alias for the default (Western) containment map. Prefer `containmentFor()`
- * in new code so the system parameter threads through; this export remains for existing call
- * sites.
+ * Backwards-compatible alias for the default (Western) containment map. Prefer `containmentFor()` in new code so the
+ * system parameter threads through; this export remains for existing call sites.
  */
 export const PARENT_OF = WESTERN_PARENT_OF

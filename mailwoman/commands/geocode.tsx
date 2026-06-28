@@ -26,14 +26,16 @@
  *   - 1 bad arguments, missing required DB, or fatal parse/resolve error
  */
 
+import { setImmediate } from "node:timers/promises"
+
 import { Spinner } from "@inkjs/ui"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath } from "../resolver-backend.js"
@@ -135,12 +137,14 @@ const OptionsSchema = zod.object({
 
 function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
 	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+
 	if (!path) {
 		throw new Error(
 			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Build one with `mailwoman-wof-build-slim` + `mailwoman-wof-build-fts`."
 		)
 	}
+
 	return path
 }
 
@@ -159,6 +163,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 	// Load the neural classifier (required for street-level; weights must be present).
 	let classifier: NeuralAddressClassifier
+
 	try {
 		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
 	} catch {
@@ -169,6 +174,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 	// Open the WOF admin resolver + the situs/interpolation shard provider.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
+
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
@@ -190,6 +196,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		explicitAp || explicitIp
 			? (slug) => {
 					const base = explicitAp && explicitIp ? {} : shardProvider.for(slug)
+
 					return { addressPoints: explicitAp ?? base.addressPoints, interpolation: explicitIp ?? base.interpolation }
 				}
 			: shardProvider.for
@@ -216,6 +223,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
 			placeCountry: placer ? (t: string) => placer.predict(t) : false,
 		})
+
 		return options.format === "text" ? formatText(result) : JSON.stringify(result, null, 2)
 	} finally {
 		explicitAp?.close()
@@ -233,25 +241,33 @@ function formatText(result: GeocodeResult): string {
 	const lines: string[] = []
 	lines.push(`input:            ${result.input}`)
 	lines.push(`resolution_tier:  ${result.resolution_tier}`)
+
 	if (result.lat != null && result.lon != null) {
 		lines.push(`coordinate:       ${result.lat.toFixed(6)}, ${result.lon.toFixed(6)}`)
 	} else {
 		lines.push(`coordinate:       (unresolved)`)
 	}
+
 	if (result.uncertainty_m != null) {
 		lines.push(`uncertainty_m:    ${result.uncertainty_m}`)
 	}
+
 	if (result.locality) lines.push(`locality:         ${result.locality}`)
+
 	if (result.region) lines.push(`region:           ${result.region}`)
+
 	if (result.postcode) lines.push(`postcode:         ${result.postcode}`)
+
 	if (result.hierarchy.length > 0) {
 		lines.push("hierarchy:")
+
 		for (const h of result.hierarchy) {
 			const coord = h.lat != null ? ` (${h.lat.toFixed(4)}, ${h.lon!.toFixed(4)})` : ""
 			const id = h.placeId ? ` [${h.placeId}]` : ""
 			lines.push(`  ${h.tag.padEnd(20)} ${h.value}${id}${coord}`)
 		}
 	}
+
 	return lines.join("\n")
 }
 
@@ -274,6 +290,7 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 
 		if (!input || input.trim().length === 0) {
 			setError('geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")')
+
 			return
 		}
 

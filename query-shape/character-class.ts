@@ -40,6 +40,7 @@ function inRange(cp: number, ranges: ReadonlyArray<[number, number]>): boolean {
 	for (const [lo, hi] of ranges) {
 		if (cp >= lo && cp <= hi) return true
 	}
+
 	return false
 }
 
@@ -83,8 +84,8 @@ const PUNCT_CODEPOINTS = new Set<number>([
 ])
 
 /**
- * "Connector" codepoints join adjacent tokens instead of separating them. Hyphen, apostrophe,
- * underscore — surface in "10118-1234", "O'Brien", "Saint-Denis", and similar.
+ * "Connector" codepoints join adjacent tokens instead of separating them. Hyphen, apostrophe, underscore — surface in
+ * "10118-1234", "O'Brien", "Saint-Denis", and similar.
  */
 const CONNECTOR_CODEPOINTS = new Set<number>([
 	0x2d, // -
@@ -97,21 +98,30 @@ const CONNECTOR_CODEPOINTS = new Set<number>([
 /** Classify a single Unicode codepoint. */
 export function classifyCodepoint(cp: number): CodepointClass {
 	if (cp >= 0x30 && cp <= 0x39) return "digit"
+
 	if ((cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a)) return "alpha"
+
 	// Latin-1 letters with diacritics + Latin Extended-A/B
 	if ((cp >= 0x00c0 && cp <= 0x024f) || (cp >= 0x1e00 && cp <= 0x1eff)) return "alpha"
+
 	if (cp === 0x20 || cp === 0x09 || cp === 0x0a || cp === 0x0d || cp === 0xa0) return "whitespace"
+
 	if (CONNECTOR_CODEPOINTS.has(cp)) return "connector"
+
 	if (PUNCT_CODEPOINTS.has(cp)) return "punct"
+
 	if (inRange(cp, CJK_RANGES)) return "cjk"
+
 	if (inRange(cp, CYRILLIC_RANGES)) return "cyrillic"
+
 	if (inRange(cp, ARABIC_RANGES)) return "arabic"
+
 	return "other"
 }
 
 /**
- * Classify a token by walking its codepoints and folding to the dominant class. Mixed alphanumeric
- * (e.g. `"221B"`, `"10118-1234"`) returns `"mixed"`. Pure-punct tokens return `"punct"`.
+ * Classify a token by walking its codepoints and folding to the dominant class. Mixed alphanumeric (e.g. `"221B"`,
+ * `"10118-1234"`) returns `"mixed"`. Pure-punct tokens return `"punct"`.
  */
 export function classifyToken(text: string): TokenCharacterClass {
 	let hasDigit = false
@@ -125,6 +135,7 @@ export function classifyToken(text: string): TokenCharacterClass {
 		const cp = text.codePointAt(i)!
 		i += cp > 0xffff ? 2 : 1
 		const cls = classifyCodepoint(cp)
+
 		switch (cls) {
 			case "digit":
 				hasDigit = true
@@ -152,12 +163,19 @@ export function classifyToken(text: string): TokenCharacterClass {
 	}
 
 	if (hasCjk) return "cjk"
+
 	if (hasCyrillic) return "cyrillic"
+
 	if (hasArabic) return "arabic"
+
 	if (hasDigit && hasAlpha) return "mixed"
+
 	if (hasDigit) return "digit"
+
 	if (hasAlpha) return "alpha"
+
 	if (hasPunct) return "punct"
+
 	return "mixed"
 }
 
@@ -196,18 +214,25 @@ export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClas
 	}
 
 	if (hasCjk && !hasAlpha && !hasCyrillic && !hasArabic) return "cjk"
+
 	if (hasCyrillic && !hasAlpha && !hasCjk && !hasArabic) return "cyrillic"
+
 	if (hasArabic && !hasAlpha && !hasCjk && !hasCyrillic) return "arabic"
+
 	if (hasCjk || hasCyrillic || hasArabic) return "mixed"
+
 	if (hasMixed || (hasDigit && hasAlpha)) return "alphanumeric"
+
 	if (hasDigit && !hasAlpha) return "numeric"
+
 	if (hasAlpha && !hasDigit) return "alpha"
+
 	return "mixed"
 }
 
 /**
- * Walk a string and emit token spans (whitespace-and-punctuation-separated). Internal helper —
- * callers receive `TokenClass[]` from `computeQueryShape`.
+ * Walk a string and emit token spans (whitespace-and-punctuation-separated). Internal helper — callers receive
+ * `TokenClass[]` from `computeQueryShape`.
  */
 export function tokenizeForClass(text: string): SpanRange[] {
 	const tokens: SpanRange[] = []
@@ -222,6 +247,7 @@ export function tokenizeForClass(text: string): SpanRange[] {
 			i += cp > 0xffff ? 2 : 1
 			continue
 		}
+
 		// A leading connector (rare — most inputs don't start with `-`/`'`) is consumed as whitespace.
 		if (cls === "connector") {
 			i += cp > 0xffff ? 2 : 1
@@ -233,11 +259,14 @@ export function tokenizeForClass(text: string): SpanRange[] {
 		const start = i
 		const startCls = cls
 		let cur = i
+
 		while (cur < N) {
 			const ncp = text.codePointAt(cur)!
 			const nstep = ncp > 0xffff ? 2 : 1
 			const ncls = classifyCodepoint(ncp)
+
 			if (ncls === "whitespace" || ncls === "punct") break
+
 			if (ncls === "connector") {
 				cur += nstep
 				continue
@@ -245,6 +274,7 @@ export function tokenizeForClass(text: string): SpanRange[] {
 			// Break tokens across script transitions (digit↔alpha is fine; alpha↔cjk is a boundary).
 			const isLatinPair = (a: CodepointClass, b: CodepointClass) =>
 				(a === "digit" || a === "alpha") && (b === "digit" || b === "alpha")
+
 			if (
 				ncls !== startCls &&
 				!isLatinPair(startCls, ncls) &&

@@ -24,8 +24,7 @@ const rangeSeparator = "-"
 const fractionSeparator = "\\/"
 
 /**
- * Flags for house number classifications, used to distinguish between different types of house
- * numbers.
+ * Flags for house number classifications, used to distinguish between different types of house numbers.
  */
 export type HouseNumberFlag = "alphanumeric" | "numeric" | "fractional" | "directional" | "separator" | "cyrillic"
 
@@ -72,6 +71,7 @@ export class HouseNumberClassifier extends WordClassifier {
 		if (previousSibling) {
 			// House number must not be preceded by a level or unit designator
 			if (previousSibling.is("level_designator")) return
+
 			if (previousSibling.is("unit_designator")) return
 		}
 

@@ -22,6 +22,7 @@
 
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
+
 import { stableSourceId } from "../../adapter.js"
 import {
 	countryToLocale,
@@ -42,13 +43,13 @@ export interface PoBoxInputRow extends PoBoxBaseTuple {
 
 export interface SynthPoBoxAdapterOptions {
 	/**
-	 * How many PO box variants to emit per input tuple. Each variant picks a different leader (and
-	 * possibly a different number / noise level). Default 1.
+	 * How many PO box variants to emit per input tuple. Each variant picks a different leader (and possibly a different
+	 * number / noise level). Default 1.
 	 */
 	variantsPerInput?: number
 	/**
-	 * Probability (0..1) of emitting a PMB-with-street variant when both the input has a street and
-	 * the locale supports PMB. Default 0.15.
+	 * Probability (0..1) of emitting a PMB-with-street variant when both the input has a street and the locale supports
+	 * PMB. Default 0.15.
 	 */
 	pmbRatio?: number
 	/**
@@ -56,19 +57,21 @@ export interface SynthPoBoxAdapterOptions {
 	 */
 	seed?: number
 	/**
-	 * Probability (0..1), evaluated per input tuple, of ALSO emitting one US military/diplomatic
-	 * PO-box row (`PSC/CMR/Unit <id> Box <box>, APO/FPO/DPO AA/AE/AP <zip>`, #517). These rows are
-	 * self-contained — they draw no field from the input tuple, so military volume scales with the
-	 * input stream size. Default 0 (off) — the adapter's contract is "one row per input"; the corpus
-	 * build recipe opts in to seed the rare-but-real military class without changing the default.
+	 * Probability (0..1), evaluated per input tuple, of ALSO emitting one US military/diplomatic PO-box row
+	 * (`PSC/CMR/Unit <id> Box <box>, APO/FPO/DPO AA/AE/AP <zip>`, #517). These rows are self-contained — they draw no
+	 * field from the input tuple, so military volume scales with the input stream size. Default 0 (off) — the adapter's
+	 * contract is "one row per input"; the corpus build recipe opts in to seed the rare-but-real military class without
+	 * changing the default.
 	 */
 	militaryRatio?: number
 }
 
 function makeRandom(seed: number): () => number {
 	let s = seed
+
 	return () => {
 		s = (s * 1664525 + 1013904223) % 4294967296
+
 		return s / 4294967296
 	}
 }
@@ -96,12 +99,15 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 			for await (const line of rl) {
 				if (options.signal?.aborted) break
+
 				if (options.limit !== undefined && emitted >= options.limit) break
 
 				const trimmed = line.trim()
+
 				if (!trimmed) continue
 
 				let input: PoBoxInputRow
+
 				try {
 					input = JSON.parse(trimmed) as PoBoxInputRow
 				} catch {
@@ -113,6 +119,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 				// has no region token, #517). synthesizePoBoxRow handles region absence; the guard just
 				// must not discard those tuples as "missing region".
 				const regionOptional = input.country ? REGION_OPTIONAL_LOCALES.has(countryToLocale(input.country)) : false
+
 				if (!input.locality || !input.postcode || !input.country || (!input.region && !regionOptional)) {
 					skipped++
 					continue
@@ -122,6 +129,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 				for (let v = 0; v < variantsPerInput; v++) {
 					const synth = synthesizePoBoxRow(input, { random, pmbRatio })
+
 					if (!synth) continue
 
 					// Include `v` in dependent_locality slot to vary the digest across variants;
@@ -154,6 +162,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 				// stream rather than the US-tuple count. US-only: suppressed under a non-US country filter
 				// and counted against `limit` like any other row.
 				const militaryAllowed = !options.country || options.country === "US"
+
 				if (
 					militaryRatio > 0 &&
 					militaryAllowed &&

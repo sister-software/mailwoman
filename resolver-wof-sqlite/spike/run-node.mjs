@@ -1,21 +1,19 @@
 /**
- * Node-side spike. Substitute for the headless-browser version: we measure what we CAN measure in
- * Node — query latency and the on-disk page footprint of the tables a query touches — and reason
- * about the network-side overhead a browser deployment would inherit.
+ * Node-side spike. Substitute for the headless-browser version: we measure what we CAN measure in Node — query latency
+ * and the on-disk page footprint of the tables a query touches — and reason about the network-side overhead a browser
+ * deployment would inherit.
  *
  * Approach:
  *
- * 1. Open the .db locally with node:sqlite (zero-copy local read; this is the lower-bound on query
- *    latency the browser will ever see, since browser-side wasm SQLite adds nothing but data-fetch
- *    latency on top of the same query plan).
+ * 1. Open the .db locally with node:sqlite (zero-copy local read; this is the lower-bound on query latency the browser
+ *    will ever see, since browser-side wasm SQLite adds nothing but data-fetch latency on top of the same query plan).
  * 2. Run each query; capture local wall time + row count.
  * 3. For each query, capture the query plan and identify the tables/indexes touched.
- * 4. Use the `dbstat` virtual table to enumerate the pages those objects occupy, then express a
- *    worst-case "if you had to fetch every page that backs every object the plan touches" figure —
- *    and a more realistic "FTS5 + R*Tree only need the index leaves the MATCH selected" figure
- *    derived from observed row counts × an empirical fan-out estimate.
- * 5. Translate page footprint into HTTP cost under three transport profiles (idealized local; typical
- *    Cloudflare CDN; cold cross-continent fetch).
+ * 4. Use the `dbstat` virtual table to enumerate the pages those objects occupy, then express a worst-case "if you had to
+ *    fetch every page that backs every object the plan touches" figure — and a more realistic "FTS5 + R*Tree only need
+ *    the index leaves the MATCH selected" figure derived from observed row counts × an empirical fan-out estimate.
+ * 5. Translate page footprint into HTTP cost under three transport profiles (idealized local; typical Cloudflare CDN; cold
+ *    cross-continent fetch).
  *
  * Output: ./results-node.json + ./RESULTS-NODE.md
  */
@@ -29,13 +27,16 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 
 function parseArgs(argv) {
 	const out = { db: null }
+
 	for (let i = 0; i < argv.length; i++) {
 		if (argv[i] === "--db") out.db = argv[++i]
 	}
+
 	if (!out.db) {
 		console.error("usage: node run-node.mjs --db <path-to-wof.db>")
 		process.exit(2)
 	}
+
 	return out
 }
 
@@ -84,7 +85,9 @@ function objectFootprint(db, names) {
 		)
 		.all(...names)
 	const out = {}
+
 	for (const r of rows) out[r.name] = { pages: Number(r.pages), bytes: Number(r.bytes) }
+
 	return out
 }
 
@@ -92,28 +95,34 @@ function objectFootprint(db, names) {
 function planTouched(db, sql) {
 	const rows = db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all()
 	const names = new Set()
+
 	for (const r of rows) {
 		const detail = String(r.detail ?? "")
 		// "SEARCH place_search VIRTUAL TABLE INDEX 1:M0" / "SCAN spr" / "SEARCH place_bbox USING ..."
 		const m = /(?:SCAN|SEARCH)\s+(\S+)/i.exec(detail)
+
 		if (m) names.add(m[1])
 		// FTS5 also lives in shadow tables — add the obvious ones if the named table is virtual
 	}
+
 	return [...names]
 }
 
 /** Expand FTS5/R*Tree virtual-table names to include their shadow b-tree subtables. */
 function expandShadowTables(db, touched) {
 	const out = new Set(touched)
+
 	for (const name of touched) {
 		// FTS5 creates <name>_config / _data / _idx / _content / _docsize
 		// R*Tree creates <name>_node / _parent / _rowid
 		for (const suffix of ["_config", "_data", "_idx", "_content", "_docsize", "_node", "_parent", "_rowid"]) {
 			const candidate = `${name}${suffix}`
 			const exists = db.prepare(`SELECT 1 FROM sqlite_master WHERE name = ?`).get(candidate)
+
 			if (exists) out.add(candidate)
 		}
 	}
+
 	return [...out]
 }
 
@@ -134,6 +143,7 @@ async function main() {
 	console.error(`DB ${args.db}: ${pageCount.toLocaleString()} pages × ${pageSize}B = ${fmtMB(dbBytes)}`)
 
 	const results = []
+
 	for (const q of QUERIES) {
 		const t0 = performance.now()
 		const rows = db.prepare(q.sql).all()
@@ -194,6 +204,7 @@ async function main() {
 	lines.push(`\n## Per-query results\n`)
 	lines.push(`| Query | rows | local ms | objects touched | footprint | est. cold fetch | est. requests |`)
 	lines.push(`|---|---:|---:|---|---:|---:|---:|`)
+
 	for (const q of results) {
 		const objs = q.plan.join(", ")
 		lines.push(
@@ -210,9 +221,11 @@ async function main() {
 	lines.push(`Assuming HTTP/2 (we get to multiplex but each fetch still costs an RTT) and 64 KiB request chunks:\n`)
 	lines.push(`| Query | est. KB | est. reqs | ${profiles.map((p) => p.name).join(" | ")} |`)
 	lines.push(`|---|---:|---:|${profiles.map(() => "---:").join("|")}|`)
+
 	for (const q of results) {
 		const cells = profiles.map((p) => {
 			const fetchTime = q.estimatedRequests * p.rttMs + (q.estimatedBytes / p.bw) * 1000
+
 			return Math.round(fetchTime) + " ms"
 		})
 		lines.push(

@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { createPostalAddressID, isPostalAddressID, parsePostalAddressID } from "./index.js"
 
 const AUSTIN = { latitude: 30.2672, longitude: -97.7431 }

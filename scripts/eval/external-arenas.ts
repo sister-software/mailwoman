@@ -30,9 +30,8 @@
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { $ } from "zx"
-
 import { runIfScript } from "mailwoman/sdk/scripting"
+import { $ } from "zx"
 
 runIfScript(import.meta, async () => {
 	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash `| tail` did.
@@ -46,18 +45,24 @@ runIfScript(import.meta, async () => {
 	// Model args: pass through if MODEL set, else harness uses loadFromWeights() default.
 	const modelArgs: string[] = []
 	const model = process.env["MODEL"]
+
 	if (model) {
 		// Under the bash `set -u`, TOKENIZER + MODELCARD were unbound-variable errors when MODEL was set.
 		const tokenizer = process.env["TOKENIZER"]
 		const modelCard = process.env["MODELCARD"]
+
 		if (!tokenizer || !modelCard) throw new Error("MODEL is set → TOKENIZER and MODELCARD are required")
 		modelArgs.push("--model", model, "--tokenizer", tokenizer, "--model-card", modelCard)
+
 		// Gaz-trained models (v4.2.0+): feed the ship config — zero-filled clues depress country
 		// recall and fake an affix crash. Opt in via GAZETTEER=/path/lexicon.json [ANCHOR=/path/lookup.json].
 		if (process.env["GAZETTEER"]) modelArgs.push("--gazetteer-lexicon", process.env["GAZETTEER"])
+
 		if (process.env["ANCHOR"]) modelArgs.push("--anchor-lookup", process.env["ANCHOR"])
+
 		// Conventions mask (#511 Tier A): CONVENTIONS=auto for v4.3.0+ ship config.
 		if (process.env["CONVENTIONS"]) modelArgs.push("--conventions", process.env["CONVENTIONS"])
+
 		// Span bridge (v4.4.0 corrective): BRIDGE=1 for v4.4.0+ ship config.
 		if (process.env["BRIDGE"]) modelArgs.push("--bridge-gaps")
 		console.log(`Model: ${model}`)
@@ -69,7 +74,9 @@ runIfScript(import.meta, async () => {
 	console.log("== regenerating perturbation arena ==")
 	const perturbed =
 		await $`node --experimental-strip-types scripts/eval/perturb-golden.ts --golden data/eval/golden/v0.1.2 --out ${join(outDir, "perturb", "perturbed.jsonl")} --per-file 60`
+
 	if (perturbed.stdout.trim()) console.log(perturbed.stdout.trimEnd())
+
 	if (perturbed.stderr.trim()) console.error(perturbed.stderr.trimEnd())
 
 	// Stage each arena in its own dir (harness loads ALL .jsonl in a --falsehoods dir).
@@ -96,5 +103,6 @@ runIfScript(import.meta, async () => {
 	const summary =
 		await $`node --experimental-strip-types scripts/eval/summarize-arenas.ts ${outDir} data/eval/external/postal-cases.jsonl`
 	console.log(summary.stdout.trimEnd())
+
 	if (summary.stderr.trim()) console.error(summary.stderr.trimEnd())
 })

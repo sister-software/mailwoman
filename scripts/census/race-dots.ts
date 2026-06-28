@@ -22,13 +22,15 @@
  *   --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
-import booleanContains from "@turf/boolean-contains"
 import { createWriteStream } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
+import { dataRootPath } from "@mailwoman/core/utils"
+import booleanContains from "@turf/boolean-contains"
+
 function arg(name: string, fb = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fb
 }
 
@@ -48,12 +50,17 @@ function bbox(rings: PolygonCoords): [number, number, number, number] {
 		minY = Infinity,
 		maxX = -Infinity,
 		maxY = -Infinity
+
 	for (const [x, y] of rings[0]!) {
 		if (x! < minX) minX = x!
+
 		if (x! > maxX) maxX = x!
+
 		if (y! < minY) minY = y!
+
 		if (y! > maxY) maxY = y!
 	}
+
 	return [minX, minY, maxX, maxY]
 }
 
@@ -62,6 +69,7 @@ function bbox(rings: PolygonCoords): [number, number, number, number] {
 function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: number): [number, number] | null {
 	let r = Math.random() * totalArea
 	let pick = 0
+
 	while (pick < polys.length - 1 && (r -= areas[pick]!) > 0) pick++
 	const poly = polys[pick]!
 	const polyFeature = {
@@ -70,12 +78,15 @@ function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: numbe
 		properties: {},
 	}
 	const [minX, minY, maxX, maxY] = bbox(poly)
+
 	for (let tries = 0; tries < 60; tries++) {
 		const x = minX + Math.random() * (maxX - minX)
 		const y = minY + Math.random() * (maxY - minY)
 		const pt = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: [x, y] }, properties: {} }
+
 		if (booleanContains(polyFeature, pt)) return [x, y]
 	}
+
 	return null
 }
 
@@ -96,6 +107,7 @@ let dots = 0,
 
 for (const row of rows) {
 	let geom: { type: string; coordinates: unknown }
+
 	try {
 		geom = JSON.parse(row.geometry)
 	} catch {
@@ -105,17 +117,21 @@ for (const row of rows) {
 		geom.type === "Polygon" ? [geom.coordinates as PolygonCoords] : (geom.coordinates as PolygonCoords[])
 	const areas = polys.map((p) => {
 		const [a, b, c, d] = bbox(p)
+
 		return Math.max((c - a) * (d - b), 1e-12)
 	})
 	const totalArea = areas.reduce((s, a) => s + a, 0)
 
 	for (const cat of CATEGORIES) {
 		const people = row[cat]
+
 		if (people <= 0) continue
 		const exact = people / PER
 		const n = Math.floor(exact) + (Math.random() < exact - Math.floor(exact) ? 1 : 0)
+
 		for (let k = 0; k < n; k++) {
 			const pt = randomPointIn(polys, areas, totalArea)
+
 			if (!pt) {
 				skipped++
 				continue
@@ -136,5 +152,6 @@ for (const row of rows) {
 
 out.end()
 console.error(`[done] ${dots} dots from ${rows.length} blocks (1 dot ≈ ${PER} people); ${skipped} skipped`)
+
 for (const [cat, n] of [...totals.entries()].sort((a, b) => b[1] - a[1]))
 	console.error(`  ${n.toString().padStart(7)}  ${cat}`)

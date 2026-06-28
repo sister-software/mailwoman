@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { CompoundUnitDesignatorClassifier } from "./CompoundUnitDesignatorClassifier.js"
 
 const classifier = await new CompoundUnitDesignatorClassifier().ready()

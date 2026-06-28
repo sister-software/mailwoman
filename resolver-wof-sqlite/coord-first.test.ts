@@ -12,6 +12,7 @@
  *   postcode.
  */
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { WofSqlitePlaceLookup } from "./lookup.js"
@@ -44,7 +45,9 @@ function buildDb(): DatabaseSync {
 	const pl = db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`)
 	pl.run("10115", "DE", 2, "Koepenick", "", 0.0, 1) // a Berlin postcode's centroid lands in the Ortsteil
 	pl.run("08523", "DE", 3, "Plauen", "", 0.0, 1) // Plauen's postcode → Plauen
-	pl.run("11201", "US", 5, "Brooklyn", "", 0.0, 1) // (#523) a Brooklyn postcode → the borough
+	pl.run("11201", "US", 5, "Brooklyn", "", 0.0, 1)
+
+	// (#523) a Brooklyn postcode → the borough
 	return db
 }
 

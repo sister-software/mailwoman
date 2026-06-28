@@ -75,8 +75,10 @@ function parseArgs(): GateArgs {
 		hallAbsThreshold: 100,
 		hallRateThresholdPct: 20,
 	}
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--baseline" && args[i + 1]) out.baselinePath = args[++i]
 		else if (a === "--candidate" && args[i + 1]) out.candidatePath = args[++i]
 		else if (a === "--recall-threshold-pp" && args[i + 1]) out.recallThresholdPp = Number(args[++i])
@@ -85,12 +87,14 @@ function parseArgs(): GateArgs {
 		else if (a === "--hall-rate-threshold-pct" && args[i + 1]) out.hallRateThresholdPct = Number(args[++i])
 		else if (a === "--out-md" && args[i + 1]) out.outMd = args[++i]
 	}
+
 	if (!out.baselinePath || !out.candidatePath) {
 		console.error(
 			"Usage: scripts/eval-gate.ts --baseline <json> --candidate <json> [--recall-threshold-pp 2] [--recall-min-baseline-pct 10] [--hall-abs-threshold 100] [--hall-rate-threshold-pct 20] [--out-md <path>]"
 		)
 		process.exit(2)
 	}
+
 	return out as GateArgs
 }
 
@@ -115,12 +119,14 @@ function evaluate(
 		// Order by baseline expected count desc — important tags first.
 		const ea = baseline.per_tag[a]?.expected ?? 0
 		const eb = baseline.per_tag[b]?.expected ?? 0
+
 		return eb - ea
 	})
 
 	for (const tag of sortedTags) {
 		const b = baseline.per_tag[tag]
 		const c = candidate.per_tag[tag]
+
 		if (!b || !c) {
 			// Either side missing the tag — fall through and emit a diff row but no gate violation
 			// (a tag that didn't exist in one eval is a schema diff, not a regression).
@@ -191,9 +197,11 @@ function buildReport(
 		`**Thresholds:** recall drop > ${args.recallThresholdPp}pp on tags with baseline > ${args.recallMinBaselinePct}% recall, OR hallucination spike > ${args.hallAbsThreshold} with new rate > ${args.hallRateThresholdPct}% of expected occurrences.`
 	)
 	lines.push("")
+
 	if (violations.length > 0) {
 		lines.push(`## Violations (${violations.length})`)
 		lines.push("")
+
 		for (const v of violations) {
 			lines.push(`- **${v.tag}** (${v.kind}) — ${v.detail}`)
 		}
@@ -203,8 +211,10 @@ function buildReport(
 	lines.push("")
 	lines.push("| Tag | Expected | Recall (baseline → candidate) | Hallucinated (baseline → candidate) |")
 	lines.push("|-----|----------|-------------------------------|-------------------------------------|")
+
 	for (const r of rows) lines.push(r)
 	lines.push("")
+
 	return lines.join("\n")
 }
 
@@ -217,6 +227,7 @@ function main(): void {
 	const report = buildReport(baseline, candidate, args, violations, rows)
 
 	console.log(report)
+
 	if (args.outMd) {
 		writeFileSync(args.outMd, report)
 		console.error(`Wrote gate report to ${args.outMd}`)

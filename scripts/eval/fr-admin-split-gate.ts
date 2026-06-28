@@ -20,10 +20,12 @@
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
  */
 
+import { readFileSync, writeFileSync } from "node:fs"
+
 import { type AddressNode, type AddressTree, decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
-import { readFileSync, writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const PLACETYPE_RANK: Record<string, number> = {
@@ -46,6 +48,7 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
+
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
 			out.push({
@@ -56,24 +59,35 @@ function collectResolved(tree: AddressTree): Resolved[] {
 				lon: n.lon,
 			})
 		}
+
 		for (const c of n.children) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return out
 }
 function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
+
 	for (const r of rs)
 		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+
 	return best
 }
 const pct = (xs: number[], p: number): number => {
 	if (xs.length === 0) return NaN
 	const s = [...xs].sort((a, b) => a - b)
+
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN)
-const norm = (s: string | undefined): string => (s ?? "").normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
+const norm = (s: string | undefined): string =>
+	(s ?? "")
+		.normalize("NFKD")
+		.replace(/[̀-ͯ]/g, "")
+		.toLowerCase()
+		.trim()
 
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 
@@ -111,6 +125,7 @@ async function main() {
 		regionCorrect = 0,
 		diacriticBroken = 0,
 		hasGoldRegion = 0
+
 	for (const row of rows) {
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
@@ -119,10 +134,13 @@ async function main() {
 		const flat = decodeAsJson(tree) as Record<string, string>
 		const goldRegion = row.components?.region as string | undefined
 		const predRegion = flat.region
+
 		if (goldRegion) {
 			hasGoldRegion++
+
 			if (predRegion) {
 				regionEmitted++
+
 				if (norm(predRegion) === norm(goldRegion)) regionCorrect++
 				// #727: a broken diacritic subword — pred is a strict, shorter suffix of gold ("ère" of "Lozère").
 				else if (
@@ -134,6 +152,7 @@ async function main() {
 			}
 		}
 		const best = mostSpecific(collectResolved(await resolver.resolveTree(tree, resolveOpts)))
+
 		if (best) {
 			resolved++
 			const e = haversineKm(best.lat, best.lon, row.lat, row.lon)
@@ -163,6 +182,7 @@ async function main() {
 	}
 	console.log(JSON.stringify(summary, null, 2))
 	const outPath = arg("out")
+
 	if (outPath) {
 		writeFileSync(outPath, JSON.stringify(summary, null, 2))
 		console.error(`wrote ${outPath}`)

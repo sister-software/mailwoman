@@ -15,10 +15,12 @@
  *   build` (prod) get correct artifacts without a separate pre-build step.
  */
 
-import type { LoadContext, Plugin } from "@docusaurus/types"
 import { mkdirSync } from "node:fs"
 import { resolve } from "node:path"
+
+import type { LoadContext, Plugin } from "@docusaurus/types"
 import webpack from "webpack"
+
 import { buildWorkspaceAliases, stageSqlJsHttpvfs } from "./resolve.js"
 
 export default function demoAssetsPlugin(context: LoadContext): Plugin {
@@ -39,6 +41,7 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 			const sqljsDir = resolve(staticDir, "sqljs")
 			mkdirSync(sqljsDir, { recursive: true })
 			stageSqlJsHttpvfs(sqljsDir)
+
 			return {}
 		},
 

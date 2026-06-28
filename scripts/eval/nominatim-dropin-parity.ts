@@ -21,6 +21,7 @@
 
 import { spawn } from "node:child_process"
 import { writeFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 interface Fixture {
@@ -111,19 +112,23 @@ function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): nu
 	const s =
 		Math.sin(dLat / 2) ** 2 +
 		Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+
 	return 2 * R * Math.asin(Math.sqrt(s))
 }
 
 /** Resolve once the server answers /status, or throw after the deadline. */
 async function waitForServer(port: number, deadlineMs: number): Promise<void> {
 	const start = Date.now()
+
 	for (;;) {
 		try {
 			const res = await fetch(`http://127.0.0.1:${port}/status`)
+
 			if (res.ok) return
 		} catch {
 			/* not up yet */
 		}
+
 		if (Date.now() - start > deadlineMs) throw new Error("server did not start within the deadline")
 		await new Promise((r) => setTimeout(r, 1000))
 	}
@@ -133,7 +138,9 @@ const CONTRACT_FIELDS = ["place_id", "lat", "lon", "display_name"]
 
 function checkContract(result: NominatimResult, addressdetails: boolean): string[] {
 	const missing = CONTRACT_FIELDS.filter((f) => result[f] == null)
+
 	if (addressdetails && (typeof result.address !== "object" || result.address == null)) missing.push("address")
+
 	return missing
 }
 
@@ -146,16 +153,19 @@ try {
 	await waitForServer(PORT, 120_000)
 
 	const rows: SearchRow[] = []
+
 	for (const fx of FIXTURE) {
 		const url = `http://127.0.0.1:${PORT}/search?q=${encodeURIComponent(fx.q)}&addressdetails=1`
 		let result: NominatimResult | undefined
+
 		try {
 			const res = await fetch(url)
 			const body = await res.json()
 			result = Array.isArray(body) ? body[0] : undefined
-		} catch (err) {
+		} catch {
 			result = undefined
 		}
+
 		if (!result) {
 			rows.push({ q: fx.q, frontier: !!fx.frontier, resolved: false, contractOk: false, km: null })
 			continue
@@ -167,8 +177,10 @@ try {
 
 	// /reverse — contract + did it land in the expected country (PIP over the admin polygons)?
 	const revRows: ReverseRow[] = []
+
 	for (const fx of REVERSE_FIXTURE) {
 		let result: NominatimResult | undefined
+
 		try {
 			const res = await fetch(`http://127.0.0.1:${PORT}/reverse?lat=${fx.lat}&lon=${fx.lon}&addressdetails=1`)
 			result = (await res.json()) as NominatimResult
@@ -191,12 +203,15 @@ try {
 	// Shows how many the explicit restriction recovers — partial, since exonyms (Wien/Vienna) + coverage
 	// still bite.
 	const overrideRows: OverrideRow[] = []
+
 	for (const fx of FIXTURE.filter((f) => f.cc)) {
 		let km: number | null = null
+
 		try {
 			const res = await fetch(`http://127.0.0.1:${PORT}/search?q=${encodeURIComponent(fx.q)}&countrycodes=${fx.cc}`)
 			const body = await res.json()
 			const r = Array.isArray(body) ? body[0] : undefined
+
 			if (r) km = haversineKm(Number(r.lat), Number(r.lon), fx.lat, fx.lon)
 		} catch {
 			/* no result */
@@ -213,8 +228,10 @@ try {
 		{ label: "reverse non-numeric", url: `/reverse?lat=x&lon=y` },
 	]
 	const robustnessRows: RobustnessRow[] = []
+
 	for (const c of robustnessCases) {
 		let status = 0
+
 		try {
 			status = (await fetch(`http://127.0.0.1:${PORT}${c.url}`)).status
 		} catch {
@@ -252,6 +269,7 @@ try {
 	lines.push("")
 	lines.push("| Query | Group | Resolved | Contract | Error (km) |")
 	lines.push("| --- | --- | :---: | :---: | ---: |")
+
 	for (const r of rows) {
 		lines.push(
 			`| ${r.q} | ${r.frontier ? "frontier" : "supported"} | ${r.resolved ? "✅" : "❌"} | ${
@@ -262,6 +280,7 @@ try {
 	lines.push("")
 	lines.push("| Reverse (lat,lon) | Contract | Country |")
 	lines.push("| --- | :---: | :---: |")
+
 	for (const r of revRows) {
 		lines.push(
 			`| ${r.ll} | ${r.contractOk ? "✅" : "❌"} | ${r.ccOk ? `✅ ${r.cc}` : `❌ ${r.cc ?? "—"}≠${r.expect}`} |`
@@ -270,17 +289,20 @@ try {
 	lines.push("")
 	lines.push("| Frontier + countrycodes | Resolves | Error (km) |")
 	lines.push("| --- | :---: | ---: |")
+
 	for (const r of overrideRows) {
 		lines.push(`| ${r.q} + cc=${r.cc} | ${r.ok ? "✅" : "❌"} | ${r.km == null ? "—" : r.km.toFixed(1)} |`)
 	}
 	lines.push("")
 	lines.push("| Malformed input | HTTP | OK |")
 	lines.push("| --- | ---: | :---: |")
+
 	for (const r of robustnessRows) {
 		lines.push(`| ${r.label} | ${r.status || "—"} | ${r.ok ? "✅" : "❌"} |`)
 	}
 	const report = lines.join("\n")
 	console.log(`\n${report}\n`)
+
 	if (OUT) {
 		writeFileSync(OUT, `${report}\n`)
 		console.error(`[parity] wrote ${OUT}`)

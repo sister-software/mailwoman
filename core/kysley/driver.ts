@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { DatabaseSync, StatementSync } from "node:sqlite"
+
 import {
 	CompiledQuery,
 	createQueryId,
@@ -15,7 +17,6 @@ import {
 	RawNode,
 	SelectQueryNode,
 } from "kysely"
-import type { DatabaseSync, StatementSync } from "node:sqlite"
 
 import type { SqliteDialectConfig } from "#kysley/dialect-config"
 
@@ -69,6 +70,7 @@ export class SqliteDriver implements Driver {
 		// SQLite only has one single connection. We use a mutex here to wait
 		// until the single connection has been released.
 		await this.#connectionMutex.lock()
+
 		// biome-ignore lint/style/noNonNullAssertion: :shrug:
 		return this.#connection!
 	}
@@ -133,6 +135,7 @@ class SqliteConnection implements DatabaseConnection {
 
 		if (stmt.columns().length) {
 			const rows = stmt.all(...args) as O[]
+
 			return Promise.resolve({ rows })
 		}
 
@@ -155,6 +158,7 @@ class SqliteConnection implements DatabaseConnection {
 		}
 
 		const iter = stmt.iterate(...args) as IterableIterator<R>
+
 		for (const row of iter) {
 			yield {
 				rows: [row],

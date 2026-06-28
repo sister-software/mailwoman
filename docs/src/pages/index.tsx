@@ -245,6 +245,7 @@ MAILWOMAN_WOF_DB=/path/to/wof.db npx mailwoman parse \\
 
 export default function Home(): ReactNode {
 	const { siteConfig } = useDocusaurusContext()
+
 	return (
 		<Layout
 			title={siteConfig.title}

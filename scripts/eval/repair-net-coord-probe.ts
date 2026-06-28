@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -20,7 +22,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const MODEL = arg("model", "out/v192/model.onnx")
@@ -43,13 +45,18 @@ function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
 	let best: RankedCoord | null = null as RankedCoord | null
 	const visit = (n: AddressNode): void => {
 		const pt = String(n.sourceId ?? "").split(":")[0] ?? ""
+
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined && (n.lat !== 0 || n.lon !== 0)) {
 			const r = RANK[pt] ?? 5
+
 			if (!best || r > best.r) best = { lat: n.lat, lon: n.lon, r }
 		}
+
 		for (const c of n.children ?? []) visit(c)
 	}
+
 	for (const r of tree.roots) visit(r)
+
 	return best ? { lat: best.lat, lon: best.lon } : null
 }
 
@@ -84,12 +91,15 @@ async function main() {
 	// Only rows whose leading token is a 5-digit house number (the bare-5-digit shape the repair gates on)
 	// and that carry a postcode + region, so both renders are well-formed.
 	const rows: Array<{ hn: string; street: string; state: string; zip: string; lat: number; lon: number }> = []
+
 	for (const r of all) {
 		const m = r.input.match(/^(\d{5})\s+([^,]+),/)
 		const state = r.expected.region ?? r.state ?? ""
 		const zip = r.expected.postcode ?? ""
+
 		if (m && state && /^\d{5}$/.test(zip))
 			rows.push({ hn: m[1]!, street: m[2]!.trim(), state, zip, lat: r.lat, lon: r.lon })
+
 		if (rows.length >= N) break
 	}
 
@@ -98,6 +108,7 @@ async function main() {
 		const c = bestCoord(
 			(await resolver.resolveTree((await scorer.parse(raw, { postcodeRepair: true })) as never, opts)) as never
 		)
+
 		return c
 	}
 	const strata = {
@@ -105,25 +116,34 @@ async function main() {
 		pclead: { on25: 0, off25: 0, on5: 0, off5: 0 },
 	}
 	let n = 0
+
 	for (const row of rows) {
 		const truth = { lat: row.lat, lon: row.lon }
 		n++
 		const ruralRaw = `${row.hn} ${row.street}, ${row.state}` // leading = house number
-		const pcRaw = `${row.zip} ${row.street}, ${row.state}` // leading = postcode
+		const pcRaw = `${row.zip} ${row.street}, ${row.state}`
+
+		// leading = postcode
 		for (const [key, raw] of [
 			["rural", ruralRaw],
 			["pclead", pcRaw],
 		] as const) {
 			const cOn = await score(raw, on as never)
 			const cOff = await score(raw, off as never)
+
 			if (cOn) {
 				const d = haversineKm(truth.lat, truth.lon, cOn.lat, cOn.lon)
+
 				if (d <= 25) strata[key].on25++
+
 				if (d <= 5) strata[key].on5++
 			}
+
 			if (cOff) {
 				const d = haversineKm(truth.lat, truth.lon, cOff.lat, cOff.lon)
+
 				if (d <= 25) strata[key].off25++
+
 				if (d <= 5) strata[key].off5++
 			}
 		}
@@ -131,6 +151,7 @@ async function main() {
 	const pct = (x: number) => ((100 * x) / Math.max(n, 1)).toFixed(0)
 	console.log(`\n#723 net-COORD probe — ${MODEL}  (n=${n} real US rows, rendered in 2 repair-triggering shapes)`)
 	console.log(`  repair ON = conventions=auto (the live config) | repair OFF = the kill state\n`)
+
 	for (const [key, label] of [
 		["rural", 'rural  "{hn5} {street}, {state}"  (leading = HOUSE#; repair helps)'],
 		["pclead", 'pclead "{zip} {street}, {state}"   (leading = POSTCODE; repair hurts)'],

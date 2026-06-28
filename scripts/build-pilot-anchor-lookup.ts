@@ -41,11 +41,12 @@
  *   also `$MAILWOMAN_DATA_ROOT` overridable.
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync, realpathSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
+
+import { dataRootPath } from "@mailwoman/core/utils"
 
 const ZCTA_SOURCE = "census-zcta-2024" // keep in sync with scripts/zcta-centroids.ts
 
@@ -56,6 +57,7 @@ type Centroid = [number, number, string | null]
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
+
 	for (; i >= 0; i--) {
 		if (a[i] === "9") a[i] = "0"
 		else {
@@ -63,28 +65,33 @@ function incDecimalString(s: string): string {
 			break
 		}
 	}
+
 	if (i < 0) a.unshift("1")
+
 	return a.join("")
 }
 
 /**
- * Python `round()` — correctly-rounded, round-half-to-EVEN. Works off the double's EXACT
- * (terminating) decimal expansion via `toFixed(80)`, so it matches Python both on ordinary values
- * (where a naïve `x * 10**nd` would diverge by a ULP) and on exact half-way ties like `40.890625` →
- * `40.89062` (where `toFixed(nd)` rounds half-UP and would diverge). `nd === 0` keeps a fast
- * half-even path on the double.
+ * Python `round()` — correctly-rounded, round-half-to-EVEN. Works off the double's EXACT (terminating) decimal
+ * expansion via `toFixed(80)`, so it matches Python both on ordinary values (where a naïve `x * 10**nd` would diverge
+ * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
+ * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
 function pyRound(x: number, nd: number = 0): number {
 	if (!Number.isFinite(x)) return x
+
 	if (nd === 0) {
 		const floor = Math.floor(x)
 		const diff = x - floor
+
 		if (diff < 0.5) return floor
+
 		if (diff > 0.5) return floor + 1
+
 		return floor % 2 === 0 ? floor : floor + 1
 	}
 	const neg = x < 0
-	const digits = Math.abs(x).toFixed(80) // exact expansion for any coord/distance-range double
+	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
 	const intPart = digits.slice(0, dot)
 	const frac = digits.slice(dot + 1)
@@ -92,6 +99,7 @@ function pyRound(x: number, nd: number = 0): number {
 	const rest = frac.slice(nd)
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
+
 	if (first > 5) roundUp = true
 	else if (first === 5) {
 		if (/[1-9]/.test(rest.slice(1))) roundUp = true
@@ -102,8 +110,10 @@ function pyRound(x: number, nd: number = 0): number {
 		}
 	}
 	let combined = intPart + keep
+
 	if (roundUp) combined = incDecimalString(combined)
 	const num = Number(combined) / 10 ** nd
+
 	return neg ? -num : num
 }
 
@@ -111,13 +121,16 @@ function pyRound(x: number, nd: number = 0): number {
 function pyFloat(s: string | undefined): number | null {
 	if (s === undefined) return null
 	const t = s.trim()
+
 	if (t === "") return null
 	const n = Number(t)
+
 	return Number.isNaN(n) ? null : n
 }
 
 function fiveDigit(name: string | null | undefined): string | null {
 	const n = (name || "").trim().toUpperCase()
+
 	return /^[0-9]{5}$/.test(n) ? n : null
 }
 
@@ -132,8 +145,10 @@ function loadIntl(country: string): Map<string, Centroid> {
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND country=?")
 		.all(country) as Array<{ name: string; latitude: number; longitude: number }>
+
 	for (const row of rows) {
 		const pc = fiveDigit(row.name)
+
 		if (pc) {
 			const lat = Number(row.latitude)
 			const lon = Number(row.longitude)
@@ -141,12 +156,13 @@ function loadIntl(country: string): Map<string, Centroid> {
 		}
 	}
 	con.close()
+
 	return out
 }
 
 /**
- * US postcodes → spr centroid, with per-row provenance from `centroid_source` when present (rows
- * the ZCTA fill placed carry `census-zcta-2024`; untracked placed rows are `wof`).
+ * US postcodes → spr centroid, with per-row provenance from `centroid_source` when present (rows the ZCTA fill placed
+ * carry `census-zcta-2024`; untracked placed rows are `wof`).
  */
 function loadUs(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
@@ -160,8 +176,10 @@ function loadUs(): Map<string, Centroid> {
 				"WHERE spr.placetype='postalcode' AND spr.is_current!=0"
 		)
 		.all() as Array<{ name: string; latitude: number; longitude: number; src: string | null }>
+
 	for (const row of rows) {
 		const pc = fiveDigit(row.name)
+
 		if (pc) {
 			const lat = Number(row.latitude)
 			const lon = Number(row.longitude)
@@ -169,6 +187,7 @@ function loadUs(): Map<string, Centroid> {
 		}
 	}
 	con.close()
+
 	return out
 }
 
@@ -178,23 +197,30 @@ function loadUs(): Map<string, Centroid> {
  */
 function loadZcta(path: string): Map<string, [number, number]> {
 	const out = new Map<string, [number, number]>()
+
 	for (const line of readFileSync(path, "utf8").split("\n")) {
 		const fields = line.split("\t").map((f) => f.trim())
 		const pc = fields.length ? fiveDigit(fields[0]) : null
+
 		if (!pc || fields.length < 7) continue
 		const lat = pyFloat(fields[5])
 		const lon = pyFloat(fields[6])
+
 		if (lat === null || lon === null) continue
+
 		if (placed(lat, lon)) out.set(pc, [lat, lon])
 	}
+
 	return out
 }
 
 /** Python `ensure_ascii=False` JSON string escape (quote, backslash, control chars). */
 function pyJsonStr(s: string): string {
 	let out = '"'
+
 	for (const ch of s) {
 		const code = ch.codePointAt(0)!
+
 		if (ch === '"') out += '\\"'
 		else if (ch === "\\") out += "\\\\"
 		else if (ch === "\n") out += "\\n"
@@ -203,25 +229,32 @@ function pyJsonStr(s: string): string {
 		else if (code < 0x20) out += "\\u" + code.toString(16).padStart(4, "0")
 		else out += ch
 	}
+
 	return out + '"'
 }
 
 /** Python `repr`/`json` of a float — shortest round-trip, but integer-valued renders with `.0`. */
 function pyJsonNum(x: number): string {
 	if (Number.isInteger(x)) return Object.is(x, -0) ? "-0.0" : `${x}.0`
+
 	return String(x)
 }
 
 /** Serialize one lookup value `[posterior, lat, lon, source]` the way Python `json.dumps` would. */
 function pyJsonValue(v: unknown): string {
 	if (v === null) return "null"
+
 	if (typeof v === "number") return pyJsonNum(v)
+
 	if (typeof v === "string") return pyJsonStr(v)
+
 	if (Array.isArray(v)) return "[" + v.map(pyJsonValue).join(", ") + "]"
 	const parts: string[] = []
+
 	for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
 		parts.push(pyJsonStr(k) + ": " + pyJsonValue(val))
 	}
+
 	return "{" + parts.join(", ") + "}"
 }
 
@@ -239,12 +272,14 @@ function parseCliArgs(): Args {
 			zcta: { type: "string" },
 		},
 	})
+
 	if (!values.output) {
 		console.error(
 			"Usage: build-pilot-anchor-lookup.ts --output <pilot-anchor-lookup.json> [--zcta <2024_Gaz_zcta.txt>]"
 		)
 		process.exit(2)
 	}
+
 	return { output: values.output, zcta: values.zcta }
 }
 
@@ -258,29 +293,36 @@ function main(): void {
 	] // centroid priority order
 	const zcta = args.zcta ? loadZcta(args.zcta) : new Map<string, [number, number]>()
 	const allCodes = new Set<string>()
+
 	for (const [, d] of sources) for (const k of d.keys()) allCodes.add(k)
 
 	const lookup: Record<string, LookupRow> = {}
 	const sortedCodes = [...allCodes].sort()
 	let collisions = 0
 	let zctaFilled = 0
+
 	for (const pc of sortedCodes) {
 		const members = sources.filter(([, d]) => d.has(pc)).map(([c]) => c)
 		const k = members.length
 		const posterior: Record<string, number> = {}
+
 		for (const c of members) posterior[c] = 1.0 / k
+
 		if (k > 1) collisions++
 		// centroid: first source (DE→FR→US) with a non-zero centroid; never overwritten by ZCTA.
 		let lat = 0.0
 		let lon = 0.0
 		let source: string | null = null
+
 		for (const [, d] of sources) {
 			const c = d.get(pc)
+
 			if (c && placed(c[0], c[1])) {
 				;[lat, lon, source] = c
 				break
 			}
 		}
+
 		// ZCTA fill: placeholders only, US members only (#525).
 		if (source === null && members.includes("US") && zcta.has(pc)) {
 			;[lat, lon] = zcta.get(pc)!
@@ -296,8 +338,10 @@ function main(): void {
 	writeFileSync(args.output, "{" + body + "}", "utf8")
 
 	const byCountry: Record<string, number> = {}
+
 	for (const [c] of sources) byCountry[c] = Object.values(lookup).filter((v) => c in v[0]).length
 	const bySource = new Map<string | null, number>()
+
 	for (const v of Object.values(lookup)) bySource.set(v[3], (bySource.get(v[3]) ?? 0) + 1)
 	const placeholders = bySource.get(null) ?? 0
 
@@ -323,6 +367,7 @@ function main(): void {
 // "__main__"`), so importing this module evaluates it without running the build.
 const selfPath = realpathSync(fileURLToPath(import.meta.url))
 const entryPath = process.argv[1] ? realpathSync(process.argv[1]) : ""
+
 if (entryPath && entryPath === selfPath) {
 	main()
 }

@@ -16,8 +16,10 @@
  *   uses), keeping one normalizer in one place.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "node:sqlite"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+
 import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
 
 export interface WofPostalCityAliasLookupOpts {
@@ -38,9 +40,9 @@ export interface PostalCityAlias {
 }
 
 /**
- * Reader over `postal_city_alias`. The only query is a postcode-scoped probe for DIVERGENT rows
- * (where the postal name differs from the geographic name — the rows that carry alias signal),
- * issued via the typed Kysely query builder against {@link PostalCityAliasDatabase}.
+ * Reader over `postal_city_alias`. The only query is a postcode-scoped probe for DIVERGENT rows (where the postal name
+ * differs from the geographic name — the rows that carry alias signal), issued via the typed Kysely query builder
+ * against {@link PostalCityAliasDatabase}.
  */
 export class WofPostalCityAliasLookup {
 	#db: DatabaseSync
@@ -62,12 +64,12 @@ export class WofPostalCityAliasLookup {
 	}
 
 	/**
-	 * Divergent postal-city aliases for a postcode (empty when the postcode isn't in the table). The
-	 * scorer groups these by normalized `geoLocality` and appends the `postalCity` surfaces to the
-	 * matching candidate locality's alias set.
+	 * Divergent postal-city aliases for a postcode (empty when the postcode isn't in the table). The scorer groups these
+	 * by normalized `geoLocality` and appends the `postalCity` surfaces to the matching candidate locality's alias set.
 	 */
 	async getDivergentAliases(postcode: string): Promise<PostalCityAlias[]> {
 		const pc = postcode.trim()
+
 		if (!pc) return []
 		const rows = await this.#kdb
 			.selectFrom("postal_city_alias")
@@ -75,6 +77,7 @@ export class WofPostalCityAliasLookup {
 			.where("postcode", "=", pc)
 			.where("divergent", "=", 1)
 			.execute()
+
 		return rows.map((r) => ({ postalCity: String(r.postal_city), geoLocality: String(r.geo_locality), n: Number(r.n) }))
 	}
 

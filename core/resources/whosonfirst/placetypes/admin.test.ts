@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import type { WOFProperties } from "./admin.js"
 import { parsePlacetypeSource, pluckFileNameLanguageCode, pluckPlacetypeSpec } from "./admin.js"
 

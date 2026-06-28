@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { applyNfc } from "./nfc.js"
 
 // Combining acute accent (U+0301) and the composed forms, by codepoint — so the test's intent

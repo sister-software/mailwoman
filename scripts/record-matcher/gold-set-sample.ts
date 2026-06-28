@@ -20,12 +20,14 @@
  *   [--cap 200000] [--state TX] [--tau 0.7] [--n 300] [--out-jsonl <path>]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { dataRootPath } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
-import { writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -67,7 +69,9 @@ function orgTokens(s: string): Set<string> {
 function jaccard(a: Set<string>, b: Set<string>): number {
 	if (a.size === 0 || b.size === 0) return 0
 	let inter = 0
+
 	for (const t of a) if (b.has(t)) inter++
+
 	return inter / (a.size + b.size - inter)
 }
 const C = {
@@ -101,14 +105,18 @@ async function main(): Promise<void> {
 	console.error(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
 	const byAddr = new Map<string, Prov[]>()
 	let kept = 0
+
 	for await (const r of streamRows(REGISTRY)) {
 		if (norm(r[C.entityType]) !== "2") continue
+
 		if (norm(r[C.pState]).toUpperCase() !== STATE) continue
 		const org = norm(r[C.org])
 		const line1 = norm(r[C.pAddr])
+
 		if (!org || !line1) continue
 		const address = [line1, norm(r[C.pCity]), STATE, norm(r[C.pZip])].filter(Boolean).join(", ")
 		const addrKey = addressFrequencyKey(address)
+
 		if (!addrKey) continue
 		const p: Prov = {
 			npi: norm(r[C.npi]),
@@ -120,9 +128,11 @@ async function main(): Promise<void> {
 			subpart: norm(r[C.isSubpart]).toUpperCase() === "Y",
 			parent: `${norm(r[C.parentLBN])}|${norm(r[C.parentTIN])}`.toLowerCase(),
 		}
+
 		if (!byAddr.has(addrKey)) byAddr.set(addrKey, [])
 		byAddr.get(addrKey)!.push(p)
 		kept++
+
 		if (kept >= CAP) break
 	}
 	console.error(`    ${kept} providers at ${byAddr.size} addresses`)
@@ -143,18 +153,24 @@ async function main(): Promise<void> {
 		adjudication: null // ← to be filled: "same-entity" | "distinct"
 	}
 	const hard: HardPair[] = []
+
 	for (const provs of byAddr.values()) {
 		const distinct = new Map<string, Prov>()
+
 		for (const p of provs) if (!distinct.has(p.npi)) distinct.set(p.npi, p)
 		const list = [...distinct.values()]
+
 		if (list.length < 2) continue
+
 		for (let i = 0; i < list.length; i++) {
 			for (let j = i + 1; j < list.length; j++) {
 				const a = list[i]!
 				const b = list[j]!
 				const sim = jaccard(a.tokens, b.tokens)
+
 				if (sim < TAU) continue
 				const sameParent = a.subpart && b.subpart && a.parent === b.parent && a.parent !== "|"
+
 				if (sameParent) continue // programmatic truth already collapses these — not the hard slice
 				const sameAuth = a.auth !== "" && a.auth === b.auth
 				const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy

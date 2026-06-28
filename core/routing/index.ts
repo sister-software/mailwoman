@@ -7,11 +7,10 @@
 import type { AxiosRequestConfig } from "axios"
 
 /**
- * Derived from React Router, this type helper is used to extract the parameters from a path
- * pattern.
+ * Derived from React Router, this type helper is used to extract the parameters from a path pattern.
  *
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/URLPattern | MDN: URLPattern}
  * @internal
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/URLPattern | MDN: URLPattern}
  */
 export type ParamPattern<Path extends string> = Path extends "*" | "/*"
 	? "*"
@@ -131,6 +130,7 @@ export class URLRoutePattern<I extends URLPatternPathnameInit | string = string>
 			const paramPattern = `:${paramName}`
 
 			const paramPatternIndex = pathname.indexOf(paramPattern)
+
 			if (paramPatternIndex === -1) continue
 
 			// Is the param present?
@@ -197,6 +197,7 @@ export class URLRoutePattern<I extends URLPatternPathnameInit | string = string>
 			const value = this[component]
 
 			if (!value) continue
+
 			if (value === "*") continue
 
 			result[component] = value

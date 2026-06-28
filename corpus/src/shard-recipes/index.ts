@@ -8,8 +8,6 @@
  *   to them. A new shard is a new entry here, not a new script.
  */
 
-import type { ShardRecipe } from "./scaffold.js"
-
 import { anchorAbsorptionRecipe } from "./anchor-absorption.js"
 import { boundaryStressRecipe } from "./boundary-stress.js"
 import { countryBalancedRecipe } from "./country-balanced.js"
@@ -22,6 +20,7 @@ import { localeRecipe } from "./locale.js"
 import { noStreetRecipe } from "./no-street.js"
 import { poBoxCedexRecipe } from "./po-box-cedex.js"
 import { poBoxRecipe } from "./po-box.js"
+import type { ShardRecipe } from "./scaffold.js"
 import { streetAffixRecipe } from "./street-affix.js"
 import { streetBareRecipe } from "./street-bare.js"
 import { streetRecipe } from "./street.js"

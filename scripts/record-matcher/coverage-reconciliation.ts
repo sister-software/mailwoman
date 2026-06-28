@@ -29,6 +29,8 @@
  *   [--cap 2000] [--wof <admin.db>] [--data-root <dir>] [--out-md <md>] [--out-geojson <geojson>]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -45,11 +47,12 @@ import {
 	type SourceRecord,
 } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { writeFileSync } from "node:fs"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -126,12 +129,15 @@ const SPECS: SourceSpec[] = [
 async function main(): Promise<void> {
 	// --- Ingest each source into one combined record set (geo-first resolve). ---
 	const rawBySource = new Map<string, Record<string, string>[]>()
+
 	for (const spec of SPECS) {
 		console.error(`[A] ${spec.source}: streaming + ${STATE} filter (cap ${CAP})…`)
 		const kept: Record<string, string>[] = []
+
 		for await (const row of streamRows(spec.path)) {
 			if (!spec.inState(row)) continue
 			kept.push(row)
+
 			if (kept.length >= CAP) break
 		}
 		rawBySource.set(spec.source, kept)
@@ -158,7 +164,9 @@ async function main(): Promise<void> {
 				placeCountry: false,
 			})
 			total++
+
 			if (g.lat !== null) geo++
+
 			return g
 		},
 		country: "US",
@@ -166,8 +174,10 @@ async function main(): Promise<void> {
 
 	console.error("[C] geocoding + ingesting…")
 	const records: SourceRecord[] = []
+
 	for (const spec of SPECS) {
 		const recs = await ingestRows(rawBySource.get(spec.source)!, spec.mapping, { geocodeAddress: seam })
+
 		for (const r of recs) r.id = `${spec.source}:${r.id}`
 		records.push(...recs)
 	}
@@ -205,10 +215,12 @@ async function main(): Promise<void> {
 		spotCheckLimit: 15,
 	})
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`[written] ${OUT_MD}`)
 	}
+
 	if (OUT_GEOJSON) {
 		writeFileSync(OUT_GEOJSON, JSON.stringify(geojson))
 		console.error(`[written] ${OUT_GEOJSON} (${geojson.features.length} features)`)

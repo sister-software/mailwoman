@@ -32,8 +32,8 @@ interface StageDef {
 	textColor: string
 	description: string
 	/**
-	 * `AddressNode.source` values that map to this stage. When a node's `source` matches one of
-	 * these, this stage contributed to that node.
+	 * `AddressNode.source` values that map to this stage. When a node's `source` matches one of these, this stage
+	 * contributed to that node.
 	 */
 	sourceMatches: string[]
 	/** True when a node can carry this stage's badge AND a different source (displaced classifier). */
@@ -130,6 +130,7 @@ const STAGES: StageDef[] = [
 
 /** Fast lookup: source string → StageDef */
 const SOURCE_TO_STAGE: Map<string, StageDef> = new Map()
+
 for (const stage of STAGES) {
 	for (const src of stage.sourceMatches) {
 		SOURCE_TO_STAGE.set(src, stage)
@@ -166,16 +167,17 @@ interface TreeNodeLike {
 }
 
 /**
- * Flatten the address tree preserving source provenance. Mirrors `flattenTree` from demo-helpers
- * but preserves `source` / `sourceId` and extracts displaced classifier info from `metadata` when
- * available.
+ * Flatten the address tree preserving source provenance. Mirrors `flattenTree` from demo-helpers but preserves `source`
+ * / `sourceId` and extracts displaced classifier info from `metadata` when available.
  */
 function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	const out: SourceNode[] = []
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
 	const stack = [...(roots as TreeNodeLike[])]
+
 	while (stack.length) {
 		const n = stack.pop()!
+
 		if (typeof n.tag === "string") {
 			const displacedSource =
 				typeof n.metadata?.classifier_source === "string" ? n.metadata.classifier_source : undefined
@@ -193,12 +195,14 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 				displacedSourceId,
 			})
 		}
+
 		if (Array.isArray(n.children)) {
 			for (const c of n.children) {
 				stack.push(c as TreeNodeLike)
 			}
 		}
 	}
+
 	return out.reverse()
 }
 
@@ -218,6 +222,7 @@ function resolveStages(node: SourceNode): StageContribution[] {
 
 	// Primary source
 	const primaryStage = node.source ? SOURCE_TO_STAGE.get(node.source) : undefined
+
 	if (primaryStage) {
 		contributions.push({ stage: primaryStage })
 	}
@@ -225,6 +230,7 @@ function resolveStages(node: SourceNode): StageContribution[] {
 	// Displaced classifier (when resolver wins)
 	if (node.displacedSource) {
 		const displacedStage = SOURCE_TO_STAGE.get(node.displacedSource)
+
 		if (displacedStage && displacedStage !== primaryStage) {
 			contributions.push({ stage: displacedStage, displaced: true })
 		}
@@ -263,6 +269,7 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 			{STAGES.map((stage) => {
 				// Dim FST when not active
 				const dimmed = stage.key === "fst_prior" && !fstActive
+
 				return (
 					<div
 						key={stage.key}
@@ -315,6 +322,7 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
+
 	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
 }
 
@@ -336,6 +344,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 			sourceNodes.find((sn) => sn.tag === n.tag && sn.start === n.start && sn.end === n.end) ??
 			sourceNodes.find((sn) => sn.tag === n.tag && String(sn.value ?? "") === String(n.value ?? "")) ??
 			sourceNodes[i]
+
 		return { ...n, sourceNode: match && match.tag === n.tag ? match : undefined }
 	})
 
@@ -362,6 +371,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 				<tbody>
 					{enriched.map((n, i) => {
 						const contributions = n.sourceNode ? resolveStages(n.sourceNode) : []
+
 						return (
 							<tr key={i}>
 								<td>

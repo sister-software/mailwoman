@@ -21,10 +21,9 @@
  */
 
 /**
- * Canonical USPS secondary unit designator → recognized variants. The first variant is the approved
- * USPS abbreviation. Keys + values uppercase per the publication. The designators marked by USPS as
- * "requires a secondary number" (APT, BLDG, FL, …) and the standalone ones (BSMT, LBBY, PH, …) are
- * both included — synthesis treats them uniformly.
+ * Canonical USPS secondary unit designator → recognized variants. The first variant is the approved USPS abbreviation.
+ * Keys + values uppercase per the publication. The designators marked by USPS as "requires a secondary number" (APT,
+ * BLDG, FL, …) and the standalone ones (BSMT, LBBY, PH, …) are both included — synthesis treats them uniformly.
  */
 export const US_UNIT_DESIGNATOR_VARIANTS = {
 	APARTMENT: ["APT", "APRT", "APMT"],
@@ -57,19 +56,21 @@ export const US_UNIT_DESIGNATOR_VARIANTS = {
 export type UsUnitDesignator = keyof typeof US_UNIT_DESIGNATOR_VARIANTS
 
 /**
- * Inverse lookup: every variant abbreviation OR full canonical word → its canonical key, built once
- * at module load, lowercase-keyed for case-insensitive matching (`apt` → `"APARTMENT"`, `ste` →
- * `"SUITE"`, `suite` → `"SUITE"`).
+ * Inverse lookup: every variant abbreviation OR full canonical word → its canonical key, built once at module load,
+ * lowercase-keyed for case-insensitive matching (`apt` → `"APARTMENT"`, `ste` → `"SUITE"`, `suite` → `"SUITE"`).
  */
 export const US_UNIT_DESIGNATOR_LOOKUP: ReadonlyMap<string, UsUnitDesignator> = (() => {
 	const out = new Map<string, UsUnitDesignator>()
+
 	for (const canonical of Object.keys(US_UNIT_DESIGNATOR_VARIANTS) as UsUnitDesignator[]) {
 		out.set(canonical.toLowerCase(), canonical)
+
 		for (const variant of US_UNIT_DESIGNATOR_VARIANTS[canonical]) {
 			// First canonical that claims a variant wins (matches the publication's ordering).
 			if (!out.has(variant.toLowerCase())) out.set(variant.toLowerCase(), canonical)
 		}
 	}
+
 	return out
 })()
 
@@ -79,17 +80,19 @@ export const US_UNIT_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<UsUnitDesignator
 ) as Readonly<Record<UsUnitDesignator, string>>
 
 /**
- * If the FIRST whitespace-separated word of `unit` is a known USPS designator variant, return the
- * canonical key and the matched word. Returns null if the leading word isn't a known designator
- * (e.g. a bare `"4B"` or `"#210"`). Leading-word-only — designators introduce the unit, unlike
- * street suffixes which trail.
+ * If the FIRST whitespace-separated word of `unit` is a known USPS designator variant, return the canonical key and the
+ * matched word. Returns null if the leading word isn't a known designator (e.g. a bare `"4B"` or `"#210"`).
+ * Leading-word-only — designators introduce the unit, unlike street suffixes which trail.
  */
 export function matchLeadingDesignator(unit: string): { canonical: UsUnitDesignator; matched: string } | null {
 	const trimmed = unit.trim()
+
 	if (!trimmed) return null
 	const first = trimmed.split(/\s+/)[0]!
 	const canonical = US_UNIT_DESIGNATOR_LOOKUP.get(first.toLowerCase())
+
 	if (!canonical) return null
+
 	return { canonical, matched: first }
 }
 
@@ -102,21 +105,23 @@ export interface UnitDesignatorMatch<D extends UsUnitDesignator = UsUnitDesignat
 }
 
 /**
- * Look up a USPS secondary unit designator (by canonical word, abbreviation, or any variant) and
- * its approved abbreviation.
+ * Look up a USPS secondary unit designator (by canonical word, abbreviation, or any variant) and its approved
+ * abbreviation.
  */
 export function lookupUnitDesignator<D extends UsUnitDesignator>(designator: D): UnitDesignatorMatch<D>
 export function lookupUnitDesignator(input: string | null | undefined): UnitDesignatorMatch | null
 export function lookupUnitDesignator(input: string | null | undefined): UnitDesignatorMatch | null {
 	if (!input || typeof input !== "string") return null
 	const designator = US_UNIT_DESIGNATOR_LOOKUP.get(input.trim().toLowerCase())
+
 	if (!designator) return null
+
 	return { designator, abbreviation: US_UNIT_DESIGNATOR_VARIANTS[designator][0] }
 }
 
 /**
- * True when a token is any USPS secondary unit designator or abbreviation (case-insensitive) —
- * `"Apt"`, `"STE"`, `"floor"`.
+ * True when a token is any USPS secondary unit designator or abbreviation (case-insensitive) — `"Apt"`, `"STE"`,
+ * `"floor"`.
  */
 export function isUnitDesignatorToken(input: unknown): boolean {
 	return typeof input === "string" && US_UNIT_DESIGNATOR_LOOKUP.has(input.trim().toLowerCase())

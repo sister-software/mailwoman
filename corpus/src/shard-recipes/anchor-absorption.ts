@@ -29,11 +29,13 @@ const ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 function loadRealUsZips(path: string): string[] {
 	const d = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>
 	const zips: string[] = []
+
 	for (const [pc, v] of Object.entries(d)) {
 		if (Array.isArray(v) && v[0] && typeof v[0] === "object" && "US" in (v[0] as object) && /^\d{5}$/.test(pc)) {
 			zips.push(pc)
 		}
 	}
+
 	return zips
 }
 
@@ -52,6 +54,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 		let written = 0
 		let quarantined = 0
 		const byTemplate: Record<string, number> = {}
+
 		for (let i = 0; i < count; i++) {
 			const synth = synthesizeAnchorAbsorptionRow({ random, realZips })
 			const country = synth.locale.split("-")[1] // "en-US" -> "US", "de-DE" -> "DE"
@@ -64,6 +67,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 				source_id: stableSourceId(source, `${i}` as unknown as Parameters<typeof stableSourceId>[1]),
 			}
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
+
 			if (aligned.kind !== "labeled") {
 				quarantined++
 				continue
@@ -76,6 +80,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 		}
 		console.error(`\nwrote ${written} rows (${quarantined} quarantined)`)
 		console.error("  by slice:", JSON.stringify(byTemplate))
+
 		return { emitted: written, skipped: quarantined }
 	},
 }

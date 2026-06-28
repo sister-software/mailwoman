@@ -10,6 +10,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { WofSqlitePlaceLookup } from "./lookup.js"
@@ -32,6 +33,7 @@ function buildFixtureDb(): DatabaseSync {
 		INSERT INTO spr VALUES (5, NULL, 'Paris', 'locality', 'FR', 48.85, 2.34, 48.81, 48.90, 2.22, 2.46, -1, 0);
 		INSERT INTO spr VALUES (6, NULL, 'St. Petersburg', 'locality', 'US', 27.77, -82.64, 27.66, 27.85, -82.78, -82.51, -1, 0);
 	`)
+
 	return db
 }
 

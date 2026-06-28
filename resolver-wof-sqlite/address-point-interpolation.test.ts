@@ -10,9 +10,11 @@
  *   its cap, route-key folding, and the no-bracket fall-through to the TIGER segment fallback.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "node:sqlite"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
 import { AddressPointInterpolator } from "./address-point-interpolation.js"
 import { type AddressPointDatabase, createAddressPointTable } from "./address-point-schema.js"
 import { StreetInterpolator } from "./interpolation.js"
@@ -35,6 +37,7 @@ async function seedPoints(db: DatabaseSync, points: SeedPoint[]): Promise<void> 
 		`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
 		 VALUES (?, ?, ?, NULL, ?, NULL, ?, ?, ?, 'overture:test', '2026-05-20.0')`
 	)
+
 	for (const p of points) {
 		ins.run(p.street_key, p.street_key, p.number, p.postcode, p.street_key, p.lat, p.lon)
 	}

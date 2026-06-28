@@ -35,6 +35,8 @@
  *   [--seeds 8] [--wof <admin.db>] [--data-root <dir>] [--seed 1] [--out-md <md>]
  */
 
+import { writeFileSync } from "node:fs"
+
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
@@ -50,11 +52,12 @@ import {
 	type SourceRecord,
 } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { writeFileSync } from "node:fs"
+
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
+
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
@@ -93,8 +96,10 @@ const addr = (line: string, city: string, st: string, zip: string) =>
 /** Deterministic LCG (no Math.random — reproducible split). */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
+
 	return () => {
 		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+
 		return s / 0x100000000
 	}
 }
@@ -110,11 +115,14 @@ async function main(): Promise<void> {
 	// --- Data-gen: same NPI-keyed records as the dedup benchmark. ---
 	console.error("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
+
 	for await (const r of streamRows(OTHER_NAMES)) {
 		const npi = norm(r[C.npi])
 		const alt = norm(r[C.otherOrg])
+
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
+
 		if (list.length < 5) list.push(alt)
 		altNames.set(npi, list)
 	}
@@ -125,15 +133,18 @@ async function main(): Promise<void> {
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 	let scanned = 0
+
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
+
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
 			addrTotal++
 		}
 		const npi = norm(r[C.npi])
+
 		if (
 			kept.size < NPIS &&
 			npi &&
@@ -144,12 +155,15 @@ async function main(): Promise<void> {
 		) {
 			const isOrg = norm(r[C.entityType]) === "2"
 			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
+
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
 				kept.add(npi)
 				rows.push({ npi, name: primaryName, org, address: practice })
+
 				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice })
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
+
 				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing })
 			}
 		}
@@ -202,13 +216,14 @@ async function main(): Promise<void> {
 	const lastLevel = (i: number) => levelCounts[i]! - 1 // the "different"/"far" catch-all level
 
 	/**
-	 * Feature vector for a pair: one-hot agreement levels + the over-merge interactions + address
-	 * crowdedness.
+	 * Feature vector for a pair: one-hot agreement levels + the over-merge interactions + address crowdedness.
 	 */
 	function features(pat: number[], a: SourceRecord): number[] {
 		const f: number[] = []
+
 		for (let i = 0; i < pat.length; i++) {
 			const lvl = pat[i]!
+
 			for (let l = 0; l < levelCounts[i]!; l++) f.push(lvl === l ? 1 : 0)
 		}
 		// Interaction: co-located (spatial exact = level 0) AND the names/org disagree (catch-all level).
@@ -219,7 +234,9 @@ async function main(): Promise<void> {
 		f.push(spatialExact * orgDisagree)
 		// Address crowdedness (how shared this address is) — high → "same address" is weak evidence.
 		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
-		f.push(Math.min(1, freq * 1000)) // scale into a usable range
+		f.push(Math.min(1, freq * 1000))
+
+		// scale into a usable range
 		return f
 	}
 
@@ -244,14 +261,14 @@ async function main(): Promise<void> {
 	const sigmoid = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
 
 	/**
-	 * One train/test split (by NPI): train the L2 logistic regression on the train pairs, then score
-	 * the held-out test pairs with both the LR and the EM-fitted FS scorer. The FS model is
-	 * seed-independent (fit unsupervised on ALL pairs); only the LR weights and the test subset move
-	 * with the seed, so repeating over seeds bounds split variance.
+	 * One train/test split (by NPI): train the L2 logistic regression on the train pairs, then score the held-out test
+	 * pairs with both the LR and the EM-fitted FS scorer. The FS model is seed-independent (fit unsupervised on ALL
+	 * pairs); only the LR weights and the test subset move with the seed, so repeating over seeds bounds split variance.
 	 */
 	function runSplit(seed: number): SplitScored {
 		const rnd = lcg(seed)
 		const npiSplit = new Map<string, "train" | "test">()
+
 		for (const npi of kept) npiSplit.set(npi, rnd() < 0.67 ? "train" : "test")
 
 		const train: Sample[] = []
@@ -259,6 +276,7 @@ async function main(): Promise<void> {
 		pairs.forEach(([a, b], i) => {
 			const sa = npiSplit.get(a.id)
 			const sb = npiSplit.get(b.id)
+
 			if (!sa || sa !== sb) return // cross-split or unknown → drop (no leakage)
 			const sample: Sample = {
 				x: features(patterns[i]!, a),
@@ -275,24 +293,31 @@ async function main(): Promise<void> {
 		const lrate = 0.1
 		const l2 = 1e-3
 		const posWeight = train.filter((s) => s.y === 1).length / Math.max(1, train.length)
+
 		for (let epoch = 0; epoch < 400; epoch++) {
 			const gw = new Array<number>(dim).fill(0)
 			let gb = 0
+
 			for (const s of train) {
 				let z = bias
+
 				for (let j = 0; j < dim; j++) z += w[j]! * s.x[j]!
 				const p = sigmoid(z)
 				const sampleW = s.y === 1 ? 1 - posWeight : posWeight
 				const err = (p - s.y) * sampleW
+
 				for (let j = 0; j < dim; j++) gw[j]! += err * s.x[j]!
 				gb += err
 			}
+
 			for (let j = 0; j < dim; j++) w[j]! -= lrate * (gw[j]! / train.length + l2 * w[j]!)
 			bias -= lrate * (gb / train.length)
 		}
 		const lrScore = (x: number[]) => {
 			let z = bias
+
 			for (let j = 0; j < x.length; j++) z += w[j]! * x[j]!
+
 			return z
 		}
 
@@ -318,28 +343,35 @@ async function main(): Promise<void> {
 	function auc(scored: Array<{ s: number; y: number }>): number {
 		const pos = scored.filter((d) => d.y === 1)
 		const neg = scored.filter((d) => d.y === 0)
+
 		if (!pos.length || !neg.length) return NaN
 		// Mann-Whitney U via rank.
 		const sorted = [...scored].sort((p, q) => p.s - q.s)
 		let rank = 1
 		let rankSum = 0
+
 		for (let i = 0; i < sorted.length; ) {
 			let j = i
+
 			while (j < sorted.length && sorted[j]!.s === sorted[i]!.s) j++
 			const avg = (rank + (rank + (j - i) - 1)) / 2
+
 			for (let k = i; k < j; k++) if (sorted[k]!.y === 1) rankSum += avg
 			rank += j - i
 			i = j
 		}
+
 		return (rankSum - (pos.length * (pos.length + 1)) / 2) / (pos.length * neg.length)
 	}
 	function bestF1(scored: Array<{ s: number; y: number }>): { f1: number; precision: number; recall: number } {
 		const thresholds = [...new Set(scored.map((d) => d.s))].sort((p, q) => p - q)
 		let best = { f1: 0, precision: 0, recall: 0 }
 		const P = scored.filter((d) => d.y === 1).length
+
 		for (const t of thresholds) {
 			let tp = 0
 			let fp = 0
+
 			for (const d of scored) {
 				if (d.s >= t) {
 					if (d.y === 1) tp++
@@ -349,8 +381,10 @@ async function main(): Promise<void> {
 			const precision = tp + fp > 0 ? tp / (tp + fp) : 0
 			const recall = P > 0 ? tp / P : 0
 			const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
+
 			if (f1 > best.f1) best = { f1, precision, recall }
 		}
+
 		return best
 	}
 
@@ -360,6 +394,7 @@ async function main(): Promise<void> {
 	const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
 	const std = (xs: number[]) => {
 		const m = mean(xs)
+
 		return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)))
 	}
 	const fsAucs = splits.map((r) => auc(r.fsScored))
@@ -384,7 +419,9 @@ async function main(): Promise<void> {
 	const gbtBeatsLr = gbtVsLr.filter((d) => d > 0).length
 	const meanGbtVsFs = mean(gbtVsFs)
 	const meanGbtVsLr = mean(gbtVsLr)
-	const f1DeltaGbt = mean(gbtF1s) - mean(fsF1s) // operating-point F1 gain (GBT − FS)
+	const f1DeltaGbt = mean(gbtF1s) - mean(fsF1s)
+
+	// operating-point F1 gain (GBT − FS)
 	for (const r of splits) {
 		const dl = auc(r.lrScored) - auc(r.fsScored)
 		const dg = auc(r.gbtScored) - auc(r.fsScored)
@@ -468,6 +505,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`| seed | test pairs | FS AUC | LR AUC | GBT AUC |`)
 	lines.push(`|---:|---:|---:|---:|---:|`)
+
 	for (const r of splits) {
 		lines.push(`| ${r.seed} | ${r.testN} | ${f4(auc(r.fsScored))} | ${f4(auc(r.lrScored))} | ${f4(auc(r.gbtScored))} |`)
 	}
@@ -514,6 +552,7 @@ async function main(): Promise<void> {
 
 	const md = lines.join("\n")
 	console.log(md)
+
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`[written] ${OUT_MD}`)

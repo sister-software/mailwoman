@@ -117,14 +117,13 @@ export interface ClassificationMatch {
 	/**
 	 * Languages for which the classification is valid.
 	 *
-	 * If a language is present in this set, it means that the value which it is associated with is a
-	 * valid value in that language.
+	 * If a language is present in this set, it means that the value which it is associated with is a valid value in that
+	 * language.
 	 */
 	readonly languages?: Displayable<ReadonlySet<LibPostalLanguageCode | Alpha3bLanguageCode>>
 
 	/**
-	 * Flags associated with the classification, i.e. clarifying details to enhance the
-	 * classification.
+	 * Flags associated with the classification, i.e. clarifying details to enhance the classification.
 	 */
 	readonly flags?: Set<string>
 }

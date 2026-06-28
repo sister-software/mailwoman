@@ -25,12 +25,11 @@
 import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
 
 /**
- * Spelled ordinal street names → their digit-ordinal form ("tenth" → "10th"), applied ONLY when a
- * street-type suffix follows (#723 admin-tail) — so the ordinal cross-streets common in grid cities
- * ("Tenth Street", "Fifth Avenue") match the shards' digit keys, WITHOUT rewriting ordinal-WORD
- * names where the next token is not a suffix ("First National Bank Rd" stays "first national …").
- * Digit-source shards are unaffected (a digit token isn't in this map), so the existing keys need
- * no rebuild; a future rebuild folds any spelled-source key the same way (the one-function
+ * Spelled ordinal street names → their digit-ordinal form ("tenth" → "10th"), applied ONLY when a street-type suffix
+ * follows (#723 admin-tail) — so the ordinal cross-streets common in grid cities ("Tenth Street", "Fifth Avenue") match
+ * the shards' digit keys, WITHOUT rewriting ordinal-WORD names where the next token is not a suffix ("First National
+ * Bank Rd" stays "first national …"). Digit-source shards are unaffected (a digit token isn't in this map), so the
+ * existing keys need no rebuild; a future rebuild folds any spelled-source key the same way (the one-function
  * discipline).
  */
 const SPELLED_ORDINAL_TO_DIGIT = new Map<string, string>([
@@ -76,17 +75,19 @@ function fold(input: string): string {
 }
 
 /**
- * Normalize a street name for address-point keying. Same function at build time and lookup time —
- * see module docstring for the contract.
+ * Normalize a street name for address-point keying. Same function at build time and lookup time — see module docstring
+ * for the contract.
  */
 export function normalizeStreetForKey(street: string): string {
 	const tokens = fold(street).split(" ")
+
 	if (tokens.length === 0) return ""
 
 	// Spelled-ordinal street names → digit form when a street suffix follows ("Tenth Street" →
 	// "10th street", #723). Gated on the next token being a suffix so ordinal-WORD names are untouched.
 	for (let i = 0; i < tokens.length - 1; i++) {
 		const digit = SPELLED_ORDINAL_TO_DIGIT.get(tokens[i]!)
+
 		if (digit && US_STREET_SUFFIX_LOOKUP.has(tokens[i + 1]!)) tokens[i] = digit
 	}
 
@@ -100,14 +101,19 @@ export function normalizeStreetForKey(street: string): string {
 		a && b && /^(north|south)$/.test(a) && /^(east|west)$/.test(b) ? a + b : undefined
 
 	const leadPair = mergePair(tokens[0], tokens[1])
+
 	if (leadPair && tokens.length > 2) tokens.splice(0, 2, leadPair)
 	const first = edgeDirectional(tokens[0]!)
+
 	if (first && tokens.length > 1) tokens[0] = first
 
 	const tailPair = mergePair(tokens[tokens.length - 2], tokens[tokens.length - 1])
+
 	if (tailPair && tokens.length > 3) tokens.splice(tokens.length - 2, 2, tailPair)
+
 	if (tokens.length > 2) {
 		const last = edgeDirectional(tokens[tokens.length - 1]!)
+
 		if (last) tokens[tokens.length - 1] = last
 	}
 
@@ -117,6 +123,7 @@ export function normalizeStreetForKey(street: string): string {
 	for (const at of [tokens.length - 1, tokens.length - 2]) {
 		if (at < 1) continue // never canonicalize the only/first token ("Street Road" exists)
 		const canonical = US_STREET_SUFFIX_LOOKUP.get(tokens[at]!)
+
 		if (canonical) {
 			tokens[at] = canonical.toLowerCase()
 			break
@@ -132,50 +139,50 @@ export function normalizeLocalityForKey(locality: string): string {
 }
 
 /**
- * Strip a locality QUALIFIER for a query-side fallback — when an OA locality's exact normalized
- * name misses the gazetteer's canonical name, retry with the qualifier removed. OA address data
- * carries disambiguating qualifiers the gazetteer's canonical name omits: Austrian `Kraubath/Mur`
- * and `Hart b.Graz` → `Hart`; Swiss `Lenk im Simmental` → `Lenk`, `Roche VD` → `Roche`; Danish
- * `Odense S`, `Hurup Thy`. A FALLBACK ONLY — the exact name is tried first, and the region-bbox
- * disambiguation resolves any base-name ambiguity downstream. The candidate table is unchanged
- * (this is purely query-side); feed the result back through {@link normalizeLocalityForKey}. Returns
- * "" when nothing was stripped (no point re-probing the identical key).
+ * Strip a locality QUALIFIER for a query-side fallback — when an OA locality's exact normalized name misses the
+ * gazetteer's canonical name, retry with the qualifier removed. OA address data carries disambiguating qualifiers the
+ * gazetteer's canonical name omits: Austrian `Kraubath/Mur` and `Hart b.Graz` → `Hart`; Swiss `Lenk im Simmental` →
+ * `Lenk`, `Roche VD` → `Roche`; Danish `Odense S`, `Hurup Thy`. A FALLBACK ONLY — the exact name is tried first, and
+ * the region-bbox disambiguation resolves any base-name ambiguity downstream. The candidate table is unchanged (this is
+ * purely query-side); feed the result back through {@link normalizeLocalityForKey}. Returns "" when nothing was stripped
+ * (no point re-probing the identical key).
  *
- * Measured (`scripts/eval/candidate-recall.ts --strip-fallback`, EU OA holdouts): recovers AT
- * 74.1→88.2% (+14.1pp), DK 91.5→96.2%, CH 90.4→92.6%; +1.3pp overall (diluted by the already-100%
- * locales). Conservative by design — only the qualifier forms above; FI/PT/SI misses are
- * untouched.
+ * Measured (`scripts/eval/candidate-recall.ts --strip-fallback`, EU OA holdouts): recovers AT 74.1→88.2% (+14.1pp), DK
+ * 91.5→96.2%, CH 90.4→92.6%; +1.3pp overall (diluted by the already-100% locales). Conservative by design — only the
+ * qualifier forms above; FI/PT/SI misses are untouched.
  */
 export function stripLocalityQualifier(locality: string): string {
 	let s = locality.trim()
+
 	if (s.includes("/")) s = s.split("/")[0]!.trim() // "Kraubath/Mur", "St.Kanzian/Klopeiner See"
 	s = s.replace(/\s+[a-zà-ÿ]\.\s*\S.*$/iu, "") // abbreviated " b.Graz" / " o.Bleiburg" / " a.d. …"
 	s = s.replace(/\s+(im|an der|ob|bei|in der|unter|vor)\s+\S.*$/iu, "") // " im Simmental", " bei Graz"
 	s = s.replace(/\s+(S|N|E|W|V|Ø|Sø|Fyn|Thy|Sjælland|Jylland|[A-ZÅÄÖ]{2})$/u, "") // " S", " VD", " Thy"
 	s = s.trim()
+
 	return s === locality.trim() ? "" : s
 }
 
 /**
- * Fold numbered-route designators to a canonical key, applied AFTER {@link normalizeStreetForKey}.
- * Sources disagree systematically on how they spell a route: TIGER says `State Rte 100` / `US Hwy
- * 5` where E911/Overture say `VT ROUTE 100` / `US ROUTE 5` — the dominant street-name miss class in
- * the #483 interpolation eval (rural addresses live on routes). `us <designator> N…` folds to `us
- * route N…`; `state <designator> N…` and `<2-letter-prefix> <designator> N…` (the state
- * abbreviation form) fold to `state route N…`. Only digit-leading route numbers fold — `State
- * Street` and friends never match.
+ * Fold numbered-route designators to a canonical key, applied AFTER {@link normalizeStreetForKey}. Sources disagree
+ * systematically on how they spell a route: TIGER says `State Rte 100` / `US Hwy 5` where E911/Overture say `VT ROUTE
+ * 100` / `US ROUTE 5` — the dominant street-name miss class in the #483 interpolation eval (rural addresses live on
+ * routes). `us <designator> N…` folds to `us route N…`; `state <designator> N…` and `<2-letter-prefix> <designator> N…`
+ * (the state abbreviation form) fold to `state route N…`. Only digit-leading route numbers fold — `State Street` and
+ * friends never match.
  *
- * Used by BOTH the segment-shard builder (`scripts/build-interpolation-shard.ts`) and the
- * interpolation lookup — same one-function discipline as {@link normalizeStreetForKey}. The
- * address-point tier (#476) does NOT apply it yet: adopting it there requires a shard rebuild
- * (noted on #483).
+ * Used by BOTH the segment-shard builder (`scripts/build-interpolation-shard.ts`) and the interpolation lookup — same
+ * one-function discipline as {@link normalizeStreetForKey}. The address-point tier (#476) does NOT apply it yet:
+ * adopting it there requires a shard rebuild (noted on #483).
  *
- * A same-numbered US and state route stay DISTINCT keys (`us route 5` vs `state route 5`); only the
- * BARE `route N` form is ambiguous (designator unknown) and it stays unfolded — a bare-route query
- * therefore misses rather than guessing a designator.
+ * A same-numbered US and state route stay DISTINCT keys (`us route 5` vs `state route 5`); only the BARE `route N` form
+ * is ambiguous (designator unknown) and it stays unfolded — a bare-route query therefore misses rather than guessing a
+ * designator.
  */
 export function canonicalizeRouteKey(streetNorm: string): string {
 	const match = /^(us|state|[a-z]{2}) (?:route|rte|rt|highway|hwy) (\d.*)$/.exec(streetNorm)
+
 	if (!match) return streetNorm
+
 	return `${match[1] === "us" ? "us" : "state"} route ${match[2]}`
 }

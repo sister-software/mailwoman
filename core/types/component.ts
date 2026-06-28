@@ -21,12 +21,11 @@
  * The canonical address component tag union, ordered by phase and locale.
  *
  * - Universal (Phase 1): country, region, locality, dependent_locality, postcode, subregion
- * - Street-level (Phase 2): house_number, street, street_prefix*, street_suffix, intersection_a/b,
- *   unit
+ * - Street-level (Phase 2): house_number, street, street_prefix*, street_suffix, intersection_a/b, unit
  * - Venue-level (Phase 3): venue, attention, po_box
  * - FR-specific: cedex
- * - JP-specific (Phase 6, declared but unused before then): prefecture, municipality, district,
- *   block, sub_block, building_number, building_name
+ * - JP-specific (Phase 6, declared but unused before then): prefecture, municipality, district, block, sub_block,
+ *   building_number, building_name
  */
 export const COMPONENT_TAGS = [
 	// Universal
@@ -67,8 +66,8 @@ export type ComponentTag = (typeof COMPONENT_TAGS)[number]
 /**
  * BIO-encoded label set: one `O` plus a `B-` / `I-` pair per tag.
  *
- * Used as the per-token output alphabet for the sequence-labeling neural model. Inference decodes a
- * stream of these back into character-aligned `ClassificationProposal`s.
+ * Used as the per-token output alphabet for the sequence-labeling neural model. Inference decodes a stream of these
+ * back into character-aligned `ClassificationProposal`s.
  */
 export const BIO_LABELS = ["O", ...COMPONENT_TAGS.flatMap((tag) => [`B-${tag}`, `I-${tag}`] as const)] as const
 

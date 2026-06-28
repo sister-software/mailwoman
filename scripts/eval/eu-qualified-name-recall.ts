@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -28,7 +30,7 @@
  */
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
-import { existsSync, readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const N = Number(arg("n", "150"))
@@ -84,12 +86,15 @@ async function exactNear(
 	tLon: number
 ): Promise<{ hit: boolean; near: boolean; km: number }> {
 	const key = norm(text)
+
 	if (key.length < 2) return { hit: false, near: false, km: NaN }
 	const hits = await lookup.findPlace({ text, country: cc, limit: 5 })
 	const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
+
 	if (!exact.length) return { hit: false, near: false, km: NaN }
 	// nearest exact candidate to truth — the resolver's postcode anchor would pick this one
 	const km = Math.min(...exact.map((h) => haversineKm(tLat, tLon, h.lat, h.lon)))
+
 	return { hit: true, near: km <= GATE_KM, km }
 }
 
@@ -99,6 +104,7 @@ async function main() {
 
 	console.log(`loc |  n  | base  | +struct (near/coll) | +trailtok (near/coll)`)
 	const T = { n: 0, base: 0, sNear: 0, sColl: 0, tNear: 0, tColl: 0 }
+
 	for (const [cc, file] of LOCALES) {
 		if (!existsSync(file)) continue
 		const rows = readFileSync(file, "utf8")
@@ -107,21 +113,26 @@ async function main() {
 			.slice(0, N)
 			.map((l) => JSON.parse(l))
 		const s = { n: 0, base: 0, sNear: 0, sColl: 0, tNear: 0, tColl: 0 }
+
 		for (const row of rows) {
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()
 			const tLat = Number(row.lat),
 				tLon = Number(row.lon)
+
 			if (!gold || !Number.isFinite(tLat) || !Number.isFinite(tLon)) continue
 			s.n++
 			const base = await exactNear(lookup, gold, cc, tLat, tLon)
+
 			if (base.hit) {
 				s.base++
 				continue // already recalled — normalization not needed
 			}
 			// Tier 1: structural normalization
 			const struct = baseStructural(gold)
+
 			if (norm(struct) !== norm(gold)) {
 				const r = await exactNear(lookup, struct, cc, tLat, tLon)
+
 				if (r.hit) {
 					if (r.near) s.sNear++
 					else s.sColl++
@@ -130,11 +141,14 @@ async function main() {
 			}
 			// Tier 2: + trailing-token (only if structural didn't recover)
 			const tok = baseTrailingToken(gold)
+
 			if (norm(tok) !== norm(gold)) {
 				const r = await exactNear(lookup, tok, cc, tLat, tLon)
+
 				if (r.hit) {
 					if (r.near) s.tNear++
 					else s.tColl++
+
 					if (process.env.DEBUG)
 						console.error(`  [${cc}] ${r.near ? "RECOVER" : "COLLIDE"}: "${gold}" → "${tok}" (${r.km.toFixed(0)}km)`)
 				}
@@ -143,6 +157,7 @@ async function main() {
 		console.log(
 			`${cc.padEnd(3)} | ${String(s.n).padStart(3)} | ${String(s.base).padStart(3)}=${((100 * s.base) / Math.max(s.n, 1)).toFixed(0)}% | ${String(s.sNear).padStart(2)} / ${String(s.sColl).padStart(2)}              | ${String(s.tNear).padStart(2)} / ${String(s.tColl).padStart(2)}`
 		)
+
 		for (const k of Object.keys(s) as (keyof typeof s)[]) T[k] += s[k]
 	}
 	const baseRecall = (100 * T.base) / Math.max(T.n, 1)

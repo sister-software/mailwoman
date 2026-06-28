@@ -23,18 +23,23 @@ export const streetRecipe: ShardRecipe = {
 		let read = 0
 		let emitted = 0
 		let skipped = 0
+
 		for await (const tuple of readTuples(opts.input)) {
 			read++
+
 			if (!tuple.locality || !tuple.region || !tuple.postcode || !tuple.country) {
 				skipped++
 				continue
 			}
+
 			if (tuple.country !== "US") {
 				skipped++
 				continue
 			}
+
 			for (let v = 0; v < opts.variants; v++) {
 				const synth = synthesizeStreetRow(tuple as StreetBaseTuple, { random, includeHouseNumberProb })
+
 				if (!synth) continue
 				const ok = alignAndWrite(
 					write,
@@ -55,10 +60,12 @@ export const streetRecipe: ShardRecipe = {
 					},
 					"street-decomp"
 				)
+
 				if (ok) emitted++
 				else skipped++
 			}
 		}
+
 		return { read, emitted, skipped }
 	},
 }

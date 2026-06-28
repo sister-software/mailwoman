@@ -46,12 +46,10 @@ function spansOverlap(a: ClassificationProposal["span"], b: ClassificationPropos
 }
 
 /**
- * Reduce a set of (possibly overlapping) arbitrated proposals to a coherent, non-overlapping set
- * via greedy interval selection. The output is sorted by span start (the order
- * {@link proposalsToTree} expects). Input is not mutated.
+ * Reduce a set of (possibly overlapping) arbitrated proposals to a coherent, non-overlapping set via greedy interval
+ * selection. The output is sorted by span start (the order {@link proposalsToTree} expects). Input is not mutated.
  *
- * @param proposals Arbitrated proposals (post policy-registry filter), any source, possibly
- *   overlapping.
+ * @param proposals Arbitrated proposals (post policy-registry filter), any source, possibly overlapping.
  *
  * @returns A subset with no two spans overlapping, in span-start order.
  */
@@ -62,11 +60,15 @@ export function resolveProposalOverlaps(proposals: readonly ClassificationPropos
 		if (b.confidence !== a.confidence) return b.confidence - a.confidence // higher confidence first
 		const lenA = a.span.end - a.span.start
 		const lenB = b.span.end - b.span.start
-		if (lenA !== lenB) return lenA - lenB // shorter (finer) span first — preserve decompositions
+
+		if (lenA !== lenB) return lenA - lenB
+
+		// shorter (finer) span first — preserve decompositions
 		return a.span.start - b.span.start // earlier start first — stable, deterministic
 	})
 
 	const kept: ClassificationProposal[] = []
+
 	for (const proposal of ranked) {
 		if (kept.every((k) => !spansOverlap(k.span, proposal.span))) {
 			kept.push(proposal)

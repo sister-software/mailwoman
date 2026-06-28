@@ -32,25 +32,23 @@ import type { TokenLike } from "./query-shape-prior.js"
 
 export interface SpanProposalPriorOpts {
 	/**
-	 * Bias magnitude for tag-mapped proposals, in log-odds units. Confidence-scaled. Default 5.0 —
-	 * measured on the punctuation-stress sweep (2026-06-12, v4.4.0 int8): the proposer's job is to
-	 * flip CONFIDENTLY-wrong emissions (fused `2/14` → split), which 1-2-nat query-shape-style scales
-	 * cannot reach; 5.0 moved slash +11.1 with every other class flat, and the model still vetoes
-	 * where its logit gap is larger (the bare `3/45` row stays fused).
+	 * Bias magnitude for tag-mapped proposals, in log-odds units. Confidence-scaled. Default 5.0 — measured on the
+	 * punctuation-stress sweep (2026-06-12, v4.4.0 int8): the proposer's job is to flip CONFIDENTLY-wrong emissions
+	 * (fused `2/14` → split), which 1-2-nat query-shape-style scales cannot reach; 5.0 moved slash +11.1 with every other
+	 * class flat, and the model still vetoes where its logit gap is larger (the bare `3/45` row stays fused).
 	 */
 	biasScale?: number
 	/**
-	 * Bias magnitude for the annotation O-prior. Confidence-scaled. Default 12.0 — deliberately
-	 * near-mask strength (measured saturation point on the same sweep: bracketed +9.1, paren
-	 * regressions zero): a BALANCED bracket pair with aside-shaped content is the strongest
-	 * structural cue the proposer has, and the confidence floor (not the scale) is what protects the
-	 * component-shaped groups.
+	 * Bias magnitude for the annotation O-prior. Confidence-scaled. Default 12.0 — deliberately near-mask strength
+	 * (measured saturation point on the same sweep: bracketed +9.1, paren regressions zero): a BALANCED bracket pair with
+	 * aside-shaped content is the strongest structural cue the proposer has, and the confidence floor (not the scale) is
+	 * what protects the component-shaped groups.
 	 */
 	annotationBiasScale?: number
 	/**
-	 * Annotation proposals below this confidence contribute NO O-bias (their span still feeds the
-	 * decode-side crossing constraint). Default 0.6 — above the trailing-component shape (0.45),
-	 * below the capitalized mid-string aside (0.75).
+	 * Annotation proposals below this confidence contribute NO O-bias (their span still feeds the decode-side crossing
+	 * constraint). Default 0.6 — above the trailing-component shape (0.45), below the capitalized mid-string aside
+	 * (0.75).
 	 */
 	annotationConfidenceFloor?: number
 }
@@ -65,8 +63,8 @@ const KIND_TO_TAG: ReadonlyMap<string, string> = new Map([
 ])
 
 /**
- * Build the additive prior matrix for one parse. Returns all-zeros rows for pieces no proposal
- * covers — composes harmlessly via `addEmissionMatrix`.
+ * Build the additive prior matrix for one parse. Returns all-zeros rows for pieces no proposal covers — composes
+ * harmlessly via `addEmissionMatrix`.
  */
 export function buildSpanProposalPriors(
 	proposals: ReadonlyArray<ProposedSpan>,
@@ -81,10 +79,13 @@ export function buildSpanProposalPriors(
 	const annotationFloor = opts.annotationConfidenceFloor ?? 0.6
 
 	const matrix: number[][] = []
+
 	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
+
 	if (proposals.length === 0) return matrix
 
 	const labelToCol = new Map<string, number>()
+
 	for (let k = 0; k < labels.length; k++) labelToCol.set(labels[k]!, k)
 	const oCol = labelToCol.get("O")
 
@@ -94,6 +95,7 @@ export function buildSpanProposalPriors(
 		if (proposal.kind === "ANNOTATION_SPAN") {
 			if (oCol === undefined || proposal.confidence < annotationFloor) continue
 			const bias = proposal.confidence * annotationBiasScale
+
 			for (let t = 0; t < T; t++) {
 				if (overlaps(tokens[t]!, proposal)) {
 					matrix[t]![oCol] = Math.max(matrix[t]![oCol]!, bias)
@@ -103,20 +105,25 @@ export function buildSpanProposalPriors(
 		}
 
 		const tag = KIND_TO_TAG.get(proposal.kind)
+
 		if (!tag) continue
 		const bCol = labelToCol.get(`B-${tag}`)
 		const iCol = labelToCol.get(`I-${tag}`)
+
 		if (bCol === undefined) continue
 		const bias = proposal.confidence * biasScale
 		let first = true
+
 		for (let t = 0; t < T; t++) {
 			if (!overlaps(tokens[t]!, proposal)) continue
 			const col = first ? bCol : iCol
 			first = false
+
 			if (col === undefined) continue
 			matrix[t]![col] = Math.max(matrix[t]![col]!, bias)
 		}
 	}
+
 	return matrix
 }
 

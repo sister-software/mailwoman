@@ -30,16 +30,19 @@ createServer((req: IncomingMessage, res: ServerResponse) => {
 	const rel = normalize(decodeURIComponent((req.url || "/").split("?")[0]!)).replace(/^(\.\.[/\\])+/, "")
 	const path = join(DIR, rel)
 	let st: Stats
+
 	try {
 		st = statSync(path)
 	} catch {
 		res.writeHead(404)
+
 		return res.end("not found")
 	}
 	const type = TYPES[extname(path)] || "application/octet-stream"
 	const base = { "Content-Type": type, "Accept-Ranges": "bytes", "Access-Control-Allow-Origin": "*" }
 	const range = req.headers.range
 	const m = range && /bytes=(\d+)-(\d*)/.exec(range)
+
 	if (m) {
 		const start = Number(m[1])
 		const end = m[2] ? Number(m[2]) : st.size - 1

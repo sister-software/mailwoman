@@ -39,13 +39,14 @@
  *   [--gate] [--floor 0.9] [--min-count 10]
  */
 
+import { readdirSync, readFileSync, writeFileSync } from "node:fs"
+import { basename, join } from "node:path"
+
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, join } from "node:path"
 import ts from "typescript"
 
 // -------------------------------------------------------------------------------------------------
@@ -70,8 +71,10 @@ interface Args {
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
 	const out: Partial<Args> = { gate: false, floor: 0.9, minCount: 10, postcodeRepair: false }
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
 		else if (a === "--tokenizer" && args[i + 1]) out.tokenizerPath = args[++i]
 		else if (a === "--model-card" && args[i + 1]) out.modelCardPath = args[++i]
@@ -85,12 +88,14 @@ function parseArgs(): Args {
 		else if (a === "--min-count" && args[i + 1]) out.minCount = Number(args[++i])
 		else if (a === "--postcode-repair") out.postcodeRepair = true
 	}
+
 	if (!out.modelPath || !out.tokenizerPath || !out.modelCardPath) {
 		console.error(
 			"Usage: harness-postcode.ts --model <onnx> --tokenizer <spm> --model-card <json> [--tests <dir>] [--falsehoods <dir>] [--golden <dir>] [--admin-fst <bin>] [--out-json <path>] [--gate] [--floor 0.9] [--min-count 10] [--postcode-repair]"
 		)
 		process.exit(1)
 	}
+
 	return out as Args
 }
 
@@ -99,11 +104,10 @@ function parseArgs(): Args {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Test files use ISO 3166 alpha-3 codes in filenames (`address.gbr.test.ts`); falsehoods use
- * BCP-47-ish `en-GB` codes; golden v0.1.2 uses bare alpha-2. We normalize everything to alpha-2 for
- * grouping. `nzd` in test filenames is a non-standard alias for NZ (New Zealand dollar code
- * mistakenly used as country code). Mapping covers all locales present in the tree as of
- * 2026-05-29.
+ * Test files use ISO 3166 alpha-3 codes in filenames (`address.gbr.test.ts`); falsehoods use BCP-47-ish `en-GB` codes;
+ * golden v0.1.2 uses bare alpha-2. We normalize everything to alpha-2 for grouping. `nzd` in test filenames is a
+ * non-standard alias for NZ (New Zealand dollar code mistakenly used as country code). Mapping covers all locales
+ * present in the tree as of 2026-05-29.
  */
 const ALPHA3_TO_ALPHA2: Record<string, string> = {
 	aus: "AU",
@@ -131,9 +135,12 @@ function localeToCountry(locale: string): string {
 	if (ALPHA3_TO_ALPHA2[locale]) return ALPHA3_TO_ALPHA2[locale]!
 	// BCP-47-ish: "en-GB", "en-CA", "fr-FR"
 	const m = /^[a-z]{2,3}-([A-Z]{2})$/.exec(locale)
+
 	if (m) return m[1]!
+
 	// Already alpha-2: "US", "FR"
 	if (/^[A-Z]{2}$/.test(locale)) return locale
+
 	// Falsehoods use lowercase locale-bare (e.g. "postcodes", "streets" from the basename
 	// when no locale field is present) — these collapse into UNKNOWN.
 	return "UNKNOWN"
@@ -152,6 +159,7 @@ interface Sample {
 
 function localeFromFilename(file: string): string {
 	const base = basename(file, ".test.ts").replace(/^address\.|^addressit\.|^place\./, "")
+
 	return base
 }
 
@@ -164,20 +172,26 @@ function objectLiteralToExpected(node: ts.ObjectLiteralExpression): ParsedExpect
 		if (!ts.isPropertyAssignment(prop)) return null
 		const name = prop.name
 		let key: string
+
 		if (ts.isIdentifier(name)) key = name.text
 		else if (ts.isStringLiteralLike(name)) key = name.text
 		else return null
+
 		if (key !== "postcode") continue
 		const value = prop.initializer
+
 		if (!ts.isArrayLiteralExpression(value)) return null
 		const elements: string[] = []
+
 		for (const el of value.elements) {
 			if (ts.isStringLiteralLike(el)) elements.push(el.text)
 			else return null
 		}
+
 		// Tests assert exactly one postcode per solution. Take the first.
 		return { postcode: elements[0] }
 	}
+
 	return {}
 }
 
@@ -196,14 +210,19 @@ function extractFromTestFile(file: string): Sample[] {
 			node.arguments.length >= 1
 		) {
 			const inputArg = node.arguments[0]
+
 			if (inputArg && ts.isStringLiteralLike(inputArg)) {
 				const expectedPostcodes: string[] = []
+
 				for (let i = 1; i < node.arguments.length; i++) {
 					const arg = node.arguments[i]!
+
 					if (!ts.isObjectLiteralExpression(arg)) continue
 					const parsed = objectLiteralToExpected(arg)
+
 					if (parsed?.postcode) expectedPostcodes.push(parsed.postcode)
 				}
+
 				if (expectedPostcodes.length > 0) {
 					out.push({ source: basename(file), country, input: inputArg.text, expectedPostcodes })
 				}
@@ -212,19 +231,23 @@ function extractFromTestFile(file: string): Sample[] {
 		ts.forEachChild(node, visit)
 	}
 	visit(sf)
+
 	return out
 }
 
 function discoverFromTests(testsDir: string): Sample[] {
 	const all: Sample[] = []
+
 	for (const entry of readdirSync(testsDir)) {
 		if (!entry.endsWith(".test.ts")) continue
+
 		try {
 			all.push(...extractFromTestFile(join(testsDir, entry)))
 		} catch (err) {
 			console.error(`[postcode-harness] WARN: ${entry}: ${(err as Error).message}`)
 		}
 	}
+
 	return all
 }
 
@@ -240,18 +263,22 @@ interface FalsehoodRow {
 
 function loadFalsehoods(dir: string): Sample[] {
 	const out: Sample[] = []
+
 	for (const entry of readdirSync(dir)) {
 		if (!entry.endsWith(".jsonl")) continue
 		const text = readFileSync(join(dir, entry), "utf8")
+
 		for (const line of text.split("\n")) {
 			if (!line.trim()) continue
 			let row: FalsehoodRow
+
 			try {
 				row = JSON.parse(line)
 			} catch {
 				continue
 			}
 			const postcodes = row.expected?.postcode
+
 			if (!postcodes || postcodes.length === 0) continue
 			const country = row.locale ? localeToCountry(row.locale) : "UNKNOWN"
 			out.push({
@@ -262,6 +289,7 @@ function loadFalsehoods(dir: string): Sample[] {
 			})
 		}
 	}
+
 	return out
 }
 
@@ -273,18 +301,22 @@ interface GoldenRow {
 
 function loadGolden(dir: string): Sample[] {
 	const out: Sample[] = []
+
 	for (const entry of readdirSync(dir)) {
 		if (!entry.endsWith(".jsonl")) continue
 		const text = readFileSync(join(dir, entry), "utf8")
+
 		for (const line of text.split("\n")) {
 			if (!line.trim()) continue
 			let row: GoldenRow
+
 			try {
 				row = JSON.parse(line)
 			} catch {
 				continue
 			}
 			const postcode = row.components?.postcode
+
 			if (!postcode) continue
 			const country = row.country ?? "UNKNOWN"
 			out.push({
@@ -295,6 +327,7 @@ function loadGolden(dir: string): Sample[] {
 			})
 		}
 	}
+
 	return out
 }
 
@@ -318,8 +351,10 @@ interface SampleResult {
 function evaluate(sample: Sample, flat: Partial<Record<ComponentTag, string>>): SampleResult {
 	const actual = flat.postcode ?? null
 	let pass = false
+
 	if (actual) {
 		const actualNorm = normalize(actual)
+
 		for (const exp of sample.expectedPostcodes) {
 			if (normalize(exp) === actualNorm) {
 				pass = true
@@ -327,6 +362,7 @@ function evaluate(sample: Sample, flat: Partial<Record<ComponentTag, string>>): 
 			}
 		}
 	}
+
 	return { ...sample, actualPostcode: actual, pass }
 }
 
@@ -340,9 +376,11 @@ function printReport(results: SampleResult[]): {
 	overall: CountryStats
 } {
 	const byCountry = new Map<string, CountryStats>()
+
 	for (const r of results) {
 		const s = byCountry.get(r.country) ?? { total: 0, pass: 0 }
 		s.total++
+
 		if (r.pass) s.pass++
 		byCountry.set(r.country, s)
 	}
@@ -360,6 +398,7 @@ function printReport(results: SampleResult[]): {
 	console.log("| Country | Total | Match | Rate | Below 90% floor |")
 	console.log("|---------|-------|-------|------|----------------|")
 	const rows = [...byCountry.entries()].sort((a, b) => b[1].total - a[1].total)
+
 	for (const [country, s] of rows) {
 		const rate = s.pass / s.total
 		const flag = s.total >= 10 && rate < 0.9 ? "❌" : ""
@@ -368,9 +407,11 @@ function printReport(results: SampleResult[]): {
 	console.log("")
 
 	const failures = results.filter((r) => !r.pass).slice(0, 30)
+
 	if (failures.length > 0) {
 		console.log("## Sample of first 30 failures")
 		console.log("")
+
 		for (const f of failures) {
 			console.log(`- ${f.country} [${f.source}] \`${f.input}\``)
 			console.log(
@@ -417,6 +458,7 @@ async function main(): Promise<void> {
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
 	let adminFst: ReturnType<typeof deserializeFst> | undefined
+
 	if (args.adminFstPath) {
 		console.error("Loading admin FST:", args.adminFstPath)
 		adminFst = deserializeFst(readFileSync(args.adminFstPath))
@@ -430,8 +472,10 @@ async function main(): Promise<void> {
 	const t0 = performance.now()
 	const results: SampleResult[] = []
 	let i = 0
+
 	for (const sample of all) {
 		i++
+
 		try {
 			const tree = await neural.parse(sample.input, parseOpts)
 			const flat = decodeAsJson(tree)
@@ -439,6 +483,7 @@ async function main(): Promise<void> {
 		} catch (err) {
 			console.error(`[postcode-harness] WARN: ${i} (${sample.input}): ${(err as Error).message}`)
 		}
+
 		if (i % 200 === 0) {
 			console.error(`  ${i}/${all.length} (${((performance.now() - t0) / 1000).toFixed(1)}s)`)
 		}
@@ -465,18 +510,22 @@ async function main(): Promise<void> {
 
 	if (args.gate) {
 		const violations: string[] = []
+
 		for (const [country, s] of byCountry) {
 			if (s.total < args.minCount) continue
 			const rate = s.pass / s.total
+
 			if (rate < args.floor) {
 				violations.push(
 					`${country}: ${(100 * rate).toFixed(1)}% (${s.pass}/${s.total}) below floor ${(100 * args.floor).toFixed(0)}%`
 				)
 			}
 		}
+
 		if (violations.length > 0) {
 			console.error("")
 			console.error("GATE FAILED:")
+
 			for (const v of violations) console.error(`  - ${v}`)
 			process.exit(1)
 		}

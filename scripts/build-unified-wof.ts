@@ -25,6 +25,10 @@
  *   `build-fts` step as the WOF rows.
  */
 
+import { existsSync, statSync, unlinkSync } from "node:fs"
+import { readFile } from "node:fs/promises"
+import { DatabaseSync } from "node:sqlite"
+
 import { DuckDBInstance } from "@duckdb/node-api"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
@@ -34,15 +38,12 @@ import {
 	populateAncestors,
 } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import FastGlob from "fast-glob"
-import { existsSync, statSync, unlinkSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-import { DatabaseSync } from "node:sqlite"
 import { asyncParallelIterator } from "spliterator"
 
 /**
- * Synthetic id base for Overture-sourced rows — above any real WOF id (WOF ids are <~2e9), so a
- * combined DB never collides across sources. Matches scripts/build-overture-divisions-gazetteer.py
- * (the standalone falsification prototype this folds into the unified build).
+ * Synthetic id base for Overture-sourced rows — above any real WOF id (WOF ids are <~2e9), so a combined DB never
+ * collides across sources. Matches scripts/build-overture-divisions-gazetteer.py (the standalone falsification
+ * prototype this folds into the unified build).
  */
 const OVERTURE_ID_BASE = 8_000_000_000_000
 /** Overture division subtypes that map to the resolver's admin placetypes. */
@@ -58,24 +59,22 @@ interface Args {
 	concurrency: number
 	batchCommitSize: number
 	/**
-	 * Override the ingested placetype set (comma-separated). Defaults to ADMIN_PLACETYPES; pass
-	 * `--placetypes postalcode` to build the postcode shard from whosonfirst-data-postalcode-*
-	 * repos.
+	 * Override the ingested placetype set (comma-separated). Defaults to ADMIN_PLACETYPES; pass `--placetypes postalcode`
+	 * to build the postcode shard from whosonfirst-data-postalcode-* repos.
 	 */
 	placetypes?: string[]
 	/**
-	 * Comma-separated ISO 3166-1 alpha-2 codes to backfill from the Overture `divisions` theme AFTER
-	 * the WOF GeoJSON ingest — the zero-DB locales the WOF repos don't cover (PT/PL/CZ/NO/FI/HR/…).
-	 * Rows land in the SAME spr/names/place_population tables with synthetic ids, so the Freeze phase
-	 * indexes them uniformly. Off unless provided. See project-eu-coverage-not-retrain.
+	 * Comma-separated ISO 3166-1 alpha-2 codes to backfill from the Overture `divisions` theme AFTER the WOF GeoJSON
+	 * ingest — the zero-DB locales the WOF repos don't cover (PT/PL/CZ/NO/FI/HR/…). Rows land in the SAME
+	 * spr/names/place_population tables with synthetic ids, so the Freeze phase indexes them uniformly. Off unless
+	 * provided. See project-eu-coverage-not-retrain.
 	 */
 	overtureCountries?: string[]
 	/** Overture release for `--overture-countries` (the divisions theme is pinned per release). */
 	overtureRelease: string
 	/**
-	 * #743/#193: comma-separated ISO codes to backfill GeoNames place ALIASES (the bilingual /
-	 * alt-name class — Karjaa↔Karis) AFTER the WOF + Overture ingest. Reads `<CC>.txt` from
-	 * {@link geonamesDir}. Off unless provided.
+	 * #743/#193: comma-separated ISO codes to backfill GeoNames place ALIASES (the bilingual / alt-name class —
+	 * Karjaa↔Karis) AFTER the WOF + Overture ingest. Reads `<CC>.txt` from {@link geonamesDir}. Off unless provided.
 	 */
 	geonamesCountries?: string[]
 	/** Directory of GeoNames per-country dumps (`<CC>.txt`). Default {@link DEFAULT_GEONAMES_DIR}. */
@@ -173,12 +172,15 @@ interface ParsedFeature {
 function parseFeature(text: string, placetypes: Set<string>): ParsedFeature | null {
 	const feature = JSON.parse(text)
 	const props = feature.properties
+
 	if (!props) return null
 
 	const supersededBy = props["wof:superseded_by"]
+
 	if (supersededBy && supersededBy.length > 0) return null
 
 	const placetype = props["wof:placetype"]
+
 	if (!placetypes.has(placetype)) return null
 
 	const mzIsCurrent = props["mz:is_current"]
@@ -189,19 +191,24 @@ function parseFeature(text: string, placetypes: Set<string>): ParsedFeature | nu
 	// absent — still correct for point-in-box proximity, the resolver's main bbox use.
 	let [minLon, minLat, maxLon, maxLat] = [lon, lat, lon, lat]
 	const bboxStr = props["geom:bbox"]
+
 	if (typeof bboxStr === "string") {
 		const parts = bboxStr.split(",").map(Number)
+
 		if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {
 			;[minLon, minLat, maxLon, maxLat] = parts as [number, number, number, number]
 		}
 	}
 
 	const names: Array<{ name: string; language: string }> = []
+
 	for (const [key, value] of Object.entries(props)) {
 		const match = key.match(/^name:([a-z]{3})_x_(preferred|variant)$/)
+
 		if (!match || !value) continue
 		const lang = match[1]!
 		const vals = Array.isArray(value) ? value : [value]
+
 		for (const v of vals) {
 			if (typeof v === "string" && v.length > 0) {
 				names.push({ name: v, language: lang })
@@ -234,18 +241,15 @@ function parseFeature(text: string, placetypes: Set<string>): ParsedFeature | nu
 }
 
 /**
- * Backfill the Overture `divisions` theme into an already-open unified ingest DB, for locales the
- * WOF GeoJSON repos don't cover (the 2026-06-20 zero-DB EU set). Writes the SAME spr/names/
- * place_population tables the WOF path uses — with synthetic ids based at {@link OVERTURE_ID_BASE}
- * so the two sources never collide — so the caller's Freeze phase (ancestors closure,
- * coincident_roles, indexes, FTS) treats them uniformly. The Overture sub-tree is self-contained
- * (locality → region → county via `parent_division_id`); a division whose parent we didn't ingest
- * tops out at -1. Country scoping rides `spr.country` (set on every row), not the ancestry, so no
- * WOF country node is needed.
+ * Backfill the Overture `divisions` theme into an already-open unified ingest DB, for locales the WOF GeoJSON repos
+ * don't cover (the 2026-06-20 zero-DB EU set). Writes the SAME spr/names/ place_population tables the WOF path uses —
+ * with synthetic ids based at {@link OVERTURE_ID_BASE} so the two sources never collide — so the caller's Freeze phase
+ * (ancestors closure, coincident_roles, indexes, FTS) treats them uniformly. The Overture sub-tree is self-contained
+ * (locality → region → county via `parent_division_id`); a division whose parent we didn't ingest tops out at -1.
+ * Country scoping rides `spr.country` (set on every row), not the ancestry, so no WOF country node is needed.
  *
- * The heavy native `@duckdb/node-api` dependency lives here in `scripts/` only — never in
- * `@mailwoman/corpus` (a runtime dep of the `mailwoman` CLI) — the same split as
- * `ingest-overture-addresses.ts`.
+ * The heavy native `@duckdb/node-api` dependency lives here in `scripts/` only — never in `@mailwoman/corpus` (a
+ * runtime dep of the `mailwoman` CLI) — the same split as `ingest-overture-addresses.ts`.
  *
  * @returns The number of divisions ingested.
  */
@@ -254,9 +258,9 @@ export async function ingestOvertureDivisions(
 	countries: string[],
 	release: string,
 	/**
-	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An
-	 * INCREMENTAL augment of a DB that ALREADY holds Overture rows MUST pass `max(spr.id) + 1` so the
-	 * new ids don't collide with — and `INSERT OR REPLACE` clobber — the existing ones.
+	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An INCREMENTAL augment of a DB
+	 * that ALREADY holds Overture rows MUST pass `max(spr.id) + 1` so the new ids don't collide with — and `INSERT OR
+	 * REPLACE` clobber — the existing ones.
 	 */
 	idBase: number = OVERTURE_ID_BASE
 ): Promise<number> {
@@ -311,6 +315,7 @@ export async function ingestOvertureDivisions(
 
 	db.exec("BEGIN")
 	let n = 0
+
 	for (const r of rows) {
 		const nid = idmap.get(String(r.id))!
 		const pgers = r.parent_division_id == null ? null : String(r.parent_division_id)
@@ -340,6 +345,7 @@ export async function ingestOvertureDivisions(
 			0
 		)
 		namesInsert.run(nid, name, subtype, country, "", 0)
+
 		// Multilingual aliases (names.common — language→name, incl. English / Latin transliterations) so a
 		// non-Latin-script place (Москва, القاهرة, กรุงเทพมหานคร) still resolves by its English/Latin name.
 		// The candidate build explodes every alias here into its own name_key.
@@ -347,6 +353,7 @@ export async function ingestOvertureDivisions(
 			try {
 				const common = JSON.parse(String(r.common_json)) as Record<string, string>
 				const seen = new Set([name])
+
 				for (const [lang, alias] of Object.entries(common)) {
 					if (typeof alias === "string" && alias.length > 0 && !seen.has(alias) && isLatin(alias)) {
 						seen.add(alias)
@@ -358,10 +365,12 @@ export async function ingestOvertureDivisions(
 			}
 		}
 		const pop = num(r.population)
+
 		if (pop > 0) populationInsert.run(nid, pop)
 		n++
 	}
 	db.exec("COMMIT")
+
 	return n
 }
 
@@ -449,6 +458,7 @@ async function main() {
 
 	for await (const text of readResults) {
 		const feature = parseFeature(text, activePlacetypes)
+
 		if (!feature) {
 			skipped++
 			continue
@@ -511,6 +521,7 @@ async function main() {
 	// Phase 2b: Overture divisions backfill (zero-DB locales the WOF repos miss)
 	// -----------------------------------------------------------------------
 	let overtureIngested = 0
+
 	if (overtureCountries && overtureCountries.length > 0) {
 		console.error(`Backfilling Overture divisions for ${overtureCountries.join(",")}...`)
 		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
@@ -521,6 +532,7 @@ async function main() {
 	// Phase 2c: GeoNames bilingual / alt-name backfill (#743/#193 — the Karjaa↔Karis class)
 	// -----------------------------------------------------------------------
 	let geonamesIngested = 0
+
 	if (geonamesCountries && geonamesCountries.length > 0) {
 		console.error(`Backfilling GeoNames aliases for ${geonamesCountries.join(",")} from ${geonamesDir}...`)
 		geonamesIngested = ingestGeonamesAliases(db, geonamesCountries, geonamesDir)
@@ -537,12 +549,14 @@ async function main() {
 		log: number
 		checkpointed: number
 	}
+
 	if (checkpoint.busy !== 0) {
 		throw new Error(`WAL checkpoint did not finish: ${JSON.stringify(checkpoint)}`)
 	}
 	console.error("  WAL checkpoint complete")
 
 	const mode = db.prepare("PRAGMA journal_mode = DELETE").get() as { journal_mode: string }
+
 	if (mode.journal_mode !== "delete") {
 		throw new Error(`journal_mode switch failed; still ${mode.journal_mode}`)
 	}
@@ -567,6 +581,7 @@ async function main() {
 	db.exec("PRAGMA optimize")
 
 	const integrity = db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }
+
 	if (integrity.integrity_check !== "ok") {
 		throw new Error(`integrity_check failed: ${integrity.integrity_check}`)
 	}
@@ -574,6 +589,7 @@ async function main() {
 
 	if (existsSync(outputPath)) {
 		const s = statSync(outputPath)
+
 		if (s.size > 0) unlinkSync(outputPath)
 	}
 	db.prepare("VACUUM INTO ?").run(outputPath)
@@ -581,6 +597,7 @@ async function main() {
 
 	db.close()
 	unlinkSync(ingestPath)
+
 	for (const sidecar of [ingestPath + "-wal", ingestPath + "-shm"]) {
 		if (existsSync(sidecar)) unlinkSync(sidecar)
 	}
@@ -589,6 +606,7 @@ async function main() {
 	const frozen = new DatabaseSync(outputPath, { readOnly: true })
 	const frozenMode = frozen.prepare("PRAGMA journal_mode").get() as { journal_mode: string }
 	frozen.close()
+
 	if (frozenMode.journal_mode !== "delete") {
 		throw new Error(`frozen DB journal_mode=${frozenMode.journal_mode}`)
 	}
@@ -597,6 +615,7 @@ async function main() {
 	const totalElapsed = ((performance.now() - t0) / 1000).toFixed(1)
 	console.error(`\nDone in ${totalElapsed}s:`)
 	console.error(`  Places:  ${processed.toLocaleString()}`)
+
 	if (overtureIngested > 0) console.error(`  Overture: ${overtureIngested.toLocaleString()}`)
 	console.error(`  Skipped: ${skipped.toLocaleString()}`)
 	console.error(`  Output:  ${outputPath} (${finalSize} MB)`)

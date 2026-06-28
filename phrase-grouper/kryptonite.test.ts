@@ -18,6 +18,7 @@
 
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
+
 import { groupPhrasesSync } from "./group.js"
 import type { NormalizedInputLite, PhraseKind, PhraseProposal } from "./types.js"
 
@@ -36,16 +37,20 @@ interface Assertion {
 
 function expectProposal(proposals: PhraseProposal[], assertion: Assertion): PhraseProposal {
 	const match = proposals.find((p) => p.kindHypothesis === assertion.kind && p.span.body === assertion.body)
+
 	if (!match) {
 		const dump = proposals.map((p) => `  ${p.kindHypothesis} "${p.span.body}" @ ${p.confidence.toFixed(2)}`).join("\n")
 		throw new Error(`Expected proposal ${assertion.kind} "${assertion.body}" not found.\nProposals:\n${dump}`)
 	}
+
 	if (assertion.minConfidence !== undefined) {
 		expect(match.confidence).toBeGreaterThanOrEqual(assertion.minConfidence)
 	}
+
 	if (assertion.maxConfidence !== undefined) {
 		expect(match.confidence).toBeLessThanOrEqual(assertion.maxConfidence)
 	}
+
 	return match
 }
 
@@ -191,6 +196,7 @@ describe("kryptonite catalogue — overall sanity", () => {
 			"350 5th Ave, New York, NY 10118",
 			"Paris 75008",
 		]
+
 		for (const f of fixtures) {
 			const shape = computeQueryShape(f)
 			const out = groupPhrasesSync(input(f), shape)

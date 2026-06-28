@@ -33,6 +33,7 @@
 
 import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs"
 import * as path from "node:path"
+
 import { $ } from "zx"
 
 export interface CoverageBuildOptions {
@@ -59,23 +60,20 @@ export interface CoverageBuildOptions {
 	/** Optimistic-mode exponent for `fog_opt = fog ** gamma`. */
 	optimisticGamma: number
 	/**
-	 * GeoNames postal file (12-col tab-separated) — the GLOBAL postcode COVERAGE signal that clears
-	 * the "where do we need data" holes. Null to skip. A postcode is area-scale, so centroids bin at
-	 * the domain resolution and a domain cell holding ≥1 postcode reads as postcode-resolvable
-	 * (covered).
+	 * GeoNames postal file (12-col tab-separated) — the GLOBAL postcode COVERAGE signal that clears the "where do we need
+	 * data" holes. Null to skip. A postcode is area-scale, so centroids bin at the domain resolution and a domain cell
+	 * holding ≥1 postcode reads as postcode-resolvable (covered).
 	 */
 	geonamesPostalFile: string | null
 	/**
-	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) +
-	 * `place_population` / `place_importance` — the CIVILIZATION/salience backdrop. Settlement
-	 * places, weighted by salience, mark "where civilization is": a salient place we DON'T cover is a
-	 * gray hole = work to do. Null to skip the global holes layer (US rooftop fine map is independent
-	 * of it).
+	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) + `place_population` /
+	 * `place_importance` — the CIVILIZATION/salience backdrop. Settlement places, weighted by salience, mark "where
+	 * civilization is": a salient place we DON'T cover is a gray hole = work to do. Null to skip the global holes layer
+	 * (US rooftop fine map is independent of it).
 	 */
 	wofDb: string | null
 	/**
-	 * Coverage a postcode cell contributes (≤ 1) — how much it clears the hole (rooftop is the full
-	 * 1).
+	 * Coverage a postcode cell contributes (≤ 1) — how much it clears the hole (rooftop is the full 1).
 	 */
 	postcodeCeiling: number
 	/** Minimum place importance (∈ [0,1]) to count as civilization worth flagging — the noise floor. */
@@ -122,12 +120,15 @@ function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 	const bySlug = new Map(files.map((f) => [f.replace(/^address-points-us-|\.db$/g, ""), f]))
 	const slugs =
 		opts.states.toLowerCase() === "all" ? [...bySlug.keys()] : opts.states.split(",").map((s) => s.trim().toLowerCase())
+
 	return slugs
 		.filter((slug) => !exclude.has(slug.toUpperCase()))
 		.map((slug) => {
 			const file = bySlug.get(slug)
+
 			if (!file) throw new Error(`no address-point shard for state '${slug}' under ${opts.dataRoot}`)
 			const interpFile = opts.interpRoot ? path.join(opts.interpRoot, `interpolation-us-${slug}.db`) : ""
+
 			return {
 				slug,
 				file: path.join(opts.dataRoot, file),
@@ -137,17 +138,18 @@ function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 }
 
 /**
- * Contiguous, gap-free zoom bands across the chosen resolutions (finest baked at the single
- * tile-max).
+ * Contiguous, gap-free zoom bands across the chosen resolutions (finest baked at the single tile-max).
  */
 function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number, number]> {
 	const asc = [...allRes].sort((a, b) => a - b)
+
 	return new Map(
 		asc.map((res, i) => {
 			if (i === asc.length - 1) return [res, [tileMaxZoom, tileMaxZoom]] as [number, [number, number]]
 			const lo = i === 0 ? 0 : (RES_ONSET_ZOOM[res] ?? 0)
 			const nextRes = asc[i + 1]!
 			const hi = i === asc.length - 2 ? tileMaxZoom - 1 : (RES_ONSET_ZOOM[nextRes] ?? tileMaxZoom) - 1
+
 			return [res, [lo, hi]] as [number, [number, number]]
 		})
 	)
@@ -155,9 +157,9 @@ function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number,
 
 /**
  * True if a GeoJSON polygon's outer ring spans >180° of longitude — the antimeridian-wrap artifact.
- * `h3_cell_to_boundary_wkt` emits UNWRAPPED lon for cells straddling ±180, smearing a polygon
- * across the whole map; a normal hex spans a fraction of a degree, so a >180° span is unambiguously
- * a wrap. Cheaper than round-tripping through the spatial extension; covers AK/RU/FJ/NZ-Chathams.
+ * `h3_cell_to_boundary_wkt` emits UNWRAPPED lon for cells straddling ±180, smearing a polygon across the whole map; a
+ * normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap. Cheaper than round-tripping through
+ * the spatial extension; covers AK/RU/FJ/NZ-Chathams.
  */
 function antimeridianWrapped(geojson: string): boolean {
 	let min = Infinity
@@ -165,11 +167,15 @@ function antimeridianWrapped(geojson: string): boolean {
 	// Each coordinate pair is `[lon,lat]`; capture the lon (first number after a `[`). `[[[` won't
 	// match (no digit follows the inner `[`), so only real vertices are scanned.
 	const re = /\[\s*(-?\d+(?:\.\d+)?)\s*,/g
+
 	for (let m = re.exec(geojson); m; m = re.exec(geojson)) {
 		const lon = Number(m[1])
+
 		if (lon < min) min = lon
+
 		if (lon > max) max = lon
 	}
+
 	return max - min > 180
 }
 
@@ -178,6 +184,7 @@ export async function buildCoverageTiles(
 	onProgress: CoverageProgress = () => {}
 ): Promise<CoverageBuildResult> {
 	let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
+
 	try {
 		;({ DuckDBInstance } = await import("@duckdb/node-api"))
 	} catch {
@@ -195,14 +202,17 @@ export async function buildCoverageTiles(
 
 	const instance = await DuckDBInstance.create()
 	const duck = await instance.connect()
+
 	if (opts.threads) await duck.run(`SET threads TO ${opts.threads}`)
 	await duck.run("INSTALL h3 FROM community; LOAD h3; INSTALL spatial; LOAD spatial; INSTALL sqlite; LOAD sqlite;")
 
 	// ATTACH every shard read-only (address-points as st<i>, interpolation as ip<i> when present).
 	for (const [i, s] of states.entries()) {
 		await duck.run(`ATTACH '${s.file}' AS st${i} (TYPE sqlite, READ_ONLY)`)
+
 		if (s.interp) await duck.run(`ATTACH '${s.interp}' AS ip${i} (TYPE sqlite, READ_ONLY)`)
 	}
+
 	// ATTACH the WOF gazetteer read-only for the global civilization/salience backdrop (if requested).
 	if (opts.wofDb) await duck.run(`ATTACH '${opts.wofDb}' AS wof (TYPE sqlite, READ_ONLY)`)
 
@@ -219,6 +229,7 @@ export async function buildCoverageTiles(
 	// data_seg: res-FINE street-segment counts. The geometry is a JSON coordinate array; bin its first
 	// vertex (a segment is ~block-length). Same raw-then-aggregate discipline as data_pt.
 	const segIdx = states.map((s, i) => (s.interp ? i : -1)).filter((i) => i >= 0)
+
 	if (segIdx.length > 0) {
 		const segAgg = segIdx
 			.map(
@@ -277,9 +288,11 @@ export async function buildCoverageTiles(
 		const prefix = `{"type":"Feature","tippecanoe":{"layer":"coverage","minzoom":${minzoom},"maxzoom":${maxzoom}},"properties":`
 		const stream = await duck.stream(sql)
 		const cols = stream.columnNames()
+
 		for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
 			for (const r of chunk.getRowObjects(cols) as Record<string, unknown>[]) {
 				if (r.geom == null) continue
+
 				if (antimeridianWrapped(String(r.geom))) continue
 				const fog = Number(r.fog)
 				const props = {
@@ -302,6 +315,7 @@ export async function buildCoverageTiles(
 		opts.fineRes,
 		`SELECT pt, seg, 1.0 - cov AS fog, ST_AsGeoJSON(ST_GeomFromText(h3_cell_to_boundary_wkt(cell))) AS geom FROM domain9`
 	)
+
 	// Rollups: coarse fog = 1 − the MEAN coverage of the fine children.
 	for (const res of opts.rollup) {
 		await emitResolution(
@@ -414,6 +428,7 @@ export async function buildCoverageTiles(
 	]
 	// quiet: tippecanoe's stderr must not leak into the Ink render; we surface it only on failure.
 	const tip = await $({ nothrow: true, quiet: true })`tippecanoe ${tipArgs}`
+
 	if (tip.exitCode !== 0) {
 		throw new Error(`tippecanoe exited ${tip.exitCode}: ${tip.stderr.slice(-400)}`)
 	}

@@ -14,6 +14,10 @@
  *   timezone, UN/LOCODE, NUTS — composed from the `@mailwoman/*` annotators.
  */
 
+import { existsSync } from "node:fs"
+import { join } from "node:path"
+import { parseArgs } from "node:util"
+
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -31,9 +35,7 @@ import {
 	resolveCandidateDbPath,
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
-import { existsSync } from "node:fs"
-import { join } from "node:path"
-import { parseArgs } from "node:util"
+
 import {
 	createNominatimRouter,
 	type NominatimAddressDetails,
@@ -57,8 +59,8 @@ const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 }
 
 /**
- * A real address fits comfortably; anything longer is malformed input (and would exceed the model's
- * input window). Cap defensively so a giant query returns no results instead of faulting.
+ * A real address fits comfortably; anything longer is malformed input (and would exceed the model's input window). Cap
+ * defensively so a giant query returns no results instead of faulting.
  */
 const MAX_QUERY_LEN = 512
 
@@ -67,10 +69,9 @@ function joinNonEmpty(...parts: Array<string | undefined>): string {
 }
 
 /**
- * The resolver returns admin labels + a coordinate (often rooftop/interpolated via the situs
- * shards) but drops the street. Recover house_number + road from the parse so the result carries
- * the full address — Nominatim populates both `addressdetails` and `display_name` down to the house
- * number.
+ * The resolver returns admin labels + a coordinate (often rooftop/interpolated via the situs shards) but drops the
+ * street. Recover house_number + road from the parse so the result carries the full address — Nominatim populates both
+ * `addressdetails` and `display_name` down to the house number.
  */
 async function streetParts(
 	parser: ReturnType<typeof createAddressParser>,
@@ -78,6 +79,7 @@ async function streetParts(
 ): Promise<{ houseNumber?: string; road?: string }> {
 	const solution = (await parser.parse(query, { verbose: true })).solutions[0]
 	const matches = (solution?.toJSON() as { matches?: Array<{ classification: string; value: string }> })?.matches ?? []
+
 	return {
 		houseNumber: matches.find((m) => m.classification === "house_number")?.value,
 		road: matches.find((m) => m.classification === "street")?.value,
@@ -87,12 +89,17 @@ async function streetParts(
 /** Map a forward geocode result (admin + coordinate) into the formatter's neutral shape. */
 function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 	const address: NominatimAddressDetails = {}
+
 	if (r.locality) address.city = r.locality
+
 	if (r.region) address.state = r.region
+
 	if (r.postcode) address.postcode = r.postcode
+
 	for (const h of r.hierarchy) {
 		if (h.tag === "country") address.country = h.value
 	}
+
 	return {
 		lat: r.lat,
 		lon: r.lon,
@@ -143,10 +150,13 @@ async function serve(): Promise<void> {
 	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDbPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
+
 	if (existsSync(tzDbPath)) annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDbPath })))
 	const ulDbPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
+
 	if (existsSync(ulDbPath)) annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDbPath })))
 	const nutsDbPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
+
 	if (existsSync(nutsDbPath)) annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDbPath })))
 	const annotate = composeAnnotators(annotators)
 
@@ -155,6 +165,7 @@ async function serve(): Promise<void> {
 			const query = (
 				params.q ?? joinNonEmpty(params.street, params.city, params.state, params.postalcode, params.country)
 			)?.trim()
+
 			// Empty/whitespace → no query; absurdly long → not an address (and would blow the model's input).
 			if (!query || query.length > MAX_QUERY_LEN) return []
 			// A caller-supplied `countrycodes` is an explicit hard restriction (Nominatim semantics): honor
@@ -168,20 +179,25 @@ async function serve(): Promise<void> {
 				shards: shards.for,
 				defaultCountry: userCountry,
 			})
+
 			if (result.lat == null || result.lon == null) return []
 			const resolved = forwardToResolved(result)
 			// Recover the street the resolver drops, so addressdetails + display_name carry it.
 			const { houseNumber, road } = await streetParts(parser, query)
+
 			if (houseNumber) resolved.address.house_number = houseNumber
+
 			if (road) resolved.address.road = road
 			// The country tag isn't always in the hierarchy (US admin results omit it); backfill from the
 			// US-centric-data default so the address, display_name, and flag/currency/calling-code agree.
 			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
 			const country = matchCountry(countryName)
+
 			if (country) {
 				if (!resolved.address.country) resolved.address.country = country.canonical
 				resolved.address.country_code = country.iso2.toLowerCase()
 			}
+
 			if (houseNumber || road) {
 				resolved.displayName =
 					joinNonEmpty(
@@ -202,19 +218,24 @@ async function serve(): Promise<void> {
 					placeName: result.locality ?? undefined,
 				})
 			)
+
 			return [out].slice(0, params.limit)
 		},
 
 		async reverse(params) {
 			if (!reverseGeo) return null
 			const { hierarchy } = await reverseGeo.reverseGeocode(params.lat, params.lon)
+
 			if (hierarchy.length === 0) return null
 			const address: NominatimAddressDetails = {}
+
 			for (const place of hierarchy) {
 				const key = PLACETYPE_TO_KEY[place.placetype]
+
 				if (key && !address[key]) address[key] = place.name
 			}
 			const deepest = hierarchy[0]!
+
 			if (deepest.country) address.country_code = deepest.country.toLowerCase()
 			const resolved: ResolvedAddress = {
 				lat: params.lat,
@@ -235,6 +256,7 @@ async function serve(): Promise<void> {
 			out.annotations = toOpenCage(
 				await annotate({ lat: params.lat, lon: params.lon, countryCode: address.country_code })
 			)
+
 			return out
 		},
 

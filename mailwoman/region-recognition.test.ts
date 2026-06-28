@@ -6,6 +6,7 @@
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
+
 import { recognizeUsRegions, usStateSlug } from "./region-recognition.js"
 
 const loc = (value: string, start = 0, end = value.length, children: AddressNode[] = []): AddressNode => ({

@@ -7,7 +7,9 @@
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { beforeEach, describe, expect, it } from "vitest"
+
 import type { CanonicalRow } from "../../types.js"
 import { createGeonamesPostalAdapter, GEONAMES_POSTAL_ADAPTER_ID, GEONAMES_POSTAL_DEFAULT_LICENSE } from "./adapter.js"
 
@@ -26,18 +28,22 @@ function row(country: string, postcode: string, place: string, admin1: string): 
 	cols[9] = "42.5"
 	cols[10] = "1.6"
 	cols[11] = "6"
+
 	return cols.join("\t")
 }
 
 function writeFixture(...rows: string[]): string {
 	const p = join(scratch, "XX.txt")
 	writeFileSync(p, rows.join("\n") + "\n", "utf8")
+
 	return p
 }
 
 async function collect(p: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
+
 	for await (const r of createGeonamesPostalAdapter().rows({ inputPath: p, ...extra })) out.push(r)
+
 	return out
 }
 
@@ -60,6 +66,7 @@ describe("geonames-postal adapter", () => {
 			locality: "Paris",
 			region: "Île-de-France",
 		})
+
 		for (const r of fr) {
 			expect(r.license).toBe(GEONAMES_POSTAL_DEFAULT_LICENSE)
 			expect(r.source).toBe(GEONAMES_POSTAL_ADAPTER_ID)

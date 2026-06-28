@@ -6,6 +6,7 @@
 
 import { ClassificationsMatchMap } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { AlphaNumericClassifier } from "./AlphaNumericClassifier.js"
 
 const classifier = new AlphaNumericClassifier()

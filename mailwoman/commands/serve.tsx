@@ -4,16 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Spinner, StatusMessage } from "@inkjs/ui"
-import express from "express"
-import { Box, Text } from "ink"
 import cluster, { Worker } from "node:cluster"
 import { availableParallelism } from "node:os"
 import { dirname, resolve as resolvePath } from "node:path"
 import * as process from "node:process"
 import { fileURLToPath } from "node:url"
+
+import { Spinner, StatusMessage } from "@inkjs/ui"
+import express from "express"
+import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../sdk/cli.js"
 import { AddressRouter, GeocodeRouter, HealthRouter, ResolveRouter } from "../server/index.js"
 

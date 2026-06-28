@@ -9,9 +9,9 @@
  *   fragments.
  */
 
+import type { DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import type { DecoderToken } from "@mailwoman/core/decoder"
 import { bridgePunctuationGaps } from "./span-bridge.js"
 
 const tok = (piece: string, start: number, label: string, confidence = 0.9): DecoderToken =>

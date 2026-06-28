@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { isUniformlyCased, smartCamelCase, smartCapitalCase, smartSnakeCase } from "./identifiers.js"
 
 test("smartSnakeCase: snake-cases mixed-case names", () => {

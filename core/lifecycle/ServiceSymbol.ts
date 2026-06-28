@@ -57,6 +57,7 @@ export class ServiceSymbol {
 	public static markAsDisposed(disposable: AsyncDisposable): boolean {
 		if (ServiceSymbol.asyncDisposed in disposable) {
 			ConsoleLogger.warn(`[${disposable}] Already disposed!`)
+
 			return false
 		}
 
@@ -73,16 +74,14 @@ export class ServiceSymbol {
 	}
 
 	/**
-	 * Type-predicate to determine if a given input is an object which implements the
-	 * `AsyncInitializable` interface.
+	 * Type-predicate to determine if a given input is an object which implements the `AsyncInitializable` interface.
 	 */
 	public static isAsyncInitializable(input: AsyncDisposable): input is AsyncInitializable {
 		return ServiceSymbol.asyncInit in input && typeof input[ServiceSymbol.asyncInit] === "function"
 	}
 
 	/**
-	 * Type-predicate to determine if a given input is an object which implements the
-	 * `AsyncDisposable` interface.
+	 * Type-predicate to determine if a given input is an object which implements the `AsyncDisposable` interface.
 	 */
 	public static isAsyncDisposable<T>(input: T): input is T & AsyncDisposable {
 		if (!input || typeof input !== "object") return false

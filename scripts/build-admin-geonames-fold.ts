@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+import { copyFileSync, existsSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -31,9 +35,6 @@
  *   <...> --out candidate-global-<v>.db
  */
 import { buildPlaceSearchFts, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite"
-import { copyFileSync, existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
 
 const { values: a } = parseArgs({
 	options: {
@@ -58,6 +59,7 @@ if (!existsSync(input)) {
 	console.error(`input admin DB missing: ${input}`)
 	process.exit(1)
 }
+
 if (input === output) {
 	console.error("refusing to write over the input — pick a distinct --out (build-on-copy, never in place)")
 	process.exit(1)

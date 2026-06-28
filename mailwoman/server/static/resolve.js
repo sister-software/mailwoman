@@ -1,6 +1,6 @@
 /**
- * Mailwoman resolver-demo front-end. No framework, no build step — vanilla DOM against the
- * `/api/resolve` endpoint exposed by `ResolveRouter.ts`.
+ * Mailwoman resolver-demo front-end. No framework, no build step — vanilla DOM against the `/api/resolve` endpoint
+ * exposed by `ResolveRouter.ts`.
  */
 
 const form = /** @type {HTMLFormElement} */ (document.getElementById("resolve-form"))
@@ -39,6 +39,7 @@ function indent(depth) {
 	const span = document.createElement("span")
 	span.className = "depth-indent"
 	span.textContent = depth === 0 ? "" : `${"·  ".repeat(depth)}`
+
 	return span
 }
 
@@ -47,6 +48,7 @@ function indent(depth) {
  */
 function renderRow(node) {
 	const tr = document.createElement("tr")
+
 	if (node.source === "resolver") tr.classList.add("resolved")
 
 	const tagTd = document.createElement("td")
@@ -63,6 +65,7 @@ function renderRow(node) {
 
 	const confTd = document.createElement("td")
 	confTd.textContent = node.confidence.toFixed(2)
+
 	if (node.confidence < 0.6) confTd.className = "conf-low"
 	tr.append(confTd)
 
@@ -97,6 +100,7 @@ function render(response) {
 	xmlEl.textContent = response.xml
 
 	nodesBody.innerHTML = ""
+
 	for (const node of response.nodes) {
 		nodesBody.append(renderRow(node))
 	}
@@ -104,10 +108,12 @@ function render(response) {
 
 async function submit() {
 	const text = input.value.trim()
+
 	if (!text) return
 
 	button.disabled = true
 	showStatus("loading", "Resolving…")
+
 	try {
 		const r = await fetch("/api/resolve", {
 			method: "POST",
@@ -115,9 +121,11 @@ async function submit() {
 			body: JSON.stringify({ text }),
 		})
 		const data = await r.json()
+
 		if (!r.ok) {
 			showStatus("error", data?.error ?? `HTTP ${r.status}`)
 			results.hidden = true
+
 			return
 		}
 		render(data)
@@ -136,6 +144,7 @@ form.addEventListener("submit", (e) => {
 
 // Pre-fill from `?text=` query string for shareable links.
 const urlText = new URLSearchParams(window.location.search).get("text")
+
 if (urlText) {
 	input.value = urlText
 	void submit()

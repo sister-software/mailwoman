@@ -6,6 +6,7 @@
 
 import { type Classification, isVisibleClassification } from "@mailwoman/core/classification"
 import { Span, TokenContext } from "@mailwoman/core/tokenization"
+
 import type { Solver } from "./BaseSolver.js"
 import { Solution } from "./Solution.js"
 import { SolutionMatch } from "./SolutionMatch.js"

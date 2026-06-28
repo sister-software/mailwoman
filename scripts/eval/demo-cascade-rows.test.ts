@@ -11,6 +11,7 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { describe, expect, it } from "vitest"
 
 import { parseSmokeRows } from "./demo-cascade-rows.js"
@@ -101,6 +102,7 @@ describe("the committed row file", () => {
 		const file = resolve(here, "../../data/eval/external/demo-cascade-smoke.jsonl")
 		const rows = parseSmokeRows(readFileSync(file, "utf8"), file)
 		expect(rows.length).toBeGreaterThanOrEqual(20)
+
 		// Every id-asserting row carries the human-readable cross-checks the README asks for.
 		for (const row of rows) {
 			if (row.expect.id !== undefined) expect(row.expect.name, row.input).toBeTruthy()

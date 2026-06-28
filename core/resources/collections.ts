@@ -75,8 +75,7 @@ export async function* takeInParallel<T, C extends (entry: T) => Promise<unknown
 /**
  * Given an async iterable collection, returns an async iterable, yielding batches of items.
  *
- * This is useful for emitting asynchronous items in batches, such as when processing a stream of
- * data.
+ * This is useful for emitting asynchronous items in batches, such as when processing a stream of data.
  */
 export async function* takeAsync<T>(collection: AsyncIterable<T>, batchSize: number): AsyncIterable<T[]> {
 	let buffer: T[] = []

@@ -7,11 +7,12 @@
 import type { Segment, SegmentSeparator } from "./types.js"
 
 /**
- * Comma / newline / tab separate segments. Locale-aware grammar reserved for future (JP whitespace,
- * KR honorifics). Default rules apply when no locale-specific override exists.
+ * Comma / newline / tab separate segments. Locale-aware grammar reserved for future (JP whitespace, KR honorifics).
+ * Default rules apply when no locale-specific override exists.
  */
 export function segment(text: string, _locale?: string): Segment[] {
 	const segments: Segment[] = []
+
 	if (text.length === 0) return segments
 
 	let start = 0
@@ -25,6 +26,7 @@ export function segment(text: string, _locale?: string): Segment[] {
 		const rightPad = raw.match(/\s*$/)![0].length
 		const innerStart = start + leftPad
 		const innerEnd = end - rightPad
+
 		if (innerEnd > innerStart) {
 			segments.push({
 				span: { start: innerStart, end: innerEnd, body: text.slice(innerStart, innerEnd) },
@@ -39,6 +41,7 @@ export function segment(text: string, _locale?: string): Segment[] {
 
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i]
+
 		if (ch === ",") {
 			flush(i, "comma")
 			start = i + 1

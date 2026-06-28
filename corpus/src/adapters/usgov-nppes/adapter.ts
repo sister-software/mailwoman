@@ -21,8 +21,10 @@
  *   License: stamped `"Public Domain"` per CMS's federal government distribution terms.
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
@@ -48,9 +50,12 @@ interface NppesRow {
 
 function splitAddress(address: string): { house_number?: string; street: string } | null {
 	const trimmed = address.trim()
+
 	if (!trimmed) return null
 	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (m) return { house_number: m[1], street: m[2]!.trim() }
+
 	return { street: trimmed }
 }
 
@@ -64,6 +69,7 @@ function composeRaw(
 ): string {
 	const streetPart = [house, street].filter(Boolean).join(" ").trim()
 	const cityPart = [city.trim(), [state, postcode].filter(Boolean).join(" ").trim()].filter(Boolean).join(", ")
+
 	return [venue, streetPart, cityPart].filter(Boolean).join(", ")
 }
 
@@ -90,9 +96,11 @@ export function createUsgovNppesAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const record of parser as AsyncIterable<NppesRow>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const npi = (record.NPI ?? "").trim()
@@ -110,10 +118,12 @@ export function createUsgovNppesAdapter(): CorpusAdapter {
 					if (!city || !postcode) continue
 
 					const state = lookupStateAbbreviation(stateRaw)
+
 					if (!state) continue
 
 					const fullStreet = [address1, address2].filter(Boolean).join(" ")
 					const split = splitAddress(fullStreet)
+
 					if (!split) continue
 
 					const venue = orgName || [firstName, lastName].filter(Boolean).join(" ") || undefined
@@ -128,9 +138,11 @@ export function createUsgovNppesAdapter(): CorpusAdapter {
 					}
 
 					const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
+
 					if (!raw) continue
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length <= 2) continue
 
 					const sourceId = npi ? `${USGOV_NPPES_ADAPTER_ID}-${npi}` : stableSourceId(USGOV_NPPES_ADAPTER_ID, aligned)

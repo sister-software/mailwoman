@@ -22,11 +22,13 @@ import {
 const N = Number(process.argv[process.argv.indexOf("--n") + 1] || "300")
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
+
 	return () => {
 		a |= 0
 		a = (a + 0x6d2b79f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 }
@@ -46,6 +48,7 @@ for (const template of Object.keys(STRESS_TAG) as BoundaryStressTemplate[]) {
 	const tag = STRESS_TAG[template]!
 	let stressHit = 0
 	const allKeys: Record<string, { hit: number; n: number }> = {}
+
 	for (let i = 0; i < N; i++) {
 		const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: template })
 		const json = decodeAsJson(await classifier.parse(row.raw, { postcodeRepair: true })) as Record<string, unknown>
@@ -57,11 +60,14 @@ for (const template of Object.keys(STRESS_TAG) as BoundaryStressTemplate[]) {
 			}
 		}
 		collect(json)
+
 		for (const [k, gold] of Object.entries(row.components)) {
 			const a = (allKeys[k] ??= { hit: 0, n: 0 })
 			a.n++
+
 			if ((got[k] ?? "").toLowerCase().trim() === String(gold).toLowerCase().trim()) a.hit++
 		}
+
 		if (
 			(got[tag] ?? "").toLowerCase().trim() ===
 			String(row.components[tag as keyof typeof row.components] ?? "")

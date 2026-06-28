@@ -9,20 +9,28 @@
  *   list. An `@mailwoman/annotations` `Annotator`.
  */
 
-import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { DatabaseSync } from "node:sqlite"
+
+import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
 /** Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace. */
 export function foldName(name: string): string {
-	return name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ")
+	return name
+		.normalize("NFD")
+		.replace(/[̀-ͯ]/g, "")
+		.toLowerCase()
+		.trim()
+		.replace(/\s+/g, " ")
 }
 
 /** Parse a UN/LOCODE coordinate (`"4923N 01522E"`) to decimal degrees, or null if absent/malformed. */
 export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } | null {
 	const m = raw.trim().match(/^(\d{2})(\d{2})([NS])\s+(\d{3})(\d{2})([EW])$/)
+
 	if (!m) return null
 	const lat = (Number(m[1]) + Number(m[2]) / 60) * (m[3] === "S" ? -1 : 1)
 	const lon = (Number(m[4]) + Number(m[5]) / 60) * (m[6] === "W" ? -1 : 1)
+
 	return { lat, lon }
 }
 
@@ -33,6 +41,7 @@ function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): nu
 	const s =
 		Math.sin(dLat / 2) ** 2 +
 		Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+
 	return 2 * EARTH_R_KM * Math.asin(Math.sqrt(s))
 }
 
@@ -57,6 +66,7 @@ export class UnLocodeLookup {
 		const row = this.#byName.get(country.toUpperCase(), foldName(name)) as
 			| { country: string; location: string }
 			| undefined
+
 		return row ? `${row.country} ${row.location}` : null
 	}
 
@@ -71,10 +81,13 @@ export class UnLocodeLookup {
 			lon: number
 		}>
 		let best: { code: string; km: number } | null = null
+
 		for (const r of rows) {
 			const km = haversineKm(lat, lon, r.lat, r.lon)
+
 			if (km <= maxKm && (!best || km < best.km)) best = { code: `${r.country} ${r.location}`, km }
 		}
+
 		return best?.code ?? null
 	}
 
@@ -84,14 +97,14 @@ export class UnLocodeLookup {
 }
 
 /**
- * Build an `Annotator` filling `AnnotationSet.unLocode`. Prefers a country + place-name match (when
- * the resolver supplies them via `countryCode` / `placeName`), and falls back to the nearest
- * coordinate.
+ * Build an `Annotator` filling `AnnotationSet.unLocode`. Prefers a country + place-name match (when the resolver
+ * supplies them via `countryCode` / `placeName`), and falls back to the nearest coordinate.
  */
 export function makeUnLocodeAnnotator(lookup: UnLocodeLookup, opts: { maxKm?: number } = {}): Annotator {
 	return ({ lat, lon, countryCode, placeName }): Partial<AnnotationSet> => {
 		const byName = countryCode && placeName ? lookup.byName(countryCode, placeName) : null
 		const code = byName ?? lookup.nearest(lat, lon, opts.maxKm)
+
 		return code ? { unLocode: code } : {}
 	}
 }

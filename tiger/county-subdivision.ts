@@ -39,22 +39,22 @@ export interface TIGERCountySubdivision {
 	COUSUBFP: string
 
 	/**
-	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
 	 * @title County Subdivision GNIS Code
 	 *
 	 * @minLength 8
 	 * @maxLength 8
 	 * @pattern ^\d{8}$
+	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
 	 */
 	COUSUBNS: string
 	/**
 	 * Concatenation of current state FIPS code, county FIPS code, and county subdivision FIPS code.
 	 *
-	 * @see {@link https://www.census.gov/programs-surveys/geography/guidance/geo-identifiers.html | Census: GeoID}
 	 * @title County Sub-division Identifier
 	 * @minLength 10
 	 * @maxLength 20
 	 * @pattern ^\d{10,20}$
+	 * @see {@link https://www.census.gov/programs-surveys/geography/guidance/geo-identifiers.html | Census: GeoID}
 	 */
 	GEOID: string
 
@@ -69,8 +69,7 @@ export interface TIGERCountySubdivision {
 	GEOIDFQ: string
 
 	/**
-	 * Current name and the translated legal/statistical area description code for county
-	 * sub-division.
+	 * Current name and the translated legal/statistical area description code for county sub-division.
 	 *
 	 * @title Name/Legal Statistical Area Description
 	 * @minLength 1

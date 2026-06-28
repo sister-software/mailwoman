@@ -7,20 +7,25 @@
 import { writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { describe, expect, it } from "vitest"
+
 import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "./adapter.js"
 
 function writeFixture(rows: Array<Record<string, unknown>>): string {
 	const path = join(tmpdir(), `synth-po-box-fixture-${Math.random().toString(36).slice(2)}.jsonl`)
 	writeFileSync(path, rows.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf8")
+
 	return path
 }
 
 async function collect(path: string, adapter = createSynthPoBoxAdapter({ seed: 42 })) {
 	const out = []
+
 	for await (const row of adapter.rows({ inputPath: path })) {
 		out.push(row)
 	}
+
 	return out
 }
 
@@ -69,6 +74,7 @@ describe("synth-po-box adapter", () => {
 		])
 		const adapter = createSynthPoBoxAdapter({ seed: 7 })
 		const rows = []
+
 		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) {
 			rows.push(row)
 		}
@@ -81,6 +87,7 @@ describe("synth-po-box adapter", () => {
 		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
 		const adapter = createSynthPoBoxAdapter({ seed: 42, variantsPerInput: 5 })
 		const rows = []
+
 		for await (const row of adapter.rows({ inputPath: path })) {
 			rows.push(row)
 		}
@@ -119,6 +126,7 @@ describe("synth-po-box adapter", () => {
 		)
 		const adapter = createSynthPoBoxAdapter({ seed: 1 })
 		const rows = []
+
 		for await (const row of adapter.rows({ inputPath: path, limit: 3 })) {
 			rows.push(row)
 		}
@@ -171,6 +179,7 @@ describe("synth-po-box adapter", () => {
 		const path = writeFixture([{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" }])
 		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1.0 })
 		const rows = []
+
 		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) rows.push(row)
 		expect(rows.length).toBeGreaterThanOrEqual(1)
 		expect(rows.every((r) => !/^(PSC|CMR|Unit) /.test(String(r.components.po_box)))).toBe(true)

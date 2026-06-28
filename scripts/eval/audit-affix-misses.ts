@@ -33,6 +33,7 @@ const { values: args } = parseArgs({
 		"gazetteer-lexicon": { type: "string", default: "data/gazetteer/anchor-lexicon-v1.json" },
 	},
 })
+
 if (!args.model) throw new Error("--model required")
 
 const rows = readFileSync(args.file!, "utf8")
@@ -73,33 +74,49 @@ const COMMON_SUFFIXES = new Set([
 function formFeatures(row: { raw: string; components: Record<string, string> }): string[] {
 	const f: string[] = []
 	const { street_prefix: prefix, street_suffix: suffix } = row.components
+
 	if (prefix) f.push(prefix.length <= 2 ? "prefix-abbr" : "prefix-full")
+
 	if (suffix) {
 		f.push(suffix.length <= 4 && !suffix.endsWith(".") ? "suffix-abbr" : "suffix-full")
+
 		if (!COMMON_SUFFIXES.has(suffix.toLowerCase().replace(/\.$/, ""))) f.push("suffix-RARE")
 	}
+
 	if (/\b[A-Z]{3,}\b/.test(row.raw.replace(/\b(USA|APO|FPO)\b/g, ""))) f.push("CAPS")
+
 	if (/\w\./.test(row.raw)) f.push("punct-period")
+
 	if (!row.raw.includes(",")) f.push("no-comma")
+
 	if ((row.components.street ?? "").includes(" ")) f.push("street-multiword")
+
 	if (prefix && suffix) f.push("both-affixes")
+
 	if (!/\d{5}/.test(row.raw)) f.push("no-postcode")
+
 	return f
 }
 
 const featureCounts = (rowsSubset: typeof rows) => {
 	const counts = new Map<string, number>()
+
 	for (const r of rowsSubset) for (const f of formFeatures(r)) counts.set(f, (counts.get(f) ?? 0) + 1)
+
 	return counts
 }
 
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const misses: Array<{ row: (typeof rows)[number]; tag: string; expected: string; got: string; street?: string }> = []
+
 for (const row of rows) {
 	const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
+
 	for (const tag of ["street_prefix", "street_suffix"]) {
 		const e = norm(row.components[tag])
+
 		if (!e) continue
+
 		if (norm(got[tag]) !== e)
 			misses.push({ row, tag, expected: e, got: norm(got[tag]) || "(nothing)", street: norm(got.street) })
 	}
@@ -107,6 +124,7 @@ for (const row of rows) {
 
 console.log(`rows: ${rows.length} · affix-gold instances missed: ${misses.length}`)
 console.log("\n== per-miss detail ==")
+
 for (const m of misses) {
 	console.log(
 		`✗ [${m.tag}] expected "${m.expected}" got "${m.got}" · model street="${m.street}" · forms: ${formFeatures(m.row).join(",")}`
@@ -117,6 +135,7 @@ console.log("\n== form-feature rates: misses vs whole eval ==")
 const all = featureCounts(rows)
 const missed = featureCounts([...new Set(misses.map((m) => m.row))])
 const features = [...new Set([...all.keys(), ...missed.keys()])].sort()
+
 for (const f of features) {
 	const a = all.get(f) ?? 0
 	const m = missed.get(f) ?? 0

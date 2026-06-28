@@ -22,7 +22,9 @@
 import { readFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { describe, expect, test } from "vitest"
+
 import { MailwomanTokenizer, SPACE_SENTINEL } from "../tokenizer.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -62,8 +64,10 @@ describe("MailwomanTokenizer — offset reconstruction", () => {
 
 	test("offsets are non-decreasing", async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
+
 		for (const { raw } of fixture) {
 			const { pieces } = tokenizer.encode(raw)
+
 			for (let i = 1; i < pieces.length; i++) {
 				expect(pieces[i]!.start).toBeGreaterThanOrEqual(pieces[i - 1]!.end)
 			}

@@ -62,8 +62,7 @@ export async function iterateInParallel<T>(asyncIterable: AsyncIterable<T>): Pro
 }
 
 /**
- * Given an iterable of values, maps each value to a record of the value and the result of the
- * callback.
+ * Given an iterable of values, maps each value to a record of the value and the result of the callback.
  *
  * This is a convenience function when an iterable needs mapping to an object-like structure.
  *

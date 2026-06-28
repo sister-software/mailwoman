@@ -14,15 +14,15 @@ type Segment = { text: string; node: ResultNode | null }
 /** ConfidenceCell's tiers, verbatim — keep these thresholds and the swatch colours in sync. */
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
+
 	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
 }
 
 /**
- * Render the raw input as a displaCy-style ribbon: each character span the parser tagged is tinted
- * by its confidence (red→amber→green, the same tiering as the table's ConfidenceCell) and labelled
- * with its tag underneath. Delimiters and any unparsed characters fall through as plain text, so a
- * dropped span reads as a literal gap in the colour. Returns null when no node carries offsets
- * (older models, or an all-O parse) — the table alone still tells the story.
+ * Render the raw input as a displaCy-style ribbon: each character span the parser tagged is tinted by its confidence
+ * (red→amber→green, the same tiering as the table's ConfidenceCell) and labelled with its tag underneath. Delimiters
+ * and any unparsed characters fall through as plain text, so a dropped span reads as a literal gap in the colour.
+ * Returns null when no node carries offsets (older models, or an all-O parse) — the table alone still tells the story.
  */
 export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) => {
 	if (!input) return null
@@ -36,16 +36,20 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 			n.end > n.start &&
 			n.end <= input.length
 	)
+
 	if (spans.length === 0) return null
 
 	// Per-character owner = the most specific (shortest) span covering it. Robust to any parent/child
 	// span nesting the tree hands us — the leaf always wins, so every character renders once.
 	const owner = new Array<number>(input.length).fill(-1)
+
 	for (let i = 0; i < input.length; i++) {
 		let best = -1
 		let bestLen = Infinity
+
 		for (let s = 0; s < spans.length; s++) {
 			const sp = spans[s]
+
 			if (i >= sp.start && i < sp.end && sp.end - sp.start < bestLen) {
 				bestLen = sp.end - sp.start
 				best = s
@@ -57,9 +61,13 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 	// Coalesce runs of the same owner into segments.
 	const segments: Segment[] = []
 	let from = 0
+
 	for (let i = 1; i <= input.length; i++) {
 		if (i === input.length || owner[i] !== owner[from]) {
-			segments.push({ text: input.slice(from, i), node: owner[from] === -1 ? null : spans[owner[from]] })
+			segments.push({
+				text: input.slice(from, i),
+				node: owner[from] === -1 ? null : spans[owner[from]],
+			})
 			from = i
 		}
 	}

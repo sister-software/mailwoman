@@ -22,6 +22,7 @@
 import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import { join } from "node:path"
+
 import { describe, expect, test } from "vitest"
 
 // ---------------------------------------------------------------------------
@@ -51,6 +52,7 @@ describe("geocode argument validation", () => {
 	test("missing address argument exits 1 with a descriptive error", () => {
 		if (!hasCliCompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
+
 			return
 		}
 		expect(() =>
@@ -66,6 +68,7 @@ describe("geocode argument validation", () => {
 	test("empty address string exits 1", () => {
 		if (!hasCliCompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
+
 			return
 		}
 		expect(() =>
@@ -80,10 +83,12 @@ describe("geocode argument validation", () => {
 	test("missing WOF DB exits 1 with a descriptive error", () => {
 		if (!hasCliCompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
+
 			return
 		}
 		let threw = false
 		let output = ""
+
 		try {
 			execFileSync(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 				encoding: "utf8",
@@ -110,8 +115,8 @@ describe("geocode argument validation", () => {
 const hasTxShards = hasTxAddressPoints && hasTxInterpolation
 
 /**
- * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit shard overrides.
- * Expects a street-level coordinate near 30.5, -97.6 (Round Rock area).
+ * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit shard overrides. Expects a
+ * street-level coordinate near 30.5, -97.6 (Round Rock area).
  */
 describe.skipIf(!hasCliCompiled || !hasWofDb || !hasTxShards)(`geocode integration — ${wofPath} + TX shards`, () => {
 	const TX_ADDRESS = "2929 Flower Hill Drive, Round Rock, TX 78664"
@@ -180,8 +185,7 @@ describe.skipIf(!hasCliCompiled || !hasWofDb || !hasTxShards)(`geocode integrati
 })
 
 /**
- * Admin-only degradation: when no shard is provided, geocode still returns a coordinate from the
- * WOF admin centroid.
+ * Admin-only degradation: when no shard is provided, geocode still returns a coordinate from the WOF admin centroid.
  */
 describe.skipIf(!hasCliCompiled || !hasWofDb)(`geocode admin-only degradation — ${wofPath}`, () => {
 	test("geocodes to admin centroid when no shards provided", () => {

@@ -6,12 +6,12 @@
 
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { LeadingAreaDeclassifier } from "./LeadingAreaDeclassifier.js"
 
 /**
- * Rule: within a solution, an admin match (locality / region / country) is removed when it ends
- * before the last NON-admin match. Postcode is treated as "neutral" — it neither advances the
- * non-admin cursor nor is it ever removed.
+ * Rule: within a solution, an admin match (locality / region / country) is removed when it ends before the last
+ * NON-admin match. Postcode is treated as "neutral" — it neither advances the non-admin cursor nor is it ever removed.
  */
 
 test("leading admin before a non-admin match is removed", () => {

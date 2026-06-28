@@ -8,16 +8,6 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "neural-web"
 	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js"
-	},
-	"dependencies": {
-		"@mailwoman/core": "workspace:*",
-		"@mailwoman/neural": "workspace:*",
-		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2"
-	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
@@ -25,7 +15,17 @@
 		"out/**/*.d.ts.map",
 		"README.md"
 	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
+		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2"
 	}
 }

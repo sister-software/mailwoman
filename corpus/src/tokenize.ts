@@ -40,26 +40,28 @@ export interface Tokenizer {
 /**
  * Whitespace + punctuation tokenizer (pure JS).
  *
- * Tokens are maximal runs of unicode word characters (`\p{L}` letters, `\p{N}` digits, `\p{M}`
- * marks, plus `'`, `-`, `_`). Everything else — whitespace, punctuation, symbols — is treated as a
- * separator and **not** emitted as a token. The resulting spans cover the original string only on
- * token regions; in-between regions belong to no token.
+ * Tokens are maximal runs of unicode word characters (`\p{L}` letters, `\p{N}` digits, `\p{M}` marks, plus `'`, `-`,
+ * `_`). Everything else — whitespace, punctuation, symbols — is treated as a separator and **not** emitted as a token.
+ * The resulting spans cover the original string only on token regions; in-between regions belong to no token.
  *
- * This is intentionally lossy at the edges (alignment can still label every meaningful span). A
- * future SentencePiece tokenizer will preserve all bytes via byte-fallback.
+ * This is intentionally lossy at the edges (alignment can still label every meaningful span). A future SentencePiece
+ * tokenizer will preserve all bytes via byte-fallback.
  */
 export function whitespaceTokenizer(): Tokenizer {
 	// Maximal runs of letters/digits/marks plus the joiners common to addresses
 	// (apostrophe, hyphen, underscore). Comma/space/period etc. are not in the set.
 	const tokenRe = /[\p{L}\p{N}\p{M}'_-]+/gu
+
 	return {
 		tokenize(text: string): readonly TokenSpan[] {
 			const out: TokenSpan[] = []
 			tokenRe.lastIndex = 0
 			let m: RegExpExecArray | null
+
 			while ((m = tokenRe.exec(text))) {
 				out.push({ text: m[0], start: m.index, end: m.index + m[0].length })
 			}
+
 			return out
 		},
 	}

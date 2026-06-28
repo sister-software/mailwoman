@@ -12,11 +12,12 @@
  *   Output: data/gazetteer/affix-relabel-lexicon-v1.json
  */
 
+import { mkdirSync, writeFileSync } from "node:fs"
+import { dirname } from "node:path"
+
 import { AbbreviationToDirectional, DirectionalToAbbreviationMap, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -43,10 +44,12 @@ const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options
 				// ("Northwest"), which is what a whitespace-token relabel pass can match — so we emit the abbr
 				// ("nw") and the de-spaced name ("northwest"), same surfaces matchLeadingDirectional accepts.
 				const directionals: Record<string, string> = {}
+
 				for (const [name, abbr] of DirectionalToAbbreviationMap) {
 					directionals[abbr.toLowerCase()] = abbr
 					directionals[name.replace(/\s+/g, "").toLowerCase()] = abbr
 				}
+
 				for (const [abbr, name] of AbbreviationToDirectional) {
 					directionals[abbr.toLowerCase()] = abbr
 					directionals[name.replace(/\s+/g, "").toLowerCase()] = abbr
@@ -54,6 +57,7 @@ const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options
 
 				// Suffixes: the codex lookup already maps every Pub-28 variant (lowercase) → canonical suffix.
 				const suffixes: Record<string, string> = {}
+
 				for (const [variant, canonical] of US_STREET_SUFFIX_LOOKUP) {
 					suffixes[variant] = canonical
 				}
@@ -83,6 +87,7 @@ const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -95,6 +100,7 @@ const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options
 			</Box>
 		)
 	}
+
 	return null
 }
 

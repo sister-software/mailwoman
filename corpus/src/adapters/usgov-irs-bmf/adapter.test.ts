@@ -7,7 +7,9 @@
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
 import { beforeEach, describe, expect, it } from "vitest"
+
 import type { CanonicalRow } from "../../types.js"
 import { createUsgovIrsBmfAdapter, USGOV_IRS_BMF_ADAPTER_ID, USGOV_IRS_BMF_DEFAULT_LICENSE } from "./adapter.js"
 
@@ -21,12 +23,15 @@ beforeEach(() => {
 function writeCsv(...lines: string[]): string {
 	const p = join(scratch, "eo.csv")
 	writeFileSync(p, HEADER + "\n" + lines.join("\n") + "\n", "utf8")
+
 	return p
 }
 
 async function collect(p: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
+
 	for await (const r of createUsgovIrsBmfAdapter().rows({ inputPath: p, ...extra })) out.push(r)
+
 	return out
 }
 

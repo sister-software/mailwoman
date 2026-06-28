@@ -15,6 +15,7 @@ const repoRoot = resolve(here, "..")
 /** Files to rewrite: everything under packages/, recursively, .ts/.tsx. */
 function listFiles() {
 	const out = execSync("git ls-files packages/", { cwd: repoRoot, encoding: "utf8" })
+
 	return out
 		.split("\n")
 		.filter((p) => p.endsWith(".ts") || p.endsWith(".tsx"))
@@ -53,7 +54,9 @@ function relIntoRoot(filePath: string, targetRelative: string) {
 	const target = resolve(repoRoot, targetRelative)
 	let rel = relative(fromDir, target)
 	rel = rel.split("\\").join("/")
+
 	if (!rel.startsWith(".")) rel = "./" + rel
+
 	return rel
 }
 
@@ -61,26 +64,32 @@ function rewriteSpecifier(spec: string, filePath: string) {
 	if (rootRelative[spec]) {
 		return relIntoRoot(filePath, rootRelative[spec])
 	}
+
 	for (const [pattern, replacement] of scopeRewrites) {
 		if (pattern.test(spec)) {
 			return spec.replace(pattern, replacement)
 		}
 	}
+
 	return null
 }
 
 const importRe = /(from\s+|require\(\s*)(["'])([^"'\n]+)\2/g
 
 let changed = 0
+
 for (const file of listFiles()) {
 	const src = readFileSync(file, "utf8")
 	let touched = false
 	const out = src.replace(importRe, (match, head, q, spec) => {
 		const rewritten = rewriteSpecifier(spec, file)
+
 		if (rewritten == null || rewritten === spec) return match
 		touched = true
+
 		return `${head}${q}${rewritten}${q}`
 	})
+
 	if (touched) {
 		writeFileSync(file, out)
 		changed++

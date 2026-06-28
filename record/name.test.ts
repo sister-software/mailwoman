@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { parsePersonName } from "./name.js"
 
 describe("parsePersonName", () => {

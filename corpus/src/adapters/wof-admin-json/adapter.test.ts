@@ -8,7 +8,9 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { WOF_ADMIN_ADAPTER_ID, createWofAdminAdapter, nameSlotsFor, variantsFor } from "./adapter.js"
@@ -26,6 +28,7 @@ afterEach(async () => {
 
 async function loadRows(): Promise<CanonicalRow[]> {
 	const jsonl = await readFile(join(scratch, WOF_ADMIN_ADAPTER_ID, "canonical.jsonl"), "utf8")
+
 	return jsonl
 		.trim()
 		.split("\n")

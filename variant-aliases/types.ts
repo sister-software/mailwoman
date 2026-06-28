@@ -9,10 +9,10 @@
 /**
  * The semantic kind of a variant — either a generic amenity category or a specific brand.
  *
- * - `amenity` aliases resolve to a category (`fuel`, `pharmacy`, `convenience`, ...). Several
- *   variants can map to the same category ("servo" and "petrol station" both → `fuel`).
- * - `brand` aliases resolve to a canonical brand name. Multiple regional variants of the same brand
- *   ("Macca's", "McDo", "Mickey D's", "マクド") all map to `McDonald's`.
+ * - `amenity` aliases resolve to a category (`fuel`, `pharmacy`, `convenience`, ...). Several variants can map to the
+ *   same category ("servo" and "petrol station" both → `fuel`).
+ * - `brand` aliases resolve to a canonical brand name. Multiple regional variants of the same brand ("Macca's", "McDo",
+ *   "Mickey D's", "マクド") all map to `McDonald's`.
  */
 export type VariantKind = "amenity" | "brand"
 
@@ -20,15 +20,14 @@ export interface VariantAliasBase {
 	/** The user-typed variant. Always lowercase for the lookup key (CJK preserved as-is). */
 	variant: string
 	/**
-	 * BCP-47 locale tags where this variant is in active use. Used to gate lookups: only consider an
-	 * alias when the detected locale matches one of these. A query in `en-US` won't match Australian
-	 * "servo" because `en-AU` is not in `["en-US"]`.
+	 * BCP-47 locale tags where this variant is in active use. Used to gate lookups: only consider an alias when the
+	 * detected locale matches one of these. A query in `en-US` won't match Australian "servo" because `en-AU` is not in
+	 * `["en-US"]`.
 	 */
 	locales: ReadonlyArray<string>
 	/**
-	 * Free-form regional refinement within the locale (e.g. "NYC", "Kansai", "Quebec"). Not used for
-	 * matching today; informational. A future enhancement could combine this with a coarse
-	 * geolocation signal to further disambiguate.
+	 * Free-form regional refinement within the locale (e.g. "NYC", "Kansai", "Quebec"). Not used for matching today;
+	 * informational. A future enhancement could combine this with a coarse geolocation signal to further disambiguate.
 	 */
 	regionHint?: string
 }

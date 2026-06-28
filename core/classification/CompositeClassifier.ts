@@ -5,9 +5,10 @@
  */
 
 import { Span } from "@mailwoman/core/tokenization"
+
 import type { Classification } from "./Classification.js"
-import { SectionClassifier } from "./SectionClassifier.js"
 import { type ClassifierSchemeConfig, phraseMatchesScheme } from "./scheme.js"
+import { SectionClassifier } from "./SectionClassifier.js"
 
 /**
  * Compute the cartesian product of two or more arrays.
@@ -24,6 +25,7 @@ function cartesian<T>(...args: T[][]): T[][] {
 					res.push(a.concat([b]))
 				})
 			})
+
 			return res
 		},
 		[[]] as T[][]

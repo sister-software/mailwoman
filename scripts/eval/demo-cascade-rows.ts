@@ -21,8 +21,8 @@ export interface SmokeRowExpect {
 	/** Human-readable cross-check (not graded — the id is the assertion). */
 	placetype?: string
 	/**
-	 * The cascade dead-ends (no WOF row) and the demo's anchor-centroid fallback must fire instead.
-	 * Mutually exclusive with `id`.
+	 * The cascade dead-ends (no WOF row) and the demo's anchor-centroid fallback must fire instead. Mutually exclusive
+	 * with `id`.
 	 */
 	anchor_centroid?: boolean
 }
@@ -50,9 +50,8 @@ class SmokeRowError extends Error {
 }
 
 /**
- * Parse + validate a JSONL smoke-row file. Throws a {@link SmokeRowError} naming the 1-based row
- * number (and echoing the offending line) on ANY malformed row. Returns at least one row — an empty
- * file is an error, not a vacuous pass.
+ * Parse + validate a JSONL smoke-row file. Throws a {@link SmokeRowError} naming the 1-based row number (and echoing the
+ * offending line) on ANY malformed row. Returns at least one row — an empty file is an error, not a vacuous pass.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 	const lines = text.split("\n")
@@ -60,10 +59,12 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i]!.trim()
+
 		if (!line || line.startsWith("//") || line.startsWith("#")) continue
 		const rowNumber = i + 1
 
 		let parsed: unknown
+
 		try {
 			parsed = JSON.parse(line)
 		} catch (error) {
@@ -84,10 +85,12 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 		if (typeof row.input !== "string" || row.input.trim() === "") {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`input` must be a non-empty string", line)
 		}
+
 		if (typeof row.expect !== "object" || row.expect === null || Array.isArray(row.expect)) {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`expect` must be an object", line)
 		}
 		const expect = row.expect as Record<string, unknown>
+
 		for (const key of Object.keys(expect)) {
 			if (!EXPECT_KEYS.has(key)) {
 				throw new SmokeRowError(
@@ -101,6 +104,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 
 		const hasId = expect.id !== undefined
 		const hasAnchor = expect.anchor_centroid !== undefined
+
 		if (hasId === hasAnchor) {
 			throw new SmokeRowError(
 				sourceLabel,
@@ -109,17 +113,21 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 				line
 			)
 		}
+
 		if (hasId && (typeof expect.id !== "number" || !Number.isInteger(expect.id) || expect.id <= 0)) {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`expect.id` must be a positive integer WOF id", line)
 		}
+
 		if (hasAnchor && expect.anchor_centroid !== true) {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`expect.anchor_centroid` must be literally `true`", line)
 		}
+
 		for (const key of ["name", "placetype"] as const) {
 			if (expect[key] !== undefined && typeof expect[key] !== "string") {
 				throw new SmokeRowError(sourceLabel, rowNumber, `\`expect.${key}\` must be a string when present`, line)
 			}
 		}
+
 		for (const key of ["note", "source"] as const) {
 			if (row[key] !== undefined && typeof row[key] !== "string") {
 				throw new SmokeRowError(sourceLabel, rowNumber, `\`${key}\` must be a string when present`, line)
@@ -132,5 +140,6 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 	if (rows.length === 0) {
 		throw new Error(`${sourceLabel}: no rows found — an empty smoke file is an error, not a vacuous pass`)
 	}
+
 	return rows
 }

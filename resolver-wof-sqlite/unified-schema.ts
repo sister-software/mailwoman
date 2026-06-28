@@ -12,8 +12,10 @@
  *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "node:sqlite"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+
 import type { WofDatabase } from "./schema.js"
 
 export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
@@ -92,11 +94,11 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 }
 
 /**
- * Populate the `ancestors` table by walking each place's `parent_id` chain in `spr` (transitive
- * closure, including the place itself). Idempotent: drops + rebuilds the table contents. Returns
- * the row count. Run after `spr` is fully ingested (build-unified-wof freeze phase) or standalone
- * on an existing unified DB (`scripts/add-ancestors.ts`). Sentinel/negative parent_ids and cycles
- * terminate the walk. ~4 rows/place average; a transaction keeps the ~5M inserts fast.
+ * Populate the `ancestors` table by walking each place's `parent_id` chain in `spr` (transitive closure, including the
+ * place itself). Idempotent: drops + rebuilds the table contents. Returns the row count. Run after `spr` is fully
+ * ingested (build-unified-wof freeze phase) or standalone on an existing unified DB (`scripts/add-ancestors.ts`).
+ * Sentinel/negative parent_ids and cycles terminate the walk. ~4 rows/place average; a transaction keeps the ~5M
+ * inserts fast.
  */
 export function populateAncestors(db: DatabaseSync): number {
 	db.exec("DELETE FROM ancestors")
@@ -106,18 +108,22 @@ export function populateAncestors(db: DatabaseSync): number {
 		placetype: string
 	}>
 	const byId = new Map<number, { parent: number; placetype: string }>()
+
 	for (const r of rows) byId.set(r.id, { parent: r.parent_id, placetype: r.placetype })
 
 	const insert = db.prepare("INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)")
 	db.exec("BEGIN")
 	let count = 0
+
 	for (const r of rows) {
 		insert.run(r.id, r.id, r.placetype) // self
 		count++
 		const seen = new Set<number>([r.id])
 		let cur = r.parent_id
+
 		while (cur > 0 && !seen.has(cur)) {
 			const node = byId.get(cur)
+
 			if (!node) break
 			insert.run(r.id, cur, node.placetype)
 			count++
@@ -126,6 +132,7 @@ export function populateAncestors(db: DatabaseSync): number {
 		}
 	}
 	db.exec("COMMIT")
+
 	return count
 }
 

@@ -13,8 +13,8 @@
 import { matchCase } from "./street-suffix.js"
 
 /**
- * The 8 directional abbreviations accepted by the USPS. The USPS prefers the abbreviation over the
- * fully-spelled-out name.
+ * The 8 directional abbreviations accepted by the USPS. The USPS prefers the abbreviation over the fully-spelled-out
+ * name.
  */
 export enum DirectionalAbbreviation {
 	NORTH = "N",
@@ -129,6 +129,7 @@ export const DirectionalToAbbreviationMap: ReadonlyMap<string, DirectionalAbbrev
  */
 export function pluckDirectionalName(input: unknown): DirectionalName | null {
 	if (!input || typeof input !== "string") return null
+
 	return AbbreviationToDirectional.get(input) || AbbreviationToDirectional.get(input.trim().toUpperCase()) || null
 }
 
@@ -137,6 +138,7 @@ export function pluckDirectionalName(input: unknown): DirectionalName | null {
  */
 export function lookupDirectionalAbbreviation(input: unknown): DirectionalAbbreviation | null {
 	if (!input || typeof input !== "string") return null
+
 	return (
 		DirectionalToAbbreviationMap.get(input) ||
 		DirectionalToAbbreviationMap.get(input.trim().toUpperCase().replace(/\s+/g, " ")) ||
@@ -160,29 +162,34 @@ export interface DirectionalMatch {
 export function lookupDirectional(input: unknown): DirectionalMatch | null {
 	if (!input || typeof input !== "string") return null
 	const abbreviation = lookupDirectionalAbbreviation(input)
+
 	if (abbreviation) return { directional: DirectionalAbbreviationRecord[abbreviation], abbreviation }
 	const directional = pluckDirectionalName(input)
+
 	if (directional) return { directional, abbreviation: DirectionalToAbbreviationMap.get(directional)! }
+
 	return null
 }
 
 // ── Codex shard-facing helpers (mirror street-suffix's matchTrailingSuffix) ───────────────────────
 
 /**
- * If the FIRST whitespace-separated word of `street` is a known USPS directional (abbrev or name),
- * return the canonical name, its abbreviation, and the matched surface word. Null otherwise. (The
- * leading-end counterpart of {@link matchTrailingSuffix}; mirrors unit-designator's
- * `matchLeadingDesignator`.) Single-word only — the spaced "NORTH EAST" form is normalized to its
- * one-word variant in real US streets, which this matches via the lookup.
+ * If the FIRST whitespace-separated word of `street` is a known USPS directional (abbrev or name), return the canonical
+ * name, its abbreviation, and the matched surface word. Null otherwise. (The leading-end counterpart of
+ * {@link matchTrailingSuffix}; mirrors unit-designator's `matchLeadingDesignator`.) Single-word only — the spaced "NORTH
+ * EAST" form is normalized to its one-word variant in real US streets, which this matches via the lookup.
  */
 export function matchLeadingDirectional(
 	street: string
 ): { canonical: DirectionalName; abbreviation: DirectionalAbbreviation; matched: string } | null {
 	const trimmed = street.trim()
+
 	if (!trimmed) return null
 	const first = trimmed.split(/\s+/)[0]!
 	const m = lookupDirectional(first)
+
 	if (!m) return null
+
 	return { canonical: m.directional, abbreviation: m.abbreviation, matched: first }
 }
 
@@ -190,8 +197,8 @@ export function matchLeadingDirectional(
  * Render a directional in the requested surface form, in `reference`'s case pattern:
  *
  * - `"abbr"` → the USPS abbreviation ("N", "NE").
- * - `"full"` → the one-word spelled-out form ("North", "Northeast") — the common US street form, not
- *   the publication's spaced "NORTH EAST".
+ * - `"full"` → the one-word spelled-out form ("North", "Northeast") — the common US street form, not the publication's
+ *   spaced "NORTH EAST".
  */
 export function renderDirectional(
 	match: { canonical: DirectionalName; abbreviation: DirectionalAbbreviation },
@@ -199,12 +206,12 @@ export function renderDirectional(
 	reference: string
 ): string {
 	const target = form === "abbr" ? match.abbreviation : match.canonical.replace(/\s+/g, "")
+
 	return matchCase(target, reference)
 }
 
 /**
- * Case-insensitive check: is the token any USPS directional or abbreviation (`"N"`, `"north"`,
- * `"NW"`)?
+ * Case-insensitive check: is the token any USPS directional or abbreviation (`"N"`, `"north"`, `"NW"`)?
  */
 export function isStreetDirectionalToken(input: unknown): boolean {
 	return lookupDirectional(typeof input === "string" ? input.trim() : input) !== null

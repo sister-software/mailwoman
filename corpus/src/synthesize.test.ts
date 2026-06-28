@@ -6,6 +6,7 @@
 
 import { BIO_LABELS, type ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
+
 import { alignRow } from "./align.js"
 import {
 	AUGMENTATIONS,
@@ -86,6 +87,7 @@ describe("universal augmentations", () => {
 		expect(out.components.street).toBe("Champs  Élysées")
 		expect(out.components.locality).toBe("Paris")
 		expect(out.components.country).toBe("France")
+
 		// Substring invariant: every component value must appear in raw.
 		for (const v of Object.values(out.components)) {
 			if (v) expect(out.raw.includes(v)).toBe(true)
@@ -511,12 +513,15 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		expect(out, `${id} should apply to its fixture`).not.toBeNull()
 		const aligned = alignRow(out!)
 		expect(aligned.kind, `${id} copy should align (got ${JSON.stringify(aligned.row)})`).toBe("labeled")
+
 		if (aligned.kind !== "labeled") throw new Error("unreachable")
 		// Every span must address the augmented raw exactly: its slice IS the component surface.
 		const { raw, span_starts, span_ends, span_tags } = aligned.row
+
 		for (let i = 0; i < span_tags!.length; i++) {
 			expect(raw.slice(span_starts![i]!, span_ends![i]!)).toBe(out!.components[span_tags![i]!])
 		}
+
 		return aligned.row
 	}
 
@@ -524,6 +529,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 	const poBoxSurface = (row: LabeledRow): string => {
 		const i = row.span_tags!.indexOf("po_box")
 		expect(i).toBeGreaterThanOrEqual(0)
+
 		return row.raw.slice(row.span_starts![i]!, row.span_ends![i]!)
 	}
 
@@ -636,10 +642,12 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		expect(upper.synth?.base_source_id).toBe("t-1")
 		const aligned = alignRow(upper)
 		expect(aligned.kind).toBe("labeled")
+
 		if (aligned.kind !== "labeled") return
 		const { raw, span_starts, span_ends, span_tags } = aligned.row
 		const slice = (tag: ComponentTag) => {
 			const i = span_tags!.indexOf(tag)
+
 			return raw.slice(span_starts![i]!, span_ends![i]!)
 		}
 		expect(slice("po_box")).toBe("P.O. BOX 5")
@@ -662,8 +670,10 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-name-venue",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		expect(result.row.tokens.length).toBe(result.row.labels.length)
+
 		for (const label of result.row.labels) {
 			expect(BIO_LABELS).toContain(label)
 		}
@@ -680,6 +690,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-name-venue",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 
 		expect(result.row.raw).toBe("Buffalo Health Clinic, Buffalo, NY 14201")
@@ -704,6 +715,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-shaped-venue",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 
 		expect(result.row.raw).toBe("New York, New York Steakhouse, Las Vegas, NV 89109")
@@ -730,6 +742,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "particle-honorific",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 
 		// The venue tokens via the whitespace tokenizer: P'tit, St, Denis, Street, Café
@@ -739,6 +752,7 @@ describe("composeAdversarialRow", () => {
 		// Every venue token gets the venue label — the embedded "St" is venue, not
 		// street_prefix.
 		const venueTokenCount = 5
+
 		for (let i = 0; i < venueTokenCount; i++) {
 			expect(result.row.labels[i]).toBe(i === 0 ? "B-venue" : "I-venue")
 		}
@@ -754,6 +768,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-name-venue",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 
 		expect(result.row.components).toMatchObject({
@@ -774,6 +789,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-name-venue",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 
 		expect(result.row.synth?.method).toBe("compose:place-name-venue")
@@ -795,6 +811,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-name-venue",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 
 		expect(result.row.country).toBe("US")
@@ -814,6 +831,7 @@ describe("composeAdversarialRow", () => {
 			separator: " ",
 		})
 		expect(spaced.kind).toBe("labeled")
+
 		if (spaced.kind === "labeled") expect(spaced.row.raw).toBe("Buffalo Health Clinic Buffalo, NY 14201")
 
 		const newline = composeAdversarialRow("Buffalo Health Clinic", address, {
@@ -821,6 +839,7 @@ describe("composeAdversarialRow", () => {
 			separator: "\n",
 		})
 		expect(newline.kind).toBe("labeled")
+
 		if (newline.kind === "labeled") expect(newline.row.raw).toBe("Buffalo Health Clinic\nBuffalo, NY 14201")
 	})
 
@@ -831,6 +850,7 @@ describe("composeAdversarialRow", () => {
 		})
 		const result = composeAdversarialRow("   ", address, { pattern: "place-name-venue" })
 		expect(result.kind).toBe("quarantined")
+
 		if (result.kind === "quarantined") expect(result.row.reason).toBe("venue-empty")
 	})
 
@@ -845,6 +865,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-name-venue",
 		})
 		expect(result.kind).toBe("quarantined")
+
 		if (result.kind === "quarantined") {
 			expect(result.row.reason).toContain("compose-address-")
 			expect(result.row.reason).toContain("region")
@@ -861,6 +882,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-name-venue",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 
 		const { raw, span_starts, span_ends, span_tags } = result.row
@@ -882,20 +904,24 @@ describe("composeAdversarialRow", () => {
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 		})
+
 		for (const separator of [", ", " ", "\n"]) {
 			const result = composeAdversarialRow("New York, New York Steakhouse", address, {
 				pattern: "place-shaped-venue",
 				separator,
 			})
 			expect(result.kind).toBe("labeled")
+
 			if (result.kind !== "labeled") continue
 			const { raw, span_starts, span_ends, span_tags } = result.row
 			expect(span_starts!.length).toBe(span_ends!.length)
 			expect(span_starts!.length).toBe(span_tags!.length)
+
 			for (let i = 0; i < span_starts!.length; i++) {
 				expect(span_starts![i]!).toBeGreaterThanOrEqual(0)
 				expect(span_starts![i]!).toBeLessThan(span_ends![i]!)
 				expect(span_ends![i]!).toBeLessThanOrEqual(raw.length)
+
 				if (i > 0) expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!)
 			}
 		}
@@ -911,6 +937,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "particle-honorific",
 		})
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		// The whole venue — apostrophe, period, accent included — is ONE span.
 		expect(result.row.span_tags![0]).toBe("venue")
@@ -927,6 +954,7 @@ describe("composeAdversarialRow", () => {
 		const nfdVenue = "Café Olé".normalize("NFD")
 		const result = composeAdversarialRow(nfdVenue, address, { pattern: "place-name-venue" })
 		expect(result.kind).toBe("quarantined")
+
 		if (result.kind === "quarantined") expect(result.row.reason).toBe("venue-not-nfc")
 	})
 
@@ -994,8 +1022,10 @@ describe("typoInject (#530)", () => {
 		const out = typoInject(row)!
 		const aligned = alignRow(out)
 		expect(aligned.kind, `typo'd row should align (got ${JSON.stringify(aligned.row)})`).toBe("labeled")
+
 		if (aligned.kind !== "labeled") throw new Error("unreachable")
 		const { raw, span_starts, span_ends, span_tags } = aligned.row
+
 		for (let i = 0; i < span_tags!.length; i++) {
 			expect(raw.slice(span_starts![i]!, span_ends![i]!)).toBe(out.components[span_tags![i]!])
 		}

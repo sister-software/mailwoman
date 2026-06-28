@@ -16,8 +16,6 @@
  *   https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { spawn } from "node:child_process"
 import { createReadStream, createWriteStream, existsSync } from "node:fs"
 import { mkdir, rename } from "node:fs/promises"
@@ -26,6 +24,10 @@ import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
+
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
+
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.js"
 import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "./schema.js"
 
@@ -100,6 +102,7 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	if (existsSync(dest)) {
 		try {
 			await runCapture("unzip", ["-tq", dest])
+
 			return true
 		} catch {
 			// corrupt cache — re-download
@@ -107,9 +110,11 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	}
 	const tmp = dest + ".tmp"
 	const res = await fetch(url, { redirect: "follow" })
+
 	if (!res.ok || !res.body) throw new Error(`HTTP ${res.status} fetching ${url}`)
 	await pipeline(Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]), createWriteStream(tmp))
 	await rename(tmp, dest)
+
 	return false
 }
 
@@ -120,8 +125,7 @@ async function eachLine(path: string, fn: (line: string) => void): Promise<void>
 }
 
 /**
- * Fetch one state's P.L. 94-171 block race counts into `pl_block`. Yields progress; returns the
- * tally.
+ * Fetch one state's P.L. 94-171 block race counts into `pl_block`. Yields progress; returns the tally.
  */
 export async function* fetchRedistricting(
 	options: FetchRedistrictingOptions
@@ -132,6 +136,7 @@ export async function* fetchRedistricting(
 	const state = options.stateFIPS
 
 	const abbr = AdminLevel1CodeToAbbreviation[state as AdminLevel1Code]
+
 	if (!abbr) throw new Error(`Unknown state FIPS "${state}"`)
 	const stateName = StateName[abbr as keyof typeof StateName]
 	const dirName = stateName.replace(/ /g, "_")
@@ -160,8 +165,10 @@ export async function* fetchRedistricting(
 	const logToGeoid = new Map<string, string>()
 	await eachLine(geoPath, (line) => {
 		const f = line.split("|")
+
 		if (f[GEO_SUMLEV] !== "750") return
 		const geoid = f[GEO_GEOCODE] ?? ""
+
 		if (!geoid.startsWith(prefix)) return
 		logToGeoid.set(f[GEO_LOGRECNO] ?? "", geoid)
 	})
@@ -195,6 +202,7 @@ export async function* fetchRedistricting(
 			if (!line) continue
 			const f = line.split("|")
 			const geoid = logToGeoid.get(f[SEG_LOGRECNO] ?? "")
+
 			if (!geoid) continue
 			batch.push({
 				GEOID: geoid,
@@ -208,6 +216,7 @@ export async function* fetchRedistricting(
 				other: Number(f[CATEGORY_INDEX.other] ?? 0),
 				multi: Number(f[CATEGORY_INDEX.multi] ?? 0),
 			})
+
 			if (batch.length >= batchSize) {
 				await flush()
 				yield { phase: "load", inserted, total }
@@ -217,6 +226,7 @@ export async function* fetchRedistricting(
 
 		yield { phase: "load", inserted, total }
 		db.exec("PRAGMA wal_checkpoint(TRUNCATE);")
+
 		return { outPath, table: "pl_block", inserted }
 	} finally {
 		await kdb.destroy()

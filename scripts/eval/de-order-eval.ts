@@ -24,9 +24,8 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { $ } from "zx"
-
 import { runIfScript } from "mailwoman/sdk/scripting"
+import { $ } from "zx"
 
 runIfScript(import.meta, async () => {
 	$.verbose = false
@@ -38,6 +37,7 @@ runIfScript(import.meta, async () => {
 	let out = "/tmp/order-eval"
 
 	const argv = process.argv.slice(2)
+
 	for (let i = 0; i < argv.length; i++) {
 		switch (argv[i]) {
 			case "--model":
@@ -60,6 +60,7 @@ runIfScript(import.meta, async () => {
 				process.exit(1)
 		}
 	}
+
 	if (!model || !card) {
 		console.error("need --model and --card")
 		process.exit(1)
@@ -86,16 +87,20 @@ runIfScript(import.meta, async () => {
 	// Pull the neural locality-match % out of a result .md (the "| **neural** | XX.X% |" row).
 	const loc = (name: string): string => {
 		let md: string
+
 		try {
 			md = readFileSync(join(out, `${name}.md`), "utf-8")
 		} catch {
 			return ""
 		}
+
 		for (const line of md.split("\n")) {
 			if (!line.includes("**neural**")) continue
 			const m = line.match(/[0-9]+\.[0-9]+%/)
+
 			if (m) return m[0]
 		}
+
 		return ""
 	}
 

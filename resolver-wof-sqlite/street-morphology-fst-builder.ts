@@ -25,14 +25,15 @@
 
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
+
 import type { FstNode } from "./fst-matcher.js"
 import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
 import type { FstProvenance, PlaceEntry } from "./fst-types.js"
 
 /**
- * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned, well above any
- * realistic WOF allocation. Reusing the same base across rebuilds keeps IDs stable for any consumer
- * that caches them. See [[project-schema-storage-decision]] for the reserved range policy.
+ * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned, well above any realistic WOF
+ * allocation. Reusing the same base across rebuilds keeps IDs stable for any consumer that caches them. See
+ * [[project-schema-storage-decision]] for the reserved range policy.
  */
 const STREET_AFFIX_WOFID_BASE = 1_900_000_000
 
@@ -42,20 +43,17 @@ export interface BuildStreetMorphologyFstOpts {
 	/** Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders. */
 	dictionariesDir: string
 	/**
-	 * Optional locale filter — only ingest these locale subfolders. Defaults to all that have a
-	 * `street_types.txt`.
+	 * Optional locale filter — only ingest these locale subfolders. Defaults to all that have a `street_types.txt`.
 	 */
 	locales?: string[]
 	/**
-	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the
-	 * trie. Defaults to 3.
+	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie. Defaults to 3.
 	 *
-	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations (`a`, `b`,
-	 * `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time — notably US state
-	 * abbreviations (`OR`, `CA`, `ND`, `NY`), single-letter unit designators, and arbitrary short
-	 * tokens. Empirically these collisions push the morphology prior to mis-tag state abbreviations
-	 * as `street_suffix`. A minimum length of 3 retains useful forms (`ave`, `blvd`, `rue`, `str`)
-	 * while filtering out the noise.
+	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations (`a`, `b`, `av`, `bd`, `br`,
+	 * ...) that collide with non-affix tokens at parse time — notably US state abbreviations (`OR`, `CA`, `ND`, `NY`),
+	 * single-letter unit designators, and arbitrary short tokens. Empirically these collisions push the morphology prior
+	 * to mis-tag state abbreviations as `street_suffix`. A minimum length of 3 retains useful forms (`ave`, `blvd`,
+	 * `rue`, `str`) while filtering out the noise.
 	 */
 	minVariantLength?: number
 	/** Optional progress callback. */
@@ -72,19 +70,22 @@ export interface BuildStreetMorphologyFstResult {
 }
 
 /**
- * Parse one `street_types.txt` line into `{ canonical, variants }`. Canonical is the first token
- * (pre-`|`); variants are all whitespace-stripped non-empty tokens including the canonical.
+ * Parse one `street_types.txt` line into `{ canonical, variants }`. Canonical is the first token (pre-`|`); variants
+ * are all whitespace-stripped non-empty tokens including the canonical.
  *
  * Lines with no `|` are treated as a single-form entry where canonical == variant.
  */
 function parseLine(line: string): { canonical: string; variants: string[] } | null {
 	const trimmed = line.trim()
+
 	if (trimmed.length === 0 || trimmed.startsWith("#")) return null
 	const parts = trimmed
 		.split("|")
 		.map((s) => s.trim())
 		.filter((s) => s.length > 0)
+
 	if (parts.length === 0) return null
+
 	return { canonical: parts[0]!, variants: parts }
 }
 
@@ -94,14 +95,18 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 
 	// Discover locales — either provided explicitly, or all directories containing street_types.txt.
 	let locales: string[]
+
 	if (opts.locales && opts.locales.length > 0) {
 		locales = opts.locales
 	} else {
 		locales = readdirSync(opts.dictionariesDir).filter((entry) => {
 			const localePath = join(opts.dictionariesDir, entry)
+
 			if (!statSync(localePath).isDirectory()) return false
+
 			try {
 				statSync(join(localePath, STREET_TYPES_FILENAME))
+
 				return true
 			} catch {
 				return false
@@ -113,13 +118,17 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 	// Collect canonical → set-of-variants across all locales. Same canonical form may appear in
 	// multiple locales (e.g. "avenue" in en/fr); we union the variant sets.
 	const canonicalToVariants = new Map<string, Set<string>>()
+
 	for (const locale of locales) {
 		const filePath = join(opts.dictionariesDir, locale, STREET_TYPES_FILENAME)
 		const content = readFileSync(filePath, "utf8")
+
 		for (const line of content.split("\n")) {
 			const parsed = parseLine(line)
+
 			if (!parsed) continue
 			const existing = canonicalToVariants.get(parsed.canonical) ?? new Set<string>()
+
 			for (const variant of parsed.variants) existing.add(variant)
 			canonicalToVariants.set(parsed.canonical, existing)
 		}
@@ -129,6 +138,7 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 	// Assign stable synthetic wofIDs. Sort canonicals for determinism.
 	const sortedCanonicals = [...canonicalToVariants.keys()].sort()
 	const canonicalToWofID = new Map<string, number>()
+
 	for (let i = 0; i < sortedCanonicals.length; i++) {
 		canonicalToWofID.set(sortedCanonicals[i]!, STREET_AFFIX_WOFID_BASE + i)
 	}
@@ -140,9 +150,11 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 	function insertName(tokens: string[], entry: PlaceEntry): void {
 		if (tokens.length === 0) return
 		let stateId = 0
+
 		for (const t of tokens) {
 			const node = nodes[stateId]!
 			let next = node.edges.get(t)
+
 			if (next === undefined) {
 				next = nodes.length
 				nodes.push({ edges: new Map(), places: [] })
@@ -151,6 +163,7 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 			stateId = next
 		}
 		const existing = nodes[stateId]!.places
+
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
 			existing.push(entry)
 		}
@@ -158,6 +171,7 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 
 	let insertCount = 0
 	let variantCount = 0
+
 	for (const canonical of sortedCanonicals) {
 		const variants = canonicalToVariants.get(canonical)!
 		const wofID = canonicalToWofID.get(canonical)!
@@ -173,12 +187,15 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 			lat: 0,
 			lon: 0,
 		}
+
 		for (const variant of variants) {
 			const tokens = normalizeTokens(variant)
+
 			if (tokens.length === 0) continue
 			// Filter out collision-prone short surface forms — see `minVariantLength` docstring.
 			// We measure against the joined token form (no spaces) since FST keys are token sequences.
 			const joined = tokens.join("")
+
 			if (joined.length < minVariantLength) continue
 			insertName(tokens, entry)
 			insertCount++

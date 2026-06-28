@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readFile } from "node:fs/promises"
+
 import { type PostcodeSpec, Span, WordClassifier } from "@mailwoman/core"
 import { corePackagePathBuilder } from "@mailwoman/core/utils"
-import { readFile } from "node:fs/promises"
 
 const dictPath = corePackagePathBuilder("data", "chromium-i18n", "ssl-address")
 

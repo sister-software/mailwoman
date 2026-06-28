@@ -30,6 +30,7 @@
 import { createWriteStream, type WriteStream } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
+
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "./adapter.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "./types.js"
 
@@ -66,14 +67,14 @@ export interface RunAdapterOptions {
 	corpusVersion: string
 
 	/**
-	 * Optional progress callback. Invoked every `progressEvery` rows yielded (default 1000) and once
-	 * at the end of the run. Errors thrown from this callback abort the run.
+	 * Optional progress callback. Invoked every `progressEvery` rows yielded (default 1000) and once at the end of the
+	 * run. Errors thrown from this callback abort the run.
 	 */
 	onProgress?: (snapshot: RunnerProgress) => void
 
 	/**
-	 * Yielded-row interval at which `onProgress` fires. Defaults to 1000. The terminal tick is always
-	 * emitted regardless of this value.
+	 * Yielded-row interval at which `onProgress` fires. Defaults to 1000. The terminal tick is always emitted regardless
+	 * of this value.
 	 */
 	progressEvery?: number
 }
@@ -98,9 +99,9 @@ export interface AdapterRunManifest {
 /**
  * Drive a single adapter to completion.
  *
- * Returns the manifest describing the run. Writes `canonical.jsonl` + `MANIFEST.json` under
- * `outputDir/<adapter.id>/`. Throws if the output directory cannot be created, if a row arrives
- * with a missing required field, or if the abort signal fires.
+ * Returns the manifest describing the run. Writes `canonical.jsonl` + `MANIFEST.json` under `outputDir/<adapter.id>/`.
+ * Throws if the output directory cannot be created, if a row arrives with a missing required field, or if the abort
+ * signal fires.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
 	const { adapter, adapterOptions, outputDir, corpusVersion } = opts
@@ -146,11 +147,13 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 			const stamped: CanonicalRow = { ...row, corpus_version: corpusVersion }
 			const key = canonicalDedupKey(stamped)
+
 			if (!dedupExhausted) {
 				if (seen.has(key)) {
 					if (yielded % progressEvery === 0) emitProgress()
 					continue
 				}
+
 				if (seen.size >= DEDUP_MAX_SIZE) {
 					dedupExhausted = true
 					process.stderr.write(
@@ -203,8 +206,8 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 }
 
 /**
- * Drive every adapter in a registry sequentially. Stops on the first failure (caller can filter the
- * registry before calling if partial-failure is desired).
+ * Drive every adapter in a registry sequentially. Stops on the first failure (caller can filter the registry before
+ * calling if partial-failure is desired).
  *
  * Returns the manifests in registry insertion order.
  */
@@ -213,6 +216,7 @@ export async function runAllAdapters(
 	common: Omit<RunAdapterOptions, "adapter"> & { adapterOptionsFor?: (a: CorpusAdapter) => AdapterOptions }
 ): Promise<AdapterRunManifest[]> {
 	const out: AdapterRunManifest[] = []
+
 	for (const adapter of registry.list()) {
 		const adapterOptions = common.adapterOptionsFor?.(adapter) ?? common.adapterOptions
 		out.push(
@@ -223,26 +227,31 @@ export async function runAllAdapters(
 			})
 		)
 	}
+
 	return out
 }
 
 /**
- * Validate an emitted row. Cheap; runs once per row. Catches adapter bugs early so the JSONL
- * doesn't end up half-malformed.
+ * Validate an emitted row. Cheap; runs once per row. Catches adapter bugs early so the JSONL doesn't end up
+ * half-malformed.
  */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 	if (row.source !== adapter.id) {
 		throw new Error(`adapter ${adapter.id}: row.source must equal adapter.id (got ${JSON.stringify(row.source)})`)
 	}
+
 	if (!row.source_id) {
 		throw new Error(`adapter ${adapter.id}: row.source_id is empty`)
 	}
+
 	if (!row.raw) {
 		throw new Error(`adapter ${adapter.id}: row.raw is empty for source_id=${row.source_id}`)
 	}
+
 	if (!row.country) {
 		throw new Error(`adapter ${adapter.id}: row.country is empty for source_id=${row.source_id}`)
 	}
+
 	if (!row.license) {
 		throw new Error(`adapter ${adapter.id}: row.license is empty for source_id=${row.source_id}`)
 	}

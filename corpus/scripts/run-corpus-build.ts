@@ -52,7 +52,9 @@ async function main() {
 	const argv = process.argv.slice(2)
 	const excludeLicenses: RegExp[] = []
 	const exIdx = argv.indexOf("--exclude-licenses")
+
 	if (exIdx >= 0 && argv[exIdx + 1]) excludeLicenses.push(...compileLicenseExcludes(argv[exIdx + 1]!))
+
 	if (argv.includes("--exclude-share-alike")) excludeLicenses.push(SHARE_ALIKE_PATTERN)
 
 	process.stderr.write(`=== Corpus v${CORPUS_VERSION} build ===\n`)
@@ -80,6 +82,7 @@ async function main() {
 	process.stderr.write(
 		`Adapted: ${manifest.adapters.map((a) => `${a.adapter_id} (${a.yielded.toLocaleString()})`).join(", ")}\n`
 	)
+
 	if (manifest.skipped_adapters.length) {
 		process.stderr.write(`Skipped: ${manifest.skipped_adapters.join(", ")}\n`)
 	}

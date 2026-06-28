@@ -8,7 +8,9 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import { alignRow } from "../../align.js"
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
@@ -29,7 +31,9 @@ afterEach(async () => {
 async function loadRows(): Promise<CanonicalRow[]> {
 	const jsonl = await readFile(join(scratch, USGOV_HRSA_FQHC_ADAPTER_ID, "canonical.jsonl"), "utf8")
 	const trimmed = jsonl.trim()
+
 	if (!trimmed) return []
+
 	return trimmed.split("\n").map((l) => JSON.parse(l) as CanonicalRow)
 }
 
@@ -96,6 +100,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		// locality's "Buffalo" under B-locality (not vice versa).
 		const result = alignRow(row)
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		const buffaloIndices = result.row.tokens.map((t, i) => (t === "Buffalo" ? i : -1)).filter((i) => i >= 0)
 		expect(buffaloIndices).toHaveLength(2)

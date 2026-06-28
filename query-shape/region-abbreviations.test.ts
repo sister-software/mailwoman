@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { classifyToken, tokenizeForClass } from "./character-class.js"
 import { computeQueryShape } from "./compute.js"
 import { detectRegionAbbreviations } from "./region-abbreviations.js"
@@ -13,6 +14,7 @@ import type { TokenClass } from "./types.js"
 
 function makeTokenClasses(text: string): TokenClass[] {
 	const spans = tokenizeForClass(text)
+
 	return spans.map((span) => ({ span, class: classifyToken(span.body), length: span.end - span.start }))
 }
 

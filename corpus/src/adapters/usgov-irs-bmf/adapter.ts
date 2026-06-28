@@ -19,8 +19,10 @@
  *   federal).
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -44,10 +46,14 @@ interface IrsBmfRow {
 /** Classify the street line into a `po_box` or a `{house_number?, street}` split. */
 function splitStreetLine(street: string): { po_box: string } | { house_number?: string; street: string } | null {
 	const trimmed = street.trim()
+
 	if (!trimmed) return null
+
 	if (PO_BOX.test(trimmed)) return { po_box: trimmed }
 	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (m) return { house_number: m[1], street: m[2]!.trim() }
+
 	return { street: trimmed }
 }
 
@@ -59,6 +65,7 @@ function composeRaw(
 	postcode: string
 ): string {
 	const cityPart = [city.trim(), [state, postcode].filter(Boolean).join(" ").trim()].filter(Boolean).join(", ")
+
 	return [venue, streetPart, cityPart].filter(Boolean).join(", ")
 }
 
@@ -80,9 +87,11 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const record of parser as AsyncIterable<IrsBmfRow>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const ein = (record.EIN ?? "").trim()
@@ -91,10 +100,12 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 					const city = (record.CITY ?? "").trim()
 					const state = (record.STATE ?? "").trim()
 					const zipRaw = (record.ZIP ?? "").trim()
+
 					if (!city || !zipRaw) continue
 					const postcode = zipRaw.split("-")[0]!.trim() // 5-digit; drop the optional +4
 
 					const split = splitStreetLine(street)
+
 					if (!split) continue
 
 					const streetPart =
@@ -111,9 +122,11 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 					}
 
 					const raw = composeRaw(venue, streetPart, city, state, postcode)
+
 					if (!raw) continue
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length <= 2) continue
 
 					const sourceId = ein

@@ -8,24 +8,24 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "resolver"
 	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./span-rescore": "./out/span-rescore.js"
-	},
-	"dependencies": {
-		"@mailwoman/codex": "workspace:*",
-		"@mailwoman/core": "workspace:*",
-		"@mailwoman/spatial": "workspace:*"
-	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map"
 	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js",
+		"./span-rescore": "./out/span-rescore.js"
+	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/spatial": "workspace:*"
 	}
 }

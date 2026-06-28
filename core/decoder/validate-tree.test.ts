@@ -9,6 +9,7 @@
  */
 
 import { describe, expect, test } from "vitest"
+
 import { buildAddressTree } from "./build-tree.js"
 import type { AddressNode, BioLabel, DecoderToken } from "./types.js"
 import { validateTree } from "./validate-tree.js"

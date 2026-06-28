@@ -29,9 +29,9 @@ import { flattenTree } from "../../shared/demo-helpers.ts"
 import type { DemoResult } from "../../shared/resources.tsx"
 import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
+import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
 
 import styles from "./styles.module.css"
-import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -65,6 +65,7 @@ function statusBadgeClass(badge: StatusBadge): string {
 
 function confTier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
+
 	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
 }
 
@@ -73,6 +74,7 @@ const ConfidenceMini: React.FC<{ confidence?: number }> = ({ confidence }) => {
 	const pct = Math.max(0, Math.min(1, confidence)) * 100
 	const t = confTier(confidence)
 	const cls = t === "high" ? styles.tourConfHigh : t === "low" ? styles.tourConfLow : styles.tourConfMid
+
 	return (
 		<div className={styles.tourConfCell}>
 			<div className={`${styles.tourConfBar} ${cls}`} style={{ width: `${pct}%` }} />
@@ -106,9 +108,11 @@ export const GuidedTour: React.FC = () => {
 	// Per-stop parse state. We store results per stop so navigating back shows the cached result.
 	const [stopStates, setStopStates] = useState<Map<number, StopParseState>>(() => {
 		const m = new Map<number, StopParseState>()
+
 		for (const stop of TOUR_STOPS) {
 			m.set(stop.id, { address: stop.address, result: null, busy: false, error: null })
 		}
+
 		return m
 	})
 
@@ -125,13 +129,16 @@ export const GuidedTour: React.FC = () => {
 			if (!classifier) return
 
 			const state = stopStates.get(stopId)
+
 			if (!state) return
 
 			setStopStates((prev) => {
 				const next = new Map(prev)
 				const existing = next.get(stopId)
+
 				if (!existing) return prev
 				next.set(stopId, { ...existing, busy: true, error: null, result: null })
+
 				return next
 			})
 
@@ -172,6 +179,7 @@ export const GuidedTour: React.FC = () => {
 				setStopStates((prev) => {
 					const next = new Map(prev)
 					next.set(stopId, { ...next.get(stopId)!, result, busy: false, error: null })
+
 					return next
 				})
 			} catch (err) {
@@ -180,6 +188,7 @@ export const GuidedTour: React.FC = () => {
 				setStopStates((prev) => {
 					const next = new Map(prev)
 					next.set(stopId, { ...next.get(stopId)!, result: null, busy: false, error: message })
+
 					return next
 				})
 			}
@@ -217,6 +226,7 @@ export const GuidedTour: React.FC = () => {
 				const next = new Map(prev)
 				const existing = next.get(currentStop.id)!
 				next.set(currentStop.id, { ...existing, address: value, result: null, error: null })
+
 				return next
 			})
 		},

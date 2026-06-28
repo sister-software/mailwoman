@@ -43,28 +43,34 @@ const classifier = await NeuralAddressClassifier.loadFromWeights(
 )
 const random = (() => {
 	let a = 20260618 >>> 0
+
 	return () => {
 		a |= 0
 		a = (a + 0x6d2b79f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 })()
 
 const mode: Record<string, number> = {}
 const examples: string[] = []
+
 for (let i = 0; i < N; i++) {
 	const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: "street-eats-affix" })
 	const gold = norm(row.components.street_suffix)
+
 	if (!gold) continue
 	const p = (await classifier.parseJson(row.raw)) as Record<string, string>
 	let m: string
+
 	if (norm(p.street_suffix) === gold) m = "✓ correct separate suffix span"
 	else if (wordIncludes(norm(p.street), gold)) m = "merged INTO street (suffix not split out)"
 	else if (!p.street_suffix) m = "dropped (no street_suffix, not in street)"
 	else m = `other (suffix='${p.street_suffix}')`
 	mode[m] = (mode[m] ?? 0) + 1
+
 	if (examples.length < 6 && m.startsWith("merged"))
 		examples.push(
 			`  "${row.raw}"\n     gold: street='${row.components.street}' suffix='${row.components.street_suffix}' | got: street='${p.street ?? ""}' suffix='${p.street_suffix ?? ""}'`
@@ -73,7 +79,9 @@ for (let i = 0; i < N; i++) {
 
 const total = Object.values(mode).reduce((a, b) => a + b, 0)
 console.log(`\n== street-eats-affix B/I decode inspector — ${args.model ?? "dev"} (n=${total}) ==\n`)
+
 for (const [m, c] of Object.entries(mode).sort((a, b) => b[1] - a[1]))
 	console.log(`  ${((100 * c) / total).toFixed(0).padStart(3)}%  ${m}  (${c})`)
+
 if (examples.length) console.log(`\n  examples (merged):\n${examples.join("\n")}`)
 console.log()

@@ -9,6 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { type LatLon, block, geoCellKey } from "./blocking.js"
 import { cluster } from "./clustering.js"
 import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.js"

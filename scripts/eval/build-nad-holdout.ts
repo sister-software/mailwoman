@@ -75,6 +75,7 @@ const result = await db.runAndReadAll(`
 const rows = result.getRowObjects() as Record<string, unknown>[]
 const lines: string[] = []
 const datasets = new Map<string, number>()
+
 for (const r of rows) {
 	const city = String(r.city)
 	const state = String(r.state)

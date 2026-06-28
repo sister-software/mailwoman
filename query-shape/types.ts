@@ -5,8 +5,8 @@
  */
 
 /**
- * Minimal character-range descriptor used internally. Compatible with `@mailwoman/core`'s `Span`
- * class by shape — consumers holding a `Span` can pass it where `SpanRange` is expected.
+ * Minimal character-range descriptor used internally. Compatible with `@mailwoman/core`'s `Span` class by shape —
+ * consumers holding a `Span` can pass it where `SpanRange` is expected.
  */
 export interface SpanRange {
 	start: number
@@ -60,8 +60,8 @@ export interface KnownFormatHit {
 }
 
 /**
- * A detected region abbreviation (e.g., "DC", "NY", "CA"). Used by the locality soft prior to bias
- * preceding place-name tokens toward `B-locality`.
+ * A detected region abbreviation (e.g., "DC", "NY", "CA"). Used by the locality soft prior to bias preceding place-name
+ * tokens toward `B-locality`.
  */
 export interface RegionAbbreviationHit {
 	/** Character offset into the normalized input. */
@@ -71,12 +71,11 @@ export interface RegionAbbreviationHit {
 }
 
 /**
- * Structural snapshot of an input string, computed once at the boundary between Stage 1 and Stage 2
- * of the runtime pipeline. Microseconds-cheap. Consumed by stages 2, 2.5, 3 (optional), and 6 as
- * additional context.
+ * Structural snapshot of an input string, computed once at the boundary between Stage 1 and Stage 2 of the runtime
+ * pipeline. Microseconds-cheap. Consumed by stages 2, 2.5, 3 (optional), and 6 as additional context.
  *
- * Bitter-lesson-safe: recognizes universal structural patterns (character class, punctuation,
- * postcode shape) rather than place-specific knowledge.
+ * Bitter-lesson-safe: recognizes universal structural patterns (character class, punctuation, postcode shape) rather
+ * than place-specific knowledge.
  */
 export interface QueryShape {
 	characterClass: CharacterClass
@@ -84,8 +83,8 @@ export interface QueryShape {
 	segments: Segment[]
 	knownFormats: KnownFormatHit[]
 	/**
-	 * Region abbreviation hits detected in the input. The locality soft prior uses these to bias
-	 * preceding place-name tokens toward `B-locality` / `I-locality` during Viterbi decoding.
+	 * Region abbreviation hits detected in the input. The locality soft prior uses these to bias preceding place-name
+	 * tokens toward `B-locality` / `I-locality` during Viterbi decoding.
 	 */
 	regionAbbreviations: RegionAbbreviationHit[]
 	totalLength: number
@@ -93,8 +92,8 @@ export interface QueryShape {
 }
 
 /**
- * Minimal shape that satisfies `computeQueryShape`'s input contract. The full `NormalizedInput`
- * from `@mailwoman/normalize` is structurally compatible — no import required.
+ * Minimal shape that satisfies `computeQueryShape`'s input contract. The full `NormalizedInput` from
+ * `@mailwoman/normalize` is structurally compatible — no import required.
  */
 export interface NormalizedInputLite {
 	normalized: string

@@ -7,11 +7,10 @@
 /**
  * Describes the particular typology for each geographic entity.
  *
- * For legal entities, the LSAD reflects the term that appears in legal documentation pertaining to
- * the entity, such as a treaty, charter, legislation, resolution, or ordinance.
+ * For legal entities, the LSAD reflects the term that appears in legal documentation pertaining to the entity, such as
+ * a treaty, charter, legislation, resolution, or ordinance.
  *
- * For statistical entities, the LSAD is the term assigned by the Census Bureau or other agency
- * defining the entity.
+ * For statistical entities, the LSAD is the term assigned by the Census Bureau or other agency defining the entity.
  *
  * @title Legal/Statistical Area Description
  */
@@ -96,8 +95,7 @@ export enum LegalStatisticalAreaDescription {
 	 */
 	CensusSubDistrict = "24",
 	/**
-	 * Consolidated City, County or Equivalent Feature, County Subdivision, Economic Census Place,
-	 * Incorporated Place.
+	 * Consolidated City, County or Equivalent Feature, County Subdivision, Economic Census Place, Incorporated Place.
 	 */
 	City = "25",
 	CountySuffixCountySubdivision = "26",

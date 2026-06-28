@@ -5,6 +5,7 @@
  */
 
 import type { Tagged } from "type-fest"
+
 import { AdminLevel1Code, FIPSStateCode } from "./state.js"
 
 //#region Tagged FIPS types
@@ -22,12 +23,12 @@ import { AdminLevel1Code, FIPSStateCode } from "./state.js"
  * @category Census
  * @category FIPS
  * @type {string}
- * @see {@linkcode FIPSBlockGroupCode} for a less specific level.
- * @see {@linkcode FIPSBlockGeoID} for the full GeoID.
  * @pattern ^\d{4}$
  * @minLength 4
  * @maxLength 4
  * @title FIPS Block Code
+ * @see {@linkcode FIPSBlockGroupCode} for a less specific level.
+ * @see {@linkcode FIPSBlockGeoID} for the full GeoID.
  */
 export type FIPSBlockCode = Tagged<string, "FIPSBlockCode">
 
@@ -44,11 +45,11 @@ export type FIPSBlockCode = Tagged<string, "FIPSBlockCode">
  * @category Census
  * @category FIPS
  * @type {string}
- * @see {@linkcode FIPSBlockCode} for the 4-digit version.
  * @pattern ^\d{15}$
  * @minLength 15
  * @maxLength 15
  * @title FIPS Block Geo ID
+ * @see {@linkcode FIPSBlockCode} for the 4-digit version.
  */
 export type FIPSBlockGeoID = Tagged<string, "FIPSBlockGeoID">
 
@@ -65,12 +66,12 @@ export type FIPSBlockGeoID = Tagged<string, "FIPSBlockGeoID">
  * @category Census
  * @category FIPS
  * @type {string}
- * @see {@linkcode FIPSBlockCode} for a more specific level.
- * @see {@linkcode FIPSTractCode} for a less specific level.
  * @pattern ^\d{1}$
  * @minLength 1
  * @maxLength 1
  * @title FIPS Block Group Code
+ * @see {@linkcode FIPSBlockCode} for a more specific level.
+ * @see {@linkcode FIPSTractCode} for a less specific level.
  */
 export type FIPSBlockGroupCode = Tagged<string, "FIPSBlockGroupCode">
 
@@ -87,12 +88,12 @@ export type FIPSBlockGroupCode = Tagged<string, "FIPSBlockGroupCode">
  * @category Census
  * @category FIPS
  * @type {string}
- * @see {@linkcode FIPSBlockGroupCode} for a more specific level.
- * @see {@linkcode FIPSCountySubDivisionCode} for a less specific level.
  * @pattern ^\d{6}$
  * @minLength 6
  * @maxLength 6
  * @title FIPS Tract Code
+ * @see {@linkcode FIPSBlockGroupCode} for a more specific level.
+ * @see {@linkcode FIPSCountySubDivisionCode} for a less specific level.
  */
 export type FIPSTractCode = Tagged<string, "FIPSTractCode">
 
@@ -109,11 +110,11 @@ export type FIPSTractCode = Tagged<string, "FIPSTractCode">
  * @category Census
  * @category FIPS
  * @type {string}
- * @see {@linkcode FIPSBlockCode} for the 4-digit version.
  * @pattern ^\d{6}$
  * @minLength 6
  * @maxLength 6
  * @title FIPS Tract Geo ID
+ * @see {@linkcode FIPSBlockCode} for the 4-digit version.
  */
 export type FIPSTractGeoID = Tagged<string, "FIPSTractGeoID">
 
@@ -130,12 +131,12 @@ export type FIPSTractGeoID = Tagged<string, "FIPSTractGeoID">
  * @category Census
  * @category FIPS
  * @type {string}
- * @see {@linkcode FIPSTractCode} for a more specific level.
- * @see {@linkcode FIPSCountyCode} for a less specific level.
  * @pattern ^\d{5}$
  * @minLength 5
  * @maxLength 5
  * @title FIPS County Sub-Division Code
+ * @see {@linkcode FIPSTractCode} for a more specific level.
+ * @see {@linkcode FIPSCountyCode} for a less specific level.
  */
 export type FIPSCountySubDivisionCode = Tagged<string, "FIPSCountySubDivisionCode">
 
@@ -151,12 +152,12 @@ export type FIPSCountySubDivisionCode = Tagged<string, "FIPSCountySubDivisionCod
  * @category Census
  * @category FIPS
  * @type {string}
- * @see {@linkcode FIPSCountySubDivisionCode} for a more specific level.
- * @see {@linkcode AdminLevel1Code} for a less specific level.
  * @pattern ^\d{3}$
  * @minLength 3
  * @maxLength 3
  * @title FIPS County Code
+ * @see {@linkcode FIPSCountySubDivisionCode} for a more specific level.
+ * @see {@linkcode AdminLevel1Code} for a less specific level.
  */
 export type FIPSCountyCode = Tagged<string, "FIPSCountyCode">
 
@@ -191,12 +192,12 @@ export type FIPSPlaceCode = Tagged<string, "FIPSPlaceCode">
  * @category Census
  * @category FIPS
  * @type {string}
- * @see {@linkcode AdminLevel1Code} for a less specific level.
- * @see {@linkcode FIPSPlaceCode} for a more specific level.
  * @pattern ^\d{2}$
  * @minLength 2
  * @maxLength 2
  * @title FIPS Congressional District Code
+ * @see {@linkcode AdminLevel1Code} for a less specific level.
+ * @see {@linkcode FIPSPlaceCode} for a more specific level.
  */
 export type FIPSCongressionalDistrictCode = Tagged<string, "FIPSConressionalDistrictCode">
 
@@ -449,8 +450,8 @@ export class GeoIDInputMatcher<T extends GeoIDPart[] = GeoIDPart[]> {
 /**
  * Record of GeoID input matchers, i.e. a pattern and parser for each grouping of GeoID components.
  *
- * @see {@linkcode GeoIDComponentMatchers} for the component-level matchers.
  * @internal
+ * @see {@linkcode GeoIDComponentMatchers} for the component-level matchers.
  */
 export const GeoIDInputMatchers = {
 	[GeoIDPart.Block]: new GeoIDInputMatcher(
@@ -502,8 +503,8 @@ export const GeoIDInputMatchers = {
 /**
  * A record of GeoID component matchers, i.e. a pattern and parser for each GeoID component.
  *
- * @see {@linkcode GeoIDInputMatchers} for the input-level matchers.
  * @internal
+ * @see {@linkcode GeoIDInputMatchers} for the input-level matchers.
  */
 const GeoIDComponentMatchers = Object.fromEntries(
 	Object.values(GeoIDPart).map((value) => {
@@ -516,6 +517,7 @@ const GeoIDComponentMatchers = Object.fromEntries(
  */
 export function isGeoIDComponent<T extends GeoIDPart>(component: T, input: unknown): input is GeoIDPartMapping[T] {
 	if (!input) return false
+
 	if (typeof input !== "string") return false
 
 	const matcher = GeoIDComponentMatchers[component]
@@ -528,8 +530,7 @@ export function isGeoIDComponent<T extends GeoIDPart>(component: T, input: unkno
 //#region GeoID Parsing
 
 /**
- * GeoID input matchers sorted by length in descending order, such that the most specific matchers
- * are first.
+ * GeoID input matchers sorted by length in descending order, such that the most specific matchers are first.
  */
 const OrderedGeoIDInputMatchers = Object.values(GeoIDInputMatchers).sort((a, b) => b.length - a.length)
 
@@ -591,6 +592,7 @@ export function parseGeoID(input: unknown): ParsedGeoID | null {
 	if (!input) return null
 
 	if (typeof input === "number") input = input.toString()
+
 	if (typeof input !== "string") return null
 
 	if (input.length === GeoIDInputMatchers[GeoIDPart.Block].length) {

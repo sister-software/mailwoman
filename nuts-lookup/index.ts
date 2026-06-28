@@ -9,28 +9,35 @@
  *   its parents. An `@mailwoman/annotations` `Annotator`.
  */
 
-import type { AnnotationSet, Annotator, Nuts } from "@mailwoman/annotations"
 import { DatabaseSync } from "node:sqlite"
 
-/** Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring
-`[[lon,lat],…]`. */
+import type { AnnotationSet, Annotator, Nuts } from "@mailwoman/annotations"
+
+/**
+ * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
+ */
 export type MultiPolygonCoords = number[][][][]
 
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
+
 	for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
 		const xi = ring[i]![0]!
 		const yi = ring[i]![1]!
 		const xj = ring[j]![0]!
 		const yj = ring[j]![1]!
+
 		if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside
 	}
+
 	return inside
 }
 
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
+
 	for (let i = 1; i < polygon.length; i++) if (pointInRing(lon, lat, polygon[i]!)) return false
+
 	return true
 }
 
@@ -39,13 +46,18 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 	return polygons.some((polygon) => pointInPolygon(lon, lat, polygon))
 }
 
-/** Derive the nested NUTS levels from a NUTS id (`"DE111"` → `{ level1:"DE1", level2:"DE11",
-level3:"DE111" }`). */
+/**
+ * Derive the nested NUTS levels from a NUTS id (`"DE111"` → `{ level1:"DE1", level2:"DE11", level3:"DE111" }`).
+ */
 export function nutsFromId(id: string): Nuts {
 	const nuts: Nuts = {}
+
 	if (id.length >= 3) nuts.level1 = id.slice(0, 3)
+
 	if (id.length >= 4) nuts.level2 = id.slice(0, 4)
+
 	if (id.length >= 5) nuts.level3 = id.slice(0, 5)
+
 	return nuts
 }
 
@@ -62,15 +74,18 @@ export class NutsLookup {
 		)
 	}
 
-	/** The nested NUTS codes containing `(lat, lon)`, or null when the point is outside the EU NUTS
-area. */
+	/**
+	 * The nested NUTS codes containing `(lat, lon)`, or null when the point is outside the EU NUTS area.
+	 */
 	find(lat: number, lon: number): Nuts | null {
 		for (const level of [3, 2, 1]) {
 			const rows = this.#byLevelBox.all(level, lat, lat, lon, lon) as Array<{ nutsId: string; geom: string }>
+
 			for (const row of rows) {
 				if (pointInMultiPolygon(lon, lat, JSON.parse(row.geom) as MultiPolygonCoords)) return nutsFromId(row.nutsId)
 			}
 		}
+
 		return null
 	}
 
@@ -83,6 +98,7 @@ area. */
 export function makeNutsAnnotator(lookup: NutsLookup): Annotator {
 	return ({ lat, lon }): Partial<AnnotationSet> => {
 		const nuts = lookup.find(lat, lon)
+
 		return nuts ? { nuts } : {}
 	}
 }

@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { type AnnotationSet, type Annotator, composeAnnotators, toNative, toOpenCage } from "./index.js"
 
 test("composeAnnotators: merges partial results from multiple annotators", async () => {

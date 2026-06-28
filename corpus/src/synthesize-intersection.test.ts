@@ -10,6 +10,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { alignRow } from "./align.js"
 import {
 	DEFAULT_US_BASES,
@@ -22,11 +23,13 @@ import type { CanonicalRow } from "./types.js"
 /** Deterministic PRNG so tests are reproducible. */
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
+
 	return () => {
 		a |= 0
 		a = (a + 0x6d2b79f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 	}
 }
@@ -50,6 +53,7 @@ describe("synthesizeIntersectionRow", () => {
 		const rows = generateIntersectionRows(400, DEFAULT_US_BASES, { random: mulberry32(99) })
 		const bare = rows.filter((r) => r.components.locality == null)
 		expect(bare.length).toBeGreaterThan(rows.length * 0.4)
+
 		// Bare rows still carry both intersection tags.
 		for (const r of bare.slice(0, 20)) {
 			expect(r.components.intersection_a).toBeTruthy()
@@ -65,6 +69,7 @@ describe("synthesizeIntersectionRow", () => {
 		const row = synthesizeIntersectionRow(DEFAULT_US_BASES[0]!, { random: mulberry32(7) })!
 		const result = alignRow(asCanonical(row))
 		expect(result.kind).toBe("labeled")
+
 		if (result.kind !== "labeled") return
 		const labels = result.row.labels
 		expect(labels).toContain("B-intersection_a")
@@ -90,8 +95,10 @@ describe("generateIntersectionRows", () => {
 		const rows = generateIntersectionRows(100, DEFAULT_US_BASES, { random: mulberry32(123) })
 		expect(rows).toHaveLength(100)
 		let labeled = 0
+
 		for (const r of rows) {
 			const result = alignRow(asCanonical(r))
+
 			if (result.kind !== "labeled") continue
 			labeled++
 			expect(result.row.labels).toContain("B-intersection_a")

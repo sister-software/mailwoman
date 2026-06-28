@@ -16,11 +16,13 @@
  *   training shard never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
  */
 
+import { setImmediate } from "node:timers/promises"
+
 import { assembleGnaf, type GnafAssembleResult } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
-import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({

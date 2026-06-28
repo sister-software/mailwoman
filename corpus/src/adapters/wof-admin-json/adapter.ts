@@ -41,6 +41,7 @@
 
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
+
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WofRecord } from "../../wof-json.js"
@@ -48,13 +49,12 @@ import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WofRecord } fr
 /**
  * Display name for the country, keyed by ISO 3166-1 alpha-2.
  *
- * Must be the **OpenCage-canonical** surface form: the `address-formatter` library expands some
- * country names en route to its output (e.g. `"United States"` → `"United States of America"`). If
- * `components.country` and the formatted `raw` disagree, alignment will fail downstream. Keying off
- * the canonical form keeps the two in lockstep.
+ * Must be the **OpenCage-canonical** surface form: the `address-formatter` library expands some country names en route
+ * to its output (e.g. `"United States"` → `"United States of America"`). If `components.country` and the formatted
+ * `raw` disagree, alignment will fail downstream. Keying off the canonical form keeps the two in lockstep.
  *
- * Phase 1 US + FR only; extend as new locales come online. Missing countries fall back to the
- * country row's `wof:name`, accepting the alignment risk for non-canonicalized names.
+ * Phase 1 US + FR only; extend as new locales come online. Missing countries fall back to the country row's `wof:name`,
+ * accepting the alignment risk for non-canonicalized names.
  */
 const COUNTRY_DISPLAY_NAME: Record<string, string> = {
 	US: "United States of America",
@@ -103,17 +103,16 @@ interface VariantSpec {
 /**
  * Compute the hierarchy variants for a record given its ancestry chain and the chosen `selfName`.
  *
- * `selfName` is the surface form to use for the record's own component (locality / region / country
- * / subregion). Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*`
- * localized value for variant slots; ancestor names always come from the ancestor's canonical
- * `wof:name`.
+ * `selfName` is the surface form to use for the record's own component (locality / region / country / subregion).
+ * Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*` localized value for variant slots;
+ * ancestor names always come from the ancestor's canonical `wof:name`.
  *
- * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the OpenCage template
- * produces the canonicalized form (`"United States of America"`), matching the legacy SQLite
- * adapter's behavior.
+ * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the OpenCage template produces the
+ * canonicalized form (`"United States of America"`), matching the legacy SQLite adapter's behavior.
  */
 export function variantsFor(row: WofRecord, ancestry: WofRecord[], selfName: string): VariantSpec[] {
 	const selfTag = placetypeToTag(row.placetype)
+
 	if (!selfTag) return []
 
 	const region = ancestry.find((a) => placetypeToTag(a.placetype) === "region")
@@ -126,12 +125,14 @@ export function variantsFor(row: WofRecord, ancestry: WofRecord[], selfName: str
 		case "locality":
 		case "dependent_locality": {
 			variants.push({ suffix: "self", components: { [selfTag]: selfName } })
+
 			if (region) {
 				variants.push({
 					suffix: "with-region",
 					components: { [selfTag]: selfName, region: region.name },
 				})
 			}
+
 			if (region && country) {
 				variants.push({
 					suffix: "with-region-country",
@@ -143,27 +144,32 @@ export function variantsFor(row: WofRecord, ancestry: WofRecord[], selfName: str
 					components: { [selfTag]: selfName, country: countryDisplay },
 				})
 			}
+
 			return variants
 		}
 
 		case "region": {
 			variants.push({ suffix: "self", components: { region: selfName } })
+
 			if (country) {
 				variants.push({
 					suffix: "with-country",
 					components: { region: selfName, country: countryDisplay },
 				})
 			}
+
 			return variants
 		}
 
 		case "country": {
 			variants.push({ suffix: "self", components: { country: selfName } })
+
 			return variants
 		}
 
 		case "subregion": {
 			variants.push({ suffix: "self", components: { subregion: selfName } })
+
 			return variants
 		}
 
@@ -173,12 +179,12 @@ export function variantsFor(row: WofRecord, ancestry: WofRecord[], selfName: str
 }
 
 /**
- * Build the per-record name-slot list. The canonical `"default"` slot uses the OpenCage-canonical
- * country form when the record is itself a country (matches SQLite-adapter behavior); every other
- * placetype's default slot uses `wof:name` verbatim.
+ * Build the per-record name-slot list. The canonical `"default"` slot uses the OpenCage-canonical country form when the
+ * record is itself a country (matches SQLite-adapter behavior); every other placetype's default slot uses `wof:name`
+ * verbatim.
  *
- * Subsequent slots come from `name:*` variants, deduplicated against the default name so we don't
- * emit a redundant `"default"`-equivalent row under a localized key.
+ * Subsequent slots come from `name:*` variants, deduplicated against the default name so we don't emit a redundant
+ * `"default"`-equivalent row under a localized key.
  */
 export function nameSlotsFor(rec: WofRecord): Array<{ key: string; value: string }> {
 	const selfTag = placetypeToTag(rec.placetype)
@@ -199,9 +205,9 @@ export function nameSlotsFor(rec: WofRecord): Array<{ key: string; value: string
 export const WOF_ADMIN_ADAPTER_ID = "wof-admin"
 
 /**
- * Construct the wof-admin JSON-bundle adapter. The adapter is stateless across runs; calling this
- * twice with the same input directory produces byte-identical `canonical.jsonl` (records are
- * emitted in sorted `wof:id` order to be insensitive to filesystem walk ordering).
+ * Construct the wof-admin JSON-bundle adapter. The adapter is stateless across runs; calling this twice with the same
+ * input directory produces byte-identical `canonical.jsonl` (records are emitted in sorted `wof:id` order to be
+ * insensitive to filesystem walk ordering).
  */
 export function createWofAdminAdapter(): CorpusAdapter {
 	return {
@@ -217,9 +223,12 @@ export function createWofAdminAdapter(): CorpusAdapter {
 			// they don't inflate the ancestry index. Country-filtered runs prune to the matching
 			// country code too; the ancestors of a same-country record live in the same admin repo.
 			const byId = new Map<number, WofRecord>()
+
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
 				if (opts.signal?.aborted) return
+
 				if (opts.country && rec.country !== opts.country) continue
+
 				if (!placetypeToTag(rec.placetype)) continue
 				byId.set(rec.id, rec)
 			}
@@ -238,12 +247,15 @@ export function createWofAdminAdapter(): CorpusAdapter {
 
 				for (const slot of slots) {
 					const variants = variantsFor(rec, chain, slot.value)
+
 					for (const variant of variants) {
 						if (opts.limit !== undefined && emitted >= opts.limit) return
 
 						const raw = formatAddress(variant.components, rec.country, { separator: ", " })
+
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
+
 						if (Object.keys(aligned).length === 0) continue
 
 						yield {

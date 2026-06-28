@@ -22,10 +22,11 @@
  *   how.
  */
 
+import { existsSync } from "node:fs"
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { hardCountryFor } from "@mailwoman/core/pipeline"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
-import { existsSync } from "node:fs"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.js"
@@ -56,8 +57,7 @@ export interface GeocodeResult {
 }
 
 /**
- * The per-state shards to wire into a single geocode resolve. Either/both may be absent
- * (admin-only).
+ * The per-state shards to wire into a single geocode resolve. Either/both may be absent (admin-only).
  */
 export interface StateShards {
 	addressPoints?: AddressPointLookup
@@ -80,40 +80,37 @@ export interface GeocodeDeps {
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
 	defaultCountry?: string
 	/**
-	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case +
-	 * non-Latin pass through untouched. **Default `true`** — validated-beneficial on this
-	 * geocode/resolveTree path (#619: TX-facility locality 90.1 → 99.7%). The #694 comma-less crater
-	 * was the space-join, not the casing, so on comma-joined input it is a clean win. Set `false` to
-	 * restore the legacy raw-case parse.
+	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case + non-Latin pass through
+	 * untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path (#619: TX-facility locality
+	 * 90.1 → 99.7%). The #694 comma-less crater was the space-join, not the casing, so on comma-joined input it is a
+	 * clean win. Set `false` to restore the legacy raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
-	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound;
-	 * `1` or `undefined` keeps the raw half-segment heuristic. Accepts either a single multiplier
-	 * (the legacy Travis 1.7) OR a per-region {@link InterpCalibrationTable} — when a table is
-	 * supplied the factor is selected by the parsed region (DC 1.44 … AZ 3.12, `default` otherwise,
-	 * #584). See `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`.
+	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound; `1` or `undefined`
+	 * keeps the raw half-segment heuristic. Accepts either a single multiplier (the legacy Travis 1.7) OR a per-region
+	 * {@link InterpCalibrationTable} — when a table is supplied the factor is selected by the parsed region (DC 1.44 … AZ
+	 * 3.12, `default` otherwise, #584). See `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
 	interpCalibration?: number | InterpCalibrationTable
 	/**
-	 * Coarse country router (#244, soft prior). A `(text) → { country, confidence }` predictor. A
-	 * confident IN-MAP guess becomes an `anchorPosterior` the resolver's #369 re-rank boosts (never
-	 * filters); abstain (`null`) / off-map (`OTHER`) are no-ops, and an explicit
-	 * {@link defaultCountry} still wins (we never overwrite a caller-set posterior).
+	 * Coarse country router (#244, soft prior). A `(text) → { country, confidence }` predictor. A confident IN-MAP guess
+	 * becomes an `anchorPosterior` the resolver's #369 re-rank boosts (never filters); abstain (`null`) / off-map
+	 * (`OTHER`) are no-ops, and an explicit {@link defaultCountry} still wins (we never overwrite a caller-set
+	 * posterior).
 	 *
 	 * **Default-on (#244 M2, after the misroute gate):**
 	 *
-	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is
-	 *   lazy-loaded and applied. Degrades to no prior if the model can't be resolved.
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded and
+	 *   applied. Degrades to no prior if the model can't be resolved.
 	 * - A function → use it (a custom placer / threshold).
 	 * - `false` → disabled (no prior; the pre-M2 byte-stable behavior).
 	 */
 	placeCountry?: PlaceCountryFn | false
 	/**
-	 * #743/#194: promote a CONFIDENT placer guess to a HARD country filter (empty→unresolved) for
-	 * coverage-safelisted countries — see {@link hardCountryFor}. **DEFAULT-ON** (#743): a pure win on
-	 * well-covered countries (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt
-	 * out.
+	 * #743/#194: promote a CONFIDENT placer guess to a HARD country filter (empty→unresolved) for coverage-safelisted
+	 * countries — see {@link hardCountryFor}. **DEFAULT-ON** (#743): a pure win on well-covered countries
+	 * (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt out.
 	 */
 	hardPlaceCountry?: boolean
 	/** #743/#194: override the coverage safelist gating {@link hardPlaceCountry}. Undefined → built-in. */
@@ -121,8 +118,8 @@ export interface GeocodeDeps {
 }
 
 /**
- * Anchor weight for the coarse-placer's country prior. Matches the runtime-pipeline default — a
- * whole-string country guess is broader/softer than a postcode anchor (2.0), so it blends gently.
+ * Anchor weight for the coarse-placer's country prior. Matches the runtime-pipeline default — a whole-string country
+ * guess is broader/softer than a postcode anchor (2.0), so it blends gently.
  */
 const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
 
@@ -134,37 +131,41 @@ export function regionToStateSlug(
 	for (const candidate of [regionValue, resolverName]) {
 		if (!candidate) continue
 		const trimmed = candidate.trim()
+
 		if (/^[A-Za-z]{2}$/.test(trimmed)) return trimmed.toLowerCase()
 	}
+
 	return null
 }
 
 /**
- * Walk a (parsed or resolved) tree for its region → the per-state shard slug (e.g. `"tx"`), else
- * null.
+ * Walk a (parsed or resolved) tree for its region → the per-state shard slug (e.g. `"tx"`), else null.
  */
 export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
 	let regionResolverName: string | null = null
 	const stack = [...tree.roots]
+
 	while (stack.length > 0) {
 		const node = stack.pop()!
+
 		if (node.tag === "region" && !regionValue) {
 			regionValue = node.value.trim() || null
 			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
 		}
 		stack.push(...node.children)
 	}
+
 	return regionToStateSlug(regionValue, regionResolverName)
 }
 
 /**
- * Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is
- * absent.
+ * Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is absent.
  */
 export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
+
 	return existsSync(candidate) ? candidate : null
 }
 
@@ -172,6 +173,7 @@ export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null
 export function selectInterpolationDb(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
+
 	return existsSync(candidate) ? candidate : null
 }
 
@@ -190,11 +192,10 @@ interface ShardCacheEntry extends StateShards {
 }
 
 /**
- * Opens + CACHES per-state situs/interpolation lookups so a batch geocoding many addresses in one
- * state opens that state's (possibly multi-GB) shards once, not once per row. Versioned-data aware
- * (#485): paths resolve through the `releases.json` manifest (legacy unversioned fallback), and
- * {@link reload} performs a zero-downtime atomic switchover when a new version is published. Call
- * {@link close} when done to release every cached handle.
+ * Opens + CACHES per-state situs/interpolation lookups so a batch geocoding many addresses in one state opens that
+ * state's (possibly multi-GB) shards once, not once per row. Versioned-data aware (#485): paths resolve through the
+ * `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic switchover
+ * when a new version is published. Call {@link close} when done to release every cached handle.
  */
 export class ShardProvider {
 	readonly #factory: ShardLookupFactory
@@ -215,16 +216,19 @@ export class ShardProvider {
 		const ipPath = resolveShardPath(this.#dataRoot, "interpolation", stateSlug, this.#manifest)
 		const ap = apPath ? new this.#factory.AddressPointSqliteLookup(apPath) : undefined
 		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : undefined
+
 		return { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip, apPath, ipPath }
 	}
 
 	readonly for: ShardResolver = (stateSlug) => {
 		if (!stateSlug) return {}
 		let entry = this.#cache.get(stateSlug)
+
 		if (!entry) {
 			entry = this.#open(stateSlug)
 			this.#cache.set(stateSlug, entry)
 		}
+
 		return { addressPoints: entry.addressPoints, interpolation: entry.interpolation }
 	}
 
@@ -234,23 +238,28 @@ export class ShardProvider {
 	}
 
 	/**
-	 * Re-read the manifest and atomically swap any cached shard whose resolved path changed. New
-	 * requests see the new version immediately; the old handles are RETIRED and closed on the next
-	 * reload (one-generation grace — safe because find() is synchronous, so no in-flight query can
-	 * still hold a handle once a request yields). Returns the new version map.
+	 * Re-read the manifest and atomically swap any cached shard whose resolved path changed. New requests see the new
+	 * version immediately; the old handles are RETIRED and closed on the next reload (one-generation grace — safe because
+	 * find() is synchronous, so no in-flight query can still hold a handle once a request yields). Returns the new
+	 * version map.
 	 */
 	reload(): DataReleaseManifest | null {
 		for (const h of this.#retired) h.close()
 		this.#retired = []
 		this.#manifest = readReleaseManifest(this.#dataRoot)
+
 		for (const [slug, old] of this.#cache) {
 			const apPath = resolveShardPath(this.#dataRoot, "address-points", slug, this.#manifest)
 			const ipPath = resolveShardPath(this.#dataRoot, "interpolation", slug, this.#manifest)
+
 			if (apPath === old.apPath && ipPath === old.ipPath) continue // unchanged — keep the open handle
 			this.#cache.set(slug, this.#open(slug))
+
 			if (old._ap) this.#retired.push(old._ap)
+
 			if (old._ip) this.#retired.push(old._ip)
 		}
+
 		return this.versions()
 	}
 
@@ -259,6 +268,7 @@ export class ShardProvider {
 			e._ap?.close()
 			e._ip?.close()
 		}
+
 		for (const h of this.#retired) h.close()
 		this.#cache.clear()
 		this.#retired = []
@@ -266,9 +276,9 @@ export class ShardProvider {
 }
 
 /**
- * Run the full street-level cascade on one address and return the structured geocode result. Always
- * returns a result (admin tier even with no coordinate shards). Throws only on a fatal
- * parse/resolve error — callers doing batch work should catch per-row.
+ * Run the full street-level cascade on one address and return the structured geocode result. Always returns a result
+ * (admin tier even with no coordinate shards). Throws only on a fatal parse/resolve error — callers doing batch work
+ * should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	const tree = recognizeUsRegions(
@@ -278,14 +288,17 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	const { addressPoints, interpolation } = deps.shards?.(stateSlug) ?? {}
 
 	const opts: ResolveOpts = {}
+
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
 	// a function → that placer; false → disabled. A confident in-map guess feeds the resolver's
 	// anchorPosterior re-rank; abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
 	const placeCountry: PlaceCountryFn | null =
 		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
+
 	if (placeCountry) {
 		const placed = placeCountry(input)
+
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
 			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
 			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
@@ -299,10 +312,13 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 				deps.hardPlaceCountry ?? true,
 				deps.hardCountrySafelist
 			)
+
 			if (hardCountry) opts.hardCountry = hardCountry
 		}
 	}
+
 	if (addressPoints) opts.addressPoints = addressPoints
+
 	if (interpolation) {
 		opts.interpolation = interpolation
 		// Resolve to a single multiplier: a per-region table selects by the parsed region (`stateSlug`);
@@ -311,19 +327,20 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			typeof deps.interpCalibration === "object"
 				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
 				: deps.interpCalibration
+
 		if (calibration && calibration !== 1) {
 			opts.interpolationRadiusCalibration = calibration
 		}
 	}
 
 	const resolved = await deps.resolver.resolveTree(tree, opts)
+
 	return extractGeocodeResult(input, resolved)
 }
 
 /**
- * Walk the resolved tree and extract the geocode result: the street node's address-point /
- * interpolation coordinate (whichever tier won), else the best admin centroid (locality → region →
- * country).
+ * Walk the resolved tree and extract the geocode result: the street node's address-point / interpolation coordinate
+ * (whichever tier won), else the best admin centroid (locality → region → country).
  */
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeResult {
 	const allNodes: AddressNode[] = []
@@ -344,6 +361,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 	if (streetNode?.metadata?.["resolution_tier"] === "address_point") {
 		const ap = streetNode.metadata["address_point"] as { lat: number; lon: number } | undefined
+
 		if (ap) {
 			lat = ap.lat
 			lon = ap.lon
@@ -354,6 +372,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 	if (tier !== "address_point" && streetNode?.metadata?.["resolution_tier"] === "interpolated") {
 		const ip = streetNode.metadata["interpolated_point"] as { lat: number; lon: number } | undefined
+
 		if (ip) {
 			lat = ip.lat
 			lon = ip.lon
@@ -364,8 +383,10 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 	if (tier === "admin") {
 		const adminPriority: ReadonlyArray<string> = ["locality", "dependent_locality", "region", "country"]
+
 		for (const tag of adminPriority) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)
+
 			if (node) {
 				lat = node.lat!
 				lon = node.lon!

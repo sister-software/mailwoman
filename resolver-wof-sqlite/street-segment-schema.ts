@@ -18,9 +18,9 @@
 import type { Kysely } from "kysely"
 
 /**
- * One TIGER street-segment edge: a `(from_hn, to_hn)` house-number range on one `side` of a named
- * street, with the geometry the interpolator walks. `min_hn`/`max_hn` are the sorted bounds (the
- * probe filters on them); `parity` is `odd`/`even`/`mixed`.
+ * One TIGER street-segment edge: a `(from_hn, to_hn)` house-number range on one `side` of a named street, with the
+ * geometry the interpolator walks. `min_hn`/`max_hn` are the sorted bounds (the probe filters on them); `parity` is
+ * `odd`/`even`/`mixed`.
  */
 export interface StreetSegmentTable {
 	/** Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key. */
@@ -54,8 +54,8 @@ export interface StreetSegmentDatabase {
 }
 
 /**
- * The `street_segment` columns in INSERT order. The builder's positional prepared statement derives
- * its placeholder list from this, so the positional order can't drift from the DDL / the reader.
+ * The `street_segment` columns in INSERT order. The builder's positional prepared statement derives its placeholder
+ * list from this, so the positional order can't drift from the DDL / the reader.
  */
 export const STREET_SEGMENT_COLUMNS = [
 	"street_norm",

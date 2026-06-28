@@ -19,6 +19,7 @@ import { describe, expect, test } from "vitest"
 describe("Phase 0 §8 — JP forward-compat", () => {
 	test("every ja-JP component is a declared ComponentTag (no schema gap)", () => {
 		const tagSet = new Set<ComponentTag>(COMPONENT_TAGS)
+
 		for (const tag of jaJP.componentsSupported) {
 			expect(tagSet.has(tag), `ja-JP componentsSupported contains unknown tag: ${tag}`).toBe(true)
 		}
@@ -43,6 +44,7 @@ describe("Phase 0 §8 — JP forward-compat", () => {
 
 	test("PolicyRegistry can install rule_only defaults for JP-only tags without throwing", () => {
 		const policy = InMemoryPolicyRegistry.withDefaults()
+
 		for (const tag of jaJP.componentsSupported) {
 			const entry = policy.lookup(tag)
 			expect(entry.mode).toBe("rule_only")

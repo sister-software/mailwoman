@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import { computeQueryShape } from "./compute.js"
 
 describe("computeQueryShape — end-to-end", () => {

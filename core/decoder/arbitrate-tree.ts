@@ -44,9 +44,9 @@ function spansOverlap(aStart: number, aEnd: number, bStart: number, bEnd: number
 }
 
 /**
- * Edit the nested neural argmax tree with the solved v0 (rule) parse under the `rule_preferred`
- * route — relabel same-span tag disagreements toward rule, add rule-only non-overlapping missing
- * tags. Containment-preserving (no flatten, no restructure). Input is not mutated.
+ * Edit the nested neural argmax tree with the solved v0 (rule) parse under the `rule_preferred` route — relabel
+ * same-span tag disagreements toward rule, add rule-only non-overlapping missing tags. Containment-preserving (no
+ * flatten, no restructure). Input is not mutated.
  *
  * @param tree The neural argmax `AddressTree`.
  * @param ruleProposals Proposals from the solved v0 parse (`solutionToProposals`).
@@ -59,14 +59,17 @@ export function applyRuleArbitration(tree: AddressTree, ruleProposals: readonly 
 		const hit = ruleProposals.find(
 			(p) => p.span.start === node.start && p.span.end === node.end && p.component !== node.tag
 		)
+
 		if (hit) {
 			node.tag = hit.component
 			node.source = "rule"
 			node.confidence = hit.confidence
 			node.sourceId = hit.source_id
 		}
+
 		for (const child of node.children) relabel(child)
 	}
+
 	for (const root of roots) relabel(root)
 
 	// Post-relabel inventory: which tags exist, and every node span (for the overlap guard).
@@ -75,13 +78,16 @@ export function applyRuleArbitration(tree: AddressTree, ruleProposals: readonly 
 	const collect = (node: AddressNode): void => {
 		neuralTags.add(node.tag)
 		neuralSpans.push({ start: node.start, end: node.end })
+
 		for (const child of node.children) collect(child)
 	}
+
 	for (const root of roots) collect(root)
 
 	// 2. Add: a rule tag the neural tree lacks entirely, on a span that overlaps no neural node.
 	for (const p of ruleProposals) {
 		if (neuralTags.has(p.component)) continue
+
 		if (neuralSpans.some((s) => spansOverlap(s.start, s.end, p.span.start, p.span.end))) continue
 		roots.push({
 			tag: p.component,
@@ -98,5 +104,6 @@ export function applyRuleArbitration(tree: AddressTree, ruleProposals: readonly 
 	}
 
 	roots.sort((a, b) => a.start - b.start)
+
 	return { ...tree, roots }
 }

@@ -4,6 +4,7 @@ import { parseEnv } from "node:util"
 export function loadEnvFile<T extends object = object>(envFilePath: PathLike): T {
 	if (existsSync(envFilePath)) {
 		console.error(`Loading environment from ${envFilePath}`)
+
 		return {} as T
 	}
 

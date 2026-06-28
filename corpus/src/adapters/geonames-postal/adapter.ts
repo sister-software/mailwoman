@@ -23,8 +23,10 @@
  *        `"CC-BY-4.0"` per row (attribute "GeoNames").
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -49,17 +51,22 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const rec of parser as AsyncIterable<string[]>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const cc = (rec[COL.country] ?? "").trim()
+
 					if (!cc) continue
+
 					if (opts.country && cc !== opts.country) continue
 
 					const postcode = (rec[COL.postcode] ?? "").trim()
 					const locality = (rec[COL.place] ?? "").trim()
+
 					if (!postcode || !locality) continue
 					const region = (rec[COL.admin1Name] ?? "").trim()
 
@@ -68,6 +75,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 					const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = [
 						{ slot: "pl", comp: { postcode, locality }, raw: `${postcode} ${locality}` },
 					]
+
 					if (region && region.toLowerCase() !== locality.toLowerCase()) {
 						variants.push({
 							slot: "plr",
@@ -79,6 +87,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 					for (const v of variants) {
 						if (opts.limit !== undefined && emitted >= opts.limit) break
 						const aligned = reconcileComponents(v.comp, v.raw)
+
 						if (Object.keys(aligned).length < 2) continue
 						yield {
 							raw: v.raw,

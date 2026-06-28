@@ -39,15 +39,19 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 	const dlat = (lat2 - lat1) * p
 	const dlon = (lon2 - lon1) * p
 	const a = Math.sin(dlat / 2) ** 2 + Math.cos(lat1 * p) * Math.cos(lat2 * p) * Math.sin(dlon / 2) ** 2
+
 	return 2 * r * Math.asin(Math.sqrt(a))
 }
 
 /** The ⌈(1−α)(n+1)⌉-th smallest calibration score. Infinity when the rank exceeds n (α too small). */
 function conformalRadius(calScores: number[], alpha: number): number {
 	const n = calScores.length
+
 	if (n === 0) return Infinity
 	const rank = Math.ceil((1 - alpha) * (n + 1))
+
 	if (rank > n) return Infinity
+
 	return [...calScores].sort((a, b) => a - b)[rank - 1]!
 }
 
@@ -66,6 +70,7 @@ function evaluate(scores: number[], alphas: number[], seed: number, calFrac: num
 	// Tiny seeded LCG shuffle — keeps the split reproducible without importing numpy/random-as-global.
 	// BigInt mirrors Python's arbitrary-precision ints: the products overflow 2^53, so Number would drift.
 	let state = (BigInt(seed) * 2654435761n + 1n) & 0xffffffffn
+
 	for (let i = idx.length - 1; i > 0; i--) {
 		state = (state * 1103515245n + 12345n) & 0x7fffffffn
 		const j = Number(state % BigInt(i + 1))
@@ -76,6 +81,7 @@ function evaluate(scores: number[], alphas: number[], seed: number, calFrac: num
 	const cal = shuffled.slice(0, nCal)
 	const test = shuffled.slice(nCal)
 	const rows: IntervalRow[] = []
+
 	for (const a of alphas) {
 		const r = conformalRadius(cal, a)
 		const cov = test.length ? test.filter((s) => s <= r).length / test.length : NaN
@@ -88,6 +94,7 @@ function evaluate(scores: number[], alphas: number[], seed: number, calFrac: num
 			n_test: test.length,
 		})
 	}
+
 	return rows
 }
 
@@ -98,8 +105,7 @@ interface ResolvedRow {
 }
 
 /**
- * Per resolved row: haversine(gold, resolved-locality centroid). Returns [scores, nTotal,
- * nAbstain].
+ * Per resolved row: haversine(gold, resolved-locality centroid). Returns [scores, nTotal, nAbstain].
  */
 function loadScores(dumpPath: string, dbPath: string): [number[], number, number] {
 	const data = JSON.parse(readFileSync(dumpPath, "utf-8"))
@@ -113,18 +119,22 @@ function loadScores(dumpPath: string, dbPath: string): [number[], number, number
 			const row = stmt.get(pid) as { latitude: number | null; longitude: number | null } | undefined
 			centroidCache.set(pid, row ? [row.latitude, row.longitude] : undefined)
 		}
+
 		return centroidCache.get(pid)
 	}
 
 	const scores: number[] = []
 	let nAbstain = 0
+
 	for (const r of rows) {
 		const pid = r.neuralLocId
+
 		if (pid === null || pid === undefined) {
 			nAbstain += 1
 			continue
 		}
 		const c = centroid(pid)
+
 		if (!c || c[0] === null || r.lat === null || r.lat === undefined) {
 			nAbstain += 1
 			continue
@@ -132,12 +142,14 @@ function loadScores(dumpPath: string, dbPath: string): [number[], number, number
 		scores.push(haversineKm(r.lat!, r.lon!, c[0]!, c[1]!))
 	}
 	db.close()
+
 	return [scores, rows.length, nAbstain]
 }
 
 /** Python `f"{x:>{w}.{p}f}"` — fixed-precision, right-justified to width `w`. */
 function fixR(x: number, w: number, p: number): string {
 	const s = Number.isNaN(x) ? "nan" : x.toFixed(p)
+
 	return s.padStart(w)
 }
 
@@ -153,6 +165,7 @@ function render(label: string, rows: IntervalRow[], nTotal: number, nAbstain: nu
 		`resolved ${nTotal - nAbstain}/${nTotal}  ·  abstained ${nAbstain} (${((100 * nAbstain) / Math.max(nTotal, 1)).toFixed(1)}%)`,
 		`${padR("target", 7)} ${padR("radius (km)", 13)} ${padR("realized", 10)} ${padR("n_cal", 7)} ${padR("n_test", 7)}`,
 	]
+
 	for (const r of rows) {
 		const rad = r.radius_km === Infinity ? "∞" : r.radius_km.toFixed(2)
 		out.push(
@@ -160,6 +173,7 @@ function render(label: string, rows: IntervalRow[], nTotal: number, nAbstain: nu
 				`${padR(String(r.n_cal), 7)} ${padR(String(r.n_test), 7)}`
 		)
 	}
+
 	return out.join("\n")
 }
 
@@ -167,6 +181,7 @@ function runSelfTest(): number {
 	// Synthetic nonconformity: exponential-ish via a seeded LCG, so realized coverage must track 1−α.
 	const scores: number[] = []
 	let state = 42n
+
 	for (let i = 0; i < 4000; i++) {
 		state = (state * 1103515245n + 12345n) & 0x7fffffffn
 		const u = Number(state % 1_000_000n) / 1_000_000 || 1e-6
@@ -177,6 +192,7 @@ function runSelfTest(): number {
 	console.log(render("self-test (synthetic)", rows, scores.length, 0))
 	const ok = rows.every((r) => Math.abs(r.realized_coverage - r.target_coverage) < 0.03)
 	console.log("\nself-test:", ok ? "PASS" : "FAIL (coverage strayed >0.03 from target)")
+
 	return ok ? 0 : 1
 }
 
@@ -201,8 +217,10 @@ function parseArgs(): Args {
 		calFrac: 0.5,
 		selfTest: false,
 	}
+
 	for (let i = 0; i < argv.length; i++) {
 		const k = argv[i]
+
 		if (k === "--dump") a.dump = argv[++i]
 		else if (k === "--db") a.db = argv[++i]!
 		else if (k === "--label") a.label = argv[++i]!
@@ -212,6 +230,7 @@ function parseArgs(): Args {
 		else if (k === "--out-json") a.outJson = argv[++i]
 		else if (k === "--self-test") a.selfTest = true
 	}
+
 	return a
 }
 
@@ -219,19 +238,24 @@ function main(): number {
 	const args = parseArgs()
 
 	if (args.selfTest) return runSelfTest()
+
 	if (!args.dump) {
 		console.error("error: --dump is required (or pass --self-test)")
+
 		return 2
 	}
 
 	const alphas = args.alphas.split(",").map((a) => parseFloat(a))
 	const [scores, nTotal, nAbstain] = loadScores(args.dump, args.db)
+
 	if (scores.length === 0) {
 		console.error("no resolved rows with centroids — nothing to calibrate")
+
 		return 1
 	}
 	const rows = evaluate(scores, alphas, args.seed, args.calFrac)
 	console.log(render(args.label, rows, nTotal, nAbstain))
+
 	if (args.outJson) {
 		writeFileSync(
 			args.outJson,
@@ -249,6 +273,7 @@ function main(): number {
 		)
 		console.error(`\nwrote ${args.outJson}`)
 	}
+
 	return 0
 }
 

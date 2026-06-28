@@ -14,6 +14,7 @@ import {
 	type SymbolLayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
 import { interpolateTurbo } from "d3-scale-chromatic"
+
 import { type LayerSpecificationListInput } from "../styles/layers.js"
 import { TileSetSourceID } from "../styles/sources.js"
 

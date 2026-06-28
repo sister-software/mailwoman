@@ -25,20 +25,20 @@ import { SqliteDriver } from "#kysley/driver"
  * The constructor takes an instance of {@link SqliteDialectConfig}.
  *
  * ```ts
- * import { DatabaseSync } from 'node:sqlite'
+ * import { DatabaseSync } from "node:sqlite"
  *
  * new SqliteDialect({
- *   database: new DatabaseSync("db.sqlite")
+ * 	database: new DatabaseSync("db.sqlite"),
  * })
  * ```
  *
  * If you want the pool to only be created once it's first used, `database` can be a function:
  *
  * ```ts
- * import { DatabaseSync } from 'node:sqlite'
+ * import { DatabaseSync } from "node:sqlite"
  *
  * new SqliteDialect({
- *   database: async () => new DatabaseSync("db.sqlite")
+ * 	database: async () => new DatabaseSync("db.sqlite"),
  * })
  * ```
  */

@@ -27,13 +27,14 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
+import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
+import { basename, dirname } from "node:path"
+import { DatabaseSync } from "node:sqlite"
+
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
-import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
-import { basename, dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -78,15 +79,18 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 /**
- * Scripts/AGENTS.md atomic swap: the build wrote to a temp path, so a mid-build crash never leaves
- * a half-written DB at finalPath. Move any prior version aside, slot the new one in, then drop the
- * old. (The original script rebuilt in place — `rmSync(OUT)` then `new DatabaseSync(OUT)`.)
+ * Scripts/AGENTS.md atomic swap: the build wrote to a temp path, so a mid-build crash never leaves a half-written DB at
+ * finalPath. Move any prior version aside, slot the new one in, then drop the old. (The original script rebuilt in
+ * place — `rmSync(OUT)` then `new DatabaseSync(OUT)`.)
  */
 function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 	const aside = `${finalPath}.old-${process.pid}`
+
 	if (existsSync(finalPath)) renameSync(finalPath, aside)
+
 	for (const sfx of ["-wal", "-shm"]) rmSync(finalPath + sfx, { force: true })
 	renameSync(tmpPath, finalPath)
+
 	for (const sfx of ["-wal", "-shm"]) rmSync(tmpPath + sfx, { force: true })
 	rmSync(aside, { force: true })
 }
@@ -100,9 +104,11 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 			try {
 				// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
 				const OA_MODE = Boolean(options.oaCsv)
+
 				if (!options.state) {
 					throw new Error("--state required (US state abbreviation, e.g. VT)")
 				}
+
 				if (options.countyFips && !/^\d{5}$/.test(options.countyFips)) {
 					throw new Error("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
 				}
@@ -115,6 +121,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 				// published CLI doesn't force them on every consumer.
 				let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address-point-schema")
 				let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street-normalize")
+
 				try {
 					pointSchema = await import("@mailwoman/resolver-wof-sqlite/address-point-schema")
 					streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
@@ -124,6 +131,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 					)
 				}
 				let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
+
 				try {
 					;({ DuckDBInstance } = await import("@duckdb/node-api"))
 				} catch {
@@ -148,10 +156,12 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 				mkdirSync(dirname(finalOut), { recursive: true })
 				// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
 				const tmpOut = `${finalOut}.building-${process.pid}.db`
+
 				for (const sfx of ["", "-wal", "-shm"]) rmSync(tmpOut + sfx, { force: true })
 
 				const instance = await DuckDBInstance.create()
 				const duck = await instance.connect()
+
 				// Optional thread cap (national driver sets this so concurrent state builds don't oversubscribe cores).
 				if (options.threads && /^\d+$/.test(options.threads)) {
 					await duck.run(`SET threads TO ${options.threads}`)
@@ -159,6 +169,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 				// Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
 				// DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
 				let countyFilter = ""
+
 				if (options.countyFips) {
 					await duck.run("INSTALL spatial; LOAD spatial;")
 					countyFilter = `AND ST_Contains(
@@ -226,8 +237,10 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 				// A streamed DataChunk carries no column names of its own, so pull them off the result once.
 				const colNames = stream.columnNames()
 				db.exec("BEGIN")
+
 				for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
 					const rows = chunk.getRowObjects(colNames) as Record<string, unknown>[]
+
 					for (const r of rows) {
 						totalReturned++
 						const dataset = String(r.dataset ?? "unknown")
@@ -235,9 +248,11 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 
 						const streetRaw = String(r.street)
 						const streetNorm = normalizeStreetForKey(streetRaw)
+
 						if (!streetNorm) continue
 						const lat = Number(r.lat)
 						const lon = Number(r.lon)
+
 						if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue // OA rows can carry empty coords
 						const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
 						insert.run(
@@ -274,9 +289,11 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 					`provenance (${STATE}, release ${options.release}):`,
 				]
 				const sortedDatasets = [...datasetCounts.entries()].sort((a, b) => b[1] - a[1])
+
 				for (const [dataset, count] of sortedDatasets) {
 					lines.push(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)
 				}
+
 				if (allowedDatasets.size > 0) {
 					// The DuckDB query already excluded non-allowed rows, so totalReturned is the kept count.
 					// Run a secondary count (cheap: parquet predicate pushdown on a single column) for the
@@ -312,6 +329,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
+
 	if (summary) {
 		return (
 			<Box flexDirection="column">
@@ -324,6 +342,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 			</Box>
 		)
 	}
+
 	return null // progress streams to stderr until the summary lands
 }
 

@@ -14,8 +14,10 @@
  *   License: stamped `"Public Domain"` per New York state government open-data terms.
  */
 
-import { parse as csvParse } from "csv-parse"
 import { createReadStream } from "node:fs"
+
+import { parse as csvParse } from "csv-parse"
+
 import { stableSourceId } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
@@ -40,9 +42,12 @@ interface NyNotaryRow {
 
 function splitAddress(address: string): { house_number?: string; street: string } | null {
 	const trimmed = address.trim()
+
 	if (!trimmed) return null
 	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
 	if (m) return { house_number: m[1], street: m[2]!.trim() }
+
 	return { street: trimmed }
 }
 
@@ -80,13 +85,16 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 			)
 
 			let emitted = 0
+
 			try {
 				for await (const rawRecord of parser as AsyncIterable<Record<string, string>>) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					// NY CSV has columns with leading spaces, so we normalize by trimming keys.
 					const record: Record<string, string> = {}
+
 					for (const key of Object.keys(rawRecord)) {
 						record[key.trim()] = rawRecord[key] ?? ""
 					}
@@ -101,13 +109,16 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 					const county = (record["Commissioned County"] ?? "").trim()
 
 					if (!city || !stateAbbr || !zip) continue
+
 					if (!address1 && !address2) continue
 
 					const state = lookupStateAbbreviation(stateAbbr)
+
 					if (!state) continue
 
 					const fullAddress = [address1, address2].filter(Boolean).join(" ")
 					const split = splitAddress(fullAddress)
+
 					if (!split) continue
 
 					const venue = businessName || holderName || undefined
@@ -128,6 +139,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 						.join(", ")
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length <= 2) continue
 
 					const commNum = (record["Commission Number (UID)"] ?? "").trim()

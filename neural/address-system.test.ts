@@ -9,9 +9,9 @@
  *   no-ops.
  */
 
+import { conventionsForSystem } from "@mailwoman/codex"
 import { describe, expect, it } from "vitest"
 
-import { conventionsForSystem } from "@mailwoman/codex"
 import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.js"
 
 /** Logits that put `prob` mass on `idx` (softmax of one-hot × scale). */

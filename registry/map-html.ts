@@ -27,6 +27,7 @@
 
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { layers, namedFlavor } from "@protomaps/basemaps"
+
 import type { EntityGeoData } from "./types.js"
 
 /** MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major. */
@@ -35,15 +36,14 @@ const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOx
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
 
 /**
- * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.sister.software`,
- * which sends CORS for localhost + the docs domains).
+ * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.sister.software`, which sends CORS for
+ * localhost + the docs domains).
  *
- * Glyphs + sprite come from the UPSTREAM Protomaps assets (GitHub Pages, `ACAO: *`), not the house
- * mirror at `public.sister.software` — that bucket sends no CORS headers, so the mirror can't be
- * fetched cross-origin (`cartographer/base/composition.ts` flags the same: "Currently upstream
- * URLs; we mirror these … but no public route fronts that bucket yet"). The upstream assets target
- * the v4 schema, matching the `basemap-v4` tiles. Swap to the house mirror once it has a
- * CORS-enabled route.
+ * Glyphs + sprite come from the UPSTREAM Protomaps assets (GitHub Pages, `ACAO: *`), not the house mirror at
+ * `public.sister.software` — that bucket sends no CORS headers, so the mirror can't be fetched cross-origin
+ * (`cartographer/base/composition.ts` flags the same: "Currently upstream URLs; we mirror these … but no public route
+ * fronts that bucket yet"). The upstream assets target the v4 schema, matching the `basemap-v4` tiles. Swap to the
+ * house mirror once it has a CORS-enabled route.
  */
 const BASEMAP_SOURCE_ID = "basemap-v4"
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
@@ -61,8 +61,8 @@ export interface MapHTMLOptions {
 	/**
 	 * How to color the markers:
 	 *
-	 * - `"auto"` (default) — by `bucket` if any feature carries one (reconciliation output), else by
-	 *   cross-dataset-link status.
+	 * - `"auto"` (default) — by `bucket` if any feature carries one (reconciliation output), else by cross-dataset-link
+	 *   status.
 	 * - `"sources"` — always by cross-dataset-link status (≥2 sources stand out).
 	 * - `"bucket"` — always by the `bucket` property.
 	 */
@@ -75,9 +75,9 @@ const SINGLE_COLOR = "#3388ff" // single-source entity
 const CROSS_COLOR = "#e8590c" // cross-dataset link (≥2 sources)
 
 /**
- * Escape a value for safe inlining inside a `<script>` as JSON. `JSON.stringify` alone isn't enough
- * — a record value containing `</script>` would close the block early; escaping `<`/`>`/`&` to
- * `\uXXXX` keeps the JSON valid and makes a breakout impossible.
+ * Escape a value for safe inlining inside a `<script>` as JSON. `JSON.stringify` alone isn't enough — a record value
+ * containing `</script>` would close the block early; escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a
+ * breakout impossible.
  */
 function safeJsonForScript(value: unknown): string {
 	return JSON.stringify(value).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")
@@ -93,9 +93,9 @@ function sourceCount(props: EntityGeoData): number {
 }
 
 /**
- * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete,
- * standalone HTML document. Entities without a coordinate are already absent from those
- * collections; an empty collection renders a friendly empty state rather than a broken map.
+ * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete, standalone HTML document.
+ * Entities without a coordinate are already absent from those collections; an empty collection renders a friendly empty
+ * state rather than a broken map.
  */
 export function toMapHTML(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
@@ -110,10 +110,13 @@ export function toMapHTML(
 
 	// Assign a color to each distinct bucket value, in first-seen order.
 	const bucketColors: Record<string, string> = {}
+
 	if (mode === "bucket") {
 		let i = 0
+
 		for (const f of geojson.features) {
 			const b = f.properties?.["bucket"] != null ? String(f.properties["bucket"]) : "—"
+
 			if (!(b in bucketColors)) bucketColors[b] = PALETTE[i++ % PALETTE.length]!
 		}
 	}
@@ -121,8 +124,10 @@ export function toMapHTML(
 	const colorFor = (props: EntityGeoData): string => {
 		if (mode === "bucket") {
 			const b = props["bucket"] != null ? String(props["bucket"]) : "—"
+
 			return bucketColors[b] ?? SINGLE_COLOR
 		}
+
 		return sourceCount(props) >= 2 ? CROSS_COLOR : SINGLE_COLOR
 	}
 
@@ -134,10 +139,15 @@ export function toMapHTML(
 	let maxLat = -Infinity
 	const features = geojson.features.map((f) => {
 		const [lng, lat] = f.geometry.coordinates
+
 		if (lng < minLng) minLng = lng
+
 		if (lat < minLat) minLat = lat
+
 		if (lng > maxLng) maxLng = lng
+
 		if (lat > maxLat) maxLat = lat
+
 		return { ...f, properties: { ...f.properties, _color: colorFor(f.properties) } }
 	})
 	const bbox = features.length ? [[minLng, minLat] as const, [maxLng, maxLat] as const] : null

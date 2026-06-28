@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from "vitest"
+
 import { MAILWOMAN_LICENCE, type ResolvedAddress, toNominatimResult } from "./index.js"
 
 const dc: ResolvedAddress = {

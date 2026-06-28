@@ -26,6 +26,10 @@
  *   [--falsehoods data/eval/falsehoods] # extra JSONL row files to include
  */
 
+import { readdirSync, readFileSync, writeFileSync } from "node:fs"
+import { basename, dirname, join, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+
 import { type ComponentTag, decodeAsJson, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import {
 	type AnchorLookup,
@@ -39,9 +43,6 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFst } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
 import { type ClassificationRecord, createAddressParser, createRuntimePipeline } from "mailwoman"
-import { readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import ts from "typescript"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -70,17 +71,16 @@ interface Args {
 	unitRepair: boolean
 	symmetricMatch: boolean
 	/**
-	 * #478: also grade the ASSEMBLED runtime pipeline (`createRuntimePipeline` — normalize → kind/
-	 * fast-path → grouper → reconcile → classify), not just the raw neural classifier. This is the
-	 * #566-lesson gate: a pipeline regression (e.g. a reconcile/arbitration change) is invisible when
-	 * the eval grades raw neural. Off by default → the existing v0-vs-raw-neural report is
-	 * byte-stable.
+	 * #478: also grade the ASSEMBLED runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
+	 * reconcile → classify), not just the raw neural classifier. This is the #566-lesson gate: a pipeline regression
+	 * (e.g. a reconcile/arbitration change) is invisible when the eval grades raw neural. Off by default → the existing
+	 * v0-vs-raw-neural report is byte-stable.
 	 */
 	assembled: boolean
 	/**
-	 * #478 inc 3: run the assembled arm with per-component arbitration ON (`runPipeline`'s
-	 * `arbitrate: true`). Only meaningful with `--assembled`. Lets the gate compare the arbitrated
-	 * pipeline's `v0-only vs ASSEMBLED` against the non-arbitrated assembled baseline.
+	 * #478 inc 3: run the assembled arm with per-component arbitration ON (`runPipeline`'s `arbitrate: true`). Only
+	 * meaningful with `--assembled`. Lets the gate compare the arbitrated pipeline's `v0-only vs ASSEMBLED` against the
+	 * non-arbitrated assembled baseline.
 	 */
 	arbitrate: boolean
 }
@@ -95,8 +95,10 @@ function parseArgs(): Args {
 		assembled: false,
 		arbitrate: false,
 	}
+
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
+
 		if (a === "--tests" && args[i + 1]) out.testsDir = args[++i]
 		else if (a === "--out-json" && args[i + 1]) out.outJson = args[++i]
 		else if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
@@ -116,10 +118,12 @@ function parseArgs(): Args {
 		else if (a === "--assembled") out.assembled = true
 		else if (a === "--arbitrate") out.arbitrate = true
 	}
+
 	if (!out.testsDir) {
 		console.error("Usage: scripts/harness-v0-neural.ts --tests <dir> [--out-json <path>] [...]")
 		process.exit(1)
 	}
+
 	return out as Args
 }
 
@@ -136,32 +140,38 @@ interface ExtractedAssertion {
 
 function localeFromFilename(file: string): string {
 	const base = basename(file, ".test.ts").replace(/^address\.|^addressit\.|^place\./, "")
+
 	return base
 }
 
 /**
- * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS
- * object. Returns `null` for anything that isn't a literal-of-literals (we intentionally don't try
- * to evaluate variables or computed properties — none of the test files use those).
+ * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS object. Returns `null`
+ * for anything that isn't a literal-of-literals (we intentionally don't try to evaluate variables or computed
+ * properties — none of the test files use those).
  */
 function objectLiteralToRecord(node: ts.ObjectLiteralExpression): ClassificationRecord | null {
 	const out: Record<string, string[]> = {}
+
 	for (const prop of node.properties) {
 		if (!ts.isPropertyAssignment(prop)) return null
 		const name = prop.name
 		let key: string
+
 		if (ts.isIdentifier(name)) key = name.text
 		else if (ts.isStringLiteralLike(name)) key = name.text
 		else return null
 		const value = prop.initializer
+
 		if (!ts.isArrayLiteralExpression(value)) return null
 		const elements: string[] = []
+
 		for (const el of value.elements) {
 			if (ts.isStringLiteralLike(el)) elements.push(el.text)
 			else return null
 		}
 		out[key] = elements
 	}
+
 	return out as ClassificationRecord
 }
 
@@ -179,25 +189,31 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 			node.arguments.length >= 1
 		) {
 			const inputArg = node.arguments[0]
+
 			if (!inputArg || !ts.isStringLiteralLike(inputArg)) {
 				ts.forEachChild(node, visit)
+
 				return
 			}
 			const expected: ClassificationRecord[] = []
 			let allOk = true
+
 			for (let i = 1; i < node.arguments.length; i++) {
 				const arg = node.arguments[i]!
+
 				if (!ts.isObjectLiteralExpression(arg)) {
 					allOk = false
 					break
 				}
 				const rec = objectLiteralToRecord(arg)
+
 				if (!rec) {
 					allOk = false
 					break
 				}
 				expected.push(rec)
 			}
+
 			if (allOk) {
 				out.push({ file: basename(file), locale, input: inputArg.text, expected })
 			}
@@ -205,11 +221,13 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 		ts.forEachChild(node, visit)
 	}
 	visit(sf)
+
 	return out
 }
 
 function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 	const all: ExtractedAssertion[] = []
+
 	for (const entry of readdirSync(testsDir)) {
 		// Only the address.*.test.ts / addressit.*.test.ts / venue.*.test.ts / intersection.test.ts
 		// / compound_street.test.ts / place.*.test.ts / transit.test.ts / libpostal.test.ts /
@@ -219,6 +237,7 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 		// extractor is a no-op on those.
 		if (!entry.endsWith(".test.ts")) continue
 		const filePath = join(testsDir, entry)
+
 		try {
 			const assertions = extractAssertions(filePath)
 			all.push(...assertions)
@@ -226,6 +245,7 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 			console.error(`[harness] WARN: failed to extract from ${entry}: ${(err as Error).message}`)
 		}
 	}
+
 	return all
 }
 
@@ -234,9 +254,9 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Visible classification labels in the v0 rule-based parser's solution model. `country, dependency,
- * house_number, level_designator, level, locality, postcode, region, street, unit_designator, unit,
- * venue`. Anything outside this set is invisible to the v0 comparison and gets folded or dropped.
+ * Visible classification labels in the v0 rule-based parser's solution model. `country, dependency, house_number,
+ * level_designator, level, locality, postcode, region, street, unit_designator, unit, venue`. Anything outside this set
+ * is invisible to the v0 comparison and gets folded or dropped.
  */
 const V0_VISIBLE = new Set([
 	"country",
@@ -254,17 +274,16 @@ const V0_VISIBLE = new Set([
 ])
 
 /**
- * Fold the neural classifier's Stage 3 component tags into the v0 visible classification set. The
- * fold is principled but lossy:
+ * Fold the neural classifier's Stage 3 component tags into the v0 visible classification set. The fold is principled
+ * but lossy:
  *
- * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street` (concat in
- *   document order, preserving inter-token spacing implicitly via concatenation).
- * - `intersection_a` + `intersection_b` → `street` (two separate values, matching v0's `{street:
- *   ["Main St", "Second Ave"]}` shape for intersections).
+ * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street` (concat in document order,
+ *   preserving inter-token spacing implicitly via concatenation).
+ * - `intersection_a` + `intersection_b` → `street` (two separate values, matching v0's `{street: ["Main St", "Second
+ *   Ave"]}` shape for intersections).
  * - `house_number`, `unit`, `venue`, `country`, `region`, `locality`, `postcode` → identity.
- * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`, JP-specific tags → dropped (no
- *   v0 equivalent). The dropped tags are surfaced in the per-assertion report so the harness
- *   consumer can see what was lost.
+ * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`, JP-specific tags → dropped (no v0 equivalent). The
+ *   dropped tags are surfaced in the per-assertion report so the harness consumer can see what was lost.
  */
 function neuralTreeToV0Record(flat: Partial<Record<ComponentTag, string>>): {
 	record: ClassificationRecord
@@ -274,15 +293,20 @@ function neuralTreeToV0Record(flat: Partial<Record<ComponentTag, string>>): {
 	const dropped: Partial<Record<ComponentTag, string>> = {}
 
 	const streetParts: string[] = []
+
 	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
 		const v = flat[tag]
+
 		if (v) streetParts.push(v)
 	}
+
 	if (streetParts.length > 0) out.street = [streetParts.join(" ")]
 
 	if (flat.intersection_a || flat.intersection_b) {
 		const xs: string[] = []
+
 		if (flat.intersection_a) xs.push(flat.intersection_a)
+
 		if (flat.intersection_b) xs.push(flat.intersection_b)
 		out.street = [...(out.street ?? []), ...xs]
 	}
@@ -298,6 +322,7 @@ function neuralTreeToV0Record(flat: Partial<Record<ComponentTag, string>>): {
 		) {
 			continue // already folded above
 		}
+
 		if (V0_VISIBLE.has(tag)) {
 			out[tag] = [value]
 		} else {
@@ -317,18 +342,20 @@ function normalize(s: string): string {
 }
 
 /**
- * Pass if every tag in `expected` is present in `actual` AND the actual value (string-equality,
- * case-folded, trimmed) contains the expected value. We accept `actual` being a superset because
- * the neural parser may emit extra components the test doesn't pin down (e.g. it labels a country
- * when the test only asserted street).
+ * Pass if every tag in `expected` is present in `actual` AND the actual value (string-equality, case-folded, trimmed)
+ * contains the expected value. We accept `actual` being a superset because the neural parser may emit extra components
+ * the test doesn't pin down (e.g. it labels a country when the test only asserted street).
  */
 function expectedMatchesActual(expected: ClassificationRecord, actual: ClassificationRecord): boolean {
 	for (const [tag, expectedValues] of Object.entries(expected)) {
 		const actualValues = actual[tag as keyof ClassificationRecord]
+
 		if (!actualValues || !expectedValues) return false
+
 		// For multi-value tags (intersection: ["Main St", "Second Ave"]) we require ALL of the
 		// expected values to appear in actual, order-sensitive.
 		if (expectedValues.length !== actualValues.length) return false
+
 		for (let i = 0; i < expectedValues.length; i++) {
 			if (normalize(expectedValues[i]!) !== normalize(actualValues[i]!)) {
 				// Allow substring containment in either direction — the neural parser sometimes
@@ -336,10 +363,12 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 				// authority on the EXPECTED span; we count a substring match as a partial pass.
 				const exp = normalize(expectedValues[i]!)
 				const act = normalize(actualValues[i]!)
+
 				if (!exp.includes(act) && !act.includes(exp)) return false
 			}
 		}
 	}
+
 	return true
 }
 
@@ -347,6 +376,7 @@ function anyExpectedMatches(expected: ClassificationRecord[], actual: Classifica
 	for (const e of expected) {
 		if (expectedMatchesActual(e, actual)) return true
 	}
+
 	return false
 }
 
@@ -367,29 +397,34 @@ interface AssertionResult {
 	neural_tree_valid: boolean
 	neural_tree_violations: TreeViolation[]
 	/**
-	 * #478 assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded
-	 * like neural.
+	 * #478 assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded like neural.
 	 */
 	assembled_pass?: boolean
 	assembled_actual?: ClassificationRecord
 }
 
 /**
- * Strict deep-equality on `ClassificationRecord`s, mirroring vitest's `toEqual`. v0's assert uses
- * `toEqual` per solution position, so the v0 path of the harness has to match exactly to stay
- * consistent with the existing test semantics.
+ * Strict deep-equality on `ClassificationRecord`s, mirroring vitest's `toEqual`. v0's assert uses `toEqual` per
+ * solution position, so the v0 path of the harness has to match exactly to stay consistent with the existing test
+ * semantics.
  */
 function classificationsEqual(a: ClassificationRecord, b: ClassificationRecord): boolean {
 	const aKeys = Object.keys(a).sort()
 	const bKeys = Object.keys(b).sort()
+
 	if (aKeys.length !== bKeys.length) return false
+
 	for (let i = 0; i < aKeys.length; i++) if (aKeys[i] !== bKeys[i]) return false
+
 	for (const k of aKeys) {
 		const av = (a as Record<string, string[]>)[k]!
 		const bv = (b as Record<string, string[]>)[k]!
+
 		if (av.length !== bv.length) return false
+
 		for (let i = 0; i < av.length; i++) if (av[i] !== bv[i]) return false
 	}
+
 	return true
 }
 
@@ -405,6 +440,7 @@ async function runAssertion(
 	const solutions = await v0Parser.parse(a.input)
 	const v0Records: ClassificationRecord[] = solutions.map((s) => s.classifications as ClassificationRecord)
 	let v0Pass: boolean
+
 	if (symmetricMatch) {
 		// Fair cross-architecture mode (external-lineage corpora, e.g. libpostal): score v0 with the
 		// SAME loose subset matcher as neural — pass if any v0 solution matches an expected record.
@@ -415,6 +451,7 @@ async function runAssertion(
 		// v0 — vitest semantics: expected[i] deep-equals solutions[i].classifications. All N
 		// expected solutions must match position-for-position; pass only if all of them do.
 		v0Pass = solutions.length >= a.expected.length
+
 		if (v0Pass) {
 			for (let i = 0; i < a.expected.length; i++) {
 				if (!classificationsEqual(a.expected[i]!, v0Records[i]!)) {
@@ -440,6 +477,7 @@ async function runAssertion(
 	// against raw-neural F1.
 	let assembledPass: boolean | undefined
 	let assembledRecord: ClassificationRecord | undefined
+
 	if (pipeline) {
 		const { tree: assembledTree } = await pipeline(a.input, arbitrate ? { arbitrate: true } : undefined)
 		assembledRecord = neuralTreeToV0Record(decodeAsJson(assembledTree)).record
@@ -477,13 +515,16 @@ interface FalsehoodRow {
 
 function loadFalsehoods(dir: string): ExtractedAssertion[] {
 	const out: ExtractedAssertion[] = []
+
 	for (const entry of readdirSync(dir)) {
 		if (!entry.endsWith(".jsonl")) continue
 		const file = basename(entry, ".jsonl")
 		const text = readFileSync(join(dir, entry), "utf8")
+
 		for (const line of text.split("\n")) {
 			if (!line.trim()) continue
 			let row: FalsehoodRow
+
 			try {
 				row = JSON.parse(line)
 			} catch (err) {
@@ -498,6 +539,7 @@ function loadFalsehoods(dir: string): ExtractedAssertion[] {
 			})
 		}
 	}
+
 	return out
 }
 
@@ -523,19 +565,25 @@ function printReport(results: AssertionResult[]): void {
 	const bothFail = results.filter((r) => !r.v0_pass && !r.neural_pass).length
 
 	const byFile = new Map<string, FileStats>()
+
 	for (const r of results) {
 		const s = byFile.get(r.file) ?? { total: 0, v0_pass: 0, neural_pass: 0 }
 		s.total++
+
 		if (r.v0_pass) s.v0_pass++
+
 		if (r.neural_pass) s.neural_pass++
 		byFile.set(r.file, s)
 	}
 
 	const byLocale = new Map<string, FileStats>()
+
 	for (const r of results) {
 		const s = byLocale.get(r.locale) ?? { total: 0, v0_pass: 0, neural_pass: 0 }
 		s.total++
+
 		if (r.v0_pass) s.v0_pass++
+
 		if (r.neural_pass) s.neural_pass++
 		byLocale.set(r.locale, s)
 	}
@@ -568,6 +616,7 @@ function printReport(results: AssertionResult[]): void {
 	// drive this to ~0 "by construction"; comparing it to `v0-only vs raw-neural` shows what the
 	// current pipeline (grouper + reconcile + fast-path, no arbitration yet) already captures or loses.
 	const hasAssembled = results.some((r) => r.assembled_pass !== undefined)
+
 	if (hasAssembled) {
 		const asmPass = results.filter((r) => r.assembled_pass).length
 		const onlyV0vsAsm = results.filter((r) => r.v0_pass && !r.assembled_pass).length
@@ -593,6 +642,7 @@ function printReport(results: AssertionResult[]): void {
 	console.log("| File | Total | v0 | Neural | v0 % | Neural % |")
 	console.log("|------|-------|----|--------|------|----------|")
 	const sortedFiles = [...byFile.entries()].sort((a, b) => b[1].total - a[1].total)
+
 	for (const [file, s] of sortedFiles) {
 		console.log(
 			`| ${file} | ${s.total} | ${s.v0_pass} | ${s.neural_pass} | ${((100 * s.v0_pass) / s.total).toFixed(0)}% | ${((100 * s.neural_pass) / s.total).toFixed(0)}% |`
@@ -605,6 +655,7 @@ function printReport(results: AssertionResult[]): void {
 	console.log("| Locale | Total | v0 | Neural | v0 % | Neural % |")
 	console.log("|--------|-------|----|--------|------|----------|")
 	const sortedLocales = [...byLocale.entries()].sort((a, b) => b[1].total - a[1].total)
+
 	for (const [locale, s] of sortedLocales) {
 		console.log(
 			`| ${locale} | ${s.total} | ${s.v0_pass} | ${s.neural_pass} | ${((100 * s.v0_pass) / s.total).toFixed(0)}% | ${((100 * s.neural_pass) / s.total).toFixed(0)}% |`
@@ -615,12 +666,14 @@ function printReport(results: AssertionResult[]): void {
 	// First 20 v0-only failures (assertions where v0 passes and neural doesn't) — these are the
 	// regression cluster the harness exists to surface.
 	const v0OnlyFailures = results.filter((r) => r.v0_pass && !r.neural_pass).slice(0, 20)
+
 	if (v0OnlyFailures.length > 0) {
 		console.log(`## v0-only passes (sample of first ${v0OnlyFailures.length})`)
 		console.log("")
 		console.log("Cases where the rule-based parser succeeds and the neural parser fails. These")
 		console.log("are the targeted-fix candidates for v0.6.2 corpus augmentation.")
 		console.log("")
+
 		for (const r of v0OnlyFailures) {
 			console.log(`- \`${r.input}\` (${r.locale})`)
 			console.log(`  - expected: \`${JSON.stringify(r.expected[0])}\``)
@@ -631,9 +684,11 @@ function printReport(results: AssertionResult[]): void {
 
 	// Neural-only passes — where neural succeeds and v0 fails. These are wins to celebrate.
 	const neuralOnly = results.filter((r) => !r.v0_pass && r.neural_pass).slice(0, 10)
+
 	if (neuralOnly.length > 0) {
 		console.log(`## Neural-only passes (sample of first ${neuralOnly.length})`)
 		console.log("")
+
 		for (const r of neuralOnly) {
 			console.log(`- \`${r.input}\` (${r.locale})`)
 		}
@@ -664,6 +719,7 @@ async function main(): Promise<void> {
 
 	console.error("Loading neural classifier...")
 	let neural: NeuralAddressClassifier
+
 	if (args.modelPath && args.tokenizerPath && args.modelCardPath) {
 		const modelCard = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
 		const labels: readonly string[] = modelCard.labels
@@ -675,10 +731,12 @@ async function main(): Promise<void> {
 		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
 		// crash (the ship config; see CONTRIBUTING_MODEL_WORK eval invariants).
 		let gazetteerLexicon: GazetteerLexicon | undefined
+
 		if (args.gazetteerLexiconPath) {
 			gazetteerLexicon = parseGazetteerLexicon(JSON.parse(readFileSync(args.gazetteerLexiconPath, "utf8")))
 		}
 		let postcodeAnchorLookup: AnchorLookup | undefined
+
 		if (args.anchorLookupPath) {
 			postcodeAnchorLookup = parseAnchorLookup(JSON.parse(readFileSync(args.anchorLookupPath, "utf8")))
 		}
@@ -697,12 +755,14 @@ async function main(): Promise<void> {
 	}
 
 	let adminFst: ReturnType<typeof deserializeFst> | undefined
+
 	if (args.adminFstPath) {
 		console.error("Loading admin FST...")
 		adminFst = deserializeFst(readFileSync(args.adminFstPath))
 	}
 
 	let morphologyFst: ReturnType<typeof deserializeFst> | undefined
+
 	if (args.morphologyEnabled) {
 		if (args.morphologyBinPath) {
 			console.error("Loading morphology FST from", args.morphologyBinPath)
@@ -729,6 +789,7 @@ async function main(): Promise<void> {
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFst ? { fst: adminFst as never } : {}) })
 		: undefined
+
 	if (pipeline)
 		console.error(
 			`Assembled-pipeline arm ON (--assembled${args.arbitrate ? " --arbitrate" : ""}): grading runPipeline${args.arbitrate ? " with per-component arbitration" : ""} alongside raw neural.`
@@ -738,13 +799,16 @@ async function main(): Promise<void> {
 	const t0 = performance.now()
 	const results: AssertionResult[] = []
 	let i = 0
+
 	for (const a of all) {
 		i++
+
 		try {
 			results.push(await runAssertion(a, v0Parser, neural, parseOpts, args.symmetricMatch, pipeline, args.arbitrate))
 		} catch (err) {
 			console.error(`[harness] WARN: error on assertion ${i} (${a.input}): ${(err as Error).message}`)
 		}
+
 		if (i % 50 === 0) {
 			const elapsed = (performance.now() - t0) / 1000
 			console.error(`  ${i}/${all.length} (${elapsed.toFixed(1)}s)`)

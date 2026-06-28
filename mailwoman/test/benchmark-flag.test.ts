@@ -12,7 +12,9 @@ import { execFile } from "node:child_process"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+
 import { describe, expect, test } from "vitest"
+
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
@@ -64,6 +66,7 @@ describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
 
 	test("rejects --benchmark with --isolated", async () => {
 		let err: (Error & { stderr?: string; stdout?: string; code?: number }) | undefined
+
 		try {
 			await exec(process.execPath, [cliBin, "parse", "--benchmark", "5", "--isolated", "--no-neural", "hello world"])
 		} catch (e) {

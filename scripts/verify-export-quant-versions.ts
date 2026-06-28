@@ -27,9 +27,9 @@ if (!existsSync(PYTHON)) {
 }
 
 /**
- * Local quantize needs only the QUANT subset (onnx, onnxruntime) — export runs on Modal, where the
- * full image pins apply. Export-side packages absent locally are a WARNING; present-but-mismatched
- * is a FAILURE either way (a wrong version is worse than a missing one).
+ * Local quantize needs only the QUANT subset (onnx, onnxruntime) — export runs on Modal, where the full image pins
+ * apply. Export-side packages absent locally are a WARNING; present-but-mismatched is a FAILURE either way (a wrong
+ * version is worse than a missing one).
  */
 const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 
@@ -37,6 +37,7 @@ const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 function pinnedVersions(): Array<[string, string]> {
 	const src = readFileSync(TRAIN_REMOTE, "utf8")
 	const matches = src.matchAll(/"(torch|transformers|onnx|onnxruntime|onnxscript)==([0-9.]+)"/g)
+
 	return [...matches].map((m) => [m[1], m[2]] as [string, string])
 }
 
@@ -54,8 +55,10 @@ function installedVersion(pkg: string): string {
 }
 
 let fail = false
+
 for (const [pkg, pinned] of pinnedVersions()) {
 	const actual = installedVersion(pkg)
+
 	if (actual === pinned) {
 		console.error(`✓ ${pkg} ${actual}`)
 	} else if (actual === "MISSING" && !QUANT_PKGS.has(pkg)) {

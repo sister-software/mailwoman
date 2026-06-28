@@ -11,6 +11,7 @@
 import { ParquetReader as BaseParquetReader } from "@dsnp/parquetjs"
 import type { BufferReaderOptions } from "@dsnp/parquetjs/dist/lib/bufferReader.js"
 import { ParquetEnvelopeReader } from "@dsnp/parquetjs/dist/lib/reader.js"
+
 import { type ParquetRecordLike, ParquetSchema } from "./schema.js"
 
 /** A typed Parquet reader, wrapping the base Parquet reader. */

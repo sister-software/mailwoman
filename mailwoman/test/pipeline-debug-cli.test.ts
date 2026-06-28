@@ -16,6 +16,7 @@ import { execFile } from "node:child_process"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
@@ -29,9 +30,11 @@ function extractJson(stdout: string): unknown {
 	// Find the outermost JSON object (debug mode emits an object — non-debug emits an array).
 	const objStart = cleaned.indexOf("{")
 	const objEnd = cleaned.lastIndexOf("}")
+
 	if (objStart < 0 || objEnd < objStart) {
 		throw new Error(`No JSON object in stdout:\n${stdout}`)
 	}
+
 	return JSON.parse(cleaned.slice(objStart, objEnd + 1))
 }
 

@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs"
+
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -28,7 +30,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync, readFileSync } from "node:fs"
+
 import { arg } from "../lib/cli-args.ts"
 
 const MODEL = arg("model", "out/v192/model.onnx")
@@ -44,8 +46,7 @@ interface Row {
 }
 
 /**
- * Fold neural Stage-3 tags into the golden component vocab (street parts → street). Mirrors
- * per-locale-f1.
+ * Fold neural Stage-3 tags into the golden component vocab (street parts → street). Mirrors per-locale-f1.
  */
 function foldPostcode(flat: Partial<Record<ComponentTag, string>>): string | undefined {
 	return flat.postcode
@@ -79,21 +80,26 @@ async function main() {
 	let n = 0
 	let r5Hit = 0 // true 5-digit ZIP labelled postcode
 	let r4Hit = 0 // 4-digit surrogate labelled postcode (same US context)
-	let r4AsHouse = 0 // 4-digit surrogate mislabelled house_number (the AU collision)
+	let r4AsHouse = 0
+
+	// 4-digit surrogate mislabelled house_number (the AU collision)
 	for (const row of rows) {
 		const zip5 = row.components.postcode!
 		const zip4 = zip5.slice(0, 4)
 		// Replace ONLY the postcode token (last occurrence, to avoid clobbering a coincident house number).
 		const at = row.raw.lastIndexOf(zip5)
+
 		if (at < 0) continue
 		const raw4 = row.raw.slice(0, at) + zip4 + row.raw.slice(at + zip5.length)
 		n++
 
 		const p5 = foldPostcode(decodeAsJson(await neural.parse(row.raw, {})))
+
 		if (norm(p5) === norm(zip5)) r5Hit++
 
 		const flat4 = decodeAsJson(await neural.parse(raw4, {}))
 		const p4 = foldPostcode(flat4)
+
 		if (norm(p4) === norm(zip4)) r4Hit++
 		else if (norm(flat4.house_number) === norm(zip4)) r4AsHouse++
 	}

@@ -22,11 +22,13 @@
  *   fast-follow; the mapping is an explicit input here.
  */
 
+import { open } from "node:fs/promises"
+
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
 import { parse as parseCsvSync } from "csv-parse/sync"
-import { open } from "node:fs/promises"
 import { Delimiters, TextSpliterator } from "spliterator"
+
 import type { SourceRecord } from "./types.js"
 
 /** Resolve a raw address string into a {@link PostalAddress}. The seam to mailwoman's geocoder. */
@@ -41,23 +43,21 @@ export function delimiterFor(path: string): Delimiter {
 }
 
 /**
- * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCsv}
- * returns, but **without loading the file into memory**. A multi-GB source (the NPPES registry is
- * ~4.8 GB / 9.6M rows — too big for `readFileSync`, which throws `ERR_STRING_TOO_LONG`) streams
- * line by line. Keys are the original header names so a {@link ColumnMapping} written against the
- * source's headers matches. Filter/sample the stream before {@link ingestRows} to keep only the rows
- * you geocode.
+ * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCsv} returns, but
+ * **without loading the file into memory**. A multi-GB source (the NPPES registry is ~4.8 GB / 9.6M rows — too big for
+ * `readFileSync`, which throws `ERR_STRING_TOO_LONG`) streams line by line. Keys are the original header names so a
+ * {@link ColumnMapping} written against the source's headers matches. Filter/sample the stream before
+ * {@link ingestRows} to keep only the rows you geocode.
  *
- * We stream _lines_ with spliterator's `TextSpliterator` (pure-Node, the part that handles the huge
- * file) and split each line into columns here with `String.prototype.split`. We deliberately do NOT
- * use `CSVSpliterator`: its column tokenizer hard-codes `skipEmpty` (it builds the column
- * spliterator as `{ delimiter }` with no `skipEmpty: false`), so consecutive delimiters collapse
- * and EMPTY FIELDS ARE DROPPED — fatal for a fixed-width registry like NPPES where a row of 330
- * columns full of empties would mis-parse to 40 and shift every value. (Upstream `spliterator` bug;
- * revisit when it's fixed.)
+ * We stream _lines_ with spliterator's `TextSpliterator` (pure-Node, the part that handles the huge file) and split
+ * each line into columns here with `String.prototype.split`. We deliberately do NOT use `CSVSpliterator`: its column
+ * tokenizer hard-codes `skipEmpty` (it builds the column spliterator as `{ delimiter }` with no `skipEmpty: false`), so
+ * consecutive delimiters collapse and EMPTY FIELDS ARE DROPPED — fatal for a fixed-width registry like NPPES where a
+ * row of 330 columns full of empties would mis-parse to 40 and shift every value. (Upstream `spliterator` bug; revisit
+ * when it's fixed.)
  *
- * Assumes an unquoted delimited file (no fields containing the delimiter) — true for these
- * government TSVs. For small, possibly-quoted CSVs use {@link parseCsv} (quote-aware, in-memory).
+ * Assumes an unquoted delimited file (no fields containing the delimiter) — true for these government TSVs. For small,
+ * possibly-quoted CSVs use {@link parseCsv} (quote-aware, in-memory).
  */
 export async function* streamRows(
 	source: string,
@@ -69,19 +69,24 @@ export async function* streamRows(
 	// in Node 24+). We open it, pass `autoDispose: false` so spliterator never touches our handle, and
 	// close it in `finally` (runs on completion AND when the consumer abandons the generator early).
 	const handle = await open(source, "r")
+
 	try {
 		let header: string[] | null = null
+
 		for await (const line of TextSpliterator.fromAsync(handle, {
 			delimiter: Delimiters.LineFeed,
 			autoDispose: false,
 		})) {
 			if (line.length === 0) continue // blank line / trailing newline
-			const fields = line.replace(/\r$/, "").split(sep) // tolerate CRLF
+			const fields = line.replace(/\r$/, "").split(sep)
+
+			// tolerate CRLF
 			if (header === null) {
 				header = fields
 				continue
 			}
 			const row: Record<string, string> = {}
+
 			for (let i = 0; i < header.length; i++) row[header[i]!] = fields[i] ?? ""
 			yield row
 		}
@@ -91,8 +96,7 @@ export async function* streamRows(
 }
 
 /**
- * Maps dataset columns to record fields. A field may draw from several columns (joined with
- * spaces).
+ * Maps dataset columns to record fields. A field may draw from several columns (joined with spaces).
  */
 export interface ColumnMapping {
 	/** Column holding a stable row id. Falls back to the row index. */
@@ -105,22 +109,20 @@ export interface ColumnMapping {
 	phone?: string
 	email?: string
 	/**
-	 * Extra secondary-identifier fields → the column(s) to draw each from (joined with spaces). Land
-	 * on `SourceRecord.attributes` under the same key, for the matcher's `discriminators`
-	 * (authorized-official name, taxonomy, license…).
+	 * Extra secondary-identifier fields → the column(s) to draw each from (joined with spaces). Land on
+	 * `SourceRecord.attributes` under the same key, for the matcher's `discriminators` (authorized-official name,
+	 * taxonomy, license…).
 	 */
 	attributes?: Record<string, string | string[]>
 }
 
 /**
- * Best-effort {@link ColumnMapping} inferred from a header row — the "point it at any CSV"
- * convenience. Each column name is matched (case- and punctuation-insensitive, on whole tokens) to
- * a field by keyword, in a precedence that resolves the common ambiguities: a dedicated id / phone
- * / email column is claimed before the generic sweep, an org / facility column beats a person
- * "name", and address columns (street / city / state / zip…) collect into one multi-column field.
- * Imperfect on bespoke headers (an explicit mapping or the LLM-assisted inference #603 is the
- * answer there), but it nails tidy and semi-tidy files with no hand-mapping. Unmatched columns are
- * left out.
+ * Best-effort {@link ColumnMapping} inferred from a header row — the "point it at any CSV" convenience. Each column name
+ * is matched (case- and punctuation-insensitive, on whole tokens) to a field by keyword, in a precedence that resolves
+ * the common ambiguities: a dedicated id / phone / email column is claimed before the generic sweep, an org / facility
+ * column beats a person "name", and address columns (street / city / state / zip…) collect into one multi-column field.
+ * Imperfect on bespoke headers (an explicit mapping or the LLM-assisted inference #603 is the answer there), but it
+ * nails tidy and semi-tidy files with no hand-mapping. Unmatched columns are left out.
  */
 export function inferMapping(header: readonly string[]): ColumnMapping {
 	// Pad to whole-token boundaries so "state" doesn't match inside "statement".
@@ -164,7 +166,9 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 	}
 
 	if (name.length) mapping.name = name.length === 1 ? name[0]! : name
+
 	if (address.length) mapping.address = address
+
 	return mapping
 }
 
@@ -173,15 +177,13 @@ export interface IngestOptions {
 	/** The geocoding seam. Without it, records carry name/org but no resolved address. */
 	geocodeAddress?: GeocodeAddress
 	/**
-	 * Separator for joining a multi-column ADDRESS mapping (name/org always join with a space).
-	 * Default `" "`. Pass `", "` to give the parser delimited input (`"214 Main St, Austin, TX
-	 * 78701"`) instead of a concatenated run (`"214 Main St Austin TX 78701"`) — the latter strips
-	 * the parser's segmentation boundaries and is partly OOD (it also breaks all-caps
-	 * case-normalization; #694). **Default `", "` (#694 flip, validated).** Comma-join is the correct
-	 * shape for an address built from separate columns, and #700 measured it at +15% cross-dataset
-	 * rooftop (579→667) with no comma-less crater. The dedup GBT was trained on the old space-joined
-	 * coords, so this flip is paired with a GBT re-validation (#694). Pass `" "` to restore the
-	 * legacy space-join for a byte-stable A/B.
+	 * Separator for joining a multi-column ADDRESS mapping (name/org always join with a space). Default `" "`. Pass `",
+	 * "` to give the parser delimited input (`"214 Main St, Austin, TX 78701"`) instead of a concatenated run (`"214 Main
+	 * St Austin TX 78701"`) — the latter strips the parser's segmentation boundaries and is partly OOD (it also breaks
+	 * all-caps case-normalization; #694). **Default `", "` (#694 flip, validated).** Comma-join is the correct shape for
+	 * an address built from separate columns, and #700 measured it at +15% cross-dataset rooftop (579→667) with no
+	 * comma-less crater. The dedup GBT was trained on the old space-joined coords, so this flip is paired with a GBT
+	 * re-validation (#694). Pass `" "` to restore the legacy space-join for a byte-stable A/B.
 	 */
 	addressSeparator?: string
 }
@@ -200,13 +202,13 @@ function pick(row: Record<string, string>, columns?: string | string[], separato
 		.filter(Boolean)
 		.join(separator)
 		.trim()
+
 	return value || undefined
 }
 
 /**
- * Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}. Accepts a sync OR
- * async iterable, so {@link parseCsv} (in-memory) and {@link streamRows} (lazy, for huge files) both
- * thread straight through.
+ * Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}. Accepts a sync OR async iterable, so
+ * {@link parseCsv} (in-memory) and {@link streamRows} (lazy, for huge files) both thread straight through.
  */
 export async function ingestRows(
 	rows: Iterable<Record<string, string>> | AsyncIterable<Record<string, string>>,
@@ -223,9 +225,11 @@ export async function ingestRows(
 		const addressValue = pick(row, mapping.address, opts.addressSeparator ?? ", ")
 
 		let attributes: Record<string, string> | undefined
+
 		if (mapping.attributes) {
 			for (const [key, columns] of Object.entries(mapping.attributes)) {
 				const value = pick(row, columns)
+
 				if (value) (attributes ??= {})[key] = value
 			}
 		}
@@ -251,8 +255,8 @@ export async function ingestRows(
 }
 
 /**
- * The subset of mailwoman's `GeocodeResult` the adapter consumes — kept structural so this package
- * never imports the heavy geocoder, yet a real `GeocodeResult` maps straight in.
+ * The subset of mailwoman's `GeocodeResult` the adapter consumes — kept structural so this package never imports the
+ * heavy geocoder, yet a real `GeocodeResult` maps straight in.
  */
 export interface RawGeocode {
 	lat: number | null
@@ -263,11 +267,10 @@ export interface RawGeocode {
 }
 
 /**
- * Build a {@link GeocodeAddress} from mailwoman's real parse + geocode primitives (injected — the
- * CLI constructs the neural parser, resolver, and shards and passes them in). Parse → components →
- * {@link toPostalAddress} (which fills the canonical key + formatted form) → attach the resolved
- * coordinate. When geocoding can't place the address, the parsed-but-unlocated address is still
- * returned.
+ * Build a {@link GeocodeAddress} from mailwoman's real parse + geocode primitives (injected — the CLI constructs the
+ * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills the
+ * canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
+ * parsed-but-unlocated address is still returned.
  */
 export function geocodeAddressVia(deps: {
 	parse: (raw: string) => Promise<Parameters<typeof toPostalAddress>[0]> | Parameters<typeof toPostalAddress>[0]
@@ -279,6 +282,7 @@ export function geocodeAddressVia(deps: {
 		const base = toPostalAddress(components, { country: deps.country, raw })
 
 		const resolved = await deps.geocode(raw)
+
 		if (!resolved || resolved.lat === null || resolved.lon === null) return base
 
 		const geocode: AddressGeocode = {
@@ -287,6 +291,7 @@ export function geocodeAddressVia(deps: {
 			uncertaintyMeters: resolved.uncertainty_m,
 			hierarchy: resolved.hierarchy,
 		}
+
 		return withGeocode(base, geocode)
 	}
 }

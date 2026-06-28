@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
+
 import {
 	type ComparisonLevel,
 	type FellegiSunterModel,

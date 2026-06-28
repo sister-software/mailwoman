@@ -6,6 +6,7 @@
 
 import { Solution, SolutionMatch, SolverContext, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
+
 import { SubsetFilter } from "./SubsetFilter.js"
 
 test("duplicate: remove dupes", () => {

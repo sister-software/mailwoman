@@ -32,6 +32,7 @@
 
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
+
 import { stableSourceId } from "../../adapter.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -50,9 +51,12 @@ interface OvertureCorpusRow {
 
 function parseLine(line: string): OvertureCorpusRow | null {
 	const t = line.trim()
+
 	if (!t || t.startsWith("#")) return null
+
 	try {
 		const o = JSON.parse(t)
+
 		return o && typeof o === "object" ? (o as OvertureCorpusRow) : null
 	} catch {
 		return null
@@ -77,12 +81,15 @@ export function createOvertureAdapter(): CorpusAdapter {
 			const lines = createInterface({ input: stream, crlfDelay: Infinity })
 
 			let emitted = 0
+
 			try {
 				for await (const line of lines) {
 					if (opts.signal?.aborted) break
+
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const r = parseLine(line)
+
 					if (!r) continue
 
 					const street = r.street?.trim() ?? ""
@@ -93,20 +100,27 @@ export function createOvertureAdapter(): CorpusAdapter {
 
 					// Only useful with a street + (postcode OR locality); point-only rows quarantine anyway.
 					if (!street) continue
+
 					if (!postcode && !locality) continue
 
 					const components: CanonicalRow["components"] = {}
+
 					// Overture "S-N" / "S/N" = sin número; only keep a real numeric house number.
 					if (/^\d/.test(number)) components.house_number = number
 					components.street = street
+
 					if (unit) components.unit = unit
+
 					if (postcode) components.postcode = postcode
+
 					if (locality) components.locality = locality
 
 					const raw = formatAddress(components, country, { separator: ", " })
+
 					if (!raw) continue
 
 					const aligned = reconcileComponents(components, raw)
+
 					if (Object.keys(aligned).length === 0) continue
 
 					yield {

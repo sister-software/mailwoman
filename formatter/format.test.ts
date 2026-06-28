@@ -6,6 +6,7 @@
 
 import type { ClassificationMap } from "@mailwoman/core/classification"
 import { describe, expect, it } from "vitest"
+
 import {
 	type ComponentDict,
 	formatAddress,
@@ -60,6 +61,7 @@ describe("formatAddress", () => {
 		const formatted = formatAddress(US_ADDRESS, "US", { separator: ", " })
 
 		expect(formatted).not.toContain("\n")
+
 		for (const token of ["123", "Main", "Portland", "97201"]) {
 			expect(formatted).toContain(token)
 		}
@@ -81,6 +83,7 @@ describe("formatFromClassificationMap", () => {
 		])
 
 		const formatted = formatFromClassificationMap(map, "US", { separator: ", " })
+
 		for (const token of ["123", "Main", "Portland", "97201"]) {
 			expect(formatted).toContain(token)
 		}
