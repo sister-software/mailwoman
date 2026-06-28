@@ -38,7 +38,7 @@ This will:
 
 1. Compile (`yarn compile`). The pre-flight **does not run tests** — PR CI already validated them; see the
    `before:init` hook in `.release-it.json`.
-2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` via `scripts/copy-weights.mjs` (paths from
+2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` via `scripts/copy-weights.ts` (paths from
    `release.config.json`)
 3. Show the proposed version bump for each workspace
 4. Stage the would-be tag + GitHub release + npm publishes — without executing them
@@ -62,7 +62,7 @@ Prompts for the version (or pass `--patch` / `--minor` / `--major` / `--ci`). Th
 
 ## Source data for the weights packages
 
-`copy-weights.mjs` reads the trained-binary paths from **`release.config.json`** (`weights.dataRoot` +
+`copy-weights.ts` reads the trained-binary paths from **`release.config.json`** (`weights.dataRoot` +
 `weights.model` / `weights.tokenizer`) — the single place the version-bearing filenames live. Bump the model
 there when a new model ships; the script resolves and copies the real artifacts. Override per-run via env:
 
@@ -270,7 +270,7 @@ Read this first — it's the 30-minute version once you know the shape. Three ba
 | backend       | tool                                   | what it feeds                                                                  |
 | ------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
 | **npm**       | `publish.yml` (CI, OIDC)               | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
-| **HF bucket** | `scripts/publish-release-to-hf.mjs`    | the npm fetch source + HF-direct `loadFromWeights`                             |
+| **HF bucket** | `scripts/publish-release-to-hf.ts`    | the npm fetch source + HF-direct `loadFromWeights`                             |
 | **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.sister.software`, NOT HF)                      |
 
 The end-to-end order that worked: **gate (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
@@ -338,7 +338,7 @@ Assemble a staging dir mirroring the R2 layout: `<src>/en-us/v<NEW>/{the 10 arti
 ### Step 3 — stage HF, then R2, then verify BOTH backends agree
 
 ```bash
-HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.mjs \
+HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.ts \
   --version v<NEW> --locale en-us --label "..." --description "..." \
   --model <src>/.../model.onnx --tokenizer ... --model-card ... --fst <src>/.../fst-en-US.bin \
   --wof-hot <src>/.../wof-hot.db --gazetteer-lexicon <src>/.../anchor-lexicon-v1.json \
@@ -394,7 +394,7 @@ gh workflow run publish.yml -f version=<NEW> -f publish_only=true -f dry_run=fal
 The E401/Web-Auth flavor was transient for v4.11.0 (the `publish_only` retry cleared it). If it recurs on the
 SAME packages, their npm Trusted Publisher is unconfigured — configure it on npmjs.com, or token-publish the
 stragglers in dependency order (`record` before `registry`). **Note:** despite older notes saying "the lab host
-has no npm credentials," it currently has an `~/.npmrc` authToken, so `node scripts/publish-workspace.mjs` per
+has no npm credentials," it currently has an `~/.npmrc` authToken, so `node scripts/publish-workspace.ts` per
 the recovery loop below can finish stragglers from here without OIDC.
 
 ## Common failures
@@ -405,7 +405,7 @@ the recovery loop below can finish stragglers from here without OIDC.
 | `requireCleanWorkingDir` aborts           | Uncommitted changes                                | `git status`, commit or stash                                                                                    |
 | `requireBranch` aborts                    | Not on `main`                                      | `git switch main`                                                                                                |
 | Hook `yarn test --run` fails              | Pre-existing test breakage                         | Fix tests OR temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
-| `copy-weights.mjs` `Missing source model` | Running from a machine without `/mnt/playpen/`     | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
+| `copy-weights.ts` `Missing source model` | Running from a machine without `/mnt/playpen/`     | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
 
 ## Releasing from CI (manual dispatch + npm Trusted Publishing)
 
@@ -433,11 +433,11 @@ git checkout main && git pull   # main already carries the release commit's vers
 for ws in <new-workspace-dirs>; do
   RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE=./$ws \
   RELEASE_IT_WORKSPACES_TAG=latest RELEASE_IT_WORKSPACES_ACCESS=public \
-  node scripts/publish-workspace.mjs || break
+  node scripts/publish-workspace.ts || break
 done
 ```
 
-> **Use the script above (or `yarn pack -o <tmp> && npm publish <tmp>`) — never a raw `npm publish` from the workspace dir.** Yarn 4's `workspace:*` dep protocol is yarn-specific; `npm publish` ships the literal string `"workspace:*"`, and consumers then fail to install with `EUNSUPPORTEDPROTOCOL`. `yarn pack` (which `publish-workspace.mjs` runs) rewrites `workspace:*` → the concrete sibling version. This bit `@mailwoman/address-id`'s 4.9.0 first publish (shipped `"@mailwoman/codex": "workspace:*"`); it was fixed by republishing 4.9.1 from a `yarn pack`'d tarball.
+> **Use the script above (or `yarn pack -o <tmp> && npm publish <tmp>`) — never a raw `npm publish` from the workspace dir.** Yarn 4's `workspace:*` dep protocol is yarn-specific; `npm publish` ships the literal string `"workspace:*"`, and consumers then fail to install with `EUNSUPPORTEDPROTOCOL`. `yarn pack` (which `publish-workspace.ts` runs) rewrites `workspace:*` → the concrete sibling version. This bit `@mailwoman/address-id`'s 4.9.0 first publish (shipped `"@mailwoman/codex": "workspace:*"`); it was fixed by republishing 4.9.1 from a `yarn pack`'d tarball.
 
 Then, on npmjs.com, **configure each new package's Trusted Publisher** (repo `sister-software/mailwoman`, workflow `.github/workflows/publish.yml`). After that, OIDC publishes it like every other package and you never touch it manually again.
 
@@ -457,7 +457,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 1. **Stage the model on HF first** (operator's host — needs only the HF token, no npm auth):
 
    ```bash
-   HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.mjs \
+   HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.ts \
      --version v<version> --locale en-us \
      --model <model.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json \
      --fst <fst-en-US.bin> --wof-hot <wof-hot.db> --set-default
@@ -483,7 +483,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 
 2. **Publish all packages from CI** — `publish.yml` at the same version. The "Fetch weight binaries from Hugging
    Face" step pulls `model.onnx` + `tokenizer.model` from the public bucket (no auth) into the `neural-weights-*`
-   workspaces, and the run publishes every package — code and weights — over OIDC. `copy-weights.mjs` stays
+   workspaces, and the run publishes every package — code and weights — over OIDC. `copy-weights.ts` stays
    skipped on CI (its `/mnt/playpen` paths aren't there); it's the local-dev path. A real run therefore requires
    the model to already be on HF for that version (step 1).
 
@@ -496,6 +496,6 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 - **Weights publish from CI** — the `neural-weights-*` npm publish is local-only (the binaries aren't on the
   runner). A future step could have CI fetch them from Hugging Face before publishing, mirroring what the demo
   already does at runtime.
-- **`publish-release-to-hf.mjs` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
+- **`publish-release-to-hf.ts` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
   is a separate manual command after the npm release, not part of `yarn release`.
 - **Changelog generation** — release-it can emit one via the `@release-it/conventional-changelog` plugin. Not configured yet because commit messages haven't standardized on Conventional Commits.

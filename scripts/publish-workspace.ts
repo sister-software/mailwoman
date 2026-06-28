@@ -44,7 +44,7 @@ const otp = process.env.RELEASE_IT_WORKSPACES_OTP || ""
 const dryRun = process.env.RELEASE_IT_WORKSPACES_DRY_RUN === "true"
 
 if (!workspacePath) {
-	console.error("publish-workspace.mjs: RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE unset")
+	console.error("publish-workspace.ts: RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE unset")
 	process.exit(2)
 }
 
@@ -112,10 +112,8 @@ try {
 
 /**
  * Replace any symlinked `files` entries with real copies of their targets.
- *
- * @param {string} workspaceDir
  */
-function dereferenceWorkspaceSymlinks(workspaceDir) {
+function dereferenceWorkspaceSymlinks(workspaceDir: string) {
 	const pkg = JSON.parse(readFileSync(resolve(workspaceDir, "package.json"), "utf8"))
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs

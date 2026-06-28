@@ -22,7 +22,7 @@ function listFiles() {
 }
 
 /** Map intra-monorepo import paths to their new home. Order matters: longer first. */
-const scopeRewrites = [
+const scopeRewrites: Array<[RegExp, string]> = [
 	[/^mailwoman\/core\/resources\/languages$/, "@mailwoman/core/resources/languages"],
 	[/^mailwoman\/core\/resources\/db$/, "@mailwoman/core/resources/db"],
 	[/^mailwoman\/core\/resources\/whosonfirst$/, "@mailwoman/core/resources/whosonfirst"],
@@ -41,14 +41,14 @@ const scopeRewrites = [
 ]
 
 /** Imports that should become repo-relative paths (root-only modules). */
-const rootRelative = {
+const rootRelative: Record<string, string> = {
 	"mailwoman/server": "server/index.js",
 	"mailwoman/sdk/cli": "sdk/cli.js",
 	"mailwoman/sdk/test": "sdk/test/index.js",
 	"mailwoman/sdk/repo": "sdk/repo.js",
 }
 
-function relIntoRoot(filePath, targetRelative) {
+function relIntoRoot(filePath: string, targetRelative: string) {
 	const fromDir = dirname(filePath)
 	const target = resolve(repoRoot, targetRelative)
 	let rel = relative(fromDir, target)
@@ -57,7 +57,7 @@ function relIntoRoot(filePath, targetRelative) {
 	return rel
 }
 
-function rewriteSpecifier(spec, filePath) {
+function rewriteSpecifier(spec: string, filePath: string) {
 	if (rootRelative[spec]) {
 		return relIntoRoot(filePath, rootRelative[spec])
 	}

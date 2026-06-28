@@ -38,7 +38,7 @@
 				"nominatim"
 			],
 			"publish": true,
-			"publishCommand": "node scripts/publish-workspace.mjs",
+			"publishCommand": "node scripts/publish-workspace.ts",
 			"skipChecks": true
 		}
 	},
@@ -59,7 +59,7 @@
 		"before:init": [
 			"echo 'Pre-flight: compile + copy-weights (tests skipped — PR CI already validated)'",
 			"yarn compile",
-			"node scripts/copy-weights.mjs"
+			"node scripts/copy-weights.ts"
 		],
 		"after:bump": "yarn prettier --write --log-level warn -u package.json '**/package.json'",
 		"after:release": "echo 'Released v${version}'"

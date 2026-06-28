@@ -1,6 +1,6 @@
 ---
 name: mailwoman-release
-description: Codifies the mailwoman npm release — a coordinated version bump across ALL @mailwoman/* workspaces (the model included), published ENTIRELY via CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag FIRST — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (publish-release-to-hf.mjs), the dry-run-then-real CI dispatch, and PUBLISHED-tarball md5 verification. The demo repoint is a SEPARATE follow-up. Use when promoting a trained model to npm or cutting any npm release ("publish", "release", "ship v…", "promote the model").
+description: Codifies the mailwoman npm release — a coordinated version bump across ALL @mailwoman/* workspaces (the model included), published ENTIRELY via CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag FIRST — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (publish-release-to-hf.ts), the dry-run-then-real CI dispatch, and PUBLISHED-tarball md5 verification. The demo repoint is a SEPARATE follow-up. Use when promoting a trained model to npm or cutting any npm release ("publish", "release", "ship v…", "promote the model").
 ---
 
 # Mailwoman Release Skill
@@ -84,7 +84,7 @@ there first, or the real run fails the `[ -s "$f" ]` guard.
 ```bash
 # Materialize the binaries into the workspaces (reads release.config.json → the new int8;
 # BUILDS postcode-us.bin / postcode-fr.bin):
-node scripts/copy-weights.mjs
+node scripts/copy-weights.ts
 md5sum neural-weights-en-us/model.onnx   # MUST equal your Step-1 int8 md5 (a stale leftover reads wrong)
 
 # The FST gazetteer is MODEL-INDEPENDENT — reuse the prior release's:
@@ -93,7 +93,7 @@ curl -fSL "https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-u
 
 # Stage (HF_TOKEN from .env; hf CLI authed as the org). Uploads to en-us/v<target>/ (additive, safe):
 HF_TOKEN=$(grep -E '^HF_TOKEN=' .env | cut -d= -f2-) \
-node scripts/publish-release-to-hf.mjs \
+node scripts/publish-release-to-hf.ts \
   --version v<target> --locale en-us \
   --model neural-weights-en-us/model.onnx \
   --tokenizer neural-weights-en-us/tokenizer.model \
@@ -124,7 +124,7 @@ gh workflow run publish.yml --ref main -f version=<target>
 - **Pass the explicit semver** to `-f version=` (e.g. `4.13.0`). It becomes release-it's
   `--increment=<value>`. (`--minor` through the local yarn wrapper silently degraded to a _patch_ —
   `4.12.1` — so the explicit number is the safe form everywhere.)
-- The repo is PUBLIC → provenance attestation works (`publish-workspace.mjs` adds `--provenance` when
+- The repo is PUBLIC → provenance attestation works (`publish-workspace.ts` adds `--provenance` when
   `MAILWOMAN_NPM_PROVENANCE=1`; CI sets it). On a private repo npm rejects it (E422) — leave it off.
 - **Partial-failure recovery**: if a real run bumped+tagged+pushed but died mid-publish, re-dispatch
   with `-f publish_only=true` — it skips git/version work and re-publishes each workspace at its
@@ -151,7 +151,7 @@ Then fast-forward local main: `git merge --ff-only origin/main`.
 ## Step 5 — the demo is SEPARATE (do not conflate with the npm ship)
 
 The npm publish leaves the browser demo (mailwoman.sister.software/demo) on the OLD model.
-`publish-release-to-hf.mjs` without `--set-default` leaves HF `releases.json` `defaultVersion`
+`publish-release-to-hf.ts` without `--set-default` leaves HF `releases.json` `defaultVersion`
 unchanged. To repoint the demo: set HF default (`--set-default` or patch `releases.json`), upload the
 model to R2 (`public.sister.software/mailwoman/en-us/v<target>/`), and bump the demo version constant
 in `docs/src/`. Heed the `hasPolygons=false` warning (demo degrades to rectangles/anchor-off if the

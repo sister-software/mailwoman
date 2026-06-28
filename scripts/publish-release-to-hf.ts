@@ -18,7 +18,7 @@
  *
  *   After upload, releases.json is updated in-place and re-uploaded.
  *
- *   Usage: HF_TOKEN=... node scripts/publish-release-to-hf.mjs\
+ *   Usage: HF_TOKEN=... node scripts/publish-release-to-hf.ts\
  *   --version v0.5.4\
  *   --locale en-us\
  *   --model /path/to/model-int8.onnx\
@@ -55,7 +55,7 @@ const DEMO_BASE = "https://public.sister.software/mailwoman"
  * HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the
  * truth for demo flags).
  */
-async function servedOnDemoPath(name) {
+async function servedOnDemoPath(name: string) {
 	try {
 		const r = await fetch(`${DEMO_BASE}/${args.locale}/${args.version}/${name}`, { method: "HEAD" })
 		return r.ok
@@ -67,7 +67,7 @@ const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman
 
 function parseArgs() {
 	const args = process.argv.slice(2)
-	const out = { setDefault: false }
+	const out: Record<string, any> = { setDefault: false }
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i]
 		if (arg === "--set-default") {
@@ -80,22 +80,22 @@ function parseArgs() {
 	return out
 }
 
-function fail(msg) {
+function fail(msg: string): never {
 	console.error(`✗ ${msg}`)
 	process.exit(1)
 }
 
-function run(cmd, args) {
+function run(cmd: string, args: string[]) {
 	const r = spawnSync(cmd, args, { stdio: "inherit", env: { ...process.env } })
 	if (r.status !== 0) fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)
 }
 
-function runCapture(cmd, args) {
+function runCapture(cmd: string, args: string[]) {
 	const r = spawnSync(cmd, args, { encoding: "utf8" })
 	return { ok: r.status === 0, stdout: r.stdout || "", stderr: r.stderr || "" }
 }
 
-async function checkRemoteFileExists(url) {
+async function checkRemoteFileExists(url: string) {
 	try {
 		const res = await fetch(url, { method: "HEAD", redirect: "follow" })
 		return res.ok
@@ -118,7 +118,7 @@ async function main() {
 	// 404s the gazetteer at runtime. (Previously `locale.toUpperCase()` produced "fst-EN-US.bin".)
 	const bcp47 = args.locale
 		.split("-")
-		.map((part, i) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
+		.map((part: string, i: number) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
 		.join("-")
 	const fstRemoteName = `fst-${bcp47}.bin`
 	REQUIRED_FILES[3].remoteName = fstRemoteName
@@ -142,7 +142,7 @@ async function main() {
 	const postcodeBins = args.postcodes
 		? args.postcodes
 				.split(",")
-				.map((s) => s.trim())
+				.map((s: string) => s.trim())
 				.filter(Boolean)
 		: []
 	for (const localPath of postcodeBins) {
@@ -208,7 +208,7 @@ async function main() {
 	if (!res.ok) fail(`failed to fetch ${releasesUrl}`)
 	const releases = await res.json()
 
-	const newEntry = {
+	const newEntry: Record<string, any> = {
 		version: args.version,
 		label: args.label,
 		description: args.description,
@@ -230,7 +230,7 @@ async function main() {
 			)
 	}
 
-	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]
+	releases.releases = [newEntry, ...releases.releases.filter((r: any) => r.version !== args.version)]
 	if (args.setDefault) releases.defaultVersion = args.version
 
 	const tmpReleases = resolve(tmpdir(), `releases-${args.locale}-${Date.now()}.json`)

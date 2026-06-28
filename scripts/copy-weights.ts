@@ -27,10 +27,10 @@
  *       (`softFeed.gazetteerLexicon`).
  *
  *   Idempotent. Used by .release-it.json's before:init hook.
- * @import {PathLike} from "node:fs"
  */
 
 import { spawnSync } from "node:child_process"
+import type { PathLike } from "node:fs"
 import { existsSync, readFileSync } from "node:fs"
 import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
@@ -47,12 +47,9 @@ const SOURCE_TOKENIZER = process.env.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(data
 const SOFT_FEED = config.softFeed ?? {}
 const SOURCE_GAZETTEER = SOFT_FEED.gazetteerLexicon ? resolve(repoRoot, SOFT_FEED.gazetteerLexicon) : null
 
-const TARGETS = config.locales.map((locale) => `neural-weights-${locale}`)
+const TARGETS = config.locales.map((locale: string) => `neural-weights-${locale}`)
 
-/**
- * @param {PathLike} path
- */
-async function exists(path) {
+async function exists(path: PathLike) {
 	try {
 		await stat(path)
 		return true
@@ -103,11 +100,8 @@ async function main() {
  * lexicon (a verbatim copy) + the per-country PCB1 postcode-anchor binary (built fresh from the WOF
  * shard). Both `removeIfPresent` first — same symlink-in-tarball trap the model/tokenizer copy
  * guards against.
- *
- * @param {string} workspace
- * @param {string} dir
  */
-async function materializeSoftFeed(workspace, dir) {
+async function materializeSoftFeed(workspace: string, dir: string) {
 	// Gazetteer-anchor lexicon (#464) — a small JSON, copied verbatim from the repo source.
 	if (SOURCE_GAZETTEER) {
 		if (!(await exists(SOURCE_GAZETTEER))) {
@@ -154,14 +148,11 @@ async function materializeSoftFeed(workspace, dir) {
 	process.stderr.write(`built soft-feed → ${workspace}/postcode-${country}.bin\n`)
 }
 
-/**
- * @param {PathLike} path
- */
-async function removeIfPresent(path) {
+async function removeIfPresent(path: PathLike) {
 	try {
 		await unlink(path)
 	} catch (err) {
-		if (/** @type {NodeJS.ErrnoException} */ (err).code !== "ENOENT") throw err
+		if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err
 	}
 }
 

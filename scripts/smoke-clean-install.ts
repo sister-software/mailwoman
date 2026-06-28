@@ -19,7 +19,7 @@
  *   CLI. A missing dep / file / eager side effect surfaces as a non-zero exit here, in CI, before
  *   publish.
  *
- *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.mjs
+ *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
 import { execFileSync } from "node:child_process"
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url"
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url))
 // The published code workspaces (mirrors the release set; weights packages carry no code to import).
-const WORKSPACES = {
+const WORKSPACES: Record<string, string> = {
 	"@mailwoman/core": "core",
 	"@mailwoman/codex": "codex",
 	"@mailwoman/classifiers": "classifiers",
@@ -71,11 +71,12 @@ const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
 const tarDir = join(tmp, "tarballs")
 const proj = join(tmp, "proj")
 execFileSync("mkdir", ["-p", tarDir, proj])
-const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
+const run = (cmd: string, args: string[], cwd: string) =>
+	execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
 
 try {
 	console.log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
-	const deps = {}
+	const deps: Record<string, string> = {}
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
 		const tgz = join(tarDir, `${dir}.tgz`)
 		run("yarn", ["workspace", name, "pack", "-o", tgz], repoRoot)
@@ -107,7 +108,7 @@ try {
 	}
 
 	console.log("\n[smoke] ✅ clean install + CLI run succeeded")
-} catch (err) {
+} catch (err: any) {
 	console.error("\n[smoke] ❌ FAILED — a published package does not clean-install/run:")
 	console.error(
 		err.stdout ? `${err.message}\n--- stdout ---\n${err.stdout}\n--- stderr ---\n${err.stderr}` : (err.message ?? err)
