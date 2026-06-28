@@ -9,6 +9,7 @@
  *   Runs in Node.js only (Docusaurus config / plugin context). Never bundled into the client.
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "node:child_process"
 import { copyFileSync, existsSync, lstatSync, readFileSync, readlinkSync, statSync } from "node:fs"
 import { createRequire } from "node:module"
@@ -22,12 +23,8 @@ const requireFromPlugin = createRequire(import.meta.url)
 
 /**
  * Locate a workspace package's root directory via its package.json.
- *
- * @param {string} packageName
- *
- * @returns {string | null}
  */
-export function resolveWorkspaceDir(packageName) {
+export function resolveWorkspaceDir(packageName: string): string | null {
 	try {
 		return dirname(requireFromPlugin.resolve(`${packageName}/package.json`))
 	} catch {
@@ -38,12 +35,8 @@ export function resolveWorkspaceDir(packageName) {
 /**
  * Resolve a workspace package's entry file. Prefers the source `.ts` file so Docusaurus's
  * swc-loader can transpile it inline — avoids requiring a pre-compile step.
- *
- * @param {string} packageName
- *
- * @returns {string}
  */
-export function resolveWorkspaceEntry(packageName) {
+export function resolveWorkspaceEntry(packageName: string): string {
 	const dir = resolveWorkspaceDir(packageName)
 	if (!dir) throw new Error(`Cannot resolve ${packageName}/package.json`)
 	const sourceEntry = resolve(dir, "index.ts")
@@ -53,13 +46,8 @@ export function resolveWorkspaceEntry(packageName) {
 
 /**
  * Resolve a single-file sub-entrypoint within a workspace directory.
- *
- * @param {string} workspaceDir
- * @param {string} sub
- *
- * @returns {string}
  */
-export function resolveWorkspaceFile(workspaceDir, sub) {
+export function resolveWorkspaceFile(workspaceDir: string, sub: string): string {
 	const sourceEntry = resolve(workspaceDir, `${sub}.ts`)
 	if (existsSync(sourceEntry)) return sourceEntry
 	return resolve(workspaceDir, "out", `${sub}.js`)
@@ -67,13 +55,8 @@ export function resolveWorkspaceFile(workspaceDir, sub) {
 
 /**
  * Resolve a directory-style sub-entrypoint (./sub/index.{ts,js}).
- *
- * @param {string} workspaceDir
- * @param {string} sub
- *
- * @returns {string}
  */
-export function resolveWorkspaceDirEntry(workspaceDir, sub) {
+export function resolveWorkspaceDirEntry(workspaceDir: string, sub: string): string {
 	const sourceEntry = resolve(workspaceDir, sub, "index.ts")
 	if (existsSync(sourceEntry)) return sourceEntry
 	return resolve(workspaceDir, "out", sub, "index.js")
@@ -86,12 +69,9 @@ export function resolveWorkspaceDirEntry(workspaceDir, sub) {
 /**
  * Build the full workspace alias map for webpack. Centralises the alias logic that was previously
  * inlined in docusaurus.config.ts.
- *
- * @returns {Record<string, string>}
  */
-export function buildWorkspaceAliases() {
-	/** @type {Record<string, string>} */
-	const aliases = {}
+export function buildWorkspaceAliases(): Record<string, string> {
+	const aliases: Record<string, string> = {}
 
 	// Bare package aliases (exact match via `$` suffix).
 	for (const pkg of [
@@ -206,10 +186,8 @@ export function buildWorkspaceAliases() {
 
 /**
  * Read the model-card.json from the weights package to get version metadata.
- *
- * @returns {{ version: string; modelSize: number; tokenizerVocab: number; step: string } | null}
  */
-export function readModelCard() {
+export function readModelCard(): { version: string; modelSize: number; tokenizerVocab: number; step: string } | null {
 	const weightsDir = resolveWorkspaceDir("@mailwoman/neural-weights-en-us")
 	if (!weightsDir) return null
 	const cardPath = resolve(weightsDir, "model-card.json")
@@ -225,11 +203,9 @@ export function readModelCard() {
  * Resolve a binary artifact from the weights package, dereferencing symlinks. Returns the real path
  * to the file (following symlinks from link-dev-weights.sh).
  *
- * @param {string} filename - E.g. "model.onnx" or "tokenizer.model"
- *
- * @returns {string | null}
+ * @param filename - E.g. "model.onnx" or "tokenizer.model"
  */
-export function resolveWeightsArtifact(filename) {
+export function resolveWeightsArtifact(filename: string): string | null {
 	const weightsDir = resolveWorkspaceDir("@mailwoman/neural-weights-en-us")
 	if (!weightsDir) return null
 	const filePath = resolve(weightsDir, filename)
@@ -247,13 +223,11 @@ export function resolveWeightsArtifact(filename) {
 /**
  * Copy a file to the static directory, but only if it differs (by size) from what's already there.
  *
- * @param {string} sourcePath
- * @param {string} destPath
- * @param {string} label - For logging
+ * @param label - For logging
  *
- * @returns {boolean} True if the file was copied
+ * @returns True if the file was copied
  */
-export function syncArtifact(sourcePath, destPath, label) {
+export function syncArtifact(sourcePath: string, destPath: string, label: string): boolean {
 	if (!existsSync(sourcePath)) {
 		console.warn(`[demo-assets] ${label}: source missing at ${sourcePath}`)
 		return false
@@ -278,12 +252,10 @@ export function syncArtifact(sourcePath, destPath, label) {
  * webpack UMD bundle with dynamic Worker/wasm requires) is exactly what produces "Critical
  * dependency" build warnings, so we keep it out of the graph entirely.
  *
- * @param {string} destDir - E.g. static/mailwoman/sqljs
- *
- * @returns {boolean}
+ * @param destDir - E.g. static/mailwoman/sqljs
  */
-export function stageSqlJsHttpvfs(destDir) {
-	let distDir
+export function stageSqlJsHttpvfs(destDir: string): boolean {
+	let distDir: string
 	try {
 		distDir = dirname(requireFromPlugin.resolve("sql.js-httpvfs/dist/index.js"))
 	} catch {
@@ -321,16 +293,13 @@ export function stageSqlJsHttpvfs(destDir) {
 /**
  * Build the FST binary from the WOF admin SQLite database.
  *
- * @param {string} fstPath - Destination path for the binary
- * @param {object} opts
- * @param {string} opts.repoRoot
- * @param {string} [opts.wofDb] - Path to WOF admin DB
+ * @param fstPath - Destination path for the binary
  *
- * @returns {boolean} True if built successfully
+ * @returns True if built successfully
  */
-export function buildFstBinary(fstPath, opts) {
+export function buildFstBinary(fstPath: string, opts: { repoRoot: string; wofDb?: string }): boolean {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
-	const globalDb = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+	const globalDb = dataRootPath("wof", "admin-global-priority.db")
 	const wofDb = opts.wofDb ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
 
 	if (!existsSync(wofDb)) {
@@ -379,16 +348,10 @@ export function buildFstBinary(fstPath, opts) {
 
 /**
  * Build the slim WOF database for the browser resolver.
- *
- * @param {string} destPath
- * @param {object} opts
- * @param {string} opts.repoRoot
- *
- * @returns {boolean}
  */
-export function buildSlimWofDb(destPath, opts) {
+export function buildSlimWofDb(destPath: string, opts: { repoRoot: string }): boolean {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
-	const globalDb = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+	const globalDb = dataRootPath("wof", "admin-global-priority.db")
 	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
 	// Postcodes: opt-in via PLAYPEN_WOF_POSTCODE_DB (e.g. /mnt/playpen/mailwoman-data/wof/
 	// postalcode-us.db — custom-built, ZCTA-centroid-filled per #525); unset, the slim build runs

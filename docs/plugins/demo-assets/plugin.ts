@@ -15,17 +15,13 @@
  *   build` (prod) get correct artifacts without a separate pre-build step.
  */
 
+import type { LoadContext, Plugin } from "@docusaurus/types"
 import { mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 import webpack from "webpack"
-import { buildWorkspaceAliases, stageSqlJsHttpvfs } from "./resolve.mjs"
+import { buildWorkspaceAliases, stageSqlJsHttpvfs } from "./resolve.js"
 
-/**
- * @param {import("@docusaurus/types").LoadContext} context
- *
- * @returns {import("@docusaurus/types").Plugin}
- */
-export default function demoAssetsPlugin(context) {
+export default function demoAssetsPlugin(context: LoadContext): Plugin {
 	const docsDir = context.siteDir
 	const staticDir = resolve(docsDir, "static", "mailwoman")
 	const emptyShim = resolve(docsDir, "src", "empty-shim.js")

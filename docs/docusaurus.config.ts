@@ -91,7 +91,7 @@ const config: Config = {
 	},
 
 	plugins: [
-		"./plugins/demo-assets/plugin.mjs",
+		"./plugins/demo-assets/plugin.ts",
 		[
 			"docusaurus-plugin-glossary",
 			{
