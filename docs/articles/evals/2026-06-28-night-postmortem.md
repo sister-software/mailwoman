@@ -46,15 +46,17 @@ swap (`mailwoman gazetteer promote`) is the operator's morning call.
   avoids re-folding the EU set into the wrong base and a synthetic-id collision; keeps the canonical
   geonames dir clean (synthesized `<CC>.txt` live in scratchpad).
 
-## Phase D (#825) — GO for a multilocale parse retrain
+## Phase D (#825) — MARGINAL (corrected — the first pass ran on a stale model)
 
-Oracle-locality injection (PT/PL/AU, real-OA goldens, resolved against staged-B). The model RESOLVES
-these locales at decent rates but to **wildly wrong places** (p50 PT 47 / PL 116 / AU 798 km); a perfect
-locality resolves the SAME gazetteer to ~1 km (Δp50 99–100%). Verify-before-verdict (`d-confound-check`)
-found the dominant failure is the en-US model **extracting the street as the locality** on PT's city-first
-formats (`R Dr Simões Junior` → locality; `Rosário` → `rio`). ~15% is a separate ranking confound. **GO** —
-the coordinate evidence cleanly justifies the #825 GPU retrain. (PT/PL/AU are B-invariant; staged-B ==
-canonical for them.)
+Oracle-locality injection (PT/PL/AU, real-OA goldens, candidate backend). **First-pass error, caught by
+verify-before-verdict:** `loadFromWeights` graded **v180** — the `neural-weights-en-us/model.onnx` dev
+symlink points to v180 (a test side-effect), not the shipped v4.15.0 (v193a3). On v180 the model looked
+disastrous (PT p50 47 / PL 116 / AU 798 km). **Re-run on the SHIPPED model**: PT **0.8 km**, PL **2.3 km**,
+AU **1.2 km** median — already tight. No parse-accuracy disaster. The remaining gap is a **recall/p90
+tail** (a perfect parse recovers PT +5 / PL +9 / AU +4 pp of unresolved), and **AU is gazetteer-bound**
+(oracle ceiling 80.6%, Δp50 −2% → NO-GO). So **#825 is a marginal lever on the shipped model, not the
+clean GO the v180 run implied** — frame any retrain as a tail/recall fix, and grade the shipped weights.
+(The street-as-locality mechanism is real on v180 but largely absent in v4.15.0.)
 
 ## Phase C (#781) — measure-first killed the lever
 
@@ -75,9 +77,12 @@ no calibration to fit. **Recommend re-scoping/closing #781**; the EU lever is #8
    in-set countries** — so no threshold/M2 change helps; the only lever is adding classes (gated). And
    B already cut namesake misroutes 11.5% → 6.1% (the recoverable cities now resolve bare via
    population-first), so the placer retrain is lower-priority than it was.
-3. **Greenlight #825 (multilocale parse retrain) for a GPU shift?** Phase D is a clean GO — PT/PL/AU
-   resolve to wrong towns (p50 47–798 km) that a perfect parse fixes to ~1 km. This is the EU coordinate
-   lever. (Both A's placer-widening and #825 are placer/model retrains — could share one GPU session.)
+3. **#825 (multilocale parse retrain) — likely NOT worth a GPU shift.** Corrected Phase D: the shipped
+   model already resolves PT/PL/AU at a tight median (0.8 / 2.3 / 1.2 km); only a recall/p90 tail remains
+   and AU is gazetteer-bound. AND the multilocale fix already exists as a trained, promote-ready artifact
+   (v191, `out/v191/model.onnx`) — the shipped v4.15.0 (v193a3 anchor) is within ~1 km of it on PT. So the
+   real #825 question is **promote v191 / combined anchor+multilocale retrain / leave** — an eyes-on
+   decision, $0 new GPU tonight. See `nightshift/2026-06-28-RESULTS/gpu-finding-825-already-trained.md`.
 4. **Re-scope or close #781 (span-rescore v2)?** Measure-first shows it is inert (+0.0 pp) on the
    candidate gazetteer. Keep only if wanted as an admin-only-backend safety net.
 
