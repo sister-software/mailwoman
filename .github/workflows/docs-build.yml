@@ -24,6 +24,10 @@ on:
       - "neural-web/**"
       - "resolver-wof-wasm/**"
       - "resolver-wof-sqlite/**"
+      - "resolver/**"
+      - "core/**"
+      - "spatial/**"
+      - "codex/**"
       - "*.md"
   push:
     branches: [main]
@@ -32,6 +36,10 @@ on:
       - "neural-web/**"
       - "resolver-wof-wasm/**"
       - "resolver-wof-sqlite/**"
+      - "resolver/**"
+      - "core/**"
+      - "spatial/**"
+      - "codex/**"
       - "*.md"
 
 permissions:
