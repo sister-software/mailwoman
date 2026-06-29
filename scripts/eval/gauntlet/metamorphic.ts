@@ -44,10 +44,10 @@ const INV = [
 ]
 
 /**
- * Known, DETERMINISTIC INV failures (the pipeline is argmax + SQL — failures don't flap). Each is tracked by
- * an issue and reported as xfail: visible, but NON-blocking, so the gate fails only on NEW regressions. The
- * loop also flags any xfail that has started PASSING ("newly passing → drop it"), so this list can't rot into
- * false comfort — the Pelias-pass-list trap, inverted.
+ * Known, DETERMINISTIC INV failures (the pipeline is argmax + SQL — failures don't flap). Each is tracked by an issue
+ * and reported as xfail: visible, but NON-blocking, so the gate fails only on NEW regressions. The loop also flags any
+ * xfail that has started PASSING ("newly passing → drop it"), so this list can't rot into false comfort — the
+ * Pelias-pass-list trap, inverted.
  */
 const KNOWN_INV_XFAIL = new Map<string, string>([
 	["lower|1600 Pennsylvania Ave NW, Washington DC", "#829 — US lowercase model sensitivity (retrain)"],
@@ -62,7 +62,12 @@ const KNOWN_INV_XFAIL = new Map<string, string>([
 ])
 
 /** Strip a 5-digit (US/FR) postcode token for the DIR test. */
-const dropPostcode = (s: string) => s.replace(/\b\d{5}\b/, "").replace(/\s*,\s*,/g, ",").replace(/\s+/g, " ").trim()
+const dropPostcode = (s: string) =>
+	s
+		.replace(/\b\d{5}\b/, "")
+		.replace(/\s*,\s*,/g, ",")
+		.replace(/\s+/g, " ")
+		.trim()
 
 const deps = await buildGauntletDeps(arg("model", "") ? { modelPath: arg("model", "") } : {})
 
@@ -111,7 +116,9 @@ for (const base of BASES) {
 
 		if (!ok) {
 			dirFails++
-			fails.push(`  ✗ DIR[drop-postcode] "${base.input}" → "${dropPostcode(base.input)}" landed ${dropped.lat},${dropped.lon} (anchor ${canon.lat},${canon.lon})`)
+			fails.push(
+				`  ✗ DIR[drop-postcode] "${base.input}" → "${dropPostcode(base.input)}" landed ${dropped.lat},${dropped.lon} (anchor ${canon.lat},${canon.lon})`
+			)
 		}
 	}
 }
@@ -121,7 +128,9 @@ deps.close()
 const newlyPassing = [...KNOWN_INV_XFAIL].filter(([key]) => !xfailHit.has(key))
 
 console.log(`\n=== Gauntlet · metamorphic ===`)
-console.log(`  INV (label-preserving invariance): ${invChecks - invFails - xfailHit.size}/${invChecks} held, ${xfailHit.size} known-xfail`)
+console.log(
+	`  INV (label-preserving invariance): ${invChecks - invFails - xfailHit.size}/${invChecks} held, ${xfailHit.size} known-xfail`
+)
 console.log(`  DIR (drop-postcode still resolves): ${dirChecks - dirFails}/${dirChecks} held`)
 
 if (fails.length) {
@@ -140,5 +149,7 @@ if (newlyPassing.length) {
 }
 // The gate fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
 const pass = invFails === 0 && dirFails === 0
-console.log(`\nverdict: ${pass ? "PASS" : "FAIL"}${pass && xfailHit.size ? ` (with ${xfailHit.size} tracked xfails)` : ""}`)
+console.log(
+	`\nverdict: ${pass ? "PASS" : "FAIL"}${pass && xfailHit.size ? ` (with ${xfailHit.size} tracked xfails)` : ""}`
+)
 process.exit(pass ? 0 : 1)
