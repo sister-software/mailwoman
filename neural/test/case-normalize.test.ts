@@ -37,17 +37,20 @@ describe("isAllCapsInput", () => {
 })
 
 describe("titleCaseInput", () => {
-	it("title-cases each ASCII run and preserves length", () => {
+	it("title-cases ASCII runs ≥3 letters, preserves ≤2-letter all-caps runs (#252), preserves length", () => {
 		expect(titleCaseInput("PALESTINE")).toBe("Palestine")
-		expect(titleCaseInput("214 JONES RD")).toBe("214 Jones Rd")
+		// #252: ≤2-letter all-caps runs are state codes / suffix abbrevs (TX, RD, ST) — title-casing them
+		// (Tx, Rd) corrupted the region signal. Preserve them; the model reads both forms.
+		expect(titleCaseInput("214 JONES RD")).toBe("214 Jones RD")
+		expect(titleCaseInput("ELKHART TX")).toBe("Elkhart TX")
 		const caps = "214 JONES RD, ELKHART, TX 75839"
 		expect(titleCaseInput(caps).length).toBe(caps.length) // offsets survive
 	})
 })
 
 describe("normalizeInputCase — the parser hook", () => {
-	it("title-cases all-caps input", () => {
-		expect(normalizeInputCase("PALESTINE TX")).toBe("Palestine Tx")
+	it("title-cases all-caps input, preserving the 2-letter state code (#252)", () => {
+		expect(normalizeInputCase("PALESTINE TX")).toBe("Palestine TX")
 	})
 
 	it("returns mixed-case and non-ASCII input UNCHANGED (no-regression by construction)", () => {
