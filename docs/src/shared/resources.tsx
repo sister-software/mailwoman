@@ -169,16 +169,17 @@ export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
  * Cache-Control means a fresh DB needs a fresh URL). See RELEASING.md "Rebuilding + swapping the canonical admin
  * gazetteer".
  */
-export const ADMIN_GAZETTEER_VERSION = "2026-06-28a"
+export const ADMIN_GAZETTEER_VERSION = "2026-06-30a"
 
 /**
- * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~1.19 GB; US + intl postcodes incl. PT/PL/CZ/AU +
- * the GeoNames bilingual alt-name fold as of 2026-06-27a) — the single-B-tree-probe lookup that replaces the slim
- * per-model-version `wof-hot.db` AND the full-DB FTS. A resolve touches a handful of contiguous pages (~12 range
- * fetches/session vs 243 on the full DB), with GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a
- * co-located FTS5-trigram fuzzy index, consulted ONLY on an exact-name miss (typo tolerance, e.g. Manchestr→Manchester)
- * so the contiguous fast path is untouched. Resolved by {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at
- * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
+ * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~1.39 GB; US + intl postcodes + the GeoNames fold
+ * grown to 244 countries by the #266 village-level + #267 admin-hierarchy coverage expansion as of 2026-06-30a) — the
+ * single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` AND the full-DB FTS. A resolve
+ * touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full DB), with GLOBAL coverage and no
+ * `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted ONLY on an exact-name
+ * miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched. Resolved by
+ * {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at `mailwoman/gazetteer/<date>/candidate.db`,
+ * version-independent like the street shards.
  */
 export function adminGazetteerUrl(): string {
 	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
