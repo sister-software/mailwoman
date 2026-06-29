@@ -37,6 +37,7 @@ import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolv
 
 import { extractAddrPoints } from "../sdk/extract.js"
 import { normalizeStreetForKeyLocale, streetLocaleForCountry } from "../sdk/street-locale.js"
+import { buildStreetRecoveryIndex } from "../sdk/street-recovery.js"
 
 interface BuildArgs {
 	country: string
@@ -44,6 +45,9 @@ interface BuildArgs {
 	pbf: string
 	release: string
 	output: string
+	/** #250: recover the street for no-`addr:street` points from the nearest named highway. */
+	recover: boolean
+	recoverRadiusKm: number
 }
 
 function parse(): BuildArgs {
@@ -54,6 +58,8 @@ function parse(): BuildArgs {
 			pbf: { type: "string" },
 			release: { type: "string" },
 			out: { type: "string" },
+			recover: { type: "boolean" },
+			"recover-radius-m": { type: "string" },
 		},
 	})
 
@@ -70,14 +76,25 @@ function parse(): BuildArgs {
 	const slug = values.slug?.toLowerCase() || country
 	const release = values.release || "unknown"
 	const output = values.out || dataRootPath("osm", `address-points-${country}-${slug}.db`)
+	const recover = Boolean(values.recover)
+	const recoverRadiusKm = Number(values["recover-radius-m"] ?? "30") / 1000
 
-	return { country, slug, pbf, release, output }
+	return { country, slug, pbf, release, output, recover, recoverRadiusKm }
 }
 
 async function main(): Promise<void> {
 	const args = parse()
 	const locale = streetLocaleForCountry(args.country)
 	const source = `openstreetmap:${args.country}`
+	const recoverSource = `${source}#recovered`
+	// #250: build the nearest-named-highway index up front (validated ~88% precision @30m on FR ground truth).
+	const recoveryIndex = args.recover ? await buildStreetRecoveryIndex(args.pbf) : null
+
+	if (recoveryIndex) {
+		console.error(
+			`[osm] recovery index: ${recoveryIndex.size.toLocaleString()} highway vertices (radius ${args.recoverRadiusKm * 1000}m)`
+		)
+	}
 	const tmp = `${args.output}.tmp-${process.pid}`
 
 	mkdirSync(dirname(args.output), { recursive: true })
@@ -93,6 +110,7 @@ async function main(): Promise<void> {
 
 	let total = 0
 	let written = 0
+	let recovered = 0
 	let noStreet = 0
 	let badCoord = 0
 	const BATCH = 50_000
@@ -103,20 +121,30 @@ async function main(): Promise<void> {
 	for await (const rec of extractAddrPoints(args.pbf)) {
 		total++
 
-		if (rec.street == null) {
-			noStreet++
+		if (!Number.isFinite(rec.lat) || !Number.isFinite(rec.lon)) {
+			badCoord++
 			continue
 		}
-		const streetNorm = normalizeStreetForKeyLocale(rec.street, locale)
+		// #250: a point with no addr:street recovers its street from the nearest named highway (when --recover).
+		let street = rec.street
+		let rowSource = source
+
+		if (street == null) {
+			const hit = recoveryIndex?.nearest(rec.lon, rec.lat, args.recoverRadiusKm)
+
+			if (!hit) {
+				noStreet++
+				continue
+			}
+			street = hit.name
+			rowSource = recoverSource
+			recovered++
+		}
+		const streetNorm = normalizeStreetForKeyLocale(street, locale)
 		const number = rec.housenumber.trim().toLowerCase()
 
 		if (!streetNorm || !number) {
 			noStreet++
-			continue
-		}
-
-		if (!Number.isFinite(rec.lat) || !Number.isFinite(rec.lon)) {
-			badCoord++
 			continue
 		}
 		// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
@@ -128,10 +156,10 @@ async function main(): Promise<void> {
 			null,
 			rec.postcode?.trim() || null,
 			rec.city ? normalizeLocalityForKey(rec.city) : null,
-			rec.street,
+			street,
 			rec.lat,
 			rec.lon,
-			source,
+			rowSource,
 			args.release
 		)
 		written++
@@ -161,10 +189,10 @@ async function main(): Promise<void> {
 	console.error(
 		`[osm] DONE ${args.output}\n` +
 			`      total addr:housenumber features : ${total.toLocaleString()}\n` +
-			`      written (had addr:street)        : ${written.toLocaleString()}\n` +
-			`      skipped (no addr:street)         : ${noStreet.toLocaleString()}  (${gap}% association gap)\n` +
+			`      written total                    : ${written.toLocaleString()}  (of which recovered: ${recovered.toLocaleString()})\n` +
+			`      skipped (no addr:street)         : ${noStreet.toLocaleString()}  (${gap}% raw association gap)\n` +
 			`      skipped (bad coord)              : ${badCoord.toLocaleString()}\n` +
-			`      source                           : ${source}  release=${args.release}`
+			`      source                           : ${source}  release=${args.release}  recover=${args.recover}`
 	)
 }
 
