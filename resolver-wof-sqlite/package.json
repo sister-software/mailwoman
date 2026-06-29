@@ -35,6 +35,7 @@
 		"./fst-types": "./out/fst-types.js",
 		"./fst-deserialize-web": "./out/fst-deserialize-web.js",
 		"./unified-schema": "./out/unified-schema.js",
+		"./ancestry-backfill": "./out/ancestry-backfill.js",
 		"./coincident-roles": "./out/coincident-roles.js",
 		"./geonames-aliases": "./out/geonames-aliases.js",
 		"./geo": "./out/geo.js",
