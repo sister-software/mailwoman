@@ -111,13 +111,32 @@ browser httpvfs as-is — a sub-region (Amsterdam) would be the demo shard.
   run caught real issues, exactly the point: the bare-Chevaleret mis-parse (#831, now a tracked known_fail),
   the US hierarchy stopping at region (dropped the over-reaching `country` assertion), and **#832** — "350
   5th Ave, New York, NY" resolves to *upstate* NY, not NYC (a real disambiguation bug the per-tag F1 misses).
-  Gate now: regression 3/3 gated + 1 tracked, metamorphic 29/35 + 6 xfails → **PASS, clear to ship**.
+  Gate now: regression 5/5 gated + 3 tracked, metamorphic 29/35 + 6 xfails → **PASS, clear to ship** (`e35583ff`).
+
+## The gate's payoff — a bare-query coordinate-bug class (operator follow-ups)
+
+The integration net surfaced what the operator built it to catch: silent coordinate bugs the per-tag F1 is
+blind to. All three are now tracked in the regression corpus (non-blocking `improvement_target`/`known_fail`),
+so a future fix auto-flags "newly passing." Fixes are model/ranking/gazetteer — the operator's tuned systems:
+
+- **#831 — bare FR street parse.** "181 Rue du Chevaleret, Paris" (no postcode, mixed case) mis-parses
+  "Chevaleret" → locality → arrondissement centroid (3.19 km). Surface perturbations *do* hit rooftop. Likely
+  a shared case-sensitive-parse root with #829. Fix: parse robustness (a retrain).
+- **#832 — "New York, NY" → New York Mills** (pop 3,190, upstate, 290 km off) instead of NYC (pop 8.8M). The
+  placer is correct (US 0.92); the FTS ranking drops NYC from the `limit*4` over-fetch window (its hundreds
+  of alt-names dilute bm25), so `exactMatchTiering` never sees it. Fix: an exact-name fetch floor (analogous
+  to the existing short-query floor) — a sensitive, tuned path; flagged for review.
+- **#833 — "Portland, ME" → Messina, Italy** (6862 km off); "Portland, OR" → Ourense, Spain. The placer
+  *mis-predicts* GB 0.79 (Portland/Dorset + "ME"=Medway UK postcode), and the soft prior can't stop the IT
+  "ME"=Messina province match. Fix: more bare-`City,ST` placer training + the #194 hard-country-filter.
 
 ## Open questions / next
 
-- C6: **region-aware held-out draw** (the lesson above) + a verified-coord US source. C7: grow regression +
-  metamorphic. B3: browser OSM rooftop tier (the demo's visible rooftop). D10: DE/NL shards (now with
-  `--recover` validated per-locale).
+- The three findings above are the headline operator follow-ups (model/ranking/gazetteer fixes).
+- **B3** (browser OSM rooftop tier) + **R2-deploy the shards** — the demo's visible rooftop; double-gated on
+  the browser build + **#249** (ODbL legal sign-off, counsel's call).
+- **A2** — the npm-side v4.16.0 release (HF stage + `@mailwoman/osm` trusted-publishing); non-urgent.
+- **E** — data ingestion (SIRENE/GLEIF) for the record-matcher; the held-out gate is well-covered (FR+US).
 
 ## Numbers
 
@@ -128,3 +147,5 @@ browser httpvfs as-is — a sub-region (Amsterdam) would be the demo shard.
 | Modal $ | $0 so far ($20 budget) |
 | CI failures | 2 main reds (the #252 second-test-file miss), caught + fixed in ~25 min; #828/#830 caught pre-merge |
 | Demo regressions | 0 |
+| Coordinate bugs found + tracked | 3 (#831, #832, #833 — the gate's payoff) |
+| Gauntlet | complete: 3 layers + unified gate; regression 5/5 gated + 3 tracked, metamorphic 29/35 + 6 xfails |
