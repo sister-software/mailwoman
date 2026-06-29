@@ -484,6 +484,38 @@ async function reconcileAdminPair(
 			return
 		}
 	}
+
+	// #267 follow-up: the token may name a COUNTRY whose namesake is a more-populous foreign region — "Tbilisi,
+	// Georgia" parses region("Georgia") → the US state, but Tbilisi descends from Georgia the COUNTRY. When no
+	// region candidate holds the locality, try same-named country candidates: a foreign capital under its
+	// country out-votes the state namesake. Needs the country + the locality's ancestry in the gazetteer (the
+	// #267 admin fold). The re-picked region node then carries the country place; the locality coordinate wins.
+	const countryCands = (await backend.findPlace({ text: regionNode.value, placetype: "country", limit: 3 })).filter(
+		(c) => c.exactMatch
+	)
+
+	for (const country of countryCands) {
+		const scoped = await backend.findPlace({
+			text: localityNode.value,
+			placetype: "locality",
+			parentId: country.id,
+			limit: 3,
+		})
+		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
+
+		if (lc) {
+			decorateNode(regionNode, country, regionCands)
+			regionNode.metadata = { ...regionNode.metadata, admin_coherence_repicked: true }
+			decorateNode(
+				localityNode,
+				lc,
+				scoped.filter((l) => l !== lc)
+			)
+			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
+
+			return
+		}
+	}
 }
 
 class WofResolver implements Resolver {
