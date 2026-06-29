@@ -39,6 +39,13 @@ Continuation of the day's FR rooftop precision arc. Full autonomy granted (relea
   red'd main for ~25 min before I caught it. The standing lesson (memory: precommit-hook-staged-scoped) is
   to run the full package suite after a cross-cutting change; I leaned on the hook and paid the CI round-trip.
   Two co-located test files for one module is itself a smell worth consolidating.
+- **The whole Gauntlet self-check ran on the stale v193a3 symlink, not the demo's v194 — for most of the
+  shift.** The local `loadFromWeights` default points at the v193a3 training base, not the shipped model. I
+  caught it only at the hourly checkpoint, when the FR held-out showed prod (199) ≠ candidate (189) resolved
+  — they should be identical if the default were v194. The anti-rot check then flagged `#831 now PASSES on
+  v194`. Net: #831 was a false finding (fixed on the demo); #832/#833 are model-independent so they held.
+  Lesson banked twice now (d6812bc7, and again here) — the harness md5-stamps the model every run as the
+  durable fix, but the dev default itself (link-dev-weights → v193a3) needs the operator's versioning call.
 
 ## Decisions made autonomously
 
@@ -119,9 +126,11 @@ The integration net surfaced what the operator built it to catch: silent coordin
 blind to. All three are now tracked in the regression corpus (non-blocking `improvement_target`/`known_fail`),
 so a future fix auto-flags "newly passing." Fixes are model/ranking/gazetteer — the operator's tuned systems:
 
-- **#831 — bare FR street parse.** "181 Rue du Chevaleret, Paris" (no postcode, mixed case) mis-parses
-  "Chevaleret" → locality → arrondissement centroid (3.19 km). Surface perturbations *do* hit rooftop. Likely
-  a shared case-sensitive-parse root with #829. Fix: parse robustness (a retrain).
+- **#831 — RESOLVED, a stale-symlink artifact (CLOSED).** "181 Rue du Chevaleret, Paris" (bare, no postcode)
+  mis-parses on v193a3 but resolves correctly on the **shipped v194** (the FR-bare-street fix did its job).
+  The Gauntlet only flagged it because the **local dev default symlinks to the v193a3 training base** (md5
+  4dec4f46), not the demo's v194 (eb76ae49) — the d6812bc7 trap. The Gauntlet's own anti-rot check caught it
+  (`fr-chevaleret-bare now PASSES on v194 → promote`). Harness now md5-stamps the model every run.
 - **#832 — "New York, NY" → New York Mills** (pop 3,190, upstate, 290 km off) instead of NYC (pop 8.8M). The
   placer is correct (US 0.92); the FTS ranking drops NYC from the `limit*4` over-fetch window (its hundreds
   of alt-names dilute bm25), so `exactMatchTiering` never sees it. Fix: an exact-name fetch floor (analogous
@@ -147,5 +156,5 @@ so a future fix auto-flags "newly passing." Fixes are model/ranking/gazetteer �
 | Modal $ | $0 so far ($20 budget) |
 | CI failures | 2 main reds (the #252 second-test-file miss), caught + fixed in ~25 min; #828/#830 caught pre-merge |
 | Demo regressions | 0 |
-| Coordinate bugs found + tracked | 3 (#831, #832, #833 — the gate's payoff) |
+| Coordinate bugs found | 3 — #832 + #833 real (model-independent); #831 a stale-symlink false-positive (closed) |
 | Gauntlet | complete: 3 layers + unified gate; regression 5/5 gated + 3 tracked, metamorphic 29/35 + 6 xfails |

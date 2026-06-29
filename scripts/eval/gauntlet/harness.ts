@@ -9,7 +9,8 @@
  *   paid for once (#566 / reconcile-retirement).
  */
 
-import { existsSync } from "node:fs"
+import { createHash } from "node:crypto"
+import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -29,6 +30,14 @@ export interface GauntletDeps {
  */
 export async function buildGauntletDeps(opts: { modelPath?: string } = {}): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
+	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
+	// loadFromWeights symlink can point at an old training base, not the shipped model) is never silent.
+	const effModel = opts.modelPath ? resolve(opts.modelPath) : resolve("neural-weights-en-us/model.onnx")
+
+	if (existsSync(effModel)) {
+		const md5 = createHash("md5").update(readFileSync(effModel)).digest("hex").slice(0, 8)
+		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5})`)
+	}
 	const classifier = opts.modelPath
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
 		: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
