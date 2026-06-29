@@ -89,6 +89,30 @@ an FR-specific lever, not a blanket pass. Measure the gap before reaching for re
 artifacts; public deployment is gated on B3 (browser tier) + #249 (ODbL legal). NL at 2.3 GB is too big for
 browser httpvfs as-is — a sub-region (Amsterdam) would be the demo shard.
 
+## C — Gauntlet Phase-2 hardening
+
+- **C7: metamorphic xfail + DE/NL coverage** (`a3a7172f`). The metamorphic gate now tracks known,
+  deterministic INV failures as non-blocking xfails (it fails only on NEW regressions), with an anti-rot
+  check that flags any xfail that starts passing — the Pelias-pass-list trap inverted. Added DE (Unter den
+  Linden) + NL (Damrak) rooftop bases + a comma-tight perturbation. Surfaced 6 tracked xfails: #829
+  (lowercase sensitivity — US→admin, NL→null) + the NEW **#831** (FR no-postcode rooftop/admin boundary;
+  any surface perturbation flips the tier — likely a shared case-sensitive-parse root with #829). DE held
+  clean. Gate: PASS with 6 xfails, DIR 3/3.
+- **C6: US verified-coord held-out source** (`898baecf`). FDIC BankFind (77,442 bank branches, address +
+  geocoded lat/lon, public domain, NOT in training) is now a held-out source beside FR/BAN; holdout.ts is
+  multi-source (`--source us|fr`), and the pool doubles as the fast draw (77k CSV vs streaming the 5 GB BAN).
+  Smoke (n=200, v194 vs prod): **rooftop 61.5%, street 74%, locality 92.5%, 100% resolved, z=0.19 PASS** —
+  an independent validation of the national situs tier on a source it never trained on. The region-aware
+  lesson (D9) applies to coverage-limited comparisons (the shard A/B), not the nationwide locality gate.
+- **C8b: regression runner + the unified gate** (`17c32518`). The regression layer had cases + a DB builder
+  but no runner — built it (status-aware: gates `status=pass`, tracks `known_fail`/`improvement_target`
+  non-blocking, flags any tracked case that starts passing). `run.ts` runs all three layers in isolated
+  processes and emits ONE combined verdict — the gate a ship runs (documented in RELEASING.md). Its FIRST
+  run caught real issues, exactly the point: the bare-Chevaleret mis-parse (#831, now a tracked known_fail),
+  the US hierarchy stopping at region (dropped the over-reaching `country` assertion), and **#832** — "350
+  5th Ave, New York, NY" resolves to *upstate* NY, not NYC (a real disambiguation bug the per-tag F1 misses).
+  Gate now: regression 3/3 gated + 1 tracked, metamorphic 29/35 + 6 xfails → **PASS, clear to ship**.
+
 ## Open questions / next
 
 - C6: **region-aware held-out draw** (the lesson above) + a verified-coord US source. C7: grow regression +
