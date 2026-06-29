@@ -139,6 +139,21 @@ so a future fix auto-flags "newly passing." Fixes are model/ranking/gazetteer �
   *mis-predicts* GB 0.79 (Portland/Dorset + "ME"=Medway UK postcode), and the soft prior can't stop the IT
   "ME"=Messina province match. Fix: more bare-`City,ST` placer training + the #194 hard-country-filter.
 
+## Harness fidelity — a theme worth its own line, + a shipped fix (PR #834)
+
+Chasing the stale-symlink catch surfaced a second "harness ≠ shipped pipeline" gap, and this one was a real
+product bug: the shipped nominatim/photon drop-ins call `geocodeAddress` **without** the `@mailwoman/normalize`
+Stage-1 pass that `createRuntimePipeline` runs. So whitespace/punctuation queries are fragile on the server
+path (`"Damrak  1,  1012  LG"` → unresolved). The harness was faithful to the drop-ins (it matched their
+geocodeAddress-no-normalize path), so the metamorphic `ws|Damrak` violation was real, not an artifact.
+
+**Fix (PR #834, flagged for review):** `geocodeAddress` now runs Stage-1 normalize (default-on, opt-out).
+Diagnostic-before-fix: fixes `ws|Damrak` → rooftop; a with/without A/B on 300 clean FDIC addresses is
+**exactly identical** (177/205/272 — idempotent, do-no-harm); unified gate PASS. Two durable wins from the
+fidelity theme: the harness now **md5-stamps the model** every run, and `geocodeAddress` is now a complete
+self-contained entry. Side-note: `default-country.test.ts`'s resolution tests are red locally (the #832 NYC
+regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB) — worth wiring into the gate.
+
 ## Open questions / next
 
 - The three findings above are the headline operator follow-ups (model/ranking/gazetteer fixes).
