@@ -5,7 +5,7 @@ description: Autonomous night shift — release completion, the casing fix, Gaun
 
 # Night shift 2026-06-29 (02:00–16:00 UTC)
 
-> Living document — sketched during the shift, finalized at hand-off.
+> Drafted during the shift; finalized at the ~11:10 UTC hand-off (operator returned early; planned close 16:00). PR #834 merged on return.
 
 Continuation of the day's FR rooftop precision arc. Full autonomy granted (release + merge authority).
 
@@ -189,7 +189,7 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
 
 | | |
 |---|---|
-| Shift window | 02:00–16:00 UTC |
+| Shift window | ~02:00–11:10 UTC (operator returned ~5h before the planned 16:00 close) |
 | Models trained | 1 — the v195 case-aug probe (2k steps), which VALIDATED #261 (US lowercase fixed) |
 | Modal $ | ~$1.5 — the v195 probe ($20 budget) |
 | CI failures | 2 main reds (the #252 second-test-file miss), caught + fixed in ~25 min; #828/#830 caught pre-merge |
