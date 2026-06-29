@@ -119,3 +119,41 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 	expect((db2.prepare("SELECT parent_id FROM spr WHERE placetype='locality'").get() as any).parent_id).toBe(-1)
 	db2.close()
 })
+
+test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)", () => {
+	const d = mkdtempSync(join(tmpdir(), "geonames-pcls-"))
+	writeFileSync(
+		join(d, "HK.txt"),
+		[
+			row({ 0: "1819730", 1: "Hong Kong", 2: "Hong Kong", 4: "22.3", 5: "114.2", 6: "A", 7: "PCLS", 8: "HK" }),
+			row({
+				0: "1819729",
+				1: "Hong Kong",
+				2: "Hong Kong",
+				4: "22.28",
+				5: "114.16",
+				6: "P",
+				7: "PPLC",
+				8: "HK",
+				14: "7012738",
+			}),
+		].join("\n")
+	)
+	const hk = new DatabaseSync(":memory:")
+	hk.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
+		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
+		 is_current INTEGER, is_deprecated INTEGER, is_ceased INTEGER, is_superseded INTEGER, is_superseding INTEGER, lastmodified INTEGER)`)
+	hk.exec(
+		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, lastmodified INTEGER)`
+	)
+	hk.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
+	hk.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
+	ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
+
+	// PCLS is a country-level code; the fold must seat Hong Kong as the country (not skip it like pre-PCL*).
+	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as any)?.name).toBe(
+		"Hong Kong"
+	)
+	hk.close()
+	rmSync(d, { recursive: true, force: true })
+})

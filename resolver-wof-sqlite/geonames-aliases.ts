@@ -137,7 +137,10 @@ export function ingestGeonamesAliases(
 				const lat = Number(f[4]) || 0
 				const lon = Number(f[5]) || 0
 
-				if (f[7] === "PCLI" || f[7] === "PCLIX") {
+				if (f[7]?.startsWith("PCL")) {
+					// Any country-level political entity — PCLI (independent), PCLD (dependent territory),
+					// PCLF (freely associated), PCLS (special administrative region: HK/MO/PS). All are the
+					// country tier; restricting to PCLI left those ~17 territories without a country row.
 					if (countryId >= 0) continue // one country row
 					countryId = id++
 					sprInsert.run(countryId, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
