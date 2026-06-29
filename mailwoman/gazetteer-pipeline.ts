@@ -109,8 +109,15 @@ export interface FoldOptions {
 	adminOut: string
 	/** ISO 3166-1 alpha-2 codes whose GeoNames dumps to fold (default {@link DEFAULT_FOLD_COUNTRIES}). */
 	countries?: readonly string[]
-	/** Dir holding `<CC>.txt` GeoNames dumps (default `<data-root>/geonames`). */
+	/** Dir holding `<CC>.txt` GeoNames dumps (default {@link DEFAULT_FOLD_COUNTRIES}). */
 	geonamesDir?: string
+	/**
+	 * #267: the countries to ALSO fold A-class admin (PCLI + ADM1) for, linking the locality→region→country ancestry.
+	 * ZERO-COVERAGE gap countries only (the coverage-expansion targets) — a country that already has WOF admin would
+	 * double up, so the EU alias set is left off. Without it the gap localities are orphans and "Tbilisi, GE" can't
+	 * resolve.
+	 */
+	adminForCountries?: ReadonlySet<string>
 	onCountry?: (event: GeonamesIngestProgress) => void
 	onPhase?: (phase: string, detail?: string) => void
 }
@@ -143,7 +150,8 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 		db,
 		[...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)],
 		opts.geonamesDir ?? geonamesDir(),
-		opts.onCountry
+		opts.onCountry,
+		opts.adminForCountries ? { adminForCountries: opts.adminForCountries } : undefined
 	)
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFts(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })

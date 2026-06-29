@@ -150,4 +150,72 @@ describe("resolveTree + adminCoherence (#263)", () => {
 
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBeUndefined()
 	})
+
+	it("falls through to a same-named COUNTRY when no region holds the locality (#267 — Tbilisi, Georgia)", async () => {
+		// "Georgia" the US state vs Georgia the country. Tbilisi descends from the COUNTRY, Atlanta from the state.
+		const usGeorgia = {
+			id: 40,
+			name: "Georgia",
+			placetype: "region",
+			country: "US",
+			lat: 32.6,
+			lon: -83.4,
+			score: 9,
+			exactMatch: true,
+		}
+		const georgiaCountry = {
+			id: 50,
+			name: "Georgia",
+			placetype: "country",
+			country: "GE",
+			lat: 42.0,
+			lon: 43.5,
+			score: 8,
+			exactMatch: true,
+		}
+		const tbilisi: ResolvedPlace = {
+			id: 51,
+			name: "Tbilisi",
+			placetype: "locality",
+			country: "GE",
+			parent_id: 50,
+			lat: 41.69,
+			lon: 44.83,
+			score: 7,
+			exactMatch: true,
+		}
+		const atlanta: ResolvedPlace = {
+			id: 41,
+			name: "Atlanta",
+			placetype: "locality",
+			country: "US",
+			parent_id: 40,
+			lat: 33.76,
+			lon: -84.42,
+			score: 9,
+			exactMatch: true,
+		}
+		const tree = (city: string): AddressTree => ({
+			raw: `${city}, Georgia`,
+			roots: [
+				node({
+					tag: "region",
+					value: "Georgia",
+					start: city.length + 2,
+					end: city.length + 9,
+					children: [node({ tag: "locality", value: city, start: 0, end: city.length })],
+				}),
+			],
+		})
+		const resolver = createWofResolver(makeBackend([usGeorgia, georgiaCountry, tbilisi, atlanta]))
+
+		// Tbilisi has no descendant under the US state → fall through to Georgia the country.
+		const tb = localityOf(await resolver.resolveTree(tree("Tbilisi"), { adminCoherence: true }))
+		expect(tb?.lat).toBeCloseTo(41.69, 2)
+		expect(tb?.metadata?.["admin_coherence_repicked"]).toBe(true)
+
+		// Atlanta IS under the US state → it resolves in the walk; no country fall-through.
+		const at = localityOf(await resolver.resolveTree(tree("Atlanta"), { adminCoherence: true }))
+		expect(at?.lat).toBeCloseTo(33.76, 2)
+	})
 })

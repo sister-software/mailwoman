@@ -124,6 +124,8 @@ const fold = await foldGeonamesIntoAdmin({
 	adminIn: ADMIN_IN,
 	adminOut: STAGED_ADMIN,
 	countries,
+	// #267: add A-class admin + ancestry for the GAP targets only (the EU default set already has WOF admin).
+	adminForCountries: new Set(targets),
 	geonamesDir: MERGE,
 	onCountry: (e) => {
 		if (!e.skipped && e.places > 0) process.stderr.write(`\r[fold] ${e.country}: ${e.places}      `)
