@@ -35,7 +35,7 @@
 		"access": "public"
 	},
 	"scripts": {
-		"test": "node --test ./out/sdk/street-locale.test.js"
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",

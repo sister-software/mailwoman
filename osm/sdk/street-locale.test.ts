@@ -8,8 +8,7 @@
  *   folding (and the Paris acceptance key) so a future tweak can't silently desync the two sides.
  */
 
-import assert from "node:assert/strict"
-import { test } from "node:test"
+import { expect, test } from "vitest"
 
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
@@ -17,38 +16,38 @@ import { streetLocaleForCountry, supportedOsmCountries } from "./street-locale.j
 
 test("fr: the Paris acceptance address keys consistently", () => {
 	const key = normalizeStreetForKeyLocale("Rue du Chevaleret", "fr")
-	assert.equal(key, "rue du chevaleret")
+	expect(key).toBe("rue du chevaleret")
 	// however a downstream source spells it, it folds to the same key
-	assert.equal(normalizeStreetForKeyLocale("rue du chevaleret", "fr"), key)
+	expect(normalizeStreetForKeyLocale("rue du chevaleret", "fr")).toBe(key)
 })
 
 test("fr: leading type abbreviations + Saint expand", () => {
-	assert.equal(normalizeStreetForKeyLocale("Av. des Champs-Élysées", "fr"), "avenue des champs elysees")
-	assert.equal(normalizeStreetForKeyLocale("Bd Saint-Germain", "fr"), "boulevard saint germain")
-	assert.equal(normalizeStreetForKeyLocale("Rue St-Honoré", "fr"), "rue saint honore")
-	assert.equal(normalizeStreetForKeyLocale("Pl. de la République", "fr"), "place de la republique")
+	expect(normalizeStreetForKeyLocale("Av. des Champs-Élysées", "fr")).toBe("avenue des champs elysees")
+	expect(normalizeStreetForKeyLocale("Bd Saint-Germain", "fr")).toBe("boulevard saint germain")
+	expect(normalizeStreetForKeyLocale("Rue St-Honoré", "fr")).toBe("rue saint honore")
+	expect(normalizeStreetForKeyLocale("Pl. de la République", "fr")).toBe("place de la republique")
 })
 
 test("de: glued -str(.) / -straße all fold to -strasse", () => {
 	const k = "lindenstrasse"
-	assert.equal(normalizeStreetForKeyLocale("Lindenstraße", "de"), k)
-	assert.equal(normalizeStreetForKeyLocale("Lindenstr.", "de"), k)
-	assert.equal(normalizeStreetForKeyLocale("Lindenstr", "de"), k)
-	assert.equal(normalizeStreetForKeyLocale("lindenstrasse", "de"), k)
+	expect(normalizeStreetForKeyLocale("Lindenstraße", "de")).toBe(k)
+	expect(normalizeStreetForKeyLocale("Lindenstr.", "de")).toBe(k)
+	expect(normalizeStreetForKeyLocale("Lindenstr", "de")).toBe(k)
+	expect(normalizeStreetForKeyLocale("lindenstrasse", "de")).toBe(k)
 	// a non-str name is untouched
-	assert.equal(normalizeStreetForKeyLocale("Marienplatz", "de"), "marienplatz")
+	expect(normalizeStreetForKeyLocale("Marienplatz", "de")).toBe("marienplatz")
 })
 
 test("nl: glued -str folds to -straat", () => {
-	assert.equal(normalizeStreetForKeyLocale("Kerkstraat", "nl"), "kerkstraat")
-	assert.equal(normalizeStreetForKeyLocale("Kerkstr.", "nl"), "kerkstraat")
-	assert.equal(normalizeStreetForKeyLocale("Kerkstr", "nl"), "kerkstraat")
+	expect(normalizeStreetForKeyLocale("Kerkstraat", "nl")).toBe("kerkstraat")
+	expect(normalizeStreetForKeyLocale("Kerkstr.", "nl")).toBe("kerkstraat")
+	expect(normalizeStreetForKeyLocale("Kerkstr", "nl")).toBe("kerkstraat")
 })
 
 test("streetLocaleForCountry: maps the shipped countries, throws otherwise", () => {
-	assert.equal(streetLocaleForCountry("FR"), "fr")
-	assert.equal(streetLocaleForCountry("de"), "de")
-	assert.equal(streetLocaleForCountry("nl"), "nl")
-	assert.deepEqual(supportedOsmCountries().sort(), ["de", "fr", "nl"])
-	assert.throws(() => streetLocaleForCountry("xx"), /No street-normalization locale/)
+	expect(streetLocaleForCountry("FR")).toBe("fr")
+	expect(streetLocaleForCountry("de")).toBe("de")
+	expect(streetLocaleForCountry("nl")).toBe("nl")
+	expect(supportedOsmCountries().sort()).toEqual(["de", "fr", "nl"])
+	expect(() => streetLocaleForCountry("xx")).toThrow(/No street-normalization locale/)
 })
