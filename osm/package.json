@@ -1,0 +1,49 @@
+{
+	"name": "@mailwoman/osm",
+	"version": "4.16.2",
+	"description": "OpenStreetMap rooftop address-point ingestion — builds per-country ODbL precision shards on the situs address-point schema.",
+	"keywords": [
+		"openstreetmap",
+		"geospatial",
+		"geocoding",
+		"address-point"
+	],
+	"homepage": "https://github.com/sister-software/mailwoman",
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
+	"license": "AGPL-3.0-only",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "osm"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		"./scripts/*": "./out/scripts/*.js",
+		"./sdk": "./out/sdk/index.js",
+		".": "./out/index.js"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "node --test ./out/sdk/street-locale.test.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
+		"kysely": "^0.29.2"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

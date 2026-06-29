@@ -146,7 +146,18 @@ export interface AddressPointHit {
  * contract.
  */
 export interface AddressPointLookup {
-	find(query: { street: string; number: string; postcode?: string; locality?: string }): AddressPointHit | null
+	find(query: {
+		street: string
+		number: string
+		postcode?: string
+		locality?: string
+		/**
+		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried AFTER postcode/locality. For shards whose points
+		 * carry no postcode/locality of their own (OSM addr nodes often don't) but DO carry a coordinate — the resolved
+		 * locality's bounding box scopes the `(street, number)` probe instead. US situs never passes it (byte-stable).
+		 */
+		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+	}): AddressPointHit | null
 }
 
 /**
@@ -277,6 +288,13 @@ export interface ResolveOpts {
 	 * "address_point"`). Opt-in; absent = byte-stable.
 	 */
 	addressPoints?: AddressPointLookup
+	/**
+	 * Pass the resolved locality's BBOX to the address-point lookup as a final scope (#247). For shards whose points
+	 * carry no postcode/locality of their own (OSM addr nodes often don't), the postcode/locality probes miss and the
+	 * lookup falls through to a `(street, number)` probe within the box. OFF by default — US situs never sets it, so
+	 * the bbox arg is simply never supplied and its postcode/locality probes are byte-identical.
+	 */
+	addressPointBboxFallback?: boolean
 	/**
 	 * House-number interpolation tier (#483): consulted ONLY when the exact address-point tier ({@link addressPoints})
 	 * did NOT stamp the street node — the "after the exact-point fall-through" semantics. On hit, stamps the estimate

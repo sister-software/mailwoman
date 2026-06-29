@@ -12,6 +12,7 @@ import { anchorAbsorptionRecipe } from "./anchor-absorption.js"
 import { boundaryStressRecipe } from "./boundary-stress.js"
 import { countryBalancedRecipe } from "./country-balanced.js"
 import { frAdminSplitRecipe } from "./fr-admin-split.js"
+import { frBareStreetRecipe } from "./fr-bare-street.js"
 import { frOrderRecipe } from "./fr-order.js"
 import { germanRecipe } from "./german.js"
 import { houseVenueRecipe } from "./house-venue.js"
@@ -43,6 +44,7 @@ const RECIPES: readonly ShardRecipe[] = [
 	localeRecipe,
 	frOrderRecipe,
 	frAdminSplitRecipe,
+	frBareStreetRecipe,
 	countryBalancedRecipe,
 	boundaryStressRecipe,
 	anchorAbsorptionRecipe,

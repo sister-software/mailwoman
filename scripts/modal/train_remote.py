@@ -806,6 +806,66 @@ def sync_v193a3():
     secrets=[r2_secret],
     timeout=1800,
 )
+def sync_v094_fr_bare():
+    """#251/#148 fr-bare-street probe. The v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to
+    /data) + the 1 fr-bare-street shard (BAN-sourced bare-no-postcode FR streets — the postcode-anchoring
+    lever). Pulls that overlay (small; base shards persist on the volume, referenced by the re-rooted
+    manifest) + code/config, then pre-seeds the v193a3 step-080000 ckpt into the v194 output dir for
+    `--resume auto` (RESUME — continue growing the FR street→locality boundary, NOT init_from)."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.9.4 fr-bare-street overlay + code+config from R2 + pre-seeding v193a3 step-080000...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    src = f"{VOL_MOUNT}/output-v193a3-anchor-absorption-s42/checkpoints/step-080000"
+    dst = f"{VOL_MOUNT}/output-v194-fr-bare-street-s42/checkpoints/step-080000"
+    if not os.path.isdir(src):
+        raise RuntimeError(f"v193a3 step-080000 checkpoint missing at {src} — cannot resume")
+    if os.path.isdir(dst):
+        print("  v194 pre-seed already present (skip copy)")
+    else:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copytree(src, dst)
+        print(f"  pre-seeded v193a3 step-080000 -> {dst}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv0.9.4 fr-bare-street sync + pre-seed complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.4-fr-bare-street.yaml"
+    print("  v1.9.4 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  fr-bare-street shard present:", os.path.isfile(f"{cdir}/train/part-fr-bare-street-train.parquet"))
+    base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
+    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  v194 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
 def push_artifact_r2(volume_path: str, r2_subpath: str):
     """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
 
