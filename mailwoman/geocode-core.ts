@@ -26,6 +26,7 @@ import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { hardCountryFor } from "@mailwoman/core/pipeline"
+import { normalize } from "@mailwoman/normalize"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
@@ -92,6 +93,13 @@ export interface GeocodeDeps {
 	 * clean win. Set `false` to restore the legacy raw-case parse.
 	 */
 	normalizeCase?: boolean
+	/**
+	 * Stage 1 deterministic preprocessing (`@mailwoman/normalize`: NFC + whitespace-collapse + punctuation) on the input
+	 * before parse. **Default `true`.** `createRuntimePipeline` runs this as a stage, but the drop-in servers
+	 * (nominatim/photon) call `geocodeAddress` directly — without it a double-spaced / odd-punctuation query was fragile
+	 * (`"Damrak 1, 1012 LG"` → unresolved). Idempotent; `false` opts out for callers that already normalized.
+	 */
+	normalizeInput?: boolean
 	/**
 	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound; `1` or `undefined`
 	 * keeps the raw half-segment heuristic. Accepts either a single multiplier (the legacy Travis 1.7) OR a per-region
@@ -287,8 +295,12 @@ export class ShardProvider {
  * should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
+	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
+	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
+	// raw for the result; the parse + placer see the normalized form.
+	const parseInput = deps.normalizeInput === false ? input : normalize(input).normalized
 	const tree = recognizeUsRegions(
-		await deps.classifier.parse(input, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
+		await deps.classifier.parse(parseInput, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
 	)
 	const stateSlug = regionSlugFromTree(tree)
 	const usShards = deps.shards?.(stateSlug) ?? {}
@@ -308,7 +320,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	let placedCountry: string | null = null
 
 	if (placeCountry) {
-		const placed = placeCountry(input)
+		const placed = placeCountry(parseInput)
 		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
