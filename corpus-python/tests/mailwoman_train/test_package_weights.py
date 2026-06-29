@@ -99,8 +99,7 @@ def test_readme_includes_phase_and_components():
     md = render_readme(
         locale="en-us",
         corpus_version="0.3.0",
-        eval_report={"per_component": {}, "n_entries": 0,
-                     "full_parse_exact_match": 0.0, "mean_token_confidence": 0.0},
+        eval_report={"per_component": {}, "n_entries": 0, "full_parse_exact_match": 0.0, "mean_token_confidence": 0.0},
         training_steps=50000,
         training_hardware="gfx1103",
         smoke=False,
@@ -117,8 +116,7 @@ def test_readme_smoke_warning_present_when_smoke():
     md = render_readme(
         locale="en-us",
         corpus_version="0.3.0",
-        eval_report={"per_component": {}, "n_entries": 0,
-                     "full_parse_exact_match": 0.0, "mean_token_confidence": 0.0},
+        eval_report={"per_component": {}, "n_entries": 0, "full_parse_exact_match": 0.0, "mean_token_confidence": 0.0},
         training_steps=10,
         training_hardware="cpu-test",
         smoke=True,

@@ -38,10 +38,9 @@ from mailwoman_train.phrase_priors import (  # noqa: E402
     PHRASE_BIE_DIM,
     PHRASE_FEATURE_DIM,
     PHRASE_KIND_DIM,
-    PHRASE_KINDS,
     PHRASE_KIND_TO_ID,
+    PHRASE_KINDS,
 )
-
 
 NUM_LABELS = len(ACTIVE_BIO_LABELS)
 VOCAB_SIZE = 64  # tiny — embeddings are toy
@@ -219,7 +218,7 @@ def test_predict_top_k_shapes_and_ordering():
         assert isinstance(row, list)
         assert 1 <= len(row) <= 5  # at least argmax; at most k
         # Descending score order.
-        for prev, curr in zip(row, row[1:]):
+        for prev, curr in zip(row, row[1:], strict=False):
             assert prev.score >= curr.score
         # Length matches mask.
         expected_length = int(batch["attention_mask"][b].sum().item())

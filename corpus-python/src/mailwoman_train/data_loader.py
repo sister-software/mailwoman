@@ -36,11 +36,9 @@ from __future__ import annotations
 import json
 import logging
 import random
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator, Sequence
-
-logger = logging.getLogger(__name__)
 
 import pyarrow.parquet as pq
 
@@ -49,6 +47,8 @@ from .config import Config, DataConfig
 from .labels import IGNORE_INDEX, active_components_present, locale_id
 from .relabel import AffixRelabelLexicon, relabel_row
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
+
+logger = logging.getLogger(__name__)
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
 
@@ -114,6 +114,7 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
     volume. Falls back to a glob over ``corpus_dir/split`` only when the manifest yields nothing
     usable."""
     import json
+
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
@@ -133,7 +134,7 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
                 continue
             # Stale absolute path (corpus moved): re-root the <split>/<file> tail under corpus_dir.
             parts = raw.parts
-            tail = Path(*parts[parts.index(split):]) if split in parts else Path(split) / raw.name
+            tail = Path(*parts[parts.index(split) :]) if split in parts else Path(split) / raw.name
             cand = corpus_dir / tail
             if cand.exists():
                 resolved.append(cand)
@@ -148,7 +149,8 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
         if resolved and missing:
             raise FileNotFoundError(
                 f"MANIFEST declares {declared} '{split}' shards but {len(missing)} are unresolvable "
-                f"(as-is AND re-rooted under {corpus_dir}):\n  " + "\n  ".join(missing[:10])
+                f"(as-is AND re-rooted under {corpus_dir}):\n  "
+                + "\n  ".join(missing[:10])
                 + ("\n  ..." if len(missing) > 10 else "")
             )
         if resolved:
@@ -377,11 +379,7 @@ def _raw_row_stream(
 
     if source_weights is not None:
         dropped = {src for src in by_source if source_weights.get(src, 0) <= 0}
-        by_source = {
-            src: shards
-            for src, shards in by_source.items()
-            if source_weights.get(src, 0) > 0
-        }
+        by_source = {src: shards for src, shards in by_source.items() if source_weights.get(src, 0) > 0}
         if dropped:
             logger.info("Dropped %d zero-weighted sources: %s", len(dropped), dropped)
         if not by_source:
@@ -402,8 +400,7 @@ def _raw_row_stream(
         for src, shards in by_source.items()
     }
     weights: dict[str, float] = {
-        src: float(source_weights[src]) if source_weights is not None else 1.0
-        for src in iters
+        src: float(source_weights[src]) if source_weights is not None else 1.0 for src in iters
     }
 
     while iters:
@@ -415,7 +412,7 @@ def _raw_row_stream(
             cum.append(total)
         r = rng.random() * total
         chosen = sources[-1]
-        for src, c in zip(sources, cum):
+        for src, c in zip(sources, cum, strict=True):
             if r < c:
                 chosen = src
                 break
@@ -439,7 +436,7 @@ def iter_rows(
     augment_region_prob: float = 0.0,
     augment_glue_prob: float = 0.0,
     augment_case_prob: float = 0.0,
-    affix_relabel_lexicon: "AffixRelabelLexicon | None" = None,
+    affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
     """Yield rows from parquet shards, filtered + shuffled.
@@ -694,9 +691,7 @@ def verify_tokenizer_alignment(
         try:
             whitespace_spans(raw, toks)
         except ValueError as exc:
-            raise RuntimeError(
-                f"corpus tokenizer invariant broken at row {i} of shard {shard}: {exc}"
-            ) from exc
+            raise RuntimeError(f"corpus tokenizer invariant broken at row {i} of shard {shard}: {exc}") from exc
         # Smoke the SP encoder so a mis-pointed tokenizer.model fails fast.
         tokenizer.encode_with_spans(raw)
 

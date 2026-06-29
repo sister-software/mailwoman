@@ -64,8 +64,9 @@ def test_off_model_with_anchor_args_raises():
     ids = torch.randint(1, 100, (2, 8))
     mask = torch.ones(2, 8, dtype=torch.long)
     with pytest.raises(ValueError, match="use_postcode_anchor=False"):
-        off(ids, attention_mask=mask, anchor_features=torch.randn(2, 8, ANCHOR_DIM),
-            anchor_confidence=torch.zeros(2, 8))
+        off(
+            ids, attention_mask=mask, anchor_features=torch.randn(2, 8, ANCHOR_DIM), anchor_confidence=torch.zeros(2, 8)
+        )
 
 
 def test_off_model_is_unchanged():
@@ -88,6 +89,7 @@ def test_save_load_round_trips_the_channel():
 
 
 # --- Dual-injection (#327, v0.9.4): the SAME anchor also at position 0 -------------------------------
+
 
 def _dual_fixture():
     """A dual-injection model sharing a single-injection model's weights (flag is the ONLY difference)."""

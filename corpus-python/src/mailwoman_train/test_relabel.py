@@ -13,14 +13,36 @@ from .relabel import AffixRelabelLexicon, relabel_row, relabel_spans, split_stre
 
 LEX = AffixRelabelLexicon(
     directionals={
-        "n": "N", "north": "N", "s": "S", "south": "S", "e": "E", "east": "E", "w": "W", "west": "W",
-        "ne": "NE", "northeast": "NE", "nw": "NW", "northwest": "NW",
-        "se": "SE", "southeast": "SE", "sw": "SW", "southwest": "SW",
+        "n": "N",
+        "north": "N",
+        "s": "S",
+        "south": "S",
+        "e": "E",
+        "east": "E",
+        "w": "W",
+        "west": "W",
+        "ne": "NE",
+        "northeast": "NE",
+        "nw": "NW",
+        "northwest": "NW",
+        "se": "SE",
+        "southeast": "SE",
+        "sw": "SW",
+        "southwest": "SW",
     },
     suffixes={
-        "st": "STREET", "street": "STREET", "ave": "AVENUE", "avenue": "AVENUE",
-        "rd": "ROAD", "road": "ROAD", "dr": "DRIVE", "drive": "DRIVE",
-        "park": "PARK", "hill": "HILL", "ln": "LANE", "lane": "LANE",
+        "st": "STREET",
+        "street": "STREET",
+        "ave": "AVENUE",
+        "avenue": "AVENUE",
+        "rd": "ROAD",
+        "road": "ROAD",
+        "dr": "DRIVE",
+        "drive": "DRIVE",
+        "park": "PARK",
+        "hill": "HILL",
+        "ln": "LANE",
+        "lane": "LANE",
     },
     version="test",
 )
@@ -84,8 +106,13 @@ class TestRelabelRow:
         }
         assert relabel_row(row, LEX) is True
         assert row["labels"] == [
-            "B-house_number", "B-street_prefix", "B-street", "B-street_suffix",
-            "B-locality", "B-region", "B-postcode",
+            "B-house_number",
+            "B-street_prefix",
+            "B-street",
+            "B-street_suffix",
+            "B-locality",
+            "B-region",
+            "B-postcode",
         ]
 
     def test_multiword_name_keeps_bio_chain(self):
@@ -120,8 +147,13 @@ class TestRelabelRow:
         }
         assert relabel_row(row, LEX) is True
         assert row["labels"] == [
-            "B-street_prefix", "B-street", "B-street_suffix", "O",
-            "B-street_prefix", "B-street", "B-street_suffix",
+            "B-street_prefix",
+            "B-street",
+            "B-street_suffix",
+            "O",
+            "B-street_prefix",
+            "B-street",
+            "B-street_suffix",
         ]
 
 
@@ -130,10 +162,7 @@ class TestRelabelSpans:
 
     @staticmethod
     def _slices(row):
-        return [
-            (t, row["raw"][s:e])
-            for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"])
-        ]
+        return [(t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)]
 
     def test_splits_street_span_by_char_arithmetic(self):
         row = {

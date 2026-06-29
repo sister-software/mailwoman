@@ -101,7 +101,7 @@ def build_model_card(
     }
 
 
-def export_crf_transitions(model: "torch.nn.Module", *, crf_loss_weight: float = 0.0) -> dict | None:
+def export_crf_transitions(model: torch.nn.Module, *, crf_loss_weight: float = 0.0) -> dict | None:
     """Extract learned CRF transition parameters from a trained model.
 
     Returns None if the model has no CRF module (CE-only training) or if
@@ -138,12 +138,8 @@ def write_package(
     package_dir.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(int8_model_path, package_dir / "model.onnx")
     shutil.copyfile(tokenizer_model_path, package_dir / "tokenizer.model")
-    (package_dir / "model-card.json").write_text(
-        json.dumps(model_card, indent=2) + "\n", encoding="utf-8"
-    )
-    (package_dir / "package.json").write_text(
-        json.dumps(package_json, indent=2) + "\n", encoding="utf-8"
-    )
+    (package_dir / "model-card.json").write_text(json.dumps(model_card, indent=2) + "\n", encoding="utf-8")
+    (package_dir / "package.json").write_text(json.dumps(package_json, indent=2) + "\n", encoding="utf-8")
     (package_dir / "README.md").write_text(readme_md, encoding="utf-8")
     if crf_transitions is not None:
         (package_dir / "crf-transitions.json").write_text(
@@ -220,10 +216,7 @@ def _components_supported_blurb() -> str:
     if ACTIVE_TAGS == STAGE2_TAGS:
         coarse = " / ".join(STAGE1_COARSE_TAGS)
         fine = " / ".join(STAGE2_FINE_TAGS)
-        return (
-            f"Stage 2 ships coarse ({coarse}) plus fine-grained {fine}. "
-            "Token classifier emits 21 BIO labels."
-        )
+        return f"Stage 2 ships coarse ({coarse}) plus fine-grained {fine}. Token classifier emits 21 BIO labels."
     if ACTIVE_TAGS == STAGE1_COARSE_TAGS:
         return (
             "Stage 1 ships coarse-only: " + " / ".join(STAGE1_COARSE_TAGS) + ". "

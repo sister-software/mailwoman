@@ -59,15 +59,13 @@ import json
 import subprocess
 import sys
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 try:
     import sentencepiece as spm
 except ImportError as exc:  # pragma: no cover
-    sys.stderr.write(
-        "missing sentencepiece — install via `pip install -e .[dev]` from packages/corpus-python\n"
-    )
+    sys.stderr.write("missing sentencepiece — install via `pip install -e .[dev]` from packages/corpus-python\n")
     raise SystemExit(2) from exc
 
 

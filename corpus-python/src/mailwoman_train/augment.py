@@ -42,7 +42,7 @@ corpora) pass through the legacy token path unchanged; a PARTIAL triple raises.
 from __future__ import annotations
 
 import random
-from typing import Iterator
+from collections.abc import Iterator
 
 from .tokenizer import whitespace_spans
 
@@ -129,10 +129,9 @@ def row_span_triple(row: dict) -> tuple[list[int], list[int], list[str]] | None:
     if not any(present):
         return None
     if not all(present):
-        missing = [k for k, p in zip(SPAN_KEYS, present) if not p]
+        missing = [k for k, p in zip(SPAN_KEYS, present, strict=True) if not p]
         raise ValueError(
-            f"corrupt row: partial char-offset span triple (#519) — missing {missing} "
-            f"(raw={row.get('raw')!r})"
+            f"corrupt row: partial char-offset span triple (#519) — missing {missing} (raw={row.get('raw')!r})"
         )
     starts, ends, tags = values
     if len(starts) != len(ends) or len(starts) != len(tags):
@@ -177,7 +176,7 @@ def splice_expansion(row: dict, idx: int, expansion: str) -> dict:
         starts, ends, tags = triple
         new_starts: list[int] = []
         new_ends: list[int] = []
-        for start, end in zip(starts, ends):
+        for start, end in zip(starts, ends, strict=True):
             if end <= s:
                 # Entirely before the edit.
                 new_starts.append(start)
@@ -250,7 +249,7 @@ def glue_region_postcode(row: dict, idx: int) -> dict:
         starts, ends, tags = triple
         new_starts: list[int] = []
         new_ends: list[int] = []
-        for start, end in zip(starts, ends):
+        for start, end in zip(starts, ends, strict=True):
             if start < postcode_begin < end:
                 raise ValueError(
                     f"corrupt row: span [{start}, {end}) straddles the glue gap "
@@ -304,9 +303,7 @@ def augment_row(
 
     # Directional expansion: find directional tokens and expand one.
     if rng.random() < directional_prob:
-        directional_indices = [
-            i for i, t in enumerate(tokens) if t in DIRECTIONALS
-        ]
+        directional_indices = [i for i, t in enumerate(tokens) if t in DIRECTIONALS]
         if directional_indices:
             idx = rng.choice(directional_indices)
             yield splice_expansion(row, idx, DIRECTIONALS[tokens[idx]])
@@ -332,9 +329,7 @@ def augment_row(
     # Region-abbreviation expansion: find region-labeled abbreviations and expand one.
     if rng.random() < region_prob:
         region_indices = [
-            i
-            for i, (t, l) in enumerate(zip(tokens, labels))
-            if t in US_STATES and l in ("B-region", "I-region")
+            i for i, (t, lab) in enumerate(zip(tokens, labels, strict=True)) if t in US_STATES and lab in ("B-region", "I-region")
         ]
         if region_indices:
             idx = rng.choice(region_indices)

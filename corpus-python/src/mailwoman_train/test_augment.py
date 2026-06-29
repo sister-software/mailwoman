@@ -243,10 +243,7 @@ def test_glued_raw_projects_split_labels_onto_pieces():
 
 def _slices(row: dict) -> list[tuple[str, str]]:
     """(tag, raw slice) pairs for a row's span triple."""
-    return [
-        (t, row["raw"][s:e])
-        for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"])
-    ]
+    return [(t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)]
 
 
 def _spanned_directional_row() -> dict:
@@ -265,7 +262,7 @@ def _spanned_directional_row() -> dict:
 def _assert_span_invariants(row: dict) -> None:
     """The #519 triple invariants: in-bounds, sorted ascending by start, non-overlapping."""
     prev_end = 0
-    for s, e in zip(row["span_starts"], row["span_ends"]):
+    for s, e in zip(row["span_starts"], row["span_ends"], strict=True):
         assert 0 <= s < e <= len(row["raw"])
         assert s >= prev_end
         prev_end = e

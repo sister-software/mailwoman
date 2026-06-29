@@ -29,7 +29,7 @@ def test_whitespace_spans_handles_repeats():
     second_buffalo_idx = raw.index("Buffalo,")
     assert spans[6] == (second_buffalo_idx, second_buffalo_idx + len("Buffalo,"))
     # Sanity-check left-to-right monotonicity: every span starts at or after the previous end.
-    for prev, cur in zip(spans, spans[1:]):
+    for prev, cur in zip(spans, spans[1:], strict=False):
         assert cur[0] >= prev[1]
 
 

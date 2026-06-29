@@ -22,8 +22,8 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 from .tokenizer import PieceSpan
 
@@ -57,7 +57,7 @@ class GazetteerLexicon:
 
 def load_gazetteer_lexicon(path: str) -> GazetteerLexicon:
     """Load the codex-generated lexicon JSON once at loader init."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         raw = json.load(f)
     return GazetteerLexicon(
         feature_dim=int(raw["feature_dim"]),

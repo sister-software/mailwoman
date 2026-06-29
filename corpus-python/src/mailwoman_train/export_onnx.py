@@ -241,7 +241,5 @@ def verify_parity(
             max_diff = max(max_diff, diff)
             n += 1
     if max_diff > atol:
-        raise RuntimeError(
-            f"ONNX/PyTorch parity broken: max_abs_diff={max_diff} > tolerance={atol}"
-        )
+        raise RuntimeError(f"ONNX/PyTorch parity broken: max_abs_diff={max_diff} > tolerance={atol}")
     return {"samples": n, "max_abs_diff": max_diff, "tolerance": atol}

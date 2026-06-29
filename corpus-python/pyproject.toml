@@ -19,7 +19,7 @@ dependencies = [
 # Heavy ML deps live under [train] so plain tokenizer-training and corpus utilities
 # can install without dragging PyTorch / Transformers / ONNX onto every machine.
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "ruff==0.15.20"]
 train = [
 	# Pinned to the exact export/quant toolchain that produced the v4.1.0 ONNX artifact
 	# (2026-06-09). Unpinned `>=` drifted (transformers→5.x, onnx→1.21) and broke int8
@@ -46,3 +46,21 @@ where = ["src"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+# Ruff — the Python analog of the repo's oxlint + oxfmt setup (lint + format in one fast tool).
+[tool.ruff]
+# Mirror the JS house style: 120-column width (double quotes are Ruff's default).
+line-length = 120
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+# Ruff's defaults (pyflakes `F` + pycodestyle `E`) plus import sorting (`I`), pyupgrade
+# (`UP`), and bugbear (`B`). Line length is enforced by the formatter, so the linter's
+# `E501` is disabled to avoid double-reporting long lines it can't wrap (URLs, etc.).
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+# Format code blocks inside docstrings too (this package is docstring-heavy).
+docstring-code-format = true
