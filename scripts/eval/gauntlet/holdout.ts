@@ -24,9 +24,7 @@ import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
 
 const N = Number(arg("n", "300"))
 const CANDIDATE = arg("candidate", "")
-const BAN = `${mailwomanDataRoot()}/corpus/staging/ban-france.csv`
-// BAN columns: numero(2) rep(3) nom_voie(4) nom_commune(7) lon(12) lat(13)
-const C = { numero: 2, rep: 3, voie: 4, commune: 7, lon: 12, lat: 13 }
+const SOURCE = arg("source", "fr").toLowerCase()
 const TOLS = [0.1, 0.5, 5] as const // rooftop / street / locality (km)
 const GATE_TOL = 5 // the z-test runs at the locality bucket (the dominant resolvable tier)
 
@@ -36,25 +34,72 @@ interface Sample {
 	lon: number
 }
 
-/** Reservoir-sample N rows with truth coords from the (streamed) BAN csv — a genuinely fresh draw each run. */
+/**
+ * Held-out truth sources — fresh-draw, NOT in mailwoman's training corpus, so they measure generalization. Each parses
+ * a semicolon row of its staging file into a BARE-form query (no postcode — the hard case the tail exercises) + truth
+ * coord. FR/BAN streams the 5 GB file; the smaller pools (US/FDIC, ~77k) are the fast draw. Add a source by dropping a
+ * staging file + a parser here.
+ */
+interface SourceDef {
+	file: string
+	label: string
+	parse(cols: string[]): Sample | null
+}
+const SOURCES: Record<string, SourceDef> = {
+	fr: {
+		file: `${mailwomanDataRoot()}/corpus/staging/ban-france.csv`,
+		label: "FR/BAN",
+		// BAN columns: numero(2) nom_voie(4) nom_commune(7) lon(12) lat(13)
+		parse(c) {
+			const voie = (c[4] ?? "").trim()
+			const numero = (c[2] ?? "").trim()
+			const commune = (c[7] ?? "").trim()
+			const lat = Number(c[13])
+			const lon = Number(c[12])
+
+			if (!voie || !numero || !commune || !voie.includes(" ") || !Number.isFinite(lat) || !Number.isFinite(lon))
+				return null
+
+			return { query: `${numero} ${voie}, ${commune}`, lat, lon }
+		},
+	},
+	us: {
+		file: `${mailwomanDataRoot()}/corpus/staging/fdic-us.csv`,
+		label: "US/FDIC",
+		// fdic-us.csv columns: address(0) city(1) state(2) zip(3) lat(4) lon(5)
+		parse(c) {
+			const address = (c[0] ?? "").trim()
+			const city = (c[1] ?? "").trim()
+			const state = (c[2] ?? "").trim()
+			const lat = Number(c[4])
+			const lon = Number(c[5])
+
+			if (!address || !city || !state || !Number.isFinite(lat) || !Number.isFinite(lon)) return null
+
+			return { query: `${address}, ${city}, ${state}`, lat, lon }
+		},
+	},
+}
+const selected = SOURCES[SOURCE]
+
+if (!selected) {
+	console.error(`Unknown --source "${SOURCE}". Known: ${Object.keys(SOURCES).join(", ")}`)
+	process.exit(2)
+}
+const src: SourceDef = selected // typed so the draw() closure doesn't re-widen it to possibly-undefined
+
+/** Reservoir-sample N rows with truth coords from the selected source — a genuinely fresh draw each run. */
 async function draw(n: number): Promise<Sample[]> {
-	const rl = createInterface({ input: createReadStream(BAN, { encoding: "utf8" }), crlfDelay: Infinity })
+	const rl = createInterface({ input: createReadStream(src.file, { encoding: "utf8" }), crlfDelay: Infinity })
 	const res: Sample[] = []
 	let seen = 0
 	let line = 0
 
 	for await (const raw of rl) {
 		if (line++ === 0) continue // header
-		const c = raw.split(";")
-		const voie = (c[C.voie] ?? "").trim()
-		const numero = (c[C.numero] ?? "").trim()
-		const commune = (c[C.commune] ?? "").trim()
-		const lat = Number(c[C.lat])
-		const lon = Number(c[C.lon])
+		const s = src.parse(raw.split(";"))
 
-		if (!voie || !numero || !commune || !voie.includes(" ") || !Number.isFinite(lat) || !Number.isFinite(lon)) continue
-		// BARE form, no postcode — the hard case the tail actually exercises.
-		const s: Sample = { query: `${numero} ${voie}, ${commune}`, lat, lon }
+		if (!s) continue
 		seen++
 
 		if (res.length < n) res.push(s)
@@ -100,7 +145,7 @@ if (!CANDIDATE) {
 	console.error("Usage: holdout.ts --candidate <model.onnx> [--n 300]")
 	process.exit(2)
 }
-console.error(`[gauntlet/holdout] drawing ${N} fresh BAN addresses…`)
+console.error(`[gauntlet/holdout] drawing ${N} fresh ${src.label} addresses…`)
 const sample = await draw(N)
 console.error(`[gauntlet/holdout] scoring production vs candidate on the SAME ${sample.length} addresses…`)
 
@@ -116,14 +161,18 @@ const n = sample.length
 const gateIdx = TOLS.indexOf(GATE_TOL as (typeof TOLS)[number])
 const z = zStat(cand.hits[gateIdx]!, prod.hits[gateIdx]!, n)
 
-console.log(`\n=== Gauntlet · held-out fresh draw (FR/BAN, n=${n}) ===`)
+console.log(`\n=== Gauntlet · held-out fresh draw (${src.label}, n=${n}) ===`)
 console.log(`  tolerance     production   candidate`)
 TOLS.forEach((t, i) => {
-	console.log(`  ≤${String(t).padEnd(5)}km   ${String(prod.hits[i]).padStart(8)}     ${String(cand.hits[i]).padStart(8)}`)
+	console.log(
+		`  ≤${String(t).padEnd(5)}km   ${String(prod.hits[i]).padStart(8)}     ${String(cand.hits[i]).padStart(8)}`
+	)
 })
 console.log(`  resolved      ${String(prod.resolved).padStart(8)}     ${String(cand.resolved).padStart(8)}`)
 console.log(`\n  z (candidate − production) @ ≤${GATE_TOL}km: ${z.toFixed(2)}`)
 // Block ONLY on a significant regression. Candidate ahead or within noise → pass.
 const pass = z >= -1.96
-console.log(`  verdict: ${pass ? "PASS (candidate not significantly worse)" : "FAIL (candidate significantly worse — do not ship)"}`)
+console.log(
+	`  verdict: ${pass ? "PASS (candidate not significantly worse)" : "FAIL (candidate significantly worse — do not ship)"}`
+)
 process.exit(pass ? 0 : 1)
