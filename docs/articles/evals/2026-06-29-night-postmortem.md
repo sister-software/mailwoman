@@ -190,8 +190,8 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
 | | |
 |---|---|
 | Shift window | 02:00–16:00 UTC |
-| Models trained | 0 (release of v194 from the day) |
-| Modal $ | $0 so far ($20 budget) |
+| Models trained | 1 — the v195 case-aug probe (2k steps), which VALIDATED #261 (US lowercase fixed) |
+| Modal $ | ~$1.5 — the v195 probe ($20 budget) |
 | CI failures | 2 main reds (the #252 second-test-file miss), caught + fixed in ~25 min; #828/#830 caught pre-merge |
 | Demo regressions | 0 |
 | Coordinate bugs found | 3 — #832 + #833 real (model-independent); #831 a stale-symlink false-positive (closed) |
