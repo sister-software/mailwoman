@@ -38,6 +38,21 @@ The expected runtime is Python 3.10+. The `[train]` extra pulls CPU-default PyTo
 you want CUDA, install `torch` separately from the appropriate wheel index _before_ installing
 this package — pip's resolver will keep the CUDA build.
 
+## Linting & formatting
+
+[Ruff](https://docs.astral.sh/ruff/) — the Python counterpart to the repo's `oxlint` + `oxfmt`
+(lint and format in one tool). Config is in `pyproject.toml` under `[tool.ruff]`. Ruff ships in the
+`[dev]` extra, so it's present after `pip install -e .[dev]` (or `uv sync`).
+
+```sh
+ruff check .            # lint        (oxlint)
+ruff check --fix .      # lint + fix  (oxlint --fix)
+ruff format .           # format      (oxfmt)
+ruff format --check .   # format check, for CI
+```
+
+(With uv, prefix any of the above with `uv run`.)
+
 ### Lab GPU (Radeon 780M / gfx1103) recipe
 
 For the lab's specific iGPU you must use the ROCm 6.2 wheel and set the override env var:

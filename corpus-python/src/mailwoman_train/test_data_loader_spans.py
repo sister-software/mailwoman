@@ -106,7 +106,16 @@ def test_null_span_value_in_span_shard_raises(tmp_path: Path) -> None:
 def test_empty_triple_is_a_valid_all_o_row(tmp_path: Path) -> None:
     corpus = _write_corpus(
         tmp_path,
-        [_row(raw="hello world", tokens=["hello", "world"], labels=["O", "O"], span_starts=[], span_ends=[], span_tags=[])],
+        [
+            _row(
+                raw="hello world",
+                tokens=["hello", "world"],
+                labels=["O", "O"],
+                span_starts=[],
+                span_ends=[],
+                span_tags=[],
+            )
+        ],
     )
     rows = _iter(corpus)
     assert rows[0]["span_starts"] == []
@@ -150,10 +159,10 @@ def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Pa
     assert len(rows) == 2  # original + expanded copy
 
     def slices(r: dict) -> list[tuple[str, str]]:
-        return [(t, r["raw"][s:e]) for s, e, t in zip(r["span_starts"], r["span_ends"], r["span_tags"])]
+        return [(t, r["raw"][s:e]) for s, e, t in zip(r["span_starts"], r["span_ends"], r["span_tags"], strict=True)]
 
     for r in rows:
-        for s, e in zip(r["span_starts"], r["span_ends"]):
+        for s, e in zip(r["span_starts"], r["span_ends"], strict=True):
             assert 0 <= s < e <= len(r["raw"])
 
     original = next(r for r in rows if r["raw"] == "1234 SE Division St")

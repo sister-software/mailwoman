@@ -52,7 +52,7 @@ class AffixRelabelLexicon:
     version: str
 
     @classmethod
-    def load(cls, path: str | Path) -> "AffixRelabelLexicon":
+    def load(cls, path: str | Path) -> AffixRelabelLexicon:
         p = Path(path)
         if not p.is_file():
             raise FileNotFoundError(f"affix relabel lexicon not found: {p}")
@@ -157,7 +157,7 @@ def relabel_spans(row: dict, lex: AffixRelabelLexicon) -> bool:
     new_ends: list[int] = []
     new_tags: list[str] = []
     changed = False
-    for start, end, tag in zip(starts, ends, tags):
+    for start, end, tag in zip(starts, ends, tags, strict=True):
         if tag != "street":
             new_starts.append(start)
             new_ends.append(end)
@@ -204,9 +204,7 @@ def _audit(lexicon_path: str, corpus_dir: str, rows: int, sample: int) -> None:
     table = pq.read_table(rng.choice(files), columns=["raw", "tokens", "labels"]).slice(0, rows)
     total = with_street = split_count = prefix_count = 0
     samples: list[tuple[str, list[str], list[str]]] = []
-    for raw, tokens, labels in zip(
-        table["raw"].to_pylist(), table["tokens"].to_pylist(), table["labels"].to_pylist()
-    ):
+    for raw, tokens, labels in zip(table["raw"].to_pylist(), table["tokens"].to_pylist(), table["labels"].to_pylist(), strict=True):
         total += 1
         if "B-street" not in labels:
             continue
@@ -225,7 +223,7 @@ def _audit(lexicon_path: str, corpus_dir: str, rows: int, sample: int) -> None:
     print(f"\n== sample of {len(samples)} relabeled rows ==")
     for raw, tokens, labels in samples:
         pairs = " ".join(
-            f"{t}/{l.removeprefix('B-').removeprefix('I-')}" for t, l in zip(tokens, labels) if "street" in l
+            f"{t}/{lab.removeprefix('B-').removeprefix('I-')}" for t, lab in zip(tokens, labels, strict=True) if "street" in lab
         )
         print(f"  {raw}\n    -> {pairs}")
 

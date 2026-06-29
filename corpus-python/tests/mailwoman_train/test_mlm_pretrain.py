@@ -53,9 +53,7 @@ def test_mask_tokens_respects_padding_and_targets() -> None:
     am = torch.ones(b, s, dtype=torch.long)
     am[:, 18:] = 0  # last 6 positions are padding
 
-    masked, labels = mask_tokens(
-        ids, am, mask_prob=0.15, mask_token_id=UNK_ID, vocab_size=VOCAB_SIZE, generator=gen
-    )
+    masked, labels = mask_tokens(ids, am, mask_prob=0.15, mask_token_id=UNK_ID, vocab_size=VOCAB_SIZE, generator=gen)
 
     assert masked.shape == ids.shape
     assert labels.shape == ids.shape
@@ -73,10 +71,12 @@ def test_mask_tokens_respects_padding_and_targets() -> None:
 def test_mask_tokens_deterministic_under_generator() -> None:
     ids = torch.randint(2, VOCAB_SIZE, (8, 16))
     am = torch.ones(8, 16, dtype=torch.long)
-    a = mask_tokens(ids, am, mask_prob=0.15, mask_token_id=UNK_ID, vocab_size=VOCAB_SIZE,
-                    generator=torch.Generator().manual_seed(7))
-    b = mask_tokens(ids, am, mask_prob=0.15, mask_token_id=UNK_ID, vocab_size=VOCAB_SIZE,
-                    generator=torch.Generator().manual_seed(7))
+    a = mask_tokens(
+        ids, am, mask_prob=0.15, mask_token_id=UNK_ID, vocab_size=VOCAB_SIZE, generator=torch.Generator().manual_seed(7)
+    )
+    b = mask_tokens(
+        ids, am, mask_prob=0.15, mask_token_id=UNK_ID, vocab_size=VOCAB_SIZE, generator=torch.Generator().manual_seed(7)
+    )
     assert bool((a[0] == b[0]).all()) and bool((a[1] == b[1]).all())
 
 
@@ -104,12 +104,15 @@ def test_forward_mlm_adds_no_parameters_vs_supervised() -> None:
     model = _build_encoder()
     keys_before = set(model.state_dict().keys())
     # touch forward_mlm; it must not have lazily created any module/parameter
-    _ = model.forward_mlm(input_ids=torch.randint(2, VOCAB_SIZE, (2, 8)),
-                          attention_mask=torch.ones(2, 8, dtype=torch.long))
+    _ = model.forward_mlm(
+        input_ids=torch.randint(2, VOCAB_SIZE, (2, 8)), attention_mask=torch.ones(2, 8, dtype=torch.long)
+    )
     assert set(model.state_dict().keys()) == keys_before
     # supervised forward still works unchanged
-    sup = model(input_ids=torch.randint(2, VOCAB_SIZE, (2, 8)),
-                attention_mask=torch.ones(2, 8, dtype=torch.long),
-                labels=torch.randint(0, NUM_LABELS, (2, 8)))
+    sup = model(
+        input_ids=torch.randint(2, VOCAB_SIZE, (2, 8)),
+        attention_mask=torch.ones(2, 8, dtype=torch.long),
+        labels=torch.randint(0, NUM_LABELS, (2, 8)),
+    )
     assert sup.logits.shape == (2, 8, NUM_LABELS)
     assert torch.isfinite(sup.loss)

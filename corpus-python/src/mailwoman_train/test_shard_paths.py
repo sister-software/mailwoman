@@ -26,9 +26,7 @@ def test_full_resolution_passes(tmp_path: Path) -> None:
     corpus = _mk(tmp_path, [])
     shard = corpus / "train" / "part-0000.parquet"
     shard.write_bytes(b"x")
-    (corpus / "MANIFEST.json").write_text(
-        json.dumps({"shards": [{"split": "train", "path": str(shard)}]})
-    )
+    (corpus / "MANIFEST.json").write_text(json.dumps({"shards": [{"split": "train", "path": str(shard)}]}))
     assert _shard_paths(corpus, "train") == [shard]
 
 
@@ -47,10 +45,14 @@ def test_partial_resolution_raises_with_missing_list(tmp_path: Path) -> None:
     present.write_bytes(b"x")
     gone = "/data/other-corpus/train/part-9999.parquet"
     (corpus / "MANIFEST.json").write_text(
-        json.dumps({"shards": [
-            {"split": "train", "path": str(present)},
-            {"split": "train", "path": gone},
-        ]})
+        json.dumps(
+            {
+                "shards": [
+                    {"split": "train", "path": str(present)},
+                    {"split": "train", "path": gone},
+                ]
+            }
+        )
     )
     with pytest.raises(FileNotFoundError, match="part-9999"):
         _shard_paths(corpus, "train")

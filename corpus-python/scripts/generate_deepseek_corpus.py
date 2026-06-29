@@ -44,8 +44,6 @@ import concurrent.futures
 import hashlib
 import json
 import os
-import random
-import re
 import sys
 import time
 import urllib.error
@@ -53,7 +51,7 @@ import urllib.request
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 API_URL = "https://api.deepseek.com/v1/chat/completions"
 DEFAULT_MODEL = "deepseek-v4-flash"
@@ -244,7 +242,7 @@ def deepseek_call(body: dict[str, Any], api_key: str, max_retries: int = 5) -> d
     """POST one chat-completion. Retries 429/5xx with exponential backoff."""
     backoff = 2.0
     last_exc: Exception | None = None
-    for attempt in range(max_retries):
+    for _attempt in range(max_retries):
         req = urllib.request.Request(
             API_URL,
             data=json.dumps(body).encode(),
@@ -393,7 +391,7 @@ def emit_transliteration(args: argparse.Namespace) -> None:
         }
         try:
             resp = deepseek_call(body, api_key)
-        except Exception as e:
+        except Exception:
             return f"!RETRY:{batch.batch_id}", {"api_error": 1, "expected": len(batch.seeds)}
         content = resp["choices"][0]["message"].get("content") or ""
         finish = resp["choices"][0].get("finish_reason")
@@ -448,15 +446,21 @@ def emit_transliteration(args: argparse.Namespace) -> None:
             canonical_f.flush()
         # Persist raw response (without _seed_ stuff) for reproducibility.
         with raw_lock:
-            rawlog_f.write(json.dumps({
-                "batch_id": batch.batch_id,
-                "script_slug": batch.script_slug,
-                "seed_source_ids": [s["source_id"] for s in batch.seeds],
-                "model": args.model,
-                "finish_reason": finish,
-                "usage": resp.get("usage"),
-                "response_content": content,
-            }, ensure_ascii=False) + "\n")
+            rawlog_f.write(
+                json.dumps(
+                    {
+                        "batch_id": batch.batch_id,
+                        "script_slug": batch.script_slug,
+                        "seed_source_ids": [s["source_id"] for s in batch.seeds],
+                        "model": args.model,
+                        "finish_reason": finish,
+                        "usage": resp.get("usage"),
+                        "response_content": content,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
             rawlog_f.flush()
         # When the completion truncates (finish_reason=='length'), prefix the returned id with
         # "!RETRY:" so the checkpoint logic skips marking it done — the rows that DID parse are
@@ -488,7 +492,7 @@ def emit_transliteration(args: argparse.Namespace) -> None:
                 truncated = sum(v for k, v in stats.items() if k == "finish:length")
                 print(
                     f"  [{processed}/{len(pending)}] ok={stats['ok']} "
-                    f"reject={sum(v for k, v in stats.items() if k.startswith('reject') or k in ('api_error','bad-shape','index-out-of-range'))} "
+                    f"reject={sum(v for k, v in stats.items() if k.startswith('reject') or k in ('api_error', 'bad-shape', 'index-out-of-range'))} "
                     f"truncated={truncated} "
                     f"elapsed={elapsed:.0f}s  rps={rps:.1f}",
                     flush=True,
@@ -498,9 +502,11 @@ def emit_transliteration(args: argparse.Namespace) -> None:
     checkpoint_path.write_text(json.dumps({"done": sorted(done)}))
     canonical_f.close()
     rawlog_f.close()
-    print(f"\nTransliteration generation complete.")
+    print("\nTransliteration generation complete.")
     print(f"  ok rows: {stats['ok']}")
-    print(f"  rejects: {dict((k, v) for k, v in stats.items() if k.startswith('reject') or k in ('api_error','bad-shape','index-out-of-range'))}")
+    print(
+        f"  rejects: {dict((k, v) for k, v in stats.items() if k.startswith('reject') or k in ('api_error', 'bad-shape', 'index-out-of-range'))}"
+    )
     print(f"  output: {canonical_path}")
 
 
@@ -528,7 +534,7 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
     # Allocate per category by weight.
     weights = [c["weight"] for c in KRYPTONITE_CATEGORIES]
     wsum = sum(weights)
-    per_cat = {c["category"]: max(50, round(total * w / wsum)) for c, w in zip(KRYPTONITE_CATEGORIES, weights)}
+    per_cat = {c["category"]: max(50, round(total * w / wsum)) for c, w in zip(KRYPTONITE_CATEGORIES, weights, strict=True)}
     print(f"per-category target row counts: {per_cat}", flush=True)
 
     # Compose batches.
@@ -571,7 +577,7 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
         }
         try:
             resp = deepseek_call(body, api_key)
-        except Exception as e:
+        except Exception:
             return batch["batch_id"], {"api_error": 1, "expected": batch["n"]}
         content = resp["choices"][0]["message"].get("content") or ""
         finish = resp["choices"][0].get("finish_reason")
@@ -617,15 +623,21 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
                 canonical_f.write(json.dumps(c, ensure_ascii=False) + "\n")
             canonical_f.flush()
         with raw_lock:
-            rawlog_f.write(json.dumps({
-                "batch_id": batch["batch_id"],
-                "category": cat["category"],
-                "n_requested": batch["n"],
-                "model": args.model,
-                "finish_reason": finish,
-                "usage": resp.get("usage"),
-                "response_content": content,
-            }, ensure_ascii=False) + "\n")
+            rawlog_f.write(
+                json.dumps(
+                    {
+                        "batch_id": batch["batch_id"],
+                        "category": cat["category"],
+                        "n_requested": batch["n"],
+                        "model": args.model,
+                        "finish_reason": finish,
+                        "usage": resp.get("usage"),
+                        "response_content": content,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
             rawlog_f.flush()
         return batch["batch_id"], bstats
 
@@ -648,7 +660,7 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
                 rps = stats["ok"] / max(elapsed, 1)
                 print(
                     f"  [{processed}/{len(pending)}] ok={stats['ok']} "
-                    f"reject={sum(v for k, v in stats.items() if k.startswith('reject') or k in ('api_error','bad-shape'))} "
+                    f"reject={sum(v for k, v in stats.items() if k.startswith('reject') or k in ('api_error', 'bad-shape'))} "
                     f"elapsed={elapsed:.0f}s rps={rps:.1f}",
                     flush=True,
                 )
@@ -656,9 +668,11 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
     checkpoint_path.write_text(json.dumps({"done": sorted(done)}))
     canonical_f.close()
     rawlog_f.close()
-    print(f"\nKryptonite generation complete.")
+    print("\nKryptonite generation complete.")
     print(f"  ok rows: {stats['ok']}")
-    print(f"  rejects: {dict((k, v) for k, v in stats.items() if k.startswith('reject') or k in ('api_error','bad-shape'))}")
+    print(
+        f"  rejects: {dict((k, v) for k, v in stats.items() if k.startswith('reject') or k in ('api_error', 'bad-shape'))}"
+    )
     print(f"  output: {canonical_path}")
 
 

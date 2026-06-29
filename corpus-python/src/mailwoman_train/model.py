@@ -27,8 +27,6 @@ replaced wholesale.
 from __future__ import annotations
 
 import json
-import math
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +35,7 @@ from torch import nn
 
 from .config import Config
 from .crf import LinearChainCRF, TopKPath
-from .labels import ID_TO_LABEL, LABEL_TO_ID, ACTIVE_BIO_LABELS, IGNORE_INDEX, NUM_LOCALES
+from .labels import ACTIVE_BIO_LABELS, ID_TO_LABEL, IGNORE_INDEX, LABEL_TO_ID, NUM_LOCALES
 from .phrase_priors import PHRASE_FEATURE_DIM
 
 
@@ -115,7 +113,9 @@ class EncoderBlock(nn.Module):
         # Pre-norm attention.
         h = self.ln1(x)
         attn_out, _ = self.attn(
-            h, h, h,
+            h,
+            h,
+            h,
             key_padding_mask=key_padding_mask,
             need_weights=False,
         )
@@ -230,9 +230,7 @@ class MailwomanCoarseEncoder(nn.Module):
         # "per_token" sums NLL / total real tokens for a magnitude comparable to per-token
         # CE — eliminates the crf_loss_weight hand-tuning search v0.3.0 went through.
         if crf_normalization not in ("per_sequence", "per_token"):
-            raise ValueError(
-                f"crf_normalization must be 'per_sequence' or 'per_token', got {crf_normalization!r}"
-            )
+            raise ValueError(f"crf_normalization must be 'per_sequence' or 'per_token', got {crf_normalization!r}")
         self.crf_normalization = crf_normalization
         # v0.6.2 diagnostic flag: force the CRF forward (NLL + transition-table forward pass)
         # to compute in fp32 even when the surrounding autocast region is bf16. The 2026-05-28
@@ -246,16 +244,12 @@ class MailwomanCoarseEncoder(nn.Module):
         # the model to GPU + serializes with state_dict. None disables (uniform weights).
         if class_weights is not None:
             if class_weights.shape != (num_labels,):
-                raise ValueError(
-                    f"class_weights shape {tuple(class_weights.shape)} != expected ({num_labels},)"
-                )
+                raise ValueError(f"class_weights shape {tuple(class_weights.shape)} != expected ({num_labels},)")
             self.register_buffer("class_weights", class_weights.clone().detach().float())
         else:
             self.class_weights = None
 
-        self.token_embeddings = nn.Embedding(
-            vocab_size, hidden_size, padding_idx=pad_token_id
-        )
+        self.token_embeddings = nn.Embedding(vocab_size, hidden_size, padding_idx=pad_token_id)
         self.position_embeddings = nn.Embedding(max_position_embeddings, hidden_size)
         self.input_dropout = nn.Dropout(hidden_dropout_prob)
         self.input_ln = nn.LayerNorm(hidden_size)
@@ -266,9 +260,7 @@ class MailwomanCoarseEncoder(nn.Module):
         # bit-identical for back-compat ablations).
         self.phrase_input_projection: nn.Linear | None
         if self.use_phrase_priors:
-            self.phrase_input_projection = nn.Linear(
-                hidden_size + self.phrase_feature_dim, hidden_size, bias=True
-            )
+            self.phrase_input_projection = nn.Linear(hidden_size + self.phrase_feature_dim, hidden_size, bias=True)
         else:
             self.phrase_input_projection = None
 
@@ -319,6 +311,7 @@ class MailwomanCoarseEncoder(nn.Module):
         if self.use_conventions_loss_mask:
             from .conventions import build_forbidden_mask
             from .labels import LABEL_TO_ID
+
             self.register_buffer(
                 "conventions_forbidden", build_forbidden_mask(LABEL_TO_ID, num_labels), persistent=False
             )
@@ -333,9 +326,12 @@ class MailwomanCoarseEncoder(nn.Module):
                 nn.Linear(256, 5),
             )
             from .labels import LABEL_TO_ID
+
             affix_ids = [
-                LABEL_TO_ID["B-street_prefix"], LABEL_TO_ID["I-street_prefix"],
-                LABEL_TO_ID["B-street_suffix"], LABEL_TO_ID["I-street_suffix"],
+                LABEL_TO_ID["B-street_prefix"],
+                LABEL_TO_ID["I-street_prefix"],
+                LABEL_TO_ID["B-street_suffix"],
+                LABEL_TO_ID["I-street_suffix"],
             ]
             self.register_buffer("affix_label_ids", torch.tensor(affix_ids, dtype=torch.long), persistent=False)
             # labels -> affix-class targets lookup: default 0 (O-or-other), affix ids -> 1..4.
@@ -413,13 +409,10 @@ class MailwomanCoarseEncoder(nn.Module):
         anchor_confidence: torch.Tensor | None = None,
         gazetteer_features: torch.Tensor | None = None,
         gazetteer_confidence: torch.Tensor | None = None,
-    ) -> "_CoarseEncoderOutput":
+    ) -> _CoarseEncoderOutput:
         bsz, seq = input_ids.shape
         if seq > self.max_position_embeddings:
-            raise ValueError(
-                f"sequence length {seq} exceeds max_position_embeddings "
-                f"{self.max_position_embeddings}"
-            )
+            raise ValueError(f"sequence length {seq} exceeds max_position_embeddings {self.max_position_embeddings}")
         pos = torch.arange(seq, device=input_ids.device).unsqueeze(0).expand(bsz, seq)
         h = self.token_embeddings(input_ids) + self.position_embeddings(pos)
         # v0.5.0 thread C: optional phrase-prior conditioning. ``phrase_features`` is the
@@ -431,13 +424,15 @@ class MailwomanCoarseEncoder(nn.Module):
         if self.phrase_input_projection is not None:
             if phrase_features is None:
                 phrase_features = torch.zeros(
-                    bsz, seq, self.phrase_feature_dim,
-                    dtype=h.dtype, device=h.device,
+                    bsz,
+                    seq,
+                    self.phrase_feature_dim,
+                    dtype=h.dtype,
+                    device=h.device,
                 )
             elif phrase_features.shape != (bsz, seq, self.phrase_feature_dim):
                 raise ValueError(
-                    f"phrase_features shape {tuple(phrase_features.shape)} != "
-                    f"({bsz}, {seq}, {self.phrase_feature_dim})"
+                    f"phrase_features shape {tuple(phrase_features.shape)} != ({bsz}, {seq}, {self.phrase_feature_dim})"
                 )
             else:
                 phrase_features = phrase_features.to(h.dtype)
@@ -457,14 +452,11 @@ class MailwomanCoarseEncoder(nn.Module):
         # regime switch. Absent features default to zeros — the well-defined "no anchor" inference path.
         if self.anchor_projection is not None and self.anchor_token_embedding is not None:
             if anchor_features is None or anchor_confidence is None:
-                anchor_features = torch.zeros(
-                    bsz, seq, self.anchor_feature_dim, dtype=h.dtype, device=h.device
-                )
+                anchor_features = torch.zeros(bsz, seq, self.anchor_feature_dim, dtype=h.dtype, device=h.device)
                 anchor_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
             elif anchor_features.shape != (bsz, seq, self.anchor_feature_dim):
                 raise ValueError(
-                    f"anchor_features shape {tuple(anchor_features.shape)} != "
-                    f"({bsz}, {seq}, {self.anchor_feature_dim})"
+                    f"anchor_features shape {tuple(anchor_features.shape)} != ({bsz}, {seq}, {self.anchor_feature_dim})"
                 )
             anchor_vec = self.anchor_projection(anchor_features.to(h.dtype)) + self.anchor_token_embedding
             h = h + anchor_confidence.to(h.dtype).unsqueeze(-1) * anchor_vec
@@ -495,18 +487,14 @@ class MailwomanCoarseEncoder(nn.Module):
         # switch). Span-local by construction; no first-token pooling (clues are positional facts).
         if self.gazetteer_projection is not None and self.gazetteer_token_embedding is not None:
             if gazetteer_features is None or gazetteer_confidence is None:
-                gazetteer_features = torch.zeros(
-                    bsz, seq, self.gazetteer_feature_dim, dtype=h.dtype, device=h.device
-                )
+                gazetteer_features = torch.zeros(bsz, seq, self.gazetteer_feature_dim, dtype=h.dtype, device=h.device)
                 gazetteer_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
             elif gazetteer_features.shape != (bsz, seq, self.gazetteer_feature_dim):
                 raise ValueError(
                     f"gazetteer_features shape {tuple(gazetteer_features.shape)} != "
                     f"({bsz}, {seq}, {self.gazetteer_feature_dim})"
                 )
-            gaz_vec = (
-                self.gazetteer_projection(gazetteer_features.to(h.dtype)) + self.gazetteer_token_embedding
-            )
+            gaz_vec = self.gazetteer_projection(gazetteer_features.to(h.dtype)) + self.gazetteer_token_embedding
             h = h + gazetteer_confidence.to(h.dtype).unsqueeze(-1) * gaz_vec
         elif gazetteer_features is not None:
             raise ValueError(
@@ -720,7 +708,7 @@ class MailwomanCoarseEncoder(nn.Module):
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
         mlm_labels: torch.Tensor | None = None,
-    ) -> "_CoarseEncoderOutput":
+    ) -> _CoarseEncoderOutput:
         """Masked-language-model forward for self-supervised PRE-training (see pretrain.py).
 
         Mirrors ``forward``'s encoder body, then projects hidden states through the TIED token-
@@ -804,7 +792,7 @@ class MailwomanCoarseEncoder(nn.Module):
         (output_dir / "config.json").write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
 
     @classmethod
-    def from_pretrained(cls, model_dir: Path | str) -> "MailwomanCoarseEncoder":
+    def from_pretrained(cls, model_dir: Path | str) -> MailwomanCoarseEncoder:
         model_dir = Path(model_dir)
         cfg = json.loads((model_dir / "config.json").read_text(encoding="utf-8"))
         # v0.4.0: reconstruct the class_weights tensor in label-index order.

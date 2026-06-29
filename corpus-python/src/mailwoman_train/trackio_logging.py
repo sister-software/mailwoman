@@ -83,8 +83,10 @@ def init_tracker(cfg: Any) -> _NullTracker | _TrackioTracker:
     try:
         import trackio
     except ImportError:
-        print("  [trackio] trackio_enabled=True but the 'trackio' package isn't installed "
-              "— logging to CSV only. (pip install trackio)")
+        print(
+            "  [trackio] trackio_enabled=True but the 'trackio' package isn't installed "
+            "— logging to CSV only. (pip install trackio)"
+        )
         return _NullTracker()
 
     init_kwargs: dict[str, Any] = {"project": getattr(tcfg, "trackio_project", "mailwoman")}
@@ -95,9 +97,7 @@ def init_tracker(cfg: Any) -> _NullTracker | _TrackioTracker:
         init_kwargs["private"] = bool(getattr(tcfg, "trackio_private", True))
     # Stable run name (explicit, else derived from output_dir) + resume="allow" so a
     # restart-on-hang continues the same run rather than forking a new dashboard line.
-    init_kwargs["name"] = getattr(tcfg, "trackio_run_name", "") or _default_run_name(
-        getattr(tcfg, "output_dir", "")
-    )
+    init_kwargs["name"] = getattr(tcfg, "trackio_run_name", "") or _default_run_name(getattr(tcfg, "output_dir", ""))
     init_kwargs["resume"] = "allow"
     init_kwargs["config"] = _run_config(cfg)
 
@@ -107,8 +107,7 @@ def init_tracker(cfg: Any) -> _NullTracker | _TrackioTracker:
         print(f"  [trackio] init failed (ignored, logging to CSV only): {exc}")
         return _NullTracker()
 
-    print(f"  [trackio] tracking run -> project={init_kwargs['project']} "
-          f"space={space_id or '(local dashboard)'}")
+    print(f"  [trackio] tracking run -> project={init_kwargs['project']} space={space_id or '(local dashboard)'}")
     return _TrackioTracker(trackio)
 
 
