@@ -156,6 +156,18 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
 
 ## Open questions / next
 
+- **Next model iteration — surface-augmentation retrain (#261, DeepSeek-backed, session 019f1223).** The
+  #829 lowercase failures + the #831-class case-sensitivity are one cluster: the model's parse is
+  case/surface-fragile. DeepSeek's structural read (trust it): **surface augmentation is the primary** —
+  #831 being fixed by a retrain *without* preprocessing changes proves the model CAN learn case-robustness,
+  so #829 is a coverage gap, not a flaw. Rejected: structural-lowercasing (destroys the directional /
+  proper-noun case signal), deterministic rules (against model-first). Reserved escalation: case as an
+  auxiliary per-token feature. **Concrete recipe:** add a case augmentation to `corpus-python/augment.py`
+  (lowercase / random-case `raw` — the simplest augmentation: case preserves offsets, so spans/labels pass
+  through unchanged, no splice/re-target) at a configurable probability; resume v194 + a 2k-step diagnostic
+  probe; expect the #829 metamorphic xfails (`lower|Pennsylvania`, `lower|Damrak`) to resolve before a full
+  retrain. The normalize fix (PR #834) already handles whitespace/punctuation deterministically; this is the
+  case half, model-first. Operator launches the Modal run.
 - The three findings above are the headline operator follow-ups (model/ranking/gazetteer fixes).
 - **B3** (browser OSM rooftop tier) + **R2-deploy the shards** — the demo's visible rooftop; double-gated on
   the browser build + **#249** (ODbL legal sign-off, counsel's call).
