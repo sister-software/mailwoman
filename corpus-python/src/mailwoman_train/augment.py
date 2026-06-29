@@ -1,6 +1,6 @@
 """Training-time augmentation: expand abbreviations to teach token equivalence.
 
-Three augmentations, applied independently with configurable probability:
+Four augmentations, applied independently with configurable probability:
 
 1. **Directional expansion**: "NW" → "Northwest", "SE" → "Southeast", etc.
    Teaches the model that both abbreviated and expanded directionals are the same
@@ -264,12 +264,32 @@ def glue_region_postcode(row: dict, idx: int) -> dict:
     return out
 
 
+def lowercase_row(row: dict) -> dict | None:
+    """Return a copy of ``row`` with ``raw`` + ``tokens`` lowercased; labels + char-offset spans
+    pass through UNCHANGED. Lowercasing is length-preserving char-by-char, so every offset still
+    lands on the same (now-lowercased) character — no splice, no re-target, the simplest augmentation.
+
+    Teaches the model that a lowercased query is the same address — the #829 lowercase-sensitivity
+    class (fully-lowercase US/NL queries degraded to admin / NULL). Model-first: we teach invariance
+    from data rather than bolt on a deterministic case-normalizer (which would discard the case
+    signal directionals/proper-nouns carry).
+
+    Returns ``None`` when lowercasing is NOT length-preserving char-by-char (rare Unicode like
+    'İ' → 'i̇', 2 chars) — yielding then would desync the spans, so we skip that row instead.
+    """
+    raw: str = row["raw"]
+    if any(len(c.lower()) != 1 for c in raw):
+        return None
+    return {**row, "raw": raw.lower(), "tokens": [t.lower() for t in row["tokens"]]}
+
+
 def augment_row(
     row: dict,
     rng: random.Random,
     directional_prob: float = 0.3,
     region_prob: float = 0.3,
     glue_prob: float = 0.0,
+    case_prob: float = 0.0,
 ) -> Iterator[dict]:
     """Yield the original row, then optionally an augmented copy.
 
@@ -319,3 +339,10 @@ def augment_row(
         if region_indices:
             idx = rng.choice(region_indices)
             yield splice_expansion(row, idx, US_STATES[tokens[idx]])
+
+    # Case augmentation (#829): a lowercased copy, length-preserving so spans/labels pass through.
+    # The prob guard keeps the rng stream bit-identical for configs that leave the knob at 0.
+    if case_prob > 0 and rng.random() < case_prob:
+        lowered = lowercase_row(row)
+        if lowered is not None:
+            yield lowered

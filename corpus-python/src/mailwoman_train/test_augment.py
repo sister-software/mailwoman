@@ -8,6 +8,7 @@ from .augment import (
     _expand_token,
     augment_row,
     glue_region_postcode,
+    lowercase_row,
     row_span_triple,
     splice_expansion,
 )
@@ -468,3 +469,59 @@ def test_expansion_then_glue_compose_still_verifies():
         ("postcode", "14201"),
     ]
     _assert_span_invariants(fused)
+
+
+def test_lowercase_row_preserves_labels_and_spans():
+    # Lowercasing is length-preserving, so labels + char-offset spans pass through UNCHANGED.
+    row = {
+        "raw": "350 5th Ave NW",
+        "tokens": ["350", "5th", "Ave", "NW"],
+        "labels": ["B-house_number", "B-street", "I-street", "I-street"],
+        "span_starts": [0, 4],
+        "span_ends": [3, 14],
+        "span_tags": ["house_number", "street"],
+        "country": "US",
+        "source": "tiger",
+    }
+    out = lowercase_row(row)
+    assert out is not None
+    assert out["raw"] == "350 5th ave nw"
+    assert out["tokens"] == ["350", "5th", "ave", "nw"]
+    assert out["labels"] == row["labels"]
+    assert out["span_starts"] == row["span_starts"]
+    assert out["span_ends"] == row["span_ends"]
+    assert out["span_tags"] == row["span_tags"]
+
+
+def test_lowercase_row_skips_non_length_preserving():
+    # Turkish dotted capital İ → 'i̇' (2 chars) would desync char-offset spans, so skip the row.
+    row = {"raw": "İSTANBUL", "tokens": ["İSTANBUL"], "labels": ["B-locality"]}
+    assert lowercase_row(row) is None
+
+
+def test_augment_row_case_prob_yields_lowercased_copy():
+    row = {
+        "raw": "350 5th Ave NW",
+        "tokens": ["350", "5th", "Ave", "NW"],
+        "labels": ["B-house_number", "B-street", "I-street", "I-street"],
+        "country": "US",
+        "source": "tiger",
+    }
+    rng = random.Random(42)
+    results = list(augment_row(row, rng, directional_prob=0.0, region_prob=0.0, case_prob=1.0))
+    assert results[0] is row  # original first, unchanged
+    assert any(r["raw"] == "350 5th ave nw" for r in results)
+
+
+def test_augment_row_case_prob_zero_is_bit_identical():
+    # case_prob=0 must not consume the rng stream (the guard), so it's a no-op vs no case knob.
+    row = {
+        "raw": "350 5th Ave NW",
+        "tokens": ["350", "5th", "Ave", "NW"],
+        "labels": ["B-house_number", "B-street", "I-street", "I-street"],
+        "country": "US",
+        "source": "tiger",
+    }
+    a = list(augment_row(row, random.Random(7), directional_prob=0.5, region_prob=0.5, case_prob=0.0))
+    b = list(augment_row(row, random.Random(7), directional_prob=0.5, region_prob=0.5))
+    assert [r["raw"] for r in a] == [r["raw"] for r in b]
