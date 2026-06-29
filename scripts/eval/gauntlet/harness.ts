@@ -24,15 +24,17 @@ export interface GauntletDeps {
 }
 
 /**
- * Build the geocode deps. `modelPath` swaps ONLY the ONNX (same tokenizer/card/anchor/gazetteer soft-feed),
- * so the held-out gate can grade a candidate against production fairly; omit it for the shipped default.
+ * Build the geocode deps. `modelPath` swaps ONLY the ONNX (same tokenizer/card/anchor/gazetteer soft-feed), so the
+ * held-out gate can grade a candidate against production fairly; omit it for the shipped default.
  */
 export async function buildGauntletDeps(opts: { modelPath?: string } = {}): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 	const classifier = opts.modelPath
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
 		: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const resolver = createWofResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
+	const resolver = createWofResolver(
+		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
+	)
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
 	const osmProvider = new OsmShardProvider(mailwomanDataRoot())
 
@@ -53,11 +55,20 @@ export interface GauntletResult {
 	tier: GeocodeResult["resolution_tier"]
 	locality: string | null
 	region: string | null
+	country: string | null
 	postcode: string | null
 }
 
 export async function runOne(input: string, deps: GauntletDeps): Promise<GauntletResult> {
 	const g = await deps.geocode(input)
 
-	return { lat: g.lat, lon: g.lon, tier: g.resolution_tier, locality: g.locality, region: g.region, postcode: g.postcode }
+	return {
+		lat: g.lat,
+		lon: g.lon,
+		tier: g.resolution_tier,
+		locality: g.locality,
+		region: g.region,
+		country: g.hierarchy.find((h) => h.tag === "country")?.value ?? null,
+		postcode: g.postcode,
+	}
 }
