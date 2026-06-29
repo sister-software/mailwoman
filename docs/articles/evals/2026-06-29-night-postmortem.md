@@ -172,6 +172,13 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
   `lowercase_row` lowercases raw + tokens with labels/spans intact (length-preserving), skipping rare
   non-length-preserving Unicode; 4 tests added, 32 pass. So the operator just sets `augment_case_prob` in a
   config (copy v1.9.4, resume v194) + launches the Modal probe — no infra work left.
+  - **PROBE DONE + VALIDATED (`b0d4e02e`, Modal ~$1.5).** Ran the 2k-step diagnostic (resume v194 step-092000
+    + `case_prob: 0.3`, fresh v195 output dir so the shipped v194 is untouched). Loss healthy throughout
+    (0.6884→0.6619). On the probe model, `"1600 pennsylvania ave nw, washington dc"` (lowercase) now resolves
+    to **ROOFTOP**, identical to the mixed-case form — **the #829 US lowercase case is fixed in just 2k
+    steps.** NL lowercase improved null→admin (needs the full run's more steps / locale weight). So the
+    DIRECTION is confirmed — the operator launches the full retrain knowing it works, not on faith. DeepSeek
+    scoreboard (session 019f1223): structural 1/1 (surface-augmentation predicted-and-held).
 - The three findings above are the headline operator follow-ups (model/ranking/gazetteer fixes).
 - **B3** (browser OSM rooftop tier) + **R2-deploy the shards** — the demo's visible rooftop; double-gated on
   the browser build + **#249** (ODbL legal sign-off, counsel's call).
