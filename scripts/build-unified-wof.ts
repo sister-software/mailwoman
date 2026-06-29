@@ -30,6 +30,10 @@ import { readFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import {
+	backfillAncestorsFromHierarchy,
+	discoverAdminDataRoots,
+} from "@mailwoman/resolver-wof-sqlite/ancestry-backfill"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
 import {
@@ -565,6 +569,23 @@ async function main() {
 	console.error("  Building ancestors (parent_id closure)...")
 	const ancestorRows = populateAncestors(db)
 	console.error(`  ancestors: ${ancestorRows} rows`)
+
+	// Repair the multi-parent orphans the closure leaves only-self (#440 / #832): places with
+	// `wof:parent_id = -4` (New York City, London, …) get NO region/county ancestry from the closure,
+	// so the resolver's region-descendant filter excludes them and a small namesake wins. Read the
+	// authoritative `wof:hierarchy` from source geojson and insert the missing rows. MUST run here —
+	// after the closure, before `coincident_roles` (which reads ancestry) and the VACUUM freeze.
+	console.error("  Backfilling ancestry from wof:hierarchy (multi-parent -4 places)...")
+	const geojsonRoots = discoverAdminDataRoots(dataDir)
+
+	if (geojsonRoots.length === 0) {
+		console.error(`    WARNING: no */data geojson roots under ${dataDir}; skipping — orphans like NYC stay unreachable`)
+	} else {
+		const bf = backfillAncestorsFromHierarchy(db, geojsonRoots)
+		console.error(
+			`    +${bf.rowsAdded} rows for ${bf.placesFixed} places (${bf.noGeojson} candidates had no source geojson)`
+		)
+	}
 
 	// Dual-role-place relation (#403, epic #402) — needs `ancestors` + `spr` bbox + `place_population`,
 	// all present by now. Drives the resolver's hierarchy completion (on by default). Tiny (~hundreds of
