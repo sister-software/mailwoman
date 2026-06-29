@@ -129,6 +129,13 @@ export interface GeocodeDeps {
 	hardPlaceCountry?: boolean
 	/** #743/#194: override the coverage safelist gating {@link hardPlaceCountry}. Undefined → built-in. */
 	hardCountrySafelist?: ReadonlySet<string>
+	/**
+	 * Admin descendant-consistency (#263, `ResolveOpts.adminCoherence`) — re-pick a (region, locality) pair so the
+	 * locality descends from the region ("Portland, ME" → Maine, not Messina). **Default-on** for the geocode path; only
+	 * fires when a region's child locality fell through, so the well-resolved path is byte-identical. Pass `false` to opt
+	 * out.
+	 */
+	adminCoherence?: boolean
 }
 
 /**
@@ -308,6 +315,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	const interpolation = usShards.interpolation
 
 	const opts: ResolveOpts = {}
+
+	// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment graph.
+	// Default-on for the geocode path (byte-stable on the well-resolved cases — only fires when a region's
+	// child locality fell through); `adminCoherence: false` opts out. Fixes the "Portland, ME → Messina IT"
+	// class structurally, without a country prior or safelist.
+	if (deps.adminCoherence !== false) opts.adminCoherence = true
 
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;

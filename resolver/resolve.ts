@@ -157,10 +157,10 @@ const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(v
  * admin resolution is never altered.
  */
 /**
- * Half-width (degrees) of the bbox derived from a resolved locality centroid for the #247 OSM bbox fall-through.
- * ~0.25° ≈ 28 km N–S — generous enough for a large metro whose centroid sits off the queried point, while the EXACT
- * `(street, number)` match keeps a cross-commune collision rare. The proper fix is per-point scope backfill (the OSM
- * association / point-in-polygon pass, #250); this is the coverage stopgap until then.
+ * Half-width (degrees) of the bbox derived from a resolved locality centroid for the #247 OSM bbox fall-through. ~0.25°
+ * ≈ 28 km N–S — generous enough for a large metro whose centroid sits off the queried point, while the EXACT `(street,
+ * number)` match keeps a cross-commune collision rare. The proper fix is per-point scope backfill (the OSM association
+ * / point-in-polygon pass, #250); this is the coverage stopgap until then.
  */
 const LOCALITY_BBOX_RADIUS_DEG = 0.25
 
@@ -404,6 +404,88 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 	}
 }
 
+/**
+ * Admin descendant-consistency (#263) — the joint-consistency resolve, scoped to the admin assignment. The greedy walk
+ * resolves a region on its own (name + population), so "ME" picks Messina (IT) over Maine, then scopes "Portland" to
+ * Messina's descendants, finds nothing, and the result falls back to the region centroid (Sicily). The region's
+ * same-named runner-ups (Maine, Missouri, …) were already captured as `alternatives`; this pass asks the question the
+ * greedy order skipped — _which "ME" has a "Portland" under it?_ — and re-picks the (region, locality) pair where a
+ * same-named locality descends from a same-named region candidate. Geography decides; no country prior, no list.
+ *
+ * Fires ONLY for a resolved region whose child locality fell through (the unresolved-locality signal), so a
+ * well-resolved tree ("Springfield, IL" → Illinois, Springfield) is byte-identical. Costs one unscoped locality lookup
+ * per triggering pair. Needs {@link ResolverBackend.ancestors}; no-op without it. See `ResolveOpts.adminCoherence`.
+ */
+async function applyAdminCoherence(roots: readonly AddressNode[], backend: ResolverBackend): Promise<void> {
+	const visit = async (node: AddressNode, regionAncestor: AddressNode | null): Promise<void> => {
+		const regionHere = node.tag === "region" && isResolvedWithCoord(node) ? node : regionAncestor
+
+		if (
+			regionHere &&
+			(node.tag === "locality" || node.tag === "dependent_locality") &&
+			!isResolvedWithCoord(node) &&
+			node.value.trim().length > 0
+		) {
+			await reconcileAdminPair(regionHere, node, backend)
+		}
+
+		for (const child of node.children) await visit(child, regionHere)
+	}
+
+	for (const root of roots) await visit(root, null)
+}
+
+/**
+ * Re-pick a (region, locality) pair so the locality descends from the region. `alternatives` on the node are the
+ * `ResolvedPlace` runner-ups `decorateNode` attached (typed `unknown[]` in the decoder, which can't import resolver
+ * types — the cast is sound). Picks the FIRST same-named locality (already score-ordered) that descends from a
+ * same-named region candidate, then swaps both nodes. Leaves both untouched when no consistent pair exists (a genuinely
+ * un-gazetteered locality — "Portland, VT" with no Portland in Vermont — stays as the region centroid, not a foreign
+ * namesake).
+ */
+async function reconcileAdminPair(
+	regionNode: AddressNode,
+	localityNode: AddressNode,
+	backend: ResolverBackend
+): Promise<void> {
+	// EXACT region matches only: the alternatives for a 2-letter token are loose ("ME" also surfaces
+	// Missouri/Michigan/Mississippi as fuzzy M-state runner-ups). Restricting to exact name/alias matches
+	// (Maine/Messina/Medway for "ME") keeps the join honest. `exactMatch` is stamped by exactMatchTiering.
+	const regionCands = ((regionNode.alternatives as ResolvedPlace[] | undefined) ?? []).filter((r) => r.exactMatch)
+
+	// For each exact region candidate, ask the gazetteer directly: is there a same-named locality UNDER it?
+	// The `parentId` scope is the descendant test (over the #832-repaired ancestors table), and it finds the
+	// instance regardless of its global population rank — "Springfield, ME" reaches the small Springfield in
+	// Maine that an unscoped top-N window would drop. First region with an exact-named descendant wins; the
+	// region candidates are score-ordered, so a tie breaks toward the more prominent place.
+	for (const region of regionCands) {
+		const scoped = await backend.findPlace({
+			text: localityNode.value,
+			placetype: "locality",
+			parentId: region.id,
+			limit: 3,
+		})
+		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
+
+		if (lc) {
+			decorateNode(
+				regionNode,
+				region,
+				regionCands.filter((r) => r !== region)
+			)
+			regionNode.metadata = { ...regionNode.metadata, admin_coherence_repicked: true }
+			decorateNode(
+				localityNode,
+				lc,
+				scoped.filter((l) => l !== lc)
+			)
+			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
+
+			return
+		}
+	}
+}
+
 class WofResolver implements Resolver {
 	readonly #backend: ResolverBackend
 
@@ -448,6 +530,14 @@ class WofResolver implements Resolver {
 		// one span, two roles — no synthesized sibling. See ResolveOpts.hierarchyCompletion.
 		if (state.hierarchyCompletion && state.resolvedRegion && state.resolvedRegionNode && !state.localityNodePresent) {
 			this.#completeRegionRole(state.resolvedRegion, state.resolvedRegionNode)
+		}
+
+		// Admin descendant-consistency (#263): opt-in. Re-pick a (region, locality) pair so the locality
+		// descends from the region — runs BEFORE postcode-consistency (it resolves the locality the postcode
+		// pass may then refine) and before the street tiers (which key off the postcode/street, not the admin
+		// coordinate this adjusts). Byte-stable when `adminCoherence` is unset.
+		if (opts.adminCoherence) {
+			await applyAdminCoherence(newRoots, this.#backend)
 		}
 
 		// Postcode-consistency (#370 "Lever A"): opt-in. After the admin walk (needs both the locality
