@@ -156,10 +156,19 @@ const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(v
  * tree's postcode/locality values, and on an exact hit stamp the point onto the STREET node's metadata. Additive only —
  * admin resolution is never altered.
  */
-function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): void {
+/**
+ * Half-width (degrees) of the bbox derived from a resolved locality centroid for the #247 OSM bbox fall-through.
+ * ~0.25° ≈ 28 km N–S — generous enough for a large metro whose centroid sits off the queried point, while the EXACT
+ * `(street, number)` match keeps a cross-commune collision rare. The proper fix is per-point scope backfill (the OSM
+ * association / point-in-polygon pass, #250); this is the coverage stopgap until then.
+ */
+const LOCALITY_BBOX_RADIUS_DEG = 0.25
+
+function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup, bboxFallback?: boolean): void {
 	let street: AddressNode | undefined
 	let houseNumber: AddressNode | undefined
 	let directionalUnit: AddressNode | undefined
+	let localityNode: AddressNode | undefined
 	let locality: string | undefined
 	let postcode: string | undefined
 	const stack = [...roots]
@@ -173,18 +182,37 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): vo
 
 		if (n.tag === "unit" && !directionalUnit && isDirectionalUnit(n.value)) directionalUnit = n
 
-		if (n.tag === "locality" && !locality && n.value.trim()) locality = n.value.trim()
+		if (n.tag === "locality" && !localityNode && n.value.trim()) {
+			localityNode = n
+			locality = n.value.trim()
+		}
 
 		if (n.tag === "postcode" && !postcode && n.value.trim()) postcode = n.value.trim()
 		stack.push(...n.children)
 	}
 
 	if (!street || !houseNumber) return
+
+	// #247 OSM bbox fall-through: when enabled (an OSM shard is wired) and the locality resolved to a
+	// coordinate, scope a final `(street, number)` probe by the locality's box — recovering OSM points that
+	// carry no postcode/locality tag of their own. US situs never enables it, so its probes are byte-identical.
+	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
+
+	if (bboxFallback && localityNode?.lat != null && localityNode.lon != null) {
+		bbox = {
+			minLat: localityNode.lat - LOCALITY_BBOX_RADIUS_DEG,
+			maxLat: localityNode.lat + LOCALITY_BBOX_RADIUS_DEG,
+			minLon: localityNode.lon - LOCALITY_BBOX_RADIUS_DEG,
+			maxLon: localityNode.lon + LOCALITY_BBOX_RADIUS_DEG,
+		}
+	}
+
 	const hit = lookup.find({
 		street: assembleStreetValue(street, directionalUnit),
 		number: houseNumber.value,
 		postcode,
 		locality,
+		bbox,
 	})
 
 	if (!hit) return
@@ -433,7 +461,7 @@ class WofResolver implements Resolver {
 		// tier can never disturb admin attribution — it only ADDS the precise coordinate. Byte-stable
 		// when opts.addressPoints is absent.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints)
+			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
 		}
 
 		// Interpolation tier (#483): strictly AFTER the exact-point block so an estimate can never

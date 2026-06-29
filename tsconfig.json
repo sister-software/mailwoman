@@ -23,6 +23,7 @@
 		{ "path": "./resolver" },
 		{ "path": "./spatial" },
 		{ "path": "./tiger" },
+		{ "path": "./osm" },
 		{ "path": "./cartographer" },
 		{ "path": "./codex" },
 		{ "path": "./classifiers" },

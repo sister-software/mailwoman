@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   SQLite implementation of core's `AddressPointLookup` (#476): exact `(street, number)` within a
- *   postcode (preferred) or locality scope, against a per-state shard built by
- *   `scripts/build-address-point-shard.ts`. Query-side normalization is THE shared normalizer
- *   (`street-normalize.ts`) — identical to build-side, by construction.
+ *   postcode (preferred), locality, or — for shards whose points carry no scope tag (OSM, #247) —
+ *   the resolved locality's BBOX. Query-side normalization is THE shared normalizer
+ *   (`street-normalize.ts`), selected per the shard's `streetLocale` so build-side and probe-side
+ *   stay identical by construction (US delegates to the USPS pipeline; FR/DE/NL use the locale rules).
  *
  *   Matching is exact-after-normalization only — no fuzzy street matching in this tier (measure how
- *   far exact gets first; fuzz is a later, separate decision). Postcode scope is attempted first
- *   (cheapest, most selective); locality scope is the fallback. Multiple hits (same number,
- *   units/duplicates) return the first by rowid — coordinates of unit siblings are the same
- *   building for tier purposes.
+ *   far exact gets first; fuzz is a later, separate decision). Scope order is most-selective first:
+ *   postcode, then locality, then the bbox fall-through (only when a bbox is supplied AND the prior
+ *   scopes missed). Multiple hits return the first by rowid — unit siblings share the building coord.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -21,7 +21,7 @@ import type { AddressPointHit, AddressPointLookup } from "@mailwoman/resolver"
 
 import type { AddressPointTable } from "./address-point-schema.js"
 import { hasTable } from "./sqlite-utils.js"
-import { normalizeLocalityForKey, normalizeStreetForKey } from "./street-normalize.js"
+import { normalizeLocalityForKey, normalizeStreetForKeyLocale, type StreetLocale } from "./street-normalize.js"
 
 /**
  * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a column rename in
@@ -37,11 +37,19 @@ const SELECT_COLS = "lat, lon, source, release"
 
 export class AddressPointSqliteLookup implements AddressPointLookup {
 	readonly #db: DatabaseSync
+	readonly #locale: StreetLocale
 	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
 	readonly #byLocality: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #byBbox: ReturnType<DatabaseSync["prepare"]> | undefined
 
-	constructor(dbPath: string) {
+	/**
+	 * @param dbPath shard path.
+	 * @param opts.streetLocale the street-normalization locale this shard was BUILT with — must match, or every key
+	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
+	 */
+	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseSync(dbPath, { readOnly: true })
+		this.#locale = opts.streetLocale ?? "us"
 
 		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
 		// `address_point` table this lookup is a no-op miss, not a crash that loses the whole state (#568).
@@ -54,12 +62,22 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
 			)
+			this.#byBbox = this.#db.prepare(
+				`SELECT ${SELECT_COLS} FROM address_point
+				 WHERE street_norm = ? AND number = ? AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? LIMIT 1`
+			)
 		}
 	}
 
-	find(query: { street: string; number: string; postcode?: string; locality?: string }): AddressPointHit | null {
-		if (!this.#byPostcode || !this.#byLocality) return null
-		const streetNorm = normalizeStreetForKey(query.street)
+	find(query: {
+		street: string
+		number: string
+		postcode?: string
+		locality?: string
+		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+	}): AddressPointHit | null {
+		if (!this.#byPostcode || !this.#byLocality || !this.#byBbox) return null
+		const streetNorm = normalizeStreetForKeyLocale(query.street, this.#locale)
 		const number = query.number.trim().toLowerCase()
 
 		if (!streetNorm || !number) return null
@@ -72,6 +90,15 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 
 		if (!row && query.locality) {
 			row = this.#byLocality.get(normalizeLocalityForKey(query.locality), streetNorm, number) as
+				| AddressPointRow
+				| undefined
+		}
+
+		// Bbox fall-through (#247): the point carries no postcode/locality of its own, but its coordinate falls
+		// inside the resolved locality's box. Only reached when the scoped probes missed AND a bbox was supplied.
+		if (!row && query.bbox) {
+			const b = query.bbox
+			row = this.#byBbox.get(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon) as
 				| AddressPointRow
 				| undefined
 		}

@@ -4912,6 +4912,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/osm@workspace:osm":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/osm@workspace:osm"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    kysely: "npm:^0.29.2"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/photon@workspace:photon":
   version: 0.0.0-use.local
   resolution: "@mailwoman/photon@workspace:photon"

@@ -27,6 +27,7 @@
 		"resolver",
 		"spatial",
 		"tiger",
+		"osm",
 		"cartographer",
 		"codex",
 		"classifiers",

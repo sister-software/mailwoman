@@ -77,6 +77,12 @@ export interface GeocodeDeps {
 	resolver: Resolver
 	/** Per-state shard resolver. Omit for admin-only geocoding. */
 	shards?: ShardResolver
+	/**
+	 * OSM rooftop shards keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
+	 * ONLY when no US per-state situs shard matched (a non-US parse), so the US path is untouched. Inject from
+	 * `@mailwoman/osm`'s `OsmShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
+	 */
+	osmShards?: (country: string) => StateShards
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
 	defaultCountry?: string
 	/**
@@ -285,7 +291,9 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		await deps.classifier.parse(input, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
 	)
 	const stateSlug = regionSlugFromTree(tree)
-	const { addressPoints, interpolation } = deps.shards?.(stateSlug) ?? {}
+	const usShards = deps.shards?.(stateSlug) ?? {}
+	let addressPoints = usShards.addressPoints
+	const interpolation = usShards.interpolation
 
 	const opts: ResolveOpts = {}
 
@@ -296,8 +304,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	const placeCountry: PlaceCountryFn | null =
 		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
 
+	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop shard for a non-US parse.
+	let placedCountry: string | null = null
+
 	if (placeCountry) {
 		const placed = placeCountry(input)
+		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
 			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
@@ -314,6 +326,22 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			)
 
 			if (hardCountry) opts.hardCountry = hardCountry
+		}
+	}
+
+	// OSM international rooftop tier (#247): only when no US situs shard matched (a non-US parse). An explicit
+	// defaultCountry wins; otherwise the coarse placer's country. Bbox fall-through is ON for OSM — its points
+	// often carry no postcode/locality tag, so the resolved locality's box scopes the (street, number) probe.
+	if (!addressPoints) {
+		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
+
+		if (country && country !== "us") {
+			const osm = deps.osmShards?.(country)
+
+			if (osm?.addressPoints) {
+				addressPoints = osm.addressPoints
+				opts.addressPointBboxFallback = true
+			}
 		}
 	}
 

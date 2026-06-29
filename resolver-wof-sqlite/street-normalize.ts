@@ -133,6 +133,88 @@ export function normalizeStreetForKey(street: string): string {
 	return tokens.join(" ")
 }
 
+/**
+ * Street-name locale for the address-point key. The US path is the full USPS pipeline
+ * ({@link normalizeStreetForKey}); the international paths fold + apply a SMALL, consistent per-locale
+ * type-token canonicalization. Same discipline as the US normalizer: build side and probe side call
+ * the identical function, so the key only needs to be CONSISTENT, not linguistically perfect — a
+ * folded "rue du chevaleret" keys the same on both sides whether or not we reorder the article, so no
+ * salient-token / multi-key index is built yet (deferred until probing shows the normalizer can't
+ * absorb the false-negatives).
+ */
+export type StreetLocale = "us" | "fr" | "de" | "nl"
+
+/**
+ * French street-type abbreviations → canonical full form, applied per token after {@link fold}. French
+ * address types LEAD the name ("Av. de…", "Bd …", "Pl. …") and "St"/"Ste" abbreviate Saint/Sainte
+ * inside names ("Rue St-Honoré" → "rue saint honore"). fold() has already stripped the trailing period,
+ * so the keys are point-free ("av", "bd").
+ */
+const FR_STREET_ABBREV = new Map<string, string>([
+	["av", "avenue"],
+	["ave", "avenue"],
+	["bd", "boulevard"],
+	["bld", "boulevard"],
+	["bvd", "boulevard"],
+	["boul", "boulevard"],
+	["pl", "place"],
+	["imp", "impasse"],
+	["all", "allee"],
+	["ch", "chemin"],
+	["che", "chemin"],
+	["sq", "square"],
+	["pas", "passage"],
+	["fg", "faubourg"],
+	["fbg", "faubourg"],
+	["rte", "route"],
+	["st", "saint"],
+	["ste", "sainte"],
+	["sts", "saints"],
+])
+
+/**
+ * Normalize a street name for the address-point key in a non-US locale. Same function build-side and
+ * probe-side (the one-function discipline). US delegates to {@link normalizeStreetForKey}.
+ *
+ * - **fr** — fold + expand leading type abbreviations and Saint/Sainte (token map).
+ * - **de** — fold + ß→ss + canonicalize the GLUED `-str(.)` suffix to `-strasse` ("Lindenstr." →
+ *     "lindenstrasse", "Lindenstraße" → "lindenstrasse"); an already-full "-strasse" is left intact.
+ * - **nl** — fold + canonicalize the glued `-str` suffix to `-straat` ("Kerkstr." → "kerkstraat").
+ */
+export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): string {
+	if (locale === "us") return normalizeStreetForKey(street)
+
+	// Hyphen → space so a compound name keys the same whether the source or the query writes the
+	// hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically, so this is pure
+	// robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore") into tokens the
+	// per-locale type/Saint map can see.
+	const tokens = fold(street).replace(/ß/g, "ss").replace(/-/g, " ").split(/\s+/).filter(Boolean)
+
+	if (tokens.length === 0) return ""
+
+	switch (locale) {
+		case "fr":
+			for (let i = 0; i < tokens.length; i++) tokens[i] = FR_STREET_ABBREV.get(tokens[i]!) ?? tokens[i]!
+			break
+		case "de":
+			for (let i = 0; i < tokens.length; i++) {
+				const t = tokens[i]!
+
+				if (/str$/.test(t) && !/strasse$/.test(t)) tokens[i] = t.replace(/str$/, "strasse")
+			}
+			break
+		case "nl":
+			for (let i = 0; i < tokens.length; i++) {
+				const t = tokens[i]!
+
+				if (/str$/.test(t) && !/straat$/.test(t)) tokens[i] = t.replace(/str$/, "straat")
+			}
+			break
+	}
+
+	return tokens.join(" ")
+}
+
 /** Normalize a locality name for address-point keying (fold only — no street semantics). */
 export function normalizeLocalityForKey(locality: string): string {
 	return fold(locality)

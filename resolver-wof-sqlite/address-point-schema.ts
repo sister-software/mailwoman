@@ -99,4 +99,9 @@ export async function createAddressPointIndexes(db: Kysely<AddressPointDatabase>
 		.columns(["locality_norm", "street_norm", "number"])
 		.execute()
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
+	// Street-first index for the BBOX scope (#247): OSM points often carry no postcode/locality, so the
+	// reader scopes a `(street_norm, number)` probe by the resolved locality's bbox (lat/lon BETWEEN). The
+	// postcode/locality indexes lead with their scope column and can't serve this; US situs never probes by
+	// bbox so it simply carries one extra (cheap) index on a future rebuild.
+	await db.schema.createIndex("idx_ap_street").on("address_point").columns(["street_norm", "number"]).execute()
 }
