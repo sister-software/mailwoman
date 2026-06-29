@@ -866,6 +866,57 @@ def sync_v094_fr_bare():
     secrets=[r2_secret],
     timeout=1800,
 )
+def sync_v095_case():
+    """#261 surface-augmentation (case) probe. Pulls ONLY code+config from R2 — the v0.9.4 corpus + base
+    shards persist on the volume from v194 (the case augmentation is a TRAINING-TIME transform; no new
+    corpus). Copies the v194 step-092000 ckpt into a FRESH v195 output dir for `--resume auto` (RESUME —
+    grow case-robustness from v194, NOT init_from), leaving the shipped v194 output dir untouched."""
+    import shutil
+    import subprocess
+
+    print("Syncing code+config from R2 + pre-seeding v194 step-092000 into the v195 probe dir...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    print(f"\n{cmd[:90]}...")
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+    if result.stdout:
+        print(result.stdout[-300:])
+
+    src = f"{VOL_MOUNT}/output-v194-fr-bare-street-s42/checkpoints/step-092000"
+    dst = f"{VOL_MOUNT}/output-v195-surface-aug-s42/checkpoints/step-092000"
+    if not os.path.isdir(src):
+        raise RuntimeError(f"v194 step-092000 checkpoint missing at {src} — cannot resume")
+    if os.path.isdir(dst):
+        print("  v195 pre-seed already present (skip copy)")
+    else:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copytree(src, dst)
+        print(f"  pre-seeded v194 step-092000 -> {dst}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv1.9.5 surface-aug sync + pre-seed complete. Volume committed.")
+
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.5-surface-aug.yaml"
+    aug = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/augment.py"
+    print("  v1.9.5 config present:", os.path.isfile(cfg))
+    print("  augment.py has case_prob:", "case_prob" in open(aug).read() if os.path.isfile(aug) else "MISSING")
+    print("  v195 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
 def push_artifact_r2(volume_path: str, r2_subpath: str):
     """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
 
