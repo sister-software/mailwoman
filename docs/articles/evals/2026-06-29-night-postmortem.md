@@ -167,7 +167,11 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
   through unchanged, no splice/re-target) at a configurable probability; resume v194 + a 2k-step diagnostic
   probe; expect the #829 metamorphic xfails (`lower|Pennsylvania`, `lower|Damrak`) to resolve before a full
   retrain. The normalize fix (PR #834) already handles whitespace/punctuation deterministically; this is the
-  case half, model-first. Operator launches the Modal run.
+  case half, model-first. **The infra is now BUILT (`681d10e3`):** `augment_case_prob` is wired through
+  `corpus-python` (config + data_loader + `augment_row`), guarded so 0 keeps the rng stream bit-identical;
+  `lowercase_row` lowercases raw + tokens with labels/spans intact (length-preserving), skipping rare
+  non-length-preserving Unicode; 4 tests added, 32 pass. So the operator just sets `augment_case_prob` in a
+  config (copy v1.9.4, resume v194) + launches the Modal probe — no infra work left.
 - The three findings above are the headline operator follow-ups (model/ranking/gazetteer fixes).
 - **B3** (browser OSM rooftop tier) + **R2-deploy the shards** — the demo's visible rooftop; double-gated on
   the browser build + **#249** (ODbL legal sign-off, counsel's call).
