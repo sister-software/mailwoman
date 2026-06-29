@@ -117,21 +117,40 @@ export const REGRESSION_CASES: SeedCase[] = [
 		note: "Bare 'New York, NY' resolves to New York Mills (upstate, 43.10) instead of NYC. The placer is correct (US 0.92); this is the FTS ranking.",
 	},
 	{
-		// #833 — the placer mis-predicts Portland/ME → GB (Portland Dorset + 'ME' Medway), and the soft prior
-		// can't stop the IT 'ME'=Messina province match. Tracked until the placer + #194 hard-filter land.
+		// #833 — RESOLVED by admin descendant-consistency (#263). The greedy walk resolved region "ME" to
+		// Messina (IT, by population), "Portland" found nothing under it, and the result fell back to the
+		// Sicilian centroid. The fix re-picks the (region, locality) pair where the locality descends from a
+		// same-named region candidate — Portland descends from Maine, not Messina. No country prior, no list.
 		id: "us-portland-me",
 		input: "Portland, ME",
 		source: "bug:#833",
 		addressKind: "us_city_state",
 		country: "US",
-		status: "improvement_target",
+		status: "pass",
 		expectComponents: { region: "ME", locality: "Portland" },
 		expectLat: 43.647,
 		expectLon: -70.168,
 		expectToleranceM: 25000,
 		addedAt: "2026-06-29",
 		bugRef: "#833",
-		note: "Bare 'Portland, ME' resolves to Messina, Italy. The placer predicts GB 0.79 for it; works with the full state name ('Portland, Maine').",
+		note: "Was Messina, Italy. Fixed by joint-consistency (adminCoherence) — Portland descends from Maine, not Messina. Earlier deterministic country-prior patch shelved; this is the structural fix.",
+	},
+	{
+		// #833 sibling — a different namesake collision (region "OR" → Ourense, Spain), guards that the fix
+		// generalizes across countries (IT for ME, ES for OR), not just one province.
+		id: "us-portland-or",
+		input: "Portland, OR",
+		source: "bug:#833",
+		addressKind: "us_city_state",
+		country: "US",
+		status: "pass",
+		expectComponents: { region: "OR", locality: "Portland" },
+		expectLat: 45.537,
+		expectLon: -122.65,
+		expectToleranceM: 25000,
+		addedAt: "2026-06-29",
+		bugRef: "#833",
+		note: "Was Ourense, Spain ('OR' province). Fixed by adminCoherence — Portland descends from Oregon. Guards the country-agnostic generalization of the joint-consistency fix.",
 	},
 	{
 		// A clean US 'City, ST' that resolves correctly — guards the working path so a placer/ranking change

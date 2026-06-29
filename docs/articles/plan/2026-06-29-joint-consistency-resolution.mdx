@@ -102,6 +102,13 @@ most-populous one. Anything that looks like a curated list of famous places must
 from the gazetteer's own structure and provenance-tracked — the moment a hand-list can override where
 the gazetteer says an address actually is, we have rebuilt Pelias in a nicer font. (#264.)
 
+The MVP shipped on this branch (`opts.adminCoherence`, default-on for the geocode path). It fixes the
+clean class — a region whose child locality fell through — and the build surfaced exactly the residual
+this document predicted. "Augusta, ME" stays at Augusta, Sicily: "Augusta" resolves to a real town
+_under_ Messina, so the locality is not unresolved, and both Messina **and** Maine genuinely contain an
+Augusta. Two consistent pairs, and geography alone cannot break the tie. That is the forward
+address-system prior's job (US-format ⇒ prefer the US state), and it is the next section.
+
 ## Future work, gated on a measured residual
 
 Build to a measured gap, not to a good idea. Once descendant-consistency lands (#263), measure where it
@@ -129,7 +136,8 @@ scopes two things we do not have today (#265):
 
 ## Status
 
-Design only. Build order: #263 (descendant-consistency) → #264 (quick-cache role) → measure → #265
-(residual-scoped model + linkage). Companion reading: `concepts/synonymy-and-homonymy.mdx` (the
+MVP landed (#263, `opts.adminCoherence`). Remaining: #264 (quick-cache role) → measure the residual →
+#265 (residual-scoped forward model + the address-system→country linkage; "Augusta, ME" is the first
+case in that bucket). Companion reading: `concepts/synonymy-and-homonymy.mdx` (the
 tag-vs-referent split this extends), `concepts/joint-decoding-walkthrough.mdx` (the retired Stage 5
 veto), `plan/2026-06-14-coarse-placer-soft-signal-spec.md` (the prior that becomes the gap-filler).
