@@ -79,7 +79,7 @@ async function score(deps: GauntletDeps, sample: Sample[]): Promise<{ hits: numb
 		resolved++
 		const km = haversineKm(g.lat, g.lon, s.lat, s.lon)
 		TOLS.forEach((t, i) => {
-			if (km <= t) hits[i]++
+			if (km <= t) hits[i] = (hits[i] ?? 0) + 1
 		})
 	}
 
