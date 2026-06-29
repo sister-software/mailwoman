@@ -202,4 +202,22 @@ export const REGRESSION_CASES: SeedCase[] = [
 		addedAt: "2026-06-29",
 		note: "A large unambiguous US city — guards the working bare-City-ST path.",
 	},
+	{
+		// #266/#267 — international coverage. "Georgia" the country shadows the populous US state; the GeoNames
+		// admin fold (#267 data) + the country-candidate reconcile (#267 resolver) land Tbilisi in Georgia, not
+		// US Georgia. Guards the gap-country admin hierarchy + the foreign-capital-vs-US-state collision fix.
+		id: "intl-tbilisi-georgia",
+		input: "Tbilisi, Georgia",
+		source: "bug:#267",
+		addressKind: "intl_city_country",
+		country: "GE",
+		status: "pass",
+		expectComponents: { locality: "Tbilisi" },
+		expectLat: 41.6938,
+		expectLon: 44.8015,
+		expectToleranceM: 25000,
+		addedAt: "2026-06-29",
+		bugRef: "#266 / #267",
+		note: "Was US Georgia (32.6,-83.4). Fixed by the #267 GeoNames admin fold (Tbilisi > K'alak'i T'bilisi > Georgia) + reconcileAdminPair's country-candidate fall-through (a foreign capital under its country out-votes the US-state namesake).",
+	},
 ]
