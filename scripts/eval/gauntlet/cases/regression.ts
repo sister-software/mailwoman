@@ -100,21 +100,23 @@ export const REGRESSION_CASES: SeedCase[] = [
 		note: "Pre-fix the span-rescore recovered 'Ave' as a same-named French locality (48.57,0.28). Guards IN NY not France; currently lands upstate NY not NYC (#832).",
 	},
 	{
-		// #832 — "New York" (NYC) is dropped from the FTS over-fetch window (alt-name-diluted bm25), so the
-		// tiny "New York Mills" (pop 3,190) outranks NYC (pop 8.8M). Tracked target until the exact-match floor lands.
+		// #832 — RESOLVED. NYC carries WOF parent_id=-4 (multi-parent sentinel), so the ancestors parent_id
+		// closure left it only-self; the region hard-filter then excluded it and "New York Mills" (pop 3,190)
+		// won over NYC (8.8M). Fixed by wiring the wof:hierarchy ancestry backfill into the build (PR #835) +
+		// swapping the backfilled canonical DB. Gated `pass` so it can't silently regress (anti-rot).
 		id: "us-new-york-nyc",
 		input: "New York, NY",
 		source: "bug:#832",
 		addressKind: "us_city_state",
 		country: "US",
-		status: "improvement_target",
+		status: "pass",
 		expectComponents: { region: "NY", locality: "New York" },
 		expectLat: 40.6945,
 		expectLon: -73.9304,
 		expectToleranceM: 25000,
 		addedAt: "2026-06-29",
 		bugRef: "#832",
-		note: "Bare 'New York, NY' resolves to New York Mills (upstate, 43.10) instead of NYC. The placer is correct (US 0.92); this is the FTS ranking.",
+		note: "Was: 'New York, NY' → New York Mills (upstate, 43.10). Root cause was NOT the FTS window (NYC was in it) — it was NYC's broken ancestry (parent_id=-4). Fixed via the wof:hierarchy ancestry backfill.",
 	},
 	{
 		// #833 — the placer mis-predicts Portland/ME → GB (Portland Dorset + 'ME' Medway), and the soft prior
