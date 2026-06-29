@@ -155,6 +155,24 @@ export const REGRESSION_CASES: SeedCase[] = [
 		note: "Was Ourense, Spain ('OR' province). Fixed by adminCoherence — Portland descends from Oregon. Guards the country-agnostic generalization of the joint-consistency fix.",
 	},
 	{
+		// #833 two-pairs residual — "Augusta" exists under BOTH Maine and Messina (IT), so the locality
+		// resolves under the greedy foreign region and adminCoherence's unresolved-trigger never fires.
+		// Closed by the forward `country_hint` linkage: a 2-letter US-state abbrev pins the region to US.
+		id: "us-augusta-me",
+		input: "Augusta, ME",
+		source: "bug:#833",
+		addressKind: "us_city_state",
+		country: "US",
+		status: "pass",
+		expectComponents: { region: "ME", locality: "Augusta" },
+		expectLat: 44.31,
+		expectLon: -69.78,
+		expectToleranceM: 25000,
+		addedAt: "2026-06-29",
+		bugRef: "#833",
+		note: "Was Augusta, Sicily — the two-consistent-pairs case (Augusta under both Maine and Messina). Fixed by the abbrev-only country_hint forward linkage (recognizeUsRegions → resolver country=US), not the descendant-consistency pass.",
+	},
+	{
 		// A clean US 'City, ST' that resolves correctly — guards the working path so a placer/ranking change
 		// for #832/#833 can't silently regress it. Springfield-IL is also a tuned exact-match case.
 		id: "us-springfield-il",

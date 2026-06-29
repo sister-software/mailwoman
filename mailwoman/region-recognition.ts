@@ -195,12 +195,32 @@ function correctNode(node: AddressNode): AddressNode {
 }
 
 /**
+ * Stamp `country_hint: "US"` on a region node whose value is a 2-letter US state ABBREVIATION (the ones the parser
+ * produced directly — "Augusta, ME" → region(ME) — as well as the ones we re-tagged). The forward
+ * address-system→country linkage: the resolver constrains a hinted region's lookup to US, so a two-consistent-pairs
+ * collision ("Augusta" under both Maine and Messina) resolves the US state.
+ *
+ * ABBREVIATIONS ONLY, deliberately. A 2-letter "ME"/"OR"/"GA" in `City, ST` position is unambiguously the US state
+ * (foreign collisions like Messina/Ourense lose in US-format context, and Georgia-the-country is "GE", not "GA"). A
+ * full NAME is genuinely ambiguous — "Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state — so full names
+ * are left to resolve on their own name-match evidence, never pinned.
+ */
+function annotateUsRegions(node: AddressNode): void {
+	if (node.tag === "region" && /^[A-Za-z]{2}$/.test(node.value.trim()) && usStateSlug(node.value)) {
+		node.metadata = { ...node.metadata, country_hint: "US" }
+	}
+
+	for (const child of node.children) annotateUsRegions(child)
+}
+
+/**
  * Recognize US regions the parser missed and restructure `"City, State"` into `region → locality` nesting so the
  * resolver scopes the locality to its state (#642). Mutates + returns the tree. A no-op when no US state token is found
  * mis-tagged — byte-stable for already-correct parses.
  */
 export function recognizeUsRegions(tree: AddressTree): AddressTree {
 	tree.roots = correctSiblings(tree.roots).map(correctNode)
+	for (const root of tree.roots) annotateUsRegions(root)
 
 	return tree
 }
