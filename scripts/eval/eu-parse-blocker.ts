@@ -36,7 +36,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { arg } from "../lib/cli-args.ts"
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
 
 		for (const row of rows) {
 			const tree = await neural.parse(row.input, { normalizeCase: true, postcodeRepair: true })
-			const flat = decodeAsJson(tree) as Record<string, string>
+			const flat = decodeAsJSON(tree) as Record<string, string>
 			const truthRegion = row.expected.region
 			const truthLoc = row.expected.locality
 			const inputNorm = norm(row.input)

@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs"
  *     --base out/v180/model.onnx --cand out/v190-int8/model.onnx \
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 
@@ -63,8 +63,8 @@ async function main() {
 	for (const row of rows) {
 		const bt = await base.parse(row.raw, { postcodeRepair: true })
 		const ct = await cand.parse(row.raw, { postcodeRepair: true })
-		const bl = (decodeAsJson(bt) as Record<string, string>).locality ?? ""
-		const cl = (decodeAsJson(ct) as Record<string, string>).locality ?? ""
+		const bl = (decodeAsJSON(bt) as Record<string, string>).locality ?? ""
+		const cl = (decodeAsJSON(ct) as Record<string, string>).locality ?? ""
 		const br = await didResolve(bt)
 		const cr = await didResolve(ct)
 

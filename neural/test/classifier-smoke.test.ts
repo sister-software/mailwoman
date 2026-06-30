@@ -41,22 +41,22 @@ describe.skipIf(!haveModel)("NeuralAddressClassifier — smoke (v0.2.0 int8)", (
 		expect(tree.roots.length).toBeGreaterThan(0)
 	})
 
-	test("parseXml emits an <address> root with at least one component", async () => {
+	test("parseXML emits an <address> root with at least one component", async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_PATH)
 		const runner = await OnnxRunner.create(MODEL_PATH)
 		const cls = new NeuralAddressClassifier({ tokenizer, runner })
 
-		const xml = await cls.parseXml("75004 Paris")
+		const xml = await cls.parseXML("75004 Paris")
 		expect(xml).toMatch(/^<address /)
 		expect(xml).toContain("</address>")
 	})
 
-	test("parseJson returns at least one coarse component for a familiar address", async () => {
+	test("parseJSON returns at least one coarse component for a familiar address", async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_PATH)
 		const runner = await OnnxRunner.create(MODEL_PATH)
 		const cls = new NeuralAddressClassifier({ tokenizer, runner })
 
-		const json = await cls.parseJson("Washington, DC 20500")
+		const json = await cls.parseJSON("Washington, DC 20500")
 		const coarseHits = ["country", "region", "locality", "postcode"].filter((k) => k in json)
 		expect(coarseHits.length).toBeGreaterThan(0)
 	})

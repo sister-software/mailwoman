@@ -33,7 +33,7 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -175,7 +175,7 @@ async function main() {
 	for (const entry of golden) {
 		total++
 		const tree = await classifier.parse(entry.raw, parseOpts)
-		const predicted = decodeAsJson(tree)
+		const predicted = decodeAsJSON(tree)
 		const expected = entry.components
 
 		let allCorrect = true

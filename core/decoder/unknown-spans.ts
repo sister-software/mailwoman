@@ -5,7 +5,7 @@
  *
  *   Lossless decomposition (#493) — the typed-`unknown`-span primitive. Every byte of the input belongs to
  *   exactly one segment: a span some node covers, or an `unknown` run the model left all-O. Those all-O runs
- *   are what `decodeAsJson` silently drops (the JSON-hides-gaps trap) — surfacing them lets a consumer route
+ *   are what `decodeAsJSON` silently drops (the JSON-hides-gaps trap) — surfacing them lets a consumer route
  *   them to fallback logic, display them, or aggregate them as the self-reporting corpus-gap detector.
  *
  *   This is the PURE primitive: it reads `tree.raw` + node `[start,end)` ranges and returns the complement.

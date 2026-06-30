@@ -70,8 +70,8 @@ for (const row of rows) {
 
 	if (!gs || !gl) continue // full-address rows only: gold has BOTH street and locality
 	full++
-	const bp = (await base.parseJson(row.raw)) as Record<string, string>
-	const cp = (await cand.parseJson(row.raw)) as Record<string, string>
+	const bp = (await base.parseJSON(row.raw)) as Record<string, string>
+	const cp = (await cand.parseJSON(row.raw)) as Record<string, string>
 	const bOk = norm(bp.street) === gs
 	const cOk = norm(cp.street) === gs
 

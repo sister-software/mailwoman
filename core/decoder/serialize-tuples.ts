@@ -7,7 +7,7 @@
  *
  *   Emits `Array<[tag, value]>` in source order (sorted by `start`). Preserves repeated tags (e.g.
  *   two `locality` entries for "Springfield, IL — sent from Springfield, MA"). Hierarchy is lost —
- *   use `decodeAsXml` when containment matters.
+ *   use `decodeAsXML` when containment matters.
  */
 
 import type { ComponentTag } from "../types/component.js"
@@ -31,10 +31,7 @@ function flatten(node: AddressNode, out: AddressNode[]): void {
 
 /** Project an `AddressTree` to a source-ordered list of (tag, value) pairs. */
 export function decodeAsTuples(tree: AddressTree): Array<[ComponentTag, string]>
-export function decodeAsTuples(
-	tree: AddressTree,
-	opts: SerializeTuplesOpts
-): Array<[ComponentTag | "unknown", string]>
+export function decodeAsTuples(tree: AddressTree, opts: SerializeTuplesOpts): Array<[ComponentTag | "unknown", string]>
 export function decodeAsTuples(
 	tree: AddressTree,
 	opts: SerializeTuplesOpts = {}

@@ -50,7 +50,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import type { SystemCode } from "@mailwoman/codex"
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
@@ -158,7 +158,7 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 	for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
 
 	for (const row of rows) {
-		const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
+		const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
 		const exp = row.components
 
 		for (const t of TAGS) {

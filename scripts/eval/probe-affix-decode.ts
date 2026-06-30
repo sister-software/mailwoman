@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs"
 
 // Probe: does a model emit street_prefix/street_suffix in the RAW (unfolded) decode?
 // per-locale-f1's foldToComponents joins prefix+street+suffix into one `street`, hiding the split.
-// This prints decodeAsJson(tree) verbatim so we can see what the model actually tags.
+// This prints decodeAsJSON(tree) verbatim so we can see what the model actually tags.
 // Usage: node --experimental-strip-types scripts/eval/probe-affix-decode.ts --model <onnx> [--file <jsonl>]
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
@@ -31,7 +31,7 @@ let prefixHits = 0,
 
 for (const row of rows.slice(0, 10)) {
 	const tree = await neural.parse(row.raw)
-	const got = decodeAsJson(tree) as Record<string, string>
+	const got = decodeAsJSON(tree) as Record<string, string>
 	const aff = ["street_prefix", "street", "street_suffix"].filter((t) => got[t]).map((t) => `${t}=${got[t]!}`)
 
 	if (got.street_prefix) prefixHits++

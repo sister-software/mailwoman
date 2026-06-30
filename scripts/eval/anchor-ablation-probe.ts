@@ -13,7 +13,7 @@ import { existsSync, readFileSync } from "node:fs"
  *
  *   Run: node --experimental-strip-types scripts/eval/anchor-ablation-probe.ts --model out/v192/model.onnx
  */
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
@@ -71,8 +71,8 @@ async function main() {
 	for (const row of rows) {
 		const hn = norm(row.components.house_number)
 		n++
-		const pOn = flat(decodeAsJson(await on.parse(row.raw, {})))
-		const pOff = flat(decodeAsJson(await off.parse(row.raw, {})))
+		const pOn = flat(decodeAsJSON(await on.parse(row.raw, {})))
+		const pOff = flat(decodeAsJSON(await off.parse(row.raw, {})))
 		const onOk = norm(pOn.house_number) === hn
 		const offOk = norm(pOff.house_number) === hn
 

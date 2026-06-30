@@ -62,7 +62,7 @@ for (let i = 0; i < N; i++) {
 	const gold = norm(row.components.street_suffix)
 
 	if (!gold) continue
-	const p = (await classifier.parseJson(row.raw)) as Record<string, string>
+	const p = (await classifier.parseJSON(row.raw)) as Record<string, string>
 	let m: string
 
 	if (norm(p.street_suffix) === gold) m = "✓ correct separate suffix span"

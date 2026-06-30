@@ -107,7 +107,7 @@ interface AddressNode {
 }
 ```
 
-A node usually plays one role (its `tag`). A **dual-role place** plays several on one span: `Berlin` is both a region and a locality. The extra roles ride in `interpretations` (each a `{ tag, placeId, lat, lon, … }`), and the flat projections surface every role — `decodeAsJson` emits both `region` and `locality`, `decodeAsXml` lists `roles="region locality"`. See [concepts/dual-role-places.md](./concepts/dual-role-places.mdx).
+A node usually plays one role (its `tag`). A **dual-role place** plays several on one span: `Berlin` is both a region and a locality. The extra roles ride in `interpretations` (each a `{ tag, placeId, lat, lon, … }`), and the flat projections surface every role — `decodeAsJSON` emits both `region` and `locality`, `decodeAsXML` lists `roles="region locality"`. See [concepts/dual-role-places.md](./concepts/dual-role-places.mdx).
 
 ### `AddressAlternative`
 

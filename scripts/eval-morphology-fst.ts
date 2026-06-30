@@ -25,7 +25,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { dirname, basename as pathBasename, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -317,7 +317,7 @@ async function main() {
 	for (const entry of golden) {
 		total++
 		const tree = await classifier.parse(entry.raw, parseOpts as Parameters<typeof classifier.parse>[1])
-		const rawPredicted = decodeAsJson(tree)
+		const rawPredicted = decodeAsJSON(tree)
 		const predicted = args.stage3Fold ? foldStage3ToStage2(rawPredicted) : rawPredicted
 		const expected = entry.components
 

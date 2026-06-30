@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs"
 // Counts affix-tag emissions + postcode-shape violations per locale slice, WITHOUT the
 // conventions mask (the shipped default for undetected/unmasked systems) — the evidence a
 // `de`/`gb` conventions row needs before it exists (no rows from vibes).
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
@@ -46,7 +46,7 @@ for (const [label, file, cap] of slices) {
 	for (const row of rows) {
 		n++
 		const text = row.raw ?? row.input
-		const got = decodeAsJson(await neural.parse(text)) as Record<string, string>
+		const got = decodeAsJSON(await neural.parse(text)) as Record<string, string>
 
 		if (got.street_prefix || got.street_suffix) {
 			affix++

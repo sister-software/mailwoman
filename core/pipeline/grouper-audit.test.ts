@@ -198,7 +198,7 @@ describe("grouper-audit pass", () => {
 
 		// #425 residual tail — the OOD model mistypes a Romance street-name word ("Via Francesca Nord"
 		// → `Francesca`) as a locality and the reconciler orphans it; the audit must NOT inject a SECOND
-		// locality that would shadow the real trailing city in decodeAsJson.
+		// locality that would shadow the real trailing city in decodeAsJSON.
 		it("suppresses a duplicate singleton locality on the joint path", () => {
 			// "Francesca" orphaned, classifier (OOD) weakly calls it locality; tree already has the real city.
 			const props = [

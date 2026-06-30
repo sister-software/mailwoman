@@ -42,7 +42,7 @@
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -478,7 +478,7 @@ async function main(): Promise<void> {
 
 		try {
 			const tree = await neural.parse(sample.input, parseOpts)
-			const flat = decodeAsJson(tree)
+			const flat = decodeAsJSON(tree)
 			results.push(evaluate(sample, flat))
 		} catch (err) {
 			console.error(`[postcode-harness] WARN: ${i} (${sample.input}): ${(err as Error).message}`)

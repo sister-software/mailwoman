@@ -8,9 +8,9 @@ import { describe, expect, test } from "vitest"
 
 import type { BioLabel } from "../types/component.js"
 import { buildAddressTree } from "./build-tree.js"
-import { decodeAsJson } from "./serialize-json.js"
+import { decodeAsJSON } from "./serialize-json.js"
 import { decodeAsTuples } from "./serialize-tuples.js"
-import { decodeAsXml } from "./serialize-xml.js"
+import { decodeAsXML } from "./serialize-xml.js"
 import type { DecoderToken } from "./types.js"
 
 function tok(piece: string, start: number, end: number, label: BioLabel, confidence = 1): DecoderToken {
@@ -30,10 +30,10 @@ const WHITE_HOUSE_TOKENS: DecoderToken[] = [
 	tok("20500", 44, 49, "B-postcode"),
 ]
 
-describe("decodeAsJson (libpostal-compat)", () => {
+describe("decodeAsJSON (libpostal-compat)", () => {
 	test("flattens to a tag→value map", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
-		expect(decodeAsJson(tree)).toEqual({
+		expect(decodeAsJSON(tree)).toEqual({
 			house_number: "1600",
 			street: "Pennsylvania Avenue NW",
 			locality: "Washington",
@@ -52,7 +52,7 @@ describe("decodeAsJson (libpostal-compat)", () => {
 			tok("MA", 27, 29, "B-region"),
 		]
 		const tree = buildAddressTree(raw, tokens)
-		const json = decodeAsJson(tree)
+		const json = decodeAsJSON(tree)
 		// First locality / region encountered in tree walk wins.
 		expect(json.locality).toBeDefined()
 		expect(json.region).toBeDefined()
@@ -86,10 +86,10 @@ describe("decodeAsTuples (order-preserving)", () => {
 	})
 })
 
-describe("decodeAsXml (nested mixed-content)", () => {
+describe("decodeAsXML (nested mixed-content)", () => {
 	test("emits root <address> with @raw and nested components with @start/@end/@conf", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
-		const xml = decodeAsXml(tree)
+		const xml = decodeAsXML(tree)
 		// Root attribute carries the raw input.
 		expect(xml).toContain(`<address raw="1600 Pennsylvania Avenue NW, Washington, DC 20500">`)
 		// Region wraps locality wraps street/postcode.
@@ -109,7 +109,7 @@ describe("decodeAsXml (nested mixed-content)", () => {
 		const raw = `<dangerous & "quoted">`
 		const tokens: DecoderToken[] = [tok(raw, 0, raw.length, "B-locality")]
 		const tree = buildAddressTree(raw, tokens)
-		const xml = decodeAsXml(tree)
+		const xml = decodeAsXML(tree)
 		// @raw is untouched by the decoder — full input must escape.
 		expect(xml).toContain(`raw="&lt;dangerous &amp; &quot;quoted&quot;&gt;"`)
 		expect(xml).not.toContain(`raw="<dangerous`)
@@ -121,7 +121,7 @@ describe("decodeAsXml (nested mixed-content)", () => {
 
 	test("respects opts: includeOffsets=false drops start/end attrs", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
-		const xml = decodeAsXml(tree, { includeOffsets: false })
+		const xml = decodeAsXML(tree, { includeOffsets: false })
 		expect(xml).not.toContain(`start=`)
 		expect(xml).not.toContain(`end=`)
 		expect(xml).toContain(`conf="1.00"`)
@@ -129,21 +129,21 @@ describe("decodeAsXml (nested mixed-content)", () => {
 
 	test("respects opts: includeConf=false drops conf attrs", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
-		const xml = decodeAsXml(tree, { includeConf: false })
+		const xml = decodeAsXML(tree, { includeConf: false })
 		expect(xml).not.toContain(`conf=`)
 		expect(xml).toContain(`start=`)
 	})
 
 	test("opts: pretty=false emits a single line", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
-		const xml = decodeAsXml(tree, { pretty: false })
+		const xml = decodeAsXML(tree, { pretty: false })
 		expect(xml.includes("\n")).toBe(false)
 		expect(xml.includes("\t")).toBe(false)
 	})
 
 	test("well-formed: every opened tag closes", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
-		const xml = decodeAsXml(tree)
+		const xml = decodeAsXML(tree)
 		const openers = [...xml.matchAll(/<([a-z_]+)(?:\s[^>]*)?>/g)].map((m) => m[1])
 		const closers = [...xml.matchAll(/<\/([a-z_]+)>/g)].map((m) => m[1])
 		// Self-closing tags would shorten the closer list; we don't emit any, so they should match.
@@ -159,7 +159,7 @@ describe("decodeAsXml (nested mixed-content)", () => {
 			{ id: 101727113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
 			{ id: 101728010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
 		]
-		const xml = decodeAsXml(tree)
+		const xml = decodeAsXML(tree)
 		expect(xml).not.toContain("<alternative")
 		expect(xml).not.toContain("Springfield, IL")
 	})
@@ -173,7 +173,7 @@ describe("decodeAsXml (nested mixed-content)", () => {
 			{ id: 101727113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
 			{ id: 101728010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
 		]
-		const xml = decodeAsXml(tree, { includeAlternatives: true })
+		const xml = decodeAsXML(tree, { includeAlternatives: true })
 		expect(xml).toContain("<alternative")
 		expect(xml).toContain('place="wof:101727113"')
 		expect(xml).toContain('name="Springfield, IL"')
@@ -188,7 +188,7 @@ describe("decodeAsXml (nested mixed-content)", () => {
 
 	test("includeAlternatives is a no-op when node has no alternatives", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
-		const xml = decodeAsXml(tree, { includeAlternatives: true })
+		const xml = decodeAsXML(tree, { includeAlternatives: true })
 		expect(xml).not.toContain("<alternative")
 		// Existing structure still well-formed.
 		expect(xml).toContain("<address raw=")
@@ -207,22 +207,22 @@ describe("interpretations (multi-role nodes, #413)", () => {
 		return tree
 	}
 
-	test("decodeAsJson emits one entry per role — region AND locality both surface", () => {
-		expect(decodeAsJson(cityStateTree())).toMatchObject({ region: "Berlin", locality: "Berlin", postcode: "10115" })
+	test("decodeAsJSON emits one entry per role — region AND locality both surface", () => {
+		expect(decodeAsJSON(cityStateTree())).toMatchObject({ region: "Berlin", locality: "Berlin", postcode: "10115" })
 	})
 
-	test("decodeAsJson is byte-stable when no interpretations are present", () => {
+	test("decodeAsJSON is byte-stable when no interpretations are present", () => {
 		const tree = buildAddressTree("Berlin 10115", [tok("Berlin", 0, 6, "B-region"), tok("10115", 7, 12, "B-postcode")])
-		expect(decodeAsJson(tree)).toEqual({ region: "Berlin", postcode: "10115" })
+		expect(decodeAsJSON(tree)).toEqual({ region: "Berlin", postcode: "10115" })
 	})
 
-	test("decodeAsXml lists the roles, primary first", () => {
-		const xml = decodeAsXml(cityStateTree())
+	test("decodeAsXML lists the roles, primary first", () => {
+		const xml = decodeAsXML(cityStateTree())
 		expect(xml).toContain('roles="region locality"')
 	})
 
-	test("decodeAsXml emits no roles attribute on a single-role node", () => {
+	test("decodeAsXML emits no roles attribute on a single-role node", () => {
 		const tree = buildAddressTree("Berlin 10115", [tok("Berlin", 0, 6, "B-region"), tok("10115", 7, 12, "B-postcode")])
-		expect(decodeAsXml(tree)).not.toContain("roles=")
+		expect(decodeAsXML(tree)).not.toContain("roles=")
 	})
 })

@@ -7,7 +7,7 @@
 import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
-import { type AddressTree, decodeAsJson, decodeAsTuples, decodeAsXml, proposalsToTree } from "@mailwoman/core/decoder"
+import { type AddressTree, decodeAsJSON, decodeAsTuples, decodeAsXML, proposalsToTree } from "@mailwoman/core/decoder"
 import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
 import { InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
@@ -350,13 +350,13 @@ function serializeTree(
 ): string {
 	switch (format) {
 		case "xml":
-			return decodeAsXml(tree, { includeAlternatives: opts.includeAlternatives })
+			return decodeAsXML(tree, { includeAlternatives: opts.includeAlternatives })
 		case "tuple":
 			return JSON.stringify(decodeAsTuples(tree), null, 2)
 		default:
 			// JSON: when --candidates is requested, dump the full AddressTree (carries alternatives
 			// on each node). Otherwise stay libpostal-compat (flat tag→value).
-			return opts.includeAlternatives ? JSON.stringify(tree, null, 2) : JSON.stringify(decodeAsJson(tree), null, 2)
+			return opts.includeAlternatives ? JSON.stringify(tree, null, 2) : JSON.stringify(decodeAsJSON(tree), null, 2)
 	}
 }
 
@@ -604,7 +604,7 @@ function serializeResult(
 		kind: result.kind,
 		path: result.path,
 		timing: result.timing,
-		tree: format === "xml" ? decodeAsXml(result.tree) : result.tree,
+		tree: format === "xml" ? decodeAsXML(result.tree) : result.tree,
 	}
 }
 
@@ -624,11 +624,11 @@ async function runNeural(
 	if (policyOverrides.length === 0 && !options.resolve) {
 		switch (options.format) {
 			case "xml":
-				return neural.parseXml(input)
+				return neural.parseXML(input)
 			case "tuple":
 				return JSON.stringify(await neural.parseTuples(input), null, 2)
 			default:
-				return JSON.stringify(await neural.parseJson(input), null, 2)
+				return JSON.stringify(await neural.parseJSON(input), null, 2)
 		}
 	}
 

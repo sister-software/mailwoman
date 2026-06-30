@@ -33,7 +33,7 @@
 import type { AddressNode, AddressTree } from "./types.js"
 import { unknownSpans } from "./unknown-spans.js"
 
-export interface SerializeXmlOpts {
+export interface SerializeXMLOpts {
 	/** Pretty-print with line breaks and indentation. Default true. */
 	pretty?: boolean
 	/** Include `conf` attribute on every component. Default true. */
@@ -82,7 +82,7 @@ function srcAttrValue(node: AddressNode): string | null {
  */
 const GEO_PRECISION = 6
 
-function attrs(node: AddressNode, opts: Required<SerializeXmlOpts>): string {
+function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 	const parts: string[] = []
 
 	if (opts.includeOffsets) parts.push(`start="${node.start}"`, `end="${node.end}"`)
@@ -144,7 +144,7 @@ function serializeAlternatives(node: AddressNode, indent: string): string {
 	return lines.join("\n")
 }
 
-function serializeNode(node: AddressNode, indent: string, opts: Required<SerializeXmlOpts>): string {
+function serializeNode(node: AddressNode, indent: string, opts: Required<SerializeXMLOpts>): string {
 	const a = attrs(node, opts)
 	const text = escapeXml(node.value)
 	const nl = opts.pretty ? "\n" : ""
@@ -165,8 +165,8 @@ function serializeNode(node: AddressNode, indent: string, opts: Required<Seriali
 }
 
 /** Project an `AddressTree` to nested XML with optional confidence/offset attributes. */
-export function decodeAsXml(tree: AddressTree, opts: SerializeXmlOpts = {}): string {
-	const full: Required<SerializeXmlOpts> = {
+export function decodeAsXML(tree: AddressTree, opts: SerializeXMLOpts = {}): string {
+	const full: Required<SerializeXMLOpts> = {
 		pretty: opts.pretty ?? true,
 		includeConf: opts.includeConf ?? true,
 		includeOffsets: opts.includeOffsets ?? true,

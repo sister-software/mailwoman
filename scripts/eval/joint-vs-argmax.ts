@@ -21,7 +21,7 @@ import { readFileSync, writeFileSync } from "node:fs"
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --default-country DE --out-json /tmp/joint-de.json
  */
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
@@ -144,7 +144,7 @@ async function main(): Promise<void> {
 
 			try {
 				const result = await pipeline(row.input, { forceJointReconcile, resolveOpts })
-				json = decodeAsJson(result.tree)
+				json = decodeAsJSON(result.tree)
 			} catch {
 				/* leave json empty → miss */
 			}
