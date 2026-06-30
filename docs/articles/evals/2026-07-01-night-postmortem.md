@@ -223,6 +223,18 @@ What's genuinely left is **operator-gated or focused-session**, not contained CP
   (absent on the lab box).
 - **#718 remainder, the record-matcher epics (#598/#602/#603/#615), #480 #3/#5** — focused sessions / train-loop.
 
+## Found while verifying #822 reaches users → filed #861 (server↔demo resolver parity)
+
+Checked whether the marquee #822 fix actually shows up in the public demo. It does **not run through** `resolveTree`
+— the demo has a custom `runCascade` (postcode→locality→raw + region-bbox + population-first over the httpvfs
+`candidate.db`), so **none** of the joint-consistency passes (#822/#263/#267/#832) execute in the browser.
+Verify-before-verdict kept this from being an overclaim: the demo's `candidate.db` ranks `Vienna AT` (1.69M) #1
+over the 45 US Viennas and bbox-constrains `Portland, ME`/`New York, NY`, so the **headline cases already
+resolve correctly via population + bbox**. The real gap is the **explicit-country tail** (the #822 placer-recoverable
+45 — non-famous foreign cities where population doesn't surface the right place and there's no region to bbox).
+Filed #861 with two options (port the country branch to the cascade, or converge the browser path on the shared
+`resolveTree` — the candidate backend already honors `findPlace({country})`). A demo-architecture call for the operator.
+
 ## Numbers (Part 2 — final-ish)
 
 | | |
