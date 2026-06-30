@@ -283,15 +283,31 @@ The takeaway for the next shift: an over-conservative "it's gated" can be its ow
 (don't ship contract/architecture/budget *decisions*) was right; "don't ship the safe plumbing underneath them"
 was too cautious.
 
-## Numbers (Part 2 — final-ish)
+## Numbers (Part 2 — final)
+
+_Drafted during the shift; finalized at hand-off. Active window ~05:00–13:39 UTC (~8.5h hands-on of the
+~14h conn)._
 
 | | |
 |---|---|
 | Levers shipped | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + #493 serializers (#864, flagged) + F+H artifacts (#853, #857) |
-| Levers triaged/measured | D (#305/#435/#456 re-scoped), E (deferred w/ reason), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
-| PRs merged | 11 (#852–860, #862, #863) · 1 open flagged (#864 #493 serializers) |
+| Levers triaged/measured | D (#305/#435/#456 re-scoped), E (deferred — corrected: v4.13.0 already shipped the multilocale win), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
+| PRs merged | 12 (#852–860, #862, #863, #865) · 1 open flagged (#864 #493 serializers) |
 | #822 bare resolve-rate | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed |
 | Modal $ | ~0 (E deferred, budget preserved) |
 | GPU | none |
-| Regressions shipped | 0 |
-| Issues advanced | #822 closed; #305/#379/#435/#456/#480/#493/#818/#825/#826 updated/advanced |
+| NaN / CI failures on main / regressions | 0 / 0 / 0 |
+| Issues advanced | #822 **closed**, #861 **filed**; #305/#379/#435/#456/#480/#493/#818/#825/#826 updated |
+
+## Open / next (the morning decisions)
+
+The decision brief at the top of Part 2 is the authoritative list; the forks for the morning:
+
+- **#864** — review the `unknown` serializer contract (native-vs-opt-in, JSON mix-vs-nest), then merge. The
+  #493 parse-API wrappers + demo rendering are the follow-on (they depend on #864's types).
+- **Lever E / $20** — held. The multilocale lift is banked (v4.13.0); the further push is a campaign-strategy
+  + data call (#477 recipe), not an overnight probe. Budget untouched.
+- **#861** — port the country branch to the demo cascade (quick) vs converge on the shared `resolveTree`
+  (principled). My rec: converge.
+- **#378** — the in-browser P95 trace needs a Chrome-capable machine (gates #372).
+- **#379** — `tar` 7.x dev-tooling bump wants a deliberate test pass.
