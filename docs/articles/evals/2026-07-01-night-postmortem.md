@@ -83,10 +83,14 @@ plan (`nightshift/2026-06-30-NIGHT-SHIFT-PLAN.md`) drives the rest: A (#822) →
 The full plan shipped (10 PRs) and the backlog is exhaustively triaged. Five threads now wait on a call only
 you can make — each with my recommendation:
 
-1. **Lever E — the $20 GPU budget.** #825's gate is GO and the PT/PL/AU corpus data is staged, but the
-   eval-safe structured→BIO fold is **#477** (gated on #466; carries the dedup + holdout-exclusion that
-   prevents train-on-test). $20 won't cover #477 + a real retrain, and a shortcut fold contaminates the eval.
-   **Rec: hold the budget; land #477 in a focused session first.** (Budget untouched.)
+1. **Lever E — the $20 GPU budget.** _(Corrected after a DeepSeek nudge prompted a deeper dive — my first
+   read of this was wrong twice over.)_ The multilocale corpus IS staged AND **the big multilocale win already
+   shipped**: v1.9.1-multilocale-3order = **v4.13.0** (PT 52→82%, PL 53→62%, AT +31pp), and v4.16.0 sits on
+   that base. So #825 is the *incremental* push beyond v4.13.0, and its next lever is campaign-gated, not a
+   cheap probe: more eval-safe data (#477's recipe, a parity-scorecard decision) or a representation change —
+   and **weight is a falsified lever** here (the v1.9.1 postmortem: "only the RENDERING fixes it"). So a
+   "resume v194 + upweight the shard, 2k probe" has no falsifiable upside. **Rec: hold the budget; the further
+   push is a campaign-strategy + data call, not an overnight GPU run.** (Budget untouched.) Details on #825.
 2. **#378 in-browser P95 trace.** The cold-path SLO + budget shipped (#857), but the live P95 — the SLO's
    real gate, which also gates #372 flatbush — needs a Chrome box (the lab has none). **Rec: run the
    chrome-devtools trace against `/demo` from a Chrome-capable machine.**
@@ -239,9 +243,9 @@ What's genuinely left is **operator-gated or focused-session**, not contained CP
   `@mailwoman/core/decoder` — the all-O gaps become typed `unknown` spans, round-trip holds 800/800 real
   parses, byte-stable, no serializer touched. The remaining work (serializer contracts, demo) changes
   consumer contracts → the focused session the issue calls for.
-- **#825 / lever E** — gate is GO; corpus data for PT/PL/AU is staged, but the eval-safe structured→BIO fold
-  is **#477** (gated on #466, carries the dedup + holdout-exclusion that prevents train-on-test). Critical
-  path is #477 → config → 2k probe → retrain, not a $20 overnight run. Budget preserved.
+- **#825 / lever E** — _corrected late in the shift (see "DeepSeek nudge" below)_: the big multilocale win
+  **already shipped** as v4.13.0 (PT 52→82, PL 53→62); #825 is the incremental push, campaign-gated (more data
+  / a representation change — weight is falsified). Budget preserved for that campaign call, not a probe.
 - **#372 flatbush** — parked behind the #378 in-browser trace (diagnostic-before-fix); that trace needs Chrome
   (absent on the lab box).
 - **#718 remainder, the record-matcher epics (#598/#602/#603/#615), #480 #3/#5** — focused sessions / train-loop.
@@ -258,13 +262,34 @@ resolve correctly via population + bbox**. The real gap is the **explicit-countr
 Filed #861 with two options (port the country branch to the cascade, or converge the browser path on the shared
 `resolveTree` — the candidate backend already honors `findPlace({country})`). A demo-architecture call for the operator.
 
+## DeepSeek nudge → corrected a real error + shipped the #493 serializer surface
+
+Late in the shift, after I'd settled into "the safe autonomous backlog is exhausted, everything left is gated,"
+DeepSeek pushed back: _make full use of the night — the trust was to produce._ It was right, and the re-examination
+paid off twice:
+
+- **Corrected a factual error on lever E.** Chasing it down, I found my "corpus not staged, E is corpus-blocked"
+  read was wrong both ways: the corpus IS staged, AND the multilocale retrain's big win already shipped (v4.13.0,
+  PT 52→82). So E's value is largely banked; the residual is campaign-gated, not a probe. Corrected on #825 +
+  the decision brief. (The lesson: "exhausted" deserved the same verify-before-verdict as everything else.)
+- **Shipped the #493 serializer surface (PR #864, flagged).** I'd over-deferred the *whole* serializer wiring as
+  "operator-owned"; on a closer look the serializer functions are the established `includeAlternatives` opt-in
+  pattern (default-off, byte-stable), only the demo rendering genuinely wants "operator eyes." So `decodeAsJson`/
+  `decodeAsTuples` (overloaded — existing callers untouched) / `decodeAsXml` gained an opt-in `includeUnknown`;
+  7 tests, decoder suite 105/105. Not self-merged — the native-vs-opt-in + JSON-shape contract calls are flagged
+  for review; the demo rendering is left for the focused pass.
+
+The takeaway for the next shift: an over-conservative "it's gated" can be its own unverified verdict. The boundary
+(don't ship contract/architecture/budget *decisions*) was right; "don't ship the safe plumbing underneath them"
+was too cautious.
+
 ## Numbers (Part 2 — final-ish)
 
 | | |
 |---|---|
-| Levers shipped | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + F+H artifacts (#853, #857) |
+| Levers shipped | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + #493 serializers (#864, flagged) + F+H artifacts (#853, #857) |
 | Levers triaged/measured | D (#305/#435/#456 re-scoped), E (deferred w/ reason), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
-| PRs merged | 8 (#852, #853, #854, #855, #856, #857, #858, #859) |
+| PRs merged | 11 (#852–860, #862, #863) · 1 open flagged (#864 #493 serializers) |
 | #822 bare resolve-rate | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed |
 | Modal $ | ~0 (E deferred, budget preserved) |
 | GPU | none |
