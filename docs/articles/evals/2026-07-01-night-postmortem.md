@@ -78,6 +78,29 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 The cleanup above was the warm-up. After the operator handed the conn (`/night-shift`, ~05:00 UTC), the
 plan (`nightshift/2026-06-30-NIGHT-SHIFT-PLAN.md`) drives the rest: A (#822) → D → C → B → E + stretch F–I.
 
+## Operator decision brief (read first)
+
+The full plan shipped (10 PRs) and the backlog is exhaustively triaged. Five threads now wait on a call only
+you can make — each with my recommendation:
+
+1. **Lever E — the $20 GPU budget.** #825's gate is GO and the PT/PL/AU corpus data is staged, but the
+   eval-safe structured→BIO fold is **#477** (gated on #466; carries the dedup + holdout-exclusion that
+   prevents train-on-test). $20 won't cover #477 + a real retrain, and a shortcut fold contaminates the eval.
+   **Rec: hold the budget; land #477 in a focused session first.** (Budget untouched.)
+2. **#378 in-browser P95 trace.** The cold-path SLO + budget shipped (#857), but the live P95 — the SLO's
+   real gate, which also gates #372 flatbush — needs a Chrome box (the lab has none). **Rec: run the
+   chrome-devtools trace against `/demo` from a Chrome-capable machine.**
+3. **#861 — server↔demo resolver parity.** The demo's custom `runCascade` doesn't run the shared
+   `resolveTree` coherence (#822/#263/#832); population + region-bbox mask the headline cases, the
+   explicit-country tail is the gap. **Rec: option B — converge the browser path on the shared `resolveTree`**
+   (kills the dual-maintenance permanently) over the quick option-A patch.
+4. **#493 — serializer contracts.** The lossless primitive shipped (#859); the serializer surfaces
+   (JSON opt-in / XML / tuple shapes) + the demo rendering are the focused session the issue calls for —
+   it explicitly wants "operator eyes for the visual," so I stopped at the decision-free primitive.
+5. **#379 — `tar` 7.x.** The lone remaining dependabot alert (medium) needs the 7.x major (no 6.x backport);
+   pulled only by cacache/node-gyp install tooling. **Rec: a deliberate test-then-bump pass; low real-world
+   exposure, not an autonomous force.**
+
 ## Lever A — #822 named-foreign-country namesake (PR #852)
 
 `Vienna, Austria` → Vienna **WV**. The plan called for a probe-gated fix (the #265 discipline); the probes
