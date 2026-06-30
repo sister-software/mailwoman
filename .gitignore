@@ -149,9 +149,12 @@ HANDOFF-*.md
 
 # Diagnostic scripts — one-off investigation scripts that aren't part of the shipped
 # toolchain. Keepers cited by docs/memories stay tracked; this only hides untracked
-# new diag scripts (#379).
+# new diag scripts (#379). The scripts live under scripts/diagnostic/ (and one-off
+# residual probes under scripts/eval/); the old scripts/diag-*.ts glob never matched.
 scripts/diag-*.ts
 scripts/diag-*.sh
+scripts/diagnostic/
+scripts/eval/*-residual.ts
 
 # Coarse-placer (#244) training data + model artifacts — regenerable, not committed
 data/coarse-placer/
