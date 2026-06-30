@@ -154,6 +154,7 @@ export function ingestGeonamesAliases(
 					adminMap.set(f[10], rid)
 				}
 			}
+
 			// Re-parent regions + ancestor them to the (now-known) country.
 			if (countryId >= 0) {
 				for (const rid of adminMap.values()) {
@@ -186,7 +187,9 @@ export function ingestGeonamesAliases(
 
 			if (addAdmin) {
 				ancestorInsert.run(nid, nid, "locality")
+
 				if (regionId >= 0) ancestorInsert.run(nid, regionId, "region")
+
 				if (countryId >= 0) ancestorInsert.run(nid, countryId, "country")
 			}
 			const seen = new Set([name])

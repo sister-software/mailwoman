@@ -204,7 +204,9 @@ def _audit(lexicon_path: str, corpus_dir: str, rows: int, sample: int) -> None:
     table = pq.read_table(rng.choice(files), columns=["raw", "tokens", "labels"]).slice(0, rows)
     total = with_street = split_count = prefix_count = 0
     samples: list[tuple[str, list[str], list[str]]] = []
-    for raw, tokens, labels in zip(table["raw"].to_pylist(), table["tokens"].to_pylist(), table["labels"].to_pylist(), strict=True):
+    for raw, tokens, labels in zip(
+        table["raw"].to_pylist(), table["tokens"].to_pylist(), table["labels"].to_pylist(), strict=True
+    ):
         total += 1
         if "B-street" not in labels:
             continue
@@ -223,7 +225,9 @@ def _audit(lexicon_path: str, corpus_dir: str, rows: int, sample: int) -> None:
     print(f"\n== sample of {len(samples)} relabeled rows ==")
     for raw, tokens, labels in samples:
         pairs = " ".join(
-            f"{t}/{lab.removeprefix('B-').removeprefix('I-')}" for t, lab in zip(tokens, labels, strict=True) if "street" in lab
+            f"{t}/{lab.removeprefix('B-').removeprefix('I-')}"
+            for t, lab in zip(tokens, labels, strict=True)
+            if "street" in lab
         )
         print(f"  {raw}\n    -> {pairs}")
 

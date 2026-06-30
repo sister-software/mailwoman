@@ -162,7 +162,9 @@ class TestRelabelSpans:
 
     @staticmethod
     def _slices(row):
-        return [(t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)]
+        return [
+            (t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)
+        ]
 
     def test_splits_street_span_by_char_arithmetic(self):
         row = {

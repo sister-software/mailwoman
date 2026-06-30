@@ -25,8 +25,8 @@ import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,

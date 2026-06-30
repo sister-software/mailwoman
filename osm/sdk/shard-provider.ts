@@ -24,8 +24,8 @@ export interface OsmShards {
 }
 
 /**
- * Opens + caches per-country OSM rooftop lookups. A non-US geocode consults `for(country)`; the first hit
- * for a country opens its shard (with the matching street locale) once, subsequent calls reuse it.
+ * Opens + caches per-country OSM rooftop lookups. A non-US geocode consults `for(country)`; the first hit for a country
+ * opens its shard (with the matching street locale) once, subsequent calls reuse it.
  */
 export class OsmShardProvider {
 	readonly #dataRoot: string

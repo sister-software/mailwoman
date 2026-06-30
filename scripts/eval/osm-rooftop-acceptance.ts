@@ -52,7 +52,9 @@ for (const t of PANEL) {
 	const verdict = g.resolution_tier === "address_point" && (errKm ?? 99) < 0.1 ? "✅ ROOFTOP" : "—"
 
 	console.log(`\n${t.q}   [country=${t.country ?? "placer"}]`)
-	console.log(`   tier=${g.resolution_tier}  lat=${g.lat}  lon=${g.lon}  err=${errKm?.toFixed(3) ?? "n/a"} km  ${verdict}`)
+	console.log(
+		`   tier=${g.resolution_tier}  lat=${g.lat}  lon=${g.lon}  err=${errKm?.toFixed(3) ?? "n/a"} km  ${verdict}`
+	)
 }
 
 shards.close()

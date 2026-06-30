@@ -55,6 +55,7 @@ for (const l of layers) {
 const allPass = results.every((r) => r.pass)
 
 console.log(`\n════════════════ GAUNTLET ════════════════`)
+
 for (const r of results) console.log(`  ${r.pass ? "✓ PASS" : "✗ FAIL"}  ${r.name}`)
 console.log(`\nVERDICT: ${allPass ? "PASS — clear to ship" : "FAIL — do not ship"}`)
 process.exit(allPass ? 0 : 1)

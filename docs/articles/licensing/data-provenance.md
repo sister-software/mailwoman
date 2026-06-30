@@ -30,17 +30,17 @@ Every source below is recorded with its license at the point it enters the pipel
 catalog is [`address-data-sources.mdx`](../plan/reference/address-data-sources.mdx); the legal notices
 live in [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md).
 
-| Source                 | License             | Obligation                          | Role in Mailwoman                                          |
-| ---------------------- | ------------------- | ----------------------------------- | --------------------------------------------------------- |
-| Who's On First (WOF)   | CC0                 | none (public domain)                | the gazetteer anchor — every place keeps its WOF id        |
-| US Census TIGER        | Public Domain       | none                                | US street interpolation + the situs rooftop base           |
-| Overture               | CDLA-Permissive-2.0 | attribution                         | US address points; coverage centroids                      |
-| OpenAddresses          | per-source, varies  | per-source attribution / share-alike | US gap states (e.g. Hawaii); cross-checked centroids       |
-| GeoNames               | CC-BY 4.0           | attribution                         | the village-level + bilingual alt-name coverage fold       |
-| France BAN             | Licence Ouverte 2.0 | attribution (we elect this over its dual ODbL) | FR street training corpus                       |
-| **OpenStreetMap**      | **ODbL**            | **attribution + share-alike**       | **optional** non-US rooftop shards — quarantined (below)   |
-| libpostal dictionaries | MIT                 | attribution                         | bundled normalization data (`core/data/`)                  |
-| libaddressinput        | Apache-2.0          | attribution                         | bundled format rules (`core/data/`)                        |
+| Source                 | License             | Obligation                                     | Role in Mailwoman                                        |
+| ---------------------- | ------------------- | ---------------------------------------------- | -------------------------------------------------------- |
+| Who's On First (WOF)   | CC0                 | none (public domain)                           | the gazetteer anchor — every place keeps its WOF id      |
+| US Census TIGER        | Public Domain       | none                                           | US street interpolation + the situs rooftop base         |
+| Overture               | CDLA-Permissive-2.0 | attribution                                    | US address points; coverage centroids                    |
+| OpenAddresses          | per-source, varies  | per-source attribution / share-alike           | US gap states (e.g. Hawaii); cross-checked centroids     |
+| GeoNames               | CC-BY 4.0           | attribution                                    | the village-level + bilingual alt-name coverage fold     |
+| France BAN             | Licence Ouverte 2.0 | attribution (we elect this over its dual ODbL) | FR street training corpus                                |
+| **OpenStreetMap**      | **ODbL**            | **attribution + share-alike**                  | **optional** non-US rooftop shards — quarantined (below) |
+| libpostal dictionaries | MIT                 | attribution                                    | bundled normalization data (`core/data/`)                |
+| libaddressinput        | Apache-2.0          | attribution                                    | bundled format rules (`core/data/`)                      |
 
 The deliberate design choice is in the first row: **WOF is the anchor and the eval key**, and supplemental
 data attaches as attributes on WOF-keyed entities, never as imported foreign-id records. That keeps the
@@ -49,13 +49,13 @@ permissive license of the core intact even as coverage grows.
 ## The ODbL boundary
 
 OpenStreetMap is licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/), which is share-alike
-**on a Derivative Database** but draws a line at what it calls a *Produced Work*. That line is the whole game
+**on a Derivative Database** but draws a line at what it calls a _Produced Work_. That line is the whole game
 for a geocoder, so it's worth stating precisely:
 
 - A **Derivative Database** is a database built from ODbL data; for Mailwoman, that's the OSM rooftop shard
   (`address-points-<cc>-<slug>.db`). Redistributing one carries the full ODbL obligation: attribution,
   share-alike, and keeping it open.
-- A **Produced Work** is something *algorithmically derived* from the database that is not itself a database
+- A **Produced Work** is something _algorithmically derived_ from the database that is not itself a database
   — a rendered map, a report, or (the case that matters here) a single resolved coordinate handed back from
   a lookup. ODbL does **not** impose share-alike on a Produced Work; it asks only for attribution.
 
@@ -77,7 +77,7 @@ from reaching the permissive core:
    gazetteer, never merged into it. The `@mailwoman/osm` workspace is **code only**, so it contains no OSM
    data and depending on it carries no obligation.
 
-3. **The tier is dark by default.** The cascade reaches the OSM shards only through an *optional* injected
+3. **The tier is dark by default.** The cascade reaches the OSM shards only through an _optional_ injected
    dependency (`osmShards?` in [`geocode-core.ts:86`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-core.ts)),
    consulted only for a non-US parse with no US situs match. The default product never injects it, so the
    tier does not exist unless a caller deliberately wires it in.
@@ -107,7 +107,7 @@ afterthoughts:
   has **no field to carry per-result attribution** — the `source` reaches the resolver node metadata but is
   dropped before the result is returned. Surfacing ODbL attribution per result requires adding that field
   first.
-- `THIRD_PARTY_NOTICES.md` credits OSM only as reaching us *via WOF and Overture* (development-time). When
+- `THIRD_PARTY_NOTICES.md` credits OSM only as reaching us _via WOF and Overture_ (development-time). When
   first-party OSM shards ship, it needs a new entry for the `@mailwoman/osm` distribution. We hold that edit
   until the shards actually ship — adding it sooner would document a distribution that isn't happening.
 

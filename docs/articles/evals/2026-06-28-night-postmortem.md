@@ -88,11 +88,11 @@ no calibration to fit. **Recommend re-scoping/closing #781**; the EU lever is #8
 
 ## Numbers
 
-| metric | value |
-| --- | --- |
-| Shift window | 05:32 UTC → (in progress) |
-| GPU | $0 (CPU-only) |
-| Staged build | candidate-global-coverage.db, 10.14M rows, +988k places, +147 countries (village-level) |
-| Supported-set regression | 0 (per-query coords identical, +988k places) |
-| Peak heat | 91°C (during VACUUM; cooled to 84°C between jobs) |
-| GeoNames dumps | 147/147 target countries downloaded (real, village-level) |
+| metric                   | value                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------- |
+| Shift window             | 05:32 UTC → (in progress)                                                               |
+| GPU                      | $0 (CPU-only)                                                                           |
+| Staged build             | candidate-global-coverage.db, 10.14M rows, +988k places, +147 countries (village-level) |
+| Supported-set regression | 0 (per-query coords identical, +988k places)                                            |
+| Peak heat                | 91°C (during VACUUM; cooled to 84°C between jobs)                                       |
+| GeoNames dumps           | 147/147 target countries downloaded (real, village-level)                               |

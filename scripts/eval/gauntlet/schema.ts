@@ -18,9 +18,9 @@
 import type { Kysely } from "kysely"
 
 /**
- * The address KIND a case exercises — a free string, deliberately extensible (the taxonomy grows with the
- * corpus). Seed examples: `fr_street_bare`, `fr_street_postcode`, `us_residential`, `us_business_suite`,
- * `us_po_box`, `us_rural_route`, `us_intersection`, `de_street`, `nl_street`, `intl_multitoken_street`.
+ * The address KIND a case exercises — a free string, deliberately extensible (the taxonomy grows with the corpus). Seed
+ * examples: `fr_street_bare`, `fr_street_postcode`, `us_residential`, `us_business_suite`, `us_po_box`,
+ * `us_rural_route`, `us_intersection`, `de_street`, `nl_street`, `intl_multitoken_street`.
  */
 export type AddressKind = string
 

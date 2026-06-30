@@ -48,7 +48,9 @@ const isFinitePair = (lon: unknown, lat: unknown): boolean =>
 	typeof lon === "number" && typeof lat === "number" && Number.isFinite(lon) && Number.isFinite(lat)
 
 /** Reduce a GeoJSON geometry to one representative coordinate: the point itself, or a ring-vertex average for a polygon. */
-function representativePoint(geom: { type?: string; coordinates?: unknown } | null | undefined): [number, number] | null {
+function representativePoint(
+	geom: { type?: string; coordinates?: unknown } | null | undefined
+): [number, number] | null {
 	if (!geom) return null
 
 	if (geom.type === "Point") {
@@ -85,7 +87,10 @@ function representativePoint(geom: { type?: string; coordinates?: unknown } | nu
 	return isFinitePair(lon, lat) ? [lon, lat] : null
 }
 
-function toRecord(feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } }): OsmAddrRecord | null {
+function toRecord(feature: {
+	properties?: Record<string, unknown>
+	geometry?: { type?: string; coordinates?: unknown }
+}): OsmAddrRecord | null {
 	const p = feature.properties ?? {}
 	const housenumber = p["housenumber"]
 
@@ -141,9 +146,9 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OsmAddr
 }
 
 /**
- * Stream every `addr:housenumber`-bearing feature from a PBF extract (nodes + building polygons),
- * geometry reduced to a representative coordinate. Records with no `addr:street` are still yielded
- * (street === null) so the caller can COUNT the association gap before deciding to write them.
+ * Stream every `addr:housenumber`-bearing feature from a PBF extract (nodes + building polygons), geometry reduced to a
+ * representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can COUNT
+ * the association gap before deciding to write them.
  */
 export async function* extractAddrPoints(pbfPath: string): AsyncGenerator<OsmAddrRecord> {
 	for (const layer of ADDR_LAYERS) yield* runLayer(pbfPath, layer)

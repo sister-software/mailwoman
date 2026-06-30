@@ -134,21 +134,19 @@ export function normalizeStreetForKey(street: string): string {
 }
 
 /**
- * Street-name locale for the address-point key. The US path is the full USPS pipeline
- * ({@link normalizeStreetForKey}); the international paths fold + apply a SMALL, consistent per-locale
- * type-token canonicalization. Same discipline as the US normalizer: build side and probe side call
- * the identical function, so the key only needs to be CONSISTENT, not linguistically perfect — a
- * folded "rue du chevaleret" keys the same on both sides whether or not we reorder the article, so no
- * salient-token / multi-key index is built yet (deferred until probing shows the normalizer can't
- * absorb the false-negatives).
+ * Street-name locale for the address-point key. The US path is the full USPS pipeline ({@link normalizeStreetForKey});
+ * the international paths fold + apply a SMALL, consistent per-locale type-token canonicalization. Same discipline as
+ * the US normalizer: build side and probe side call the identical function, so the key only needs to be CONSISTENT, not
+ * linguistically perfect — a folded "rue du chevaleret" keys the same on both sides whether or not we reorder the
+ * article, so no salient-token / multi-key index is built yet (deferred until probing shows the normalizer can't absorb
+ * the false-negatives).
  */
 export type StreetLocale = "us" | "fr" | "de" | "nl"
 
 /**
- * French street-type abbreviations → canonical full form, applied per token after {@link fold}. French
- * address types LEAD the name ("Av. de…", "Bd …", "Pl. …") and "St"/"Ste" abbreviate Saint/Sainte
- * inside names ("Rue St-Honoré" → "rue saint honore"). fold() has already stripped the trailing period,
- * so the keys are point-free ("av", "bd").
+ * French street-type abbreviations → canonical full form, applied per token after {@link fold}. French address types
+ * LEAD the name ("Av. de…", "Bd …", "Pl. …") and "St"/"Ste" abbreviate Saint/Sainte inside names ("Rue St-Honoré" →
+ * "rue saint honore"). fold() has already stripped the trailing period, so the keys are point-free ("av", "bd").
  */
 const FR_STREET_ABBREV = new Map<string, string>([
 	["av", "avenue"],
@@ -173,12 +171,12 @@ const FR_STREET_ABBREV = new Map<string, string>([
 ])
 
 /**
- * Normalize a street name for the address-point key in a non-US locale. Same function build-side and
- * probe-side (the one-function discipline). US delegates to {@link normalizeStreetForKey}.
+ * Normalize a street name for the address-point key in a non-US locale. Same function build-side and probe-side (the
+ * one-function discipline). US delegates to {@link normalizeStreetForKey}.
  *
  * - **fr** — fold + expand leading type abbreviations and Saint/Sainte (token map).
- * - **de** — fold + ß→ss + canonicalize the GLUED `-str(.)` suffix to `-strasse` ("Lindenstr." →
- *     "lindenstrasse", "Lindenstraße" → "lindenstrasse"); an already-full "-strasse" is left intact.
+ * - **de** — fold + ß→ss + canonicalize the GLUED `-str(.)` suffix to `-strasse` ("Lindenstr." → "lindenstrasse",
+ *   "Lindenstraße" → "lindenstrasse"); an already-full "-strasse" is left intact.
  * - **nl** — fold + canonicalize the glued `-str` suffix to `-straat` ("Kerkstr." → "kerkstraat").
  */
 export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): string {
@@ -200,14 +198,14 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 			for (let i = 0; i < tokens.length; i++) {
 				const t = tokens[i]!
 
-				if (/str$/.test(t) && !/strasse$/.test(t)) tokens[i] = t.replace(/str$/, "strasse")
+				if (t.endsWith("str") && !t.endsWith("strasse")) tokens[i] = t.replace(/str$/, "strasse")
 			}
 			break
 		case "nl":
 			for (let i = 0; i < tokens.length; i++) {
 				const t = tokens[i]!
 
-				if (/str$/.test(t) && !/straat$/.test(t)) tokens[i] = t.replace(/str$/, "straat")
+				if (t.endsWith("str") && !t.endsWith("straat")) tokens[i] = t.replace(/str$/, "straat")
 			}
 			break
 	}

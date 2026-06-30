@@ -17,6 +17,9 @@ import { afterAll, beforeAll, expect, test } from "vitest"
 
 import { ingestGeonamesAliases } from "./geonames-aliases.js"
 
+/** A loose SQLite row shape for the test's column probes (avoids `any` — oxlint no-explicit-any). */
+type Row = Record<string, string | number | null>
+
 let dir: string
 let db: DatabaseSync
 
@@ -24,7 +27,9 @@ let db: DatabaseSync
 // admin1, admin2, admin3, admin4, pop, elev, dem, tz, mod).
 function row(over: Record<number, string>): string {
 	const f = Array(19).fill("")
+
 	for (const [i, v] of Object.entries(over)) f[Number(i)] = v
+
 	return f.join("\t")
 }
 
@@ -74,31 +79,31 @@ afterAll(() => {
 test("folds the country (PCLI) and region (ADM1) as admin spr rows", () => {
 	const country = db
 		.prepare("SELECT name, placetype, country FROM spr WHERE placetype='country' AND country='GE'")
-		.get() as any
-	const region = db.prepare("SELECT name, placetype FROM spr WHERE placetype='region' AND country='GE'").get() as any
+		.get() as Row
+	const region = db.prepare("SELECT name, placetype FROM spr WHERE placetype='region' AND country='GE'").get() as Row
 
 	expect(country?.name).toBe("Georgia")
 	expect(region?.name).toBe("Tbilisi")
 })
 
 test("links the locality → region → country ancestry so parentId scoping reaches it", () => {
-	const loc = db.prepare("SELECT id, parent_id FROM spr WHERE placetype='locality' AND country='GE'").get() as any
-	const region = db.prepare("SELECT id FROM spr WHERE placetype='region' AND country='GE'").get() as any
-	const country = db.prepare("SELECT id FROM spr WHERE placetype='country' AND country='GE'").get() as any
+	const loc = db.prepare("SELECT id, parent_id FROM spr WHERE placetype='locality' AND country='GE'").get() as Row
+	const region = db.prepare("SELECT id FROM spr WHERE placetype='region' AND country='GE'").get() as Row
+	const country = db.prepare("SELECT id FROM spr WHERE placetype='country' AND country='GE'").get() as Row
 
 	// Locality is parented to its region; the ancestor chain carries both region and country.
 	expect(loc.parent_id).toBe(region.id)
 	const ancestorIds = db
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ? ORDER BY ancestor_id")
 		.all(loc.id)
-		.map((r: any) => r.ancestor_id)
+		.map((r) => (r as Row).ancestor_id)
 	expect(ancestorIds).toContain(region.id)
 	expect(ancestorIds).toContain(country.id)
 	// The region itself ancestors to the country (so a region→country query works too).
 	const regionAnc = db
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ?")
 		.all(region.id)
-		.map((r: any) => r.ancestor_id)
+		.map((r) => (r as Row).ancestor_id)
 	expect(regionAnc).toContain(country.id)
 })
 
@@ -114,9 +119,9 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 	db2.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 	ingestGeonamesAliases(db2, ["GE"], dir, () => {})
 
-	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as any).n).toBe(0)
-	expect((db2.prepare("SELECT COUNT(*) n FROM ancestors").get() as any).n).toBe(0)
-	expect((db2.prepare("SELECT parent_id FROM spr WHERE placetype='locality'").get() as any).parent_id).toBe(-1)
+	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as Row).n).toBe(0)
+	expect((db2.prepare("SELECT COUNT(*) n FROM ancestors").get() as Row).n).toBe(0)
+	expect((db2.prepare("SELECT parent_id FROM spr WHERE placetype='locality'").get() as Row).parent_id).toBe(-1)
 	db2.close()
 })
 
@@ -151,7 +156,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 	ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
 
 	// PCLS is a country-level code; the fold must seat Hong Kong as the country (not skip it like pre-PCL*).
-	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as any)?.name).toBe(
+	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(
 		"Hong Kong"
 	)
 	hk.close()

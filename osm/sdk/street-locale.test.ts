@@ -8,9 +8,8 @@
  *   folding (and the Paris acceptance key) so a future tweak can't silently desync the two sides.
  */
 
-import { expect, test } from "vitest"
-
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { expect, test } from "vitest"
 
 import { streetLocaleForCountry, supportedOsmCountries } from "./street-locale.js"
 
