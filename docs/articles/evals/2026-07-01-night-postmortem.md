@@ -197,6 +197,30 @@ explicitly parked** behind that trace (diagnostic-before-fix — don't build the
   the operator rejected Pelias-style determinism in #833, and DeepSeek's review concurred. Shipped default-on.
 - **Did not force the tar 7.x major bump** — dev-only tooling, no 6.x backport, breakage risk on cacache/node-gyp.
 
+## Backlog triage — the contained CPU work is delivered; verify-before-verdict kept paying
+
+After the plan's levers landed, I worked down the rest of the backlog and kept hitting **already-shipped**
+(checked before re-implementing, the cleanup's lesson held all night): #480 deliverable 2 (strict shard
+resolution + `test_shard_paths.py`), #480's REPRODUCIBILITY.md, #718's "fix boundary-stress-gate.ts first"
+(already routes through the canonical `createScorer` in strict mode), #435 quirk 2 (the v4.16.0 model fixed
+the street-prefix drop), and the NPPES dedup yardstick (already measured anchor-on, the
+`2026-06-22-nppes-dedup-lever-ladder.md` report — #718's "anchor-off 68.0" concern was resolved by
+`loadFromWeights`'s default-on soft-feed). Re-doing any of these would have been wasted motion.
+
+What's genuinely left is **operator-gated or focused-session**, not contained CPU riders:
+
+- **#493** (lossless decomposition) — scoped with a round-trip diagnostic, no decoder change (the issue
+  itself says it deserves a focused session). Baseline: 97.8% content coverage / 90.4% fully covered. The
+  dominant lost-content class is **multibyte/accented-character fragmentation** (`Hôtel` → `H` + an all-O `ô`
+  + `tel de Ville`), confirmed real (offsets are JS-char-aligned, not an artifact). The implementation touches
+  every serializer contract + the demo → a focused session.
+- **#825 / lever E** — gate is GO; corpus data for PT/PL/AU is staged, but the eval-safe structured→BIO fold
+  is **#477** (gated on #466, carries the dedup + holdout-exclusion that prevents train-on-test). Critical
+  path is #477 → config → 2k probe → retrain, not a $20 overnight run. Budget preserved.
+- **#372 flatbush** — parked behind the #378 in-browser trace (diagnostic-before-fix); that trace needs Chrome
+  (absent on the lab box).
+- **#718 remainder, the record-matcher epics (#598/#602/#603/#615), #480 #3/#5** — focused sessions / train-loop.
+
 ## Numbers (Part 2 — final-ish)
 
 | | |
