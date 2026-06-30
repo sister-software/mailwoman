@@ -534,7 +534,9 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
     # Allocate per category by weight.
     weights = [c["weight"] for c in KRYPTONITE_CATEGORIES]
     wsum = sum(weights)
-    per_cat = {c["category"]: max(50, round(total * w / wsum)) for c, w in zip(KRYPTONITE_CATEGORIES, weights, strict=True)}
+    per_cat = {
+        c["category"]: max(50, round(total * w / wsum)) for c, w in zip(KRYPTONITE_CATEGORIES, weights, strict=True)
+    }
     print(f"per-category target row counts: {per_cat}", flush=True)
 
     # Compose batches.

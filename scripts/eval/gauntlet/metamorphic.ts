@@ -135,16 +135,19 @@ console.log(`  DIR (drop-postcode still resolves): ${dirChecks - dirFails}/${dir
 
 if (fails.length) {
 	console.log(`\nNEW violations (gate-failing):`)
+
 	for (const f of fails) console.log(f)
 }
 
 if (xfails.length) {
 	console.log(`\nknown xfails (tracked, non-blocking):`)
+
 	for (const f of xfails) console.log(f)
 }
 
 if (newlyPassing.length) {
 	console.log(`\n⚠ xfails that now PASS — remove from KNOWN_INV_XFAIL:`)
+
 	for (const [key, issue] of newlyPassing) console.log(`  + ${key}  [was: ${issue}]`)
 }
 // The gate fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.

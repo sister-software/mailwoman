@@ -34,7 +34,7 @@ Continuation of the day's FR rooftop precision arc. Full autonomy granted (relea
 - The two-backend release (npm←HF, demo←R2/nexus-public) took a long reverse-engineering pass at the shift
   boundary — the nexus-public credential split + the polygons-GET-403 are gotchas worth a runbook line.
 - **The staged-scoped pre-commit hook bit again.** The #252 fix touched `neural/case-normalize.ts`, but a
-  *second* test file (`neural/test/case-normalize.test.ts`) carried the same assertions — the hook runs only
+  _second_ test file (`neural/test/case-normalize.test.ts`) carried the same assertions — the hook runs only
   the staged file's tests, so it greened locally while CI went red on the un-staged copy. Both casing pushes
   red'd main for ~25 min before I caught it. The standing lesson (memory: precommit-hook-staged-scoped) is
   to run the full package suite after a cross-cutting change; I leaned on the hook and paid the CI round-trip.
@@ -43,7 +43,7 @@ Continuation of the day's FR rooftop precision arc. Full autonomy granted (relea
   shift.** The local `loadFromWeights` default points at the v193a3 training base, not the shipped model. I
   caught it only at the hourly checkpoint, when the FR held-out showed prod (199) ≠ candidate (189) resolved
   — they should be identical if the default were v194. The anti-rot check then flagged `#831 now PASSES on
-  v194`. Net: #831 was a false finding (fixed on the demo); #832/#833 are model-independent so they held.
+v194`. Net: #831 was a false finding (fixed on the demo); #832/#833 are model-independent so they held.
   Lesson banked twice now (d6812bc7, and again here) — the harness md5-stamps the model every run as the
   durable fix, but the dev default itself (link-dev-weights → v193a3) needs the operator's versioning call.
 
@@ -51,7 +51,7 @@ Continuation of the day's FR rooftop precision arc. Full autonomy granted (relea
 
 - **Fired the v4.16.0 demo promote solo** — byte-identical carry + post-flip md5 + soft-feed verification;
   reversible. The npm side deferred (trusted-publishing setup for @mailwoman/osm; nothing depends on it).
-- **#252 fix in the preprocessing, not a retrain** — #690 *created* the OOD `Ny`; the model reads `NY`
+- **#252 fix in the preprocessing, not a retrain** — #690 _created_ the OOD `Ny`; the model reads `NY`
   correctly, so fixing the deterministic layer that broke it is principled (not a model override). The
   ≤2-letter length heuristic over a state/directional list (structural, no list to maintain).
 - **#250 via nearest-named-highway** (orphaned points aren't `addr:place`; 301k highways available) —
@@ -68,12 +68,12 @@ addresses had no OSM coverage either way → the recovery's win diluted to noise
 marginal → I'd committed it default-off). Re-running the A/B drawn **IdF-only** (the region the shard
 actually covers):
 
-| ≤tol | current | recovery |
-|---|---|---|
-| 0.1km (rooftop) | 28 | **65** (+132%) |
-| 0.5km (street) | 51 | **81** (+59%) |
-| 5km (locality) | 160 | 154 (−6, noise) |
-| resolved | 213 | 213 |
+| ≤tol            | current | recovery        |
+| --------------- | ------- | --------------- |
+| 0.1km (rooftop) | 28      | **65** (+132%)  |
+| 0.5km (street)  | 51      | **81** (+59%)   |
+| 5km (locality)  | 160     | 154 (−6, noise) |
+| resolved        | 213     | 213             |
 
 A coverage-limited tier MUST be gated on a draw from the COVERED region — the all-France draw nearly
 killed a doubling of rooftop coverage. **This is a Gauntlet held-out improvement (C6): make the draw
@@ -85,10 +85,10 @@ deployment of the shard is gated on B3 (browser tier) + #249 (ODbL legal). The l
 OSM rooftop tier extended to DE + NL with the existing pipeline (no code change — `de`/`nl` were already in
 `COUNTRY_TO_STREET_LOCALE`, so `supportedOsmCountries()` + the provider routed them once the shards existed):
 
-| shard | points | size | assoc. gap | acceptance |
-|---|---|---|---|---|
-| DE / Berlin | 450,900 | 108 MB | **0.3%** | Unter den Linden #1 → (52.5172, 13.3978) ✓ |
-| NL / whole country | 9,919,996 | 2.3 GB | **0.0%** | Damrak #1 → (52.3770, 4.8979) ✓ |
+| shard              | points    | size   | assoc. gap | acceptance                                 |
+| ------------------ | --------- | ------ | ---------- | ------------------------------------------ |
+| DE / Berlin        | 450,900   | 108 MB | **0.3%**   | Unter den Linden #1 → (52.5172, 13.3978) ✓ |
+| NL / whole country | 9,919,996 | 2.3 GB | **0.0%**   | Damrak #1 → (52.3770, 4.8979) ✓            |
 
 **Finding: the association gap is import-specific, not universal.** FR/IdF's 58% gap was a cadastre-style
 import (addr:housenumber nodes with no addr:street); DE-Berlin and NL (BAG) tag streets, so `--recover` is
@@ -115,9 +115,9 @@ browser httpvfs as-is — a sub-region (Amsterdam) would be the demo shard.
   but no runner — built it (status-aware: gates `status=pass`, tracks `known_fail`/`improvement_target`
   non-blocking, flags any tracked case that starts passing). `run.ts` runs all three layers in isolated
   processes and emits ONE combined verdict — the gate a ship runs (documented in RELEASING.md). Its FIRST
-  run caught real issues, exactly the point: the bare-Chevaleret mis-parse (#831, now a tracked known_fail),
+  run caught real issues, exactly the point: the bare-Chevaleret mis-parse (#831, now a tracked known*fail),
   the US hierarchy stopping at region (dropped the over-reaching `country` assertion), and **#832** — "350
-  5th Ave, New York, NY" resolves to *upstate* NY, not NYC (a real disambiguation bug the per-tag F1 misses).
+  5th Ave, New York, NY" resolves to \_upstate* NY, not NYC (a real disambiguation bug the per-tag F1 misses).
   Gate now: regression 5/5 gated + 3 tracked, metamorphic 29/35 + 6 xfails → **PASS, clear to ship** (`e35583ff`).
 
 ## The gate's payoff — a bare-query coordinate-bug class (operator follow-ups)
@@ -136,7 +136,7 @@ so a future fix auto-flags "newly passing." Fixes are model/ranking/gazetteer �
   of alt-names dilute bm25), so `exactMatchTiering` never sees it. Fix: an exact-name fetch floor (analogous
   to the existing short-query floor) — a sensitive, tuned path; flagged for review.
 - **#833 — "Portland, ME" → Messina, Italy** (6862 km off); "Portland, OR" → Ourense, Spain. The placer
-  *mis-predicts* GB 0.79 (Portland/Dorset + "ME"=Medway UK postcode), and the soft prior can't stop the IT
+  _mis-predicts_ GB 0.79 (Portland/Dorset + "ME"=Medway UK postcode), and the soft prior can't stop the IT
   "ME"=Messina province match. Fix: more bare-`City,ST` placer training + the #194 hard-country-filter.
 
 ## Harness fidelity — a theme worth its own line, + a shipped fix (PR #834)
@@ -159,7 +159,7 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
 - **Next model iteration — surface-augmentation retrain (#261, DeepSeek-backed, session 019f1223).** The
   #829 lowercase failures + the #831-class case-sensitivity are one cluster: the model's parse is
   case/surface-fragile. DeepSeek's structural read (trust it): **surface augmentation is the primary** —
-  #831 being fixed by a retrain *without* preprocessing changes proves the model CAN learn case-robustness,
+  #831 being fixed by a retrain _without_ preprocessing changes proves the model CAN learn case-robustness,
   so #829 is a coverage gap, not a flaw. Rejected: structural-lowercasing (destroys the directional /
   proper-noun case signal), deterministic rules (against model-first). Reserved escalation: case as an
   auxiliary per-token feature. **Concrete recipe:** add a case augmentation to `corpus-python/augment.py`
@@ -173,12 +173,12 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
   non-length-preserving Unicode; 4 tests added, 32 pass. So the operator just sets `augment_case_prob` in a
   config (copy v1.9.4, resume v194) + launches the Modal probe — no infra work left.
   - **PROBE DONE + VALIDATED (`b0d4e02e`, Modal ~$1.5).** Ran the 2k-step diagnostic (resume v194 step-092000
-    + `case_prob: 0.3`, fresh v195 output dir so the shipped v194 is untouched). Loss healthy throughout
-    (0.6884→0.6619). On the probe model, `"1600 pennsylvania ave nw, washington dc"` (lowercase) now resolves
-    to **ROOFTOP**, identical to the mixed-case form — **the #829 US lowercase case is fixed in just 2k
-    steps.** NL lowercase improved null→admin (needs the full run's more steps / locale weight). So the
-    DIRECTION is confirmed — the operator launches the full retrain knowing it works, not on faith. DeepSeek
-    scoreboard (session 019f1223): structural 1/1 (surface-augmentation predicted-and-held).
+    - `case_prob: 0.3`, fresh v195 output dir so the shipped v194 is untouched). Loss healthy throughout
+      (0.6884→0.6619). On the probe model, `"1600 pennsylvania ave nw, washington dc"` (lowercase) now resolves
+      to **ROOFTOP**, identical to the mixed-case form — **the #829 US lowercase case is fixed in just 2k
+      steps.** NL lowercase improved null→admin (needs the full run's more steps / locale weight). So the
+      DIRECTION is confirmed — the operator launches the full retrain knowing it works, not on faith. DeepSeek
+      scoreboard (session 019f1223): structural 1/1 (surface-augmentation predicted-and-held).
 - The three findings above are the headline operator follow-ups (model/ranking/gazetteer fixes).
 - **B3** (browser OSM rooftop tier) + **R2-deploy the shards** — the demo's visible rooftop; double-gated on
   the browser build + **#249** (ODbL legal sign-off, counsel's call).
@@ -187,12 +187,12 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
 
 ## Numbers
 
-| | |
-|---|---|
-| Shift window | ~02:00–11:10 UTC (operator returned ~5h before the planned 16:00 close) |
-| Models trained | 1 — the v195 case-aug probe (2k steps), which VALIDATED #261 (US lowercase fixed) |
-| Modal $ | ~$1.5 — the v195 probe ($20 budget) |
-| CI failures | 2 main reds (the #252 second-test-file miss), caught + fixed in ~25 min; #828/#830 caught pre-merge |
-| Demo regressions | 0 |
-| Coordinate bugs found | 3 — #832 + #833 real (model-independent); #831 a stale-symlink false-positive (closed) |
-| Gauntlet | complete: 3 layers + unified gate; regression 5/5 gated + 3 tracked, metamorphic 29/35 + 6 xfails |
+|                       |                                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| Shift window          | ~02:00–11:10 UTC (operator returned ~5h before the planned 16:00 close)                             |
+| Models trained        | 1 — the v195 case-aug probe (2k steps), which VALIDATED #261 (US lowercase fixed)                   |
+| Modal $               | ~$1.5 — the v195 probe ($20 budget)                                                                 |
+| CI failures           | 2 main reds (the #252 second-test-file miss), caught + fixed in ~25 min; #828/#830 caught pre-merge |
+| Demo regressions      | 0                                                                                                   |
+| Coordinate bugs found | 3 — #832 + #833 real (model-independent); #831 a stale-symlink false-positive (closed)              |
+| Gauntlet              | complete: 3 layers + unified gate; regression 5/5 gated + 3 tracked, metamorphic 29/35 + 6 xfails   |

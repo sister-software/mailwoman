@@ -26,7 +26,9 @@ const PROBE_MODEL = resolve(process.env["PROBE_MODEL"] ?? "./out/v194-final/mode
 const baseline = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const probe = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: PROBE_MODEL })
 
-function streetKey(tree: { roots: readonly { tag: string; value: string; start: number; children: readonly unknown[] }[] }): string {
+function streetKey(tree: {
+	roots: readonly { tag: string; value: string; start: number; children: readonly unknown[] }[]
+}): string {
 	const parts: Array<{ value: string; start: number }> = []
 	const stack = [...tree.roots]
 
@@ -101,7 +103,10 @@ for (const q of usCases) {
 const n = cases.length
 console.log(`\n=== #251 fr-bare-street PROBE VERDICT (bare FR, no postcode; ${n} cases incl 3 named demos) ===`)
 console.log(`  SHIPPED v193a3 : ${baseOk}/${n} street-intact  (${((baseOk / n) * 100).toFixed(0)}%)`)
-console.log(`  PROBE   v194   : ${probeOk}/${n} street-intact  (${((probeOk / n) * 100).toFixed(0)}%)   Δ ${(((probeOk - baseOk) / n) * 100).toFixed(0)}pp`)
+console.log(
+	`  PROBE   v194   : ${probeOk}/${n} street-intact  (${((probeOk / n) * 100).toFixed(0)}%)   Δ ${(((probeOk - baseOk) / n) * 100).toFixed(0)}pp`
+)
 console.log(`  US no-regression: ${usSame}/${usCases.length} parses identical to shipped`)
 console.log(`\nflips:`)
+
 for (const f of flips) console.log(f)

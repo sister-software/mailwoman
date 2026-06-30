@@ -43,8 +43,8 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 	readonly #byBbox: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	/**
-	 * @param dbPath shard path.
-	 * @param opts.streetLocale the street-normalization locale this shard was BUILT with — must match, or every key
+	 * @param dbPath Shard path.
+	 * @param opts.streetLocale The street-normalization locale this shard was BUILT with — must match, or every key
 	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
@@ -98,9 +98,7 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 		// inside the resolved locality's box. Only reached when the scoped probes missed AND a bbox was supplied.
 		if (!row && query.bbox) {
 			const b = query.bbox
-			row = this.#byBbox.get(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon) as
-				| AddressPointRow
-				| undefined
+			row = this.#byBbox.get(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon) as AddressPointRow | undefined
 		}
 
 		if (!row) return null

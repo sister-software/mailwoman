@@ -15,9 +15,9 @@ import { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resol
 export { normalizeStreetForKeyLocale, type StreetLocale }
 
 /**
- * ISO-3166 alpha-2 (lowercase) → the street-normalization locale. Deliberately small: only the
- * countries we actually ship an OSM rooftop shard for. Adding a country is a one-line entry PLUS the
- * matching per-locale branch in `normalizeStreetForKeyLocale` — keep them in lockstep.
+ * ISO-3166 alpha-2 (lowercase) → the street-normalization locale. Deliberately small: only the countries we actually
+ * ship an OSM rooftop shard for. Adding a country is a one-line entry PLUS the matching per-locale branch in
+ * `normalizeStreetForKeyLocale` — keep them in lockstep.
  */
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["fr", "fr"],
@@ -26,10 +26,10 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 ])
 
 /**
- * Resolve the street-normalization locale for a country. Throws for an unsupported country rather than
- * silently folding with the wrong rules — a shard built with the wrong normalizer keys every street
- * incorrectly and looks fine until a probe misses. Add the country to {@link COUNTRY_TO_STREET_LOCALE}
- * (and a branch in `normalizeStreetForKeyLocale`) before building its shard.
+ * Resolve the street-normalization locale for a country. Throws for an unsupported country rather than silently folding
+ * with the wrong rules — a shard built with the wrong normalizer keys every street incorrectly and looks fine until a
+ * probe misses. Add the country to {@link COUNTRY_TO_STREET_LOCALE} (and a branch in `normalizeStreetForKeyLocale`)
+ * before building its shard.
  */
 export function streetLocaleForCountry(countryCode: string): StreetLocale {
 	const locale = COUNTRY_TO_STREET_LOCALE.get(countryCode.toLowerCase())

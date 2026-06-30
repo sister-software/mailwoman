@@ -33,7 +33,9 @@ const rows = db
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
-function streetKeyOf(tree: { roots: readonly { tag: string; value: string; start: number; children: readonly unknown[] }[] }): string {
+function streetKeyOf(tree: {
+	roots: readonly { tag: string; value: string; start: number; children: readonly unknown[] }[]
+}): string {
 	const parts: Array<{ value: string; start: number }> = []
 	const stack = [...tree.roots]
 
@@ -63,11 +65,17 @@ for (const r of rows) {
 
 	if (anch === want) anchoredOk++
 
-	if (bare !== want && fails.length < 12) fails.push(`  ✗ bare "${r.street_raw}" → "${bare}" (want "${want}")  | anchored→"${anch}"`)
+	if (bare !== want && fails.length < 12)
+		fails.push(`  ✗ bare "${r.street_raw}" → "${bare}" (want "${want}")  | anchored→"${anch}"`)
 }
 
 console.log(`\nFR street parse-recall on ${rows.length} real OSM addresses:`)
-console.log(`  BARE     (no postcode): ${bareOk}/${rows.length} streets intact  (${((bareOk / rows.length) * 100).toFixed(0)}%)`)
-console.log(`  ANCHORED (w/ postcode): ${anchoredOk}/${rows.length} streets intact  (${((anchoredOk / rows.length) * 100).toFixed(0)}%)`)
+console.log(
+	`  BARE     (no postcode): ${bareOk}/${rows.length} streets intact  (${((bareOk / rows.length) * 100).toFixed(0)}%)`
+)
+console.log(
+	`  ANCHORED (w/ postcode): ${anchoredOk}/${rows.length} streets intact  (${((anchoredOk / rows.length) * 100).toFixed(0)}%)`
+)
 console.log(`\nbare failures:`)
+
 for (const f of fails) console.log(f)

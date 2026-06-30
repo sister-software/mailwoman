@@ -25,7 +25,8 @@ import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourc
 
 export const frBareStreetRecipe: ShardRecipe = {
 	name: "fr-bare-street",
-	description: "FR bare comma-form street+city, NO postcode (#251): '<n> Rue <name>, <City>' — the postcode-anchoring lever",
+	description:
+		"FR bare comma-form street+city, NO postcode (#251): '<n> Rue <name>, <City>' — the postcode-anchoring lever",
 	mode: "tuples",
 	async run(opts, write) {
 		// Seeded for parity with the other recipes; unused beyond reproducibility (the tuples drive the content).
@@ -68,7 +69,8 @@ export const frBareStreetRecipe: ShardRecipe = {
 				source: "synth-fr-bare-street",
 				source_id,
 				corpus_version: "0.9.4",
-				license: "Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
+				license:
+					"Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
 			}
 
 			if (alignAndWrite(write, canonical, "fr-bare-street")) emitted++

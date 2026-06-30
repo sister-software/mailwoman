@@ -329,7 +329,9 @@ def augment_row(
     # Region-abbreviation expansion: find region-labeled abbreviations and expand one.
     if rng.random() < region_prob:
         region_indices = [
-            i for i, (t, lab) in enumerate(zip(tokens, labels, strict=True)) if t in US_STATES and lab in ("B-region", "I-region")
+            i
+            for i, (t, lab) in enumerate(zip(tokens, labels, strict=True))
+            if t in US_STATES and lab in ("B-region", "I-region")
         ]
         if region_indices:
             idx = rng.choice(region_indices)

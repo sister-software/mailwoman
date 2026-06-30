@@ -50,6 +50,7 @@ function checkCase(c: (typeof cases)[number], r: GauntletResult): string[] {
 	if (c.expect_lat != null && c.expect_lon != null) {
 		const tolKm = (c.expect_tolerance_m ?? DEFAULT_TOL_M) / 1000
 		const km = r.lat != null && r.lon != null ? haversineKm(r.lat, r.lon, c.expect_lat, c.expect_lon) : Infinity
+
 		if (km > tolKm) {
 			issues.push(
 				`coord ${km === Infinity ? "unresolved" : `${km.toFixed(2)}km off`} (tol ${c.expect_tolerance_m ?? DEFAULT_TOL_M}m)`
@@ -97,15 +98,18 @@ deps.close()
 console.log(
 	`\n=== Gauntlet · regression (${gated - fails.length}/${gated} gated cases pass, ${tracked.length} tracked) ===`
 )
+
 for (const f of fails) console.log(f)
 
 if (tracked.length) {
 	console.log(`\ntracked (known_fail / improvement_target, non-blocking):`)
+
 	for (const t of tracked) console.log(t)
 }
 
 if (newlyPassing.length) {
 	console.log(`\n⚠ tracked cases that now PASS — promote to status=pass:`)
+
 	for (const p of newlyPassing) console.log(p)
 }
 const pass = fails.length === 0

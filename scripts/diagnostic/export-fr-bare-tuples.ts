@@ -20,6 +20,7 @@ import { createReadStream, createWriteStream } from "node:fs"
 import { createInterface } from "node:readline"
 
 import { mailwomanDataRoot } from "mailwoman/resolver-backend"
+
 import { arg } from "../lib/cli-args.ts"
 
 const N = Number(arg("n", "12000"))
@@ -43,7 +44,8 @@ let written = 0
 for await (const line of rl) {
 	lineNo++
 
-	if (lineNo === 1) continue // header
+	if (lineNo === 1) continue
+	// header
 
 	if (lineNo % STRIDE !== 0) continue // strided sample
 	const c = line.split(";")

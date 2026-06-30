@@ -220,6 +220,7 @@ function annotateUsRegions(node: AddressNode): void {
  */
 export function recognizeUsRegions(tree: AddressTree): AddressTree {
 	tree.roots = correctSiblings(tree.roots).map(correctNode)
+
 	for (const root of tree.roots) annotateUsRegions(root)
 
 	return tree

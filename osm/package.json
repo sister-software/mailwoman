@@ -3,10 +3,10 @@
 	"version": "4.16.2",
 	"description": "OpenStreetMap rooftop address-point ingestion — builds per-country ODbL precision shards on the situs address-point schema.",
 	"keywords": [
-		"openstreetmap",
-		"geospatial",
+		"address-point",
 		"geocoding",
-		"address-point"
+		"geospatial",
+		"openstreetmap"
 	],
 	"homepage": "https://github.com/sister-software/mailwoman",
 	"bugs": {
