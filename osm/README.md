@@ -33,6 +33,10 @@ to our distribution model (the opt-in-per-country shard, the attribution surface
 resolved coordinate from one constitutes a Produced Work or a Derived Database hand-off). The build and the
 local benchmark below are fine to run now; **publishing is blocked on that review.**
 
+The full boundary doc (the per-source license matrix, the attribution requirements, and the counsel sign-off
+gate) is [`docs/articles/licensing/data-provenance.md`](../docs/articles/licensing/data-provenance.md); this
+section is the package-local summary.
+
 ## Building a shard
 
 You need GDAL (`ogr2ogr`) on the path — the same dependency `@mailwoman/tiger` uses. GDAL's OSM driver
