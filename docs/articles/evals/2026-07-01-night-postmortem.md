@@ -209,11 +209,13 @@ the street-prefix drop), and the NPPES dedup yardstick (already measured anchor-
 
 What's genuinely left is **operator-gated or focused-session**, not contained CPU riders:
 
-- **#493** (lossless decomposition) — scoped with a round-trip diagnostic, no decoder change (the issue
-  itself says it deserves a focused session). Baseline: 97.8% content coverage / 90.4% fully covered. The
-  dominant lost-content class is **multibyte/accented-character fragmentation** (`Hôtel` → `H` + an all-O `ô`
-  + `tel de Ville`), confirmed real (offsets are JS-char-aligned, not an artifact). The implementation touches
-  every serializer contract + the demo → a focused session.
+- **#493** (lossless decomposition) — scoped with a round-trip diagnostic (baseline 97.8% content coverage /
+  90.4% fully covered; the dominant lost-content class is **multibyte/accented-character fragmentation**,
+  `Hôtel` → `H` + an all-O `ô` + `tel de Ville`, confirmed real — offsets are JS-char-aligned), then
+  **shipped the pure primitive** (PR #859): `unknownSpans`/`losslessSegments`/`isLossless` in
+  `@mailwoman/core/decoder` — the all-O gaps become typed `unknown` spans, round-trip holds 800/800 real
+  parses, byte-stable, no serializer touched. The remaining work (serializer contracts, demo) changes
+  consumer contracts → the focused session the issue calls for.
 - **#825 / lever E** — gate is GO; corpus data for PT/PL/AU is staged, but the eval-safe structured→BIO fold
   is **#477** (gated on #466, carries the dedup + holdout-exclusion that prevents train-on-test). Critical
   path is #477 → config → 2k probe → retrain, not a $20 overnight run. Budget preserved.
@@ -225,11 +227,11 @@ What's genuinely left is **operator-gated or focused-session**, not contained CP
 
 | | |
 |---|---|
-| Levers shipped | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + F+H artifacts (#853 + SLO doc) |
-| Levers triaged/measured | D (#305/#435/#456 re-scoped), E (deferred w/ reason), F (frontier A/B), H (SLO + cold-path budget) |
-| PRs merged | 5 (#852, #853, #854, #855, #856) |
+| Levers shipped | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + F+H artifacts (#853, #857) |
+| Levers triaged/measured | D (#305/#435/#456 re-scoped), E (deferred w/ reason), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
+| PRs merged | 8 (#852, #853, #854, #855, #856, #857, #858, #859) |
 | #822 bare resolve-rate | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed |
 | Modal $ | ~0 (E deferred, budget preserved) |
 | GPU | none |
 | Regressions shipped | 0 |
-| Issues advanced | #822 closed; #305/#379/#435/#456/#480/#818/#826 updated/advanced |
+| Issues advanced | #822 closed; #305/#379/#435/#456/#480/#493/#818/#825/#826 updated/advanced |
