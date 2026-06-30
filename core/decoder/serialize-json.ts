@@ -39,6 +39,11 @@ function visit(node: AddressNode, out: Partial<Record<ComponentTag, string>>): v
 }
 
 /** Project an `AddressTree` to a flat libpostal-style component map. */
+export function decodeAsJson(tree: AddressTree): Partial<Record<ComponentTag, string>>
+export function decodeAsJson(
+	tree: AddressTree,
+	opts: SerializeJsonOpts
+): Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] }
 export function decodeAsJson(
 	tree: AddressTree,
 	opts: SerializeJsonOpts = {}
