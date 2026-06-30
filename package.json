@@ -65,7 +65,7 @@
 		"lint": "run-s lint:oxlint lint:oxfmt lint:python",
 		"lint:oxlint": "oxlint",
 		"lint:oxfmt": "oxfmt --check .",
-		"lint:python": "uvx ruff@0.15.20 check corpus-python && uvx ruff@0.15.20 format --check corpus-python",
+		"lint:python": "uvx ruff@0.15.20 check corpus-python && uvx ruff@0.15.20 format --check corpus-python && python3 corpus-python/scripts/verify_toolchain.py",
 		"lint:fix": "run-s fix:oxlint format fix:python",
 		"fix:oxlint": "oxlint --fix",
 		"format": "oxfmt .",
