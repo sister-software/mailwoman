@@ -31,6 +31,7 @@
  */
 
 import type { AddressNode, AddressTree } from "./types.js"
+import { unknownSpans } from "./unknown-spans.js"
 
 export interface SerializeXmlOpts {
 	/** Pretty-print with line breaks and indentation. Default true. */
@@ -52,6 +53,13 @@ export interface SerializeXmlOpts {
 	 * (Springfield-class disambiguation surfaces only when the caller asks).
 	 */
 	includeAlternatives?: boolean
+	/**
+	 * Emit `<unknown start end>…</unknown>` elements for the all-O runs no node covers — the input the model left
+	 * unclassified (#493 lossless decomposition). Interleaved with the root components in source order, so the
+	 * `<address>` children tile the raw input exactly. Default false — keeps output libpostal-compat / the existing shape
+	 * when not explicitly requested (same posture as {@link includeAlternatives}).
+	 */
+	includeUnknown?: boolean
 }
 
 function escapeXml(s: string): string {
@@ -166,11 +174,30 @@ export function decodeAsXml(tree: AddressTree, opts: SerializeXmlOpts = {}): str
 		includeGeo: opts.includeGeo ?? true,
 		includePlace: opts.includePlace ?? true,
 		includeAlternatives: opts.includeAlternatives ?? false,
+		includeUnknown: opts.includeUnknown ?? false,
 	}
 	const rawAttr = escapeXml(tree.raw)
 	const nl = full.pretty ? "\n" : ""
 	const indent = full.pretty ? "\t" : ""
-	const children = tree.roots.map((r) => serializeNode(r, indent, full)).join(nl)
+
+	// Source-ordered XML for the root components. When includeUnknown is set, interleave the all-O gaps as
+	// `<unknown>` elements by start offset so the children tile the raw input losslessly.
+	const entries: Array<{ start: number; xml: string }> = tree.roots.map((r) => ({
+		start: r.start,
+		xml: serializeNode(r, indent, full),
+	}))
+
+	if (full.includeUnknown) {
+		for (const u of unknownSpans(tree)) {
+			entries.push({
+				start: u.start,
+				xml: `${indent}<unknown start="${u.start}" end="${u.end}">${escapeXml(u.value)}</unknown>`,
+			})
+		}
+		entries.sort((a, b) => a.start - b.start)
+	}
+
+	const children = entries.map((e) => e.xml).join(nl)
 
 	return `<address raw="${rawAttr}">${nl}${children}${nl}</address>`
 }
