@@ -58,7 +58,7 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 - **#818** — four OpenCage-style recipes remain; the multi-service one wants a voice review.
 - **#260 (B3)** — still gated on #249 ODbL counsel sign-off (from the day shift).
 
-## Numbers
+## Numbers (Part 1 — cleanup)
 
 | | |
 |---|---|
@@ -70,3 +70,95 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 | GPU | none |
 | Regressions shipped | 0 |
 | Open issues: before → after | ~45 → 30 |
+
+---
+
+# Part 2 — substantive shift (resolver/parser levers)
+
+The cleanup above was the warm-up. After the operator handed the conn (`/night-shift`, ~05:00 UTC), the
+plan (`nightshift/2026-06-30-NIGHT-SHIFT-PLAN.md`) drives the rest: A (#822) → D → C → B → E + stretch F–I.
+
+## Lever A — #822 named-foreign-country namesake (PR #852)
+
+`Vienna, Austria` → Vienna **WV**. The plan called for a probe-gated fix (the #265 discipline); the probes
+re-shaped it twice before a line of resolver code was written:
+
+- **A0 (parser probe).** Every unambiguous foreign name (`Austria`/`Australia`/`Switzerland`/`Canada`) is
+  tagged `country` by the model. `Georgia` tags as `region` in *both* readings (`Tbilisi, Georgia` and
+  `Atlanta, Georgia`) — so it self-disambiguates; the `{Georgia,GE}` skip-set the plan hedged on is dead
+  code. Fork (i): the bug is resolver-side.
+- **Backend probe (the pivot).** The first read was "coverage gap" — the unscoped `Vienna` lookup returns
+  only US Viennas and there's no `country` row for Austria. Querying the DB directly corrected it: Vienna AT
+  **does** exist (an exonym-folded row), just *outranked* by the populous US namesakes; and well-covered WOF
+  countries carry no `country`-placetype row (only the #267 gap countries do), so the re-pick must filter by
+  the `country` ISO **column**, not a `parentId` descendant scope.
+- **Salvage-first.** `@mailwoman/codex/country` already carries the ISO-3166 base + address surface forms
+  (`matchCountry`, salvaged from isp-nexus). No new table written.
+
+The fix (`applyExplicitCountryCoherence` in `resolve.ts`) is the joint-consistency family's inverse trigger:
+fires when the explicit country is the locality's nearest admin context (region-guarded), regardless of the
+locality's resolution state (so it pre-empts the span-rescore back-fill), and re-picks the locality to its
+same-named in-country place via `matchCountry` → `findPlace({ country })`. No list, no pin — the country
+code is a normalization of the model's own `country` emission.
+
+**Result:** Vienna/Sydney/Toronto/Zurich all land in-country; Tbilisi/GE, Portland/Augusta ME→Maine,
+Springfield IL, NYC, Paris all held. Gauntlet PASS (regression 15/15 with 5 new anti-rot guards). PR #852,
+default-on, awaiting CI.
+
+**verify-before-verdict fired (again):** the first gauntlet run failed Sydney "7532km off." Instead of
+assuming the fix broke, I dug in — the resolver was right (−33.87,151.21); my *expected* value had a dropped
+minus sign (`33.8696` not `−33.8696`). My typo, caught by the gate, not a regression.
+
+## Lever D — resolver/parser backlog (#305, #435, #456): triaged, none a clean CPU PR
+
+The diagnostic-first discipline earned its keep — all three are GPU/schema/coverage-dependent, not the
+"CPU-doable subset" the plan hoped. The realistic output was a correct re-scope of each (which saves the
+next cycle), not three implementations:
+
+- **#305** (proximity-gate the exact-name tier) — the gate needs the postcode anchor's *coordinate*, which
+  lives at the resolver layer; the JP/EU postcode shards exist on disk but aren't wired into the default
+  geocode path; and `applyPostcodeConsistency` (#370, shipped *after* #305) already does this proximity test
+  post-walk but isn't wired into `geocode-core`. Re-scoped to: wire the non-US postcode shards, then fold the
+  exact-tier demote into the existing #370 pass — no second gate on the hot per-keystroke path.
+- **#435** (number-after-street mis-tag) — re-probed the shipped model: **quirk 2 (street-prefix dropped) is
+  FIXED** by v4.16.0 (`Rue` now tags `street_prefix`); **quirk 1 still broken** (+ a `ß` tokenization split).
+  A decode-time relabel would re-classify a token, which #723's repair-discipline forbids → rides the #825
+  retrain eval. Narrowed the issue.
+- **#456** (unit_designator/unit_id split) — schema change (ComponentTag + BIO + retrain). Infra is ready
+  (`codex/us/unit-designator.ts` + `build-unit-shard`); the open fork is `unit`-subsplit vs `locator[]`
+  (#295). Assess-only, deferred to the unit-recognition retrain.
+
+## Lever F — quantify the coverage win (the #822 before/after)
+
+Ran `frontier-gap.ts` (the #822 placer-frontier diagnostic itself) before and after the fix, default drop-in
+config, 506 cities / 187 countries:
+
+| | Before | After |
+|---|---:|---:|
+| Bare `"City, Country"` resolve-rate | 54.2% | **77.9%** (+23.7pp) |
+| +hint ceiling | 82.8% | 83.0% (flat) |
+| US-namesake misroutes | 10.5% (53) | 4.3% (22) |
+| Bare-supported countries | 112 | **157** (+45) |
+| Placer-recoverable (#822) | 57 | **12** (−45 closed) |
+
+**#822 recovered 45 of 57 placer-recoverable countries on CPU** — what the issue (and the drop-in memo)
+expected a GPU placer retrain to do. The flat +hint ceiling confirms it closed the placer↔resolver gap
+structurally. Artifact: `2026-06-30-822-frontier-gap.md`.
+
+The 18-country residual (exonym + coverage, fails even with a hint) is unchanged — it's the parallel #826
+lever, not #822's job. Updated #826 with the post-fix split (5 exonym / 13 coverage), with the nuance that
+**the capitals already resolve — the misses are 2nd/3rd-tier cities** (so the exonym lever's ceiling is the
+long tail). Verify-before-verdict fired: my first exonym probe tested the capitals (which resolve) before I
+realized the failures were the smaller cities.
+
+## Numbers (Part 2 — running)
+
+| | |
+|---|---|
+| Levers shipped | A (#822/#852, merged + measured) |
+| Levers triaged/measured | D (#305/#435/#456 re-scoped), F (frontier A/B + #826 update) |
+| PRs merged | 1 (#852) |
+| #822 bare resolve-rate | 54.2% → 77.9% (+23.7pp, CPU, no retrain) |
+| Modal $ | ~0 |
+| GPU | none |
+| Regressions shipped | 0 |
