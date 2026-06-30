@@ -296,22 +296,46 @@ export interface RawGeocode {
 	hierarchy?: AddressGeocode["hierarchy"]
 }
 
+/** The component map {@link toPostalAddress} consumes (kept structural so this package never imports the geocoder). */
+type GeocodeComponents = Parameters<typeof toPostalAddress>[0]
+
 /**
  * Build a {@link GeocodeAddress} from mailwoman's real parse + geocode primitives (injected — the CLI constructs the
- * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills the
- * canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
+ * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills
+ * the canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
  * parsed-but-unlocated address is still returned.
+ *
+ * Two shapes:
+ *
+ * - `{ parse, geocode }` — the original: two independent calls. mailwoman's `geocodeAddress` re-parses internally, so
+ *   this parses the address twice (fine when the two callbacks don't share a parser).
+ * - `{ parseAndGeocode }` — parse the address ONCE and return both the components and the geocode. Use this when the
+ *   parse is the expensive step you'd rather not pay for twice (e.g. share `parseForGeocode`'s tree between the
+ *   PostalAddress and `geocodeAddress`'s `parsedTree`). ~1.3× over the two-call shape on a real geocode pipeline.
  */
-export function geocodeAddressVia(deps: {
-	parse: (raw: string) => Promise<Parameters<typeof toPostalAddress>[0]> | Parameters<typeof toPostalAddress>[0]
-	geocode: (raw: string) => Promise<RawGeocode | null> | RawGeocode | null
-	country?: string
-}): GeocodeAddress {
+export function geocodeAddressVia(
+	deps: { country?: string } & (
+		| {
+				parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
+				geocode: (raw: string) => Promise<RawGeocode | null> | RawGeocode | null
+		  }
+		| { parseAndGeocode: (raw: string) => Promise<{ components: GeocodeComponents; geo: RawGeocode | null }> }
+	)
+): GeocodeAddress {
 	return async (raw: string): Promise<PostalAddress | null> => {
-		const components = await deps.parse(raw)
-		const base = toPostalAddress(components, { country: deps.country, raw })
+		let components: GeocodeComponents
+		let resolved: RawGeocode | null
 
-		const resolved = await deps.geocode(raw)
+		if ("parseAndGeocode" in deps) {
+			const r = await deps.parseAndGeocode(raw)
+			components = r.components
+			resolved = r.geo
+		} else {
+			components = await deps.parse(raw)
+			resolved = await deps.geocode(raw)
+		}
+
+		const base = toPostalAddress(components, { country: deps.country, raw })
 
 		if (!resolved || resolved.lat === null || resolved.lon === null) return base
 
