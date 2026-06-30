@@ -12,6 +12,7 @@
  *   not the MA one.
  */
 
+import { matchCountry } from "@mailwoman/codex/country"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
 import {
@@ -518,6 +519,83 @@ async function reconcileAdminPair(
 	}
 }
 
+/**
+ * Explicit-country coherence (#822) — the joint-consistency resolve keyed on the query's own EXPLICIT country token.
+ * The greedy walk resolves a locality on name + population alone, so "Vienna, Austria" picks the populous US namesake
+ * (Vienna WV) and IGNORES the "Austria" the address named. This pass asks the question the greedy order skipped —
+ * _which "Vienna" is in the country the address names?_ — and re-picks the locality to the same-named place under that
+ * country. The country code comes from the parser's OWN `country` emission via codex's ISO-3166 table (a name→code
+ * normalization of a token the model already classified, NOT a routing prior or safelist); the gazetteer's `country`
+ * column does the geographic confirmation. No pin, no list; generalizes to every country.
+ *
+ * Disjoint from {@link applyAdminCoherence} by the region guard: that pass owns the case where a REGION scopes the
+ * locality; this one fires only when the explicit country is the locality's nearest admin context (no region between),
+ * and then regardless of the locality's resolution state — so it covers both the resolved-but-foreign locality (Sydney
+ * → the greedy AU pick was wrong) and the unresolved locality the span-rescore tier would otherwise back-fill with the
+ * US namesake (Vienna → Vienna WV). Byte-stable when the locality already resolved in-country (the id guard) or the
+ * named country holds no same-named locality (the fail-safe — what also protects "Turkey, TX": no country token ⇒ no
+ * trigger; and an in-country lookup that finds nothing keeps the greedy result). Costs one country-scoped locality
+ * lookup per triggering pair. See `ResolveOpts.adminCoherence`.
+ */
+async function applyExplicitCountryCoherence(roots: readonly AddressNode[], backend: ResolverBackend): Promise<void> {
+	const visit = async (node: AddressNode, countryToken: AddressNode | null, regionAbove: boolean): Promise<void> => {
+		const countryHere = node.tag === "country" && node.value.trim().length > 0 ? node : countryToken
+		const regionHere = regionAbove || node.tag === "region" || node.tag === "subregion"
+
+		// Fire only when the explicit country is the locality's NEAREST admin context (no region/subregion between).
+		// When a region IS present, applyAdminCoherence + the region's `parentId` scope already disambiguate the
+		// locality — applying the coarse country filter there would wrongly re-pick "Springfield, IL" to the most
+		// populous US "Springfield". Fires regardless of the locality's resolution state, so it PRE-EMPTS the
+		// span-rescore tier (which would otherwise back-fill the unresolved locality with the US namesake).
+		if (countryHere && !regionHere && (node.tag === "locality" || node.tag === "dependent_locality")) {
+			await reconcileExplicitCountry(countryHere, node, backend)
+		}
+
+		for (const child of node.children) await visit(child, countryHere, regionHere)
+	}
+
+	for (const root of roots) await visit(root, null, false)
+}
+
+/**
+ * Re-pick a resolved locality to its same-named place UNDER the explicitly-named country. `matchCountry` turns the
+ * country token into an ISO-3166 alpha-2 (returns null for an unrecognized token → no-op); the backend then surfaces
+ * the in-country namesake the population-first unscoped window buried. Leaves the node untouched when the country is
+ * unrecognized, the named country has no exact same-named locality (the fail-safe), or the locality already resolved to
+ * that place (the id guard → byte-stable). The country node itself stays as the parser emitted it — the named
+ * well-covered countries carry no `country`-placetype row in the admin gazetteer, so there is nothing to decorate it
+ * with; the locality coordinate is what the re-pick fixes.
+ */
+async function reconcileExplicitCountry(
+	countryNode: AddressNode,
+	localityNode: AddressNode,
+	backend: ResolverBackend
+): Promise<void> {
+	const mc = matchCountry(countryNode.value)
+
+	if (!mc) return
+
+	const scoped = await backend.findPlace({
+		text: localityNode.value,
+		placetype: "locality",
+		country: mc.iso2,
+		limit: 3,
+	})
+	const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
+
+	if (!lc) return
+
+	// Already the in-country place? (placeId encodes the WOF id.) Then the greedy walk was right — byte-stable.
+	if (localityNode.placeId === `wof:${lc.id}`) return
+
+	decorateNode(
+		localityNode,
+		lc,
+		scoped.filter((l) => l !== lc)
+	)
+	localityNode.metadata = { ...localityNode.metadata, explicit_country_repicked: true }
+}
+
 class WofResolver implements Resolver {
 	readonly #backend: ResolverBackend
 
@@ -570,6 +648,10 @@ class WofResolver implements Resolver {
 		// coordinate this adjusts). Byte-stable when `adminCoherence` is unset.
 		if (opts.adminCoherence) {
 			await applyAdminCoherence(newRoots, this.#backend)
+			// #822 — same joint-consistency family, inverse trigger: an explicit country token whose resolved
+			// locality landed in the wrong country (the populous US namesake). Runs after the region pass so the
+			// two never contend (region-fallthrough vs resolved-but-foreign are disjoint locality states).
+			await applyExplicitCountryCoherence(newRoots, this.#backend)
 		}
 
 		// Postcode-consistency (#370 "Lever A"): opt-in. After the admin walk (needs both the locality
