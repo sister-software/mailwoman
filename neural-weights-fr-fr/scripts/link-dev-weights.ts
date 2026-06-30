@@ -10,7 +10,7 @@
  *   A single multilingual model serves both en-us and fr-fr (byte-identical artifact;
  *   fr-fr just carries its own calibration). Re-symlinks the SAME files as en-us until
  *   per-locale training lands. Keep these defaults in lockstep with en-us's DEFAULT_*
- *   on every defaultVersion bump (currently v4.1.0 = v0.9.7-unit-v3, tokenizer 0.6.0-a0).
+ *   on every defaultVersion bump (currently v4.16.0 = v1.9.4-fr-bare-street, tokenizer 0.6.0-a0).
  */
 
 import { existsSync, symlinkSync, unlinkSync } from "node:fs"
@@ -20,10 +20,10 @@ import { fileURLToPath } from "node:url"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 const PKG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-// In lockstep with en-us's DEFAULT_MODEL (one multilingual artifact serves both). 2026-06-28: this had
-// drifted to the stale v097 step-20000 bytes; bumped to the v4.15.0 / v1.9.3a3 shipped model.
+// In lockstep with en-us's DEFAULT_MODEL (one multilingual artifact serves both). 2026-06-30 #259: pinned
+// to the v4.16.0 / v1.9.4-fr-bare-street shipped model (was the stale v1.9.3a3 step-80000 / v4.15.0 default).
 const SRC_MODEL =
-	process.env.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v193a3-step-80000-int8.onnx")
+	process.env.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v194-step-92000-int8.onnx")
 const SRC_TOKENIZER =
 	process.env.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 
