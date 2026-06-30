@@ -151,14 +151,61 @@ lever, not #822's job. Updated #826 with the post-fix split (5 exonym / 13 cover
 long tail). Verify-before-verdict fired: my first exonym probe tested the capitals (which resolve) before I
 realized the failures were the smaller cities.
 
-## Numbers (Part 2 — running)
+## Lever C — #818 recipes (3 of 4 shipped, PR #854)
+
+Wrote three OpenCage-style developer recipes in house voice, each verified against the real API (not the
+README-fiction trap): **privacy/coordinate-rounding** (`toGeohash` + decimal rounding, with the
+"coarsening is not anonymity" caveat), **batch geocoding** (`POST /api/batch`, input-order results, per-row
+error isolation, the cap + concurrency knobs), **display-on-a-map** (`resolveEntities → toGeoJSON →
+toMapHTML`, the localhost-CORS `file://` gotcha). `docusaurus build` green. The **multi-service/cost-first**
+recipe was left for the operator's voice pass (competitive positioning, gracious-not-vengeful).
+
+## Lever B — #379 deps (PR #855): the "high CVE" framing was stale
+
+Verify-before-verdict on the dependabot alerts: serialize-javascript is no longer flagged (on 6.0.2, patched);
+js-yaml is all 4.2.0 (above the vuln range); the one cleanly-safe fix was **http-proxy-middleware 2.0.9 →
+2.0.10** (in-major patch, dev-server-only) — shipped. The remaining `tar` alert needs the **7.x major** (no
+6.x backport), pulled only by cacache/node-gyp install tooling — left for the operator, not an autonomous force.
+
+## Lever I — #480 reproducibility (PR #856): #4 shipped, the rest already done
+
+Most of #480 was already shipped (verify-before-verdict again): REPRODUCIBILITY.md, the strict shard
+resolution + `test_shard_paths.py` (deliverable 2), the quantize value_info/opset docstring. The open
+deliverable I closed is **#4 — a toolchain pin-consistency verifier** (`verify_toolchain.py`): asserts the
+export/quant pins agree across pyproject ↔ the Modal image ↔ the export opset (the exact drift that broke
+mobile-Safari int8 in 2026-06-09), wired into `lint:python` + a 3-test pytest. Deliverables 3 (curriculum
+stamping) + 5 (snapshot publishing) stay open — both touch the train loop / release machinery.
+
+## Lever H — #378 WASM cold-path SLO (committed artifact)
+
+Couldn't run the live browser trace (**no Chrome on the lab box**), so delivered the measurable half: a
+cold-path budget from real artifact sizes (29 MB int8 model, the 1.3 GB candidate.db byte-range-fetched ~12
+cold chunks) + a node-side compute floor (model session-init 126 ms, warm parse 5.7 ms native EP) + a
+proposed two-surface SLO (cold-load < 6 s / per-keystroke < 50 ms on a Moto-G-class phone). The numbers
+already name the cold bottleneck: **the 29 MB model download**, not compute — so the cold lever is model size
++ streaming + CDN, not the SQLite path. The per-keystroke resolve cost (which gates **#372 flatbush**) is the
+one piece still needing the in-browser trace. Artifact: `2026-06-30-378-wasm-cold-path-slo.md`. **#372 is
+explicitly parked** behind that trace (diagnostic-before-fix — don't build the index before the profile).
+
+## Decisions made autonomously (Part 2)
+
+- **Deferred lever E (the $20 GPU budget).** #825's gate is GO, but no multilocale corpus/config is staged —
+  the retrain needs *new* PT/PL/AU data (a pipeline session), and weight-only up-weighting likely falsifies
+  (the fr.house_number precedent). Burning the $20 on an uninformative probe is worse than preserving it.
+  Flagged for operator override.
+- **#822 fix shape:** resolver-side joint-consistency (extend the reconcile) over a forward country pin —
+  the operator rejected Pelias-style determinism in #833, and DeepSeek's review concurred. Shipped default-on.
+- **Did not force the tar 7.x major bump** — dev-only tooling, no 6.x backport, breakage risk on cacache/node-gyp.
+
+## Numbers (Part 2 — final-ish)
 
 | | |
 |---|---|
-| Levers shipped | A (#822/#852, merged + measured) |
-| Levers triaged/measured | D (#305/#435/#456 re-scoped), F (frontier A/B + #826 update) |
-| PRs merged | 1 (#852) |
-| #822 bare resolve-rate | 54.2% → 77.9% (+23.7pp, CPU, no retrain) |
-| Modal $ | ~0 |
+| Levers shipped | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + F+H artifacts (#853 + SLO doc) |
+| Levers triaged/measured | D (#305/#435/#456 re-scoped), E (deferred w/ reason), F (frontier A/B), H (SLO + cold-path budget) |
+| PRs merged | 5 (#852, #853, #854, #855, #856) |
+| #822 bare resolve-rate | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed |
+| Modal $ | ~0 (E deferred, budget preserved) |
 | GPU | none |
 | Regressions shipped | 0 |
+| Issues advanced | #822 closed; #305/#379/#435/#456/#480/#818/#826 updated/advanced |
