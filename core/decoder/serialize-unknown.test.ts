@@ -35,8 +35,8 @@ describe("decodeAsJson includeUnknown", () => {
 		})
 	})
 
-	it("omits the unknown key when there are no gaps", () => {
-		expect("unknown" in decodeAsJson(noGap, { includeUnknown: true })).toBe(false)
+	it("emits an empty unknown array (not omitted) when there are no gaps", () => {
+		expect(decodeAsJson(noGap, { includeUnknown: true })).toEqual({ locality: "Berlin", unknown: [] })
 	})
 })
 

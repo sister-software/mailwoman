@@ -52,11 +52,9 @@ export function decodeAsJson(
 
 	for (const root of tree.roots) visit(root, out)
 
-	if (opts.includeUnknown) {
-		const gaps = unknownSpans(tree)
-
-		if (gaps.length > 0) out.unknown = gaps
-	}
+	// Always emit `unknown` (even `[]`) when asked — a consumer that opted in can iterate it without a
+	// presence check. Omitting-when-empty was a libpostal-flat-map instinct that doesn't fit the opt-in path.
+	if (opts.includeUnknown) out.unknown = unknownSpans(tree)
 
 	return out
 }
