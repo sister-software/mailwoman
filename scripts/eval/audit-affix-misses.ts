@@ -17,7 +17,7 @@
 import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
@@ -110,7 +110,7 @@ const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const misses: Array<{ row: (typeof rows)[number]; tag: string; expected: string; got: string; street?: string }> = []
 
 for (const row of rows) {
-	const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
+	const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
 
 	for (const tag of ["street_prefix", "street_suffix"]) {
 		const e = norm(row.components[tag])

@@ -25,7 +25,7 @@ async function run() {
 	console.log("=== BASELINE (v0.5.1 current weights) ===\n")
 
 	for (const addr of PRESETS) {
-		const r = await baseline.parseJson(addr)
+		const r = await baseline.parseJSON(addr)
 		const comps = Object.entries(r)
 			.map(([k, v]) => `${k}=${v}`)
 			.join(", ")
@@ -40,7 +40,7 @@ async function run() {
 		console.log(`\n=== CANDIDATE (${modelPath}) ===\n`)
 
 		for (const addr of PRESETS) {
-			const r = await candidate.parseJson(addr)
+			const r = await candidate.parseJSON(addr)
 			const comps = Object.entries(r)
 				.map(([k, v]) => `${k}=${v}`)
 				.join(", ")

@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 // Usage: node --experimental-strip-types scripts/eval/score-punctuation-stress.ts --model <onnx>
 //   [--engine neural|v0] [--file data/eval/external/punctuation-stress.jsonl] [--no-ship-config]
 //   [--span-proposer]  — enable the Stage 2.7 span proposer (#518 M2+M3; default-off, NOT ship config)
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildCodexSpanLexicon,
@@ -105,7 +105,7 @@ async function parseWith(raw: string): Promise<Record<string, string>> {
 
 		return Object.fromEntries(Object.entries(rec).map(([t, vs]) => [t, vs.join(" ")]))
 	}
-	const flat = decodeAsJson(await neural.parse(raw)) as Record<string, string>
+	const flat = decodeAsJSON(await neural.parse(raw)) as Record<string, string>
 
 	return argv.includes("--fold-gold") ? foldGoldForV0(flat) : flat
 }

@@ -135,7 +135,7 @@ The full pipeline with all inference-time enhancements active:
 
 ### Analysis
 
-The neural-only path (4/6) appears to outperform the full pipeline (1/6), but this is misleading. The neural-only JSON output hides unclassified spans — `decodeAsJson` only shows tags the model emitted, silently dropping all-O regions. For example, on `1600 Pennsylvania Ave NW, Washington, DC 20500`, the neural model produces ONLY `region=Washington` and `region=DC`. The entire street + house number + postcode region (positions 0-25 and 41-46) is unclassified.
+The neural-only path (4/6) appears to outperform the full pipeline (1/6), but this is misleading. The neural-only JSON output hides unclassified spans — `decodeAsJSON` only shows tags the model emitted, silently dropping all-O regions. For example, on `1600 Pennsylvania Ave NW, Washington, DC 20500`, the neural model produces ONLY `region=Washington` and `region=DC`. The entire street + house number + postcode region (positions 0-25 and 41-46) is unclassified.
 
 The pipeline path reveals the truth: the grouper-audit fills those gaps with provisional nodes, making the missing tags visible. The grouper-audit is working as designed — it only fills empty spans. The problem is:
 
@@ -214,14 +214,14 @@ This session had significant thrashing. Documenting the confusion points so futu
 | --- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | 1   | Ran uncompiled TSX via `npx tsx`, blamed missing React import. Created PR, then reverted. | Didn't know the CLI must be run from compiled output (`node mailwoman/out/cli.js`).                                                          | ~30 min                                     |
 | 2   | Compared val_macro_f1 across tokenizer versions (0.579 vs 0.638), concluded regression.   | Different tokenizers produce incomparable BIO alignments. No guard against this comparison.                                                  | ~2 hours of wrong-direction analysis        |
-| 3   | Blamed grouper-audit for "overriding neural output" (pipeline 1/6 vs neural 4/6).         | `decodeAsJson` hides all-O spans. The neural model was barely emitting tags — the audit was correctly filling gaps.                          | ~1 hour                                     |
+| 3   | Blamed grouper-audit for "overriding neural output" (pipeline 1/6 vs neural 4/6).         | `decodeAsJSON` hides all-O spans. The neural model was barely emitting tags — the audit was correctly filling gaps.                          | ~1 hour                                     |
 | 4   | Printed `tree.roots.map(tag)` and reported 4% coverage. Concluded tag collapse.           | Tree uses containment nesting (`region → locality → street → house_number`). Only top-level roots visible without traversal.                 | ~30 min                                     |
 | 5   | DeepSeek recommended "do not ship, revert to v0.5.1 recipe."                              | Trusted the same invalid F1 comparison. Wrote 150 lines of analysis before running a single functional test.                                 | ~1 hour of wrong-direction planning         |
 | 6   | DeepSeek diagnosed wof-admin downweight as "caused tag collapse."                         | Confirmation bias — once the F1 comparison "proved" regression, every observation confirmed it. The downweight was actually the correct fix. | Cascading effect on all subsequent analysis |
 
 ### The pattern
 
-Every confusion point shares one root cause: **trusted a summary number over direct observation.** val_macro_f1 over demo presets. `decodeAsJson` over raw BIO stream. `tree.roots` over tree traversal. "29M params" over counting the embedding table.
+Every confusion point shares one root cause: **trusted a summary number over direct observation.** val_macro_f1 over demo presets. `decodeAsJSON` over raw BIO stream. `tree.roots` over tree traversal. "29M params" over counting the embedding table.
 
 The fix is not more metrics. It's a mandatory step where you look at the actual output before trusting the summary. One demo preset run (30 seconds) would have prevented every error.
 
@@ -230,7 +230,7 @@ The fix is not more metrics. It's a mandatory step where you look at the actual 
 1. **Demo presets are a release gate.** Run them BEFORE writing any verdict on a training run.
 2. **Never compare F1 across tokenizer versions.** Add `tokenizer_version` to eval headers.
 3. **When metrics disagree with functional tests, trust the functional test.** Investigate the metric.
-4. **Print raw BIO coverage, not just JSON projection.** `decodeAsJson` hides the model's gaps.
+4. **Print raw BIO coverage, not just JSON projection.** `decodeAsJSON` hides the model's gaps.
 5. **After tokenizer vocab change, recheck param count.** 48K vocab added 9.2M embedding params.
 6. **DeepSeek consultations must include functional test results** alongside metrics. Aggregate metrics without functional evidence are insufficient to conclude.
 

@@ -18,7 +18,7 @@ import { existsSync, readFileSync } from "node:fs"
  *
  *   Run: node --experimental-strip-types scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -97,7 +97,7 @@ async function main() {
 				continue
 			}
 			s.unres++
-			const emitted = ((decodeAsJson(tree) as Record<string, string>).locality ?? "").toString().trim()
+			const emitted = ((decodeAsJSON(tree) as Record<string, string>).locality ?? "").toString().trim()
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()
 			const goldCands = gold ? await lookup.findPlace({ text: gold, country: cc, limit: 5 }) : []
 

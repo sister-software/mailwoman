@@ -12,7 +12,7 @@
 
 import { readFileSync } from "node:fs"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 const CLASSES = new Set(["apostrophe", "hyphen", "slash"])
@@ -29,8 +29,8 @@ const tally: Record<string, { n: number; miss: number; missKeys: Record<string, 
 for (const r of rows) {
 	const t = (tally[r.class] ??= { n: 0, miss: 0, missKeys: {} })
 	t.n++
-	const json = decodeAsJson(await classifier.parse(r.raw, { postcodeRepair: true })) as Record<string, unknown>
-	// decodeAsJson is a (mostly flat) component dict; collect string leaves keyed by component name.
+	const json = decodeAsJSON(await classifier.parse(r.raw, { postcodeRepair: true })) as Record<string, unknown>
+	// decodeAsJSON is a (mostly flat) component dict; collect string leaves keyed by component name.
 	const got: Record<string, string> = {}
 	const collect = (o: Record<string, unknown>): void => {
 		for (const [k, v] of Object.entries(o)) {

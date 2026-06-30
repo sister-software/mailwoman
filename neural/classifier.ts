@@ -7,19 +7,22 @@
  *   `@mailwoman/core` decoder. Single user-facing entrypoint: `parse(text)` returns an
  *   `AddressTree` ready for projection into JSON / tuple / XML.
  *
- *   Convenience wrappers `parseJson` / `parseTuples` / `parseXml` project the tree on the way out.
+ *   Convenience wrappers `parseJSON` / `parseTuples` / `parseXML` project the tree on the way out.
  */
 
 import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
 import {
 	buildAddressTree,
-	decodeAsJson,
+	decodeAsJSON,
 	decodeAsTuples,
-	decodeAsXml,
+	decodeAsXML,
 	type AddressTree,
 	type Calibrator,
 	type ComponentTag,
 	type DecoderToken,
+	type SerializeJSONOpts,
+	type SerializeTuplesOpts,
+	type UnknownSpan,
 } from "@mailwoman/core/decoder"
 import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
@@ -503,16 +506,32 @@ export class NeuralAddressClassifier {
 		return { tokens, logits, pieces }
 	}
 
-	async parseJson(text: string, opts?: ParseOpts): Promise<Partial<Record<ComponentTag, string>>> {
-		return decodeAsJson(await this.parse(text, opts))
+	async parseJSON(text: string, opts?: ParseOpts): Promise<Partial<Record<ComponentTag, string>>>
+	async parseJSON(
+		text: string,
+		opts: ParseOpts & SerializeJSONOpts
+	): Promise<Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] }>
+	async parseJSON(
+		text: string,
+		opts: ParseOpts & SerializeJSONOpts = {}
+	): Promise<Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] }> {
+		return decodeAsJSON(await this.parse(text, opts), opts)
 	}
 
-	async parseTuples(text: string, opts?: ParseOpts): Promise<Array<[ComponentTag, string]>> {
-		return decodeAsTuples(await this.parse(text, opts))
+	async parseTuples(text: string, opts?: ParseOpts): Promise<Array<[ComponentTag, string]>>
+	async parseTuples(
+		text: string,
+		opts: ParseOpts & SerializeTuplesOpts
+	): Promise<Array<[ComponentTag | "unknown", string]>>
+	async parseTuples(
+		text: string,
+		opts: ParseOpts & SerializeTuplesOpts = {}
+	): Promise<Array<[ComponentTag | "unknown", string]>> {
+		return decodeAsTuples(await this.parse(text, opts), opts)
 	}
 
-	async parseXml(text: string, opts?: ParseOpts & { xml?: Parameters<typeof decodeAsXml>[1] }): Promise<string> {
-		return decodeAsXml(await this.parse(text, opts), opts?.xml)
+	async parseXML(text: string, opts?: ParseOpts & { xml?: Parameters<typeof decodeAsXML>[1] }): Promise<string> {
+		return decodeAsXML(await this.parse(text, opts), opts?.xml)
 	}
 
 	/**

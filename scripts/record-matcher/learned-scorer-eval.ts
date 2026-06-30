@@ -37,7 +37,7 @@
 
 import { writeFileSync } from "node:fs"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -182,7 +182,7 @@ async function main(): Promise<void> {
 	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
 	const shardProvider = new ShardProvider(mod, DATA_ROOT)
 	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJson(await classifier.parse(raw, { postcodeRepair: true })),
+		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
 		geocode: async (raw: string) =>
 			geocodeAddress(raw, {
 				classifier,

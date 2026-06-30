@@ -22,7 +22,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
-import { type AddressNode, type AddressTree, decodeAsJson } from "@mailwoman/core/decoder"
+import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -131,7 +131,7 @@ async function main() {
 			postcodeRepair: true,
 			enforceWordConsistency: process.env.MAILWOMAN_WORD_CONSISTENCY === "1",
 		})
-		const flat = decodeAsJson(tree) as Record<string, string>
+		const flat = decodeAsJSON(tree) as Record<string, string>
 		const goldRegion = row.components?.region as string | undefined
 		const predRegion = flat.region
 

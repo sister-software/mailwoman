@@ -17,7 +17,7 @@
  *   earns its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
  *   the interference tripwire firing.
  *
- *   Scoring mirrors `harness-v0-neural.ts`: flatten the AddressTree via `decodeAsJson`, fold the
+ *   Scoring mirrors `harness-v0-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the
  *   Stage-3 street parts (`street_prefix`/`street`/`street_suffix` → `street`,
  *   `intersection_a`/`_b` → `street`) into the golden component vocab, then compare case-folded
  *   strings per tag.
@@ -42,7 +42,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, resolve } from "node:path"
 
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
@@ -344,7 +344,7 @@ async function main(): Promise<void> {
 				row.raw,
 				process.env.MAILWOMAN_WORD_CONSISTENCY === "1" ? { enforceWordConsistency: true } : {}
 			)
-			const pred = foldToComponents(decodeAsJson(tree))
+			const pred = foldToComponents(decodeAsJSON(tree))
 			preds.push(pred)
 
 			if (dumpTag) {

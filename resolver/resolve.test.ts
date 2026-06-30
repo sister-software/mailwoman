@@ -8,7 +8,7 @@
  */
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
-import { decodeAsXml } from "@mailwoman/core/decoder"
+import { decodeAsXML } from "@mailwoman/core/decoder"
 import type {
 	Ancestor,
 	CoincidentLocality,
@@ -347,7 +347,7 @@ describe("resolveTree", () => {
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
 		const result = await resolver.resolveTree(input)
-		const xml = decodeAsXml(result)
+		const xml = decodeAsXML(result)
 
 		expect(xml).toContain(`src="resolver:region:85688489"`)
 		expect(xml).toContain(`lat="31.000000"`)
@@ -361,7 +361,7 @@ describe("resolveTree", () => {
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
 		const result = await resolver.resolveTree(input)
-		const xml = decodeAsXml(result, { includeGeo: false, includePlace: false })
+		const xml = decodeAsXML(result, { includeGeo: false, includePlace: false })
 
 		expect(xml).not.toContain("lat=")
 		expect(xml).not.toContain("lon=")

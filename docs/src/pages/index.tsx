@@ -217,7 +217,7 @@ function QuickStart(): ReactNode {
 							{`import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 const neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const components = await neural.parseJson("1600 Pennsylvania Ave NW, Washington DC")
+const components = await neural.parseJSON("1600 Pennsylvania Ave NW, Washington DC")
 // → { house_number: "1600", street: "Pennsylvania Ave NW", locality: "Washington", region: "DC" }`}
 						</CodeBlock>
 					</div>

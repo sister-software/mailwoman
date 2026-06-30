@@ -30,7 +30,7 @@ import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"
 import { pathToFileURL } from "node:url"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { haversineKm, type GBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -260,7 +260,7 @@ async function main(): Promise<void> {
 
 	let geo = 0
 	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJson(await classifier.parse(raw, { postcodeRepair: true })),
+		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
 		geocode: async (raw: string) => {
 			const g = await geocodeAddress(raw, {
 				classifier,

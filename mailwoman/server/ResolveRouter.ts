@@ -17,7 +17,7 @@
 
 import { existsSync } from "node:fs"
 
-import { type AddressTree, decodeAsXml } from "@mailwoman/core/decoder"
+import { type AddressTree, decodeAsXML } from "@mailwoman/core/decoder"
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 
@@ -179,7 +179,7 @@ const handler: RequestHandler = async (req, res) => {
 		const resolved = await pipeline.resolver.resolveTree(decoded)
 		const response: ResolveResponse = {
 			input: text,
-			xml: decodeAsXml(resolved),
+			xml: decodeAsXML(resolved),
 			nodes: flatten(resolved),
 		}
 		res.status(200).json(response)

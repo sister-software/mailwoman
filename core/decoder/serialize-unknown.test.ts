@@ -9,9 +9,9 @@
 import { describe, expect, it } from "vitest"
 
 import type { ComponentTag } from "../types/component.js"
-import { decodeAsJson } from "./serialize-json.js"
+import { decodeAsJSON } from "./serialize-json.js"
 import { decodeAsTuples } from "./serialize-tuples.js"
-import { decodeAsXml } from "./serialize-xml.js"
+import { decodeAsXML } from "./serialize-xml.js"
 import type { AddressNode, AddressTree } from "./types.js"
 
 function node(tag: ComponentTag, start: number, end: number, value: string, children: AddressNode[] = []): AddressNode {
@@ -22,21 +22,21 @@ function node(tag: ComponentTag, start: number, end: number, value: string, chil
 const tree: AddressTree = { raw: "A, B", roots: [node("locality", 0, 1, "A"), node("locality", 3, 4, "B")] }
 const noGap: AddressTree = { raw: "Berlin", roots: [node("locality", 0, 6, "Berlin")] }
 
-describe("decodeAsJson includeUnknown", () => {
+describe("decodeAsJSON includeUnknown", () => {
 	it("is byte-stable by default (no unknown key)", () => {
-		expect(decodeAsJson(tree)).toEqual({ locality: "A" })
-		expect("unknown" in decodeAsJson(tree)).toBe(false)
+		expect(decodeAsJSON(tree)).toEqual({ locality: "A" })
+		expect("unknown" in decodeAsJSON(tree)).toBe(false)
 	})
 
 	it("adds the unknown array when asked", () => {
-		expect(decodeAsJson(tree, { includeUnknown: true })).toEqual({
+		expect(decodeAsJSON(tree, { includeUnknown: true })).toEqual({
 			locality: "A",
 			unknown: [{ kind: "unknown", value: ", ", start: 1, end: 3 }],
 		})
 	})
 
 	it("emits an empty unknown array (not omitted) when there are no gaps", () => {
-		expect(decodeAsJson(noGap, { includeUnknown: true })).toEqual({ locality: "Berlin", unknown: [] })
+		expect(decodeAsJSON(noGap, { includeUnknown: true })).toEqual({ locality: "Berlin", unknown: [] })
 	})
 })
 
@@ -57,13 +57,13 @@ describe("decodeAsTuples includeUnknown", () => {
 	})
 })
 
-describe("decodeAsXml includeUnknown", () => {
+describe("decodeAsXML includeUnknown", () => {
 	it("is byte-stable by default (no <unknown>)", () => {
-		expect(decodeAsXml(tree, { pretty: false })).not.toContain("<unknown")
+		expect(decodeAsXML(tree, { pretty: false })).not.toContain("<unknown")
 	})
 
 	it("emits source-ordered <unknown> elements when asked", () => {
-		const xml = decodeAsXml(tree, { pretty: false, includeUnknown: true })
+		const xml = decodeAsXML(tree, { pretty: false, includeUnknown: true })
 		expect(xml).toContain('<unknown start="1" end="3">, </unknown>')
 		// Source order: locality A, then the gap, then locality B.
 		expect(xml.indexOf("A</locality>")).toBeLessThan(xml.indexOf("<unknown"))

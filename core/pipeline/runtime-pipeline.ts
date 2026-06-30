@@ -596,7 +596,7 @@ export function grouperAudit(
 	// placed the confident locality/region/postcode; a SECOND one injected here is almost always a
 	// street-name word the OOD model mistyped ("Via Francesca Nord" → `Francesca`) or an area-line
 	// prefix ("LUGAR …" / "URBANIZACION …"). Suppressing the duplicate keeps the real trailing city
-	// from being shadowed by an earlier-positioned spurious node in `decodeAsJson` (#425 residual tail).
+	// from being shadowed by an earlier-positioned spurious node in `decodeAsJSON` (#425 residual tail).
 	const SINGLETON_TAGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>(["locality", "region", "postcode", "country"])
 	const presentSingletons = new Set<ComponentTag>()
 	const collectSingletons = (nodes: typeof roots): void => {

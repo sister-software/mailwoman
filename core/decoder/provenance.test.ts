@@ -13,9 +13,9 @@ import type { BioLabel } from "../types/component.js"
 import type { ClassificationProposal } from "../types/index.js"
 import { buildAddressTree } from "./build-tree.js"
 import { proposalsToTree } from "./proposals-to-tree.js"
-import { decodeAsJson } from "./serialize-json.js"
+import { decodeAsJSON } from "./serialize-json.js"
 import { decodeAsTuples } from "./serialize-tuples.js"
-import { decodeAsXml } from "./serialize-xml.js"
+import { decodeAsXML } from "./serialize-xml.js"
 import type { DecoderToken } from "./types.js"
 
 function tok(piece: string, start: number, end: number, label: BioLabel, confidence = 1): DecoderToken {
@@ -57,20 +57,20 @@ describe("Phase 4.1 source provenance", () => {
 
 		test("XML serializer emits src='<source>:<sourceId>' attribute", () => {
 			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "rule", "whos_on_first")])
-			const xml = decodeAsXml(tree)
+			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`src="rule:whos_on_first"`)
 		})
 
 		test("includeSrc=false suppresses the src attribute", () => {
 			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "rule", "whos_on_first")])
-			const xml = decodeAsXml(tree, { includeSrc: false })
+			const xml = decodeAsXML(tree, { includeSrc: false })
 			expect(xml).not.toContain(`src=`)
 			expect(xml).toContain(`conf=`) // other attrs unaffected
 		})
 
 		test("escapes XML special chars in src attribute", () => {
 			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "rule", `evil"&<>`)])
-			const xml = decodeAsXml(tree)
+			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`src="rule:evil&quot;&amp;&lt;&gt;"`)
 		})
 
@@ -79,7 +79,7 @@ describe("Phase 4.1 source provenance", () => {
 				proposal("75004", 0, "postcode", "rule", "postcode"),
 				proposal("Paris", 6, "locality", "rule", "whos_on_first"),
 			])
-			expect(decodeAsJson(tree)).toEqual({ postcode: "75004", locality: "Paris" })
+			expect(decodeAsJSON(tree)).toEqual({ postcode: "75004", locality: "Paris" })
 		})
 
 		test("tuple projection is unchanged when provenance is set", () => {
@@ -121,7 +121,7 @@ describe("Phase 4.1 source provenance", () => {
 				source: "neural",
 				sourceId: "neural-v0.3.1-en-us",
 			})
-			const xml = decodeAsXml(tree)
+			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`<region`)
 			expect(xml).toContain(`<locality`)
 			// Both region and locality carry the same neural attribution.
@@ -133,7 +133,7 @@ describe("Phase 4.1 source provenance", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS, { sourceId: "anon" })
 			expect(tree.roots[0].source).toBeUndefined()
 			expect(tree.roots[0].sourceId).toBe("anon")
-			const xml = decodeAsXml(tree)
+			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`src="anon"`)
 		})
 
@@ -141,7 +141,7 @@ describe("Phase 4.1 source provenance", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS, { source: "rule" })
 			expect(tree.roots[0].source).toBe("rule")
 			expect(tree.roots[0].sourceId).toBeUndefined()
-			const xml = decodeAsXml(tree)
+			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`src="rule"`)
 		})
 
@@ -149,7 +149,7 @@ describe("Phase 4.1 source provenance", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS)
 			expect(tree.roots[0].source).toBeUndefined()
 			expect(tree.roots[0].sourceId).toBeUndefined()
-			const xml = decodeAsXml(tree)
+			const xml = decodeAsXML(tree)
 			expect(xml).not.toContain(`src=`)
 		})
 	})

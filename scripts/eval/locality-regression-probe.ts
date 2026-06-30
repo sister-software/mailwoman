@@ -72,8 +72,8 @@ for (const row of rows) {
 	const gold = norm(row.components.locality)
 
 	if (!gold) continue
-	const bp = (await base.parseJson(row.raw)) as Record<string, string>
-	const cp = (await cand.parseJson(row.raw)) as Record<string, string>
+	const bp = (await base.parseJSON(row.raw)) as Record<string, string>
+	const cp = (await cand.parseJSON(row.raw)) as Record<string, string>
 	const baseOk = norm(bp.locality) === gold
 	const candOk = norm(cp.locality) === gold
 

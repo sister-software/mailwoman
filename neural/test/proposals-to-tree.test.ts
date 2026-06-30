@@ -7,7 +7,7 @@
  *   flat AddressTree so the existing JSON/tuple/XML decoders can format policy-filtered output.
  */
 
-import { decodeAsJson, decodeAsTuples, proposalsToTree } from "@mailwoman/core/decoder"
+import { decodeAsJSON, decodeAsTuples, proposalsToTree } from "@mailwoman/core/decoder"
 import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
@@ -58,7 +58,7 @@ describe("proposalsToTree", () => {
 			makeProposal("locality", "Paris", 0),
 			makeProposal("postcode", "75004", 6),
 		])
-		expect(decodeAsJson(tree)).toEqual({ locality: "Paris", postcode: "75004" })
+		expect(decodeAsJSON(tree)).toEqual({ locality: "Paris", postcode: "75004" })
 	})
 
 	test("plays nicely with existing tuple decoder (source-ordered)", () => {

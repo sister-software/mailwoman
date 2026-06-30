@@ -10,7 +10,7 @@
 
 import { readFileSync } from "node:fs"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
@@ -36,8 +36,8 @@ let titleLoc = 0
 
 for (const caps of samples) {
 	const tc = title(caps)
-	const recCaps = decodeAsJson(await neural.parse(caps, { postcodeRepair: true })) as Record<string, string>
-	const recTitle = decodeAsJson(await neural.parse(tc, { postcodeRepair: true })) as Record<string, string>
+	const recCaps = decodeAsJSON(await neural.parse(caps, { postcodeRepair: true })) as Record<string, string>
+	const recTitle = decodeAsJSON(await neural.parse(tc, { postcodeRepair: true })) as Record<string, string>
 	const wantLoc = caps.split(",")[1]!.trim()
 	const capsOk = (recCaps.locality ?? "").toUpperCase() === wantLoc
 	const titleOk = (recTitle.locality ?? "").toUpperCase() === wantLoc

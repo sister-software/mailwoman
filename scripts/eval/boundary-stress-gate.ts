@@ -31,7 +31,7 @@
 
 import { parseArgs } from "node:util"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
@@ -122,7 +122,7 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 
 	for (let i = 0; i < N; i++) {
 		const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: template })
-		const json = decodeAsJson(await classifier.parse(row.raw, { postcodeRepair: true })) as Record<string, unknown>
+		const json = decodeAsJSON(await classifier.parse(row.raw, { postcodeRepair: true })) as Record<string, unknown>
 		const got: Record<string, string> = {}
 		const collect = (o: Record<string, unknown>): void => {
 			for (const [k, v] of Object.entries(o)) {

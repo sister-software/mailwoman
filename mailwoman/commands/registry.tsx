@@ -23,7 +23,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	geocodeAddressVia,
@@ -244,7 +244,7 @@ async function buildGeocoder(
 	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
 
 	const seam = geocodeAddressVia({
-		parse: async (raw) => decodeAsJson(await classifier.parse(raw, { postcodeRepair: true })),
+		parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
 		geocode: (raw) =>
 			geocodeAddress(raw, {
 				classifier,

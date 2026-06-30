@@ -23,7 +23,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
-import { decodeAsJson, proposalsToTree } from "@mailwoman/core/decoder"
+import { decodeAsJSON, proposalsToTree } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createAddressParser } from "mailwoman"
@@ -125,10 +125,10 @@ async function partB(): Promise<string[]> {
 	const parseV0 = async (s: string) => {
 		const sols = await v0.parse(s)
 
-		return sols[0] ? (decodeAsJson(proposalsToTree(s, solutionToProposals(sols[0]!))) as Record<string, string>) : {}
+		return sols[0] ? (decodeAsJSON(proposalsToTree(s, solutionToProposals(sols[0]!))) as Record<string, string>) : {}
 	}
 	const parseNeural = async (s: string) =>
-		decodeAsJson(await neural.parse(s, { postcodeRepair: true })) as Record<string, string>
+		decodeAsJSON(await neural.parse(s, { postcodeRepair: true })) as Record<string, string>
 
 	// type → (address generator, structure check per parser)
 	const types: Array<{

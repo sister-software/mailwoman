@@ -30,7 +30,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { type ComponentTag, decodeAsJson, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import {
 	type AnchorLookup,
 	type GazetteerLexicon,
@@ -466,7 +466,7 @@ async function runAssertion(
 	// the top-1 neural output. This is the natural reading for a single-result parser; v0's
 	// multi-solution structure simply isn't part of the neural API.
 	const tree = await neuralClassifier.parse(a.input, parseOpts)
-	const flat = decodeAsJson(tree)
+	const flat = decodeAsJSON(tree)
 	const { record: neuralRecord, dropped } = neuralTreeToV0Record(flat)
 	const neuralPass = anyExpectedMatches(a.expected, neuralRecord)
 	const treeValidity = validateTree(tree) // #37 — structural coherence of the neural parse
@@ -480,7 +480,7 @@ async function runAssertion(
 
 	if (pipeline) {
 		const { tree: assembledTree } = await pipeline(a.input, arbitrate ? { arbitrate: true } : undefined)
-		assembledRecord = neuralTreeToV0Record(decodeAsJson(assembledTree)).record
+		assembledRecord = neuralTreeToV0Record(decodeAsJSON(assembledTree)).record
 		assembledPass = anyExpectedMatches(a.expected, assembledRecord)
 	}
 
