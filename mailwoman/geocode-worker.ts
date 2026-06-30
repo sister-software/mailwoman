@@ -16,7 +16,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/registry"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 
-import { geocodeAddress, ShardProvider } from "./geocode-core.js"
+import { geocodeAddress, parseForGeocode, ShardProvider } from "./geocode-core.js"
 import type { GeocodeStreamConfig } from "./geocode-stream.js"
 
 const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
@@ -30,16 +30,24 @@ const lookup = new wof.WofSqlitePlaceLookup({ databasePath: cfg.wofDbPath })
 const resolver = createWofResolver(lookup as unknown as ResolverBackend)
 const shards = new ShardProvider(wof, cfg.dataRoot)
 
+const geoDeps = {
+	classifier,
+	resolver,
+	shards: shards.for,
+	defaultCountry: cfg.country ?? "US",
+	placeCountry: false,
+} as const
+
+// Parse ONCE per address (the ~3 ms/row inference is the dominant cost): share the tree between the PostalAddress
+// (decodeAsJSON) and the geocode (parsedTree). Coordinates are byte-identical to the two-parse path — geocodeAddress
+// would have produced this exact tree internally; only the PostalAddress now reflects the normalized parse.
 const seam = geocodeAddressVia({
-	parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-	geocode: (raw) =>
-		geocodeAddress(raw, {
-			classifier,
-			resolver,
-			shards: shards.for,
-			defaultCountry: cfg.country ?? "US",
-			placeCountry: false,
-		}),
+	parseAndGeocode: async (raw) => {
+		const tree = await parseForGeocode(raw, geoDeps)
+		const geo = await geocodeAddress(raw, { ...geoDeps, parsedTree: tree })
+
+		return { components: decodeAsJSON(tree), geo }
+	},
 	country: cfg.country,
 })
 
