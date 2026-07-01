@@ -1,6 +1,6 @@
 # Night Shift Postmortem — 2026-07-01/02 (30th shift)
 
-Living document — sketched during the shift, finalized at hand-off. Window: ~05:30 UTC → 15:00 UTC.
+Drafted during the shift; finalized at hand-off. Window: **05:30 → 13:10 UTC** (operator returned early).
 Posture: autonomous, CPU/local, ~$0 Modal (GPU levers flagged, not run). PRs shipped + flagged for
 operator merge (no self-merge).
 
@@ -100,6 +100,11 @@ operator merge (no self-merge).
   were solid, the mechanism interpretation kept outrunning the probe.** Rule for the rest of the shift and
   next: dump the specific case BEFORE writing the "why", not after. The verify-before-verdict reflex fired
   on the correction, not the claim — it needs to fire one step earlier.
+- **Branch-stacking from an aborted `git switch`.** `git switch main` silently aborts when the working tree
+  has uncommitted edits, so two new branches stacked on the previous one — the postmortem PR would have
+  carried #879's 18-file cast diff. Caught it on a diff-review before it mattered, rebased both onto main
+  with explicit hashes. Lesson: commit (or stash) before switching, and always `git diff origin/main
+  --name-only` a fresh branch before pushing.
 
 ## Decisions made autonomously
 
