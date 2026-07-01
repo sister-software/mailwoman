@@ -137,6 +137,7 @@ console.log(`\n## Decision (#826 rule): **${decision}**\n`)
 console.log(`## Worst exonym countries (record present under local name, English key absent)\n`)
 console.log(`| Country | exonym | coverage | covered |`)
 console.log(`| --- | ---: | ---: | ---: |`)
+
 for (const [cc, s] of [...perCountry.entries()].sort((a, b) => b[1].exonym - a[1].exonym).slice(0, 20)) {
 	if (s.exonym === 0) continue
 	console.log(`| ${cc} | ${s.exonym} | ${s.coverage} | ${s.covered} |`)

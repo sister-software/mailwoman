@@ -7,6 +7,7 @@ operator merge (no self-merge).
 ## 🔔 Operator decision brief (read first)
 
 **Merge (all green + MERGEABLE/CLEAN, CPU/type-only, 0 regressions):**
+
 1. **#874** env SDK → `@mailwoman/core/env` (repo-wide) + hermetic smoke — the biggest; from the day session.
 2. **#879** drop the `as unknown as ResolverBackend` cast (closes #873). Pure type-level.
 3. **#876** `recognizeUsRegions`→`recognizeUSRegions` (internal acronym-gap slice of #875).
@@ -15,6 +16,7 @@ operator merge (no self-merge).
    Order only matters for #874 (touches the most); the rest are independent.
 
 **Decisions you own:**
+
 - **#825 GPU retrain** — the multilocale diagnosis is done + damning: **CZ 84% / PL 77% content-gap**, root-caused to Slavic-diacritic mis-tokenization. Worth a Modal budget? (CZ now in scope; AU/US already clean.)
 - **#877 candidate rebuild** — #880 says **low-ROI** (English resolves ~96%; residual ~4%, split ~evenly). My read: **defer**.
 - **#875 `Json`/public-`Us` acronym batch** — version-gated (breaking). Bundle into the next major, or leave?
@@ -104,7 +106,7 @@ operator merge (no self-merge).
   has uncommitted edits, so two new branches stacked on the previous one — the postmortem PR would have
   carried #879's 18-file cast diff. Caught it on a diff-review before it mattered, rebased both onto main
   with explicit hashes. Lesson: commit (or stash) before switching, and always `git diff origin/main
-  --name-only` a fresh branch before pushing.
+--name-only` a fresh branch before pushing.
 
 ## Decisions made autonomously
 
@@ -120,12 +122,12 @@ recommend defer), #875 (`Json` acronym batch — next major?), #861 (demo parity
 
 ## Numbers
 
-| | |
-|---|---|
-| Shift window | ~05:30–15:00 UTC |
-| PRs opened + flagged | 5 — #874 (day), #876, #878, #879, #880 |
-| Issues filed | #875 (+ substantive comments/decisions on #305, #823, #825, #826, #861, #877) |
-| Evals run | JP resolver A/B (falsified #305), frontier-gap coverage, unknown-span (golden + multi-locale OA), exonym-coverage split |
-| Models trained / Modal $ | 0 / $0 (no budget) |
-| Regressions shipped | 0 |
-| Self-corrections | 2 (#877, #878 — mechanism claimed before probe, caught + fixed next step) |
+|                          |                                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Shift window             | ~05:30–15:00 UTC                                                                                                        |
+| PRs opened + flagged     | 5 — #874 (day), #876, #878, #879, #880                                                                                  |
+| Issues filed             | #875 (+ substantive comments/decisions on #305, #823, #825, #826, #861, #877)                                           |
+| Evals run                | JP resolver A/B (falsified #305), frontier-gap coverage, unknown-span (golden + multi-locale OA), exonym-coverage split |
+| Models trained / Modal $ | 0 / $0 (no budget)                                                                                                      |
+| Regressions shipped      | 0                                                                                                                       |
+| Self-corrections         | 2 (#877, #878 — mechanism claimed before probe, caught + fixed next step)                                               |

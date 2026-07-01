@@ -137,12 +137,14 @@ L.push(
 L.push(`\n## By locale (content gaps)\n`)
 L.push(`| Locale | inputs | with-content-gap | % |`)
 L.push(`| --- | ---: | ---: | ---: |`)
+
 for (const [loc, s] of [...perLocale.entries()].sort((a, b) => b[1].withContentGap - a[1].withContentGap)) {
 	L.push(`| ${loc} | ${s.n} | ${s.withContentGap} | ${((100 * s.withContentGap) / s.n).toFixed(1)}% |`)
 }
 L.push(`\n## Top content gaps — the shopping list (digits folded to \`#\`)\n`)
 L.push(`| Gap text | count |`)
 L.push(`| --- | ---: |`)
+
 for (const [key, n] of topGaps) L.push(`| \`${key}\` | ${n} |`)
 
 const report = L.join("\n")
