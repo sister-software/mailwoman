@@ -1,8 +1,24 @@
 # Night Shift Postmortem — 2026-07-01/02 (30th shift)
 
-Living document — sketched during the shift, finalized at hand-off. Window: ~05:30 UTC → 15:00 UTC.
+Drafted during the shift; finalized at hand-off. Window: **05:30 → 13:10 UTC** (operator returned early).
 Posture: autonomous, CPU/local, ~$0 Modal (GPU levers flagged, not run). PRs shipped + flagged for
 operator merge (no self-merge).
+
+## 🔔 Operator decision brief (read first)
+
+**Merge (all green + MERGEABLE/CLEAN, CPU/type-only, 0 regressions):**
+1. **#874** env SDK → `@mailwoman/core/env` (repo-wide) + hermetic smoke — the biggest; from the day session.
+2. **#879** drop the `as unknown as ResolverBackend` cast (closes #873). Pure type-level.
+3. **#876** `recognizeUsRegions`→`recognizeUSRegions` (internal acronym-gap slice of #875).
+4. **#878** unknown-span corpus-gap eval (#493 item). **#880** exonym-vs-coverage rebuild probe (#826).
+   — #878/#880 are new tracked evals, no runtime surface.
+   Order only matters for #874 (touches the most); the rest are independent.
+
+**Decisions you own:**
+- **#825 GPU retrain** — the multilocale diagnosis is done + damning: **CZ 84% / PL 77% content-gap**, root-caused to Slavic-diacritic mis-tokenization. Worth a Modal budget? (CZ now in scope; AU/US already clean.)
+- **#877 candidate rebuild** — #880 says **low-ROI** (English resolves ~96%; residual ~4%, split ~evenly). My read: **defer**.
+- **#875 `Json`/public-`Us` acronym batch** — version-gated (breaking). Bundle into the next major, or leave?
+- **#861 demo↔server resolver parity** — recommended **B** (converge on shared resolver) as a focused session; no regression today, not urgent.
 
 ## What shipped / opened
 
@@ -48,6 +64,22 @@ operator merge (no self-merge).
   digits (`39`→`9`). Told #825 the lever is diacritic robustness + CZ-in-scope, not per-locale volume (AU/US
   already 0%). The 3 PRs (#874/#876/#878) all verified MERGEABLE/CLEAN + green.
 
+- **PR #879 — dropped the `as unknown as ResolverBackend` cast (closes #873).** Filed #873 (day session)
+  assuming `createWOFResolver(lookup)` didn't typecheck; verified it does (`PlaceCandidate` is structurally
+  a `ResolvedPlace`; method param is bivariant). Removed all **18** cast sites + dead imports. Pure
+  type-level, byte-identical runtime, 76 resolver tests green. A clean ungated API-papercut removal — and
+  this time the assumption was verified (one cast removed + compiled) BEFORE the fix, not after.
+- **CZ/PL diacritic gap: no clean CPU fix (→ #825 GPU).** `parseWithLogits` shows the tokenizer isolates
+  diacritics into own pieces the model tags O; a decoder gap-bridge would patch `Grudziądz` but not the
+  broader Polish under-tagging (`Daliowa`→`owa`), and it's #305-class repair risk. Declined; it's the
+  retrain lever.
+
+- **PR #880 — exonym-vs-coverage kill-switch (#826).** A pure name_key existence probe (no model) that
+  front-runs the candidate-rebuild-payload decision. Verified across two sample widths: **English names
+  already resolve for ~96%** of non-US cities (the #266/#267 arc worked); the residual ~4% name-key gap
+  splits **42–49% exonym / 51–58% coverage** → decision **BOTH**, but **low-ROI** (small gap). Told #826:
+  don't spend a night on the rebuild yet. Verified the split's stability at two thresholds before writing it.
+
 ## What went well
 
 - **Verify-before-verdict earned its keep on #305.** The issue's hypothesis was plausible; the eval said
@@ -68,6 +100,11 @@ operator merge (no self-merge).
   were solid, the mechanism interpretation kept outrunning the probe.** Rule for the rest of the shift and
   next: dump the specific case BEFORE writing the "why", not after. The verify-before-verdict reflex fired
   on the correction, not the claim — it needs to fire one step earlier.
+- **Branch-stacking from an aborted `git switch`.** `git switch main` silently aborts when the working tree
+  has uncommitted edits, so two new branches stacked on the previous one — the postmortem PR would have
+  carried #879's 18-file cast diff. Caught it on a diff-review before it mattered, rebased both onto main
+  with explicit hashes. Lesson: commit (or stash) before switching, and always `git diff origin/main
+  --name-only` a fresh branch before pushing.
 
 ## Decisions made autonomously
 
@@ -78,18 +115,17 @@ operator merge (no self-merge).
 
 ## Open questions / for the operator
 
-- **#875** — do we want a deliberate acronym-completion pass (`Json`/`Jsonl` + public codex `Us`) bundled
-  into the next major? Or leave the convention gap? (Internal `recognizeUsRegions` already done in #876.)
-- **PR #874** (env SDK → `@mailwoman/core/env`) + **PR #876** await your merge.
+See the decision brief up top. In short: #825 (GPU budget for the CZ/PL diacritic retrain), #877 (rebuild —
+recommend defer), #875 (`Json` acronym batch — next major?), #861 (demo parity — recommend B, focused session).
 
 ## Numbers
 
 | | |
 |---|---|
 | Shift window | ~05:30–15:00 UTC |
-| Models trained | 0 (no Modal budget) |
-| Modal $ | $0 |
-| PRs opened | #876 (+ #874 from the day session) |
-| Issues filed | #875 |
-| Evals run | JP resolver A/B (falsified #305) |
+| PRs opened + flagged | 5 — #874 (day), #876, #878, #879, #880 |
+| Issues filed | #875 (+ substantive comments/decisions on #305, #823, #825, #826, #861, #877) |
+| Evals run | JP resolver A/B (falsified #305), frontier-gap coverage, unknown-span (golden + multi-locale OA), exonym-coverage split |
+| Models trained / Modal $ | 0 / $0 (no budget) |
 | Regressions shipped | 0 |
+| Self-corrections | 2 (#877, #878 — mechanism claimed before probe, caught + fixed next step) |
