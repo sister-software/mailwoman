@@ -47,18 +47,19 @@ const tree: AddressTree = await classifier.parse("350 5th Ave, New York, NY 1011
 const { tree, logits, pieces } = await classifier.parseWithLogits("350 5th Ave, New York, NY 10118")
 ```
 
-### `createWOFResolver(opts)`
+### `createWOFResolver(backend)`
 
-Creates a resolver backed by a Who's On First SQLite distribution.
+Wraps a place-lookup backend as a `Resolver`. The backend is any `PlaceLookup` — on the
+server that's a `WOFSqlitePlaceLookup` over a Who's On First SQLite distribution.
 
 ```ts
-import { createWOFResolver } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const resolver = await createWOFResolver({
-	dbPath: "./wof.sqlite",
-	// Optional: locale hint for name-language preference
-	locale: "en-US",
-})
+const lookup = new WOFSqlitePlaceLookup({ databasePath: "./wof.sqlite" })
+// `PlaceLookup` and `ResolverBackend` are structurally adjacent but not identical, so the
+// backend is passed through a cast — the same one every internal call site uses today.
+const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 
 // Resolve a parsed tree
 const resolvedTree: AddressTree = await resolver.resolveTree(tree)
@@ -194,14 +195,24 @@ mailwoman parse [options] <address string>
 // Neural classifier (WASM-based onnxruntime-web)
 import { loadNeuralClassifierFromUrls } from "@mailwoman/neural-web"
 
-// WOF resolver (WASM-based sqlite-wasm)
-import { createWASMResolver } from "@mailwoman/resolver-wof-wasm"
+// WOF resolver backend (WASM-based sqlite-wasm)
+import { loadSlimWOFDatabase, WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm"
 
 // Map rendering (MapLibre + Protomaps)
-import { StyleSpecificationComposer } from "@mailwoman/cartographer"
+import { StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 ```
 
-The browser path mirrors the Node API. `classifier.parse()` and `classifier.parseWithLogits()` have the same signatures. The demo at `/demo` is the reference browser integration.
+The browser path mirrors the Node API. `classifier.parse()` and `classifier.parseWithLogits()` have the same signatures. Build the resolver the same way as on the server, swapping the SQLite lookup for the WASM one:
+
+```ts
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+
+const { db } = await loadSlimWOFDatabase({ source: "/wof-slim.sqlite" })
+const lookup = new WOFWasmPlaceLookup({ db })
+const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
+```
+
+The demo at `/demo` is the reference browser integration.
 
 ## Component tags
 
