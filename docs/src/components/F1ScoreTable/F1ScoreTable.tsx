@@ -7,9 +7,9 @@
  *   parity scorecard, with hover tooltips explaining what each score means in context. Click any
  *   column header to sort ascending; click again to reverse.
  *
- *   The data is sourced from the parity-scorecard-2026-06-11.md and the v4.3.0 ship gate. It is
- *   hardcoded here — the scorecard is the single source of truth; this component mirrors it for the
- *   status page.
+ *   The data is sourced from the parity scorecards (2026-06-11 for v4.1.0–v4.3.0, the v4.4.0 ship
+ *   gate, and parity-scorecard-2026-07-02.md for the v5.0.0 re-score). It is hardcoded here — the
+ *   scorecard is the single source of truth; this component mirrors it for the status page.
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
@@ -32,9 +32,12 @@ interface F1Row {
 	v410: number | null
 	v420: number | null
 	v430: number | null
+	v440: number | null
+	/** The 2026-07-02 full re-score of the shipped 5.0.0 line (weights = v4.15.0, int8). */
+	v500: number | null
 }
 
-type SortKey = "tag" | "eval" | "v410" | "v420" | "v430"
+type SortKey = "tag" | "eval" | "v410" | "v420" | "v430" | "v440" | "v500"
 
 // ---------------------------------------------------------------------------
 // F1 data (sourced from parity-scorecard-2026-06-11.md)
@@ -49,6 +52,8 @@ const F1_DATA: F1Row[] = [
 		v410: 0,
 		v420: 64.9,
 		v430: 93.6,
+		v440: 93.6,
+		v500: 98.0,
 	},
 	{
 		tag: "street_suffix",
@@ -58,6 +63,8 @@ const F1_DATA: F1Row[] = [
 		v410: 0,
 		v420: 48.8,
 		v430: 96.6,
+		v440: 96.6,
+		v500: 94.9,
 	},
 	{
 		tag: "street_prefix",
@@ -67,6 +74,8 @@ const F1_DATA: F1Row[] = [
 		v410: null,
 		v420: 18.2,
 		v430: 92.2,
+		v440: null,
+		v500: 95.7,
 	},
 	{
 		tag: "street_suffix",
@@ -75,6 +84,8 @@ const F1_DATA: F1Row[] = [
 		v410: null,
 		v420: 8.9,
 		v430: 90.3,
+		v440: null,
+		v500: 91.6,
 	},
 	{
 		tag: "unit",
@@ -84,6 +95,8 @@ const F1_DATA: F1Row[] = [
 		v410: 92.3,
 		v420: 90.6,
 		v430: 92.1,
+		v440: 92.1,
+		v500: 97.0,
 	},
 	{
 		tag: "country",
@@ -93,6 +106,8 @@ const F1_DATA: F1Row[] = [
 		v410: 27,
 		v420: 89.8,
 		v430: 85.1,
+		v440: 89.8,
+		v500: 87.5,
 	},
 	{
 		tag: "us.street",
@@ -102,6 +117,8 @@ const F1_DATA: F1Row[] = [
 		v410: 78.5,
 		v420: 76.2,
 		v430: 75.5,
+		v440: 77.9,
+		v500: 82.3,
 	},
 	{
 		tag: "us.locality",
@@ -111,6 +128,8 @@ const F1_DATA: F1Row[] = [
 		v410: 60.1,
 		v420: 72.9,
 		v430: 74.4,
+		v440: 75.7,
+		v500: 76.7,
 	},
 	{
 		tag: "us.region",
@@ -120,6 +139,8 @@ const F1_DATA: F1Row[] = [
 		v410: 78.4,
 		v420: 89.1,
 		v430: 89.1,
+		v440: 90.3,
+		v500: 88.6,
 	},
 	{
 		tag: "us.postcode",
@@ -129,6 +150,8 @@ const F1_DATA: F1Row[] = [
 		v410: 98.3,
 		v420: 97.3,
 		v430: 97.8,
+		v440: 98.3,
+		v500: 95.0,
 	},
 	{
 		tag: "us.micro",
@@ -138,6 +161,8 @@ const F1_DATA: F1Row[] = [
 		v410: 81.6,
 		v420: 84.8,
 		v430: 85.1,
+		v440: 86.1,
+		v500: 85.7,
 	},
 	{
 		tag: "fr.postcode",
@@ -147,6 +172,8 @@ const F1_DATA: F1Row[] = [
 		v410: 99.5,
 		v420: 99.6,
 		v430: 99.7,
+		v440: 99.6,
+		v500: 99.3,
 	},
 	{
 		tag: "fr.house_number",
@@ -156,6 +183,8 @@ const F1_DATA: F1Row[] = [
 		v410: 91.0,
 		v420: 94.6,
 		v430: 97.7,
+		v440: 97.2,
+		v500: 98.1,
 	},
 	{
 		tag: "fr.region",
@@ -165,6 +194,8 @@ const F1_DATA: F1Row[] = [
 		v410: 30.2,
 		v420: 27.6,
 		v430: 16.2,
+		v440: 25.6,
+		v500: 48.4,
 	},
 	{
 		tag: "de.native_locality",
@@ -174,6 +205,8 @@ const F1_DATA: F1Row[] = [
 		v410: 90.6,
 		v420: 90.9,
 		v430: 90.1,
+		v440: 91.0,
+		v500: 91.1,
 	},
 ]
 
@@ -275,6 +308,12 @@ const F1ScoreTableInner: React.FC = () => {
 						<th className={styles.sortableHeader} onClick={() => handleSort("v430")}>
 							v4.3.0{sortArrow("v430", sortKey, sortDir)}
 						</th>
+						<th className={styles.sortableHeader} onClick={() => handleSort("v440")}>
+							v4.4.0{sortArrow("v440", sortKey, sortDir)}
+						</th>
+						<th className={styles.sortableHeader} onClick={() => handleSort("v500")}>
+							v5.0.0{sortArrow("v500", sortKey, sortDir)}
+						</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -299,13 +338,24 @@ const F1ScoreTableInner: React.FC = () => {
 									{row.v430 != null ? row.v430.toFixed(1) : "—"}
 								</td>
 							</Tooltip>
+							<Tooltip text={row.tooltip}>
+								<td className={`${styles.f1Cell} ${scoreClass(row.v440)}`}>
+									{row.v440 != null ? row.v440.toFixed(1) : "—"}
+								</td>
+							</Tooltip>
+							<Tooltip text={row.tooltip}>
+								<td className={`${styles.f1Cell} ${scoreClass(row.v500)}`}>
+									{row.v500 != null ? row.v500.toFixed(1) : "—"}
+								</td>
+							</Tooltip>
 						</tr>
 					))}
 				</tbody>
 			</table>
 			<p className={styles.footnote}>
-				Source: <a href="./evals/parity-scorecard-2026-06-11">parity-scorecard-2026-06-11.md</a>. Click any column
-				header to sort. Hover over a score to see what it means in context.{" "}
+				Source: <a href="./evals/parity-scorecard-2026-07-02">parity-scorecard-2026-07-02.md</a> (v5.0.0 re-score;
+				earlier columns from <a href="./evals/parity-scorecard-2026-06-11">2026-06-11</a> and the v4.4.0 ship gate).
+				Click any column header to sort. Hover over a score to see what it means in context.{" "}
 				<span className={styles.colorKey}>
 					<span className={styles.keyHigh}>≥ 80 healthy</span> · <span className={styles.keyMid}>30–79 moderate</span> ·{" "}
 					<span className={styles.keyLow}>&lt; 30 needs work</span>
