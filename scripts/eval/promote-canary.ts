@@ -37,7 +37,7 @@ import { setTimeout as sleep } from "node:timers/promises"
  */
 import { createCalibrator } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -72,10 +72,10 @@ async function collectModel(
 	inputs: Array<{ cc: string; variant: string; input: string; lat: number; lon: number }>
 ): Promise<CanaryRow[]> {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const calibrate = createCalibrator(JSON.parse(readFileSync(CALIB, "utf8")))
-	const lookup = new WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as never)
+	const lookup = new WOFSqlitePlaceLookup({ databasePath: WOF })
+	const resolver = createWOFResolver(lookup as never)
 	const model = await createScorer({
 		modelPath,
 		tokenizerPath: TOK,

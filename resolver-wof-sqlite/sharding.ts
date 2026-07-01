@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Multi-shard support for `WofSqlitePlaceLookup` — opens multiple WOF SQLite distributions on one
+ *   Multi-shard support for `WOFSqlitePlaceLookup` — opens multiple WOF SQLite distributions on one
  *   connection via `ATTACH DATABASE`, and routes queries to the right shard based on placetype.
  *
  *   ## The FTS5 syntax rule that drove this design
@@ -78,7 +78,7 @@ export interface ShardConfig {
 
 /**
  * Resolved post-derivation: paired path + chosen schema name + (possibly empty) placetypes hint. Used internally by
- * `WofSqlitePlaceLookup` so the routing logic operates on uniform structures.
+ * `WOFSqlitePlaceLookup` so the routing logic operates on uniform structures.
  */
 export interface ResolvedShard {
 	path: string

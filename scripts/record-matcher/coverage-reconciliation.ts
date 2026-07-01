@@ -46,7 +46,7 @@ import {
 	type ReconcileConfig,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
@@ -147,8 +147,8 @@ async function main(): Promise<void> {
 	console.error("[B] building the geocoder…")
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
+	const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 	const shardProvider = new ShardProvider(mod, DATA_ROOT)
 
 	let geo = 0

@@ -97,7 +97,7 @@ const FIXTURE: Fixture[] = [
 ]
 
 // /reverse (geopy's geo.reverse): known coordinate → expected country_code. Exercises the
-// WofReverseGeocoder PIP path, a different code path than /search.
+// WOFReverseGeocoder PIP path, a different code path than /search.
 const REVERSE_FIXTURE: ReverseFixture[] = [
 	{ lat: 38.8977, lon: -77.0365, cc: "us" },
 	{ lat: 42.3601, lon: -71.0589, cc: "us" },

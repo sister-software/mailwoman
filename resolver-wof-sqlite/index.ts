@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export type { FindPlaceQuery, GeoBbox, GeoPoint, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
+export type { FindPlaceQuery, GeoBbox, GeoPoint, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.js"
 
 export type {
 	AncestorsTable,
@@ -16,22 +16,22 @@ export type {
 	PlacePopulationTable,
 	PlaceSearchTable,
 	SprTable,
-	WofDatabase,
+	WOFDatabase,
 } from "./schema.js"
 
-export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpts } from "./lookup.js"
+export { WOFSqlitePlaceLookup, type RankingWeights, type WOFSqlitePlaceLookupOpts } from "./lookup.js"
 
-export { CANDIDATE_FTS_TABLE, createCandidateFts } from "./candidate-fts.js"
-export { WofCandidateTableLookup, type WofCandidateTableLookupOpts } from "./candidate-lookup.js"
+export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "./candidate-fts.js"
+export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "./candidate-lookup.js"
 
 export { GEONAMES_ID_BASE, ingestGeonamesAliases, type GeonamesIngestProgress } from "./geonames-aliases.js"
 
 export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "./address-point-schema.js"
 export type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.js"
 export {
-	WofPostalCityAliasLookup,
+	WOFPostalCityAliasLookup,
 	type PostalCityAlias,
-	type WofPostalCityAliasLookupOpts,
+	type WOFPostalCityAliasLookupOpts,
 } from "./postal-city-alias-lookup.js"
 export type { PostalCityAliasDatabase, PostalCityAliasTable } from "./postal-city-alias-schema.js"
 export {
@@ -57,16 +57,16 @@ export {
 
 export { SqliteConventionSource } from "./sqlite-convention-source.js"
 
-export { WofPostcodeLookup, type PostcodePlace } from "./postcode-point-lookup.js"
+export { WOFPostcodeLookup, type PostcodePlace } from "./postcode-point-lookup.js"
 
 export {
 	PLACE_BBOX_TABLE,
 	PLACE_SEARCH_TABLE,
-	buildPlaceSearchFts,
+	buildPlaceSearchFTS,
 	placeBboxExists,
-	placeSearchFtsExists,
-	type BuildPlaceSearchFtsOpts,
-	type BuildPlaceSearchFtsResult,
+	placeSearchFTSExists,
+	type BuildPlaceSearchFTSOpts,
+	type BuildPlaceSearchFTSResult,
 } from "./fts.js"
 
 export {
@@ -85,11 +85,11 @@ export {
 export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "./ancestry.js"
 
 export {
-	WofReverseGeocoder,
+	WOFReverseGeocoder,
 	type ContainmentKind,
 	type ReverseGeocodeOpts,
 	type ReverseGeocodeResult,
-	type WofReverseGeocoderOpts,
+	type WOFReverseGeocoderOpts,
 } from "./reverse.js"
 
 export { AddressPointInterpolator } from "./address-point-interpolation.js"

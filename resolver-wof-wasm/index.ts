@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-export { loadSlimWofDatabase, type LoadSlimOpts } from "./loader.js"
-export { WofWasmPlaceLookup, type WofWasmPlaceLookupOpts } from "./lookup.js"
+export { loadSlimWOFDatabase, type LoadSlimOpts } from "./loader.js"
+export { WOFWasmPlaceLookup, type WOFWasmPlaceLookupOpts } from "./lookup.js"
 
 // Re-export the shared interface types so callers don't need both packages on the typed path.
 export type {
@@ -14,5 +14,5 @@ export type {
 	GeoPoint,
 	PlaceCandidate,
 	PlaceLookup,
-	WofPlacetype,
+	WOFPlacetype,
 } from "@mailwoman/resolver-wof-sqlite"

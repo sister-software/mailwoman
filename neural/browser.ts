@@ -24,7 +24,7 @@ export * from "./postcode-binary-resolver.js"
 export * from "./gazetteer-inference.js"
 // Browser-safe soft-feature choreography (#718): the pure `buildSoftFeatures` that composes the
 // anchor + gazetteer channels (+ near-postcode suppression). No `fs`. The Node-only `./scorer` (which
-// constructs the OnnxRunner + reads the card/lookup/lexicon from disk) is deliberately NOT re-exported
+// constructs the ONNXRunner + reads the card/lookup/lexicon from disk) is deliberately NOT re-exported
 // here.
 export * from "./soft-features.js"
 // Type-only re-export so callers can still type `InferResult` from the browser entry without

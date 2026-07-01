@@ -17,7 +17,7 @@
  *       needs; without it "new yor" returns nothing useful. (#587)
  */
 
-import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
+import { FSTMatcher, normalizeTokens } from "./fst-matcher.js"
 import type { PlaceEntry } from "./fst-types.js"
 
 export interface AutocompleteResult {
@@ -69,7 +69,7 @@ function topByImportance(entries: readonly PlaceEntry[], k: number): PlaceEntry[
 /**
  * Autocomplete from the current prefix. Returns suggestions ranked importance-descending.
  */
-export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
+export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
 	const maxSuggestions = opts.maxSuggestions ?? 10
 	const maxExpansionDepth = opts.maxExpansionDepth ?? 2
 	const normalizedTokens = normalizeTokens(query)

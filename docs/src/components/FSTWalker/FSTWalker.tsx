@@ -14,7 +14,7 @@
  *   import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
  *   import { FSTWalker } from "@site/src/components/FSTWalker/FSTWalker"
  *
- *   <DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+ *   <DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
  *     <FSTWalker input="New York, NY 10001" />
  *   </DemoEmbedProvider>
  * ```
@@ -62,7 +62,7 @@ export interface FSTWalkerProps {
 }
 
 // ---------------------------------------------------------------------------
-// Token normalization (matches FstMatcher.normalizeTokens)
+// Token normalization (matches FSTMatcher.normalizeTokens)
 // ---------------------------------------------------------------------------
 
 /**
@@ -83,7 +83,7 @@ function normalizeTokens(text: string): string[] {
 // ---------------------------------------------------------------------------
 
 /** Format a WOF ID as a compact 8-digit string. */
-function fmtWofID(id: number): string {
+function fmtWOFID(id: number): string {
 	return String(id).padStart(8, "0").slice(-8)
 }
 
@@ -118,7 +118,7 @@ const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
 				<span className={`${styles.impDot} ${styles[`impDot_${tier}`]}`} />
 				{fmtImportance(place.importance)}
 			</span>
-			<code className={styles.placeId}>{fmtWofID(place.wofID)}</code>
+			<code className={styles.placeId}>{fmtWOFID(place.wofID)}</code>
 		</div>
 	)
 }
@@ -201,7 +201,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		if (!lastValidStep?.result) return null
 
 		// Try to use continuations() if available (runtime duck check — the deserialized
-		// matcher is a full FstMatcher instance with this method).
+		// matcher is a full FSTMatcher instance with this method).
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const matcher = fstMatcher as any
 
@@ -223,7 +223,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 					<span className={styles.fallbackIcon}>📡</span>
 					<p>
 						FST gazetteer not loaded for the selected version. The walker requires an FST binary ({" "}
-						<code>fst-en-US.bin</code>) — try a version with <code>hasFst: true</code> in the releases manifest.
+						<code>fst-en-US.bin</code>) — try a version with <code>hasFST: true</code> in the releases manifest.
 					</p>
 				</div>
 			</div>

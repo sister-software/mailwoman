@@ -16,16 +16,16 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
-import { deserializeFst, readFstProvenance, serializeFst } from "./fst-serialize.js"
-import { buildStreetMorphologyFst } from "./street-morphology-fst-builder.js"
+import { deserializeFST, readFSTProvenance, serializeFST } from "./fst-serialize.js"
+import { buildStreetMorphologyFST } from "./street-morphology-fst-builder.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const DICTIONARIES_DIR = join(__dirname, "..", "core", "data", "libpostal", "dictionaries")
 
-describe("buildStreetMorphologyFst", () => {
+describe("buildStreetMorphologyFST", () => {
 	it("ingests the libpostal street_types dictionaries", () => {
-		const result = buildStreetMorphologyFst({ dictionariesDir: DICTIONARIES_DIR })
+		const result = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR })
 
 		expect(result.locales.length).toBeGreaterThan(40)
 		expect(result.canonicalCount).toBeGreaterThan(500)
@@ -33,7 +33,7 @@ describe("buildStreetMorphologyFst", () => {
 	})
 
 	it("recognises the English canonical 'avenue' and its variants", () => {
-		const { matcher } = buildStreetMorphologyFst({ dictionariesDir: DICTIONARIES_DIR, locales: ["en"] })
+		const { matcher } = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["en"] })
 
 		const avenue = matcher.query("avenue")
 		expect(avenue.accepting.length).toBeGreaterThan(0)
@@ -54,7 +54,7 @@ describe("buildStreetMorphologyFst", () => {
 	})
 
 	it("recognises French 'rue' and German 'straße' canonicals", () => {
-		const { matcher } = buildStreetMorphologyFst({ dictionariesDir: DICTIONARIES_DIR, locales: ["fr", "de"] })
+		const { matcher } = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["fr", "de"] })
 
 		const rue = matcher.query("rue")
 		expect(rue.accepting.some((e) => e.name === "rue" && e.placetype === "street_affix")).toBe(true)
@@ -65,13 +65,13 @@ describe("buildStreetMorphologyFst", () => {
 	})
 
 	it("round-trips through serialize + deserialize", () => {
-		const { matcher, provenance } = buildStreetMorphologyFst({
+		const { matcher, provenance } = buildStreetMorphologyFST({
 			dictionariesDir: DICTIONARIES_DIR,
 			locales: ["en"],
 		})
-		const buf = serializeFst(matcher, provenance)
-		const restored = deserializeFst(buf)
-		const restoredProvenance = readFstProvenance(buf)
+		const buf = serializeFST(matcher, provenance)
+		const restored = deserializeFST(buf)
+		const restoredProvenance = readFSTProvenance(buf)
 
 		expect(restoredProvenance?.placeCount).toBe(provenance.placeCount)
 		const avenue = restored.query("avenue")

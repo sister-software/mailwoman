@@ -35,7 +35,7 @@ const CSV_OPTS: Options = {
 }
 
 /** Return the first `.csv` member name inside `zipPath` (Python `[n for n in namelist() ...][0]`). */
-export function firstCsvEntry(zipPath: string): string {
+export function firstCSVEntry(zipPath: string): string {
 	const r = spawnSync("unzip", ["-Z1", zipPath], { encoding: "utf-8", maxBuffer: 1 << 28 })
 	const names = (r.stdout || "")
 		.split("\n")

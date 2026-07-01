@@ -25,7 +25,7 @@ import { parseArgs } from "node:util"
 
 import { pyJsonDumps } from "../lib/python-json.ts"
 import { SeededRandom } from "../lib/python-random.ts"
-import { csvRecordsFromZip, firstCsvEntry } from "../lib/zip-csv.ts"
+import { csvRecordsFromZip, firstCSVEntry } from "../lib/zip-csv.ts"
 
 type Row = Record<string, string | undefined>
 
@@ -120,7 +120,7 @@ async function main(): Promise<void> {
 	if (!bbox) throw new Error(`no bbox for country ${country}`)
 	const [minlat, maxlat, minlon, maxlon] = bbox
 
-	const csvName = firstCsvEntry(zip)
+	const csvName = firstCSVEntry(zip)
 	const reservoir: Record<string, unknown>[] = []
 	let seen = 0
 

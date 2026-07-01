@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Unit tests for the demo's #741 postal-city side-index probe in the browser candidate lookup
- *   (`WofCandidateTableLookup`), against a node:sqlite-backed stub worker that mimics
+ *   (`WOFCandidateTableLookup`), against a node:sqlite-backed stub worker that mimics
  *   sql.js-httpvfs's `db.exec` contract. Pins parity with the Node lookup: an exact `(name_key,
  *   postcode)` hit resolves a postal city to its geographic locality; a bare query, and a
  *   candidate.db WITHOUT the side-index (today's production demo), are byte-stable.
@@ -69,7 +69,7 @@ afterEach(() => {
 	while (openDbs.length) openDbs.pop()!.close()
 })
 
-describe("browser WofCandidateTableLookup postal-city side-index (#741)", () => {
+describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => {
 	test("WITH the side-index, a postal-city + postcode resolves to the geographic locality", async () => {
 		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })

@@ -14,21 +14,21 @@
 
 import { identityMap } from "./offset-map.js"
 
-export interface NfcResult {
+export interface NFCResult {
 	text: string
 	/** `text[i]` came from `input[map[i]]`. */
 	map: number[]
 	changed: boolean
 }
 
-export function applyNfc(input: string): NfcResult {
+export function applyNFC(input: string): NFCResult {
 	const normalized = input.normalize("NFC")
 
 	if (normalized === input) {
 		return { text: input, map: identityMap(input.length), changed: false }
 	}
 
-	return { text: normalized, map: estimateNfcMap(input, normalized), changed: true }
+	return { text: normalized, map: estimateNFCMap(input, normalized), changed: true }
 }
 
 /**
@@ -36,7 +36,7 @@ export function applyNfc(input: string): NfcResult {
  * position. Imprecise for combining sequences but correct for length-equal NFC outputs (the common length-changing case
  * is when a sequence shortens).
  */
-function estimateNfcMap(input: string, output: string): number[] {
+function estimateNFCMap(input: string, output: string): number[] {
 	const map: number[] = []
 	let inIdx = 0
 

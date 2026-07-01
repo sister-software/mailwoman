@@ -72,7 +72,7 @@ interface PromoteStats {
 
 // ── CLI ────────────────────────────────────────────────────────────────────
 
-function parseCli() {
+function parseCLI() {
 	const { values } = parseArgs({
 		options: {
 			input: { type: "string" },
@@ -179,7 +179,7 @@ function sha256(path: string): string {
 // ── Main ───────────────────────────────────────────────────────────────────
 
 function main() {
-	const opts = parseCli()
+	const opts = parseCLI()
 
 	process.stderr.write(`reading candidates: ${opts.inputPath}\n`)
 	const candidates = readJsonl<GoldenEntry>(opts.inputPath)

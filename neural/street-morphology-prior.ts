@@ -6,7 +6,7 @@
  *   Street-morphology emission bias — Layer 1 of the four-layer street-supplement architecture (see
  *   `docs/articles/concepts/street-supplement-architecture.md`).
  *
- *   This module composes with {@linkcode buildFstEmissionPriors} (admin FST) and the QueryShape prior
+ *   This module composes with {@linkcode buildFSTEmissionPriors} (admin FST) and the QueryShape prior
  *   via {@linkcode addEmissionMatrix} — same shape, same additive semantics. Where the admin FST
  *   biases admin BIO labels (`B/I-locality`, `B/I-region`, ...), the morphology FST biases:
  *
@@ -18,11 +18,11 @@
  *       (see [[project-v061-failure-mechanism]]).
  *
  *   The morphology FST itself is built by `resolver-wof-sqlite/street-morphology-fst-builder.ts` and
- *   ships as a separate binary (`fst-street-morphology.bin`) loaded into a second `FstMatcher`
+ *   ships as a separate binary (`fst-street-morphology.bin`) loaded into a second `FSTMatcher`
  *   instance.
  */
 
-import { groupPiecesIntoWords, type FstMatcherLike, type WordGroup } from "./fst-prior.js"
+import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "./fst-prior.js"
 import type { TokenLike } from "./query-shape-prior.js"
 
 export interface StreetMorphologyPriorOpts {
@@ -53,7 +53,7 @@ export interface StreetMorphologyPriorOpts {
  * `addEmissionMatrix(emissions, fstBias) → biasedEmissions` pattern as the existing admin prior.
  */
 export function buildStreetMorphologyEmissionPriors(
-	fst: FstMatcherLike,
+	fst: FSTMatcherLike,
 	pieces: ReadonlyArray<TokenLike & { piece: string }>,
 	labels: ReadonlyArray<string>,
 	opts: StreetMorphologyPriorOpts = {}

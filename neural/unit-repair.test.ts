@@ -10,13 +10,13 @@
  *   match on "United"/"Box"/bare prose).
  */
 
-import type { BioLabel, DecoderToken } from "@mailwoman/core/decoder"
+import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
 import { repairUnitLabels } from "./unit-repair.js"
 
 /** Build a char-aligned token. */
-function tok(piece: string, start: number, end: number, label: BioLabel): DecoderToken {
+function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }
 }
 

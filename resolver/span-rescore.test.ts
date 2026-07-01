@@ -12,7 +12,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { createWofResolver } from "./resolve.js"
+import { createWOFResolver } from "./resolve.js"
 import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 
 const norm = (s: string): string =>
@@ -146,7 +146,7 @@ describe("resolveTree + spanRescore", () => {
 	const tree = (raw: string, roots: AddressNode[]): AddressTree => ({ raw, roots })
 
 	it("injects a resolved locality when the tree resolved nothing (opt-in)", async () => {
-		const resolver = createWofResolver(makeBackend())
+		const resolver = createWOFResolver(makeBackend())
 		const input = tree("86-300 Grudziądz, Daliowa 4", [
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
@@ -163,7 +163,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("injects by default when spanRescore is unset (#370 promoted to default-on 2026-06-25)", async () => {
-		const resolver = createWofResolver(makeBackend())
+		const resolver = createWOFResolver(makeBackend())
 		const input = tree("86-300 Grudziądz, Daliowa 4", [
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
@@ -174,7 +174,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable contract)", async () => {
-		const resolver = createWofResolver(makeBackend())
+		const resolver = createWOFResolver(makeBackend())
 		const roots = [node({ tag: "locality", value: "Grudzi", start: 7, end: 13 })]
 		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), {
 			defaultCountry: "PL",
@@ -185,7 +185,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("does not fire when the tree already resolved (the #685 brake)", async () => {
-		const resolver = createWofResolver(makeBackend())
+		const resolver = createWOFResolver(makeBackend())
 		// "Grudziądz" as a single locality node resolves in the walk → already has a coordinate.
 		const out = await resolver.resolveTree(
 			tree("Grudziądz", [node({ tag: "locality", value: "Grudziądz", start: 0, end: 9 })]),

@@ -23,9 +23,9 @@
  *   (V2); was population u32 (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0)
  */
 
-import type { FstNode } from "./fst-matcher.js"
-import { FstMatcher } from "./fst-matcher.js"
-import type { FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.js"
+import { FSTMatcher } from "./fst-matcher.js"
+import type { FSTProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const MAGIC = Buffer.from("FST\0", "ascii")
 const VERSION = 4
@@ -55,8 +55,8 @@ for (let i = 0; i < PLACETYPE_ORDER.length; i++) {
 	placetypeToIdx.set(PLACETYPE_ORDER[i]!, i)
 }
 
-export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): Buffer {
-	const nodes = matcher.toNodes() as FstNode[]
+export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): Buffer {
+	const nodes = matcher.toNodes() as FSTNode[]
 
 	// --- String interning ---
 	const stringMap = new Map<string, number>()
@@ -196,7 +196,7 @@ export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): B
 	return buf
 }
 
-export function deserializeFst(buf: Buffer): FstMatcher {
+export function deserializeFST(buf: Buffer): FSTMatcher {
 	// --- Header ---
 	if (buf.length < HEADER_SIZE) throw new Error("FST buffer too small for header")
 
@@ -237,7 +237,7 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
 
-	const nodes: FstNode[] = new Array(stateCount)
+	const nodes: FSTNode[] = new Array(stateCount)
 
 	for (let si = 0; si < stateCount; si++) {
 		const sp = stateTableStart + si * stateEntrySize
@@ -282,10 +282,10 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 		nodes[si] = { edges, places }
 	}
 
-	return FstMatcher.fromNodes(nodes)
+	return FSTMatcher.fromNodes(nodes)
 }
 
-export function readFstProvenance(buf: Buffer): FstProvenance | undefined {
+export function readFSTProvenance(buf: Buffer): FSTProvenance | undefined {
 	if (buf.length < HEADER_SIZE) return undefined
 
 	if (!buf.subarray(0, 4).equals(MAGIC)) return undefined
@@ -300,7 +300,7 @@ export function readFstProvenance(buf: Buffer): FstProvenance | undefined {
 		const jsonLen = buf.readUInt32LE(provenanceOffset)
 		const jsonStr = buf.toString("utf8", provenanceOffset + 4, provenanceOffset + 4 + jsonLen)
 
-		return JSON.parse(jsonStr) as FstProvenance
+		return JSON.parse(jsonStr) as FSTProvenance
 	} catch {
 		return undefined
 	}

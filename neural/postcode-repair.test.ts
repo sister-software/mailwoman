@@ -9,13 +9,13 @@
  *   (longest-match-wins, SNAP-only for numeric shapes, no-add-over-structural, local smear-clip).
  */
 
-import type { BioLabel, DecoderToken } from "@mailwoman/core/decoder"
+import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
 import { repairPostcodeLabels } from "./postcode-repair.js"
 
 /** Build a char-aligned token. */
-function tok(piece: string, start: number, end: number, label: BioLabel): DecoderToken {
+function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }
 }
 

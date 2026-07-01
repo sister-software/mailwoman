@@ -11,10 +11,10 @@
 import { describe, expect, test } from "vitest"
 
 import { buildAddressTree } from "./build-tree.js"
-import type { AddressNode, BioLabel, DecoderToken } from "./types.js"
+import type { AddressNode, BIOLabel, DecoderToken } from "./types.js"
 import { validateTree } from "./validate-tree.js"
 
-function tok(piece: string, start: number, end: number, label: BioLabel): DecoderToken {
+function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }
 }
 

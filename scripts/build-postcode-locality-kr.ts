@@ -165,7 +165,7 @@ interface Args {
 	output: string
 }
 
-function parseCliArgs(): Args {
+function parseCLIArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			geonames: { type: "string" },
@@ -183,7 +183,7 @@ function parseCliArgs(): Args {
 }
 
 async function main(): Promise<void> {
-	const args = parseCliArgs()
+	const args = parseCLIArgs()
 
 	const admin = new DatabaseSync(args.adminDb)
 

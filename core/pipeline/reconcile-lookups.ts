@@ -28,7 +28,7 @@ export interface ReconcileLookups {
 /**
  * Build the reconciler's concordance lookups from one bounded pre-fetch pass over the backend.
  *
- * @param backend The gazetteer backend (Stage 6's `WofSqlitePlaceLookup.asResolverBackend()` in production; any
+ * @param backend The gazetteer backend (Stage 6's `WOFSqlitePlaceLookup.asResolverBackend()` in production; any
  *   structural match in tests).
  * @param raw The normalized input text — span bounds index into this.
  * @param classifierTopK The aggregated per-span tag candidates (score-descending preferred; the budget follows this

@@ -33,7 +33,7 @@
  *   `relationship_type` is recorded for debuggability / deferred per-type behavior; v1 completion is
  *   uniform (see #405). It's a coarse classification, not critical.
  *
- *   Mirrors the derived-table builder pattern in `fts.ts` (`buildPlaceSearchFts`). Run incrementally
+ *   Mirrors the derived-table builder pattern in `fts.ts` (`buildPlaceSearchFTS`). Run incrementally
  *   against an existing `admin-global-priority.db` via `build-coincident-roles-cli.ts`; should also
  *   be wired as a post-step of the main `scripts/build-unified-wof.ts`.
  */

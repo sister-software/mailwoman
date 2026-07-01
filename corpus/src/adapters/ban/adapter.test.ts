@@ -16,7 +16,7 @@ import type { CanonicalRow } from "../../types.js"
 import { BAN_ADAPTER_ID, createBanAdapter } from "./adapter.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
-const fixtureCsv = resolve(here, "../../../fixtures/ban/sample.csv")
+const fixtureCSV = resolve(here, "../../../fixtures/ban/sample.csv")
 
 let scratch: string
 beforeEach(async () => {
@@ -30,7 +30,7 @@ describe("ban adapter against fixture sample.csv", () => {
 	it("emits a row per CSV record with FR country + Licence Ouverte (the elected BAN license, #26)", async () => {
 		const manifest = await runAdapter({
 			adapter: createBanAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -50,7 +50,7 @@ describe("ban adapter against fixture sample.csv", () => {
 	it("composes the canonical FR raw line", async () => {
 		await runAdapter({
 			adapter: createBanAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -79,7 +79,7 @@ describe("ban adapter against fixture sample.csv", () => {
 		await expect(
 			runAdapter({
 				adapter: createBanAdapter(),
-				adapterOptions: { inputPath: fixtureCsv, country: "US" },
+				adapterOptions: { inputPath: fixtureCSV, country: "US" },
 				outputDir: scratch,
 				corpusVersion: "0.1.0",
 			})
@@ -89,7 +89,7 @@ describe("ban adapter against fixture sample.csv", () => {
 	it("honors --limit", async () => {
 		const manifest = await runAdapter({
 			adapter: createBanAdapter(),
-			adapterOptions: { inputPath: fixtureCsv, limit: 2 },
+			adapterOptions: { inputPath: fixtureCSV, limit: 2 },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -100,7 +100,7 @@ describe("ban adapter against fixture sample.csv", () => {
 	it("source_id uses BAN's native id (deterministic)", async () => {
 		await runAdapter({
 			adapter: createBanAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -115,14 +115,14 @@ describe("ban adapter against fixture sample.csv", () => {
 	it("two runs over the same CSV produce identical sha256", async () => {
 		const a = await runAdapter({
 			adapter: createBanAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
 		await rm(join(scratch, BAN_ADAPTER_ID), { recursive: true, force: true })
 		const b = await runAdapter({
 			adapter: createBanAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})

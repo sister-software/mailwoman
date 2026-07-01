@@ -26,7 +26,7 @@
  *
  *   The output DB has the resolver-facing schema: `spr`, `names`, `place_population`, plus the
  *   `place_search` FTS5 / `place_bbox` R*Tree virtual tables rebuilt against the trimmed row set
- *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WofSqlitePlaceLookup`
+ *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSqlitePlaceLookup`
  *   opens the slim DB without any code change — it sees a smaller universe, nothing more.
  *
  *   Multi-shard inputs (e.g. admin + postcode) are processed in sequence; selected rows accumulate
@@ -43,7 +43,7 @@ import { DatabaseSync } from "node:sqlite"
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 import { Kysely, sql } from "kysely"
 
-import { buildPlaceSearchFts, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.js"
+import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.js"
 import type { NamesTable, SprTable } from "./schema.js"
 
 export interface BuildSlimOptions {
@@ -125,7 +125,7 @@ interface BuildSchema {
 	"src.place_population": PlacePopulationTable
 }
 
-export async function buildSlimWofDatabase(opts: BuildSlimOptions): Promise<BuildSlimResult> {
+export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<BuildSlimResult> {
 	const countries = (opts.countries ?? ["US"]).map((c) => c.toUpperCase())
 	const topLocalities = opts.topLocalitiesPerCountry ?? 1000
 	const progress = opts.onProgress ?? (() => {})
@@ -157,14 +157,14 @@ export async function buildSlimWofDatabase(opts: BuildSlimOptions): Promise<Buil
 			progress("schema", "copying spr / names / place_population schemas from first input")
 
 			for (const table of COPIED_TABLES) {
-				const createSql = firstSource
+				const createSQL = firstSource
 					.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`)
 					.get(table) as { sql?: string } | undefined
 
-				if (createSql?.sql) {
+				if (createSQL?.sql) {
 					// Raw DDL by design (introspect-and-replay): we exec the SOURCE DB's own CREATE TABLE
 					// string read from sqlite_master, so a static Kysely builder can't express it. See AGENTS.md.
-					out.exec(createSql.sql)
+					out.exec(createSQL.sql)
 				} else if (table === PLACE_POPULATION_TABLE) {
 					// Older source builds may predate the aux table — create it empty so the per-source
 					// copy + ranking have somewhere to land. Sparse-by-design; missing rows are fine.
@@ -192,7 +192,7 @@ export async function buildSlimWofDatabase(opts: BuildSlimOptions): Promise<Buil
 		// population aux table is NOT rebuilt here: it was copied verbatim above, and fts.ts only
 		// (re)builds it when a `geojson` table is present, which the slim DB intentionally has not.
 		progress("fts", "building place_search / place_bbox on slim DB")
-		buildPlaceSearchFts(out, {
+		buildPlaceSearchFTS(out, {
 			drop: true, // schema we copied had no FTS tables, but be explicit
 			onProgress: (phase, name) => progress("fts", `${phase} ${name}`),
 		})

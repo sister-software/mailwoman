@@ -10,7 +10,7 @@
  *   - Examples live in the package README.
  *
  *   Wires the real engine: `/api` over `geocodeAddress` (parse → resolve), `/reverse` over
- *   `WofReverseGeocoder`, projecting results into Photon's GeoJSON FeatureCollection. The FST
+ *   `WOFReverseGeocoder`, projecting results into Photon's GeoJSON FeatureCollection. The FST
  *   autocomplete tier is the eventual front for `/api`; geocode resolution is the MVP path.
  */
 
@@ -19,7 +19,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import {
 	createResolverBackend,
@@ -75,9 +75,9 @@ async function serve(): Promise<void> {
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
-	const resolver = createWofResolver(backend as unknown as ResolverBackend)
+	const resolver = createWOFResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
-	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
+	const reverseGeo = adminDbPath ? new resolverMod.WOFReverseGeocoder({ adminDbPath }) : undefined
 
 	const engine: PhotonEngine = {
 		async search(params) {

@@ -148,7 +148,7 @@ function weightedPick<T extends { w: number }>(items: readonly T[], random: () =
 }
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields) — same as the affix builder. */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -259,7 +259,7 @@ function buildZipCityMap(): Map<string, string> {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return new Map()
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const iCity = header.indexOf("city")
 	const iPost = header.indexOf("postcode")
 	const counts = new Map<string, Map<string, number>>()
@@ -267,7 +267,7 @@ function buildZipCityMap(): Map<string, string> {
 	// zip → Map(city → n)
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const city = (cells[iCity] ?? "").trim()
 		const zip = (cells[iPost] ?? "").trim()
 

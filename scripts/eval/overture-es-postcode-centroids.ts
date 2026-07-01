@@ -5,7 +5,7 @@
  *
  *   #474: build ES postcode centroids from the local Overture addresses parquet (ES postcode fill =
  *   100%, 15.7M points) and emit a `spr`-table SQLite DB the existing postcode-anchor harness
- *   consumes (`WofPostcodeLookup` / `postcode-anchor-accuracy.ts`). Per-postcode centroid = mean
+ *   consumes (`WOFPostcodeLookup` / `postcode-anchor-accuracy.ts`). Per-postcode centroid = mean
  *   after dropping points >3σ from the per-postcode mean (agency data carries geocoding errors).
  *   Lets us measure Overture-derived centroids vs the shipped GeoNames-backfilled ones
  *   (postalcode-intl.db) on the ES eval rows — does Overture's 15.7M-point density beat GeoNames on
@@ -75,7 +75,7 @@ const res = await conn.runAndReadAll(sql)
 const rows = res.getRowObjects() as Array<{ postcode: string; lat: number; lon: number; n: bigint }>
 console.error(`extracted ${rows.length} ${CC} postcode centroids from Overture`)
 
-// Emit the spr table the WofPostcodeLookup query consumes:
+// Emit the spr table the WOFPostcodeLookup query consumes:
 //   SELECT country, latitude, longitude FROM spr WHERE name=? AND placetype='postalcode' AND is_current!=0
 const out = new DatabaseSync(OUT_DB)
 // Throwaway build artifact — no durability needed; OFF journal + a single transaction around the

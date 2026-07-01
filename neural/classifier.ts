@@ -29,7 +29,7 @@ import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mail
 import { detectAddressSystem } from "./address-system.js"
 import type { AnchorLookup } from "./anchor-inference.js"
 import { normalizeInputCase } from "./case-normalize.js"
-import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
+import { buildFSTEmissionPriors, type FSTMatcherLike } from "./fst-prior.js"
 import type { GazetteerLexicon } from "./gazetteer-inference.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
@@ -42,13 +42,13 @@ import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { repairUnitLabels } from "./unit-repair.js"
-import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
+import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
 import { enforceWordConsistency } from "./word-consistency.js"
 
 /**
- * Structural type the classifier needs from a runner. Lets callers swap the Node-side `OnnxRunner` for a browser-side
- * runner (e.g. `@mailwoman/neural-web`'s `WebOnnxRunner`) without inheritance — the classifier only ever calls
+ * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
+ * runner (e.g. `@mailwoman/neural-web`'s `WebONNXRunner`) without inheritance — the classifier only ever calls
  * `infer(ids)`.
  */
 export interface NeuralRunner {
@@ -168,15 +168,15 @@ export class NeuralAddressClassifier {
 	constructor(private readonly cfg: NeuralAddressClassifierConfig) {
 		this.labels = cfg.labels ?? STAGE2_BIO_LABELS
 		this.decodeMode = cfg.decode ?? "viterbi"
-		const structural = buildBioTransitionMask(this.labels)
+		const structural = buildBIOTransitionMask(this.labels)
 
 		if (cfg.transitions) {
 			this.transitions = addMatrices(structural, cfg.transitions)
 		} else {
 			this.transitions = structural
 		}
-		this.startTransitions = cfg.startTransitions ?? buildBioStartMask(this.labels)
-		this.endTransitions = cfg.endTransitions ?? buildBioEndMask(this.labels)
+		this.startTransitions = cfg.startTransitions ?? buildBIOStartMask(this.labels)
+		this.endTransitions = cfg.endTransitions ?? buildBIOEndMask(this.labels)
 	}
 
 	/**
@@ -196,7 +196,7 @@ export class NeuralAddressClassifier {
 	 * Resolution order: explicit paths in `opts` → `@mailwoman/neural-weights-<locale>` package → throws a single
 	 * actionable error.
 	 *
-	 * **Node-only.** The dynamic imports keep `OnnxRunner` (onnxruntime-node) + `resolveWeights` (uses Node fs) out of
+	 * **Node-only.** The dynamic imports keep `ONNXRunner` (onnxruntime-node) + `resolveWeights` (uses Node fs) out of
 	 * the static dependency graph, so this file can be bundled for the browser by `@mailwoman/neural-web`. Calling this
 	 * method in a browser will throw at runtime — use `loadNeuralClassifierFromUrls` from `@mailwoman/neural-web`
 	 * instead.
@@ -210,7 +210,7 @@ export class NeuralAddressClassifier {
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
 		const [
-			{ OnnxRunner },
+			{ ONNXRunner },
 			{ resolveWeights, readLabelsFromModelCard, readCrfTransitions, readRequiredChannels },
 			{ parseAnchorLookup },
 			{ parseGazetteerLexicon },
@@ -229,7 +229,7 @@ export class NeuralAddressClassifier {
 		const crf = readCrfTransitions(resolved.crfTransitionsPath)
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
-			OnnxRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
+			ONNXRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
 		])
 
 		// --- Soft-feed (#718 D1): feed the channels the SHIPPED model was trained against ----------
@@ -394,7 +394,7 @@ export class NeuralAddressClassifier {
 		if (opts?.fst) {
 			emissions = addEmissionMatrix(
 				emissions,
-				buildFstEmissionPriors(opts.fst, pieces, this.labels, {
+				buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
 					biasScale: opts.fstBiasScale ?? 1.0,
 				})
 			)
@@ -584,7 +584,7 @@ export interface ParseOpts {
 	/**
 	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission biases.
 	 */
-	fst?: FstMatcherLike
+	fst?: FSTMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number
 	/**
@@ -593,7 +593,7 @@ export interface ParseOpts {
 	 * from `dependent_locality` on the adjacent name tokens. Closes the v0.6.1 dependent_locality vacuum; see
 	 * `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
 	 */
-	fstStreetMorphology?: FstMatcherLike
+	fstStreetMorphology?: FSTMatcherLike
 	/** Override bias magnitudes for the morphology prior. */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
 	/**

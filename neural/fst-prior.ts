@@ -15,7 +15,7 @@
  *   non-alnum), and walked through the FST as contiguous subpaths.
  *
  *   Uses structural typing for the FST input so this module has zero dependencies on
- *   `@mailwoman/resolver-wof-sqlite` — consumers pass an FstMatcher instance, but this file only
+ *   `@mailwoman/resolver-wof-sqlite` — consumers pass an FSTMatcher instance, but this file only
  *   consumes the shape.
  */
 
@@ -27,22 +27,22 @@ const SPACE_SENTINEL = "▁"
 // Structural types — compatible with @mailwoman/resolver-wof-sqlite shapes
 // ---------------------------------------------------------------------------
 
-export interface FstMatchLike {
+export interface FSTMatchLike {
 	stateId: number
 	accepted: boolean
 	depth: number
 }
 
-export interface FstPlaceEntryLike {
+export interface FSTPlaceEntryLike {
 	wofID: number
 	placetype: string
 	importance: number
 }
 
-export interface FstMatcherLike {
-	walk(tokens: string[]): FstMatchLike | null
-	walkFrom(prev: FstMatchLike, token: string): FstMatchLike | null
-	accepting(stateId: number): FstPlaceEntryLike[]
+export interface FSTMatcherLike {
+	walk(tokens: string[]): FSTMatchLike | null
+	walkFrom(prev: FSTMatchLike, token: string): FSTMatchLike | null
+	accepting(stateId: number): FSTPlaceEntryLike[]
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +67,7 @@ export interface WordGroup {
 
 const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house_number", "I-house_number", "B-venue"]
 
-export interface FstPriorOpts {
+export interface FSTPriorOpts {
 	biasScale?: number
 	/**
 	 * Maximum bias magnitude (logits). Prevents large-population places from overriding the model. Default 3.0.
@@ -82,11 +82,11 @@ export interface FstPriorOpts {
  * Walks all contiguous subpaths of the reconstructed whitespace-token sequence through the FST. For each accepting
  * state, biases the corresponding BIO labels on the matched pieces.
  */
-export function buildFstEmissionPriors(
-	fst: FstMatcherLike,
+export function buildFSTEmissionPriors(
+	fst: FSTMatcherLike,
 	pieces: ReadonlyArray<TokenLike & { piece: string }>,
 	labels: ReadonlyArray<string>,
-	opts: FstPriorOpts = {}
+	opts: FSTPriorOpts = {}
 ): number[][] {
 	const T = pieces.length
 	const L = labels.length
@@ -164,7 +164,7 @@ export function buildFstEmissionPriors(
  * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is reconstructed by
  * concatenating pieces (minus leading ▁), then normalized through the same pipeline the FST builder uses.
  *
- * Exported (alongside {@linkcode normalizeFstToken} and the {@linkcode WordGroup} type) so the street-morphology prior
+ * Exported (alongside {@linkcode normalizeFSTToken} and the {@linkcode WordGroup} type) so the street-morphology prior
  * can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper signature; not part of
  * the public neural API.
  */
@@ -198,14 +198,14 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 
 	for (const g of groups) {
 		if (g.fstToken !== "") {
-			g.fstToken = normalizeFstToken(g.fstToken)
+			g.fstToken = normalizeFSTToken(g.fstToken)
 		}
 	}
 
 	return groups
 }
 
-function normalizeFstToken(s: string): string {
+function normalizeFSTToken(s: string): string {
 	const cleaned = s
 		.normalize("NFKC")
 		.toLowerCase()
@@ -217,7 +217,7 @@ function normalizeFstToken(s: string): string {
 function applyBias(
 	matrix: number[][],
 	labelToCol: Map<string, number>,
-	entries: ReadonlyArray<FstPlaceEntryLike>,
+	entries: ReadonlyArray<FSTPlaceEntryLike>,
 	groups: WordGroup[],
 	biasScale: number,
 	maxBias: number,

@@ -165,7 +165,7 @@ for (const m of MODELS) {
 
 // The headline callout — the full climb for the shipped model, ending at the geocode-first key.
 const gCoord = yFor(F1.GBT![3])
-const gNpi = yFor(F1.GBT![0])
+const gNPI = yFor(F1.GBT![0])
 push(
 	`<g font-size="10.5">` +
 		`<text x="${lx}" y="${ly + 18}" font-weight="700" fill="#3578e5">+14.5pp NPI → coord</text>` +
@@ -177,7 +177,7 @@ push(
 )
 // Bracket the GBT climb on the right edge of the plot (NPI → coord, the full honest range).
 push(
-	`<path d="M ${(plotR - 4).toFixed(1)} ${gNpi.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gNpi.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gCoord.toFixed(1)} L ${(plotR - 4).toFixed(1)} ${gCoord.toFixed(1)}" fill="none" stroke="#3578e5" stroke-width="1" opacity="0.5"/>`
+	`<path d="M ${(plotR - 4).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gCoord.toFixed(1)} L ${(plotR - 4).toFixed(1)} ${gCoord.toFixed(1)}" fill="none" stroke="#3578e5" stroke-width="1" opacity="0.5"/>`
 )
 
 // Footer caveat — the gold-set anchor.

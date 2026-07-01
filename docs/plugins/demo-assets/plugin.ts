@@ -21,7 +21,7 @@ import { resolve } from "node:path"
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import webpack from "webpack"
 
-import { buildWorkspaceAliases, stageSqlJsHttpvfs } from "./resolve.js"
+import { buildWorkspaceAliases, stageSQLJsHttpvfs } from "./resolve.js"
 
 export default function demoAssetsPlugin(context: LoadContext): Plugin {
 	const docsDir = context.siteDir
@@ -40,7 +40,7 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 			mkdirSync(staticDir, { recursive: true })
 			const sqljsDir = resolve(staticDir, "sqljs")
 			mkdirSync(sqljsDir, { recursive: true })
-			stageSqlJsHttpvfs(sqljsDir)
+			stageSQLJsHttpvfs(sqljsDir)
 
 			return {}
 		},

@@ -6,14 +6,14 @@
 
 import { describe, expect, test } from "vitest"
 
-import type { BioLabel } from "../types/component.js"
+import type { BIOLabel } from "../types/component.js"
 import { buildAddressTree } from "./build-tree.js"
 import { decodeAsJSON } from "./serialize-json.js"
 import { decodeAsTuples } from "./serialize-tuples.js"
 import { decodeAsXML } from "./serialize-xml.js"
 import type { DecoderToken } from "./types.js"
 
-function tok(piece: string, start: number, end: number, label: BioLabel, confidence = 1): DecoderToken {
+function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
 	return { piece, start, end, label, confidence }
 }
 

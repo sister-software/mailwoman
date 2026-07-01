@@ -14,7 +14,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { createWofResolver } from "./resolve.js"
+import { createWOFResolver } from "./resolve.js"
 
 const PC = {
 	id: 900,
@@ -77,7 +77,7 @@ const postcodeNode = () => node({ tag: "postcode", value: "75001", start: 0, end
 describe("resolveTree + postcodeConsistency (Lever A)", () => {
 	it("re-picks the same-named locality nearest the postcode (the wrong instance was the top match)", async () => {
 		// Backend returns the FAR Saint-Pierre first → top is wrong; the NEAR one is an alternative.
-		const resolver = createWofResolver(makeBackend([PC, SP_FAR, SP_NEAR]))
+		const resolver = createWOFResolver(makeBackend([PC, SP_FAR, SP_NEAR]))
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
 			defaultCountry: "FR",
 			postcodeConsistency: true,
@@ -90,7 +90,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 
 	it("falls the coordinate back to the postcode when no same-named instance reconciles", async () => {
 		// Only the FAR Saint-Pierre exists — no alternative within the gate → demote to the postcode point.
-		const resolver = createWofResolver(makeBackend([PC, SP_FAR]))
+		const resolver = createWOFResolver(makeBackend([PC, SP_FAR]))
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
 			defaultCountry: "FR",
 			postcodeConsistency: true,
@@ -104,7 +104,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 
 	it("leaves a locality already consistent with the postcode untouched", async () => {
 		// NEAR is the only/top candidate and it's within the gate → no change.
-		const resolver = createWofResolver(makeBackend([PC, SP_NEAR]))
+		const resolver = createWOFResolver(makeBackend([PC, SP_NEAR]))
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
 			defaultCountry: "FR",
 			postcodeConsistency: true,
@@ -116,7 +116,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 	})
 
 	it("is byte-stable when postcodeConsistency is unset (keeps the wrong top match)", async () => {
-		const resolver = createWofResolver(makeBackend([PC, SP_FAR, SP_NEAR]))
+		const resolver = createWOFResolver(makeBackend([PC, SP_FAR, SP_NEAR]))
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), { defaultCountry: "FR" })
 		const loc = out.roots.find((n) => n.tag === "locality")!
 		expect(loc.placeId).toBe("wof:1") // the far one — untouched without the lever
@@ -125,7 +125,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 
 	it("no-ops when no postcode resolved (no anchor to disambiguate against)", async () => {
 		// No postcode in the tree → Lever A can't fire; the (wrong) top match stands.
-		const resolver = createWofResolver(makeBackend([SP_FAR, SP_NEAR]))
+		const resolver = createWOFResolver(makeBackend([SP_FAR, SP_NEAR]))
 		const out = await resolver.resolveTree(tree([localityNode()]), { defaultCountry: "FR", postcodeConsistency: true })
 		const loc = out.roots.find((n) => n.tag === "locality")!
 		expect(loc.placeId).toBe("wof:1")

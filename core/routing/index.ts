@@ -79,7 +79,7 @@ const URLPatternComponents = [
 /**
  * A URL pattern with path parameters.
  */
-// @ts-ignore: Property 'UrlPattern' does not exist
+// @ts-ignore: Property 'URLPattern' does not exist
 export class URLRoutePattern<I extends URLPatternPathnameInit | string = string> extends URLPattern {
 	public override toString(): string {
 		return JSON.stringify(this.toJSON(), null, "\t")

@@ -95,7 +95,7 @@ function readInput(args: Args): string {
  * train_loss, lr, val_loss, val_macro_f1, f1.<tag>... Train-only rows have val_loss/val_macro_f1 empty; eval rows fill
  * them in. One row per record (no need to pair train + eval lines like in the modal-log case).
  */
-function parseCsv(text: string, runName: string): TrainPoint[] {
+function parseCSV(text: string, runName: string): TrainPoint[] {
 	const lines = text.split("\n").filter((l) => l.trim())
 
 	if (lines.length === 0) return []
@@ -195,13 +195,13 @@ function main(): void {
 	const args = parseArgs()
 	const text = readInput(args)
 	// Auto-detect format: CSV files start with a header that includes "step,wall_seconds".
-	const isCsv = text.split("\n", 1)[0]!.startsWith("step,wall_seconds")
-	const points = isCsv ? parseCsv(text, args.runName) : parse(text, args.runName)
+	const isCSV = text.split("\n", 1)[0]!.startsWith("step,wall_seconds")
+	const points = isCSV ? parseCSV(text, args.runName) : parse(text, args.runName)
 	const json = JSON.stringify(points, null, 2)
 
 	if (args.outPath) writeFileSync(args.outPath, json)
 	else process.stdout.write(json + "\n")
-	console.error(`Parsed ${points.length} records for run '${args.runName}' (${isCsv ? "csv" : "modal-log"} format).`)
+	console.error(`Parsed ${points.length} records for run '${args.runName}' (${isCSV ? "csv" : "modal-log"} format).`)
 }
 
 main()

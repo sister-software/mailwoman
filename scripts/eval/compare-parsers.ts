@@ -22,10 +22,10 @@ const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 const card = JSON.parse(readFileSync(CARD, "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 const v0 = createAddressParser()
 

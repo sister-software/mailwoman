@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Node-side {@link PlaceLookup} over the byte-range CANDIDATE table (`build-candidate.ts`) — the
- *   SAME gazetteer the browser demo resolves against ({@link WofCandidateTableLookup} in
+ *   SAME gazetteer the browser demo resolves against ({@link WOFCandidateTableLookup} in
  *   `docs/src/shared/httpvfs-resolver.ts`), but reading a LOCAL `candidate.db` via `node:sqlite`
  *   instead of sql.js-httpvfs. This is what makes the server/CLI resolver match the demo: one
  *   lookup surface, one artifact, one ranking.
@@ -14,7 +14,7 @@
  *   {@link normalizeLocalityForKey} (build- and query-consistent), each row is denormalized (display
  *   `name`, centroid, bbox), and population rank is precomputed into `neg_rank` — so the result is
  *   POPULATION-FIRST and COUNTRY-AGNOSTIC (when no `country` filter is given), exactly like the
- *   demo. That's the deliberate divergence from {@link WofSqlitePlaceLookup}'s FTS/bm25 ranking: a
+ *   demo. That's the deliberate divergence from {@link WOFSqlitePlaceLookup}'s FTS/bm25 ranking: a
  *   bare "Moscow" resolves to the 10.4 M-pop Russian city, not whichever same-name US township bm25
  *   floats to the top.
  *
@@ -33,9 +33,9 @@ import { trigramJaccard } from "./lookup.js"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.js"
 import { hasTable } from "./sqlite-utils.js"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.js"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.js"
 
-export interface WofCandidateTableLookupOpts {
+export interface WOFCandidateTableLookupOpts {
 	/** Path to a `candidate.db` built by `build-candidate.ts`. Opened read-only. */
 	databasePath?: string
 	/** Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`. */
@@ -86,10 +86,10 @@ function ftsTrigramQuery(s: string): string {
 }
 
 /**
- * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WofSqlitePlaceLookup} in `createWofResolver(backend)`
+ * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WOFSqlitePlaceLookup} in `createWOFResolver(backend)`
  * — same `findPlace` contract, population-first ranking.
  */
-export class WofCandidateTableLookup implements PlaceLookup {
+export class WOFCandidateTableLookup implements PlaceLookup {
 	#db: DatabaseSync
 	#ownsDb: boolean
 	readonly #countryToId = new Map<string, number>()
@@ -115,7 +115,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
 
-	constructor(opts: WofCandidateTableLookupOpts) {
+	constructor(opts: WOFCandidateTableLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
 			this.#ownsDb = false
@@ -123,7 +123,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			this.#db = new DatabaseSync(opts.databasePath, { readOnly: true })
 			this.#ownsDb = true
 		} else {
-			throw new Error("WofCandidateTableLookup needs `databasePath` or `database`")
+			throw new Error("WOFCandidateTableLookup needs `databasePath` or `database`")
 		}
 
 		// The code tables are tiny (country/placetype dictionaries) — load them once at construction so
@@ -191,7 +191,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 					{
 						id: Number(hit.spr_id),
 						name: String(hit.name ?? ""),
-						placetype: "locality" as WofPlacetype,
+						placetype: "locality" as WOFPlacetype,
 						country: query.country?.toUpperCase() ?? "",
 						lat: Number(hit.latitude),
 						lon: Number(hit.longitude),
@@ -294,7 +294,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			return {
 				id: Number(row.spr_id),
 				name: String(row.name ?? ""),
-				placetype: (this.#idToPlacetype.get(Number(row.placetype_id)) ?? "") as WofPlacetype,
+				placetype: (this.#idToPlacetype.get(Number(row.placetype_id)) ?? "") as WOFPlacetype,
 				// Surfaced so the cascade can country-gate a postcode by the resolved locality (an ambiguous
 				// international postcode like 10115 = Berlin DE AND New York US must not out-resolve the city).
 				country: this.#idToCountry.get(Number(row.country_id)) ?? "",

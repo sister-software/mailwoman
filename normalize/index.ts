@@ -16,7 +16,7 @@
 export { expandAbbreviations } from "./abbreviations.js"
 export { applyCjkNormalization, type CjkResult } from "./cjk.js"
 export { normalize } from "./compute.js"
-export { applyNfc } from "./nfc.js"
+export { applyNFC } from "./nfc.js"
 export { composeMaps, identityMap } from "./offset-map.js"
 export { applyPunctuation } from "./punctuation.js"
 export type { NormalizationTransform, NormalizeOpts, NormalizedInput, SpanRange } from "./types.js"

@@ -108,7 +108,7 @@ export interface NominatimStatus {
 
 /**
  * The geocoding engine the router delegates to. Each method is optional; a route whose method is not provided answers
- * `501 Not Implemented`. The real implementation (Mailwoman parse → resolve, plus `WofReverseGeocoder`) is wired by the
+ * `501 Not Implemented`. The real implementation (Mailwoman parse → resolve, plus `WOFReverseGeocoder`) is wired by the
  * CLI and fleshed out across #802–#805.
  */
 export interface NominatimEngine {

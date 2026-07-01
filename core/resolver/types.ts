@@ -391,7 +391,7 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	dependent_locality: "locality",
 	subregion: "county",
 	// `postcode` (mailwoman tag) maps to WOF's `postalcode` placetype. Resolves only when the
-	// backend has the postcode shard available — `WofSqlitePlaceLookup` auto-routes `postalcode`
+	// backend has the postcode shard available — `WOFSqlitePlaceLookup` auto-routes `postalcode`
 	// queries to a `postalcode_us` (or similarly-named) shard, falling back to main if absent.
 	postcode: "postalcode",
 }
@@ -479,7 +479,7 @@ export function isPlacetypeFallback(requestedPlacetype: string, candidatePlacety
 }
 
 /**
- * The interface implemented by `createWofResolver` and any future resolver factories.
+ * The interface implemented by `createWOFResolver` and any future resolver factories.
  *
  * `resolveTree` returns a NEW `AddressTree` rather than mutating — keeps the input safe to inspect after the call. The
  * new tree's `roots` are fresh `AddressNode` objects; nodes the resolver didn't touch are structurally cloned with

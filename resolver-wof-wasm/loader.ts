@@ -12,7 +12,7 @@
  *   "hundreds of byte-range requests" cost a HTTP-VFS approach would incur.
  *
  *   When we eventually want incremental loading (Phase B.x), this is the seam to swap — keep
- *   `WofWasmPlaceLookup` unchanged and replace the loader with a `sql.js-httpvfs`-style VFS.
+ *   `WOFWasmPlaceLookup` unchanged and replace the loader with a `sql.js-httpvfs`-style VFS.
  */
 
 import sqlite3InitModule, { type Database, type Sqlite3Static } from "@sqlite.org/sqlite-wasm"
@@ -35,7 +35,7 @@ export interface LoadSlimOpts {
 	 *
 	 * Leave unset to use the runtime's defaults (works in Node + worker contexts where the path is resolvable directly).
 	 */
-	wasmUrl?: string
+	wasmURL?: string
 	/**
 	 * Optional fetch implementation override. Defaults to `globalThis.fetch`. Useful in test harnesses that want to
 	 * short-circuit network calls.
@@ -49,7 +49,7 @@ export interface LoadSlimOpts {
  *
  * Caller is responsible for `db.close()` when done.
  */
-export async function loadSlimWofDatabase(opts: LoadSlimOpts): Promise<{ db: Database; sqlite3: Sqlite3Static }> {
+export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Database; sqlite3: Sqlite3Static }> {
 	const bytes = typeof opts.source === "string" ? await fetchBytes(opts.source, opts.fetchImpl) : opts.source
 
 	// sqlite3InitModule's TS signature lies about its options bag — the runtime DOES accept the
@@ -58,7 +58,7 @@ export async function loadSlimWofDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 	const sqlite3 = await (sqlite3InitModule as unknown as (opts: Record<string, unknown>) => Promise<Sqlite3Static>)({
 		print: () => {}, // suppress stdout from the WASM runtime
 		printErr: (msg: string) => console.error("[sqlite-wasm]", msg),
-		...(opts.wasmUrl ? { locateFile: (name: string) => (name.endsWith(".wasm") ? opts.wasmUrl! : name) } : {}),
+		...(opts.wasmURL ? { locateFile: (name: string) => (name.endsWith(".wasm") ? opts.wasmURL! : name) } : {}),
 	})
 
 	// OO1 transient-DB constructor: opens an in-memory DB then we restore the file bytes into it

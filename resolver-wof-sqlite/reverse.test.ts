@@ -21,7 +21,7 @@ import { DatabaseSync } from "node:sqlite"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { geometryContains, pointInPolygonRings, pointInRing, type GeojsonPosition } from "./geo.js"
-import { WofReverseGeocoder } from "./reverse.js"
+import { WOFReverseGeocoder } from "./reverse.js"
 
 const square = (minX: number, minY: number, maxX: number, maxY: number): GeojsonPosition[] => [
 	[minX, minY],
@@ -120,10 +120,10 @@ function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
 	return { admin, polygons }
 }
 
-describe("WofReverseGeocoder over the fixture gazetteer", () => {
+describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 	test("PIP confirms the deepest polygon, then descends to the nearest point-geometry child", async () => {
 		const { admin, polygons } = buildFixture()
-		const rg = new WofReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
+		const rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		const result = await rg.reverseGeocode(44.0, -72.0)
 
 		// Deepest = the locality village (descent: county A → town → village), approximate.
@@ -144,7 +144,7 @@ describe("WofReverseGeocoder over the fixture gazetteer", () => {
 
 	test("polygon containment is reported when the deepest place IS polygon-confirmed", async () => {
 		const { admin, polygons } = buildFixture()
-		const rg = new WofReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
+		const rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		// Restrict to the polygon-bearing tiers — the deepest is then county A, PIP-confirmed.
 		const result = await rg.reverseGeocode(44.0, -72.0, { placetypes: ["country", "region", "county"] })
 		expect(result.containment).toBe("polygon")
@@ -154,7 +154,7 @@ describe("WofReverseGeocoder over the fixture gazetteer", () => {
 
 	test("no polygon DB → centroid-only mode, every result approximate", async () => {
 		const { admin } = buildFixture()
-		const rg = new WofReverseGeocoder({ adminDatabase: admin })
+		const rg = new WOFReverseGeocoder({ adminDatabase: admin })
 		const result = await rg.reverseGeocode(44.0, -72.0)
 		expect(result.containment).toBe("approximate")
 		// Bbox false positives can't be vetoed without polygons; the smallest containing bbox
@@ -165,7 +165,7 @@ describe("WofReverseGeocoder over the fixture gazetteer", () => {
 
 	test("a point outside every bbox returns an empty hierarchy", async () => {
 		const { admin, polygons } = buildFixture()
-		const rg = new WofReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
+		const rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		const result = await rg.reverseGeocode(-44.0, 72.0)
 		expect(result.hierarchy).toEqual([])
 		expect(result.containment).toBe("approximate")
@@ -174,7 +174,7 @@ describe("WofReverseGeocoder over the fixture gazetteer", () => {
 
 	test("approximate steps respect maxApproximateKm", async () => {
 		const { admin, polygons } = buildFixture()
-		const rg = new WofReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
+		const rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		// Tiny cap: the town centroid (~2 km away) is out of reach → walk stops at county A.
 		const result = await rg.reverseGeocode(44.0, -72.0, { maxApproximateKm: 0.5 })
 		expect(result.hierarchy[0]).toMatchObject({ id: 3, placetype: "county" })
@@ -184,7 +184,7 @@ describe("WofReverseGeocoder over the fixture gazetteer", () => {
 
 	test("rejects out-of-range coordinates", async () => {
 		const { admin } = buildFixture()
-		const rg = new WofReverseGeocoder({ adminDatabase: admin })
+		const rg = new WOFReverseGeocoder({ adminDatabase: admin })
 		await expect(rg.reverseGeocode(91, 0)).rejects.toThrow(RangeError)
 		await expect(rg.reverseGeocode(0, 181)).rejects.toThrow(RangeError)
 		rg.close()
@@ -201,9 +201,9 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	() => {
 		// Construct in beforeAll, not the describe body — the body runs at collection time even when
 		// the suite is skipped, and would try to open the (absent) DBs.
-		let rg: WofReverseGeocoder
+		let rg: WOFReverseGeocoder
 		beforeAll(() => {
-			rg = new WofReverseGeocoder({ adminDbPath: ADMIN_DB!, polygonDbPath: POLYGONS_DB! })
+			rg = new WOFReverseGeocoder({ adminDbPath: ADMIN_DB!, polygonDbPath: POLYGONS_DB! })
 		})
 		afterAll(() => rg?.close())
 

@@ -8,7 +8,7 @@
  *   examples live in the package README.
  *
  *   Wires the real engine: `/search` over `geocodeAddress` (parse → resolve), `/reverse` over
- *   `WofReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the same
+ *   `WOFReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the same
  *   resolver-backend selector GeocodeRouter uses. Results carry the OpenCage-style `annotations`
  *   block — coordinate formats, flag, calling code, currency, and (when their DBs are present)
  *   timezone, UN/LOCODE, NUTS — composed from the `@mailwoman/*` annotators.
@@ -22,7 +22,7 @@ import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
@@ -137,7 +137,7 @@ async function serve(): Promise<void> {
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const parser = createAddressParser()
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
-	const resolver = createWofResolver(backend as unknown as ResolverBackend)
+	const resolver = createWOFResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
 	// (Berlin→DE, Boston→US) and `defaultCountry` is a HARD override that beats it (geocode-core.ts:102),
@@ -147,7 +147,7 @@ async function serve(): Promise<void> {
 	// happens for US results, where "US" is the right guess. Non-US results carry the country tag, so
 	// the fallback never mislabels them.
 	const annotationCountryFallback = candidateDb ? undefined : "US"
-	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
+	const reverseGeo = adminDbPath ? new resolverMod.WOFReverseGeocoder({ adminDbPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDbPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
 

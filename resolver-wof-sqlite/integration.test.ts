@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Integration tests for `WofSqlitePlaceLookup` against a real Who's On First SQLite distribution.
+ *   Integration tests for `WOFSqlitePlaceLookup` against a real Who's On First SQLite distribution.
  *
  *   These are gated on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
  *   message) if the path doesn't exist. CI runs against the fixture-only suites; operators with the
@@ -23,20 +23,20 @@ import { existsSync } from "node:fs"
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 const DEFAULT_WOF_PATH = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
-const hasWofDb = existsSync(wofPath)
+const hasWOFDb = existsSync(wofPath)
 
 // vitest's describe.skipIf prints a helpful message at suite runtime.
-const describeIfWof = describe.skipIf(!hasWofDb)
+const describeIfWOF = describe.skipIf(!hasWOFDb)
 
-describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
-	let lookup: WofSqlitePlaceLookup
+describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
+	let lookup: WOFSqlitePlaceLookup
 
 	beforeAll(() => {
-		lookup = new WofSqlitePlaceLookup({ databasePath: wofPath })
+		lookup = new WOFSqlitePlaceLookup({ databasePath: wofPath })
 	})
 
 	afterAll(() => {
@@ -148,8 +148,8 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 	})
 })
 
-if (!hasWofDb) {
-	describe.skip("WofSqlitePlaceLookup integration", () => {
+if (!hasWOFDb) {
+	describe.skip("WOFSqlitePlaceLookup integration", () => {
 		test(`skipped (WOF DB not present at ${wofPath} — set MAILWOMAN_WOF_DB or download via the README)`, () => {})
 	})
 }

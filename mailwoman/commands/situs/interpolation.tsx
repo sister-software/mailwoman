@@ -301,7 +301,7 @@ function extractEdgesZip(zipPath: string, destDir: string): void {
 // Parallel download pool
 // ---------------------------------------------------------------------------
 
-type DownloadTask = { geoid: string; zipUrl: string; zipPath: string }
+type DownloadTask = { geoid: string; zipURL: string; zipPath: string }
 
 /** Download and unpack a list of county ZIPs with capped parallelism. */
 async function downloadParallel(
@@ -338,7 +338,7 @@ async function downloadParallel(
 			}
 
 			try {
-				await downloadFile(task.zipUrl, task.zipPath)
+				await downloadFile(task.zipURL, task.zipPath)
 				extractEdgesZip(task.zipPath, edgesDir)
 				downloaded++
 			} catch (err) {
@@ -507,7 +507,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 						return {
 							geoid,
-							zipUrl: `${BASE}/${zipFile}`,
+							zipURL: `${BASE}/${zipFile}`,
 							zipPath: path.join(EDGES_DIR, zipFile),
 						}
 					})

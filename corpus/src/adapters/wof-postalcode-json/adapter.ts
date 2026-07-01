@@ -42,7 +42,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
-import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WofRecord } from "../../wof-json.js"
+import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "../../wof-json.js"
 
 const COUNTRY_DISPLAY_NAME: Record<string, string> = {
 	US: "United States of America",
@@ -80,7 +80,7 @@ interface VariantSpec {
  * Compute hierarchy variants for a postcode record. `selfName` is the postcode surface form (canonical `wof:name` for
  * the `default` slot, a `name:*` localized variant otherwise).
  */
-export function postcodeVariantsFor(row: WofRecord, ancestry: WofRecord[], selfName: string): VariantSpec[] {
+export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): VariantSpec[] {
 	if (placetypeToTag(row.placetype) !== "postcode") return []
 
 	const locality = ancestry.find((a) => placetypeToTag(a.placetype) === "locality")
@@ -123,7 +123,7 @@ export function postcodeVariantsFor(row: WofRecord, ancestry: WofRecord[], selfN
  * Build the per-record name-slot list. The `default` slot uses `wof:name` verbatim (postcode digits); subsequent slots
  * come from `name:*` variants dedup'd against the default.
  */
-export function nameSlotsFor(rec: WofRecord): Array<{ key: string; value: string }> {
+export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string }> {
 	const seen = new Set<string>([rec.name])
 	const slots: Array<{ key: string; value: string }> = [{ key: "default", value: rec.name }]
 
@@ -138,7 +138,7 @@ export function nameSlotsFor(rec: WofRecord): Array<{ key: string; value: string
 
 export const WOF_POSTALCODE_ADAPTER_ID = "wof-postalcode"
 
-export function createWofPostalcodeAdapter(): CorpusAdapter {
+export function createWOFPostalcodeAdapter(): CorpusAdapter {
 	return {
 		id: WOF_POSTALCODE_ADAPTER_ID,
 		defaultLicense: "CC0-1.0",
@@ -149,7 +149,7 @@ export function createWofPostalcodeAdapter(): CorpusAdapter {
 			// Pass 1: full walk. We keep every record whose placetype maps to a ComponentTag — the
 			// postcode adapter needs locality / region / country admin records in the index so it
 			// can resolve postcode ancestry, even though it only emits rows for postcode records.
-			const byId = new Map<number, WofRecord>()
+			const byId = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
 				if (opts.signal?.aborted) return
@@ -206,4 +206,4 @@ export function createWofPostalcodeAdapter(): CorpusAdapter {
 	}
 }
 
-export const wofPostalcodeAdapter = createWofPostalcodeAdapter()
+export const wofPostalcodeAdapter = createWOFPostalcodeAdapter()

@@ -34,7 +34,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { type FindPlaceQuery, WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { type FindPlaceQuery, WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -97,7 +97,7 @@ async function main(): Promise<void> {
 		.split(",")
 		.map((s) => s.trim())
 		.filter(Boolean)
-	const lookup = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+	const lookup = new WOFSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
 
 	// Resolve a region name (e.g. "CA", "DC") → its WOF id, the way the resolver does (region lookup,
 	// country-scoped). Memoized — "CA" recurs thousands of times. null when unresolved.

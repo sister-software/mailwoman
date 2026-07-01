@@ -45,7 +45,7 @@ import { basename, resolve } from "node:path"
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 // Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict
@@ -54,7 +54,7 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 // must feed them. The lookup is keyed by the input's own postcode — always available at eval time.
 //
 // Why this is a DEFAULT, not opt-in (the bug this file used to have): when these are omitted, the
-// OnnxRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
+// ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
 // out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
 // (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0,
 // region↔locality flip — while the morphology tags (street/house_number/venue) that don't lean on
@@ -278,7 +278,7 @@ async function main(): Promise<void> {
 		const card = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
-			OnnxRunner.create(args.modelPath),
+			ONNXRunner.create(args.modelPath),
 		])
 		// Anchor + gazetteer feed. DEFAULT-ON (the standard paths) so an anchor-trained model is scored
 		// in-distribution — see the DEFAULT_* note above for why omitting these silently collapses the

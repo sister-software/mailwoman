@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { BIO_LABELS, BioLabel, COMPONENT_TAGS, ComponentTag } from "./component.js"
+import { BIO_LABELS, BIOLabel, COMPONENT_TAGS, ComponentTag } from "./component.js"
 
 describe("COMPONENT_TAGS", () => {
 	test("every tag is unique", () => {
@@ -59,12 +59,12 @@ describe("BIO_LABELS", () => {
 	})
 
 	test("contains B- and I- for every tag exactly once", () => {
-		const seen = new Set<BioLabel>(BIO_LABELS)
+		const seen = new Set<BIOLabel>(BIO_LABELS)
 		expect(seen.size).toBe(BIO_LABELS.length)
 
 		for (const tag of COMPONENT_TAGS) {
-			expect(seen.has(`B-${tag}` as BioLabel)).toBe(true)
-			expect(seen.has(`I-${tag}` as BioLabel)).toBe(true)
+			expect(seen.has(`B-${tag}` as BIOLabel)).toBe(true)
+			expect(seen.has(`I-${tag}` as BIOLabel)).toBe(true)
 		}
 	})
 

@@ -99,8 +99,8 @@ async function exactNear(
 }
 
 async function main() {
-	const { WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WofCandidateTableLookup({ databasePath: CAND }) as unknown as Lookup
+	const { WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const lookup = new WOFCandidateTableLookup({ databasePath: CAND }) as unknown as Lookup
 
 	console.log(`loc |  n  | base  | +struct (near/coll) | +trailtok (near/coll)`)
 	const T = { n: 0, base: 0, sNear: 0, sColl: 0, tNear: 0, tColl: 0 }

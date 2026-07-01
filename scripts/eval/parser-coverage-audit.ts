@@ -30,7 +30,7 @@ import { readFileSync } from "node:fs"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 // ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ const modelCard = JSON.parse(readFileSync(modelCardPath, "utf8"))
 
 const [tokenizer, runner] = await Promise.all([
 	MailwomanTokenizer.loadFromFile(tokenizerPath),
-	OnnxRunner.create(modelPath),
+	ONNXRunner.create(modelPath),
 ])
 
 const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined

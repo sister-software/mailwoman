@@ -18,7 +18,7 @@
  *   `labels` field as "you are loading a pre-v0.4.0 bundle" rather than "unknown stage".
  */
 
-import type { BioLabel } from "@mailwoman/core/decoder"
+import type { BIOLabel } from "@mailwoman/core/decoder"
 
 /** Coarse component tags trained in Phase 2 Stage 1 (v0.1.0 / v0.2.0). */
 export const STAGE1_COARSE_TAGS = [
@@ -32,9 +32,9 @@ export const STAGE1_COARSE_TAGS = [
 ] as const
 
 /** BIO label vocabulary for Stage 1 — O + (B-/I- per coarse tag). 1 + 14 = 15 labels. */
-export const STAGE1_BIO_LABELS: readonly BioLabel[] = Object.freeze([
-	"O" as BioLabel,
-	...STAGE1_COARSE_TAGS.flatMap((tag) => [`B-${tag}` as BioLabel, `I-${tag}` as BioLabel]),
+export const STAGE1_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
+	"O" as BIOLabel,
+	...STAGE1_COARSE_TAGS.flatMap((tag) => [`B-${tag}` as BIOLabel, `I-${tag}` as BIOLabel]),
 ])
 
 /**
@@ -53,9 +53,9 @@ export const STAGE2_TAGS = [...STAGE1_COARSE_TAGS, ...STAGE2_FINE_TAGS] as const
  * model with this vocabulary still decodes correctly; the tail (15..20) just never gets argmax'd because Stage 1 only
  * emits 15 logits.
  */
-export const STAGE2_BIO_LABELS: readonly BioLabel[] = Object.freeze([
-	"O" as BioLabel,
-	...STAGE2_TAGS.flatMap((tag) => [`B-${tag}` as BioLabel, `I-${tag}` as BioLabel]),
+export const STAGE2_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
+	"O" as BIOLabel,
+	...STAGE2_TAGS.flatMap((tag) => [`B-${tag}` as BIOLabel, `I-${tag}` as BIOLabel]),
 ])
 
 export const STAGE3_FINE_TAGS = [
@@ -69,7 +69,7 @@ export const STAGE3_FINE_TAGS = [
 
 export const STAGE3_TAGS = [...STAGE2_TAGS, ...STAGE3_FINE_TAGS] as const
 
-export const STAGE3_BIO_LABELS: readonly BioLabel[] = Object.freeze([
-	"O" as BioLabel,
-	...STAGE3_TAGS.flatMap((tag) => [`B-${tag}` as BioLabel, `I-${tag}` as BioLabel]),
+export const STAGE3_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
+	"O" as BIOLabel,
+	...STAGE3_TAGS.flatMap((tag) => [`B-${tag}` as BIOLabel, `I-${tag}` as BIOLabel]),
 ])

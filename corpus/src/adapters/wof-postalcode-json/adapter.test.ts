@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
-import { WOF_POSTALCODE_ADAPTER_ID, createWofPostalcodeAdapter, postcodeVariantsFor } from "./adapter.js"
+import { WOF_POSTALCODE_ADAPTER_ID, createWOFPostalcodeAdapter, postcodeVariantsFor } from "./adapter.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = resolve(here, "../../../fixtures/wof-postalcode-json")
@@ -85,7 +85,7 @@ describe("postcodeVariantsFor (pure)", () => {
 describe("wof-postalcode-json adapter against fixture", () => {
 	it("resolves admin ancestry from sibling repo dirs in the same walk", async () => {
 		await runAdapter({
-			adapter: createWofPostalcodeAdapter(),
+			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "FR" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -105,7 +105,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 
 	it("US template abbreviates state to alpha-2 and reconciliation prunes the region component", async () => {
 		await runAdapter({
-			adapter: createWofPostalcodeAdapter(),
+			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -124,7 +124,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		// (cross-product with ancestor name variants is a future synthesis concern). Verify the
 		// canonical-name behavior so a future change to localize ancestors is a deliberate decision.
 		await runAdapter({
-			adapter: createWofPostalcodeAdapter(),
+			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -138,7 +138,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 
 	it("excludes superseded postcodes (mz:is_current=0)", async () => {
 		await runAdapter({
-			adapter: createWofPostalcodeAdapter(),
+			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -149,7 +149,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 
 	it("source_id includes the name-slot segment for consistency with the admin adapter", async () => {
 		await runAdapter({
-			adapter: createWofPostalcodeAdapter(),
+			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "FR" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -164,14 +164,14 @@ describe("wof-postalcode-json adapter against fixture", () => {
 
 	it("two runs over the same fixture produce identical sha256", async () => {
 		const a = await runAdapter({
-			adapter: createWofPostalcodeAdapter(),
+			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
 		await rm(join(scratch, WOF_POSTALCODE_ADAPTER_ID), { recursive: true, force: true })
 		const b = await runAdapter({
-			adapter: createWofPostalcodeAdapter(),
+			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",

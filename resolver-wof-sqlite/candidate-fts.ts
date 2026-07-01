@@ -8,7 +8,7 @@
  *   key, so the contiguous-probe lookup returns nothing). It indexes the NORMALIZED key (not the
  *   raw `name`), so a diacritic-stripped query (`munchen`) trigram-matches the stored `munchen`
  *   rather than missing a raw `München`. The trigram tokenizer makes MATCH a substring/fuzzy
- *   operation; the reader ({@link WofCandidateTableLookup}) OR's the query's trigrams to fetch a
+ *   operation; the reader ({@link WOFCandidateTableLookup}) OR's the query's trigrams to fetch a
  *   loose set, then re-ranks by the SAME `trigramJaccard` the admin/FTS backend uses, so a typo
  *   resolves identically on either.
  *
@@ -34,7 +34,7 @@ export const CANDIDATE_FTS_TABLE = "candidate_fts"
  * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table. Call after the candidate
  * B-tree is populated (build pipeline) or against an existing candidate DB (migration).
  */
-export function createCandidateFts(db: DatabaseSync): void {
+export function createCandidateFTS(db: DatabaseSync): void {
 	db.exec(`DROP TABLE IF EXISTS ${CANDIDATE_FTS_TABLE}`)
 	db.exec(`CREATE VIRTUAL TABLE ${CANDIDATE_FTS_TABLE} USING fts5(name_key, tokenize='trigram')`)
 	db.exec(

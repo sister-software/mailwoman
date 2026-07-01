@@ -29,7 +29,7 @@ import {
 	geocodeAddressVia,
 	inferMapping,
 	ingestRows,
-	parseCsv,
+	parseCSV,
 	reconcileCoverage,
 	reconciliationGeoJSON,
 	reconciliationReport,
@@ -42,7 +42,7 @@ import {
 	type GeocodeAddress,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
@@ -198,7 +198,7 @@ export function loadMapping(
 	return { ...base, ...provided, ...(source ? { source } : {}) }
 }
 
-function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
+function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
 	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
 
 	if (!path) {
@@ -216,7 +216,7 @@ function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
 async function buildGeocoder(
 	options: zod.infer<typeof OptionsSchema>
 ): Promise<{ seam: GeocodeAddress; close: () => void }> {
-	const wofPath = resolveWofPath(options)
+	const wofPath = resolveWOFPath(options)
 
 	let classifier: NeuralAddressClassifier
 
@@ -241,7 +241,7 @@ async function buildGeocoder(
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	const shards: ShardResolver = shardProvider.for
 	const defaultCountry = resolverDefaultCountry(options, !!resolveCandidateDbPath()) || undefined
-	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+	const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 
 	const seam = geocodeAddressVia({
 		parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
@@ -424,7 +424,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 				"`role`), not a single positional CSV."
 		)
 	}
-	const rows = parseCsv(readFileSync(csvPath, "utf8"))
+	const rows = parseCSV(readFileSync(csvPath, "utf8"))
 	// --infer-mapping reads the header (the first row's keys) and guesses the mapping; an explicit --mapping
 	// still merges on top of it. Otherwise the base is the built-in default.
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING

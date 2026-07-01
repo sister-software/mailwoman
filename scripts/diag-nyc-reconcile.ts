@@ -15,11 +15,11 @@
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { aggregateSpanLogits, reconcileSpans, runPipeline } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { readFileSync } from "node:fs"
 
 const TOKENIZER = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
@@ -32,7 +32,7 @@ const CARD = "/tmp/v440-stage/en-us/v4.4.0/model-card.json"
 const card = JSON.parse(readFileSync(CARD, "utf8"))
 const classifier = new NeuralAddressClassifier({
 	tokenizer: await MailwomanTokenizer.loadFromFile(TOKENIZER),
-	runner: await OnnxRunner.create(MODEL),
+	runner: await ONNXRunner.create(MODEL),
 	labels: card.labels,
 	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(ANCHOR, "utf8"))),
 	gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))),
@@ -40,7 +40,7 @@ const classifier = new NeuralAddressClassifier({
 	addressSystemConventions: "auto",
 	bridgePunctuationGaps: true,
 })
-const fst = deserializeFst(readFileSync(FST))
+const fst = deserializeFST(readFileSync(FST))
 
 const QUERIES = ["New York City", "Brooklyn", "brooklyn, new york, ny"]
 

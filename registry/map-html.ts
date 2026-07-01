@@ -84,7 +84,7 @@ function safeJsonForScript(value: unknown): string {
 }
 
 /** Escape text for the HTML document body (title/heading), not the inlined script. */
-function escapeHtml(text: string): string {
+function escapeHTML(text: string): string {
 	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
 
@@ -195,7 +195,7 @@ export function toMapHTML(
 	const legendRows =
 		mode === "bucket"
 			? Object.entries(bucketColors)
-					.map(([b, c]) => `<div><i style="background:${c}"></i>${escapeHtml(b)}</div>`)
+					.map(([b, c]) => `<div><i style="background:${c}"></i>${escapeHTML(b)}</div>`)
 					.join("")
 			: `<div><i style="background:${CROSS_COLOR}"></i>cross-dataset link (&ge;2 sources)</div>` +
 				`<div><i style="background:${SINGLE_COLOR}"></i>single-source entity</div>` +
@@ -211,7 +211,7 @@ export function toMapHTML(
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${escapeHtml(title)}</title>
+<title>${escapeHTML(title)}</title>
 <link
 	rel="stylesheet"
 	href="https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.css"
@@ -240,8 +240,8 @@ export function toMapHTML(
 </head>
 <body>
 <div id="map"></div>
-<div class="mw-panel mw-title"><h1>${escapeHtml(title)}</h1><div class="muted">${summary}</div></div>
-${features.length ? `<div class="mw-panel mw-legend">${legendRows}</div>` : `<div class="mw-empty"><div class="mw-panel"><h1>${escapeHtml(title)}</h1><div class="muted">No geocoded entities to display.</div></div></div>`}
+<div class="mw-panel mw-title"><h1>${escapeHTML(title)}</h1><div class="muted">${summary}</div></div>
+${features.length ? `<div class="mw-panel mw-legend">${legendRows}</div>` : `<div class="mw-empty"><div class="mw-panel"><h1>${escapeHTML(title)}</h1><div class="muted">No geocoded entities to display.</div></div></div>`}
 <script
 	src="https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.js"
 	integrity="${MAPLIBRE_JS_SRI}"
@@ -256,7 +256,7 @@ function esc(v) {
 	return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function popupHtml(p) {
+function popupHTML(p) {
 	var rows = [];
 	var heading = p.name || p.organization || p.entityId || "entity";
 	rows.push('<div class="nm">' + esc(heading) + '</div>');
@@ -285,7 +285,7 @@ map.on("load", function () {
 map.on("click", "mw-entities", function (e) {
 	var f = e.features && e.features[0];
 	if (!f) return;
-	new maplibregl.Popup({ closeButton: true }).setLngLat(e.lngLat).setHTML(popupHtml(f.properties || {})).addTo(map);
+	new maplibregl.Popup({ closeButton: true }).setLngLat(e.lngLat).setHTML(popupHTML(f.properties || {})).addTo(map);
 });
 map.on("mouseenter", "mw-entities", function () { map.getCanvas().style.cursor = "pointer"; });
 map.on("mouseleave", "mw-entities", function () { map.getCanvas().style.cursor = ""; });

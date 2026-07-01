@@ -20,7 +20,7 @@ import {
 	parseAnchorLookup,
 	parseGazetteerLexicon,
 } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createAddressParser } from "mailwoman"
 
@@ -36,7 +36,7 @@ const engine = arg("engine", "neural")!
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] =
 	engine === "neural"
-		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("model")!)])
+		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(arg("model")!)])
 		: [undefined!, undefined!]
 const shipConfig = !argv.includes("--no-ship-config")
 const v0 = engine === "v0" ? createAddressParser() : undefined

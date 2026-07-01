@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman reverse <lat> <lon>` — resolve a WGS-84 coordinate to its containing admin hierarchy
- *   via the WofReverseGeocoder (#484).
+ *   via the WOFReverseGeocoder (#484).
  *
  *   Falls back to the MAILWOMAN_WOF_ADMIN_DB / MAILWOMAN_WOF_POLYGONS_DB env vars when the
  *   corresponding flags are absent. Prints a JSON object with the resolved hierarchy and the
@@ -87,7 +87,7 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 	const adminDbPath = resolveAdminDbPath(options)
 	const polygonDbPath = resolvePolygonsDbPath(options)
 
-	const geocoder = new mod.WofReverseGeocoder({ adminDbPath, polygonDbPath })
+	const geocoder = new mod.WOFReverseGeocoder({ adminDbPath, polygonDbPath })
 
 	try {
 		const result = await geocoder.reverseGeocode(lat, lon)

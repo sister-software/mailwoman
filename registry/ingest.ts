@@ -26,7 +26,7 @@ import { open } from "node:fs/promises"
 
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
-import { parse as parseCsvSync } from "csv-parse/sync"
+import { parse as parseCSVSync } from "csv-parse/sync"
 import { Delimiters, TextSpliterator } from "spliterator"
 
 import type { SourceRecord } from "./types.js"
@@ -43,7 +43,7 @@ export function delimiterFor(path: string): Delimiter {
 }
 
 /**
- * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCsv} returns, but
+ * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCSV} returns, but
  * **without loading the file into memory**. A multi-GB source (the NPPES registry is ~4.8 GB / 9.6M rows — too big for
  * `readFileSync`, which throws `ERR_STRING_TOO_LONG`) streams line by line. Keys are the original header names so a
  * {@link ColumnMapping} written against the source's headers matches. Filter/sample the stream before
@@ -57,7 +57,7 @@ export function delimiterFor(path: string): Delimiter {
  * when it's fixed.)
  *
  * Assumes an unquoted delimited file (no fields containing the delimiter) — true for these government TSVs. For small,
- * possibly-quoted CSVs use {@link parseCsv} (quote-aware, in-memory).
+ * possibly-quoted CSVs use {@link parseCSV} (quote-aware, in-memory).
  */
 export async function* streamRows(
 	source: string,
@@ -189,8 +189,8 @@ export interface IngestOptions {
 }
 
 /** Parse a CSV string (with a header row) into row objects keyed by column name. */
-export function parseCsv(text: string): Record<string, string>[] {
-	return parseCsvSync(text, { columns: true, skip_empty_lines: true, trim: true, relax_column_count: true })
+export function parseCSV(text: string): Record<string, string>[] {
+	return parseCSVSync(text, { columns: true, skip_empty_lines: true, trim: true, relax_column_count: true })
 }
 
 /** Join the named column(s) of a row into a single trimmed string, or undefined if empty. */
@@ -248,7 +248,7 @@ export async function ingestRow(
 
 /**
  * Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}. Accepts a sync OR async iterable, so
- * {@link parseCsv} (in-memory) and {@link streamRows} (lazy, for huge files) both thread straight through.
+ * {@link parseCSV} (in-memory) and {@link streamRows} (lazy, for huge files) both thread straight through.
  */
 export async function ingestRows(
 	rows: Iterable<Record<string, string>> | AsyncIterable<Record<string, string>>,

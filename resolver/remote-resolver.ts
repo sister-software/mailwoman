@@ -10,7 +10,7 @@
  *
  *   1. **Multi-instance** — stateless parser nodes (the ~30 MB ONNX model) talk to ONE resolver service
  *        (the multi-GB gazetteer + shards). `parse` locally, `new RemoteResolver(...).resolveTree`
- *        remotely — same interface the in-process `WofResolver` satisfies, so it's a drop-in.
+ *        remotely — same interface the in-process `WOFResolver` satisfies, so it's a drop-in.
  *   2. **Canary** — point it at a second resolver build (or an adapter fronting Pelias/Nominatim/BAN)
  *        and diff the resolved trees through the identical contract.
  *

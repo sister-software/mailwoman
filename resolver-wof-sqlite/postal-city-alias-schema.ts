@@ -5,7 +5,7 @@
  *
  *   Typed schema for the POSTAL-CITY ALIAS table (`postal-city-alias-<cc>.db`, built by
  *   `scripts/build-postal-city-alias.ts`) — the single source of truth for the columns shared by
- *   the BUILDER and the READER ({@link WofPostalCityAliasLookup}). Like {@link CandidateTable}, the
+ *   the BUILDER and the READER ({@link WOFPostalCityAliasLookup}). Like {@link CandidateTable}, the
  *   contract is a Kysely `Database` interface plus the table DDL as a string, so a column rename in
  *   the builder is a compile error in the reader.
  *

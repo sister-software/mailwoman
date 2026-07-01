@@ -114,10 +114,10 @@ const STREETS = ["Main", "Oak", "Elm", "Park", "Washington", "Maple", "Cedar", "
 
 async function partB(): Promise<string[]> {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 	const card = JSON.parse(readFileSync(CARD, "utf8"))
-	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 	const v0 = createAddressParser()
 

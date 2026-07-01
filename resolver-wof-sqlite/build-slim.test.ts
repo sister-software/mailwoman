@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode buildSlimWofDatabase}. Builds a tiny fixture WOF with a country + a few
+ *   Tests for {@linkcode buildSlimWOFDatabase}. Builds a tiny fixture WOF with a country + a few
  *   localities (varying populations) + postcodes + a non-US locality, then asserts that the slim
  *   output keeps only what the selection policy promises.
  *
@@ -20,11 +20,11 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildSlimWofDatabase } from "./build-slim.js"
+import { buildSlimWOFDatabase } from "./build-slim.js"
 
 let scratch: string
 
-function buildFixtureWof(path: string): void {
+function buildFixtureWOF(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
 		CREATE TABLE spr (
@@ -83,13 +83,13 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-describe("buildSlimWofDatabase", () => {
+describe("buildSlimWOFDatabase", () => {
 	test("keeps ancestors, top-K localities by population, and all postcodes", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
-		buildFixtureWof(source)
+		buildFixtureWOF(source)
 
-		const result = await buildSlimWofDatabase({
+		const result = await buildSlimWOFDatabase({
 			inputs: [source],
 			output,
 			topLocalitiesPerCountry: 2, // keeps Chicago + Springfield, drops Mascoutah
@@ -120,9 +120,9 @@ describe("buildSlimWofDatabase", () => {
 	test("preserves names + place_population only for selected IDs", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
-		buildFixtureWof(source)
+		buildFixtureWOF(source)
 
-		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 1 })
+		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 1 })
 
 		const slim = new DatabaseSync(output, { readOnly: true })
 
@@ -159,9 +159,9 @@ describe("buildSlimWofDatabase", () => {
 	test("carries place_population for the trimmed row set, ranked by population", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
-		buildFixtureWof(source)
+		buildFixtureWOF(source)
 
-		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
+		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
 
 		const slim = new DatabaseSync(output, { readOnly: true })
 
@@ -180,12 +180,12 @@ describe("buildSlimWofDatabase", () => {
 		const adminSource = join(scratch, "admin.db")
 		const postcodeSource = join(scratch, "postcode.db")
 		const output = join(scratch, "slim.db")
-		buildFixtureWof(adminSource)
+		buildFixtureWOF(adminSource)
 		// Postcode shard: same schema, only contributes postcodes (here, re-use the admin fixture's
 		// postcode rows to verify INSERT OR IGNORE actually de-dupes on id).
-		buildFixtureWof(postcodeSource)
+		buildFixtureWOF(postcodeSource)
 
-		const result = await buildSlimWofDatabase({
+		const result = await buildSlimWOFDatabase({
 			inputs: [adminSource, postcodeSource],
 			output,
 			topLocalitiesPerCountry: 1,
@@ -198,9 +198,9 @@ describe("buildSlimWofDatabase", () => {
 	test("dropNames removes the names table but keeps a working FTS index", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
-		buildFixtureWof(source)
+		buildFixtureWOF(source)
 
-		const result = await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
+		const result = await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
 		// The report still carries the pre-drop names count (informative), even though the table is gone.
 		expect(result.rowCounts.names).toBeGreaterThan(0)
 		expect(result.rowCounts.placeSearch).toBe(6)
@@ -224,18 +224,18 @@ describe("buildSlimWofDatabase", () => {
 	test('skips empty input paths (callers pass "" for an unbuilt shard)', async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
-		buildFixtureWof(source)
+		buildFixtureWOF(source)
 
 		// Both the demo plugin and build-demo-assets.ts pass `--in ""` when the custom postcode DB
 		// isn't built yet. The empty path must be skipped, not treated as a missing file.
-		const result = await buildSlimWofDatabase({ inputs: ["", source, ""], output, topLocalitiesPerCountry: 1 })
+		const result = await buildSlimWOFDatabase({ inputs: ["", source, ""], output, topLocalitiesPerCountry: 1 })
 		expect(result.rowCounts.spr).toBe(5) // 1 country + 1 region + 1 locality + 2 postcodes
 	})
 
 	test("carries the coincident_roles relation, filtered to surviving spr ids (#402)", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
-		buildFixtureWof(source)
+		buildFixtureWOF(source)
 		// A dual-role relation: Illinois(101) ⊃ Springfield(201) [survives top-2] and ⊃ Mascoutah(202) [trimmed].
 		const s = new DatabaseSync(source)
 		s.exec(`CREATE TABLE coincident_roles (
@@ -246,7 +246,7 @@ describe("buildSlimWofDatabase", () => {
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 202, 'capital-seat', 'region', 6.0, 8000)`)
 		s.close()
 
-		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 }) // keeps Springfield, drops Mascoutah
+		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 }) // keeps Springfield, drops Mascoutah
 
 		const slim = new DatabaseSync(output, { readOnly: true })
 
@@ -262,14 +262,14 @@ describe("buildSlimWofDatabase", () => {
 	test("materializes place_abbr from language='abbr' names, filtered to surviving ids, surviving dropNames (#189)", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
-		buildFixtureWof(source)
+		buildFixtureWOF(source)
 		const s = new DatabaseSync(source)
 		s.exec(`INSERT INTO names (id, language, name) VALUES (101, 'abbr', 'IL')`) // Illinois (region) — survives
 		s.exec(`INSERT INTO names (id, language, name) VALUES (202, 'abbr', 'MZ')`) // Mascoutah (locality) — trimmed
 		s.close()
 
 		// top-2 keeps Springfield, drops Mascoutah; dropNames removes the source names table afterward.
-		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
+		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
 
 		const slim = new DatabaseSync(output, { readOnly: true })
 

@@ -44,7 +44,7 @@ const REQUIRED_FILES = [
 	// The slim wof-hot.db was RETIRED 2026-06-20: the demo's admin tier now byte-range-resolves
 	// against the global candidate table, hosted version-independently at
 	// mailwoman/gazetteer/<ver>/candidate.db (NOT a per-release asset — it's model-independent). See
-	// RELEASING.md + project-candidate-table-byte-range. `hasWofDb` in releases.json stays true (it now
+	// RELEASING.md + project-candidate-table-byte-range. `hasWOFDb` in releases.json stays true (it now
 	// means "this version has admin resolution", which the version-independent gazetteer always provides).
 ]
 
@@ -251,10 +251,10 @@ async function main() {
 	}
 
 	// --- Phase 4: update releases.json ---
-	const releasesUrl = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
-	const res = await fetch(releasesUrl, { redirect: "follow" })
+	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
+	const res = await fetch(releasesURL, { redirect: "follow" })
 
-	if (!res.ok) fail(`failed to fetch ${releasesUrl}`)
+	if (!res.ok) fail(`failed to fetch ${releasesURL}`)
 	const releases = (await res.json()) as ReleaseManifest
 
 	const newEntry: Record<string, unknown> = {
@@ -264,8 +264,8 @@ async function main() {
 		modelSize: args.modelSize ?? `${Math.round(statSync(args.model as string).size / 1024 / 1024)} MB`,
 		tokenizerVocab: 48000,
 		steps: args.steps ? parseInt(args.steps, 10) : 100000,
-		hasFst: true,
-		hasWofDb: true,
+		hasFST: true,
+		hasWOFDb: true,
 		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
 		// truth by PROBING the demo's serving path (the four-release hasPolygons:false rectangle bug,
 		// 2026-06-11). CLI args still count; either source sets the flag.

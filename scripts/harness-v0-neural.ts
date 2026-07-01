@@ -38,10 +38,10 @@ import {
 	parseAnchorLookup,
 	parseGazetteerLexicon,
 } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { buildStreetMorphologyFst } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
 import { type ClassificationRecord, createAddressParser, createRuntimePipeline } from "mailwoman"
 import ts from "typescript"
 
@@ -63,7 +63,7 @@ interface Args {
 	anchorLookupPath?: string
 	conventions?: string
 	bridgeGaps?: boolean
-	adminFstPath?: string
+	adminFSTPath?: string
 	morphologyEnabled: boolean
 	morphologyBinPath?: string
 	falsehoodsDir?: string
@@ -108,7 +108,7 @@ function parseArgs(): Args {
 		else if (a === "--anchor-lookup" && args[i + 1]) out.anchorLookupPath = args[++i]
 		else if (a === "--conventions" && args[i + 1]) out.conventions = args[++i]
 		else if (a === "--bridge-gaps") out.bridgeGaps = true
-		else if (a === "--admin-fst" && args[i + 1]) out.adminFstPath = args[++i]
+		else if (a === "--admin-fst" && args[i + 1]) out.adminFSTPath = args[++i]
 		else if (a === "--morphology-fst" && args[i + 1]) out.morphologyBinPath = args[++i]
 		else if (a === "--no-morphology") out.morphologyEnabled = false
 		else if (a === "--falsehoods" && args[i + 1]) out.falsehoodsDir = args[++i]
@@ -725,7 +725,7 @@ async function main(): Promise<void> {
 		const labels: readonly string[] = modelCard.labels
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
-			OnnxRunner.create(args.modelPath),
+			ONNXRunner.create(args.modelPath),
 		])
 		// Gaz-trained models (v4.2.0+) MUST be fed the lexicon + the postcode-anchor lookup with
 		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
@@ -754,32 +754,32 @@ async function main(): Promise<void> {
 		neural = await NeuralAddressClassifier.loadFromWeights()
 	}
 
-	let adminFst: ReturnType<typeof deserializeFst> | undefined
+	let adminFST: ReturnType<typeof deserializeFST> | undefined
 
-	if (args.adminFstPath) {
+	if (args.adminFSTPath) {
 		console.error("Loading admin FST...")
-		adminFst = deserializeFst(readFileSync(args.adminFstPath))
+		adminFST = deserializeFST(readFileSync(args.adminFSTPath))
 	}
 
-	let morphologyFst: ReturnType<typeof deserializeFst> | undefined
+	let morphologyFST: ReturnType<typeof deserializeFST> | undefined
 
 	if (args.morphologyEnabled) {
 		if (args.morphologyBinPath) {
 			console.error("Loading morphology FST from", args.morphologyBinPath)
-			morphologyFst = deserializeFst(readFileSync(args.morphologyBinPath))
+			morphologyFST = deserializeFST(readFileSync(args.morphologyBinPath))
 		} else {
 			console.error("Building morphology FST in-process...")
-			const built = buildStreetMorphologyFst({
+			const built = buildStreetMorphologyFST({
 				dictionariesDir: resolve(REPO_ROOT, "core", "data", "libpostal", "dictionaries"),
 			})
-			morphologyFst = built.matcher
+			morphologyFST = built.matcher
 			console.error(`  ${built.canonicalCount} canonicals / ${built.variantCount} variants`)
 		}
 	}
 
 	const parseOpts = {
-		...(adminFst ? { fst: adminFst as never } : {}),
-		...(morphologyFst ? { fstStreetMorphology: morphologyFst as never } : {}),
+		...(adminFST ? { fst: adminFST as never } : {}),
+		...(morphologyFST ? { fstStreetMorphology: morphologyFST as never } : {}),
 		postcodeRepair: args.postcodeRepair,
 		unitRepair: args.unitRepair,
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
@@ -787,7 +787,7 @@ async function main(): Promise<void> {
 	// #478: the assembled runtime pipeline (reuses the neural classifier + admin FST). No resolver —
 	// the arena grades COMPONENT parses (Stage 3 / grouper / reconcile), not coordinates.
 	const pipeline = args.assembled
-		? createRuntimePipeline({ classifier: neural, ...(adminFst ? { fst: adminFst as never } : {}) })
+		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST as never } : {}) })
 		: undefined
 
 	if (pipeline)

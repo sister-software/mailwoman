@@ -57,7 +57,7 @@ interface FrTuple {
 }
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields with doubled-quote escaping). */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -103,7 +103,7 @@ function readTuples(limit: number): FrTuple[] {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -115,7 +115,7 @@ function readTuples(limit: number): FrTuple[] {
 
 	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const street = get(cells, iStreet)
 		const locality = get(cells, iCity)
 		const house_number = get(cells, iNum)

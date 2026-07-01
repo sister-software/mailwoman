@@ -12,7 +12,7 @@
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
@@ -20,10 +20,10 @@ const titleCaseInput = (t: string) => t.replace(/[A-Za-z]+/g, (w) => w[0]!.toUpp
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const mod = await import("@mailwoman/resolver-wof-sqlite")
-const lookup = new mod.WofSqlitePlaceLookup({
+const lookup = new mod.WOFSqlitePlaceLookup({
 	databasePath: dataRootPath("wof", "admin-global-priority.db"),
 })
-const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 const shards = new ShardProvider(mod, mailwomanDataRoot())
 
 import { readFileSync } from "node:fs"

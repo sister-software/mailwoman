@@ -193,9 +193,9 @@ function loadUs(): Map<string, Centroid> {
 
 /**
  * Census ZCTA Gazetteer file → 5-digit code → internal-point centroid (mirror of
- * scripts/zcta-centroids.ts::parseZctaCentroids).
+ * scripts/zcta-centroids.ts::parseZCTACentroids).
  */
-function loadZcta(path: string): Map<string, [number, number]> {
+function loadZCTA(path: string): Map<string, [number, number]> {
 	const out = new Map<string, [number, number]>()
 
 	for (const line of readFileSync(path, "utf8").split("\n")) {
@@ -265,7 +265,7 @@ interface Args {
 	zcta?: string
 }
 
-function parseCliArgs(): Args {
+function parseCLIArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			output: { type: "string" },
@@ -284,14 +284,14 @@ function parseCliArgs(): Args {
 }
 
 function main(): void {
-	const args = parseCliArgs()
+	const args = parseCLIArgs()
 
 	const sources: Array<[string, Map<string, Centroid>]> = [
 		["DE", loadIntl("DE")],
 		["FR", loadIntl("FR")],
 		["US", loadUs()],
 	] // centroid priority order
-	const zcta = args.zcta ? loadZcta(args.zcta) : new Map<string, [number, number]>()
+	const zcta = args.zcta ? loadZCTA(args.zcta) : new Map<string, [number, number]>()
 	const allCodes = new Set<string>()
 
 	for (const [, d] of sources) for (const k of d.keys()) allCodes.add(k)

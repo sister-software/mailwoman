@@ -23,7 +23,7 @@ import { aggregateSpanLogits } from "./span-logit-aggregation.js"
 import type {
 	AddressClassifier,
 	ClassifierOpts,
-	FstMatcherLike,
+	FSTMatcherLike,
 	LocaleHint,
 	LocaleTag,
 	NormalizedInputLite,
@@ -509,7 +509,7 @@ async function safeClassify(
 	classifier: AddressClassifier,
 	text: string,
 	queryShape: QueryShapeLite,
-	fst?: FstMatcherLike,
+	fst?: FSTMatcherLike,
 	normalizeCase?: boolean
 ): Promise<AddressTree> {
 	try {

@@ -21,7 +21,7 @@
  *   2-step.
  *
  *   The name_key normalizer is the SHARED {@link normalizeLocalityForKey} — the query side (the demo
- *   resolver {@link WofCandidateTableLookup}) MUST use the same function, the one-normalizer
+ *   resolver {@link WOFCandidateTableLookup}) MUST use the same function, the one-normalizer
  *   discipline the address-point shard uses, so build/query stay consistent by construction.
  *
  *   Measured (2026-06-20, vs the 2.6 GB full-DB FTS): ~5 M rows; ~12 range fetches per 8-query
@@ -33,7 +33,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
-import { createCandidateFts } from "./candidate-fts.js"
+import { createCandidateFTS } from "./candidate-fts.js"
 import {
 	CANDIDATE_COLUMNS,
 	createCandidateStagingTables,
@@ -328,7 +328,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// Typo-tolerant fallback index (the unified gazetteer's second mode): the exact name_key probe can't
 	// recover misspellings, so FTS5-trigram over `name` lets the reader fuzzy-match on an exact+strip miss.
 	progress("fts", "building FTS5-trigram fuzzy index")
-	createCandidateFts(out)
+	createCandidateFTS(out)
 	// page_size MUST be set right before VACUUM: node:sqlite initializes the file at the 4096 default on
 	// `new DatabaseSync`, so the creation-time pragma is a no-op — only a VACUUM rebuilds at the new size.
 	// 8192 matches the sql.js-httpvfs 64 KiB request chunk cleanly (8 pages) and shallows the B-tree.

@@ -17,7 +17,7 @@ import { existsSync, readFileSync } from "node:fs"
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -73,8 +73,8 @@ function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const resolver = createWofResolver(new WofCandidateTableLookup({ databasePath: CAND }) as never)
+	const { WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const resolver = createWOFResolver(new WOFCandidateTableLookup({ databasePath: CAND }) as never)
 	const model = await createScorer({
 		modelPath: arg("model", "out/v191/model.onnx"),
 		tokenizerPath: dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"),

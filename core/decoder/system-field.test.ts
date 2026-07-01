@@ -16,13 +16,13 @@
 
 import { describe, expect, test } from "vitest"
 
-import type { BioLabel } from "../types/component.js"
+import type { BIOLabel } from "../types/component.js"
 import { buildAddressTree } from "./build-tree.js"
 import { containmentFor, PARENT_OF, WESTERN_PARENT_OF } from "./containment.js"
 import type { DecoderToken } from "./types.js"
 import { validateTree } from "./validate-tree.js"
 
-function tok(piece: string, start: number, end: number, label: BioLabel): DecoderToken {
+function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }
 }
 

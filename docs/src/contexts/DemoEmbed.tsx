@@ -19,12 +19,12 @@ import type { Calibrator, ReleasesManifest } from "../shared/demo-helpers.ts"
 import { createCalibrator, DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 import type {
-	FstMatcherLike,
-	FstProvenanceLike,
+	FSTMatcherLike,
+	FSTProvenanceLike,
 	MailwomanClassifierLike,
 	MailwomanLookupLike,
 } from "../shared/resources.tsx"
-import { adminGazetteerUrl, assetUrl, loadFstGazetteer } from "../shared/resources.tsx"
+import { adminGazetteerURL, assetURL, loadFSTGazetteer } from "../shared/resources.tsx"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,9 +40,9 @@ export interface DemoEmbedState {
 	/** The loaded neural classifier (onnxruntime-web). */
 	classifier: MailwomanClassifierLike | null
 	/** The loaded FST gazetteer matcher. */
-	fstMatcher: FstMatcherLike | null
+	fstMatcher: FSTMatcherLike | null
 	/** Provenance metadata for the FST binary. */
-	fstProvenance: FstProvenanceLike | null
+	fstProvenance: FSTProvenanceLike | null
 	/** The instantiated, cached WOF HTTP-VFS lookup. Loaded eagerly by the provider. */
 	lookup: MailwomanLookupLike | null
 	/**
@@ -67,9 +67,9 @@ export interface DemoEmbedState {
 	/** Switch to a different version. Triggers asset reload. */
 	selectVersion: (version: string) => void
 	/** Force CPU WASM backend instead of WebGPU. */
-	setForceWasm: (v: boolean) => void
+	setForceWASM: (v: boolean) => void
 	/** Whether WASM is forced. */
-	forceWasm: boolean
+	forceWASM: boolean
 }
 
 const DemoEmbedContext = createContext<DemoEmbedState | null>(null)
@@ -94,31 +94,31 @@ export function useDemoEmbed(): DemoEmbedState {
 
 export interface DemoEmbedProviderProps {
 	/** Base URL for the sql.js-httpvfs worker + wasm (same-origin, e.g. `/mailwoman/sqljs`). */
-	sqljsBaseUrl: string
+	sqljsBaseURL: string
 	children: React.ReactNode
 }
 
-export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseUrl, children }) => {
+export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseURL, children }) => {
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
 	const [loadingStepIndex, setLoadingStepIndex] = useState(-1)
 	const [loadingStepLabels, setLoadingStepLabels] = useState<string[]>([])
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
-	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
-	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
-	const [forceWasm, setForceWasm] = useState(false)
+	const [fstMatcher, setFSTMatcher] = useState<FSTMatcherLike | null>(null)
+	const [fstProvenance, setFSTProvenance] = useState<FSTProvenanceLike | null>(null)
+	const [forceWASM, setForceWASM] = useState(false)
 	const [activeBackend, setActiveBackend] = useState<string>("")
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
 	const [calibrator, setCalibrator] = useState<Calibrator | null>(null)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
 	// Mount: register the range-chunk service worker (persists validated DB range chunks across
-	// visits; see static/range-cache-sw.js). The provider only receives sqljsBaseUrl
-	// (`${baseUrl}mailwoman/sqljs`), so the site base is recovered by stripping the staged suffix.
+	// visits; see static/range-cache-sw.js). The provider only receives sqljsBaseURL
+	// (`${baseURL}mailwoman/sqljs`), so the site base is recovered by stripping the staged suffix.
 	useEffect(() => {
-		registerRangeCacheServiceWorker(sqljsBaseUrl.replace(/mailwoman\/sqljs\/?$/, ""))
-	}, [sqljsBaseUrl])
+		registerRangeCacheServiceWorker(sqljsBaseURL.replace(/mailwoman\/sqljs\/?$/, ""))
+	}, [sqljsBaseURL])
 
 	// Drop cached range chunks from other (immutable, never-expiring) versions.
 	useEffect(() => {
@@ -130,7 +130,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		let cancelled = false
 		void (async () => {
 			try {
-				const res = await fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"))
+				const res = await fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"))
 				const data: ReleasesManifest | null = res.ok ? await res.json() : null
 
 				if (cancelled) return
@@ -160,8 +160,8 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		void (async () => {
 			try {
 				setClassifier(null)
-				setFstMatcher(null)
-				setFstProvenance(null)
+				setFSTMatcher(null)
+				setFSTProvenance(null)
 				setLookup(null)
 				setCalibrator(null)
 				setLoadingStepIndex(-1)
@@ -171,9 +171,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// Build staged step labels based on what this release includes.
 				const steps: string[] = ["Loading classifier"]
 
-				if (release?.hasFst) steps.push("Loading FST gazetteer")
+				if (release?.hasFST) steps.push("Loading FST gazetteer")
 
-				if (release?.hasWofDb) steps.push("Loading WOF database")
+				if (release?.hasWOFDb) steps.push("Loading WOF database")
 				setLoadingStepLabels(steps)
 
 				// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the
@@ -181,19 +181,19 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// through unknown (same pattern as the demo page).
 				const neuralWeb = await import("@mailwoman/neural-web")
 				const { classifier: cls, diagnostics } = (await neuralWeb.loadNeuralClassifierFromUrls({
-					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
-					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
-					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
+					modelURL: assetURL(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
+					tokenizerURL: assetURL(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
+					modelCardURL: assetURL(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
 					// Gazetteer-anchor lexicon (#464): REQUIRED by gazetteer-trained bundles (v4.2.0+). The
 					// loader tolerates a 404 for older bundles (logging loudly when the model needed it).
-					gazetteerLexiconUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "anchor-lexicon-v1.json"),
-					runner: { useWebGpu: !forceWasm },
+					gazetteerLexiconURL: assetURL(DEFAULT_LOCALE, selectedVersion, "anchor-lexicon-v1.json"),
+					runner: { useWebGPU: !forceWASM },
 					...(release?.hasAnchor
 						? {
 								postcodeBinaryUrls: [
-									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
-									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
-									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-fr.bin"),
+									assetURL(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
+									assetURL(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
+									assetURL(DEFAULT_LOCALE, selectedVersion, "postcode-fr.bin"),
 								],
 							}
 						: {}),
@@ -218,7 +218,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// which case the demo shows raw softmax scores (and says so). The table is the model's
 				// OWN held-out reliability, so it must match the loaded version.
 				try {
-					const calRes = await fetch(assetUrl(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
+					const calRes = await fetch(assetURL(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
 
 					if (calRes.ok) {
 						const calTable = await calRes.json()
@@ -229,12 +229,12 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 					// No calibration table for this version — raw scores it is.
 				}
 
-				if (release?.hasFst) {
+				if (release?.hasFST) {
 					try {
-						const fstResult = await loadFstGazetteer(DEFAULT_LOCALE, selectedVersion)
-						setFstMatcher(fstResult.matcher)
+						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, selectedVersion)
+						setFSTMatcher(fstResult.matcher)
 
-						if (fstResult.provenance) setFstProvenance(fstResult.provenance)
+						if (fstResult.provenance) setFSTProvenance(fstResult.provenance)
 					} catch {
 						// FST not available for this version
 					}
@@ -243,14 +243,14 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// Step 1 complete: FST loaded (or skipped).
 				setLoadingStepIndex(1)
 
-				if (release?.hasWofDb) {
+				if (release?.hasWOFDb) {
 					try {
-						const { loadHttpvfsDb, WofCandidateTableLookup: WOFCandidateTableLookup } =
+						const { loadHttpvfsDb, WOFCandidateTableLookup: WOFCandidateTableLookup } =
 							await import("../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(adminGazetteerUrl(), sqljsBaseUrl)
+						const worker = await loadHttpvfsDb(adminGazetteerURL(), sqljsBaseURL)
 
 						if (cancelled) return
-						const wofLookup = new WofCandidateTableLookup(worker)
+						const wofLookup = new WOFCandidateTableLookup(worker)
 						// Fire-and-forget: pull the schema/FTS/dual-role pages through the VFS now so the
 						// first interactive query starts warm. The worker serializes execs, so a user query
 						// issued mid-warm-up simply queues behind pages it was going to need anyway.
@@ -277,7 +277,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		return () => {
 			cancelled = true
 		}
-	}, [selectedVersion, manifest, forceWasm, sqljsBaseUrl])
+	}, [selectedVersion, manifest, forceWASM, sqljsBaseURL])
 
 	const selectVersion = useCallback((version: string) => {
 		setSelectedVersion(version)
@@ -302,8 +302,8 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			ready,
 			activeBackend,
 			selectVersion,
-			setForceWasm,
-			forceWasm,
+			setForceWASM,
+			forceWASM,
 		}),
 		[
 			manifest,
@@ -320,7 +320,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			ready,
 			activeBackend,
 			selectVersion,
-			forceWasm,
+			forceWASM,
 		]
 	)
 

@@ -33,7 +33,7 @@ import { DatabaseSync } from "node:sqlite"
 import { ancestorLineage, placetypeDepth } from "./ancestry.js"
 import { PLACE_BBOX_TABLE } from "./fts.js"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "./geo.js"
-import type { PlaceCandidate, WofPlacetype } from "./types.js"
+import type { PlaceCandidate, WOFPlacetype } from "./types.js"
 
 /**
  * How the deepest returned place was confirmed:
@@ -56,7 +56,7 @@ export interface ReverseGeocodeResult {
 	containment: ContainmentKind
 }
 
-export interface WofReverseGeocoderOpts {
+export interface WOFReverseGeocoderOpts {
 	/**
 	 * Path to the admin gazetteer DB (e.g. `admin-global-priority.db`) — must carry `spr`, `ancestors`, and the
 	 * package-built `place_bbox` R*Tree (`mailwoman-wof-build-fts`). Mutually exclusive with `adminDatabase`.
@@ -78,7 +78,7 @@ export interface ReverseGeocodeOpts {
 	 * Restrict the hierarchy to these placetypes (both the bbox candidates and the descent tiers). Default: every admin
 	 * placetype the gazetteer carries. E.g. `["region", "county", "locality"]` to skip the neighbourhood grain.
 	 */
-	placetypes?: WofPlacetype[]
+	placetypes?: WOFPlacetype[]
 	/**
 	 * Cap on the bbox candidate fetch. Default 128 — comfortably covers a dense metro (the most bbox-overlapping point
 	 * we've measured is a few dozen neighbourhoods + the admin chain).
@@ -99,7 +99,7 @@ const DEFAULT_MAX_APPROXIMATE_KM = 25
  * The tier ladder for the approximate descent, coarsest-first. Each tier is attempted among the CURRENT winner's
  * descendants; a tier with no rows is skipped (e.g. counties without localadmins jump straight to locality).
  */
-const DESCENT_TIERS: readonly WofPlacetype[] = [
+const DESCENT_TIERS: readonly WOFPlacetype[] = [
 	"county",
 	"localadmin",
 	"locality",
@@ -123,7 +123,7 @@ function toPlaceCandidate(row: CandidateRow, distanceKm?: number): PlaceCandidat
 	const c: PlaceCandidate = {
 		id: row.id,
 		name: row.name,
-		placetype: row.placetype as WofPlacetype,
+		placetype: row.placetype as WOFPlacetype,
 		country: row.country ?? "",
 		lat: row.lat,
 		lon: row.lon,
@@ -136,7 +136,7 @@ function toPlaceCandidate(row: CandidateRow, distanceKm?: number): PlaceCandidat
 	return c
 }
 
-export class WofReverseGeocoder implements Disposable {
+export class WOFReverseGeocoder implements Disposable {
 	readonly #admin: DatabaseSync
 	readonly #ownsAdmin: boolean
 	readonly #polygons: DatabaseSync | null
@@ -150,17 +150,17 @@ export class WofReverseGeocoder implements Disposable {
 	readonly #geometryCache = new Map<number, GeojsonGeometry | null>()
 	static readonly #GEOMETRY_CACHE_CAP = 4096
 
-	constructor(opts: WofReverseGeocoderOpts) {
+	constructor(opts: WOFReverseGeocoderOpts) {
 		if (opts.adminDatabase && opts.adminDbPath) {
-			throw new Error("WofReverseGeocoder: pass either `adminDatabase` or `adminDbPath`, not both")
+			throw new Error("WOFReverseGeocoder: pass either `adminDatabase` or `adminDbPath`, not both")
 		}
 
 		if (!opts.adminDatabase && !opts.adminDbPath) {
-			throw new Error("WofReverseGeocoder: one of `adminDatabase` or `adminDbPath` is required")
+			throw new Error("WOFReverseGeocoder: one of `adminDatabase` or `adminDbPath` is required")
 		}
 
 		if (opts.polygonDatabase && opts.polygonDbPath) {
-			throw new Error("WofReverseGeocoder: pass either `polygonDatabase` or `polygonDbPath`, not both")
+			throw new Error("WOFReverseGeocoder: pass either `polygonDatabase` or `polygonDbPath`, not both")
 		}
 
 		this.#admin = opts.adminDatabase ?? new DatabaseSync(opts.adminDbPath!, { readOnly: true })
@@ -177,7 +177,7 @@ export class WofReverseGeocoder implements Disposable {
 
 		if (!hasBbox) {
 			throw new Error(
-				`WofReverseGeocoder: the admin DB has no \`${PLACE_BBOX_TABLE}\` R*Tree. Build it with ` +
+				`WOFReverseGeocoder: the admin DB has no \`${PLACE_BBOX_TABLE}\` R*Tree. Build it with ` +
 					"`mailwoman-wof-build-fts <path-to-wof.db>` (see resolver-wof-sqlite/README.md)."
 			)
 		}
@@ -189,7 +189,7 @@ export class WofReverseGeocoder implements Disposable {
 
 			if (!hasPolygons) {
 				throw new Error(
-					"WofReverseGeocoder: the polygon DB has no `polygons` table. Expected a `wof-polygons.db` " +
+					"WOFReverseGeocoder: the polygon DB has no `polygons` table. Expected a `wof-polygons.db` " +
 						"built by scripts/build-wof-polygons.mjs."
 				)
 			}
@@ -202,7 +202,7 @@ export class WofReverseGeocoder implements Disposable {
 	 */
 	async reverseGeocode(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): Promise<ReverseGeocodeResult> {
 		if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
-			throw new RangeError(`WofReverseGeocoder.reverseGeocode: (${lat}, ${lon}) is not a WGS-84 coordinate`)
+			throw new RangeError(`WOFReverseGeocoder.reverseGeocode: (${lat}, ${lon}) is not a WGS-84 coordinate`)
 		}
 		const maxApproximateKm = opts.maxApproximateKm ?? DEFAULT_MAX_APPROXIMATE_KM
 		const candidates = this.#bboxCandidates(lat, lon, opts)
@@ -293,7 +293,7 @@ export class WofReverseGeocoder implements Disposable {
 
 		for (const a of ancestorLineage(this.#admin, current.id)) {
 			if (!byId.has(a.id)) {
-				byId.set(a.id, { ...a, placetype: a.placetype as WofPlacetype, country: a.country ?? "", score: 0 })
+				byId.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
 			}
 		}
 
@@ -302,7 +302,7 @@ export class WofReverseGeocoder implements Disposable {
 
 			for (const a of ancestorLineage(this.#admin, winner.id)) {
 				if (!byId.has(a.id)) {
-					byId.set(a.id, { ...a, placetype: a.placetype as WofPlacetype, country: a.country ?? "", score: 0 })
+					byId.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
 				}
 			}
 		}
@@ -389,7 +389,7 @@ export class WofReverseGeocoder implements Disposable {
 
 		if (cached !== undefined) return cached
 
-		if (this.#geometryCache.size >= WofReverseGeocoder.#GEOMETRY_CACHE_CAP) this.#geometryCache.clear()
+		if (this.#geometryCache.size >= WOFReverseGeocoder.#GEOMETRY_CACHE_CAP) this.#geometryCache.clear()
 		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
 		let geometry: GeojsonGeometry | null = null
 

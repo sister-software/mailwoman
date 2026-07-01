@@ -94,7 +94,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 const RESERVOIR_CAP = 1_200_000
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields). */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -147,7 +147,7 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 			if (!line) return
 
 			if (header === null) {
-				header = splitCsv(line).map((h) => h.trim().toLowerCase())
+				header = splitCSV(line).map((h) => h.trim().toLowerCase())
 				const ix = (name: string): number => header!.indexOf(String(name).toLowerCase())
 				// OA-standard columns (IT/FR/NL/DE), unless the part carries a `conform` map for a raw
 				// upstream schema (ES — CNIG columns, street split across `tipo_vial` + `nombre_via`).
@@ -172,7 +172,7 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 			}
 
 			if (cols === null) return
-			const cells = splitCsv(line)
+			const cells = splitCSV(line)
 			const street = cols.streetParts
 				.map((i) => get(cells, i))
 				.filter(Boolean)

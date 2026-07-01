@@ -31,7 +31,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { WofPostalCityAliasLookup, WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFPostalCityAliasLookup, WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 function arg(name: string, fallback = ""): string {
@@ -78,10 +78,10 @@ async function main(): Promise<void> {
 
 	if (limit > 0) rows = rows.slice(0, limit)
 
-	const off = new WofSqlitePlaceLookup({ databasePath: wof })
-	const on = new WofSqlitePlaceLookup({
+	const off = new WOFSqlitePlaceLookup({ databasePath: wof })
+	const on = new WOFSqlitePlaceLookup({
 		databasePath: wof,
-		postalCityAliases: new WofPostalCityAliasLookup({ databasePath: aliasDbPath }),
+		postalCityAliases: new WOFPostalCityAliasLookup({ databasePath: aliasDbPath }),
 	})
 
 	const distOff: number[] = []

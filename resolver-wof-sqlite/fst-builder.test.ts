@@ -8,19 +8,19 @@ import { existsSync } from "node:fs"
 
 import { beforeAll, describe, expect, it } from "vitest"
 
-import { buildFstFromWof } from "./fst-builder.js"
-import type { FstMatcher } from "./fst-matcher.js"
-import type { BuildFstResult } from "./fst-types.js"
+import { buildFSTFromWOF } from "./fst-builder.js"
+import type { FSTMatcher } from "./fst-matcher.js"
+import type { BuildFSTResult } from "./fst-types.js"
 
 const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const HAS_WOF = existsSync(WOF_DB)
 
-describe.skipIf(!HAS_WOF)("buildFstFromWof — integration", () => {
-	let matcher: FstMatcher
-	let result: BuildFstResult
+describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
+	let matcher: FSTMatcher
+	let result: BuildFSTResult
 
 	beforeAll(() => {
-		const built = buildFstFromWof({
+		const built = buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],

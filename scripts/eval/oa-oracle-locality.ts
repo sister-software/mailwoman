@@ -55,7 +55,7 @@ import { DatabaseSync } from "node:sqlite"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { ParseOpts } from "@mailwoman/neural"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 function arg(name: string, fallback = ""): string {
@@ -204,23 +204,23 @@ async function main(): Promise<void> {
 
 	if (!oracleOnly) {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-		const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+		const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 		const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 		const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(
 				arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 			),
-			OnnxRunner.create(arg("model", dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))),
+			ONNXRunner.create(arg("model", dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))),
 		])
 		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 		parseOpts = { postcodeRepair: true }
 	}
 
 	// --- resolver (shared by both arms) ---
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WofSqlitePlaceLookup({ databasePath: dbPath })
-	const resolver = createWofResolver(backend as never)
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const backend = new WOFSqlitePlaceLookup({ databasePath: dbPath })
+	const resolver = createWOFResolver(backend as never)
 	const resolveOpts = dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}
 
 	// --- localityMatches credit logic (identical to oa-resolver-eval.ts) ---
@@ -310,8 +310,8 @@ async function main(): Promise<void> {
 		 ORDER BY (spr.latitude - ?) * (spr.latitude - ?) + (spr.longitude - ?) * (spr.longitude - ?)
 		 LIMIT 1`
 	)
-	const sanitizeFts = (s: string): string => {
-		// Mirror the spirit of sanitizeFtsQuery: quote tokens so punctuation can't break the MATCH.
+	const sanitizeFTS = (s: string): string => {
+		// Mirror the spirit of sanitizeFTSQuery: quote tokens so punctuation can't break the MATCH.
 		const toks = s
 			.toLowerCase()
 			.replace(/[^a-z0-9\s]+/g, " ")
@@ -497,7 +497,7 @@ async function main(): Promise<void> {
 				errKm: oBest ? haversineKm(oBest.lat, oBest.lon, row.lat, row.lon) : null,
 				note: "",
 			}
-			const ftsQ = sanitizeFts(goldLoc)
+			const ftsQ = sanitizeFTS(goldLoc)
 			let inRegionByName: { id: number; name: string; lat: number; lon: number } | null = null
 			let anyByName = false
 			const regionId = await regionIdFor(goldReg)

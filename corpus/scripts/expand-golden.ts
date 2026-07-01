@@ -104,7 +104,7 @@ interface GoldenCandidate {
 
 // ── CLI ────────────────────────────────────────────────────────────────────
 
-function parseCli() {
+function parseCLI() {
 	const { values } = parseArgs({
 		options: {
 			corpus: {
@@ -446,7 +446,7 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 // ── Main pipeline ─────────────────────────────────────────────────────────
 
 async function main() {
-	const opts = parseCli()
+	const opts = parseCLI()
 	const provider = opts.provider === "anthropic" ? makeAnthropicProvider(opts.model) : makeDeepseekProvider(opts.model)
 	process.stderr.write(`provider: ${provider.name}  model: ${provider.model}\n`)
 

@@ -81,7 +81,7 @@ export interface GeocodeDeps {
 	/**
 	 * OSM rooftop shards keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
 	 * ONLY when no US per-state situs shard matched (a non-US parse), so the US path is untouched. Inject from
-	 * `@mailwoman/osm`'s `OsmShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
+	 * `@mailwoman/osm`'s `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
 	 */
 	osmShards?: (country: string) => StateShards
 	/** Country constraint passed to the resolver (e.g. `"US"`). */

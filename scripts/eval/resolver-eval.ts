@@ -36,7 +36,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
 
@@ -142,28 +142,28 @@ async function main(): Promise<void> {
 	let neural: InstanceType<typeof NeuralAddressClassifier>
 
 	if (modelPath) {
-		const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+		const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 		const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 		const modelCard = JSON.parse(readFileSync(arg("model-card"), "utf8"))
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(arg("tokenizer")),
-			OnnxRunner.create(modelPath),
+			ONNXRunner.create(modelPath),
 		])
 		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()
 	}
 	const v0 = createAddressParser()
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	// PR1 A/B flags: `--exact-tiering false` / `--parent-fallback false` restore the pre-PR1 baseline
 	// so the before/after table is one toggle apart.
 	const exactTiering = arg("exact-tiering", "true") !== "false"
 	const parentFallback = arg("parent-fallback", "true") !== "false"
-	const backend = new WofSqlitePlaceLookup(
+	const backend = new WOFSqlitePlaceLookup(
 		{ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths },
 		{ exactMatchTiering: exactTiering }
 	)
-	const resolver = createWofResolver(backend as never)
+	const resolver = createWOFResolver(backend as never)
 
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 	const country = arg("country", "US")

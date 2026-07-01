@@ -187,9 +187,9 @@ export interface PolygonDb {
  * id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file rather than the whole thing. Same range-load
  * path as the resolver DB.
  */
-export async function loadPolygonDb(url: string, sqljsBaseUrl: string): Promise<PolygonDb> {
+export async function loadPolygonDb(url: string, sqljsBaseURL: string): Promise<PolygonDb> {
 	const { loadHttpvfsDb, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
-	const worker = await loadHttpvfsDb(url, sqljsBaseUrl)
+	const worker = await loadHttpvfsDb(url, sqljsBaseURL)
 	const lookup = makeHttpvfsPolygonLookup(worker)
 
 	return {

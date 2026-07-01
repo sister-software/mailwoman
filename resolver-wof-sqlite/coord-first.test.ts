@@ -15,7 +15,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 function buildDb(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
@@ -51,9 +51,9 @@ function buildDb(): DatabaseSync {
 	return db
 }
 
-let lookup: WofSqlitePlaceLookup
+let lookup: WOFSqlitePlaceLookup
 beforeEach(() => {
-	lookup = new WofSqlitePlaceLookup({ database: buildDb(), buildFts: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildDb(), buildFTS: true })
 })
 afterEach(() => {
 	lookup.close()

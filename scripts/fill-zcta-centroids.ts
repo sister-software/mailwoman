@@ -29,7 +29,7 @@ import {
 	fillGeonamesPlaceholders,
 	fillPlaceholderCentroids,
 	parseGeonamesCentroids,
-	parseZctaCentroids,
+	parseZCTACentroids,
 } from "./zcta-centroids.ts"
 
 function main(): void {
@@ -71,7 +71,7 @@ function main(): void {
 	const beforeAll = count("country='US' AND latitude=0 AND longitude=0")
 
 	// Pass 1: Census ZCTA fill.
-	const zcta = parseZctaCentroids(readFileSync(zctaPath, "utf8"))
+	const zcta = parseZCTACentroids(readFileSync(zctaPath, "utf8"))
 	const zctaBefore = count("country='US' AND latitude=0 AND longitude=0")
 	const zctaFilled = fillPlaceholderCentroids(db, zcta)
 	const zctaAfter = count("country='US' AND latitude=0 AND longitude=0")

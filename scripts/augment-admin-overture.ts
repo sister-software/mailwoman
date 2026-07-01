@@ -26,9 +26,9 @@ import { copyFileSync, existsSync, readFileSync, unlinkSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import type { WofDatabase } from "@mailwoman/resolver-wof-sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
-import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite/fts"
+import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { createUnifiedIndexes, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -43,9 +43,9 @@ import { ingestOvertureDivisions } from "./build-unified-wof.ts"
  */
 async function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): Promise<number> {
 	// The match probe stays a reused prepared statement (read-heavy loop). The WRITE goes through a
-	// typed DatabaseClient<WofDatabase> upsert, so `place_population`'s columns are checked against the
+	// typed DatabaseClient<WOFDatabase> upsert, so `place_population`'s columns are checked against the
 	// shared schema the reader uses.
-	const kdb = new DatabaseClient<WofDatabase>({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
 	const findByName = db.prepare(
 		"SELECT n.id AS id, s.latitude AS lat, s.longitude AS lon FROM names n JOIN spr s ON n.id = s.id WHERE n.name = ? AND n.country = ? AND n.id >= 2000000000"
 	)
@@ -126,7 +126,7 @@ copyFileSync(IN, WORK)
 const db = new DatabaseSync(WORK)
 // `kdb` wraps `db` for the typed read stats below (the bulk INSERTs in ingestOvertureDivisions +
 // populateAncestors stay raw on the handle). MAX(COALESCE)/PRAGMA/VACUUM below also stay raw.
-const kdb = new DatabaseClient<WofDatabase>({ database: db })
+const kdb = new DatabaseClient<WOFDatabase>({ database: db })
 const before = Number(
 	(
 		await kdb
@@ -160,7 +160,7 @@ await createUnifiedIndexes(db)
 // English names) never reach the candidate, and a non-Latin city resolves only by its local-script
 // primary. drop:true so it includes the newly-ingested rows.
 console.error("  place_search FTS (so the candidate's alias pass sees the new places) ...")
-buildPlaceSearchFts(db, { drop: true })
+buildPlaceSearchFTS(db, { drop: true })
 db.exec("ANALYZE")
 db.exec("PRAGMA optimize")
 

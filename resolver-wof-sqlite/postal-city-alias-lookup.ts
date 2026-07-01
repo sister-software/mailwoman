@@ -5,7 +5,7 @@
  *
  *   Node reader over the POSTAL-CITY ALIAS table (`postal-city-alias-<cc>.db`) — the observed
  *   `postal_city → geo_locality` aliases per postcode (`build-postal-city-alias.ts`). Consumed by
- *   {@link WofSqlitePlaceLookup}'s coordinate-first locality scorer: a user-typed postal city
+ *   {@link WOFSqlitePlaceLookup}'s coordinate-first locality scorer: a user-typed postal city
  *   ("Antioch", postcode 37013) becomes a name-match alias for the geographic locality the postcode
  *   actually sits in ("Nashville"), so the right place tiers to the top instead of a same-named
  *   town in another state. Opt-in — the lookup is only constructed when a path is supplied, and
@@ -22,7 +22,7 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
 
-export interface WofPostalCityAliasLookupOpts {
+export interface WOFPostalCityAliasLookupOpts {
 	/** Path to a `postal-city-alias-<cc>.db` built by `build-postal-city-alias.ts`. Opened read-only. */
 	databasePath?: string
 	/** Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`. */
@@ -44,12 +44,12 @@ export interface PostalCityAlias {
  * differs from the geographic name — the rows that carry alias signal), issued via the typed Kysely query builder
  * against {@link PostalCityAliasDatabase}.
  */
-export class WofPostalCityAliasLookup {
+export class WOFPostalCityAliasLookup {
 	#db: DatabaseSync
 	#kdb: DatabaseClient<PostalCityAliasDatabase>
 	#ownsDb: boolean
 
-	constructor(opts: WofPostalCityAliasLookupOpts) {
+	constructor(opts: WOFPostalCityAliasLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
 			this.#ownsDb = false
@@ -57,7 +57,7 @@ export class WofPostalCityAliasLookup {
 			this.#db = new DatabaseSync(opts.databasePath, { readOnly: true })
 			this.#ownsDb = true
 		} else {
-			throw new Error("WofPostalCityAliasLookup needs `databasePath` or `database`")
+			throw new Error("WOFPostalCityAliasLookup needs `databasePath` or `database`")
 		}
 		// `#kdb` wraps `#db` for the typed query; close() owns the raw handle directly (sync).
 		this.#kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: this.#db })

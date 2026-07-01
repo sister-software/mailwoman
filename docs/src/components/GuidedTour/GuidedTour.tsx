@@ -14,7 +14,7 @@
  *   import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
  *   import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
  *
- *   <DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+ *   <DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
  *     <PipelineExplorer />
  *   </DemoEmbedProvider>
  * ```

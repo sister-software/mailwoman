@@ -184,14 +184,14 @@ const SVG_HEIGHT = 380
 
 type ScaleMode = "linear" | "log"
 
-interface SvgChartProps {
+interface SVGChartProps {
 	series: ChartSeries[]
 	containerRef: React.RefObject<HTMLDivElement | null>
 	onHover: (d: TooltipDatum | null) => void
 	scaleMode: ScaleMode
 }
 
-const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scaleMode }) => {
+const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scaleMode }) => {
 	const allPoints = useMemo(() => series.flatMap((s) => s.points), [series])
 
 	const isLog = scaleMode === "log"
@@ -329,7 +329,7 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 
 	if (allPoints.length === 0) {
 		return (
-			<svg viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className={styles.chartSvg}>
+			<svg viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className={styles.chartSVG}>
 				<text x={SVG_WIDTH / 2} y={SVG_HEIGHT / 2} textAnchor="middle" fill="#9ca3af" fontSize="14">
 					No data points
 				</text>
@@ -338,7 +338,7 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 	}
 
 	return (
-		<svg viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className={styles.chartSvg}>
+		<svg viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className={styles.chartSVG}>
 			{/* Background */}
 			<rect width={SVG_WIDTH} height={SVG_HEIGHT} fill="var(--ifm-background-color, #fff)" />
 
@@ -746,7 +746,7 @@ const TrainingChartsInner: React.FC = () => {
 						Log
 					</button>
 				</div>
-				<SvgChart series={chartSeries} containerRef={chartWrapperRef} onHover={handleTooltip} scaleMode={scaleMode} />
+				<SVGChart series={chartSeries} containerRef={chartWrapperRef} onHover={handleTooltip} scaleMode={scaleMode} />
 
 				{/* Tooltip overlay */}
 				{tooltip ? (

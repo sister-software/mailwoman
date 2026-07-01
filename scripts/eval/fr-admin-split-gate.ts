@@ -5,7 +5,7 @@
  *
  *   Fr-admin-split-gate.ts — the LIVE gate for the v1.8.0 international admin-split candidate (night
  *   2026-06-19). Runs the production ship-config parse (createScorer: anchor + gazetteer +
- *   conventions=auto) → resolve (createWofResolver, defaultCountry FR) → coordinate on the HELD-OUT
+ *   conventions=auto) → resolve (createWOFResolver, defaultCountry FR) → coordinate on the HELD-OUT
  *   FR golden set (disjoint communes, with truth coords), and reports the metrics that decide the
  *   promote: assembled centroid error, resolve-rate, région-emit-rate, and the #727 diacritic
  *   break.
@@ -100,7 +100,7 @@ async function main() {
 		.split("\n")
 		.map((l) => JSON.parse(l))
 
-	const [{ WofSqlitePlaceLookup }, { createScorer }, { createWofResolver }] = await Promise.all([
+	const [{ WOFSqlitePlaceLookup }, { createScorer }, { createWOFResolver }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite"),
 		import("@mailwoman/neural/scorer"),
 		import("@mailwoman/resolver"),
@@ -115,7 +115,7 @@ async function main() {
 		strict: true,
 		tier: "server",
 	})
-	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: wofDb }) as never)
+	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: wofDb }) as never)
 	const resolveOpts = { defaultCountry: arg("default-country", "FR") }
 
 	const errs: number[] = []

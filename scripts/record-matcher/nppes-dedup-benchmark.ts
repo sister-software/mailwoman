@@ -44,7 +44,7 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { latLngToCell } from "h3-js"
 
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
@@ -295,8 +295,8 @@ async function main(): Promise<void> {
 			...(arg("model-card") ? { modelCardPath: arg("model-card") } : {}),
 		})
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const lookup = new mod.WofSqlitePlaceLookup({ databasePath: WOF })
-		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
+		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 		const shardProvider = new ShardProvider(mod, DATA_ROOT)
 		const seam = geocodeAddressVia({
 			parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
@@ -353,23 +353,23 @@ async function main(): Promise<void> {
 		let recordsInOverMerged = 0
 		let maxNpisFused = 0
 		entities.forEach((e, ci) => {
-			const byNpi = new Map<string, number>()
+			const byNPI = new Map<string, number>()
 
 			for (const rec of e.records) {
 				const lbl = labelOf(rec)
-				byNpi.set(lbl, (byNpi.get(lbl) ?? 0) + 1)
+				byNPI.set(lbl, (byNPI.get(lbl) ?? 0) + 1)
 			}
 			sumCluster += choose2(e.records.length)
 
 			if (e.records.length === 1) singletons++
 
-			if (byNpi.size > 1) {
+			if (byNPI.size > 1) {
 				overMergedClusters++
 				recordsInOverMerged += e.records.length
-				maxNpisFused = Math.max(maxNpisFused, byNpi.size)
+				maxNpisFused = Math.max(maxNpisFused, byNPI.size)
 			}
 
-			for (const [npi, n] of byNpi) {
+			for (const [npi, n] of byNPI) {
 				sumCK += choose2(n)
 				npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + n)
 			}
@@ -687,11 +687,11 @@ async function main(): Promise<void> {
 	// and the shipped default (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
 	const entityCount = new Set(records.map((r) => entityLabel(r))).size
 	const orgCount = new Set(records.map((r) => orgNameLabel(r))).size
-	const fsNpi = bestLever.score
+	const fsNPI = bestLever.score
 	const fsEntity = scoreEntities(bestLever.res.entities, entityLabel)
 	const fsOrg = scoreEntities(bestLever.res.entities, orgNameLabel)
 	const gbtRes = resolveEntities(records, { addressFrequency, trainEM: TRAIN_EM }) // GBT default-on (production)
-	const gbtNpi = scoreEntities(gbtRes.entities, npiLabel)
+	const gbtNPI = scoreEntities(gbtRes.entities, npiLabel)
 	const gbtEntity = scoreEntities(gbtRes.entities, entityLabel)
 	const gbtOrg = scoreEntities(gbtRes.entities, orgNameLabel)
 	// Tier 2D: the coordinate-co-location org-name truth (tighter lower bound).
@@ -729,8 +729,8 @@ async function main(): Promise<void> {
 		)
 	}
 	console.error(
-		`    truth-grains — GBT NPI ${(100 * gbtNpi.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}% → org-name-coord ${(100 * gbtOrgCoord.f1).toFixed(1)}% → org-name-h3 ${(100 * gbtOrgH3.f1).toFixed(1)}% (res ${H3_RES}); ` +
-			`FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}% / org-coord ${(100 * fsOrgCoord.f1).toFixed(1)}%`
+		`    truth-grains — GBT NPI ${(100 * gbtNPI.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}% → org-name-coord ${(100 * gbtOrgCoord.f1).toFixed(1)}% → org-name-h3 ${(100 * gbtOrgH3.f1).toFixed(1)}% (res ${H3_RES}); ` +
+			`FS: NPI ${(100 * fsNPI.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}% / org-coord ${(100 * fsOrgCoord.f1).toFixed(1)}%`
 	)
 
 	const pct = (x: number) => (100 * x).toFixed(1)
@@ -748,9 +748,9 @@ async function main(): Promise<void> {
 	lines.push(
 		`**Headline — org-name truth (the honest grain):** the shipped ` +
 			`matcher resolves these records at **F1 ${pct(gbtOrg.f1)}%** against org-name entity-truth — not the NPI-level ` +
-			`${pct(gbtNpi.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
+			`${pct(gbtNPI.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
 			`correct co-located merges are scored as errors). Same clusters, three rulers: ` +
-			`**NPI ${pct(gbtNpi.f1)}% → site ${pct(gbtEntity.f1)}% → org-name ${pct(gbtOrg.f1)}%** ` +
+			`**NPI ${pct(gbtNPI.f1)}% → site ${pct(gbtEntity.f1)}% → org-name ${pct(gbtOrg.f1)}%** ` +
 			`(${kept.size} NPI → ${entityCount} site → ${orgCount} org-name classes); the climb is the yardstick getting honest, ` +
 			`not the model changing — gold-set validated (120/120 hard pairs = same org). Details in "Three truth grains" below.`
 	)
@@ -844,15 +844,15 @@ async function main(): Promise<void> {
 		lines.push(
 			`| ${label} | ${truth} | ${pct(s.precision)}% | ${pct(s.recall)}% | **${pct(s.f1)}%** | ${delta === undefined ? "—" : signed(100 * delta)} | ${s.ari.toFixed(3)} | ${s.overMergedClusters} |`
 		)
-	dualRow("FS full stack", "NPI", fsNpi)
-	dualRow("FS full stack", "site", fsEntity, fsEntity.f1 - fsNpi.f1)
-	dualRow("FS full stack", "**org-name**", fsOrg, fsOrg.f1 - fsNpi.f1)
-	dualRow("FS full stack", "org-name (coord)", fsOrgCoord, fsOrgCoord.f1 - fsNpi.f1)
-	dualRow("GBT (shipped default)", "NPI", gbtNpi)
-	dualRow("GBT (shipped default)", "site", gbtEntity, gbtEntity.f1 - gbtNpi.f1)
-	dualRow("GBT (shipped default)", "**org-name**", gbtOrg, gbtOrg.f1 - gbtNpi.f1)
-	dualRow("GBT (shipped default)", "**org-name (coord)**", gbtOrgCoord, gbtOrgCoord.f1 - gbtNpi.f1)
-	dualRow("GBT (shipped default)", `org-name (H3 res ${H3_RES})`, gbtOrgH3, gbtOrgH3.f1 - gbtNpi.f1)
+	dualRow("FS full stack", "NPI", fsNPI)
+	dualRow("FS full stack", "site", fsEntity, fsEntity.f1 - fsNPI.f1)
+	dualRow("FS full stack", "**org-name**", fsOrg, fsOrg.f1 - fsNPI.f1)
+	dualRow("FS full stack", "org-name (coord)", fsOrgCoord, fsOrgCoord.f1 - fsNPI.f1)
+	dualRow("GBT (shipped default)", "NPI", gbtNPI)
+	dualRow("GBT (shipped default)", "site", gbtEntity, gbtEntity.f1 - gbtNPI.f1)
+	dualRow("GBT (shipped default)", "**org-name**", gbtOrg, gbtOrg.f1 - gbtNPI.f1)
+	dualRow("GBT (shipped default)", "**org-name (coord)**", gbtOrgCoord, gbtOrgCoord.f1 - gbtNPI.f1)
+	dualRow("GBT (shipped default)", `org-name (H3 res ${H3_RES})`, gbtOrgH3, gbtOrgH3.f1 - gbtNPI.f1)
 
 	if (cand) {
 		dualRow(cand.label, "NPI", cand.npi)
@@ -860,9 +860,9 @@ async function main(): Promise<void> {
 	}
 	lines.push("")
 	lines.push(
-		`The F1 **climbs as the yardstick gets honest**: GBT **${pct(gbtNpi.f1)}% (NPI) → ${pct(gbtEntity.f1)}% (site) → ` +
-			`${pct(gbtOrg.f1)}% (org-name)**, the over-merge collapsing (${gbtNpi.overMergedClusters} → ${gbtOrg.overMergedClusters}) ` +
-			`and precision rising (${pct(gbtNpi.precision)}% → ${pct(gbtOrg.precision)}%). The clusters are IDENTICAL across the three ` +
+		`The F1 **climbs as the yardstick gets honest**: GBT **${pct(gbtNPI.f1)}% (NPI) → ${pct(gbtEntity.f1)}% (site) → ` +
+			`${pct(gbtOrg.f1)}% (org-name)**, the over-merge collapsing (${gbtNPI.overMergedClusters} → ${gbtOrg.overMergedClusters}) ` +
+			`and precision rising (${pct(gbtNPI.precision)}% → ${pct(gbtOrg.precision)}%). The clusters are IDENTICAL across the three ` +
 			`columns — the climb is purely the ruler ceasing to charge the matcher for the correct same-org merges the gold set proved ` +
 			`(\`2026-06-16-dedup-gold-set-tx120.md\`: 120/120 same org, 0 genuine over-merges).`
 	)
@@ -895,7 +895,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(
 		`**Takeaways:** (1) The dedup model's REAL quality is the **org-name F1 ~${pct(gbtOrg.f1)}%**, not the NPI-level ` +
-			`${pct(gbtNpi.f1)}% — the difference was NPI over-segmentation, not model error. (2) The #625 lever was the YARDSTICK, ` +
+			`${pct(gbtNPI.f1)}% — the difference was NPI over-segmentation, not model error. (2) The #625 lever was the YARDSTICK, ` +
 			`not the scorer: the corroboration-feature experiment (reverted) couldn't move precision because the over-merge was ` +
 			`mostly correct. (3) The remaining org-name over-merge (${gbtOrg.overMergedClusters} clusters) is the genuine frontier — ` +
 			`small, approaching the ceiling's ~1.6% irreducible (\`2026-06-16-dedup-ceiling.md\`). (4) Trust the large eval: a 50-NPI ` +

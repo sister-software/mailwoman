@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Browser-side loader that pairs the existing `MailwomanTokenizer` (whose `loadFromBase64` path is
- *   already browser-safe — it doesn't touch Node fs) with a fresh `WebOnnxRunner`, and returns a
+ *   already browser-safe — it doesn't touch Node fs) with a fresh `WebONNXRunner`, and returns a
  *   ready-to-use `NeuralAddressClassifier`.
  *
  *   V1 strategy: fetch both `model.onnx` and `tokenizer.model` over HTTP from caller-provided URLs
@@ -23,13 +23,13 @@ import {
 	PostcodeBinaryResolver,
 } from "@mailwoman/neural/browser"
 
-import { WebOnnxRunner, type WebOnnxRunnerDiagnostics, type WebOnnxRunnerOpts } from "./web-onnx-runner.js"
+import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.js"
 
-export type { WebOnnxRunnerDiagnostics }
+export type { WebONNXRunnerDiagnostics }
 
 export interface LoadResult {
 	classifier: NeuralAddressClassifier
-	diagnostics: WebOnnxRunnerDiagnostics | null
+	diagnostics: WebONNXRunnerDiagnostics | null
 	/**
 	 * Labels actually applied to the classifier. `null` when no model-card was provided or its `labels` field was missing
 	 * — the classifier fell back to its built-in default (Stage 2).
@@ -45,9 +45,9 @@ export interface LoadResult {
 
 export interface LoadFromUrlsOpts {
 	/** URL to the ONNX model file (e.g. `/static/mailwoman/model.onnx`). */
-	modelUrl: string
+	modelURL: string
 	/** URL to the SentencePiece tokenizer model (e.g. `/static/mailwoman/tokenizer.model`). */
-	tokenizerUrl: string
+	tokenizerURL: string
 	/**
 	 * URL to `model-card.json`. When provided, its `labels` field is threaded into the classifier so post-Stage-2 bundles
 	 * (33-label Stage 3 and beyond) decode correctly. Skip for legacy bundles whose cards predate the `labels` field —
@@ -56,9 +56,9 @@ export interface LoadFromUrlsOpts {
 	 * Required for any v0.6.x+ bundle: without it the classifier builds a 21×21 transition mask while the model emits 33
 	 * logits and viterbi crashes with "Cannot read properties of undefined".
 	 */
-	modelCardUrl?: string
+	modelCardURL?: string
 	/** Runner options (WebGPU toggle, fixed sequence length, WASM path override). */
-	runner?: WebOnnxRunnerOpts
+	runner?: WebONNXRunnerOpts
 	/**
 	 * URLs to one or more PCB1 postcode binaries (`postcode-<cc>.bin`). For anchor-trained models (#239/#240) these are
 	 * decoded + merged into the postcode→anchor lookup the classifier feeds at inference, so the demo runs the model with
@@ -73,12 +73,12 @@ export interface LoadFromUrlsOpts {
 	 * fallback is the measured train/inference mismatch that wrecks segmentation ("the zero-fill trap",
 	 * CONTRIBUTING_MODEL_WORK.mdx eval invariants).
 	 *
-	 * Defaults to `anchor-lexicon-v1.json` next to `modelUrl`. A fetch miss (404 etc.) does NOT throw — older bundles
+	 * Defaults to `anchor-lexicon-v1.json` next to `modelURL`. A fetch miss (404 etc.) does NOT throw — older bundles
 	 * never shipped the file — but if the loaded model turns out to be gazetteer-trained the loader logs a loud
 	 * `console.error` naming the missing file and the model runs gazetteer-off (structurally valid, quality-degraded).
 	 * Pass `null` to skip the fetch entirely.
 	 */
-	gazetteerLexiconUrl?: string | null
+	gazetteerLexiconURL?: string | null
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent to a postcode-anchor
 	 * hit. Defaults to TRUE — it pairs with the train-time half on every gazetteer-trained bundle (v4.2.0+) and is inert
@@ -137,10 +137,10 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
  * how release bundles lay out their version directory (model.onnx, tokenizer.model, model-card.json, postcode-*.bin,
  * anchor-lexicon-v1.json side by side).
  */
-export function defaultGazetteerLexiconUrl(modelUrl: string): string {
+export function defaultGazetteerLexiconURL(modelURL: string): string {
 	// Swap the final path segment — string surgery rather than `new URL()` so relative model URLs
 	// ("/static/mailwoman/model.onnx") stay relative.
-	return modelUrl.replace(/[^/]*$/, "anchor-lexicon-v1.json")
+	return modelURL.replace(/[^/]*$/, "anchor-lexicon-v1.json")
 }
 
 /**
@@ -160,19 +160,19 @@ export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Prom
 		throw new Error("no fetch implementation available — pass fetchImpl in non-fetch environments")
 	}
 
-	const gazetteerLexiconUrl =
-		opts.gazetteerLexiconUrl === null ? null : (opts.gazetteerLexiconUrl ?? defaultGazetteerLexiconUrl(opts.modelUrl))
+	const gazetteerLexiconURL =
+		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
 
 	const [modelBytes, tokenizerBytes, labels, gazetteerLexicon] = await Promise.all([
-		fetchBytes(opts.modelUrl, fetchImpl),
-		fetchBytes(opts.tokenizerUrl, fetchImpl),
-		opts.modelCardUrl ? fetchLabelsFromModelCard(opts.modelCardUrl, fetchImpl) : Promise.resolve(null),
-		gazetteerLexiconUrl ? fetchGazetteerLexicon(gazetteerLexiconUrl, fetchImpl) : Promise.resolve(null),
+		fetchBytes(opts.modelURL, fetchImpl),
+		fetchBytes(opts.tokenizerURL, fetchImpl),
+		opts.modelCardURL ? fetchLabelsFromModelCard(opts.modelCardURL, fetchImpl) : Promise.resolve(null),
+		gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
 	])
 
 	const [tokenizer, runner, postcodeAnchorLookup] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
-		WebOnnxRunner.fromBytes(modelBytes, opts.runner),
+		WebONNXRunner.fromBytes(modelBytes, opts.runner),
 		opts.postcodeBinaryUrls?.length
 			? Promise.all(
 					opts.postcodeBinaryUrls.map(async (url) =>
@@ -196,7 +196,7 @@ export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Prom
 	await runner.infer([0])
 	warnOnUnfedTrainedChannels(runner, {
 		gazetteerLexicon,
-		gazetteerLexiconUrl,
+		gazetteerLexiconURL,
 		postcodeAnchorLookup,
 	})
 
@@ -211,10 +211,10 @@ export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Prom
  * is missing in 'feeds'`.) The loader still returns a working classifier — structural fallback, loud console.
  */
 function warnOnUnfedTrainedChannels(
-	runner: WebOnnxRunner,
+	runner: WebONNXRunner,
 	fed: {
 		gazetteerLexicon: GazetteerLexicon | null
-		gazetteerLexiconUrl: string | null
+		gazetteerLexiconURL: string | null
 		postcodeAnchorLookup: AnchorLookup | undefined
 	}
 ): void {
@@ -226,10 +226,10 @@ function warnOnUnfedTrainedChannels(
 		console.error(
 			"[mailwoman/neural-web] This model is gazetteer-anchor-trained (its ONNX declares `gazetteer_features`) " +
 				"but no gazetteer lexicon was loaded" +
-				(fed.gazetteerLexiconUrl
-					? ` — \`anchor-lexicon-v1.json\` could not be fetched from ${fed.gazetteerLexiconUrl}. ` +
-						"Upload the lexicon next to model.onnx, or pass `gazetteerLexiconUrl` explicitly."
-					: " — `gazetteerLexiconUrl` was explicitly disabled (null). ") +
+				(fed.gazetteerLexiconURL
+					? ` — \`anchor-lexicon-v1.json\` could not be fetched from ${fed.gazetteerLexiconURL}. ` +
+						"Upload the lexicon next to model.onnx, or pass `gazetteerLexiconURL` explicitly."
+					: " — `gazetteerLexiconURL` was explicitly disabled (null). ") +
 				" Running with zero-filled gazetteer clues: parses will be degraded (train/inference mismatch)."
 		)
 	}

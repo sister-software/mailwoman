@@ -7,7 +7,7 @@
  *   `mailwoman-wof-build-fts <path-to-wof.db>... [--drop]`
  *
  *   Operator-side one-shot CLI: takes one or more Who's On First SQLite distributions and adds the
- *   `place_search` FTS5 + `place_bbox` R*Tree virtual tables needed by `WofSqlitePlaceLookup`. Run
+ *   `place_search` FTS5 + `place_bbox` R*Tree virtual tables needed by `WOFSqlitePlaceLookup`. Run
  *   this once per downloaded WOF shard so production callers can skip the (~minutes-long) lazy
  *   build.
  *
@@ -24,9 +24,9 @@ import { existsSync } from "node:fs"
 import { exit, stderr } from "node:process"
 import { DatabaseSync } from "node:sqlite"
 
-import { buildPlaceSearchFts } from "./fts.js"
+import { buildPlaceSearchFTS } from "./fts.js"
 
-interface CliArgs {
+interface CLIArgs {
 	databasePaths: string[]
 	drop: boolean
 }
@@ -38,7 +38,7 @@ function printUsageAndExit(code: number): never {
 			"",
 			"Builds the place_search FTS5 + place_bbox R*Tree virtual tables in one or more",
 			"Who's On First SQLite distributions. Run this once per downloaded WOF shard so",
-			"production WofSqlitePlaceLookup instances skip the lazy-build cost at first open.",
+			"production WOFSqlitePlaceLookup instances skip the lazy-build cost at first open.",
 			"",
 			"  --drop   Drop and rebuild place_search + place_bbox if they already exist.",
 			"           Apply after refreshing the spr / names tables from a newer dump.",
@@ -56,7 +56,7 @@ function printUsageAndExit(code: number): never {
 	exit(code)
 }
 
-function parseArgs(argv: readonly string[]): CliArgs {
+function parseArgs(argv: readonly string[]): CLIArgs {
 	const args: string[] = []
 	let drop = false
 
@@ -91,7 +91,7 @@ function buildOne(path: string, drop: boolean): number {
 	const db = new DatabaseSync(path)
 
 	try {
-		const result = buildPlaceSearchFts(db, {
+		const result = buildPlaceSearchFTS(db, {
 			drop,
 			onProgress: (phase, detail) => {
 				const suffix = detail ? ` — ${detail}` : ""

@@ -14,7 +14,7 @@
  *   import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
  *   import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
  *
- *   <DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+ *   <DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
  *     <PipelineExplorer />
  *   </DemoEmbedProvider>
  * ```
@@ -94,8 +94,8 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 		ready,
 		activeBackend,
 		selectVersion,
-		setForceWasm,
-		forceWasm,
+		setForceWASM,
+		forceWASM,
 	} = useDemoEmbed()
 
 	const [text, setText] = useState(defaultAddress)
@@ -315,7 +315,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 					</span>
 				) : null}
 				<label className={styles.wasmToggle}>
-					<input type="checkbox" checked={forceWasm} onChange={(e) => setForceWasm(e.target.checked)} />
+					<input type="checkbox" checked={forceWASM} onChange={(e) => setForceWASM(e.target.checked)} />
 					Force WASM
 				</label>
 			</div>

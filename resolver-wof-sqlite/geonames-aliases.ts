@@ -13,7 +13,7 @@
  *   For each POPULATED place (feature class `P`) this writes an `spr` row + `names` rows (primary +
  *   Latin alt-names) + population into the SAME tables the WOF/Overture paths use — synthetic ids
  *   based at {@link GEONAMES_ID_BASE} so the three sources never collide. The caller then rebuilds
- *   `place_search` ({@link buildPlaceSearchFts} with `drop: true`) so the candidate build carries
+ *   `place_search` ({@link buildPlaceSearchFTS} with `drop: true`) so the candidate build carries
  *   Karjaa↔Karis. Proven (FI hard-resolve 69.5 → 85.8 %, coverage 74.4 → 94.0 %); duplicating a
  *   place already held under another source is benign — the rows share name_key+coord and the
  *   candidate ranking dedupes by score.
@@ -49,7 +49,7 @@ export interface GeonamesIngestProgress {
  * `place_population` tables. Returns the total places ingested.
  *
  * `onProgress` receives one event per country (default: a stderr line, matching the build scripts' legacy output). The
- * caller MUST rebuild `place_search` afterward (`buildPlaceSearchFts(db, { drop: true })`) for the new names to reach
+ * caller MUST rebuild `place_search` afterward (`buildPlaceSearchFTS(db, { drop: true })`) for the new names to reach
  * the candidate build's alias pass.
  */
 export function ingestGeonamesAliases(

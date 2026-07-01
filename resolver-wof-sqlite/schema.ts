@@ -19,7 +19,7 @@
  * The FTS5 virtual table built by this package on first open (NOT shipped by upstream WOF).
  *
  * `content` is unindexed — it's there so we can roundtrip the original name back to the caller without a second SELECT.
- * The actual FTS rebuild happens in `fts.ts::buildPlaceSearchFts`.
+ * The actual FTS rebuild happens in `fts.ts::buildPlaceSearchFTS`.
  */
 export interface PlaceSearchTable {
 	rowid: number
@@ -153,12 +153,12 @@ export interface CoincidentRolesTable {
 }
 
 /**
- * The full schema we hand to `Kysely<WofDatabase>` / `new DatabaseClient<WofDatabase>(...)`. Tables not listed here
- * will fail type-checked queries — by design. The reader ({@link WofSqlitePlaceLookup}) already consumes this; the
+ * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`. Tables not listed here
+ * will fail type-checked queries — by design. The reader ({@link WOFSqlitePlaceLookup}) already consumes this; the
  * build/augment WRITERS adopt it so a column rename is a compile error on both sides (the drift that bit the corpus
  * TIGER adapter).
  */
-export interface WofDatabase {
+export interface WOFDatabase {
 	place_search: PlaceSearchTable
 	spr: SprTable
 	names: NamesTable

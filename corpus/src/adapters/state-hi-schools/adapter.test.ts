@@ -43,7 +43,7 @@ beforeEach(() => {
 	scratch = mkdtempSync(join(tmpdir(), "mailwoman-hi-schools-"))
 })
 
-function writeCsv(...lines: string[]): string {
+function writeCSV(...lines: string[]): string {
 	const p = join(scratch, "test.csv")
 	const header = CSV_HEADER + "\n"
 	writeFileSync(p, header + lines.join("\n"), "utf8")
@@ -59,7 +59,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("emits a row for a HIDOE school with a hyphenated Oahu address", async () => {
-		const p = writeCsv(
+		const p = writeCSV(
 			"335,Ahuimanu Elem School,47-470 Hui Aeko Place,Kaneohe,96744,808.305.4800,808.239.3127,Kimi Ikeda,K,6,Elementary,http://example,Castle,Castle-Kahuku,Windward,Oahu,False"
 		)
 		const a = createStateHiSchoolsAdapter()
@@ -82,7 +82,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("emits a row for a charter (PCS) school with a non-hyphenated address", async () => {
-		const p = writeCsv(
+		const p = writeCSV(
 			"540,Halau Ku Mana - PCS,2101 Makiki Heights Drive,Honolulu,96822,808.945.1600,808.945.1604,Lori Pereia,4,12,K - 12,http://example,Roosevelt,Kaimuki-McKinley-Roosevelt,Honolulu,Oahu,True"
 		)
 		const a = createStateHiSchoolsAdapter()
@@ -101,7 +101,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("skips rows with missing required fields", async () => {
-		const p = writeCsv(
+		const p = writeCSV(
 			// missing name
 			",,200 Some Way,Honolulu,96813,,,,,,,,,,,,",
 			// missing address
@@ -137,7 +137,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("honors limit", async () => {
-		const p = writeCsv(
+		const p = writeCSV(
 			"100,A School,100 A St,Honolulu,96813,,,,,,,,,,,,",
 			"101,B School,200 B St,Honolulu,96813,,,,,,,,,,,,",
 			"102,C School,300 C St,Honolulu,96813,,,,,,,,,,,,"

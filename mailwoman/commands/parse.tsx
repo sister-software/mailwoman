@@ -12,7 +12,7 @@ import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
 import { InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
 import { useEffect, useState } from "react"
@@ -256,7 +256,7 @@ export function resolverDefaultCountry(
 	return candidateActive ? undefined : localeToCountry(options.locale)
 }
 
-function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
+function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
 
 	if (!path) {
@@ -270,9 +270,9 @@ function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	return path
 }
 
-async function tryBuildFst(
+async function tryBuildFST(
 	options: zod.infer<typeof ParseConfigSchema>
-): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FstMatcher | undefined> {
+): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined> {
 	const dbPath = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
 
 	if (!dbPath) return undefined
@@ -281,8 +281,8 @@ async function tryBuildFst(
 		const { existsSync } = await import("node:fs")
 
 		if (!existsSync(dbPath)) return undefined
-		const { buildFstFromWof } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
-		const { matcher } = buildFstFromWof({ dbPath })
+		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
+		const { matcher } = buildFSTFromWOF({ dbPath })
 
 		return matcher
 	} catch {
@@ -329,13 +329,13 @@ async function withResolver<T>(
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend (no WOF admin path required); else FTS.
 	const lookup = createResolverBackend(mod, {
-		wofPaths: resolveCandidateDbPath() ? "" : resolveWofPath(options),
+		wofPaths: resolveCandidateDbPath() ? "" : resolveWOFPath(options),
 	})
 
 	try {
 		// PlaceLookup is structurally compatible with ResolverBackend — the cast is just to satisfy
 		// the type, no runtime conversion.
-		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 
 		return await fn(resolver)
 	} finally {
@@ -414,7 +414,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
-			const fst = await tryBuildFst(options)
+			const fst = await tryBuildFST(options)
 			const pipeline = createRuntimePipeline({ classifier, resolver, fst })
 			const result = await pipeline(input, pipelineOpts)
 
@@ -424,7 +424,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		})
 	}
 
-	const fst = await tryBuildFst(options)
+	const fst = await tryBuildFST(options)
 	const pipeline = createRuntimePipeline({ classifier, fst })
 	const result = await pipeline(input, pipelineOpts)
 

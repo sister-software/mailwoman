@@ -1,4 +1,4 @@
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { readFileSync } from "node:fs"
 
@@ -11,10 +11,10 @@ const WOF = [
 ]
 
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 const modelCard = JSON.parse(readFileSync(CARD, "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 const neuralArgmax = new NeuralAddressClassifier({
 	tokenizer,
@@ -24,9 +24,9 @@ const neuralArgmax = new NeuralAddressClassifier({
 } as any)
 const v0 = createAddressParser()
 
-const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-const backend = new WofSqlitePlaceLookup({ databasePath: WOF })
-const resolver = createWofResolver(backend as never)
+const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+const backend = new WOFSqlitePlaceLookup({ databasePath: WOF })
+const resolver = createWOFResolver(backend as never)
 
 function dumpTree(label: string, tree: any) {
 	const flat: string[] = []

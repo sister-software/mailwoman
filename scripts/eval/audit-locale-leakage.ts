@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -16,7 +16,7 @@ const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([
 	MailwomanTokenizer.loadFromFile(TOK),
-	OnnxRunner.create("/tmp/v110-relabel-40k-locale-int8.onnx"),
+	ONNXRunner.create("/tmp/v110-relabel-40k-locale-int8.onnx"),
 ])
 const neural = new NeuralAddressClassifier({
 	tokenizer,

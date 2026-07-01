@@ -17,7 +17,7 @@ import {
 	geocodeAddressVia,
 	inferMapping,
 	ingestRows,
-	parseCsv,
+	parseCSV,
 	streamRows,
 } from "./ingest.js"
 
@@ -25,9 +25,9 @@ const CSV = `id,name,org,street,city,state,zip,phone,email
 c1,Dr. Robert Smith,Acme Health LLC,123 Main St,Portland,OR,97201,503-555-0100,Bob@Acme.org
 c2,Maria Garcia,,50 Elm Ave,Seattle,WA,98101,,maria@example.com`
 
-describe("parseCsv", () => {
+describe("parseCSV", () => {
 	it("parses a header row into keyed objects", () => {
-		const rows = parseCsv(CSV)
+		const rows = parseCSV(CSV)
 		expect(rows).toHaveLength(2)
 		expect(rows[0]).toMatchObject({ id: "c1", name: "Dr. Robert Smith", state: "OR" })
 	})
@@ -96,7 +96,7 @@ describe("ingestRows", () => {
 	}
 
 	it("normalizes each row: parsed name, canonical org, geocoded address, phone/email", async () => {
-		const [a, b] = await ingestRows(parseCsv(CSV), mapping, { geocodeAddress: stubGeocode })
+		const [a, b] = await ingestRows(parseCSV(CSV), mapping, { geocodeAddress: stubGeocode })
 
 		expect(a!.id).toBe("c1")
 		expect(a!.name).toEqual({ prefix: "Dr.", given: "Robert", family: "Smith" })
@@ -114,19 +114,19 @@ describe("ingestRows", () => {
 	})
 
 	it("comma-joins a multi-column address by default, space when overridden (#694 flip)", async () => {
-		const [dflt] = await ingestRows(parseCsv(CSV), mapping, { geocodeAddress: stubGeocode })
+		const [dflt] = await ingestRows(parseCSV(CSV), mapping, { geocodeAddress: stubGeocode })
 		expect(dflt!.address?.formatted).toBe("123 Main St, Portland, OR, 97201") // default: comma-join (#694, validated)
-		const [space] = await ingestRows(parseCsv(CSV), mapping, { geocodeAddress: stubGeocode, addressSeparator: " " })
+		const [space] = await ingestRows(parseCSV(CSV), mapping, { geocodeAddress: stubGeocode, addressSeparator: " " })
 		expect(space!.address?.formatted).toBe("123 Main St Portland OR 97201") // override → legacy space-join (byte-stable A/B)
 	})
 
 	it("falls back to the row index when no id column maps", async () => {
-		const [first] = await ingestRows(parseCsv(CSV), { name: "name" })
+		const [first] = await ingestRows(parseCSV(CSV), { name: "name" })
 		expect(first!.id).toBe("0")
 	})
 
 	it("leaves the address unresolved when no geocoder is injected", async () => {
-		const [first] = await ingestRows(parseCsv(CSV), mapping)
+		const [first] = await ingestRows(parseCSV(CSV), mapping)
 		expect(first!.address).toBeUndefined()
 	})
 })

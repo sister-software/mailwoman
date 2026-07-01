@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-export interface FstProvenanceLike {
+export interface FSTProvenanceLike {
 	builtAt: string
 	stateCount: number
 	placeCount: number
 	importanceMatches: number
 }
 
-export interface FstMatcherLike {
+export interface FSTMatcherLike {
 	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null
 	walkFrom(
 		prev: { stateId: number; accepted: boolean; depth: number },
@@ -23,7 +23,7 @@ export interface FstMatcherLike {
 }
 
 export interface MailwomanClassifierLike {
-	parse: (text: string, opts?: { queryShape?: unknown; fst?: FstMatcherLike }) => Promise<unknown>
+	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
 }
 
 export interface MailwomanLookupLike {
@@ -101,7 +101,7 @@ export interface DemoResult {
 	/** Per-stage timing for the breakdown panel; absent on older render paths. */
 	timing?: StageTiming
 	fstActive: boolean
-	fstProvenance?: FstProvenanceLike | null
+	fstProvenance?: FSTProvenanceLike | null
 	/**
 	 * Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state etc.).
 	 */
@@ -148,7 +148,7 @@ export interface ResolvedHit {
 // one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL swap.
 const ASSET_BASE_URL = "https://public.sister.software/mailwoman/"
 
-export function assetUrl(locale: string, version: string, filename: string): string {
+export function assetURL(locale: string, version: string, filename: string): string {
 	return `${ASSET_BASE_URL}${locale}/${version}/${filename}`
 }
 
@@ -158,7 +158,7 @@ export function assetUrl(locale: string, version: string, filename: string): str
  * parsed region, not bundled. Independent of the locale/version WOF asset layout (street shards are per-state, not
  * per-model-version).
  */
-export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
+export function streetShardURL(slug: string, kind: "situs" | "interp"): string {
 	return `${ASSET_BASE_URL}street/us/${slug}/${kind}.db`
 }
 
@@ -178,10 +178,10 @@ export const ADMIN_GAZETTEER_VERSION = "2026-06-30a"
  * touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full DB), with GLOBAL coverage and no
  * `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted ONLY on an exact-name
  * miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched. Resolved by
- * {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at `mailwoman/gazetteer/<date>/candidate.db`,
+ * {@link WOFCandidateTableLookup} (build-candidate.ts). Hosted at `mailwoman/gazetteer/<date>/candidate.db`,
  * version-independent like the street shards.
  */
-export function adminGazetteerUrl(): string {
+export function adminGazetteerURL(): string {
 	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
 }
 
@@ -322,47 +322,47 @@ export function regionToStateSlug(region: string | undefined): string | null {
 export function neuralClassifierLoadUrls(
 	locale: string,
 	version: string,
-	opts: { hasAnchor?: boolean; forceWasm: boolean }
+	opts: { hasAnchor?: boolean; forceWASM: boolean }
 ) {
 	return {
-		modelUrl: assetUrl(locale, version, "model.onnx"),
-		tokenizerUrl: assetUrl(locale, version, "tokenizer.model"),
-		modelCardUrl: assetUrl(locale, version, "model-card.json"),
+		modelURL: assetURL(locale, version, "model.onnx"),
+		tokenizerURL: assetURL(locale, version, "tokenizer.model"),
+		modelCardURL: assetURL(locale, version, "model-card.json"),
 		// Gazetteer-anchor lexicon (#464): REQUIRED by gazetteer-trained bundles (v4.2.0+). The loader
 		// tolerates a 404 for older bundles (logging loudly when the model needed it).
-		gazetteerLexiconUrl: assetUrl(locale, version, "anchor-lexicon-v1.json"),
-		runner: { useWebGpu: !opts.forceWasm },
+		gazetteerLexiconURL: assetURL(locale, version, "anchor-lexicon-v1.json"),
+		runner: { useWebGPU: !opts.forceWASM },
 		// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode anchor
 		// — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
 		...(opts.hasAnchor
 			? {
 					postcodeBinaryUrls: [
-						assetUrl(locale, version, "postcode-us.bin"),
-						assetUrl(locale, version, "postcode-de.bin"),
-						assetUrl(locale, version, "postcode-fr.bin"),
+						assetURL(locale, version, "postcode-us.bin"),
+						assetURL(locale, version, "postcode-de.bin"),
+						assetURL(locale, version, "postcode-fr.bin"),
 					],
 				}
 			: {}),
 	}
 }
 
-export async function loadFstGazetteer(
+export async function loadFSTGazetteer(
 	locale: string,
 	version: string
-): Promise<{ matcher: FstMatcherLike; provenance?: FstProvenanceLike }> {
+): Promise<{ matcher: FSTMatcherLike; provenance?: FSTProvenanceLike }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web"),
-		fetch(assetUrl(locale, version, "fst-en-US.bin")).then((r) => {
+		fetch(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
 			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
 
 			return r.arrayBuffer()
 		}),
 	])
-	const matcher = fstModule.deserializeFstWeb(fstBinary) as FstMatcherLike
-	let provenance: FstProvenanceLike | undefined
+	const matcher = fstModule.deserializeFSTWeb(fstBinary) as FSTMatcherLike
+	let provenance: FSTProvenanceLike | undefined
 
 	try {
-		provenance = fstModule.readFstProvenanceWeb(fstBinary) as FstProvenanceLike | undefined
+		provenance = fstModule.readFSTProvenanceWeb(fstBinary) as FSTProvenanceLike | undefined
 	} catch {
 		/* V2 binary — no provenance */
 	}

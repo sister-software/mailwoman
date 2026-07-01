@@ -1,14 +1,14 @@
 /**
- * Smoke test: confirm WofSqlitePlaceLookup works against our CUSTOM unified DB (admin-global-priority.db) now that
+ * Smoke test: confirm WOFSqlitePlaceLookup works against our CUSTOM unified DB (admin-global-priority.db) now that
  * ancestors + FTS are built. Tests plain text lookup AND ancestors-based parent-constraint scoping (the Springfield
  * problem).
  *
  * Run: node --experimental-strip-types scripts/smoke-resolve.ts
  */
-import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
 const DB = process.argv[2] ?? "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
-const lookup = new WofSqlitePlaceLookup({ databasePath: DB })
+const lookup = new WOFSqlitePlaceLookup({ databasePath: DB })
 
 console.log("=== plain: 'New York' (locality) ===")
 console.log(

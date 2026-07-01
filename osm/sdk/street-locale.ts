@@ -45,6 +45,6 @@ export function streetLocaleForCountry(countryCode: string): StreetLocale {
 }
 
 /** The countries with a registered OSM rooftop street locale (for CLI validation / help text). */
-export function supportedOsmCountries(): string[] {
+export function supportedOSMCountries(): string[] {
 	return [...COUNTRY_TO_STREET_LOCALE.keys()]
 }

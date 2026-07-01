@@ -93,7 +93,7 @@ interface Args {
 	note: string
 }
 
-function parseCliArgs(): Args {
+function parseCLIArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			base: { type: "string" },
@@ -129,7 +129,7 @@ function parseCliArgs(): Args {
 }
 
 async function main(): Promise<void> {
-	const args = parseCliArgs()
+	const args = parseCLIArgs()
 
 	const base = JSON.parse(readFileSync(args.base, "utf8")) as BaseManifest
 

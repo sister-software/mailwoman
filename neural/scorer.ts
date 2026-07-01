@@ -17,7 +17,7 @@
  *   loudly instead of throwing (silent OOD is the bug, not the ablation).
  *
  *   **Node-only.** Reads the model card, anchor lookup, and gazetteer lexicon from disk and
- *   constructs the `OnnxRunner` (onnxruntime-node). Subpath `./scorer`; never import from the
+ *   constructs the `ONNXRunner` (onnxruntime-node). Subpath `./scorer`; never import from the
  *   browser bundle.
  */
 
@@ -29,7 +29,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.js"
 import { NeuralAddressClassifier } from "./classifier.js"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.js"
-import { OnnxRunner } from "./onnx-runner.js"
+import { ONNXRunner } from "./onnx-runner.js"
 import { PostcodeBinaryResolver } from "./postcode-binary-resolver.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import {
@@ -259,7 +259,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const labels = readLabelsFromModelCard(opts.modelCardPath)
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(opts.tokenizerPath),
-		OnnxRunner.create(opts.modelPath),
+		ONNXRunner.create(opts.modelPath),
 	])
 
 	// What the model DECLARES it needs. Card `requires` block is authoritative; older cards (no block)

@@ -113,7 +113,7 @@ export function synthesizeJpAddress(
  * Build the JP adapter. Reads from the unified global WOF SQLite, walks admin chains starting from neighbourhoods, and
  * yields canonical rows.
  */
-export function createWofAdminJpAdapter(): CorpusAdapter {
+export function createWOFAdminJpAdapter(): CorpusAdapter {
 	return {
 		id: WOF_ADMIN_JP_ADAPTER_ID,
 		defaultLicense: "CC-BY-4.0",
@@ -169,4 +169,4 @@ export function createWofAdminJpAdapter(): CorpusAdapter {
 	}
 }
 
-export const wofAdminJpAdapter = createWofAdminJpAdapter()
+export const wofAdminJpAdapter = createWOFAdminJpAdapter()

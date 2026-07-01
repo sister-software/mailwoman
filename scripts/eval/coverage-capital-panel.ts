@@ -14,7 +14,7 @@
 import { existsSync, writeFileSync } from "node:fs"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
@@ -87,7 +87,7 @@ const SET = arg("set", "new") === "supported" ? SUPPORTED : CAPITALS
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const resolver = createWofResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
+const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
 const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 
 const db = process.env["MAILWOMAN_CANDIDATE_DB"] ?? "admin shards"

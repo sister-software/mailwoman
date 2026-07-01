@@ -16,7 +16,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 import { arg } from "../lib/cli-args.ts"
@@ -37,7 +37,7 @@ const flat = (t: Partial<Record<ComponentTag, string>>) => t as Record<string, s
 
 async function build(withAnchor: boolean) {
 	const card = JSON.parse(readFileSync(CARD, "utf8"))
-	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 
 	return new NeuralAddressClassifier({
 		tokenizer,

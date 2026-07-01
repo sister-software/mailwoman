@@ -19,7 +19,7 @@ import { spawn } from "node:child_process"
 import { createInterface } from "node:readline"
 
 /** One OSM address feature, geometry already reduced to a single representative coordinate. */
-export interface OsmAddrRecord {
+export interface OSMAddrRecord {
 	/** `addr:housenumber` — always present (the extract filters on it). */
 	housenumber: string
 	/** `addr:street` — null when the point carries no street tag (the association gap; counted, not written). */
@@ -34,7 +34,7 @@ export interface OsmAddrRecord {
 const ADDR_LAYERS = ["points", "multipolygons"] as const
 
 /** OGRSQL projecting the four `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number. */
-function addrSql(layer: string): string {
+function addrSQL(layer: string): string {
 	return (
 		`SELECT hstore_get_value(other_tags,'addr:housenumber') AS housenumber, ` +
 		`hstore_get_value(other_tags,'addr:street') AS street, ` +
@@ -90,7 +90,7 @@ function representativePoint(
 function toRecord(feature: {
 	properties?: Record<string, unknown>
 	geometry?: { type?: string; coordinates?: unknown }
-}): OsmAddrRecord | null {
+}): OSMAddrRecord | null {
 	const p = feature.properties ?? {}
 	const housenumber = p["housenumber"]
 
@@ -110,8 +110,8 @@ function toRecord(feature: {
 }
 
 /** Run ogr2ogr against one layer, yielding parsed records from its GeoJSONSeq stdout. */
-async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OsmAddrRecord> {
-	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", addrSql(layer), pbfPath]
+async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddrRecord> {
+	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", addrSQL(layer), pbfPath]
 	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
@@ -150,6 +150,6 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OsmAddr
  * representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can COUNT
  * the association gap before deciding to write them.
  */
-export async function* extractAddrPoints(pbfPath: string): AsyncGenerator<OsmAddrRecord> {
+export async function* extractAddrPoints(pbfPath: string): AsyncGenerator<OSMAddrRecord> {
 	for (const layer of ADDR_LAYERS) yield* runLayer(pbfPath, layer)
 }

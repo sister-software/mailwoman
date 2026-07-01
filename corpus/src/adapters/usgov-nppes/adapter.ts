@@ -35,7 +35,7 @@ export const USGOV_NPPES_DEFAULT_LICENSE = "Public Domain"
 
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
 
-interface NppesRow {
+interface NPPESRow {
 	NPI: string
 	"Entity Type Code": string
 	"Provider Organization Name (Legal Business Name)": string
@@ -73,7 +73,7 @@ function composeRaw(
 	return [venue, streetPart, cityPart].filter(Boolean).join(", ")
 }
 
-export function createUsgovNppesAdapter(): CorpusAdapter {
+export function createUsgovNPPESAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_NPPES_ADAPTER_ID,
 		defaultLicense: USGOV_NPPES_DEFAULT_LICENSE,
@@ -98,7 +98,7 @@ export function createUsgovNppesAdapter(): CorpusAdapter {
 			let emitted = 0
 
 			try {
-				for await (const record of parser as AsyncIterable<NppesRow>) {
+				for await (const record of parser as AsyncIterable<NPPESRow>) {
 					if (opts.signal?.aborted) break
 
 					if (opts.limit !== undefined && emitted >= opts.limit) break
@@ -166,4 +166,4 @@ export function createUsgovNppesAdapter(): CorpusAdapter {
 	}
 }
 
-export const usgovNppesAdapter = createUsgovNppesAdapter()
+export const usgovNPPESAdapter = createUsgovNPPESAdapter()

@@ -9,18 +9,18 @@ import { existsSync } from "node:fs"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { autocomplete } from "./fst-autocomplete.js"
-import { buildFstFromWof } from "./fst-builder.js"
-import { FstMatcher } from "./fst-matcher.js"
+import { buildFSTFromWOF } from "./fst-builder.js"
+import { FSTMatcher } from "./fst-matcher.js"
 import type { PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const HAS_WOF = existsSync(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
-	let matcher: FstMatcher
+	let matcher: FSTMatcher
 
 	beforeAll(() => {
-		const built = buildFstFromWof({
+		const built = buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],
@@ -91,7 +91,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		lat: 0,
 		lon: 0,
 	})
-	const matcher = new FstMatcher([
+	const matcher = new FSTMatcher([
 		{
 			edges: new Map([
 				["new", 1],
@@ -151,7 +151,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		// "go" → "diego" (12 low-importance places) + "tham" (one high-importance Gotham). Without the
 		// per-branch cap, the 12 "Go Diego"s blow the budget before "tham" is ever visited, so Gotham
 		// (the place a user most likely wants) is dropped — the real "new → New London not New York" bug.
-		const dense = new FstMatcher([
+		const dense = new FSTMatcher([
 			{ edges: new Map([["go", 1]]), places: [] },
 			{
 				edges: new Map([

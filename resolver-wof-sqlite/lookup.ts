@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `WofSqlitePlaceLookup` — the resolver implementation backed by `node:sqlite` + a Kysely-typed
+ *   `WOFSqlitePlaceLookup` — the resolver implementation backed by `node:sqlite` + a Kysely-typed
  *   query layer where the queries are non-trivial, and raw SQL where they aren't (FTS5 MATCH, the
  *   FTS index build).
  *
@@ -29,21 +29,21 @@ import {
 } from "./convention.js"
 import {
 	aliasBagExactMatch,
-	buildPlaceSearchFts,
+	buildPlaceSearchFTS,
 	PLACE_BBOX_TABLE,
 	PLACE_POPULATION_TABLE,
 	placeBboxExists,
 	placePopulationExists,
-	placeSearchFtsExists,
+	placeSearchFTSExists,
 } from "./fts.js"
 import { bboxAround, haversineKm } from "./geo.js"
-import type { WofPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
-import type { WofDatabase } from "./schema.js"
+import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
+import type { WOFDatabase } from "./schema.js"
 import { pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "./sharding.js"
 import { SqliteConventionSource } from "./sqlite-convention-source.js"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.js"
 
-export interface WofSqlitePlaceLookupOpts {
+export interface WOFSqlitePlaceLookupOpts {
 	/**
 	 * Path to the WOF SQLite distribution on disk. Mutually exclusive with `database`.
 	 *
@@ -70,10 +70,10 @@ export interface WofSqlitePlaceLookupOpts {
 	 * operator-side CLI documented in the README. Default false — the resolver assumes the index already exists and
 	 * errors loudly if it doesn't.
 	 *
-	 * With multi-shard, `buildFts: true` builds the index on the **main** shard only. Other shards must be pre-built via
+	 * With multi-shard, `buildFTS: true` builds the index on the **main** shard only. Other shards must be pre-built via
 	 * `mailwoman-wof-build-fts` — operator script for predictable cost.
 	 */
-	buildFts?: boolean
+	buildFTS?: boolean
 	/**
 	 * Geographic Rule Engine convention source (Direction E, #289). Per-WOF-polygon resolution profiles, either as a
 	 * ready `ConventionSource` or a plain `{ wofId: Convention }` seed map. Default empty — every query rides
@@ -87,7 +87,7 @@ export interface WofSqlitePlaceLookupOpts {
 	 * ("Nashville"), recovering the chronic postal-vs- geographic-city mismatch. Absent (the default), the resolver is
 	 * byte-identical — every alias code path is gated on this being non-null, so an unprovided reader changes no score.
 	 */
-	postalCityAliases?: WofPostalCityAliasLookup
+	postalCityAliases?: WOFPostalCityAliasLookup
 }
 
 /**
@@ -282,10 +282,10 @@ function softNameScore(text: string, name: string, aliases: readonly string[]): 
 	return best
 }
 
-export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
+export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #db: DatabaseSync
 	readonly #ownsDb: boolean
-	readonly #kysely: Kysely<WofDatabase>
+	readonly #kysely: Kysely<WOFDatabase>
 	readonly #weights: RankingWeights
 	/**
 	 * Cached at construction so we don't `sqlite_master` query on every findPlace call. Bbox + near- with-radius queries
@@ -314,13 +314,13 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	/**
 	 * The Geographic Rule Engine (Direction E, #289). `#conventionSource` supplies per-WOF-polygon resolution profiles;
 	 * `#strategies` is the named-primitive registry the merged convention dispatches. Empty source → every query resolves
-	 * to `WORLD_DEFAULT` → byte-identical to the pre-engine coordinate-first path. `#countryWofIdCache` memoizes the
+	 * to `WORLD_DEFAULT` → byte-identical to the pre-engine coordinate-first path. `#countryWOFIdCache` memoizes the
 	 * country-code → country-WOF-id lookup that seeds the convention ancestor chain (one query per country, then
 	 * cached).
 	 */
 	readonly #conventionSource: ConventionSource
 	readonly #strategies: Map<string, Strategy>
-	readonly #countryWofIdCache = new Map<string, number | null>()
+	readonly #countryWOFIdCache = new Map<string, number | null>()
 	/** Strategy names already warned about — so an unknown name surfaces once, not once per query. */
 	readonly #warnedUnknownStrategies = new Set<string>()
 	/**
@@ -333,15 +333,15 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * Opt-in postal-city alias reader (#475). `null` unless `opts.postalCityAliases` was supplied — every alias code path
 	 * is gated on this, so the default resolver is byte-identical.
 	 */
-	readonly #postalCityAliases: WofPostalCityAliasLookup | null
+	readonly #postalCityAliases: WOFPostalCityAliasLookup | null
 
-	constructor(opts: WofSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
+	constructor(opts: WOFSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
 		if (opts.database && opts.databasePath) {
-			throw new Error("WofSqlitePlaceLookup: pass either `database` or `databasePath`, not both")
+			throw new Error("WOFSqlitePlaceLookup: pass either `database` or `databasePath`, not both")
 		}
 
 		if (!opts.database && !opts.databasePath) {
-			throw new Error("WofSqlitePlaceLookup: one of `database` or `databasePath` is required")
+			throw new Error("WOFSqlitePlaceLookup: one of `database` or `databasePath` is required")
 		}
 
 		if (opts.database) {
@@ -364,13 +364,13 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// node:sqlite has no .pragma() helper; pragmas are executed as plain SQL.
 		this.#db.exec("PRAGMA busy_timeout = 5000")
 
-		if (opts.buildFts) {
-			this.#ensureFts()
+		if (opts.buildFTS) {
+			this.#ensureFTS()
 		} else {
-			this.#assertFtsExists()
+			this.#assertFTSExists()
 		}
 
-		this.#kysely = new Kysely<WofDatabase>({
+		this.#kysely = new Kysely<WOFDatabase>({
 			dialect: new SqliteDialect({ database: this.#db }),
 		})
 		this.#weights = { ...DEFAULT_WEIGHTS, ...weights }
@@ -549,7 +549,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		if (this.#warnedUnknownStrategies.has(name)) return
 		this.#warnedUnknownStrategies.add(name)
 		console.warn(
-			`WofSqlitePlaceLookup: a convention names strategy "${name}", which this build does not register ` +
+			`WOFSqlitePlaceLookup: a convention names strategy "${name}", which this build does not register ` +
 				`(known: ${[...this.#strategies.keys()].join(", ")}). Skipping it. If the convention asset was built ` +
 				`against a newer code revision, rebuild the asset for this one.`
 		)
@@ -591,8 +591,8 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// (pop 2.5M) is a borough, not a locality, and a strict filter made it unreachable so the
 		// fuzzy "Brooklyn Park, MN" won instead. Order-preserving: the FIRST entry stays the
 		// requested placetype, which is what shard routing keys off below.
-		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WofPlacetype[] | null
-		const ftsQuery = sanitizeFtsQuery(query.text)
+		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
+		const ftsQuery = sanitizeFTSQuery(query.text)
 
 		if (!ftsQuery) return []
 
@@ -699,7 +699,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// start from a higher-is-better baseline.
 			let score = -row.rank
 
-			if (placetypes && placetypes.length > 0 && placetypes.includes(row.placetype as WofPlacetype)) {
+			if (placetypes && placetypes.length > 0 && placetypes.includes(row.placetype as WOFPlacetype)) {
 				score += this.#weights.placetypeMatchBoost
 			}
 
@@ -742,7 +742,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const candidate: PlaceCandidate = {
 				id: row.id,
 				name: row.name,
-				placetype: row.placetype as WofPlacetype,
+				placetype: row.placetype as WOFPlacetype,
 				country: row.country ?? "",
 				lat: row.lat ?? 0,
 				lon: row.lon ?? 0,
@@ -828,7 +828,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const chain: number[] = []
 
 		if (query.country) {
-			const cid = this.#countryWofId(query.country)
+			const cid = this.#countryWOFId(query.country)
 
 			if (cid !== null) chain.push(cid)
 		}
@@ -840,8 +840,8 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * Country ISO code → its WOF polygon id (the coarsest convention key). Cached — one indexed `spr` query per distinct
 	 * country, then memoized (including a not-found `null`) so findPlace never pays for it twice.
 	 */
-	#countryWofId(code: string): number | null {
-		const cached = this.#countryWofIdCache.get(code)
+	#countryWOFId(code: string): number | null {
+		const cached = this.#countryWOFIdCache.get(code)
 
 		if (cached !== undefined) return cached
 		let id: number | null = null
@@ -854,7 +854,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		} catch {
 			id = null
 		}
-		this.#countryWofIdCache.set(code, id)
+		this.#countryWOFIdCache.set(code, id)
 
 		return id
 	}
@@ -991,7 +991,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const c: PlaceCandidate = {
 				id: row.id,
 				name: row.name,
-				placetype: row.placetype as WofPlacetype,
+				placetype: row.placetype as WOFPlacetype,
 				country: row.country ?? "",
 				lat: row.lat ?? 0,
 				lon: row.lon ?? 0,
@@ -1078,20 +1078,20 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	}
 
 	/** Build the FTS5 virtual table from the `names` + `places` tables. */
-	#ensureFts(): void {
-		buildPlaceSearchFts(this.#db)
+	#ensureFTS(): void {
+		buildPlaceSearchFTS(this.#db)
 	}
 
-	#assertFtsExists(): void {
-		if (!placeSearchFtsExists(this.#db)) {
+	#assertFTSExists(): void {
+		if (!placeSearchFTSExists(this.#db)) {
 			throw new Error(
-				"WofSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFts: true` to build it on open, or run `mailwoman-wof-build-fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
+				"WOFSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman-wof-build-fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
 			)
 		}
 	}
 }
 
-function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WofPlacetype[] | null {
+function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetype[] | null {
 	if (!p) return null
 
 	return Array.isArray(p) ? p : [p]
@@ -1120,7 +1120,7 @@ function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WofPlacetype[] | n
  * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
  * - `"*"` alone → `""` (no body → drop)
  */
-function sanitizeFtsQuery(text: string): string {
+function sanitizeFTSQuery(text: string): string {
 	const out: string[] = []
 
 	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {

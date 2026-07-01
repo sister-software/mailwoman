@@ -80,7 +80,7 @@ export interface PhotonReverseParams {
 
 /**
  * The engine the router delegates to. Each method is optional; a missing one answers `501`. The real implementation
- * backs `/api` with the FST autocomplete tier + parse→resolve, and `/reverse` with the `WofReverseGeocoder`.
+ * backs `/api` with the FST autocomplete tier + parse→resolve, and `/reverse` with the `WOFReverseGeocoder`.
  */
 export interface PhotonEngine {
 	search?(params: PhotonSearchParams): Promise<PhotonFeatureCollection>

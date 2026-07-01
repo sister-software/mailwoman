@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
-import { WOF_ADMIN_ADAPTER_ID, createWofAdminAdapter, nameSlotsFor, variantsFor } from "./adapter.js"
+import { WOF_ADMIN_ADAPTER_ID, createWOFAdminAdapter, nameSlotsFor, variantsFor } from "./adapter.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = resolve(here, "../../../fixtures/wof-admin-json")
@@ -130,7 +130,7 @@ describe("nameSlotsFor", () => {
 describe("wof-admin-json adapter against fixture", () => {
 	it("emits multi-name-variant rows for the St. Petersburg case", async () => {
 		await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -153,7 +153,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 	it("emits per-hierarchy variants for a vanilla locality (Portland, no localized variants)", async () => {
 		await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -175,7 +175,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 	it("filter country=FR emits only FR rows; locale defaults to fr-FR", async () => {
 		await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "FR" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -193,7 +193,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 	it("treats mz:is_current=-1 as live (Pelias convention) and mz:is_current=0 as superseded", async () => {
 		await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -207,7 +207,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 	it("skips -alt-*.geojson sibling files (alternate-geometry exports, not separate records)", async () => {
 		await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -220,7 +220,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 	it("honors --limit", async () => {
 		const manifest = await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, limit: 4 },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -231,14 +231,14 @@ describe("wof-admin-json adapter against fixture", () => {
 
 	it("two runs over the same fixture produce identical sha256 (sorted-id emission)", async () => {
 		const a = await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "FR" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
 		await rm(join(scratch, WOF_ADMIN_ADAPTER_ID), { recursive: true, force: true })
 		const b = await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "FR" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -248,7 +248,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 	it("country record uses OpenCage-canonical 'United States of America' for the default slot", async () => {
 		await runAdapter({
-			adapter: createWofAdminAdapter(),
+			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",

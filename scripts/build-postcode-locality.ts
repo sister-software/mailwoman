@@ -178,7 +178,7 @@ interface Args {
 	finalize: boolean
 }
 
-function parseCliArgs(): Args {
+function parseCLIArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			country: { type: "string" },
@@ -472,7 +472,7 @@ async function build(args: Args): Promise<void> {
 }
 
 async function main(): Promise<void> {
-	const args = parseCliArgs()
+	const args = parseCLIArgs()
 
 	if (args.finalize) {
 		await finalize(args.output)

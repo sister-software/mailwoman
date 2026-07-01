@@ -13,7 +13,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { deserializeFstWeb, readFstProvenanceWeb } from "./fst-deserialize-web.js"
+import { deserializeFSTWeb, readFSTProvenanceWeb } from "./fst-deserialize-web.js"
 
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
@@ -60,7 +60,7 @@ interface BuildOpts {
  * through the web deserializer, but kept hand-rolled so the test asserts the format the reader actually expects (not
  * whatever the Node serializer happens to emit at v4).
  */
-function buildFstBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array {
+function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array {
 	const version = opts.version ?? 2
 
 	// --- Intern strings (edge tokens, then place names), first-seen order. ---
@@ -223,18 +223,18 @@ const PARIS_FIXTURE: FixtureNode[] = [
 	},
 ]
 
-//#region deserializeFstWeb — happy path
+//#region deserializeFSTWeb — happy path
 
-describe("deserializeFstWeb", () => {
+describe("deserializeFSTWeb", () => {
 	test("round-trips a 2-state FST: node + place counts", () => {
-		const matcher = deserializeFstWeb(buildFstBuffer(PARIS_FIXTURE))
+		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 
 		expect(matcher.stateCount).toBe(2)
 		expect(matcher.placeCount).toBe(1)
 	})
 
 	test("walking the gold token reaches the accepting state", () => {
-		const matcher = deserializeFstWeb(buildFstBuffer(PARIS_FIXTURE))
+		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 
 		const result = matcher.walk(["paris"])
 		expect(result).not.toBeNull()
@@ -243,13 +243,13 @@ describe("deserializeFstWeb", () => {
 	})
 
 	test("an unknown token falls off the trie (no walk)", () => {
-		const matcher = deserializeFstWeb(buildFstBuffer(PARIS_FIXTURE))
+		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 
 		expect(matcher.walk(["london"])).toBeNull()
 	})
 
 	test("decodes the place entry's scalar fields exactly", () => {
-		const matcher = deserializeFstWeb(buildFstBuffer(PARIS_FIXTURE))
+		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 		const place = matcher.accepting(matcher.walk(["paris"])!.stateId)[0]!
 
 		expect(place.wofID).toBe(101748479)
@@ -261,7 +261,7 @@ describe("deserializeFstWeb", () => {
 	})
 
 	test("reconstructs the parent chain (chainLen entries)", () => {
-		const matcher = deserializeFstWeb(buildFstBuffer(PARIS_FIXTURE))
+		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 		const place = matcher.accepting(1)[0]!
 
 		expect(place.parentChain).toEqual([85633147, 85632343])
@@ -272,15 +272,15 @@ describe("deserializeFstWeb", () => {
 			{ edges: [["x", 1]], places: [] },
 			{ edges: [], places: [{ wofID: 1, placetype: "region", name: "X", importance: 0.1, lat: 0, lon: 0 }] },
 		]
-		const place = deserializeFstWeb(buildFstBuffer(nodes)).accepting(1)[0]!
+		const place = deserializeFSTWeb(buildFSTBuffer(nodes)).accepting(1)[0]!
 
 		expect(place.placetype).toBe("region")
 	})
 
 	test("accepts a Uint8Array as well as an ArrayBuffer", () => {
-		const u8 = buildFstBuffer(PARIS_FIXTURE)
-		const fromU8 = deserializeFstWeb(u8)
-		const fromAb = deserializeFstWeb(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength))
+		const u8 = buildFSTBuffer(PARIS_FIXTURE)
+		const fromU8 = deserializeFSTWeb(u8)
+		const fromAb = deserializeFSTWeb(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength))
 
 		expect(fromU8.placeCount).toBe(1)
 		expect(fromAb.placeCount).toBe(1)
@@ -289,16 +289,16 @@ describe("deserializeFstWeb", () => {
 
 //#endregion
 
-//#region deserializeFstWeb — v1 importance derivation
+//#region deserializeFSTWeb — v1 importance derivation
 
-test("deserializeFstWeb: v1 derives importance from a population u32 via the log2 curve", () => {
+test("deserializeFSTWeb: v1 derives importance from a population u32 via the log2 curve", () => {
 	// v1 stores population (u32) in the importance slot; the reader maps it through
 	// min(1, log2(1 + pop/1000) / 14). For pop = 1000: log2(2)/14 = 1/14 ≈ 0.0714.
 	const nodes: FixtureNode[] = [
 		{ edges: [["t", 1]], places: [] },
 		{ edges: [], places: [{ wofID: 1, placetype: "locality", name: "T", importance: 1000, lat: 0, lon: 0 }] },
 	]
-	const matcher = deserializeFstWeb(buildFstBuffer(nodes, { version: 1 }))
+	const matcher = deserializeFSTWeb(buildFSTBuffer(nodes, { version: 1 }))
 	const place = matcher.accepting(1)[0]!
 
 	expect(place.importance).toBeCloseTo(1 / 14, 4)
@@ -306,34 +306,34 @@ test("deserializeFstWeb: v1 derives importance from a population u32 via the log
 
 //#endregion
 
-//#region deserializeFstWeb — error paths
+//#region deserializeFSTWeb — error paths
 
-test("deserializeFstWeb: a buffer shorter than the header throws", () => {
-	expect(() => deserializeFstWeb(new Uint8Array(HEADER_SIZE - 1))).toThrow(/too small/i)
+test("deserializeFSTWeb: a buffer shorter than the header throws", () => {
+	expect(() => deserializeFSTWeb(new Uint8Array(HEADER_SIZE - 1))).toThrow(/too small/i)
 })
 
-test("deserializeFstWeb: a bad magic throws", () => {
-	const bytes = buildFstBuffer(PARIS_FIXTURE)
+test("deserializeFSTWeb: a bad magic throws", () => {
+	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	bytes[0] = 0x00 // corrupt the "F"
-	expect(() => deserializeFstWeb(bytes)).toThrow(/magic mismatch/i)
+	expect(() => deserializeFSTWeb(bytes)).toThrow(/magic mismatch/i)
 })
 
-test("deserializeFstWeb: version 0 is rejected", () => {
-	const bytes = buildFstBuffer(PARIS_FIXTURE)
+test("deserializeFSTWeb: version 0 is rejected", () => {
+	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	new DataView(bytes.buffer).setUint16(4, 0, true)
-	expect(() => deserializeFstWeb(bytes)).toThrow(/version 0 unsupported/i)
+	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 0 unsupported/i)
 })
 
-test("deserializeFstWeb: a version above MAX_VERSION (now 4) is rejected", () => {
+test("deserializeFSTWeb: a version above MAX_VERSION (now 4) is rejected", () => {
 	// MAX_VERSION tracks the serializer's VERSION (4): v3/v4 parse, v5+ is rejected.
-	const bytes = buildFstBuffer(PARIS_FIXTURE)
+	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	new DataView(bytes.buffer).setUint16(4, 5, true)
-	expect(() => deserializeFstWeb(bytes)).toThrow(/version 5 unsupported/i)
+	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 5 unsupported/i)
 })
 
 //#endregion
 
-//#region readFstProvenanceWeb
+//#region readFSTProvenanceWeb
 
 const PROVENANCE = {
 	builtAt: "2026-06-25T00:00:00Z",
@@ -345,34 +345,34 @@ const PROVENANCE = {
 	importanceMatches: 1,
 }
 
-test("readFstProvenanceWeb: returns undefined for versions below 3 (no trailer support)", () => {
+test("readFSTProvenanceWeb: returns undefined for versions below 3 (no trailer support)", () => {
 	// A v2 buffer never carries provenance the reader will read — version gate is `< 3`.
-	const bytes = buildFstBuffer(PARIS_FIXTURE, { version: 2, provenance: PROVENANCE })
-	expect(readFstProvenanceWeb(bytes)).toBeUndefined()
+	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 2, provenance: PROVENANCE })
+	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
 })
 
-test("readFstProvenanceWeb: parses the JSON trailer for a v3 buffer", () => {
-	const bytes = buildFstBuffer(PARIS_FIXTURE, { version: 3, provenance: PROVENANCE })
-	expect(readFstProvenanceWeb(bytes)).toEqual(PROVENANCE)
+test("readFSTProvenanceWeb: parses the JSON trailer for a v3 buffer", () => {
+	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 3, provenance: PROVENANCE })
+	expect(readFSTProvenanceWeb(bytes)).toEqual(PROVENANCE)
 })
 
-test("readFstProvenanceWeb: a v3 buffer with no trailer (offset 0) returns undefined", () => {
-	const bytes = buildFstBuffer(PARIS_FIXTURE, { version: 3 })
+test("readFSTProvenanceWeb: a v3 buffer with no trailer (offset 0) returns undefined", () => {
+	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 3 })
 	// offset field at byte 28 is 0 when no provenance was written.
-	expect(readFstProvenanceWeb(bytes)).toBeUndefined()
+	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
 })
 
-test("readFstProvenanceWeb: a buffer shorter than the header returns undefined", () => {
-	expect(readFstProvenanceWeb(new Uint8Array(HEADER_SIZE - 1))).toBeUndefined()
+test("readFSTProvenanceWeb: a buffer shorter than the header returns undefined", () => {
+	expect(readFSTProvenanceWeb(new Uint8Array(HEADER_SIZE - 1))).toBeUndefined()
 })
 
-test("readFstProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefined", () => {
-	const bytes = buildFstBuffer(PARIS_FIXTURE, { version: 3, provenance: PROVENANCE })
+test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefined", () => {
+	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 3, provenance: PROVENANCE })
 	const view = new DataView(bytes.buffer)
 	const offset = view.getUint32(28, true)
 	// Overwrite the first JSON byte with a non-"{" so JSON.parse throws.
 	bytes[offset + 4] = 0x21 // "!"
-	expect(readFstProvenanceWeb(bytes)).toBeUndefined()
+	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
 })
 
 //#endregion

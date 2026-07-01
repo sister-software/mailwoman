@@ -20,7 +20,7 @@ import { readFileSync, writeFileSync } from "node:fs"
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
@@ -66,9 +66,9 @@ const wofPaths = arg(
 	"wof",
 	`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 ).split(",")
-const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
-const resolver = createWofResolver(backend as never)
+const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+const backend = new WOFSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+const resolver = createWOFResolver(backend as never)
 
 const results: Array<{ row: Row; flag: boolean; ok: boolean }> = []
 

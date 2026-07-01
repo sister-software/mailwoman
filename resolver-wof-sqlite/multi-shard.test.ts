@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Multi-shard ATTACH tests for `WofSqlitePlaceLookup`.
+ *   Multi-shard ATTACH tests for `WOFSqlitePlaceLookup`.
  *
  *   Uses on-disk fixture DBs because ATTACH requires file paths. Tests run unconditionally (the
  *   fixture DBs are built in-test via the same shape the real WOF distribution uses), so this
@@ -17,8 +17,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildPlaceSearchFts } from "./fts.js"
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { buildPlaceSearchFTS } from "./fts.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 let scratch: string
 
@@ -37,7 +37,7 @@ function buildAdminShard(path: string): void {
 		INSERT INTO spr VALUES (102, NULL, 'Beverly Hills', 'locality', 'US', 34.07, -118.40, 34.05, 34.09, -118.42, -118.38, 1, 0);
 		INSERT INTO spr VALUES (103, NULL, 'Paris', 'locality', 'FR', 48.85, 2.34, 48.81, 48.90, 2.22, 2.46, -1, 0);
 	`)
-	buildPlaceSearchFts(db)
+	buildPlaceSearchFTS(db)
 	db.close()
 }
 
@@ -56,7 +56,7 @@ function buildPostcodeShard(path: string): void {
 		INSERT INTO spr VALUES (202, 102, '90210', 'postalcode', 'US', 34.10, -118.41, 34.08, 34.12, -118.43, -118.39, -1, 0);
 		INSERT INTO spr VALUES (203, 101, '62702', 'postalcode', 'US', 39.82, -89.63, 39.80, 39.84, -89.65, -89.61, 1, 0);
 	`)
-	buildPlaceSearchFts(db)
+	buildPlaceSearchFTS(db)
 	db.close()
 }
 
@@ -68,11 +68,11 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
+describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 	test("opens a single shard via string path (backwards compatible)", async () => {
 		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
 		buildAdminShard(adminPath)
-		const lookup = new WofSqlitePlaceLookup({ databasePath: adminPath })
+		const lookup = new WOFSqlitePlaceLookup({ databasePath: adminPath })
 
 		try {
 			const r = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
@@ -89,7 +89,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WofSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		const lookup = new WOFSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
 		try {
 			// Locality query → admin shard
@@ -114,7 +114,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(oddlyNamed)
 
-		const lookup = new WofSqlitePlaceLookup({
+		const lookup = new WOFSqlitePlaceLookup({
 			databasePath: [adminPath, { path: oddlyNamed, schemaName: "pc", placetypes: ["postalcode"] }],
 		})
 
@@ -135,7 +135,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WofSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		const lookup = new WOFSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
 		try {
 			// "62701" near Illinois coords with a 10km hard filter — only 62701 and 62702 in fixture
@@ -159,7 +159,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WofSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		const lookup = new WOFSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
 		try {
 			// No placetype → main only. "62701" won't match (it's in postcode shard); Springfield will.
@@ -176,7 +176,7 @@ describe("WofSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		// Only admin shard — no postcode shard. A postalcode query falls back to main, returns
 		// nothing because admin has no postalcodes.
-		const lookup = new WofSqlitePlaceLookup({ databasePath: [adminPath] })
+		const lookup = new WOFSqlitePlaceLookup({ databasePath: [adminPath] })
 
 		try {
 			const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })

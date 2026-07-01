@@ -21,7 +21,7 @@
 import { readFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { haversineKm, WofPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
+import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 
 interface Args {
 	evalPath: string
@@ -53,7 +53,7 @@ function pct(sorted: number[], p: number): number {
 
 function main(): void {
 	const { evalPath, country, shards } = parseArgs()
-	const lookup = new WofPostcodeLookup(shards)
+	const lookup = new WOFPostcodeLookup(shards)
 
 	const lines = readFileSync(evalPath, "utf8").split("\n").filter(Boolean)
 	let withPostcode = 0

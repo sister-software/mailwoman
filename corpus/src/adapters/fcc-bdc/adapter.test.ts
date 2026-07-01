@@ -23,13 +23,13 @@ import {
 } from "./adapter.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
-const fixtureSqlPath = resolve(here, "../../../fixtures/fcc-bdc/fixture.sql")
+const fixtureSQLPath = resolve(here, "../../../fixtures/fcc-bdc/fixture.sql")
 
 let scratch: string
 let dbPath: string
 
 async function buildFixtureDb(): Promise<string> {
-	const sql = await readFile(fixtureSqlPath, "utf8")
+	const sql = await readFile(fixtureSQLPath, "utf8")
 	const path = join(scratch, "fcc-bdc-fixture.db")
 	const db = new DatabaseSync(path)
 	db.exec(sql)

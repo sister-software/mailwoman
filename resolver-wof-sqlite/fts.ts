@@ -5,7 +5,7 @@
  *
  *   FTS5 index lifecycle for the WOF SQLite distribution.
  *
- *   Shared by `WofSqlitePlaceLookup` (lazy build via `buildFts: true`) and the operator-side
+ *   Shared by `WOFSqlitePlaceLookup` (lazy build via `buildFTS: true`) and the operator-side
  *   `mailwoman-wof-build-fts` CLI (ahead-of-time build to avoid first-open latency in production).
  *
  *   Upstream WOF SQLite distributions do NOT ship FTS5. The index lives in a `place_search` virtual
@@ -17,7 +17,7 @@
 import type { DatabaseSync } from "node:sqlite"
 
 /**
- * Name of the FTS5 virtual table this module owns. Centralized so `WofSqlitePlaceLookup` and the CLI can't drift apart.
+ * Name of the FTS5 virtual table this module owns. Centralized so `WOFSqlitePlaceLookup` and the CLI can't drift apart.
  */
 export const PLACE_SEARCH_TABLE = "place_search"
 
@@ -46,8 +46,8 @@ export const PLACE_SEARCH_TABLE = "place_search"
  * the standalone `\uE000` between aliases is indexed as its own token and the aliases' tokens are no longer
  * positionally adjacent. The remaining requirements also hold:
  *
- * - **Unreachable from queries**: `sanitizeFtsQuery` (Node + WASM resolvers) strips everything outside `\p{L}\p{N}` from
- *   token bodies, and U+E000 is neither — no user query can ever address the separator token. The demo's `sanitizeFts`
+ * - **Unreachable from queries**: `sanitizeFTSQuery` (Node + WASM resolvers) strips everything outside `\p{L}\p{N}` from
+ *   token bodies, and U+E000 is neither — no user query can ever address the separator token. The demo's `sanitizeFTS`
  *   strips it explicitly.
  * - **Never in place names**: PUA codepoints are unassigned by definition; real-world WOF names don't carry them.
  *   Defensively, the INSERT below also strips any embedded U+E000 from source names so a poisoned row can't forge an
@@ -106,7 +106,7 @@ export function aliasBagExactMatch(altNames: string | null, normalizedQuery: str
 
 /**
  * Name of the R*Tree virtual table that indexes WOF places' bounding boxes for proximity / bbox lookups. Built
- * alongside `place_search` by the CLI and `buildFts: true`. Pure SQLite — no extensions needed, the `rtree`
+ * alongside `place_search` by the CLI and `buildFTS: true`. Pure SQLite — no extensions needed, the `rtree`
  * virtual-table module ships with the core library.
  */
 export const PLACE_BBOX_TABLE = "place_bbox"
@@ -122,10 +122,10 @@ export const PLACE_BBOX_TABLE = "place_bbox"
 export const PLACE_POPULATION_TABLE = "place_population"
 
 /**
- * Counters for a single `buildPlaceSearchFts` run. Exposed so callers (CLI, lazy-build) can render progress to the
+ * Counters for a single `buildPlaceSearchFTS` run. Exposed so callers (CLI, lazy-build) can render progress to the
  * user.
  */
-export interface BuildPlaceSearchFtsResult {
+export interface BuildPlaceSearchFTSResult {
 	/** Whether the FTS5 index was created (true) or already existed and was left alone (false). */
 	created: boolean
 	/** Number of rows in the `place_search` table after the call. */
@@ -138,7 +138,7 @@ export interface BuildPlaceSearchFtsResult {
 	durationMs: number
 }
 
-export interface BuildPlaceSearchFtsOpts {
+export interface BuildPlaceSearchFTSOpts {
 	/**
 	 * Drop the existing `place_search` AND `place_bbox` tables before building. Default false — if either already exists
 	 * the corresponding build step is skipped. Set true when you want to rebuild against an updated `spr` / `names`
@@ -162,10 +162,10 @@ export interface BuildPlaceSearchFtsOpts {
  * The FTS5 index is used for name-based MATCH queries; the R*Tree is used for bbox + proximity filtering. Both are pure
  * SQLite — no extensions required.
  *
- * Returns a `BuildPlaceSearchFtsResult` summary. Idempotent when `drop: false` — re-running against an already-indexed
+ * Returns a `BuildPlaceSearchFTSResult` summary. Idempotent when `drop: false` — re-running against an already-indexed
  * DB skips whichever indexes already exist.
  */
-export function buildPlaceSearchFts(db: DatabaseSync, opts: BuildPlaceSearchFtsOpts = {}): BuildPlaceSearchFtsResult {
+export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSOpts = {}): BuildPlaceSearchFTSResult {
 	const start = Date.now()
 	const onProgress = opts.onProgress ?? (() => {})
 
@@ -292,10 +292,10 @@ export function buildPlaceSearchFts(db: DatabaseSync, opts: BuildPlaceSearchFtsO
 }
 
 /**
- * Returns true iff the `place_search` table exists in the connected DB. Used by `WofSqlitePlaceLookup` for its "FTS
- * missing — pass buildFts:true or run the CLI" guard.
+ * Returns true iff the `place_search` table exists in the connected DB. Used by `WOFSqlitePlaceLookup` for its "FTS
+ * missing — pass buildFTS:true or run the CLI" guard.
  */
-export function placeSearchFtsExists(db: DatabaseSync): boolean {
+export function placeSearchFTSExists(db: DatabaseSync): boolean {
 	return tableExists(db, PLACE_SEARCH_TABLE)
 }
 

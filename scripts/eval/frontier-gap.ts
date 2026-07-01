@@ -41,7 +41,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import { ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
 
@@ -135,7 +135,7 @@ console.error(`[frontier] ${byCountry.size} countries, ${sample.length} cities (
 // --- engine (bare = the drop-in's path; hint = the country-constrained ceiling) ---
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const resolver = createWofResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
+const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
 const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 
 const resolvesWithin = async (query: string, opts: { defaultCountry?: string }, c: City): Promise<ResolveOutcome> => {

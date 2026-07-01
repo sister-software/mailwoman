@@ -7,7 +7,7 @@
  *
  *   These mirror the conceptual model described in `docs/plan/phases/PHASE_4_2_wof_sqlite.md`. Phase
  *   4.3 will extend `PlaceCandidate` with the resolver-decorated fields that flow into
- *   `AddressNode.source` / `sourceId` (e.g. an explicit `wofUri: "wof-admin:101751113"` form).
+ *   `AddressNode.source` / `sourceId` (e.g. an explicit `wofURI: "wof-admin:101751113"` form).
  */
 
 /**
@@ -16,7 +16,7 @@
  *
  * Phase 4.2 only emits the ones we actually look up; the union is open enough to extend later.
  */
-export type WofPlacetype =
+export type WOFPlacetype =
 	| "country"
 	| "macroregion"
 	| "region"
@@ -39,7 +39,7 @@ export type WofPlacetype =
  * treat it as ordinal, not absolute.
  *
  * `id` is the WOF place id. It's named generically (not `wof_id`) so the shape stays structurally compatible with
- * `@mailwoman/resolver`'s `ResolvedPlace` — `WofSqlitePlaceLookup` satisfies the generic `ResolverBackend` contract
+ * `@mailwoman/resolver`'s `ResolvedPlace` — `WOFSqlitePlaceLookup` satisfies the generic `ResolverBackend` contract
  * without an adapter shim.
  *
  * `distanceKm` is populated only when the query carried `near` (and the place has a centroid). Useful for downstream
@@ -48,7 +48,7 @@ export type WofPlacetype =
 export interface PlaceCandidate {
 	id: number
 	name: string
-	placetype: WofPlacetype
+	placetype: WOFPlacetype
 	/** ISO 3166-1 alpha-2 country code. */
 	country: string
 	lat: number
@@ -118,7 +118,7 @@ export interface GeoBbox {
  */
 export interface FindPlaceQuery {
 	text: string
-	placetype?: WofPlacetype | WofPlacetype[]
+	placetype?: WOFPlacetype | WOFPlacetype[]
 	/** ISO 3166-1 alpha-2 — narrows to one country. */
 	country?: string
 	/** WOF place id — narrows to descendants of this place. */

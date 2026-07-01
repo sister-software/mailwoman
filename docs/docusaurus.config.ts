@@ -80,7 +80,7 @@ const config: Config = {
 	},
 
 	url: "https://mailwoman.sister.software",
-	baseUrl: "/",
+	baseURL: "/",
 
 	organizationName: "sister-software",
 	projectName: "mailwoman",
@@ -119,7 +119,7 @@ const config: Config = {
 					path: "articles",
 					routeBasePath: "docs",
 					sidebarPath: "./sidebars.ts",
-					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
+					editURL: "https://github.com/sister-software/mailwoman/tree/main/docs/",
 					// Internal-only content — kept in the repo for the record but NOT rendered on the public
 					// site (globs are relative to `path: "articles"`). `reviews/` is AI-consult transcripts +
 					// the public-readiness review; the `*postmortem*` / session-report files are candid
@@ -170,7 +170,7 @@ const config: Config = {
 					},
 				},
 				theme: {
-					customCss: [
+					customCSS: [
 						// ---
 						"./src/css/fonts/IosevkaNexus.css",
 						"./src/css/fonts/IosevkaNexusMono.css",

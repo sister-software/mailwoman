@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for exact-match tiering in `WofSqlitePlaceLookup.findPlace` — the ranking fix that keeps
+ *   Tests for exact-match tiering in `WOFSqlitePlaceLookup.findPlace` — the ranking fix that keeps
  *   the population/importance prior as an INTRA-tier tiebreaker instead of letting it promote a
  *   worse-matching candidate across tiers.
  *
@@ -24,7 +24,7 @@ import { DatabaseSync } from "node:sqlite"
 import { afterEach, describe, expect, test } from "vitest"
 
 import type { RankingWeights } from "./lookup.js"
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 interface SeedRegion {
 	id: number
@@ -39,7 +39,7 @@ interface SeedRegion {
 /**
  * Build a fixture in the production shape: a pre-built `place_population` aux table (no geojson — `build-unified-wof`
  * extracts `wof:population` into this table at ingest), so the population boost is actually active (the plain
- * lookup.test.ts seed has no population path). Opened with `buildFts: true` by the lookup; the lazy FTS build leaves
+ * lookup.test.ts seed has no population path). Opened with `buildFTS: true` by the lookup; the lazy FTS build leaves
  * the pre-existing `place_population` untouched (it only (re)builds it from geojson, which we don't carry).
  */
 function buildDb(regions: SeedRegion[]): DatabaseSync {
@@ -90,12 +90,12 @@ const REGIONS: SeedRegion[] = [
 // +0. Makes the OFF case reliably pick the populous non-match.
 const POP_DOMINATES: Partial<RankingWeights> = { populationBoost: 1000, populationScaleLog10: 6 }
 
-let lookup: WofSqlitePlaceLookup
+let lookup: WOFSqlitePlaceLookup
 afterEach(() => lookup?.close())
 
 describe("findPlace — exact-match tiering", () => {
 	test("exact alias match beats a population-dominated partial match (ME → Maine)", async () => {
-		lookup = new WofSqlitePlaceLookup({ database: buildDb(REGIONS), buildFts: true }, POP_DOMINATES)
+		lookup = new WOFSqlitePlaceLookup({ database: buildDb(REGIONS), buildFTS: true }, POP_DOMINATES)
 		const results = await lookup.findPlace({ text: "ME", placetype: "region", country: "US" })
 		expect(results.length).toBeGreaterThan(1) // both surface as candidates
 		expect(results[0]!.id).toBe(1) // Maine wins despite zero population vs the 6M decoy
@@ -103,8 +103,8 @@ describe("findPlace — exact-match tiering", () => {
 	})
 
 	test("with tiering OFF + population dominating, the populous non-exact match wins (the bug)", async () => {
-		lookup = new WofSqlitePlaceLookup(
-			{ database: buildDb(REGIONS), buildFts: true },
+		lookup = new WOFSqlitePlaceLookup(
+			{ database: buildDb(REGIONS), buildFTS: true },
 			{ ...POP_DOMINATES, exactMatchTiering: false }
 		)
 		const results = await lookup.findPlace({ text: "ME", placetype: "region", country: "US" })
@@ -114,12 +114,12 @@ describe("findPlace — exact-match tiering", () => {
 	test("alignment: among EQUALLY-exact matches, population still decides (Springfield by pop)", async () => {
 		// Both exact name matches → same tier → the population prior orders them, unchanged. This is
 		// the guarantee that tiering aligns with (rather than overrides) population/importance.
-		lookup = new WofSqlitePlaceLookup({
+		lookup = new WOFSqlitePlaceLookup({
 			database: buildDb([
 				{ id: 10, name: "Springfield", country: "US", lat: 39.8, lon: -89.65, population: 112_544 },
 				{ id: 11, name: "Springfield", country: "US", lat: 37.2, lon: -93.28, population: 171_589 },
 			]),
-			buildFts: true,
+			buildFTS: true,
 		})
 		const results = await lookup.findPlace({ text: "Springfield", placetype: "region", country: "US" })
 		expect(results.length).toBe(2)
@@ -151,18 +151,18 @@ describe("findPlace — exact-match tiering", () => {
 			// (rank ~61: outside the default `limit * 4` window, inside the 200 short-query floor).
 			aliases: ["NY", ...Array.from({ length: 40 }, (_, i) => `New York alternate label ${i}`)],
 		}
-		lookup = new WofSqlitePlaceLookup({ database: buildDb([newYork, ...decoys]), buildFts: true })
+		lookup = new WOFSqlitePlaceLookup({ database: buildDb([newYork, ...decoys]), buildFTS: true })
 		const results = await lookup.findPlace({ text: "NY", placetype: "region", limit: 2 })
 		expect(results[0]!.id).toBe(1)
 		expect(results[0]!.name).toBe("New York")
 	})
 
 	test("a single candidate is unaffected (no tier to split)", async () => {
-		lookup = new WofSqlitePlaceLookup({
+		lookup = new WOFSqlitePlaceLookup({
 			database: buildDb([
 				{ id: 1, name: "Oregon", country: "US", lat: 43.9, lon: -120.6, population: 4_233_358, aliases: ["OR"] },
 			]),
-			buildFts: true,
+			buildFTS: true,
 		})
 		const results = await lookup.findPlace({ text: "OR", placetype: "region", country: "US" })
 		expect(results.length).toBe(1)
@@ -173,7 +173,7 @@ describe("findPlace — exact-match tiering", () => {
 		// Without candidate.bbox the cascade's region→bbox constraint is dead on the Node backend and
 		// locality disambiguation falls to population ranking (Springfield IL → MO, caught by the
 		// #524 smoke eval). The fixture seeds min/max as centroid ±0.5.
-		lookup = new WofSqlitePlaceLookup({ database: buildDb(REGIONS), buildFts: true })
+		lookup = new WOFSqlitePlaceLookup({ database: buildDb(REGIONS), buildFTS: true })
 		const results = await lookup.findPlace({ text: "Maine", placetype: "region", country: "US" })
 		expect(results[0]!.name).toBe("Maine")
 		expect(results[0]!.bbox).toEqual({ minLat: 44.8, maxLat: 45.8, minLon: -69.7, maxLon: -68.7 })

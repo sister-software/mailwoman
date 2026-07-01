@@ -40,12 +40,12 @@ import * as path from "node:path"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
-import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
 // The demo's own composition helpers — imported (read-only) from the demo source so the smoke eval
 // measures the REAL cascade, not a re-implementation that can drift from it.
@@ -143,7 +143,7 @@ const anchorLookup =
 		? mergeAnchorLookups(postcodeBinaries.map((p) => new PostcodeBinaryResolver(readFileSync(p)).toAnchorLookup()))
 		: undefined
 
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 const classifier = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
@@ -154,8 +154,8 @@ const classifier = new NeuralAddressClassifier({
 	addressSystemConventions: "auto",
 	bridgePunctuationGaps: true,
 })
-const fst = deserializeFst(readFileSync(FST))
-const lookup = new WofSqlitePlaceLookup({ databasePath: DB })
+const fst = deserializeFST(readFileSync(FST))
+const lookup = new WOFSqlitePlaceLookup({ databasePath: DB })
 
 // ── Run ──────────────────────────────────────────────────────────────────────────────────────────
 interface RowResult {

@@ -39,7 +39,7 @@ import { $ } from "zx"
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
 const DICTIONARIES_DIR = fileURLToPath(new URL("./dictionaries", import.meta.url))
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
 			force: { type: "boolean", default: false },
@@ -74,7 +74,7 @@ async function sortFileInPlace(path: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
-	const { force } = parseCliArgs()
+	const { force } = parseCLIArgs()
 
 	// Guard the destination exactly as the bash version did: refuse to clobber unless --force.
 	if (await isDirectory(DICTIONARIES_DIR)) {

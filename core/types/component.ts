@@ -72,4 +72,4 @@ export type ComponentTag = (typeof COMPONENT_TAGS)[number]
 export const BIO_LABELS = ["O", ...COMPONENT_TAGS.flatMap((tag) => [`B-${tag}`, `I-${tag}`] as const)] as const
 
 /** Union of every BIO label. */
-export type BioLabel = (typeof BIO_LABELS)[number]
+export type BIOLabel = (typeof BIO_LABELS)[number]

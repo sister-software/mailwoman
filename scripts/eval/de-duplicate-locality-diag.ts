@@ -79,7 +79,7 @@ async function main(): Promise<void> {
 		.map((l) => JSON.parse(l))
 
 	const { NeuralAddressClassifier, parseAnchorLookup } = await import("@mailwoman/neural")
-	const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 	const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
 	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
@@ -88,7 +88,7 @@ async function main(): Promise<void> {
 		MailwomanTokenizer.loadFromFile(
 			arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 		),
-		OnnxRunner.create(arg("model", "/tmp/v093-eval/model.onnx")),
+		ONNXRunner.create(arg("model", "/tmp/v093-eval/model.onnx")),
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]

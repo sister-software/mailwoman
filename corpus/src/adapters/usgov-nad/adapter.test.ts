@@ -10,12 +10,12 @@ import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "../../types.js"
-import { createUsgovNadAdapter, USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE } from "./adapter.js"
+import { createUsgovNADAdapter, USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE } from "./adapter.js"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const FIXTURE_DIR = join(HERE, "fixtures")
 
-async function collect(adapter = createUsgovNadAdapter(), opts: { country?: string; limit?: number } = {}) {
+async function collect(adapter = createUsgovNADAdapter(), opts: { country?: string; limit?: number } = {}) {
 	const out: CanonicalRow[] = []
 
 	for await (const row of adapter.rows({ inputPath: FIXTURE_DIR, ...opts })) {
@@ -134,7 +134,7 @@ describe("usgov-nad adapter", () => {
 	})
 
 	it("rejects non-US country filter", async () => {
-		const adapter = createUsgovNadAdapter()
+		const adapter = createUsgovNADAdapter()
 		const iterate = async () => {
 			for await (const _ of adapter.rows({ inputPath: FIXTURE_DIR, country: "FR" })) {
 				/* should throw before first yield */

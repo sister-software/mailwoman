@@ -36,8 +36,8 @@ import { tigerAdapter } from "./tiger/adapter.js"
 import { usgovHrsaFqhcAdapter } from "./usgov-hrsa-fqhc/adapter.js"
 import { usgovImlsPlsAdapter } from "./usgov-imls-pls/adapter.js"
 import { usgovIrsBmfAdapter } from "./usgov-irs-bmf/adapter.js"
-import { usgovNadAdapter } from "./usgov-nad/adapter.js"
-import { usgovNppesAdapter } from "./usgov-nppes/adapter.js"
+import { usgovNADAdapter } from "./usgov-nad/adapter.js"
+import { usgovNPPESAdapter } from "./usgov-nppes/adapter.js"
 import { wofAdminAdapter } from "./wof-admin-json/adapter.js"
 import { wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.js"
 
@@ -63,8 +63,8 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	gnafAdapter,
 	fccBdcAdapter,
 	usgovHrsaFqhcAdapter,
-	usgovNppesAdapter,
-	usgovNadAdapter,
+	usgovNPPESAdapter,
+	usgovNADAdapter,
 	usgovImlsPlsAdapter,
 	usgovIrsBmfAdapter,
 	stateIaContractorsAdapter,
@@ -124,8 +124,8 @@ export {
 	usgovImlsPlsAdapter,
 } from "./usgov-imls-pls/adapter.js"
 export { USGOV_IRS_BMF_ADAPTER_ID, USGOV_IRS_BMF_DEFAULT_LICENSE, usgovIrsBmfAdapter } from "./usgov-irs-bmf/adapter.js"
-export { USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE, usgovNadAdapter } from "./usgov-nad/adapter.js"
-export { USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE, usgovNppesAdapter } from "./usgov-nppes/adapter.js"
+export { USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE, usgovNADAdapter } from "./usgov-nad/adapter.js"
+export { USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE, usgovNPPESAdapter } from "./usgov-nppes/adapter.js"
 export {
 	USGOV_SAMHSA_ADAPTER_ID,
 	USGOV_SAMHSA_DEFAULT_LICENSE,

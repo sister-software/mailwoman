@@ -21,7 +21,7 @@ import {
 } from "./adapter.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
-const fixtureCsv = resolve(here, "../../../fixtures/usgov-samhsa-treatment-locator/sample.csv")
+const fixtureCSV = resolve(here, "../../../fixtures/usgov-samhsa-treatment-locator/sample.csv")
 
 let scratch: string
 
@@ -45,7 +45,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("emits one row per valid CSV record + drops invalid ones", async () => {
 		const m = await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -63,7 +63,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("joins name1 + name2 with ' - ' when both are present", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -75,7 +75,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("joins street1 + street2 with ', ' for two-line addresses", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -89,7 +89,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 		// "Suite C, behind main building" is the SAMHSA-specific adversarial training signal.
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -103,7 +103,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("kryptonite case: 'Buffalo Treatment Services' + 'Buffalo NY' aligns to disjoint spans", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -122,7 +122,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("hyphenated NYC-style house number splits cleanly", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -135,7 +135,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("PO Box surface form preserved verbatim in street", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -148,7 +148,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("uses name2 as fallback venue when name1 is empty", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -160,7 +160,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("drops rows whose state is not a recognized USPS abbreviation", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -172,7 +172,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 		await expect(
 			runAdapter({
 				adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-				adapterOptions: { inputPath: fixtureCsv, country: "FR" },
+				adapterOptions: { inputPath: fixtureCSV, country: "FR" },
 				outputDir: scratch,
 				corpusVersion: "0.1.0",
 			})
@@ -182,7 +182,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("honors --limit", async () => {
 		const m = await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv, limit: 3 },
+			adapterOptions: { inputPath: fixtureCSV, limit: 3 },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
@@ -193,14 +193,14 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	it("two runs against the same fixture produce identical sha256", async () => {
 		const a = await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
 		await rm(join(scratch, USGOV_SAMHSA_ADAPTER_ID), { recursive: true, force: true })
 		const b = await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
-			adapterOptions: { inputPath: fixtureCsv },
+			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})

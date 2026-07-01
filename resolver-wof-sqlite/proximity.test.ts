@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Proximity + bbox tests for `WofSqlitePlaceLookup` — exercises the R*Tree integration via the
+ *   Proximity + bbox tests for `WOFSqlitePlaceLookup` — exercises the R*Tree integration via the
  *   fixture-DB pattern. Real-WOF coverage lives in `integration.test.ts`.
  */
 
@@ -12,7 +12,7 @@ import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { bboxAround, haversineKm } from "./geo.js"
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 interface FixturePlace {
 	id: number
@@ -112,10 +112,10 @@ function buildFixtureDb(): DatabaseSync {
 	return db
 }
 
-let lookup: WofSqlitePlaceLookup
+let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WofSqlitePlaceLookup({ database: buildFixtureDb(), buildFts: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDb(), buildFTS: true })
 })
 
 afterEach(() => {
@@ -235,7 +235,7 @@ describe("findPlace — backwards compat", () => {
 			);
 			INSERT INTO place_search (wof_id, name, alt_names) SELECT id, name, '' FROM spr;
 		`)
-		const oldLookup = new WofSqlitePlaceLookup({ database: db })
+		const oldLookup = new WOFSqlitePlaceLookup({ database: db })
 
 		try {
 			// bbox option should be silently ignored — without the R*Tree we can't filter at SQL level,

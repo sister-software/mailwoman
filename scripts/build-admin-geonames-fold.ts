@@ -20,7 +20,7 @@ import { parseArgs } from "node:util"
  *   function of the admin DB again. From here the recipe is one clean `build-candidate-cli` run.
  *
  *   It reuses the CANONICAL `ingestGeonamesAliases` (the very function a full `build-unified-wof
- *   --geonames-countries` runs) + `buildPlaceSearchFts`, so the folded admin DB is identical to a
+ *   --geonames-countries` runs) + `buildPlaceSearchFTS`, so the folded admin DB is identical to a
  *   from-scratch unified build with `--geonames-countries` — but WITHOUT re-ingesting the global
  *   WOF GeoJSON repos (the full set isn't cloned locally). Build-on-copy, never in place: the
  *   canonical admin DB is opened read-only via the copy and is never mutated.
@@ -34,7 +34,7 @@ import { parseArgs } from "node:util"
  *   folded admin DB: node resolver-wof-sqlite/out/build-candidate-cli.js --in <out> --postcodes
  *   <...> --out candidate-global-<v>.db
  */
-import { buildPlaceSearchFts, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite"
+import { buildPlaceSearchFTS, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite"
 
 const { values: a } = parseArgs({
 	options: {
@@ -83,7 +83,7 @@ console.error(
 // GeoNames rows are reachable by the candidate build's alias-explosion pass. drop:true forces a full
 // rebuild against the new snapshot (the copy already carries both tables).
 console.error("  rebuilding place_search + place_bbox from the updated names…")
-const res = buildPlaceSearchFts(db, {
+const res = buildPlaceSearchFTS(db, {
 	drop: true,
 	onProgress: (phase, detail) => console.error(`    [${phase}]${detail ? ` ${detail}` : ""}`),
 })

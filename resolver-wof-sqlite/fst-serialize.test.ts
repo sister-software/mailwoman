@@ -8,14 +8,14 @@ import { existsSync } from "node:fs"
 
 import { beforeAll, describe, expect, it } from "vitest"
 
-import { buildFstFromWof } from "./fst-builder.js"
-import { FstMatcher, type FstNode } from "./fst-matcher.js"
-import { deserializeFst, serializeFst } from "./fst-serialize.js"
+import { buildFSTFromWOF } from "./fst-builder.js"
+import { FSTMatcher, type FSTNode } from "./fst-matcher.js"
+import { deserializeFST, serializeFST } from "./fst-serialize.js"
 
 // --- Unit tests with a synthetic trie ---
 
-function buildSyntheticFst(): FstMatcher {
-	const nodes: FstNode[] = [
+function buildSyntheticFST(): FSTMatcher {
+	const nodes: FSTNode[] = [
 		{ edges: new Map(), places: [] }, // root (0)
 		{ edges: new Map(), places: [] }, // "new" (1)
 		{
@@ -62,13 +62,13 @@ function buildSyntheticFst(): FstMatcher {
 	nodes[0]!.edges.set("portland", 3)
 	nodes[1]!.edges.set("york", 2)
 
-	return FstMatcher.fromNodes(nodes)
+	return FSTMatcher.fromNodes(nodes)
 }
 
 describe("FST binary serialization — unit (synthetic)", () => {
-	const original = buildSyntheticFst()
-	const buf = serializeFst(original)
-	const restored = deserializeFst(buf)
+	const original = buildSyntheticFST()
+	const buf = serializeFST(original)
+	const restored = deserializeFST(buf)
 
 	it("roundtrips state count", () => {
 		expect(restored.stateCount).toBe(original.stateCount)
@@ -131,12 +131,12 @@ const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest
 const HAS_WOF = existsSync(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () => {
-	let original: FstMatcher
+	let original: FSTMatcher
 	let buf: Buffer
-	let restored: FstMatcher
+	let restored: FSTMatcher
 
 	beforeAll(() => {
-		const { matcher } = buildFstFromWof({
+		const { matcher } = buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],
@@ -146,8 +146,8 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 			},
 		})
 		original = matcher
-		buf = serializeFst(original)
-		restored = deserializeFst(buf)
+		buf = serializeFST(original)
+		restored = deserializeFST(buf)
 	}, 60_000)
 
 	it("roundtrips state count", () => {

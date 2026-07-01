@@ -7,9 +7,9 @@
 import { describe, expect, it } from "vitest"
 
 import {
-	buildBioEndMask,
-	buildBioStartMask,
-	buildBioTransitionMask,
+	buildBIOEndMask,
+	buildBIOStartMask,
+	buildBIOTransitionMask,
 	perTokenArgmax,
 	softmax,
 	viterbi,
@@ -18,9 +18,9 @@ import {
 const NEG_INF = -1e9
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"] as const
 
-describe("buildBioTransitionMask", () => {
+describe("buildBIOTransitionMask", () => {
 	it("permits O → anything except I-X", () => {
-		const mask = buildBioTransitionMask(LABELS)
+		const mask = buildBIOTransitionMask(LABELS)
 		expect(mask[0]?.[0]).toBe(0) // O → O
 		expect(mask[0]?.[1]).toBe(0) // O → B-locality
 		expect(mask[0]?.[2]).toBe(NEG_INF) // O → I-locality (forbidden)
@@ -29,7 +29,7 @@ describe("buildBioTransitionMask", () => {
 	})
 
 	it("permits B-X → I-X but forbids B-X → I-Y for different tags", () => {
-		const mask = buildBioTransitionMask(LABELS)
+		const mask = buildBIOTransitionMask(LABELS)
 		// from = B-locality (idx 1)
 		expect(mask[1]?.[2]).toBe(0) // B-locality → I-locality
 		expect(mask[1]?.[4]).toBe(NEG_INF) // B-locality → I-region
@@ -38,14 +38,14 @@ describe("buildBioTransitionMask", () => {
 	})
 
 	it("permits I-X → I-X", () => {
-		const mask = buildBioTransitionMask(LABELS)
+		const mask = buildBIOTransitionMask(LABELS)
 		expect(mask[2]?.[2]).toBe(0) // I-locality → I-locality
 	})
 })
 
-describe("buildBioStartMask", () => {
+describe("buildBIOStartMask", () => {
 	it("forbids starting on I-X", () => {
-		const start = buildBioStartMask(LABELS)
+		const start = buildBIOStartMask(LABELS)
 		expect(start[0]).toBe(0) // O
 		expect(start[1]).toBe(0) // B-locality
 		expect(start[2]).toBe(NEG_INF) // I-locality
@@ -64,7 +64,7 @@ describe("viterbi — basic", () => {
 		// One timestep, B-locality has highest emission.
 		const result = viterbi({
 			emissions: [[-1, 5, -10, -10, -10]],
-			transitions: buildBioTransitionMask(LABELS),
+			transitions: buildBIOTransitionMask(LABELS),
 		})
 		expect(result.path).toEqual([1]) // B-locality
 	})
@@ -78,8 +78,8 @@ describe("viterbi — basic", () => {
 		]
 		const path = viterbi({
 			emissions,
-			transitions: buildBioTransitionMask(LABELS),
-			startTransitions: buildBioStartMask(LABELS),
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
 		}).path
 
 		// Verify no orphan-I.
@@ -105,8 +105,8 @@ describe("viterbi — basic", () => {
 		]
 		const path = viterbi({
 			emissions,
-			transitions: buildBioTransitionMask(LABELS),
-			startTransitions: buildBioStartMask(LABELS),
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
 		}).path
 		expect(LABELS[path[0]!]).toBe("B-locality")
 		expect(LABELS[path[1]!]).toBe("I-locality")
@@ -120,9 +120,9 @@ describe("viterbi — basic", () => {
 		]
 		const path = viterbi({
 			emissions,
-			transitions: buildBioTransitionMask(LABELS),
-			startTransitions: buildBioStartMask(LABELS),
-			endTransitions: buildBioEndMask(LABELS),
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+			endTransitions: buildBIOEndMask(LABELS),
 		}).path
 		// First label can't be I-locality (start mask forbids).
 		expect(LABELS[path[0]!]).not.toBe("I-locality")

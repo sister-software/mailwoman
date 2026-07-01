@@ -51,7 +51,7 @@ import { pathToFileURL } from "node:url"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createCalibrator } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -180,10 +180,10 @@ export interface ScoredRow {
 
 async function collect(): Promise<ScoredRow[]> {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const calibrate = createCalibrator(JSON.parse(readFileSync(CALIB, "utf8")))
-	const lookup = new WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as never)
+	const lookup = new WOFSqlitePlaceLookup({ databasePath: WOF })
+	const resolver = createWOFResolver(lookup as never)
 	const model = await createScorer({
 		modelPath: MODEL,
 		tokenizerPath: TOK,
@@ -382,7 +382,7 @@ function analyze(rows: ScoredRow[]): string {
 	const svgPath = arg("svg", "")
 
 	if (svgPath) {
-		writeFileSync(svgPath, renderSvg(curve, nom))
+		writeFileSync(svgPath, renderSVG(curve, nom))
 		console.error(`wrote ${svgPath}`)
 	}
 
@@ -392,7 +392,7 @@ function analyze(rows: ScoredRow[]): string {
 /**
  * Minimal self-contained precision–recall SVG: mailwoman curve (recall x, precision y) + Nominatim point.
  */
-function renderSvg(
+function renderSVG(
 	curve: Array<{ precision: number; recall: number }>,
 	nom: { precision: number; recall: number }
 ): string {

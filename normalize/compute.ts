@@ -9,7 +9,7 @@
 
 import { expandAbbreviations } from "./abbreviations.js"
 import { applyCjkNormalization } from "./cjk.js"
-import { applyNfc } from "./nfc.js"
+import { applyNFC } from "./nfc.js"
 import { composeMaps, identityMap } from "./offset-map.js"
 import { applyPunctuation } from "./punctuation.js"
 import type { NormalizationTransform, NormalizedInput, NormalizeOpts } from "./types.js"
@@ -21,8 +21,8 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	let map = identityMap(raw.length)
 
 	// 1. NFC
-	if (!opts?.skipNfc) {
-		const r = applyNfc(text)
+	if (!opts?.skipNFC) {
+		const r = applyNFC(text)
 		text = r.text
 		map = composeMaps(map, r.map)
 		transforms.push({ kind: "nfc", changed: r.changed })

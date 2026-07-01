@@ -17,7 +17,7 @@ import { existsSync, readFileSync } from "node:fs"
  *   Run: node --experimental-strip-types scripts/eval/span-rescore-e2e.ts [--n 150]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -94,9 +94,9 @@ interface Stat {
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WofCandidateTableLookup({ databasePath: CAND })
-	const resolver = createWofResolver(backend as never)
+	const { WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const backend = new WOFCandidateTableLookup({ databasePath: CAND })
+	const resolver = createWOFResolver(backend as never)
 	const model = await createScorer({
 		modelPath: MODEL,
 		tokenizerPath: TOK,

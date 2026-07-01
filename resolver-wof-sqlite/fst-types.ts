@@ -31,26 +31,26 @@ export type PlacetypeId =
 	| "dependency"
 	| "street_affix"
 
-export interface FstMatchResult {
+export interface FSTMatchResult {
 	stateId: number
 	accepted: boolean
 	depth: number
 }
 
-export interface FstContinuation {
+export interface FSTContinuation {
 	token: string
 	targetState: number
 	acceptingCount: number
 }
 
-export interface FstQueryResult {
+export interface FSTQueryResult {
 	path: string[]
 	stateId: number
 	accepting: PlaceEntry[]
-	continuations: FstContinuation[]
+	continuations: FSTContinuation[]
 }
 
-export interface FstProvenance {
+export interface FSTProvenance {
 	builtAt: string
 	countries: string[]
 	stateCount: number
@@ -62,7 +62,7 @@ export interface FstProvenance {
 	modelCardVersion?: string
 }
 
-export interface BuildFstOpts {
+export interface BuildFSTOpts {
 	dbPath: string
 	countries?: string[]
 	placetypes?: PlacetypeId[]
@@ -70,7 +70,7 @@ export interface BuildFstOpts {
 	onProgress?: (phase: string, detail?: string) => void
 }
 
-export interface BuildFstResult {
+export interface BuildFSTResult {
 	stateCount: number
 	placeCount: number
 	edgeCount: number

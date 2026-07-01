@@ -33,10 +33,10 @@ import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
- * `PlaceLookup` — e.g. `new WofSqlitePlaceLookup({ databasePath }).asResolverBackend()` or a fake for tests.
+ * `PlaceLookup` — e.g. `new WOFSqlitePlaceLookup({ databasePath }).asResolverBackend()` or a fake for tests.
  */
-export function createWofResolver(backend: ResolverBackend): Resolver {
-	return new WofResolver(backend)
+export function createWOFResolver(backend: ResolverBackend): Resolver {
+	return new WOFResolver(backend)
 }
 
 interface ResolutionState {
@@ -596,7 +596,7 @@ async function reconcileExplicitCountry(
 	localityNode.metadata = { ...localityNode.metadata, explicit_country_repicked: true }
 }
 
-class WofResolver implements Resolver {
+class WOFResolver implements Resolver {
 	readonly #backend: ResolverBackend
 
 	constructor(backend: ResolverBackend) {

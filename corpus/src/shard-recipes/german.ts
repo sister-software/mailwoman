@@ -40,7 +40,7 @@ const SOURCES: GermanSource[] = [
 ]
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields). */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -78,7 +78,7 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -93,7 +93,7 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 		const lineStr = lines[li]
 
 		if (!lineStr) continue
-		const cells = splitCsv(lineStr)
+		const cells = splitCSV(lineStr)
 		const street = get(cells, iStreet)
 		const locality = get(cells, iCity)
 

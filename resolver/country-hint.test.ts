@@ -14,7 +14,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { createWofResolver } from "./resolve.js"
+import { createWOFResolver } from "./resolve.js"
 
 const MESSINA = {
 	id: 10,
@@ -111,7 +111,7 @@ function localityOf(tree: AddressTree): AddressNode | undefined {
 
 describe("resolveTree + country_hint (#833 forward linkage)", () => {
 	it("pins a hinted region to its country → the US locality wins the two-pairs tie", async () => {
-		const resolver = createWofResolver(makeBackend([MESSINA, MAINE, AUGUSTA_ME, AUGUSTA_IT]))
+		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, AUGUSTA_ME, AUGUSTA_IT]))
 		const out = await resolver.resolveTree(augustaMeTree(true), {})
 		const loc = localityOf(out)
 
@@ -121,7 +121,7 @@ describe("resolveTree + country_hint (#833 forward linkage)", () => {
 	})
 
 	it("without the hint, the greedy region (more-populous Messina) wins and Augusta lands in Sicily", async () => {
-		const resolver = createWofResolver(makeBackend([MESSINA, MAINE, AUGUSTA_ME, AUGUSTA_IT]))
+		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, AUGUSTA_ME, AUGUSTA_IT]))
 		const out = await resolver.resolveTree(augustaMeTree(false), {})
 		const loc = localityOf(out)
 

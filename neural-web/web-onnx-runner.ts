@@ -9,7 +9,7 @@
  *
  *   Execution provider strategy:
  *
- *   - Try WebGPU first when `useWebGpu !== false`. ~10× faster than WASM on supported devices, but
+ *   - Try WebGPU first when `useWebGPU !== false`. ~10× faster than WASM on supported devices, but
  *       availability depends on browser (Chromium 113+, Safari Tech Preview) AND hardware. The
  *       runtime surfaces a clean error when WebGPU is unavailable, so the constructor falls back to
  *       WASM automatically.
@@ -17,7 +17,7 @@
  *       but works everywhere onnxruntime-web does — including in Node, which is how the test
  *       harness exercises this file.
  *
- *   Tensor shape + I/O contract matches `OnnxRunner` exactly: fixed-length int64 inputs, padded with
+ *   Tensor shape + I/O contract matches `ONNXRunner` exactly: fixed-length int64 inputs, padded with
  *   zeros + attention_mask, output is a `logits` tensor of shape `[batch, seq, num_labels]`. See
  *   `@mailwoman/neural/onnx-runner` for the full export contract this file mirrors.
  */
@@ -30,14 +30,14 @@ import {
 } from "@mailwoman/neural/browser"
 import * as ort from "onnxruntime-web/webgpu"
 
-export interface WebOnnxRunnerOpts {
+export interface WebONNXRunnerOpts {
 	/**
 	 * Try the WebGPU execution provider first. Defaults to true. Set false to skip the WebGPU probe — useful in test
 	 * environments where WebGPU isn't available and the probe failure adds latency.
 	 */
-	useWebGpu?: boolean
+	useWebGPU?: boolean
 	/**
-	 * Fixed sequence length the model expects. Matches `OnnxRunner.DEFAULT_FIXED_SEQ_LEN` (128) by default. Re-quantized
+	 * Fixed sequence length the model expects. Matches `ONNXRunner.DEFAULT_FIXED_SEQ_LEN` (128) by default. Re-quantized
 	 * models can override.
 	 */
 	fixedSeqLen?: number
@@ -45,7 +45,7 @@ export interface WebOnnxRunnerOpts {
 	 * Optional override for where onnxruntime-web should load its `.wasm` assets from. Defaults to the package's CDN
 	 * paths; bundlers usually want to point this at a self-hosted copy.
 	 *
-	 * Example: `setWasmPaths("/static/ort/")` and put the .wasm files at /static/ort/.
+	 * Example: `setWASMPaths("/static/ort/")` and put the .wasm files at /static/ort/.
 	 */
 	wasmPathsRoot?: string
 }
@@ -53,47 +53,47 @@ export interface WebOnnxRunnerOpts {
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 /** Apply `wasmPathsRoot` once at module init. Safe to call multiple times. */
-function configureWasmPaths(root: string | undefined): void {
+function configureWASMPaths(root: string | undefined): void {
 	if (!root) return
 	// onnxruntime-web ships this on `ort.env.wasm`. We assign directly rather than calling
-	// `setWasmPaths` so it works across the slightly different shapes the typings have had.
+	// `setWASMPaths` so it works across the slightly different shapes the typings have had.
 	ort.env.wasm.wasmPaths = root
 }
 
-export interface WebOnnxRunnerDiagnostics {
+export interface WebONNXRunnerDiagnostics {
 	backend: "webgpu" | "wasm"
 	modelBytes: number
 }
 
-export class WebOnnxRunner implements NeuralRunner {
+export class WebONNXRunner implements NeuralRunner {
 	public readonly fixedSeqLen: number
-	public diagnostics: WebOnnxRunnerDiagnostics | null = null
+	public diagnostics: WebONNXRunnerDiagnostics | null = null
 	#session: ort.InferenceSession | null = null
 	#loadPromise: Promise<ort.InferenceSession> | null = null
 
 	private constructor(
 		private readonly modelBytes: Uint8Array,
-		private readonly opts: WebOnnxRunnerOpts
+		private readonly opts: WebONNXRunnerOpts
 	) {
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 	}
 
 	/** Construct from already-fetched model bytes. */
-	static async fromBytes(modelBytes: Uint8Array, opts: WebOnnxRunnerOpts = {}): Promise<WebOnnxRunner> {
-		configureWasmPaths(opts.wasmPathsRoot)
-		const runner = new WebOnnxRunner(modelBytes, opts)
+	static async fromBytes(modelBytes: Uint8Array, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
+		configureWASMPaths(opts.wasmPathsRoot)
+		const runner = new WebONNXRunner(modelBytes, opts)
 
 		return runner
 	}
 
 	/** Fetch the model from a URL and construct. */
-	static async fromUrl(modelUrl: string, opts: WebOnnxRunnerOpts = {}): Promise<WebOnnxRunner> {
-		const res = await fetch(modelUrl)
+	static async fromURL(modelURL: string, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
+		const res = await fetch(modelURL)
 
-		if (!res.ok) throw new Error(`fetch ${modelUrl} failed: ${res.status} ${res.statusText}`)
+		if (!res.ok) throw new Error(`fetch ${modelURL} failed: ${res.status} ${res.statusText}`)
 		const bytes = new Uint8Array(await res.arrayBuffer())
 
-		return WebOnnxRunner.fromBytes(bytes, opts)
+		return WebONNXRunner.fromBytes(bytes, opts)
 	}
 
 	async #ensureSession(): Promise<ort.InferenceSession> {
@@ -101,9 +101,9 @@ export class WebOnnxRunner implements NeuralRunner {
 
 		if (!this.#loadPromise) {
 			this.#loadPromise = (async () => {
-				const wantWebGpu = this.opts.useWebGpu !== false
+				const wantWebGPU = this.opts.useWebGPU !== false
 
-				if (wantWebGpu) {
+				if (wantWebGPU) {
 					try {
 						const session = await ort.InferenceSession.create(this.modelBytes, {
 							executionProviders: ["webgpu", "wasm"],
@@ -161,7 +161,7 @@ export class WebOnnxRunner implements NeuralRunner {
 			attention_mask: new ort.Tensor("int64", mask, [1, this.fixedSeqLen]),
 		}
 
-		// Anchor channel (#239/#240) — mirror of the node OnnxRunner. Feed the per-piece anchor when the
+		// Anchor channel (#239/#240) — mirror of the node ONNXRunner. Feed the per-piece anchor when the
 		// caller supplies it; otherwise, for anchor-trained models (whose ONNX declares the inputs as
 		// mandatory), feed zeros — the confidence=0 identity / anchor-off path. Without this the session
 		// throws on the missing required inputs.
@@ -187,7 +187,7 @@ export class WebOnnxRunner implements NeuralRunner {
 			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
-		// Gazetteer-anchor channel (#464) — mirror of the node OnnxRunner. Feed the per-piece clue when
+		// Gazetteer-anchor channel (#464) — mirror of the node ONNXRunner. Feed the per-piece clue when
 		// the caller supplies it AND the graph declares the inputs; for gazetteer-trained models with no
 		// clue data, feed zeros (the confidence=0 identity — a structural fallback only; see the loader's
 		// loud warning) so the session doesn't throw `input 'gazetteer_features' is missing in 'feeds'`.
@@ -231,7 +231,7 @@ export class WebOnnxRunner implements NeuralRunner {
 		}
 
 		// Locale head (#511 Tier A): present on v1.1.0+ exports (shipped v4.3.0+), absent before.
-		// Mirrors the node OnnxRunner — `addressSystemConventions: "auto"` depends on this surfacing.
+		// Mirrors the node ONNXRunner — `addressSystemConventions: "auto"` depends on this surfacing.
 		const localeTensor = output["locale_logits"]
 		const localeLogits = localeTensor ? Array.from(localeTensor.data as Float32Array) : undefined
 

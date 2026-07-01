@@ -20,7 +20,7 @@ import ort from "onnxruntime-node"
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.js"
 import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.js"
 
-export interface OnnxRunnerOpts {
+export interface ONNXRunnerOpts {
 	/** If true, load the model immediately in `create()`. Default false. */
 	warmup?: boolean
 	/**
@@ -54,7 +54,7 @@ export interface InferResult {
 	localeLogits?: number[]
 }
 
-export class OnnxRunner {
+export class ONNXRunner {
 	private session: ort.InferenceSession | null = null
 	private loadPromise: Promise<ort.InferenceSession> | null = null
 	public readonly fixedSeqLen: number
@@ -64,7 +64,7 @@ export class OnnxRunner {
 	private constructor(
 		private readonly modelPath: string,
 		private readonly modelBytes: Uint8Array | null,
-		opts: OnnxRunnerOpts
+		opts: ONNXRunnerOpts
 	) {
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 		const requested = opts.executionProviders ?? ["cpu"]
@@ -73,8 +73,8 @@ export class OnnxRunner {
 	}
 
 	/** Load by path. Reads the model lazily unless `warmup` is true. */
-	static async create(modelPath: string, opts: OnnxRunnerOpts = {}): Promise<OnnxRunner> {
-		const runner = new OnnxRunner(modelPath, null, opts)
+	static async create(modelPath: string, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
+		const runner = new ONNXRunner(modelPath, null, opts)
 
 		if (opts.warmup) await runner.ensureSession()
 
@@ -82,8 +82,8 @@ export class OnnxRunner {
 	}
 
 	/** Load from an already-read byte buffer. */
-	static async fromBytes(modelBytes: Uint8Array, opts: OnnxRunnerOpts = {}): Promise<OnnxRunner> {
-		const runner = new OnnxRunner("(bytes)", modelBytes, opts)
+	static async fromBytes(modelBytes: Uint8Array, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
+		const runner = new ONNXRunner("(bytes)", modelBytes, opts)
 
 		if (opts.warmup) await runner.ensureSession()
 
@@ -121,7 +121,7 @@ export class OnnxRunner {
 
 			// A requested GPU provider failed to initialize — fall back to CPU so inference still loads.
 			console.warn(
-				`[OnnxRunner] execution providers [${this.executionProviders.join(", ")}] failed to initialize ` +
+				`[ONNXRunner] execution providers [${this.executionProviders.join(", ")}] failed to initialize ` +
 					`(${(err as Error).message.split("\n")[0]}); falling back to CPU.`
 			)
 

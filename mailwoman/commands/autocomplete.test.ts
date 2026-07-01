@@ -17,9 +17,9 @@ import { join } from "node:path"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { autocomplete } from "../../resolver-wof-sqlite/fst-autocomplete.js"
-import { FstMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.js"
-import { serializeFst } from "../../resolver-wof-sqlite/fst-serialize.js"
-import { resolveFstPath, runAutocomplete } from "./autocomplete.js"
+import { FSTMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.js"
+import { serializeFST } from "../../resolver-wof-sqlite/fst-serialize.js"
+import { resolveFSTPath, runAutocomplete } from "./autocomplete.js"
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -33,13 +33,13 @@ interface FixturePlace {
 	parentChain: number[]
 }
 
-type FstNodeInternal = { edges: Map<string, number>; places: FixtureEntry[] }
+type FSTNodeInternal = { edges: Map<string, number>; places: FixtureEntry[] }
 type FixtureEntry = FixturePlace & { lat: number; lon: number }
 
-/** Build a minimal FstMatcher from a list of places, using normalizeTokens exactly as the builder. */
-function buildFixtureMatcher(places: FixturePlace[]): FstMatcher {
+/** Build a minimal FSTMatcher from a list of places, using normalizeTokens exactly as the builder. */
+function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 	const entries: FixtureEntry[] = places.map((p) => ({ ...p, lat: 0, lon: 0 }))
-	const nodes: FstNodeInternal[] = [{ edges: new Map(), places: [] }]
+	const nodes: FSTNodeInternal[] = [{ edges: new Map(), places: [] }]
 
 	for (const entry of entries) {
 		const tokens = normalizeTokens(entry.name)
@@ -65,7 +65,7 @@ function buildFixtureMatcher(places: FixturePlace[]): FstMatcher {
 		}
 	}
 
-	return FstMatcher.fromNodes(nodes)
+	return FSTMatcher.fromNodes(nodes)
 }
 
 const FIXTURE_PLACES: FixturePlace[] = [
@@ -83,7 +83,7 @@ const FIXTURE_PLACES: FixturePlace[] = [
 	{ wofID: 85633793, placetype: "country", name: "United States", importance: 0.99, parentChain: [] },
 ]
 
-let fixtureMatcher: FstMatcher
+let fixtureMatcher: FSTMatcher
 let fixtureBinPath: string
 
 beforeAll(() => {
@@ -91,7 +91,7 @@ beforeAll(() => {
 
 	// Write the serialized fixture to a temp file so runAutocomplete (which reads from disk) can be
 	// tested end-to-end.
-	const buf = serializeFst(fixtureMatcher)
+	const buf = serializeFST(fixtureMatcher)
 	fixtureBinPath = join(tmpdir(), `mailwoman-fst-fixture-${Date.now()}.bin`)
 	writeFileSync(fixtureBinPath, buf)
 })
@@ -123,7 +123,7 @@ describe("normalizeTokens symmetry", () => {
 })
 
 // ---------------------------------------------------------------------------
-// In-memory autocomplete (FstMatcher directly, no disk I/O)
+// In-memory autocomplete (FSTMatcher directly, no disk I/O)
 // ---------------------------------------------------------------------------
 
 describe("autocomplete — in-memory fixture", () => {
@@ -222,12 +222,12 @@ describe("runAutocomplete — disk round-trip", () => {
 })
 
 // ---------------------------------------------------------------------------
-// resolveFstPath
+// resolveFSTPath
 // ---------------------------------------------------------------------------
 
-describe("resolveFstPath", () => {
+describe("resolveFSTPath", () => {
 	it("returns the explicit path when given one", () => {
-		expect(resolveFstPath("/explicit/path.bin")).toBe("/explicit/path.bin")
+		expect(resolveFSTPath("/explicit/path.bin")).toBe("/explicit/path.bin")
 	})
 
 	it("falls back to the staged default when no explicit path and no env var", () => {
@@ -235,7 +235,7 @@ describe("resolveFstPath", () => {
 		delete process.env["MAILWOMAN_FST_BIN"]
 
 		try {
-			expect(resolveFstPath()).toBe("/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin")
+			expect(resolveFSTPath()).toBe("/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin")
 		} finally {
 			if (saved !== undefined) process.env["MAILWOMAN_FST_BIN"] = saved
 		}
@@ -246,7 +246,7 @@ describe("resolveFstPath", () => {
 		process.env["MAILWOMAN_FST_BIN"] = "/env/path.bin"
 
 		try {
-			expect(resolveFstPath()).toBe("/env/path.bin")
+			expect(resolveFSTPath()).toBe("/env/path.bin")
 		} finally {
 			if (saved !== undefined) {
 				process.env["MAILWOMAN_FST_BIN"] = saved
@@ -261,7 +261,7 @@ describe("resolveFstPath", () => {
 		process.env["MAILWOMAN_FST_BIN"] = "/env/path.bin"
 
 		try {
-			expect(resolveFstPath("/explicit/path.bin")).toBe("/explicit/path.bin")
+			expect(resolveFSTPath("/explicit/path.bin")).toBe("/explicit/path.bin")
 		} finally {
 			if (saved !== undefined) {
 				process.env["MAILWOMAN_FST_BIN"] = saved

@@ -47,7 +47,7 @@ export const AutocompleteConfigSchema = zod.object({
 })
 
 /** Resolve the FST binary path from explicit flag, env var, or the staged default. */
-export function resolveFstPath(explicitPath?: string): string {
+export function resolveFSTPath(explicitPath?: string): string {
 	return explicitPath ?? process.env["MAILWOMAN_FST_BIN"] ?? "/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin"
 }
 
@@ -89,13 +89,13 @@ export async function runAutocomplete(
 
 	// Dynamic import keeps @mailwoman/resolver-wof-sqlite a true optional peer dep — only loaded
 	// when the autocomplete command is invoked.
-	const { deserializeFst } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
+	const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
 	const { autocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
 
 	let matcher
 
 	try {
-		matcher = deserializeFst(buf)
+		matcher = deserializeFST(buf)
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err)
 		throw new Error(`Malformed FST binary at ${fstPath}: ${msg}`)
@@ -145,7 +145,7 @@ const AutocompleteCommand: CommandComponent<typeof AutocompleteConfigSchema, typ
 			return
 		}
 
-		const fstPath = resolveFstPath(options.fst)
+		const fstPath = resolveFSTPath(options.fst)
 
 		runAutocomplete(prefix, { fstPath, limit: options.limit })
 			.then((entries) => {

@@ -14,8 +14,8 @@ import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { OsmShardProvider } from "@mailwoman/osm/sdk"
-import { createWofResolver } from "@mailwoman/resolver"
+import { OSMShardProvider } from "@mailwoman/osm/sdk"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { type GeocodeResult, geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
 
@@ -41,11 +41,11 @@ export async function buildGauntletDeps(opts: { modelPath?: string } = {}): Prom
 	const classifier = opts.modelPath
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
 		: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const resolver = createWofResolver(
+	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
-	const osmProvider = new OsmShardProvider(mailwomanDataRoot())
+	const osmProvider = new OSMShardProvider(mailwomanDataRoot())
 
 	return {
 		geocode: (input: string) =>

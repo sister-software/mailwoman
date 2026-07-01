@@ -28,7 +28,7 @@ import { existsSync, readFileSync } from "node:fs"
  *   Run: node --experimental-strip-types scripts/eval/span-rescore-validate.ts [--n 150]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -50,7 +50,7 @@ const LOCALES: [string, string][] = [
 ]
 
 type N9 = { placeId?: string; children?: unknown[] }
-const hasWof = (n: N9): boolean => !!n.placeId?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWof)
+const hasWOF = (n: N9): boolean => !!n.placeId?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWOF)
 
 const pctile = (xs: number[], p: number): number => {
 	if (!xs.length) return NaN
@@ -174,16 +174,16 @@ async function spanRescore(
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup, WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WofSqlitePlaceLookup({ databasePath: WOF }) as unknown as Lookup & {
+	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const lookup = new WOFSqlitePlaceLookup({ databasePath: WOF }) as unknown as Lookup & {
 		findPlace: Lookup["findPlace"]
 	}
 	// Postcode→point anchor for the consistency gate. The candidate gazetteer folds postcodes as
 	// queryable rows (the demo's resolver); IT/CZ postcodes resolve here, PL/PT/AU don't (gate no-ops there).
 	const GATE_KM = Number(arg("gate", "50")) // 0 disables the gate
 	const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20h.db"))
-	const pcLookup = new WofCandidateTableLookup({ databasePath: CAND }) as unknown as Lookup
-	const resolver = createWofResolver(lookup as never)
+	const pcLookup = new WOFCandidateTableLookup({ databasePath: CAND }) as unknown as Lookup
+	const resolver = createWOFResolver(lookup as never)
 	const model = await createScorer({
 		modelPath: MODEL,
 		tokenizerPath: TOK,
@@ -211,7 +211,7 @@ async function main() {
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
 			const r = await resolver.resolveTree(tree as never, { defaultCountry: cc })
 
-			if ((r.roots as N9[]).some(hasWof)) continue
+			if ((r.roots as N9[]).some(hasWOF)) continue
 			s.unres++
 			const pc = ((row.components?.postcode ?? "") as string).toString().trim() || undefined
 			// Resolve the postcode anchor for the consistency gate (once per row).

@@ -49,7 +49,7 @@ interface CorpusRow {
 }
 
 /** Strip a BIO prefix ("B-"/"I-") off a label, matching the Python `strip_bio`. */
-function stripBio(label: string): string {
+function stripBIO(label: string): string {
 	const head = label.slice(0, 2)
 
 	return head === "B-" || head === "I-" ? label.slice(2) : label
@@ -192,7 +192,7 @@ interface Args {
 	fraction: number
 }
 
-function parseCliArgs(): Args {
+function parseCLIArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			shard: { type: "string" },
@@ -222,7 +222,7 @@ function parseCliArgs(): Args {
 }
 
 async function main(): Promise<void> {
-	const args = parseCliArgs()
+	const args = parseCLIArgs()
 
 	const instance = await DuckDBInstance.create()
 	const con = await instance.connect()
@@ -240,7 +240,7 @@ async function main(): Promise<void> {
 			const l = labels[i]!
 
 			if (isDigit(w)) continue // numbers are context-determined (house_number/postcode), not lexical vocab
-			bump(shardTags, w, stripBio(l))
+			bump(shardTags, w, stripBIO(l))
 			let set = shardCountries.get(w)
 
 			if (!set) {
@@ -301,7 +301,7 @@ async function main(): Promise<void> {
 				const w = tokens[j]!
 
 				if (shardVocab.has(w) && shardCountries.get(w)!.has(country)) {
-					bump(baseTags, w, stripBio(labels[j]!))
+					bump(baseTags, w, stripBIO(labels[j]!))
 				}
 			}
 		}

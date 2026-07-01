@@ -106,7 +106,7 @@ async function discoverLatestZip(): Promise<string | undefined> {
 }
 
 /** Extract the main registry CSV name (npidata_pfile_*.csv) from a ZIP's `unzip -l` listing. */
-async function findNpidataCsv(zipPath: string): Promise<string | undefined> {
+async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
 	const listing = await $`unzip -l ${zipPath}`
 
 	for (const line of listing.stdout.split("\n")) {
@@ -118,7 +118,7 @@ async function findNpidataCsv(zipPath: string): Promise<string | undefined> {
 	return undefined
 }
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
 			"out-root": { type: "string", default: process.env.OUT_ROOT },
@@ -133,7 +133,7 @@ function parseCliArgs() {
 async function main(): Promise<void> {
 	$.verbose = false
 
-	const { outRoot } = parseCliArgs()
+	const { outRoot } = parseCLIArgs()
 	const destDir = join(outRoot, SLUG)
 	mkdirSync(destDir, { recursive: true })
 	const manifestPath = join(destDir, "MANIFEST.json")
@@ -150,7 +150,7 @@ async function main(): Promise<void> {
 		return
 	}
 
-	const zipUrl = `${BASE_URL}/${zipFilename}`
+	const zipURL = `${BASE_URL}/${zipFilename}`
 	const zipDest = join(destDir, zipFilename)
 	process.stderr.write(`  Latest full file: ${zipFilename}\n`)
 
@@ -179,15 +179,15 @@ async function main(): Promise<void> {
 	// ------------------------------------------------------------------
 	// Download ZIP (large; 60-minute timeout)
 	// ------------------------------------------------------------------
-	process.stderr.write(`  Downloading ${zipUrl} ...\n`)
-	const zipSize = await downloadToFile(zipUrl, zipDest, 3_600_000)
+	process.stderr.write(`  Downloading ${zipURL} ...\n`)
+	const zipSize = await downloadToFile(zipURL, zipDest, 3_600_000)
 	process.stderr.write(`  Downloaded: ${(zipSize / 1024 / 1024).toFixed(1)} MB\n`)
 
 	// ------------------------------------------------------------------
 	// Extract only the main registry CSV (npidata_pfile_*.csv)
 	// ------------------------------------------------------------------
 	process.stderr.write("  Extracting npidata_pfile CSV from ZIP ...\n")
-	const csvName = await findNpidataCsv(zipDest)
+	const csvName = await findNpidataCSV(zipDest)
 
 	if (!csvName) {
 		process.stderr.write("  ✗ Could not find npidata_pfile CSV inside ZIP\n")
@@ -214,7 +214,7 @@ async function main(): Promise<void> {
 	// Write MANIFEST (records the extracted CSV, not the ZIP)
 	// ------------------------------------------------------------------
 	const manifest: SourceManifest = {
-		source_url: zipUrl,
+		source_url: zipURL,
 		downloaded_at: new Date().toISOString(),
 		filename: csvName,
 		sha256: csvSha,

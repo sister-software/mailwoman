@@ -24,7 +24,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 // US regions, their USPS abbreviations (what add-region-abbrevs writes into `names`), and two
 // same-named towns ("Sheldon") — the Vermont one small, the Iowa one larger — plus the ancestry
@@ -86,9 +86,9 @@ function buildDb(): DatabaseSync {
 	return db
 }
 
-let lookup: WofSqlitePlaceLookup
+let lookup: WOFSqlitePlaceLookup
 beforeEach(() => {
-	lookup = new WofSqlitePlaceLookup({ database: buildDb(), buildFts: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildDb(), buildFTS: true })
 })
 afterEach(() => {
 	lookup.close()

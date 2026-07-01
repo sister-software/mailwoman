@@ -34,9 +34,9 @@ import { CoarsePlacer, inMapPosterior } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { createWofResolver, type ResolveOpts } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolveOpts } from "@mailwoman/resolver"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
@@ -75,7 +75,7 @@ const PLACETYPE_RANK: Record<string, number> = {
 	country: 0,
 }
 
-function resolvedWofNodes(tree: AddressTree): Array<{ id: number; rank: number }> {
+function resolvedWOFNodes(tree: AddressTree): Array<{ id: number; rank: number }> {
 	const out: Array<{ id: number; rank: number }> = []
 	const visit = (n: AddressNode): void => {
 		if (n.placeId?.startsWith("wof:")) {
@@ -121,13 +121,13 @@ async function main(): Promise<void> {
 	const card = JSON.parse(readFileSync(cardPath, "utf8")) as { labels: string[]; version?: string }
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(tokPath),
-		OnnxRunner.create(modelPath),
+		ONNXRunner.create(modelPath),
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WofSqlitePlaceLookup({ databasePath: wofPath })
-	const resolver = createWofResolver(backend as never)
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const backend = new WOFSqlitePlaceLookup({ databasePath: wofPath })
+	const resolver = createWOFResolver(backend as never)
 	const placer = await CoarsePlacer.fromBundled({ abstainBelow: ABSTAIN_BELOW, openSet: true })
 
 	const db = new DatabaseSync(wofPath, { readOnly: true })
@@ -146,7 +146,7 @@ async function main(): Promise<void> {
 	}
 	const resolvedCountry = async (parsed: AddressTree, opts: ResolveOpts): Promise<string> => {
 		const resolved = await resolver.resolveTree(structuredClone(parsed), opts)
-		const nodes = resolvedWofNodes(resolved)
+		const nodes = resolvedWOFNodes(resolved)
 
 		if (nodes.length === 0) return ""
 		nodes.sort((a, b) => b.rank - a.rank)

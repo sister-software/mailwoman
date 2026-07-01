@@ -15,7 +15,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { WofPostcodeLookup } from "./postcode-point-lookup.js"
+import { WOFPostcodeLookup } from "./postcode-point-lookup.js"
 
 /** Create a minimal postcode shard with the columns the lookup reads. */
 function seedShard(path: string, rows: Array<[number, string, string, string, number, number, number]>): void {
@@ -32,7 +32,7 @@ function seedShard(path: string, rows: Array<[number, string, string, string, nu
 }
 
 let dir: string
-let lookup: WofPostcodeLookup
+let lookup: WOFPostcodeLookup
 
 beforeAll(() => {
 	dir = mkdtempSync(join(tmpdir(), "mailwoman-pc-lookup-"))
@@ -49,7 +49,7 @@ beforeAll(() => {
 		[10, "75008", "postalcode", "US", 35.9, -90.7, 1], // collides with FR 75008
 		[11, "94105", "postalcode", "US", 37.789, -122.396, 1],
 	])
-	lookup = new WofPostcodeLookup([intl, us])
+	lookup = new WOFPostcodeLookup([intl, us])
 })
 
 afterAll(() => {
@@ -57,7 +57,7 @@ afterAll(() => {
 	rmSync(dir, { recursive: true, force: true })
 })
 
-describe("WofPostcodeLookup", () => {
+describe("WOFPostcodeLookup", () => {
 	it("exact-matches a current postcode", () => {
 		expect(lookup.lookup("94105")).toEqual([{ country: "US", lat: 37.789, lon: -122.396 }])
 	})

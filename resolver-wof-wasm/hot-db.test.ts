@@ -25,12 +25,12 @@
 
 import { readFile } from "node:fs/promises"
 
-import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
 import { runCascade } from "../docs/src/shared/demo-helpers.js"
-import { loadSlimWofDatabase } from "./loader.js"
-import { WofWasmPlaceLookup } from "./lookup.js"
+import { loadSlimWOFDatabase } from "./loader.js"
+import { WOFWasmPlaceLookup } from "./lookup.js"
 
 const HOT_DB_PATH = process.env.MAILWOMAN_WOF_HOT_DB
 
@@ -38,12 +38,12 @@ const BROOKLYN_BOROUGH = 421205765
 const NEW_YORK_LOCALITY = 85977539
 
 describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_HOT_DB)", () => {
-	let wasmLookup: WofWasmPlaceLookup
+	let wasmLookup: WOFWasmPlaceLookup
 
 	beforeAll(async () => {
 		const bytes = await readFile(HOT_DB_PATH!)
-		const { db } = await loadSlimWofDatabase({ source: bytes })
-		wasmLookup = new WofWasmPlaceLookup({ db })
+		const { db } = await loadSlimWOFDatabase({ source: bytes })
+		wasmLookup = new WOFWasmPlaceLookup({ db })
 	})
 
 	afterAll(() => {
@@ -118,7 +118,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 
 	describe("Node lookup (resolver-wof-sqlite) — parity on the same DB", () => {
 		test('"Brooklyn" locality query → the borough (placetype expansion + alias-bag exact tier)', async () => {
-			const lookup = new WofSqlitePlaceLookup({ databasePath: HOT_DB_PATH! })
+			const lookup = new WOFSqlitePlaceLookup({ databasePath: HOT_DB_PATH! })
 
 			try {
 				const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
@@ -130,7 +130,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 		})
 
 		test('"New York City" → the New York locality via the alias bag (no names table on the slim DB)', async () => {
-			const lookup = new WofSqlitePlaceLookup({ databasePath: HOT_DB_PATH! })
+			const lookup = new WOFSqlitePlaceLookup({ databasePath: HOT_DB_PATH! })
 
 			try {
 				const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })

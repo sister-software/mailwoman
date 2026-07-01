@@ -40,7 +40,7 @@ export const ZCTA_SOURCE = "census-zcta-2024"
  */
 export const GEONAMES_US_SOURCE = "geonames-us"
 
-export interface ZctaCentroid {
+export interface ZCTACentroid {
 	lat: number
 	lon: number
 }
@@ -50,8 +50,8 @@ export interface ZctaCentroid {
  * centroid map. Skips the header, non-5-digit GEOIDs, non-finite coordinates, and `(0,0)` rows (a placeholder must
  * never fill a placeholder).
  */
-export function parseZctaCentroids(text: string): Map<string, ZctaCentroid> {
-	const out = new Map<string, ZctaCentroid>()
+export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
+	const out = new Map<string, ZCTACentroid>()
 
 	for (const line of text.split("\n")) {
 		const fields = line.split("\t").map((f) => f.trim())
@@ -75,7 +75,7 @@ export function parseZctaCentroids(text: string): Map<string, ZctaCentroid> {
  */
 export function fillPlaceholderCentroids(
 	db: DatabaseSync,
-	zcta: ReadonlyMap<string, ZctaCentroid>,
+	zcta: ReadonlyMap<string, ZCTACentroid>,
 	source: string = ZCTA_SOURCE
 ): number {
 	// Raw DDL by design: this is a sync helper that borrows `db` and is exercised by a sync, heavily-
@@ -123,7 +123,7 @@ export function fillPlaceholderCentroids(
  * Source: download.geonames.org/export/zip/<CC>.zip → `<CC>.txt`. License: CC-BY 4.0. Attribution required in any DB
  * that ships the resulting coordinates.
  */
-export function parseGeonamesCentroids(text: string): Map<string, ZctaCentroid> {
+export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()
 
 	for (const line of text.split("\n")) {
@@ -145,7 +145,7 @@ export function parseGeonamesCentroids(text: string): Map<string, ZctaCentroid> 
 		}
 	}
 
-	const out = new Map<string, ZctaCentroid>()
+	const out = new Map<string, ZCTACentroid>()
 
 	for (const [pc, s] of acc) {
 		out.set(pc, { lat: s.lat / s.n, lon: s.lon / s.n })
@@ -163,7 +163,7 @@ export function parseGeonamesCentroids(text: string): Map<string, ZctaCentroid> 
  */
 export function fillGeonamesPlaceholders(
 	db: DatabaseSync,
-	geonames: ReadonlyMap<string, ZctaCentroid>,
+	geonames: ReadonlyMap<string, ZCTACentroid>,
 	source: string = GEONAMES_US_SOURCE
 ): number {
 	// Raw DDL by design: this is a sync helper that borrows `db` and is exercised by a sync, heavily-

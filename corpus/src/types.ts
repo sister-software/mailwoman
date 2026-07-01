@@ -16,7 +16,7 @@
  *   per-invocation knob set (input path, optional country filter, row cap, abort signal).
  */
 
-import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
+import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 
 /**
  * Provenance + augmentation metadata that travels with every corpus row.
@@ -110,7 +110,7 @@ export interface LabeledRow extends CanonicalRow {
 	tokens: readonly string[]
 
 	/** BIO labels, one per token. Same length as `tokens`. */
-	labels: readonly BioLabel[]
+	labels: readonly BIOLabel[]
 
 	/**
 	 * Char-offset label spans over `raw` (parallel arrays, per the #519 ruling): `span_starts[i]` is the inclusive start

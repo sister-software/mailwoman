@@ -28,7 +28,7 @@
 import React, { useEffect, useState } from "react"
 
 import { DEFAULT_LOCALE } from "../../shared/demo-helpers.ts"
-import { assetUrl } from "../../shared/resources.tsx"
+import { assetURL } from "../../shared/resources.tsx"
 
 interface ReliabilityBin {
 	n: number
@@ -72,7 +72,7 @@ export default function CalibrationShowcase({
 		let cancelled = false
 		void (async () => {
 			try {
-				const res = await fetch(assetUrl(locale, version, "calibration.json"))
+				const res = await fetch(assetURL(locale, version, "calibration.json"))
 
 				if (!res.ok) throw new Error(`calibration.json ${res.status}`)
 				const json = (await res.json()) as CalibrationData

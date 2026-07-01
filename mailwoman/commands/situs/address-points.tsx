@@ -70,7 +70,7 @@ const OptionsSchema = zod.object({
 	// from these instead of the Overture parquet — for states Overture's addresses theme does NOT carry
 	// (HI, NH). The CSVs are already state-scoped, so no state/county filter applies; --state still names
 	// the output. Same address_point schema + shared normalizer as the Overture path.
-	oaCsv: zod
+	oaCSV: zod
 		.string()
 		.optional()
 		.describe("Comma-separated OpenAddresses conformed-CSV path(s); builds from these instead of Overture"),
@@ -103,7 +103,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 		void (async () => {
 			try {
 				// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
-				const OA_MODE = Boolean(options.oaCsv)
+				const OA_MODE = Boolean(options.oaCSV)
 
 				if (!options.state) {
 					throw new Error("--state required (US state abbreviation, e.g. VT)")
@@ -207,20 +207,20 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 				// whole result — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap that way (OOM 2026-06-14).
 				// stream()+fetchChunk() keeps JS memory bounded to one chunk; the growing data lives in the
 				// on-disk SQLite WAL inside a single transaction.
-				const oaCsvList = OA_MODE
+				const oaCSVList = OA_MODE
 					? options
-							.oaCsv!.split(",")
+							.oaCSV!.split(",")
 							.map((p) => `'${p.trim()}'`)
 							.join(", ")
 					: ""
-				const streamSql = OA_MODE
+				const streamSQL = OA_MODE
 					? `SELECT
 							NUMBER AS number, STREET AS street, NULLIF(trim(UNIT), '') AS unit,
 							NULLIF(trim(POSTCODE), '') AS postcode,
 							NULLIF(trim(CITY), '') AS locality,
 							'openaddresses' AS dataset,
 							LAT AS lat, LON AS lon
-						FROM read_csv([${oaCsvList}], header = true, all_varchar = true)
+						FROM read_csv([${oaCSVList}], header = true, all_varchar = true)
 						WHERE nullif(trim(STREET), '') IS NOT NULL AND nullif(trim(NUMBER), '') IS NOT NULL`
 					: `SELECT
 							number, street, unit, postcode,
@@ -233,7 +233,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 							AND nullif(trim(number), '') IS NOT NULL
 							${countyFilter}
 							${datasetFilter}`
-				const stream = await duck.stream(streamSql)
+				const stream = await duck.stream(streamSQL)
 				// A streamed DataChunk carries no column names of its own, so pull them off the result once.
 				const colNames = stream.columnNames()
 				db.exec("BEGIN")

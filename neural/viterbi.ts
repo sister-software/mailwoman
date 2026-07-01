@@ -12,7 +12,7 @@
  *   Two transition matrix modes:
  *
  *   1. **Structural-only** (no weights changes required) — build from the BIO label vocabulary using
- *        `buildBioTransitionMask()`. Forbids `O → I-X`, `B-X → I-Y` (X ≠ Y), and sequence-start →
+ *        `buildBIOTransitionMask()`. Forbids `O → I-X`, `B-X → I-Y` (X ≠ Y), and sequence-start →
  *        `I-X`. Permits everything else. This alone prevents orphan-I decoding ("Saint Petersburg →
  *        Petersburg" bug) at runtime — a strict improvement over argmax.
  *   2. **Learned** (requires a future weights release that ships `crf-transitions.json`) — load the
@@ -34,7 +34,7 @@ const NEG_INF = -1e9
  * Returns a `numLabels × numLabels` matrix where `mask[from][to]` is the additive log-score (0 for permitted, NEG_INF
  * for forbidden).
  */
-export function buildBioTransitionMask(labels: readonly string[]): number[][] {
+export function buildBIOTransitionMask(labels: readonly string[]): number[][] {
 	const n = labels.length
 	const mask: number[][] = []
 
@@ -53,7 +53,7 @@ export function buildBioTransitionMask(labels: readonly string[]): number[][] {
 }
 
 /** Returns the per-label vector of valid start-of-sequence transitions (0 or -inf). */
-export function buildBioStartMask(labels: readonly string[]): number[] {
+export function buildBIOStartMask(labels: readonly string[]): number[] {
 	return labels.map((l) => (l.startsWith("I-") ? NEG_INF : 0))
 }
 
@@ -61,7 +61,7 @@ export function buildBioStartMask(labels: readonly string[]): number[] {
  * End-of-sequence transitions. By default all labels are valid endings (returns zeros). Override if the trained model
  * has learned end transitions.
  */
-export function buildBioEndMask(labels: readonly string[]): number[] {
+export function buildBIOEndMask(labels: readonly string[]): number[] {
 	return labels.map(() => 0)
 }
 
@@ -82,7 +82,7 @@ function isValidTransition(from: string, to: string): boolean {
 export interface ViterbiInput {
 	/** `emissions[t][k]` — log-emission for label k at timestep t. Pass raw logits or log-softmaxes. */
 	emissions: number[][]
-	/** `transitions[from][to]` — additive log-score. Use `buildBioTransitionMask` if unsure. */
+	/** `transitions[from][to]` — additive log-score. Use `buildBIOTransitionMask` if unsure. */
 	transitions: number[][]
 	/** Per-label log-score for being the FIRST label. */
 	startTransitions?: number[]

@@ -5,7 +5,7 @@
  *
  *   Typed schema for the byte-range CANDIDATE gazetteer (`candidate.db`) — the single source of truth
  *   for the columns shared by the BUILDER ({@link buildCandidateTable}) and the READERS (the Node
- *   {@link WofCandidateTableLookup} + the browser `httpvfs-resolver.ts`). Before this module each
+ *   {@link WOFCandidateTableLookup} + the browser `httpvfs-resolver.ts`). Before this module each
  *   side hand-wrote the column list; a rename in one place broke the other at runtime. Now the
  *   contract is a Kysely `Database` interface (`new DatabaseClient<CandidateDatabase>(...)` for
  *   typed inserts) plus the table DDL as strings — so a column change is a compile error on every

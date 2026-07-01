@@ -41,7 +41,7 @@ import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js
 export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 
-interface NadRecord {
+interface NADRecord {
 	OBJECTID?: number
 	UUID?: string | null
 	// House number
@@ -157,7 +157,7 @@ function nonEmpty(...values: Array<string | null | undefined>): string | undefin
 	return undefined
 }
 
-function composeHouseNumber(r: NadRecord): string | undefined {
+function composeHouseNumber(r: NADRecord): string | undefined {
 	const full = (r.AddNo_Full ?? "").toString().trim()
 
 	if (full) return full
@@ -170,14 +170,14 @@ function composeHouseNumber(r: NadRecord): string | undefined {
 	return [pre, num, suf].filter(Boolean).join(" ").trim() || undefined
 }
 
-interface DecomposedNadStreet {
+interface DecomposedNADStreet {
 	prefix?: string
 	street?: string
 	suffix?: string
 	full: string
 }
 
-function decomposeNadStreet(r: NadRecord): DecomposedNadStreet | undefined {
+function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 	const name = (r.St_Name ?? "").toString().trim()
 
 	if (name) {
@@ -199,11 +199,11 @@ function decomposeNadStreet(r: NadRecord): DecomposedNadStreet | undefined {
 	return undefined
 }
 
-function composeLocality(r: NadRecord): string | undefined {
+function composeLocality(r: NADRecord): string | undefined {
 	return nonEmpty(r.Post_City, r.Inc_Muni, r.Census_Plc, r.Uninc_Comm)
 }
 
-function composePostcode(r: NadRecord): string | undefined {
+function composePostcode(r: NADRecord): string | undefined {
 	const zip = (r.Zip_Code ?? "").toString().trim()
 
 	if (!zip) return undefined
@@ -227,7 +227,7 @@ function composeRaw(parts: {
 	return [parts.venue, streetLine || undefined, tail].filter(Boolean).join(", ")
 }
 
-export function createUsgovNadAdapter(): CorpusAdapter {
+export function createUsgovNADAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_NAD_ADAPTER_ID,
 		defaultLicense: USGOV_NAD_DEFAULT_LICENSE,
@@ -259,10 +259,10 @@ export function createUsgovNadAdapter(): CorpusAdapter {
 
 						if (!line) continue
 
-						let record: NadRecord
+						let record: NADRecord
 
 						try {
-							record = JSON.parse(line) as NadRecord
+							record = JSON.parse(line) as NADRecord
 						} catch {
 							continue // malformed line — skip silently
 						}
@@ -279,7 +279,7 @@ export function createUsgovNadAdapter(): CorpusAdapter {
 
 						if (!postcode) continue
 
-						const decomposed = decomposeNadStreet(record)
+						const decomposed = decomposeNADStreet(record)
 						const houseNumber = composeHouseNumber(record)
 						const venue = nonEmpty(record.LandmkName)
 						const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
@@ -337,4 +337,4 @@ export function createUsgovNadAdapter(): CorpusAdapter {
 	}
 }
 
-export const usgovNadAdapter = createUsgovNadAdapter()
+export const usgovNADAdapter = createUsgovNADAdapter()

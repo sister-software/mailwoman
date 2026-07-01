@@ -99,7 +99,7 @@ interface OaCollection {
 	size?: number
 }
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values, positionals } = parseArgs({
 		allowPositionals: true,
 		options: {
@@ -209,7 +209,7 @@ async function downloadToFile(url: string, dest: string, opts: DownloadOpts): Pr
 }
 
 async function main(): Promise<void> {
-	const cli = parseCliArgs()
+	const cli = parseCLIArgs()
 	const country = cli.country
 	const outRoot = cli.outRoot ?? join(await gitToplevel(), "data", "corpus", "sources")
 
@@ -296,9 +296,9 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 
 	const tmpGz = join(destDir, "collection.geojsonl.gz.tmp")
 	const tmpRaw = join(destDir, "collection.geojsonl.tmp")
-	const sourceUrl = `${OA_BASE}/api/collections/${collectionId}/download`
+	const sourceURL = `${OA_BASE}/api/collections/${collectionId}/download`
 
-	let httpStatus = await downloadToFile(sourceUrl, tmpGz, {
+	let httpStatus = await downloadToFile(sourceURL, tmpGz, {
 		headers: { Authorization: `Bearer ${token}` },
 		timeoutMs: 7_200_000,
 		retries: 3,
@@ -377,7 +377,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionId}/download
 	const downloadedAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z")
 
 	const manifest = {
-		source_url: sourceUrl,
+		source_url: sourceURL,
 		collection_id: collectionId,
 		country,
 		filename: "collection.geojsonl",

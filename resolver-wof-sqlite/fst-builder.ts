@@ -8,14 +8,14 @@
  *   every place name in the gazetteer.
  *
  *   Build pipeline: open WOF DB → query spr + names → normalize names → insert into trie → attach
- *   PlaceEntry at terminals → return FstMatcher.
+ *   PlaceEntry at terminals → return FSTMatcher.
  */
 
 import { DatabaseSync } from "node:sqlite"
 
-import type { FstNode } from "./fst-matcher.js"
-import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
-import type { BuildFstOpts, BuildFstResult, FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.js"
+import { FSTMatcher, normalizeTokens } from "./fst-matcher.js"
+import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const DEFAULT_PLACETYPES: PlacetypeId[] = [
 	"country",
@@ -50,10 +50,10 @@ interface PopulationRow {
 	population: number
 }
 
-export function buildFstFromWof(opts: BuildFstOpts): {
-	matcher: FstMatcher
-	provenance: FstProvenance
-	result: BuildFstResult
+export function buildFSTFromWOF(opts: BuildFSTOpts): {
+	matcher: FSTMatcher
+	provenance: FSTProvenance
+	result: BuildFSTResult
 } {
 	const countries = opts.countries ?? DEFAULT_COUNTRIES
 	const placetypes = opts.placetypes ?? DEFAULT_PLACETYPES
@@ -198,7 +198,7 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 
 	// Phase 5: Build the trie.
 	progress("trie", "Building trie")
-	const nodes: FstNode[] = [{ edges: new Map(), places: [] }]
+	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
 		if (tokens.length === 0) return
@@ -260,8 +260,8 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 	progress("done", `Built trie: ${nodes.length} states, ${insertCount} name insertions`)
 
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
-	const matcher = FstMatcher.fromNodes(nodes)
-	const provenance: FstProvenance = {
+	const matcher = FSTMatcher.fromNodes(nodes)
+	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
 		countries,
 		stateCount: nodes.length,

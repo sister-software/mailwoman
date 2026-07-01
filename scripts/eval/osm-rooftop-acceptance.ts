@@ -15,17 +15,17 @@
 import { existsSync } from "node:fs"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { OsmShardProvider } from "@mailwoman/osm/sdk"
-import { createWofResolver } from "@mailwoman/resolver"
+import { OSMShardProvider } from "@mailwoman/osm/sdk"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const resolver = createWofResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
+const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
 const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
-const osm = new OsmShardProvider(mailwomanDataRoot())
+const osm = new OSMShardProvider(mailwomanDataRoot())
 
 interface Case {
 	q: string

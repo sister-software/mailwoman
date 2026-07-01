@@ -23,7 +23,7 @@
  *   exposes as attributes.
  */
 
-import type { BioLabel, ComponentTag } from "../types/component.js"
+import type { BIOLabel, ComponentTag } from "../types/component.js"
 import type { Calibrator } from "./calibration.js"
 import { containmentFor } from "./containment.js"
 import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "./types.js"
@@ -59,7 +59,7 @@ interface OpenSpan {
 	confidences: number[]
 }
 
-function bioParts(label: BioLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag | null } {
+function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag | null } {
 	if (label === "O") return { prefix: "O", tag: null }
 	const dash = label.indexOf("-")
 

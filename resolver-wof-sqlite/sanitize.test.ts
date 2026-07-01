@@ -13,7 +13,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 function buildFixtureDb(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
@@ -37,17 +37,17 @@ function buildFixtureDb(): DatabaseSync {
 	return db
 }
 
-let lookup: WofSqlitePlaceLookup
+let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WofSqlitePlaceLookup({ database: buildFixtureDb(), buildFts: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDb(), buildFTS: true })
 })
 
 afterEach(() => {
 	lookup.close()
 })
 
-describe("sanitizeFtsQuery — trailing-* prefix support", () => {
+describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 	test("exact-match (no trailing *) still works (phrase)", async () => {
 		const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
 		expect(r.length).toBe(1)
@@ -87,7 +87,7 @@ describe("sanitizeFtsQuery — trailing-* prefix support", () => {
 	})
 })
 
-describe("sanitizeFtsQuery — punctuation stripping (existing behavior, regression backstop)", () => {
+describe("sanitizeFTSQuery — punctuation stripping (existing behavior, regression backstop)", () => {
 	test("apostrophes are stripped — `St. (Petersburg)` becomes two phrases AND-joined", async () => {
 		// Both `St` and `Petersburg` (as standalone tokens) must match the name `St. Petersburg`.
 		// FTS5 tokenizes the name on whitespace (after stripping punctuation by the unicode61

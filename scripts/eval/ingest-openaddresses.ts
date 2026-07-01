@@ -374,7 +374,7 @@ function readPackagedLicense(zipPath: string): string | null {
 }
 
 // Minimal RFC-4180-ish CSV line splitter (handles quoted fields with embedded commas/quotes).
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQuotes = false
@@ -515,7 +515,7 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 
 	if (lines.length < 2) return { error: "empty CSV" }
 
-	const header = splitCsv(lines[0]!)
+	const header = splitCSV(lines[0]!)
 	const idx = buildHeaderIndex(header)
 
 	if (idx.lon === -1 || idx.lat === -1) return { error: "no LON/LAT columns" }
@@ -542,7 +542,7 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 
 		if (!raw) continue
 		read++
-		const cells = splitCsv(raw)
+		const cells = splitCSV(raw)
 
 		const lon = Number(get(cells, "lon"))
 		const lat = Number(get(cells, "lat"))

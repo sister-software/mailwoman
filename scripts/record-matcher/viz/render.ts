@@ -19,9 +19,9 @@ import { pathToFileURL } from "node:url"
 
 import { chromium } from "playwright"
 
-const [, , inHtml, outPng, w = "1160", h = "1000"] = process.argv
+const [, , inHTML, outPNG, w = "1160", h = "1000"] = process.argv
 
-if (!inHtml || !outPng) {
+if (!inHTML || !outPNG) {
 	console.error("usage: render.ts <in.html> <out.png> [width] [height]")
 	process.exit(1)
 }
@@ -35,7 +35,7 @@ const errors: string[] = []
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()))
 page.on("pageerror", (e) => errors.push(String(e)))
 
-await page.goto(pathToFileURL(resolve(inHtml)).href, { waitUntil: "networkidle" })
+await page.goto(pathToFileURL(resolve(inHTML)).href, { waitUntil: "networkidle" })
 
 // Resolve once every Plotly graph div has fired plotly_afterplot (3D paints land async, after
 // newPlot's promise resolves), with a per-div fallback so an already-painted div can't hang us.
@@ -62,7 +62,7 @@ await page.evaluate(async () => {
 // Final settle for the software WebGL rasterizer.
 await page.waitForTimeout(800)
 
-await page.screenshot({ path: resolve(outPng), fullPage: true })
+await page.screenshot({ path: resolve(outPNG), fullPage: true })
 await browser.close()
 
 if (errors.length) {
@@ -70,4 +70,4 @@ if (errors.length) {
 
 	for (const e of errors.slice(0, 8)) console.error("  " + e)
 }
-console.error(`[render] ${outPng}`)
+console.error(`[render] ${outPNG}`)

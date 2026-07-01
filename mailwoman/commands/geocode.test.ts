@@ -39,8 +39,8 @@ const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
 const TX_ADDRESS_POINTS_DB = "/mnt/playpen/mailwoman-data/address-points/address-points-us-tx.db"
 const TX_INTERPOLATION_DB = "/mnt/playpen/mailwoman-data/interpolation/interpolation-us-tx.db"
 
-const hasWofDb = existsSync(wofPath)
-const hasCliCompiled = existsSync(CLI_PATH)
+const hasWOFDb = existsSync(wofPath)
+const hasCLICompiled = existsSync(CLI_PATH)
 const hasTxAddressPoints = existsSync(TX_ADDRESS_POINTS_DB)
 const hasTxInterpolation = existsSync(TX_INTERPOLATION_DB)
 
@@ -50,7 +50,7 @@ const hasTxInterpolation = existsSync(TX_INTERPOLATION_DB)
 
 describe("geocode argument validation", () => {
 	test("missing address argument exits 1 with a descriptive error", () => {
-		if (!hasCliCompiled) {
+		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
 			return
@@ -66,7 +66,7 @@ describe("geocode argument validation", () => {
 	})
 
 	test("empty address string exits 1", () => {
-		if (!hasCliCompiled) {
+		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
 			return
@@ -81,7 +81,7 @@ describe("geocode argument validation", () => {
 	})
 
 	test("missing WOF DB exits 1 with a descriptive error", () => {
-		if (!hasCliCompiled) {
+		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
 			return
@@ -118,7 +118,7 @@ const hasTxShards = hasTxAddressPoints && hasTxInterpolation
  * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit shard overrides. Expects a
  * street-level coordinate near 30.5, -97.6 (Round Rock area).
  */
-describe.skipIf(!hasCliCompiled || !hasWofDb || !hasTxShards)(`geocode integration — ${wofPath} + TX shards`, () => {
+describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integration — ${wofPath} + TX shards`, () => {
 	const TX_ADDRESS = "2929 Flower Hill Drive, Round Rock, TX 78664"
 
 	test("street-level geocode returns address_point or interpolated tier near Round Rock, TX", () => {
@@ -187,7 +187,7 @@ describe.skipIf(!hasCliCompiled || !hasWofDb || !hasTxShards)(`geocode integrati
 /**
  * Admin-only degradation: when no shard is provided, geocode still returns a coordinate from the WOF admin centroid.
  */
-describe.skipIf(!hasCliCompiled || !hasWofDb)(`geocode admin-only degradation — ${wofPath}`, () => {
+describe.skipIf(!hasCLICompiled || !hasWOFDb)(`geocode admin-only degradation — ${wofPath}`, () => {
 	test("geocodes to admin centroid when no shards provided", () => {
 		const stdout = execFileSync(process.execPath, [CLI_PATH, "geocode", "Round Rock, TX", `--resolve-db=${wofPath}`], {
 			encoding: "utf8",

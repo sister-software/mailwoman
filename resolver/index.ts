@@ -18,7 +18,7 @@ export type {
 	ResolveTreeResponse,
 	SerializableResolveOpts,
 } from "./remote-resolver.js"
-export { createWofResolver } from "./resolve.js"
+export { createWOFResolver } from "./resolve.js"
 export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.js"
 

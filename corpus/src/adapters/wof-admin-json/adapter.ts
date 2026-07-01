@@ -44,7 +44,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
-import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WofRecord } from "../../wof-json.js"
+import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "../../wof-json.js"
 
 /**
  * Display name for the country, keyed by ISO 3166-1 alpha-2.
@@ -110,7 +110,7 @@ interface VariantSpec {
  * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the OpenCage template produces the
  * canonicalized form (`"United States of America"`), matching the legacy SQLite adapter's behavior.
  */
-export function variantsFor(row: WofRecord, ancestry: WofRecord[], selfName: string): VariantSpec[] {
+export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): VariantSpec[] {
 	const selfTag = placetypeToTag(row.placetype)
 
 	if (!selfTag) return []
@@ -186,7 +186,7 @@ export function variantsFor(row: WofRecord, ancestry: WofRecord[], selfName: str
  * Subsequent slots come from `name:*` variants, deduplicated against the default name so we don't emit a redundant
  * `"default"`-equivalent row under a localized key.
  */
-export function nameSlotsFor(rec: WofRecord): Array<{ key: string; value: string }> {
+export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string }> {
 	const selfTag = placetypeToTag(rec.placetype)
 	const canonicalSelfName = selfTag === "country" ? (COUNTRY_DISPLAY_NAME[rec.country] ?? rec.name) : rec.name
 
@@ -209,7 +209,7 @@ export const WOF_ADMIN_ADAPTER_ID = "wof-admin"
  * input directory produces byte-identical `canonical.jsonl` (records are emitted in sorted `wof:id` order to be
  * insensitive to filesystem walk ordering).
  */
-export function createWofAdminAdapter(): CorpusAdapter {
+export function createWOFAdminAdapter(): CorpusAdapter {
 	return {
 		id: WOF_ADMIN_ADAPTER_ID,
 		defaultLicense: "CC0-1.0",
@@ -222,7 +222,7 @@ export function createWofAdminAdapter(): CorpusAdapter {
 			// (campus, county-region hybrids on which Mailwoman has no opinion) are dropped here so
 			// they don't inflate the ancestry index. Country-filtered runs prune to the matching
 			// country code too; the ancestors of a same-country record live in the same admin repo.
-			const byId = new Map<number, WofRecord>()
+			const byId = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
 				if (opts.signal?.aborted) return
@@ -277,4 +277,4 @@ export function createWofAdminAdapter(): CorpusAdapter {
 }
 
 /** Single shared instance, suitable for `defaultAdapterRegistry`. */
-export const wofAdminAdapter = createWofAdminAdapter()
+export const wofAdminAdapter = createWOFAdminAdapter()

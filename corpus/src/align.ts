@@ -33,7 +33,7 @@
  *       — NFD `é` occupies two code units where NFC `é` occupies one — and silently so).
  */
 
-import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
+import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 import { distance as levenshteinDistance } from "fastest-levenshtein"
 
 import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "./tokenize.js"
@@ -286,24 +286,24 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
  * find the first component span that contains the token's start offset; if the token is the first one inside that span
  * emit `B-<tag>`, else `I-<tag>`.
  */
-function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BioLabel[] {
-	const out: BioLabel[] = []
+function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {
+	const out: BIOLabel[] = []
 	const seenSpan = new Set<number>()
 
 	// index into `spans`
 
 	for (const token of tokens) {
-		let assigned: BioLabel = "O"
+		let assigned: BIOLabel = "O"
 
 		for (let i = 0; i < spans.length; i++) {
 			const s = spans[i]!
 
 			if (token.start >= s.start && token.end <= s.end) {
 				if (!seenSpan.has(i)) {
-					assigned = `B-${s.tag}` as BioLabel
+					assigned = `B-${s.tag}` as BIOLabel
 					seenSpan.add(i)
 				} else {
-					assigned = `I-${s.tag}` as BioLabel
+					assigned = `I-${s.tag}` as BIOLabel
 				}
 				break
 			}

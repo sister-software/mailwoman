@@ -82,7 +82,7 @@ function envInt(name: string, fallback: number): number {
 	return v ? Number.parseInt(v, 10) : fallback
 }
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
 			"out-root": { type: "string", default: process.env.OUT_ROOT ?? "data/corpus/sources" },
@@ -99,7 +99,7 @@ function parseCliArgs() {
 	return {
 		outRoot: values["out-root"]!,
 		mode: values.mode!,
-		nadUrl: values["nad-url"],
+		nadURL: values["nad-url"],
 		chunkSize: Number.parseInt(values["chunk-size"]!, 10),
 		pageSize: Number.parseInt(values["page-size"]!, 10),
 		concurrency: Number.parseInt(values.concurrency!, 10),
@@ -207,7 +207,7 @@ async function fetchChunk(
 	return { recordCount: lines.length, errors }
 }
 
-async function featureserverMode(opts: ReturnType<typeof parseCliArgs>): Promise<void> {
+async function featureserverMode(opts: ReturnType<typeof parseCLIArgs>): Promise<void> {
 	const chunkDir = join(opts.outRoot, SLUG, "featureserver")
 	mkdirSync(chunkDir, { recursive: true })
 
@@ -285,8 +285,8 @@ async function featureserverMode(opts: ReturnType<typeof parseCliArgs>): Promise
 	if (totalErrors > 0) process.exitCode = 1
 }
 
-async function bulkMode(opts: ReturnType<typeof parseCliArgs>): Promise<void> {
-	if (!opts.nadUrl) {
+async function bulkMode(opts: ReturnType<typeof parseCLIArgs>): Promise<void> {
+	if (!opts.nadURL) {
 		process.stderr.write(
 			`error: bulk mode requires --nad-url (or NAD_URL env). The DOT page is Akamai-gated;\n` +
 				`visit https://www.transportation.gov/gis/national-address-database in a browser,\n` +
@@ -298,13 +298,13 @@ async function bulkMode(opts: ReturnType<typeof parseCliArgs>): Promise<void> {
 	}
 	const destDir = join(opts.outRoot, SLUG)
 	mkdirSync(destDir, { recursive: true })
-	const filename = new URL(opts.nadUrl).pathname.split("/").pop() ?? "NAD.zip"
+	const filename = new URL(opts.nadURL).pathname.split("/").pop() ?? "NAD.zip"
 	const destPath = join(destDir, filename)
 
 	process.stderr.write(`=== ${SLUG} / ${filename}\n`)
-	process.stderr.write(`  URL: ${opts.nadUrl.slice(0, 100)}${opts.nadUrl.length > 100 ? "…" : ""}\n`)
+	process.stderr.write(`  URL: ${opts.nadURL.slice(0, 100)}${opts.nadURL.length > 100 ? "…" : ""}\n`)
 
-	const res = await fetch(opts.nadUrl, { signal: AbortSignal.timeout(3 * 3600 * 1000) })
+	const res = await fetch(opts.nadURL, { signal: AbortSignal.timeout(3 * 3600 * 1000) })
 
 	if (!res.ok || !res.body) throw new Error(`HTTP ${res.status} on bulk download`)
 	const { writeFile: writeStream } = await import("node:fs/promises")
@@ -317,7 +317,7 @@ async function bulkMode(opts: ReturnType<typeof parseCliArgs>): Promise<void> {
 		join(destDir, "MANIFEST.json"),
 		JSON.stringify(
 			{
-				source_url: opts.nadUrl,
+				source_url: opts.nadURL,
 				downloaded_at: new Date().toISOString(),
 				filename,
 				sha256: sha,
@@ -331,7 +331,7 @@ async function bulkMode(opts: ReturnType<typeof parseCliArgs>): Promise<void> {
 }
 
 async function main(): Promise<void> {
-	const opts = parseCliArgs()
+	const opts = parseCLIArgs()
 
 	if (opts.mode === "featureserver") await featureserverMode(opts)
 	else if (opts.mode === "bulk") await bulkMode(opts)

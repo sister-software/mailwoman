@@ -15,7 +15,7 @@ import { parse } from "csv-parse/sync"
 
 import { foldName, parseUnLocodeCoords } from "./index.js"
 
-interface CsvRow {
+interface CSVRow {
 	Country: string
 	Location: string
 	Name: string
@@ -29,7 +29,7 @@ export function buildUnLocodeDb(csvPath: string, dbPath: string): { rows: number
 		columns: true,
 		skip_empty_lines: true,
 		relax_quotes: true,
-	}) as CsvRow[]
+	}) as CSVRow[]
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS un_locode")
 	db.exec(

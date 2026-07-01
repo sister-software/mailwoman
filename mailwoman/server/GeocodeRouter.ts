@@ -19,7 +19,7 @@
 import { existsSync } from "node:fs"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import type { ResolveOpts } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 
@@ -85,7 +85,7 @@ async function getDeps(): Promise<GeocodeDepsBundle | null> {
 		}
 		const classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const backend = createResolverBackend(resolverMod, { wofPaths: paths })
-		const resolver = createWofResolver(backend as unknown as ResolverBackend)
+		const resolver = createWOFResolver(backend as unknown as ResolverBackend)
 		const shards = new ShardProvider(resolverMod, DATA_ROOT)
 
 		// Candidate backend → country-agnostic default (demo's global, population-first behavior); a

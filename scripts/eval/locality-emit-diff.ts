@@ -15,7 +15,7 @@ import { readFileSync } from "node:fs"
  */
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 
 import { arg } from "../lib/cli-args.ts"
 
@@ -33,7 +33,7 @@ async function main() {
 		.slice(0, n)
 		.map((l) => JSON.parse(l))
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const mk = (m: string) =>
 		createScorer({
 			modelPath: m,
@@ -45,7 +45,7 @@ async function main() {
 		})
 	const base = await mk(arg("base"))
 	const cand = await mk(arg("cand"))
-	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: WOF }) as never)
+	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: WOF }) as never)
 	const opts = { defaultCountry: cc }
 	const didResolve = async (tree: unknown): Promise<boolean> => {
 		const r = await resolver.resolveTree(tree as never, opts)

@@ -17,8 +17,8 @@ import { ResolveRouter } from "../server/ResolveRouter.js"
 
 const DEFAULT_WOF_PATH = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
-const hasWofDb = existsSync(wofPath)
-const describeIfWof = describe.skipIf(!hasWofDb)
+const hasWOFDb = existsSync(wofPath)
+const describeIfWOF = describe.skipIf(!hasWOFDb)
 
 function buildApp() {
 	const app = express()
@@ -58,7 +58,7 @@ describe("ResolveRouter — error paths (run unconditionally)", () => {
 	})
 })
 
-describeIfWof("ResolveRouter — success path against real WOF", () => {
+describeIfWOF("ResolveRouter — success path against real WOF", () => {
 	test("returns parsed XML + flat node list for a known input", async () => {
 		const r = await postJson(buildApp(), "/api/resolve", { text: "Springfield, Illinois" })
 		expect(r.status).toBe(200)

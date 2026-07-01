@@ -9,7 +9,7 @@
  *        precedence over a country → region → locality ancestor chain (most-specific wins, weights
  *        merge key-by-key). This is the mechanism the EU locales never exercise (they ride
  *        WORLD_DEFAULT).
- *   2. Live dispatch — a `WofSqlitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
+ *   2. Live dispatch — a `WOFSqlitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
  *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
  */
 import { DatabaseSync } from "node:sqlite"
@@ -23,7 +23,7 @@ import {
 	SeedConventionSource,
 	WORLD_DEFAULT,
 } from "./convention.js"
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 describe("convention engine — merge + resolve", () => {
 	it("WORLD_DEFAULT reproduces the pre-engine coordinate-first dispatch", () => {
@@ -110,7 +110,7 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {
-		const lookup = new WofSqlitePlaceLookup({ database: db, buildFts: true })
+		const lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
 		// "Plaun" won't FTS-match; postcode_area_resolution injects Plauen from the postcode.
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
@@ -121,9 +121,9 @@ describe("convention engine — live dispatch", () => {
 		// Key the convention by the DE country WOF id (90). Removing postcode_area_resolution from the
 		// strategy list means the typo no longer recovers Plauen — proof the merged convention controls
 		// findPlace dispatch through the live country → WOF-id → convention path.
-		const lookup = new WofSqlitePlaceLookup({
+		const lookup = new WOFSqlitePlaceLookup({
 			database: db,
-			buildFts: true,
+			buildFTS: true,
 			conventions: { 90: { candidateStrategies: ["fallback_fuzzy_name_match"] } },
 		})
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })

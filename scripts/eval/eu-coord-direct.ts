@@ -25,8 +25,8 @@ import { parseArgs } from "node:util"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { createWofResolver } from "@mailwoman/resolver"
-import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { createWOFResolver } from "@mailwoman/resolver"
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 const { values: a } = parseArgs({
@@ -83,8 +83,8 @@ const neural = await createScorer({
 	strict: true,
 	tier: "server",
 })
-const backend = new WofSqlitePlaceLookup({ databasePath: a["wof-db"]!.split(",") })
-const resolver = createWofResolver(backend)
+const backend = new WOFSqlitePlaceLookup({ databasePath: a["wof-db"]!.split(",") })
+const resolver = createWOFResolver(backend)
 
 const finest: number[] = []
 const adminLoc: number[] = []

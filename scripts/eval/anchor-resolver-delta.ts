@@ -149,19 +149,19 @@ async function main(): Promise<void> {
 		.slice(0, limit === Infinity ? undefined : limit)
 
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 	const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(arg("tokenizer", "neural-weights-en-us/tokenizer.model")),
-		OnnxRunner.create(arg("model", "neural-weights-en-us/model.onnx")),
+		ONNXRunner.create(arg("model", "neural-weights-en-us/model.onnx")),
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 
-	const { WofSqlitePlaceLookup, WofPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
-	const postcodeLookup = new WofPostcodeLookup(shards)
+	const { WOFSqlitePlaceLookup, WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const backend = new WOFSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+	const postcodeLookup = new WOFPostcodeLookup(shards)
 	const { extractPostcodeAnchors } = await import("@mailwoman/neural/postcode-anchor")
 
 	const results: DeltaRow[] = []

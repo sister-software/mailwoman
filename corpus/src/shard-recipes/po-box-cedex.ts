@@ -162,7 +162,7 @@ function localityHash(name: string): number {
 const isHoldoutLocality = (name: string): boolean => localityHash(name) % 10 === 0
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields). */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -202,7 +202,7 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UsT
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string) => header.indexOf(name)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -214,7 +214,7 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UsT
 
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const locality = get(cells, iCity)
 
 		if (!cleanLocality(locality)) continue
@@ -235,7 +235,7 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UsT
 /**
  * Stride-sampled FR tuples (number/street/city/postcode). The countrywide CSV is 2.5 GB and insee-ordered; `awk NR%K`
  * strides the whole country instead of reading one département. Quoted commas survive because awk only FILTERS lines —
- * parsing stays in splitCsv.
+ * parsing stays in splitCSV.
  */
 function readFrTuples(limit: number): FrTuple[] {
 	const r = spawnSync(
@@ -252,7 +252,7 @@ function readFrTuples(limit: number): FrTuple[] {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string) => header.indexOf(n)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -264,7 +264,7 @@ function readFrTuples(limit: number): FrTuple[] {
 
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const locality = get(cells, iCity),
 			postcode = get(cells, iPost),
 			street = get(cells, iStreet),

@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   End-to-end smoke test for `WebOnnxRunner` using the real `@mailwoman/neural-weights-en-us`
+ *   End-to-end smoke test for `WebONNXRunner` using the real `@mailwoman/neural-weights-en-us`
  *   package + the production tokenizer + the production decoder. Runs in Node — `onnxruntime-web`'s
- *   WASM execution provider works there too; WebGPU is skipped via `useWebGpu: false` since Node
+ *   WASM execution provider works there too; WebGPU is skipped via `useWebGPU: false` since Node
  *   doesn't have a WebGPU adapter to fall back from.
  *
  *   What this test guards:
@@ -13,7 +13,7 @@
  *   - The runner loads a real production ONNX model end-to-end.
  *   - `infer(tokenIds)` returns logits with the expected shape.
  *   - The classifier composed with this runner produces an `AddressTree` for a simple address.
- *   - WebOnnxRunner is interchangeable with OnnxRunner from the classifier's POV — same `parse()`
+ *   - WebONNXRunner is interchangeable with ONNXRunner from the classifier's POV — same `parse()`
  *       output shape, no API divergence.
  */
 
@@ -24,7 +24,7 @@ import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, test } from "vitest"
 
-import { WebOnnxRunner } from "./web-onnx-runner.js"
+import { WebONNXRunner } from "./web-onnx-runner.js"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via
 // `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights
@@ -44,10 +44,10 @@ function probeWeights(): { modelPath: string; tokenizerPath: string } | null {
 const weights = probeWeights()
 const haveWeights = weights !== null
 
-describe.skipIf(!haveWeights)("WebOnnxRunner", () => {
+describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 	test("loads a real model and produces logits of the expected shape", async () => {
 		const modelBytes = new Uint8Array(await readFile(weights!.modelPath))
-		const runner = await WebOnnxRunner.fromBytes(modelBytes, { useWebGpu: false })
+		const runner = await WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false })
 		const tokenIds = [1, 2, 3, 4, 5] // arbitrary; the SP vocab assigns these to common pieces
 		const result = await runner.infer(tokenIds)
 
@@ -61,11 +61,11 @@ describe.skipIf(!haveWeights)("WebOnnxRunner", () => {
 		}
 	})
 
-	test("classifier.parse() works with a WebOnnxRunner injected", async () => {
+	test("classifier.parse() works with a WebONNXRunner injected", async () => {
 		const modelBytes = new Uint8Array(await readFile(weights!.modelPath))
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(weights!.tokenizerPath),
-			WebOnnxRunner.fromBytes(modelBytes, { useWebGpu: false }),
+			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
 		])
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner })
 

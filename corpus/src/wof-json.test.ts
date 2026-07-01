@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import type { WofRecord } from "./wof-json.js"
+import type { WOFRecord } from "./wof-json.js"
 import { buildAncestryIndex, extractNameVariants, isCurrentFeature, normalizeNameKey } from "./wof-json.js"
 
 // `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are out of scope
@@ -76,15 +76,15 @@ test("normalizeNameKey: both ':' and '_' become '-' for source_id safety", () =>
 	expect(normalizeNameKey("plain")).toBe("plain")
 })
 
-// --- buildAncestryIndex: pure Map<id, WofRecord> → Map<id, ancestors[]> ---
+// --- buildAncestryIndex: pure Map<id, WOFRecord> → Map<id, ancestors[]> ---
 
-function rec(id: number, parent_id: number | null, name = `n${id}`): WofRecord {
+function rec(id: number, parent_id: number | null, name = `n${id}`): WOFRecord {
 	return { id, parent_id, name, placetype: "locality", country: "US", nameVariants: new Map() }
 }
 
 test("buildAncestryIndex: walks parent_id upward, nearest-first, self-excluded", () => {
 	// 3 → 2 → 1 (root). 1's parent is null.
-	const byId = new Map<number, WofRecord>([
+	const byId = new Map<number, WOFRecord>([
 		[1, rec(1, null)],
 		[2, rec(2, 1)],
 		[3, rec(3, 2)],
@@ -97,12 +97,12 @@ test("buildAncestryIndex: walks parent_id upward, nearest-first, self-excluded",
 
 test("buildAncestryIndex: stops at the first missing link (partial repo set)", () => {
 	// 5's parent 99 isn't in byId → chain ends immediately, degrades gracefully.
-	const byId = new Map<number, WofRecord>([[5, rec(5, 99)]])
+	const byId = new Map<number, WOFRecord>([[5, rec(5, 99)]])
 	expect(buildAncestryIndex(byId).get(5)).toEqual([])
 })
 
 test("buildAncestryIndex: parent_id of null / 0 / negative terminates the walk", () => {
-	const byId = new Map<number, WofRecord>([
+	const byId = new Map<number, WOFRecord>([
 		[10, rec(10, null)],
 		[11, rec(11, 0)],
 		[12, rec(12, -4)], // WOF "only-self" sentinel (e.g. NYC parent_id = -4)
@@ -115,7 +115,7 @@ test("buildAncestryIndex: parent_id of null / 0 / negative terminates the walk",
 
 test("buildAncestryIndex: a cycle is broken rather than looping forever", () => {
 	// Corrupt fixture: 1 → 2 → 1. The guard halts on re-visit.
-	const byId = new Map<number, WofRecord>([
+	const byId = new Map<number, WOFRecord>([
 		[1, rec(1, 2)],
 		[2, rec(2, 1)],
 	])

@@ -38,7 +38,7 @@ export const COUNTRY_SURFACE_FORMS = {
 	JP: ["Japan", "日本", "Nippon", "JP", "JPN"],
 } as const satisfies Partial<Record<string, readonly string[]>>
 
-export type CountrySurfaceIso2 = keyof typeof COUNTRY_SURFACE_FORMS
+export type CountrySurfaceISO2 = keyof typeof COUNTRY_SURFACE_FORMS
 
 /** Alpha-2 → canonical English name (inverted from the salvaged CountryISO2 enum). */
 export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(

@@ -26,8 +26,8 @@ const cliBin = resolve(repoRoot, "out", "cli.js")
 
 const DEFAULT_WOF_PATH = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
-const hasWofDb = existsSync(wofPath)
-const describeIfWof = describe.skipIf(!hasWofDb)
+const hasWOFDb = existsSync(wofPath)
+const describeIfWOF = describe.skipIf(!hasWOFDb)
 
 describe("--resolve schema validation", () => {
 	test("--resolve defaults to false", () => {
@@ -58,7 +58,7 @@ describe("npx mailwoman parse --resolve error paths", () => {
 	})
 })
 
-describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () => {
+describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () => {
 	test("emits resolver-decorated XML for a known US locality", async () => {
 		const result = await exec(
 			"node",
@@ -158,7 +158,7 @@ function stripAnsiSpinner(stdout: string): string {
 	return objStart >= 0 ? cleaned.slice(objStart) : cleaned
 }
 
-if (!hasWofDb) {
+if (!hasWOFDb) {
 	describe.skip("--resolve end-to-end", () => {
 		test(`skipped (WOF DB not present at ${wofPath} — set MAILWOMAN_WOF_DB)`, () => {})
 	})

@@ -38,7 +38,7 @@ import {
 	type ColumnMapping,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
@@ -121,12 +121,12 @@ function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 	let sumCluster = 0
 
 	for (const e of entities) {
-		const byNpi = new Map<string, number>()
+		const byNPI = new Map<string, number>()
 
-		for (const rec of e.records) byNpi.set(rec.id, (byNpi.get(rec.id) ?? 0) + 1)
+		for (const rec of e.records) byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
 		sumCluster += choose2(e.records.length)
 
-		for (const [npi, c] of byNpi) {
+		for (const [npi, c] of byNPI) {
 			tp += choose2(c)
 			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
 		}
@@ -211,8 +211,8 @@ async function main(): Promise<void> {
 	console.error("[C] geocoding…")
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
+	const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 	const shardProvider = new ShardProvider(mod, DATA_ROOT)
 	const seam = geocodeAddressVia({
 		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),

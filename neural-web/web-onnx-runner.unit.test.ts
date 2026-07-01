@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for `WebOnnxRunner`'s feed construction against a MOCKED onnxruntime-web session — no
+ *   Unit tests for `WebONNXRunner`'s feed construction against a MOCKED onnxruntime-web session — no
  *   model files required, so these run in CI where the weights aren't linked.
  *
  *   What this suite guards (the live-demo regression of 2026-06-10): models since v4.2.0 are
  *   gazetteer-anchor-trained and their ONNX graphs declare `gazetteer_features` /
  *   `gazetteer_confidence` (and `anchor_features` / `anchor_confidence`) as REQUIRED inputs. The
- *   runner must mirror `@mailwoman/neural`'s node `OnnxRunner`:
+ *   runner must mirror `@mailwoman/neural`'s node `ONNXRunner`:
  *
  *   - Caller-provided anchor/gazetteer features are fed through.
  *   - When the graph declares the inputs but the caller provides nothing, zero-fill them (the
@@ -42,7 +42,7 @@ vi.mock("onnxruntime-web/webgpu", () => {
 })
 
 // Import AFTER the mock declaration (vi.mock is hoisted, but keep the reading order honest).
-const { WebOnnxRunner } = await import("./web-onnx-runner.js")
+const { WebONNXRunner } = await import("./web-onnx-runner.js")
 
 interface FedTensor {
 	type: string
@@ -83,7 +83,7 @@ beforeEach(() => {
 	sessionCreateMock.mockReset()
 })
 
-describe("WebOnnxRunner feed construction (mocked session)", () => {
+describe("WebONNXRunner feed construction (mocked session)", () => {
 	test("gazetteer/anchor-trained graph + NO features provided → zero-filled structural fallback, not a throw", async () => {
 		const session = mockSession([
 			"input_ids",
@@ -93,7 +93,7 @@ describe("WebOnnxRunner feed construction (mocked session)", () => {
 			"gazetteer_features",
 			"gazetteer_confidence",
 		])
-		const runner = await WebOnnxRunner.fromBytes(new Uint8Array([1]), { useWebGpu: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		// Pre-fix this rejected with ORT's `input 'gazetteer_features' is missing in 'feeds'`.
 		const result = await runner.infer([5, 6, 7])
@@ -126,7 +126,7 @@ describe("WebOnnxRunner feed construction (mocked session)", () => {
 			"gazetteer_features",
 			"gazetteer_confidence",
 		])
-		const runner = await WebOnnxRunner.fromBytes(new Uint8Array([1]), { useWebGpu: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		const gazRow = [1, 0, 1, 0, 0] // country + po_box bits, lexicon featureDim = 5
 		const anchorRow = Array.from({ length: ANCHOR_FEATURE_DIM }, (_, i) => (i === 0 ? 0.9 : 0))
@@ -151,10 +151,10 @@ describe("WebOnnxRunner feed construction (mocked session)", () => {
 	})
 
 	test("plain graph (no gazetteer inputs) + gazetteer features provided → clue is NOT fed", async () => {
-		// Mirrors the node OnnxRunner's `gazetteer && session.inputNames.includes(...)` guard:
+		// Mirrors the node ONNXRunner's `gazetteer && session.inputNames.includes(...)` guard:
 		// feeding an undeclared input would itself crash ORT.
 		const session = mockSession(["input_ids", "attention_mask"])
-		const runner = await WebOnnxRunner.fromBytes(new Uint8Array([1]), { useWebGpu: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		await runner.infer([5], undefined, { features: [[1, 0, 0, 0, 0]], confidence: [1] })
 
@@ -164,7 +164,7 @@ describe("WebOnnxRunner feed construction (mocked session)", () => {
 
 	test("locale_logits output surfaces as `localeLogits` when the graph exports it", async () => {
 		mockSession(["input_ids", "attention_mask"], { localeLogits: [0.25, 0.5, 0.125, 0.125] })
-		const runner = await WebOnnxRunner.fromBytes(new Uint8Array([1]), { useWebGpu: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		const result = await runner.infer([5, 6])
 		expect(result.localeLogits).toEqual([0.25, 0.5, 0.125, 0.125])
@@ -172,7 +172,7 @@ describe("WebOnnxRunner feed construction (mocked session)", () => {
 
 	test("localeLogits is absent (undefined) on graphs without the locale head", async () => {
 		mockSession(["input_ids", "attention_mask"])
-		const runner = await WebOnnxRunner.fromBytes(new Uint8Array([1]), { useWebGpu: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		const result = await runner.infer([5])
 		expect(result.localeLogits).toBeUndefined()
@@ -180,20 +180,20 @@ describe("WebOnnxRunner feed construction (mocked session)", () => {
 
 	test("inputNames is null before the session exists and populated after", async () => {
 		mockSession(["input_ids", "attention_mask", "gazetteer_features", "gazetteer_confidence"])
-		const runner = await WebOnnxRunner.fromBytes(new Uint8Array([1]), { useWebGpu: false })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 		expect(runner.inputNames).toBeNull()
 		await runner.infer([5])
 		expect(runner.inputNames).toContain("gazetteer_features")
 	})
 })
 
-describe("defaultGazetteerLexiconUrl", () => {
+describe("defaultGazetteerLexiconURL", () => {
 	test("derives the sibling anchor-lexicon-v1.json beside the model URL", async () => {
-		const { defaultGazetteerLexiconUrl } = await import("./loader.js")
-		expect(defaultGazetteerLexiconUrl("https://public.sister.software/mailwoman/en-us/v4.4.0/model.onnx")).toBe(
+		const { defaultGazetteerLexiconURL } = await import("./loader.js")
+		expect(defaultGazetteerLexiconURL("https://public.sister.software/mailwoman/en-us/v4.4.0/model.onnx")).toBe(
 			"https://public.sister.software/mailwoman/en-us/v4.4.0/anchor-lexicon-v1.json"
 		)
 		// Relative URLs stay relative.
-		expect(defaultGazetteerLexiconUrl("/static/mailwoman/model.onnx")).toBe("/static/mailwoman/anchor-lexicon-v1.json")
+		expect(defaultGazetteerLexiconURL("/static/mailwoman/model.onnx")).toBe("/static/mailwoman/anchor-lexicon-v1.json")
 	})
 })

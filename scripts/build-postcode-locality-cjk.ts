@@ -202,7 +202,7 @@ interface Args {
 	output: string
 }
 
-function parseCliArgs(): Args {
+function parseCLIArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			country: { type: "string" },
@@ -230,7 +230,7 @@ function parseCliArgs(): Args {
 }
 
 async function main(): Promise<void> {
-	const args = parseCliArgs()
+	const args = parseCLIArgs()
 
 	const postal = args.country === "JP" ? loadKenall(args.postalNames) : new Map<string, string>()
 

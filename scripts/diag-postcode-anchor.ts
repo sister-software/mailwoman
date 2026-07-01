@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Functional diagnostic for the postcode anchor (#240). Wires the real `postalcode-us.db` +
- *   `postalcode-intl.db` shards through `WofPostcodeLookup` and runs `extractPostcodeAnchors` on a
+ *   `postalcode-intl.db` shards through `WOFPostcodeLookup` and runs `extractPostcodeAnchors` on a
  *   few addresses that exercise each claim in the design doc: single-country placement,
  *   cross-country ambiguity, a regex-shaped non-member (the house-number case), and an
  *   out-of-coverage country (graceful zero-confidence).
@@ -17,7 +17,7 @@
  */
 
 import { extractPostcodeAnchors } from "@mailwoman/neural/postcode-anchor"
-import { WofPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 
 const SHARDS = [
 	"/mnt/playpen/mailwoman-data/wof/postalcode-us.db",
@@ -35,7 +35,7 @@ const INPUTS = [
 	"10 Downing Street, London SW1A 2AA", // GB — not in our shards → graceful 0
 ]
 
-const lookup = new WofPostcodeLookup(SHARDS)
+const lookup = new WOFPostcodeLookup(SHARDS)
 
 for (const input of INPUTS) {
 	console.log(`\n=== ${input} ===`)

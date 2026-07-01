@@ -18,7 +18,7 @@
 import { existsSync } from "node:fs"
 
 import { type AddressTree, decodeAsXML } from "@mailwoman/core/decoder"
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.js"
@@ -53,7 +53,7 @@ export interface ResolveErrorResponse {
  * Multi-shard: comma-separated paths in `MAILWOMAN_WOF_DB` are split and routed through the multi-shard ATTACH
  * machinery.
  */
-function resolveWofPaths(): string[] {
+function resolveWOFPaths(): string[] {
 	const env = process.env["MAILWOMAN_WOF_DB"]
 
 	if (env) {
@@ -100,7 +100,7 @@ async function getResolverPipeline() {
 			return null
 		}
 
-		const wofPaths = resolveWofPaths()
+		const wofPaths = resolveWOFPaths()
 
 		if (wofPaths.length === 0) {
 			console.error(`ResolveRouter: no WOF DBs found. Set MAILWOMAN_WOF_DB or place shards at ${dataRootPath("wof")}/`)
@@ -111,7 +111,7 @@ async function getResolverPipeline() {
 		const neural = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const lookup = createResolverBackend(resolverMod, { wofPaths })
 		// The lookup is structurally compatible with `ResolverBackend` — same shape.
-		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 
 		return {
 			parse: (text: string) => neural.parse(text),

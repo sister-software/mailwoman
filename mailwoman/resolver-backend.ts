@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Shared resolver-backend selector for the CLI commands + server routers. Picks the byte-range
- *   CANDIDATE-table lookup ({@link WofCandidateTableLookup}) — the SAME backend + population-first,
+ *   CANDIDATE-table lookup ({@link WOFCandidateTableLookup}) — the SAME backend + population-first,
  *   country-agnostic ranking the browser demo uses — when a `candidate.db` is configured, else the
- *   FTS admin lookup ({@link WofSqlitePlaceLookup}, today's default).
+ *   FTS admin lookup ({@link WOFSqlitePlaceLookup}, today's default).
  *
  *   Why this exists: the demo resolves localities population-first ("Moscow" → the 10.4 M-pop Russian
  *   city), but the FTS resolver ranks by bm25 + exact-match tiering, so a bare homonym goes to
@@ -23,9 +23,9 @@ import { existsSync } from "node:fs"
 
 import type {
 	PlaceLookup,
-	WofCandidateTableLookup,
-	WofPostalCityAliasLookup,
-	WofSqlitePlaceLookup,
+	WOFCandidateTableLookup,
+	WOFPostalCityAliasLookup,
+	WOFSqlitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
 
 /**
@@ -57,9 +57,9 @@ export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/
  * The lookup constructors this selector needs — a structural subset of `@mailwoman/resolver-wof-sqlite`.
  */
 interface ResolverLookupModule {
-	WofSqlitePlaceLookup: typeof WofSqlitePlaceLookup
-	WofCandidateTableLookup: typeof WofCandidateTableLookup
-	WofPostalCityAliasLookup: typeof WofPostalCityAliasLookup
+	WOFSqlitePlaceLookup: typeof WOFSqlitePlaceLookup
+	WOFCandidateTableLookup: typeof WOFCandidateTableLookup
+	WOFPostalCityAliasLookup: typeof WOFPostalCityAliasLookup
 }
 
 /**
@@ -77,15 +77,15 @@ export function createResolverBackend(
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)
 
-		return new mod.WofCandidateTableLookup({ databasePath: candidate })
+		return new mod.WOFCandidateTableLookup({ databasePath: candidate })
 	}
 	const wp = opts.wofPaths
 	const aliasDb = resolvePostalCityAliasDbPath(opts.postalCityAliasDb)
-	const postalCityAliases = aliasDb ? new mod.WofPostalCityAliasLookup({ databasePath: aliasDb }) : undefined
+	const postalCityAliases = aliasDb ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDb }) : undefined
 
 	if (postalCityAliases) console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDb}`)
 
-	return new mod.WofSqlitePlaceLookup({
+	return new mod.WOFSqlitePlaceLookup({
 		databasePath: Array.isArray(wp) && wp.length === 1 ? wp[0]! : wp,
 		postalCityAliases,
 	})

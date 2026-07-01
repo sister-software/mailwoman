@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `WofWasmPlaceLookup` — browser-side `PlaceLookup` backed by `@sqlite.org/sqlite-wasm`.
+ *   `WOFWasmPlaceLookup` — browser-side `PlaceLookup` backed by `@sqlite.org/sqlite-wasm`.
  *
  *   V1 scope: text + placetype + limit + country. The full ranking surface from
- *   `WofSqlitePlaceLookup` (parentId descendant filter, near-proximity boost, bbox hard filter,
+ *   `WOFSqlitePlaceLookup` (parentId descendant filter, near-proximity boost, bbox hard filter,
  *   population-weighted ordering) is queued for v2 in the same PR series — see Phase B tracking
  *   issue #98. The v1 scope is the minimum that lets the public demo answer "type a US city /
  *   postcode, get a hit".
  *
- *   Internally this is a thin facade over the OO1 DB returned by `loadSlimWofDatabase`. The SQL we
+ *   Internally this is a thin facade over the OO1 DB returned by `loadSlimWOFDatabase`. The SQL we
  *   issue is the same SQLite dialect the Node implementation uses — once we extract the SQL
  *   building into a shared helper (planned: `@mailwoman/resolver-wof-sqlite/query-builder`), both
  *   implementations will call into the same builder and the parity guarantee becomes mechanical
@@ -19,14 +19,14 @@
  */
 
 import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/resolver"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "@mailwoman/resolver-wof-sqlite"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "@mailwoman/resolver-wof-sqlite"
 // Browser-safe subpath import (fts.ts's only node:sqlite import is type-only) — the shared
 // alias-bag parser keeps this backend's exact tier byte-identical to the Node resolver's.
 import { aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
-export interface WofWasmPlaceLookupOpts {
-	/** Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWofDatabase`). */
+export interface WOFWasmPlaceLookupOpts {
+	/** Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWOFDatabase`). */
 	db: Database
 }
 
@@ -45,7 +45,7 @@ function normalizeName(s: string): string {
 	return s.toLowerCase().trim().replace(/\s+/g, " ")
 }
 
-export class WofWasmPlaceLookup implements PlaceLookup {
+export class WOFWasmPlaceLookup implements PlaceLookup {
 	readonly #db: Database
 	#hasPopulationCache?: boolean
 	#hasPlaceAbbrCache?: boolean
@@ -54,7 +54,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 	 */
 	#coincidentRolesCache?: Map<number, CoincidentLocality[]>
 
-	constructor(opts: WofWasmPlaceLookupOpts) {
+	constructor(opts: WOFWasmPlaceLookupOpts) {
 		this.#db = opts.db
 	}
 
@@ -100,7 +100,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 
 		if (!text) return []
 
-		const ftsQuery = sanitizeFtsQuery(text)
+		const ftsQuery = sanitizeFTSQuery(text)
 
 		if (!ftsQuery) return []
 
@@ -115,7 +115,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		// `borough` / `localadmin` rows. Without it, Brooklyn-the-borough (pop 2.5M, an EXACT name
 		// match) was unreachable and the fuzzy "Brooklyn Park, MN" won. Same table the Node resolver
 		// uses — the two backends can't drift.
-		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WofPlacetype[] | null
+		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
 
 		if (placetypes && placetypes.length > 0) {
 			conditions.push(`spr.placetype IN (${placetypes.map(() => "?").join(",")})`)
@@ -194,7 +194,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 				// artifact, boundaries lost) it falls back to padded containment gated on "no strictly
 				// exact candidate" so interior fragments ("York" inside "New York City") can't be
 				// false-promoted. Mirrors the Node resolver's alias tier
-				// (`WofSqlitePlaceLookup.#exactMatchIds`).
+				// (`WOFSqlitePlaceLookup.#exactMatchIds`).
 				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 				const popBoost =
@@ -211,13 +211,13 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			.map(({ row, adjScore, exactTier }) => ({
 				id: row.id,
 				name: row.name,
-				placetype: row.placetype as WofPlacetype,
+				placetype: row.placetype as WOFPlacetype,
 				country: row.country,
 				lat: row.latitude,
 				lon: row.longitude,
 				parent_id: row.parent_id ?? undefined,
 				// Surface the exact-match tier so a downstream country re-rank (#369) can keep the country
-				// pin from crossing it — parity with `WofSqlitePlaceLookup`. See ResolvedPlace.exactMatch.
+				// pin from crossing it — parity with `WOFSqlitePlaceLookup`. See ResolvedPlace.exactMatch.
 				exactMatch: exactTier === 0,
 				bbox:
 					row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
@@ -237,7 +237,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 	/**
 	 * Dual-role localities coincident with an admin id, from the `coincident_roles` relation (#403) carried into the slim
 	 * DB by build-slim. Backs the resolver's hierarchy completion (on by default) in the browser — mirrors
-	 * `WofSqlitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates the relation. Loaded once +
+	 * `WOFSqlitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates the relation. Loaded once +
 	 * memoized (the relation is ~hundreds of rows).
 	 */
 	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
@@ -304,7 +304,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
  * resolver-wof-sqlite implementation). Strips characters FTS5 treats as punctuation or operators so a user typing
  * `Paris's` or `St. (Petersburg)` doesn't trigger an "fts5: syntax error" inside the WASM runtime.
  */
-function sanitizeFtsQuery(text: string): string {
+function sanitizeFTSQuery(text: string): string {
 	const out: string[] = []
 
 	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {
@@ -321,7 +321,7 @@ function sanitizeFtsQuery(text: string): string {
 	return out.join(" ")
 }
 
-function normalizePlacetypes(input: FindPlaceQuery["placetype"]): WofPlacetype[] | null {
+function normalizePlacetypes(input: FindPlaceQuery["placetype"]): WOFPlacetype[] | null {
 	if (!input) return null
 
 	return Array.isArray(input) ? input : [input]

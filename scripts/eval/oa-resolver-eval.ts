@@ -54,7 +54,7 @@ import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
+import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import {
 	type ClassificationRecord,
@@ -364,14 +364,14 @@ async function main(): Promise<void> {
 	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
 	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
 	const postalCityAliasDb = arg("postal-city-alias-db", "")
-	const { WofSqlitePlaceLookup, WofCandidateTableLookup, WofPostalCityAliasLookup } =
+	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
 	const postalCityAliases = postalCityAliasDb
-		? new WofPostalCityAliasLookup({ databasePath: postalCityAliasDb })
+		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDb })
 		: undefined
 	const backend = candidateDb
-		? new WofCandidateTableLookup({ databasePath: candidateDb })
-		: new WofSqlitePlaceLookup({
+		? new WOFCandidateTableLookup({ databasePath: candidateDb })
+		: new WOFSqlitePlaceLookup({
 				databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
 				postalCityAliases,
 			})
@@ -379,7 +379,7 @@ async function main(): Promise<void> {
 	if (candidateDb) console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
 
 	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDb}`)
-	const resolver = createWofResolver(backend as never)
+	const resolver = createWOFResolver(backend as never)
 
 	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
 	// expected name equals ANY of that place's WOF `names` rows (normalized) — not just its
@@ -548,8 +548,8 @@ async function main(): Promise<void> {
 		)
 			.split(",")
 			.map((s) => s.trim())
-		const { WofPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
-		postcodeLookup = new WofPostcodeLookup(shards)
+		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		postcodeLookup = new WOFPostcodeLookup(shards)
 		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
 	}
 	// Minimum anchor confidence to trust the anchor's coordinate over the resolver's. A penalized

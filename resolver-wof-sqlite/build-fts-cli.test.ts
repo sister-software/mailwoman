@@ -15,7 +15,7 @@ import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 import { main } from "./build-fts-cli.js"
-import { placeSearchFtsExists } from "./fts.js"
+import { placeSearchFTSExists } from "./fts.js"
 
 let scratch: string
 
@@ -56,7 +56,7 @@ describe("build-fts-cli main()", () => {
 		const db = new DatabaseSync(dbPath)
 
 		try {
-			expect(placeSearchFtsExists(db)).toBe(true)
+			expect(placeSearchFTSExists(db)).toBe(true)
 		} finally {
 			db.close()
 		}

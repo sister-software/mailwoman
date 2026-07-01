@@ -8,17 +8,17 @@
  *   arrays at accepting states.
  */
 
-import type { FstContinuation, FstMatchResult, FstQueryResult, PlaceEntry } from "./fst-types.js"
+import type { FSTContinuation, FSTMatchResult, FSTQueryResult, PlaceEntry } from "./fst-types.js"
 
-interface FstNode {
+interface FSTNode {
 	edges: Map<string, number>
 	places: PlaceEntry[]
 }
 
-export class FstMatcher {
-	private nodes: FstNode[]
+export class FSTMatcher {
+	private nodes: FSTNode[]
 
-	constructor(nodes: FstNode[]) {
+	constructor(nodes: FSTNode[]) {
 		this.nodes = nodes
 	}
 
@@ -34,7 +34,7 @@ export class FstMatcher {
 		return count
 	}
 
-	walk(tokens: string[]): FstMatchResult | null {
+	walk(tokens: string[]): FSTMatchResult | null {
 		let stateId = 0
 
 		for (let i = 0; i < tokens.length; i++) {
@@ -51,7 +51,7 @@ export class FstMatcher {
 		return { stateId, accepted: node.places.length > 0, depth: tokens.length }
 	}
 
-	walkFrom(prev: FstMatchResult, token: string): FstMatchResult | null {
+	walkFrom(prev: FSTMatchResult, token: string): FSTMatchResult | null {
 		const node = this.nodes[prev.stateId]
 
 		if (!node) return null
@@ -67,11 +67,11 @@ export class FstMatcher {
 		return this.nodes[stateId]?.places ?? []
 	}
 
-	continuations(stateId: number): FstContinuation[] {
+	continuations(stateId: number): FSTContinuation[] {
 		const node = this.nodes[stateId]
 
 		if (!node) return []
-		const result: FstContinuation[] = []
+		const result: FSTContinuation[] = []
 
 		for (const [token, targetId] of node.edges) {
 			const target = this.nodes[targetId]!
@@ -85,7 +85,7 @@ export class FstMatcher {
 		return result
 	}
 
-	query(text: string): FstQueryResult {
+	query(text: string): FSTQueryResult {
 		const tokens = normalizeTokens(text)
 		const match = this.walk(tokens)
 
@@ -126,12 +126,12 @@ export class FstMatcher {
 	}
 
 	/** Expose the internal node array for serialization. */
-	toNodes(): readonly FstNode[] {
+	toNodes(): readonly FSTNode[] {
 		return this.nodes
 	}
 
-	static fromNodes(nodes: FstNode[]): FstMatcher {
-		return new FstMatcher(nodes)
+	static fromNodes(nodes: FSTNode[]): FSTMatcher {
+		return new FSTMatcher(nodes)
 	}
 }
 
@@ -145,4 +145,4 @@ export function normalizeTokens(text: string): string[] {
 		.filter((t) => t.length > 0)
 }
 
-export type { FstNode }
+export type { FSTNode }

@@ -10,12 +10,12 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, test } from "vitest"
 
-import type { BioLabel } from "../types/component.js"
+import type { BIOLabel } from "../types/component.js"
 import { buildAddressTree } from "./build-tree.js"
 import { createCalibrator, type CalibrationTable } from "./calibration.js"
 import type { AddressNode, DecoderToken } from "./types.js"
 
-function tok(piece: string, start: number, end: number, label: BioLabel, confidence = 1): DecoderToken {
+function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
 	return { piece, start, end, label, confidence }
 }
 

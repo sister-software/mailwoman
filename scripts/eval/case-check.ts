@@ -14,12 +14,12 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([
 	MailwomanTokenizer.loadFromFile(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")),
-	OnnxRunner.create(dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")),
+	ONNXRunner.create(dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")),
 ])
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 

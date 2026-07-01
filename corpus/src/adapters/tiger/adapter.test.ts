@@ -17,13 +17,13 @@ import type { CanonicalRow } from "../../types.js"
 import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "./adapter.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
-const fixtureSqlPath = resolve(here, "../../../fixtures/tiger/fixture.sql")
+const fixtureSQLPath = resolve(here, "../../../fixtures/tiger/fixture.sql")
 
 let scratch: string
 let dbPath: string
 
 async function buildFixtureDb(): Promise<string> {
-	const sql = await readFile(fixtureSqlPath, "utf8")
+	const sql = await readFile(fixtureSQLPath, "utf8")
 	const path = join(scratch, "tiger-fixture.db")
 	const db = new DatabaseSync(path)
 	db.exec(sql)

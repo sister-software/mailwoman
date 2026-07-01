@@ -11,7 +11,7 @@
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { expect, test } from "vitest"
 
-import { streetLocaleForCountry, supportedOsmCountries } from "./street-locale.js"
+import { streetLocaleForCountry, supportedOSMCountries } from "./street-locale.js"
 
 test("fr: the Paris acceptance address keys consistently", () => {
 	const key = normalizeStreetForKeyLocale("Rue du Chevaleret", "fr")
@@ -47,6 +47,6 @@ test("streetLocaleForCountry: maps the shipped countries, throws otherwise", () 
 	expect(streetLocaleForCountry("FR")).toBe("fr")
 	expect(streetLocaleForCountry("de")).toBe("de")
 	expect(streetLocaleForCountry("nl")).toBe("nl")
-	expect(supportedOsmCountries().sort()).toEqual(["de", "fr", "nl"])
+	expect(supportedOSMCountries().sort()).toEqual(["de", "fr", "nl"])
 	expect(() => streetLocaleForCountry("xx")).toThrow(/No street-normalization locale/)
 })

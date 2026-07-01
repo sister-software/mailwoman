@@ -26,9 +26,9 @@
  *   essential.
  */
 
-import type { BioLabel, ComponentTag } from "../types/component.js"
+import type { BIOLabel, ComponentTag } from "../types/component.js"
 
-export type { BioLabel, ComponentTag }
+export type { BIOLabel, ComponentTag }
 
 /**
  * A single token emitted by the model, paired with its predicted label and confidence.
@@ -44,7 +44,7 @@ export interface DecoderToken {
 	/** Exclusive end char offset in the original raw text. */
 	end: number
 	/** The argmax BIO label for this token. */
-	label: BioLabel
+	label: BIOLabel
 	/** Softmax confidence for the chosen label, in [0, 1]. */
 	confidence: number
 }

@@ -5,7 +5,7 @@
  *
  *   Reverse-geocoding eval (#484) — the honest-eval harness, inverted. The OA held-out rows carry a
  *   REAL government lat/lon plus gold locality/region; instead of parsing the address string we
- *   feed the COORDINATE to `WofReverseGeocoder` and score whether the gold admin components appear
+ *   feed the COORDINATE to `WOFReverseGeocoder` and score whether the gold admin components appear
  *   in the returned hierarchy. No parser, no model — this isolates the reverse stack (R*Tree bbox →
  *   PIP → approximate descent → ancestor chain).
  *
@@ -42,7 +42,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { placetypeDepth, WofReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
+import { placetypeDepth, WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
 
 const { values: args } = parseArgs({
 	options: {
@@ -119,7 +119,7 @@ if (rows.length === 0) {
 	process.exit(1)
 }
 
-const rg = new WofReverseGeocoder({ adminDbPath: args["admin-db"], polygonDbPath: args["polygons-db"] })
+const rg = new WOFReverseGeocoder({ adminDbPath: args["admin-db"], polygonDbPath: args["polygons-db"] })
 // Alias lookups (gold "VT" vs WOF "Vermont") go straight at the admin DB's `names` table.
 const aliasDb = new DatabaseSync(args["admin-db"], { readOnly: true })
 const aliasStmt = aliasDb.prepare(`SELECT 1 FROM names WHERE id = ? AND name = ? COLLATE NOCASE LIMIT 1`)

@@ -33,7 +33,7 @@ import {
 	matchLeadingDesignator,
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
-import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
+import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 
 import { alignRow, assertSpanInvariants, type ComponentSpan } from "./align.js"
 import { whitespaceTokenizer, type Tokenizer } from "./tokenize.js"
@@ -801,10 +801,10 @@ export function composeAdversarialRow(
 		return { kind: "quarantined", row: { row: address, reason: "venue-no-tokens" } }
 	}
 
-	const venueLabels: BioLabel[] = venueTokens.map((_, i) => (i === 0 ? "B-venue" : "I-venue"))
+	const venueLabels: BIOLabel[] = venueTokens.map((_, i) => (i === 0 ? "B-venue" : "I-venue"))
 
 	const tokens: string[] = [...venueTokens.map((t) => t.text), ...addressAligned.row.tokens]
-	const labels: BioLabel[] = [...venueLabels, ...addressAligned.row.labels]
+	const labels: BIOLabel[] = [...venueLabels, ...addressAligned.row.labels]
 
 	const composedRaw = `${venueTrimmed}${separator}${address.raw}`
 	const composedComponents = {

@@ -52,7 +52,7 @@ import { readFileSync } from "node:fs"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 
 // ---------------------------------------------------------------------------
@@ -205,22 +205,22 @@ async function main(): Promise<void> {
 
 	// --- build parser (mirror oa-resolver-eval.ts exactly) ---
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 	const modelCard = JSON.parse(readFileSync(modelCardPath, "utf8")) as { labels: string[] }
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(tokenizerPath),
-		OnnxRunner.create(modelPath),
+		ONNXRunner.create(modelPath),
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 
 	// --- build resolver with BOTH street-level shards ---
-	const { WofSqlitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
+	const { WOFSqlitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
 		await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WofSqlitePlaceLookup({
+	const backend = new WOFSqlitePlaceLookup({
 		databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
 	})
-	const resolver = createWofResolver(backend as never)
+	const resolver = createWOFResolver(backend as never)
 	const addressPoints = new AddressPointSqliteLookup(addressPointsDb)
 	const interpolation = new StreetInterpolator({ dbPath: interpolationDb })
 
