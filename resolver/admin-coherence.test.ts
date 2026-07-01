@@ -83,7 +83,7 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value" | "
 	children: [],
 	...over,
 })
-// region(ME) → locality(Portland), the shape recognizeUsRegions produces for "Portland, ME".
+// region(ME) → locality(Portland), the shape recognizeUSRegions produces for "Portland, ME".
 const portlandMeTree = (): AddressTree => ({
 	raw: "Portland, ME",
 	roots: [

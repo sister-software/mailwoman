@@ -218,7 +218,7 @@ function annotateUsRegions(node: AddressNode): void {
  * resolver scopes the locality to its state (#642). Mutates + returns the tree. A no-op when no US state token is found
  * mis-tagged — byte-stable for already-correct parses.
  */
-export function recognizeUsRegions(tree: AddressTree): AddressTree {
+export function recognizeUSRegions(tree: AddressTree): AddressTree {
 	tree.roots = correctSiblings(tree.roots).map(correctNode)
 
 	for (const root of tree.roots) annotateUsRegions(root)

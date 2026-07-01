@@ -7,7 +7,7 @@
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import { recognizeUsRegions, usStateSlug } from "./region-recognition.js"
+import { recognizeUSRegions, usStateSlug } from "./region-recognition.js"
 
 const loc = (value: string, start = 0, end = value.length, children: AddressNode[] = []): AddressNode => ({
 	tag: "locality" as ComponentTag,
@@ -40,42 +40,42 @@ describe("usStateSlug", () => {
 	})
 })
 
-describe("recognizeUsRegions (#642)", () => {
+describe("recognizeUSRegions (#642)", () => {
 	it('nests a sibling city under a state-name locality ("Dublin, Texas" → 2 localities)', () => {
-		const t = recognizeUsRegions(tree([loc("Dublin"), loc("Texas")]))
+		const t = recognizeUSRegions(tree([loc("Dublin"), loc("Texas")]))
 		expect(t.roots.map(tagsOf)).toEqual(["region:Texas[locality:Dublin]"])
 	})
 
 	it('splits a merged "City, ST" locality into region → locality', () => {
-		const t = recognizeUsRegions(tree([loc("Dublin, TX")]))
+		const t = recognizeUSRegions(tree([loc("Dublin, TX")]))
 		expect(t.roots.map(tagsOf)).toEqual(["region:TX[locality:Dublin]"])
 	})
 
 	it('splits a merged "City, State" (full name) locality', () => {
-		const t = recognizeUsRegions(tree([loc("Athens, Texas")]))
+		const t = recognizeUSRegions(tree([loc("Athens, Texas")]))
 		expect(t.roots.map(tagsOf)).toEqual(["region:Texas[locality:Athens]"])
 	})
 
 	it("leaves an already-correct parse (explicit region) untouched", () => {
 		const region: AddressNode = { ...loc("TX"), tag: "region" as ComponentTag, children: [loc("Dublin")] }
-		const t = recognizeUsRegions(tree([region]))
+		const t = recognizeUSRegions(tree([region]))
 		expect(t.roots.map(tagsOf)).toEqual(["region:TX[locality:Dublin]"])
 	})
 
 	it("leaves a LONE state-name locality untouched (no sibling city to nest — ambiguous city/state)", () => {
-		const t = recognizeUsRegions(tree([loc("Washington")]))
+		const t = recognizeUSRegions(tree([loc("Washington")]))
 		expect(t.roots.map(tagsOf)).toEqual(["locality:Washington"]) // not converted
 	})
 
 	it("does not fire when BOTH tokens are state-names (ambiguous; conservative no-op)", () => {
-		const t = recognizeUsRegions(tree([loc("Washington"), loc("Pennsylvania")]))
+		const t = recognizeUSRegions(tree([loc("Washington"), loc("Pennsylvania")]))
 		// Neither is unambiguously the city, so leave both as the parser had them.
 		expect(t.roots.map(tagsOf)).toEqual(["locality:Washington", "locality:Pennsylvania"])
 	})
 
 	it("preserves a street + recognizes the region in a fuller address", () => {
 		const street: AddressNode = { ...loc("100 Main St"), tag: "street" as ComponentTag }
-		const t = recognizeUsRegions(tree([street, loc("Dublin"), loc("Texas")]))
+		const t = recognizeUSRegions(tree([street, loc("Dublin"), loc("Texas")]))
 		const tags = t.roots.map(tagsOf).sort()
 		expect(tags).toContain("region:Texas[locality:Dublin]")
 		expect(tags).toContain("street:100 Main St")

@@ -170,7 +170,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectToleranceM: 25000,
 		addedAt: "2026-06-29",
 		bugRef: "#833",
-		note: "Was Augusta, Sicily — the two-consistent-pairs case (Augusta under both Maine and Messina). Fixed by the abbrev-only country_hint forward linkage (recognizeUsRegions → resolver country=US), not the descendant-consistency pass.",
+		note: "Was Augusta, Sicily — the two-consistent-pairs case (Augusta under both Maine and Messina). Fixed by the abbrev-only country_hint forward linkage (recognizeUSRegions → resolver country=US), not the descendant-consistency pass.",
 	},
 	{
 		// A clean US 'City, ST' that resolves correctly — guards the working path so a placer/ranking change
