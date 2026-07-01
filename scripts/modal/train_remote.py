@@ -555,6 +555,61 @@ def sync_v092():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v196_slavic():
+    """#825 SHIP candidate. Pull the v0.9.6-slavic-anchor OVERLAY (= v0.9.3a3-anchor-absorption, v4.15.0's
+    694 base shards referenced verbatim + already on the volume from the v4.15.0 run) + the one new
+    oa-slavic street-level diacritic shard (89837 rows, CZ/PL/SK/SI real OpenAddresses). Mirror of
+    sync_v092. The base v0.9.3a3 shards — incl synth-anchor-absorption, the #723 fix — persist on the
+    volume; only the ~3.5 MB oa-slavic overlay is new. Train is `--resume none` (from scratch, 80k) so
+    #723 is re-learned from the corpus (paint_mode=shaped + absorption shard both in the recipe), keeping
+    the comparison to v4.15.0 a clean one-variable — only oa-slavic differs."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.9.6-slavic-anchor overlay + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv0.9.6-slavic-anchor overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor"
+    base = f"{VOL_MOUNT}/corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.6-slavic-anchor.yaml"
+    print("  v1.9.6 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  oa-slavic shard present:", os.path.isfile(f"{cdir}/train/part-oa-slavic-diacritic-train.parquet"))
+    print("  base v0.9.3a3 MANIFEST on volume (manifest-referenced):", os.path.isfile(f"{base}/MANIFEST.json"))
+    print(
+        "  synth-anchor-absorption shard on volume (#723 fix):",
+        os.path.isfile(f"{base}/train/part-anchor-absorption-train.parquet"),
+    )
+    print("  tokenizer v0.6.0-a0 on volume:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=1800,
 )
 def sync_v193():
