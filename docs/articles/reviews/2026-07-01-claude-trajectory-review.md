@@ -62,7 +62,7 @@ The single highest-leverage item in the backlog, because every win already shipp
 - **Close the version-lag class, not the instance:** add a release-train checklist item (or CI check) that fails when the demo's pinned model/package version trails the latest npm release. #203 was fixed once as an instance; make it structural.
 - While in there, spend the small effort on #827 (progressive region centering / gazetteer cold-load) only if it falls out of the parity work — it is polish, not rail.
 
-### Track 2 — Re-anchor measurement (days, CPU only)
+### Track 2 — Re-anchor measurement (days, CPU only) — #885
 
 R1 and R5 have the same fix: one full re-score and one documentation truth-pass.
 
@@ -94,7 +94,7 @@ The diacritic defect (R2) is the only thing on the board that requires training 
 - **Define the cheap probe first:** before a full multi-locale retrain, a bounded experiment that isolates the rendering hypothesis — e.g., a tokenizer-only rebuild (or byte-fallback coverage audit) scored against the failing CZ/PL spans on CPU, to confirm the failure is representational before buying GPU time to fix it. If the probe can't be defined, the shift notes' own rule applies: not ready to train.
 - **Freeze locale expansion until this lands.** No locale 17 (Sweden waits on its license anyway) and no new locale shards before the rendering fix, because every added locale deepens the exact defect this campaign exists to fix.
 
-### Track 5 — Re-declare the scope (one document, half a day)
+### Track 5 — Re-declare the scope (one document, half a day) — #886
 
 Write the successor to `plan/README.mdx` — a short "what mailwoman is now" scope doc that: names the real locale set and its tiers; admits record-matching as a second workstream with its own epics rather than a footnote; states the demo-is-the-geocoder goal and its parity requirement (Track 1) as a standing invariant; and marks the phase directory as historical. The 06-25 review found the internals excellent and the front door fictional; the same is true one level up — the plan is the internal front door, and it should stop describing a US+FR parser.
 
