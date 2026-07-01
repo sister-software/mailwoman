@@ -8,7 +8,7 @@ for campaign tags. Self-emitted from `scripts/eval/promotion-gate.ts` (the #479 
 `external-arenas.ts`), gate spec `scripts/eval/gates/v4.15.0-boundary.json` — do not hand-edit.
 
 **What this is:** [#885](https://github.com/sister-software/mailwoman/issues/885)'s answer to R1
-of the [2026-07-01 trajectory review](../reviews/2026-07-01-claude-trajectory-review.md). Since
+of the [2026-07-01 trajectory review](https://github.com/sister-software/mailwoman/blob/main/docs/articles/reviews/2026-07-01-claude-trajectory-review.md). Since
 the north-star moved to the assembled coordinate, five label-F1 regressions shipped as
 "coordinate-invisible" with per-case justification but no periodic backstop. This re-score is the
 backstop: it re-measures every v4.4.0-gate slice against the currently shipped bytes and asks
@@ -98,7 +98,7 @@ if a future release wants to gate it, this is the baseline to floor.
 ## The assembled coordinate (the north star, for anchor)
 
 Label-F1 above is the drift backstop, not the verdict. The shipped line's coordinate record,
-measured this week on the same artifact (see `#884` and the [day eval](./2026-07-01-day-825-tokenizer-fix.md)):
+measured this week on the same artifact (see `#884` and the [day eval](https://github.com/sister-software/mailwoman/blob/feat/825-v196-slavic-anchor/docs/articles/evals/2026-07-01-day-825-tokenizer-fix.md)):
 US-2k coord p50 3.31 km / resolve 1.000 / region 0.999; CZ-1k resolved-p50 3.29 km / resolve
 0.968; PL-1k 2.07 km / 0.985 (the CZ/PL wrong-city defect is #884's fix, promote-pending).
 
