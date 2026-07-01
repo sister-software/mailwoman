@@ -153,7 +153,7 @@ Read the workspace-local docstrings before changing infrastructure files. The he
 
 ### Acronym casing in identifiers
 
-Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSqlitePlaceLookup`, `modelURL`. Not `createWOFResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
+Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSqlitePlaceLookup`, `modelURL`. Not `createWofResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
 
 - **`snake_case`** — DB columns and wire keys (`parent_id`, `place_id`, `name_key`) stay as-is; they're string contracts, and the convention is camelCase-only by construction.
 - **External library names** — match the dependency's own casing (`HttpStatusCode` from axios, `createQueryId`/`createWithSql` from kysely, `sqlite-wasm`).
@@ -161,3 +161,5 @@ Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `pa
 - **Dated historical records** — `docs/articles/evals/`, `reviews/`, postmortems, and phase docs are point-in-time; don't rewrite their acronyms.
 
 There's no lint rule for this (oxlint can't express it); it's reviewer discipline. When adding an acronym, cap the whole component.
+
+**Known gaps (#875):** the v5.0.0 sweep enumerated a fixed acronym list that omitted `Us` and generic `Json`/`Jsonl`. `recognizeUsRegions` → `recognizeUSRegions` is done (internal). Still pending: `isUsStateAbbreviation` + codex `us/*` (public `@mailwoman/codex` → breaking), and the whole `Json`/`Jsonl` family (`writeJsonl`, `readJsonl`, `fetchJson`, `GeoJsonFeatureCollection`, `pyJsonDumps`, … — ~28 identifiers across packages, some public). These are a version-gated batch, not a piecemeal fix — bundle with the next major, don't half-apply (a partial `Json` sweep half-renames callers vs their def).

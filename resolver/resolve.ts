@@ -783,7 +783,7 @@ class WOFResolver implements Resolver {
 		// global fallback collapses back to the soft-prior baseline (FI p90 3050, PL p90 1078); pure-hard
 		// collapses the tail (FI 18 km, PL p99 8172→494) at a coverage-bounded recall cost.
 		// #833 forward linkage: a node's own `country_hint` (an address-system recognizer's derived country —
-		// today `recognizeUsRegions` stamping "US" on a recognized closed-set US state) constrains THIS node's
+		// today `recognizeUSRegions` stamping "US" on a recognized closed-set US state) constrains THIS node's
 		// lookup, below a resolved parent's country but above the global defaults. It breaks the two-consistent-
 		// pairs tie ("Augusta, ME" → Maine, not Augusta/Messina) that pure geographic consistency cannot.
 		const countryHint = node.metadata?.["country_hint"]

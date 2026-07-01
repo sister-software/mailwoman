@@ -32,7 +32,7 @@ import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } f
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.js"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.js"
-import { recognizeUsRegions } from "./region-recognition.js"
+import { recognizeUSRegions } from "./region-recognition.js"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
@@ -305,7 +305,7 @@ export class ShardProvider {
 
 /**
  * The exact parse `geocodeAddress` runs internally: Stage-1 deterministic preprocessing (`normalizeInput`) →
- * `classifier.parse` (postcodeRepair + normalizeCase) → `recognizeUsRegions`. Exposed so a caller can run it once and
+ * `classifier.parse` (postcodeRepair + normalizeCase) → `recognizeUSRegions`. Exposed so a caller can run it once and
  * feed the result to both {@link geocodeAddress} (via `GeocodeDeps.parsedTree`) and another consumer of the parse (e.g.
  * `decodeAsJSON(tree)` → a PostalAddress), instead of parsing the same address twice. The inference is ~3 ms/row — the
  * single most expensive step — so sharing it is a ~1.3× win on a parse-then-geocode pipeline.
@@ -316,7 +316,7 @@ export async function parseForGeocode(
 ): Promise<AddressTree> {
 	const parseInput = deps.normalizeInput === false ? input : normalize(input).normalized
 
-	return recognizeUsRegions(
+	return recognizeUSRegions(
 		await deps.classifier.parse(parseInput, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
 	)
 }

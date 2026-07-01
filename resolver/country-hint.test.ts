@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the #833 forward `country_hint` linkage. A region node carrying `metadata.country_hint`
- *   (an address-system recognizer's derived country — `recognizeUsRegions` stamps "US" on a 2-letter US
+ *   (an address-system recognizer's derived country — `recognizeUSRegions` stamps "US" on a 2-letter US
  *   state abbrev) constrains THAT node's lookup to the hinted country, below a resolved parent's country
  *   but above the global defaults. It breaks the two-consistent-pairs tie ("Augusta, ME" → Maine, not
  *   the more-populous Augusta under Messina) that geographic consistency alone cannot.
