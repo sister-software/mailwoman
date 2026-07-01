@@ -28,9 +28,16 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url))
-// The published code workspaces (mirrors the release set; weights packages carry no code to import).
+// The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load
+// at runtime MUST be packed here — otherwise `npm install` pulls it from the REGISTRY (the published,
+// possibly-stale version), and the smoke tests new-source-CLI against an old-registry dependency. That
+// exact skew shipped a red main after the v5.0.0 acronym rename: `mailwoman` imported the renamed
+// `createWOFResolver`, but `@mailwoman/resolver` wasn't packed, so npm resolved the pre-rename 4.16.2 and
+// the CLI crashed on a missing export. Packing the closure makes the test source-coherent (new-vs-new).
 const WORKSPACES: Record<string, string> = {
 	"@mailwoman/core": "core",
+	"@mailwoman/spatial": "spatial",
+	"@mailwoman/resolver": "resolver",
 	"@mailwoman/codex": "codex",
 	"@mailwoman/classifiers": "classifiers",
 	"@mailwoman/kind-classifier": "kind-classifier",
