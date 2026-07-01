@@ -86,7 +86,7 @@ async function getDeps(): Promise<GeocodeDepsBundle | null> {
 		}
 		const classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const backend = createResolverBackend(resolverMod, { wofPaths: paths })
-		const resolver = createWOFResolver(backend as unknown as ResolverBackend)
+		const resolver = createWOFResolver(backend)
 		const shards = new ShardProvider(resolverMod, DATA_ROOT)
 
 		// Candidate backend → country-agnostic default (demo's global, population-first behavior); a

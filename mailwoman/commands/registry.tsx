@@ -43,7 +43,7 @@ import {
 	type GeocodeAddress,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
@@ -242,7 +242,7 @@ async function buildGeocoder(
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	const shards: ShardResolver = shardProvider.for
 	const defaultCountry = resolverDefaultCountry(options, !!resolveCandidateDBPath()) || undefined
-	const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
+	const resolver = createWOFResolver(lookup)
 
 	const seam = geocodeAddressVia({
 		parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),

@@ -44,7 +44,7 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { latLngToCell } from "h3-js"
 
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
@@ -296,7 +296,7 @@ async function main(): Promise<void> {
 		})
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup)
 		const shardProvider = new ShardProvider(mod, DATA_ROOT)
 		const seam = geocodeAddressVia({
 			parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
