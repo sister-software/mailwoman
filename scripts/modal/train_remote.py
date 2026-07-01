@@ -612,6 +612,55 @@ def sync_v196_slavic():
     secrets=[r2_secret],
     timeout=1800,
 )
+def sync_v197_bsplice():
+    """#825 B-splice fine-tune. Pulls the code+config + the SPLICED tokenizer (v0.6.0-bsplice = v0.6.0-a0's
+    48000 pieces + 10,582 diacritic pieces) + the EXPANDED v4.15.0 checkpoint (token_embeddings 48000 ->
+    58582, the new rows mean-initialized from their old-tokenizer constituents). The v0.9.6-slavic-anchor
+    corpus + base shards persist on the volume from the v196 run — only the tokenizer (~1.3 MB) and the
+    expanded checkpoint (~112 MB) are new. The fine-tune is init_from (fresh optimizer), resume=none."""
+    import shutil
+    import subprocess
+
+    print("Syncing v1.9.7-bsplice code+config + spliced tokenizer + expanded ckpt from R2...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/models/tokenizer/v0.6.0-bsplice/ {VOL_MOUNT}/models/tokenizer/v0.6.0-bsplice/ {R}",
+        f"rclone copy :s3:{BUCKET}/models/bsplice-expanded/ {VOL_MOUNT}/models/bsplice-expanded/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+    print("\nv1.9.7-bsplice sync complete. Volume committed.")
+
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.7-bsplice.yaml"
+    tok = f"{VOL_MOUNT}/models/tokenizer/v0.6.0-bsplice/tokenizer.model"
+    exp = f"{VOL_MOUNT}/models/bsplice-expanded/pytorch_model.bin"
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor"
+    print("  v1.9.7 config present:", os.path.isfile(cfg))
+    print("  spliced tokenizer present:", os.path.isfile(tok))
+    print("  expanded checkpoint present:", os.path.isfile(exp))
+    print("  expanded config present:", os.path.isfile(f"{VOL_MOUNT}/models/bsplice-expanded/config.json"))
+    print("  v0.9.6 corpus MANIFEST on volume (reused):", os.path.isfile(f"{cdir}/MANIFEST.json"))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
 def sync_v193():
     """#220/#723 Probe A0 (anchor-absorption, anchor_paint_mode=shaped). Syncs ONLY the code+config —
     A0 reuses v192's corpus-v0.9.2-multilocale-au (already on the volume); the ONLY data change is the
@@ -1217,6 +1266,7 @@ def export_onnx(
     output_dir: str = "",
     step: str = "",
     tokenizer_path: str = "",
+    model_dir: str = "",
 ):
     """Export a checkpoint to ONNX.
 
@@ -1224,6 +1274,11 @@ def export_onnx(
     --output-dir=/data/output-v062 --step=20000``. Env-var fallbacks
     (MAILWOMAN_EXPORT_OUTPUT_DIR / MAILWOMAN_EXPORT_STEP / MAILWOMAN_EXPORT_TOKENIZER)
     are kept for back-compat with prior workflows; CLI params take precedence when set.
+
+    ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a FLAT
+    ``from_pretrained`` dir directly (``pytorch_model.bin`` + ``config.json``), writing ``model.onnx``
+    into that same dir. Used to export an ad-hoc checkpoint — e.g. the #825 B-splice expanded-but-not-
+    fine-tuned model for the mean-init ablation — without restructuring it into the training layout.
     """
     import sys
     from pathlib import Path
@@ -1241,15 +1296,18 @@ def export_onnx(
         "MAILWOMAN_EXPORT_TOKENIZER", "/data/models/tokenizer/v0.6.0-a0/tokenizer.model"
     )
 
-    ck_dir = Path(f"{output_dir}/checkpoints/step-{step}")
+    if model_dir:
+        ck_dir = Path(model_dir)
+        out_path = Path(f"{model_dir}/model.onnx")
+    else:
+        ck_dir = Path(f"{output_dir}/checkpoints/step-{step}")
+        out_path = Path(f"{output_dir}/model.onnx")
     tokenizer = Tokenizer(Path(tokenizer_path))
 
     _orig_load = torch.load
     torch.load = lambda *a, **kw: _orig_load(*a, **{**kw, "map_location": "cpu"})
     model = MailwomanCoarseEncoder.from_pretrained(ck_dir)
     torch.load = _orig_load
-
-    out_path = Path(f"{output_dir}/model.onnx")
     print(f"Exporting {ck_dir} → {out_path}")
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
