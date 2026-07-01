@@ -41,8 +41,8 @@ const LOCALES: [string, string][] = [
 	["AU", "data/eval/external/oa-au-coord-150.jsonl"],
 ]
 
-type N9 = { placeId?: string; children?: unknown[] }
-const hasWOF = (n: N9): boolean => !!n.placeId?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWOF)
+type N9 = { placeID?: string; children?: unknown[] }
+const hasWOF = (n: N9): boolean => !!n.placeID?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWOF)
 
 const pctile = (xs: number[], p: number): number => {
 	if (!xs.length) return NaN

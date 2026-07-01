@@ -25,9 +25,9 @@ import { type ClassificationProposal, legacyClassificationToComponentTag } from 
  * `ComponentTag` mapping (e.g. structural-only tags) are skipped.
  *
  * @param solution A `SerializedSolution` from `AddressParser.parse()` (typically the top solution).
- * @param sourceId Stable id surfaced as `source_id` (default `"rule"`).
+ * @param sourceID Stable id surfaced as `source_id` (default `"rule"`).
  */
-export function solutionToProposals(solution: SerializedSolution, sourceId = "rule"): ClassificationProposal[] {
+export function solutionToProposals(solution: SerializedSolution, sourceID = "rule"): ClassificationProposal[] {
 	const proposals: ClassificationProposal[] = []
 
 	for (const match of solution.matches) {
@@ -41,7 +41,7 @@ export function solutionToProposals(solution: SerializedSolution, sourceId = "ru
 			component,
 			confidence: match.confidence,
 			source: "rule",
-			source_id: sourceId,
+			source_id: sourceID,
 			penalty: 0,
 		})
 	}

@@ -31,10 +31,10 @@ export interface ResolveResponseNode {
 	end: number
 	confidence: number
 	source?: string
-	sourceId?: string
+	sourceID?: string
 	lat?: number
 	lon?: number
-	placeId?: string
+	placeID?: string
 	depth: number
 }
 
@@ -133,10 +133,10 @@ function flatten(tree: AddressTree): ResolveResponseNode[] {
 			end: node.end,
 			confidence: node.confidence,
 			source: node.source,
-			sourceId: node.sourceId,
+			sourceID: node.sourceID,
 			lat: node.lat,
 			lon: node.lon,
-			placeId: node.placeId,
+			placeID: node.placeID,
 			depth,
 		})
 

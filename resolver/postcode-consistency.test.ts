@@ -83,7 +83,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 			postcodeConsistency: true,
 		})
 		const loc = out.roots.find((n) => n.tag === "locality")!
-		expect(loc.placeId).toBe("wof:2") // re-picked to the postcode-consistent instance
+		expect(loc.placeID).toBe("wof:2") // re-picked to the postcode-consistent instance
 		expect(loc.lat).toBeCloseTo(48.9)
 		expect(loc.metadata?.postcode_repicked).toBe(true)
 	})
@@ -110,7 +110,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 			postcodeConsistency: true,
 		})
 		const loc = out.roots.find((n) => n.tag === "locality")!
-		expect(loc.placeId).toBe("wof:2")
+		expect(loc.placeID).toBe("wof:2")
 		expect(loc.metadata?.postcode_repicked).toBeUndefined()
 		expect(loc.metadata?.postcode_city_mismatch).toBeUndefined()
 	})
@@ -119,7 +119,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 		const resolver = createWOFResolver(makeBackend([PC, SP_FAR, SP_NEAR]))
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), { defaultCountry: "FR" })
 		const loc = out.roots.find((n) => n.tag === "locality")!
-		expect(loc.placeId).toBe("wof:1") // the far one — untouched without the lever
+		expect(loc.placeID).toBe("wof:1") // the far one — untouched without the lever
 		expect(loc.lat).toBeCloseTo(44.0)
 	})
 
@@ -128,6 +128,6 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 		const resolver = createWOFResolver(makeBackend([SP_FAR, SP_NEAR]))
 		const out = await resolver.resolveTree(tree([localityNode()]), { defaultCountry: "FR", postcodeConsistency: true })
 		const loc = out.roots.find((n) => n.tag === "locality")!
-		expect(loc.placeId).toBe("wof:1")
+		expect(loc.placeID).toBe("wof:1")
 	})
 })

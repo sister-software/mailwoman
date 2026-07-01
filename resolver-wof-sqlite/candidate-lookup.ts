@@ -91,10 +91,10 @@ function ftsTrigramQuery(s: string): string {
  */
 export class WOFCandidateTableLookup implements PlaceLookup {
 	#db: DatabaseSync
-	#ownsDb: boolean
-	readonly #countryToId = new Map<string, number>()
+	#ownsDB: boolean
+	readonly #countryToID = new Map<string, number>()
 	readonly #idToCountry = new Map<number, string>()
-	readonly #placetypeToId = new Map<string, number>()
+	readonly #placetypeToID = new Map<string, number>()
 	readonly #idToPlacetype = new Map<number, string>()
 	/**
 	 * Prepared `(name_key, postcode)` probe for the #741 postal-city side-index — `undefined` when the
@@ -118,10 +118,10 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDb = false
+			this.#ownsDB = false
 		} else if (opts.databasePath) {
 			this.#db = new DatabaseSync(opts.databasePath, { readOnly: true })
-			this.#ownsDb = true
+			this.#ownsDB = true
 		} else {
 			throw new Error("WOFCandidateTableLookup needs `databasePath` or `database`")
 		}
@@ -130,14 +130,14 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// `findPlace` is a single B-tree probe with no dictionary round-trip.
 		for (const r of this.#db.prepare("SELECT id, code FROM country_codes").all() as unknown as CountryCodeTable[]) {
 			const code = String(r.code).toUpperCase()
-			this.#countryToId.set(code, Number(r.id))
+			this.#countryToID.set(code, Number(r.id))
 			this.#idToCountry.set(Number(r.id), code)
 		}
 
 		for (const r of this.#db
 			.prepare("SELECT id, placetype FROM placetype_codes")
 			.all() as unknown as PlacetypeCodeTable[]) {
-			this.#placetypeToId.set(String(r.placetype), Number(r.id))
+			this.#placetypeToID.set(String(r.placetype), Number(r.id))
 			this.#idToPlacetype.set(Number(r.id), String(r.placetype))
 		}
 
@@ -209,7 +209,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		const filterParams: Array<string | number> = []
 
 		if (query.country) {
-			const cid = this.#countryToId.get(query.country.toUpperCase())
+			const cid = this.#countryToID.get(query.country.toUpperCase())
 
 			if (cid === undefined) return [] // a country the candidate table doesn't carry
 			filters.push("country_id = ?")
@@ -221,7 +221,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// localadmin). `postalcode` maps to no admin placetype here → empty → no rows.
 			const want = Array.isArray(query.placetype) ? query.placetype : [query.placetype]
 			const ids = expandPlacetypeFilter(want as readonly string[])
-				.map((t) => this.#placetypeToId.get(t))
+				.map((t) => this.#placetypeToID.get(t))
 				.filter((v): v is number => v !== undefined)
 
 			if (ids.length === 0) return []
@@ -319,6 +319,6 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDb) this.#db.close()
+		if (this.#ownsDB) this.#db.close()
 	}
 }

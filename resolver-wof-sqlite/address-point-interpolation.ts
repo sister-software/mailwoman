@@ -67,17 +67,17 @@ interface NumberAnchor {
 
 export class AddressPointInterpolator implements InterpolationLookup {
 	readonly #db: DatabaseSync
-	readonly #ownsDb: boolean
+	readonly #ownsDB: boolean
 	readonly #fallback: StreetInterpolator | undefined
 	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseSync; fallback?: StreetInterpolator }) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDb = false
+			this.#ownsDB = false
 		} else if (opts.dbPath) {
 			this.#db = new DatabaseSync(opts.dbPath, { readOnly: true })
-			this.#ownsDb = true
+			this.#ownsDB = true
 		} else {
 			throw new Error("AddressPointInterpolator: one of dbPath or database is required")
 		}
@@ -115,7 +115,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDb) this.#db.close()
+		if (this.#ownsDB) this.#db.close()
 	}
 }
 

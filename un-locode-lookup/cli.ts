@@ -13,7 +13,7 @@
 
 import { parseArgs } from "node:util"
 
-import { buildUnLocodeDb } from "./build.js"
+import { buildUnLocodeDB } from "./build.js"
 import { UnLocodeLookup } from "./index.js"
 
 if (process.argv[2] === "build") {
@@ -26,7 +26,7 @@ if (process.argv[2] === "build") {
 		console.error("Usage: mailwoman-un-locode build --csv <code-list.csv> --out <db>")
 		process.exit(1)
 	}
-	const { rows, withCoords } = buildUnLocodeDb(values.csv, values.out)
+	const { rows, withCoords } = buildUnLocodeDB(values.csv, values.out)
 	console.error(`built ${values.out} (${rows} rows, ${withCoords} with coordinates)`)
 } else {
 	// Hand-parse so negative coordinates work as positionals.

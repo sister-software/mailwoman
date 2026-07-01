@@ -203,7 +203,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 ]
 
-function buildFixtureDb(): DatabaseSync {
+function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
 	// actually read; full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
@@ -285,7 +285,7 @@ function buildFixtureDb(): DatabaseSync {
 let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
-	const db = buildFixtureDb()
+	const db = buildFixtureDB()
 	lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
 })
 
@@ -297,7 +297,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 	test('"Paris" with no country/parent filter returns both Paris,FR and Paris,US as localities', async () => {
 		// Without a popularity signal (real WOF has wof:population; v0.1 doesn't model it) the
 		// resolver has no reason to prefer one Paris over the other — both are valid candidates.
-		// Callers disambiguate via country / parentId / alt-name match.
+		// Callers disambiguate via country / parentID / alt-name match.
 		const candidates = await lookup.findPlace({ text: "Paris" })
 		const names = candidates.map((c) => `${c.name},${c.country}`)
 		expect(names).toContain("Paris,FR")
@@ -337,11 +337,11 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 		expect(candidates[0]?.exactMatch).toBe(true)
 	})
 
-	test('"Springfield" with parentId: Illinois returns Springfield,IL first', async () => {
-		const illinoisId = 85688541
-		const candidates = await lookup.findPlace({ text: "Springfield", parentId: illinoisId })
+	test('"Springfield" with parentID: Illinois returns Springfield,IL first', async () => {
+		const illinoisID = 85688541
+		const candidates = await lookup.findPlace({ text: "Springfield", parentID: illinoisID })
 		expect(candidates.length).toBeGreaterThan(0)
-		expect(candidates[0]).toMatchObject({ name: "Springfield", country: "US", parent_id: illinoisId })
+		expect(candidates[0]).toMatchObject({ name: "Springfield", country: "US", parent_id: illinoisID })
 	})
 
 	test('alternate-name match: "パリ" returns Paris,FR via the names join', async () => {
@@ -394,7 +394,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 		// Slim DBs built with `dropNames` have no `names` table — the aliases survive only inside the
 		// FTS `alt_names` token bag. #exactMatchIds must fall back to it so "Brooklyn" still tiers the
 		// exact-named borough above the fuzzy "Brooklyn Park" against a hot/slim DB.
-		const db = buildFixtureDb()
+		const db = buildFixtureDB()
 		const withFTS = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
 		withFTS.close() // releases nothing we need — the FTS table now exists on `db`, which we own
 		db.exec(`DROP TABLE names`)
@@ -414,7 +414,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 		// "York New" straddles the bag "Old York <sep> New City": its tokens AND-match the row, but
 		// the exact tier must NOT promote it. Pre-#523 the bag was space-joined and the padded
 		// containment check (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
-		const db = buildFixtureDb()
+		const db = buildFixtureDB()
 		const withFTS = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
 		withFTS.close()
 		db.exec(`DROP TABLE names`)
@@ -433,7 +433,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("Disposable: Symbol.dispose closes the lookup", async () => {
-		const db = buildFixtureDb()
+		const db = buildFixtureDB()
 
 		{
 			using disposable = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })

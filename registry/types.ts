@@ -56,7 +56,7 @@ export interface ResolvedEntity {
 export type ReconciliationBucket = "enrolled" | "eligible-not-enrolled" | "funded-not-eligible"
 
 export interface EntityGeoData {
-	entityId: string
+	entityID: string
 	sourceIds?: string[]
 	recordCount?: number
 	cohesion?: number | null

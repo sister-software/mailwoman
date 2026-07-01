@@ -37,7 +37,7 @@ import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "./types.js"
 /** Snapshot of the runner's state, emitted on every progress tick. */
 export interface RunnerProgress {
 	/** Adapter being driven. */
-	adapterId: string
+	adapterID: string
 
 	/** Total rows the adapter has yielded (before dedup). */
 	yielded: number
@@ -128,7 +128,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 	const emitProgress = (): void => {
 		opts.onProgress?.({
-			adapterId: adapter.id,
+			adapterID: adapter.id,
 			yielded,
 			written,
 			bytes,

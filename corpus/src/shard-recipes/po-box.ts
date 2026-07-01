@@ -10,7 +10,7 @@
  */
 
 import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "../synthesize-po-box.js"
-import { alignAndWrite, makeLcg, readTuples, shardSourceId, type ShardRecipe } from "./scaffold.js"
+import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.js"
 
 const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
@@ -53,7 +53,7 @@ export const poBoxRecipe: ShardRecipe = {
 						country: tuple.country,
 						locale: synth.locale,
 						source: "synth-po-box",
-						source_id: shardSourceId("synth-po-box", {
+						source_id: shardSourceID("synth-po-box", {
 							locality: tuple.locality,
 							region: tuple.region,
 							postcode: tuple.postcode,
@@ -82,7 +82,7 @@ export const poBoxRecipe: ShardRecipe = {
 						country: "US",
 						locale: mil.locale,
 						source: "synth-po-box",
-						source_id: shardSourceId("synth-po-box", {
+						source_id: shardSourceID("synth-po-box", {
 							po_box: mil.components.po_box,
 							locality: mil.components.locality,
 							region: mil.components.region,

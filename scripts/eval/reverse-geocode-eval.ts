@@ -119,10 +119,10 @@ if (rows.length === 0) {
 	process.exit(1)
 }
 
-const rg = new WOFReverseGeocoder({ adminDbPath: args["admin-db"], polygonDbPath: args["polygons-db"] })
+const rg = new WOFReverseGeocoder({ adminDBPath: args["admin-db"], polygonDBPath: args["polygons-db"] })
 // Alias lookups (gold "VT" vs WOF "Vermont") go straight at the admin DB's `names` table.
-const aliasDb = new DatabaseSync(args["admin-db"], { readOnly: true })
-const aliasStmt = aliasDb.prepare(`SELECT 1 FROM names WHERE id = ? AND name = ? COLLATE NOCASE LIMIT 1`)
+const aliasDB = new DatabaseSync(args["admin-db"], { readOnly: true })
+const aliasStmt = aliasDB.prepare(`SELECT 1 FROM names WHERE id = ? AND name = ? COLLATE NOCASE LIMIT 1`)
 const aliasCache = new Map<string, boolean>()
 function nameOrAliasMatches(id: number | string, canonicalName: string, gold: string): boolean {
 	if (normalizeName(canonicalName) === normalizeName(gold)) return true
@@ -197,7 +197,7 @@ for (const row of rows) {
 }
 
 rg.close()
-aliasDb.close()
+aliasDB.close()
 
 const pct = (num: number, den: number): string => (den ? `${((100 * num) / den).toFixed(1)}%` : "—")
 const sortedMs = [...timesMs].sort((a, b) => a - b)

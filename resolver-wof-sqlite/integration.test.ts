@@ -118,19 +118,19 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 	})
 
 	describe("parent-constrained lookup", () => {
-		test("parentId narrows children to direct + transitive descendants", async () => {
+		test("parentID narrows children to direct + transitive descendants", async () => {
 			// Pick the first Springfield candidate, then look up children of its parent.
 			const springfields = await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 1 })
 			expect(springfields.length).toBe(1)
-			const parentId = springfields[0]!.parent_id
-			expect(parentId).toBeDefined()
+			const parentID = springfields[0]!.parent_id
+			expect(parentID).toBeDefined()
 
 			// Now query for that Springfield by name, scoped to its parent. Should include itself plus
 			// possibly other places under the same parent.
 			const constrained = await lookup.findPlace({
 				text: "Springfield",
 				placetype: "locality",
-				parentId: parentId!,
+				parentID: parentID!,
 				limit: 50,
 			})
 			expect(constrained.length).toBeGreaterThan(0)

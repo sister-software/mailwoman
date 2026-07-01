@@ -220,7 +220,7 @@ describe("toGeoJSON", () => {
 		expect(feature.geometry.coordinates).toHaveLength(2)
 		// [longitude, latitude] order per the GeoJSON spec.
 		expect(feature.geometry.coordinates[0]).toBeLessThan(0)
-		expect(feature.properties).toMatchObject({ entityId: expect.any(String), recordCount: expect.any(Number) })
+		expect(feature.properties).toMatchObject({ entityID: expect.any(String), recordCount: expect.any(Number) })
 
 		const merged = fc.features.find((f) => f.properties.recordCount === 2)!
 		expect(merged.properties.name).toBe("Robert Smith")

@@ -11,7 +11,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 import { autocomplete } from "./fst-autocomplete.js"
 import { buildFSTFromWOF } from "./fst-builder.js"
 import { FSTMatcher } from "./fst-matcher.js"
-import type { PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { PlaceEntry, PlacetypeID } from "./fst-types.js"
 
 const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const HAS_WOF = existsSync(WOF_DB)
@@ -82,7 +82,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 //        --san--> [francisco -> San Francisco]
 //        --chicago--> Chicago
 describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
-	const place = (wofID: number, name: string, placetype: PlacetypeId, importance: number): PlaceEntry => ({
+	const place = (wofID: number, name: string, placetype: PlacetypeID, importance: number): PlaceEntry => ({
 		wofID,
 		name,
 		placetype,

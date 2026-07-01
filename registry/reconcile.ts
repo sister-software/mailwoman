@@ -131,7 +131,7 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 						coordinates: [c.entity.coordinate!.longitude, c.entity.coordinate!.latitude] as [number, number],
 					},
 					properties: {
-						entityId: c.entity.id,
+						entityID: c.entity.id,
 						bucket: c.bucket,
 						sources: c.sources,
 						name: repName(c.entity),

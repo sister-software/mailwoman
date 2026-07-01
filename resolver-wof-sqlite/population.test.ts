@@ -35,7 +35,7 @@ const FIXTURE: FixturePlace[] = [
 	{ id: 1100, name: "Tokyo", country: "JP", lat: 35.68, lon: 139.69, population: 13_500_000 },
 ]
 
-function buildFixtureDb(): DatabaseSync {
+function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (
@@ -69,7 +69,7 @@ function buildFixtureDb(): DatabaseSync {
 let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDb(), buildFTS: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true })
 })
 
 afterEach(() => {
@@ -78,7 +78,7 @@ afterEach(() => {
 
 describe("buildPlaceSearchFTS — done-phase summary", () => {
 	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
-		const db = buildFixtureDb()
+		const db = buildFixtureDB()
 		let doneDetail: string | undefined
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
@@ -115,7 +115,7 @@ describe("findPlace — population boost", () => {
 	})
 
 	test("the population boost can be tuned to 0 — falls back to BM25-only ordering", async () => {
-		const dbg = new WOFSqlitePlaceLookup({ database: buildFixtureDb(), buildFTS: true }, { populationBoost: 0 })
+		const dbg = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true }, { populationBoost: 0 })
 
 		try {
 			const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
@@ -143,7 +143,7 @@ describe("findPlace — population boost", () => {
 
 	test("DB without place_population table → no boost, lookup still works", async () => {
 		// Build the fixture but drop the aux table before opening the lookup.
-		const db = buildFixtureDb()
+		const db = buildFixtureDB()
 		buildPlaceSearchFTS(db)
 		db.exec(`DROP TABLE place_population`)
 		const fallback = new WOFSqlitePlaceLookup({ database: db })

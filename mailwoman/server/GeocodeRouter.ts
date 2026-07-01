@@ -31,7 +31,7 @@ import {
 	ShardProvider,
 } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp-calibration.js"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath, wofShardPaths } from "../resolver-backend.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.js"
 import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
@@ -90,7 +90,7 @@ async function getDeps(): Promise<GeocodeDepsBundle | null> {
 
 		// Candidate backend → country-agnostic default (demo's global, population-first behavior); a
 		// per-request `country` still scopes. FTS backend keeps the US default. (#170)
-		return { classifier, resolver, shards, defaultCountry: resolveCandidateDbPath() ? undefined : "US" }
+		return { classifier, resolver, shards, defaultCountry: resolveCandidateDBPath() ? undefined : "US" }
 	})()
 
 	return depsPromise

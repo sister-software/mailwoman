@@ -76,7 +76,7 @@ export interface WOFSqlitePlaceLookupOpts {
 	buildFTS?: boolean
 	/**
 	 * Geographic Rule Engine convention source (Direction E, #289). Per-WOF-polygon resolution profiles, either as a
-	 * ready `ConventionSource` or a plain `{ wofId: Convention }` seed map. Default empty — every query rides
+	 * ready `ConventionSource` or a plain `{ wofID: Convention }` seed map. Default empty — every query rides
 	 * `WORLD_DEFAULT` (the EU coordinate-first behavior). JP/KR/TW add rows; #290 wires a build-from-source sqlite-backed
 	 * source here.
 	 */
@@ -101,9 +101,9 @@ export interface RankingWeights {
 	localityImplicitBoost: number
 	/** Boost when the candidate's country matches an explicit `country` filter. */
 	countryMatchBoost: number
-	/** Boost when the candidate is a direct child of the requested `parentId`. */
+	/** Boost when the candidate is a direct child of the requested `parentID`. */
 	directChildBoost: number
-	/** Boost when the candidate is a transitive descendant of the requested `parentId`. */
+	/** Boost when the candidate is a transitive descendant of the requested `parentID`. */
 	descendantBoost: number
 	/** Multiplier on the length-penalty term (penalizes much-longer-than-query names). */
 	lengthPenaltyWeight: number
@@ -284,7 +284,7 @@ function softNameScore(text: string, name: string, aliases: readonly string[]): 
 
 export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #db: DatabaseSync
-	readonly #ownsDb: boolean
+	readonly #ownsDB: boolean
 	readonly #kysely: Kysely<WOFDatabase>
 	readonly #weights: RankingWeights
 	/**
@@ -346,13 +346,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDb = false
+			this.#ownsDB = false
 			this.#shards = [{ path: ":memory:", schemaName: "main", placetypes: [] }]
 		} else {
 			const shards = resolveShards(opts.databasePath!)
 			this.#shards = shards
 			this.#db = new DatabaseSync(shards[0]!.path, { readOnly: false })
-			this.#ownsDb = true
+			this.#ownsDB = true
 
 			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
 			// interpolate directly (SQLite ATTACH doesn't accept parameters for the schema name).
@@ -459,8 +459,8 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * table is absent (older DB) or the admin isn't a dual-role place, so completion degrades gracefully. The relation +
 	 * `spr` join is loaded once and memoized.
 	 */
-	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
-		const id = typeof adminId === "number" ? adminId : Number(adminId)
+	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {
+		const id = typeof adminID === "number" ? adminID : Number(adminID)
 
 		if (!Number.isFinite(id)) return []
 
@@ -470,14 +470,14 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			if (coincidentRolesExists(this.#db)) {
 				const rows = this.#db
 					.prepare(
-						`SELECT cr.admin_id AS adminId, s.id AS id, s.name AS name, s.country AS country,
+						`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
 							s.latitude AS lat, s.longitude AS lon,
 							cr.relationship_type AS relationshipType, cr.locality_population AS population,
 							cr.distance_km AS distanceKm
 						FROM ${COINCIDENT_ROLES_TABLE} cr JOIN spr s ON s.id = cr.locality_id`
 					)
 					.all() as unknown as Array<{
-					adminId: number
+					adminID: number
 					id: number
 					name: string
 					country: string
@@ -501,10 +501,10 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 						population: r.population,
 						distanceKm: r.distanceKm,
 					}
-					const list = map.get(r.adminId)
+					const list = map.get(r.adminID)
 
 					if (list) list.push(candidate)
-					else map.set(r.adminId, [candidate])
+					else map.set(r.adminID, [candidate])
 				}
 			}
 			this.#coincidentRolesCache = map
@@ -621,9 +621,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			params.push(query.country)
 		}
 
-		if (query.parentId !== undefined) {
+		if (query.parentID !== undefined) {
 			where.push(`(spr.parent_id = ? OR spr.id IN (SELECT id FROM ${sch}.ancestors WHERE ancestor_id = ?))`)
-			params.push(query.parentId, query.parentId)
+			params.push(query.parentID, query.parentID)
 		}
 
 		// Bbox + near-with-radius are SQL-level filters via the R*Tree. We only emit the JOIN when
@@ -711,8 +711,8 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				score += this.#weights.countryMatchBoost
 			}
 
-			if (query.parentId !== undefined) {
-				if (row.parent_id === query.parentId) {
+			if (query.parentID !== undefined) {
+				if (row.parent_id === query.parentID) {
 					score += this.#weights.directChildBoost
 				} else {
 					score += this.#weights.descendantBoost
@@ -918,7 +918,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		for (const c of ftsCands) merged.set(c.id as number, c)
 		const missing = [...pcInfo.keys()].filter((id) => !merged.has(id))
 
-		for (const row of this.#fetchLocalitiesById(missing)) merged.set(row.id, row)
+		for (const row of this.#fetchLocalitiesByID(missing)) merged.set(row.id, row)
 
 		const scored: Array<PlaceCandidate & { exact: boolean }> = []
 
@@ -972,7 +972,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	}
 
 	/** Fetch locality spr rows (from main) for the postcode-injected candidate ids the FTS set missed. */
-	#fetchLocalitiesById(ids: number[]): PlaceCandidate[] {
+	#fetchLocalitiesByID(ids: number[]): PlaceCandidate[] {
 		if (ids.length === 0) return []
 		const hasPop = this.#hasPopulationIndex.get("main") === true
 		const popSelect = hasPop ? `pp.population AS population` : `NULL AS population`
@@ -1068,7 +1068,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// passed in a pre-opened DatabaseSync (test fixture), respect their ownership.
 		void this.#kysely.destroy()
 
-		if (this.#ownsDb) {
+		if (this.#ownsDB) {
 			this.#db.close()
 		}
 	}

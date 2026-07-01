@@ -44,9 +44,9 @@ type Geometry = { type?: string; coordinates?: unknown } | null
 
 const geomCache = new Map<number, Geometry>()
 
-function geomForId(wofId: number): Geometry {
-	if (geomCache.has(wofId)) return geomCache.get(wofId)!
-	const s = String(Math.trunc(wofId))
+function geomForID(wofID: number): Geometry {
+	if (geomCache.has(wofID)) return geomCache.get(wofID)!
+	const s = String(Math.trunc(wofID))
 	// WOF path: split the id into 3-char chunks (last chunk is the remainder).
 	const chunks: string[] = []
 	let i = 0
@@ -70,7 +70,7 @@ function geomForId(wofId: number): Geometry {
 			break
 		}
 	}
-	geomCache.set(wofId, geom)
+	geomCache.set(wofID, geom)
 
 	return geom
 }
@@ -208,7 +208,7 @@ function line(label: string, c: Counter): string {
 interface ResolvedRow {
 	state?: string | null
 	nameMatch?: unknown
-	neuralLocId?: number | null
+	neuralLocID?: number | null
 	lon: number
 	lat: number
 	input?: string
@@ -262,8 +262,8 @@ function main(): number {
 			inc(overall, "name")
 			inc(byState[st]!, "name")
 		}
-		const lid = r.neuralLocId
-		const contained = lid ? contains(geomForId(lid), r.lon, r.lat) : null
+		const lid = r.neuralLocID
+		const contained = lid ? contains(geomForID(lid), r.lon, r.lat) : null
 
 		if (contained !== null) {
 			// a polygon existed and was tested (True or False)

@@ -110,7 +110,7 @@ export default function (pi: ExtensionAPI) {
 				})
 			),
 		}),
-		async execute(toolCallId, params, signal, onUpdate) {
+		async execute(toolCallID, params, signal, onUpdate) {
 			const result: CheckReleaseResult = {
 				passed: true,
 				issues: [],
@@ -298,7 +298,7 @@ export default function (pi: ExtensionAPI) {
 				})
 			),
 		}),
-		async execute(_toolCallId, params, signal) {
+		async execute(_toolCallID, params, signal) {
 			const args = ["mailwoman/out/cli.js", "parse"]
 
 			if (params.locale) {

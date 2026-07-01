@@ -45,7 +45,7 @@ const OptionsSchema = zod.object({
 		.optional()
 		.default(dataRootPath("geonames", "allCountries-postal.txt"))
 		.describe("GeoNames postal file (12-col) — the global postcode COVERAGE signal"),
-	wofDb: zod
+	wofDB: zod
 		.string()
 		.optional()
 		.default(dataRootPath("wof", "admin-global-priority-importance.db"))
@@ -94,7 +94,7 @@ const CoverageBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				interpWeight: options.interpWeight,
 				optimisticGamma: options.optimisticGamma,
 				geonamesPostalFile: options.postcode ? options.geonamesPostal : null,
-				wofDb: options.postcode ? options.wofDb : null,
+				wofDB: options.postcode ? options.wofDB : null,
 				postcodeCeiling: options.postcodeCeiling,
 				salienceFloor: options.salienceFloor,
 				postcodeExcludeCountries: options.postcodeExclude.split(",").map((s) => s.trim()).filter(Boolean),

@@ -193,7 +193,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		expect(rows).toHaveLength(3)
 		expect(rows[0]!.source_id).toBe("openaddresses-deadbeefcafef00d")
 		expect(rows[1]!.source_id).toBe("openaddresses-us-fallback-id")
-		// Content-hashed fallback: 12-hex prefix of sha256 from stableSourceId. Stable across runs.
+		// Content-hashed fallback: 12-hex prefix of sha256 from stableSourceID. Stable across runs.
 		expect(rows[2]!.source_id).toMatch(/^openaddresses-[0-9a-f]{12}$/)
 	})
 

@@ -14,13 +14,13 @@
  *   - `conf` — aggregated confidence in [0, 1], two decimal places.
  *   - `start` / `end` — character offsets in the raw input. Preserves source order alongside the
  *       containment-derived element order.
- *   - `src` — provenance for the assertion. Formatted as `<source>:<sourceId>` when both fields are
+ *   - `src` — provenance for the assertion. Formatted as `<source>:<sourceID>` when both fields are
  *       present on the node, `<source>` when only the broad category is set, omitted when neither
  *       is. Phase 4.1 surfaces classifier provenance (`rule:whos_on_first`, `neural:v0.3.1-en-us`);
  *       Phase 4.3 overlays resolver provenance (`resolver:wof-admin:101751119`).
  *   - `lat` / `lon` — resolver-supplied centroid (Phase 4.3). Emitted only when both are set.
  *   - `place` — resolver-supplied normalized place URI like `wof:101751119` (Phase 4.3). Emitted only
- *       when `node.placeId` is set; distinct from `src` so callers that want the bare place id
+ *       when `node.placeID` is set; distinct from `src` so callers that want the bare place id
  *       without the vendor prefix have a direct attribute to read.
  *   - Root `<address>` carries `raw` — the full input string for round-trip.
  *
@@ -67,11 +67,11 @@ function escapeXml(s: string): string {
 }
 
 function srcAttrValue(node: AddressNode): string | null {
-	if (node.source && node.sourceId) return `${node.source}:${node.sourceId}`
+	if (node.source && node.sourceID) return `${node.source}:${node.sourceID}`
 
 	if (node.source) return node.source
 
-	if (node.sourceId) return node.sourceId
+	if (node.sourceID) return node.sourceID
 
 	return null
 }
@@ -101,8 +101,8 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		parts.push(`lat="${node.lat.toFixed(GEO_PRECISION)}"`, `lon="${node.lon.toFixed(GEO_PRECISION)}"`)
 	}
 
-	if (opts.includePlace && node.placeId !== undefined) {
-		parts.push(`place="${escapeXml(node.placeId)}"`)
+	if (opts.includePlace && node.placeID !== undefined) {
+		parts.push(`place="${escapeXml(node.placeID)}"`)
 	}
 
 	// Multi-role node (#413): a city-state span tagged `region` that also plays `locality` lists every

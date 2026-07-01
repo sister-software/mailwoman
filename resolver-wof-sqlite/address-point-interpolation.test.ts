@@ -148,8 +148,8 @@ describe("AddressPointInterpolator", () => {
 	})
 
 	it("falls through to the TIGER segment fallback when bracketing cannot answer", () => {
-		const segDb = new DatabaseSync(":memory:")
-		segDb.exec(`
+		const segDB = new DatabaseSync(":memory:")
+		segDB.exec(`
 			CREATE TABLE street_segment (
 				street_norm  TEXT NOT NULL,
 				side         TEXT NOT NULL,
@@ -166,13 +166,13 @@ describe("AddressPointInterpolator", () => {
 				release      TEXT NOT NULL
 			)
 		`)
-		segDb
+		segDB
 			.prepare(
 				`INSERT INTO street_segment VALUES
 				 ('lone lane', 'L', 1, 99, 1, 99, 'odd', '05601', '50023', 'Lone Ln', '[[0,2],[0.001,2]]', 'tiger:edges', 'TIGER2023')`
 			)
 			.run()
-		const tiger = new StreetInterpolator({ database: segDb })
+		const tiger = new StreetInterpolator({ database: segDB })
 		const ladder = new AddressPointInterpolator({ database: db, fallback: tiger })
 
 		// 'lone lane' has one point — Method 2 cannot bracket; TIGER answers, flagged as such.
@@ -192,6 +192,6 @@ describe("AddressPointInterpolator", () => {
 
 		ladder.close()
 		tiger.close()
-		segDb.close()
+		segDB.close()
 	})
 })

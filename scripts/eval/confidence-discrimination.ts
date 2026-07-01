@@ -121,8 +121,8 @@ export function resolvedResult(
 	let best: RankedNode | null = null as RankedNode | null
 	const confs: number[] = []
 	const visit = (n: AddressNode): void => {
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			const rank = PLACETYPE_RANK[placetype] ?? 5
 			const conf = n.confidence ?? 0
 			confs.push(conf)

@@ -54,7 +54,7 @@ export interface GeocodeResult {
 	region: string | null
 	postcode: string | null
 	/** Admin hierarchy from the resolver, locality → country (most specific first). */
-	hierarchy: Array<{ tag: string; value: string; lat?: number; lon?: number; placeId?: string }>
+	hierarchy: Array<{ tag: string; value: string; lat?: number; lon?: number; placeID?: string }>
 }
 
 /**
@@ -190,7 +190,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 /**
  * Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is absent.
  */
-export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): string | null {
+export function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
 
@@ -198,7 +198,7 @@ export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null
 }
 
 /** Per-state interpolation shard path under `<dataRoot>/interpolation/`, or null if absent. */
-export function selectInterpolationDb(dataRoot: string, stateSlug: string | null): string | null {
+export function selectInterpolationDB(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
 
@@ -478,13 +478,13 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
 	const hierarchy = allNodes
-		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeId))
+		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
 		.sort((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
 		.map((n) => ({
 			tag: n.tag,
 			value: n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
-			...(n.placeId ? { placeId: n.placeId } : {}),
+			...(n.placeID ? { placeID: n.placeID } : {}),
 		}))
 
 	return { input, lat, lon, resolution_tier: tier, uncertainty_m: uncertaintyM, locality, region, postcode, hierarchy }

@@ -143,7 +143,7 @@ class SqliteConnection implements DatabaseConnection {
 
 		return Promise.resolve({
 			numAffectedRows: BigInt(result.changes),
-			insertId: BigInt(result.lastInsertRowid),
+			insertID: BigInt(result.lastInsertRowid),
 			rows: [],
 		})
 	}

@@ -109,19 +109,19 @@ function pyFixed(x: number, d: number): string {
 
 function collisionSet(): Set<string> {
 	const us = new Set<string>()
-	const usDb = new DatabaseSync(US_DB, { readOnly: true })
+	const usDB = new DatabaseSync(US_DB, { readOnly: true })
 
-	for (const r of usDb.prepare("SELECT name FROM spr WHERE placetype='postalcode'").iterate()) {
+	for (const r of usDB.prepare("SELECT name FROM spr WHERE placetype='postalcode'").iterate()) {
 		us.add((r as { name: string }).name)
 	}
-	usDb.close()
+	usDB.close()
 	const fr = new Set<string>()
-	const intlDb = new DatabaseSync(INTL_DB, { readOnly: true })
+	const intlDB = new DatabaseSync(INTL_DB, { readOnly: true })
 
-	for (const r of intlDb.prepare("SELECT name FROM spr WHERE placetype='postalcode' AND country='FR'").iterate()) {
+	for (const r of intlDB.prepare("SELECT name FROM spr WHERE placetype='postalcode' AND country='FR'").iterate()) {
 		fr.add((r as { name: string }).name)
 	}
-	intlDb.close()
+	intlDB.close()
 	const us5 = new Set<string>([...us].filter((p) => fiveDigit(p)))
 	const fr5 = new Set<string>([...fr].filter((p) => fiveDigit(p)))
 

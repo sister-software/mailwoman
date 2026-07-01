@@ -19,8 +19,8 @@
  *
  *   See `containment.ts` for the parent-of mapping that drives nesting.
  *
- *   Phase 4.1 added optional `source` / `sourceId` on `AddressNode` so the XML serializer can emit
- *   provenance via `src="<source>:<sourceId>"`. The neural pipeline stamps these via
+ *   Phase 4.1 added optional `source` / `sourceID` on `AddressNode` so the XML serializer can emit
+ *   provenance via `src="<source>:<sourceID>"`. The neural pipeline stamps these via
  *   `BuildTreeOpts`; the proposal-derived path threads them through from `ClassificationProposal`.
  *   JSON / tuple projections deliberately do not surface provenance — libpostal compat is
  *   essential.
@@ -73,17 +73,17 @@ export interface AddressNode {
 	 * Specific identifier within `source`: a rule classifier id like `"whos_on_first"`, a neural model card version like
 	 * `"neural-v0.3.1-en-us"`, or a resolver-supplied place id like `"wof-admin:101751119"`.
 	 */
-	sourceId?: string
+	sourceID?: string
 	/** Resolver-supplied centroid latitude (Phase 4.3). Optional — only set when a resolver wins. */
 	lat?: number
 	/** Resolver-supplied centroid longitude (Phase 4.3). Optional — only set when a resolver wins. */
 	lon?: number
 	/**
-	 * Resolver-supplied normalized place URI (Phase 4.3) — `"wof:101751119"` for a WOF place. Distinct from `sourceId`
+	 * Resolver-supplied normalized place URI (Phase 4.3) — `"wof:101751119"` for a WOF place. Distinct from `sourceID`
 	 * (which includes the resolver vendor) so consumers that want the canonical place id without the vendor prefix have
 	 * one.
 	 */
-	placeId?: string
+	placeID?: string
 	/**
 	 * Opaque per-node metadata bag. Phase 4.3 uses keys `classifier_source` and `classifier_source_id` to preserve the
 	 * displaced classifier attribution when a resolver wins. Never consulted by the decoder or serializers — debugging +
@@ -92,7 +92,7 @@ export interface AddressNode {
 	metadata?: Record<string, unknown>
 	/**
 	 * Top-k alternative resolutions for this node, ranked by score (highest first). The winning candidate is reflected in
-	 * `placeId` / `lat` / `lon` / `sourceId`. Surfaced for failure mode #8 (Springfield-class ambiguity) — callers
+	 * `placeID` / `lat` / `lon` / `sourceID`. Surfaced for failure mode #8 (Springfield-class ambiguity) — callers
 	 * needing disambiguation see the runners-up. Empty / absent when the resolver returned a single candidate.
 	 *
 	 * Typed as `unknown[]` here to avoid a circular import on `ResolvedPlace`; resolver-emitting code sets the concrete
@@ -103,7 +103,7 @@ export interface AddressNode {
 	 * ADDITIONAL roles this single span plays, beyond `tag` (#413). A place can hold multiple admin tiers under one name
 	 * — a city-state (Berlin is region AND locality) or a capital-seat province (Milano province ~ Milano comune). Rather
 	 * than synthesize a second node with a borrowed span, the resolver records the extra role(s) here, so one node = one
-	 * span = many roles (the model Google's `address_components[].types` uses). `tag`/`placeId`/`lat`/`lon` remain the
+	 * span = many roles (the model Google's `address_components[].types` uses). `tag`/`placeID`/`lat`/`lon` remain the
 	 * PRIMARY role; each interpretation is a distinct secondary role with its own resolved place. Serializers surface
 	 * every role (a city-state emits both `region` and `locality`). Distinct from `alternatives` — those are same-role
 	 * runner-up places (Springfield IL vs MA); interpretations are DIFFERENT tags, same span. Empty / absent for the
@@ -116,8 +116,8 @@ export interface AddressNode {
 export interface Interpretation {
 	tag: ComponentTag
 	/** Resolver-supplied normalized place URI for this role (e.g. `wof:101909779`). */
-	placeId?: string
-	sourceId?: string
+	placeID?: string
+	sourceID?: string
 	/** Centroid for this role's place (a capital-seat comune differs from its province). */
 	lat?: number
 	lon?: number

@@ -99,7 +99,7 @@ function evaluate(scores: number[], alphas: number[], seed: number, calFrac: num
 }
 
 interface ResolvedRow {
-	neuralLocId?: number | null
+	neuralLocID?: number | null
 	lat?: number | null
 	lon?: number | null
 }
@@ -127,7 +127,7 @@ function loadScores(dumpPath: string, dbPath: string): [number[], number, number
 	let nAbstain = 0
 
 	for (const r of rows) {
-		const pid = r.neuralLocId
+		const pid = r.neuralLocID
 
 		if (pid === null || pid === undefined) {
 			nAbstain += 1

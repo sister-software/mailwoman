@@ -7,10 +7,10 @@
  *   resolved {@link SourceRecord} and exposes it as a blocking key — the deterministic,
  *   exact-canonical-address complement to the fuzzy Fellegi-Sunter / GBT scoring. Two uses:
  *
- *   - **As a pre-dedup / join key:** `GROUP BY postalAddressId(record)` collapses records that resolve
+ *   - **As a pre-dedup / join key:** `GROUP BY postalAddressID(record)` collapses records that resolve
  *       to the same place AND share a canonical address with NO scoring at all — the cheap, certain
  *       slice of dedup before the matcher does the fuzzy rest.
- *   - **As a blocking key:** {@link addressIdBlockingKey} adds the address-id to the blocking union, so
+ *   - **As a blocking key:** {@link addressIDBlockingKey} adds the address-id to the blocking union, so
  *       records sharing one are guaranteed to be compared.
  */
 
@@ -24,7 +24,7 @@ import type { SourceRecord } from "./types.js"
  * carries no raw address to hash. Uses the resolved coordinate + the raw address; the state prefix is plucked from the
  * address when present.
  */
-export function postalAddressId(record: SourceRecord): PostalAddressID | null {
+export function postalAddressID(record: SourceRecord): PostalAddressID | null {
 	const coordinate = record.address?.geocode?.coordinate
 	const address = record.address?.raw
 
@@ -34,9 +34,9 @@ export function postalAddressId(record: SourceRecord): PostalAddressID | null {
 }
 
 /**
- * A blocking key on the {@link postalAddressId} — records that resolve to the same place with the same canonical address
+ * A blocking key on the {@link postalAddressID} — records that resolve to the same place with the same canonical address
  * block together. Add it to {@link defaultBlockingKeys}'s union when an exact address join should never be missed.
  */
-export function addressIdBlockingKey(): BlockingKey<SourceRecord> {
-	return exactKey((record) => postalAddressId(record))
+export function addressIDBlockingKey(): BlockingKey<SourceRecord> {
+	return exactKey((record) => postalAddressID(record))
 }

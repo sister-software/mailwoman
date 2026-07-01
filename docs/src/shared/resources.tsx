@@ -12,12 +12,12 @@ export interface FSTProvenanceLike {
 }
 
 export interface FSTMatcherLike {
-	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null
+	walk(tokens: string[]): { stateID: number; accepted: boolean; depth: number } | null
 	walkFrom(
-		prev: { stateId: number; accepted: boolean; depth: number },
+		prev: { stateID: number; accepted: boolean; depth: number },
 		token: string
-	): { stateId: number; accepted: boolean; depth: number } | null
-	accepting(stateId: number): Array<{ wofID: number; placetype: string; importance: number }>
+	): { stateID: number; accepted: boolean; depth: number } | null
+	accepting(stateID: number): Array<{ wofID: number; placetype: string; importance: number }>
 	readonly stateCount: number
 	readonly placeCount: number
 }
@@ -60,7 +60,7 @@ export interface MailwomanLookupLike {
 	 * Dual-role partner roles for a resolved place id (#402). Optional — absent on lookups built from a slim DB that
 	 * predates the `coincident_roles` relation.
 	 */
-	coincidentRolesFor?: (placeId: number) => Promise<DualRole[]>
+	coincidentRolesFor?: (placeID: number) => Promise<DualRole[]>
 }
 
 export interface KindResult {

@@ -42,7 +42,7 @@ for (const c of REGRESSION_CASES) {
 		c.country,
 		c.status,
 		c.expectComponents ? JSON.stringify(c.expectComponents) : null,
-		c.expectPlaceId ?? null,
+		c.expectPlaceID ?? null,
 		c.expectPlaceName ?? null,
 		c.expectLat ?? null,
 		c.expectLon ?? null,

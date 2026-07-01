@@ -67,7 +67,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 ]
 
-function buildFixtureDb(): DatabaseSync {
+function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (
@@ -115,7 +115,7 @@ function buildFixtureDb(): DatabaseSync {
 let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDb(), buildFTS: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true })
 })
 
 afterEach(() => {
@@ -227,7 +227,7 @@ describe("findPlace — backwards compat", () => {
 
 	test("near + bbox without R*Tree (legacy DB) is silently ignored; no crash, no proximity filter", async () => {
 		// Simulate an older DB that has FTS5 but NOT the R*Tree bbox index (built before this PR).
-		const db = buildFixtureDb()
+		const db = buildFixtureDB()
 		db.exec(`
 			CREATE VIRTUAL TABLE place_search USING fts5(
 				wof_id UNINDEXED, name, alt_names,

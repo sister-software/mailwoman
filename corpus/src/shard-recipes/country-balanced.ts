@@ -29,7 +29,7 @@ import { spawnSync } from "node:child_process"
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -439,7 +439,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 				country: rowISO2,
 				locale: localeTag,
 				source,
-				source_id: stableSourceId(source, components),
+				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
 				license: "OpenAddresses multi-locale skeletons + injected ISO-3166 country surface forms (codex)",
 			}

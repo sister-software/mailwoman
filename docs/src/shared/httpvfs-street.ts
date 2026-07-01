@@ -24,8 +24,8 @@ import {
 	normalizeStreetForKey,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-/** The minimal worker handle the lookups need — the same shape `loadHttpvfsDb` returns. */
-export interface HttpvfsDb {
+/** The minimal worker handle the lookups need — the same shape `loadHttpvfsDB` returns. */
+export interface HttpvfsDB {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 }
 
@@ -53,10 +53,10 @@ export interface StreetPointHit {
  * Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality fallback.
  */
 export class HttpvfsAddressPointLookup {
-	#worker: HttpvfsDb
+	#worker: HttpvfsDB
 	#available: Promise<boolean> | undefined
 
-	constructor(worker: HttpvfsDb) {
+	constructor(worker: HttpvfsDB) {
 		this.#worker = worker
 	}
 
@@ -134,10 +134,10 @@ export interface StreetInterpHit {
  * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on cross-ZIP ambiguity.
  */
 export class HttpvfsInterpolator {
-	#worker: HttpvfsDb
+	#worker: HttpvfsDB
 	#available: Promise<boolean> | undefined
 
-	constructor(worker: HttpvfsDb) {
+	constructor(worker: HttpvfsDB) {
 		this.#worker = worker
 	}
 

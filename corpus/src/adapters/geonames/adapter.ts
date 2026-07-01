@@ -33,7 +33,7 @@ import { dirname, join } from "node:path"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
@@ -156,15 +156,15 @@ export function createGeonamesAdapter(): CorpusAdapter {
 						const aligned = reconcileComponents(v.comp, v.raw)
 
 						if (Object.keys(aligned).length === 0) continue
-						const sourceId = geonameid
+						const sourceID = geonameid
 							? `${GEONAMES_ADAPTER_ID}-${geonameid}-${v.slot}`
-							: stableSourceId(GEONAMES_ADAPTER_ID, aligned)
+							: stableSourceID(GEONAMES_ADAPTER_ID, aligned)
 						yield {
 							raw: v.raw,
 							components: aligned,
 							country: cc,
 							source: GEONAMES_ADAPTER_ID,
-							source_id: sourceId,
+							source_id: sourceID,
 							corpus_version: "",
 							license: GEONAMES_DEFAULT_LICENSE,
 						}

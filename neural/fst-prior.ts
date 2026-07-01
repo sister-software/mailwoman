@@ -28,7 +28,7 @@ const SPACE_SENTINEL = "▁"
 // ---------------------------------------------------------------------------
 
 export interface FSTMatchLike {
-	stateId: number
+	stateID: number
 	accepted: boolean
 	depth: number
 }
@@ -42,7 +42,7 @@ export interface FSTPlaceEntryLike {
 export interface FSTMatcherLike {
 	walk(tokens: string[]): FSTMatchLike | null
 	walkFrom(prev: FSTMatchLike, token: string): FSTMatchLike | null
-	accepting(stateId: number): FSTPlaceEntryLike[]
+	accepting(stateID: number): FSTPlaceEntryLike[]
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +119,7 @@ export function buildFSTEmissionPriors(
 			applyBias(
 				matrix,
 				labelToCol,
-				fst.accepting(match.stateId),
+				fst.accepting(match.stateID),
 				[group],
 				biasScale,
 				maxBias,
@@ -144,7 +144,7 @@ export function buildFSTEmissionPriors(
 				applyBias(
 					matrix,
 					labelToCol,
-					fst.accepting(next.stateId),
+					fst.accepting(next.stateID),
 					matchedGroups,
 					biasScale,
 					maxBias,

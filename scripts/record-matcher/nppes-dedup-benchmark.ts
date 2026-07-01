@@ -144,7 +144,7 @@ function orgJaccard(a: Set<string>, b: Set<string>): number {
 const ORG_TAU = 0.7 // gold-set threshold
 
 /**
- * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityId` the site-level entity-level
+ * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityID` the site-level entity-level
  * truth (subpart-collapsed).
  */
 interface MessyRow {
@@ -153,7 +153,7 @@ interface MessyRow {
 	org: string
 	address: string
 	auth: string
-	entityId: string
+	entityID: string
 }
 
 async function main(): Promise<void> {
@@ -224,15 +224,15 @@ async function main(): Promise<void> {
 
 				if (org) npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
 				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice, auth, entityId: eid(practice) })
+				rows.push({ npi, name: primaryName, org, address: practice, auth, entityID: eid(practice) })
 
 				// primary
 				for (const alt of altNames.get(npi)!)
-					rows.push({ npi, name: alt, org: alt, address: practice, auth, entityId: eid(practice) }) // name drift
+					rows.push({ npi, name: alt, org: alt, address: practice, auth, entityID: eid(practice) }) // name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice)
-					rows.push({ npi, name: primaryName, org, address: mailing, auth, entityId: eid(mailing) }) // address variation
+					rows.push({ npi, name: primaryName, org, address: mailing, auth, entityID: eid(mailing) }) // address variation
 			}
 		}
 	}
@@ -259,7 +259,7 @@ async function main(): Promise<void> {
 		address: "address",
 		// `entityTruth` rides as an attribute purely for scoring (NOT a discriminator → never used in
 		// matching); it carries the site-level entity-level label alongside the NPI (record.id).
-		attributes: { authorizedOfficial: "auth", entityTruth: "entityId" },
+		attributes: { authorizedOfficial: "auth", entityTruth: "entityID" },
 		source: "nppes",
 	}
 
@@ -277,7 +277,7 @@ async function main(): Promise<void> {
 
 		for await (const rec of geocodeStream(normalized, {
 			mapping,
-			geocode: { wofDbPath: WOF, dataRoot: DATA_ROOT, locale: "en-US", country: "US" },
+			geocode: { wofDBPath: WOF, dataRoot: DATA_ROOT, locale: "en-US", country: "US" },
 			concurrency: GEO_CONC,
 		})) {
 			geocoded.push(rec)

@@ -104,7 +104,7 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 	while (stack.length) {
 		const n = stack.pop()!
 
-		if (n.placeId) return true
+		if (n.placeID) return true
 
 		if (n.children?.length) stack.push(...n.children)
 	}

@@ -31,7 +31,7 @@
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
@@ -125,7 +125,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 						country: "AU",
 						locale: "en-AU",
 						source: GNAF_ADAPTER_ID,
-						source_id: `${stableSourceId(GNAF_ADAPTER_ID, aligned)}-o${order}`,
+						source_id: `${stableSourceID(GNAF_ADAPTER_ID, aligned)}-o${order}`,
 						corpus_version: "",
 						license: GNAF_DEFAULT_LICENSE,
 					}

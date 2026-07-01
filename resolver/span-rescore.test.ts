@@ -137,7 +137,7 @@ describe("hasResolvedPlace", () => {
 	it("detects a resolved node anywhere in the tree", () => {
 		expect(hasResolvedPlace([node({ tag: "locality", value: "x", start: 0, end: 1 })])).toBe(false)
 		const resolved = node({ tag: "locality", value: "x", start: 0, end: 1 })
-		resolved.placeId = "wof:1"
+		resolved.placeID = "wof:1"
 		expect(hasResolvedPlace([resolved])).toBe(true)
 	})
 })
@@ -152,7 +152,7 @@ describe("resolveTree + spanRescore", () => {
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
 		const out = await resolver.resolveTree(input, { defaultCountry: "PL", spanRescore: true })
-		const injected = out.roots.find((n) => n.placeId === "wof:1")
+		const injected = out.roots.find((n) => n.placeID === "wof:1")
 		expect(injected).toBeDefined()
 		expect(injected?.tag).toBe("locality")
 		expect(injected?.value).toBe("Grudziądz")
@@ -170,7 +170,7 @@ describe("resolveTree + spanRescore", () => {
 		])
 		// No `spanRescore` in opts — the default (ON) must still recover the locality.
 		const out = await resolver.resolveTree(input, { defaultCountry: "PL" })
-		expect(out.roots.find((n) => n.placeId === "wof:1")?.value).toBe("Grudziądz")
+		expect(out.roots.find((n) => n.placeID === "wof:1")?.value).toBe("Grudziądz")
 	})
 
 	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable contract)", async () => {
@@ -180,7 +180,7 @@ describe("resolveTree + spanRescore", () => {
 			defaultCountry: "PL",
 			spanRescore: false,
 		})
-		expect(out.roots.some((n) => n.placeId)).toBe(false)
+		expect(out.roots.some((n) => n.placeID)).toBe(false)
 		expect(out.roots).toHaveLength(1)
 	})
 

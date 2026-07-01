@@ -57,8 +57,8 @@ describe("withGeocode", () => {
 		tier: "address_point",
 		uncertaintyMeters: 1,
 		hierarchy: [
-			{ tag: "locality", value: "Portland", placeId: "101715829" },
-			{ tag: "region", value: "Oregon", placeId: "85688513" },
+			{ tag: "locality", value: "Portland", placeID: "101715829" },
+			{ tag: "region", value: "Oregon", placeID: "85688513" },
 		],
 	}
 

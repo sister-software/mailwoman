@@ -61,7 +61,7 @@ const LOCALES: [string, string][] = [
 	["AU", "data/eval/external/oa-au-coord-150.jsonl"],
 ]
 
-type N9 = { tag?: string; lat?: number; lon?: number; placeId?: string; children?: N9[] }
+type N9 = { tag?: string; lat?: number; lon?: number; placeID?: string; children?: N9[] }
 const RANK: Record<string, number> = { house_number: 5, street: 4, locality: 3, city: 3, region: 2, country: 1 }
 /** Most-specific resolved coordinate in the tree (highest placetype rank with a real lat/lon). */
 function bestCoord(roots: N9[]): { lat: number; lon: number } | null {
@@ -71,7 +71,7 @@ function bestCoord(roots: N9[]): { lat: number; lon: number } | null {
 	while (stack.length) {
 		const n = stack.pop()!
 
-		if (n.placeId && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0)) {
+		if (n.placeID && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0)) {
 			const rank = RANK[n.tag ?? ""] ?? 0
 
 			if (!best || rank > best.rank) best = { lat: n.lat, lon: n.lon, rank }

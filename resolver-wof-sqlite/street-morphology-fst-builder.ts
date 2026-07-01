@@ -149,10 +149,10 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
 		if (tokens.length === 0) return
-		let stateId = 0
+		let stateID = 0
 
 		for (const t of tokens) {
-			const node = nodes[stateId]!
+			const node = nodes[stateID]!
 			let next = node.edges.get(t)
 
 			if (next === undefined) {
@@ -160,9 +160,9 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
-			stateId = next
+			stateID = next
 		}
-		const existing = nodes[stateId]!.places
+		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
 			existing.push(entry)
@@ -214,7 +214,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 		edgeCount,
 		nameInsertions: insertCount,
 		importanceMatches: 0, // No importance scoring for morphology — fixed at 1.0.
-		sourceDb: opts.dictionariesDir,
+		sourceDB: opts.dictionariesDir,
 	}
 
 	return {

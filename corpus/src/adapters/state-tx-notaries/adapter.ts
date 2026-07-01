@@ -19,7 +19,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -86,7 +86,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 					const firstName = (record["First Name"] ?? "").trim()
 					const lastName = (record["Last Name"] ?? "").trim()
-					const notaryId = (record["Notary ID"] ?? "").trim()
+					const notaryID = (record["Notary ID"] ?? "").trim()
 
 					// Parse embedded city/state/zip from the trailing portion of the address.
 					// Addresses look like: "1215 MCMILLAN DR\nCEDAR HILL, TX 75104"
@@ -134,9 +134,9 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 					if (Object.keys(aligned).length <= 2) continue
 
-					const sourceId = notaryId
-						? `${STATE_TX_NOTARIES_ADAPTER_ID}-${notaryId}`
-						: stableSourceId(STATE_TX_NOTARIES_ADAPTER_ID, aligned)
+					const sourceID = notaryID
+						? `${STATE_TX_NOTARIES_ADAPTER_ID}-${notaryID}`
+						: stableSourceID(STATE_TX_NOTARIES_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -144,7 +144,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 						country: "US",
 						locale: "en-US",
 						source: STATE_TX_NOTARIES_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 					}

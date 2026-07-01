@@ -182,19 +182,19 @@ function extractCountry(dbPath: string, country: string, limit: number, rng: See
 
 	// For DE/GB the immediate parent may be a county; we want the region name. Walk up if needed
 	// using a quick lookup.
-	const sprById = conn.prepare("SELECT name, placetype, parent_id FROM spr WHERE id = ?")
+	const sprByID = conn.prepare("SELECT name, placetype, parent_id FROM spr WHERE id = ?")
 	const regionCache = new Map<number, string>()
 
-	const resolveRegion = (startId: number | null): string | null => {
+	const resolveRegion = (startID: number | null): string | null => {
 		const seen = new Set<number>()
-		let curId = startId
+		let curID = startID
 
-		while (curId != null && curId > 0 && !seen.has(curId)) {
-			seen.add(curId)
-			const cached = regionCache.get(curId)
+		while (curID != null && curID > 0 && !seen.has(curID)) {
+			seen.add(curID)
+			const cached = regionCache.get(curID)
 
 			if (cached !== undefined) return cached
-			const row = sprById.get(curId) as
+			const row = sprByID.get(curID) as
 				| { name: string | null; placetype: string | null; parent_id: number | null }
 				| undefined
 
@@ -202,11 +202,11 @@ function extractCountry(dbPath: string, country: string, limit: number, rng: See
 			const { name, placetype, parent_id } = row
 
 			if (placetype === "region") {
-				regionCache.set(curId, name as string)
+				regionCache.set(curID, name as string)
 
 				return name
 			}
-			curId = parent_id
+			curID = parent_id
 		}
 
 		return null

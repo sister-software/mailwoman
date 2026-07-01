@@ -18,7 +18,7 @@
 import { spawn } from "node:child_process"
 import { createInterface } from "node:readline"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import { type LocaleBaseTuple, synthesizeLocaleRow } from "../synthesize-german.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -274,7 +274,7 @@ export const localeRecipe: ShardRecipe = {
 				emitted++
 				continue
 			}
-			const sourceId = stableSourceId(source, {
+			const sourceID = stableSourceID(source, {
 				street: synth.components.street,
 				house_number: synth.components.house_number,
 				locality: synth.components.locality,
@@ -286,7 +286,7 @@ export const localeRecipe: ShardRecipe = {
 				country,
 				locale: synth.locale,
 				source,
-				source_id: sourceId,
+				source_id: sourceID,
 				corpus_version: "0.4.0",
 				license: `OpenAddresses ${country} tuples, rendered ${order}-order — see ingest SOURCES`,
 			}

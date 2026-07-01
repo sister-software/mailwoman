@@ -239,7 +239,7 @@ function appendShape(row: ParquetRow): Record<string, unknown> {
  * only one shard writer is open at a time — memory cost is bounded by the parquetjs row-group buffer (~`ROW_GROUP_SIZE
  * × row_size`), not by the labeled-row count.
  *
- * Callers pass per-split `AsyncIterable<LabeledRow>` (`PerSplitRows`); the prior `splitFor(sourceId)` callback is gone
+ * Callers pass per-split `AsyncIterable<LabeledRow>` (`PerSplitRows`); the prior `splitFor(sourceID)` callback is gone
  * because pre-partitioning at the caller eliminates the O(n) `Map<source_id, SplitName>` it required. See `buildCorpus`
  * for the new wire-up.
  */
@@ -261,8 +261,8 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 		let writer: ParquetWriter<ParquetRow> | null = null
 		let path = ""
 		let shardRows = 0
-		let firstSourceId = ""
-		let lastSourceId = ""
+		let firstSourceID = ""
+		let lastSourceID = ""
 
 		const openShard = async (): Promise<void> => {
 			const splitDir = join(corpusDir, split)
@@ -275,8 +275,8 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			writer.setMetadata("mailwoman.split", split)
 			writer.setMetadata("mailwoman.shard_index", String(shardIndex))
 			shardRows = 0
-			firstSourceId = ""
-			lastSourceId = ""
+			firstSourceID = ""
+			lastSourceID = ""
 		}
 
 		const closeShard = async (): Promise<void> => {
@@ -294,8 +294,8 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 					rows: shardRows,
 					bytes: fileStat.size,
 					sha256,
-					first_source_id: firstSourceId,
-					last_source_id: lastSourceId,
+					first_source_id: firstSourceID,
+					last_source_id: lastSourceID,
 				})
 			}
 			writer = null
@@ -306,8 +306,8 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			const pq = rowToParquet(row)
 			await writer!.appendRow(appendShape(pq) as unknown as ParquetRow)
 
-			if (shardRows === 0) firstSourceId = row.source_id
-			lastSourceId = row.source_id
+			if (shardRows === 0) firstSourceID = row.source_id
+			lastSourceID = row.source_id
 			shardRows++
 			counts[split]++
 			totalRows++

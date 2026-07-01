@@ -258,7 +258,7 @@ function esc(v) {
 
 function popupHTML(p) {
 	var rows = [];
-	var heading = p.name || p.organization || p.entityId || "entity";
+	var heading = p.name || p.organization || p.entityID || "entity";
 	rows.push('<div class="nm">' + esc(heading) + '</div>');
 	if (p.organization && p.organization !== p.name) rows.push('<div>' + esc(p.organization) + '</div>');
 	if (p.address) rows.push('<div class="muted">' + esc(p.address) + '</div>');

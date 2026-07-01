@@ -99,7 +99,7 @@ export interface GeojsonTable {
 
 /**
  * Adjacency table for ancestor relationships. One row per (place, ancestor) pair, including transitive ancestors. Used
- * to implement `FindPlaceQuery.parentId` (descendant lookup).
+ * to implement `FindPlaceQuery.parentID` (descendant lookup).
  */
 export interface AncestorsTable {
 	id: number

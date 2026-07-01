@@ -35,7 +35,7 @@ import { parallelMap } from "spliterator"
 
 export interface GeocodeStreamConfig {
 	/** Path to the WOF admin SQLite DB. Opened read-only per worker (shared OS page cache). */
-	wofDbPath: string
+	wofDBPath: string
 	/** Mailwoman data root (geometry shards live under here). */
 	dataRoot: string
 	/** Classifier weights locale, e.g. `"en-US"`. */

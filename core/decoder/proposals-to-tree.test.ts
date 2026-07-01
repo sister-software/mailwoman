@@ -14,7 +14,7 @@ import { proposalsToTree, treeToProposals } from "./proposals-to-tree.js"
 import type { AddressTree } from "./types.js"
 
 describe("treeToProposals", () => {
-	it("walks nodes depth-first (incl. children) into proposals with the given source/sourceId", () => {
+	it("walks nodes depth-first (incl. children) into proposals with the given source/sourceID", () => {
 		const tree: AddressTree = {
 			raw: "x",
 			roots: [
@@ -28,7 +28,7 @@ describe("treeToProposals", () => {
 				},
 			],
 		}
-		const props = treeToProposals(tree, "neural", { sourceId: "n1" })
+		const props = treeToProposals(tree, "neural", { sourceID: "n1" })
 		expect(props.map((p) => p.component)).toEqual(["street", "house_number"])
 		expect(props.every((p) => p.source === "neural" && p.source_id === "n1")).toBe(true)
 		expect(props[1]).toMatchObject({ confidence: 0.8 })

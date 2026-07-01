@@ -50,7 +50,7 @@ import zod from "zod"
 
 import { geocodeAddress, ShardProvider, type ShardResolver } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath } from "../resolver-backend.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -240,7 +240,7 @@ async function buildGeocoder(
 	const lookup = createResolverBackend(mod, { wofPaths: wofPath })
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	const shards: ShardResolver = shardProvider.for
-	const defaultCountry = resolverDefaultCountry(options, !!resolveCandidateDbPath()) || undefined
+	const defaultCountry = resolverDefaultCountry(options, !!resolveCandidateDBPath()) || undefined
 	const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 
 	const seam = geocodeAddressVia({

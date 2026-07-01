@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url"
 
 import { afterEach, expect, test } from "vitest"
 
-import { mailwomanDataRoot, resolveCandidateDbPath, wofShardPaths } from "./resolver-backend.js"
+import { mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.js"
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
 const THIS_FILE = fileURLToPath(import.meta.url)
@@ -37,14 +37,14 @@ test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT, else the lab default; threa
 	expect(mailwomanDataRoot()).toBe("/mnt/playpen/mailwoman-data")
 })
 
-test("resolveCandidateDbPath: returns an explicit/env path only when it exists on disk", () => {
+test("resolveCandidateDBPath: returns an explicit/env path only when it exists on disk", () => {
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
-	expect(resolveCandidateDbPath()).toBeUndefined() // unset
-	expect(resolveCandidateDbPath("/no/such/candidate.db")).toBeUndefined() // explicit but missing
-	expect(resolveCandidateDbPath(THIS_FILE)).toBe(THIS_FILE) // explicit + exists
+	expect(resolveCandidateDBPath()).toBeUndefined() // unset
+	expect(resolveCandidateDBPath("/no/such/candidate.db")).toBeUndefined() // explicit but missing
+	expect(resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE) // explicit + exists
 
 	setEnv("MAILWOMAN_CANDIDATE_DB", THIS_FILE)
-	expect(resolveCandidateDbPath()).toBe(THIS_FILE) // from env + exists
+	expect(resolveCandidateDBPath()).toBe(THIS_FILE) // from env + exists
 	setEnv("MAILWOMAN_CANDIDATE_DB", "/no/such/candidate.db")
-	expect(resolveCandidateDbPath()).toBeUndefined() // env path missing
+	expect(resolveCandidateDBPath()).toBeUndefined() // env path missing
 })

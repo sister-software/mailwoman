@@ -21,7 +21,7 @@
  */
 
 import { decomposeFrStreet } from "../adapters/ban/street-decompose.js"
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceId } from "./scaffold.js"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.js"
 
 export const frBareStreetRecipe: ShardRecipe = {
 	name: "fr-bare-street",
@@ -60,7 +60,7 @@ export const frBareStreetRecipe: ShardRecipe = {
 			}
 			// BARE comma form, number-before (FR's dominant order), NO postcode — the whole point.
 			const raw = `${number} ${prefix} ${street}, ${locality}`
-			const source_id = shardSourceId("synth-fr-bare-street", { ...components, v: String(read) })
+			const source_id = shardSourceID("synth-fr-bare-street", { ...components, v: String(read) })
 			const canonical = {
 				raw,
 				components,

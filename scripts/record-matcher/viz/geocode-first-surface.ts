@@ -268,7 +268,7 @@ Plotly.newPlot("contour", [
 }, {displayModeBar:false, responsive:false});
 
 const fmt = (p)=> (p*100).toFixed(p>=0.5?0:1)+"%";
-document.getElementById("cap").innerHTML =
+document.getElementByID("cap").innerHTML =
   "Real per-level Bayes factors (NAME_LEVELS, DEFAULT_DISTANCE_LEVELS); illustrative prior λ="+D.lambda+
   " (production λ=1e-4 + phone/spatial-key corroboration, omitted here to isolate the two-axis boundary). "+
   "Trap ① string-first="+fmt(D.traps[0].stringP)+" (MATCH ✗) · geocode-first="+fmt(D.traps[0].geoP)+" (reject ✓). "+

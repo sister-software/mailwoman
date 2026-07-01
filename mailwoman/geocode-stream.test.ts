@@ -24,7 +24,7 @@ describe("geocodeStream (wiring, fake worker)", () => {
 
 		for await (const r of geocodeStream(records(50), {
 			mapping: { address: ["addr", "city"] },
-			geocode: { wofDbPath: "/x.db", dataRoot: "/data", locale: "en-US", country: "US" },
+			geocode: { wofDBPath: "/x.db", dataRoot: "/data", locale: "en-US", country: "US" },
 			concurrency: 3,
 			batchSize: 8,
 			worker: fakeWorker,

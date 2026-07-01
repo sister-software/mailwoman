@@ -250,7 +250,7 @@ describe("deserializeFSTWeb", () => {
 
 	test("decodes the place entry's scalar fields exactly", () => {
 		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
-		const place = matcher.accepting(matcher.walk(["paris"])!.stateId)[0]!
+		const place = matcher.accepting(matcher.walk(["paris"])!.stateID)[0]!
 
 		expect(place.wofID).toBe(101748479)
 		expect(place.placetype).toBe("locality")

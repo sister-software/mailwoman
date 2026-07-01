@@ -201,7 +201,7 @@ describe("interpretations (multi-role nodes, #413)", () => {
 		const tree = buildAddressTree("Berlin 10115", [tok("Berlin", 0, 6, "B-region"), tok("10115", 7, 12, "B-postcode")])
 		const region = tree.roots.find((r) => r.tag === "region")!
 		;(region as { interpretations?: unknown }).interpretations = [
-			{ tag: "locality", placeId: "wof:101909779", lat: 52.52, lon: 13.4 },
+			{ tag: "locality", placeID: "wof:101909779", lat: 52.52, lon: 13.4 },
 		]
 
 		return tree

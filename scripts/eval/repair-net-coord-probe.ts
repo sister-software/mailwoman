@@ -44,9 +44,9 @@ type RankedCoord = { lat: number; lon: number; r: number }
 function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
 	let best: RankedCoord | null = null as RankedCoord | null
 	const visit = (n: AddressNode): void => {
-		const pt = String(n.sourceId ?? "").split(":")[0] ?? ""
+		const pt = String(n.sourceID ?? "").split(":")[0] ?? ""
 
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined && (n.lat !== 0 || n.lon !== 0)) {
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined && (n.lat !== 0 || n.lon !== 0)) {
 			const r = RANK[pt] ?? 5
 
 			if (!best || r > best.r) best = { lat: n.lat, lon: n.lon, r }

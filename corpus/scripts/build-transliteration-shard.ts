@@ -187,15 +187,15 @@ async function writeOneShard(
 	writer.setMetadata("mailwoman.split", "train")
 	writer.setMetadata("mailwoman.shard_source", source)
 
-	let firstSourceId = ""
-	let lastSourceId = ""
+	let firstSourceID = ""
+	let lastSourceID = ""
 
 	for (const row of rows) {
 		const pq = rowToParquet(row)
 		await writer.appendRow(appendShape(pq) as unknown as ParquetRow)
 
-		if (firstSourceId === "") firstSourceId = row.source_id
-		lastSourceId = row.source_id
+		if (firstSourceID === "") firstSourceID = row.source_id
+		lastSourceID = row.source_id
 	}
 	await writer.close()
 
@@ -210,8 +210,8 @@ async function writeOneShard(
 		rows: rows.length,
 		bytes: fileStat.size,
 		sha256,
-		first_source_id: firstSourceId,
-		last_source_id: lastSourceId,
+		first_source_id: firstSourceID,
+		last_source_id: lastSourceID,
 		// Stamp source so audit.ts attributes the shard without falling back to filename-prefix
 		// inference. Cast widens ShardDescriptor; the field is read by audit.ts.
 		...({ source } as Record<string, string>),

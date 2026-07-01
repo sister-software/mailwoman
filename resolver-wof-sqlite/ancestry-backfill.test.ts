@@ -52,9 +52,9 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
 	// A multi-parent locality (parent_id=-4 in real WOF) — only-self ancestry, must be repaired.
-	const orphanId = 85977539
-	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(orphanId)
-	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(orphanId, orphanId) // self only
+	const orphanID = 85977539
+	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(orphanID)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(orphanID, orphanID) // self only
 	// A country (top-level) with only-self ancestry — must be skipped, not queried for geojson.
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'country')").run(85633793)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(85633793, 85633793)
@@ -63,13 +63,13 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	const dataRoot = join(root, "whosonfirst-data", "whosonfirst-data-admin-us", "data")
 	mkdirSync(join(dataRoot, "859", "775", "39"), { recursive: true })
 	writeFileSync(
-		join(dataRoot, "859", "775", "39", `${orphanId}.geojson`),
+		join(dataRoot, "859", "775", "39", `${orphanID}.geojson`),
 		JSON.stringify({
 			properties: {
 				"wof:parent_id": -4,
 				"wof:hierarchy": [
-					{ locality_id: orphanId, region_id: 85688543, country_id: 85633793 },
-					{ locality_id: orphanId, region_id: 85688543, county_id: 102081863 },
+					{ locality_id: orphanID, region_id: 85688543, country_id: 85633793 },
+					{ locality_id: orphanID, region_id: 85688543, county_id: 102081863 },
 				],
 			},
 		})
@@ -82,7 +82,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 
 	const ancestorIds = db
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ? AND ancestor_id != ? ORDER BY ancestor_id")
-		.all(orphanId, orphanId)
+		.all(orphanID, orphanID)
 		.map((r) => (r as { ancestor_id: number }).ancestor_id)
 	expect(ancestorIds).toEqual([85633793, 85688543, 102081863].sort((a, b) => a - b))
 

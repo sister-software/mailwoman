@@ -34,7 +34,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 import { decomposeFrStreet } from "./street-decompose.js"
@@ -149,9 +149,9 @@ export function createBanAdapter(): CorpusAdapter {
 
 					if (Object.keys(aligned).length === 0) continue
 
-					const sourceId = record.id?.trim()
+					const sourceID = record.id?.trim()
 						? `${BAN_ADAPTER_ID}-${record.id.trim()}`
-						: stableSourceId(BAN_ADAPTER_ID, aligned)
+						: stableSourceID(BAN_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -159,7 +159,7 @@ export function createBanAdapter(): CorpusAdapter {
 						country: "FR",
 						locale: "fr-FR",
 						source: BAN_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: "Licence Ouverte 2.0",
 					}

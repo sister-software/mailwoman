@@ -47,7 +47,7 @@ for (const query of queries) {
 	const q = matcher.query(query)
 
 	console.log(`"${query}" → path: [${q.path.map((t) => `"${t}"`).join(", ")}]`)
-	console.log(`  State: ${q.stateId}, Accepting: ${q.accepting.length} interpretations`)
+	console.log(`  State: ${q.stateID}, Accepting: ${q.accepting.length} interpretations`)
 
 	if (q.accepting.length > 0) {
 		const sorted = [...q.accepting].sort((a, b) => b.importance - a.importance)

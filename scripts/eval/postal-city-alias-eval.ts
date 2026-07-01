@@ -48,8 +48,8 @@ const pct = (xs: number[], p: number): number => {
 }
 
 async function main(): Promise<void> {
-	const aliasDbPath = arg("alias-db", dataRootPath("wof", "postal-city-alias-us.db"))
-	const postcodeDbPath = arg("postcode-db", dataRootPath("wof", "postalcode-us.db"))
+	const aliasDBPath = arg("alias-db", dataRootPath("wof", "postal-city-alias-us.db"))
+	const postcodeDBPath = arg("postcode-db", dataRootPath("wof", "postalcode-us.db"))
 	const wof = arg(
 		"wof",
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-us.db")}`
@@ -59,29 +59,29 @@ async function main(): Promise<void> {
 	const nearKm = Number(arg("near-km", "50")) // "resolved near the postcode" threshold
 
 	// Truth: postcode → centroid (independent of the alias table).
-	const pcDb = new DatabaseSync(postcodeDbPath, { readOnly: true })
+	const pcDB = new DatabaseSync(postcodeDBPath, { readOnly: true })
 	const centroid = new Map<string, { lat: number; lon: number }>()
 
-	for (const r of pcDb
+	for (const r of pcDB
 		.prepare("SELECT name, latitude AS lat, longitude AS lon FROM spr WHERE latitude IS NOT NULL")
 		.all() as unknown as Array<{ name: string; lat: number; lon: number }>) {
 		centroid.set(String(r.name), { lat: Number(r.lat), lon: Number(r.lon) })
 	}
-	pcDb.close()
+	pcDB.close()
 
 	// The divergent alias edges to test.
-	const aliasDb = new DatabaseSync(aliasDbPath, { readOnly: true })
-	let rows = aliasDb
+	const aliasDB = new DatabaseSync(aliasDBPath, { readOnly: true })
+	let rows = aliasDB
 		.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1 ORDER BY n DESC")
 		.all() as unknown as Array<{ postcode: string; postal_city: string }>
-	aliasDb.close()
+	aliasDB.close()
 
 	if (limit > 0) rows = rows.slice(0, limit)
 
 	const off = new WOFSqlitePlaceLookup({ databasePath: wof })
 	const on = new WOFSqlitePlaceLookup({
 		databasePath: wof,
-		postalCityAliases: new WOFPostalCityAliasLookup({ databasePath: aliasDbPath }),
+		postalCityAliases: new WOFPostalCityAliasLookup({ databasePath: aliasDBPath }),
 	})
 
 	const distOff: number[] = []

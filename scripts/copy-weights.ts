@@ -22,7 +22,7 @@
  *   load path serves the model anchor-OFF — the #566/#685 OOD crater):
  *
  *   - `postcode-<cc>.bin` — the compact PCB1 postcode-anchor binary, built from the WOF postcode shard
- *       (`softFeed.postcodeDbByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
+ *       (`softFeed.postcodeDBByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
  *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon
  *       (`softFeed.gazetteerLexicon`).
  *
@@ -118,13 +118,13 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	}
 
 	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode shard. The locale's
-	// region subtag (`en-us` → `us`) names both the binary and the postcodeDbByCountry source entry.
+	// region subtag (`en-us` → `us`) names both the binary and the postcodeDBByCountry source entry.
 	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
-	const dbRel = SOFT_FEED.postcodeDbByCountry?.[country]
+	const dbRel = SOFT_FEED.postcodeDBByCountry?.[country]
 
 	if (!dbRel) {
 		process.stderr.write(
-			`soft-feed: no postcodeDbByCountry entry for "${country}" — skipping ${workspace}/postcode-${country}.bin\n`
+			`soft-feed: no postcodeDBByCountry entry for "${country}" — skipping ${workspace}/postcode-${country}.bin\n`
 		)
 
 		return
@@ -133,7 +133,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 
 	if (!existsSync(db)) {
 		throw new Error(
-			`Missing postcode shard for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDbByCountry.`
+			`Missing postcode shard for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDBByCountry.`
 		)
 	}
 	const binDest = resolve(dir, `postcode-${country}.bin`)

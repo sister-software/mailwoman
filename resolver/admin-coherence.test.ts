@@ -61,7 +61,7 @@ const PORTLAND_ME: ResolvedPlace = {
 	exactMatch: true,
 }
 
-/** Backend filtered by name-substring + placetype + country + `parentId` (descendant scope via parent_id). */
+/** Backend filtered by name-substring + placetype + country + `parentID` (descendant scope via parent_id). */
 function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 	return {
 		async findPlace(query) {
@@ -72,7 +72,7 @@ function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 				.filter((p) => p.name.toLowerCase() === text || (p.placetype === "region" && text.length === 2)) // 2-letter abbrev matches its region candidates
 				.filter((p) => !types || types.includes(p.placetype))
 				.filter((p) => !query.country || p.country === query.country)
-				.filter((p) => query.parentId === undefined || p.parent_id === query.parentId)
+				.filter((p) => query.parentID === undefined || p.parent_id === query.parentID)
 				.slice(0, query.limit ?? 5)
 		},
 	}

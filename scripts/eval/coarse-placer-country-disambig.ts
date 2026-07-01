@@ -87,9 +87,9 @@ const PLACETYPE_RANK: Record<string, number> = {
 function resolvedWOFNodes(tree: AddressTree): Array<{ id: number; rank: number; placetype: string }> {
 	const out: Array<{ id: number; rank: number; placetype: string }> = []
 	const visit = (n: AddressNode): void => {
-		if (n.placeId?.startsWith("wof:")) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
-			out.push({ id: Number(n.placeId.slice(4)), rank: PLACETYPE_RANK[placetype] ?? -1, placetype })
+		if (n.placeID?.startsWith("wof:")) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
+			out.push({ id: Number(n.placeID.slice(4)), rank: PLACETYPE_RANK[placetype] ?? -1, placetype })
 		}
 
 		for (const c of n.children) visit(c)

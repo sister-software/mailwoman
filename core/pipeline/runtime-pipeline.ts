@@ -185,7 +185,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
 						confidence: hit.confidence,
 						children: [],
 						source: "query-shape",
-						sourceId: hit.format,
+						sourceID: hit.format,
 					},
 				],
 			}
@@ -204,7 +204,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
 					confidence: kind.confidence,
 					children: [],
 					source: "query-shape",
-					sourceId: "kind:locality_only",
+					sourceID: "kind:locality_only",
 				},
 			],
 		}
@@ -639,7 +639,7 @@ export function grouperAudit(
 			confidence: proposal.confidence * GROUPER_TYPING_PENALTY,
 			children: [],
 			source: "grouper-audit",
-			sourceId: `grouper:${proposal.kindHypothesis}`,
+			sourceID: `grouper:${proposal.kindHypothesis}`,
 		}
 
 		roots.push(provisionalNode)

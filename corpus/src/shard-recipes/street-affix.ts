@@ -40,7 +40,7 @@ import {
 } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -447,7 +447,7 @@ export const streetAffixRecipe: ShardRecipe = {
 				country: "US",
 				locale: "en-US",
 				source,
-				source_id: stableSourceId(source, components),
+				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
 				license: "OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
 			}
@@ -505,7 +505,7 @@ export const streetAffixRecipe: ShardRecipe = {
 					country: t.iso2,
 					locale,
 					source,
-					source_id: stableSourceId(source, components),
+					source_id: stableSourceID(source, components),
 					corpus_version: "0.4.0",
 					license: "OpenAddresses non-US skeletons (native-order postcode balance for the affix shard)",
 				}

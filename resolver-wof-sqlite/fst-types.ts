@@ -10,7 +10,7 @@
 
 export interface PlaceEntry {
 	wofID: number
-	placetype: PlacetypeId
+	placetype: PlacetypeID
 	name: string
 	parentChain: number[]
 	importance: number
@@ -18,7 +18,7 @@ export interface PlaceEntry {
 	lon: number
 }
 
-export type PlacetypeId =
+export type PlacetypeID =
 	| "country"
 	| "region"
 	| "county"
@@ -32,7 +32,7 @@ export type PlacetypeId =
 	| "street_affix"
 
 export interface FSTMatchResult {
-	stateId: number
+	stateID: number
 	accepted: boolean
 	depth: number
 }
@@ -45,7 +45,7 @@ export interface FSTContinuation {
 
 export interface FSTQueryResult {
 	path: string[]
-	stateId: number
+	stateID: number
 	accepting: PlaceEntry[]
 	continuations: FSTContinuation[]
 }
@@ -58,14 +58,14 @@ export interface FSTProvenance {
 	edgeCount: number
 	nameInsertions: number
 	importanceMatches: number
-	sourceDb?: string
+	sourceDB?: string
 	modelCardVersion?: string
 }
 
 export interface BuildFSTOpts {
 	dbPath: string
 	countries?: string[]
-	placetypes?: PlacetypeId[]
+	placetypes?: PlacetypeID[]
 	languages?: string[]
 	onProgress?: (phase: string, detail?: string) => void
 }

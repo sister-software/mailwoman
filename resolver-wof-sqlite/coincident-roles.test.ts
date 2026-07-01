@@ -146,8 +146,8 @@ beforeEach(() => {
 
 afterEach(() => db.close())
 
-function rolesFor(adminId: number): CoincidentRole[] {
-	return loadCoincidentRoles(db).get(adminId) ?? []
+function rolesFor(adminID: number): CoincidentRole[] {
+	return loadCoincidentRoles(db).get(adminID) ?? []
 }
 
 describe("buildCoincidentRoles", () => {
@@ -157,11 +157,11 @@ describe("buildCoincidentRoles", () => {
 
 		const berlin = rolesFor(10)
 		expect(berlin).toHaveLength(1)
-		expect(berlin[0]).toMatchObject({ localityId: 11, relationshipType: "city-state", population: 3_600_000 })
+		expect(berlin[0]).toMatchObject({ localityID: 11, relationshipType: "city-state", population: 3_600_000 })
 
 		const milano = rolesFor(20)
 		expect(milano).toHaveLength(1)
-		expect(milano[0]).toMatchObject({ localityId: 21, relationshipType: "capital-seat" })
+		expect(milano[0]).toMatchObject({ localityID: 21, relationshipType: "capital-seat" })
 
 		expect(result.byCountry).toMatchObject({ DE: expect.any(Number), IT: expect.any(Number) })
 	})
@@ -185,7 +185,7 @@ describe("buildCoincidentRoles", () => {
 		buildCoincidentRoles(db)
 		const padova = rolesFor(60)
 		expect(padova).toHaveLength(2)
-		expect(padova.map((r) => r.localityId).sort()).toEqual([61, 62])
+		expect(padova.map((r) => r.localityID).sort()).toEqual([61, 62])
 	})
 
 	test("is idempotent — a rebuild yields the same row count", () => {

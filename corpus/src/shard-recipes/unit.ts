@@ -26,7 +26,7 @@ import { spawnSync } from "node:child_process"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type UsUnitDesignator } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -287,7 +287,7 @@ export const unitRecipe: ShardRecipe = {
 				country: "US",
 				locale: "en-US",
 				source,
-				source_id: stableSourceId(source, components),
+				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
 				license: "OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
 			}

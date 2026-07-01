@@ -181,12 +181,12 @@ export interface PhraseGrouper {
  * @mailwoman/core/resolver-wof-sqlite's FSTMatcher.
  */
 export interface FSTMatcherLike {
-	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null
+	walk(tokens: string[]): { stateID: number; accepted: boolean; depth: number } | null
 	walkFrom(
-		prev: { stateId: number; depth: number },
+		prev: { stateID: number; depth: number },
 		token: string
-	): { stateId: number; accepted: boolean; depth: number } | null
-	accepting(stateId: number): Array<{ wofID: number; placetype: string; importance: number }>
+	): { stateID: number; accepted: boolean; depth: number } | null
+	accepting(stateID: number): Array<{ wofID: number; placetype: string; importance: number }>
 }
 
 export interface ClassifierOpts {

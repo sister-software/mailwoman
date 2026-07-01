@@ -50,7 +50,7 @@ describe("serializableResolveOpts", () => {
 
 describe("RemoteResolver", () => {
 	test("POSTs { tree, opts(stripped) } and returns the response tree", async () => {
-		const resolved: AddressTree = { raw: tree.raw, roots: [{ ...tree.roots[0]!, placeId: "wof:1" } as never] }
+		const resolved: AddressTree = { raw: tree.raw, roots: [{ ...tree.roots[0]!, placeID: "wof:1" } as never] }
 		const fetchSpy = stubFetch({ tree: resolved })
 		const r = new RemoteResolver({ endpoint: "http://resolver/api/resolve-tree", fetch: fetchSpy })
 

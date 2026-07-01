@@ -49,10 +49,10 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			out.push({
-				id: Number(n.placeId.slice(4)),
+				id: Number(n.placeID.slice(4)),
 				name: String(meta?.["resolver_name"] ?? n.value ?? ""),
 				placetype,
 				lat: n.lat,
@@ -94,7 +94,7 @@ const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 async function main() {
 	const goldenPath = arg("golden", "/tmp/reg/fr-admin-split-golden.jsonl")
 	const label = arg("label", "model")
-	const wofDb = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
+	const wofDB = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
 	const rows = readFileSync(goldenPath, "utf8")
 		.trim()
 		.split("\n")
@@ -115,7 +115,7 @@ async function main() {
 		strict: true,
 		tier: "server",
 	})
-	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: wofDb }) as never)
+	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: wofDB }) as never)
 	const resolveOpts = { defaultCountry: arg("default-country", "FR") }
 
 	const errs: number[] = []

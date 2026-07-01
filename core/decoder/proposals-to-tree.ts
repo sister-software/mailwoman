@@ -27,7 +27,7 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
 		confidence: p.confidence,
 		children: [],
 		source: p.source,
-		sourceId: p.source_id,
+		sourceID: p.source_id,
 	}))
 	roots.sort((a, b) => a.start - b.start)
 
@@ -46,16 +46,16 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
  *
  * @param tree The parsed tree (e.g. the neural argmax tree).
  * @param source Provenance stamped on every emitted proposal (`"neural"` here).
- * @param opts.sourceId Optional stable id surfaced as `source_id`.
+ * @param opts.sourceID Optional stable id surfaced as `source_id`.
  * @param opts.emits Optional tag allow-list; when set, only nodes with these tags are emitted.
  */
 export function treeToProposals(
 	tree: AddressTree,
 	source: ClassificationProposalSource,
-	opts: { sourceId?: string; emits?: ReadonlySet<ComponentTag> } = {}
+	opts: { sourceID?: string; emits?: ReadonlySet<ComponentTag> } = {}
 ): ClassificationProposal[] {
 	const proposals: ClassificationProposal[] = []
-	const { sourceId, emits } = opts
+	const { sourceID, emits } = opts
 
 	const visit = (node: AddressNode): void => {
 		if (!emits || emits.has(node.tag)) {
@@ -65,7 +65,7 @@ export function treeToProposals(
 				component: node.tag,
 				confidence: node.confidence,
 				source,
-				source_id: sourceId ?? node.sourceId ?? source,
+				source_id: sourceID ?? node.sourceID ?? source,
 				penalty: 0,
 			})
 		}

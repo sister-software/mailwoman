@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { InMemoryAdapterRegistry, canonicalDedupKey, stableSourceId, streamingSha256 } from "./adapter.js"
+import { InMemoryAdapterRegistry, canonicalDedupKey, stableSourceID, streamingSha256 } from "./adapter.js"
 import type { CanonicalRow, CorpusAdapter } from "./types.js"
 
 function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
@@ -59,30 +59,30 @@ describe("InMemoryAdapterRegistry", () => {
 	})
 })
 
-describe("stableSourceId", () => {
+describe("stableSourceID", () => {
 	it("is deterministic across calls", () => {
-		const id1 = stableSourceId("wof-admin", { locality: "Paris", country: "France" })
-		const id2 = stableSourceId("wof-admin", { locality: "Paris", country: "France" })
+		const id1 = stableSourceID("wof-admin", { locality: "Paris", country: "France" })
+		const id2 = stableSourceID("wof-admin", { locality: "Paris", country: "France" })
 		expect(id1).toBe(id2)
 	})
 
 	it("is order-independent on component key order", () => {
-		const id1 = stableSourceId("wof-admin", { locality: "Paris", country: "France" })
-		const id2 = stableSourceId("wof-admin", { country: "France", locality: "Paris" })
+		const id1 = stableSourceID("wof-admin", { locality: "Paris", country: "France" })
+		const id2 = stableSourceID("wof-admin", { country: "France", locality: "Paris" })
 		expect(id1).toBe(id2)
 	})
 
 	it("namespaces by adapter id", () => {
-		const a = stableSourceId("wof-admin", { locality: "Paris" })
-		const b = stableSourceId("openaddresses", { locality: "Paris" })
+		const a = stableSourceID("wof-admin", { locality: "Paris" })
+		const b = stableSourceID("openaddresses", { locality: "Paris" })
 		expect(a).not.toBe(b)
 		expect(a.startsWith("wof-admin-")).toBe(true)
 		expect(b.startsWith("openaddresses-")).toBe(true)
 	})
 
 	it("changes when any component value changes", () => {
-		const a = stableSourceId("wof-admin", { locality: "Paris" })
-		const b = stableSourceId("wof-admin", { locality: "Paris " })
+		const a = stableSourceID("wof-admin", { locality: "Paris" })
+		const b = stableSourceID("wof-admin", { locality: "Paris " })
 		expect(a).not.toBe(b)
 	})
 })

@@ -312,7 +312,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 						if (Object.keys(aligned).length <= 2) continue
 
-						const sourceId = record.UUID
+						const sourceID = record.UUID
 							? `${USGOV_NAD_ADAPTER_ID}-${record.UUID}`
 							: `${USGOV_NAD_ADAPTER_ID}-${record.OBJECTID ?? `${shard}:${emitted}`}`
 
@@ -322,7 +322,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 							country: "US",
 							locale: "en-US",
 							source: USGOV_NAD_ADAPTER_ID,
-							source_id: sourceId,
+							source_id: sourceID,
 							corpus_version: "",
 							license: USGOV_NAD_DEFAULT_LICENSE,
 						}

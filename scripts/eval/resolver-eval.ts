@@ -86,10 +86,10 @@ interface Resolution {
 function extractResolution(tree: AddressTree): Resolution | null {
 	let best: Resolution | null = null
 	const visit = (n: AddressNode): void => {
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			const cand: Resolution = {
-				id: Number(n.placeId.slice(4)),
+				id: Number(n.placeID.slice(4)),
 				lat: n.lat,
 				lon: n.lon,
 				score: Number((n.metadata as Record<string, unknown> | undefined)?.["resolver_score"] ?? 0),

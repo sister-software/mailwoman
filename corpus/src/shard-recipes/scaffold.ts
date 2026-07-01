@@ -9,16 +9,16 @@
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
  */
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 
 /**
- * {@link stableSourceId}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that aren't
- * `ComponentTag`s. `stableSourceId` sorts + hashes EVERY key it's given, so passing extra keys is how the legacy
+ * {@link stableSourceID}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that aren't
+ * `ComponentTag`s. `stableSourceID` sorts + hashes EVERY key it's given, so passing extra keys is how the legacy
  * builders kept per-variant ids unique — the strict typing is just too narrow for that. Centralizes the one cast.
  */
-export function shardSourceId(adapterId: string, parts: Record<string, string | undefined>): string {
-	return stableSourceId(adapterId, parts as unknown as Parameters<typeof stableSourceId>[1])
+export function shardSourceID(adapterID: string, parts: Record<string, string | undefined>): string {
+	return stableSourceID(adapterID, parts as unknown as Parameters<typeof stableSourceID>[1])
 }
 
 /** A (locality, region, postcode, country) source tuple — the input to tuples-mode recipes. */
@@ -103,12 +103,12 @@ export function alignAndWrite(
 	write: (line: string) => void,
 	canonical: CanonicalShardRow,
 	synthMethod: string,
-	synthBaseId: string | null = null
+	synthBaseID: string | null = null
 ): boolean {
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 	if (!aligned.row) return false
-	write(JSON.stringify({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseId }) + "\n")
+	write(JSON.stringify({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseID }) + "\n")
 
 	return true
 }

@@ -80,10 +80,10 @@ for (const line of readFileSync(CITIES, "utf8").split("\n")) {
 
 // --- canonical candidate DB (read-only) ---
 const db = new DatabaseSync(DB_PATH, { readOnly: true })
-const codeToId = new Map<string, number>()
+const codeToID = new Map<string, number>()
 
 for (const r of db.prepare("SELECT id, code FROM country_codes").all() as Array<{ id: number; code: string }>) {
-	codeToId.set(r.code, r.id)
+	codeToID.set(r.code, r.id)
 }
 const rowsByCountry = new Map<number, number>()
 
@@ -94,8 +94,8 @@ for (const r of db.prepare("SELECT country_id, COUNT(*) n FROM candidate GROUP B
 	rowsByCountry.set(r.country_id, r.n)
 }
 const hasKey = db.prepare("SELECT 1 FROM candidate WHERE country_id = ? AND name_key = ? LIMIT 1")
-const keyReachable = (countryId: number, key: string): boolean =>
-	key.length > 0 && hasKey.get(countryId, key) !== undefined
+const keyReachable = (countryID: number, key: string): boolean =>
+	key.length > 0 && hasKey.get(countryID, key) !== undefined
 
 type Bucket = "english" | "exonym" | "city_absent" | "country_absent"
 interface CountryResult {
@@ -116,8 +116,8 @@ for (const [cc, cities] of byCountry) {
 	const countryName = ISO2_TO_NAME.get(cc) ?? cc
 	cities.sort((a, b) => b.pop - a.pop)
 	const top = cities.slice(0, PER_COUNTRY)
-	const countryId = codeToId.get(cc)
-	const rows = countryId == null ? 0 : (rowsByCountry.get(countryId) ?? 0)
+	const countryID = codeToID.get(cc)
+	const rows = countryID == null ? 0 : (rowsByCountry.get(countryID) ?? 0)
 	const res: CountryResult = {
 		cc,
 		name: countryName,
@@ -132,16 +132,16 @@ for (const [cc, cities] of byCountry) {
 	for (const c of top) {
 		let bucket: Bucket
 
-		if (countryId == null || rows === 0) {
+		if (countryID == null || rows === 0) {
 			bucket = "country_absent"
 		} else {
 			const englishKeys = [normalizeLocalityForKey(c.name), normalizeLocalityForKey(c.ascii)]
-			const englishReachable = englishKeys.some((k) => keyReachable(countryId, k))
+			const englishReachable = englishKeys.some((k) => keyReachable(countryID, k))
 
 			if (englishReachable) {
 				bucket = "english"
 			} else {
-				const altReachable = c.alts.some((a) => keyReachable(countryId, normalizeLocalityForKey(a)))
+				const altReachable = c.alts.some((a) => keyReachable(countryID, normalizeLocalityForKey(a)))
 				bucket = altReachable ? "exonym" : "city_absent"
 			}
 		}

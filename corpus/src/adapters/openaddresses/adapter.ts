@@ -39,7 +39,7 @@
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import { SHARE_ALIKE_PATTERN } from "../../license.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -193,17 +193,17 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 					if (Object.keys(aligned).length === 0) continue
 
-					const sourceIdSeed = props.hash?.trim() || props.id?.trim()
-					const sourceId = sourceIdSeed
-						? `${OPENADDRESSES_ADAPTER_ID}-${sourceIdSeed}`
-						: stableSourceId(OPENADDRESSES_ADAPTER_ID, aligned)
+					const sourceIDSeed = props.hash?.trim() || props.id?.trim()
+					const sourceID = sourceIDSeed
+						? `${OPENADDRESSES_ADAPTER_ID}-${sourceIDSeed}`
+						: stableSourceID(OPENADDRESSES_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
 						components: aligned,
 						country,
 						source: OPENADDRESSES_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license,
 					}

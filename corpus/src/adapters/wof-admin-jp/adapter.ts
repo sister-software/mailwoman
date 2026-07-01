@@ -50,10 +50,10 @@ interface NameRow {
 }
 
 /** Walk parent chain up to 6 levels. */
-function chainOf(db: DatabaseSync, startId: number, _jpnNames: Map<number, string>): PlaceRow[] {
+function chainOf(db: DatabaseSync, startID: number, _jpnNames: Map<number, string>): PlaceRow[] {
 	const stmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
 	const out: PlaceRow[] = []
-	let id = startId
+	let id = startID
 
 	for (let i = 0; i < 6 && id > 0; i++) {
 		const row = stmt.get(id) as PlaceRow | undefined

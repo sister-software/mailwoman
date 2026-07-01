@@ -26,7 +26,7 @@ const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: cfg.locale })
 const wof = await import("@mailwoman/resolver-wof-sqlite")
-const lookup = new wof.WOFSqlitePlaceLookup({ databasePath: cfg.wofDbPath })
+const lookup = new wof.WOFSqlitePlaceLookup({ databasePath: cfg.wofDBPath })
 const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 const shards = new ShardProvider(wof, cfg.dataRoot)
 

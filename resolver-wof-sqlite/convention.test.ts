@@ -77,7 +77,7 @@ describe("convention engine — merge + resolve", () => {
 
 // --- Live dispatch: an injected convention reroutes findPlace -------------------------------------
 
-function buildDb(): DatabaseSync {
+function buildDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -103,7 +103,7 @@ function buildDb(): DatabaseSync {
 describe("convention engine — live dispatch", () => {
 	let db: DatabaseSync
 	beforeEach(() => {
-		db = buildDb()
+		db = buildDB()
 	})
 	afterEach(() => {
 		// lookup.close() in each test closes db; nothing else to do.

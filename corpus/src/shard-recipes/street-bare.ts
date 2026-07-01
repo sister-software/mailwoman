@@ -20,7 +20,7 @@
 import { alignRow } from "../align.js"
 import { DEFAULT_US_BASES } from "../synthesize-intersection.js"
 import { synthesizeStreetRow, type StreetBaseTuple } from "../synthesize-street.js"
-import { makeMulberry32, shardSourceId, type CanonicalShardRow, type ShardRecipe } from "./scaffold.js"
+import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.js"
 
 export const streetBareRecipe: ShardRecipe = {
 	name: "street-bare",
@@ -61,7 +61,7 @@ export const streetBareRecipe: ShardRecipe = {
 				country: base.country,
 				locale: synth.locale,
 				source,
-				source_id: shardSourceId(source, {
+				source_id: shardSourceID(source, {
 					street: synth.components.street,
 					street_suffix: synth.components.street_suffix,
 					house_number: synth.components.house_number,

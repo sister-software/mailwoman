@@ -89,11 +89,11 @@ export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) =
  * Look up a convention record by WOF polygon id. Returns `undefined` when the polygon has no override.
  */
 export interface ConventionSource {
-	get(wofId: number): Convention | undefined
+	get(wofID: number): Convention | undefined
 }
 
 /**
- * In-memory convention source seeded from a `{ wofId: Convention }` map. Empty for the EU locales (they ride
+ * In-memory convention source seeded from a `{ wofID: Convention }` map. Empty for the EU locales (they ride
  * `WORLD_DEFAULT`); JP / KR / TW add rows. #290 replaces this with a sqlite-backed source built from source, same
  * distributable-asset discipline as `postcode-locality-intl.db`.
  */
@@ -104,8 +104,8 @@ export class SeedConventionSource implements ConventionSource {
 		this.#rows = new Map(Object.entries(rows).map(([k, v]) => [Number(k), v]))
 	}
 
-	get(wofId: number): Convention | undefined {
-		return this.#rows.get(wofId)
+	get(wofID: number): Convention | undefined {
+		return this.#rows.get(wofID)
 	}
 }
 

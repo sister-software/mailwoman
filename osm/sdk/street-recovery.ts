@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   #250 street recovery — recover the street for an OSM `addr:housenumber` point that carries no
- *   `addr:street` (58% of IdF points; they're not `addr:place` hamlets, they're street addresses missing
+ *   `addr:street` (58% of IDF points; they're not `addr:place` hamlets, they're street addresses missing
  *   the tag). The recovery is a nearest-named-highway spatial join: assign the name of the closest named
  *   highway within a tight radius. A grid index over densified highway vertices keeps it O(points).
  *

@@ -14,7 +14,7 @@
 
 import { alignRow } from "../align.js"
 import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "../synthesize-boundary-stress.js"
-import { makeMulberry32, type ShardRecipe, shardSourceId } from "./scaffold.js"
+import { makeMulberry32, type ShardRecipe, shardSourceID } from "./scaffold.js"
 
 // Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality
 // drop on bare "City, STATE" rows WITHOUT becoming a locality-first majority), and
@@ -58,7 +58,7 @@ export const boundaryStressRecipe: ShardRecipe = {
 		for (let i = 0; i < count; i++) {
 			const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: pickTemplate(random) })
 			const country = row.locale.split("-")[1] ?? "US"
-			const source_id = shardSourceId("synth-boundary-stress", { ...row.components, v: String(i) })
+			const source_id = shardSourceID("synth-boundary-stress", { ...row.components, v: String(i) })
 			const canonical = {
 				raw: row.raw,
 				components: row.components,

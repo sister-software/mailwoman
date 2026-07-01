@@ -185,7 +185,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	// 2 + 3. Synthesis + alignment: stream every canonical.jsonl, optionally augment, align,
 	// and route each labeled row directly to its split-specific JSONL (`labeled-{train,val,test}.
-	// jsonl`). Memory cost is O(1) — the prior in-memory `splitInputs` array + `splitByIdMap`
+	// jsonl`). Memory cost is O(1) — the prior in-memory `splitInputs` array + `splitByIDMap`
 	// + `SplitManifest.{train,val,test}` arrays are gone; per-row split is decided inline via
 	// `splitForRow` (a pure function of source_id + region + holdout policy).
 	const labeledPaths: Record<SplitName, string> = {

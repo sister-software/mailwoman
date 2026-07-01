@@ -10,7 +10,7 @@
  *
  *   - `AdapterRegistry`: a tiny lookup table the CLI + build pipeline use to find adapters by id.
  *   - `InMemoryAdapterRegistry`: the default implementation.
- *   - `stableSourceId(adapterId, components)`: deterministic content-addressed id for adapters whose
+ *   - `stableSourceID(adapterID, components)`: deterministic content-addressed id for adapters whose
  *       source data has no native primary key (CSV, GeoJSON).
  *   - `canonicalDedupKey(row)`: normalized signature used to drop near-identical rows during a run.
  *       Adapter-internal dedup; cross-adapter dedup is the runner's job.
@@ -52,25 +52,25 @@ export interface AdapterRegistry {
  * (`defaultAdapterRegistry`) populated by `./adapters/index.ts` as adapters come online.
  */
 export class InMemoryAdapterRegistry implements AdapterRegistry {
-	#byId = new Map<string, CorpusAdapter>()
+	#byID = new Map<string, CorpusAdapter>()
 
 	register(adapter: CorpusAdapter): void {
-		if (this.#byId.has(adapter.id)) {
+		if (this.#byID.has(adapter.id)) {
 			throw new Error(`AdapterRegistry: id ${JSON.stringify(adapter.id)} already registered`)
 		}
-		this.#byId.set(adapter.id, adapter)
+		this.#byID.set(adapter.id, adapter)
 	}
 
 	get(id: string): CorpusAdapter | undefined {
-		return this.#byId.get(id)
+		return this.#byID.get(id)
 	}
 
 	list(): readonly CorpusAdapter[] {
-		return Array.from(this.#byId.values())
+		return Array.from(this.#byID.values())
 	}
 
 	ids(): readonly string[] {
-		return Array.from(this.#byId.keys())
+		return Array.from(this.#byID.keys())
 	}
 }
 
@@ -87,16 +87,16 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
  * stable id so dedup, holdout manifests, and resumability work across reruns. This helper produces one by hashing the
  * adapter id and a canonical serialization of the components dict (keys sorted, values verbatim).
  *
- * Output format: `<adapterId>-<first-12-hex-chars-of-sha256>`. 48 bits of entropy is enough for ~17M rows per adapter
+ * Output format: `<adapterID>-<first-12-hex-chars-of-sha256>`. 48 bits of entropy is enough for ~17M rows per adapter
  * before the expected collision count exceeds 1 (birthday paradox); adapters with more rows should extend the prefix
  * length.
  */
-export function stableSourceId(adapterId: string, components: Partial<Record<ComponentTag, string>>): string {
+export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
 	const sortedKeys = Object.keys(components).sort() as ComponentTag[]
 	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\x1f")
-	const digest = createHash("sha256").update(adapterId).update("\x1e").update(payload).digest("hex")
+	const digest = createHash("sha256").update(adapterID).update("\x1e").update(payload).digest("hex")
 
-	return `${adapterId}-${digest.slice(0, 12)}`
+	return `${adapterID}-${digest.slice(0, 12)}`
 }
 
 /**

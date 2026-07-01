@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import { synthesizeAnchorAbsorptionRow } from "../synthesize-anchor-absorption.js"
 import { makeLcg, type ShardRecipe } from "./scaffold.js"
@@ -64,7 +64,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 				country,
 				locale: synth.locale,
 				source,
-				source_id: stableSourceId(source, `${i}` as unknown as Parameters<typeof stableSourceId>[1]),
+				source_id: stableSourceID(source, `${i}` as unknown as Parameters<typeof stableSourceID>[1]),
 			}
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 

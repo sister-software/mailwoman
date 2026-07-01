@@ -70,21 +70,21 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 	}, [error, manifest])
 
 	useEffect(() => {
-		const adapterId = args[0]
+		const adapterID = args[0]
 
-		if (!adapterId) {
+		if (!adapterID) {
 			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
 			setError("missing positional argument: <adapter-id>")
 
 			return
 		}
 
-		const adapter = defaultAdapterRegistry.get(adapterId)
+		const adapter = defaultAdapterRegistry.get(adapterID)
 
 		if (!adapter) {
 			const ids = defaultAdapterRegistry.ids()
 			const hint = ids.length === 0 ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
-			setError(`unknown adapter id ${JSON.stringify(adapterId)}; ${hint}`)
+			setError(`unknown adapter id ${JSON.stringify(adapterID)}; ${hint}`)
 
 			return
 		}

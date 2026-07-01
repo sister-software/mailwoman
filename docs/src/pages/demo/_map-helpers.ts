@@ -178,7 +178,7 @@ export function geomBounds(geometry: PlaceGeometry): {
 /**
  * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async (range-loaded).
  */
-export interface PolygonDb {
+export interface PolygonDB {
 	get(id: number): Promise<PlaceGeometry | null>
 }
 
@@ -187,9 +187,9 @@ export interface PolygonDb {
  * id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file rather than the whole thing. Same range-load
  * path as the resolver DB.
  */
-export async function loadPolygonDb(url: string, sqljsBaseURL: string): Promise<PolygonDb> {
-	const { loadHttpvfsDb, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
-	const worker = await loadHttpvfsDb(url, sqljsBaseURL)
+export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<PolygonDB> {
+	const { loadHttpvfsDB, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
+	const worker = await loadHttpvfsDB(url, sqljsBaseURL)
 	const lookup = makeHttpvfsPolygonLookup(worker)
 
 	return {

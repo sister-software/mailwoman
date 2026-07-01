@@ -48,7 +48,7 @@ const GEONAMES_FIXTURE = [
 	"DE\t10115\tBerlin\t\t\t\t\t\t\t52.5200\t13.4050\t1", // non-US → included in map, no US spr match
 ].join("\n")
 
-function seedDb(): DatabaseSync {
+function seedDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`CREATE TABLE spr (
 		id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL DEFAULT -1, name TEXT NOT NULL DEFAULT '',
@@ -82,7 +82,7 @@ describe("parseZCTACentroids", () => {
 
 describe("fillPlaceholderCentroids", () => {
 	it("fills placeholders, preserves real coords, leaves ZCTA-less rows placeholder", () => {
-		const db = seedDb()
+		const db = seedDB()
 		const filled = fillPlaceholderCentroids(db, parseZCTACentroids(GAZETTEER_FIXTURE))
 		expect(filled).toBe(1)
 
@@ -106,7 +106,7 @@ describe("fillPlaceholderCentroids", () => {
 	})
 
 	it("is idempotent", () => {
-		const db = seedDb()
+		const db = seedDB()
 		const zcta = parseZCTACentroids(GAZETTEER_FIXTURE)
 		expect(fillPlaceholderCentroids(db, zcta)).toBe(1)
 		expect(fillPlaceholderCentroids(db, zcta)).toBe(0)
@@ -132,7 +132,7 @@ describe("parseGeonamesCentroids", () => {
 
 describe("fillGeonamesPlaceholders", () => {
 	it("fills ZCTA-residual placeholders, does not overwrite ZCTA-filled or real coords", () => {
-		const db = seedDb()
+		const db = seedDB()
 
 		// Run ZCTA fill first (fills 90210 with census coords).
 		const zcta = parseZCTACentroids(GAZETTEER_FIXTURE)
@@ -172,9 +172,9 @@ describe("fillGeonamesPlaceholders", () => {
 	})
 
 	it("is idempotent", () => {
-		const db = seedDb()
+		const db = seedDB()
 		const geo = parseGeonamesCentroids(GEONAMES_FIXTURE)
-		// seedDb has two US placeholders GeoNames can fill: 90210 and 21638.
+		// seedDB has two US placeholders GeoNames can fill: 90210 and 21638.
 		const firstRun = fillGeonamesPlaceholders(db, geo)
 		expect(firstRun).toBeGreaterThan(0)
 		// Second run must fill zero rows (idempotent — UPDATE re-checks latitude=0).
@@ -182,7 +182,7 @@ describe("fillGeonamesPlaceholders", () => {
 	})
 
 	it("does not overwrite a row already filled by ZCTA even if GeoNames has a different coord", () => {
-		const db = seedDb()
+		const db = seedDB()
 
 		// Fill 90210 via ZCTA (lat=34.100517).
 		fillPlaceholderCentroids(db, parseZCTACentroids(GAZETTEER_FIXTURE))

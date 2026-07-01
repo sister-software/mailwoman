@@ -148,10 +148,10 @@ interface SourceNode {
 	start?: number
 	end?: number
 	source?: string
-	sourceId?: string
+	sourceID?: string
 	/** Displaced classifier source when the resolver won (from metadata). */
 	displacedSource?: string
-	displacedSourceId?: string
+	displacedSourceID?: string
 }
 
 interface TreeNodeLike {
@@ -161,14 +161,14 @@ interface TreeNodeLike {
 	start?: number
 	end?: number
 	source?: string
-	sourceId?: string
+	sourceID?: string
 	metadata?: Record<string, unknown>
 	children?: unknown[]
 }
 
 /**
  * Flatten the address tree preserving source provenance. Mirrors `flattenTree` from demo-helpers but preserves `source`
- * / `sourceId` and extracts displaced classifier info from `metadata` when available.
+ * / `sourceID` and extracts displaced classifier info from `metadata` when available.
  */
 function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	const out: SourceNode[] = []
@@ -181,7 +181,7 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 		if (typeof n.tag === "string") {
 			const displacedSource =
 				typeof n.metadata?.classifier_source === "string" ? n.metadata.classifier_source : undefined
-			const displacedSourceId =
+			const displacedSourceID =
 				typeof n.metadata?.classifier_source_id === "string" ? n.metadata.classifier_source_id : undefined
 			out.push({
 				tag: n.tag,
@@ -190,9 +190,9 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 				start: n.start,
 				end: n.end,
 				source: n.source,
-				sourceId: n.sourceId,
+				sourceID: n.sourceID,
 				displacedSource,
-				displacedSourceId,
+				displacedSourceID,
 			})
 		}
 

@@ -74,7 +74,7 @@ async function main(): Promise<void> {
 	// Two-shard ship config (matches oa-resolver-eval): admin + the coordinate-first postcode→locality
 	// table, so passing `postcode` actually injects postcode-proximal candidates (coord-first disabled
 	// without the shard). Comma-separated, like the eval.
-	const wofDb = arg(
+	const wofDB = arg(
 		"wof-db",
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
@@ -93,7 +93,7 @@ async function main(): Promise<void> {
 		.filter((r) => r.expected?.locality)
 		.slice(0, limit)
 
-	const wofPaths = wofDb
+	const wofPaths = wofDB
 		.split(",")
 		.map((s) => s.trim())
 		.filter(Boolean)
@@ -102,7 +102,7 @@ async function main(): Promise<void> {
 	// Resolve a region name (e.g. "CA", "DC") → its WOF id, the way the resolver does (region lookup,
 	// country-scoped). Memoized — "CA" recurs thousands of times. null when unresolved.
 	const regionCache = new Map<string, number | null>()
-	async function resolveRegionId(region: string | undefined): Promise<number | null> {
+	async function resolveRegionID(region: string | undefined): Promise<number | null> {
 		if (!region) return null
 		const key = normName(region)
 
@@ -174,20 +174,20 @@ async function main(): Promise<void> {
 			continue
 		}
 
-		// (2) FAITHFUL resolver query: the region as parentId (hard descendant filter) + the sibling
-		// postcode (coordinate-first), with the resolver's parent-fallback (retry without parentId when
+		// (2) FAITHFUL resolver query: the region as parentID (hard descendant filter) + the sibling
+		// postcode (coordinate-first), with the resolver's parent-fallback (retry without parentID when
 		// the parent scope returns nothing — resolve.ts). This is the candidate list the resolver
 		// ACTUALLY ranks, so the gold's rank here is real ranking headroom, not name-only ambiguity.
-		const regionId = await resolveRegionId(row.expected.region)
+		const regionID = await resolveRegionID(row.expected.region)
 		const q: FindPlaceQuery = { text: row.expected.locality!, placetype: ["locality"], country, limit: universeK }
 
-		if (regionId != null) q.parentId = regionId
+		if (regionID != null) q.parentID = regionID
 
 		if (row.expected.postcode) q.postcode = row.expected.postcode
 		let faithful = await lookup.findPlace(q)
 
-		if (faithful.length === 0 && q.parentId !== undefined) {
-			delete q.parentId
+		if (faithful.length === 0 && q.parentID !== undefined) {
+			delete q.parentID
 			faithful = await lookup.findPlace(q)
 		}
 		const rank = faithful.findIndex(isGold)

@@ -20,12 +20,12 @@ function labelCol(label: string): number {
 
 function mockAffixFST(affixSurfaces: string[]): FSTMatcherLike {
 	const states = new Map<string, { id: number; entries: FSTPlaceEntryLike[] }>()
-	let nextId = 1
+	let nextID = 1
 
 	for (const surface of affixSurfaces) {
 		states.set(surface, {
-			id: nextId++,
-			entries: [{ wofID: 1_900_000_000 + nextId, placetype: "street_affix", importance: 1.0 }],
+			id: nextID++,
+			entries: [{ wofID: 1_900_000_000 + nextID, placetype: "street_affix", importance: 1.0 }],
 		})
 	}
 
@@ -34,16 +34,16 @@ function mockAffixFST(affixSurfaces: string[]): FSTMatcherLike {
 			const key = tokens.join(" ")
 			const state = states.get(key)
 
-			if (state) return { stateId: state.id, accepted: true, depth: tokens.length }
+			if (state) return { stateID: state.id, accepted: true, depth: tokens.length }
 
 			return null
 		},
 		walkFrom(): FSTMatchLike | null {
 			return null
 		},
-		accepting(stateId: number): FSTPlaceEntryLike[] {
+		accepting(stateID: number): FSTPlaceEntryLike[] {
 			for (const [, state] of states) {
-				if (state.id === stateId) return state.entries
+				if (state.id === stateID) return state.entries
 			}
 
 			return []

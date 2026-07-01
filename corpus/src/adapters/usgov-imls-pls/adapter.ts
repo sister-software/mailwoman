@@ -22,7 +22,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -126,9 +126,9 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const fscsKey = (record.FSCSKEY ?? "").trim()
-					const sourceId = fscsKey
+					const sourceID = fscsKey
 						? `${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`
-						: stableSourceId(USGOV_IMLS_PLS_ADAPTER_ID, aligned)
+						: stableSourceID(USGOV_IMLS_PLS_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -136,7 +136,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 						country: "US",
 						locale: "en-US",
 						source: USGOV_IMLS_PLS_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: USGOV_IMLS_PLS_DEFAULT_LICENSE,
 					}

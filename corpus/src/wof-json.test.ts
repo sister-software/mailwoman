@@ -84,30 +84,30 @@ function rec(id: number, parent_id: number | null, name = `n${id}`): WOFRecord {
 
 test("buildAncestryIndex: walks parent_id upward, nearest-first, self-excluded", () => {
 	// 3 → 2 → 1 (root). 1's parent is null.
-	const byId = new Map<number, WOFRecord>([
+	const byID = new Map<number, WOFRecord>([
 		[1, rec(1, null)],
 		[2, rec(2, 1)],
 		[3, rec(3, 2)],
 	])
-	const index = buildAncestryIndex(byId)
+	const index = buildAncestryIndex(byID)
 	expect(index.get(3)!.map((r) => r.id)).toEqual([2, 1]) // parent then grandparent
 	expect(index.get(2)!.map((r) => r.id)).toEqual([1])
 	expect(index.get(1)).toEqual([]) // root has no ancestors
 })
 
 test("buildAncestryIndex: stops at the first missing link (partial repo set)", () => {
-	// 5's parent 99 isn't in byId → chain ends immediately, degrades gracefully.
-	const byId = new Map<number, WOFRecord>([[5, rec(5, 99)]])
-	expect(buildAncestryIndex(byId).get(5)).toEqual([])
+	// 5's parent 99 isn't in byID → chain ends immediately, degrades gracefully.
+	const byID = new Map<number, WOFRecord>([[5, rec(5, 99)]])
+	expect(buildAncestryIndex(byID).get(5)).toEqual([])
 })
 
 test("buildAncestryIndex: parent_id of null / 0 / negative terminates the walk", () => {
-	const byId = new Map<number, WOFRecord>([
+	const byID = new Map<number, WOFRecord>([
 		[10, rec(10, null)],
 		[11, rec(11, 0)],
 		[12, rec(12, -4)], // WOF "only-self" sentinel (e.g. NYC parent_id = -4)
 	])
-	const index = buildAncestryIndex(byId)
+	const index = buildAncestryIndex(byID)
 	expect(index.get(10)).toEqual([])
 	expect(index.get(11)).toEqual([])
 	expect(index.get(12)).toEqual([])
@@ -115,11 +115,11 @@ test("buildAncestryIndex: parent_id of null / 0 / negative terminates the walk",
 
 test("buildAncestryIndex: a cycle is broken rather than looping forever", () => {
 	// Corrupt fixture: 1 → 2 → 1. The guard halts on re-visit.
-	const byId = new Map<number, WOFRecord>([
+	const byID = new Map<number, WOFRecord>([
 		[1, rec(1, 2)],
 		[2, rec(2, 1)],
 	])
-	const index = buildAncestryIndex(byId)
+	const index = buildAncestryIndex(byID)
 	// From 1: push 2, then 2's parent is 1 (already in guard) → stop.
 	expect(index.get(1)!.map((r) => r.id)).toEqual([2])
 	expect(index.get(2)!.map((r) => r.id)).toEqual([1])

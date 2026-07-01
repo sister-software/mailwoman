@@ -36,7 +36,7 @@ import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "./ty
  */
 export interface BuildTreeOpts {
 	source?: string
-	sourceId?: string
+	sourceID?: string
 	/**
 	 * Addressing system to decode under — selects the containment hierarchy via `containmentFor`. Stamped onto the
 	 * returned `AddressTree.system`. Omit for the default Western hierarchy. Today all systems share one map, so this
@@ -97,7 +97,7 @@ function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attributi
 
 	if (attribution.source !== undefined) node.source = attribution.source
 
-	if (attribution.sourceId !== undefined) node.sourceId = attribution.sourceId
+	if (attribution.sourceID !== undefined) node.sourceID = attribution.sourceID
 	out.push(node)
 
 	return null
@@ -190,7 +190,7 @@ function sortByStart(nodes: AddressNode[]): void {
  * @param raw The original input as fed to the tokenizer.
  * @param tokens Model output: one entry per piece with predicted BIO label + confidence.
  * @param opts Optional attribution stamped on every emitted node. Callers in the neural pipeline pass `{ source:
- *   "neural", sourceId: <model-card-version> }` to mark provenance for the XML serializer's `src` attribute.
+ *   "neural", sourceID: <model-card-version> }` to mark provenance for the XML serializer's `src` attribute.
  */
 export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: BuildTreeOpts = {}): AddressTree {
 	const spans = emitSpans(raw, tokens, opts)

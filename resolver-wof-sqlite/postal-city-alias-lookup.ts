@@ -47,15 +47,15 @@ export interface PostalCityAlias {
 export class WOFPostalCityAliasLookup {
 	#db: DatabaseSync
 	#kdb: DatabaseClient<PostalCityAliasDatabase>
-	#ownsDb: boolean
+	#ownsDB: boolean
 
 	constructor(opts: WOFPostalCityAliasLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDb = false
+			this.#ownsDB = false
 		} else if (opts.databasePath) {
 			this.#db = new DatabaseSync(opts.databasePath, { readOnly: true })
-			this.#ownsDb = true
+			this.#ownsDB = true
 		} else {
 			throw new Error("WOFPostalCityAliasLookup needs `databasePath` or `database`")
 		}
@@ -82,6 +82,6 @@ export class WOFPostalCityAliasLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDb) this.#db.close()
+		if (this.#ownsDB) this.#db.close()
 	}
 }

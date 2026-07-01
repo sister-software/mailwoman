@@ -22,7 +22,7 @@ import { StreetInterpolator } from "./interpolation.js"
 const query = { street: "Main St", number: "100", postcode: "03301" }
 const dirs: string[] = []
 
-function tablelessDbFile(): string {
+function tablelessDBFile(): string {
 	const dir = mkdtempSync(join(tmpdir(), "mw-empty-shard-"))
 	dirs.push(dir)
 	const path = join(dir, "empty.db")
@@ -40,7 +40,7 @@ afterAll(() => {
 describe("empty/tableless shard degrades gracefully (#568)", () => {
 	it("AddressPointSqliteLookup: missing address_point table → constructs, find() returns null", () => {
 		let lookup: AddressPointSqliteLookup | undefined
-		expect(() => (lookup = new AddressPointSqliteLookup(tablelessDbFile()))).not.toThrow()
+		expect(() => (lookup = new AddressPointSqliteLookup(tablelessDBFile()))).not.toThrow()
 		expect(lookup!.find(query)).toBeNull()
 		lookup!.close()
 	})

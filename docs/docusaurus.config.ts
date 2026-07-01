@@ -223,7 +223,7 @@ const config: Config = {
 				{
 					// Lands on the "Start here" section; the docs sub-header switches sections from there.
 					type: "docSidebar",
-					sidebarId: "startHere",
+					sidebarID: "startHere",
 					position: "left",
 					label: "Docs",
 				},

@@ -37,7 +37,7 @@ test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
 })
 
-function fixtureDb(): DatabaseSync {
+function fixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
 	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run(
@@ -53,13 +53,13 @@ function fixtureDb(): DatabaseSync {
 }
 
 test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", () => {
-	const lookup = new TimezoneLookup({ database: fixtureDb() })
+	const lookup = new TimezoneLookup({ database: fixtureDB() })
 	expect(lookup.find(5, 5)).toBe("Test/Zone")
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
 test("makeTimezoneAnnotator: fills AnnotationSet.timezone", () => {
-	const annotate = makeTimezoneAnnotator(new TimezoneLookup({ database: fixtureDb() }))
+	const annotate = makeTimezoneAnnotator(new TimezoneLookup({ database: fixtureDB() }))
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone" } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

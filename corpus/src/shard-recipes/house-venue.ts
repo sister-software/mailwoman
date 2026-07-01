@@ -11,7 +11,7 @@
  */
 
 import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "../synthesize-house-venue.js"
-import { alignAndWrite, makeLcg, readTuples, shardSourceId, type ShardRecipe } from "./scaffold.js"
+import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.js"
 
 const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
@@ -51,7 +51,7 @@ export const houseVenueRecipe: ShardRecipe = {
 						country: tuple.country,
 						locale: synth.locale,
 						source,
-						source_id: shardSourceId(source, {
+						source_id: shardSourceID(source, {
 							locality: tuple.locality,
 							region: tuple.region,
 							postcode: tuple.postcode,

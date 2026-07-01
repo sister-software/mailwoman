@@ -25,7 +25,7 @@ const ArgumentsSchema = zod.array(zod.string().describe("Path to the Who's On Fi
 export { ArgumentsSchema as args }
 
 const OptionsSchema = zod.object({
-	unifiedDb: zod
+	unifiedDB: zod
 		.string()
 		.optional()
 		.describe("Path to write a unified SQLite database for the FST builder and resolver."),
@@ -38,7 +38,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 	args: [wofDataAdminDirectory],
 	options,
 }) => {
-	const unifiedDbPath = options.unifiedDb
+	const unifiedDBPath = options.unifiedDB
 	const [insertionCount, setInsertionCount] = useState(0)
 	const [throughput, setThroughput] = useState(0)
 	const [recordCount, setRecordCount] = useState(-1)
@@ -78,7 +78,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 			// on startup importing an unpublished workspace (#481 follow-up / clean-install fix).
 			let unifiedSchema: typeof import("@mailwoman/resolver-wof-sqlite/unified-schema") | undefined
 
-			if (unifiedDbPath) {
+			if (unifiedDBPath) {
 				try {
 					unifiedSchema = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 				} catch {
@@ -86,7 +86,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 						"`wof prepare --unified-db` needs @mailwoman/resolver-wof-sqlite — install it (npm i @mailwoman/resolver-wof-sqlite) and retry."
 					)
 				}
-				const db = new DatabaseSync(unifiedDbPath, { open: true })
+				const db = new DatabaseSync(unifiedDBPath, { open: true })
 				unifiedSchema.createUnifiedSchema(db)
 				db.close()
 			}
@@ -96,27 +96,27 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 				absolute: true,
 			})
 
-			let unifiedDb: DatabaseSync | null = null
+			let unifiedDB: DatabaseSync | null = null
 			let sprInsert: ReturnType<DatabaseSync["prepare"]> | null = null
 			let namesInsert: ReturnType<DatabaseSync["prepare"]> | null = null
 			let concordancesInsert: ReturnType<DatabaseSync["prepare"]> | null = null
 			let populationInsert: ReturnType<DatabaseSync["prepare"]> | null = null
 
-			if (unifiedDbPath) {
-				unifiedDb = new DatabaseSync(unifiedDbPath)
-				unifiedDb.exec("PRAGMA journal_mode = WAL")
-				unifiedDb.exec("PRAGMA synchronous = NORMAL")
-				unifiedDb.exec("PRAGMA busy_timeout = 30000")
-				sprInsert = unifiedDb.prepare(
+			if (unifiedDBPath) {
+				unifiedDB = new DatabaseSync(unifiedDBPath)
+				unifiedDB.exec("PRAGMA journal_mode = WAL")
+				unifiedDB.exec("PRAGMA synchronous = NORMAL")
+				unifiedDB.exec("PRAGMA busy_timeout = 30000")
+				sprInsert = unifiedDB.prepare(
 					"INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
-				namesInsert = unifiedDb.prepare(
+				namesInsert = unifiedDB.prepare(
 					"INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)"
 				)
-				concordancesInsert = unifiedDb.prepare(
+				concordancesInsert = unifiedDB.prepare(
 					"INSERT INTO concordances (id, other_id, other_source, lastmodified) VALUES (?, ?, ?, ?)"
 				)
-				populationInsert = unifiedDb.prepare("INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)")
+				populationInsert = unifiedDB.prepare("INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)")
 			}
 
 			const tasks: Promise<void>[] = []
@@ -125,8 +125,8 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 				const filePaths = fileNames.map((f) => f.toString())
 
 				const task = piscina.run({ filePaths }).then((result: WorkerOutput) => {
-					if (unifiedDb && result.places.length > 0) {
-						unifiedDb.exec("BEGIN TRANSACTION")
+					if (unifiedDB && result.places.length > 0) {
+						unifiedDB.exec("BEGIN TRANSACTION")
 
 						for (const p of result.places) {
 							sprInsert!.run(
@@ -158,7 +158,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 
 							if (p.population > 0) populationInsert!.run(p.id, p.population)
 						}
-						unifiedDb.exec("COMMIT")
+						unifiedDB.exec("COMMIT")
 					}
 					setInsertionCount((count) => count + result.places.length)
 				})
@@ -169,12 +169,12 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 			await Promise.allSettled(tasks)
 			await piscina.destroy()
 
-			if (unifiedDb) {
-				unifiedSchema!.createUnifiedIndexes(unifiedDb)
-				unifiedDb.close()
+			if (unifiedDB) {
+				unifiedSchema!.createUnifiedIndexes(unifiedDB)
+				unifiedDB.close()
 			}
 		})()
-	}, [wofDataAdminDirectory, unifiedDbPath])
+	}, [wofDataAdminDirectory, unifiedDBPath])
 
 	useEffect(() => {
 		const refreshStats = () => {

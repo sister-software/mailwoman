@@ -84,7 +84,7 @@ export function discoverAdminDataRoots(reposRoot: string): string[] {
 }
 
 /** WOF geojson lives sharded: an id resolves to `<3-char chunks>/<id>.geojson` under each data root. */
-function geojsonForId(id: number, roots: readonly string[]): Record<string, unknown> | null {
+function geojsonForID(id: number, roots: readonly string[]): Record<string, unknown> | null {
 	const s = String(id)
 	const chunks: string[] = []
 
@@ -144,7 +144,7 @@ export function backfillAncestorsFromHierarchy(
 
 	for (const { id, placetype } of candidates) {
 		if (TOP_PLACETYPES.has(placetype)) continue
-		const gj = geojsonForId(id, geojsonRoots)
+		const gj = geojsonForID(id, geojsonRoots)
 		const props = (gj?.["properties"] ?? null) as Record<string, unknown> | null
 		const hierarchy = (props?.["wof:hierarchy"] ?? null) as Array<Record<string, number>> | null
 

@@ -33,7 +33,7 @@
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
@@ -128,7 +128,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 						components: aligned,
 						country,
 						source: OVERTURE_ADAPTER_ID,
-						source_id: stableSourceId(OVERTURE_ADAPTER_ID, aligned),
+						source_id: stableSourceID(OVERTURE_ADAPTER_ID, aligned),
 						corpus_version: "",
 						license: OVERTURE_DEFAULT_LICENSE,
 					}

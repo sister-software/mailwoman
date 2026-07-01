@@ -247,7 +247,7 @@ async function foldIntoCandidate(
 	const maxCc = out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes").get() as { m: number }
 	let nextCc = maxCc.m + 1
 	const insCc = out.prepare("INSERT INTO country_codes (id, code) VALUES (?, ?)")
-	const ccId = (code: string): number => {
+	const ccID = (code: string): number => {
 		let id = ccCache.get(code)
 
 		if (id !== undefined) return id
@@ -286,7 +286,7 @@ async function foldIntoCandidate(
 		const lon = r.longitude as number
 		ins.run(
 			key,
-			ccId(r.country as string),
+			ccID(r.country as string),
 			0,
 			pcPtid,
 			0,

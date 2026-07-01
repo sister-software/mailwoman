@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs"
+
 import { createWOFResolver } from "@mailwoman/resolver"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
-import { readFileSync } from "node:fs"
 
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const MODEL = "/tmp/v072-eval/model.onnx"
@@ -41,10 +42,10 @@ function dumpTree(label: string, tree: any) {
 function dumpResolved(label: string, tree: any) {
 	const out: string[] = []
 	const walk = (n: any) => {
-		if (n?.placeId?.startsWith?.("wof:")) {
+		if (n?.placeID?.startsWith?.("wof:")) {
 			const meta = n.metadata as Record<string, unknown> | undefined
-			const pt = String(n.sourceId ?? "").split(":")[0]
-			out.push(`${pt}:${meta?.["resolver_name"] ?? n.value}(${n.placeId})`)
+			const pt = String(n.sourceID ?? "").split(":")[0]
+			out.push(`${pt}:${meta?.["resolver_name"] ?? n.value}(${n.placeID})`)
 		}
 		for (const c of n?.children ?? []) walk(c)
 	}

@@ -222,7 +222,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			// (campus, county-region hybrids on which Mailwoman has no opinion) are dropped here so
 			// they don't inflate the ancestry index. Country-filtered runs prune to the matching
 			// country code too; the ancestors of a same-country record live in the same admin repo.
-			const byId = new Map<number, WOFRecord>()
+			const byID = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
 				if (opts.signal?.aborted) return
@@ -230,18 +230,18 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 				if (opts.country && rec.country !== opts.country) continue
 
 				if (!placetypeToTag(rec.placetype)) continue
-				byId.set(rec.id, rec)
+				byID.set(rec.id, rec)
 			}
 
-			const ancestry = buildAncestryIndex(byId)
+			const ancestry = buildAncestryIndex(byID)
 
 			// Pass 2: emit rows in sorted-id order for deterministic JSONL.
-			const ids = [...byId.keys()].sort((a, b) => a - b)
+			const ids = [...byID.keys()].sort((a, b) => a - b)
 			let emitted = 0
 
 			for (const id of ids) {
 				if (opts.signal?.aborted) return
-				const rec = byId.get(id)!
+				const rec = byID.get(id)!
 				const chain = ancestry.get(id) ?? []
 				const slots = nameSlotsFor(rec)
 

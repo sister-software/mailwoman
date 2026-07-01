@@ -31,7 +31,7 @@ import type {
 /**
  * Resolve the candidate-db path from an explicit option then `$MAILWOMAN_CANDIDATE_DB`; undefined if unset or missing.
  */
-export function resolveCandidateDbPath(explicit?: string): string | undefined {
+export function resolveCandidateDBPath(explicit?: string): string | undefined {
 	const p = explicit ?? process.env["MAILWOMAN_CANDIDATE_DB"]
 
 	return p && existsSync(p) ? p : undefined
@@ -42,7 +42,7 @@ export function resolveCandidateDbPath(explicit?: string): string | undefined {
  * undefined if unset or missing. Only consulted on the FTS backend (the candidate backend folds aliases at build time,
  * not at query time).
  */
-export function resolvePostalCityAliasDbPath(explicit?: string): string | undefined {
+export function resolvePostalCityAliasDBPath(explicit?: string): string | undefined {
 	const p = explicit ?? process.env["MAILWOMAN_POSTAL_CITY_ALIAS_DB"]
 
 	return p && existsSync(p) ? p : undefined
@@ -70,9 +70,9 @@ interface ResolverLookupModule {
  */
 export function createResolverBackend(
 	mod: ResolverLookupModule,
-	opts: { candidateDb?: string; wofPaths: string | string[]; postalCityAliasDb?: string }
+	opts: { candidateDb?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
 ): PlaceLookup {
-	const candidate = resolveCandidateDbPath(opts.candidateDb)
+	const candidate = resolveCandidateDBPath(opts.candidateDb)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)
@@ -80,10 +80,10 @@ export function createResolverBackend(
 		return new mod.WOFCandidateTableLookup({ databasePath: candidate })
 	}
 	const wp = opts.wofPaths
-	const aliasDb = resolvePostalCityAliasDbPath(opts.postalCityAliasDb)
-	const postalCityAliases = aliasDb ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDb }) : undefined
+	const aliasDB = resolvePostalCityAliasDBPath(opts.postalCityAliasDB)
+	const postalCityAliases = aliasDB ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDB }) : undefined
 
-	if (postalCityAliases) console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDb}`)
+	if (postalCityAliases) console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDB}`)
 
 	return new mod.WOFSqlitePlaceLookup({
 		databasePath: Array.isArray(wp) && wp.length === 1 ? wp[0]! : wp,

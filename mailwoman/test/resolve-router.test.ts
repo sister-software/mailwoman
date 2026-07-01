@@ -65,13 +65,13 @@ describeIfWOF("ResolveRouter — success path against real WOF", () => {
 		const body = r.body as {
 			input: string
 			xml: string
-			nodes: Array<{ tag: string; placeId?: string; lat?: number; depth: number }>
+			nodes: Array<{ tag: string; placeID?: string; lat?: number; depth: number }>
 		}
 		expect(body.input).toBe("Springfield, Illinois")
 		expect(body.xml).toContain("<address raw=")
 		expect(body.nodes.length).toBeGreaterThan(0)
 		// At least one node should have been resolver-decorated (region or locality).
-		const resolved = body.nodes.filter((n) => n.placeId)
+		const resolved = body.nodes.filter((n) => n.placeID)
 		expect(resolved.length).toBeGreaterThan(0)
 	}, 30_000)
 

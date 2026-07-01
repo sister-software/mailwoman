@@ -94,8 +94,8 @@ type Resolved = { placetype: string; lat: number; lon: number }
 function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | null {
 	let best: Resolved | null = null as Resolved | null
 	const visit = (n: AddressNode): void => {
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 
 			if (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5))
 				best = { placetype, lat: n.lat, lon: n.lon }

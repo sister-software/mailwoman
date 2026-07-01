@@ -19,7 +19,7 @@ import { placeSearchFTSExists } from "./fts.js"
 
 let scratch: string
 
-function buildFixtureDb(path: string): void {
+function buildFixtureDB(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
 		CREATE TABLE spr (
@@ -46,7 +46,7 @@ afterEach(async () => {
 describe("build-fts-cli main()", () => {
 	test("exits 0 and builds the index against a fresh DB", () => {
 		const dbPath = join(scratch, "fixture.db")
-		buildFixtureDb(dbPath)
+		buildFixtureDB(dbPath)
 		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
 
 		const exitCode = main([dbPath])
@@ -64,7 +64,7 @@ describe("build-fts-cli main()", () => {
 
 	test("exits 0 and is a no-op when the index already exists", () => {
 		const dbPath = join(scratch, "fixture.db")
-		buildFixtureDb(dbPath)
+		buildFixtureDB(dbPath)
 		main([dbPath]) // first build
 		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
 
@@ -78,7 +78,7 @@ describe("build-fts-cli main()", () => {
 
 	test("exits 0 and rebuilds when --drop is passed", () => {
 		const dbPath = join(scratch, "fixture.db")
-		buildFixtureDb(dbPath)
+		buildFixtureDB(dbPath)
 		main([dbPath])
 		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
 
@@ -120,8 +120,8 @@ describe("build-fts-cli main()", () => {
 		// Build two real fixture DBs and pass them both. Both should land with indexes.
 		const dbA = join(scratch, "a.db")
 		const dbB = join(scratch, "b.db")
-		buildFixtureDb(dbA)
-		buildFixtureDb(dbB)
+		buildFixtureDB(dbA)
+		buildFixtureDB(dbB)
 		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
 		expect(main([dbA, dbB])).toBe(0)
 		const written = stderrSpy.mock.calls.map((c) => String(c[0])).join("")
@@ -132,7 +132,7 @@ describe("build-fts-cli main()", () => {
 
 	test("multi-DB invocation surfaces the worst exit code (missing file → 1)", () => {
 		const dbOK = join(scratch, "ok.db")
-		buildFixtureDb(dbOK)
+		buildFixtureDB(dbOK)
 		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
 		// Good DB succeeds, missing DB fails. Worst-of-both = 1.
 		expect(main([dbOK, "/nope/missing.db"])).toBe(1)

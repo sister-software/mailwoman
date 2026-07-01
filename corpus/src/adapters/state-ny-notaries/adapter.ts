@@ -18,7 +18,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -143,9 +143,9 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const commNum = (record["Commission Number (UID)"] ?? "").trim()
-					const sourceId = commNum
+					const sourceID = commNum
 						? `${STATE_NY_NOTARIES_ADAPTER_ID}-${commNum}`
-						: stableSourceId(STATE_NY_NOTARIES_ADAPTER_ID, aligned)
+						: stableSourceID(STATE_NY_NOTARIES_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -153,7 +153,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 						country: "US",
 						locale: "en-US",
 						source: STATE_NY_NOTARIES_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: STATE_NY_NOTARIES_DEFAULT_LICENSE,
 					}

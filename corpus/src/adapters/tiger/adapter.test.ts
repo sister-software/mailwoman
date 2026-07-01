@@ -22,7 +22,7 @@ const fixtureSQLPath = resolve(here, "../../../fixtures/tiger/fixture.sql")
 let scratch: string
 let dbPath: string
 
-async function buildFixtureDb(): Promise<string> {
+async function buildFixtureDB(): Promise<string> {
 	const sql = await readFile(fixtureSQLPath, "utf8")
 	const path = join(scratch, "tiger-fixture.db")
 	const db = new DatabaseSync(path)
@@ -34,7 +34,7 @@ async function buildFixtureDb(): Promise<string> {
 
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-tiger-"))
-	dbPath = await buildFixtureDb()
+	dbPath = await buildFixtureDB()
 })
 
 afterEach(async () => {

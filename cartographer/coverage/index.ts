@@ -81,7 +81,7 @@ function fogFill(id: string, fogProperty: "fog" | "fog_opt"): FillLayerSpecifica
 
 /**
  * The two default-off fog fills (optimistic + honest). Plain MapLibre specs — the demo adds them
- * imperatively on map-load with a `beforeId` of the first symbol layer, so the fog sits beneath place
+ * imperatively on map-load with a `beforeID` of the first symbol layer, so the fog sits beneath place
  * labels but above basemap geometry (roads/water vanish under fog where we have no data).
  */
 export const CoverageLayers: FillLayerSpecification[] = [

@@ -12,7 +12,7 @@
 
 import { parseArgs } from "node:util"
 
-import { buildTimezoneDb } from "./build.js"
+import { buildTimezoneDB } from "./build.js"
 import { offsetSecForTimezone, TimezoneLookup } from "./index.js"
 
 if (process.argv[2] === "build") {
@@ -25,7 +25,7 @@ if (process.argv[2] === "build") {
 		console.error("Usage: mailwoman-timezone build --geojson <path> --out <db>")
 		process.exit(1)
 	}
-	const { features } = buildTimezoneDb(values.geojson, values.out)
+	const { features } = buildTimezoneDB(values.geojson, values.out)
 	console.error(`built ${values.out} (${features} features)`)
 } else {
 	// Hand-parse so negative longitudes (which look like options to parseArgs) work as positionals.

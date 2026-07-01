@@ -149,7 +149,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 			// Pass 1: full walk. We keep every record whose placetype maps to a ComponentTag — the
 			// postcode adapter needs locality / region / country admin records in the index so it
 			// can resolve postcode ancestry, even though it only emits rows for postcode records.
-			const byId = new Map<number, WOFRecord>()
+			const byID = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
 				if (opts.signal?.aborted) return
@@ -157,18 +157,18 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 				if (opts.country && rec.country !== opts.country) continue
 
 				if (!placetypeToTag(rec.placetype)) continue
-				byId.set(rec.id, rec)
+				byID.set(rec.id, rec)
 			}
 
-			const ancestry = buildAncestryIndex(byId)
+			const ancestry = buildAncestryIndex(byID)
 
 			// Pass 2: emit postcode rows only, sorted by id for determinism.
-			const ids = [...byId.keys()].sort((a, b) => a - b)
+			const ids = [...byID.keys()].sort((a, b) => a - b)
 			let emitted = 0
 
 			for (const id of ids) {
 				if (opts.signal?.aborted) return
-				const rec = byId.get(id)!
+				const rec = byID.get(id)!
 
 				if (placetypeToTag(rec.placetype) !== "postcode") continue
 

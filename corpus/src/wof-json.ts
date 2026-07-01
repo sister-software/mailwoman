@@ -113,8 +113,8 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	if (!feature || feature.type !== "Feature" || !feature.properties) return null
 	const props = feature.properties
 
-	const rawId = typeof feature.id === "number" ? feature.id : props["wof:id"]
-	const id = typeof rawId === "number" ? rawId : typeof rawId === "string" ? Number(rawId) : NaN
+	const rawID = typeof feature.id === "number" ? feature.id : props["wof:id"]
+	const id = typeof rawID === "number" ? rawID : typeof rawID === "string" ? Number(rawID) : NaN
 
 	if (!Number.isFinite(id)) return null
 
@@ -202,21 +202,21 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
  * at the first missing link. A cycle guard halts at any re-visit (defensive — WOF data is acyclic by construction but
  * corrupt fixtures shouldn't infinite-loop the adapter).
  *
- * Records whose ancestors aren't in `byId` (e.g. an FR locality whose region wasn't included in the cloned repo set)
+ * Records whose ancestors aren't in `byID` (e.g. an FR locality whose region wasn't included in the cloned repo set)
  * get a shorter chain; the variant emission gracefully degrades.
  */
 export type AncestryIndex = Map<number, WOFRecord[]>
 
-export function buildAncestryIndex(byId: Map<number, WOFRecord>): AncestryIndex {
+export function buildAncestryIndex(byID: Map<number, WOFRecord>): AncestryIndex {
 	const index: AncestryIndex = new Map()
 
-	for (const [id, rec] of byId) {
+	for (const [id, rec] of byID) {
 		const chain: WOFRecord[] = []
 		const guard = new Set<number>([id])
 		let cur: number | null = rec.parent_id
 
 		while (cur !== null && cur > 0) {
-			const parent = byId.get(cur)
+			const parent = byID.get(cur)
 
 			if (!parent) break
 

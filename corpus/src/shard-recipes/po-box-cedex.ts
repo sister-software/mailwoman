@@ -45,7 +45,7 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
 } from "../synthesize-po-box.js"
-import { makeMulberry32, shardSourceId, type CanonicalShardRow, type ShardRecipe } from "./scaffold.js"
+import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.js"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
@@ -442,9 +442,9 @@ function makeAuNzPoBoxPhrase(
 	const phrase = `${caseDial(random, leader)} ${num}`
 	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the AU
 	// AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
-	const cleanId = validate === isNzDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
+	const cleanID = validate === isNzDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
 
-	if (cleanId.test(num) && !validate(phrase)) {
+	if (cleanID.test(num) && !validate(phrase)) {
 		throw new Error(`generated a phrase the codex matcher rejects: "${phrase}"`)
 	}
 
@@ -806,7 +806,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				country,
 				locale,
 				source,
-				source_id: shardSourceId(source, components),
+				source_id: shardSourceID(source, components),
 				corpus_version: "0.4.0",
 				license:
 					country === "CA"

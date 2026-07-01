@@ -64,7 +64,7 @@ export function applyRuleArbitration(tree: AddressTree, ruleProposals: readonly 
 			node.tag = hit.component
 			node.source = "rule"
 			node.confidence = hit.confidence
-			node.sourceId = hit.source_id
+			node.sourceID = hit.source_id
 		}
 
 		for (const child of node.children) relabel(child)
@@ -97,7 +97,7 @@ export function applyRuleArbitration(tree: AddressTree, ruleProposals: readonly 
 			confidence: p.confidence,
 			children: [],
 			source: p.source,
-			sourceId: p.source_id,
+			sourceID: p.source_id,
 		})
 		neuralTags.add(p.component) // a tag is added at most once
 		neuralSpans.push({ start: p.span.start, end: p.span.end })

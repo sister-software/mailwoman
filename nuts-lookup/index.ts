@@ -49,7 +49,7 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 /**
  * Derive the nested NUTS levels from a NUTS id (`"DE111"` → `{ level1:"DE1", level2:"DE11", level3:"DE111" }`).
  */
-export function nutsFromId(id: string): Nuts {
+export function nutsFromID(id: string): Nuts {
 	const nuts: Nuts = {}
 
 	if (id.length >= 3) nuts.level1 = id.slice(0, 3)
@@ -69,7 +69,7 @@ export class NutsLookup {
 	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
 		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
 		this.#byLevelBox = this.#db.prepare(
-			`SELECT nutsId, geom FROM nuts_regions
+			`SELECT nutsID, geom FROM nuts_regions
 			 WHERE level = ? AND minLat <= ? AND maxLat >= ? AND minLon <= ? AND maxLon >= ?`
 		)
 	}
@@ -79,10 +79,10 @@ export class NutsLookup {
 	 */
 	find(lat: number, lon: number): Nuts | null {
 		for (const level of [3, 2, 1]) {
-			const rows = this.#byLevelBox.all(level, lat, lat, lon, lon) as Array<{ nutsId: string; geom: string }>
+			const rows = this.#byLevelBox.all(level, lat, lat, lon, lon) as Array<{ nutsID: string; geom: string }>
 
 			for (const row of rows) {
-				if (pointInMultiPolygon(lon, lat, JSON.parse(row.geom) as MultiPolygonCoords)) return nutsFromId(row.nutsId)
+				if (pointInMultiPolygon(lon, lat, JSON.parse(row.geom) as MultiPolygonCoords)) return nutsFromID(row.nutsID)
 			}
 		}
 

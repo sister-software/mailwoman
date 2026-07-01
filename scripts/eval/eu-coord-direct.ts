@@ -98,8 +98,8 @@ for (const r of rows) {
 	// Collect every resolved node carrying a coordinate, with its placetype.
 	const nodes: { pt: string; name?: string; lat: number; lon: number }[] = []
 	const visit = (n: AddressNode): void => {
-		if (typeof n.lat === "number" && typeof n.lon === "number" && (n.placeId || n.sourceId)) {
-			nodes.push({ pt: String(n.sourceId ?? "").split(":")[0]!, name: n.value, lat: n.lat, lon: n.lon })
+		if (typeof n.lat === "number" && typeof n.lon === "number" && (n.placeID || n.sourceID)) {
+			nodes.push({ pt: String(n.sourceID ?? "").split(":")[0]!, name: n.value, lat: n.lat, lon: n.lon })
 		}
 
 		for (const c of n.children ?? []) visit(c)

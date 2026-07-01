@@ -27,7 +27,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
@@ -94,7 +94,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 							components: aligned,
 							country: cc,
 							source: GEONAMES_POSTAL_ADAPTER_ID,
-							source_id: `${stableSourceId(GEONAMES_POSTAL_ADAPTER_ID, aligned)}-${v.slot}`,
+							source_id: `${stableSourceID(GEONAMES_POSTAL_ADAPTER_ID, aligned)}-${v.slot}`,
 							corpus_version: "",
 							license: GEONAMES_POSTAL_DEFAULT_LICENSE,
 						}

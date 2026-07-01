@@ -34,7 +34,7 @@ test("toGeoJSON: entities with no resolved coordinate are omitted", () => {
 		entity({ id: "no-coord" }), // coordinate undefined
 	])
 	expect(fc.features).toHaveLength(1)
-	expect(fc.features[0]!.properties.entityId).toBe("has-coord")
+	expect(fc.features[0]!.properties.entityID).toBe("has-coord")
 })
 
 test("toGeoJSON: properties carry record count, cohesion, and DISTINCT, SORTED sources", () => {

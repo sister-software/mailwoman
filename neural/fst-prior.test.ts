@@ -15,10 +15,10 @@ function labelCol(label: string): number {
 
 function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 	const states = new Map<string, { id: number; entries: FSTPlaceEntryLike[] }>()
-	let nextId = 1
+	let nextID = 1
 
 	for (const [path, places] of entries) {
-		states.set(path, { id: nextId++, entries: places })
+		states.set(path, { id: nextID++, entries: places })
 	}
 
 	return {
@@ -26,11 +26,11 @@ function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 			const key = tokens.join(" ")
 			const state = states.get(key)
 
-			if (state) return { stateId: state.id, accepted: state.entries.length > 0, depth: tokens.length }
+			if (state) return { stateID: state.id, accepted: state.entries.length > 0, depth: tokens.length }
 
 			for (const [path] of states) {
 				if (path.startsWith(key + " ") || path === key) {
-					return { stateId: 0, accepted: false, depth: tokens.length }
+					return { stateID: 0, accepted: false, depth: tokens.length }
 				}
 			}
 
@@ -45,18 +45,18 @@ function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 					const exactState = states.get(subpath)
 
 					if (exactState) {
-						return { stateId: exactState.id, accepted: exactState.entries.length > 0, depth: prev.depth + 1 }
+						return { stateID: exactState.id, accepted: exactState.entries.length > 0, depth: prev.depth + 1 }
 					}
 
-					return { stateId: 0, accepted: false, depth: prev.depth + 1 }
+					return { stateID: 0, accepted: false, depth: prev.depth + 1 }
 				}
 			}
 
 			return null
 		},
-		accepting(stateId: number): FSTPlaceEntryLike[] {
+		accepting(stateID: number): FSTPlaceEntryLike[] {
 			for (const [, state] of states) {
-				if (state.id === stateId) return state.entries
+				if (state.id === stateID) return state.entries
 			}
 
 			return []

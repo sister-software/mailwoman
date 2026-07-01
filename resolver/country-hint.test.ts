@@ -59,7 +59,7 @@ const AUGUSTA_IT: ResolvedPlace = {
 	exactMatch: true,
 }
 
-/** Backend filtered by name + placetype + country + parentId. Regions match any 2-letter token (abbrev). */
+/** Backend filtered by name + placetype + country + parentID. Regions match any 2-letter token (abbrev). */
 function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 	return {
 		async findPlace(query) {
@@ -70,7 +70,7 @@ function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 				.filter((p) => p.name.toLowerCase() === text || (p.placetype === "region" && text.length === 2))
 				.filter((p) => !types || types.includes(p.placetype))
 				.filter((p) => !query.country || p.country === query.country)
-				.filter((p) => query.parentId === undefined || p.parent_id === query.parentId)
+				.filter((p) => query.parentID === undefined || p.parent_id === query.parentID)
 				.slice(0, query.limit ?? 5)
 		},
 	}

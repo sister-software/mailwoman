@@ -220,7 +220,7 @@ interface Flag {
 	shardCount?: number
 	corpusCount?: number
 	detail: string
-	ruleId?: string
+	ruleID?: string
 }
 
 function checkDistributionOutliers(shard: ShardStats, corpus: CorpusStats): Flag[] {
@@ -336,7 +336,7 @@ function checkRules(shard: ShardStats, rulesFile: LintRulesFile): Flag[] {
 					flags.push({
 						check: "anti-pattern-rule",
 						severity: rule.severity,
-						ruleId: rule.id,
+						ruleID: rule.id,
 						token,
 						shardLabel: label,
 						shardCount: count,

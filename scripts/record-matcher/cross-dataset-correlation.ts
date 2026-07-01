@@ -150,7 +150,7 @@ const SPECS: SourceSpec[] = [
 		source: "fcc-rhc-commitments",
 		path: `${S}/fcc-rhc_commitments-disbursements_form462-466-466a_20260615.tsv`,
 		mapping: {
-			id: "hcpId",
+			id: "hcpID",
 			organization: "hcpName",
 			address: ["hcpStreet", "hcpCity", "hcpState", "hcpZip"],
 			source: "fcc-rhc-commitments",
@@ -165,7 +165,7 @@ const SPECS: SourceSpec[] = [
 
 				if (id && state === STATE)
 					out.push({
-						hcpId: `${role}-${id}`,
+						hcpID: `${role}-${id}`,
 						hcpName: norm(r[`${prefix} HCP Name`]),
 						hcpStreet: norm(r[`${prefix} HCP Street`]),
 						hcpCity: norm(r[`${prefix} HCP City`]),

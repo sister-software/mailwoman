@@ -46,7 +46,7 @@ afterEach(() => {
 	while (openDbs.length) openDbs.pop()!.close()
 })
 
-function situsDb(): DatabaseSync {
+function situsDB(): DatabaseSync {
 	return db((d) => {
 		d.exec(
 			"CREATE TABLE address_point(street_norm TEXT, street_key TEXT, number TEXT, unit TEXT, postcode TEXT, locality_norm TEXT, street_raw TEXT, lat REAL, lon REAL, source TEXT, release TEXT)"
@@ -58,7 +58,7 @@ function situsDb(): DatabaseSync {
 	})
 }
 
-function interpDb(): DatabaseSync {
+function interpDB(): DatabaseSync {
 	return db((d) => {
 		d.exec(
 			"CREATE TABLE street_segment(street_norm TEXT, from_hn INTEGER, to_hn INTEGER, min_hn INTEGER, max_hn INTEGER, parity TEXT, postcode TEXT, geometry TEXT, source TEXT, release TEXT)"
@@ -84,19 +84,19 @@ function interpDb(): DatabaseSync {
 
 describe("HttpvfsAddressPointLookup", () => {
 	test("finds an exact point by postcode + street + number", async () => {
-		const lk = new HttpvfsAddressPointLookup(stubWorker(situsDb()))
+		const lk = new HttpvfsAddressPointLookup(stubWorker(situsDB()))
 		const hit = await lk.find({ street: "Main St", number: "100", postcode: "10001" })
 		expect(hit).toMatchObject({ lat: 40.75, lon: -73.99, source: "overture:test" })
 	})
 
 	test("falls back to locality scope when no postcode hit", async () => {
-		const lk = new HttpvfsAddressPointLookup(stubWorker(situsDb()))
+		const lk = new HttpvfsAddressPointLookup(stubWorker(situsDB()))
 		const hit = await lk.find({ street: "Main St", number: "100", locality: "New York" })
 		expect(hit?.lat).toBe(40.75)
 	})
 
 	test("returns null on a miss and on a tableless shard", async () => {
-		const lk = new HttpvfsAddressPointLookup(stubWorker(situsDb()))
+		const lk = new HttpvfsAddressPointLookup(stubWorker(situsDB()))
 		expect(await lk.find({ street: "Main St", number: "999", postcode: "10001" })).toBeNull()
 		const empty = new HttpvfsAddressPointLookup(stubWorker(db((d) => d.exec("CREATE TABLE _x(a)"))))
 		expect(await empty.find({ street: "Main St", number: "100", postcode: "10001" })).toBeNull()
@@ -105,7 +105,7 @@ describe("HttpvfsAddressPointLookup", () => {
 
 describe("HttpvfsInterpolator", () => {
 	test("interpolates a house number within a segment range", async () => {
-		const lk = new HttpvfsInterpolator(stubWorker(interpDb()))
+		const lk = new HttpvfsInterpolator(stubWorker(interpDB()))
 		const hit = await lk.find({ street: "Main St", number: "150", postcode: "10001" }) // even, mid-range
 		expect(hit?.interpolated).toBe(true)
 		expect(hit?.method).toBe("tiger_range")
@@ -117,7 +117,7 @@ describe("HttpvfsInterpolator", () => {
 	})
 
 	test("rejects non-numeric house numbers and tableless shards", async () => {
-		const lk = new HttpvfsInterpolator(stubWorker(interpDb()))
+		const lk = new HttpvfsInterpolator(stubWorker(interpDB()))
 		expect(await lk.find({ street: "Main St", number: "12B", postcode: "10001" })).toBeNull()
 		const empty = new HttpvfsInterpolator(stubWorker(db((d) => d.exec("CREATE TABLE _x(a)"))))
 		expect(await empty.find({ street: "Main St", number: "150", postcode: "10001" })).toBeNull()

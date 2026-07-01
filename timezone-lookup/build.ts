@@ -20,7 +20,7 @@ interface TimezoneFeature {
 }
 
 /** Read the GeoJSON at `geojsonPath` and write the polygon DB to `dbPath` (overwriting its table). */
-export function buildTimezoneDb(geojsonPath: string, dbPath: string): { features: number } {
+export function buildTimezoneDB(geojsonPath: string, dbPath: string): { features: number } {
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: TimezoneFeature[] }
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS timezone_polygons")

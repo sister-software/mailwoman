@@ -49,10 +49,10 @@ async function main() {
 	const opts = { defaultCountry: cc }
 	const didResolve = async (tree: unknown): Promise<boolean> => {
 		const r = await resolver.resolveTree(tree as never, opts)
-		const has = (n: { placeId?: string; children: unknown[] }): boolean =>
-			!!n.placeId?.startsWith("wof:") || (n.children as { placeId?: string; children: unknown[] }[]).some(has)
+		const has = (n: { placeID?: string; children: unknown[] }): boolean =>
+			!!n.placeID?.startsWith("wof:") || (n.children as { placeID?: string; children: unknown[] }[]).some(has)
 
-		return (r.roots as { placeId?: string; children: unknown[] }[]).some(has)
+		return (r.roots as { placeID?: string; children: unknown[] }[]).some(has)
 	}
 
 	let diff = 0,

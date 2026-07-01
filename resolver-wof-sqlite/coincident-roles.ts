@@ -46,7 +46,7 @@ export const COINCIDENT_ROLES_TABLE = "coincident_roles"
 
 /** A place that plays multiple admin roles — one row of the relation, keyed by `admin_id`. */
 export interface CoincidentRole {
-	localityId: number
+	localityID: number
 	relationshipType: "city-state" | "capital-seat" | "consolidated-county"
 	adminPlacetype: string
 	distanceKm: number
@@ -221,7 +221,7 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
 
 	for (const r of rows) {
 		const entry: CoincidentRole = {
-			localityId: r.locality_id,
+			localityID: r.locality_id,
 			relationshipType: r.relationship_type,
 			adminPlacetype: r.admin_placetype,
 			distanceKm: r.distance_km,

@@ -135,7 +135,7 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 }
 
 /** WOF id → repo-relative GeoJSON path: chunk the id into groups of 3, then `<id>.geojson`. */
-function wofIdPath(id: number): string {
+function wofIDPath(id: number): string {
 	const s = String(id)
 	const parts: string[] = []
 
@@ -166,7 +166,7 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 	db.exec("BEGIN")
 
 	for (const row of unplaced) {
-		const file = join(reposDir, `whosonfirst-data-postalcode-${row.country.toLowerCase()}`, "data", wofIdPath(row.id))
+		const file = join(reposDir, `whosonfirst-data-postalcode-${row.country.toLowerCase()}`, "data", wofIDPath(row.id))
 		let hierarchy: Record<string, number> | undefined
 
 		try {
@@ -179,10 +179,10 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 
 		// Finest-available ancestor: county, then region.
 		for (const key of ["county_id", "region_id"] as const) {
-			const ancestorId = hierarchy[key]
+			const ancestorID = hierarchy[key]
 
-			if (!ancestorId) continue
-			const c = adminCentroid.get(ancestorId) as { lat: number; lon: number } | undefined
+			if (!ancestorID) continue
+			const c = adminCentroid.get(ancestorID) as { lat: number; lon: number } | undefined
 
 			if (c) {
 				update.run(c.lat, c.lon, c.lat, c.lat, c.lon, c.lon, row.id)

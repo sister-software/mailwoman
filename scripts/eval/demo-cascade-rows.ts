@@ -102,10 +102,10 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			}
 		}
 
-		const hasId = expect.id !== undefined
+		const hasID = expect.id !== undefined
 		const hasAnchor = expect.anchor_centroid !== undefined
 
-		if (hasId === hasAnchor) {
+		if (hasID === hasAnchor) {
 			throw new SmokeRowError(
 				sourceLabel,
 				rowNumber,
@@ -114,7 +114,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			)
 		}
 
-		if (hasId && (typeof expect.id !== "number" || !Number.isInteger(expect.id) || expect.id <= 0)) {
+		if (hasID && (typeof expect.id !== "number" || !Number.isInteger(expect.id) || expect.id <= 0)) {
 			throw new SmokeRowError(sourceLabel, rowNumber, "`expect.id` must be a positive integer WOF id", line)
 		}
 

@@ -33,7 +33,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -52,7 +52,7 @@ interface HrsaSiteRow {
 	"Site City": string
 	"Site State Abbreviation": string
 	"Site Postal Code": string
-	/** Optional. Falls back to `stableSourceId` derived from components when missing. */
+	/** Optional. Falls back to `stableSourceID` derived from components when missing. */
 	"Site ID"?: string
 }
 
@@ -162,10 +162,10 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 
 					if (Object.keys(aligned).length === 0) continue
 
-					const siteId = (record["Site ID"] ?? "").trim()
-					const sourceId = siteId
-						? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteId}`
-						: stableSourceId(USGOV_HRSA_FQHC_ADAPTER_ID, aligned)
+					const siteID = (record["Site ID"] ?? "").trim()
+					const sourceID = siteID
+						? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`
+						: stableSourceID(USGOV_HRSA_FQHC_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -173,7 +173,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 						country: "US",
 						locale: "en-US",
 						source: USGOV_HRSA_FQHC_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 					}

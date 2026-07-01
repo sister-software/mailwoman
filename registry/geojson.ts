@@ -39,7 +39,7 @@ function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoDa
 			coordinates: [entity.coordinate!.longitude, entity.coordinate!.latitude],
 		},
 		properties: {
-			entityId: entity.id,
+			entityID: entity.id,
 			recordCount: entity.records.length,
 			cohesion: entity.cohesion,
 			sourceIds: entity.records.map((r) => r.id),

@@ -54,14 +54,14 @@ function withAugmentation(
 	newRaw: string,
 	newComponents: ComponentDict
 ): CanonicalRow {
-	const baseId = source.synth?.base_source_id ?? source.source_id
+	const baseID = source.synth?.base_source_id ?? source.source_id
 
 	return {
 		...source,
 		raw: newRaw,
 		components: newComponents,
 		source_id: `${source.source_id}+${method}`,
-		synth: { method, base_source_id: baseId },
+		synth: { method, base_source_id: baseID },
 	}
 }
 
@@ -830,7 +830,7 @@ export function composeAdversarialRow(
 		...addrTags.map((tag, i) => ({ tag, start: addrStarts[i]! + offset, end: addrEnds[i]! + offset })),
 	]
 
-	const baseSourceId = address.synth?.base_source_id ?? address.source_id
+	const baseSourceID = address.synth?.base_source_id ?? address.source_id
 	const method = `compose:${options.pattern}`
 
 	const composed: LabeledRow = {
@@ -842,7 +842,7 @@ export function composeAdversarialRow(
 		source_id: `${address.source_id}+${method}`,
 		corpus_version: address.corpus_version,
 		license: address.license,
-		synth: { method, base_source_id: baseSourceId },
+		synth: { method, base_source_id: baseSourceID },
 		tokens,
 		labels,
 		span_starts: spans.map((s) => s.start),

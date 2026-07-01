@@ -5,7 +5,7 @@
  *
  *   #267 — `ingestGeonamesAliases({ includeAdmin: true })` folds the GeoNames A-class admin (PCLI country
  *   + ADM1 regions) alongside the P-class localities and links the locality→region→country ancestry, so
- *   `parentId` scoping and adminCoherence reach the gap countries ("Tbilisi, GE" can resolve).
+ *   `parentID` scoping and adminCoherence reach the gap countries ("Tbilisi, GE" can resolve).
  */
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
@@ -86,7 +86,7 @@ test("folds the country (PCLI) and region (ADM1) as admin spr rows", () => {
 	expect(region?.name).toBe("Tbilisi")
 })
 
-test("links the locality → region → country ancestry so parentId scoping reaches it", () => {
+test("links the locality → region → country ancestry so parentID scoping reaches it", () => {
 	const loc = db.prepare("SELECT id, parent_id FROM spr WHERE placetype='locality' AND country='GE'").get() as Row
 	const region = db.prepare("SELECT id FROM spr WHERE placetype='region' AND country='GE'").get() as Row
 	const country = db.prepare("SELECT id FROM spr WHERE placetype='country' AND country='GE'").get() as Row

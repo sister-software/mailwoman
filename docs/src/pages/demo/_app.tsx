@@ -43,7 +43,7 @@ import {
 	runCascade,
 } from "../../shared/demo-helpers.ts"
 import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
-import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
+import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 import {
 	adminGazetteerURL,
 	assetURL,
@@ -87,8 +87,8 @@ import {
 	drawRadiusCircle,
 	fetchBasemapSource,
 	geomBounds,
-	loadPolygonDb,
-	type PolygonDb,
+	loadPolygonDB,
+	type PolygonDB,
 	TILE_WORKER_URL,
 } from "./_map-helpers.ts"
 
@@ -190,7 +190,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	// first resolve, reset when the selected version changes. Held as the in-flight promise so concurrent
 	// resolves share one fetch.
 	const anchorLookupRef = useRef<Map<string, { lat: number; lon: number }> | null>(null)
-	const polygonDbRef = useRef<Promise<PolygonDb> | null>(null)
+	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	// Street tier (#377): per-state situs/interp httpvfs lookups, lazy-loaded by parsed region and
 	// cached. Held as the in-flight promise so a fast second submit on the same state shares one load.
 	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
@@ -220,7 +220,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	useEffect(() => {
 		if (!selectedVersion) return
 
-		pruneDbRangeCache(selectedVersion)
+		pruneDBRangeCache(selectedVersion)
 	}, [selectedVersion])
 
 	// Mount: fetch the releases manifest + set up the map.
@@ -373,7 +373,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				setLookup(null)
 				setLookupLoader(null)
 				lookupPromiseRef.current = null
-				polygonDbRef.current = null
+				polygonDBRef.current = null
 				setResult(null)
 				setCalibrator(null)
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
@@ -408,8 +408,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				if (release?.hasWOFDb) {
 					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
 						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
-						const { loadHttpvfsDb, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(adminGazetteerURL(), sqljsBaseURL)
+						const { loadHttpvfsDB, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
+						const worker = await loadHttpvfsDB(adminGazetteerURL(), sqljsBaseURL)
 						const wofLookup = new WOFCandidateTableLookup(worker)
 						// Warm the schema/FTS/abbr/dual-role pages now (idle or first submit) so the first
 						// real query starts from a warm page cache; report live transfer while it runs.
@@ -606,13 +606,13 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 			if (release?.hasPolygons && selectedVersion && candidate.id) {
 				try {
-					if (!polygonDbRef.current) {
-						polygonDbRef.current = loadPolygonDb(
+					if (!polygonDBRef.current) {
+						polygonDBRef.current = loadPolygonDB(
 							assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"),
 							sqljsBaseURL
 						)
 					}
-					const geom = await (await polygonDbRef.current).get(candidate.id)
+					const geom = await (await polygonDBRef.current).get(candidate.id)
 
 					if (geom) {
 						drawPlaceGeometry(map, geom)
@@ -631,7 +631,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					// Postcodes (point geometry) and any id absent from the polygon DB land here — fall
 					// through to the bbox. Null the ref so a transient fetch failure can retry next resolve.
 					console.error("Crisp polygon unavailable; falling back to bbox", err)
-					polygonDbRef.current = null
+					polygonDBRef.current = null
 				}
 			}
 
@@ -703,11 +703,11 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 			if (!p) {
 				p = (async () => {
-					const { loadHttpvfsDb } = await import("../../shared/httpvfs-resolver")
+					const { loadHttpvfsDB } = await import("../../shared/httpvfs-resolver")
 					const { HttpvfsAddressPointLookup, HttpvfsInterpolator } = await import("../../shared/httpvfs-street")
 					const [situsW, interpW] = await Promise.all([
-						loadHttpvfsDb(streetShardURL(slug, "situs"), sqljsBaseURL),
-						loadHttpvfsDb(streetShardURL(slug, "interp"), sqljsBaseURL),
+						loadHttpvfsDB(streetShardURL(slug, "situs"), sqljsBaseURL),
+						loadHttpvfsDB(streetShardURL(slug, "interp"), sqljsBaseURL),
 					])
 
 					return { situs: new HttpvfsAddressPointLookup(situsW), interp: new HttpvfsInterpolator(interpW) }
@@ -738,24 +738,24 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				if (cancelled) return
 				const release = manifest?.releases.find((r) => r.version === selectedVersion)
 
-				if (release?.hasPolygons && selectedVersion && !polygonDbRef.current) {
-					const loading = loadPolygonDb(assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseURL)
-					polygonDbRef.current = loading
+				if (release?.hasPolygons && selectedVersion && !polygonDBRef.current) {
+					const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseURL)
+					polygonDBRef.current = loading
 					loading.catch(() => {
 						// Transient failure — null the ref so the next resolve retries.
-						if (polygonDbRef.current === loading) polygonDbRef.current = null
+						if (polygonDBRef.current === loading) polygonDBRef.current = null
 					})
 				}
 			})
 		}
 		const hasIdleCallback = typeof window.requestIdleCallback === "function" // Safari ships without it
-		const idleId = hasIdleCallback ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 1500)
+		const idleID = hasIdleCallback ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 1500)
 
 		return () => {
 			cancelled = true
 
-			if (hasIdleCallback) window.cancelIdleCallback(idleId)
-			else window.clearTimeout(idleId)
+			if (hasIdleCallback) window.cancelIdleCallback(idleID)
+			else window.clearTimeout(idleID)
 		}
 	}, [lookupLoader, lookup, ensureLookup, manifest, selectedVersion, sqljsBaseURL])
 
@@ -993,11 +993,11 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// only cold work left. The idle warm-up usually got here first; this covers a fast submit.
 				const releaseForResolve = manifest?.releases.find((r) => r.version === selectedVersion)
 
-				if (releaseForResolve?.hasPolygons && selectedVersion && !polygonDbRef.current) {
-					const loading = loadPolygonDb(assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseURL)
-					polygonDbRef.current = loading
+				if (releaseForResolve?.hasPolygons && selectedVersion && !polygonDBRef.current) {
+					const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseURL)
+					polygonDBRef.current = loading
 					loading.catch(() => {
-						if (polygonDbRef.current === loading) polygonDbRef.current = null
+						if (polygonDBRef.current === loading) polygonDBRef.current = null
 					})
 				}
 

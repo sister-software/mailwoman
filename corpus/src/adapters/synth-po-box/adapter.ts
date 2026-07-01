@@ -23,7 +23,7 @@
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import {
 	countryToLocale,
 	REGION_OPTIONAL_LOCALES,
@@ -133,8 +133,8 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					if (!synth) continue
 
 					// Include `v` in dependent_locality slot to vary the digest across variants;
-					// stableSourceId only accepts ComponentTag keys.
-					const sourceId = stableSourceId(SYNTH_PO_BOX_ADAPTER_ID, {
+					// stableSourceID only accepts ComponentTag keys.
+					const sourceID = stableSourceID(SYNTH_PO_BOX_ADAPTER_ID, {
 						locality: `${input.locality}#${v}`,
 						region: input.region,
 						postcode: input.postcode,
@@ -147,7 +147,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						country: input.country,
 						locale: synth.locale,
 						source: SYNTH_PO_BOX_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: SYNTH_PO_BOX_LICENSE,
 					}
@@ -170,7 +170,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					random() < militaryRatio
 				) {
 					const mil = synthesizeMilitaryPoBoxRow({ random })
-					const sourceId = stableSourceId(SYNTH_PO_BOX_ADAPTER_ID, {
+					const sourceID = stableSourceID(SYNTH_PO_BOX_ADAPTER_ID, {
 						po_box: `${mil.components.po_box}#mil${militarySeq++}`,
 						locality: mil.components.locality!,
 						region: mil.components.region!,
@@ -182,7 +182,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						country: "US",
 						locale: mil.locale,
 						source: SYNTH_PO_BOX_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: SYNTH_PO_BOX_LICENSE,
 					}

@@ -126,24 +126,24 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
-			out.push({ id: Number(n.placeId.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
+			out.push({ id: Number(n.placeID.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
 
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
 			tag: string
-			placeId?: string
-			sourceId?: string
+			placeID?: string
+			sourceID?: string
 			lat?: number
 			lon?: number
 			metadata?: Record<string, unknown>
 		}>) {
-			if (interp.placeId?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
-				const placetype = String(interp.sourceId ?? interp.tag).split(":")[0] ?? ""
+			if (interp.placeID?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
+				const placetype = String(interp.sourceID ?? interp.tag).split(":")[0] ?? ""
 				const name = String(interp.metadata?.["resolver_name"] ?? n.value ?? "")
-				out.push({ id: Number(interp.placeId.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
+				out.push({ id: Number(interp.placeID.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
 			}
 		}
 
@@ -323,9 +323,9 @@ async function main(): Promise<void> {
 		return toks.map((t) => `"${t}"`).join(" ")
 	}
 	// region abbrev (OA gold) -> WOF region id, resolved once per state via the resolver path.
-	const regionIdCache = new Map<string, number | null>()
-	const regionIdFor = async (abbrev: string): Promise<number | null> => {
-		if (regionIdCache.has(abbrev)) return regionIdCache.get(abbrev)!
+	const regionIDCache = new Map<string, number | null>()
+	const regionIDFor = async (abbrev: string): Promise<number | null> => {
+		if (regionIDCache.has(abbrev)) return regionIDCache.get(abbrev)!
 		const rNode: AddressNode = {
 			tag: "region" as never,
 			value: abbrev,
@@ -337,7 +337,7 @@ async function main(): Promise<void> {
 		const out = await resolver.resolveTree({ raw: abbrev, roots: [rNode] }, resolveOpts)
 		const reg = collectResolved(out).find((r) => r.placetype === "region")
 		const id = reg ? reg.id : null
-		regionIdCache.set(abbrev, id)
+		regionIDCache.set(abbrev, id)
 
 		return id
 	}
@@ -390,7 +390,7 @@ async function main(): Promise<void> {
 		goldLoc: string
 		goldRegion: string
 		resolvedLoc: string | null
-		resolvedLocId: number | null
+		resolvedLocID: number | null
 		errKm: number | null
 		note: string
 	}
@@ -493,14 +493,14 @@ async function main(): Promise<void> {
 				goldLoc,
 				goldRegion: goldReg,
 				resolvedLoc: oLocNode?.name ?? null,
-				resolvedLocId: oLocNode?.id ?? null,
+				resolvedLocID: oLocNode?.id ?? null,
 				errKm: oBest ? haversineKm(oBest.lat, oBest.lon, row.lat, row.lon) : null,
 				note: "",
 			}
 			const ftsQ = sanitizeFTS(goldLoc)
 			let inRegionByName: { id: number; name: string; lat: number; lon: number } | null = null
 			let anyByName = false
-			const regionId = await regionIdFor(goldReg)
+			const regionID = await regionIDFor(goldReg)
 
 			if (ftsQ) {
 				const cands = ftsStmt.all(ftsQ) as { id: number; name: string; placetype: string; lat: number; lon: number }[]
@@ -512,7 +512,7 @@ async function main(): Promise<void> {
 					if (!nameHits) continue
 					anyByName = true
 
-					if (regionId !== null && regionAncestorStmt.get(c.id, regionId)) {
+					if (regionID !== null && regionAncestorStmt.get(c.id, regionID)) {
 						if (!inRegionByName) inRegionByName = { id: c.id, name: c.name, lat: c.lat, lon: c.lon }
 					}
 				}
@@ -522,9 +522,9 @@ async function main(): Promise<void> {
 			const DEG = 0.18 // ~20 km bbox pre-filter at US latitudes
 			let nearest: { id: number; name: string; placetype: string; lat: number; lon: number; km: number } | null = null
 
-			if (regionId !== null) {
+			if (regionID !== null) {
 				const r = nearestInRegionStmt.get(
-					regionId,
+					regionID,
 					row.lat - DEG,
 					row.lat + DEG,
 					row.lon - DEG,
@@ -559,7 +559,7 @@ async function main(): Promise<void> {
 			if (inRegionByName) {
 				// gold name IS present in the gold region (locality/localadmin/borough), but the expanded oracle
 				// resolved a DIFFERENT instance (a same-name place elsewhere outranked it) or none — a RANKING miss.
-				const what = fail.resolvedLocId === null ? "picked none" : `picked #${fail.resolvedLocId} (${fail.resolvedLoc})`
+				const what = fail.resolvedLocID === null ? "picked none" : `picked #${fail.resolvedLocID} (${fail.resolvedLoc})`
 				fail.note = `gold name in-region as #${inRegionByName.id} (${inRegionByName.name}, ${haversineKm(inRegionByName.lat, inRegionByName.lon, row.lat, row.lon).toFixed(1)}km from gold pt); ${what}`
 				buckets.ranking.push(fail)
 			} else if (nearest && nearest.km <= NEAR_KM && isNameVariant(goldLoc, nearest.name)) {

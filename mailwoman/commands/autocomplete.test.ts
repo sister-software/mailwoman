@@ -45,10 +45,10 @@ function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 		const tokens = normalizeTokens(entry.name)
 
 		if (tokens.length === 0) continue
-		let stateId = 0
+		let stateID = 0
 
 		for (const t of tokens) {
-			const node = nodes[stateId]!
+			const node = nodes[stateID]!
 			let next = node.edges.get(t)
 
 			if (next === undefined) {
@@ -56,9 +56,9 @@ function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
-			stateId = next
+			stateID = next
 		}
-		const node = nodes[stateId]!
+		const node = nodes[stateID]!
 
 		if (!node.places.some((p) => p.wofID === entry.wofID)) {
 			node.places.push(entry)

@@ -54,7 +54,7 @@ const OptionsSchema = zod.object({
 
 export { ArgumentsSchema as args, OptionsSchema as options }
 
-function resolveAdminDbPath(options: zod.infer<typeof OptionsSchema>): string {
+function resolveAdminDBPath(options: zod.infer<typeof OptionsSchema>): string {
 	const path = options.adminDb ?? process.env["MAILWOMAN_WOF_ADMIN_DB"]
 
 	if (!path) {
@@ -68,7 +68,7 @@ function resolveAdminDbPath(options: zod.infer<typeof OptionsSchema>): string {
 	return path
 }
 
-function resolvePolygonsDbPath(options: zod.infer<typeof OptionsSchema>): string | undefined {
+function resolvePolygonsDBPath(options: zod.infer<typeof OptionsSchema>): string | undefined {
 	return options.polygonsDb ?? process.env["MAILWOMAN_WOF_POLYGONS_DB"]
 }
 
@@ -84,10 +84,10 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 		)
 	}
 
-	const adminDbPath = resolveAdminDbPath(options)
-	const polygonDbPath = resolvePolygonsDbPath(options)
+	const adminDBPath = resolveAdminDBPath(options)
+	const polygonDBPath = resolvePolygonsDBPath(options)
 
-	const geocoder = new mod.WOFReverseGeocoder({ adminDbPath, polygonDbPath })
+	const geocoder = new mod.WOFReverseGeocoder({ adminDBPath, polygonDBPath })
 
 	try {
 		const result = await geocoder.reverseGeocode(lat, lon)

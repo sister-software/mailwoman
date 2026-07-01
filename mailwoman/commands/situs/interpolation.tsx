@@ -370,10 +370,10 @@ function buildStateShard(
 	release: string,
 	force: boolean
 ): ShardBuildResult | null {
-	const outDb = path.join(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
+	const outDB = path.join(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
 
-	if (existsSync(outDb) && !force) {
-		console.error(`  [skip] ${stateAbbr}: shard already exists at ${outDb} (--force to rebuild)`)
+	if (existsSync(outDB) && !force) {
+		console.error(`  [skip] ${stateAbbr}: shard already exists at ${outDB} (--force to rebuild)`)
 
 		return null
 	}
@@ -393,7 +393,7 @@ function buildStateShard(
 			"--release",
 			release,
 			"--out",
-			outDb,
+			outDB,
 		],
 		{
 			stdio: ["ignore", "pipe", "pipe"],

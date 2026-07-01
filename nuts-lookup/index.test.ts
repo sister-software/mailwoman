@@ -8,12 +8,12 @@ import { DatabaseSync } from "node:sqlite"
 
 import { expect, test } from "vitest"
 
-import { makeNutsAnnotator, nutsFromId, NutsLookup, pointInMultiPolygon } from "./index.js"
+import { makeNutsAnnotator, nutsFromID, NutsLookup, pointInMultiPolygon } from "./index.js"
 
-test("nutsFromId: derives nested levels by prefix", () => {
-	expect(nutsFromId("DE300")).toEqual({ level1: "DE3", level2: "DE30", level3: "DE300" })
-	expect(nutsFromId("DE3")).toEqual({ level1: "DE3" })
-	expect(nutsFromId("DE")).toEqual({})
+test("nutsFromID: derives nested levels by prefix", () => {
+	expect(nutsFromID("DE300")).toEqual({ level1: "DE3", level2: "DE30", level3: "DE300" })
+	expect(nutsFromID("DE3")).toEqual({ level1: "DE3" })
+	expect(nutsFromID("DE")).toEqual({})
 })
 
 test("pointInMultiPolygon: inside vs outside", () => {
@@ -32,10 +32,10 @@ test("pointInMultiPolygon: inside vs outside", () => {
 	expect(pointInMultiPolygon(20, 20, square)).toBe(false)
 })
 
-function fixtureDb(): DatabaseSync {
+function fixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(
-		"CREATE TABLE nuts_regions (nutsId TEXT, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)"
+		"CREATE TABLE nuts_regions (nutsID TEXT, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)"
 	)
 	const ins = db.prepare("INSERT INTO nuts_regions VALUES (?,?,?,?,?,?,?)")
 	const square = JSON.stringify([
@@ -55,13 +55,13 @@ function fixtureDb(): DatabaseSync {
 }
 
 test("NutsLookup.find: deepest containing region → nested codes", () => {
-	const lookup = new NutsLookup({ database: fixtureDb() })
+	const lookup = new NutsLookup({ database: fixtureDB() })
 	expect(lookup.find(5, 5)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
 test("makeNutsAnnotator: fills nuts inside, abstains outside", () => {
-	const annotate = makeNutsAnnotator(new NutsLookup({ database: fixtureDb() }))
+	const annotate = makeNutsAnnotator(new NutsLookup({ database: fixtureDB() }))
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ nuts: { level1: "XX3", level2: "XX30", level3: "XX300" } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

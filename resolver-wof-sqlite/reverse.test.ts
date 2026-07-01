@@ -203,7 +203,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 		// the suite is skipped, and would try to open the (absent) DBs.
 		let rg: WOFReverseGeocoder
 		beforeAll(() => {
-			rg = new WOFReverseGeocoder({ adminDbPath: ADMIN_DB!, polygonDbPath: POLYGONS_DB! })
+			rg = new WOFReverseGeocoder({ adminDBPath: ADMIN_DB!, polygonDBPath: POLYGONS_DB! })
 		})
 		afterAll(() => rg?.close())
 

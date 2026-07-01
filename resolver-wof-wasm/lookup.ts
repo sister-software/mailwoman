@@ -6,7 +6,7 @@
  *   `WOFWasmPlaceLookup` — browser-side `PlaceLookup` backed by `@sqlite.org/sqlite-wasm`.
  *
  *   V1 scope: text + placetype + limit + country. The full ranking surface from
- *   `WOFSqlitePlaceLookup` (parentId descendant filter, near-proximity boost, bbox hard filter,
+ *   `WOFSqlitePlaceLookup` (parentID descendant filter, near-proximity boost, bbox hard filter,
  *   population-weighted ordering) is queued for v2 in the same PR series — see Phase B tracking
  *   issue #98. The v1 scope is the minimum that lets the public demo answer "type a US city /
  *   postcode, get a hit".
@@ -240,8 +240,8 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	 * `WOFSqlitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates the relation. Loaded once +
 	 * memoized (the relation is ~hundreds of rows).
 	 */
-	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
-		const id = typeof adminId === "number" ? adminId : Number(adminId)
+	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {
+		const id = typeof adminID === "number" ? adminID : Number(adminID)
 
 		if (!Number.isFinite(id)) return []
 
@@ -253,12 +253,12 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 			if (exists.length > 0) {
 				const rows = this.#db.selectObjects(
-					`SELECT cr.admin_id AS adminId, s.id AS id, s.name AS name, s.country AS country,
+					`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
 						s.latitude AS lat, s.longitude AS lon, cr.relationship_type AS relationshipType,
 						cr.locality_population AS population, cr.distance_km AS distanceKm
 					FROM coincident_roles cr JOIN spr s ON s.id = cr.locality_id`
 				) as Array<{
-					adminId: number
+					adminID: number
 					id: number
 					name: string
 					country: string
@@ -282,10 +282,10 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 						population: r.population,
 						distanceKm: r.distanceKm,
 					}
-					const list = map.get(r.adminId)
+					const list = map.get(r.adminID)
 
 					if (list) list.push(candidate)
-					else map.set(r.adminId, [candidate])
+					else map.set(r.adminID, [candidate])
 				}
 			}
 			this.#coincidentRolesCache = map

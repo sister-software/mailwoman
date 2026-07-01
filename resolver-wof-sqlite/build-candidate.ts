@@ -102,7 +102,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// assigned here; the rows are bulk-inserted via kdb once the passes have discovered every code. ---
 	const ccodes = new Map<string, number>()
 	const ptcodes = new Map<string, number>()
-	const ccId = (code: string | null): number => {
+	const ccID = (code: string | null): number => {
 		const c = (code || "??").toUpperCase()
 		let id = ccodes.get(c)
 
@@ -113,7 +113,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 		return id
 	}
-	const ptId = (pt: string | null): number => {
+	const ptID = (pt: string | null): number => {
 		const p = pt || ""
 		let id = ptcodes.get(p)
 
@@ -156,8 +156,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		)
 		.iterate()) {
 		const sid = Number(r.id)
-		const cid = ccId(r.country as string | null)
-		const ptid = ptId(r.placetype as string | null)
+		const cid = ccID(r.country as string | null)
+		const ptid = ptID(r.placetype as string | null)
 		const rid = regionOf.get(sid) ?? 0
 		const pop = Number(r.pop) || 0
 		const neg = -Math.log10(pop + 1)
@@ -252,10 +252,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// --- pass 4: postcodes (separate shards: spr placetype='postalcode' with real coords) ---
 	let nPostcode = 0
 
-	for (const pcDb of opts.postcodes ?? []) {
-		progress("postcodes", `reading ${pcDb}`)
-		const pc = new DatabaseSync(pcDb, { readOnly: true })
-		const pcPtid = ptId("postalcode")
+	for (const pcDB of opts.postcodes ?? []) {
+		progress("postcodes", `reading ${pcDB}`)
+		const pc = new DatabaseSync(pcDB, { readOnly: true })
+		const pcPtid = ptID("postalcode")
 		out.exec("BEGIN")
 
 		for (const r of pc
@@ -275,7 +275,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			// (no population). bbox = the postcode's own min/max (falls back to the centroid point).
 			insStage.run(
 				key,
-				ccId(r.country as string | null),
+				ccID(r.country as string | null),
 				0,
 				pcPtid,
 				0,

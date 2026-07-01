@@ -14,7 +14,7 @@
  *   region constraint can reach them).
  *
  *   These tests pin the resolver-side behaviour that fix relies on, against an in-memory fixture: (1)
- *   a USPS abbreviation in `names`/FTS resolves to its region; (2) a region `parentId` constrains
+ *   a USPS abbreviation in `names`/FTS resolves to its region; (2) a region `parentID` constrains
  *   the locality lookup to that region's descendants (via the `ancestors` table), so the
  *   right-state town beats a larger same-named town elsewhere; (3) the bug condition — without the
  *   constraint the higher-population namesake wins, which is exactly why region resolution has to
@@ -29,7 +29,7 @@ import { WOFSqlitePlaceLookup } from "./lookup.js"
 // US regions, their USPS abbreviations (what add-region-abbrevs writes into `names`), and two
 // same-named towns ("Sheldon") — the Vermont one small, the Iowa one larger — plus the ancestry
 // the wof:hierarchy backfill restores so the region constraint can reach the descendant town.
-function buildDb(): DatabaseSync {
+function buildDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -88,7 +88,7 @@ function buildDb(): DatabaseSync {
 
 let lookup: WOFSqlitePlaceLookup
 beforeEach(() => {
-	lookup = new WOFSqlitePlaceLookup({ database: buildDb(), buildFTS: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildDB(), buildFTS: true })
 })
 afterEach(() => {
 	lookup.close()
@@ -110,7 +110,7 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 		// Vermont = region id 10. "Sheldon" has a Vermont town (pop 932) and a larger Iowa town
 		// (pop 5455). With the region constraint the Iowa town is filtered out (not a descendant of
 		// Vermont), so the correct Vermont Sheldon wins despite its smaller population.
-		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentId: 10, country: "US" })
+		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })
 		expect(r[0]?.id).toBe(30)
 		expect(r.some((p) => p.id === 31)).toBe(false)
 	})
@@ -126,7 +126,7 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 		// Sheldon, VT's direct parent is Franklin County (20), not Vermont (10). The constraint still
 		// reaches it through the `ancestors` table — the exact linkage the backfill restores for
 		// multi/ambiguous-parent places (e.g. NYC, parent_id=-4).
-		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentId: 10, country: "US" })
+		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })
 		expect(r[0]?.id).toBe(30)
 	})
 })

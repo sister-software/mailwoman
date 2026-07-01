@@ -18,7 +18,7 @@ import { createAddressParser, createDiagnosticReport, createRuntimePipeline } fr
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
+import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
@@ -303,7 +303,7 @@ async function resolveWithCandidates(
 	const opts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
 
 	if (options.candidates !== undefined) opts.candidatesPerLookup = options.candidates + 1
-	const dc = resolverDefaultCountry(options, !!resolveCandidateDbPath())
+	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 	if (dc) opts.defaultCountry = dc
 
@@ -329,7 +329,7 @@ async function withResolver<T>(
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend (no WOF admin path required); else FTS.
 	const lookup = createResolverBackend(mod, {
-		wofPaths: resolveCandidateDbPath() ? "" : resolveWOFPath(options),
+		wofPaths: resolveCandidateDBPath() ? "" : resolveWOFPath(options),
 	})
 
 	try {
@@ -400,7 +400,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
-		const dc = resolverDefaultCountry(options, !!resolveCandidateDbPath())
+		const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 		if (dc) resolveOpts.defaultCountry = dc
 	}

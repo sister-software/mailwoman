@@ -24,9 +24,9 @@ import { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
 import { createPostalCityAliasTable, type PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
 
 /** A `postal_city_alias` fixture DB with the production DDL + a divergent and a non-divergent row. */
-async function buildAliasDb(): Promise<DatabaseSync> {
+async function buildAliasDB(): Promise<DatabaseSync> {
 	const db = new DatabaseSync(":memory:")
-	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.close()/aliasDb.close()),
+	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.close()/aliasDB.close()),
 	// so we don't destroy `kdb`.
 	const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
 	await createPostalCityAliasTable(kdb)
@@ -44,7 +44,7 @@ async function buildAliasDb(): Promise<DatabaseSync> {
 }
 
 /** Main resolver fixture: Nashville (the geographic city 37013 sits in) + a far Antioch distractor. */
-function buildMainDb(): DatabaseSync {
+function buildMainDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -72,7 +72,7 @@ function buildMainDb(): DatabaseSync {
 describe("WOFPostalCityAliasLookup (#475 reader)", () => {
 	let reader: WOFPostalCityAliasLookup
 	beforeEach(async () => {
-		reader = new WOFPostalCityAliasLookup({ database: await buildAliasDb() })
+		reader = new WOFPostalCityAliasLookup({ database: await buildAliasDB() })
 	})
 	afterEach(() => reader.close())
 
@@ -96,11 +96,11 @@ describe("WOFPostalCityAliasLookup (#475 reader)", () => {
 })
 
 describe("postal-city alias coordinate-first wiring (#475)", () => {
-	let aliasDb: DatabaseSync
-	afterEach(() => aliasDb?.close())
+	let aliasDB: DatabaseSync
+	afterEach(() => aliasDB?.close())
 
 	it("WITHOUT the reader, a postal-city query resolves to the same-named distractor (the bug)", async () => {
-		const lookup = new WOFSqlitePlaceLookup({ database: buildMainDb(), buildFTS: true })
+		const lookup = new WOFSqlitePlaceLookup({ database: buildMainDB(), buildFTS: true })
 		const r = await lookup.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		// The bare name-match wins the far Antioch, and the postcode/name conflict fires.
 		expect(r[0]?.name).toBe("Antioch")
@@ -109,11 +109,11 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	})
 
 	it("WITH the reader, the postal city resolves to its geographic locality (the fix)", async () => {
-		aliasDb = await buildAliasDb()
+		aliasDB = await buildAliasDB()
 		const lookup = new WOFSqlitePlaceLookup({
-			database: buildMainDb(),
+			database: buildMainDB(),
 			buildFTS: true,
-			postalCityAliases: new WOFPostalCityAliasLookup({ database: aliasDb }),
+			postalCityAliases: new WOFPostalCityAliasLookup({ database: aliasDB }),
 		})
 		const r = await lookup.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		// "Antioch" is now a name-match alias for Nashville (37013's geographic locality), so Nashville
@@ -126,11 +126,11 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	it("an unrelated postcode (no alias) is byte-stable with the reader attached", async () => {
 		// Reader attached, but 37013 isn't queried — a postcode with no divergent alias must behave
 		// exactly as without the reader. Here the distractor still wins (no alias rescues Nashville).
-		aliasDb = await buildAliasDb()
+		aliasDB = await buildAliasDB()
 		const lookup = new WOFSqlitePlaceLookup({
-			database: buildMainDb(),
+			database: buildMainDB(),
 			buildFTS: true,
-			postalCityAliases: new WOFPostalCityAliasLookup({ database: aliasDb }),
+			postalCityAliases: new WOFPostalCityAliasLookup({ database: aliasDB }),
 		})
 		// 99999 has no postcode_locality row → coord-first is inert → pure name-match → Antioch.
 		const r = await lookup.findPlace({ text: "Antioch", placetype: "locality", postcode: "99999", country: "US" })

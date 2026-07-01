@@ -34,7 +34,7 @@ import { spawnSync } from "node:child_process"
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -238,7 +238,7 @@ export const frOrderRecipe: ShardRecipe = {
 				continue
 			}
 
-			const sourceId = stableSourceId(source, {
+			const sourceID = stableSourceID(source, {
 				street: components.street,
 				house_number: components.house_number,
 				locality: components.locality,
@@ -250,7 +250,7 @@ export const frOrderRecipe: ShardRecipe = {
 				country: "FR",
 				locale: "fr-FR",
 				source,
-				source_id: sourceId,
+				source_id: sourceID,
 				corpus_version: "0.5.0",
 				license: "OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE",
 			}

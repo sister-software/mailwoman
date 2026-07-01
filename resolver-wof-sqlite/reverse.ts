@@ -61,14 +61,14 @@ export interface WOFReverseGeocoderOpts {
 	 * Path to the admin gazetteer DB (e.g. `admin-global-priority.db`) — must carry `spr`, `ancestors`, and the
 	 * package-built `place_bbox` R*Tree (`mailwoman-wof-build-fts`). Mutually exclusive with `adminDatabase`.
 	 */
-	adminDbPath?: string
+	adminDBPath?: string
 	/** Pre-opened admin DB — primarily for tests against an inline fixture. */
 	adminDatabase?: DatabaseSync
 	/**
 	 * Path to the polygon sidecar DB (`wof-polygons.db`, table `polygons(id, geom)`). OPTIONAL — without it every result
 	 * is `containment: "approximate"` (centroid-only mode). Mutually exclusive with `polygonDatabase`.
 	 */
-	polygonDbPath?: string
+	polygonDBPath?: string
 	/** Pre-opened polygon DB — primarily for tests. */
 	polygonDatabase?: DatabaseSync
 }
@@ -151,23 +151,23 @@ export class WOFReverseGeocoder implements Disposable {
 	static readonly #GEOMETRY_CACHE_CAP = 4096
 
 	constructor(opts: WOFReverseGeocoderOpts) {
-		if (opts.adminDatabase && opts.adminDbPath) {
-			throw new Error("WOFReverseGeocoder: pass either `adminDatabase` or `adminDbPath`, not both")
+		if (opts.adminDatabase && opts.adminDBPath) {
+			throw new Error("WOFReverseGeocoder: pass either `adminDatabase` or `adminDBPath`, not both")
 		}
 
-		if (!opts.adminDatabase && !opts.adminDbPath) {
-			throw new Error("WOFReverseGeocoder: one of `adminDatabase` or `adminDbPath` is required")
+		if (!opts.adminDatabase && !opts.adminDBPath) {
+			throw new Error("WOFReverseGeocoder: one of `adminDatabase` or `adminDBPath` is required")
 		}
 
-		if (opts.polygonDatabase && opts.polygonDbPath) {
-			throw new Error("WOFReverseGeocoder: pass either `polygonDatabase` or `polygonDbPath`, not both")
+		if (opts.polygonDatabase && opts.polygonDBPath) {
+			throw new Error("WOFReverseGeocoder: pass either `polygonDatabase` or `polygonDBPath`, not both")
 		}
 
-		this.#admin = opts.adminDatabase ?? new DatabaseSync(opts.adminDbPath!, { readOnly: true })
+		this.#admin = opts.adminDatabase ?? new DatabaseSync(opts.adminDBPath!, { readOnly: true })
 		this.#ownsAdmin = !opts.adminDatabase
 		this.#polygons =
-			opts.polygonDatabase ?? (opts.polygonDbPath ? new DatabaseSync(opts.polygonDbPath, { readOnly: true }) : null)
-		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDbPath)
+			opts.polygonDatabase ?? (opts.polygonDBPath ? new DatabaseSync(opts.polygonDBPath, { readOnly: true }) : null)
+		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDBPath)
 
 		// Fail loudly up front — the R*Tree is a build artifact, not part of the upstream WOF
 		// distribution, and a missing index would otherwise surface as an opaque SQL error per query.
@@ -288,25 +288,25 @@ export class WOFReverseGeocoder implements Disposable {
 		// Hierarchy assembly via the shared ancestor walk. If the descent crossed an ancestry gap
 		// (the deepest place's recorded lineage misses the PIP root), merge the root's own chain so
 		// region/country are always present when a polygon confirmed them.
-		const byId = new Map<number, PlaceCandidate>()
-		byId.set(current.id, toPlaceCandidate(current, currentDistanceKm))
+		const byID = new Map<number, PlaceCandidate>()
+		byID.set(current.id, toPlaceCandidate(current, currentDistanceKm))
 
 		for (const a of ancestorLineage(this.#admin, current.id)) {
-			if (!byId.has(a.id)) {
-				byId.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
+			if (!byID.has(a.id)) {
+				byID.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
 			}
 		}
 
-		if (!byId.has(winner.id)) {
-			byId.set(winner.id, toPlaceCandidate(winner))
+		if (!byID.has(winner.id)) {
+			byID.set(winner.id, toPlaceCandidate(winner))
 
 			for (const a of ancestorLineage(this.#admin, winner.id)) {
-				if (!byId.has(a.id)) {
-					byId.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
+				if (!byID.has(a.id)) {
+					byID.set(a.id, { ...a, placetype: a.placetype as WOFPlacetype, country: a.country ?? "", score: 0 })
 				}
 			}
 		}
-		const hierarchy = [...byId.values()]
+		const hierarchy = [...byID.values()]
 
 		if (opts.placetypes) {
 			const allowed = new Set<string>(opts.placetypes)
@@ -351,12 +351,12 @@ export class WOFReverseGeocoder implements Disposable {
 	}
 
 	/**
-	 * Descendants of `parentId` at one placetype tier, pre-filtered to a centroid window around the query point (a
+	 * Descendants of `parentID` at one placetype tier, pre-filtered to a centroid window around the query point (a
 	 * generous 4× the approximate cap — polygon-holding children may legitimately have far centroids, e.g. a sprawling
 	 * consolidated city; the precise cap is applied per-candidate in the caller, and only to centroid-fallback steps).
 	 */
 	#descendants(
-		parentId: number,
+		parentID: number,
 		placetype: string,
 		lat: number,
 		lon: number,
@@ -373,7 +373,7 @@ export class WOFReverseGeocoder implements Disposable {
 					AND s.latitude BETWEEN ? AND ? AND s.longitude BETWEEN ? AND ?`
 			)
 			.all(
-				parentId,
+				parentID,
 				placetype,
 				lat - windowDeg,
 				lat + windowDeg,

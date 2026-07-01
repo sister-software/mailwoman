@@ -36,7 +36,7 @@ interface WalkStep {
 	/** The normalized token consumed at this step. */
 	token: string
 	/** The state after consuming this token (null = path broken). */
-	result: { stateId: number; accepted: boolean; depth: number } | null
+	result: { stateID: number; accepted: boolean; depth: number } | null
 	/** Whether this is the first token in the walk. */
 	isFirst: boolean
 }
@@ -118,7 +118,7 @@ const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
 				<span className={`${styles.impDot} ${styles[`impDot_${tier}`]}`} />
 				{fmtImportance(place.importance)}
 			</span>
-			<code className={styles.placeId}>{fmtWOFID(place.wofID)}</code>
+			<code className={styles.placeID}>{fmtWOFID(place.wofID)}</code>
 		</div>
 	)
 }
@@ -180,7 +180,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		return walkSteps.map((step) => {
 			if (!step.result || !step.result.accepted) return null
 
-			return fstMatcher.accepting(step.result.stateId) as PlaceEntryLike[]
+			return fstMatcher.accepting(step.result.stateID) as PlaceEntryLike[]
 		})
 	}, [fstMatcher, walkSteps])
 
@@ -206,7 +206,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		const matcher = fstMatcher as any
 
 		if (typeof matcher.continuations === "function") {
-			return matcher.continuations(lastValidStep.result.stateId) as ContinuationLike[]
+			return matcher.continuations(lastValidStep.result.stateID) as ContinuationLike[]
 		}
 
 		return null
@@ -290,7 +290,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 							{/* State badge */}
 							{step.result ? (
 								<span className={styles.stateBadge}>
-									S<sub>{step.result.stateId}</sub>
+									S<sub>{step.result.stateID}</sub>
 									{isAccepting ? (
 										<span className={styles.acceptedMark} title="Accepting state">
 											✓

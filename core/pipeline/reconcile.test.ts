@@ -102,10 +102,10 @@ function mockResolver(
  * chain until null/missing.
  */
 function mockChain(places: ResolvedPlace[]): ParentChainLookup {
-	const byId = new Map<string, ResolvedPlace>()
+	const byID = new Map<string, ResolvedPlace>()
 
 	for (const p of places) {
-		byId.set(String(p.id), p)
+		byID.set(String(p.id), p)
 	}
 
 	return {
@@ -114,7 +114,7 @@ function mockChain(places: ResolvedPlace[]): ParentChainLookup {
 			let cur: ResolvedPlace | undefined = place
 
 			while (cur && cur.parent_id !== undefined && cur.parent_id !== null) {
-				const next = byId.get(String(cur.parent_id))
+				const next = byID.get(String(cur.parent_id))
 
 				if (!next || chain.some((c) => String(c.id) === String(next.id))) break
 				chain.push(next)
@@ -283,8 +283,8 @@ describe("kryptonite catalogue — NY-NY Steakhouse, Houston, TX (post-reconcile
 		})
 		const houstonNode = result.tree.roots.find((r) => r.value === "Houston")
 		const txNode = result.tree.roots.find((r) => r.value === "TX")
-		expect(houstonNode?.placeId).toContain(":3")
-		expect(txNode?.placeId).toContain(":2")
+		expect(houstonNode?.placeID).toContain(":3")
+		expect(txNode?.placeID).toContain(":2")
 	})
 })
 
@@ -332,7 +332,7 @@ describe("kryptonite catalogue — Paris, Texas (post-reconcile picks Paris-TX o
 			parentChain: chain,
 		})
 		const parisNode = result.tree.roots.find((r) => r.value === "Paris")
-		expect(parisNode?.placeId).toContain(":11") // Paris, TX
+		expect(parisNode?.placeID).toContain(":11") // Paris, TX
 	})
 })
 
@@ -386,7 +386,7 @@ describe("kryptonite catalogue — Saint Petersburg, FL (post-reconcile picks th
 			parentChain: chain,
 		})
 		const stPeteNode = result.tree.roots.find((r) => r.value === "Saint Petersburg")
-		expect(stPeteNode?.placeId).toContain(":10") // US St Pete
+		expect(stPeteNode?.placeID).toContain(":10") // US St Pete
 	})
 })
 
@@ -543,8 +543,8 @@ describe("reconcile — concordance hard veto", () => {
 			parentChain: chain,
 		})
 		// The contradictory combination (paris-FR + Texas) should not coexist as roots.
-		const parisFRNode = result.tree.roots.find((r) => r.placeId?.includes(":10"))
-		const txNode = result.tree.roots.find((r) => r.placeId?.includes(":2"))
+		const parisFRNode = result.tree.roots.find((r) => r.placeID?.includes(":10"))
+		const txNode = result.tree.roots.find((r) => r.placeID?.includes(":2"))
 		expect(parisFRNode && txNode).toBeFalsy()
 	})
 })

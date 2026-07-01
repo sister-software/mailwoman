@@ -15,9 +15,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { FSTNode } from "./fst-matcher.js"
 import { FSTMatcher, normalizeTokens } from "./fst-matcher.js"
-import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.js"
 
-const DEFAULT_PLACETYPES: PlacetypeId[] = [
+const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"country",
 	"region",
 	"county",
@@ -202,10 +202,10 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
 		if (tokens.length === 0) return
-		let stateId = 0
+		let stateID = 0
 
 		for (const t of tokens) {
-			const node = nodes[stateId]!
+			const node = nodes[stateID]!
 			let next = node.edges.get(t)
 
 			if (next === undefined) {
@@ -213,10 +213,10 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
-			stateId = next
+			stateID = next
 		}
 		// Deduplicate: don't add the same wofID twice at the same state.
-		const existing = nodes[stateId]!.places
+		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
 			existing.push(entry)
@@ -229,7 +229,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		const parentChain = resolveParentChain(row.id)
 		const entry: PlaceEntry = {
 			wofID: row.id,
-			placetype: row.placetype as PlacetypeId,
+			placetype: row.placetype as PlacetypeID,
 			name: row.name,
 			parentChain,
 			importance: importanceMap.get(row.id) ?? 0,
@@ -269,7 +269,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		edgeCount,
 		nameInsertions: insertCount,
 		importanceMatches: importanceMap.size,
-		sourceDb: opts.dbPath,
+		sourceDB: opts.dbPath,
 	}
 
 	return {

@@ -77,7 +77,7 @@ export interface ResolverBackend {
 		text: string
 		placetype?: string | string[]
 		country?: string
-		parentId?: number | string
+		parentID?: number | string
 		/**
 		 * Sibling postcode string, when the address carries one. A coordinate-first backend uses it to inject
 		 * postcode-proximal locality candidates (the postcode→locality table) and soft-score them against the parsed name —
@@ -92,7 +92,7 @@ export interface ResolverBackend {
 	 * capital-seat region, the resolver completes it from here instead of re-querying. OPTIONAL — backends without the
 	 * relation omit it, and completion no-ops. Synchronous: it's an in-memory map lookup once the relation is loaded.
 	 */
-	coincidentLocalitiesFor?(adminId: number | string): CoincidentLocality[]
+	coincidentLocalitiesFor?(adminID: number | string): CoincidentLocality[]
 	/**
 	 * The ancestor lineage of a resolved place — its containment chain (county → region → country), nearest-first. Backs
 	 * {@link ResolveOpts.includeAncestors} (#404): the Pelias/Nominatim "always-attach-the-hierarchy" enrichment. OPTIONAL
@@ -218,7 +218,7 @@ export interface ResolveOpts {
 	 */
 	defaultCountry?: string
 	/**
-	 * When a resolved parent constrains a child lookup (`parentId` is passed to the backend as a hard descendant filter)
+	 * When a resolved parent constrains a child lookup (`parentID` is passed to the backend as a hard descendant filter)
 	 * and that filtered lookup returns NOTHING, retry the lookup once without the parent constraint. Guards against an
 	 * incomplete gazetteer hierarchy (a real locality whose ancestor chain is missing its region) or a mis-resolved
 	 * parent silently turning a resolvable node unresolved. The country constraint is retained on the retry, so
@@ -244,7 +244,7 @@ export interface ResolveOpts {
 	 * `score + anchorWeight * posterior[candidate.country]` before the top is picked, so a postcode that pins the country
 	 * can pull the right-country place over a higher-BM25 foreign namesake (the "Berlin DE vs Berlin US" class the #59
 	 * anchor→resolver harness measured). OFF by default — omit it and resolution is byte-identical. Country signal only,
-	 * so it touches locality lookups only; admin parents already carry country via `parentId`.
+	 * so it touches locality lookups only; admin parents already carry country via `parentID`.
 	 */
 	anchorPosterior?: Record<string, number>
 	/**

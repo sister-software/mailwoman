@@ -271,7 +271,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
 
 /**
  * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + WASM) into `destDir`. The demo loads these at
- * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
+ * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDBWorker — so webpack never sees
  * them. That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is exactly
  * what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
  *
@@ -328,18 +328,18 @@ export function stageSQLJsHttpvfs(destDir: string): boolean {
  *
  * @returns True if built successfully
  */
-export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDb?: string }): boolean {
+export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?: string }): boolean {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
-	const globalDb = dataRootPath("wof", "admin-global-priority.db")
-	const wofDb = opts.wofDb ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
+	const globalDB = dataRootPath("wof", "admin-global-priority.db")
+	const wofDB = opts.wofDB ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDB
 
-	if (!existsSync(wofDb)) {
-		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDb} — skipping FST build`)
+	if (!existsSync(wofDB)) {
+		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDB} — skipping FST build`)
 
 		return false
 	}
 
-	const isGlobal = wofDb.includes("global")
+	const isGlobal = wofDB.includes("global")
 	const countries = isGlobal ? "['US', 'FR', 'JP', 'CN', 'KR', 'DE', 'GB']" : "['US']"
 	const languages = isGlobal ? "['*']" : "['eng', '']"
 
@@ -348,7 +348,7 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDb?
 		import { serializeFST } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
 		import { writeFileSync } from 'node:fs'
 		const { matcher, provenance } = buildFSTFromWOF({
-			dbPath: ${JSON.stringify(wofDb)},
+			dbPath: ${JSON.stringify(wofDB)},
 			countries: ${countries},
 			languages: ${languages},
 			onProgress: (phase, msg) => process.stderr.write(phase + ': ' + msg + '\\n'),
@@ -358,7 +358,7 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDb?
 		process.stderr.write('FST binary: ' + (buf.length / 1024 / 1024).toFixed(2) + ' MB\\n')
 	`
 
-	console.log(`[demo-assets] FST: building from ${wofDb}`)
+	console.log(`[demo-assets] FST: building from ${wofDB}`)
 	const result = spawnSync("node", ["--input-type=module", "-e", script], {
 		cwd: opts.repoRoot,
 		stdio: ["pipe", "inherit", "inherit"],
@@ -385,12 +385,12 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDb?
  */
 export function buildSlimWOFDb(destPath: string, opts: { repoRoot: string }): boolean {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
-	const globalDb = dataRootPath("wof", "admin-global-priority.db")
-	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
+	const globalDB = dataRootPath("wof", "admin-global-priority.db")
+	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDB
 	// Postcodes: opt-in via PLAYPEN_WOF_POSTCODE_DB (e.g. /mnt/playpen/mailwoman-data/wof/
 	// postalcode-us.db — custom-built, ZCTA-centroid-filled per #525); unset, the slim build runs
 	// admin-only and the demo's postcode-first cascade leg has no rows to hit.
-	const postcodeDb = process.env.PLAYPEN_WOF_POSTCODE_DB ?? ""
+	const postcodeDB = process.env.PLAYPEN_WOF_POSTCODE_DB ?? ""
 
 	if (!existsSync(adminDb)) {
 		console.warn("[demo-assets] wof-hot.db: WOF admin DB not found — skipping slim build")
@@ -422,7 +422,7 @@ export function buildSlimWOFDb(destPath: string, opts: { repoRoot: string }): bo
 			"--in",
 			adminDb,
 			"--in",
-			postcodeDb,
+			postcodeDB,
 			"--out",
 			destPath,
 			"--top",

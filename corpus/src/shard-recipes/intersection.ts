@@ -41,7 +41,7 @@ import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow, LabeledRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -291,14 +291,14 @@ function buildZipCityMap(): Map<string, string> {
 }
 
 /**
- * Render one crossing → { raw, components, formId, tailId, caseId }. Components are inserted in claim order (streets
+ * Render one crossing → { raw, components, formID, tailID, caseID }. Components are inserted in claim order (streets
  * first) so alignment can't grab a region/postcode lookalike inside a street.
  */
 function renderRow(
 	random: () => number,
 	crossing: Crossing,
 	zipCity: Map<string, string>
-): { raw: string; components: Partial<Record<ComponentTag, string>>; formId: string; tailId: string; caseId: string } {
+): { raw: string; components: Partial<Record<ComponentTag, string>>; formID: string; tailID: string; caseID: string } {
 	const form = weightedPick(FORMS, random)
 	const body = form.render(crossing.a, crossing.b)
 
@@ -336,7 +336,7 @@ function renderRow(
 
 	// Components keep their original case; alignRow matches case-insensitively and labels the
 	// tokens of the (cased) raw — the parquet row carries tokens+labels only.
-	return { raw, components, formId: form.id, tailId: tail.id, caseId: casing.id }
+	return { raw, components, formID: form.id, tailID: tail.id, caseID: casing.id }
 }
 
 /**
@@ -493,7 +493,7 @@ export const intersectionRecipe: ShardRecipe = {
 
 		while (emitted < count && guard++ < count * 10) {
 			const crossing = pool[Math.floor(random() * pool.length)]!
-			const { raw, components, formId, tailId, caseId } = renderRow(random, crossing, zipCity)
+			const { raw, components, formID, tailID, caseID } = renderRow(random, crossing, zipCity)
 
 			if (seenRaw.has(raw)) {
 				skipped++
@@ -502,10 +502,10 @@ export const intersectionRecipe: ShardRecipe = {
 
 			if (opts.golden) {
 				seenRaw.add(raw)
-				write(JSON.stringify({ raw, components, country: "US", form: formId }) + "\n")
-				formCounts[formId] = (formCounts[formId] ?? 0) + 1
-				tailCounts[tailId] = (tailCounts[tailId] ?? 0) + 1
-				caseCounts[caseId] = (caseCounts[caseId] ?? 0) + 1
+				write(JSON.stringify({ raw, components, country: "US", form: formID }) + "\n")
+				formCounts[formID] = (formCounts[formID] ?? 0) + 1
+				tailCounts[tailID] = (tailCounts[tailID] ?? 0) + 1
+				caseCounts[caseID] = (caseCounts[caseID] ?? 0) + 1
 				countyCounts[crossing.fips] = (countyCounts[crossing.fips] ?? 0) + 1
 				usedCrossings.add(crossing.node)
 				emitted++
@@ -518,7 +518,7 @@ export const intersectionRecipe: ShardRecipe = {
 				country: "US",
 				locale: "en-US",
 				source,
-				source_id: stableSourceId(source, components),
+				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
 				license: "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails",
 			}
@@ -539,14 +539,14 @@ export const intersectionRecipe: ShardRecipe = {
 
 			seenRaw.add(raw)
 			write(JSON.stringify({ ...aligned.row, synth_method: "intersection", synth_base_id: null }) + "\n")
-			formCounts[formId] = (formCounts[formId] ?? 0) + 1
-			tailCounts[tailId] = (tailCounts[tailId] ?? 0) + 1
-			caseCounts[caseId] = (caseCounts[caseId] ?? 0) + 1
+			formCounts[formID] = (formCounts[formID] ?? 0) + 1
+			tailCounts[tailID] = (tailCounts[tailID] ?? 0) + 1
+			caseCounts[caseID] = (caseCounts[caseID] ?? 0) + 1
 			countyCounts[crossing.fips] = (countyCounts[crossing.fips] ?? 0) + 1
 			usedCrossings.add(crossing.node)
 
-			if (samples.length < FORMS.length && !samples.some((s) => s.form === formId)) {
-				samples.push({ form: formId, raw, tokens: aligned.row.tokens, labels: aligned.row.labels })
+			if (samples.length < FORMS.length && !samples.some((s) => s.form === formID)) {
+				samples.push({ form: formID, raw, tokens: aligned.row.tokens, labels: aligned.row.labels })
 			}
 			emitted++
 		}

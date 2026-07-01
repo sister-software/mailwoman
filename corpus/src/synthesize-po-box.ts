@@ -243,12 +243,12 @@ const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => 
 export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): SynthesizedPoBoxRow {
 	const random = opts.random ?? Math.random
 	const unit = MIL_UNITS[Math.floor(random() * MIL_UNITS.length)]!
-	const unitId = String(1 + Math.floor(random() * 9999))
+	const unitID = String(1 + Math.floor(random() * 9999))
 	const { region, zip } = MIL_REGION_ZIP[Math.floor(random() * MIL_REGION_ZIP.length)]!
 	const zipStr = zip(random)
 	const po = MIL_PO_CODES[Math.floor(random() * MIL_PO_CODES.length)]!
 	const hasBox = unit.boxRequired || random() < 0.5
-	const unitLine = hasBox ? `${unit.code} ${unitId} Box ${1 + Math.floor(random() * 9999)}` : `${unit.code} ${unitId}`
+	const unitLine = hasBox ? `${unit.code} ${unitID} Box ${1 + Math.floor(random() * 9999)}` : `${unit.code} ${unitID}`
 	const raw = `${unitLine}, ${po} ${region} ${zipStr}`
 
 	return {

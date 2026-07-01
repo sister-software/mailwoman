@@ -135,10 +135,10 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
-			out.push({ id: Number(n.placeId.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
+			out.push({ id: Number(n.placeID.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
 
 		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
@@ -147,16 +147,16 @@ function collectResolved(tree: AddressTree): Resolved[] {
 		// interpretation).
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
 			tag: string
-			placeId?: string
-			sourceId?: string
+			placeID?: string
+			sourceID?: string
 			lat?: number
 			lon?: number
 			metadata?: Record<string, unknown>
 		}>) {
-			if (interp.placeId?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
-				const placetype = String(interp.sourceId ?? interp.tag).split(":")[0] ?? ""
+			if (interp.placeID?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
+				const placetype = String(interp.sourceID ?? interp.tag).split(":")[0] ?? ""
 				const name = String(interp.metadata?.["resolver_name"] ?? n.value ?? "")
-				out.push({ id: Number(interp.placeId.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
+				out.push({ id: Number(interp.placeID.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
 			}
 		}
 
@@ -363,11 +363,11 @@ async function main(): Promise<void> {
 	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on the FTS
 	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
 	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
-	const postalCityAliasDb = arg("postal-city-alias-db", "")
+	const postalCityAliasDB = arg("postal-city-alias-db", "")
 	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
-	const postalCityAliases = postalCityAliasDb
-		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDb })
+	const postalCityAliases = postalCityAliasDB
+		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB })
 		: undefined
 	const backend = candidateDb
 		? new WOFCandidateTableLookup({ databasePath: candidateDb })
@@ -378,7 +378,7 @@ async function main(): Promise<void> {
 
 	if (candidateDb) console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
 
-	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDb}`)
+	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
 	const resolver = createWOFResolver(backend as never)
 
 	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
@@ -637,7 +637,7 @@ async function main(): Promise<void> {
 		resolved: boolean
 		err: number | null
 		resolvedLoc?: string
-		resolvedLocId?: number
+		resolvedLocID?: number
 		resolvedReg?: string
 	} => {
 		const best = mostSpecific(resolved)
@@ -663,7 +663,7 @@ async function main(): Promise<void> {
 			// Raw resolved names for the --errors-json per-row dump: a present-but-wrong resolvedLoc
 			// => resolver ranking/disambiguation miss; an absent one => coverage/parse miss.
 			resolvedLoc: locRaw,
-			resolvedLocId: locNode?.id,
+			resolvedLocID: locNode?.id,
 			resolvedReg: regResolved?.name,
 		}
 	}
@@ -829,7 +829,7 @@ async function main(): Promise<void> {
 				lon: row.lon,
 				state: row.state,
 				expectedLoc: row.expected.locality,
-				neuralLocId: ns.resolvedLocId ?? null,
+				neuralLocID: ns.resolvedLocID ?? null,
 				neuralLoc: ns.resolvedLoc ?? null,
 				nameMatch: ns.locMatch,
 			})

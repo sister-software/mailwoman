@@ -7,7 +7,7 @@
  *   {@link synthesizeStreetRow} → aligned LabeledRow. Ported from scripts/build-street-shard.mjs.
  */
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { synthesizeStreetRow, type StreetBaseTuple } from "../synthesize-street.js"
 import { alignAndWrite, makeLcg, readTuples, type ShardRecipe } from "./scaffold.js"
 
@@ -49,7 +49,7 @@ export const streetRecipe: ShardRecipe = {
 						country: tuple.country,
 						locale: synth.locale,
 						source: "synth-street",
-						source_id: stableSourceId("synth-street", {
+						source_id: stableSourceID("synth-street", {
 							locality: `${tuple.locality}#${v}`,
 							region: tuple.region,
 							postcode: tuple.postcode,

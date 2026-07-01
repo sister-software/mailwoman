@@ -55,9 +55,9 @@ function walk(tree: AddressTree): { best: { lat: number; lon: number; placetype:
 	let best: { lat: number; lon: number; placetype: string } | null = null
 	const nodes: NodeInfo[] = []
 	const visit = (n: AddressNode): void => {
-		const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 		const resolved = !!(
-			n.placeId?.startsWith("wof:") &&
+			n.placeID?.startsWith("wof:") &&
 			n.lat !== undefined &&
 			n.lon !== undefined &&
 			(n.lat !== 0 || n.lon !== 0)

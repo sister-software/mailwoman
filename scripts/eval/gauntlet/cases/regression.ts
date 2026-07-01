@@ -20,7 +20,7 @@ export interface SeedCase {
 	status: CaseStatus
 	/** Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }` (matched case-insensitively). */
 	expectComponents?: Record<string, string>
-	expectPlaceId?: string
+	expectPlaceID?: string
 	expectPlaceName?: string
 	expectLat?: number
 	expectLon?: number

@@ -37,19 +37,19 @@ function pct(xs: number[], p: number): number {
 }
 
 const db = new DatabaseSync(a.db, { readOnly: true })
-const ccId = (db.prepare("SELECT id FROM country_codes WHERE code=?").get(CC) as { id?: number } | undefined)?.id
-const ptId = (pt: string) =>
+const ccID = (db.prepare("SELECT id FROM country_codes WHERE code=?").get(CC) as { id?: number } | undefined)?.id
+const ptID = (pt: string) =>
 	(db.prepare("SELECT id FROM placetype_codes WHERE placetype=?").get(pt) as { id?: number } | undefined)?.id
-const LOC_PTS = ["locality", "localadmin", "borough"].map(ptId).filter((v): v is number => v !== undefined)
-const PC_PT = ptId("postalcode")
+const LOC_PTS = ["locality", "localadmin", "borough"].map(ptID).filter((v): v is number => v !== undefined)
+const PC_PT = ptID("postalcode")
 
 const q = db.prepare(
 	`SELECT latitude AS lat, longitude AS lon FROM candidate WHERE name_key=? AND country_id=? AND placetype_id IN (SELECT value FROM json_each(?)) ORDER BY neg_rank ASC LIMIT 1`
 )
 const resolve = (key: string, pts: number[]): { lat: number; lon: number } | undefined => {
-	if (ccId === undefined || !key) return undefined
+	if (ccID === undefined || !key) return undefined
 
-	return q.get(key, ccId, JSON.stringify(pts)) as { lat: number; lon: number } | undefined
+	return q.get(key, ccID, JSON.stringify(pts)) as { lat: number; lon: number } | undefined
 }
 
 const pcErr: number[] = []

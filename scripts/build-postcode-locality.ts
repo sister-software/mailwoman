@@ -171,7 +171,7 @@ interface Locality {
 interface Args {
 	country?: string
 	adminRepo?: string
-	postcodeDb?: string
+	postcodeDB?: string
 	output: string
 	radiusKm: number
 	maxCandidates: number
@@ -201,7 +201,7 @@ function parseCLIArgs(): Args {
 	return {
 		country: values.country,
 		adminRepo: values["admin-repo"],
-		postcodeDb: values["postcode-db"],
+		postcodeDB: values["postcode-db"],
 		output: values.output,
 		radiusKm: Number(values["radius-km"]),
 		maxCandidates: Number.parseInt(values["max-candidates"]!, 10),
@@ -299,7 +299,7 @@ function geojsonFiles(dir: string): string[] {
 }
 
 async function build(args: Args): Promise<void> {
-	const { country, adminRepo, postcodeDb, output, radiusKm, maxCandidates } = args
+	const { country, adminRepo, postcodeDB, output, radiusKm, maxCandidates } = args
 
 	console.log(`loading ${country} locality polygons from source GeoJSON…`)
 	const locs: Locality[] = []
@@ -365,7 +365,7 @@ async function build(args: Args): Promise<void> {
 		}
 	}
 
-	const con = new DatabaseSync(postcodeDb!)
+	const con = new DatabaseSync(postcodeDB!)
 	const postcodes = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE country=? AND placetype='postalcode' AND is_current!=0")
 		.all(country!) as Array<{ name: string; latitude: number | null; longitude: number | null }>
@@ -480,7 +480,7 @@ async function main(): Promise<void> {
 		return
 	}
 
-	if (!(args.country && args.adminRepo && args.postcodeDb)) {
+	if (!(args.country && args.adminRepo && args.postcodeDB)) {
 		console.error("build mode needs --country, --admin-repo, --postcode-db (or pass --finalize)")
 		process.exit(1)
 	}

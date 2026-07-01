@@ -29,7 +29,7 @@ const il = await lookup.findPlace({ text: "Illinois", placetype: "region", count
 console.log(il.map((p) => ({ id: p.id, name: p.name })))
 
 if (il[0]) {
-	console.log(`\n=== Springfield scoped to Illinois (parentId=${il[0].id}) — ancestors parent-constraint ===`)
-	const scoped = await lookup.findPlace({ text: "Springfield", placetype: "locality", parentId: il[0].id, limit: 3 })
+	console.log(`\n=== Springfield scoped to Illinois (parentID=${il[0].id}) — ancestors parent-constraint ===`)
+	const scoped = await lookup.findPlace({ text: "Springfield", placetype: "locality", parentID: il[0].id, limit: 3 })
 	console.log(scoped.map((p) => ({ id: p.id, name: p.name, lat: p.lat.toFixed(2), lon: p.lon.toFixed(2) })))
 }

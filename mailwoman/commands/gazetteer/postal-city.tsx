@@ -33,8 +33,8 @@ import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
 	candidateDb: zod.string().describe("Candidate DB to add the side-index to (MODIFIED IN PLACE — run on a copy first)"),
-	aliasDb: zod.string().optional().describe("Postal-city alias DB. Default <data-root>/wof/postal-city-alias-us.db"),
-	postcodeLocalityDb: zod
+	aliasDB: zod.string().optional().describe("Postal-city alias DB. Default <data-root>/wof/postal-city-alias-us.db"),
+	postcodeLocalityDB: zod
 		.string()
 		.optional()
 		.describe("Postcode→locality shard DB. Default <data-root>/wof/postcode-locality-us.db"),
@@ -54,8 +54,8 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 				if (!candidateDb) {
 					throw new Error("--candidate-db is required (modified in place — run on a copy first)")
 				}
-				const aliasDb = options.aliasDb ?? dataRootPath("wof", "postal-city-alias-us.db")
-				const postcodeLocalityDb = options.postcodeLocalityDb ?? dataRootPath("wof", "postcode-locality-us.db")
+				const aliasDB = options.aliasDB ?? dataRootPath("wof", "postal-city-alias-us.db")
+				const postcodeLocalityDB = options.postcodeLocalityDB ?? dataRootPath("wof", "postcode-locality-us.db")
 
 				const { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_COLUMNS, POSTAL_CITY_CANDIDATE_TABLE } =
 					await import("@mailwoman/resolver-wof-sqlite")
@@ -64,8 +64,8 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 				const db = new DatabaseSync(candidateDb)
 
 				// postcode → containing locality_id (the geo-locality the postcode sits in).
-				console.error(`▸ loading postcode → locality from ${postcodeLocalityDb}`)
-				const pcl = new DatabaseSync(postcodeLocalityDb, { readOnly: true })
+				console.error(`▸ loading postcode → locality from ${postcodeLocalityDB}`)
+				const pcl = new DatabaseSync(postcodeLocalityDB, { readOnly: true })
 				const pcToLocality = new Map<string, number>()
 
 				for (const r of pcl
@@ -89,8 +89,8 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 				}
 
 				// Divergent postal-city edges.
-				console.error(`▸ loading divergent postal-city edges from ${aliasDb}`)
-				const alias = new DatabaseSync(aliasDb, { readOnly: true })
+				console.error(`▸ loading divergent postal-city edges from ${aliasDB}`)
+				const alias = new DatabaseSync(aliasDB, { readOnly: true })
 				const edges = alias
 					.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
 					.all() as unknown as Array<{ postcode: string; postal_city: string }>
@@ -112,13 +112,13 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 				db.exec("BEGIN")
 
 				for (const e of edges) {
-					const localityId = pcToLocality.get(String(e.postcode))
+					const localityID = pcToLocality.get(String(e.postcode))
 
-					if (localityId === undefined) {
+					if (localityID === undefined) {
 						noLocality++
 						continue
 					}
-					const place = sprToPlace.get(localityId)
+					const place = sprToPlace.get(localityID)
 
 					if (!place) {
 						noCoord++
@@ -127,7 +127,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 					const key = normalizeLocalityForKey(e.postal_city)
 
 					if (!key) continue
-					insert.run(key, String(e.postcode), localityId, place.name, place.lat, place.lon)
+					insert.run(key, String(e.postcode), localityID, place.name, place.lat, place.lon)
 					inserted++
 				}
 				db.exec("COMMIT")

@@ -17,7 +17,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { WOFSqlitePlaceLookup } from "./lookup.js"
 
-function buildDb(): DatabaseSync {
+function buildDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -53,7 +53,7 @@ function buildDb(): DatabaseSync {
 
 let lookup: WOFSqlitePlaceLookup
 beforeEach(() => {
-	lookup = new WOFSqlitePlaceLookup({ database: buildDb(), buildFTS: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildDB(), buildFTS: true })
 })
 afterEach(() => {
 	lookup.close()

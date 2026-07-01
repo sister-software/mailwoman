@@ -112,11 +112,11 @@ export function buildStreetMorphologyEmissionPriors(
 		if (!initial) continue
 
 		let bestEnd = -1
-		let bestStateId = -1
+		let bestStateID = -1
 
 		if (initial.accepted) {
 			bestEnd = start
-			bestStateId = initial.stateId
+			bestStateID = initial.stateID
 		}
 
 		let current = initial
@@ -132,7 +132,7 @@ export function buildStreetMorphologyEmissionPriors(
 
 			if (next.accepted) {
 				bestEnd = end
-				bestStateId = next.stateId
+				bestStateID = next.stateID
 			}
 			current = next
 		}
@@ -141,7 +141,7 @@ export function buildStreetMorphologyEmissionPriors(
 
 		// Verify the accepting entries are street_affix (the morphology FST may eventually contain
 		// other placetypes if the binary format is reused for related priors).
-		const entries = fst.accepting(bestStateId)
+		const entries = fst.accepting(bestStateID)
 		const hasAffix = entries.some((e) => e.placetype === "street_affix")
 
 		if (!hasAffix) continue

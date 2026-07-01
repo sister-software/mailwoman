@@ -17,7 +17,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import type { Calibrator, ReleasesManifest } from "../shared/demo-helpers.ts"
 import { createCalibrator, DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
-import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
+import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 import type {
 	FSTMatcherLike,
 	FSTProvenanceLike,
@@ -122,7 +122,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 
 	// Drop cached range chunks from other (immutable, never-expiring) versions.
 	useEffect(() => {
-		if (selectedVersion) pruneDbRangeCache(selectedVersion)
+		if (selectedVersion) pruneDBRangeCache(selectedVersion)
 	}, [selectedVersion])
 
 	// Mount: fetch the releases manifest.
@@ -245,9 +245,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 
 				if (release?.hasWOFDb) {
 					try {
-						const { loadHttpvfsDb, WOFCandidateTableLookup: WOFCandidateTableLookup } =
+						const { loadHttpvfsDB, WOFCandidateTableLookup: WOFCandidateTableLookup } =
 							await import("../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(adminGazetteerURL(), sqljsBaseURL)
+						const worker = await loadHttpvfsDB(adminGazetteerURL(), sqljsBaseURL)
 
 						if (cancelled) return
 						const wofLookup = new WOFCandidateTableLookup(worker)

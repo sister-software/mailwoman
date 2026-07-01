@@ -71,7 +71,7 @@ export interface CoverageBuildOptions {
 	 * civilization is": a salient place we DON'T cover is a gray hole = work to do. Null to skip the global holes layer
 	 * (US rooftop fine map is independent of it).
 	 */
-	wofDb: string | null
+	wofDB: string | null
 	/**
 	 * Coverage a postcode cell contributes (≤ 1) — how much it clears the hole (rooftop is the full 1).
 	 */
@@ -214,7 +214,7 @@ export async function buildCoverageTiles(
 	}
 
 	// ATTACH the WOF gazetteer read-only for the global civilization/salience backdrop (if requested).
-	if (opts.wofDb) await duck.run(`ATTACH '${opts.wofDb}' AS wof (TYPE sqlite, READ_ONLY)`)
+	if (opts.wofDB) await duck.run(`ATTACH '${opts.wofDB}' AS wof (TYPE sqlite, READ_ONLY)`)
 
 	// data_pt: res-FINE address-point counts. UNION ALL the RAW (lat, lon) across states and bin + count
 	// ONCE in the outer query. Do NOT pre-aggregate per UNION arm: DuckDB mis-binds structurally-identical
@@ -335,7 +335,7 @@ export async function buildCoverageTiles(
 	// Only cells with residual fog (uncovered salient places) are emitted, so the layer is just the
 	// HOLES — covered + empty stay clear (basemap). Same `coverage` layer + fog props as the US tier, so
 	// the demo renders it unchanged, at res-domainRes [onset…max] + a res-4 low-zoom rollup.
-	if (opts.geonamesPostalFile && opts.wofDb) {
+	if (opts.geonamesPostalFile && opts.wofDB) {
 		const exclude = opts.postcodeExcludeCountries.map((c) => `'${c.toUpperCase()}'`).join(", ") || "''"
 		onProgress("holes", "postcode coverage + civilization salience → holes…")
 		// pc_cov: postcode COVERAGE per domain cell — flat presence (postcode ∪ 1-ring), clears the hole.

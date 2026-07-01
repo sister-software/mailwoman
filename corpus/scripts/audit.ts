@@ -171,12 +171,12 @@ const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 ]
 
 /** Extract the source-name prefix from a `first_source_id` value. */
-function sourceFromId(sourceId: string, knownPrefixes: readonly string[]): string {
+function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): string {
 	// Sort longest-first so usgov-nad beats usgov, wof-admin beats wof.
 	const sorted = [...knownPrefixes].sort((a, b) => b.length - a.length)
 
 	for (const prefix of sorted) {
-		if (sourceId.startsWith(prefix + "-") || sourceId === prefix) return prefix
+		if (sourceID.startsWith(prefix + "-") || sourceID === prefix) return prefix
 	}
 
 	return "<unknown>"
@@ -204,7 +204,7 @@ function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): Shar
 
 	for (const shard of manifest.shards) {
 		const split = shard.split
-		const src = shard.source ?? sourceFromId(shard.first_source_id ?? "", knownPrefixes)
+		const src = shard.source ?? sourceFromID(shard.first_source_id ?? "", knownPrefixes)
 		bySplit[split] ??= {}
 		bySplit[split][src] = (bySplit[split][src] ?? 0) + 1
 	}

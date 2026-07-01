@@ -94,17 +94,17 @@ interface SegmentRow {
 
 export class StreetInterpolator implements InterpolationLookup {
 	readonly #db: DatabaseSync
-	readonly #ownsDb: boolean
+	readonly #ownsDB: boolean
 	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
 	readonly #byStreet: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseSync }) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDb = false
+			this.#ownsDB = false
 		} else if (opts.dbPath) {
 			this.#db = new DatabaseSync(opts.dbPath, { readOnly: true })
-			this.#ownsDb = true
+			this.#ownsDB = true
 		} else {
 			throw new Error("StreetInterpolator: one of dbPath or database is required")
 		}
@@ -181,7 +181,7 @@ export class StreetInterpolator implements InterpolationLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDb) this.#db.close()
+		if (this.#ownsDB) this.#db.close()
 	}
 }
 

@@ -25,7 +25,7 @@
 
 import type { FSTNode } from "./fst-matcher.js"
 import { FSTMatcher } from "./fst-matcher.js"
-import type { FSTProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.js"
 
 const MAGIC = Buffer.from("FST\0", "ascii")
 const VERSION = 4
@@ -35,7 +35,7 @@ const EDGE_ENTRY_SIZE = 8
 const PLACE_ENTRY_SIZE = 56
 const MAX_CHAIN_LEN = 8
 
-const PLACETYPE_ORDER: readonly PlacetypeId[] = [
+const PLACETYPE_ORDER: readonly PlacetypeID[] = [
 	"country",
 	"region",
 	"county",

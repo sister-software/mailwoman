@@ -154,7 +154,7 @@ let dump: Record<string, unknown> = {}
 
 try {
 	const arr = JSON.parse(readFileSync("/tmp/resolved-v072-de.json", "utf-8")) as Array<Record<string, unknown>>
-	dump = Object.fromEntries(arr.map((d) => [d.input as string, d.neuralLocId]))
+	dump = Object.fromEntries(arr.map((d) => [d.input as string, d.neuralLocID]))
 } catch {
 	dump = {}
 }
@@ -167,7 +167,7 @@ const adminRoots = [
 	"/mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-admin-us/data",
 ]
 const gcache = new Map<string, Geometry | null>()
-function geomForId(wid: unknown): Geometry | null {
+function geomForID(wid: unknown): Geometry | null {
 	const key = String(wid)
 
 	if (gcache.has(key)) return gcache.get(key)!
@@ -232,10 +232,10 @@ for (const r of rows) {
 		ov.truth += 1
 		byst.truth += 1
 	}
-	const truthId = truth ? truth[0] : null
+	const truthID = truth ? truth[0] : null
 	// name signal: is the gold point inside the RESOLVER's chosen locality polygon? (== #273)
 	const nlid = dump[r.input as string]
-	const ngeom = nlid ? geomForId(nlid) : null
+	const ngeom = nlid ? geomForID(nlid) : null
 	const nameOk = ngeom !== null && ngeom !== undefined && inGeom(glon, glat, ngeom)
 
 	if (nameOk) {
@@ -256,7 +256,7 @@ for (const r of rows) {
 	byst.has_pc += 1
 	const cand = pipLocality(cen[1], cen[0]) // cen=(lat,lon) -> pip(lon,lat)
 	// coordinate-first containment: does the gold point fall inside the centroid-PIP'd locality?
-	const cfOk = cand !== null && truthId !== null && cand[0] === truthId
+	const cfOk = cand !== null && truthID !== null && cand[0] === truthID
 
 	if (cfOk) {
 		ov.cf += 1

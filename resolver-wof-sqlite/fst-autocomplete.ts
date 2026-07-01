@@ -49,7 +49,7 @@ export interface AutocompleteOpts {
 }
 
 interface BfsItem {
-	stateId: number
+	stateID: number
 	depth: number
 	tokens: string[]
 }
@@ -88,16 +88,16 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		// COMPLETE-token prefix landed on a state. Seed at the match state (accepting + continuations).
 		depth = match.depth
 
-		for (const entry of fst.accepting(match.stateId)) addSuggestion(seen, entry, match.depth, [])
+		for (const entry of fst.accepting(match.stateID)) addSuggestion(seen, entry, match.depth, [])
 
-		for (const cont of fst.continuations(match.stateId)) {
-			queue.push({ stateId: cont.targetState, depth: 1, tokens: [cont.token] })
+		for (const cont of fst.continuations(match.stateID)) {
+			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token] })
 		}
 	} else {
 		// PARTIAL last token — walk the complete prefix, complete the partial by prefix-filtering edges.
 		const complete = normalizedTokens.slice(0, -1)
 		const partial = normalizedTokens[normalizedTokens.length - 1]!
-		const prefixState = complete.length === 0 ? 0 : (fst.walk(complete)?.stateId ?? undefined)
+		const prefixState = complete.length === 0 ? 0 : (fst.walk(complete)?.stateID ?? undefined)
 
 		if (prefixState === undefined) {
 			return { query, normalizedTokens, depth: 0, suggestions: [] }
@@ -111,7 +111,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 			for (const entry of topByImportance(fst.accepting(cont.targetState), PER_BRANCH))
 				addSuggestion(seen, entry, complete.length + 1, [cont.token])
 			// BFS a little past it too (multi-token completions: "new yor" → "New York Mills").
-			queue.push({ stateId: cont.targetState, depth: 1, tokens: [cont.token] })
+			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token] })
 		}
 	}
 
@@ -124,12 +124,12 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 
 		if (item.depth > maxExpansionDepth) continue
 
-		for (const entry of topByImportance(fst.accepting(item.stateId), PER_BRANCH))
+		for (const entry of topByImportance(fst.accepting(item.stateID), PER_BRANCH))
 			addSuggestion(seen, entry, depth + item.depth, item.tokens)
 
 		if (item.depth < maxExpansionDepth) {
-			for (const cont of fst.continuations(item.stateId)) {
-				queue.push({ stateId: cont.targetState, depth: item.depth + 1, tokens: [...item.tokens, cont.token] })
+			for (const cont of fst.continuations(item.stateID)) {
+				queue.push({ stateID: cont.targetState, depth: item.depth + 1, tokens: [...item.tokens, cont.token] })
 			}
 		}
 	}

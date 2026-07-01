@@ -12,7 +12,7 @@
 
 import type { FSTNode } from "./fst-matcher.js"
 import { FSTMatcher } from "./fst-matcher.js"
-import type { FSTProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.js"
 
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
@@ -23,7 +23,7 @@ const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00] // "FST\0"
 // was left stale at 2, so the browser FST loader rejected every real (v4) artifact.
 const MAX_VERSION = 4
 
-const PLACETYPE_ORDER: readonly PlacetypeId[] = [
+const PLACETYPE_ORDER: readonly PlacetypeID[] = [
 	"country",
 	"region",
 	"county",

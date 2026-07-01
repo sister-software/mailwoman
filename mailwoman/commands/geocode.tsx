@@ -38,7 +38,7 @@ import zod from "zod"
 
 import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath } from "../resolver-backend.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -158,7 +158,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
-	const candidateDb = resolveCandidateDbPath(options.candidateDb)
+	const candidateDb = resolveCandidateDBPath(options.candidateDb)
 	const wofPath = candidateDb ? "" : resolveWOFPath(options)
 
 	// Load the neural classifier (required for street-level; weights must be present).
@@ -263,7 +263,7 @@ function formatText(result: GeocodeResult): string {
 
 		for (const h of result.hierarchy) {
 			const coord = h.lat != null ? ` (${h.lat.toFixed(4)}, ${h.lon!.toFixed(4)})` : ""
-			const id = h.placeId ? ` [${h.placeId}]` : ""
+			const id = h.placeID ? ` [${h.placeID}]` : ""
 			lines.push(`  ${h.tag.padEnd(20)} ${h.value}${id}${coord}`)
 		}
 	}

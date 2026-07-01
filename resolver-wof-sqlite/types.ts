@@ -7,7 +7,7 @@
  *
  *   These mirror the conceptual model described in `docs/plan/phases/PHASE_4_2_wof_sqlite.md`. Phase
  *   4.3 will extend `PlaceCandidate` with the resolver-decorated fields that flow into
- *   `AddressNode.source` / `sourceId` (e.g. an explicit `wofURI: "wof-admin:101751113"` form).
+ *   `AddressNode.source` / `sourceID` (e.g. an explicit `wofURI: "wof-admin:101751113"` form).
  */
 
 /**
@@ -105,8 +105,8 @@ export interface GeoBbox {
 /**
  * Query against the resolver.
  *
- * `text` is the only required field; everything else narrows the search. When `country` and `parentId` are both set,
- * `parentId` wins (it's more specific).
+ * `text` is the only required field; everything else narrows the search. When `country` and `parentID` are both set,
+ * `parentID` wins (it's more specific).
  *
  * `near` and `bbox` are independent. `near` is a soft signal — candidates close to the point get a ranking boost but
  * distant candidates aren't dropped. `bbox` is a hard filter — only candidates whose bbox intersects the query bbox are
@@ -122,7 +122,7 @@ export interface FindPlaceQuery {
 	/** ISO 3166-1 alpha-2 — narrows to one country. */
 	country?: string
 	/** WOF place id — narrows to descendants of this place. */
-	parentId?: number
+	parentID?: number
 	/**
 	 * Sibling postcode. When set on a `locality` query AND a `postcode_locality` table is present, triggers the
 	 * coordinate-first soft-score path: postcode→candidate localities are injected and scored `0.6·S_pc + 0.3·S_name +

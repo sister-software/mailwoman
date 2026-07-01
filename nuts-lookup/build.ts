@@ -19,15 +19,15 @@ interface NutsFeature {
 }
 
 /** Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`. */
-export function buildNutsDb(geojsonPath: string, dbPath: string): { regions: number } {
+export function buildNutsDB(geojsonPath: string, dbPath: string): { regions: number } {
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NutsFeature[] }
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
 	db.exec(
-		"CREATE TABLE nuts_regions (nutsId TEXT NOT NULL, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT NOT NULL)"
+		"CREATE TABLE nuts_regions (nutsID TEXT NOT NULL, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT NOT NULL)"
 	)
 	const insert = db.prepare(
-		"INSERT INTO nuts_regions (nutsId, level, minLat, maxLat, minLon, maxLon, geom) VALUES (?,?,?,?,?,?,?)"
+		"INSERT INTO nuts_regions (nutsID, level, minLat, maxLat, minLon, maxLon, geom) VALUES (?,?,?,?,?,?,?)"
 	)
 
 	db.exec("BEGIN")

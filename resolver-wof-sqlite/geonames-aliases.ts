@@ -63,7 +63,7 @@ export function ingestGeonamesAliases(
 		 * locality's `parent_id` + ancestry chain (locality → region → country). PER-COUNTRY because a country that already
 		 * carries WOF admin would double up — pass only the ZERO-COVERAGE gap countries (the coverage-expansion targets),
 		 * never the EU alias set. Without admin, a gap country's localities are orphans (`parent_id=-1`, no ancestors), so
-		 * `parentId` scoping and adminCoherence can't reach them and "Tbilisi, GE" can't resolve.
+		 * `parentID` scoping and adminCoherence can't reach them and "Tbilisi, GE" can't resolve.
 		 */
 		adminForCountries?: ReadonlySet<string>
 	}
@@ -83,7 +83,7 @@ export function ingestGeonamesAliases(
 		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)`
 	)
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
-	// #267 admin linkage: ancestor rows (locality→region→country) so parentId scoping + adminCoherence reach
+	// #267 admin linkage: ancestor rows (locality→region→country) so parentID scoping + adminCoherence reach
 	// the gap countries. Only used for a country in opts.adminForCountries.
 	const ancestorInsert = db.prepare(
 		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
@@ -123,7 +123,7 @@ export function ingestGeonamesAliases(
 
 		// #267 admin pre-pass (gap countries): fold the country (PCLI) + regions (ADM1), self+ancestry them, and
 		// build the admin1→region map the localities link through. Point bbox (GeoNames gives a centroid only).
-		let countryId = -1
+		let countryID = -1
 		const adminMap = new Map<string, number>()
 
 		if (addAdmin) {
@@ -141,11 +141,11 @@ export function ingestGeonamesAliases(
 					// Any country-level political entity — PCLI (independent), PCLD (dependent territory),
 					// PCLF (freely associated), PCLS (special administrative region: HK/MO/PS). All are the
 					// country tier; restricting to PCLI left those ~17 territories without a country row.
-					if (countryId >= 0) continue // one country row
-					countryId = id++
-					sprInsert.run(countryId, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
-					namesInsert.run(countryId, aname, "country", cc, "", 0)
-					ancestorInsert.run(countryId, countryId, "country")
+					if (countryID >= 0) continue // one country row
+					countryID = id++
+					sprInsert.run(countryID, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
+					namesInsert.run(countryID, aname, "country", cc, "", 0)
+					ancestorInsert.run(countryID, countryID, "country")
 				} else if (f[7] === "ADM1" && f[10]) {
 					const rid = id++
 					sprInsert.run(rid, -1, aname, "region", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
@@ -156,10 +156,10 @@ export function ingestGeonamesAliases(
 			}
 
 			// Re-parent regions + ancestor them to the (now-known) country.
-			if (countryId >= 0) {
+			if (countryID >= 0) {
 				for (const rid of adminMap.values()) {
-					db.prepare("UPDATE spr SET parent_id = ? WHERE id = ?").run(countryId, rid)
-					ancestorInsert.run(rid, countryId, "country")
+					db.prepare("UPDATE spr SET parent_id = ? WHERE id = ?").run(countryID, rid)
+					ancestorInsert.run(rid, countryID, "country")
 				}
 			}
 		}
@@ -178,19 +178,19 @@ export function ingestGeonamesAliases(
 			if (!name) continue
 			const nid = id++
 			// #267: link to the locality's region (else country) for gap countries; -1 (orphan) otherwise.
-			const regionId = addAdmin ? (adminMap.get(f[10] ?? "") ?? -1) : -1
-			const parentId = regionId >= 0 ? regionId : addAdmin && countryId >= 0 ? countryId : -1
+			const regionID = addAdmin ? (adminMap.get(f[10] ?? "") ?? -1) : -1
+			const parentID = regionID >= 0 ? regionID : addAdmin && countryID >= 0 ? countryID : -1
 			// Point bbox — a GeoNames row is a centroid; the candidate's region-bbox disambiguation just
 			// sees it as contained in itself, fine for a locality.
-			sprInsert.run(nid, parentId, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
+			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
 			namesInsert.run(nid, name, "locality", cc, "", 0)
 
 			if (addAdmin) {
 				ancestorInsert.run(nid, nid, "locality")
 
-				if (regionId >= 0) ancestorInsert.run(nid, regionId, "region")
+				if (regionID >= 0) ancestorInsert.run(nid, regionID, "region")
 
-				if (countryId >= 0) ancestorInsert.run(nid, countryId, "country")
+				if (countryID >= 0) ancestorInsert.run(nid, countryID, "country")
 			}
 			const seen = new Set([name])
 

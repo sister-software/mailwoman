@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { WOFSqlitePlaceLookup } from "./lookup.js"
 
-function buildFixtureDb(): DatabaseSync {
+function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (
@@ -40,7 +40,7 @@ function buildFixtureDb(): DatabaseSync {
 let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDb(), buildFTS: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true })
 })
 
 afterEach(() => {
