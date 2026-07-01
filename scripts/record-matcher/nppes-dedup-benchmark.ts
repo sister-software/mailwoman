@@ -69,6 +69,11 @@ const LEGACY = process.argv.includes("--legacy-join")
 // Optional A/B: a path to a trained dedup-gbt TS module (exports DEDUP_GBT_MODEL + DEDUP_GBT_META) to
 // score alongside the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
 const CANDIDATE = arg("candidate", "")
+// `--parallel-geocode`: geocode the sample across a worker pool (spliterator.geocodeStream) instead of the
+// serial in-process seam. Heavy per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2
+// workers, coordinates identical. Concurrency low on purpose (geocode is I/O-bound). `--geo-concurrency N` tunes.
+const PARALLEL_GEOCODE = process.argv.includes("--parallel-geocode")
+const GEO_CONC = Number(arg("geo-concurrency", "2"))
 
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
@@ -247,37 +252,6 @@ async function main(): Promise<void> {
 	// (mirrors scripts/eval/eval-matrix.ts / compare-parsers.ts). modelCardPath is MANDATORY when modelPath
 	// is set — without it a STAGE3 model silently mis-decodes into empty parses (neural/weights.ts). Bare
 	// call (no --model) keeps the default dev-weights behavior.
-	const classifier = await NeuralAddressClassifier.loadFromWeights({
-		locale: "en-US",
-		...(arg("model") ? { modelPath: arg("model") } : {}),
-		...(arg("tokenizer") ? { tokenizerPath: arg("tokenizer") } : {}),
-		...(arg("model-card") ? { modelCardPath: arg("model-card") } : {}),
-	})
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
-
-	let geo = 0
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: async (raw: string) => {
-			const g = await geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-				normalizeCase: !LEGACY,
-			})
-
-			if (g.lat !== null) geo++
-
-			return g
-		},
-		country: "US",
-	})
-
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -288,12 +262,68 @@ async function main(): Promise<void> {
 		attributes: { authorizedOfficial: "auth", entityTruth: "entityId" },
 		source: "nppes",
 	}
-	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
-		geocodeAddress: seam,
-		addressSeparator: LEGACY ? " " : ", ",
-	})
-	shardProvider.close()
-	lookup.close()
+
+	let geo = 0
+	let records: SourceRecord[]
+
+	if (PARALLEL_GEOCODE) {
+		// Threaded geocode: normalize on the main thread, then hand records to a worker pool that each rebuild the
+		// classifier/resolver/shards from config. `address` is a single pre-joined column here, so `--legacy-join`
+		// (a separator toggle) is a no-op for this path; `normalizeCase` follows the worker default (on).
+		const { geocodeStream } = await import("../../mailwoman/out/geocode-stream.js")
+		const normalized = await ingestRows(rows as unknown as Record<string, string>[], mapping)
+		const order = new Map(normalized.map((r, i) => [r.id, i]))
+		const geocoded: SourceRecord[] = []
+
+		for await (const rec of geocodeStream(normalized, {
+			mapping,
+			geocode: { wofDbPath: WOF, dataRoot: DATA_ROOT, locale: "en-US", country: "US" },
+			concurrency: GEO_CONC,
+		})) {
+			geocoded.push(rec)
+
+			if (rec.address?.geocode) geo++
+		}
+		// geocodeStream yields in completion order; restore input order so downstream cluster tie-breaks are byte-stable.
+		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+		records = geocoded
+	} else {
+		const classifier = await NeuralAddressClassifier.loadFromWeights({
+			locale: "en-US",
+			...(arg("model") ? { modelPath: arg("model") } : {}),
+			...(arg("tokenizer") ? { tokenizerPath: arg("tokenizer") } : {}),
+			...(arg("model-card") ? { modelCardPath: arg("model-card") } : {}),
+		})
+		const mod = await import("@mailwoman/resolver-wof-sqlite")
+		const lookup = new mod.WofSqlitePlaceLookup({ databasePath: WOF })
+		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+		const shardProvider = new ShardProvider(mod, DATA_ROOT)
+		const seam = geocodeAddressVia({
+			parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
+			geocode: async (raw: string) => {
+				const g = await geocodeAddress(raw, {
+					classifier,
+					resolver,
+					shards: shardProvider.for,
+					defaultCountry: "US",
+					placeCountry: false,
+					normalizeCase: !LEGACY,
+				})
+
+				if (g.lat !== null) geo++
+
+				return g
+			},
+			country: "US",
+		})
+
+		records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
+			geocodeAddress: seam,
+			addressSeparator: LEGACY ? " " : ", ",
+		})
+		shardProvider.close()
+		lookup.close()
+	}
 	console.error(`    geocoded ${geo}/${rows.length} (${((100 * geo) / rows.length).toFixed(1)}%)`)
 
 	// --- Phase E: score recovered clusters vs the NPI grouping (record.id = the held-out NPI). ---
