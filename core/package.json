@@ -34,6 +34,7 @@
 		"./solver": "./out/solver/index.js",
 		"./formatter": "./out/formatter/index.js",
 		"./decoder": "./out/decoder/index.js",
+		"./env": "./out/env/index.js",
 		"./resources": "./out/resources/index.js",
 		"./resources/languages": "./out/resources/languages/index.js",
 		"./resources/whosonfirst": "./out/resources/whosonfirst/index.js",
@@ -79,7 +80,8 @@
 		"pluralize": "^8.0.0",
 		"regenerate": "^1.4.2",
 		"spliterator": "^3.1.0",
-		"table": "^6.9.0"
+		"table": "^6.9.0",
+		"zod": "^4.4.3"
 	},
 	"devDependencies": {
 		"@types/d3-color": "^3.1.3",

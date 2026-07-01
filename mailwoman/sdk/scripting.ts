@@ -84,7 +84,7 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
 export async function runIfScript(meta: ImportMeta, scriptCallback: ScriptCallback): Promise<void> {
 	if (!esMain(meta)) return
 
-	const { $public } = await import("mailwoman/sdk/runtime")
+	const { $public } = await import("@mailwoman/core/env")
 
 	ConsoleLogger.info(
 		stringifyLoggedObject($public, {

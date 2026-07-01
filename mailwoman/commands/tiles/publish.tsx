@@ -28,13 +28,13 @@ import { existsSync, statSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
+import { $private } from "@mailwoman/core/env"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
 
 import type { CommandComponent } from "../../sdk/cli.js"
-import { $private } from "../../sdk/runtime/index.js"
 
 const OptionsSchema = zod.object({
 	file: zod.string().describe("Path to the .pmtiles archive to upload"),

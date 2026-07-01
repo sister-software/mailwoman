@@ -15,11 +15,11 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
 
+import { $public } from "@mailwoman/core/env"
 import { type RequestHandler, Router } from "express"
 
 import { readReleaseManifest } from "../data-release.js"
 import { mailwomanDataRoot, wofShardPaths } from "../resolver-backend.js"
-import { $public } from "../sdk/runtime/index.js"
 import { metricsSnapshot } from "./metrics.js"
 
 const DATA_ROOT = mailwomanDataRoot()

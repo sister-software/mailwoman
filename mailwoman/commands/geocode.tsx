@@ -30,6 +30,7 @@ import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
+import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
@@ -40,7 +41,6 @@ import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver }
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
-import { $public } from "../sdk/runtime/index.js"
 import { resolverDefaultCountry } from "./parse.js"
 
 // ---------------------------------------------------------------------------

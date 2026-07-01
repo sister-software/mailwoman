@@ -17,6 +17,7 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_POSTAL_CITY_ALIAS_DB: z.string().optional(),
 	MAILWOMAN_FST_BIN: z.string().optional(),
 	MAILWOMAN_MODEL_CARD: z.string().optional(),
+	MAILWOMAN_COARSE_PLACER_DIR: z.string().optional(),
 	WOF_DATA_DIR: z.string().optional(),
 
 	// Geocode server batch tuning (`GeocodeRouter`).
@@ -37,6 +38,10 @@ export const PrivateEnvSchema = z.object({
 
 	CF_AUTH_TOKEN: z.string().optional(),
 	GEOCODE_EARTH_API_KEY: z.string().optional(),
+
+	// LLM API keys for the corpus golden-expansion tooling.
+	DEEPSEEK_API_KEY: z.string().optional(),
+	ANTHROPIC_API_KEY: z.string().optional(),
 
 	// R2/S3 upload credentials for `tiles publish` (rclone `:s3:` remote).
 	RCLONE_S3_ENDPOINT: z.string().optional(),

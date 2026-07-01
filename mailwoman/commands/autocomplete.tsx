@@ -17,12 +17,12 @@
 
 import { readFileSync } from "node:fs"
 
+import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
 import type { CommandComponent } from "../sdk/cli.js"
-import { $public } from "../sdk/runtime/index.js"
 
 export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 

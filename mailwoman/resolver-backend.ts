@@ -21,14 +21,13 @@
 
 import { existsSync } from "node:fs"
 
+import { $public } from "@mailwoman/core/env"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
 	WOFPostalCityAliasLookup,
 	WOFSqlitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
-
-import { $public } from "./sdk/runtime/index.js"
 
 /**
  * Resolve the candidate-db path from an explicit option then `$MAILWOMAN_CANDIDATE_DB`; undefined if unset or missing.

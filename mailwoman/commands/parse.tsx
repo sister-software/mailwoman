@@ -8,6 +8,7 @@ import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { type AddressTree, decodeAsJSON, decodeAsTuples, decodeAsXML, proposalsToTree } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
 import { InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
@@ -20,7 +21,6 @@ import zod from "zod"
 
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
-import { $public } from "../sdk/runtime/index.js"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u

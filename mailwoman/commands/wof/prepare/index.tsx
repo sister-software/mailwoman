@@ -8,6 +8,7 @@ import { DatabaseSync } from "node:sqlite"
 import { setImmediate } from "node:timers/promises"
 
 import { ProgressBar } from "@inkjs/ui"
+import { $public } from "@mailwoman/core/env"
 import { formatMinutes, formatQuantity, takeAsync, tallyPatternCount } from "@mailwoman/core/resources"
 import FastGlob from "fast-glob"
 import { Box, Text } from "ink"
@@ -17,7 +18,6 @@ import { useEffect, useState } from "react"
 import zod from "zod"
 
 import type { CommandComponent } from "../../../sdk/cli.js"
-import { $public } from "../../../sdk/runtime/index.js"
 import type { WorkerInput, WorkerOutput } from "./_app_worker.mjs"
 
 const FILES_PER_BATCH = 500

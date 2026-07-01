@@ -18,11 +18,11 @@
 import { existsSync } from "node:fs"
 
 import { type AddressTree, decodeAsXML } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.js"
-import { $public } from "../sdk/runtime/index.js"
 
 /** One node in the response's flat list — what the UI renders for each resolved component. */
 export interface ResolveResponseNode {

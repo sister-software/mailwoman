@@ -4732,6 +4732,7 @@ __metadata:
     regenerate: "npm:^1.4.2"
     spliterator: "npm:^3.1.0"
     table: "npm:^6.9.0"
+    zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
 

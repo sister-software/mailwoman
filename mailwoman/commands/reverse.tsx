@@ -19,12 +19,12 @@
 import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
+import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
 import type { CommandComponent } from "../sdk/cli.js"
-import { $public } from "../sdk/runtime/index.js"
 
 const ArgumentsSchema = zod
 	.array(zod.string())

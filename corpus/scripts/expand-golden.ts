@@ -65,6 +65,7 @@ import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
 import { ParquetReader } from "@dsnp/parquetjs"
+import { $private } from "@mailwoman/core/env"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -311,7 +312,7 @@ N: ${n}`
 }
 
 function makeDeepseekProvider(model: string): LlmProvider {
-	const apiKey = process.env.DEEPSEEK_API_KEY
+	const apiKey = $private.DEEPSEEK_API_KEY
 
 	if (!apiKey) throw new Error("DEEPSEEK_API_KEY env var is required for --provider deepseek")
 
@@ -345,7 +346,7 @@ function makeDeepseekProvider(model: string): LlmProvider {
 }
 
 function makeAnthropicProvider(model: string): LlmProvider {
-	const apiKey = process.env.ANTHROPIC_API_KEY
+	const apiKey = $private.ANTHROPIC_API_KEY
 
 	if (!apiKey) throw new Error("ANTHROPIC_API_KEY env var is required for --provider anthropic")
 

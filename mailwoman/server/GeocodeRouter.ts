@@ -19,6 +19,7 @@
 import { existsSync } from "node:fs"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import type { ResolveOpts } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
@@ -32,7 +33,6 @@ import {
 } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.js"
-import { $public } from "../sdk/runtime/index.js"
 import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */

@@ -24,6 +24,7 @@ import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	geocodeAddressVia,
@@ -52,7 +53,6 @@ import { geocodeAddress, ShardProvider, type ShardResolver } from "../geocode-co
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
-import { $public } from "../sdk/runtime/index.js"
 import { resolverDefaultCountry } from "./parse.js"
 
 // ---------------------------------------------------------------------------
