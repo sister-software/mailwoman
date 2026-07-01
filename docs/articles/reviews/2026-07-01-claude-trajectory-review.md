@@ -112,3 +112,34 @@ Write the successor to `plan/README.mdx` — a short "what mailwoman is now" sco
 Tracks 1 and 2 are independent and can run in parallel (Track 1 is demo/runtime code; Track 2 is eval + docs). Track 3 needs an hour of operator time and can happen any day. Track 4 starts only after Track 2's re-score exists (its gates depend on the fresh baseline) and Track 3 sets its budget ceiling. Track 5 can be a night-shift deliverable once 1–3 have landed, so the new scope doc describes the re-railed state rather than promising it.
 
 Success, four weeks out, looks like: the demo resolves what the server resolves; a 2026-07 parity scorecard exists and the ledger question is settled; the operator queue holds only externally-blocked items with check-back dates; and #825 has either a probe result and a funded gate, or a documented no-go. That is the project back on rails — not faster, but pointed where it is going.
+
+---
+
+## Addendum — 2026-07-02: #825 resolved overnight; Track 4 rewritten
+
+Between this review and the next morning, the night shift ran the #825 question to ground and the answer invalidates Track 4 as written — in the best possible way.
+
+**What happened.** The shard retrain the plan was gating (v196-slavic-anchor, correctly built on the v4.15.0 base) ran and was falsified: it held US but regressed CZ at convergence (wrong-city 44 → 58%, resolved-p50 5.24 → 82.89 km). Root-causing the failure found the bottleneck was never training data: the 48k SentencePiece unigram vocab contains the diacritic _characters_ but no multi-char _subwords_ containing them, so every diacritic isolates its own piece (`Vysoká → [▁V, ys, ok, á]`) — and a unigram model cannot emit a subword absent from its table, so no volume of data fixes it. The fix is a **training-free tokenizer vocab-splice + embedding mean-init** (#884): CZ wrong-city 44 → 28%, PL 30 → 11%, US coordinate output byte-for-byte identical by construction (bootstrap diff 0, CI [0, 0]). No GPU. The ship candidate is the mean-init model; a 2k fine-tune was ablated and retired as slightly harmful.
+
+**What this vindicates.** Two of the disciplines this review said not to change did exactly their job in one night: the falsified-lever rule killed the retrain instead of shipping it, and coordinate-first grading caught what label-F1 would have promoted — the retrain's content-gap label metric _improved_ 100 → 17 while the coordinate regressed. That is the sharpest evidence yet for the R1 nuance: the re-score in #885 is a drift _backstop_, not an argument for re-anchoring on label-F1.
+
+**R2 is closed as written.** "Stalled with no probe" no longer describes reality; the probe ran, the hypothesis flipped from data to representation, and the fix is committed and reproducible (branch `feat/825-v196-slavic-anchor`, `tokenizer_splice.py`, day eval `2026-07-01-day-825-tokenizer-fix.md`). The residual risk moves downstream: shipping it.
+
+### Track 4, rewritten — ship #884 (no campaign, no GPU)
+
+The remaining work is mechanical and tracked on #884:
+
+- **#291 — grow the CZ/PL coord eval sets 150 → ~1k.** The 150-row sets are underpowered (CZ p50 CI was [−40, −0.34]); wrong-city% is the defensible headline until then. This is the #884 equivalent of the pre-registered gate and should land before promotion.
+- **#293 — int8-quantize the mean-init model and measure the browser budget.** The vocab growth (48k → 58.6k) took fp32 ONNX 118 → 134 MB; int8 lands near ~34 MB against the ~30 MB browser SLO. If it busts, the fallback decision is prune rarer diacritic pieces vs ship server-only — an operator call, added to Track 3.
+- **#295 — the coordinated model + tokenizer promotion** (operator gate). The spliced tokenizer ships _with_ the model in both runtimes; model-card plus OA CZ/PL ODbL/CC-BY attribution. This inherits Track 4's old role as the gated spend — except the spend is now a release, not a training run.
+- **#296 — CZ/PL coverage residual** (re-opened): the remaining wrong-city is gazetteer/rooftop coverage, downstream of the now-fixed parse. OA CZ 2.83M + PL 7.67M rows already on disk.
+- **#297 — CharCNN CJK track stays deferred.** It is the next representational question, not this one.
+
+### Consequent edits to the standing plan
+
+- **Track 3 decision table:** the "#825 GPU budget ceiling" row is moot. Replace with two calls: the #295 promote go/no-go (after #291 + #293 land), and the #293 fallback (prune vs server-only) if int8 exceeds the browser SLO.
+- **Locale freeze:** the rule "no new locales before the rendering fix lands" becomes "no new locales until #295 ships the coordinated bump" — the fix exists but is not shipped, and every pre-#295 locale shard would train against the old vocab.
+- **Track 2 sequencing gains a hard edge:** run #885's full re-score on the _current shipped line_ before #295 promotes, so the splice lands with a clean pre/post baseline; the post-#295 scorecard then becomes the first entry of the new re-score cadence.
+- **Grading hygiene carried forward from the handoff:** baseline grades go against the explicit `model-v193a3-step-80000-int8.onnx`, never the dev symlink, which drifts (#259).
+
+Success at four weeks, restated: the demo resolves what the server resolves; the 2026-07 scorecard exists and the ledger question is settled; the operator queue holds only externally-blocked items; and the coordinated model + tokenizer bump has shipped — or the int8-budget fallback is documented. Track 4 went from the plan's most expensive unknown to its most concrete deliverable in one shift.
