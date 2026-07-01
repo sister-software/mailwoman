@@ -6,7 +6,7 @@
  *   Pages deploy) so a session fetches ~5 MB instead of the whole 53 MB — the win that matters on
  *   mobile / metered links.
  *
- *   The query SQL + ranking mirror `@mailwoman/resolver-wof-wasm`'s `WofWasmPlaceLookup` (exact-name
+ *   The query SQL + ranking mirror `@mailwoman/resolver-wof-wasm`'s `WOFWasmPlaceLookup` (exact-name
  *   tier → population-adjusted bm25, plus a point-in-bbox region constraint), but run ASYNC over
  *   the worker's `db.exec`. We can't share that class directly: it consumes a synchronous in-memory
  *   `@sqlite.org/sqlite-wasm` handle, whereas this talks to a Comlink-proxied sql.js worker. Keep
@@ -15,12 +15,12 @@
  *
  *   Sql.js-httpvfs ships a webpack UMD bundle (not ESM) and a Worker + WASM. The demo-assets plugin
  *   stages all three into `static/mailwoman/sqljs/`; we load the UMD via a classic <script> (→
- *   `window.createDbWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
+ *   `window.createDBWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
  *   webpack — that's what keeps the Docusaurus build warning-free.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
-// The SHARED candidate schema (build-candidate.ts writes it; the Node WofCandidateTableLookup reads it
+// The SHARED candidate schema (build-candidate.ts writes it; the Node WOFCandidateTableLookup reads it
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 // Browser-safe subpath (fts.ts's only node:sqlite import is type-only; aliased in
@@ -61,12 +61,12 @@ const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, "
 const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
 
 /**
- * Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFtsQuery intent. Unlike the
+ * Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFTSQuery intent. Unlike the
  * Node/WASM sanitizers (which strip everything outside `\p{L}\p{N}`), this one strips a denylist — so the alias-bag
  * separator must be stripped EXPLICITLY or a pasted U+E000 could address the boundary token in the quoted phrase
  * below.
  */
-function sanitizeFts(text: string): string {
+function sanitizeFTS(text: string): string {
 	const trimmed = text.trim()
 	const prefix = trimmed.endsWith("*")
 	const cleaned = trimmed
@@ -90,7 +90,7 @@ function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | u
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
 }
 
-interface HttpvfsWorker {
+interface HTTPVFSWorker {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 	/**
 	 * Total bytes range-fetched from the DB so far (Comlink property read on the worker). Drives the live transfer
@@ -99,13 +99,13 @@ interface HttpvfsWorker {
 	bytesRead(): Promise<number>
 }
 
-/** The raw shape `createDbWorker` resolves to — `worker` is the Comlink proxy. */
-interface RawWorkerHttpvfs {
-	db: HttpvfsWorker["db"]
+/** The raw shape `createDBWorker` resolves to — `worker` is the Comlink proxy. */
+interface RawWorkerHTTPVFS {
+	db: HTTPVFSWorker["db"]
 	worker?: { bytesRead?: number | Promise<number> }
 }
 
-export interface HttpvfsOptions {
+export interface HTTPSVFSOptions {
 	/**
 	 * Bytes per HTTP range request. Default 65536 (64 KiB = 16 SQLite pages). Fetches inside the worker are SYNCHRONOUS
 	 * XHR, so cold latency ≈ uncached-chunk-count × RTT: bigger chunks cut round-trips on FTS-walk-heavy access (the hot
@@ -116,27 +116,27 @@ export interface HttpvfsOptions {
 }
 
 /**
- * Load the sql.js-httpvfs UMD (once) and open a DB over byte-range fetches from `dbUrl`. `sqljsBaseUrl` is where the
+ * Load the sql.js-httpvfs UMD (once) and open a DB over byte-range fetches from `dbURL`. `sqljsBaseURL` is where the
  * plugin staged the worker + wasm (e.g. "/mailwoman/sqljs").
  */
-export async function loadHttpvfsDb(
-	dbUrl: string,
-	sqljsBaseUrl: string,
-	options: HttpvfsOptions = {}
-): Promise<HttpvfsWorker> {
-	const w = window as unknown as { createDbWorker?: (...args: unknown[]) => Promise<RawWorkerHttpvfs> }
+export async function loadHTTPVFSDatabase(
+	dbURL: string,
+	sqljsBaseURL: string,
+	options: HTTPSVFSOptions = {}
+): Promise<HTTPVFSWorker> {
+	const w = window as unknown as { createDBWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
 
-	if (typeof w.createDbWorker !== "function") {
+	if (typeof w.createDBWorker !== "function") {
 		await new Promise<void>((res, rej) => {
 			const s = document.createElement("script")
-			s.src = `${sqljsBaseUrl}/index.js`
+			s.src = `${sqljsBaseURL}/index.js`
 			s.onload = () => res()
 			s.onerror = () => rej(new Error("sql.js-httpvfs UMD failed to load"))
 			document.head.appendChild(s)
 		})
 	}
 
-	if (typeof w.createDbWorker !== "function") throw new Error("createDbWorker missing after UMD load")
+	if (typeof w.createDBWorker !== "function") throw new Error("createDBWorker missing after UMD load")
 
 	// Open over byte-range fetches, then force the header + schema pages through SQLite with a
 	// cheap read. On mobile Safari the HTTP cache can hand sql.js-httpvfs a torn 64 KB range chunk,
@@ -145,16 +145,16 @@ export async function loadHttpvfsDb(
 	// cacheable URL first (fast — Cloudflare edge-caches the ranges); if it opens corrupt, retry ONCE
 	// with a cache-busting query param to force fresh chunks. Self-heals a poisoned cache without
 	// permanently defeating caching for the happy path. See the 2026-06 mobile-Safari demo report.
-	const open = async (url: string): Promise<HttpvfsWorker> => {
-		const raw = await w.createDbWorker!(
+	const open = async (url: string): Promise<HTTPVFSWorker> => {
+		const raw = await w.createDBWorker!(
 			[
 				{
 					from: "inline",
 					config: { serverMode: "full", url, requestChunkSize: options.requestChunkSize ?? 65536 },
 				},
 			],
-			`${sqljsBaseUrl}/sqlite.worker.js`,
-			`${sqljsBaseUrl}/sql-wasm.wasm`
+			`${sqljsBaseURL}/sqlite.worker.js`,
+			`${sqljsBaseURL}/sql-wasm.wasm`
 		)
 		await raw.db.exec("SELECT count(*) FROM sqlite_master")
 
@@ -172,12 +172,12 @@ export async function loadHttpvfsDb(
 	}
 
 	try {
-		return await open(dbUrl)
+		return await open(dbURL)
 	} catch (err) {
 		if (!/malformed|not a database|disk image/i.test(String(err))) throw err
-		const sep = dbUrl.includes("?") ? "&" : "?"
+		const sep = dbURL.includes("?") ? "&" : "?"
 
-		return open(`${dbUrl}${sep}cb=${Date.now()}`)
+		return open(`${dbURL}${sep}cb=${Date.now()}`)
 	}
 }
 
@@ -188,13 +188,13 @@ interface SchemaFacts {
 	hasRoles: boolean
 }
 
-/** PlaceLookup over the httpvfs worker — same ranking as WofWasmPlaceLookup, async. */
-export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
-	#worker: HttpvfsWorker
+/** PlaceLookup over the httpvfs worker — same ranking as WOFWasmPlaceLookup, async. */
+export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
+	#worker: HTTPVFSWorker
 	#schemaProbe: Promise<SchemaFacts> | undefined
 	#dualRoles: Promise<Map<number, DualRole[]>> | undefined
 
-	constructor(worker: HttpvfsWorker) {
+	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
 	}
 
@@ -242,7 +242,7 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 				if (!hasRoles) return map
 				const rows = rowsFromExec(
 					await this.#worker.db.exec(
-						`SELECT cr.admin_id AS adminId, cr.locality_id AS localityId, cr.relationship_type AS rel,
+						`SELECT cr.admin_id AS adminID, cr.locality_id AS localityID, cr.relationship_type AS rel,
 							a.name AS adminName, a.placetype AS adminType, l.name AS locName, l.placetype AS locType
 						FROM coincident_roles cr JOIN spr a ON a.id = cr.admin_id JOIN spr l ON l.id = cr.locality_id`
 					)
@@ -254,20 +254,20 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 				}
 
 				for (const r of rows) {
-					const adminId = Number(r.adminId)
-					const localityId = Number(r.localityId)
+					const adminID = Number(r.adminID)
+					const localityID = Number(r.localityID)
 					const rel = String(r.rel)
 					// Resolved place is the locality → it ALSO acts as the region (the admin partner).
-					push(localityId, {
-						id: adminId,
+					push(localityID, {
+						id: adminID,
 						name: String(r.adminName),
 						placetype: String(r.adminType),
 						relationshipType: rel,
 						role: "region",
 					})
 					// Resolved place is the admin → it ALSO acts as the locality.
-					push(adminId, {
-						id: localityId,
+					push(adminID, {
+						id: localityID,
 						name: String(r.locName),
 						placetype: String(r.locType),
 						relationshipType: rel,
@@ -292,10 +292,10 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 	 * region (city-state)" whether the parse resolved the city or the state. Returns `[]` when the slim DB predates the
 	 * relation (existence-guarded) — degrades silently.
 	 */
-	async coincidentRolesFor(placeId: number): Promise<DualRole[]> {
-		if (!Number.isFinite(placeId)) return []
+	async coincidentRolesFor(placeID: number): Promise<DualRole[]> {
+		if (!Number.isFinite(placeID)) return []
 
-		return (await this.#dualRolesMap()).get(placeId) ?? []
+		return (await this.#dualRolesMap()).get(placeID) ?? []
 	}
 
 	/**
@@ -327,7 +327,7 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from the slim DB's `place_abbr` table
 	 * (carried by build-slim, #189). Empty on DBs built before the table. Lets the demo resolver tier an exact-abbrev
 	 * match ("VT" → Vermont) above a foreign region that merely token-matches — the data-driven replacement for the
-	 * hardcoded `expandUsRegion` map. Mirrors `WofWasmPlaceLookup.#abbrExactIds` (keep the two in lockstep).
+	 * hardcoded `expandUsRegion` map. Mirrors `WOFWasmPlaceLookup.#abbrExactIds` (keep the two in lockstep).
 	 */
 	async #abbrExactIds(text: string): Promise<Set<number>> {
 		const t = text.trim()
@@ -344,7 +344,7 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 		const text = (query.text ?? "").trim()
 
 		if (!text) return []
-		const fts = sanitizeFts(text)
+		const fts = sanitizeFTS(text)
 
 		if (!fts) return []
 		const limit = Math.max(1, query.limit ?? 10)
@@ -384,7 +384,7 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 
 		// Exact-abbrev tier: a candidate whose region abbreviation equals the query ("VT" → Vermont) is
 		// an exact match, same tier as an exact name match — so it outranks a foreign region that merely
-		// token-matches "VT". Mirrors WofWasmPlaceLookup; no-op on slim DBs without `place_abbr`.
+		// token-matches "VT". Mirrors WOFWasmPlaceLookup; no-op on slim DBs without `place_abbr`.
 		// Issued together with the main query — the queries are independent and the worker pipelines
 		// them, saving a main-thread→worker round-trip gap per lookup.
 		const [rows, abbrIds] = await Promise.all([this.#worker.db.exec(sql).then(rowsFromExec), this.#abbrExactIds(text)])
@@ -404,7 +404,7 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 				// boundary-preserving ALIAS_SEPARATOR (#523). The shared parser does a per-alias equality
 				// check, ungated; on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
 				// to padded containment gated on "no strictly exact candidate" so interior fragments
-				// ("York" inside "New York City") can't be false-promoted. Mirrors WofWasmPlaceLookup.
+				// ("York" inside "New York City") can't be false-promoted. Mirrors WOFWasmPlaceLookup.
 				const aliasExact =
 					typeof row.alt_names === "string" && aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
@@ -438,9 +438,9 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 
 /** Cached id↔text maps from the candidate DB's tiny code tables (one probe, memoized). */
 interface CandidateCodeMaps {
-	countryToId: Map<string, number>
+	countryToID: Map<string, number>
 	idToCountry: Map<number, string>
-	placetypeToId: Map<string, number>
+	placetypeToID: Map<string, number>
 	idToPlacetype: Map<number, string>
 }
 
@@ -448,7 +448,7 @@ interface CandidateCodeMaps {
  * PlaceLookup over the byte-range CANDIDATE table (`build-candidate.ts`) — the FTS-free gazetteer that replaces the
  * slim `wof-hot.db` for the demo. A resolve is a single contiguous B-tree probe on `name_key` (the shared
  * {@link normalizeLocalityForKey}, build/query-consistent): no FTS, no join — each row is denormalized (display `name`,
- * centroid, bbox) and population rank is precomputed into `neg_rank`. Drop-in for {@link WofHttpvfsPlaceLookup} (same
+ * centroid, bbox) and population rank is precomputed into `neg_rank`. Drop-in for {@link WOFHTTPVFSPlaceLookup} (same
  * `MailwomanLookupLike` surface), but ~12 range fetches per session instead of 243 on the full DB, with GLOBAL
  * coverage.
  *
@@ -457,19 +457,19 @@ interface CandidateCodeMaps {
  * exactly what `runCascade` expects.
  */
 export class WOFCandidateTableLookup implements MailwomanLookupLike {
-	#worker: HttpvfsWorker
+	#worker: HTTPVFSWorker
 	#codes: Promise<CandidateCodeMaps> | undefined
 	/** Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip). */
 	#hasPostalCity: Promise<boolean> | undefined
 
-	constructor(worker: HttpvfsWorker) {
+	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
 	}
 
 	/**
 	 * Whether this candidate.db carries the #741 postal-city side-index. Memoized — absent (today's production demo DB)
 	 * the postal-city probe never fires, so resolution is byte-identical to pre-#741. Mirrors the Node
-	 * `WofCandidateTableLookup`'s existence-gated probe.
+	 * `WOFCandidateTableLookup`'s existence-gated probe.
 	 */
 	#postalCityPresent(): Promise<boolean> {
 		if (!this.#hasPostalCity) {
@@ -489,22 +489,22 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			this.#codes = (async () => {
 				const cc = rowsFromExec(await this.#worker.db.exec("SELECT id, code FROM country_codes"))
 				const pt = rowsFromExec(await this.#worker.db.exec("SELECT id, placetype FROM placetype_codes"))
-				const countryToId = new Map<string, number>()
+				const countryToID = new Map<string, number>()
 				const idToCountry = new Map<number, string>()
 
 				for (const r of cc) {
-					countryToId.set(String(r.code).toUpperCase(), Number(r.id))
+					countryToID.set(String(r.code).toUpperCase(), Number(r.id))
 					idToCountry.set(Number(r.id), String(r.code).toUpperCase())
 				}
-				const placetypeToId = new Map<string, number>()
+				const placetypeToID = new Map<string, number>()
 				const idToPlacetype = new Map<number, string>()
 
 				for (const r of pt) {
-					placetypeToId.set(String(r.placetype), Number(r.id))
+					placetypeToID.set(String(r.placetype), Number(r.id))
 					idToPlacetype.set(Number(r.id), String(r.placetype))
 				}
 
-				return { countryToId, idToCountry, placetypeToId, idToPlacetype }
+				return { countryToID, idToCountry, placetypeToID, idToPlacetype }
 			})()
 			this.#codes.catch(() => {
 				this.#codes = undefined
@@ -540,7 +540,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Gated on
 		// the side-index being present, a postcode in the query, and a locality-tier request — so the
 		// common path is byte-identical, and inert on a candidate.db built without the side-index
-		// (today's production demo). Mirrors the Node WofCandidateTableLookup probe.
+		// (today's production demo). Mirrors the Node WOFCandidateTableLookup probe.
 		const wantsLocality = !query.placetype || expandPlacetypeFilter([query.placetype]).includes("locality")
 
 		if (query.postcode && wantsLocality && (await this.#postalCityPresent())) {
@@ -569,13 +569,13 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		}
 
 		const limit = Math.max(1, query.limit ?? 10)
-		const { countryToId, idToCountry, placetypeToId, idToPlacetype } = await this.#codeMaps()
+		const { countryToID, idToCountry, placetypeToID, idToPlacetype } = await this.#codeMaps()
 
 		// Filter conds shared by the exact + the strip-fallback probe (everything but name_key).
 		const filters: string[] = []
 
 		if (query.country) {
-			const cid = countryToId.get(query.country.toUpperCase())
+			const cid = countryToID.get(query.country.toUpperCase())
 
 			if (cid === undefined) return [] // a country the candidate table doesn't carry
 			filters.push(`country_id = ${cid}`)
@@ -586,7 +586,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			// localadmin). `postalcode` maps to no admin placetype here → empty → no rows (postcodes
 			// live in a separate shard, resolved off the anchor bins, not this table).
 			const ids = expandPlacetypeFilter([query.placetype])
-				.map((t) => placetypeToId.get(t))
+				.map((t) => placetypeToID.get(t))
 				.filter((v): v is number => v !== undefined)
 
 			if (ids.length === 0) return []
@@ -650,7 +650,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 }
 
 /** Polygon lookup over an httpvfs worker: id → GeoJSON geometry (async). */
-export function makeHttpvfsPolygonLookup(worker: HttpvfsWorker) {
+export function makeHTTPVFSPolygonLookup(worker: HTTPVFSWorker) {
 	return {
 		async get(id: number): Promise<unknown | null> {
 			const rows = rowsFromExec(await worker.db.exec(`SELECT geom FROM polygons WHERE id = ${Number(id)}`))

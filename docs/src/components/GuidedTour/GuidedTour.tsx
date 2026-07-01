@@ -13,7 +13,7 @@
  *   import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
  *   import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
  *
- *   <DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+ *   <DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
  *     <PipelineExplorer />
  *   </DemoEmbedProvider>
  * ```
@@ -124,19 +124,19 @@ export const GuidedTour: React.FC = () => {
 	// ---- Parse ----
 
 	const parse = useCallback(
-		async (stopId: number) => {
+		async (stopID: number) => {
 			if (!classifier) return
 
-			const state = stopStates.get(stopId)
+			const state = stopStates.get(stopID)
 
 			if (!state) return
 
 			setStopStates((prev) => {
 				const next = new Map(prev)
-				const existing = next.get(stopId)
+				const existing = next.get(stopID)
 
 				if (!existing) return prev
-				next.set(stopId, { ...existing, busy: true, error: null, result: null })
+				next.set(stopID, { ...existing, busy: true, error: null, result: null })
 
 				return next
 			})
@@ -177,7 +177,7 @@ export const GuidedTour: React.FC = () => {
 
 				setStopStates((prev) => {
 					const next = new Map(prev)
-					next.set(stopId, { ...next.get(stopId)!, result, busy: false, error: null })
+					next.set(stopID, { ...next.get(stopID)!, result, busy: false, error: null })
 
 					return next
 				})
@@ -186,7 +186,7 @@ export const GuidedTour: React.FC = () => {
 				const message = err instanceof Error ? err.message : String(err)
 				setStopStates((prev) => {
 					const next = new Map(prev)
-					next.set(stopId, { ...next.get(stopId)!, result: null, busy: false, error: message })
+					next.set(stopID, { ...next.get(stopID)!, result: null, busy: false, error: message })
 
 					return next
 				})

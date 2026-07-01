@@ -27,15 +27,15 @@ export class SqliteConventionSource implements ConventionSource {
 	/**
 	 * @param db An open handle to a DB that has the convention asset attached (or is it).
 	 * @param schema The schema name the `address_convention` table lives under (`main` or an ATTACHed shard name —
-	 *   `WofSqlitePlaceLookup` auto-detects which shard carries the table).
+	 *   `WOFSqlitePlaceLookup` auto-detects which shard carries the table).
 	 */
 	constructor(db: DatabaseSync, schema: string) {
 		this.#db = db
 		this.#schema = schema
 	}
 
-	get(wofId: number): Convention | undefined {
-		const cached = this.#cache.get(wofId)
+	get(wofID: number): Convention | undefined {
+		const cached = this.#cache.get(wofID)
 
 		if (cached !== undefined) return cached ?? undefined
 		let value: Convention | null = null
@@ -43,7 +43,7 @@ export class SqliteConventionSource implements ConventionSource {
 		try {
 			const row = this.#db
 				.prepare(`SELECT convention FROM ${this.#schema}.${ADDRESS_CONVENTION_TABLE} WHERE wof_id = ?`)
-				.get(wofId) as { convention: string } | undefined
+				.get(wofID) as { convention: string } | undefined
 
 			if (row?.convention) value = JSON.parse(row.convention) as Convention
 		} catch {
@@ -51,7 +51,7 @@ export class SqliteConventionSource implements ConventionSource {
 			// WORLD_DEFAULT). The build script validates structure, so this is purely defensive.
 			value = null
 		}
-		this.#cache.set(wofId, value)
+		this.#cache.set(wofID, value)
 
 		return value ?? undefined
 	}

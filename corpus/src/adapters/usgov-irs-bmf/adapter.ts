@@ -22,7 +22,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
@@ -128,9 +128,9 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 
 					if (Object.keys(aligned).length <= 2) continue
 
-					const sourceId = ein
+					const sourceID = ein
 						? `${USGOV_IRS_BMF_ADAPTER_ID}-${ein}`
-						: stableSourceId(USGOV_IRS_BMF_ADAPTER_ID, aligned)
+						: stableSourceID(USGOV_IRS_BMF_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -138,7 +138,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 						country: "US",
 						locale: "en-US",
 						source: USGOV_IRS_BMF_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: USGOV_IRS_BMF_DEFAULT_LICENSE,
 					}

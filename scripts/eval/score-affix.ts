@@ -1,13 +1,13 @@
 import { readFileSync } from "node:fs"
 
 // Affix-aware per-tag scorer. per-locale-f1's foldToComponents joins street_prefix+street+street_suffix
-// into one `street`, so it CANNOT measure the affix split. This scores the UNFOLDED decodeAsJson
+// into one `street`, so it CANNOT measure the affix split. This scores the UNFOLDED decodeAsJSON
 // output against split ground truth: exact-match (case-insensitive) P/R/F1 per tag.
 // Usage: node --experimental-strip-types scripts/eval/score-affix.ts --model <onnx> [--file <jsonl>]
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 import { arg } from "../lib/cli-args.ts"
@@ -37,7 +37,7 @@ const GAZ = arg("gazetteer-lexicon")
 const suppressGaz = argv.includes("--suppress-gaz-near-postcode")
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("model")!)])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(arg("model")!)])
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
@@ -61,7 +61,7 @@ const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
 
 for (const row of rows) {
-	const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
+	const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
 	const exp = row.components as Record<string, string>
 
 	for (const t of TAGS) {

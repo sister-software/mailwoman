@@ -3,7 +3,7 @@
 
 /**
  *   Unit tests for the demo's #741 postal-city side-index probe in the browser candidate lookup
- *   (`WofCandidateTableLookup`), against a node:sqlite-backed stub worker that mimics
+ *   (`WOFCandidateTableLookup`), against a node:sqlite-backed stub worker that mimics
  *   sql.js-httpvfs's `db.exec` contract. Pins parity with the Node lookup: an exact `(name_key,
  *   postcode)` hit resolves a postal city to its geographic locality; a bare query, and a
  *   candidate.db WITHOUT the side-index (today's production demo), are byte-stable.
@@ -33,7 +33,7 @@ function stubWorker(db: DatabaseSync) {
 }
 
 const openDbs: DatabaseSync[] = []
-function makeDb(withSideIndex: boolean): DatabaseSync {
+function makeDB(withSideIndex: boolean): DatabaseSync {
 	const d = new DatabaseSync(":memory:")
 	d.exec(`
 		CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT);
@@ -68,9 +68,9 @@ afterEach(() => {
 	while (openDbs.length) openDbs.pop()!.close()
 })
 
-describe("browser WofCandidateTableLookup postal-city side-index (#741)", () => {
+describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => {
 	test("WITH the side-index, a postal-city + postcode resolves to the geographic locality", async () => {
-		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(true)))
+		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		expect(hits).toHaveLength(1)
 		expect(hits[0]!.name).toBe("Nashville")
@@ -79,20 +79,20 @@ describe("browser WofCandidateTableLookup postal-city side-index (#741)", () => 
 	})
 
 	test("a BARE query (no postcode) is untouched — bare 'Antioch' resolves to the CA distractor", async () => {
-		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(true)))
+		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
 		expect(hits[0]!.lat).toBeCloseTo(38.0, 1)
 	})
 
 	test("a postcode NOT in the side-index falls through to the normal probe", async () => {
-		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(true)))
+		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "99999", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
 	})
 
 	test("a candidate.db WITHOUT the side-index is byte-stable (today's production demo)", async () => {
-		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(false)))
+		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(false)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch") // no probe → normal population-first ranking
 	})

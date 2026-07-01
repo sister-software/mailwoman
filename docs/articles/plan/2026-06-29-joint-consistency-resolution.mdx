@@ -1,0 +1,143 @@
+---
+sidebar_position: 60
+title: Joint-consistency resolution — reading an address through the hermeneutic circle
+tags:
+  - plan
+  - architecture
+  - resolver
+  - design
+---
+
+# Joint-consistency resolution — reading an address through the hermeneutic circle
+
+_The target this document sets: an address should resolve to wherever its spans are **jointly
+consistent** in the gazetteer's containment graph, not to wherever a whole-string country guess
+points. "Portland, ME" is Portland, Maine because a Portland sits under Maine and none sits under
+Messina or Medway. Geography decides; the country prior only fills the silences. This is the design
+the #832 / #833 / VT failures asked for; it is not yet built._
+
+## What the failures told us
+
+Three bugs in late June 2026 share one root. "New York, NY" resolved to New York Mills (#832).
+"Portland, ME" resolved to Messina, Italy; "Portland, OR" to Ourense, Spain (#833). "Portland, VT"
+resolves to Viterbo and refuses to move even when you pin the country prior to the US at near-certainty.
+
+The shape underneath all three: the resolver works **greedily**. It resolves the region token "ME" on
+its own — by name match, population, and the soft country prior — and Messina wins on population before
+anything checks whether a "Portland" actually sits beneath it. Then it scopes the locality into the
+region it already picked. The one question that would have saved it — _which "ME" has a "Portland"
+under it?_ — never gets asked.
+
+We did once ask it. Stage 5 (the cross-component reconcile, see `plan/reference/STAGES.mdx`) scored
+whole assignments and vetoed an impossible parent chain (`Houston → New York` earns `-Infinity`
+because Who's On First says Houston descends from Texas). That reconcile was retired to argmax in #566
+because, bundled as it was, it broke the street/house-number precondition on the majority of US
+addresses. The admin-coherence check went out with the bathwater. The greedy fallback that replaced it
+is what produces #833.
+
+## The frame: a hermeneutic circle
+
+You cannot read the parts of an address without a guess at the whole, and you cannot fix the whole
+without the parts. "ME" is only Maine once you suspect the address is American; you only suspect it is
+American once you have read "ME", "Portland", and the shape of the string. Interpretation spirals: a
+provisional whole conditions the parts, the parts revise the whole, until the two cohere. This is the
+hermeneutic circle, and an address is a small, tractable instance of it.
+
+The system already runs a faint version of this loop inside the parser — `neural/anchor-inference.ts`
+infers a soft locale posterior and conditions its own labeling on it, with token-dropout so it never
+becomes dependent. What is missing is the **outer** loop, between the parse and the atlas, run over
+geography rather than over token features.
+
+The circle has two halves, and they are complementary:
+
+- **Forward** — format and script propose a system. A CJK script implies CJK address systems; a UK
+  alphanumeric postcode implies GB; a bare five-digit implies one of a small set. Today this is
+  rule-based (`query-shape`, `locale-gate`'s script-class scorer), and deliberately so — it reads
+  character classes and known postcode formats, never place-name dictionaries.
+- **Backward** — the resolved place confirms the system. Once "Portland, ME" lands in Maine, "US"
+  falls out of the result. You did not guess the country; you derived it.
+
+The coarse placer (#244) is a forward signal that skips the format and guesses the whole string at
+once. It is useful, but it is a guess, and on "Portland, ME" it guesses GB at 0.79 and routes the
+address to Italy. The backward half — geographic consistency — is the half we under-built.
+
+## What we build now: scoped admin descendant-consistency
+
+The minimum viable form of the backward half, using machinery that already exists. When resolving a
+region and a locality together, prefer the assignment in which the locality is a **descendant of the
+region** in the `ancestors` table (the same table #832 repaired):
+
+- "Portland, ME" → candidate regions `{Maine/US, Messina/IT, Medway/GB}`; only Maine has a "Portland"
+  descendant; resolve there.
+- "Portland, VT" → Vermont, because a Portland/Burlington descends from Vermont and not from Viterbo.
+
+This generalizes to every country with no country list and no placer in the loop. It needs no new
+data — `Portland (43.647, -70.168)` already records Maine as an ancestor in the swapped gazetteer. The
+hard constraint is **scope**: the check applies to the admin assignment only, so it cannot re-break the
+street/house-number path that retired the #566 reconcile. We are reintroducing the admin-coherence
+veto in isolation, not the whole beam.
+
+Tracking issue: **#263**. The deterministic country-prior patch we prototyped first (a β-weighted damp
+of the foreign posterior when a US state is recognized) is **shelved** on `spike/833-beta-fusion-shelved`
+— it fixed four of six targets but it is a US-only rule that never reaches the VT cases, and it leans on
+exactly the country-pin reflex this document is trying to retire.
+
+## The placer demotes to gap-filler
+
+This is the part to hold onto. The coarse placer does not disappear; it changes job. Where the
+gazetteer is rich, geography disambiguates and the placer is silent. Where the gazetteer is thin — a
+locality missing under any candidate parent — joint consistency returns nothing, and the placer's prior
+is what keeps a sparsely-covered country from resolving to "no answer." Primary signal: the graph.
+Fallback: the prior. The `HARD_PLACE_COUNTRY_SAFELIST` is the piece this most directly undercuts; its
+job shrinks as the graph's grows, and the docs already half-disown it (the 2026-06-26 postmortem
+measured that widening it changes nothing, because the placer abstains and it never gates).
+
+## The quick cache is the substrate, not a list
+
+There is room for a "well-known place" fast path, and we already have its substrate: the candidate-table
+byte-range gazetteer (`WofCandidateTableLookup`, `candidate-schema.ts`) — a `WITHOUT ROWID` B-tree keyed
+by `name_key`, denormalized so a resolve is a single probe, population-ranked. The constraint graph does
+not replace it; it **re-ranks within it**, choosing the joint-consistent candidate over the merely
+most-populous one. Anything that looks like a curated list of famous places must instead be derived
+from the gazetteer's own structure and provenance-tracked — the moment a hand-list can override where
+the gazetteer says an address actually is, we have rebuilt Pelias in a nicer font. (#264.)
+
+The MVP shipped on this branch (`opts.adminCoherence`, default-on for the geocode path). It fixes the
+clean class — a region whose child locality fell through — and the build surfaced exactly the residual
+this document predicted. "Augusta, ME" stays at Augusta, Sicily: "Augusta" resolves to a real town
+_under_ Messina, so the locality is not unresolved, and both Messina **and** Maine genuinely contain an
+Augusta. Two consistent pairs, and geography alone cannot break the tie. That is the forward
+address-system prior's job (US-format ⇒ prefer the US state), and it is the next section.
+
+## Future work, gated on a measured residual
+
+Build to a measured gap, not to a good idea. Once descendant-consistency lands (#263), measure where it
+still fails, bucketed by why — romanized or transliterated input, mixed script, ambiguous field
+ordering, sparse-coverage countries where geography stays silent. That residual, and only that residual,
+scopes two things we do not have today (#265):
+
+- A **supplementary address-system model**. The "don't memorize" rule is task-scoped: the open-world job
+  (which Portland, of thousands) must generalize and retrieve; address-_system_ identification is a
+  closed, small taxonomy where densely encoding the format-to-system structure is learning the real
+  distribution, not overfitting. Such a model earns its keep on the fuzzy tier the rules and the graph
+  both miss. It stays **advisory** — it proposes a system, it never vetoes where geography lands an
+  address. Its larger payoff may be routing (which normalizer, which abbreviations, which field order,
+  which gazetteer slice), not disambiguation.
+- An **address-system → country-set** linkage. "Parses like a US address" makes US _and_ Canada
+  candidate postal systems, and floats their regions up — a derived prior, softer and more honest than a
+  whole-string guess. Not built.
+
+## Non-goals
+
+- No hand-curated country list, safe-list, or famous-place list as a source of truth. Derived and
+  provenance-tracked, or it does not ship.
+- No re-enabling of the full #566 beam reconcile. The admin-coherence check returns scoped and alone.
+- No supplementary model built ahead of the residual that justifies it.
+
+## Status
+
+MVP landed (#263, `opts.adminCoherence`). Remaining: #264 (quick-cache role) → measure the residual →
+#265 (residual-scoped forward model + the address-system→country linkage; "Augusta, ME" is the first
+case in that bucket). Companion reading: `concepts/synonymy-and-homonymy.mdx` (the
+tag-vs-referent split this extends), `concepts/joint-decoding-walkthrough.mdx` (the retired Stage 5
+veto), `plan/2026-06-14-coarse-placer-soft-signal-spec.md` (the prior that becomes the gap-filler).

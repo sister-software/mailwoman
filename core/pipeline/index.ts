@@ -23,7 +23,7 @@ export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "./span
 export type {
 	AddressClassifier,
 	ClassifierOpts,
-	FstMatcherLike,
+	FSTMatcherLike,
 	LocaleHint,
 	LocaleTag,
 	NormalizedInputLite,

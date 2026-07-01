@@ -28,7 +28,7 @@ import { spawnSync } from "node:child_process"
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -85,7 +85,7 @@ interface CountryTuple {
 	order: string
 }
 
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = "",
 		inQ = false
@@ -128,7 +128,7 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string): number => header.indexOf(n)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -141,7 +141,7 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 
 	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const street = get(cells, iStreet),
 			locality = get(cells, iCity),
 			house_number = get(cells, iNum)
@@ -403,21 +403,21 @@ export const countryBalancedRecipe: ShardRecipe = {
 			// breadth/recall main path (random ISO form on an OA skeleton, ~30% country-absent).
 			const roll = random()
 			let rendered: { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> }
-			let rowIso2: string
+			let rowISO2: string
 
 			if (roll < HOMOGRAPH_FRAC) {
 				const h = renderHomograph(random)
 				rendered = h
-				rowIso2 = h.iso2
+				rowISO2 = h.iso2
 			} else if (roll < HOMOGRAPH_FRAC + ABBREV_FRAC) {
 				const a = renderAbbrevRegion(random)
 				rendered = a
-				rowIso2 = a.iso2
+				rowISO2 = a.iso2
 			} else {
 				const t = pool[Math.floor(random() * N)]!
 				const country = pickCountry(random) // may be null → a country-absent negative row
 				rendered = renderCountry(random, t, country)
-				rowIso2 = t.iso2
+				rowISO2 = t.iso2
 
 				if (country && !rendered.raw.includes(country)) {
 					skipped++
@@ -425,20 +425,20 @@ export const countryBalancedRecipe: ShardRecipe = {
 				}
 			}
 			const { raw, components } = rendered
-			const localeTag = rowIso2 === "US" ? "en-US" : `${rowIso2.toLowerCase()}-${rowIso2}`
+			const localeTag = rowISO2 === "US" ? "en-US" : `${rowISO2.toLowerCase()}-${rowISO2}`
 
 			if (opts.golden) {
-				write(JSON.stringify({ raw, components, country: rowIso2 }) + "\n")
+				write(JSON.stringify({ raw, components, country: rowISO2 }) + "\n")
 				emitted++
 				continue
 			}
 			const canonical: CanonicalRow = {
 				raw,
 				components,
-				country: rowIso2,
+				country: rowISO2,
 				locale: localeTag,
 				source,
-				source_id: stableSourceId(source, components),
+				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
 				license: "OpenAddresses multi-locale skeletons + injected ISO-3166 country surface forms (codex)",
 			}

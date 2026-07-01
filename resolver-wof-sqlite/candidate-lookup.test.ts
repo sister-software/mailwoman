@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for {@link WofCandidateTableLookup} — the Node {@link PlaceLookup} over the byte-range
+ *   Tests for {@link WOFCandidateTableLookup} — the Node {@link PlaceLookup} over the byte-range
  *   candidate.db (the SAME backend + ranking the browser demo uses). Builds a tiny fixture admin
  *   WOF with a HOMONYM (Moscow RU vs Moscow ID) + a postcode shard via the real
  *   {@link buildCandidateTable}, then asserts the resolver disciplines the CLI/server depend on:
@@ -22,7 +22,7 @@ import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "./build-candidate.js"
-import { WofCandidateTableLookup } from "./candidate-lookup.js"
+import { WOFCandidateTableLookup } from "./candidate-lookup.js"
 
 const ALIAS_SEP = "\u{E000}"
 
@@ -96,9 +96,9 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-describe("WofCandidateTableLookup", () => {
+describe("WOFCandidateTableLookup", () => {
 	test("ranks homonyms population-first + country-agnostic (Moscow → RU, not Idaho)", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
@@ -115,7 +115,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("country filter narrows to the requested country", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", country: "US" })
@@ -128,7 +128,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("an unknown country (not in the table) returns no candidates", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			expect(await lk.findPlace({ text: "Moscow", placetype: "locality", country: "ZZ" })).toHaveLength(0)
@@ -138,7 +138,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("resolves an alias row to the primary place", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			const [hit] = await lk.findPlace({ text: "Moskva", placetype: "locality" })
@@ -151,7 +151,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("returns the denormalized PlaceCandidate shape (exactMatch + bbox + coords)", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			const [chi] = await lk.findPlace({ text: "Chicago", placetype: "locality" })
@@ -165,7 +165,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("bbox filter keeps only candidates whose centroid falls inside (the region-disambiguation path)", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			// A box over European Russia — contains RU Moscow's centroid, not the Idaho one.
@@ -182,7 +182,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("qualifier-strip fallback resolves 'Lenk im Simmental' → 'Lenk'", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			const [hit] = await lk.findPlace({ text: "Lenk im Simmental", placetype: "locality" })
@@ -194,7 +194,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("folds postcodes in; resolves a real ZIP, drops the placeholder 0,0 row", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			const [zip] = await lk.findPlace({ text: "60601", placetype: "postalcode" })
@@ -208,7 +208,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("a placetype that doesn't match the row's type yields nothing (Moscow is not a postalcode)", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			expect(await lk.findPlace({ text: "Moscow", placetype: "postalcode" })).toHaveLength(0)
@@ -218,7 +218,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("an unknown name + an empty query return no candidates", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			expect(await lk.findPlace({ text: "Nowhereville" })).toHaveLength(0)
@@ -229,7 +229,7 @@ describe("WofCandidateTableLookup", () => {
 	})
 
 	test("FTS5-trigram fuzzy fallback recovers a misspelled locality on an exact miss", async () => {
-		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		try {
 			// "Chicgo"/"Moscw" aren't a name_key — the exact + strip probes miss, so the trigram fallback

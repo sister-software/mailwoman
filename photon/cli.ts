@@ -9,7 +9,7 @@
  *   - Examples live in the package README.
  *
  *   Wires the real engine: `/api` over `geocodeAddress` (parse → resolve), `/reverse` over
- *   `WofReverseGeocoder`, projecting results into Photon's GeoJSON FeatureCollection. The FST
+ *   `WOFReverseGeocoder`, projecting results into Photon's GeoJSON FeatureCollection. The FST
  *   autocomplete tier is the eventual front for `/api`; geocode resolution is the MVP path.
  */
 
@@ -18,12 +18,12 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import {
 	createResolverBackend,
 	mailwomanDataRoot,
-	resolveCandidateDbPath,
+	resolveCandidateDBPath,
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
 
@@ -63,20 +63,20 @@ async function serve(): Promise<void> {
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 	const wofPaths = wofShardPaths().filter(existsSync)
-	const adminDbPath = wofPaths[0]
+	const adminDBPath = wofPaths[0]
 
 	// Candidate gazetteer = worldwide resolution (see @mailwoman/nominatim). --candidate-db /
 	// $MAILWOMAN_CANDIDATE_DB, else auto-use one fetched to `<data-root>/wof/candidate.db`; absent → admin-only.
 	const conventionCandidate = join(mailwomanDataRoot(), "wof", "candidate.db")
 	const candidateDb =
-		resolveCandidateDbPath(values["candidate-db"]) ??
+		resolveCandidateDBPath(values["candidate-db"]) ??
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
-	const resolver = createWofResolver(backend as unknown as ResolverBackend)
+	const resolver = createWOFResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
-	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
+	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 
 	const engine: PhotonEngine = {
 		async search(params) {
@@ -125,7 +125,7 @@ async function serve(): Promise<void> {
 		.use(createPhotonRouter(engine))
 		.listen(port, host, () => {
 			console.error(`[@mailwoman/photon] listening on http://${host}:${port}`)
-			console.error(`  wof: ${adminDbPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
+			console.error(`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
 			console.error(
 				candidateDb
 					? `  resolver: candidate gazetteer (worldwide) — ${candidateDb}`

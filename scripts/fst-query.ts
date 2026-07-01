@@ -3,7 +3,7 @@
  * /path/to/wof.db "Portland" npx tsx scripts/fst-query.ts --show-continuations "New"
  */
 
-import { buildFstFromWof } from "../resolver-wof-sqlite/fst-builder.js"
+import { buildFSTFromWOF } from "../resolver-wof-sqlite/fst-builder.js"
 
 const args = process.argv.slice(2)
 let dbPath = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
@@ -32,7 +32,7 @@ if (queries.length === 0) {
 
 console.error(`Building FST from ${dbPath}...`)
 const start = performance.now()
-const { matcher, result } = buildFstFromWof({
+const { matcher, result } = buildFSTFromWOF({
 	dbPath,
 	countries: ["US"],
 	placetypes: ["country", "region", "county", "locality"],
@@ -47,7 +47,7 @@ for (const query of queries) {
 	const q = matcher.query(query)
 
 	console.log(`"${query}" → path: [${q.path.map((t) => `"${t}"`).join(", ")}]`)
-	console.log(`  State: ${q.stateId}, Accepting: ${q.accepting.length} interpretations`)
+	console.log(`  State: ${q.stateID}, Accepting: ${q.accepting.length} interpretations`)
 
 	if (q.accepting.length > 0) {
 		const sorted = [...q.accepting].sort((a, b) => b.importance - a.importance)

@@ -6,15 +6,15 @@
  *   `mailwoman-wof-build-slim --in <wof.db>... --out <slim.db> [--top 1000] [--countries US]`
  *
  *   Operator-side one-shot CLI that produces a "slim" WOF SQLite distribution sized for the
- *   browser-side mailwoman demo (Path B). Delegates to {@linkcode buildSlimWofDatabase}; the CLI is
+ *   browser-side mailwoman demo (Path B). Delegates to {@linkcode buildSlimWOFDatabase}; the CLI is
  *   just argument parsing + stderr progress.
  */
 
 import { exit, stderr } from "node:process"
 
-import { buildSlimWofDatabase, type BuildSlimOptions } from "./build-slim.js"
+import { buildSlimWOFDatabase, type BuildSlimOptions } from "./build-slim.js"
 
-interface CliArgs {
+interface CLIArgs {
 	inputs: string[]
 	output: string
 	topLocalities: number
@@ -48,8 +48,8 @@ function printUsageAndExit(code: number): never {
 	exit(code)
 }
 
-function parseArgs(argv: string[]): CliArgs {
-	const out: CliArgs = { inputs: [], output: "", topLocalities: 1000, countries: ["US"], dropNames: false }
+function parseArgs(argv: string[]): CLIArgs {
+	const out: CLIArgs = { inputs: [], output: "", topLocalities: 1000, countries: ["US"], dropNames: false }
 
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
@@ -102,7 +102,7 @@ function parseArgs(argv: string[]): CliArgs {
 }
 
 export async function main(rawArgv: string[]): Promise<number> {
-	let args: CliArgs
+	let args: CLIArgs
 
 	try {
 		args = parseArgs(rawArgv)
@@ -122,7 +122,7 @@ export async function main(rawArgv: string[]): Promise<number> {
 	}
 
 	try {
-		const result = await buildSlimWofDatabase(opts)
+		const result = await buildSlimWOFDatabase(opts)
 		const mb = (result.outputBytes / 1024 / 1024).toFixed(1)
 		stderr.write(
 			`\nBuilt ${result.outputPath} (${mb} MB)\n` +

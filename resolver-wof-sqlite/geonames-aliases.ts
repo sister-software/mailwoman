@@ -12,7 +12,7 @@
  *   For each POPULATED place (feature class `P`) this writes an `spr` row + `names` rows (primary +
  *   Latin alt-names) + population into the SAME tables the WOF/Overture paths use — synthetic ids
  *   based at {@link GEONAMES_ID_BASE} so the three sources never collide. The caller then rebuilds
- *   `place_search` ({@link buildPlaceSearchFts} with `drop: true`) so the candidate build carries
+ *   `place_search` ({@link buildPlaceSearchFTS} with `drop: true`) so the candidate build carries
  *   Karjaa↔Karis. Proven (FI hard-resolve 69.5 → 85.8 %, coverage 74.4 → 94.0 %); duplicating a
  *   place already held under another source is benign — the rows share name_key+coord and the
  *   candidate ranking dedupes by score.
@@ -48,14 +48,24 @@ export interface GeonamesIngestProgress {
  * `place_population` tables. Returns the total places ingested.
  *
  * `onProgress` receives one event per country (default: a stderr line, matching the build scripts' legacy output). The
- * caller MUST rebuild `place_search` afterward (`buildPlaceSearchFts(db, { drop: true })`) for the new names to reach
+ * caller MUST rebuild `place_search` afterward (`buildPlaceSearchFTS(db, { drop: true })`) for the new names to reach
  * the candidate build's alias pass.
  */
 export function ingestGeonamesAliases(
 	db: DatabaseSync,
 	countries: string[],
 	geonamesDir: string,
-	onProgress?: (event: GeonamesIngestProgress) => void
+	onProgress?: (event: GeonamesIngestProgress) => void,
+	opts?: {
+		/**
+		 * #267: the countries for which to ALSO fold the GeoNames A-class admin (PCLI country + ADM1 regions) and link each
+		 * locality's `parent_id` + ancestry chain (locality → region → country). PER-COUNTRY because a country that already
+		 * carries WOF admin would double up — pass only the ZERO-COVERAGE gap countries (the coverage-expansion targets),
+		 * never the EU alias set. Without admin, a gap country's localities are orphans (`parent_id=-1`, no ancestors), so
+		 * `parentID` scoping and adminCoherence can't reach them and "Tbilisi, GE" can't resolve.
+		 */
+		adminForCountries?: ReadonlySet<string>
+	}
 ): number {
 	// Latin-only, no bracket/paren noise GeoNames packs into `alternatenames` ("(( Karis Landskommun ))",
 	// airport codes), 2–60 chars, at least one letter (drops bare postcodes/numbers).
@@ -72,6 +82,11 @@ export function ingestGeonamesAliases(
 		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)`
 	)
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
+	// #267 admin linkage: ancestor rows (locality→region→country) so parentID scoping + adminCoherence reach
+	// the gap countries. Only used for a country in opts.adminForCountries.
+	const ancestorInsert = db.prepare(
+		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
+	)
 
 	const report = (event: GeonamesIngestProgress, missingFile?: string): void => {
 		if (onProgress) {
@@ -99,9 +114,56 @@ export function ingestGeonamesAliases(
 			continue
 		}
 		let nc = 0
+		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
+		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
+		// GeoNames dump columns (0-indexed): 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon, 6 feature_class,
+		// 7 feature_code, 10 admin1 code, 14 pop.
+		const lines = readFileSync(file, "utf8").split("\n")
 
-		// GeoNames dump columns: 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon, 6 feature_class, 14 pop.
-		for (const line of readFileSync(file, "utf8").split("\n")) {
+		// #267 admin pre-pass (gap countries): fold the country (PCLI) + regions (ADM1), self+ancestry them, and
+		// build the admin1→region map the localities link through. Point bbox (GeoNames gives a centroid only).
+		let countryID = -1
+		const adminMap = new Map<string, number>()
+
+		if (addAdmin) {
+			for (const line of lines) {
+				const f = line.split("\t")
+
+				if (f[6] !== "A") continue
+				const aname = clean(f[2] ?? "") ?? clean(f[1] ?? "")
+
+				if (!aname) continue
+				const lat = Number(f[4]) || 0
+				const lon = Number(f[5]) || 0
+
+				if (f[7]?.startsWith("PCL")) {
+					// Any country-level political entity — PCLI (independent), PCLD (dependent territory),
+					// PCLF (freely associated), PCLS (special administrative region: HK/MO/PS). All are the
+					// country tier; restricting to PCLI left those ~17 territories without a country row.
+					if (countryID >= 0) continue // one country row
+					countryID = id++
+					sprInsert.run(countryID, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
+					namesInsert.run(countryID, aname, "country", cc, "", 0)
+					ancestorInsert.run(countryID, countryID, "country")
+				} else if (f[7] === "ADM1" && f[10]) {
+					const rid = id++
+					sprInsert.run(rid, -1, aname, "region", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
+					namesInsert.run(rid, aname, "region", cc, "", 0)
+					ancestorInsert.run(rid, rid, "region")
+					adminMap.set(f[10], rid)
+				}
+			}
+
+			// Re-parent regions + ancestor them to the (now-known) country.
+			if (countryID >= 0) {
+				for (const rid of adminMap.values()) {
+					db.prepare("UPDATE spr SET parent_id = ? WHERE id = ?").run(countryID, rid)
+					ancestorInsert.run(rid, countryID, "country")
+				}
+			}
+		}
+
+		for (const line of lines) {
 			if (!line) continue
 			const f = line.split("\t")
 
@@ -114,10 +176,21 @@ export function ingestGeonamesAliases(
 
 			if (!name) continue
 			const nid = id++
+			// #267: link to the locality's region (else country) for gap countries; -1 (orphan) otherwise.
+			const regionID = addAdmin ? (adminMap.get(f[10] ?? "") ?? -1) : -1
+			const parentID = regionID >= 0 ? regionID : addAdmin && countryID >= 0 ? countryID : -1
 			// Point bbox — a GeoNames row is a centroid; the candidate's region-bbox disambiguation just
 			// sees it as contained in itself, fine for a locality.
-			sprInsert.run(nid, -1, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
+			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
 			namesInsert.run(nid, name, "locality", cc, "", 0)
+
+			if (addAdmin) {
+				ancestorInsert.run(nid, nid, "locality")
+
+				if (regionID >= 0) ancestorInsert.run(nid, regionID, "region")
+
+				if (countryID >= 0) ancestorInsert.run(nid, countryID, "country")
+			}
 			const seen = new Set([name])
 
 			for (const raw of [f[2] ?? "", ...(f[3] ? f[3].split(",") : [])]) {

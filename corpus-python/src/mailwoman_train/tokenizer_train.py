@@ -30,15 +30,14 @@ import json
 import logging
 import random
 import re
-import shutil
 import subprocess
 import tempfile
 import time
 import unicodedata
 from collections import Counter
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Sequence
 
 import pyarrow.parquet as pq
 import sentencepiece as spm  # type: ignore[import-not-found]
@@ -69,25 +68,119 @@ _BYTE_FALLBACK_RE = re.compile(r"^<0x[0-9A-Fa-f]{2}>$")
 # per line, blank lines + ``#``-comments ignored).
 DEFAULT_USER_DEFINED_SYMBOLS: tuple[str, ...] = (
     # US states
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
-    "DC", "PR", "VI", "GU", "AS", "MP",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC",
+    "PR",
+    "VI",
+    "GU",
+    "AS",
+    "MP",
     # Country abbreviations / common names
-    "USA", "US", "U.S.", "U.S.A.", "FR", "FRA", "France",
-    "JP", "JPN", "Japan", "GB", "UK", "U.K.",
-    "DE", "DEU", "Germany", "IT", "ITA", "Italy",
-    "ES", "ESP", "Spain", "NL", "NLD", "Netherlands",
-    "CA", "CAN", "Canada", "AU", "AUS", "Australia",
-    "CH", "CHE", "Switzerland", "BE", "BEL", "Belgium",
-    "AT", "AUT", "Austria", "SE", "SWE", "Sweden",
-    "RU", "RUS",
+    "USA",
+    "US",
+    "U.S.",
+    "U.S.A.",
+    "FR",
+    "FRA",
+    "France",
+    "JP",
+    "JPN",
+    "Japan",
+    "GB",
+    "UK",
+    "U.K.",
+    "DE",
+    "DEU",
+    "Germany",
+    "IT",
+    "ITA",
+    "Italy",
+    "ES",
+    "ESP",
+    "Spain",
+    "NL",
+    "NLD",
+    "Netherlands",
+    "CA",
+    "CAN",
+    "Canada",
+    "AU",
+    "AUS",
+    "Australia",
+    "CH",
+    "CHE",
+    "Switzerland",
+    "BE",
+    "BEL",
+    "Belgium",
+    "AT",
+    "AUT",
+    "Austria",
+    "SE",
+    "SWE",
+    "Sweden",
+    "RU",
+    "RUS",
     # Postal-form anchors
-    "PO Box", "P.O. Box", "P.O.Box", "POB",
-    "Apt", "Apt.", "Suite", "Ste",
-    "Cedex", "CEDEX",
+    "PO Box",
+    "P.O. Box",
+    "P.O.Box",
+    "POB",
+    "Apt",
+    "Apt.",
+    "Suite",
+    "Ste",
+    "Cedex",
+    "CEDEX",
     "BP",
 )
 
@@ -131,19 +224,13 @@ def iter_train_shards(corpus_dir: Path) -> list[Path]:
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        shards = [
-            Path(s["path"])
-            for s in data.get("shards", [])
-            if s.get("split") == "train"
-        ]
+        shards = [Path(s["path"]) for s in data.get("shards", []) if s.get("split") == "train"]
         if shards:
             return sorted(shards)
     train_dir = corpus_dir / "train"
     shards = sorted(train_dir.glob("*.parquet"))
     if not shards:
-        raise FileNotFoundError(
-            f"no parquet shards via MANIFEST.json or {train_dir}"
-        )
+        raise FileNotFoundError(f"no parquet shards via MANIFEST.json or {train_dir}")
     return shards
 
 
@@ -224,7 +311,7 @@ def mine_postcode_literals(
                 continue
             toks = tokens_col[i].as_py()
             labs = labels_col[i].as_py()
-            for tok, lab in zip(toks, labs):
+            for tok, lab in zip(toks, labs, strict=True):
                 if lab.endswith("-postcode"):
                     # Strip trailing punctuation like ``75008,`` so the literal we add to
                     # the vocab is the bare postcode form. Anything else is unsafe to mine.
@@ -280,9 +367,7 @@ def detect_script(text: str) -> str:
     return top if n / total >= 0.9 else "mixed"
 
 
-def measure_byte_fallback(
-    sp: spm.SentencePieceProcessor, lines: Iterable[str]
-) -> dict:
+def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) -> dict:
     """Encode each line and tally byte-fallback piece rate, overall + per script.
 
     Returns a dict shaped::
@@ -308,9 +393,7 @@ def measure_byte_fallback(
         if not line:
             continue
         script = detect_script(line)
-        bucket = per_script.setdefault(
-            script, {"lines": 0, "pieces": 0, "byte_fallback_pieces": 0}
-        )
+        bucket = per_script.setdefault(script, {"lines": 0, "pieces": 0, "byte_fallback_pieces": 0})
         pieces = sp.encode_as_pieces(line)
         npieces = len(pieces)
         nfb = sum(1 for p in pieces if _BYTE_FALLBACK_RE.match(p))
@@ -433,9 +516,7 @@ def train_tokenizer(cfg: TrainerConfig) -> dict:
         seed=cfg.seed,
     )
     if not raws:
-        raise RuntimeError(
-            f"sampled zero lines from corpus_dir={cfg.corpus_dir} countries={cfg.countries}"
-        )
+        raise RuntimeError(f"sampled zero lines from corpus_dir={cfg.corpus_dir} countries={cfg.countries}")
 
     # 2. Resolve UDS: caller's list, deduped + intersected with sane limits.
     uds = list(cfg.user_defined_symbols)
@@ -454,7 +535,8 @@ def train_tokenizer(cfg: TrainerConfig) -> dict:
     if len(uds) > uds_cap:
         logger.warning(
             "user_defined_symbols (%d) exceeds vocab_size/4 cap (%d); truncating",
-            len(uds), uds_cap,
+            len(uds),
+            uds_cap,
         )
         uds = uds[:uds_cap]
     # SP needs ASCII spaces in UDS literals translated to its ``▁`` placeholder so they
@@ -462,9 +544,7 @@ def train_tokenizer(cfg: TrainerConfig) -> dict:
     uds_for_sp = [_normalize_uds_for_sp(s) for s in uds]
 
     # 3. Materialize sampled raws to a temp file (SP wants a path on disk).
-    with tempfile.NamedTemporaryFile(
-        "w", suffix=".txt", delete=False, encoding="utf-8"
-    ) as tmp:
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as tmp:
         tmp_path = Path(tmp.name)
         for line in raws:
             tmp.write(line.replace("\n", " "))
@@ -549,9 +629,7 @@ def train_tokenizer(cfg: TrainerConfig) -> dict:
     card_path = cfg.output_dir / "model_card.json"
     card_path.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
     # Keep a META.json compatibility shim — older Phase 1 scripts looked for this name.
-    (cfg.output_dir / "META.json").write_text(
-        json.dumps(card, indent=2) + "\n", encoding="utf-8"
-    )
+    (cfg.output_dir / "META.json").write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
 
     logger.info(
         "wrote %s (vocab=%d, byte_fb_overall=%s)",

@@ -127,7 +127,7 @@ def _fixture_sanity(raw, tokens, labels, span_starts, span_ends, span_tags):
     """The two representations must describe the same row before identity means anything."""
     assert len(tokens) == len(labels)
     assert len(span_starts) == len(span_ends) == len(span_tags)
-    for start, end in zip(span_starts, span_ends):
+    for start, end in zip(span_starts, span_ends, strict=True):
         assert 0 <= start < end <= len(raw)
 
 
@@ -172,9 +172,7 @@ def test_gate_b_channels_identical_through_encode_row(name, raw, tokens, labels,
     tok = FakeTokenizer(_pieces(raw, chunks))
     kwargs = dict(max_length=32, anchor_lookup=ANCHOR_LOOKUP, gazetteer_lexicon=LEXICON)
     via_tokens = encode_row(tok, raw, tokens, labels, **kwargs)
-    via_spans = encode_row(
-        tok, raw, tokens, labels, span_starts=starts, span_ends=ends, span_tags=tags, **kwargs
-    )
+    via_spans = encode_row(tok, raw, tokens, labels, span_starts=starts, span_ends=ends, span_tags=tags, **kwargs)
     for key in ("anchor_features", "anchor_confidence", "gazetteer_features", "gazetteer_confidence"):
         assert via_spans[key] == via_tokens[key], f"{name}: {key} diverged"
 

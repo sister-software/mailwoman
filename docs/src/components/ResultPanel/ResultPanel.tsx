@@ -50,8 +50,8 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 
 			return
 		}
-		const { decodeAsXml } = await import("@mailwoman/core/decoder")
-		setXml(decodeAsXml(result.tree as Parameters<typeof decodeAsXml>[0]))
+		const { decodeAsXML } = await import("@mailwoman/core/decoder")
+		setXml(decodeAsXML(result.tree as Parameters<typeof decodeAsXML>[0]))
 		setShowXml(true)
 	}, [xml, result.tree])
 

@@ -35,7 +35,7 @@ export type ResolutionTier = "address_point" | "interpolated" | "admin"
 export interface HierarchyNode {
 	tag: string
 	value: string
-	placeId?: string
+	placeID?: string
 }
 
 /** A resolved geocode attached to an address record — the location signal the matcher scores on. */

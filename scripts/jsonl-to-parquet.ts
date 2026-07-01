@@ -89,7 +89,7 @@ interface Args {
 	rowGroupSize: number
 }
 
-function parseCliArgs(): Args {
+function parseCLIArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			input: { type: "string" },
@@ -146,7 +146,7 @@ function sqlString(value: string): string {
 }
 
 async function main(): Promise<void> {
-	const args = parseCliArgs()
+	const args = parseCLIArgs()
 
 	// Stage the validated rows to a temp NDJSON, then let DuckDB type + write them. Streaming keeps
 	// memory O(1) on the Node side (the Python original buffered every column into memory first). The

@@ -11,7 +11,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { createWofResolver } from "./resolve.js"
+import { createWOFResolver } from "./resolve.js"
 import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 
 const norm = (s: string): string =>
@@ -136,7 +136,7 @@ describe("hasResolvedPlace", () => {
 	it("detects a resolved node anywhere in the tree", () => {
 		expect(hasResolvedPlace([node({ tag: "locality", value: "x", start: 0, end: 1 })])).toBe(false)
 		const resolved = node({ tag: "locality", value: "x", start: 0, end: 1 })
-		resolved.placeId = "wof:1"
+		resolved.placeID = "wof:1"
 		expect(hasResolvedPlace([resolved])).toBe(true)
 	})
 })
@@ -145,13 +145,13 @@ describe("resolveTree + spanRescore", () => {
 	const tree = (raw: string, roots: AddressNode[]): AddressTree => ({ raw, roots })
 
 	it("injects a resolved locality when the tree resolved nothing (opt-in)", async () => {
-		const resolver = createWofResolver(makeBackend())
+		const resolver = createWOFResolver(makeBackend())
 		const input = tree("86-300 Grudziądz, Daliowa 4", [
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
 		const out = await resolver.resolveTree(input, { defaultCountry: "PL", spanRescore: true })
-		const injected = out.roots.find((n) => n.placeId === "wof:1")
+		const injected = out.roots.find((n) => n.placeID === "wof:1")
 		expect(injected).toBeDefined()
 		expect(injected?.tag).toBe("locality")
 		expect(injected?.value).toBe("Grudziądz")
@@ -162,29 +162,29 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("injects by default when spanRescore is unset (#370 promoted to default-on 2026-06-25)", async () => {
-		const resolver = createWofResolver(makeBackend())
+		const resolver = createWOFResolver(makeBackend())
 		const input = tree("86-300 Grudziądz, Daliowa 4", [
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
 		// No `spanRescore` in opts — the default (ON) must still recover the locality.
 		const out = await resolver.resolveTree(input, { defaultCountry: "PL" })
-		expect(out.roots.find((n) => n.placeId === "wof:1")?.value).toBe("Grudziądz")
+		expect(out.roots.find((n) => n.placeID === "wof:1")?.value).toBe("Grudziądz")
 	})
 
 	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable contract)", async () => {
-		const resolver = createWofResolver(makeBackend())
+		const resolver = createWOFResolver(makeBackend())
 		const roots = [node({ tag: "locality", value: "Grudzi", start: 7, end: 13 })]
 		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), {
 			defaultCountry: "PL",
 			spanRescore: false,
 		})
-		expect(out.roots.some((n) => n.placeId)).toBe(false)
+		expect(out.roots.some((n) => n.placeID)).toBe(false)
 		expect(out.roots).toHaveLength(1)
 	})
 
 	it("does not fire when the tree already resolved (the #685 brake)", async () => {
-		const resolver = createWofResolver(makeBackend())
+		const resolver = createWOFResolver(makeBackend())
 		// "Grudziądz" as a single locality node resolves in the walk → already has a coordinate.
 		const out = await resolver.resolveTree(
 			tree("Grudziądz", [node({ tag: "locality", value: "Grudziądz", start: 0, end: 9 })]),

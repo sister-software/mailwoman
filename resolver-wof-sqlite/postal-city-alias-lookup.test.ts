@@ -4,7 +4,7 @@
 /**
  *   #475 postal-city alias integration. Two layers:
  *
- *   1. The reader ({@link WofPostalCityAliasLookup}) — a postcode-scoped probe that returns only the
+ *   1. The reader ({@link WOFPostalCityAliasLookup}) — a postcode-scoped probe that returns only the
  *        DIVERGENT rows (postal name ≠ geographic name), the rows that carry alias signal.
  *   2. The coordinate-first scorer wiring — a user-typed POSTAL city ("Antioch", postcode 37013) becomes
  *        a name-match alias for the geographic locality the postcode sits in ("Nashville"), so the
@@ -18,14 +18,14 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { WofSqlitePlaceLookup } from "./lookup.js"
-import { WofPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
+import { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
 import { createPostalCityAliasTable, type PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
 
 /** A `postal_city_alias` fixture DB with the production DDL + a divergent and a non-divergent row. */
-async function buildAliasDb(): Promise<DatabaseSync> {
+async function buildAliasDB(): Promise<DatabaseSync> {
 	const db = new DatabaseSync(":memory:")
-	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.close()/aliasDb.close()),
+	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.close()/aliasDB.close()),
 	// so we don't destroy `kdb`.
 	const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
 	await createPostalCityAliasTable(kdb)
@@ -43,7 +43,7 @@ async function buildAliasDb(): Promise<DatabaseSync> {
 }
 
 /** Main resolver fixture: Nashville (the geographic city 37013 sits in) + a far Antioch distractor. */
-function buildMainDb(): DatabaseSync {
+function buildMainDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -68,10 +68,10 @@ function buildMainDb(): DatabaseSync {
 	return db
 }
 
-describe("WofPostalCityAliasLookup (#475 reader)", () => {
-	let reader: WofPostalCityAliasLookup
+describe("WOFPostalCityAliasLookup (#475 reader)", () => {
+	let reader: WOFPostalCityAliasLookup
 	beforeEach(async () => {
-		reader = new WofPostalCityAliasLookup({ database: await buildAliasDb() })
+		reader = new WOFPostalCityAliasLookup({ database: await buildAliasDB() })
 	})
 	afterEach(() => reader.close())
 
@@ -95,11 +95,11 @@ describe("WofPostalCityAliasLookup (#475 reader)", () => {
 })
 
 describe("postal-city alias coordinate-first wiring (#475)", () => {
-	let aliasDb: DatabaseSync
-	afterEach(() => aliasDb?.close())
+	let aliasDB: DatabaseSync
+	afterEach(() => aliasDB?.close())
 
 	it("WITHOUT the reader, a postal-city query resolves to the same-named distractor (the bug)", async () => {
-		const lookup = new WofSqlitePlaceLookup({ database: buildMainDb(), buildFts: true })
+		const lookup = new WOFSqlitePlaceLookup({ database: buildMainDB(), buildFTS: true })
 		const r = await lookup.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		// The bare name-match wins the far Antioch, and the postcode/name conflict fires.
 		expect(r[0]?.name).toBe("Antioch")
@@ -108,11 +108,11 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	})
 
 	it("WITH the reader, the postal city resolves to its geographic locality (the fix)", async () => {
-		aliasDb = await buildAliasDb()
-		const lookup = new WofSqlitePlaceLookup({
-			database: buildMainDb(),
-			buildFts: true,
-			postalCityAliases: new WofPostalCityAliasLookup({ database: aliasDb }),
+		aliasDB = await buildAliasDB()
+		const lookup = new WOFSqlitePlaceLookup({
+			database: buildMainDB(),
+			buildFTS: true,
+			postalCityAliases: new WOFPostalCityAliasLookup({ database: aliasDB }),
 		})
 		const r = await lookup.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		// "Antioch" is now a name-match alias for Nashville (37013's geographic locality), so Nashville
@@ -125,11 +125,11 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	it("an unrelated postcode (no alias) is byte-stable with the reader attached", async () => {
 		// Reader attached, but 37013 isn't queried — a postcode with no divergent alias must behave
 		// exactly as without the reader. Here the distractor still wins (no alias rescues Nashville).
-		aliasDb = await buildAliasDb()
-		const lookup = new WofSqlitePlaceLookup({
-			database: buildMainDb(),
-			buildFts: true,
-			postalCityAliases: new WofPostalCityAliasLookup({ database: aliasDb }),
+		aliasDB = await buildAliasDB()
+		const lookup = new WOFSqlitePlaceLookup({
+			database: buildMainDB(),
+			buildFTS: true,
+			postalCityAliases: new WOFPostalCityAliasLookup({ database: aliasDB }),
 		})
 		// 99999 has no postcode_locality row → coord-first is inert → pure name-match → Antioch.
 		const r = await lookup.findPlace({ text: "Antioch", placetype: "locality", postcode: "99999", country: "US" })

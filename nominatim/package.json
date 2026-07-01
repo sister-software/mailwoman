@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/nominatim",
-	"version": "4.16.2",
+	"version": "5.0.0",
 	"description": "Nominatim drop-in — a Nominatim-compatible HTTP geocoding API (search / reverse / lookup / status) over the Mailwoman engine. Run it with `npx @mailwoman/nominatim serve`.",
 	"license": "AGPL-3.0-only",
 	"repository": {

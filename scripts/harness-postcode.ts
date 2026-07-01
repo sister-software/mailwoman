@@ -41,11 +41,11 @@
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import ts from "typescript"
 
 // -------------------------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ interface Args {
 	testsDir?: string
 	falsehoodsDir?: string
 	goldenDir?: string
-	adminFstPath?: string
+	adminFSTPath?: string
 	outJson?: string
 	gate: boolean
 	floor: number
@@ -80,7 +80,7 @@ function parseArgs(): Args {
 		else if (a === "--tests" && args[i + 1]) out.testsDir = args[++i]
 		else if (a === "--falsehoods" && args[i + 1]) out.falsehoodsDir = args[++i]
 		else if (a === "--golden" && args[i + 1]) out.goldenDir = args[++i]
-		else if (a === "--admin-fst" && args[i + 1]) out.adminFstPath = args[++i]
+		else if (a === "--admin-fst" && args[i + 1]) out.adminFSTPath = args[++i]
 		else if (a === "--out-json" && args[i + 1]) out.outJson = args[++i]
 		else if (a === "--gate") out.gate = true
 		else if (a === "--floor" && args[i + 1]) out.floor = Number(args[++i])
@@ -452,18 +452,18 @@ async function main(): Promise<void> {
 	const labels: readonly string[] = modelCard.labels
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(args.tokenizerPath),
-		OnnxRunner.create(args.modelPath),
+		ONNXRunner.create(args.modelPath),
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
-	let adminFst: ReturnType<typeof deserializeFst> | undefined
+	let adminFST: ReturnType<typeof deserializeFST> | undefined
 
-	if (args.adminFstPath) {
-		console.error("Loading admin FST:", args.adminFstPath)
-		adminFst = deserializeFst(readFileSync(args.adminFstPath))
+	if (args.adminFSTPath) {
+		console.error("Loading admin FST:", args.adminFSTPath)
+		adminFST = deserializeFST(readFileSync(args.adminFSTPath))
 	}
 	const parseOpts = {
-		...(adminFst ? { fst: adminFst as never } : {}),
+		...(adminFST ? { fst: adminFST as never } : {}),
 		postcodeRepair: args.postcodeRepair,
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
@@ -477,7 +477,7 @@ async function main(): Promise<void> {
 
 		try {
 			const tree = await neural.parse(sample.input, parseOpts)
-			const flat = decodeAsJson(tree)
+			const flat = decodeAsJSON(tree)
 			results.push(evaluate(sample, flat))
 		} catch (err) {
 			console.error(`[postcode-harness] WARN: ${i} (${sample.input}): ${(err as Error).message}`)

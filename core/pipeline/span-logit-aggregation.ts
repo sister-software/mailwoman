@@ -94,7 +94,7 @@ export function aggregateSpanLogits(
 
 			for (let l = 0; l < labels.length; l++) {
 				const bioLabel = labels[l]!
-				const tag = stripBioPrefix(bioLabel)
+				const tag = stripBIOPrefix(bioLabel)
 
 				if (tag === "O") continue
 
@@ -126,7 +126,7 @@ export function aggregateSpanLogits(
 /**
  * Strip `B-` or `I-` prefix from a BIO label, returning the component tag. `O` returns `"O"`.
  */
-function stripBioPrefix(label: string): string {
+function stripBIOPrefix(label: string): string {
 	if (label === "O") return "O"
 	const dash = label.indexOf("-")
 

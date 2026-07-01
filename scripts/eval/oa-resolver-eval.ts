@@ -53,7 +53,7 @@ import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
+import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import {
 	type ClassificationRecord,
@@ -134,10 +134,10 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
-			out.push({ id: Number(n.placeId.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
+			out.push({ id: Number(n.placeID.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
 
 		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
@@ -146,16 +146,16 @@ function collectResolved(tree: AddressTree): Resolved[] {
 		// interpretation).
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
 			tag: string
-			placeId?: string
-			sourceId?: string
+			placeID?: string
+			sourceID?: string
 			lat?: number
 			lon?: number
 			metadata?: Record<string, unknown>
 		}>) {
-			if (interp.placeId?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
-				const placetype = String(interp.sourceId ?? interp.tag).split(":")[0] ?? ""
+			if (interp.placeID?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
+				const placetype = String(interp.sourceID ?? interp.tag).split(":")[0] ?? ""
 				const name = String(interp.metadata?.["resolver_name"] ?? n.value ?? "")
-				out.push({ id: Number(interp.placeId.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
+				out.push({ id: Number(interp.placeID.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
 			}
 		}
 
@@ -362,23 +362,23 @@ async function main(): Promise<void> {
 	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on the FTS
 	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
 	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
-	const postalCityAliasDb = arg("postal-city-alias-db", "")
-	const { WofSqlitePlaceLookup, WofCandidateTableLookup, WofPostalCityAliasLookup } =
+	const postalCityAliasDB = arg("postal-city-alias-db", "")
+	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
-	const postalCityAliases = postalCityAliasDb
-		? new WofPostalCityAliasLookup({ databasePath: postalCityAliasDb })
+	const postalCityAliases = postalCityAliasDB
+		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB })
 		: undefined
 	const backend = candidateDb
-		? new WofCandidateTableLookup({ databasePath: candidateDb })
-		: new WofSqlitePlaceLookup({
+		? new WOFCandidateTableLookup({ databasePath: candidateDb })
+		: new WOFSqlitePlaceLookup({
 				databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
 				postalCityAliases,
 			})
 
 	if (candidateDb) console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
 
-	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDb}`)
-	const resolver = createWofResolver(backend as never)
+	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
+	const resolver = createWOFResolver(backend as never)
 
 	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
 	// expected name equals ANY of that place's WOF `names` rows (normalized) — not just its
@@ -547,8 +547,8 @@ async function main(): Promise<void> {
 		)
 			.split(",")
 			.map((s) => s.trim())
-		const { WofPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
-		postcodeLookup = new WofPostcodeLookup(shards)
+		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		postcodeLookup = new WOFPostcodeLookup(shards)
 		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
 	}
 	// Minimum anchor confidence to trust the anchor's coordinate over the resolver's. A penalized
@@ -636,7 +636,7 @@ async function main(): Promise<void> {
 		resolved: boolean
 		err: number | null
 		resolvedLoc?: string
-		resolvedLocId?: number
+		resolvedLocID?: number
 		resolvedReg?: string
 	} => {
 		const best = mostSpecific(resolved)
@@ -662,7 +662,7 @@ async function main(): Promise<void> {
 			// Raw resolved names for the --errors-json per-row dump: a present-but-wrong resolvedLoc
 			// => resolver ranking/disambiguation miss; an absent one => coverage/parse miss.
 			resolvedLoc: locRaw,
-			resolvedLocId: locNode?.id,
+			resolvedLocID: locNode?.id,
 			resolvedReg: regResolved?.name,
 		}
 	}
@@ -828,7 +828,7 @@ async function main(): Promise<void> {
 				lon: row.lon,
 				state: row.state,
 				expectedLoc: row.expected.locality,
-				neuralLocId: ns.resolvedLocId ?? null,
+				neuralLocID: ns.resolvedLocID ?? null,
 				neuralLoc: ns.resolvedLoc ?? null,
 				nameMatch: ns.locMatch,
 			})

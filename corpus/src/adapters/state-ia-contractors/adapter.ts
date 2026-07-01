@@ -19,7 +19,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -121,9 +121,9 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const regNum = (record["Registration #"] ?? "").trim()
-					const sourceId = regNum
+					const sourceID = regNum
 						? `${STATE_IA_CONTRACTORS_ADAPTER_ID}-${regNum}`
-						: stableSourceId(STATE_IA_CONTRACTORS_ADAPTER_ID, aligned)
+						: stableSourceID(STATE_IA_CONTRACTORS_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -131,7 +131,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 						country: "US",
 						locale: "en-US",
 						source: STATE_IA_CONTRACTORS_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 					}

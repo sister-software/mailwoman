@@ -107,7 +107,7 @@ interface Manifest {
 	notes: string
 }
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
 			"out-root": { type: "string", default: process.env.OUT_ROOT ?? "data/corpus/sources" },
@@ -142,7 +142,7 @@ async function sha256OfFile(path: string): Promise<string> {
 
 async function main(): Promise<void> {
 	$.verbose = false
-	const opts = parseCliArgs()
+	const opts = parseCLIArgs()
 	const destDir = join(opts.outRoot, SLUG)
 	mkdirSync(destDir, { recursive: true })
 

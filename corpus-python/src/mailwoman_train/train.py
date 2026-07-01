@@ -62,9 +62,7 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
     # Gazetteer-anchor channel (#464): same presence contract — only when a lexicon is configured.
     if "gazetteer_features" in batch:
         tb["gazetteer_features"] = torch.tensor(batch["gazetteer_features"], dtype=torch.float32, device=device)
-        tb["gazetteer_confidence"] = torch.tensor(
-            batch["gazetteer_confidence"], dtype=torch.float32, device=device
-        )
+        tb["gazetteer_confidence"] = torch.tensor(batch["gazetteer_confidence"], dtype=torch.float32, device=device)
     return tb
 
 
@@ -72,8 +70,8 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
 # anchor early (break the German collapse, build the basin), then a ramped perturbation so it can't
 # launder the anchor. No discrete [NO-ANCHOR] mode — "absent" is the c=0 tail of a continuum.
 ANCHOR_CURRICULUM_START_FRAC = 0.25  # ≤ this fraction of max_steps: no perturbation
-ANCHOR_CURRICULUM_RAMP_FRAC = 0.50   # by this fraction: full perturbation
-ANCHOR_ZERO_OUT_MAX = 0.15           # peak per-row zero-out probability
+ANCHOR_CURRICULUM_RAMP_FRAC = 0.50  # by this fraction: full perturbation
+ANCHOR_ZERO_OUT_MAX = 0.15  # peak per-row zero-out probability
 
 
 def perturb_anchor_confidence(conf: torch.Tensor, step: int, max_steps: int) -> torch.Tensor:
@@ -134,9 +132,7 @@ def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
         return _constant_with_warmup(optim, cfg_train.warmup_steps)
     if schedule == "cosine":
         return _cosine_with_warmup(optim, cfg_train.warmup_steps, cfg_train.max_steps)
-    raise ValueError(
-        f"unknown train.lr_schedule={schedule!r}; expected 'cosine' or 'constant'"
-    )
+    raise ValueError(f"unknown train.lr_schedule={schedule!r}; expected 'cosine' or 'constant'")
 
 
 def _precision_to_dtype(precision: str, device: torch.device) -> torch.dtype | None:
@@ -556,16 +552,19 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     print(
                         f"step {step}/{cfg.train.max_steps}"
                         f"  train_loss={avg:.4f}  lr={lr:.6f}"
-                        f"  rate={step/elapsed:.2f} steps/s"
+                        f"  rate={step / elapsed:.2f} steps/s"
                     )
-                    csv_writer.writerow([step, f"{elapsed:.1f}", f"{avg:.6f}", f"{lr:.8f}", "", ""] + [""] * len(per_tag_cols))
+                    csv_writer.writerow(
+                        [step, f"{elapsed:.1f}", f"{avg:.6f}", f"{lr:.8f}", "", ""] + [""] * len(per_tag_cols)
+                    )
                     csv_fh.flush()
                     tracker.log({"train_loss": avg, "lr": lr, "wall_seconds": elapsed}, step=step)
 
                 if step % cfg.train.eval_every_steps == 0:
                     val = _eval_val(cfg, tokenizer, model, device, max_rows=cfg.data.val_rows)
                     tag_summary = "  ".join(
-                        f"{t}={val.get(f'f1_tag.{t}', 0.0):.3f}" for t in ("locality", "region", "street", "house_number", "postcode")
+                        f"{t}={val.get(f'f1_tag.{t}', 0.0):.3f}"
+                        for t in ("locality", "region", "street", "house_number", "postcode")
                     )
                     print(
                         f"  [eval] val_loss={val.get('val_loss', float('nan')):.4f}"
@@ -639,9 +638,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         },
                         "vocab_size": tokenizer.vocab_size,
                     }
-                    ck = save_checkpoint(
-                        model, output_dir, step, extras, optim=optim, scheduler=scheduler
-                    )
+                    ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
                     print(f"  [save] checkpoint → {ck}")
         # Final save.
         extras = {

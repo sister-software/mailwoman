@@ -1,6 +1,7 @@
-import { createWofResolver } from "@mailwoman/resolver"
-import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { readFileSync } from "node:fs"
+
+import { createWOFResolver } from "@mailwoman/resolver"
+import { type ClassificationRecord, createAddressParser } from "mailwoman"
 
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const MODEL = "/tmp/v072-eval/model.onnx"
@@ -11,10 +12,10 @@ const WOF = [
 ]
 
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 const modelCard = JSON.parse(readFileSync(CARD, "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 const neuralArgmax = new NeuralAddressClassifier({
 	tokenizer,
@@ -24,9 +25,9 @@ const neuralArgmax = new NeuralAddressClassifier({
 } as any)
 const v0 = createAddressParser()
 
-const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-const backend = new WofSqlitePlaceLookup({ databasePath: WOF })
-const resolver = createWofResolver(backend as never)
+const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+const backend = new WOFSqlitePlaceLookup({ databasePath: WOF })
+const resolver = createWOFResolver(backend as never)
 
 function dumpTree(label: string, tree: any) {
 	const flat: string[] = []
@@ -41,10 +42,10 @@ function dumpTree(label: string, tree: any) {
 function dumpResolved(label: string, tree: any) {
 	const out: string[] = []
 	const walk = (n: any) => {
-		if (n?.placeId?.startsWith?.("wof:")) {
+		if (n?.placeID?.startsWith?.("wof:")) {
 			const meta = n.metadata as Record<string, unknown> | undefined
-			const pt = String(n.sourceId ?? "").split(":")[0]
-			out.push(`${pt}:${meta?.["resolver_name"] ?? n.value}(${n.placeId})`)
+			const pt = String(n.sourceID ?? "").split(":")[0]
+			out.push(`${pt}:${meta?.["resolver_name"] ?? n.value}(${n.placeID})`)
 		}
 		for (const c of n?.children ?? []) walk(c)
 	}

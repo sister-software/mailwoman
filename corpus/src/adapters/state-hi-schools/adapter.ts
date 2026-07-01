@@ -32,7 +32,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -144,9 +144,9 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const code = (record.code ?? "").toString().trim()
-					const sourceId = code
+					const sourceID = code
 						? `${STATE_HI_SCHOOLS_ADAPTER_ID}-${code}`
-						: stableSourceId(STATE_HI_SCHOOLS_ADAPTER_ID, aligned)
+						: stableSourceID(STATE_HI_SCHOOLS_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -154,7 +154,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 						country: "US",
 						locale: "en-US",
 						source: STATE_HI_SCHOOLS_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 					}

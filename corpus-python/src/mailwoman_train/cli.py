@@ -18,10 +18,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import random
 import sys
 import time
-from dataclasses import asdict
 from pathlib import Path
 
 
@@ -83,7 +81,6 @@ def _apply_smoke_mode(args: argparse.Namespace, cfg) -> None:
 
 def cmd_eval(args: argparse.Namespace) -> int:
     import torch
-    from .model import MailwomanCoarseEncoder
 
     from .config import load_config
     from .eval import (
@@ -92,6 +89,7 @@ def cmd_eval(args: argparse.Namespace) -> int:
         report_to_json,
         run_eval,
     )
+    from .model import MailwomanCoarseEncoder
     from .tokenizer import Tokenizer
 
     cfg = load_config(args.config)
@@ -123,12 +121,10 @@ def cmd_eval(args: argparse.Namespace) -> int:
 
 
 def cmd_export(args: argparse.Namespace) -> int:
-    import torch
-    from .model import MailwomanCoarseEncoder
-
     from .config import load_config
     from .data_loader import iter_batches
     from .export_onnx import export_to_onnx, verify_parity
+    from .model import MailwomanCoarseEncoder
     from .tokenizer import Tokenizer
 
     cfg = load_config(args.config)
@@ -148,9 +144,7 @@ def cmd_export(args: argparse.Namespace) -> int:
     # Build a parity sample of up to `args.parity_samples` real val-set inputs.
     samples: list[tuple[list[int], list[int]]] = []
     remaining = args.parity_samples
-    for batch in iter_batches(
-        cfg, tokenizer, split="val", batch_size=1, seed=0, row_limit=args.parity_samples
-    ):
+    for batch in iter_batches(cfg, tokenizer, split="val", batch_size=1, seed=0, row_limit=args.parity_samples):
         samples.append((batch["input_ids"][0], batch["attention_mask"][0]))
         remaining -= 1
         if remaining <= 0:
@@ -171,11 +165,9 @@ def cmd_quantize(args: argparse.Namespace) -> int:
 
 
 def cmd_package(args: argparse.Namespace) -> int:
-    import torch
-    from .model import MailwomanCoarseEncoder
-
     from .config import load_config
     from .eval import load_golden_dir, report_to_json, run_eval
+    from .model import MailwomanCoarseEncoder
     from .package_weights import (
         build_model_card,
         render_package_json,
@@ -209,7 +201,7 @@ def cmd_package(args: argparse.Namespace) -> int:
     int8_path = Path(args.int8_model)
     tokenizer_model_path = Path(cfg.data.tokenizer_dir) / "tokenizer.model"
     pkg_root = Path(args.packages_root)
-    locales = [l.strip() for l in args.locales.split(",") if l.strip()]
+    locales = [loc.strip() for loc in args.locales.split(",") if loc.strip()]
     for locale in locales:
         pkg_dir = pkg_root / f"neural-weights-{locale}"
         card = build_model_card(
@@ -269,15 +261,16 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     print(f"smoke: using checkpoint {ck}")
 
     # Eval against golden set.
+    import torch
+
     from .eval import (
         load_golden_dir,
         render_report_markdown,
         report_to_json,
         run_eval,
     )
-    from .tokenizer import Tokenizer
     from .model import MailwomanCoarseEncoder
-    import torch
+    from .tokenizer import Tokenizer
 
     tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     model = MailwomanCoarseEncoder.from_pretrained(ck)
@@ -287,12 +280,8 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     golden_dir = Path(args.golden_dir or "data/eval/golden/v0.1.0")
     entries = load_golden_dir(golden_dir)
     report = run_eval(cfg, model, tokenizer, entries, device=device)
-    (ck / "eval-report.md").write_text(
-        render_report_markdown(report, header="Smoke eval"), encoding="utf-8"
-    )
-    (ck / "eval-report.json").write_text(
-        json.dumps(report_to_json(report), indent=2) + "\n", encoding="utf-8"
-    )
+    (ck / "eval-report.md").write_text(render_report_markdown(report, header="Smoke eval"), encoding="utf-8")
+    (ck / "eval-report.json").write_text(json.dumps(report_to_json(report), indent=2) + "\n", encoding="utf-8")
 
     # Export to ONNX.
     from .export_onnx import export_to_onnx, verify_parity
@@ -400,9 +389,7 @@ def _resolve_corpus_dir(spec: str) -> Path:
     candidate = _CORPUS_VERSIONED_ROOT / f"v{ver}" / f"corpus-v{ver}"
     if (candidate / "train").is_dir():
         return candidate
-    raise FileNotFoundError(
-        f"could not resolve --corpus={spec!r}; tried {candidate}/train and direct path forms"
-    )
+    raise FileNotFoundError(f"could not resolve --corpus={spec!r}; tried {candidate}/train and direct path forms")
 
 
 def cmd_tokenizer(args: argparse.Namespace) -> int:
@@ -457,7 +444,7 @@ def _infer_corpus_version(corpus_dir: Path) -> str:
     """Best-effort: pull ``v0.3.0`` out of ``.../v0.3.0/corpus-v0.3.0`` paths."""
     name = corpus_dir.name
     if name.startswith("corpus-"):
-        return name[len("corpus-"):]
+        return name[len("corpus-") :]
     return name
 
 
@@ -477,9 +464,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m mailwoman_train", description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    common = lambda p: (
-        p.add_argument("--config", default=None, help="Path to YAML config (optional)"),
-    )
+    def common(p):
+        p.add_argument("--config", default=None, help="Path to YAML config (optional)")
 
     p = sub.add_parser("train", help="Train a Stage 1 coarse model")
     common(p)
@@ -567,7 +553,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--corpus",
         required=True,
         help='Corpus to train on. Accepts "v0.3.0" / "0.3.0" (resolves under '
-        '/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit shard-tree path '
+        "/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit shard-tree path "
         "(parent of train/, val/, test/).",
     )
     p.add_argument(

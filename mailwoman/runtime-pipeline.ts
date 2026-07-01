@@ -33,7 +33,7 @@ import { createAddressParser } from "./utils/parser.js"
 export interface CreateRuntimePipelineOpts {
 	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
 	classifier?: RuntimePipelineStages["classifier"]
-	/** The Stage 6 resolver — typically a `WofResolver` from `@mailwoman/resolver-wof-sqlite`. */
+	/** The Stage 6 resolver — typically a `WOFResolver` from `@mailwoman/resolver-wof-sqlite`. */
 	resolver?: RuntimePipelineStages["resolver"]
 	/**
 	 * Pre-built FST gazetteer matcher. Produces additive emission biases during neural classification.
@@ -110,7 +110,7 @@ export interface CreateRuntimePipelineOpts {
  * @example
  * 	Const pipeline = createRuntimePipeline({ classifier: await
  * 	NeuralAddressClassifier.loadFromWeights({ locale: "en-US" }), resolver:
- * 	createWofResolver(backend), }) const result = await pipeline("350 5th Ave, New York, NY 10118", {
+ * 	createWOFResolver(backend), }) const result = await pipeline("350 5th Ave, New York, NY 10118", {
  * 	locale: "en-US" })
  */
 export function createRuntimePipeline(
@@ -196,7 +196,7 @@ export function createRuntimePipeline(
 export type {
 	AddressClassifier,
 	ClassifierOpts,
-	FstMatcherLike,
+	FSTMatcherLike,
 	LocaleHint,
 	NormalizedInputLite,
 	PhraseGrouper,

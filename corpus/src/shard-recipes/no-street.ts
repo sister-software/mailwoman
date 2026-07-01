@@ -10,7 +10,7 @@
  */
 
 import { synthesizeNoStreetRow, type NoStreetBaseTuple } from "../synthesize-no-street.js"
-import { alignAndWrite, makeLcg, readTuples, shardSourceId, type ShardRecipe } from "./scaffold.js"
+import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.js"
 
 const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
@@ -50,7 +50,7 @@ export const noStreetRecipe: ShardRecipe = {
 						country: tuple.country,
 						locale: synth.locale,
 						source,
-						source_id: shardSourceId(source, {
+						source_id: shardSourceID(source, {
 							locality: tuple.locality,
 							region: tuple.region,
 							postcode: tuple.postcode,

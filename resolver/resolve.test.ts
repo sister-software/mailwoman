@@ -7,7 +7,7 @@
  */
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
-import { decodeAsXml } from "@mailwoman/core/decoder"
+import { decodeAsXML } from "@mailwoman/core/decoder"
 import type {
 	Ancestor,
 	CoincidentLocality,
@@ -18,7 +18,7 @@ import type {
 import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import { describe, expect, test, vi } from "vitest"
 
-import { createWofResolver } from "./resolve.js"
+import { createWOFResolver } from "./resolve.js"
 
 function node(
 	tag: ComponentTag,
@@ -27,13 +27,13 @@ function node(
 	end: number,
 	children: AddressNode[] = [],
 	source?: string,
-	sourceId?: string
+	sourceID?: string
 ): AddressNode {
 	const n: AddressNode = { tag, value, start, end, confidence: 0.9, children }
 
 	if (source) n.source = source
 
-	if (sourceId) n.sourceId = sourceId
+	if (sourceID) n.sourceID = sourceID
 
 	return n
 }
@@ -70,12 +70,12 @@ class FakeResolverBackend implements ResolverBackend {
 			.filter((p) => p.name.toLowerCase().includes(text))
 			.filter((p) => !types || types.includes(p.placetype))
 			.filter((p) => !query.country || p.country === query.country)
-			.filter((p) => query.parentId === undefined || p.parent_id === query.parentId)
+			.filter((p) => query.parentID === undefined || p.parent_id === query.parentID)
 			.slice(0, query.limit ?? 5)
 	}
 
-	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
-		return this.#coincident.get(Number(adminId)) ?? []
+	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {
+		return this.#coincident.get(Number(adminID)) ?? []
 	}
 
 	ancestors(id: number | string): Ancestor[] {
@@ -139,9 +139,9 @@ const FIXTURE_PLACES: ResolvedPlace[] = [
 ]
 
 describe("resolveTree", () => {
-	test("decorates a matched node with resolver source + sourceId + lat/lon + placeId", async () => {
+	test("decorates a matched node with resolver source + sourceID + lat/lon + placeID", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
 		const result = await resolver.resolveTree(input)
@@ -150,16 +150,16 @@ describe("resolveTree", () => {
 			tag: "region",
 			value: "Texas",
 			source: "resolver",
-			sourceId: "region:85688489",
+			sourceID: "region:85688489",
 			lat: 31.0,
 			lon: -100.0,
-			placeId: "wof:85688489",
+			placeID: "wof:85688489",
 		})
 	})
 
 	test("preserves classifier attribution into metadata when it gets displaced", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5, [], "rule", "whos_on_first")])
 		const result = await resolver.resolveTree(input)
@@ -173,21 +173,21 @@ describe("resolveTree", () => {
 
 	test("leaves the node untouched when no candidates match", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Nowheresville", [node("locality", "Nowheresville", 0, 13, [], "neural", "v1")])
 		const result = await resolver.resolveTree(input)
 
 		expect(result.roots[0]?.source).toBe("neural")
-		expect(result.roots[0]?.sourceId).toBe("v1")
+		expect(result.roots[0]?.sourceID).toBe("v1")
 		expect(result.roots[0]?.lat).toBeUndefined()
-		expect(result.roots[0]?.placeId).toBeUndefined()
+		expect(result.roots[0]?.placeID).toBeUndefined()
 		expect(result.roots[0]?.metadata).toBeUndefined()
 	})
 
 	test("does NOT mutate the input tree", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5, [], "rule", "whos_on_first")])
 		const before = JSON.stringify(input)
@@ -197,7 +197,7 @@ describe("resolveTree", () => {
 
 	test("skips nodes whose tag isn't in the placetype map (street / house_number / etc)", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("123 Main St", [node("street", "Main St", 4, 11), node("house_number", "123", 0, 3)])
 		await resolver.resolveTree(input)
@@ -206,7 +206,7 @@ describe("resolveTree", () => {
 
 	test("inherits parent's country code into child queries", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas, Paris", [node("region", "Texas", 0, 5, [node("locality", "Paris", 7, 12)])])
 		await resolver.resolveTree(input)
@@ -218,23 +218,23 @@ describe("resolveTree", () => {
 		expect(backend.calls[1]).toMatchObject({ text: "Paris", placetype: "locality", country: "US" })
 	})
 
-	test("inherits parent's id into child queries via parentId", async () => {
+	test("inherits parent's id into child queries via parentID", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Illinois, Springfield", [
 			node("region", "Illinois", 0, 8, [node("locality", "Springfield", 10, 21)]),
 		])
 		const result = await resolver.resolveTree(input)
 
-		// The child lookup carries parentId = the resolved Illinois id (85688541).
+		// The child lookup carries parentID = the resolved Illinois id (85688541).
 		expect(backend.calls[1]).toMatchObject({
 			text: "Springfield",
 			placetype: "locality",
-			parentId: 85688541,
+			parentID: 85688541,
 		})
 		// And the resolved locality is the IL Springfield, not the MA one.
-		expect(result.roots[0]?.children[0]?.placeId).toBe("wof:101727113")
+		expect(result.roots[0]?.children[0]?.placeID).toBe("wof:101727113")
 	})
 
 	test("#194 hardCountry: a confident placer country is a HARD filter, winning over a higher-scored foreign namesake", async () => {
@@ -244,13 +244,13 @@ describe("resolveTree", () => {
 			{ id: 2, name: "Pori", placetype: "locality", country: "US", lat: 40.0, lon: -90.0, score: 9 },
 		]
 		const backend = new FakeResolverBackend(places)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Pori", [node("locality", "Pori", 0, 4)])
 		const result = await resolver.resolveTree(input, { hardCountry: "FI" })
 
 		// The FI Pori wins despite the US one's higher score — the hard country filter excludes it.
-		expect(result.roots[0]).toMatchObject({ placeId: "wof:1", lat: 61.48 })
+		expect(result.roots[0]).toMatchObject({ placeID: "wof:1", lat: 61.48 })
 		expect(backend.calls).toHaveLength(1)
 		expect(backend.calls[0]).toMatchObject({ country: "FI" })
 	})
@@ -261,7 +261,7 @@ describe("resolveTree", () => {
 			{ id: 3, name: "Lyon", placetype: "locality", country: "FR", lat: 45.76, lon: 4.84, score: 9 },
 		]
 		const backend = new FakeResolverBackend(places)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Lyon", [node("locality", "Lyon", 0, 4, [], "neural", "v1")])
 		// spanRescore:false isolates the #194 contract — rescore is default-on and would add a second
@@ -269,7 +269,7 @@ describe("resolveTree", () => {
 		const result = await resolver.resolveTree(input, { hardCountry: "FI", spanRescore: false })
 
 		// Unresolved — the classifier attribution survives, no coordinate, no global fallback to the FR Lyon.
-		expect(result.roots[0]?.placeId).toBeUndefined()
+		expect(result.roots[0]?.placeID).toBeUndefined()
 		expect(result.roots[0]?.lat).toBeUndefined()
 		expect(result.roots[0]?.source).toBe("neural")
 		// Exactly one lookup, and it carried the FI filter — there is no second, country-less retry.
@@ -279,7 +279,7 @@ describe("resolveTree", () => {
 
 	test("respects maxLookups budget", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas, Illinois, Paris, Springfield", [
 			node("region", "Texas", 0, 5),
@@ -293,20 +293,20 @@ describe("resolveTree", () => {
 
 	test("respects minWinningScore — low-score candidate doesn't win", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5, [], "rule", "whos_on_first")])
 		const result = await resolver.resolveTree(input, { minWinningScore: 100 })
 		// All fixture scores top out at 10; with a 100 floor, the resolver leaves classifier
 		// attribution in place.
 		expect(result.roots[0]?.source).toBe("rule")
-		expect(result.roots[0]?.sourceId).toBe("whos_on_first")
-		expect(result.roots[0]?.placeId).toBeUndefined()
+		expect(result.roots[0]?.sourceID).toBe("whos_on_first")
+		expect(result.roots[0]?.placeID).toBeUndefined()
 	})
 
 	test("placetypeMap override can disable a default mapping", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
 		// spanRescore:false isolates the placetypeMap behavior — rescore is default-on and would issue
@@ -323,17 +323,17 @@ describe("resolveTree", () => {
 				throw new Error("backend boom")
 			},
 		}
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5, [], "rule", "whos_on_first")])
 		const result = await resolver.resolveTree(input)
 		expect(result.roots[0]?.source).toBe("rule")
-		expect(result.roots[0]?.placeId).toBeUndefined()
+		expect(result.roots[0]?.placeID).toBeUndefined()
 	})
 
 	test("empty-value node doesn't issue a lookup", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("", [node("region", "  ", 0, 2)])
 		await resolver.resolveTree(input)
@@ -342,11 +342,11 @@ describe("resolveTree", () => {
 
 	test("emits lat/lon/place in XML serialization after resolve", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
 		const result = await resolver.resolveTree(input)
-		const xml = decodeAsXml(result)
+		const xml = decodeAsXML(result)
 
 		expect(xml).toContain(`src="resolver:region:85688489"`)
 		expect(xml).toContain(`lat="31.000000"`)
@@ -356,11 +356,11 @@ describe("resolveTree", () => {
 
 	test("XML serializer can suppress geo + place via opts", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
 		const result = await resolver.resolveTree(input)
-		const xml = decodeAsXml(result, { includeGeo: false, includePlace: false })
+		const xml = decodeAsXML(result, { includeGeo: false, includePlace: false })
 
 		expect(xml).not.toContain("lat=")
 		expect(xml).not.toContain("lon=")
@@ -372,7 +372,7 @@ describe("resolveTree", () => {
 	test("backend call site receives candidatesPerLookup as `limit`", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
 		const findPlaceSpy = vi.spyOn(backend, "findPlace")
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
 		await resolver.resolveTree(input, { candidatesPerLookup: 3 })
@@ -417,14 +417,14 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	test("surfaces runner-up candidates on resolved node", async () => {
 		const backend = new FakeResolverBackend(AMBIG_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Springfield", [node("locality", "Springfield", 0, 11)])
 		const result = await resolver.resolveTree(input)
 		const root = result.roots[0]!
 
-		// Top candidate (IL Springfield, score 8) wins for placeId/lat/lon.
-		expect(root.placeId).toBe("wof:101727113")
+		// Top candidate (IL Springfield, score 8) wins for placeID/lat/lon.
+		expect(root.placeID).toBe("wof:101727113")
 		expect(root.lat).toBe(39.78)
 
 		// alternatives expose the remaining candidates in rank order.
@@ -437,7 +437,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	test("alternatives is absent (not just empty) when only one candidate", async () => {
 		const backend = new FakeResolverBackend([AMBIG_PLACES[0]!])
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Springfield", [node("locality", "Springfield", 0, 11)])
 		const result = await resolver.resolveTree(input)
@@ -446,23 +446,23 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	test("alternatives is absent when no candidates resolved", async () => {
 		const backend = new FakeResolverBackend([])
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Atlantis", [node("locality", "Atlantis", 0, 8)])
 		const result = await resolver.resolveTree(input)
 		expect(result.roots[0]?.alternatives).toBeUndefined()
-		expect(result.roots[0]?.placeId).toBeUndefined()
+		expect(result.roots[0]?.placeID).toBeUndefined()
 	})
 
 	test("alternatives respects candidatesPerLookup (top + alternatives = limit)", async () => {
 		const backend = new FakeResolverBackend(AMBIG_PLACES)
-		const resolver = createWofResolver(backend)
+		const resolver = createWOFResolver(backend)
 
 		const input = tree("Springfield", [node("locality", "Springfield", 0, 11)])
 		const result = await resolver.resolveTree(input, { candidatesPerLookup: 2 })
 		const root = result.roots[0]!
 
-		expect(root.placeId).toBe("wof:101727113") // top
+		expect(root.placeID).toBe("wof:101727113") // top
 		const alts = root.alternatives as ResolvedPlace[]
 		expect(alts).toHaveLength(1) // limit 2 → top + 1 alternative
 	})
@@ -476,14 +476,14 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const input = tree("Berlin", [node("locality", "Berlin", 0, 6)])
 
 		// Default (no posterior): the higher-scored US Berlin wins — byte-stable.
-		const off = await createWofResolver(new FakeResolverBackend(berlins)).resolveTree(input)
-		expect(off.roots[0]!.placeId).toBe("wof:1")
+		const off = await createWOFResolver(new FakeResolverBackend(berlins)).resolveTree(input)
+		expect(off.roots[0]!.placeID).toBe("wof:1")
 
 		// With a DE country posterior, the +weight*posterior boost pulls the German Berlin to the top.
-		const on = await createWofResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
+		const on = await createWOFResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
 			anchorPosterior: { DE: 1.0 },
 		})
-		expect(on.roots[0]!.placeId).toBe("wof:2")
+		expect(on.roots[0]!.placeID).toBe("wof:2")
 		// The displaced US Berlin survives as the top alternative.
 		expect((on.roots[0]!.alternatives as ResolvedPlace[])[0]!.id).toBe(1)
 	})
@@ -494,10 +494,10 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			{ id: 2, name: "Berlin", placetype: "locality", country: "DE", lat: 52.52, lon: 13.4, score: 7 },
 		]
 		const input = tree("Berlin", [node("locality", "Berlin", 0, 6)])
-		const on = await createWofResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
+		const on = await createWOFResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
 			anchorPosterior: { US: 1.0 },
 		})
-		expect(on.roots[0]!.placeId).toBe("wof:1") // US already top, boost keeps it there
+		expect(on.roots[0]!.placeID).toBe("wof:1") // US already top, boost keeps it there
 	})
 
 	test("anchor posterior re-ranks REGION candidates by country (#369), off by default", async () => {
@@ -515,14 +515,14 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const input = tree("Vermontia", [node("region", "Vermontia", 0, 9)])
 
 		// Default (no posterior): the higher-scored IT region wins — byte-stable.
-		const off = await createWofResolver(new FakeResolverBackend(regions)).resolveTree(input)
-		expect(off.roots[0]!.placeId).toBe("wof:1")
+		const off = await createWOFResolver(new FakeResolverBackend(regions)).resolveTree(input)
+		expect(off.roots[0]!.placeID).toBe("wof:1")
 
 		// With a US country posterior, the +weight*posterior boost pulls the US region to the top.
-		const on = await createWofResolver(new FakeResolverBackend(regions)).resolveTree(input, {
+		const on = await createWOFResolver(new FakeResolverBackend(regions)).resolveTree(input, {
 			anchorPosterior: { US: 1.0 },
 		})
-		expect(on.roots[0]!.placeId).toBe("wof:2")
+		expect(on.roots[0]!.placeID).toBe("wof:2")
 		expect((on.roots[0]!.alternatives as ResolvedPlace[])[0]!.id).toBe(1) // displaced IT survives
 	})
 
@@ -547,10 +547,10 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			{ id: 3, name: "Messinaland", placetype: "region", country: "IT", lat: 38, lon: 15, score: 6, exactMatch: true },
 		]
 		const input = tree("land", [node("region", "land", 0, 4)])
-		const on = await createWofResolver(new FakeResolverBackend(regions)).resolveTree(input, {
+		const on = await createWOFResolver(new FakeResolverBackend(regions)).resolveTree(input, {
 			anchorPosterior: { US: 1.0 },
 		})
-		expect(on.roots[0]!.placeId).toBe("wof:1") // US exact wins: tier primary, then US posterior
+		expect(on.roots[0]!.placeID).toBe("wof:1") // US exact wins: tier primary, then US posterior
 	})
 
 	// Macro-tier equivalence groups + fallback observability (#718). WOF models some countries'
@@ -564,10 +564,10 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			{ id: 404227501, name: "Veneto", placetype: "macroregion", country: "IT", lat: 45.65, lon: 11.86, score: 9 },
 		]
 		const input = tree("Veneto", [node("region", "Veneto", 0, 6)])
-		const out = await createWofResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
+		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
 		const r = out.roots[0]!
-		expect(r.placeId).toBe("wof:404227501")
-		expect(r.sourceId).toBe("macroregion:404227501")
+		expect(r.placeID).toBe("wof:404227501")
+		expect(r.sourceID).toBe("macroregion:404227501")
 		expect(r.metadata?.["resolution_quality"]).toBe("fallback")
 	})
 
@@ -579,9 +579,9 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			{ id: 2, name: "Foo", placetype: "region", country: "IT", lat: 46, lon: 12, score: 7 },
 		]
 		const input = tree("Foo", [node("region", "Foo", 0, 3)])
-		const out = await createWofResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
+		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
 		const r = out.roots[0]!
-		expect(r.sourceId).toBe("region:2") // exact region wins despite lower score
+		expect(r.sourceID).toBe("region:2") // exact region wins despite lower score
 		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
 		// The displaced macroregion survives as an alternative.
 		expect((r.alternatives as ResolvedPlace[])[0]!.id).toBe(1)
@@ -593,9 +593,9 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			{ id: 404227567, name: "Oberbayern", placetype: "macrocounty", country: "DE", lat: 48, lon: 11.5, score: 8 },
 		]
 		const input = tree("Oberbayern", [node("subregion", "Oberbayern", 0, 10)])
-		const out = await createWofResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "DE" })
+		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "DE" })
 		const r = out.roots[0]!
-		expect(r.sourceId).toBe("macrocounty:404227567")
+		expect(r.sourceID).toBe("macrocounty:404227567")
 		expect(r.metadata?.["resolution_quality"]).toBe("fallback")
 	})
 
@@ -606,9 +606,9 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			{ id: 421205765, name: "Brooklyn", placetype: "borough", country: "US", lat: 40.65, lon: -73.95, score: 8 },
 		]
 		const input = tree("Brooklyn", [node("locality", "Brooklyn", 0, 8)])
-		const out = await createWofResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "US" })
+		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "US" })
 		const r = out.roots[0]!
-		expect(r.sourceId).toBe("borough:421205765")
+		expect(r.sourceID).toBe("borough:421205765")
 		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
 	})
 
@@ -654,7 +654,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	test("completion records the dropped locality as an interpretation on the region node (#415)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWofResolver(backend).resolveTree(input, {
+		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
@@ -663,7 +663,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
 		expect(localityRole(result.roots)).toMatchObject({
 			tag: "locality",
-			placeId: "wof:911",
+			placeID: "wof:911",
 			lat: 52.52,
 			lon: 13.4,
 			metadata: { relationship_type: "city-state", resolver_completed: true },
@@ -673,24 +673,24 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	test("the deprecated cityStateFallback alias still drives completion (#415)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWofResolver(backend).resolveTree(input, {
+		const result = await createWOFResolver(backend).resolveTree(input, {
 			cityStateFallback: true,
 			defaultCountry: "DE",
 		})
-		expect(localityRole(result.roots)?.placeId).toBe("wof:911")
+		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
 	})
 
 	test("hierarchy completion is ON by default (#402)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWofResolver(backend).resolveTree(input, { defaultCountry: "DE" })
-		expect(localityRole(result.roots)?.placeId).toBe("wof:911")
+		const result = await createWOFResolver(backend).resolveTree(input, { defaultCountry: "DE" })
+		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
 	})
 
 	test("hierarchyCompletion: false opts out of the default (#402)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWofResolver(backend).resolveTree(input, {
+		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: false,
 			defaultCountry: "DE",
 		})
@@ -700,14 +700,14 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	test("a backend without the relation no-ops (default-on is safe) (#402)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWofResolver(backend).resolveTree(input, { defaultCountry: "DE" })
+		const result = await createWOFResolver(backend).resolveTree(input, { defaultCountry: "DE" })
 		expect(localityRole(result.roots)).toBeUndefined()
 	})
 
 	test("hierarchy completion does nothing for a region absent from the relation (#405)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Brandenburg 14770", [node("region", "Brandenburg", 0, 11), node("postcode", "14770", 12, 17)])
-		const result = await createWofResolver(backend).resolveTree(input, {
+		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
@@ -729,7 +729,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		})
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, new Map([[910, [twin(911), twin(912)]]]))
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWofResolver(backend).resolveTree(input, {
+		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
@@ -763,17 +763,17 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		}
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, new Map([[910, [small, big]]]))
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
-		const result = await createWofResolver(backend).resolveTree(input, {
+		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
-		expect(localityRole(result.roots)?.placeId).toBe("wof:911")
+		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
 	})
 
 	test("hierarchy completion never adds a role when the parser already emitted a locality (#405)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Some Town, Berlin", [node("locality", "Some Town", 0, 9), node("region", "Berlin", 11, 17)])
-		const result = await createWofResolver(backend).resolveTree(input, {
+		const result = await createWOFResolver(backend).resolveTree(input, {
 			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
@@ -798,9 +798,9 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const input = tree("Illinois, Springfield", [
 			node("region", "Illinois", 0, 8, [node("locality", "Springfield", 10, 21)]),
 		])
-		const result = await createWofResolver(backend).resolveTree(input, { includeAncestors: true })
+		const result = await createWOFResolver(backend).resolveTree(input, { includeAncestors: true })
 		const locality = result.roots[0]?.children[0]
-		expect(locality?.placeId).toBe("wof:101727113")
+		expect(locality?.placeID).toBe("wof:101727113")
 		expect(locality?.metadata?.["ancestors"]).toEqual([
 			{ id: 85688541, placetype: "region", name: "Illinois" },
 			{ id: 85633147, placetype: "country", name: "United States" },
@@ -812,7 +812,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const input = tree("Illinois, Springfield", [
 			node("region", "Illinois", 0, 8, [node("locality", "Springfield", 10, 21)]),
 		])
-		const result = await createWofResolver(backend).resolveTree(input)
+		const result = await createWOFResolver(backend).resolveTree(input)
 		expect(result.roots[0]?.children[0]?.metadata?.["ancestors"]).toBeUndefined()
 	})
 })
@@ -844,7 +844,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		])
 
 	test("stamps the interpolated point onto the street node on a hit", async () => {
-		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		const result = await resolver.resolveTree(addrTree(), { interpolation: fakeInterp })
 		const street = result.roots.find((n) => n.tag === "street")
 		expect(street?.metadata).toMatchObject({
@@ -860,7 +860,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 	})
 
 	test("byte-stable when the flag is absent", async () => {
-		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		const withFlagOff = await resolver.resolveTree(addrTree())
 		const street = withFlagOff.roots.find((n) => n.tag === "street")
 		expect(street?.metadata?.["resolution_tier"]).toBeUndefined()
@@ -868,7 +868,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 	})
 
 	test("exact address-point tier wins — interpolation never overrides a situs point", async () => {
-		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		const exact = {
 			find: () => ({ lat: 44.2, lon: -72.6, source: "overture:NAD", release: "2026-05-20.0" }),
 		}
@@ -881,7 +881,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 	})
 
 	test("miss → no stamp, admin untouched", async () => {
-		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		const missTree = tree("999 Main St 05601", [
 			node("house_number", "999", 0, 3),
 			node("street", "Main St", 4, 11),
@@ -911,7 +911,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 				node("postcode", "05450", 19, 24),
 			]),
 		])
-		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		await resolver.resolveTree(nested, { interpolation: recorder })
 		expect(queried).toBe("East Sheldon Rd")
 	})
@@ -934,7 +934,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			node("unit", "Ne", 19, 21),
 			node("postcode", "20018", 22, 27),
 		])
-		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		await resolver.resolveTree(dirTree, { interpolation: recorder })
 		expect(queried).toBe("Taylor Street Ne")
 	})
@@ -954,7 +954,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			node("unit", "Apt 4", 19, 24),
 			node("postcode", "20018", 25, 30),
 		])
-		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		await resolver.resolveTree(aptTree, { interpolation: recorder })
 		expect(queried).toBe("Taylor Street")
 	})
@@ -968,7 +968,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 				return fakeInterp.find(q)
 			},
 		}
-		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		const noHn = tree("Main St", [node("street", "Main St", 0, 7)])
 		await resolver.resolveTree(noHn, { interpolation: spy })
 		expect(called).toBe(false)

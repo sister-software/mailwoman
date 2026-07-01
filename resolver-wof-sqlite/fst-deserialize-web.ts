@@ -9,9 +9,9 @@
  *   build-time operation).
  */
 
-import type { FstNode } from "./fst-matcher.js"
-import { FstMatcher } from "./fst-matcher.js"
-import type { FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.js"
+import { FSTMatcher } from "./fst-matcher.js"
+import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.js"
 
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
@@ -22,7 +22,7 @@ const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00] // "FST\0"
 // was left stale at 2, so the browser FST loader rejected every real (v4) artifact.
 const MAX_VERSION = 4
 
-const PLACETYPE_ORDER: readonly PlacetypeId[] = [
+const PLACETYPE_ORDER: readonly PlacetypeID[] = [
 	"country",
 	"region",
 	"county",
@@ -36,7 +36,7 @@ const PLACETYPE_ORDER: readonly PlacetypeId[] = [
 	"street_affix",
 ]
 
-export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
+export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 	const bytes = input instanceof ArrayBuffer ? new Uint8Array(input) : input
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	const decoder = new TextDecoder("utf-8")
@@ -90,7 +90,7 @@ export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
 
-	const nodes: FstNode[] = new Array(stateCount)
+	const nodes: FSTNode[] = new Array(stateCount)
 
 	for (let si = 0; si < stateCount; si++) {
 		const sp = stateTableStart + si * stateEntrySize
@@ -136,10 +136,10 @@ export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
 		nodes[si] = { edges, places }
 	}
 
-	return FstMatcher.fromNodes(nodes)
+	return FSTMatcher.fromNodes(nodes)
 }
 
-export function readFstProvenanceWeb(input: ArrayBuffer | Uint8Array): FstProvenance | undefined {
+export function readFSTProvenanceWeb(input: ArrayBuffer | Uint8Array): FSTProvenance | undefined {
 	const bytes = input instanceof ArrayBuffer ? new Uint8Array(input) : input
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	const decoder = new TextDecoder("utf-8")
@@ -156,7 +156,7 @@ export function readFstProvenanceWeb(input: ArrayBuffer | Uint8Array): FstProven
 		const jsonLen = view.getUint32(provenanceOffset, true)
 		const jsonStr = decoder.decode(bytes.subarray(provenanceOffset + 4, provenanceOffset + 4 + jsonLen))
 
-		return JSON.parse(jsonStr) as FstProvenance
+		return JSON.parse(jsonStr) as FSTProvenance
 	} catch {
 		return undefined
 	}

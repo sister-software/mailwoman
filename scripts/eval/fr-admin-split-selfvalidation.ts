@@ -9,7 +9,7 @@
  *   — the v1.7.0 trap: a label change that the resolver ignores)?
  *
  *   For each sampled FR commune (truth = its own WOF centroid) we resolve THREE parse states through
- *   the SAME resolver the geocoder ships (`createWofResolver` over `admin-global-priority.db`,
+ *   the SAME resolver the geocoder ships (`createWOFResolver` over `admin-global-priority.db`,
  *   `defaultCountry: FR`):
  *
  *   - DROPPED {locality:[commune]} — the model's "région → null" failure
@@ -32,7 +32,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { ClassificationRecord } from "mailwoman"
 
@@ -61,10 +61,10 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
-			out.push({ id: Number(n.placeId.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
+			out.push({ id: Number(n.placeID.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
 
 		for (const c of n.children) visit(c)
@@ -130,9 +130,9 @@ const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
 db.close()
 
 // --- resolver (production path) ------------------------------------------------------------------
-const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-const backend = new WofSqlitePlaceLookup({ databasePath: DB })
-const resolver = createWofResolver(backend as never)
+const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+const backend = new WOFSqlitePlaceLookup({ databasePath: DB })
+const resolver = createWOFResolver(backend as never)
 const resolveOpts = { defaultCountry: "FR" }
 
 // Unresolved penalty = the coordinate the geocoder actually falls back to when the place isn't

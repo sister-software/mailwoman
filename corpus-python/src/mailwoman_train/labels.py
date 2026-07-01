@@ -108,7 +108,15 @@ IGNORE_INDEX: Final[int] = -100
 # graceful for locales the head wasn't trained on. The head still carries a slot for every
 # entry here, so the pilot (US/FR/DE) can grow to the others without a geometry change.
 LOCALE_COUNTRIES: Final[tuple[str, ...]] = (
-    "US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL",
+    "US",
+    "FR",
+    "DE",
+    "CA",
+    "GB",
+    "JP",
+    "ES",
+    "IT",
+    "NL",
 )
 LOCALE_TO_ID: Final[dict[str, int]] = {c: i for i, c in enumerate(LOCALE_COUNTRIES)}
 ID_TO_LOCALE: Final[dict[int, str]] = {i: c for c, i in LOCALE_TO_ID.items()}

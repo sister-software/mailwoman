@@ -29,12 +29,12 @@ geo.reverse((38.8977, -77.0365))
 
 ## Endpoint map
 
-| Nominatim      | Mailwoman      | Notes                                                    |
-| -------------- | -------------- | -------------------------------------------------------- |
-| `GET /search`  | `GET /search`  | free-text `q` and the structured fields                  |
-| `GET /reverse` | `GET /reverse` | `lat` / `lon`, point-in-polygon over the same admin data |
+| Nominatim      | Mailwoman      | Notes                                                                                             |
+| -------------- | -------------- | ------------------------------------------------------------------------------------------------- |
+| `GET /search`  | `GET /search`  | free-text `q` and the structured fields                                                           |
+| `GET /reverse` | `GET /reverse` | `lat` / `lon`, point-in-polygon over the same admin data                                          |
 | `GET /lookup`  | `501`          | Nominatim looks up by OSM id; Mailwoman is WOF/Overture-keyed, so there are no OSM ids to look up |
-| `GET /status`  | `GET /status`  | `{ status: 0, message: "OK" }`                           |
+| `GET /status`  | `GET /status`  | `{ status: 0, message: "OK" }`                                                                    |
 
 Parameters honored: `q`, the structured set (`street`, `city`, `county`, `state`, `country`,
 `postalcode`), `countrycodes`, `limit`, `viewbox`, `bounded`, `addressdetails`, `accept-language`, and

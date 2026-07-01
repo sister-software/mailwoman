@@ -16,10 +16,10 @@
 import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -44,7 +44,7 @@ const rows = readFileSync(args.file!, "utf8")
 // and grades the default symlink with no anchor channel (the zero-fill crash signature this
 // audit's first run produced — caught by the misses-vs-scorer discrepancy).
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(args.model!)])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(args.model!)])
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
@@ -109,7 +109,7 @@ const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const misses: Array<{ row: (typeof rows)[number]; tag: string; expected: string; got: string; street?: string }> = []
 
 for (const row of rows) {
-	const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
+	const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
 
 	for (const tag of ["street_prefix", "street_suffix"]) {
 		const e = norm(row.components[tag])

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proximity + bbox tests for `WofSqlitePlaceLookup` — exercises the R*Tree integration via the
+ *   Proximity + bbox tests for `WOFSqlitePlaceLookup` — exercises the R*Tree integration via the
  *   fixture-DB pattern. Real-WOF coverage lives in `integration.test.ts`.
  */
 
@@ -11,7 +11,7 @@ import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { bboxAround, haversineKm } from "./geo.js"
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 interface FixturePlace {
 	id: number
@@ -66,7 +66,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 ]
 
-function buildFixtureDb(): DatabaseSync {
+function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (
@@ -111,10 +111,10 @@ function buildFixtureDb(): DatabaseSync {
 	return db
 }
 
-let lookup: WofSqlitePlaceLookup
+let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WofSqlitePlaceLookup({ database: buildFixtureDb(), buildFts: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true })
 })
 
 afterEach(() => {
@@ -226,7 +226,7 @@ describe("findPlace — backwards compat", () => {
 
 	test("near + bbox without R*Tree (legacy DB) is silently ignored; no crash, no proximity filter", async () => {
 		// Simulate an older DB that has FTS5 but NOT the R*Tree bbox index (built before this PR).
-		const db = buildFixtureDb()
+		const db = buildFixtureDB()
 		db.exec(`
 			CREATE VIRTUAL TABLE place_search USING fts5(
 				wof_id UNINDEXED, name, alt_names,
@@ -234,7 +234,7 @@ describe("findPlace — backwards compat", () => {
 			);
 			INSERT INTO place_search (wof_id, name, alt_names) SELECT id, name, '' FROM spr;
 		`)
-		const oldLookup = new WofSqlitePlaceLookup({ database: db })
+		const oldLookup = new WOFSqlitePlaceLookup({ database: db })
 
 		try {
 			// bbox option should be silently ignored — without the R*Tree we can't filter at SQL level,

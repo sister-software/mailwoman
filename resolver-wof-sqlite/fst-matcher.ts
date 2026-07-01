@@ -7,17 +7,17 @@
  *   arrays at accepting states.
  */
 
-import type { FstContinuation, FstMatchResult, FstQueryResult, PlaceEntry } from "./fst-types.js"
+import type { FSTContinuation, FSTMatchResult, FSTQueryResult, PlaceEntry } from "./fst-types.js"
 
-interface FstNode {
+interface FSTNode {
 	edges: Map<string, number>
 	places: PlaceEntry[]
 }
 
-export class FstMatcher {
-	private nodes: FstNode[]
+export class FSTMatcher {
+	private nodes: FSTNode[]
 
-	constructor(nodes: FstNode[]) {
+	constructor(nodes: FSTNode[]) {
 		this.nodes = nodes
 	}
 
@@ -33,25 +33,25 @@ export class FstMatcher {
 		return count
 	}
 
-	walk(tokens: string[]): FstMatchResult | null {
-		let stateId = 0
+	walk(tokens: string[]): FSTMatchResult | null {
+		let stateID = 0
 
 		for (let i = 0; i < tokens.length; i++) {
-			const node = this.nodes[stateId]
+			const node = this.nodes[stateID]
 
 			if (!node) return null
 			const next = node.edges.get(tokens[i]!)
 
 			if (next === undefined) return null
-			stateId = next
+			stateID = next
 		}
-		const node = this.nodes[stateId]!
+		const node = this.nodes[stateID]!
 
-		return { stateId, accepted: node.places.length > 0, depth: tokens.length }
+		return { stateID, accepted: node.places.length > 0, depth: tokens.length }
 	}
 
-	walkFrom(prev: FstMatchResult, token: string): FstMatchResult | null {
-		const node = this.nodes[prev.stateId]
+	walkFrom(prev: FSTMatchResult, token: string): FSTMatchResult | null {
+		const node = this.nodes[prev.stateID]
 
 		if (!node) return null
 		const next = node.edges.get(token)
@@ -59,24 +59,24 @@ export class FstMatcher {
 		if (next === undefined) return null
 		const target = this.nodes[next]!
 
-		return { stateId: next, accepted: target.places.length > 0, depth: prev.depth + 1 }
+		return { stateID: next, accepted: target.places.length > 0, depth: prev.depth + 1 }
 	}
 
-	accepting(stateId: number): PlaceEntry[] {
-		return this.nodes[stateId]?.places ?? []
+	accepting(stateID: number): PlaceEntry[] {
+		return this.nodes[stateID]?.places ?? []
 	}
 
-	continuations(stateId: number): FstContinuation[] {
-		const node = this.nodes[stateId]
+	continuations(stateID: number): FSTContinuation[] {
+		const node = this.nodes[stateID]
 
 		if (!node) return []
-		const result: FstContinuation[] = []
+		const result: FSTContinuation[] = []
 
-		for (const [token, targetId] of node.edges) {
-			const target = this.nodes[targetId]!
+		for (const [token, targetID] of node.edges) {
+			const target = this.nodes[targetID]!
 			result.push({
 				token,
-				targetState: targetId,
+				targetState: targetID,
 				acceptingCount: target.places.length,
 			})
 		}
@@ -84,39 +84,39 @@ export class FstMatcher {
 		return result
 	}
 
-	query(text: string): FstQueryResult {
+	query(text: string): FSTQueryResult {
 		const tokens = normalizeTokens(text)
 		const match = this.walk(tokens)
 
 		if (!match) {
 			// Walk as far as possible to find where we fall off
-			let stateId = 0
+			let stateID = 0
 			let depth = 0
 
 			for (const t of tokens) {
-				const node = this.nodes[stateId]
+				const node = this.nodes[stateID]
 
 				if (!node) break
 				const next = node.edges.get(t)
 
 				if (next === undefined) break
-				stateId = next
+				stateID = next
 				depth++
 			}
 
 			return {
 				path: tokens.slice(0, depth),
-				stateId,
-				accepting: this.accepting(stateId),
-				continuations: this.continuations(stateId),
+				stateID,
+				accepting: this.accepting(stateID),
+				continuations: this.continuations(stateID),
 			}
 		}
 
 		return {
 			path: tokens,
-			stateId: match.stateId,
-			accepting: this.accepting(match.stateId),
-			continuations: this.continuations(match.stateId),
+			stateID: match.stateID,
+			accepting: this.accepting(match.stateID),
+			continuations: this.continuations(match.stateID),
 		}
 	}
 
@@ -125,12 +125,12 @@ export class FstMatcher {
 	}
 
 	/** Expose the internal node array for serialization. */
-	toNodes(): readonly FstNode[] {
+	toNodes(): readonly FSTNode[] {
 		return this.nodes
 	}
 
-	static fromNodes(nodes: FstNode[]): FstMatcher {
-		return new FstMatcher(nodes)
+	static fromNodes(nodes: FSTNode[]): FSTMatcher {
+		return new FSTMatcher(nodes)
 	}
 }
 
@@ -144,4 +144,4 @@ export function normalizeTokens(text: string): string[] {
 		.filter((t) => t.length > 0)
 }
 
-export type { FstNode }
+export type { FSTNode }

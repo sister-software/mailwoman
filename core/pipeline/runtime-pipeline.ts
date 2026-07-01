@@ -22,7 +22,7 @@ import { aggregateSpanLogits } from "./span-logit-aggregation.js"
 import type {
 	AddressClassifier,
 	ClassifierOpts,
-	FstMatcherLike,
+	FSTMatcherLike,
 	LocaleHint,
 	LocaleTag,
 	NormalizedInputLite,
@@ -184,7 +184,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
 						confidence: hit.confidence,
 						children: [],
 						source: "query-shape",
-						sourceId: hit.format,
+						sourceID: hit.format,
 					},
 				],
 			}
@@ -203,7 +203,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
 					confidence: kind.confidence,
 					children: [],
 					source: "query-shape",
-					sourceId: "kind:locality_only",
+					sourceID: "kind:locality_only",
 				},
 			],
 		}
@@ -508,7 +508,7 @@ async function safeClassify(
 	classifier: AddressClassifier,
 	text: string,
 	queryShape: QueryShapeLite,
-	fst?: FstMatcherLike,
+	fst?: FSTMatcherLike,
 	normalizeCase?: boolean
 ): Promise<AddressTree> {
 	try {
@@ -595,7 +595,7 @@ export function grouperAudit(
 	// placed the confident locality/region/postcode; a SECOND one injected here is almost always a
 	// street-name word the OOD model mistyped ("Via Francesca Nord" → `Francesca`) or an area-line
 	// prefix ("LUGAR …" / "URBANIZACION …"). Suppressing the duplicate keeps the real trailing city
-	// from being shadowed by an earlier-positioned spurious node in `decodeAsJson` (#425 residual tail).
+	// from being shadowed by an earlier-positioned spurious node in `decodeAsJSON` (#425 residual tail).
 	const SINGLETON_TAGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>(["locality", "region", "postcode", "country"])
 	const presentSingletons = new Set<ComponentTag>()
 	const collectSingletons = (nodes: typeof roots): void => {
@@ -638,7 +638,7 @@ export function grouperAudit(
 			confidence: proposal.confidence * GROUPER_TYPING_PENALTY,
 			children: [],
 			source: "grouper-audit",
-			sourceId: `grouper:${proposal.kindHypothesis}`,
+			sourceID: `grouper:${proposal.kindHypothesis}`,
 		}
 
 		roots.push(provisionalNode)

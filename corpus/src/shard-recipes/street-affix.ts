@@ -39,7 +39,7 @@ import {
 } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -109,7 +109,7 @@ interface BalanceTuple {
 type Prefix = Pick<NonNullable<ReturnType<typeof matchLeadingDirectional>>, "canonical" | "abbreviation">
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields). */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -147,7 +147,7 @@ function readTuples(source: UsSource): UsTuple[] {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -159,7 +159,7 @@ function readTuples(source: UsSource): UsTuple[] {
 
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const street = get(cells, iStreet)
 		const locality = get(cells, iCity)
 		const house_number = get(cells, iNum)
@@ -315,7 +315,7 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string): number => header.indexOf(n)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -328,7 +328,7 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 
 	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const street = get(cells, iStreet),
 			locality = get(cells, iCity),
 			house_number = get(cells, iNum),
@@ -446,7 +446,7 @@ export const streetAffixRecipe: ShardRecipe = {
 				country: "US",
 				locale: "en-US",
 				source,
-				source_id: stableSourceId(source, components),
+				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
 				license: "OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
 			}
@@ -465,7 +465,7 @@ export const streetAffixRecipe: ShardRecipe = {
 		// non-US rows ride the SAME source weight. Native-order postcodes, no affix labels.
 		let balanceEmitted = 0
 		let balanceSkipped = 0
-		const balanceIso: Record<string, number> = {}
+		const balanceISO: Record<string, number> = {}
 
 		if (multilocaleCount > 0) {
 			const mlSources = opts.golden ? MULTILOCALE_EVAL_SOURCES : MULTILOCALE_SOURCES
@@ -490,7 +490,7 @@ export const streetAffixRecipe: ShardRecipe = {
 					balanceSkipped++
 					continue
 				}
-				balanceIso[t.iso2] = (balanceIso[t.iso2] ?? 0) + 1
+				balanceISO[t.iso2] = (balanceISO[t.iso2] ?? 0) + 1
 				const locale = `${t.iso2.toLowerCase()}-${t.iso2}`
 
 				if (opts.golden) {
@@ -504,7 +504,7 @@ export const streetAffixRecipe: ShardRecipe = {
 					country: t.iso2,
 					locale,
 					source,
-					source_id: stableSourceId(source, components),
+					source_id: stableSourceID(source, components),
 					corpus_version: "0.4.0",
 					license: "OpenAddresses non-US skeletons (native-order postcode balance for the affix shard)",
 				}
@@ -524,7 +524,7 @@ export const streetAffixRecipe: ShardRecipe = {
 				`  formats: ${JSON.stringify(formatCounts)}\n` +
 				`  affix mix: ${JSON.stringify(affixCounts)}` +
 				(multilocaleCount > 0
-					? `\n  balance: emitted ${balanceEmitted}, skipped ${balanceSkipped}, iso ${JSON.stringify(balanceIso)}`
+					? `\n  balance: emitted ${balanceEmitted}, skipped ${balanceSkipped}, iso ${JSON.stringify(balanceISO)}`
 					: "")
 		)
 

@@ -31,7 +31,7 @@ import { join } from "node:path"
 
 import { PSVSpliterator } from "spliterator"
 
-export interface GnafAssembleOptions {
+export interface GNAFAssembleOptions {
 	/** G-NAF `Standard` directory (holds the per-state `*_psv.psv` tables). */
 	standardDir: string
 	/** Target sample size (uniform reservoir → population-proportional across states). */
@@ -46,7 +46,7 @@ export interface GnafAssembleOptions {
 	onProgress?: (message: string) => void
 }
 
-export interface GnafAssembleResult {
+export interface GNAFAssembleResult {
 	written: number
 	seen: number
 	heldOut: number
@@ -106,7 +106,7 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 	return keys
 }
 
-export async function assembleGnaf(opts: GnafAssembleOptions): Promise<GnafAssembleResult> {
+export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssembleResult> {
 	const progress = opts.onProgress ?? (() => {})
 	const files = await readdir(opts.standardDir)
 	const pick = (re: RegExp, exclude?: RegExp) =>

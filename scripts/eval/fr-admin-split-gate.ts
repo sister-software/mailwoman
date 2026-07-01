@@ -4,7 +4,7 @@
 /**
  *   Fr-admin-split-gate.ts — the LIVE gate for the v1.8.0 international admin-split candidate (night
  *   2026-06-19). Runs the production ship-config parse (createScorer: anchor + gazetteer +
- *   conventions=auto) → resolve (createWofResolver, defaultCountry FR) → coordinate on the HELD-OUT
+ *   conventions=auto) → resolve (createWOFResolver, defaultCountry FR) → coordinate on the HELD-OUT
  *   FR golden set (disjoint communes, with truth coords), and reports the metrics that decide the
  *   promote: assembled centroid error, resolve-rate, région-emit-rate, and the #727 diacritic
  *   break.
@@ -21,7 +21,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
-import { type AddressNode, type AddressTree, decodeAsJson } from "@mailwoman/core/decoder"
+import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -48,10 +48,10 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			out.push({
-				id: Number(n.placeId.slice(4)),
+				id: Number(n.placeID.slice(4)),
 				name: String(meta?.["resolver_name"] ?? n.value ?? ""),
 				placetype,
 				lat: n.lat,
@@ -93,13 +93,13 @@ const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 async function main() {
 	const goldenPath = arg("golden", "/tmp/reg/fr-admin-split-golden.jsonl")
 	const label = arg("label", "model")
-	const wofDb = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
+	const wofDB = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
 	const rows = readFileSync(goldenPath, "utf8")
 		.trim()
 		.split("\n")
 		.map((l) => JSON.parse(l))
 
-	const [{ WofSqlitePlaceLookup }, { createScorer }, { createWofResolver }] = await Promise.all([
+	const [{ WOFSqlitePlaceLookup }, { createScorer }, { createWOFResolver }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite"),
 		import("@mailwoman/neural/scorer"),
 		import("@mailwoman/resolver"),
@@ -114,7 +114,7 @@ async function main() {
 		strict: true,
 		tier: "server",
 	})
-	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: wofDb }) as never)
+	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: wofDB }) as never)
 	const resolveOpts = { defaultCountry: arg("default-country", "FR") }
 
 	const errs: number[] = []
@@ -130,7 +130,7 @@ async function main() {
 			postcodeRepair: true,
 			enforceWordConsistency: process.env.MAILWOMAN_WORD_CONSISTENCY === "1",
 		})
-		const flat = decodeAsJson(tree) as Record<string, string>
+		const flat = decodeAsJSON(tree) as Record<string, string>
 		const goldRegion = row.components?.region as string | undefined
 		const predRegion = flat.region
 

@@ -7,16 +7,16 @@
  *   every place name in the gazetteer.
  *
  *   Build pipeline: open WOF DB → query spr + names → normalize names → insert into trie → attach
- *   PlaceEntry at terminals → return FstMatcher.
+ *   PlaceEntry at terminals → return FSTMatcher.
  */
 
 import { DatabaseSync } from "node:sqlite"
 
-import type { FstNode } from "./fst-matcher.js"
-import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
-import type { BuildFstOpts, BuildFstResult, FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.js"
+import { FSTMatcher, normalizeTokens } from "./fst-matcher.js"
+import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.js"
 
-const DEFAULT_PLACETYPES: PlacetypeId[] = [
+const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"country",
 	"region",
 	"county",
@@ -49,10 +49,10 @@ interface PopulationRow {
 	population: number
 }
 
-export function buildFstFromWof(opts: BuildFstOpts): {
-	matcher: FstMatcher
-	provenance: FstProvenance
-	result: BuildFstResult
+export function buildFSTFromWOF(opts: BuildFSTOpts): {
+	matcher: FSTMatcher
+	provenance: FSTProvenance
+	result: BuildFSTResult
 } {
 	const countries = opts.countries ?? DEFAULT_COUNTRIES
 	const placetypes = opts.placetypes ?? DEFAULT_PLACETYPES
@@ -197,14 +197,14 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 
 	// Phase 5: Build the trie.
 	progress("trie", "Building trie")
-	const nodes: FstNode[] = [{ edges: new Map(), places: [] }]
+	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
 		if (tokens.length === 0) return
-		let stateId = 0
+		let stateID = 0
 
 		for (const t of tokens) {
-			const node = nodes[stateId]!
+			const node = nodes[stateID]!
 			let next = node.edges.get(t)
 
 			if (next === undefined) {
@@ -212,10 +212,10 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
-			stateId = next
+			stateID = next
 		}
 		// Deduplicate: don't add the same wofID twice at the same state.
-		const existing = nodes[stateId]!.places
+		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
 			existing.push(entry)
@@ -228,7 +228,7 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 		const parentChain = resolveParentChain(row.id)
 		const entry: PlaceEntry = {
 			wofID: row.id,
-			placetype: row.placetype as PlacetypeId,
+			placetype: row.placetype as PlacetypeID,
 			name: row.name,
 			parentChain,
 			importance: importanceMap.get(row.id) ?? 0,
@@ -259,8 +259,8 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 	progress("done", `Built trie: ${nodes.length} states, ${insertCount} name insertions`)
 
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
-	const matcher = FstMatcher.fromNodes(nodes)
-	const provenance: FstProvenance = {
+	const matcher = FSTMatcher.fromNodes(nodes)
+	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
 		countries,
 		stateCount: nodes.length,
@@ -268,7 +268,7 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 		edgeCount,
 		nameInsertions: insertCount,
 		importanceMatches: importanceMap.size,
-		sourceDb: opts.dbPath,
+		sourceDB: opts.dbPath,
 	}
 
 	return {

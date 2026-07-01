@@ -26,10 +26,10 @@ import { existsSync, readFileSync } from "node:fs"
  *
  *   Run: node --experimental-strip-types scripts/eval/digit-count-probe.ts --model out/v192/model.onnx
  */
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 import { arg } from "../lib/cli-args.ts"
@@ -57,7 +57,7 @@ const norm = (v: string | undefined): string => (v ?? "").trim().toLowerCase()
 
 async function main() {
 	const card = JSON.parse(readFileSync(CARD, "utf8"))
-	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 	const postcodeAnchorLookup = existsSync(ANCHOR)
 		? parseAnchorLookup(JSON.parse(readFileSync(ANCHOR, "utf8")))
 		: undefined
@@ -94,11 +94,11 @@ async function main() {
 		const raw4 = row.raw.slice(0, at) + zip4 + row.raw.slice(at + zip5.length)
 		n++
 
-		const p5 = foldPostcode(decodeAsJson(await neural.parse(row.raw, {})))
+		const p5 = foldPostcode(decodeAsJSON(await neural.parse(row.raw, {})))
 
 		if (norm(p5) === norm(zip5)) r5Hit++
 
-		const flat4 = decodeAsJson(await neural.parse(raw4, {}))
+		const flat4 = decodeAsJSON(await neural.parse(raw4, {}))
 		const p4 = foldPostcode(flat4)
 
 		if (norm(p4) === norm(zip4)) r4Hit++

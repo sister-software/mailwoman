@@ -29,9 +29,9 @@ Why not just use a HuggingFace fast tokenizer? Two reasons:
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Sequence
 
 import sentencepiece as spm  # type: ignore[import-not-found]
 
@@ -123,9 +123,7 @@ def whitespace_spans(raw: str, tokens: Sequence[str]) -> list[tuple[int, int]]:
         idx = raw.find(tok, cursor)
         if idx < 0:
             # Should not happen if the corpus invariant holds; raise so callers see corruption.
-            raise ValueError(
-                f"token {tok!r} not found in raw starting from offset {cursor}: {raw!r}"
-            )
+            raise ValueError(f"token {tok!r} not found in raw starting from offset {cursor}: {raw!r}")
         end = idx + len(tok)
         spans.append((idx, end))
         cursor = end
@@ -146,7 +144,7 @@ def char_label_array(
     if len(tokens) != len(labels):
         raise ValueError(f"tokens/labels length mismatch: {len(tokens)} vs {len(labels)}")
     out = ["O"] * len(raw)
-    for (begin, end), label in zip(whitespace_spans(raw, tokens), labels):
+    for (begin, end), label in zip(whitespace_spans(raw, tokens), labels, strict=True):
         for i in range(begin, end):
             out[i] = label
     return out
@@ -171,17 +169,13 @@ def char_label_array_from_spans(
     """
     n = len(span_starts)
     if len(span_ends) != n or len(span_tags) != n:
-        raise ValueError(
-            f"span arrays length mismatch: starts={n} ends={len(span_ends)} tags={len(span_tags)}"
-        )
+        raise ValueError(f"span arrays length mismatch: starts={n} ends={len(span_ends)} tags={len(span_tags)}")
     out = ["O"] * len(raw)
     prev_start = -1
     prev_end = 0
-    for start, end, tag in zip(span_starts, span_ends, span_tags):
+    for start, end, tag in zip(span_starts, span_ends, span_tags, strict=True):
         if not (0 <= start < end <= len(raw)):
-            raise ValueError(
-                f"span out of bounds: {tag}@[{start}, {end}) over raw of length {len(raw)}: {raw!r}"
-            )
+            raise ValueError(f"span out of bounds: {tag}@[{start}, {end}) over raw of length {len(raw)}: {raw!r}")
         if start < prev_start:
             raise ValueError(f"spans not sorted: {tag}@[{start}, {end}) after [{prev_start}, {prev_end})")
         if start < prev_end:
@@ -286,7 +280,7 @@ def realign_anchor_to_pieces(
     tokens: Sequence[str],
     labels: Sequence[str],
     pieces: Sequence[PieceSpan],
-    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]]",
+    anchor_lookup: dict[str, tuple[dict[str, float], float, float]],
 ) -> tuple[list[list[float]], list[float]]:
     """Project gold postcode-span anchor features onto SP pieces (de-risk pilot #239/#240).
 
@@ -328,7 +322,7 @@ def realign_anchor_to_pieces_from_spans(
     span_ends: Sequence[int],
     span_tags: Sequence[str],
     pieces: Sequence[PieceSpan],
-    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]]",
+    anchor_lookup: dict[str, tuple[dict[str, float], float, float]],
 ) -> tuple[list[list[float]], list[float]]:
     """Spans-native sibling of ``realign_anchor_to_pieces`` (#519, the v0.5.0 path).
 
@@ -341,7 +335,7 @@ def realign_anchor_to_pieces_from_spans(
     zero = [0.0] * ANCHOR_FEATURE_DIM
     char_feat: list[list[float]] = [zero] * len(raw)
     char_conf: list[float] = [0.0] * len(raw)
-    for start, end, tag in zip(span_starts, span_ends, span_tags):
+    for start, end, tag in zip(span_starts, span_ends, span_tags, strict=True):
         if tag != "postcode":
             continue
         _paint_anchor_chars(raw, start, end, anchor_lookup, char_feat, char_conf)
@@ -352,7 +346,7 @@ def _paint_anchor_chars(
     raw: str,
     begin: int,
     end: int,
-    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]]",
+    anchor_lookup: dict[str, tuple[dict[str, float], float, float]],
     char_feat: list[list[float]],
     char_conf: list[float],
 ) -> None:
@@ -402,7 +396,7 @@ def _project_anchor_chars_to_pieces(
 def realign_anchor_to_pieces_shaped(
     raw: str,
     pieces: Sequence[PieceSpan],
-    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]]",
+    anchor_lookup: dict[str, tuple[dict[str, float], float, float]],
 ) -> tuple[list[list[float]], list[float]]:
     """Shape-detected sibling of ``realign_anchor_to_pieces`` (#220/#723, ``anchor_paint_mode="shaped"``).
 
@@ -433,7 +427,7 @@ def encode_row(
     tokens: Sequence[str],
     labels: Sequence[str],
     max_length: int,
-    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]] | None" = None,
+    anchor_lookup: dict[str, tuple[dict[str, float], float, float]] | None = None,
     anchor_paint_mode: str = "gold",
     gazetteer_lexicon=None,
     gazetteer_choreography: bool = False,

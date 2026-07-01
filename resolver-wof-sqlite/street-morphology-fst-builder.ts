@@ -18,16 +18,16 @@
  *   Source: `core/data/libpostal/dictionaries/{locale}/street_types.txt`. Each line is pipe-delimited
  *   surface forms with the canonical form first: avenue|av|ave|aven|avenu|avn|avnu|avnue
  *
- *   Output: an `FstMatcher` ready to serialize via `serializeFst` to e.g.
+ *   Output: an `FSTMatcher` ready to serialize via `serializeFST` to e.g.
  *   `fst-street-morphology.bin`.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-import type { FstNode } from "./fst-matcher.js"
-import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
-import type { FstProvenance, PlaceEntry } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.js"
+import { FSTMatcher, normalizeTokens } from "./fst-matcher.js"
+import type { FSTProvenance, PlaceEntry } from "./fst-types.js"
 
 /**
  * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned, well above any realistic WOF
@@ -38,7 +38,7 @@ const STREET_AFFIX_WOFID_BASE = 1_900_000_000
 
 const STREET_TYPES_FILENAME = "street_types.txt"
 
-export interface BuildStreetMorphologyFstOpts {
+export interface BuildStreetMorphologyFSTOpts {
 	/** Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders. */
 	dictionariesDir: string
 	/**
@@ -59,9 +59,9 @@ export interface BuildStreetMorphologyFstOpts {
 	onProgress?: (phase: string, detail?: string) => void
 }
 
-export interface BuildStreetMorphologyFstResult {
-	matcher: FstMatcher
-	provenance: FstProvenance
+export interface BuildStreetMorphologyFSTResult {
+	matcher: FSTMatcher
+	provenance: FSTProvenance
 	canonicalCount: number
 	variantCount: number
 	insertCount: number
@@ -88,7 +88,7 @@ function parseLine(line: string): { canonical: string; variants: string[] } | nu
 	return { canonical: parts[0]!, variants: parts }
 }
 
-export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): BuildStreetMorphologyFstResult {
+export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): BuildStreetMorphologyFSTResult {
 	const progress = opts.onProgress ?? (() => {})
 	const minVariantLength = opts.minVariantLength ?? 3
 
@@ -136,22 +136,22 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 
 	// Assign stable synthetic wofIDs. Sort canonicals for determinism.
 	const sortedCanonicals = [...canonicalToVariants.keys()].sort()
-	const canonicalToWofID = new Map<string, number>()
+	const canonicalToWOFID = new Map<string, number>()
 
 	for (let i = 0; i < sortedCanonicals.length; i++) {
-		canonicalToWofID.set(sortedCanonicals[i]!, STREET_AFFIX_WOFID_BASE + i)
+		canonicalToWOFID.set(sortedCanonicals[i]!, STREET_AFFIX_WOFID_BASE + i)
 	}
 
 	// Build the trie. Each variant is inserted as a token sequence pointing to its canonical's
 	// PlaceEntry — so all variants of "avenue" (av/ave/aven/...) lead to the same terminal entry.
-	const nodes: FstNode[] = [{ edges: new Map(), places: [] }]
+	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
 		if (tokens.length === 0) return
-		let stateId = 0
+		let stateID = 0
 
 		for (const t of tokens) {
-			const node = nodes[stateId]!
+			const node = nodes[stateID]!
 			let next = node.edges.get(t)
 
 			if (next === undefined) {
@@ -159,9 +159,9 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
-			stateId = next
+			stateID = next
 		}
-		const existing = nodes[stateId]!.places
+		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
 			existing.push(entry)
@@ -173,7 +173,7 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 
 	for (const canonical of sortedCanonicals) {
 		const variants = canonicalToVariants.get(canonical)!
-		const wofID = canonicalToWofID.get(canonical)!
+		const wofID = canonicalToWOFID.get(canonical)!
 		const entry: PlaceEntry = {
 			wofID,
 			placetype: "street_affix",
@@ -204,8 +204,8 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 	progress("trie", `Built trie: ${nodes.length} states, ${insertCount} variant insertions`)
 
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
-	const matcher = FstMatcher.fromNodes(nodes)
-	const provenance: FstProvenance = {
+	const matcher = FSTMatcher.fromNodes(nodes)
+	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
 		countries: locales, // Reuse `countries` slot for locale provenance — semantics differ from admin FST.
 		stateCount: nodes.length,
@@ -213,7 +213,7 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 		edgeCount,
 		nameInsertions: insertCount,
 		importanceMatches: 0, // No importance scoring for morphology — fixed at 1.0.
-		sourceDb: opts.dictionariesDir,
+		sourceDB: opts.dictionariesDir,
 	}
 
 	return {

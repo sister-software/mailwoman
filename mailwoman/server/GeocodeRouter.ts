@@ -18,7 +18,7 @@
 import { existsSync } from "node:fs"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import type { ResolveOpts } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 
@@ -30,7 +30,7 @@ import {
 	ShardProvider,
 } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp-calibration.js"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath, wofShardPaths } from "../resolver-backend.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.js"
 import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
@@ -84,12 +84,12 @@ async function getDeps(): Promise<GeocodeDepsBundle | null> {
 		}
 		const classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const backend = createResolverBackend(resolverMod, { wofPaths: paths })
-		const resolver = createWofResolver(backend as unknown as ResolverBackend)
+		const resolver = createWOFResolver(backend as unknown as ResolverBackend)
 		const shards = new ShardProvider(resolverMod, DATA_ROOT)
 
 		// Candidate backend → country-agnostic default (demo's global, population-first behavior); a
 		// per-request `country` still scopes. FTS backend keeps the US default. (#170)
-		return { classifier, resolver, shards, defaultCountry: resolveCandidateDbPath() ? undefined : "US" }
+		return { classifier, resolver, shards, defaultCountry: resolveCandidateDBPath() ? undefined : "US" }
 	})()
 
 	return depsPromise

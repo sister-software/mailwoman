@@ -154,9 +154,9 @@ export class LayerToggleControl implements IControl {
 			cb.addEventListener("change", () => {
 				const visibility = cb.checked ? "visible" : "none"
 
-				for (const layerId of bucket.layerIds) {
+				for (const layerID of bucket.layerIds) {
 					try {
-						this.map?.setLayoutProperty(layerId, "visibility", visibility)
+						this.map?.setLayoutProperty(layerID, "visibility", visibility)
 					} catch {
 						// layer disappeared between render and toggle; ignore
 					}

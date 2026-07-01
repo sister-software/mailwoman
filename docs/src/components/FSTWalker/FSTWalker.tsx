@@ -13,7 +13,7 @@
  *   import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
  *   import { FSTWalker } from "@site/src/components/FSTWalker/FSTWalker"
  *
- *   <DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+ *   <DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
  *     <FSTWalker input="New York, NY 10001" />
  *   </DemoEmbedProvider>
  * ```
@@ -35,7 +35,7 @@ interface WalkStep {
 	/** The normalized token consumed at this step. */
 	token: string
 	/** The state after consuming this token (null = path broken). */
-	result: { stateId: number; accepted: boolean; depth: number } | null
+	result: { stateID: number; accepted: boolean; depth: number } | null
 	/** Whether this is the first token in the walk. */
 	isFirst: boolean
 }
@@ -61,7 +61,7 @@ export interface FSTWalkerProps {
 }
 
 // ---------------------------------------------------------------------------
-// Token normalization (matches FstMatcher.normalizeTokens)
+// Token normalization (matches FSTMatcher.normalizeTokens)
 // ---------------------------------------------------------------------------
 
 /**
@@ -82,7 +82,7 @@ function normalizeTokens(text: string): string[] {
 // ---------------------------------------------------------------------------
 
 /** Format a WOF ID as a compact 8-digit string. */
-function fmtWofID(id: number): string {
+function fmtWOFID(id: number): string {
 	return String(id).padStart(8, "0").slice(-8)
 }
 
@@ -117,7 +117,7 @@ const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
 				<span className={`${styles.impDot} ${styles[`impDot_${tier}`]}`} />
 				{fmtImportance(place.importance)}
 			</span>
-			<code className={styles.placeId}>{fmtWofID(place.wofID)}</code>
+			<code className={styles.placeID}>{fmtWOFID(place.wofID)}</code>
 		</div>
 	)
 }
@@ -179,7 +179,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		return walkSteps.map((step) => {
 			if (!step.result || !step.result.accepted) return null
 
-			return fstMatcher.accepting(step.result.stateId) as PlaceEntryLike[]
+			return fstMatcher.accepting(step.result.stateID) as PlaceEntryLike[]
 		})
 	}, [fstMatcher, walkSteps])
 
@@ -200,12 +200,12 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		if (!lastValidStep?.result) return null
 
 		// Try to use continuations() if available (runtime duck check — the deserialized
-		// matcher is a full FstMatcher instance with this method).
+		// matcher is a full FSTMatcher instance with this method).
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const matcher = fstMatcher as any
 
 		if (typeof matcher.continuations === "function") {
-			return matcher.continuations(lastValidStep.result.stateId) as ContinuationLike[]
+			return matcher.continuations(lastValidStep.result.stateID) as ContinuationLike[]
 		}
 
 		return null
@@ -222,7 +222,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 					<span className={styles.fallbackIcon}>📡</span>
 					<p>
 						FST gazetteer not loaded for the selected version. The walker requires an FST binary ({" "}
-						<code>fst-en-US.bin</code>) — try a version with <code>hasFst: true</code> in the releases manifest.
+						<code>fst-en-US.bin</code>) — try a version with <code>hasFST: true</code> in the releases manifest.
 					</p>
 				</div>
 			</div>
@@ -289,7 +289,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 							{/* State badge */}
 							{step.result ? (
 								<span className={styles.stateBadge}>
-									S<sub>{step.result.stateId}</sub>
+									S<sub>{step.result.stateID}</sub>
 									{isAccepting ? (
 										<span className={styles.acceptedMark} title="Accepting state">
 											✓

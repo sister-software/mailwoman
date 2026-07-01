@@ -107,7 +107,7 @@ export interface NominatimStatus {
 
 /**
  * The geocoding engine the router delegates to. Each method is optional; a route whose method is not provided answers
- * `501 Not Implemented`. The real implementation (Mailwoman parse → resolve, plus `WofReverseGeocoder`) is wired by the
+ * `501 Not Implemented`. The real implementation (Mailwoman parse → resolve, plus `WOFReverseGeocoder`) is wired by the
  * CLI and fleshed out across #802–#805.
  */
 export interface NominatimEngine {
@@ -299,13 +299,13 @@ export interface ResolvedAddress {
 	placeRank?: number
 	boundingbox?: [string, string, string, string]
 	/** A stable id from the resolver (WOF/GERS); a deterministic hash is used when absent. */
-	placeId?: string | number
+	placeID?: string | number
 }
 
 /** The attribution string emitted as `licence` (the data sources Mailwoman resolves over). */
 export const MAILWOMAN_LICENCE = "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER"
 
-function stableId(seed: string): number {
+function stableID(seed: string): number {
 	let h = 5381
 
 	for (let i = 0; i < seed.length; i++) h = (h * 33) ^ seed.charCodeAt(i)
@@ -322,7 +322,7 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 	const lat = r.lat != null ? String(r.lat) : ""
 	const lon = r.lon != null ? String(r.lon) : ""
 	const result: NominatimResult = {
-		place_id: r.placeId ?? stableId(`${lat},${lon},${displayName}`),
+		place_id: r.placeID ?? stableID(`${lat},${lon},${displayName}`),
 		licence: MAILWOMAN_LICENCE,
 		lat,
 		lon,

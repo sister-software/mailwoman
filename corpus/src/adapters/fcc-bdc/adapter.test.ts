@@ -20,13 +20,13 @@ import {
 } from "./adapter.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
-const fixtureSqlPath = resolve(here, "../../../fixtures/fcc-bdc/fixture.sql")
+const fixtureSQLPath = resolve(here, "../../../fixtures/fcc-bdc/fixture.sql")
 
 let scratch: string
 let dbPath: string
 
-async function buildFixtureDb(): Promise<string> {
-	const sql = await readFile(fixtureSqlPath, "utf8")
+async function buildFixtureDB(): Promise<string> {
+	const sql = await readFile(fixtureSQLPath, "utf8")
 	const path = join(scratch, "fcc-bdc-fixture.db")
 	const db = new DatabaseSync(path)
 	db.exec(sql)
@@ -37,7 +37,7 @@ async function buildFixtureDb(): Promise<string> {
 
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-fcc-bdc-"))
-	dbPath = await buildFixtureDb()
+	dbPath = await buildFixtureDB()
 })
 
 afterEach(async () => {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   End-to-end test for WofSqlitePlaceLookup.coincidentLocalitiesFor (#405): builds a fixture
+ *   End-to-end test for WOFSqlitePlaceLookup.coincidentLocalitiesFor (#405): builds a fixture
  *   gazetteer, derives the coincident_roles relation (#403), then verifies the backend method joins
  *   the relation with `spr` and returns the dual-role completion candidates the resolver consumes.
  */
@@ -12,10 +12,10 @@ import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildCoincidentRoles } from "./coincident-roles.js"
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 let db: DatabaseSync
-let lookup: WofSqlitePlaceLookup
+let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
 	db = new DatabaseSync(":memory:")
@@ -50,12 +50,12 @@ beforeEach(() => {
 	anc.run(921, 920, "region")
 
 	buildCoincidentRoles(db)
-	lookup = new WofSqlitePlaceLookup({ database: db, buildFts: true })
+	lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
 })
 
 afterEach(() => db.close())
 
-describe("WofSqlitePlaceLookup.coincidentLocalitiesFor", () => {
+describe("WOFSqlitePlaceLookup.coincidentLocalitiesFor", () => {
 	test("returns the dual-role locality joined with spr", () => {
 		const berlin = lookup.coincidentLocalitiesFor(910)
 		expect(berlin).toHaveLength(1)
@@ -93,7 +93,7 @@ describe("WofSqlitePlaceLookup.coincidentLocalitiesFor", () => {
 			latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL,
 			max_longitude REAL, is_current INTEGER, is_deprecated INTEGER, parent_id INTEGER);
 			CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);`)
-		const bareLookup = new WofSqlitePlaceLookup({ database: bare, buildFts: true })
+		const bareLookup = new WOFSqlitePlaceLookup({ database: bare, buildFTS: true })
 		expect(bareLookup.coincidentLocalitiesFor(910)).toHaveLength(0)
 		bare.close()
 	})

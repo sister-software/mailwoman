@@ -25,7 +25,7 @@ import { spawnSync } from "node:child_process"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type UsUnitDesignator } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -87,7 +87,7 @@ interface UnitTuple {
 }
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields). */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -125,7 +125,7 @@ function readTuples(source: UnitSource): UnitTuple[] {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -138,7 +138,7 @@ function readTuples(source: UnitSource): UnitTuple[] {
 
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const street = get(cells, iStreet)
 		const locality = get(cells, iCity)
 		const house_number = get(cells, iNum)
@@ -286,7 +286,7 @@ export const unitRecipe: ShardRecipe = {
 				country: "US",
 				locale: "en-US",
 				source,
-				source_id: stableSourceId(source, components),
+				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
 				license: "OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
 			}

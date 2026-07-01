@@ -7,7 +7,7 @@
  *   Pipeline:
  *
  *   1. Parse the address with the neural classifier (same path as `parse` command).
- *   2. Resolve admin hierarchy via `createWofResolver(WofSqlitePlaceLookup)`.
+ *   2. Resolve admin hierarchy via `createWOFResolver(WOFSqlitePlaceLookup)`.
  *   3. Augment with per-state address-point (situs) + interpolation shards, selected from the resolved
  *        region. Both are optional — absent shards degrade gracefully to admin-only.
  *   4. Extract the best available coordinate + resolution tier from the resolved tree and emit a flat
@@ -30,14 +30,14 @@ import { setImmediate } from "node:timers/promises"
 import { Spinner } from "@inkjs/ui"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
 import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath } from "../resolver-backend.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -134,7 +134,7 @@ const OptionsSchema = zod.object({
 // Path helpers
 // ---------------------------------------------------------------------------
 
-function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
+function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
 	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
 
 	if (!path) {
@@ -157,8 +157,8 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
-	const candidateDb = resolveCandidateDbPath(options.candidateDb)
-	const wofPath = candidateDb ? "" : resolveWofPath(options)
+	const candidateDb = resolveCandidateDBPath(options.candidateDb)
+	const wofPath = candidateDb ? "" : resolveWOFPath(options)
 
 	// Load the neural classifier (required for street-level; weights must be present).
 	let classifier: NeuralAddressClassifier
@@ -211,7 +211,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		: undefined
 
 	try {
-		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 		const result = await geocodeAddress(input, {
 			classifier,
 			resolver,
@@ -262,7 +262,7 @@ function formatText(result: GeocodeResult): string {
 
 		for (const h of result.hierarchy) {
 			const coord = h.lat != null ? ` (${h.lat.toFixed(4)}, ${h.lon!.toFixed(4)})` : ""
-			const id = h.placeId ? ` [${h.placeId}]` : ""
+			const id = h.placeID ? ` [${h.placeID}]` : ""
 			lines.push(`  ${h.tag.padEnd(20)} ${h.value}${id}${coord}`)
 		}
 	}

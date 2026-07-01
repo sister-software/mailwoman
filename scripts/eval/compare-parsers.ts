@@ -11,7 +11,7 @@
 
 import { readFileSync } from "node:fs"
 
-import { decodeAsJson, proposalsToTree } from "@mailwoman/core/decoder"
+import { decodeAsJSON, proposalsToTree } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createAddressParser } from "mailwoman"
@@ -21,10 +21,10 @@ const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 const card = JSON.parse(readFileSync(CARD, "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 const v0 = createAddressParser()
 
@@ -47,9 +47,9 @@ const fmt = (rec: Record<string, unknown>) =>
 
 for (const input of inputs) {
 	const sols = await v0.parse(input)
-	const v0Rec = sols[0] ? decodeAsJson(proposalsToTree(input, solutionToProposals(sols[0]!))) : {}
+	const v0Rec = sols[0] ? decodeAsJSON(proposalsToTree(input, solutionToProposals(sols[0]!))) : {}
 	const nTree = await neural.parse(input, { postcodeRepair: true })
-	const nRec = decodeAsJson(nTree)
+	const nRec = decodeAsJSON(nTree)
 	console.log(`\n=== ${input}`)
 	console.log(`  v0    : ${fmt(v0Rec as Record<string, unknown>)}`)
 	console.log(`  neural: ${fmt(nRec as Record<string, unknown>)}`)

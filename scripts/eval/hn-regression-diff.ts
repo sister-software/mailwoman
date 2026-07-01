@@ -17,11 +17,11 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 function arg(name: string, fallback = ""): string {
@@ -47,7 +47,7 @@ const norm = (v: string | undefined): string => (v ?? "").trim().toLowerCase()
 
 async function build(model: string) {
 	const card = JSON.parse(readFileSync(CARD, "utf8"))
-	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(model)])
+	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(model)])
 
 	return new NeuralAddressClassifier({
 		tokenizer,
@@ -114,8 +114,8 @@ async function main() {
 	for (const row of rows) {
 		if (++i % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
 		const gold = norm(row.components.house_number)
-		const pB = decodeAsJson(await base.parse(row.raw, {})) as Record<string, string>
-		const pC = decodeAsJson(await cand.parse(row.raw, {})) as Record<string, string>
+		const pB = decodeAsJSON(await base.parse(row.raw, {})) as Record<string, string>
+		const pC = decodeAsJSON(await cand.parse(row.raw, {})) as Record<string, string>
 		const bOk = norm(pB.house_number) === gold
 		const cOk = norm(pC.house_number) === gold
 

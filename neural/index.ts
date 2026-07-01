@@ -17,9 +17,9 @@ export * from "./span-proposal-prior.js"
 export * from "./span-proposer-lexicon.js"
 export * from "./tokenizer.js"
 export {
-	buildBioEndMask,
-	buildBioStartMask,
-	buildBioTransitionMask,
+	buildBIOEndMask,
+	buildBIOStartMask,
+	buildBIOTransitionMask,
 	perTokenArgmax,
 	softmax,
 	viterbi,

@@ -4730,7 +4730,7 @@ __metadata:
     pino-pretty: "npm:^13.1.3"
     pluralize: "npm:^8.0.0"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^2.2.1"
+    spliterator: "npm:^3.1.0"
     table: "npm:^6.9.0"
   languageName: unknown
   linkType: soft
@@ -4748,7 +4748,7 @@ __metadata:
     fast-glob: "npm:^3.3.3"
     fastest-levenshtein: "npm:^1.0.16"
     lru-cache: "npm:^10.4.3"
-    spliterator: "npm:^2.2.1"
+    spliterator: "npm:^3.1.0"
   languageName: unknown
   linkType: soft
 
@@ -4912,6 +4912,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/osm@workspace:osm":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/osm@workspace:osm"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    kysely: "npm:^0.29.2"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/photon@workspace:photon":
   version: 0.0.0-use.local
   resolution: "@mailwoman/photon@workspace:photon"
@@ -4960,7 +4971,7 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/node": "npm:>=26.0.1"
     csv-parse: "npm:^5.6.0"
-    spliterator: "npm:^2.2.1"
+    spliterator: "npm:^3.1.0"
   languageName: unknown
   linkType: soft
 
@@ -5097,7 +5108,7 @@ __metadata:
     oxlint: "npm:1.71.0"
     react: "npm:^19.2.7"
     release-it: "npm:^19.2.4"
-    spliterator: "npm:^2.2.1"
+    spliterator: "npm:^3.1.0"
     tap-difflet: "npm:^0.7.2"
     typescript: "npm:^6.0.3"
     vitest: "npm:3.2.6"
@@ -15046,9 +15057,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http-proxy-middleware@npm:^2.0.9":
-  version: 2.0.9
-  resolution: "http-proxy-middleware@npm:2.0.9"
+"http-proxy-middleware@npm:2.0.10":
+  version: 2.0.10
+  resolution: "http-proxy-middleware@npm:2.0.10"
   dependencies:
     "@types/http-proxy": "npm:^1.17.8"
     http-proxy: "npm:^1.18.1"
@@ -15060,7 +15071,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/express":
       optional: true
-  checksum: 10/4ece416a91d52e96f8136c5f4abfbf7ac2f39becbad21fa8b158a12d7e7d8f808287ff1ae342b903fd1f15f2249dee87fabc09e1f0e73106b83331c496d67660
+  checksum: 10/efa8b5d4dec112fba5f6741df33a926818f87156f44dee425e653284c20844f3a9f2af88042a7d4ef297161479e1549302dea693bce23123fa2da07420fa2214
   languageName: node
   linkType: hard
 
@@ -16819,7 +16830,7 @@ __metadata:
     pluralize: "npm:^8.0.0"
     react: "npm:^19.2.7"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^2.2.1"
+    spliterator: "npm:^3.1.0"
     zod: "npm:^4.4.3"
     zx: "npm:^8.8.5"
   peerDependencies:
@@ -22955,9 +22966,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spliterator@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "spliterator@npm:2.2.1"
+"spliterator@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "spliterator@npm:3.1.0"
   dependencies:
     yargs: "npm:^18.0.0"
   peerDependencies:
@@ -22970,7 +22981,7 @@ __metadata:
       optional: true
   bin:
     spliterator: out/node/cli/index.js
-  checksum: 10/50895a43470c5b527a30accd720fd562e71b017252895575ed6a6c2cd7c52e0bd7bdd1ec2fce9e1354696ca3ed9100ff34f28f0075d572c3b4de39383ec27033
+  checksum: 10/2ed58d7f5b0fa35f306d9b0346cda963050ab66e698dfbeb0438258425d20ba64b20fdb59c3bfb9a3d984453344a56e06a8c0b6d084299c371f8f8c5216b2e6c
   languageName: node
   linkType: hard
 
@@ -24205,10 +24216,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:6.23.0":
-  version: 6.23.0
-  resolution: "undici@npm:6.23.0"
-  checksum: 10/56950995e7b628e62c996430445d17995ca9b70f6f2afe760a63da54205660d968bd08f0741b6f4fb008f40aa35c69cce979cd96ced399585d8c897a76a4f1d1
+"undici@npm:^6.24.0":
+  version: 6.27.0
+  resolution: "undici@npm:6.27.0"
+  checksum: 10/30c18cdb235edf4dd36f8aa3ace1ffaf44060289a7d62ad44c33180d2d74a224015d25574812f62ce9c625b5beb1b0b766495b650fedf356aca11eed7ce2c816
   languageName: node
   linkType: hard
 

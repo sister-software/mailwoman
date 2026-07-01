@@ -28,7 +28,7 @@
 
 import { writeFileSync } from "node:fs"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
@@ -45,7 +45,7 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
@@ -235,11 +235,11 @@ async function main(): Promise<void> {
 	console.error("[B] building the geocoder…")
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
+	const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 	const shardProvider = new ShardProvider(mod, DATA_ROOT)
 	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJson(await classifier.parse(raw, { postcodeRepair: true })),
+		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
 		geocode: async (raw: string) =>
 			geocodeAddress(raw, {
 				classifier,

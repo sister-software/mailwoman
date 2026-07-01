@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Integration tests for `WofSqlitePlaceLookup` against a real Who's On First SQLite distribution.
+ *   Integration tests for `WOFSqlitePlaceLookup` against a real Who's On First SQLite distribution.
  *
  *   These are gated on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
  *   message) if the path doesn't exist. CI runs against the fixture-only suites; operators with the
@@ -22,20 +22,20 @@ import { existsSync } from "node:fs"
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 const DEFAULT_WOF_PATH = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
-const hasWofDb = existsSync(wofPath)
+const hasWOFDb = existsSync(wofPath)
 
 // vitest's describe.skipIf prints a helpful message at suite runtime.
-const describeIfWof = describe.skipIf(!hasWofDb)
+const describeIfWOF = describe.skipIf(!hasWOFDb)
 
-describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
-	let lookup: WofSqlitePlaceLookup
+describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
+	let lookup: WOFSqlitePlaceLookup
 
 	beforeAll(() => {
-		lookup = new WofSqlitePlaceLookup({ databasePath: wofPath })
+		lookup = new WOFSqlitePlaceLookup({ databasePath: wofPath })
 	})
 
 	afterAll(() => {
@@ -117,19 +117,19 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 	})
 
 	describe("parent-constrained lookup", () => {
-		test("parentId narrows children to direct + transitive descendants", async () => {
+		test("parentID narrows children to direct + transitive descendants", async () => {
 			// Pick the first Springfield candidate, then look up children of its parent.
 			const springfields = await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 1 })
 			expect(springfields.length).toBe(1)
-			const parentId = springfields[0]!.parent_id
-			expect(parentId).toBeDefined()
+			const parentID = springfields[0]!.parent_id
+			expect(parentID).toBeDefined()
 
 			// Now query for that Springfield by name, scoped to its parent. Should include itself plus
 			// possibly other places under the same parent.
 			const constrained = await lookup.findPlace({
 				text: "Springfield",
 				placetype: "locality",
-				parentId: parentId!,
+				parentID: parentID!,
 				limit: 50,
 			})
 			expect(constrained.length).toBeGreaterThan(0)
@@ -147,8 +147,8 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 	})
 })
 
-if (!hasWofDb) {
-	describe.skip("WofSqlitePlaceLookup integration", () => {
+if (!hasWOFDb) {
+	describe.skip("WOFSqlitePlaceLookup integration", () => {
 		test(`skipped (WOF DB not present at ${wofPath} — set MAILWOMAN_WOF_DB or download via the README)`, () => {})
 	})
 }

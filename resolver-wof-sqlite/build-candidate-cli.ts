@@ -16,7 +16,7 @@ import { exit, stderr } from "node:process"
 
 import { buildCandidateTable } from "./build-candidate.js"
 
-interface CliArgs {
+interface CLIArgs {
 	input: string
 	output: string
 	postcodes: string[]
@@ -38,7 +38,7 @@ function printUsageAndExit(code: number): never {
 	exit(code)
 }
 
-function parseArgs(argv: string[]): CliArgs {
+function parseArgs(argv: string[]): CLIArgs {
 	let input: string | undefined
 	let output: string | undefined
 	const postcodes: string[] = []

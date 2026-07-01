@@ -177,20 +177,20 @@ export interface PhraseGrouper {
 /**
  * Structural type for the FST gazetteer matcher, compatible with
  *
- * @mailwoman/core/resolver-wof-sqlite's FstMatcher.
+ * @mailwoman/core/resolver-wof-sqlite's FSTMatcher.
  */
-export interface FstMatcherLike {
-	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null
+export interface FSTMatcherLike {
+	walk(tokens: string[]): { stateID: number; accepted: boolean; depth: number } | null
 	walkFrom(
-		prev: { stateId: number; depth: number },
+		prev: { stateID: number; depth: number },
 		token: string
-	): { stateId: number; accepted: boolean; depth: number } | null
-	accepting(stateId: number): Array<{ wofID: number; placetype: string; importance: number }>
+	): { stateID: number; accepted: boolean; depth: number } | null
+	accepting(stateID: number): Array<{ wofID: number; placetype: string; importance: number }>
 }
 
 export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
-	fst?: FstMatcherLike
+	fst?: FSTMatcherLike
 	fstBiasScale?: number
 	/** Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels. */
 	postcodeRepair?: boolean
@@ -243,7 +243,7 @@ export interface RuntimePipelineStages {
 	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission biases during
 	 * classification.
 	 */
-	fst?: FstMatcherLike
+	fst?: FSTMatcherLike
 	resolver?: Resolver
 	/**
 	 * The gazetteer BACKEND (lower-level than `resolver`), enabling the reconciler's concordance axes (#478): a bounded

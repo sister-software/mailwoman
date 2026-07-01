@@ -16,8 +16,8 @@
 
 import { existsSync } from "node:fs"
 
-import { type AddressTree, decodeAsXml } from "@mailwoman/core/decoder"
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
+import { type AddressTree, decodeAsXML } from "@mailwoman/core/decoder"
+import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.js"
@@ -30,10 +30,10 @@ export interface ResolveResponseNode {
 	end: number
 	confidence: number
 	source?: string
-	sourceId?: string
+	sourceID?: string
 	lat?: number
 	lon?: number
-	placeId?: string
+	placeID?: string
 	depth: number
 }
 
@@ -52,7 +52,7 @@ export interface ResolveErrorResponse {
  * Multi-shard: comma-separated paths in `MAILWOMAN_WOF_DB` are split and routed through the multi-shard ATTACH
  * machinery.
  */
-function resolveWofPaths(): string[] {
+function resolveWOFPaths(): string[] {
 	const env = process.env["MAILWOMAN_WOF_DB"]
 
 	if (env) {
@@ -99,7 +99,7 @@ async function getResolverPipeline() {
 			return null
 		}
 
-		const wofPaths = resolveWofPaths()
+		const wofPaths = resolveWOFPaths()
 
 		if (wofPaths.length === 0) {
 			console.error(`ResolveRouter: no WOF DBs found. Set MAILWOMAN_WOF_DB or place shards at ${dataRootPath("wof")}/`)
@@ -110,7 +110,7 @@ async function getResolverPipeline() {
 		const neural = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const lookup = createResolverBackend(resolverMod, { wofPaths })
 		// The lookup is structurally compatible with `ResolverBackend` — same shape.
-		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 
 		return {
 			parse: (text: string) => neural.parse(text),
@@ -132,10 +132,10 @@ function flatten(tree: AddressTree): ResolveResponseNode[] {
 			end: node.end,
 			confidence: node.confidence,
 			source: node.source,
-			sourceId: node.sourceId,
+			sourceID: node.sourceID,
 			lat: node.lat,
 			lon: node.lon,
-			placeId: node.placeId,
+			placeID: node.placeID,
 			depth,
 		})
 
@@ -178,7 +178,7 @@ const handler: RequestHandler = async (req, res) => {
 		const resolved = await pipeline.resolver.resolveTree(decoded)
 		const response: ResolveResponse = {
 			input: text,
-			xml: decodeAsXml(resolved),
+			xml: decodeAsXML(resolved),
 			nodes: flatten(resolved),
 		}
 		res.status(200).json(response)

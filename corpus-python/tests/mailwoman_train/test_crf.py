@@ -209,7 +209,7 @@ def test_top_k_decode_returns_argmax_as_first_path():
     argmax = crf.viterbi_decode(emissions, mask)
     top_k = crf.top_k_decode(emissions, mask, k=5)
     assert len(top_k) == 3
-    for row_argmax, row_paths in zip(argmax, top_k):
+    for row_argmax, row_paths in zip(argmax, top_k, strict=True):
         assert len(row_paths) >= 1
         assert row_paths[0].sequence == row_argmax
 
@@ -273,14 +273,10 @@ def test_top_k_decode_never_emits_orphan_i():
             if idx == 0:
                 pytest.fail(f"top-k path starts with I-* (orphan): {label}")
             prev = ID_TO_LABEL[path.sequence[idx - 1]]
-            assert prev.startswith(("B-", "I-")), (
-                f"orphan-I at {idx}: prev={prev}, curr={label}"
-            )
+            assert prev.startswith(("B-", "I-")), f"orphan-I at {idx}: prev={prev}, curr={label}"
             _, prev_tag = prev.split("-", 1)
             _, curr_tag = label.split("-", 1)
-            assert prev_tag == curr_tag, (
-                f"cross-tag I at {idx}: prev={prev}, curr={label}"
-            )
+            assert prev_tag == curr_tag, f"cross-tag I at {idx}: prev={prev}, curr={label}"
 
 
 def test_top_k_decode_calibrated_scores_are_log_probs():
@@ -311,7 +307,7 @@ def test_top_k_decode_k_one_matches_viterbi():
     mask = torch.ones(2, 6)
     argmax = crf.viterbi_decode(emissions, mask)
     top_1 = crf.top_k_decode(emissions, mask, k=1)
-    for row_argmax, row_paths in zip(argmax, top_1):
+    for row_argmax, row_paths in zip(argmax, top_1, strict=True):
         assert len(row_paths) == 1
         assert row_paths[0].sequence == row_argmax
 

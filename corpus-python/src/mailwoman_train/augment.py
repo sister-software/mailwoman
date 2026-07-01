@@ -1,6 +1,6 @@
 """Training-time augmentation: expand abbreviations to teach token equivalence.
 
-Three augmentations, applied independently with configurable probability:
+Four augmentations, applied independently with configurable probability:
 
 1. **Directional expansion**: "NW" → "Northwest", "SE" → "Southeast", etc.
    Teaches the model that both abbreviated and expanded directionals are the same
@@ -42,7 +42,7 @@ corpora) pass through the legacy token path unchanged; a PARTIAL triple raises.
 from __future__ import annotations
 
 import random
-from typing import Iterator
+from collections.abc import Iterator
 
 from .tokenizer import whitespace_spans
 
@@ -129,10 +129,9 @@ def row_span_triple(row: dict) -> tuple[list[int], list[int], list[str]] | None:
     if not any(present):
         return None
     if not all(present):
-        missing = [k for k, p in zip(SPAN_KEYS, present) if not p]
+        missing = [k for k, p in zip(SPAN_KEYS, present, strict=True) if not p]
         raise ValueError(
-            f"corrupt row: partial char-offset span triple (#519) — missing {missing} "
-            f"(raw={row.get('raw')!r})"
+            f"corrupt row: partial char-offset span triple (#519) — missing {missing} (raw={row.get('raw')!r})"
         )
     starts, ends, tags = values
     if len(starts) != len(ends) or len(starts) != len(tags):
@@ -177,7 +176,7 @@ def splice_expansion(row: dict, idx: int, expansion: str) -> dict:
         starts, ends, tags = triple
         new_starts: list[int] = []
         new_ends: list[int] = []
-        for start, end in zip(starts, ends):
+        for start, end in zip(starts, ends, strict=True):
             if end <= s:
                 # Entirely before the edit.
                 new_starts.append(start)
@@ -250,7 +249,7 @@ def glue_region_postcode(row: dict, idx: int) -> dict:
         starts, ends, tags = triple
         new_starts: list[int] = []
         new_ends: list[int] = []
-        for start, end in zip(starts, ends):
+        for start, end in zip(starts, ends, strict=True):
             if start < postcode_begin < end:
                 raise ValueError(
                     f"corrupt row: span [{start}, {end}) straddles the glue gap "
@@ -264,12 +263,32 @@ def glue_region_postcode(row: dict, idx: int) -> dict:
     return out
 
 
+def lowercase_row(row: dict) -> dict | None:
+    """Return a copy of ``row`` with ``raw`` + ``tokens`` lowercased; labels + char-offset spans
+    pass through UNCHANGED. Lowercasing is length-preserving char-by-char, so every offset still
+    lands on the same (now-lowercased) character — no splice, no re-target, the simplest augmentation.
+
+    Teaches the model that a lowercased query is the same address — the #829 lowercase-sensitivity
+    class (fully-lowercase US/NL queries degraded to admin / NULL). Model-first: we teach invariance
+    from data rather than bolt on a deterministic case-normalizer (which would discard the case
+    signal directionals/proper-nouns carry).
+
+    Returns ``None`` when lowercasing is NOT length-preserving char-by-char (rare Unicode like
+    'İ' → 'i̇', 2 chars) — yielding then would desync the spans, so we skip that row instead.
+    """
+    raw: str = row["raw"]
+    if any(len(c.lower()) != 1 for c in raw):
+        return None
+    return {**row, "raw": raw.lower(), "tokens": [t.lower() for t in row["tokens"]]}
+
+
 def augment_row(
     row: dict,
     rng: random.Random,
     directional_prob: float = 0.3,
     region_prob: float = 0.3,
     glue_prob: float = 0.0,
+    case_prob: float = 0.0,
 ) -> Iterator[dict]:
     """Yield the original row, then optionally an augmented copy.
 
@@ -284,9 +303,7 @@ def augment_row(
 
     # Directional expansion: find directional tokens and expand one.
     if rng.random() < directional_prob:
-        directional_indices = [
-            i for i, t in enumerate(tokens) if t in DIRECTIONALS
-        ]
+        directional_indices = [i for i, t in enumerate(tokens) if t in DIRECTIONALS]
         if directional_indices:
             idx = rng.choice(directional_indices)
             yield splice_expansion(row, idx, DIRECTIONALS[tokens[idx]])
@@ -313,9 +330,16 @@ def augment_row(
     if rng.random() < region_prob:
         region_indices = [
             i
-            for i, (t, l) in enumerate(zip(tokens, labels))
-            if t in US_STATES and l in ("B-region", "I-region")
+            for i, (t, lab) in enumerate(zip(tokens, labels, strict=True))
+            if t in US_STATES and lab in ("B-region", "I-region")
         ]
         if region_indices:
             idx = rng.choice(region_indices)
             yield splice_expansion(row, idx, US_STATES[tokens[idx]])
+
+    # Case augmentation (#829): a lowercased copy, length-preserving so spans/labels pass through.
+    # The prob guard keeps the rng stream bit-identical for configs that leave the knob at 0.
+    if case_prob > 0 and rng.random() < case_prob:
+        lowered = lowercase_row(row)
+        if lowered is not None:
+            yield lowered

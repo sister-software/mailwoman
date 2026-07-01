@@ -24,8 +24,8 @@ import { parseArgs } from "node:util"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { createWofResolver } from "@mailwoman/resolver"
-import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { createWOFResolver } from "@mailwoman/resolver"
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 const { values: a } = parseArgs({
@@ -82,8 +82,8 @@ const neural = await createScorer({
 	strict: true,
 	tier: "server",
 })
-const backend = new WofSqlitePlaceLookup({ databasePath: a["wof-db"]!.split(",") })
-const resolver = createWofResolver(backend)
+const backend = new WOFSqlitePlaceLookup({ databasePath: a["wof-db"]!.split(",") })
+const resolver = createWOFResolver(backend)
 
 const finest: number[] = []
 const adminLoc: number[] = []
@@ -97,8 +97,8 @@ for (const r of rows) {
 	// Collect every resolved node carrying a coordinate, with its placetype.
 	const nodes: { pt: string; name?: string; lat: number; lon: number }[] = []
 	const visit = (n: AddressNode): void => {
-		if (typeof n.lat === "number" && typeof n.lon === "number" && (n.placeId || n.sourceId)) {
-			nodes.push({ pt: String(n.sourceId ?? "").split(":")[0]!, name: n.value, lat: n.lat, lon: n.lon })
+		if (typeof n.lat === "number" && typeof n.lon === "number" && (n.placeID || n.sourceID)) {
+			nodes.push({ pt: String(n.sourceID ?? "").split(":")[0]!, name: n.value, lat: n.lat, lon: n.lon })
 		}
 
 		for (const c of n.children ?? []) visit(c)

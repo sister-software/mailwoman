@@ -18,7 +18,7 @@ import {
 	fillPlaceholderCentroids,
 	GEONAMES_US_SOURCE,
 	parseGeonamesCentroids,
-	parseZctaCentroids,
+	parseZCTACentroids,
 	ZCTA_SOURCE,
 } from "./zcta-centroids.ts"
 
@@ -47,7 +47,7 @@ const GEONAMES_FIXTURE = [
 	"DE\t10115\tBerlin\t\t\t\t\t\t\t52.5200\t13.4050\t1", // non-US → included in map, no US spr match
 ].join("\n")
 
-function seedDb(): DatabaseSync {
+function seedDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`CREATE TABLE spr (
 		id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL DEFAULT -1, name TEXT NOT NULL DEFAULT '',
@@ -69,9 +69,9 @@ function seedDb(): DatabaseSync {
 	return db
 }
 
-describe("parseZctaCentroids", () => {
+describe("parseZCTACentroids", () => {
 	it("parses centroids, skipping header and degenerate rows", () => {
-		const zcta = parseZctaCentroids(GAZETTEER_FIXTURE)
+		const zcta = parseZCTACentroids(GAZETTEER_FIXTURE)
 		expect(zcta.size).toBe(2)
 		expect(zcta.get("90210")).toEqual({ lat: 34.100517, lon: -118.41463 })
 		expect(zcta.get("00601")).toEqual({ lat: 18.180555, lon: -66.749961 })
@@ -81,8 +81,8 @@ describe("parseZctaCentroids", () => {
 
 describe("fillPlaceholderCentroids", () => {
 	it("fills placeholders, preserves real coords, leaves ZCTA-less rows placeholder", () => {
-		const db = seedDb()
-		const filled = fillPlaceholderCentroids(db, parseZctaCentroids(GAZETTEER_FIXTURE))
+		const db = seedDB()
+		const filled = fillPlaceholderCentroids(db, parseZCTACentroids(GAZETTEER_FIXTURE))
 		expect(filled).toBe(1)
 
 		const byName = (name: string) =>
@@ -105,8 +105,8 @@ describe("fillPlaceholderCentroids", () => {
 	})
 
 	it("is idempotent", () => {
-		const db = seedDb()
-		const zcta = parseZctaCentroids(GAZETTEER_FIXTURE)
+		const db = seedDB()
+		const zcta = parseZCTACentroids(GAZETTEER_FIXTURE)
 		expect(fillPlaceholderCentroids(db, zcta)).toBe(1)
 		expect(fillPlaceholderCentroids(db, zcta)).toBe(0)
 	})
@@ -131,10 +131,10 @@ describe("parseGeonamesCentroids", () => {
 
 describe("fillGeonamesPlaceholders", () => {
 	it("fills ZCTA-residual placeholders, does not overwrite ZCTA-filled or real coords", () => {
-		const db = seedDb()
+		const db = seedDB()
 
 		// Run ZCTA fill first (fills 90210 with census coords).
-		const zcta = parseZctaCentroids(GAZETTEER_FIXTURE)
+		const zcta = parseZCTACentroids(GAZETTEER_FIXTURE)
 		expect(fillPlaceholderCentroids(db, zcta)).toBe(1)
 
 		// Now run GeoNames fill on the residual (21638 is still placeholder; 90210 is already filled).
@@ -171,9 +171,9 @@ describe("fillGeonamesPlaceholders", () => {
 	})
 
 	it("is idempotent", () => {
-		const db = seedDb()
+		const db = seedDB()
 		const geo = parseGeonamesCentroids(GEONAMES_FIXTURE)
-		// seedDb has two US placeholders GeoNames can fill: 90210 and 21638.
+		// seedDB has two US placeholders GeoNames can fill: 90210 and 21638.
 		const firstRun = fillGeonamesPlaceholders(db, geo)
 		expect(firstRun).toBeGreaterThan(0)
 		// Second run must fill zero rows (idempotent — UPDATE re-checks latitude=0).
@@ -181,10 +181,10 @@ describe("fillGeonamesPlaceholders", () => {
 	})
 
 	it("does not overwrite a row already filled by ZCTA even if GeoNames has a different coord", () => {
-		const db = seedDb()
+		const db = seedDB()
 
 		// Fill 90210 via ZCTA (lat=34.100517).
-		fillPlaceholderCentroids(db, parseZctaCentroids(GAZETTEER_FIXTURE))
+		fillPlaceholderCentroids(db, parseZCTACentroids(GAZETTEER_FIXTURE))
 
 		// GeoNames has a different coord for 90210 (lat=34.0736). Must NOT overwrite.
 		fillGeonamesPlaceholders(db, parseGeonamesCentroids(GEONAMES_FIXTURE))

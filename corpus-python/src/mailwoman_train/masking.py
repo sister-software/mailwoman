@@ -49,11 +49,7 @@ def mask_tokens(
     masked[to_mask] = mask_token_id
 
     # 3. 10% of selected -> random token (half of the remaining 20%).
-    to_random = (
-        torch.bernoulli(torch.full(input_ids.shape, 0.5), generator=generator).bool()
-        & selected
-        & ~to_mask
-    )
+    to_random = torch.bernoulli(torch.full(input_ids.shape, 0.5), generator=generator).bool() & selected & ~to_mask
     random_ids = torch.randint(0, vocab_size, input_ids.shape, generator=generator)
     masked[to_random] = random_ids[to_random]
 

@@ -7,7 +7,7 @@
  *   examples live in the package README.
  *
  *   Wires the real engine: `/search` over `geocodeAddress` (parse → resolve), `/reverse` over
- *   `WofReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the same
+ *   `WOFReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the same
  *   resolver-backend selector GeocodeRouter uses. Results carry the OpenCage-style `annotations`
  *   block — coordinate formats, flag, calling code, currency, and (when their DBs are present)
  *   timezone, UN/LOCODE, NUTS — composed from the `@mailwoman/*` annotators.
@@ -21,7 +21,7 @@ import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
@@ -31,7 +31,7 @@ import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geo
 import {
 	createResolverBackend,
 	mailwomanDataRoot,
-	resolveCandidateDbPath,
+	resolveCandidateDBPath,
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
 
@@ -122,7 +122,7 @@ async function serve(): Promise<void> {
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 	const wofPaths = wofShardPaths().filter(existsSync)
-	const adminDbPath = wofPaths[0]
+	const adminDBPath = wofPaths[0]
 
 	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the
 	// FTS5-trigram typo fallback). Resolve it from --candidate-db / $MAILWOMAN_CANDIDATE_DB, else auto-use
@@ -130,13 +130,13 @@ async function serve(): Promise<void> {
 	// Absent → admin-only (US-optimized) — the no-download default.
 	const conventionCandidate = join(mailwomanDataRoot(), "wof", "candidate.db")
 	const candidateDb =
-		resolveCandidateDbPath(values["candidate-db"]) ??
+		resolveCandidateDBPath(values["candidate-db"]) ??
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const parser = createAddressParser()
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
-	const resolver = createWofResolver(backend as unknown as ResolverBackend)
+	const resolver = createWOFResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
 	// (Berlin→DE, Boston→US) and `defaultCountry` is a HARD override that beats it (geocode-core.ts:102),
@@ -146,17 +146,17 @@ async function serve(): Promise<void> {
 	// happens for US results, where "US" is the right guess. Non-US results carry the country tag, so
 	// the fallback never mislabels them.
 	const annotationCountryFallback = candidateDb ? undefined : "US"
-	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
+	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
-	const tzDbPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
+	const tzDBPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
 
-	if (existsSync(tzDbPath)) annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDbPath })))
-	const ulDbPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
+	if (existsSync(tzDBPath)) annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
+	const ulDBPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
 
-	if (existsSync(ulDbPath)) annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDbPath })))
-	const nutsDbPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
+	if (existsSync(ulDBPath)) annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
+	const nutsDBPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
 
-	if (existsSync(nutsDbPath)) annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDbPath })))
+	if (existsSync(nutsDBPath)) annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDBPath })))
 	const annotate = composeAnnotators(annotators)
 
 	const engine: NominatimEngine = {
@@ -241,7 +241,7 @@ async function serve(): Promise<void> {
 				lon: params.lon,
 				address,
 				displayName: hierarchy.map((p) => p.name).join(", "),
-				placeId: deepest.id,
+				placeID: deepest.id,
 				boundingbox: deepest.bbox
 					? [
 							String(deepest.bbox.minLat),
@@ -268,7 +268,7 @@ async function serve(): Promise<void> {
 		.use(createNominatimRouter(engine))
 		.listen(port, host, () => {
 			console.error(`[@mailwoman/nominatim] listening on http://${host}:${port}`)
-			console.error(`  wof: ${adminDbPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
+			console.error(`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
 			console.error(
 				candidateDb
 					? `  resolver: candidate gazetteer (worldwide) — ${candidateDb}`

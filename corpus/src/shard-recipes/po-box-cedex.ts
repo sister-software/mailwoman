@@ -44,7 +44,7 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
 } from "../synthesize-po-box.js"
-import { makeMulberry32, shardSourceId, type CanonicalShardRow, type ShardRecipe } from "./scaffold.js"
+import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.js"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
@@ -161,7 +161,7 @@ function localityHash(name: string): number {
 const isHoldoutLocality = (name: string): boolean => localityHash(name) % 10 === 0
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields). */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -201,7 +201,7 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UsT
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string) => header.indexOf(name)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -213,7 +213,7 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UsT
 
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const locality = get(cells, iCity)
 
 		if (!cleanLocality(locality)) continue
@@ -234,7 +234,7 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UsT
 /**
  * Stride-sampled FR tuples (number/street/city/postcode). The countrywide CSV is 2.5 GB and insee-ordered; `awk NR%K`
  * strides the whole country instead of reading one département. Quoted commas survive because awk only FILTERS lines —
- * parsing stays in splitCsv.
+ * parsing stays in splitCSV.
  */
 function readFrTuples(limit: number): FrTuple[] {
 	const r = spawnSync(
@@ -251,7 +251,7 @@ function readFrTuples(limit: number): FrTuple[] {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string) => header.indexOf(n)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -263,7 +263,7 @@ function readFrTuples(limit: number): FrTuple[] {
 
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
-		const cells = splitCsv(lines[li]!)
+		const cells = splitCSV(lines[li]!)
 		const locality = get(cells, iCity),
 			postcode = get(cells, iPost),
 			street = get(cells, iStreet),
@@ -441,9 +441,9 @@ function makeAuNzPoBoxPhrase(
 	const phrase = `${caseDial(random, leader)} ${num}`
 	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the AU
 	// AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
-	const cleanId = validate === isNzDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
+	const cleanID = validate === isNzDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
 
-	if (cleanId.test(num) && !validate(phrase)) {
+	if (cleanID.test(num) && !validate(phrase)) {
 		throw new Error(`generated a phrase the codex matcher rejects: "${phrase}"`)
 	}
 
@@ -805,7 +805,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				country,
 				locale,
 				source,
-				source_id: shardSourceId(source, components),
+				source_id: shardSourceID(source, components),
 				corpus_version: "0.4.0",
 				license:
 					country === "CA"

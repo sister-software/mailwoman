@@ -163,7 +163,7 @@ mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 ```
 
 Programmatically, build a `WofSqlitePlaceLookup` backend (from
-`@mailwoman/resolver-wof-sqlite`), pass it to `createWofResolver` (from `@mailwoman/resolver`),
+`@mailwoman/resolver-wof-sqlite`), pass it to `createWOFResolver` (from `@mailwoman/resolver`),
 and hand the resolver to `createRuntimePipeline({ classifier, resolver })`. The resolved
 `result.tree` roots then carry a `wof:id` and coordinate. See
 [Getting started → Adding resolution](https://mailwoman.sister.software/articles/getting-started/)

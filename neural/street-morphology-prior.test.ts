@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type FstMatcherLike, type FstMatchLike, type FstPlaceEntryLike } from "./fst-prior.js"
+import { type FSTMatcherLike, type FSTMatchLike, type FSTPlaceEntryLike } from "./fst-prior.js"
 import { STAGE3_BIO_LABELS } from "./labels.js"
 import { buildStreetMorphologyEmissionPriors } from "./street-morphology-prior.js"
 
@@ -17,32 +17,32 @@ function labelCol(label: string): number {
 	return STAGE3_BIO_LABELS.indexOf(label as (typeof STAGE3_BIO_LABELS)[number])
 }
 
-function mockAffixFst(affixSurfaces: string[]): FstMatcherLike {
-	const states = new Map<string, { id: number; entries: FstPlaceEntryLike[] }>()
-	let nextId = 1
+function mockAffixFST(affixSurfaces: string[]): FSTMatcherLike {
+	const states = new Map<string, { id: number; entries: FSTPlaceEntryLike[] }>()
+	let nextID = 1
 
 	for (const surface of affixSurfaces) {
 		states.set(surface, {
-			id: nextId++,
-			entries: [{ wofID: 1_900_000_000 + nextId, placetype: "street_affix", importance: 1.0 }],
+			id: nextID++,
+			entries: [{ wofID: 1_900_000_000 + nextID, placetype: "street_affix", importance: 1.0 }],
 		})
 	}
 
 	return {
-		walk(tokens: string[]): FstMatchLike | null {
+		walk(tokens: string[]): FSTMatchLike | null {
 			const key = tokens.join(" ")
 			const state = states.get(key)
 
-			if (state) return { stateId: state.id, accepted: true, depth: tokens.length }
+			if (state) return { stateID: state.id, accepted: true, depth: tokens.length }
 
 			return null
 		},
-		walkFrom(): FstMatchLike | null {
+		walkFrom(): FSTMatchLike | null {
 			return null
 		},
-		accepting(stateId: number): FstPlaceEntryLike[] {
+		accepting(stateID: number): FSTPlaceEntryLike[] {
 			for (const [, state] of states) {
-				if (state.id === stateId) return state.entries
+				if (state.id === stateID) return state.entries
 			}
 
 			return []
@@ -66,7 +66,7 @@ function makePieces(text: string): Array<{ piece: string; start: number; end: nu
 
 describe("buildStreetMorphologyEmissionPriors", () => {
 	it("produces a zero matrix when no morphology FST matches", () => {
-		const fst = mockAffixFst([])
+		const fst = mockAffixFST([])
 		const pieces = makePieces("hello world")
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS)
 
@@ -76,7 +76,7 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 	})
 
 	it("biases matched affix tokens toward both street_prefix and street_suffix", () => {
-		const fst = mockAffixFst(["avenue"])
+		const fst = mockAffixFST(["avenue"])
 		const pieces = makePieces("5th avenue") // tokens: "5th", "avenue"
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS)
 
@@ -86,7 +86,7 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 	})
 
 	it("biases the adjacent name token toward street and away from dependent_locality", () => {
-		const fst = mockAffixFst(["avenue"])
+		const fst = mockAffixFST(["avenue"])
 		const pieces = makePieces("5th avenue") // matched: pieces[1], adjacent-before: pieces[0]
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS)
 
@@ -96,7 +96,7 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 	})
 
 	it("biases neighbours on BOTH sides of an affix span", () => {
-		const fst = mockAffixFst(["rue"])
+		const fst = mockAffixFST(["rue"])
 		const pieces = makePieces("123 rue cassette") // matched: pieces[1], adjacent before+after
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS)
 
@@ -118,7 +118,7 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 	})
 
 	it("respects custom bias magnitudes", () => {
-		const fst = mockAffixFst(["avenue"])
+		const fst = mockAffixFST(["avenue"])
 		const pieces = makePieces("elm avenue")
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS, {
 			maxAffixBias: 5.0,

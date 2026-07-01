@@ -30,7 +30,7 @@ import { setTimeout as sleep } from "node:timers/promises"
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -95,8 +95,8 @@ type Resolved = { placetype: string; lat: number; lon: number }
 function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | null {
 	let best: Resolved | null = null as Resolved | null
 	const visit = (n: AddressNode): void => {
-		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 
 			if (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5))
 				best = { placetype, lat: n.lat, lon: n.lon }
@@ -189,14 +189,14 @@ function record(t: Tally, err: number | null) {
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup, WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	// --candidate-db <path> uses the DEMO's resolver (the byte-range candidate gazetteer, with the
 	// promoted EU postcode/GeoNames coverage); else the CLI shards (admin + postcode-locality-intl).
 	const CAND = arg("candidate-db", "")
 	const lookup = CAND
-		? new WofCandidateTableLookup({ databasePath: CAND })
-		: new WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as never)
+		? new WOFCandidateTableLookup({ databasePath: CAND })
+		: new WOFSqlitePlaceLookup({ databasePath: WOF })
+	const resolver = createWOFResolver(lookup as never)
 	const model = SYSTEMS.includes("mailwoman")
 		? await createScorer({
 				modelPath: MODEL,

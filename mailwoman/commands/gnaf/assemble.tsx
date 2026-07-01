@@ -17,7 +17,7 @@
 
 import { setImmediate } from "node:timers/promises"
 
-import { assembleGnaf, type GnafAssembleResult } from "@mailwoman/corpus"
+import { assembleGNAF, type GNAFAssembleResult } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
@@ -44,9 +44,9 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-const GnafAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GNAFAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<GnafAssembleResult>()
+	const [done, setDone] = useState<GNAFAssembleResult>()
 	const [progress, setProgress] = useState<string>()
 
 	useEffect(() => {
@@ -55,7 +55,7 @@ const GnafAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	}, [error, done])
 
 	useEffect(() => {
-		assembleGnaf({
+		assembleGNAF({
 			standardDir: options.standardDir,
 			sampleSize: options.n,
 			out: options.out,
@@ -94,4 +94,4 @@ const GnafAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	)
 }
 
-export default GnafAssemble
+export default GNAFAssemble

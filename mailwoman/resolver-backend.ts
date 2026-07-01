@@ -3,9 +3,9 @@
 
 /**
  *   Shared resolver-backend selector for the CLI commands + server routers. Picks the byte-range
- *   CANDIDATE-table lookup ({@link WofCandidateTableLookup}) — the SAME backend + population-first,
+ *   CANDIDATE-table lookup ({@link WOFCandidateTableLookup}) — the SAME backend + population-first,
  *   country-agnostic ranking the browser demo uses — when a `candidate.db` is configured, else the
- *   FTS admin lookup ({@link WofSqlitePlaceLookup}, today's default).
+ *   FTS admin lookup ({@link WOFSqlitePlaceLookup}, today's default).
  *
  *   Why this exists: the demo resolves localities population-first ("Moscow" → the 10.4 M-pop Russian
  *   city), but the FTS resolver ranks by bm25 + exact-match tiering, so a bare homonym goes to
@@ -22,15 +22,15 @@ import { existsSync } from "node:fs"
 
 import type {
 	PlaceLookup,
-	WofCandidateTableLookup,
-	WofPostalCityAliasLookup,
-	WofSqlitePlaceLookup,
+	WOFCandidateTableLookup,
+	WOFPostalCityAliasLookup,
+	WOFSqlitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
 
 /**
  * Resolve the candidate-db path from an explicit option then `$MAILWOMAN_CANDIDATE_DB`; undefined if unset or missing.
  */
-export function resolveCandidateDbPath(explicit?: string): string | undefined {
+export function resolveCandidateDBPath(explicit?: string): string | undefined {
 	const p = explicit ?? process.env["MAILWOMAN_CANDIDATE_DB"]
 
 	return p && existsSync(p) ? p : undefined
@@ -41,7 +41,7 @@ export function resolveCandidateDbPath(explicit?: string): string | undefined {
  * undefined if unset or missing. Only consulted on the FTS backend (the candidate backend folds aliases at build time,
  * not at query time).
  */
-export function resolvePostalCityAliasDbPath(explicit?: string): string | undefined {
+export function resolvePostalCityAliasDBPath(explicit?: string): string | undefined {
 	const p = explicit ?? process.env["MAILWOMAN_POSTAL_CITY_ALIAS_DB"]
 
 	return p && existsSync(p) ? p : undefined
@@ -56,9 +56,9 @@ export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/
  * The lookup constructors this selector needs — a structural subset of `@mailwoman/resolver-wof-sqlite`.
  */
 interface ResolverLookupModule {
-	WofSqlitePlaceLookup: typeof WofSqlitePlaceLookup
-	WofCandidateTableLookup: typeof WofCandidateTableLookup
-	WofPostalCityAliasLookup: typeof WofPostalCityAliasLookup
+	WOFSqlitePlaceLookup: typeof WOFSqlitePlaceLookup
+	WOFCandidateTableLookup: typeof WOFCandidateTableLookup
+	WOFPostalCityAliasLookup: typeof WOFPostalCityAliasLookup
 }
 
 /**
@@ -69,22 +69,22 @@ interface ResolverLookupModule {
  */
 export function createResolverBackend(
 	mod: ResolverLookupModule,
-	opts: { candidateDb?: string; wofPaths: string | string[]; postalCityAliasDb?: string }
+	opts: { candidateDb?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
 ): PlaceLookup {
-	const candidate = resolveCandidateDbPath(opts.candidateDb)
+	const candidate = resolveCandidateDBPath(opts.candidateDb)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)
 
-		return new mod.WofCandidateTableLookup({ databasePath: candidate })
+		return new mod.WOFCandidateTableLookup({ databasePath: candidate })
 	}
 	const wp = opts.wofPaths
-	const aliasDb = resolvePostalCityAliasDbPath(opts.postalCityAliasDb)
-	const postalCityAliases = aliasDb ? new mod.WofPostalCityAliasLookup({ databasePath: aliasDb }) : undefined
+	const aliasDB = resolvePostalCityAliasDBPath(opts.postalCityAliasDB)
+	const postalCityAliases = aliasDB ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDB }) : undefined
 
-	if (postalCityAliases) console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDb}`)
+	if (postalCityAliases) console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDB}`)
 
-	return new mod.WofSqlitePlaceLookup({
+	return new mod.WOFSqlitePlaceLookup({
 		databasePath: Array.isArray(wp) && wp.length === 1 ? wp[0]! : wp,
 		postalCityAliases,
 	})

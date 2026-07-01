@@ -1,5 +1,5 @@
-import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
-const lookup = new WofSqlitePlaceLookup({
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+const lookup = new WOFSqlitePlaceLookup({
 	databasePath: [
 		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
 		"/mnt/playpen/mailwoman-data/wof/postalcode-us.db",

@@ -19,9 +19,9 @@ strings.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 import torch
 
@@ -58,7 +58,9 @@ def load_golden_dir(golden_dir: Path) -> list[GoldenEntry]:
     return entries
 
 
-def golden_to_bio_labels(entry: GoldenEntry, max_length: int, tokenizer: Tokenizer) -> tuple[list[int], list[int], list[int]]:
+def golden_to_bio_labels(
+    entry: GoldenEntry, max_length: int, tokenizer: Tokenizer
+) -> tuple[list[int], list[int], list[int]]:
     """Encode ``entry.raw`` and assign ACTIVE BIO labels via substring search.
 
     Components whose values can't be located in ``raw`` are silently skipped — they are golden
@@ -120,7 +122,7 @@ def decode_components(pieces, pred_label_ids: list[int], raw: str) -> dict[str, 
     current_tag: str | None = None
     current_begin: int = -1
     current_end: int = -1
-    for i, (piece, lid) in enumerate(zip(pieces, pred_label_ids)):
+    for piece, lid in zip(pieces, pred_label_ids, strict=True):
         label = ACTIVE_BIO_LABELS[lid] if 0 <= lid < len(ACTIVE_BIO_LABELS) else "O"
         if label == "O":
             if current_tag is not None and current_tag not in out:
@@ -226,14 +228,12 @@ def run_eval(
             full_match += 1
 
         # Confidence/calibration: only over non-O predictions vs golden char labels.
-        for i, (pid, conf) in enumerate(zip(pred_ids, pred_confs)):
+        for i, (pid, conf) in enumerate(zip(pred_ids, pred_confs, strict=True)):
             confidences.append(conf)
             correct = 1 if pid == _gold_ids[i] else 0
             confidence_correct.append((conf, correct))
 
-    per_component = {
-        tag: _f1(*counts) for tag, counts in per_tag_counts.items()
-    }
+    per_component = {tag: _f1(*counts) for tag, counts in per_tag_counts.items()}
     em = full_match / max(1, n)
 
     # Calibration buckets: 10 evenly spaced.
@@ -271,9 +271,7 @@ def render_report_markdown(report: EvalReport, header: str = "") -> str:
     lines.append("|---|---:|---:|---:|---:|")
     for tag in ACTIVE_TAGS:
         m = report.per_component[tag]
-        lines.append(
-            f"| {tag} | {m['precision']:.4f} | {m['recall']:.4f} | {m['f1']:.4f} | {int(m['support'])} |"
-        )
+        lines.append(f"| {tag} | {m['precision']:.4f} | {m['recall']:.4f} | {m['f1']:.4f} | {int(m['support'])} |")
     lines.append("")
     lines.append("## Calibration (confidence bucket → accuracy)")
     lines.append("")

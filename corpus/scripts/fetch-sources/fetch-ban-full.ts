@@ -158,7 +158,7 @@ interface BanManifestEntry {
 	bytes: number
 }
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
 			"out-root": { type: "string", default: process.env.OUT_ROOT ?? "data/corpus/sources" },
@@ -211,7 +211,7 @@ async function loadExistingEntries(manifestPath: string): Promise<Map<string, Ba
 }
 
 async function main(): Promise<void> {
-	const opts = parseCliArgs()
+	const opts = parseCLIArgs()
 	const banDir = join(opts.outRoot, "ban")
 	const manifestPath = join(banDir, "MANIFEST.json")
 	mkdirSync(banDir, { recursive: true })

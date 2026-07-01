@@ -97,6 +97,7 @@ def test_span_columns_round_trip(tmp_path: Path) -> None:
             table["span_starts"].to_pylist(),
             table["span_ends"].to_pylist(),
             table["span_tags"].to_pylist(),
+            strict=True,
         )
     }
     assert by_id["t-multi"] == (

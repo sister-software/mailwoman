@@ -12,14 +12,14 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 import { SqliteConventionSource } from "./sqlite-convention-source.js"
 
 /**
  * A minimal WOF fixture (DE country #90 + Plauen) WITH an attached `address_convention` table in the same schema, so
  * the lookup auto-detects it.
  */
-function buildDb(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseSync {
+function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -48,7 +48,7 @@ function buildDb(conventions: Array<{ wof_id: number; convention: object }> = []
 describe("SqliteConventionSource", () => {
 	let db: DatabaseSync
 	beforeEach(() => {
-		db = buildDb([{ wof_id: 90, convention: { scoringWeights: { pc: 0.9 } } }])
+		db = buildDB([{ wof_id: 90, convention: { scoringWeights: { pc: 0.9 } } }])
 	})
 	afterEach(() => {
 		db.close()
@@ -72,7 +72,7 @@ describe("SqliteConventionSource", () => {
 
 describe("convention-asset auto-detect → dispatch", () => {
 	it("with no address_convention rows for the country, the coord-first path still recovers the town", async () => {
-		const lookup = new WofSqlitePlaceLookup({ database: buildDb(), buildFts: true })
+		const lookup = new WOFSqlitePlaceLookup({ database: buildDB(), buildFTS: true })
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
 		lookup.close()
@@ -82,9 +82,9 @@ describe("convention-asset auto-detect → dispatch", () => {
 		// The convention asset lives in the same (main) schema; the lookup auto-detects address_convention
 		// and queries it by the DE country WOF id (90). Dropping postcode_area_resolution means the typo
 		// no longer recovers Plauen — proof the asset drives findPlace with no opts.conventions injection.
-		const lookup = new WofSqlitePlaceLookup({
-			database: buildDb([{ wof_id: 90, convention: { candidateStrategies: ["fallback_fuzzy_name_match"] } }]),
-			buildFts: true,
+		const lookup = new WOFSqlitePlaceLookup({
+			database: buildDB([{ wof_id: 90, convention: { candidateStrategies: ["fallback_fuzzy_name_match"] } }]),
+			buildFTS: true,
 		})
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).not.toBe("Plauen")
@@ -93,11 +93,11 @@ describe("convention-asset auto-detect → dispatch", () => {
 
 	it("warns loudly (once) on a convention that names an unknown strategy, then continues", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
-		const lookup = new WofSqlitePlaceLookup({
-			database: buildDb([
+		const lookup = new WOFSqlitePlaceLookup({
+			database: buildDB([
 				{ wof_id: 90, convention: { candidateStrategies: ["does_not_exist", "fallback_fuzzy_name_match"] } },
 			]),
-			buildFts: true,
+			buildFTS: true,
 		})
 		// First query warns about the unknown strategy and falls through to the known one.
 		await lookup.findPlace({ text: "Plauen", placetype: "locality", country: "DE" })

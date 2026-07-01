@@ -109,9 +109,9 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	// parser so the demo's exact tier can't drift from the Node/WASM resolvers). `street-normalize`
 	// (pure, imports only @mailwoman/codex) + `geo` (pure math) back the httpvfs STREET lookups
 	// (httpvfs-street.ts) so the demo's situs/interp normalization can't drift from the Node tiers.
-	const resolverWofDir = resolveWorkspaceDir("@mailwoman/resolver-wof-sqlite")
+	const resolverWOFDir = resolveWorkspaceDir("@mailwoman/resolver-wof-sqlite")
 
-	if (resolverWofDir) {
+	if (resolverWOFDir) {
 		for (const sub of [
 			"fst-deserialize-web",
 			"fst-matcher",
@@ -121,7 +121,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 			"geo",
 			"fst-autocomplete",
 		]) {
-			aliases[`@mailwoman/resolver-wof-sqlite/${sub}`] = resolveWorkspaceFile(resolverWofDir, sub)
+			aliases[`@mailwoman/resolver-wof-sqlite/${sub}`] = resolveWorkspaceFile(resolverWOFDir, sub)
 		}
 	}
 
@@ -165,7 +165,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		// the async resolver chunk: `httpvfs-resolver.ts` saw `expandPlacetypeFilter` as `undefined` at
 		// runtime ("expandPlacetypeFilter is not a function"). The ONLY runtime value the bundled graph
 		// imports from this barrel is `expandPlacetypeFilter` (the resolver-wof-* lookups + this demo);
-		// `createWofResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
+		// `createWOFResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
 		// package barrel, so type-only imports (`CoincidentLocality`, `Ancestor`) keep working.
 		// EXACT match (`$`): the bare `@mailwoman/resolver` import resolves to core's types module, but a
 		// SUBPATH like `@mailwoman/resolver/span-rescore` must NOT — it has to reach the real package
@@ -270,13 +270,13 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
 
 /**
  * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + WASM) into `destDir`. The demo loads these at
- * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
+ * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDBWorker — so webpack never sees
  * them. That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is exactly
  * what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
  *
  * @param destDir - E.g. static/mailwoman/sqljs
  */
-export function stageSqlJsHttpvfs(destDir: string): boolean {
+export function stageSQLJSHTTPVFS(destDir: string): boolean {
 	let distDir: string
 
 	try {
@@ -327,37 +327,37 @@ export function stageSqlJsHttpvfs(destDir: string): boolean {
  *
  * @returns True if built successfully
  */
-export function buildFstBinary(fstPath: string, opts: { repoRoot: string; wofDb?: string }): boolean {
+export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?: string }): boolean {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
-	const globalDb = dataRootPath("wof", "admin-global-priority.db")
-	const wofDb = opts.wofDb ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
+	const globalDB = dataRootPath("wof", "admin-global-priority.db")
+	const wofDB = opts.wofDB ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDB
 
-	if (!existsSync(wofDb)) {
-		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDb} — skipping FST build`)
+	if (!existsSync(wofDB)) {
+		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDB} — skipping FST build`)
 
 		return false
 	}
 
-	const isGlobal = wofDb.includes("global")
+	const isGlobal = wofDB.includes("global")
 	const countries = isGlobal ? "['US', 'FR', 'JP', 'CN', 'KR', 'DE', 'GB']" : "['US']"
 	const languages = isGlobal ? "['*']" : "['eng', '']"
 
 	const script = `
-		import { buildFstFromWof } from '@mailwoman/resolver-wof-sqlite/fst-builder'
-		import { serializeFst } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
+		import { buildFSTFromWOF } from '@mailwoman/resolver-wof-sqlite/fst-builder'
+		import { serializeFST } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
 		import { writeFileSync } from 'node:fs'
-		const { matcher, provenance } = buildFstFromWof({
-			dbPath: ${JSON.stringify(wofDb)},
+		const { matcher, provenance } = buildFSTFromWOF({
+			dbPath: ${JSON.stringify(wofDB)},
 			countries: ${countries},
 			languages: ${languages},
 			onProgress: (phase, msg) => process.stderr.write(phase + ': ' + msg + '\\n'),
 		})
-		const buf = serializeFst(matcher, provenance)
+		const buf = serializeFST(matcher, provenance)
 		writeFileSync(${JSON.stringify(fstPath)}, buf)
 		process.stderr.write('FST binary: ' + (buf.length / 1024 / 1024).toFixed(2) + ' MB\\n')
 	`
 
-	console.log(`[demo-assets] FST: building from ${wofDb}`)
+	console.log(`[demo-assets] FST: building from ${wofDB}`)
 	const result = spawnSync("node", ["--input-type=module", "-e", script], {
 		cwd: opts.repoRoot,
 		stdio: ["pipe", "inherit", "inherit"],
@@ -382,14 +382,14 @@ export function buildFstBinary(fstPath: string, opts: { repoRoot: string; wofDb?
 /**
  * Build the slim WOF database for the browser resolver.
  */
-export function buildSlimWofDb(destPath: string, opts: { repoRoot: string }): boolean {
+export function buildSlimWOFDb(destPath: string, opts: { repoRoot: string }): boolean {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
-	const globalDb = dataRootPath("wof", "admin-global-priority.db")
-	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
+	const globalDB = dataRootPath("wof", "admin-global-priority.db")
+	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDB
 	// Postcodes: opt-in via PLAYPEN_WOF_POSTCODE_DB (e.g. /mnt/playpen/mailwoman-data/wof/
 	// postalcode-us.db — custom-built, ZCTA-centroid-filled per #525); unset, the slim build runs
 	// admin-only and the demo's postcode-first cascade leg has no rows to hit.
-	const postcodeDb = process.env.PLAYPEN_WOF_POSTCODE_DB ?? ""
+	const postcodeDB = process.env.PLAYPEN_WOF_POSTCODE_DB ?? ""
 
 	if (!existsSync(adminDb)) {
 		console.warn("[demo-assets] wof-hot.db: WOF admin DB not found — skipping slim build")
@@ -397,9 +397,9 @@ export function buildSlimWofDb(destPath: string, opts: { repoRoot: string }): bo
 		return false
 	}
 
-	const slimCli = resolve(opts.repoRoot, "resolver-wof-sqlite/out/build-slim-cli.js")
+	const slimCLI = resolve(opts.repoRoot, "resolver-wof-sqlite/out/build-slim-cli.js")
 
-	if (!existsSync(slimCli)) {
+	if (!existsSync(slimCLI)) {
 		console.warn("[demo-assets] wof-hot.db: build-slim-cli not compiled — skipping")
 
 		return false
@@ -417,11 +417,11 @@ export function buildSlimWofDb(destPath: string, opts: { repoRoot: string }): bo
 	const result = spawnSync(
 		"node",
 		[
-			slimCli,
+			slimCLI,
 			"--in",
 			adminDb,
 			"--in",
-			postcodeDb,
+			postcodeDB,
 			"--out",
 			destPath,
 			"--top",

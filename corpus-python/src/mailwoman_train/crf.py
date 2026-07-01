@@ -421,7 +421,7 @@ def _row_top_k(
     top_final_vals, top_final_idx = flat_final.topk(kk)
     # Drop -inf entries — they correspond to invalid / nonexistent paths.
     paths: list[TopKPath] = []
-    for v, idx in zip(top_final_vals.tolist(), top_final_idx.tolist()):
+    for v, idx in zip(top_final_vals.tolist(), top_final_idx.tolist(), strict=True):
         if v == NEG_INF or v != v:  # NaN guard
             continue
         end_tag = int(idx // k)

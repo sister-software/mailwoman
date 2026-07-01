@@ -14,8 +14,8 @@
  *
  *   This module provides:
  *
- *   - `WofRecord`: the lightweight per-feature shape both adapters carry in their ancestry index.
- *   - `walkFeatures`: streaming directory walk → parsed `WofRecord`s (skips alt files, bad JSON,
+ *   - `WOFRecord`: the lightweight per-feature shape both adapters carry in their ancestry index.
+ *   - `walkFeatures`: streaming directory walk → parsed `WOFRecord`s (skips alt files, bad JSON,
  *       deprecated records).
  *   - `buildAncestryIndex`: in-memory ancestry chain construction (`Map<id, ancestors[]>`).
  *   - `extractNameVariants`: pulls `name:*` localized name lists off a feature's properties.
@@ -33,7 +33,7 @@ import { readFile } from "node:fs/promises"
 import FastGlob from "fast-glob"
 
 /** A WOF GeoJSON feature, as published by the per-record bundles. */
-export interface WofFeature {
+export interface WOFFeature {
 	type?: string
 	id?: number | string
 	properties?: Record<string, unknown> | null
@@ -43,7 +43,7 @@ export interface WofFeature {
  * Lightweight in-memory shape both adapters keep per record. Geometry is intentionally dropped — it's 95% of the file
  * weight and the adapters never consult it.
  */
-export interface WofRecord {
+export interface WOFRecord {
 	id: number
 	parent_id: number | null
 	/** Canonical `wof:name` of the record. */
@@ -108,12 +108,12 @@ export function normalizeNameKey(rawKey: string): string {
 }
 
 /** Result of parsing a single GeoJSON file. `null` means "skip this row" (any reason). */
-function recordFromFeature(feature: WofFeature): WofRecord | null {
+function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	if (!feature || feature.type !== "Feature" || !feature.properties) return null
 	const props = feature.properties
 
-	const rawId = typeof feature.id === "number" ? feature.id : props["wof:id"]
-	const id = typeof rawId === "number" ? rawId : typeof rawId === "string" ? Number(rawId) : NaN
+	const rawID = typeof feature.id === "number" ? feature.id : props["wof:id"]
+	const id = typeof rawID === "number" ? rawID : typeof rawID === "string" ? Number(rawID) : NaN
 
 	if (!Number.isFinite(id)) return null
 
@@ -150,7 +150,7 @@ function recordFromFeature(feature: WofFeature): WofRecord | null {
 }
 
 /**
- * Stream every canonical GeoJSON file under `repoDir` and yield parsed `WofRecord`s.
+ * Stream every canonical GeoJSON file under `repoDir` and yield parsed `WOFRecord`s.
  *
  * `repoDir` may point at a single cloned `whosonfirst-data-*` repo OR at a parent directory holding several such repos
  * (the corpus pipeline clones all four into a shared `wof/repos/` root and runs the adapter against that root).
@@ -160,7 +160,7 @@ function recordFromFeature(feature: WofFeature): WofRecord | null {
  * Errors per-file (unreadable, malformed JSON, missing properties) are swallowed so one bad file doesn't poison a 3 GB
  * walk. Adapters can add stricter validation downstream if they need it.
  */
-export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WofRecord> {
+export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WOFRecord> {
 	const stream = FastGlob.stream(["**/*.geojson"], {
 		cwd: repoDir,
 		absolute: true,
@@ -182,10 +182,10 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 			continue
 		}
 
-		let parsed: WofFeature
+		let parsed: WOFFeature
 
 		try {
-			parsed = JSON.parse(text) as WofFeature
+			parsed = JSON.parse(text) as WOFFeature
 		} catch {
 			continue
 		}
@@ -201,21 +201,21 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
  * at the first missing link. A cycle guard halts at any re-visit (defensive — WOF data is acyclic by construction but
  * corrupt fixtures shouldn't infinite-loop the adapter).
  *
- * Records whose ancestors aren't in `byId` (e.g. an FR locality whose region wasn't included in the cloned repo set)
+ * Records whose ancestors aren't in `byID` (e.g. an FR locality whose region wasn't included in the cloned repo set)
  * get a shorter chain; the variant emission gracefully degrades.
  */
-export type AncestryIndex = Map<number, WofRecord[]>
+export type AncestryIndex = Map<number, WOFRecord[]>
 
-export function buildAncestryIndex(byId: Map<number, WofRecord>): AncestryIndex {
+export function buildAncestryIndex(byID: Map<number, WOFRecord>): AncestryIndex {
 	const index: AncestryIndex = new Map()
 
-	for (const [id, rec] of byId) {
-		const chain: WofRecord[] = []
+	for (const [id, rec] of byID) {
+		const chain: WOFRecord[] = []
 		const guard = new Set<number>([id])
 		let cur: number | null = rec.parent_id
 
 		while (cur !== null && cur > 0) {
-			const parent = byId.get(cur)
+			const parent = byID.get(cur)
 
 			if (!parent) break
 

@@ -15,7 +15,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 import sentencepiece as spm  # type: ignore[import-not-found]
 
 from mailwoman_train.tokenizer_train import (
@@ -103,11 +102,7 @@ def test_reservoir_sample_size_and_determinism():
 def test_load_fixture_lines_handles_jsonl_and_text(tmp_path: Path):
     jsonl = tmp_path / "f.jsonl"
     jsonl.write_text(
-        '{"raw": "foo"}\n'
-        '{"text": "bar"}\n'
-        '{"input": "baz"}\n'
-        "\n"
-        '{"raw": "qux"}\n',
+        '{"raw": "foo"}\n{"text": "bar"}\n{"input": "baz"}\n\n{"raw": "qux"}\n',
         encoding="utf-8",
     )
     assert load_fixture_lines(jsonl) == ["foo", "bar", "baz", "qux"]
@@ -129,7 +124,6 @@ def _train_tiny_sp(tmp_path: Path, uds: list[str] | None = None) -> spm.Sentence
     # SP's vocab_size floor = required_chars (1 per byte fallback = 256) + 4 specials +
     # corpus alphabet. Lower bound is ~300, upper bound = pieces SP can extract. Generate a
     # rich-enough synthetic corpus with varied tokens so SP has > 600 candidate pieces.
-    import string
     base_addresses = [
         "1600 Pennsylvania Avenue NW Washington DC 20500",
         "350 Fifth Avenue New York NY 10118",
@@ -148,9 +142,18 @@ def _train_tiny_sp(tmp_path: Path, uds: list[str] | None = None) -> spm.Sentence
     ]
     # Extra filler so the unigram trainer has plenty of distinct pieces to choose from.
     filler_streets = [
-        "Main Street", "Oak Avenue", "Maple Road", "Cedar Lane",
-        "Elm Boulevard", "Pine Drive", "Birch Court", "Walnut Place",
-        "Sunset Park", "Lakeshore Way", "Highland Plaza", "Riverside Path",
+        "Main Street",
+        "Oak Avenue",
+        "Maple Road",
+        "Cedar Lane",
+        "Elm Boulevard",
+        "Pine Drive",
+        "Birch Court",
+        "Walnut Place",
+        "Sunset Park",
+        "Lakeshore Way",
+        "Highland Plaza",
+        "Riverside Path",
     ]
     for _ in range(200):
         for a in base_addresses:
@@ -302,11 +305,7 @@ def test_committed_multi_script_fixture_loads_and_has_balanced_scripts():
     """Sanity-check the in-tree multi-script eval fixture is wellformed."""
     # Resolve relative to the repo root via the test file's own location.
     fixture = (
-        Path(__file__).resolve().parent.parent.parent.parent
-        / "data"
-        / "eval"
-        / "multi-script"
-        / "v0.5.0-a0.jsonl"
+        Path(__file__).resolve().parent.parent.parent.parent / "data" / "eval" / "multi-script" / "v0.5.0-a0.jsonl"
     )
     assert fixture.exists(), f"missing fixture: {fixture}"
     lines = load_fixture_lines(fixture)

@@ -76,7 +76,7 @@ export interface ResolverBackend {
 		text: string
 		placetype?: string | string[]
 		country?: string
-		parentId?: number | string
+		parentID?: number | string
 		/**
 		 * Sibling postcode string, when the address carries one. A coordinate-first backend uses it to inject
 		 * postcode-proximal locality candidates (the postcode→locality table) and soft-score them against the parsed name —
@@ -91,7 +91,7 @@ export interface ResolverBackend {
 	 * capital-seat region, the resolver completes it from here instead of re-querying. OPTIONAL — backends without the
 	 * relation omit it, and completion no-ops. Synchronous: it's an in-memory map lookup once the relation is loaded.
 	 */
-	coincidentLocalitiesFor?(adminId: number | string): CoincidentLocality[]
+	coincidentLocalitiesFor?(adminID: number | string): CoincidentLocality[]
 	/**
 	 * The ancestor lineage of a resolved place — its containment chain (county → region → country), nearest-first. Backs
 	 * {@link ResolveOpts.includeAncestors} (#404): the Pelias/Nominatim "always-attach-the-hierarchy" enrichment. OPTIONAL
@@ -145,7 +145,18 @@ export interface AddressPointHit {
  * contract.
  */
 export interface AddressPointLookup {
-	find(query: { street: string; number: string; postcode?: string; locality?: string }): AddressPointHit | null
+	find(query: {
+		street: string
+		number: string
+		postcode?: string
+		locality?: string
+		/**
+		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried AFTER postcode/locality. For shards whose points
+		 * carry no postcode/locality of their own (OSM addr nodes often don't) but DO carry a coordinate — the resolved
+		 * locality's bounding box scopes the `(street, number)` probe instead. US situs never passes it (byte-stable).
+		 */
+		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+	}): AddressPointHit | null
 }
 
 /**
@@ -206,7 +217,7 @@ export interface ResolveOpts {
 	 */
 	defaultCountry?: string
 	/**
-	 * When a resolved parent constrains a child lookup (`parentId` is passed to the backend as a hard descendant filter)
+	 * When a resolved parent constrains a child lookup (`parentID` is passed to the backend as a hard descendant filter)
 	 * and that filtered lookup returns NOTHING, retry the lookup once without the parent constraint. Guards against an
 	 * incomplete gazetteer hierarchy (a real locality whose ancestor chain is missing its region) or a mis-resolved
 	 * parent silently turning a resolvable node unresolved. The country constraint is retained on the retry, so
@@ -232,7 +243,7 @@ export interface ResolveOpts {
 	 * `score + anchorWeight * posterior[candidate.country]` before the top is picked, so a postcode that pins the country
 	 * can pull the right-country place over a higher-BM25 foreign namesake (the "Berlin DE vs Berlin US" class the #59
 	 * anchor→resolver harness measured). OFF by default — omit it and resolution is byte-identical. Country signal only,
-	 * so it touches locality lookups only; admin parents already carry country via `parentId`.
+	 * so it touches locality lookups only; admin parents already carry country via `parentID`.
 	 */
 	anchorPosterior?: Record<string, number>
 	/**
@@ -276,6 +287,13 @@ export interface ResolveOpts {
 	 * "address_point"`). Opt-in; absent = byte-stable.
 	 */
 	addressPoints?: AddressPointLookup
+	/**
+	 * Pass the resolved locality's BBOX to the address-point lookup as a final scope (#247). For shards whose points
+	 * carry no postcode/locality of their own (OSM addr nodes often don't), the postcode/locality probes miss and the
+	 * lookup falls through to a `(street, number)` probe within the box. OFF by default — US situs never sets it, so the
+	 * bbox arg is simply never supplied and its postcode/locality probes are byte-identical.
+	 */
+	addressPointBboxFallback?: boolean
 	/**
 	 * House-number interpolation tier (#483): consulted ONLY when the exact address-point tier ({@link addressPoints})
 	 * did NOT stamp the street node — the "after the exact-point fall-through" semantics. On hit, stamps the estimate
@@ -327,6 +345,17 @@ export interface ResolveOpts {
 	 * re-picked or demoted. Default 50.
 	 */
 	postcodeConsistencyGateKm?: number
+	/**
+	 * Admin descendant-consistency (#263). When a region resolved but its child locality did NOT — the greedy region pick
+	 * (name + population) chose a foreign namesake whose descendants hold no such locality ("Portland, ME" → Messina IT;
+	 * "Portland" then finds nothing beneath it and falls back to the region centroid) — re-pick the (region, locality)
+	 * pair JOINTLY against the gazetteer's containment graph: the best same-named locality that descends from one of the
+	 * region's same-named candidates. "Portland" descends from Maine, not Messina, so the pair resolves to (Maine,
+	 * Portland-Maine). Generalizes to every country with no country prior and no list. Costs ONE unscoped locality lookup
+	 * per triggering admin pair; only fires where a locality fell through, so the well-resolved path is byte-identical.
+	 * Needs {@link ResolverBackend.ancestors}; no-op without it. Default-off + byte-stable when unset.
+	 */
+	adminCoherence?: boolean
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean
@@ -361,7 +390,7 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	dependent_locality: "locality",
 	subregion: "county",
 	// `postcode` (mailwoman tag) maps to WOF's `postalcode` placetype. Resolves only when the
-	// backend has the postcode shard available — `WofSqlitePlaceLookup` auto-routes `postalcode`
+	// backend has the postcode shard available — `WOFSqlitePlaceLookup` auto-routes `postalcode`
 	// queries to a `postalcode_us` (or similarly-named) shard, falling back to main if absent.
 	postcode: "postalcode",
 }
@@ -449,7 +478,7 @@ export function isPlacetypeFallback(requestedPlacetype: string, candidatePlacety
 }
 
 /**
- * The interface implemented by `createWofResolver` and any future resolver factories.
+ * The interface implemented by `createWOFResolver` and any future resolver factories.
  *
  * `resolveTree` returns a NEW `AddressTree` rather than mutating — keeps the input safe to inspect after the call. The
  * new tree's `roots` are fresh `AddressNode` objects; nodes the resolver didn't touch are structurally cloned with

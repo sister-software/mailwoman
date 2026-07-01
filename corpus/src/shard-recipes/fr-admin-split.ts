@@ -35,7 +35,7 @@ import { createInterface } from "node:readline"
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import type { CanonicalRow } from "../types.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -175,7 +175,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 				continue
 			}
 
-			const sourceId = stableSourceId(source, {
+			const sourceID = stableSourceID(source, {
 				locality: components.locality,
 				region: components.region,
 				postcode: components.postcode,
@@ -186,7 +186,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 				country: "FR",
 				locale: "fr-FR",
 				source,
-				source_id: sourceId,
+				source_id: sourceID,
 				corpus_version: "0.5.0",
 				license: LICENSE,
 			}

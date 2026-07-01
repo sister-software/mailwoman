@@ -14,6 +14,16 @@
 
 import type { ComponentTag } from "../types/component.js"
 import type { AddressNode, AddressTree } from "./types.js"
+import { type UnknownSpan, unknownSpans } from "./unknown-spans.js"
+
+/** Options for {@link decodeAsJSON}. */
+export interface SerializeJSONOpts {
+	/**
+	 * Add an `unknown` array of the all-O spans the model left unclassified (#493). Default false — keeps the output
+	 * libpostal-compatible (a flat tag→value map) unless the caller asks for the gaps.
+	 */
+	includeUnknown?: boolean
+}
 
 function visit(node: AddressNode, out: Partial<Record<ComponentTag, string>>): void {
 	if (!(node.tag in out)) out[node.tag] = node.value
@@ -28,10 +38,22 @@ function visit(node: AddressNode, out: Partial<Record<ComponentTag, string>>): v
 }
 
 /** Project an `AddressTree` to a flat libpostal-style component map. */
-export function decodeAsJson(tree: AddressTree): Partial<Record<ComponentTag, string>> {
-	const out: Partial<Record<ComponentTag, string>> = {}
+export function decodeAsJSON(tree: AddressTree): Partial<Record<ComponentTag, string>>
+export function decodeAsJSON(
+	tree: AddressTree,
+	opts: SerializeJSONOpts
+): Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] }
+export function decodeAsJSON(
+	tree: AddressTree,
+	opts: SerializeJSONOpts = {}
+): Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] } {
+	const out: Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] } = {}
 
 	for (const root of tree.roots) visit(root, out)
+
+	// Always emit `unknown` (even `[]`) when asked — a consumer that opted in can iterate it without a
+	// presence check. Omitting-when-empty was a libpostal-flat-map instinct that doesn't fit the opt-in path.
+	if (opts.includeUnknown) out.unknown = unknownSpans(tree)
 
 	return out
 }

@@ -25,7 +25,7 @@ import { open } from "node:fs/promises"
 
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
-import { parse as parseCsvSync } from "csv-parse/sync"
+import { parse as parseCSVSync } from "csv-parse/sync"
 import { Delimiters, TextSpliterator } from "spliterator"
 
 import type { SourceRecord } from "./types.js"
@@ -42,7 +42,7 @@ export function delimiterFor(path: string): Delimiter {
 }
 
 /**
- * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCsv} returns, but
+ * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCSV} returns, but
  * **without loading the file into memory**. A multi-GB source (the NPPES registry is ~4.8 GB / 9.6M rows — too big for
  * `readFileSync`, which throws `ERR_STRING_TOO_LONG`) streams line by line. Keys are the original header names so a
  * {@link ColumnMapping} written against the source's headers matches. Filter/sample the stream before
@@ -56,7 +56,7 @@ export function delimiterFor(path: string): Delimiter {
  * when it's fixed.)
  *
  * Assumes an unquoted delimited file (no fields containing the delimiter) — true for these government TSVs. For small,
- * possibly-quoted CSVs use {@link parseCsv} (quote-aware, in-memory).
+ * possibly-quoted CSVs use {@link parseCSV} (quote-aware, in-memory).
  */
 export async function* streamRows(
 	source: string,
@@ -188,12 +188,12 @@ export interface IngestOptions {
 }
 
 /** Parse a CSV string (with a header row) into row objects keyed by column name. */
-export function parseCsv(text: string): Record<string, string>[] {
-	return parseCsvSync(text, { columns: true, skip_empty_lines: true, trim: true, relax_column_count: true })
+export function parseCSV(text: string): Record<string, string>[] {
+	return parseCSVSync(text, { columns: true, skip_empty_lines: true, trim: true, relax_column_count: true })
 }
 
 /** Join the named column(s) of a row into a single trimmed string, or undefined if empty. */
-function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
+export function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
 	if (!columns) return undefined
 	const list = Array.isArray(columns) ? columns : [columns]
 	const value = list
@@ -206,8 +206,48 @@ function pick(row: Record<string, string>, columns?: string | string[], separato
 }
 
 /**
+ * Normalize one tabular row into a {@link SourceRecord} under a {@link ColumnMapping}: parse the person name,
+ * canonicalize the org, and (if `opts.geocodeAddress` is provided) geocode the joined address. `id` falls back to the
+ * caller-supplied row index. Pure aside from the optional geocode seam, so the deterministic normalization can run
+ * single-threaded (see {@link normalizeCSV}) while geocoding is offloaded (see `geocodeStream`).
+ */
+export async function ingestRow(
+	row: Record<string, string>,
+	mapping: ColumnMapping,
+	index: number,
+	opts: IngestOptions = {}
+): Promise<SourceRecord> {
+	const id = (mapping.id ? row[mapping.id]?.trim() : "") || String(index)
+	const nameValue = pick(row, mapping.name)
+	const orgValue = pick(row, mapping.organization)
+	const addressValue = pick(row, mapping.address, opts.addressSeparator ?? ", ")
+
+	let attributes: Record<string, string> | undefined
+
+	if (mapping.attributes) {
+		for (const [key, columns] of Object.entries(mapping.attributes)) {
+			const value = pick(row, columns)
+
+			if (value) (attributes ??= {})[key] = value
+		}
+	}
+
+	return {
+		id,
+		source: mapping.source,
+		name: nameValue ? parsePersonName(nameValue) : undefined,
+		organization: orgValue ? canonicalizeOrganizationName(orgValue) : undefined,
+		phone: (mapping.phone && row[mapping.phone]?.trim()) || undefined,
+		email: (mapping.email && row[mapping.email]?.trim()?.toLowerCase()) || undefined,
+		address: addressValue && opts.geocodeAddress ? ((await opts.geocodeAddress(addressValue)) ?? undefined) : undefined,
+		attributes,
+		raw: row,
+	}
+}
+
+/**
  * Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}. Accepts a sync OR async iterable, so
- * {@link parseCsv} (in-memory) and {@link streamRows} (lazy, for huge files) both thread straight through.
+ * {@link parseCSV} (in-memory) and {@link streamRows} (lazy, for huge files) both thread straight through.
  */
 export async function ingestRows(
 	rows: Iterable<Record<string, string>> | AsyncIterable<Record<string, string>>,
@@ -218,39 +258,29 @@ export async function ingestRows(
 	let index = 0
 
 	for await (const row of rows) {
-		const id = (mapping.id ? row[mapping.id]?.trim() : "") || String(index)
-		const nameValue = pick(row, mapping.name)
-		const orgValue = pick(row, mapping.organization)
-		const addressValue = pick(row, mapping.address, opts.addressSeparator ?? ", ")
-
-		let attributes: Record<string, string> | undefined
-
-		if (mapping.attributes) {
-			for (const [key, columns] of Object.entries(mapping.attributes)) {
-				const value = pick(row, columns)
-
-				if (value) (attributes ??= {})[key] = value
-			}
-		}
-
-		const record: SourceRecord = {
-			id,
-			source: mapping.source,
-			name: nameValue ? parsePersonName(nameValue) : undefined,
-			organization: orgValue ? canonicalizeOrganizationName(orgValue) : undefined,
-			phone: (mapping.phone && row[mapping.phone]?.trim()) || undefined,
-			email: (mapping.email && row[mapping.email]?.trim()?.toLowerCase()) || undefined,
-			address:
-				addressValue && opts.geocodeAddress ? ((await opts.geocodeAddress(addressValue)) ?? undefined) : undefined,
-			attributes,
-			raw: row,
-		}
-
-		records.push(record)
+		records.push(await ingestRow(row, mapping, index, opts))
 		index++
 	}
 
 	return records
+}
+
+/**
+ * Stream a delimited file as normalized {@link SourceRecord}s — `streamRows` + {@link ingestRow} with **no geocoding**.
+ * This is the single-threaded, "fast enough" ergonomic core: column mapping, name parsing, and org canonicalization for
+ * a multi-GB file, line by line. Geocode separately by piping the output through `geocodeStream` (the only heavy step
+ * worth threading); for a light file (e.g. one that already carries geo cells) just consume this and stop.
+ */
+export async function* normalizeCSV(
+	source: string,
+	opts: { mapping: ColumnMapping; delimiter?: Delimiter }
+): AsyncGenerator<SourceRecord> {
+	let index = 0
+
+	for await (const row of streamRows(source, { delimiter: opts.delimiter })) {
+		yield await ingestRow(row, opts.mapping, index)
+		index++
+	}
 }
 
 /**
@@ -265,22 +295,46 @@ export interface RawGeocode {
 	hierarchy?: AddressGeocode["hierarchy"]
 }
 
+/** The component map {@link toPostalAddress} consumes (kept structural so this package never imports the geocoder). */
+type GeocodeComponents = Parameters<typeof toPostalAddress>[0]
+
 /**
  * Build a {@link GeocodeAddress} from mailwoman's real parse + geocode primitives (injected — the CLI constructs the
- * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills the
- * canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
+ * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills
+ * the canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
  * parsed-but-unlocated address is still returned.
+ *
+ * Two shapes:
+ *
+ * - `{ parse, geocode }` — the original: two independent calls. mailwoman's `geocodeAddress` re-parses internally, so
+ *   this parses the address twice (fine when the two callbacks don't share a parser).
+ * - `{ parseAndGeocode }` — parse the address ONCE and return both the components and the geocode. Use this when the
+ *   parse is the expensive step you'd rather not pay for twice (e.g. share `parseForGeocode`'s tree between the
+ *   PostalAddress and `geocodeAddress`'s `parsedTree`). ~1.3× over the two-call shape on a real geocode pipeline.
  */
-export function geocodeAddressVia(deps: {
-	parse: (raw: string) => Promise<Parameters<typeof toPostalAddress>[0]> | Parameters<typeof toPostalAddress>[0]
-	geocode: (raw: string) => Promise<RawGeocode | null> | RawGeocode | null
-	country?: string
-}): GeocodeAddress {
+export function geocodeAddressVia(
+	deps: { country?: string } & (
+		| {
+				parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
+				geocode: (raw: string) => Promise<RawGeocode | null> | RawGeocode | null
+		  }
+		| { parseAndGeocode: (raw: string) => Promise<{ components: GeocodeComponents; geo: RawGeocode | null }> }
+	)
+): GeocodeAddress {
 	return async (raw: string): Promise<PostalAddress | null> => {
-		const components = await deps.parse(raw)
-		const base = toPostalAddress(components, { country: deps.country, raw })
+		let components: GeocodeComponents
+		let resolved: RawGeocode | null
 
-		const resolved = await deps.geocode(raw)
+		if ("parseAndGeocode" in deps) {
+			const r = await deps.parseAndGeocode(raw)
+			components = r.components
+			resolved = r.geo
+		} else {
+			components = await deps.parse(raw)
+			resolved = await deps.geocode(raw)
+		}
+
+		const base = toPostalAddress(components, { country: deps.country, raw })
 
 		if (!resolved || resolved.lat === null || resolved.lon === null) return base
 

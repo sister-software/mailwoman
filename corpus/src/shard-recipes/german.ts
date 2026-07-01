@@ -16,7 +16,7 @@
 
 import { spawnSync } from "node:child_process"
 
-import { stableSourceId } from "../adapter.js"
+import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
 import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.js"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
@@ -39,7 +39,7 @@ const SOURCES: GermanSource[] = [
 ]
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields). */
-function splitCsv(line: string): string[] {
+function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
 	let inQ = false
@@ -77,7 +77,7 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
-	const header = splitCsv(lines[0]!).map((h) => h.trim().toLowerCase())
+	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
 	const iNum = idx("number"),
 		iStreet = idx("street"),
@@ -92,7 +92,7 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 		const lineStr = lines[li]
 
 		if (!lineStr) continue
-		const cells = splitCsv(lineStr)
+		const cells = splitCSV(lineStr)
 		const street = get(cells, iStreet)
 		const locality = get(cells, iCity)
 
@@ -165,7 +165,7 @@ export const germanRecipe: ShardRecipe = {
 				emitted++
 				continue
 			}
-			const sourceId = stableSourceId(source, {
+			const sourceID = stableSourceID(source, {
 				street: synth.components.street,
 				house_number: synth.components.house_number,
 				locality: synth.components.locality,
@@ -177,7 +177,7 @@ export const germanRecipe: ShardRecipe = {
 				country: "DE",
 				locale: synth.locale,
 				source,
-				source_id: sourceId,
+				source_id: sourceID,
 				corpus_version: "0.4.0",
 				license: `OpenAddresses DE (Berlin/Saxony) tuples, rendered ${order}-order — see ingest SOURCES`,
 			}

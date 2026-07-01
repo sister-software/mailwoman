@@ -32,7 +32,7 @@ import {
 	matchLeadingDesignator,
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
-import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
+import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 
 import { alignRow, assertSpanInvariants, type ComponentSpan } from "./align.js"
 import { whitespaceTokenizer, type Tokenizer } from "./tokenize.js"
@@ -53,14 +53,14 @@ function withAugmentation(
 	newRaw: string,
 	newComponents: ComponentDict
 ): CanonicalRow {
-	const baseId = source.synth?.base_source_id ?? source.source_id
+	const baseID = source.synth?.base_source_id ?? source.source_id
 
 	return {
 		...source,
 		raw: newRaw,
 		components: newComponents,
 		source_id: `${source.source_id}+${method}`,
-		synth: { method, base_source_id: baseId },
+		synth: { method, base_source_id: baseID },
 	}
 }
 
@@ -800,10 +800,10 @@ export function composeAdversarialRow(
 		return { kind: "quarantined", row: { row: address, reason: "venue-no-tokens" } }
 	}
 
-	const venueLabels: BioLabel[] = venueTokens.map((_, i) => (i === 0 ? "B-venue" : "I-venue"))
+	const venueLabels: BIOLabel[] = venueTokens.map((_, i) => (i === 0 ? "B-venue" : "I-venue"))
 
 	const tokens: string[] = [...venueTokens.map((t) => t.text), ...addressAligned.row.tokens]
-	const labels: BioLabel[] = [...venueLabels, ...addressAligned.row.labels]
+	const labels: BIOLabel[] = [...venueLabels, ...addressAligned.row.labels]
 
 	const composedRaw = `${venueTrimmed}${separator}${address.raw}`
 	const composedComponents = {
@@ -829,7 +829,7 @@ export function composeAdversarialRow(
 		...addrTags.map((tag, i) => ({ tag, start: addrStarts[i]! + offset, end: addrEnds[i]! + offset })),
 	]
 
-	const baseSourceId = address.synth?.base_source_id ?? address.source_id
+	const baseSourceID = address.synth?.base_source_id ?? address.source_id
 	const method = `compose:${options.pattern}`
 
 	const composed: LabeledRow = {
@@ -841,7 +841,7 @@ export function composeAdversarialRow(
 		source_id: `${address.source_id}+${method}`,
 		corpus_version: address.corpus_version,
 		license: address.license,
-		synth: { method, base_source_id: baseSourceId },
+		synth: { method, base_source_id: baseSourceID },
 		tokens,
 		labels,
 		span_starts: spans.map((s) => s.start),

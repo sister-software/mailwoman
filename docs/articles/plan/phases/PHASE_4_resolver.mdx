@@ -60,7 +60,7 @@ Sub-phases 4.2 and 4.3 will each get their own plan doc (`PHASE_4_2_*.md`, `PHAS
    - Update the file header: drop "reserved for Phase 4" wording; replace with the actual semantics.
 
 5. **JSON + tuple projections — explicitly unchanged**
-   - `decodeAsJson` stays libpostal-compat (shape: `{ tag: value }`). No provenance.
+   - `decodeAsJSON` stays libpostal-compat (shape: `{ tag: value }`). No provenance.
    - `decodeAsTuples` stays `[tag, value][]`. No provenance.
    - Rationale documented in the file headers.
 
@@ -72,14 +72,14 @@ Sub-phases 4.2 and 4.3 will each get their own plan doc (`PHASE_4_2_*.md`, `PHAS
 
 - All existing decoder tests pass unchanged.
 - New provenance test passes for both decoder entry points.
-- A `decodeAsXml` call on a proposal-derived tree emits `<locality src="rule:whos_on_first" ...>Paris</locality>`-style output.
+- A `decodeAsXML` call on a proposal-derived tree emits `<locality src="rule:whos_on_first" ...>Paris</locality>`-style output.
 
 ### Out of scope for 4.1
 
 - Resolver lookup (4.3).
 - Lat/lon attrs (4.3).
 - WOF SQLite loader (4.2).
-- `decodeAsJson` shape change (deferred indefinitely; libpostal compat is essential).
+- `decodeAsJSON` shape change (deferred indefinitely; libpostal compat is essential).
 
 ## Phase 4.2 — WOF SQLite loader (sketch)
 

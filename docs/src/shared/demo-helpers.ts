@@ -19,8 +19,8 @@ export interface ReleaseInfo {
 	modelSize: string
 	tokenizerVocab: number
 	steps: number
-	hasFst: boolean
-	hasWofDb: boolean
+	hasFST: boolean
+	hasWOFDb: boolean
 	hasAnchor?: boolean
 	hasPolygons?: boolean
 }

@@ -51,5 +51,5 @@ export interface NormalizeOpts {
 	expandAbbreviations?: boolean
 
 	/** Skip Unicode NFC. Only use for debugging — production callers should leave on. */
-	skipNfc?: boolean
+	skipNFC?: boolean
 }

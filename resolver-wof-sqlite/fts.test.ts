@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the FTS5 build helpers used by both `WofSqlitePlaceLookup` and the
+ *   Tests for the FTS5 build helpers used by both `WOFSqlitePlaceLookup` and the
  *   `mailwoman-wof-build-fts` CLI.
  */
 
@@ -13,9 +13,9 @@ import { describe, expect, test } from "vitest"
 import {
 	ALIAS_SEPARATOR,
 	aliasBagExactMatch,
-	buildPlaceSearchFts,
+	buildPlaceSearchFTS,
 	PLACE_SEARCH_TABLE,
-	placeSearchFtsExists,
+	placeSearchFTSExists,
 } from "./fts.js"
 
 function buildBaseSchema(): DatabaseSync {
@@ -55,25 +55,25 @@ function buildBaseSchema(): DatabaseSync {
 	return db
 }
 
-describe("buildPlaceSearchFts", () => {
+describe("buildPlaceSearchFTS", () => {
 	test("builds the place_search virtual table from a fresh DB", () => {
 		const db = buildBaseSchema()
-		expect(placeSearchFtsExists(db)).toBe(false)
+		expect(placeSearchFTSExists(db)).toBe(false)
 
-		const result = buildPlaceSearchFts(db)
+		const result = buildPlaceSearchFTS(db)
 		expect(result.created).toBe(true)
 		expect(result.indexedRows).toBe(3)
 		expect(result.durationMs).toBeGreaterThanOrEqual(0)
-		expect(placeSearchFtsExists(db)).toBe(true)
+		expect(placeSearchFTSExists(db)).toBe(true)
 
 		db.close()
 	})
 
 	test("is a no-op when the table already exists and drop is false", () => {
 		const db = buildBaseSchema()
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 
-		const result = buildPlaceSearchFts(db)
+		const result = buildPlaceSearchFTS(db)
 		expect(result.created).toBe(false)
 		expect(result.indexedRows).toBe(3)
 
@@ -82,7 +82,7 @@ describe("buildPlaceSearchFts", () => {
 
 	test("rebuilds when drop is true", () => {
 		const db = buildBaseSchema()
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 
 		// Add a new place but don't reindex yet — count should still be the original 3.
 		db.exec(`
@@ -90,7 +90,7 @@ describe("buildPlaceSearchFts", () => {
 		`)
 		expect((db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_SEARCH_TABLE}`).get() as { n: number }).n).toBe(3)
 
-		const result = buildPlaceSearchFts(db, { drop: true })
+		const result = buildPlaceSearchFTS(db, { drop: true })
 		expect(result.created).toBe(true)
 		expect(result.indexedRows).toBe(4)
 
@@ -99,7 +99,7 @@ describe("buildPlaceSearchFts", () => {
 
 	test("concatenates alt_names from the names table into the FTS document", () => {
 		const db = buildBaseSchema()
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 
 		const row = db.prepare(`SELECT name, alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 1`).get() as {
 			name: string
@@ -114,7 +114,7 @@ describe("buildPlaceSearchFts", () => {
 
 	test("joins aliases with the boundary-preserving ALIAS_SEPARATOR token (#523)", () => {
 		const db = buildBaseSchema()
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 
 		const row = db.prepare(`SELECT alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 1`).get() as {
 			alt_names: string
@@ -137,7 +137,7 @@ describe("buildPlaceSearchFts", () => {
 			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'York');
 			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'New City');
 		`)
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 
 		const match = (q: string): number[] =>
 			(
@@ -159,7 +159,7 @@ describe("buildPlaceSearchFts", () => {
 			INSERT INTO spr VALUES (6, NULL, 'Honest Place', 'locality', 'US', 41.0, -81.0, 40.9, 41.1, -81.1, -80.9, -1, 0);
 		`)
 		db.prepare(`INSERT INTO names (id, language, name) VALUES (6, 'eng', ?)`).run(`Evil${ALIAS_SEPARATOR}Name`)
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 
 		const row = db.prepare(`SELECT alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 6`).get() as {
 			alt_names: string
@@ -174,7 +174,7 @@ describe("buildPlaceSearchFts", () => {
 
 	test("MATCH query works against the built index", () => {
 		const db = buildBaseSchema()
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 
 		const rows = db
 			.prepare(`SELECT wof_id FROM ${PLACE_SEARCH_TABLE} WHERE ${PLACE_SEARCH_TABLE} MATCH ?`)
@@ -194,16 +194,16 @@ describe("buildPlaceSearchFts", () => {
 	test("invokes onProgress for each phase on a fresh build", () => {
 		const db = buildBaseSchema()
 		const phases: string[] = []
-		buildPlaceSearchFts(db, { onProgress: (phase) => phases.push(phase) })
+		buildPlaceSearchFTS(db, { onProgress: (phase) => phases.push(phase) })
 		expect(phases).toEqual(["checking", "creating", "populating", "creating-bbox", "populating-bbox", "done"])
 		db.close()
 	})
 
 	test("invokes onProgress with the dropping phase when --drop is used (twice — once per index)", () => {
 		const db = buildBaseSchema()
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 		const phases: string[] = []
-		buildPlaceSearchFts(db, { drop: true, onProgress: (phase) => phases.push(phase) })
+		buildPlaceSearchFTS(db, { drop: true, onProgress: (phase) => phases.push(phase) })
 		expect(phases).toEqual([
 			"checking",
 			"dropping", // place_search
@@ -220,7 +220,7 @@ describe("buildPlaceSearchFts", () => {
 	test("onProgress receives a detail string for the done phase", () => {
 		const db = buildBaseSchema()
 		let doneDetail: string | undefined
-		buildPlaceSearchFts(db, {
+		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
 				if (phase === "done") doneDetail = detail
 			},
@@ -232,7 +232,7 @@ describe("buildPlaceSearchFts", () => {
 
 	test("populates the R*Tree bbox table from spr.min_*/max_* columns", () => {
 		const db = buildBaseSchema()
-		buildPlaceSearchFts(db)
+		buildPlaceSearchFTS(db)
 		// Paris (id 1) bbox should be present and queryable.
 		const hits = db
 			.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ? AND min_lon <= ? AND max_lon >= ?`)
@@ -254,7 +254,7 @@ describe("buildPlaceSearchFts", () => {
 				1, 0  /* is_current = 1 (legacy), is_deprecated = 0 */
 			);
 		`)
-		const result = buildPlaceSearchFts(db)
+		const result = buildPlaceSearchFTS(db)
 		expect(result.indexedRows).toBe(4) // 3 modern + 1 legacy
 		// MATCH against the new row to confirm it's actually queryable.
 		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Legacy Place") as
@@ -279,7 +279,7 @@ describe("buildPlaceSearchFts", () => {
 				0, 0
 			);
 		`)
-		const result = buildPlaceSearchFts(db)
+		const result = buildPlaceSearchFTS(db)
 		expect(result.indexedRows).toBe(3) // the phantom is excluded
 		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Phantom") as
 			| { wof_id: number }
@@ -291,7 +291,7 @@ describe("buildPlaceSearchFts", () => {
 
 describe("aliasBagExactMatch", () => {
 	const SEP = ALIAS_SEPARATOR
-	// What buildPlaceSearchFts emits for aliases ["York", "New City"] (note the trailing marker).
+	// What buildPlaceSearchFTS emits for aliases ["York", "New City"] (note the trailing marker).
 	const separated = `York ${SEP} New City ${SEP}`
 
 	test("separated bag: per-alias equality, case/whitespace-insensitive", () => {
@@ -318,17 +318,17 @@ describe("aliasBagExactMatch", () => {
 	})
 })
 
-describe("placeSearchFtsExists", () => {
+describe("placeSearchFTSExists", () => {
 	test("returns false when the table is absent", () => {
 		const db = buildBaseSchema()
-		expect(placeSearchFtsExists(db)).toBe(false)
+		expect(placeSearchFTSExists(db)).toBe(false)
 		db.close()
 	})
 
 	test("returns true once the table is built", () => {
 		const db = buildBaseSchema()
-		buildPlaceSearchFts(db)
-		expect(placeSearchFtsExists(db)).toBe(true)
+		buildPlaceSearchFTS(db)
+		expect(placeSearchFTSExists(db)).toBe(true)
 		db.close()
 	})
 })

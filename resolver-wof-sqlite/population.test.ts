@@ -11,8 +11,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildPlaceSearchFts } from "./fts.js"
-import { WofSqlitePlaceLookup } from "./lookup.js"
+import { buildPlaceSearchFTS } from "./fts.js"
+import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 interface FixturePlace {
 	id: number
@@ -34,7 +34,7 @@ const FIXTURE: FixturePlace[] = [
 	{ id: 1100, name: "Tokyo", country: "JP", lat: 35.68, lon: 139.69, population: 13_500_000 },
 ]
 
-function buildFixtureDb(): DatabaseSync {
+function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`
 		CREATE TABLE spr (
@@ -65,21 +65,21 @@ function buildFixtureDb(): DatabaseSync {
 	return db
 }
 
-let lookup: WofSqlitePlaceLookup
+let lookup: WOFSqlitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WofSqlitePlaceLookup({ database: buildFixtureDb(), buildFts: true })
+	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true })
 })
 
 afterEach(() => {
 	lookup.close()
 })
 
-describe("buildPlaceSearchFts — done-phase summary", () => {
+describe("buildPlaceSearchFTS — done-phase summary", () => {
 	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
-		const db = buildFixtureDb()
+		const db = buildFixtureDB()
 		let doneDetail: string | undefined
-		buildPlaceSearchFts(db, {
+		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
 				if (phase === "done") doneDetail = detail
 			},
@@ -114,7 +114,7 @@ describe("findPlace — population boost", () => {
 	})
 
 	test("the population boost can be tuned to 0 — falls back to BM25-only ordering", async () => {
-		const dbg = new WofSqlitePlaceLookup({ database: buildFixtureDb(), buildFts: true }, { populationBoost: 0 })
+		const dbg = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true }, { populationBoost: 0 })
 
 		try {
 			const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
@@ -142,10 +142,10 @@ describe("findPlace — population boost", () => {
 
 	test("DB without place_population table → no boost, lookup still works", async () => {
 		// Build the fixture but drop the aux table before opening the lookup.
-		const db = buildFixtureDb()
-		buildPlaceSearchFts(db)
+		const db = buildFixtureDB()
+		buildPlaceSearchFTS(db)
 		db.exec(`DROP TABLE place_population`)
-		const fallback = new WofSqlitePlaceLookup({ database: db })
+		const fallback = new WOFSqlitePlaceLookup({ database: db })
 
 		try {
 			const candidates = await fallback.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })

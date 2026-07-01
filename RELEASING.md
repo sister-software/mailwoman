@@ -45,6 +45,25 @@ This will:
 
 Inspect the output. If it looks wrong, fix and re-run.
 
+## Pre-ship gate — the Gauntlet
+
+Before shipping a model (or any change that can move a coordinate), run the full-pipeline integration gate.
+It grades the ASSEMBLED output (coordinate + tier), not per-tag F1 — the lesson #566 paid for once.
+
+```bash
+# Self-check on the shipped default (regression + metamorphic):
+node scripts/eval/gauntlet/run.ts
+
+# Promote gate for a candidate model (adds the held-out candidate-vs-prod z-test):
+node scripts/eval/gauntlet/run.ts --candidate ./out/<version>/model.onnx [--source us]
+```
+
+A non-zero exit blocks the ship. The three layers (`scripts/eval/gauntlet/`): **regression** (the curated
+executable bug log — a fixed bug must stay fixed; gates `status=pass`, tracks `known_fail`/`improvement_target`),
+**metamorphic** (un-gameable INV/DIR surface-form relations; gates minus tracked xfails), and **held-out**
+(a fresh BAN/FDIC draw, candidate-vs-prod z-test — the generalization blocker, wins on conflict). Not yet a
+`release-it` hook — wire it into the release flow once the candidate path is standardized.
+
 ## Real release
 
 ```bash

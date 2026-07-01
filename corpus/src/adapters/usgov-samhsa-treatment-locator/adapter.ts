@@ -31,7 +31,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -51,7 +51,7 @@ interface SamhsaSiteRow {
 	city: string
 	state: string
 	zip: string
-	/** Optional. Falls back to `stableSourceId` derived from components when missing. */
+	/** Optional. Falls back to `stableSourceID` derived from components when missing. */
 	frid?: string
 }
 
@@ -183,10 +183,10 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 
 					if (Object.keys(aligned).length === 0) continue
 
-					const frId = (record.frid ?? "").trim()
-					const sourceId = frId
-						? `${USGOV_SAMHSA_ADAPTER_ID}-${frId}`
-						: stableSourceId(USGOV_SAMHSA_ADAPTER_ID, aligned)
+					const frID = (record.frid ?? "").trim()
+					const sourceID = frID
+						? `${USGOV_SAMHSA_ADAPTER_ID}-${frID}`
+						: stableSourceID(USGOV_SAMHSA_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
@@ -194,7 +194,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 						country: "US",
 						locale: "en-US",
 						source: USGOV_SAMHSA_ADAPTER_ID,
-						source_id: sourceId,
+						source_id: sourceID,
 						corpus_version: "",
 						license: USGOV_SAMHSA_DEFAULT_LICENSE,
 					}

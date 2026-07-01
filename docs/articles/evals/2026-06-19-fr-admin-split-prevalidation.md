@@ -9,7 +9,7 @@ the v1.7.0 trap was a label change the resolver ignored. So this is the falsific
 ## Method
 
 For each sampled FR commune (truth = its own WOF centroid), resolve three parse states through the
-**same resolver the geocoder ships** (`createWofResolver` over `admin-global-priority.db`,
+**same resolver the geocoder ships** (`createWOFResolver` over `admin-global-priority.db`,
 `defaultCountry: FR`), and measure great-circle error to the truth centroid:
 
 - **dropped** `{locality:[commune]}` — the model's observed "région → null" failure

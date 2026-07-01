@@ -1,14 +1,14 @@
 import { existsSync, readFileSync } from "node:fs"
 
 // Country homograph scorer — the TRUE baseline for the model-first country lever.
-// Measures country/region/locality P/R/F1 (unfolded decodeAsJson) on the hard homograph eval,
+// Measures country/region/locality P/R/F1 (unfolded decodeAsJSON) on the hard homograph eval,
 // PLUS the over-fire confusion: how often a gold region/locality span is mistagged as `country`
 // (the "trailing token = country" failure), and how often gold country is missed.
 // Usage: node --experimental-strip-types scripts/eval/score-country-homograph.ts --model <onnx> [--file <jsonl>]
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 import { arg } from "../lib/cli-args.ts"
@@ -23,7 +23,7 @@ const file = arg("file", "data/eval/external/country-homograph-real.jsonl")!
 const TAGS = ["country", "region", "locality"] as const
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("model")!)])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(arg("model")!)])
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
@@ -52,7 +52,7 @@ const overfireCases: string[] = []
 const missedCases: string[] = []
 
 for (const row of rows) {
-	const got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
+	const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
 	const exp = row.components as Record<string, string>
 
 	for (const t of TAGS) {

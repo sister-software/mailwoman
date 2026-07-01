@@ -101,7 +101,7 @@ not just unit-tested — the gated re-measure happened this shift:
 - **#387 → promote `cityStateFallback` to default-on (recommended, your call).** Regression check is clean:
   measured DE Berlin PIP 36.3→80.9% (+44.6pp), and ON-vs-OFF is byte-identical on US (0/10000) and FR
   (0/3000), +7 pure improvements on NL (Dutch province-capitals Utrecht/Groningen). Serializers render the
-  synthesized node fine (`decodeAsJson` → `…,"locality":"Berlin"`). Only un-done check is the demo
+  synthesized node fine (`decodeAsJSON` → `…,"locality":"Berlin"`). Only un-done check is the demo
   highlighting (your verify domain). Then it's a one-line default flip in `resolve.ts`.
 - **#387 residual (~12.5% Berlin) is a PARSER bug, not the resolver:** the model mangles `Straußstraße`→
   `Strau`+`straße` and drops both Berlins (no region to anchor on). A distinct ß / compound-street

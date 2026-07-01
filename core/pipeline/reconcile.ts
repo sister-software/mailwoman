@@ -187,7 +187,7 @@ interface Beam {
  * Joint-decode the best parse tree from Stage 2.7 phrase proposals, Stage 3 classifier top-k, and Stage 6 resolver
  * candidates. See file header for the scoring formula.
  *
- * The result tree's roots are the winning `(span, tag, place)` triples in source order. Each node's `placeId`, `lat`,
+ * The result tree's roots are the winning `(span, tag, place)` triples in source order. Each node's `placeID`, `lat`,
  * `lon` come from the chosen resolver candidate; `confidence` reflects the per- factor score for that slot. `runnersUp`
  * are the next-best parses for caller inspection.
  *
@@ -477,12 +477,12 @@ function buildTree(beam: Beam, raw: string): AddressTree {
 			confidence: slot.classifierScore * slot.phraseConf,
 			children: [],
 			source: "reconcile",
-			sourceId: "reconcile:stage-5-joint",
+			sourceID: "reconcile:stage-5-joint",
 			...(slot.place
 				? {
 						lat: slot.place.lat,
 						lon: slot.place.lon,
-						placeId: `${placeIdPrefix(slot.place)}:${slot.place.id}`,
+						placeID: `${placeIDPrefix(slot.place)}:${slot.place.id}`,
 					}
 				: {}),
 		}))
@@ -499,7 +499,7 @@ function emptyParseTree(raw: string): ParseTree {
 	}
 }
 
-function placeIdPrefix(place: ResolvedPlace): string {
+function placeIDPrefix(place: ResolvedPlace): string {
 	// Mirror the convention used by @mailwoman/core/resolver-wof-sqlite (`wof:<id>`). Resolver
 	// backends that don't carry an implicit vendor in `id` get a neutral `place:` prefix.
 	return typeof place.id === "number" ? "wof" : "place"

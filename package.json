@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/universe",
-	"version": "4.16.2",
+	"version": "5.0.0",
 	"private": true,
 	"description": "Mailwoman monorepo workspace root.",
 	"license": "AGPL-3.0-only",
@@ -27,6 +27,7 @@
 		"resolver",
 		"spatial",
 		"tiger",
+		"osm",
 		"cartographer",
 		"codex",
 		"classifiers",
@@ -61,12 +62,14 @@
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
 		"docs:build": "yarn workspace @mailwoman/docs build",
-		"lint": "run-s lint:oxlint lint:oxfmt",
+		"lint": "run-s lint:oxlint lint:oxfmt lint:python",
 		"lint:oxlint": "oxlint",
 		"lint:oxfmt": "oxfmt --check .",
-		"lint:fix": "run-s fix:oxlint format",
+		"lint:python": "uvx ruff@0.15.20 check corpus-python && uvx ruff@0.15.20 format --check corpus-python && python3 corpus-python/scripts/verify_toolchain.py",
+		"lint:fix": "run-s fix:oxlint format fix:python",
 		"fix:oxlint": "oxlint --fix",
 		"format": "oxfmt .",
+		"fix:python": "uvx ruff@0.15.20 check --fix corpus-python && uvx ruff@0.15.20 format corpus-python",
 		"prepare": "husky",
 		"release": "release-it",
 		"test": "vitest",
@@ -100,14 +103,16 @@
 		"oxlint": "1.71.0",
 		"react": "^19.2.7",
 		"release-it": "^19.2.4",
-		"spliterator": "^2.2.1",
+		"spliterator": "^3.1.0",
 		"tap-difflet": "^0.7.2",
 		"typescript": "^6.0.3",
 		"vitest": "3.2.6",
 		"zx": "^8.8.5"
 	},
 	"resolutions": {
-		"@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch"
+		"@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch",
+		"http-proxy-middleware@^2.0.9": "2.0.10",
+		"undici": "^6.24.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

@@ -14,9 +14,9 @@ import { readFileSync } from "node:fs"
  *     --base out/v180/model.onnx --cand out/v190-int8/model.onnx \
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 
 import { arg } from "../lib/cli-args.ts"
 
@@ -34,7 +34,7 @@ async function main() {
 		.slice(0, n)
 		.map((l) => JSON.parse(l))
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const mk = (m: string) =>
 		createScorer({
 			modelPath: m,
@@ -46,14 +46,14 @@ async function main() {
 		})
 	const base = await mk(arg("base"))
 	const cand = await mk(arg("cand"))
-	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: WOF }) as never)
+	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: WOF }) as never)
 	const opts = { defaultCountry: cc }
 	const didResolve = async (tree: unknown): Promise<boolean> => {
 		const r = await resolver.resolveTree(tree as never, opts)
-		const has = (n: { placeId?: string; children: unknown[] }): boolean =>
-			!!n.placeId?.startsWith("wof:") || (n.children as { placeId?: string; children: unknown[] }[]).some(has)
+		const has = (n: { placeID?: string; children: unknown[] }): boolean =>
+			!!n.placeID?.startsWith("wof:") || (n.children as { placeID?: string; children: unknown[] }[]).some(has)
 
-		return (r.roots as { placeId?: string; children: unknown[] }[]).some(has)
+		return (r.roots as { placeID?: string; children: unknown[] }[]).some(has)
 	}
 
 	let diff = 0,
@@ -64,8 +64,8 @@ async function main() {
 	for (const row of rows) {
 		const bt = await base.parse(row.raw, { postcodeRepair: true })
 		const ct = await cand.parse(row.raw, { postcodeRepair: true })
-		const bl = (decodeAsJson(bt) as Record<string, string>).locality ?? ""
-		const cl = (decodeAsJson(ct) as Record<string, string>).locality ?? ""
+		const bl = (decodeAsJSON(bt) as Record<string, string>).locality ?? ""
+		const cl = (decodeAsJSON(ct) as Record<string, string>).locality ?? ""
 		const br = await didResolve(bt)
 		const cr = await didResolve(ct)
 

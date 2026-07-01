@@ -16,7 +16,7 @@ import { existsSync, readFileSync } from "node:fs"
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -56,9 +56,9 @@ function walk(tree: AddressTree): { best: { lat: number; lon: number; placetype:
 	let best: { lat: number; lon: number; placetype: string } | null = null
 	const nodes: NodeInfo[] = []
 	const visit = (n: AddressNode): void => {
-		const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
+		const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 		const resolved = !!(
-			n.placeId?.startsWith("wof:") &&
+			n.placeID?.startsWith("wof:") &&
 			n.lat !== undefined &&
 			n.lon !== undefined &&
 			(n.lat !== 0 || n.lon !== 0)
@@ -110,9 +110,9 @@ function classify(nodes: NodeInfo[], best: { placetype: string } | null, dist: n
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WofCandidateTableLookup({ databasePath: CAND })
-	const resolver = createWofResolver(lookup as never)
+	const { WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const lookup = new WOFCandidateTableLookup({ databasePath: CAND })
+	const resolver = createWOFResolver(lookup as never)
 	const model = await createScorer({
 		modelPath: MODEL,
 		tokenizerPath: TOK,

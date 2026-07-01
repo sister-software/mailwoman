@@ -9,16 +9,16 @@
 
 import { readFileSync } from "node:fs"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
+const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([
 	MailwomanTokenizer.loadFromFile(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")),
-	OnnxRunner.create(dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")),
+	ONNXRunner.create(dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")),
 ])
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 
@@ -35,8 +35,8 @@ let titleLoc = 0
 
 for (const caps of samples) {
 	const tc = title(caps)
-	const recCaps = decodeAsJson(await neural.parse(caps, { postcodeRepair: true })) as Record<string, string>
-	const recTitle = decodeAsJson(await neural.parse(tc, { postcodeRepair: true })) as Record<string, string>
+	const recCaps = decodeAsJSON(await neural.parse(caps, { postcodeRepair: true })) as Record<string, string>
+	const recTitle = decodeAsJSON(await neural.parse(tc, { postcodeRepair: true })) as Record<string, string>
 	const wantLoc = caps.split(",")[1]!.trim()
 	const capsOk = (recCaps.locality ?? "").toUpperCase() === wantLoc
 	const titleOk = (recTitle.locality ?? "").toUpperCase() === wantLoc

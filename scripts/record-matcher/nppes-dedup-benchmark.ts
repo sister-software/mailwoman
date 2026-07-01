@@ -29,7 +29,7 @@ import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"
 import { pathToFileURL } from "node:url"
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { haversineKm, type GBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -43,7 +43,7 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { latLngToCell } from "h3-js"
 
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
@@ -68,6 +68,11 @@ const LEGACY = process.argv.includes("--legacy-join")
 // Optional A/B: a path to a trained dedup-gbt TS module (exports DEDUP_GBT_MODEL + DEDUP_GBT_META) to
 // score alongside the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
 const CANDIDATE = arg("candidate", "")
+// `--parallel-geocode`: geocode the sample across a worker pool (spliterator.geocodeStream) instead of the
+// serial in-process seam. Heavy per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2
+// workers, coordinates identical. Concurrency low on purpose (geocode is I/O-bound). `--geo-concurrency N` tunes.
+const PARALLEL_GEOCODE = process.argv.includes("--parallel-geocode")
+const GEO_CONC = Number(arg("geo-concurrency", "2"))
 
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
@@ -138,7 +143,7 @@ function orgJaccard(a: Set<string>, b: Set<string>): number {
 const ORG_TAU = 0.7 // gold-set threshold
 
 /**
- * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityId` the site-level entity-level
+ * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityID` the site-level entity-level
  * truth (subpart-collapsed).
  */
 interface MessyRow {
@@ -147,7 +152,7 @@ interface MessyRow {
 	org: string
 	address: string
 	auth: string
-	entityId: string
+	entityID: string
 }
 
 async function main(): Promise<void> {
@@ -218,15 +223,15 @@ async function main(): Promise<void> {
 
 				if (org) npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
 				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice, auth, entityId: eid(practice) })
+				rows.push({ npi, name: primaryName, org, address: practice, auth, entityID: eid(practice) })
 
 				// primary
 				for (const alt of altNames.get(npi)!)
-					rows.push({ npi, name: alt, org: alt, address: practice, auth, entityId: eid(practice) }) // name drift
+					rows.push({ npi, name: alt, org: alt, address: practice, auth, entityID: eid(practice) }) // name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice)
-					rows.push({ npi, name: primaryName, org, address: mailing, auth, entityId: eid(mailing) }) // address variation
+					rows.push({ npi, name: primaryName, org, address: mailing, auth, entityID: eid(mailing) }) // address variation
 			}
 		}
 	}
@@ -246,37 +251,6 @@ async function main(): Promise<void> {
 	// (mirrors scripts/eval/eval-matrix.ts / compare-parsers.ts). modelCardPath is MANDATORY when modelPath
 	// is set — without it a STAGE3 model silently mis-decodes into empty parses (neural/weights.ts). Bare
 	// call (no --model) keeps the default dev-weights behavior.
-	const classifier = await NeuralAddressClassifier.loadFromWeights({
-		locale: "en-US",
-		...(arg("model") ? { modelPath: arg("model") } : {}),
-		...(arg("tokenizer") ? { tokenizerPath: arg("tokenizer") } : {}),
-		...(arg("model-card") ? { modelCardPath: arg("model-card") } : {}),
-	})
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
-
-	let geo = 0
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJson(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: async (raw: string) => {
-			const g = await geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-				normalizeCase: !LEGACY,
-			})
-
-			if (g.lat !== null) geo++
-
-			return g
-		},
-		country: "US",
-	})
-
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -284,15 +258,71 @@ async function main(): Promise<void> {
 		address: "address",
 		// `entityTruth` rides as an attribute purely for scoring (NOT a discriminator → never used in
 		// matching); it carries the site-level entity-level label alongside the NPI (record.id).
-		attributes: { authorizedOfficial: "auth", entityTruth: "entityId" },
+		attributes: { authorizedOfficial: "auth", entityTruth: "entityID" },
 		source: "nppes",
 	}
-	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
-		geocodeAddress: seam,
-		addressSeparator: LEGACY ? " " : ", ",
-	})
-	shardProvider.close()
-	lookup.close()
+
+	let geo = 0
+	let records: SourceRecord[]
+
+	if (PARALLEL_GEOCODE) {
+		// Threaded geocode: normalize on the main thread, then hand records to a worker pool that each rebuild the
+		// classifier/resolver/shards from config. `address` is a single pre-joined column here, so `--legacy-join`
+		// (a separator toggle) is a no-op for this path; `normalizeCase` follows the worker default (on).
+		const { geocodeStream } = await import("../../mailwoman/out/geocode-stream.js")
+		const normalized = await ingestRows(rows as unknown as Record<string, string>[], mapping)
+		const order = new Map(normalized.map((r, i) => [r.id, i]))
+		const geocoded: SourceRecord[] = []
+
+		for await (const rec of geocodeStream(normalized, {
+			mapping,
+			geocode: { wofDBPath: WOF, dataRoot: DATA_ROOT, locale: "en-US", country: "US" },
+			concurrency: GEO_CONC,
+		})) {
+			geocoded.push(rec)
+
+			if (rec.address?.geocode) geo++
+		}
+		// geocodeStream yields in completion order; restore input order so downstream cluster tie-breaks are byte-stable.
+		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+		records = geocoded
+	} else {
+		const classifier = await NeuralAddressClassifier.loadFromWeights({
+			locale: "en-US",
+			...(arg("model") ? { modelPath: arg("model") } : {}),
+			...(arg("tokenizer") ? { tokenizerPath: arg("tokenizer") } : {}),
+			...(arg("model-card") ? { modelCardPath: arg("model-card") } : {}),
+		})
+		const mod = await import("@mailwoman/resolver-wof-sqlite")
+		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
+		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
+		const shardProvider = new ShardProvider(mod, DATA_ROOT)
+		const seam = geocodeAddressVia({
+			parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
+			geocode: async (raw: string) => {
+				const g = await geocodeAddress(raw, {
+					classifier,
+					resolver,
+					shards: shardProvider.for,
+					defaultCountry: "US",
+					placeCountry: false,
+					normalizeCase: !LEGACY,
+				})
+
+				if (g.lat !== null) geo++
+
+				return g
+			},
+			country: "US",
+		})
+
+		records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
+			geocodeAddress: seam,
+			addressSeparator: LEGACY ? " " : ", ",
+		})
+		shardProvider.close()
+		lookup.close()
+	}
 	console.error(`    geocoded ${geo}/${rows.length} (${((100 * geo) / rows.length).toFixed(1)}%)`)
 
 	// --- Phase E: score recovered clusters vs the NPI grouping (record.id = the held-out NPI). ---
@@ -322,23 +352,23 @@ async function main(): Promise<void> {
 		let recordsInOverMerged = 0
 		let maxNpisFused = 0
 		entities.forEach((e, ci) => {
-			const byNpi = new Map<string, number>()
+			const byNPI = new Map<string, number>()
 
 			for (const rec of e.records) {
 				const lbl = labelOf(rec)
-				byNpi.set(lbl, (byNpi.get(lbl) ?? 0) + 1)
+				byNPI.set(lbl, (byNPI.get(lbl) ?? 0) + 1)
 			}
 			sumCluster += choose2(e.records.length)
 
 			if (e.records.length === 1) singletons++
 
-			if (byNpi.size > 1) {
+			if (byNPI.size > 1) {
 				overMergedClusters++
 				recordsInOverMerged += e.records.length
-				maxNpisFused = Math.max(maxNpisFused, byNpi.size)
+				maxNpisFused = Math.max(maxNpisFused, byNPI.size)
 			}
 
-			for (const [npi, n] of byNpi) {
+			for (const [npi, n] of byNPI) {
 				sumCK += choose2(n)
 				npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + n)
 			}
@@ -656,11 +686,11 @@ async function main(): Promise<void> {
 	// and the shipped default (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
 	const entityCount = new Set(records.map((r) => entityLabel(r))).size
 	const orgCount = new Set(records.map((r) => orgNameLabel(r))).size
-	const fsNpi = bestLever.score
+	const fsNPI = bestLever.score
 	const fsEntity = scoreEntities(bestLever.res.entities, entityLabel)
 	const fsOrg = scoreEntities(bestLever.res.entities, orgNameLabel)
 	const gbtRes = resolveEntities(records, { addressFrequency, trainEM: TRAIN_EM }) // GBT default-on (production)
-	const gbtNpi = scoreEntities(gbtRes.entities, npiLabel)
+	const gbtNPI = scoreEntities(gbtRes.entities, npiLabel)
 	const gbtEntity = scoreEntities(gbtRes.entities, entityLabel)
 	const gbtOrg = scoreEntities(gbtRes.entities, orgNameLabel)
 	// Tier 2D: the coordinate-co-location org-name truth (tighter lower bound).
@@ -698,8 +728,8 @@ async function main(): Promise<void> {
 		)
 	}
 	console.error(
-		`    truth-grains — GBT NPI ${(100 * gbtNpi.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}% → org-name-coord ${(100 * gbtOrgCoord.f1).toFixed(1)}% → org-name-h3 ${(100 * gbtOrgH3.f1).toFixed(1)}% (res ${H3_RES}); ` +
-			`FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}% / org-coord ${(100 * fsOrgCoord.f1).toFixed(1)}%`
+		`    truth-grains — GBT NPI ${(100 * gbtNPI.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}% → org-name-coord ${(100 * gbtOrgCoord.f1).toFixed(1)}% → org-name-h3 ${(100 * gbtOrgH3.f1).toFixed(1)}% (res ${H3_RES}); ` +
+			`FS: NPI ${(100 * fsNPI.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}% / org-coord ${(100 * fsOrgCoord.f1).toFixed(1)}%`
 	)
 
 	const pct = (x: number) => (100 * x).toFixed(1)
@@ -717,9 +747,9 @@ async function main(): Promise<void> {
 	lines.push(
 		`**Headline — org-name truth (the honest grain):** the shipped ` +
 			`matcher resolves these records at **F1 ${pct(gbtOrg.f1)}%** against org-name entity-truth — not the NPI-level ` +
-			`${pct(gbtNpi.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
+			`${pct(gbtNPI.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
 			`correct co-located merges are scored as errors). Same clusters, three rulers: ` +
-			`**NPI ${pct(gbtNpi.f1)}% → site ${pct(gbtEntity.f1)}% → org-name ${pct(gbtOrg.f1)}%** ` +
+			`**NPI ${pct(gbtNPI.f1)}% → site ${pct(gbtEntity.f1)}% → org-name ${pct(gbtOrg.f1)}%** ` +
 			`(${kept.size} NPI → ${entityCount} site → ${orgCount} org-name classes); the climb is the yardstick getting honest, ` +
 			`not the model changing — gold-set validated (120/120 hard pairs = same org). Details in "Three truth grains" below.`
 	)
@@ -813,15 +843,15 @@ async function main(): Promise<void> {
 		lines.push(
 			`| ${label} | ${truth} | ${pct(s.precision)}% | ${pct(s.recall)}% | **${pct(s.f1)}%** | ${delta === undefined ? "—" : signed(100 * delta)} | ${s.ari.toFixed(3)} | ${s.overMergedClusters} |`
 		)
-	dualRow("FS full stack", "NPI", fsNpi)
-	dualRow("FS full stack", "site", fsEntity, fsEntity.f1 - fsNpi.f1)
-	dualRow("FS full stack", "**org-name**", fsOrg, fsOrg.f1 - fsNpi.f1)
-	dualRow("FS full stack", "org-name (coord)", fsOrgCoord, fsOrgCoord.f1 - fsNpi.f1)
-	dualRow("GBT (shipped default)", "NPI", gbtNpi)
-	dualRow("GBT (shipped default)", "site", gbtEntity, gbtEntity.f1 - gbtNpi.f1)
-	dualRow("GBT (shipped default)", "**org-name**", gbtOrg, gbtOrg.f1 - gbtNpi.f1)
-	dualRow("GBT (shipped default)", "**org-name (coord)**", gbtOrgCoord, gbtOrgCoord.f1 - gbtNpi.f1)
-	dualRow("GBT (shipped default)", `org-name (H3 res ${H3_RES})`, gbtOrgH3, gbtOrgH3.f1 - gbtNpi.f1)
+	dualRow("FS full stack", "NPI", fsNPI)
+	dualRow("FS full stack", "site", fsEntity, fsEntity.f1 - fsNPI.f1)
+	dualRow("FS full stack", "**org-name**", fsOrg, fsOrg.f1 - fsNPI.f1)
+	dualRow("FS full stack", "org-name (coord)", fsOrgCoord, fsOrgCoord.f1 - fsNPI.f1)
+	dualRow("GBT (shipped default)", "NPI", gbtNPI)
+	dualRow("GBT (shipped default)", "site", gbtEntity, gbtEntity.f1 - gbtNPI.f1)
+	dualRow("GBT (shipped default)", "**org-name**", gbtOrg, gbtOrg.f1 - gbtNPI.f1)
+	dualRow("GBT (shipped default)", "**org-name (coord)**", gbtOrgCoord, gbtOrgCoord.f1 - gbtNPI.f1)
+	dualRow("GBT (shipped default)", `org-name (H3 res ${H3_RES})`, gbtOrgH3, gbtOrgH3.f1 - gbtNPI.f1)
 
 	if (cand) {
 		dualRow(cand.label, "NPI", cand.npi)
@@ -829,9 +859,9 @@ async function main(): Promise<void> {
 	}
 	lines.push("")
 	lines.push(
-		`The F1 **climbs as the yardstick gets honest**: GBT **${pct(gbtNpi.f1)}% (NPI) → ${pct(gbtEntity.f1)}% (site) → ` +
-			`${pct(gbtOrg.f1)}% (org-name)**, the over-merge collapsing (${gbtNpi.overMergedClusters} → ${gbtOrg.overMergedClusters}) ` +
-			`and precision rising (${pct(gbtNpi.precision)}% → ${pct(gbtOrg.precision)}%). The clusters are IDENTICAL across the three ` +
+		`The F1 **climbs as the yardstick gets honest**: GBT **${pct(gbtNPI.f1)}% (NPI) → ${pct(gbtEntity.f1)}% (site) → ` +
+			`${pct(gbtOrg.f1)}% (org-name)**, the over-merge collapsing (${gbtNPI.overMergedClusters} → ${gbtOrg.overMergedClusters}) ` +
+			`and precision rising (${pct(gbtNPI.precision)}% → ${pct(gbtOrg.precision)}%). The clusters are IDENTICAL across the three ` +
 			`columns — the climb is purely the ruler ceasing to charge the matcher for the correct same-org merges the gold set proved ` +
 			`(\`2026-06-16-dedup-gold-set-tx120.md\`: 120/120 same org, 0 genuine over-merges).`
 	)
@@ -864,7 +894,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(
 		`**Takeaways:** (1) The dedup model's REAL quality is the **org-name F1 ~${pct(gbtOrg.f1)}%**, not the NPI-level ` +
-			`${pct(gbtNpi.f1)}% — the difference was NPI over-segmentation, not model error. (2) The #625 lever was the YARDSTICK, ` +
+			`${pct(gbtNPI.f1)}% — the difference was NPI over-segmentation, not model error. (2) The #625 lever was the YARDSTICK, ` +
 			`not the scorer: the corroboration-feature experiment (reverted) couldn't move precision because the over-merge was ` +
 			`mostly correct. (3) The remaining org-name over-merge (${gbtOrg.overMergedClusters} clusters) is the genuine frontier — ` +
 			`small, approaching the ceiling's ~1.6% irreducible (\`2026-06-16-dedup-ceiling.md\`). (4) Trust the large eval: a 50-NPI ` +

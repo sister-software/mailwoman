@@ -20,12 +20,12 @@ import { readFileSync, writeFileSync } from "node:fs"
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --default-country DE --out-json /tmp/joint-de.json
  */
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { createRuntimePipeline } from "mailwoman"
 
 function arg(name: string, fallback = ""): string {
@@ -96,15 +96,15 @@ async function main(): Promise<void> {
 	const card = JSON.parse(readFileSync(cardPath, "utf8"))
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(tokPath),
-		OnnxRunner.create(modelPath),
+		ONNXRunner.create(modelPath),
 	])
 	const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined
 	const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels, postcodeAnchorLookup })
 
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const wofPaths = wof.split(",").map((s) => s.trim())
-	const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
-	const resolver = createWofResolver(backend as never)
+	const backend = new WOFSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+	const resolver = createWOFResolver(backend as never)
 
 	const pipeline = createRuntimePipeline({ classifier, resolver })
 	const resolveOpts = dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}
@@ -143,7 +143,7 @@ async function main(): Promise<void> {
 
 			try {
 				const result = await pipeline(row.input, { forceJointReconcile, resolveOpts })
-				json = decodeAsJson(result.tree)
+				json = decodeAsJSON(result.tree)
 			} catch {
 				/* leave json empty → miss */
 			}

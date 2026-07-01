@@ -24,12 +24,12 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { dirname, basename as pathBasename, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { buildStreetMorphologyFst } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -46,7 +46,7 @@ interface Args {
 	modelPath: string
 	tokenizerPath: string
 	modelCardPath: string
-	adminFstPath?: string
+	adminFSTPath?: string
 	morphologyBinPath?: string
 	morphologyEnabled: boolean
 	goldenDir: string
@@ -79,7 +79,7 @@ function parseArgs(): Args {
 	let modelPath: string | undefined
 	let tokenizerPath: string | undefined
 	let modelCardPath: string | undefined
-	let adminFstPath: string | undefined
+	let adminFSTPath: string | undefined
 	let morphologyBinPath: string | undefined
 	let morphologyEnabled = true
 	let goldenDir: string | undefined
@@ -96,7 +96,7 @@ function parseArgs(): Args {
 		if (a === "--model" && args[i + 1]) modelPath = args[++i]
 		else if (a === "--tokenizer" && args[i + 1]) tokenizerPath = args[++i]
 		else if (a === "--model-card" && args[i + 1]) modelCardPath = args[++i]
-		else if (a === "--admin-fst" && args[i + 1]) adminFstPath = args[++i]
+		else if (a === "--admin-fst" && args[i + 1]) adminFSTPath = args[++i]
 		else if (a === "--morphology-bin" && args[i + 1]) morphologyBinPath = args[++i]
 		else if (a === "--no-morphology") morphologyEnabled = false
 		else if (a === "--golden" && args[i + 1]) goldenDir = args[++i]
@@ -119,7 +119,7 @@ function parseArgs(): Args {
 		modelPath,
 		tokenizerPath,
 		modelCardPath,
-		adminFstPath,
+		adminFSTPath,
 		morphologyBinPath,
 		morphologyEnabled,
 		goldenDir,
@@ -208,7 +208,7 @@ async function main() {
 	console.error("Model:        ", args.modelPath)
 	console.error("Tokenizer:    ", args.tokenizerPath)
 	console.error("Model card:   ", args.modelCardPath)
-	console.error("Admin FST:    ", args.adminFstPath ?? "(none)")
+	console.error("Admin FST:    ", args.adminFSTPath ?? "(none)")
 	console.error("Morphology:   ", args.morphologyEnabled ? "enabled" : "disabled")
 	console.error("Morphology src:", args.morphologyBinPath ?? "(build in-process)")
 	console.error("Golden:       ", args.goldenDir)
@@ -223,31 +223,31 @@ async function main() {
 	const labels: readonly string[] = modelCard.labels
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(args.tokenizerPath),
-		OnnxRunner.create(args.modelPath),
+		ONNXRunner.create(args.modelPath),
 	])
 	const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
 	// Admin FST (if provided).
-	let adminFst: ReturnType<typeof deserializeFst> | undefined
+	let adminFST: ReturnType<typeof deserializeFST> | undefined
 
-	if (args.adminFstPath) {
+	if (args.adminFSTPath) {
 		console.error("Loading admin FST...")
-		adminFst = deserializeFst(readFileSync(args.adminFstPath))
+		adminFST = deserializeFST(readFileSync(args.adminFSTPath))
 	}
 
 	// Morphology FST.
-	let morphologyFst: ReturnType<typeof deserializeFst> | undefined
+	let morphologyFST: ReturnType<typeof deserializeFST> | undefined
 
 	if (args.morphologyEnabled) {
 		if (args.morphologyBinPath) {
 			console.error("Loading morphology FST from", args.morphologyBinPath)
-			morphologyFst = deserializeFst(readFileSync(args.morphologyBinPath))
+			morphologyFST = deserializeFST(readFileSync(args.morphologyBinPath))
 		} else {
 			console.error("Building morphology FST in-process from libpostal dictionaries...")
-			const built = buildStreetMorphologyFst({
+			const built = buildStreetMorphologyFST({
 				dictionariesDir: resolve(REPO_ROOT, "core", "data", "libpostal", "dictionaries"),
 			})
-			morphologyFst = built.matcher
+			morphologyFST = built.matcher
 			console.error(`  ${built.canonicalCount} canonicals / ${built.variantCount} variants`)
 		}
 	}
@@ -292,18 +292,18 @@ async function main() {
 		morphologyOpts.dependentLocalityPenalty = args.dependentLocalityPenalty
 
 	const parseOpts = {
-		...(adminFst
+		...(adminFST
 			? {
-					fst: adminFst as unknown as Parameters<typeof classifier.parse>[1] extends infer T
+					fst: adminFST as unknown as Parameters<typeof classifier.parse>[1] extends infer T
 						? T extends { fst?: infer F }
 							? F
 							: never
 						: never,
 				}
 			: {}),
-		...(morphologyFst
+		...(morphologyFST
 			? {
-					fstStreetMorphology: morphologyFst as unknown as Parameters<typeof classifier.parse>[1] extends infer T
+					fstStreetMorphology: morphologyFST as unknown as Parameters<typeof classifier.parse>[1] extends infer T
 						? T extends { fstStreetMorphology?: infer F }
 							? F
 							: never
@@ -316,7 +316,7 @@ async function main() {
 	for (const entry of golden) {
 		total++
 		const tree = await classifier.parse(entry.raw, parseOpts as Parameters<typeof classifier.parse>[1])
-		const rawPredicted = decodeAsJson(tree)
+		const rawPredicted = decodeAsJSON(tree)
 		const predicted = args.stage3Fold ? foldStage3ToStage2(rawPredicted) : rawPredicted
 		const expected = entry.components
 
@@ -370,7 +370,7 @@ async function main() {
 	console.log("")
 	console.log(`**Model:** \`${args.modelPath}\``)
 	console.log(`**Tokenizer:** \`${args.tokenizerPath}\``)
-	console.log(`**Admin FST:** ${args.adminFstPath ?? "(none)"}`)
+	console.log(`**Admin FST:** ${args.adminFSTPath ?? "(none)"}`)
 	console.log(`**Morphology FST:** ${args.morphologyEnabled ? "enabled" : "disabled"}`)
 	console.log(`**Golden set:** ${total} entries`)
 	console.log(`**Time:** ${elapsed}s`)
@@ -406,7 +406,7 @@ async function main() {
 			golden_set: total,
 			exact_match_pct: (100 * exactMatch) / total,
 			model: args.modelPath,
-			admin_fst: args.adminFstPath ?? null,
+			admin_fst: args.adminFSTPath ?? null,
 			morphology_enabled: args.morphologyEnabled,
 			per_tag: Object.fromEntries(
 				sortedTags.map(([tag, s]) => [

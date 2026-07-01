@@ -4,18 +4,18 @@
 import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
-import { type AddressTree, decodeAsJson, decodeAsTuples, decodeAsXml, proposalsToTree } from "@mailwoman/core/decoder"
+import { type AddressTree, decodeAsJSON, decodeAsTuples, decodeAsXML, proposalsToTree } from "@mailwoman/core/decoder"
 import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
 import { InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
+import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
@@ -253,7 +253,7 @@ export function resolverDefaultCountry(
 	return candidateActive ? undefined : localeToCountry(options.locale)
 }
 
-function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
+function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
 
 	if (!path) {
@@ -267,9 +267,9 @@ function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	return path
 }
 
-async function tryBuildFst(
+async function tryBuildFST(
 	options: zod.infer<typeof ParseConfigSchema>
-): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FstMatcher | undefined> {
+): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined> {
 	const dbPath = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
 
 	if (!dbPath) return undefined
@@ -278,8 +278,8 @@ async function tryBuildFst(
 		const { existsSync } = await import("node:fs")
 
 		if (!existsSync(dbPath)) return undefined
-		const { buildFstFromWof } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
-		const { matcher } = buildFstFromWof({ dbPath })
+		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
+		const { matcher } = buildFSTFromWOF({ dbPath })
 
 		return matcher
 	} catch {
@@ -300,7 +300,7 @@ async function resolveWithCandidates(
 	const opts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
 
 	if (options.candidates !== undefined) opts.candidatesPerLookup = options.candidates + 1
-	const dc = resolverDefaultCountry(options, !!resolveCandidateDbPath())
+	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 	if (dc) opts.defaultCountry = dc
 
@@ -326,13 +326,13 @@ async function withResolver<T>(
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend (no WOF admin path required); else FTS.
 	const lookup = createResolverBackend(mod, {
-		wofPaths: resolveCandidateDbPath() ? "" : resolveWofPath(options),
+		wofPaths: resolveCandidateDBPath() ? "" : resolveWOFPath(options),
 	})
 
 	try {
 		// PlaceLookup is structurally compatible with ResolverBackend — the cast is just to satisfy
 		// the type, no runtime conversion.
-		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 
 		return await fn(resolver)
 	} finally {
@@ -347,13 +347,13 @@ function serializeTree(
 ): string {
 	switch (format) {
 		case "xml":
-			return decodeAsXml(tree, { includeAlternatives: opts.includeAlternatives })
+			return decodeAsXML(tree, { includeAlternatives: opts.includeAlternatives })
 		case "tuple":
 			return JSON.stringify(decodeAsTuples(tree), null, 2)
 		default:
 			// JSON: when --candidates is requested, dump the full AddressTree (carries alternatives
 			// on each node). Otherwise stay libpostal-compat (flat tag→value).
-			return opts.includeAlternatives ? JSON.stringify(tree, null, 2) : JSON.stringify(decodeAsJson(tree), null, 2)
+			return opts.includeAlternatives ? JSON.stringify(tree, null, 2) : JSON.stringify(decodeAsJSON(tree), null, 2)
 	}
 }
 
@@ -397,7 +397,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
-		const dc = resolverDefaultCountry(options, !!resolveCandidateDbPath())
+		const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 		if (dc) resolveOpts.defaultCountry = dc
 	}
@@ -411,7 +411,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
-			const fst = await tryBuildFst(options)
+			const fst = await tryBuildFST(options)
 			const pipeline = createRuntimePipeline({ classifier, resolver, fst })
 			const result = await pipeline(input, pipelineOpts)
 
@@ -421,7 +421,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		})
 	}
 
-	const fst = await tryBuildFst(options)
+	const fst = await tryBuildFST(options)
 	const pipeline = createRuntimePipeline({ classifier, fst })
 	const result = await pipeline(input, pipelineOpts)
 
@@ -601,7 +601,7 @@ function serializeResult(
 		kind: result.kind,
 		path: result.path,
 		timing: result.timing,
-		tree: format === "xml" ? decodeAsXml(result.tree) : result.tree,
+		tree: format === "xml" ? decodeAsXML(result.tree) : result.tree,
 	}
 }
 
@@ -621,11 +621,11 @@ async function runNeural(
 	if (policyOverrides.length === 0 && !options.resolve) {
 		switch (options.format) {
 			case "xml":
-				return neural.parseXml(input)
+				return neural.parseXML(input)
 			case "tuple":
 				return JSON.stringify(await neural.parseTuples(input), null, 2)
 			default:
-				return JSON.stringify(await neural.parseJson(input), null, 2)
+				return JSON.stringify(await neural.parseJSON(input), null, 2)
 		}
 	}
 

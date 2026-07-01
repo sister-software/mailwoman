@@ -14,10 +14,10 @@ import { existsSync, readFileSync } from "node:fs"
  *
  *   Run: node --experimental-strip-types scripts/eval/repair-net-probe.ts --model out/v192/model.onnx
  */
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 import { arg } from "../lib/cli-args.ts"
@@ -38,7 +38,7 @@ const flat = (t: Partial<Record<ComponentTag, string>>) => t as Record<string, s
 
 async function main() {
 	const card = JSON.parse(readFileSync(CARD, "utf8"))
-	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
+	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 	const neural = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
@@ -59,8 +59,8 @@ async function main() {
 	for (const t of tags) stat[t] = { help: 0, hurt: 0, helpRows: [], hurtRows: [] }
 
 	for (const row of rows) {
-		const off = flat(decodeAsJson(await neural.parse(row.raw, {})))
-		const on = flat(decodeAsJson(await neural.parse(row.raw, { addressSystemConventions: "auto" })))
+		const off = flat(decodeAsJSON(await neural.parse(row.raw, {})))
+		const on = flat(decodeAsJSON(await neural.parse(row.raw, { addressSystemConventions: "auto" })))
 
 		// Only rows the repair actually changed are interesting.
 		if (norm(off.postcode) === norm(on.postcode) && norm(off.house_number) === norm(on.house_number)) continue

@@ -35,7 +35,7 @@ import { parseArgs } from "node:util"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
 			"out-dir": { type: "string", default: fileURLToPath(new URL("./ssl-address/", import.meta.url)) },
@@ -68,7 +68,7 @@ async function fetchCountry(cc: string, outDir: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
-	const { outDir, concurrency } = parseCliArgs()
+	const { outDir, concurrency } = parseCLIArgs()
 	await mkdir(outDir, { recursive: true })
 
 	const codes = await fetchCountryCodes()

@@ -92,7 +92,7 @@ async function listZipEntries(zipPath: string): Promise<string[]> {
 		.filter((name) => name.length > 0)
 }
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
 			"out-root": { type: "string", default: process.env.OUT_ROOT },
@@ -107,7 +107,7 @@ function parseCliArgs() {
 async function main(): Promise<void> {
 	$.verbose = false
 
-	const { outRoot } = parseCliArgs()
+	const { outRoot } = parseCLIArgs()
 	const destDir = join(outRoot, SLUG)
 	mkdirSync(destDir, { recursive: true })
 

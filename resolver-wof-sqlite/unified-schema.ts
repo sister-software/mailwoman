@@ -6,7 +6,7 @@
  *   (`scripts/build-unified-wof.ts`). This is the CANONICAL gazetteer — we never use the
  *   off-the-shelf geocode.earth prebuilt dumps (they assign different WOF ids to the same place;
  *   see the `feedback-custom-wof-db-only` memory). The table/column names match the resolver's
- *   expectations (`lookup.ts`) so `WofSqlitePlaceLookup` works unchanged, INCLUDING the `ancestors`
+ *   expectations (`lookup.ts`) so `WOFSqlitePlaceLookup` works unchanged, INCLUDING the `ancestors`
  *   table (which lookup.ts's parent-constraint subquery needs) — see `populateAncestors`. The
  *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
  */
@@ -15,7 +15,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
-import type { WofDatabase } from "./schema.js"
+import type { WOFDatabase } from "./schema.js"
 
 export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 	// PRAGMAs stay raw — not Kysely-modelled, and these tune the bulk build.
@@ -25,7 +25,7 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 
 	// `kdb` wraps `db` for the DDL (the house idiom); the caller owns `db`'s lifecycle, so we don't
 	// destroy it here. The bulk INSERTs (populateAncestors + build-unified-wof) stay on the raw handle.
-	const kdb = new DatabaseClient<WofDatabase>({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
 
 	await kdb.schema
 		.createTable("spr")
@@ -106,9 +106,9 @@ export function populateAncestors(db: DatabaseSync): number {
 		parent_id: number
 		placetype: string
 	}>
-	const byId = new Map<number, { parent: number; placetype: string }>()
+	const byID = new Map<number, { parent: number; placetype: string }>()
 
-	for (const r of rows) byId.set(r.id, { parent: r.parent_id, placetype: r.placetype })
+	for (const r of rows) byID.set(r.id, { parent: r.parent_id, placetype: r.placetype })
 
 	const insert = db.prepare("INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)")
 	db.exec("BEGIN")
@@ -121,7 +121,7 @@ export function populateAncestors(db: DatabaseSync): number {
 		let cur = r.parent_id
 
 		while (cur > 0 && !seen.has(cur)) {
-			const node = byId.get(cur)
+			const node = byID.get(cur)
 
 			if (!node) break
 			insert.run(r.id, cur, node.placetype)
@@ -136,7 +136,7 @@ export function populateAncestors(db: DatabaseSync): number {
 }
 
 export async function createUnifiedIndexes(db: DatabaseSync): Promise<void> {
-	const kdb = new DatabaseClient<WofDatabase>({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
 	await kdb.schema.createIndex("spr_by_placetype").ifNotExists().on("spr").column("placetype").execute()
 	await kdb.schema.createIndex("spr_by_country").ifNotExists().on("spr").column("country").execute()
 	await kdb.schema.createIndex("spr_by_parent").ifNotExists().on("spr").column("parent_id").execute()

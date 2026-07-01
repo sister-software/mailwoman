@@ -6,26 +6,29 @@
  *   `@mailwoman/core` decoder. Single user-facing entrypoint: `parse(text)` returns an
  *   `AddressTree` ready for projection into JSON / tuple / XML.
  *
- *   Convenience wrappers `parseJson` / `parseTuples` / `parseXml` project the tree on the way out.
+ *   Convenience wrappers `parseJSON` / `parseTuples` / `parseXML` project the tree on the way out.
  */
 
 import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
 import {
 	buildAddressTree,
-	decodeAsJson,
+	decodeAsJSON,
 	decodeAsTuples,
-	decodeAsXml,
+	decodeAsXML,
 	type AddressTree,
 	type Calibrator,
 	type ComponentTag,
 	type DecoderToken,
+	type SerializeJSONOpts,
+	type SerializeTuplesOpts,
+	type UnknownSpan,
 } from "@mailwoman/core/decoder"
 import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
 import { detectAddressSystem } from "./address-system.js"
 import type { AnchorLookup } from "./anchor-inference.js"
 import { normalizeInputCase } from "./case-normalize.js"
-import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
+import { buildFSTEmissionPriors, type FSTMatcherLike } from "./fst-prior.js"
 import type { GazetteerLexicon } from "./gazetteer-inference.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
@@ -38,13 +41,13 @@ import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { repairUnitLabels } from "./unit-repair.js"
-import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
+import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
 import { enforceWordConsistency } from "./word-consistency.js"
 
 /**
- * Structural type the classifier needs from a runner. Lets callers swap the Node-side `OnnxRunner` for a browser-side
- * runner (e.g. `@mailwoman/neural-web`'s `WebOnnxRunner`) without inheritance — the classifier only ever calls
+ * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
+ * runner (e.g. `@mailwoman/neural-web`'s `WebONNXRunner`) without inheritance — the classifier only ever calls
  * `infer(ids)`.
  */
 export interface NeuralRunner {
@@ -164,15 +167,15 @@ export class NeuralAddressClassifier {
 	constructor(private readonly cfg: NeuralAddressClassifierConfig) {
 		this.labels = cfg.labels ?? STAGE2_BIO_LABELS
 		this.decodeMode = cfg.decode ?? "viterbi"
-		const structural = buildBioTransitionMask(this.labels)
+		const structural = buildBIOTransitionMask(this.labels)
 
 		if (cfg.transitions) {
 			this.transitions = addMatrices(structural, cfg.transitions)
 		} else {
 			this.transitions = structural
 		}
-		this.startTransitions = cfg.startTransitions ?? buildBioStartMask(this.labels)
-		this.endTransitions = cfg.endTransitions ?? buildBioEndMask(this.labels)
+		this.startTransitions = cfg.startTransitions ?? buildBIOStartMask(this.labels)
+		this.endTransitions = cfg.endTransitions ?? buildBIOEndMask(this.labels)
 	}
 
 	/**
@@ -192,13 +195,13 @@ export class NeuralAddressClassifier {
 	 * Resolution order: explicit paths in `opts` → `@mailwoman/neural-weights-<locale>` package → throws a single
 	 * actionable error.
 	 *
-	 * **Node-only.** The dynamic imports keep `OnnxRunner` (onnxruntime-node) + `resolveWeights` (uses Node fs) out of
+	 * **Node-only.** The dynamic imports keep `ONNXRunner` (onnxruntime-node) + `resolveWeights` (uses Node fs) out of
 	 * the static dependency graph, so this file can be bundled for the browser by `@mailwoman/neural-web`. Calling this
 	 * method in a browser will throw at runtime — use `loadNeuralClassifierFromUrls` from `@mailwoman/neural-web`
 	 * instead.
 	 */
 	static async loadFromWeights(
-		opts: ResolveWeightsOpts & { postcodeAnchorLookup?: AnchorLookup } = {}
+		opts: ResolveWeightsOpts & { postcodeAnchorLookup?: AnchorLookup; executionProviders?: string[] } = {}
 	): Promise<NeuralAddressClassifier> {
 		// /* webpackIgnore: true */ tells webpack to leave the dynamic import statement intact —
 		// it becomes a runtime native ESM import that resolves in Node (which has onnxruntime-node
@@ -206,7 +209,7 @@ export class NeuralAddressClassifier {
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
 		const [
-			{ OnnxRunner },
+			{ ONNXRunner },
 			{ resolveWeights, readLabelsFromModelCard, readCrfTransitions, readRequiredChannels },
 			{ parseAnchorLookup },
 			{ parseGazetteerLexicon },
@@ -225,7 +228,7 @@ export class NeuralAddressClassifier {
 		const crf = readCrfTransitions(resolved.crfTransitionsPath)
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
-			OnnxRunner.create(resolved.modelPath),
+			ONNXRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
 		])
 
 		// --- Soft-feed (#718 D1): feed the channels the SHIPPED model was trained against ----------
@@ -390,7 +393,7 @@ export class NeuralAddressClassifier {
 		if (opts?.fst) {
 			emissions = addEmissionMatrix(
 				emissions,
-				buildFstEmissionPriors(opts.fst, pieces, this.labels, {
+				buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
 					biasScale: opts.fstBiasScale ?? 1.0,
 				})
 			)
@@ -502,16 +505,32 @@ export class NeuralAddressClassifier {
 		return { tokens, logits, pieces }
 	}
 
-	async parseJson(text: string, opts?: ParseOpts): Promise<Partial<Record<ComponentTag, string>>> {
-		return decodeAsJson(await this.parse(text, opts))
+	async parseJSON(text: string, opts?: ParseOpts): Promise<Partial<Record<ComponentTag, string>>>
+	async parseJSON(
+		text: string,
+		opts: ParseOpts & SerializeJSONOpts
+	): Promise<Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] }>
+	async parseJSON(
+		text: string,
+		opts: ParseOpts & SerializeJSONOpts = {}
+	): Promise<Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] }> {
+		return decodeAsJSON(await this.parse(text, opts), opts)
 	}
 
-	async parseTuples(text: string, opts?: ParseOpts): Promise<Array<[ComponentTag, string]>> {
-		return decodeAsTuples(await this.parse(text, opts))
+	async parseTuples(text: string, opts?: ParseOpts): Promise<Array<[ComponentTag, string]>>
+	async parseTuples(
+		text: string,
+		opts: ParseOpts & SerializeTuplesOpts
+	): Promise<Array<[ComponentTag | "unknown", string]>>
+	async parseTuples(
+		text: string,
+		opts: ParseOpts & SerializeTuplesOpts = {}
+	): Promise<Array<[ComponentTag | "unknown", string]>> {
+		return decodeAsTuples(await this.parse(text, opts), opts)
 	}
 
-	async parseXml(text: string, opts?: ParseOpts & { xml?: Parameters<typeof decodeAsXml>[1] }): Promise<string> {
-		return decodeAsXml(await this.parse(text, opts), opts?.xml)
+	async parseXML(text: string, opts?: ParseOpts & { xml?: Parameters<typeof decodeAsXML>[1] }): Promise<string> {
+		return decodeAsXML(await this.parse(text, opts), opts?.xml)
 	}
 
 	/**
@@ -564,7 +583,7 @@ export interface ParseOpts {
 	/**
 	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission biases.
 	 */
-	fst?: FstMatcherLike
+	fst?: FSTMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number
 	/**
@@ -573,7 +592,7 @@ export interface ParseOpts {
 	 * from `dependent_locality` on the adjacent name tokens. Closes the v0.6.1 dependent_locality vacuum; see
 	 * `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
 	 */
-	fstStreetMorphology?: FstMatcherLike
+	fstStreetMorphology?: FSTMatcherLike
 	/** Override bias magnitudes for the morphology prior. */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
 	/**

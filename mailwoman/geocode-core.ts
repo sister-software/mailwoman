@@ -25,6 +25,7 @@ import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { hardCountryFor } from "@mailwoman/core/pipeline"
+import { normalize } from "@mailwoman/normalize"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
@@ -52,7 +53,7 @@ export interface GeocodeResult {
 	region: string | null
 	postcode: string | null
 	/** Admin hierarchy from the resolver, locality → country (most specific first). */
-	hierarchy: Array<{ tag: string; value: string; lat?: number; lon?: number; placeId?: string }>
+	hierarchy: Array<{ tag: string; value: string; lat?: number; lon?: number; placeID?: string }>
 }
 
 /**
@@ -76,6 +77,12 @@ export interface GeocodeDeps {
 	resolver: Resolver
 	/** Per-state shard resolver. Omit for admin-only geocoding. */
 	shards?: ShardResolver
+	/**
+	 * OSM rooftop shards keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
+	 * ONLY when no US per-state situs shard matched (a non-US parse), so the US path is untouched. Inject from
+	 * `@mailwoman/osm`'s `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
+	 */
+	osmShards?: (country: string) => StateShards
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
 	defaultCountry?: string
 	/**
@@ -85,6 +92,20 @@ export interface GeocodeDeps {
 	 * clean win. Set `false` to restore the legacy raw-case parse.
 	 */
 	normalizeCase?: boolean
+	/**
+	 * Stage 1 deterministic preprocessing (`@mailwoman/normalize`: NFC + whitespace-collapse + punctuation) on the input
+	 * before parse. **Default `true`.** `createRuntimePipeline` runs this as a stage, but the drop-in servers
+	 * (nominatim/photon) call `geocodeAddress` directly — without it a double-spaced / odd-punctuation query was fragile
+	 * (`"Damrak 1, 1012 LG"` → unresolved). Idempotent; `false` opts out for callers that already normalized.
+	 */
+	normalizeInput?: boolean
+	/**
+	 * A pre-parsed tree to resolve, skipping the internal `classifier.parse` (the address's single most expensive step).
+	 * Supply the output of {@link parseForGeocode} when a caller already parsed the same address for another purpose — a
+	 * PostalAddress, say — so the inference runs once, not twice. MUST come from `parseForGeocode` (same input + opts),
+	 * or the resolved tree won't match the address. Omit for the normal one-shot path.
+	 */
+	parsedTree?: AddressTree
 	/**
 	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound; `1` or `undefined`
 	 * keeps the raw half-segment heuristic. Accepts either a single multiplier (the legacy Travis 1.7) OR a per-region
@@ -114,6 +135,13 @@ export interface GeocodeDeps {
 	hardPlaceCountry?: boolean
 	/** #743/#194: override the coverage safelist gating {@link hardPlaceCountry}. Undefined → built-in. */
 	hardCountrySafelist?: ReadonlySet<string>
+	/**
+	 * Admin descendant-consistency (#263, `ResolveOpts.adminCoherence`) — re-pick a (region, locality) pair so the
+	 * locality descends from the region ("Portland, ME" → Maine, not Messina). **Default-on** for the geocode path; only
+	 * fires when a region's child locality fell through, so the well-resolved path is byte-identical. Pass `false` to opt
+	 * out.
+	 */
+	adminCoherence?: boolean
 }
 
 /**
@@ -161,7 +189,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 /**
  * Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is absent.
  */
-export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): string | null {
+export function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
 
@@ -169,7 +197,7 @@ export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null
 }
 
 /** Per-state interpolation shard path under `<dataRoot>/interpolation/`, or null if absent. */
-export function selectInterpolationDb(dataRoot: string, stateSlug: string | null): string | null {
+export function selectInterpolationDB(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
 
@@ -275,18 +303,47 @@ export class ShardProvider {
 }
 
 /**
+ * The exact parse `geocodeAddress` runs internally: Stage-1 deterministic preprocessing (`normalizeInput`) →
+ * `classifier.parse` (postcodeRepair + normalizeCase) → `recognizeUsRegions`. Exposed so a caller can run it once and
+ * feed the result to both {@link geocodeAddress} (via `GeocodeDeps.parsedTree`) and another consumer of the parse (e.g.
+ * `decodeAsJSON(tree)` → a PostalAddress), instead of parsing the same address twice. The inference is ~3 ms/row — the
+ * single most expensive step — so sharing it is a ~1.3× win on a parse-then-geocode pipeline.
+ */
+export async function parseForGeocode(
+	input: string,
+	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase">
+): Promise<AddressTree> {
+	const parseInput = deps.normalizeInput === false ? input : normalize(input).normalized
+
+	return recognizeUsRegions(
+		await deps.classifier.parse(parseInput, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
+	)
+}
+
+/**
  * Run the full street-level cascade on one address and return the structured geocode result. Always returns a result
  * (admin tier even with no coordinate shards). Throws only on a fatal parse/resolve error — callers doing batch work
  * should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
-	const tree = recognizeUsRegions(
-		await deps.classifier.parse(input, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
-	)
+	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
+	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
+	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
+	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
+	const parseInput = deps.normalizeInput === false ? input : normalize(input).normalized
+	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const stateSlug = regionSlugFromTree(tree)
-	const { addressPoints, interpolation } = deps.shards?.(stateSlug) ?? {}
+	const usShards = deps.shards?.(stateSlug) ?? {}
+	let addressPoints = usShards.addressPoints
+	const interpolation = usShards.interpolation
 
 	const opts: ResolveOpts = {}
+
+	// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment graph.
+	// Default-on for the geocode path (byte-stable on the well-resolved cases — only fires when a region's
+	// child locality fell through); `adminCoherence: false` opts out. Fixes the "Portland, ME → Messina IT"
+	// class structurally, without a country prior or safelist.
+	if (deps.adminCoherence !== false) opts.adminCoherence = true
 
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
@@ -295,8 +352,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	const placeCountry: PlaceCountryFn | null =
 		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
 
+	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop shard for a non-US parse.
+	let placedCountry: string | null = null
+
 	if (placeCountry) {
-		const placed = placeCountry(input)
+		const placed = placeCountry(parseInput)
+		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
 			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
@@ -313,6 +374,22 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			)
 
 			if (hardCountry) opts.hardCountry = hardCountry
+		}
+	}
+
+	// OSM international rooftop tier (#247): only when no US situs shard matched (a non-US parse). An explicit
+	// defaultCountry wins; otherwise the coarse placer's country. Bbox fall-through is ON for OSM — its points
+	// often carry no postcode/locality tag, so the resolved locality's box scopes the (street, number) probe.
+	if (!addressPoints) {
+		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
+
+		if (country && country !== "us") {
+			const osm = deps.osmShards?.(country)
+
+			if (osm?.addressPoints) {
+				addressPoints = osm.addressPoints
+				opts.addressPointBboxFallback = true
+			}
 		}
 	}
 
@@ -400,13 +477,13 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
 	const hierarchy = allNodes
-		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeId))
+		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
 		.sort((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
 		.map((n) => ({
 			tag: n.tag,
 			value: n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
-			...(n.placeId ? { placeId: n.placeId } : {}),
+			...(n.placeID ? { placeID: n.placeID } : {}),
 		}))
 
 	return { input, lat, lon, resolution_tier: tier, uncertainty_m: uncertaintyM, locality, region, postcode, hierarchy }

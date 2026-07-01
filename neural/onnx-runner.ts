@@ -19,7 +19,7 @@ import ort from "onnxruntime-node"
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.js"
 import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.js"
 
-export interface OnnxRunnerOpts {
+export interface ONNXRunnerOpts {
 	/** If true, load the model immediately in `create()`. Default false. */
 	warmup?: boolean
 	/**
@@ -28,6 +28,14 @@ export interface OnnxRunnerOpts {
 	 * than this are padded with id `0` and masked out via attention_mask=0; inputs longer are truncated.
 	 */
 	fixedSeqLen?: number
+	/**
+	 * ONNX Runtime execution providers to try, in priority order — e.g. `["cuda", "cpu"]` or `["webgpu", "cpu"]`.
+	 * **Default `["cpu"]`** (unchanged behavior). GPU providers (`cuda`, `webgpu`) THROW at session-create when their
+	 * runtime/driver is absent rather than soft-falling-back, so this is **guarded**: if the requested list fails to
+	 * initialize, the runner retries on CPU alone. The cost of a failed GPU probe is a one-time sub-`100 ms` hit at load,
+	 * so a GPU box lights up and a CPU box pays ~nothing. `cpu` is always appended if not present.
+	 */
+	executionProviders?: string[]
 }
 
 /** Default sequence length for v0.1.0 / v0.2.0 (BertConfig max_position_embeddings = 128). */
@@ -45,22 +53,27 @@ export interface InferResult {
 	localeLogits?: number[]
 }
 
-export class OnnxRunner {
+export class ONNXRunner {
 	private session: ort.InferenceSession | null = null
 	private loadPromise: Promise<ort.InferenceSession> | null = null
 	public readonly fixedSeqLen: number
 
+	private readonly executionProviders: string[]
+
 	private constructor(
 		private readonly modelPath: string,
 		private readonly modelBytes: Uint8Array | null,
-		opts: OnnxRunnerOpts
+		opts: ONNXRunnerOpts
 	) {
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
+		const requested = opts.executionProviders ?? ["cpu"]
+		// CPU is the universal final fallback — append it so a GPU-only list still has somewhere to land.
+		this.executionProviders = requested.includes("cpu") ? requested : [...requested, "cpu"]
 	}
 
 	/** Load by path. Reads the model lazily unless `warmup` is true. */
-	static async create(modelPath: string, opts: OnnxRunnerOpts = {}): Promise<OnnxRunner> {
-		const runner = new OnnxRunner(modelPath, null, opts)
+	static async create(modelPath: string, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
+		const runner = new ONNXRunner(modelPath, null, opts)
 
 		if (opts.warmup) await runner.ensureSession()
 
@@ -68,8 +81,8 @@ export class OnnxRunner {
 	}
 
 	/** Load from an already-read byte buffer. */
-	static async fromBytes(modelBytes: Uint8Array, opts: OnnxRunnerOpts = {}): Promise<OnnxRunner> {
-		const runner = new OnnxRunner("(bytes)", modelBytes, opts)
+	static async fromBytes(modelBytes: Uint8Array, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
+		const runner = new ONNXRunner("(bytes)", modelBytes, opts)
 
 		if (opts.warmup) await runner.ensureSession()
 
@@ -82,17 +95,37 @@ export class OnnxRunner {
 		if (!this.loadPromise) {
 			this.loadPromise = (async () => {
 				const bytes = this.modelBytes ?? new Uint8Array(await fs.readFile(this.modelPath))
-				const session = await ort.InferenceSession.create(bytes, {
-					executionProviders: ["cpu"],
-					graphOptimizationLevel: "all",
-				})
-				this.session = session
+				this.session = await this.createSession(bytes)
 
-				return session
+				return this.session
 			})()
 		}
 
 		return this.loadPromise
+	}
+
+	/**
+	 * Create the session on the configured execution providers, guarded: GPU providers (`cuda`/`webgpu`) throw at
+	 * create-time when their runtime/driver is missing, so on failure we retry on CPU alone. A box with the GPU runtime
+	 * uses it; a box without one transparently lands on CPU.
+	 */
+	private async createSession(bytes: Uint8Array): Promise<ort.InferenceSession> {
+		try {
+			return await ort.InferenceSession.create(bytes, {
+				executionProviders: this.executionProviders,
+				graphOptimizationLevel: "all",
+			})
+		} catch (err) {
+			if (this.executionProviders.length === 1 && this.executionProviders[0] === "cpu") throw err
+
+			// A requested GPU provider failed to initialize — fall back to CPU so inference still loads.
+			console.warn(
+				`[ONNXRunner] execution providers [${this.executionProviders.join(", ")}] failed to initialize ` +
+					`(${(err as Error).message.split("\n")[0]}); falling back to CPU.`
+			)
+
+			return ort.InferenceSession.create(bytes, { executionProviders: ["cpu"], graphOptimizationLevel: "all" })
+		}
 	}
 
 	/**

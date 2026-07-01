@@ -88,7 +88,11 @@ def test_shaped_matches_gold_when_postcode_is_in_position():
     pieces = [_piece("Strasse", 0, 7), _piece("12", 8, 10), _piece("10115", 11, 16), _piece("Berlin", 17, 23)]
     lookup = {"10115": ({"DE": 1.0}, 52.53, 13.40)}
     g_feats, g_confs = realign_anchor_to_pieces(
-        raw, ["Strasse", "12", "10115", "Berlin"], ["B-street", "B-house_number", "B-postcode", "B-locality"], pieces, lookup
+        raw,
+        ["Strasse", "12", "10115", "Berlin"],
+        ["B-street", "B-house_number", "B-postcode", "B-locality"],
+        pieces,
+        lookup,
     )
     s_feats, s_confs = realign_anchor_to_pieces_shaped(raw, pieces, lookup)
     assert g_confs == s_confs

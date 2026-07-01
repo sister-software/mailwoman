@@ -34,6 +34,7 @@ from .data_loader import iter_batches
 from .masking import mask_tokens
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
+from .trackio_logging import init_tracker
 from .train import (
     _build_scheduler,
     _precision_to_dtype,
@@ -41,7 +42,6 @@ from .train import (
     find_latest_checkpoint,
     save_checkpoint,
 )
-from .trackio_logging import init_tracker
 
 
 @torch.no_grad()
@@ -52,14 +52,15 @@ def _mlm_eval(cfg: Config, model, tokenizer: Tokenizer, device, *, mask_token_id
     gen = torch.Generator().manual_seed(cfg.train.seed)
     total, n = 0.0, 0
     max_batches = max(1, cfg.train.eval_every_steps // 50)  # cheap, bounded
-    for batch in iter_batches(
-        cfg, tokenizer, split="val", batch_size=cfg.train.batch_size, seed=cfg.train.seed
-    ):
+    for batch in iter_batches(cfg, tokenizer, split="val", batch_size=cfg.train.batch_size, seed=cfg.train.seed):
         tb = _to_tensor_batch(batch, device)
         masked, labels = mask_tokens(
-            tb["input_ids"].cpu(), tb["attention_mask"].cpu(),
-            mask_prob=cfg.train.mlm_mask_prob, mask_token_id=mask_token_id,
-            vocab_size=tokenizer.vocab_size, generator=gen,
+            tb["input_ids"].cpu(),
+            tb["attention_mask"].cpu(),
+            mask_prob=cfg.train.mlm_mask_prob,
+            mask_token_id=mask_token_id,
+            vocab_size=tokenizer.vocab_size,
+            generator=gen,
         )
         out = model.forward_mlm(
             input_ids=masked.to(device), attention_mask=tb["attention_mask"], mlm_labels=labels.to(device)
@@ -102,8 +103,10 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     if amp_dtype is not None and device.type == "cuda":
         model.to(dtype=amp_dtype)  # explicit cast, not autocast (gfx1103 hang — see train.py)
 
-    print(f"[pretrain] device={device} params={model_param_count(model):,} "
-          f"objective=mlm mask_prob={cfg.train.mlm_mask_prob} mask_token_id={mask_token_id}")
+    print(
+        f"[pretrain] device={device} params={model_param_count(model):,} "
+        f"objective=mlm mask_prob={cfg.train.mlm_mask_prob} mask_token_id={mask_token_id}"
+    )
 
     optim = AdamW(model.parameters(), lr=cfg.train.learning_rate, weight_decay=cfg.train.weight_decay)
     scheduler = _build_scheduler(optim, cfg.train)
@@ -144,8 +147,12 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         while step < cfg.train.max_steps:
             epoch += 1
             for batch in iter_batches(
-                cfg, tokenizer, split="train", batch_size=cfg.train.batch_size,
-                seed=cfg.train.seed + epoch, row_limit=cfg.data.train_rows_per_epoch,
+                cfg,
+                tokenizer,
+                split="train",
+                batch_size=cfg.train.batch_size,
+                seed=cfg.train.seed + epoch,
+                row_limit=cfg.data.train_rows_per_epoch,
             ):
                 if step >= cfg.train.max_steps:
                     break
@@ -153,9 +160,12 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 tb = _to_tensor_batch(batch, device)
                 # Mask on CPU (cheap, keeps the RNG device-independent), then move to device.
                 masked, labels = mask_tokens(
-                    tb["input_ids"].cpu(), tb["attention_mask"].cpu(),
-                    mask_prob=cfg.train.mlm_mask_prob, mask_token_id=mask_token_id,
-                    vocab_size=tokenizer.vocab_size, generator=gen,
+                    tb["input_ids"].cpu(),
+                    tb["attention_mask"].cpu(),
+                    mask_prob=cfg.train.mlm_mask_prob,
+                    mask_token_id=mask_token_id,
+                    vocab_size=tokenizer.vocab_size,
+                    generator=gen,
                 )
                 optim.zero_grad(set_to_none=True)
                 out = model.forward_mlm(
@@ -176,10 +186,14 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     lr = float(scheduler.get_last_lr()[0])
                     ppl = math.exp(min(20.0, avg))
                     elapsed = time.time() - started
-                    print(f"[pretrain] step {step}/{cfg.train.max_steps} mlm_loss={avg:.4f} "
-                          f"ppl={ppl:.1f} lr={lr:.6f} rate={step/elapsed:.2f}/s")
-                    tracker.log({"mlm_train_loss": avg, "mlm_train_perplexity": ppl, "lr": lr,
-                                 "wall_seconds": elapsed}, step=step)
+                    print(
+                        f"[pretrain] step {step}/{cfg.train.max_steps} mlm_loss={avg:.4f} "
+                        f"ppl={ppl:.1f} lr={lr:.6f} rate={step / elapsed:.2f}/s"
+                    )
+                    tracker.log(
+                        {"mlm_train_loss": avg, "mlm_train_perplexity": ppl, "lr": lr, "wall_seconds": elapsed},
+                        step=step,
+                    )
 
                 if step % cfg.train.eval_every_steps == 0:
                     metrics = _mlm_eval(cfg, model, tokenizer, device, mask_token_id=mask_token_id)

@@ -41,23 +41,23 @@ import {
 	resolveStreet,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
-import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
-import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
+import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "../../shared/httpvfs-street.ts"
+import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 import {
-	adminGazetteerUrl,
-	assetUrl,
+	adminGazetteerURL,
+	assetURL,
 	type DemoResult,
 	type DualRole,
-	type FstMatcherLike,
-	type FstProvenanceLike,
+	type FSTMatcherLike,
+	type FSTProvenanceLike,
 	HOSTED_STREET_SLUGS,
-	loadFstGazetteer,
+	loadFSTGazetteer,
 	type MailwomanClassifierLike,
 	type MailwomanLookupLike,
 	neuralClassifierLoadUrls,
 	regionToStateSlug,
 	type ResolvedHit,
-	streetShardUrl,
+	streetShardURL,
 } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
@@ -73,8 +73,8 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
 
 /** The per-state street lookups, loaded together (lazy by region). */
 interface StreetLookups {
-	situs: HttpvfsAddressPointLookup
-	interp: HttpvfsInterpolator
+	situs: HTTPVFSAddressPointLookup
+	interp: HTTPVFSInterpolator
 }
 
 import { DebugControl } from "./_debug.tsx"
@@ -86,8 +86,8 @@ import {
 	drawRadiusCircle,
 	fetchBasemapSource,
 	geomBounds,
-	loadPolygonDb,
-	type PolygonDb,
+	loadPolygonDB,
+	type PolygonDB,
 	TILE_WORKER_URL,
 } from "./_map-helpers.ts"
 
@@ -103,13 +103,13 @@ export interface DemoAppProps {
 }
 
 export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
-	// Asset hosting split: the DBs + model + everything else come from R2 (assetUrl → the
+	// Asset hosting split: the DBs + model + everything else come from R2 (assetURL → the
 	// public.sister.software bucket — raw ranges, CORS, free egress). The sql.js-httpvfs WORKER must
 	// stay SAME-ORIGIN though — browsers block cross-origin `new Worker()` — so the worker + wasm are
 	// staged into the Pages deploy at `/mailwoman/sqljs/` by the demo-assets plugin and loaded from
 	// there, while the DB the worker range-reads lives on R2 (cross-origin, CORS-allowed).
 	const { siteConfig } = useDocusaurusContext()
-	const sqljsBaseUrl = `${siteConfig.baseUrl}mailwoman/sqljs`
+	const sqljsBaseURL = `${siteConfig.baseURL}mailwoman/sqljs`
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
@@ -129,9 +129,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	const [compareBackend, setCompareBackend] = useState<string>("")
 	const [compareResult, setCompareResult] = useState<DemoResult | null>(null)
 
-	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
-	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
-	const [forceWasm, setForceWasm] = useState(false)
+	const [fstMatcher, setFSTMatcher] = useState<FSTMatcherLike | null>(null)
+	const [fstProvenance, setFSTProvenance] = useState<FSTProvenanceLike | null>(null)
+	const [forceWASM, setForceWASM] = useState(false)
 	const [activeBackend, setActiveBackend] = useState<string>("")
 	const [lookupLoader, setLookupLoader] = useState<
 		((onProgress?: (bytesRead: number) => void) => Promise<MailwomanLookupLike>) | null
@@ -189,7 +189,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	// first resolve, reset when the selected version changes. Held as the in-flight promise so concurrent
 	// resolves share one fetch.
 	const anchorLookupRef = useRef<Map<string, { lat: number; lon: number }> | null>(null)
-	const polygonDbRef = useRef<Promise<PolygonDb> | null>(null)
+	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	// Street tier (#377): per-state situs/interp httpvfs lookups, lazy-loaded by parsed region and
 	// cached. Held as the in-flight promise so a fast second submit on the same state shares one load.
 	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
@@ -211,15 +211,15 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	// Mount: register the range-chunk service worker (persists validated DB range chunks in Cache
 	// Storage — warm repeat visits, and the root fix for mobile Safari's torn-chunk HTTP cache).
 	useEffect(() => {
-		registerRangeCacheServiceWorker(siteConfig.baseUrl)
-	}, [siteConfig.baseUrl])
+		registerRangeCacheServiceWorker(siteConfig.baseURL)
+	}, [siteConfig.baseURL])
 
 	// Drop cached range chunks belonging to other versions once a version is selected — the URLs are
 	// immutable, so old versions' chunks never expire on their own.
 	useEffect(() => {
 		if (!selectedVersion) return
 
-		pruneDbRangeCache(selectedVersion)
+		pruneDBRangeCache(selectedVersion)
 	}, [selectedVersion])
 
 	// Mount: fetch the releases manifest + set up the map.
@@ -235,7 +235,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					// never sees a defaultVersion bump — the symptom being "the new version only shows in a
 					// private tab". Always refetch the pointer (it's ~4 KB); the versioned assets it points
 					// to stay immutably cached.
-					fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"), {
+					fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"), {
 						cache: "reload",
 					}).then((r) => (r.ok ? (r.json() as Promise<ReleasesManifest>) : null)),
 					import("maplibre-gl"),
@@ -293,7 +293,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					// Add the coverage "fog of war" source + default-off fill layers once the basemap style is
 					// ready. Served as XYZ vector tiles by the tile worker; the fills sit beneath the first
 					// symbol layer so place labels stay legible.
-					const coverageSourceUrl = `${TILE_WORKER_URL}/${CoverageTileSetID}.json`
+					const coverageSourceURL = `${TILE_WORKER_URL}/${CoverageTileSetID}.json`
 					const wireCoverage = (): void => {
 						if (!map.isStyleLoaded()) {
 							map.once("styledata", wireCoverage)
@@ -303,7 +303,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 						try {
 							if (!map.getSource(CoverageTileSetID)) {
-								map.addSource(CoverageTileSetID, createCoverageSource(coverageSourceUrl))
+								map.addSource(CoverageTileSetID, createCoverageSource(coverageSourceURL))
 							}
 							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
 
@@ -323,11 +323,11 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					// wireCoverage (which runs first) calls addSource — so on the globe basemap, where tiles
 					// stream continuously, gating here would defer on `styledata` forever and the dots would
 					// never wire. Coverage gets away with the guard only because it's the first overlay added.
-					const raceDotsSourceUrl = `${TILE_WORKER_URL}/${RaceDotsTileSetID}.json`
+					const raceDotsSourceURL = `${TILE_WORKER_URL}/${RaceDotsTileSetID}.json`
 					const wireRaceDots = (): void => {
 						try {
 							if (!map.getSource(RaceDotsTileSetID)) {
-								map.addSource(RaceDotsTileSetID, createRaceDotsSource(raceDotsSourceUrl))
+								map.addSource(RaceDotsTileSetID, createRaceDotsSource(raceDotsSourceURL))
 							}
 							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
 
@@ -367,12 +367,12 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 		void (async () => {
 			try {
 				setClassifier(null)
-				setFstMatcher(null)
-				setFstProvenance(null)
+				setFSTMatcher(null)
+				setFSTProvenance(null)
 				setLookup(null)
 				setLookupLoader(null)
 				lookupPromiseRef.current = null
-				polygonDbRef.current = null
+				polygonDBRef.current = null
 				setResult(null)
 				setCalibrator(null)
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
@@ -383,7 +383,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					diagnostics,
 					postcodeAnchorLookup,
 				} = await neuralWeb.loadNeuralClassifierFromUrls(
-					neuralClassifierLoadUrls(DEFAULT_LOCALE, selectedVersion, { hasAnchor: release?.hasAnchor, forceWasm })
+					neuralClassifierLoadUrls(DEFAULT_LOCALE, selectedVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 				setActiveBackend(
 					diagnostics
@@ -393,22 +393,22 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 				if (cancelled) return
 
-				if (release?.hasFst) {
+				if (release?.hasFST) {
 					try {
-						const fstResult = await loadFstGazetteer(DEFAULT_LOCALE, selectedVersion)
-						setFstMatcher(fstResult.matcher)
+						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, selectedVersion)
+						setFSTMatcher(fstResult.matcher)
 
-						if (fstResult.provenance) setFstProvenance(fstResult.provenance)
+						if (fstResult.provenance) setFSTProvenance(fstResult.provenance)
 					} catch {
 						// FST not available for this version
 					}
 				}
 
-				if (release?.hasWofDb) {
+				if (release?.hasWOFDb) {
 					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
 						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
-						const { loadHttpvfsDb, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(adminGazetteerUrl(), sqljsBaseUrl)
+						const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
+						const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL)
 						const wofLookup = new WOFCandidateTableLookup(worker)
 						// Warm the schema/FTS/abbr/dual-role pages now (idle or first submit) so the first
 						// real query starts from a warm page cache; report live transfer while it runs.
@@ -432,7 +432,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// Load the version's calibration table (opt-in display toggle). Tolerate a 404 — older
 				// bundles ship none, in which case the toggle stays hidden and the demo shows raw scores.
 				try {
-					const calRes = await fetch(assetUrl(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
+					const calRes = await fetch(assetURL(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
 
 					if (calRes.ok) {
 						const calTable = await calRes.json()
@@ -458,7 +458,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 		return () => {
 			cancelled = true
 		}
-	}, [selectedVersion, manifest, forceWasm, sqljsBaseUrl])
+	}, [selectedVersion, manifest, forceWASM, sqljsBaseURL])
 
 	// ── Compare classifier loading ─────────────────────────────────────────
 	// When compare mode is active and the user selects a compare version, load
@@ -490,7 +490,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 				const neuralWeb = await import("@mailwoman/neural-web")
 				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls(
-					neuralClassifierLoadUrls(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWasm })
+					neuralClassifierLoadUrls(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 
 				if (cancelled) return
@@ -513,7 +513,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 		return () => {
 			cancelled = true
 		}
-	}, [compareMode, compareVersion, manifest, forceWasm])
+	}, [compareMode, compareVersion, manifest, forceWASM])
 
 	// Hot-swap the map style when the operator toggles Docusaurus's color mode. The page sets
 	// data-theme="dark" / "light" on <html>; a MutationObserver is the lightest dependency-free way
@@ -605,13 +605,13 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 			if (release?.hasPolygons && selectedVersion && candidate.id) {
 				try {
-					if (!polygonDbRef.current) {
-						polygonDbRef.current = loadPolygonDb(
-							assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"),
-							sqljsBaseUrl
+					if (!polygonDBRef.current) {
+						polygonDBRef.current = loadPolygonDB(
+							assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"),
+							sqljsBaseURL
 						)
 					}
-					const geom = await (await polygonDbRef.current).get(candidate.id)
+					const geom = await (await polygonDBRef.current).get(candidate.id)
 
 					if (geom) {
 						drawPlaceGeometry(map, geom)
@@ -630,7 +630,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					// Postcodes (point geometry) and any id absent from the polygon DB land here — fall
 					// through to the bbox. Null the ref so a transient fetch failure can retry next resolve.
 					console.error("Crisp polygon unavailable; falling back to bbox", err)
-					polygonDbRef.current = null
+					polygonDBRef.current = null
 				}
 			}
 
@@ -661,7 +661,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: 12 })
 			}
 		})()
-	}, [result, selectedCandidateIndex, selectedVersion, manifest, sqljsBaseUrl, map])
+	}, [result, selectedCandidateIndex, selectedVersion, manifest, sqljsBaseURL, map])
 
 	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
@@ -702,14 +702,14 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 			if (!p) {
 				p = (async () => {
-					const { loadHttpvfsDb } = await import("../../shared/httpvfs-resolver")
-					const { HttpvfsAddressPointLookup, HttpvfsInterpolator } = await import("../../shared/httpvfs-street")
+					const { loadHTTPVFSDatabase } = await import("../../shared/httpvfs-resolver")
+					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("../../shared/httpvfs-street")
 					const [situsW, interpW] = await Promise.all([
-						loadHttpvfsDb(streetShardUrl(slug, "situs"), sqljsBaseUrl),
-						loadHttpvfsDb(streetShardUrl(slug, "interp"), sqljsBaseUrl),
+						loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL),
+						loadHTTPVFSDatabase(streetShardURL(slug, "interp"), sqljsBaseURL),
 					])
 
-					return { situs: new HttpvfsAddressPointLookup(situsW), interp: new HttpvfsInterpolator(interpW) }
+					return { situs: new HTTPVFSAddressPointLookup(situsW), interp: new HTTPVFSInterpolator(interpW) }
 				})()
 				p.catch(() => streetLookupsRef.current.delete(slug))
 				streetLookupsRef.current.set(slug, p)
@@ -717,7 +717,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 			return p
 		},
-		[sqljsBaseUrl]
+		[sqljsBaseURL]
 	)
 
 	// Warm the place index + polygon DB during browser idle time. The cold path (UMD script + worker
@@ -737,26 +737,26 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				if (cancelled) return
 				const release = manifest?.releases.find((r) => r.version === selectedVersion)
 
-				if (release?.hasPolygons && selectedVersion && !polygonDbRef.current) {
-					const loading = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseUrl)
-					polygonDbRef.current = loading
+				if (release?.hasPolygons && selectedVersion && !polygonDBRef.current) {
+					const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseURL)
+					polygonDBRef.current = loading
 					loading.catch(() => {
 						// Transient failure — null the ref so the next resolve retries.
-						if (polygonDbRef.current === loading) polygonDbRef.current = null
+						if (polygonDBRef.current === loading) polygonDBRef.current = null
 					})
 				}
 			})
 		}
 		const hasIdleCallback = typeof window.requestIdleCallback === "function" // Safari ships without it
-		const idleId = hasIdleCallback ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 1500)
+		const idleID = hasIdleCallback ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 1500)
 
 		return () => {
 			cancelled = true
 
-			if (hasIdleCallback) window.cancelIdleCallback(idleId)
-			else window.clearTimeout(idleId)
+			if (hasIdleCallback) window.cancelIdleCallback(idleID)
+			else window.clearTimeout(idleID)
 		}
-	}, [lookupLoader, lookup, ensureLookup, manifest, selectedVersion, sqljsBaseUrl])
+	}, [lookupLoader, lookup, ensureLookup, manifest, selectedVersion, sqljsBaseURL])
 
 	// Place-autocomplete: debounced FST prefix walk over the locality being typed (the segment after the
 	// last comma). Runs against the in-memory gazetteer FST already loaded for the parser — no fetch,
@@ -992,11 +992,11 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// only cold work left. The idle warm-up usually got here first; this covers a fast submit.
 				const releaseForResolve = manifest?.releases.find((r) => r.version === selectedVersion)
 
-				if (releaseForResolve?.hasPolygons && selectedVersion && !polygonDbRef.current) {
-					const loading = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseUrl)
-					polygonDbRef.current = loading
+				if (releaseForResolve?.hasPolygons && selectedVersion && !polygonDBRef.current) {
+					const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseURL)
+					polygonDBRef.current = loading
 					loading.catch(() => {
-						if (polygonDbRef.current === loading) polygonDbRef.current = null
+						if (polygonDBRef.current === loading) polygonDBRef.current = null
 					})
 				}
 
@@ -1126,7 +1126,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			compareClassifier,
 			manifest,
 			selectedVersion,
-			sqljsBaseUrl,
+			sqljsBaseURL,
 		]
 	)
 
@@ -1197,7 +1197,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 							opacity: 0.7,
 						}}
 					>
-						<input type="checkbox" checked={forceWasm} onChange={(e) => setForceWasm(e.target.checked)} />
+						<input type="checkbox" checked={forceWASM} onChange={(e) => setForceWASM(e.target.checked)} />
 						Force WASM
 					</label>
 					{manifest && manifest.releases.length > 1 ? (

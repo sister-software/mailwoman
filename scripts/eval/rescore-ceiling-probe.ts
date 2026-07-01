@@ -19,9 +19,9 @@ import { existsSync, readFileSync } from "node:fs"
  *
  *   Run: node --experimental-strip-types scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
@@ -42,8 +42,8 @@ const LOCALES: [string, string][] = [
 	["AU", "data/eval/external/oa-au-coord-150.jsonl"],
 ]
 
-type N9 = { placeId?: string; children?: unknown[] }
-const hasWof = (n: N9): boolean => !!n.placeId?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWof)
+type N9 = { placeID?: string; children?: unknown[] }
+const hasWOF = (n: N9): boolean => !!n.placeID?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWOF)
 
 const pctile = (xs: number[], p: number): number => {
 	if (!xs.length) return NaN
@@ -54,9 +54,9 @@ const pctile = (xs: number[], p: number): number => {
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WofSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWofResolver(lookup as never)
+	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const lookup = new WOFSqlitePlaceLookup({ databasePath: WOF })
+	const resolver = createWOFResolver(lookup as never)
 	const model = await createScorer({
 		modelPath: MODEL,
 		tokenizerPath: TOK,
@@ -93,12 +93,12 @@ async function main() {
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
 			const r = await resolver.resolveTree(tree as never, { defaultCountry: cc })
 
-			if ((r.roots as N9[]).some(hasWof)) {
+			if ((r.roots as N9[]).some(hasWOF)) {
 				s.res++
 				continue
 			}
 			s.unres++
-			const emitted = ((decodeAsJson(tree) as Record<string, string>).locality ?? "").toString().trim()
+			const emitted = ((decodeAsJSON(tree) as Record<string, string>).locality ?? "").toString().trim()
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()
 			const goldCands = gold ? await lookup.findPlace({ text: gold, country: cc, limit: 5 }) : []
 

@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 // Usage: node --experimental-strip-types scripts/eval/score-punctuation-stress.ts --model <onnx>
 //   [--engine neural|v0] [--file data/eval/external/punctuation-stress.jsonl] [--no-ship-config]
 //   [--span-proposer]  — enable the Stage 2.7 span proposer (#518 M2+M3; default-off, NOT ship config)
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildCodexSpanLexicon,
@@ -20,7 +20,7 @@ import {
 	parseAnchorLookup,
 	parseGazetteerLexicon,
 } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createAddressParser } from "mailwoman"
 
@@ -36,7 +36,7 @@ const engine = arg("engine", "neural")!
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] =
 	engine === "neural"
-		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("model")!)])
+		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(arg("model")!)])
 		: [undefined!, undefined!]
 const shipConfig = !argv.includes("--no-ship-config")
 const v0 = engine === "v0" ? createAddressParser() : undefined
@@ -105,7 +105,7 @@ async function parseWith(raw: string): Promise<Record<string, string>> {
 
 		return Object.fromEntries(Object.entries(rec).map(([t, vs]) => [t, vs.join(" ")]))
 	}
-	const flat = decodeAsJson(await neural.parse(raw)) as Record<string, string>
+	const flat = decodeAsJSON(await neural.parse(raw)) as Record<string, string>
 
 	return argv.includes("--fold-gold") ? foldGoldForV0(flat) : flat
 }

@@ -15,9 +15,9 @@
 const PRUNE_MESSAGE_TYPE = "mailwoman-prune-db-ranges"
 
 /** Register the range-cache service worker. Idempotent — repeat calls re-use the registration. */
-export function registerRangeCacheServiceWorker(baseUrl: string): void {
+export function registerRangeCacheServiceWorker(baseURL: string): void {
 	if (typeof window === "undefined" || !("serviceWorker" in navigator)) return
-	void navigator.serviceWorker.register(`${baseUrl}range-cache-sw.js`).catch((error: unknown) => {
+	void navigator.serviceWorker.register(`${baseURL}range-cache-sw.js`).catch((error: unknown) => {
 		console.warn("[mailwoman demo] range-cache service worker registration failed", error)
 	})
 }
@@ -26,7 +26,7 @@ export function registerRangeCacheServiceWorker(baseUrl: string): void {
  * Ask the service worker to drop cached DB range chunks from versions other than `keepVersion`. The asset URLs are
  * versioned + immutable, so stale versions' chunks never expire on their own.
  */
-export function pruneDbRangeCache(keepVersion: string): void {
+export function pruneDBRangeCache(keepVersion: string): void {
 	if (typeof window === "undefined" || !("serviceWorker" in navigator)) return
 	void navigator.serviceWorker.ready
 		.then((registration) => registration.active?.postMessage({ type: PRUNE_MESSAGE_TYPE, keepVersion }))

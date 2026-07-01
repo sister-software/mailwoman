@@ -72,7 +72,7 @@ async function downloadToFile(url: string, dest: string, timeoutMs: number): Pro
 	return statSync(dest).size
 }
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
 			"out-root": { type: "string", default: process.env.OUT_ROOT },
@@ -85,7 +85,7 @@ function parseCliArgs() {
 }
 
 async function main(): Promise<void> {
-	const { outRoot } = parseCliArgs()
+	const { outRoot } = parseCLIArgs()
 	const destDir = join(outRoot, SLUG)
 	mkdirSync(destDir, { recursive: true })
 	const dest = join(destDir, FILENAME)

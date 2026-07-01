@@ -30,7 +30,7 @@
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
 
-import { stableSourceId } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
@@ -38,7 +38,7 @@ export const GNAF_ADAPTER_ID = "gnaf"
 /** Open G-NAF is freely redistributable with attribution to Geoscape Australia (CC-BY-style). */
 export const GNAF_DEFAULT_LICENSE = "CC-BY-4.0"
 
-interface GnafTuple {
+interface GNAFTuple {
 	house_number: string
 	street: string
 	locality: string
@@ -51,7 +51,7 @@ interface GnafTuple {
  * two postcode-LEADING forms are the ones it fails, so they carry the lever. We keep the canonical form too so the
  * retrain doesn't forget it.
  */
-function renderOrders(c: GnafTuple): string[] {
+function renderOrders(c: GNAFTuple): string[] {
 	const region = c.region ? ` ${c.region}` : ""
 
 	return [
@@ -68,7 +68,7 @@ function renderOrders(c: GnafTuple): string[] {
  * Build the G-NAF adapter. `inputPath` is the assembled component JSONL (see {@link ./assemble}); it is country-pinned
  * to AU regardless of `opts.country` (G-NAF is Australia-only).
  */
-export function createGnafAdapter(): CorpusAdapter {
+export function createGNAFAdapter(): CorpusAdapter {
 	return {
 		id: GNAF_ADAPTER_ID,
 		defaultLicense: GNAF_DEFAULT_LICENSE,
@@ -90,10 +90,10 @@ export function createGnafAdapter(): CorpusAdapter {
 
 					if (!line.trim()) continue
 
-					let t: GnafTuple
+					let t: GNAFTuple
 
 					try {
-						t = JSON.parse(line) as GnafTuple
+						t = JSON.parse(line) as GNAFTuple
 					} catch {
 						continue
 					}
@@ -124,7 +124,7 @@ export function createGnafAdapter(): CorpusAdapter {
 						country: "AU",
 						locale: "en-AU",
 						source: GNAF_ADAPTER_ID,
-						source_id: `${stableSourceId(GNAF_ADAPTER_ID, aligned)}-o${order}`,
+						source_id: `${stableSourceID(GNAF_ADAPTER_ID, aligned)}-o${order}`,
 						corpus_version: "",
 						license: GNAF_DEFAULT_LICENSE,
 					}
@@ -138,4 +138,4 @@ export function createGnafAdapter(): CorpusAdapter {
 	}
 }
 
-export const gnafAdapter = createGnafAdapter()
+export const gnafAdapter = createGNAFAdapter()

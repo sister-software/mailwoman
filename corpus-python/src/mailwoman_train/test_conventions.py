@@ -8,8 +8,8 @@ import pytest
 
 torch = pytest.importorskip("torch")  # training deps live on Modal; locally these skip
 
-from .conventions import CONVENTIONS_FORBIDDEN_TAGS, build_forbidden_mask
-from .labels import ACTIVE_BIO_LABELS, LABEL_TO_ID, LOCALE_COUNTRIES
+from .conventions import CONVENTIONS_FORBIDDEN_TAGS, build_forbidden_mask  # noqa: E402
+from .labels import ACTIVE_BIO_LABELS, LABEL_TO_ID, LOCALE_COUNTRIES  # noqa: E402
 
 NUM_LABELS = len(ACTIVE_BIO_LABELS)
 

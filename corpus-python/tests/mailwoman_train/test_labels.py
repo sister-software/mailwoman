@@ -13,7 +13,6 @@ from mailwoman_train.labels import (
     collapse_label,
 )
 
-
 # --- Historical (frozen) -------------------------------------------------------------
 
 

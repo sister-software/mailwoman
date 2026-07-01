@@ -98,7 +98,7 @@ interface OaCollection {
 	size?: number
 }
 
-function parseCliArgs() {
+function parseCLIArgs() {
 	const { values, positionals } = parseArgs({
 		allowPositionals: true,
 		options: {
@@ -208,7 +208,7 @@ async function downloadToFile(url: string, dest: string, opts: DownloadOpts): Pr
 }
 
 async function main(): Promise<void> {
-	const cli = parseCliArgs()
+	const cli = parseCLIArgs()
 	const country = cli.country
 	const outRoot = cli.outRoot ?? join(await gitToplevel(), "data", "corpus", "sources")
 
@@ -252,9 +252,9 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	// -------------------------------------------------------------------------
 	// Determine collection ID
 	// -------------------------------------------------------------------------
-	let collectionId = OA_COLLECTION_IDS[country]
+	let collectionID = OA_COLLECTION_IDS[country]
 
-	if (collectionId === undefined) {
+	if (collectionID === undefined) {
 		process.stdout.write(`Unknown country code '${country}'. Fetching collection list to find ID...\n`)
 		const res = await fetch(`${OA_BASE}/api/collections`, {
 			headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" },
@@ -283,21 +283,21 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 			process.exit(1)
 		}
 
-		collectionId = match.id
-		process.stdout.write(`  Found collection id=${collectionId} for '${country}'\n`)
+		collectionID = match.id
+		process.stdout.write(`  Found collection id=${collectionID} for '${country}'\n`)
 	}
 
 	// -------------------------------------------------------------------------
 	// Download via the collections download endpoint (302s to S3)
 	// -------------------------------------------------------------------------
-	process.stdout.write(`  Resolving download URL for collection id=${collectionId}...\n`)
+	process.stdout.write(`  Resolving download URL for collection id=${collectionID}...\n`)
 	process.stdout.write(`  Attempting authenticated download...\n`)
 
 	const tmpGz = join(destDir, "collection.geojsonl.gz.tmp")
 	const tmpRaw = join(destDir, "collection.geojsonl.tmp")
-	const sourceUrl = `${OA_BASE}/api/collections/${collectionId}/download`
+	const sourceURL = `${OA_BASE}/api/collections/${collectionID}/download`
 
-	let httpStatus = await downloadToFile(sourceUrl, tmpGz, {
+	let httpStatus = await downloadToFile(sourceURL, tmpGz, {
 		headers: { Authorization: `Bearer ${token}` },
 		timeoutMs: 7_200_000,
 		retries: 3,
@@ -306,7 +306,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 
 	if (httpStatus !== 200) {
 		// Try the geojsonl.gz directly with token as query param (alternate URL shape).
-		httpStatus = await downloadToFile(`${OA_BASE}/api/collections/${collectionId}/geojsonl.gz?token=${token}`, tmpGz, {
+		httpStatus = await downloadToFile(`${OA_BASE}/api/collections/${collectionID}/geojsonl.gz?token=${token}`, tmpGz, {
 			timeoutMs: 7_200_000,
 			retries: 3,
 			retryDelayMs: 30_000,
@@ -325,12 +325,12 @@ Likely causes:
   3. Network error or CDN outage.
 
 Manual download (after logging in to batch.openaddresses.io):
-  - Navigate to https://batch.openaddresses.io/collection/${collectionId}
+  - Navigate to https://batch.openaddresses.io/collection/${collectionID}
   - Click "GeoJSON+LD" to download the collection.
   - Save as: ${outputFile}
   - Then re-run this script with SKIP_DOWNLOAD=1 to generate the MANIFEST.
 
-URL tried: ${OA_BASE}/api/collections/${collectionId}/download
+URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 `)
 		process.exit(1)
@@ -376,8 +376,8 @@ URL tried: ${OA_BASE}/api/collections/${collectionId}/download
 	const downloadedAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z")
 
 	const manifest = {
-		source_url: sourceUrl,
-		collection_id: collectionId,
+		source_url: sourceURL,
+		collection_id: collectionID,
 		country,
 		filename: "collection.geojsonl",
 		downloaded_at: downloadedAt,
