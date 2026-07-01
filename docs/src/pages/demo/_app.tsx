@@ -42,7 +42,7 @@ import {
 	resolveStreet,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
-import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
+import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "../../shared/httpvfs-street.ts"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 import {
 	adminGazetteerURL,
@@ -74,8 +74,8 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
 
 /** The per-state street lookups, loaded together (lazy by region). */
 interface StreetLookups {
-	situs: HttpvfsAddressPointLookup
-	interp: HttpvfsInterpolator
+	situs: HTTPVFSAddressPointLookup
+	interp: HTTPVFSInterpolator
 }
 
 import { DebugControl } from "./_debug.tsx"
@@ -408,8 +408,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				if (release?.hasWOFDb) {
 					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
 						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
-						const { loadHttpvfsDB, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDB(adminGazetteerURL(), sqljsBaseURL)
+						const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
+						const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL)
 						const wofLookup = new WOFCandidateTableLookup(worker)
 						// Warm the schema/FTS/abbr/dual-role pages now (idle or first submit) so the first
 						// real query starts from a warm page cache; report live transfer while it runs.
@@ -703,14 +703,14 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 			if (!p) {
 				p = (async () => {
-					const { loadHttpvfsDB } = await import("../../shared/httpvfs-resolver")
-					const { HttpvfsAddressPointLookup, HttpvfsInterpolator } = await import("../../shared/httpvfs-street")
+					const { loadHTTPVFSDatabase } = await import("../../shared/httpvfs-resolver")
+					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("../../shared/httpvfs-street")
 					const [situsW, interpW] = await Promise.all([
-						loadHttpvfsDB(streetShardURL(slug, "situs"), sqljsBaseURL),
-						loadHttpvfsDB(streetShardURL(slug, "interp"), sqljsBaseURL),
+						loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL),
+						loadHTTPVFSDatabase(streetShardURL(slug, "interp"), sqljsBaseURL),
 					])
 
-					return { situs: new HttpvfsAddressPointLookup(situsW), interp: new HttpvfsInterpolator(interpW) }
+					return { situs: new HTTPVFSAddressPointLookup(situsW), interp: new HTTPVFSInterpolator(interpW) }
 				})()
 				p.catch(() => streetLookupsRef.current.delete(slug))
 				streetLookupsRef.current.set(slug, p)

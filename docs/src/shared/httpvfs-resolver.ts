@@ -91,7 +91,7 @@ function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | u
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
 }
 
-interface HttpvfsWorker {
+interface HTTPVFSWorker {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 	/**
 	 * Total bytes range-fetched from the DB so far (Comlink property read on the worker). Drives the live transfer
@@ -101,12 +101,12 @@ interface HttpvfsWorker {
 }
 
 /** The raw shape `createDBWorker` resolves to — `worker` is the Comlink proxy. */
-interface RawWorkerHttpvfs {
-	db: HttpvfsWorker["db"]
+interface RawWorkerHTTPVFS {
+	db: HTTPVFSWorker["db"]
 	worker?: { bytesRead?: number | Promise<number> }
 }
 
-export interface HttpvfsOptions {
+export interface HTTPSVFSOptions {
 	/**
 	 * Bytes per HTTP range request. Default 65536 (64 KiB = 16 SQLite pages). Fetches inside the worker are SYNCHRONOUS
 	 * XHR, so cold latency ≈ uncached-chunk-count × RTT: bigger chunks cut round-trips on FTS-walk-heavy access (the hot
@@ -120,12 +120,12 @@ export interface HttpvfsOptions {
  * Load the sql.js-httpvfs UMD (once) and open a DB over byte-range fetches from `dbURL`. `sqljsBaseURL` is where the
  * plugin staged the worker + wasm (e.g. "/mailwoman/sqljs").
  */
-export async function loadHttpvfsDB(
+export async function loadHTTPVFSDatabase(
 	dbURL: string,
 	sqljsBaseURL: string,
-	options: HttpvfsOptions = {}
-): Promise<HttpvfsWorker> {
-	const w = window as unknown as { createDBWorker?: (...args: unknown[]) => Promise<RawWorkerHttpvfs> }
+	options: HTTPSVFSOptions = {}
+): Promise<HTTPVFSWorker> {
+	const w = window as unknown as { createDBWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
 
 	if (typeof w.createDBWorker !== "function") {
 		await new Promise<void>((res, rej) => {
@@ -146,7 +146,7 @@ export async function loadHttpvfsDB(
 	// cacheable URL first (fast — Cloudflare edge-caches the ranges); if it opens corrupt, retry ONCE
 	// with a cache-busting query param to force fresh chunks. Self-heals a poisoned cache without
 	// permanently defeating caching for the happy path. See the 2026-06 mobile-Safari demo report.
-	const open = async (url: string): Promise<HttpvfsWorker> => {
+	const open = async (url: string): Promise<HTTPVFSWorker> => {
 		const raw = await w.createDBWorker!(
 			[
 				{
@@ -190,12 +190,12 @@ interface SchemaFacts {
 }
 
 /** PlaceLookup over the httpvfs worker — same ranking as WOFWasmPlaceLookup, async. */
-export class WOFHttpvfsPlaceLookup implements MailwomanLookupLike {
-	#worker: HttpvfsWorker
+export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
+	#worker: HTTPVFSWorker
 	#schemaProbe: Promise<SchemaFacts> | undefined
 	#dualRoles: Promise<Map<number, DualRole[]>> | undefined
 
-	constructor(worker: HttpvfsWorker) {
+	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
 	}
 
@@ -449,7 +449,7 @@ interface CandidateCodeMaps {
  * PlaceLookup over the byte-range CANDIDATE table (`build-candidate.ts`) — the FTS-free gazetteer that replaces the
  * slim `wof-hot.db` for the demo. A resolve is a single contiguous B-tree probe on `name_key` (the shared
  * {@link normalizeLocalityForKey}, build/query-consistent): no FTS, no join — each row is denormalized (display `name`,
- * centroid, bbox) and population rank is precomputed into `neg_rank`. Drop-in for {@link WOFHttpvfsPlaceLookup} (same
+ * centroid, bbox) and population rank is precomputed into `neg_rank`. Drop-in for {@link WOFHTTPVFSPlaceLookup} (same
  * `MailwomanLookupLike` surface), but ~12 range fetches per session instead of 243 on the full DB, with GLOBAL
  * coverage.
  *
@@ -458,12 +458,12 @@ interface CandidateCodeMaps {
  * exactly what `runCascade` expects.
  */
 export class WOFCandidateTableLookup implements MailwomanLookupLike {
-	#worker: HttpvfsWorker
+	#worker: HTTPVFSWorker
 	#codes: Promise<CandidateCodeMaps> | undefined
 	/** Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip). */
 	#hasPostalCity: Promise<boolean> | undefined
 
-	constructor(worker: HttpvfsWorker) {
+	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
 	}
 
@@ -651,7 +651,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 }
 
 /** Polygon lookup over an httpvfs worker: id → GeoJSON geometry (async). */
-export function makeHttpvfsPolygonLookup(worker: HttpvfsWorker) {
+export function makeHTTPVFSPolygonLookup(worker: HTTPVFSWorker) {
 	return {
 		async get(id: number): Promise<unknown | null> {
 			const rows = rowsFromExec(await worker.db.exec(`SELECT geom FROM polygons WHERE id = ${Number(id)}`))

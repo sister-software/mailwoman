@@ -17,8 +17,6 @@ export const MailwomanBaseTileSetID = TileSetSourceID("basemap-v4")
 
 const darkFlavor = namedFlavor("dark")
 
-console.log("MailwomanBaseFlavor:", darkFlavor)
-
 /**
  * The Mailwoman theme for Protomaps via MapLibre. Keys follow `@protomaps/basemaps@5.x` which targets the v4 tile
  * schema (`["==","kind","..."]` filters), matching the basemap-v4 PMTiles on R2.

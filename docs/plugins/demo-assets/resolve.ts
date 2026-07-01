@@ -277,7 +277,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
  *
  * @param destDir - E.g. static/mailwoman/sqljs
  */
-export function stageSQLJsHttpvfs(destDir: string): boolean {
+export function stageSQLJSHTTPVFS(destDir: string): boolean {
 	let distDir: string
 
 	try {

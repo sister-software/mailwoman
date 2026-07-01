@@ -11,13 +11,13 @@ So coarsen it on purpose. You have two ways to do it, and the only real decision
 
 The cheapest coarsening is to drop decimal places. Each one you keep is worth roughly 10× the precision:
 
-| Decimals | Cell size | What it pins |
-| -------- | --------- | ------------ |
-| 5 | ~1 m | the doormat |
-| 4 | ~11 m | the building |
-| 3 | ~110 m | the block |
-| 2 | ~1.1 km | the neighbourhood |
-| 1 | ~11 km | the city |
+| Decimals | Cell size | What it pins      |
+| -------- | --------- | ----------------- |
+| 5        | ~1 m      | the doormat       |
+| 4        | ~11 m     | the building      |
+| 3        | ~110 m    | the block         |
+| 2        | ~1.1 km   | the neighbourhood |
+| 1        | ~11 km    | the city          |
 
 ```ts
 const round = (n: number, decimals: number) => {
@@ -43,13 +43,13 @@ toGeohash(40.7484, -73.9857) // precision 9 ≈ 4.8 m: "dr5ru7p4n"
 toGeohash(40.7484, -73.9857, 5) // ≈ 4.9 km: "dr5ru"
 ```
 
-| Precision | Cell size |
-| --------- | --------- |
-| 9 (default) | ~4.8 m |
-| 7 | ~153 m |
-| 6 | ~1.2 km |
-| 5 | ~4.9 km |
-| 4 | ~39 km |
+| Precision   | Cell size |
+| ----------- | --------- |
+| 9 (default) | ~4.8 m    |
+| 7           | ~153 m    |
+| 6           | ~1.2 km   |
+| 5           | ~4.9 km   |
+| 4           | ~39 km    |
 
 Because the cell boundaries are fixed, every address inside `dr5ru` shares the prefix — you can group, join, or count by the truncated string and know that two records in the same cell really are neighbours. Store the geohash, not the point, and the precision you didn't keep is precision you can't leak.
 

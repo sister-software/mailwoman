@@ -18,7 +18,13 @@ curl -s localhost:3000/api/batch \
 ```json
 {
 	"results": [
-		{ "input": "350 5th Ave, New York, NY 10118", "lat": 40.7484, "lon": -73.9857, "resolution_tier": "interpolated", "...": "..." },
+		{
+			"input": "350 5th Ave, New York, NY 10118",
+			"lat": 40.7484,
+			"lon": -73.9857,
+			"resolution_tier": "interpolated",
+			"...": "..."
+		},
 		{ "input": "Vienna, Austria", "lat": 48.2083, "lon": 16.3725, "resolution_tier": "admin", "...": "..." },
 		{ "input": "", "error": "..." }
 	]

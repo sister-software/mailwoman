@@ -60,15 +60,15 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 
 ## Numbers (Part 1 — cleanup)
 
-| | |
-|---|---|
-| Issues closed | 15 |
-| Issues relabeled | 7 |
-| PRs merged | 1 (#849) |
-| PRs open | 1 (#850) |
-| Modal $ | ~0 |
-| GPU | none |
-| Regressions shipped | 0 |
+|                             |          |
+| --------------------------- | -------- |
+| Issues closed               | 15       |
+| Issues relabeled            | 7        |
+| PRs merged                  | 1 (#849) |
+| PRs open                    | 1 (#850) |
+| Modal $                     | ~0       |
+| GPU                         | none     |
+| Regressions shipped         | 0        |
 | Open issues: before → after | ~45 → 30 |
 
 ---
@@ -86,7 +86,7 @@ you can make — each with my recommendation:
 1. **Lever E — the $20 GPU budget.** _(Corrected after a DeepSeek nudge prompted a deeper dive — my first
    read of this was wrong twice over.)_ The multilocale corpus IS staged AND **the big multilocale win already
    shipped**: v1.9.1-multilocale-3order = **v4.13.0** (PT 52→82%, PL 53→62%, AT +31pp), and v4.16.0 sits on
-   that base. So #825 is the *incremental* push beyond v4.13.0, and its next lever is campaign-gated, not a
+   that base. So #825 is the _incremental_ push beyond v4.13.0, and its next lever is campaign-gated, not a
    cheap probe: more eval-safe data (#477's recipe, a parity-scorecard decision) or a representation change —
    and **weight is a falsified lever** here (the v1.9.1 postmortem: "only the RENDERING fixes it"). So a
    "resume v194 + upweight the shard, 2k probe" has no falsifiable upside. **Rec: hold the budget; the further
@@ -111,12 +111,12 @@ you can make — each with my recommendation:
 re-shaped it twice before a line of resolver code was written:
 
 - **A0 (parser probe).** Every unambiguous foreign name (`Austria`/`Australia`/`Switzerland`/`Canada`) is
-  tagged `country` by the model. `Georgia` tags as `region` in *both* readings (`Tbilisi, Georgia` and
+  tagged `country` by the model. `Georgia` tags as `region` in _both_ readings (`Tbilisi, Georgia` and
   `Atlanta, Georgia`) — so it self-disambiguates; the `{Georgia,GE}` skip-set the plan hedged on is dead
   code. Fork (i): the bug is resolver-side.
 - **Backend probe (the pivot).** The first read was "coverage gap" — the unscoped `Vienna` lookup returns
   only US Viennas and there's no `country` row for Austria. Querying the DB directly corrected it: Vienna AT
-  **does** exist (an exonym-folded row), just *outranked* by the populous US namesakes; and well-covered WOF
+  **does** exist (an exonym-folded row), just _outranked_ by the populous US namesakes; and well-covered WOF
   countries carry no `country`-placetype row (only the #267 gap countries do), so the re-pick must filter by
   the `country` ISO **column**, not a `parentId` descendant scope.
 - **Salvage-first.** `@mailwoman/codex/country` already carries the ISO-3166 base + address surface forms
@@ -133,7 +133,7 @@ Springfield IL, NYC, Paris all held. Gauntlet PASS (regression 15/15 with 5 new 
 default-on, awaiting CI.
 
 **verify-before-verdict fired (again):** the first gauntlet run failed Sydney "7532km off." Instead of
-assuming the fix broke, I dug in — the resolver was right (−33.87,151.21); my *expected* value had a dropped
+assuming the fix broke, I dug in — the resolver was right (−33.87,151.21); my _expected_ value had a dropped
 minus sign (`33.8696` not `−33.8696`). My typo, caught by the gate, not a regression.
 
 ## Lever D — resolver/parser backlog (#305, #435, #456): triaged, none a clean CPU PR
@@ -142,9 +142,9 @@ The diagnostic-first discipline earned its keep — all three are GPU/schema/cov
 "CPU-doable subset" the plan hoped. The realistic output was a correct re-scope of each (which saves the
 next cycle), not three implementations:
 
-- **#305** (proximity-gate the exact-name tier) — the gate needs the postcode anchor's *coordinate*, which
+- **#305** (proximity-gate the exact-name tier) — the gate needs the postcode anchor's _coordinate_, which
   lives at the resolver layer; the JP/EU postcode shards exist on disk but aren't wired into the default
-  geocode path; and `applyPostcodeConsistency` (#370, shipped *after* #305) already does this proximity test
+  geocode path; and `applyPostcodeConsistency` (#370, shipped _after_ #305) already does this proximity test
   post-walk but isn't wired into `geocode-core`. Re-scoped to: wire the non-US postcode shards, then fold the
   exact-tier demote into the existing #370 pass — no second gate on the hot per-keystroke path.
 - **#435** (number-after-street mis-tag) — re-probed the shipped model: **quirk 2 (street-prefix dropped) is
@@ -160,13 +160,13 @@ next cycle), not three implementations:
 Ran `frontier-gap.ts` (the #822 placer-frontier diagnostic itself) before and after the fix, default drop-in
 config, 506 cities / 187 countries:
 
-| | Before | After |
-|---|---:|---:|
-| Bare `"City, Country"` resolve-rate | 54.2% | **77.9%** (+23.7pp) |
-| +hint ceiling | 82.8% | 83.0% (flat) |
-| US-namesake misroutes | 10.5% (53) | 4.3% (22) |
-| Bare-supported countries | 112 | **157** (+45) |
-| Placer-recoverable (#822) | 57 | **12** (−45 closed) |
+|                                     |     Before |               After |
+| ----------------------------------- | ---------: | ------------------: |
+| Bare `"City, Country"` resolve-rate |      54.2% | **77.9%** (+23.7pp) |
+| +hint ceiling                       |      82.8% |        83.0% (flat) |
+| US-namesake misroutes               | 10.5% (53) |           4.3% (22) |
+| Bare-supported countries            |        112 |       **157** (+45) |
+| Placer-recoverable (#822)           |         57 | **12** (−45 closed) |
 
 **#822 recovered 45 of 57 placer-recoverable countries on CPU** — what the issue (and the drop-in memo)
 expected a GPU placer retrain to do. The flat +hint ceiling confirms it closed the placer↔resolver gap
@@ -210,14 +210,15 @@ cold-path budget from real artifact sizes (29 MB int8 model, the 1.3 GB candidat
 cold chunks) + a node-side compute floor (model session-init 126 ms, warm parse 5.7 ms native EP) + a
 proposed two-surface SLO (cold-load < 6 s / per-keystroke < 50 ms on a Moto-G-class phone). The numbers
 already name the cold bottleneck: **the 29 MB model download**, not compute — so the cold lever is model size
-+ streaming + CDN, not the SQLite path. The per-keystroke resolve cost (which gates **#372 flatbush**) is the
-one piece still needing the in-browser trace. Artifact: `2026-06-30-378-wasm-cold-path-slo.md`. **#372 is
-explicitly parked** behind that trace (diagnostic-before-fix — don't build the index before the profile).
+
+- streaming + CDN, not the SQLite path. The per-keystroke resolve cost (which gates **#372 flatbush**) is the
+  one piece still needing the in-browser trace. Artifact: `2026-06-30-378-wasm-cold-path-slo.md`. **#372 is
+  explicitly parked** behind that trace (diagnostic-before-fix — don't build the index before the profile).
 
 ## Decisions made autonomously (Part 2)
 
 - **Deferred lever E (the $20 GPU budget).** #825's gate is GO, but no multilocale corpus/config is staged —
-  the retrain needs *new* PT/PL/AU data (a pipeline session), and weight-only up-weighting likely falsifies
+  the retrain needs _new_ PT/PL/AU data (a pipeline session), and weight-only up-weighting likely falsifies
   (the fr.house_number precedent). Burning the $20 on an uninformative probe is worse than preserving it.
   Flagged for operator override.
 - **#822 fix shape:** resolver-side joint-consistency (extend the reconcile) over a forward country pin —
@@ -272,7 +273,7 @@ paid off twice:
   read was wrong both ways: the corpus IS staged, AND the multilocale retrain's big win already shipped (v4.13.0,
   PT 52→82). So E's value is largely banked; the residual is campaign-gated, not a probe. Corrected on #825 +
   the decision brief. (The lesson: "exhausted" deserved the same verify-before-verdict as everything else.)
-- **Shipped the #493 serializer surface (PR #864, flagged).** I'd over-deferred the *whole* serializer wiring as
+- **Shipped the #493 serializer surface (PR #864, flagged).** I'd over-deferred the _whole_ serializer wiring as
   "operator-owned"; on a closer look the serializer functions are the established `includeAlternatives` opt-in
   pattern (default-off, byte-stable), only the demo rendering genuinely wants "operator eyes." So `decodeAsJson`/
   `decodeAsTuples` (overloaded — existing callers untouched) / `decodeAsXml` gained an opt-in `includeUnknown`;
@@ -280,7 +281,7 @@ paid off twice:
   for review; the demo rendering is left for the focused pass.
 
 The takeaway for the next shift: an over-conservative "it's gated" can be its own unverified verdict. The boundary
-(don't ship contract/architecture/budget *decisions*) was right; "don't ship the safe plumbing underneath them"
+(don't ship contract/architecture/budget _decisions_) was right; "don't ship the safe plumbing underneath them"
 was too cautious.
 
 ## Numbers (Part 2 — final)
@@ -288,16 +289,16 @@ was too cautious.
 _Drafted during the shift; finalized at hand-off. Active window ~05:00–13:39 UTC (~8.5h hands-on of the
 ~14h conn)._
 
-| | |
-|---|---|
-| Levers shipped | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + #493 serializers (#864, flagged) + F+H artifacts (#853, #857) |
-| Levers triaged/measured | D (#305/#435/#456 re-scoped), E (deferred — corrected: v4.13.0 already shipped the multilocale win), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
-| PRs merged | 12 (#852–860, #862, #863, #865) · 1 open flagged (#864 #493 serializers) |
-| #822 bare resolve-rate | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed |
-| Modal $ | ~0 (E deferred, budget preserved) |
-| GPU | none |
-| NaN / CI failures on main / regressions | 0 / 0 / 0 |
-| Issues advanced | #822 **closed**, #861 **filed**; #305/#379/#435/#456/#480/#493/#818/#825/#826 updated |
+|                                         |                                                                                                                                                                               |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Levers shipped                          | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + #493 serializers (#864, flagged) + F+H artifacts (#853, #857)                       |
+| Levers triaged/measured                 | D (#305/#435/#456 re-scoped), E (deferred — corrected: v4.13.0 already shipped the multilocale win), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
+| PRs merged                              | 12 (#852–860, #862, #863, #865) · 1 open flagged (#864 #493 serializers)                                                                                                      |
+| #822 bare resolve-rate                  | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed                                                                                       |
+| Modal $                                 | ~0 (E deferred, budget preserved)                                                                                                                                             |
+| GPU                                     | none                                                                                                                                                                          |
+| NaN / CI failures on main / regressions | 0 / 0 / 0                                                                                                                                                                     |
+| Issues advanced                         | #822 **closed**, #861 **filed**; #305/#379/#435/#456/#480/#493/#818/#825/#826 updated                                                                                         |
 
 ## Open / next (the morning decisions)
 
@@ -306,7 +307,7 @@ The decision brief at the top of Part 2 is the authoritative list; the forks for
 - **#864** — review the `unknown` serializer contract (native-vs-opt-in, JSON mix-vs-nest), then merge. The
   #493 parse-API wrappers + demo rendering are the follow-on (they depend on #864's types).
 - **Lever E / $20** — held. The multilocale lift is banked (v4.13.0); the further push is a campaign-strategy
-  + data call (#477 recipe), not an overnight probe. Budget untouched.
+  - data call (#477 recipe), not an overnight probe. Budget untouched.
 - **#861** — port the country branch to the demo cascade (quick) vs converge on the shared `resolveTree`
   (principled). My rec: converge.
 - **#378** — the in-browser P95 trace needs a Chrome-capable machine (gates #372).

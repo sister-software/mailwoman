@@ -8,7 +8,7 @@
  *   (#483). They run the SAME SQL + the SAME shared normalizer (`street-normalize.ts`) as the node
  *   classes, just ASYNC over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
  *   main thread; see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
- *   parity-preference + polyline interpolation in `HttpvfsInterpolator` mirrors
+ *   parity-preference + polyline interpolation in `HTTPVFSInterpolator` mirrors
  *   `StreetInterpolator` line-for-line — KEEP THE TWO IN LOCKSTEP (the same lockstep contract the
  *   WOF resolvers hold).
  *
@@ -24,8 +24,8 @@ import {
 	normalizeStreetForKey,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-/** The minimal worker handle the lookups need — the same shape `loadHttpvfsDB` returns. */
-export interface HttpvfsDB {
+/** The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns. */
+export interface HTTPVFSDB {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 }
 
@@ -52,11 +52,11 @@ export interface StreetPointHit {
 /**
  * Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality fallback.
  */
-export class HttpvfsAddressPointLookup {
-	#worker: HttpvfsDB
+export class HTTPVFSAddressPointLookup {
+	#worker: HTTPVFSDB
 	#available: Promise<boolean> | undefined
 
-	constructor(worker: HttpvfsDB) {
+	constructor(worker: HTTPVFSDB) {
 		this.#worker = worker
 	}
 
@@ -133,11 +133,11 @@ export interface StreetInterpHit {
 /**
  * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on cross-ZIP ambiguity.
  */
-export class HttpvfsInterpolator {
-	#worker: HttpvfsDB
+export class HTTPVFSInterpolator {
+	#worker: HTTPVFSDB
 	#available: Promise<boolean> | undefined
 
-	constructor(worker: HttpvfsDB) {
+	constructor(worker: HTTPVFSDB) {
 		this.#worker = worker
 	}
 

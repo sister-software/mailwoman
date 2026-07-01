@@ -188,9 +188,9 @@ export interface PolygonDB {
  * path as the resolver DB.
  */
 export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<PolygonDB> {
-	const { loadHttpvfsDB, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
-	const worker = await loadHttpvfsDB(url, sqljsBaseURL)
-	const lookup = makeHttpvfsPolygonLookup(worker)
+	const { loadHTTPVFSDatabase, makeHTTPVFSPolygonLookup } = await import("../../shared/httpvfs-resolver")
+	const worker = await loadHTTPVFSDatabase(url, sqljsBaseURL)
+	const lookup = makeHTTPVFSPolygonLookup(worker)
 
 	return {
 		get: (id: number) => lookup.get(id) as Promise<PlaceGeometry | null>,

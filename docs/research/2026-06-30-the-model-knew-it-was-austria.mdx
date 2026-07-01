@@ -46,10 +46,10 @@ There's a guard rail worth mentioning, because it's where this kind of fix usual
 
 We measure these things against coordinates, not labels, because a name-match metric would have told us this bug didn't exist. The honest yardstick is a bare `City, Country` query — the exact thing a user types into the box — scored by how close the answer lands to the real place.
 
-| | before | after |
-| --- | ---: | ---: |
-| `City, Country` resolves correctly | 54.2% | **77.9%** |
-| countries the country-name now rescues | — | **45 of 57** |
+|                                        | before |        after |
+| -------------------------------------- | -----: | -----------: |
+| `City, Country` resolves correctly     |  54.2% |    **77.9%** |
+| countries the country-name now rescues |      — | **45 of 57** |
 
 Forty-five countries that used to need a hint and now don't, a twenty-four-point jump on the query shape people actually use, and the cost on the GPU meter was zero. The thing we'd budgeted a retrain for was a hundred-odd lines in the resolver.
 

@@ -53,7 +53,7 @@ sql.js-httpvfs's fetches are sync XHR only _inside_ the worker.
 **But the demo does not use `geocodeAddress`/`resolveTree`.** It has its own **async** cascade —
 `runCascade()` in `docs/src/shared/demo-helpers.ts` — that already `await`s `lookup.findPlace(...)` over
 the Comlink-proxied httpvfs worker on the main thread. So the street tiers slot in as **async** lookups
-(mirroring the existing `WofHttpvfsPlaceLookup`), with no sync-interface problem and no
+(mirroring the existing `WofHTTPVFSPlaceLookup`), with no sync-interface problem and no
 worker-internal-sync requirement. The sync `AddressPointLookup` contract is a _node_ concern (the CLI /
 server path); the browser has always resolved async.
 
@@ -62,8 +62,8 @@ server path); the browser has always resolved async.
  ──────────────────────────────────────────────
  onnxruntime-web parse → ParsedNodes
  street + number + (postcode|locality) present?
-   ├─ await HttpvfsAddressPointLookup.find(...)   situs-<state>.db   → address_point tier
-   ├─ else await HttpvfsInterpolator.find(...)    interp-<state>.db  → interpolated tier
+   ├─ await HTTPVFSAddressPointLookup.find(...)   situs-<state>.db   → address_point tier
+   ├─ else await HTTPVFSInterpolator.find(...)    interp-<state>.db  → interpolated tier
    └─ else runCascade(...) (existing)             wof-hot.db         → admin tier
  → coordinate + tier + calibrated uncertainty_m → map pin + radius
 ```
@@ -100,7 +100,7 @@ lifted, the page↔worker contract is:
   cache, slow link), abandon the street tier and return the admin-centroid result the WOF resolve
   already produced — a coarse pin beats a spinner. The tier field tells the UI to widen the radius and
   caption it plainly. The cascade already degrades tier-by-tier; the worker adds the wall-clock guard.
-- **Warm-up on idle**, mirroring `WofHttpvfsPlaceLookup.warmUp()` — pull the situs index root + the
+- **Warm-up on idle**, mirroring `WofHTTPVFSPlaceLookup.warmUp()` — pull the situs index root + the
   hot WOF pages during browser idle so the first submit isn't paying cold serial RTTs.
 
 ### Service Worker (build on `2026-06-06-demo-service-worker-design.mdx`)
@@ -147,10 +147,10 @@ epic — it is more than "wire the existing feature," which is the nuance worth 
 
 ## Implementation steps
 
-1. **`HttpvfsAddressPointLookup` + `HttpvfsInterpolator`** in `docs/src/shared/` — **async** `find()`
+1. **`HTTPVFSAddressPointLookup` + `HTTPVFSInterpolator`** in `docs/src/shared/` — **async** `find()`
    over a sql.js-httpvfs handle (`worker.db.exec` + inline SQL), mirroring `AddressPointSqliteLookup` /
    the interpolation lookup query-for-query (same `street-normalize`, same postcode-then-locality
-   scoping) and the existing `WofHttpvfsPlaceLookup` async idiom.
+   scoping) and the existing `WofHTTPVFSPlaceLookup` async idiom.
 2. **A `resolveStreet()` street tier** in `demo-helpers.ts` — given the parsed street/number/postcode/
    locality + the two lookups, return `{ lat, lon, tier, uncertaintyM }` (situs → interp → null), so
    `index.tsx` runs it before `runCascade` and falls back to admin on a null. Main-thread async — no
