@@ -71,6 +71,10 @@ const { values } = parseArgs({
 		base: { type: "string" },
 		cand: { type: "string" },
 		tokenizer: { type: "string" },
+		// The candidate's tokenizer, when it differs from the baseline's (a vocab-splice candidate like
+		// #884 ships its own tokenizer; feeding the spliced vocab to the base model would emit ids past
+		// its embedding table). Defaults to --tokenizer.
+		"cand-tokenizer": { type: "string" },
 		"model-card": { type: "string", default: "neural-weights-en-us/model-card.json" },
 		"anchor-lookup": { type: "string" },
 		"default-country": { type: "string", default: "US" },
@@ -102,10 +106,10 @@ const wofDB = values["wof-db"] ?? dataRootPath("wof", "admin-global-priority.db"
 const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: wofDB }) as never)
 const resolveOpts = { defaultCountry: values["default-country"] }
 
-async function build(modelPath: string) {
+async function build(modelPath: string, tokenizerPath: string) {
 	return createScorer({
 		modelPath,
-		tokenizerPath: values.tokenizer!,
+		tokenizerPath,
 		modelCardPath: values["model-card"]!,
 		anchorLookupPath: anchorPath,
 		strict: true,
@@ -113,8 +117,8 @@ async function build(modelPath: string) {
 	})
 }
 
-const baseModel = await build(values.base!)
-const candModel = await build(values.cand!)
+const baseModel = await build(values.base!, values.tokenizer!)
+const candModel = await build(values.cand!, values["cand-tokenizer"] ?? values.tokenizer!)
 
 async function run(model: Awaited<ReturnType<typeof build>>, raw: string, gold: { lat: number; lon: number }) {
 	const tree = await model.parse(raw, { postcodeRepair: true })

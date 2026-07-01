@@ -26,7 +26,7 @@ CI [−0.02, 0]. CZ/PL wrong-city rate unchanged. The shard was proving genuinel
 coordinate.
 
 **The coverage detour, and the eyeball that overturned our own aggregate.** The operator asked us to scope
-whether CZ/PL was coverage-bound before deciding. The resolved-p50 aggregate (CZ 5.24km) *looked* like "right
+whether CZ/PL was coverage-bound before deciding. The resolved-p50 aggregate (CZ 5.24km) _looked_ like "right
 city, just coarse — needs rooftop data." The eyeball said otherwise: ~40% of Czech addresses were landing in
 the **wrong city entirely** (80–280km off), because the diacritic parse was broken — `Vysoká` read as
 `Vysok`, `Čistá` as `istá`, localities truncated. The p50 had hidden a bimodal distribution. This is
@@ -34,7 +34,7 @@ verify-before-verdict firing on our own summary statistic: the aggregate wasn't 
 was. CZ/PL was **parse-bound**, not coverage-bound, and coverage can't touch a wrong-city row.
 
 **The research said we weren't alone.** A tokenizer probe confirmed the mechanism: the 48k SentencePiece vocab
-has the diacritic *characters* but no multi-char *subwords* containing them, so every diacritic isolates its
+has the diacritic _characters_ but no multi-char _subwords_ containing them, so every diacritic isolates its
 own piece — CZ localities at 3.3× English fertility. This is the documented "tokenizer fertility tax." Four
 parallel SOTA agents + a DeepSeek consult mapped the fix space: vocabulary expansion (byte-identical English
 by construction), byte/char-level models (universal but latency-heavy), and a CharCNN front-end (cheap +
@@ -56,21 +56,21 @@ constituents, a 2k-step fine-tune, and grade with the spliced tokenizer.
 
 Same golden sets, same grader; the B columns are graded with the spliced tokenizer.
 
-| metric | baseline v4.15.0 | v196 retrain (80k) | B splice + 2k FT | **B splice, mean-init only ($0)** |
-| --- | --- | --- | --- | --- |
-| US-2k coord p50 | 3.31 km | 3.31 (flat) | 3.31 (diff 0) | **3.31 (diff 0, CI [0,0])** |
-| US region-match | 0.999 | 0.999 | 0.999 | **0.999** |
-| CZ resolved-p50 | 5.24 km | 82.89 ✗ | 3.75 | **3.52** |
-| CZ wrong-city (>20km) | 44% | 58% ✗ | 30% | **28%** |
-| PL resolved-p50 | 2.37 km | 2.37 | 1.53 | **1.53** |
-| PL wrong-city | 30% | 30% | 11% | **11%** |
+| metric                | baseline v4.15.0 | v196 retrain (80k) | B splice + 2k FT | **B splice, mean-init only ($0)** |
+| --------------------- | ---------------- | ------------------ | ---------------- | --------------------------------- |
+| US-2k coord p50       | 3.31 km          | 3.31 (flat)        | 3.31 (diff 0)    | **3.31 (diff 0, CI [0,0])**       |
+| US region-match       | 0.999            | 0.999              | 0.999            | **0.999**                         |
+| CZ resolved-p50       | 5.24 km          | 82.89 ✗            | 3.75             | **3.52**                          |
+| CZ wrong-city (>20km) | 44%              | 58% ✗              | 30%              | **28%**                           |
+| PL resolved-p50       | 2.37 km          | 2.37               | 1.53             | **1.53**                          |
+| PL wrong-city         | 30%              | 30%                | 11%              | **11%**                           |
 
 Tokenization, before → after splice: `Vysoká` 4→1 piece, `Grudziądz` 6→1, `Świętokrzyska` 9→1, `Čistá` 5→2.
 The eyeball confirmed the mechanism end-to-end — `Fr. Černého`, `Střížovice`, `Březová nad Svitavou` now parse
 as whole names where the baseline truncated them to `Fr`, `St`, `B`.
 
-**The ablation is the punchline: the fine-tune was unnecessary.** We ran the splice + mean-init model *without
-any fine-tune* and it matches or beats the fine-tuned version on every metric (CZ wrong-city 28% vs the
+**The ablation is the punchline: the fine-tune was unnecessary.** We ran the splice + mean-init model _without
+any fine-tune_ and it matches or beats the fine-tuned version on every metric (CZ wrong-city 28% vs the
 fine-tune's 30%; PL and US identical). The 2k fine-tune not only added nothing — it began drifting toward the
 same overfit that killed v196. So the fix is a tokenizer splice plus an embedding average: no GPU training.
 And because it leaves v4.15.0's encoder byte-for-byte untouched, US identity is a **guarantee** (encoder
@@ -100,7 +100,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
   tokenizer probe could have flagged in an hour. The fertility check should have run before the ship
   candidate, not after. We reached for the pre-registered lever instead of the cheapest falsifier.
 - **The 150-row CZ/PL eval sets are underpowered.** The CZ resolved-p50 CI was [−40, −0.34] — barely negative
-  at the top, huge at the bottom. The wrong-city *rate* carried the verdict; the p50 was noise. A promote
+  at the top, huge at the bottom. The wrong-city _rate_ carried the verdict; the p50 was noise. A promote
   decision needs ~1k rows.
 - **The first grade in each batch kept getting skipped** (heat throttle), forcing standalone re-runs. Minor,
   but it cost a couple of confused minutes each time.
@@ -112,7 +112,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 2. **The cheapest falsifier goes first.** The tokenizer fertility probe was $0 and decisive; it should have
    preceded the GPU spend, not followed it.
 3. **Disjoint-codepoint vocab splicing is a real tool.** Appending only non-ASCII pieces to a unigram vocab
-   keeps the source language byte-identical *by construction* — a guarantee, not a hope. Worth remembering for
+   keeps the source language byte-identical _by construction_ — a guarantee, not a hope. Worth remembering for
    any future non-Latin extension (with the caveat that it does not scale to CJK, where char-level is the
    natural unit).
 4. **A recipe copied from vN-1 inherits vN-1's bugs.** Diff the corpus and source-weights against the shipped
@@ -135,12 +135,12 @@ parallel and is parked as the CJK-forward path (the one place vocab-splice won't
 
 ## Ledger
 
-| | |
-| --- | --- |
-| Shift | Day, 2026-07-01, ~15:00–19:45 UTC |
-| Models trained | 2 (v196 ship candidate 80k; v1.9.7-bsplice fine-tune 2k) + the v193 probe finishing |
-| Total Modal GPU | ~$25–30 (retrain dominates; the winning fix — splice + mean-init — needed 0 training, just an export) |
-| Promotions | 0 shipped — v4.15.0 remains default; B is a candidate pending the checklist |
-| Regressions shipped | 0 |
-| NaN / divergence | 0 |
-| Net result | #825-as-retrain falsified; an English-safe CZ/PL fix found and validated |
+|                     |                                                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| Shift               | Day, 2026-07-01, ~15:00–19:45 UTC                                                                     |
+| Models trained      | 2 (v196 ship candidate 80k; v1.9.7-bsplice fine-tune 2k) + the v193 probe finishing                   |
+| Total Modal GPU     | ~$25–30 (retrain dominates; the winning fix — splice + mean-init — needed 0 training, just an export) |
+| Promotions          | 0 shipped — v4.15.0 remains default; B is a candidate pending the checklist                           |
+| Regressions shipped | 0                                                                                                     |
+| NaN / divergence    | 0                                                                                                     |
+| Net result          | #825-as-retrain falsified; an English-safe CZ/PL fix found and validated                              |
