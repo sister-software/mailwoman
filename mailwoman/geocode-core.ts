@@ -101,6 +101,13 @@ export interface GeocodeDeps {
 	 */
 	normalizeInput?: boolean
 	/**
+	 * A pre-parsed tree to resolve, skipping the internal `classifier.parse` (the address's single most expensive step).
+	 * Supply the output of {@link parseForGeocode} when a caller already parsed the same address for another purpose — a
+	 * PostalAddress, say — so the inference runs once, not twice. MUST come from `parseForGeocode` (same input + opts),
+	 * or the resolved tree won't match the address. Omit for the normal one-shot path.
+	 */
+	parsedTree?: AddressTree
+	/**
 	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound; `1` or `undefined`
 	 * keeps the raw half-segment heuristic. Accepts either a single multiplier (the legacy Travis 1.7) OR a per-region
 	 * {@link InterpCalibrationTable} — when a table is supplied the factor is selected by the parsed region (DC 1.44 … AZ
@@ -297,6 +304,24 @@ export class ShardProvider {
 }
 
 /**
+ * The exact parse `geocodeAddress` runs internally: Stage-1 deterministic preprocessing (`normalizeInput`) →
+ * `classifier.parse` (postcodeRepair + normalizeCase) → `recognizeUsRegions`. Exposed so a caller can run it once and
+ * feed the result to both {@link geocodeAddress} (via `GeocodeDeps.parsedTree`) and another consumer of the parse (e.g.
+ * `decodeAsJSON(tree)` → a PostalAddress), instead of parsing the same address twice. The inference is ~3 ms/row — the
+ * single most expensive step — so sharing it is a ~1.3× win on a parse-then-geocode pipeline.
+ */
+export async function parseForGeocode(
+	input: string,
+	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase">
+): Promise<AddressTree> {
+	const parseInput = deps.normalizeInput === false ? input : normalize(input).normalized
+
+	return recognizeUsRegions(
+		await deps.classifier.parse(parseInput, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
+	)
+}
+
+/**
  * Run the full street-level cascade on one address and return the structured geocode result. Always returns a result
  * (admin tier even with no coordinate shards). Throws only on a fatal parse/resolve error — callers doing batch work
  * should catch per-row.
@@ -304,11 +329,10 @@ export class ShardProvider {
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
 	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
-	// raw for the result; the parse + placer see the normalized form.
+	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
+	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
 	const parseInput = deps.normalizeInput === false ? input : normalize(input).normalized
-	const tree = recognizeUsRegions(
-		await deps.classifier.parse(parseInput, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
-	)
+	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const stateSlug = regionSlugFromTree(tree)
 	const usShards = deps.shards?.(stateSlug) ?? {}
 	let addressPoints = usShards.addressPoints

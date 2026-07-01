@@ -234,4 +234,29 @@ describe("geocodeAddressVia", () => {
 		expect(address?.canonicalKey).toBeTruthy()
 		expect(address?.geocode).toBeUndefined()
 	})
+
+	it("parseAndGeocode variant: one combined call wires the same PostalAddress + coordinate", async () => {
+		let calls = 0
+		const geocoded = geocodeAddressVia({
+			parseAndGeocode: async () => {
+				calls++
+
+				return { components, geo: { lat: 45.5, lon: -122.6, resolution_tier: "interpolated", uncertainty_m: 120 } }
+			},
+			country: "US",
+		})
+
+		const address = await geocoded("123 Main St, Portland OR 97201")
+		expect(calls).toBe(1)
+		expect(address?.canonicalKey).toBe("123|main|st|portland|or|97201|us")
+		expect(address?.geocode?.coordinate).toEqual({ latitude: 45.5, longitude: -122.6 })
+		expect(address?.geocode?.tier).toBe("interpolated")
+	})
+
+	it("parseAndGeocode with geo null returns the parsed-but-unlocated address", async () => {
+		const geocoded = geocodeAddressVia({ parseAndGeocode: async () => ({ components, geo: null }) })
+		const address = await geocoded("123 Main St")
+		expect(address?.canonicalKey).toBeTruthy()
+		expect(address?.geocode).toBeUndefined()
+	})
 })
