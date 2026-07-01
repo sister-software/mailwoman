@@ -126,6 +126,68 @@ class EncoderBlock(nn.Module):
         return x
 
 
+class CharCNNEmbedding(nn.Module):
+    """Per-token embedding computed from a token's CHARACTERS via a multi-width 1D CNN.
+
+    A drop-in replacement for the SentencePiece token-ID lookup (``nn.Embedding``). The input is
+    char IDs per token: ``(B, S, W)`` where ``S`` is the WORD/token count (whitespace tokens for
+    space-delimited scripts, one char per token for CJK) and ``W`` is max chars per token. It
+    produces ``(B, S, hidden)`` — the exact shape the transformer body already consumes, so nothing
+    downstream (anchor/gazetteer/phrase channels, the blocks, CRF, classifier) changes.
+
+    Why this fixes the diacritic problem the SentencePiece path can't: the tokenizer is now
+    word-level, so "Čistá" is ONE token whose embedding is composed from its own characters — the
+    subword vocab never gets to isolate the diacritic into its own O-tagged piece (the 3.3x Slavic
+    fertility tax that broke span boundaries → wrong-city geocoding). The char vocab is small (the
+    Unicode chars seen in training, a few thousand), so the embedding table is a fraction of a 48k SP
+    vocab. Generalizes to any script — for CJK, one character is one token, no giant subword vocab.
+
+    ONNX-clean: Embedding + Conv1d + ReLU + masked max-pool + Linear are all standard ops the
+    onnxruntime-node and onnxruntime-web (WASM/WebGPU) runtimes accept.
+    """
+
+    def __init__(
+        self,
+        *,
+        char_vocab_size: int,
+        char_embed_dim: int,
+        hidden_size: int,
+        kernel_sizes: tuple[int, ...] = (3, 4, 5),
+        pad_char_id: int = 0,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.pad_char_id = pad_char_id
+        self.char_embeddings = nn.Embedding(char_vocab_size, char_embed_dim, padding_idx=pad_char_id)
+        # Split the hidden width across the kernels; the projection absorbs any remainder so the
+        # output is exactly ``hidden_size`` regardless of divisibility.
+        per_kernel = max(1, hidden_size // len(kernel_sizes))
+        self.convs = nn.ModuleList(
+            [nn.Conv1d(char_embed_dim, per_kernel, kernel_size=k, padding=k // 2) for k in kernel_sizes]
+        )
+        self.proj = nn.Linear(per_kernel * len(kernel_sizes), hidden_size)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, char_ids: torch.Tensor) -> torch.Tensor:
+        # char_ids: (B, S, W) long. Fold (B, S) so the conv runs once over B*S tokens.
+        bsz, seq, width = char_ids.shape
+        flat = char_ids.reshape(bsz * seq, width)  # (B*S, W)
+        # (B*S, W, D) -> (B*S, D, W) for Conv1d (channels = char_embed_dim).
+        x = self.char_embeddings(flat).transpose(1, 2)
+        # Mask padded char positions out of the max-pool: after ReLU real activations are >= 0, so a
+        # padded column could otherwise win the max. Set padded columns to a large negative before pool.
+        pad_mask = (flat == self.pad_char_id).unsqueeze(1)  # (B*S, 1, W)
+        feats: list[torch.Tensor] = []
+        for conv in self.convs:
+            # Even kernels with symmetric padding emit W+1; trim to the input width so every kernel's
+            # output aligns to the char positions (and the pad mask), for any kernel-size mix.
+            c = torch.relu(conv(x))[..., :width]  # (B*S, per_kernel, W)
+            c = c.masked_fill(pad_mask, -1e4)
+            feats.append(c.max(dim=2).values)  # (B*S, per_kernel) — max over chars
+        h = self.dropout(self.proj(torch.cat(feats, dim=-1)))  # (B*S, hidden)
+        return h.reshape(bsz, seq, -1)  # (B, S, hidden)
+
+
 class MailwomanCoarseEncoder(nn.Module):
     """Minimal transformer for Stage 1 coarse BIO token classification.
 
@@ -168,6 +230,10 @@ class MailwomanCoarseEncoder(nn.Module):
         gazetteer_feature_dim: int = 5,
         use_affix_head: bool = False,
         use_conventions_loss_mask: bool = False,
+        use_char_embed: bool = False,
+        char_vocab_size: int = 0,
+        char_embed_dim: int = 64,
+        char_kernel_sizes: tuple[int, ...] = (3, 4, 5),
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
@@ -253,6 +319,29 @@ class MailwomanCoarseEncoder(nn.Module):
         self.position_embeddings = nn.Embedding(max_position_embeddings, hidden_size)
         self.input_dropout = nn.Dropout(hidden_dropout_prob)
         self.input_ln = nn.LayerNorm(hidden_size)
+        # CharCNN front-end (the #825 tokenizer-fragmentation fix). When on, the per-token embedding is
+        # COMPOSED from the token's characters (see CharCNNEmbedding) instead of a SentencePiece piece-ID
+        # lookup, so a whole word ("Čistá") is one token and diacritics never fragment the span. The
+        # SentencePiece token_embeddings table stays built (unused in char mode) so the pretrain / MLM /
+        # save code paths keep working unchanged; the ship-slim path drops it once the arch is chosen.
+        self.use_char_embed = bool(use_char_embed)
+        self.char_embed_dim = int(char_embed_dim)
+        self.char_kernel_sizes = tuple(char_kernel_sizes)
+        self.char_vocab_size = int(char_vocab_size)
+        self.char_cnn: CharCNNEmbedding | None
+        if self.use_char_embed:
+            if char_vocab_size <= 0:
+                raise ValueError("use_char_embed=True requires char_vocab_size > 0")
+            self.char_cnn = CharCNNEmbedding(
+                char_vocab_size=char_vocab_size,
+                char_embed_dim=char_embed_dim,
+                hidden_size=hidden_size,
+                kernel_sizes=self.char_kernel_sizes,
+                pad_char_id=0,
+                dropout=hidden_dropout_prob,
+            )
+        else:
+            self.char_cnn = None
         # Linear projection ``(hidden + phrase_feature_dim) → hidden`` so the body's
         # transformer stack keeps its declared ``hidden_size``. xavier_uniform_ init via
         # ``_init_weights``; bias init zero. None when ``use_phrase_priors`` is off — the
@@ -400,7 +489,7 @@ class MailwomanCoarseEncoder(nn.Module):
 
     def forward(
         self,
-        input_ids: torch.Tensor,
+        input_ids: torch.Tensor | None = None,
         attention_mask: torch.Tensor | None = None,
         labels: torch.Tensor | None = None,
         phrase_features: torch.Tensor | None = None,
@@ -409,12 +498,26 @@ class MailwomanCoarseEncoder(nn.Module):
         anchor_confidence: torch.Tensor | None = None,
         gazetteer_features: torch.Tensor | None = None,
         gazetteer_confidence: torch.Tensor | None = None,
+        char_ids: torch.Tensor | None = None,
     ) -> _CoarseEncoderOutput:
-        bsz, seq = input_ids.shape
+        # Token embedding source: char-composed (CharCNN over per-token char IDs, shape (B, S, W)) or the
+        # SentencePiece piece-ID lookup (input_ids, shape (B, S)). Everything after `h` is identical.
+        if self.use_char_embed:
+            if char_ids is None:
+                raise ValueError("use_char_embed=True requires char_ids (B, S, W)")
+            bsz, seq = int(char_ids.shape[0]), int(char_ids.shape[1])
+            device = char_ids.device
+            tok_embed = self.char_cnn(char_ids)  # type: ignore[misc]
+        else:
+            if input_ids is None:
+                raise ValueError("input_ids required when use_char_embed=False")
+            bsz, seq = input_ids.shape
+            device = input_ids.device
+            tok_embed = self.token_embeddings(input_ids)
         if seq > self.max_position_embeddings:
             raise ValueError(f"sequence length {seq} exceeds max_position_embeddings {self.max_position_embeddings}")
-        pos = torch.arange(seq, device=input_ids.device).unsqueeze(0).expand(bsz, seq)
-        h = self.token_embeddings(input_ids) + self.position_embeddings(pos)
+        pos = torch.arange(seq, device=device).unsqueeze(0).expand(bsz, seq)
+        h = tok_embed + self.position_embeddings(pos)
         # v0.5.0 thread C: optional phrase-prior conditioning. ``phrase_features`` is the
         # per-token BIE+kind one-hot from Stage 2.7. When the encoder was built with
         # ``use_phrase_priors=True`` and features are supplied, concat them onto the embed
@@ -786,6 +889,12 @@ class MailwomanCoarseEncoder(nn.Module):
             "gazetteer_feature_dim": int(self.gazetteer_feature_dim),
             "use_affix_head": bool(self.use_affix_head),
             "use_conventions_loss_mask": bool(self.use_conventions_loss_mask),
+            # CharCNN front-end (#825). False/0 on SentencePiece checkpoints; loaders branch on the flag
+            # to materialize the char_cnn module at the persisted char-vocab width + kernel geometry.
+            "use_char_embed": bool(self.use_char_embed),
+            "char_vocab_size": int(self.char_vocab_size),
+            "char_embed_dim": int(self.char_embed_dim),
+            "char_kernel_sizes": list(self.char_kernel_sizes),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -841,6 +950,11 @@ class MailwomanCoarseEncoder(nn.Module):
             use_affix_head=cfg.get("use_affix_head", False),
             use_conventions_loss_mask=cfg.get("use_conventions_loss_mask", False),
             gazetteer_feature_dim=cfg.get("gazetteer_feature_dim", 5),
+            # CharCNN front-end (#825). Default off for back-compat with SentencePiece checkpoints.
+            use_char_embed=cfg.get("use_char_embed", False),
+            char_vocab_size=cfg.get("char_vocab_size", 0),
+            char_embed_dim=cfg.get("char_embed_dim", 64),
+            char_kernel_sizes=tuple(cfg.get("char_kernel_sizes", (3, 4, 5))),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -851,8 +965,15 @@ class MailwomanCoarseEncoder(nn.Module):
         return model
 
 
-def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoarseEncoder:
-    """Instantiate ``MailwomanCoarseEncoder`` with the phase's geometry from ``cfg``."""
+def build_model(
+    cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size: int = 0
+) -> MailwomanCoarseEncoder:
+    """Instantiate ``MailwomanCoarseEncoder`` with the phase's geometry from ``cfg``.
+
+    ``char_vocab_size`` is the CharCNN char-alphabet size (#825); it's derived from the char vocab at
+    load time (like ``vocab_size`` for the SentencePiece path) and only used when
+    ``cfg.model.use_char_embed`` is set.
+    """
     # v0.4.0: derive the class_weights tensor from cfg.model.class_weights if set.
     # Labels not present in the dict default to weight 1.0 (no change vs uniform).
     cw_dict = getattr(cfg.model, "class_weights", None)
@@ -901,6 +1022,11 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         # Dedicated affix head (#492).
         use_affix_head=getattr(cfg.model, "use_affix_head", False),
         use_conventions_loss_mask=getattr(cfg.model, "use_conventions_loss_mask", False),
+        # CharCNN front-end (#825). char_vocab_size threaded from the loader; the rest from cfg.model.
+        use_char_embed=getattr(cfg.model, "use_char_embed", False),
+        char_vocab_size=char_vocab_size,
+        char_embed_dim=getattr(cfg.model, "char_embed_dim", 64),
+        char_kernel_sizes=tuple(getattr(cfg.model, "char_kernel_sizes", (3, 4, 5))),
     )
 
 
