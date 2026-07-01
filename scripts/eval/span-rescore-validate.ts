@@ -27,6 +27,7 @@ import { existsSync, readFileSync } from "node:fs"
  *
  *   Run: node --experimental-strip-types scripts/eval/span-rescore-validate.ts [--n 150]
  */
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -237,7 +238,7 @@ async function main() {
 
 			if (Number.isFinite(dist)) km.push(dist)
 
-			if (process.env.DEBUG && !isGold)
+			if ($public.DEBUG && !isGold)
 				console.error(
 					`  [${cc}] WRONG: raw="${row.raw}" gold="${gold}" → recovered="${hit.text}" pc=${pc ?? "-"} dist=${dist.toFixed(0)}km`
 				)

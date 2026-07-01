@@ -53,6 +53,7 @@ import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -680,7 +681,7 @@ async function main(): Promise<void> {
 	let addressPointHits = 0
 	const neuralInterpAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	let interpHits = 0
-	const diagInterp = process.env.MAILWOMAN_DIAG_INTERP === "1"
+	const diagInterp = $public.MAILWOMAN_DIAG_INTERP === "1"
 	let interpPrecond = 0 // rows that parsed street+house_number+postcode (interp's precondition)
 	let interpFullParseMiss = 0 // precond met + exact missed + interp null = genuine find() miss
 	const diagMisses: string[] = []

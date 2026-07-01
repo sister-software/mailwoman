@@ -43,6 +43,7 @@ import { existsSync, readFileSync, symlinkSync, unlinkSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 // --- current default (releases.json defaultVersion = v4.16.0) --------------
@@ -61,11 +62,11 @@ const PKG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
 // An explicit override means the caller is deliberately experimenting with a
 // non-default model — skip the hash assertion in that case (but warn loudly).
-const MODEL_OVERRIDDEN = !!process.env.MAILWOMAN_DEV_MODEL
-const TOKENIZER_OVERRIDDEN = !!process.env.MAILWOMAN_DEV_TOKENIZER
+const MODEL_OVERRIDDEN = !!$public.MAILWOMAN_DEV_MODEL
+const TOKENIZER_OVERRIDDEN = !!$public.MAILWOMAN_DEV_TOKENIZER
 
-const SRC_MODEL = process.env.MAILWOMAN_DEV_MODEL || DEFAULT_MODEL
-const SRC_TOKENIZER = process.env.MAILWOMAN_DEV_TOKENIZER || DEFAULT_TOKENIZER
+const SRC_MODEL = $public.MAILWOMAN_DEV_MODEL || DEFAULT_MODEL
+const SRC_TOKENIZER = $public.MAILWOMAN_DEV_TOKENIZER || DEFAULT_TOKENIZER
 
 if (!existsSync(SRC_MODEL)) {
 	console.error(`missing source model: ${SRC_MODEL}`)

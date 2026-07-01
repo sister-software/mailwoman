@@ -52,6 +52,8 @@ import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
 
+import { $public } from "@mailwoman/core/env"
+
 import { defaultAdapterRegistry } from "./adapter.js"
 import { alignRow } from "./align.js"
 import { licenseExcluded } from "./license.js"
@@ -164,7 +166,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		const cachedManifest = join(adapterDir, "MANIFEST.json")
 
 		if (
-			process.env.MAILWOMAN_RESUME === "1" &&
+			$public.MAILWOMAN_RESUME === "1" &&
 			existsSync(cachedManifest) &&
 			existsSync(join(adapterDir, "canonical.jsonl"))
 		) {

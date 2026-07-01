@@ -18,7 +18,9 @@
 import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 
-const PYTHON = process.env.PYTHON ?? "corpus-python/.venv/bin/python"
+import { $public } from "@mailwoman/core/env"
+
+const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
 const TRAIN_REMOTE = "scripts/modal/train_remote.py"
 
 if (!existsSync(PYTHON)) {

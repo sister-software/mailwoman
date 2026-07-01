@@ -14,6 +14,7 @@
 import { readFileSync } from "node:fs"
 
 import { proposalsToTree, resolveProposalOverlaps, treeToProposals } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { solutionToProposals } from "@mailwoman/core/parser"
 import { policyRegistryFromRoute, routeInputShape } from "@mailwoman/core/policy"
 import type { ClassificationProposal } from "@mailwoman/core/types"
@@ -36,7 +37,7 @@ const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(T
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 const v0 = createAddressParser()
 
-const N = Number(process.env.PROBE_N ?? "0")
+const N = Number($public.PROBE_N ?? "0")
 const inputs = N
 	? readFileSync("data/eval/external/openaddresses-us-sample.jsonl", "utf8")
 			.split("\n")

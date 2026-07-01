@@ -43,6 +43,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, resolve } from "node:path"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
@@ -337,12 +338,12 @@ async function main(): Promise<void> {
 		// MAILWOMAN_DUMP_MISS_TAG=<tag>: print every row where gold has <tag> but the prediction
 		// differs (false-neg or mislabel). A diagnostic lens for "which surfaces does the model drop"
 		// — added for the #560 fr.house_number investigation; harmless when the env is unset.
-		const dumpTag = process.env.MAILWOMAN_DUMP_MISS_TAG
+		const dumpTag = $public.MAILWOMAN_DUMP_MISS_TAG
 
 		for (const row of rows) {
 			const tree = await neural.parse(
 				row.raw,
-				process.env.MAILWOMAN_WORD_CONSISTENCY === "1" ? { enforceWordConsistency: true } : {}
+				$public.MAILWOMAN_WORD_CONSISTENCY === "1" ? { enforceWordConsistency: true } : {}
 			)
 			const pred = foldToComponents(decodeAsJSON(tree))
 			preds.push(pred)

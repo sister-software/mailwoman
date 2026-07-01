@@ -42,6 +42,7 @@ import { readFile, rm, writeFile } from "node:fs/promises"
 import { basename, join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
 import { $ } from "zx"
 
 // The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05).
@@ -96,7 +97,7 @@ async function listZipEntries(zipPath: string): Promise<string[]> {
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-root": { type: "string", default: process.env.OUT_ROOT },
+			"out-root": { type: "string", default: $public.OUT_ROOT },
 		},
 	})
 

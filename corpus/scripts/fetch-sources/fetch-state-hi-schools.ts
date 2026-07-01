@@ -48,6 +48,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
 import { $ } from "zx"
 
 const SOURCE_URL = "https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx"
@@ -111,7 +112,7 @@ interface Manifest {
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-root": { type: "string", default: process.env.OUT_ROOT ?? "data/corpus/sources" },
+			"out-root": { type: "string", default: $public.OUT_ROOT ?? "data/corpus/sources" },
 		},
 	})
 

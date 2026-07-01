@@ -23,6 +23,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -129,7 +130,7 @@ async function main() {
 	for (const row of rows) {
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
-			enforceWordConsistency: process.env.MAILWOMAN_WORD_CONSISTENCY === "1",
+			enforceWordConsistency: $public.MAILWOMAN_WORD_CONSISTENCY === "1",
 		})
 		const flat = decodeAsJSON(tree) as Record<string, string>
 		const goldRegion = row.components?.region as string | undefined

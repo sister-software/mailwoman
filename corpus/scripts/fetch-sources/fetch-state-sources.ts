@@ -41,6 +41,8 @@ import { readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
+
 interface Source {
 	slug: string
 	filename: string
@@ -122,7 +124,7 @@ async function downloadToFile(url: string, dest: string, timeoutMs: number): Pro
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-root": { type: "string", default: process.env.OUT_ROOT },
+			"out-root": { type: "string", default: $public.OUT_ROOT },
 		},
 	})
 

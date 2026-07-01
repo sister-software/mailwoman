@@ -17,15 +17,15 @@ import { existsSync, symlinkSync, unlinkSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 const PKG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 // In lockstep with en-us's DEFAULT_MODEL (one multilingual artifact serves both). 2026-06-30 #259: pinned
 // to the v4.16.0 / v1.9.4-fr-bare-street shipped model (was the stale v1.9.3a3 step-80000 / v4.15.0 default).
-const SRC_MODEL =
-	process.env.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v194-step-92000-int8.onnx")
+const SRC_MODEL = $public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v194-step-92000-int8.onnx")
 const SRC_TOKENIZER =
-	process.env.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+	$public.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 
 if (!existsSync(SRC_MODEL)) {
 	console.error(`missing source model: ${SRC_MODEL}`)

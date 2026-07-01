@@ -28,6 +28,7 @@ import { existsSync, readFileSync } from "node:fs"
  *
  *   Run: node --experimental-strip-types scripts/eval/eu-qualified-name-recall.ts [--n 150]
  */
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -149,7 +150,7 @@ async function main() {
 					if (r.near) s.tNear++
 					else s.tColl++
 
-					if (process.env.DEBUG)
+					if ($public.DEBUG)
 						console.error(`  [${cc}] ${r.near ? "RECOVER" : "COLLIDE"}: "${gold}" → "${tok}" (${r.km.toFixed(0)}km)`)
 				}
 			}

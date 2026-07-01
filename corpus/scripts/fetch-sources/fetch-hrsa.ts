@@ -35,6 +35,8 @@ import { readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
+
 const SLUG = "usgov-hrsa-fqhc"
 const FILENAME = "Health_Center_Service_Delivery_and_LookAlike_Sites.csv"
 const SOURCE_URL = `https://data.hrsa.gov/DataDownload/DD_Files/${FILENAME}`
@@ -76,7 +78,7 @@ async function downloadToFile(url: string, dest: string, timeoutMs: number): Pro
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-root": { type: "string", default: process.env.OUT_ROOT },
+			"out-root": { type: "string", default: $public.OUT_ROOT },
 		},
 	})
 

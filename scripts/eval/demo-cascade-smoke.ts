@@ -37,6 +37,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { $public } from "@mailwoman/core/env"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
@@ -56,7 +57,7 @@ import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
 const argv = process.argv.slice(2)
 
 const STAGE = arg("stage-dir", "/tmp/v440-stage/en-us/v4.4.0")!
-const DB = arg("db", process.env.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))!
+const DB = arg("db", $public.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))!
 const MODEL = arg("model", path.join(STAGE, "model.onnx"))!
 const TOK = arg("tokenizer", path.join(STAGE, "tokenizer.model"))!
 const CARD = arg("card", path.join(STAGE, "model-card.json"))!

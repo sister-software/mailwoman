@@ -22,6 +22,7 @@ import { readFileSync, writeFileSync } from "node:fs"
  *   --default-country DE --out-json /tmp/joint-de.json
  */
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
@@ -133,7 +134,7 @@ async function main(): Promise<void> {
 	const argmaxLat: number[] = []
 	const jointLat: number[] = []
 
-	const dumpReg = !!process.env.MW_DUMP_REGRESSIONS
+	const dumpReg = !!$public.MW_DUMP_REGRESSIONS
 
 	for (const row of rows) {
 		const score = async (

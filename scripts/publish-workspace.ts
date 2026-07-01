@@ -35,20 +35,22 @@ import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { $private, $public } from "@mailwoman/core/env"
+
 const repoRoot = fileURLToPath(new URL("..", import.meta.url))
 
-const workspacePath = process.env.RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE
-const tag = process.env.RELEASE_IT_WORKSPACES_TAG || "latest"
-const access = process.env.RELEASE_IT_WORKSPACES_ACCESS || ""
-const otp = process.env.RELEASE_IT_WORKSPACES_OTP || ""
-const dryRun = process.env.RELEASE_IT_WORKSPACES_DRY_RUN === "true"
+const workspacePath = $public.RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE
+const tag = $public.RELEASE_IT_WORKSPACES_TAG || "latest"
+const access = $public.RELEASE_IT_WORKSPACES_ACCESS || ""
+const otp = $private.RELEASE_IT_WORKSPACES_OTP || ""
+const dryRun = $public.RELEASE_IT_WORKSPACES_DRY_RUN === "true"
 
 if (!workspacePath) {
 	console.error("publish-workspace.ts: RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE unset")
 	process.exit(2)
 }
 
-const SKIP_WEIGHTS = !!process.env.MAILWOMAN_SKIP_WEIGHTS
+const SKIP_WEIGHTS = !!$public.MAILWOMAN_SKIP_WEIGHTS
 const isWeightsWorkspace = workspacePath.startsWith("./neural-weights-")
 
 if (SKIP_WEIGHTS && isWeightsWorkspace) {
@@ -92,7 +94,7 @@ try {
 	// sigstore attestations link to source code that third parties can't
 	// verify. Trusted Publishing itself works fine without --provenance; flip
 	// the env var on once the repo goes public.
-	if (process.env.MAILWOMAN_NPM_PROVENANCE === "1") publishArgs.push("--provenance")
+	if ($public.MAILWOMAN_NPM_PROVENANCE === "1") publishArgs.push("--provenance")
 
 	console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
 

@@ -36,13 +36,15 @@ import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { $public } from "@mailwoman/core/env"
+
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, "..")
 
 const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
-const dataRoot = process.env.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot
-const SOURCE_MODEL = process.env.MAILWOMAN_PUBLISH_MODEL ?? resolve(dataRoot, config.weights.model)
-const SOURCE_TOKENIZER = process.env.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(dataRoot, config.weights.tokenizer)
+const dataRoot = $public.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot
+const SOURCE_MODEL = $public.MAILWOMAN_PUBLISH_MODEL ?? resolve(dataRoot, config.weights.model)
+const SOURCE_TOKENIZER = $public.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(dataRoot, config.weights.tokenizer)
 
 const SOFT_FEED = config.softFeed ?? {}
 const SOURCE_GAZETTEER = SOFT_FEED.gazetteerLexicon ? resolve(repoRoot, SOFT_FEED.gazetteerLexicon) : null
@@ -65,7 +67,7 @@ async function main() {
 	// operator's host and aren't fetchable from CI; the workflow excludes the
 	// weights workspaces from the publish set in that mode, so skipping the
 	// copy is correct.
-	if (process.env.MAILWOMAN_SKIP_WEIGHTS_COPY) {
+	if ($public.MAILWOMAN_SKIP_WEIGHTS_COPY) {
 		process.stderr.write("copy-weights: MAILWOMAN_SKIP_WEIGHTS_COPY set — skipping.\n")
 
 		return

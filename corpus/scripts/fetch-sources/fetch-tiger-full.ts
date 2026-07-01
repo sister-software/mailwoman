@@ -46,6 +46,7 @@ import { basename, join } from "node:path"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
+import { $public } from "@mailwoman/core/env"
 import { $ } from "zx"
 
 $.verbose = false
@@ -54,13 +55,13 @@ const TIGER_BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT"
 
 function parseEnv() {
 	return {
-		outRoot: process.env.OUT_ROOT,
+		outRoot: $public.OUT_ROOT,
 		// Space-separated 2-digit state FIPS codes to skip entirely.
 		// Default: skip 50 (Vermont) — already present from v0.1.1 build.
-		skipStateFips: (process.env.SKIP_STATE_FIPS ?? "50").split(/\s+/).filter(Boolean),
-		rateSleepMs: Math.round(Number.parseFloat(process.env.RATE_SLEEP ?? "0.2") * 1000),
-		maxParallel: Number.parseInt(process.env.MAX_PARALLEL ?? "4", 10),
-		dryRun: (process.env.DRY_RUN ?? "0") === "1",
+		skipStateFips: ($public.SKIP_STATE_FIPS ?? "50").split(/\s+/).filter(Boolean),
+		rateSleepMs: Math.round(Number.parseFloat($public.RATE_SLEEP ?? "0.2") * 1000),
+		maxParallel: Number.parseInt($public.MAX_PARALLEL ?? "4", 10),
+		dryRun: ($public.DRY_RUN ?? "0") === "1",
 	}
 }
 

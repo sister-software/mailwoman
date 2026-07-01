@@ -14,6 +14,7 @@ import { copyFileSync, existsSync, lstatSync, readFileSync, readlinkSync, statSy
 import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
 
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 // ---------------------------------------------------------------------------
@@ -331,7 +332,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?: string }): boolean {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
 	const globalDB = dataRootPath("wof", "admin-global-priority.db")
-	const wofDB = opts.wofDB ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDB
+	const wofDB = opts.wofDB ?? $public.PLAYPEN_WOF_ADMIN_DB ?? globalDB
 
 	if (!existsSync(wofDB)) {
 		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDB} — skipping FST build`)
@@ -386,11 +387,11 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?
 export function buildSlimWOFDb(destPath: string, opts: { repoRoot: string }): boolean {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
 	const globalDB = dataRootPath("wof", "admin-global-priority.db")
-	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDB
+	const adminDb = $public.PLAYPEN_WOF_ADMIN_DB ?? globalDB
 	// Postcodes: opt-in via PLAYPEN_WOF_POSTCODE_DB (e.g. /mnt/playpen/mailwoman-data/wof/
 	// postalcode-us.db — custom-built, ZCTA-centroid-filled per #525); unset, the slim build runs
 	// admin-only and the demo's postcode-first cascade leg has no rows to hit.
-	const postcodeDB = process.env.PLAYPEN_WOF_POSTCODE_DB ?? ""
+	const postcodeDB = $public.PLAYPEN_WOF_POSTCODE_DB ?? ""
 
 	if (!existsSync(adminDb)) {
 		console.warn("[demo-assets] wof-hot.db: WOF admin DB not found — skipping slim build")
@@ -410,7 +411,7 @@ export function buildSlimWOFDb(destPath: string, opts: { repoRoot: string }): bo
 	// survive the slim filter (the relation is dropped for any place whose spr row is trimmed). DE/FR
 	// carry the city-states the dual-role badge surfaces (Berlin/Hamburg/Bremen, Paris) — a US-only slim
 	// has zero coincident roles, so the badge would never appear. Override via SLIM_COUNTRIES.
-	const countries = process.env.SLIM_COUNTRIES ?? "US,DE,FR"
+	const countries = $public.SLIM_COUNTRIES ?? "US,DE,FR"
 
 	// `--drop-names`: the resolver never reads the names table at runtime (place_search is a
 	// self-contained FTS5), so drop it for a ~2/3 size win on the shipped DB (see #359).

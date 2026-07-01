@@ -23,6 +23,57 @@ export const PublicEnvSchema = z.object({
 	// Geocode server batch tuning (`GeocodeRouter`).
 	MAILWOMAN_BATCH_CONCURRENCY: z.coerce.number().int().positive().default(8),
 	MAILWOMAN_BATCH_MAX: z.coerce.number().int().positive().default(1000),
+
+	// The gazetteer/model data root (`core/utils/data-root.ts`, `scripts/copy-weights.ts`).
+	MAILWOMAN_DATA_ROOT: z.string().optional(),
+
+	// Corpus source-fetch scripts (`corpus/scripts/fetch-*`). Callers do their own numeric/boolean parsing on these,
+	// so they stay raw strings — the schema only gates which keys surface, not how they're coerced.
+	OUT_ROOT: z.string().optional(),
+	NAD_MODE: z.string().optional(),
+	NAD_URL: z.string().optional(),
+	FS_END_OID: z.string().optional(),
+	SKIP_STATE_FIPS: z.string().optional(),
+	RATE_SLEEP: z.string().optional(),
+	MAX_PARALLEL: z.string().optional(),
+	DRY_RUN: z.string().optional(),
+
+	// Python training driver (`corpus-python/scripts/train_with_resume.ts`) + build resume (`corpus/src/build.ts`).
+	MAX_ATTEMPTS: z.string().optional(),
+	LOG: z.string().optional(),
+	CONFIG: z.string().optional(),
+	PYTHON: z.string().optional(),
+	MAILWOMAN_RESUME: z.string().optional(),
+
+	// Weights dev-linking + release copy (`neural-weights-*/scripts/link-dev-weights.ts`, `scripts/copy-weights.ts`).
+	MAILWOMAN_DEV_MODEL: z.string().optional(),
+	MAILWOMAN_DEV_TOKENIZER: z.string().optional(),
+	MAILWOMAN_PUBLISH_MODEL: z.string().optional(),
+	MAILWOMAN_PUBLISH_TOKENIZER: z.string().optional(),
+	MAILWOMAN_SKIP_WEIGHTS_COPY: z.string().optional(),
+
+	// Release-it publish flow (`scripts/publish-workspace.ts`). The OTP is a secret — see `$private`.
+	MAILWOMAN_SKIP_WEIGHTS: z.string().optional(),
+	MAILWOMAN_NPM_PROVENANCE: z.string().optional(),
+	RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE: z.string().optional(),
+	RELEASE_IT_WORKSPACES_TAG: z.string().optional(),
+	RELEASE_IT_WORKSPACES_ACCESS: z.string().optional(),
+	RELEASE_IT_WORKSPACES_DRY_RUN: z.string().optional(),
+
+	// Demo resolver (`docs/plugins/demo-assets/resolve.ts`) + docs driver.
+	PLAYPEN_WOF_ADMIN_DB: z.string().optional(),
+	PLAYPEN_WOF_POSTCODE_DB: z.string().optional(),
+	SLIM_COUNTRIES: z.string().optional(),
+	MAILWOMAN_DOCS_URL: z.string().optional(),
+
+	// Eval scripts (`scripts/eval/*`) — diagnostic toggles + DB/probe overrides.
+	MAILWOMAN_WOF_HOT_DB: z.string().optional(),
+	MAILWOMAN_DIAG_INTERP: z.string().optional(),
+	MAILWOMAN_DUMP_MISS_TAG: z.string().optional(),
+	MAILWOMAN_WORD_CONSISTENCY: z.string().optional(),
+	MW_DUMP_REGRESSIONS: z.string().optional(),
+	PROBE_N: z.string().optional(),
+	DEBUG: z.string().optional(),
 })
 
 /**
@@ -47,4 +98,10 @@ export const PrivateEnvSchema = z.object({
 	RCLONE_S3_ENDPOINT: z.string().optional(),
 	RCLONE_S3_ACCESS_KEY_ID: z.string().optional(),
 	RCLONE_S3_SECRET_ACCESS_KEY: z.string().optional(),
+
+	// OpenAddresses batch-download API token (`corpus/scripts/fetch-sources/fetch-openaddresses.ts`).
+	OA_BATCH_TOKEN: z.string().optional(),
+
+	// npm 2FA OTP for the release publish flow (`scripts/publish-workspace.ts`).
+	RELEASE_IT_WORKSPACES_OTP: z.string().optional(),
 })

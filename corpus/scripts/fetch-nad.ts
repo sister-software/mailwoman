@@ -60,6 +60,8 @@ import { readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
+
 const SLUG = "usgov-nad"
 const FEATURE_SERVICE_URL =
 	"https://services.arcgis.com/xOi1kZaI0eWDREZv/ArcGIS/rest/services/Address_Points_from_National_Address_Database_view/FeatureServer/0"
@@ -85,14 +87,14 @@ function envInt(name: string, fallback: number): number {
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-root": { type: "string", default: process.env.OUT_ROOT ?? "data/corpus/sources" },
-			mode: { type: "string", default: process.env.NAD_MODE ?? "featureserver" },
-			"nad-url": { type: "string", default: process.env.NAD_URL },
+			"out-root": { type: "string", default: $public.OUT_ROOT ?? "data/corpus/sources" },
+			mode: { type: "string", default: $public.NAD_MODE ?? "featureserver" },
+			"nad-url": { type: "string", default: $public.NAD_URL },
 			"chunk-size": { type: "string", default: String(envInt("FS_CHUNK_SIZE", 100_000)) },
 			"page-size": { type: "string", default: String(envInt("FS_PAGE_SIZE", 5_000)) },
 			concurrency: { type: "string", default: String(envInt("FS_CONCURRENCY", 4)) },
 			"start-oid": { type: "string", default: String(envInt("FS_START_OID", 1)) },
-			"end-oid": { type: "string", default: process.env.FS_END_OID },
+			"end-oid": { type: "string", default: $public.FS_END_OID },
 		},
 	})
 
