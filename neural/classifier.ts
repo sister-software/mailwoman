@@ -202,7 +202,7 @@ export class NeuralAddressClassifier {
 	 * instead.
 	 */
 	static async loadFromWeights(
-		opts: ResolveWeightsOpts & { postcodeAnchorLookup?: AnchorLookup } = {}
+		opts: ResolveWeightsOpts & { postcodeAnchorLookup?: AnchorLookup; executionProviders?: string[] } = {}
 	): Promise<NeuralAddressClassifier> {
 		// /* webpackIgnore: true */ tells webpack to leave the dynamic import statement intact —
 		// it becomes a runtime native ESM import that resolves in Node (which has onnxruntime-node
@@ -229,7 +229,7 @@ export class NeuralAddressClassifier {
 		const crf = readCrfTransitions(resolved.crfTransitionsPath)
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
-			OnnxRunner.create(resolved.modelPath),
+			OnnxRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
 		])
 
 		// --- Soft-feed (#718 D1): feed the channels the SHIPPED model was trained against ----------
