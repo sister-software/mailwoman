@@ -24,6 +24,7 @@ import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	geocodeAddressVia,
@@ -199,7 +200,7 @@ export function loadMapping(
 }
 
 function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
-	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
 		throw new Error("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")

@@ -18,6 +18,7 @@
 import { existsSync } from "node:fs"
 
 import { type AddressTree, decodeAsXML } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 
@@ -54,7 +55,7 @@ export interface ResolveErrorResponse {
  * machinery.
  */
 function resolveWOFPaths(): string[] {
-	const env = process.env["MAILWOMAN_WOF_DB"]
+	const env = $public.MAILWOMAN_WOF_DB
 
 	if (env) {
 		return env

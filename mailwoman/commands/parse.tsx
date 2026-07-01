@@ -8,6 +8,7 @@ import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { type AddressTree, decodeAsJSON, decodeAsTuples, decodeAsXML, proposalsToTree } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
 import { InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
@@ -257,7 +258,7 @@ export function resolverDefaultCountry(
 }
 
 function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
-	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
 		throw new Error(
@@ -273,7 +274,7 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 async function tryBuildFST(
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined> {
-	const dbPath = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	const dbPath = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!dbPath) return undefined
 

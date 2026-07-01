@@ -28,6 +28,7 @@ import { setTimeout as sleep } from "node:timers/promises"
  *          [--n 40] [--locales it,pt,pl,at,cz,fr,au] [--systems mailwoman,nominatim,pelias] [--out <md>]
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { $private } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -129,7 +130,7 @@ async function queryNominatim(raw: string, cc: string): Promise<Coord> {
 	}
 }
 async function loadPelias(): Promise<((q: string, country: string) => Promise<Coord>) | null> {
-	if (!process.env.GEOCODE_EARTH_API_KEY) return null
+	if (!$private.GEOCODE_EARTH_API_KEY) return null
 
 	try {
 		// `diag-geocode-earth.ts` is the operator's local, git-excluded geocode.earth probe — present

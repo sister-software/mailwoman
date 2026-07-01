@@ -10,6 +10,7 @@
  *   browser.
  */
 
+import { $public } from "../env/index.js"
 import { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.js"
 
 /** Serialized model: metadata in JSON, the dense `weights` (row-major [class][feature]) alongside. */
@@ -154,7 +155,7 @@ export class CoarsePlacer {
 	 * docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md).
 	 */
 	static async fromBundled(opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
-		const dir = process.env["MAILWOMAN_COARSE_PLACER_DIR"]
+		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
 
 		if (dir) return CoarsePlacer.fromArtifactDir(dir, opts)
 		const { corePackagePathBuilder } = await import("../utils/repo.js")

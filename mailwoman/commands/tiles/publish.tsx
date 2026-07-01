@@ -28,6 +28,7 @@ import { existsSync, statSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
+import { $private } from "@mailwoman/core/env"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
@@ -60,7 +61,7 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 		return `[dry-run] ${options.file} (${sizeMb.toFixed(1)} MB) → ${options.bucket}/${key}\n[dry-run] would serve at ${servedAt}`
 	}
 
-	const missing = REQUIRED_ENV.filter((v) => !process.env[v])
+	const missing = REQUIRED_ENV.filter((v) => !$private[v])
 
 	if (missing.length) {
 		throw new Error(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)

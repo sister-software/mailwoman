@@ -8,6 +8,7 @@ import { DatabaseSync } from "node:sqlite"
 import { setImmediate } from "node:timers/promises"
 
 import { ProgressBar } from "@inkjs/ui"
+import { $public } from "@mailwoman/core/env"
 import { formatMinutes, formatQuantity, takeAsync, tallyPatternCount } from "@mailwoman/core/resources"
 import FastGlob from "fast-glob"
 import { Box, Text } from "ink"
@@ -69,7 +70,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 				filename: PathBuilder.from(import.meta.dirname, "_app_worker.mjs").href,
 				idleTimeout: 1000 * 10,
 				env: {
-					WOF_DATA_DIR: process.env.WOF_DATA_DIR || "/tmp/wof-placetype-dbs",
+					WOF_DATA_DIR: $public.WOF_DATA_DIR || "/tmp/wof-placetype-dbs",
 				},
 			})
 			// The unified-DB helpers live in the optional `@mailwoman/resolver-wof-sqlite` peer. Load them

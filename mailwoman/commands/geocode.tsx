@@ -30,6 +30,7 @@ import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
+import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
@@ -136,7 +137,7 @@ const OptionsSchema = zod.object({
 // ---------------------------------------------------------------------------
 
 function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
-	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
 		throw new Error(

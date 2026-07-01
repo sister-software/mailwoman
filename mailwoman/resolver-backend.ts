@@ -21,6 +21,7 @@
 
 import { existsSync } from "node:fs"
 
+import { $public } from "@mailwoman/core/env"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -32,7 +33,7 @@ import type {
  * Resolve the candidate-db path from an explicit option then `$MAILWOMAN_CANDIDATE_DB`; undefined if unset or missing.
  */
 export function resolveCandidateDBPath(explicit?: string): string | undefined {
-	const p = explicit ?? process.env["MAILWOMAN_CANDIDATE_DB"]
+	const p = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
 	return p && existsSync(p) ? p : undefined
 }
@@ -43,7 +44,7 @@ export function resolveCandidateDBPath(explicit?: string): string | undefined {
  * not at query time).
  */
 export function resolvePostalCityAliasDBPath(explicit?: string): string | undefined {
-	const p = explicit ?? process.env["MAILWOMAN_POSTAL_CITY_ALIAS_DB"]
+	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
 
 	return p && existsSync(p) ? p : undefined
 }

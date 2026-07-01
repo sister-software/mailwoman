@@ -19,6 +19,7 @@
 import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
+import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
@@ -55,7 +56,7 @@ const OptionsSchema = zod.object({
 export { ArgumentsSchema as args, OptionsSchema as options }
 
 function resolveAdminDBPath(options: zod.infer<typeof OptionsSchema>): string {
-	const path = options.adminDb ?? process.env["MAILWOMAN_WOF_ADMIN_DB"]
+	const path = options.adminDb ?? $public.MAILWOMAN_WOF_ADMIN_DB
 
 	if (!path) {
 		throw new Error(
@@ -69,7 +70,7 @@ function resolveAdminDBPath(options: zod.infer<typeof OptionsSchema>): string {
 }
 
 function resolvePolygonsDBPath(options: zod.infer<typeof OptionsSchema>): string | undefined {
-	return options.polygonsDb ?? process.env["MAILWOMAN_WOF_POLYGONS_DB"]
+	return options.polygonsDb ?? $public.MAILWOMAN_WOF_POLYGONS_DB
 }
 
 async function runReverse(lat: number, lon: number, options: zod.infer<typeof OptionsSchema>): Promise<string> {
