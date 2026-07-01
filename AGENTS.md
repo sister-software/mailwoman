@@ -150,3 +150,14 @@ Read the workspace-local docstrings before changing infrastructure files. The he
 ## Addendum
 
 - We use a version of Node.js that can strip types without any additional CLI flags. This is appropriate for everything but the Ink/Pastel commands, which are TSX and require compiling.
+
+### Acronym casing in identifiers
+
+Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSqlitePlaceLookup`, `modelURL`. Not `createWofResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
+
+- **`snake_case`** — DB columns and wire keys (`parent_id`, `place_id`, `name_key`) stay as-is; they're string contracts, and the convention is camelCase-only by construction.
+- **External library names** — match the dependency's own casing (`HttpStatusCode` from axios, `createQueryId`/`createWithSql` from kysely, `sqlite-wasm`).
+- **Pastel/Ink CLI flag props** — the framework binds a kebab flag to a lowercase-acronym prop (`--resolve-db` → `resolveDb`), so those specific schema keys must match its derivation. Result-read fields and domain properties (`result.placeID`) still follow the convention.
+- **Dated historical records** — `docs/articles/evals/`, `reviews/`, postmortems, and phase docs are point-in-time; don't rewrite their acronyms.
+
+There's no lint rule for this (oxlint can't express it); it's reviewer discipline. When adding an acronym, cap the whole component.

@@ -33,13 +33,13 @@ Phases 1-2 shipped in v0.5.2 ([#170](https://github.com/sister-software/mailwoma
 ### The FST data structure
 
 ```ts
-FstState {
+FSTState {
   id: u32                              // dense index into states[]
-  edges: Vec<FstEdge>                  // 2-5 entries avg
+  edges: Vec<FSTEdge>                  // 2-5 entries avg
   places: Vec<PlaceEntry>              // accepting states only, 1-5 entries avg
 }
 
-FstEdge {
+FSTEdge {
   token: string                        // interned, lowercase, NFKC-normalized
   target: u32                          // target state id
 }
@@ -73,7 +73,7 @@ WOF SQLite (spr + names tables)
   fst.bin  ← compact binary (~8-12 MB for US)
          │
          ▼
-  FstMatcher class (fast prefix walk)
+  FSTMatcher class (fast prefix walk)
 ```
 
 ### Integration with the neural pipeline
@@ -86,7 +86,7 @@ if (opts?.queryShape) {
   emissions = addEmissionMatrix(emissions, buildEmissionPriors(...))
 }
 if (opts?.fst) {
-  emissions = addEmissionMatrix(emissions, buildFstEmissionPriors(...))
+  emissions = addEmissionMatrix(emissions, buildFSTEmissionPriors(...))
 }
 // → Viterbi decode over biased emissions
 ```
@@ -182,7 +182,7 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 ### Phase 2: Neural emission prior — shipped (#170, #173)
 
-- `neural/fst-prior.ts` — `buildFstEmissionPriors()` with Wikipedia importance weighting
+- `neural/fst-prior.ts` — `buildFSTEmissionPriors()` with Wikipedia importance weighting
 - `neural/classifier.ts` — FST threaded through `ParseOpts.fst`
 - `core/pipeline/runtime-pipeline.ts` — FST threaded through `RuntimePipelineStages`
 - Wikipedia importance ETL: `scripts/build-importance.ts`

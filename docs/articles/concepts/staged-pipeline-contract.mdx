@@ -34,7 +34,7 @@ interface RuntimePipelineStages {
 	placeCountry?: (normalizedText: string) => { country: string | null; confidence: number; posterior?: Record&lt;string, number&gt; }
 	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise&lt;PhraseProposal[]&gt;
 	classifier?: { parse(text: string, opts?: ClassifierOpts): Promise&lt;AddressTree&gt; }
-	fst?: FstMatcherLike  // FST gazetteer matcher — produces emission biases during classification
+	fst?: FSTMatcherLike  // FST gazetteer matcher — produces emission biases during classification
 	resolver?: { resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise&lt;AddressTree&gt; }
 }
 ```
@@ -162,7 +162,7 @@ You should **not** swap a stage to bypass it cheaply. If you want the pipeline w
 import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
 import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
 
-<DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+<DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
 	<PipelineExplorer />
 </DemoEmbedProvider>
 

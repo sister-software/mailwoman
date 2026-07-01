@@ -66,8 +66,8 @@ Output format options: `--format json` (default), `--format tuple`, `--format xm
 import { loadNeuralClassifierFromUrls } from "@mailwoman/neural-web"
 
 const classifier = await loadNeuralClassifierFromUrls({
-	modelUrl: "/mailwoman/model.onnx",
-	tokenizerUrl: "/mailwoman/tokenizer.model",
+	modelURL: "/mailwoman/model.onnx",
+	tokenizerURL: "/mailwoman/tokenizer.model",
 })
 
 const tree = await classifier.parse("350 5th Ave, New York, NY 10118")
@@ -101,9 +101,9 @@ Fast-path routing: bare postcodes and single localities skip the neural classifi
 The resolver turns parsed components into place IDs and coordinates:
 
 ```ts
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 
-const resolver = await createWofResolver({ dbPath: "./wof.sqlite" })
+const resolver = await createWOFResolver({ dbPath: "./wof.sqlite" })
 const pipeline = createRuntimePipeline({ classifier, resolver })
 
 const result = await pipeline("350 5th Ave, New York, NY 10118")

@@ -17,7 +17,7 @@ import { createRuntimePipeline } from "mailwoman"
 
 function createRuntimePipeline(opts?: {
 	classifier?: AddressClassifier // Stage 3 — typically NeuralAddressClassifier
-	resolver?: Resolver // Stage 6 — typically createWofResolver(...)
+	resolver?: Resolver // Stage 6 — typically createWOFResolver(...)
 	detectLocale?: LocaleDetector // Stage 2 override (caller-trust stub by default)
 	classifyKind?: KindClassifier // Stage 2.5 override (rule-based by default)
 	groupPhrases?: PhraseGrouper // Stage 2.7 override (rule-based by default)
@@ -47,14 +47,14 @@ const tree: AddressTree = await classifier.parse("350 5th Ave, New York, NY 1011
 const { tree, logits, pieces } = await classifier.parseWithLogits("350 5th Ave, New York, NY 10118")
 ```
 
-### `createWofResolver(opts)`
+### `createWOFResolver(opts)`
 
 Creates a resolver backed by a Who's On First SQLite distribution.
 
 ```ts
-import { createWofResolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 
-const resolver = await createWofResolver({
+const resolver = await createWOFResolver({
 	dbPath: "./wof.sqlite",
 	// Optional: locale hint for name-language preference
 	locale: "en-US",
@@ -195,7 +195,7 @@ mailwoman parse [options] <address string>
 import { loadNeuralClassifierFromUrls } from "@mailwoman/neural-web"
 
 // WOF resolver (WASM-based sqlite-wasm)
-import { createWasmResolver } from "@mailwoman/resolver-wof-wasm"
+import { createWASMResolver } from "@mailwoman/resolver-wof-wasm"
 
 // Map rendering (MapLibre + Protomaps)
 import { StyleSpecificationComposer } from "@mailwoman/cartographer"
