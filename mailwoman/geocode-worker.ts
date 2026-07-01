@@ -14,7 +14,7 @@ import { workerData } from "node:worker_threads"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/registry"
-import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 
 import { geocodeAddress, parseForGeocode, ShardProvider } from "./geocode-core.js"
 import type { GeocodeStreamConfig } from "./geocode-stream.js"
@@ -27,7 +27,7 @@ const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: cfg.locale })
 const wof = await import("@mailwoman/resolver-wof-sqlite")
 const lookup = new wof.WOFSqlitePlaceLookup({ databasePath: cfg.wofDBPath })
-const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
+const resolver = createWOFResolver(lookup)
 const shards = new ShardProvider(wof, cfg.dataRoot)
 
 const geoDeps = {

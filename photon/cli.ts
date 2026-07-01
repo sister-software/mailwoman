@@ -19,7 +19,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import {
 	createResolverBackend,
@@ -75,7 +75,7 @@ async function serve(): Promise<void> {
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
-	const resolver = createWOFResolver(backend as unknown as ResolverBackend)
+	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 

@@ -111,7 +111,7 @@ async function getResolverPipeline() {
 		const neural = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const lookup = createResolverBackend(resolverMod, { wofPaths })
 		// The lookup is structurally compatible with `ResolverBackend` — same shape.
-		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup)
 
 		return {
 			parse: (text: string) => neural.parse(text),

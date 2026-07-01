@@ -335,7 +335,7 @@ async function withResolver<T>(
 	try {
 		// PlaceLookup is structurally compatible with ResolverBackend — the cast is just to satisfy
 		// the type, no runtime conversion.
-		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup)
 
 		return await fn(resolver)
 	} finally {

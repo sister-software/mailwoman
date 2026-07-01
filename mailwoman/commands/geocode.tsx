@@ -31,7 +31,7 @@ import { setImmediate } from "node:timers/promises"
 import { Spinner } from "@inkjs/ui"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
@@ -212,7 +212,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		: undefined
 
 	try {
-		const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
+		const resolver = createWOFResolver(lookup)
 		const result = await geocodeAddress(input, {
 			classifier,
 			resolver,

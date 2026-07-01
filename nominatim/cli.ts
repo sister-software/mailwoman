@@ -22,7 +22,7 @@ import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
-import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
@@ -137,7 +137,7 @@ async function serve(): Promise<void> {
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const parser = createAddressParser()
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
-	const resolver = createWOFResolver(backend as unknown as ResolverBackend)
+	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
 	// (Berlin→DE, Boston→US) and `defaultCountry` is a HARD override that beats it (geocode-core.ts:102),
