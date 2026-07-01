@@ -22,6 +22,7 @@ import { useEffect, useState } from "react"
 import zod from "zod"
 
 import type { CommandComponent } from "../sdk/cli.js"
+import { $public } from "../sdk/runtime/index.js"
 
 export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 
@@ -48,7 +49,7 @@ export const AutocompleteConfigSchema = zod.object({
 
 /** Resolve the FST binary path from explicit flag, env var, or the staged default. */
 export function resolveFSTPath(explicitPath?: string): string {
-	return explicitPath ?? process.env["MAILWOMAN_FST_BIN"] ?? "/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin"
+	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? "/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin"
 }
 
 export interface AutocompleteEntry {

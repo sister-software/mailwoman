@@ -52,6 +52,7 @@ import { geocodeAddress, ShardProvider, type ShardResolver } from "../geocode-co
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
+import { $public } from "../sdk/runtime/index.js"
 import { resolverDefaultCountry } from "./parse.js"
 
 // ---------------------------------------------------------------------------
@@ -199,7 +200,7 @@ export function loadMapping(
 }
 
 function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
-	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
 		throw new Error("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")

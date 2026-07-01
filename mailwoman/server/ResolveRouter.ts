@@ -22,6 +22,7 @@ import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwom
 import { type RequestHandler, Router } from "express"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.js"
+import { $public } from "../sdk/runtime/index.js"
 
 /** One node in the response's flat list — what the UI renders for each resolved component. */
 export interface ResolveResponseNode {
@@ -54,7 +55,7 @@ export interface ResolveErrorResponse {
  * machinery.
  */
 function resolveWOFPaths(): string[] {
-	const env = process.env["MAILWOMAN_WOF_DB"]
+	const env = $public.MAILWOMAN_WOF_DB
 
 	if (env) {
 		return env

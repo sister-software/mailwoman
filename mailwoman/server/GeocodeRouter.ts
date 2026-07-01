@@ -32,14 +32,15 @@ import {
 } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.js"
+import { $public } from "../sdk/runtime/index.js"
 import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
 const DATA_ROOT = mailwomanDataRoot()
 /** Bounded concurrency for `/api/batch`. Override with MAILWOMAN_BATCH_CONCURRENCY. */
-const BATCH_CONCURRENCY = Math.max(1, Number(process.env["MAILWOMAN_BATCH_CONCURRENCY"] ?? "8"))
+const BATCH_CONCURRENCY = Math.max(1, $public.MAILWOMAN_BATCH_CONCURRENCY)
 /** Hard cap on batch size — a guardrail against unbounded request bodies. */
-const BATCH_MAX = Math.max(1, Number(process.env["MAILWOMAN_BATCH_MAX"] ?? "1000"))
+const BATCH_MAX = Math.max(1, $public.MAILWOMAN_BATCH_MAX)
 
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
@@ -49,7 +50,7 @@ interface GeocodeDepsBundle {
 }
 
 function wofPaths(): string[] {
-	const env = process.env["MAILWOMAN_WOF_DB"]
+	const env = $public.MAILWOMAN_WOF_DB
 
 	if (env)
 		return env

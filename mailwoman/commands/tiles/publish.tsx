@@ -34,6 +34,7 @@ import zod from "zod"
 import { $ } from "zx"
 
 import type { CommandComponent } from "../../sdk/cli.js"
+import { $private } from "../../sdk/runtime/index.js"
 
 const OptionsSchema = zod.object({
 	file: zod.string().describe("Path to the .pmtiles archive to upload"),
@@ -60,7 +61,7 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 		return `[dry-run] ${options.file} (${sizeMb.toFixed(1)} MB) → ${options.bucket}/${key}\n[dry-run] would serve at ${servedAt}`
 	}
 
-	const missing = REQUIRED_ENV.filter((v) => !process.env[v])
+	const missing = REQUIRED_ENV.filter((v) => !$private[v])
 
 	if (missing.length) {
 		throw new Error(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)

@@ -20,6 +20,7 @@ import zod from "zod"
 
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
+import { $public } from "../sdk/runtime/index.js"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
@@ -257,7 +258,7 @@ export function resolverDefaultCountry(
 }
 
 function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
-	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
 		throw new Error(
@@ -273,7 +274,7 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 async function tryBuildFST(
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined> {
-	const dbPath = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	const dbPath = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!dbPath) return undefined
 
