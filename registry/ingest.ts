@@ -194,7 +194,7 @@ export function parseCsv(text: string): Record<string, string>[] {
 }
 
 /** Join the named column(s) of a row into a single trimmed string, or undefined if empty. */
-function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
+export function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
 	if (!columns) return undefined
 	const list = Array.isArray(columns) ? columns : [columns]
 	const value = list
@@ -204,6 +204,46 @@ function pick(row: Record<string, string>, columns?: string | string[], separato
 		.trim()
 
 	return value || undefined
+}
+
+/**
+ * Normalize one tabular row into a {@link SourceRecord} under a {@link ColumnMapping}: parse the person name,
+ * canonicalize the org, and (if `opts.geocodeAddress` is provided) geocode the joined address. `id` falls back to the
+ * caller-supplied row index. Pure aside from the optional geocode seam, so the deterministic normalization can run
+ * single-threaded (see {@link normalizeCSV}) while geocoding is offloaded (see `geocodeStream`).
+ */
+export async function ingestRow(
+	row: Record<string, string>,
+	mapping: ColumnMapping,
+	index: number,
+	opts: IngestOptions = {}
+): Promise<SourceRecord> {
+	const id = (mapping.id ? row[mapping.id]?.trim() : "") || String(index)
+	const nameValue = pick(row, mapping.name)
+	const orgValue = pick(row, mapping.organization)
+	const addressValue = pick(row, mapping.address, opts.addressSeparator ?? ", ")
+
+	let attributes: Record<string, string> | undefined
+
+	if (mapping.attributes) {
+		for (const [key, columns] of Object.entries(mapping.attributes)) {
+			const value = pick(row, columns)
+
+			if (value) (attributes ??= {})[key] = value
+		}
+	}
+
+	return {
+		id,
+		source: mapping.source,
+		name: nameValue ? parsePersonName(nameValue) : undefined,
+		organization: orgValue ? canonicalizeOrganizationName(orgValue) : undefined,
+		phone: (mapping.phone && row[mapping.phone]?.trim()) || undefined,
+		email: (mapping.email && row[mapping.email]?.trim()?.toLowerCase()) || undefined,
+		address: addressValue && opts.geocodeAddress ? ((await opts.geocodeAddress(addressValue)) ?? undefined) : undefined,
+		attributes,
+		raw: row,
+	}
 }
 
 /**
@@ -219,39 +259,29 @@ export async function ingestRows(
 	let index = 0
 
 	for await (const row of rows) {
-		const id = (mapping.id ? row[mapping.id]?.trim() : "") || String(index)
-		const nameValue = pick(row, mapping.name)
-		const orgValue = pick(row, mapping.organization)
-		const addressValue = pick(row, mapping.address, opts.addressSeparator ?? ", ")
-
-		let attributes: Record<string, string> | undefined
-
-		if (mapping.attributes) {
-			for (const [key, columns] of Object.entries(mapping.attributes)) {
-				const value = pick(row, columns)
-
-				if (value) (attributes ??= {})[key] = value
-			}
-		}
-
-		const record: SourceRecord = {
-			id,
-			source: mapping.source,
-			name: nameValue ? parsePersonName(nameValue) : undefined,
-			organization: orgValue ? canonicalizeOrganizationName(orgValue) : undefined,
-			phone: (mapping.phone && row[mapping.phone]?.trim()) || undefined,
-			email: (mapping.email && row[mapping.email]?.trim()?.toLowerCase()) || undefined,
-			address:
-				addressValue && opts.geocodeAddress ? ((await opts.geocodeAddress(addressValue)) ?? undefined) : undefined,
-			attributes,
-			raw: row,
-		}
-
-		records.push(record)
+		records.push(await ingestRow(row, mapping, index, opts))
 		index++
 	}
 
 	return records
+}
+
+/**
+ * Stream a delimited file as normalized {@link SourceRecord}s — `streamRows` + {@link ingestRow} with **no geocoding**.
+ * This is the single-threaded, "fast enough" ergonomic core: column mapping, name parsing, and org canonicalization for
+ * a multi-GB file, line by line. Geocode separately by piping the output through `geocodeStream` (the only heavy step
+ * worth threading); for a light file (e.g. one that already carries geo cells) just consume this and stop.
+ */
+export async function* normalizeCSV(
+	source: string,
+	opts: { mapping: ColumnMapping; delimiter?: Delimiter }
+): AsyncGenerator<SourceRecord> {
+	let index = 0
+
+	for await (const row of streamRows(source, { delimiter: opts.delimiter })) {
+		yield await ingestRow(row, opts.mapping, index)
+		index++
+	}
 }
 
 /**

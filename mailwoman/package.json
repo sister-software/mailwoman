@@ -45,6 +45,7 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./geocode-core": "./out/geocode-core.js",
+		"./geocode-stream": "./out/geocode-stream.js",
 		"./resolver-backend": "./out/resolver-backend.js",
 		"./server": "./out/server/index.js",
 		"./sdk/test": "./out/sdk/test/index.js",
@@ -88,7 +89,7 @@
 		"pluralize": "^8.0.0",
 		"react": "^19.2.7",
 		"regenerate": "^1.4.2",
-		"spliterator": "^2.2.1",
+		"spliterator": "^3.1.0",
 		"zod": "^4.4.3",
 		"zx": "^8.8.5"
 	},

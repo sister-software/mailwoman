@@ -14,6 +14,7 @@
 export * from "./address-key.js"
 export * from "./geojson.js"
 export * from "./ingest.js"
+export * from "./geocode-handler.js"
 export * from "./learned-scorer.js"
 export * from "./map-html.js"
 export * from "./models/dedup-gbt-en-us.js"
