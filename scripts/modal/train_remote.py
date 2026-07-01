@@ -457,6 +457,55 @@ def sync_v090():
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_v093():
+    """Pull the v0.9.3-slavic-diacritic OVERLAY (#825 lever b: OA CZ/PL/SK/SI diacritic STREET shard,
+    ~90k real OpenAddresses rows carrying house-number/street-context diacritics) + latest code (config
+    v1.9.3-slavic-diacritic) from R2. The base v0.9.2/v0.9.0/v0.8.0/v0.5.0 shards the overlay manifest
+    references already persist on the volume from prior runs (verified below)."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.9.3-slavic-diacritic overlay + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/0.9.3-slavic-diacritic/corpus-v0.9.3-slavic-diacritic/ "
+        f"{VOL_MOUNT}/corpus/versioned/0.9.3-slavic-diacritic/corpus-v0.9.3-slavic-diacritic/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv0.9.3 overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/0.9.3-slavic-diacritic/corpus-v0.9.3-slavic-diacritic"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3-slavic-diacritic.yaml"
+    print("  v1.9.3 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  slavic diacritic shard present:", os.path.isfile(f"{cdir}/train/part-oa-slavic-diacritic-train.parquet"))
+    base92 = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
+    print("  base v0.9.2 gnaf-au shard on volume:", os.path.isfile(base92))
+    print("  base v0.5.0 shard on volume:", os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"))
+    print("  tokenizer v0.6.0-a0 on volume:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_v091():
     """Pull the v0.9.1-multilocale OVERLAY (#148 v1.9.1 — the ORDER-OVERFIT FIX: the SAME 2.4M Overture
     rows as v0.9.0 but re-rendered in 3 natural orders (canonical/pc-first/city-first), so the model can
