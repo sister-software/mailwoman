@@ -77,6 +77,25 @@ first affix audit).
 Plus your tag's pre-registered real-OOD gate. Pass → append the run to
 `evals/scores-by-version.json` and write the dated report in `docs/articles/evals/`.
 
+### The full re-score cadence (standing rule, operator-approved 2026-07-02)
+
+A promote's gate only checks the floors the spec names; label metrics can erode indefinitely in
+small, individually-justified "coordinate-invisible" steps with nothing forcing a periodic look.
+So, as a **gate, not a virtue**:
+
+- **Every 5 promotes, or any promote that lowers a gate floor, triggers a full per-tag re-score**
+  of the shipped line — the whole `promotion-gate.ts` battery against the current gate spec,
+  published as a dated `docs/articles/evals/parity-scorecard-YYYY-MM-DD.md`.
+- The scorecard quotes the config-canonical bars above its tables, keeps failing rows, and marks
+  any relaxed threshold (the no-silent-gate-drift rules).
+- Grade the artifact by **explicit md5-pinned path** — for the shipped line, verify against the
+  published npm tarball's `model.onnx`, never the dev symlink (#259).
+
+Calibration for why: v4.4.0 → v4.15.0 was 11 promotes without one; the 2026-07-02 re-anchor
+([#885](https://github.com/sister-software/mailwoman/issues/885)) paid that debt and found the
+drift bounded — but also found two unsigned drifts (`fr.cedex_real` −6.7, libpostal clean arena
+−6) that per-promote gates structurally cannot catch.
+
 ## Adding a shard
 
 1. Generator lives in `corpus/` (`synthesize-*.ts`) or `scripts/build-*-shard.mjs`; every row
