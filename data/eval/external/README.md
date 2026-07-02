@@ -208,6 +208,34 @@ renders these real DE tuples in German order via the OpenCage `DE` template, so 
 model learns house-number-after-street and postcode-before-city. Run the German
 before/after with `node scripts/eval-de-coverage.ts <model> <tokenizer> <model-card>`.
 
+## ES/IT/NL — order-shard goldens (#241, 2026-07-02)
+
+Per-locale held-out parser goldens mirroring the German pattern above —
+`{raw, components, country, order}` rows rendered from REAL OpenAddresses
+tuples by the `locale` shard recipe's `--golden` mode
+(`corpus/src/shard-recipes/locale.ts` → `synthesizeLocaleRow`):
+
+- **`openaddresses-es-golden.jsonl`** / **`openaddresses-it-golden.jsonl`** /
+  **`openaddresses-nl-golden.jsonl`** (1,500 records each, held-out seed 7 vs
+  the training shards' seed 42 — the same seed split the DE golden used).
+  ~60% native order (house-after-street, postcode-before-city), ~40%
+  international; the `order` field stratifies them.
+- Surface diversity matches the observed eval forms: ES rows mix the
+  template's comma join (`CALLE MAYOR, 12`) with the OA/eval space join
+  (`CALLE MAYOR 12`); NL rows mix the conventional spaced postcode (`1011 AB`)
+  with OA's glued shape (`1011AB`). IT keeps the source's ALL-CAPS localities
+  (the eval's observed form).
+- City values pass the recipe's documented OA CITY-noise normalization
+  (`cleanCityNoise`): ES cadastral pseudo-localities dropped, NL parenthesized
+  province codes (`Bergen (NH)`) stripped.
+
+Rebuild:
+
+```bash
+mailwoman corpus shard locale --country ES --count 1500 --seed 7 --golden \
+  --output data/eval/external/openaddresses-es-golden.jsonl   # IT/NL alike
+```
+
 ## Running the arenas
 
 All three arenas run through one push-button script:

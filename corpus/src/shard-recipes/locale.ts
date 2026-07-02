@@ -7,16 +7,29 @@
  *   OpenAddresses tuples for a `--country` (DE/FR/NL/IT/ES), renders each via
  *   {@link synthesizeLocaleRow} in BOTH orders (`--intl-fraction`, default 0.4 international / the
  *   rest country-native), aligns to BIO, and emits a labeled JSONL. Generate-mode: it STREAMS each
- *   source CSV (`unzip -p | readline`) and reservoir-samples to {@link RESERVOIR_CAP} (so FR/ES
- *   countrywide work in bounded memory), then draws `--count` rows from the pool with the passed
- *   `random`. Ported from scripts/build-locale-shard.mjs.
+ *   source CSV (`unzip -p` for cached zips, plain `createReadStream` for extracted CSVs) and
+ *   reservoir-samples to {@link RESERVOIR_CAP} (so FR/ES countrywide work in bounded memory), then
+ *   draws `--count` rows from the pool with the passed `random`. Ported from
+ *   scripts/build-locale-shard.mjs.
  *
- *   The reservoir uses its OWN seeded PRNG ({@link mulberry32}, per part), independent of the emit
- *   `random`, so the input sample is reproducible WITHOUT perturbing the synth/order draws.
+ *   The reservoir uses its OWN seeded PRNG ({@link makeMulberry32}, per part), independent of the
+ *   emit `random`, so the input sample is reproducible WITHOUT perturbing the synth/order draws.
+ *
+ *   SURFACE DIVERSITY (#241): two per-country shape draws ride the emit loop, sized by the
+ *   2026-07-02 format-diversity audit against the `openaddresses-{es,nl,it}-sample.jsonl` observed
+ *   forms. ES: the OpenCage template comma-joins the house number (`CALLE MAYOR, 12`) but all 3,000
+ *   eval rows space-join (`CALLE MAYOR 12`) — {@link ES_SPACE_JOIN_FRACTION} of native rows collapse
+ *   the comma. NL: OA (and the eval, 3,000/3,000) glue the postcode (`1187LM`) while the national
+ *   convention spaces it (`1187 LM`) — {@link NL_GLUED_POSTCODE_FRACTION} of rows keep the glued
+ *   source shape, the rest the spaced conventional one. These draws are consumed ONLY for their
+ *   country, so DE/FR emit streams are unchanged for a given seed.
  */
 
 import { spawn } from "node:child_process"
+import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
+
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
@@ -24,65 +37,64 @@ import { type LocaleBaseTuple, synthesizeLocaleRow } from "../synthesize-german.
 import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
 
 /**
- * A conform map ({number, street, city, region, postcode} → raw column names; `street` as an array space-joins) for an
- * upstream that isn't OA-conformed — ES uses it (the raw CNIG schema).
+ * One per-country OA source part: either a cached `zip` + `csv` member (streamed via `unzip -p`) or an extracted plain
+ * `path` (streamed via `createReadStream`). Both carry the standard OA header
+ * (LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH). An optional `region` fallback covers countries
+ * whose REGION column is empty (DE — the Bundesland is implied by the per-state file).
  */
-interface ConformMap {
-	number: string
-	street: string | string[]
-	city: string
-	region?: string
-	postcode: string
-}
-
-/** One per-country OA source part (cached zip) + optional region fallback / conform map. */
 interface LocalePart {
-	zip: string
-	csv: string
+	zip?: string
+	csv?: string
+	path?: string
 	region?: string
-	conform?: ConformMap
 }
 
 interface LocaleCountrySource {
 	source: string
 	parts: LocalePart[]
+	/**
+	 * The `corpus_version` stamped on emitted rows. DE/FR keep the historical `0.4.0` (regenerating those shards must
+	 * stay lineage-identical); ES/IT/NL are the #241 staging lineage (`v0.9.9-es-it-nl`).
+	 */
+	corpusVersion: string
 }
 
 /**
- * Per-country OA sources (cached zips) + the source name used in the corpus. A part may carry a `region` fallback (the
- * admin region the file covers) for countries whose OA REGION column is empty — DE's is, so the international-order
- * tail needs it set per-state (#327). FR/NL/IT leave it unset (their REGION column is populated, used per-row). ES
- * carries a `conform` map (the raw CNIG schema).
+ * Per-country OA sources + the source name used in the corpus. DE/FR still point at the legacy `/tmp/oa-cache` zips
+ * (their historical build inputs — materialize them there to regenerate). ES/NL read the extracted countrywide CSVs and
+ * IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241; the fresh ES extract is OA-conformed, so the old
+ * raw-CNIG conform map is gone). DE carries a per-part `region` fallback (its REGION column is empty; the
+ * international-order tail needs it, #327). FR/NL/IT/ES REGION is populated per-row (ES = comunidad autónoma, IT =
+ * regione, NL = province).
  */
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
 		source: "synth-german",
+		corpusVersion: "0.4.0",
 		parts: [
 			{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
 			{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
 		],
 	},
-	FR: { source: "synth-fr", parts: [{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }] },
-	NL: { source: "synth-nl", parts: [{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv" }] },
-	// IT: 5-digit postcode; OA REGION populated (the regione) → international rows carry the tail.
-	IT: { source: "synth-it", parts: [{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv" }] },
-	// ES: the raw CNIG/IGN national set (NOT OA-conformed), via a `conform` map: street = join(tipo_vial,
-	// nombre_via); region = comunidad_autonoma (POPULATED → international "City, Comunidad Postcode" tail).
+	FR: {
+		source: "synth-fr",
+		corpusVersion: "0.4.0",
+		parts: [{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }],
+	},
+	NL: {
+		source: "synth-nl",
+		corpusVersion: "0.9.9",
+		parts: [{ path: dataRootPath("openaddresses", "extracted", "nl", "countrywide.csv") }],
+	},
+	IT: {
+		source: "synth-it",
+		corpusVersion: "0.9.9",
+		parts: [{ zip: dataRootPath("oa-cache", "it__countrywide.zip"), csv: "it/countrywide.csv" }],
+	},
 	ES: {
 		source: "synth-es",
-		parts: [
-			{
-				zip: "/tmp/oa-cache/es__countrywide.zip",
-				csv: "es_addresses.csv",
-				conform: {
-					number: "numero",
-					street: ["tipo_vial", "nombre_via"],
-					city: "municipio",
-					region: "comunidad_autonoma",
-					postcode: "cod_postal",
-				},
-			},
-		],
+		corpusVersion: "0.9.9",
+		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
 	},
 }
 
@@ -92,6 +104,51 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
  * sources (≤ ~1.2M) fit entirely, so they're sampled losslessly.
  */
 const RESERVOIR_CAP = 1_200_000
+
+/**
+ * Fraction of NATIVE-order ES rows whose street→house join is space-collapsed (`CALLE MAYOR 12`) instead of the
+ * template's comma (`CALLE MAYOR, 12`). Both are real Spanish surfaces — the comma is the official convention, the
+ * space is what OA-derived feeds (and all 3,000 `openaddresses-es-sample.jsonl` rows) carry. 0.5 teaches both.
+ */
+const ES_SPACE_JOIN_FRACTION = 0.5
+
+/**
+ * Fraction of NL rows whose postcode keeps OA's glued shape (`1187LM`) instead of the spaced national convention (`1187
+ * LM`). The eval sample is 100% glued; the conventional spaced form is the `1012 LM` two-letter-suffix shape the model
+ * currently glues onto the city (#241). 0.5 teaches both.
+ */
+const NL_GLUED_POSTCODE_FRACTION = 0.5
+
+/**
+ * OA CITY-noise normalization (#241) — the documented cleaning step, derived from the 2026-07-02 FULL-STREAM audit of
+ * the ES (15.6M rows), IT (13.9M), and NL (9.1M) sources (not a hand-list). Returns the cleaned city, or `null` to drop
+ * the tuple.
+ *
+ * Cleaned classes:
+ *
+ * 1. DROP pseudo-localities — the ES cadastral aggregates (`Comunidad de 09076, 09150 y 09578`, `Ledanía de …`; 0.06% of
+ *    ES rows): any CITY containing a comma or a ≥4-digit run is a land-register aggregate, not a renderable city.
+ *    Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives; IT/NL have zero hits.
+ * 2. STRIP a trailing parenthesized 1–3-letter admin code — the NL BAG province disambiguator (`Bergen (NH)`, `Rijswijk
+ *    (GLD)` → `Bergen`, `Rijswijk`; 0.13% of NL rows). The analogue of the German Kreis/region-suffix class (#241 names
+ *    `Rabenau Sachs` / `Weißwasser /O.L.`): an admin-region gloss glued onto the locality value that dirties locality
+ *    labels.
+ *
+ * Audit-verified NON-noise, deliberately NOT cleaned (a naive suffix rule would mangle real names):
+ *
+ * - ES/IT city-ends-with-province (`Alhama de Almería`, `GENZANO DI ROMA`; ~0.8% each): genuine toponyms whose linking
+ *   `de`/`di` makes them full names, unlike the German glued-abbreviation class.
+ * - ES bilingual slash names (`Laudio/Llodio`; 2.16%): official co-names — the eval expects them verbatim.
+ * - IT ALL-CAPS city casing (98.79% of the source, and the eval's observed form): casing is the #829 case-augmentation
+ *   lever, not this shard's.
+ */
+export function cleanCityNoise(city: string): string | null {
+	if (/,|\d{4}/.test(city)) return null
+
+	const stripped = city.replace(/\s*\(\p{L}{1,3}\)\s*$/u, "").trim()
+
+	return stripped || null
+}
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields). */
 function splitCSV(line: string): string[] {
@@ -122,65 +179,68 @@ function splitCSV(line: string): string[] {
 
 interface ColumnIndex {
 	num: number
-	streetParts: number[]
+	street: number
 	city: number
 	region: number
 	post: number
 }
 
 /**
- * Stream real tuples out of a cached OA zip and reservoir-sample to {@link RESERVOIR_CAP}. Reads the CSV line-by-line
- * via `unzip -p | readline` (bounded memory) and keeps a uniform random sample (Algorithm R) seeded by `rng` — separate
- * from the emit loop's PRNG. NO global dedup (a 25M-key Set would OOM; OA rows are near-unique). The region falls back
- * to `part.region` when the row's REGION cell is empty (DE).
+ * Stream real tuples out of an OA source part and reservoir-sample to {@link RESERVOIR_CAP}. Reads the CSV line-by-line
+ * — `unzip -p | readline` for zip parts, `createReadStream | readline` for extracted parts (both bounded memory) — and
+ * keeps a uniform random sample (Algorithm R) seeded by `rng`, separate from the emit loop's PRNG. NO global dedup (a
+ * 25M-key Set would OOM; OA rows are near-unique). The city passes through {@link cleanCityNoise}; the region falls
+ * back to `part.region` when the row's REGION cell is empty (DE).
  */
 function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
 	return new Promise((resolve) => {
-		const child = spawn("unzip", ["-p", part.zip, part.csv])
-		const rl = createInterface({ input: child.stdout!, crlfDelay: Infinity })
+		let input: NodeJS.ReadableStream
+
+		if (part.path) {
+			input = createReadStream(part.path, { encoding: "utf8" })
+			input.on("error", (err: Error) => {
+				console.error(`  WARN: read failed for ${part.path}: ${err.message}`)
+				resolve([])
+			})
+		} else {
+			const child = spawn("unzip", ["-p", part.zip!, part.csv!])
+			child.on("error", (err) => {
+				console.error(`  WARN: unzip failed for ${part.zip}: ${err.message}`)
+				resolve([])
+			})
+			input = child.stdout!
+		}
+		const rl = createInterface({ input, crlfDelay: Infinity })
 		const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 		const reservoir: LocaleBaseTuple[] = []
 		let cols: ColumnIndex | null = null
 		let header: string[] | null = null
 		let seen = 0
+		let dropped = 0
 		rl.on("line", (line) => {
 			if (!line) return
 
 			if (header === null) {
 				header = splitCSV(line).map((h) => h.trim().toLowerCase())
-				const ix = (name: string): number => header!.indexOf(String(name).toLowerCase())
-				// OA-standard columns (IT/FR/NL/DE), unless the part carries a `conform` map for a raw
-				// upstream schema (ES — CNIG columns, street split across `tipo_vial` + `nombre_via`).
-				const c = part.conform
-				cols = c
-					? {
-							num: ix(c.number),
-							streetParts: (Array.isArray(c.street) ? c.street : [c.street]).map(ix),
-							city: ix(c.city),
-							region: c.region ? ix(c.region) : -1,
-							post: ix(c.postcode),
-						}
-					: {
-							num: ix("number"),
-							streetParts: [ix("street")],
-							city: ix("city"),
-							region: ix("region"),
-							post: ix("postcode"),
-						}
+				const ix = (name: string): number => header!.indexOf(name)
+				cols = { num: ix("number"), street: ix("street"), city: ix("city"), region: ix("region"), post: ix("postcode") }
 
 				return
 			}
 
 			if (cols === null) return
 			const cells = splitCSV(line)
-			const street = cols.streetParts
-				.map((i) => get(cells, i))
-				.filter(Boolean)
-				.join(" ")
-				.trim()
-			const locality = get(cells, cols.city)
+			const street = get(cells, cols.street)
+			const rawCity = get(cells, cols.city)
 
-			if (!street || !locality) return
+			if (!street || !rawCity) return
+			const locality = cleanCityNoise(rawCity)
+
+			if (!locality) {
+				dropped++
+
+				return
+			}
 			const tuple: LocaleBaseTuple = {
 				house_number: get(cells, cols.num),
 				street,
@@ -200,12 +260,10 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 			}
 		})
 		rl.on("close", () => {
-			console.error(`  ${part.csv}: ${reservoir.length} sampled of ${seen} rows`)
+			console.error(
+				`  ${part.path ?? part.csv}: ${reservoir.length} sampled of ${seen} rows (${dropped} city-noise drops)`
+			)
 			resolve(reservoir)
-		})
-		child.on("error", (err) => {
-			console.error(`  WARN: unzip failed for ${part.zip}: ${err.message}`)
-			resolve([])
 		})
 	})
 }
@@ -251,7 +309,7 @@ export const localeRecipe: ShardRecipe = {
 		}
 
 		if (pool.length === 0) {
-			throw new Error(`No ${country} tuples found — are the cached zips present in /tmp/oa-cache?`)
+			throw new Error(`No ${country} tuples found — are the source CSVs/zips present? (see COUNTRY_SOURCES)`)
 		}
 
 		let emitted = 0
@@ -262,7 +320,17 @@ export const localeRecipe: ShardRecipe = {
 		while (emitted < count && guard++ < count * 6) {
 			const base = pool[Math.floor(random() * N)]!
 			const order = random() < intlFraction ? "international" : "native"
-			const synth = synthesizeLocaleRow(base, country, { random, order })
+			// Per-country surface-shape draws (#241) — consumed ONLY for that country, so the DE/FR emit
+			// streams for a given seed are unchanged by their existence.
+			const nativeHouseJoin =
+				country === "ES" ? (random() < ES_SPACE_JOIN_FRACTION ? ("space" as const) : ("template" as const)) : undefined
+			const postcodeShape =
+				country === "NL"
+					? random() < NL_GLUED_POSTCODE_FRACTION
+						? ("as-source" as const)
+						: ("conventional" as const)
+					: undefined
+			const synth = synthesizeLocaleRow(base, country, { random, order, nativeHouseJoin, postcodeShape })
 
 			if (!synth) {
 				skipped++
@@ -270,6 +338,22 @@ export const localeRecipe: ShardRecipe = {
 			}
 
 			if (opts.golden) {
+				// Golden rows must round-trip through alignRow exactly like training rows (#241 done-when): a
+				// render that can't be BIO-labeled can't serve as a parser golden either. Consumes no RNG draw.
+				const goldenCanonical = {
+					raw: synth.raw,
+					components: synth.components,
+					country,
+					locale: synth.locale,
+					source,
+					source_id: "golden:align-check",
+				}
+				const goldenAligned = alignRow(goldenCanonical as Parameters<typeof alignRow>[0])
+
+				if (goldenAligned.kind !== "labeled" || !goldenAligned.row) {
+					skipped++
+					continue
+				}
 				write(JSON.stringify({ raw: synth.raw, components: synth.components, country, order }) + "\n")
 				emitted++
 				continue
@@ -287,7 +371,7 @@ export const localeRecipe: ShardRecipe = {
 				locale: synth.locale,
 				source,
 				source_id: sourceID,
-				corpus_version: "0.4.0",
+				corpus_version: countrySource.corpusVersion,
 				license: `OpenAddresses ${country} tuples, rendered ${order}-order — see ingest SOURCES`,
 			}
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])

@@ -55,6 +55,24 @@ export interface LocaleSynthesisOpts {
 	 * correction).
 	 */
 	order?: "native" | "international"
+	/**
+	 * Postcode surface shape. `"conventional"` (default) canonicalizes to the country's rendered form (NL: OA's glued
+	 * `1011AB` → the spaced `1011 AB`); `"as-source"` keeps the source's own surface — the form OA (and the OA-derived
+	 * evals) feed, which for NL is 100% glued. Only NL differs today; every other country passes through identically
+	 * either way. Mixing both teaches the two-letter-suffix `1012 LM` shape AND the glued feed shape (#241 — the model
+	 * currently glues the suffix onto the city).
+	 */
+	postcodeShape?: "conventional" | "as-source"
+	/**
+	 * How the NATIVE-order render joins street and house number. The OpenCage ES template comma-joins (`Calle Mayor, 12`
+	 * — the official Spanish convention); OA-derived feeds and our ES eval space-join (`CALLE MAYOR 12`, the observed
+	 * form on all 3,000 eval rows). `"template"` (default) keeps the template's own join; `"space"` collapses `<street>,
+	 * <house_number>` → `<street> <house_number>` after rendering. Countries whose template already space-joins
+	 * (DE/IT/NL) render identically under both. Mixing both stops an ES shard from teaching the comma as THE street→house
+	 * boundary signal (#241 format-diversity audit). International order ignores this (the US template is already
+	 * house-first space-joined).
+	 */
+	nativeHouseJoin?: "template" | "space"
 }
 /** @deprecated Alias — use LocaleSynthesisOpts. */
 export type GermanSynthesisOpts = LocaleSynthesisOpts
@@ -129,7 +147,9 @@ export function synthesizeLocaleRow(
 	// ~80% keep the house number (the rest are street-only forms, also idiomatic).
 	if (base.house_number && random() < 0.8) components.house_number = base.house_number
 
-	// ~85% keep the postcode (canonicalized to the country's rendered form — NL spaces it).
+	// ~85% keep the postcode (canonicalized to the country's rendered form — NL spaces it). The
+	// `postcodeShape: "as-source"` rewrite happens AFTER the render: the OpenCage NL template
+	// normalizes the postcode itself, so a glued input can't survive rendering directly.
 	if (base.postcode && random() < 0.85) components.postcode = normalizePostcode(base.postcode, country)
 
 	// International order carries the REGION in the tail ("City, Region Postcode") — the layout real
@@ -143,9 +163,31 @@ export function synthesizeLocaleRow(
 	// house-first, postcode-after-city, with a region slot for the tail. Neither branch consumes a
 	// `random()` draw for the template, so the RNG sequence existing callers/tests depend on is stable.
 	const renderCountry = order === "international" ? "US" : country
-	const raw = formatAddress(components, renderCountry, { separator: ", " })
+	let raw = formatAddress(components, renderCountry, { separator: ", " })
 
 	if (!raw) return null
+
+	// Native-order space-join (see {@link LocaleSynthesisOpts.nativeHouseJoin}): collapse the template's
+	// `<street>, <hn>` comma to a space — the OA/feed layout. A no-op for templates that already
+	// space-join (the substring isn't present), and skipped when the house number was dropped above.
+	if (order === "native" && opts.nativeHouseJoin === "space" && components.house_number) {
+		raw = raw.replace(
+			`${components.street}, ${components.house_number}`,
+			`${components.street} ${components.house_number}`
+		)
+	}
+
+	// `postcodeShape: "as-source"` (see {@link LocaleSynthesisOpts.postcodeShape}): rewrite BOTH raw and
+	// the component back to the source's own surface (NL glued `1011AB`). Post-render because the
+	// OpenCage NL template normalizes the postcode to the spaced form no matter what it's given.
+	if (opts.postcodeShape === "as-source" && components.postcode && base.postcode) {
+		const sourceForm = base.postcode.trim()
+
+		if (sourceForm && sourceForm !== components.postcode && raw.includes(components.postcode)) {
+			raw = raw.replace(components.postcode, sourceForm)
+			components.postcode = sourceForm
+		}
+	}
 
 	// Every component must align — drop the row if the template didn't surface one verbatim, or a
 	// numeric component collides with a neighbouring digit run.
