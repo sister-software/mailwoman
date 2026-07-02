@@ -11,7 +11,7 @@
 	"bugs": {
 		"url": "https://github.com/sister-software/mailwoman/issues"
 	},
-	"license": "AGPL-3.0-only",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"contributors": [
 		{
 			"name": "Teffen Ellis",

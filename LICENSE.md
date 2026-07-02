@@ -1,19 +1,45 @@
 # Mailwoman
 
-Copyright © Sister Software. Authors: Teffen Ellis, et al.
+Copyright © Teffen Ellis (DBA Sister Software). Authors: Teffen Ellis, et al.
 
-Mailwoman is **dual-licensed**:
+Mailwoman is available under dual-license terms. You may choose either:
 
-- **[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)** for open-source use. You may use,
-  modify, and redistribute the software, but you must share your modifications and, for network
-  services, your source. The full license text follows below.
-- **A commercial license** for closed-source or commercial use without the AGPL's source-sharing
-  obligation. Buying one becomes mandatory once you develop commercial activities involving
-  Mailwoman without disclosing the source of your own applications. Contact `teffen@sister.software`.
+- AGPL-3.0-only (open-source use)
+- A separate commercial license agreement
 
-Portions of Mailwoman derived from [Pelias Parser](https://github.com/pelias/parser) remain under the
-MIT license, and Mailwoman bundles third-party data under its own terms — see
-[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) for the full attribution list.
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+---
+
+## Open Source License (AGPL-3.0-only)
+
+If you use this software under the GNU Affero General Public License v3.0, you must comply with its terms, including source disclosure requirements for network use.
+
+Full license text follows below.
+
+---
+
+## Commercial License
+
+A commercial license is available from Sister Software.
+
+Under the commercial license, you may use Mailwoman in proprietary or closed-source software and SaaS products without the copyleft obligations of the AGPL.
+
+This license is granted under a separate written agreement between the licensee and Sister Software. A reference template of those terms is provided in [`COMMERCIAL-LICENSE.md`](./COMMERCIAL-LICENSE.md); it is a template only, and grants no rights until a specific agreement is executed in writing.
+
+To obtain a commercial license, contact: teffen@sister.software
+
+---
+
+## Third-Party Components
+
+Portions of Mailwoman are derived from Pelias Parser, licensed under the MIT License.
+
+Mailwoman also bundles third-party data (including libpostal dictionaries, Google libaddressinput metadata, and Who's On First reference data) under each dataset's own terms. These third-party components retain their original licenses and are **not** relicensed by the commercial license option above — the commercial license covers only Sister Software's own code and model artifacts. Attribution and share-alike obligations attaching to bundled third-party data continue to apply under either license path.
+
+All third-party components and attributions are documented in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
+
+Where applicable, original license headers are preserved in source files.
 
 ---
 
@@ -668,3 +694,11 @@ You should also get your employer (if you work as a programmer) or school,
 if any, to sign a “copyright disclaimer” for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 http://www.gnu.org/licenses/
+
+## License Selection
+
+You may choose to use this work under either:
+- AGPL-3.0-only, or
+- The commercial license agreement with Sister Software
+
+Use of the software implies acceptance of one of the above license paths.

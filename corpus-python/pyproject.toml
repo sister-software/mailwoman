@@ -3,7 +3,7 @@ name = "mailwoman-corpus-python"
 version = "0.1.0"
 description = "Python helpers for the Mailwoman corpus pipeline (SentencePiece tokenizer training + Phase 2 training)."
 readme = "README.md"
-license = { text = "AGPL-3.0-only" }
+license = { text = "AGPL-3.0-only OR LicenseRef-Commercial" }
 requires-python = ">=3.11"
 authors = [{ name = "Sister Software", email = "contact@sister.software" }]
 dependencies = [
