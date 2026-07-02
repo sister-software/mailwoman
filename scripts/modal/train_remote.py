@@ -910,6 +910,48 @@ def sync_v193a3():
     secrets=[r2_secret],
     timeout=1800,
 )
+def sync_v198():
+    """#901 run 1 (night-31): v1.9.8-bare-street-bsplice — the fr-bare-street shard retrained on the
+    SHIPPED spliced base. Everything heavy is already on the volume (corpus v0.9.4 overlay from the v194
+    run, tokenizer v0.6.0-bsplice, init ckpt models/bsplice-expanded), so this sync only delivers the new
+    config via R2 and verifies the four prerequisites. init_from (not resume) — the surgery export carries
+    no optimizer state; see the config header."""
+    import shutil
+    import subprocess
+
+    print("Syncing code+config from R2 for v1.9.8 (corpus/tokenizer/init already on volume)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    print(cmd[:90] + "...")
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("v1.9.8 sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.8-bare-street-bsplice.yaml"
+    print("  v1.9.8 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  fr-bare-street shard present:", os.path.isfile(f"{cdir}/train/part-fr-bare-street-train.parquet"))
+    print("  bsplice tokenizer present:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-bsplice/tokenizer.model"))
+    init_dir = f"{VOL_MOUNT}/models/bsplice-expanded"
+    print("  init_from ckpt files:", sorted(os.listdir(init_dir)) if os.path.isdir(init_dir) else "MISSING")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
 def sync_v094_fr_bare():
     """#251/#148 fr-bare-street probe. The v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to
     /data) + the 1 fr-bare-street shard (BAN-sourced bare-no-postcode FR streets — the postcode-anchoring
