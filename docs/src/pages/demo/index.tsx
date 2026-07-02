@@ -50,9 +50,9 @@ const DemoPage: React.FC = () => {
 				<link rel="preconnect" href="https://public.sister.software" crossOrigin="anonymous" />
 				<link rel="dns-prefetch" href="https://public.sister.software" />
 				<link rel="preconnect" href={TILE_WORKER_URL} crossOrigin="anonymous" />
-				<link rel="prefetch" href={`${siteConfig.baseURL}mailwoman/sqljs/index.js`} />
-				<link rel="prefetch" href={`${siteConfig.baseURL}mailwoman/sqljs/sqlite.worker.js`} />
-				<link rel="prefetch" href={`${siteConfig.baseURL}mailwoman/sqljs/sql-wasm.wasm`} />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/index.js`} />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/sqlite.worker.js`} />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/sql-wasm.wasm`} />
 			</Head>
 
 			<main className={styles.demoRoot}>
