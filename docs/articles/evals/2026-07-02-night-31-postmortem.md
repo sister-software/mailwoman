@@ -69,6 +69,22 @@ Shift: 05:56 → 16:00 UTC, $30 Modal ceiling, plan `nightshift/2026-07-02-NIGHT
 - Friction worth recording: a `pkill -f <script>` matched its own background shell's command line
   and killed it (exit 144) — cost ~20 min; pattern-match pkill against argv you also occupy.
 
+## Production find + hotfix (hour 3.5)
+
+- **The live demo has been silently degraded since v5.0.0 (July 1):** the acronym sweep renamed
+  Docusaurus's EXTERNAL `siteConfig.baseUrl` key to `.baseURL` (undefined at runtime) — sqljs
+  worker base, SW registration, and prefetch hints all built `undefined…` paths. Found by the
+  #818 agent's typecheck; **verified against the live page** (`curl …/demo/` renders
+  `href=undefinedmailwoman/sqljs/index.js`); hotfixed as PR #917 (split from #916 so the
+  voice-review recipe doesn't block a production repair), merge-on-green armed. Also fixes
+  `PipelineExplorer`'s dead pre-#861 five-arg `runCascade` call.
+  Class note: the sweep's own AGENTS.md rule exempts external library keys — this was the rule's
+  named failure mode, caught only because docs/ typecheck ran tonight. Candidate follow-up: wire
+  `docs` typecheck into CI (it was 7 errors red on main and nobody knew).
+- **#818 delivered (PR #916):** the agent verify-before-verdicted the issue itself — 5/6 recipes
+  had already shipped (#850/#854); it wrote only the missing multi-service/cost-first piece +
+  recipes nav wiring. Voice review = operator.
+
 ## Decisions made autonomously
 
 - Case-aug excluded from run 1 (scar re-derivation: v1.9.6 gate-fail conditions still hold —
