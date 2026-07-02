@@ -31,13 +31,20 @@ import { setImmediate } from "node:timers/promises"
 import { Spinner } from "@inkjs/ui"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { $public } from "@mailwoman/core/env"
+import { isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver } from "../geocode-core.js"
+import {
+	geocodeAddress,
+	parseForGeocode,
+	ShardProvider,
+	type GeocodeResult,
+	type ShardResolver,
+} from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
@@ -214,11 +221,18 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 	try {
 		const resolver = createWOFResolver(lookup)
+		// #912 lever 3: parse ONCE up front (shared into geocodeAddress via parsedTree — no re-parse)
+		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
+		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
+		// wins (resolverDefaultCountry returns it before the locale inference is consulted).
+		const parsedTree = await parseForGeocode(input, { classifier })
+		const inferredScopeOK = options.defaultCountry || !isBareLocalityTree(parsedTree)
 		const result = await geocodeAddress(input, {
 			classifier,
 			resolver,
 			shards,
-			defaultCountry: resolverDefaultCountry(options, !!candidateDb) || undefined,
+			parsedTree,
+			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).

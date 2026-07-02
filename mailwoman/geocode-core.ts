@@ -25,7 +25,7 @@
 import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { hardCountryFor } from "@mailwoman/core/pipeline"
+import { hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
@@ -356,7 +356,10 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop shard for a non-US parse.
 	let placedCountry: string | null = null
 
-	if (placeCountry) {
+	// #912 lever 1: the placer abstains on a single bare locality — OOD input, and the wrong soft
+	// posterior overrides the resolver's better-informed exact-tier/population ranking (see
+	// isBareLocalityTree). Explicit defaultCountry / anchorPosterior from the caller are untouched.
+	if (placeCountry && !isBareLocalityTree(tree)) {
 		const placed = placeCountry(parseInput)
 		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 

@@ -78,6 +78,30 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set(["US", "ES", "IT", "NL", "DE", "FR"])
 
 /**
+ * #912 lever 1 — is this parse a single BARE locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on
+ * one-token city names (trained on full addresses): measured on the gauntlet's bare-namesake rows it emitted Paris→IT
+ * .35, Melbourne→GB .66 — all wrong, and even sub-threshold the SOFT posterior still re-ranks the resolver toward the
+ * wrong country. A bare locality carries no country evidence the placer can read that the resolver's exact-tier +
+ * population ranking doesn't already use better — so both production placeCountry call sites (the runtime pipeline and
+ * `geocodeAddress`) ABSTAIN on this shape. Any second non-empty component makes the input address-shaped and the placer
+ * runs as before.
+ */
+export function isBareLocalityTree(tree: AddressTree): boolean {
+	let sawLocality = false
+	const stack = [...tree.roots]
+
+	while (stack.length > 0) {
+		const node = stack.pop()!
+
+		if (node.tag === "locality") sawLocality = true
+		else if (node.value.trim() !== "") return false
+		stack.push(...node.children)
+	}
+
+	return sawLocality
+}
+
+/**
  * #743/#194: the shared coverage-guard gate — decide whether a confident coarse-placer country should become a HARD
  * candidate filter. Exported so the two production placeCountry call sites (the runtime pipeline AND `geocodeAddress`)
  * apply the SAME three gates and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the safelist
@@ -250,6 +274,9 @@ export async function runPipeline(
 	let effectiveOpts = opts
 	// Captured for the arbitration router signal (#478 inc 3) as well as the resolver anchor below.
 	let placedPrediction: { country: string | null; confidence: number; posterior?: Record<string, number> } | undefined
+	// #912 lever 1: true when the anchorPosterior in effectiveOpts came from the placer (not the
+	// caller) — the post-parse bare-locality abstention below only strips what the placer added.
+	let placerAnchorApplied = false
 
 	if (stages.placeCountry) {
 		const tPlace = performance.now()
@@ -273,6 +300,7 @@ export async function runPipeline(
 				opts?.hardPlaceCountry,
 				opts?.hardCountrySafelist
 			)
+			placerAnchorApplied = true
 			effectiveOpts = {
 				...opts,
 				resolveOpts: {
@@ -474,6 +502,12 @@ export async function runPipeline(
 	if (stages.resolver) {
 		throwIfAborted(opts)
 		const tResolve = performance.now()
+		// #912 lever 1: the placer abstains on a single bare locality — strip ONLY the anchor it
+		// added (a caller-supplied posterior was never overwritten and passes through untouched).
+		if (placerAnchorApplied && isBareLocalityTree(tree)) {
+			effectiveOpts = opts
+			placedPrediction = undefined
+		}
 		tree = await safeResolve(stages.resolver, tree, effectiveOpts)
 		timing["resolve"] = performance.now() - tResolve
 	}
