@@ -5,13 +5,14 @@
  *
  *   Both-order order-robustness eval harness (S6). Runs a model through the resolver on German
  *   addresses in BOTH renderings — native German order (the realistic layout) and US/international
- *   order (the layout our OA de-sample ships) — with the postcode anchor fed and zeroed, plus US +
- *   FR for the no-regression gate. The German "collapse" was substantially an eval-order artifact
- *   (docs/articles/evals/2026-06-06-anchor-pilot.md); this makes native-vs-international a
- *   first-class, repeatable measurement instead of a one-off. Self-emits every figure (each run
- *   writes its own .md), then prints a 2x2 + US/FR summary. NOTE: anchor on/off only differs for an
- *   anchor-trained (4-input) model; for a plain model both columns are identical (the anchor inputs
- *   are ignored / absent).
+ *   order (the layout our OA de-sample ships) — with the postcode anchor fed and ablated
+ *   (oa-resolver-eval's `--anchor-off` → `overrides.anchor=false`, the #718-sanctioned declared
+ *   ablation; #887), plus US + FR for the no-regression gate. The German "collapse" was
+ *   substantially an eval-order artifact (docs/articles/evals/2026-06-06-anchor-pilot.md); this
+ *   makes native-vs-international a first-class, repeatable measurement instead of a one-off.
+ *   Self-emits every figure (each run writes its own .md), then prints a 2x2 + US/FR summary. NOTE:
+ *   anchor on/off only differs for an anchor-trained (4-input) model; for a plain model both
+ *   columns are identical (the anchor inputs are ignored / absent).
  *
  *   Usage: node --experimental-strip-types scripts/eval/de-order-eval.ts\
  *   --model /tmp/v092-eval/model.onnx --card /tmp/v092-eval/model-card.json\
@@ -67,19 +68,21 @@ runIfScript(import.meta, async () => {
 	}
 
 	mkdirSync(out, { recursive: true })
-	const empty = join(out, "empty-anchor.json")
-	writeFileSync(empty, "{}") // zeroed anchor = c=0 identity = "anchor off"
 	const deNative = "data/eval/external/openaddresses-de-sample-native-order.jsonl"
 	const deIntl = "data/eval/external/openaddresses-de-sample.jsonl"
 
-	// run <eval-jsonl> <anchor-lookup> <default-country> <out-name>
-	const run = async (evalJsonl: string, anchorLookup: string, country: string, outName: string): Promise<void> => {
+	// run <eval-jsonl> <anchor-on> <default-country> <out-name>
+	const run = async (evalJsonl: string, anchorOn: boolean, country: string, outName: string): Promise<void> => {
+		// Anchor OFF = oa-resolver-eval's `--anchor-off` (overrides.anchor=false — the sanctioned,
+		// declared ablation; #887). The old idiom (an empty-anchor.json fed as --model-anchor-lookup)
+		// is refused by the #718 fail-closed gate: a lookup parsing to size 0 → UnfedChannelError.
+		const anchorArgs = anchorOn ? ["--model-anchor-lookup", lookup] : ["--anchor-off"]
 		// nothrow: oa-resolver-eval exits non-zero on its own internal regression signal even when it wrote
 		// a valid report; this is a MEASUREMENT harness (loc() reads the .md), so under the bash `set -e` we
 		// must not let that exit code abort before the 2x2 summary prints (it false-failed de.native_locality).
 		const r = await $({
 			nothrow: true,
-		})`node --experimental-strip-types scripts/eval/oa-resolver-eval.ts --eval ${evalJsonl} --model ${model} --model-card ${card} --tokenizer ${tok} --model-anchor-lookup ${anchorLookup} --default-country ${country}`
+		})`node --experimental-strip-types scripts/eval/oa-resolver-eval.ts --eval ${evalJsonl} --model ${model} --model-card ${card} --tokenizer ${tok} ${anchorArgs} --default-country ${country}`
 		writeFileSync(join(out, `${outName}.md`), r.stdout)
 		writeFileSync(join(out, `${outName}.log`), r.stderr)
 	}
@@ -105,17 +108,17 @@ runIfScript(import.meta, async () => {
 	}
 
 	console.log("== DE native, anchor ON ==")
-	await run(deNative, lookup, "DE", "de-native-on")
+	await run(deNative, true, "DE", "de-native-on")
 	console.log("== DE native, anchor OFF ==")
-	await run(deNative, empty, "DE", "de-native-off")
+	await run(deNative, false, "DE", "de-native-off")
 	console.log("== DE intl,   anchor ON ==")
-	await run(deIntl, lookup, "DE", "de-intl-on")
+	await run(deIntl, true, "DE", "de-intl-on")
 	console.log("== DE intl,   anchor OFF ==")
-	await run(deIntl, empty, "DE", "de-intl-off")
+	await run(deIntl, false, "DE", "de-intl-off")
 	console.log("== US (anchor ON) ==")
-	await run("data/eval/external/openaddresses-us-sample.jsonl", lookup, "US", "us-on")
+	await run("data/eval/external/openaddresses-us-sample.jsonl", true, "US", "us-on")
 	console.log("== FR (anchor ON) ==")
-	await run("data/eval/external/openaddresses-fr-sample.jsonl", lookup, "FR", "fr-on")
+	await run("data/eval/external/openaddresses-fr-sample.jsonl", true, "FR", "fr-on")
 
 	console.log("")
 	console.log(`### Order-robustness 2x2 — DE locality-match (model: ${model})`)
