@@ -127,6 +127,21 @@ zero margin is by construction, not fragility. Any dip triggers rule 1, and the
 [#901](https://github.com/sister-software/mailwoman/issues/901) campaign gate must name both
 postcode slices explicitly.
 
+### Splice safety gate — codepoint overlap is pre-registered, not post-measured ([#900](https://github.com/sister-software/mailwoman/issues/900))
+
+Any tokenizer vocab splice must run the overlap gate **before grading begins**
+(`tokenizer_splice.py build-tokenizer --trained-samples <locale=sample,…>`): it computes the
+non-ASCII codepoints shared between the NEW pieces and every trained locale's character
+inventory, writes the per-locale report artifact next to the spliced tokenizer, and fails loud
+on any overlapping locale that was not explicitly accepted. Accepting a locale
+(`--accept-overlap fr,de`) is a commitment, not a waiver: a per-locale non-inferiority leg for
+each accepted locale must be pre-registered in the gate spec before the first measurement — the
+FR n=3000 coordinate leg from v5.1.0 is the template.
+
+Why this is a gate: the v5.1.0 splice shipped on "byte-identical by construction," which turned
+out ASCII-only — FR/DE/ES shared é/ü/ö with the spliced pieces and 52/15,000 EU rows
+re-tokenized, measured only after the fact. Net-positive that time; the gate removes the luck.
+
 ## Adding a shard
 
 1. Generator lives in `corpus/` (`synthesize-*.ts`) or `scripts/build-*-shard.mjs`; every row
