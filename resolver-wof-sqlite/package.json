@@ -38,6 +38,7 @@
 		"./ancestry-backfill": "./out/ancestry-backfill.js",
 		"./coincident-roles": "./out/coincident-roles.js",
 		"./geonames-aliases": "./out/geonames-aliases.js",
+		"./geonames-postal": "./out/geonames-postal.js",
 		"./geo": "./out/geo.js",
 		"./street-normalize": "./out/street-normalize.js",
 		"./build-candidate": "./out/build-candidate.js",
