@@ -854,32 +854,25 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			try {
 				// Stage 2.4 + 2.5: compute QueryShape + kind classification. Pure functions, ~µs.
 				// Surfaced in the UI so users see the staged pipeline working.
-				const [
-					{ computeQueryShape },
-					{ classifyKindSync },
-					{ runPipeline },
-					{ groupPhrases },
-					{ findRescoreCandidate },
-				] = await Promise.all([
+				const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
 					import("@mailwoman/query-shape"),
 					import("@mailwoman/kind-classifier"),
 					import("@mailwoman/core/pipeline"),
 					import("@mailwoman/phrase-grouper"),
-					import("@mailwoman/resolver/span-rescore"),
 				])
 				const tStart = performance.now()
 				const queryShape = computeQueryShape(text)
 				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
 				const tShape = performance.now()
 
-				// Run the full runtime pipeline — phrase grouper (Stage 2.7) + joint-reconcile decode
-				// (Stage 5), the default since #427 — instead of the raw argmax `classifier.parse`. This
-				// is what surfaces multi-word localities, Romance street prefixes, and the correct
-				// house-number boundary in the browser, matching the library + CLI. Normalize / locale /
-				// kind default inside runPipeline; the demo's own WOF httpvfs lookup runs below on the
+				// Run the full runtime pipeline — phrase grouper (Stage 2.7) + the argmax decode
+				// (joint-reconcile was retired as the default, #566) — instead of the raw
+				// `classifier.parse`. This is what surfaces multi-word localities, Romance street
+				// prefixes, and the correct house-number boundary in the browser, matching the library +
+				// CLI. Normalize / locale / kind default inside runPipeline; the SHARED resolver runs
 				setParseStage(1)
 
-				// resulting tree (no resolver stage is passed).
+				// below over the demo's byte-range candidate lookup (#861).
 				const { tree } = await runPipeline(text, {
 					computeQueryShape,
 					groupPhrases,
@@ -1001,34 +994,14 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					})
 				}
 
-				// Cascade: postcode first (most precise), fall back to locality, then raw text.
-				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
+				// Admin resolution (#861): the SHARED `resolveTree` — greedy walk + admin/explicit-country
+				// coherence (#263/#822) + span-rescore recovery (#370, internal, default-on) — over the
+				// byte-range candidate lookup. Same passes as the server; the pin ordering (postcode most
+				// precise, cross-country gate) lives in runCascade's hit extraction.
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
 				const tBeforeResolve = performance.now()
-				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
+				const cascadeHits = await runCascade(wofLookup, tree as { roots: unknown[] }, text)
 				const tResolve = performance.now()
-
-				// Span-rescore fallback (#370 — the demo opts the lever ON). When the admin cascade resolved
-				// NOTHING, recover a dropped/fragmented locality from the RAW text — the model splits accented
-				// towns ("Grudziądz" → "Grudzi"+"dz") so they never resolve, but the word is intact in the input.
-				// Tried before the US-postcode anchor fallback: it recovers the actual locality (not just a
-				// postcode centroid) and it's where the EU recovery lives. Recovered places are marked
-				// "(recovered)"; ungated ones (no postcode→point coverage to verify against) say "unverified".
-				if (cascadeHits.length === 0) {
-					const pc = postcodeNode?.value ? String(postcodeNode.value).trim() : undefined
-					const rescued = await findRescoreCandidate(text, tree.roots as never, wofLookup as never, { postcode: pc })
-
-					if (rescued) {
-						cascadeHits.push({
-							id: rescued.place.id,
-							name: `${rescued.place.name} (recovered${rescued.gated ? "" : ", unverified"})`,
-							placetype: "locality",
-							lat: rescued.place.lat,
-							lon: rescued.place.lon,
-							score: 0,
-						} as (typeof cascadeHits)[number])
-					}
-				}
 
 				// Anchor-centroid fallback (postcode-only dead ends): WOF ships placeholder (0,0) for
 				// ~22% of US postcodes and the cascade rightly drops those — but postcode-us.bin (the

@@ -965,9 +965,7 @@ class MailwomanCoarseEncoder(nn.Module):
         return model
 
 
-def build_model(
-    cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size: int = 0
-) -> MailwomanCoarseEncoder:
+def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size: int = 0) -> MailwomanCoarseEncoder:
     """Instantiate ``MailwomanCoarseEncoder`` with the phase's geometry from ``cfg``.
 
     ``char_vocab_size`` is the CharCNN char-alphabet size (#825); it's derived from the char vocab at

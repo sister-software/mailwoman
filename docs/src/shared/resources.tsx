@@ -29,7 +29,12 @@ export interface MailwomanClassifierLike {
 export interface MailwomanLookupLike {
 	findPlace: (q: {
 		text: string
-		placetype?: "locality" | "postalcode" | "region" | undefined
+		/**
+		 * Requested placetype(s). Widened from the demo's original locality/postalcode/region union for the #861
+		 * shared-resolver convergence: `resolveTree` + its coherence passes also query `country`, `county`, and pass arrays
+		 * (the placetype-equivalence groups).
+		 */
+		placetype?: string | string[] | undefined
 		country?: string
 		/** Point-in-bbox filter — constrains candidates to a parsed region/state's bounds. */
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }

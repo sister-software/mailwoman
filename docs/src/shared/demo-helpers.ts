@@ -7,6 +7,7 @@
  *   PipelineExplorer embeddable component and the full demo page.
  */
 
+import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { MailwomanLookupLike } from "./resources.tsx"
 
 // ---------------------------------------------------------------------------
@@ -227,143 +228,166 @@ function clamp01(v: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// WOF cascade lookup
+// WOF resolution — the shared resolver over the demo's candidate lookup (#861)
 // ---------------------------------------------------------------------------
 
-type RegionBbox = { minLat: number; maxLat: number; minLon: number; maxLon: number }
-
 /**
- * Per-lookup-instance cache of region → bbox resolutions ("NY" → New York's bounds). Users iterate on addresses within
- * one region, and the region query re-ran on every submit — a worker round trip each time. Misses are cached too (entry
- * present, `bbox` undefined) so a region the gazetteer can't bound isn't re-queried; the stored `warning` is replayed
- * so the unconstrained-lookup signal stays loud on every submit. WeakMap-keyed so a version switch (new lookup
- * instance) drops it.
+ * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node. Same ordering the
+ * eval harnesses use; `postalcode` outranks `locality` (the old cascade's "postcode first, most precise" tier), peers
+ * of locality sit just below it.
  */
-const regionBboxCache = new WeakMap<MailwomanLookupLike, Map<string, { bbox?: RegionBbox; warning?: string }>>()
+const PIN_RANK: Record<string, number> = {
+	postalcode: 6,
+	locality: 5,
+	borough: 4,
+	localadmin: 4,
+	neighbourhood: 4,
+	county: 3,
+	macrocounty: 3,
+	region: 2,
+	macroregion: 2,
+	country: 1,
+}
+
+type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
+
+/** Minimal structural view of a decorated `AddressTree` node (decoupled from core's types). */
+interface ResolvedTreeNode {
+	source?: string
+	sourceID?: string
+	value?: unknown
+	lat?: number
+	lon?: number
+	placeID?: string
+	metadata?: Record<string, unknown>
+	alternatives?: unknown[]
+	children?: ResolvedTreeNode[]
+}
 
 /**
- * Cascade: postcode first (most precise), fall back to locality, then raw text. Drop (lat=0, lon=0) hits — WOF ships
- * placeholder zeros on ~22% of US postcodes.
+ * Admin resolution for the demo (#861): run the SHARED `@mailwoman/resolver` `resolveTree` — the greedy walk + admin
+ * descendant-coherence (#263/#267) + explicit-country coherence (#822) + the span-rescore recovery (#370) — over the
+ * byte-range candidate lookup, via {@link CandidateResolverBackend}. This replaced the bespoke postcode→locality→raw
+ * cascade that re-implemented the resolver's tier order beside it and silently trailed its joint-consistency passes
+ * (the server↔demo parity gap #861 measured).
+ *
+ * Returns hits in the shape the map UI consumes: the pin first (most address-precise resolved node), then its runner-up
+ * candidates, then the other resolved admin nodes for hierarchy context. Falls back to a raw-text lookup when nothing
+ * in the tree resolves — same last-resort the old cascade had. Drops (lat=0, lon=0) placeholder hits throughout.
  */
 export async function runCascade(
 	lookup: MailwomanLookupLike,
-	postcodeNode: ParsedNode | undefined,
-	localityNodes: ParsedNode[],
-	stateNode: ParsedNode | undefined,
+	tree: { roots: unknown[] },
 	rawText: string
-): Promise<Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>> {
-	type Hits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
-	const usable = (cs: Hits): Hits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
+): Promise<CascadeHits> {
+	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
-	// Failure mode for a mis-tagged span. The model can label a street as a locality ("Rue du
-	// Chevaleret") and emit several locality spans alongside the real city ("Paris"). Resolve them in
-	// source order (specific → general) and prefer a hypothesis whose top hit is an EXACT name match
-	// — a real place actually called this — over a fuzzy token match (a street name can token-collide
-	// with an unrelated same-named town). So when the specific line isn't a real place, we fall
-	// through to the one that is: the city. A fuzzy hit is kept only as a last-resort backstop.
-	const resolveLocality = async (regionBbox: Hits[number]["bbox"]): Promise<Hits> => {
-		// Prefer an exact match (canonical name, or the backend's alias/abbr `exactMatch` tier —
-		// "New York City" is a WOF alias of the New York locality) inside the region bbox; if none,
-		// retry the same nodes WITHOUT the bbox before settling for a fuzzy hit. The unconstrained
-		// retry is the safety net for a mis-resolved region (e.g. "IL" → a French département): a bad
-		// bbox can't cause a total miss.
-		let fuzzy: Hits = []
+	const backend = new CandidateResolverBackend(lookup)
+	const { createWOFResolver } = await import("@mailwoman/resolver")
+	const resolver = createWOFResolver(backend as never)
 
-		for (const bbox of regionBbox ? [regionBbox, undefined] : [undefined]) {
-			for (const node of localityNodes) {
-				const text = String(node.value ?? "").trim()
+	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
+	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
+	// global by design (the placer/population ranking routes, never a hardcoded country).
+	const resolved = (await resolver.resolveTree(tree as never, { adminCoherence: true })) as unknown as {
+		roots: ResolvedTreeNode[]
+	}
 
-				if (!text) continue
-				const cs = usable(await lookup.findPlace({ text, placetype: "locality", bbox, limit: 5 }))
+	// Collect every resolver-decorated node, best-pin first.
+	const collected: Array<{ hit: CascadeHits[number]; rank: number }> = []
+	const alternativesOf = new Map<number, CascadeHits>()
 
-				if (cs.length === 0) continue
-
-				if (cs.some((c) => c.exactMatch || normName(c.name) === normName(text))) return cs
-
-				if (fuzzy.length === 0) fuzzy = cs
+	const visit = (node: ResolvedTreeNode): void => {
+		if (node.source === "resolver" && node.sourceID && typeof node.lat === "number" && typeof node.lon === "number") {
+			const sep = node.sourceID.indexOf(":")
+			const placetype = sep === -1 ? node.sourceID : node.sourceID.slice(0, sep)
+			const id = Number(node.placeID?.replace(/^wof:/, "") ?? node.sourceID.slice(sep + 1))
+			const meta = backend.metaFor(id)
+			const hit: CascadeHits[number] = {
+				id,
+				name: String(node.metadata?.["resolver_name"] ?? node.value ?? ""),
+				placetype,
+				country: meta?.country,
+				lat: node.lat,
+				lon: node.lon,
+				score: typeof node.metadata?.["resolver_score"] === "number" ? (node.metadata["resolver_score"] as number) : 0,
+				exactMatch: true,
+				bbox: meta?.bbox,
 			}
 
-			// Fail loud when the region constraint produced nothing and we're about to widen — a silent
-			// fallback here is how "brooklyn, new york" quietly resolved to Brooklyn Park, MN.
-			if (bbox) {
-				console.warn(
-					"[mailwoman demo] no exact locality match inside the resolved region's bbox — retrying without the region constraint"
+			if (!(hit.lat === 0 && hit.lon === 0)) {
+				collected.push({ hit, rank: PIN_RANK[placetype] ?? 0 })
+
+				const alts = (node.alternatives as Array<Record<string, unknown>> | undefined) ?? []
+
+				alternativesOf.set(
+					id,
+					usable(
+						alts.map((a) => ({
+							id: Number(a.id),
+							name: String(a.name ?? ""),
+							placetype: String(a.placetype ?? placetype),
+							country: typeof a.country === "string" && a.country ? a.country : undefined,
+							lat: Number(a.lat),
+							lon: Number(a.lon),
+							score: typeof a.score === "number" ? a.score : 0,
+							exactMatch: a.exactMatch === true,
+							bbox: backend.metaFor(Number(a.id))?.bbox,
+						}))
+					)
 				)
 			}
 		}
 
-		return fuzzy
+		for (const child of node.children ?? []) visit(child)
 	}
 
-	// Use the geography the parser found. Country is NOT hardcoded to US — a global search plus the
-	// resolver's population ranking surfaces the famous same-name place ("Berlin" → Berlin, DE 3.7M,
-	// not Berlin, NH 9k). A parsed region/state is resolved to its bbox and used to constrain the
-	// postcode + locality lookups, which disambiguates same-name US localities ("Roseville, Michigan"
-	// → the Roseville inside Michigan's bounds, not the larger Roseville, CA the population boost
-	// would otherwise pick).
-	let regionBbox: RegionBbox | undefined
+	for (const root of resolved.roots) visit(root)
 
-	if (stateNode?.value) {
-		const regionText = expandUsRegion(String(stateNode.value))
-		const cacheKey = regionText.toLowerCase().trim()
-		let perLookup = regionBboxCache.get(lookup)
+	if (collected.length === 0) {
+		// Nothing in the tree resolved (span-rescore included) — the old cascade's last resort.
+		return usable(await lookup.findPlace({ text: rawText, limit: 5 }))
+	}
 
-		if (!perLookup) {
-			perLookup = new Map()
-			regionBboxCache.set(lookup, perLookup)
+	collected.sort((a, b) => b.rank - a.rank || b.hit.score - a.hit.score)
+
+	// Cross-country postcode gate, carried over from the old cascade: an ambiguous INTERNATIONAL
+	// postcode (10115 = Berlin DE and a New York US ZIP shape) must not out-pin the parsed city
+	// across countries. When the top pin is a postcode whose country differs from the resolved
+	// locality's, the locality wins the pin; the postcode stays in the list.
+	const top = collected[0]!
+	const localityEntry = collected.find((c) => c.rank === 5 || c.rank === 4)
+
+	let pinOrder = collected
+
+	if (
+		top.hit.placetype === "postalcode" &&
+		localityEntry &&
+		top.hit.country &&
+		localityEntry.hit.country &&
+		top.hit.country !== localityEntry.hit.country
+	) {
+		pinOrder = [localityEntry, ...collected.filter((c) => c !== localityEntry)]
+	}
+
+	const seen = new Set<number>()
+	const hits: CascadeHits = []
+
+	for (const { hit } of pinOrder) {
+		if (!seen.has(hit.id)) {
+			seen.add(hit.id)
+			hits.push(hit)
 		}
-		let entry = perLookup.get(cacheKey)
 
-		if (!entry) {
-			const regions = await lookup.findPlace({
-				text: regionText,
-				placetype: "region",
-				limit: 1,
-			})
-			entry = { bbox: regions[0]?.bbox }
-
-			// Fail loud: a region the parser found but the gazetteer can't resolve (or one resolved
-			// without a bbox) means the locality lookup runs UNCONSTRAINED — same-name places anywhere
-			// in the world can win. Don't let that degrade silently.
-			if (!entry.bbox) {
-				entry.warning =
-					`[mailwoman demo] parsed region ${JSON.stringify(regionText)} did not resolve to a bbox` +
-					(regions.length > 0 ? ` (top hit ${JSON.stringify(regions[0]?.name)} carries no bbox)` : " (no candidates)") +
-					" — locality lookup is unconstrained"
+		for (const alt of alternativesOf.get(hit.id) ?? []) {
+			if (!seen.has(alt.id)) {
+				seen.add(alt.id)
+				hits.push(alt)
 			}
-			perLookup.set(cacheKey, entry)
 		}
-		regionBbox = entry.bbox
-
-		if (entry.warning) console.warn(entry.warning)
 	}
 
-	// Resolve the locality FIRST: its population-ranked country (Berlin → Berlin DE 3.5M, not Berlin NH)
-	// gates the postcode below, so an ambiguous INTERNATIONAL postcode — 10115 is both a Berlin DE postcode
-	// and a New York US ZIP (the candidate gazetteer now carries US + DE/FR/EU postcodes) — can't out-
-	// resolve the parsed city across countries. The postcode still WINS when it resolves within the
-	// locality's country (the most precise tier — 10115 → the Berlin DE point); it just can't drag a German
-	// address to New York. A bare postcode with no parsed locality stays country-ambiguous (a known edge —
-	// see #153 follow-up); every demo example carries a gating locality.
-	const localityHits = await resolveLocality(regionBbox)
-
-	if (postcodeNode?.value) {
-		const cs = usable(
-			await lookup.findPlace({
-				text: String(postcodeNode.value),
-				placetype: "postalcode",
-				bbox: regionBbox,
-				country: localityHits[0]?.country,
-				limit: 5,
-			})
-		)
-
-		if (cs.length > 0) return cs
-	}
-
-	if (localityHits.length > 0) return localityHits
-
-	return usable(await lookup.findPlace({ text: rawText, bbox: regionBbox, limit: 5 }))
+	return hits
 }
 
 // ---------------------------------------------------------------------------
