@@ -75,8 +75,8 @@ Shift: 05:56 → 16:00 UTC, $30 Modal ceiling, plan `nightshift/2026-07-02-NIGHT
   Docusaurus's EXTERNAL `siteConfig.baseUrl` key to `.baseURL` (undefined at runtime) — sqljs
   worker base, SW registration, and prefetch hints all built `undefined…` paths. Found by the
   #818 agent's typecheck; **verified against the live page** (`curl …/demo/` renders
-  `href=undefinedmailwoman/sqljs/index.js`); hotfixed as PR #917 (split from #916 so the
-  voice-review recipe doesn't block a production repair), merge-on-green armed. Also fixes
+  `href=undefinedmailwoman/sqljs/index.js`); hotfixed as PR #917, MERGED, deploy green, and the LIVE PAGE RE-VERIFIED repaired
+  (undefinedmailwoman count 0; prefetch reads /mailwoman/sqljs/index.js). Also fixes
   `PipelineExplorer`'s dead pre-#861 five-arg `runCascade` call.
   Class note: the sweep's own AGENTS.md rule exempts external library keys — this was the rule's
   named failure mode, caught only because docs/ typecheck ran tonight. Candidate follow-up: wire
