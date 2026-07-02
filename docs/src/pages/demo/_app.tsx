@@ -110,7 +110,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	// staged into the Pages deploy at `/mailwoman/sqljs/` by the demo-assets plugin and loaded from
 	// there, while the DB the worker range-reads lives on R2 (cross-origin, CORS-allowed).
 	const { siteConfig } = useDocusaurusContext()
-	const sqljsBaseURL = `${siteConfig.baseURL}mailwoman/sqljs`
+	const sqljsBaseURL = `${siteConfig.baseUrl}mailwoman/sqljs`
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
@@ -212,8 +212,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	// Mount: register the range-chunk service worker (persists validated DB range chunks in Cache
 	// Storage — warm repeat visits, and the root fix for mobile Safari's torn-chunk HTTP cache).
 	useEffect(() => {
-		registerRangeCacheServiceWorker(siteConfig.baseURL)
-	}, [siteConfig.baseURL])
+		registerRangeCacheServiceWorker(siteConfig.baseUrl)
+	}, [siteConfig.baseUrl])
 
 	// Drop cached range chunks belonging to other versions once a version is selected — the URLs are
 	// immutable, so old versions' chunks never expire on their own.
