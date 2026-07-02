@@ -352,4 +352,19 @@ runIfScript(import.meta, async () => {
 		}
 		process.exit(1)
 	}
+
+	// --- ledger (#885) — the update is automatic, not discipline ------------------
+	// The ledger froze at v4.4.0 because appending relied on a human remembering. On a PASS, print
+	// the exact ledger-append command with everything pre-filled; the release-prep flow runs it with
+	// the real npm version. (Not auto-executed here: the gate runs on candidates that may never
+	// ship, and the ledger records shipped/shippable versions keyed by npm semver.)
+	const shipDate = new Date().toISOString().slice(0, 10)
+
+	console.log(
+		`\nledger (#885): on promote, append this run —\n` +
+			`  node --experimental-strip-types scripts/eval/ledger-append.ts \\\n` +
+			`    --out-dir ${OUT_DIR} --model-version <npm-semver> \\\n` +
+			`    --run-id ${LABEL.replace(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
+			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${CARD}`
+	)
 })

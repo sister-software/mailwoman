@@ -63,7 +63,7 @@
 			"metrics": {
 				"overall": {
 					"macro_f1": 0.0314,
-					"micro_f1": 0.0,
+					"micro_f1": 0,
 					"exact_match": 0.00882
 				},
 				"per_component": {
@@ -87,7 +87,7 @@
 					},
 					"postcode": {
 						"f1": 0.0007,
-						"precision": 1.0,
+						"precision": 1,
 						"recall": 0.0003,
 						"support": 2980
 					}
@@ -95,7 +95,7 @@
 				"calibration_buckets": [
 					{
 						"min_conf": 0.95,
-						"max_conf": 1.0,
+						"max_conf": 1,
 						"observed_accuracy": 0.3366,
 						"sample_count": 38328
 					},
@@ -165,9 +165,9 @@
 				},
 				"per_component": {
 					"country": {
-						"f1": 0.0,
-						"precision": 0.0,
-						"recall": 0.0,
+						"f1": 0,
+						"precision": 0,
+						"recall": 0,
 						"support": 6
 					},
 					"region": {
@@ -192,7 +192,7 @@
 				"calibration_buckets": [
 					{
 						"min_conf": 0.9,
-						"max_conf": 1.0,
+						"max_conf": 1,
 						"observed_accuracy": 0.8824,
 						"sample_count": 1114
 					},
@@ -251,7 +251,7 @@
 			"metrics": {
 				"overall": {
 					"macro_f1": 0.3245,
-					"micro_f1": 0.0,
+					"micro_f1": 0,
 					"exact_match": 0.1074
 				},
 				"per_component": {
@@ -274,9 +274,9 @@
 						"support": 3357
 					},
 					"dependent_locality": {
-						"f1": 0.0,
-						"precision": 0.0,
-						"recall": 0.0,
+						"f1": 0,
+						"precision": 0,
+						"recall": 0,
 						"support": 40
 					},
 					"postcode": {
@@ -286,9 +286,9 @@
 						"support": 2980
 					},
 					"cedex": {
-						"f1": 0.0,
-						"precision": 0.0,
-						"recall": 0.0,
+						"f1": 0,
+						"precision": 0,
+						"recall": 0,
 						"support": 1
 					},
 					"venue": {
@@ -313,7 +313,7 @@
 				"calibration_buckets": [
 					{
 						"min_conf": 0.9,
-						"max_conf": 1.0,
+						"max_conf": 1,
 						"observed_accuracy": 0.5988,
 						"sample_count": 37314
 					},
@@ -404,7 +404,7 @@
 						"coord_p50_km": 3.4,
 						"coord_p90_km": 7.4,
 						"pip_coverage_adj": 47.1,
-						"baseline_v410_region": 100.0,
+						"baseline_v410_region": 100,
 						"verdict": "PASS"
 					},
 					"demo_presets": "PASS (5/6 identical; 6th = intended affix split)",
@@ -458,7 +458,7 @@
 				"affix_nad_native_v2_int8": {
 					"street_prefix_f1": 92.2,
 					"street_suffix_f1": 90.3,
-					"precision": 100.0
+					"precision": 100
 				},
 				"honest_eval_vt": {
 					"n": 1428,
@@ -493,7 +493,7 @@
 					"street_suffix": 96.6,
 					"unit": 92.1,
 					"po_box_real": 89.1,
-					"intersection_real": 100.0
+					"intersection_real": 100
 				},
 				"fr": {
 					"postcode": 99.6,
@@ -502,10 +502,51 @@
 					"cedex_real": 96.1
 				},
 				"de": {
-					"native_locality_anchor_on": 91.0
+					"native_locality_anchor_on": 91
 				}
 			},
 			"notes": "FROM SCRATCH, clean lineage. PASS 17/17 on the densest pre-registered spec to date (arena floor gated for the first time). Three-battery verdict: po_box FAIL 60.4 (dotted-leader truncation — the corpus format cannot label intra-span punctuation) → span bridge corrective → fr.postcode FAIL 99.0 (comma over-merge) → separator exclusion → PASS. Both correctives decode-side, $0 GPU. Ship config: addressSystemConventions:'auto' + bridgePunctuationGaps:true (REQUIRED — see model card notes)."
+		},
+		{
+			"run_id": "v193a3-anchor-absorption-step080000-rescore-20260702",
+			"model_version": "5.0.0",
+			"model_path": "@mailwoman/neural-weights-en-us@5.0.0 (model.onnx md5 4dec4f460a934949580d8e7b43adae7e; weights = the v4.15.0 line unchanged)",
+			"corpus_version": "corpus-v0.9.3a3",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v4.15.0-boundary): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-06-25",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 80000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 95,
+					"country_homograph": 87.5,
+					"micro": 85.7,
+					"locality": 76.7,
+					"region": 88.6,
+					"street": 82.3,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 91.4,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.3,
+					"house_number": 98.1,
+					"region": 48.4,
+					"cedex_real": 89.4
+				},
+				"de": {
+					"native_locality_anchor_on": 91.1
+				},
+				"arena": {
+					"perturb": 78
+				}
+			},
+			"notes": "The #885 measurement re-anchor: first full per-tag re-score since v4.4.0 (17/17 PASS; scorecard parity-scorecard-2026-07-02.md). Rows for 4.5.0-4.16.2 were never populated (the ledger froze at v4.4.0) - their per-release headlines live in releases.mdx + each version's model-card.json; the re-score cadence rule in CONTRIBUTING_MODEL_WORK.mdx now backstops the gap going forward. Scored 2026-07-02 on the shipped int8. [graded_artifact=int8; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/rescore-885]"
 		}
 	]
 }
