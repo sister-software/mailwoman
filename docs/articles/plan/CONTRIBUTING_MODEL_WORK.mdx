@@ -75,7 +75,9 @@ and produces numbers that look real (the zero-fill trap; it has bitten the count
 first affix audit).
 
 Plus your tag's pre-registered real-OOD gate. Pass → append the run to
-`evals/scores-by-version.json` and write the dated report in `docs/articles/evals/`.
+`evals/scores-by-version.json` via `scripts/eval/ledger-append.ts` (the promotion gate prints the
+pre-filled command on every PASS — fill in the npm semver at promote time) and write the dated
+report in `docs/articles/evals/`.
 
 ### The full re-score cadence (standing rule, operator-approved 2026-07-02)
 

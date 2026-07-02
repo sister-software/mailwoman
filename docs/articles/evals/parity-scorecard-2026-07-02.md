@@ -110,13 +110,15 @@ US-2k coord p50 3.31 km / resolve 1.000 / region 0.999; CZ-1k resolved-p50 3.29 
    bought street +4.4, unit +4.9, prefix +4.4, po_box +2.3, fr.region +22.8, and +6 on the gated
    arena. The pattern (grade the coordinate, document label trades) is vindicated — with two
    uncaptured drifts now recorded: `fr.cedex_real` −6.7 and the libpostal clean-arena −6.
-2. **Ledger fate — operator decision, deliberately not made here** (per #885): either repopulate
-   `evals/scores-by-version.json` from this scorecard and re-commit to per-promote updates, or
-   deprecate it and point `AGENTS.md` at "latest parity scorecard + per-release model-card". The
-   raw per-tag JSON for a repopulation lives in the battery out-dir (below).
-3. **Standing re-score rule — operator sign-off needed** (per #885): proposal is "every 5
-   promotes, or any promote that lowers a gate floor, triggers a full re-score published as a
-   dated scorecard". v4.4.0 → v4.15.0 was 11 promotes with none; this doc is the debt paid once.
+2. **Ledger fate — DECIDED (operator, 2026-07-02): revived, automated.** This re-score is the
+   v5.0.0 row in `evals/scores-by-version.json` (appended via the new
+   `scripts/eval/ledger-append.ts`; `promotion-gate.ts` prints the pre-filled append command on
+   every PASS, so the update no longer depends on discipline). The 4.5–4.16 gap stays
+   unpopulated and is documented in the row's notes.
+3. **Standing re-score rule — APPROVED (operator, 2026-07-02)** and written into
+   `CONTRIBUTING_MODEL_WORK.mdx`: every 5 promotes, or any promote that lowers a gate floor,
+   triggers a full re-score published as a dated scorecard. v4.4.0 → v4.15.0 was 11 promotes
+   with none; this doc is the debt paid once.
 
 ## Provenance
 
