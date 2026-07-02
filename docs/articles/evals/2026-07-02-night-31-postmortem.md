@@ -69,8 +69,12 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
    PASS everywhere** — a resolvable postcode feeds the existing coordinate-first candidate
    injection; the binding machinery existed all along. Format normalization is load-bearing
    (spaced GeoNames CZ codes made things WORSE, +13, before strip-whitespace at build).
-   **Production #920 = postcode coverage for SK/SI/DK/NO/HR/PL through the real shard pipeline +
-   per-country format normalization — the measured biggest lever on the board, zero GPU.**
+   **Extension (same night): all eight tail locales measured** — SK −98%, DK −77%, SI −71%,
+   HR −52%, NO −47%, PL null. Three production-spec findings: (1) crude postcode centroids tax
+   p50 on already-correct rows (SK/SI/HR ni-failed the 1 km leg — build needs per-postcode fine
+   centroids); (2) PL's null = names must be stored in the SANITIZED-QUERY token shape (the
+   hyphen-strip law — third format law of the night); (3) resolve rates held or rose everywhere.
+   **Production #920 is fully spec'd from measurement: the biggest lever on the board, zero GPU.**
 
 ## What went well
 
