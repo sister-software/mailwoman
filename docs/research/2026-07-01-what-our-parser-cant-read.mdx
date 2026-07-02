@@ -36,3 +36,11 @@ We had a comfortable theory that this was a decoder bug, a character-offset mism
 A model that guesses without a word is a liability, because you learn what it can't do from a customer. A model that hands you a typed, countable record of its own blind spots is something you can plan around. We didn't make the parser smarter this week. We made it honest about what it doesn't know, and that honesty turned out to be a feature you can run a `GROUP BY` over.
 
 The shopping list is checked in, and it runs before and after every retrain now. Next time you build something that classifies text, make it account for the text it couldn't classify. You'll be surprised how loudly it starts telling you where to look.
+
+## Update — July 2
+
+We wrote "it's a retrain" and then we tested it, because writing a thing down is not the same as it being true. The retrain held English and made Czech worse. What the ranked list had actually found was one layer lower: the tokenizer's vocabulary carried every one of those characters as its own lonely subword and not a single piece containing them, and a unigram model cannot emit a subword that isn't in its table. No volume of training data teaches a model to say a word its alphabet can't spell.
+
+So the fix wasn't a retrain. We trained a small SentencePiece model on Czech and Polish addresses, spliced its 10,582 diacritic-bearing pieces into the vocabulary, and initialized each new embedding from the mean of the pieces it used to shatter into. Zero GPU hours. Wrong-city rates fell from 22.4% to 14.8% in Czechia and from 27.9% to 7.9% in Poland, and Slovak and Slovenian came along for free because they share the codepoints. It shipped the next day.
+
+The shopping list paid for itself in under twenty-four hours, which is the part worth repeating: the fix was cheap because the blind spots were countable. `Grudziądz` is whole now.
