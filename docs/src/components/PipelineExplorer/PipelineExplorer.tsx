@@ -148,11 +148,9 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				const tree = pipelineResult.tree
 				const nodes = flattenTree(tree)
 
-				const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
 				const stateNode = nodes
 					.filter((n) => n.tag === "region" || n.tag === "state")
 					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
-				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 				const wofLookup = lookup
 
@@ -176,7 +174,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				setParseStage(2)
 
 				const tBeforeResolve = performance.now()
-				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
+				const cascadeHits = await runCascade(wofLookup, tree as { roots: unknown[] }, text)
 				const tResolve = performance.now()
 				const candidates: ResolvedHit[] = cascadeHits.map((c) => ({
 					id: c.id,
