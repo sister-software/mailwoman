@@ -468,6 +468,8 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// a primitive a future phase will register.
 		const convention = this.#conventionFor(query)
 
+		let outcome: PlaceCandidate[] = []
+
 		for (const name of convention.candidateStrategies) {
 			const strategy = this.#strategies.get(name)
 
@@ -477,10 +479,41 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			}
 			const result = await strategy(query, convention)
 
-			if (result !== null) return result
+			if (result !== null) {
+				outcome = result
+				break
+			}
 		}
 
-		return []
+		if (outcome.length > 0) return outcome
+
+		// #924: NL postcode retry ladder. The WOF NL postalcode repo stores full codes UNSPACED
+		// ('1012LG') plus 4-digit stems ('1012'), while Dutch addresses carry the spaced form
+		// ('1012 LG') — two FTS tokens that can never match the one-token doc (the #920 name law,
+		// resurfacing in a WOF-built shard). On a postcode-typed NL-shape miss, retry ONCE with the
+		// whitespace-joined form (block-level precision when the full-code row exists), then the
+		// 4-digit stem (area-level). Country-gated to NL — the same digits+letters shape elsewhere
+		// must not silently coarsen to a different system's code. Each retry only fires when its
+		// text differs from the current one, so the ladder terminates by construction.
+		if (
+			query.country?.toUpperCase() === "NL" &&
+			(normalizePlacetypes(query.placetype)?.includes("postalcode") ?? false) &&
+			/^\d{4}\s?[A-Za-z]{2}$/.test(query.text.trim())
+		) {
+			const trimmed = query.text.trim()
+			const joined = trimmed.replace(/\s+/g, "")
+
+			if (joined !== trimmed) {
+				const full = await this.findPlace({ ...query, text: joined })
+
+				if (full.length > 0) return full
+			}
+			const stem = trimmed.slice(0, 4)
+
+			if (stem !== trimmed) return this.findPlace({ ...query, text: stem })
+		}
+
+		return outcome
 	}
 
 	/**
