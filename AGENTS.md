@@ -52,12 +52,12 @@ Source files live at each workspace's root (no `src/` nesting). The repo root ho
 ## Where to read next
 
 - **[`docs/articles/concepts/what-mailwoman-is.mdx`](./docs/articles/concepts/what-mailwoman-is.mdx)** — what the system _is_ (a calibrated, retrieval-augmented sequence labeler), the grammar/atlas division of labor, and the disciplines that keep the architecture honest. Read this first if you're new to the project entirely.
-- **[`docs/articles/plan/README.mdx`](./docs/articles/plan/README.mdx)** — the implementation plan that drove the neural classifier work. Phases 0–3 are substantially shipped; Phases 4–6 are the forward roadmap. Read this first if you're working on anything model-related.
+- **[`docs/articles/plan/SCOPE.mdx`](./docs/articles/plan/SCOPE.mdx)** — the current scope declaration (#886): locale tiers, the two workstreams, the standing invariants, the runtime-flag register, where the live roadmap lives. Read this first for orientation. The old implementation plan (`plan/README.mdx`) and the phase directory are historical design records — rationale, not current state.
 - **[`docs/articles/plan/reference/`](./docs/articles/plan/reference/)** — design rationale, schema source of truth, TS contracts, operations playbook, address-data-sources catalog. `SCHEMA.mdx` is the single source of truth for the `ComponentTag` union.
 - **[`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx)** — the model-work runbook: which evals gate a change, the lever-shape taxonomy, how to add a shard. Read before touching the model, a shard recipe, or an eval.
 - **[`docs/articles/plan/reference/coverage-overlay.mdx`](./docs/articles/plan/reference/coverage-overlay.mdx)** — the demo-map address-coverage ("fog of war") overlay runbook: rebuild/republish (the `coverage build` + `tiles publish` CLIs), the `mailwoman-tiles` upload/credential gotchas, the HI/NH data situation, tuning knobs. Read before touching the coverage overlay, the `tile-worker`, or `coverage build`.
 - **[`RELEASING.md`](./RELEASING.md)** — local and CI release flows. Read before cutting a release.
-- **[`docs/articles/evals/`](./docs/articles/evals/)** — eval reports per training step. The per-model score ledger lives at `evals/scores-by-version.json` (repo root), schema in `docs/articles/plan/reference/eval-ledger.schema.json`. **Note:** the ledger's full per-tag rows are frozen at the v4.4.0 ship gate (the last full re-score); per-release headlines since (4.5–4.15) live in [`docs/articles/releases.mdx`](./docs/articles/releases.mdx) + each version's `model-card.json`. The authoritative per-tag parity table is the latest `parity-scorecard-*.md`.
+- **[`docs/articles/evals/`](./docs/articles/evals/)** — eval reports per training step. The per-model score ledger lives at `evals/scores-by-version.json` (repo root), schema in `docs/articles/plan/reference/eval-ledger.schema.json`. **Ledger status:** revived at the 2026-07-02 re-anchor (#885) — the v5.0.0 row is from the full re-score, and appending is now automated (`scripts/eval/ledger-append.ts`; `promotion-gate.ts` prints the pre-filled command on every PASS). Rows for 4.5.0–4.16.2 were never populated (the freeze the re-anchor ended); their headlines live in [`docs/articles/releases.mdx`](./docs/articles/releases.mdx) + each version's `model-card.json`. The authoritative human-readable per-tag table is the latest `parity-scorecard-*.md`.
 
 ## Release pipeline pitfalls
 
@@ -153,7 +153,7 @@ Read the workspace-local docstrings before changing infrastructure files. The he
 
 ### Acronym casing in identifiers
 
-Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSqlitePlaceLookup`, `modelURL`. Not `createWOFResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
+Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSqlitePlaceLookup`, `modelURL`. Not `createWofResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
 
 - **`snake_case`** — DB columns and wire keys (`parent_id`, `place_id`, `name_key`) stay as-is; they're string contracts, and the convention is camelCase-only by construction.
 - **External library names** — match the dependency's own casing (`HttpStatusCode` from axios, `createQueryId`/`createWithSql` from kysely, `sqlite-wasm`).
@@ -161,3 +161,5 @@ Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `pa
 - **Dated historical records** — `docs/articles/evals/`, `reviews/`, postmortems, and phase docs are point-in-time; don't rewrite their acronyms.
 
 There's no lint rule for this (oxlint can't express it); it's reviewer discipline. When adding an acronym, cap the whole component.
+
+**Known gaps (#875):** the v5.0.0 sweep enumerated a fixed acronym list that omitted `Us` and generic `Json`/`Jsonl`. `recognizeUsRegions` → `recognizeUSRegions` is done (internal). Still pending: `isUsStateAbbreviation` + codex `us/*` (public `@mailwoman/codex` → breaking), and the whole `Json`/`Jsonl` family (`writeJsonl`, `readJsonl`, `fetchJson`, `GeoJsonFeatureCollection`, `pyJsonDumps`, … — ~28 identifiers across packages, some public). These are a version-gated batch, not a piecemeal fix — bundle with the next major, don't half-apply (a partial `Json` sweep half-renames callers vs their def).

@@ -39,6 +39,8 @@ import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 import { gunzipSync } from "node:zlib"
 
+import { $public } from "@mailwoman/core/env"
+
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
 /**
@@ -161,7 +163,7 @@ interface BanManifestEntry {
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-root": { type: "string", default: process.env.OUT_ROOT ?? "data/corpus/sources" },
+			"out-root": { type: "string", default: $public.OUT_ROOT ?? "data/corpus/sources" },
 		},
 	})
 

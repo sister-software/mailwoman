@@ -8,24 +8,25 @@ description: What ships today, what's behind a flag, and what's still experiment
 
 This page is the single source of truth for what works in Mailwoman right now.
 
-:::info[Verified as of 2026-06-25 — release 4.15.0]
-The package version + model lineage below are from the shipped `model-card.json` (v4.15.0 =
-`v1.9.3a3-anchor-absorption`). v4.15.0's headline is the **#723 postcode-anchor fix**: a leading
-5-digit token that is actually a US house number which happens to look like a ZIP (`12345 Main St`)
-is now correctly labeled `house_number` with the postcode anchor ON — the `SLICE-H` case went
-**20 → 100**, at **zero coordinate cost** (non-circular oa-resolver-eval, 2000 real OA-US points:
-whole-US locality-match 97.7 → 97.8, region 99.9 flat, coord p50 3.4 km flat). It trades
-us.postcode label-F1 −2 — a rare leading-postcode (VT E911) case that is coordinate-invisible (VT
-locality flat 92.6 = 92.6); the gate floor was revised with an operator-approved, stated reason. The
-per-tag **F1 tables below are still from the v4.4.0 ship gate** (2026-06-11) — the last full per-tag
-scorecard; treat them as the v4.4.0 baseline, not v4.15.0. The
-[parity scorecard](./evals/parity-scorecard-2026-06-11.md) is the live per-tag truth; for which
+:::info[Verified as of 2026-07-02 — release 5.0.0]
+The current npm release is **5.0.0** (the breaking acronym-casing major); its **weights are the
+v4.15.0 line unchanged** (`v1.9.3a3-anchor-absorption` — the bundled `model.onnx` was md5-verified
+against the published 5.0.0 tarball). v4.15.0's model headline was the **#723 postcode-anchor
+fix**: a leading 5-digit token that is actually a US house number which happens to look like a ZIP
+(`12345 Main St`) is now correctly labeled `house_number` with the postcode anchor ON — the
+`SLICE-H` case went **20 → 100**, at **zero coordinate cost** (non-circular oa-resolver-eval, 2000
+real OA-US points: whole-US locality-match 97.7 → 97.8, region 99.9 flat, coord p50 3.4 km flat).
+It trades us.postcode label-F1 −2 on a rare leading-postcode (VT E911) case; the gate floor was
+revised with an operator-approved, stated reason. The per-tag tables below are from the
+**2026-07-02 full re-score** of this shipped line (the #885 measurement re-anchor — the first
+complete per-tag scorecard since 2026-06-11): the
+[parity scorecard](./evals/parity-scorecard-2026-07-02.md) is the live per-tag truth; for which
 release added which capability, see [Releases & capabilities](./releases.mdx).
 :::
 
 ## Packages
 
-All publishable workspaces release in lockstep; the current npm version is **4.15.0**.
+All publishable workspaces release in lockstep; the current npm version is **5.0.0**.
 
 | Package                                                                                       | Description                                                         |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -39,7 +40,7 @@ All publishable workspaces release in lockstep; the current npm version is **4.1
 | `@mailwoman/resolver-wof-sqlite` / `-wasm`                                                    | WOF gazetteer resolver (Node SQLite / browser WASM)                 |
 | `@mailwoman/neural-web`                                                                       | Browser-side neural classifier (onnxruntime-web)                    |
 
-## Model weights (4.15.0)
+## Model weights (the 4.15.0 line, shipped in 4.15.0 → 5.0.0)
 
 | Property             | Value                                                                                                                                                                                                                                                                                                                                                       |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -55,7 +56,7 @@ All publishable workspaces release in lockstep; the current npm version is **4.1
 ### Per-tag health (summary)
 
 The full per-tag table — two lenses, golden-dev and real-OOD — lives in the
-[parity scorecard](./evals/parity-scorecard-2026-06-11.md). The sortable summary:
+[parity scorecard](./evals/parity-scorecard-2026-07-02.md). The sortable summary:
 
 import { F1ScoreTable } from "@site/src/components/F1ScoreTable/F1ScoreTable"
 
@@ -68,7 +69,9 @@ explanation of what that value means in the context of the eval set it was measu
 
 The trend, in words:
 
-- **Healthy:** postcode (98/99 US/FR), house_number (96/91), venue-US (90), street (79 US).
+- **Healthy (2026-07-02 re-score):** postcode (95.0/99.3 US/FR — both sitting exactly at their
+  revised gate floors), house_number (90.7/98.1), venue-US (89.1), street (82.3 US, the best it
+  has measured), fr.region recovered 16.2 → 48.4 by the multi-locale work.
 - **Fixed by the parity campaign:** `unit` 0 → 92.3 on real-OOD designators (the 4.1.0 headline).
 - **Shipped by the consolidation (v4.2.0):** locality +12.8, region +10.7, country 0 → 89.8
   (gazetteer soft anchor), affixes now exist (0 → 64.9/48.8 at P≈100), DE 90.9.
@@ -122,7 +125,7 @@ calls the classifier's argmax path directly; joint reconcile is not active in th
 
 ## Model line (June 2026)
 
-The shipped weights are **4.15.0** — `v1.9.3a3-anchor-absorption`, the latest step in a coordinate-first arc. The lineage stacks three single-lever moves, each held to the **shipped assembled coordinate** (not label-F1): v4.11.0 (`v1.8.0-fr-admin-split`) taught the locality↔adjacent-admin split on non-US formats (FR coord p50 42 → 2.2 km); v4.14.0 (`v1.9.2-multilocale-au`) added AU word-order via G-NAF (AU @25km 65 → 87); v4.15.0 closes the #220/#723 postcode-anchor-pollution bug — a leading 5-digit house number that looks like a ZIP is now labeled `house_number` with the anchor ON (`SLICE-H` 20 → 100), at zero coordinate cost (oa-resolver-eval, 2000 real OA-US points: whole-US locality 97.7 → 97.8, p50 3.4 km flat). The trade is a coordinate-invisible −2 us.postcode label-F1 on the rare VT-E911 leading-postcode case. The parity campaign's remaining gaps are quality gradients, not missing capabilities. Next: the post-parity agenda — arbitration ([#478](https://github.com/sister-software/mailwoman/issues/478)), geocoder table stakes (interpolation, reverse), and the char-offset corpus format (the structural cure for what the span bridge contains). The ordered
+The shipped weights are the **4.15.0 line** (`v1.9.3a3-anchor-absorption`, carried unchanged into 4.16.x and 5.0.0), the latest step in a coordinate-first arc. The lineage stacks three single-lever moves, each held to the **shipped assembled coordinate** (not label-F1): v4.11.0 (`v1.8.0-fr-admin-split`) taught the locality↔adjacent-admin split on non-US formats (FR coord p50 42 → 2.2 km); v4.14.0 (`v1.9.2-multilocale-au`) added AU word-order via G-NAF (AU @25km 65 → 87); v4.15.0 closes the #220/#723 postcode-anchor-pollution bug — a leading 5-digit house number that looks like a ZIP is now labeled `house_number` with the anchor ON (`SLICE-H` 20 → 100), at zero coordinate cost (oa-resolver-eval, 2000 real OA-US points: whole-US locality 97.7 → 97.8, p50 3.4 km flat). The trade is a coordinate-invisible −2 us.postcode label-F1 on the rare VT-E911 leading-postcode case. The parity campaign's remaining gaps are quality gradients, not missing capabilities. Next: the post-parity agenda — arbitration ([#478](https://github.com/sister-software/mailwoman/issues/478)), geocoder table stakes (interpolation, reverse), and the char-offset corpus format (the structural cure for what the span bridge contains). The ordered
 work queue to the full geocoder is
 [epic #488](https://github.com/sister-software/mailwoman/issues/488).
 

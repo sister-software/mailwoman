@@ -42,6 +42,7 @@ import { readFile, rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
 import { $ } from "zx"
 
 const INDEX_URL = "https://download.cms.gov/nppes/NPI_Files.html"
@@ -120,7 +121,7 @@ async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-root": { type: "string", default: process.env.OUT_ROOT },
+			"out-root": { type: "string", default: $public.OUT_ROOT },
 		},
 	})
 

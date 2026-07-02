@@ -6,10 +6,11 @@
  *
  *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the FULL stack exactly the
  *   way the demo (and any real consumer) composes it: neural parse with the ship config (gazetteer
- *   lexicon + postcode anchor + conventions mask + span bridge + FST) → `runPipeline`'s joint
- *   reconcile + grouper audit → the demo's `runCascade` (postcode → locality-with-region-bbox → raw
- *   text) over the Node lookup against the slim `wof-hot.db` the demo serves. Each row asserts the
- *   RESOLVED WOF PLACE ID of the top hit — not parse components. See the row README
+ *   lexicon + postcode anchor + conventions mask + span bridge + FST) → `runPipeline` + grouper
+ *   audit → the demo's `runCascade` (#861: the SHARED `resolveTree` — greedy walk + admin/
+ *   explicit-country coherence + span-rescore — over the lookup, with the demo's pin extraction)
+ *   against the slim `wof-hot.db` the demo serves. Each row asserts the RESOLVED WOF PLACE ID of
+ *   the top hit — not parse components. See the row README
  *   (`data/eval/external/demo-cascade-smoke.README.md`) for the convention.
  *
  *   Why: on 2026-06-11 three production bugs (#520/#521/#522) shipped through green gates because
@@ -36,6 +37,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { $public } from "@mailwoman/core/env"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
@@ -55,7 +57,7 @@ import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
 const argv = process.argv.slice(2)
 
 const STAGE = arg("stage-dir", "/tmp/v440-stage/en-us/v4.4.0")!
-const DB = arg("db", process.env.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))!
+const DB = arg("db", $public.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))!
 const MODEL = arg("model", path.join(STAGE, "model.onnx"))!
 const TOK = arg("tokenizer", path.join(STAGE, "tokenizer.model"))!
 const CARD = arg("card", path.join(STAGE, "model-card.json"))!
@@ -184,11 +186,12 @@ for (const row of rows) {
 		.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 	const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
+	// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
+	// passes + span-rescore) over the lookup, exactly as the browser composes it. The node
+	// extraction above stays for the --explain output + the anchor-centroid fallback below.
 	const hits = await runCascade(
 		lookup as unknown as Parameters<typeof runCascade>[0],
-		postcodeNode,
-		localityNodes,
-		stateNode,
+		tree as { roots: unknown[] },
 		row.input
 	)
 

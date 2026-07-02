@@ -1,17 +1,25 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "4.15.0",
-	"model_lineage": "v1.9.3a3-anchor-absorption / step 80000 — the #220/#723 postcode-anchor-pollution fix on top of v1.9.2-multilocale-au (shipped v4.14.0). Pre-seeded from the v1.9.2 step-040000 checkpoint, continued to 80k on A100. TWO coordinated levers: (1) anchor_paint_mode=shaped — the postcode anchor is painted at TRAIN time on the same postcode-SHAPED spans inference fires on (neural/postcode-anchor.ts collectMatches), closing the #723 WHERE gap (training only ever saw the anchor on GOLD postcode spans, so the model never learned to OVERRIDE a present anchor when a leading 5-digit token is a house number that looks like a ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the locality discriminator — leading-5-digit + trailing-postcode → house_number, + locality → house_number, + NO locality + state → postcode (the VT E911 format). RESULT: SLICE-H anchor-ON 20→100 (the #723 leading-5-digit house# bug fixed) at ZERO coordinate cost, confirmed by the non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7→97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3→259.1; VT — the E911 leading-postcode state where the entire trade lives — FLAT at the coordinate (loc 92.6=92.6), SD +1.0. Trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3), both coordinate-invisible; gate revised (scripts/eval/gates/v4.15.0-boundary.json) with a stated reason, operator-approved. mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config (requires) UNCHANGED from v1.9.2.",
-	"phase": "v1.9.3a3 anchor-absorption — the #220/#723 anchor-pollution fix (anchor_paint_mode=shaped + the locality-discriminator counter-shard). Leading-5-digit house# (SLICE-H) anchor-ON 20→100 at zero coordinate cost (oa-resolver-eval whole-US locality 97.7→97.8, VT flat); trades us.postcode label −2 (coordinate-invisible)",
+	"version": "5.1.0",
+	"model_lineage": "v1.9.3a3-anchor-absorption encoder (UNCHANGED, step 80000 — see the v4.15.0 lineage below) + the #884 UNIGRAM vocab-splice with FVT mean-init embeddings — the training-free CZ/PL/SK/SI diacritic fix. The 48k SentencePiece vocab carried the diacritic CHARACTERS but no multi-char subwords containing them, so every diacritic isolated its own piece (Vysoká → [▁V, ys, ok, á], ~3.3× English fertility) and the fragmented span resolved to the WRONG CITY. A shard retrain (v196) was falsified (held US, regressed CZ wrong-city 44→58% at convergence). The fix: train a CZ/PL SP unigram, splice ONLY its diacritic-bearing pieces into the vocab (48,000 → 58,582; a diacritic piece can never match an ASCII span, so English tokenizes byte-identically BY CONSTRUCTION — asserted 0/2000), and FVT mean-init the 10,582 new embedding rows from their old-tokenizer constituents. The encoder is byte-for-byte v1.9.3a3; a 2k fine-tune was ablated and retired as slightly harmful. Slovak + Slovenian ride the same pieces for free (shared codepoints + morphology). PRIOR LINEAGE: v1.9.3a3-anchor-absorption / step 80000 — the #220/#723 postcode-anchor-pollution fix on top of v1.9.2-multilocale-au (shipped v4.14.0). Pre-seeded from the v1.9.2 step-040000 checkpoint, continued to 80k on A100. TWO coordinated levers: (1) anchor_paint_mode=shaped — the postcode anchor is painted at TRAIN time on the same postcode-SHAPED spans inference fires on (neural/postcode-anchor.ts collectMatches), closing the #723 WHERE gap (training only ever saw the anchor on GOLD postcode spans, so the model never learned to OVERRIDE a present anchor when a leading 5-digit token is a house number that looks like a ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the locality discriminator — leading-5-digit + trailing-postcode → house_number, + locality → house_number, + NO locality + state → postcode (the VT E911 format). RESULT: SLICE-H anchor-ON 20→100 (the #723 leading-5-digit house# bug fixed) at ZERO coordinate cost, confirmed by the non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7→97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3→259.1; VT — the E911 leading-postcode state where the entire trade lives — FLAT at the coordinate (loc 92.6=92.6), SD +1.0. Trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3), both coordinate-invisible; gate revised (scripts/eval/gates/v4.15.0-boundary.json) with a stated reason, operator-approved. mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config (requires) UNCHANGED from v1.9.2.",
+	"phase": "v5.1.0 vocab-splice (#884) — training-free CZ/PL/SK/SI diacritic fix: spliced tokenizer (48k→58.6k) + mean-init rows on the unchanged v1.9.3a3 encoder. Wrong-city at n=1k: CZ 22.4→14.8%, PL 27.9→7.9%, SK 22.2→13.2%, SI 18.9→10.6%; US byte-identical (int8 row dumps identical to v4.15.0)",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
 		"corpus_version": "corpus-v0.9.3a3 = v0.9.2-multilocale-au base + synth-anchor-absorption counter-shard @ source-weight 6.0 (the #220/#723 leading-5-digit discriminator, built by scripts/build-anchor-absorption-shard.mjs from 42,312 real US ZIPs)",
-		"tokenizer_version": "0.6.0-a0",
+		"tokenizer_version": "0.6.0-bsplice",
 		"steps": 80000,
 		"best_step": 80000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v1.9.3a3-anchor-absorption: RESUMED from the v1.9.2-multilocale-au step-040000 checkpoint (pre-seeded into the run's output dir, --resume auto) and continued to 80k. TWO coordinated levers, converged via the A0→A3 probe ladder: (1) anchor_paint_mode=shaped (a LOAD-TIME transform in encode_row — no corpus rebuild; realign_anchor_to_pieces_shaped paints the anchor on collect_matches postcode-shaped spans, mirroring neural/postcode-anchor.ts inference, so the model trains on the anchor firing on a house-number-that-looks-like-a-ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the CASE-H/CASE-P locality discriminator (the A3 fix the A2 shard lacked — A2 cost house# by flipping leading-5-digit→postcode on locality-bearing no-trailing rows; hn-regression-diff.ts diagnosed 132/132). conventions loss-mask OFF; CE-only; lr=1.5e-4 constant, warmup 1000, seed 42. ANCHOR_FEATURE_DIM=11 unchanged (resume-safe). Loss-abort gate PASSED; the A0→A3 probe ladder + the full-run grade adjudicated the locality discriminator."
+		"recipe": "v1.9.3a3-anchor-absorption: RESUMED from the v1.9.2-multilocale-au step-040000 checkpoint (pre-seeded into the run's output dir, --resume auto) and continued to 80k. TWO coordinated levers, converged via the A0→A3 probe ladder: (1) anchor_paint_mode=shaped (a LOAD-TIME transform in encode_row — no corpus rebuild; realign_anchor_to_pieces_shaped paints the anchor on collect_matches postcode-shaped spans, mirroring neural/postcode-anchor.ts inference, so the model trains on the anchor firing on a house-number-that-looks-like-a-ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the CASE-H/CASE-P locality discriminator (the A3 fix the A2 shard lacked — A2 cost house# by flipping leading-5-digit→postcode on locality-bearing no-trailing rows; hn-regression-diff.ts diagnosed 132/132). conventions loss-mask OFF; CE-only; lr=1.5e-4 constant, warmup 1000, seed 42. ANCHOR_FEATURE_DIM=11 unchanged (resume-safe). Loss-abort gate PASSED; the A0→A3 probe ladder + the full-run grade adjudicated the locality discriminator.",
+		"tokenizer_splice": "corpus-python/src/mailwoman_train/tokenizer_splice.py (build-tokenizer + mean-init): CZ/PL SP unigram trained on OpenAddresses CZ (countrywide, ČÚZK/RÚIAN) + PL (voivodeship dumps, GUGiK) address text; only non-ASCII-bearing pieces appended (English-safety assertion enforced). Embedding rows FVT mean-init from old-tokenizer constituent pieces; NO gradient steps (the 2k fine-tune ablation was retired).",
+		"data_attribution": [
+			"OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
+			"OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text + the oa-pl coord eval sets",
+			"OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source): oa-sk coord eval set (free-rider validation)",
+			"OpenAddresses SI — GURS (CC-BY per OA source): oa-si coord eval set (free-rider validation)",
+			"See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution."
+		]
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -19,19 +27,28 @@
 		"num_attention_heads": 6,
 		"intermediate_size": 1536,
 		"max_position_embeddings": 128,
-		"vocab_size": 48000,
+		"vocab_size": 58582,
 		"num_labels": 33,
-		"params": "29.6M (29M encoder + 9M embedding from 48K vocab)",
+		"params": "33.7M (the 29.6M v1.9.3a3 encoder+48k-embedding unchanged + 10,582 spliced mean-init embedding rows ≈ +4.1M)",
 		"crf_at_training": false,
 		"crf_at_inference": true,
 		"phrase_priors": true
 	},
 	"requires": {
 		"$comment": "The SHIP-CONFIG this model was TRAINED against (#718) — UNCHANGED from v1.5.0 (v1.8.0 cloned the v1.5.0-fr-order ship config; the single training variable was the fr-admin-split shard). The canonical ProductionScorer (@mailwoman/neural's createScorer) reads this and FAILS CLOSED if a required channel isn't actually fed — closing the #566/#685 trap where a channel-trained model scored channel-OFF silently goes OOD. Read off the gate it shipped against (scripts/eval/gates/v0.5.0-bridge.json: requires_gazetteer_lexicon=true, requires_conventions=auto, requires_bridge=false) plus anchor (the model exports anchor_features). Additive metadata only.",
-		"anchor": { "required": true },
-		"gazetteer": { "required": true },
-		"conventions": { "required": true, "mode": "auto" },
-		"bridge": { "required": false },
+		"anchor": {
+			"required": true
+		},
+		"gazetteer": {
+			"required": true
+		},
+		"conventions": {
+			"required": true,
+			"mode": "auto"
+		},
+		"bridge": {
+			"required": false
+		},
 		"suppress_gazetteer_near_postcode": true
 	},
 	"labels": [
@@ -87,14 +104,14 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v4.15.0 / v1.9.3a3-anchor-absorption — the #220/#723 postcode-anchor-pollution fix on top of v1.9.2-multilocale-au (v4.14.0). The #723 bug: the postcode anchor fired on a leading 5-digit token even when it was a US house number that happens to be a real ZIP (12345 Main St). A decode-time override was killed (project-723); the model had to LEARN the disambiguation. Root cause was a TRAIN/INFERENCE WHERE-mismatch — training painted the anchor on GOLD postcode spans, but inference (neural/postcode-anchor.ts collectMatches) paints on postcode-SHAPED spans, so the model never trained on the anchor firing on a house-number-that-looks-like-a-ZIP. Fix: anchor_paint_mode=shaped (a load-time transform, no corpus rebuild) + the synth-anchor-absorption counter-shard @ source-weight 6.0 carrying the CASE-H/CASE-P LOCALITY discriminator (the A3 fix; converged via the A0→A3 probe ladder, hn-regression-diff.ts diagnosing the A2 house# regression as 132/132 house#→postcode on locality-bearing no-trailing rows). RESULT: leading-5-digit house# (SLICE-H) anchor-ON 20→100, at ZERO coordinate cost — non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7→97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3→259.1; per-state VT (the E911 leading-postcode format where the postcode trade lives) FLAT at the coordinate (loc 92.6=92.6), SD 96.5→97.5. The fix trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3) — both coordinate-invisible, gate revised (scripts/eval/gates/v4.15.0-boundary.json, stated reason) and operator-approved. mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config (requires) UNCHANGED — anchor+gazetteer+conventions(auto). Tokenizer 0.6.0-a0 (byte-identical). KNOWN: int8 max fp32↔int8 delta ~0.3pp.",
+	"notes": "v5.1.0 / the #884 vocab-splice — the training-free CZ/PL/SK/SI diacritic fix on the UNCHANGED v1.9.3a3 encoder (v4.15.0). COORDINATED model+tokenizer bump: the spliced tokenizer.model (58,582 pieces) ships in this bundle and MUST be loaded with this model (grading either against the other version's counterpart is invalid — per-locale-f1/promotion-gate enforce tokenizer_version agreement). US safety is a GUARANTEE, not an observation: a diacritic piece cannot match an ASCII span, so English input_ids are unchanged and the encoder is untouched — verified at the strongest level (the int8 candidate's US-2k per-row dump is BYTE-IDENTICAL to shipped v4.15.0's; region_correct 0.999 both). Wrong-city (resolved >20km, n=1k reservoir OA sets, pre-registered gates): CZ 22.4→14.8% (CI [−10.3,−5.1]pp), PL 27.9→7.9% ([−22.7,−17.4]), SK 22.2→13.2% ([−11.5,−6.4]), SI 18.9→10.6% ([−10.4,−6.4]) — SK/SI are free riders on the CZ/PL pieces (fertility −52%/−35%, zero additional bytes). Resolved-p50 improve CIs wholly negative in all four; resolve rates +2.0/−0.5/+1.9/+4.4pp. KNOWN COST (operator-accepted): int8 29.8→33.8 MB (+4.06 MB, all embedding bytes) — ~3.8 MB over the ~30 MB browser SLO; WASM latency flat (~41–44 ms p50/p95, Node 1-thread bound), session load +19 ms. Residual CZ/PL wrong-city is decode-boundary/namesake + coverage territory (name-key/span levers), not vocab. Vocab-splice does NOT scale to CJK (CharCNN is that path). Ship-config (requires) UNCHANGED — anchor+gazetteer+conventions(auto). Pre-splice baseline: parity-scorecard-2026-07-02.md (17/17 floors PASS on v4.15.0/v5.0.0).",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32, max fp32↔int8 delta 0.3pp)",
-		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
+		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=58582 (v0.6.0-bsplice — the #884 diacritic splice; ships WITH the model, both runtimes load it from this bundle)",
 		"max_sequence_length": 128,
 		"opset": 17,
-		"fp32_size_mb": 118.4,
-		"int8_size_mb": 29.8
+		"fp32_size_mb": 134.7,
+		"int8_size_mb": 33.8
 	},
 	"files": {
 		"model": "model.onnx",
@@ -109,8 +126,46 @@
 		"held_out_ece_calibrated": 0.0035,
 		"note": "calibration.json + calibration-per-locale.json carried forward from v4.4.0 (architecture + label space unchanged across v1.5.0→v1.8.0). Re-fit recommended next train. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
-	"base_relpath": "/data/output-v193a3-anchor-absorption-s42/checkpoints/step-080000",
+	"base_relpath": "/data/models/bsplice-expanded (v1.9.3a3 step-080000 encoder + FVT mean-init spliced embeddings; expanded HF-format checkpoint also at R2 mailwoman-assets/models/bsplice-expanded/)",
 	"eval": {
+		"gate_2026_07_02_v510_vocab_splice": {
+			"promotion_gate": "#884 gates ALL PASS, pre-registered before measurement (gate log: /mnt/playpen/mailwoman-data/scratch-825/gate-v193/RESULTS.md; evidence comments on #884). US-2k non-inferiority passed at the strongest possible level — the int8 candidate's per-row dump is byte-identical to shipped v4.15.0's. CZ/PL/SK/SI improve gates: wrong-city diff CIs wholly negative, resolved-p50 improve CIs wholly negative, resolve-rate floors held. Functional eyeball: CZ churn (103 fixed / 43 newly-wrong) diagnosed as a pre-existing locality-truncation→namesake residual exposed where the baseline won by garbage-parse fluke — NOT a parse regression (10/10 rows read). The int8 SLO overage (+3.8 MB) was an explicit operator accept (four locales for the same bytes).",
+			"gate_docs": [
+				"docs/articles/evals/2026-07-01-day-825-tokenizer-fix.md",
+				"docs/articles/evals/2026-07-02-lab-session-postmortem.md",
+				"docs/articles/evals/parity-scorecard-2026-07-02.md (the pre-splice baseline, 17/17 PASS)"
+			],
+			"wrong_city_resolved_gt20km_n1k": {
+				"cz": {
+					"v4_15_0": 22.4,
+					"v5_1_0": 14.8,
+					"diff_ci95_pp": [-10.3, -5.1]
+				},
+				"pl": {
+					"v4_15_0": 27.9,
+					"v5_1_0": 7.9,
+					"diff_ci95_pp": [-22.7, -17.4]
+				},
+				"sk": {
+					"v4_15_0": 22.2,
+					"v5_1_0": 13.2,
+					"diff_ci95_pp": [-11.5, -6.4]
+				},
+				"si": {
+					"v4_15_0": 18.9,
+					"v5_1_0": 10.6,
+					"diff_ci95_pp": [-10.4, -6.4]
+				},
+				"$note": "reservoir-sampled 1k-row OA coord sets (oa-{cz,pl,sk,si}-coord-1k.jsonl), graded parse→resolve→great-circle, int8 ship artifact"
+			},
+			"us_2k_non_inferiority": {
+				"row_dump": "BYTE-IDENTICAL to shipped v4.15.0 int8 (diff 0 everywhere)",
+				"coord_p50_km": 3.31,
+				"resolve_rate": 1.0,
+				"region_correct": 0.999
+			},
+			"tokenization_examples": "Vysoká 4→1 piece, Grudziądz 6→1, Świętokrzyska 9→1, Čistá 5→2; SK fertility −51.9%, SI −35.2% on diacritic-bearing names with zero SK/SI-specific pieces"
+		},
 		"gate_2026_06_25_v415_anchor_absorption": {
 			"promotion_gate": "v4.15.0-boundary gate PASS after a stated, operator-approved revision of two postcode floors (us.postcode 97→95, fr.postcode 99.5→99.3). The #723 fix (SLICE-H anchor-ON 20→100) trades −2pp us.postcode LABEL-F1 on the rare leading-5-digit-postcode (VT E911) case. The trade is COORDINATE-INVISIBLE — proven by the non-circular oa-resolver-eval below, not asserted. Every other floor holds with margin (us.locality 76.7/62.2, us.street 82.3/74, us.region 88.6/80.1, de.native_locality 89.3/83.8, arena.perturb 78/71); mask-regression gate (#718) PASS; int8↔fp32 delta 0. No silent drift: the revision is in scripts/eval/gates/v4.15.0-boundary.json with the reason, mirrored here and in the promotion doc.",
 			"gate_doc": "docs/articles/evals/2026-06-25-v4.15.0-promotion.md",
@@ -122,17 +177,35 @@
 			"oa_resolver_eval_us": {
 				"n": 2000,
 				"$note": "non-circular: real OA gov lat/lon vs resolved admin centroid, full ship-config (anchor+gazetteer+suppress)",
-				"locality_match": { "v192": 0.977, "v193a3": 0.978 },
-				"region_match": { "v192": 0.999, "v193a3": 0.999 },
-				"coord_p50_km": { "v192": 3.4, "v193a3": 3.4 },
-				"coord_p90_km": { "v192": 10.7, "v193a3": 10.7 },
-				"coord_p99_km": { "v192": 275.3, "v193a3": 259.1 },
+				"locality_match": {
+					"v192": 0.977,
+					"v193a3": 0.978
+				},
+				"region_match": {
+					"v192": 0.999,
+					"v193a3": 0.999
+				},
+				"coord_p50_km": {
+					"v192": 3.4,
+					"v193a3": 3.4
+				},
+				"coord_p90_km": {
+					"v192": 10.7,
+					"v193a3": 10.7
+				},
+				"coord_p99_km": {
+					"v192": 275.3,
+					"v193a3": 259.1
+				},
 				"vt_locality_match": {
 					"v192": 0.926,
 					"v193a3": 0.926,
 					"$note": "VT = the E911 leading-postcode state where the postcode label trade lives — FLAT at the coordinate"
 				},
-				"sd_locality_match": { "v192": 0.965, "v193a3": 0.975 }
+				"sd_locality_match": {
+					"v192": 0.965,
+					"v193a3": 0.975
+				}
 			},
 			"label_deltas_coordinate_invisible": [
 				"us.postcode -2.0 (95.0) — rare leading-5-digit-postcode VT E911 case; VT coordinate flat (92.6=92.6)",
@@ -150,20 +223,53 @@
 		},
 		"fr_centroid_gate_heldout": {
 			"n": 3000,
-			"coord_mean_km": { "v1_5_0": 174.99, "v1_8_0": 105.51 },
-			"coord_p50_km": { "v1_5_0": 42.52, "v1_8_0": 2.17 },
-			"coord_p90_km": { "v1_5_0": 389.37, "v1_8_0": 334.15 },
-			"resolve_rate": { "v1_5_0": 0.595, "v1_8_0": 0.785 },
-			"region_emit_rate": { "v1_5_0": 0.396, "v1_8_0": 0.996 },
-			"region_correct_rate": { "v1_5_0": 0.364, "v1_8_0": 0.964 },
-			"diacritic_727_breaks": { "v1_5_0": 23, "v1_8_0": 24 }
+			"coord_mean_km": {
+				"v1_5_0": 174.99,
+				"v1_8_0": 105.51
+			},
+			"coord_p50_km": {
+				"v1_5_0": 42.52,
+				"v1_8_0": 2.17
+			},
+			"coord_p90_km": {
+				"v1_5_0": 389.37,
+				"v1_8_0": 334.15
+			},
+			"resolve_rate": {
+				"v1_5_0": 0.595,
+				"v1_8_0": 0.785
+			},
+			"region_emit_rate": {
+				"v1_5_0": 0.396,
+				"v1_8_0": 0.996
+			},
+			"region_correct_rate": {
+				"v1_5_0": 0.364,
+				"v1_8_0": 0.964
+			},
+			"diacritic_727_breaks": {
+				"v1_5_0": 23,
+				"v1_8_0": 24
+			}
 		},
 		"us_assembled_coord_oa": {
 			"n": 2000,
-			"locality_match": { "v1_5_0": 0.975, "v1_8_0": 0.976 },
-			"coord_p50_km": { "v1_5_0": 3.3, "v1_8_0": 3.3 },
-			"coord_p90_km": { "v1_5_0": 10.8, "v1_8_0": 10.7 },
-			"region_match": { "v1_5_0": 0.999, "v1_8_0": 0.999 }
+			"locality_match": {
+				"v1_5_0": 0.975,
+				"v1_8_0": 0.976
+			},
+			"coord_p50_km": {
+				"v1_5_0": 3.3,
+				"v1_8_0": 3.3
+			},
+			"coord_p90_km": {
+				"v1_5_0": 10.8,
+				"v1_8_0": 10.7
+			},
+			"region_match": {
+				"v1_5_0": 0.999,
+				"v1_8_0": 0.999
+			}
 		},
 		"per_component_int8_shipconfig": {
 			"$comment": "per-locale-f1 anchor-ON matched pair vs v1.5.0 (postmortem guardrail tables). The unfolded per-tag F1 (split affix, intersections, etc.) is the authoritative `capabilities` block below. Tags off the FR-shard path (us intersections/unit, de native_locality, arena.perturb) were not re-measured for v1.8.0 — the single training variable was the FR admin-split shard and the architecture is identical to v1.5.0.",
@@ -197,9 +303,9 @@
 		}
 	},
 	"files_md5": {
-		"$comment": "Source int8 artifact md5 (out/v193a3-full/model.onnx). The PUBLISHED model.onnx md5 is re-verified against this at release Step 4 (npm pack); update if the publish pipeline post-processes the graph.",
-		"model.onnx": "4dec4f460a934949580d8e7b43adae7e",
-		"tokenizer.model": "b6137e8c52914c9715374268ecaa4bc6"
+		"$comment": "Source artifact md5s (int8 model-bsplice-meaninit-int8.onnx + tokenizer v0.6.0-bsplice). The PUBLISHED files are re-verified against these at release Step 4 (npm pack); update if the publish pipeline post-processes either.",
+		"model.onnx": "12fa2d645162e90cf028dbc333218f2c",
+		"tokenizer.model": "b0397ce3d89ab459be6dd901eae8f0a1"
 	},
 	"capabilities": {
 		"server": {

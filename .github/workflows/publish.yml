@@ -141,6 +141,11 @@ jobs:
           MAILWOMAN_SKIP_WEIGHTS: ${{ inputs.dry_run && '1' || '' }}
         run: | # shell
           set -euo pipefail
+          # publish-workspace.ts (a release-it hook) imports @mailwoman/core/env, which resolves
+          # to the COMPILED core/out tree (#874 moved env into core) — compile before release-it
+          # or every workspace publish dies ERR_MODULE_NOT_FOUND. The publish_only path below
+          # already compiles; this is the same requirement on the normal path (first bit v5.1.0).
+          yarn compile
           ARGS=(--ci --increment="${{ inputs.version }}")
           if [ "${{ inputs.dry_run }}" = "true" ]; then
               ARGS+=(--dry-run)

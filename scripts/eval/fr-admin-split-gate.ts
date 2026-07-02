@@ -22,6 +22,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -119,6 +120,10 @@ async function main() {
 
 	const errs: number[] = []
 	const resolvedErrs: number[] = [] // coordinate error over RESOLVED rows only (unconfounded by the unresolved penalty)
+	// Per-row records for a paired A/B bootstrap (--dump-rows): index-aligned across model runs on the SAME
+	// golden, so coord-ab-bootstrap.ts can resample rows and compute a paired p50-diff / resolve-rate CI.
+	const rowRecords: Array<{ i: number; resolved: boolean; err_km: number | null }> = []
+	let rowIdx = -1
 	let resolved = 0,
 		regionEmitted = 0,
 		regionCorrect = 0,
@@ -126,9 +131,10 @@ async function main() {
 		hasGoldRegion = 0
 
 	for (const row of rows) {
+		rowIdx++
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
-			enforceWordConsistency: process.env.MAILWOMAN_WORD_CONSISTENCY === "1",
+			enforceWordConsistency: $public.MAILWOMAN_WORD_CONSISTENCY === "1",
 		})
 		const flat = decodeAsJSON(tree) as Record<string, string>
 		const goldRegion = row.components?.region as string | undefined
@@ -157,8 +163,10 @@ async function main() {
 			const e = haversineKm(best.lat, best.lon, row.lat, row.lon)
 			errs.push(e)
 			resolvedErrs.push(e)
+			rowRecords.push({ i: rowIdx, resolved: true, err_km: e })
 		} else {
 			errs.push(haversineKm(FR_CENTROID.lat, FR_CENTROID.lon, row.lat, row.lon))
+			rowRecords.push({ i: rowIdx, resolved: false, err_km: null })
 		}
 	}
 
@@ -185,6 +193,14 @@ async function main() {
 	if (outPath) {
 		writeFileSync(outPath, JSON.stringify(summary, null, 2))
 		console.error(`wrote ${outPath}`)
+	}
+
+	// Per-row dump for the paired A/B bootstrap. One JSON line per golden row, index-aligned to the input.
+	const dumpPath = arg("dump-rows")
+
+	if (dumpPath) {
+		writeFileSync(dumpPath, rowRecords.map((r) => JSON.stringify(r)).join("\n") + "\n")
+		console.error(`wrote per-row dump: ${dumpPath} (${rowRecords.length} rows)`)
 	}
 }
 

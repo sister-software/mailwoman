@@ -72,6 +72,7 @@ import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 import { parseArgs } from "node:util"
 
+import { $private, $public } from "@mailwoman/core/env"
 import { $ } from "zx"
 
 $.verbose = false
@@ -103,7 +104,7 @@ function parseCLIArgs() {
 		allowPositionals: true,
 		options: {
 			country: { type: "string" },
-			"out-root": { type: "string", default: process.env.OUT_ROOT },
+			"out-root": { type: "string", default: $public.OUT_ROOT },
 		},
 	})
 
@@ -111,7 +112,7 @@ function parseCLIArgs() {
 		// Positional first arg accepted for backwards-compat: `script ca`.
 		country: values.country ?? positionals[0] ?? "ca",
 		outRoot: values["out-root"],
-		token: process.env.OA_BATCH_TOKEN,
+		token: $private.OA_BATCH_TOKEN,
 	}
 }
 

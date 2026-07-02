@@ -14,6 +14,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
 
+import { $public } from "@mailwoman/core/env"
 import { type RequestHandler, Router } from "express"
 
 import { readReleaseManifest } from "../data-release.js"
@@ -27,7 +28,7 @@ const startedAt = Date.now()
 function readModelCard(): Record<string, unknown> | null {
 	const candidates: string[] = []
 
-	if (process.env["MAILWOMAN_MODEL_CARD"]) candidates.push(process.env["MAILWOMAN_MODEL_CARD"]!)
+	if ($public.MAILWOMAN_MODEL_CARD) candidates.push($public.MAILWOMAN_MODEL_CARD)
 
 	try {
 		candidates.push(createRequire(import.meta.url).resolve("@mailwoman/neural-weights-en-us/model-card.json"))
@@ -59,7 +60,7 @@ function countShards(subdir: string, prefix: string): number {
 }
 
 function wofPaths(): string[] {
-	const env = process.env["MAILWOMAN_WOF_DB"]
+	const env = $public.MAILWOMAN_WOF_DB
 	const paths = env
 		? env
 				.split(",")

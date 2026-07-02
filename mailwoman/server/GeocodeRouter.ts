@@ -18,6 +18,7 @@
 import { existsSync } from "node:fs"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import type { ResolveOpts } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
@@ -36,9 +37,9 @@ import { recordGeocode } from "./metrics.js"
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
 const DATA_ROOT = mailwomanDataRoot()
 /** Bounded concurrency for `/api/batch`. Override with MAILWOMAN_BATCH_CONCURRENCY. */
-const BATCH_CONCURRENCY = Math.max(1, Number(process.env["MAILWOMAN_BATCH_CONCURRENCY"] ?? "8"))
+const BATCH_CONCURRENCY = Math.max(1, $public.MAILWOMAN_BATCH_CONCURRENCY)
 /** Hard cap on batch size — a guardrail against unbounded request bodies. */
-const BATCH_MAX = Math.max(1, Number(process.env["MAILWOMAN_BATCH_MAX"] ?? "1000"))
+const BATCH_MAX = Math.max(1, $public.MAILWOMAN_BATCH_MAX)
 
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
@@ -48,7 +49,7 @@ interface GeocodeDepsBundle {
 }
 
 function wofPaths(): string[] {
-	const env = process.env["MAILWOMAN_WOF_DB"]
+	const env = $public.MAILWOMAN_WOF_DB
 
 	if (env)
 		return env
@@ -84,7 +85,7 @@ async function getDeps(): Promise<GeocodeDepsBundle | null> {
 		}
 		const classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const backend = createResolverBackend(resolverMod, { wofPaths: paths })
-		const resolver = createWOFResolver(backend as unknown as ResolverBackend)
+		const resolver = createWOFResolver(backend)
 		const shards = new ShardProvider(resolverMod, DATA_ROOT)
 
 		// Candidate backend → country-agnostic default (demo's global, population-first behavior); a
