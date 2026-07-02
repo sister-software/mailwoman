@@ -13,7 +13,7 @@ import type { AddressNode, AddressTree } from "../decoder/types.js"
 import type { Resolver } from "../resolver/types.js"
 import type { Span } from "../tokenization/index.js"
 import type { ClassificationProposal, ComponentTag } from "../types/index.js"
-import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, runPipeline } from "./runtime-pipeline.js"
+import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.js"
 import type {
 	AddressClassifier,
 	LocaleHint,
@@ -59,6 +59,30 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 	it("honours a safelist override (how the eval measures ungated to grow the list)", () => {
 		expect(hardCountryFor("FI", 0.99, {}, ON, new Set(["FI"]))).toBe("FI")
 		expect(hardCountryFor("ES", 0.99, {}, ON, new Set(["FI"]))).toBeUndefined()
+	})
+})
+
+describe("isBareLocalityTree — #912 lever 1 (placer abstention shape)", () => {
+	const node = (tag: string, value: string, children: AddressNode[] = []): AddressNode =>
+		({ tag, value, children }) as unknown as AddressNode
+	const tree = (roots: AddressNode[]): AddressTree => ({ raw: "", roots })
+
+	it("a single bare locality is bare", () => {
+		expect(isBareLocalityTree(tree([node("locality", "Paris")]))).toBe(true)
+	})
+
+	it("locality + any second component is address-shaped", () => {
+		expect(isBareLocalityTree(tree([node("locality", "Paris"), node("region", "TX")]))).toBe(false)
+		expect(isBareLocalityTree(tree([node("street", "Rue du Chevaleret"), node("locality", "Paris")]))).toBe(false)
+	})
+
+	it("nested children count — a locality wrapping a house number is address-shaped", () => {
+		expect(isBareLocalityTree(tree([node("locality", "Paris", [node("house_number", "8")])]))).toBe(false)
+	})
+
+	it("no locality at all is not bare-locality (a bare postcode keeps its placer)", () => {
+		expect(isBareLocalityTree(tree([node("postcode", "75013")]))).toBe(false)
+		expect(isBareLocalityTree(tree([]))).toBe(false)
 	})
 })
 
