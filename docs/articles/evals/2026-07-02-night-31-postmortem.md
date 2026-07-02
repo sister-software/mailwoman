@@ -143,7 +143,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 
 | item                        | value                                                                 |
 | --------------------------- | --------------------------------------------------------------------- |
-| Shift                       | 05:56 → 14:29 UTC (operator returned early; wrapped on request)      |
+| Shift                       | 05:56 → 14:29 UTC (operator returned early; wrapped on request)       |
 | Modal spend                 | ≈ $4–5 of $30 (2 training runs, 2 probes, ~8 exports/quants, syncs)   |
 | Training                    | v1.9.8 (2k+10k, falsified at full gate), v1.9.9 (2k+4k, killed at 6k) |
 | NaN incidents               | 0                                                                     |

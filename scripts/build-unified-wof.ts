@@ -30,12 +30,14 @@ import { readFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	backfillAncestorsFromHierarchy,
 	discoverAdminDataRoots,
 } from "@mailwoman/resolver-wof-sqlite/ancestry-backfill"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
+import { ingestGeonamesPostal } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
 import {
 	createUnifiedIndexes,
 	createUnifiedSchema,
@@ -54,6 +56,8 @@ const OVERTURE_ID_BASE = 8_000_000_000_000
 const OVERTURE_DIVISION_SUBTYPES = ["locality", "region", "county", "localadmin"]
 /** Default GeoNames per-country dump directory (`<CC>.txt`, from download.geonames.org/export/dump). */
 const DEFAULT_GEONAMES_DIR = "/mnt/playpen/mailwoman-data/geonames"
+/** Default GeoNames per-country POSTAL dump directory (`<CC>.txt`, from download.geonames.org/export/zip). */
+const DEFAULT_GEONAMES_POSTAL_DIR = String(dataRootPath("geonames-postal"))
 /** Pinned Overture release for the divisions theme (the release the EU coverage was validated on). */
 const DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"
 
@@ -81,6 +85,13 @@ interface Args {
 	 * Karjaa↔Karis) AFTER the WOF + Overture ingest. Reads `<CC>.txt` from {@link geonamesDir}. Off unless provided.
 	 */
 	geonamesCountries?: string[]
+	/**
+	 * #920: fold GeoNames POSTAL codes (download.geonames.org/export/zip) for these countries as `postalcode` places —
+	 * the tail locales without WOF postalcode repos. Name law + medoid centroids enforced in
+	 * `@mailwoman/resolver-wof-sqlite/geonames-postal`. Off unless provided.
+	 */
+	geonamesPostalCountries?: string[]
+	geonamesPostalDir: string
 	/** Directory of GeoNames per-country dumps (`<CC>.txt`). Default {@link DEFAULT_GEONAMES_DIR}. */
 	geonamesDir: string
 }
@@ -96,6 +107,8 @@ function parseArgs(): Args {
 	let overtureRelease = DEFAULT_OVERTURE_RELEASE
 	let geonamesCountries: string[] | undefined
 	let geonamesDir = DEFAULT_GEONAMES_DIR
+	let geonamesPostalCountries: string[] | undefined
+	let geonamesPostalDir = DEFAULT_GEONAMES_POSTAL_DIR
 
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--data" && args[i + 1]) dataDir = args[++i]
@@ -116,6 +129,8 @@ function parseArgs(): Args {
 				.map((s) => s.trim().toUpperCase())
 				.filter(Boolean)
 		else if (args[i] === "--geonames-dir" && args[i + 1]) geonamesDir = args[++i]!
+		else if (args[i] === "--geonames-postal-countries" && args[i + 1]) geonamesPostalCountries = args[++i]!.split(",")
+		else if (args[i] === "--geonames-postal-dir" && args[i + 1]) geonamesPostalDir = args[++i]!
 	}
 
 	if (!dataDir || !outputPath) {
@@ -135,6 +150,8 @@ function parseArgs(): Args {
 		overtureRelease,
 		geonamesCountries,
 		geonamesDir,
+		geonamesPostalCountries,
+		geonamesPostalDir,
 	}
 }
 
@@ -393,6 +410,8 @@ async function main() {
 		overtureRelease,
 		geonamesCountries,
 		geonamesDir,
+		geonamesPostalCountries,
+		geonamesPostalDir,
 	} = parseArgs()
 	const activePlacetypes = placetypes ? new Set(placetypes) : ADMIN_PLACETYPES
 	console.error(`Ingesting placetypes: ${[...activePlacetypes].join(", ")}`)
@@ -541,6 +560,17 @@ async function main() {
 		console.error(`Backfilling GeoNames aliases for ${geonamesCountries.join(",")} from ${geonamesDir}...`)
 		geonamesIngested = ingestGeonamesAliases(db, geonamesCountries, geonamesDir)
 		console.error(`  GeoNames places ingested: ${geonamesIngested.toLocaleString()}`)
+	}
+
+	// -----------------------------------------------------------------------
+	// Phase 2d: GeoNames postal backfill (#920 — postcode coverage for the namesake-tail locales)
+	// -----------------------------------------------------------------------
+	if (geonamesPostalCountries && geonamesPostalCountries.length > 0) {
+		console.error(
+			`Backfilling GeoNames postal codes for ${geonamesPostalCountries.join(",")} from ${geonamesPostalDir}...`
+		)
+		const postal = ingestGeonamesPostal(db, geonamesPostalCountries, geonamesPostalDir)
+		console.error(`  GeoNames postal codes ingested: ${postal.inserted.toLocaleString()}`)
 	}
 
 	// -----------------------------------------------------------------------

@@ -151,15 +151,32 @@ export function resolveShards(input: string | ReadonlyArray<string | ShardConfig
  * the typical mailwoman query has a single placetype anyway. If a caller needs cross-shard results they can issue two
  * `findPlace` calls.
  */
-export function pickShardForPlacetype(shards: ResolvedShard[], placetype: string | undefined): ResolvedShard {
+export function pickShardForPlacetype(
+	shards: ResolvedShard[],
+	placetype: string | undefined,
+	opts?: {
+		/**
+		 * #920: the query's country constraint, when the caller has one. With MULTIPLE shards matching a placetype
+		 * (postalcode-us + postalcode-geonames-tail), first-match routing sent every postcode query to the first shard and
+		 * starved the rest — a FI postcode could never reach the tail shard. When `country` is given and a matching shard's
+		 * probed country set contains it, that shard wins; shards without the country are skipped; the placetype-match
+		 * order remains the tiebreak when no shard claims the country (or none was probed).
+		 */
+		country?: string
+		/** Per-schema probed country sets (see `WOFSqlitePlaceLookup`'s construction probe). */
+		countriesBySchema?: ReadonlyMap<string, ReadonlySet<string>>
+	}
+): ResolvedShard {
 	if (!placetype) return shards[0]!
 
+	const matches: ResolvedShard[] = []
+
 	for (const s of shards) {
-		if (s.placetypes.includes(placetype)) return s
+		if (s.placetypes.includes(placetype)) matches.push(s)
 	}
 
 	for (const s of shards) {
-		if (s.schemaName === "main") continue
+		if (s.schemaName === "main" || matches.includes(s)) continue
 
 		// Substring match: `postalcode_us` matches `postalcode`. Conservative — requires the
 		// placetype to appear at a word boundary in the schema name to avoid false hits like
@@ -169,9 +186,17 @@ export function pickShardForPlacetype(shards: ResolvedShard[], placetype: string
 			s.schemaName.startsWith(`${placetype}_`) ||
 			s.schemaName.endsWith(`_${placetype}`)
 		) {
-			return s
+			matches.push(s)
 		}
 	}
 
-	return shards[0]!
+	if (matches.length === 0) return shards[0]!
+
+	if (opts?.country && opts.countriesBySchema) {
+		for (const s of matches) {
+			if (opts.countriesBySchema.get(s.schemaName)?.has(opts.country)) return s
+		}
+	}
+
+	return matches[0]!
 }

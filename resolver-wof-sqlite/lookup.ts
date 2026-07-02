@@ -319,6 +319,8 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * override) schema names.
 	 */
 	readonly #shards: ResolvedShard[]
+	/** #920: per-schema probed country sets for country-aware shard routing (non-main shards only). */
+	readonly #shardCountries: Map<string, ReadonlySet<string>>
 	/**
 	 * The Geographic Rule Engine (Direction E, #289). `#conventionSource` supplies per-WOF-polygon resolution profiles;
 	 * `#strategies` is the named-primitive registry the merged convention dispatches. Empty source → every query resolves
@@ -392,6 +394,26 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			this.#hasBboxIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_BBOX_TABLE))
 			this.#hasPopulationIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_POPULATION_TABLE))
 		}
+		// #920 country-aware shard routing: probe each NON-MAIN shard's country set once at
+		// construction (they're small, purpose-built shards — postcode/locality slices; main is the
+		// multi-GB admin DB and is the fallback anyway, so it is deliberately NOT scanned). Feeds
+		// pickShardForPlacetype so two postcode shards (postalcode-us + postalcode-geonames-tail)
+		// route by the query's country instead of first-match starving the second shard.
+		this.#shardCountries = new Map()
+
+		for (const sh of this.#shards) {
+			if (sh.schemaName === "main") continue
+
+			try {
+				const rows = this.#db
+					.prepare(`SELECT DISTINCT country FROM ${sh.schemaName}.spr WHERE country != ''`)
+					.all() as Array<{ country: string }>
+				this.#shardCountries.set(sh.schemaName, new Set(rows.map((r) => r.country)))
+			} catch {
+				// A shard without spr (or an attach oddity) just doesn't participate in country routing.
+			}
+		}
+
 		// The postcode_locality table can live on any attached shard (typically its own
 		// `postcode-locality-<cc>.db`). Find the first shard that has it; null = coord-first disabled.
 		this.#postcodeLocalityShard =
@@ -608,7 +630,10 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// `placetype` always goes to main. (Mixed-placetype queries with multiple shards aren't
 		// supported in v1 — caller can issue two findPlace calls and merge in TS if needed.)
 		const firstPlacetype = placetypes?.[0]
-		const shard = pickShardForPlacetype(this.#shards, firstPlacetype)
+		const shard = pickShardForPlacetype(this.#shards, firstPlacetype, {
+			country: query.country,
+			countriesBySchema: this.#shardCountries,
+		})
 		const sch = shard.schemaName // bare schema name; safe to interpolate (validated at construction)
 
 		// Filter out historical / superseded / deprecated places by default — they live in the same

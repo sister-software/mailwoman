@@ -127,4 +127,32 @@ describe("pickShardForPlacetype", () => {
 		const odd = resolveShards(["/tmp/whosonfirst-data-admin-us-latest.db", { path: "/tmp/arboregion.db" }])
 		expect(pickShardForPlacetype(odd, "region").schemaName).toBe("main")
 	})
+
+	// #920 — country-aware routing across MULTIPLE placetype-matching shards: first-match starved
+	// the second postcode shard (a FI postcode could never reach postalcode-geonames-tail behind
+	// postalcode-us). With the query country + probed country sets, the claiming shard wins; the
+	// original first-match order stays the tiebreak when no shard claims the country.
+	test("country routes across two postcode shards (#920)", () => {
+		const two = resolveShards([
+			"/tmp/whosonfirst-data-admin-us-latest.db",
+			"/tmp/whosonfirst-data-postalcode-us-latest.db",
+			"/tmp/postalcode-geonames-tail.db",
+		])
+		const countries = new Map([
+			["postalcode_us", new Set(["US"])],
+			["postalcode_geonames_tail", new Set(["FI", "CZ", "PL"])],
+		])
+
+		expect(pickShardForPlacetype(two, "postalcode", { country: "FI", countriesBySchema: countries }).schemaName).toBe(
+			"postalcode_geonames_tail"
+		)
+		expect(pickShardForPlacetype(two, "postalcode", { country: "US", countriesBySchema: countries }).schemaName).toBe(
+			"postalcode_us"
+		)
+		// Unknown country / no probe → first placetype match (the pre-#920 behavior, unchanged).
+		expect(pickShardForPlacetype(two, "postalcode", { country: "XX", countriesBySchema: countries }).schemaName).toBe(
+			"postalcode_us"
+		)
+		expect(pickShardForPlacetype(two, "postalcode").schemaName).toBe("postalcode_us")
+	})
 })
