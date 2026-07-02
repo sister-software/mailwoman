@@ -1,7 +1,10 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
 	"version": "5.1.0",
-	"locales": ["en-us", "fr-fr"],
+	"locales": [
+		"en-us",
+		"fr-fr"
+	],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
 		"model": "models/quantized/model-bsplice-meaninit-int8.onnx",
@@ -13,7 +16,7 @@
 	"softFeed": {
 		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.ts so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode shard (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to weights.dataRoot/wof. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) — the publish workflow places them via the HF fetch step.",
 		"gazetteerLexicon": "data/gazetteer/anchor-lexicon-v1.json",
-		"postcodeDbByCountry": {
+		"postcodeDBByCountry": {
 			"us": "postalcode-us.db",
 			"fr": "postalcode-intl.db"
 		}
