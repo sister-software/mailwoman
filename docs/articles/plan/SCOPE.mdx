@@ -1,0 +1,88 @@
+---
+sidebar_position: 1
+title: Scope — what mailwoman is now
+description: The current scope declaration — locale tiers, the two workstreams, the standing invariants, and where the live roadmap actually lives.
+---
+
+# Scope — what mailwoman is now
+
+**Declared 2026-07-02** ([#886](https://github.com/sister-software/mailwoman/issues/886), Track 5
+of the [2026-07-01 trajectory review](https://github.com/sister-software/mailwoman/blob/main/docs/articles/reviews/2026-07-01-claude-trajectory-review.md)).
+This page supersedes the v1 implementation plan as the orientation entry point. The old plan
+declared "US + France, Japanese as a stress test" — the project it describes shipped, worked, and
+outgrew it. This is the map that matches the territory; when reality moves again, this page moves
+with it or it becomes the next lie.
+
+For what the system _is_ — the calibrated-sequence-labeler + gazetteer division of labor — read
+[What Mailwoman is](../concepts/what-mailwoman-is.mdx). This page is about what it _covers_ and
+what rules keep it honest.
+
+## Two workstreams, not one
+
+1. **The geocoder** — the staged pipeline (normalize → parse → resolve → coordinate), the
+   drop-in API surfaces (`@mailwoman/{nominatim,photon,libpostal}` + annotations), the browser
+   runtime, and the coverage/demo stack. The daily queue is
+   [epic #488](https://github.com/sister-software/mailwoman/issues/488).
+2. **Record matching / entity resolution** — geocode-first matching of messy records to resolved
+   places (`formatter` / `record` / `match` / `registry`; Fellegi–Sunter + the gated GBT scorer).
+   Its own epics: [#598](https://github.com/sister-software/mailwoman/issues/598),
+   [#602](https://github.com/sister-software/mailwoman/issues/602),
+   [#603](https://github.com/sister-software/mailwoman/issues/603),
+   [#615](https://github.com/sister-software/mailwoman/issues/615),
+   [#625](https://github.com/sister-software/mailwoman/issues/625),
+   [#655](https://github.com/sister-software/mailwoman/issues/655). It grew inside the parser's
+   roadmap; it is hereby a first-class workstream, not a footnote.
+
+## Locales, in tiers
+
+The honest list, not the aspirational one. "Trained exposure" means rows in the shipped recipe's
+`country_weights`; a locale is only _claimed_ when a coordinate-graded eval exists for it.
+
+| Tier                                      | Locales                                                                                                                                                                                                                                  | What backs the claim                                                                                                                                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1 — first-class, floor-gated**          | US, FR                                                                                                                                                                                                                                   | Golden-dev per-tag floors in the gate spec + real-OOD slices; the [parity scorecard](../evals/parity-scorecard-2026-07-02.md)                                                                                            |
+| **2 — trained + coordinate-paneled**      | IT, PT, PL, AT, CZ, DE, AU                                                                                                                                                                                                               | The 3-order multi-locale recipe (v4.13.0) + G-NAF (v4.14.0); per-locale coord panels (resolve rate + wrong-city + p50)                                                                                                   |
+| **3 — trained exposure, thinly measured** | ES, NL, BE, CH, DK, NO, FI, SE, IE, GB, HR, HU                                                                                                                                                                                           | In `country_weights` (Overture rows) but no dedicated coordinate panel yet — treat claims about them as unverified                                                                                                       |
+| **4 — diacritic fix, promote-pending**    | CZ, PL, SK, SI                                                                                                                                                                                                                           | The [#884](https://github.com/sister-software/mailwoman/issues/884) tokenizer splice: wrong-city roughly halved in all four at n=1k, US byte-identical; ships as the coordinated model + tokenizer bump (operator-gated) |
+| **5 — resolver-route only**               | JP                                                                                                                                                                                                                                       | Postcode-route resolution (Geographic Rule Engine); no parser training claim                                                                                                                                             |
+| **Blocked / queued**                      | SE as locale 17 ([#202](https://github.com/sister-software/mailwoman/issues/202), license), GB/IE/SE/HU/RO corpus via OSM ([#733](https://github.com/sister-software/mailwoman/issues/733), share-alike gate), KR (no adopted open path) | External constraints, each with a check-back owner — not engineering-blocked                                                                                                                                             |
+
+**Standing locale rule:** no new locale shards until the coordinated model + tokenizer bump
+ships — a pre-splice shard trains against the old vocab and bakes the fragmentation back in.
+After it ships, CJK-family locales route through the CharCNN path (scaffolding committed,
+deferred), not vocab splicing.
+
+## The standing invariants
+
+These are the disciplines the trajectory review said not to change, plus the two added at the
+2026-07-02 re-anchor. They are gates, not virtues:
+
+1. **Grade the assembled coordinate, never label-F1 alone.** Label metrics are a drift backstop,
+   re-anchored on a cadence: every 5 promotes, or any promote that lowers a gate floor, triggers
+   a full per-tag re-score (rule + procedure in
+   [CONTRIBUTING_MODEL_WORK](./CONTRIBUTING_MODEL_WORK.mdx); ledger append is automated).
+2. **The demo is the geocoder.** The browser cascade must run the shared resolver passes
+   ([#861](https://github.com/sister-software/mailwoman/issues/861)) and must not silently trail
+   the released model ([#203](https://github.com/sister-software/mailwoman/issues/203)'s class —
+   enforce structurally, in the release train, not by memory). A win that doesn't reach the demo
+   is discounted to zero.
+3. **Pre-registered gates; falsified levers get reverted, not shipped.** The config is the
+   contract; gate revisions are written, attributed, and operator-approved.
+4. **Repair retirement** ([#486](https://github.com/sister-software/mailwoman/issues/486)):
+   every post-model patch shrinks at each consolidation. Decode-time overrides are scaffolding
+   with a kill date.
+5. **Runtime flags are instruments, not homes.** A default-off feature exists to be measured.
+   At each consolidation it either earns default-on with a gate result, stays explicitly
+   experimental with a named blocker, or is retired. The accounting lives in the
+   [runtime-flag register](./reference/runtime-flags.mdx) — a flag with no register row is a
+   smell.
+
+## Where the live roadmap lives
+
+- **The queue:** [project board (epic #488)](https://github.com/sister-software/mailwoman/issues/488)
+  for the geocoder; the record-matching epics above for workstream 2.
+- **The record:** dated eval reports under `docs/articles/evals/` (latest full re-score: the
+  [parity scorecard](../evals/parity-scorecard-2026-07-02.md)), per-release rows in
+  [Releases & capabilities](../releases.mdx), the score ledger `evals/scores-by-version.json`.
+- **The phase directory is historical.** `phases/*` and the dated architecture specs are design
+  records — read them for rationale, never for current state.

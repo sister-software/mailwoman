@@ -1,0 +1,75 @@
+---
+title: Runtime-flag register
+description: Every runtime flag on the parse→resolve surface — default, eval verdict, and disposition. A flag is an instrument, not a home.
+---
+
+# Runtime-flag register
+
+**The policy ([SCOPE](../SCOPE.mdx), invariant 5):** a runtime flag is a measurement instrument,
+not a home. Every default-off feature exists to be measured; at each consolidation it either
+earns default-on with a gate result, stays explicitly experimental with a named blocker, or is
+retired. This register is the accounting — a flag with no row here is a smell, and a new flag
+lands with its row in the same PR.
+
+Enumerated from the option surfaces 2026-07-02 (`CreateRuntimePipelineOpts`, `PipelineOpts`,
+`ClassifierOpts`, `ResolveOpts`, `ParseOpts`, `NeuralAddressClassifierConfig`, `CreateScorerOpts`,
+`GeocodeDeps`, the policy registry, the drop-in CLIs, and the demo cascade). Tuning sub-knobs
+(bias scales, gate radii, lookup caps) are listed with their owner flag, not separately.
+
+## Default-ON — earned it, or required ship config
+
+| flag                                         | home                                        | since / evidence                                                                                                                                                   |
+| -------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `spanRescore` (+ `spanRescoreGateKm` 50)     | `ResolveOpts`                               | #370 — EU @25km +16pp e2e; promoted to default 2026-06-25. `false` opts out                                                                                        |
+| `hierarchyCompletion`                        | `ResolveOpts`                               | #402/#405 — recovers the dropped locality in dual-role-place addresses                                                                                             |
+| `parentFallback`                             | `ResolveOpts`                               | resolver liveness: one retry without the parent constraint on an empty filtered lookup                                                                             |
+| `placeCountry` (soft prior)                  | `CreateRuntimePipelineOpts` / `GeocodeDeps` | #244 — coarse-placer country router, in-map routing 64.7 → 85.3%; `false` disables                                                                                 |
+| `hardPlaceCountry` (+ `hardCountrySafelist`) | pipeline / geocode-core                     | #743/#194 — coverage-guarded HARD country filter, default-ON since 4.12.0 (population-first ranking can't be out-scored softly for low-pop locales)                |
+| `bridgePunctuationGaps`                      | classifier config                           | required ship config since v4.4.0 (`requires_bridge`) — po_box 60.4 → 89.1; dotted surfaces are corpus-unlabelable                                                 |
+| `addressSystemConventions: "auto"`           | classifier config / scorer                  | required ship config since v4.3.0 (`requires_conventions`) — the locale-head-keyed conventions mask                                                                |
+| `spanProposer`                               | classifier config                           | #518 — Stage-2.7 span-proposal priors; `false` disables                                                                                                            |
+| `strict` (fail-closed channel gate)          | `createScorer`                              | #718 — refuses to grade/serve a model with a declared-but-unfed channel (the zero-fill trap)                                                                       |
+| `normalizeCase` — **geocode path only**      | `GeocodeDeps`                               | #690/#713 — all-caps title-casing; TX locality 90.1 → 99.7, +15% cross-dataset rooftop. ⚠ default-OFF at the pipeline factory and classifier — see drift D2        |
+| `adminCoherence` — **geocode path only**     | `GeocodeDeps`                               | #263/#837 + #822 — joint admin-consistency re-pick + explicit-country coherence; bare "City, Country" 54 → 78%. ⚠ default-OFF in core `ResolveOpts` — see drift D1 |
+
+## Default-OFF — measured, kept as opt-in with a named reason
+
+| flag                                                                     | home                         | verdict / blocker                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------ | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `postcodeConsistency` (+ gate km)                                        | `ResolveOpts`                | #370 lever A — measured; the promoted `spanRescore` covers the common case, this stays a lever                                                                                                                                     |
+| `anchorPosterior` (+ `anchorWeight` 2.0)                                 | `ResolveOpts`                | #369 — postcode-anchor country posterior re-rank; superseded on the routing job by the placer, retained for anchor-first experiments                                                                                               |
+| `addressPoints` / `interpolation` (+ calibrations)                       | `ResolveOpts`                | #476/#483 — rooftop/interp tiers; **data-gated, not eval-gated** (per-state shards; four states hosted, #735 is the rollout) — geocode-core enables them wherever shards exist                                                     |
+| `addressPointBboxFallback`                                               | `ResolveOpts`                | #247 — OSM intl rooftop tier support                                                                                                                                                                                               |
+| `includeAncestors`                                                       | `ResolveOpts`                | #404 — response-shape enrichment, consumer's choice                                                                                                                                                                                |
+| `defaultCountry`                                                         | `ResolveOpts` / drop-ins     | correct as a USER-expressed restriction (`countrycodes=`); the v4.16 lesson: never a silent server default — it hard-overrides the placer onto US namesakes                                                                        |
+| `postcodeRepair` / `unitRepair`                                          | `ParseOpts`                  | deterministic repair passes — subject to repair-retirement (#486); each consolidation should shrink them                                                                                                                           |
+| `enforceWordConsistency`                                                 | `ParseOpts` / config         | #727 — the per-word BIO vote amplifies over-confidence on byte-soup; ships OFF by research verdict                                                                                                                                 |
+| `fuzzy` postcode anchors                                                 | anchor extractor             | typo/OCR variant matching; off until an OCR-shaped eval exists                                                                                                                                                                     |
+| `calibrate`                                                              | `ParseOpts`                  | isotonic calibrators ship in the weights bundle; opt-in at parse, the demo exposes a toggle                                                                                                                                        |
+| `overrides.{anchor,gazetteer,conventions,bridge}`                        | `createScorer`               | deliberate-ablation switches — for evals, never production (loud warn by design)                                                                                                                                                   |
+| `forceFullPipeline`                                                      | `PipelineOpts`               | debugging aid — disables fast-paths                                                                                                                                                                                                |
+| `arbitrate` (+ `ruleProposer`, `resolverBackend`, policy registry modes) | `PipelineOpts` / #478 family | **research-only.** Built and merged default-OFF; promotion killed by the coordinate gate (#685: arena +122 label-wins, coord p50 3.3 → 1069 km). Do not enable outside an A/B harness; revisit only with a coordinate-gated design |
+| `jointReconcile`                                                         | `PipelineOpts`               | **retired as default** (#566): broke the street+house# geocode precondition on 77–84% of clean US addresses, fixed 0%. Argmax is the default decode; flag kept for A/B only                                                        |
+
+## Deprecated — delete at the next major
+
+| flag                  | replacement                                 |
+| --------------------- | ------------------------------------------- |
+| `forceJointReconcile` | `jointReconcile` (itself retired)           |
+| `cityStateFallback`   | `hierarchyCompletion` (alias still honored) |
+
+## Known drift (actionable)
+
+- **D1 — `adminCoherence` split-brain:** ON in `geocode-core` (the drop-ins get it), OFF in core
+  `ResolveOpts` (raw `resolveTree` users don't). Disposition: promote to default-ON at the core
+  once #861 lands, so both runtimes flip together with the demo — flipping core first would widen
+  the server↔demo gap #861 exists to close.
+- **D2 — `normalizeCase` split-brain:** ON in `GeocodeDeps`, OFF at the pipeline factory and
+  classifier. Same shape as D1; same disposition (one default, decided at the next
+  consolidation, with the #690 gate numbers re-cited).
+- **D3 — the demo runs none of this** ([#861](https://github.com/sister-software/mailwoman/issues/861)):
+  `runCascade` reimplements a narrower tier order and bypasses `ResolveOpts` entirely, so every
+  resolver-side row above silently does not apply in the browser. This register documents the
+  server; until #861, the demo column is "n/a".
+- **D4 — stale comment:** the demo `_app.tsx` still claims reconcile-runs-since-#427; reconcile
+  was retired (#566). Cleanup rides #861.

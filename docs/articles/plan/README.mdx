@@ -1,24 +1,35 @@
 ---
-sidebar_position: 1
-title: Implementation plan
+sidebar_position: 99
+title: The v1 implementation plan (historical)
 ---
 
-# Mailwoman Neural — Implementation Plan
+# The v1 implementation plan — historical
 
-The plan that drove the neural address parser work inside Mailwoman: TypeScript-first, deployed as a new classifier that progressively replaces rule-based classifiers as confidence metrics justify (Ship of Theseus).
+**This is a design record, not the live plan.** The current scope declaration — locale tiers,
+workstreams, standing invariants, where the roadmap lives — is **[Scope — what mailwoman is
+now](./SCOPE.mdx)** ([#886](https://github.com/sister-software/mailwoman/issues/886) marked this
+directory historical on 2026-07-02).
+
+What follows below this note is the plan that drove the neural classifier work from Phase 0
+through the release train, preserved as written. It declared a US + France v1 with Japanese as a
+Phase 6 stress test; the shipped reality (a multi-locale geocoder with drop-in API surfaces and a
+record-matching workstream) outgrew it — which is what plans are for. Read it, and the
+`phases/*` + `reference/*` files it indexes, for design rationale and the reasoning behind
+decisions that still bind (`reference/SCHEMA.mdx` remains the live source of truth for the
+`ComponentTag` union; [CONTRIBUTING_MODEL_WORK](./CONTRIBUTING_MODEL_WORK.mdx) remains the live
+model-work runbook).
+
+## The plan as written (2026-05, status notes through 2026-06-11)
+
+TypeScript-first, deployed as a new classifier that progressively replaces rule-based classifiers
+as confidence metrics justify (Ship of Theseus).
 
 **Status (last edited 2026-06-11):** Phases 0 through 4 shipped and superseded by the release
-train — the current shipped release is **v4.3.0** (the #511 relabel run + the conventions
-layer's first slice). The live roadmap is no longer this directory's phase files; it is the
+train. The live roadmap moved to the
 [Geocoder v1 — Daily Queue project board](https://github.com/orgs/sister-software/projects/4)
 (epic [#488](https://github.com/sister-software/mailwoman/issues/488)), plus the dated eval
 reports in `docs/articles/evals/`.
 
-- All workspaces publish in lockstep at **4.3.0**; weights flow HF (npm/CI source) + R2 (demo).
-- The model: 29.3M params, 33 BIO labels over 16 tags, CE-only training with CRF-at-inference,
-  postcode + gazetteer anchors live, locale head exported (`locale_logits`) driving the
-  address-system conventions mask. Affix split at parity (93.6/96.6); per-tag truth lives in
-  the latest `parity-scorecard-*.md`.
 - The capacity question this plan deferred ("bigger model later?") was answered by measurement:
   a 48M widening reproduced the 29M affix ceiling exactly — the binding constraint was a
   corpus label contradiction, not parameters
@@ -27,52 +38,36 @@ reports in `docs/articles/evals/`.
 - Architecture + per-stage contracts: `reference/ARCHITECTURE.mdx`, `reference/STAGES.mdx`; the
   conceptual map is [the knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx).
 
-What's described below as "next" or "future" should be read as the historical plan; the actual state is whatever this directory's most-recently-committed phase file says, plus `LOG.md` at the repo root for the live cadence.
-
-## Read order
+### Read order (historical)
 
 1. This file
 2. `reference/CONTEXT.md` — background, prior art, design rationale
 3. `reference/ARCHITECTURE.md` — system shape, key abstractions, locale strategy
-4. `reference/SCHEMA.md` — canonical component tag union (single source of truth)
+4. `reference/SCHEMA.md` — canonical component tag union (still the live source of truth)
 5. `reference/INTERFACES.md` — TypeScript contracts at every boundary
 6. `reference/OPERATIONS.md` — how to work, how to commit, how to report progress
-7. `phases/PHASE_0_foundation.md` — start here once you have read 1–6
+7. `phases/PHASE_0_foundation.md` onward — sequential
 
-Subsequent phases (`phases/PHASE_1_*` through `phases/PHASE_6_*`) are sequential. Do not begin a phase until the previous phase's success criteria are met.
+### Hard constraints (as declared for v1)
 
-## Hard constraints
+- **TypeScript-first.** Inference runtime is `onnxruntime-node`. Training is allowed in Python
+  but is not shipped to npm.
+- **Coexistence, not replacement.** The neural classifier is additive. Rule classifiers are not
+  deleted until per-component metrics justify retirement.
+- **Locale scope (v1):** US + France. English + French. Japanese is a deliberate Phase 6 stress
+  test of the architecture, not v1. _(Superseded — see [Scope](./SCOPE.mdx) for the real list.)_
+- **Staged components:** coarse (country/region/locality/postcode) first, street second, venue
+  third. Each stage ships.
+- **No new ML in places where rules are already correct.** Postcodes are a regex problem. Don't
+  burn a model on them.
+- **Schema-first.** Touching `reference/SCHEMA.md` requires a written rationale in the commit.
+  Downstream code keys off it.
 
-- **TypeScript-first.** Inference runtime is `onnxruntime-node`. Training is allowed in Python but is not shipped to npm.
-- **Coexistence, not replacement.** The neural classifier is additive. Rule classifiers are not deleted until per-component metrics justify retirement.
-- **Locale scope (v1):** US + France. English + French. Japanese is a deliberate Phase 6 stress test of the architecture, not v1.
-- **Staged components:** coarse (country/region/locality/postcode) first, street second, venue third. Each stage ships.
-- **No new ML in places where rules are already correct.** Postcodes are a regex problem. Don't burn a model on them.
-- **Schema-first.** Touching `reference/SCHEMA.md` requires a written rationale in the commit. Downstream code keys off it.
+### What good looked like
 
-## What good looks like
-
-By end of Phase 3 you will have shipped `@mailwoman/neural@0.1.0` to npm. It loads a quantized ONNX model on demand, emits `ClassificationProposal` objects that flow through Mailwoman's existing solver unchanged, and beats rule-based Mailwoman on the held-out golden set for at least the `country` and `region` components.
-
-By end of Phase 6 the same architecture supports Japanese addresses with schema additions but no core refactor. That is the validation that the design is sound.
-
-## What failure looks like
-
-- Schema churn after Phase 1 — means Phase 0 was rushed.
-- Tokenizer drift between Python training and TypeScript inference — silent accuracy loss in prod.
-- Training data leakage (same locality in train and eval splits) — model looks great in eval, fails in the wild.
-- Coupling the model to a specific Mailwoman internal type, then needing to refactor to ship the model standalone later.
-
-Any of these means stop and re-read `reference/ARCHITECTURE.md`.
-
-## How to ask for help
-
-You will inevitably hit decisions the plan does not anticipate. When that happens:
-
-1. Write the decision and the options to `DECISIONS.md` (create it if absent) under a new heading with date.
-2. Pick the option that is most reversible and lowest-blast-radius.
-3. Continue. Do not block waiting for input from outside the lab unless the decision is irreversible (npm package name, public API contract, data license commitment).
-
-## How to report progress
-
-Append to `LOG.md` (create if absent) after every meaningful unit of work. One line per entry: `YYYY-MM-DD HH:MM | <phase> | <what was done> | <next>`. Keep it terse — the radio-console format from the user preferences. This log is the only thing the human will read between check-ins.
+By end of Phase 3: `@mailwoman/neural@0.1.0` on npm, loading a quantized ONNX model, emitting
+`ClassificationProposal` objects through the existing solver, beating rule-based Mailwoman on the
+held-out golden set for `country` and `region`. By end of Phase 6: the same architecture supports
+Japanese addresses with schema additions but no core refactor. Both happened — the second via the
+postcode-route resolver rather than parser training, which is its own validation of the
+schema-first bet.
