@@ -60,11 +60,17 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 2. The shaped lever **already exists**: `postcodeConsistency` (#370 lever A, default-off).
 3. Pre-registered experiment (FI/CZ, flag ON): **NULL — byte-identical.** Mechanism: the pass
    needs a RESOLVED postcode node, and `postalcode-intl.db` covers **NL/DE/FR/ES/IT only** — zero
-   rows for every namesake-heavy locale. **The lever is data-starved exactly where the tail
-   lives.** → **#920** filed: extend the postalcode shard (GeoNames postal per-country, open +
-   small), re-run the pre-registration, then the default-flip evaluation. Recommended next-night
-   primary; attacks 60–300 rows/1k per locale at zero GPU — bigger than any parse shard on the
-   board, including the #901 fork.
+   rows for every namesake-heavy locale. → **#920** filed.
+4. **#920's experiment leg executed the same night** (scope re-derived once the clock was read
+   right; EXPERIMENT-labeled shard from GeoNames postal FI+CZ, control leg added to the
+   registration before measuring). Verdict: **the lever hypothesis is falsified — and the control
+   is the discovery.** `postcodeConsistency` is inert (ctrl≡pcc byte-identical); **postcode-shard
+   COVERAGE alone collapses the tail: FI namesake 300→1 (unresolved 13→0), CZ 131→4 (12→2), ni
+   PASS everywhere** — a resolvable postcode feeds the existing coordinate-first candidate
+   injection; the binding machinery existed all along. Format normalization is load-bearing
+   (spaced GeoNames CZ codes made things WORSE, +13, before strip-whitespace at build).
+   **Production #920 = postcode coverage for SK/SI/DK/NO/HR/PL through the real shard pipeline +
+   per-country format normalization — the measured biggest lever on the board, zero GPU.**
 
 ## What went well
 
