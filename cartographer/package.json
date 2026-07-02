@@ -2,7 +2,7 @@
 	"name": "@mailwoman/cartographer",
 	"version": "5.1.0",
 	"description": "Mapping utilities for the Mailwoman geo-spatial data pipeline.",
-	"license": "AGPL-3.0-only",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"contributors": [
 		{
 			"name": "Teffen Ellis",

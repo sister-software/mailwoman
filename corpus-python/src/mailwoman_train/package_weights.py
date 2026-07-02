@@ -60,7 +60,7 @@ def build_model_card(
         "name": f"neural-weights-{locale}",
         "version": package_version,
         "phase": _phase_label(),
-        "license": "AGPL-3.0-only",
+        "license": "AGPL-3.0-only OR LicenseRef-Commercial",
         "locale": locale,
         "training": {
             "corpus_version": corpus_version,
@@ -152,7 +152,7 @@ def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict:
     return {
         "name": f"@mailwoman/neural-weights-{locale}",
         "version": package_version,
-        "license": "AGPL-3.0-only",
+        "license": "AGPL-3.0-only OR LicenseRef-Commercial",
         "description": (
             f"Mailwoman neural-classifier weights for locale '{locale}'. "
             "Data-only package — loaded by @mailwoman/neural at runtime."
