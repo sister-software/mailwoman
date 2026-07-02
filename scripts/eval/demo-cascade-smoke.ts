@@ -7,10 +7,11 @@
  *
  *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the FULL stack exactly the
  *   way the demo (and any real consumer) composes it: neural parse with the ship config (gazetteer
- *   lexicon + postcode anchor + conventions mask + span bridge + FST) → `runPipeline`'s joint
- *   reconcile + grouper audit → the demo's `runCascade` (postcode → locality-with-region-bbox → raw
- *   text) over the Node lookup against the slim `wof-hot.db` the demo serves. Each row asserts the
- *   RESOLVED WOF PLACE ID of the top hit — not parse components. See the row README
+ *   lexicon + postcode anchor + conventions mask + span bridge + FST) → `runPipeline` + grouper
+ *   audit → the demo's `runCascade` (#861: the SHARED `resolveTree` — greedy walk + admin/
+ *   explicit-country coherence + span-rescore — over the lookup, with the demo's pin extraction)
+ *   against the slim `wof-hot.db` the demo serves. Each row asserts the RESOLVED WOF PLACE ID of
+ *   the top hit — not parse components. See the row README
  *   (`data/eval/external/demo-cascade-smoke.README.md`) for the convention.
  *
  *   Why: on 2026-06-11 three production bugs (#520/#521/#522) shipped through green gates because
@@ -186,11 +187,12 @@ for (const row of rows) {
 		.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 	const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
+	// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
+	// passes + span-rescore) over the lookup, exactly as the browser composes it. The node
+	// extraction above stays for the --explain output + the anchor-centroid fallback below.
 	const hits = await runCascade(
 		lookup as unknown as Parameters<typeof runCascade>[0],
-		postcodeNode,
-		localityNodes,
-		stateNode,
+		tree as { roots: unknown[] },
 		row.input
 	)
 

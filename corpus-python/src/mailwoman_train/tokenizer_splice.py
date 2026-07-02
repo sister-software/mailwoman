@@ -234,9 +234,7 @@ def _main() -> None:
         print(f"spliced {len(new_pieces)} diacritic pieces -> {args.out_tokenizer}")
         print("English tokenization verified byte-identical (0 diff).")
     elif args.cmd == "mean-init":
-        old_v, new_v = mean_init_embeddings(
-            args.checkpoint, args.base_tokenizer, args.spliced_tokenizer, args.out_dir
-        )
+        old_v, new_v = mean_init_embeddings(args.checkpoint, args.base_tokenizer, args.spliced_tokenizer, args.out_dir)
         print(f"expanded token_embeddings {old_v} -> {new_v}; wrote {args.out_dir}")
 
 

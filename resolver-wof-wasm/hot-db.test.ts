@@ -26,7 +26,7 @@
 import { readFile } from "node:fs/promises"
 
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
-import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { runCascade } from "../docs/src/shared/demo-helpers.js"
 import { loadSlimWOFDatabase } from "./loader.js"
@@ -64,55 +64,52 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 		})
 	})
 
-	describe("demo cascade (runCascade over the WASM lookup)", () => {
+	describe("demo resolution (runCascade — the shared resolveTree over the WASM lookup, #861)", () => {
+		const node = (tag: string, value: string, children: object[] = []) => ({
+			tag,
+			value,
+			confidence: 0.95,
+			children,
+		})
+		const tree = (raw: string, roots: object[]) => ({ raw, roots }) as { roots: unknown[] }
+
 		test('locality "Brooklyn" alone → the borough', async () => {
-			const hits = await runCascade(
-				wasmLookup,
-				undefined,
-				[{ tag: "locality", value: "Brooklyn" }],
-				undefined,
-				"Brooklyn"
-			)
+			const hits = await runCascade(wasmLookup, tree("Brooklyn", [node("locality", "Brooklyn")]), "Brooklyn")
+
 			expect(hits[0]?.id).toBe(BROOKLYN_BOROUGH)
 		})
 
-		test('locality "brooklyn" + region "new york" → the borough (region bbox narrows)', async () => {
+		test('locality "brooklyn" under region "new york" → the borough (parent scope narrows)', async () => {
 			const hits = await runCascade(
 				wasmLookup,
-				undefined,
-				[{ tag: "locality", value: "brooklyn" }],
-				{ tag: "region", value: "new york" },
+				tree("brooklyn, new york, ny", [node("region", "new york", [node("locality", "brooklyn")])]),
 				"brooklyn, new york, ny"
 			)
+
 			expect(hits[0]?.id).toBe(BROOKLYN_BOROUGH)
 		})
 
 		test('locality "New York City" → the New York locality', async () => {
 			const hits = await runCascade(
 				wasmLookup,
-				undefined,
-				[{ tag: "locality", value: "New York City" }],
-				undefined,
+				tree("New York City", [node("locality", "New York City")]),
 				"New York City"
 			)
+
 			expect(hits[0]?.id).toBe(NEW_YORK_LOCALITY)
 		})
 
-		test("an unresolvable parsed region fails LOUD (console.warn), not silent", async () => {
-			const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+		test("an unresolvable parsed region does not sink the locality (parentFallback recall)", async () => {
+			// The old cascade warned-and-widened here; the shared walk's parentFallback retries the
+			// locality unscoped when the parent scope yields nothing — recall over silence, no warning
+			// contract. The locality must still resolve.
+			const hits = await runCascade(
+				wasmLookup,
+				tree("Brooklyn, Zzyzx Nonexistia", [node("region", "Zzyzx Nonexistia", [node("locality", "Brooklyn")])]),
+				"Brooklyn, Zzyzx Nonexistia"
+			)
 
-			try {
-				await runCascade(
-					wasmLookup,
-					undefined,
-					[{ tag: "locality", value: "Brooklyn" }],
-					{ tag: "region", value: "Zzyzx Nonexistia" },
-					"Brooklyn, Zzyzx Nonexistia"
-				)
-				expect(warn).toHaveBeenCalledWith(expect.stringContaining("did not resolve to a bbox"))
-			} finally {
-				warn.mockRestore()
-			}
+			expect(hits[0]?.id).toBe(BROOKLYN_BOROUGH)
 		})
 	})
 

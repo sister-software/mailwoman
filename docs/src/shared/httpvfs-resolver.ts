@@ -542,7 +542,11 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		// the side-index being present, a postcode in the query, and a locality-tier request — so the
 		// common path is byte-identical, and inert on a candidate.db built without the side-index
 		// (today's production demo). Mirrors the Node WOFCandidateTableLookup probe.
-		const wantsLocality = !query.placetype || expandPlacetypeFilter([query.placetype]).includes("locality")
+		const requestedPlacetypes = query.placetype
+			? ((Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[])
+			: []
+		const wantsLocality =
+			requestedPlacetypes.length === 0 || expandPlacetypeFilter(requestedPlacetypes).includes("locality")
 
 		if (query.postcode && wantsLocality && (await this.#postalCityPresent())) {
 			const hit = rowsFromExec(
@@ -582,11 +586,11 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			filters.push(`country_id = ${cid}`)
 		}
 
-		if (query.placetype) {
+		if (requestedPlacetypes.length > 0) {
 			// Shared placetype-equivalence expansion (a `locality` query must also reach borough /
-			// localadmin). `postalcode` maps to no admin placetype here → empty → no rows (postcodes
-			// live in a separate shard, resolved off the anchor bins, not this table).
-			const ids = expandPlacetypeFilter([query.placetype])
+			// localadmin). Placetypes without a group entry — `postalcode`, `country`, `county` — pass
+			// through unchanged; the global candidate table carries rows for all of them.
+			const ids = expandPlacetypeFilter(requestedPlacetypes)
 				.map((t) => placetypeToID.get(t))
 				.filter((v): v is number => v !== undefined)
 
