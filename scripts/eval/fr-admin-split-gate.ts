@@ -95,7 +95,10 @@ const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 async function main() {
 	const goldenPath = arg("golden", "/tmp/reg/fr-admin-split-golden.jsonl")
 	const label = arg("label", "model")
-	const wofDB = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
+	// Comma-separated multi-shard support (night-31): postcodeConsistency needs a resolvable postcode
+	// node, which needs a postalcode shard attached alongside the admin DB.
+	const wofDBArg = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
+	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 	const rows = readFileSync(goldenPath, "utf8")
 		.trim()
 		.split("\n")
@@ -130,9 +133,13 @@ async function main() {
 		: process.argv.includes("--raw-case")
 			? false
 			: undefined
+	// #375 night-31: opt-in postcodeConsistency pin (the #370 lever A namesake binder) for the
+	// taxonomy-driven experiment; unset = library default (off).
+	const postcodeConsistencyPin = process.argv.includes("--postcode-consistency") ? true : undefined
 	const resolveOpts = {
 		defaultCountry: arg("default-country", "FR"),
 		...(adminCoherencePin !== undefined ? { adminCoherence: adminCoherencePin } : {}),
+		...(postcodeConsistencyPin !== undefined ? { postcodeConsistency: postcodeConsistencyPin } : {}),
 	}
 
 	const errs: number[] = []
