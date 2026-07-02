@@ -677,30 +677,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:^7.21.3, @babel/core@npm:^7.25.9":
-  version: 7.29.0
-  resolution: "@babel/core@npm:7.29.0"
-  dependencies:
-    "@babel/code-frame": "npm:^7.29.0"
-    "@babel/generator": "npm:^7.29.0"
-    "@babel/helper-compilation-targets": "npm:^7.28.6"
-    "@babel/helper-module-transforms": "npm:^7.28.6"
-    "@babel/helpers": "npm:^7.28.6"
-    "@babel/parser": "npm:^7.29.0"
-    "@babel/template": "npm:^7.28.6"
-    "@babel/traverse": "npm:^7.29.0"
-    "@babel/types": "npm:^7.29.0"
-    "@jridgewell/remapping": "npm:^2.3.5"
-    convert-source-map: "npm:^2.0.0"
-    debug: "npm:^4.1.0"
-    gensync: "npm:^1.0.0-beta.2"
-    json5: "npm:^2.2.3"
-    semver: "npm:^6.3.1"
-  checksum: 10/25f4e91688cdfbaf1365831f4f245b436cdaabe63d59389b75752013b8d61819ee4257101b52fc328b0546159fd7d0e74457ed7cf12c365fea54be4fb0a40229
-  languageName: node
-  linkType: hard
-
-"@babel/core@npm:^7.28.0":
+"@babel/core@npm:^7.21.3, @babel/core@npm:^7.25.9, @babel/core@npm:^7.28.0":
   version: 7.29.7
   resolution: "@babel/core@npm:7.29.7"
   dependencies:
@@ -1008,16 +985,6 @@ __metadata:
     "@babel/traverse": "npm:^7.28.6"
     "@babel/types": "npm:^7.28.6"
   checksum: 10/d8a895a75399904746f4127db33593a20021fc55d1a5b5dfeb060b87cc13a8dceea91e70a4951bcd376ba9bd8232b0c04bff9a86c1dab83d691e01852c3b5bcd
-  languageName: node
-  linkType: hard
-
-"@babel/helpers@npm:^7.28.6":
-  version: 7.29.2
-  resolution: "@babel/helpers@npm:7.29.2"
-  dependencies:
-    "@babel/template": "npm:^7.28.6"
-    "@babel/types": "npm:^7.29.0"
-  checksum: 10/ad77706f3f917bd224e037fd0fbc67c45b240d2a45981321b093f70b7c535bee9bbddb0a19e34c362cb000ae21cdd8638f8a87a5f305a5bd7547e93fdcc524fe
   languageName: node
   linkType: hard
 
@@ -16177,25 +16144,25 @@ __metadata:
   linkType: hard
 
 "js-yaml@npm:^3.0.2, js-yaml@npm:^3.13.1":
-  version: 3.14.2
-  resolution: "js-yaml@npm:3.14.2"
+  version: 3.15.0
+  resolution: "js-yaml@npm:3.15.0"
   dependencies:
     argparse: "npm:^1.0.7"
     esprima: "npm:^4.0.0"
   bin:
     js-yaml: bin/js-yaml.js
-  checksum: 10/172e0b6007b0bf0fc8d2469c94424f7dd765c64a047d2b790831fecef2204a4054eabf4d911eb73ab8c9a3256ab8ba1ee8d655b789bf24bf059c772acc2075a1
+  checksum: 10/2fdf3a1453ed93a8e06d6ca8054c0bec145cf40ab51f305d1071736a03668b95e40f47cfd0239d7d50019b4780a18cdaca3c935def935594c9876964c49f1185
   languageName: node
   linkType: hard
 
 "js-yaml@npm:^4.1.0":
-  version: 4.2.0
-  resolution: "js-yaml@npm:4.2.0"
+  version: 4.3.0
+  resolution: "js-yaml@npm:4.3.0"
   dependencies:
     argparse: "npm:^2.0.1"
   bin:
     js-yaml: bin/js-yaml.js
-  checksum: 10/51de2067a2b44b07ba5206132e56005f8b568ff279bb4d2f645068958c56fa4827d40a6841c983234671fa0a134bf094d0b0717873c2a3d319185297af145a6d
+  checksum: 10/2bcec3a8118d7f744badeb04e14366578d234a736f353d41fe35d2305e4ce2409a8e041d277f07cd6bbc8aaa12128d650a68ce43247072519bede20962d2126f
   languageName: node
   linkType: hard
 
