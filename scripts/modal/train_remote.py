@@ -910,6 +910,51 @@ def sync_v193a3():
     secrets=[r2_secret],
     timeout=1800,
 )
+def sync_v199():
+    """#901 run 2 (night-31): v1.9.9-bare-street-si — the v0.9.9 overlay (v0.9.4 base VERBATIM + the
+    synth-si-bare-village counter-shard) + the new config. Base shards/tokenizer/init ckpt persist on
+    the volume; this pulls the small overlay dir + code."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.9.9 overlay + code/config from R2...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.9.9-si-bare-village/corpus-v0.9.9-si-bare-village/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.9.9-si-bare-village/corpus-v0.9.9-si-bare-village/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("v0.9.9 sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.9-si-bare-village/corpus-v0.9.9-si-bare-village"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.9-bare-street-si.yaml"
+    print("  v1.9.9 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  si shard present:", os.path.isfile(f"{cdir}/train/part-si-bare-village-train.parquet"))
+    print("  fr shard (base, re-rooted) present:", os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/train/part-fr-bare-street-train.parquet"))
+    init_dir = f"{VOL_MOUNT}/models/bsplice-expanded"
+    print("  init_from ckpt files:", sorted(os.listdir(init_dir)) if os.path.isdir(init_dir) else "MISSING")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
 def sync_v198():
     """#901 run 1 (night-31): v1.9.8-bare-street-bsplice — the fr-bare-street shard retrained on the
     SHIPPED spliced base. Everything heavy is already on the volume (corpus v0.9.4 overlay from the v194

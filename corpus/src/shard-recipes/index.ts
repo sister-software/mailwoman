@@ -22,6 +22,7 @@ import { noStreetRecipe } from "./no-street.js"
 import { poBoxCedexRecipe } from "./po-box-cedex.js"
 import { poBoxRecipe } from "./po-box.js"
 import type { ShardRecipe } from "./scaffold.js"
+import { siBareVillageRecipe } from "./si-bare-village.js"
 import { streetAffixRecipe } from "./street-affix.js"
 import { streetBareRecipe } from "./street-bare.js"
 import { streetRecipe } from "./street.js"
@@ -45,6 +46,7 @@ const RECIPES: readonly ShardRecipe[] = [
 	frOrderRecipe,
 	frAdminSplitRecipe,
 	frBareStreetRecipe,
+	siBareVillageRecipe,
 	countryBalancedRecipe,
 	boundaryStressRecipe,
 	anchorAbsorptionRecipe,
