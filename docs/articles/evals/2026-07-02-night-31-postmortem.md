@@ -89,7 +89,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
   lost). Pattern-pkill against argv you also occupy.
 - My first export fetch graded the SHIPPED baseline as the probe (silent volume-get failure +
   fail-open linker path). The md5/guard discipline caught it, but the linker's missing-source path
-  should probably hard-fail rather than warn when MAILWOMAN*DEV*\* is set.
+  should probably hard-fail rather than warn when `MAILWOMAN_DEV_*` is set.
 - Docs typecheck was 7-errors-red on main and nobody knew (the #917 bug lived there). Candidate:
   wire `docs` typecheck into CI.
 - Clock discipline: I mis-read local-vs-UTC twice early in the shift (harmless, but the ledger
