@@ -98,6 +98,35 @@ Calibration for why: v4.4.0 → v4.15.0 was 11 promotes without one; the 2026-07
 drift bounded — but also found two unsigned drifts (`fr.cedex_real` −6.7, libpostal clean arena
 −6) that per-promote gates structurally cannot catch.
 
+### Floor policy — floors ratchet at re-scores, never drift on promotes ([#899](https://github.com/sister-software/mailwoman/issues/899))
+
+The complement to the cadence rule, decided _before_ a promote needed it rather than under
+promotion pressure:
+
+1. **Between re-scores, floors are immutable contracts.** Measured == floor is a PASS — a
+   knife-edge is legal, not a defect. A promote that dips below a floor FAILS; shipping it anyway
+   is a gate _revision_ under the existing no-silent-drift rules (written reason, attribution,
+   operator sign-off) **plus a note in that version's ledger row**, so margin erosion is visible
+   in the same record as the score.
+2. **At each cadence re-score, every floor is re-ratified, ratchet-up only.** A tag whose measured
+   value has cleared its floor by ≥ 2pp on the last two consecutive scorecards gets its floor
+   raised to (lower of the two readings − 1pp) — gains get locked in instead of becoming slack
+   for future erosion. Floors are never lowered at a re-score; lowering is only ever a per-promote
+   revision under rule 1. Any floor sitting at **zero margin** gets an explicit disposition in the
+   scorecard: _knife-edge accepted_ (with the reason) or _revision proposed_ — never silence.
+3. **Why not a standing tolerance:** pre-widening floors by a fixed tolerance licenses exactly the
+   slow-erosion pattern the [#885](https://github.com/sister-software/mailwoman/issues/885)
+   re-anchor exists to prevent. The buffer against measurement noise is the revision protocol's
+   human in the loop, not a constant.
+
+**Standing disposition (2026-07-02):** the two zero-margin postcode floors — `us.postcode` 95.0
+and `fr.postcode` 99.3 — are **knife-edge accepted**. Both were set to measured values at the
+operator-approved v4.15.0 revision (the #723 anchor-pollution trade), and both held byte-exact
+across the v5.1.0 tokenizer swap; the anchor-fed postcode channel is structurally stable, so the
+zero margin is by construction, not fragility. Any dip triggers rule 1, and the
+[#901](https://github.com/sister-software/mailwoman/issues/901) campaign gate must name both
+postcode slices explicitly.
+
 ## Adding a shard
 
 1. Generator lives in `corpus/` (`synthesize-*.ts`) or `scripts/build-*-shard.mjs`; every row
