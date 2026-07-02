@@ -1,19 +1,22 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
-	"version": "4.15.0",
-	"locales": ["en-us", "fr-fr"],
+	"version": "5.1.0",
+	"locales": [
+		"en-us",
+		"fr-fr"
+	],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
-		"model": "models/quantized/model-v193a3-step-80000-int8.onnx",
-		"tokenizer": "models/tokenizer/v0.6.0-a0/tokenizer.model",
-		"tokenizerVersion": "0.6.0-a0",
+		"model": "models/quantized/model-bsplice-meaninit-int8.onnx",
+		"tokenizer": "models/tokenizer/v0.6.0-bsplice/tokenizer.model",
+		"tokenizerVersion": "0.6.0-bsplice",
 		"trainingStep": 80000,
-		"lineage": "v1.9.3a3-anchor-absorption (v1.9.2-multilocale-au + the #220/#723 anchor-pollution fix, step 80000) — pre-seeded from the v1.9.2 step-040000 checkpoint, continued to 80k. TWO coordinated levers: (1) anchor_paint_mode=shaped — the postcode anchor is now painted at TRAIN time on the same postcode-SHAPED spans inference fires on (neural/postcode-anchor.ts collectMatches), closing the #723 WHERE gap where training only saw the anchor on GOLD postcode spans, so the model never learned to OVERRIDE a present anchor on a house-number-that-looks-like-a-ZIP; (2) the synth-anchor-absorption counter-shard (source-weight 6.0) with the locality discriminator — leading-5-digit + trailing-postcode → house_number, + locality → house_number, + NO locality + state → postcode (VT E911). RESULT: SLICE-H anchor-ON 20→100 (the #723 leading-5-digit house# bug fixed) at ZERO coordinate cost — non-circular oa-resolver-eval (2000 OA-US, full ship-config) whole-US locality-match 97.7→97.8, coord p50 3.4 flat, p90 10.7 flat, p99 275→259; VT (the trade's home state) flat 92.6. Trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3), both COORDINATE-INVISIBLE — gate revised (scripts/eval/gates/v4.15.0-boundary.json, stated reason). mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config UNCHANGED. Tokenizer 0.6.0-a0 (byte-identical). int8 md5 4dec4f460a934949580d8e7b43adae7e."
+		"lineage": "#884 vocab-splice + FVT mean-init on the UNCHANGED v1.9.3a3-anchor-absorption encoder (v4.15.0, step 80000) — the training-free CZ/PL/SK/SI diacritic fix. The 48k unigram vocab had diacritic chars but no diacritic subwords, so CZ/PL names fragmented (~3.3× fertility) and resolved to the wrong city; a shard retrain (v196) was falsified (CZ wrong-city 44→58% at convergence). Fix: splice ONLY diacritic-bearing pieces from a CZ/PL SP unigram into the vocab (48,000→58,582 — English byte-identical BY CONSTRUCTION, asserted 0/2000) + mean-init the 10,582 new embedding rows from constituents; zero gradient steps (the 2k fine-tune ablation was retired as slightly harmful). COORDINATED bump: the spliced tokenizer ships WITH the model. Gates (pre-registered, n=1k reservoir OA sets, int8 ship artifact): US-2k row dump BYTE-IDENTICAL to v4.15.0; wrong-city CZ 22.4→14.8%, PL 27.9→7.9%, SK 22.2→13.2%, SI 18.9→10.6% (SK/SI free-ride the CZ/PL pieces, zero added bytes); p50 improve CIs wholly negative ×4. Cost (operator-accepted): int8 29.8→33.8 MB (+4.06 MB embedding bytes, ~3.8 MB over the ~30 MB browser SLO); WASM latency flat. Pre-splice baseline: parity-scorecard-2026-07-02.md (17/17). int8 md5 12fa2d645162e90cf028dbc333218f2c; tokenizer md5 b0397ce3d89ab459be6dd901eae8f0a1."
 	},
 	"softFeed": {
 		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.ts so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode shard (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to weights.dataRoot/wof. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) — the publish workflow places them via the HF fetch step.",
 		"gazetteerLexicon": "data/gazetteer/anchor-lexicon-v1.json",
-		"postcodeDbByCountry": {
+		"postcodeDBByCountry": {
 			"us": "postalcode-us.db",
 			"fr": "postalcode-intl.db"
 		}
