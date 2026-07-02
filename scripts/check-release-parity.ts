@@ -86,7 +86,11 @@ const npmLatest = await readNPMLatest()
 const checks: ParityCheck[] = []
 
 const demoDefault = await readDemoDefaultVersion()
-checks.push({ name: `demo manifest defaultVersion (${DEMO_MANIFEST_URL})`, value: demoDefault, ok: demoDefault === npmLatest })
+checks.push({
+	name: `demo manifest defaultVersion (${DEMO_MANIFEST_URL})`,
+	value: demoDefault,
+	ok: demoDefault === npmLatest,
+})
 
 const docsCurrent = readDocsCurrentVersion()
 checks.push({ name: "docs/articles/releases.mdx (current) row", value: docsCurrent, ok: docsCurrent === npmLatest })
