@@ -188,6 +188,14 @@ const DEFAULT_WEIGHTS: RankingWeights = {
  */
 const SHORT_QUERY_OVERFETCH = 200
 
+/**
+ * How many rows the population-ordered companion fetch (#905) adds to the candidate pool. Small on purpose: its only
+ * job is to guarantee the FAMOUS holders of a name enter the pool at all — for "Paris"-class floods the bm25 window is
+ * saturated by thousands of tiny same-name rows and no boost inside the bm25-based ORDER BY can rescue a candidate
+ * whose bm25 is length-poisoned by ~15 points (see the fetch-site comment).
+ */
+const POPULATION_FETCH_LIMIT = 15
+
 interface RawSearchRow {
 	id: number
 	name: string
@@ -660,6 +668,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		//
 		// Formula: rank_adjusted = bm25 - populationBoost * min(1.0, log10(1 + pop) / scaleLog10)
 		// Lower rank_adjusted = better (matches SQLite's bm25 convention of "more negative = better").
+		//
+		// #905 — do NOT reach for bm25 column weights here. Measured falsification (2026-07-02): FTS5's
+		// bm25 length normalization is polluted by the row's TOTAL document size, so identical 1-token
+		// `name` docs read −16.0 (empty alt_names) vs −0.43 (2.7 KB alt_names) EVEN with the alt_names
+		// column weighted to zero — no weighting isolates name relevance in this schema. The famous-
+		// holder guarantee lives in the population-ordered companion fetch below instead, and the
+		// exact tier breaks ties by population in the post-scoring sort.
 		const orderByExpr = shardHasPopulation
 			? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`
 			: "bm25(place_search)"
@@ -692,6 +707,40 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		params.push(ftsLimit)
 
 		const rawRows = stmt.all(...params) as unknown as RawSearchRow[]
+
+		// #905 companion fetch: the same MATCH, ordered by population alone. For name floods
+		// ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit
+		// the famous holder — its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts,
+		// vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the
+		// prominent holders of a name pool-complete BY CONSTRUCTION; the exact-tier sort below
+		// decides whether they win. Skipped without a population index (nothing to order by).
+		if (shardHasPopulation) {
+			const popStmt = this.#db.prepare(`
+				SELECT
+					spr.id AS id,
+					spr.name,
+					spr.placetype,
+					spr.country,
+					spr.parent_id,
+					bm25(place_search) AS rank,
+					spr.latitude AS lat,
+					spr.longitude AS lon,
+					spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude,
+					${populationSelect}
+				FROM ${sch}.place_search
+				${joinClause}
+				${populationJoin}
+				WHERE ${where.join(" AND ")}
+				ORDER BY COALESCE(${PLACE_POPULATION_TABLE}.population, 0) DESC
+				LIMIT ?
+			`)
+			const popParams = params.slice(0, params.length - 3) // drop the two boost params + ftsLimit
+			const seen = new Set(rawRows.map((r) => r.id))
+
+			for (const row of popStmt.all(...popParams, POPULATION_FETCH_LIMIT) as unknown as RawSearchRow[]) {
+				if (!seen.has(row.id)) rawRows.push(row)
+			}
+		}
 
 		const queryLen = query.text.length
 		const candidates = rawRows.map((row): PlaceCandidate => {
@@ -794,12 +843,22 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
 			for (const c of candidates) c.exactMatch = exactIds.has(c.id as number)
 
-			if (exactIds.size > 0 && exactIds.size < candidates.length) {
+			if (exactIds.size > 0) {
+				// #905: WITHIN the exact tier, population is the PRIMARY key and the weighted score
+				// only breaks population ties. Exactness saturates text relevance, and the bm25
+				// residue inside `score` is length-noise (see the fetch-site comment), so letting it
+				// order the tier is what sent unscoped "Paris" to an Ohio township. The partial tier
+				// keeps score order — text relevance still means something there. This makes the
+				// exactMatchTiering docstring literal: match quality primary, prominence within.
 				candidates.sort((a, b) => {
 					const ax = exactIds.has(a.id as number) ? 1 : 0
 					const bx = exactIds.has(b.id as number) ? 1 : 0
 
-					return bx - ax || b.score - a.score
+					if (bx !== ax) return bx - ax
+
+					if (ax === 1) return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
+
+					return b.score - a.score
 				})
 
 				return Promise.resolve(candidates.slice(0, limit))
