@@ -34,12 +34,16 @@ export function dataRootPath(...segments: string[]): string {
 
 /**
  * The default WOF shard list the FTS backend probes when no single `--wof-db` is given: the global admin-priority shard
- * + the US postcode shard, both under `dataRoot` (defaults to the configured {@link mailwomanDataRoot}; callers thread a
- * `--data-root` option through). A fresh array each call.
+ * + the US postcode shard + the GeoNames-postal tail shard (#920 — postcode coverage for the namesake-tail locales
+ * FI/CZ/SK/SI/DK/NO/HR/PL; country-aware routing in `pickShardForPlacetype` sends each postcode query to the shard that
+ * claims its country). All under `dataRoot` (defaults to the configured {@link mailwomanDataRoot}; callers thread a
+ * `--data-root` option through). A fresh array each call; callers filter with `existsSync`, so a deployment without the
+ * tail shard degrades to the pre-#920 pair.
  */
-export function wofShardPaths(dataRoot: string = mailwomanDataRoot()): [string, string] {
+export function wofShardPaths(dataRoot: string = mailwomanDataRoot()): [string, string, string] {
 	return [
 		String(resolvePathBuilder(dataRoot, "wof", "admin-global-priority.db")),
 		String(resolvePathBuilder(dataRoot, "wof", "postalcode-us.db")),
+		String(resolvePathBuilder(dataRoot, "wof", "postalcode-geonames-tail.db")),
 	]
 }
