@@ -1,109 +1,147 @@
 # 2026-07-02 → 03 — night 31 postmortem
 
-Shift: 05:56 → 16:00 UTC, $30 Modal ceiling, plan `nightshift/2026-07-02-NIGHT-SHIFT-PLAN.md`.
+Shift 05:56 → 16:00 UTC · $30 Modal ceiling · plan `nightshift/2026-07-02-NIGHT-SHIFT-PLAN.md`
+(operator locks recorded at top of that file). Two agents-in-worktrees + local eval work +
+two Modal training runs, both killed by their own pre-registered gates.
 
-## What shipped (running)
+## What shipped
 
-- **v1.9.8 probe PASS → full run → FULL GATE FALSIFIED THE RUN (the system worked).** Probe:
-  FR bare-intact 90→93%, US 12-row spot byte-identical. Full run (12k, six 2k checkpoints):
-  sweet-spot scan put FR at 93% through 10k (12k dipped to 90 = ties baseline, fails the WIN
-  acceptance; the 12k corpus-val jump is label-F1 — not a gate input). Full gate at 10k int8:
-  US/CZ/PL/SK ni PASS, **SI ni FAIL** (resolve −3.4pp; also fails at 6k → intrinsic): 37 rows
-  lost, ALL the Slovenian no-street "Village N, Postcode Village" form — the shard's boundary
-  lesson splits "Apače 108" into street "Apače 10" + house "8". **Nothing from v1.9.8 ships.**
-- **Run 2 (v1.9.9-bare-street-si) launched:** + `synth-si-bare-village` counter-shard (6,285 real
-  OA SI village-repeated tuples, 3 orders, number-diversity-picked; overlay v0.9.9, 696 shards,
-  0 /mnt leaks). Probe gate pre-registered WITH the SI failure slice (`si-lost37` ≥30/37) — the
-  run-1 lesson (the probe gate lacked an SI leg) applied. New recipe `si-bare-village` +
-  exporter committed on the campaign branch.
-  Case-aug had been DROPPED from run 1 (schedule adjustment #1): v1.9.6 shelving record = metamorphic gate failure +
-  #834/#895 deterministic coverage. Recipe branch `feat/901-run1-bare-street-bsplice`.
-- **#900 splice safety gate: PR #911 MERGED.** Codepoint-overlap assertion + report artifact +
-  CONTRIBUTING rule; 4/4 tests.
-- **PR #913 (open, CI running):** #905 acceptance rows → gauntlet as `improvement_target` under
-  the new **#912** finding (below). Gauntlet verdict on main: PASS (15/20 gated + 6 tracked).
-- **OA fetch ×8 → 5 landed** (ES 15.6M / NL 9.1M / CH 2.8M / NO 3.6M / HR 1.7M rows, ALL
-  city-bearing; agent dodged a city-less legacy NO trap). IE/GB/HU: **no OA source exists**
-  (proprietary registers) — a real answer for the SCOPE tier table. 1k panel sets BUILT for all
-  five (sparse-region buckets needed --per-bucket raise for ES/NL/CH/HR).
-- **PL/SK/SI post-#910 baselines dumped** (`gate-v193/{pl,sk,si}-905-base`).
+**Merged to main (6):**
 
-## Findings (the night's real product)
+- **#911** — #900 splice safety gate: codepoint-overlap assertion + per-locale report artifact in
+  `tokenizer_splice.py`, gate rule in CONTRIBUTING (4/4 tests, incl. report-written-before-raise).
+- **#913** — #905 bare-namesake acceptance rows into the gauntlet as `improvement_target` under
+  **#912** (the cascade findings, below).
+- **#915** — **Tier-3 panel sweep complete**: ES 98.7%/1.99 km, NL 95.7%/1.83, CH 91.9%/0.70,
+  HR 99.6%/0.76, DK 91.1%/0.77, FI 98.7%/1.46 (n=1000 each; DK/FI via a new spatial CITY-fill);
+  SCOPE tiers rewritten to the measured table. Fourteen locales now tier-2-paneled; unmeasurable
+  remainder is IE/GB/HU (no OA source exists).
+- **#917** — **production hotfix**: the v5.0.0 acronym sweep had renamed Docusaurus's external
+  `siteConfig.baseUrl` key → the LIVE demo served `undefined…` sqljs/SW/prefetch paths since
+  July 1. Found by an agent's typecheck, verified against the live page, deployed, and the live
+  page RE-VERIFIED repaired (`undefinedmailwoman` count 0). Also fixed `PipelineExplorer`'s dead
+  pre-#861 `runCascade` call.
+- **#919** — SCOPE truth fix: the NO-tail caps hypothesis I wrote earlier the same night was
+  read-falsified (0/208 offenders caps) and corrected to the namesake/coverage family.
+- Plus the night's harness additions on the campaign branch (`--postcode-consistency` pin,
+  multi-shard `--wof-db`, `si-bare-village` recipe + exporter, v1.9.8/v1.9.9 configs, sync fns).
 
-1. **#912 (filed): bare famous city names defeat the #910 fix through the production cascade.**
-   The whole-string placer is OOD on single bare localities (Paris→IT .35, Dublin→DE .46,
-   Melbourne→GB .66, Vancouver→IT .53 — all wrong, all sub-hard-threshold) and its WRONG soft
-   posterior re-ranks the exact tier; the geocode CLI separately inherits defaultCountry=US from
-   the en-US locale; within US scope, alias-exact **Paris Township OH (30k)** out-ranks name-exact
-   **Paris TX (25k)** (placetype-prominence defect, pre-existing). Sub-finding: "Åbo" parses to
-   locality="bo" — classifier drops the leading diacritic (normalize is clean); #897 family.
-2. v1.9.8 runs FAST on the fine-tune idiom: 2k probe ≈ 4.4 min A100. Budget barely dented.
+**Flagged for operator review (not merged):** **#914** (ES/IT/NL order shards + goldens +
+format-diversity findings — agent), **#916** (the missing multi-service recipe + recipes nav —
+voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 
-## Run 2 + the fork (mid-shift update)
+**Model artifacts:** none promoted, by design and by verdict — see below.
 
-- **Run 2 (v1.9.9 + si-bare-village) KILLED at 6k as pre-registered:** probe 2k moved the failure
-  slice 0→19/37 (mechanism works) but FR sat at 36/40; the one bounded extension to 6k (bars
-  unchanged, kill explicit) read FR flat and SI **regressed to 13/37** — the counter-shard loses
-  to the fr-shard gradient at convergence. Stopped; **fork posted to #901** (recommended shape:
-  ONE unified bare-name-comma shard family — FR streets + SI villages + CZ Praha districts — over
-  weight-rebalance treadmilling). US stayed byte-identical through every checkpoint of both runs.
-- **Honest correction (#829):** the case-aug drop rationale overstated #895's coverage — its
-  detection gate is ALL-CAPS-only; the metamorphic lowercase xfails still fail on current main.
-  The v1.9.6 shelving stands on its own regressions; #829 remains open and uncovered.
-- **Tier-3 panels, pass 2:** ES 98.7%/1.99km, NL 95.7%/1.83, CH 91.9%/0.70, HR 99.6%/0.76 (all
-  tier-2-class), NO 86.9% with a 454km p90 tail (UPPERCASE non-ASCII poststed — outside the
-  ASCII caps gate; a resolve-side case-fold candidate). Tier-3 unverified now = DK/FI (spatial
-  fill in flight) + IE/GB/HU (no OA source).
+## The model campaign: two runs, two falsifications, one fork
 
-## Second half of the shift (through ~08:30 UTC)
+- **Run 1 (v1.9.8** — fr-bare-street alone on the shipped spliced base, case-aug excluded on the
+  v1.9.6 shelving record): probe PASS (FR bare 90→93%, US 12-row spot byte-identical). Full 12k +
+  sweet-spot scan: FR plateaus 93% through 10k; **full gate at 10k: US/CZ/PL/SK ni PASS, SI ni
+  FAIL** (−3.4pp resolve; 37 rows, all the Slovenian no-street "Village N, Postcode Village" form —
+  "Apače 108" → street "Apače 10" + house "8"); intrinsic by 6k. The 12k corpus-val jump (macro
+  .725→.739) was disregarded as a gate input — label-F1 on the training distribution.
+- **Run 2 (v1.9.9** — + `synth-si-bare-village`, 6,285 real OA SI tuples, counter-polarity):
+  probe FAILED as registered (SI lost-rows 0→19/37, bar 30; mechanism works, under-converged).
+  ONE bounded extension to 6k, bars unchanged, kill explicit: **SI regressed 19→13/37 — kill
+  fired.** Two compositions, one knob, no resolution → treadmill-guard shape → **fork posted to
+  #901** (weight grid / drop the shard / unified bare-name-comma family across FR+SI+CZ / fold
+  into a day campaign with #914). Recommendation: the unified family — the mechanism is identical
+  in all three, only the leading name's referent differs.
+- US stayed byte-identical through every checkpoint of both runs. Notable historical correction:
+  v1.9.4 (the demo-only v4.16 model) was never SI-measured — its damage was invisible until the
+  SI sets existed (two days old).
 
-- **Tier-3 panel sweep COMPLETE (PR #915):** ES 98.7%/1.99 km, NL 95.7%/1.83, CH 91.9%/0.70,
-  HR 99.6%/0.76, DK 91.1%/0.77, FI 98.7%/1.46 — every `country_weights` locale with obtainable
-  data is now coordinate-paneled; SCOPE tiers 2/3 rewritten to the measured table. DK/FI needed a
-  spatial CITY-fill; en route: the gap-fill gazetteer rows carry **degenerate point-bboxes**
-  (containment matched 0/103,543 — windowed nearest-centroid is the working join).
-- **#473 dispatched** (agent): TW postcode→admin from Overture + JP Overture eval gold, gates from
-  the issue. **#818 dispatched** (agent): recipe docs in house voice, PR flagged for voice review.
-- Sensors mystery resolved: `sensors` works but `coretemp` isn't loaded and modprobe needs sudo —
-  operator item; Modal-first held all night.
-- Friction worth recording: a `pkill -f <script>` matched its own background shell's command line
-  and killed it (exit 144) — cost ~20 min; pattern-match pkill against argv you also occupy.
+## The taxonomy arc (the night's biggest strategic finding)
 
-## Production find + hotfix (hour 3.5)
+1. **Cross-locale offender taxonomy** over all 14 panels (posted to #375): the non-US tail is
+   **namesake collision, not coverage** — FI 300/1k, DK 167, CZ/SK 131, HR 94, SI 91, PL 75
+   namesake rows vs single-digit unique-misses. US: 13/2000 (its region tokens + adminCoherence
+   already do this job; EU formats carry no region token).
+2. The shaped lever **already exists**: `postcodeConsistency` (#370 lever A, default-off).
+3. Pre-registered experiment (FI/CZ, flag ON): **NULL — byte-identical.** Mechanism: the pass
+   needs a RESOLVED postcode node, and `postalcode-intl.db` covers **NL/DE/FR/ES/IT only** — zero
+   rows for every namesake-heavy locale. **The lever is data-starved exactly where the tail
+   lives.** → **#920** filed: extend the postalcode shard (GeoNames postal per-country, open +
+   small), re-run the pre-registration, then the default-flip evaluation. Recommended next-night
+   primary; attacks 60–300 rows/1k per locale at zero GPU — bigger than any parse shard on the
+   board, including the #901 fork.
 
-- **The live demo has been silently degraded since v5.0.0 (July 1):** the acronym sweep renamed
-  Docusaurus's EXTERNAL `siteConfig.baseUrl` key to `.baseURL` (undefined at runtime) — sqljs
-  worker base, SW registration, and prefetch hints all built `undefined…` paths. Found by the
-  #818 agent's typecheck; **verified against the live page** (`curl …/demo/` renders
-  `href=undefinedmailwoman/sqljs/index.js`); hotfixed as PR #917, MERGED, deploy green, and the LIVE PAGE RE-VERIFIED repaired
-  (undefinedmailwoman count 0; prefetch reads /mailwoman/sqljs/index.js). Also fixes
-  `PipelineExplorer`'s dead pre-#861 five-arg `runCascade` call.
-  Class note: the sweep's own AGENTS.md rule exempts external library keys — this was the rule's
-  named failure mode, caught only because docs/ typecheck ran tonight. Candidate follow-up: wire
-  `docs` typecheck into CI (it was 7 errors red on main and nobody knew).
-- **#818 delivered (PR #916):** the agent verify-before-verdicted the issue itself — 5/6 recipes
-  had already shipped (#850/#854); it wrote only the missing multi-service/cost-first piece +
-  recipes nav wiring. Voice review = operator.
+## What went well
+
+- **Gates killed two plausible-looking runs** and each kill produced a mechanism, not a shrug.
+  Total GPU for both falsifications ≈ $4.
+- **Verify-before-verdict fired four times on MY OWN claims:** the probe grade that was secretly
+  the baseline (missing ONNX download), the caps-tail hypothesis (read-falsified same night, #919),
+  the case-aug coverage claim (#829 correction — `normalizeCase` is caps-only), and the
+  postcodeConsistency null (traced to data, not plumbing).
+- **Agents compounding:** four dispatched, four delivered (OA fetch ×5 countries incl. a
+  city-less-trap dodge; #914 with real format-audit findings; #473 at gate with two WOF-TW data
+  findings; #916 which verify-before-verdicted its own issue and then caught the live demo bug).
+- Salvage-first: the night's biggest lever candidate was an existing flag; the SI shard rode the
+  existing recipe scaffold; DK/FI panels rode the existing R-tree.
+
+## What could've gone better
+
+- **Run-1's probe gate lacked the failure slice that later killed it.** The SI leg existed as
+  data (the sets were built nights ago) but wasn't in the probe registration. Fixed for run 2;
+  rule of thumb: a probe gate should include every locale the full gate will grade, at reduced n.
+- A `pkill -f <script>` matched its own background shell's argv and killed it (exit 144, ~20 min
+  lost). Pattern-pkill against argv you also occupy.
+- My first export fetch graded the SHIPPED baseline as the probe (silent volume-get failure +
+  fail-open linker path). The md5/guard discipline caught it, but the linker's missing-source path
+  should probably hard-fail rather than warn when MAILWOMAN*DEV*\* is set.
+- Docs typecheck was 7-errors-red on main and nobody knew (the #917 bug lived there). Candidate:
+  wire `docs` typecheck into CI.
+- Clock discipline: I mis-read local-vs-UTC twice early in the shift (harmless, but the ledger
+  timestamps wobbled until corrected).
 
 ## Decisions made autonomously
 
-- Case-aug excluded from run 1 (scar re-derivation: v1.9.6 gate-fail conditions still hold —
-  STRONGER post-#895). Recorded in plan + gate log + config header.
-- #905 gauntlet rows re-scoped from `pass` to `improvement_target` when the cascade flipped them —
-  suite stays green, class stays visible, #912 carries the fix.
-- init_from (not resume) for run 1 — the surgery export has no optimizer state; v1.9.7 precedent.
+- Case-aug excluded from run 1 (v1.9.6 shelving conditions re-derived, still binding) — later
+  partially corrected on #829: the deterministic cover is caps-only; the shelving stands on its
+  own regressions regardless.
+- init_from (not resume) for the campaign — the surgery export carries no optimizer state;
+  v1.9.7 idiom.
+- Run-2's bounded 6k extension after a probe FAIL (bars unchanged, kill explicit) — spent $0.5 to
+  distinguish under-convergence from non-convergence; the kill then fired honestly.
+- #917 split-and-merged as production REPAIR under tonight's merge mode (distinct from the
+  demo-default wall; live breakage verified before and after).
+- #920 scoped as a filed follow-up rather than a rushed night build (canonical-adjacent data
+  artifact + blind heat monitoring at hour 4 = wrong conditions).
 
 ## Open questions for the operator
 
-- #912 direction: placer abstention on bare single-locality inputs (query-shape-gated) + exact-tier
-  placetype prominence. Needs a gate; not night work.
+1. **The #901 fork** — recommendation: option 3 (unified bare-name-comma shard family), weighed
+   against the taxonomy finding that the resolver-side #920 lever likely dominates it on impact.
+2. **#920 as next-night primary?** The full arc is pre-registered and CPU-only.
+3. Review queue, in merge order: **#918** (TW/JP data + convention row), **#914** (run-2 shards),
+   **#916** (voice pass on one recipe).
+4. **#912 direction** (placer abstention on bare single-locality inputs + exact-tier placetype
+   prominence + CLI locale-defaultCountry) — needs a gate design.
+5. Morning chores: Modal `output-v05x/v06x` dirs deletion proposal; `coretemp` modprobe (sudo);
+   docs-typecheck-in-CI.
 
-## Ledger (updated through the shift)
+## Concrete next steps
 
-| item          | value                                                                     |
-| ------------- | ------------------------------------------------------------------------- |
-| Modal spend   | ~$1 so far (probe 4.4 min + sync/export; full run ~20 min A100 in flight) |
-| Runs launched | probe (done, PASS) + full run 1 (in flight)                               |
-| NaN incidents | 0                                                                         |
-| PRs           | #911 merged; #913 open (CI)                                               |
-| Panels        | 5 sets built (ES/NL/CH/NO/HR), grading queued behind run-1 battery        |
+- #920: GeoNames-postal shard extension → re-run the FI/CZ pre-registration → default-flip eval.
+- #901 fork decision → run 3 design (if option 3: one recipe over FR/SI/CZ with balanced polarity,
+  probe gate includes ALL graded locales at reduced n).
+- #294 is unblocked by #918's TW table (after review/merge).
+- v198/v199 volume outputs kept for the fork review; propose cleanup WITH the v05x dirs after.
+
+## Numbers
+
+| item                        | value                                                                 |
+| --------------------------- | --------------------------------------------------------------------- |
+| Shift                       | 05:56 → 16:00 UTC                                                     |
+| Modal spend                 | ≈ $4–5 of $30 (2 training runs, 2 probes, ~8 exports/quants, syncs)   |
+| Training                    | v1.9.8 (2k+10k, falsified at full gate), v1.9.9 (2k+4k, killed at 6k) |
+| NaN incidents               | 0                                                                     |
+| GPU lost to error           | 0                                                                     |
+| PRs merged                  | 6 (#911 #913 #915 #917 #919 + format sweep)                           |
+| PRs flagged for review      | 3 (#914 #916 #918)                                                    |
+| Issues filed                | #912, #920                                                            |
+| Issue records posted        | #901 fork, #897 diagnostic, #375 taxonomy, #829 correction, #473 gate |
+| Panels added                | 9 locales (ES NL CH NO HR DK FI + BE SE) — Tier-3 sweep closed        |
+| Production incidents        | 1 found (live since Jul 1), fixed, deployed, re-verified              |
+| Verification (end of shift) | gauntlet PASS · metamorphic PASS (6 tracked) · 1,441 tests green      |
