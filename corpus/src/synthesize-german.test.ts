@@ -146,4 +146,65 @@ describe("NL postcode normalization", () => {
 		const de = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll })!
 		expect(de.components.postcode).toBe("12623")
 	})
+	it("postcodeShape: as-source keeps OA's glued NL form (the eval's observed shape, #241)", () => {
+		const row = synthesizeLocaleRow(NL, "NL", { random: keepAll, postcodeShape: "as-source" })!
+		expect(row).not.toBeNull()
+		expect(row.components.postcode).toBe("1011AB")
+		expect(row.raw).toContain("1011AB Amsterdam")
+	})
+	it("postcodeShape: conventional (and the default) space the two-letter suffix", () => {
+		const explicit = synthesizeLocaleRow(NL, "NL", { random: keepAll, postcodeShape: "conventional" })!
+		expect(explicit.components.postcode).toBe("1011 AB")
+		expect(explicit.raw).toBe(synthesizeLocaleRow(NL, "NL", { random: keepAll })!.raw)
+	})
+})
+
+describe("nativeHouseJoin (#241 — ES street→house join diversity)", () => {
+	const MADRID: LocaleBaseTuple = {
+		house_number: "12",
+		street: "Calle Mayor",
+		locality: "Madrid",
+		postcode: "28013",
+	}
+	it("space collapses the ES template's comma join to the OA/eval space join", () => {
+		const template = synthesizeLocaleRow(MADRID, "ES", { random: keepAll })!
+		const spaced = synthesizeLocaleRow(MADRID, "ES", { random: keepAll, nativeHouseJoin: "space" })!
+		expect(template.raw).toBe("Calle Mayor, 12, 28013 Madrid")
+		expect(spaced.raw).toBe("Calle Mayor 12, 28013 Madrid")
+		expect(spaced.components).toEqual(template.components) // same components — only the surface join moves
+	})
+	it("is a no-op for templates that already space-join (DE)", () => {
+		const spaced = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, nativeHouseJoin: "space" })!
+		expect(spaced.raw).toBe(synthesizeLocaleRow(BERLIN, "DE", { random: keepAll })!.raw)
+	})
+	it("is ignored for international order (already house-first, space-joined)", () => {
+		const intl = synthesizeLocaleRow(MADRID, "ES", { random: keepAll, order: "international" })!
+		const intlSpace = synthesizeLocaleRow(MADRID, "ES", {
+			random: keepAll,
+			order: "international",
+			nativeHouseJoin: "space",
+		})!
+		expect(intlSpace.raw).toBe(intl.raw)
+	})
+	it("still aligns to BIO after the join collapse", () => {
+		const row = synthesizeLocaleRow(MADRID, "ES", { random: keepAll, nativeHouseJoin: "space" })!
+		const canonical = { ...row, country: "ES", source: "synth-es", source_id: "synth-es:test" } as CanonicalRow
+		const aligned = alignRow(canonical)
+		expect(aligned.kind).toBe("labeled")
+	})
+	it("consumes no extra RNG draw (defaults unchanged for a given sequence)", () => {
+		const seq = () => {
+			let i = 0
+			const vals = [0.1, 0.2, 0.3, 0.4]
+
+			return () => vals[i++ % vals.length]!
+		}
+		const withoutOpts = synthesizeLocaleRow(MADRID, "ES", { random: seq() })!
+		const withDefaults = synthesizeLocaleRow(MADRID, "ES", {
+			random: seq(),
+			nativeHouseJoin: "template",
+			postcodeShape: "conventional",
+		})!
+		expect(withDefaults.raw).toBe(withoutOpts.raw)
+	})
 })

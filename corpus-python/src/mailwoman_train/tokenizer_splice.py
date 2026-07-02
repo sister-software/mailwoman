@@ -166,8 +166,6 @@ def verify_source_identical(base_tokenizer: Path, spliced_tokenizer: Path, probe
         )
 
 
-
-
 def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) -> set[str]:
     """The set of non-ASCII codepoints in a locale sample file (first ``cap_bytes``, utf-8, errors ignored).
 
