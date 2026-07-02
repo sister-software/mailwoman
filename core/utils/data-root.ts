@@ -40,10 +40,11 @@ export function dataRootPath(...segments: string[]): string {
  * `--data-root` option through). A fresh array each call; callers filter with `existsSync`, so a deployment without the
  * tail shard degrades to the pre-#920 pair.
  */
-export function wofShardPaths(dataRoot: string = mailwomanDataRoot()): [string, string, string] {
+export function wofShardPaths(dataRoot: string = mailwomanDataRoot()): [string, string, string, string] {
 	return [
 		String(resolvePathBuilder(dataRoot, "wof", "admin-global-priority.db")),
 		String(resolvePathBuilder(dataRoot, "wof", "postalcode-us.db")),
 		String(resolvePathBuilder(dataRoot, "wof", "postalcode-geonames-tail.db")),
+		String(resolvePathBuilder(dataRoot, "wof", "postalcode-intl.db")),
 	]
 }
