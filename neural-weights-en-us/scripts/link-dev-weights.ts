@@ -27,14 +27,15 @@
  *
  *   To make drift impossible to ignore, when the DEFAULT artifacts are used (no
  *   MAILWOMAN_DEV_MODEL / MAILWOMAN_DEV_TOKENIZER override) this script asserts the
- *   linked bytes match EXPECTED_*_MD5 — the md5 of what the demo actually serves at
- *     https://public.sister.software/mailwoman/en-us/<defaultVersion>/{model,tokenizer}
- *   A mismatch FAILS LOUD instead of grading the wrong model.
+ *   linked bytes match the package's own `model-card.json` `files_md5` — the md5s the
+ *   release pipeline re-verifies the PUBLISHED tarball against. A mismatch FAILS LOUD
+ *   instead of grading the wrong model.
  *
- *   ON DEFAULT PROMOTION (releases.json `defaultVersion` bump): update the four
- *   DEFAULT_* values below to the new artifact + its md5 in ONE place. Recompute via:
- *     curl -s https://public.sister.software/mailwoman/en-us/<ver>/model.onnx | md5sum
- *     curl -s https://public.sister.software/mailwoman/en-us/<ver>/tokenizer.model | md5sum
+ *   ON SHIP: bump the two DEFAULT_* paths below to the new artifacts. The md5s are NOT
+ *   duplicated here — they come from model-card.json, which the release-prep PR updates
+ *   anyway. A path bumped without the card (or vice versa) fails the guard immediately;
+ *   the 2026-07-02 v5.1.0 ship missed the path bump here and the duplicated-md5 design
+ *   couldn't catch it (the stale pin was self-consistent — #259's trap, post-release form).
  *   ---------------------------------------------------------------------------
  */
 
@@ -46,19 +47,30 @@ import { fileURLToPath } from "node:url"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-// --- current default (releases.json defaultVersion = v4.16.0) --------------
-// v4.16.0 en-us ships the v1.9.4-fr-bare-street model (step 92000 — v1.9.3a3 resumed
-// with the FR-bare-street shard). These md5s are the authoritative bytes the demo
-// serves at .../mailwoman/en-us/v4.16.0/{model,tokenizer}, so the capability-gate
-// certifies the SHIPPED model. (2026-06-30 #259: pinned off the stale v1.9.3a3
-// step-80000 default, which kept grading v4.15.0's model after v4.16.0 shipped. Bump
-// these two lines on each ship; the #397 guard below only checks self-consistency.)
-const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v194-step-92000-int8.onnx")
-const DEFAULT_MODEL_MD5 = "eb76ae49adab7dc7ca412b306cc1aab6"
-const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
-const DEFAULT_TOKENIZER_MD5 = "b6137e8c52914c9715374268ecaa4bc6"
+// --- current default (npm v5.1.0 = demo defaultVersion v5.1.0) --------------
+// v5.1.0 ships the #884 vocab-splice pair: bsplice-meaninit int8 model + the spliced
+// v0.6.0-bsplice tokenizer (58,582 pieces) — the first coordinated model + tokenizer
+// bump, so BOTH paths moved this ship. Bump these two paths on each ship; the expected
+// md5s live in model-card.json `files_md5` (single source — see the header).
+const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-bsplice-meaninit-int8.onnx")
+const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.6.0-bsplice", "tokenizer.model")
 
 const PKG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+
+// The shipped-bytes truth (#397 guard): the card's files_md5 block, which release Step 4
+// re-verifies against the published tarball — so dev symlinks, the card, and npm agree.
+const CARD = JSON.parse(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8")) as {
+	files_md5?: Record<string, string>
+}
+const DEFAULT_MODEL_MD5 = CARD.files_md5?.["model.onnx"]
+const DEFAULT_TOKENIZER_MD5 = CARD.files_md5?.["tokenizer.model"]
+
+if (!DEFAULT_MODEL_MD5 || !DEFAULT_TOKENIZER_MD5) {
+	console.error(
+		"ERROR (#397 guard): model-card.json has no files_md5.{model.onnx,tokenizer.model} — cannot verify the dev pin."
+	)
+	process.exit(1)
+}
 
 // An explicit override means the caller is deliberately experimenting with a
 // non-default model — skip the hash assertion in that case (but warn loudly).
