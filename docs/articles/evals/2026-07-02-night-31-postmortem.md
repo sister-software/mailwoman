@@ -1,4 +1,4 @@
-# 2026-07-02 → 03 — night 31 postmortem (IN PROGRESS — sketch updated through the shift)
+# 2026-07-02 → 03 — night 31 postmortem
 
 Shift: 05:56 → 16:00 UTC, $30 Modal ceiling, plan `nightshift/2026-07-02-NIGHT-SHIFT-PLAN.md`.
 
@@ -38,6 +38,36 @@ Shift: 05:56 → 16:00 UTC, $30 Modal ceiling, plan `nightshift/2026-07-02-NIGHT
    **Paris TX (25k)** (placetype-prominence defect, pre-existing). Sub-finding: "Åbo" parses to
    locality="bo" — classifier drops the leading diacritic (normalize is clean); #897 family.
 2. v1.9.8 runs FAST on the fine-tune idiom: 2k probe ≈ 4.4 min A100. Budget barely dented.
+
+## Run 2 + the fork (mid-shift update)
+
+- **Run 2 (v1.9.9 + si-bare-village) KILLED at 6k as pre-registered:** probe 2k moved the failure
+  slice 0→19/37 (mechanism works) but FR sat at 36/40; the one bounded extension to 6k (bars
+  unchanged, kill explicit) read FR flat and SI **regressed to 13/37** — the counter-shard loses
+  to the fr-shard gradient at convergence. Stopped; **fork posted to #901** (recommended shape:
+  ONE unified bare-name-comma shard family — FR streets + SI villages + CZ Praha districts — over
+  weight-rebalance treadmilling). US stayed byte-identical through every checkpoint of both runs.
+- **Honest correction (#829):** the case-aug drop rationale overstated #895's coverage — its
+  detection gate is ALL-CAPS-only; the metamorphic lowercase xfails still fail on current main.
+  The v1.9.6 shelving stands on its own regressions; #829 remains open and uncovered.
+- **Tier-3 panels, pass 2:** ES 98.7%/1.99km, NL 95.7%/1.83, CH 91.9%/0.70, HR 99.6%/0.76 (all
+  tier-2-class), NO 86.9% with a 454km p90 tail (UPPERCASE non-ASCII poststed — outside the
+  ASCII caps gate; a resolve-side case-fold candidate). Tier-3 unverified now = DK/FI (spatial
+  fill in flight) + IE/GB/HU (no OA source).
+
+## Second half of the shift (through ~08:30 UTC)
+
+- **Tier-3 panel sweep COMPLETE (PR #915):** ES 98.7%/1.99 km, NL 95.7%/1.83, CH 91.9%/0.70,
+  HR 99.6%/0.76, DK 91.1%/0.77, FI 98.7%/1.46 — every `country_weights` locale with obtainable
+  data is now coordinate-paneled; SCOPE tiers 2/3 rewritten to the measured table. DK/FI needed a
+  spatial CITY-fill; en route: the gap-fill gazetteer rows carry **degenerate point-bboxes**
+  (containment matched 0/103,543 — windowed nearest-centroid is the working join).
+- **#473 dispatched** (agent): TW postcode→admin from Overture + JP Overture eval gold, gates from
+  the issue. **#818 dispatched** (agent): recipe docs in house voice, PR flagged for voice review.
+- Sensors mystery resolved: `sensors` works but `coretemp` isn't loaded and modprobe needs sudo —
+  operator item; Modal-first held all night.
+- Friction worth recording: a `pkill -f <script>` matched its own background shell's command line
+  and killed it (exit 144) — cost ~20 min; pattern-match pkill against argv you also occupy.
 
 ## Decisions made autonomously
 
