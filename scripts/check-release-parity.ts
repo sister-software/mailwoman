@@ -73,11 +73,11 @@ async function readDemoDefaultVersion(): Promise<string> {
 
 function readDocsCurrentVersion(): string {
 	const mdx = readFileSync(RELEASES_MDX_PATH, "utf8")
-	const match = mdx.match(/^\|\s*\*\*([\d.]+)\*\*\s*\(current\)/m)
+	const version = mdx.match(/^\|\s*\*\*([\d.]+)\*\*\s*\(current\)/m)?.[1]
 
-	if (!match) throw new Error(`${RELEASES_MDX_PATH} has no "| **X.Y.Z** (current)" row`)
+	if (!version) throw new Error(`${RELEASES_MDX_PATH} has no "| **X.Y.Z** (current)" row`)
 
-	return normalizeVersion(match[1])
+	return normalizeVersion(version)
 }
 
 const warnOnly = process.argv.includes("--warn-only")
