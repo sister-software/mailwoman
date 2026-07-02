@@ -19,6 +19,7 @@ export const DOCS_SECTIONS: readonly DocsSectionDef[] = [
 	{ id: "startHere", label: "Start here" },
 	{ id: "understanding", label: "Understanding Mailwoman" },
 	{ id: "concepts", label: "Concept deep dives" },
+	{ id: "recipes", label: "Recipes" },
 	{ id: "plan", label: "Implementation plan 🧪" },
 	{ id: "evals", label: "Eval reports" },
 	{ id: "retrospectives", label: "Retrospectives" },
