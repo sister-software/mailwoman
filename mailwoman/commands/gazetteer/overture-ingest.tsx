@@ -128,6 +128,11 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 				await db.run("INSTALL httpfs; LOAD httpfs;")
 				await db.run("INSTALL spatial; LOAD spatial;")
 				await db.run("SET s3_region='us-west-2';")
+				// Modest thread count + a hard memory ceiling: DuckDB's default (all cores) over the
+				// Overture addresses theme OOM-killed this box once (2026-06-19, naive read_parquet).
+				// COPY streams to disk, so the caps cost little; they bound scan parallelism + buffers.
+				await db.run("SET threads=4;")
+				await db.run("SET memory_limit='8GB';")
 
 				const countryParquet = (cc: string) => path.join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
 

@@ -1,1 +1,9 @@
-[]
+[
+	{
+		"wof_id": 85632403,
+		"source": "TW (#473, unblocks #294 — the third CJK block-style system, Direction E): 3-digit Chunghwa Post district codes resolve coordinate-first through postcode-locality-tw.db (postcode_area_resolution), fuzzy name-match as fallback. Byte-identical to WORLD_DEFAULT — recorded explicitly per the #289/#290 pattern so the TW postcode route is a declared convention, not an accident of the default. Gate (2026-07-02): PIP-containment 86.4% on 3,000 held-out Overture points, coord p50 2.5 km.",
+		"convention": {
+			"candidateStrategies": ["postcode_area_resolution", "fallback_fuzzy_name_match"]
+		}
+	}
+]
