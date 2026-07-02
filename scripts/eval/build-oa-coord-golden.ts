@@ -118,6 +118,13 @@ async function main(): Promise<void> {
 			n: { type: "string", default: "150" },
 			"per-bucket": { type: "string", default: "8" },
 			seed: { type: "string", default: "722" },
+			// Per-bucket seeded reservoir sampling over the FULL stream, instead of the default
+			// first-per-bucket-rows fill. The default fill takes each bucket's rows from wherever the
+			// bucket key first appears in file order — for municipality-ordered dumps (OA CZ/PL) that
+			// concentrates every bucket on one city, which under-disperses the localities the
+			// wrong-city% metric needs (#291). Reservoir mode streams everything (no early stop), so it
+			// costs a full pass; row selection stays deterministic per seed + input order.
+			reservoir: { type: "boolean", default: false },
 		},
 	})
 
@@ -133,8 +140,10 @@ async function main(): Promise<void> {
 	const perBucket = Number(values["per-bucket"])
 	const seed = Number(values.seed)
 
+	const reservoir = values.reservoir
 	const rng = new SeededRandom(seed)
 	const buckets = new Map<string, Bucketed[]>()
+	const bucketSeen = new Map<string, number>()
 
 	async function* rowStreams(): AsyncGenerator<Record<string, string | undefined>> {
 		if (values.zip) {
@@ -170,12 +179,28 @@ async function main(): Promise<void> {
 			buckets.set(key, bucket)
 		}
 
-		if (bucket.length < perBucket) {
-			bucket.push({ street: titlecaseIfUpper(street), num, cp, city: titlecaseIfUpper(city), lat, lon })
-			total += 1
-		}
+		if (reservoir) {
+			// Algorithm R per bucket: every valid row in the stream has an equal chance of a slot.
+			const seen = (bucketSeen.get(key) ?? 0) + 1
+			bucketSeen.set(key, seen)
 
-		if (total >= n * 2) done = true
+			if (bucket.length < perBucket) {
+				bucket.push({ street: titlecaseIfUpper(street), num, cp, city: titlecaseIfUpper(city), lat, lon })
+			} else {
+				const j = rng.randint(0, seen - 1)
+
+				if (j < perBucket) {
+					bucket[j] = { street: titlecaseIfUpper(street), num, cp, city: titlecaseIfUpper(city), lat, lon }
+				}
+			}
+		} else {
+			if (bucket.length < perBucket) {
+				bucket.push({ street: titlecaseIfUpper(street), num, cp, city: titlecaseIfUpper(city), lat, lon })
+				total += 1
+			}
+
+			if (total >= n * 2) done = true
+		}
 	}
 
 	const rows: Record<string, unknown>[] = []
