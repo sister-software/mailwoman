@@ -45,6 +45,14 @@ const ParseConfigSchema = zod.object({
 				"Requires --resolve. Defaults from --locale's region subtag (en-US → US); pass 'none' to disable " +
 				"the filter and let ranking alone decide."
 		),
+	adminCoherence: zod
+		.boolean()
+		.optional()
+		.default(true)
+		.describe(
+			"Joint admin-consistency re-pick during --resolve (#263/#822: 'Portland, ME' binds to Maine, not Messina). " +
+				"ON by default (#895); pass --no-admin-coherence to restore the greedy population-first ranking."
+		),
 	isolated: zod
 		.boolean()
 		.optional()
@@ -301,12 +309,14 @@ async function resolveWithCandidates(
 	tree: AddressTree,
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<AddressTree> {
-	const opts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
+	const opts: { candidatesPerLookup?: number; defaultCountry?: string; adminCoherence?: boolean } = {}
 
 	if (options.candidates !== undefined) opts.candidatesPerLookup = options.candidates + 1
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 	if (dc) opts.defaultCountry = dc
+	// #895: the library default is ON; only the explicit --no-admin-coherence pin needs threading.
+	if (options.adminCoherence === false) opts.adminCoherence = false
 
 	return resolver.resolveTree(tree, opts)
 }

@@ -57,7 +57,8 @@ export interface PipelineOpts {
 	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps registry/compliance
 	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-gated
 	 *
-	 * - Off by default → byte-stable for mixed-case input.
+	 * - **Default-ON** (#895 settled drift D2; the classifier applies it when unset) — byte-stable for mixed-case input
+	 *   either way. Pass `false` to restore the raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -197,7 +198,8 @@ export interface ClassifierOpts {
 	postcodeRepair?: boolean
 	/**
 	 * #690: title-case a detected all-caps ASCII input before the model (all-caps registry/compliance data is partly
-	 * OOD). Detection-gated — mixed-case + non-ASCII input is untouched. Off by default.
+	 * OOD). Detection-gated — mixed-case + non-ASCII input is untouched. **Default-ON** (#895 settled drift D2); `false`
+	 * restores the raw-case parse.
 	 */
 	normalizeCase?: boolean
 }

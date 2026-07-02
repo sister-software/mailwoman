@@ -83,8 +83,9 @@ export interface CreateRuntimePipelineOpts {
 	ruleProposer?: RuntimePipelineStages["ruleProposer"]
 	/**
 	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII input before the
-	 * model (helps on all-caps registry/compliance data; detection-gated, mixed-case untouched). Off by default. A
-	 * per-call `runOpts.normalizeCase` overrides this.
+	 * model (helps on all-caps registry/compliance data; detection-gated, mixed-case untouched). The classifier is
+	 * **default-ON** since #895 (drift D2 settled), so leaving this unset runs it; set `false` here to pin the raw-case
+	 * parse for every call. A per-call `runOpts.normalizeCase` overrides this.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -175,8 +176,10 @@ export function createRuntimePipeline(
 		const factoryHardPlaceCountry = opts.hardPlaceCountry ?? true
 		let effectiveRunOpts = runOpts
 
-		if (opts.normalizeCase && effectiveRunOpts?.normalizeCase === undefined) {
-			effectiveRunOpts = { ...effectiveRunOpts, normalizeCase: true }
+		// Propagate the factory pin in BOTH directions (#895): the classifier is default-ON now, so an
+		// explicit factory `false` must reach it — swallowing false would break the opt-out.
+		if (opts.normalizeCase !== undefined && effectiveRunOpts?.normalizeCase === undefined) {
+			effectiveRunOpts = { ...effectiveRunOpts, normalizeCase: opts.normalizeCase }
 		}
 
 		if (factoryHardPlaceCountry && effectiveRunOpts?.hardPlaceCountry === undefined) {

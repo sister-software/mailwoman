@@ -97,22 +97,37 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 		expect(m, `expected a NYC-range locality coordinate, got:\n${stdout}`).not.toBeNull()
 	})
 
-	test("--default-country none is a real opt-out: it flips a US namesake to its more-populous foreign twin", async () => {
-		// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor). With the
-		// en-US hint, "Paris" resolves to Paris, TEXAS (lat ~33.7); drop the hint with
-		// `--default-country none` and the global ranking picks the far-more-populous Paris, FRANCE
-		// (lat ~48.9). Same input, different country scope, demonstrably different place — the opt-out is
-		// real and observable. (Replaces the old NY→Scotland example, which #595 found no longer flips.)
+	test("--default-country scoping is a real mechanism: US vs FR flips the resolved namesake", async () => {
+		// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor). The en-US
+		// default scopes "Paris" to Paris, TEXAS (~33.7°N); an explicit `--default-country FR` scopes it to
+		// Paris, FRANCE (~48.9°N). Same input, different country scope, demonstrably different place.
+		// HISTORY: this probe used `--default-country none` and asserted the unscoped ranking picks the
+		// more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead). That premise
+		// broke on current gazetteer artifacts — unscoped ranking now keeps US namesakes (#905, pre-existing
+		// on main, invisible in CI because this suite needs the lab DB). Probing an EXPLICIT scope flip tests
+		// the same mechanism without depending on global-ranking policy. adminCoherence is pinned off so the
+		// probe observes scoping alone (default-ON since #895 — asserted separately below).
 		const usLat = localityLat((await run("Paris, TX")).stdout)
-		const noneLat = localityLat((await run("Paris, TX", ["--default-country", "none"])).stdout)
+		const frLat = localityLat((await run("Paris, TX", ["--default-country", "FR", "--no-admin-coherence"])).stdout)
 
 		expect(usLat, "expected a Paris locality under the en-US default").not.toBeNull()
-		expect(noneLat, "expected a Paris locality under --default-country none").not.toBeNull()
-		// Default → Paris, Texas (≈ 33.7°N); opt-out → Paris, France (≈ 48.9°N).
+		expect(frLat, "expected a Paris locality under --default-country FR").not.toBeNull()
+		// Default → Paris, Texas (≈ 33.7°N); FR scope → Paris, France (≈ 48.9°N).
 		expect(usLat!).toBeGreaterThan(32)
 		expect(usLat!).toBeLessThan(36)
-		expect(noneLat!).toBeGreaterThan(45)
-		// The point of the test: the opt-out changed the resolved place.
-		expect(usLat).not.toBe(noneLat)
+		expect(frLat!).toBeGreaterThan(45)
+		// The point of the test: the scope changed the resolved place.
+		expect(usLat).not.toBe(frLat)
+	})
+
+	test("adminCoherence (default-ON, #895) binds a namesake to its region token even with no country scope", async () => {
+		// The #833 class: with coherence ON (the default), "Paris, TX" under `--default-country none`
+		// stays Paris, TEXAS — the region token wins over the more-populous foreign twin. This is the
+		// behavior the greedy probe above must pin OFF to observe raw ranking.
+		const lat = localityLat((await run("Paris, TX", ["--default-country", "none"])).stdout)
+
+		expect(lat, "expected a Paris locality").not.toBeNull()
+		expect(lat!).toBeGreaterThan(32)
+		expect(lat!).toBeLessThan(36)
 	})
 })

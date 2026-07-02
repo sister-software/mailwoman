@@ -513,7 +513,8 @@ async function safeClassify(
 	normalizeCase?: boolean
 ): Promise<AddressTree> {
 	try {
-		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase off by default.
+		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
+		// default-ON at the classifier since #895 (unset runs it; explicit false pins the raw-case parse).
 		return await classifier.parse(text, { queryShape, fst, postcodeRepair: true, normalizeCase })
 	} catch {
 		return { raw: text, roots: [] }
