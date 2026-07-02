@@ -44,6 +44,12 @@
  *   locality resolution is ON by default (no-op where the candidate table has no rows, e.g. US).
  *   Pass `--wof <admin.db>` alone for the admin-only baseline, or append a postcode shard
  *   (postalcode-*.db) to also resolve the postcode node.
+ *
+ *   `--anchor-off` (#887) ablates the model's postcode-anchor INPUT channel — the sanctioned,
+ *   declared ablation (`overrides.anchor=false` through createScorer, warn-not-throw per the #718
+ *   fail-closed gate). de-order-eval.ts uses it for the 2x2 anchor-OFF column; the old
+ *   empty-anchor.json idiom (a lookup that parses to size 0) is refused by the gate. Distinct from
+ *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -338,6 +344,14 @@ async function main(): Promise<void> {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const modelAnchorPath = arg("model-anchor-lookup", "")
 	const ablateToAnchor = process.argv.includes("--ablate-to-anchor")
+	// `--anchor-off` (#887): the sanctioned anchor ablation — `overrides.anchor=false` through
+	// createScorer (a loud warning, not a throw). Replaces the pre-#718 empty-anchor.json idiom,
+	// which the fail-closed gate now refuses (an empty lookup parses to size 0 → UnfedChannelError).
+	const anchorOff = process.argv.includes("--anchor-off")
+	const overrides: import("@mailwoman/neural/scorer").ScorerOverrides = {
+		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
+		...(anchorOff ? { anchor: false } : {}),
+	}
 	const neural = await createScorer({
 		modelPath: arg("model"),
 		tokenizerPath: arg("tokenizer"),
@@ -345,13 +359,17 @@ async function main(): Promise<void> {
 		...(modelAnchorPath ? { anchorLookupPath: modelAnchorPath } : {}),
 		strict: true,
 		tier: "server",
-		...(ablateToAnchor ? { overrides: { gazetteer: false, conventions: false } } : {}),
+		...(ablateToAnchor || anchorOff ? { overrides } : {}),
 	})
 	console.error(
 		ablateToAnchor
 			? "[scorer] ABLATED to anchor-only (gazetteer + conventions OFF) — #722 before/after baseline"
 			: "[scorer] full ship-config via createScorer (anchor + gazetteer + conventions=auto + suppress)"
 	)
+
+	if (anchorOff) {
+		console.error("[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor=false, #887 declared ablation)")
+	}
 
 	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
 	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
