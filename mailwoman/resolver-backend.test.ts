@@ -24,8 +24,12 @@ afterEach(() => {
 	for (const k of ENV_KEYS) setEnv(k, original[k])
 })
 
-test("wofShardPaths: builds the admin + postcode shard paths under a data root", () => {
-	expect(wofShardPaths("/data")).toEqual(["/data/wof/admin-global-priority.db", "/data/wof/postalcode-us.db"])
+test("wofShardPaths: builds the admin + postcode + tail shard paths under a data root (#920)", () => {
+	expect(wofShardPaths("/data")).toEqual([
+		"/data/wof/admin-global-priority.db",
+		"/data/wof/postalcode-us.db",
+		"/data/wof/postalcode-geonames-tail.db",
+	])
 })
 
 test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT, else the lab default; threads into wofShardPaths", () => {
