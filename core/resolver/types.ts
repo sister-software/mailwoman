@@ -354,7 +354,9 @@ export interface ResolveOpts {
 	 * region's same-named candidates. "Portland" descends from Maine, not Messina, so the pair resolves to (Maine,
 	 * Portland-Maine). Generalizes to every country with no country prior and no list. Costs ONE unscoped locality lookup
 	 * per triggering admin pair; only fires where a locality fell through, so the well-resolved path is byte-identical.
-	 * Needs {@link ResolverBackend.ancestors}; no-op without it. Default-off + byte-stable when unset.
+	 * Needs {@link ResolverBackend.ancestors}; no-op without it. **Default-ON** (#895 settled drift D1 — the geocode path
+	 * had run it since #837 while raw `resolveTree` callers silently didn't); byte-stable wherever nothing fell through
+	 * or the backend lacks `ancestors`. Pass `false` to opt out.
 	 */
 	adminCoherence?: boolean
 	hierarchyCompletion?: boolean

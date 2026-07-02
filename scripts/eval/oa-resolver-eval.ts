@@ -478,11 +478,19 @@ async function main(): Promise<void> {
 		return false
 	}
 
-	// #690: --normalize-case title-cases all-caps input before the model (detection-gated). Off by default.
+	// #690/#895: normalizeCase is tri-state so a gate leg can PIN either side of the library default
+	// (default-ON at the classifier since #895). `--normalize-case` pins ON, `--raw-case` pins OFF,
+	// neither = the library default. Silent config shifts in a gate battery are the #718 sin — pin
+	// explicitly in pre-registered legs.
 	const normalizeCase = process.argv.includes("--normalize-case")
-	const parseOpts = { postcodeRepair: true, ...(normalizeCase ? { normalizeCase: true } : {}) } as Parameters<
-		typeof neural.parse
-	>[1]
+		? true
+		: process.argv.includes("--raw-case")
+			? false
+			: undefined
+	const parseOpts = {
+		postcodeRepair: true,
+		...(normalizeCase !== undefined ? { normalizeCase } : {}),
+	} as Parameters<typeof neural.parse>[1]
 	// `defaultCountry` is the hard country filter applied to admin lookups when the parse carries no
 	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
@@ -495,9 +503,17 @@ async function main(): Promise<void> {
 	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion =
 		process.argv.includes("--hierarchy-completion") || process.argv.includes("--city-state-fallback")
+	// #895: adminCoherence is default-ON in the resolver now (drift D1 settled). Tri-state pin for gate
+	// legs: `--admin-coherence` ON, `--no-admin-coherence` OFF, neither = the library default.
+	const adminCoherence = process.argv.includes("--admin-coherence")
+		? true
+		: process.argv.includes("--no-admin-coherence")
+			? false
+			: undefined
 	const resolveOpts = {
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
+		...(adminCoherence !== undefined ? { adminCoherence } : {}),
 	}
 
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place

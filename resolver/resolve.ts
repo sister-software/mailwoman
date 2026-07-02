@@ -642,11 +642,12 @@ class WOFResolver implements Resolver {
 			this.#completeRegionRole(state.resolvedRegion, state.resolvedRegionNode)
 		}
 
-		// Admin descendant-consistency (#263): opt-in. Re-pick a (region, locality) pair so the locality
-		// descends from the region — runs BEFORE postcode-consistency (it resolves the locality the postcode
-		// pass may then refine) and before the street tiers (which key off the postcode/street, not the admin
-		// coordinate this adjusts). Byte-stable when `adminCoherence` is unset.
-		if (opts.adminCoherence) {
+		// Admin descendant-consistency (#263): default-ON (#895 settled drift D1; `false` opts out). Re-pick a
+		// (region, locality) pair so the locality descends from the region — runs BEFORE postcode-consistency
+		// (it resolves the locality the postcode pass may then refine) and before the street tiers (which key
+		// off the postcode/street, not the admin coordinate this adjusts). Byte-stable when nothing fell
+		// through or the backend lacks `ancestors`.
+		if (opts.adminCoherence !== false) {
 			await applyAdminCoherence(newRoots, this.#backend)
 			// #822 — same joint-consistency family, inverse trigger: an explicit country token whose resolved
 			// locality landed in the wrong country (the populous US namesake). Runs after the region pass so the

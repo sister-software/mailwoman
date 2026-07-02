@@ -117,7 +117,23 @@ async function main() {
 		tier: "server",
 	})
 	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: wofDB }) as never)
-	const resolveOpts = { defaultCountry: arg("default-country", "FR") }
+	// #895: the library defaults flipped ON (drift D1/D2). Tri-state pins keep gate legs reproducible
+	// against pre-flip baselines: `--no-admin-coherence`/`--raw-case` reproduce the historical config,
+	// no flag = the current library default. Pin explicitly in pre-registered legs (#718 discipline).
+	const adminCoherencePin = process.argv.includes("--admin-coherence")
+		? true
+		: process.argv.includes("--no-admin-coherence")
+			? false
+			: undefined
+	const normalizeCasePin = process.argv.includes("--normalize-case")
+		? true
+		: process.argv.includes("--raw-case")
+			? false
+			: undefined
+	const resolveOpts = {
+		defaultCountry: arg("default-country", "FR"),
+		...(adminCoherencePin !== undefined ? { adminCoherence: adminCoherencePin } : {}),
+	}
 
 	const errs: number[] = []
 	const resolvedErrs: number[] = [] // coordinate error over RESOLVED rows only (unconfounded by the unresolved penalty)
@@ -136,6 +152,7 @@ async function main() {
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
 			enforceWordConsistency: $public.MAILWOMAN_WORD_CONSISTENCY === "1",
+			...(normalizeCasePin !== undefined ? { normalizeCase: normalizeCasePin } : {}),
 		})
 		const flat = decodeAsJSON(tree) as Record<string, string>
 		const goldRegion = row.components?.region as string | undefined

@@ -18,19 +18,19 @@ Enumerated from the option surfaces 2026-07-02 (`CreateRuntimePipelineOpts`, `Pi
 
 ## Default-ON — earned it, or required ship config
 
-| flag                                         | home                                        | since / evidence                                                                                                                                                   |
-| -------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `spanRescore` (+ `spanRescoreGateKm` 50)     | `ResolveOpts`                               | #370 — EU @25km +16pp e2e; promoted to default 2026-06-25. `false` opts out                                                                                        |
-| `hierarchyCompletion`                        | `ResolveOpts`                               | #402/#405 — recovers the dropped locality in dual-role-place addresses                                                                                             |
-| `parentFallback`                             | `ResolveOpts`                               | resolver liveness: one retry without the parent constraint on an empty filtered lookup                                                                             |
-| `placeCountry` (soft prior)                  | `CreateRuntimePipelineOpts` / `GeocodeDeps` | #244 — coarse-placer country router, in-map routing 64.7 → 85.3%; `false` disables                                                                                 |
-| `hardPlaceCountry` (+ `hardCountrySafelist`) | pipeline / geocode-core                     | #743/#194 — coverage-guarded HARD country filter, default-ON since 4.12.0 (population-first ranking can't be out-scored softly for low-pop locales)                |
-| `bridgePunctuationGaps`                      | classifier config                           | required ship config since v4.4.0 (`requires_bridge`) — po_box 60.4 → 89.1; dotted surfaces are corpus-unlabelable                                                 |
-| `addressSystemConventions: "auto"`           | classifier config / scorer                  | required ship config since v4.3.0 (`requires_conventions`) — the locale-head-keyed conventions mask                                                                |
-| `spanProposer`                               | classifier config                           | #518 — Stage-2.7 span-proposal priors; `false` disables                                                                                                            |
-| `strict` (fail-closed channel gate)          | `createScorer`                              | #718 — refuses to grade/serve a model with a declared-but-unfed channel (the zero-fill trap)                                                                       |
-| `normalizeCase` — **geocode path only**      | `GeocodeDeps`                               | #690/#713 — all-caps title-casing; TX locality 90.1 → 99.7, +15% cross-dataset rooftop. ⚠ default-OFF at the pipeline factory and classifier — see drift D2        |
-| `adminCoherence` — **geocode path only**     | `GeocodeDeps`                               | #263/#837 + #822 — joint admin-consistency re-pick + explicit-country coherence; bare "City, Country" 54 → 78%. ⚠ default-OFF in core `ResolveOpts` — see drift D1 |
+| flag                                         | home                                        | since / evidence                                                                                                                                                                                 |
+| -------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `spanRescore` (+ `spanRescoreGateKm` 50)     | `ResolveOpts`                               | #370 — EU @25km +16pp e2e; promoted to default 2026-06-25. `false` opts out                                                                                                                      |
+| `hierarchyCompletion`                        | `ResolveOpts`                               | #402/#405 — recovers the dropped locality in dual-role-place addresses                                                                                                                           |
+| `parentFallback`                             | `ResolveOpts`                               | resolver liveness: one retry without the parent constraint on an empty filtered lookup                                                                                                           |
+| `placeCountry` (soft prior)                  | `CreateRuntimePipelineOpts` / `GeocodeDeps` | #244 — coarse-placer country router, in-map routing 64.7 → 85.3%; `false` disables                                                                                                               |
+| `hardPlaceCountry` (+ `hardCountrySafelist`) | pipeline / geocode-core                     | #743/#194 — coverage-guarded HARD country filter, default-ON since 4.12.0 (population-first ranking can't be out-scored softly for low-pop locales)                                              |
+| `bridgePunctuationGaps`                      | classifier config                           | required ship config since v4.4.0 (`requires_bridge`) — po_box 60.4 → 89.1; dotted surfaces are corpus-unlabelable                                                                               |
+| `addressSystemConventions: "auto"`           | classifier config / scorer                  | required ship config since v4.3.0 (`requires_conventions`) — the locale-head-keyed conventions mask                                                                                              |
+| `spanProposer`                               | classifier config                           | #518 — Stage-2.7 span-proposal priors; `false` disables                                                                                                                                          |
+| `strict` (fail-closed channel gate)          | `createScorer`                              | #718 — refuses to grade/serve a model with a declared-but-unfed channel (the zero-fill trap)                                                                                                     |
+| `normalizeCase`                              | classifier / pipeline / `GeocodeDeps`       | #690/#713 — all-caps title-casing; TX locality 90.1 → 99.7, +15% cross-dataset rooftop. Default-ON everywhere since #895 (drift D2 settled 2026-07-02); `false` restores the raw-case parse      |
+| `adminCoherence`                             | `ResolveOpts` / `GeocodeDeps`               | #263/#837 + #822 — joint admin-consistency re-pick + explicit-country coherence; bare "City, Country" 54 → 78%. Default-ON everywhere since #895 (drift D1 settled 2026-07-02); `false` opts out |
 
 ## Default-OFF — measured, kept as opt-in with a named reason
 
@@ -60,16 +60,16 @@ Enumerated from the option surfaces 2026-07-02 (`CreateRuntimePipelineOpts`, `Pi
 
 ## Known drift (actionable)
 
-- **D1 — `adminCoherence` split-brain:** ON in `geocode-core` (the drop-ins get it), OFF in core
-  `ResolveOpts` (raw `resolveTree` users don't). Disposition: promote to default-ON at the core
-  once #861 lands, so both runtimes flip together with the demo — flipping core first would widen
-  the server↔demo gap #861 exists to close.
-- **D2 — `normalizeCase` split-brain:** ON in `GeocodeDeps`, OFF at the pipeline factory and
-  classifier. Same shape as D1; same disposition (one default, decided at the next
-  consolidation, with the #690 gate numbers re-cited).
-- **D3 — the demo runs none of this** ([#861](https://github.com/sister-software/mailwoman/issues/861)):
-  `runCascade` reimplements a narrower tier order and bypasses `ResolveOpts` entirely, so every
-  resolver-side row above silently does not apply in the browser. This register documents the
-  server; until #861, the demo column is "n/a".
+- **D1 — SETTLED 2026-07-02** ([#895](https://github.com/sister-software/mailwoman/issues/895)):
+  `adminCoherence` is default-ON in core `ResolveOpts` (was geocode-core-only). #861 landed first,
+  so both runtimes flipped together per the original disposition. `false` opts out; `geocode-core`
+  propagates an explicit `deps.adminCoherence: false` downstream so the opt-out survives the new
+  default.
+- **D2 — SETTLED 2026-07-02** ([#895](https://github.com/sister-software/mailwoman/issues/895)):
+  `normalizeCase` is default-ON at the classifier (detection-gated, so mixed-case input is
+  byte-stable either way); the pipeline factory forwards `undefined` and propagates an explicit
+  `false` pin. The #690 gate numbers (TX locality 90.1 → 99.7 on all-caps) carried the flip.
+- **D3 — CLOSED by #861** (2026-07-02): the demo runs the shared `resolveTree`
+  (`CandidateResolverBackend`), so the resolver-side rows above now apply in the browser.
 - **D4 — stale comment:** the demo `_app.tsx` still claims reconcile-runs-since-#427; reconcile
-  was retired (#566). Cleanup rides #861.
+  was retired (#566). Cleanup rides the next demo touch.

@@ -341,10 +341,10 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	const opts: ResolveOpts = {}
 
 	// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment graph.
-	// Default-on for the geocode path (byte-stable on the well-resolved cases — only fires when a region's
-	// child locality fell through); `adminCoherence: false` opts out. Fixes the "Portland, ME → Messina IT"
-	// class structurally, without a country prior or safelist.
-	if (deps.adminCoherence !== false) opts.adminCoherence = true
+	// Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation here keeps
+	// `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would otherwise re-default
+	// ON downstream). Fixes the "Portland, ME → Messina IT" class structurally, without a prior or safelist.
+	opts.adminCoherence = deps.adminCoherence !== false
 
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;

@@ -121,9 +121,18 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBe(true)
 	})
 
-	it("is byte-stable when adminCoherence is unset (locality stays unresolved under the greedy region)", async () => {
+	it("runs by default when adminCoherence is unset (#895 settled drift D1 — default-ON)", async () => {
 		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
 		const out = await resolver.resolveTree(portlandMeTree(), {})
+		const loc = localityOf(out)
+
+		expect(loc?.lat).toBeCloseTo(43.66, 2)
+		expect(loc?.metadata?.["admin_coherence_repicked"]).toBe(true)
+	})
+
+	it("restores the greedy result when adminCoherence is explicitly false (the opt-out)", async () => {
+		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
+		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: false })
 		const loc = localityOf(out)
 
 		// Greedy walk scoped Portland to Messina (parent 10) → nothing → unresolved; no re-pick.
