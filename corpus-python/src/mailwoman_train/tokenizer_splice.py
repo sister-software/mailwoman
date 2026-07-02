@@ -166,6 +166,71 @@ def verify_source_identical(base_tokenizer: Path, spliced_tokenizer: Path, probe
         )
 
 
+
+
+def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) -> set[str]:
+    """The set of non-ASCII codepoints in a locale sample file (first ``cap_bytes``, utf-8, errors ignored).
+
+    Deliberately format-agnostic (CSV/JSONL/plain all work): the #900 gate needs a locale's CHARACTER
+    inventory, not its parse — reading raw text keeps the gate free of per-format code.
+    """
+    raw = sample_path.read_bytes()[:cap_bytes].decode("utf-8", errors="ignore")
+    return {c for c in raw if ord(c) >= 128}
+
+
+def gate_codepoint_overlap(
+    new_pieces: list[str],
+    locale_samples: dict[str, Path],
+    report_path: Path,
+    *,
+    accepted_overlap: set[str] | None = None,
+) -> dict[str, list[str]]:
+    """#900 — the splice safety gate, pre-registered as a GATE rather than a postmortem note.
+
+    The v5.1.0 splice shipped on a "byte-identical by construction" claim that turned out ASCII-only:
+    FR/DE/ES share codepoints with the spliced pieces, so 52/15,000 EU rows re-tokenized — measured
+    AFTER the fact (net-positive, by luck and row-reads). This gate makes the overlap visible BEFORE
+    grading: for every trained locale sample, compute the non-ASCII codepoints shared between the
+    NEW pieces and that locale's character inventory, write the per-locale report artifact, and FAIL
+    LOUD on any overlapping locale that was not explicitly accepted.
+
+    "Accepted" is a commitment, not a waiver: per CONTRIBUTING_MODEL_WORK.mdx, accepting a locale
+    means a per-locale non-inferiority leg for it is pre-registered in the gate spec BEFORE the
+    first measurement (the FR n=3000 leg from v5.1.0 is the template).
+    """
+    accepted = accepted_overlap or set()
+    new_cps = {c for piece in new_pieces for c in _core(piece) if ord(c) >= 128}
+    report: dict[str, list[str]] = {}
+    for locale, sample in sorted(locale_samples.items()):
+        overlap = sorted(new_cps & collect_sample_codepoints(sample))
+        report[locale] = overlap
+
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
+        json.dumps(
+            {
+                "new_piece_codepoints": sorted(new_cps),
+                "per_locale_overlap": report,
+                "accepted_overlap": sorted(accepted),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    offending = [loc for loc, cps in report.items() if cps and loc not in accepted]
+    if offending:
+        detail = "; ".join(f"{loc}: {''.join(report[loc][:12])}" for loc in offending)
+        raise AssertionError(
+            f"#900 splice gate: codepoint overlap with trained locale(s) {offending} ({detail}). "
+            f"Either the overlap is a bug, or pre-register a per-locale non-inferiority leg for each "
+            f"and re-run with --accept-overlap {','.join(offending)}. Report: {report_path}"
+        )
+    return report
+
+
 def mean_init_embeddings(
     checkpoint_dir: Path, base_tokenizer: Path, spliced_tokenizer: Path, out_dir: Path
 ) -> tuple[int, int]:
@@ -216,6 +281,20 @@ def _main() -> None:
     bt.add_argument("--out-tokenizer", type=Path, required=True)
     bt.add_argument("--vocab-size", type=int, default=24_000)
     bt.add_argument("--work-dir", type=Path, default=Path("out/bsplice-work"))
+    bt.add_argument(
+        "--trained-samples",
+        default="",
+        help="#900 gate: comma list of locale=samplePath pairs for every TRAINED locale "
+        "(e.g. fr=data/eval/external/openaddresses-fr-sample.jsonl,de=...). When set, the "
+        "codepoint-overlap gate runs and FAILS on unaccepted overlap; the per-locale report "
+        "is written next to the spliced tokenizer either way.",
+    )
+    bt.add_argument(
+        "--accept-overlap",
+        default="",
+        help="#900 gate: comma list of locales whose overlap is ACCEPTED — i.e. a per-locale "
+        "non-inferiority leg is pre-registered in the gate spec (CONTRIBUTING_MODEL_WORK.mdx).",
+    )
 
     mi = sub.add_parser("mean-init", help="expand a checkpoint's embeddings to the spliced vocab")
     mi.add_argument("--checkpoint", type=Path, required=True)
@@ -233,6 +312,16 @@ def _main() -> None:
         new_pieces = splice_vocab(args.base_tokenizer, sp_model, args.out_tokenizer)
         print(f"spliced {len(new_pieces)} diacritic pieces -> {args.out_tokenizer}")
         print("English tokenization verified byte-identical (0 diff).")
+        if args.trained_samples:
+            samples = {
+                loc.strip(): Path(path.strip())
+                for loc, _, path in (pair.partition("=") for pair in args.trained_samples.split(","))
+            }
+            accepted = {x.strip() for x in args.accept_overlap.split(",") if x.strip()}
+            report_path = args.out_tokenizer.with_suffix(".overlap-report.json")
+            report = gate_codepoint_overlap(new_pieces, samples, report_path, accepted_overlap=accepted)
+            overlapping = [loc for loc, cps in report.items() if cps]
+            print(f"#900 overlap gate PASS — report {report_path}; overlapping (accepted): {overlapping or 'none'}")
     elif args.cmd == "mean-init":
         old_v, new_v = mean_init_embeddings(args.checkpoint, args.base_tokenizer, args.spliced_tokenizer, args.out_dir)
         print(f"expanded token_embeddings {old_v} -> {new_v}; wrote {args.out_dir}")
