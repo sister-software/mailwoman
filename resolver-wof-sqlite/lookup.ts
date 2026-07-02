@@ -875,13 +875,27 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				// order the tier is what sent unscoped "Paris" to an Ohio township. The partial tier
 				// keeps score order — text relevance still means something there. This makes the
 				// exactMatchTiering docstring literal: match quality primary, prominence within.
+				//
+				// #912 sub-tier: a NAME-exact candidate (spr.name equals the query) outranks an
+				// ALIAS-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris').
+				// The place's own name is a stronger identity claim than an alias — aliases exist to
+				// widen recall, not to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
+				// nothing, so the alias sub-tier still decides there. Population orders within each
+				// sub-tier as before.
+				const norm = (v: string): string => v.toLowerCase().trim().replace(/\s+/g, " ")
+				const needle = norm(query.text)
+				const kind = (c: PlaceCandidate): number => {
+					if (!exactIds.has(c.id as number)) return 0
+
+					return norm(String(c.name ?? "")) === needle ? 2 : 1
+				}
 				candidates.sort((a, b) => {
-					const ax = exactIds.has(a.id as number) ? 1 : 0
-					const bx = exactIds.has(b.id as number) ? 1 : 0
+					const ax = kind(a)
+					const bx = kind(b)
 
 					if (bx !== ax) return bx - ax
 
-					if (ax === 1) return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
+					if (ax >= 1) return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
 
 					return b.score - a.score
 				})

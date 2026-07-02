@@ -111,6 +111,33 @@ describe("findPlace — exact-match tiering", () => {
 		expect(results[0]!.id).toBe(2) // the populous non-exact match — pre-fix behavior
 	})
 
+	// #912 sub-tier: the query IS one place's own name and only an ALIAS of the other. The name
+	// holder must win even when the alias holder is more populous — 'Paris' (the capital's own name)
+	// over 'Paris Township' (alias 'Paris'), scale-model edition. ME→Maine (alias-exact, no
+	// name-exact competitor) is covered by the tests above and must keep passing unchanged.
+	test("#912: name-exact outranks alias-exact regardless of population", async () => {
+		const db = buildDB([
+			{ id: 11, name: "Capitalia", country: "FR", lat: 48.8, lon: 2.3, population: 50_000 },
+			{
+				id: 12,
+				name: "Capitalia Township",
+				country: "US",
+				lat: 40.5,
+				lon: -81.5,
+				aliases: ["Capitalia"],
+				population: 9_000_000,
+			},
+		])
+		lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true }, POP_DOMINATES)
+		const results = await lookup.findPlace({ text: "Capitalia", placetype: "region", limit: 2 })
+
+		expect(results[0]?.name).toBe("Capitalia")
+		expect(results[1]?.name).toBe("Capitalia Township")
+		// Both still stamp exactMatch — the sub-tier reorders WITHIN the tier, not across the flag.
+		expect(results[0]?.exactMatch).toBe(true)
+		expect(results[1]?.exactMatch).toBe(true)
+	})
+
 	test("alignment: among EQUALLY-exact matches, population still decides (Springfield by pop)", async () => {
 		// Both exact name matches → same tier → the population prior orders them, unchanged. This is
 		// the guarantee that tiering aligns with (rather than overrides) population/importance.
