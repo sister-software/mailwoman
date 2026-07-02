@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "5.0.0",
+	"version": "5.1.0",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"keywords": [
 		"address",
