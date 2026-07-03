@@ -134,6 +134,9 @@ output-*/
 
 # Night-shift ephemera — operational plans, logs, and session notes produced during
 # autonomous overnight shifts. AI-agent scratch, not project source (#379).
+# ds-*.txt / session-notes-*.md were previously only ignored inside
+# .agents/skills/deepseek-consult/ (below); the global patterns catch the same
+# scratch when it lands at the repo root or elsewhere. No tracked file matches either.
 *-NIGHT-SHIFT-*.md
 *-NIGHT-SHIFT-*.log
 *-NIGHT-SHIFT-*.sh
@@ -141,6 +144,8 @@ output-*/
 HANDOFF-*.md
 *-SESSION-RECAP.md
 *-DEEP-DIVE-REVIEW.md
+ds-*.txt
+session-notes-*.md
 
 # DeepSeek consult skill directory — the skill definition (SKILL.md) IS tracked;
 # all other files (conversation transcripts, session notes, plans) are AI-agent

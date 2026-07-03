@@ -52,6 +52,12 @@ jobs:
       - name: Typecheck scripts
         run: yarn typecheck:scripts
 
+      # The docs app ships real runtime code (the /demo page). Its typecheck sat outside CI and
+      # went 7-errors red on main unnoticed — one of those errors was the LIVE demo's undefined
+      # baseUrl paths (#917, broken in production since v5.0.0). This step is that bug's class fix.
+      - name: Typecheck docs
+        run: yarn workspace @mailwoman/docs typecheck
+
       - name: Test
         run: yarn ci:test
 

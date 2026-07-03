@@ -43,6 +43,12 @@
  *   locality resolution is ON by default (no-op where the candidate table has no rows, e.g. US).
  *   Pass `--wof <admin.db>` alone for the admin-only baseline, or append a postcode shard
  *   (postalcode-*.db) to also resolve the postcode node.
+ *
+ *   `--anchor-off` (#887) ablates the model's postcode-anchor INPUT channel — the sanctioned,
+ *   declared ablation (`overrides.anchor=false` through createScorer, warn-not-throw per the #718
+ *   fail-closed gate). de-order-eval.ts uses it for the 2x2 anchor-OFF column; the old
+ *   empty-anchor.json idiom (a lookup that parses to size 0) is refused by the gate. Distinct from
+ *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -337,6 +343,14 @@ async function main(): Promise<void> {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const modelAnchorPath = arg("model-anchor-lookup", "")
 	const ablateToAnchor = process.argv.includes("--ablate-to-anchor")
+	// `--anchor-off` (#887): the sanctioned anchor ablation — `overrides.anchor=false` through
+	// createScorer (a loud warning, not a throw). Replaces the pre-#718 empty-anchor.json idiom,
+	// which the fail-closed gate now refuses (an empty lookup parses to size 0 → UnfedChannelError).
+	const anchorOff = process.argv.includes("--anchor-off")
+	const overrides: import("@mailwoman/neural/scorer").ScorerOverrides = {
+		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
+		...(anchorOff ? { anchor: false } : {}),
+	}
 	const neural = await createScorer({
 		modelPath: arg("model"),
 		tokenizerPath: arg("tokenizer"),
@@ -344,13 +358,17 @@ async function main(): Promise<void> {
 		...(modelAnchorPath ? { anchorLookupPath: modelAnchorPath } : {}),
 		strict: true,
 		tier: "server",
-		...(ablateToAnchor ? { overrides: { gazetteer: false, conventions: false } } : {}),
+		...(ablateToAnchor || anchorOff ? { overrides } : {}),
 	})
 	console.error(
 		ablateToAnchor
 			? "[scorer] ABLATED to anchor-only (gazetteer + conventions OFF) — #722 before/after baseline"
 			: "[scorer] full ship-config via createScorer (anchor + gazetteer + conventions=auto + suppress)"
 	)
+
+	if (anchorOff) {
+		console.error("[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor=false, #887 declared ablation)")
+	}
 
 	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
 	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
@@ -459,11 +477,19 @@ async function main(): Promise<void> {
 		return false
 	}
 
-	// #690: --normalize-case title-cases all-caps input before the model (detection-gated). Off by default.
+	// #690/#895: normalizeCase is tri-state so a gate leg can PIN either side of the library default
+	// (default-ON at the classifier since #895). `--normalize-case` pins ON, `--raw-case` pins OFF,
+	// neither = the library default. Silent config shifts in a gate battery are the #718 sin — pin
+	// explicitly in pre-registered legs.
 	const normalizeCase = process.argv.includes("--normalize-case")
-	const parseOpts = { postcodeRepair: true, ...(normalizeCase ? { normalizeCase: true } : {}) } as Parameters<
-		typeof neural.parse
-	>[1]
+		? true
+		: process.argv.includes("--raw-case")
+			? false
+			: undefined
+	const parseOpts = {
+		postcodeRepair: true,
+		...(normalizeCase !== undefined ? { normalizeCase } : {}),
+	} as Parameters<typeof neural.parse>[1]
 	// `defaultCountry` is the hard country filter applied to admin lookups when the parse carries no
 	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
@@ -476,9 +502,17 @@ async function main(): Promise<void> {
 	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion =
 		process.argv.includes("--hierarchy-completion") || process.argv.includes("--city-state-fallback")
+	// #895: adminCoherence is default-ON in the resolver now (drift D1 settled). Tri-state pin for gate
+	// legs: `--admin-coherence` ON, `--no-admin-coherence` OFF, neither = the library default.
+	const adminCoherence = process.argv.includes("--admin-coherence")
+		? true
+		: process.argv.includes("--no-admin-coherence")
+			? false
+			: undefined
 	const resolveOpts = {
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
+		...(adminCoherence !== undefined ? { adminCoherence } : {}),
 	}
 
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place

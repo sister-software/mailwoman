@@ -1,0 +1,46 @@
+---
+title: "We asked our address parser what it couldn't read"
+description: "Most sequence labelers throw away the parts of an address they don't understand, and the output format is built to hide it. We made ours hand every dropped character back, then aggregated them into a ranked list. The top of the list turned out to be the Polish alphabet."
+authors: [playpen-agent]
+tags: [decoder, corpus, methodology, multilocale, lossless, advanced]
+---
+
+Feed an address into a sequence labeler and part of it goes missing. The model tags the tokens it recognizes — house number, street, city — and the characters it doesn't understand fall on the floor. `decodeAsJSON` hands you back a tidy object with every field in its place, and nothing in that object tells you the model just shrugged at a fifth of the input.
+
+So you ship that parser. It looks great on the addresses you tested it against. And you have no real idea what it's dropping in production, because the output format was built to hide exactly that.
+
+{/* truncate */}
+
+We got tired of not knowing. So we made the decoder keep a promise: every byte of the input lands in exactly one typed span, including the bytes we can't classify. The runs the model leaves untagged stop being absence and become a thing you can hold — an `unknown` span, with a start, an end, and the literal text the model couldn't place. Concatenate all the spans back together and you get the original string, character for character. Nothing gets lost, because there's nowhere left for it to go.
+
+That's a small change to a decoder. It turns into a diagnostic you can point at real data.
+
+## The shopping list
+
+Once the gaps are typed, you can count them. We ran the parser over a few thousand real addresses and folded every `unknown` span into a frequency table: a ranked list of what the model systematically fails to read. We started calling it the shopping list, because that's what it is. The next retrain, in priority order, written by the model's own failures instead of our hunches.
+
+The first thing the list did was catch us lying to ourselves. Ninety-eight percent of inputs had an unknown span. Ninety-eight! That number is worthless, and it took about four minutes to see why: the gaps were almost all whitespace and commas, the spaces between tokens that no component owns. A metric that's mostly punctuation will tell you the sky is falling on every single address. Once we separated the trivial delimiter gaps from gaps holding an actual letter or digit, the honest figure dropped to nine percent. Nine percent of addresses carry a run of real content the model can't place. That one you can act on.
+
+## What it can't read is Polish
+
+Then we aimed the same tool at OpenAddresses data from nine countries, and the shopping list stopped being abstract.
+
+The United States and Australia came back spotless: zero content gaps. France, ten percent. Italy, two. And then Czechia at eighty-four percent and Poland at seventy-seven, towering over everything else on the board.
+
+The top entries said why in the plainest possible terms: `ł`, `á`, `ó`, `í`, `ě`, `ś`, `ę`, `č`. The whole Latin-Extended block. Our tokenizer isolates a Slavic diacritic into its own little subword, the model was never shown enough of them to learn what they are, so it files them under background noise. `Grudziądz` comes apart at the `ą`: the model labels `Grudzi`, drops the accent, and picks the city back up at `dz`, as if the letter in the middle were a coffee stain. `Bohaterów` splits at the `ó` and takes the neighboring house number down with it.
+
+We had a comfortable theory that this was a decoder bug, a character-offset mismatch around multi-byte characters, the kind of thing you fix in an afternoon without touching a GPU. We checked before we wrote it down, which is the entire point of the exercise. It wasn't the decoder. The offsets were fine; the model simply doesn't know these letters, and there is no clever preprocessing that fixes not-knowing. It's a retrain. The difference is that now we know precisely which characters to weight and which locales to leave alone, because Australia and the US don't need a thing.
+
+## Honesty you can query
+
+A model that guesses without a word is a liability, because you learn what it can't do from a customer. A model that hands you a typed, countable record of its own blind spots is something you can plan around. We didn't make the parser smarter this week. We made it honest about what it doesn't know, and that honesty turned out to be a feature you can run a `GROUP BY` over.
+
+The shopping list is checked in, and it runs before and after every retrain now. Next time you build something that classifies text, make it account for the text it couldn't classify. You'll be surprised how loudly it starts telling you where to look.
+
+## Update — July 2
+
+We wrote "it's a retrain" and then we tested it, because writing a thing down is not the same as it being true. The retrain held English and made Czech worse. What the ranked list had actually found was one layer lower: the tokenizer's vocabulary carried every one of those characters as its own lonely subword and not a single piece containing them, and a unigram model cannot emit a subword that isn't in its table. No volume of training data teaches a model to say a word its alphabet can't spell.
+
+So the fix wasn't a retrain. We trained a small SentencePiece model on Czech and Polish addresses, spliced its 10,582 diacritic-bearing pieces into the vocabulary, and initialized each new embedding from the mean of the pieces it used to shatter into. Zero GPU hours. Wrong-city rates fell from 22.4% to 14.8% in Czechia and from 27.9% to 7.9% in Poland, and Slovak and Slovenian came along for free because they share the codepoints. It shipped the next day.
+
+The shopping list paid for itself in under twenty-four hours, which is the part worth repeating: the fix was cheap because the blind spots were countable. `Grudziądz` is whole now.

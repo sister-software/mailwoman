@@ -1,0 +1,44 @@
+# Release-surface version-parity check (#894 — #203's class, structurally).
+#
+# The demo repoint is a deliberate, separate step after `npm publish` (mailwoman-release Step 5),
+# so the demo CAN legitimately trail npm for a short window mid-release. What must never happen is
+# the #203 failure mode: the drift persisting silently for weeks. This workflow makes drift visible
+# the day it happens — a daily scheduled run fails when the demo's live `releases.json`
+# defaultVersion or the docs release-matrix "(current)" row trails `npm view mailwoman dist-tags.latest`.
+#
+# The check script (`scripts/check-release-parity.ts`) has zero workspace dependencies on purpose:
+# no yarn install, just Node built-ins + fetch. Manual dispatch supports a mid-release sanity check
+# (use the warn_only input while the repoint is still pending).
+name: Version parity
+
+on:
+  schedule:
+    # Daily, 06:17 UTC — after any overnight release/repoint has settled.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      warn_only:
+        description: "Report drift without failing (mid-release window)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check release-surface parity
+        run: node scripts/check-release-parity.ts ${{ inputs.warn_only == true && '--warn-only' || '' }}

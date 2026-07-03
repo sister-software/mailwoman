@@ -24,7 +24,7 @@
 import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { hardCountryFor } from "@mailwoman/core/pipeline"
+import { hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
@@ -340,10 +340,10 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	const opts: ResolveOpts = {}
 
 	// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment graph.
-	// Default-on for the geocode path (byte-stable on the well-resolved cases — only fires when a region's
-	// child locality fell through); `adminCoherence: false` opts out. Fixes the "Portland, ME → Messina IT"
-	// class structurally, without a country prior or safelist.
-	if (deps.adminCoherence !== false) opts.adminCoherence = true
+	// Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation here keeps
+	// `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would otherwise re-default
+	// ON downstream). Fixes the "Portland, ME → Messina IT" class structurally, without a prior or safelist.
+	opts.adminCoherence = deps.adminCoherence !== false
 
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
@@ -355,7 +355,10 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop shard for a non-US parse.
 	let placedCountry: string | null = null
 
-	if (placeCountry) {
+	// #912 lever 1: the placer abstains on a single bare locality — OOD input, and the wrong soft
+	// posterior overrides the resolver's better-informed exact-tier/population ranking (see
+	// isBareLocalityTree). Explicit defaultCountry / anchorPosterior from the caller are untouched.
+	if (placeCountry && !isBareLocalityTree(tree)) {
 		const placed = placeCountry(parseInput)
 		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 

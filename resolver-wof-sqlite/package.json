@@ -1,8 +1,8 @@
 {
 	"name": "@mailwoman/resolver-wof-sqlite",
-	"version": "5.1.0",
+	"version": "5.2.0",
 	"description": "Who's On First SQLite resolver — FTS5-backed PlaceLookup that resolves text queries to WOF place IDs + coordinates. Optional dependency for callers who want geocoding.",
-	"license": "AGPL-3.0-only",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/sister-software/mailwoman.git",
@@ -38,6 +38,7 @@
 		"./ancestry-backfill": "./out/ancestry-backfill.js",
 		"./coincident-roles": "./out/coincident-roles.js",
 		"./geonames-aliases": "./out/geonames-aliases.js",
+		"./geonames-postal": "./out/geonames-postal.js",
 		"./geo": "./out/geo.js",
 		"./street-normalize": "./out/street-normalize.js",
 		"./build-candidate": "./out/build-candidate.js",

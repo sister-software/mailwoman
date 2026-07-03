@@ -2,7 +2,8 @@
 
 **A calibrated, retrieval-augmented postal-address parser.**
 
-![GitHub License](https://img.shields.io/github/license/sister-software/mailwoman)
+![NPM License](https://img.shields.io/npm/l/mailwoman?color=%23663399)
+
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/sister-software/mailwoman)
 
 Mailwoman turns free-text postal addresses into structured components — house number,

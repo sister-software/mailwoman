@@ -2,7 +2,7 @@
 	"name": "neural-weights-en-us",
 	"version": "0.6.2",
 	"phase": "Stage 3 — corpus rebalance: synth-no-street counter-distribution",
-	"license": "AGPL-3.0-only",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "en-us",
 	"training": {
 		"corpus_version": "0.4.0+stage3+nostreet",

@@ -26,6 +26,7 @@ import type { RankingWeights } from "./lookup.js"
 import { WOFSqlitePlaceLookup } from "./lookup.js"
 
 interface SeedRegion {
+	placetype?: string
 	id: number
 	name: string
 	country: string
@@ -57,13 +58,24 @@ function buildDB(regions: SeedRegion[]): DatabaseSync {
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude,
 			min_latitude, max_latitude, min_longitude, max_longitude, is_current, is_deprecated)
-		VALUES (?, NULL, ?, 'region', ?, ?, ?, ?, ?, ?, ?, -1, 0)
+		VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
 	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
 	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 
 	for (const r of regions) {
-		insertSpr.run(r.id, r.name, r.country, r.lat, r.lon, r.lat - 0.5, r.lat + 0.5, r.lon - 0.5, r.lon + 0.5)
+		insertSpr.run(
+			r.id,
+			r.name,
+			r.placetype ?? "region",
+			r.country,
+			r.lat,
+			r.lon,
+			r.lat - 0.5,
+			r.lat + 0.5,
+			r.lon - 0.5,
+			r.lon + 0.5
+		)
 		insertName.run(r.id, "eng", r.name)
 
 		for (const a of r.aliases ?? []) insertName.run(r.id, "abbr", a)
@@ -110,6 +122,33 @@ describe("findPlace — exact-match tiering", () => {
 		expect(results[0]!.id).toBe(2) // the populous non-exact match — pre-fix behavior
 	})
 
+	// #912 sub-tier: the query IS one place's own name and only an ALIAS of the other. The name
+	// holder must win even when the alias holder is more populous — 'Paris' (the capital's own name)
+	// over 'Paris Township' (alias 'Paris'), scale-model edition. ME→Maine (alias-exact, no
+	// name-exact competitor) is covered by the tests above and must keep passing unchanged.
+	test("#912: name-exact outranks alias-exact regardless of population", async () => {
+		const db = buildDB([
+			{ id: 11, name: "Capitalia", country: "FR", lat: 48.8, lon: 2.3, population: 50_000 },
+			{
+				id: 12,
+				name: "Capitalia Township",
+				country: "US",
+				lat: 40.5,
+				lon: -81.5,
+				aliases: ["Capitalia"],
+				population: 9_000_000,
+			},
+		])
+		lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true }, POP_DOMINATES)
+		const results = await lookup.findPlace({ text: "Capitalia", placetype: "region", limit: 2 })
+
+		expect(results[0]?.name).toBe("Capitalia")
+		expect(results[1]?.name).toBe("Capitalia Township")
+		// Both still stamp exactMatch — the sub-tier reorders WITHIN the tier, not across the flag.
+		expect(results[0]?.exactMatch).toBe(true)
+		expect(results[1]?.exactMatch).toBe(true)
+	})
+
 	test("alignment: among EQUALLY-exact matches, population still decides (Springfield by pop)", async () => {
 		// Both exact name matches → same tier → the population prior orders them, unchanged. This is
 		// the guarantee that tiering aligns with (rather than overrides) population/importance.
@@ -154,6 +193,31 @@ describe("findPlace — exact-match tiering", () => {
 		const results = await lookup.findPlace({ text: "NY", placetype: "region", limit: 2 })
 		expect(results[0]!.id).toBe(1)
 		expect(results[0]!.name).toBe("New York")
+	})
+
+	// #924: the NL retry ladder — spaced full-form queries reach unspaced full-code rows (block
+	// level), and unknown letter pairs fall to the 4-digit stem. Country-gated: the same shape
+	// under another country must NOT retry.
+	test("#924: NL postcode ladder — joined form first, stem second, country-gated", async () => {
+		const db = buildDB([
+			{ id: 21, name: "1012LG", country: "NL", lat: 52.377, lon: 4.898, placetype: "postalcode" },
+			{ id: 22, name: "1012", country: "NL", lat: 52.374, lon: 4.895, placetype: "postalcode" },
+		])
+		lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
+
+		// Placetype gate: a region-typed query never enters the ladder (and the spaced phrase can't
+		// FTS-match the one-token docs), so it comes back empty rather than silently coarsening.
+		const nonPostcode = await lookup.findPlace({ text: "1012 LG", placetype: "region", country: "NL", limit: 1 })
+		expect(nonPostcode).toHaveLength(0)
+
+		const fullPc = await lookup.findPlace({ text: "1012 LG", placetype: "postalcode", country: "NL", limit: 1 })
+		expect(fullPc[0]?.name).toBe("1012LG")
+
+		const stem = await lookup.findPlace({ text: "1012 XX", placetype: "postalcode", country: "NL", limit: 1 })
+		expect(stem[0]?.name).toBe("1012")
+
+		const gb = await lookup.findPlace({ text: "1012 LG", placetype: "postalcode", country: "GB", limit: 1 })
+		expect(gb).toHaveLength(0)
 	})
 
 	test("a single candidate is unaffected (no tier to split)", async () => {

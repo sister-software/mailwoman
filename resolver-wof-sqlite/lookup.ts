@@ -187,6 +187,14 @@ const DEFAULT_WEIGHTS: RankingWeights = {
  */
 const SHORT_QUERY_OVERFETCH = 200
 
+/**
+ * How many rows the population-ordered companion fetch (#905) adds to the candidate pool. Small on purpose: its only
+ * job is to guarantee the FAMOUS holders of a name enter the pool at all — for "Paris"-class floods the bm25 window is
+ * saturated by thousands of tiny same-name rows and no boost inside the bm25-based ORDER BY can rescue a candidate
+ * whose bm25 is length-poisoned by ~15 points (see the fetch-site comment).
+ */
+const POPULATION_FETCH_LIMIT = 15
+
 interface RawSearchRow {
 	id: number
 	name: string
@@ -310,6 +318,8 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * override) schema names.
 	 */
 	readonly #shards: ResolvedShard[]
+	/** #920: per-schema probed country sets for country-aware shard routing (non-main shards only). */
+	readonly #shardCountries: Map<string, ReadonlySet<string>>
 	/**
 	 * The Geographic Rule Engine (Direction E, #289). `#conventionSource` supplies per-WOF-polygon resolution profiles;
 	 * `#strategies` is the named-primitive registry the merged convention dispatches. Empty source → every query resolves
@@ -383,6 +393,26 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			this.#hasBboxIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_BBOX_TABLE))
 			this.#hasPopulationIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_POPULATION_TABLE))
 		}
+		// #920 country-aware shard routing: probe each NON-MAIN shard's country set once at
+		// construction (they're small, purpose-built shards — postcode/locality slices; main is the
+		// multi-GB admin DB and is the fallback anyway, so it is deliberately NOT scanned). Feeds
+		// pickShardForPlacetype so two postcode shards (postalcode-us + postalcode-geonames-tail)
+		// route by the query's country instead of first-match starving the second shard.
+		this.#shardCountries = new Map()
+
+		for (const sh of this.#shards) {
+			if (sh.schemaName === "main") continue
+
+			try {
+				const rows = this.#db
+					.prepare(`SELECT DISTINCT country FROM ${sh.schemaName}.spr WHERE country != ''`)
+					.all() as Array<{ country: string }>
+				this.#shardCountries.set(sh.schemaName, new Set(rows.map((r) => r.country)))
+			} catch {
+				// A shard without spr (or an attach oddity) just doesn't participate in country routing.
+			}
+		}
+
 		// The postcode_locality table can live on any attached shard (typically its own
 		// `postcode-locality-<cc>.db`). Find the first shard that has it; null = coord-first disabled.
 		this.#postcodeLocalityShard =
@@ -437,6 +467,8 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// a primitive a future phase will register.
 		const convention = this.#conventionFor(query)
 
+		let outcome: PlaceCandidate[] = []
+
 		for (const name of convention.candidateStrategies) {
 			const strategy = this.#strategies.get(name)
 
@@ -446,10 +478,41 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			}
 			const result = await strategy(query, convention)
 
-			if (result !== null) return result
+			if (result !== null) {
+				outcome = result
+				break
+			}
 		}
 
-		return []
+		if (outcome.length > 0) return outcome
+
+		// #924: NL postcode retry ladder. The WOF NL postalcode repo stores full codes UNSPACED
+		// ('1012LG') plus 4-digit stems ('1012'), while Dutch addresses carry the spaced form
+		// ('1012 LG') — two FTS tokens that can never match the one-token doc (the #920 name law,
+		// resurfacing in a WOF-built shard). On a postcode-typed NL-shape miss, retry ONCE with the
+		// whitespace-joined form (block-level precision when the full-code row exists), then the
+		// 4-digit stem (area-level). Country-gated to NL — the same digits+letters shape elsewhere
+		// must not silently coarsen to a different system's code. Each retry only fires when its
+		// text differs from the current one, so the ladder terminates by construction.
+		if (
+			query.country?.toUpperCase() === "NL" &&
+			(normalizePlacetypes(query.placetype)?.includes("postalcode") ?? false) &&
+			/^\d{4}\s?[A-Za-z]{2}$/.test(query.text.trim())
+		) {
+			const trimmed = query.text.trim()
+			const joined = trimmed.replace(/\s+/g, "")
+
+			if (joined !== trimmed) {
+				const full = await this.findPlace({ ...query, text: joined })
+
+				if (full.length > 0) return full
+			}
+			const stem = trimmed.slice(0, 4)
+
+			if (stem !== trimmed) return this.findPlace({ ...query, text: stem })
+		}
+
+		return outcome
 	}
 
 	/**
@@ -599,7 +662,10 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// `placetype` always goes to main. (Mixed-placetype queries with multiple shards aren't
 		// supported in v1 — caller can issue two findPlace calls and merge in TS if needed.)
 		const firstPlacetype = placetypes?.[0]
-		const shard = pickShardForPlacetype(this.#shards, firstPlacetype)
+		const shard = pickShardForPlacetype(this.#shards, firstPlacetype, {
+			country: query.country,
+			countriesBySchema: this.#shardCountries,
+		})
 		const sch = shard.schemaName // bare schema name; safe to interpolate (validated at construction)
 
 		// Filter out historical / superseded / deprecated places by default — they live in the same
@@ -659,6 +725,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		//
 		// Formula: rank_adjusted = bm25 - populationBoost * min(1.0, log10(1 + pop) / scaleLog10)
 		// Lower rank_adjusted = better (matches SQLite's bm25 convention of "more negative = better").
+		//
+		// #905 — do NOT reach for bm25 column weights here. Measured falsification (2026-07-02): FTS5's
+		// bm25 length normalization is polluted by the row's TOTAL document size, so identical 1-token
+		// `name` docs read −16.0 (empty alt_names) vs −0.43 (2.7 KB alt_names) EVEN with the alt_names
+		// column weighted to zero — no weighting isolates name relevance in this schema. The famous-
+		// holder guarantee lives in the population-ordered companion fetch below instead, and the
+		// exact tier breaks ties by population in the post-scoring sort.
 		const orderByExpr = shardHasPopulation
 			? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`
 			: "bm25(place_search)"
@@ -691,6 +764,40 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		params.push(ftsLimit)
 
 		const rawRows = stmt.all(...params) as unknown as RawSearchRow[]
+
+		// #905 companion fetch: the same MATCH, ordered by population alone. For name floods
+		// ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit
+		// the famous holder — its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts,
+		// vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the
+		// prominent holders of a name pool-complete BY CONSTRUCTION; the exact-tier sort below
+		// decides whether they win. Skipped without a population index (nothing to order by).
+		if (shardHasPopulation) {
+			const popStmt = this.#db.prepare(`
+				SELECT
+					spr.id AS id,
+					spr.name,
+					spr.placetype,
+					spr.country,
+					spr.parent_id,
+					bm25(place_search) AS rank,
+					spr.latitude AS lat,
+					spr.longitude AS lon,
+					spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude,
+					${populationSelect}
+				FROM ${sch}.place_search
+				${joinClause}
+				${populationJoin}
+				WHERE ${where.join(" AND ")}
+				ORDER BY COALESCE(${PLACE_POPULATION_TABLE}.population, 0) DESC
+				LIMIT ?
+			`)
+			const popParams = params.slice(0, params.length - 3) // drop the two boost params + ftsLimit
+			const seen = new Set(rawRows.map((r) => r.id))
+
+			for (const row of popStmt.all(...popParams, POPULATION_FETCH_LIMIT) as unknown as RawSearchRow[]) {
+				if (!seen.has(row.id)) rawRows.push(row)
+			}
+		}
 
 		const queryLen = query.text.length
 		const candidates = rawRows.map((row): PlaceCandidate => {
@@ -793,12 +900,36 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
 			for (const c of candidates) c.exactMatch = exactIds.has(c.id as number)
 
-			if (exactIds.size > 0 && exactIds.size < candidates.length) {
-				candidates.sort((a, b) => {
-					const ax = exactIds.has(a.id as number) ? 1 : 0
-					const bx = exactIds.has(b.id as number) ? 1 : 0
+			if (exactIds.size > 0) {
+				// #905: WITHIN the exact tier, population is the PRIMARY key and the weighted score
+				// only breaks population ties. Exactness saturates text relevance, and the bm25
+				// residue inside `score` is length-noise (see the fetch-site comment), so letting it
+				// order the tier is what sent unscoped "Paris" to an Ohio township. The partial tier
+				// keeps score order — text relevance still means something there. This makes the
+				// exactMatchTiering docstring literal: match quality primary, prominence within.
+				//
+				// #912 sub-tier: a NAME-exact candidate (spr.name equals the query) outranks an
+				// ALIAS-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris').
+				// The place's own name is a stronger identity claim than an alias — aliases exist to
+				// widen recall, not to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
+				// nothing, so the alias sub-tier still decides there. Population orders within each
+				// sub-tier as before.
+				const norm = (v: string): string => v.toLowerCase().trim().replace(/\s+/g, " ")
+				const needle = norm(query.text)
+				const kind = (c: PlaceCandidate): number => {
+					if (!exactIds.has(c.id as number)) return 0
 
-					return bx - ax || b.score - a.score
+					return norm(String(c.name ?? "")) === needle ? 2 : 1
+				}
+				candidates.sort((a, b) => {
+					const ax = kind(a)
+					const bx = kind(b)
+
+					if (bx !== ax) return bx - ax
+
+					if (ax >= 1) return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
+
+					return b.score - a.score
 				})
 
 				return Promise.resolve(candidates.slice(0, limit))

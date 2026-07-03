@@ -547,6 +547,47 @@
 				}
 			},
 			"notes": "The #885 measurement re-anchor: first full per-tag re-score since v4.4.0 (17/17 PASS; scorecard parity-scorecard-2026-07-02.md). Rows for 4.5.0-4.16.2 were never populated (the ledger froze at v4.4.0) - their per-release headlines live in releases.mdx + each version's model-card.json; the re-score cadence rule in CONTRIBUTING_MODEL_WORK.mdx now backstops the gap going forward. Scored 2026-07-02 on the shipped int8. [graded_artifact=int8; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/rescore-885]"
+		},
+		{
+			"run_id": "bsplice-meaninit-v193a3-step080000-postship-20260702",
+			"model_version": "5.1.0",
+			"model_path": "@mailwoman/neural-weights-en-us@5.1.0 (model.onnx md5 12fa2d645162e90cf028dbc333218f2c + tokenizer v0.6.0-bsplice md5 b0397ce3d89ab459be6dd901eae8f0a1)",
+			"corpus_version": "corpus-v0.9.3a3",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v4.15.0-boundary): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-02",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 80000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 95,
+					"country_homograph": 87.5,
+					"micro": 85.7,
+					"locality": 76.7,
+					"region": 88.7,
+					"street": 82.3,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 91.4,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.3,
+					"house_number": 98.1,
+					"region": 48.4,
+					"cedex_real": 89.4
+				},
+				"de": {
+					"native_locality_anchor_on": 91.1
+				},
+				"arena": {
+					"perturb": 78
+				}
+			},
+			"notes": "The #884 vocab-splice ship (training-free; v1.9.3a3 encoder unchanged + 10,582 mean-init rows; coordinated model+tokenizer bump). POST-SHIP battery on the published pair: 17/17 PASS incl. both zero-margin postcode floors exactly held — per-tag F1 unmoved at gate precision across the tokenizer change (cross-lingual leakage measured separately: 52/15k EU rows re-tokenize, net-positive, FR coord ni PASS). Coordinate wins: wrong-city CZ 22.4->14.8, PL 27.9->7.9, SK 22.2->13.2, SI 18.9->10.6 (n=1k). Re-score cadence entry #1. [graded_artifact=int8; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v510]"
 		}
 	]
 }

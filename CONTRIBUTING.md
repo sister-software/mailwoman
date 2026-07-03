@@ -11,13 +11,86 @@ first — model work has its own gates and discipline.
 
 ## Before you start
 
-By contributing, you agree your work is licensed under **AGPL-3.0-only** (the
-repository's open-source license — see [`LICENSE.md`](./LICENSE.md)). Mailwoman is
-also offered under a separate commercial license; contact teffen@sister.software
-if that matters for your use.
-
 For anything larger than a typo or an obvious bug fix, open an issue first so we
 can agree on the approach before you spend the time.
+
+## Contribution terms (DCO + dual license)
+
+Mailwoman is dual-licensed under **AGPL-3.0-only** and a separate **commercial
+license** (see [`LICENSE.md`](./LICENSE.md)). For that dual model to hold, every
+contribution has to reach us under terms that let us offer it under _both_
+licenses. So, by submitting a contribution (a pull request, patch, or any change),
+you agree to the following. **You keep the copyright in your contribution** — this
+is a license grant, not an assignment.
+
+1. **Developer Certificate of Origin.** You certify the DCO (version 1.1, full
+   text below) for every commit. Sign off each commit to indicate this:
+
+   ```bash
+   git commit -s          # appends a "Signed-off-by: Your Name <you@example.com>" trailer
+   ```
+
+   The sign-off name and email must be real and must match the commit author.
+
+2. **License grant.** You grant Teffen Ellis (DBA Sister Software),
+   a perpetual, worldwide, non-exclusive, royalty-free,
+   irrevocable license to use, reproduce, modify, prepare derivative works of,
+   publicly display, publicly perform, and distribute your contribution and such
+   derivative works, and to **sublicense and relicense** your contribution under
+   any terms — including under AGPL-3.0-only and under Sister Software's commercial
+   license (and any future or successor versions of either). You also grant a
+   patent license on the same terms as Section 11 of the AGPL for any patent claims
+   you own that are necessarily infringed by your contribution.
+
+3. **You have the right to grant this.** Your contribution is your original work,
+   or you otherwise have the rights to submit it under these terms; and if your
+   employer has rights to work you create, you have permission to make the
+   contribution, or your employer has waived those rights.
+
+If you are contributing on behalf of a company and need a signed corporate CLA
+rather than the DCO trailer, contact teffen@sister.software.
+
+<details>
+<summary><strong>Developer Certificate of Origin 1.1</strong> (full text)</summary>
+
+```
+Developer Certificate of Origin
+Version 1.1
+
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+
+Everyone is permitted to copy and distribute verbatim copies of this
+license document, but changing it is not allowed.
+
+
+Developer's Certificate of Origin 1.1
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
+```
+
+</details>
 
 ## Prerequisites
 
