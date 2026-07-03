@@ -11,6 +11,7 @@
 import { anchorAbsorptionRecipe } from "./anchor-absorption.js"
 import { boundaryStressRecipe } from "./boundary-stress.js"
 import { countryBalancedRecipe } from "./country-balanced.js"
+import { czPcFirstPrepositionRecipe } from "./cz-pcfirst-preposition.js"
 import { frAdminSplitRecipe } from "./fr-admin-split.js"
 import { frBareStreetRecipe } from "./fr-bare-street.js"
 import { frOrderRecipe } from "./fr-order.js"
@@ -18,10 +19,12 @@ import { germanRecipe } from "./german.js"
 import { houseVenueRecipe } from "./house-venue.js"
 import { intersectionRecipe } from "./intersection.js"
 import { localeRecipe } from "./locale.js"
+import { noStreetLedRecipe } from "./no-street-led.js"
 import { noStreetRecipe } from "./no-street.js"
 import { poBoxCedexRecipe } from "./po-box-cedex.js"
 import { poBoxRecipe } from "./po-box.js"
 import type { ShardRecipe } from "./scaffold.js"
+import { siBareVillageRecipe } from "./si-bare-village.js"
 import { streetAffixRecipe } from "./street-affix.js"
 import { streetBareRecipe } from "./street-bare.js"
 import { streetRecipe } from "./street.js"
@@ -45,6 +48,9 @@ const RECIPES: readonly ShardRecipe[] = [
 	frOrderRecipe,
 	frAdminSplitRecipe,
 	frBareStreetRecipe,
+	czPcFirstPrepositionRecipe,
+	noStreetLedRecipe,
+	siBareVillageRecipe,
 	countryBalancedRecipe,
 	boundaryStressRecipe,
 	anchorAbsorptionRecipe,

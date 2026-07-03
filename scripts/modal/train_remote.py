@@ -1296,6 +1296,47 @@ def sync_nsplice():
 @app.function(
     image=training_image,
     volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v210():
+    """#901 re-scoped: v2.1.0-boundary-family — the v0.10.0 overlay (v0.9.4 base VERBATIM + the
+    three new family shards si/no/cz; fr-bare-street already in the base) + code/configs. The
+    nsplice-v2-expanded init ckpt and the v0.7.1-nsplice tokenizer are already on the volume from
+    the v5.2.0 staging chain."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.10.0 overlay + code/configs from R2...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+    for check, path in [
+        ("v2.1.0 config", f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.1.0-boundary-family.yaml"),
+        ("probe config", f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.1.0-boundary-family-probe.yaml"),
+        ("overlay MANIFEST", f"{VOL_MOUNT}/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/MANIFEST.json"),
+        ("init ckpt", f"{VOL_MOUNT}/models/nsplice-v2-expanded/pytorch_model.bin"),
+        ("tokenizer", f"{VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/tokenizer.model"),
+    ]:
+        print(f"  {check} present:", os.path.isfile(path))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
     timeout=1200,
 )
 def mean_init_nsplice():
