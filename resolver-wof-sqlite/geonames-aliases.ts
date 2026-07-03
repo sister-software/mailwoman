@@ -28,6 +28,8 @@ import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
+import { isOfficialLanguage } from "@mailwoman/codex/country"
+
 /**
  * Synthetic id base for GeoNames-sourced rows (#743/#193) — above Overture's 8e12 so the three sources (WOF real ids,
  * Overture, GeoNames) never collide in a combined DB.
@@ -66,6 +68,15 @@ export function ingestGeonamesAliases(
 		 * `parentID` scoping and adminCoherence can't reach them and "Tbilisi, GE" can't resolve.
 		 */
 		adminForCountries?: ReadonlySet<string>
+		/**
+		 * #936: directory of per-country alternateNamesV2 dumps
+		 * (`download.geonames.org/export/dump/alternatenames/<CC>.zip` → `<CC>.txt`). When a country's file is present,
+		 * alias rows gain their language tag, `privateuse` ("preferred" from `isPreferredName`), and the `official` bit
+		 * (language is CLDR-official for the country, colloquial/historic excluded — the rule the #936 risk probe measured
+		 * at 7 new name-exact collisions globally). The main dump's bare `alternatenames` list still decides WHICH rows
+		 * exist; V2 only decorates them. Missing file = the pre-#936 untagged behavior, not an error.
+		 */
+		alternateDir?: string
 	}
 ): number {
 	// Latin-only, no bracket/paren noise GeoNames packs into `alternatenames` ("(( Karis Landskommun ))",
@@ -80,7 +91,7 @@ export function ingestGeonamesAliases(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)`
+		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 	// #267 admin linkage: ancestor rows (locality→region→country) so parentID scoping + adminCoherence reach
@@ -117,9 +128,60 @@ export function ingestGeonamesAliases(
 		let nc = 0
 		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
-		// GeoNames dump columns (0-indexed): 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon, 6 feature_class,
-		// 7 feature_code, 10 admin1 code, 14 pop.
+		// GeoNames dump columns (0-indexed): 0 geonameid, 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon,
+		// 6 feature_class, 7 feature_code, 10 admin1 code, 14 pop.
 		const lines = readFileSync(file, "utf8").split("\n")
+
+		// #936: V2 tags for this country's P-class rows — geonameid → exact alias spelling → tag. The V2
+		// dump repeats one spelling under several languages ("Åbo" sv/da/no); the merged tag is official /
+		// preferred if ANY qualifying row is.
+		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
+		let v2: Map<number, Map<string, { language: string; privateuse: string; official: number }>> | undefined
+
+		if (v2File && existsSync(v2File)) {
+			const wanted = new Set<number>()
+
+			for (const line of lines) {
+				const f = line.split("\t")
+
+				if (f[6] === "P") wanted.add(Number(f[0]))
+			}
+			v2 = new Map()
+
+			// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
+			// 6 isColloquial, 7 isHistoric.
+			for (const line of readFileSync(v2File, "utf8").split("\n")) {
+				if (!line) continue
+				const f = line.split("\t")
+				const gid = Number(f[1])
+
+				if (!wanted.has(gid)) continue
+				const lang = f[2] ?? ""
+
+				// ISO 639 codes are 2-3 letters; GeoNames' pseudo-codes (post, link, iata, wkdt, …) are 4+.
+				if (!/^[a-z]{2,3}$/.test(lang)) continue
+				const alt = (f[3] ?? "").trim()
+
+				if (!alt) continue
+				const preferred = f[4] === "1"
+				// Colloquial/historic forms are never official names, whatever their language.
+				const official = f[6] !== "1" && f[7] !== "1" && isOfficialLanguage(cc, lang) ? 1 : 0
+				let byName = v2.get(gid)
+
+				if (!byName) v2.set(gid, (byName = new Map()))
+				const prev = byName.get(alt)
+
+				if (!prev) byName.set(alt, { language: lang, privateuse: preferred ? "preferred" : "", official })
+				else {
+					if (official && !prev.official) {
+						prev.language = lang
+						prev.official = 1
+					}
+
+					if (preferred && !prev.privateuse) prev.privateuse = "preferred"
+				}
+			}
+		}
 
 		// #267 admin pre-pass (gap countries): fold the country (PCLI) + regions (ADM1), self+ancestry them, and
 		// build the admin1→region map the localities link through. Point bbox (GeoNames gives a centroid only).
@@ -144,12 +206,12 @@ export function ingestGeonamesAliases(
 					if (countryID >= 0) continue // one country row
 					countryID = id++
 					sprInsert.run(countryID, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
-					namesInsert.run(countryID, aname, "country", cc, "", 0)
+					namesInsert.run(countryID, aname, "country", cc, "", "", 0, 0)
 					ancestorInsert.run(countryID, countryID, "country")
 				} else if (f[7] === "ADM1" && f[10]) {
 					const rid = id++
 					sprInsert.run(rid, -1, aname, "region", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
-					namesInsert.run(rid, aname, "region", cc, "", 0)
+					namesInsert.run(rid, aname, "region", cc, "", "", 0, 0)
 					ancestorInsert.run(rid, rid, "region")
 					adminMap.set(f[10], rid)
 				}
@@ -183,7 +245,7 @@ export function ingestGeonamesAliases(
 			// Point bbox — a GeoNames row is a centroid; the candidate's region-bbox disambiguation just
 			// sees it as contained in itself, fine for a locality.
 			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
-			namesInsert.run(nid, name, "locality", cc, "", 0)
+			namesInsert.run(nid, name, "locality", cc, "", "", 0, 0)
 
 			if (addAdmin) {
 				ancestorInsert.run(nid, nid, "locality")
@@ -194,12 +256,16 @@ export function ingestGeonamesAliases(
 			}
 			const seen = new Set([name])
 
+			const tags = v2?.get(Number(f[0]))
+
 			for (const raw of [f[2] ?? "", ...(f[3] ? f[3].split(",") : [])]) {
 				const alt = clean(raw)
 
 				if (alt && !seen.has(alt)) {
 					seen.add(alt)
-					namesInsert.run(nid, alt, "locality", cc, "", 0)
+					const tag = tags?.get(alt)
+
+					namesInsert.run(nid, alt, "locality", cc, tag?.language ?? "", tag?.privateuse ?? "", tag?.official ?? 0, 0)
 				}
 			}
 			const pop = Number(f[14]) || 0

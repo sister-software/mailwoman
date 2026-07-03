@@ -9,5 +9,6 @@
 export * from "./codes.js"
 export * from "./country.js"
 export * from "./names.js"
+export * from "./official-languages.js"
 export * from "./reference-data.js"
 export * from "./reference.js"

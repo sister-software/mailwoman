@@ -30,6 +30,7 @@ import { readFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	backfillAncestorsFromHierarchy,
@@ -58,6 +59,8 @@ const OVERTURE_DIVISION_SUBTYPES = ["locality", "region", "county", "localadmin"
 const DEFAULT_GEONAMES_DIR = "/mnt/playpen/mailwoman-data/geonames"
 /** Default GeoNames per-country POSTAL dump directory (`<CC>.txt`, from download.geonames.org/export/zip). */
 const DEFAULT_GEONAMES_POSTAL_DIR = String(dataRootPath("geonames-postal"))
+/** Default GeoNames per-country alternateNamesV2 directory (`<CC>.txt`, from …/export/dump/alternatenames). */
+const DEFAULT_GEONAMES_ALTERNATE_DIR = String(dataRootPath("geonames-alternate"))
 /** Pinned Overture release for the divisions theme (the release the EU coverage was validated on). */
 const DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"
 
@@ -94,6 +97,12 @@ interface Args {
 	geonamesPostalDir: string
 	/** Directory of GeoNames per-country dumps (`<CC>.txt`). Default {@link DEFAULT_GEONAMES_DIR}. */
 	geonamesDir: string
+	/**
+	 * #936: directory of GeoNames per-country alternateNamesV2 dumps
+	 * (`download.geonames.org/export/dump/alternatenames/<CC>.zip` → `<CC>.txt`) — decorates the `--geonames-countries`
+	 * alias rows with language / privateuse / the `official` bit. Countries without a file ingest untagged (not fatal).
+	 */
+	geonamesAlternateDir: string
 }
 
 function parseArgs(): Args {
@@ -109,6 +118,7 @@ function parseArgs(): Args {
 	let geonamesDir = DEFAULT_GEONAMES_DIR
 	let geonamesPostalCountries: string[] | undefined
 	let geonamesPostalDir = DEFAULT_GEONAMES_POSTAL_DIR
+	let geonamesAlternateDir = DEFAULT_GEONAMES_ALTERNATE_DIR
 
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--data" && args[i + 1]) dataDir = args[++i]
@@ -131,6 +141,7 @@ function parseArgs(): Args {
 		else if (args[i] === "--geonames-dir" && args[i + 1]) geonamesDir = args[++i]!
 		else if (args[i] === "--geonames-postal-countries" && args[i + 1]) geonamesPostalCountries = args[++i]!.split(",")
 		else if (args[i] === "--geonames-postal-dir" && args[i + 1]) geonamesPostalDir = args[++i]!
+		else if (args[i] === "--geonames-alternate-dir" && args[i + 1]) geonamesAlternateDir = args[++i]!
 	}
 
 	if (!dataDir || !outputPath) {
@@ -152,6 +163,7 @@ function parseArgs(): Args {
 		geonamesDir,
 		geonamesPostalCountries,
 		geonamesPostalDir,
+		geonamesAlternateDir,
 	}
 }
 
@@ -187,7 +199,7 @@ interface ParsedFeature {
 	isSuperseding: number
 	lastmodified: number
 	concordances: Record<string, string | number>
-	names: Array<{ name: string; language: string }>
+	names: Array<{ name: string; language: string; privateuse: string; official: number }>
 }
 
 function parseFeature(text: string, placetypes: Set<string>): ParsedFeature | null {
@@ -221,18 +233,24 @@ function parseFeature(text: string, placetypes: Set<string>): ParsedFeature | nu
 		}
 	}
 
-	const names: Array<{ name: string; language: string }> = []
+	const names: Array<{ name: string; language: string; privateuse: string; official: number }> = []
+	const country = props["wof:country"] ?? ""
 
 	for (const [key, value] of Object.entries(props)) {
 		const match = key.match(/^name:([a-z]{3})_x_(preferred|variant)$/)
 
 		if (!match || !value) continue
 		const lang = match[1]!
+		const privateuse = match[2]!
+		// #936: only PREFERRED forms in an official language are official names — x_variant rows
+		// tagged with an official language are abbreviations/codes ("MSP", "Frisco"), and marking
+		// them official scored 13× the collision count in the risk probe.
+		const official = privateuse === "preferred" && isOfficialLanguage(country, lang) ? 1 : 0
 		const vals = Array.isArray(value) ? value : [value]
 
 		for (const v of vals) {
 			if (typeof v === "string" && v.length > 0) {
-				names.push({ name: v, language: lang })
+				names.push({ name: v, language: lang, privateuse, official })
 			}
 		}
 	}
@@ -323,7 +341,7 @@ export async function ingestOvertureDivisions(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)`
+		`INSERT INTO names (id, name, placetype, country, language, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	)
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 
@@ -365,11 +383,12 @@ export async function ingestOvertureDivisions(
 			0,
 			0
 		)
-		namesInsert.run(nid, name, subtype, country, "", 0)
+		namesInsert.run(nid, name, subtype, country, "", 0, 0)
 
 		// Multilingual aliases (names.common — language→name, incl. English / Latin transliterations) so a
 		// non-Latin-script place (Москва, القاهرة, กรุงเทพมหานคร) still resolves by its English/Latin name.
-		// The candidate build explodes every alias here into its own name_key.
+		// The candidate build explodes every alias here into its own name_key. Overture `common` is the
+		// standard name per language (no variant axis), so #936 officialness is the language test alone.
 		if (r.common_json) {
 			try {
 				const common = JSON.parse(String(r.common_json)) as Record<string, string>
@@ -378,7 +397,7 @@ export async function ingestOvertureDivisions(
 				for (const [lang, alias] of Object.entries(common)) {
 					if (typeof alias === "string" && alias.length > 0 && !seen.has(alias) && isLatin(alias)) {
 						seen.add(alias)
-						namesInsert.run(nid, alias, subtype, country, lang, 0)
+						namesInsert.run(nid, alias, subtype, country, lang, isOfficialLanguage(country, lang) ? 1 : 0, 0)
 					}
 				}
 			} catch {
@@ -412,6 +431,7 @@ async function main() {
 		geonamesDir,
 		geonamesPostalCountries,
 		geonamesPostalDir,
+		geonamesAlternateDir,
 	} = parseArgs()
 	const activePlacetypes = placetypes ? new Set(placetypes) : ADMIN_PLACETYPES
 	console.error(`Ingesting placetypes: ${[...activePlacetypes].join(", ")}`)
@@ -450,7 +470,7 @@ async function main() {
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)`
+		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 	const concordancesInsert = db.prepare(
 		`INSERT INTO concordances (id, other_id, other_source, lastmodified) VALUES (?, ?, ?, ?)`
@@ -510,7 +530,16 @@ async function main() {
 		)
 
 		for (const n of feature.names) {
-			namesInsert.run(feature.id, n.name, feature.placetype, feature.country, n.language, feature.lastmodified)
+			namesInsert.run(
+				feature.id,
+				n.name,
+				feature.placetype,
+				feature.country,
+				n.language,
+				n.privateuse,
+				n.official,
+				feature.lastmodified
+			)
 		}
 
 		for (const [source, value] of Object.entries(feature.concordances)) {
@@ -558,7 +587,9 @@ async function main() {
 
 	if (geonamesCountries && geonamesCountries.length > 0) {
 		console.error(`Backfilling GeoNames aliases for ${geonamesCountries.join(",")} from ${geonamesDir}...`)
-		geonamesIngested = ingestGeonamesAliases(db, geonamesCountries, geonamesDir)
+		geonamesIngested = ingestGeonamesAliases(db, geonamesCountries, geonamesDir, undefined, {
+			alternateDir: geonamesAlternateDir,
+		})
 		console.error(`  GeoNames places ingested: ${geonamesIngested.toLocaleString()}`)
 	}
 
