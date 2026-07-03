@@ -75,7 +75,11 @@ export interface NeuralParseTrace {
 	priors: TracePrior[]
 	/** The post-prior, post-mask matrix viterbi actually decoded over. Equals `logits` when nothing fired. */
 	emissions: number[][]
-	/** The label vocabulary, index-aligned with the logits/emissions inner dimension. */
+	/**
+	 * The label vocabulary. Index-aligned with the logits/emissions inner dimension, which may be
+	 * NARROWER than this list (the Stage-prefix rule: a Stage-N model loaded with Stage-N+1 labels
+	 * emits only the prefix — see labels.ts + `assertEmissionWidth`). Never wider.
+	 */
 	labels: string[]
 	/** Decoded label indices per piece (pre-token-repair; final labels live on `tokens`). */
 	path: number[]
