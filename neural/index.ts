@@ -19,6 +19,7 @@ export * from "./soft-features.js"
 export * from "./span-proposal-prior.js"
 export * from "./span-proposer-lexicon.js"
 export * from "./tokenizer.js"
+export * from "./trace.js"
 export {
 	buildBIOEndMask,
 	buildBIOStartMask,
