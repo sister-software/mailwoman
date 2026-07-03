@@ -149,8 +149,29 @@ export function ingestGeonamesAliases(
 			v2 = new Map()
 
 			// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
-			// 6 isColloquial, 7 isHistoric.
-			for (const line of readFileSync(v2File, "utf8").split("\n")) {
+			// 6 isColloquial, 7 isHistoric, 8 from, 9 to.
+			//
+			// Two passes, because historic-ness is a fact about the NAME, not the row: GeoNames splits one
+			// spelling across rows — Malabo carries "Santa Isabel" as (es, unflagged) AND as (no-language,
+			// isHistoric=1, to=1973). Officialness must see the flags from EVERY row for the spelling, or the
+			// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
+			// Do NOT gate on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
+			// is unflagged; FI has 1,746 flags across the whole dump).
+			const v2Lines = readFileSync(v2File, "utf8").split("\n")
+			const historicNames = new Set<string>()
+
+			for (const line of v2Lines) {
+				if (!line) continue
+				const f = line.split("\t")
+
+				if (f[6] === "1" || f[7] === "1" || (f[9] ?? "").trim() !== "") {
+					const alt = (f[3] ?? "").trim()
+
+					if (alt && wanted.has(Number(f[1]))) historicNames.add(`${f[1]}|${alt}`)
+				}
+			}
+
+			for (const line of v2Lines) {
 				if (!line) continue
 				const f = line.split("\t")
 				const gid = Number(f[1])
@@ -164,8 +185,7 @@ export function ingestGeonamesAliases(
 
 				if (!alt) continue
 				const preferred = f[4] === "1"
-				// Colloquial/historic forms are never official names, whatever their language.
-				const official = f[6] !== "1" && f[7] !== "1" && isOfficialLanguage(cc, lang) ? 1 : 0
+				const official = !historicNames.has(`${gid}|${alt}`) && isOfficialLanguage(cc, lang) ? 1 : 0
 				let byName = v2.get(gid)
 
 				if (!byName) v2.set(gid, (byName = new Map()))
