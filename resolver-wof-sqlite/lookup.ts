@@ -163,6 +163,25 @@ export interface RankingWeights {
 	 * handful of states match a 2-letter query).
 	 */
 	exactMatchTiering: boolean
+	/**
+	 * #936 option 3 — official-language names ARE names. When true, a candidate holding the query as an OFFICIAL name
+	 * (`names.official = 1`: a preferred-form name in an official language of its country, stamped at ingest) joins the
+	 * NAME-exact sub-tier rather than the alias-exact one, provided its population clears {@link officialNameExactFloor}.
+	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo; population still orders
+	 * within the sub-tier, so Paris → Paris FR is untouched.
+	 *
+	 * Default false (byte-stable). Requires a gazetteer built with the #940 ingest bit — on older DBs without the
+	 * `official` column the probe fails soft and behavior is identical to the flag being off.
+	 */
+	officialNameExact: boolean
+	/**
+	 * Minimum population for a candidate's official names to join the name-exact sub-tier. The #936 review's no-floor
+	 * census measured the boundary: ≥100k holders are the famous-exonym class (757 flips, intent-correct; 7 collisions,
+	 * none harmful) while 10k–100k holders are junk-dominated (3,481 flips led by short-form mis-tags — Villeneuve-Loubet
+	 * carrying "villeneuve" would bury five real villages of that name). Rank-time knob: tunable without re-ingest;
+	 * below-floor official names simply stay alias-tier (today's behavior).
+	 */
+	officialNameExactFloor: number
 }
 
 const DEFAULT_WEIGHTS: RankingWeights = {
@@ -191,6 +210,9 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
 	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine, not the more-populous Missouri).
 	exactMatchTiering: true,
+	// #936 option 3 ships default-OFF behind its gate battery; see the RankingWeights docstring.
+	officialNameExact: false,
+	officialNameExactFloor: 100_000,
 }
 
 /**
@@ -994,10 +1016,28 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				// sub-tier as before.
 				const norm = (v: string): string => v.toLowerCase().trim().replace(/\s+/g, " ")
 				const needle = norm(query.text)
+				// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
+				// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
+				// Turku's name, not merely its alias. Floor-gated on the holder's population (see the
+				// RankingWeights docstring for the measured 100k boundary). officialIds ⊆ exactIds by
+				// construction (official rows are names rows), so only the sub-tier KIND changes.
+				const officialIds = this.#weights.officialNameExact
+					? this.#officialNameIds(
+							sch,
+							candidates
+								.filter(
+									(c) => exactIds.has(c.id as number) && (c.population ?? 0) >= this.#weights.officialNameExactFloor
+								)
+								.map((c) => c.id as number),
+							query.text
+						)
+					: undefined
 				const kind = (c: PlaceCandidate): number => {
 					if (!exactIds.has(c.id as number)) return 0
 
-					return norm(String(c.name ?? "")) === needle ? 2 : 1
+					if (norm(String(c.name ?? "")) === needle) return 2
+
+					return officialIds?.has(c.id as number) ? 2 : 1
 				}
 				// With proximity hints (near/bias), prominence (population + nearness, same units)
 				// replaces raw population as the within-tier key — the 48026 rule: the map view or
@@ -1275,6 +1315,34 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			}
 		} catch {
 			// Shard without place_search either → no exact-match tier. Falls back to weighted-sum order.
+		}
+
+		return out
+	}
+
+	/**
+	 * Among `ids` (already known exact matches), the subset holding `text` as an OFFICIAL name (`names.official = 1`, the
+	 * #940 ingest bit). Same COLLATE NOCASE semantics as {@link WOFSqlitePlaceLookup.#exactMatchIds} so the two probes
+	 * agree on what "equals the query" means. Fails soft on gazetteers built before #940 (no `official` column) — the
+	 * sub-tier then behaves exactly as if `officialNameExact` were off.
+	 */
+	#officialNameIds(schemaName: string, ids: number[], text: string): Set<number> {
+		const out = new Set<number>()
+		const trimmed = text.trim()
+
+		if (ids.length === 0 || !trimmed) return out
+		const placeholders = ids.map(() => "?").join(", ")
+
+		try {
+			const rows = this.#db
+				.prepare(
+					`SELECT DISTINCT id FROM ${schemaName}.names WHERE id IN (${placeholders}) AND official = 1 AND name = ? COLLATE NOCASE`
+				)
+				.all(...ids, trimmed) as Array<{ id: number }>
+
+			for (const r of rows) out.add(r.id)
+		} catch {
+			// Pre-#940 gazetteer (no `official` column) or a names-less slim shard — feature inert.
 		}
 
 		return out
