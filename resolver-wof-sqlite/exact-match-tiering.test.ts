@@ -221,6 +221,37 @@ describe("findPlace — exact-match tiering", () => {
 		expect(gb).toHaveLength(0)
 	})
 
+	// The 48026 rule (proximity bias): two same-name postcode rows on different continents — with
+	// no hints, population-first picks the bigger one; with a bias point near the smaller, the
+	// prominence sort follows the hint. Soft only: both candidates still return.
+	test("bias re-ranks a cross-country postcode tie; absent bias = population order", async () => {
+		const db = buildDB([
+			{ id: 31, name: "48026", country: "IT", lat: 44.37, lon: 12.03, placetype: "postalcode", population: 12000 },
+			{ id: 32, name: "48026", country: "US", lat: 42.54, lon: -82.95, placetype: "postalcode", population: 900 },
+		])
+		lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
+
+		const noBias = await lookup.findPlace({ text: "48026", placetype: "postalcode", limit: 2 })
+		expect(noBias[0]?.country).toBe("IT") // population-first, unchanged default
+
+		const usBias = await lookup.findPlace({
+			text: "48026",
+			placetype: "postalcode",
+			limit: 2,
+			bias: [{ lat: 42.33, lon: -83.05 }], // Detroit viewport
+		})
+		expect(usBias[0]?.country).toBe("US")
+		expect(usBias).toHaveLength(2) // soft — nothing filtered
+
+		const itBias = await lookup.findPlace({
+			text: "48026",
+			placetype: "postalcode",
+			limit: 2,
+			bias: [{ lat: 44.42, lon: 12.2 }], // Ravenna viewport
+		})
+		expect(itBias[0]?.country).toBe("IT")
+	})
+
 	test("a single candidate is unaffected (no tier to split)", async () => {
 		lookup = new WOFSqlitePlaceLookup({
 			database: buildDB([

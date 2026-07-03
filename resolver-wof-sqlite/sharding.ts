@@ -151,6 +151,35 @@ export function resolveShards(input: string | ReadonlyArray<string | ShardConfig
  * the typical mailwoman query has a single placetype anyway. If a caller needs cross-shard results they can issue two
  * `findPlace` calls.
  */
+/**
+ * All placetype-matching shards, in routing order (the country-aware pick chooses among these). Used by the bias path:
+ * a country-less postcode query with proximity hints fans out across every matching shard and merges, because
+ * single-shard routing would hide the cross-country ambiguity the hints exist to resolve ("48026" lives in
+ * postalcode-us AND postalcode-intl).
+ */
+export function pickShardsForPlacetype(shards: ResolvedShard[], placetype: string | undefined): ResolvedShard[] {
+	if (!placetype) return [shards[0]!]
+	const matches: ResolvedShard[] = []
+
+	for (const s of shards) {
+		if (s.placetypes.includes(placetype)) matches.push(s)
+	}
+
+	for (const s of shards) {
+		if (s.schemaName === "main" || matches.includes(s)) continue
+
+		if (
+			s.schemaName === placetype ||
+			s.schemaName.startsWith(`${placetype}_`) ||
+			s.schemaName.endsWith(`_${placetype}`)
+		) {
+			matches.push(s)
+		}
+	}
+
+	return matches.length > 0 ? matches : [shards[0]!]
+}
+
 export function pickShardForPlacetype(
 	shards: ResolvedShard[],
 	placetype: string | undefined,

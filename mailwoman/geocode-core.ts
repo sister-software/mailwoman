@@ -129,6 +129,11 @@ export interface GeocodeDeps {
 	 */
 	placeCountry?: PlaceCountryFn | false
 	/**
+	 * Proximity-bias points (viewport center, user location, …), strongest first — forwarded to the resolver as
+	 * ResolveOpts.bias (soft prominence re-rank; the ambiguous-postcode disambiguator).
+	 */
+	bias?: Array<{ lat: number; lon: number; weight?: number }>
+	/**
 	 * #743/#194: promote a CONFIDENT placer guess to a HARD country filter (empty→unresolved) for coverage-safelisted
 	 * countries — see {@link hardCountryFor}. **DEFAULT-ON** (#743): a pure win on well-covered countries
 	 * (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt out.
@@ -347,6 +352,8 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	opts.adminCoherence = deps.adminCoherence !== false
 
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
+
+	if (deps.bias && deps.bias.length > 0) opts.bias = deps.bias
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
 	// a function → that placer; false → disabled. A confident in-map guess feeds the resolver's
 	// anchorPosterior re-rank; abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
@@ -462,7 +469,10 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	}
 
 	if (tier === "admin") {
-		const adminPriority: ReadonlyArray<string> = ["locality", "dependent_locality", "region", "country"]
+		// `postcode` joins the ladder (after the locality tiers, before region): a lone-postcode
+		// query resolves the postcode node itself — without it here the result reported 0,0 despite
+		// a resolved coordinate (found building the proximity-bias feature's 48026 case).
+		const adminPriority: ReadonlyArray<string> = ["locality", "dependent_locality", "postcode", "region", "country"]
 
 		for (const tag of adminPriority) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)

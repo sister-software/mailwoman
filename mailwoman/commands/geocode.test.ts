@@ -20,7 +20,8 @@
  */
 
 import { execFileSync } from "node:child_process"
-import { existsSync } from "node:fs"
+import { existsSync, mkdtempSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { describe, expect, test } from "vitest"
@@ -80,7 +81,7 @@ describe("geocode argument validation", () => {
 		).toThrow()
 	})
 
-	test("missing WOF DB exits 1 with a descriptive error", () => {
+	test("missing WOF DB exits 1 with a descriptive error (empty data root — the default shard set no longer exists)", () => {
 		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
@@ -92,8 +93,15 @@ describe("geocode argument validation", () => {
 		try {
 			execFileSync(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 				encoding: "utf8",
-				// Explicitly unset the env var so the command doesn't find a DB.
-				env: { ...process.env, MAILWOMAN_WOF_DB: undefined },
+				// Unset the env var AND point the data root at an empty dir: since the proximity-bias
+				// pass, geocode auto-attaches the wofShardPaths default set when the env is absent —
+				// on a standard data root that now SUCCEEDS (the new contract). The error contract
+				// only survives when no default shard exists either.
+				env: {
+					...process.env,
+					MAILWOMAN_WOF_DB: undefined,
+					MAILWOMAN_DATA_ROOT: mkdtempSync(join(tmpdir(), "mw-empty-")),
+				},
 				timeout: 15_000,
 			})
 		} catch (err: unknown) {

@@ -26,6 +26,7 @@
  *   - 1 bad arguments, missing required DB, or fatal parse/resolve error
  */
 
+import { existsSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
@@ -46,7 +47,7 @@ import {
 	type ShardResolver,
 } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -64,6 +65,13 @@ const OptionsSchema = zod.object({
 		.optional()
 		.default("en-US")
 		.describe("Locale tag matching a weights package (en-US, fr-FR). Default en-US."),
+	bias: zod
+		.string()
+		.optional()
+		.describe(
+			"Proximity-bias points, strongest first: 'lat,lon[:weight];lat,lon' (e.g. the map viewport center, then " +
+				"the user's location). Soft re-rank only — an ambiguous bare postcode follows the nearest hint."
+		),
 	defaultCountry: zod
 		.string()
 		.optional()
@@ -143,17 +151,28 @@ const OptionsSchema = zod.object({
 // Path helpers
 // ---------------------------------------------------------------------------
 
-function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
-	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
+function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
+	// Comma-separated multi-shard paths (the HealthRouter/$MAILWOMAN_WOF_DB convention), else the
+	// wofShardPaths default set filtered to what exists on disk — the same auto-attach the server
+	// and drop-ins use, so `mailwoman geocode` works out of the box on a standard data root.
+	const raw = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
+	const paths = (
+		raw
+			? raw
+					.split(",")
+					.map((p: string) => p.trim())
+					.filter(Boolean)
+			: wofShardPaths()
+	).filter((p: string) => existsSync(p))
 
-	if (!path) {
+	if (paths.length === 0) {
 		throw new Error(
 			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Build one with `mailwoman-wof-build-slim` + `mailwoman-wof-build-fts`."
 		)
 	}
 
-	return path
+	return paths
 }
 
 // ---------------------------------------------------------------------------
@@ -167,7 +186,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
 	const candidateDb = resolveCandidateDBPath(options.candidateDb)
-	const wofPath = candidateDb ? "" : resolveWOFPath(options)
+	const wofPath = candidateDb ? [] : resolveWOFPath(options)
 
 	// Load the neural classifier (required for street-level; weights must be present).
 	let classifier: NeuralAddressClassifier
@@ -225,6 +244,19 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
 		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
 		// wins (resolverDefaultCountry returns it before the locale inference is consulted).
+		// --bias 'lat,lon[:weight];…' → ordered soft proximity hints (viewport first by convention).
+		const bias = (options.bias ?? "")
+			.split(";")
+			.map((part: string) => part.trim())
+			.filter(Boolean)
+			.map((part: string) => {
+				const [coords, w] = part.split(":")
+				const [lat, lon] = coords!.split(",").map(Number)
+
+				if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error(`--bias: bad point '${part}'`)
+
+				return { lat: lat!, lon: lon!, ...(w !== undefined ? { weight: Number(w) } : {}) }
+			})
 		const parsedTree = await parseForGeocode(input, { classifier })
 		const inferredScopeOK = options.defaultCountry || !isBareLocalityTree(parsedTree)
 		const result = await geocodeAddress(input, {
@@ -232,6 +264,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			resolver,
 			shards,
 			parsedTree,
+			...(bias.length > 0 ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,

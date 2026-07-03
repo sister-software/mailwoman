@@ -84,6 +84,8 @@ export interface ResolverBackend {
 		 * recovering localities the name-match alone misses. Backends without postcode support ignore it.
 		 */
 		postcode?: string
+		/** Proximity-bias points — a SOFT prominence re-rank; backends without support ignore it. */
+		bias?: Array<{ lat: number; lon: number; weight?: number }>
 		limit?: number
 	}): Promise<ResolvedPlace[]>
 	/**
@@ -217,6 +219,13 @@ export interface ResolveOpts {
 	 * overrides it deeper in the tree.
 	 */
 	defaultCountry?: string
+	/**
+	 * Ordered proximity-bias points (viewport center first, then user location, …), each optionally weighted (default
+	 * 1.0). SOFT ranking signal only — candidates near a bias point win prominence ties (the ambiguous-postcode case:
+	 * "48026" follows the map view to Michigan or Italy); recall and filters are untouched, and omitting it keeps ranking
+	 * byte-identical. Callers: the CLI's `--bias lat,lon[:weight]`, the demo's viewport/user hints, `GeocodeDeps.bias`.
+	 */
+	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
 	 * When a resolved parent constrains a child lookup (`parentID` is passed to the backend as a hard descendant filter)
 	 * and that filtered lookup returns NOTHING, retry the lookup once without the parent constraint. Guards against an

@@ -64,6 +64,12 @@ export interface PlaceCandidate {
 	 */
 	exactMatch?: boolean
 	/**
+	 * Combined prominence (population term + best proximity-bias term, same additive units) — populated by the FTS
+	 * lookup; the exact-tier sort orders by THIS instead of raw population when the query carried proximity hints
+	 * (`near`/`bias`).
+	 */
+	prominence?: number
+	/**
 	 * Population from WOF's `wof:population` property. Only present when the candidate has it on record — WOF carries
 	 * population for ~15% of localities (mostly larger ones). Absent does NOT mean zero, just unknown.
 	 */
@@ -132,6 +138,15 @@ export interface FindPlaceQuery {
 	postcode?: string
 	/** Proximity hint — candidates close to this point get a ranking boost. */
 	near?: GeoPoint & { maxDistanceKm?: number }
+	/**
+	 * Ordered proximity-bias points (viewport center, user location, …), each optionally weighted (default 1.0, first
+	 * entry strongest by convention). SOFT — a re-rank signal, never a filter: with bias present, exact-tier candidates
+	 * order by combined prominence (population + the best decayed-distance term over these points) instead of population
+	 * alone, which is how an ambiguous bare postcode ("48026": Fraser MI vs Russi IT) follows the map view / the user.
+	 * Absent (and no `near`) → ranking is byte-identical to today. `near` is treated as a weight-1.0 bias point for
+	 * back-compat.
+	 */
+	bias?: Array<GeoPoint & { weight?: number }>
 	/** Bounding-box filter — only candidates whose bbox intersects this box are returned. */
 	bbox?: GeoBbox
 	/** Default 10. */
