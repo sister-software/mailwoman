@@ -238,28 +238,32 @@ export class CoarsePlacer {
 }
 
 /**
- * The in-map posterior for the soft-prior DISTRIBUTION wiring (#244 residual upgrade): the per-in-map-country marginals
- * (every class except `OTHER`) from a prediction, or `null` when the model abstained / routed off-map. Fed straight to
- * the resolver's `anchorPosterior` so it boosts EVERY plausible in-map country proportionally — and breaks
- * country-ambiguous ties (mass split across several in-map countries) with its own place-level evidence — instead of
- * committing to the single argmax (the one-hot the M2 wiring shipped). Raw marginals (un-renormalized; they sum to the
- * in-map mass `1 - P(OTHER)`), matching the one-hot's `confidence` scale so `anchorWeight` is unchanged.
+ * The coarse placer's country POSTERIOR, shaped for the resolver: a per-country probability map like `{GB: 0.8, FR:
+ * 0.06}` — "given this address text, how likely is each country?" ("posterior" in the Bayesian sense: the model's
+ * belief AFTER seeing the input; see the glossary). Every in-map class except `OTHER` is included; returns `null` when
+ * the model abstained or routed off-map. The resolver consumes it as `anchorPosterior`: each candidate's rank gains
+ * `anchorWeight × posterior[candidate.country]`, so EVERY plausible country is boosted proportionally, and
+ * country-ambiguous inputs (mass split DK↔NO) let the resolver's own place evidence break the tie — strictly more
+ * informative than committing to the single argmax. Values are raw marginals in [0, 1] (un-renormalized; they sum to
+ * the in-map mass `1 − P(OTHER)`), matching the one-hot `confidence` scale so `anchorWeight` needs no retuning.
  */
 export function inMapPosterior(
 	prediction: CoarsePrediction,
 	opts?: {
 		/**
-		 * #928: drop in-map classes whose marginal is below this floor before handing the posterior to the resolver. The
-		 * misroute drift (0 → 25 since the M2 gate) was TAIL MASS: on a correctly-argmaxed GB row, the small US marginal
-		 * compounds with the #910 population-first exact tier and flips Boston-class namesakes — the placer was right and
-		 * its tail still did the damage. The floor zeroes implausible tails while keeping genuine ambiguity (a DK↔NO split
-		 * above the floor passes through intact). Default 0.05; `0` = the untempered distribution (the pre-#928 behavior).
+		 * Epsilon floor (see the glossary): drop countries whose probability falls below this cutoff before the resolver
+		 * sees the posterior, so implausible tails cannot influence ranking. Domain [0, 1]: `0` (the DEFAULT) passes the
+		 * full distribution through unchanged; raising it keeps only stronger beliefs — at the extreme only the argmax
+		 * survives (a one-hot). The default is 0 deliberately: the #928 investigation swept 0.05–0.30 against the misroute
+		 * battery and every value was byte-identical (the drift's real cause was the anchor re-rank's score key, fixed
+		 * separately) — no nonzero default has a measured basis, and the shipped distribution contract stays
+		 * byte-identical. The knob exists for distribution-mode experiments (`--posterior-floor` on the misroute eval).
 		 */
 		epsilonFloor?: number
 	}
 ): Record<string, number> | null {
 	if (prediction.country === null || prediction.country === "OTHER") return null
-	const floor = opts?.epsilonFloor ?? 0.05
+	const floor = opts?.epsilonFloor ?? 0
 	const posterior: Record<string, number> = {}
 
 	for (const [cls, prob] of Object.entries(prediction.probs)) {

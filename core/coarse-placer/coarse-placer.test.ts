@@ -239,17 +239,17 @@ describe("inMapPosterior — #928 epsilon floor", () => {
 		probs: { GB: 0.8, US: 0.04, FR: 0.06, OTHER: 0.1 },
 	}
 
-	test("default floor drops sub-5% tails, keeps the rest, never includes OTHER", () => {
-		expect(inMapPosterior(pred)).toEqual({ GB: 0.8, FR: 0.06 })
+	test("DEFAULT floor is 0 — the full distribution passes through (the shipped contract)", () => {
+		expect(inMapPosterior(pred)).toEqual({ GB: 0.8, US: 0.04, FR: 0.06 })
 	})
 
-	test("floor 0 = the untempered pre-#928 distribution", () => {
-		expect(inMapPosterior(pred, { epsilonFloor: 0 })).toEqual({ GB: 0.8, US: 0.04, FR: 0.06 })
+	test("an explicit floor drops sub-floor tails, keeps the rest, never includes OTHER", () => {
+		expect(inMapPosterior(pred, { epsilonFloor: 0.05 })).toEqual({ GB: 0.8, FR: 0.06 })
 	})
 
-	test("genuine ambiguity above the floor is preserved (the DK↔NO class)", () => {
+	test("genuine ambiguity above an explicit floor is preserved (the DK↔NO class)", () => {
 		const split = { country: "DK", confidence: 0.5, abstained: false, probs: { DK: 0.5, NO: 0.4, OTHER: 0.1 } }
-		expect(inMapPosterior(split)).toEqual({ DK: 0.5, NO: 0.4 })
+		expect(inMapPosterior(split, { epsilonFloor: 0.05 })).toEqual({ DK: 0.5, NO: 0.4 })
 	})
 
 	test("the argmax always survives, even under an extreme floor", () => {

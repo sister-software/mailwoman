@@ -41,8 +41,14 @@ export interface ResolvedPlace {
 	 */
 	score: number
 	/**
-	 * Backend-computed prominence (population + proximity terms, additive units) — the within-tier ranking key the #369
-	 * anchor re-rank and #938 bias path share. Optional: backends without it degrade to score-based ordering.
+	 * The candidate's PROMINENCE (see the glossary): how important this place is when breaking ties among equally-good
+	 * text matches. Computed by the backend as the population term (log-scaled, capped at `populationBoost`, default 4.0)
+	 * plus the best proximity-bias term (distance-decayed, capped at `biasBoost`, default 4.0). Domain [0,
+	 * populationBoost + biasBoost] — typically [0, 8]; HIGHER = more prominent = ranked EARLIER within an exact-match
+	 * tier. Exists because raw bm25 `score` is length-poisoned for famous places (a capital's alias-heavy index entry
+	 * reads ~15 pts worse than a tiny namesake's clean one), so within-tier ordering keys on this instead; the #369
+	 * anchor re-rank adds `anchorWeight × posterior[country]` on top. Optional — backends that don't compute it degrade
+	 * to score-based ordering.
 	 */
 	prominence?: number
 	/**
