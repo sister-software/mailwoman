@@ -19,10 +19,22 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import type { SoftFeatureChannel } from "./soft-features.js"
 
-/** The emission priors the decode path may compose, in application order. */
-export type TracePriorKind = "queryShape" | "fst" | "streetMorphology" | "spanProposer" | "conventionsMask"
+/**
+ * The emission priors the decode path may compose, in application order. The ORDERED constant is the single source for
+ * "every kind" — the decode path's push sites and the empty-input return both produce records in exactly this order,
+ * and the trace test asserts against it, so adding a prior without its participation record is a test failure, not a
+ * silent omission.
+ */
+export const TRACE_PRIOR_KINDS = ["queryShape", "fst", "streetMorphology", "spanProposer", "conventionsMask"] as const
 
-/** One prior's participation record: present for every kind, `applied` says whether it fired. */
+export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
+
+/**
+ * One prior's participation record: present for every kind. `applied` reports EFFECT, not configuration — true only
+ * when the composed prior actually carried a nonzero bias (or the mask removed at least one label). A configured source
+ * that matched nothing reports `false`, so "why didn't my prior move the emissions" is answerable from the trace
+ * alone.
+ */
 export interface TracePrior {
 	kind: TracePriorKind
 	applied: boolean
@@ -66,8 +78,15 @@ export interface NeuralParseTrace {
 	gazetteer?: SoftFeatureChannel
 	/** Raw model emissions, pre-prior — `logits[tokenIdx][labelIdx]`. */
 	logits: number[][]
-	/** Locale-head output (`LOCALE_COUNTRIES` order). Absent on models without the head. */
+	/** Locale-head output, index-aligned with `localeCountries`. Absent on models without the head. */
 	localeLogits?: number[]
+	/**
+	 * The locale-head axis: the country code each `localeLogits` index means, serialized from the producing model's own
+	 * `LOCALE_COUNTRIES` so consumers never hardcode the order (the PLACETYPE_ORDER dual-maintenance class — a retrained
+	 * head that adds or reorders classes would otherwise silently mislabel every downstream gauge). Present iff
+	 * `localeLogits` is.
+	 */
+	localeCountries?: string[]
 	/** Address system whose conventions applied, or null when conventions were off / below the bar. */
 	detectedSystem: SystemCode | null
 	/** How `detectedSystem` was chosen: conventions off, locale-head auto-detect, or caller-pinned. */
@@ -81,7 +100,11 @@ export interface NeuralParseTrace {
 	 * `assertEmissionWidth`). Never wider.
 	 */
 	labels: string[]
-	/** Decoded label indices per piece (pre-token-repair; final labels live on `tokens`). */
+	/**
+	 * The DECODER's label indices per piece — the raw viterbi/argmax output, captured BEFORE the word-consistency healing
+	 * vote and before every token-repair pass (all of which appear in `repairs`; final labels live on `tokens`). This is
+	 * what the heatmap's path outline means: the cell the decode chose, not the healed result.
+	 */
 	path: number[]
 	decode: "viterbi" | "argmax"
 	repairs: TraceRepair[]

@@ -1,3 +1,7 @@
+> **Point-in-time design record.** The embedded code listings are the plan as written, NOT the shipped code —
+> several diverged during implementation (e.g. the repair test's input, the Stage-prefix heatmap slice). The
+> shipped files are canonical; read this for intent and sequencing only.
+
 # Parse Trace + ModelVisualizer Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

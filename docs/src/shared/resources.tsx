@@ -66,6 +66,8 @@ export interface ParseTraceLike {
 	gazetteer?: TraceChannelLike
 	logits: number[][]
 	localeLogits?: number[]
+	/** The locale-head axis (country code per `localeLogits` index) — self-describing, never hardcode the order. */
+	localeCountries?: string[]
 	detectedSystem: string | null
 	systemSource: "off" | "auto" | "pinned"
 	priors: Array<{ kind: string; applied: boolean }>

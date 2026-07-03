@@ -7,11 +7,18 @@
  *   via Storybook (ModelVisualizer.stories.tsx) against the committed fixture.
  */
 
+import type { NeuralParseTrace } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"
 
 import type { ParseTraceLike } from "../../shared/resources.tsx"
 import fixture from "./fixtures/white-house.trace.json"
 import { changedIndices, emissionColor, matrixAbsMax, pieceDisplay, softmaxRow, stripBIO } from "./helpers.ts"
+
+// Compile-time tie (type-only, erased at build): the docs mirror must accept every real trace. A
+// NeuralParseTrace field rename/retype now fails HERE at typecheck instead of at runtime on /trace.
+const _traceMirrorAccepts: ParseTraceLike = {} as NeuralParseTrace
+
+void _traceMirrorAccepts
 
 describe("ModelVisualizer helpers", () => {
 	it("softmaxRow sums to 1 and preserves argmax", () => {
@@ -80,6 +87,11 @@ describe("ModelVisualizer helpers", () => {
 			expect(repair.after).toHaveLength(trace.pieces.length)
 		}
 
-		if (trace.localeLogits) expect(trace.localeLogits).toHaveLength(9)
+		if (trace.localeLogits) {
+			// Self-describing axis: the trace carries the country order its logits mean — the gauge (and
+			// this test) key off it rather than a hardcoded class count.
+			expect(trace.localeCountries).toBeDefined()
+			expect(trace.localeLogits).toHaveLength(trace.localeCountries!.length)
+		}
 	})
 })

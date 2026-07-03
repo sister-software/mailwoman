@@ -219,6 +219,17 @@
 		0,
 		0
 	],
+	"localeCountries": [
+		"US",
+		"FR",
+		"DE",
+		"CA",
+		"GB",
+		"JP",
+		"ES",
+		"IT",
+		"NL"
+	],
 	"detectedSystem": "us",
 	"systemSource": "auto",
 	"priors": [

@@ -17,11 +17,13 @@ import { fileURLToPath } from "node:url"
 import { buildAddressTree } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
+import type { AnchorLookup } from "../anchor-inference.js"
 import { NeuralAddressClassifier, type NeuralRunner } from "../classifier.js"
 import { STAGE2_BIO_LABELS } from "../labels.js"
 import type { InferResult } from "../onnx-runner.js"
 import type { QueryShapeLike } from "../query-shape-prior.js"
 import { MailwomanTokenizer } from "../tokenizer.js"
+import { TRACE_PRIOR_KINDS } from "../trace.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
 const TOKENIZER_PATH = resolve(here, "fixtures/tokenizer-v0.1.0.model")
@@ -109,11 +111,11 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
 
-		// The span proposer is default-ON; whether it fires depends on the text. The contract
-		// here is presence + a boolean, not a specific value.
-		for (const kind of ["queryShape", "fst", "streetMorphology", "spanProposer", "conventionsMask"]) {
-			expect(bare.priors.map((p) => p.kind)).toContain(kind)
-		}
+		// The span proposer is default-ON; whether it fires depends on the text. The contract is
+		// EVERY kind, in application order — asserted against the exported constant, so a new prior
+		// added to #decode without its participation record fails here instead of silently vanishing
+		// from traces.
+		expect(bare.priors.map((p) => p.kind)).toEqual([...TRACE_PRIOR_KINDS])
 	})
 
 	it("emissions differ from logits when a prior applies, match when none do", async () => {
@@ -219,6 +221,69 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		expect(trace.caseNormalized).toBe(true)
 		expect(trace.text).not.toBe(upper)
+	})
+
+	it("spanBridge repair stays piece-aligned even though the bridge MERGES tokens", async () => {
+		const tokenizer = await loadTokenizer()
+		// "P.O. Box" fragments: label the alphanumeric pieces street (a STAGE2 tag — the fake
+		// classifier runs the 21-label set, and the bridge is tag-agnostic), leave the dot pieces O.
+		// The bridge merges the fragments across the unlabeled intra-token punctuation, DROPPING
+		// tokens; the trace contract still promises per-piece before/after (char-offset projection).
+		const text = "P.O. Box 123"
+		const { pieces } = tokenizer.encode(text)
+		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
+		const bIdx = STAGE2_BIO_LABELS.indexOf("B-street")
+		const iIdx = STAGE2_BIO_LABELS.indexOf("I-street")
+		// Each fragment STARTS with B- (O → I- is an illegal BIO transition the viterbi mask forbids);
+		// only a contiguous continuation piece gets I-. The dots decode O — the gaps the bridge crosses.
+		const logits = pieces.map((p, idx) => {
+			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
+			const alnum = /[\p{L}\p{N}]/u.test(p.piece)
+			const prev = pieces[idx - 1]
+			const continues = alnum && prev !== undefined && /[\p{L}\p{N}]/u.test(prev.piece) && prev.end === p.start
+
+			row[alnum ? (continues ? iIdx : bIdx) : oIdx] = 4
+
+			return row
+		})
+		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
+
+		const trace = await classifier.traceParse(text, { bridgePunctuationGaps: true, spanProposer: false })
+		const bridge = trace.repairs.find((r) => r.pass === "spanBridge")
+
+		// The bridge must have merged (fewer final tokens than pieces) — otherwise this test's
+		// premise is dead and it should fail loudly rather than assert nothing.
+		expect(trace.tokens.length).toBeLessThan(pieces.length)
+		expect(bridge).toBeDefined()
+		expect(bridge!.before).toHaveLength(pieces.length)
+		expect(bridge!.after).toHaveLength(pieces.length)
+		// The merged span's label covers the punctuation pieces it absorbed.
+		expect(bridge!.after.filter((l) => l.endsWith("street")).length).toBeGreaterThan(
+			bridge!.before.filter((l) => l.endsWith("street")).length
+		)
+	})
+
+	it("anchor channel rides the trace exactly as fed, piece-aligned", async () => {
+		const tokenizer = await loadTokenizer()
+		const text = "350 5th Ave 10118"
+		const { pieces } = tokenizer.encode(text)
+		const logits = logitsWithBoost(pieces.length, 0, "B-house_number")
+		const anchor: AnchorLookup = new Map([["10118", { posterior: { US: 1 }, lat: 40.75, lon: -73.99 }]])
+		const classifier = new NeuralAddressClassifier({
+			tokenizer,
+			runner: new FakeRunner(logits),
+			postcodeAnchorLookup: anchor,
+		})
+
+		const trace = await classifier.traceParse(text, { spanProposer: false })
+
+		expect(trace.anchor).toBeDefined()
+		expect(trace.anchor!.confidence).toHaveLength(pieces.length)
+		expect(trace.anchor!.features).toHaveLength(pieces.length)
+		// The ZIP's pieces carry the anchor hit; leading pieces don't.
+		expect(Math.max(...trace.anchor!.confidence)).toBeGreaterThan(0)
+		// Serializable by construction: a JSON round-trip preserves the channel byte-for-byte.
+		expect(JSON.parse(JSON.stringify(trace.anchor))).toEqual(trace.anchor)
 	})
 
 	it("schema snapshot — drift forces a conscious decision", async () => {

@@ -26,13 +26,20 @@ import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay, so
 
 import styles from "./styles.module.css"
 
-const LOCALE_ORDER = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
+/**
+ * Fallback locale-head axis for traces produced before `localeCountries` rode with the logits. Live traces are
+ * self-describing — NEVER extend this list; the model's own axis wins. (Mirrors neural/address-system.ts
+ * LOCALE_COUNTRIES as of 2026-07; the PLACETYPE_ORDER dual-maintenance class is exactly why the trace now carries the
+ * axis itself.)
+ */
+const LOCALE_ORDER_FALLBACK = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
 
 export interface ModelVisualizerProps {
 	trace: ParseTraceLike
 }
 
-export function ModelVisualizer({ trace }: ModelVisualizerProps): React.JSX.Element {
+/** Memoized: the live wrapper re-renders on every input keystroke; `trace` is referentially stable between runs. */
+export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: ModelVisualizerProps): React.JSX.Element {
 	const [matrixMode, setMatrixMode] = useState<"logits" | "emissions">("emissions")
 	const matrix = matrixMode === "logits" ? trace.logits : trace.emissions
 	const absMax = useMemo(() => matrixAbsMax(matrix), [matrix])
@@ -149,7 +156,7 @@ export function ModelVisualizer({ trace }: ModelVisualizerProps): React.JSX.Elem
 				<section aria-label="Locale head">
 					<h4 className={styles.bandTitle}>Locale head</h4>
 					<div className={styles.gauge}>
-						{LOCALE_ORDER.map((cc, i) => (
+						{(trace.localeCountries ?? LOCALE_ORDER_FALLBACK).map((cc, i) => (
 							<div key={cc} className={styles.gaugeCol} title={`${cc}: ${((localeProbs[i] ?? 0) * 100).toFixed(1)}%`}>
 								<div className={styles.gaugeBar} style={{ height: `${((localeProbs[i] ?? 0) * 100).toFixed(1)}%` }} />
 								<span className={styles.gaugeLabel}>{cc}</span>
@@ -160,7 +167,7 @@ export function ModelVisualizer({ trace }: ModelVisualizerProps): React.JSX.Elem
 			) : null}
 		</div>
 	)
-}
+})
 
 function ChannelRow({
 	name,

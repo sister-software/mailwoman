@@ -8,6 +8,7 @@
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import Layout from "@theme/Layout"
 import type React from "react"
 
@@ -15,6 +16,11 @@ import { LiveModelVisualizer } from "../components/ModelVisualizer/LiveModelVisu
 import { DemoEmbedProvider } from "../contexts/DemoEmbed.tsx"
 
 const TracePage: React.FC = () => {
+	// Derive from siteConfig like the demo page does — a hardcoded "/mailwoman/sqljs" breaks the
+	// service-worker/sql.js root on any non-root baseUrl deploy (the night-31 baseURL-hotfix class).
+	const { siteConfig } = useDocusaurusContext()
+	const sqljsBaseURL = `${siteConfig.baseUrl}mailwoman/sqljs`
+
 	return (
 		<Layout title="Trace" description="Follow an address through the mailwoman neural decode path">
 			<main style={{ padding: "2rem", maxWidth: 1100, margin: "0 auto" }}>
@@ -25,7 +31,7 @@ const TracePage: React.FC = () => {
 				</p>
 				<BrowserOnly fallback={<p>Loading…</p>}>
 					{() => (
-						<DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
+						<DemoEmbedProvider sqljsBaseURL={sqljsBaseURL}>
 							<LiveModelVisualizer />
 						</DemoEmbedProvider>
 					)}

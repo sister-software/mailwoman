@@ -50,5 +50,6 @@ review.jsonl
 
 
 ## Generated parse-trace artifacts (scripts/generate-trace-fixture.ts + vitest file snapshots)
-**/*.snap.json
-**/*.trace.json
+## Scoped to the two generator-owned dirs — hand-written *.snap.json/*.trace.json elsewhere stay format-checked.
+neural/test/fixtures/*.snap.json
+docs/src/components/ModelVisualizer/fixtures/*.trace.json

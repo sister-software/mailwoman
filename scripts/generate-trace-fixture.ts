@@ -18,13 +18,17 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 const here = dirname(fileURLToPath(import.meta.url))
 const OUT_PATH = resolve(here, "../docs/src/components/ModelVisualizer/fixtures/white-house.trace.json")
 
-const text = process.argv[2] ?? "1600 Pennsylvania Ave NW, Washington, DC 20500"
+// parseArgs with strict positionals: a flag-looking arg errors loudly instead of being traced as
+// the literal address text and silently overwriting the committed fixture with garbage.
+const { positionals } = parseArgs({ allowPositionals: true, options: {} })
+const text = positionals[0] ?? "1600 Pennsylvania Ave NW, Washington, DC 20500"
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })
 const trace = await classifier.traceParse(text, { addressSystemConventions: "auto" })
 
