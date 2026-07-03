@@ -25,8 +25,8 @@ export interface FSTMatcherLike {
 export interface MailwomanClassifierLike {
 	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
 	/**
-	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the
-	 * trace seam lack it — feature-detect before calling.
+	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the trace seam lack it —
+	 * feature-detect before calling.
 	 */
 	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
 }

@@ -20,8 +20,8 @@ const TracePage: React.FC = () => {
 			<main style={{ padding: "2rem", maxWidth: 1100, margin: "0 auto" }}>
 				<h1>Trace a parse</h1>
 				<p>
-					Type an address and watch it move through the model: tokens, retrieval channels, emissions, and the
-					decoded result — including every prior and repair pass that shaped it.
+					Type an address and watch it move through the model: tokens, retrieval channels, emissions, and the decoded
+					result — including every prior and repair pass that shaped it.
 				</p>
 				<BrowserOnly fallback={<p>Loading…</p>}>
 					{() => (

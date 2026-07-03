@@ -18,7 +18,7 @@ Three needs share one missing artifact:
 Today the interior of a parse is discarded. `NeuralAddressClassifier.#decode`
 (`neural/classifier.ts`) computes every intermediate — soft-feature channels, raw logits, locale
 head, post-prior emissions, viterbi path, repair mutations — and returns only tokens (+ raw
-logits/pieces via `parseWithLogits`). Nothing downstream can show *why* a token got its tag.
+logits/pieces via `parseWithLogits`). Nothing downstream can show _why_ a token got its tag.
 
 ## Decision summary
 
@@ -32,7 +32,7 @@ trace JSON ───┼─ mailwoman parse --trace json|mermaid        … need 
 ```
 
 - **Producer seam:** a new `traceParse(text, opts)` method on `NeuralAddressClassifier`,
-  implemented by *retaining* what `#decode` already computes. `#decode` remains the single decode
+  implemented by _retaining_ what `#decode` already computes. `#decode` remains the single decode
   path (#481 invariant) — trace retention happens inside it, never beside it. `parse` and
   `parseWithLogits` stay byte-stable.
 - **Envelope scope:** pipeline-wide from day one. `PipelineResult` (`core/pipeline/types.ts:271`)
@@ -40,10 +40,10 @@ trace JSON ───┼─ mailwoman parse --trace json|mermaid        … need 
   `phraseProposals`, `tree`, `timing`, `path`); the trace envelope wraps that and adds the neural
   stage payload now, reserving keys for resolver detail later. No schema churn when stages join.
 - **Rejected alternatives:**
-  - *Docs-local feed reconstruction* (rebuild anchor/gazetteer channels in the docs layer via
+  - _Docs-local feed reconstruction_ (rebuild anchor/gazetteer channels in the docs layer via
     `buildSoftFeatures`): forks the feed choreography — the exact train/inference drift class the
     codebase forbids.
-  - *Overloading `parseWithLogits`:* muddies its documented purpose (per-span logit aggregation
+  - _Overloading `parseWithLogits`:_ muddies its documented purpose (per-span logit aggregation
     for joint-reconcile) and perturbs existing callers' contract.
 
 ## 1. Trace contract
@@ -55,23 +55,23 @@ Types live where their producers live; the envelope composes them.
 Everything below is what `#decode` already computes, keyed by the moment the model's opinion was
 formed or overridden:
 
-| Field | Source in `#decode` | Notes |
-| --- | --- | --- |
-| `text` | `modelText` after case-normalize | the string the model actually saw |
-| `caseNormalized` | `normalizeInputCase` applied? | boolean |
-| `pieces` | tokenizer `encode` | `{ piece, start, end }[]` |
-| `ids` | tokenizer `encode` | `number[]` |
-| `anchor?` | `buildSoftFeatures` | `SoftFeatureChannel` as fed (post-choreography) |
-| `gazetteer?` | `buildSoftFeatures` | `SoftFeatureChannel` as fed (post-suppression) |
-| `logits` | runner output | raw, pre-prior — the model's emissions |
-| `localeLogits?` | runner output | 9-wide, `LOCALE_COUNTRIES` order |
-| `detectedSystem?` | `detectAddressSystem` | `SystemCode \| null` + whether pinned vs auto |
-| `priors` | prior-builder calls | list of `{ kind, applied }` for queryShape / fst / streetMorphology / spanProposer / conventionsMask — which actually fired |
-| `emissions` | post-prior matrix | what viterbi actually decoded over |
-| `labels` | `this.labels` | the 33-label vocabulary, for axis labeling |
-| `path` | viterbi / argmax | label indices + per-token confidence |
-| `repairs` | repair passes | ordered `{ pass, before, after }` token diffs for wordConsistency / postcodeRepair / unitRepair / spanBridge — empty entries omitted |
-| `tokens` | final | the same `DecoderToken[]` `parse` would produce |
+| Field             | Source in `#decode`              | Notes                                                                                                                                |
+| ----------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `text`            | `modelText` after case-normalize | the string the model actually saw                                                                                                    |
+| `caseNormalized`  | `normalizeInputCase` applied?    | boolean                                                                                                                              |
+| `pieces`          | tokenizer `encode`               | `{ piece, start, end }[]`                                                                                                            |
+| `ids`             | tokenizer `encode`               | `number[]`                                                                                                                           |
+| `anchor?`         | `buildSoftFeatures`              | `SoftFeatureChannel` as fed (post-choreography)                                                                                      |
+| `gazetteer?`      | `buildSoftFeatures`              | `SoftFeatureChannel` as fed (post-suppression)                                                                                       |
+| `logits`          | runner output                    | raw, pre-prior — the model's emissions                                                                                               |
+| `localeLogits?`   | runner output                    | 9-wide, `LOCALE_COUNTRIES` order                                                                                                     |
+| `detectedSystem?` | `detectAddressSystem`            | `SystemCode \| null` + whether pinned vs auto                                                                                        |
+| `priors`          | prior-builder calls              | list of `{ kind, applied }` for queryShape / fst / streetMorphology / spanProposer / conventionsMask — which actually fired          |
+| `emissions`       | post-prior matrix                | what viterbi actually decoded over                                                                                                   |
+| `labels`          | `this.labels`                    | the 33-label vocabulary, for axis labeling                                                                                           |
+| `path`            | viterbi / argmax                 | label indices + per-token confidence                                                                                                 |
+| `repairs`         | repair passes                    | ordered `{ pass, before, after }` token diffs for wordConsistency / postcodeRepair / unitRepair / spanBridge — empty entries omitted |
+| `tokens`          | final                            | the same `DecoderToken[]` `parse` would produce                                                                                      |
 
 All arrays are plain numbers/strings — JSON-serializable by construction. Feature matrices are
 small (≤ seq×11 floats) so no truncation is needed.
@@ -111,10 +111,10 @@ peers: `SubwordExplorer`, `BIOHighlight`, `PipelineExplorer`).
   2. **Channel band** — anchor/gazetteer confidence + feature heat per piece (the
      retrieval-augmented "what the atlas already knew").
   3. **Emissions heatmap** — labels × tokens; toggle raw `logits` vs post-prior `emissions`
-     (the delta *is* the priors' influence); conventions-masked cells marked.
+     (the delta _is_ the priors' influence); conventions-masked cells marked.
   4. **Decode band** — viterbi path + confidence; repair diffs highlighted as
      before → after chips.
-  Locale head renders as a side gauge (9 bars, `LOCALE_COUNTRIES` order).
+     Locale head renders as a side gauge (9 bars, `LOCALE_COUNTRIES` order).
 - Marketing polish (animation, guided narrative) layers onto this same component later —
   explicitly out of v1 scope.
 
@@ -165,6 +165,6 @@ Each increment is independently shippable; 2 and 3 are parallel once 1 lands.
 - SVG emission from the CLI.
 - Resolver/gazetteer candidate traces (increment 4 reserves the key; design when it lands).
 - Any change to training-side Python or the ONNX export.
-- Exposing attention weights or other *inside-the-graph* tensors — the trace covers the model's
+- Exposing attention weights or other _inside-the-graph_ tensors — the trace covers the model's
   I/O contract and the decode pipeline around it, not transformer internals. (Netron already
   serves the op-graph view; revisit only if a concrete need appears.)

@@ -13,6 +13,7 @@ import React, { useCallback, useState } from "react"
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 import type { ParseTraceLike } from "../../shared/resources.tsx"
 import { ModelVisualizer } from "./ModelVisualizer.tsx"
+
 import styles from "./styles.module.css"
 
 const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"

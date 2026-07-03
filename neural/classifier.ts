@@ -39,9 +39,9 @@ import { buildSoftFeatures, type SoftFeatureChannel } from "./soft-features.js"
 import { bridgePunctuationGaps } from "./span-bridge.js"
 import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.js"
 import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
-import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
+import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.js"
 import { repairUnitLabels } from "./unit-repair.js"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
@@ -342,12 +342,11 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * Like `parse`, but returns the full decode-path trace instead of a tree: pieces, soft-feature
-	 * channels as fed, raw logits, locale head, prior participation, post-prior emissions, viterbi
-	 * path, repair diffs, and the final tokens. Shares the ENTIRE decode path with `parse` (one
-	 * `#decode`, #481) and mirrors `parse`'s case normalization, so `buildAddressTree(trace.text,
-	 * trace.tokens)` reproduces `parse(text)`'s tree exactly. Serializable by construction — see
-	 * `./trace.js` for the schema and the spec reference.
+	 * Like `parse`, but returns the full decode-path trace instead of a tree: pieces, soft-feature channels as fed, raw
+	 * logits, locale head, prior participation, post-prior emissions, viterbi path, repair diffs, and the final tokens.
+	 * Shares the ENTIRE decode path with `parse` (one `#decode`, #481) and mirrors `parse`'s case normalization, so
+	 * `buildAddressTree(trace.text, trace.tokens)` reproduces `parse(text)`'s tree exactly. Serializable by construction
+	 * — see `./trace.js` for the schema and the spec reference.
 	 */
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
 		const labels = [...this.labels] as string[]

@@ -4,7 +4,7 @@
 
 **Goal:** A serializable `NeuralParseTrace` produced by the shared decode path (`traceParse` on `NeuralAddressClassifier`), rendered by a docs `<ModelVisualizer>` component fed from production assets.
 
-**Architecture:** Increments 1+2 of the approved spec (`docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md`). The private `#decode` in `neural/classifier.ts` gains a trace flag that *retains* intermediates it already computes (no fork — #481 invariant); a new public `traceParse` assembles them into `NeuralParseTrace`. Docs side: a pure `<ModelVisualizer trace={…}/>` renders four bands + a locale gauge, and a thin `LiveModelVisualizer` wires it to `useDemoEmbed()`. CLI + resolver stages are a **separate later plan** (spec increments 3–4).
+**Architecture:** Increments 1+2 of the approved spec (`docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md`). The private `#decode` in `neural/classifier.ts` gains a trace flag that _retains_ intermediates it already computes (no fork — #481 invariant); a new public `traceParse` assembles them into `NeuralParseTrace`. Docs side: a pure `<ModelVisualizer trace={…}/>` renders four bands + a locale gauge, and a thin `LiveModelVisualizer` wires it to `useDemoEmbed()`. CLI + resolver stages are a **separate later plan** (spec increments 3–4).
 
 **Tech Stack:** TypeScript (tabs, workspace-root files, license headers), vitest, React 18 + CSS modules (docs), Storybook (`@storybook/react-vite`), Docusaurus.
 
@@ -22,12 +22,14 @@
 ### Task 1: `NeuralParseTrace` + `traceParse` on the shared decode path
 
 **Files:**
+
 - Create: `neural/trace.ts`
 - Modify: `neural/classifier.ts` (imports; `#decode` signature/return; new `traceParse`)
 - Modify: `neural/index.ts` (add `export * from "./trace.js"`)
 - Test: `neural/test/trace-parse.test.ts`
 
 **Interfaces:**
+
 - Consumes: `#decode(text, opts)` internals as they exist today (`neural/classifier.ts:348-509`), `SoftFeatureChannel` (`neural/soft-features.ts:26`), `DecoderToken` (`@mailwoman/core/decoder`), `SystemCode` (`@mailwoman/codex`).
 - Produces: `traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace>` and the exported types `NeuralParseTrace`, `TracePiece`, `TracePrior`, `TracePriorKind`, `TraceRepair`, `TraceRepairPass`. Task 2's script and Task 3's docs types depend on these exact names/fields.
 
@@ -161,9 +163,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
 		const shape = {
-			knownFormatHits: [
-				{ format: "us_zip", start: 0, end: 5, confidence: 1.0 },
-			],
+			knownFormatHits: [{ format: "us_zip", start: 0, end: 5, confidence: 1.0 }],
 		}
 		const traced = await classifier.traceParse(text, { queryShape: shape, spanProposer: false })
 
@@ -272,6 +272,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 ```
 
 Notes for the implementer:
+
 - `logitsWithBoost` magnitude 3 (not the 0.3 the query-shape test uses) so decode choices are deterministic against the structural CRF mask.
 - If `us_zip` is not a recognized known-format key for the queryShape prior, check `neural/query-shape-prior.ts` for the exact `KnownFormatHitLike` shape and a format string it maps (the test's intent is only "a queryShape prior fires and shifts emissions").
 - If the `postcodeRepair` case doesn't fire on `"Main St 90210"`, read `neural/postcode-repair.ts` for a string its US pattern accepts — do not weaken the assertion to pass-without-change.
@@ -426,97 +427,97 @@ becomes:
 4c. Inside `#decode`, add the accumulators and a repair recorder right after the `buildSoftFeatures` call (`const soft = …`):
 
 ```ts
-		// Trace retention (spec 2026-07-03): capture-by-reference of arrays this method already
-		// builds. Null when not tracing — the non-trace path allocates nothing new.
-		const tracePriors: TracePrior[] | null = trace ? [] : null
-		const traceRepairs: TraceRepair[] | null = trace ? [] : null
-		const recordRepair = (pass: TraceRepairPass, before: string[], after: string[]): void => {
-			if (!traceRepairs) return
+// Trace retention (spec 2026-07-03): capture-by-reference of arrays this method already
+// builds. Null when not tracing — the non-trace path allocates nothing new.
+const tracePriors: TracePrior[] | null = trace ? [] : null
+const traceRepairs: TraceRepair[] | null = trace ? [] : null
+const recordRepair = (pass: TraceRepairPass, before: string[], after: string[]): void => {
+	if (!traceRepairs) return
 
-			if (before.length === after.length && before.every((label, i) => label === after[i])) return
-			traceRepairs.push({ pass, before, after })
-		}
-		const labelsOf = (toks: readonly DecoderToken[]): string[] => toks.map((t) => t.label as string)
+	if (before.length === after.length && before.every((label, i) => label === after[i])) return
+	traceRepairs.push({ pass, before, after })
+}
+const labelsOf = (toks: readonly DecoderToken[]): string[] => toks.map((t) => t.label as string)
 ```
 
 4d. Record each prior where it's applied today. After the `emissions = opts?.queryShape ? … : logits` assignment:
 
 ```ts
-		tracePriors?.push({ kind: "queryShape", applied: Boolean(opts?.queryShape) })
+tracePriors?.push({ kind: "queryShape", applied: Boolean(opts?.queryShape) })
 ```
 
 After the `if (opts?.fst) { … }` block:
 
 ```ts
-		tracePriors?.push({ kind: "fst", applied: Boolean(opts?.fst) })
+tracePriors?.push({ kind: "fst", applied: Boolean(opts?.fst) })
 ```
 
 After the `if (opts?.fstStreetMorphology) { … }` block:
 
 ```ts
-		tracePriors?.push({ kind: "streetMorphology", applied: Boolean(opts?.fstStreetMorphology) })
+tracePriors?.push({ kind: "streetMorphology", applied: Boolean(opts?.fstStreetMorphology) })
 ```
 
 After the `if (spanProposals.length > 0) { … }` block:
 
 ```ts
-		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
+tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
 ```
 
 Inside the conventions-mask block, the current code guards `if (forbidden.size > 0)`. Record right after that block (note: `forbidden` is scoped inside `if (conventions?.forbiddenTags?.length)`, so capture a flag):
 
 ```ts
-		// current code:
-		let conventionsMaskApplied = false
+// current code:
+let conventionsMaskApplied = false
 
-		if (conventions?.forbiddenTags?.length) {
-			const forbidden = new Set<number>()
-			// … existing body unchanged …
-			if (forbidden.size > 0) {
-				conventionsMaskApplied = true
-				emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
-			}
-		}
-		tracePriors?.push({ kind: "conventionsMask", applied: conventionsMaskApplied })
+if (conventions?.forbiddenTags?.length) {
+	const forbidden = new Set<number>()
+	// … existing body unchanged …
+	if (forbidden.size > 0) {
+		conventionsMaskApplied = true
+		emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
+	}
+}
+tracePriors?.push({ kind: "conventionsMask", applied: conventionsMaskApplied })
 ```
 
-4e. Word-consistency repair operates on `labelIndices` *before* tokens are built. Wrap the existing block:
+4e. Word-consistency repair operates on `labelIndices` _before_ tokens are built. Wrap the existing block:
 
 ```ts
-		if (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false) {
-			const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []
-			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices)
-			labelIndices = wc.labelIndices
-			healedConfidence = wc.healedConfidence
-			recordRepair(
-				"wordConsistency",
-				beforeLabels,
-				labelIndices.map((i) => (this.labels[i] ?? "O") as string)
-			)
-		}
+if (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false) {
+	const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []
+	const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices)
+	labelIndices = wc.labelIndices
+	healedConfidence = wc.healedConfidence
+	recordRepair(
+		"wordConsistency",
+		beforeLabels,
+		labelIndices.map((i) => (this.labels[i] ?? "O") as string)
+	)
+}
 ```
 
 4f. The three token-level repair passes each get a before-snapshot. Wrap the existing calls:
 
 ```ts
-		if (opts?.postcodeRepair || conventions?.postcodePattern) {
-			const before = traceRepairs ? labelsOf(tokens) : []
-			tokens = repairPostcodeLabels(text, tokens).tokens
-			recordRepair("postcodeRepair", before, labelsOf(tokens))
-		}
+if (opts?.postcodeRepair || conventions?.postcodePattern) {
+	const before = traceRepairs ? labelsOf(tokens) : []
+	tokens = repairPostcodeLabels(text, tokens).tokens
+	recordRepair("postcodeRepair", before, labelsOf(tokens))
+}
 
-		if (opts?.unitRepair) {
-			const before = traceRepairs ? labelsOf(tokens) : []
-			tokens = repairUnitLabels(text, tokens).tokens
-			recordRepair("unitRepair", before, labelsOf(tokens))
-		}
+if (opts?.unitRepair) {
+	const before = traceRepairs ? labelsOf(tokens) : []
+	tokens = repairUnitLabels(text, tokens).tokens
+	recordRepair("unitRepair", before, labelsOf(tokens))
+}
 
-		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
-			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
-			const before = traceRepairs ? labelsOf(tokens) : []
-			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length > 0 ? { blockedSpans } : undefined)
-			recordRepair("spanBridge", before, labelsOf(tokens))
-		}
+if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
+	const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
+	const before = traceRepairs ? labelsOf(tokens) : []
+	tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length > 0 ? { blockedSpans } : undefined)
+	recordRepair("spanBridge", before, labelsOf(tokens))
+}
 ```
 
 (`recordRepair` no-ops when not tracing and omits unchanged passes — matching the spec's "empty entries omitted".)
@@ -524,8 +525,8 @@ Inside the conventions-mask block, the current code guards `if (forbidden.size >
 4g. The `systemSource` derives from the existing `conventionsOpt` local:
 
 ```ts
-		const systemSource: "off" | "auto" | "pinned" =
-			conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned"
+const systemSource: "off" | "auto" | "pinned" =
+	conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned"
 ```
 
 Place it next to the existing `detectedSystem` computation.
@@ -533,26 +534,26 @@ Place it next to the existing `detectedSystem` computation.
 4h. Widen the final return:
 
 ```ts
-		return {
-			tokens,
-			logits,
-			pieces,
-			...(trace
-				? {
-						trace: {
-							...(soft.anchor ? { anchor: soft.anchor } : {}),
-							...(soft.gazetteer ? { gazetteer: soft.gazetteer } : {}),
-							...(localeLogits ? { localeLogits } : {}),
-							detectedSystem,
-							systemSource,
-							priors: tracePriors!,
-							emissions,
-							path: labelIndices,
-							repairs: traceRepairs!,
-						},
-					}
-				: {}),
-		}
+return {
+	tokens,
+	logits,
+	pieces,
+	...(trace
+		? {
+				trace: {
+					...(soft.anchor ? { anchor: soft.anchor } : {}),
+					...(soft.gazetteer ? { gazetteer: soft.gazetteer } : {}),
+					...(localeLogits ? { localeLogits } : {}),
+					detectedSystem,
+					systemSource,
+					priors: tracePriors!,
+					emissions,
+					path: labelIndices,
+					repairs: traceRepairs!,
+				},
+			}
+		: {}),
+}
 ```
 
 4i. Add `traceParse` directly below `parseWithLogits`:
@@ -648,10 +649,12 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 2: Docs trace fixture generated from real weights
 
 **Files:**
+
 - Create: `scripts/generate-trace-fixture.ts`
 - Create (generated, committed): `docs/src/components/ModelVisualizer/fixtures/white-house.trace.json`
 
 **Interfaces:**
+
 - Consumes: `NeuralAddressClassifier.loadFromWeights` (`neural/classifier.ts:204`) + `traceParse` from Task 1.
 - Produces: the committed fixture JSON that Tasks 3–4's tests and stories import. Regenerating = re-running this script.
 
@@ -716,11 +719,13 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 3: Docs structural types + pure render helpers
 
 **Files:**
+
 - Modify: `docs/src/shared/resources.tsx` (widen `MailwomanClassifierLike`, add `ParseTraceLike` family at line ~25)
 - Create: `docs/src/components/ModelVisualizer/helpers.ts`
 - Test: `docs/src/components/ModelVisualizer/helpers.test.ts`
 
 **Interfaces:**
+
 - Consumes: the fixture JSON from Task 2 (shape reference only).
 - Produces: `ParseTraceLike`, `TraceChannelLike`, `TraceRepairLike`, `TracePieceLike`, `TraceTokenLike` (resources.tsx); `softmaxRow(row: number[]): number[]`, `matrixAbsMax(m: number[][]): number`, `emissionColor(value: number, absMax: number): string`, `isMasked(value: number): boolean`, `stripBIO(label: string): string`, `pieceDisplay(piece: string): string`, `changedIndices(before: string[], after: string[]): number[]` (helpers.ts). Task 4 imports all of these by these exact names.
 
@@ -818,7 +823,12 @@ describe("ModelVisualizer helpers", () => {
 	})
 
 	it("matrixAbsMax ignores the conventions-mask sentinel", () => {
-		expect(matrixAbsMax([[1, -2], [-1e9, 3]])).toBe(3)
+		expect(
+			matrixAbsMax([
+				[1, -2],
+				[-1e9, 3],
+			])
+		).toBe(3)
 		expect(matrixAbsMax([])).toBe(1)
 	})
 
@@ -972,11 +982,13 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 4: `<ModelVisualizer>` pure component + story
 
 **Files:**
+
 - Create: `docs/src/components/ModelVisualizer/ModelVisualizer.tsx`
 - Create: `docs/src/components/ModelVisualizer/styles.module.css`
 - Create: `docs/src/components/ModelVisualizer/ModelVisualizer.stories.tsx`
 
 **Interfaces:**
+
 - Consumes: `ParseTraceLike` (Task 3), all six helpers (Task 3), fixture JSON (Task 2).
 - Produces: `export function ModelVisualizer(props: { trace: ParseTraceLike }): JSX.Element`. Task 5's live wrapper renders it.
 
@@ -1452,10 +1464,12 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 5: Live wrapper + site page
 
 **Files:**
+
 - Create: `docs/src/components/ModelVisualizer/LiveModelVisualizer.tsx`
 - Create: `docs/src/pages/trace.tsx`
 
 **Interfaces:**
+
 - Consumes: `useDemoEmbed()` (`docs/src/contexts/DemoEmbed.tsx:81` — `{ classifier, ready, loadingProgress }`), `DemoEmbedProvider` (needs `sqljsBaseURL="/mailwoman/sqljs"`), `ModelVisualizer` (Task 4), `MailwomanClassifierLike.traceParse` (Task 3).
 - Produces: the `/trace` page. Nothing downstream depends on it in this plan.
 
@@ -1535,6 +1549,7 @@ export function LiveModelVisualizer(): JSX.Element {
 ```
 
 Implementation notes:
+
 - Check `DemoEmbedState`'s exact field names in `docs/src/contexts/DemoEmbed.tsx` before wiring (`loadingProgress` may be structured, not a string) — adjust the loading line to whatever the context actually exposes (the GuidedTour usage at `docs/src/components/GuidedTour/GuidedTour.tsx:102` is the reference consumer).
 - `useDemoEmbed().classifier` is typed `MailwomanClassifierLike | null` — the optional `traceParse` added in Task 3 makes the feature-detect type-check.
 
@@ -1562,8 +1577,8 @@ export default function TracePage(): JSX.Element {
 			<main style={{ padding: "2rem", maxWidth: 1100, margin: "0 auto" }}>
 				<h1>Trace a parse</h1>
 				<p>
-					Type an address and watch it move through the model: tokens, retrieval channels, emissions, and the
-					decoded result — including every prior and repair pass that shaped it.
+					Type an address and watch it move through the model: tokens, retrieval channels, emissions, and the decoded
+					result — including every prior and repair pass that shaped it.
 				</p>
 				<BrowserOnly fallback={<p>Loading…</p>}>
 					{() => {
@@ -1587,7 +1602,7 @@ export default function TracePage(): JSX.Element {
 
 - [ ] **Step 3: Verify in the running site**
 
-Use the **run-docs skill** to start the docs site, then open `http://localhost:7770/trace`. Expected: asset loading indicator → input box → clicking Trace renders the four bands from a live parse. ⚠ The deployed HF bundle's `@mailwoman/neural` code is bundled from *local source* (webpack alias), so `traceParse` exists at runtime; only the model/tokenizer bytes come from production.
+Use the **run-docs skill** to start the docs site, then open `http://localhost:7770/trace`. Expected: asset loading indicator → input box → clicking Trace renders the four bands from a live parse. ⚠ The deployed HF bundle's `@mailwoman/neural` code is bundled from _local source_ (webpack alias), so `traceParse` exists at runtime; only the model/tokenizer bytes come from production.
 
 Run: `yarn workspace @mailwoman/docs typecheck`
 Expected: clean.

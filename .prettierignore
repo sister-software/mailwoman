@@ -48,3 +48,7 @@ LOG.md
 pi-session-*.html
 review.jsonl
 
+
+## Generated parse-trace artifacts (scripts/generate-trace-fixture.ts + vitest file snapshots)
+**/*.snap.json
+**/*.trace.json

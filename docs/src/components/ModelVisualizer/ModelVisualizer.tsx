@@ -23,6 +23,7 @@ import React, { useMemo, useState } from "react"
 
 import type { ParseTraceLike } from "../../shared/resources.tsx"
 import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay, softmaxRow, stripBIO } from "./helpers.ts"
+
 import styles from "./styles.module.css"
 
 const LOCALE_ORDER = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const

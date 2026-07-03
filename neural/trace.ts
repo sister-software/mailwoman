@@ -32,8 +32,8 @@ export interface TracePrior {
 export type TraceRepairPass = "wordConsistency" | "postcodeRepair" | "unitRepair" | "spanBridge"
 
 /**
- * A repair pass that changed something: per-piece BIO label sequences before and after, index-aligned
- * with `pieces`. Passes that ran but changed nothing are omitted.
+ * A repair pass that changed something: per-piece BIO label sequences before and after, index-aligned with `pieces`.
+ * Passes that ran but changed nothing are omitted.
  */
 export interface TraceRepair {
 	pass: TraceRepairPass
@@ -50,9 +50,9 @@ export interface TracePiece {
 }
 
 /**
- * The full trace of one `traceParse` call. Field-by-field provenance lives in the spec's trace
- * contract table; the one deviation from that table is that vocab ids ride on `pieces[].id`
- * rather than a parallel `ids` array (same information, one fewer alignment invariant).
+ * The full trace of one `traceParse` call. Field-by-field provenance lives in the spec's trace contract table; the one
+ * deviation from that table is that vocab ids ride on `pieces[].id` rather than a parallel `ids` array (same
+ * information, one fewer alignment invariant).
  */
 export interface NeuralParseTrace {
 	/** The text the model actually saw (post case-normalize). */
@@ -76,9 +76,9 @@ export interface NeuralParseTrace {
 	/** The post-prior, post-mask matrix viterbi actually decoded over. Equals `logits` when nothing fired. */
 	emissions: number[][]
 	/**
-	 * The label vocabulary. Index-aligned with the logits/emissions inner dimension, which may be
-	 * NARROWER than this list (the Stage-prefix rule: a Stage-N model loaded with Stage-N+1 labels
-	 * emits only the prefix — see labels.ts + `assertEmissionWidth`). Never wider.
+	 * The label vocabulary. Index-aligned with the logits/emissions inner dimension, which may be NARROWER than this list
+	 * (the Stage-prefix rule: a Stage-N model loaded with Stage-N+1 labels emits only the prefix — see labels.ts +
+	 * `assertEmissionWidth`). Never wider.
 	 */
 	labels: string[]
 	/** Decoded label indices per piece (pre-token-repair; final labels live on `tokens`). */
