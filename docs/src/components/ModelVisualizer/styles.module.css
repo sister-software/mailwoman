@@ -1,0 +1,195 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	font-size: 0.85rem;
+}
+
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.inputText {
+	font-size: 1rem;
+}
+
+.chips {
+	display: inline-flex;
+	gap: 0.35rem;
+}
+
+.chip {
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 999px;
+	padding: 0.05rem 0.55rem;
+	font-size: 0.72rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.bandTitle {
+	margin: 0 0 0.35rem;
+	display: flex;
+	align-items: baseline;
+	gap: 0.75rem;
+}
+
+.toggle {
+	font-size: 0.72rem;
+	cursor: pointer;
+	background: none;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.ribbon {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.piece {
+	font-family: var(--ifm-font-family-monospace);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	padding: 0.1rem 0.35rem;
+}
+
+.channelRow {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	margin-bottom: 2px;
+}
+
+.channelName {
+	width: 5.5rem;
+	font-size: 0.72rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.channelCell {
+	width: 1.1rem;
+	height: 0.8rem;
+	border-radius: 2px;
+	background: var(--ifm-color-primary);
+}
+
+.notFed {
+	font-size: 0.72rem;
+	font-style: italic;
+	color: var(--ifm-color-emphasis-500);
+}
+
+.heatmapScroll {
+	overflow-x: auto;
+}
+
+.heatmap {
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.labelCell {
+	font-size: 0.65rem;
+	font-weight: 400;
+	text-align: right;
+	padding-right: 0.4rem;
+	white-space: nowrap;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.cell {
+	width: 1.1rem;
+	min-width: 1.1rem;
+	height: 0.75rem;
+	border: 1px solid var(--ifm-color-emphasis-200);
+	padding: 0;
+}
+
+.pathCell {
+	outline: 2px solid var(--ifm-color-primary-darkest);
+	outline-offset: -2px;
+}
+
+.maskedCell {
+	background: repeating-linear-gradient(
+		45deg,
+		transparent,
+		transparent 2px,
+		var(--ifm-color-emphasis-300) 2px,
+		var(--ifm-color-emphasis-300) 3px
+	);
+}
+
+.priorLine,
+.repairLine {
+	margin: 0.35rem 0 0;
+	font-size: 0.72rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.decoded {
+	position: relative;
+	display: inline-flex;
+	flex-direction: column;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	padding: 0.1rem 0.35rem 0.25rem;
+	overflow: hidden;
+}
+
+.decoded[data-o] {
+	opacity: 0.55;
+}
+
+.decodedPiece {
+	font-family: var(--ifm-font-family-monospace);
+}
+
+.decodedLabel {
+	font-size: 0.62rem;
+	color: var(--ifm-color-primary-darkest);
+}
+
+.confidenceBar {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	height: 3px;
+	background: var(--ifm-color-primary);
+}
+
+.gauge {
+	display: flex;
+	gap: 0.5rem;
+	align-items: flex-end;
+	height: 5rem;
+}
+
+.gaugeCol {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	height: 100%;
+	width: 2rem;
+}
+
+.gaugeBar {
+	width: 100%;
+	background: var(--ifm-color-primary);
+	border-radius: 2px 2px 0 0;
+}
+
+.gaugeLabel {
+	font-size: 0.65rem;
+}
+
+.empty {
+	font-style: italic;
+	color: var(--ifm-color-emphasis-500);
+}
