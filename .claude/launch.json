@@ -1,0 +1,17 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "docs-storybook",
+			"runtimeExecutable": "yarn",
+			"runtimeArgs": ["workspace", "@mailwoman/docs", "storybook"],
+			"port": 6006
+		},
+		{
+			"name": "docs-site",
+			"runtimeExecutable": "yarn",
+			"runtimeArgs": ["workspace", "@mailwoman/docs", "start"],
+			"port": 7770
+		}
+	]
+}

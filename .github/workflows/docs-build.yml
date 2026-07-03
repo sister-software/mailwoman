@@ -22,6 +22,8 @@ on:
     paths:
       - "docs/**"
       - "neural-web/**"
+      # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
+      - "neural/**"
       - "resolver-wof-wasm/**"
       - "resolver-wof-sqlite/**"
       - "resolver/**"
@@ -34,6 +36,8 @@ on:
     paths:
       - "docs/**"
       - "neural-web/**"
+      # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
+      - "neural/**"
       - "resolver-wof-wasm/**"
       - "resolver-wof-sqlite/**"
       - "resolver/**"

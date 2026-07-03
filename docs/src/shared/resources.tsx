@@ -24,6 +24,59 @@ export interface FSTMatcherLike {
 
 export interface MailwomanClassifierLike {
 	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
+	/**
+	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the trace seam lack it —
+	 * feature-detect before calling.
+	 */
+	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
+}
+
+export interface TraceChannelLike {
+	features: number[][]
+	confidence: number[]
+}
+
+export interface TracePieceLike {
+	piece: string
+	id: number
+	start: number
+	end: number
+}
+
+export interface TraceTokenLike {
+	piece: string
+	start: number
+	end: number
+	label: string
+	confidence: number
+}
+
+export interface TraceRepairLike {
+	pass: string
+	before: string[]
+	after: string[]
+}
+
+/** Structural mirror of `@mailwoman/neural`'s `NeuralParseTrace` (spec 2026-07-03). */
+export interface ParseTraceLike {
+	text: string
+	caseNormalized: boolean
+	pieces: TracePieceLike[]
+	anchor?: TraceChannelLike
+	gazetteer?: TraceChannelLike
+	logits: number[][]
+	localeLogits?: number[]
+	/** The locale-head axis (country code per `localeLogits` index) — self-describing, never hardcode the order. */
+	localeCountries?: string[]
+	detectedSystem: string | null
+	systemSource: "off" | "auto" | "pinned"
+	priors: Array<{ kind: string; applied: boolean }>
+	emissions: number[][]
+	labels: string[]
+	path: number[]
+	decode: "viterbi" | "argmax"
+	repairs: TraceRepairLike[]
+	tokens: TraceTokenLike[]
 }
 
 export interface MailwomanLookupLike {

@@ -26,7 +26,7 @@ import {
 } from "@mailwoman/core/decoder"
 import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
-import { detectAddressSystem } from "./address-system.js"
+import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.js"
 import type { AnchorLookup } from "./anchor-inference.js"
 import { normalizeInputCase } from "./case-normalize.js"
 import { buildFSTEmissionPriors, type FSTMatcherLike } from "./fst-prior.js"
@@ -35,12 +35,14 @@ import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { repairPostcodeLabels } from "./postcode-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
-import { buildSoftFeatures } from "./soft-features.js"
+import { buildSoftFeatures, type SoftFeatureChannel } from "./soft-features.js"
 import { bridgePunctuationGaps } from "./span-bridge.js"
 import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.js"
 import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
+import { TRACE_PRIOR_KINDS } from "./trace.js"
+import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.js"
 import { repairUnitLabels } from "./unit-repair.js"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
@@ -341,17 +343,90 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
+	 * Like `parse`, but returns the full decode-path trace instead of a tree: pieces, soft-feature channels as fed, raw
+	 * logits, locale head, prior participation, post-prior emissions, viterbi path, repair diffs, and the final tokens.
+	 * Shares the ENTIRE decode path with `parse` (one `#decode`, #481) and mirrors `parse`'s case normalization, so
+	 * `buildAddressTree(trace.text, trace.tokens)` reproduces `parse(text)`'s tree exactly — modulo `opts.calibrate`,
+	 * which `parse` forwards into the tree build to recalibrate node confidences and which the trace does not carry
+	 * (tokens/labels/spans still match; re-pass the calibrator to the rebuild if calibrated confidences matter).
+	 * Serializable by construction — see `./trace.js` for the schema and the spec reference.
+	 */
+	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
+		const labels = [...this.labels] as string[]
+
+		if (text.length === 0) {
+			// Mirror #decode's contract on the degenerate input: systemSource still reflects the
+			// RESOLVED conventions mode (opts over config), and every prior kind gets its
+			// participation record (applied: false — nothing can fire on zero pieces).
+			const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
+
+			return {
+				text,
+				caseNormalized: false,
+				pieces: [],
+				logits: [],
+				detectedSystem: null,
+				systemSource: conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned",
+				priors: TRACE_PRIOR_KINDS.map((kind) => ({ kind, applied: false })),
+				emissions: [],
+				labels,
+				path: [],
+				decode: this.decodeMode,
+				repairs: [],
+				tokens: [],
+			}
+		}
+		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
+		const { tokens, logits, pieces, trace } = await this.#decode(modelText, opts, true)
+
+		if (!trace) throw new Error("traceParse: #decode returned no trace despite trace=true (invariant)")
+
+		return {
+			text: modelText,
+			caseNormalized: modelText !== text,
+			pieces: pieces.map((p) => ({ piece: p.piece, id: p.id, start: p.start, end: p.end })),
+			...(trace.anchor ? { anchor: trace.anchor } : {}),
+			...(trace.gazetteer ? { gazetteer: trace.gazetteer } : {}),
+			logits,
+			// The axis rides with the values (self-describing — consumers must not hardcode the order).
+			...(trace.localeLogits ? { localeLogits: trace.localeLogits, localeCountries: [...LOCALE_COUNTRIES] } : {}),
+			detectedSystem: trace.detectedSystem,
+			systemSource: trace.systemSource,
+			priors: trace.priors,
+			emissions: trace.emissions,
+			labels,
+			path: trace.path,
+			decode: this.decodeMode,
+			repairs: trace.repairs,
+			tokens: tokens.map((t) => ({ ...t })),
+		}
+	}
+
+	/**
 	 * THE decode path (#481): tokenize → anchor/gazetteer features → infer → priors → CRF/argmax → tokens → repairs. Both
 	 * `parse` and `parseWithLogits` consume this — never fork it; the 2026-06 audit found three drift surfaces in the
 	 * previous duplicated copies.
 	 */
 	async #decode(
 		text: string,
-		opts?: ParseOpts
+		opts?: ParseOpts,
+		trace = false
 	): Promise<{
 		tokens: DecoderToken[]
 		logits: number[][]
 		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
+		/** Present iff `trace` — the retained intermediates `traceParse` assembles. */
+		trace?: {
+			anchor?: SoftFeatureChannel
+			gazetteer?: SoftFeatureChannel
+			localeLogits?: number[]
+			detectedSystem: SystemCode | null
+			systemSource: "off" | "auto" | "pinned"
+			priors: TracePrior[]
+			emissions: number[][]
+			path: number[]
+			repairs: TraceRepair[]
+		}
 	}> {
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
 		// Soft-feature channels (#718): the postcode-anchor (#239/#240) + gazetteer-anchor (#464) clues
@@ -368,6 +443,36 @@ export class NeuralAddressClassifier {
 
 		this.assertEmissionWidth(logits)
 
+		// Trace retention (spec 2026-07-03): capture-by-reference of arrays this method already
+		// builds. Null when not tracing — the non-trace path allocates nothing new (every recording
+		// call below sits behind a `tracePriors?` / `if (traceRepairs)` guard, so even snapshot
+		// arguments are never built for a plain parse).
+		const tracePriors: TracePrior[] | null = trace ? [] : null
+		const traceRepairs: TraceRepair[] | null = trace ? [] : null
+		const recordRepair = (pass: TraceRepairPass, before: string[], after: string[]): void => {
+			if (!traceRepairs) return
+
+			if (before.length === after.length && before.every((label, i) => label === after[i])) return
+			traceRepairs.push({ pass, before, after })
+		}
+		// TraceRepair before/after are PER-PIECE (index-aligned with `pieces`). Token-count-preserving
+		// passes can read labels 1:1, but the span bridge MERGES fragments (dropping later tokens), so
+		// labels are projected back onto pieces via char offsets: each piece carries the label of the
+		// token covering its start. Keeps the alignment contract true for every pass.
+		const labelsPerPiece = (toks: readonly DecoderToken[]): string[] => {
+			let t = 0
+
+			return pieces.map((p) => {
+				while (t + 1 < toks.length && toks[t + 1]!.start <= p.start) t++
+
+				const tok = toks[t]
+
+				return (tok && tok.start <= p.start && p.start < tok.end ? tok.label : "O") as string
+			})
+		}
+		// `applied` reports EFFECT (see TracePrior): a composed prior counts only if any cell is nonzero.
+		const matrixHasBias = (m: readonly (readonly number[])[]): boolean => m.some((row) => row.some((v) => v !== 0))
+
 		// Address-system conventions (#511 Tier A): resolve which system's rules apply — caller-pinned
 		// system, or the model's own locale-head detection under a high confidence bar. Null = no
 		// constraints; the parse below is byte-identical to the pre-conventions path.
@@ -382,37 +487,42 @@ export class NeuralAddressClassifier {
 					? (detectAddressSystem(localeLogits)?.system ?? null)
 					: conventionsOpt
 		const conventions = conventionsForSystem(detectedSystem)
+		const systemSource: "off" | "auto" | "pinned" =
+			conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned"
 
-		let emissions = opts?.queryShape
-			? addEmissionMatrix(
-					logits,
-					buildEmissionPriors(opts.queryShape, pieces, this.labels, {
-						biasScale: opts.queryShapeBiasScale ?? 1.0,
-						inputText: text,
-					})
-				)
-			: logits
+		const queryShapePrior = opts?.queryShape
+			? buildEmissionPriors(opts.queryShape, pieces, this.labels, {
+					biasScale: opts.queryShapeBiasScale ?? 1.0,
+					inputText: text,
+				})
+			: undefined
+		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
 
-		if (opts?.fst) {
-			emissions = addEmissionMatrix(
-				emissions,
-				buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
+		tracePriors?.push({ kind: "queryShape", applied: queryShapePrior !== undefined && matrixHasBias(queryShapePrior) })
+
+		const fstPrior = opts?.fst
+			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
 					biasScale: opts.fstBiasScale ?? 1.0,
 				})
-			)
-		}
+			: undefined
 
-		if (opts?.fstStreetMorphology) {
-			emissions = addEmissionMatrix(
-				emissions,
-				buildStreetMorphologyEmissionPriors(
+		if (fstPrior) emissions = addEmissionMatrix(emissions, fstPrior)
+		tracePriors?.push({ kind: "fst", applied: fstPrior !== undefined && matrixHasBias(fstPrior) })
+
+		const morphologyPrior = opts?.fstStreetMorphology
+			? buildStreetMorphologyEmissionPriors(
 					opts.fstStreetMorphology,
 					pieces,
 					this.labels,
 					opts.fstStreetMorphologyOpts ?? {}
 				)
-			)
-		}
+			: undefined
+
+		if (morphologyPrior) emissions = addEmissionMatrix(emissions, morphologyPrior)
+		tracePriors?.push({
+			kind: "streetMorphology",
+			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
+		})
 
 		// Stage 2.7 span proposer (#518, M2+M3): typed span proposals consumed as phrase priors.
 		// DEFAULT ON since 2026-06-12 (operator ruling): an omitted config builds the codex lexicon
@@ -425,12 +535,15 @@ export class NeuralAddressClassifier {
 		if (spanProposals.length > 0) {
 			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
+		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
 
 		// Conventions emission mask: tags that are ungrammatical in the detected system are removed
 		// from the decoder's vocabulary outright (-1e9 ≈ log 0). Copy-on-mask — `emissions` may alias
 		// `logits`, which the per-token confidence below reads unmasked.
+		let conventionsMaskApplied = false
+
 		if (conventions?.forbiddenTags?.length) {
 			const forbidden = new Set<number>()
 
@@ -444,9 +557,11 @@ export class NeuralAddressClassifier {
 			}
 
 			if (forbidden.size > 0) {
+				conventionsMaskApplied = true
 				emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
 			}
 		}
+		tracePriors?.push({ kind: "conventionsMask", applied: conventionsMaskApplied })
 
 		let labelIndices =
 			this.decodeMode === "viterbi"
@@ -458,6 +573,10 @@ export class NeuralAddressClassifier {
 					}).path
 				: emissions.map((row) => argmaxSoftmax(row).idx)
 
+		// The trace's `path` is the DECODER's output — snapshot before the word-consistency healing
+		// below reassigns labelIndices (the healing itself is visible as a `wordConsistency` repair).
+		const decodedPath = trace ? [...labelIndices] : null
+
 		// Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Opt-in — default
 		// OFF → byte-identical. Heals words whose pieces disagree (e.g. `VERMONT`→VER[loc]+MONT[region],
 		// `Lozère`→Loz[loc]+ère[region]) via a confidence-weighted vote over the post-prior emissions; a
@@ -465,9 +584,18 @@ export class NeuralAddressClassifier {
 		let healedConfidence: Map<number, number> | null = null
 
 		if (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false) {
+			const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []
 			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices)
 			labelIndices = wc.labelIndices
 			healedConfidence = wc.healedConfidence
+
+			if (traceRepairs) {
+				recordRepair(
+					"wordConsistency",
+					beforeLabels,
+					labelIndices.map((i) => (this.labels[i] ?? "O") as string)
+				)
+			}
 		}
 
 		let tokens: DecoderToken[] = pieces.map((p, i) => {
@@ -489,11 +617,17 @@ export class NeuralAddressClassifier {
 		// shape (#511 Tier A): a span that is a sub-match of a shape-valid string is exactly the
 		// snap-only truncation class the pass exists for ("47110" decoded as "4711" + a digit-split).
 		if (opts?.postcodeRepair || conventions?.postcodePattern) {
+			const before = traceRepairs ? labelsPerPiece(tokens) : []
 			tokens = repairPostcodeLabels(text, tokens).tokens
+
+			if (traceRepairs) recordRepair("postcodeRepair", before, labelsPerPiece(tokens))
 		}
 
 		if (opts?.unitRepair) {
+			const before = traceRepairs ? labelsPerPiece(tokens) : []
 			tokens = repairUnitLabels(text, tokens).tokens
+
+			if (traceRepairs) recordRepair("unitRepair", before, labelsPerPiece(tokens))
 		}
 
 		// Punctuation-gap span bridging (v4.4.0 corrective — see span-bridge.ts): merge same-tag
@@ -502,10 +636,35 @@ export class NeuralAddressClassifier {
 		// ANNOTATION/QUOTED boundaries become merge-crossing constraints (M2's second half).
 		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
 			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
+			// The bridge MERGES tokens (later fragments are dropped), so both snapshots go through the
+			// per-piece projection — a merged span's label lands on every piece it covers, keeping
+			// before/after index-aligned with `pieces` per the TraceRepair contract.
+			const before = traceRepairs ? labelsPerPiece(tokens) : []
 			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length > 0 ? { blockedSpans } : undefined)
+
+			if (traceRepairs) recordRepair("spanBridge", before, labelsPerPiece(tokens))
 		}
 
-		return { tokens, logits, pieces }
+		return {
+			tokens,
+			logits,
+			pieces,
+			...(trace
+				? {
+						trace: {
+							...(soft.anchor ? { anchor: soft.anchor } : {}),
+							...(soft.gazetteer ? { gazetteer: soft.gazetteer } : {}),
+							...(localeLogits ? { localeLogits } : {}),
+							detectedSystem,
+							systemSource,
+							priors: tracePriors!,
+							emissions,
+							path: decodedPath!,
+							repairs: traceRepairs!,
+						},
+					}
+				: {}),
+		}
 	}
 
 	async parseJSON(text: string, opts?: ParseOpts): Promise<Partial<Record<ComponentTag, string>>>
