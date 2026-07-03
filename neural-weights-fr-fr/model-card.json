@@ -1,7 +1,7 @@
 {
 	"name": "neural-weights-fr-fr",
-	"version": "4.15.0",
-	"model_lineage": "Ships the en-us v1.9.3a3-anchor-absorption model (step 80000) — CI copies neural-weights-en-us/model.onnx into this package (publish.yml: 'one multi-locale model serves both'), so the binary, the 33-label set, and the ship-config are IDENTICAL to neural-weights-en-us 4.15.0. This card carries only the FR-specific framing; see that card for full training/recipe/provenance. FR was unaffected by the #220/#723 anchor-absorption fix at the coordinate (fr.postcode label −0.2 = noise; fr.house_number 98.1 held). (Version + lineage reconciled at v4.15.0; previously stale at the 4.6.0 / v1.5.0-fr-order reference while the cp had long since moved the shipped binary forward — see #721 for the original 21→33 label reconciliation.)",
+	"version": "5.2.0",
+	"model_lineage": "Ships the en-us v5.2.0 nsplice-v2 model (bsplice-expanded + the #912-lever-4 Nordic vocab-splice, FVT mean-init; tokenizer v0.7.1-nsplice). One model serves both locales; see the en-us card for the full lineage + gate record.",
 	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v1.9.3a3 model)",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "fr-fr",
@@ -14,10 +14,19 @@
 	},
 	"requires": {
 		"$comment": "SHIP-CONFIG mirrored from neural-weights-en-us (#718/#721): this package ships en-us's model, so its required channels are identical. createScorer / loadFromWeights read this and feed anchor + gazetteer + the conventions mask; running channel-OFF is the #566/#685 OOD crater. Reconciled in #721 — this block was previously ABSENT, so loadFromWeights gave fr-fr a partial (anchor + gazetteer only) ship-config.",
-		"anchor": { "required": true },
-		"gazetteer": { "required": true },
-		"conventions": { "required": true, "mode": "auto" },
-		"bridge": { "required": false },
+		"anchor": {
+			"required": true
+		},
+		"gazetteer": {
+			"required": true
+		},
+		"conventions": {
+			"required": true,
+			"mode": "auto"
+		},
+		"bridge": {
+			"required": false
+		},
 		"suppress_gazetteer_near_postcode": true
 	},
 	"components_supported": [
