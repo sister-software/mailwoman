@@ -299,7 +299,8 @@ async function applySpanRescore(
 			country: opts.defaultCountry,
 			postcode: firstPostcodeValue(roots),
 			gateKm: opts.spanRescoreGateKm,
-			postalCompoundRecovery: opts.postalCompoundRecovery,
+			// Default-ON (promoted 2026-07-03); explicit `false` opts out — the spanRescore idiom.
+			postalCompoundRecovery: opts.postalCompoundRecovery !== false,
 		})
 	} catch {
 		return
@@ -311,7 +312,7 @@ async function applySpanRescore(
 	// medoid postcode centroid is COARSER than the exact village centroid, and consumers that rank
 	// postcode above locality (the eval harness does) would otherwise trade a 0.2 km village pin for a
 	// 5 km area centroid. Same unresolved tree, so the #685 brake semantics hold.
-	if (!hit && opts.postalCompoundRecovery) {
+	if (!hit && opts.postalCompoundRecovery !== false) {
 		try {
 			await recoverPostcodeNode(roots, backend, opts.defaultCountry)
 		} catch {

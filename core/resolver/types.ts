@@ -360,8 +360,12 @@ export interface ResolveOpts {
 	 *
 	 * When on and the tree resolved nothing: the failed postcode span only blocks its CODE-shaped tokens (digit-bearing;
 	 * the residual city tokens become recoverable), the postcode-consistency anchor retries with that code subset, and
-	 * the failed postcode NODE is decorated from the code resolution (a postcode-tier coordinate floor even when no city
-	 * matches). Never fires on a resolved tree (the #685 brake). Default false pending its gate battery.
+	 * the failed postcode NODE is decorated from the code resolution (a postcode-tier coordinate floor, strictly
+	 * subordinate to a recovered locality). Never fires on a resolved tree (the #685 brake).
+	 *
+	 * **Default ON** (operator-promoted 2026-07-03 after the pre-registered gate: SI 25/25 recovery at p50 0.67 km, US/FR
+	 * byte-identical, and the insurance leg — the composition-failed v2.2.0 candidate recovers all 55 lost rows). Set
+	 * `false` to opt out (byte-stable then).
 	 */
 	postalCompoundRecovery?: boolean
 	/**
