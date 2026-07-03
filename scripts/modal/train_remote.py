@@ -1258,6 +1258,67 @@ def versions():
 
 
 @app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_nsplice():
+    """#912 lever 4 — Nordic splice staging. Pulls the v0.7.0-nsplice tokenizer (v0.6.0-bsplice's
+    58,582 pieces + 8,613 Nordic diacritic pieces from OA fi/se/no/dk/is; #900 overlap gate PASS,
+    accepted set stamped in the report next to the local artifact) and refreshes the training code.
+    The mean-init input is models/bsplice-expanded — the SHIPPED v5.1.0 fp32 (the pure mean-init
+    artifact; the fine-tune washed, see tokenizer_splice.py's header) — already on the volume."""
+    import shutil
+    import subprocess
+
+    print("Syncing nsplice tokenizer + code from R2...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/models/tokenizer/v0.7.0-nsplice/ {VOL_MOUNT}/models/tokenizer/v0.7.0-nsplice/ {R}",
+        f"rclone copy :s3:{BUCKET}/models/tokenizer/v0.7.1-nsplice/ {VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+    print("  nsplice tokenizer present:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.7.0-nsplice/tokenizer.model"))
+    print("  base ckpt present:", os.path.isfile(f"{VOL_MOUNT}/models/bsplice-expanded/pytorch_model.bin"))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=1200,
+)
+def mean_init_nsplice():
+    """#912 lever 4: expand the shipped bsplice-expanded checkpoint's embeddings to the nsplice
+    vocab (FVT mean-init — same surgery that produced v5.1.0). Writes /data/models/nsplice-expanded."""
+    import sys
+    sys.path.insert(0, "/data/corpus-python/src")
+    from pathlib import Path
+
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/models/bsplice-expanded"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-bsplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/nsplice-v2-expanded"),
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; /data/models/nsplice-expanded committed")
+
+
+@app.function(
     volumes={VOL_MOUNT: vol},
     image=training_image,
     timeout=600,

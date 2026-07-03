@@ -70,7 +70,15 @@ def _is_ascii(s: str) -> bool:
     return all(ord(c) < 128 for c in s)
 
 
-def build_slavic_corpus(oa_root: Path, locales: list[str], out_path: Path, *, per_file_cap: int = 400_000) -> int:
+def build_slavic_corpus(
+    oa_root: Path,
+    locales: list[str],
+    out_path: Path,
+    *,
+    per_file_cap: int = 400_000,
+    extra_text: Path | None = None,
+    extra_repeat: int = 10,
+) -> int:
     """Stream the OpenAddresses STREET/CITY columns for ``locales`` into a deduped SP-training corpus.
 
     Returns the line count written. Reproducible: fixed seed + fixed sample size.
@@ -98,6 +106,14 @@ def build_slavic_corpus(oa_root: Path, locales: list[str], out_path: Path, *, pe
     corpus = [ln for ln in lines if ln and len(ln) < 80]
     random.Random(_SEED).shuffle(corpus)
     corpus = corpus[:_CORPUS_SAMPLE]
+    # Exonym awareness (#912 lever 4's Åbo lesson): OA STREET/CITY text carries only the NATIVE
+    # names, so an exonym like "Åbo" (Swedish for Turku) never earns a piece and its decode drop
+    # survives the splice. extra_text feeds gazetteer ALIAS names in, repeated extra_repeat× so a
+    # once-per-name list has enough unigram mass to compete for vocab slots.
+    if extra_text is not None and extra_text.is_file():
+        extra = [ln.strip() for ln in extra_text.read_text(encoding="utf-8").splitlines()]
+        extra = [ln for ln in extra if ln and len(ln) < 80]
+        corpus.extend(extra * max(1, extra_repeat))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(corpus), encoding="utf-8")
     return len(corpus)
@@ -287,6 +303,8 @@ def _main() -> None:
         "codepoint-overlap gate runs and FAILS on unaccepted overlap; the per-locale report "
         "is written next to the spliced tokenizer either way.",
     )
+    bt.add_argument("--extra-text", type=Path, default=None, help="extra corpus lines (gazetteer alias names) — the exonym-awareness feed")
+    bt.add_argument("--extra-repeat", type=int, default=10)
     bt.add_argument(
         "--accept-overlap",
         default="",
@@ -304,7 +322,9 @@ def _main() -> None:
     if args.cmd == "build-tokenizer":
         args.work_dir.mkdir(parents=True, exist_ok=True)
         corpus = args.work_dir / "slavic-corpus.txt"
-        n = build_slavic_corpus(args.oa_root, args.locales.split(","), corpus)
+        n = build_slavic_corpus(
+            args.oa_root, args.locales.split(","), corpus, extra_text=args.extra_text, extra_repeat=args.extra_repeat
+        )
         print(f"corpus: {n} lines")
         sp_model = train_diacritic_sp(corpus, args.work_dir / "slavic-sp", vocab_size=args.vocab_size)
         new_pieces = splice_vocab(args.base_tokenizer, sp_model, args.out_tokenizer)
