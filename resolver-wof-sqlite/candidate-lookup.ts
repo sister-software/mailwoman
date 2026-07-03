@@ -168,9 +168,16 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
-		const text = (query.text ?? "").trim()
+		let text = (query.text ?? "").trim()
 
 		if (!text) return []
+
+		// #920 name law, candidate-key edition: postcode rows are keyed by their whitespace-stripped
+		// form at build (the GeoNames fold normalizes '624 66' → '62466'), so a postcode-typed query
+		// strips internal whitespace before keying. Postcode-only — locality names keep their spaces.
+		if ([query.placetype].flat().includes("postalcode")) {
+			text = text.replace(/\s+/g, "")
+		}
 		const nameKey = normalizeLocalityForKey(text)
 
 		if (!nameKey) return []
