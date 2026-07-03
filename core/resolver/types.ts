@@ -41,6 +41,11 @@ export interface ResolvedPlace {
 	 */
 	score: number
 	/**
+	 * Backend-computed prominence (population + proximity terms, additive units) — the within-tier ranking key the #369
+	 * anchor re-rank and #938 bias path share. Optional: backends without it degrade to score-based ordering.
+	 */
+	prominence?: number
+	/**
 	 * Set by the backend when this candidate is an EXACT name/alias match for the query (vs a partial token match). The
 	 * postcode-anchor re-rank (#369) uses it as the PRIMARY key so a country posterior can pin the country WITHOUT
 	 * crossing the exact-match tier: "ME" under a confident US posterior stays Maine (US exact) rather than promoting the

@@ -245,13 +245,29 @@ export class CoarsePlacer {
  * committing to the single argmax (the one-hot the M2 wiring shipped). Raw marginals (un-renormalized; they sum to the
  * in-map mass `1 - P(OTHER)`), matching the one-hot's `confidence` scale so `anchorWeight` is unchanged.
  */
-export function inMapPosterior(prediction: CoarsePrediction): Record<string, number> | null {
+export function inMapPosterior(
+	prediction: CoarsePrediction,
+	opts?: {
+		/**
+		 * #928: drop in-map classes whose marginal is below this floor before handing the posterior to the resolver. The
+		 * misroute drift (0 → 25 since the M2 gate) was TAIL MASS: on a correctly-argmaxed GB row, the small US marginal
+		 * compounds with the #910 population-first exact tier and flips Boston-class namesakes — the placer was right and
+		 * its tail still did the damage. The floor zeroes implausible tails while keeping genuine ambiguity (a DK↔NO split
+		 * above the floor passes through intact). Default 0.05; `0` = the untempered distribution (the pre-#928 behavior).
+		 */
+		epsilonFloor?: number
+	}
+): Record<string, number> | null {
 	if (prediction.country === null || prediction.country === "OTHER") return null
+	const floor = opts?.epsilonFloor ?? 0.05
 	const posterior: Record<string, number> = {}
 
 	for (const [cls, prob] of Object.entries(prediction.probs)) {
-		if (cls !== "OTHER") posterior[cls] = prob
+		if (cls !== "OTHER" && prob >= floor) posterior[cls] = prob
 	}
+	// The argmax always survives (it is ≥ every other marginal; if even it fell below the floor the
+	// prediction would have abstained upstream) — but guard anyway so the posterior is never empty.
+	if (Object.keys(posterior).length === 0) posterior[prediction.country] = prediction.confidence
 
 	return posterior
 }

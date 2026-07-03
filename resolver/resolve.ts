@@ -859,11 +859,24 @@ class WOFResolver implements Resolver {
 		if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
 			const post = state.anchorPosterior
 			const w = state.anchorWeight
-			ranked = [...candidates].sort(
-				(a, b) =>
-					Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false) ||
-					b.score + w * (post[b.country] ?? 0) - (a.score + w * (post[a.country] ?? 0))
-			)
+			// #928 root cause: this sort's within-tier key was `score + w·posterior` — RAW SCORE order,
+			// the exact metric #910 deprecated inside the exact tier as bm25-length-poisoned (a famous
+			// place's alias-heavy doc reads ~15 pts WORSE than a tiny namesake's clean one; #905
+			// measured it). Before #910 the anchor-off path also sorted by score, so the two paths
+			// agreed; after, anchor-ON silently reverted to the poisoned metric — a CORRECT GB@1.00
+			// pin flipped "London SE15 1DD" to a US namesake because +w·1.0 can't bridge the bm25 gap.
+			// The within-tier key is now the backend's PROMINENCE (population + proximity, #938 units)
+			// with the posterior as the additive country pin; score stays the final tiebreak. Backends
+			// that don't populate `prominence` degrade to the additive score behavior.
+			ranked = [...candidates].sort((a, b) => {
+				const tier = Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false)
+
+				if (tier !== 0) return tier
+				const aKey = (a.prominence ?? a.score) + w * (post[a.country] ?? 0)
+				const bKey = (b.prominence ?? b.score) + w * (post[b.country] ?? 0)
+
+				return bKey - aKey || b.score - a.score
+			})
 		}
 
 		// Exact-type preference (#718): when the placetype-equivalence group let a broader admin tier

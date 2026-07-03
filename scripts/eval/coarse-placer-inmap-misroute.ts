@@ -49,6 +49,8 @@ const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR"]
 const ANCHOR_WEIGHT = Number(arg("anchor-weight", "1.0"))
 const ABSTAIN_BELOW = Number(arg("abstain-below", "0.9"))
 const PER_COUNTRY = Number(arg("per-country", "200"))
+// #928: the posterior epsilon floor under test (passed through to inMapPosterior).
+const POSTERIOR_FLOOR = Number(arg("posterior-floor", "0.05"))
 // `--distribution` feeds the full in-map posterior (vs one-hot argmax) as anchorPosterior (#244 residual).
 const DISTRIBUTION = process.argv.includes("--distribution")
 
@@ -167,11 +169,22 @@ async function main(): Promise<void> {
 		const parsed = await neural.parse(s.raw, { postcodeRepair: true })
 		const pred = placer.predict(s.raw)
 		const usePrior = !!pred.country && pred.country !== "OTHER"
-		const posterior = usePrior ? (DISTRIBUTION ? inMapPosterior(pred) : { [pred.country!]: pred.confidence }) : null
+		const posterior = usePrior
+			? DISTRIBUTION
+				? inMapPosterior(pred, { epsilonFloor: POSTERIOR_FLOOR })
+				: { [pred.country!]: pred.confidence }
+			: null
 		const onOpts: ResolveOpts = posterior ? { anchorPosterior: posterior, anchorWeight: ANCHOR_WEIGHT } : {}
 		const off = await resolvedCountry(parsed, {})
 		const on = await resolvedCountry(parsed, onOpts)
 		rows.push({ gold: s.country, placer: pred.country, off, on })
+
+		// #928 diagnosis: dump each regression row verbatim (gold right OFF, wrong ON).
+		if (off === s.country && on !== s.country) {
+			console.error(
+				`REGRESSION ${s.country}→${on ?? "—"} placer=${pred.country}@${pred.confidence.toFixed(2)} "${s.raw.slice(0, 70)}"`
+			)
+		}
 
 		if (++done % 200 === 0) console.error(`  ${done}/${sample.length}`)
 	}
