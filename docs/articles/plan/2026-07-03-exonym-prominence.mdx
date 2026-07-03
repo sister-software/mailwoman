@@ -1,0 +1,74 @@
+---
+title: "Design note: exonym prominence in the exact tier (the Åbo problem)"
+description: The name-exact vs alias-exact sub-tier meets bilingual official names — three candidate rules, one recommendation, no implementation yet.
+---
+
+# Exonym prominence in the exact tier
+
+**Status: design note for review (2026-07-03). No implementation. The concrete failing row is the
+`global-abo-alias` gauntlet case (tracked `improvement_target`, #912).**
+
+## The tension, made concrete
+
+The #927 exact-tier sub-tier ranks a NAME-exact candidate (the query equals the place's own
+`spr.name`) above an ALIAS-exact one (the query matches only an alias), with population ordering
+within each sub-tier. That fixed the _Paris Township_ class — an alias must not tie the primary.
+
+The v5.2.0 Nordic splice then fixed "Åbo"'s tokenization (the exonym now parses whole), which
+surfaced the sub-tier's known trade as a real row: unscoped **"Åbo" now resolves 859 km away** to
+a tiny place literally _named_ Åbo (name-exact) instead of Turku, pop 207k, which holds "Åbo" only
+as an alias in our gazetteer. Before #927, population-within-one-tier let Turku win; the sub-tier
+is more principled generally but loses this row.
+
+The trap in fixing it naively: `ME → Maine` (alias-exact, no name-exact competitor) and
+`Paris → Paris, France` (name-exact over a more populous alias holder is exactly what we want)
+must both keep working.
+
+## Why "Åbo" is not actually an alias
+
+Finland is officially bilingual. "Åbo" is Turku's **official Swedish name** — the same class as
+Karjaa/Karis (the #743 bilingual-recall fix already treats these as first-class names on ingest).
+Our gazetteer stores ONE primary (`spr.name` = "Turku") and demotes every other official-language
+name into the alias bag. The defect is not the sub-tier's ordering; it is that **"name-exact" only
+consults a single primary in a world with multilingual official names.**
+
+## The rule space
+
+1. **Population-ratio override**: alias-exact may outrank name-exact when
+   `pop(alias holder) / pop(name holder) > K`. Rejected as primary: K is a magic constant with no
+   principled value, it re-introduces the mushy cross-tier population comparisons #927 removed,
+   and it would resurrect Paris Township for extreme ratios.
+2. **Curated exonym table**: a provenance-tracked exonym→canonical dataset consulted at rank time.
+   Workable but heavy: a new data artifact + maintenance surface for something the gazetteer's
+   `names` table already encodes (language-tagged names with WOF provenance). Violates the spirit
+   of no-load-bearing-trivia if hand-grown.
+3. **Official-language names ARE names** _(recommended)_: widen the name-exact sub-tier's
+   definition from `spr.name` to "any OFFICIAL-language name of the place" — the language-tagged
+   name rows the gazetteer already carries (`name_swe` for Turku, per WOF). Alias-exact remains
+   the tier for abbreviations, colloquialisms, and historical forms. Turku becomes name-exact for
+   "Åbo" and beats the hamlet on population _within_ the sub-tier; Paris Township stays
+   alias-exact (its "Paris" is a truncation, not an official name in another language);
+   `ME → Maine` is untouched (abbreviations stay alias-tier, no name-exact competitor).
+
+## What option 3 needs (scoping, not commitment)
+
+- Ingest: mark official-language name rows distinctly from alt/colloquial names (WOF's `name_*`
+  language tags + `official` flags carry this; the candidate/FTS builders would carry one extra
+  bit per name row).
+- Lookup: the exact-tier classifier consults `names WHERE official = 1` for the name-exact test
+  (one indexed probe, same shape as today's alias check).
+- Gate: the bare-namesake gauntlet rows (Paris/Dublin/Melbourne/Vancouver/Åbo + ME/NY abbrevs) +
+  US-2k ni + the quad panel ni set — the same battery #927 ran, plus the Åbo row flipping to
+  gated.
+- Risk probe (RUN, 2026-07-03): 6,910 names are shared by 2+ localities above 100k population —
+  but that's the UPPER BOUND across ALL name classes, because today's `names` table cannot
+  distinguish official-language rows from transliterations/colloquialisms ("A-shih-ko" counts the
+  same as "Åbo"). The official-only subset is certainly far smaller but is UNQUANTIFIABLE until
+  the ingest bit exists — i.e., option 3's ingest work is a prerequisite for its own risk
+  assessment. Sequence accordingly: ingest bit → re-run this probe official-only → then decide
+  the lookup change.
+
+## Decision requested
+
+Approve option 3 for a scoped implementation pass (ingest bit + lookup probe + the #927 battery),
+or park behind the v2.2.0 retrain evaluation.
