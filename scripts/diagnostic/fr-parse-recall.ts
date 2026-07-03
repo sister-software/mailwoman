@@ -13,13 +13,31 @@
  *   Run: node scripts/diagnostic/fr-parse-recall.ts
  */
 
+import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
+import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
+import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
+
+const { values: args } = parseArgs({
+	options: {
+		// Candidate-pair override (the v2.2.0 salvage read). Argless = the installed weights package
+		// via loadFromWeights, unchanged. When a pair is given, the classifier is built MANUALLY with
+		// the ship-config channels fed from the INSTALLED package's model-independent artifacts
+		// (postcode bins + gazetteer lexicon) — the explicit-path resolveWeights drops the soft-feed
+		// siblings, and an unfed arm vs a fed arm is not a comparison.
+		model: { type: "string" },
+		tokenizer: { type: "string" },
+		"model-card": { type: "string", default: "neural-weights-en-us/model-card.json" },
+		label: { type: "string", default: "" },
+	},
+})
 
 const db = new DatabaseSync(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, { readOnly: true })
 // Distinct streets with a city + postcode, sampled across the table (not one street repeated).
@@ -31,7 +49,31 @@ const rows = db
 	)
 	.all() as Array<{ street_raw: string; number: string; locality_norm: string; postcode: string }>
 
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+async function buildClassifier(): Promise<NeuralAddressClassifier> {
+	if (!args.model || !args.tokenizer) return NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
+	const card = JSON.parse(readFileSync(args["model-card"]!, "utf8")) as { labels: string[] }
+	const anchor = new PostcodeBinaryResolver(readFileSync("neural-weights-en-us/postcode-us.bin")).toAnchorLookup()
+	const [tokenizer, runner] = await Promise.all([
+		MailwomanTokenizer.loadFromFile(args.tokenizer),
+		ONNXRunner.create(args.model),
+	])
+
+	return new NeuralAddressClassifier({
+		tokenizer,
+		runner,
+		labels: card.labels,
+		postcodeAnchorLookup: anchor,
+		gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync("neural-weights-en-us/anchor-lexicon-v1.json", "utf8"))),
+		suppressGazetteerNearPostcode: true,
+		addressSystemConventions: "auto",
+		bridgePunctuationGaps: true,
+	})
+}
+
+const classifier = await buildClassifier()
+
+if (args.label) console.log(`[pair] ${args.label}: model=${args.model ?? "package"} tokenizer=${args.tokenizer ?? "package"}`)
 
 function streetKeyOf(tree: {
 	roots: readonly { tag: string; value: string; start: number; children: readonly unknown[] }[]
