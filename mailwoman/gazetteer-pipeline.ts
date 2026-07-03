@@ -71,6 +71,9 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	"postalcode-us.db",
 	"postalcode-intl.db",
 	"postalcode-geonames-intl.db",
+	// #920: the GeoNames-postal namesake-tail shard (FI/CZ/SK/SI/DK/NO/HR/PL/SE) — the nine
+	// countries the deployed candidate build predated. existsSync-filtered like the rest.
+	"postalcode-geonames-tail.db",
 	"postcode-ca-overture.db",
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
 		(cc) => `postcode-${cc}-overture.db`
