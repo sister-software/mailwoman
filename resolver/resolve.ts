@@ -51,6 +51,8 @@ interface ResolutionState {
 	 * can inject postcode-proximal locality candidates.
 	 */
 	postcode?: string
+	/** Proximity-bias points (viewport, user location) — forwarded to every primary lookup. */
+	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/** Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default). */
 	anchorPosterior?: Record<string, number>
 	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
@@ -614,6 +616,7 @@ class WOFResolver implements Resolver {
 			defaultCountry: opts.defaultCountry,
 			parentFallback: opts.parentFallback ?? true,
 			postcode: firstPostcodeValue(tree.roots),
+			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2.0,
 			hardCountry: opts.hardCountry,
@@ -768,6 +771,11 @@ class WOFResolver implements Resolver {
 			placetype,
 			limit: state.candidatesPerLookup,
 		}
+
+		// Proximity bias (viewport center, user location, …) — a SOFT re-rank the backend folds into
+		// its exact-tier prominence; never a filter, so recall is untouched. This is how an ambiguous
+		// bare postcode ("48026") follows the map view instead of a global population coin-flip.
+		if (state.bias && state.bias.length > 0) query.bias = state.bias
 
 		// Pass the inherited parent constraint to the backend when available — `parentID` scopes to
 		// the resolved parent's descendants. For `country`: a resolved parent's country wins, else

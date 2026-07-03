@@ -39,7 +39,13 @@ import {
 import { bboxAround, haversineKm } from "./geo.js"
 import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
 import type { WOFDatabase } from "./schema.js"
-import { pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "./sharding.js"
+import {
+	pickShardForPlacetype,
+	pickShardsForPlacetype,
+	resolveShards,
+	type ResolvedShard,
+	type ShardConfig,
+} from "./sharding.js"
 import { SqliteConventionSource } from "./sqlite-convention-source.js"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.js"
 
@@ -114,6 +120,13 @@ export interface RankingWeights {
 	 * strong text match.
 	 */
 	proximityBoost: number
+	/**
+	 * Magnitude of the bias-hint term inside the exact-tier PROMINENCE sort (the `bias`/viewport path). Deliberately
+	 * population-scale (default = populationBoost) so a candidate near the map view / the user beats a distant-but-bigger
+	 * namesake — "the map view wins" is the feature; same-region ties (all candidates far from every hint) still fall to
+	 * population.
+	 */
+	biasBoost: number
 	/** Distance (km) at which the proximity boost halves. Tune to the typical query radius. */
 	proximityScaleKm: number
 	/**
@@ -161,6 +174,7 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	lengthPenaltyWeight: 0.1,
 	proximityBoost: 0.8,
 	proximityScaleKm: 100,
+	biasBoost: 4.0,
 	// populationBoost is intentionally large — empirical tuning against real WOF showed BM25 gaps
 	// of 1.5-3.0 between famous places and tiny same-name peers (because the famous ones have
 	// hundreds of alt-name entries that hurt their FTS document score). To consistently surface
@@ -636,7 +650,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * Strategy `fallback_fuzzy_name_match` — the BM25 FTS name-match over the gazetteer, the universal fallback. Always
 	 * returns an array (never null), so it terminates the dispatch chain.
 	 */
-	async #fuzzyNameMatch(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
+	async #fuzzyNameMatch(query: FindPlaceQuery, forceShard?: ResolvedShard): Promise<PlaceCandidate[]> {
 		const limit = query.limit ?? 10
 		// Over-fetch so post-scoring + exact-match tiering have room to re-rank. SHORT queries (a 2–3-char
 		// region abbreviation like "NY"/"VT") are the danger case the `exactMatchTiering` docstring flags:
@@ -663,10 +677,43 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// `placetype` always goes to main. (Mixed-placetype queries with multiple shards aren't
 		// supported in v1 — caller can issue two findPlace calls and merge in TS if needed.)
 		const firstPlacetype = placetypes?.[0]
-		const shard = pickShardForPlacetype(this.#shards, firstPlacetype, {
-			country: query.country,
-			countriesBySchema: this.#shardCountries,
-		})
+
+		// Bias fan-out (#58/proximity-bias): a country-less query WITH proximity hints must see the
+		// cross-shard ambiguity the hints exist to resolve — "48026" lives in postalcode-us AND
+		// postalcode-intl, and single-shard routing would hide one side. Query every matching shard
+		// (self-recursion with a shard pin), merge by id, and re-sort by the same (exact, prominence)
+		// keys the per-shard tier sort used. Bounded: hints + no country + >1 matching shard only.
+		const hasBiasHints = !!query.near || (query.bias?.length ?? 0) > 0
+
+		if (!forceShard && hasBiasHints && !query.country) {
+			const matching = pickShardsForPlacetype(this.#shards, firstPlacetype)
+
+			if (matching.length > 1) {
+				const pools: PlaceCandidate[][] = []
+
+				for (const sh of matching) pools.push(await this.#fuzzyNameMatch(query, sh))
+				const byID = new Map<PlaceCandidate["id"], PlaceCandidate>()
+
+				for (const c of pools.flat()) {
+					if (!byID.has(c.id)) byID.set(c.id, c)
+				}
+				const merged = [...byID.values()]
+				merged.sort(
+					(a, b) =>
+						Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false) ||
+						(b.prominence ?? 0) - (a.prominence ?? 0) ||
+						b.score - a.score
+				)
+
+				return merged.slice(0, limit)
+			}
+		}
+		const shard =
+			forceShard ??
+			pickShardForPlacetype(this.#shards, firstPlacetype, {
+				country: query.country,
+				countriesBySchema: this.#shardCountries,
+			})
 		const sch = shard.schemaName // bare schema name; safe to interpolate (validated at construction)
 
 		// Filter out historical / superseded / deprecated places by default — they live in the same
@@ -832,22 +879,52 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// coordinates. The formula decays smoothly with distance so close-but-not-exact hits
 			// still benefit; tunable via proximityBoost + proximityScaleKm.
 			let distanceKm: number | undefined
+			// The best decayed-distance term over `near` + every `bias` point (each point's term is
+			// scaled by its weight; the MAX wins — a candidate near ANY hint is "nearby"). Carried
+			// into the exact-tier prominence sort below when hints are present.
+			let proximityTerm = 0
 
-			if (query.near && row.lat !== null && row.lon !== null && !(row.lat === 0 && row.lon === 0)) {
-				distanceKm = haversineKm(query.near.lat, query.near.lon, row.lat, row.lon)
-				score += this.#weights.proximityBoost / (1 + distanceKm / this.#weights.proximityScaleKm)
+			if (row.lat !== null && row.lon !== null && !(row.lat === 0 && row.lon === 0)) {
+				const hints: Array<{ lat: number; lon: number; weight: number }> = []
+
+				if (query.near) hints.push({ lat: query.near.lat, lon: query.near.lon, weight: 1 })
+
+				for (const b of query.bias ?? []) hints.push({ lat: b.lat, lon: b.lon, weight: b.weight ?? 1 })
+
+				let scoreTerm = 0
+
+				for (const h of hints) {
+					const d = haversineKm(h.lat, h.lon, row.lat, row.lon)
+					const decay = h.weight / (1 + d / this.#weights.proximityScaleKm)
+					const prom = decay * this.#weights.biasBoost
+
+					if (prom > proximityTerm) {
+						proximityTerm = prom
+						distanceKm = d
+						scoreTerm = decay * this.#weights.proximityBoost
+					}
+				}
+				score += scoreTerm
 			}
 
 			// Population boost: capped at `populationBoost` magnitude at `10^populationScaleLog10`
 			// people. Missing population → no contribution. Never penalizes.
+			let popTerm = 0
+
 			if (row.population !== null && row.population > 0 && this.#weights.populationScaleLog10 > 0) {
 				const popLog = Math.log10(1 + row.population)
 				const popFraction = Math.min(1, popLog / this.#weights.populationScaleLog10)
-				score += this.#weights.populationBoost * popFraction
+				popTerm = this.#weights.populationBoost * popFraction
+				score += popTerm
 			}
+			// Combined prominence for the exact-tier sort when proximity hints are present: population
+			// and nearness in the SAME additive units, so the map view / the user's location can win a
+			// cross-country postcode tie without a hard filter.
+			const prominence = popTerm + proximityTerm
 
 			const candidate: PlaceCandidate = {
 				id: row.id,
+				prominence,
 				name: row.name,
 				placetype: row.placetype as WOFPlacetype,
 				country: row.country ?? "",
@@ -922,13 +999,22 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 					return norm(String(c.name ?? "")) === needle ? 2 : 1
 				}
+				// With proximity hints (near/bias), prominence (population + nearness, same units)
+				// replaces raw population as the within-tier key — the 48026 rule: the map view or
+				// the user's location breaks a cross-country postcode tie. Without hints, population
+				// ordering is byte-identical to before.
+				const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 				candidates.sort((a, b) => {
 					const ax = kind(a)
 					const bx = kind(b)
 
 					if (bx !== ax) return bx - ax
 
-					if (ax >= 1) return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
+					if (ax >= 1) {
+						if (hasHints) return (b.prominence ?? 0) - (a.prominence ?? 0) || b.score - a.score
+
+						return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
+					}
 
 					return b.score - a.score
 				})
