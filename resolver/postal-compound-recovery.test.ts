@@ -96,12 +96,21 @@ describe("postcodeCodeSubset", () => {
 })
 
 describe("postal-compound recovery (#942)", () => {
-	it("flag OFF (default): the tree stays unresolved — today's behavior", async () => {
+	it("flag OFF (explicit): the tree stays unresolved — the pre-#942 behavior", async () => {
 		const resolver = createWOFResolver(makeBackend())
-		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI" })
+		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI", postalCompoundRecovery: false })
 		const resolved = out.roots.filter((n) => n.placeID)
 
 		expect(resolved.length).toBe(0)
+	})
+
+	it("DEFAULT (flag ON since the 2026-07-03 promote): the compound recovers without opting in", async () => {
+		const resolver = createWOFResolver(makeBackend())
+		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI" })
+		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
+
+		expect(locality).toBeDefined()
+		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})
 
 	it("flag ON: recovers the trailing city from the globbed postcode span, gate-validated", async () => {
