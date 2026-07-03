@@ -352,6 +352,19 @@ export interface ResolveOpts {
 	 */
 	spanRescoreGateKm?: number
 	/**
+	 * Postal-compound recovery inside the span-rescore tier (#942). The knife-edge no-street query shape ("Kožljek 7,
+	 * 1382 Kožljek") fails as a COMPOUND: the parse globs the trailing city into the postcode span ("1382 Kožljek"),
+	 * which then (a) resolves as neither postcode nor locality and (b) BLOCKS its own city tokens from span-rescore's
+	 * recovery (a confident postcode span is avoided). Proven training-composition-insensitive on #901 — five vehicles
+	 * including a full from-scratch retrain all tip this class, so the floor lives here, model-independently.
+	 *
+	 * When on and the tree resolved nothing: the failed postcode span only blocks its CODE-shaped tokens (digit-bearing;
+	 * the residual city tokens become recoverable), the postcode-consistency anchor retries with that code subset, and
+	 * the failed postcode NODE is decorated from the code resolution (a postcode-tier coordinate floor even when no city
+	 * matches). Never fires on a resolved tree (the #685 brake). Default false pending its gate battery.
+	 */
+	postalCompoundRecovery?: boolean
+	/**
 	 * Postcode-disambiguated locality selection (#370 "Lever A"). When set, AND a locality resolves far from a resolved
 	 * sibling postcode, re-pick the same-named candidate (from the lookup's already- captured `alternatives`) nearest the
 	 * postcode; if none reconciles within the gate, fall the coordinate back to the postcode point and flag

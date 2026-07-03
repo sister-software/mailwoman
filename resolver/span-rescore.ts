@@ -50,6 +50,14 @@ export interface SpanRescoreOptions {
 	 * Min confidence for a street/house_number/postcode node to count as a span-blocking constituent. Default 0.7.
 	 */
 	confidentThreshold?: number
+	/**
+	 * #942 postal-compound recovery. A globbed postcode span ("1382 Kožljek") normally (a) fails to anchor (the compound
+	 * matches no bare-code gazetteer row) and (b) blocks its own trailing city tokens from recovery. When on: the anchor
+	 * retries with the postcode's code-shaped (digit-bearing) token subset, and an UNRESOLVED postcode node blocks only
+	 * those code tokens — the residual name tokens become span material. Street/affix blocking is untouched (the "Ave,
+	 * France" guard). Default false.
+	 */
+	postalCompoundRecovery?: boolean
 }
 
 /** The recovered locality: the raw span and the gazetteer place it resolved to. */
@@ -97,6 +105,19 @@ function tokenizeRaw(raw: string): RawTok[] {
 	return toks
 }
 
+/**
+ * The code-shaped (digit-bearing) token subset of a postcode string — "1382 Kožljek" → "1382", "SW1A 1AA London" →
+ * "SW1A 1AA". The #942 recovery resolves THIS against the gazetteer's bare-code rows when the globbed compound fails.
+ * Empty string when no token carries a digit.
+ */
+export function postcodeCodeSubset(postcode: string): string {
+	return postcode
+		.split(/[\s,;/]+/)
+		.filter((t) => /\d/.test(t))
+		.join(" ")
+		.trim()
+}
+
 /** True if any node in the tree already carries a resolved place id — the #685 brake. */
 export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 	const stack: AddressNode[] = [...roots]
@@ -118,7 +139,12 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
  * NY" is a street suffix, not a locality, and without this guard the recovery exact-matches it against a same-named
  * place ("Ave", France) and injects a bogus locality.
  */
-function confidentRanges(roots: readonly AddressNode[], threshold: number): Array<[number, number]> {
+function confidentRanges(
+	roots: readonly AddressNode[],
+	threshold: number,
+	raw: string,
+	postalCompoundRecovery: boolean
+): Array<[number, number]> {
 	const out: Array<[number, number]> = []
 	const stack: AddressNode[] = [...roots]
 
@@ -135,7 +161,16 @@ function confidentRanges(roots: readonly AddressNode[], threshold: number): Arra
 			Number.isFinite(n.start) &&
 			Number.isFinite(n.end)
 		) {
-			out.push([n.start, n.end])
+			// #942: an UNRESOLVED postcode span blocks only its code-shaped tokens — the globbed trailing
+			// city name ("1382 Kožljek") is exactly the recoverable material. Resolved postcodes and the
+			// street family keep the full-range block (the "Ave, France" guard).
+			if (postalCompoundRecovery && n.tag === "postcode" && !n.placeID) {
+				for (const t of tokenizeRaw(raw.slice(n.start, n.end))) {
+					if (/\d/.test(t.text)) out.push([n.start + t.start, n.start + t.end])
+				}
+			} else {
+				out.push([n.start, n.end])
+			}
 		}
 
 		if (n.children?.length) stack.push(...n.children)
@@ -169,10 +204,23 @@ export async function findRescoreCandidate(
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
 		if (a) anchor = { lat: a.lat, lon: a.lon }
+
+		// #942: the globbed compound ("1382 Kožljek") matches no bare-code row — retry the anchor with
+		// the code-shaped token subset so the consistency gate can validate the recovered city.
+		if (!anchor && opts.postalCompoundRecovery) {
+			const code = postcodeCodeSubset(postcode)
+
+			if (code && code !== postcode) {
+				const codeHits = await backend.findPlace({ text: code, country, limit: 2 })
+				const c = codeHits.find((h) => h.lat !== 0 || h.lon !== 0)
+
+				if (c) anchor = { lat: c.lat, lon: c.lon }
+			}
+		}
 	}
 
 	const toks = tokenizeRaw(raw)
-	const avoid = confidentRanges(roots, threshold)
+	const avoid = confidentRanges(roots, threshold, raw, opts.postalCompoundRecovery ?? false)
 	const overlapsAvoid = (s: number, e: number) => avoid.some(([as, ae]) => s < ae && as < e)
 
 	// Enumerate contiguous spans, LONGEST first — the gold locality is usually the more-specific

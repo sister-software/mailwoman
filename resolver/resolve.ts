@@ -29,7 +29,7 @@ import {
 } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
+import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.js"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
@@ -299,9 +299,24 @@ async function applySpanRescore(
 			country: opts.defaultCountry,
 			postcode: firstPostcodeValue(roots),
 			gateKm: opts.spanRescoreGateKm,
+			postalCompoundRecovery: opts.postalCompoundRecovery,
 		})
 	} catch {
 		return
+	}
+
+	// #942 postal-compound recovery, part 2: when NO city span matched, decorate the FAILED postcode
+	// node from its code-shaped token subset ("1382 Kožljek" → the bare "1382" row) — a postcode-tier
+	// coordinate FLOOR, strictly subordinate to a recovered locality. Only-on-miss matters: a GeoNames
+	// medoid postcode centroid is COARSER than the exact village centroid, and consumers that rank
+	// postcode above locality (the eval harness does) would otherwise trade a 0.2 km village pin for a
+	// 5 km area centroid. Same unresolved tree, so the #685 brake semantics hold.
+	if (!hit && opts.postalCompoundRecovery) {
+		try {
+			await recoverPostcodeNode(roots, backend, opts.defaultCountry)
+		} catch {
+			// degrade to no-recovery, never crash the resolve
+		}
 	}
 
 	if (!hit) return
@@ -321,6 +336,41 @@ async function applySpanRescore(
 	// (high-precision); false = ungated (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_gated: hit.gated }
 	roots.push(node)
+}
+
+/**
+ * #942: find the first confident-but-UNRESOLVED postcode node whose value is a polluted compound ("1382 Kožljek"),
+ * resolve its code-shaped token subset as a `postalcode`, and decorate the node from that hit
+ * (`postal_compound_recovered` metadata marks the provenance). No-op when every postcode node resolved, the value has
+ * no digit-bearing tokens, or the subset equals the full value (then the walk already tried it).
+ */
+async function recoverPostcodeNode(
+	roots: AddressNode[],
+	backend: ResolverBackend,
+	country: string | undefined
+): Promise<void> {
+	const stack: AddressNode[] = [...roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		if (n.tag === "postcode" && !n.placeID && n.value.trim()) {
+			const code = postcodeCodeSubset(n.value)
+
+			if (!code || code === n.value.trim()) continue
+			const hits = await backend.findPlace({ text: code, placetype: "postalcode", country, limit: 1 })
+			const top = hits.find((h) => h.lat !== 0 || h.lon !== 0)
+
+			if (top) {
+				decorateNode(n, top, [])
+				n.metadata = { ...n.metadata, postal_compound_recovered: true }
+			}
+
+			return // first postcode node only — one recovery per tree
+		}
+
+		if (n.children?.length) stack.push(...n.children)
+	}
 }
 
 /** A resolved node carries a real coordinate (placeID set + non-zero lat/lon). */

@@ -141,6 +141,8 @@ async function main() {
 	// #375 night-31: opt-in postcodeConsistency pin (the #370 lever A namesake binder) for the
 	// taxonomy-driven experiment; unset = library default (off).
 	const postcodeConsistencyPin = process.argv.includes("--postcode-consistency") ? true : undefined
+	// #942: opt-in postal-compound recovery (globbed no-street shapes); unset = library default (off).
+	const postalCompoundPin = process.argv.includes("--postal-compound-recovery") ? true : undefined
 	// `--default-country none` = truly UNSCOPED resolution (no country prior at all) — the #936
 	// namesake legs need it; an empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = arg("default-country", "FR")
@@ -148,6 +150,7 @@ async function main() {
 		...(defaultCountryArg === "none" ? {} : { defaultCountry: defaultCountryArg }),
 		...(adminCoherencePin !== undefined ? { adminCoherence: adminCoherencePin } : {}),
 		...(postcodeConsistencyPin !== undefined ? { postcodeConsistency: postcodeConsistencyPin } : {}),
+		...(postalCompoundPin !== undefined ? { postalCompoundRecovery: postalCompoundPin } : {}),
 	}
 
 	const errs: number[] = []
