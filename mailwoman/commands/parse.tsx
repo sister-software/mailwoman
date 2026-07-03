@@ -315,6 +315,7 @@ async function resolveWithCandidates(
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 	if (dc) opts.defaultCountry = dc
+
 	// #895: the library default is ON; only the explicit --no-admin-coherence pin needs threading.
 	if (options.adminCoherence === false) opts.adminCoherence = false
 

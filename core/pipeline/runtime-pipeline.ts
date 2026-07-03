@@ -502,6 +502,7 @@ export async function runPipeline(
 	if (stages.resolver) {
 		throwIfAborted(opts)
 		const tResolve = performance.now()
+
 		// #912 lever 1: the placer abstains on a single bare locality — strip ONLY the anchor it
 		// added (a caller-supplied posterior was never overwritten and passes through untouched).
 		if (placerAnchorApplied && isBareLocalityTree(tree)) {

@@ -269,6 +269,7 @@ export function inMapPosterior(
 	for (const [cls, prob] of Object.entries(prediction.probs)) {
 		if (cls !== "OTHER" && prob >= floor) posterior[cls] = prob
 	}
+
 	// The argmax always survives (it is ≥ every other marginal; if even it fell below the floor the
 	// prediction would have abstained upstream) — but guard anyway so the posterior is never empty.
 	if (Object.keys(posterior).length === 0) posterior[prediction.country] = prediction.confidence
