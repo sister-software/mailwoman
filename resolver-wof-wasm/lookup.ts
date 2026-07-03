@@ -100,7 +100,12 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		if (!text) return []
 
-		const ftsQuery = sanitizeFTSQuery(text)
+		// Postcode-typed queries keep the #920 fused name-law shape; everything else splits on
+		// intra-token punctuation so hyphenated names reach the FTS as their real terms (#945) —
+		// parity with the resolver-wof-sqlite implementation.
+		const ftsQuery = sanitizeFTSQuery(text, {
+			fuseTokens: normalizePlacetypes(query.placetype)?.includes("postalcode") ?? false,
+		})
 
 		if (!ftsQuery) return []
 
@@ -304,7 +309,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
  * resolver-wof-sqlite implementation). Strips characters FTS5 treats as punctuation or operators so a user typing
  * `Paris's` or `St. (Petersburg)` doesn't trigger an "fts5: syntax error" inside the WASM runtime.
  */
-function sanitizeFTSQuery(text: string): string {
+function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string {
 	const out: string[] = []
 
 	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {
@@ -312,10 +317,26 @@ function sanitizeFTSQuery(text: string): string {
 
 		if (!trimmed) continue
 		const hasPrefixStar = trimmed.endsWith("*")
-		const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
 
-		if (!body) continue
-		out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+		// #920 name law (postcode-typed queries): delete intra-token punctuation and fuse.
+		if (opts?.fuseTokens) {
+			const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+
+			if (!body) continue
+			out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			continue
+		}
+
+		// Non-postcode queries SPLIT on intra-token punctuation — fusing made "Thiron-Gardais" an
+		// unmatchable single term while the FTS doc holds two (#945).
+		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+
+		for (let i = 0; i < parts.length; i++) {
+			const body = parts[i]!.replace(/\*/g, "")
+
+			if (!body) continue
+			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+		}
 	}
 
 	return out.join(" ")

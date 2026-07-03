@@ -693,7 +693,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// fuzzy "Brooklyn Park, MN" won instead. Order-preserving: the FIRST entry stays the
 		// requested placetype, which is what shard routing keys off below.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
-		const ftsQuery = sanitizeFTSQuery(query.text)
+		// Postcode-typed queries keep the #920 fused name-law shape; everything else splits on
+		// intra-token punctuation so hyphenated names reach the FTS as their real terms (#945).
+		const ftsQuery = sanitizeFTSQuery(query.text, { fuseTokens: placetypes?.includes("postalcode") ?? false })
 
 		if (!ftsQuery) return []
 
@@ -1404,10 +1406,13 @@ function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetype[] | n
  * - `"Paris"` → `"Paris"` (phrase)
  * - `"627*"` → `627*` (prefix)
  * - `"St. (Petersburg)"` → `"St" "Petersburg"` (two phrases, AND-joined)
+ * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation SPLITS — #945; fusing to
+ *   `ThironGardais` matched nothing because the FTS doc tokenizes the hyphenated name as two terms)
+ * - `"110 00"` with `fuseTokens` (postcode-typed) → `"110" "00"` per-token fused — the #920 name law
  * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
  * - `"*"` alone → `""` (no body → drop)
  */
-function sanitizeFTSQuery(text: string): string {
+function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string {
 	const out: string[] = []
 
 	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {
@@ -1415,12 +1420,33 @@ function sanitizeFTSQuery(text: string): string {
 
 		if (!trimmed) continue
 		const hasPrefixStar = trimmed.endsWith("*")
-		// Strip everything except letters + numbers from the token body. Apostrophes / hyphens /
-		// any embedded `*` all go. The trailing `*` (if any) is reapplied separately below.
-		const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
 
-		if (!body) continue
-		out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+		// #920 name law (postcode-typed queries ONLY): delete intra-token punctuation and FUSE the
+		// remainder — postal names are stored in this collapsed shape ("SW1A" stays one term).
+		if (opts?.fuseTokens) {
+			const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+
+			if (!body) continue
+			out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			continue
+		}
+
+		// Everything else SPLITS on intra-token punctuation — the behavior the docstring always
+		// promised ("St. (Petersburg)" → two phrases). The old code DELETED punctuation instead,
+		// fusing "Thiron-Gardais" into the unmatchable single term `ThironGardais` while the FTS
+		// doc holds two terms (#945 — the entire hyphenated-name class missed at the raw lookup;
+		// masked for years because pre-splice tokenizers never emitted hyphen-preserved values).
+		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+
+		if (parts.length === 0) continue
+
+		for (let i = 0; i < parts.length; i++) {
+			const body = parts[i]!.replace(/\*/g, "")
+
+			if (!body) continue
+			// The caller's trailing `*` applies to the FINAL part ("Thiron-Gard*" → "Thiron" Gard*).
+			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+		}
 	}
 
 	return out.join(" ")
