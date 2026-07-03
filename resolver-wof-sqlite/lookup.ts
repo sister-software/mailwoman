@@ -1406,8 +1406,8 @@ function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetype[] | n
  * - `"Paris"` → `"Paris"` (phrase)
  * - `"627*"` → `627*` (prefix)
  * - `"St. (Petersburg)"` → `"St" "Petersburg"` (two phrases, AND-joined)
- * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation SPLITS — #945; fusing to
- *   `ThironGardais` matched nothing because the FTS doc tokenizes the hyphenated name as two terms)
+ * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation SPLITS — #945; fusing to `ThironGardais` matched
+ *   nothing because the FTS doc tokenizes the hyphenated name as two terms)
  * - `"110 00"` with `fuseTokens` (postcode-typed) → `"110" "00"` per-token fused — the #920 name law
  * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
  * - `"*"` alone → `""` (no body → drop)
