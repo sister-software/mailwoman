@@ -97,6 +97,11 @@ export function geonamesDir(dataRoot: string = mailwomanDataRoot()): string {
 	return join(dataRoot, "geonames")
 }
 
+/** `<data-root>/geonames-alternate`, the per-country alternateNamesV2 dump dir (#936 language tags). */
+export function geonamesAlternateDir(dataRoot: string = mailwomanDataRoot()): string {
+	return join(dataRoot, "geonames-alternate")
+}
+
 /** Resolve the canonical postcode-shard filenames to absolute paths, keeping only those present. */
 export function resolvePostcodeShards(
 	shards: readonly string[] = DEFAULT_POSTCODE_SHARDS,
@@ -121,6 +126,11 @@ export interface FoldOptions {
 	 * resolve.
 	 */
 	adminForCountries?: ReadonlySet<string>
+	/**
+	 * #936: dir holding `<CC>.txt` alternateNamesV2 dumps (default {@link geonamesAlternateDir}) — tags alias rows with
+	 * language / privateuse / `official`. Countries without a file fold untagged, exactly as before.
+	 */
+	alternateDir?: string
 	onCountry?: (event: GeonamesIngestProgress) => void
 	onPhase?: (phase: string, detail?: string) => void
 }
@@ -154,7 +164,10 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 		[...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)],
 		opts.geonamesDir ?? geonamesDir(),
 		opts.onCountry,
-		opts.adminForCountries ? { adminForCountries: opts.adminForCountries } : undefined
+		{
+			adminForCountries: opts.adminForCountries,
+			alternateDir: opts.alternateDir ?? geonamesAlternateDir(),
+		}
 	)
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })

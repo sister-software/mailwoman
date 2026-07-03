@@ -34,6 +34,7 @@ import { parseArgs } from "node:util"
  *   folded admin DB: node resolver-wof-sqlite/out/build-candidate-cli.js --in <out> --postcodes
  *   <...> --out candidate-global-<v>.db
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { buildPlaceSearchFTS, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite"
 
 const { values: a } = parseArgs({
@@ -44,12 +45,15 @@ const { values: a } = parseArgs({
 		// download.geonames.org/export/dump must be present under --geonames-dir.
 		countries: { type: "string", default: "FI,PL,NO,CZ,AT,LT,LV,SI,SK,HR,DK,BE,CH,LU" },
 		"geonames-dir": { type: "string", default: "/mnt/playpen/mailwoman-data/geonames" },
+		// #936: alternateNamesV2 dumps (language tags + the `official` bit). Missing files fold untagged.
+		"geonames-alternate-dir": { type: "string", default: String(dataRootPath("geonames-alternate")) },
 	},
 })
 
 const input = a.in!
 const output = a.out!
 const geonamesDir = a["geonames-dir"]!
+const geonamesAlternateDir = a["geonames-alternate-dir"]!
 const countries = a
 	.countries!.split(",")
 	.map((c) => c.trim().toUpperCase())
@@ -74,7 +78,9 @@ const t0 = Date.now()
 copyFileSync(input, output)
 const db = new DatabaseSync(output)
 
-const ingested = ingestGeonamesAliases(db, countries, geonamesDir)
+const ingested = ingestGeonamesAliases(db, countries, geonamesDir, undefined, {
+	alternateDir: geonamesAlternateDir,
+})
 console.error(
 	`  ingested ${ingested.toLocaleString()} GeoNames places (+ Latin alt-names) → spr/names/place_population`
 )

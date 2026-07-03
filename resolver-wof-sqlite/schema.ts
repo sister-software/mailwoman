@@ -68,6 +68,10 @@ export interface SprTable {
  * tables with the same FK column name).
  *
  * No `kind` column in real WOF — the FTS build just concatenates ALL names per id.
+ *
+ * `official` (#936 ingest bit, our unified builds only; absent in real WOF dumps) marks a PREFERRED-form name in an
+ * official language of the place's country — the aliases eligible to join the name-exact tier under the option-3 rule.
+ * See `unified-schema.ts` for the full contract.
  */
 export interface NamesTable {
 	id: number
@@ -80,6 +84,7 @@ export interface NamesTable {
 	variant: string | null
 	extension: string | null
 	privateuse: string | null
+	official: number | null
 	name: string
 	lastmodified: number
 }

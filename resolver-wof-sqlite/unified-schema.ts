@@ -50,6 +50,12 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
 		.execute()
 
+	// `privateuse` carries WOF's x_<variant> kind (preferred | variant) / GeoNames' isPreferredName
+	// ("preferred" | ""). `official` is the #936 ingest bit: 1 when the row's language is an official
+	// language of the place's country (codex OFFICIAL_LANGUAGES) AND the row is a preferred form —
+	// x_variant rows tagged with an official language ("MSP", "Frisco") stay 0. Primary-name mirror
+	// rows stay 0 too: the name-exact tier already consults spr.name; `official` only marks the
+	// ALIASES eligible to join it. Both are ingest-time facts, never computed at query time.
 	await kdb.schema
 		.createTable("names")
 		.ifNotExists()
@@ -59,6 +65,7 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 		.addColumn("country", "text", (c) => c.notNull().defaultTo(""))
 		.addColumn("language", "text", (c) => c.notNull().defaultTo(""))
 		.addColumn("privateuse", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("official", "integer", (c) => c.notNull().defaultTo(0))
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
 		.execute()
 
