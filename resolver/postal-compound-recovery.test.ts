@@ -113,11 +113,26 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 		expect(locality!.metadata?.span_rescore).toBe(true)
 		expect(locality!.metadata?.rescore_gated).toBe(true) // the code-subset anchor validated it
+		// The postcode node stays UNdecorated when a locality was recovered — its medoid centroid is
+		// coarser than the village pin, and postcode-over-locality consumers must not trade down.
+		const pc = out.roots.find((n) => n.tag === "postcode")
+
+		expect(pc?.placeID).toBeFalsy()
 	})
 
-	it("flag ON: the failed postcode node gains the code-subset coordinate floor", async () => {
+	it("flag ON: the postcode node gains the code-subset coordinate floor ONLY when no city matches", async () => {
 		const resolver = createWOFResolver(makeBackend())
-		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI", postalCompoundRecovery: true })
+		// "Neznano" is not in the gazetteer — the locality rescue misses, so the floor fires.
+		const raw = "Neznano 7, 1382 Neznano"
+		const tree: AddressTree = {
+			raw,
+			roots: [
+				node({ tag: "street", value: "Neznano", start: 0, end: 7 }),
+				node({ tag: "house_number", value: "7", start: 8, end: 9 }),
+				node({ tag: "postcode", value: "1382 Neznano", start: 11, end: 23 }),
+			],
+		}
+		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
 		expect(pc?.placeID).toBeTruthy()

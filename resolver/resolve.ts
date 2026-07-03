@@ -305,12 +305,13 @@ async function applySpanRescore(
 		return
 	}
 
-	// #942 postal-compound recovery, part 2: decorate the FAILED postcode node from its code-shaped
-	// token subset ("1382 Kožljek" → the bare "1382" row). Gives the tree a postcode-tier coordinate
-	// floor even when no city span matches, and feeds the downstream postcode machinery
-	// (result-assembly ladder, consistency passes). Runs whether or not a locality was recovered —
-	// but only on this unresolved tree, so the #685 brake semantics hold.
-	if (opts.postalCompoundRecovery) {
+	// #942 postal-compound recovery, part 2: when NO city span matched, decorate the FAILED postcode
+	// node from its code-shaped token subset ("1382 Kožljek" → the bare "1382" row) — a postcode-tier
+	// coordinate FLOOR, strictly subordinate to a recovered locality. Only-on-miss matters: a GeoNames
+	// medoid postcode centroid is COARSER than the exact village centroid, and consumers that rank
+	// postcode above locality (the eval harness does) would otherwise trade a 0.2 km village pin for a
+	// 5 km area centroid. Same unresolved tree, so the #685 brake semantics hold.
+	if (!hit && opts.postalCompoundRecovery) {
 		try {
 			await recoverPostcodeNode(roots, backend, opts.defaultCountry)
 		} catch {
