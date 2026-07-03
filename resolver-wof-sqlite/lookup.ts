@@ -170,8 +170,10 @@ export interface RankingWeights {
 	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo; population still orders
 	 * within the sub-tier, so Paris → Paris FR is untouched.
 	 *
-	 * Default false (byte-stable). Requires a gazetteer built with the #940 ingest bit — on older DBs without the
-	 * `official` column the probe fails soft and behavior is identical to the flag being off.
+	 * Default true (operator-promoted 2026-07-03 after the pre-registered gate battery: four intended exonym flips —
+	 * Berne→Bern, Bruges→Brugge, Roma→Rome, Åbo→Turku — with the namesake/abbreviation rows and the US/FI panels
+	 * byte-identical). Requires a gazetteer carrying the #940 ingest bit — on older DBs without the `official` column the
+	 * probe fails soft and behavior is identical to the flag being off.
 	 */
 	officialNameExact: boolean
 	/**
@@ -210,8 +212,8 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
 	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine, not the more-populous Missouri).
 	exactMatchTiering: true,
-	// #936 option 3 ships default-OFF behind its gate battery; see the RankingWeights docstring.
-	officialNameExact: false,
+	// #936 option 3 — promoted default-ON 2026-07-03 (gate battery PASS; see the RankingWeights docstring).
+	officialNameExact: true,
 	officialNameExactFloor: 100_000,
 }
 

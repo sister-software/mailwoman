@@ -88,16 +88,16 @@ let lookup: WOFSqlitePlaceLookup
 afterEach(() => lookup?.close())
 
 describe("findPlace — officialNameExact (#936 option 3)", () => {
-	test("flag OFF (default): the hamlet's own name beats Turku's official alias — today's behavior", async () => {
-		lookup = new WOFSqlitePlaceLookup({ database: buildDB(TURKU_ABO), buildFTS: true })
+	test("flag OFF (explicit): the hamlet's own name beats Turku's official alias — the pre-#936 behavior", async () => {
+		lookup = new WOFSqlitePlaceLookup({ database: buildDB(TURKU_ABO), buildFTS: true }, { officialNameExact: false })
 		const results = await lookup.findPlace({ text: "Åbo", placetype: "locality" })
 
 		expect(results.length).toBeGreaterThan(1)
 		expect(results[0]!.id).toBe(1)
 	})
 
-	test("flag ON: Turku's official name joins the name-exact sub-tier and population decides", async () => {
-		lookup = new WOFSqlitePlaceLookup({ database: buildDB(TURKU_ABO), buildFTS: true }, FLAG_ON)
+	test("DEFAULT (flag ON since the 2026-07-03 promote): Turku's official name joins the name-exact sub-tier", async () => {
+		lookup = new WOFSqlitePlaceLookup({ database: buildDB(TURKU_ABO), buildFTS: true })
 		const results = await lookup.findPlace({ text: "Åbo", placetype: "locality" })
 
 		expect(results[0]!.id).toBe(2)
