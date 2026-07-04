@@ -200,7 +200,11 @@ export async function findRescoreCandidate(
 	let anchor: { lat: number; lon: number } | null = null
 
 	if (postcode && gateKm > 0) {
-		const pcHits = await backend.findPlace({ text: postcode, country, limit: 2 })
+		// #961: both anchor probes are postalcode-TYPED. Untyped, a truncated code fragment (v5.3.0
+		// emits "250 Zabiče" → subset "250") name-matches arbitrary places ("Chak No 250", PK) and the
+		// false anchor then GATES OUT the true village. A typed miss leaves anchor=null → the match is
+		// accepted ungated, which is the correct degradation for an unverifiable code.
+		const pcHits = await backend.findPlace({ text: postcode, country, placetype: "postalcode", limit: 2 })
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
 		if (a) anchor = { lat: a.lat, lon: a.lon }
@@ -211,7 +215,7 @@ export async function findRescoreCandidate(
 			const code = postcodeCodeSubset(postcode)
 
 			if (code && code !== postcode) {
-				const codeHits = await backend.findPlace({ text: code, country, limit: 2 })
+				const codeHits = await backend.findPlace({ text: code, country, placetype: "postalcode", limit: 2 })
 				const c = codeHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
 				if (c) anchor = { lat: c.lat, lon: c.lon }
