@@ -122,9 +122,9 @@
 	},
 	"calibration": {
 		"method": "isotonic-regression (PAVA) over per-span softmax confidence; OPT-IN via core/decoder createCalibrator",
-		"held_out_ece_raw": 0.0673,
-		"held_out_ece_calibrated": 0.0035,
-		"note": "calibration.json + calibration-per-locale.json carried forward from v4.4.0 (architecture + label space unchanged across v1.5.0→v1.8.0). Re-fit recommended next train. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
+		"held_out_ece_raw": 0.0698,
+		"held_out_ece_calibrated": 0.0017,
+		"note": "RE-FIT on v5.3.0 (2026-07-04): calibration.json + calibration-per-locale.json are now fitted on THIS model's confidence distribution (35,600 spans over the 8k held-out set), not carried from v4.x. The from-scratch model was under-confident (meanConf 0.913 vs acc 0.980, gap -0.067); the fit corrects held-out OA ECE 0.0698→0.0017 (overall 0.0677→0.0028, per-locale NL 0.166→0.000 / DE 0.114→0.003). Reproduce: collect-span-confidences.ts → fit-isotonic-calibration.py --model-version 5.3.0. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
 	"base_relpath": "/mnt/playpen/mailwoman-data/models/candidates/v220-full-family (fp32 + int8; training output on Modal volume)",
 	"eval": {

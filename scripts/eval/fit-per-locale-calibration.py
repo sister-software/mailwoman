@@ -88,6 +88,7 @@ def main() -> None:
     ap.add_argument("--out", default=str(REPO / "data/eval/calibration/isotonic-per-locale-en-us-v4.0.0.json"))
     ap.add_argument("--report", default=str(REPO / "docs/articles/evals/2026-06-07-per-locale-calibration.md"))
     ap.add_argument("--seed", type=int, default=20260607)
+    ap.add_argument("--model-version", default="4.0.0")
     args = ap.parse_args()
 
     recs = [json.loads(l) for l in Path(args.conf).read_text().splitlines() if l.strip()]
@@ -126,10 +127,10 @@ def main() -> None:
         rows.append({"locale": loc, "n_eval": int(len(l_eval)), "acc": float(ev_y.mean()),
                      "ece_raw": e_raw, "ece_global": e_global, "ece_local": e_local})
 
-    Path(args.out).write_text(json.dumps({"model": "neural-weights-en-us", "model_version": "4.0.0",
+    Path(args.out).write_text(json.dumps({"model": "neural-weights-en-us", "model_version": args.model_version,
                                           "method": "per-locale isotonic (PAVA)", "tables": out_tables}, indent=2) + "\n")
 
-    lines = ["# Per-locale confidence calibration — en-us v4.0.0 (#368 L2)", ""]
+    lines = [f"# Per-locale confidence calibration — en-us v{args.model_version} (#368 L2)", ""]
     lines.append("A separate isotonic table per locale, vs the single global table. ECE is measured on each "
                  "locale's held-out split under three regimes: raw softmax, the global table, the locale table.")
     lines.append("")
