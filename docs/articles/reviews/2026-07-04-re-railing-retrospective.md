@@ -242,7 +242,10 @@ measurement, which is the discipline working exactly as this review describes it
 
 ### The open list, re-scored at day's end
 
-- **#894** — unchanged in content, tripled in urgency; the demo outage is its fourth exhibit.
+- **#894** — correction upon checking: closed on 07-02 (#902, `version-parity.yml` + daily
+  schedule; verified passing against the live surfaces today). What the demo outage actually
+  exposes is the adjacent gap: version parity is checked, **functional** parity is not — a
+  scheduled live-demo Playwright smoke is the missing structural check, filed in today's triage.
 - **The #942 insurance leg in the standing battery** — this review recommended it; still to land.
 - **#949's fr.street gate floor** — the convention epoch gave FR standing baselines; the gate-spec
   floor remains unwritten.

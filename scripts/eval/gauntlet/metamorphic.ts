@@ -52,13 +52,13 @@ const INV = [
 const KNOWN_INV_XFAIL = new Map<string, string>([
 	["lower|1600 Pennsylvania Ave NW, Washington DC", "#829 — US lowercase model sensitivity (retrain)"],
 	["lower|Damrak 1, 1012 LG Amsterdam", "#829 — lowercase sensitivity, NL: resolution → null (more severe)"],
-	// #831 — the no-postcode form of the FR demo address sits on a rooftop/admin boundary: the canonical
-	// MISSES rooftop while every surface perturbation HITS it. Likely the same case-sensitive-parse root as
-	// #829 (mixed-case canonical parses differently from its lower/upper variants).
-	["lower|181 Rue du Chevaleret, Paris", "#831 — FR no-postcode rooftop/admin boundary"],
-	["upper|181 Rue du Chevaleret, Paris", "#831 — FR no-postcode rooftop/admin boundary"],
-	["trail-dot|181 Rue du Chevaleret, Paris", "#831 — FR no-postcode rooftop/admin boundary"],
-	["comma-tight|181 Rue du Chevaleret, Paris", "#831 — FR no-postcode rooftop/admin boundary"],
+	// #829 family, v5.3.0 shapes (first gauntlet run post-promote, 2026-07-04): the WITH-ZIP Penn
+	// canonical degrades address_point → admin under these variants. Same case-sensitive-parse root.
+	["lower|1600 Pennsylvania Ave NW, Washington DC 20500", "#829 — v5.3.0: with-ZIP variant drops the street tier"],
+	["trail-dot|1600 Pennsylvania Ave NW, Washington DC", "#829 — v5.3.0: trail-dot drops the street tier"],
+	// The four #831 fr-chevaleret rows were REMOVED 2026-07-04: v5.3.0 (the retrain built to fix that
+	// class) makes all four variants PASS — the runner flagged them newly-passing, promoting them to
+	// gated coverage by their absence here.
 ])
 
 /** Strip a 5-digit (US/FR) postcode token for the DIR test. */
