@@ -52,12 +52,12 @@ const PLACES: ResolvedPlace[] = [
 	},
 ]
 
-function makeBackend(): ResolverBackend {
+function makeBackend(places: ResolvedPlace[] = PLACES): ResolverBackend {
 	return {
 		async findPlace(query) {
 			const key = norm(query.text)
 
-			return PLACES.filter(
+			return places.filter(
 				(p) =>
 					norm(p.name) === key &&
 					(!query.country || p.country === query.country) &&
@@ -188,5 +188,46 @@ describe("postal-compound recovery (#942)", () => {
 		// Both candidates surface; the gate keeps only the SI one.
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
+	})
+})
+
+describe("#961 joint country recovery — the locale-default trap", () => {
+	// The CLI's en-US locale default scoped both the anchor and the village probe to US, so the SI
+	// floor never fired through geocode-core. The joint pass probes spans unscoped and verifies each
+	// candidate against the postcode resolved in the CANDIDATE's own country — cross-country
+	// promotion only postcode-verified, never ungated.
+	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
+		const resolver = createWOFResolver(makeBackend())
+		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
+		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
+
+		expect(locality).toBeDefined()
+		expect(locality!.lat).toBeCloseTo(45.8, 1)
+		expect(locality!.metadata?.rescore_gated).toBe(true)
+	})
+
+	it("rejects a cross-country namesake whose own country cannot verify the postcode", async () => {
+		// The HR decoy shares the name but HR holds no postcode "1382" → the joint pass must not
+		// promote it; with the SI row removed the tree stays unresolved rather than guessing.
+		const resolver = createWOFResolver(
+			makeBackend(PLACES.filter((p) => !(p.placetype === "locality" && p.country === "SI")))
+		)
+		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
+
+		expect(out.roots.filter((n) => n.tag === "locality" && n.placeID).length).toBe(0)
+	})
+
+	it("never cross-promotes without a postcode present (no ungated wandering)", async () => {
+		const resolver = createWOFResolver(makeBackend())
+		const tree: AddressTree = {
+			raw: "Kožljek 7",
+			roots: [
+				node({ tag: "street", value: "Kožljek", start: 0, end: 7 }),
+				node({ tag: "house_number", value: "7", start: 8, end: 9 }),
+			],
+		}
+		const out = await resolver.resolveTree(tree, { defaultCountry: "US" })
+
+		expect(out.roots.filter((n) => n.placeID).length).toBe(0)
 	})
 })

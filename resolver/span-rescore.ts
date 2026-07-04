@@ -260,5 +260,41 @@ export async function findRescoreCandidate(
 		}
 	}
 
+	// #961 joint country recovery: the caller's `country` is a LOCALE DEFAULT, not knowledge — the
+	// CLI's en-US default scoped both the anchor and the village probe to US, so the SI floor never
+	// fired through geocode-core while the same rows resolved 25/25 on the resolver harness. When the
+	// scoped pass finds nothing and a postcode is present, re-probe the spans UNSCOPED (the admin
+	// gazetteer is one shard, all countries), then verify each exact candidate against the postcode's
+	// code subset resolved in the CANDIDATE's own country (postcode shards route by country). A
+	// cross-country promotion is accepted ONLY postcode-verified within the gate — never ungated —
+	// so a US-shaped query can't wander abroad on a name coincidence (the 48026 guard: resolved
+	// trees never reach this code, and unresolved ones must pass the joint postcode check).
+	if (opts.postalCompoundRecovery && postcode && gateKm > 0) {
+		const code = postcodeCodeSubset(postcode) || postcode.trim()
+
+		for (const sp of spans) {
+			const key = norm(sp.text)
+
+			if (key.length < 2 || /^\d+$/.test(key)) continue
+			const hits = await backend.findPlace({ text: sp.text, placetype: "locality", limit: 5 })
+			const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
+
+			for (const h of exact) {
+				if (!h.country || h.country === country) continue // the scoped pass already covered `country`
+				const pcHits = await backend.findPlace({
+					text: code,
+					country: h.country,
+					placetype: "postalcode",
+					limit: 2,
+				})
+				const verified = pcHits.find((p) => p.lat !== 0 || p.lon !== 0)
+
+				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= gateKm) {
+					return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: true }
+				}
+			}
+		}
+	}
+
 	return null
 }
