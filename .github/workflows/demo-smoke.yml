@@ -1,0 +1,70 @@
+# Production functional-smoke for the live demo (#963 — sibling of version-parity.yml).
+#
+# version-parity.yml checks the demo's pinned VERSION tracks npm. It stayed green for three days
+# (2026-07-01..04) while the demo served no WOF hits, no FST, and no street tier — because version
+# parity is not FUNCTIONAL parity, and all three failures produced zero console errors. This runs
+# the `@smoke` browser spec against the DEPLOYED site (`MAILWOMAN_DEMO_URL`) so a functional
+# regression becomes visible the day it ships, not three days later via a bug report.
+#
+# The same spec also runs in the local build gate (test/browser, webServer mode) on every docs
+# change — this workflow is the SCHEDULED production half. Grades the results (address_point tier +
+# WOF cascade + markers), not the absence of errors.
+name: Demo smoke
+
+on:
+  schedule:
+    # Daily, 06:37 UTC — 20 min after version-parity, so any overnight repoint has settled.
+    - cron: "37 6 * * *"
+  workflow_dispatch:
+    inputs:
+      demo_url:
+        description: "Deployed demo origin to smoke (default: production)"
+        type: string
+        default: "https://mailwoman.sister.software"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # workflow_dispatch override wins; the scheduled run uses production.
+      MAILWOMAN_DEMO_URL: ${{ inputs.demo_url || 'https://mailwoman.sister.software' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # Remote mode (MAILWOMAN_DEMO_URL set) skips the local build+serve + the `build` project,
+      # so only the browser chromium is needed. `--with-deps` pulls the system libs on the runner.
+      - name: Install Playwright chromium
+        working-directory: docs
+        run: yarn playwright install --with-deps chromium
+
+      - name: Smoke the deployed demo
+        working-directory: docs
+        run: yarn test:e2e --project=chromium --grep @smoke
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-smoke-report
+          path: docs/playwright-report/
+          retention-days: 14
