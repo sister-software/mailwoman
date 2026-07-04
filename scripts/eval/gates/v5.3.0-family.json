@@ -1,0 +1,31 @@
+{
+	"$comment": "Gate spec for v5.3.0 (v2.2.0-full-family, the from-scratch nsplice retrain promoted after the 2026-07-03 re-gate under the #942 floor). Clones v5.2.0-nordic verbatim EXCEPT one floor revision, below.",
+	"$revision_2026_06_25": "GATE REVISION (operator-approved, not silent drift): us.postcode 97.0 -> 95.0 and fr.postcode 99.5 -> 99.3. REASON: v1.9.3a3 fixes the #723 leading-5-digit anchor-pollution (SLICE-H anchor-ON 20 -> 100) by training the postcode anchor on SHAPED spans (anchor_paint_mode=shaped) + the locality-discriminator counter-shard. The fix trades a -2pp postcode LABEL-F1 on the rare leading-5-digit-POSTCODE case (VT E911 format). This trade is COORDINATE-INVISIBLE, confirmed by the non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7 -> 97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3 -> 259.1 (better). VT — the E911 leading-postcode state where the entire trade lives — is FLAT at the coordinate (loc 92.6 = 92.6); SD +1.0. The us.postcode 95 floor is the wrong bar for a fix whose coordinate holds (the #566/#723 discipline, inverted: grade the assembled coordinate, never label-F1). fr.postcode 99.3 is 0.2pp = eval noise. Evidence: /tmp/oa-v192.txt vs /tmp/oa-v193a3.txt; docs/articles/evals/2026-06-25-v4.15.0-promotion.md.",
+	"label": "v5.3.0-family",
+	"requires_gazetteer_lexicon": true,
+	"requires_conventions": "auto",
+	"floors": {
+		"us.postcode": 94.8,
+		"us.country_homograph_f1": 83.3,
+		"us.micro": 81.6,
+		"us.locality": 62.2,
+		"us.region": 80.1,
+		"us.street": 74.0,
+		"us.street_prefix": 78.0,
+		"us.street_suffix": 67.0,
+		"us.unit_real": 88.0,
+		"fr.postcode": 99.2,
+		"fr.house_number": 91.0,
+		"fr.region": 16.2,
+		"de.native_locality": 83.8,
+		"arena.perturb": 71.0,
+		"us.po_box_real": 70.0,
+		"fr.cedex_real": 70.0,
+		"us.intersection_real": 50.0
+	},
+	"int8_vs_fp32_max_delta_pp": 1.5,
+	"ledger_path": "evals/scores-by-version.json",
+	"requires_bridge": true,
+	"$revision_us_postcode": "95 -> 94.8 (2026-07-03, operator-approved in chat for the v5.2.0 cut): MEASUREMENT IDENTITY, not a model dip — the shipped v5.1.0 fp32 reads the identical 94.8 on the same harness, and the candidate's int8 postcode parses are byte-identical to shipped on all 2,660 US gate rows (0 diffs). The prior 95 floor was calibrated on the int8-class/earlier harness generation. Evidence: gate-v193/RESULTS.md (us.postcode attribution block).",
+	"$revision_2026_07_04": "GATE REVISION (operator-approved 2026-07-04, the #901 promote fork): fr.postcode 99.3 -> 99.2. REASON: v2.2.0 reads 99.2 (-0.1, the zero-margin floor the 2026-07-02 scorecard flagged as 'any hair of postcode loss fails loudly' — it did, and the trade was adjudicated, not silently absorbed). The FR COORDINATE is non-inferior on the deconfounded same-stack fr-3k (resolve 0.991=0.991, p50 1.30=1.30, CI[-0.009,0]) and the bare-FR street class the promote exists to fix goes 16/40 -> 34/40. Companion exception, NOT a cap change: the int8<->fp32 homograph delta reads 2.4 vs the 1.5 cap for THIS artifact (quantization delta; the fp32 model passes every floor and int8 country_homograph 85.1 still clears its 83.3 floor) — operator-accepted for this promote; the cap stays 1.5 for the next candidate. SI trade on the record: wrong-city 8.7->11.4% (+2.7pp vs the +2pp re-gate bar), resolve 1.000->0.985, floored model-independently by postalCompoundRecovery (#942 default-ON; the insurance leg proved the candidate+floor recovers ALL 55 composition-lost rows)."
+}
