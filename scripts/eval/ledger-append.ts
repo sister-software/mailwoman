@@ -38,6 +38,12 @@ const { values } = parseArgs({
 		"trained-at": { type: "string" },
 		notes: { type: "string", default: "" },
 		replace: { type: "boolean", default: false },
+		// The gate-revision escape (mirrors the no-silent-gate-drift discipline): a FAIL verdict may
+		// be ledgered ONLY when every failing check is named here — i.e. the operator adjudicated the
+		// exact miss at a fork (e.g. a per-artifact int8-delta exception recorded in the gate spec's
+		// $revision comment). The excepted checks are stamped into the row's notes; any UNnamed
+		// failure still refuses. Repeatable.
+		"operator-exception": { type: "string", multiple: true },
 	},
 })
 
@@ -63,10 +69,26 @@ interface Verdict {
 }
 
 const verdict = JSON.parse(readFileSync(`${values["out-dir"]}/verdict.json`, "utf8")) as Verdict
+const exceptions = values["operator-exception"] ?? []
+let exceptionNote = ""
 
 if (verdict.verdict !== "PASS") {
-	console.error(`✗ refusing to ledger a ${verdict.verdict} verdict — the ledger records shipped/shippable runs`)
-	process.exit(1)
+	const failing = Object.entries(verdict.results)
+		.filter(([, r]) => !r.pass)
+		.map(([k]) => k)
+	const unexcepted = failing.filter((k) => !exceptions.includes(k))
+
+	if (unexcepted.length > 0) {
+		console.error(
+			`✗ refusing to ledger a ${verdict.verdict} verdict — the ledger records shipped/shippable runs.\n` +
+				`  failing checks: ${failing.join(", ")}\n` +
+				`  (only ${exceptions.length ? exceptions.join(", ") : "none"} are operator-excepted; ` +
+				`name each adjudicated miss via --operator-exception)`
+		)
+		process.exit(1)
+	}
+	exceptionNote = ` OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): ${failing.join(", ")}.`
+	console.error(`! ledgering a FAIL verdict under operator exception: ${failing.join(", ")}`)
 }
 
 // verdict floor keys → the ledger's practiced metrics shape (the v4.4.0 row).
@@ -126,7 +148,7 @@ const row = {
 	training_wall_clock_seconds: 0,
 	metrics,
 	notes:
-		`${values.notes} [graded_artifact=${verdict.graded_artifact}; gate=${verdict.label}; out-dir=${values["out-dir"]}]`.trim(),
+		`${values.notes}${exceptionNote} [graded_artifact=${verdict.graded_artifact}; gate=${verdict.label}; out-dir=${values["out-dir"]}]`.trim(),
 }
 
 interface Ledger {
