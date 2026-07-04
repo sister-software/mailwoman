@@ -39,6 +39,7 @@ import {
 	DEFAULT_LOCALE,
 	EXAMPLE_ADDRESSES,
 	flattenTree,
+	normalizeReleasesManifest,
 	resolveStreet,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
@@ -238,7 +239,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					// to stay immutably cached.
 					fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"), {
 						cache: "reload",
-					}).then((r) => (r.ok ? (r.json() as Promise<ReleasesManifest>) : null)),
+					}).then(async (r) => (r.ok ? normalizeReleasesManifest(await r.json()) : null)),
 					import("maplibre-gl"),
 					fetchBasemapSource(),
 				])
@@ -394,7 +395,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 				if (cancelled) return
 
-				if (release?.hasFst) {
+				if (release?.hasFST) {
 					try {
 						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, selectedVersion)
 						setFSTMatcher(fstResult.matcher)
@@ -405,7 +406,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					}
 				}
 
-				if (release?.hasWofDb) {
+				if (release?.hasWOFDb) {
 					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
 						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
 						const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")

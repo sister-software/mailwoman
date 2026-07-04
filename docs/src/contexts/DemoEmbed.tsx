@@ -16,7 +16,7 @@ import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 
 import type { Calibrator, ReleasesManifest } from "../shared/demo-helpers.ts"
-import { createCalibrator, DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
+import { createCalibrator, DEFAULT_LOCALE, normalizeReleasesManifest } from "../shared/demo-helpers.ts"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 import type {
 	FSTMatcherLike,
@@ -131,7 +131,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		void (async () => {
 			try {
 				const res = await fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"))
-				const data: ReleasesManifest | null = res.ok ? await res.json() : null
+				const data: ReleasesManifest | null = res.ok ? normalizeReleasesManifest(await res.json()) : null
 
 				if (cancelled) return
 
@@ -171,9 +171,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// Build staged step labels based on what this release includes.
 				const steps: string[] = ["Loading classifier"]
 
-				if (release?.hasFst) steps.push("Loading FST gazetteer")
+				if (release?.hasFST) steps.push("Loading FST gazetteer")
 
-				if (release?.hasWofDb) steps.push("Loading WOF database")
+				if (release?.hasWOFDb) steps.push("Loading WOF database")
 				setLoadingStepLabels(steps)
 
 				// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the
@@ -229,7 +229,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 					// No calibration table for this version — raw scores it is.
 				}
 
-				if (release?.hasFst) {
+				if (release?.hasFST) {
 					try {
 						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, selectedVersion)
 						setFSTMatcher(fstResult.matcher)
@@ -243,7 +243,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// Step 1 complete: FST loaded (or skipped).
 				setLoadingStepIndex(1)
 
-				if (release?.hasWofDb) {
+				if (release?.hasWOFDb) {
 					try {
 						const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("../shared/httpvfs-resolver")
 						const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL)

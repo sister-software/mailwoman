@@ -223,7 +223,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 					<span className={styles.fallbackIcon}>📡</span>
 					<p>
 						FST gazetteer not loaded for the selected version. The walker requires an FST binary ({" "}
-						<code>fst-en-US.bin</code>) — try a version with <code>hasFst: true</code> in the releases manifest.
+						<code>fst-en-US.bin</code>) — try a version with <code>hasFST: true</code> in the releases manifest.
 					</p>
 				</div>
 			</div>

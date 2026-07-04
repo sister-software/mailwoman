@@ -21,13 +21,8 @@ export interface ReleaseInfo {
 	modelSize: string
 	tokenizerVocab: number
 	steps: number
-	// `hasFst` / `hasWofDb` are WIRE KEYS from the published releases.json — a string contract exempt
-	// from the acronym-casing convention (AGENTS.md). The batch-A sweep capitalized these reads while
-	// the live manifest kept the old keys: every release read `undefined`, silently disabling the WOF
-	// cascade AND the FST for the whole demo from 2026-07-01 to 07-04. Pinned by the manifest
-	// contract test — do not re-sweep.
-	hasFst: boolean
-	hasWofDb: boolean
+	hasFST: boolean
+	hasWOFDb: boolean
 	hasAnchor?: boolean
 	hasPolygons?: boolean
 }
@@ -36,6 +31,42 @@ export interface ReleasesManifest {
 	locale: string
 	defaultVersion: string
 	releases: ReleaseInfo[]
+}
+
+/** The raw wire shape of one releases.json entry — either key generation may appear. */
+interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDb"> {
+	hasFST?: boolean
+	hasWOFDb?: boolean
+	/** Pre-2026-07-04 manifests published lowercase-acronym keys. */
+	hasFst?: boolean
+	hasWofDb?: boolean
+}
+
+/**
+ * Normalize a fetched releases.json into house-cased {@link ReleasesManifest} fields. ALL manifest consumption goes
+ * through here — the wire tolerance lives in exactly one place, and everything past this boundary uses the acronym
+ * convention (`hasFST` / `hasWOFDb`).
+ *
+ * Why the tolerance: the 2026-07-01 acronym sweep renamed the READS while the published R2 manifest kept the old
+ * keys — every release read `undefined`, silently disabling the demo's WOF cascade AND the FST for three days (zero
+ * console errors; "no WOF hits" was the only symptom). The fix is not to freeze the wire keys but to migrate them
+ * deliberately: the publisher now writes house-cased keys, this normalizer accepts both generations (old HF mirrors
+ * still carry the legacy keys), and the contract test pins all three parties.
+ */
+export function normalizeReleasesManifest(raw: {
+	locale: string
+	defaultVersion: string
+	releases: WireReleaseEntry[]
+}): ReleasesManifest {
+	return {
+		locale: raw.locale,
+		defaultVersion: raw.defaultVersion,
+		releases: raw.releases.map((r) => ({
+			...r,
+			hasFST: r.hasFST ?? r.hasFst ?? false,
+			hasWOFDb: r.hasWOFDb ?? r.hasWofDb ?? false,
+		})),
+	}
 }
 
 export type ParsedNode = { tag: string; value?: unknown; confidence?: number }
