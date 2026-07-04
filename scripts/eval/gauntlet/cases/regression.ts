@@ -309,9 +309,12 @@ export const REGRESSION_CASES: SeedCase[] = [
 	// population-ordered companion fetch + population-first exact tier, PR #910). These lock the
 	// user-visible behavior class against BOTH ranking and placer regressions at the next DB rebuild —
 	// the exact silent-break mode #905 documented (lab-only suites are CI-invisible).
-	// STATUS improvement_target (#912): the library-level ranking passes all five, but the production
-	// cascade still flips them — placer soft-posterior noise on bare city names + the CLI locale
-	// defaultCountry + township-alias-exact prominence. Flip to "pass" when #912 closes.
+	// STATUS 4/5 pass (#912 ranking bug CLOSED 2026-07-04): the #910 population-first exact tier +
+	// #936 officialNameExact fixed both the library ranking AND the CLI defaultCountry/township-alias
+	// path — Paris→FR, Dublin→IE, Melbourne→AU, Vancouver→CA all resolve correctly, and the #3
+	// sub-finding ("Åbo"→"bo" diacritic drop) is gone. Åbo stays improvement_target for a DIFFERENT,
+	// narrower reason: its coordinate is now correct (Turku) but the resolver returns the alias NAME
+	// "Åbo" not canonical "Turku" (a name-canonicalization residual, #897 family) — see its note.
 	{
 		id: "global-paris-bare",
 		input: "Paris",
@@ -385,7 +388,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectToleranceM: 25000,
 		addedAt: "2026-07-02",
 		bugRef: "#912",
-		note: "Alias-exact leg: the Swedish name for Turku (206k) must beat tiny places literally NAMED Åbo (DK/SE). Exercises exact-via-alias tiering + population-first within the tier.",
+		note: "COORDINATE FIXED (#910/#936, re-graded 2026-07-04): resolves to Turku's location within tolerance. Residual is NAME-CANONICALIZATION only — the resolver returns the alias name 'Åbo' instead of canonical 'Turku', so the component check ('Åbo' ≠ 'Turku') still holds it here. Distinct from the ranking bug #912 closed; belongs to the #897 exonym/name family.",
 	},
 	// #901 knife-edge sentinels (added 2026-07-03): the four SI short-village rows + the Učakar
 	// digit-split form. The four-probe attribution proved these are knife-edge outputs of the
