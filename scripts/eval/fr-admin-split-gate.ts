@@ -42,9 +42,9 @@ const PLACETYPE_RANK: Record<string, number> = {
 
 /**
  * #945 residual instrumentation: production's result-assembly ladder (geocode-core `adminPriority`) prefers LOCALITY
- * over postcode; this harness historically preferred the postcode point (rank 6 > 5). `--prefer-locality-coord`
- * mirrors production so the two coordinate conventions can be measured against the same golden. Not a default flip —
- * the choice is the open trade-off on #945.
+ * over postcode; this harness historically preferred the postcode point (rank 6 > 5). `--prefer-locality-coord` mirrors
+ * production so the two coordinate conventions can be measured against the same golden. Not a default flip — the choice
+ * is the open trade-off on #945.
  */
 const PRODUCTION_LADDER_RANK: Record<string, number> = { ...PLACETYPE_RANK, locality: 6, postalcode: 5 }
 interface Resolved {
