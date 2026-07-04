@@ -317,10 +317,14 @@ interface ResolvedTreeNode {
  * candidates, then the other resolved admin nodes for hierarchy context. Falls back to a raw-text lookup when nothing
  * in the tree resolves — same last-resort the old cascade had. Drops (lat=0, lon=0) placeholder hits throughout.
  */
+/** Soft proximity hints (#938 `bias[]`): ordered, weighted, never a hard filter. */
+export type ResolveBias = Array<{ lat: number; lon: number; weight?: number }>
+
 export async function runCascade(
 	lookup: MailwomanLookupLike,
 	tree: { roots: unknown[] },
-	rawText: string
+	rawText: string,
+	bias?: ResolveBias
 ): Promise<CascadeHits> {
 	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
@@ -330,7 +334,13 @@ export async function runCascade(
 	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
 	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
 	// global by design (the placer/population ranking routes, never a hardcoded country).
-	const resolved = (await resolver.resolveTree(tree as never, { adminCoherence: true })) as unknown as {
+	// bias (#938): the map viewport (and optional geolocation) as SOFT proximity hints — an in-view
+	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
+	// (48026 → Fraser MI vs Russi IT, the rule the library gate pins). Omitted when empty.
+	const resolved = (await resolver.resolveTree(tree as never, {
+		adminCoherence: true,
+		...(bias && bias.length > 0 ? { bias } : {}),
+	})) as unknown as {
 		roots: ResolvedTreeNode[]
 	}
 

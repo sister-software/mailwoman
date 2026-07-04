@@ -36,6 +36,7 @@ import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-sc
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
+import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**
@@ -631,7 +632,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			if (strippedKey && strippedKey !== nameKey) rows = await probe(strippedKey)
 		}
 
-		return rows.map((row) => {
+		const candidates = rows.map((row) => {
 			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
 
 			return {
@@ -657,6 +658,40 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 					: undefined,
 			}
 		})
+
+		// Proximity re-rank (#938): the browser twin of the Node candidate lookup's bias sort — with the
+		// map viewport / user location as hints, re-order the exact-match candidates by the SAME prominence
+		// (population + nearness in one additive scale) so an in-view namesake wins a tie. Byte-identical to
+		// population order when no bias is passed. `score` = -neg_rank = log10(population + 1). Constants
+		// MUST match resolver-wof-sqlite/candidate-lookup.ts (the #861 server↔demo parity contract).
+		if (query.bias && query.bias.length > 0) {
+			const BIAS_BOOST = 4.0
+			const POP_BOOST = 4.0
+			const POP_SCALE_LOG10 = 6
+			const PROX_SCALE_KM = 30
+			const prominence = (c: (typeof candidates)[number]): number => {
+				const popTerm = POP_BOOST * Math.min(1, Math.max(0, c.score) / POP_SCALE_LOG10)
+				let proxTerm = 0
+
+				if (!(c.lat === 0 && c.lon === 0)) {
+					for (const b of query.bias!) {
+						const d = haversineKm(b.lat, b.lon, c.lat, c.lon)
+						const term = (BIAS_BOOST * (b.weight ?? 1)) / (1 + d / PROX_SCALE_KM)
+
+						if (term > proxTerm) proxTerm = term
+					}
+				}
+
+				return popTerm + proxTerm
+			}
+
+			return candidates
+				.map((c, i) => ({ c, i, p: prominence(c) }))
+				.sort((a, b) => b.p - a.p || a.i - b.i)
+				.map((x) => x.c)
+		}
+
+		return candidates
 	}
 }
 

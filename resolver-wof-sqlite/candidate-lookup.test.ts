@@ -115,6 +115,38 @@ describe("WOFCandidateTableLookup", () => {
 		}
 	})
 
+	test("proximity bias (#938) re-ranks the exact tier by nearness without a hard filter", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// No bias: population wins — Moscow, RU (10.4M) over Moscow, ID (26k).
+			const plain = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+			expect(plain[0]!.country).toBe("RU")
+
+			// A view over Idaho flips it to Moscow, ID — the in-view namesake wins the tie.
+			const idahoView = await lk.findPlace({
+				text: "Moscow",
+				placetype: "locality",
+				limit: 5,
+				bias: [{ lat: 46.73, lon: -117.0, weight: 1 }],
+			})
+			expect(idahoView[0]!.country).toBe("US")
+			expect(idahoView[0]!.lat).toBeCloseTo(46.73, 1)
+
+			// A DISTANT view must NOT flip a far-more-populous city: a Chicago-area view (near neither
+			// Moscow) leaves population-first order intact — the sharp decay keeps out-of-view namesakes out.
+			const chicagoView = await lk.findPlace({
+				text: "Moscow",
+				placetype: "locality",
+				limit: 5,
+				bias: [{ lat: 41.88, lon: -87.63, weight: 1 }],
+			})
+			expect(chicagoView[0]!.country).toBe("RU")
+		} finally {
+			lk.close()
+		}
+	})
+
 	test("country filter narrows to the requested country", async () => {
 		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 

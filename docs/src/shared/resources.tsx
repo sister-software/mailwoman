@@ -93,6 +93,11 @@ export interface MailwomanLookupLike {
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		limit?: number
 		postcode?: string
+		/**
+		 * Soft proximity hints (#938 — the demo's map viewport / user location). With bias present, exact-tier candidates
+		 * near a hint sort ahead of distant ones; never a hard filter. Absent → population-first order.
+		 */
+		bias?: Array<{ lat: number; lon: number; weight?: number }>
 	}) => Promise<
 		Array<{
 			id: number
