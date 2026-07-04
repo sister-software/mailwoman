@@ -179,3 +179,71 @@ dependency retires.
 
 _The 2026-07-01 review closed by defining "back on rails" as pointed where it is going, not
 faster. Three days later the honest summary is: both — and the speed came from the rails._
+
+---
+
+## Addendum — 2026-07-04, fourteen hours later
+
+This review was written at 04:10. By evening, the same day's work had both strengthened its
+thesis and falsified one of its verdicts. A review whose theme is record accuracy corrects its
+own record; this is that correction.
+
+### R3 was scored wrong: the demo had been lying since July 1
+
+The section above closes R3 on the strength of #861's shared `resolveTree` and its smoke rows.
+The evening's investigation of an operator bug report proved the opposite: **the production demo
+had been silently degraded since July 1** — three stacked failures, each masking the next.
+
+1. The street tier was dead (#955): the acronym sweep renamed the _external_
+   `window.createDbWorker`, sql.js-httpvfs's own export.
+2. The WOF cascade and the FST were dead (#957/#958): the sweep capitalized the `releases.json`
+   reads (`hasFST`/`hasWOFDb`) while the published manifest kept the old keys — every release
+   read `undefined`, and both features switched off with zero console errors.
+3. Deepest: **#861's shared cascade had never executed in production at all** (#959). Its
+   `createWOFResolver` import hit a deliberate webpack barrel-bypass alias whose comment still
+   said "createWOFResolver is never bundled" — a premise that went stale the day #861 merged.
+   The smoke rows this review cites pass in CI builds; production diverged invisibly.
+
+The repair kept the house naming and migrated the wire (operator direction): one tolerant
+boundary (`normalizeReleasesManifest`), the publisher on house keys, the R2 manifest migrated
+after the tolerant reader deployed, and contract tests pinning all of it. Verified live via
+Playwright: an address-point rooftop hit and an SI village through the browser cascade, markers
+on both — all three tiers working together in production **for the first time since July 1**.
+
+The corrected R3 verdict: _the code convergence was real; the deployment truth was not._ And the
+caveat this review already carried — "the process still depends on the next careful actor" — now
+has four exhibits instead of one. #894-class structural checks are no longer the retirement path
+for a dependency; they are overdue.
+
+### The v5.2.0 grading claim this document inherits is also wrong
+
+The model-line table and the release notes carry v5.2.0's "14/14 per-locale non-inferiority
+PASS." The #945 investigation found that **9 of the 16 release-grading baselines were byte-copies
+of the v1 candidate's dumps** — never re-run against the artifact that shipped. Eight copies were
+benign; the ninth was FR, the one leg where v2 truly differed, and it was a regression
+(resolved-p50 2.64 → 4.12) whose root cause predates every model: the FTS sanitizer has fused
+intra-token punctuation since #95, unmatchable for every hyphenated name, masked for years by
+tokenizers that never emitted hyphen-preserved values. The fix (#948) shipped inside v5.3.0;
+the corrected verdict is 7 legs graded + 9 copied, FR failing unobserved. Two standing rules
+came out of the erratum: **never copy dumps across model labels**, and **tokenizer directories
+are immutable** (the v1 tokenizer was overwritten in place, making a direct re-grade impossible
+forever).
+
+### What the same evening added to the R1 column
+
+The measurement system kept finding things: the eval harness's coordinate convention was proven
+to differ from production's (postcode point vs locality), and the repair became a declared
+**convention epoch** (2026-07-04) — the harness now scores what production serves, FR reads
+1.92 km under it, `postcodeConsistency` (#370) went default-ON behind a corrected gate
+(FI 231 wins / 0 losses; US byte-flat), and every pre-epoch dump is retired from comparisons.
+One false verdict was published and retracted within the hour along the way (a shell
+word-splitting bug ran gate legs flagless) — caught because the code contradicted the
+measurement, which is the discipline working exactly as this review describes it.
+
+### The open list, re-scored at day's end
+
+- **#894** — unchanged in content, tripled in urgency; the demo outage is its fourth exhibit.
+- **The #942 insurance leg in the standing battery** — this review recommended it; still to land.
+- **#949's fr.street gate floor** — the convention epoch gave FR standing baselines; the gate-spec
+  floor remains unwritten.
+- #897, the calibration re-fit, #727/CharCNN — unchanged.
