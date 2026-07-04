@@ -39,6 +39,14 @@ const PLACETYPE_RANK: Record<string, number> = {
 	region: 2,
 	country: 0,
 }
+
+/**
+ * #945 residual instrumentation: production's result-assembly ladder (geocode-core `adminPriority`) prefers LOCALITY
+ * over postcode; this harness historically preferred the postcode point (rank 6 > 5). `--prefer-locality-coord`
+ * mirrors production so the two coordinate conventions can be measured against the same golden. Not a default flip —
+ * the choice is the open trade-off on #945.
+ */
+const PRODUCTION_LADDER_RANK: Record<string, number> = { ...PLACETYPE_RANK, locality: 6, postalcode: 5 }
 interface Resolved {
 	id: number
 	name: string
@@ -69,11 +77,10 @@ function collectResolved(tree: AddressTree): Resolved[] {
 
 	return out
 }
-function mostSpecific(rs: Resolved[]): Resolved | null {
+function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_RANK): Resolved | null {
 	let best: Resolved | null = null
 
-	for (const r of rs)
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+	for (const r of rs) if (!best || (rank[r.placetype] ?? -1) > (rank[best.placetype] ?? -1)) best = r
 
 	return best
 }
@@ -138,6 +145,8 @@ async function main() {
 			// #942: postal-compound recovery (library default ON since the 2026-07-03 promote).
 			"postal-compound-recovery": { type: "boolean" },
 			"no-postal-compound-recovery": { type: "boolean" },
+			// #945 residual: score the coordinate production's ladder would pick (locality over postcode).
+			"prefer-locality-coord": { type: "boolean" },
 		},
 		strict: false,
 	})
@@ -201,7 +210,10 @@ async function main() {
 					diacriticBroken++
 			}
 		}
-		const best = mostSpecific(collectResolved(await resolver.resolveTree(tree, resolveOpts)))
+		const best = mostSpecific(
+			collectResolved(await resolver.resolveTree(tree, resolveOpts)),
+			pins["prefer-locality-coord"] === true ? PRODUCTION_LADDER_RANK : PLACETYPE_RANK
+		)
 
 		if (best) {
 			resolved++
