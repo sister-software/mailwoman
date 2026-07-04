@@ -200,7 +200,11 @@ export async function findRescoreCandidate(
 	let anchor: { lat: number; lon: number } | null = null
 
 	if (postcode && gateKm > 0) {
-		const pcHits = await backend.findPlace({ text: postcode, country, limit: 2 })
+		// #961: both anchor probes are postalcode-TYPED. Untyped, a truncated code fragment (v5.3.0
+		// emits "250 Zabiče" → subset "250") name-matches arbitrary places ("Chak No 250", PK) and the
+		// false anchor then GATES OUT the true village. A typed miss leaves anchor=null → the match is
+		// accepted ungated, which is the correct degradation for an unverifiable code.
+		const pcHits = await backend.findPlace({ text: postcode, country, placetype: "postalcode", limit: 2 })
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
 		if (a) anchor = { lat: a.lat, lon: a.lon }
@@ -211,7 +215,7 @@ export async function findRescoreCandidate(
 			const code = postcodeCodeSubset(postcode)
 
 			if (code && code !== postcode) {
-				const codeHits = await backend.findPlace({ text: code, country, limit: 2 })
+				const codeHits = await backend.findPlace({ text: code, country, placetype: "postalcode", limit: 2 })
 				const c = codeHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
 				if (c) anchor = { lat: c.lat, lon: c.lon }
@@ -257,6 +261,42 @@ export async function findRescoreCandidate(
 			// gated = the postcode anchor existed AND validated this match (within gateKm). When no anchor
 			// (no postcode→point coverage), the match is ungated — returned, but flagged lower-precision.
 			return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: anchor !== null }
+		}
+	}
+
+	// #961 joint country recovery: the caller's `country` is a LOCALE DEFAULT, not knowledge — the
+	// CLI's en-US default scoped both the anchor and the village probe to US, so the SI floor never
+	// fired through geocode-core while the same rows resolved 25/25 on the resolver harness. When the
+	// scoped pass finds nothing and a postcode is present, re-probe the spans UNSCOPED (the admin
+	// gazetteer is one shard, all countries), then verify each exact candidate against the postcode's
+	// code subset resolved in the CANDIDATE's own country (postcode shards route by country). A
+	// cross-country promotion is accepted ONLY postcode-verified within the gate — never ungated —
+	// so a US-shaped query can't wander abroad on a name coincidence (the 48026 guard: resolved
+	// trees never reach this code, and unresolved ones must pass the joint postcode check).
+	if (opts.postalCompoundRecovery && postcode && gateKm > 0) {
+		const code = postcodeCodeSubset(postcode) || postcode.trim()
+
+		for (const sp of spans) {
+			const key = norm(sp.text)
+
+			if (key.length < 2 || /^\d+$/.test(key)) continue
+			const hits = await backend.findPlace({ text: sp.text, placetype: "locality", limit: 5 })
+			const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
+
+			for (const h of exact) {
+				if (!h.country || h.country === country) continue // the scoped pass already covered `country`
+				const pcHits = await backend.findPlace({
+					text: code,
+					country: h.country,
+					placetype: "postalcode",
+					limit: 2,
+				})
+				const verified = pcHits.find((p) => p.lat !== 0 || p.lon !== 0)
+
+				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= gateKm) {
+					return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: true }
+				}
+			}
 		}
 	}
 
