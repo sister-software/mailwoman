@@ -21,11 +21,13 @@
 		"arena.perturb": 71.0,
 		"us.po_box_real": 70.0,
 		"fr.cedex_real": 70.0,
-		"us.intersection_real": 50.0
+		"us.intersection_real": 50.0,
+		"fr.bare_street_intact": 75.0
 	},
 	"int8_vs_fp32_max_delta_pp": 1.5,
 	"ledger_path": "evals/scores-by-version.json",
 	"requires_bridge": true,
 	"$revision_us_postcode": "95 -> 94.8 (2026-07-03, operator-approved in chat for the v5.2.0 cut): MEASUREMENT IDENTITY, not a model dip — the shipped v5.1.0 fp32 reads the identical 94.8 on the same harness, and the candidate's int8 postcode parses are byte-identical to shipped on all 2,660 US gate rows (0 diffs). The prior 95 floor was calibrated on the int8-class/earlier harness generation. Evidence: gate-v193/RESULTS.md (us.postcode attribution block).",
+	"$floor_fr_bare_street_intact": "NEW FLOOR (#949, 2026-07-04): fr.bare_street_intact >= 75.0. The class v5.2.0 silently regressed (bare-street-intact 34/40 -> 16/40) because NO standing leg measured FR street parsing WITHOUT a postcode anchor — the retro's R1 blind-spot instance. The leg (scripts/diagnostic/fr-parse-recall.ts --floor) reads a FROZEN 40-row OSM sample (scripts/eval/fixtures/fr-bare-street-40.jsonl; committed, no live shard needed) and parses each bare + anchored. v5.3.0 reads 34/40=85% bare (37/40=92.5% anchored); the 75% floor (30/40) catches a real regression like v5.2.0's 40% while tolerating +/-1-2 rows of sample noise. Refresh the fixture only via --from-db, committed deliberately (a moving sample is a flaky floor).",
 	"$revision_2026_07_04": "GATE REVISION (operator-approved 2026-07-04, the #901 promote fork): fr.postcode 99.3 -> 99.2. REASON: v2.2.0 reads 99.2 (-0.1, the zero-margin floor the 2026-07-02 scorecard flagged as 'any hair of postcode loss fails loudly' — it did, and the trade was adjudicated, not silently absorbed). The FR COORDINATE is non-inferior on the deconfounded same-stack fr-3k (resolve 0.991=0.991, p50 1.30=1.30, CI[-0.009,0]) and the bare-FR street class the promote exists to fix goes 16/40 -> 34/40. Companion exception, NOT a cap change: the int8<->fp32 homograph delta reads 2.4 vs the 1.5 cap for THIS artifact (quantization delta; the fp32 model passes every floor and int8 country_homograph 85.1 still clears its 83.3 floor) — operator-accepted for this promote; the cap stays 1.5 for the next candidate. SI trade on the record: wrong-city 8.7->11.4% (+2.7pp vs the +2pp re-gate bar), resolve 1.000->0.985, floored model-independently by postalCompoundRecovery (#942 default-ON; the insurance leg proved the candidate+floor recovers ALL 55 composition-lost rows)."
 }

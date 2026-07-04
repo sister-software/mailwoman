@@ -13,7 +13,7 @@
  *   Run: node scripts/diagnostic/fr-parse-recall.ts
  */
 
-import { readFileSync } from "node:fs"
+import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
@@ -36,18 +36,43 @@ const { values: args } = parseArgs({
 		tokenizer: { type: "string" },
 		"model-card": { type: "string", default: "neural-weights-en-us/model-card.json" },
 		label: { type: "string", default: "" },
+		// Gate-leg mode (#949): read the FROZEN 40-row sample instead of the live OSM shard, so the
+		// bare-street floor is reproducible anywhere (incl. CI, which has no shard). `--from-db`
+		// re-derives from the live shard — the ONLY way the fixture should ever change, and it must be
+		// committed deliberately (the "pin the golden" discipline; a moving sample is a flaky floor).
+		fixture: { type: "string", default: "scripts/eval/fixtures/fr-bare-street-40.jsonl" },
+		"from-db": { type: "boolean", default: false },
+		// Emit machine-readable rates to <path> for the promotion gate.
+		json: { type: "string" },
+		// Fail (exit 1) when the BARE-intact rate falls below this percent — the enforced floor.
+		floor: { type: "string" },
 	},
 })
 
-const db = new DatabaseSync(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, { readOnly: true })
-// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
-const rows = db
-	.prepare(
-		`SELECT street_raw, number, locality_norm, postcode FROM address_point
-		 WHERE locality_norm IS NOT NULL AND postcode IS NOT NULL AND street_raw LIKE '% %'
-		 GROUP BY street_norm ORDER BY number LIMIT 40`
-	)
-	.all() as Array<{ street_raw: string; number: string; locality_norm: string; postcode: string }>
+interface FRRow {
+	street_raw: string
+	number: string
+	locality_norm: string
+	postcode: string
+}
+
+const rows: FRRow[] = args["from-db"]
+	? (() => {
+			const db = new DatabaseSync(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, { readOnly: true })
+			// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
+			// DETERMINISTIC (GROUP BY + ORDER BY, no RANDOM) — the same shard yields the same 40 rows.
+			return db
+				.prepare(
+					`SELECT street_raw, number, locality_norm, postcode FROM address_point
+					 WHERE locality_norm IS NOT NULL AND postcode IS NOT NULL AND street_raw LIKE '% %'
+					 GROUP BY street_norm ORDER BY number LIMIT 40`
+				)
+				.all() as FRRow[]
+		})()
+	: readFileSync(args.fixture, "utf8")
+			.split("\n")
+			.filter((l) => l.trim())
+			.map((l) => JSON.parse(l) as FRRow)
 
 async function buildClassifier(): Promise<NeuralAddressClassifier> {
 	if (!args.model || !args.tokenizer) return NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
@@ -121,3 +146,35 @@ console.log(
 console.log(`\nbare failures:`)
 
 for (const f of fails) console.log(f)
+
+const bareRate = (bareOk / rows.length) * 100
+const anchoredRate = (anchoredOk / rows.length) * 100
+
+if (args.json) {
+	writeFileSync(
+		args.json,
+		`${JSON.stringify(
+			{
+				bare_intact: bareOk,
+				anchored_intact: anchoredOk,
+				n: rows.length,
+				bare_rate: Number(bareRate.toFixed(1)),
+				anchored_rate: Number(anchoredRate.toFixed(1)),
+				source: args["from-db"] ? "live-shard" : args.fixture,
+			},
+			null,
+			2
+		)}\n`
+	)
+}
+
+if (args.floor !== undefined) {
+	const floor = Number(args.floor)
+
+	if (bareRate < floor) {
+		console.error(`\n✗ fr.bare_street_intact FAIL: ${bareRate.toFixed(1)}% < floor ${floor}% (${bareOk}/${rows.length})`)
+		process.exit(1)
+	}
+
+	console.log(`\n✓ fr.bare_street_intact PASS: ${bareRate.toFixed(1)}% ≥ floor ${floor}% (${bareOk}/${rows.length})`)
+}

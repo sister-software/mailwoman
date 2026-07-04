@@ -305,6 +305,27 @@ runIfScript(import.meta, async () => {
 		if (arena.exitCode !== 0) process.exit(1)
 	}
 
+	// FR bare-street floor (#949) — the class v5.2.0 silently regressed (34/40 → 16/40) because no
+	// standing leg measured FR street parsing WITHOUT a postcode anchor. Reads a FROZEN 40-row OSM
+	// sample (committed fixture, no live shard needed), parses each bare + anchored, and fails if the
+	// bare-intact rate drops below the spec floor. The leg self-reports its verdict + exits non-zero.
+	const bareStreetFloor = (gate.floors ?? {})["fr.bare_street_intact"]
+
+	if (bareStreetFloor !== undefined) {
+		const bare = await $({
+			nothrow: true,
+			env: { ...process.env },
+		})`node scripts/diagnostic/fr-parse-recall.ts --model ${shipModel} --tokenizer ${TOK} --model-card ${CARD} --floor ${String(bareStreetFloor)} --json ${`${OUT_DIR}/fr-bare-street.json`}`
+		writeFileSync(`${OUT_DIR}/fr-bare-street.md`, `${bare.stdout}${bare.stderr}`)
+
+		if (bare.exitCode !== 0) {
+			console.error(`✗ fr.bare_street_intact FAIL (floor ${bareStreetFloor}%) — see ${OUT_DIR}/fr-bare-street.md`)
+			process.exit(1)
+		}
+
+		console.log(`✓ fr.bare_street_intact PASS (floor ${bareStreetFloor}%)`)
+	}
+
 	// --- mask-regression gate (#718) — the "second lock" ------------------------
 	// Re-runs the SHIP artifact mask-off vs the declared conventions mode and FAILS if any tag's UNFOLDED
 	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta-gate (it catches
