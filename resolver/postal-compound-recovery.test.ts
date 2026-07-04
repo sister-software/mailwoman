@@ -57,12 +57,14 @@ function makeBackend(places: ResolvedPlace[] = PLACES): ResolverBackend {
 		async findPlace(query) {
 			const key = norm(query.text)
 
-			return places.filter(
-				(p) =>
-					norm(p.name) === key &&
-					(!query.country || p.country === query.country) &&
-					(!query.placetype || query.placetype.includes(p.placetype))
-			).map((p) => ({ ...p }))
+			return places
+				.filter(
+					(p) =>
+						norm(p.name) === key &&
+						(!query.country || p.country === query.country) &&
+						(!query.placetype || query.placetype.includes(p.placetype))
+				)
+				.map((p) => ({ ...p }))
 		},
 	}
 }
