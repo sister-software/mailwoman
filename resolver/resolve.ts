@@ -28,7 +28,7 @@ import {
 } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
+import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.js"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
@@ -50,6 +50,8 @@ interface ResolutionState {
 	 * can inject postcode-proximal locality candidates.
 	 */
 	postcode?: string
+	/** Proximity-bias points (viewport, user location) — forwarded to every primary lookup. */
+	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/** Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default). */
 	anchorPosterior?: Record<string, number>
 	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
@@ -296,9 +298,25 @@ async function applySpanRescore(
 			country: opts.defaultCountry,
 			postcode: firstPostcodeValue(roots),
 			gateKm: opts.spanRescoreGateKm,
+			// Default-ON (promoted 2026-07-03); explicit `false` opts out — the spanRescore idiom.
+			postalCompoundRecovery: opts.postalCompoundRecovery !== false,
 		})
 	} catch {
 		return
+	}
+
+	// #942 postal-compound recovery, part 2: when NO city span matched, decorate the FAILED postcode
+	// node from its code-shaped token subset ("1382 Kožljek" → the bare "1382" row) — a postcode-tier
+	// coordinate FLOOR, strictly subordinate to a recovered locality. Only-on-miss matters: a GeoNames
+	// medoid postcode centroid is COARSER than the exact village centroid, and consumers that rank
+	// postcode above locality (the eval harness does) would otherwise trade a 0.2 km village pin for a
+	// 5 km area centroid. Same unresolved tree, so the #685 brake semantics hold.
+	if (!hit && opts.postalCompoundRecovery !== false) {
+		try {
+			await recoverPostcodeNode(roots, backend, opts.defaultCountry)
+		} catch {
+			// degrade to no-recovery, never crash the resolve
+		}
 	}
 
 	if (!hit) return
@@ -318,6 +336,41 @@ async function applySpanRescore(
 	// (high-precision); false = ungated (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_gated: hit.gated }
 	roots.push(node)
+}
+
+/**
+ * #942: find the first confident-but-UNRESOLVED postcode node whose value is a polluted compound ("1382 Kožljek"),
+ * resolve its code-shaped token subset as a `postalcode`, and decorate the node from that hit
+ * (`postal_compound_recovered` metadata marks the provenance). No-op when every postcode node resolved, the value has
+ * no digit-bearing tokens, or the subset equals the full value (then the walk already tried it).
+ */
+async function recoverPostcodeNode(
+	roots: AddressNode[],
+	backend: ResolverBackend,
+	country: string | undefined
+): Promise<void> {
+	const stack: AddressNode[] = [...roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		if (n.tag === "postcode" && !n.placeID && n.value.trim()) {
+			const code = postcodeCodeSubset(n.value)
+
+			if (!code || code === n.value.trim()) continue
+			const hits = await backend.findPlace({ text: code, placetype: "postalcode", country, limit: 1 })
+			const top = hits.find((h) => h.lat !== 0 || h.lon !== 0)
+
+			if (top) {
+				decorateNode(n, top, [])
+				n.metadata = { ...n.metadata, postal_compound_recovered: true }
+			}
+
+			return // first postcode node only — one recovery per tree
+		}
+
+		if (n.children?.length) stack.push(...n.children)
+	}
 }
 
 /** A resolved node carries a real coordinate (placeID set + non-zero lat/lon). */
@@ -613,6 +666,7 @@ class WOFResolver implements Resolver {
 			defaultCountry: opts.defaultCountry,
 			parentFallback: opts.parentFallback ?? true,
 			postcode: firstPostcodeValue(tree.roots),
+			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2.0,
 			hardCountry: opts.hardCountry,
@@ -768,6 +822,11 @@ class WOFResolver implements Resolver {
 			limit: state.candidatesPerLookup,
 		}
 
+		// Proximity bias (viewport center, user location, …) — a SOFT re-rank the backend folds into
+		// its exact-tier prominence; never a filter, so recall is untouched. This is how an ambiguous
+		// bare postcode ("48026") follows the map view instead of a global population coin-flip.
+		if (state.bias && state.bias.length > 0) query.bias = state.bias
+
 		// Pass the inherited parent constraint to the backend when available — `parentID` scopes to
 		// the resolved parent's descendants. For `country`: a resolved parent's country wins, else
 		// fall back to the caller's `defaultCountry`. Without this top-level hint a bare "IL" over a
@@ -850,11 +909,24 @@ class WOFResolver implements Resolver {
 		if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
 			const post = state.anchorPosterior
 			const w = state.anchorWeight
-			ranked = [...candidates].sort(
-				(a, b) =>
-					Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false) ||
-					b.score + w * (post[b.country] ?? 0) - (a.score + w * (post[a.country] ?? 0))
-			)
+			// #928 root cause: this sort's within-tier key was `score + w·posterior` — RAW SCORE order,
+			// the exact metric #910 deprecated inside the exact tier as bm25-length-poisoned (a famous
+			// place's alias-heavy doc reads ~15 pts WORSE than a tiny namesake's clean one; #905
+			// measured it). Before #910 the anchor-off path also sorted by score, so the two paths
+			// agreed; after, anchor-ON silently reverted to the poisoned metric — a CORRECT GB@1.00
+			// pin flipped "London SE15 1DD" to a US namesake because +w·1.0 can't bridge the bm25 gap.
+			// The within-tier key is now the backend's PROMINENCE (population + proximity, #938 units)
+			// with the posterior as the additive country pin; score stays the final tiebreak. Backends
+			// that don't populate `prominence` degrade to the additive score behavior.
+			ranked = [...candidates].sort((a, b) => {
+				const tier = Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false)
+
+				if (tier !== 0) return tier
+				const aKey = (a.prominence ?? a.score) + w * (post[a.country] ?? 0)
+				const bKey = (b.prominence ?? b.score) + w * (post[b.country] ?? 0)
+
+				return bKey - aKey || b.score - a.score
+			})
 		}
 
 		// Exact-type preference (#718): when the placetype-equivalence group let a broader admin tier

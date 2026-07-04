@@ -38,7 +38,13 @@ import {
 import { bboxAround, haversineKm } from "./geo.js"
 import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
 import type { WOFDatabase } from "./schema.js"
-import { pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "./sharding.js"
+import {
+	pickShardForPlacetype,
+	pickShardsForPlacetype,
+	resolveShards,
+	type ResolvedShard,
+	type ShardConfig,
+} from "./sharding.js"
 import { SqliteConventionSource } from "./sqlite-convention-source.js"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.js"
 
@@ -113,6 +119,13 @@ export interface RankingWeights {
 	 * strong text match.
 	 */
 	proximityBoost: number
+	/**
+	 * Magnitude of the bias-hint term inside the exact-tier PROMINENCE sort (the `bias`/viewport path). Deliberately
+	 * population-scale (default = populationBoost) so a candidate near the map view / the user beats a distant-but-bigger
+	 * namesake — "the map view wins" is the feature; same-region ties (all candidates far from every hint) still fall to
+	 * population.
+	 */
+	biasBoost: number
 	/** Distance (km) at which the proximity boost halves. Tune to the typical query radius. */
 	proximityScaleKm: number
 	/**
@@ -149,6 +162,27 @@ export interface RankingWeights {
 	 * handful of states match a 2-letter query).
 	 */
 	exactMatchTiering: boolean
+	/**
+	 * #936 option 3 — official-language names ARE names. When true, a candidate holding the query as an OFFICIAL name
+	 * (`names.official = 1`: a preferred-form name in an official language of its country, stamped at ingest) joins the
+	 * NAME-exact sub-tier rather than the alias-exact one, provided its population clears {@link officialNameExactFloor}.
+	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo; population still orders
+	 * within the sub-tier, so Paris → Paris FR is untouched.
+	 *
+	 * Default true (operator-promoted 2026-07-03 after the pre-registered gate battery: four intended exonym flips —
+	 * Berne→Bern, Bruges→Brugge, Roma→Rome, Åbo→Turku — with the namesake/abbreviation rows and the US/FI panels
+	 * byte-identical). Requires a gazetteer carrying the #940 ingest bit — on older DBs without the `official` column the
+	 * probe fails soft and behavior is identical to the flag being off.
+	 */
+	officialNameExact: boolean
+	/**
+	 * Minimum population for a candidate's official names to join the name-exact sub-tier. The #936 review's no-floor
+	 * census measured the boundary: ≥100k holders are the famous-exonym class (757 flips, intent-correct; 7 collisions,
+	 * none harmful) while 10k–100k holders are junk-dominated (3,481 flips led by short-form mis-tags — Villeneuve-Loubet
+	 * carrying "villeneuve" would bury five real villages of that name). Rank-time knob: tunable without re-ingest;
+	 * below-floor official names simply stay alias-tier (today's behavior).
+	 */
+	officialNameExactFloor: number
 }
 
 const DEFAULT_WEIGHTS: RankingWeights = {
@@ -160,6 +194,7 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	lengthPenaltyWeight: 0.1,
 	proximityBoost: 0.8,
 	proximityScaleKm: 100,
+	biasBoost: 4.0,
 	// populationBoost is intentionally large — empirical tuning against real WOF showed BM25 gaps
 	// of 1.5-3.0 between famous places and tiny same-name peers (because the famous ones have
 	// hundreds of alt-name entries that hurt their FTS document score). To consistently surface
@@ -176,6 +211,9 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
 	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine, not the more-populous Missouri).
 	exactMatchTiering: true,
+	// #936 option 3 — promoted default-ON 2026-07-03 (gate battery PASS; see the RankingWeights docstring).
+	officialNameExact: true,
+	officialNameExactFloor: 100_000,
 }
 
 /**
@@ -635,7 +673,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * Strategy `fallback_fuzzy_name_match` — the BM25 FTS name-match over the gazetteer, the universal fallback. Always
 	 * returns an array (never null), so it terminates the dispatch chain.
 	 */
-	async #fuzzyNameMatch(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
+	async #fuzzyNameMatch(query: FindPlaceQuery, forceShard?: ResolvedShard): Promise<PlaceCandidate[]> {
 		const limit = query.limit ?? 10
 		// Over-fetch so post-scoring + exact-match tiering have room to re-rank. SHORT queries (a 2–3-char
 		// region abbreviation like "NY"/"VT") are the danger case the `exactMatchTiering` docstring flags:
@@ -654,7 +692,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// fuzzy "Brooklyn Park, MN" won instead. Order-preserving: the FIRST entry stays the
 		// requested placetype, which is what shard routing keys off below.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
-		const ftsQuery = sanitizeFTSQuery(query.text)
+		// Postcode-typed queries keep the #920 fused name-law shape; everything else splits on
+		// intra-token punctuation so hyphenated names reach the FTS as their real terms (#945).
+		const ftsQuery = sanitizeFTSQuery(query.text, { fuseTokens: placetypes?.includes("postalcode") ?? false })
 
 		if (!ftsQuery) return []
 
@@ -662,10 +702,43 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// `placetype` always goes to main. (Mixed-placetype queries with multiple shards aren't
 		// supported in v1 — caller can issue two findPlace calls and merge in TS if needed.)
 		const firstPlacetype = placetypes?.[0]
-		const shard = pickShardForPlacetype(this.#shards, firstPlacetype, {
-			country: query.country,
-			countriesBySchema: this.#shardCountries,
-		})
+
+		// Bias fan-out (#58/proximity-bias): a country-less query WITH proximity hints must see the
+		// cross-shard ambiguity the hints exist to resolve — "48026" lives in postalcode-us AND
+		// postalcode-intl, and single-shard routing would hide one side. Query every matching shard
+		// (self-recursion with a shard pin), merge by id, and re-sort by the same (exact, prominence)
+		// keys the per-shard tier sort used. Bounded: hints + no country + >1 matching shard only.
+		const hasBiasHints = !!query.near || (query.bias?.length ?? 0) > 0
+
+		if (!forceShard && hasBiasHints && !query.country) {
+			const matching = pickShardsForPlacetype(this.#shards, firstPlacetype)
+
+			if (matching.length > 1) {
+				const pools: PlaceCandidate[][] = []
+
+				for (const sh of matching) pools.push(await this.#fuzzyNameMatch(query, sh))
+				const byID = new Map<PlaceCandidate["id"], PlaceCandidate>()
+
+				for (const c of pools.flat()) {
+					if (!byID.has(c.id)) byID.set(c.id, c)
+				}
+				const merged = [...byID.values()]
+				merged.sort(
+					(a, b) =>
+						Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false) ||
+						(b.prominence ?? 0) - (a.prominence ?? 0) ||
+						b.score - a.score
+				)
+
+				return merged.slice(0, limit)
+			}
+		}
+		const shard =
+			forceShard ??
+			pickShardForPlacetype(this.#shards, firstPlacetype, {
+				country: query.country,
+				countriesBySchema: this.#shardCountries,
+			})
 		const sch = shard.schemaName // bare schema name; safe to interpolate (validated at construction)
 
 		// Filter out historical / superseded / deprecated places by default — they live in the same
@@ -831,22 +904,52 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// coordinates. The formula decays smoothly with distance so close-but-not-exact hits
 			// still benefit; tunable via proximityBoost + proximityScaleKm.
 			let distanceKm: number | undefined
+			// The best decayed-distance term over `near` + every `bias` point (each point's term is
+			// scaled by its weight; the MAX wins — a candidate near ANY hint is "nearby"). Carried
+			// into the exact-tier prominence sort below when hints are present.
+			let proximityTerm = 0
 
-			if (query.near && row.lat !== null && row.lon !== null && !(row.lat === 0 && row.lon === 0)) {
-				distanceKm = haversineKm(query.near.lat, query.near.lon, row.lat, row.lon)
-				score += this.#weights.proximityBoost / (1 + distanceKm / this.#weights.proximityScaleKm)
+			if (row.lat !== null && row.lon !== null && !(row.lat === 0 && row.lon === 0)) {
+				const hints: Array<{ lat: number; lon: number; weight: number }> = []
+
+				if (query.near) hints.push({ lat: query.near.lat, lon: query.near.lon, weight: 1 })
+
+				for (const b of query.bias ?? []) hints.push({ lat: b.lat, lon: b.lon, weight: b.weight ?? 1 })
+
+				let scoreTerm = 0
+
+				for (const h of hints) {
+					const d = haversineKm(h.lat, h.lon, row.lat, row.lon)
+					const decay = h.weight / (1 + d / this.#weights.proximityScaleKm)
+					const prom = decay * this.#weights.biasBoost
+
+					if (prom > proximityTerm) {
+						proximityTerm = prom
+						distanceKm = d
+						scoreTerm = decay * this.#weights.proximityBoost
+					}
+				}
+				score += scoreTerm
 			}
 
 			// Population boost: capped at `populationBoost` magnitude at `10^populationScaleLog10`
 			// people. Missing population → no contribution. Never penalizes.
+			let popTerm = 0
+
 			if (row.population !== null && row.population > 0 && this.#weights.populationScaleLog10 > 0) {
 				const popLog = Math.log10(1 + row.population)
 				const popFraction = Math.min(1, popLog / this.#weights.populationScaleLog10)
-				score += this.#weights.populationBoost * popFraction
+				popTerm = this.#weights.populationBoost * popFraction
+				score += popTerm
 			}
+			// Combined prominence for the exact-tier sort when proximity hints are present: population
+			// and nearness in the SAME additive units, so the map view / the user's location can win a
+			// cross-country postcode tie without a hard filter.
+			const prominence = popTerm + proximityTerm
 
 			const candidate: PlaceCandidate = {
 				id: row.id,
+				prominence,
 				name: row.name,
 				placetype: row.placetype as WOFPlacetype,
 				country: row.country ?? "",
@@ -916,18 +1019,45 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				// sub-tier as before.
 				const norm = (v: string): string => v.toLowerCase().trim().replace(/\s+/g, " ")
 				const needle = norm(query.text)
+				// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
+				// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
+				// Turku's name, not merely its alias. Floor-gated on the holder's population (see the
+				// RankingWeights docstring for the measured 100k boundary). officialIds ⊆ exactIds by
+				// construction (official rows are names rows), so only the sub-tier KIND changes.
+				const officialIds = this.#weights.officialNameExact
+					? this.#officialNameIds(
+							sch,
+							candidates
+								.filter(
+									(c) => exactIds.has(c.id as number) && (c.population ?? 0) >= this.#weights.officialNameExactFloor
+								)
+								.map((c) => c.id as number),
+							query.text
+						)
+					: undefined
 				const kind = (c: PlaceCandidate): number => {
 					if (!exactIds.has(c.id as number)) return 0
 
-					return norm(String(c.name ?? "")) === needle ? 2 : 1
+					if (norm(String(c.name ?? "")) === needle) return 2
+
+					return officialIds?.has(c.id as number) ? 2 : 1
 				}
+				// With proximity hints (near/bias), prominence (population + nearness, same units)
+				// replaces raw population as the within-tier key — the 48026 rule: the map view or
+				// the user's location breaks a cross-country postcode tie. Without hints, population
+				// ordering is byte-identical to before.
+				const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 				candidates.sort((a, b) => {
 					const ax = kind(a)
 					const bx = kind(b)
 
 					if (bx !== ax) return bx - ax
 
-					if (ax >= 1) return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
+					if (ax >= 1) {
+						if (hasHints) return (b.prominence ?? 0) - (a.prominence ?? 0) || b.score - a.score
+
+						return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
+					}
 
 					return b.score - a.score
 				})
@@ -1193,6 +1323,34 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		return out
 	}
 
+	/**
+	 * Among `ids` (already known exact matches), the subset holding `text` as an OFFICIAL name (`names.official = 1`, the
+	 * #940 ingest bit). Same COLLATE NOCASE semantics as {@link WOFSqlitePlaceLookup.#exactMatchIds} so the two probes
+	 * agree on what "equals the query" means. Fails soft on gazetteers built before #940 (no `official` column) — the
+	 * sub-tier then behaves exactly as if `officialNameExact` were off.
+	 */
+	#officialNameIds(schemaName: string, ids: number[], text: string): Set<number> {
+		const out = new Set<number>()
+		const trimmed = text.trim()
+
+		if (ids.length === 0 || !trimmed) return out
+		const placeholders = ids.map(() => "?").join(", ")
+
+		try {
+			const rows = this.#db
+				.prepare(
+					`SELECT DISTINCT id FROM ${schemaName}.names WHERE id IN (${placeholders}) AND official = 1 AND name = ? COLLATE NOCASE`
+				)
+				.all(...ids, trimmed) as Array<{ id: number }>
+
+			for (const r of rows) out.add(r.id)
+		} catch {
+			// Pre-#940 gazetteer (no `official` column) or a names-less slim shard — feature inert.
+		}
+
+		return out
+	}
+
 	close(): void {
 		// Destroying the Kysely instance closes the underlying connection IF we own it. If the caller
 		// passed in a pre-opened DatabaseSync (test fixture), respect their ownership.
@@ -1247,10 +1405,13 @@ function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetype[] | n
  * - `"Paris"` → `"Paris"` (phrase)
  * - `"627*"` → `627*` (prefix)
  * - `"St. (Petersburg)"` → `"St" "Petersburg"` (two phrases, AND-joined)
+ * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation SPLITS — #945; fusing to `ThironGardais` matched
+ *   nothing because the FTS doc tokenizes the hyphenated name as two terms)
+ * - `"110 00"` with `fuseTokens` (postcode-typed) → `"110" "00"` per-token fused — the #920 name law
  * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
  * - `"*"` alone → `""` (no body → drop)
  */
-function sanitizeFTSQuery(text: string): string {
+function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string {
 	const out: string[] = []
 
 	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {
@@ -1258,12 +1419,33 @@ function sanitizeFTSQuery(text: string): string {
 
 		if (!trimmed) continue
 		const hasPrefixStar = trimmed.endsWith("*")
-		// Strip everything except letters + numbers from the token body. Apostrophes / hyphens /
-		// any embedded `*` all go. The trailing `*` (if any) is reapplied separately below.
-		const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
 
-		if (!body) continue
-		out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+		// #920 name law (postcode-typed queries ONLY): delete intra-token punctuation and FUSE the
+		// remainder — postal names are stored in this collapsed shape ("SW1A" stays one term).
+		if (opts?.fuseTokens) {
+			const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+
+			if (!body) continue
+			out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			continue
+		}
+
+		// Everything else SPLITS on intra-token punctuation — the behavior the docstring always
+		// promised ("St. (Petersburg)" → two phrases). The old code DELETED punctuation instead,
+		// fusing "Thiron-Gardais" into the unmatchable single term `ThironGardais` while the FTS
+		// doc holds two terms (#945 — the entire hyphenated-name class missed at the raw lookup;
+		// masked for years because pre-splice tokenizers never emitted hyphen-preserved values).
+		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+
+		if (parts.length === 0) continue
+
+		for (let i = 0; i < parts.length; i++) {
+			const body = parts[i]!.replace(/\*/g, "")
+
+			if (!body) continue
+			// The caller's trailing `*` applies to the FINAL part ("Thiron-Gard*" → "Thiron" Gard*).
+			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+		}
 	}
 
 	return out.join(" ")

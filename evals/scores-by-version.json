@@ -588,6 +588,47 @@
 				}
 			},
 			"notes": "The #884 vocab-splice ship (training-free; v1.9.3a3 encoder unchanged + 10,582 mean-init rows; coordinated model+tokenizer bump). POST-SHIP battery on the published pair: 17/17 PASS incl. both zero-margin postcode floors exactly held — per-tag F1 unmoved at gate precision across the tokenizer change (cross-lingual leakage measured separately: 52/15k EU rows re-tokenize, net-positive, FR coord ni PASS). Coordinate wins: wrong-city CZ 22.4->14.8, PL 27.9->7.9, SK 22.2->13.2, SI 18.9->10.6 (n=1k). Re-score cadence entry #1. [graded_artifact=int8; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v510]"
+		},
+		{
+			"run_id": "nsplice-v2-exonym-meaninit-20260703",
+			"model_version": "5.2.0",
+			"model_path": "@mailwoman/neural-weights-en-us@5.2.0",
+			"corpus_version": "corpus-v0.9.3a3",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v4.15.0-boundary): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-03",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 80000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 94.8,
+					"country_homograph": 87.5,
+					"micro": 86.5,
+					"locality": 78.9,
+					"region": 88.8,
+					"street": 82.6,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 89,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.3,
+					"house_number": 98.4,
+					"region": 50.6,
+					"cedex_real": 89.4
+				},
+				"de": {
+					"native_locality_anchor_on": 91.1
+				},
+				"arena": {
+					"perturb": 78
+				}
+			},
+			"notes": "Coordinated model+code cut on gate v5.2.0-nordic (one $revision: us.postcode 95→94.8, measurement identity — shipped-fp32 reads the same 94.8, 0/2660 parse diffs; operator-approved). Nordic vocab-splice: SE 83.8→90.2 (p90res 113→12.7km), NO 92.7→98.1, DK 91.4→95.2, Åbo 0.12km; 14/14 ni; US byte-identical. Post-ship gauntlet 19/19 + metamorphic PASS. Carries the resolver arc #910/#920/#922/#923/#927/#929/#930/#931. [graded_artifact=fp32; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v193/v520-gate-out]"
 		}
 	]
 }

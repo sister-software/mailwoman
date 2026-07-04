@@ -303,7 +303,12 @@ def _main() -> None:
         "codepoint-overlap gate runs and FAILS on unaccepted overlap; the per-locale report "
         "is written next to the spliced tokenizer either way.",
     )
-    bt.add_argument("--extra-text", type=Path, default=None, help="extra corpus lines (gazetteer alias names) — the exonym-awareness feed")
+    bt.add_argument(
+        "--extra-text",
+        type=Path,
+        default=None,
+        help="extra corpus lines (gazetteer alias names) — the exonym-awareness feed",
+    )
     bt.add_argument("--extra-repeat", type=int, default=10)
     bt.add_argument(
         "--accept-overlap",

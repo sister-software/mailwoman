@@ -241,6 +241,12 @@ class TrainConfig:
     # sees only head params. Distinguishes encoder-representation sufficiency from output-head
     # competition — see issue #492's pre-registered ladder.
     freeze_encoder: bool = False
+    # #901 v2.1.3: freeze the token-embedding table during fine-tune. The zero-shard control
+    # proved ANY 2k init_from fine-tune of a mean-init surgery base breaks the same SI short-
+    # village rows (4/4 casualty row-identity, no shards attached) — gradient through the
+    # never-trained mean-init rows is the mechanism. Freezing removes it while the encoder
+    # layers learn the boundary rules (the multi-word wins were encoder-layer learning).
+    freeze_token_embeddings: bool = False
     # Trackio experiment tracking (Hugging Face). Off by default so existing configs and
     # plain/CI runs stay bit-identical and never depend on the optional 'trackio' package.
     # When enabled, the metrics written to train_log.csv are also streamed to a Trackio

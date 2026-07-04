@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "5.2.0",
-	"model_lineage": "v5.1.0 bsplice-expanded (UNCHANGED encoder — see below) + the #912-lever-4 NORDIC vocab-splice with FVT mean-init embeddings (the same training-free #884 mechanism, second application): +5,331 Nordic diacritic pieces from OA fi/se/no/dk/is STREET/CITY text + the gazetteer ALIAS names (the exonym feed — 'Åbo' is Swedish for Turku and appears in no native OA text; without alias mass the piece is never minted and the decode drop survives, measured as the 134km v1 residual). Tokenizer v0.7.1-nsplice = v0.6.0-bsplice + the Nordic pieces; English tokenization byte-identical; US resolution byte-identical 2000/2000. Gate: 14/14 per-locale ni PASS (incl. the five #900-accepted acute-vowel overlap locales CZ/ES/PL/SI/SK), SE resolve 83.8→90.2% (p90res 113→12.7km), NO 92.7→98.1%, DK 91.4→95.2%, Åbo→Turku 0.12km. PRIOR LINEAGE: v1.9.3a3-anchor-absorption encoder (UNCHANGED, step 80000 — see the v4.15.0 lineage below) + the #884 UNIGRAM vocab-splice with FVT mean-init embeddings — the training-free CZ/PL/SK/SI diacritic fix. The 48k SentencePiece vocab carried the diacritic CHARACTERS but no multi-char subwords containing them, so every diacritic isolated its own piece (Vysoká → [▁V, ys, ok, á], ~3.3× English fertility) and the fragmented span resolved to the WRONG CITY. A shard retrain (v196) was falsified (held US, regressed CZ wrong-city 44→58% at convergence). The fix: train a CZ/PL SP unigram, splice ONLY its diacritic-bearing pieces into the vocab (48,000 → 58,582; a diacritic piece can never match an ASCII span, so English tokenizes byte-identically BY CONSTRUCTION — asserted 0/2000), and FVT mean-init the 10,582 new embedding rows from their old-tokenizer constituents. The encoder is byte-for-byte v1.9.3a3; a 2k fine-tune was ablated and retired as slightly harmful. Slovak + Slovenian ride the same pieces for free (shared codepoints + morphology). PRIOR LINEAGE: v1.9.3a3-anchor-absorption / step 80000 — the #220/#723 postcode-anchor-pollution fix on top of v1.9.2-multilocale-au (shipped v4.14.0). Pre-seeded from the v1.9.2 step-040000 checkpoint, continued to 80k on A100. TWO coordinated levers: (1) anchor_paint_mode=shaped — the postcode anchor is painted at TRAIN time on the same postcode-SHAPED spans inference fires on (neural/postcode-anchor.ts collectMatches), closing the #723 WHERE gap (training only ever saw the anchor on GOLD postcode spans, so the model never learned to OVERRIDE a present anchor when a leading 5-digit token is a house number that looks like a ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the locality discriminator — leading-5-digit + trailing-postcode → house_number, + locality → house_number, + NO locality + state → postcode (the VT E911 format). RESULT: SLICE-H anchor-ON 20→100 (the #723 leading-5-digit house# bug fixed) at ZERO coordinate cost, confirmed by the non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7→97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3→259.1; VT — the E911 leading-postcode state where the entire trade lives — FLAT at the coordinate (loc 92.6=92.6), SD +1.0. Trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3), both coordinate-invisible; gate revised (scripts/eval/gates/v4.15.0-boundary.json) with a stated reason, operator-approved. mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config (requires) UNCHANGED from v1.9.2.",
-	"phase": "v5.1.0 vocab-splice (#884) — training-free CZ/PL/SK/SI diacritic fix: spliced tokenizer (48k→58.6k) + mean-init rows on the unchanged v1.9.3a3 encoder. Wrong-city at n=1k: CZ 22.4→14.8%, PL 27.9→7.9%, SK 22.2→13.2%, SI 18.9→10.6%; US byte-identical (int8 row dumps identical to v4.15.0)",
+	"version": "5.3.0",
+	"model_lineage": "v2.2.0-full-family / step 100000 — the FIRST ground-up from-scratch train on the spliced vocab (v0.8-era schedule: lr 1.5e-4, warmup 1000, batch 128; corpus v0.10.0 = 698 shards incl. the four-orthography leading-name-boundary family @6.0: fr-bare-street #831 / si-bare-village / no-street-led / cz-pcfirst-preposition; tokenizer v0.7.1-nsplice UNCHANGED — model-only bump). Archived NO-PROMOTE 2026-07-03 under the pre-#942 calculus (SI sentinels model-level fail); PROMOTED 2026-07-04 after the same-stack re-gate under the #942 floor (operator fork on #901). THE HEADLINE: fixes #949 — the shipped v5.2.0 pair fragmented FR streets bare AND anchored (16/40, 13/40 on the standing 40-row harness; 'Allée'→'e' at the é piece boundary; ungated because no fr.street floor existed) — v2.2.0 reads 34/40 bare / 37/40 anchored. Re-gate: US-2k ni PASS (p50 3.27 IDENTICAL), FR-3k ni PASS deconfounded (1.30km both), CZ wrong-city 13.7→6.6%, SK 13.3→6.6%, PL 7.1→6.2%; SE +4.6pp resolve (90.2→94.8), Åbo 0.12km vs 859km. TRADES (operator-approved, stated): SI wrong-city 8.7→11.4% (+2.7pp) / resolve −1.5pp — the composition-insensitive no-street class, floored model-independently by postalCompoundRecovery (#942 default-ON: candidate+floor recovered ALL 55 composition-lost rows, SI 92.2→100% resolve on the insurance leg); fr.postcode 99.2 (floor revised 99.3→99.2, scripts/eval/gates/v5.3.0-family.json, stated reason); int8 homograph quantization delta 2.4 vs the 1.5 cap (fp32 passes every floor; int8 homograph 85.1 clears its 83.3 floor) — per-artifact exception, cap unchanged. PRIOR LINEAGE (the v5.2.0 base this replaces): v5.1.0 bsplice-expanded (UNCHANGED encoder — see below) + the #912-lever-4 NORDIC vocab-splice with FVT mean-init embeddings (the same training-free #884 mechanism, second application): +5,331 Nordic diacritic pieces from OA fi/se/no/dk/is STREET/CITY text + the gazetteer ALIAS names (the exonym feed — 'Åbo' is Swedish for Turku and appears in no native OA text; without alias mass the piece is never minted and the decode drop survives, measured as the 134km v1 residual). Tokenizer v0.7.1-nsplice = v0.6.0-bsplice + the Nordic pieces; English tokenization byte-identical; US resolution byte-identical 2000/2000. Gate: 14/14 per-locale ni PASS (incl. the five #900-accepted acute-vowel overlap locales CZ/ES/PL/SI/SK), SE resolve 83.8→90.2% (p90res 113→12.7km), NO 92.7→98.1%, DK 91.4→95.2%, Åbo→Turku 0.12km. PRIOR LINEAGE: v1.9.3a3-anchor-absorption encoder (UNCHANGED, step 80000 — see the v4.15.0 lineage below) + the #884 UNIGRAM vocab-splice with FVT mean-init embeddings — the training-free CZ/PL/SK/SI diacritic fix. The 48k SentencePiece vocab carried the diacritic CHARACTERS but no multi-char subwords containing them, so every diacritic isolated its own piece (Vysoká → [▁V, ys, ok, á], ~3.3× English fertility) and the fragmented span resolved to the WRONG CITY. A shard retrain (v196) was falsified (held US, regressed CZ wrong-city 44→58% at convergence). The fix: train a CZ/PL SP unigram, splice ONLY its diacritic-bearing pieces into the vocab (48,000 → 58,582; a diacritic piece can never match an ASCII span, so English tokenizes byte-identically BY CONSTRUCTION — asserted 0/2000), and FVT mean-init the 10,582 new embedding rows from their old-tokenizer constituents. The encoder is byte-for-byte v1.9.3a3; a 2k fine-tune was ablated and retired as slightly harmful. Slovak + Slovenian ride the same pieces for free (shared codepoints + morphology). PRIOR LINEAGE: v1.9.3a3-anchor-absorption / step 80000 — the #220/#723 postcode-anchor-pollution fix on top of v1.9.2-multilocale-au (shipped v4.14.0). Pre-seeded from the v1.9.2 step-040000 checkpoint, continued to 80k on A100. TWO coordinated levers: (1) anchor_paint_mode=shaped — the postcode anchor is painted at TRAIN time on the same postcode-SHAPED spans inference fires on (neural/postcode-anchor.ts collectMatches), closing the #723 WHERE gap (training only ever saw the anchor on GOLD postcode spans, so the model never learned to OVERRIDE a present anchor when a leading 5-digit token is a house number that looks like a ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the locality discriminator — leading-5-digit + trailing-postcode → house_number, + locality → house_number, + NO locality + state → postcode (the VT E911 format). RESULT: SLICE-H anchor-ON 20→100 (the #723 leading-5-digit house# bug fixed) at ZERO coordinate cost, confirmed by the non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7→97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3→259.1; VT — the E911 leading-postcode state where the entire trade lives — FLAT at the coordinate (loc 92.6=92.6), SD +1.0. Trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3), both coordinate-invisible; gate revised (scripts/eval/gates/v4.15.0-boundary.json) with a stated reason, operator-approved. mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config (requires) UNCHANGED from v1.9.2.",
+	"phase": "v5.3.0 v2.2.0-full-family — from-scratch on nsplice; fixes the #949 FR street fragmentation (bare 16→34/40), halves CZ/SK wrong-city (13.7→6.6 / 13.3→6.6), SE +4.6pp, Åbo fixed; SI no-street trade floored by #942",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "corpus-v0.9.3a3 = v0.9.2-multilocale-au base + synth-anchor-absorption counter-shard @ source-weight 6.0 (the #220/#723 leading-5-digit discriminator, built by scripts/build-anchor-absorption-shard.mjs from 42,312 real US ZIPs)",
+		"corpus_version": "corpus-v0.10.0-boundary-family = 698 shards; the v0.9.4 base (v0.9.3a3 + synth-fr-bare-street) + the #901 family: synth-si-bare-village, synth-no-street-led, synth-cz-pcfirst-preposition — all real-tuple synthetic, 3 orders, balanced polarity, source-weight 6.0",
 		"tokenizer_version": "0.7.1-nsplice",
-		"steps": 80000,
-		"best_step": 80000,
+		"steps": 100000,
+		"best_step": 100000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v1.9.3a3-anchor-absorption: RESUMED from the v1.9.2-multilocale-au step-040000 checkpoint (pre-seeded into the run's output dir, --resume auto) and continued to 80k. TWO coordinated levers, converged via the A0→A3 probe ladder: (1) anchor_paint_mode=shaped (a LOAD-TIME transform in encode_row — no corpus rebuild; realign_anchor_to_pieces_shaped paints the anchor on collect_matches postcode-shaped spans, mirroring neural/postcode-anchor.ts inference, so the model trains on the anchor firing on a house-number-that-looks-like-a-ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the CASE-H/CASE-P locality discriminator (the A3 fix the A2 shard lacked — A2 cost house# by flipping leading-5-digit→postcode on locality-bearing no-trailing rows; hn-regression-diff.ts diagnosed 132/132). conventions loss-mask OFF; CE-only; lr=1.5e-4 constant, warmup 1000, seed 42. ANCHOR_FEATURE_DIM=11 unchanged (resume-safe). Loss-abort gate PASSED; the A0→A3 probe ladder + the full-run grade adjudicated the locality discriminator.",
+		"recipe": "v2.2.0-full-family: FROM SCRATCH (no resume, no init_from — the probe ladder falsified every fine-tune vehicle on the mean-init surgery base, #901). v0.8-era schedule: lr 1.5e-4 constant, warmup 1000, batch 128, bf16, seed 42, 100k steps (~3.6 A100-h, loss 0.646, val macro_f1 0.7613, zero NaN). anchor_paint_mode=shaped + gazetteer choreography carried; conventions loss-mask OFF; CE-only. Config corpus-python/src/mailwoman_train/configs/v2.2.0-full-family.yaml.",
 		"tokenizer_splice": "corpus-python/src/mailwoman_train/tokenizer_splice.py (build-tokenizer + mean-init): CZ/PL SP unigram trained on OpenAddresses CZ (countrywide, ČÚZK/RÚIAN) + PL (voivodeship dumps, GUGiK) address text; only non-ASCII-bearing pieces appended (English-safety assertion enforced). Embedding rows FVT mean-init from old-tokenizer constituent pieces; NO gradient steps (the 2k fine-tune ablation was retired).",
 		"data_attribution": [
 			"OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
@@ -29,7 +29,7 @@
 		"max_position_embeddings": 128,
 		"vocab_size": 58582,
 		"num_labels": 33,
-		"params": "33.7M (the 29.6M v1.9.3a3 encoder+48k-embedding unchanged + 10,582 spliced mean-init embedding rows ≈ +4.1M)",
+		"params": "33.9M from scratch (6-layer/384-hidden encoder + the 58,582-piece nsplice embedding — same architecture as the v1.9.x line, fresh weights)",
 		"crf_at_training": false,
 		"crf_at_inference": true,
 		"phrase_priors": true
@@ -104,14 +104,14 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v5.1.0 / the #884 vocab-splice — the training-free CZ/PL/SK/SI diacritic fix on the UNCHANGED v1.9.3a3 encoder (v4.15.0). COORDINATED model+tokenizer bump: the spliced tokenizer.model (58,582 pieces) ships in this bundle and MUST be loaded with this model (grading either against the other version's counterpart is invalid — per-locale-f1/promotion-gate enforce tokenizer_version agreement). US safety is a GUARANTEE, not an observation: a diacritic piece cannot match an ASCII span, so English input_ids are unchanged and the encoder is untouched — verified at the strongest level (the int8 candidate's US-2k per-row dump is BYTE-IDENTICAL to shipped v4.15.0's; region_correct 0.999 both). Wrong-city (resolved >20km, n=1k reservoir OA sets, pre-registered gates): CZ 22.4→14.8% (CI [−10.3,−5.1]pp), PL 27.9→7.9% ([−22.7,−17.4]), SK 22.2→13.2% ([−11.5,−6.4]), SI 18.9→10.6% ([−10.4,−6.4]) — SK/SI are free riders on the CZ/PL pieces (fertility −52%/−35%, zero additional bytes). Resolved-p50 improve CIs wholly negative in all four; resolve rates +2.0/−0.5/+1.9/+4.4pp. KNOWN COST (operator-accepted): int8 29.8→33.8 MB (+4.06 MB, all embedding bytes) — ~3.8 MB over the ~30 MB browser SLO; WASM latency flat (~41–44 ms p50/p95, Node 1-thread bound), session load +19 ms. Residual CZ/PL wrong-city is decode-boundary/namesake + coverage territory (name-key/span levers), not vocab. Vocab-splice does NOT scale to CJK (CharCNN is that path). Ship-config (requires) UNCHANGED — anchor+gazetteer+conventions(auto). Pre-splice baseline: parity-scorecard-2026-07-02.md (17/17 floors PASS on v4.15.0/v5.0.0).",
+	"notes": "v5.3.0 / v2.2.0-full-family — MODEL-ONLY bump (tokenizer v0.7.1-nsplice byte-identical to v5.2.0's). The promote's reason for existing: #949 — v5.2.0 shipped a severe ungated FR street fragmentation (bare 16/40, anchored 13/40; no fr.street floor in the gate, golden-dev FR is postcode-anchored canonical, so nothing caught it). v2.2.0 fixes it (34/40 bare, 37/40 anchored) and banks CZ 13.7→6.6% / SK 13.3→6.6% / PL 7.1→6.2% wrong-city, SE +4.6pp resolve, Åbo 0.12km vs 859km. Every ni leg holds (US p50 identical 3.27; FR deconfounded identical 1.30). THE STATED TRADES: (1) SI no-street short-forms — wrong-city +2.7pp / resolve −1.5pp; this is the training-composition-INSENSITIVE class (#901: 5 vehicles incl. from-scratch all tip it; the shipped lineage's hold was a basin artifact) and it is floored model-independently by postalCompoundRecovery (#942 default-ON — candidate+floor recovered all 55 composition-lost rows); (2) fr.postcode 99.2 vs the old 99.3 zero-margin floor — revised with a stated reason (gate v5.3.0-family.json); (3) int8 homograph quantization delta 2.4 vs the 1.5 cap — fp32 passes all floors, int8 homograph 85.1 clears 83.3; per-artifact exception. CALIBRATION CAVEAT: calibration.json/calibration-per-locale.json are carried forward but were fitted on the v1.x lineage — a from-scratch model's confidence distribution differs; re-fit is the standing recommendation and applies with force here (calibration is opt-in; default output unaffected). Ship-config (requires) UNCHANGED. Evidence: gate-v193/RESULTS.md (pre-registrations + verdicts), gate-v220-regate/ dumps, v220-battery.log, #901/#949.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32, max fp32↔int8 delta 0.3pp)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=58582 (v0.6.0-bsplice — the #884 diacritic splice; ships WITH the model, both runtimes load it from this bundle)",
 		"max_sequence_length": 128,
 		"opset": 17,
-		"fp32_size_mb": 134.7,
-		"int8_size_mb": 33.8
+		"fp32_size_mb": 136.3,
+		"int8_size_mb": 34.2
 	},
 	"files": {
 		"model": "model.onnx",
@@ -126,8 +126,45 @@
 		"held_out_ece_calibrated": 0.0035,
 		"note": "calibration.json + calibration-per-locale.json carried forward from v4.4.0 (architecture + label space unchanged across v1.5.0→v1.8.0). Re-fit recommended next train. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
-	"base_relpath": "/data/models/bsplice-expanded (v1.9.3a3 step-080000 encoder + FVT mean-init spliced embeddings; expanded HF-format checkpoint also at R2 mailwoman-assets/models/bsplice-expanded/)",
+	"base_relpath": "/mnt/playpen/mailwoman-data/models/candidates/v220-full-family (fp32 + int8; training output on Modal volume)",
 	"eval": {
+		"gate_2026_07_04_v530_full_family": {
+			"promotion_gate": "v5.3.0-family gate (clone of v5.2.0-nordic + the fr.postcode 99.3→99.2 revision): PASS with the three operator-approved trades stated above. The promote decision ran on the 2026-07-03 RE-GATE of the archived candidate under the #942-floored stack — fresh dumps BOTH arms, same stack (the #942-D1 stack-drift lesson): 6/6 ni legs PASS; the SI wrong-city re-gate bar (≤+2pp) failed at +2.7pp and was adjudicated at the fork, not silently absorbed. Original 100k battery: 15/17 floors (the two above), mask-regression PASS, zero NaN.",
+			"gate_docs": [
+				"gate-v193/RESULTS.md (pre-registered salvage read + re-gate, 2026-07-03)",
+				"#901 (the campaign + the promote fork), #949 (the FR fragmentation this fixes)"
+			],
+			"fr_bare_street_40row": {
+				"v5_2_0": {
+					"bare": "16/40",
+					"anchored": "13/40"
+				},
+				"v5_3_0": {
+					"bare": "34/40",
+					"anchored": "37/40"
+				}
+			},
+			"wrong_city_resolved_gt20km_n1k": {
+				"cz": {
+					"v5_2_0": 13.7,
+					"v5_3_0": 6.6
+				},
+				"sk": {
+					"v5_2_0": 13.3,
+					"v5_3_0": 6.6
+				},
+				"pl": {
+					"v5_2_0": 7.1,
+					"v5_3_0": 6.2
+				},
+				"si": {
+					"v5_2_0": 8.7,
+					"v5_3_0": 11.4,
+					"$note": "the stated trade — floored by #942"
+				}
+			},
+			"ni_legs": "US-2k p50 3.27 identical, resolve 1.000 both; FR-3k p50 1.30 identical (deconfounded same-stack); SE +4.6pp resolve; Abo 0.12km vs 859km"
+		},
 		"gate_2026_07_02_v510_vocab_splice": {
 			"promotion_gate": "#884 gates ALL PASS, pre-registered before measurement (gate log: /mnt/playpen/mailwoman-data/scratch-825/gate-v193/RESULTS.md; evidence comments on #884). US-2k non-inferiority passed at the strongest possible level — the int8 candidate's per-row dump is byte-identical to shipped v4.15.0's. CZ/PL/SK/SI improve gates: wrong-city diff CIs wholly negative, resolved-p50 improve CIs wholly negative, resolve-rate floors held. Functional eyeball: CZ churn (103 fixed / 43 newly-wrong) diagnosed as a pre-existing locality-truncation→namesake residual exposed where the baseline won by garbage-parse fluke — NOT a parse regression (10/10 rows read). The int8 SLO overage (+3.8 MB) was an explicit operator accept (four locales for the same bytes).",
 			"gate_docs": [
@@ -303,8 +340,8 @@
 		}
 	},
 	"files_md5": {
-		"$comment": "Source artifact md5s (int8 model-nsplice-v2-int8.onnx + tokenizer v0.7.1-nsplice). The PUBLISHED files are re-verified against these at release Step 4 (npm pack); update if the publish pipeline post-processes either.",
-		"model.onnx": "2c18d8545048e116564069647978532b",
+		"$comment": "Source artifact md5s (int8 model-v220-full-family-100k-int8.onnx + tokenizer v0.7.1-nsplice, unchanged from v5.2.0). The PUBLISHED files are re-verified against these at release Step 4.",
+		"model.onnx": "a64ad2e6b9ee73a6b63f3c94c01b1966",
 		"tokenizer.model": "8e1cab7c501af834fbfcd6c4b8d78cad"
 	},
 	"capabilities": {

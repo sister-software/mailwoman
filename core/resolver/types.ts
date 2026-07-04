@@ -40,6 +40,17 @@ export interface ResolvedPlace {
 	 */
 	score: number
 	/**
+	 * The candidate's PROMINENCE (see the glossary): how important this place is when breaking ties among equally-good
+	 * text matches. Computed by the backend as the population term (log-scaled, capped at `populationBoost`, default 4.0)
+	 * plus the best proximity-bias term (distance-decayed, capped at `biasBoost`, default 4.0). Domain [0,
+	 * populationBoost + biasBoost] — typically [0, 8]; HIGHER = more prominent = ranked EARLIER within an exact-match
+	 * tier. Exists because raw bm25 `score` is length-poisoned for famous places (a capital's alias-heavy index entry
+	 * reads ~15 pts worse than a tiny namesake's clean one), so within-tier ordering keys on this instead; the #369
+	 * anchor re-rank adds `anchorWeight × posterior[country]` on top. Optional — backends that don't compute it degrade
+	 * to score-based ordering.
+	 */
+	prominence?: number
+	/**
 	 * Set by the backend when this candidate is an EXACT name/alias match for the query (vs a partial token match). The
 	 * postcode-anchor re-rank (#369) uses it as the PRIMARY key so a country posterior can pin the country WITHOUT
 	 * crossing the exact-match tier: "ME" under a confident US posterior stays Maine (US exact) rather than promoting the
@@ -83,6 +94,8 @@ export interface ResolverBackend {
 		 * recovering localities the name-match alone misses. Backends without postcode support ignore it.
 		 */
 		postcode?: string
+		/** Proximity-bias points — a SOFT prominence re-rank; backends without support ignore it. */
+		bias?: Array<{ lat: number; lon: number; weight?: number }>
 		limit?: number
 	}): Promise<ResolvedPlace[]>
 	/**
@@ -217,6 +230,13 @@ export interface ResolveOpts {
 	 */
 	defaultCountry?: string
 	/**
+	 * Ordered proximity-bias points (viewport center first, then user location, …), each optionally weighted (default
+	 * 1.0). SOFT ranking signal only — candidates near a bias point win prominence ties (the ambiguous-postcode case:
+	 * "48026" follows the map view to Michigan or Italy); recall and filters are untouched, and omitting it keeps ranking
+	 * byte-identical. Callers: the CLI's `--bias lat,lon[:weight]`, the demo's viewport/user hints, `GeocodeDeps.bias`.
+	 */
+	bias?: Array<{ lat: number; lon: number; weight?: number }>
+	/**
 	 * When a resolved parent constrains a child lookup (`parentID` is passed to the backend as a hard descendant filter)
 	 * and that filtered lookup returns NOTHING, retry the lookup once without the parent constraint. Guards against an
 	 * incomplete gazetteer hierarchy (a real locality whose ancestor chain is missing its region) or a mis-resolved
@@ -330,6 +350,23 @@ export interface ResolveOpts {
 	 * Default 50.
 	 */
 	spanRescoreGateKm?: number
+	/**
+	 * Postal-compound recovery inside the span-rescore tier (#942). The knife-edge no-street query shape ("Kožljek 7,
+	 * 1382 Kožljek") fails as a COMPOUND: the parse globs the trailing city into the postcode span ("1382 Kožljek"),
+	 * which then (a) resolves as neither postcode nor locality and (b) BLOCKS its own city tokens from span-rescore's
+	 * recovery (a confident postcode span is avoided). Proven training-composition-insensitive on #901 — five vehicles
+	 * including a full from-scratch retrain all tip this class, so the floor lives here, model-independently.
+	 *
+	 * When on and the tree resolved nothing: the failed postcode span only blocks its CODE-shaped tokens (digit-bearing;
+	 * the residual city tokens become recoverable), the postcode-consistency anchor retries with that code subset, and
+	 * the failed postcode NODE is decorated from the code resolution (a postcode-tier coordinate floor, strictly
+	 * subordinate to a recovered locality). Never fires on a resolved tree (the #685 brake).
+	 *
+	 * **Default ON** (operator-promoted 2026-07-03 after the pre-registered gate: SI 25/25 recovery at p50 0.67 km, US/FR
+	 * byte-identical, and the insurance leg — the composition-failed v2.2.0 candidate recovers all 55 lost rows). Set
+	 * `false` to opt out (byte-stable then).
+	 */
+	postalCompoundRecovery?: boolean
 	/**
 	 * Postcode-disambiguated locality selection (#370 "Lever A"). When set, AND a locality resolves far from a resolved
 	 * sibling postcode, re-pick the same-named candidate (from the lookup's already- captured `alternatives`) nearest the

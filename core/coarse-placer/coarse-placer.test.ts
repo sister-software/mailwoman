@@ -14,7 +14,7 @@ import { join } from "node:path"
 
 import { afterAll, describe, expect, test } from "vitest"
 
-import { CoarsePlacer, dequantizeInt8Weights, FEATURE_DIM, featurize } from "./coarse-placer.js"
+import { CoarsePlacer, dequantizeInt8Weights, FEATURE_DIM, featurize, inMapPosterior } from "./coarse-placer.js"
 
 const tmpRoot = mkdtempSync(join(tmpdir(), "coarse-placer-test-"))
 afterAll(() => rmSync(tmpRoot, { recursive: true, force: true }))
@@ -224,5 +224,38 @@ describe("abstention", () => {
 		expect(p.abstained).toBe(true)
 		expect(p.country).toBeNull()
 		expect(p.confidence).toBeCloseTo(0.25, 5)
+	})
+})
+
+// #928: the epsilon floor — tail mass below the floor is dropped before the resolver sees the
+// posterior (the GB→US misroute class: correct argmax, damaging tail), genuine above-floor
+// ambiguity passes through, and floor 0 reproduces the untempered distribution.
+describe("inMapPosterior — #928 epsilon floor", () => {
+	const pred = {
+		country: "GB",
+		confidence: 0.8,
+		abstained: false,
+		probs: { GB: 0.8, US: 0.04, FR: 0.06, OTHER: 0.1 },
+	}
+
+	test("DEFAULT floor is 0 — the full distribution passes through (the shipped contract)", () => {
+		expect(inMapPosterior(pred)).toEqual({ GB: 0.8, US: 0.04, FR: 0.06 })
+	})
+
+	test("an explicit floor drops sub-floor tails, keeps the rest, never includes OTHER", () => {
+		expect(inMapPosterior(pred, { epsilonFloor: 0.05 })).toEqual({ GB: 0.8, FR: 0.06 })
+	})
+
+	test("genuine ambiguity above an explicit floor is preserved (the DK↔NO class)", () => {
+		const split = { country: "DK", confidence: 0.5, abstained: false, probs: { DK: 0.5, NO: 0.4, OTHER: 0.1 } }
+		expect(inMapPosterior(split, { epsilonFloor: 0.05 })).toEqual({ DK: 0.5, NO: 0.4 })
+	})
+
+	test("the argmax always survives, even under an extreme floor", () => {
+		expect(inMapPosterior(pred, { epsilonFloor: 0.99 })).toEqual({ GB: 0.8 })
+	})
+
+	test("abstained / off-map stays null", () => {
+		expect(inMapPosterior({ country: null, confidence: 0.2, abstained: true, probs: {} })).toBeNull()
 	})
 })

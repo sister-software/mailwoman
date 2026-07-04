@@ -20,6 +20,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
@@ -118,27 +119,46 @@ async function main() {
 		strict: true,
 		tier: "server",
 	})
-	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: wofDB }) as never)
-	// #895: the library defaults flipped ON (drift D1/D2). Tri-state pins keep gate legs reproducible
-	// against pre-flip baselines: `--no-admin-coherence`/`--raw-case` reproduce the historical config,
-	// no flag = the current library default. Pin explicitly in pre-registered legs (#718 discipline).
-	const adminCoherencePin = process.argv.includes("--admin-coherence")
-		? true
-		: process.argv.includes("--no-admin-coherence")
-			? false
-			: undefined
-	const normalizeCasePin = process.argv.includes("--normalize-case")
-		? true
-		: process.argv.includes("--raw-case")
-			? false
-			: undefined
-	// #375 night-31: opt-in postcodeConsistency pin (the #370 lever A namesake binder) for the
-	// taxonomy-driven experiment; unset = library default (off).
-	const postcodeConsistencyPin = process.argv.includes("--postcode-consistency") ? true : undefined
+	// #936 option 3 gate legs: `--official-name-exact` flips the official-name sub-tier promotion on
+	// Boolean pin flags via node:util parseArgs (strict off — the string args ride the `arg()` helper).
+	// #895/#718 discipline: the tri-state pins keep gate legs reproducible against pre-flip baselines —
+	// the positive flag pins ON, the `--no-*`/inverse flag pins OFF (the historical config), no flag =
+	// the current library default. Pin explicitly in pre-registered legs.
+	const { values: pins } = parseArgs({
+		options: {
+			// #936: official-language names join the name-exact sub-tier (library default ON since 2026-07-03).
+			"official-name-exact": { type: "boolean" },
+			"admin-coherence": { type: "boolean" },
+			"no-admin-coherence": { type: "boolean" },
+			"normalize-case": { type: "boolean" },
+			"raw-case": { type: "boolean" },
+			// #375 night-31: opt-in postcodeConsistency (the #370 lever A namesake binder).
+			"postcode-consistency": { type: "boolean" },
+			// #942: postal-compound recovery (library default ON since the 2026-07-03 promote).
+			"postal-compound-recovery": { type: "boolean" },
+			"no-postal-compound-recovery": { type: "boolean" },
+		},
+		strict: false,
+	})
+	const tri = (on: keyof typeof pins, off: keyof typeof pins): boolean | undefined =>
+		pins[on] === true ? true : pins[off] === true ? false : undefined
+
+	const officialNameExact = pins["official-name-exact"] === true
+	const resolver = createWOFResolver(
+		new WOFSqlitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined) as never
+	)
+	const adminCoherencePin = tri("admin-coherence", "no-admin-coherence")
+	const normalizeCasePin = tri("normalize-case", "raw-case")
+	const postcodeConsistencyPin = pins["postcode-consistency"] === true ? true : undefined
+	const postalCompoundPin = tri("postal-compound-recovery", "no-postal-compound-recovery")
+	// `--default-country none` = truly UNSCOPED resolution (no country prior at all) — the #936
+	// namesake legs need it; an empty string would still be a (falsy, ambiguous) country value.
+	const defaultCountryArg = arg("default-country", "FR")
 	const resolveOpts = {
-		defaultCountry: arg("default-country", "FR"),
+		...(defaultCountryArg === "none" ? {} : { defaultCountry: defaultCountryArg }),
 		...(adminCoherencePin !== undefined ? { adminCoherence: adminCoherencePin } : {}),
 		...(postcodeConsistencyPin !== undefined ? { postcodeConsistency: postcodeConsistencyPin } : {}),
+		...(postalCompoundPin !== undefined ? { postalCompoundRecovery: postalCompoundPin } : {}),
 	}
 
 	const errs: number[] = []

@@ -1,0 +1,162 @@
+# v2.2.0-full-family — THE #901 ANSWER AS A RECIPE: full FROM-SCRATCH retrain, the v1.9.3a3
+# NOTE (corrected during assembly): v1.9.3a3 was RESUME-lineage, not from-scratch — the modern line
+# never retrained from zero. This config is the v0.8-ERA from-scratch schedule (lr 1.5e-4, warmup
+# 1000, batch 128, 100k steps — the last true from-scratch era) on the v0.10.0-boundary-family
+# corpus (698 shards incl. the validated four-orthography family
+# @6.0) with tokenizer v0.7.1-nsplice (63,913 pieces) — the FIRST ground-up training on the
+# spliced vocab: the mean-init rows finally receive gradients WITH everything else instead of
+# being tipped by partial updates (the four-probe attribution, gate-v193/RESULTS.md 2026-07-03).
+# Acceptance rows: the five #901 knife-edge sentinels (gauntlet) + the full v5.2.0 battery.
+data:
+  # v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to /data) + the 1 fr-bare-street shard.
+  corpus_dir: /data/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family
+  tokenizer_dir: /data/models/tokenizer/v0.7.1-nsplice
+  max_length: 128
+  country_weights: # VERBATIM from v1.9.3a3 (22 countries) — no new locales (surgical).
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+    ES: 1.0
+    IT: 1.0
+    NL: 1.0
+    PT: 1.0
+    BE: 1.0
+    PL: 1.0
+    AT: 1.0
+    CH: 1.0
+    CZ: 1.0
+    DK: 1.0
+    NO: 1.0
+    SE: 1.0
+    FI: 1.0
+    IE: 1.0
+    GB: 1.0
+    SK: 1.0
+    SI: 1.0
+    HR: 1.0
+    HU: 1.0
+    AU: 1.0
+  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street shard.
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    # #251 NEW: the bare-no-postcode FR street shard. 6.0 = targeted-fix precedent.
+    synth-fr-bare-street: 6.0
+    synth-si-bare-village: 6.0 # the family, balanced polarity
+    synth-no-street-led: 6.0
+    synth-cz-pcfirst-preposition: 6.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+
+model: # VERBATIM from v1.9.3a3.
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train: # FROM-SCRATCH, the v0.8-era schedule (lr 1.5e-4, warmup 1000, batch 128) at 100k steps.
+  output_dir: /data/output-v220-full-family-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  # Constant LR 1.5e-4; anchor-dropout curriculum at full strength. Eval every 2k → gate 84/86/88/90/92k and
+  # ship the best (FR street-intact up, US floors held).
+  max_steps: 100000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v1.9.8-bare-street-bsplice-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

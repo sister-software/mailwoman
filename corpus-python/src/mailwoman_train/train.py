@@ -392,6 +392,19 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             raise RuntimeError("freeze_encoder=True but no affix_head params found — set model.use_affix_head: true")
         print(f"[freeze_encoder] frozen={frozen:,} trainable={trainable:,} (affix head only)")
 
+    # #901 v2.1.3: freeze ONLY the token-embedding table (the mean-init surgery rows). Mirrors
+    # the freeze_encoder idiom — explicit filtered param list, loud count print.
+    if getattr(cfg.train, "freeze_token_embeddings", False):
+        frozen = 0
+        for name, p in model.named_parameters():
+            if "token_embeddings" in name:
+                p.requires_grad = False
+                frozen += p.numel()
+        trainable_params = [p for p in model.parameters() if p.requires_grad]
+        if frozen == 0:
+            raise RuntimeError("freeze_token_embeddings=True but no token_embeddings params found")
+        print(f"[freeze_token_embeddings] frozen={frozen:,} trainable={sum(p.numel() for p in trainable_params):,}")
+
     optim = AdamW(
         trainable_params if getattr(cfg.train, "freeze_encoder", False) else model.parameters(),
         lr=cfg.train.learning_rate,
