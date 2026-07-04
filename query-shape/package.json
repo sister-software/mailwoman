@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/query-shape",
-	"version": "5.2.0",
+	"version": "5.3.0",
 	"description": "Cheap structural priors for the runtime pipeline: character class, segmentation, known-format detection. Pure functions, no ML.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
