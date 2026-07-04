@@ -85,6 +85,9 @@ export class CandidateResolverBackend implements ResolverBackend {
 			bbox,
 			postcode: query.postcode,
 			limit: query.limit,
+			// #938: forward the proximity hints (map viewport / user location) so the candidate lookup
+			// re-ranks the exact tier by nearness — dropped here, the demo's viewport bias was inert.
+			bias: query.bias,
 		})
 
 		return hits.map((h) => {

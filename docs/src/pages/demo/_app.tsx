@@ -43,6 +43,7 @@ import {
 	resolveStreet,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
+import type { ResolveBias } from "../../shared/demo-helpers.ts"
 import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "../../shared/httpvfs-street.ts"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 import {
@@ -191,6 +192,10 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	// first resolve, reset when the selected version changes. Held as the in-flight promise so concurrent
 	// resolves share one fetch.
 	const anchorLookupRef = useRef<Map<string, { lat: number; lon: number }> | null>(null)
+	// Optional geolocation bias (#938): populated by the "Use my location" control, read at submit.
+	// A ref (not state) so granting it mid-session doesn't re-render or re-create the submit callback.
+	const geoBiasRef = useRef<{ lat: number; lon: number } | null>(null)
+	const [geoBiasOn, setGeoBiasOn] = useState(false)
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	// Street tier (#377): per-state situs/interp httpvfs lookups, lazy-loaded by parsed region and
 	// cached. Held as the in-flight promise so a fast second submit on the same state shares one load.
@@ -999,9 +1004,24 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// coherence (#263/#822) + span-rescore recovery (#370, internal, default-on) — over the
 				// byte-range candidate lookup. Same passes as the server; the pin ordering (postcode most
 				// precise, cross-country gate) lives in runCascade's hit extraction.
+				// Viewport bias (#938): the map's current center is a SOFT proximity hint, so an in-view
+				// namesake sorts ahead of a distant one at equal exact-tier (48026 → Fraser MI when you're
+				// looking at Michigan, Russi IT near Ravenna). The library's decay is population-CEILINGED,
+				// so a huge population gap still wins regardless of the view — "Paris" stays Paris, FR even
+				// from a US-centered map. Only hint once the user has zoomed past the global view; a
+				// whole-globe center is noise. Geolocation, when granted, joins as a second weaker hint.
+				const bias: ResolveBias = []
+
+				if (map && map.getZoom() >= 4) {
+					const c = map.getCenter()
+					bias.push({ lat: c.lat, lon: c.lng, weight: 1 })
+				}
+
+				if (geoBiasRef.current) bias.push({ ...geoBiasRef.current, weight: 0.6 })
+
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
 				const tBeforeResolve = performance.now()
-				const cascadeHits = await runCascade(wofLookup, tree as { roots: unknown[] }, text)
+				const cascadeHits = await runCascade(wofLookup, tree as { roots: unknown[] }, text, bias)
 				const tResolve = performance.now()
 
 				// Anchor-centroid fallback (postcode-only dead ends): WOF ships placeholder (0,0) for
@@ -1102,6 +1122,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			manifest,
 			selectedVersion,
 			sqljsBaseURL,
+			map,
 		]
 	)
 
@@ -1255,6 +1276,39 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						{busy ? "Parsing…" : "Parse + resolve"}
 					</button>
 				</form>
+				<div className={styles.examples}>
+					<span className={styles.examplesLabel}>Bias:</span>
+					<button
+						type="button"
+						className={styles.exampleBtn}
+						aria-pressed={geoBiasOn}
+						style={geoBiasOn ? { outline: "2px solid var(--ifm-color-primary)", outlineOffset: "1px" } : undefined}
+						title="Add your device location as a soft proximity hint (in addition to the map view). Never a hard filter — a strong population signal still wins."
+						onClick={() => {
+							if (geoBiasOn) {
+								geoBiasRef.current = null
+								setGeoBiasOn(false)
+
+								return
+							}
+
+							if (typeof navigator === "undefined" || !navigator.geolocation) return
+							navigator.geolocation.getCurrentPosition(
+								(pos) => {
+									geoBiasRef.current = { lat: pos.coords.latitude, lon: pos.coords.longitude }
+									setGeoBiasOn(true)
+								},
+								() => setGeoBiasOn(false),
+								{ maximumAge: 600_000, timeout: 8_000 }
+							)
+						}}
+					>
+						{geoBiasOn ? "📍 Using your location" : "📍 Use my location"}
+					</button>
+					<span className={styles.examplesLabel} style={{ opacity: 0.7 }}>
+						the map view already biases nearby namesakes
+					</span>
+				</div>
 				{suggestions.length > 0 ? (
 					<div className={styles.examples} id="addr-suggest-list" role="listbox" aria-label="Place suggestions">
 						<span className={styles.examplesLabel}>Did you mean:</span>

@@ -29,6 +29,7 @@ import { expandPlacetypeFilter } from "@mailwoman/resolver"
 
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.js"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.js"
+import { haversineKm } from "./geo.js"
 import { trigramJaccard } from "./lookup.js"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.js"
 import { hasTable } from "./sqlite-utils.js"
@@ -295,7 +296,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			}
 		}
 
-		return rows.map((row): PlaceCandidate => {
+		const candidates = rows.map((row): PlaceCandidate => {
 			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
 
 			return {
@@ -323,6 +324,48 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 					: {}),
 			}
 		})
+
+		// Proximity re-rank (#938): with bias hints (the demo's map viewport / user location), re-sort the
+		// exact-match candidates by the SAME prominence the FTS server uses (lookup.ts) — population and
+		// nearness in one additive scale — so an in-view namesake wins a tie without a hard filter. Byte-
+		// identical to the plain population order when no bias is passed. `score` here is -neg_rank =
+		// log10(population + 1), so popTerm is the server formula read straight off it. Constants MIRROR
+		// lookup.ts's DEFAULT_WEIGHTS (biasBoost 4, populationBoost 4, populationScaleLog10 6,
+		// proximityScaleKm 100) — the #861 server↔demo parity contract; keep them in lockstep.
+		if (query.bias && query.bias.length > 0) {
+			const BIAS_BOOST = 4.0
+			const POP_BOOST = 4.0
+			const POP_SCALE_LOG10 = 6
+			// SHARPER than lookup.ts's 100 km on purpose: this backend's `score` is log-population ALONE
+			// (no bm25 document term), so the population signal is weaker relative to the bias and the
+			// gentle 100 km decay let a 230 km-distant alias-exact township ("Paris Township", OH) edge
+			// out a global city ("Paris", FR) from a nearby view. A ~30 km scale keeps the boost to
+			// candidates the user is actually LOOKING at — an in-view namesake still wins (Dublin, OH from
+			// an Ohio view), a distant one no longer does (Paris stays FR from a Michigan view).
+			const PROX_SCALE_KM = 30
+			const prominence = (c: PlaceCandidate): number => {
+				const popTerm = POP_BOOST * Math.min(1, Math.max(0, c.score) / POP_SCALE_LOG10)
+				let proxTerm = 0
+
+				if (!(c.lat === 0 && c.lon === 0)) {
+					for (const b of query.bias!) {
+						const d = haversineKm(b.lat, b.lon, c.lat, c.lon)
+						const term = (BIAS_BOOST * (b.weight ?? 1)) / (1 + d / PROX_SCALE_KM)
+
+						if (term > proxTerm) proxTerm = term
+					}
+				}
+
+				return popTerm + proxTerm
+			}
+			// Stable within equal prominence (preserves the population order the B-tree already gave).
+			candidates
+				.map((c, i) => ({ c, i, p: prominence(c) }))
+				.sort((a, b) => b.p - a.p || a.i - b.i)
+				.forEach((x, j) => (candidates[j] = x.c))
+		}
+
+		return candidates
 	}
 
 	close(): void {
