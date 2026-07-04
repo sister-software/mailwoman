@@ -67,7 +67,7 @@ const rows: FRRow[] = args["from-db"]
 					 WHERE locality_norm IS NOT NULL AND postcode IS NOT NULL AND street_raw LIKE '% %'
 					 GROUP BY street_norm ORDER BY number LIMIT 40`
 				)
-				.all() as FRRow[]
+				.all() as unknown as FRRow[]
 		})()
 	: readFileSync(args.fixture, "utf8")
 			.split("\n")
