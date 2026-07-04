@@ -21,8 +21,13 @@ export interface ReleaseInfo {
 	modelSize: string
 	tokenizerVocab: number
 	steps: number
-	hasFST: boolean
-	hasWOFDb: boolean
+	// `hasFst` / `hasWofDb` are WIRE KEYS from the published releases.json — a string contract exempt
+	// from the acronym-casing convention (AGENTS.md). The batch-A sweep capitalized these reads while
+	// the live manifest kept the old keys: every release read `undefined`, silently disabling the WOF
+	// cascade AND the FST for the whole demo from 2026-07-01 to 07-04. Pinned by the manifest
+	// contract test — do not re-sweep.
+	hasFst: boolean
+	hasWofDb: boolean
 	hasAnchor?: boolean
 	hasPolygons?: boolean
 }

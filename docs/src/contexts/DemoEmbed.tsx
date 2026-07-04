@@ -171,9 +171,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// Build staged step labels based on what this release includes.
 				const steps: string[] = ["Loading classifier"]
 
-				if (release?.hasFST) steps.push("Loading FST gazetteer")
+				if (release?.hasFst) steps.push("Loading FST gazetteer")
 
-				if (release?.hasWOFDb) steps.push("Loading WOF database")
+				if (release?.hasWofDb) steps.push("Loading WOF database")
 				setLoadingStepLabels(steps)
 
 				// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the
@@ -229,7 +229,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 					// No calibration table for this version — raw scores it is.
 				}
 
-				if (release?.hasFST) {
+				if (release?.hasFst) {
 					try {
 						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, selectedVersion)
 						setFSTMatcher(fstResult.matcher)
@@ -243,7 +243,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// Step 1 complete: FST loaded (or skipped).
 				setLoadingStepIndex(1)
 
-				if (release?.hasWOFDb) {
+				if (release?.hasWofDb) {
 					try {
 						const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("../shared/httpvfs-resolver")
 						const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL)
