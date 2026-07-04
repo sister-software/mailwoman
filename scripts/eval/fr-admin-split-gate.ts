@@ -30,9 +30,16 @@ import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
 
+/**
+ * CONVENTION EPOCH 2026-07-04 (#945, operator-promoted): the DEFAULT scoring coordinate is the one production's
+ * result-assembly ladder picks — LOCALITY over postcode (geocode-core `adminPriority`). The harness historically scored
+ * the postcode point (rank 6 > 5), which measured a non-production preference and hid a 1.5 km-class FR gap for weeks.
+ * All dumps BEFORE this epoch are postcode-convention: NEVER compare across conventions (the tokenizer-F1 rule,
+ * coordinate edition). `--prefer-postcode-coord` reproduces the old convention for continuity runs only.
+ */
 const PLACETYPE_RANK: Record<string, number> = {
-	postalcode: 6,
-	locality: 5,
+	locality: 6,
+	postalcode: 5,
 	localadmin: 4,
 	borough: 4,
 	county: 3,
@@ -40,13 +47,8 @@ const PLACETYPE_RANK: Record<string, number> = {
 	country: 0,
 }
 
-/**
- * #945 residual instrumentation: production's result-assembly ladder (geocode-core `adminPriority`) prefers LOCALITY
- * over postcode; this harness historically preferred the postcode point (rank 6 > 5). `--prefer-locality-coord` mirrors
- * production so the two coordinate conventions can be measured against the same golden. Not a default flip — the choice
- * is the open trade-off on #945.
- */
-const PRODUCTION_LADDER_RANK: Record<string, number> = { ...PLACETYPE_RANK, locality: 6, postalcode: 5 }
+/** The pre-epoch (postcode-point) convention — continuity runs against pre-2026-07-04 dumps only. */
+const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
 interface Resolved {
 	id: number
 	name: string
@@ -145,7 +147,11 @@ async function main() {
 			// #942: postal-compound recovery (library default ON since the 2026-07-03 promote).
 			"postal-compound-recovery": { type: "boolean" },
 			"no-postal-compound-recovery": { type: "boolean" },
-			// #945 residual: score the coordinate production's ladder would pick (locality over postcode).
+			// Convention epoch 2026-07-04: locality-first is the DEFAULT (production's ladder). This flag
+			// reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
+			"prefer-postcode-coord": { type: "boolean" },
+			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention; it IS
+			// the default now, so it's a no-op.
 			"prefer-locality-coord": { type: "boolean" },
 		},
 		strict: false,
@@ -212,7 +218,7 @@ async function main() {
 		}
 		const best = mostSpecific(
 			collectResolved(await resolver.resolveTree(tree, resolveOpts)),
-			pins["prefer-locality-coord"] === true ? PRODUCTION_LADDER_RANK : PLACETYPE_RANK
+			pins["prefer-postcode-coord"] === true ? POSTCODE_CONVENTION_RANK : PLACETYPE_RANK
 		)
 
 		if (best) {

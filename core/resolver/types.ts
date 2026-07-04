@@ -375,7 +375,11 @@ export interface ResolveOpts {
 	 * `postcode_city_mismatch`. Targets the dominant failure mode on the EU/AU panel — a same-named town resolved to the
 	 * wrong instance while the postcode that would disambiguate it sits resolved in the same tree (e.g. "06260
 	 * Saint-Pierre" → 617 km off, postcode 06260 correct). Only bites where the backend resolved the postcode to a point
-	 * (so it composes with postcode coverage, #193). Default-off + byte-stable when unset.
+	 * (so it composes with postcode coverage, #193).
+	 *
+	 * **Default ON** (operator-promoted 2026-07-04 after the corrected gate: FI 231 wins / 0 losses, SI 37/6, CZ 47/2, US
+	 * aggregates byte-flat with 9/2,000 rows touched — the four losses being two golden-data errors the pass correctly
+	 * flags as `postcode_city_mismatch` and one bad ZIP centroid). Explicit `false` opts out (byte-stable then).
 	 */
 	postcodeConsistency?: boolean
 	/**
