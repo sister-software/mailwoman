@@ -189,6 +189,12 @@ export function buildWorkspaceAliases(): Record<string, string> {
 
 	if (resolverDir) {
 		aliases["@mailwoman/resolver/span-rescore"] = resolveWorkspaceFile(resolverDir, "span-rescore")
+		// `@mailwoman/resolver/resolve` — createWOFResolver/resolveTree for the demo's #861 shared
+		// cascade. The bare-barrel alias above (deliberately) reaches only core's types module — its
+		// "createWOFResolver is never bundled" premise went stale the day #861 landed, and the miss
+		// was invisible for days behind the manifest wire-key bug (the cascade never executed).
+		// Same subpath pattern as span-rescore; package exports carry "./resolve" for node/tsc.
+		aliases["@mailwoman/resolver/resolve"] = resolveWorkspaceFile(resolverDir, "resolve")
 	}
 
 	return aliases

@@ -7,6 +7,12 @@
  *   PipelineExplorer embeddable component and the full demo page.
  */
 
+// STATIC on purpose: a dynamic-import destructure of this barrel gets tree-shaken by webpack's
+// usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
+// which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
+// behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
+import { createWOFResolver } from "@mailwoman/resolver/resolve"
+
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { MailwomanLookupLike } from "./resources.tsx"
 
@@ -319,7 +325,6 @@ export async function runCascade(
 	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
 	const backend = new CandidateResolverBackend(lookup)
-	const { createWOFResolver } = await import("@mailwoman/resolver")
 	const resolver = createWOFResolver(backend as never)
 
 	// adminCoherence is the point of the convergence (the passes the old cascade approximated);

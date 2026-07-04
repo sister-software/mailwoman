@@ -18,6 +18,7 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js",
+		"./resolve": "./out/resolve.js",
 		"./span-rescore": "./out/span-rescore.js"
 	},
 	"publishConfig": {
