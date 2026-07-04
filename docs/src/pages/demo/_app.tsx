@@ -394,7 +394,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 
 				if (cancelled) return
 
-				if (release?.hasFST) {
+				if (release?.hasFst) {
 					try {
 						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, selectedVersion)
 						setFSTMatcher(fstResult.matcher)
@@ -405,7 +405,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					}
 				}
 
-				if (release?.hasWOFDb) {
+				if (release?.hasWofDb) {
 					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
 						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
 						const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
