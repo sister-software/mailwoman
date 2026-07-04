@@ -272,7 +272,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
 
 /**
  * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + WASM) into `destDir`. The demo loads these at
- * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDBWorker — so webpack never sees
+ * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
  * them. That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is exactly
  * what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
  *
