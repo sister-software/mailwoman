@@ -16,8 +16,14 @@
  *
  *   Sql.js-httpvfs ships a webpack UMD bundle (not ESM) and a Worker + WASM. The demo-assets plugin
  *   stages all three into `static/mailwoman/sqljs/`; we load the UMD via a classic <script> (→
- *   `window.createDBWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
+ *   `window.createDbWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
  *   webpack — that's what keeps the Docusaurus build warning-free.
+ *
+ *   `createDbWorker` (lowercase b) is sql.js-httpvfs's OWN export name — the acronym-casing
+ *   convention explicitly exempts external library names (AGENTS.md), and the batch-B sweep
+ *   (da54bc8c) violating that here silently killed the street tier for three days: the UMD loaded,
+ *   `window.createDbWorker` never existed, and the demo fell back to the admin cascade. The
+ *   contract test pins the library's export name against this file.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
@@ -100,7 +106,7 @@ interface HTTPVFSWorker {
 	bytesRead(): Promise<number>
 }
 
-/** The raw shape `createDBWorker` resolves to — `worker` is the Comlink proxy. */
+/** The raw shape `createDbWorker` resolves to — `worker` is the Comlink proxy. */
 interface RawWorkerHTTPVFS {
 	db: HTTPVFSWorker["db"]
 	worker?: { bytesRead?: number | Promise<number> }
@@ -125,9 +131,9 @@ export async function loadHTTPVFSDatabase(
 	sqljsBaseURL: string,
 	options: HTTPSVFSOptions = {}
 ): Promise<HTTPVFSWorker> {
-	const w = window as unknown as { createDBWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
+	const w = window as unknown as { createDbWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
 
-	if (typeof w.createDBWorker !== "function") {
+	if (typeof w.createDbWorker !== "function") {
 		await new Promise<void>((res, rej) => {
 			const s = document.createElement("script")
 			s.src = `${sqljsBaseURL}/index.js`
@@ -137,7 +143,7 @@ export async function loadHTTPVFSDatabase(
 		})
 	}
 
-	if (typeof w.createDBWorker !== "function") throw new Error("createDBWorker missing after UMD load")
+	if (typeof w.createDbWorker !== "function") throw new Error("createDbWorker missing after UMD load")
 
 	// Open over byte-range fetches, then force the header + schema pages through SQLite with a
 	// cheap read. On mobile Safari the HTTP cache can hand sql.js-httpvfs a torn 64 KB range chunk,
@@ -147,7 +153,7 @@ export async function loadHTTPVFSDatabase(
 	// with a cache-busting query param to force fresh chunks. Self-heals a poisoned cache without
 	// permanently defeating caching for the happy path. See the 2026-06 mobile-Safari demo report.
 	const open = async (url: string): Promise<HTTPVFSWorker> => {
-		const raw = await w.createDBWorker!(
+		const raw = await w.createDbWorker!(
 			[
 				{
 					from: "inline",

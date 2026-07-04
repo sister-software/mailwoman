@@ -98,3 +98,25 @@ describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => 
 		expect(hits[0]!.name).toBe("Antioch") // no probe → normal population-first ranking
 	})
 })
+
+describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", () => {
+	// The acronym-casing sweep (da54bc8c) renamed `window.createDbWorker` → `createDBWorker` — an
+	// EXTERNAL library's export, explicitly exempt from the house convention (AGENTS.md). The UMD
+	// loaded, the capitalized global never existed, and the demo street tier silently fell back to
+	// the admin cascade for three days. These pins make the next sweep fail loudly instead.
+	test("the library actually exports `createDbWorker` (lowercase b)", async () => {
+		const { createRequire } = await import("node:module")
+		const require = createRequire(import.meta.url)
+		const umd = require("sql.js-httpvfs/dist/index.js") as Record<string, unknown>
+
+		expect(typeof umd.createDbWorker).toBe("function")
+	})
+
+	test("the loader references the library's own casing and never the house-cased variant", async () => {
+		const { readFileSync } = await import("node:fs")
+		const source = readFileSync(new URL("./httpvfs-resolver.ts", import.meta.url), "utf8")
+
+		expect(source).toContain("createDbWorker")
+		expect(source).not.toContain("createDBWorker")
+	})
+})
