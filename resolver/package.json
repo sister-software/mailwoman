@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/resolver",
-	"version": "5.3.0",
+	"version": "5.4.0",
 	"description": "The address resolver: walk an AddressTree, decorate nodes with gazetteer-supplied coordinates + attribution. Backend-agnostic (any ResolverBackend), with the span-rescore + postcode-consistency levers. Lifted out of @mailwoman/core so it can depend on @mailwoman/spatial (haversine) + @mailwoman/codex (USPS directionals) instead of reinventing them; the type contract stays in core so the pipeline composes it without a cycle.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
