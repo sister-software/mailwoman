@@ -172,7 +172,11 @@ const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
  * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` lever (gated, default-off pending its gate).
  */
 const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly country: string }> = [
+	// GB `E4 9AZ` — letters-first, ends `\d[A-Z]{2}`. Never matches a US ZIP / NL / FR / CA code.
 	{ re: /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i, country: "GB" },
+	// CA `K2P 1L4` — `A#A #A#`, ends `\d[A-Z]\d` (distinct from GB's `\d[A-Z]{2}`). The placer conflates CA
+	// with US (English) / FR (Québec) at 0.9–1.0 confidence, same failure as GB; the format is unambiguous.
+	{ re: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i, country: "CA" },
 ]
 
 /** The country a parsed postcode's FORMAT implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}. */

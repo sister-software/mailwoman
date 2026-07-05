@@ -23,11 +23,22 @@ describe("countryFromPostcodeFormat (#928)", () => {
 		expect(countryFromPostcodeFormat("  CH43 0TR  ")).toBe("GB") // trimmed
 	})
 
-	it("does NOT match a US ZIP, NL, FR, or CA postcode (unforgeable → no mis-route)", () => {
+	it("matches CA postcodes (A#A #A#), distinct from GB", () => {
+		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
+		expect(countryFromPostcodeFormat("M5J 2J2")).toBe("CA")
+		expect(countryFromPostcodeFormat("V6C0C3")).toBe("CA") // unspaced
+	})
+
+	it("does NOT match a US ZIP, NL, or FR postcode (unforgeable → no mis-route)", () => {
 		expect(countryFromPostcodeFormat("90210")).toBeNull() // US ZIP (all digits)
 		expect(countryFromPostcodeFormat("1012 LG")).toBeNull() // NL (digits-first)
 		expect(countryFromPostcodeFormat("75013")).toBeNull() // FR
-		expect(countryFromPostcodeFormat("K1A 0B1")).toBeNull() // CA (ends digit-letter-digit, not digit-letter-letter)
+	})
+
+	it("GB and CA formats never collide", () => {
+		// GB ends \d[A-Z]{2}; CA ends \d[A-Z]\d — a GB code is never read as CA and vice-versa.
+		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
+		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
 	})
 
 	it("is null on empty / missing input", () => {
