@@ -87,6 +87,9 @@ export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"FR",
 	"GB",
 	"CA",
+	// AU added with the #244 AU placer class (2026-07-06): 150k-row G-NAF training → AU test-acc 100%,
+	// and the hard filter is recall-SAFE on the AU panel (unresolved 4→2 while abroad 43→20).
+	"AU",
 ])
 
 /**

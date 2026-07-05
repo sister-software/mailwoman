@@ -37,6 +37,17 @@ const TEST_FRAC = 0.1
 
 const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"]
 const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
+// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows; the v0.9.2 G-NAF shard carries
+// 150k real Australian addresses. AU rides the SAME corpus sampling path as COUNTRIES, just from its
+// own glob — the (country, glob) pairs below unify the two.
+const AU_GLOB = dataRootPath(
+	"corpus",
+	"versioned",
+	"v0.9.2-multilocale-au",
+	"corpus-v0.9.2-multilocale-au",
+	"train",
+	"*.parquet"
+)
 const OUT_DIR = path.resolve(import.meta.dirname, "../../data/coarse-placer")
 
 // #743: the EU expansion. The v0.5.0 corpus carries zero rows for these locales, so they're drawn
@@ -61,10 +72,15 @@ const train: DatasetRow[] = [],
 	val: DatasetRow[] = [],
 	test: DatasetRow[] = []
 
-for (const country of COUNTRIES) {
+const CORPUS_SOURCES: ReadonlyArray<[string, string]> = [
+	...COUNTRIES.map((c): [string, string] => [c, String(TRAIN_GLOB)]),
+	["AU", String(AU_GLOB)],
+]
+
+for (const [country, glob] of CORPUS_SOURCES) {
 	// filter-THEN-sample: the subquery restricts to the country, SAMPLE draws from that filtered set.
 	const q = `SELECT raw FROM (
-			SELECT raw FROM read_parquet('${TRAIN_GLOB}') WHERE country = '${country}' AND nullif(trim(raw), '') IS NOT NULL
+			SELECT raw FROM read_parquet('${glob}') WHERE country = '${country}' AND nullif(trim(raw), '') IS NOT NULL
 		) USING SAMPLE ${Math.ceil(PER * 1.3)} ROWS`
 	const res = await duck.runAndReadAll(q)
 	const seen = new Set<string>()
