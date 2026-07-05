@@ -25,7 +25,7 @@ import { parseArgs } from "node:util"
 
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
-import { hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
+import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -154,6 +154,10 @@ async function main() {
 			// re-rank + the #743 hard-country filter — on top of the soft `--default-country`. Without it the
 			// harness overstates the wrong-country p90 tail for namesake locales (fi 270 km vs production ~3).
 			"hard-country": { type: "boolean" },
+			// #985: comma-separated country codes to ADD to the default hard-country safelist for this run
+			// (e.g. `--hard-country-safelist HU`). Measures a proposed safelist expansion WITHOUT touching
+			// the production const — the p90 of a cross-border-tail country should collapse if it's added.
+			"hard-country-safelist": { type: "string" },
 			// Convention epoch 2026-07-04: locality-first is the DEFAULT (production's ladder). This flag
 			// reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
 			"prefer-postcode-coord": { type: "boolean" },
@@ -200,6 +204,13 @@ async function main() {
 	const hardCountryPin = pins["hard-country"] === true
 	const placeCountry = hardCountryPin ? await loadDefaultPlaceCountry() : null
 	const COARSE_PLACER_ANCHOR_WEIGHT = 1.0 // keep in sync with geocode-core.ts
+	// #985: default safelist + any `--hard-country-safelist` additions (experiment without editing the const).
+	const extraSafelist = (pins["hard-country-safelist"] as string | undefined)
+		?.split(",")
+		.map((c) => c.trim().toUpperCase())
+	const hardCountrySafelist = extraSafelist?.length
+		? new Set([...HARD_PLACE_COUNTRY_SAFELIST, ...extraSafelist])
+		: undefined
 
 	const errs: number[] = []
 	const resolvedErrs: number[] = [] // coordinate error over RESOLVED rows only (unconfounded by the unresolved penalty)
@@ -247,7 +258,7 @@ async function main() {
 		if (placeCountry && !isBareLocalityTree(tree)) {
 			const placed = placeCountry(row.raw)
 			if (placed.country && placed.country !== "OTHER") {
-				const hardCountry = hardCountryFor(placed.country, placed.confidence, resolveOpts, true, undefined)
+				const hardCountry = hardCountryFor(placed.country, placed.confidence, resolveOpts, true, hardCountrySafelist)
 				rowResolveOpts = {
 					...resolveOpts,
 					anchorPosterior: placed.posterior ?? { [placed.country]: placed.confidence },
