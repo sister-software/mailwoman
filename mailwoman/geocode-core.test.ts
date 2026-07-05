@@ -1,0 +1,38 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   #928: `countryFromPostcodeFormat` — a parsed postcode's FORMAT as a country signal, used by the
+ *   `postcodeCountryPrior` lever to override the language-based placer (which conflates GB/US). The
+ *   essential guarantee: the GB pattern is UNFORGEABLE across the formats we resolve — it never matches
+ *   a US ZIP, an NL `\d{4} [A-Z]{2}`, an FR 5-digit, or a Canadian `A#A #A#` code — so turning the lever
+ *   on can never mis-route a non-GB address.
+ */
+
+import { describe, expect, it } from "vitest"
+
+import { countryFromPostcodeFormat } from "./geocode-core.js"
+
+describe("countryFromPostcodeFormat (#928)", () => {
+	it("matches GB postcodes (spaced and unspaced)", () => {
+		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
+		expect(countryFromPostcodeFormat("SW1A 1AA")).toBe("GB")
+		expect(countryFromPostcodeFormat("IG5 0NA")).toBe("GB")
+		expect(countryFromPostcodeFormat("E49AZ")).toBe("GB") // unspaced
+		expect(countryFromPostcodeFormat("  CH43 0TR  ")).toBe("GB") // trimmed
+	})
+
+	it("does NOT match a US ZIP, NL, FR, or CA postcode (unforgeable → no mis-route)", () => {
+		expect(countryFromPostcodeFormat("90210")).toBeNull() // US ZIP (all digits)
+		expect(countryFromPostcodeFormat("1012 LG")).toBeNull() // NL (digits-first)
+		expect(countryFromPostcodeFormat("75013")).toBeNull() // FR
+		expect(countryFromPostcodeFormat("K1A 0B1")).toBeNull() // CA (ends digit-letter-digit, not digit-letter-letter)
+	})
+
+	it("is null on empty / missing input", () => {
+		expect(countryFromPostcodeFormat(undefined)).toBeNull()
+		expect(countryFromPostcodeFormat("")).toBeNull()
+		expect(countryFromPostcodeFormat("   ")).toBeNull()
+	})
+})
