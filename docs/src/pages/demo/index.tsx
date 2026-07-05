@@ -34,14 +34,22 @@ const LoadingFallback: React.FC = () => {
 	return <p>Loading…</p>
 }
 
-const DemoPage: React.FC = () => {
+/**
+ * The demo page body — shared by `/demo` and `/debug` (the latter opens with the model-visualizer drawer on by
+ * default). Exported so the thin `debug.tsx` route can mount it with `debugDefault`.
+ */
+export const DemoPageInner: React.FC<{ debugDefault?: boolean }> = ({ debugDefault = false }) => {
 	const { siteConfig } = useDocusaurusContext()
 	const buildCommit = (siteConfig.customFields?.buildCommit as string) ?? "?"
 	const buildTimeDisplay = (siteConfig.customFields?.buildTimeDisplay as string) ?? "?"
 	const initialCenter = useBrowserGeolocation()
 
 	return (
-		<Layout title="Demo" description="Client-side address geocoder demo for mailwoman." noFooter>
+		<Layout
+			title={debugDefault ? "Debug" : "Demo"}
+			description="Client-side address geocoder demo for mailwoman."
+			noFooter
+		>
 			{/* Resource hints: the DBs/model range-load from R2 and the basemap tiles from tiles.* the
 			    moment the app boots — preconnecting here overlaps DNS+TLS with hydration. The sqljs
 			    worker assets are same-origin and fetched on (or before) first lookup; prefetch warms
@@ -72,11 +80,13 @@ const DemoPage: React.FC = () => {
 				{() => {
 					if (!initialCenter) return <LoadingFallback />
 
-					return <DemoApp initialCenter={initialCenter} />
+					return <DemoApp initialCenter={initialCenter} debugDefault={debugDefault} />
 				}}
 			</BrowserOnly>
 		</Layout>
 	)
 }
+
+const DemoPage: React.FC = () => <DemoPageInner />
 
 export default DemoPage
