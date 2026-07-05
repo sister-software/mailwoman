@@ -19,6 +19,7 @@ import { germanRecipe } from "./german.js"
 import { houseVenueRecipe } from "./house-venue.js"
 import { intersectionRecipe } from "./intersection.js"
 import { localeRecipe } from "./locale.js"
+import { nlPostcodeRecipe } from "./nl-postcode.js"
 import { noStreetLedRecipe } from "./no-street-led.js"
 import { noStreetRecipe } from "./no-street.js"
 import { poBoxCedexRecipe } from "./po-box-cedex.js"
@@ -49,6 +50,7 @@ const RECIPES: readonly ShardRecipe[] = [
 	frAdminSplitRecipe,
 	frBareStreetRecipe,
 	czPcFirstPrepositionRecipe,
+	nlPostcodeRecipe,
 	noStreetLedRecipe,
 	siBareVillageRecipe,
 	countryBalancedRecipe,
