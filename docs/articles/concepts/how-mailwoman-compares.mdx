@@ -54,3 +54,27 @@ npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
 
 Where each tool still does something better, the switching guides say so plainly. The goal isn't to claim
 Mailwoman wins every row. It's to let you keep your stack, your client, and your budget.
+
+## What about the map apps?
+
+Some of the projects you'll meet in this space aren't geocoders at all. [Cartes](https://cartes.app) is a
+good example: an open-source web map for the general public, built in France on OpenStreetMap data, with
+public transit, cycling routes, and place discovery, all in the browser with nothing to install. We like
+it a lot.
+
+Cartes doesn't parse or resolve addresses itself. Its search box calls a self-hosted
+[Photon](https://photon.komoot.io) instance, and for French addresses it merges in results from the
+national [BAN](https://adresse.data.gouv.fr) address API. The client does clever work before the geocoder
+ever sees the query: it detects raw coordinates in several formats, Open Location Codes ("plus codes"),
+five-digit French postal codes, and even a "de X à Y" itinerary phrasing. Those detectors are a good
+idea, and we intend to borrow a few of them.
+
+What the client can't fix is the layer underneath. Photon doesn't parse addresses, so Cartes grafts BAN
+onto it, gated by a street-keyword list and a check that you're searching inside France. Every app that
+builds on a geocoder ends up writing a shim like this eventually, and it's the kind of code nobody enjoys
+maintaining.
+
+That's the gap Mailwoman aims at. We sit under apps like Cartes rather than beside them:
+`@mailwoman/photon` speaks the same `/api` contract their client already calls, from a SQLite file
+instead of an Elasticsearch cluster, with a parser at the front door — so the address shim stops being
+the app's problem.

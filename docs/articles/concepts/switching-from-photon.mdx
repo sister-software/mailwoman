@@ -46,6 +46,14 @@ parses.
   type-ahead ordering.
 - **Coverage** mirrors the gazetteer — strong in the US, improving across the EU.
 
-See [how Mailwoman compares](./how-mailwoman-compares) for the full capability matrix. For structured
-lookup (the Nominatim shape) instead of autocomplete, see [Switching from
-Nominatim](./switching-from-nominatim).
+## Photon in the wild
+
+For a sense of what Photon looks like in production, [Cartes](https://cartes.app) (an open-source French
+web map we admire) runs its own Photon instance and layers France's
+[BAN](https://adresse.data.gouv.fr) address API on top for house-number queries. The pairing works well
+for them. It's also the kind of per-country shim a parser-first geocoder is meant to retire: when the
+engine can read the address, the app doesn't have to.
+
+See [how Mailwoman compares](./how-mailwoman-compares#what-about-the-map-apps) for the full capability
+matrix and the longer Cartes note. For structured lookup (the Nominatim shape) instead of autocomplete,
+see [Switching from Nominatim](./switching-from-nominatim).
