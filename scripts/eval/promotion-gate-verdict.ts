@@ -147,10 +147,16 @@ const fp32 = collect("fp32")
 const int8 = args["with-int8"] ? collect("int8") : undefined
 const graded = int8 ?? fp32 // floors are graded on the ship artifact when present
 
+// Floors owned by a DEDICATED leg in promotion-gate.ts (not a per-tag F1 in `graded`) — that leg
+// runs the check and exits non-zero on failure, so the per-tag aggregator here must SKIP them or it
+// spuriously reports "NOT FOUND" for a floor that already passed (#949's fr.bare_street_intact).
+const LEG_HANDLED_FLOORS = new Set(["fr.bare_street_intact"])
+
 const results: Record<string, { floor: number; actual: number | undefined; pass: boolean }> = {}
 let failed = false
 
 for (const [key, floor] of Object.entries(gate.floors)) {
+	if (LEG_HANDLED_FLOORS.has(key)) continue
 	const actual = graded[key]
 	const pass = actual !== undefined && actual >= floor
 
