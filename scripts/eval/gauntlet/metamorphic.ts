@@ -49,17 +49,15 @@ const INV = [
  * xfail that has started PASSING ("newly passing → drop it"), so this list can't rot into false comfort — the
  * Pelias-pass-list trap, inverted.
  */
-const KNOWN_INV_XFAIL = new Map<string, string>([
-	// #829 lowercase normalizer (night 34, 2026-07-05) CLEARED the entire INV[lower]/[upper] class + all
-	// four fr-chevaleret perturbations: `restoreLowerInput` canonicalizes a fully-lowercase input to the
-	// mixed-case form the model was trained on (mirror of #690's all-caps hook), so `1600 pennsylvania
-	// ave nw, washington dc` → `1600 Pennsylvania Ave NW, Washington DC` before the model. Seven rows
-	// removed from this map (verified newly-passing by the anti-rot loop). What SURVIVES is the one
-	// non-casing perturbation:
-	//   - trail-dot: a trailing "." on the mixed-case canonical drops the street tier (address_point →
-	//     admin). Not a casing issue — the normalizer can't touch it. Tracked under #829's tail.
-	["trail-dot|1600 Pennsylvania Ave NW, Washington DC", "#829 tail — trailing-dot drops the street tier (not casing)"],
-])
+// EMPTY as of night 34 (2026-07-05) — the metamorphic INV layer is fully green (35/35). Two no-retrain
+// normalizer levers cleared every prior xfail:
+//   - #829 `restoreLowerInput` (neural/case-normalize.ts) canonicalizes all-lowercase input to the
+//     trained mixed-case → the entire INV[lower]/[upper] class + the four fr-chevaleret perturbations.
+//   - the trailing-punct trim (normalize/whitespace.ts) drops a trailing `.`/`,`/`;`/`:` → the
+//     INV[trail-dot] case (a trailing dot glued onto the last token and dropped the street tier).
+// Keep the anti-rot loop honest: a NEW deterministic INV break belongs here with an issue ref, never
+// silently gated. The Map stays (typed) so re-adding an xfail is a one-line change.
+const KNOWN_INV_XFAIL = new Map<string, string>([])
 
 /** Strip a 5-digit (US/FR) postcode token for the DIR test. */
 const dropPostcode = (s: string) =>
