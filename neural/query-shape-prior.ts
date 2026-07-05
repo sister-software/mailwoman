@@ -58,6 +58,7 @@ const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([
 	["uk_postcode", "B-postcode"],
 	["ca_postcode", "B-postcode"],
 	["jp_postcode", "B-postcode"],
+	["nl_postcode", "B-postcode"],
 	["po_box", "B-po_box"],
 ])
 
