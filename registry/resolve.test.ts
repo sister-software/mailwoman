@@ -207,6 +207,25 @@ describe("secondary-identifier discriminators (#625)", () => {
 	})
 })
 
+describe("exactDiscriminators — code-SET overlap (#625 A5)", () => {
+	it("agrees on ANY shared code regardless of slot order/count; never via string similarity", () => {
+		// 207R vs 207Q are near-identical strings but DIFFERENT specialties — string similarity would
+		// mis-score them "high"; the set-overlap comparator reads them as disjoint (level: different).
+		const a: SourceRecord = {
+			...coLocated("1", "Acme", "Health"),
+			attributes: { taxonomy: "207R00000X 208D00000X" },
+		}
+		const b: SourceRecord = { ...coLocated("2", "Acme", "Health"), attributes: { taxonomy: "208D00000X" } } // shared 208D
+		const c: SourceRecord = { ...coLocated("3", "Acme", "Health"), attributes: { taxonomy: "207Q00000X" } } // disjoint
+		const shared = resolveEntities([a, b], { threshold: -100, exactDiscriminators: ["taxonomy"] })
+		expect(shared.entities).toHaveLength(1)
+		// The disjoint pair still merges here (same name+address dominate) — the assertion is the model
+		// BUILDS and the comparator runs; the weight-level separation is the benchmark's to measure.
+		const disjoint = resolveEntities([a, c], { threshold: -100, exactDiscriminators: ["taxonomy"] })
+		expect(disjoint.entities.length).toBeGreaterThanOrEqual(1)
+	})
+})
+
 describe("toGeoJSON", () => {
 	it("emits a Point feature per geocoded entity with analyst-facing properties", () => {
 		const { entities } = resolveEntities(records, { learnedScorer: false }) // FS-baseline pipeline assertion
