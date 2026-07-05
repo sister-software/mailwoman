@@ -11,6 +11,9 @@
  *   - 1600 Pennsylvania Ave NW → the STREET tier (situs/interp shards) + an address_point rooftop.
  *   - Zabiče 8, 6250 Zabiče → the WOF admin cascade AND the #942/#961 postal-compound floor. If either regresses to
  *     admin-only (or drops its marker), a tier is dead — exactly what shipped silently before.
+ *   - 1012 LG Amsterdam → the #924 NL digits-first postcode fix (v5.4.0). If the model regresses to parsing `1012` as a
+ *     house number + `LG` as a street, the spurious street context drags it to the US situs tier (Amsterdam, NY) — so
+ *     this asserts the coordinate lands in the NETHERLANDS, the exact bug v5.4.0 shipped to fix.
  */
 
 import { expect, test } from "#e2e"
@@ -43,6 +46,21 @@ test.describe("Demo — production functional smoke @smoke", () => {
 		expect(lat).toBeLessThan(45.7)
 		expect(lon, `resolved lon ${lon} should be in Slovenia`).toBeGreaterThan(14.2)
 		expect(lon).toBeLessThan(14.5)
+		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
+		demo.console.assertNoFailEvents()
+	})
+
+	test("1012 LG Amsterdam → resolves in the Netherlands, not Amsterdam NY (#924 / v5.4.0)", async ({ demo }) => {
+		await demo.goto("1012 LG Amsterdam")
+		await demo.submit()
+
+		const { resolved, markerCount } = await demo.readResult()
+		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+		// The tell: NL Amsterdam is ~52.37, 4.90; the pre-v5.4.0 mis-parse landed on Amsterdam, NY (~42.94, -74.19).
+		expect(lat, `resolved lat ${lat} should be in the Netherlands (v5.4.0 NL postcode fix), not Amsterdam NY`).toBeGreaterThan(52.2)
+		expect(lat).toBeLessThan(52.5)
+		expect(lon, `resolved lon ${lon} should be in the Netherlands, not the US`).toBeGreaterThan(4.7)
+		expect(lon).toBeLessThan(5.1)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()
 	})
