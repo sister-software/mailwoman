@@ -48,6 +48,26 @@ describe("collapseWhitespace", () => {
 		expect(r.text).toBe("350 5th")
 	})
 
+	it("trims trailing sentence-punctuation noise (#829 tail): . , ; :", () => {
+		expect(collapseWhitespace("Washington DC.").text).toBe("Washington DC")
+		expect(collapseWhitespace("123 Main St., Apt 5;").text).toBe("123 Main St., Apt 5") // internal '.' kept
+		expect(collapseWhitespace("Paris . ").text).toBe("Paris") // mixed trailing space + dot
+		expect(collapseWhitespace("foo:").text).toBe("foo")
+	})
+
+	it("does NOT trim leading punctuation or internal / quote / bracket punctuation", () => {
+		expect(collapseWhitespace(".net cafe").text).toBe(".net cafe") // leading dot is load-bearing
+		expect(collapseWhitespace('"350 5th"').text).toBe('"350 5th"') // trailing quote is not noise
+		expect(collapseWhitespace("Apt (rear)").text).toBe("Apt (rear)") // trailing bracket preserved
+	})
+
+	it("offsetMap stays correct + length-matched after a trailing-punct trim", () => {
+		const r = collapseWhitespace("ABC.")
+		expect(r.text).toBe("ABC")
+		expect(r.map).toEqual([0, 1, 2]) // the trailing '.' at index 3 is sliced off
+		expect(r.map.length).toBe(r.text.length)
+	})
+
 	it("offsetMap points to first whitespace in collapsed run", () => {
 		// raw:  "350  5th Ave"     (positions 0-11, double space at 3,4)
 		// out:  "350 5th Ave"      (positions 0-10)

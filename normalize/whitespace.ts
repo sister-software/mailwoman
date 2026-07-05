@@ -5,13 +5,20 @@
  *
  *   Whitespace collapse — runs of whitespace become a single ASCII space. Newlines and tabs are
  *   preserved as-is (segmentation grammar in QueryShape uses them); inline runs of spaces
- *   collapse.
+ *   collapse. The trailing trim also drops trailing sentence-punctuation NOISE (#829 tail): a
+ *   trailing `.`/`,`/`;`/`:` (e.g. `…Washington DC.`) glues onto the last token and drops the street
+ *   tier (`address_point`→`admin`). Trailing only + a conservative set — leading punctuation and
+ *   quotes/brackets are never touched (they can be meaningful). Offset-map-correct via the same slice
+ *   as the whitespace trim, so span alignment survives.
  */
 
 import { identityMap } from "./offset-map.js"
 
 const INLINE_SPACE = /[ \t]/
 const ANY_SPACE = /[ \t\n\r]/
+// Trailing NOISE trimmed off the END of the input: whitespace + the sentence-punctuation that a user
+// commonly appends. NOT leading (a leading token is load-bearing) and NOT quotes/brackets/parens.
+const TRAILING_NOISE = /[ \t\n\r.,;:]/
 
 export interface WhitespaceResult {
 	text: string
@@ -61,13 +68,13 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 		i += 1
 	}
 
-	// Trim leading and trailing whitespace.
+	// Trim leading whitespace, and trailing whitespace + sentence-punctuation noise (#829 tail).
 	let lead = 0
 
 	while (lead < out.length && ANY_SPACE.test(out[lead]!)) lead += 1
 	let trail = out.length
 
-	while (trail > lead && ANY_SPACE.test(out[trail - 1]!)) trail -= 1
+	while (trail > lead && TRAILING_NOISE.test(out[trail - 1]!)) trail -= 1
 
 	if (lead > 0 || trail < out.length) {
 		changed = true
