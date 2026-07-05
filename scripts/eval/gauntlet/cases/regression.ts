@@ -50,21 +50,24 @@ export const REGRESSION_CASES: SeedCase[] = [
 		note: "FR street → OSM rooftop. v1.9.4 parse fix (postcode-anchoring) + the OSM FR rooftop tier (D9).",
 	},
 	{
-		// The BARE no-postcode form mis-parses ('Chevaleret' → locality) → admin. Tracked, non-gated; the
-		// metamorphic carries the surface-perturbation evidence. Promote to status=pass when #831 is fixed.
+		// #831 FIXED — promoted to a gated pass (night 34, 2026-07-05). The v5.4.0 parse fix
+		// (v2.3.0-nl-postcode, family-pinned) parses 'Chevaleret' into the street ('Rue du Chevaleret'),
+		// not the locality, so the canonical mixed-case now reaches the OSM rooftop tier — verified
+		// deterministic at 48.8335,2.3686 (address_point) under the shipped v5.4.0 dev weights. Not a
+		// #829 effect (that hook only touches all-lowercase input; the mixed-case canonical is untouched).
 		id: "fr-chevaleret-bare",
 		input: "181 Rue du Chevaleret, Paris",
 		source: "bug:#831",
 		addressKind: "fr_street_bare",
 		country: "FR",
-		status: "known_fail",
+		status: "pass",
 		expectLat: 48.8335023,
 		expectLon: 2.3686051,
 		expectToleranceM: 80,
 		expectTier: "address_point",
 		addedAt: "2026-06-29",
 		bugRef: "#831",
-		note: "Bare no-postcode FR street. Canonical mixed-case mis-parses 'Chevaleret' as the locality → arrondissement centroid (3.19km). Surface perturbations DO hit rooftop (the #831 boundary).",
+		note: "Bare no-postcode FR street → OSM rooftop. v5.4.0 parse fix reaches the street tier (was: 'Chevaleret'→locality→arrondissement centroid). Promoted from known_fail once the canonical hit rooftop deterministically.",
 	},
 	{
 		// A US landmark anchor — guards the US admin/street path doesn't drift while we touch intl. (country

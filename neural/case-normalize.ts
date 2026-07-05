@@ -55,7 +55,54 @@ export function titleCaseInput(text: string): string {
 	return text.replace(/[A-Za-z]+/g, (w) => (w.length <= 2 ? w : w[0]!.toUpperCase() + w.slice(1).toLowerCase()))
 }
 
-/** Title-case the input iff it is all-caps; otherwise return it unchanged. The parser's #690 hook. */
+/**
+ * True when `text` is PURE-ASCII ALL-LOWERCASE: it has cased ASCII letters and ZERO uppercase, and NO non-ASCII
+ * characters. The mirror of {@link isAllCapsInput} for the #829 class — fully-lowercase input (`1600 pennsylvania ave
+ * nw, washington dc`) is as out-of-domain as all-caps for a mixed-case-trained model: it fragments the street and drops
+ * the state code (the Gauntlet metamorphic INV[lower] failures). Same pure-ASCII + 3-letter guards as the all-caps
+ * detector, for the same reasons (accented/non-Latin casing is locale-sensitive + length-changing → left untouched).
+ */
+export function isAllLowerInput(text: string): boolean {
+	let lower = 0
+
+	for (let i = 0; i < text.length; i++) {
+		const c = text.charCodeAt(i)
+
+		if (c > 127) return false
+
+		// any non-ASCII (accented/non-Latin) → leave it alone
+		if (c >= 65 && c <= 90) return false
+
+		// any [A-Z] → mixed case, leave it alone
+		if (c >= 97 && c <= 122) lower++
+	}
+
+	return lower >= 3
+}
+
+/**
+ * Restore a fully-lowercase input to the canonical mixed-case the model was trained on: title-case each ASCII run ≥3
+ * letters (`pennsylvania` → `Pennsylvania`) and UPPERCASE each run ≤2 letters (`dc` → `DC`, `nw` → `NW`, `lg` → `LG`).
+ * The ≤2 handling is where this differs from {@link titleCaseInput}: on all-caps input those tokens are ALREADY shouting
+ * so #690 preserves them; on all-lowercase input they arrive as `dc`/`ny` and must be UPPERCASED to reach the same form
+ * — every ≤2-letter token in an address is an abbreviation the model reads best uppercase (state codes NY/DC,
+ * directionals N/NW/SE, suffixes ST/RD, the NL postcode suffix LG). Length-preserving — token offsets unchanged. Net:
+ * `1600 pennsylvania ave nw, washington dc` and `1600 PENNSYLVANIA AVE NW, WASHINGTON DC` both canonicalize to `1600
+ * Pennsylvania Ave NW, Washington DC`, the exact mixed-case form that parses `region:DC`.
+ */
+export function restoreLowerInput(text: string): string {
+	return text.replace(/[A-Za-z]+/g, (w) =>
+		w.length <= 2 ? w.toUpperCase() : w[0]!.toUpperCase() + w.slice(1).toLowerCase()
+	)
+}
+
+/**
+ * Normalize a shouting OR whispering ASCII input to canonical mixed-case before the model; mixed-case and
+ * accented/non-Latin input pass through byte-identically. The parser's #690 (all-caps) + #829 (all-lowercase) hook.
+ */
 export function normalizeInputCase(text: string): string {
-	return isAllCapsInput(text) ? titleCaseInput(text) : text
+	if (isAllCapsInput(text)) return titleCaseInput(text)
+	if (isAllLowerInput(text)) return restoreLowerInput(text)
+
+	return text
 }

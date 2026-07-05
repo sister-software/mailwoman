@@ -50,24 +50,15 @@ const INV = [
  * Pelias-pass-list trap, inverted.
  */
 const KNOWN_INV_XFAIL = new Map<string, string>([
-	["lower|1600 Pennsylvania Ave NW, Washington DC", "#829 — US lowercase model sensitivity (retrain)"],
-	["lower|Damrak 1, 1012 LG Amsterdam", "#829 — lowercase sensitivity, NL: resolution → null (more severe)"],
-	// #829 family, v5.3.0 shapes (first gauntlet run post-promote, 2026-07-04): the WITH-ZIP Penn
-	// canonical degrades address_point → admin under these variants. Same case-sensitive-parse root.
-	["lower|1600 Pennsylvania Ave NW, Washington DC 20500", "#829 — v5.3.0: with-ZIP variant drops the street tier"],
-	["trail-dot|1600 Pennsylvania Ave NW, Washington DC", "#829 — v5.3.0: trail-dot drops the street tier"],
-	// The four #831 fr-chevaleret rows RE-ADDED as #829 xfails 2026-07-05 (v2.3.0 promote). Subtlety:
-	// v5.3.0 passed these by being CONSISTENTLY WRONG — it fragmented "181 Rue du Chevaleret, Paris"
-	// into locality="Chevaleret Paris" / street="Rue du" for BOTH canonical and perturbations, so the
-	// invariance held (agreed-wrong). v2.3.0's NL-postcode fine-tune (family pinned @12) FIXED the
-	// parse — locality="Paris", street="Rue du Chevaleret" — so the canonical now REACHES the street
-	// tier, where mixed-case "Rue du Chevaleret" misses the OSM rooftop lookup while the lowercased
-	// perturbations hit it. That admin↔address_point split is the RESOLVER case-normalization (#829),
-	// same root as the 1600 Penn / Damrak rows above — exposed BY the improved parse, not a regression.
-	["lower|181 Rue du Chevaleret, Paris", "#829 — resolver case-norm exposed by v2.3.0's fixed parse"],
-	["upper|181 Rue du Chevaleret, Paris", "#829 — resolver case-norm exposed by v2.3.0's fixed parse"],
-	["trail-dot|181 Rue du Chevaleret, Paris", "#829 — resolver case-norm exposed by v2.3.0's fixed parse"],
-	["comma-tight|181 Rue du Chevaleret, Paris", "#829 — resolver case-norm exposed by v2.3.0's fixed parse"],
+	// #829 lowercase normalizer (night 34, 2026-07-05) CLEARED the entire INV[lower]/[upper] class + all
+	// four fr-chevaleret perturbations: `restoreLowerInput` canonicalizes a fully-lowercase input to the
+	// mixed-case form the model was trained on (mirror of #690's all-caps hook), so `1600 pennsylvania
+	// ave nw, washington dc` → `1600 Pennsylvania Ave NW, Washington DC` before the model. Seven rows
+	// removed from this map (verified newly-passing by the anti-rot loop). What SURVIVES is the one
+	// non-casing perturbation:
+	//   - trail-dot: a trailing "." on the mixed-case canonical drops the street tier (address_point →
+	//     admin). Not a casing issue — the normalizer can't touch it. Tracked under #829's tail.
+	["trail-dot|1600 Pennsylvania Ave NW, Washington DC", "#829 tail — trailing-dot drops the street tier (not casing)"],
 ])
 
 /** Strip a 5-digit (US/FR) postcode token for the DIR test. */

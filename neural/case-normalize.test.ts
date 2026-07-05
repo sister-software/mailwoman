@@ -6,7 +6,13 @@
 
 import { expect, test } from "vitest"
 
-import { isAllCapsInput, normalizeInputCase, titleCaseInput } from "./case-normalize.js"
+import {
+	isAllCapsInput,
+	isAllLowerInput,
+	normalizeInputCase,
+	restoreLowerInput,
+	titleCaseInput,
+} from "./case-normalize.js"
 
 test("isAllCapsInput: a pure-ASCII shouting address qualifies", () => {
 	expect(isAllCapsInput("214 JONES RD, ELKHART, TX 75839")).toBe(true)
@@ -52,4 +58,27 @@ test("normalizeInputCase: the #690 hook — title-case iff all-caps, else unchan
 	// mixed-case and non-ASCII inputs pass through byte-for-byte
 	expect(normalizeInputCase("214 Jones Rd")).toBe("214 Jones Rd")
 	expect(normalizeInputCase("MÜNCHEN HBF")).toBe("MÜNCHEN HBF")
+})
+
+test("isAllLowerInput: #829 — pure-ASCII whispering qualifies; one uppercase or non-ASCII disqualifies", () => {
+	expect(isAllLowerInput("1600 pennsylvania ave nw, washington dc")).toBe(true)
+	expect(isAllLowerInput("214 Jones rd")).toBe(false) // one uppercase → mixed, byte-stable
+	expect(isAllLowerInput("straße parís")).toBe(false) // non-ASCII → left untouched
+	expect(isAllLowerInput("tx")).toBe(false) // <3 cased letters
+})
+
+test("restoreLowerInput: #829 — title-case ≥3-letter runs, UPPERCASE ≤2-letter runs, length-preserving", () => {
+	// The ≤2 difference from titleCaseInput: a lowercase 2-letter token is an abbrev the model wants shouting.
+	expect(restoreLowerInput("washington dc")).toBe("Washington DC")
+	expect(restoreLowerInput("new york ny")).toBe("New York NY")
+	expect(restoreLowerInput("1012 lg amsterdam")).toBe("1012 LG Amsterdam")
+	const input = "1600 pennsylvania ave nw"
+	expect(restoreLowerInput(input)).toHaveLength(input.length) // offsets unchanged
+})
+
+test("normalizeInputCase: #829 — all-lowercase canonicalizes to the trained mixed-case; converges with all-caps", () => {
+	const canon = "1600 Pennsylvania Ave NW, Washington DC"
+	expect(normalizeInputCase("1600 pennsylvania ave nw, washington dc")).toBe(canon)
+	expect(normalizeInputCase("1600 PENNSYLVANIA AVE NW, WASHINGTON DC")).toBe(canon) // same target from all-caps
+	expect(normalizeInputCase("café de parís")).toBe("café de parís") // lowercase non-ASCII untouched
 })
