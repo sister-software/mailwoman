@@ -54,6 +54,12 @@ export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"
 	{ label: "GB", kind: "alnum", re: /\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b/g },
 	// CA: A1A 1A1 (space optional), e.g. M5V 2T6, H2X 2T6, H3B 1A3
 	{ label: "CA", kind: "alnum", re: /\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b/g },
+	// IE Eircode: routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part, e.g.
+	// D02 AF30, T12 X70A, F91 Y5CY. Space REQUIRED (glued Eircodes are rare and a 7-alnum blob is too
+	// forgeable for the ADD path). No GB collision: a letter+2-digit GB outward always has a 3-char
+	// inward (B12 8QX), never 4. The 2026-07-06 IE diagnostic showed the model fragments Eircodes
+	// (F91 Y5CY → postcode "91") — same class the GB/CA/NL patterns above were added for.
+	{ label: "IE", kind: "alnum", re: /\b(?:[A-Z]\d{2}|D6W)\s+[A-Z\d]{4}\b/g },
 	// DE-prefixed: D-68161
 	{ label: "DE", kind: "alnum", re: /\bD-\d{5}\b/g },
 	// NL: 1234 AB / 1234AB — space optional (glued is common). The US "2737 CA" (ZIP+4 tail +

@@ -71,6 +71,32 @@ describe("repairPostcodeLabels", () => {
 		expect(postcodeValue(text, out)).toBe("SW1A 1AA")
 	})
 
+	it("SNAPs a fragmented IE Eircode to the full shape (F91 Y5CY — the 2026-07-06 diagnostic)", () => {
+		const text = "Ballysadare, F91 Y5CY"
+		// model truncates the routing key: only "91" carries a postcode label.
+		const tokens = [
+			tok("Ballysadare", 0, 11, "B-locality"),
+			tok(",", 11, 12, "O"),
+			tok("F", 13, 14, "O"),
+			tok("91", 14, 16, "B-postcode"),
+			tok("Y5CY", 17, 21, "O"),
+		]
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("F91 Y5CY")
+	})
+
+	it("ADDs a missed IE Eircode over O, incl. the D6W special; GB inward stays GB-shaped", () => {
+		const text = "Dublin D6W XV67"
+		const tokens = [tok("Dublin", 0, 6, "B-locality"), tok("D6W", 7, 10, "O"), tok("XV67", 11, 15, "O")]
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("D6W XV67")
+		// A GB letter+2-digit outward has a 3-char inward — the IE pattern (4-alnum unique) must not claim it.
+		const gb = "Birmingham B12 8QX"
+		const gbTokens = [tok("Birmingham", 0, 10, "B-locality"), tok("B12", 11, 14, "O"), tok("8QX", 15, 18, "O")]
+		const { tokens: gbOut } = repairPostcodeLabels(gb, gbTokens)
+		expect(postcodeValue(gb, gbOut)).toBe("B12 8QX") // via the GB pattern, not IE
+	})
+
 	it("SNAPs a truncated postcode to the full shape (CA M5V 2T6)", () => {
 		const text = "Toronto ON M5V 2T6"
 		// model labeled only "2T6" as postcode (truncation).

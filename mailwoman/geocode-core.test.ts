@@ -35,10 +35,20 @@ describe("countryFromPostcodeFormat (#928)", () => {
 		expect(countryFromPostcodeFormat("75013")).toBeNull() // FR
 	})
 
-	it("GB and CA formats never collide", () => {
-		// GB ends \d[A-Z]{2}; CA ends \d[A-Z]\d — a GB code is never read as CA and vice-versa.
+	it("matches IE Eircodes (routing key + 4-alnum unique part), incl. the D6W special", () => {
+		expect(countryFromPostcodeFormat("D02 AF30")).toBe("IE")
+		expect(countryFromPostcodeFormat("T12 X70A")).toBe("IE")
+		expect(countryFromPostcodeFormat("V94T2XR")).toBe("IE") // unspaced
+		expect(countryFromPostcodeFormat("D6W XY00")).toBe("IE")
+	})
+
+	it("GB / CA / IE formats never collide", () => {
+		// GB inward is 3 chars (\d[A-Z]{2}); CA ends \d[A-Z]\d; IE unique part is 4 alnum. Mutually exclusive.
 		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
 		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
+		expect(countryFromPostcodeFormat("D02 AF30")).toBe("IE")
+		// Belfast (Northern Ireland) uses GB postcodes — BT must stay GB, never IE.
+		expect(countryFromPostcodeFormat("BT1 5GS")).toBe("GB")
 	})
 
 	it("is null on empty / missing input", () => {
