@@ -55,6 +55,10 @@ async function main(): Promise<void> {
 			n: { type: "string", default: "1000" },
 			"per-bucket": { type: "string", default: "60" },
 			seed: { type: "string", default: "42" },
+			// Optional postcode-format filter (an anchored regex). Needed when a PBF extract spans postal
+			// systems — e.g. ireland-and-northern-ireland: NI rows carry GB `BT…` codes that would pollute
+			// an IE panel; pass the Eircode pattern to keep IE rows only.
+			"postcode-re": { type: "string" },
 		},
 	})
 
@@ -67,6 +71,7 @@ async function main(): Promise<void> {
 	const country = values.country!.toUpperCase()
 	const n = Number(values.n)
 	const perBucket = Number(values["per-bucket"])
+	const postcodeRe = values["postcode-re"] ? new RegExp(values["postcode-re"], "i") : null
 	const rng = new SeededRandom(Number(values.seed))
 	const buckets = new Map<string, Sampled[]>()
 	const bucketSeen = new Map<string, number>()
@@ -85,6 +90,7 @@ async function main(): Promise<void> {
 		// street that starts with a letter (drops the odd "-" / numeric-only tag).
 		if (!(num && street && city && cp && num !== "0" && /^\p{L}/u.test(street))) continue
 		if (!Number.isFinite(rec.lat) || !Number.isFinite(rec.lon)) continue
+		if (postcodeRe && !postcodeRe.test(cp)) continue
 
 		// Geographic diversity: the outward-code prefix (GB "SW"/"EC", HU 2-digit) buckets the reservoir.
 		const key = cp.slice(0, 2).toUpperCase()
