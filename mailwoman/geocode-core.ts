@@ -537,7 +537,23 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		// `postcode` joins the ladder (after the locality tiers, before region): a lone-postcode
 		// query resolves the postcode node itself — without it here the result reported 0,0 despite
 		// a resolved coordinate (found building the proximity-bias feature's 48026 case).
-		const adminPriority: ReadonlyArray<string> = ["locality", "dependent_locality", "postcode", "region", "country"]
+		//
+		// #977: EXCEPT when the resolved postcode is a full NL PC6 EXACT hit — a PC6 is street-block-class
+		// (avg ~8 addresses; the CBS polygon centroid), categorically tighter than any locality centroid,
+		// so it leads the ladder. Guarded three ways so the locality-first epoch convention (adopted for
+		// FR, where 5-digit zone centroids are COARSER than communes) is untouched everywhere else:
+		// (1) the parsed text is the full NL shape (`1012 LG`), (2) the node resolved, and (3) the
+		// resolver's hit is the FULL code, not the 4-digit-stem fallback (the stem is area-class — the
+		// lookup ladder can coarsen to it, and a stem hit must NOT outrank the locality).
+		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
+		const alnum = (s: string): string => s.replace(/[^\p{L}\p{N}]/gu, "").toUpperCase()
+		const pc6Exact =
+			pcNode !== undefined &&
+			/^\d{4}\s?[A-Z]{2}$/i.test(pcNode.value.trim()) &&
+			alnum(String(pcNode.metadata?.["resolver_name"] ?? "")) === alnum(pcNode.value)
+		const adminPriority: ReadonlyArray<string> = pc6Exact
+			? ["postcode", "locality", "dependent_locality", "region", "country"]
+			: ["locality", "dependent_locality", "postcode", "region", "country"]
 
 		for (const tag of adminPriority) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)
