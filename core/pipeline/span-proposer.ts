@@ -361,6 +361,14 @@ const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
 const FRACTION = /^\d\/\d$/
 
 /**
+ * #481 item 7: the "plausible but genuinely ambiguous" proposal confidence — a FUSED_NUMBER reading that is real but
+ * not the only reading of the token (a trailing-fused slash compound, a hyphen at house-number position). Deliberately
+ * BELOW the confident readings (0.8–0.9) and above coin-flip, and the same operating point as the phrase grouper's
+ * `NEUTRAL_PROPOSAL_CONFIDENCE` — both stages express "emit, but don't let this outrank a confident reading" alike.
+ */
+const AMBIGUOUS_PROPOSAL_CONFIDENCE = 0.55
+
+/**
  * Words that lead NUMBERED ROADS ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural category (road-type
  * leaders), mirroring the phrase grouper's street-type sets. The leading-designator-shape fallback must not read them
  * as sub-premise designators: a slash after a road leader is a route concurrency, not an AU unit/house split.
@@ -470,7 +478,7 @@ function proposeNumericReadings(
 					start: t.strippedStart,
 					end: t.strippedEnd,
 					kind: "FUSED_NUMBER",
-					confidence: 0.55,
+					confidence: AMBIGUOUS_PROPOSAL_CONFIDENCE,
 					source: "slash:trailing-fused",
 				})
 			}
@@ -520,7 +528,7 @@ function proposeNumericReadings(
 					start: t.strippedStart,
 					end: t.strippedEnd,
 					kind: "FUSED_NUMBER",
-					confidence: 0.55,
+					confidence: AMBIGUOUS_PROPOSAL_CONFIDENCE,
 					source: "hyphen:house-number-position",
 				})
 			}
