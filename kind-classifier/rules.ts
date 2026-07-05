@@ -169,6 +169,7 @@ const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
 	"de_postcode",
 	"ca_postcode",
 	"jp_postcode",
+	"nl_postcode",
 ])
 
 /**

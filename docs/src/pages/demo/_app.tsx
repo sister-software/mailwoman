@@ -28,6 +28,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { AboutDemo } from "../../components/AboutDemo/AboutDemo.tsx"
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
 import { LoadingIndicator } from "../../components/LoadingIndicator/LoadingIndicator.tsx"
+import { ModelVisualizer } from "../../components/ModelVisualizer/ModelVisualizer.tsx"
 import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
@@ -38,15 +39,18 @@ import {
 	DEFAULT_LOCALE,
 	EXAMPLE_ADDRESSES,
 	flattenTree,
+	normalizeReleasesManifest,
 	resolveStreet,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
+import type { ResolveBias } from "../../shared/demo-helpers.ts"
 import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "../../shared/httpvfs-street.ts"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 import {
 	adminGazetteerURL,
 	assetURL,
 	type DemoResult,
+	type ParseTraceLike,
 	type DualRole,
 	type FSTMatcherLike,
 	type FSTProvenanceLike,
@@ -100,9 +104,11 @@ function initialAddress(): string {
 
 export interface DemoAppProps {
 	initialCenter: [number, number]
+	/** Open the model-visualizer debug drawer by default (the /debug route). */
+	debugDefault?: boolean
 }
 
-export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
+export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = false }) => {
 	// Asset hosting split: the DBs + model + everything else come from R2 (assetURL → the
 	// public.sister.software bucket — raw ranges, CORS, free egress). The sql.js-httpvfs WORKER must
 	// stay SAME-ORIGIN though — browsers block cross-origin `new Worker()` — so the worker + wasm are
@@ -156,6 +162,12 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	const suppressAutocompleteRef = useRef(false)
 	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
+	// Model-visualizer debug drawer (#941 component, in-demo per operator): a dev-mode toggle that
+	// traces the SAME address being geocoded on the map. `debugTrace` is the decode-path trace for the
+	// current input; recomputed on each submit while debug mode is on. Gated on the classifier exposing
+	// `traceParse` (older bundles lack the seam).
+	const [debug, setDebug] = useState(debugDefault)
+	const [debugTrace, setDebugTrace] = useState<ParseTraceLike | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [compareErrorMessage, setCompareErrorMessage] = useState<string | null>(null)
@@ -189,6 +201,10 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	// first resolve, reset when the selected version changes. Held as the in-flight promise so concurrent
 	// resolves share one fetch.
 	const anchorLookupRef = useRef<Map<string, { lat: number; lon: number }> | null>(null)
+	// Optional geolocation bias (#938): populated by the "Use my location" control, read at submit.
+	// A ref (not state) so granting it mid-session doesn't re-render or re-create the submit callback.
+	const geoBiasRef = useRef<{ lat: number; lon: number } | null>(null)
+	const [geoBiasOn, setGeoBiasOn] = useState(false)
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	// Street tier (#377): per-state situs/interp httpvfs lookups, lazy-loaded by parsed region and
 	// cached. Held as the in-flight promise so a fast second submit on the same state shares one load.
@@ -237,7 +253,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					// to stay immutably cached.
 					fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"), {
 						cache: "reload",
-					}).then((r) => (r.ok ? (r.json() as Promise<ReleasesManifest>) : null)),
+					}).then(async (r) => (r.ok ? normalizeReleasesManifest(await r.json()) : null)),
 					import("maplibre-gl"),
 					fetchBasemapSource(),
 				])
@@ -879,6 +895,17 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					fst: (fstMatcher ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
 				})
 				const tClassify = performance.now()
+
+				// Debug drawer (#941): trace the SAME input through the decode path when dev mode is on.
+				// Best-effort + feature-detected — a trace failure or an older bundle never blocks the parse.
+				if (debug && classifier.traceParse) {
+					classifier
+						.traceParse(text, { addressSystemConventions: "auto" })
+						.then(setDebugTrace)
+						.catch(() => setDebugTrace(null))
+				} else if (!debug) {
+					setDebugTrace(null)
+				}
 				const nodes = flattenTree(tree)
 				const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
 				// Highest-confidence region, not the first in source order: a street name like
@@ -997,9 +1024,24 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 				// coherence (#263/#822) + span-rescore recovery (#370, internal, default-on) — over the
 				// byte-range candidate lookup. Same passes as the server; the pin ordering (postcode most
 				// precise, cross-country gate) lives in runCascade's hit extraction.
+				// Viewport bias (#938): the map's current center is a SOFT proximity hint, so an in-view
+				// namesake sorts ahead of a distant one at equal exact-tier (48026 → Fraser MI when you're
+				// looking at Michigan, Russi IT near Ravenna). The library's decay is population-CEILINGED,
+				// so a huge population gap still wins regardless of the view — "Paris" stays Paris, FR even
+				// from a US-centered map. Only hint once the user has zoomed past the global view; a
+				// whole-globe center is noise. Geolocation, when granted, joins as a second weaker hint.
+				const bias: ResolveBias = []
+
+				if (map && map.getZoom() >= 4) {
+					const c = map.getCenter()
+					bias.push({ lat: c.lat, lon: c.lng, weight: 1 })
+				}
+
+				if (geoBiasRef.current) bias.push({ ...geoBiasRef.current, weight: 0.6 })
+
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
 				const tBeforeResolve = performance.now()
-				const cascadeHits = await runCascade(wofLookup, tree as { roots: unknown[] }, text)
+				const cascadeHits = await runCascade(wofLookup, tree as { roots: unknown[] }, text, bias)
 				const tResolve = performance.now()
 
 				// Anchor-centroid fallback (postcode-only dead ends): WOF ships placeholder (0,0) for
@@ -1100,6 +1142,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			manifest,
 			selectedVersion,
 			sqljsBaseURL,
+			map,
+			debug,
 		]
 	)
 
@@ -1253,6 +1297,39 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						{busy ? "Parsing…" : "Parse + resolve"}
 					</button>
 				</form>
+				<div className={styles.examples}>
+					<span className={styles.examplesLabel}>Bias:</span>
+					<button
+						type="button"
+						className={styles.exampleBtn}
+						aria-pressed={geoBiasOn}
+						style={geoBiasOn ? { outline: "2px solid var(--ifm-color-primary)", outlineOffset: "1px" } : undefined}
+						title="Add your device location as a soft proximity hint (in addition to the map view). Never a hard filter — a strong population signal still wins."
+						onClick={() => {
+							if (geoBiasOn) {
+								geoBiasRef.current = null
+								setGeoBiasOn(false)
+
+								return
+							}
+
+							if (typeof navigator === "undefined" || !navigator.geolocation) return
+							navigator.geolocation.getCurrentPosition(
+								(pos) => {
+									geoBiasRef.current = { lat: pos.coords.latitude, lon: pos.coords.longitude }
+									setGeoBiasOn(true)
+								},
+								() => setGeoBiasOn(false),
+								{ maximumAge: 600_000, timeout: 8_000 }
+							)
+						}}
+					>
+						{geoBiasOn ? "📍 Using your location" : "📍 Use my location"}
+					</button>
+					<span className={styles.examplesLabel} style={{ opacity: 0.7 }}>
+						the map view already biases nearby namesakes
+					</span>
+				</div>
 				{suggestions.length > 0 ? (
 					<div className={styles.examples} id="addr-suggest-list" role="listbox" aria-label="Place suggestions">
 						<span className={styles.examplesLabel}>Did you mean:</span>
@@ -1325,6 +1402,38 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						</span>
 					</label>
 				) : null}
+				{classifier?.traceParse ? (
+					<label
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							gap: 6,
+							fontSize: 13,
+							margin: "8px 0",
+							cursor: "pointer",
+							color: "var(--ifm-color-emphasis-800)",
+						}}
+						title="Open the model-visualizer drawer: trace this address through the decode path — tokens, retrieval channels, emissions, priors, repairs — beside the map."
+					>
+						<input
+							type="checkbox"
+							checked={debug}
+							onChange={(e) => {
+								setDebug(e.target.checked)
+
+								if (!e.target.checked) setDebugTrace(null)
+								else if (result && classifier.traceParse) {
+									classifier
+										.traceParse(text, { addressSystemConventions: "auto" })
+										.then(setDebugTrace)
+										.catch(() => setDebugTrace(null))
+								}
+							}}
+						/>
+						🐛 Dev mode
+						<span style={{ color: "var(--ifm-color-emphasis-600)" }}>— trace the decode path</span>
+					</label>
+				) : null}
 				{result ? (
 					<ResultPanel
 						result={displayResult ?? result}
@@ -1341,6 +1450,25 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					/>
 				) : null}
 			</section>
+
+			{/* Model-visualizer drawer — slides over the map's right edge so you inspect the SAME address
+			    the map is geocoding without leaving the demo. Mounts only in dev mode with a trace ready. */}
+			{debug && debugTrace ? (
+				<aside className={styles.debugDrawer} aria-label="Model decode-path visualizer">
+					<div className={styles.debugDrawerHeader}>
+						<strong>🐛 Decode path</strong>
+						<button
+							type="button"
+							className={styles.exampleBtn}
+							onClick={() => setDebug(false)}
+							aria-label="Close debug drawer"
+						>
+							✕
+						</button>
+					</div>
+					<ModelVisualizer trace={debugTrace} />
+				</aside>
+			) : null}
 		</div>
 	)
 }

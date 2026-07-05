@@ -15,8 +15,14 @@
  *
  *   Sql.js-httpvfs ships a webpack UMD bundle (not ESM) and a Worker + WASM. The demo-assets plugin
  *   stages all three into `static/mailwoman/sqljs/`; we load the UMD via a classic <script> (→
- *   `window.createDBWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
+ *   `window.createDbWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
  *   webpack — that's what keeps the Docusaurus build warning-free.
+ *
+ *   `createDbWorker` (lowercase b) is sql.js-httpvfs's OWN export name — the acronym-casing
+ *   convention explicitly exempts external library names (AGENTS.md), and the batch-B sweep
+ *   (da54bc8c) violating that here silently killed the street tier for three days: the UMD loaded,
+ *   `window.createDbWorker` never existed, and the demo fell back to the admin cascade. The
+ *   contract test pins the library's export name against this file.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
@@ -29,6 +35,7 @@ import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-sc
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
+import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**
@@ -99,7 +106,7 @@ interface HTTPVFSWorker {
 	bytesRead(): Promise<number>
 }
 
-/** The raw shape `createDBWorker` resolves to — `worker` is the Comlink proxy. */
+/** The raw shape `createDbWorker` resolves to — `worker` is the Comlink proxy. */
 interface RawWorkerHTTPVFS {
 	db: HTTPVFSWorker["db"]
 	worker?: { bytesRead?: number | Promise<number> }
@@ -124,9 +131,9 @@ export async function loadHTTPVFSDatabase(
 	sqljsBaseURL: string,
 	options: HTTPSVFSOptions = {}
 ): Promise<HTTPVFSWorker> {
-	const w = window as unknown as { createDBWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
+	const w = window as unknown as { createDbWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
 
-	if (typeof w.createDBWorker !== "function") {
+	if (typeof w.createDbWorker !== "function") {
 		await new Promise<void>((res, rej) => {
 			const s = document.createElement("script")
 			s.src = `${sqljsBaseURL}/index.js`
@@ -136,7 +143,7 @@ export async function loadHTTPVFSDatabase(
 		})
 	}
 
-	if (typeof w.createDBWorker !== "function") throw new Error("createDBWorker missing after UMD load")
+	if (typeof w.createDbWorker !== "function") throw new Error("createDbWorker missing after UMD load")
 
 	// Open over byte-range fetches, then force the header + schema pages through SQLite with a
 	// cheap read. On mobile Safari the HTTP cache can hand sql.js-httpvfs a torn 64 KB range chunk,
@@ -146,7 +153,7 @@ export async function loadHTTPVFSDatabase(
 	// with a cache-busting query param to force fresh chunks. Self-heals a poisoned cache without
 	// permanently defeating caching for the happy path. See the 2026-06 mobile-Safari demo report.
 	const open = async (url: string): Promise<HTTPVFSWorker> => {
-		const raw = await w.createDBWorker!(
+		const raw = await w.createDbWorker!(
 			[
 				{
 					from: "inline",
@@ -624,7 +631,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			if (strippedKey && strippedKey !== nameKey) rows = await probe(strippedKey)
 		}
 
-		return rows.map((row) => {
+		const candidates = rows.map((row) => {
 			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
 
 			return {
@@ -650,6 +657,40 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 					: undefined,
 			}
 		})
+
+		// Proximity re-rank (#938): the browser twin of the Node candidate lookup's bias sort — with the
+		// map viewport / user location as hints, re-order the exact-match candidates by the SAME prominence
+		// (population + nearness in one additive scale) so an in-view namesake wins a tie. Byte-identical to
+		// population order when no bias is passed. `score` = -neg_rank = log10(population + 1). Constants
+		// MUST match resolver-wof-sqlite/candidate-lookup.ts (the #861 server↔demo parity contract).
+		if (query.bias && query.bias.length > 0) {
+			const BIAS_BOOST = 4.0
+			const POP_BOOST = 4.0
+			const POP_SCALE_LOG10 = 6
+			const PROX_SCALE_KM = 30
+			const prominence = (c: (typeof candidates)[number]): number => {
+				const popTerm = POP_BOOST * Math.min(1, Math.max(0, c.score) / POP_SCALE_LOG10)
+				let proxTerm = 0
+
+				if (!(c.lat === 0 && c.lon === 0)) {
+					for (const b of query.bias!) {
+						const d = haversineKm(b.lat, b.lon, c.lat, c.lon)
+						const term = (BIAS_BOOST * (b.weight ?? 1)) / (1 + d / PROX_SCALE_KM)
+
+						if (term > proxTerm) proxTerm = term
+					}
+				}
+
+				return popTerm + proxTerm
+			}
+
+			return candidates
+				.map((c, i) => ({ c, i, p: prominence(c) }))
+				.sort((a, b) => b.p - a.p || a.i - b.i)
+				.map((x) => x.c)
+		}
+
+		return candidates
 	}
 }
 

@@ -15,7 +15,7 @@ import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 
 import type { Calibrator, ReleasesManifest } from "../shared/demo-helpers.ts"
-import { createCalibrator, DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
+import { createCalibrator, DEFAULT_LOCALE, normalizeReleasesManifest } from "../shared/demo-helpers.ts"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 import type {
 	FSTMatcherLike,
@@ -130,7 +130,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		void (async () => {
 			try {
 				const res = await fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"))
-				const data: ReleasesManifest | null = res.ok ? await res.json() : null
+				const data: ReleasesManifest | null = res.ok ? normalizeReleasesManifest(await res.json()) : null
 
 				if (cancelled) return
 

@@ -188,6 +188,12 @@ export function buildWorkspaceAliases(): Record<string, string> {
 
 	if (resolverDir) {
 		aliases["@mailwoman/resolver/span-rescore"] = resolveWorkspaceFile(resolverDir, "span-rescore")
+		// `@mailwoman/resolver/resolve` — createWOFResolver/resolveTree for the demo's #861 shared
+		// cascade. The bare-barrel alias above (deliberately) reaches only core's types module — its
+		// "createWOFResolver is never bundled" premise went stale the day #861 landed, and the miss
+		// was invisible for days behind the manifest wire-key bug (the cascade never executed).
+		// Same subpath pattern as span-rescore; package exports carry "./resolve" for node/tsc.
+		aliases["@mailwoman/resolver/resolve"] = resolveWorkspaceFile(resolverDir, "resolve")
 	}
 
 	return aliases
@@ -271,7 +277,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
 
 /**
  * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + WASM) into `destDir`. The demo loads these at
- * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDBWorker — so webpack never sees
+ * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
  * them. That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is exactly
  * what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
  *

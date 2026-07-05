@@ -6,6 +6,12 @@
  *   PipelineExplorer embeddable component and the full demo page.
  */
 
+// STATIC on purpose: a dynamic-import destructure of this barrel gets tree-shaken by webpack's
+// usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
+// which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
+// behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
+import { createWOFResolver } from "@mailwoman/resolver/resolve"
+
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { MailwomanLookupLike } from "./resources.tsx"
 
@@ -30,6 +36,42 @@ export interface ReleasesManifest {
 	locale: string
 	defaultVersion: string
 	releases: ReleaseInfo[]
+}
+
+/** The raw wire shape of one releases.json entry — either key generation may appear. */
+interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDb"> {
+	hasFST?: boolean
+	hasWOFDb?: boolean
+	/** Pre-2026-07-04 manifests published lowercase-acronym keys. */
+	hasFst?: boolean
+	hasWofDb?: boolean
+}
+
+/**
+ * Normalize a fetched releases.json into house-cased {@link ReleasesManifest} fields. ALL manifest consumption goes
+ * through here — the wire tolerance lives in exactly one place, and everything past this boundary uses the acronym
+ * convention (`hasFST` / `hasWOFDb`).
+ *
+ * Why the tolerance: the 2026-07-01 acronym sweep renamed the READS while the published R2 manifest kept the old keys —
+ * every release read `undefined`, silently disabling the demo's WOF cascade AND the FST for three days (zero console
+ * errors; "no WOF hits" was the only symptom). The fix is not to freeze the wire keys but to migrate them deliberately:
+ * the publisher now writes house-cased keys, this normalizer accepts both generations (old HF mirrors still carry the
+ * legacy keys), and the contract test pins all three parties.
+ */
+export function normalizeReleasesManifest(raw: {
+	locale: string
+	defaultVersion: string
+	releases: WireReleaseEntry[]
+}): ReleasesManifest {
+	return {
+		locale: raw.locale,
+		defaultVersion: raw.defaultVersion,
+		releases: raw.releases.map((r) => ({
+			...r,
+			hasFST: r.hasFST ?? r.hasFst ?? false,
+			hasWOFDb: r.hasWOFDb ?? r.hasWofDb ?? false,
+		})),
+	}
 }
 
 export type ParsedNode = { tag: string; value?: unknown; confidence?: number }
@@ -274,21 +316,30 @@ interface ResolvedTreeNode {
  * candidates, then the other resolved admin nodes for hierarchy context. Falls back to a raw-text lookup when nothing
  * in the tree resolves — same last-resort the old cascade had. Drops (lat=0, lon=0) placeholder hits throughout.
  */
+/** Soft proximity hints (#938 `bias[]`): ordered, weighted, never a hard filter. */
+export type ResolveBias = Array<{ lat: number; lon: number; weight?: number }>
+
 export async function runCascade(
 	lookup: MailwomanLookupLike,
 	tree: { roots: unknown[] },
-	rawText: string
+	rawText: string,
+	bias?: ResolveBias
 ): Promise<CascadeHits> {
 	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
 	const backend = new CandidateResolverBackend(lookup)
-	const { createWOFResolver } = await import("@mailwoman/resolver")
 	const resolver = createWOFResolver(backend as never)
 
 	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
 	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
 	// global by design (the placer/population ranking routes, never a hardcoded country).
-	const resolved = (await resolver.resolveTree(tree as never, { adminCoherence: true })) as unknown as {
+	// bias (#938): the map viewport (and optional geolocation) as SOFT proximity hints — an in-view
+	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
+	// (48026 → Fraser MI vs Russi IT, the rule the library gate pins). Omitted when empty.
+	const resolved = (await resolver.resolveTree(tree as never, {
+		adminCoherence: true,
+		...(bias && bias.length > 0 ? { bias } : {}),
+	})) as unknown as {
 		roots: ResolvedTreeNode[]
 	}
 

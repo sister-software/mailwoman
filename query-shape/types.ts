@@ -26,6 +26,7 @@ export type KnownFormat =
 	| "ca_postcode"
 	| "de_postcode"
 	| "jp_postcode"
+	| "nl_postcode"
 	| "po_box"
 
 /** Punctuation grammar separator between consecutive segments. */

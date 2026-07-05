@@ -29,15 +29,25 @@ import { haversineKm } from "@mailwoman/spatial"
 
 import { arg } from "../lib/cli-args.ts"
 
+/**
+ * CONVENTION EPOCH 2026-07-04 (#945, operator-promoted): the DEFAULT scoring coordinate is the one production's
+ * result-assembly ladder picks — LOCALITY over postcode (geocode-core `adminPriority`). The harness historically scored
+ * the postcode point (rank 6 > 5), which measured a non-production preference and hid a 1.5 km-class FR gap for weeks.
+ * All dumps BEFORE this epoch are postcode-convention: NEVER compare across conventions (the tokenizer-F1 rule,
+ * coordinate edition). `--prefer-postcode-coord` reproduces the old convention for continuity runs only.
+ */
 const PLACETYPE_RANK: Record<string, number> = {
-	postalcode: 6,
-	locality: 5,
+	locality: 6,
+	postalcode: 5,
 	localadmin: 4,
 	borough: 4,
 	county: 3,
 	region: 2,
 	country: 0,
 }
+
+/** The pre-epoch (postcode-point) convention — continuity runs against pre-2026-07-04 dumps only. */
+const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
 interface Resolved {
 	id: number
 	name: string
@@ -68,11 +78,10 @@ function collectResolved(tree: AddressTree): Resolved[] {
 
 	return out
 }
-function mostSpecific(rs: Resolved[]): Resolved | null {
+function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_RANK): Resolved | null {
 	let best: Resolved | null = null
 
-	for (const r of rs)
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+	for (const r of rs) if (!best || (rank[r.placetype] ?? -1) > (rank[best.placetype] ?? -1)) best = r
 
 	return best
 }
@@ -137,6 +146,12 @@ async function main() {
 			// #942: postal-compound recovery (library default ON since the 2026-07-03 promote).
 			"postal-compound-recovery": { type: "boolean" },
 			"no-postal-compound-recovery": { type: "boolean" },
+			// Convention epoch 2026-07-04: locality-first is the DEFAULT (production's ladder). This flag
+			// reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
+			"prefer-postcode-coord": { type: "boolean" },
+			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention; it IS
+			// the default now, so it's a no-op.
+			"prefer-locality-coord": { type: "boolean" },
 		},
 		strict: false,
 	})
@@ -200,7 +215,10 @@ async function main() {
 					diacriticBroken++
 			}
 		}
-		const best = mostSpecific(collectResolved(await resolver.resolveTree(tree, resolveOpts)))
+		const best = mostSpecific(
+			collectResolved(await resolver.resolveTree(tree, resolveOpts)),
+			pins["prefer-postcode-coord"] === true ? POSTCODE_CONVENTION_RANK : PLACETYPE_RANK
+		)
 
 		if (best) {
 			resolved++
