@@ -24,6 +24,7 @@ import { parseArgs } from "node:util"
 
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -113,11 +114,13 @@ async function main() {
 		.split("\n")
 		.map((l) => JSON.parse(l))
 
-	const [{ WOFSqlitePlaceLookup }, { createScorer }, { createWOFResolver }] = await Promise.all([
-		import("@mailwoman/resolver-wof-sqlite"),
-		import("@mailwoman/neural/scorer"),
-		import("@mailwoman/resolver"),
-	])
+	const [{ WOFSqlitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
+		await Promise.all([
+			import("@mailwoman/resolver-wof-sqlite"),
+			import("@mailwoman/neural/scorer"),
+			import("@mailwoman/resolver"),
+			import("mailwoman"),
+		])
 
 	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const neural = await createScorer({
@@ -146,6 +149,14 @@ async function main() {
 			// #942: postal-compound recovery (library default ON since the 2026-07-03 promote).
 			"postal-compound-recovery": { type: "boolean" },
 			"no-postal-compound-recovery": { type: "boolean" },
+			// #965: apply the SAME production scoping geocode-core does — the coarse-placer anchorPosterior
+			// re-rank + the #743 hard-country filter — on top of the soft `--default-country`. Without it the
+			// harness overstates the wrong-country p90 tail for namesake locales (fi 270 km vs production ~3).
+			"hard-country": { type: "boolean" },
+			// #985: comma-separated country codes to ADD to the default hard-country safelist for this run
+			// (e.g. `--hard-country-safelist HU`). Measures a proposed safelist expansion WITHOUT touching
+			// the production const — the p90 of a cross-border-tail country should collapse if it's added.
+			"hard-country-safelist": { type: "string" },
 			// Convention epoch 2026-07-04: locality-first is the DEFAULT (production's ladder). This flag
 			// reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
 			"prefer-postcode-coord": { type: "boolean" },
@@ -169,12 +180,36 @@ async function main() {
 	// `--default-country none` = truly UNSCOPED resolution (no country prior at all) — the #936
 	// namesake legs need it; an empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = arg("default-country", "FR")
-	const resolveOpts = {
+	const resolveOpts: {
+		defaultCountry?: string
+		adminCoherence?: boolean
+		postcodeConsistency?: boolean
+		postalCompoundRecovery?: boolean
+		anchorPosterior?: Record<string, number>
+		anchorWeight?: number
+		hardCountry?: string
+	} = {
 		...(defaultCountryArg === "none" ? {} : { defaultCountry: defaultCountryArg }),
 		...(adminCoherencePin !== undefined ? { adminCoherence: adminCoherencePin } : {}),
 		...(postcodeConsistencyPin !== undefined ? { postcodeConsistency: postcodeConsistencyPin } : {}),
 		...(postalCompoundPin !== undefined ? { postalCompoundRecovery: postalCompoundPin } : {}),
 	}
+
+	// #965: when `--hard-country` is set, load the bundled coarse placer and apply the SAME scoping
+	// geocode-core does per row (anchorPosterior + anchorWeight + the #743 hard-country filter). This
+	// makes the harness's absolute p90s production-equivalent for namesake locales. `hardCountryFor` is
+	// a no-op when defaultCountry is set (the caller's country wins), so the hard filter only bites the
+	// unscoped `--default-country none` legs — exactly matching geocode-core's precedence.
+	const hardCountryPin = pins["hard-country"] === true
+	const placeCountry = hardCountryPin ? await loadDefaultPlaceCountry() : null
+	const COARSE_PLACER_ANCHOR_WEIGHT = 1.0 // keep in sync with geocode-core.ts
+	// #985: default safelist + any `--hard-country-safelist` additions (experiment without editing the const).
+	const extraSafelist = (pins["hard-country-safelist"] as string | undefined)
+		?.split(",")
+		.map((c) => c.trim().toUpperCase())
+	const hardCountrySafelist = extraSafelist?.length
+		? new Set([...HARD_PLACE_COUNTRY_SAFELIST, ...extraSafelist])
+		: undefined
 
 	const errs: number[] = []
 	const resolvedErrs: number[] = [] // coordinate error over RESOLVED rows only (unconfounded by the unresolved penalty)
@@ -215,8 +250,26 @@ async function main() {
 					diacriticBroken++
 			}
 		}
+		// #965: mirror geocode-core's per-row scoping when `--hard-country` — coarse placer → anchorPosterior
+		// re-rank (+ hard-country filter on the unscoped legs). The placer abstains on a bare-locality tree
+		// (same isBareLocalityTree guard geocode-core uses), and hardCountryFor no-ops when defaultCountry set.
+		let rowResolveOpts = resolveOpts
+
+		if (placeCountry && !isBareLocalityTree(tree)) {
+			const placed = placeCountry(row.raw)
+
+			if (placed.country && placed.country !== "OTHER") {
+				const hardCountry = hardCountryFor(placed.country, placed.confidence, resolveOpts, true, hardCountrySafelist)
+				rowResolveOpts = {
+					...resolveOpts,
+					anchorPosterior: placed.posterior ?? { [placed.country]: placed.confidence },
+					anchorWeight: COARSE_PLACER_ANCHOR_WEIGHT,
+					...(hardCountry ? { hardCountry } : {}),
+				}
+			}
+		}
 		const best = mostSpecific(
-			collectResolved(await resolver.resolveTree(tree, resolveOpts)),
+			collectResolved(await resolver.resolveTree(tree, rowResolveOpts)),
 			pins["prefer-postcode-coord"] === true ? POSTCODE_CONVENTION_RANK : PLACETYPE_RANK
 		)
 

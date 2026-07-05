@@ -24,6 +24,7 @@
 import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
@@ -141,6 +142,15 @@ export interface GeocodeDeps {
 	/** #743/#194: override the coverage safelist gating {@link hardPlaceCountry}. Undefined → built-in. */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
+	 * #928: when the parsed postcode's FORMAT unambiguously implies a country ({@link POSTCODE_FORMAT_COUNTRY} — GB `E4
+	 * 9AZ`, CA `K2P 1L4`), use it as the country prior IN PLACE OF the coarse placer, which conflates GB/CA with US on
+	 * shared English patterns and mis-routes them to US namesakes at high confidence (London E4 → London, Ohio).
+	 * **DEFAULT-ON** (promoted 2026-07-06; gate: GB 63→90% ok, CA 42→67%, US byte-identical 0/150 — the formats never
+	 * match a US ZIP / NL / FR code). Only fires when no explicit `defaultCountry`. Pass `false` to opt out (the
+	 * pre-promote behavior). A format is a stronger, unforgeable signal than the language model.
+	 */
+	postcodeCountryPrior?: boolean
+	/**
 	 * Admin descendant-consistency (#263, `ResolveOpts.adminCoherence`) — re-pick a (region, locality) pair so the
 	 * locality descends from the region ("Portland, ME" → Maine, not Messina). **Default-on** for the geocode path; only
 	 * fires when a region's child locality fell through, so the well-resolved path is byte-identical. Pass `false` to opt
@@ -154,6 +164,37 @@ export interface GeocodeDeps {
  * guess is broader/softer than a postcode anchor (2.0), so it blends gently.
  */
 const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
+
+/**
+ * #928: distinctive postcode FORMATS that unambiguously indicate a country — a stronger country signal than the
+ * language-based coarse placer, which conflates GB/US (both carry English street patterns) and mis-routes GB addresses
+ * to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence. The format is unforgeable across these
+ * countries: the GB pattern (letters-first) never matches a US ZIP or an NL `\d{4} [A-Z]{2}` code. Extend ONLY with
+ * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` lever (gated, default-off pending its gate).
+ */
+const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly country: string }> = [
+	// GB `E4 9AZ` — letters-first, ends `\d[A-Z]{2}`. Never matches a US ZIP / NL / FR / CA code.
+	{ re: /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i, country: "GB" },
+	// CA `K2P 1L4` — `A#A #A#`, ends `\d[A-Z]\d` (distinct from GB's `\d[A-Z]{2}`). The placer conflates CA
+	// with US (English) / FR (Québec) at 0.9–1.0 confidence, same failure as GB; the format is unambiguous.
+	{ re: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i, country: "CA" },
+	// IE Eircode `D02 AF30` — routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part.
+	// The 4-char unique part is what separates it from GB's 3-char `\d[A-Z]{2}` inward (no real-code
+	// overlap; Belfast `BT1 5GS` stays GB — Northern Ireland uses GB postcodes). The placer mis-routes IE
+	// 5/5 (Cork→US 0.99, Drogheda→US 1.00) — the same conflation class as GB/CA.
+	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
+]
+
+/** The country a parsed postcode's FORMAT implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}. */
+export function countryFromPostcodeFormat(postcode: string | undefined): string | null {
+	const p = postcode?.trim()
+
+	if (!p) return null
+
+	for (const { re, country } of POSTCODE_FORMAT_COUNTRY) if (re.test(p)) return country
+
+	return null
+}
 
 /** Lowercase 2-letter state slug from a parsed region value / resolver name, else null. */
 export function regionToStateSlug(
@@ -362,6 +403,30 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop shard for a non-US parse.
 	let placedCountry: string | null = null
 
+	// #928: a distinctive postcode FORMAT outranks the language-based placer (which conflates GB/US → US
+	// namesakes). When gated on and no explicit defaultCountry, set the country prior from the parsed
+	// postcode's format; the placer block below then no-ops via its `!opts.anchorPosterior` guard. Confidence
+	// 1.0 — a matched format is unambiguous. hardCountry still gates on the safelist (GB isn't on it yet, so
+	// this is a soft anchorPosterior re-rank for GB — enough to de-boost the US namesakes; a safelist add
+	// would make it hard, see #985).
+	if (
+		deps.postcodeCountryPrior !== false &&
+		!opts.defaultCountry &&
+		!opts.anchorPosterior &&
+		!isBareLocalityTree(tree)
+	) {
+		const pcCountry = countryFromPostcodeFormat(decodeAsJSON(tree).postcode as string | undefined)
+
+		if (pcCountry) {
+			placedCountry = pcCountry
+			opts.anchorPosterior = { [pcCountry]: 1.0 }
+			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+			const hardCountry = hardCountryFor(pcCountry, 1.0, opts, deps.hardPlaceCountry ?? true, deps.hardCountrySafelist)
+
+			if (hardCountry) opts.hardCountry = hardCountry
+		}
+	}
+
 	// #912 lever 1: the placer abstains on a single bare locality — OOD input, and the wrong soft
 	// posterior overrides the resolver's better-informed exact-tier/population ranking (see
 	// isBareLocalityTree). Explicit defaultCountry / anchorPosterior from the caller are untouched.
@@ -471,7 +536,23 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		// `postcode` joins the ladder (after the locality tiers, before region): a lone-postcode
 		// query resolves the postcode node itself — without it here the result reported 0,0 despite
 		// a resolved coordinate (found building the proximity-bias feature's 48026 case).
-		const adminPriority: ReadonlyArray<string> = ["locality", "dependent_locality", "postcode", "region", "country"]
+		//
+		// #977: EXCEPT when the resolved postcode is a full NL PC6 EXACT hit — a PC6 is street-block-class
+		// (avg ~8 addresses; the CBS polygon centroid), categorically tighter than any locality centroid,
+		// so it leads the ladder. Guarded three ways so the locality-first epoch convention (adopted for
+		// FR, where 5-digit zone centroids are COARSER than communes) is untouched everywhere else:
+		// (1) the parsed text is the full NL shape (`1012 LG`), (2) the node resolved, and (3) the
+		// resolver's hit is the FULL code, not the 4-digit-stem fallback (the stem is area-class — the
+		// lookup ladder can coarsen to it, and a stem hit must NOT outrank the locality).
+		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
+		const alnum = (s: string): string => s.replace(/[^\p{L}\p{N}]/gu, "").toUpperCase()
+		const pc6Exact =
+			pcNode !== undefined &&
+			/^\d{4}\s?[A-Z]{2}$/i.test(pcNode.value.trim()) &&
+			alnum(String(pcNode.metadata?.["resolver_name"] ?? "")) === alnum(pcNode.value)
+		const adminPriority: ReadonlyArray<string> = pc6Exact
+			? ["postcode", "locality", "dependent_locality", "region", "country"]
+			: ["locality", "dependent_locality", "postcode", "region", "country"]
 
 		for (const tag of adminPriority) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)
