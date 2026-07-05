@@ -29,6 +29,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { AboutDemo } from "../../components/AboutDemo/AboutDemo.tsx"
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
 import { LoadingIndicator } from "../../components/LoadingIndicator/LoadingIndicator.tsx"
+import { ModelVisualizer } from "../../components/ModelVisualizer/ModelVisualizer.tsx"
 import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
@@ -50,6 +51,7 @@ import {
 	adminGazetteerURL,
 	assetURL,
 	type DemoResult,
+	type ParseTraceLike,
 	type DualRole,
 	type FSTMatcherLike,
 	type FSTProvenanceLike,
@@ -103,9 +105,11 @@ function initialAddress(): string {
 
 export interface DemoAppProps {
 	initialCenter: [number, number]
+	/** Open the model-visualizer debug drawer by default (the /debug route). */
+	debugDefault?: boolean
 }
 
-export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
+export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = false }) => {
 	// Asset hosting split: the DBs + model + everything else come from R2 (assetURL → the
 	// public.sister.software bucket — raw ranges, CORS, free egress). The sql.js-httpvfs WORKER must
 	// stay SAME-ORIGIN though — browsers block cross-origin `new Worker()` — so the worker + wasm are
@@ -159,6 +163,12 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 	const suppressAutocompleteRef = useRef(false)
 	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
+	// Model-visualizer debug drawer (#941 component, in-demo per operator): a dev-mode toggle that
+	// traces the SAME address being geocoded on the map. `debugTrace` is the decode-path trace for the
+	// current input; recomputed on each submit while debug mode is on. Gated on the classifier exposing
+	// `traceParse` (older bundles lack the seam).
+	const [debug, setDebug] = useState(debugDefault)
+	const [debugTrace, setDebugTrace] = useState<ParseTraceLike | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [compareErrorMessage, setCompareErrorMessage] = useState<string | null>(null)
@@ -886,6 +896,17 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					fst: (fstMatcher ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
 				})
 				const tClassify = performance.now()
+
+				// Debug drawer (#941): trace the SAME input through the decode path when dev mode is on.
+				// Best-effort + feature-detected — a trace failure or an older bundle never blocks the parse.
+				if (debug && classifier.traceParse) {
+					classifier
+						.traceParse(text, { addressSystemConventions: "auto" })
+						.then(setDebugTrace)
+						.catch(() => setDebugTrace(null))
+				} else if (!debug) {
+					setDebugTrace(null)
+				}
 				const nodes = flattenTree(tree)
 				const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
 				// Highest-confidence region, not the first in source order: a street name like
@@ -1123,6 +1144,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 			selectedVersion,
 			sqljsBaseURL,
 			map,
+			debug,
 		]
 	)
 
@@ -1381,6 +1403,38 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 						</span>
 					</label>
 				) : null}
+				{classifier?.traceParse ? (
+					<label
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							gap: 6,
+							fontSize: 13,
+							margin: "8px 0",
+							cursor: "pointer",
+							color: "var(--ifm-color-emphasis-800)",
+						}}
+						title="Open the model-visualizer drawer: trace this address through the decode path — tokens, retrieval channels, emissions, priors, repairs — beside the map."
+					>
+						<input
+							type="checkbox"
+							checked={debug}
+							onChange={(e) => {
+								setDebug(e.target.checked)
+
+								if (!e.target.checked) setDebugTrace(null)
+								else if (result && classifier.traceParse) {
+									classifier
+										.traceParse(text, { addressSystemConventions: "auto" })
+										.then(setDebugTrace)
+										.catch(() => setDebugTrace(null))
+								}
+							}}
+						/>
+						🐛 Dev mode
+						<span style={{ color: "var(--ifm-color-emphasis-600)" }}>— trace the decode path</span>
+					</label>
+				) : null}
 				{result ? (
 					<ResultPanel
 						result={displayResult ?? result}
@@ -1397,6 +1451,25 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter }) => {
 					/>
 				) : null}
 			</section>
+
+			{/* Model-visualizer drawer — slides over the map's right edge so you inspect the SAME address
+			    the map is geocoding without leaving the demo. Mounts only in dev mode with a trace ready. */}
+			{debug && debugTrace ? (
+				<aside className={styles.debugDrawer} aria-label="Model decode-path visualizer">
+					<div className={styles.debugDrawerHeader}>
+						<strong>🐛 Decode path</strong>
+						<button
+							type="button"
+							className={styles.exampleBtn}
+							onClick={() => setDebug(false)}
+							aria-label="Close debug drawer"
+						>
+							✕
+						</button>
+					</div>
+					<ModelVisualizer trace={debugTrace} />
+				</aside>
+			) : null}
 		</div>
 	)
 }
