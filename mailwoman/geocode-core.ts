@@ -144,9 +144,11 @@ export interface GeocodeDeps {
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
 	 * #928: when the parsed postcode's FORMAT unambiguously implies a country ({@link POSTCODE_FORMAT_COUNTRY} — GB `E4
-	 * 9AZ`), use it as the country prior IN PLACE OF the coarse placer, which conflates GB/US on shared English patterns
-	 * and mis-routes GB → US namesakes at high confidence. Default-OFF (staged pending its gate); only fires when no
-	 * explicit `defaultCountry`. A format is a stronger, unforgeable signal than the language model.
+	 * 9AZ`, CA `K2P 1L4`), use it as the country prior IN PLACE OF the coarse placer, which conflates GB/CA with US on
+	 * shared English patterns and mis-routes them to US namesakes at high confidence (London E4 → London, Ohio).
+	 * **DEFAULT-ON** (promoted 2026-07-06; gate: GB 63→90% ok, CA 42→67%, US byte-identical 0/150 — the formats never
+	 * match a US ZIP / NL / FR code). Only fires when no explicit `defaultCountry`. Pass `false` to opt out (the
+	 * pre-promote behavior). A format is a stronger, unforgeable signal than the language model.
 	 */
 	postcodeCountryPrior?: boolean
 	/**
@@ -403,7 +405,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// 1.0 — a matched format is unambiguous. hardCountry still gates on the safelist (GB isn't on it yet, so
 	// this is a soft anchorPosterior re-rank for GB — enough to de-boost the US namesakes; a safelist add
 	// would make it hard, see #985).
-	if (deps.postcodeCountryPrior && !opts.defaultCountry && !opts.anchorPosterior && !isBareLocalityTree(tree)) {
+	if (
+		deps.postcodeCountryPrior !== false &&
+		!opts.defaultCountry &&
+		!opts.anchorPosterior &&
+		!isBareLocalityTree(tree)
+	) {
 		const pcCountry = countryFromPostcodeFormat(decodeAsJSON(tree).postcode as string | undefined)
 
 		if (pcCountry) {

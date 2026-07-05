@@ -75,7 +75,19 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 // for the rest (DeepSeek-advised, 2026-06-22). Measured resolve-rate under hard: US 100, FR 100, DE
 // 100, ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (out). Grow as more countries clear the bar.
 // Override per-call with `PipelineOpts.hardCountrySafelist` (the eval measures ungated to grow it).
-export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set(["US", "ES", "IT", "NL", "DE", "FR"])
+// GB + CA added at the #928 promote (2026-07-06): the postcodeCountryPrior format signal routes them
+// confidently (the language placer conflated both with US), and their OSM-panel gates passed with the
+// hard filter on — GB 271/300 ok / 7 unresolved, CA 200/300 ok / 31 unresolved (night 34).
+export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
+	"US",
+	"ES",
+	"IT",
+	"NL",
+	"DE",
+	"FR",
+	"GB",
+	"CA",
+])
 
 /**
  * #912 lever 1 — is this parse a single BARE locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on
