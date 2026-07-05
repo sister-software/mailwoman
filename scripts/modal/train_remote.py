@@ -139,6 +139,10 @@ def sync_corpus():
         f"rclone copy :s3:{BUCKET}/corpus/v0.4.0/ {VOL_MOUNT}/corpus/versioned/v0.4.0/corpus-v0.4.0/ --transfers 8",
         f"rclone copy :s3:{BUCKET}/models/tokenizer/ {VOL_MOUNT}/models/tokenizer/ --transfers 4",
         f"rclone copy :s3:{BUCKET}/corpus-python/ {VOL_MOUNT}/corpus-python/ --transfers 4",
+        # #924 NL-postcode overlay (v0.10.1) — the 698 base shards already live on the volume from
+        # prior trainings; only the +1 shard + its MANIFEST are new. modal-volume-put is
+        # container-blind, so it MUST come through this rclone path to be visible to the trainer.
+        f"rclone copy :s3:{BUCKET}/corpus/v0.10.1-nl-postcode/ {VOL_MOUNT}/corpus/versioned/v0.10.1-nl-postcode/ --transfers 4",
     ]
 
     for i, cmd in enumerate(commands):
