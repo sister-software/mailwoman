@@ -128,14 +128,14 @@ found by characterizing the GB namesake tail, not by planning it).
 
 ## Numbers (running)
 
-| Metric                | Value                                                                          |
-| --------------------- | ------------------------------------------------------------------------------ |
-| Shift window          | 06:10 → 15:35 UTC (~9.5 h)                                                      |
-| Models trained        | 0                                                                              |
-| Modal $               | **$0 of $30** (every win a no-GPU lever / measurement)                         |
-| PRs merged            | **9** (#978 #965, #979 #963, #980 #829, #982 trailing-punct, #983/#984 #937 GB/HU, #986 #985 flag, #987/#988 #928 GB/CA) |
-| Issues advanced       | #928 (fix), #981/#985 filed, #942/#977/#937 measured/scoped, #965 falsified     |
-| Coordinate panels     | 3 new (GB / HU / CA) + a reusable OSM→golden builder                           |
-| Gauntlet              | metamorphic 35/35 (zero xfails, first ever), regression 24/24                   |
-| Regressions shipped   | 0                                                                              |
-| NaN / CI failures     | 0 / 0                                                                          |
+| Metric              | Value                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Shift window        | 06:10 → 15:35 UTC (~9.5 h)                                                                                               |
+| Models trained      | 0                                                                                                                        |
+| Modal $             | **$0 of $30** (every win a no-GPU lever / measurement)                                                                   |
+| PRs merged          | **9** (#978 #965, #979 #963, #980 #829, #982 trailing-punct, #983/#984 #937 GB/HU, #986 #985 flag, #987/#988 #928 GB/CA) |
+| Issues advanced     | #928 (fix), #981/#985 filed, #942/#977/#937 measured/scoped, #965 falsified                                              |
+| Coordinate panels   | 3 new (GB / HU / CA) + a reusable OSM→golden builder                                                                     |
+| Gauntlet            | metamorphic 35/35 (zero xfails, first ever), regression 24/24                                                            |
+| Regressions shipped | 0                                                                                                                        |
+| NaN / CI failures   | 0 / 0                                                                                                                    |

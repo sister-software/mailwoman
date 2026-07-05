@@ -57,7 +57,10 @@ test.describe("Demo — production functional smoke @smoke", () => {
 		const { resolved, markerCount } = await demo.readResult()
 		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
 		// The tell: NL Amsterdam is ~52.37, 4.90; the pre-v5.4.0 mis-parse landed on Amsterdam, NY (~42.94, -74.19).
-		expect(lat, `resolved lat ${lat} should be in the Netherlands (v5.4.0 NL postcode fix), not Amsterdam NY`).toBeGreaterThan(52.2)
+		expect(
+			lat,
+			`resolved lat ${lat} should be in the Netherlands (v5.4.0 NL postcode fix), not Amsterdam NY`
+		).toBeGreaterThan(52.2)
 		expect(lat).toBeLessThan(52.5)
 		expect(lon, `resolved lon ${lon} should be in the Netherlands, not the US`).toBeGreaterThan(4.7)
 		expect(lon).toBeLessThan(5.1)

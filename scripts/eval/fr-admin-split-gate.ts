@@ -255,8 +255,10 @@ async function main() {
 		// re-rank (+ hard-country filter on the unscoped legs). The placer abstains on a bare-locality tree
 		// (same isBareLocalityTree guard geocode-core uses), and hardCountryFor no-ops when defaultCountry set.
 		let rowResolveOpts = resolveOpts
+
 		if (placeCountry && !isBareLocalityTree(tree)) {
 			const placed = placeCountry(row.raw)
+
 			if (placed.country && placed.country !== "OTHER") {
 				const hardCountry = hardCountryFor(placed.country, placed.confidence, resolveOpts, true, hardCountrySafelist)
 				rowResolveOpts = {

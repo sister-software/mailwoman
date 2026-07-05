@@ -102,6 +102,7 @@ export function restoreLowerInput(text: string): string {
  */
 export function normalizeInputCase(text: string): string {
 	if (isAllCapsInput(text)) return titleCaseInput(text)
+
 	if (isAllLowerInput(text)) return restoreLowerInput(text)
 
 	return text

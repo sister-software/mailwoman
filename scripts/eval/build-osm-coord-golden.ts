@@ -32,6 +32,7 @@ const ORDERS = ["canonical", "no-comma", "pc-line"] as const
 
 function render(num: string, street: string, cp: string, city: string, order: (typeof ORDERS)[number]): string {
 	if (order === "canonical") return `${num} ${street}, ${city} ${cp}`
+
 	if (order === "no-comma") return `${num} ${street} ${city} ${cp}`
 
 	return `${num} ${street}, ${city}, ${cp}`
@@ -89,7 +90,9 @@ async function main(): Promise<void> {
 		// A resolvable golden row needs house number + street + city + postcode + a coordinate, and a
 		// street that starts with a letter (drops the odd "-" / numeric-only tag).
 		if (!(num && street && city && cp && num !== "0" && /^\p{L}/u.test(street))) continue
+
 		if (!Number.isFinite(rec.lat) || !Number.isFinite(rec.lon)) continue
+
 		if (postcodeRe && !postcodeRe.test(cp)) continue
 
 		// Geographic diversity: the outward-code prefix (GB "SW"/"EC", HU 2-digit) buckets the reservoir.
