@@ -52,8 +52,8 @@ import { dataRootPath } from "@mailwoman/core/utils"
 // v0.6.0-bsplice tokenizer (58,582 pieces) — the first coordinated model + tokenizer
 // bump, so BOTH paths moved this ship. Bump these two paths on each ship; the expected
 // md5s live in model-card.json `files_md5` (single source — see the header).
-const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-bsplice-meaninit-int8.onnx")
-const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.6.0-bsplice", "tokenizer.model")
+const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v230-nl-postcode-int8.onnx")
+const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.7.1-nsplice", "tokenizer.model")
 
 const PKG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
