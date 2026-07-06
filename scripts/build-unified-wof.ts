@@ -53,8 +53,12 @@ import { asyncParallelIterator } from "spliterator"
  * prototype this folds into the unified build).
  */
 const OVERTURE_ID_BASE = 8_000_000_000_000
-/** Overture division subtypes that map to the resolver's admin placetypes. */
-const OVERTURE_DIVISION_SUBTYPES = ["locality", "region", "county", "localadmin"]
+/**
+ * Overture division subtypes that map to the resolver's admin placetypes. `country` is included (#1015) so an
+ * Overture-backfilled locale gets its country node — without it the reverse geocoder has no country tier to anchor to
+ * (Brussels → nearest FOREIGN place across the border), and forward resolution can't country-gate the locale.
+ */
+const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "county", "localadmin"]
 /** Default GeoNames per-country dump directory (`<CC>.txt`, from download.geonames.org/export/dump). */
 const DEFAULT_GEONAMES_DIR = "/mnt/playpen/mailwoman-data/geonames"
 /** Default GeoNames per-country POSTAL dump directory (`<CC>.txt`, from download.geonames.org/export/zip). */
@@ -306,6 +310,12 @@ export async function ingestOvertureDivisions(
 	const inlist = countries.map((c) => `'${c.replace(/'/g, "''")}'`).join(",")
 	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
 	const glob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division/*`
+	// #1015: the real boundary EXTENT lives in the sibling `type=division_area` (the polygon). The `type=division`
+	// row is the label POINT — its `bbox` is a degenerate point, so relying on it left every Overture-backfilled
+	// place with a point bbox, invisible to the reverse geocoder's bbox-containment (Brussels resolved to a foreign
+	// cross-border neighbour). Join the area's extent by `division_id`, falling back to the point bbox when a
+	// division has no area row (so nothing regresses).
+	const areaGlob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division_area/*`
 
 	const instance = await DuckDBInstance.create()
 	const con = await instance.connect()
@@ -316,19 +326,28 @@ export async function ingestOvertureDivisions(
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
 	const result = await con.runAndReadAll(`
-		SELECT id,
-			names.primary AS name,
-			to_json(names.common) AS common_json,
-			subtype,
-			country,
-			ST_Y(ST_Centroid(geometry)) AS lat,
-			ST_X(ST_Centroid(geometry)) AS lon,
-			bbox.ymin AS min_lat, bbox.ymax AS max_lat, bbox.xmin AS min_lon, bbox.xmax AS max_lon,
-			parent_division_id,
-			population
-		FROM read_parquet('${glob}')
-		WHERE country IN (${inlist}) AND subtype IN (${subtypes})
-			AND names.primary IS NOT NULL AND geometry IS NOT NULL
+		WITH area AS (
+			SELECT division_id,
+				MIN(bbox.ymin) AS ymin, MAX(bbox.ymax) AS ymax, MIN(bbox.xmin) AS xmin, MAX(bbox.xmax) AS xmax
+			FROM read_parquet('${areaGlob}')
+			WHERE country IN (${inlist})
+			GROUP BY division_id
+		)
+		SELECT d.id AS id,
+			d.names.primary AS name,
+			to_json(d.names.common) AS common_json,
+			d.subtype AS subtype,
+			d.country AS country,
+			ST_Y(ST_Centroid(d.geometry)) AS lat,
+			ST_X(ST_Centroid(d.geometry)) AS lon,
+			COALESCE(a.ymin, d.bbox.ymin) AS min_lat, COALESCE(a.ymax, d.bbox.ymax) AS max_lat,
+			COALESCE(a.xmin, d.bbox.xmin) AS min_lon, COALESCE(a.xmax, d.bbox.xmax) AS max_lon,
+			d.parent_division_id AS parent_division_id,
+			d.population AS population
+		FROM read_parquet('${glob}') d
+		LEFT JOIN area a ON a.division_id = d.id
+		WHERE d.country IN (${inlist}) AND d.subtype IN (${subtypes})
+			AND d.names.primary IS NOT NULL AND d.geometry IS NOT NULL
 	`)
 	const rows = result.getRowObjects() as Array<Record<string, unknown>>
 	console.error(`  Overture divisions: ${rows.length.toLocaleString()} pulled`)
