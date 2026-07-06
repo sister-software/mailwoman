@@ -54,8 +54,17 @@ export interface GeocodeResult {
 	locality: string | null
 	region: string | null
 	postcode: string | null
-	/** Admin hierarchy from the resolver, locality → country (most specific first). */
-	hierarchy: Array<{ tag: string; value: string; lat?: number; lon?: number; placeID?: string }>
+	/**
+	 * ISO-3166 alpha-2 of the resolved place (the gazetteer/candidate country of the deepest resolved node), or null.
+	 * #1014 — lets a forward consumer fill `country`/`countrycode` without a full ancestry walk (the candidate backend
+	 * carries the country code even when it has no `ancestors()` table).
+	 */
+	countryCode: string | null
+	/**
+	 * Admin hierarchy from the resolver, locality → country (most specific first). `name` is the resolved gazetteer name
+	 * (proper-cased canonical, #1014) — distinct from `value`, the raw parsed input span.
+	 */
+	hierarchy: Array<{ tag: string; value: string; name: string; lat?: number; lon?: number; placeID?: string }>
 }
 
 /**
@@ -584,9 +593,36 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		.map((n) => ({
 			tag: n.tag,
 			value: n.value.trim(),
+			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`; fall back to the raw
+			// parsed span when a node resolved without one. #1014: consumers should DISPLAY this, not `value`.
+			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),
 		}))
 
-	return { input, lat, lon, resolution_tier: tier, uncertainty_m: uncertaintyM, locality, region, postcode, hierarchy }
+	// #1014: the resolved ISO-3166 alpha-2 country (`resolver_country`, stamped by decorateNode). Same for every
+	// resolved node of one address, so the first that carries it wins.
+	let countryCode: string | null = null
+
+	for (const n of allNodes) {
+		const c = (n.metadata?.["resolver_country"] as string | undefined)?.trim()
+
+		if (c) {
+			countryCode = c.toUpperCase()
+			break
+		}
+	}
+
+	return {
+		input,
+		lat,
+		lon,
+		resolution_tier: tier,
+		uncertainty_m: uncertaintyM,
+		locality,
+		region,
+		postcode,
+		countryCode,
+		hierarchy,
+	}
 }
