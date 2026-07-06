@@ -66,6 +66,12 @@ Run for _every_ candidate, regardless of what you changed (this is what
 | Affix split         | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold gated numbers                      |
 | Demo smoke          | `eval-model` skill / `demo-preset-compare.ts`                                      | presets stable                          |
 | Honest geography    | `scripts/eval/honest-eval.ts`                                                      | region-match + coord p50/p90 + PIP hold |
+| Input robustness    | `scripts/eval/gauntlet/metamorphic.ts` (INV/DIR)                                   | no new drift; xfails tracked            |
+
+The input-robustness gate is the metamorphic layer of the Gauntlet — label-preserving
+perturbations that must not move the assembled coordinate. See
+[Input robustness](../concepts/input-robustness.mdx) for the absorption layers behind it and the
+coverage matrix.
 
 The ship-config channels are part of the contract: a gaz-trained model is graded with
 `--gazetteer-lexicon` + `--suppress-gaz-near-postcode`, and (v4.3.0+) `--conventions auto` —

@@ -1,0 +1,170 @@
+---
+sidebar_position: 16
+title: Input robustness — absorbing the mess users actually type
+tags:
+  - concepts
+  - eval
+  - robustness
+---
+
+# Input robustness — absorbing the mess users actually type
+
+The addresses in a test fixture are clean. The addresses a geocoder receives are
+not. They arrive in all caps from a compliance export, comma-crushed from a
+spreadsheet paste, missing a letter because someone typed fast, with `Ave` where
+the fixture said `Avenue`. A parser that only holds up on the tidy form is a
+demo. Holding up on the mess is the product.
+
+So the question that matters isn't "does it parse `1600 Pennsylvania Avenue NW,
+Washington, DC 20500`?" Of course it does. It's "does `1600 PENNSYLVANIA AVE
+NW,WASHINGTON DC` land on the same rooftop?" This page is how Mailwoman answers
+that: three layers that absorb surface noise before it can move the coordinate,
+and the gates that keep those layers honest.
+
+## The absorption stack
+
+Robustness here comes in three layers, deliberately ordered from the cheapest and
+most certain transforms to the most learned, each catching what the one before it
+shouldn't.
+
+### Layer 1 — deterministic normalization
+
+The first pass is pure code, no model, in [`@mailwoman/normalize`](../plan/reference/STAGES.mdx).
+It does the transforms that are always safe because they have a single correct
+answer: Unicode NFC, so a composed `é` and a decomposed `é` stop being different
+strings; punctuation folding; whitespace collapse, where a run of spaces becomes
+one and a trailing `.`/`,`/`;`/`:` is trimmed off the tail (`normalize/whitespace.ts`).
+That last one earns its keep: a stray period glued onto the final token
+(`…Washington DC.`) used to drop the street tier from `address_point` to `admin`,
+and trimming it is free.
+
+Every transform is offset-mapped. The normalized string carries a map back to the
+raw character positions, so a span the model finds in the clean text still points
+at the right bytes of what the user typed. Robustness that corrupted the offsets
+would be worse than none.
+
+One thing this layer deliberately does **not** do at runtime: expand
+abbreviations. `normalize/abbreviations.ts` can turn `Rd` into `Road` and `Ave`
+into `Avenue`, and it's fully built, but it's opt-in, and the runtime pipeline
+leaves it off (`normalize/compute.ts`). That's a choice, not an oversight.
+Abbreviation is the model's job. Hard-coding `Ave → Avenue` in front of the parser
+would be the sieve regrowing: a rule seizing a decision the model is supposed to
+own, and one it can't unlearn if the rule turns out wrong for a locale. See
+[What Mailwoman is](./what-mailwoman-is.mdx) on why knowledge stays out of the
+learner's front door.
+
+### Layer 2 — model-side case normalization
+
+Some noise is too locale-sensitive for Layer 1 but too systematic to leave to the
+corpus alone. Casing is the case in point. A model trained on mixed-case text is
+partly out of domain on a fully-shouting compliance record, where it drops and
+mis-bounds tokens (`214 JONES RD, ELKHART, TX 75839` mangles into a locality of
+`ALESTINE`). So `neural/case-normalize.ts` title-cases an all-caps input before the
+model sees it (#690), and restores the trained mixed-case shape of an all-lowercase
+input (#829). Both are on by default.
+
+The detection is strict on purpose: only a fully-shouting or fully-whispering input
+qualifies, so ordinary mixed-case text is never touched and its byte path stays
+identical. It's also offset-stable, and it has to be. It targets pure-ASCII input,
+because title-casing accented or non-Latin text can change length (`ß`→`SS`, the
+Turkish dotted and dotless I) and break the very offset invariant Layer 1 worked
+to preserve. The measured payoff was concrete: TX HHSC locality recall went from
+90.1% to 99.7%.
+
+### Layer 3 — trained-in variation
+
+The last layer isn't a pass at all. It's the corpus. The parser learns to shrug off
+surface variation because the training data contains it: casing permutations
+(`corpus/src/shard-recipes/intersection.ts`, `locale.ts`), abbreviation variants in
+both directions (`street-affix.ts`, the `unit.ts` designators from #454,
+`fr-bare-street.ts`). This is where `Ave` and `Avenue` both become the same street
+to the model. No rule rewrote one into the other; the model simply saw both forms
+in training and learned they point at the same place.
+
+This is the layer that makes Layer 1's abstention safe. Because the model trains on
+both forms, `normalize/` can leave abbreviations alone and trust the learner to
+handle them. The three layers are a division of labor: deterministic code takes the
+transforms with one right answer, the corpus takes the ones whose answer depends on
+context, and case normalization bridges the systematic gap between them.
+
+## The gates
+
+Absorption you can't measure is absorption you can't trust. Three gates watch these
+layers, and they grade different things on purpose.
+
+### Metamorphic INV/DIR — the un-gameable layer
+
+The one that matters most is `scripts/eval/gauntlet/metamorphic.ts`, layer 2 of
+[the Gauntlet](./eval-discipline.mdx). It asserts _relations_ between outputs rather
+than stored expected values, which is exactly why a curated corpus can't breed false
+confidence in it. It also grades the **assembled geocode**, coordinate and tier, not
+parse F1, because a robustness bug that leaves the tags intact but moves the pin is
+still a bug that ships a wrong answer.
+
+Two relation families:
+
+- **INV (invariance).** A label-preserving perturbation of a base address (lowercase
+  it, uppercase it, double the spaces, append a stray dot, tighten the space after a
+  comma) must not move the coordinate more than a metre (`INV_EPSILON_KM = 0.001`) or
+  change the resolution tier. Same address, same answer. A drift is a surface-form
+  robustness bug, full stop.
+- **DIR (directional).** Drop the postcode and the result must still land within 5km
+  of the with-postcode anchor. This is the #251 failure class, a parser that falls
+  apart the moment a user omits the ZIP, frozen here as a standing property.
+
+When a perturbation deterministically fails, it doesn't get swept under the rug and
+it doesn't block the build either. It goes in `KNOWN_INV_XFAIL` with an issue
+reference: visible, tracked, non-blocking, so the gate fails only on _new_
+regressions. The bookkeeping cuts the other way too: an xfail that starts passing
+gets flagged for removal, so the list can't rot into the Pelias pass-list trap it was
+built to avoid. As of this writing that map is empty. The INV layer is 35/35 green,
+cleared by the two normalizer levers above (#829's lowercase restore and the
+trailing-punctuation trim) with no retraining.
+
+### Golden `graceful/*` slices — labeled adversarial cases
+
+The golden set (`data/eval/golden/v0.1.2`) carries a small hand-labeled adversarial
+track under `graceful/*`: typos (`Pensylvania`, `Portlnad`, `Fransisco`), mis-casing,
+mis-punctuation, whitespace abuse. Around ten of these are single-character typo
+cases. They're a stress test with expected components attached, not a coordinate
+gate: the parse should survive with lower confidence, and the labels say what
+"survive" means.
+
+### `perturb-golden.ts` — the one-off arena
+
+`scripts/eval/perturb-golden.ts` takes golden rows and applies rule-defeating
+perturbations (strip the delimiters, lowercase everything, glue the region to the
+postcode as `OR97214`) while keeping the component labels intact. It exists to show
+that a contextual model degrades more gracefully than a delimiter-hungry rule parser.
+It's a generator you run when you want that arena, not a standing gate.
+
+## The coverage matrix
+
+Put the perturbation classes against the layers that absorb them and the gates that
+watch them, and the honest picture falls out, thin spots included.
+
+| Class                                        | `normalize/` (runtime)                     | Trained (corpus aug) | Gated                                          |
+| -------------------------------------------- | ------------------------------------------ | -------------------- | ---------------------------------------------- |
+| Casing                                       | yes (case-normalize #690/#829, model-side) | yes                  | INV[lower/upper] green                         |
+| Spacing                                      | yes (whitespace.ts)                        | incidental           | INV[ws], INV[comma-tight]                      |
+| Abbreviation swap (Road↔Rd)                  | capable but OFF at runtime (deliberate)    | yes                  | labeled golden entries only, no stability gate |
+| Number spelling (5th↔Fifth, 100↔One Hundred) | no                                         | no                   | nowhere                                        |
+| Typos (single-char edit)                     | no                                         | no                   | ~10 labeled golden cases only                  |
+| Transpositions                               | no                                         | no                   | folded into golden typo slice                  |
+
+The top two rows are the settled ones: casing and spacing are absorbed at runtime,
+reinforced in the corpus, and held green by a standing invariant. The bottom four are
+where the coverage is honest about its holes. Abbreviation swaps are trained in but
+have no coordinate-stability gate, so the model handles them and we just don't assert
+it. Number spelling is absorbed nowhere. Typos and transpositions live only in a
+handful of hand-labeled golden cases. Naming a gap out loud is how you keep it from
+hiding.
+
+## See also
+
+- [Eval discipline](./eval-discipline.mdx) — the full Gauntlet, and why the
+  coordinate is graded, not the name string
+- [What Mailwoman is](./what-mailwoman-is.mdx) — why knowledge stays outside the
+  learner, the principle behind Layer 1's abstention
+- [The pipeline contract](./staged-pipeline-contract.mdx) — where the normalize stage
+  plugs into the runtime pipeline
