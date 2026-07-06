@@ -99,6 +99,8 @@ const C = {
 	isSubpart: "Is Organization Subpart",
 	parentLBN: "Parent Organization LBN",
 	parentTIN: "Parent Organization TIN",
+	// #625 taxonomy discriminator: the 15 taxonomy slots; collected as a set (any shared code = agreement).
+	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
@@ -153,6 +155,8 @@ interface MessyRow {
 	org: string
 	address: string
 	auth: string
+	/** Whitespace-joined taxonomy-code set (up to 15 slots) — the #625 code-set discriminator. */
+	taxonomy: string
 	entityID: string
 }
 
@@ -212,6 +216,13 @@ async function main(): Promise<void> {
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
 				const auth = `${norm(r[C.authFirst])} ${norm(r[C.authLast])}`.trim() // the NPI's registrant — shared across its records
+				// #625: the taxonomy-code set (up to 15 slots), whitespace-joined — identical across the NPI's
+				// records by construction (it's a per-NPI registry attribute), so it NEVER splits one entity;
+				// it only separates co-located DISTINCT providers whose sets are disjoint.
+				const taxonomy = C.taxonomy
+					.map((col) => norm(r[col]))
+					.filter(Boolean)
+					.join(" ")
 				// Entity-level (site) truth: same org + same physical address. Subparts (NPPES
 				// "Is Organization Subpart" + parent LBN/TIN) collapse to their PARENT, so the matcher isn't
 				// charged for correctly fusing one org's many subpart-NPIs at a site; an NPI's mailing-vs-
@@ -224,15 +235,15 @@ async function main(): Promise<void> {
 
 				if (org) npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
 				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice, auth, entityID: eid(practice) })
+				rows.push({ npi, name: primaryName, org, address: practice, auth, taxonomy, entityID: eid(practice) })
 
 				// primary
 				for (const alt of altNames.get(npi)!)
-					rows.push({ npi, name: alt, org: alt, address: practice, auth, entityID: eid(practice) }) // name drift
+					rows.push({ npi, name: alt, org: alt, address: practice, auth, taxonomy, entityID: eid(practice) }) // name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice)
-					rows.push({ npi, name: primaryName, org, address: mailing, auth, entityID: eid(mailing) }) // address variation
+					rows.push({ npi, name: primaryName, org, address: mailing, auth, taxonomy, entityID: eid(mailing) }) // address variation
 			}
 		}
 	}
@@ -259,7 +270,7 @@ async function main(): Promise<void> {
 		address: "address",
 		// `entityTruth` rides as an attribute purely for scoring (NOT a discriminator → never used in
 		// matching); it carries the site-level entity-level label alongside the NPI (record.id).
-		attributes: { authorizedOfficial: "auth", entityTruth: "entityID" },
+		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy", entityTruth: "entityID" },
 		source: "nppes",
 	}
 
@@ -590,6 +601,7 @@ async function main(): Promise<void> {
 		requireCorroboration?: boolean
 		usePhone?: boolean
 		linkage?: "single" | "average"
+		exactDiscriminators?: string[]
 	}
 	// The proven levers are now DEFAULT-ON in resolveEntities (#86). Each row sets BOTH `collapseSpatial`
 	// and `addressFrequency` EXPLICITLY so the progression isolates one lever at a time — otherwise the
@@ -640,6 +652,20 @@ async function main(): Promise<void> {
 				requireCorroboration: true,
 				usePhone: true,
 				linkage: "average",
+			},
+		},
+		// A5 (#625): the taxonomy code-set discriminator — set-overlap agreement over the NPI's 15 taxonomy
+		// slots. The named "still-more-distinctive identifier" from the 2026-06-16 report: co-located
+		// DISTINCT providers usually have disjoint sets (the over-merge separator) while an entity's own
+		// records always share theirs (never splits). Stacked on the BEST prior classical config (A1 +
+		// authorized-official; A3 phone + A4 avg-linkage were measured neutral-to-negative and are left off).
+		{
+			label: "+ taxonomy code-set discriminator (A5, #625)",
+			config: {
+				collapseSpatial: true,
+				addressFrequency,
+				discriminators: ["authorizedOfficial"],
+				exactDiscriminators: ["taxonomy"],
 			},
 		},
 	]

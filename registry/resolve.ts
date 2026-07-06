@@ -75,6 +75,25 @@ const PHONE_LEVELS: ComparisonLevel[] = [
 	{ label: "different", minSimilarity: 0, m: 0.4, u: 0.998 },
 ]
 
+/**
+ * Exact-vs-different levels for a closed-vocabulary code SET ({@link DefaultModelOptions.exactDiscriminators} — NPPES
+ * taxonomy codes, license numbers). Seeds only — EM refits. `u` starts well above phone's 0.002: two RANDOM providers
+ * share a specialty far more often than a phone line (dermatologists cluster in dermatology buildings).
+ */
+const CODE_SET_LEVELS: ComparisonLevel[] = [
+	{ label: "exact", minSimilarity: 1.0, m: 0.75, u: 0.08 },
+	{ label: "different", minSimilarity: 0, m: 0.25, u: 0.92 },
+]
+
+/** 1 when the whitespace-joined code sets share ANY code, else 0 (order/count-insensitive, case-folded). */
+function codeSetOverlap(a: string, b: string): number {
+	const sa = new Set(a.toUpperCase().split(/\s+/).filter(Boolean))
+
+	for (const t of b.toUpperCase().split(/\s+/)) if (t && sa.has(t)) return 1
+
+	return 0
+}
+
 /** Last-10-digits normalization for phone agreement (drops country code, punctuation, extensions). */
 function normalizePhone(raw: string | null | undefined): string | null {
 	if (!raw) return null
@@ -119,6 +138,14 @@ export interface DefaultModelOptions {
 	 * phone where the data has one (#625).
 	 */
 	discriminators?: string[]
+	/**
+	 * Closed-vocabulary CODE-SET discriminators drawn from {@link SourceRecord.attributes} (#625 taxonomy lever). The
+	 * attribute value is a whitespace-joined set of codes (NPPES taxonomy codes, license numbers, …); agreement = ANY
+	 * shared code (set overlap, not string similarity — `207R00000X` vs `207Q00000X` are DIFFERENT specialties despite
+	 * near-identical text, exactly the case string similarity mis-scores). The over-merge separator: two co-located
+	 * records of ONE entity nearly always share a code, two distinct co-located providers usually don't.
+	 */
+	exactDiscriminators?: string[]
 }
 
 /**
@@ -155,6 +182,17 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
 				name: `attr:${key}`,
 				extract: (r) => r.attributes?.[key],
 				levels: NAME_LEVELS,
+			})
+		)
+	}
+
+	for (const key of opts.exactDiscriminators ?? []) {
+		identity.push(
+			similarityComparison<SourceRecord>({
+				name: `attr:${key}`,
+				extract: (r) => r.attributes?.[key],
+				similarity: codeSetOverlap, // ANY shared code = 1, else 0 — never string similarity (see the config doc)
+				levels: CODE_SET_LEVELS,
 			})
 		)
 	}
@@ -264,6 +302,11 @@ export interface ResolveConfig {
 	 */
 	discriminators?: string[]
 	/**
+	 * Closed-vocabulary code-SET discriminator keys ({@link DefaultModelOptions.exactDiscriminators} — set-overlap
+	 * agreement, e.g. `["taxonomy"]`). Also corroborators. Ignored if `model` is supplied.
+	 */
+	exactDiscriminators?: string[]
+	/**
 	 * Override the Fellegi-Sunter link weight with a LEARNED score (#603). When set, a candidate pair's match weight is
 	 * this function's return value (same threshold-comparable units as the FS weight) instead of {@link scorePair}'s.
 	 * Default undefined (pure FS). The blocking + clustering are unchanged, so a trained scorer can be A/B'd against the
@@ -324,6 +367,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 			collapseSpatial,
 			usePhone: config.usePhone,
 			discriminators: config.discriminators,
+			exactDiscriminators: config.exactDiscriminators,
 		})
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 
