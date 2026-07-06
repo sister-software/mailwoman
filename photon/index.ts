@@ -102,12 +102,44 @@ function asStringArray(raw: unknown): string[] | undefined {
 
 const EMPTY: PhotonFeatureCollection = { type: "FeatureCollection", features: [] }
 
+/** Options for {@link createPhotonRouter}. */
+export interface PhotonRouterOptions {
+	/**
+	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
+	 * with `204`. Default `true` — upstream komoot/photon serves permissive CORS, and the map-widget use case
+	 * (leaflet-control-geocoder, @openrunner/photon-geocoder, …) needs it: a browser's cross-origin XHR is blocked
+	 * without it (#1017). Set `false` when a reverse proxy already owns the CORS headers.
+	 */
+	cors?: boolean
+}
+
+/**
+ * Permissive CORS, matching upstream Photon: `Access-Control-Allow-Origin: *` on every response, plus a `204` answer to
+ * preflight `OPTIONS`. `ACAO: *` is anonymous (no credentials), so a wildcard `Allow-Headers` is valid.
+ */
+const applyCors: RequestHandler = (req, res, next) => {
+	res.setHeader("Access-Control-Allow-Origin", "*")
+	res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
+	res.setHeader("Access-Control-Allow-Headers", "*")
+
+	if (req.method === "OPTIONS") {
+		res.setHeader("Access-Control-Max-Age", "86400")
+		res.status(204).end()
+
+		return
+	}
+	next()
+}
+
 /**
  * Build the Photon-compatible router around an injected {@link PhotonEngine}. Param parsing lives here; the feature
  * _projection_ (resolved place → {@link PhotonProperties}) is the staged work.
  */
-export function createPhotonRouter(engine: PhotonEngine): Router {
+export function createPhotonRouter(engine: PhotonEngine, options: PhotonRouterOptions = {}): Router {
 	const router = Router()
+
+	// Browser-embedded widgets need CORS or their cross-origin XHR is blocked before the request completes (#1017).
+	if (options.cors !== false) router.use(applyCors)
 
 	const search: RequestHandler = async (req, res) => {
 		if (!engine.search) {

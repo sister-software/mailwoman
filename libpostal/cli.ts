@@ -26,7 +26,11 @@ function serve(): void {
 		options: {
 			port: { type: "string", default: "8081" },
 			host: { type: "string", default: "0.0.0.0" },
+			// Permissive CORS is on by default (browser clients need it). `--no-cors` turns it off for deployments
+			// where a reverse proxy already sets the headers.
+			cors: { type: "boolean", default: true },
 		},
+		allowNegative: true,
 		allowPositionals: true,
 	})
 
@@ -55,9 +59,10 @@ function serve(): void {
 	}
 
 	express()
-		.use(createLibpostalRouter(engine))
+		.use(createLibpostalRouter(engine, { cors: values.cors }))
 		.listen(port, host, () => {
 			console.error(`[@mailwoman/libpostal] listening on http://${host}:${port}`)
+			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
 			console.error(`  endpoints: POST/GET /parse  POST/GET /expand`)
 		})
 }
@@ -69,6 +74,6 @@ switch (command) {
 		serve()
 		break
 	default:
-		console.error("Usage: mailwoman-libpostal serve [--port 8081] [--host 0.0.0.0]")
+		console.error("Usage: mailwoman-libpostal serve [--port 8081] [--host 0.0.0.0] [--no-cors]")
 		process.exit(command ? 1 : 0)
 }

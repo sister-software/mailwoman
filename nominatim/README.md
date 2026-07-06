@@ -37,6 +37,10 @@ const engine: NominatimEngine = {
 express().use(createNominatimRouter(engine)).listen(8080)
 ```
 
+## CORS
+
+Browser-embedded geocoder clients call this cross-origin, so the server sends permissive CORS by default — `Access-Control-Allow-Origin: *` and a `204` answer to preflight `OPTIONS`. Behind a reverse proxy that already sets the headers, turn it off with `--no-cors` (or `createNominatimRouter(engine, { cors: false })`).
+
 ## Annotations
 
 Every result carries an OpenCage-style `annotations` block — coordinate formats (DMS, MGRS, geohash,

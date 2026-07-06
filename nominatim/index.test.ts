@@ -4,9 +4,19 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { AddressInfo } from "node:net"
+
+import express from "express"
 import { expect, test } from "vitest"
 
-import { MAILWOMAN_LICENCE, type ResolvedAddress, toFeatureCollection, toNominatimResult } from "./index.js"
+import {
+	createNominatimRouter,
+	MAILWOMAN_LICENCE,
+	type NominatimEngine,
+	type ResolvedAddress,
+	toFeatureCollection,
+	toNominatimResult,
+} from "./index.js"
 
 const dc: ResolvedAddress = {
 	lat: 38.8977,
@@ -75,4 +85,42 @@ test("toNominatimResult: carries class/type/importance/boundingbox when present"
 	expect(r.type).toBe("government")
 	expect(r.importance).toBe(0.8)
 	expect(r.boundingbox).toEqual(["38.89", "38.90", "-77.04", "-77.03"])
+})
+
+const corsEngine: NominatimEngine = { status: async () => ({ status: 0, message: "OK" }) }
+
+/** Boot the app on an ephemeral port, hand the base URL to `fn`, always close. */
+async function withServer(app: express.Express, fn: (base: string) => Promise<void>): Promise<void> {
+	const server = app.listen(0)
+	await new Promise((resolve) => server.once("listening", resolve))
+	const { port } = server.address() as AddressInfo
+
+	try {
+		await fn(`http://127.0.0.1:${port}`)
+	} finally {
+		await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())))
+	}
+}
+
+test("CORS: permissive Access-Control-Allow-Origin on responses (browser clients)", async () => {
+	await withServer(express().use(createNominatimRouter(corsEngine)), async (base) => {
+		const res = await fetch(`${base}/status`)
+		expect(res.headers.get("access-control-allow-origin")).toBe("*")
+	})
+})
+
+test("CORS: preflight OPTIONS answers 204 with CORS headers", async () => {
+	await withServer(express().use(createNominatimRouter(corsEngine)), async (base) => {
+		const res = await fetch(`${base}/search`, { method: "OPTIONS" })
+		expect(res.status).toBe(204)
+		expect(res.headers.get("access-control-allow-origin")).toBe("*")
+		expect(res.headers.get("access-control-allow-methods")).toContain("GET")
+	})
+})
+
+test("CORS: { cors: false } disables the headers (for a proxy that owns CORS)", async () => {
+	await withServer(express().use(createNominatimRouter(corsEngine, { cors: false })), async (base) => {
+		const res = await fetch(`${base}/status`)
+		expect(res.headers.get("access-control-allow-origin")).toBeNull()
+	})
 })

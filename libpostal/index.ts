@@ -65,9 +65,41 @@ export interface LibpostalEngine {
 	expand?(address: string): Promise<string[]>
 }
 
+/** Options for {@link createLibpostalRouter}. */
+export interface LibpostalRouterOptions {
+	/**
+	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
+	 * with `204`. Default `true` — browser clients need it: a cross-origin XHR (including the `POST /parse` preflight) is
+	 * blocked without it (#1017). Set `false` when a reverse proxy already owns the CORS headers.
+	 */
+	cors?: boolean
+}
+
+/**
+ * Permissive CORS: `Access-Control-Allow-Origin: *` on every response, plus a `204` answer to preflight `OPTIONS`.
+ * `POST /parse` is a preflighted CORS request, so the `OPTIONS` answer must advertise `POST`. `ACAO: *` is anonymous
+ * (no credentials), so a wildcard `Allow-Headers` is valid.
+ */
+const applyCors: RequestHandler = (req, res, next) => {
+	res.setHeader("Access-Control-Allow-Origin", "*")
+	res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	res.setHeader("Access-Control-Allow-Headers", "*")
+
+	if (req.method === "OPTIONS") {
+		res.setHeader("Access-Control-Max-Age", "86400")
+		res.status(204).end()
+
+		return
+	}
+	next()
+}
+
 /** Build the libpostal-compatible router around an injected {@link LibpostalEngine}. */
-export function createLibpostalRouter(engine: LibpostalEngine): Router {
+export function createLibpostalRouter(engine: LibpostalEngine, options: LibpostalRouterOptions = {}): Router {
 	const router = Router()
+
+	// Browser clients need CORS or their cross-origin XHR is blocked before completing (#1017).
+	if (options.cors !== false) router.use(applyCors)
 
 	const parse: RequestHandler = async (req, res) => {
 		const query = (
