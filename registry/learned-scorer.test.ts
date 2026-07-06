@@ -36,7 +36,7 @@ function rec(id: string, given: string, family: string, key: string, raw: string
 describe("createMatchFeaturizer", () => {
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 	// The trailing three features are [spatial×name-disagree, spatial×org-disagree, crowdedness].
-	const tail = (a: SourceRecord, b: SourceRecord) => featurize(a, b).slice(-3)
+	const tail = (a: SourceRecord, b: SourceRecord) => featurize(a, b).slice(-6)
 
 	it("produces a one-hot-plus-tail vector of stable length", () => {
 		const v = featurize(
@@ -44,7 +44,7 @@ describe("createMatchFeaturizer", () => {
 			rec("2", "ann", "lee", "10 oak st", "10 OAK ST")
 		)
 		const expectedOneHot = comparisons.reduce((n, c) => n + c.levels.length, 0)
-		expect(v).toHaveLength(expectedOneHot + 3)
+		expect(v).toHaveLength(expectedOneHot + 6) // 3 interaction/crowd + 3 roll-up (#625 adjudication)
 		expect(v.every((x) => x >= 0)).toBe(true)
 	})
 
@@ -58,6 +58,28 @@ describe("createMatchFeaturizer", () => {
 		const a = rec("1", "ann", "lee", "10 oak st", "10 OAK ST")
 		const b = rec("2", "ann", "lee", "10 oak st", "10 OAK ST") // co-located, names agree
 		expect(tail(a, b)[0]).toBe(0)
+	})
+
+	it("fires the roll-up signature (#625): same official + org disagree + co-located", () => {
+		const a = {
+			...rec("1", "", "", "10 oak st", "10 OAK ST"),
+			organization: { canonical: "sunrise home care", raw: "Sunrise Home Care" },
+			attributes: { authorizedOfficial: "shane lewis" },
+		}
+		const b = {
+			...rec("2", "", "", "10 oak st", "10 OAK ST"),
+			organization: { canonical: "bluebonnet health services", raw: "Bluebonnet Health Services" },
+			attributes: { authorizedOfficial: "shane lewis" },
+		}
+		const t = tail(a, b)
+		expect(t[3]).toBe(1) // officialAgree
+		expect(t[4]).toBe(1) // officialAgree × orgDisagree — the roll-up core
+		expect(t[5]).toBe(1) // …at the same place
+		// Same officials but org names AGREE → the roll-up features must NOT fire.
+		const c = { ...b, organization: { canonical: "sunrise home care", raw: "Sunrise Home Care" } }
+		const t2 = tail(a, c)
+		expect(t2[4]).toBe(0)
+		expect(t2[5]).toBe(0)
 	})
 
 	it("reflects address crowdedness in the trailing feature", () => {
