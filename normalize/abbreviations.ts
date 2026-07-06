@@ -53,8 +53,29 @@ const FR_FR_DICT: ReadonlyArray<AbbreviationEntry> = [
 	{ from: "Sq", to: "Square" },
 ]
 
+/**
+ * #1002: the locale-UNKNOWN expansion set — the entries safe to apply when the input's locale hasn't been established
+ * yet (the geocode path expands BEFORE the parse, which is what determines the locale). Safe = multi-char,
+ * collision-free across the locale dictionaries, and never a plausible standalone token in the other locale (FR
+ * `Bd`/`Bvd`/`Imp` have no EN reading; `Av` reads Avenue in both). Deliberately EXCLUDED: the FR single letters (`R` →
+ * Rue would fire on Washington DC's literal "R St") and the EN suffixes (`St`, `Ave`, `Dr`, … — the model is
+ * trained-robust on those, and `St`/`Dr` are ambiguous with Saint/Doctor).
+ */
+const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
+	{ from: "Bd", to: "Boulevard" },
+	{ from: "Bvd", to: "Boulevard" },
+	{ from: "Boul", to: "Boulevard" },
+	{ from: "Av", to: "Avenue" },
+	{ from: "Imp", to: "Impasse" },
+]
+
 function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEntry> {
 	const lc = (locale ?? "en-US").toLowerCase()
+
+	// BCP-47 "und" (undetermined) — the caller knows it does NOT know the locale yet (the geocode path
+	// expands before the parse). Only the collision-free multi-locale set applies; `undefined` keeps its
+	// historical en-US default.
+	if (lc === "und") return LOCALE_UNKNOWN_DICT
 
 	if (lc.startsWith("fr")) return FR_FR_DICT
 

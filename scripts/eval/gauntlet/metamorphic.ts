@@ -244,13 +244,12 @@ const BAND: Perturbation[] = [
 // retrain). `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on both forms — but
 // the FR street-type swap below is a RESOLVER gap, not a model one, and it is a finding, not a reflex xfail (see note).
 // A NEW deterministic INV break belongs here with a tracked note, never silently gated.
-const KNOWN_INV_XFAIL = new Map<string, string>([
-	// FINDING (2026-07-06, tracked as #1002): `Boulevard`→`Bd` drops address_point→admin (~0.24km). The FR street
-	// gazetteer stores the expanded type, so the abbreviated form fails the point-tier name match — a resolver coverage
-	// gap, not a model robustness failure (EN Ave/St hold). Measured anchor-OFF; the gazetteer soft-feed may recover it
-	// in ship-config. Remove this row as part of the #1002 fix — the anti-rot check will flag it once it passes.
-	["abbrev|2 Boulevard du Palais, 75001 Paris", "resolver: FR street-type abbrev name-match gap (#1002)"],
-])
+// The #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was NOT the
+// FR gazetteer (street_norm expands `bd` fine) but the MODEL absorbing the undertrained "Bd" into
+// house_number ("2 Bd") pre-lookup — fixed by enabling Stage-1 `expandAbbreviations` in the geocode
+// path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp; EN suffixes deliberately untouched). Keep the
+// anti-rot loop honest: a NEW deterministic INV break belongs here with a tracked note, never silently gated.
+const KNOWN_INV_XFAIL = new Map<string, string>([])
 
 /**
  * Known, DETERMINISTIC BAND misses — the tolerance-band analog of KNOWN_INV_XFAIL, same anti-rot bookkeeping. These are
