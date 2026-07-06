@@ -62,6 +62,9 @@ const STATE = arg("state", "TX").toUpperCase()
 const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
 const DATA_ROOT = arg("data-root", mailwomanDataRoot())
 const OUT_MD = arg("out-md", "")
+// #655 option 2: a trained CROSS-SOURCE GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as
+// a third arm at its recommended threshold — the model train-cross-gbt.ts emits.
+const CANDIDATE = arg("candidate", "")
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
@@ -312,6 +315,36 @@ async function main(): Promise<void> {
 	// collapse below ~90% of FS, else the "links" are giant-blob artifacts). Otherwise FS is on the
 	// frontier and threshold alone is insufficient. ---
 	const pct = (n: number, d: number) => (d > 0 ? `${((100 * n) / d).toFixed(0)}%` : "—")
+	// --- Arm 3 (#655 option 2): the cross-source-trained GBT at its own recommended threshold. ---
+	const candidateArms: ArmMetrics[] = []
+
+	if (CANDIDATE) {
+		const { pathToFileURL } = await import("node:url")
+		const { resolve: resolvePath } = await import("node:path")
+		const mod = (await import(pathToFileURL(resolvePath(CANDIDATE)).href)) as {
+			CROSS_SOURCE_GBT_MODEL: typeof DEDUP_GBT_MODEL
+			CROSS_SOURCE_GBT_META?: { recommendedThreshold?: number }
+		}
+		const t0 = mod.CROSS_SOURCE_GBT_META?.recommendedThreshold ?? 0
+		const candScorer = createGbtScorer({ model: mod.CROSS_SOURCE_GBT_MODEL, comparisons, addressFrequency })
+		console.error(`[E] resolving — cross-source GBT candidate @ ${t0.toFixed(3)} (±)…`)
+
+		for (const t of [t0 - 1, t0, t0 + 1]) {
+			candidateArms.push(
+				measure(
+					`cross-GBT @ ${t.toFixed(2)}`,
+					t,
+					resolveEntities(records, {
+						trainEM: true,
+						collapseSpatial: true,
+						addressFrequency,
+						scorer: candScorer,
+						threshold: t,
+					}).entities
+				)
+			)
+		}
+	}
 	const rate = (a: ArmMetrics) => (a.phoneCheckable > 0 ? a.phoneCorrob / a.phoneCheckable : 0)
 	const fsCorrobRate = rate(fs)
 	const minEntities = Math.floor(fs.entities * 0.9)
@@ -319,7 +352,7 @@ async function main(): Promise<void> {
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)
 
-	const rows = [fs, ...gbtArms]
+	const rows = [fs, ...gbtArms, ...candidateArms]
 	const lines: string[] = []
 	lines.push(`# #655 — cross-source threshold sweep: can a re-thresholded GBT beat FS?`)
 	lines.push("")
