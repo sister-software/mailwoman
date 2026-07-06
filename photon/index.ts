@@ -272,7 +272,7 @@ const DEFAULT_OSM_TAGS = { osm_key: "place", osm_value: "yes", type: "other" } a
  * falling back to a safe default so the fields are always present. Shared by the forward projection and `/reverse` so
  * the two endpoints report a place the SAME way. #1014.
  */
-export function photonOsmTags(tagOrPlacetype: string): { osm_key: string; osm_value: string; type: string } {
+export function photonOSMTags(tagOrPlacetype: string): { osm_key: string; osm_value: string; type: string } {
 	const proj = FORWARD_TAG_PROJECTION[tagOrPlacetype]
 
 	return proj ? { osm_key: proj.osmKey, osm_value: proj.osmValue, type: proj.type } : { ...DEFAULT_OSM_TAGS }
@@ -290,7 +290,7 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 
 	if (primary) {
 		props.name = primary.name
-		Object.assign(props, photonOsmTags(primary.tag))
+		Object.assign(props, photonOSMTags(primary.tag))
 	}
 
 	for (const place of input.places) {

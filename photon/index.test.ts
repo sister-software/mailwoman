@@ -14,7 +14,7 @@ import {
 	type PhotonEngine,
 	photonForwardFeature,
 	photonForwardProperties,
-	photonOsmTags,
+	photonOSMTags,
 } from "./index.js"
 
 const engine: PhotonEngine = {
@@ -103,19 +103,19 @@ test("forward: a street-primary result names the street and types as street", ()
 	expect(props.type).toBe("street")
 })
 
-test("photonOsmTags: maps place tiers to the Photon osm schema, with a safe fallback", () => {
-	expect(photonOsmTags("locality")).toEqual({ osm_key: "place", osm_value: "city", type: "city" })
-	expect(photonOsmTags("localadmin")).toEqual({ osm_key: "place", osm_value: "city", type: "city" }) // reverse placetype
-	expect(photonOsmTags("region")).toEqual({ osm_key: "place", osm_value: "state", type: "state" })
-	expect(photonOsmTags("country")).toEqual({ osm_key: "place", osm_value: "country", type: "country" })
-	expect(photonOsmTags("whatever")).toEqual({ osm_key: "place", osm_value: "yes", type: "other" }) // unknown → fallback
+test("photonOSMTags: maps place tiers to the Photon osm schema, with a safe fallback", () => {
+	expect(photonOSMTags("locality")).toEqual({ osm_key: "place", osm_value: "city", type: "city" })
+	expect(photonOSMTags("localadmin")).toEqual({ osm_key: "place", osm_value: "city", type: "city" }) // reverse placetype
+	expect(photonOSMTags("region")).toEqual({ osm_key: "place", osm_value: "state", type: "state" })
+	expect(photonOSMTags("country")).toEqual({ osm_key: "place", osm_value: "country", type: "country" })
+	expect(photonOSMTags("whatever")).toEqual({ osm_key: "place", osm_value: "yes", type: "other" }) // unknown → fallback
 })
 
 test("contract: /api and /reverse derive the same osm tags for a place (#1014 checkbox 4)", () => {
 	// The forward projection (primary=locality) and the /reverse path (deepest.placetype=locality) both go through
-	// photonOsmTags, so they can't drift.
+	// photonOSMTags, so they can't drift.
 	const fwd = photonForwardProperties({ lat: 0, lon: 0, places: [{ tag: "locality", name: "X" }] })
-	expect({ osm_key: fwd.osm_key, osm_value: fwd.osm_value, type: fwd.type }).toEqual(photonOsmTags("locality"))
+	expect({ osm_key: fwd.osm_key, osm_value: fwd.osm_value, type: fwd.type }).toEqual(photonOSMTags("locality"))
 })
 
 test("photonForwardFeature: wraps properties as a Point Feature at [lon, lat]", () => {

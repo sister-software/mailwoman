@@ -34,7 +34,7 @@ import {
 	photonCollection,
 	photonFeature,
 	photonForwardFeature,
-	photonOsmTags,
+	photonOSMTags,
 	type PhotonEngine,
 	type PhotonProperties,
 } from "./index.js"
@@ -126,7 +126,7 @@ async function serve(): Promise<void> {
 			const properties: PhotonProperties = {
 				name: deepest.name,
 				countrycode: deepest.country?.toLowerCase(),
-				...photonOsmTags(deepest.placetype),
+				...photonOSMTags(deepest.placetype),
 			}
 
 			for (const place of hierarchy) {
