@@ -6,7 +6,7 @@ For each cluster: the matcher fused records that the org-name truth says belong 
 Adjudicate each: **[same]** one real-world entity (yardstick error — the truth under-collapsed) or
 **[distinct]** genuinely different co-located providers (model over-merge). Mark inline and return.
 
-## Cluster 1 — 9 records, 9 org-name entities → verdict: [ ]
+## Cluster 1 — 9 records, 9 org-name entities → verdict: **[same]** — Nine serial NPI registrations of ONE company — identical name, address, official, taxonomy. Textbook yardstick error (the practice-address-keyed truth never unions them because their TX practice sites differ; these are the shared back-office records).
 
 - **entity 1275536229**
   - npi=1275536229 · name="MEDFUND LLC" · org="medfund" · addr="240 N WASHINGTON BLVD, SARASOTA, FL, 342365945" · auth="MARTIN KERN" · taxonomy="261QM1200X"
@@ -27,28 +27,28 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
 - **entity 1598768459**
   - npi=1598768459 · name="MEDFUND LLC" · org="medfund" · addr="240 N WASHINGTON BLVD, SARASOTA, FL, 342365945" · auth="MARTIN KERN" · taxonomy="261QM1200X"
 
-## Cluster 2 — 2 records, 2 org-name entities → verdict: [ ]
+## Cluster 2 — 2 records, 2 org-name entities → verdict: **[distinct]** — Two differently-named agencies (home health 251E vs hospice 251G) at one corporate address, same official — a roll-up operator's two operating entities. Name + taxonomy disagree; only address+official agree.
 
 - **entity 1457354664**
   - npi=1457354664 · name="INC. THOMAS" · org="s fisher and s thomas" · addr="3854 AMERICAN WAY STE A, BATON ROUGE, LA, 708164897" · auth="JOSHUA PROFFITT" · taxonomy="251E00000X"
 - **entity 1891798427**
   - npi=1891798427 · name="LLC HOUSTON" · org="compassionate care hospice of houston" · addr="3854 AMERICAN WAY STE A, BATON ROUGE, LA, 708164897" · auth="JOSHUA PROFFITT" · taxonomy="251G00000X"
 
-## Cluster 3 — 2 records, 2 org-name entities → verdict: [ ]
+## Cluster 3 — 2 records, 2 org-name entities → verdict: **[same]** — Identical org (BioScrip Pharmacy), address, official, taxonomy — duplicate registration.
 
 - **entity 1184627200**
   - npi=1184627200 · name="INC. PHARMACY" · org="bioscrip pharmacy" · addr="10050 CROSSTOWN CIR, EDEN PRAIRIE, MN, 553443374" · auth="JAMES MELANCON" · taxonomy="3336H0001X 332B00000X 3336C0003X"
 - **entity 1508869660**
   - npi=1508869660 · name="INC. PHARMACY" · org="bioscrip pharmacy" · addr="10050 CROSSTOWN CIR, EDEN PRAIRIE, MN, 553443374" · auth="JAMES MELANCON" · taxonomy="3336H0001X 332B00000X 3336C0003X"
 
-## Cluster 4 — 2 records, 2 org-name entities → verdict: [ ]
+## Cluster 4 — 2 records, 2 org-name entities → verdict: **[distinct]** — Open MRI of FORT WORTH vs Open MRI of DALLAS — two different imaging centers (one brand family, one NJ back-office). Distinct operating sites.
 
 - **entity 1033112834**
   - npi=1033112834 · name="L.C. WORTH" · org="open mri of fort worth lc" · addr="100 PARAGON DR, MONTVALE, NJ, 076451718" · auth="LAWRENCE BUCHWALTER" · taxonomy="261QM1200X 261QR0200X"
 - **entity 1164425773**
   - npi=1164425773 · name="L.C. DALLAS" · org="open mri of dallas lc" · addr="100 PARAGON DR, MONTVALE, NJ, 076451718" · auth="LAWRENCE BUCHWALTER" · taxonomy="261QM1200X 261QR0200X"
 
-## Cluster 5 — 7 records, 7 org-name entities → verdict: [ ]
+## Cluster 5 — 7 records, 7 org-name entities → verdict: **[distinct]** — Seven differently-branded home-health agencies at one Mansfield address under one official (Eddins) — the management-company roll-up class. Distinct certified agencies.
 
 - **entity 1437152220**
   - npi=1437152220 · name="INC. CARE" · org="first choice community home care" · addr="2301 HIGHWAY 1187, MANSFIELD, TX, 760636124" · auth="ANGELA EDDINS" · taxonomy="251E00000X"
@@ -65,7 +65,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
 - **entity 1144225327**
   - npi=1144225327 · name="INC. SERVICES" · org="banner health services" · addr="2301 HIGHWAY 1187, MANSFIELD, TX, 760636124" · auth="ANGIE EDDINS" · taxonomy="251E00000X"
 
-## Cluster 6 — 8 records, 5 org-name entities → verdict: [ ]
+## Cluster 6 — 8 records, 5 org-name entities → verdict: **[distinct]** — Different hospitals/surgery centers (Frisco Medical Center, Memorial Hermann Sugar Land, Fort Worth Surgicare, Metroplex Surgicare…) sharing the 14201 Dallas Pkwy corporate/billing address (a USPI-style roll-up). Distinct facilities, several distinct officials.
 
 - **entity 1386647717**
   - npi=1386647717 · name="LLC PARTNERS" · org="msh partners" · addr="2727 E LEMMON AVE, DALLAS, TX, 75204" · auth="DONITA FLEMING" · taxonomy="282N00000X"
@@ -81,7 +81,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1467458513 · name="METROPLEX LTD" · org="metroplex surgicare partners" · addr="14201 DALLAS PKWY, DALLAS, TX, 752542916" · auth="REGINA PRICE" · taxonomy="261QA1903X"
   - npi=1467458513 · name="Baylor Bedford" · org="baylor scott and white surgicare bedford" · addr="14201 DALLAS PKWY, DALLAS, TX, 752542916" · auth="REGINA PRICE" · taxonomy="261QA1903X"
 
-## Cluster 7 — 4 records, 2 org-name entities → verdict: [ ]
+## Cluster 7 — 4 records, 2 org-name entities → verdict: **[same]** — Both NPIs carry the same two names (CHRISTUS Health Gulf Coast / CHRISTUS St. Catherine Hospital) at the same campus (701 S Fry Rd) — one hospital, re-registered (officials differ across registrations).
 
 - **entity 1447253729**
   - npi=1447253729 · name="CHRISTUS COAST" · org="christus health gulf coast" · addr="701 S FRY RD, KATY, TX, 774502237" · auth="ELLEN JONES" · taxonomy="282N00000X"
@@ -90,7 +90,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1326042805 · name="CHRISTUS COAST" · org="christus health gulf coast" · addr="701 S FRY RD, KATY, TX, 774502255" · auth="BUDDY WHIDDON" · taxonomy="282N00000X"
   - npi=1326042805 · name="CHRISTUS Catherine Hospital" · org="christus st catherine hospital" · addr="701 S FRY RD, KATY, TX, 774502255" · auth="BUDDY WHIDDON" · taxonomy="282N00000X"
 
-## Cluster 8 — 15 records, 13 org-name entities → verdict: [ ]
+## Cluster 8 — 15 records, 13 org-name entities → verdict: **[same]** — One corporate back office (1413 East I-30, one official) with 13 per-facility NPIs registered under near-identical corporate name variants (Management/Consultants/Services + typos). The distinct FACILITIES are not expressed in these records at all — the corporate identity shown is one group. Yardstick artifact of NPI granularity.
 
 - **entity 1902808058**
   - npi=1902808058 · name="SENIOR MANAGEMENT" · org="senior care management" · addr="1413 EAST I 30, GARLAND, TX, 750434598" · auth="SHANE LEWIS" · taxonomy="314000000X"
@@ -121,7 +121,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
 - **entity 1124022470**
   - npi=1124022470 · name="SENIOR SERVICES" · org="senior care services" · addr="1413 EAST I 30, GARLAND, TX, 750434598" · auth="SHANE LEWIS" · taxonomy="314000000X"
 
-## Cluster 9 — 6 records, 2 org-name entities → verdict: [ ]
+## Cluster 9 — 6 records, 2 org-name entities → verdict: **[distinct]** — Two different surgery centers at two different addresses (3534 Vista Rd vs 5146 Preston Ave, different officials) fused via a shared historical name row. Genuine over-merge.
 
 - **entity 1619971504**
   - npi=1619971504 · name="LTD. ROAD" · org="memorial hermann surgery center preston road" · addr="3534 VISTA RD, PASADENA, TX, 775041728" · auth="JENETHA MORAN" · taxonomy="261QA1903X"
@@ -132,7 +132,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1598769481 · name="Doctors Center" · org="doctors united surgery center" · addr="5146 PRESTON AVE, PASADENA, TX, 775052054" · auth="NICHOLAS CRAFTS" · taxonomy="261QA1903X"
   - npi=1598769481 · name="Doctors Center" · org="doctors united surgery center" · addr="5146 PRESTON AVE, PASADENA, TX, 775052054" · auth="NICHOLAS CRAFTS" · taxonomy="261QA1903X"
 
-## Cluster 10 — 3 records, 2 org-name entities → verdict: [ ]
+## Cluster 10 — 3 records, 2 org-name entities → verdict: **[same]** — NPI A itself carries both names (Community Healthcare / Community Hospice of Texas) — one org's rename/dba; NPI B same identity, same official.
 
 - **entity 1275537219**
   - npi=1275537219 · name="COMMUNITY TEXAS" · org="community healthcare of texas" · addr="6100 WESTERN PL STE 105, FORT WORTH, TX, 761074662" · auth="VICTORIA JINGLE" · taxonomy="251G00000X"
@@ -140,7 +140,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
 - **entity 1043214638**
   - npi=1043214638 · name="COMMUNITY TEXAS" · org="community healthcare of texas" · addr="6100 WESTERN PLACE, FORT WORTH, TX, 76107" · auth="VICTORIA JINGLE" · taxonomy="251G00000X"
 
-## Cluster 11 — 8 records, 2 org-name entities → verdict: [ ]
+## Cluster 11 — 8 records, 2 org-name entities → verdict: **[same]** — ACCESS is the acronym/dba of Anderson Cherokee Community Enrichment ServiceS — three NPIs, one organization, one official, two of its own sites.
 
 - **entity 1154325645**
   - npi=1497759237 · name="ANDERSON SERVICES" · org="anderson cherokee community enrichment services" · addr="5656 N JACKSON ST, JACKSONVILLE, TX, 757669641" · auth="ALLYN LANG" · taxonomy="103T00000X"
@@ -153,14 +153,14 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1821092677 · name="ANDERSON SERVICES" · org="anderson cherokee community enrichment services" · addr="913 N JACKSON ST, JACKSONVILLE, TX, 757663801" · auth="ALLYN LANG" · taxonomy="103TM1800X"
   - npi=1821092677 · name="ACCESS" · org="access" · addr="913 N JACKSON ST, JACKSONVILLE, TX, 757663801" · auth="ALLYN LANG" · taxonomy="103TM1800X"
 
-## Cluster 12 — 2 records, 2 org-name entities → verdict: [ ]
+## Cluster 12 — 2 records, 2 org-name entities → verdict: **[same]** — Hanger Prosthetics & Orthotics — one national company, two branch NPIs at the same billing PO box (officials differ by branch; the org identity is one).
 
 - **entity 1275538928**
   - npi=1275538928 · name="INC. ORTHOTICS" · org="hanger prosthetics and orthotics" · addr="PO BOX 650846, DALLAS, TX, 75265" · auth="GRACE ANGELINE" · taxonomy="332B00000X 335E00000X 335E00000X"
 - **entity 1477558047**
   - npi=1477558047 · name="INC. ORTHOTICS" · org="hanger prosthetics and orthotics" · addr="PO BOX 650846, DALLAS, TX, 752650846" · auth="JENNIFER SIMMONS" · taxonomy="332B00000X 335E00000X"
 
-## Cluster 13 — 3 records, 2 org-name entities → verdict: [ ]
+## Cluster 13 — 3 records, 2 org-name entities → verdict: **[same]** — Family Medical Center at Terrell is a clinic OF HealthTexas Provider Network — NPI B carries both names itself. One medical group with clinic-level NPIs.
 
 - **entity 1538164116**
   - npi=1538164116 · name="HEALTHTEXAS NETWORK" · org="healthtexas provider network" · addr="301 N WASHINGTON AVE, DALLAS, TX, 752461754" · auth="JENNIFER REEVES" · taxonomy="207Q00000X"
@@ -168,7 +168,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1205831898 · name="HEALTHTEXAS NETWORK" · org="healthtexas provider network" · addr="4004 WORTH ST, DALLAS, TX, 752461600" · auth="ELLEN FOURTON" · taxonomy="207RP1001X"
   - npi=1205831898 · name="Family Terrell" · org="family medical center at terrell" · addr="4004 WORTH ST, DALLAS, TX, 752461600" · auth="ELLEN FOURTON" · taxonomy="207RP1001X"
 
-## Cluster 14 — 3 records, 3 org-name entities → verdict: [ ]
+## Cluster 14 — 3 records, 3 org-name entities → verdict: **[same]** — HealthTexas Dallas Diagnostic Association is an HTPN division/care-site brand — same address, same official. One organization.
 
 - **entity 1205831898**
   - npi=1205831898 · name="HEALTHTEXAS NETWORK" · org="healthtexas provider network" · addr="8080 N CENTRAL EXPY, LB 82, DALLAS, TX, 752063789" · auth="ELLEN FOURTON" · taxonomy="207RP1001X"
@@ -177,7 +177,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
 - **entity 1245235886**
   - npi=1245235886 · name="HEALTHTEXAS-DALLAS ASSOCIATION" · org="healthtexas dallas diagnostic association" · addr="8080 N CENTRAL EXPY, DALLAS, TX, 752061838" · auth="ELLEN FOURTON" · taxonomy="207RG0100X 207RC0200X 207RE0101X 2084N0400X 207N00000X 207RP1001X 207RR0500X 207R00000X"
 
-## Cluster 15 — 11 records, 3 org-name entities → verdict: [ ]
+## Cluster 15 — 11 records, 3 org-name entities → verdict: **[same]** — Muenster Hospital District with its hospital, family clinic, and home care — every NPI also carries the district name. One district, departmental NPIs.
 
 - **entity 1497750962**
   - npi=1497750962 · name="MUENSTER DISTRICT" · org="muenster hospital district" · addr="509 N MAPLE ST, MUENSTER, TX, 762522425" · auth="MARION WILIMON" · taxonomy="207Q00000X 261QR1300X"
@@ -194,7 +194,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1164428348 · name="MMH CARE" · org="mmh home care" · addr="602 N MAPLE ST, MUENSTER, TX, 762522423" · auth="BRIAN ROLAND" · taxonomy="251E00000X"
   - npi=1164428348 · name="MUENSTER DISTRICT" · org="muenster hospital district" · addr="PO BOX 370, MUENSTER, TX, 762520370" · auth="BRIAN ROLAND" · taxonomy="251E00000X"
 
-## Cluster 16 — 8 records, 2 org-name entities → verdict: [ ]
+## Cluster 16 — 8 records, 2 org-name entities → verdict: **[distinct]** — Berkeley Eye Center (ophthalmology, 152W…) vs the Caplan surgery-center entity (ASC 261QA1903X) at one building — related by a JV name (Caplan Berkeley) but different officials, different taxonomies, different service identities. Co-located distinct providers.
 
 - **entity 1033115472**
   - npi=1033115472 · name="LLP CAPLAN-BERKELEY" · org="caplan berkeley" · addr="3100 WESLAYAN ST, HOUSTON, TX, 770275752" · auth="MICHAEL CAPLAN" · taxonomy="261QA1903X"
@@ -207,7 +207,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1740286186 · name="Berkeley Center" · org="berkeley eye center" · addr="3100 WESLAYAN ST, HOUSTON, TX, 770275752" · auth="MARK MICHELETTI" · taxonomy="152W00000X 332H00000X 207W00000X"
   - npi=1740286186 · name="Berkeley Center" · org="berkeley eye center" · addr="3100 WESLAYAN ST, HOUSTON, TX, 770275752" · auth="MARK MICHELETTI" · taxonomy="152W00000X 332H00000X 207W00000X"
 
-## Cluster 17 — 4 records, 4 org-name entities → verdict: [ ]
+## Cluster 17 — 4 records, 4 org-name entities → verdict: **[same]** — American Health Imaging of Dallas ×4 — identical org name at shared Atlanta billing PO boxes; per-center NPIs of one company.
 
 - **entity 1184620197**
   - npi=1184620197 · name="AMERICAN LLC" · org="american health imaging of dallas" · addr="PO BOX 933367, ATLANTA, GA, 31193" · auth="SCOTT ARANT" · taxonomy="261QR0200X"
@@ -218,7 +218,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
 - **entity 1275539231**
   - npi=1275539231 · name="AMERICAN LLC" · org="american health imaging of dallas" · addr="PO BOX 933367, ATLANTA, GA, 31193" · auth="SCOTT ARANT" · taxonomy="261QR0200X"
 
-## Cluster 18 — 7 records, 3 org-name entities → verdict: [ ]
+## Cluster 18 — 7 records, 3 org-name entities → verdict: **[same]** — The Hendrick health system (Abilene): medical center + rehabilitation + home health + physician group — every record carries the Hendrick identity. One system, service-line NPIs.
 
 - **entity 1255337309**
   - npi=1255337309 · name="HENDRICK CENTER" · org="hendrick medical center" · addr="1934 HICKORY ST, ABILENE, TX, 796012336" · auth="STEVEN KIMMEL" · taxonomy="273Y00000X"
@@ -231,7 +231,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1861498735 · name="HENDRICK CENTER" · org="hendrick medical center" · addr="1900 PINE ST, ABILENE, TX, 796012432" · auth="STEPHEN KIMMEL" · taxonomy="207RP1001X 207X00000X 207R00000X"
   - npi=1861498735 · name="HENDRICK CENTER" · org="hendrick medical center" · addr="PO BOX 1198, ABILENE, TX, 796041198" · auth="STEPHEN KIMMEL" · taxonomy="207RP1001X 207X00000X 207R00000X"
 
-## Cluster 19 — 3 records, 3 org-name entities → verdict: [ ]
+## Cluster 19 — 3 records, 3 org-name entities → verdict: **[distinct]** — Plano AMI, TexScan MRI Corpus Christi, North Dallas Medical Imaging — three differently-named imaging centers in three cities sharing one billing PO box (a management company). Distinct operating centers.
 
 - **entity 1639175508**
   - npi=1639175508 · name="LP AMI" · org="plano ami" · addr="PO BOX 601449, DALLAS, TX, 753601449" · auth="MIKE GHANI" · taxonomy="261QM1200X"
@@ -240,7 +240,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
 - **entity 1508863143**
   - npi=1508863143 · name="NORTH IMAGING" · org="north dallas medical imaging" · addr="PO BOX 601449, DALLAS, TX, 753601449" · auth="MIKE GHANI" · taxonomy="261QM1200X"
 
-## Cluster 20 — 6 records, 3 org-name entities → verdict: [ ]
+## Cluster 20 — 6 records, 3 org-name entities → verdict: **[same]** — Kindstar (dba Accolade Home Care — NPI A carries both names) with its home-health + hospice registrations. One company, one official.
 
 - **entity 1265438030**
   - npi=1265438030 · name="INC. KINDSTAR" · org="kindstar" · addr="225 W MULBERRY ST STE 102, DENTON, TX, 762016011" · auth="DENA SCHWARTZ" · taxonomy="251E00000X"
@@ -252,7 +252,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
 - **entity 1386640035**
   - npi=1386640035 · name="INC. KINDSTAR" · org="kindstar" · addr="225 W MULBERRY ST STE 102, DENTON, TX, 762016011" · auth="DENA SCHWARTZ" · taxonomy="251E00000X"
 
-## Cluster 21 — 5 records, 3 org-name entities → verdict: [ ]
+## Cluster 21 — 5 records, 3 org-name entities → verdict: **[same]** — Chest Diagnostic Therapeutic Services (± 'and Transit Nursing of TX') ×3 — name variants of one Mexia company, one official.
 
 - **entity 1770589392**
   - npi=1770589392 · name="INC TX" · org="chest diagnostic therapeutic svcs and transit nursing of tx" · addr="401 E MILAM ST, MEXIA, TX, 766672329" · auth="WILLIAM WRAGGE" · taxonomy="332B00000X 332BC3200X 332BX2000X 332BX2000X 332B00000X"
@@ -262,3 +262,30 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1215933833 · name="INC SERVICES" · org="chest diagnostic therapeutic services" · addr="PO BOX 289, MEXIA, TX, 766670289" · auth="WILLIAM WRAGGE" · taxonomy="332BX2000X"
 - **entity 1316944994**
   - npi=1316944994 · name="INC SERVICES" · org="chest diagnostic therapeutic services" · addr="PO BOX 289, MEXIA, TX, 766670289" · auth="WILLIAM WRAGGE" · taxonomy="332BX2000X 332B00000X"
+
+---
+
+## Adjudication summary (Claude, 2026-07-06 — operator-delegated)
+
+**14/21 clusters are [same] (yardstick error) · 7/21 are [distinct] (genuine over-merge).**
+
+Method: each cluster judged on the full record evidence — org-name identity (incl. dba/acronym/rename
+relationships expressed IN the records, e.g. a single NPI carrying both names), authorized official,
+taxonomy, and address roles (practice site vs corporate/billing). Where a cluster's records express only
+a corporate identity (cluster 8), the verdict follows what the records say, with the granularity caveat
+noted inline.
+
+**Findings:**
+
+1. **Two-thirds of the residual "over-merge" is the yardstick, not the model.** With 14 of 21
+   clusters adjudicated same-entity, the genuine over-merged-cluster count drops 21 → 7 — the
+   matcher's true org-grain quality is materially above the measured 68.8% F1 (consistent with the
+   ~1.6% irreducible-ceiling estimate).
+2. **The genuine over-merge class has ONE signature: the management-company roll-up.** All 7
+   [distinct] clusters are differently-branded operating entities sharing a corporate/billing address —
+   and in most, the AUTHORIZED OFFICIAL also agrees (the roll-up operator signs everything). The
+   auth-official discriminator is actively harmful on exactly this class: it corroborates the wrong merge.
+3. **The next lever writes itself:** when org names disagree strongly and the ONLY agreements are
+   address + official, that pattern is management-company evidence, not identity evidence — a
+   corroboration rule (or a GBT feature: `official-agree × org-disagree × address-shared`) targeting
+   precisely the 7 remaining clusters. Filed on #625.
