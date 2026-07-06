@@ -18,6 +18,7 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
@@ -32,6 +33,8 @@ import {
 	createPhotonRouter,
 	photonCollection,
 	photonFeature,
+	photonForwardFeature,
+	photonOSMTags,
 	type PhotonEngine,
 	type PhotonProperties,
 } from "./index.js"
@@ -95,16 +98,21 @@ async function serve(): Promise<void> {
 			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for })
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
-			const properties: PhotonProperties = {
-				name: result.locality ?? result.region ?? undefined,
-				city: result.locality ?? undefined,
-				state: result.region ?? undefined,
-				postcode: result.postcode ?? undefined,
-			}
+			// #1014: decorate from the RESOLVED gazetteer place — proper-cased ancestry names (`hierarchy[].name`,
+			// not the parsed span) + the resolved country (ISO2 → canonical name via codex) + osm_key/value/type so
+			// Photon clients don't TypeError. The candidate backend fills only the locality (no ancestors() table),
+			// so state/county come through only on an ancestry-capable backend — country still lands from the code.
+			const country = matchCountry(result.countryCode)
 
-			for (const h of result.hierarchy) if (h.tag === "country") properties.country = h.value
-
-			return photonCollection([photonFeature(result.lon, result.lat, properties)])
+			return photonCollection([
+				photonForwardFeature({
+					lat: result.lat,
+					lon: result.lon,
+					postcode: result.postcode,
+					country: country ? { name: country.canonical, code: country.iso2 } : undefined,
+					places: result.hierarchy.map((h) => ({ tag: h.tag, name: h.name })),
+				}),
+			])
 		},
 
 		async reverse(params) {
@@ -113,7 +121,13 @@ async function serve(): Promise<void> {
 
 			if (hierarchy.length === 0) return photonCollection([])
 			const deepest = hierarchy[0]!
-			const properties: PhotonProperties = { name: deepest.name, countrycode: deepest.country?.toLowerCase() }
+			// #1014: carry osm_key/osm_value/type (from the deepest placetype) so /reverse matches /api's schema —
+			// no Photon client should dereference an undefined osm_key on a reverse result either.
+			const properties: PhotonProperties = {
+				name: deepest.name,
+				countrycode: deepest.country?.toLowerCase(),
+				...photonOSMTags(deepest.placetype),
+			}
 
 			for (const place of hierarchy) {
 				const key = PLACETYPE_TO_KEY[place.placetype]

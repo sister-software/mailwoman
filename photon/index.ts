@@ -224,3 +224,91 @@ export function photonFeature(lon: number, lat: number, properties: PhotonProper
 export function photonCollection(features: PhotonFeature[]): PhotonFeatureCollection {
 	return { type: "FeatureCollection", features }
 }
+
+/**
+ * The resolved-place info a forward `/api` result carries: the admin ladder (MOST-SPECIFIC first) with GAZETTEER names,
+ * the coordinate, the resolved country, and the postcode. {@link photonForwardProperties} projects it onto Photon's
+ * schema. #1014 — decorate from the resolved place, not the parsed input span.
+ */
+export interface PhotonForwardInput {
+	lat: number
+	lon: number
+	postcode?: string | null
+	/** The resolved country, mapped by the caller (ISO2 → canonical name via `@mailwoman/codex`). */
+	country?: { name?: string; code?: string } | null
+	/** Resolved admin ancestry, most-specific first, each carrying the gazetteer's canonical name (not the parsed span). */
+	places: ReadonlyArray<{ tag: string; name: string }>
+}
+
+/**
+ * How a resolved tag projects onto Photon's schema: the property key that holds its name, plus the OSM `key`/`value`/
+ * `type` a Photon client reads. Kept close to komoot Photon's own values so client label-builders behave.
+ */
+const FORWARD_TAG_PROJECTION: Record<
+	string,
+	{ key: keyof PhotonProperties; osmKey: string; osmValue: string; type: string }
+> = {
+	venue: { key: "name", osmKey: "amenity", osmValue: "yes", type: "house" },
+	house: { key: "name", osmKey: "building", osmValue: "yes", type: "house" },
+	street: { key: "street", osmKey: "highway", osmValue: "residential", type: "street" },
+	neighbourhood: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
+	dependent_locality: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
+	borough: { key: "district", osmKey: "place", osmValue: "borough", type: "district" },
+	locality: { key: "city", osmKey: "place", osmValue: "city", type: "city" },
+	// WOF placetypes the /reverse hierarchy uses (so both endpoints derive osm tags from ONE table).
+	localadmin: { key: "city", osmKey: "place", osmValue: "city", type: "city" },
+	subregion: { key: "county", osmKey: "place", osmValue: "county", type: "county" },
+	county: { key: "county", osmKey: "place", osmValue: "county", type: "county" },
+	region: { key: "state", osmKey: "place", osmValue: "state", type: "state" },
+	macroregion: { key: "state", osmKey: "place", osmValue: "state", type: "state" },
+	country: { key: "country", osmKey: "place", osmValue: "country", type: "country" },
+}
+
+/** Fallback OSM tags — a Photon client reads `osm_key`/`osm_value`/`type` unconditionally, so they must never be absent. */
+const DEFAULT_OSM_TAGS = { osm_key: "place", osm_value: "yes", type: "other" } as const
+
+/**
+ * The Photon `osm_key`/`osm_value`/`type` for a resolved tag or WOF placetype (`locality`, `region`, `country`, …),
+ * falling back to a safe default so the fields are always present. Shared by the forward projection and `/reverse` so
+ * the two endpoints report a place the SAME way. #1014.
+ */
+export function photonOSMTags(tagOrPlacetype: string): { osm_key: string; osm_value: string; type: string } {
+	const proj = FORWARD_TAG_PROJECTION[tagOrPlacetype]
+
+	return proj ? { osm_key: proj.osmKey, osm_value: proj.osmValue, type: proj.type } : { ...DEFAULT_OSM_TAGS }
+}
+
+/**
+ * Project a resolved forward result into Photon properties — decorating from the RESOLVED gazetteer place (proper-cased
+ * names + ancestry + country), NOT the parsed input span, and ALWAYS emitting `osm_key`/`osm_value`/`type` so Photon
+ * client libraries (leaflet-control-geocoder, @openrunner/photon-geocoder) never dereference undefined. #1014.
+ */
+export function photonForwardProperties(input: PhotonForwardInput): PhotonProperties {
+	// Safe defaults: a Photon client reads osm_key/osm_value/type unconditionally, so they must never be undefined.
+	const props: PhotonProperties = { ...DEFAULT_OSM_TAGS }
+	const [primary] = input.places
+
+	if (primary) {
+		props.name = primary.name
+		Object.assign(props, photonOSMTags(primary.tag))
+	}
+
+	for (const place of input.places) {
+		const proj = FORWARD_TAG_PROJECTION[place.tag]
+
+		if (proj && props[proj.key] == null) props[proj.key] = place.name
+	}
+
+	if (input.postcode) props.postcode = input.postcode
+
+	if (input.country?.name && props.country == null) props.country = input.country.name
+
+	if (input.country?.code) props.countrycode = input.country.code.toLowerCase()
+
+	return props
+}
+
+/** {@link photonForwardProperties}, wrapped as a Photon Point `Feature` at the resolved coordinate. #1014. */
+export function photonForwardFeature(input: PhotonForwardInput): PhotonFeature {
+	return photonFeature(input.lon, input.lat, photonForwardProperties(input))
+}

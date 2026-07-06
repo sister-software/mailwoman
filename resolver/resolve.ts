@@ -989,6 +989,11 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
 	node.metadata = { ...node.metadata, resolver_score: resolved.score, resolver_name: resolved.name }
 
+	// The resolved place's ISO-3166 alpha-2 country (from the gazetteer/candidate row), when known. #1014: lets a
+	// forward consumer fill country/countrycode without an ancestry walk — the candidate backend carries this even
+	// though it has no `ancestors()` table.
+	if (resolved.country) node.metadata["resolver_country"] = resolved.country
+
 	// The postcode/locality conflict flag (the falsehood differentiator): the postcode pointed to a
 	// geographically different place than the parsed city name. Surface it so callers can warn rather
 	// than silently trust the resolved point.
