@@ -98,6 +98,8 @@ const C = {
 	isSubpart: "Is Organization Subpart",
 	parentLBN: "Parent Organization LBN",
 	parentTIN: "Parent Organization TIN",
+	// #625 taxonomy discriminator: the 15 taxonomy slots; collected as a set (any shared code = agreement).
+	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
@@ -152,6 +154,8 @@ interface MessyRow {
 	org: string
 	address: string
 	auth: string
+	/** Whitespace-joined taxonomy-code set (up to 15 slots) — the #625 code-set discriminator. */
+	taxonomy: string
 	entityID: string
 }
 
@@ -211,6 +215,13 @@ async function main(): Promise<void> {
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
 				const auth = `${norm(r[C.authFirst])} ${norm(r[C.authLast])}`.trim() // the NPI's registrant — shared across its records
+				// #625: the taxonomy-code set (up to 15 slots), whitespace-joined — identical across the NPI's
+				// records by construction (it's a per-NPI registry attribute), so it NEVER splits one entity;
+				// it only separates co-located DISTINCT providers whose sets are disjoint.
+				const taxonomy = C.taxonomy
+					.map((col) => norm(r[col]))
+					.filter(Boolean)
+					.join(" ")
 				// Entity-level (site) truth: same org + same physical address. Subparts (NPPES
 				// "Is Organization Subpart" + parent LBN/TIN) collapse to their PARENT, so the matcher isn't
 				// charged for correctly fusing one org's many subpart-NPIs at a site; an NPI's mailing-vs-
@@ -223,15 +234,15 @@ async function main(): Promise<void> {
 
 				if (org) npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
 				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice, auth, entityID: eid(practice) })
+				rows.push({ npi, name: primaryName, org, address: practice, auth, taxonomy, entityID: eid(practice) })
 
 				// primary
 				for (const alt of altNames.get(npi)!)
-					rows.push({ npi, name: alt, org: alt, address: practice, auth, entityID: eid(practice) }) // name drift
+					rows.push({ npi, name: alt, org: alt, address: practice, auth, taxonomy, entityID: eid(practice) }) // name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice)
-					rows.push({ npi, name: primaryName, org, address: mailing, auth, entityID: eid(mailing) }) // address variation
+					rows.push({ npi, name: primaryName, org, address: mailing, auth, taxonomy, entityID: eid(mailing) }) // address variation
 			}
 		}
 	}
@@ -258,7 +269,7 @@ async function main(): Promise<void> {
 		address: "address",
 		// `entityTruth` rides as an attribute purely for scoring (NOT a discriminator → never used in
 		// matching); it carries the site-level entity-level label alongside the NPI (record.id).
-		attributes: { authorizedOfficial: "auth", entityTruth: "entityID" },
+		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy", entityTruth: "entityID" },
 		source: "nppes",
 	}
 
@@ -589,6 +600,7 @@ async function main(): Promise<void> {
 		requireCorroboration?: boolean
 		usePhone?: boolean
 		linkage?: "single" | "average"
+		exactDiscriminators?: string[]
 	}
 	// The proven levers are now DEFAULT-ON in resolveEntities (#86). Each row sets BOTH `collapseSpatial`
 	// and `addressFrequency` EXPLICITLY so the progression isolates one lever at a time — otherwise the
@@ -639,6 +651,20 @@ async function main(): Promise<void> {
 				requireCorroboration: true,
 				usePhone: true,
 				linkage: "average",
+			},
+		},
+		// A5 (#625): the taxonomy code-set discriminator — set-overlap agreement over the NPI's 15 taxonomy
+		// slots. The named "still-more-distinctive identifier" from the 2026-06-16 report: co-located
+		// DISTINCT providers usually have disjoint sets (the over-merge separator) while an entity's own
+		// records always share theirs (never splits). Stacked on the BEST prior classical config (A1 +
+		// authorized-official; A3 phone + A4 avg-linkage were measured neutral-to-negative and are left off).
+		{
+			label: "+ taxonomy code-set discriminator (A5, #625)",
+			config: {
+				collapseSpatial: true,
+				addressFrequency,
+				discriminators: ["authorizedOfficial"],
+				exactDiscriminators: ["taxonomy"],
 			},
 		},
 	]
@@ -700,6 +726,57 @@ async function main(): Promise<void> {
 	// Task 4 (#109): the H3-cell co-location truth — a robustness check on the haversine coord-grain.
 	const orgH3Count = new Set(records.map((r) => orgNameH3Label(r))).size
 	const gbtOrgH3 = scoreEntities(gbtRes.entities, orgNameH3Label)
+
+	// --- #625 gold-set adjudication packet (--dump-overmerges <path>): the org-name-grain over-merged
+	// clusters from the SHIPPED (GBT) config, with full member records, formatted for HUMAN review. The
+	// residual over-merge is small (~21 clusters) and approaching the measured ~1.6% irreducible ceiling —
+	// per-pair adjudication (same entity? distinct co-located?) is the only instrument left that can
+	// separate model error from yardstick error. Each cluster prints its members grouped by org-name
+	// label with every matcher-visible field, so a reviewer can adjudicate in one glance.
+	const DUMP_OVERMERGES = arg("dump-overmerges")
+
+	if (DUMP_OVERMERGES) {
+		const rowByID = new Map(rows.map((r) => [r.npi, r]))
+		const out: string[] = [
+			"# #625 gold-set adjudication packet — org-name-grain over-merged clusters (GBT, shipped config)",
+			"",
+			`TX --max-npis ${MAX_NPIS} · ${records.length} records · generated by nppes-dedup-benchmark --dump-overmerges`,
+			"",
+			"For each cluster: the matcher fused records that the org-name truth says belong to DIFFERENT entities.",
+			"Adjudicate each: **[same]** one real-world entity (yardstick error — the truth under-collapsed) or",
+			"**[distinct]** genuinely different co-located providers (model over-merge). Mark inline and return.",
+			"",
+		]
+		let n = 0
+		gbtRes.entities.forEach((e) => {
+			const byLabel = new Map<string, SourceRecord[]>()
+
+			for (const rec of e.records) {
+				const lbl = orgNameLabel(rec)
+				const list = byLabel.get(lbl) ?? []
+				list.push(rec)
+				byLabel.set(lbl, list)
+			}
+
+			if (byLabel.size <= 1) return
+			n++
+			out.push(`## Cluster ${n} — ${e.records.length} records, ${byLabel.size} org-name entities  → verdict: [ ]`)
+
+			for (const [lbl, members] of byLabel) {
+				out.push(`- **entity ${lbl}**`)
+
+				for (const rec of members) {
+					const src = rowByID.get(rec.id)
+					out.push(
+						`  - npi=${rec.id} · name="${[rec.name?.given, rec.name?.family].filter(Boolean).join(" ")}" · org="${rec.organization?.canonical ?? ""}" · addr="${rec.address?.raw ?? ""}" · auth="${src?.auth ?? ""}" · taxonomy="${src?.taxonomy ?? ""}"`
+					)
+				}
+			}
+			out.push("")
+		})
+		writeFileSync(DUMP_OVERMERGES, out.join("\n"))
+		console.error(`    adjudication packet: ${n} over-merged clusters -> ${DUMP_OVERMERGES}`)
+	}
 
 	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
 	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. corroboration features).

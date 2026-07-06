@@ -32,6 +32,10 @@ const engine: PhotonEngine = {
 express().use(createPhotonRouter(engine)).listen(2322)
 ```
 
+## CORS
+
+Map widgets (`leaflet-control-geocoder`, `@openrunner/photon-geocoder`) call this cross-origin from the browser, so the server sends permissive CORS by default — `Access-Control-Allow-Origin: *` and a `204` answer to preflight `OPTIONS`, matching upstream Photon. Behind a reverse proxy that already sets the headers, turn it off with `--no-cors` (or `createPhotonRouter(engine, { cors: false })`).
+
 ## Status
 
 Shipped. `/api` and `/reverse` resolve over the live engine and return Photon GeoJSON. `/api` runs the
