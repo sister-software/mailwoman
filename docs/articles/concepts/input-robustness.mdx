@@ -92,7 +92,7 @@ context, and case normalization bridges the systematic gap between them.
 Absorption you can't measure is absorption you can't trust. Three gates watch these
 layers, and they grade different things on purpose.
 
-### Metamorphic INV/DIR — the un-gameable layer
+### Metamorphic INV/DIR/BAND — the un-gameable layer
 
 The one that matters most is `scripts/eval/gauntlet/metamorphic.ts`, layer 2 of
 [the Gauntlet](./eval-discipline.mdx). It asserts _relations_ between outputs rather
@@ -101,25 +101,41 @@ confidence in it. It also grades the **assembled geocode**, coordinate and tier,
 parse F1, because a robustness bug that leaves the tags intact but moves the pin is
 still a bug that ships a wrong answer.
 
-Two relation families:
+Three relation families, split by what a perturbation is _allowed_ to do to the
+answer:
 
-- **INV (invariance).** A label-preserving perturbation of a base address (lowercase
-  it, uppercase it, double the spaces, append a stray dot, tighten the space after a
-  comma) must not move the coordinate more than a metre (`INV_EPSILON_KM = 0.001`) or
-  change the resolution tier. Same address, same answer. A drift is a surface-form
-  robustness bug, full stop.
-- **DIR (directional).** Drop the postcode and the result must still land within 5km
-  of the with-postcode anchor. This is the #251 failure class, a parser that falls
+- **INV (invariance, ≤1m).** A label-preserving perturbation of a base address
+  (lowercase it, uppercase it, double the spaces, append a stray dot, tighten the
+  space after a comma, swap an expanded suffix for its abbreviation) must not move the
+  coordinate more than a metre (`INV_EPSILON_KM = 0.001`) or change the resolution
+  tier. Same address, same answer. The `abbrev` case inverts the `normalize/`
+  abbreviation table (`Avenue`→`Ave`), and it holds because the model trains on both
+  forms, so the coordinate has no excuse to budge.
+- **DIR (directional, ≤5km).** Drop the postcode and the result must still land within
+  5km of the with-postcode anchor. This is the #251 failure class, a parser that falls
   apart the moment a user omits the ZIP, frozen here as a standing property.
+- **BAND (tolerance, ≤5km).** A _corrupting_ perturbation (a single-character transpose
+  or substitution, an ordinal or house-number spelled out) is allowed to shift the
+  parse, so demanding byte-identical output would be the wrong contract. It still has
+  to land within a tolerance band of the clean coordinate. This is the family that
+  catches the classes the pipeline never trained on.
 
-When a perturbation deterministically fails, it doesn't get swept under the rug and
-it doesn't block the build either. It goes in `KNOWN_INV_XFAIL` with an issue
-reference: visible, tracked, non-blocking, so the gate fails only on _new_
-regressions. The bookkeeping cuts the other way too: an xfail that starts passing
-gets flagged for removal, so the list can't rot into the Pelias pass-list trap it was
-built to avoid. As of this writing that map is empty. The INV layer is 35/35 green,
-cleared by the two normalizer levers above (#829's lowercase restore and the
-trailing-punctuation trim) with no retraining.
+When a perturbation deterministically fails, it doesn't get swept under the rug and it
+doesn't block the build either. It goes in `KNOWN_INV_XFAIL` or `KNOWN_BAND_XFAIL` with
+a tracked note: visible, non-blocking, so the gate fails only on _new_ regressions. The
+bookkeeping cuts the other way too: an xfail that starts passing gets flagged for
+removal, so the list can't rot into the Pelias pass-list trap it was built to avoid.
+
+Casing and spacing are green, cleared by the two normalizer levers above (#829's
+lowercase restore and the trailing-punctuation trim) with no retraining. The EN suffix
+abbreviations hold. The tracked xfails are honest about the rest: the FR `Boulevard`→`Bd`
+swap drops from a rooftop to admin tier (the street gazetteer stores the expanded type,
+so the abbreviation misses the point-tier name match, a resolver gap rather than a model
+one), house-number spelling misses the band outright, and a single-char typo in a
+locality or street can lose the pin. Those last are measured with the anchor and
+gazetteer channels off, which is the harness default; the gazetteer soft-feed is exactly
+what would recover a typo'd `Amsterdam` in ship-config, so read them as the anchor-off
+floor, not a verdict on production.
 
 ### Golden `graceful/*` slices — labeled adversarial cases
 
@@ -143,22 +159,26 @@ It's a generator you run when you want that arena, not a standing gate.
 Put the perturbation classes against the layers that absorb them and the gates that
 watch them, and the honest picture falls out, thin spots included.
 
-| Class                                        | `normalize/` (runtime)                     | Trained (corpus aug) | Gated                                          |
-| -------------------------------------------- | ------------------------------------------ | -------------------- | ---------------------------------------------- |
-| Casing                                       | yes (case-normalize #690/#829, model-side) | yes                  | INV[lower/upper] green                         |
-| Spacing                                      | yes (whitespace.ts)                        | incidental           | INV[ws], INV[comma-tight]                      |
-| Abbreviation swap (Road↔Rd)                  | capable but OFF at runtime (deliberate)    | yes                  | labeled golden entries only, no stability gate |
-| Number spelling (5th↔Fifth, 100↔One Hundred) | no                                         | no                   | nowhere                                        |
-| Typos (single-char edit)                     | no                                         | no                   | ~10 labeled golden cases only                  |
-| Transpositions                               | no                                         | no                   | folded into golden typo slice                  |
+| Class                                        | `normalize/` (runtime)                     | Trained (corpus aug) | Gated                                                                                                     |
+| -------------------------------------------- | ------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------- |
+| Casing                                       | yes (case-normalize #690/#829, model-side) | yes                  | INV[lower/upper] green                                                                                    |
+| Spacing                                      | yes (whitespace.ts)                        | incidental           | INV[ws], INV[comma-tight] green                                                                           |
+| Abbreviation swap (Road↔Rd)                  | capable but OFF at runtime (deliberate)    | yes                  | INV[abbrev]: EN suffixes green; FR `Bd` tracked-xfail (resolver name-match gap)                           |
+| Number spelling (5th↔Fifth, 100↔One Hundred) | no                                         | no                   | BAND[num-ordinal] green; BAND[num-house] tracked-xfail (untrained)                                        |
+| Typos (single-char edit)                     | no                                         | no                   | BAND[typo-sub]: most bases green; tracked-xfail where a typo'd locality/street loses the pin (anchor-off) |
+| Transpositions                               | no                                         | no                   | BAND[transpose]: same anchor-off gaps as typo-sub                                                         |
 
 The top two rows are the settled ones: casing and spacing are absorbed at runtime,
-reinforced in the corpus, and held green by a standing invariant. The bottom four are
-where the coverage is honest about its holes. Abbreviation swaps are trained in but
-have no coordinate-stability gate, so the model handles them and we just don't assert
-it. Number spelling is absorbed nowhere. Typos and transpositions live only in a
-handful of hand-labeled golden cases. Naming a gap out loud is how you keep it from
-hiding.
+reinforced in the corpus, and held green by a standing invariant. The bottom four used
+to be blind spots. They run through the metamorphic gate now, and the surprise was that
+several of them already hold. The EN suffix abbreviations pass the strict metre
+invariant. Ordinal street spelling (`5th`↔`Fifth`) stays inside the tolerance band even
+though nothing trains it. The genuine gaps came out smaller than feared, and they're
+named in the xfail maps rather than hiding: a French street-type abbreviation the
+resolver can't match at rooftop tier, house-number spelling, and single-character typos
+that lose a locality or street when the anchor and gazetteer channels are off. Each one
+is a tracked, watched line item instead of a silent hole, which is the whole point of
+running them.
 
 ## See also
 
