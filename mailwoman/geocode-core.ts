@@ -360,7 +360,13 @@ export async function parseForGeocode(
 	input: string,
 	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase">
 ): Promise<AddressTree> {
-	const parseInput = deps.normalizeInput === false ? input : normalize(input).normalized
+	// #1002: expandAbbreviations with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp → the expanded street
+	// type). The model mis-parses undertrained FR abbreviations ("2 Bd du Palais" → house_number "2 Bd",
+	// which then fails the point-tier number match); the EN suffixes are deliberately NOT expanded (the
+	// model is trained-robust on them, and St/Dr are ambiguous with Saint/Doctor). The locale isn't known
+	// pre-parse, so only the collision-free multi-locale entries apply — see LOCALE_UNKNOWN_DICT.
+	const parseInput =
+		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
 
 	return recognizeUSRegions(
 		await deps.classifier.parse(parseInput, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
@@ -377,7 +383,8 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
 	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
 	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
-	const parseInput = deps.normalizeInput === false ? input : normalize(input).normalized
+	const parseInput =
+		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const stateSlug = regionSlugFromTree(tree)
 	const usShards = deps.shards?.(stateSlug) ?? {}
