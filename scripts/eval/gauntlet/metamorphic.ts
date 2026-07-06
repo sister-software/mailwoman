@@ -245,10 +245,11 @@ const BAND: Perturbation[] = [
 // the FR street-type swap below is a RESOLVER gap, not a model one, and it is a finding, not a reflex xfail (see note).
 // A NEW deterministic INV break belongs here with a tracked note, never silently gated.
 const KNOWN_INV_XFAIL = new Map<string, string>([
-	// FINDING (2026-07-06): `Boulevard`→`Bd` drops address_point→admin (~0.24km). The FR street gazetteer stores the
-	// expanded type, so the abbreviated form fails the point-tier name match — a resolver coverage gap, not a model
-	// robustness failure (EN Ave/St hold). Measured anchor-OFF; the gazetteer soft-feed may recover it in ship-config.
-	["abbrev|2 Boulevard du Palais, 75001 Paris", "resolver: FR street-type abbrev name-match gap (address_point→admin)"],
+	// FINDING (2026-07-06, tracked as #1002): `Boulevard`→`Bd` drops address_point→admin (~0.24km). The FR street
+	// gazetteer stores the expanded type, so the abbreviated form fails the point-tier name match — a resolver coverage
+	// gap, not a model robustness failure (EN Ave/St hold). Measured anchor-OFF; the gazetteer soft-feed may recover it
+	// in ship-config. Remove this row as part of the #1002 fix — the anti-rot check will flag it once it passes.
+	["abbrev|2 Boulevard du Palais, 75001 Paris", "resolver: FR street-type abbrev name-match gap (#1002)"],
 ])
 
 /**
