@@ -79,6 +79,8 @@ const C = {
 	mState: "Provider Business Mailing Address State Name",
 	mZip: "Provider Business Mailing Address Postal Code",
 	otherOrg: "Provider Other Organization Name",
+	authLast: "Authorized Official Last Name",
+	authFirst: "Authorized Official First Name",
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
@@ -90,6 +92,8 @@ interface MessyRow {
 	name: string
 	org: string
 	address: string
+	/** Authorized official — feeds the #625 roll-up-signature features (officialAgree × orgDisagree). */
+	auth: string
 }
 
 /** Deterministic LCG (no Math.random — reproducible split + commit). */
@@ -188,13 +192,14 @@ async function main(): Promise<void> {
 
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
+				const auth = `${norm(r[C.authFirst])} ${norm(r[C.authLast])}`.trim()
 				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice })
+				rows.push({ npi, name: primaryName, org, address: practice, auth })
 
-				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice })
+				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice, auth })
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
-				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing })
+				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing, auth })
 			}
 		}
 	}
@@ -227,7 +232,13 @@ async function main(): Promise<void> {
 		country: "US",
 	})
 	// mapping.id = "npi" → record.id IS the NPI label (multiple records share an NPI, the ground truth).
-	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address" }
+	const mapping: ColumnMapping = {
+		id: "npi",
+		name: "name",
+		organization: "org",
+		address: "address",
+		attributes: { authorizedOfficial: "auth" },
+	}
 	const records: SourceRecord[] = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
 		geocodeAddress: seam,
 	})
