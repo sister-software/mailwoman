@@ -1,0 +1,93 @@
+---
+sidebar_position: 4
+title: "Case study: the same doctor, two federal registries, two different addresses"
+tags:
+  - concepts
+  - record-matching
+  - case-study
+---
+
+# Case study: the same doctor, two federal registries, two different addresses
+
+If you work with US provider data, you already know this problem — you just may not have named it yet.
+The same physician is in NPPES because they have an NPI, and in CMS Open Payments because a device
+manufacturer bought them lunch. Both records are self-reported. Both carry an address a human typed on
+a different day, into a different form, under different validation rules. Neither is wrong, exactly.
+They just don't match.
+
+```text
+NPPES:          JOHN Q SAMPLE · 4510 MEDICAL CENTER DR STE 200, MCALLEN, TX 78503
+Open Payments:  John Sample   · 4510 Medical Ctr Drive, McAllen, TX 785031234
+```
+
+Join on name + address and you lose this pair. Fuzzy-match the strings and you drown in false
+positives from the medical building next door. So the join gets done by hand, or it doesn't get done —
+and a compliance team ends up with two provider universes that never reconcile.
+
+## The geocode-first move
+
+Mailwoman's record matcher doesn't try to make the strings agree. It resolves each record to a
+**place** — parse the address with the neural parser, geocode it, take the coordinate and the
+canonical key — and then asks a smaller, better question: _of the records at (or near) this place,
+which are the same entity?_ Blocking happens on the map, not on the text, so "STE 200" versus no
+suite, "Dr" versus "Drive", ZIP versus ZIP+4 stop mattering before the comparison even starts.
+
+What's left is a scoring problem: same place, similar-enough name — one provider or two? For
+within-registry dedup we ship a learned scorer trained on NPI-grouped records. But cross-registry
+linking is the _opposite_ objective: the dedup scorer learned that "same address, names disagree"
+usually means two co-located providers, so it rejects exactly the drifted-text pair a cross-registry
+join wants to keep. Objectives, not thresholds — a lesson we measured the hard way before fixing it
+properly.
+
+## Training on truth nobody had to label
+
+Here's the part worth stealing. The two registries share the NPI column — an external key the
+matcher's features never see. Join NPPES to Open Payments on NPI and you get thousands of
+ground-truth "same provider, independently typed text" pairs, **for free, with no annotation
+budget**. Train a scorer on those labels and it learns the cross-registry objective directly:
+address drift and name drift are what _agreement_ looks like across sources.
+
+Both files are public domain. The whole pipeline — download, parse, geocode, block, train — runs on
+one machine, with no API keys and no per-row geocoding invoice.
+
+## The numbers
+
+Texas, one afternoon, one machine. 1,954 practitioners present in both registries (the NPI join),
+3,908 records — **100% geocoded**. Blocking produced 175,200 cross-registry candidate pairs, 1.1%
+of them true same-provider pairs by the NPI key.
+
+| held-out (unseen NPIs)                       | value                                |
+| -------------------------------------------- | ------------------------------------ |
+| recall at the ≥95%-precision operating point | **100.0%**                           |
+| F1 at the F1-max threshold                   | **99.2%**                            |
+| annotation cost                              | $0 — the NPI join labeled everything |
+
+Every drifted pair like the one at the top of this page links; the co-located stranger next door
+doesn't. That's the whole job.
+
+One honest boundary, because we measure these things: this scorer is trained on _practitioners_ —
+people, with given and family names. Pointed at **organization-level** cross-dataset linking
+(clinic rosters, funding filings), its person-name features go dark and it over-links; the
+classical Fellegi–Sunter baseline stays pinned there until an org-level label source exists. The
+lesson generalizes: a learned matcher is only as portable as its labels, so we scope it to where
+its labels came from — and say so.
+
+## Run it yourself
+
+```bash
+# The public source files (both public domain):
+#   NPPES registry — https://download.cms.gov/nppes/NPI_Files.html
+#   Open Payments covered-recipient profile — https://openpaymentsdata.cms.gov
+
+# Train the cross-source scorer on NPI-joined pairs:
+node scripts/record-matcher/train-cross-gbt.ts --state TX --npis 2000
+
+# Grade it against the FS baseline (cross-source links + the phone-corroboration proxy):
+node scripts/record-matcher/cross-source-threshold-sweep.ts \
+  --candidate registry/models/crosssource-gbt-en-us.ts
+```
+
+The same recipe extends to any registry pair with a shared key — PECOS by NPI, SAM.gov by UEI, IRS
+BMF by EIN. The key gives you labels; the geocoder gives you the blocking; the scorer learns the
+rest. See [Geocode-first record matching](./geocode-first-record-matching.mdx) for the architecture
+and [the dedup yardstick](./dedup-entity-truth.mdx) for how we grade it honestly.
