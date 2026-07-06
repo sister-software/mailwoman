@@ -13,7 +13,7 @@
  *   See `docs/articles/plan/reference/STAGES.md` § Stage 1 for the contract.
  */
 
-export { expandAbbreviations } from "./abbreviations.js"
+export { type AbbreviationEntry, abbreviationDictionary, expandAbbreviations } from "./abbreviations.js"
 export { applyCjkNormalization, type CjkResult } from "./cjk.js"
 export { normalize } from "./compute.js"
 export { applyNFC } from "./nfc.js"
