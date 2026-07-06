@@ -33,7 +33,8 @@ import {
 	createPhotonRouter,
 	photonCollection,
 	photonFeature,
-	photonForwardFeature,
+	photonForwardCollection,
+	type PhotonForwardInput,
 	photonOSMTags,
 	type PhotonEngine,
 	type PhotonProperties,
@@ -92,10 +93,13 @@ async function serve(): Promise<void> {
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
+			// #1016: forward the client's viewport/user location as a proximity bias — a SOFT re-rank the resolver
+			// folds into candidate scoring (Springfield near the map center wins). Only when both coords are present.
+			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
 			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
-			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for })
+			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for, bias })
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
 			// #1014: decorate from the RESOLVED gazetteer place — proper-cased ancestry names (`hierarchy[].name`,
@@ -103,16 +107,27 @@ async function serve(): Promise<void> {
 			// Photon clients don't TypeError. The candidate backend fills only the locality (no ancestors() table),
 			// so state/county come through only on an ancestry-capable backend — country still lands from the code.
 			const country = matchCountry(result.countryCode)
+			const primary: PhotonForwardInput = {
+				lat: result.lat,
+				lon: result.lon,
+				postcode: result.postcode,
+				country: country ? { name: country.canonical, code: country.iso2 } : undefined,
+				places: result.hierarchy.map((h) => ({ tag: h.tag, name: h.name })),
+			}
+			// #1016: candidates[0] is the primary itself; its ranked alternatives (Springfield MA/IL/…) become the
+			// extra features, up to the requested `limit`. Each alternative is a single resolved place.
+			const alternatives = result.candidates.slice(1).map((c) => {
+				const cc = matchCountry(c.countryCode)
 
-			return photonCollection([
-				photonForwardFeature({
-					lat: result.lat,
-					lon: result.lon,
-					postcode: result.postcode,
-					country: country ? { name: country.canonical, code: country.iso2 } : undefined,
-					places: result.hierarchy.map((h) => ({ tag: h.tag, name: h.name })),
-				}),
-			])
+				return {
+					lat: c.lat,
+					lon: c.lon,
+					country: cc ? { name: cc.canonical, code: cc.iso2 } : undefined,
+					places: [{ tag: c.tag, name: c.name }],
+				}
+			})
+
+			return photonForwardCollection({ primary, alternatives }, params.limit)
 		},
 
 		async reverse(params) {

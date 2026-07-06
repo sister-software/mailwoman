@@ -23,14 +23,19 @@ curl "http://localhost:2322/reverse?lat=52.52&lon=13.405"
 
 ## Endpoint map
 
-| Photon         | Mailwoman      | Notes                                             |
-| -------------- | -------------- | ------------------------------------------------- |
-| `GET /api`     | `GET /api`     | `q`, `limit`, `lat`/`lon` bias, `lang`, `osm_tag` |
-| `GET /reverse` | `GET /reverse` | `lat` / `lon`                                     |
+| Photon         | Mailwoman      | Parameters honored                |
+| -------------- | -------------- | --------------------------------- |
+| `GET /api`     | `GET /api`     | `q`, `limit`, `lat`/`lon` bias     |
+| `GET /reverse` | `GET /reverse` | `lat` / `lon`                     |
+
+`limit` returns the top-N ranked matches (an ambiguous name like `Springfield` yields each instance),
+and `lat`/`lon` is a proximity bias — the same query near different map centers re-ranks the results
+toward the viewport. `lang` and `osm_tag` are accepted for wire compatibility but not yet applied:
+`lang` because the model ships a single (en-US) locale, and `osm_tag` layer filtering is on the roadmap.
 
 Both return a GeoJSON `FeatureCollection` of `Point` features with `properties` (`name`, `street`,
-`postcode`, `city`, `county`, `state`, `country`, `countrycode`, …) — the shape a Photon client already
-parses.
+`postcode`, `city`, `county`, `state`, `country`, `countrycode`, `osm_key`, `osm_value`, `type`, …) —
+the shape a Photon client already parses.
 
 ## What's different
 
