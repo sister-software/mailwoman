@@ -55,7 +55,11 @@ async function serve(): Promise<void> {
 			port: { type: "string", default: "2322" },
 			host: { type: "string", default: "0.0.0.0" },
 			"candidate-db": { type: "string" },
+			// Permissive CORS is on by default (upstream Photon parity — browser widgets need it). `--no-cors`
+			// turns it off for deployments where a reverse proxy already sets the headers.
+			cors: { type: "boolean", default: true },
 		},
+		allowNegative: true,
 		allowPositionals: true,
 	})
 
@@ -123,7 +127,7 @@ async function serve(): Promise<void> {
 
 	const express = (await import("express")).default
 	express()
-		.use(createPhotonRouter(engine))
+		.use(createPhotonRouter(engine, { cors: values.cors }))
 		.listen(port, host, () => {
 			console.error(`[@mailwoman/photon] listening on http://${host}:${port}`)
 			console.error(`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
@@ -132,6 +136,7 @@ async function serve(): Promise<void> {
 					? `  resolver: candidate gazetteer (worldwide) — ${candidateDb}`
 					: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
 			)
+			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
 			console.error(`  endpoints: GET /api  GET /reverse`)
 		})
 }
@@ -143,6 +148,6 @@ switch (command) {
 		await serve()
 		break
 	default:
-		console.error("Usage: mailwoman-photon serve [--port 2322] [--host 0.0.0.0] [--candidate-db <path>]")
+		console.error("Usage: mailwoman-photon serve [--port 2322] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]")
 		process.exit(command ? 1 : 0)
 }

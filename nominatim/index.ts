@@ -171,13 +171,44 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 	return { type: "FeatureCollection", features }
 }
 
+/** Options for {@link createNominatimRouter}. */
+export interface NominatimRouterOptions {
+	/**
+	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
+	 * with `204`. Default `true` — browser-embedded geocoder clients need it: a cross-origin XHR is blocked without it
+	 * (#1017). Set `false` when a reverse proxy already owns the CORS headers.
+	 */
+	cors?: boolean
+}
+
+/**
+ * Permissive CORS: `Access-Control-Allow-Origin: *` on every response, plus a `204` answer to preflight `OPTIONS`.
+ * `ACAO: *` is anonymous (no credentials), so a wildcard `Allow-Headers` is valid.
+ */
+const applyCors: RequestHandler = (req, res, next) => {
+	res.setHeader("Access-Control-Allow-Origin", "*")
+	res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
+	res.setHeader("Access-Control-Allow-Headers", "*")
+
+	if (req.method === "OPTIONS") {
+		res.setHeader("Access-Control-Max-Age", "86400")
+		res.status(204).end()
+
+		return
+	}
+	next()
+}
+
 /**
  * Build the Nominatim-compatible router around an injected {@link NominatimEngine}. Query-param parsing lives here; the
  * result _formatting_ (jsonv2 vs geojson envelope, `address` projection) is #804 and currently passes the engine's
  * results through verbatim.
  */
-export function createNominatimRouter(engine: NominatimEngine): Router {
+export function createNominatimRouter(engine: NominatimEngine, options: NominatimRouterOptions = {}): Router {
 	const router = Router()
+
+	// Browser-embedded geocoder clients need CORS or their cross-origin XHR is blocked before completing (#1017).
+	if (options.cors !== false) router.use(applyCors)
 
 	const search: RequestHandler = async (req, res) => {
 		if (!engine.search) {

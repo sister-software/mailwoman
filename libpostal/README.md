@@ -40,3 +40,7 @@ const engine: LibpostalEngine = {
 }
 express().use(createLibpostalRouter(engine)).listen(8081)
 ```
+
+## CORS
+
+Browser clients call this cross-origin — including the preflighted `POST /parse` — so the server sends permissive CORS by default: `Access-Control-Allow-Origin: *` and a `204` answer to preflight `OPTIONS`. Behind a reverse proxy that already sets the headers, turn it off with `--no-cors` (or `createLibpostalRouter(engine, { cors: false })`).
