@@ -65,6 +65,20 @@ export interface GeocodeResult {
 	 * (proper-cased canonical, #1014) — distinct from `value`, the raw parsed input span.
 	 */
 	hierarchy: Array<{ tag: string; value: string; name: string; lat?: number; lon?: number; placeID?: string }>
+	/**
+	 * Ranked candidate resolutions for the query's primary place — the winning place first, then the resolver's
+	 * same-query alternatives (Springfield MO, MA, IL, …), each with its own coordinate + country. #1016 — lets a
+	 * `limit`>1 / autocomplete client return the top-N matches instead of only the single best. The order reflects any
+	 * proximity `bias`; an unambiguous result yields a single entry.
+	 */
+	candidates: Array<{
+		name: string
+		tag: string
+		lat: number
+		lon: number
+		countryCode: string | null
+		placeID?: string
+	}>
 }
 
 /**
@@ -613,6 +627,60 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		}
 	}
 
+	// #1016: ranked candidate places for the winning result — the resolved primary node (self) plus its
+	// `alternatives` (the resolver's same-query runner-ups, already ranked and bias-aware). Each is a distinct place
+	// with its own coordinate, so an ambiguous name (Springfield MO/MA/IL) returns all its instances for limit>1.
+	// The primary is the resolved node whose coordinate WON (else the first resolved admin node — a bare-name query).
+	const primaryNode =
+		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??
+		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null)
+	const candidates: GeocodeResult["candidates"] = []
+
+	if (primaryNode?.lat != null) {
+		// Collapse same-point duplicates (a city + its coincident township share a centroid): two places at one
+		// coordinate are not distinct autocomplete suggestions. ~11 m grid (4 decimals) keeps genuinely distinct
+		// namesakes (Springfield MA vs IL are far apart) while dropping the variants.
+		const seen = new Set<string>()
+		const coordKey = (lt: number, ln: number): string => `${lt.toFixed(4)},${ln.toFixed(4)}`
+		seen.add(coordKey(primaryNode.lat, primaryNode.lon!))
+		candidates.push({
+			name: (primaryNode.metadata?.["resolver_name"] as string | undefined)?.trim() || primaryNode.value.trim(),
+			tag: primaryNode.tag,
+			lat: primaryNode.lat,
+			lon: primaryNode.lon!,
+			countryCode: (primaryNode.metadata?.["resolver_country"] as string | undefined)?.trim()?.toUpperCase() ?? null,
+			...(primaryNode.placeID ? { placeID: primaryNode.placeID } : {}),
+		})
+
+		const alts =
+			(primaryNode.alternatives as
+				| ReadonlyArray<{
+						name?: string
+						placetype?: string
+						lat?: number
+						lon?: number
+						country?: string
+						id?: number | string
+				  }>
+				| undefined) ?? []
+
+		for (const a of alts) {
+			if (a.lat == null || a.lon == null || !a.name) continue
+			const key = coordKey(a.lat, a.lon)
+
+			if (seen.has(key)) continue
+			seen.add(key)
+			candidates.push({
+				name: String(a.name).trim(),
+				tag: a.placetype ?? primaryNode.tag,
+				lat: a.lat,
+				lon: a.lon,
+				countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
+				...(a.id != null ? { placeID: `wof:${a.id}` } : {}),
+			})
+		}
+	}
+
 	return {
 		input,
 		lat,
@@ -624,5 +692,6 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		postcode,
 		countryCode,
 		hierarchy,
+		candidates,
 	}
 }

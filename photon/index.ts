@@ -312,3 +312,27 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 export function photonForwardFeature(input: PhotonForwardInput): PhotonFeature {
 	return photonFeature(input.lon, input.lat, photonForwardProperties(input))
 }
+
+/** The winning place plus its ranked alternatives — the input to {@link photonForwardCollection}. #1016. */
+export interface PhotonForwardResult {
+	/** The winning place, with full admin ancestry (from the resolved hierarchy). */
+	primary: PhotonForwardInput
+	/** Ranked alternative places (Springfield MA / IL / …), each a single-place input; excludes the primary. */
+	alternatives: PhotonForwardInput[]
+}
+
+/**
+ * Assemble a Photon `FeatureCollection` honoring `limit` (#1016): the primary feature first, then ranked alternatives,
+ * capped at `limit`. `limit` floors to 1 (Photon always returns at least the best match).
+ */
+export function photonForwardCollection(result: PhotonForwardResult, limit: number): PhotonFeatureCollection {
+	const cap = Math.max(1, Math.floor(limit) || 1)
+	const features = [photonForwardFeature(result.primary)]
+
+	for (const alt of result.alternatives) {
+		if (features.length >= cap) break
+		features.push(photonForwardFeature(alt))
+	}
+
+	return photonCollection(features)
+}

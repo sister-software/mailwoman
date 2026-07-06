@@ -11,10 +11,12 @@ import { expect, test } from "vitest"
 
 import {
 	createPhotonRouter,
-	type PhotonEngine,
+	photonForwardCollection,
 	photonForwardFeature,
+	type PhotonForwardInput,
 	photonForwardProperties,
 	photonOSMTags,
+	type PhotonEngine,
 } from "./index.js"
 
 const engine: PhotonEngine = {
@@ -116,6 +118,25 @@ test("contract: /api and /reverse derive the same osm tags for a place (#1014 ch
 	// photonOSMTags, so they can't drift.
 	const fwd = photonForwardProperties({ lat: 0, lon: 0, places: [{ tag: "locality", name: "X" }] })
 	expect({ osm_key: fwd.osm_key, osm_value: fwd.osm_value, type: fwd.type }).toEqual(photonOSMTags("locality"))
+})
+
+test("photonForwardCollection: primary first, then alternatives, capped at limit (#1016)", () => {
+	const primary: PhotonForwardInput = { lat: 37.19, lon: -93.29, places: [{ tag: "locality", name: "Springfield" }] }
+	const alternatives: PhotonForwardInput[] = [
+		{ lat: 42.11, lon: -72.54, places: [{ tag: "locality", name: "Springfield" }] },
+		{ lat: 39.77, lon: -89.65, places: [{ tag: "locality", name: "Springfield" }] },
+	]
+	const fc = photonForwardCollection({ primary, alternatives }, 2)
+	expect(fc.features).toHaveLength(2) // capped at limit
+	expect(fc.features[0]!.geometry.coordinates).toEqual([-93.29, 37.19]) // primary first
+	expect(fc.features[1]!.geometry.coordinates).toEqual([-72.54, 42.11])
+})
+
+test("photonForwardCollection: limit≥available returns all; limit<1 floors to the single best", () => {
+	const primary: PhotonForwardInput = { lat: 0, lon: 0, places: [{ tag: "locality", name: "A" }] }
+	const alternatives: PhotonForwardInput[] = [{ lat: 1, lon: 1, places: [{ tag: "locality", name: "B" }] }]
+	expect(photonForwardCollection({ primary, alternatives }, 10).features).toHaveLength(2)
+	expect(photonForwardCollection({ primary, alternatives }, 0).features).toHaveLength(1)
 })
 
 test("photonForwardFeature: wraps properties as a Point Feature at [lon, lat]", () => {

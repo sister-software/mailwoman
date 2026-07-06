@@ -105,3 +105,86 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 		expect(extractGeocodeResult("berlin", tree).hierarchy[0]?.name).toBe("Berlin")
 	})
 })
+
+describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () => {
+	it("surfaces the resolved primary plus its alternatives, self first", () => {
+		const tree: AddressTree = {
+			raw: "springfield",
+			roots: [
+				node({
+					tag: "locality",
+					value: "springfield",
+					lat: 37.19,
+					lon: -93.29,
+					placeID: "wof:100",
+					metadata: { resolver_name: "Springfield", resolver_country: "US" },
+					// ranked runner-ups (Springfield MA, then IL) the resolver captured on the node
+					alternatives: [
+						{ id: 201, name: "Springfield", placetype: "locality", lat: 42.11, lon: -72.54, country: "US" },
+						{ id: 202, name: "Springfield", placetype: "locality", lat: 39.77, lon: -89.65, country: "US" },
+					],
+				}),
+			],
+		}
+		const r = extractGeocodeResult("springfield", tree)
+		expect(r.candidates).toHaveLength(3) // self + 2 alternatives
+		expect(r.candidates[0]).toMatchObject({
+			name: "Springfield",
+			tag: "locality",
+			lat: 37.19,
+			countryCode: "US",
+			placeID: "wof:100",
+		})
+		expect(r.candidates[1]).toMatchObject({ name: "Springfield", lat: 42.11, countryCode: "US", placeID: "wof:201" })
+		expect(r.candidates[2]).toMatchObject({ lat: 39.77, placeID: "wof:202" })
+	})
+
+	it("collapses same-coordinate duplicates (a city + its coincident township)", () => {
+		const tree: AddressTree = {
+			raw: "springfield",
+			roots: [
+				node({
+					tag: "locality",
+					value: "springfield",
+					lat: 37.194291,
+					lon: -93.291579,
+					placeID: "wof:100",
+					metadata: { resolver_name: "Springfield", resolver_country: "US" },
+					alternatives: [
+						// same point as the primary (~0.2 m) → dropped
+						{
+							id: 101,
+							name: "Springfield Township",
+							placetype: "localadmin",
+							lat: 37.194301,
+							lon: -93.291581,
+							country: "US",
+						},
+						// a genuinely distinct namesake → kept
+						{ id: 201, name: "Springfield", placetype: "locality", lat: 42.115503, lon: -72.53952, country: "US" },
+					],
+				}),
+			],
+		}
+		const r = extractGeocodeResult("springfield", tree)
+		expect(r.candidates).toHaveLength(2) // primary + the distinct MA one; the coincident township is dropped
+		expect(r.candidates.map((c) => c.placeID)).toEqual(["wof:100", "wof:201"])
+	})
+
+	it("is a single entry for an unambiguous result (no alternatives)", () => {
+		const tree: AddressTree = {
+			raw: "berlin",
+			roots: [
+				node({
+					tag: "locality",
+					value: "Berlin",
+					lat: 52.5,
+					lon: 13.4,
+					placeID: "wof:101909779",
+					metadata: { resolver_name: "Berlin", resolver_country: "DE" },
+				}),
+			],
+		}
+		expect(extractGeocodeResult("berlin", tree).candidates).toHaveLength(1)
+	})
+})
