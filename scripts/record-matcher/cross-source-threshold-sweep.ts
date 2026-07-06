@@ -322,11 +322,17 @@ async function main(): Promise<void> {
 		const { pathToFileURL } = await import("node:url")
 		const { resolve: resolvePath } = await import("node:path")
 		const mod = (await import(pathToFileURL(resolvePath(CANDIDATE)).href)) as {
-			CROSS_SOURCE_GBT_MODEL: typeof DEDUP_GBT_MODEL
+			CROSS_SOURCE_GBT_MODEL?: typeof DEDUP_GBT_MODEL
 			CROSS_SOURCE_GBT_META?: { recommendedThreshold?: number }
+			ORG_CROSS_SOURCE_GBT_MODEL?: typeof DEDUP_GBT_MODEL
+			ORG_CROSS_SOURCE_GBT_META?: { recommendedThreshold?: number }
 		}
-		const t0 = mod.CROSS_SOURCE_GBT_META?.recommendedThreshold ?? 0
-		const candScorer = createGbtScorer({ model: mod.CROSS_SOURCE_GBT_MODEL, comparisons, addressFrequency })
+		const candModel = mod.CROSS_SOURCE_GBT_MODEL ?? mod.ORG_CROSS_SOURCE_GBT_MODEL
+
+		if (!candModel)
+			throw new Error(`--candidate module exports neither CROSS_SOURCE_GBT_MODEL nor ORG_CROSS_SOURCE_GBT_MODEL`)
+		const t0 = (mod.CROSS_SOURCE_GBT_META ?? mod.ORG_CROSS_SOURCE_GBT_META)?.recommendedThreshold ?? 0
+		const candScorer = createGbtScorer({ model: candModel, comparisons, addressFrequency })
 		console.error(`[E] resolving — cross-source GBT candidate @ ${t0.toFixed(3)} (±)…`)
 
 		for (const t of [t0 - 1, t0, t0 + 1]) {
@@ -351,6 +357,15 @@ async function main(): Promise<void> {
 	const dominating = gbtArms.find(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)
+	// The candidate (#655 option-2 models) gets its own verdict scan — the hardcoded option-1 verdict
+	// below is about the DEDUP GBT and must not silently absorb (or ignore) a candidate arm.
+	const candidateDominating = candidateArms.find(
+		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
+	)
+	const candidateBest = candidateArms.reduce<ArmMetrics | null>(
+		(best, a) => (a.entities >= minEntities && a.crossSource > (best?.crossSource ?? -1) ? a : best),
+		null
+	)
 
 	const rows = [fs, ...gbtArms, ...candidateArms]
 	const lines: string[] = []
@@ -374,6 +389,23 @@ async function main(): Promise<void> {
 	}
 	lines.push("")
 	lines.push(`## Verdict`)
+
+	if (CANDIDATE) {
+		const c = candidateDominating ?? candidateBest
+		lines.push("")
+
+		if (candidateDominating) {
+			lines.push(
+				`**The --candidate model DOMINATES FS**: ${candidateDominating.crossSource} cross-source links (FS ${fs.crossSource}) at phone-corrob ${(100 * rate(candidateDominating)).toFixed(0)}% ≥ FS ${(100 * fsCorrobRate).toFixed(0)}%, entities ${candidateDominating.entities} (no collapse). Un-pinning FS for this objective is supported by this run.`
+			)
+		} else if (c) {
+			lines.push(
+				`**--candidate (best non-collapsing arm)**: ${c.crossSource} cross-source links vs FS ${fs.crossSource}, phone-corrob ${(100 * rate(c)).toFixed(0)}% vs FS ${(100 * fsCorrobRate).toFixed(0)}%, entities ${c.entities}. Does not STRICTLY dominate — judge the margins (the phone proxy is one-link noisy at this n).`
+			)
+		} else {
+			lines.push(`**--candidate**: no non-collapsing arm (every threshold fell below the entity floor).`)
+		}
+	}
 	lines.push("")
 	lines.push(
 		`FS baseline: **${fs.crossSource}** cross-source links (${fs.tripleSource} triple), ` +
