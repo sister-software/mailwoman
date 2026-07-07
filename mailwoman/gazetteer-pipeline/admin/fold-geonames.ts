@@ -21,6 +21,12 @@ export interface FoldGeonamesOptions {
 	geonamesDir?: string
 	/** AlternateNamesV2 dir (…/export/dump/alternatenames). Default `<data-root>/geonames-alternate`. */
 	alternateDir?: string
+	/**
+	 * #267/#1026: countries for which to ALSO fold the GeoNames A-class admin (PCLI country + ADM1 regions) and link
+	 * locality ancestry. Pass ONLY zero-coverage locales (no WOF/Overture admin) — see `geonamesAdminGapCountries()`.
+	 * Omitting this is what flattened 95 countries' nodes (#1026).
+	 */
+	adminForCountries?: ReadonlySet<string>
 	/** ISO-2 codes for the POSTAL fold (#920). Omit to skip. */
 	postalCountries?: readonly string[]
 	/** GeoNames postal dump dir (…/export/zip). Default `<data-root>/geonames-postal`. */
@@ -41,7 +47,10 @@ export async function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions):
 	const alternateDir = opts.alternateDir ?? String(dataRootPath("geonames-alternate"))
 	const placesIngested =
 		opts.countries.length > 0
-			? ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, { alternateDir })
+			? ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {
+					alternateDir,
+					adminForCountries: opts.adminForCountries,
+				})
 			: 0
 
 	let postalIngested = 0

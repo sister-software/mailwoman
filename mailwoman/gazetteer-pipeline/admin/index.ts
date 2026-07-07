@@ -27,6 +27,7 @@ import {
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_OVERTURE_RELEASE,
+	geonamesAdminGapCountries,
 } from "../defaults.js"
 import { buildFTS } from "../fts.js"
 import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "../verify.js"
@@ -124,8 +125,11 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	const overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
 	phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
-	phase("fold-geonames", `${geonamesCountries.length} countries`)
-	const folded = await foldGeonames(db, { countries: geonamesCountries })
+	// #1026: the A-class admin fold for the zero-coverage locales — country + region NODES + locality
+	// ancestry. Scoped to the countries actually in this run's geonames set.
+	const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
+	phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
+	const folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })
 	phase("fold-geonames", `${folded.placesIngested.toLocaleString()} places`)
 
 	phase("freeze")
