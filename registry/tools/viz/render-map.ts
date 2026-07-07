@@ -17,7 +17,7 @@
  *   The map paints asynchronously after the network settles; we wait for networkidle, then a fixed
  *   beat for the basemap tiles + marker layer to finish compositing.
  *
- *   Run: node scripts/record-matcher/viz/render-map.ts <served-url> <out.png>
+ *   Run: node registry/tools/viz/render-map.ts <served-url> <out.png>
  */
 
 import { chromium } from "playwright"

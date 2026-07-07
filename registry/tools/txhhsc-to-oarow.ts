@@ -11,18 +11,26 @@
  *   Neutral scope: this measures GEOCODER ACCURACY on real public addresses; it makes no claim about
  *   the facilities themselves.
  *
- *   Run: node --experimental-strip-types scripts/record-matcher/txhhsc-to-oarow.ts\
+ *   Run: node --experimental-strip-types registry/tools/txhhsc-to-oarow.ts\
  *   --src <tsv> --out /tmp/txhhsc-oarow.jsonl
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { arg } from "../lib/cli-args.ts"
-
-const src = arg("src", dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv"))
-const out = arg("out", "/tmp/txhhsc-oarow.jsonl")
+const { values } = parseArgs({
+	options: {
+		src: {
+			type: "string",
+			default: String(dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv")),
+		},
+		out: { type: "string", default: "/tmp/txhhsc-oarow.jsonl" },
+	},
+})
+const src = values.src!
+const out = values.out!
 
 const lines = readFileSync(src, "utf8")
 	.split("\n")

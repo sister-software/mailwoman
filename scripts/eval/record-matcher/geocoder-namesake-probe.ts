@@ -10,15 +10,14 @@
  *   the in-state Texas city. This probes a curated set of TX namesake cities, with and without ZIP,
  *   and flags any result outside the Texas bounding box.
  *
- *   Run: node --experimental-strip-types scripts/record-matcher/geocoder-namesake-probe.ts
+ *   Run: node --experimental-strip-types scripts/eval/record-matcher/geocoder-namesake-probe.ts
  */
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-
-import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
+import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)

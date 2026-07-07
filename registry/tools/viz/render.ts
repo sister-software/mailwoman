@@ -11,7 +11,7 @@
  *   on the 2D canvas regardless. We wait for Plotly's `plotly_afterplot` to fire on every graph div
  *   rather than a fixed sleep, so the screenshot can't race the (async) WebGL paint.
  *
- *   Run: node scripts/record-matcher/viz/render.ts <in.html> <out.png> [width] [height]
+ *   Run: node registry/tools/viz/render.ts <in.html> <out.png> [width] [height]
  */
 
 import { resolve } from "node:path"

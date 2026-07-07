@@ -22,7 +22,7 @@
  *   SERVE THE OUTPUT OVER LOCALHOST (the house tile server CORS-restricts to localhost + the docs
  *   domains). e.g. `python3 -m http.server -d <dir>`, or `render-map.mjs` against the served URL.
  *
- *   Run: node --experimental-strip-types scripts/record-matcher/viz/source-provenance-map.ts\
+ *   Run: node --experimental-strip-types registry/tools/viz/source-provenance-map.ts\
  *   [--state ny] [--db <address-points-us-XX.db>] [--out-html /tmp/source-provenance.html]\
  *   [--nad-mod 700] [--oa-mod 120] [--cap 7000]
  */
