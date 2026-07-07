@@ -224,6 +224,64 @@ export const REGRESSION_CASES: SeedCase[] = [
 		note: "Was US Georgia (32.6,-83.4). Fixed by the #267 GeoNames admin fold (Tbilisi > K'alak'i T'bilisi > Georgia) + reconcileAdminPair's country-candidate fall-through (a foreign capital under its country out-votes the US-state namesake).",
 	},
 	{
+		// #1023 — a SECOND Georgian city on the exact path the Tbilisi fix repairs. "Georgia" parses as
+		// `region` (it names a US state), so a non-capital Georgian city ("Batumi") must ride
+		// reconcileAdminPair's matchCountry fall-through, NOT the greedy walk. Guards against a future admin
+		// rebuild re-breaking the country-vs-US-state class for anything but the one capital already pinned.
+		id: "intl-batumi-georgia",
+		input: "Batumi, Georgia",
+		source: "bug:#1023",
+		addressKind: "intl_city_country",
+		country: "GE",
+		status: "pass",
+		expectComponents: { locality: "Batumi" },
+		expectLat: 41.6168,
+		expectLon: 41.6367,
+		expectToleranceM: 25000,
+		addedAt: "2026-07-07",
+		bugRef: "#1023",
+		note: "Was US Georgia after the 2026-07-07 admin rebuild (#1015) flattened GE to localities-only (no country node; Tbilisi/Batumi orphaned, parent_id -1) — the country-node + parentID fall-through could no longer reach the Georgian city. Fixed by reconcileAdminPair's matchCountry fall-through (#1023): the token → ISO-3166 GE, then scope the locality by the gazetteer's `country` COLUMN.",
+	},
+	{
+		// #1023 byte-stability guard (the NEGATIVE case) — a DOMESTIC "City, Georgia" (US) must stay US
+		// Georgia. The matchCountry fall-through must never re-pick a real US city to a foreign namesake:
+		// Savannah resolves under the US state in the greedy walk, so reconcileAdminPair's unresolved-locality
+		// branch never fires. Pins that the #1023 fix doesn't over-reach into the domestic path.
+		id: "us-savannah-georgia",
+		input: "Savannah, Georgia",
+		source: "bug:#1023",
+		addressKind: "us_city_state",
+		country: "US",
+		status: "pass",
+		expectComponents: { region: "Georgia", locality: "Savannah" },
+		expectLat: 32.0809,
+		expectLon: -81.0912,
+		expectToleranceM: 25000,
+		addedAt: "2026-07-07",
+		bugRef: "#1023",
+		note: "Guards that the #1023 matchCountry fall-through stays inert on a domestic pair — Savannah GA must NOT flip to Georgia the country. Resolves in the walk (locality never falls through), so the coherence pass is untouched.",
+	},
+	{
+		// #1023 sibling-path guard — the country-vs-US-town namesake via the EXPLICIT-country path (#822),
+		// the disjoint half of the namesake family. "Lebanon" parses as `country` (region=null), so
+		// "Beirut, Lebanon" rides applyExplicitCountryCoherence, not reconcileAdminPair. Broadens the class
+		// beyond Georgia (Lebanon has populous US-town namesakes — Lebanon PA/TN/OH) so a regression in
+		// EITHER coherence pass is caught.
+		id: "intl-beirut-lebanon",
+		input: "Beirut, Lebanon",
+		source: "bug:#1023",
+		addressKind: "intl_city_country",
+		country: "LB",
+		status: "pass",
+		expectComponents: { locality: "Beirut" },
+		expectLat: 33.8938,
+		expectLon: 35.5018,
+		expectToleranceM: 25000,
+		addedAt: "2026-07-07",
+		bugRef: "#1023",
+		note: "The explicit-country coherence sibling of the region-parsed Tbilisi case — the resolved coordinate must stay in LB, not a US Lebanon namesake. Broadens the namesake guard beyond the Georgia collision.",
+	},
+	{
 		// #822 — the named-foreign-country namesake. "Vienna" has 6 populous US namesakes that win the
 		// population-first candidate window; the explicit "Austria" token was ignored. applyExplicitCountry
 		// coherence (resolve.ts) re-picks the locality to the same-named place under matchCountry("Austria")=AT.

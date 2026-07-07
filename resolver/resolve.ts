@@ -570,6 +570,72 @@ async function reconcileAdminPair(
 			return
 		}
 	}
+
+	// #1023: the admin gazetteer may carry NO `country`-placetype node for the token AND the same-named
+	// foreign locality may be ORPHANED (parent_id = -1) — the 2026-07-07 rebuild flattened Georgia's admin
+	// hierarchy to localities-only, so the country-node lookup above finds nothing and the `parentID`
+	// descendant test can never reach Tbilisi. Fall back to matchCountry: normalize the token to an
+	// ISO-3166 alpha-2 and scope the locality by the gazetteer's `country` COLUMN (set even on an orphaned
+	// row). Same primitive reconcileExplicitCountry (#822) uses, so the region-parsed namesake path
+	// ("Tbilisi, Georgia") converges with the country-parsed one ("Vienna, Austria"). matchCountry returns
+	// null for a US state name/abbrev ("Illinois" / "ME" / "IL"), so a real US (region, locality) pair
+	// never reaches here — this stays inert on the domestic path.
+	const mc = matchCountry(regionNode.value)
+
+	if (mc) {
+		const scoped = await backend.findPlace({
+			text: localityNode.value,
+			placetype: "locality",
+			country: mc.iso2,
+			limit: 3,
+		})
+		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
+
+		if (lc) {
+			decorateNode(
+				localityNode,
+				lc,
+				scoped.filter((l) => l !== lc)
+			)
+			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
+			// The token named a foreign country the admin gazetteer has no node for, but the greedy walk had
+			// already decorated the region node with the US-state namesake. Revert that stale decoration so the
+			// node stops asserting the wrong-country coordinate + `resolver_country` (which would otherwise leak
+			// into the result's `countryCode`); the re-picked locality carries the winning coordinate, and the
+			// region node falls back to the parsed "Georgia" token, unresolved (the admin DB has nothing truer).
+			revertResolverDecoration(regionNode)
+		}
+	}
+}
+
+/**
+ * Undo a resolver decoration on a node: restore the classifier attribution {@link decorateNode} displaced into
+ * `metadata.classifier_source(_id)` and drop the resolver-supplied coordinate/identity/alternatives. Used by the #1023
+ * country fall-through when the region token turns out to name a foreign country the admin gazetteer holds no node for
+ * — the greedy walk had bound it to the US-state namesake, and that stale claim must not survive the locality re-pick.
+ */
+function revertResolverDecoration(node: AddressNode): void {
+	const meta = { ...node.metadata }
+	const priorSource = meta["classifier_source"]
+	const priorSourceID = meta["classifier_source_id"]
+	node.source = typeof priorSource === "string" ? priorSource : undefined
+	node.sourceID = typeof priorSourceID === "string" ? priorSourceID : undefined
+
+	for (const key of [
+		"classifier_source",
+		"classifier_source_id",
+		"resolver_score",
+		"resolver_name",
+		"resolver_country",
+		"resolution_quality",
+		"postcode_city_mismatch",
+	])
+		delete meta[key]
+	node.metadata = meta
+	node.lat = undefined
+	node.lon = undefined
+	node.placeID = undefined
+	node.alternatives = undefined
 }
 
 /**
