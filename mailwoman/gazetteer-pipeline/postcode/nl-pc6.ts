@@ -24,26 +24,35 @@
 
 import { existsSync, readFileSync, renameSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
 
-import { sealDatabase } from "@mailwoman/core/utils"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite"
-import { normalizePostcodeName } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
-import { createUnifiedIndexes, createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 
 /** Synthetic id base — distinct from the GeoNames postal range (9500000000000). */
 const NL_PC6_ID_BASE = 9_600_000_000_000
 
-async function main(): Promise<void> {
-	const { values } = parseArgs({
-		options: {
-			csv: { type: "string", default: "/mnt/playpen/mailwoman-data/cbs/pc6-centroids.csv" },
-			out: { type: "string", default: String(dataRootPath("wof", "postalcode-nl-pc6.db")) },
-		},
-	})
-	const csvPath = values.csv!
-	const outPath = values.out!
+export interface BuildNLPC6Options {
+	/**
+	 * CBS PC6 centroid CSV (see the ogr2ogr extraction in the module docstring). Default
+	 * `<data-root>/cbs/pc6-centroids.csv`.
+	 */
+	csvPath?: string
+	/** Output shard. Default `<data-root>/wof/postalcode-nl-pc6.db`. */
+	out?: string
+}
+
+/**
+ * Build the sealed NL PC6 shard (#977 tier 2). NOT re-exported from the postcode barrel — the command lazy-imports it
+ * (optional-peer discipline).
+ */
+export async function buildNLPC6Shard(
+	opts: BuildNLPC6Options = {}
+): Promise<{ out: string; inserted: number; skipped: number }> {
+	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
+	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
+	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames-postal")
+	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
+	const csvPath = opts.csvPath ?? String(dataRootPath("cbs", "pc6-centroids.csv"))
+	const outPath = opts.out ?? String(dataRootPath("wof", "postalcode-nl-pc6.db"))
 	const tmpPath = `${outPath}.tmp`
 
 	const lines = readFileSync(csvPath, "utf8").trim().split("\n")
@@ -106,7 +115,6 @@ async function main(): Promise<void> {
 	renameSync(tmpPath, outPath)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(outPath)
-	process.stderr.write(`wrote ${inserted} NL PC6 rows -> ${outPath}\n`)
-}
 
-await main()
+	return { out: outPath, inserted, skipped }
+}
