@@ -24,9 +24,9 @@
  *   download.geonames.org/export/zip/US.zip (GeoNames; CC-BY 4.0, attribute "GeoNames (CC-BY
  *   4.0)").
  *
- *   This module owns the parse + fill logic; `scripts/fill-zcta-centroids.ts` is the CLI and
+ *   This module owns the parse + fill logic; `gazetteer build postcode-shard` runs these fills;
  *   `scripts/build-pilot-anchor-lookup.ts` mirrors the same join for lookup-build-time fills.
- *   Tested by `scripts/zcta-centroids.test.ts`.
+ *   Tested by the sibling `zcta-centroids.test.ts`.
  */
 
 import type { DatabaseSync } from "node:sqlite"

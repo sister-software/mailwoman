@@ -21,7 +21,7 @@ import {
 	parseGeonamesCentroids,
 	parseZCTACentroids,
 	ZCTA_SOURCE,
-} from "./zcta-centroids.ts"
+} from "./zcta-centroids.js"
 
 const GAZETTEER_FIXTURE = [
 	"GEOID\tALAND\tAWATER\tALAND_SQMI\tAWATER_SQMI\tINTPTLAT\tINTPTLONG",
