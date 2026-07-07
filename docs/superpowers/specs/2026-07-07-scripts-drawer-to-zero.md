@@ -291,18 +291,18 @@ Phases 1, 2, 4, 5, 10 can run in parallel — they touch disjoint file sets. Pha
 
 ## Success metrics
 
-- [ ] `scripts/lib/` is empty and deleted
-- [ ] Zero imports of `scripts/lib/cli-args` anywhere
-- [ ] Zero `.mjs` files in `scripts/`
-- [ ] `scripts/coarse-placer/` → empty, code lives in `@mailwoman/core`
-- [ ] `scripts/record-matcher/` → empty, code lives in `registry/`
-- [ ] `scripts/census/` → empty, code lives in `tiger/`
-- [ ] `scripts/modal/` → empty, code lives in `corpus-python/`
-- [ ] `scripts/data/` → empty
-- [ ] `scripts/eval/` and `scripts/diagnostic/` remain (legitimate permanent residents)
-- [ ] Release tooling scripts still work (verified by dry-run publish)
-- [ ] `yarn typecheck:scripts` passes
-- [ ] `scripts/AGENTS.md` updated to describe the slimmed-down reality
-- [ ] `scripts/` contains ≤ 20 top-level files (down from 16 now, after removing the builder/modal stubs)
-- [ ] `scripts/` top-level contains ONLY: release tooling, codegen/lint, config files, and the two eval/diagnostic subdirectories
-- [ ] No file imports anything from `../lib/` or `./lib/`
+- [x] `scripts/lib/` is empty and deleted
+- [x] Zero imports of `scripts/lib/cli-args` anywhere
+- [x] Zero `.mjs` files in `scripts/`
+- [x] `scripts/coarse-placer/` → empty, code lives in `@mailwoman/core`
+- [x] `scripts/record-matcher/` → empty, code lives in `registry/`
+- [x] `scripts/census/` → empty, code lives in `tiger/`
+- [x] `scripts/modal/` → empty, code lives in `corpus-python/`
+- [x] `scripts/data/` → empty
+- [x] `scripts/eval/` and `scripts/diagnostic/` remain (legitimate permanent residents)
+- [x] Release tooling scripts still work (verified by dry-run publish)
+- [x] `yarn typecheck:scripts` passes
+- [x] `scripts/AGENTS.md` updated to describe the slimmed-down reality
+- [x] `scripts/` contains ≤ 20 top-level files (down from 16 now, after removing the builder/modal stubs)
+- [x] `scripts/` top-level contains ONLY: release tooling, codegen/lint, config files, and the two eval/diagnostic subdirectories
+- [x] No file imports anything from `../lib/` or `./lib/`
