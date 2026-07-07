@@ -19,7 +19,7 @@
  *   candidate ranking dedupes by score.
  *
  *   This is the package home so the canonical `build-unified-wof --geonames-countries`, the
- *   standalone `build-admin-geonames-fold` fold, AND the `mailwoman gazetteer` commands all share
+ *   pipeline fold (`gazetteer-pipeline/admin/fold-geonames`), AND the `mailwoman gazetteer` commands all share
  *   ONE implementation. GeoNames dump = `download.geonames.org/export/dump/<CC>.zip` → `<CC>.txt`
  *   (TSV).
  */
