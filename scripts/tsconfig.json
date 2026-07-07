@@ -17,11 +17,11 @@
 		"rootDir": ".."
 	},
 	"include": ["./**/*.ts", "./**/*.tsx"],
-	// `diag-*.ts` is the throwaway-diagnostic namespace (.gitignore'd as `scripts/diag-*.ts`);
+	// `diagnostic/` is the throwaway-diagnostic namespace (.gitignore'd);
 	// excluding it keeps `yarn typecheck:scripts` clean against local scratch as well as in CI.
 	// `demo-cascade-smoke.ts` imports the docs-app browser source (`docs/src/shared/*`) by relative
 	// path; under this node module config TS mis-detects those ESM files as CommonJS (TS1287). It's a
 	// runtime smoke test (exercised by promotion-gate). Follow-up: extract the shared cascade logic
 	// into a package so both the demo and the smoke test import it across a clean boundary.
-	"exclude": ["./**/out/**", "./**/node_modules/**", "./diag-*.ts", "./eval/demo-cascade-smoke.ts"]
+	"exclude": ["./**/out/**", "./**/node_modules/**", "./diagnostic/**", "./eval/demo-cascade-smoke.ts"]
 }
