@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 // Probe: does a model emit street_prefix/street_suffix in the RAW (unfolded) decode?
 // per-locale-f1's foldToComponents joins prefix+street+suffix into one `street`, hiding the split.
@@ -10,15 +11,24 @@ import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { file: { type: "string" }, model: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { file?: string; model?: string }
 const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const file = arg("file", "data/eval/external/street-affix-real.jsonl")!
+const file = (values["file"] || "data/eval/external/street-affix-real.jsonl")!
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(arg("model")!)])
+const [tokenizer, runner] = await Promise.all([
+	MailwomanTokenizer.loadFromFile(TOK),
+	ONNXRunner.create((values["model"] || "")!),
+])
 const postcodeAnchorLookup = parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8")))
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels, postcodeAnchorLookup })
 

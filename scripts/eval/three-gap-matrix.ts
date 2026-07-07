@@ -32,13 +32,38 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { type FindPlaceQuery, WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		country: { type: "string" },
+		eval: { type: "string" },
+		ks: { type: "string" },
+		limit: { type: "string" },
+		"near-km": { type: "string" },
+		out: { type: "string" },
+		universe: { type: "string" },
+		"wof-db": { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	country?: string
+	eval?: string
+	ks?: string
+	limit?: string
+	"near-km"?: string
+	out?: string
+	universe?: string
+	"wof-db"?: string
+}
 interface OaRow {
 	input: string
 	lat: number
@@ -70,21 +95,18 @@ function normName(s: string | undefined): string {
 type Bucket = "correct" | "ranking_gap" | "recall_gap" | "coverage_gap"
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval", "data/eval/external/openaddresses-us-sample.jsonl")
+	const evalPath = values["eval"] || "data/eval/external/openaddresses-us-sample.jsonl"
 	// Two-shard ship config (matches oa-resolver-eval): admin + the coordinate-first postcode→locality
 	// table, so passing `postcode` actually injects postcode-proximal candidates (coord-first disabled
 	// without the shard). Comma-separated, like the eval.
-	const wofDB = arg(
-		"wof-db",
+	const wofDB =
+		values["wof-db"] ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
-	)
-	const limit = parseInt(arg("limit", "3000"), 10)
-	const universeK = parseInt(arg("universe", "200"), 10) // deep ranked candidate set per query
-	const nearKm = parseFloat(arg("near-km", "35")) // gold = nearest same-name locality within this of truth
-	const KS = arg("ks", "5,10,20")
-		.split(",")
-		.map((s) => parseInt(s.trim(), 10))
-	const country = arg("country", "US")
+	const limit = parseInt(values["limit"] || "3000", 10)
+	const universeK = parseInt(values["universe"] || "200", 10) // deep ranked candidate set per query
+	const nearKm = parseFloat(values["near-km"] || "35") // gold = nearest same-name locality within this of truth
+	const KS = (values["ks"] || "5,10,20").split(",").map((s) => parseInt(s.trim(), 10))
+	const country = values["country"] || "US"
 
 	const rows = readFileSync(evalPath, "utf8")
 		.trim()
@@ -311,7 +333,7 @@ async function main(): Promise<void> {
 		ranking_examples: rankingExamples,
 	}
 	console.log(JSON.stringify(summary, null, 2))
-	const out = arg("out")
+	const out = values["out"] || ""
 
 	if (out) {
 		writeFileSync(out, JSON.stringify(summary, null, 2))

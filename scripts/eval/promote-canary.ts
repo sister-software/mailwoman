@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software
@@ -40,18 +41,31 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
 import { messify, resolvedResult } from "./confidence-discrimination.ts"
 
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		candidate: { type: "string" },
+		locales: { type: "string" },
+		n: { type: "string" },
+		out: { type: "string" },
+		shipped: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { candidate?: string; locales?: string; n?: string; out?: string; shipped?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const WOF = [dataRootPath("wof", "admin-global-priority.db"), dataRootPath("wof", "postcode-locality-intl.db")]
 const CALIB = "data/eval/calibration/isotonic-en-us-v4.13.0.json"
-const SHIPPED = arg("shipped", "out/v191/model.onnx")
-const CANDIDATE = arg("candidate", "out/v192/model-int8.onnx")
-const LOCALES = arg("locales", "us,it,pt,pl,fr,au").split(",")
-const N = Number(arg("n", "60"))
+const SHIPPED = values["shipped"] || "out/v191/model.onnx"
+const CANDIDATE = values["candidate"] || "out/v192/model-int8.onnx"
+const LOCALES = (values["locales"] || "us,it,pt,pl,fr,au").split(",")
+const N = Number(values["n"] || "60")
 const ALLCAPS = process.argv.includes("--allcaps")
 const THRESH_KM = 25
 const HIGH_CONF = 0.9
@@ -219,7 +233,7 @@ async function main(): Promise<void> {
 	)
 
 	const md = L.join("\n") + "\n"
-	const out = arg("out", "")
+	const out = values["out"] || ""
 
 	if (out) {
 		writeFileSync(out, md)

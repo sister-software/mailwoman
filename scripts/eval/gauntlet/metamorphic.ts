@@ -25,12 +25,21 @@
  *     node scripts/eval/gauntlet/metamorphic.ts [--model <candidate.onnx>]
  */
 
+import { parseArgs } from "node:util"
+
 import { abbreviationDictionary } from "@mailwoman/normalize"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../../lib/cli-args.ts"
 import { buildGauntletDeps, runOne } from "./harness.ts"
 
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { model: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { model?: string }
 const INV_EPSILON_KM = 0.001 // 1m — same address, identical resolution expected.
 const DIR_NEAR_KM = 5 // dropping the postcode may lose the rooftop, but must still land in the right area.
 const BAND_NEAR_KM = 5 // a corrupted surface may shift the parse, but must stay within the tolerance band.
@@ -284,7 +293,7 @@ const dropPostcode = (s: string) =>
 		.replace(/\s+/g, " ")
 		.trim()
 
-const deps = await buildGauntletDeps(arg("model", "") ? { modelPath: arg("model", "") } : {})
+const deps = await buildGauntletDeps(values["model"] || "" ? { modelPath: values["model"] || "" } : {})
 
 interface Tally {
 	checks: number

@@ -32,7 +32,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
-import { pyJsonDumps } from "../lib/python-json.ts"
+import { pyJsonDumps } from "@mailwoman/core/utils"
 
 const REMAP: Record<string, string> = {
 	road: "street",

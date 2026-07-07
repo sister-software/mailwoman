@@ -19,17 +19,30 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { arg } from "../lib/cli-args.ts"
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		country: { type: "string" },
+		"pc-len": { type: "string" },
+		parquet: { type: "string" },
+		out: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { country?: string; "pc-len"?: string; parquet?: string; out?: string }
 
-const CC = arg("country", "ES")
+const CC = values.country || "ES"
 // Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK.
-const PC_LEN = Number(arg("pc-len", "5"))
-const PARQUET = arg("parquet", dataRootPath("overture", "2026-05-20.0", `addresses-${CC.toLowerCase()}.parquet`))
-const OUT_DB = arg("out", dataRootPath("wof", `postcode-${CC.toLowerCase()}-overture.db`))
+const PC_LEN = Number(values["pc-len"] || "5")
+const PARQUET = values.parquet || dataRootPath("overture", "2026-05-20.0", `addresses-${CC.toLowerCase()}.parquet`)
+const OUT_DB = values.out || dataRootPath("wof", `postcode-${CC.toLowerCase()}-overture.db`)
 
 const instance = await DuckDBInstance.create()
 const conn = await instance.connect()

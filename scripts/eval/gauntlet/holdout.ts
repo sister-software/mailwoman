@@ -15,16 +15,24 @@
 
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
+import { parseArgs } from "node:util"
 
 import { haversineKm } from "@mailwoman/spatial"
 import { mailwomanDataRoot } from "mailwoman/resolver-backend"
 
-import { arg } from "../../lib/cli-args.ts"
 import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
 
-const N = Number(arg("n", "300"))
-const CANDIDATE = arg("candidate", "")
-const SOURCE = arg("source", "fr").toLowerCase()
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { candidate: { type: "string" }, n: { type: "string" }, source: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { candidate?: string; n?: string; source?: string }
+const N = Number(values["n"] || "300")
+const CANDIDATE = values["candidate"] || ""
+const SOURCE = (values["source"] || "fr").toLowerCase()
 const TOLS = [0.1, 0.5, 5] as const // rooftop / street / locality (km)
 const GATE_TOL = 5 // the z-test runs at the locality bucket (the dominant resolvable tier)
 

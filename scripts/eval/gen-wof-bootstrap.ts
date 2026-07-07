@@ -40,8 +40,8 @@ import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { pyJsonDumps, pyReprDict } from "../lib/python-json.ts"
-import { SeededRandom } from "../lib/python-random.ts"
+import { pyJsonDumps, pyReprDict } from "@mailwoman/core/utils"
+import { SeededRandom } from "@mailwoman/core/utils"
 
 // state/territory name -> USPS abbreviation (real addresses use the abbrev).
 const STATE_ABBREV: Record<string, string> = {

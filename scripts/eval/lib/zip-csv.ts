@@ -12,7 +12,7 @@
  *   a single member to stdout; Debian's UnZip 6.00 has ZIP64 + large-file support compiled in. (The
  *   Python notes warned `unzip -p` "chokes on ZIP64" — that predated the 6.00 LFS build; if a
  *   future archive ever regresses, the fallback is a Node ZIP64 local-header reader.) This mirrors
- *   the established `scripts/eval/ingest-openaddresses.mjs` pattern of spawning system zip
+ *   the established `(retired) ingest-openaddresses` pattern of spawning system zip
  *   tooling.
  *
  *   The CSV options are tuned to match Python's lenient `csv.DictReader`: missing trailing columns

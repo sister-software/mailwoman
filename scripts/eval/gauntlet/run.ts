@@ -18,11 +18,18 @@
  */
 
 import { spawnSync } from "node:child_process"
+import { parseArgs } from "node:util"
 
-import { arg } from "../../lib/cli-args.ts"
-
-const candidate = arg("candidate", "")
-const source = arg("source", "fr")
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { candidate: { type: "string" }, source: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { candidate?: string; source?: string }
+const candidate = values["candidate"] || ""
+const source = values["source"] || "fr"
 const modelArgs = candidate ? ["--model", candidate] : []
 
 interface Layer {

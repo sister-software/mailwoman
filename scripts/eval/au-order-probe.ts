@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
@@ -20,10 +21,16 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
-const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20j.db"))
-const N = Number(arg("n", "60"))
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { "candidate-db": { type: "string" }, model: { type: "string" }, n: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "candidate-db"?: string; model?: string; n?: string }
+const CAND = values["candidate-db"] || dataRootPath("wof", "candidate-global-20j.db")
+const N = Number(values["n"] || "60")
 
 /**
  * Reorder an AU postcode-first row to canonical (street, suburb postcode). Two native shapes: "PPPP Suburb, Street HN"
@@ -82,7 +89,7 @@ async function main() {
 	const { WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const resolver = createWOFResolver(new WOFCandidateTableLookup({ databasePath: CAND }) as never)
 	const model = await createScorer({
-		modelPath: arg("model", "out/v191/model.onnx"),
+		modelPath: values["model"] || "out/v191/model.onnx",
 		tokenizerPath: dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"),
 		modelCardPath: "neural-weights-en-us/model-card.json",
 		anchorLookupPath: dataRootPath("anchor", "pilot-anchor-lookup.json"),

@@ -36,9 +36,10 @@ import { globSync, mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
-import { pyJsonDumps } from "../lib/python-json.ts"
-import { SeededRandom } from "../lib/python-random.ts"
-import { csvRecordsFromFile, csvRecordsFromZip } from "../lib/zip-csv.ts"
+import { pyJsonDumps } from "@mailwoman/core/utils"
+import { SeededRandom } from "@mailwoman/core/utils"
+
+import { csvRecordsFromFile, csvRecordsFromZip } from "./lib/zip-csv.ts"
 
 const ORDERS = ["canonical", "pc-first", "city-first"]
 

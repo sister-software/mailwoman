@@ -23,9 +23,10 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
+import { pyJsonDumps } from "@mailwoman/core/utils"
+import { SeededRandom } from "@mailwoman/core/utils"
+
 import { extractAddrPoints } from "../../osm/sdk/extract.ts"
-import { pyJsonDumps } from "../lib/python-json.ts"
-import { SeededRandom } from "../lib/python-random.ts"
 
 /** GB/IE/HU natural order is number-first; three diversity variants keep the parser from overfitting one template. */
 const ORDERS = ["canonical", "no-comma", "pc-line"] as const

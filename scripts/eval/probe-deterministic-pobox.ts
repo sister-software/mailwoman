@@ -5,16 +5,24 @@
 // "Boxwood Lane", "Drawbridge Ave" must NOT fire) and recall on the curated real-OOD eval.
 // Usage: node scripts/eval/probe-deterministic-pobox.ts [--file <jsonl>]
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { matchPOBox } from "../../codex/out/us/po-box.js"
-import { arg } from "../lib/cli-args.ts"
 
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { file: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { file?: string }
 interface EvalRow {
 	raw: string
 	components: { po_box?: string | null }
 }
 
-const file = arg("file", "data/eval/external/po-box-real.jsonl")
+const file = values["file"] || "data/eval/external/po-box-real.jsonl"
 
 const rows = readFileSync(file, "utf8")
 	.split("\n")

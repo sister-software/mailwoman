@@ -31,16 +31,23 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-import { arg } from "../lib/cli-args.ts"
-
-const PER_COUNTRY = Number(arg("per-country", "3"))
-const MIN_POP = Number(arg("min-pop", "50000"))
-const OUT = arg("out", "")
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { "min-pop": { type: "string" }, out: { type: "string" }, "per-country": { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "min-pop"?: string; out?: string; "per-country"?: string }
+const PER_COUNTRY = Number(values["per-country"] || "3")
+const MIN_POP = Number(values["min-pop"] || "50000")
+const OUT = values["out"] || ""
 const CITIES = `${mailwomanDataRoot()}/geonames/cities15000.txt`
 const DB_PATH =
 	process.env["MAILWOMAN_CANDIDATE_DB"] && existsSync(process.env["MAILWOMAN_CANDIDATE_DB"])

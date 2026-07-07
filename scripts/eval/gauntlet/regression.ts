@@ -13,15 +13,23 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../../lib/cli-args.ts"
 import { buildGauntletDeps, type GauntletResult, runOne } from "./harness.ts"
 import type { GauntletDatabase } from "./schema.ts"
 
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { model: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { model?: string }
 const DEFAULT_TOL_M = 5000
 
 /** Map an expect_components key to the assembled-result field it asserts. */
@@ -77,7 +85,7 @@ function checkCase(c: (typeof cases)[number], r: GauntletResult): string[] {
 	return issues
 }
 
-const deps = await buildGauntletDeps(arg("model", "") ? { modelPath: arg("model", "") } : {})
+const deps = await buildGauntletDeps(values["model"] || "" ? { modelPath: values["model"] || "" } : {})
 const fails: string[] = [] // status=pass that failed → BLOCK
 const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)

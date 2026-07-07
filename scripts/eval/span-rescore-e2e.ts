@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
@@ -20,14 +21,20 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { "candidate-db": { type: "string" }, model: { type: "string" }, n: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "candidate-db"?: string; model?: string; n?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const MODEL = arg("model", "out/v191/model.onnx")
-const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20h.db"))
-const N = Number(arg("n", "150"))
+const MODEL = values["model"] || "out/v191/model.onnx"
+const CAND = values["candidate-db"] || dataRootPath("wof", "candidate-global-20h.db")
+const N = Number(values["n"] || "150")
 // Same-harness confirm (#780): also grade Nominatim on the same rows + grading, so mailwoman-with-lever
 // vs Nominatim is apples-to-apples (no cross-harness baseline gap). Opt-in — the public API is rate-
 // limited to ~1 req/s, so only run when explicitly confirming. Reuses #775's queryNominatim verbatim.

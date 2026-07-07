@@ -23,9 +23,16 @@
  *   --out data/eval/external/openaddresses-de-sample-native-order.jsonl
  */
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { in: { type: "string" }, out: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { in?: string; out?: string }
 interface DeRow {
 	input: string
 	lat: number
@@ -35,8 +42,8 @@ interface DeRow {
 	source: string
 }
 
-const inPath = arg("in", "data/eval/external/openaddresses-de-sample.jsonl")
-const outPath = arg("out", "data/eval/external/openaddresses-de-sample-native-order.jsonl")
+const inPath = values["in"] || "data/eval/external/openaddresses-de-sample.jsonl"
+const outPath = values["out"] || "data/eval/external/openaddresses-de-sample-native-order.jsonl"
 
 /**
  * `"27 Straußstraße, Berlin, Berlin 12623"` → `"Straußstraße 27, 12623 Berlin"`. House number is the leading `\d+`
