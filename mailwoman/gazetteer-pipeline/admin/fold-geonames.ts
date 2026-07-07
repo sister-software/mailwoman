@@ -13,8 +13,6 @@
 import type { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
-import { ingestGeonamesPostal } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
 
 export interface FoldGeonamesOptions {
 	/** ISO-2 codes for the alias fold (`<CC>.txt` under {@link FoldGeonamesOptions.geonamesDir}). */
@@ -35,7 +33,10 @@ export interface FoldGeonamesResult {
 }
 
 /** Fold GeoNames aliases (+ optionally postal codes) into an open unified staging DB. */
-export function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions): FoldGeonamesResult {
+export async function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions): Promise<FoldGeonamesResult> {
+	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — lazy import (the gazetteer-pipeline convention).
+	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames-aliases")
+	const { ingestGeonamesPostal } = await import("@mailwoman/resolver-wof-sqlite/geonames-postal")
 	const geonamesDir = opts.geonamesDir ?? String(dataRootPath("geonames"))
 	const alternateDir = opts.alternateDir ?? String(dataRootPath("geonames-alternate"))
 	const placesIngested =

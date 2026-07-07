@@ -13,13 +13,6 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
-import {
-	backfillAncestorsFromHierarchy,
-	discoverAdminDataRoots,
-} from "@mailwoman/resolver-wof-sqlite/ancestry-backfill"
-import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
-import { createUnifiedIndexes, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
-
 import { OVERTURE_ID_BASE } from "./fold-overture.js"
 
 export interface FreezeAdminOptions {
@@ -39,6 +32,12 @@ export interface FreezeAdminResult {
 
 /** Freeze an ingested admin staging DB (see the module docstring for the exact order and why it matters). */
 export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {}): Promise<FreezeAdminResult> {
+	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — import it lazily (the gazetteer-pipeline
+	// convention) so eagerly loading this module (pastel imports every command) never faults without it.
+	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
+		await import("@mailwoman/resolver-wof-sqlite/ancestry-backfill")
+	const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")
+	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const phase = opts.onPhase ?? (() => {})
 
 	// An in-memory fixture has no WAL to checkpoint (journal_mode reports `memory`); skip the freeze pragmas there.

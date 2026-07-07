@@ -154,7 +154,7 @@ async function main() {
 
 	if (args.geonamesCountries && args.geonamesCountries.length > 0) {
 		console.error(`Backfilling GeoNames aliases for ${args.geonamesCountries.join(",")}...`)
-		const folded = foldGeonames(db, {
+		const folded = await foldGeonames(db, {
 			countries: args.geonamesCountries,
 			geonamesDir: args.geonamesDir,
 			alternateDir: args.geonamesAlternateDir,
