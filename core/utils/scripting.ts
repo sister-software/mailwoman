@@ -104,6 +104,7 @@ export async function runIfScript(meta: ImportMeta, scriptCallback: ScriptCallba
  * negative-coordinate positionals).
  */
 export function cliArguments(): string[] {
+	// oxlint-disable-next-line sister-software/no-process-globals
 	return process.argv.slice(2)
 }
 
@@ -113,10 +114,12 @@ export function cliArguments(): string[] {
  * `scripts/lint-raw-env-argv.ts`) — read config through `$public`/`$private`.
  */
 export function childEnv(overrides: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
+	// oxlint-disable-next-line sister-software/no-process-globals
 	return { ...process.env, ...overrides }
 }
 
 /** The path of the executing script (`argv[1]`) — for commands that re-spawn or reference their own CLI entry. */
 export function scriptEntryPath(): string {
+	// oxlint-disable-next-line sister-software/no-process-globals
 	return process.argv[1]!
 }

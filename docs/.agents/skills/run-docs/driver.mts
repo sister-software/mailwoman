@@ -25,6 +25,7 @@ import { parseArgs } from "node:util"
 
 import { chromium, type Page } from "@playwright/test"
 
+// oxlint-disable-next-line sister-software/no-process-globals
 const BASE = process.env.MAILWOMAN_DOCS_URL ?? "http://localhost:7770"
 const SCREENSHOT_DIR = "/tmp/mailwoman-docs"
 
