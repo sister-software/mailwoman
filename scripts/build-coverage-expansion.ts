@@ -38,7 +38,8 @@ import {
 	geonamesDir,
 	resolvePostcodeShards,
 	wofDir,
-} from "../mailwoman/out/gazetteer-pipeline.js"
+} from "mailwoman/gazetteer-pipeline"
+
 import { arg } from "./lib/cli-args.ts"
 
 const WOF = wofDir()

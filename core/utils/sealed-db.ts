@@ -11,7 +11,17 @@
  */
 import { chmodSync, existsSync, statSync, unlinkSync } from "node:fs"
 import { basename } from "node:path"
-import { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "node:sqlite"
+
+/**
+ * `node:sqlite` via {@link process.getBuiltinModule} — invisible to bundlers. A static import here would ride the
+ * `@mailwoman/core/utils` barrel into every consumer, and the docs' plugin loader (which transpiles `docusaurus.config`
+ * imports) can't resolve `node:sqlite` (CI: "Cannot find module 'sqlite'"). The builtin accessor keeps the functions
+ * synchronous with zero resolve surface.
+ */
+function sqlite(): typeof import("node:sqlite") {
+	return process.getBuiltinModule("node:sqlite")
+}
 
 /** A write-mode open was attempted on a sealed (0444) data artifact. */
 export class SealedArtifactError extends Error {
@@ -36,7 +46,7 @@ export function isSealed(path: string): boolean {
 export function sealDatabase(path: string): void {
 	// A previously sealed artifact needs the write bit back for the journal-mode switch.
 	if (isSealed(path)) chmodSync(path, 0o644)
-	const db = new DatabaseSync(path)
+	const db = new (sqlite().DatabaseSync)(path)
 	const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
 
 	if (checkpoint.busy !== 0) {
@@ -64,8 +74,8 @@ export function openBuiltDatabase(path: string, opts: { write?: boolean } = {}):
 	if (opts.write) {
 		if (isSealed(path)) throw new SealedArtifactError(path)
 
-		return new DatabaseSync(path)
+		return new (sqlite().DatabaseSync)(path)
 	}
 
-	return new DatabaseSync(path, { readOnly: true })
+	return new (sqlite().DatabaseSync)(path, { readOnly: true })
 }
