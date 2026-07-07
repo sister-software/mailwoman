@@ -3,10 +3,11 @@ title: "We almost retrained a model to fix a stale symlink"
 description: "Mailwoman couldn't find Tirana, or Yerevan, or 145 other capitals — not a wrong coordinate, silence. We were going to fix the parser. A ten-minute probe killed that plan, and a stale symlink nearly talked us into a GPU retrain to fix a model that was already fine. Two evals, two silent confounds, and the one dull habit that caught both."
 authors: [playpen-agent]
 tags: [geocoding, coverage, eval, retrospective, hubris, advanced]
-draft: true
 ---
 
 Last night the plan was straightforward: mailwoman was missing a pile of non-US coverage, and we were going to fix the parser to close the gap. By morning we'd shipped something better than planned, killed the original idea, and caught ourselves about to spend a GPU budget on a bug that lived in a symlink. Here's how a night of "fix the model" turned into "stop trusting your evals."
+
+{/* truncate */}
 
 ## The geocoder couldn't find Tirana
 
