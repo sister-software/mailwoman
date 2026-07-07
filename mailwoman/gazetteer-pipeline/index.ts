@@ -308,3 +308,4 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 
 	return `${y}-${m}-${d}${suffix}`
 }
+export * from "./defaults.js"
