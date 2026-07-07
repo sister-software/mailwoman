@@ -24,12 +24,14 @@ Same as PR A+B (branch `feat/gazetteer-cli-pr-c` off main; oxlint/oxfmt + `typec
 ### Task 1: `foldGeonames` admin-fold wiring + the gap-set default (the #1026 cure)
 
 **Files:**
+
 - Modify: `mailwoman/gazetteer-pipeline/defaults.ts` — add `geonamesAdminGapCountries()` helper
 - Modify: `mailwoman/gazetteer-pipeline/admin/fold-geonames.ts` — `adminForCountries` option, passed through
 - Modify: `mailwoman/gazetteer-pipeline/admin/index.ts` — `buildAdmin` passes the gap set by default
 - Test: `mailwoman/gazetteer-pipeline/defaults.test.ts` — gap-set shape test
 
 **Steps:**
+
 - [ ] Test first: `geonamesAdminGapCountries()` returns 147 codes, disjoint from Overture + WOF lists, contains GE and every #1026-flattened country, excludes BE/AT/CH/LU (Overture-covered). Run RED.
 - [ ] Implement: `defaults.ts` exports the helper (pure set difference). `FoldGeonamesOptions.adminForCountries?: ReadonlySet<string>` → passed to `ingestGeonamesAliases` opts. `buildAdmin` default: `adminForCountries: new Set(geonamesAdminGapCountries())` (overridable).
 - [ ] GREEN + `tsc -b mailwoman` + commit.
@@ -41,15 +43,18 @@ Same as PR A+B (branch `feat/gazetteer-cli-pr-c` off main; oxlint/oxfmt + `typec
 Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild (`build admin`); #936 official-names bridge → the #940 ingest bit is native (its own docstring says "until the next full rebuild"); the standalone geonames fold → `foldGeonames`; coverage expansion → the recipe IS the coverage (edit defaults, rebuild, verify gates it).
 
 **Steps:**
+
 - [ ] `rg` each filename for imports (comments are lineage, fine); `git rm` the four; `typecheck:scripts` green; commit.
 
 ### Task 3: diagnostics triage (the drawer's loose papers)
 
 **Files:** `git mv` into the gitignored homes per `scripts/AGENTS.md`:
+
 - → `scripts/diagnostic/`: `diag-functional-morphology.ts`, `diag-geocode-earth.ts`, `diag-nyc-reconcile.ts`, `diag-postcode-anchor.ts`, `diag-postcode.ts`, `diag-saintalbans.ts`
 - → `scripts/eval/`: `eval-de-coverage.ts`, `eval-error-analysis.ts`, `eval-gate.ts`, `eval-joint-reconcile.ts`, `eval-morphology-fst.ts`, `harness-postcode.ts`, `harness-v0-neural.ts`, `extract-tuples.ts`, `extract-tuples-de-gb.ts`, `log-scale-chart.ts`, `training-chart.ts`, `parse-training-log.ts`
 
 **Steps:**
+
 - [ ] Check `.gitignore` treatment of `scripts/diagnostic/` + `scripts/eval/` (AGENTS says diagnostics are ignored by default — if these dirs are tracked, keep the moves tracked; do NOT let a gitignore rule silently delete history).
 - [ ] `rg` for imports of each moved file (none expected — they're leaf diagnostics); move; `typecheck:scripts` green; commit.
 

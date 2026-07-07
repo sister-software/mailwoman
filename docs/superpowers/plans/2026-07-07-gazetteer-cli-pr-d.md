@@ -13,6 +13,7 @@ As PR A–C. Branch `feat/gazetteer-cli-pr-d`.
 ### Task 1: `gazetteer-pipeline/postcode/` — the shard build with fills folded
 
 **Files:**
+
 - Move: `scripts/zcta-centroids.ts` → `mailwoman/gazetteer-pipeline/postcode/zcta-centroids.ts`; `scripts/zcta-centroids.test.ts` → sibling (import fixes only — the lib is sync + tested, stays raw SQL per AGENTS)
 - Create: `mailwoman/gazetteer-pipeline/postcode/index.ts` — `buildPostcodeShard(opts)`:
   1. staging `.ingest` + `createUnifiedSchema` + `ingestWOF(db, { dataDir: <repos>/whosonfirst-data-postalcode-<cc>, placetypes: new Set(["postalcode"]) })`
@@ -23,6 +24,7 @@ As PR A–C. Branch `feat/gazetteer-cli-pr-d`.
 - Modify: RELEASING.md postcode mentions; manifest `postcode_build*` sections gain a "superseded by `gazetteer build postcode-shard`" note
 
 **Steps:**
+
 - [ ] Move lib + test; fix imports; existing zcta tests stay green.
 - [ ] `buildPostcodeShard` + fills (lazy resolver-wof-sqlite imports); fixture test: tiny staging DB with a `(0,0)` postcode row → fill from a fixture centroid map → sealed output.
 - [ ] Command + compile + `gazetteer build postcode-shard --help` smoke.
