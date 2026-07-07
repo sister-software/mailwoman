@@ -323,31 +323,21 @@ const F1ScoreTableInner: React.FC = () => {
 								<code>{row.tag}</code>
 							</td>
 							<td className={styles.evalCell}>{row.eval}</td>
-							<Tooltip text={row.tooltip}>
-								<td className={`${styles.f1Cell} ${scoreClass(row.v410)}`}>
-									{row.v410 != null ? row.v410.toFixed(1) : "—"}
-								</td>
-							</Tooltip>
-							<Tooltip text={row.tooltip}>
-								<td className={`${styles.f1Cell} ${scoreClass(row.v420)}`}>
-									{row.v420 != null ? row.v420.toFixed(1) : "—"}
-								</td>
-							</Tooltip>
-							<Tooltip text={row.tooltip}>
-								<td className={`${styles.f1Cell} ${scoreClass(row.v430)}`}>
-									{row.v430 != null ? row.v430.toFixed(1) : "—"}
-								</td>
-							</Tooltip>
-							<Tooltip text={row.tooltip}>
-								<td className={`${styles.f1Cell} ${scoreClass(row.v440)}`}>
-									{row.v440 != null ? row.v440.toFixed(1) : "—"}
-								</td>
-							</Tooltip>
-							<Tooltip text={row.tooltip}>
-								<td className={`${styles.f1Cell} ${scoreClass(row.v500)}`}>
-									{row.v500 != null ? row.v500.toFixed(1) : "—"}
-								</td>
-							</Tooltip>
+							<td className={`${styles.f1Cell} ${scoreClass(row.v410)}`}>
+								<Tooltip text={row.tooltip}>{row.v410 != null ? row.v410.toFixed(1) : "—"}</Tooltip>
+							</td>
+							<td className={`${styles.f1Cell} ${scoreClass(row.v420)}`}>
+								<Tooltip text={row.tooltip}>{row.v420 != null ? row.v420.toFixed(1) : "—"}</Tooltip>
+							</td>
+							<td className={`${styles.f1Cell} ${scoreClass(row.v430)}`}>
+								<Tooltip text={row.tooltip}>{row.v430 != null ? row.v430.toFixed(1) : "—"}</Tooltip>
+							</td>
+							<td className={`${styles.f1Cell} ${scoreClass(row.v440)}`}>
+								<Tooltip text={row.tooltip}>{row.v440 != null ? row.v440.toFixed(1) : "—"}</Tooltip>
+							</td>
+							<td className={`${styles.f1Cell} ${scoreClass(row.v500)}`}>
+								<Tooltip text={row.tooltip}>{row.v500 != null ? row.v500.toFixed(1) : "—"}</Tooltip>
+							</td>
 						</tr>
 					))}
 				</tbody>
