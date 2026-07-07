@@ -82,8 +82,13 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["manifest"] != null) out.manifestPath = values["manifest"] as string
-	if (values["verbose"] != null) out.verbose = true
+	if (values["manifest"] != null) {
+		out.manifestPath = values["manifest"] as string
+	}
+
+	if (values["verbose"] != null) {
+		out.verbose = true
+	}
 
 	if (!out.manifestPath) {
 		console.error("Usage: verify-shard-acks.ts --manifest <MANIFEST.json> [--verbose]")

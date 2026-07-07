@@ -122,24 +122,77 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["tests"] != null) out.testsDir = values["tests"] as string
-	if (values["out-json"] != null) out.outJson = values["out-json"] as string
-	if (values["model"] != null) out.modelPath = values["model"] as string
-	if (values["tokenizer"] != null) out.tokenizerPath = values["tokenizer"] as string
-	if (values["model-card"] != null) out.modelCardPath = values["model-card"] as string
-	if (values["gazetteer-lexicon"] != null) out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
-	if (values["anchor-lookup"] != null) out.anchorLookupPath = values["anchor-lookup"] as string
-	if (values["conventions"] != null) out.conventions = values["conventions"] as string
-	if (values["bridge-gaps"] != null) out.bridgeGaps = true
-	if (values["admin-fst"] != null) out.adminFSTPath = values["admin-fst"] as string
-	if (values["morphology-fst"] != null) out.morphologyBinPath = values["morphology-fst"] as string
-	if (values["no-morphology"] != null) out.morphologyEnabled = false
-	if (values["falsehoods"] != null) out.falsehoodsDir = values["falsehoods"] as string
-	if (values["postcode-repair"] != null) out.postcodeRepair = true
-	if (values["unit-repair"] != null) out.unitRepair = true
-	if (values["symmetric-match"] != null) out.symmetricMatch = true
-	if (values["assembled"] != null) out.assembled = true
-	if (values["arbitrate"] != null) out.arbitrate = true
+	if (values["tests"] != null) {
+		out.testsDir = values["tests"] as string
+	}
+
+	if (values["out-json"] != null) {
+		out.outJson = values["out-json"] as string
+	}
+
+	if (values["model"] != null) {
+		out.modelPath = values["model"] as string
+	}
+
+	if (values["tokenizer"] != null) {
+		out.tokenizerPath = values["tokenizer"] as string
+	}
+
+	if (values["model-card"] != null) {
+		out.modelCardPath = values["model-card"] as string
+	}
+
+	if (values["gazetteer-lexicon"] != null) {
+		out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
+	}
+
+	if (values["anchor-lookup"] != null) {
+		out.anchorLookupPath = values["anchor-lookup"] as string
+	}
+
+	if (values["conventions"] != null) {
+		out.conventions = values["conventions"] as string
+	}
+
+	if (values["bridge-gaps"] != null) {
+		out.bridgeGaps = true
+	}
+
+	if (values["admin-fst"] != null) {
+		out.adminFSTPath = values["admin-fst"] as string
+	}
+
+	if (values["morphology-fst"] != null) {
+		out.morphologyBinPath = values["morphology-fst"] as string
+	}
+
+	if (values["no-morphology"] != null) {
+		out.morphologyEnabled = false
+	}
+
+	if (values["falsehoods"] != null) {
+		out.falsehoodsDir = values["falsehoods"] as string
+	}
+
+	if (values["postcode-repair"] != null) {
+		out.postcodeRepair = true
+	}
+
+	if (values["unit-repair"] != null) {
+		out.unitRepair = true
+	}
+
+	if (values["symmetric-match"] != null) {
+		out.symmetricMatch = true
+	}
+
+	if (values["assembled"] != null) {
+		out.assembled = true
+	}
+
+	if (values["arbitrate"] != null) {
+		out.arbitrate = true
+	}
 
 	if (!out.testsDir) {
 		console.error("Usage: scripts/harness-v0-neural.ts --tests <dir> [--out-json <path>] [...]")

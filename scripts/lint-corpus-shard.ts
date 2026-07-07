@@ -80,11 +80,25 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["shard"] != null) out.shardPath = values["shard"] as string
-	if (values["stats"] != null) out.statsPath = values["stats"] as string
-	if (values["rules"] != null) out.rulesPath = values["rules"] as string
-	if (values["out-md"] != null) out.outMd = values["out-md"] as string
-	if (values["out-json"] != null) out.outJson = values["out-json"] as string
+	if (values["shard"] != null) {
+		out.shardPath = values["shard"] as string
+	}
+
+	if (values["stats"] != null) {
+		out.statsPath = values["stats"] as string
+	}
+
+	if (values["rules"] != null) {
+		out.rulesPath = values["rules"] as string
+	}
+
+	if (values["out-md"] != null) {
+		out.outMd = values["out-md"] as string
+	}
+
+	if (values["out-json"] != null) {
+		out.outJson = values["out-json"] as string
+	}
 
 	if (!out.shardPath || !out.statsPath) {
 		console.error(

@@ -236,10 +236,21 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["report"] != null) a.report = values["report"] as string
-	if (values["floors"] != null) a.floors = values["floors"] as string
-	if (values["blocking"] != null) a.blocking = true
-	if (values["self-test"] != null) a.selfTest = true
+	if (values["report"] != null) {
+		a.report = values["report"] as string
+	}
+
+	if (values["floors"] != null) {
+		a.floors = values["floors"] as string
+	}
+
+	if (values["blocking"] != null) {
+		a.blocking = true
+	}
+
+	if (values["self-test"] != null) {
+		a.selfTest = true
+	}
 
 	return a
 }

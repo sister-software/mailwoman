@@ -75,15 +75,41 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	for (const v of (values["input"] as string[] | undefined) ?? []) out.inputs!.push(v)
-	if (values["metric"] != null) out.metric = values["metric"] as string as Metric
-	if (values["title"] != null) out.title = values["title"] as string
-	if (values["output"] != null) out.output = values["output"] as string
-	if (values["width"] != null) out.width = Number(values["width"] as string)
-	if (values["height"] != null) out.height = Number(values["height"] as string)
-	if (values["y-min"] != null) out.yMin = Number(values["y-min"] as string)
-	if (values["y-max"] != null) out.yMax = Number(values["y-max"] as string)
-	if (values["log"] != null) out.log = true
+	for (const v of (values["input"] as string[] | undefined) ?? []) {
+		out.inputs!.push(v)
+	}
+
+	if (values["metric"] != null) {
+		out.metric = values["metric"] as string as Metric
+	}
+
+	if (values["title"] != null) {
+		out.title = values["title"] as string
+	}
+
+	if (values["output"] != null) {
+		out.output = values["output"] as string
+	}
+
+	if (values["width"] != null) {
+		out.width = Number(values["width"] as string)
+	}
+
+	if (values["height"] != null) {
+		out.height = Number(values["height"] as string)
+	}
+
+	if (values["y-min"] != null) {
+		out.yMin = Number(values["y-min"] as string)
+	}
+
+	if (values["y-max"] != null) {
+		out.yMax = Number(values["y-max"] as string)
+	}
+
+	if (values["log"] != null) {
+		out.log = true
+	}
 
 	if (!out.inputs || out.inputs.length === 0 || !out.metric || !out.output) {
 		console.error("Usage: training-chart.ts --input <json>... --metric val_loss|macro_f1|train_loss --output <svg>")

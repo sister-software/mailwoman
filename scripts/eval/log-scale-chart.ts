@@ -32,8 +32,13 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["input"] != null) out.input = values["input"] as string
-	if (values["output"] != null) out.output = values["output"] as string
+	if (values["input"] != null) {
+		out.input = values["input"] as string
+	}
+
+	if (values["output"] != null) {
+		out.output = values["output"] as string
+	}
 
 	if (!out.input || !out.output) {
 		console.error("Usage: log-scale-chart.ts --input <svg> --output <svg>")

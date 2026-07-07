@@ -112,21 +112,57 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["model"] != null) modelPath = values["model"] as string
-	if (values["tokenizer"] != null) tokenizerPath = values["tokenizer"] as string
-	if (values["model-card"] != null) modelCardPath = values["model-card"] as string
-	if (values["admin-fst"] != null) adminFSTPath = values["admin-fst"] as string
-	if (values["morphology-bin"] != null) morphologyBinPath = values["morphology-bin"] as string
-	if (values["no-morphology"] != null) morphologyEnabled = false
-	if (values["golden"] != null) goldenDir = values["golden"] as string
-	if (values["max-affix-bias"] != null) maxAffixBias = Number(values["max-affix-bias"] as string)
-	if (values["max-neighbour-street-bias"] != null)
+	if (values["model"] != null) {
+		modelPath = values["model"] as string
+	}
+
+	if (values["tokenizer"] != null) {
+		tokenizerPath = values["tokenizer"] as string
+	}
+
+	if (values["model-card"] != null) {
+		modelCardPath = values["model-card"] as string
+	}
+
+	if (values["admin-fst"] != null) {
+		adminFSTPath = values["admin-fst"] as string
+	}
+
+	if (values["morphology-bin"] != null) {
+		morphologyBinPath = values["morphology-bin"] as string
+	}
+
+	if (values["no-morphology"] != null) {
+		morphologyEnabled = false
+	}
+
+	if (values["golden"] != null) {
+		goldenDir = values["golden"] as string
+	}
+
+	if (values["max-affix-bias"] != null) {
+		maxAffixBias = Number(values["max-affix-bias"] as string)
+	}
+
+	if (values["max-neighbour-street-bias"] != null) {
 		maxNeighbourStreetBias = Number(values["max-neighbour-street-bias"] as string)
-	if (values["dep-locality-penalty"] != null)
+	}
+
+	if (values["dep-locality-penalty"] != null) {
 		dependentLocalityPenalty = Number(values["dep-locality-penalty"] as string)
-	if (values["out-json"] != null) outJson = values["out-json"] as string
-	if (values["name"] != null) evalName = values["name"] as string
-	if (values["stage3-fold"] != null) stage3Fold = true
+	}
+
+	if (values["out-json"] != null) {
+		outJson = values["out-json"] as string
+	}
+
+	if (values["name"] != null) {
+		evalName = values["name"] as string
+	}
+
+	if (values["stage3-fold"] != null) {
+		stage3Fold = true
+	}
 
 	if (!modelPath || !tokenizerPath || !modelCardPath || !goldenDir) {
 		console.error(

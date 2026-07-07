@@ -71,9 +71,17 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["input"] != null) out.inputPath = values["input"] as string
-	if (values["out"] != null) out.outPath = values["out"] as string
-	if (values["run-name"] != null) out.runName = values["run-name"] as string
+	if (values["input"] != null) {
+		out.inputPath = values["input"] as string
+	}
+
+	if (values["out"] != null) {
+		out.outPath = values["out"] as string
+	}
+
+	if (values["run-name"] != null) {
+		out.runName = values["run-name"] as string
+	}
 
 	if (!out.runName) {
 		console.error("Usage: parse-training-log.ts --run-name <label> [--input <file>] [--out <json>]")

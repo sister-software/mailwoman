@@ -42,9 +42,17 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["eval"] != null) evalPath = values["eval"] as string
-	if (values["country"] != null) country = values["country"] as string
-	for (const v of (values["shard"] as string[] | undefined) ?? []) shards.push(v)
+	if (values["eval"] != null) {
+		evalPath = values["eval"] as string
+	}
+
+	if (values["country"] != null) {
+		country = values["country"] as string
+	}
+
+	for (const v of (values["shard"] as string[] | undefined) ?? []) {
+		shards.push(v)
+	}
 
 	return { evalPath, country, shards }
 }

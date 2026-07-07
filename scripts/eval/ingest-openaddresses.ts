@@ -292,17 +292,36 @@ function parseArgs(): Options {
 		},
 	})
 
-	if (values.out != null) out.out = values.out
-	if (values.cache != null) out.cache = values.cache
-	if (values.target != null) out.target = parseInt(values.target, 10)
-	if (values["per-state"] != null) out.perState = parseInt(values["per-state"], 10)
-	if (values.seed != null) out.seed = parseInt(values.seed, 10)
-	if (values.offline === true) out.offline = true
-	if (values.sources != null)
+	if (values.out != null) {
+		out.out = values.out
+	}
+
+	if (values.cache != null) {
+		out.cache = values.cache
+	}
+
+	if (values.target != null) {
+		out.target = parseInt(values.target, 10)
+	}
+
+	if (values["per-state"] != null) {
+		out.perState = parseInt(values["per-state"], 10)
+	}
+
+	if (values.seed != null) {
+		out.seed = parseInt(values.seed, 10)
+	}
+
+	if (values.offline === true) {
+		out.offline = true
+	}
+
+	if (values.sources != null) {
 		out.sources = values.sources
 			.split(",")
 			.map((s) => s.trim())
 			.filter(Boolean)
+	}
 
 	return out
 }

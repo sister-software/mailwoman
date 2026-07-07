@@ -70,13 +70,33 @@ runIfScript(import.meta, async () => {
 		process.exit(1)
 	}
 
-	if (cliValues["model"] != null) MODEL = cliValues["model"] as string
-	if (cliValues["card"] != null) CARD = cliValues["card"] as string
-	if (cliValues["tokenizer"] != null) TOK = cliValues["tokenizer"] as string
-	if (cliValues["wof"] != null) WOF = cliValues["wof"] as string
-	if (cliValues["label"] != null) LABEL = cliValues["label"] as string
-	if (cliValues["out"] != null) OUT = cliValues["out"] as string
-	if (cliValues["tmp"] != null) TMP = cliValues["tmp"] as string
+	if (cliValues["model"] != null) {
+		MODEL = cliValues["model"] as string
+	}
+
+	if (cliValues["card"] != null) {
+		CARD = cliValues["card"] as string
+	}
+
+	if (cliValues["tokenizer"] != null) {
+		TOK = cliValues["tokenizer"] as string
+	}
+
+	if (cliValues["wof"] != null) {
+		WOF = cliValues["wof"] as string
+	}
+
+	if (cliValues["label"] != null) {
+		LABEL = cliValues["label"] as string
+	}
+
+	if (cliValues["out"] != null) {
+		OUT = cliValues["out"] as string
+	}
+
+	if (cliValues["tmp"] != null) {
+		TMP = cliValues["tmp"] as string
+	}
 
 	mkdirSync(TMP, { recursive: true })
 	const US_SAMPLE = "data/eval/external/openaddresses-us-sample.jsonl"

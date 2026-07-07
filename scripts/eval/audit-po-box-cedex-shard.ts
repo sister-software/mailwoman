@@ -79,8 +79,13 @@ function parseArgs(): AuditOptions {
 		allowPositionals: true,
 	})
 
-	if (values["input"] != null) out.input = values["input"] as string
-	if (values["samples"] != null) out.samples = parseInt((values["samples"] as string) ?? "", 10)
+	if (values["input"] != null) {
+		out.input = values["input"] as string
+	}
+
+	if (values["samples"] != null) {
+		out.samples = parseInt((values["samples"] as string) ?? "", 10)
+	}
 
 	if (!out.input) {
 		console.error("Usage: audit-po-box-cedex-shard.ts --input <labeled.jsonl> [--samples N]")

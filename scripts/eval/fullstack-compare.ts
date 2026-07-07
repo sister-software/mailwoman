@@ -48,11 +48,25 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["harness"] != null) out.harnessPath = values["harness"] as string
-	if (values["out-md"] != null) out.outMd = values["out-md"] as string
-	if (values["out-json"] != null) out.outJson = values["out-json"] as string
-	if (values["geocode-earth-key"] != null) out.geocodeEarthKey = values["geocode-earth-key"] as string
-	if (values["backoff-ms"] != null) out.backoffMs = Number(values["backoff-ms"] as string)
+	if (values["harness"] != null) {
+		out.harnessPath = values["harness"] as string
+	}
+
+	if (values["out-md"] != null) {
+		out.outMd = values["out-md"] as string
+	}
+
+	if (values["out-json"] != null) {
+		out.outJson = values["out-json"] as string
+	}
+
+	if (values["geocode-earth-key"] != null) {
+		out.geocodeEarthKey = values["geocode-earth-key"] as string
+	}
+
+	if (values["backoff-ms"] != null) {
+		out.backoffMs = Number(values["backoff-ms"] as string)
+	}
 
 	if (!out.harnessPath) {
 		console.error("--harness <harness.json> required")

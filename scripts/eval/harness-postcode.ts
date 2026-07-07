@@ -92,18 +92,53 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["model"] != null) out.modelPath = values["model"] as string
-	if (values["tokenizer"] != null) out.tokenizerPath = values["tokenizer"] as string
-	if (values["model-card"] != null) out.modelCardPath = values["model-card"] as string
-	if (values["tests"] != null) out.testsDir = values["tests"] as string
-	if (values["falsehoods"] != null) out.falsehoodsDir = values["falsehoods"] as string
-	if (values["golden"] != null) out.goldenDir = values["golden"] as string
-	if (values["admin-fst"] != null) out.adminFSTPath = values["admin-fst"] as string
-	if (values["out-json"] != null) out.outJson = values["out-json"] as string
-	if (values["gate"] != null) out.gate = true
-	if (values["floor"] != null) out.floor = Number(values["floor"] as string)
-	if (values["min-count"] != null) out.minCount = Number(values["min-count"] as string)
-	if (values["postcode-repair"] != null) out.postcodeRepair = true
+	if (values["model"] != null) {
+		out.modelPath = values["model"] as string
+	}
+
+	if (values["tokenizer"] != null) {
+		out.tokenizerPath = values["tokenizer"] as string
+	}
+
+	if (values["model-card"] != null) {
+		out.modelCardPath = values["model-card"] as string
+	}
+
+	if (values["tests"] != null) {
+		out.testsDir = values["tests"] as string
+	}
+
+	if (values["falsehoods"] != null) {
+		out.falsehoodsDir = values["falsehoods"] as string
+	}
+
+	if (values["golden"] != null) {
+		out.goldenDir = values["golden"] as string
+	}
+
+	if (values["admin-fst"] != null) {
+		out.adminFSTPath = values["admin-fst"] as string
+	}
+
+	if (values["out-json"] != null) {
+		out.outJson = values["out-json"] as string
+	}
+
+	if (values["gate"] != null) {
+		out.gate = true
+	}
+
+	if (values["floor"] != null) {
+		out.floor = Number(values["floor"] as string)
+	}
+
+	if (values["min-count"] != null) {
+		out.minCount = Number(values["min-count"] as string)
+	}
+
+	if (values["postcode-repair"] != null) {
+		out.postcodeRepair = true
+	}
 
 	if (!out.modelPath || !out.tokenizerPath || !out.modelCardPath) {
 		console.error(

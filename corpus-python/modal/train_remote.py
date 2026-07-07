@@ -18,6 +18,7 @@ Usage:
 
 import os
 import subprocess
+
 import modal
 
 # ---------------------------------------------------------------------------
@@ -68,6 +69,7 @@ training_image = (
     )
 )
 
+
 # R2 credentials — reads from local .env at deploy time via dotenv fallback.
 # The script loads .env itself so `source .env` before `modal run` is NOT required.
 def _load_r2_env() -> dict[str, str]:
@@ -83,11 +85,18 @@ def _load_r2_env() -> dict[str, str]:
                     if key.startswith("RCLONE_S3_"):
                         env[key] = val
     # os.environ overrides file values
-    for key in ["RCLONE_S3_PROVIDER", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY",
-                "RCLONE_S3_ENDPOINT", "RCLONE_S3_REGION", "RCLONE_S3_NO_CHECK_BUCKET"]:
+    for key in [
+        "RCLONE_S3_PROVIDER",
+        "RCLONE_S3_ACCESS_KEY_ID",
+        "RCLONE_S3_SECRET_ACCESS_KEY",
+        "RCLONE_S3_ENDPOINT",
+        "RCLONE_S3_REGION",
+        "RCLONE_S3_NO_CHECK_BUCKET",
+    ]:
         if key in os.environ:
             env[key] = os.environ[key]
     return env
+
 
 r2_secret = modal.Secret.from_dict(_load_r2_env())
 
@@ -124,6 +133,7 @@ OUTPUT_DIR = "/data/output"
 # Sync corpus from R2 into the volume
 # ---------------------------------------------------------------------------
 
+
 @app.function(
     image=training_image,
     volumes={VOL_MOUNT: vol},
@@ -142,7 +152,7 @@ def sync_corpus():
     ]
 
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd.split('/')[-1][:60]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd.split('/')[-1][:60]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:500]}")
@@ -190,7 +200,7 @@ def sync_v050():
         f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -210,8 +220,10 @@ def sync_v050():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.4.0-charoffset.yaml"
     print("  v0.5.0 train shards:", len(os.listdir(tdir)) if os.path.isdir(tdir) else "MISSING")
     print("  v1.4.0 config present:", os.path.isfile(cfg))
-    print("  loader has astral-skip:",
-          "astral_skipped" in open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/data_loader.py").read())
+    print(
+        "  loader has astral-skip:",
+        "astral_skipped" in open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/data_loader.py").read(),
+    )
 
 
 @app.function(
@@ -237,7 +249,7 @@ def sync_v060():
         f"{VOL_MOUNT}/corpus/versioned/v0.6.0-boundary-stress/corpus-v0.6.0-boundary-stress/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -284,7 +296,7 @@ def sync_v061():
         f"{VOL_MOUNT}/corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -331,7 +343,7 @@ def sync_v080():
         f"{VOL_MOUNT}/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -377,7 +389,7 @@ def sync_v081():
         f"{VOL_MOUNT}/corpus/versioned/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -424,7 +436,7 @@ def sync_v090():
         f"{VOL_MOUNT}/corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -474,7 +486,7 @@ def sync_v091():
         f"{VOL_MOUNT}/corpus/versioned/v0.9.1-multilocale/corpus-v0.9.1-multilocale/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -493,7 +505,10 @@ def sync_v091():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.1-multilocale-3order.yaml"
     print("  v1.9.1 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  3-order overture shard present:", os.path.isfile(f"{cdir}/train/part-overture-multilocale-3order-train.parquet"))
+    print(
+        "  3-order overture shard present:",
+        os.path.isfile(f"{cdir}/train/part-overture-multilocale-3order-train.parquet"),
+    )
     base09 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     base89 = f"{VOL_MOUNT}/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/train/part-fr-admin-split-train.parquet"
     print("  base v0.5.0 shard on volume:", os.path.isfile(base09))
@@ -524,7 +539,7 @@ def sync_v092():
         f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -577,7 +592,7 @@ def sync_v196_slavic():
         f"{VOL_MOUNT}/corpus/versioned/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -630,7 +645,7 @@ def sync_v197_bsplice():
         f"rclone copy :s3:{BUCKET}/models/bsplice-expanded/ {VOL_MOUNT}/models/bsplice-expanded/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -737,7 +752,7 @@ def sync_v193a1():
         f"{VOL_MOUNT}/corpus/versioned/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -750,7 +765,7 @@ def sync_v193a1():
     if not os.path.isdir(src):
         raise RuntimeError(f"v192 checkpoint missing at {src} — cannot resume")
     if os.path.isdir(dst):
-        print(f"  v193a1 pre-seed already present (skip copy)")
+        print("  v193a1 pre-seed already present (skip copy)")
     else:
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copytree(src, dst)
@@ -801,7 +816,7 @@ def sync_v193a2():
         f"{VOL_MOUNT}/corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -814,7 +829,7 @@ def sync_v193a2():
     if not os.path.isdir(src):
         raise RuntimeError(f"v192 checkpoint missing at {src} — cannot resume")
     if os.path.isdir(dst):
-        print(f"  v193a2 pre-seed already present (skip copy)")
+        print("  v193a2 pre-seed already present (skip copy)")
     else:
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copytree(src, dst)
@@ -865,7 +880,7 @@ def sync_v193a3():
         f"{VOL_MOUNT}/corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -878,7 +893,7 @@ def sync_v193a3():
     if not os.path.isdir(src):
         raise RuntimeError(f"v192 checkpoint missing at {src} — cannot resume")
     if os.path.isdir(dst):
-        print(f"  v193a3 pre-seed already present (skip copy)")
+        print("  v193a3 pre-seed already present (skip copy)")
     else:
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copytree(src, dst)
@@ -928,7 +943,7 @@ def sync_v094_fr_bare():
         f"{VOL_MOUNT}/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"STDERR: {result.stderr[:800]}")
@@ -1052,6 +1067,7 @@ def push_artifact_r2(volume_path: str, r2_subpath: str):
 # Training function
 # ---------------------------------------------------------------------------
 
+
 @app.function(
     image=training_image,
     volumes={VOL_MOUNT: vol},
@@ -1073,6 +1089,7 @@ def train(
     omit them to honor whatever the config sets (default: tracking off).
     """
     import sys
+
     import torch
 
     # Fetch the latest committed volume state. Without this, a container mounts a stale
@@ -1103,10 +1120,11 @@ def train(
     print("Starting training...\n")
 
     # Import and run training
+    import yaml
+
     from mailwoman_train.config import Config, _merge
     from mailwoman_train.train import train as run_train
 
-    import yaml
     cfg = Config()
     _merge(cfg, yaml.safe_load(open(config_path)))
 
@@ -1133,7 +1151,11 @@ def train(
     run_output = cfg.train.output_dir if cfg.train.output_dir.startswith("/data/") else f"{OUTPUT_DIR}/checkpoints"
     run_base = os.path.dirname(run_output)
     cfg.train.output_dir = run_output
-    cfg.train.csv_log_path = cfg.train.csv_log_path.replace("{output_dir}", run_output) if "{output_dir}" in cfg.train.csv_log_path else f"{run_base}/train_log.csv"
+    cfg.train.csv_log_path = (
+        cfg.train.csv_log_path.replace("{output_dir}", run_output)
+        if "{output_dir}" in cfg.train.csv_log_path
+        else f"{run_base}/train_log.csv"
+    )
 
     os.makedirs(run_base, exist_ok=True)
 
@@ -1146,7 +1168,7 @@ def train(
     print(f"\nTraining complete. Output at {OUTPUT_DIR}/")
 
     # List what we produced
-    for root, dirs, files in os.walk(OUTPUT_DIR):
+    for root, _dirs, files in os.walk(OUTPUT_DIR):
         for f in files:
             path = os.path.join(root, f)
             size = os.path.getsize(path)
@@ -1156,6 +1178,7 @@ def train(
 # ---------------------------------------------------------------------------
 # Local entrypoint
 # ---------------------------------------------------------------------------
+
 
 @app.local_entrypoint()
 def main(
@@ -1185,7 +1208,7 @@ def main(
     print(f"Training with config={config}, resume={resume}, trackio={trackio}...")
     train.remote(config_name=config, resume=resume, trackio=trackio, trackio_space=trackio_space)
     print("\nTraining complete!")
-    print(f"\nDownload results with:\n  modal volume get mailwoman-training /output/ ./output/")
+    print("\nDownload results with:\n  modal volume get mailwoman-training /output/ ./output/")
 
 
 @app.function(volumes={VOL_MOUNT: vol}, image=training_image, timeout=600)
@@ -1226,13 +1249,24 @@ def debug_volume(config_name: str = "v1.4.0-charoffset.yaml"):
         if os.path.isdir(cfgdir):
             print("  configs:", sorted(os.listdir(cfgdir)))
         print(f"  isfile({config_name}):", os.path.isfile(cpath))
-        print("  v0.5.0 train dir exists:", os.path.isdir(ctrain),
-              "shards:", len(os.listdir(ctrain)) if os.path.isdir(ctrain) else 0)
+        print(
+            "  v0.5.0 train dir exists:",
+            os.path.isdir(ctrain),
+            "shards:",
+            len(os.listdir(ctrain)) if os.path.isdir(ctrain) else 0,
+        )
 
     import modal as _m
+
     print("modal client version:", getattr(_m, "__version__", "?"))
-    for d in ["/data", "/data/corpus/versioned", "/data/models", "/data/models/tokenizer",
-              "/data/output-v140-charoffset-s42", "/data/output-v140-charoffset-s42/checkpoints"]:
+    for d in [
+        "/data",
+        "/data/corpus/versioned",
+        "/data/models",
+        "/data/models/tokenizer",
+        "/data/output-v140-charoffset-s42",
+        "/data/output-v140-charoffset-s42/checkpoints",
+    ]:
         print(f"  ls {d}:", sorted(os.listdir(d)) if os.path.isdir(d) else "MISSING")
 
     snapshot("pre-reload (mount as-started)")
@@ -1248,7 +1282,14 @@ def versions():
     between v0.9.3 and v0.9.7 and broke int8 quant — see scripts/modal pins + quantize.py).
     Run: ``modal run scripts/modal/train_remote.py::versions``
     """
-    import torch, transformers, onnx, onnxruntime, onnxscript, sys
+    import sys
+
+    import onnx
+    import onnxruntime
+    import onnxscript
+    import torch
+    import transformers
+
     print(f"python      {sys.version.split()[0]}")
     print(f"torch       {torch.__version__}")
     print(f"transformers {transformers.__version__}")
@@ -1281,7 +1322,7 @@ def sync_nsplice():
         f"rclone copy :s3:{BUCKET}/models/tokenizer/v0.7.1-nsplice/ {VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
@@ -1289,7 +1330,9 @@ def sync_nsplice():
     if os.path.isdir(pyc):
         shutil.rmtree(pyc)
     vol.commit()
-    print("  nsplice tokenizer present:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.7.0-nsplice/tokenizer.model"))
+    print(
+        "  nsplice tokenizer present:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.7.0-nsplice/tokenizer.model")
+    )
     print("  base ckpt present:", os.path.isfile(f"{VOL_MOUNT}/models/bsplice-expanded/pytorch_model.bin"))
 
 
@@ -1316,7 +1359,7 @@ def sync_v210():
         f"{VOL_MOUNT}/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/ {R}",
     ]
     for i, cmd in enumerate(commands):
-        print(f"[{i+1}/{len(commands)}] {cmd[:90]}...")
+        print(f"[{i + 1}/{len(commands)}] {cmd[:90]}...")
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
@@ -1327,7 +1370,10 @@ def sync_v210():
     for check, path in [
         ("v2.1.0 config", f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.1.0-boundary-family.yaml"),
         ("probe config", f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.1.0-boundary-family-probe.yaml"),
-        ("overlay MANIFEST", f"{VOL_MOUNT}/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/MANIFEST.json"),
+        (
+            "overlay MANIFEST",
+            f"{VOL_MOUNT}/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/MANIFEST.json",
+        ),
         ("init ckpt", f"{VOL_MOUNT}/models/nsplice-v2-expanded/pytorch_model.bin"),
         ("tokenizer", f"{VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/tokenizer.model"),
     ]:
@@ -1343,6 +1389,7 @@ def mean_init_nsplice():
     """#912 lever 4: expand the shipped bsplice-expanded checkpoint's embeddings to the nsplice
     vocab (FVT mean-init — same surgery that produced v5.1.0). Writes /data/models/nsplice-expanded."""
     import sys
+
     sys.path.insert(0, "/data/corpus-python/src")
     from pathlib import Path
 
@@ -1384,14 +1431,17 @@ def export_onnx(
     """
     import sys
     from pathlib import Path
+
     sys.path.insert(0, "/data/corpus-python/src")
 
-    from mailwoman_train.model import MailwomanCoarseEncoder
-    from mailwoman_train.export_onnx import export_to_onnx
-    from mailwoman_train.tokenizer import Tokenizer
+    import os
 
     import torch
-    import os
+
+    from mailwoman_train.export_onnx import export_to_onnx
+    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.tokenizer import Tokenizer
+
     output_dir = output_dir or os.environ.get("MAILWOMAN_EXPORT_OUTPUT_DIR", "/data/output-v054")
     step = step or os.environ.get("MAILWOMAN_EXPORT_STEP", "100000")
     tokenizer_path = tokenizer_path or os.environ.get(
@@ -1438,8 +1488,9 @@ def quantize_onnx(
     --fp32-path=/data/output-v097-unit-v3-s42/model.onnx
     --int8-path=/data/models/quantized/model-v097-step-20000-int8.onnx``
     """
-    from pathlib import Path
     import sys
+    from pathlib import Path
+
     sys.path.insert(0, "/data/corpus-python/src")
     from mailwoman_train.quantize import quantize_dynamic_int8
 
@@ -1499,7 +1550,7 @@ def diagnose_corpus(
                     print(f"  MISSING: {s['path']}")
                     break
 
-    from mailwoman_train.data_loader import _shard_paths, _shard_first_source
+    from mailwoman_train.data_loader import _shard_first_source, _shard_paths
 
     paths = _shard_paths(corpus_dir, "train")
     print(f"\n_shard_paths returned {len(paths)} train shards")
@@ -1529,10 +1580,17 @@ def diagnose_corpus(
 
         cw = {c: 1.0 for c in (verify_country.split(",") if verify_country else ["US", "FR", "DE"])}
         sw = {verify_source: 1.0} if verify_source else None
-        rows = list(iter_rows(
-            corpus_dir, "train", rng=random.Random(0),
-            country_weights=cw, source_weights=sw, coarse_filter=True, row_limit=5,
-        ))
+        rows = list(
+            iter_rows(
+                corpus_dir,
+                "train",
+                rng=random.Random(0),
+                country_weights=cw,
+                source_weights=sw,
+                coarse_filter=True,
+                row_limit=5,
+            )
+        )
         print(f"\n[verify] rows passing filter (country={cw}, source={sw}): {len(rows)}")
         for r in rows[:3]:
             print(f"  country={r['country']} locale_id={locale_id(r['country'])} raw={r['raw'][:60]}")
@@ -1564,14 +1622,14 @@ def eval_de(
 
     vol.reload()
     sys.path.insert(0, "/data/corpus-python/src")
-    import torch
     import pyarrow.parquet as pq
+    import torch
 
+    from mailwoman_train.data_loader import load_anchor_lookup
+    from mailwoman_train.labels import ACTIVE_BIO_LABELS
     from mailwoman_train.model import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
     from mailwoman_train.train import _token_f1
-    from mailwoman_train.data_loader import load_anchor_lookup
-    from mailwoman_train.labels import ACTIVE_BIO_LABELS
 
     ck = Path(f"{output_dir}/checkpoints/step-{step}")
     tok = Tokenizer(Path(tokenizer_path))
@@ -1609,7 +1667,10 @@ def eval_de(
     preds = torch.cat(all_preds)
     labels = torch.cat(all_labels)
     m = _token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
-    g = lambda t: m.get(f"f1_tag.{t}", float("nan"))
+
+    def g(t):
+        return m.get(f"f1_tag.{t}", float("nan"))
+
     mode = "anchor-OFF" if (anchor_off or not lookup) else "anchor-ON "
     print(
         f"[DE eval] {ck.name} {mode}: locality={g('locality'):.3f}  postcode={g('postcode'):.3f}  "

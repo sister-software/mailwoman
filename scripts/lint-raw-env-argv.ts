@@ -41,7 +41,9 @@ function walk(dir: string): void {
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
 		if (entry.isDirectory()) {
 			// Hidden dirs (.claude worktrees, .git, .yarn, …) are never source.
-			if (!PRUNE.has(entry.name) && !entry.name.startsWith(".")) walk(join(dir, entry.name))
+			if (!PRUNE.has(entry.name) && !entry.name.startsWith(".")) {
+				walk(join(dir, entry.name))
+			}
 			continue
 		}
 
@@ -53,7 +55,9 @@ function walk(dir: string): void {
 		const lines = readFileSync(path, "utf8").split("\n")
 
 		for (const [i, line] of lines.entries()) {
-			if (PATTERN.test(line)) offenders.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`)
+			if (PATTERN.test(line)) {
+				offenders.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`)
+			}
 		}
 	}
 }

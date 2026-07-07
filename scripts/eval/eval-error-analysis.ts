@@ -78,12 +78,29 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["golden"] != null) out.goldenDir = values["golden"] as string
-	if (values["model"] != null) out.modelPath = values["model"] as string
-	if (values["tokenizer"] != null) out.tokenizerPath = values["tokenizer"] as string
-	if (values["model-card"] != null) out.modelCardPath = values["model-card"] as string
-	if (values["postcode-repair"] != null) out.postcodeRepair = true
-	if (values["no-strict"] != null) out.strict = false
+	if (values["golden"] != null) {
+		out.goldenDir = values["golden"] as string
+	}
+
+	if (values["model"] != null) {
+		out.modelPath = values["model"] as string
+	}
+
+	if (values["tokenizer"] != null) {
+		out.tokenizerPath = values["tokenizer"] as string
+	}
+
+	if (values["model-card"] != null) {
+		out.modelCardPath = values["model-card"] as string
+	}
+
+	if (values["postcode-repair"] != null) {
+		out.postcodeRepair = true
+	}
+
+	if (values["no-strict"] != null) {
+		out.strict = false
+	}
 
 	if (!out.goldenDir) {
 		console.error(

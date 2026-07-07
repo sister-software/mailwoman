@@ -44,11 +44,25 @@ runIfScript(import.meta, async () => {
 		throw new Error(`unknown arg: ${e instanceof Error ? e.message : e}`)
 	}
 
-	if (cliValues["model"] != null) MODEL = cliValues["model"] as string
-	if (cliValues["card"] != null) CARD = cliValues["card"] as string
-	if (cliValues["tokenizer"] != null) TOK = cliValues["tokenizer"] as string
-	if (cliValues["anchor-lookup"] != null) LOOKUP = cliValues["anchor-lookup"] as string
-	if (cliValues["out"] != null) OUT = cliValues["out"] as string
+	if (cliValues["model"] != null) {
+		MODEL = cliValues["model"] as string
+	}
+
+	if (cliValues["card"] != null) {
+		CARD = cliValues["card"] as string
+	}
+
+	if (cliValues["tokenizer"] != null) {
+		TOK = cliValues["tokenizer"] as string
+	}
+
+	if (cliValues["anchor-lookup"] != null) {
+		LOOKUP = cliValues["anchor-lookup"] as string
+	}
+
+	if (cliValues["out"] != null) {
+		OUT = cliValues["out"] as string
+	}
 
 	if (!MODEL || !CARD) throw new Error("need --model and --card")
 

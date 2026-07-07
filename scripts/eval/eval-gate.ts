@@ -91,15 +91,33 @@ function parseArgs(): GateArgs {
 		allowPositionals: true,
 	})
 
-	if (values["baseline"] != null) out.baselinePath = values["baseline"] as string
-	if (values["candidate"] != null) out.candidatePath = values["candidate"] as string
-	if (values["recall-threshold-pp"] != null) out.recallThresholdPp = Number(values["recall-threshold-pp"] as string)
-	if (values["recall-min-baseline-pct"] != null)
+	if (values["baseline"] != null) {
+		out.baselinePath = values["baseline"] as string
+	}
+
+	if (values["candidate"] != null) {
+		out.candidatePath = values["candidate"] as string
+	}
+
+	if (values["recall-threshold-pp"] != null) {
+		out.recallThresholdPp = Number(values["recall-threshold-pp"] as string)
+	}
+
+	if (values["recall-min-baseline-pct"] != null) {
 		out.recallMinBaselinePct = Number(values["recall-min-baseline-pct"] as string)
-	if (values["hall-abs-threshold"] != null) out.hallAbsThreshold = Number(values["hall-abs-threshold"] as string)
-	if (values["hall-rate-threshold-pct"] != null)
+	}
+
+	if (values["hall-abs-threshold"] != null) {
+		out.hallAbsThreshold = Number(values["hall-abs-threshold"] as string)
+	}
+
+	if (values["hall-rate-threshold-pct"] != null) {
 		out.hallRateThresholdPct = Number(values["hall-rate-threshold-pct"] as string)
-	if (values["out-md"] != null) out.outMd = values["out-md"] as string
+	}
+
+	if (values["out-md"] != null) {
+		out.outMd = values["out-md"] as string
+	}
 
 	if (!out.baselinePath || !out.candidatePath) {
 		console.error(

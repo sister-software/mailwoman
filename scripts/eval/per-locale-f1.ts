@@ -111,22 +111,56 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["golden-dir"] != null) out.goldenDir = values["golden-dir"] as string
-	if (values["files"] != null)
+	if (values["golden-dir"] != null) {
+		out.goldenDir = values["golden-dir"] as string
+	}
+
+	if (values["files"] != null) {
 		out.files = (values["files"] as string)
 			.split(",")
 			.map((s) => s.trim())
 			.filter(Boolean)
-	if (values["model"] != null) out.modelPath = values["model"] as string
-	if (values["tokenizer"] != null) out.tokenizerPath = values["tokenizer"] as string
-	if (values["model-card"] != null) out.modelCardPath = values["model-card"] as string
-	if (values["model-anchor-lookup"] != null) out.modelAnchorLookupPath = values["model-anchor-lookup"] as string
-	if (values["gazetteer-lexicon"] != null) out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
-	if (values["no-anchor"] != null) out.noAnchor = true
-	if (values["suppress-gaz-near-postcode"] != null) out.suppressGazNearPostcode = true
-	if (values["conventions"] != null) out.conventions = values["conventions"] as string
-	if (values["bridge-gaps"] != null) out.bridgeGaps = true
-	if (values["out-json"] != null) out.outJson = values["out-json"] as string
+	}
+
+	if (values["model"] != null) {
+		out.modelPath = values["model"] as string
+	}
+
+	if (values["tokenizer"] != null) {
+		out.tokenizerPath = values["tokenizer"] as string
+	}
+
+	if (values["model-card"] != null) {
+		out.modelCardPath = values["model-card"] as string
+	}
+
+	if (values["model-anchor-lookup"] != null) {
+		out.modelAnchorLookupPath = values["model-anchor-lookup"] as string
+	}
+
+	if (values["gazetteer-lexicon"] != null) {
+		out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
+	}
+
+	if (values["no-anchor"] != null) {
+		out.noAnchor = true
+	}
+
+	if (values["suppress-gaz-near-postcode"] != null) {
+		out.suppressGazNearPostcode = true
+	}
+
+	if (values["conventions"] != null) {
+		out.conventions = values["conventions"] as string
+	}
+
+	if (values["bridge-gaps"] != null) {
+		out.bridgeGaps = true
+	}
+
+	if (values["out-json"] != null) {
+		out.outJson = values["out-json"] as string
+	}
 
 	return out as Args
 }

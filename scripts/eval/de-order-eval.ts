@@ -56,11 +56,25 @@ runIfScript(import.meta, async () => {
 		process.exit(1)
 	}
 
-	if (cliValues["model"] != null) model = cliValues["model"] as string
-	if (cliValues["card"] != null) card = cliValues["card"] as string
-	if (cliValues["tokenizer"] != null) tok = cliValues["tokenizer"] as string
-	if (cliValues["anchor-lookup"] != null) lookup = cliValues["anchor-lookup"] as string
-	if (cliValues["out"] != null) out = cliValues["out"] as string
+	if (cliValues["model"] != null) {
+		model = cliValues["model"] as string
+	}
+
+	if (cliValues["card"] != null) {
+		card = cliValues["card"] as string
+	}
+
+	if (cliValues["tokenizer"] != null) {
+		tok = cliValues["tokenizer"] as string
+	}
+
+	if (cliValues["anchor-lookup"] != null) {
+		lookup = cliValues["anchor-lookup"] as string
+	}
+
+	if (cliValues["out"] != null) {
+		out = cliValues["out"] as string
+	}
 
 	if (!model || !card) {
 		console.error("need --model and --card")

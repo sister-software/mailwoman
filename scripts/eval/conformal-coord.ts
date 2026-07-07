@@ -234,14 +234,37 @@ function parseArgs(): Args {
 		allowPositionals: true,
 	})
 
-	if (values["dump"] != null) a.dump = values["dump"] as string
-	if (values["db"] != null) a.db = values["db"] as string
-	if (values["label"] != null) a.label = values["label"] as string
-	if (values["alphas"] != null) a.alphas = values["alphas"] as string
-	if (values["seed"] != null) a.seed = parseInt(values["seed"] as string, 10)
-	if (values["cal-frac"] != null) a.calFrac = parseFloat(values["cal-frac"] as string)
-	if (values["out-json"] != null) a.outJson = values["out-json"] as string
-	if (values["self-test"] != null) a.selfTest = true
+	if (values["dump"] != null) {
+		a.dump = values["dump"] as string
+	}
+
+	if (values["db"] != null) {
+		a.db = values["db"] as string
+	}
+
+	if (values["label"] != null) {
+		a.label = values["label"] as string
+	}
+
+	if (values["alphas"] != null) {
+		a.alphas = values["alphas"] as string
+	}
+
+	if (values["seed"] != null) {
+		a.seed = parseInt(values["seed"] as string, 10)
+	}
+
+	if (values["cal-frac"] != null) {
+		a.calFrac = parseFloat(values["cal-frac"] as string)
+	}
+
+	if (values["out-json"] != null) {
+		a.outJson = values["out-json"] as string
+	}
+
+	if (values["self-test"] != null) {
+		a.selfTest = true
+	}
 
 	return a
 }

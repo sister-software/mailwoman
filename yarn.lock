@@ -5062,8 +5062,8 @@ __metadata:
     "@duckdb/node-api": "npm:^1.5.3-r.3"
     "@inkjs/ui": "npm:^2.0.0"
     "@release-it-plugins/workspaces": "npm:^5.0.3"
-    "@sister.software/oxfmt-config": "npm:^9.2.0"
-    "@sister.software/oxlint-config": "npm:^9.2.0"
+    "@sister.software/oxfmt-config": "npm:^9.3.0"
+    "@sister.software/oxlint-config": "npm:^9.3.0"
     "@sister.software/tsconfig": "npm:^8.0.1"
     "@types/express": "npm:^5.0.6"
     "@types/geojson": "npm:^7946.0.16"
@@ -7103,21 +7103,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/oxfmt-config@npm:^9.2.0":
-  version: 9.2.0
-  resolution: "@sister.software/oxfmt-config@npm:9.2.0"
+"@sister.software/oxfmt-config@npm:^9.3.0":
+  version: 9.3.0
+  resolution: "@sister.software/oxfmt-config@npm:9.3.0"
   peerDependencies:
     oxfmt: 0.56.0
-  checksum: 10/c7b6d764c8072f4473c022a1452b5f86908fe3944ecfba5f71278e9163b7df515250414a554e18ad51f65e6c4ed33f1da4a3f7627d3cbc2b58d469dbe384d12e
+  checksum: 10/fed032d078e32797574421d9ee4d74a960720530f14328d6f40612569b2c0bc4bf059531683100bc316cbc0a6e31e045f11bec9c6c2a3b6680f24005a82d8f06
   languageName: node
   linkType: hard
 
-"@sister.software/oxlint-config@npm:^9.2.0":
-  version: 9.2.0
-  resolution: "@sister.software/oxlint-config@npm:9.2.0"
+"@sister.software/oxlint-config@npm:^9.3.0":
+  version: 9.3.0
+  resolution: "@sister.software/oxlint-config@npm:9.3.0"
   peerDependencies:
     oxlint: ^1.71.0
-  checksum: 10/35010f91bc605f23ae8955cfbbe334657de41673c5eaff3c326ff10977bd2f8d9ee2b229ed047159937e98e88144ce5434c77a7c32962af837750cb04df70c23
+  checksum: 10/8654671bfa58777bd9a6e04e38022ffd2ca6e49a29825e938367853c53f7ea540d4360de51797ed4076c67e35998781f29162d32b029aa24b8f1667607c7acb5
   languageName: node
   linkType: hard
 
