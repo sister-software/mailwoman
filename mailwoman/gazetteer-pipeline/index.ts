@@ -39,7 +39,7 @@ import { sealDatabase } from "@mailwoman/core/utils"
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 
-import { mailwomanDataRoot } from "./resolver-backend.js"
+import { mailwomanDataRoot } from "../resolver-backend.js"
 
 /**
  * The bilingual / alt-name EU set the GeoNames fold lifts (FI hard-resolve 69.5 → 85.8 %). GeoNames `<CC>.txt` dumps
