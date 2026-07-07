@@ -44,7 +44,6 @@ import { DuckDBInstance } from "@duckdb/node-api"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geometryContains } from "@mailwoman/resolver-wof-sqlite/geo"
-
 import {
 	type DivisionPolygon,
 	loadDistrictPolygons,
