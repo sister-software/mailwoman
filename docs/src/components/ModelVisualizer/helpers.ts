@@ -30,7 +30,9 @@ export function matrixAbsMax(matrix: number[][]): number {
 
 			const abs = Math.abs(v)
 
-			if (abs > max) max = abs
+			if (abs > max) {
+				max = abs
+			}
 		}
 	}
 
@@ -69,7 +71,9 @@ export function changedIndices(before: string[], after: string[]): number[] {
 	const len = Math.max(before.length, after.length)
 
 	for (let i = 0; i < len; i++) {
-		if (before[i] !== after[i]) out.push(i)
+		if (before[i] !== after[i]) {
+			out.push(i)
+		}
 	}
 
 	return out

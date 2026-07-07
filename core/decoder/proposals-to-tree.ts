@@ -69,10 +69,14 @@ export function treeToProposals(
 			})
 		}
 
-		for (const child of node.children) visit(child)
+		for (const child of node.children) {
+			visit(child)
+		}
 	}
 
-	for (const root of tree.roots) visit(root)
+	for (const root of tree.roots) {
+		visit(root)
+	}
 
 	return proposals
 }

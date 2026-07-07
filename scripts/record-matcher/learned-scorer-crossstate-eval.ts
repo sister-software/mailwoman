@@ -104,10 +104,14 @@ function scoreClusters(entities: ResolvedEntity[]): {
 	for (const e of entities) {
 		const byNPI = new Map<string, number>()
 
-		for (const rec of e.records) byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
+		for (const rec of e.records) {
+			byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
+		}
 		sumCluster += choose2(e.records.length)
 
-		if (byNPI.size > 1) overMerged++
+		if (byNPI.size > 1) {
+			overMerged++
+		}
 
 		for (const [npi, c] of byNPI) {
 			sumCK += choose2(c)
@@ -116,7 +120,9 @@ function scoreClusters(entities: ResolvedEntity[]): {
 	}
 	let sumClass = 0
 
-	for (const total of npiTotals.values()) sumClass += choose2(total)
+	for (const total of npiTotals.values()) {
+		sumClass += choose2(total)
+	}
 	const tp = sumCK
 	const precision = sumCluster > 0 ? tp / sumCluster : 0
 	const recall = sumClass > 0 ? tp / sumClass : 0
@@ -136,7 +142,9 @@ async function main(): Promise<void> {
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) list.push(alt)
+		if (list.length < 5) {
+			list.push(alt)
+		}
 		altNames.set(npi, list)
 	}
 
@@ -151,7 +159,9 @@ async function main(): Promise<void> {
 	let scanned = 0
 
 	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M`)
+		if (++scanned % 1_000_000 === 0) {
+			console.error(`    scanned ${scanned / 1e6}M`)
+		}
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
 		if (practice) {
@@ -172,10 +182,14 @@ async function main(): Promise<void> {
 				bucket.kept.add(npi)
 				bucket.rows.push({ npi, name: primaryName, org, address: practice })
 
-				for (const alt of altNames.get(npi)!) bucket.rows.push({ npi, name: alt, org: alt, address: practice })
+				for (const alt of altNames.get(npi)!) {
+					bucket.rows.push({ npi, name: alt, org: alt, address: practice })
+				}
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
-				if (mailing && mailing !== practice) bucket.rows.push({ npi, name: primaryName, org, address: mailing })
+				if (mailing && mailing !== practice) {
+					bucket.rows.push({ npi, name: primaryName, org, address: mailing })
+				}
 			}
 		}
 	}
@@ -239,20 +253,28 @@ async function main(): Promise<void> {
 		for (let i = 0; i < trainX.length; i++) {
 			let z = bias
 
-			for (let j = 0; j < dim; j++) z += w[j]! * trainX[i]![j]!
+			for (let j = 0; j < dim; j++) {
+				z += w[j]! * trainX[i]![j]!
+			}
 			const err = (sigmoid(z) - trainY[i]!) * trainW[i]!
 
-			for (let j = 0; j < dim; j++) gw[j]! += err * trainX[i]![j]!
+			for (let j = 0; j < dim; j++) {
+				gw[j]! += err * trainX[i]![j]!
+			}
 			gb += err
 		}
 
-		for (let j = 0; j < dim; j++) w[j]! -= 0.1 * (gw[j]! / trainX.length + 1e-3 * w[j]!)
+		for (let j = 0; j < dim; j++) {
+			w[j]! -= 0.1 * (gw[j]! / trainX.length + 1e-3 * w[j]!)
+		}
 		bias -= 0.1 * (gb / trainX.length)
 	}
 	const lrSc = (x: number[]) => {
 		let z = bias
 
-		for (let j = 0; j < x.length; j++) z += w[j]! * x[j]!
+		for (let j = 0; j < x.length; j++) {
+			z += w[j]! * x[j]!
+		}
 
 		return z
 	}
@@ -272,7 +294,9 @@ async function main(): Promise<void> {
 		for (const t of thresholds) {
 			const s = scoreClusters(resolveEntities(evalRecords, cfg(t)).entities)
 
-			if (s.f1 > best.f1) best = s
+			if (s.f1 > best.f1) {
+				best = s
+			}
 		}
 
 		return best
@@ -282,7 +306,9 @@ async function main(): Promise<void> {
 		const sorted = [...scores].sort((p, q) => p - q)
 		const ts = new Set<number>()
 
-		for (let k = 0; k <= 32; k++) ts.add(sorted[Math.floor((0.2 + (0.999 - 0.2) * (k / 32)) * (sorted.length - 1))]!)
+		for (let k = 0; k <= 32; k++) {
+			ts.add(sorted[Math.floor((0.2 + (0.999 - 0.2) * (k / 32)) * (sorted.length - 1))]!)
+		}
 
 		return [...ts]
 	}

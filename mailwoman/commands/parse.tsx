@@ -308,13 +308,19 @@ async function resolveWithCandidates(
 ): Promise<AddressTree> {
 	const opts: { candidatesPerLookup?: number; defaultCountry?: string; adminCoherence?: boolean } = {}
 
-	if (options.candidates !== undefined) opts.candidatesPerLookup = options.candidates + 1
+	if (options.candidates !== undefined) {
+		opts.candidatesPerLookup = options.candidates + 1
+	}
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
-	if (dc) opts.defaultCountry = dc
+	if (dc) {
+		opts.defaultCountry = dc
+	}
 
 	// #895: the library default is ON; only the explicit --no-admin-coherence pin needs threading.
-	if (options.adminCoherence === false) opts.adminCoherence = false
+	if (options.adminCoherence === false) {
+		opts.adminCoherence = false
+	}
 
 	return resolver.resolveTree(tree, opts)
 }
@@ -403,7 +409,9 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	const wantAlternatives = options.candidates !== undefined
 	const resolveOpts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
 
-	if (wantAlternatives) resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
+	if (wantAlternatives) {
+		resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
+	}
 
 	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended country's place
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
@@ -411,7 +419,9 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	if (options.resolve) {
 		const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
-		if (dc) resolveOpts.defaultCountry = dc
+		if (dc) {
+			resolveOpts.defaultCountry = dc
+		}
 	}
 	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string } } = {
 		locale: options.locale,
@@ -502,9 +512,13 @@ async function runBenchmark(
 		paths: Map<string, number>
 		heapDelta: number
 	}> => {
-		for (let i = 0; i < BENCHMARK_WARMUP_ITERATIONS; i++) await runOne(pipeline)
+		for (let i = 0; i < BENCHMARK_WARMUP_ITERATIONS; i++) {
+			await runOne(pipeline)
+		}
 
-		if (typeof global.gc === "function") global.gc()
+		if (typeof global.gc === "function") {
+			global.gc()
+		}
 		const heapBefore = process.memoryUsage().heapUsed
 
 		const stageRuns = new Map<string, number[]>()

@@ -17,6 +17,7 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
@@ -31,6 +32,9 @@ import {
 	createPhotonRouter,
 	photonCollection,
 	photonFeature,
+	photonForwardCollection,
+	type PhotonForwardInput,
+	photonOSMTags,
 	type PhotonEngine,
 	type PhotonProperties,
 } from "./index.js"
@@ -88,22 +92,41 @@ async function serve(): Promise<void> {
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
+			// #1016: forward the client's viewport/user location as a proximity bias — a SOFT re-rank the resolver
+			// folds into candidate scoring (Springfield near the map center wins). Only when both coords are present.
+			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
 			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
-			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for })
+			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for, bias })
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
-			const properties: PhotonProperties = {
-				name: result.locality ?? result.region ?? undefined,
-				city: result.locality ?? undefined,
-				state: result.region ?? undefined,
-				postcode: result.postcode ?? undefined,
+			// #1014: decorate from the RESOLVED gazetteer place — proper-cased ancestry names (`hierarchy[].name`,
+			// not the parsed span) + the resolved country (ISO2 → canonical name via codex) + osm_key/value/type so
+			// Photon clients don't TypeError. The candidate backend fills only the locality (no ancestors() table),
+			// so state/county come through only on an ancestry-capable backend — country still lands from the code.
+			const country = matchCountry(result.countryCode)
+			const primary: PhotonForwardInput = {
+				lat: result.lat,
+				lon: result.lon,
+				postcode: result.postcode,
+				country: country ? { name: country.canonical, code: country.iso2 } : undefined,
+				places: result.hierarchy.map((h) => ({ tag: h.tag, name: h.name })),
 			}
+			// #1016: candidates[0] is the primary itself; its ranked alternatives (Springfield MA/IL/…) become the
+			// extra features, up to the requested `limit`. Each alternative is a single resolved place.
+			const alternatives = result.candidates.slice(1).map((c) => {
+				const cc = matchCountry(c.countryCode)
 
-			for (const h of result.hierarchy) if (h.tag === "country") properties.country = h.value
+				return {
+					lat: c.lat,
+					lon: c.lon,
+					country: cc ? { name: cc.canonical, code: cc.iso2 } : undefined,
+					places: [{ tag: c.tag, name: c.name }],
+				}
+			})
 
-			return photonCollection([photonFeature(result.lon, result.lat, properties)])
+			return photonForwardCollection({ primary, alternatives }, params.limit)
 		},
 
 		async reverse(params) {
@@ -112,12 +135,20 @@ async function serve(): Promise<void> {
 
 			if (hierarchy.length === 0) return photonCollection([])
 			const deepest = hierarchy[0]!
-			const properties: PhotonProperties = { name: deepest.name, countrycode: deepest.country?.toLowerCase() }
+			// #1014: carry osm_key/osm_value/type (from the deepest placetype) so /reverse matches /api's schema —
+			// no Photon client should dereference an undefined osm_key on a reverse result either.
+			const properties: PhotonProperties = {
+				name: deepest.name,
+				countrycode: deepest.country?.toLowerCase(),
+				...photonOSMTags(deepest.placetype),
+			}
 
 			for (const place of hierarchy) {
 				const key = PLACETYPE_TO_KEY[place.placetype]
 
-				if (key && properties[key] == null) properties[key] = place.name
+				if (key && properties[key] == null) {
+					properties[key] = place.name
+				}
 			}
 
 			return photonCollection([photonFeature(deepest.lon, deepest.lat, properties)])

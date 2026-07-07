@@ -114,7 +114,9 @@ export class AddressPointInterpolator implements InterpolationLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDB) this.#db.close()
+		if (this.#ownsDB) {
+			this.#db.close()
+		}
 	}
 }
 
@@ -125,8 +127,11 @@ function anchorsByNumber(rows: readonly PointRow[]): NumberAnchor[] {
 	for (const row of rows) {
 		const group = byN.get(row.n)
 
-		if (group) group.push(row)
-		else byN.set(row.n, [row])
+		if (group) {
+			group.push(row)
+		} else {
+			byN.set(row.n, [row])
+		}
 	}
 
 	return [...byN.entries()]
@@ -148,8 +153,9 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 	let above: NumberAnchor | undefined
 
 	for (const anchor of anchors) {
-		if (anchor.n < n) below = anchor
-		else {
+		if (anchor.n < n) {
+			below = anchor
+		} else {
 			above = anchor
 			break
 		}

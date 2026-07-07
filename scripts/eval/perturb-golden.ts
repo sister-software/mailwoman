@@ -75,7 +75,10 @@ function main(): void {
 			// Expected = the golden components, wrapped as {tag: [value]} (harness format).
 			const expected: Record<string, string[]> = {}
 
-			for (const [tag, val] of Object.entries(row.components)) if (val) expected[tag] = [val]
+			for (const [tag, val] of Object.entries(row.components))
+				if (val) {
+					expected[tag] = [val]
+				}
 
 			if (Object.keys(expected).length === 0) continue
 

@@ -51,7 +51,9 @@ function loadGolden(dir: string): Sample[] {
 			try {
 				const row = JSON.parse(line)
 
-				if (row.raw && row.country) out.push({ input: row.raw, country: row.country.toUpperCase() })
+				if (row.raw && row.country) {
+					out.push({ input: row.raw, country: row.country.toUpperCase() })
+				}
 			} catch {
 				/* skip */
 			}
@@ -71,7 +73,9 @@ function loadFalsehoods(dir: string): Sample[] {
 			try {
 				const row = JSON.parse(line)
 
-				if (row.input && row.locale) out.push({ input: row.input, country: regionOf(row.locale) })
+				if (row.input && row.locale) {
+					out.push({ input: row.input, country: regionOf(row.locale) })
+				}
 			} catch {
 				/* skip */
 			}
@@ -95,12 +99,16 @@ function main(): void {
 		const detected = regionOf(hint.locale)
 		const ok = detected === s.country
 
-		if (ok) correct++
+		if (ok) {
+			correct++
+		}
 
 		const cs = byCountry.get(s.country) ?? { total: 0, correct: 0, conf: 0 }
 		cs.total++
 
-		if (ok) cs.correct++
+		if (ok) {
+			cs.correct++
+		}
 		cs.conf += hint.confidence
 		byCountry.set(s.country, cs)
 

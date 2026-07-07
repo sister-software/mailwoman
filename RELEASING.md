@@ -101,47 +101,41 @@ card's `training.tokenizer_version` is the source of truth (mismatches have ship
 The resolver's gazetteer is the custom WOF SQLite DB at
 `/mnt/playpen/mailwoman-data/wof/admin-global-priority.db` — **never** an off-the-shelf geocode.earth dump
 (different WOF ids; see `feedback-custom-wof-db-only`). It is not part of the npm/HF release; it ships
-separately (the demo's slim derivative — see the next section). You rebuild it when you add locale
-coverage. `scripts/wof-build-manifest.json` is the source of truth for the build inputs — read it first; it
-pins the repo commits and records every prior rebuild.
+separately (the demo's slim derivative — see the next section). Rebuild it when you add locale coverage OR
+fix a source-ingest bug (#1015). The artifact is SEALED read-only (0444) — never mutate it in place;
+rebuild → verify → swap.
 
-This runbook is the exact sequence walked for the 2026-06-20 Overture-EU swap (+15 zero-DB EU locales). Do
-the steps in order; the post-build steps and the gate are not optional — skipping them silently regresses US
-region resolution (the #440 honest-eval fix lives in steps 1–2).
+The coverage RECIPE lives in code: `mailwoman/gazetteer-pipeline/defaults.ts` (86 Overture + 161 GeoNames +
+11 WOF-priority countries + the pinned Overture release), reviewed like code. `scripts/wof-build-manifest.json`
+is the auto-appended build LOG (what ran, when, verify result, md5) — the command writes it, so it can't lag
+the artifact (the #1015 reconstruct-from-artifact ordeal).
 
-### Step 1 — build to a STAGING path, never over the live DB
-
-```bash
-node --experimental-strip-types scripts/build-unified-wof.ts \
-  --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data \
-  --overture-countries PT,PL,BE,AT,CH,CZ,DK,NO,FI,SK,SI,HR,LU,LV,LT \
-  --output /mnt/playpen/mailwoman-data/wof/admin-global-priority-eu.db
-```
-
-`whosonfirst-data` is a meta-repo nesting the admin subrepos; the sibling `whosonfirst-data-admin-us`
-carries the real US data (the nested admin-us is empty). `--overture-countries` folds the Overture
-`divisions` theme for locales the WOF repos miss (synthetic ids @ 8e12 — see the `overture_divisions_supplement`
-section of the manifest). Build to `*-eu.db`, not the live name.
-
-### Step 2 — the three post-build steps, IN ORDER
+### Step 1 — build + verify + seal (one command)
 
 ```bash
-DB=/mnt/playpen/mailwoman-data/wof/admin-global-priority-eu.db
-node --experimental-strip-types scripts/add-region-abbrevs.ts "$DB"                 # names: VT->Vermont (~184 rows)
-node --experimental-strip-types scripts/backfill-ancestors-from-hierarchy.ts "$DB"  # NYC-style multi-parent ancestry
-node resolver-wof-sqlite/out/build-fts-cli.js --drop "$DB"                          # rebuild place_search AFTER abbrevs
+yarn compile
+node mailwoman/out/cli.js gazetteer build admin        # ~10 min; builds to admin-global-priority.REBUILD.db
 ```
 
-Step 1 (abbrevs) must precede the FTS rebuild — `place_search` concatenates the `names` rows, so build FTS
-last. Use `--drop` because the staging build already has an FTS to replace.
+One turnkey run: WOF ingest → Overture divisions (real `division_area` extents + country nodes, #1015) →
+GeoNames folds → freeze (ancestors closure → `ancestors(id)` index → `wof:hierarchy` −4 backfill →
+coincident_roles) → enrich (region abbrevs + `place_abbr` — the steps the 2026-07-07 rebuild missed) → FTS
+(`place_search` + `place_bbox`) → the **structural verify gate** → seal 0444 → build-log append.
 
-### Step 3 — the no-regression gate (do not swap without it)
+The verify gate (also standalone: `node mailwoman/out/cli.js gazetteer verify --db <path>`): per-country
+node census vs the committed baseline (`gazetteer-pipeline/verify-baseline.ts` — the #1026 class, where
+count gates passed while 95 countries lost their country node), coverage floor, VT→Vermont abbrev
+spot-check, `place_abbr` presence, FTS/bbox coverage, degenerate-extent spot-check, and the reverse EU
+panel (capitals + border cities → correct country, the #1015 class). **A failed gate leaves the artifact
+UNSEALED and exits non-zero — do not swap it.** Baseline updates are deliberate: regenerate via
+`generateBaseline` and review the `verify-baseline.ts` diff like code.
 
-Diff the new DB against the live one on the same US eval, same model. The two `**neural**` rows must match:
+Also run the FORWARD no-regression eval when the change could move coordinates (same US eval, same model,
+old vs new DB — the two `**neural**` rows must match):
 
 ```bash
 PC=/mnt/playpen/mailwoman-data/wof/postalcode-us.db
-for db in admin-global-priority.db admin-global-priority-eu.db; do
+for db in admin-global-priority.db admin-global-priority.REBUILD.db; do
   node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
     --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
     --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
@@ -150,22 +144,20 @@ for db in admin-global-priority.db admin-global-priority-eu.db; do
 done
 ```
 
-Also confirm: priority-country locality counts unchanged (`SELECT country, count(*) FROM spr WHERE
-placetype='locality' GROUP BY country` on both), the `names language='abbr'` count is unchanged, and a
-direct `findPlace('VT', region, US)` returns Vermont. If anything regresses, stop — don't swap.
-
 ### Step 4 — swap + record
 
 ```bash
 cd /mnt/playpen/mailwoman-data/wof
 mv admin-global-priority.db admin-global-priority.db.pre-<change>-bak   # back up the live DB
-mv admin-global-priority-eu.db admin-global-priority.db                 # promote (instant; same fs)
+mv admin-global-priority.REBUILD.db admin-global-priority.db           # promote (instant; same fs)
+# The hosted drop-in services hold the DB open — restart them to pick up the new file:
+systemctl --user restart mailwoman-photon.service                       # + nominatim if running
 ```
 
-The build freezes to `journal_mode=delete` + VACUUM, so there are no `-wal`/`-shm` sidecars to carry. Then
-add a `notes` entry + (for a new source) a section to `scripts/wof-build-manifest.json`, and commit it — the
-manifest is the reproducibility record, and a rebuild that isn't pinned there has bitten us before (the
-deleted admin-fr repo).
+The build freezes to `journal_mode=delete` + VACUUM, so there are no `-wal`/`-shm` sidecars to carry. A
+long-running server that already opened the OLD inode keeps serving it until restarted — the `mv` is atomic
+on-disk but processes don't re-`open()` on their own. The build log
+(`scripts/wof-build-manifest.json`) was already appended by the build command — commit it with the swap.
 
 ### Step 5 — propagating to the demo/browser (rebuild the candidate gazetteer)
 
@@ -296,6 +288,7 @@ The end-to-end order that worked: **gate (revised if needed) → commit card+con
 
 - **Only TWO model-card fields are pipeline-breaking**: `version` (publish.yml derives `MODEL_VERSION` from it) and `files_md5.model.onnx` (re-verified at `yarn pack`). Everything else in the card (`model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block) is provenance — get it honest, but a typo there won't break the publish. Move fast on the prose, slow on those two.
 - **The `neural-weights-fr-fr` card silently drifts.** It is NOT auto-bumped (release-it only touches `package.json`), so its `version` + `model_lineage` rot — found it stuck at `4.6.0` / "v1.5.0-fr-order" while it had long shipped the en-us binary. Reconcile both fields every model promotion.
+- **`release.config.json` silently drifts from the card, and copy-weights trusts the config.** The card is the source of truth for _which_ model ships; `release.config.json#weights.model` is the PATH copy-weights.ts materializes from. They must move in the SAME commit as the card (Step 1 items 2+3) — when they don't, copy-weights materializes the SUPERSEDED model and the Gauntlet gate grades it silently (#1024: config lagged at v220 `a64ad2e6` while the v5.4.0 promote shipped v230 `ea785a70`, costing a bisect detour). **Guardrail (#1024):** the Gauntlet harness now asserts the materialized `neural-weights-en-us/model.onnx` md5 == the card's `files_md5["model.onnx"]` for the shipped default and FAILS the gate on mismatch. Since the gate is the release `before:release` step, a drifted config can no longer ship. #1005 fixed the dev-weights-symlink half of the same class; this is the release-config half.
 - **Gate floor comparison is `>=`** (`scripts/eval/promotion-gate.ts`). A floor set exactly AT the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A gate that needs a floor lowered gets a **new gate file** with a stated `$revision_*` reason (no silent drift); the full gate is ~12–15 min, so set the floors right the first time.
 - **The R2 demo repoint is "carry-forward + overwrite 2 files."** Between model versions ONLY `model.onnx` and `model-card.json` change — tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json`, `calibration.json` are byte-identical. Fastest path: boto3-`download` ALL of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend entry + `defaultVersion`), one `publish-demo-assets-to-r2.py --src`. ~60 MB, two commands. (The bucket is `mailwoman-public`, creds are `RCLONE_S3_PUBLIC_*`.)
 - **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation, NOT a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `/mnt/playpen source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.

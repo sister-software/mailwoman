@@ -414,7 +414,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 				(c) => (CORROBORATING_FIELDS.has(c.name) || c.name.startsWith("attr:")) && c.weight > 0
 			)
 
-			if (!corroborated) weight = Number.NEGATIVE_INFINITY
+			if (!corroborated) {
+				weight = Number.NEGATIVE_INFINITY
+			}
 		}
 
 		return { a, b, weight }
@@ -427,7 +429,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	// the latter is O(clusters × links) and dominates the resolve at scale.
 	const clusterOf = new Map<SourceRecord, number>()
 	clusters.forEach((group, i) => {
-		for (const record of group) clusterOf.set(record, i)
+		for (const record of group) {
+			clusterOf.set(record, i)
+		}
 	})
 	const minIntraWeight = new Array<number>(clusters.length).fill(Infinity)
 
@@ -437,7 +441,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 		if (ci === undefined || ci !== clusterOf.get(link.b)) continue
 
-		if (link.weight < minIntraWeight[ci]!) minIntraWeight[ci] = link.weight
+		if (link.weight < minIntraWeight[ci]!) {
+			minIntraWeight[ci] = link.weight
+		}
 	}
 
 	const entities: ResolvedEntity[] = clusters.map((group, i) => {

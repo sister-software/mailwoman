@@ -321,7 +321,9 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 				`WHERE place_search MATCH '"springfield"' AND spr.is_current != 0 AND spr.is_deprecated = 0 LIMIT 3`,
 		]
 
-		if (hasAbbr) stmts.push(`SELECT id FROM place_abbr WHERE abbr = 'ny' COLLATE NOCASE LIMIT 1`)
+		if (hasAbbr) {
+			stmts.push(`SELECT id FROM place_abbr WHERE abbr = 'ny' COLLATE NOCASE LIMIT 1`)
+		}
 		await Promise.all([this.#worker.db.exec(stmts.join(";\n")), this.#dualRolesMap()])
 	}
 
@@ -366,10 +368,14 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[]
 			)
 
-			if (types.length) conds.push(`spr.placetype IN (${types.map(sqlStr).join(",")})`)
+			if (types.length) {
+				conds.push(`spr.placetype IN (${types.map(sqlStr).join(",")})`)
+			}
 		}
 
-		if (query.country) conds.push(`spr.country = ${sqlStr(query.country.toUpperCase())}`)
+		if (query.country) {
+			conds.push(`spr.country = ${sqlStr(query.country.toUpperCase())}`)
+		}
 
 		if (query.bbox) {
 			const b = query.bbox
@@ -628,7 +634,9 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			// Tried ONLY on an exact miss; the cascade's region bbox disambiguates any base-name ambiguity.
 			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
-			if (strippedKey && strippedKey !== nameKey) rows = await probe(strippedKey)
+			if (strippedKey && strippedKey !== nameKey) {
+				rows = await probe(strippedKey)
+			}
 		}
 
 		const candidates = rows.map((row) => {
@@ -677,7 +685,9 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 						const d = haversineKm(b.lat, b.lon, c.lat, c.lon)
 						const term = (BIAS_BOOST * (b.weight ?? 1)) / (1 + d / PROX_SCALE_KM)
 
-						if (term > proxTerm) proxTerm = term
+						if (term > proxTerm) {
+							proxTerm = term
+						}
 					}
 				}
 

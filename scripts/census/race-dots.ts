@@ -51,13 +51,21 @@ function bbox(rings: PolygonCoords): [number, number, number, number] {
 		maxY = -Infinity
 
 	for (const [x, y] of rings[0]!) {
-		if (x! < minX) minX = x!
+		if (x! < minX) {
+			minX = x!
+		}
 
-		if (x! > maxX) maxX = x!
+		if (x! > maxX) {
+			maxX = x!
+		}
 
-		if (y! < minY) minY = y!
+		if (y! < minY) {
+			minY = y!
+		}
 
-		if (y! > maxY) maxY = y!
+		if (y! > maxY) {
+			maxY = y!
+		}
 	}
 
 	return [minX, minY, maxX, maxY]
@@ -69,7 +77,9 @@ function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: numbe
 	let r = Math.random() * totalArea
 	let pick = 0
 
-	while (pick < polys.length - 1 && (r -= areas[pick]!) > 0) pick++
+	while (pick < polys.length - 1 && (r -= areas[pick]!) > 0) {
+		pick++
+	}
 	const poly = polys[pick]!
 	const polyFeature = {
 		type: "Feature" as const,
@@ -152,5 +162,6 @@ for (const row of rows) {
 out.end()
 console.error(`[done] ${dots} dots from ${rows.length} blocks (1 dot ≈ ${PER} people); ${skipped} skipped`)
 
-for (const [cat, n] of [...totals.entries()].sort((a, b) => b[1] - a[1]))
+for (const [cat, n] of [...totals.entries()].sort((a, b) => b[1] - a[1])) {
 	console.error(`  ${n.toString().padStart(7)}  ${cat}`)
+}

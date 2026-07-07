@@ -34,9 +34,13 @@ for (const row of rows.slice(0, 10)) {
 	const got = decodeAsJSON(tree) as Record<string, string>
 	const aff = ["street_prefix", "street", "street_suffix"].filter((t) => got[t]).map((t) => `${t}=${got[t]!}`)
 
-	if (got.street_prefix) prefixHits++
+	if (got.street_prefix) {
+		prefixHits++
+	}
 
-	if (got.street_suffix) suffixHits++
+	if (got.street_suffix) {
+		suffixHits++
+	}
 	console.log(`${row.raw}\n   → ${aff.join(" · ") || "(no street tags)"}`)
 }
 console.log(`\nstreet_prefix emitted in ${prefixHits}/10, street_suffix in ${suffixHits}/10`)

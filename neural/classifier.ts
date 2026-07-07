@@ -199,7 +199,7 @@ export class NeuralAddressClassifier {
 	 *
 	 * **Node-only.** The dynamic imports keep `ONNXRunner` (onnxruntime-node) + `resolveWeights` (uses Node fs) out of
 	 * the static dependency graph, so this file can be bundled for the browser by `@mailwoman/neural-web`. Calling this
-	 * method in a browser will throw at runtime — use `loadNeuralClassifierFromUrls` from `@mailwoman/neural-web`
+	 * method in a browser will throw at runtime — use `loadNeuralClassifierFromURLs` from `@mailwoman/neural-web`
 	 * instead.
 	 */
 	static async loadFromWeights(
@@ -462,7 +462,9 @@ export class NeuralAddressClassifier {
 			let t = 0
 
 			return pieces.map((p) => {
-				while (t + 1 < toks.length && toks[t + 1]!.start <= p.start) t++
+				while (t + 1 < toks.length && toks[t + 1]!.start <= p.start) {
+					t++
+				}
 
 				const tok = toks[t]
 
@@ -505,7 +507,9 @@ export class NeuralAddressClassifier {
 				})
 			: undefined
 
-		if (fstPrior) emissions = addEmissionMatrix(emissions, fstPrior)
+		if (fstPrior) {
+			emissions = addEmissionMatrix(emissions, fstPrior)
+		}
 		tracePriors?.push({ kind: "fst", applied: fstPrior !== undefined && matrixHasBias(fstPrior) })
 
 		const morphologyPrior = opts?.fstStreetMorphology
@@ -517,7 +521,9 @@ export class NeuralAddressClassifier {
 				)
 			: undefined
 
-		if (morphologyPrior) emissions = addEmissionMatrix(emissions, morphologyPrior)
+		if (morphologyPrior) {
+			emissions = addEmissionMatrix(emissions, morphologyPrior)
+		}
 		tracePriors?.push({
 			kind: "streetMorphology",
 			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
@@ -550,9 +556,13 @@ export class NeuralAddressClassifier {
 				const b = this.labels.indexOf(`B-${tag}`)
 				const i = this.labels.indexOf(`I-${tag}`)
 
-				if (b >= 0) forbidden.add(b)
+				if (b >= 0) {
+					forbidden.add(b)
+				}
 
-				if (i >= 0) forbidden.add(i)
+				if (i >= 0) {
+					forbidden.add(i)
+				}
 			}
 
 			if (forbidden.size > 0) {
@@ -619,14 +629,18 @@ export class NeuralAddressClassifier {
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
 			tokens = repairPostcodeLabels(text, tokens).tokens
 
-			if (traceRepairs) recordRepair("postcodeRepair", before, labelsPerPiece(tokens))
+			if (traceRepairs) {
+				recordRepair("postcodeRepair", before, labelsPerPiece(tokens))
+			}
 		}
 
 		if (opts?.unitRepair) {
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
 			tokens = repairUnitLabels(text, tokens).tokens
 
-			if (traceRepairs) recordRepair("unitRepair", before, labelsPerPiece(tokens))
+			if (traceRepairs) {
+				recordRepair("unitRepair", before, labelsPerPiece(tokens))
+			}
 		}
 
 		// Punctuation-gap span bridging (v4.4.0 corrective — see span-bridge.ts): merge same-tag
@@ -641,7 +655,9 @@ export class NeuralAddressClassifier {
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
 			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length > 0 ? { blockedSpans } : undefined)
 
-			if (traceRepairs) recordRepair("spanBridge", before, labelsPerPiece(tokens))
+			if (traceRepairs) {
+				recordRepair("spanBridge", before, labelsPerPiece(tokens))
+			}
 		}
 
 		return {
@@ -712,7 +728,7 @@ export class NeuralAddressClassifier {
 			throw new Error(
 				`Label/emission mismatch: model emits ${width} logits per token but the classifier was ` +
 					`configured with only ${this.labels.length} labels. Did you load a Stage 3 bundle without ` +
-					`passing its model-card labels? See loadFromWeights / loadNeuralClassifierFromUrls.`
+					`passing its model-card labels? See loadFromWeights / loadNeuralClassifierFromURLs.`
 			)
 		}
 	}
@@ -848,7 +864,9 @@ function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
 	}
 	let sumExp = 0
 
-	for (const v of row) sumExp += Math.exp(v - maxVal)
+	for (const v of row) {
+		sumExp += Math.exp(v - maxVal)
+	}
 	const conf = 1 / sumExp
 
 	return { idx: maxIdx, conf }
@@ -862,7 +880,9 @@ function addMatrices(a: number[][], b: number[][]): number[][] {
 	for (let i = 0; i < n; i++) {
 		const row = new Array<number>(n)
 
-		for (let j = 0; j < n; j++) row[j] = a[i]![j]! + b[i]![j]!
+		for (let j = 0; j < n; j++) {
+			row[j] = a[i]![j]! + b[i]![j]!
+		}
 		out.push(row)
 	}
 

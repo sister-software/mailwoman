@@ -12,8 +12,9 @@ console.log("\nINDEXES:")
 for (const r of d.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'index'").all() as Array<{
 	name: string
 	sql: string | null
-}>)
+}>) {
 	console.log("  ", r.sql || r.name)
+}
 
 const row = d
 	.prepare(
@@ -28,8 +29,9 @@ for (const r of d
 	.prepare(
 		"EXPLAIN QUERY PLAN SELECT lat,lon,source,release FROM address_point WHERE postcode=? AND street_norm=? AND number=? LIMIT 1"
 	)
-	.all(row.postcode, row.street_norm, row.number) as Array<{ detail: string }>)
+	.all(row.postcode, row.street_norm, row.number) as Array<{ detail: string }>) {
 	console.log("  ", r.detail)
+}
 
 // dbstat: pages backing the index used + the table. A byte-range index lookup descends the index
 // B-tree (depth) + reads the matching leaf + one table row page. We report the B-tree DEPTH (≈ pages
@@ -40,7 +42,9 @@ try {
 		.all() as Array<{ name: string; pages: number }>
 	console.log("\nINDEX page footprint (total, NOT per-query):")
 
-	for (const r of idxRows) console.log(`   ${r.name}: ${r.pages} pages (${((r.pages * PS) / 1e6).toFixed(1)} MB)`)
+	for (const r of idxRows) {
+		console.log(`   ${r.name}: ${r.pages} pages (${((r.pages * PS) / 1e6).toFixed(1)} MB)`)
+	}
 } catch (e) {
 	console.log("\n(dbstat unavailable:", (e as Error).message, ")")
 }

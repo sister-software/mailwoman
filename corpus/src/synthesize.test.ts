@@ -87,7 +87,9 @@ describe("universal augmentations", () => {
 
 		// Substring invariant: every component value must appear in raw.
 		for (const v of Object.values(out.components)) {
-			if (v) expect(out.raw.includes(v)).toBe(true)
+			if (v) {
+				expect(out.raw.includes(v)).toBe(true)
+			}
 		}
 	})
 
@@ -829,7 +831,9 @@ describe("composeAdversarialRow", () => {
 		})
 		expect(spaced.kind).toBe("labeled")
 
-		if (spaced.kind === "labeled") expect(spaced.row.raw).toBe("Buffalo Health Clinic Buffalo, NY 14201")
+		if (spaced.kind === "labeled") {
+			expect(spaced.row.raw).toBe("Buffalo Health Clinic Buffalo, NY 14201")
+		}
 
 		const newline = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
@@ -837,7 +841,9 @@ describe("composeAdversarialRow", () => {
 		})
 		expect(newline.kind).toBe("labeled")
 
-		if (newline.kind === "labeled") expect(newline.row.raw).toBe("Buffalo Health Clinic\nBuffalo, NY 14201")
+		if (newline.kind === "labeled") {
+			expect(newline.row.raw).toBe("Buffalo Health Clinic\nBuffalo, NY 14201")
+		}
 	})
 
 	it("empty venue quarantines with reason=venue-empty", () => {
@@ -848,7 +854,9 @@ describe("composeAdversarialRow", () => {
 		const result = composeAdversarialRow("   ", address, { pattern: "place-name-venue" })
 		expect(result.kind).toBe("quarantined")
 
-		if (result.kind === "quarantined") expect(result.row.reason).toBe("venue-empty")
+		if (result.kind === "quarantined") {
+			expect(result.row.reason).toBe("venue-empty")
+		}
 	})
 
 	it("address that fails alignment quarantines with the propagated reason", () => {
@@ -919,7 +927,9 @@ describe("composeAdversarialRow", () => {
 				expect(span_starts![i]!).toBeLessThan(span_ends![i]!)
 				expect(span_ends![i]!).toBeLessThanOrEqual(raw.length)
 
-				if (i > 0) expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!)
+				if (i > 0) {
+					expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!)
+				}
 			}
 		}
 	})
@@ -952,7 +962,9 @@ describe("composeAdversarialRow", () => {
 		const result = composeAdversarialRow(nfdVenue, address, { pattern: "place-name-venue" })
 		expect(result.kind).toBe("quarantined")
 
-		if (result.kind === "quarantined") expect(result.row.reason).toBe("venue-not-nfc")
+		if (result.kind === "quarantined") {
+			expect(result.row.reason).toBe("venue-not-nfc")
+		}
 	})
 
 	it("is deterministic: two compositions of the same inputs produce identical output", () => {

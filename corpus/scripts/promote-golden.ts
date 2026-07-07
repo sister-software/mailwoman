@@ -196,7 +196,9 @@ function main() {
 			const entries = readJsonl<GoldenEntry>(join(priorDir, f))
 			priorEntries.push({ country, entries })
 
-			for (const e of entries) seenNormalized.add(normalize(e.raw))
+			for (const e of entries) {
+				seenNormalized.add(normalize(e.raw))
+			}
 			process.stderr.write(`  prior ${country}: ${entries.length} entries (forward-copy base)\n`)
 		}
 	} else {
@@ -263,7 +265,9 @@ function main() {
 	for (const cand of accepted) {
 		const key = (cand.country || "OTHER").toUpperCase()
 
-		if (!buckets.has(key)) buckets.set(key, [])
+		if (!buckets.has(key)) {
+			buckets.set(key, [])
+		}
 		buckets.get(key)!.push(cand)
 	}
 

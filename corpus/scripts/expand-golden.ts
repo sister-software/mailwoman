@@ -230,7 +230,9 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 				bySource.set(row.source, bucket)
 			}
 
-			if (bucket.length < PER_SOURCE_CAP) bucket.push(seed)
+			if (bucket.length < PER_SOURCE_CAP) {
+				bucket.push(seed)
+			}
 		}
 		await reader.close()
 	}
@@ -240,7 +242,9 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 	)
 	process.stderr.write(`  per-source pool sizes:\n`)
 
-	for (const [src, pool] of bySource) process.stderr.write(`    ${src}: ${pool.length}\n`)
+	for (const [src, pool] of bySource) {
+		process.stderr.write(`    ${src}: ${pool.length}\n`)
+	}
 
 	// Round-robin sample. Each source gives floor(count / nSources) seeds; rounding goes
 	// to sources in alphabetical order. If a pool is smaller than its target, take all of it.
@@ -491,7 +495,9 @@ async function main() {
 						}
 
 						// Remove dropped components from the components map
-						for (const tag of goldenCandidate.dropped_components) delete goldenCandidate.components[tag]
+						for (const tag of goldenCandidate.dropped_components) {
+							delete goldenCandidate.components[tag]
+						}
 						outLines.push(JSON.stringify(goldenCandidate))
 						kept++
 					} else {

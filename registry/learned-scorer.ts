@@ -71,7 +71,9 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		for (let i = 0; i < pat.length; i++) {
 			const lvl = pat[i]!
 
-			for (let l = 0; l < levelCounts[i]!; l++) f.push(lvl === l ? 1 : 0)
+			for (let l = 0; l < levelCounts[i]!; l++) {
+				f.push(lvl === l ? 1 : 0)
+			}
 		}
 		// Interaction: co-located (spatial exact = level 0) AND names/org disagree (catch-all level).
 		const spatialExact = spatialI !== undefined && pat[spatialI] === 0 ? 1 : 0
@@ -101,7 +103,9 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= 0.93 ? 1 : 0
 		f.push(officialAgree)
 		f.push(officialAgree * orgDisagree) // the roll-up core: same signer, different brand
-		f.push(officialAgree * orgDisagree * spatialExact) // …at the same place
+		f.push(officialAgree * orgDisagree * spatialExact)
+
+		// …at the same place
 
 		// scale into a usable range
 		return f

@@ -120,9 +120,13 @@ export function* iterateContextSpans(context: TokenContext): Generator<Span> {
 	const visited = new Set<number>()
 	const queue: Span[] = []
 
-	if (context.span) queue.push(context.span)
+	if (context.span) {
+		queue.push(context.span)
+	}
 
-	for (const section of context.sections) queue.push(section)
+	for (const section of context.sections) {
+		queue.push(section)
+	}
 
 	while (queue.length > 0) {
 		const span = queue.pop()!
@@ -131,9 +135,13 @@ export function* iterateContextSpans(context: TokenContext): Generator<Span> {
 		visited.add(span.id)
 		yield span
 
-		for (const child of span.children) queue.push(child)
+		for (const child of span.children) {
+			queue.push(child)
+		}
 
-		for (const phrase of span.phrases) queue.push(phrase)
+		for (const phrase of span.phrases) {
+			queue.push(phrase)
+		}
 	}
 }
 

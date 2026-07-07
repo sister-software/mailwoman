@@ -95,11 +95,15 @@ export function buildFSTEmissionPriors(
 	const suppressionScale = opts.suppressionScale ?? 1.5
 	const matrix: number[][] = []
 
-	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
+	for (let t = 0; t < T; t++) {
+		matrix.push(new Array<number>(L).fill(0))
+	}
 
 	const labelToCol = new Map<string, number>()
 
-	for (let k = 0; k < labels.length; k++) labelToCol.set(labels[k]!, k)
+	for (let k = 0; k < labels.length; k++) {
+		labelToCol.set(labels[k]!, k)
+	}
 
 	const wordGroups = groupPiecesIntoWords(pieces)
 
@@ -176,7 +180,9 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 		const hasAlnum = /[\p{L}\p{N}]/u.test(p.piece)
 
 		if (p.piece.startsWith(SPACE_SENTINEL) || i === 0 || !hasAlnum) {
-			if (current) groups.push(current)
+			if (current) {
+				groups.push(current)
+			}
 
 			if (!hasAlnum) {
 				groups.push({ fstToken: "", pieceIndices: [i] })
@@ -193,7 +199,9 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 		}
 	}
 
-	if (current) groups.push(current)
+	if (current) {
+		groups.push(current)
+	}
 
 	for (const g of groups) {
 		if (g.fstToken !== "") {
@@ -234,7 +242,9 @@ function applyBias(
 		const impBias = entry.importance * biasScale * maxBias
 		const existing = seenTags.get(bioTag) ?? 0
 
-		if (impBias > existing) seenTags.set(bioTag, impBias)
+		if (impBias > existing) {
+			seenTags.set(bioTag, impBias)
+		}
 	}
 
 	if (seenTags.size === 0) return
@@ -242,7 +252,9 @@ function applyBias(
 	const allPieceIndices: number[] = []
 
 	for (const group of groups) {
-		for (const pi of group.pieceIndices) allPieceIndices.push(pi)
+		for (const pi of group.pieceIndices) {
+			allPieceIndices.push(pi)
+		}
 	}
 
 	for (const [bioTag, bias] of seenTags) {

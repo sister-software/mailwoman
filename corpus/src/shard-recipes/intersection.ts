@@ -160,13 +160,20 @@ function splitCSV(line: string): string[] {
 				if (line[i + 1] === '"') {
 					cur += '"'
 					i++
-				} else inQ = false
-			} else cur += c
-		} else if (c === '"') inQ = true
-		else if (c === ",") {
+				} else {
+					inQ = false
+				}
+			} else {
+				cur += c
+			}
+		} else if (c === '"') {
+			inQ = true
+		} else if (c === ",") {
 			out.push(cur)
 			cur = ""
-		} else cur += c
+		} else {
+			cur += c
+		}
 	}
 	out.push(cur)
 
@@ -273,7 +280,9 @@ function buildZipCityMap(): Map<string, string> {
 		if (!city || !/^\d{5}$/.test(zip) || BAD_NAME.test(city)) continue
 		let byCity = counts.get(zip)
 
-		if (!byCity) counts.set(zip, (byCity = new Map()))
+		if (!byCity) {
+			counts.set(zip, (byCity = new Map()))
+		}
 		byCity.set(city, (byCity.get(city) ?? 0) + 1)
 	}
 	const map = new Map<string, string>()
@@ -281,9 +290,14 @@ function buildZipCityMap(): Map<string, string> {
 	for (const [zip, byCity] of counts) {
 		let best: { city: string; n: number } | null = null
 
-		for (const [city, n] of byCity) if (!best || n > best.n) best = { city, n }
+		for (const [city, n] of byCity)
+			if (!best || n > best.n) {
+				best = { city, n }
+			}
 
-		if (best) map.set(zip, best.city)
+		if (best) {
+			map.set(zip, best.city)
+		}
 	}
 
 	return map
@@ -305,9 +319,13 @@ function renderRow(
 	const city = crossing.zip ? (zipCity.get(crossing.zip) ?? null) : null
 
 	// Downgrade unsatisfiable tails (no ZIP on the edge / no city for the ZIP) to the region tail.
-	if ((tail.id === "region-zip" || tail.id === "city-region-zip") && !crossing.zip) tail = TAILS[1]!
+	if ((tail.id === "region-zip" || tail.id === "city-region-zip") && !crossing.zip) {
+		tail = TAILS[1]!
+	}
 
-	if ((tail.id === "city-region" || tail.id === "city-region-zip") && !city) tail = TAILS[1]!
+	if ((tail.id === "city-region" || tail.id === "city-region-zip") && !city) {
+		tail = TAILS[1]!
+	}
 
 	const components: Partial<Record<ComponentTag, string>> = { intersection_a: crossing.a, intersection_b: crossing.b }
 	let raw = body
@@ -347,7 +365,9 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 	const errors: string[] = []
 	const { raw, tokens, labels, span_starts, span_ends, span_tags } = row
 
-	if (tokens.length !== labels.length) errors.push("tokens/labels length mismatch")
+	if (tokens.length !== labels.length) {
+		errors.push("tokens/labels length mismatch")
+	}
 
 	if (!span_starts || !span_ends || !span_tags) {
 		errors.push("missing the char-offset span triple (#519)")
@@ -375,7 +395,9 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 
 	const compCount = Object.keys(components).length
 
-	if (span_tags.length !== compCount) errors.push(`span count ${span_tags.length} != components ${compCount}`)
+	if (span_tags.length !== compCount) {
+		errors.push(`span count ${span_tags.length} != components ${compCount}`)
+	}
 
 	// Raw-surface reconstruction: each component's single span slices raw to the component verbatim.
 	for (const [tag, value] of Object.entries(components)) {
@@ -389,7 +411,9 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 		const idx = indices[0]!
 		const got = raw.slice(span_starts[idx]!, span_ends[idx]!)
 
-		if (got.toLowerCase() !== value.toLowerCase()) errors.push(`${tag} span "${got}" != component "${value}"`)
+		if (got.toLowerCase() !== value.toLowerCase()) {
+			errors.push(`${tag} span "${got}" != component "${value}"`)
+		}
 	}
 
 	// Negative space: every char outside the spans must be connector material.
@@ -397,21 +421,29 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 	const uncovered: string[] = []
 
 	for (let i = 0; i < span_starts.length; i++) {
-		if (span_starts[i]! > cursor) uncovered.push(raw.slice(cursor, span_starts[i]!))
+		if (span_starts[i]! > cursor) {
+			uncovered.push(raw.slice(cursor, span_starts[i]!))
+		}
 		cursor = span_ends[i]!
 	}
 
-	if (cursor < raw.length) uncovered.push(raw.slice(cursor))
+	if (cursor < raw.length) {
+		uncovered.push(raw.slice(cursor))
+	}
 
 	for (const segment of uncovered) {
 		const words = segment.match(/[\p{L}\p{N}]+/gu) ?? []
 
 		for (const word of words) {
-			if (!CONNECTOR_O_TOKENS.has(word.toLowerCase())) errors.push(`illegal uncovered word "${word}"`)
+			if (!CONNECTOR_O_TOKENS.has(word.toLowerCase())) {
+				errors.push(`illegal uncovered word "${word}"`)
+			}
 		}
 		const punctOnly = segment.replace(/[\p{L}\p{N}]+/gu, "")
 
-		if (!CONNECTOR_PUNCT_RE.test(punctOnly)) errors.push(`illegal uncovered punctuation in "${segment}"`)
+		if (!CONNECTOR_PUNCT_RE.test(punctOnly)) {
+			errors.push(`illegal uncovered punctuation in "${segment}"`)
+		}
 	}
 
 	return errors
@@ -476,7 +508,9 @@ export const intersectionRecipe: ShardRecipe = {
 
 		const zipCity = opts.golden ? new Map<string, string>() : buildZipCityMap()
 
-		if (!opts.golden) console.error(`  zip→city map: ${zipCity.size} ZIPs (OA Cook)`)
+		if (!opts.golden) {
+			console.error(`  zip→city map: ${zipCity.size} ZIPs (OA Cook)`)
+		}
 
 		let emitted = 0
 		let skipped = 0

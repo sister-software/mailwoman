@@ -120,7 +120,9 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 				for (const spec of options.locale ?? []) {
 					const [country, db] = spec.split(":")
 
-					if (country && db) locales.push({ country, db: db.startsWith("/") ? db : join(wof, db) })
+					if (country && db) {
+						locales.push({ country, db: db.startsWith("/") ? db : join(wof, db) })
+					}
 				}
 
 				if (locales.length === 0) {
@@ -178,7 +180,9 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

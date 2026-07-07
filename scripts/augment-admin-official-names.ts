@@ -71,7 +71,9 @@ const hasColumn = (db.prepare(`PRAGMA table_info(names)`).all() as Array<{ name:
 	(c) => c.name === "official"
 )
 
-if (!hasColumn) db.exec(`ALTER TABLE names ADD COLUMN official INTEGER NOT NULL DEFAULT 0`)
+if (!hasColumn) {
+	db.exec(`ALTER TABLE names ADD COLUMN official INTEGER NOT NULL DEFAULT 0`)
+}
 
 const selectNames = db.prepare(`SELECT rowid, name FROM names WHERE id = ?`)
 const stamp = db.prepare(`UPDATE names SET official = 1 WHERE rowid = ?`)
@@ -82,7 +84,9 @@ const byID = new Map<number, Set<string>>()
 for (const p of pairs) {
 	let set = byID.get(p.id)
 
-	if (!set) byID.set(p.id, (set = new Set()))
+	if (!set) {
+		byID.set(p.id, (set = new Set()))
+	}
 	set.add(p.name)
 }
 
@@ -103,7 +107,9 @@ for (const [id, wanted] of byID) {
 		}
 	}
 
-	if (!hit) missed++
+	if (!hit) {
+		missed++
+	}
 }
 db.exec("COMMIT")
 db.exec("ANALYZE")
@@ -114,4 +120,6 @@ console.error(`  stamped ${stamped.toLocaleString()} name rows official=1 (${mis
 console.error(`  quick_check: ${integrity.quick_check}`)
 db.close()
 
-if (integrity.quick_check !== "ok") process.exit(1)
+if (integrity.quick_check !== "ok") {
+	process.exit(1)
+}

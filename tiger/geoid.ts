@@ -588,7 +588,9 @@ export function parseGeoID(input: unknown): ParsedGeoID | null
 export function parseGeoID(input: unknown): ParsedGeoID | null {
 	if (!input) return null
 
-	if (typeof input === "number") input = input.toString()
+	if (typeof input === "number") {
+		input = input.toString()
+	}
 
 	if (typeof input !== "string") return null
 

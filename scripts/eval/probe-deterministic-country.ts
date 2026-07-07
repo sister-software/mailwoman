@@ -35,8 +35,9 @@ for (const row of rows) {
 	const predicted = m ? last : null // tag the trailing segment verbatim if it's a known country form
 	const gold = row.components.country ?? null
 
-	if (predicted && gold && norm(predicted) === norm(gold)) tp++
-	else {
+	if (predicted && gold && norm(predicted) === norm(gold)) {
+		tp++
+	} else {
 		if (predicted) {
 			fp++
 			misses.push(`FP  ${row.raw}  → tagged "${predicted}" (gold country=${gold ?? "∅"})`)
@@ -59,5 +60,7 @@ console.log(
 if (misses.length) {
 	console.log("\n-- misses --")
 
-	for (const m of misses) console.log(m)
+	for (const m of misses) {
+		console.log(m)
+	}
 }

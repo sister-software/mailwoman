@@ -136,8 +136,11 @@ async function main() {
 				const r = await exactNear(lookup, struct, cc, tLat, tLon)
 
 				if (r.hit) {
-					if (r.near) s.sNear++
-					else s.sColl++
+					if (r.near) {
+						s.sNear++
+					} else {
+						s.sColl++
+					}
 					continue
 				}
 			}
@@ -148,11 +151,15 @@ async function main() {
 				const r = await exactNear(lookup, tok, cc, tLat, tLon)
 
 				if (r.hit) {
-					if (r.near) s.tNear++
-					else s.tColl++
+					if (r.near) {
+						s.tNear++
+					} else {
+						s.tColl++
+					}
 
-					if ($public.DEBUG)
+					if ($public.DEBUG) {
 						console.error(`  [${cc}] ${r.near ? "RECOVER" : "COLLIDE"}: "${gold}" → "${tok}" (${r.km.toFixed(0)}km)`)
+					}
 				}
 			}
 		}
@@ -160,7 +167,9 @@ async function main() {
 			`${cc.padEnd(3)} | ${String(s.n).padStart(3)} | ${String(s.base).padStart(3)}=${((100 * s.base) / Math.max(s.n, 1)).toFixed(0)}% | ${String(s.sNear).padStart(2)} / ${String(s.sColl).padStart(2)}              | ${String(s.tNear).padStart(2)} / ${String(s.tColl).padStart(2)}`
 		)
 
-		for (const k of Object.keys(s) as (keyof typeof s)[]) T[k] += s[k]
+		for (const k of Object.keys(s) as (keyof typeof s)[]) {
+			T[k] += s[k]
+		}
 	}
 	const baseRecall = (100 * T.base) / Math.max(T.n, 1)
 	const structRecall = (100 * (T.base + T.sNear)) / Math.max(T.n, 1)

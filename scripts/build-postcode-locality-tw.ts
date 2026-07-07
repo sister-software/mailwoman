@@ -200,18 +200,30 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 			if (Array.isArray(coords) && typeof coords[0] === "number") {
 				const [lon, lat] = coords as [number, number]
 
-				if (lon < minLon) minLon = lon
+				if (lon < minLon) {
+					minLon = lon
+				}
 
-				if (lon > maxLon) maxLon = lon
+				if (lon > maxLon) {
+					maxLon = lon
+				}
 
-				if (lat < minLat) minLat = lat
+				if (lat < minLat) {
+					minLat = lat
+				}
 
-				if (lat > maxLat) maxLat = lat
+				if (lat > maxLat) {
+					maxLat = lat
+				}
 
 				return
 			}
 
-			if (Array.isArray(coords)) for (const c of coords) scan(c)
+			if (Array.isArray(coords)) {
+				for (const c of coords) {
+					scan(c)
+				}
+			}
 		}
 		scan((geometry as { coordinates?: unknown }).coordinates)
 		out.push({
@@ -286,8 +298,11 @@ async function main(): Promise<void> {
 	for (const p of polygons) {
 		const bucket = polygonsByName.get(p.nameHan)
 
-		if (bucket) bucket.push(p)
-		else polygonsByName.set(p.nameHan, [p])
+		if (bucket) {
+			bucket.push(p)
+		} else {
+			polygonsByName.set(p.nameHan, [p])
+		}
 	}
 
 	const admin = new DatabaseSync(args.adminDb)
@@ -328,8 +343,11 @@ async function main(): Promise<void> {
 
 		if (!place) continue
 
-		if (/[一-鿿]/.test(row.name)) place.hanNames.add(normHan(row.name))
-		else if (row.language === "eng") place.engNames.add(normEn(row.name))
+		if (/[一-鿿]/.test(row.name)) {
+			place.hanNames.add(normHan(row.name))
+		} else if (row.language === "eng") {
+			place.engNames.add(normEn(row.name))
+		}
 	}
 
 	// Region tier (the 22 直轄市/縣/市) — the containing-city fallback for districts WOF simply lacks
@@ -371,8 +389,11 @@ async function main(): Promise<void> {
 		if (!place) continue
 		const bucket = placesByQID.get(row.qid)
 
-		if (bucket) bucket.push(place)
-		else placesByQID.set(row.qid, [place])
+		if (bucket) {
+			bucket.push(place)
+		} else {
+			placesByQID.set(row.qid, [place])
+		}
 	}
 	admin.close()
 
@@ -384,8 +405,11 @@ async function main(): Promise<void> {
 		const key = `${Math.round(p.lo * 2)}|${Math.round(p.la * 2)}`
 		const bucket = grid.get(key)
 
-		if (bucket) bucket.push(p)
-		else grid.set(key, [p])
+		if (bucket) {
+			bucket.push(p)
+		} else {
+			grid.set(key, [p])
+		}
 	}
 
 	const nearby = (lat: number, lon: number, radiusKm: number): Array<{ d: number; place: AdminPlace }> => {
@@ -398,7 +422,9 @@ async function main(): Promise<void> {
 				for (const place of grid.get(`${cx + dx}|${cy + dy}`) ?? []) {
 					const d = haversineKm(lat, lon, place.la, place.lo)
 
-					if (d <= radiusKm) out.push({ d, place })
+					if (d <= radiusKm) {
+						out.push({ d, place })
+					}
 				}
 			}
 		}
@@ -477,8 +503,9 @@ async function main(): Promise<void> {
 				inside.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place)) ??
 				inside.find((c) => DISTRICT_TIER.has(c.place.placetype))
 
-			if (hit) tierCounts.polygon++
-			else if (polygon.wikidata) {
+			if (hit) {
+				tierCounts.polygon++
+			} else if (polygon.wikidata) {
 				const concordant = (placesByQID.get(polygon.wikidata) ?? [])
 					.map((place) => ({ d: haversineKm(d.lat, d.lon, place.la, place.lo), place }))
 					.sort(
@@ -487,7 +514,9 @@ async function main(): Promise<void> {
 					)
 				hit = concordant[0]
 
-				if (hit) tierCounts.wikidata++
+				if (hit) {
+					tierCounts.wikidata++
+				}
 			}
 
 			if (!hit) {
@@ -495,10 +524,14 @@ async function main(): Promise<void> {
 				// zho-less `county`/`neighbourhood` rows (Lingya, Qianzhen, …).
 				hit = inside.find((c) => nameMatches(c.place))
 
-				if (hit) tierCounts.name_in_polygon++
+				if (hit) {
+					tierCounts.name_in_polygon++
+				}
 			}
 
-			if (hit) extras = inside.filter((c) => c.place.pid !== hit!.place.pid)
+			if (hit) {
+				extras = inside.filter((c) => c.place.pid !== hit!.place.pid)
+			}
 		}
 
 		if (!hit) {
@@ -557,7 +590,9 @@ async function main(): Promise<void> {
 	const insert = db.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
 	db.exec("BEGIN")
 
-	for (const r of rows) insert.run(...r)
+	for (const r of rows) {
+		insert.run(...r)
+	}
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -599,7 +634,9 @@ async function main(): Promise<void> {
 	]
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
-	for (const [k, v] of meta) insMeta.run(k, v)
+	for (const [k, v] of meta) {
+		insMeta.run(k, v)
+	}
 
 	db.exec("PRAGMA journal_mode=DELETE")
 	db.exec("ANALYZE")

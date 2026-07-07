@@ -39,14 +39,18 @@ runIfScript(import.meta, async () => {
 		await $`node --experimental-strip-types scripts/eval-error-analysis.ts --golden data/eval/golden/v0.1.2/test --model ${CALIB} --tokenizer ${TOK} --model-card ${CARD}`
 	writeFileSync(`${OUT}/calib-test-pertag.md`, r1.stdout)
 
-	if (r1.stderr) process.stderr.write(r1.stderr)
+	if (r1.stderr) {
+		process.stderr.write(r1.stderr)
+	}
 
 	{
 		// grep -A14 "Per-tag breakdown" | head -16  ->  the match line + 14 after (head -16 is a no-op on 15 lines)
 		const lines = r1.stdout.split("\n")
 		const idx = lines.findIndex((l) => l.includes("Per-tag breakdown"))
 
-		if (idx >= 0) console.log(lines.slice(idx, idx + 15).join("\n"))
+		if (idx >= 0) {
+			console.log(lines.slice(idx, idx + 15).join("\n"))
+		}
 	}
 
 	console.log("### 2/4 — harness pass rate (calibration, no repair)")

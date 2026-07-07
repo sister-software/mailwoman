@@ -215,7 +215,9 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 							String(threads),
 						]
 
-						if (options.licenseFilter) argv.push("--license-filter", options.licenseFilter)
+						if (options.licenseFilter) {
+							argv.push("--license-filter", options.licenseFilter)
+						}
 						const t = Date.now()
 						const child = spawn(process.execPath, argv)
 						let out = "",
@@ -306,7 +308,9 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

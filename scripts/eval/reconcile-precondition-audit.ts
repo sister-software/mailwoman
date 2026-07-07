@@ -46,11 +46,17 @@ const tagvals = (tree: AddressTree): TagVals => {
 	while (st.length) {
 		const n = st.pop()!
 
-		if (n.tag === "street" && o.street === null && n.value.trim()) o.street = n.value.trim()
+		if (n.tag === "street" && o.street === null && n.value.trim()) {
+			o.street = n.value.trim()
+		}
 
-		if (n.tag === "house_number" && o.house_number === null && n.value.trim()) o.house_number = n.value.trim()
+		if (n.tag === "house_number" && o.house_number === null && n.value.trim()) {
+			o.house_number = n.value.trim()
+		}
 
-		if (n.tag === "postcode" && o.postcode === null && n.value.trim()) o.postcode = n.value.trim()
+		if (n.tag === "postcode" && o.postcode === null && n.value.trim()) {
+			o.postcode = n.value.trim()
+		}
 		st.push(...n.children)
 	}
 
@@ -79,25 +85,37 @@ for (const r of rows.slice(0, cap)) {
 	const rp = !!(raw.street && raw.house_number && raw.postcode),
 		cp = !!(rec.street && rec.house_number && rec.postcode)
 
-	if (rp) rawPrecond++
+	if (rp) {
+		rawPrecond++
+	}
 
-	if (cp) recPrecond++
+	if (cp) {
+		recPrecond++
+	}
 
 	if (rp && !cp) {
 		rawOnlyPrecond++
 
-		if (lost.length < 14)
+		if (lost.length < 14) {
 			lost.push(
 				`${r.input}\n      raw: hn=${raw.house_number} st=${raw.street} pc=${raw.postcode}\n      rec: hn=${rec.house_number} st=${rec.street} pc=${rec.postcode}`
 			)
+		}
 	}
 
-	if (cp && !rp) recOnlyPrecond++
+	if (cp && !rp) {
+		recOnlyPrecond++
+	}
 
-	if (raw.street === rec.street && raw.house_number === rec.house_number) identical++
-	else if (raw.street && !rec.street) recLostStreet++
-	else if (!raw.street && rec.street) recGainedStreet++
-	else if (raw.house_number !== rec.house_number) hnDiffers++
+	if (raw.street === rec.street && raw.house_number === rec.house_number) {
+		identical++
+	} else if (raw.street && !rec.street) {
+		recLostStreet++
+	} else if (!raw.street && rec.street) {
+		recGainedStreet++
+	} else if (raw.house_number !== rec.house_number) {
+		hnDiffers++
+	}
 }
 const pc = (x: number): string => `${((100 * x) / n).toFixed(1)}%`
 console.log(`reconcile-vs-raw-neural audit (n=${n})`)
@@ -113,5 +131,7 @@ console.log(
 if (lost.length) {
 	console.log(`\n  sample pipeline-broke-the-geocode cases:`)
 
-	for (const s of lost) console.log(`   - ${s}`)
+	for (const s of lost) {
+		console.log(`   - ${s}`)
+	}
 }

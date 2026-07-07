@@ -42,7 +42,9 @@ function load(): Sample[] {
 			try {
 				const r = JSON.parse(line)
 
-				if (r.raw && r.country) out.push({ input: r.raw, country: r.country.toUpperCase() })
+				if (r.raw && r.country) {
+					out.push({ input: r.raw, country: r.country.toUpperCase() })
+				}
 			} catch {
 				/* skip */
 			}
@@ -56,7 +58,9 @@ function load(): Sample[] {
 			try {
 				const r = JSON.parse(line)
 
-				if (r.input && r.locale) out.push({ input: r.input, country: regionOf(r.locale) })
+				if (r.input && r.locale) {
+					out.push({ input: r.input, country: regionOf(r.locale) })
+				}
 			} catch {
 				/* skip */
 			}

@@ -99,7 +99,9 @@ function tokenizeRaw(raw: string): RawTok[] {
 	const re = /[^\s,;/]+/g
 	let m: RegExpExecArray | null
 
-	while ((m = re.exec(raw)) !== null) toks.push({ text: m[0], start: m.index, end: m.index + m[0].length })
+	while ((m = re.exec(raw)) !== null) {
+		toks.push({ text: m[0], start: m.index, end: m.index + m[0].length })
+	}
 
 	return toks
 }
@@ -126,7 +128,9 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 
 		if (n.placeID) return true
 
-		if (n.children?.length) stack.push(...n.children)
+		if (n.children?.length) {
+			stack.push(...n.children)
+		}
 	}
 
 	return false
@@ -165,14 +169,18 @@ function confidentRanges(
 			// street family keep the full-range block (the "Ave, France" guard).
 			if (postalCompoundRecovery && n.tag === "postcode" && !n.placeID) {
 				for (const t of tokenizeRaw(raw.slice(n.start, n.end))) {
-					if (/\d/.test(t.text)) out.push([n.start + t.start, n.start + t.end])
+					if (/\d/.test(t.text)) {
+						out.push([n.start + t.start, n.start + t.end])
+					}
 				}
 			} else {
 				out.push([n.start, n.end])
 			}
 		}
 
-		if (n.children?.length) stack.push(...n.children)
+		if (n.children?.length) {
+			stack.push(...n.children)
+		}
 	}
 
 	return out
@@ -206,7 +214,9 @@ export async function findRescoreCandidate(
 		const pcHits = await backend.findPlace({ text: postcode, country, placetype: "postalcode", limit: 2 })
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
-		if (a) anchor = { lat: a.lat, lon: a.lon }
+		if (a) {
+			anchor = { lat: a.lat, lon: a.lon }
+		}
 
 		// #942: the globbed compound ("1382 Kožljek") matches no bare-code row — retry the anchor with
 		// the code-shaped token subset so the consistency gate can validate the recovered city.
@@ -217,7 +227,9 @@ export async function findRescoreCandidate(
 				const codeHits = await backend.findPlace({ text: code, country, placetype: "postalcode", limit: 2 })
 				const c = codeHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
-				if (c) anchor = { lat: c.lat, lon: c.lon }
+				if (c) {
+					anchor = { lat: c.lat, lon: c.lon }
+				}
 			}
 		}
 	}

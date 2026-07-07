@@ -93,7 +93,9 @@ function foldGoldForV0(components: Record<string, string>): Record<string, strin
 		out[tag] = tag === "street" ? street : v
 	}
 
-	if (street && !out.street) out.street = street
+	if (street && !out.street) {
+		out.street = street
+	}
 
 	return out
 }
@@ -129,9 +131,11 @@ for (const row of rows) {
 	for (const [tag, gold] of Object.entries(goldView)) {
 		c.components++
 
-		if (norm(got[tag]) === norm(gold)) c.correct++
-		else if (c.samples.length < 2)
+		if (norm(got[tag]) === norm(gold)) {
+			c.correct++
+		} else if (c.samples.length < 2) {
 			c.samples.push(`"${row.raw.slice(0, 55)}" [${tag}] exp="${gold}" got="${got[tag] ?? "(none)"}"`)
+		}
 	}
 }
 
@@ -155,8 +159,14 @@ console.log(
 )
 console.log("\n## sample misses (≤2/class)")
 
-for (const [cls, c] of Object.entries(byClass).sort()) for (const s of c.samples) console.log(`- [${cls}] ${s}`)
+for (const [cls, c] of Object.entries(byClass).sort()) {
+	for (const s of c.samples) {
+		console.log(`- [${cls}] ${s}`)
+	}
+}
 
 const jsonOut = arg("json")
 
-if (jsonOut) writeFileSync(jsonOut, JSON.stringify({ n: rows.length, classes: sidecar }, null, "\t") + "\n")
+if (jsonOut) {
+	writeFileSync(jsonOut, JSON.stringify({ n: rows.length, classes: sidecar }, null, "\t") + "\n")
+}

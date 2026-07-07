@@ -149,7 +149,9 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 			if (!dedupExhausted) {
 				if (seen.has(key)) {
-					if (yielded % progressEvery === 0) emitProgress()
+					if (yielded % progressEvery === 0) {
+						emitProgress()
+					}
 					continue
 				}
 
@@ -172,7 +174,9 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 				await once(stream, "drain")
 			}
 
-			if (yielded % progressEvery === 0) emitProgress()
+			if (yielded % progressEvery === 0) {
+				emitProgress()
+			}
 		}
 	} finally {
 		stream.end()

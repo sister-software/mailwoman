@@ -64,7 +64,9 @@ function loadAdmin1(dir: string): Map<string, string> {
 		if (!line) continue
 		const cols = line.split("\t")
 
-		if (cols[0] && cols[1]) map.set(cols[0], cols[1])
+		if (cols[0] && cols[1]) {
+			map.set(cols[0], cols[1])
+		}
 	}
 
 	return map
@@ -82,7 +84,9 @@ function loadCountries(dir: string): Map<string, string> {
 		const cols = line.split("\t")
 
 		// ISO(0), ISO3(1), iso-numeric(2), fips(3), Country(4), ...
-		if (cols[0] && cols[4]) map.set(cols[0], cols[4])
+		if (cols[0] && cols[4]) {
+			map.set(cols[0], cols[4])
+		}
 	}
 
 	return map

@@ -58,7 +58,9 @@ const rows = readFileSync(file, "utf8")
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
-for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
+for (const t of TAGS) {
+	stat[t] = { tp: 0, fp: 0, fn: 0 }
+}
 
 for (const row of rows) {
 	const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
@@ -68,11 +70,16 @@ for (const row of rows) {
 		const e = norm(exp[t]),
 			g = norm(got[t])
 
-		if (e && g && e === g) stat[t]!.tp++
-		else {
-			if (g) stat[t]!.fp++
+		if (e && g && e === g) {
+			stat[t]!.tp++
+		} else {
+			if (g) {
+				stat[t]!.fp++
+			}
 
-			if (e) stat[t]!.fn++
+			if (e) {
+				stat[t]!.fn++
+			}
 		}
 	}
 }

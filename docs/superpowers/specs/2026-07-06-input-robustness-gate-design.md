@@ -48,14 +48,14 @@ Gates:
 
 ### Coverage matrix (article centerpiece)
 
-| Class | normalize/ (runtime) | Trained (corpus aug) | Gated |
-|---|---|---|---|
-| Casing | yes (case-normalize #690/#829) | yes | INV[lower/upper] green |
-| Spacing | yes (whitespace.ts) | incidental | INV[ws], INV[comma-tight] |
-| Abbreviation swap | capable but OFF at runtime (deliberate) | yes | golden entries only — no stability gate |
-| Number spelling | no | no | nowhere |
-| Typos (single-char edit) | no | no | ~10 labeled golden cases only |
-| Transpositions | no | no | folded into golden typo slice |
+| Class                    | normalize/ (runtime)                    | Trained (corpus aug) | Gated                                   |
+| ------------------------ | --------------------------------------- | -------------------- | --------------------------------------- |
+| Casing                   | yes (case-normalize #690/#829)          | yes                  | INV[lower/upper] green                  |
+| Spacing                  | yes (whitespace.ts)                     | incidental           | INV[ws], INV[comma-tight]               |
+| Abbreviation swap        | capable but OFF at runtime (deliberate) | yes                  | golden entries only — no stability gate |
+| Number spelling          | no                                      | no                   | nowhere                                 |
+| Typos (single-char edit) | no                                      | no                   | ~10 labeled golden cases only           |
+| Transpositions           | no                                      | no                   | folded into golden typo slice           |
 
 ## Deliverable 1 — docs
 

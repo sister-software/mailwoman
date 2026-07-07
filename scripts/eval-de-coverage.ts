@@ -16,7 +16,9 @@ function printGrepAfter(stdout: string, needle: string, after: number): void {
 	const lines = stdout.split("\n")
 	const idx = lines.findIndex((l) => l.includes(needle))
 
-	if (idx >= 0) console.log(lines.slice(idx, idx + after + 1).join("\n"))
+	if (idx >= 0) {
+		console.log(lines.slice(idx, idx + after + 1).join("\n"))
+	}
 }
 
 runIfScript(import.meta, async () => {

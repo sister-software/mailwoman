@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/universe",
-	"version": "5.5.0",
+	"version": "5.6.0",
 	"private": true,
 	"description": "Mailwoman monorepo workspace root.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
@@ -82,8 +82,8 @@
 		"@duckdb/node-api": "^1.5.3-r.3",
 		"@inkjs/ui": "^2.0.0",
 		"@release-it-plugins/workspaces": "^5.0.3",
-		"@sister.software/oxfmt-config": "^9.1.0",
-		"@sister.software/oxlint-config": "^9.1.0",
+		"@sister.software/oxfmt-config": "^9.2.0",
+		"@sister.software/oxlint-config": "^9.2.0",
 		"@sister.software/tsconfig": "^8.0.1",
 		"@types/express": "^5.0.6",
 		"@types/geojson": "^7946.0.16",
@@ -117,5 +117,5 @@
 	"engines": {
 		"node": ">=24.18.0"
 	},
-	"packageManager": "yarn@4.14.1+sha512.64df448055b2d37ba269d7db535a469b8da93f8ef1140c25fd7a83c00a8fbaacb214ca0e02553b92a2c54cef78bb67d0b4817fab02001df0e24fac0faccc3b42"
+	"packageManager": "yarn@4.17.0"
 }

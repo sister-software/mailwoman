@@ -176,34 +176,22 @@
 				"cz": {
 					"v4_15_0": 22.4,
 					"v5_1_0": 14.8,
-					"diff_ci95_pp": [
-						-10.3,
-						-5.1
-					]
+					"diff_ci95_pp": [-10.3, -5.1]
 				},
 				"pl": {
 					"v4_15_0": 27.9,
 					"v5_1_0": 7.9,
-					"diff_ci95_pp": [
-						-22.7,
-						-17.4
-					]
+					"diff_ci95_pp": [-22.7, -17.4]
 				},
 				"sk": {
 					"v4_15_0": 22.2,
 					"v5_1_0": 13.2,
-					"diff_ci95_pp": [
-						-11.5,
-						-6.4
-					]
+					"diff_ci95_pp": [-11.5, -6.4]
 				},
 				"si": {
 					"v4_15_0": 18.9,
 					"v5_1_0": 10.6,
-					"diff_ci95_pp": [
-						-10.4,
-						-6.4
-					]
+					"diff_ci95_pp": [-10.4, -6.4]
 				},
 				"$note": "reservoir-sampled 1k-row OA coord sets (oa-{cz,pl,sk,si}-coord-1k.jsonl), graded parse→resolve→great-circle, int8 ship artifact"
 			},

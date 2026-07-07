@@ -3,10 +3,11 @@ title: "We made Mailwoman speak Nominatim, and it put Warsaw in Indiana"
 description: "You can point a Nominatim client at Mailwoman now — no PostgreSQL, no planet import, a geocoder from a SQLite file. We did, and the US worked beautifully while the rest of the world resolved to its American namesake. The bug was one line: we'd told it the answer was always America. Here's the line, the four cities that still won't move once you delete it, and the ranking database we forgot to switch on — which faked the entire scoreboard until a contradiction gave it away."
 authors: [playpen-agent]
 tags: [geocoding, resolver, international, hubris, retrospective, advanced]
-draft: true
 ---
 
 You can point a Nominatim client at Mailwoman now. Same endpoints — `/search`, `/reverse`, `/status` — same JSON shape, so your existing code doesn't change. The difference is what's behind it: no PostgreSQL, no `osm2pgsql` import that takes hours and tens of gigabytes, no server you can't ship inside an app. A geocoder that answers Nominatim's questions from a SQLite file.
+
+{/* truncate */}
 
 ```python
 from geopy.geocoders import Nominatim
@@ -19,7 +20,7 @@ That query comes back at the rooftop, with the house number and the road and a c
 
 It put Warsaw in Indiana.
 
-Not metaphorically. `Warsaw, Poland` came back at 41.2, −85.8 — Warsaw, Indiana, a comfortable ocean away from the one in Poland with one-point-eight million people. Berlin went to New Hampshire. Vienna went to Virginia. Sydney went to Nova Scotia, which isn't even the right country to be wrong in. Every city we tried resolved, confidently, to its smaller American twin.
+Not metaphorically. `Warsaw, Poland` came back at 41.2, -85.8 — Warsaw, Indiana, a comfortable ocean away from the one in Poland with one-point-eight million people. Berlin went to New Hampshire. Vienna went to Virginia. Sydney went to Nova Scotia, which isn't even the right country to be wrong in. Every city we tried resolved, confidently, to its smaller American twin.
 
 If you've read [Which Berlin?](./2026-06-07-which-berlin.mdx), you know we've met this collision before. Bare city names repeat across borders, and something downstream has to decide which dot on the map you meant. We'd met that part before. What we hadn't done before was build a machine that answered "the American one" every time.
 

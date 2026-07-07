@@ -76,10 +76,13 @@ function pyFixed(x: number, d: number): string {
 	const rest = frac.slice(d)
 	let roundUp: boolean
 
-	if (rest[0]! > "5") roundUp = true
-	else if (rest[0]! < "5") roundUp = false
-	else if (rest.slice(1).replace(/0+$/, "").length > 0) roundUp = true
-	else {
+	if (rest[0]! > "5") {
+		roundUp = true
+	} else if (rest[0]! < "5") {
+		roundUp = false
+	} else if (rest.slice(1).replace(/0+$/, "").length > 0) {
+		roundUp = true
+	} else {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
 		roundUp = parseInt(lastKept, 10) % 2 === 1
 	}
@@ -90,14 +93,17 @@ function pyFixed(x: number, d: number): string {
 		let i = arr.length - 1
 
 		for (; i >= 0; i--) {
-			if (arr[i] === "9") arr[i] = "0"
-			else {
+			if (arr[i] === "9") {
+				arr[i] = "0"
+			} else {
 				arr[i] = String(parseInt(arr[i]!, 10) + 1)
 				break
 			}
 		}
 
-		if (i < 0) arr.unshift("1")
+		if (i < 0) {
+			arr.unshift("1")
+		}
 		digits = arr.join("")
 	}
 	const di = digits.length - d
@@ -161,7 +167,9 @@ async function buildFhat(): Promise<FHat> {
 			const m = Math.min(toks.length, labs.length)
 
 			for (let i = 0; i < m; i++) {
-				if (labs[i] === "B-postcode" || labs[i] === "I-postcode") parts.push(toks[i]!)
+				if (labs[i] === "B-postcode" || labs[i] === "I-postcode") {
+					parts.push(toks[i]!)
+				}
 			}
 			const pc = fiveDigit(parts.join(""))
 
@@ -190,11 +198,15 @@ function posteriors(
 	// B. naive count-weighted
 	const raw: Posterior = {}
 
-	for (const c of cands) raw[c] = countGet(count, c, pc) + ALPHA
+	for (const c of cands) {
+		raw[c] = countGet(count, c, pc) + ALPHA
+	}
 	let z = cands.reduce((s, c) => s + raw[c]!, 0)
 	out.naive_count = {}
 
-	for (const c of cands) out.naive_count[c] = raw[c]! / z
+	for (const c of cands) {
+		out.naive_count[c] = raw[c]! / z
+	}
 	// C. de-biased: f̂ · prior
 	const priorZ = cands.reduce((s, c) => s + ADDR_VOLUME[c]!, 0)
 	const deb: Posterior = {}
@@ -206,7 +218,9 @@ function posteriors(
 	z = cands.reduce((s, c) => s + deb[c]!, 0)
 	out.de_biased = {}
 
-	for (const c of cands) out.de_biased[c] = deb[c]! / z
+	for (const c of cands) {
+		out.de_biased[c] = deb[c]! / z
+	}
 
 	return out
 }
@@ -231,7 +245,9 @@ function loadTest(coll: Set<string>): Array<[string, string]> {
 				continue
 			}
 
-			if (pc && coll.has(pc)) rows.push([pc, country])
+			if (pc && coll.has(pc)) {
+				rows.push([pc, country])
+			}
 		}
 	}
 
@@ -242,7 +258,10 @@ function loadTest(coll: Set<string>): Array<[string, string]> {
 function argmax(p: Posterior, cands: string[]): string {
 	let best = cands[0]!
 
-	for (const c of cands) if (p[c]! > p[best]!) best = c
+	for (const c of cands)
+		if (p[c]! > p[best]!) {
+			best = c
+		}
 
 	return best
 }
@@ -266,7 +285,9 @@ async function main(): Promise<void> {
 	const test = loadTest(coll)
 	const byCountry: Record<string, number> = { US: 0, FR: 0 }
 
-	for (const [, c] of test) byCountry[c] = (byCountry[c] ?? 0) + 1
+	for (const [, c] of test) {
+		byCountry[c] = (byCountry[c] ?? 0) + 1
+	}
 	console.log(
 		`  held-out collision test addresses: ${pyComma(test.length)}  (US=${pyComma(byCountry.US!)}, FR=${pyComma(byCountry.FR!)})\n`
 	)
@@ -276,7 +297,9 @@ async function main(): Promise<void> {
 	// per (method, true_country): [logloss_sum, n, top1, highconf_err]
 	const agg: Record<string, Record<string, [number, number, number, number]>> = {}
 
-	for (const m of methods) agg[m] = { US: [0.0, 0, 0, 0], FR: [0.0, 0, 0, 0] }
+	for (const m of methods) {
+		agg[m] = { US: [0.0, 0, 0, 0], FR: [0.0, 0, 0, 0] }
+	}
 
 	for (const [pc, truth] of test) {
 		const post = posteriors(pc, count, total)
@@ -288,8 +311,11 @@ async function main(): Promise<void> {
 			a[1] += 1
 			const arg = argmax(p, cands)
 
-			if (arg === truth) a[2] += 1
-			else if (p[arg]! > 0.8) a[3] += 1
+			if (arg === truth) {
+				a[2] += 1
+			} else if (p[arg]! > 0.8) {
+				a[3] += 1
+			}
 		}
 	}
 

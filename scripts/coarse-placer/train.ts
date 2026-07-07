@@ -85,12 +85,17 @@ function forward(x: Int32Array): void {
 		let s = b[c]!
 		const base = c * D
 
-		for (let k = 0; k < x.length; k++) s += W[base + x[k]!]!
+		for (let k = 0; k < x.length; k++) {
+			s += W[base + x[k]!]!
+		}
 		logits[c] = s
 	}
 	let mx = -Infinity
 
-	for (let c = 0; c < C; c++) if (logits[c]! > mx) mx = logits[c]!
+	for (let c = 0; c < C; c++)
+		if (logits[c]! > mx) {
+			mx = logits[c]!
+		}
 	let sum = 0
 
 	for (let c = 0; c < C; c++) {
@@ -99,7 +104,9 @@ function forward(x: Int32Array): void {
 		sum += e
 	}
 
-	for (let c = 0; c < C; c++) probs[c] = probs[c]! / sum
+	for (let c = 0; c < C; c++) {
+		probs[c] = probs[c]! / sum
+	}
 }
 
 function accuracy(set: Sample[]): number {
@@ -109,9 +116,14 @@ function accuracy(set: Sample[]): number {
 		forward(x)
 		let top = 0
 
-		for (let c = 1; c < C; c++) if (probs[c]! > probs[top]!) top = c
+		for (let c = 1; c < C; c++)
+			if (probs[c]! > probs[top]!) {
+				top = c
+			}
 
-		if (top === y) ok++
+		if (top === y) {
+			ok++
+		}
 	}
 
 	return ok / set.length
@@ -156,15 +168,22 @@ function valNLL(T: number): number {
 			let s = b[c]!
 			const base = c * D
 
-			for (let k = 0; k < x.length; k++) s += W[base + x[k]!]!
+			for (let k = 0; k < x.length; k++) {
+				s += W[base + x[k]!]!
+			}
 			logits[c] = s / T
 		}
 		let mx = -Infinity
 
-		for (let c = 0; c < C; c++) if (logits[c]! > mx) mx = logits[c]!
+		for (let c = 0; c < C; c++)
+			if (logits[c]! > mx) {
+				mx = logits[c]!
+			}
 		let sum = 0
 
-		for (let c = 0; c < C; c++) sum += Math.exp(logits[c]! - mx)
+		for (let c = 0; c < C; c++) {
+			sum += Math.exp(logits[c]! - mx)
+		}
 		nll += -(logits[y]! - mx - Math.log(sum))
 	}
 

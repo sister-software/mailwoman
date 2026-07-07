@@ -87,7 +87,9 @@ function geojsonForID(id: number, roots: readonly string[]): Record<string, unkn
 	const s = String(id)
 	const chunks: string[] = []
 
-	for (let i = 0; i < s.length; i += 3) chunks.push(s.slice(i, i + 3))
+	for (let i = 0; i < s.length; i += 3) {
+		chunks.push(s.slice(i, i + 3))
+	}
 	const rel = join(chunks.join("/"), `${s}.geojson`)
 
 	for (const root of roots) {
@@ -119,17 +121,27 @@ function placetypeFromKey(key: string): string | null {
  * Insert missing ancestor rows for only-self places by reading `wof:hierarchy` from their source geojson under
  * `geojsonRoots` (see {@link discoverAdminDataRoots}). Runs inside a single transaction; caller owns connection
  * lifecycle (open, WAL checkpoint, close).
+ *
+ * `opts.maxId` bounds the candidate scan to ids BELOW it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
+ * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have NO `wof:hierarchy`
+ * geojson, so probing them is pure waste: on a wide-coverage DB the only-self set is millions of Overture/GeoNames leaf
+ * localities, and the per-candidate geojson probe across every repo root turns a seconds-long WOF-only pass into a
+ * ~40-minute one (their ancestry comes from the parent_id closure, not this backfill). Correctness-preserving — the
+ * skipped rows would have `noGeojson`-skipped anyway. Omit `maxId` (default) for the legacy WOF-only DBs.
  */
 export function backfillAncestorsFromHierarchy(
 	db: DatabaseSync,
-	geojsonRoots: readonly string[]
+	geojsonRoots: readonly string[],
+	opts: { maxId?: number } = {}
 ): AncestryBackfillResult {
+	const maxId = opts.maxId ?? Number.MAX_SAFE_INTEGER
+	// `s.id < ?` first lets SQLite prune by the PK index before the correlated only-self subquery runs at all.
 	const candidates = db
 		.prepare(
 			`SELECT s.id AS id, s.placetype AS placetype FROM spr s
-			 WHERE (SELECT count(*) FROM ancestors a WHERE a.id = s.id) <= 1`
+			 WHERE s.id < ? AND (SELECT count(*) FROM ancestors a WHERE a.id = s.id) <= 1`
 		)
-		.all() as Array<{ id: number; placetype: string }>
+		.all(maxId) as Array<{ id: number; placetype: string }>
 
 	const insert = db.prepare(
 		"INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)"
@@ -148,7 +160,9 @@ export function backfillAncestorsFromHierarchy(
 		const hierarchy = (props?.["wof:hierarchy"] ?? null) as Array<Record<string, number>> | null
 
 		if (!hierarchy || hierarchy.length === 0) {
-			if (!gj) noGeojson++
+			if (!gj) {
+				noGeojson++
+			}
 			continue
 		}
 
@@ -164,7 +178,9 @@ export function backfillAncestorsFromHierarchy(
 
 				if (!Number.isFinite(aid) || aid <= 0 || aid === id) continue
 
-				if (!seen.has(aid)) seen.set(aid, pt)
+				if (!seen.has(aid)) {
+					seen.set(aid, pt)
+				}
 			}
 		}
 

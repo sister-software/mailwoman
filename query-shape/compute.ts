@@ -19,8 +19,11 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 		if (ch === "\t") {
 			hasTab = true
 		} else if (ch === " ") {
-			if (prevSpace) hasDouble = true
-			else hasSingle = true
+			if (prevSpace) {
+				hasDouble = true
+			} else {
+				hasSingle = true
+			}
 			prevSpace = true
 			continue
 		}

@@ -24,7 +24,9 @@ export function cwdEnvPaths(): string[] {
 	while (true) {
 		const candidate = resolve(dir, ".env")
 
-		if (existsSync(candidate)) found.push(candidate)
+		if (existsSync(candidate)) {
+			found.push(candidate)
+		}
 
 		const parent = dirname(dir)
 		const atRepoRoot = existsSync(resolve(dir, ".git"))

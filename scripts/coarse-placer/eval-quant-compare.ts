@@ -61,7 +61,9 @@ function loadInt8(dir: string): CoarsePlacerClass {
 		const s = scales[c]!
 		const base = c * dim
 
-		for (let i = 0; i < dim; i++) weights[base + i] = int8[base + i]! * s
+		for (let i = 0; i < dim; i++) {
+			weights[base + i] = int8[base + i]! * s
+		}
 	}
 
 	return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
@@ -101,7 +103,9 @@ for (const r of test) {
 		perI[r.country]!.ok++
 	}
 
-	if (cf === ci) agree++
+	if (cf === ci) {
+		agree++
+	}
 	confMae += Math.abs(pf.confidence - pi.confidence)
 }
 const N = test.length

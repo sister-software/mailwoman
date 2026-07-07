@@ -61,7 +61,9 @@ export class OSMShardProvider {
 	}
 
 	close(): void {
-		for (const entry of this.#cache.values()) entry.addressPoints?.close()
+		for (const entry of this.#cache.values()) {
+			entry.addressPoints?.close()
+		}
 		this.#cache.clear()
 	}
 }

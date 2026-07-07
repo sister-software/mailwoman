@@ -230,7 +230,9 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 
 					const fill_pct: Record<string, number> = {}
 
-					for (const f of FILL_FIELDS) fill_pct[f] = Number(row[`${f}_pct`])
+					for (const f of FILL_FIELDS) {
+						fill_pct[f] = Number(row[`${f}_pct`])
+					}
 
 					return {
 						country: cc,
@@ -245,9 +247,13 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 				const probes: CountryProbe[] = []
 
 				for (const cc of countries) {
-					if (!options.probeOnly) await ingestCountry(cc)
+					if (!options.probeOnly) {
+						await ingestCountry(cc)
+					}
 
-					if (options.corpusJsonl) await emitCorpusJsonl(cc)
+					if (options.corpusJsonl) {
+						await emitCorpusJsonl(cc)
+					}
 					const probe = await probeCountry(cc)
 
 					if (probe) {
@@ -284,7 +290,9 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

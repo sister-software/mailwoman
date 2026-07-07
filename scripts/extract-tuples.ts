@@ -84,7 +84,9 @@ async function extractFromParquet(shardPath: string, write: WriteFn, limit: numb
 			const tag = dash >= 0 ? lab.slice(dash + 1) : ""
 
 			if (prefix === "B" || tag !== currentTag) {
-				if (!(tag in components)) components[tag] = []
+				if (!(tag in components)) {
+					components[tag] = []
+				}
 				components[tag]!.push(tok)
 				currentTag = tag
 			} else {
@@ -113,9 +115,13 @@ async function extractFromParquet(shardPath: string, write: WriteFn, limit: numb
 		const street = components.street ? components.street[0] : undefined
 		const hn = components.house_number ? components.house_number[0] : undefined
 
-		if (street) tupleOut.street = street
+		if (street) {
+			tupleOut.street = street
+		}
 
-		if (hn) tupleOut.houseNumber = hn
+		if (hn) {
+			tupleOut.houseNumber = hn
+		}
 
 		write(JSON.stringify(tupleOut) + "\n")
 		emitted++
@@ -318,7 +324,9 @@ function parseArgs(): Args {
 
 		if (a === "--shards") {
 			// argparse nargs="*": greedily consume following non-flag tokens.
-			while (i + 1 < argv.length && !argv[i + 1]!.startsWith("-")) shards.push(argv[++i]!)
+			while (i + 1 < argv.length && !argv[i + 1]!.startsWith("-")) {
+				shards.push(argv[++i]!)
+			}
 		} else if (a === "--sqlite") {
 			sqlite = argv[++i]
 		} else if (a === "--output") {

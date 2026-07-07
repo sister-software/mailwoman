@@ -70,7 +70,9 @@ test.describe("Demo — street tier (#377)", () => {
 			// read as a whole-shard download (the #638 measurement trap). The 206 page reads are the lookup.
 			if (res.request().method() !== "GET") return
 
-			if (res.status() === 206) rangeReads++
+			if (res.status() === 206) {
+				rangeReads++
+			}
 			situsBytes += Number(res.headers()["content-length"] ?? 0)
 		})
 

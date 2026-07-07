@@ -67,6 +67,8 @@ await browser.close()
 if (errors.length) {
 	console.error(`[render] ${errors.length} console error(s):`)
 
-	for (const e of errors.slice(0, 8)) console.error("  " + e)
+	for (const e of errors.slice(0, 8)) {
+		console.error("  " + e)
+	}
 }
 console.error(`[render] ${outPNG}`)

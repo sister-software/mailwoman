@@ -42,10 +42,13 @@ function parseArgs(argv: string[]): Args {
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
 
-		if (a === "--input") out.input = argv[++i]
-		else if (a === "--output") out.output = argv[++i]
-		else if (a === "--corpus-version") out.corpusVersion = argv[++i]
-		else throw new Error(`unknown arg: ${a}`)
+		if (a === "--input") {
+			out.input = argv[++i]
+		} else if (a === "--output") {
+			out.output = argv[++i]
+		} else if (a === "--corpus-version") {
+			out.corpusVersion = argv[++i]
+		} else throw new Error(`unknown arg: ${a}`)
 	}
 
 	if (!out.input) throw new Error("--input <canonical.jsonl> required")

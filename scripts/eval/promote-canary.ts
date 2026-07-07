@@ -122,7 +122,9 @@ function buildInputs(): Array<{ cc: string; variant: string; input: string; lat:
 		for (const g of goldens) {
 			inputs.push({ cc, variant: "messy", input: messify(g.raw), lat: g.lat, lon: g.lon })
 
-			if (ALLCAPS) inputs.push({ cc, variant: "allcaps", input: g.raw.toUpperCase(), lat: g.lat, lon: g.lon })
+			if (ALLCAPS) {
+				inputs.push({ cc, variant: "allcaps", input: g.raw.toUpperCase(), lat: g.lat, lon: g.lon })
+			}
 		}
 	}
 
@@ -189,7 +191,9 @@ async function main(): Promise<void> {
 		const c = cand[i]!
 		const s = ship[i]!
 
-		if (c.answered && c.conf >= HIGH_CONF && !c.right && (s.right || s.conf < HIGH_CONF)) overconf++
+		if (c.answered && c.conf >= HIGH_CONF && !c.right && (s.right || s.conf < HIGH_CONF)) {
+			overconf++
+		}
 	}
 	const overconfFrac = answered.length ? overconf / answered.length : 0
 	L.push(`\n## Overconfidence spike\n`)

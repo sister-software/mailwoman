@@ -51,7 +51,9 @@ function collect(tree: AddressTree): ByTag {
 	while (st.length) {
 		const n = st.pop()!
 
-		if (STREET.has(n.tag) && n.value?.trim()) streetParts.push({ s: n.start, v: n.value.trim() })
+		if (STREET.has(n.tag) && n.value?.trim()) {
+			streetParts.push({ s: n.start, v: n.value.trim() })
+		}
 		;(byTag[n.tag] ??= []).push(n.value?.trim() || "")
 		st.push(...(n.children || []))
 	}
@@ -96,10 +98,14 @@ for (const f of files) {
 			if (!tags.includes(tag)) continue
 			acc.raw[tag]!.n++
 
-			if (hit(rawT, tag, gv)) acc.raw[tag]!.h++
+			if (hit(rawT, tag, gv)) {
+				acc.raw[tag]!.h++
+			}
 			acc.rec[tag]!.n++
 
-			if (hit(recT, tag, gv)) acc.rec[tag]!.h++
+			if (hit(recT, tag, gv)) {
+				acc.rec[tag]!.h++
+			}
 		}
 	}
 }

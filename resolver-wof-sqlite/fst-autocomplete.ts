@@ -87,7 +87,9 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		// COMPLETE-token prefix landed on a state. Seed at the match state (accepting + continuations).
 		depth = match.depth
 
-		for (const entry of fst.accepting(match.stateID)) addSuggestion(seen, entry, match.depth, [])
+		for (const entry of fst.accepting(match.stateID)) {
+			addSuggestion(seen, entry, match.depth, [])
+		}
 
 		for (const cont of fst.continuations(match.stateID)) {
 			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token] })
@@ -107,8 +109,9 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 			if (!cont.token.startsWith(partial)) continue
 
 			// This edge completes the typed partial token — its target is a real match at depth+1.
-			for (const entry of topByImportance(fst.accepting(cont.targetState), PER_BRANCH))
+			for (const entry of topByImportance(fst.accepting(cont.targetState), PER_BRANCH)) {
 				addSuggestion(seen, entry, complete.length + 1, [cont.token])
+			}
 			// BFS a little past it too (multi-token completions: "new yor" → "New York Mills").
 			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token] })
 		}
@@ -123,8 +126,9 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 
 		if (item.depth > maxExpansionDepth) continue
 
-		for (const entry of topByImportance(fst.accepting(item.stateID), PER_BRANCH))
+		for (const entry of topByImportance(fst.accepting(item.stateID), PER_BRANCH)) {
 			addSuggestion(seen, entry, depth + item.depth, item.tokens)
+		}
 
 		if (item.depth < maxExpansionDepth) {
 			for (const cont of fst.continuations(item.stateID)) {
@@ -135,7 +139,9 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 
 	let suggestions = [...seen.values()].sort((a, b) => b.importance - a.importance)
 
-	if (opts.dedupeByName) suggestions = dedupeByName(suggestions)
+	if (opts.dedupeByName) {
+		suggestions = dedupeByName(suggestions)
+	}
 
 	return { query, normalizedTokens, depth, suggestions: suggestions.slice(0, maxSuggestions) }
 }

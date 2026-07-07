@@ -101,11 +101,14 @@ async function draw(n: number): Promise<Sample[]> {
 		if (!s) continue
 		seen++
 
-		if (res.length < n) res.push(s)
-		else {
+		if (res.length < n) {
+			res.push(s)
+		} else {
 			const j = Math.floor(Math.random() * seen)
 
-			if (j < n) res[j] = s
+			if (j < n) {
+				res[j] = s
+			}
 		}
 	}
 
@@ -123,7 +126,9 @@ async function score(deps: GauntletDeps, sample: Sample[]): Promise<{ hits: numb
 		resolved++
 		const km = haversineKm(g.lat, g.lon, s.lat, s.lon)
 		TOLS.forEach((t, i) => {
-			if (km <= t) hits[i] = (hits[i] ?? 0) + 1
+			if (km <= t) {
+				hits[i] = (hits[i] ?? 0) + 1
+			}
 		})
 	}
 

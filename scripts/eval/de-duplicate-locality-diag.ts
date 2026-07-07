@@ -61,11 +61,18 @@ function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 	const walk = (n: AddressNode): void => {
 		if (found) return
 
-		if (n.tag === tag) found = n
-		else for (const c of n.children) walk(c)
+		if (n.tag === tag) {
+			found = n
+		} else {
+			for (const c of n.children) {
+				walk(c)
+			}
+		}
 	}
 
-	for (const r of tree.roots) walk(r)
+	for (const r of tree.roots) {
+		walk(r)
+	}
 
 	return found
 }
@@ -98,7 +105,9 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		i++
 
-		if (i % 1000 === 0) console.error(`  ${i}/${rows.length}`)
+		if (i % 1000 === 0) {
+			console.error(`  ${i}/${rows.length}`)
+		}
 		const loc = row.expected.locality
 		const reg = row.expected.region
 
@@ -115,7 +124,9 @@ async function main(): Promise<void> {
 		}
 		const pred = firstByTag(tree, "locality")
 
-		if (pred && valueMatch(pred.value, loc)) bucket.ok++
+		if (pred && valueMatch(pred.value, loc)) {
+			bucket.ok++
+		}
 	}
 
 	const pct = (b: { ok: number; n: number }): string => (b.n ? ((100 * b.ok) / b.n).toFixed(1) : "0.0") + "%"

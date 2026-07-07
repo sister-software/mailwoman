@@ -51,15 +51,18 @@ for (const [label, file, cap] of slices) {
 		if (got.street_prefix || got.street_suffix) {
 			affix++
 
-			if (samples.length < 4)
+			if (samples.length < 4) {
 				samples.push(`${text.slice(0, 60)} → prefix="${got.street_prefix ?? ""}" suffix="${got.street_suffix ?? ""}"`)
+			}
 		}
 
 		// DE postcodes are exactly 5 digits (same shape as FR).
 		if (got.postcode && !/^\d{5}$/.test(got.postcode.trim())) {
 			badPostcode++
 
-			if (samples.length < 6) samples.push(`${text.slice(0, 60)} → postcode="${got.postcode}"`)
+			if (samples.length < 6) {
+				samples.push(`${text.slice(0, 60)} → postcode="${got.postcode}"`)
+			}
 		}
 	}
 	console.log(`\n== ${label} (n=${n}) ==`)
@@ -67,5 +70,7 @@ for (const [label, file, cap] of slices) {
 		`affix-tag emissions: ${affix} (${((100 * affix) / n).toFixed(1)}%) · postcode-shape violations: ${badPostcode} (${((100 * badPostcode) / n).toFixed(1)}%)`
 	)
 
-	for (const s of samples) console.log(`  ${s}`)
+	for (const s of samples) {
+		console.log(`  ${s}`)
+	}
 }

@@ -14,8 +14,11 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 		if (typeof window === "undefined") return
 		const url = new URL(window.location.href)
 
-		if (text) url.searchParams.set("q", text)
-		else url.searchParams.delete("q")
+		if (text) {
+			url.searchParams.set("q", text)
+		} else {
+			url.searchParams.delete("q")
+		}
 		const href = url.toString()
 
 		try {

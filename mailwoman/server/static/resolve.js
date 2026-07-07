@@ -54,7 +54,9 @@ function indent(depth) {
 function renderRow(node) {
 	const tr = document.createElement("tr")
 
-	if (node.source === "resolver") tr.classList.add("resolved")
+	if (node.source === "resolver") {
+		tr.classList.add("resolved")
+	}
 
 	const tagTd = document.createElement("td")
 	tagTd.append(indent(node.depth))
@@ -71,7 +73,9 @@ function renderRow(node) {
 	const confTd = document.createElement("td")
 	confTd.textContent = node.confidence.toFixed(2)
 
-	if (node.confidence < 0.6) confTd.className = "conf-low"
+	if (node.confidence < 0.6) {
+		confTd.className = "conf-low"
+	}
 	tr.append(confTd)
 
 	const sourceTd = document.createElement("td")

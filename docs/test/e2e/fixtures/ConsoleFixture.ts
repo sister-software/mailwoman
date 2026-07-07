@@ -85,8 +85,11 @@ export class ConsoleFixture {
 		const noise: string[] = []
 
 		for (const e of this.events) {
-			if (classify(e.text) === "fail") failures.push(e.text)
-			else noise.push(e.text)
+			if (classify(e.text) === "fail") {
+				failures.push(e.text)
+			} else {
+				noise.push(e.text)
+			}
 		}
 
 		return { failures, noise }

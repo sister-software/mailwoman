@@ -247,8 +247,11 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 		while (hi - lo > 1) {
 			const mid = (lo + hi) >> 1
 
-			if (centers[mid]! <= x) lo = mid
-			else hi = mid
+			if (centers[mid]! <= x) {
+				lo = mid
+			} else {
+				hi = mid
+			}
 		}
 		const x0 = centers[lo]!
 		const x1 = centers[hi]!
@@ -389,10 +392,14 @@ export async function runCascade(
 			}
 		}
 
-		for (const child of node.children ?? []) visit(child)
+		for (const child of node.children ?? []) {
+			visit(child)
+		}
 	}
 
-	for (const root of resolved.roots) visit(root)
+	for (const root of resolved.roots) {
+		visit(root)
+	}
 
 	if (collected.length === 0) {
 		// Nothing in the tree resolved (span-rescore included) — the old cascade's last resort.

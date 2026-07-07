@@ -42,7 +42,9 @@ function db(setup: (d: DatabaseSync) => void): DatabaseSync {
 	return d
 }
 afterEach(() => {
-	while (openDbs.length) openDbs.pop()!.close()
+	while (openDbs.length) {
+		openDbs.pop()!.close()
+	}
 })
 
 function situsDB(): DatabaseSync {

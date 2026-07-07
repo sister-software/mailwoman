@@ -204,7 +204,9 @@ async function loadExistingEntries(manifestPath: string): Promise<Map<string, Ba
 	try {
 		const parsed = JSON.parse(await readFile(manifestPath, "utf8")) as BanManifestEntry[]
 
-		for (const entry of parsed) entries.set(entry.dept_code, entry)
+		for (const entry of parsed) {
+			entries.set(entry.dept_code, entry)
+		}
 	} catch {
 		// Corrupt/partial manifest — start fresh, all codes re-fetch.
 	}
@@ -329,9 +331,13 @@ async function main(): Promise<void> {
 	process.stderr.write(`skipped:  ${skipped} (already present + sha matched)\n`)
 	process.stderr.write(`failed:   ${failed}\n`)
 
-	if (failedCodes.length > 0) process.stderr.write(`failed codes: ${failedCodes.join(" ")}\n`)
+	if (failedCodes.length > 0) {
+		process.stderr.write(`failed codes: ${failedCodes.join(" ")}\n`)
+	}
 
-	if (failed > 0) process.exitCode = 1
+	if (failed > 0) {
+		process.exitCode = 1
+	}
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

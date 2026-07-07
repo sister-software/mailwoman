@@ -108,18 +108,27 @@ export function editDistance1Variants(s: string): string[] {
 		/[0-9]/.test(ch) ? "0123456789" : /[A-Z]/.test(ch) ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : ""
 	const variants = new Set<string>()
 
-	for (let i = 0; i < s.length; i++) variants.add(s.slice(0, i) + s.slice(i + 1))
+	for (let i = 0; i < s.length; i++) {
+		variants.add(s.slice(0, i) + s.slice(i + 1))
+	}
 
 	// deletions
 	for (let i = 0; i < s.length; i++) {
-		for (const c of classOf(s[i]!)) if (c !== s[i]) variants.add(s.slice(0, i) + c + s.slice(i + 1)) // substitutions
+		for (const c of classOf(s[i]!))
+			if (c !== s[i]) {
+				variants.add(s.slice(0, i) + c + s.slice(i + 1))
+			} // substitutions
 	}
 
 	for (let i = 0; i <= s.length; i++) {
-		for (const c of classOf(s[i] ?? s[i - 1] ?? "")) variants.add(s.slice(0, i) + c + s.slice(i)) // insertions
+		for (const c of classOf(s[i] ?? s[i - 1] ?? "")) {
+			variants.add(s.slice(0, i) + c + s.slice(i))
+		} // insertions
 	}
 
-	for (let i = 0; i + 1 < s.length; i++) variants.add(s.slice(0, i) + s[i + 1] + s[i] + s.slice(i + 2)) // transpositions
+	for (let i = 0; i + 1 < s.length; i++) {
+		variants.add(s.slice(0, i) + s[i + 1] + s[i] + s.slice(i + 2))
+	} // transpositions
 	variants.delete(s)
 
 	return [...variants]
@@ -132,10 +141,14 @@ export function editDistance1Variants(s: string): string[] {
 export function normalizePostcode(raw: string): string {
 	let s = raw.trim().toUpperCase().replace(/\s+/g, " ")
 
-	if (/^D-\d{5}$/.test(s)) s = s.slice(2)
+	if (/^D-\d{5}$/.test(s)) {
+		s = s.slice(2)
+	}
 
 	// German courtesy prefix: D-68161 → 68161
-	if (/^\d{4} [A-Z]{2}$/.test(s)) s = s.replace(" ", "")
+	if (/^\d{4} [A-Z]{2}$/.test(s)) {
+		s = s.replace(" ", "")
+	}
 
 	// Dutch: gazetteer stores 1012LM, not 1012 LM
 	return s
@@ -253,7 +266,9 @@ function positionFactor(text: string, start: number, normalized: string, systems
 	const segStart = text.lastIndexOf(",", start - 1) + 1
 	let segEnd = text.indexOf(",", start)
 
-	if (segEnd < 0) segEnd = text.length
+	if (segEnd < 0) {
+		segEnd = text.length
+	}
 
 	for (const token of text.slice(segStart, segEnd).split(/\s+/)) {
 		if (looksLikeStreetWord(token, systems)) return HOUSE_NUMBER_PENALTY
@@ -300,7 +315,9 @@ export function extractPostcodeAnchors(
 			const fuzzyHits: PostcodePlace[] = []
 
 			for (const variant of editDistance1Variants(normalized)) {
-				for (const h of resolver.lookup(variant)) fuzzyHits.push(h)
+				for (const h of resolver.lookup(variant)) {
+					fuzzyHits.push(h)
+				}
 			}
 
 			if (fuzzyHits.length > 0) {
@@ -315,7 +332,9 @@ export function extractPostcodeAnchors(
 
 		const posterior: Record<string, number> = {}
 
-		for (const c of countries) posterior[c] = 1 / k
+		for (const c of countries) {
+			posterior[c] = 1 / k
+		}
 
 		// Placement: one representative coordinate-bearing hit per country (the first with real coords).
 		const candidates: PostcodePlace[] = []
@@ -323,7 +342,9 @@ export function extractPostcodeAnchors(
 		for (const c of countries) {
 			const placed = hits.find((h) => h.country === c && h.lat !== 0 && h.lon !== 0)
 
-			if (placed) candidates.push(placed)
+			if (placed) {
+				candidates.push(placed)
+			}
 		}
 
 		// Gate the street-word check to the systems this code plausibly belongs to: its gazetteer

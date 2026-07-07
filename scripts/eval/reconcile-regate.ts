@@ -59,7 +59,9 @@ function collect(tree: AddressTree): ByTag {
 	while (st.length) {
 		const n = st.pop()!
 
-		if (STREET.has(n.tag) && n.value?.trim()) streetParts.push({ s: n.start, v: n.value.trim() })
+		if (STREET.has(n.tag) && n.value?.trim()) {
+			streetParts.push({ s: n.start, v: n.value.trim() })
+		}
 		;(byTag[n.tag] ??= []).push(n.value?.trim() || "")
 		st.push(...(n.children || []))
 	}
@@ -90,7 +92,11 @@ type TagAcc = Record<string, Counts>
 for (const f of files) {
 	const acc: { raw: TagAcc; argmax: TagAcc; rec: TagAcc } = { raw: {}, argmax: {}, rec: {} }
 
-	for (const t of TAGS) for (const k of ["raw", "argmax", "rec"] as const) acc[k][t] = { h: 0, n: 0 }
+	for (const t of TAGS) {
+		for (const k of ["raw", "argmax", "rec"] as const) {
+			acc[k][t] = { h: 0, n: 0 }
+		}
+	}
 	let n = 0
 
 	for (const line of readFileSync(f, "utf8").trim().split("\n")) {
@@ -108,11 +114,17 @@ for (const f of files) {
 			acc.argmax[tag]!.n++
 			acc.rec[tag]!.n++
 
-			if (hit(rawT, tag, gv)) acc.raw[tag]!.h++
+			if (hit(rawT, tag, gv)) {
+				acc.raw[tag]!.h++
+			}
 
-			if (hit(argT, tag, gv)) acc.argmax[tag]!.h++
+			if (hit(argT, tag, gv)) {
+				acc.argmax[tag]!.h++
+			}
 
-			if (hit(recT, tag, gv)) acc.rec[tag]!.h++
+			if (hit(recT, tag, gv)) {
+				acc.rec[tag]!.h++
+			}
 		}
 	}
 	console.log(`\n=== ${basename(f)}  (n=${n} addresses) ===`)
@@ -129,7 +141,9 @@ for (const f of files) {
 			cp = (100 * c.h) / c.n,
 			d = cp - ap
 
-		if (d < worst) worst = d
+		if (d < worst) {
+			worst = d
+		}
 		const flag = d <= -2 ? "  <-- reconcile WORSE" : d >= 2 ? "  <-- reconcile better" : ""
 		console.log(
 			`${t.padEnd(14)} ${pct(rw.h, rw.n).padStart(5)}%   ${pct(a.h, a.n).padStart(5)}%   ${pct(c.h, c.n).padStart(6)}%   ${(d >= 0 ? "+" : "") + d.toFixed(1)}pp${flag}`

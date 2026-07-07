@@ -42,8 +42,9 @@ for (const row of rows) {
 	}
 	const gold = row.components.po_box ?? null
 
-	if (predicted && gold && norm(predicted) === norm(gold)) tp++
-	else {
+	if (predicted && gold && norm(predicted) === norm(gold)) {
+		tp++
+	} else {
 		if (predicted) {
 			fp++
 			misses.push(`FP  ${row.raw}  → tagged "${predicted}" (gold po_box=${gold ?? "∅"})`)
@@ -67,5 +68,7 @@ console.log(
 if (misses.length) {
 	console.log("\n-- misses --")
 
-	for (const m of misses) console.log(m)
+	for (const m of misses) {
+		console.log(m)
+	}
 }

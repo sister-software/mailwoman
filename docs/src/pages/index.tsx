@@ -6,6 +6,8 @@ import Layout from "@theme/Layout"
 import clsx from "clsx"
 import type { ReactNode } from "react"
 
+import { useSiteConfig } from "../hooks/site.ts"
+
 import styles from "./index.module.css"
 
 function HomepageHeader(): ReactNode {
@@ -244,11 +246,11 @@ MAILWOMAN_WOF_DB=/path/to/wof.db npx mailwoman parse \\
 }
 
 export default function Home(): ReactNode {
-	const { siteConfig } = useDocusaurusContext()
+	const { title } = useSiteConfig()
 
 	return (
 		<Layout
-			title={siteConfig.title}
+			title={title}
 			description="TypeScript-first address parser + geocoder. Neural classifier + WOF resolver, runs in Node and the browser."
 		>
 			<HomepageHeader />

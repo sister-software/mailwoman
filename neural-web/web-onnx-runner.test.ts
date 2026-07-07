@@ -56,7 +56,9 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 
 		// Logits should be finite numbers (no NaN/Infinity from a misconfigured runtime).
 		for (const row of result.logits) {
-			for (const v of row) expect(Number.isFinite(v)).toBe(true)
+			for (const v of row) {
+				expect(Number.isFinite(v)).toBe(true)
+			}
 		}
 	})
 
@@ -88,7 +90,9 @@ function collectTags(nodes: Array<{ tag: string; children?: unknown[] }>): Set<s
 		out.add(n.tag)
 
 		if (Array.isArray(n.children)) {
-			for (const c of n.children) stack.push(c as { tag: string; children?: unknown[] })
+			for (const c of n.children) {
+				stack.push(c as { tag: string; children?: unknown[] })
+			}
 		}
 	}
 

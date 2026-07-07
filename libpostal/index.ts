@@ -98,7 +98,9 @@ export function createLibpostalRouter(engine: LibpostalEngine, options: Libposta
 	const router = Router()
 
 	// Browser clients need CORS or their cross-origin XHR is blocked before completing (#1017).
-	if (options.cors !== false) router.use(applyCors)
+	if (options.cors !== false) {
+		router.use(applyCors)
+	}
 
 	const parse: RequestHandler = async (req, res) => {
 		const query = (
@@ -136,7 +138,9 @@ export function createLibpostalRouter(engine: LibpostalEngine, options: Libposta
 			try {
 				await fn(req, res, next)
 			} catch {
-				if (!res.headersSent) res.status(500).json({ error: "internal error" })
+				if (!res.headersSent) {
+					res.status(500).json({ error: "internal error" })
+				}
 			}
 		}
 

@@ -222,7 +222,9 @@ describe("buildPlaceSearchFTS", () => {
 		let doneDetail: string | undefined
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
-				if (phase === "done") doneDetail = detail
+				if (phase === "done") {
+					doneDetail = detail
+				}
 			},
 		})
 		expect(doneDetail).toMatch(/3 FTS rows/)

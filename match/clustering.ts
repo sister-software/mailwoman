@@ -112,7 +112,9 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	const find = (x: number): number => {
 		let root = x
 
-		while (parent[root] !== root) root = parent[root]!
+		while (parent[root] !== root) {
+			root = parent[root]!
+		}
 
 		// Path compression.
 		while (parent[x] !== root) {
@@ -130,9 +132,11 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 
 		if (rx === ry) return
 
-		if (rank[rx]! < rank[ry]!) parent[rx] = ry
-		else if (rank[rx]! > rank[ry]!) parent[ry] = rx
-		else {
+		if (rank[rx]! < rank[ry]!) {
+			parent[rx] = ry
+		} else if (rank[rx]! > rank[ry]!) {
+			parent[ry] = rx
+		} else {
 			parent[ry] = rx
 			rank[rx]!++
 		}
@@ -150,7 +154,9 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 		if (ia === undefined || ib === undefined) continue
 		allLinks.push(link)
 
-		if (link.weight >= opts.threshold) union(ia, ib)
+		if (link.weight >= opts.threshold) {
+			union(ia, ib)
+		}
 	}
 
 	const groups = new Map<number, R[]>()
@@ -158,8 +164,11 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 		const root = find(i)
 		const group = groups.get(root)
 
-		if (group) group.push(record)
-		else groups.set(root, [record])
+		if (group) {
+			group.push(record)
+		} else {
+			groups.set(root, [record])
+		}
 	})
 
 	if (opts.linkage !== "average") return [...groups.values()]
@@ -170,7 +179,9 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	const localOf = new Map<R, number>()
 
 	// member → its index within its own group
-	for (const members of groups.values()) members.forEach((m, i) => localOf.set(m, i))
+	for (const members of groups.values()) {
+		members.forEach((m, i) => localOf.set(m, i))
+	}
 	const groupEdges = new Map<number, Array<[number, number, number]>>()
 
 	for (const link of allLinks) {
@@ -190,7 +201,9 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 			continue
 		}
 
-		for (const sub of averageLinkageRefine(members, groupEdges.get(root) ?? [], opts.threshold)) result.push(sub)
+		for (const sub of averageLinkageRefine(members, groupEdges.get(root) ?? [], opts.threshold)) {
+			result.push(sub)
+		}
 	}
 
 	return result
@@ -209,7 +222,9 @@ export function representative<R extends object>(group: readonly R[]): R | undef
 		let filled = 0
 
 		for (const value of Object.values(record)) {
-			if (value !== null && value !== undefined && value !== "") filled++
+			if (value !== null && value !== undefined && value !== "") {
+				filled++
+			}
 		}
 
 		if (filled > bestFilled) {
