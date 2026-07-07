@@ -309,3 +309,7 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 	return `${y}-${m}-${d}${suffix}`
 }
 export * from "./defaults.js"
+export * from "./admin/fold-geonames.js"
+export * from "./admin/fold-overture.js"
+export * from "./admin/freeze.js"
+export * from "./admin/ingest-wof.js"
