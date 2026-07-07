@@ -24,6 +24,7 @@ import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import Layout from "@theme/Layout"
 import type React from "react"
 
+import { useSiteConfig } from "../../hooks/site.ts"
 import { DemoApp } from "./_app.tsx"
 import { useBrowserGeolocation } from "./_hooks.tsx"
 import { TILE_WORKER_URL } from "./_map-helpers.ts"
@@ -39,9 +40,7 @@ const LoadingFallback: React.FC = () => {
  * default). Exported so the thin `debug.tsx` route can mount it with `debugDefault`.
  */
 export const DemoPageInner: React.FC<{ debugDefault?: boolean }> = ({ debugDefault = false }) => {
-	const { siteConfig } = useDocusaurusContext()
-	const buildCommit = (siteConfig.customFields?.buildCommit as string) ?? "?"
-	const buildTimeDisplay = (siteConfig.customFields?.buildTimeDisplay as string) ?? "?"
+	const { buildCommit, buildTimeDisplay, baseURL } = useSiteConfig()
 	const initialCenter = useBrowserGeolocation()
 
 	return (
@@ -58,9 +57,9 @@ export const DemoPageInner: React.FC<{ debugDefault?: boolean }> = ({ debugDefau
 				<link rel="preconnect" href="https://public.sister.software" crossOrigin="anonymous" />
 				<link rel="dns-prefetch" href="https://public.sister.software" />
 				<link rel="preconnect" href={TILE_WORKER_URL} crossOrigin="anonymous" />
-				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/index.js`} />
-				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/sqlite.worker.js`} />
-				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/sql-wasm.wasm`} />
+				<link rel="prefetch" href={`${baseURL}mailwoman/sqljs/index.js`} />
+				<link rel="prefetch" href={`${baseURL}mailwoman/sqljs/sqlite.worker.js`} />
+				<link rel="prefetch" href={`${baseURL}mailwoman/sqljs/sql-wasm.wasm`} />
 			</Head>
 
 			<main className={styles.demoRoot}>

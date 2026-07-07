@@ -190,7 +190,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 					runner: { useWebGPU: !forceWASM },
 					...(release?.hasAnchor
 						? {
-								postcodeBinaryUrls: [
+								postcodeBinaryURLs: [
 									assetURL(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
 									assetURL(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
 									assetURL(DEFAULT_LOCALE, selectedVersion, "postcode-fr.bin"),

@@ -13,13 +13,12 @@ import Layout from "@theme/Layout"
 import React from "react"
 
 import { TrainingCharts } from "../../components/TrainingCharts/TrainingCharts.tsx"
+import { useSiteConfig } from "../../hooks/site.ts"
 
 import styles from "./styles.module.css"
 
 const TrainingPage: React.FC = () => {
-	const { siteConfig } = useDocusaurusContext()
-	const buildCommit = (siteConfig.customFields?.buildCommit as string) ?? "?"
-	const buildTimeDisplay = (siteConfig.customFields?.buildTimeDisplay as string) ?? "?"
+	const { buildCommit, buildTimeDisplay, baseURL } = useSiteConfig()
 
 	return (
 		<Layout

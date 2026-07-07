@@ -103,6 +103,7 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		f.push(officialAgree)
 		f.push(officialAgree * orgDisagree) // the roll-up core: same signer, different brand
 		f.push(officialAgree * orgDisagree * spatialExact)
+
 		// …at the same place
 
 		// scale into a usable range

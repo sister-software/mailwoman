@@ -59,7 +59,7 @@ import {
 	loadFSTGazetteer,
 	type MailwomanClassifierLike,
 	type MailwomanLookupLike,
-	neuralClassifierLoadUrls,
+	neuralClassifierLoadURLs,
 	regionToStateSlug,
 	type ResolvedHit,
 	streetShardURL,
@@ -82,6 +82,7 @@ interface StreetLookups {
 	interp: HTTPVFSInterpolator
 }
 
+import { useSiteConfig } from "../../hooks/site.ts"
 import { DebugControl } from "./_debug.tsx"
 import {
 	clearBbox,
@@ -115,8 +116,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 	// stay SAME-ORIGIN though — browsers block cross-origin `new Worker()` — so the worker + wasm are
 	// staged into the Pages deploy at `/mailwoman/sqljs/` by the demo-assets plugin and loaded from
 	// there, while the DB the worker range-reads lives on R2 (cross-origin, CORS-allowed).
-	const { siteConfig } = useDocusaurusContext()
-	const sqljsBaseURL = `${siteConfig.baseUrl}mailwoman/sqljs`
+	const { baseURL } = useSiteConfig()
+	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
@@ -228,8 +229,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 	// Mount: register the range-chunk service worker (persists validated DB range chunks in Cache
 	// Storage — warm repeat visits, and the root fix for mobile Safari's torn-chunk HTTP cache).
 	useEffect(() => {
-		registerRangeCacheServiceWorker(siteConfig.baseUrl)
-	}, [siteConfig.baseUrl])
+		registerRangeCacheServiceWorker(baseURL)
+	}, [baseURL])
 
 	// Drop cached range chunks belonging to other versions once a version is selected — the URLs are
 	// immutable, so old versions' chunks never expire on their own.
@@ -400,7 +401,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 					diagnostics,
 					postcodeAnchorLookup,
 				} = await neuralWeb.loadNeuralClassifierFromUrls(
-					neuralClassifierLoadUrls(DEFAULT_LOCALE, selectedVersion, { hasAnchor: release?.hasAnchor, forceWASM })
+					neuralClassifierLoadURLs(DEFAULT_LOCALE, selectedVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 				setActiveBackend(
 					diagnostics
@@ -507,7 +508,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 
 				const neuralWeb = await import("@mailwoman/neural-web")
 				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls(
-					neuralClassifierLoadUrls(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
+					neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 
 				if (cancelled) return

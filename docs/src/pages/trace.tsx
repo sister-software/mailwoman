@@ -14,12 +14,12 @@ import type React from "react"
 
 import { LiveModelVisualizer } from "../components/ModelVisualizer/LiveModelVisualizer.tsx"
 import { DemoEmbedProvider } from "../contexts/DemoEmbed.tsx"
+import { useSiteConfig } from "../hooks/site.ts"
 
 const TracePage: React.FC = () => {
-	// Derive from siteConfig like the demo page does — a hardcoded "/mailwoman/sqljs" breaks the
-	// service-worker/sql.js root on any non-root baseUrl deploy (the night-31 baseURL-hotfix class).
-	const { siteConfig } = useDocusaurusContext()
-	const sqljsBaseURL = `${siteConfig.baseUrl}mailwoman/sqljs`
+	const { baseURL } = useSiteConfig()
+
+	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
 
 	return (
 		<Layout title="Trace" description="Follow an address through the mailwoman neural decode path">
