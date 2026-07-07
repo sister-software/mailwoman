@@ -289,3 +289,17 @@ export const DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"
 
 /** Staging suffix for admin rebuilds — build here, verify, THEN swap over the live name (RELEASING.md). */
 export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
+
+/**
+ * The zero-coverage gap set — GeoNames-alias locales carrying NO WOF or Overture admin. These are the
+ * `adminForCountries` targets for the GeoNames fold (#267): without the A-class fold (PCLI country + ADM1 regions +
+ * locality ancestry linking), their localities are orphans and "City, Country" scoping breaks (#1023/#1026 — the
+ * canonical recipe silently omitted this until 2026-07-07; the country nodes had come from coverage-expansion runs
+ * outside the recipe). Countries with WOF/Overture admin are excluded by construction — folding their GeoNames admin
+ * would double up (the #267 warning).
+ */
+export function geonamesAdminGapCountries(): string[] {
+	const covered = new Set<string>([...DEFAULT_OVERTURE_COUNTRIES, ...DEFAULT_WOF_PRIORITY_COUNTRIES])
+
+	return DEFAULT_GEONAMES_COUNTRIES.filter((cc) => !covered.has(cc))
+}

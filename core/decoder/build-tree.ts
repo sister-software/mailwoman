@@ -134,7 +134,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to an already-open
 			// `X` span is the model fragmenting a multi-word value — e.g. "Saint Paul" emitted as
 			// B-locality B-locality instead of B-locality I-locality (a real, decode-agnostic
-			// emission bug; see scripts/diag-saintalbans.ts). Fold it into the open span.
+			// emission bug; see scripts/diagnostic/diag-saintalbans.ts). Fold it into the open span.
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only. A
 			// comma or any other separator keeps them distinct, and an intervening O/different-tag

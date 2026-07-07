@@ -36,7 +36,7 @@ import { closeSync, openSync, writeSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { SeededRandom } from "./lib/python-random.ts"
+import { SeededRandom } from "../lib/python-random.ts"
 
 const ASCII_UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
 

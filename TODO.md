@@ -23,7 +23,7 @@ Per [Phase 8 — v0.5.0 fresh-slate](docs/articles/plan/phases/PHASE_8_v0_5_0_fr
 
 - **CRF NLL is the training destabilizer** — gradient-norm probe showed CRF dominates CE by 8-20× in the conflict regime below loss 0.41. Nine dual-loss runs diverged; CE-only (crf_loss_weight=0) trains stably past 6800 steps with val_macro_f1=0.496 (best ever). See [`dual-loss-curvature-conflict.md`](docs/articles/concepts/dual-loss-curvature-conflict.md).
 - **Smokes must match full-run effective batch.** Smoke at eff_batch=8 passed; full at eff_batch=128 diverged. Added to [`VERDICT_SMOKES.md`](docs/articles/plan/reference/VERDICT_SMOKES.md).
-- **Reconciler eval against v0.4.0 weights: zero delta** — classifier too weak to put correct tag in top-3. Waiting for CE-only weights to re-eval. Script at `scripts/eval-joint-reconcile.ts`.
+- **Reconciler eval against v0.4.0 weights: zero delta** — classifier too weak to put correct tag in top-3. Waiting for CE-only weights to re-eval. Script at `scripts/eval/eval-joint-reconcile.ts`.
 
 ## CPU-bound work surfaced 2026-05-23 (parallel to v0.4.0 training window)
 

@@ -72,7 +72,7 @@ node --experimental-strip-types scripts/backfill-postcode-centroids.ts \
   --repos /mnt/playpen/mailwoman-data/wof/repos
 
 # 4. functional check + accuracy
-node --experimental-strip-types scripts/diag-postcode-anchor.ts
+node --experimental-strip-types scripts/diagnostic/diag-postcode-anchor.ts
 node --experimental-strip-types scripts/eval/postcode-anchor-accuracy.ts \
   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
 ```
