@@ -33,9 +33,30 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
+import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createAddressParser, createRuntimePipeline } from "mailwoman"
+
+// Loose scan parity with the retired --flag=value find() scans: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"golden-dir": { type: "string" },
+		"model-card": { type: "string" },
+		"model-path": { type: "string" },
+		out: { type: "string" },
+		"tokenizer-path": { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+const values = rawValues as {
+	"golden-dir"?: string
+	"model-card"?: string
+	"model-path"?: string
+	out?: string
+	"tokenizer-path"?: string
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -491,11 +512,10 @@ function formatMarkdown(reports: ModeReport[]): string {
 // ---------------------------------------------------------------------------
 
 async function main() {
-	const goldenDir =
-		process.argv.find((a) => a.startsWith("--golden-dir="))?.split("=")[1] ?? resolve("data/eval/golden/v0.1.2")
-	const modelPath = process.argv.find((a) => a.startsWith("--model-path="))?.split("=")[1]
-	const tokenizerPath = process.argv.find((a) => a.startsWith("--tokenizer-path="))?.split("=")[1]
-	const modelCardPath = process.argv.find((a) => a.startsWith("--model-card="))?.split("=")[1]
+	const goldenDir = (values["golden-dir"] as string | undefined) ?? resolve("data/eval/golden/v0.1.2")
+	const modelPath = values["model-path"] as string | undefined
+	const tokenizerPath = values["tokenizer-path"] as string | undefined
+	const modelCardPath = values["model-card"] as string | undefined
 
 	const weightsOpts: WeightsOpts = { modelPath, tokenizerPath, modelCardPath }
 
@@ -583,7 +603,7 @@ async function main() {
 	console.log(JSON.stringify({ generated: new Date().toISOString(), goldenDir, reports }, null, 2))
 
 	// Optionally write markdown to file
-	const outPath = process.argv.find((a) => a.startsWith("--out="))?.split("=")[1]
+	const outPath = values["out"] as string | undefined
 
 	if (outPath) {
 		writeFileSync(outPath, markdown, "utf-8")

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software
@@ -14,6 +15,7 @@ import { readFileSync } from "node:fs"
  */
 import type { AddressTree } from "@mailwoman/core/decoder"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 interface NeuralClassifier {
 	parse(input: string, opts?: { postcodeRepair?: boolean }): Promise<AddressTree>
 }
@@ -62,11 +64,11 @@ const tagvals = (tree: AddressTree): TagVals => {
 
 	return o
 }
-const rows = readFileSync(process.argv[2] || "/tmp/ood-truth.jsonl", "utf8")
+const rows = readFileSync(positionals[0] || "/tmp/ood-truth.jsonl", "utf8")
 	.trim()
 	.split("\n")
 	.map((l) => JSON.parse(l) as HoldoutRow)
-const cap = Number(process.argv[3] || rows.length)
+const cap = Number(positionals[1] || rows.length)
 let n = 0,
 	identical = 0,
 	recLostStreet = 0,

@@ -1,3 +1,5 @@
+import { readFileSync, writeFileSync } from "node:fs"
+import { resolve } from "node:path"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -12,24 +14,26 @@
  *   Run with --expose-gc (the onnxruntime batch leak SIGKILLs a few hundred parses otherwise):
  *     node --expose-gc scripts/eval/unknown-span-report.ts [--files us.jsonl,adversarial.jsonl,fr.jsonl] [--out report.md]
  */
-import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { parseArgs } from "node:util"
 
 import { unknownSpans } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-const argv = process.argv.slice(2)
-const arg = (name: string, dflt: string): string => {
-	const i = argv.indexOf(`--${name}`)
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { files: { type: "string" }, "golden-dir": { type: "string" }, out: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { files?: string; "golden-dir"?: string; out?: string }
 
-	return i >= 0 && argv[i + 1] ? argv[i + 1]! : dflt
-}
-const GOLDEN_DIR = arg("golden-dir", "data/eval/golden/v0.1.2")
-const FILES = arg("files", "us.jsonl,fr.jsonl,adversarial.jsonl")
+const GOLDEN_DIR = values["golden-dir"] || "data/eval/golden/v0.1.2"
+const FILES = (values["files"] || "us.jsonl,fr.jsonl,adversarial.jsonl")
 	.split(",")
 	.map((s) => s.trim())
 	.filter(Boolean)
-const OUT = arg("out", "")
+const OUT = values["out"] || ""
 
 interface GoldenRow {
 	raw: string

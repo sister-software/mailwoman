@@ -45,7 +45,6 @@ import { createHash } from "node:crypto"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { readFile, unlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
@@ -63,6 +62,7 @@ const XLSX_FILENAME = "HI_Public_Schools_List.xlsx"
 const PY_CONVERT = `
 import csv
 import sys
+import { runIfScript } from "@mailwoman/core/utils"
 from openpyxl import load_workbook
 
 xlsx_path, csv_path = sys.argv[1], sys.argv[2]
@@ -238,9 +238,9 @@ async function main(): Promise<void> {
 	process.stderr.write(`  MANIFEST written to ${manifestPath}\n`)
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+void runIfScript(import.meta, async () => {
 	main().catch((err: Error) => {
 		process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
 		process.exitCode = 1
 	})
-}
+})

@@ -20,6 +20,8 @@ const { values: rawValues } = parseArgs({
 		"gazetteer-lexicon": { type: "string" },
 		json: { type: "string" },
 		model: { type: "string" },
+		"bridge-gaps": { type: "boolean" },
+		"suppress-gaz-near-postcode": { type: "boolean" },
 	},
 	strict: false,
 	allowPositionals: true,
@@ -31,8 +33,9 @@ const values = rawValues as {
 	"gazetteer-lexicon"?: string
 	json?: string
 	model?: string
+	"bridge-gaps"?: boolean
+	"suppress-gaz-near-postcode"?: boolean
 }
-const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 // Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its
@@ -52,10 +55,10 @@ const neural = new NeuralAddressClassifier({
 	labels: card.labels,
 	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
 	...(existsSync(GAZ) ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
-	suppressGazetteerNearPostcode: argv.includes("--suppress-gaz-near-postcode"),
+	suppressGazetteerNearPostcode: values["suppress-gaz-near-postcode"] ?? false,
 	// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
 	...(values["conventions"] || "" ? { addressSystemConventions: (values["conventions"] || "") as "auto" } : {}),
-	...(argv.includes("--bridge-gaps") ? { bridgePunctuationGaps: true } : {}),
+	...((values["bridge-gaps"] ?? false) ? { bridgePunctuationGaps: true } : {}),
 })
 
 const rows = readFileSync(file, "utf8")

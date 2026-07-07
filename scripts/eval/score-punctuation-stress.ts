@@ -35,6 +35,9 @@ const { values: rawValues } = parseArgs({
 		model: { type: "string" },
 		"sp-ann-bias": { type: "string" },
 		"sp-bias": { type: "string" },
+		"fold-gold": { type: "boolean" },
+		"no-ship-config": { type: "boolean" },
+		"span-proposer": { type: "boolean" },
 	},
 	strict: false,
 	allowPositionals: true,
@@ -48,8 +51,10 @@ const values = rawValues as {
 	model?: string
 	"sp-ann-bias"?: string
 	"sp-bias"?: string
+	"fold-gold"?: boolean
+	"no-ship-config"?: boolean
+	"span-proposer"?: boolean
 }
-const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const file = (values["file"] || "data/eval/external/punctuation-stress.jsonl")!
@@ -61,7 +66,7 @@ const [tokenizer, runner] =
 	engine === "neural"
 		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create((values["model"] || "")!)])
 		: [undefined!, undefined!]
-const shipConfig = !argv.includes("--no-ship-config")
+const shipConfig = !(values["no-ship-config"] ?? false)
 const v0 = engine === "v0" ? createAddressParser() : undefined
 const neural =
 	engine === "v0"
@@ -83,7 +88,7 @@ const neural =
 							bridgePunctuationGaps: true,
 						}
 					: {}),
-				...(argv.includes("--span-proposer")
+				...((values["span-proposer"] ?? false)
 					? {
 							spanProposer: {
 								lexicon: buildCodexSpanLexicon(),
@@ -134,7 +139,7 @@ async function parseWith(raw: string): Promise<Record<string, string>> {
 	}
 	const flat = decodeAsJSON(await neural.parse(raw)) as Record<string, string>
 
-	return argv.includes("--fold-gold") ? foldGoldForV0(flat) : flat
+	return (values["fold-gold"] ?? false) ? foldGoldForV0(flat) : flat
 }
 
 const byClass: Record<string, { components: number; correct: number; rows: number; died: number; samples: string[] }> =
@@ -151,7 +156,7 @@ for (const row of rows) {
 		c.died++ // every component in the row fails below
 	}
 	// --fold-gold grades neural on the same folded view as v0 (apples-to-apples head-to-head).
-	const goldView = engine === "v0" || argv.includes("--fold-gold") ? foldGoldForV0(row.components) : row.components
+	const goldView = engine === "v0" || (values["fold-gold"] ?? false) ? foldGoldForV0(row.components) : row.components
 
 	for (const [tag, gold] of Object.entries(goldView)) {
 		c.components++

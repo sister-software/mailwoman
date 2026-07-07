@@ -44,7 +44,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { $public } from "@mailwoman/core/env"
+import { childEnv, dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
@@ -253,7 +254,7 @@ runIfScript(import.meta, async () => {
 	// the ship artifact against the slim hot DB the demo serves. Env-gated like the other
 	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
 	// gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
-	const HOT_DB = process.env["MAILWOMAN_WOF_HOT_DB"] || "/tmp/v440-stage/en-us/v4.4.0/wof-hot.db"
+	const HOT_DB = $public.MAILWOMAN_WOF_HOT_DB || "/tmp/v440-stage/en-us/v4.4.0/wof-hot.db"
 	const HOT_STAGE = dirname(HOT_DB)
 
 	if (existsSync(HOT_DB)) {
@@ -280,20 +281,26 @@ runIfScript(import.meta, async () => {
 		// went to core/out/data/... while the data lives at core/data/.... A local core/out/data symlink
 		// bridged the gap. #481 fixed the detection — the compiled tree now reads core/data directly — so
 		// no bridge is needed here anymore.)
+		// Flags replace the bash-era env threading (external-arenas converted to parseArgs).
+		const arenaArgs = [
+			"--model",
+			shipModel,
+			"--tokenizer",
+			TOK,
+			"--model-card",
+			CARD,
+			"--gazetteer-lexicon",
+			GAZ,
+			"--anchor-lookup",
+			String(LK),
+			"--out-dir",
+			`${OUT_DIR}/arenas`,
+			...(CONV_MODE ? ["--conventions", CONV_MODE] : []),
+			...(BRIDGE_MODE ? ["--bridge-gaps"] : []),
+		]
 		const arena = await $({
 			nothrow: true,
-			env: {
-				...process.env,
-				MODEL: shipModel,
-				TOKENIZER: TOK,
-				MODELCARD: CARD,
-				GAZETTEER: GAZ,
-				ANCHOR: LK,
-				CONVENTIONS: CONV_MODE,
-				BRIDGE: BRIDGE_MODE,
-				OUT_DIR: `${OUT_DIR}/arenas`,
-			},
-		})`node --experimental-strip-types scripts/eval/external-arenas.ts`
+		})`node --experimental-strip-types scripts/eval/external-arenas.ts ${arenaArgs}`
 		writeFileSync(`${OUT_DIR}/arenas.md`, `${arena.stdout}${arena.stderr}`)
 
 		// set -e: a non-zero arena run aborts the gate before the verdict.
@@ -311,7 +318,7 @@ runIfScript(import.meta, async () => {
 	if (bareStreetFloor !== undefined) {
 		const bare = await $({
 			nothrow: true,
-			env: { ...process.env },
+			env: childEnv(),
 		})`node scripts/diagnostic/fr-parse-recall.ts --model ${shipModel} --tokenizer ${TOK} --model-card ${CARD} --floor ${String(bareStreetFloor)} --json ${`${OUT_DIR}/fr-bare-street.json`}`
 		writeFileSync(`${OUT_DIR}/fr-bare-street.md`, `${bare.stdout}${bare.stderr}`)
 

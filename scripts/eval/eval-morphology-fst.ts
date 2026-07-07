@@ -24,6 +24,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { dirname, basename as pathBasename, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -76,7 +77,6 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	let modelPath: string | undefined
 	let tokenizerPath: string | undefined
 	let modelCardPath: string | undefined
@@ -91,37 +91,42 @@ function parseArgs(): Args {
 	let evalName: string | undefined
 	let stage3Fold = false
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: {
+			"admin-fst": { type: "string" },
+			"dep-locality-penalty": { type: "string" },
+			golden: { type: "string" },
+			"max-affix-bias": { type: "string" },
+			"max-neighbour-street-bias": { type: "string" },
+			model: { type: "string" },
+			"model-card": { type: "string" },
+			"morphology-bin": { type: "string" },
+			name: { type: "string" },
+			"no-morphology": { type: "boolean" },
+			"out-json": { type: "string" },
+			"stage3-fold": { type: "boolean" },
+			tokenizer: { type: "string" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--model" && args[i + 1]) {
-			modelPath = args[++i]
-		} else if (a === "--tokenizer" && args[i + 1]) {
-			tokenizerPath = args[++i]
-		} else if (a === "--model-card" && args[i + 1]) {
-			modelCardPath = args[++i]
-		} else if (a === "--admin-fst" && args[i + 1]) {
-			adminFSTPath = args[++i]
-		} else if (a === "--morphology-bin" && args[i + 1]) {
-			morphologyBinPath = args[++i]
-		} else if (a === "--no-morphology") {
-			morphologyEnabled = false
-		} else if (a === "--golden" && args[i + 1]) {
-			goldenDir = args[++i]
-		} else if (a === "--max-affix-bias" && args[i + 1]) {
-			maxAffixBias = Number(args[++i])
-		} else if (a === "--max-neighbour-street-bias" && args[i + 1]) {
-			maxNeighbourStreetBias = Number(args[++i])
-		} else if (a === "--dep-locality-penalty" && args[i + 1]) {
-			dependentLocalityPenalty = Number(args[++i])
-		} else if (a === "--out-json" && args[i + 1]) {
-			outJson = args[++i]
-		} else if (a === "--name" && args[i + 1]) {
-			evalName = args[++i]
-		} else if (a === "--stage3-fold") {
-			stage3Fold = true
-		}
-	}
+	if (values["model"] != null) modelPath = values["model"] as string
+	if (values["tokenizer"] != null) tokenizerPath = values["tokenizer"] as string
+	if (values["model-card"] != null) modelCardPath = values["model-card"] as string
+	if (values["admin-fst"] != null) adminFSTPath = values["admin-fst"] as string
+	if (values["morphology-bin"] != null) morphologyBinPath = values["morphology-bin"] as string
+	if (values["no-morphology"] != null) morphologyEnabled = false
+	if (values["golden"] != null) goldenDir = values["golden"] as string
+	if (values["max-affix-bias"] != null) maxAffixBias = Number(values["max-affix-bias"] as string)
+	if (values["max-neighbour-street-bias"] != null)
+		maxNeighbourStreetBias = Number(values["max-neighbour-street-bias"] as string)
+	if (values["dep-locality-penalty"] != null)
+		dependentLocalityPenalty = Number(values["dep-locality-penalty"] as string)
+	if (values["out-json"] != null) outJson = values["out-json"] as string
+	if (values["name"] != null) evalName = values["name"] as string
+	if (values["stage3-fold"] != null) stage3Fold = true
 
 	if (!modelPath || !tokenizerPath || !modelCardPath || !goldenDir) {
 		console.error(

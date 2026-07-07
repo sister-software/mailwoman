@@ -20,10 +20,13 @@
  *   Run: node registry/tools/viz/render-map.ts <served-url> <out.png>
  */
 
+import { parseArgs } from "node:util"
+
 import { chromium } from "playwright"
 
-const url = process.argv[2]
-const out = process.argv[3]
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
+const url = positionals[0]
+const out = positionals[1]
 
 if (!url || !out) {
 	console.error("usage: render-map.ts <served-localhost-url> <out.png>")

@@ -14,7 +14,7 @@ import { writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { beforeAll, describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it, vi } from "vitest"
 
 import { autocomplete } from "../../resolver-wof-sqlite/fst-autocomplete.js"
 import { FSTMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.js"
@@ -231,45 +231,32 @@ describe("resolveFSTPath", () => {
 	})
 
 	it("falls back to the staged default when no explicit path and no env var", () => {
-		const saved = process.env["MAILWOMAN_FST_BIN"]
-		delete process.env["MAILWOMAN_FST_BIN"]
+		vi.stubEnv("MAILWOMAN_FST_BIN", undefined as unknown as string)
 
 		try {
 			expect(resolveFSTPath()).toBe("/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin")
 		} finally {
-			if (saved !== undefined) {
-				process.env["MAILWOMAN_FST_BIN"] = saved
-			}
+			vi.unstubAllEnvs()
 		}
 	})
 
 	it("prefers $MAILWOMAN_FST_BIN over the staged default", () => {
-		const saved = process.env["MAILWOMAN_FST_BIN"]
-		process.env["MAILWOMAN_FST_BIN"] = "/env/path.bin"
+		vi.stubEnv("MAILWOMAN_FST_BIN", "/env/path.bin")
 
 		try {
 			expect(resolveFSTPath()).toBe("/env/path.bin")
 		} finally {
-			if (saved !== undefined) {
-				process.env["MAILWOMAN_FST_BIN"] = saved
-			} else {
-				delete process.env["MAILWOMAN_FST_BIN"]
-			}
+			vi.unstubAllEnvs()
 		}
 	})
 
 	it("explicit path takes precedence over env var", () => {
-		const saved = process.env["MAILWOMAN_FST_BIN"]
-		process.env["MAILWOMAN_FST_BIN"] = "/env/path.bin"
+		vi.stubEnv("MAILWOMAN_FST_BIN", "/env/path.bin")
 
 		try {
 			expect(resolveFSTPath("/explicit/path.bin")).toBe("/explicit/path.bin")
 		} finally {
-			if (saved !== undefined) {
-				process.env["MAILWOMAN_FST_BIN"] = saved
-			} else {
-				delete process.env["MAILWOMAN_FST_BIN"]
-			}
+			vi.unstubAllEnvs()
 		}
 	})
 })

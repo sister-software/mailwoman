@@ -29,6 +29,7 @@
 
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
@@ -37,40 +38,53 @@ runIfScript(import.meta, async () => {
 	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash `| tail` did.
 	$.verbose = false
 
-	const outDir = process.env["OUT_DIR"] ?? "/tmp/external-arenas"
+	// Flags replace the bash-era env contract (MODEL=… TOKENIZER=… → --model … --tokenizer …).
+	const { values: cli } = parseArgs({
+		options: {
+			"out-dir": { type: "string" },
+			model: { type: "string" },
+			tokenizer: { type: "string" },
+			"model-card": { type: "string" },
+			"gazetteer-lexicon": { type: "string" },
+			"anchor-lookup": { type: "string" },
+			conventions: { type: "string" },
+			"bridge-gaps": { type: "boolean" },
+		},
+	})
+
+	const outDir = cli["out-dir"] ?? "/tmp/external-arenas"
 	mkdirSync(outDir, { recursive: true })
 	const emptyTests = join(outDir, "empty-tests")
 	mkdirSync(emptyTests, { recursive: true })
 
-	// Model args: pass through if MODEL set, else harness uses loadFromWeights() default.
+	// Model args: pass through if --model set, else harness uses loadFromWeights() default.
 	const modelArgs: string[] = []
-	const model = process.env["MODEL"]
+	const model = cli.model
 
 	if (model) {
-		// Under the bash `set -u`, TOKENIZER + MODELCARD were unbound-variable errors when MODEL was set.
-		const tokenizer = process.env["TOKENIZER"]
-		const modelCard = process.env["MODELCARD"]
+		const tokenizer = cli.tokenizer
+		const modelCard = cli["model-card"]
 
-		if (!tokenizer || !modelCard) throw new Error("MODEL is set → TOKENIZER and MODELCARD are required")
+		if (!tokenizer || !modelCard) throw new Error("--model is set → --tokenizer and --model-card are required")
 		modelArgs.push("--model", model, "--tokenizer", tokenizer, "--model-card", modelCard)
 
 		// Gaz-trained models (v4.2.0+): feed the ship config — zero-filled clues depress country
-		// recall and fake an affix crash. Opt in via GAZETTEER=/path/lexicon.json [ANCHOR=/path/lookup.json].
-		if (process.env["GAZETTEER"]) {
-			modelArgs.push("--gazetteer-lexicon", process.env["GAZETTEER"])
+		// recall and fake an affix crash. Opt in via --gazetteer-lexicon [--anchor-lookup].
+		if (cli["gazetteer-lexicon"]) {
+			modelArgs.push("--gazetteer-lexicon", cli["gazetteer-lexicon"])
 		}
 
-		if (process.env["ANCHOR"]) {
-			modelArgs.push("--anchor-lookup", process.env["ANCHOR"])
+		if (cli["anchor-lookup"]) {
+			modelArgs.push("--anchor-lookup", cli["anchor-lookup"])
 		}
 
-		// Conventions mask (#511 Tier A): CONVENTIONS=auto for v4.3.0+ ship config.
-		if (process.env["CONVENTIONS"]) {
-			modelArgs.push("--conventions", process.env["CONVENTIONS"])
+		// Conventions mask (#511 Tier A): --conventions auto for v4.3.0+ ship config.
+		if (cli.conventions) {
+			modelArgs.push("--conventions", cli.conventions)
 		}
 
-		// Span bridge (v4.4.0 corrective): BRIDGE=1 for v4.4.0+ ship config.
-		if (process.env["BRIDGE"]) {
+		// Span bridge (v4.4.0 corrective): --bridge-gaps for v4.4.0+ ship config.
+		if (cli["bridge-gaps"]) {
 			modelArgs.push("--bridge-gaps")
 		}
 		console.log(`Model: ${model}`)

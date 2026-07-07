@@ -18,6 +18,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { $public } from "@mailwoman/core/env"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { geometryContains, pointInPolygonRings, pointInRing, type GeojsonPosition } from "./geo.js"
@@ -193,8 +194,8 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 
 // --- env-gated integration against the real artifacts (see file header for paths) ---------------
 
-const ADMIN_DB = process.env.MAILWOMAN_WOF_ADMIN_DB
-const POLYGONS_DB = process.env.MAILWOMAN_WOF_POLYGONS_DB
+const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
+const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"against the production gazetteer (MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB)",

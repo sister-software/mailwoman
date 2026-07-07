@@ -12,12 +12,16 @@
 
 import { parseArgs } from "node:util"
 
+import { cliArguments } from "@mailwoman/core/utils"
+
 import { buildNutsDB } from "./build.js"
 import { NutsLookup } from "./index.js"
 
-if (process.argv[2] === "build") {
+const argvAll = cliArguments()
+
+if (argvAll[0] === "build") {
 	const { values } = parseArgs({
-		args: process.argv.slice(3),
+		args: argvAll.slice(1),
 		options: { geojson: { type: "string" }, out: { type: "string" } },
 	})
 
@@ -29,7 +33,7 @@ if (process.argv[2] === "build") {
 	console.error(`built ${values.out} (${regions} regions)`)
 } else {
 	// Hand-parse so negative coordinates work as positionals.
-	const args = process.argv.slice(2)
+	const args = argvAll
 	let databasePath: string | undefined
 	const coords: number[] = []
 

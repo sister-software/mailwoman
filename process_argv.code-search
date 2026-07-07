@@ -1,0 +1,199 @@
+# Query: process.argv
+# Including: .ts
+# Excluding: .pi
+# ContextLines: 1
+
+47 results - 34 files
+
+corpus/scripts/audit.test.ts:
+  15  // Re-export the internals for testing. The script's CLI entry is gated on
+  16: // `import.meta.url === file:// process.argv[1]`, so importing the module is side-effect-free.
+  17  import { audit } from "./audit.js"
+
+corpus/scripts/audit.ts:
+  383  // Run when invoked directly (not when imported as a module for testing).
+  384: if (import.meta.url === `file://${process.argv[1]}`) {
+  385: 	audit(parseArgv(process.argv.slice(2)))
+  386  }
+
+corpus/scripts/build-kryptonite-shard.ts:
+  118  async function main(): Promise<void> {
+  119: 	const args = parseArgs(process.argv.slice(2))
+  120  
+
+corpus/scripts/build-transliteration-shard.ts:
+  235  async function main(): Promise<void> {
+  236: 	const args = parseArgs(process.argv.slice(2))
+  237  
+
+corpus/scripts/ingest-csv.ts:
+  42  function parseArgs(): Record<string, string> {
+  43: 	const args = process.argv.slice(2)
+  44  	const out: Record<string, string> = {}
+
+corpus/scripts/fetch-sources/fetch-ban-full.ts:
+  343  
+  344: if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  345  	main().catch((err: Error) => {
+
+corpus/scripts/fetch-sources/fetch-state-hi-schools.ts:
+  240  
+  241: if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  242  	main().catch((err: Error) => {
+
+corpus-python/scripts/train_with_resume.ts:
+  25  const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml"
+  26: const EXTRA_ARGS = process.argv.slice(2)
+  27  
+
+nuts-lookup/cli.ts:
+  17  
+  18: if (process.argv[2] === "build") {
+  19  	const { values } = parseArgs({
+  20: 		args: process.argv.slice(3),
+  21  		options: { geojson: { type: "string" }, out: { type: "string" } },
+
+  31  	// Hand-parse so negative coordinates work as positionals.
+  32: 	const args = process.argv.slice(2)
+  33  	let databasePath: string | undefined
+
+resolver-wof-sqlite/build-candidate-cli.ts:
+  94  
+  95: if (import.meta.url === `file://${process.argv[1]}`) {
+  96: 	main(process.argv.slice(2))
+  97  		.then((code) => exit(code))
+
+resolver-wof-sqlite/build-coincident-roles-cli.ts:
+  109  
+  110: if (import.meta.url === `file://${process.argv[1]}`) {
+  111: 	exit(main(process.argv.slice(2)))
+  112  }
+
+resolver-wof-sqlite/build-fts-cli.ts:
+  138  // Entry point — only run when invoked directly, not when imported by tests.
+  139: if (import.meta.url === `file://${process.argv[1]}`) {
+  140: 	exit(main(process.argv.slice(2)))
+  141  }
+
+resolver-wof-sqlite/build-slim-cli.ts:
+  157  // Run when invoked as a script (not when imported by tests).
+  158: if (import.meta.url === `file://${process.argv[1]}`) {
+  159: 	main(process.argv.slice(2)).then((code) => exit(code))
+  160  }
+
+scripts/lint-corpus-shard.ts:
+  71  	const { values } = parseNodeArgs({
+  72: 		args: process.argv.slice(2),
+  73  		options: {
+
+scripts/publish-release-to-hf.ts:
+  91  function parseArgs(): ParsedArgs {
+  92: 	const args = process.argv.slice(2)
+  93  	const out: ParsedArgs = { setDefault: false }
+
+scripts/verify-shard-acks.ts:
+  79  	const { values } = parseNodeArgs({
+  80: 		args: process.argv.slice(2),
+  81  		options: { manifest: { type: "string" }, verbose: { type: "boolean", short: "v" } },
+
+scripts/eval/audit-po-box-cedex-shard.ts:
+  76  	const { values } = parseNodeArgs({
+  77: 		args: process.argv.slice(2),
+  78  		options: { input: { type: "string" }, samples: { type: "string" } },
+
+scripts/eval/confidence-discrimination.ts:
+  504  
+  505: if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  506  	await main()
+
+scripts/eval/conformal-coord.ts:
+  222  	const { values } = parseNodeArgs({
+  223: 		args: process.argv.slice(2),
+  224  		options: {
+
+scripts/eval/eval-error-analysis.ts:
+  68  	const { values } = parseNodeArgs({
+  69: 		args: process.argv.slice(2),
+  70  		options: {
+
+scripts/eval/eval-gate.ts:
+  80  	const { values } = parseNodeArgs({
+  81: 		args: process.argv.slice(2),
+  82  		options: {
+
+scripts/eval/eval-morphology-fst.ts:
+  95  	const { values } = parseNodeArgs({
+  96: 		args: process.argv.slice(2),
+  97  		options: {
+
+scripts/eval/extract-tuples.ts:
+  317  function parseArgs(): Args {
+  318: 	const argv = process.argv.slice(2)
+  319  	const shards: string[] = []
+
+scripts/eval/fullstack-compare.ts:
+  39  	const { values } = parseNodeArgs({
+  40: 		args: process.argv.slice(2),
+  41  		options: {
+
+scripts/eval/harness-postcode.ts:
+  76  	const { values } = parseNodeArgs({
+  77: 		args: process.argv.slice(2),
+  78  		options: {
+
+scripts/eval/harness-v0-neural.ts:
+  100  	const { values } = parseNodeArgs({
+  101: 		args: process.argv.slice(2),
+  102  		options: {
+
+scripts/eval/log-scale-chart.ts:
+  29  	const { values } = parseNodeArgs({
+  30: 		args: process.argv.slice(2),
+  31  		options: { input: { type: "string" }, output: { type: "string" } },
+
+scripts/eval/parse-training-log.ts:
+  68  	const { values } = parseNodeArgs({
+  69: 		args: process.argv.slice(2),
+  70  		options: { input: { type: "string" }, out: { type: "string" }, "run-name": { type: "string" } },
+
+scripts/eval/per-locale-f1-floors.ts:
+  228  	const { values } = parseNodeArgs({
+  229: 		args: process.argv.slice(2),
+  230  		options: {
+
+scripts/eval/per-locale-f1.ts:
+  95  	const { values } = parseNodeArgs({
+  96: 		args: process.argv.slice(2),
+  97  		options: {
+
+scripts/eval/postcode-anchor-accuracy.ts:
+  39  	const { values } = parseNodeArgs({
+  40: 		args: process.argv.slice(2),
+  41  		options: { country: { type: "string" }, eval: { type: "string" }, shard: { type: "string", multiple: true } },
+
+scripts/eval/training-chart.ts:
+  62  	const { values } = parseNodeArgs({
+  63: 		args: process.argv.slice(2),
+  64  		options: {
+
+timezone-lookup/cli.ts:
+  17  
+  18: if (process.argv[2] === "build") {
+  19  	const { values } = parseArgs({
+  20: 		args: process.argv.slice(3),
+  21  		options: { geojson: { type: "string" }, out: { type: "string" } },
+
+  31  	// Hand-parse so negative longitudes (which look like options to parseArgs) work as positionals.
+  32: 	const args = process.argv.slice(2)
+  33  	let databasePath: string | undefined
+
+un-locode-lookup/cli.ts:
+  18  
+  19: if (process.argv[2] === "build") {
+  20  	const { values } = parseArgs({
+  21: 		args: process.argv.slice(3),
+  22  		options: { csv: { type: "string" }, out: { type: "string" } },
+
+  32  	// Hand-parse so negative coordinates work as positionals.
+  33: 	const args = process.argv.slice(2)
+  34  	let databasePath: string | undefined

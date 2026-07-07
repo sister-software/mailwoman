@@ -36,11 +36,11 @@ import { createHash } from "node:crypto"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { readFile, unlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 import { gunzipSync } from "node:zlib"
 
 import { $public } from "@mailwoman/core/env"
+import { runIfScript } from "@mailwoman/core/utils"
 
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
@@ -341,9 +341,9 @@ async function main(): Promise<void> {
 	}
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+void runIfScript(import.meta, async () => {
 	main().catch((err: Error) => {
 		process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
 		process.exitCode = 1
 	})
-}
+})

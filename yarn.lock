@@ -4689,6 +4689,7 @@ __metadata:
     change-case: "npm:^5.4.4"
     d3-color: "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
+    es-main: "npm:^1.4.0"
     fast-glob: "npm:^3.3.3"
     http-status-codes: "npm:^2.3.0"
     json-colorizer: "npm:^3.0.1"

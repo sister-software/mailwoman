@@ -31,7 +31,7 @@ import * as https from "node:https"
 import * as path from "node:path"
 import { pipeline } from "node:stream/promises"
 
-import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPathBuilder, scriptEntryPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
@@ -128,7 +128,7 @@ const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-popu
 // The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-shard` command (the old
 // `scripts/build-interpolation-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this
 // process was started from, so dev + published installs both resolve correctly.
-const CLI_ENTRY = process.argv[1]!
+const CLI_ENTRY = scriptEntryPath()
 const ANSI_PATTERN = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
 const stripAnsi = (s: string): string => s.replace(ANSI_PATTERN, "")
 

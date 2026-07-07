@@ -41,6 +41,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, resolve } from "node:path"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
@@ -85,49 +86,47 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const argv = process.argv.slice(2)
 	const out: Partial<Args> = {
 		goldenDir: "data/eval/golden/v0.1.2/dev",
 		files: ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
 	}
 
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: {
+			"bridge-gaps": { type: "boolean" },
+			conventions: { type: "string" },
+			files: { type: "string" },
+			"gazetteer-lexicon": { type: "string" },
+			"golden-dir": { type: "string" },
+			model: { type: "string" },
+			"model-anchor-lookup": { type: "string" },
+			"model-card": { type: "string" },
+			"no-anchor": { type: "boolean" },
+			"out-json": { type: "string" },
+			"suppress-gaz-near-postcode": { type: "boolean" },
+			tokenizer: { type: "string" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--golden-dir" && argv[i + 1]) {
-			out.goldenDir = argv[++i]
-		} else if (a === "--files" && argv[i + 1]) {
-			out.files = argv[++i]!.split(",")
-				.map((s) => s.trim())
-				.filter(Boolean)
-		} else if (a === "--model" && argv[i + 1]) {
-			out.modelPath = argv[++i]
-		} else if (a === "--tokenizer" && argv[i + 1]) {
-			out.tokenizerPath = argv[++i]
-		} else if (a === "--model-card" && argv[i + 1]) {
-			out.modelCardPath = argv[++i]
-		}
-		// Feed the postcode anchor for a 4-input anchor-trained model (else inference errors on the
-		// missing anchor inputs). Mirrors oa-resolver-eval's --model-anchor-lookup.
-		else if (a === "--model-anchor-lookup" && argv[i + 1]) {
-			out.modelAnchorLookupPath = argv[++i]
-		} else if (a === "--gazetteer-lexicon" && argv[i + 1]) {
-			out.gazetteerLexiconPath = argv[++i]
-		}
-		// Opt OUT of the default anchor/gazetteer feed to deliberately measure the zero-feed (anchor-off)
-		// behavior of an anchor-trained model. Without this flag the standard lookup/lexicon are fed.
-		else if (a === "--no-anchor") {
-			out.noAnchor = true
-		} else if (a === "--suppress-gaz-near-postcode") {
-			out.suppressGazNearPostcode = true
-		} else if (a === "--conventions" && argv[i + 1]) {
-			out.conventions = argv[++i]
-		} else if (a === "--bridge-gaps") {
-			out.bridgeGaps = true
-		} else if (a === "--out-json" && argv[i + 1]) {
-			out.outJson = argv[++i]
-		}
-	}
+	if (values["golden-dir"] != null) out.goldenDir = values["golden-dir"] as string
+	if (values["files"] != null)
+		out.files = (values["files"] as string)
+			.split(",")
+			.map((s) => s.trim())
+			.filter(Boolean)
+	if (values["model"] != null) out.modelPath = values["model"] as string
+	if (values["tokenizer"] != null) out.tokenizerPath = values["tokenizer"] as string
+	if (values["model-card"] != null) out.modelCardPath = values["model-card"] as string
+	if (values["model-anchor-lookup"] != null) out.modelAnchorLookupPath = values["model-anchor-lookup"] as string
+	if (values["gazetteer-lexicon"] != null) out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
+	if (values["no-anchor"] != null) out.noAnchor = true
+	if (values["suppress-gaz-near-postcode"] != null) out.suppressGazNearPostcode = true
+	if (values["conventions"] != null) out.conventions = values["conventions"] as string
+	if (values["bridge-gaps"] != null) out.bridgeGaps = true
+	if (values["out-json"] != null) out.outJson = values["out-json"] as string
 
 	return out as Args
 }

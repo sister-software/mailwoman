@@ -52,6 +52,7 @@
  */
 
 import { readFileSync } from "node:fs"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 interface ShardEntry {
 	path: string
@@ -72,18 +73,17 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	const out: Partial<Args> = { verbose: false }
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: { manifest: { type: "string" }, verbose: { type: "boolean", short: "v" } },
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--manifest" && args[i + 1]) {
-			out.manifestPath = args[++i]
-		} else if (a === "--verbose" || a === "-v") {
-			out.verbose = true
-		}
-	}
+	if (values["manifest"] != null) out.manifestPath = values["manifest"] as string
+	if (values["verbose"] != null) out.verbose = true
 
 	if (!out.manifestPath) {
 		console.error("Usage: verify-shard-acks.ts --manifest <MANIFEST.json> [--verbose]")

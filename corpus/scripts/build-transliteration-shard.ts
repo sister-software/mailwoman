@@ -37,6 +37,8 @@ import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
 
+import { cliArguments } from "@mailwoman/core/utils"
+
 import { alignRow } from "../src/align.js"
 import { ParquetWriter } from "../src/parquet-wrapper/index.js"
 import {
@@ -233,7 +235,7 @@ function canonicalizeShardPath(path: string, legacyPrefix: string, canonicalPref
 }
 
 async function main(): Promise<void> {
-	const args = parseArgs(process.argv.slice(2))
+	const args = parseArgs(cliArguments())
 
 	if (!existsSync(args.jsonl)) throw new Error(`jsonl not found: ${args.jsonl}`)
 

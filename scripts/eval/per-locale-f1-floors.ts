@@ -24,6 +24,7 @@
  */
 
 import { readFileSync } from "node:fs"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 // locale key -> minimum acceptable micro-F1 (regression floor). null = no floor yet (SKIP, not guessed).
 const DEFAULT_FLOORS: Record<string, number | null> = {
@@ -221,22 +222,24 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const argv = process.argv.slice(2)
 	const a: Args = { blocking: false, selfTest: false }
 
-	for (let i = 0; i < argv.length; i++) {
-		const k = argv[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: {
+			blocking: { type: "boolean" },
+			floors: { type: "string" },
+			report: { type: "string" },
+			"self-test": { type: "boolean" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (k === "--report") {
-			a.report = argv[++i]
-		} else if (k === "--floors") {
-			a.floors = argv[++i]
-		} else if (k === "--blocking") {
-			a.blocking = true
-		} else if (k === "--self-test") {
-			a.selfTest = true
-		}
-	}
+	if (values["report"] != null) a.report = values["report"] as string
+	if (values["floors"] != null) a.floors = values["floors"] as string
+	if (values["blocking"] != null) a.blocking = true
+	if (values["self-test"] != null) a.selfTest = true
 
 	return a
 }

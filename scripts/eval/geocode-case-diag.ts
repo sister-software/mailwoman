@@ -10,6 +10,8 @@
  *   scripts/eval/geocode-case-diag.ts
  */
 
+import { parseArgs } from "node:util"
+
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -27,9 +29,11 @@ const resolver = createWOFResolver(lookup)
 const shards = new ShardProvider(mod, mailwomanDataRoot())
 
 import { readFileSync } from "node:fs"
-const SRC = process.argv[2] ?? "txhhsc"
-const N = Number(process.argv[3] ?? "200")
-const NOCOMMA = process.argv.slice(2).includes("nocomma") // bare positional mode token — #694: ingestRows space-joins columns (no commas)
+
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
+const SRC = positionals[0] ?? "txhhsc"
+const N = Number(positionals[1] ?? "200")
+const NOCOMMA = positionals.includes("nocomma") // bare positional mode token — #694: ingestRows space-joins columns (no commas)
 let addrs: string[]
 
 if (SRC === "fcc") {

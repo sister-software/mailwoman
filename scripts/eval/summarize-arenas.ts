@@ -17,7 +17,9 @@
  */
 
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 interface Result {
 	v0_pass: boolean
 	neural_pass: boolean
@@ -93,7 +95,7 @@ function pct(x: number, n: number): string {
 }
 
 function main(): void {
-	const [outDir, postalSrc] = [process.argv[2]!, process.argv[3]!]
+	const [outDir, postalSrc] = [positionals[0]!, positionals[1]!]
 	const arenas = ["libpostal", "perturb", "postal"]
 
 	console.log("| arena | n | v0 | neural | both | neural-only | v0-only | both-fail | tree-valid |")

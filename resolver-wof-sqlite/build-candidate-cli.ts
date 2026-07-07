@@ -15,6 +15,8 @@
 
 import { exit, stderr } from "node:process"
 
+import { cliArguments, runIfScript } from "@mailwoman/core/utils"
+
 import { buildCandidateTable } from "./build-candidate.js"
 
 interface CLIArgs {
@@ -92,11 +94,11 @@ export async function main(rawArgv: string[]): Promise<number> {
 	return 0
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-	main(process.argv.slice(2))
+void runIfScript(import.meta, async () => {
+	main(cliArguments())
 		.then((code) => exit(code))
 		.catch((err) => {
 			stderr.write(`${err instanceof Error ? err.stack : String(err)}\n`)
 			exit(1)
 		})
-}
+})

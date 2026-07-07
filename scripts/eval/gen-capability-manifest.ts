@@ -55,6 +55,7 @@ const { values: rawValues } = parseArgs({
 		model: { type: "string" },
 		"model-card": { type: "string" },
 		tokenizer: { type: "string" },
+		write: { type: "boolean" },
 	},
 	strict: false,
 	allowPositionals: true,
@@ -66,19 +67,18 @@ const values = rawValues as {
 	model?: string
 	"model-card"?: string
 	tokenizer?: string
+	write?: boolean
 }
 // -------------------------------------------------------------------------------------------------
 // Args
 // -------------------------------------------------------------------------------------------------
-
-const argv = process.argv.slice(2)
 
 const MODEL = (values["model"] || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))!
 const TOKENIZER = (values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))!
 const MODEL_CARD = (values["model-card"] || "neural-weights-en-us/model-card.json")!
 const ANCHOR_LOOKUP = (values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json"))!
 const GAZETTEER_LEXICON = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
-const WRITE = argv.includes("--write")
+const WRITE = values["write"] ?? false
 
 // -------------------------------------------------------------------------------------------------
 // Tier + locale matrix

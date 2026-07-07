@@ -19,6 +19,7 @@
  */
 
 import { readFileSync } from "node:fs"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -30,20 +31,20 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	let evalPath = "data/eval/external/openaddresses-de-sample.jsonl"
 	let country = "DE"
 	const shards = [dataRootPath("wof", "postalcode-us.db"), dataRootPath("wof", "postalcode-intl.db")]
 
-	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--eval" && args[i + 1]) {
-			evalPath = args[++i]!
-		} else if (args[i] === "--country" && args[i + 1]) {
-			country = args[++i]!
-		} else if (args[i] === "--shard" && args[i + 1]) {
-			shards.push(args[++i]!)
-		}
-	}
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: { country: { type: "string" }, eval: { type: "string" }, shard: { type: "string", multiple: true } },
+		strict: false,
+		allowPositionals: true,
+	})
+
+	if (values["eval"] != null) evalPath = values["eval"] as string
+	if (values["country"] != null) country = values["country"] as string
+	for (const v of (values["shard"] as string[] | undefined) ?? []) shards.push(v)
 
 	return { evalPath, country, shards }
 }

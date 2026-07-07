@@ -17,6 +17,8 @@ import { existsSync } from "node:fs"
 import { exit, stderr } from "node:process"
 import { DatabaseSync } from "node:sqlite"
 
+import { cliArguments, runIfScript } from "@mailwoman/core/utils"
+
 import { buildCoincidentRoles } from "./coincident-roles.js"
 
 function printUsageAndExit(code: number): never {
@@ -107,6 +109,4 @@ export function main(argv: readonly string[]): number {
 	return worst
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-	exit(main(process.argv.slice(2)))
-}
+void runIfScript(import.meta, () => exit(main(cliArguments())))

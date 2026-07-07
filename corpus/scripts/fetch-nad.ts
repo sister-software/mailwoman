@@ -78,8 +78,8 @@ interface ChunkManifest {
 	complete: boolean
 }
 
-function envInt(name: string, fallback: number): number {
-	const v = process.env[name]
+function envInt(name: "FS_CHUNK_SIZE" | "FS_PAGE_SIZE" | "FS_CONCURRENCY", fallback: number): number {
+	const v = $public[name]
 
 	return v ? Number.parseInt(v, 10) : fallback
 }

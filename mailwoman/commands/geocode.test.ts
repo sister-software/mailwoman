@@ -24,6 +24,8 @@ import { existsSync, mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { $public } from "@mailwoman/core/env"
+import { childEnv, dataRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 // ---------------------------------------------------------------------------
@@ -33,8 +35,8 @@ import { describe, expect, test } from "vitest"
 const REPO_ROOT = new URL("../../", import.meta.url).pathname.replace(/\/$/, "")
 const CLI_PATH = join(REPO_ROOT, "mailwoman/out/cli.js")
 
-const DEFAULT_WOF_PATH = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
-const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
+const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
+const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 
 // Per-state TX shards (the demo address is Round Rock, TX).
 const TX_ADDRESS_POINTS_DB = "/mnt/playpen/mailwoman-data/address-points/address-points-us-tx.db"
@@ -60,7 +62,7 @@ describe("geocode argument validation", () => {
 			execFileSync(process.execPath, [CLI_PATH, "geocode"], {
 				encoding: "utf8",
 				// Set a bogus WOF path so the command fails on arg validation, not on missing DB.
-				env: { ...process.env, MAILWOMAN_WOF_DB: "/nonexistent/wof.db" },
+				env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 				timeout: 10_000,
 			})
 		).toThrow()
@@ -75,7 +77,7 @@ describe("geocode argument validation", () => {
 		expect(() =>
 			execFileSync(process.execPath, [CLI_PATH, "geocode", "   "], {
 				encoding: "utf8",
-				env: { ...process.env, MAILWOMAN_WOF_DB: "/nonexistent/wof.db" },
+				env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 				timeout: 10_000,
 			})
 		).toThrow()
@@ -97,11 +99,10 @@ describe("geocode argument validation", () => {
 				// pass, geocode auto-attaches the wofShardPaths default set when the env is absent —
 				// on a standard data root that now SUCCEEDS (the new contract). The error contract
 				// only survives when no default shard exists either.
-				env: {
-					...process.env,
+				env: childEnv({
 					MAILWOMAN_WOF_DB: undefined,
 					MAILWOMAN_DATA_ROOT: mkdtempSync(join(tmpdir(), "mw-empty-")),
-				},
+				}),
 				timeout: 15_000,
 			})
 		} catch (err: unknown) {

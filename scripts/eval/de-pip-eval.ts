@@ -14,6 +14,7 @@
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
@@ -26,29 +27,28 @@ runIfScript(import.meta, async () => {
 	let LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 	let OUT = "/tmp/de-pip"
 
-	const argv = process.argv.slice(2)
+	// STRICT parseArgs — the original switch errored on unknown args; parity preserved.
+	let cliValues: Record<string, string | boolean | undefined>
 
-	for (let i = 0; i < argv.length; i++) {
-		switch (argv[i]) {
-			case "--model":
-				MODEL = argv[++i]!
-				break
-			case "--card":
-				CARD = argv[++i]!
-				break
-			case "--tokenizer":
-				TOK = argv[++i]!
-				break
-			case "--anchor-lookup":
-				LOOKUP = argv[++i]!
-				break
-			case "--out":
-				OUT = argv[++i]!
-				break
-			default:
-				throw new Error(`unknown arg: ${argv[i]}`)
-		}
+	try {
+		cliValues = parseArgs({
+			options: {
+				"anchor-lookup": { type: "string" },
+				card: { type: "string" },
+				model: { type: "string" },
+				out: { type: "string" },
+				tokenizer: { type: "string" },
+			},
+		}).values
+	} catch (e) {
+		throw new Error(`unknown arg: ${e instanceof Error ? e.message : e}`)
 	}
+
+	if (cliValues["model"] != null) MODEL = cliValues["model"] as string
+	if (cliValues["card"] != null) CARD = cliValues["card"] as string
+	if (cliValues["tokenizer"] != null) TOK = cliValues["tokenizer"] as string
+	if (cliValues["anchor-lookup"] != null) LOOKUP = cliValues["anchor-lookup"] as string
+	if (cliValues["out"] != null) OUT = cliValues["out"] as string
 
 	if (!MODEL || !CARD) throw new Error("need --model and --card")
 

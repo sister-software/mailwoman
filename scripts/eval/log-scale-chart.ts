@@ -15,6 +15,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 interface Args {
 	input: string
@@ -22,18 +23,17 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	const out: Partial<Args> = {}
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: { input: { type: "string" }, output: { type: "string" } },
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--input" && args[i + 1]) {
-			out.input = args[++i]
-		} else if (a === "--output" && args[i + 1]) {
-			out.output = args[++i]
-		}
-	}
+	if (values["input"] != null) out.input = values["input"] as string
+	if (values["output"] != null) out.output = values["output"] as string
 
 	if (!out.input || !out.output) {
 		console.error("Usage: log-scale-chart.ts --input <svg> --output <svg>")

@@ -40,6 +40,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 interface TrainPoint {
 	run: string
@@ -61,20 +62,18 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	const out: Partial<Args> = {}
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: { input: { type: "string" }, out: { type: "string" }, "run-name": { type: "string" } },
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--input" && args[i + 1]) {
-			out.inputPath = args[++i]
-		} else if (a === "--out" && args[i + 1]) {
-			out.outPath = args[++i]
-		} else if (a === "--run-name" && args[i + 1]) {
-			out.runName = args[++i]
-		}
-	}
+	if (values["input"] != null) out.inputPath = values["input"] as string
+	if (values["out"] != null) out.outPath = values["out"] as string
+	if (values["run-name"] != null) out.runName = values["run-name"] as string
 
 	if (!out.runName) {
 		console.error("Usage: parse-training-log.ts --run-name <label> [--input <file>] [--out <json>]")

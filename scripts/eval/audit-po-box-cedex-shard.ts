@@ -31,6 +31,7 @@
 
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isPOBox } from "@mailwoman/codex/us"
@@ -69,16 +70,17 @@ interface ShardRow {
 type SpanSlicesResult = { ok: false; reason: string } | { ok: true; byTag: Map<string, string[]> }
 
 function parseArgs(): AuditOptions {
-	const args = process.argv.slice(2)
 	const out: { input?: string; samples: number } = { samples: 8 }
 
-	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--input") {
-			out.input = args[++i]
-		} else if (args[i] === "--samples") {
-			out.samples = parseInt(args[++i] ?? "", 10)
-		}
-	}
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: { input: { type: "string" }, samples: { type: "string" } },
+		strict: false,
+		allowPositionals: true,
+	})
+
+	if (values["input"] != null) out.input = values["input"] as string
+	if (values["samples"] != null) out.samples = parseInt((values["samples"] as string) ?? "", 10)
 
 	if (!out.input) {
 		console.error("Usage: audit-po-box-cedex-shard.ts --input <labeled.jsonl> [--samples N]")

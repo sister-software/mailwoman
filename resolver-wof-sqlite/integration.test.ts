@@ -21,12 +21,14 @@
 
 import { existsSync } from "node:fs"
 
+import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { WOFSqlitePlaceLookup } from "./lookup.js"
 
-const DEFAULT_WOF_PATH = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
-const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
+const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
+const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDb = existsSync(wofPath)
 
 // vitest's describe.skipIf prints a helpful message at suite runtime.

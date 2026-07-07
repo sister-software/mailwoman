@@ -36,6 +36,7 @@
 
 import { existsSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
@@ -65,18 +66,26 @@ runIfScript(import.meta, async () => {
 	$.verbose = false
 
 	const outDir = "data/eval/external"
-	const model = process.env["MODEL"] ?? "out/v180/model.onnx"
-	const tok = process.env["TOK"] ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
-	const card = process.env["CARD"] ?? "neural-weights-en-us/model-card.json"
-	const anchor = process.env["ANCHOR"] ?? dataRootPath("anchor", "pilot-anchor-lookup.json")
+	// node:util parseArgs (strict:false = old scan parity); positionals = the country panel list.
+	const { values, positionals: args } = parseArgs({
+		options: {
+			"build-only": { type: "boolean" },
+			model: { type: "string" },
+			tokenizer: { type: "string" },
+			card: { type: "string" },
+			anchor: { type: "string" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
+	const buildOnly = (values["build-only"] as boolean | undefined) ?? false
 
-	const args = process.argv.slice(2)
-	let buildOnly = false
-
-	if (args[0] === "--build-only") {
-		buildOnly = true
-		args.shift()
-	}
+	// Flags replace the bash-era env contract (MODEL=… TOK=… → --model … --tokenizer …).
+	const model = (values.model as string | undefined) ?? "out/v180/model.onnx"
+	const tok =
+		(values.tokenizer as string | undefined) ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+	const card = (values.card as string | undefined) ?? "neural-weights-en-us/model-card.json"
+	const anchor = (values.anchor as string | undefined) ?? dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 	if (args.length === 0) {
 		console.error("usage: nonus-coord-panel.ts [--build-only] <cc> [cc...]")

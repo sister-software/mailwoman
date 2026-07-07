@@ -30,6 +30,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 const DEFAULT_DB = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
 
@@ -208,7 +209,6 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const argv = process.argv.slice(2)
 	const a: Args = {
 		db: DEFAULT_DB,
 		label: "dump",
@@ -218,27 +218,30 @@ function parseArgs(): Args {
 		selfTest: false,
 	}
 
-	for (let i = 0; i < argv.length; i++) {
-		const k = argv[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: {
+			alphas: { type: "string" },
+			"cal-frac": { type: "string" },
+			db: { type: "string" },
+			dump: { type: "string" },
+			label: { type: "string" },
+			"out-json": { type: "string" },
+			seed: { type: "string" },
+			"self-test": { type: "boolean" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (k === "--dump") {
-			a.dump = argv[++i]
-		} else if (k === "--db") {
-			a.db = argv[++i]!
-		} else if (k === "--label") {
-			a.label = argv[++i]!
-		} else if (k === "--alphas") {
-			a.alphas = argv[++i]!
-		} else if (k === "--seed") {
-			a.seed = parseInt(argv[++i]!, 10)
-		} else if (k === "--cal-frac") {
-			a.calFrac = parseFloat(argv[++i]!)
-		} else if (k === "--out-json") {
-			a.outJson = argv[++i]
-		} else if (k === "--self-test") {
-			a.selfTest = true
-		}
-	}
+	if (values["dump"] != null) a.dump = values["dump"] as string
+	if (values["db"] != null) a.db = values["db"] as string
+	if (values["label"] != null) a.label = values["label"] as string
+	if (values["alphas"] != null) a.alphas = values["alphas"] as string
+	if (values["seed"] != null) a.seed = parseInt(values["seed"] as string, 10)
+	if (values["cal-frac"] != null) a.calFrac = parseFloat(values["cal-frac"] as string)
+	if (values["out-json"] != null) a.outJson = values["out-json"] as string
+	if (values["self-test"] != null) a.selfTest = true
 
 	return a
 }

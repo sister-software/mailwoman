@@ -24,6 +24,8 @@ import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
 
+import { cliArguments } from "@mailwoman/core/utils"
+
 import { alignRow } from "../src/align.js"
 import { PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, type ShardManifest, writeShards } from "../src/parquet.js"
 import type { CanonicalRow, LabeledRow } from "../src/types.js"
@@ -116,7 +118,7 @@ async function* labeledRows(jsonl: string, corpusVersion: string, quarantineLog:
 }
 
 async function main(): Promise<void> {
-	const args = parseArgs(process.argv.slice(2))
+	const args = parseArgs(cliArguments())
 
 	if (!existsSync(args.jsonl)) throw new Error(`jsonl not found: ${args.jsonl}`)
 

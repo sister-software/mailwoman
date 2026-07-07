@@ -51,7 +51,7 @@ import { parseArgs } from "node:util"
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createCalibrator } from "@mailwoman/core/decoder"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, runIfScript } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -502,6 +502,4 @@ async function main(): Promise<void> {
 	console.log(md)
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
-	await main()
-}
+await runIfScript(import.meta, main)

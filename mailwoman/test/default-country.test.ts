@@ -24,6 +24,8 @@ import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
+import { childEnv, dataRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { localeToCountry, options as parseOptions, resolverDefaultCountry } from "../commands/parse.js"
@@ -31,7 +33,7 @@ import { localeToCountry, options as parseOptions, resolverDefaultCountry } from
 const exec = promisify(execFile)
 const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
 const cliBin = resolve(repoRoot, "out", "cli.js")
-const GLOBAL_WOF = process.env["MAILWOMAN_WOF_GLOBAL_DB"] ?? "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+const GLOBAL_WOF = $public.MAILWOMAN_WOF_GLOBAL_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 
 describe("localeToCountry", () => {
 	test("infers the ISO country from a BCP-47 region subtag", () => {
@@ -78,7 +80,7 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 			"node",
 			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", GLOBAL_WOF, "--format", "xml", ...extra, address],
 			{
-				env: { ...process.env, NODE_NO_WARNINGS: "1" },
+				env: childEnv({ NODE_NO_WARNINGS: "1" }),
 				maxBuffer: 4 * 1024 * 1024,
 			}
 		)

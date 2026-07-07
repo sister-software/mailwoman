@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -24,6 +24,8 @@
  *   Field separator (default: ,) --skip <n> Lines to skip before header (default: 0) --no-header
  *   CSV has no header row — columns will be col_0, col_1, etc. --dry-run Infer schema and print
  *   CREATE TABLE, but don't import
+ *
+ *   DELIBERATE hand-parse: dynamic --key value pairs (columns inferred at runtime) — node:util parseArgs cannot express this shape.
  */
 
 ///<reference types="node" />
@@ -33,12 +35,14 @@ import { basename, dirname, extname, join } from "node:path"
 import { createInterface } from "node:readline"
 import { SQLInputValue } from "node:sqlite"
 
+import { cliArguments } from "@mailwoman/core/utils"
+
 // ---------------------------------------------------------------------------
 // CLI arg parsing (minimal — no yargs dependency needed for a utility script)
 // ---------------------------------------------------------------------------
 
 function parseArgs(): Record<string, string> {
-	const args = process.argv.slice(2)
+	const args = cliArguments()
 	const out: Record<string, string> = {}
 
 	for (let i = 0; i < args.length; i++) {

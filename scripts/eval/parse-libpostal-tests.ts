@@ -31,9 +31,11 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { pyJsonDumps } from "@mailwoman/core/utils"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 const REMAP: Record<string, string> = {
 	road: "street",
 	house_number: "house_number",
@@ -61,8 +63,8 @@ const DROP = new Set([
 ])
 
 function main(): void {
-	const srcPath = process.argv[2] ?? "/tmp/test_parser.c"
-	const outPath = process.argv[3] ?? "data/eval/external/libpostal-cases.jsonl"
+	const srcPath = positionals[0] ?? "/tmp/test_parser.c"
+	const outPath = positionals[1] ?? "data/eval/external/libpostal-cases.jsonl"
 	const src = readFileSync(srcPath, "utf-8")
 
 	const callRe = /test_parse_result_equals\(\s*"((?:[^"\\]|\\.)*)"\s*,\s*\w+\s*,\s*\d+\s*,(.*?)\)\s*\)/gs

@@ -31,6 +31,7 @@
  */
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
@@ -49,36 +50,33 @@ runIfScript(import.meta, async () => {
 	let OUT = ""
 	let TMP = "/tmp/honest"
 
-	const argv = process.argv.slice(2)
+	// STRICT parseArgs — the original switch errored on unknown args; parity preserved.
+	let cliValues: Record<string, string | boolean | undefined>
 
-	for (let i = 0; i < argv.length; i++) {
-		switch (argv[i]) {
-			case "--model":
-				MODEL = argv[++i] ?? ""
-				break
-			case "--card":
-				CARD = argv[++i] ?? ""
-				break
-			case "--tokenizer":
-				TOK = argv[++i] ?? ""
-				break
-			case "--wof":
-				WOF = argv[++i] ?? ""
-				break
-			case "--label":
-				LABEL = argv[++i] ?? ""
-				break
-			case "--out":
-				OUT = argv[++i] ?? ""
-				break
-			case "--tmp":
-				TMP = argv[++i] ?? ""
-				break
-			default:
-				console.error(`unknown arg: ${argv[i]}`)
-				process.exit(1)
-		}
+	try {
+		cliValues = parseArgs({
+			options: {
+				card: { type: "string" },
+				label: { type: "string" },
+				model: { type: "string" },
+				out: { type: "string" },
+				tmp: { type: "string" },
+				tokenizer: { type: "string" },
+				wof: { type: "string" },
+			},
+		}).values
+	} catch (e) {
+		console.error(`unknown arg: ${e instanceof Error ? e.message : e}`)
+		process.exit(1)
 	}
+
+	if (cliValues["model"] != null) MODEL = cliValues["model"] as string
+	if (cliValues["card"] != null) CARD = cliValues["card"] as string
+	if (cliValues["tokenizer"] != null) TOK = cliValues["tokenizer"] as string
+	if (cliValues["wof"] != null) WOF = cliValues["wof"] as string
+	if (cliValues["label"] != null) LABEL = cliValues["label"] as string
+	if (cliValues["out"] != null) OUT = cliValues["out"] as string
+	if (cliValues["tmp"] != null) TMP = cliValues["tmp"] as string
 
 	mkdirSync(TMP, { recursive: true })
 	const US_SAMPLE = "data/eval/external/openaddresses-us-sample.jsonl"

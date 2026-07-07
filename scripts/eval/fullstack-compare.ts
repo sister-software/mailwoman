@@ -23,6 +23,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 interface Args {
 	harnessPath: string
@@ -32,22 +33,26 @@ interface Args {
 	backoffMs: number
 }
 function parseArgs(): Args {
-	const a = process.argv.slice(2)
 	const out: Partial<Args> = { backoffMs: 3000 }
 
-	for (let i = 0; i < a.length; i++) {
-		if (a[i] === "--harness" && a[i + 1]) {
-			out.harnessPath = a[++i]
-		} else if (a[i] === "--out-md" && a[i + 1]) {
-			out.outMd = a[++i]
-		} else if (a[i] === "--out-json" && a[i + 1]) {
-			out.outJson = a[++i]
-		} else if (a[i] === "--geocode-earth-key" && a[i + 1]) {
-			out.geocodeEarthKey = a[++i]
-		} else if (a[i] === "--backoff-ms" && a[i + 1]) {
-			out.backoffMs = Number(a[++i])
-		}
-	}
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: {
+			"backoff-ms": { type: "string" },
+			"geocode-earth-key": { type: "string" },
+			harness: { type: "string" },
+			"out-json": { type: "string" },
+			"out-md": { type: "string" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
+
+	if (values["harness"] != null) out.harnessPath = values["harness"] as string
+	if (values["out-md"] != null) out.outMd = values["out-md"] as string
+	if (values["out-json"] != null) out.outJson = values["out-json"] as string
+	if (values["geocode-earth-key"] != null) out.geocodeEarthKey = values["geocode-earth-key"] as string
+	if (values["backoff-ms"] != null) out.backoffMs = Number(values["backoff-ms"] as string)
 
 	if (!out.harnessPath) {
 		console.error("--harness <harness.json> required")

@@ -19,7 +19,6 @@ const { values: rawValues } = parseArgs({
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { file?: string; model?: string }
-const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const file = (values["file"] || "data/eval/external/street-affix-real.jsonl")!

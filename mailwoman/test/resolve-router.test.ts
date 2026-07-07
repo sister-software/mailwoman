@@ -10,13 +10,15 @@
 
 import { existsSync } from "node:fs"
 
+import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/utils"
 import express from "express"
 import { describe, expect, test } from "vitest"
 
 import { ResolveRouter } from "../server/ResolveRouter.js"
 
-const DEFAULT_WOF_PATH = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
-const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
+const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
+const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDb = existsSync(wofPath)
 const describeIfWOF = describe.skipIf(!hasWOFDb)
 

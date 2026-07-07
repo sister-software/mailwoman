@@ -7,6 +7,8 @@
 
 ///<reference types="node" />
 
+import { parseArgs } from "node:util"
+
 import { defaultAdapterRegistry } from "../src/adapter.js"
 import { buildCorpus } from "../src/build.js"
 import { compileLicenseExcludes, SHARE_ALIKE_PATTERN } from "../src/license.js"
@@ -49,15 +51,19 @@ async function main() {
 	// Deliberate license exclusion (#26): default includes EVERYTHING. Pass `--exclude-share-alike`
 	// for a proprietary-weights build (drops ODbL/CC-BY-SA/CC-SA), or `--exclude-licenses "X,Y"` to
 	// purposely drop named license prefixes. Exclusion is an explicit operator act, never a default.
-	const argv = process.argv.slice(2)
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseArgs({
+		options: { "exclude-licenses": { type: "string" }, "exclude-share-alike": { type: "boolean" } },
+		strict: false,
+		allowPositionals: true,
+	})
 	const excludeLicenses: RegExp[] = []
-	const exIdx = argv.indexOf("--exclude-licenses")
 
-	if (exIdx >= 0 && argv[exIdx + 1]) {
-		excludeLicenses.push(...compileLicenseExcludes(argv[exIdx + 1]!))
+	if (values["exclude-licenses"] != null) {
+		excludeLicenses.push(...compileLicenseExcludes(values["exclude-licenses"] as string))
 	}
 
-	if (argv.includes("--exclude-share-alike")) {
+	if (values["exclude-share-alike"] === true) {
 		excludeLicenses.push(SHARE_ALIKE_PATTERN)
 	}
 

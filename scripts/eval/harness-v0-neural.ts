@@ -29,6 +29,7 @@
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import {
@@ -86,7 +87,6 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	const out: Partial<Args> = {
 		morphologyEnabled: true,
 		postcodeRepair: false,
@@ -96,47 +96,50 @@ function parseArgs(): Args {
 		arbitrate: false,
 	}
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		options: {
+			"admin-fst": { type: "string" },
+			"anchor-lookup": { type: "string" },
+			arbitrate: { type: "boolean" },
+			assembled: { type: "boolean" },
+			"bridge-gaps": { type: "boolean" },
+			conventions: { type: "string" },
+			falsehoods: { type: "string" },
+			"gazetteer-lexicon": { type: "string" },
+			model: { type: "string" },
+			"model-card": { type: "string" },
+			"morphology-fst": { type: "string" },
+			"no-morphology": { type: "boolean" },
+			"out-json": { type: "string" },
+			"postcode-repair": { type: "boolean" },
+			"symmetric-match": { type: "boolean" },
+			tests: { type: "string" },
+			tokenizer: { type: "string" },
+			"unit-repair": { type: "boolean" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--tests" && args[i + 1]) {
-			out.testsDir = args[++i]
-		} else if (a === "--out-json" && args[i + 1]) {
-			out.outJson = args[++i]
-		} else if (a === "--model" && args[i + 1]) {
-			out.modelPath = args[++i]
-		} else if (a === "--tokenizer" && args[i + 1]) {
-			out.tokenizerPath = args[++i]
-		} else if (a === "--model-card" && args[i + 1]) {
-			out.modelCardPath = args[++i]
-		} else if (a === "--gazetteer-lexicon" && args[i + 1]) {
-			out.gazetteerLexiconPath = args[++i]
-		} else if (a === "--anchor-lookup" && args[i + 1]) {
-			out.anchorLookupPath = args[++i]
-		} else if (a === "--conventions" && args[i + 1]) {
-			out.conventions = args[++i]
-		} else if (a === "--bridge-gaps") {
-			out.bridgeGaps = true
-		} else if (a === "--admin-fst" && args[i + 1]) {
-			out.adminFSTPath = args[++i]
-		} else if (a === "--morphology-fst" && args[i + 1]) {
-			out.morphologyBinPath = args[++i]
-		} else if (a === "--no-morphology") {
-			out.morphologyEnabled = false
-		} else if (a === "--falsehoods" && args[i + 1]) {
-			out.falsehoodsDir = args[++i]
-		} else if (a === "--postcode-repair") {
-			out.postcodeRepair = true
-		} else if (a === "--unit-repair") {
-			out.unitRepair = true
-		} else if (a === "--symmetric-match") {
-			out.symmetricMatch = true
-		} else if (a === "--assembled") {
-			out.assembled = true
-		} else if (a === "--arbitrate") {
-			out.arbitrate = true
-		}
-	}
+	if (values["tests"] != null) out.testsDir = values["tests"] as string
+	if (values["out-json"] != null) out.outJson = values["out-json"] as string
+	if (values["model"] != null) out.modelPath = values["model"] as string
+	if (values["tokenizer"] != null) out.tokenizerPath = values["tokenizer"] as string
+	if (values["model-card"] != null) out.modelCardPath = values["model-card"] as string
+	if (values["gazetteer-lexicon"] != null) out.gazetteerLexiconPath = values["gazetteer-lexicon"] as string
+	if (values["anchor-lookup"] != null) out.anchorLookupPath = values["anchor-lookup"] as string
+	if (values["conventions"] != null) out.conventions = values["conventions"] as string
+	if (values["bridge-gaps"] != null) out.bridgeGaps = true
+	if (values["admin-fst"] != null) out.adminFSTPath = values["admin-fst"] as string
+	if (values["morphology-fst"] != null) out.morphologyBinPath = values["morphology-fst"] as string
+	if (values["no-morphology"] != null) out.morphologyEnabled = false
+	if (values["falsehoods"] != null) out.falsehoodsDir = values["falsehoods"] as string
+	if (values["postcode-repair"] != null) out.postcodeRepair = true
+	if (values["unit-repair"] != null) out.unitRepair = true
+	if (values["symmetric-match"] != null) out.symmetricMatch = true
+	if (values["assembled"] != null) out.assembled = true
+	if (values["arbitrate"] != null) out.arbitrate = true
 
 	if (!out.testsDir) {
 		console.error("Usage: scripts/harness-v0-neural.ts --tests <dir> [--out-json <path>] [...]")

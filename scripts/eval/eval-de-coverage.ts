@@ -5,10 +5,13 @@
  * /tmp/v072-eval.
  */
 
+import { parseArgs } from "node:util"
+
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 /**
  * Mirror `grep -A<after> <needle>` for the single-match case: the match line + `after` lines below it.
  */
@@ -22,9 +25,9 @@ function printGrepAfter(stdout: string, needle: string, after: number): void {
 }
 
 runIfScript(import.meta, async () => {
-	const MODEL = process.argv[2] ?? "/tmp/v072-eval/model.onnx"
-	const TOK = process.argv[3] ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
-	const CARD = process.argv[4] ?? "/tmp/v072-eval/model-card.json"
+	const MODEL = positionals[0] ?? "/tmp/v072-eval/model.onnx"
+	const TOK = positionals[1] ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+	const CARD = positionals[2] ?? "/tmp/v072-eval/model-card.json"
 	const WOF = dataRootPath("wof", "admin-global-priority.db")
 
 	$.verbose = false

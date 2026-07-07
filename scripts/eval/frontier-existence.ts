@@ -34,6 +34,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { ISO2_TO_NAME } from "@mailwoman/codex/country"
+import { $public } from "@mailwoman/core/env"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
@@ -50,8 +51,8 @@ const MIN_POP = Number(values["min-pop"] || "50000")
 const OUT = values["out"] || ""
 const CITIES = `${mailwomanDataRoot()}/geonames/cities15000.txt`
 const DB_PATH =
-	process.env["MAILWOMAN_CANDIDATE_DB"] && existsSync(process.env["MAILWOMAN_CANDIDATE_DB"])
-		? process.env["MAILWOMAN_CANDIDATE_DB"]!
+	$public.MAILWOMAN_CANDIDATE_DB && existsSync($public.MAILWOMAN_CANDIDATE_DB)
+		? $public.MAILWOMAN_CANDIDATE_DB
 		: `${mailwomanDataRoot()}/wof/candidate.db`
 
 if (!existsSync(DB_PATH)) {
