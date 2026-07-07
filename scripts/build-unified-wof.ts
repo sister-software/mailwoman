@@ -53,8 +53,12 @@ import { asyncParallelIterator } from "spliterator"
  * prototype this folds into the unified build).
  */
 const OVERTURE_ID_BASE = 8_000_000_000_000
-/** Overture division subtypes that map to the resolver's admin placetypes. */
-const OVERTURE_DIVISION_SUBTYPES = ["locality", "region", "county", "localadmin"]
+/**
+ * Overture division subtypes that map to the resolver's admin placetypes. `country` is included (#1015) so an
+ * Overture-backfilled locale gets its country node — without it the reverse geocoder has no country tier to anchor to
+ * (Brussels → nearest FOREIGN place across the border), and forward resolution can't country-gate the locale.
+ */
+const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "county", "localadmin"]
 /** Default GeoNames per-country dump directory (`<CC>.txt`, from download.geonames.org/export/dump). */
 const DEFAULT_GEONAMES_DIR = "/mnt/playpen/mailwoman-data/geonames"
 /** Default GeoNames per-country POSTAL dump directory (`<CC>.txt`, from download.geonames.org/export/zip). */
@@ -306,6 +310,12 @@ export async function ingestOvertureDivisions(
 	const inlist = countries.map((c) => `'${c.replace(/'/g, "''")}'`).join(",")
 	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
 	const glob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division/*`
+	// #1015: the real boundary EXTENT lives in the sibling `type=division_area` (the polygon). The `type=division`
+	// row is the label POINT — its `bbox` is a degenerate point, so relying on it left every Overture-backfilled
+	// place with a point bbox, invisible to the reverse geocoder's bbox-containment (Brussels resolved to a foreign
+	// cross-border neighbour). Join the area's extent by `division_id`, falling back to the point bbox when a
+	// division has no area row (so nothing regresses).
+	const areaGlob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division_area/*`
 
 	const instance = await DuckDBInstance.create()
 	const con = await instance.connect()
@@ -316,19 +326,28 @@ export async function ingestOvertureDivisions(
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
 	const result = await con.runAndReadAll(`
-		SELECT id,
-			names.primary AS name,
-			to_json(names.common) AS common_json,
-			subtype,
-			country,
-			ST_Y(ST_Centroid(geometry)) AS lat,
-			ST_X(ST_Centroid(geometry)) AS lon,
-			bbox.ymin AS min_lat, bbox.ymax AS max_lat, bbox.xmin AS min_lon, bbox.xmax AS max_lon,
-			parent_division_id,
-			population
-		FROM read_parquet('${glob}')
-		WHERE country IN (${inlist}) AND subtype IN (${subtypes})
-			AND names.primary IS NOT NULL AND geometry IS NOT NULL
+		WITH area AS (
+			SELECT division_id,
+				MIN(bbox.ymin) AS ymin, MAX(bbox.ymax) AS ymax, MIN(bbox.xmin) AS xmin, MAX(bbox.xmax) AS xmax
+			FROM read_parquet('${areaGlob}')
+			WHERE country IN (${inlist})
+			GROUP BY division_id
+		)
+		SELECT d.id AS id,
+			d.names.primary AS name,
+			to_json(d.names.common) AS common_json,
+			d.subtype AS subtype,
+			d.country AS country,
+			ST_Y(ST_Centroid(d.geometry)) AS lat,
+			ST_X(ST_Centroid(d.geometry)) AS lon,
+			COALESCE(a.ymin, d.bbox.ymin) AS min_lat, COALESCE(a.ymax, d.bbox.ymax) AS max_lat,
+			COALESCE(a.xmin, d.bbox.xmin) AS min_lon, COALESCE(a.xmax, d.bbox.xmax) AS max_lon,
+			d.parent_division_id AS parent_division_id,
+			d.population AS population
+		FROM read_parquet('${glob}') d
+		LEFT JOIN area a ON a.division_id = d.id
+		WHERE d.country IN (${inlist}) AND d.subtype IN (${subtypes})
+			AND d.names.primary IS NOT NULL AND d.geometry IS NOT NULL
 	`)
 	const rows = result.getRowObjects() as Array<Record<string, unknown>>
 	console.error(`  Overture divisions: ${rows.length.toLocaleString()} pulled`)
@@ -444,10 +463,17 @@ async function main() {
 	// Phase 1: Enumerate
 	// -----------------------------------------------------------------------
 	console.error(`Scanning ${dataDir} for GeoJSON files...`)
+	// The whosonfirst-data-postalcode-* repos hold millions of postcode geojson the ADMIN build filters out by
+	// placetype anyway — enumerating + reading them is the bulk of the ingest time. Exclude them unless this build
+	// actually wants postalcode rows (#1015 — a full admin rebuild off `--data …/repos` dropped from a ~30-min scan of
+	// the postcode tail to a couple of minutes).
+	const ignore = ["**/*-alt-*"]
+
+	if (!activePlacetypes.has("postalcode")) ignore.push("**/whosonfirst-data-postalcode-*/**")
 	const filePaths = await FastGlob("**/data/**/*.geojson", {
 		cwd: dataDir,
 		absolute: true,
-		ignore: ["**/*-alt-*"],
+		ignore,
 	})
 	console.error(`  Found ${filePaths.length.toLocaleString()} files (excluding -alt- variants)`)
 
@@ -631,6 +657,13 @@ async function main() {
 	const ancestorRows = populateAncestors(db)
 	console.error(`  ancestors: ${ancestorRows} rows`)
 
+	// Index `ancestors(id)` NOW — before the −4 backfill probes it. `createUnifiedIndexes` (below) builds this same
+	// index, but it runs AFTER the backfill; without it here the backfill's per-candidate `count(*)/EXISTS` lookups
+	// full-scan the 13M-row `ancestors` table EACH time, and the build stalls for hours (found rebuilding for #1015).
+	// `ifNotExists` keeps the later `createUnifiedIndexes` a no-op.
+	console.error("  Indexing ancestors(id) for the backfill...")
+	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors(id)")
+
 	// Repair the multi-parent orphans the closure leaves only-self (#440 / #832): places with
 	// `wof:parent_id = -4` (New York City, London, …) get NO region/county ancestry from the closure,
 	// so the resolver's region-descendant filter excludes them and a small namesake wins. Read the
@@ -642,7 +675,10 @@ async function main() {
 	if (geojsonRoots.length === 0) {
 		console.error(`    WARNING: no */data geojson roots under ${dataDir}; skipping — orphans like NYC stay unreachable`)
 	} else {
-		const bf = backfillAncestorsFromHierarchy(db, geojsonRoots)
+		// Only real WOF places have `wof:hierarchy` geojson; synthetic Overture/GeoNames rows (ids >= OVERTURE_ID_BASE)
+		// never do, and probing millions of them across every repo root is what turned this step into a ~40-min stall on
+		// the wide-coverage build. Their ancestry comes from the parent_id closure above, not this backfill.
+		const bf = backfillAncestorsFromHierarchy(db, geojsonRoots, { maxId: OVERTURE_ID_BASE })
 		console.error(
 			`    +${bf.rowsAdded} rows for ${bf.placesFixed} places (${bf.noGeojson} candidates had no source geojson)`
 		)
