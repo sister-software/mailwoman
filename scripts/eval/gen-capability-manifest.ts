@@ -73,8 +73,6 @@ const values = rawValues as {
 // Args
 // -------------------------------------------------------------------------------------------------
 
-const argv = process.argv.slice(2)
-
 const MODEL = (values["model"] || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))!
 const TOKENIZER = (values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))!
 const MODEL_CARD = (values["model-card"] || "neural-weights-en-us/model-card.json")!

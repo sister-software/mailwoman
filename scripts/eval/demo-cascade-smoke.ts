@@ -85,7 +85,6 @@ const values = rawValues as {
 	tokenizer?: string
 	explain?: boolean
 }
-const argv = process.argv.slice(2)
 
 const STAGE = (values["stage-dir"] || "/tmp/v440-stage/en-us/v4.4.0")!
 const DB = (values["db"] || ($public.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db")))!

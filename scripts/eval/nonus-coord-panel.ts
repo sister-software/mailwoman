@@ -36,6 +36,7 @@
 
 import { existsSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
@@ -70,13 +71,13 @@ runIfScript(import.meta, async () => {
 	const card = process.env["CARD"] ?? "neural-weights-en-us/model-card.json"
 	const anchor = process.env["ANCHOR"] ?? dataRootPath("anchor", "pilot-anchor-lookup.json")
 
-	const args = process.argv.slice(2)
-	let buildOnly = false
-
-	if (args[0] === "--build-only") {
-		buildOnly = true
-		args.shift()
-	}
+	// node:util parseArgs (strict:false = old scan parity); positionals = the country panel list.
+	const { values, positionals: args } = parseArgs({
+		options: { "build-only": { type: "boolean" } },
+		strict: false,
+		allowPositionals: true,
+	})
+	const buildOnly = (values["build-only"] as boolean | undefined) ?? false
 
 	if (args.length === 0) {
 		console.error("usage: nonus-coord-panel.ts [--build-only] <cc> [cc...]")

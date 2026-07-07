@@ -55,7 +55,6 @@ const values = rawValues as {
 	"no-ship-config"?: boolean
 	"span-proposer"?: boolean
 }
-const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const file = (values["file"] || "data/eval/external/punctuation-stress.jsonl")!

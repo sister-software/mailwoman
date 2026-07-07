@@ -36,7 +36,6 @@ const values = rawValues as {
 	"bridge-gaps"?: boolean
 	"suppress-gaz-near-postcode"?: boolean
 }
-const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 // Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its
