@@ -74,8 +74,11 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 		while (hi - lo > 1) {
 			const mid = (lo + hi) >> 1
 
-			if (centers[mid]! <= x) lo = mid
-			else hi = mid
+			if (centers[mid]! <= x) {
+				lo = mid
+			} else {
+				hi = mid
+			}
 		}
 		const x0 = centers[lo]!
 		const x1 = centers[hi]!

@@ -67,7 +67,9 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 	const pairs: Array<{ tag: string; value: string }> = []
 
 	for (const [tag, values] of Object.entries(record)) {
-		for (const value of values ?? []) pairs.push({ tag, value })
+		for (const value of values ?? []) {
+			pairs.push({ tag, value })
+		}
 	}
 
 	const placements: Array<{ tag: string; start: number; end: number }> = []

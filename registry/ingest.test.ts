@@ -156,7 +156,9 @@ describe("streamRows (lazy delimited ingest)", () => {
 		)
 		const rows: Record<string, string>[] = []
 
-		for await (const r of streamRows(file)) rows.push(r)
+		for await (const r of streamRows(file)) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(2)
 		expect(Object.keys(rows[0]!)).toEqual(["Facility Name", "Physical Address", "CITY"])
 		expect(rows[0]!["Facility Name"]).toBe("AVIR")
@@ -170,7 +172,9 @@ describe("streamRows (lazy delimited ingest)", () => {
 		writeFileSync(file, "npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n")
 		const rows: Record<string, string>[] = []
 
-		for await (const r of streamRows(file)) rows.push(r)
+		for await (const r of streamRows(file)) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(1)
 		expect(rows[0]).toEqual({ npi: "123", org: "", last: "", first: "", state: "NE" })
 	})
@@ -189,7 +193,9 @@ describe("streamRows (lazy delimited ingest)", () => {
 		// Re-stream the same file fully — succeeds because the prior handle was released.
 		const all: Record<string, string>[] = []
 
-		for await (const r of streamRows(file)) all.push(r)
+		for await (const r of streamRows(file)) {
+			all.push(r)
+		}
 		expect(all).toHaveLength(3)
 	})
 

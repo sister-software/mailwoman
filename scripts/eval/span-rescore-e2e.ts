@@ -74,10 +74,14 @@ function bestCoord(roots: N9[]): { lat: number; lon: number } | null {
 		if (n.placeID && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0)) {
 			const rank = RANK[n.tag ?? ""] ?? 0
 
-			if (!best || rank > best.rank) best = { lat: n.lat, lon: n.lon, rank }
+			if (!best || rank > best.rank) {
+				best = { lat: n.lat, lon: n.lon, rank }
+			}
 		}
 
-		if (n.children?.length) stack.push(...n.children)
+		if (n.children?.length) {
+			stack.push(...n.children)
+		}
 	}
 
 	return best ? { lat: best.lat, lon: best.lon } : null
@@ -137,19 +141,25 @@ async function main() {
 			if (cB) {
 				s.resBase++
 
-				if (haversineKm(tLat, tLon, cB.lat, cB.lon) <= 25) s.res25Base++
+				if (haversineKm(tLat, tLon, cB.lat, cB.lon) <= 25) {
+					s.res25Base++
+				}
 			}
 
 			if (cL) {
 				s.resLever++
 
-				if (haversineKm(tLat, tLon, cL.lat, cL.lon) <= 25) s.res25Lever++
+				if (haversineKm(tLat, tLon, cL.lat, cL.lon) <= 25) {
+					s.res25Lever++
+				}
 			}
 
 			if (NOM) {
 				const cN = await queryNominatim(row.raw, cc)
 
-				if (cN && haversineKm(tLat, tLon, cN.lat, cN.lon) <= 25) s.nom25++
+				if (cN && haversineKm(tLat, tLon, cN.lat, cN.lon) <= 25) {
+					s.nom25++
+				}
 				await sleep(1100) // Nominatim ~1 req/s policy
 			}
 		}
@@ -158,7 +168,9 @@ async function main() {
 			`${cc.padEnd(3)} | ${String(s.n).padStart(3)} | ${pct(s.res25Base).padStart(4)} → ${pct(s.res25Lever).padStart(4)}${NOM ? ` | ${pct(s.nom25).padStart(4)}` : ""}`
 		)
 
-		for (const k of Object.keys(s) as (keyof Stat)[]) T[k] += s[k]
+		for (const k of Object.keys(s) as (keyof Stat)[]) {
+			T[k] += s[k]
+		}
 	}
 	const p = (x: number) => ((100 * x) / Math.max(T.n, 1)).toFixed(1)
 	console.log(

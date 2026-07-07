@@ -94,7 +94,9 @@ if (!existsSync(SRC_TOKENIZER)) {
 
 /** Replicate `ln -sf SRC DEST`: drop any pre-existing link/file at the destination, then symlink. */
 function linkForce(src: string, dest: string): void {
-	if (existsSync(dest)) unlinkSync(dest)
+	if (existsSync(dest)) {
+		unlinkSync(dest)
+	}
 
 	symlinkSync(src, dest)
 }

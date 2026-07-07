@@ -300,11 +300,17 @@ function formatText(result: GeocodeResult): string {
 		lines.push(`uncertainty_m:    ${result.uncertainty_m}`)
 	}
 
-	if (result.locality) lines.push(`locality:         ${result.locality}`)
+	if (result.locality) {
+		lines.push(`locality:         ${result.locality}`)
+	}
 
-	if (result.region) lines.push(`region:           ${result.region}`)
+	if (result.region) {
+		lines.push(`region:           ${result.region}`)
+	}
 
-	if (result.postcode) lines.push(`postcode:         ${result.postcode}`)
+	if (result.postcode) {
+		lines.push(`postcode:         ${result.postcode}`)
+	}
 
 	if (result.hierarchy.length > 0) {
 		lines.push("hierarchy:")

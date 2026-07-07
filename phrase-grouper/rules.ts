@@ -92,12 +92,16 @@ export function tokenizeSegment(segmentBody: string, segmentStart: number): Segm
 	let i = 0
 
 	while (i < segmentBody.length) {
-		while (i < segmentBody.length && WHITESPACE.test(segmentBody[i]!)) i++
+		while (i < segmentBody.length && WHITESPACE.test(segmentBody[i]!)) {
+			i++
+		}
 
 		if (i >= segmentBody.length) break
 		const start = i
 
-		while (i < segmentBody.length && !WHITESPACE.test(segmentBody[i]!)) i++
+		while (i < segmentBody.length && !WHITESPACE.test(segmentBody[i]!)) {
+			i++
+		}
 		tokens.push({
 			body: segmentBody.slice(start, i),
 			start: segmentStart + start,
@@ -411,7 +415,9 @@ function venueMarkerWeight(tokens: ReadonlyArray<SegmentToken>): number {
 	for (const t of tokens) {
 		const w = VENUE_MARKERS.get(t.body.toLowerCase())
 
-		if (w !== undefined && w > maxWeight) maxWeight = w
+		if (w !== undefined && w > maxWeight) {
+			maxWeight = w
+		}
 	}
 
 	return maxWeight
@@ -611,7 +617,9 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 		}
 
 		// Don't end on a trailing connective particle ("Calle de" is not a street name).
-		while (end > prefixIdx && isPlaceNameParticle(tokens[end]!.body)) end--
+		while (end > prefixIdx && isPlaceNameParticle(tokens[end]!.body)) {
+			end--
+		}
 		const startTok = tokens[prefixIdx]!
 		const endTok = tokens[end]!
 		// Prefix + name scores moderately; a bare prefix still emits a low-confidence marker so the
@@ -689,7 +697,9 @@ export function scoreLocalityPhrase(
 				// Look past a short run of consecutive particles for the next content token.
 				let k = j + 2
 
-				while (tokens[k] && isPlaceNameParticle(tokens[k]!.body)) k++
+				while (tokens[k] && isPlaceNameParticle(tokens[k]!.body)) {
+					k++
+				}
 
 				if (tokens[k] && k - (j + 1) <= 2 && isPlaceNameContent(tokens[k]!.body)) {
 					j = k // jump onto the content token; the bridged particles stay inside the span
@@ -714,11 +724,17 @@ export function scoreLocalityPhrase(
 			const lenBonus = len === 2 ? 0.15 : len === 3 ? 0.12 : len >= 4 ? 0.08 : 0
 			let confidence = NEUTRAL_PROPOSAL_CONFIDENCE + lenBonus
 
-			if (isRegionName && !atTail) confidence -= 0.2
+			if (isRegionName && !atTail) {
+				confidence -= 0.2
+			}
 
-			if (atTail && segmentIsLast) confidence += 0.1
+			if (atTail && segmentIsLast) {
+				confidence += 0.1
+			}
 
-			if (atTail) confidence += 0.05
+			if (atTail) {
+				confidence += 0.05
+			}
 			out.push({
 				span: makeSection(text, startTok.start, endTok.end),
 				kindHypothesis: "LOCALITY_PHRASE",

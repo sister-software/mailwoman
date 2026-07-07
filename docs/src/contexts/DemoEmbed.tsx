@@ -122,7 +122,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 
 	// Drop cached range chunks from other (immutable, never-expiring) versions.
 	useEffect(() => {
-		if (selectedVersion) pruneDBRangeCache(selectedVersion)
+		if (selectedVersion) {
+			pruneDBRangeCache(selectedVersion)
+		}
 	}, [selectedVersion])
 
 	// Mount: fetch the releases manifest.
@@ -171,9 +173,13 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// Build staged step labels based on what this release includes.
 				const steps: string[] = ["Loading classifier"]
 
-				if (release?.hasFST) steps.push("Loading FST gazetteer")
+				if (release?.hasFST) {
+					steps.push("Loading FST gazetteer")
+				}
 
-				if (release?.hasWOFDb) steps.push("Loading WOF database")
+				if (release?.hasWOFDb) {
+					steps.push("Loading WOF database")
+				}
 				setLoadingStepLabels(steps)
 
 				// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the
@@ -223,7 +229,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 					if (calRes.ok) {
 						const calTable = await calRes.json()
 
-						if (!cancelled) setCalibrator(() => createCalibrator(calTable))
+						if (!cancelled) {
+							setCalibrator(() => createCalibrator(calTable))
+						}
 					}
 				} catch {
 					// No calibration table for this version — raw scores it is.
@@ -234,7 +242,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, selectedVersion)
 						setFSTMatcher(fstResult.matcher)
 
-						if (fstResult.provenance) setFSTProvenance(fstResult.provenance)
+						if (fstResult.provenance) {
+							setFSTProvenance(fstResult.provenance)
+						}
 					} catch {
 						// FST not available for this version
 					}

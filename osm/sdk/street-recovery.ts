@@ -67,7 +67,9 @@ export class StreetRecoveryIndex {
 				for (const v of cell) {
 					const km = haversineKm(lat, lon, v.lat, v.lon)
 
-					if (km <= maxKm && (!best || km < best.km)) best = { name: v.name, km }
+					if (km <= maxKm && (!best || km < best.km)) {
+						best = { name: v.name, km }
+					}
 				}
 			}
 		}
@@ -138,7 +140,9 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 
 		if (!name || f.geometry?.type !== "LineString" || !Array.isArray(f.geometry.coordinates)) continue
 
-		for (const [lon, lat] of densify(f.geometry.coordinates)) index.add(name, lon, lat)
+		for (const [lon, lat] of densify(f.geometry.coordinates)) {
+			index.add(name, lon, lat)
+		}
 	}
 	const code = await exit
 

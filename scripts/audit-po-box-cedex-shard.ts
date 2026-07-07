@@ -73,8 +73,11 @@ function parseArgs(): AuditOptions {
 	const out: { input?: string; samples: number } = { samples: 8 }
 
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--input") out.input = args[++i]
-		else if (args[i] === "--samples") out.samples = parseInt(args[++i] ?? "", 10)
+		if (args[i] === "--input") {
+			out.input = args[++i]
+		} else if (args[i] === "--samples") {
+			out.samples = parseInt(args[++i] ?? "", 10)
+		}
 	}
 
 	if (!out.input) {
@@ -117,7 +120,9 @@ function spanSlices(row: ShardRow): SpanSlicesResult {
 			return { ok: false, reason: `spans unsorted/overlapping at index ${i}` }
 		}
 
-		if (!byTag.has(tag)) byTag.set(tag, [])
+		if (!byTag.has(tag)) {
+			byTag.set(tag, [])
+		}
 		byTag.get(tag)!.push(raw.slice(start, end))
 	}
 
@@ -157,11 +162,17 @@ async function main(): Promise<void> {
 		byMethod[row.synth_method] = (byMethod[row.synth_method] ?? 0) + 1
 		const { tokens, labels, components: c } = row
 
-		if (tokens.length !== labels.length) fail(row, "tokens/labels length mismatch")
+		if (tokens.length !== labels.length) {
+			fail(row, "tokens/labels length mismatch")
+		}
 
-		if (!bioWellFormed(labels)) fail(row, "malformed BIO")
+		if (!bioWellFormed(labels)) {
+			fail(row, "malformed BIO")
+		}
 
-		if (!c.po_box && !c.cedex) fail(row, "row carries neither po_box nor cedex")
+		if (!c.po_box && !c.cedex) {
+			fail(row, "row carries neither po_box nor cedex")
+		}
 
 		// RAW-surface comparison via the #519 span triple — punctuation preserved, never stripped.
 		const sliced = spanSlices(row)
@@ -174,26 +185,34 @@ async function main(): Promise<void> {
 				tagCounts[tag]++
 				const slices = sliced.byTag.get(tag) ?? []
 
-				if (slices.length !== 1) fail(row, `${tag}: expected 1 span, got ${slices.length}`)
-				else if (slices[0]!.toLowerCase() !== c[tag]!.toLowerCase())
+				if (slices.length !== 1) {
+					fail(row, `${tag}: expected 1 span, got ${slices.length}`)
+				} else if (slices[0]!.toLowerCase() !== c[tag]!.toLowerCase()) {
 					fail(row, `${tag} span "${slices[0]}" != component "${c[tag]}" (raw-surface, verbatim)`)
+				}
 			}
 		}
 
-		if (c.cedex && !CEDEX_SHAPE.test(c.cedex)) fail(row, `cedex shape: "${c.cedex}"`)
+		if (c.cedex && !CEDEX_SHAPE.test(c.cedex)) {
+			fail(row, `cedex shape: "${c.cedex}"`)
+		}
 
 		if (c.po_box && row.country === "US") {
 			const m = CODEX_COVERED.exec(c.po_box)
 
-			if (m && CLEAN_ID.test(c.po_box.slice(m[0].length).trim()) && !isPOBox(c.po_box))
+			if (m && CLEAN_ID.test(c.po_box.slice(m[0].length).trim()) && !isPOBox(c.po_box)) {
 				fail(row, `codex rejects US po_box "${c.po_box}"`)
+			}
 		}
 
 		if (row.country === "CA" && c.postcode) {
 			const pc = normalizeCaPostalCode(c.postcode)
 
-			if (!pc) fail(row, `invalid CA postcode "${c.postcode}"`)
-			else if (c.region && FSA_LETTER_TO_PROVINCE[pc[0]!] !== c.region) fail(row, `FSA ${pc[0]} != region ${c.region}`)
+			if (!pc) {
+				fail(row, `invalid CA postcode "${c.postcode}"`)
+			} else if (c.region && FSA_LETTER_TO_PROVINCE[pc[0]!] !== c.region) {
+				fail(row, `FSA ${pc[0]} != region ${c.region}`)
+			}
 		}
 
 		if (samples.length < opts.samples && rows % 977 === 1) {
@@ -206,12 +225,16 @@ async function main(): Promise<void> {
 	console.log(`tag coverage: ${JSON.stringify(tagCounts)}`)
 	console.log(`\nsamples:`)
 
-	for (const s of samples) console.log(`  ${s.raw}\n    ${s.labeled}`)
+	for (const s of samples) {
+		console.log(`  ${s.raw}\n    ${s.labeled}`)
+	}
 
 	if (failures.length > 0) {
 		console.error(`\nFAIL: ${failures.length} rows`)
 
-		for (const f of failures.slice(0, 20)) console.error(`  [${f.reason}] ${f.raw}`)
+		for (const f of failures.slice(0, 20)) {
+			console.error(`  [${f.reason}] ${f.raw}`)
+		}
 		process.exit(1)
 	}
 	console.log(`\nPASS: all ${rows} rows clean`)

@@ -68,13 +68,21 @@ async function main() {
 		const br = await didResolve(bt)
 		const cr = await didResolve(ct)
 
-		if (bl !== cl) diff++
+		if (bl !== cl) {
+			diff++
+		}
 
-		if (br) baseRes++
+		if (br) {
+			baseRes++
+		}
 
-		if (cr) candRes++
+		if (cr) {
+			candRes++
+		}
 
-		if (br && !cr) candLostThatBaseHad++
+		if (br && !cr) {
+			candLostThatBaseHad++
+		}
 		const flag = br && !cr ? " <<< base resolved, cand DIDN'T" : ""
 		console.log(
 			`gold=${(row.components.locality ?? "").padEnd(22)} | v180="${bl}"[${br ? "R" : "-"}]  v190="${cl}"[${cr ? "R" : "-"}]${flag}`

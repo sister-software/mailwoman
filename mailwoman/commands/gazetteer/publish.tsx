@@ -86,7 +86,9 @@ const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 	}, [options, args])
 
 	useEffect(() => {
-		if (done || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (done || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [done, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

@@ -86,12 +86,18 @@ export { OptionsSchema as options }
 function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 	const aside = `${finalPath}.old-${process.pid}`
 
-	if (existsSync(finalPath)) renameSync(finalPath, aside)
+	if (existsSync(finalPath)) {
+		renameSync(finalPath, aside)
+	}
 
-	for (const sfx of ["-wal", "-shm"]) rmSync(finalPath + sfx, { force: true })
+	for (const sfx of ["-wal", "-shm"]) {
+		rmSync(finalPath + sfx, { force: true })
+	}
 	renameSync(tmpPath, finalPath)
 
-	for (const sfx of ["-wal", "-shm"]) rmSync(tmpPath + sfx, { force: true })
+	for (const sfx of ["-wal", "-shm"]) {
+		rmSync(tmpPath + sfx, { force: true })
+	}
 	rmSync(aside, { force: true })
 }
 
@@ -157,7 +163,9 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 				// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
 				const tmpOut = `${finalOut}.building-${process.pid}.db`
 
-				for (const sfx of ["", "-wal", "-shm"]) rmSync(tmpOut + sfx, { force: true })
+				for (const sfx of ["", "-wal", "-shm"]) {
+					rmSync(tmpOut + sfx, { force: true })
+				}
 
 				const instance = await DuckDBInstance.create()
 				const duck = await instance.connect()
@@ -325,7 +333,9 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

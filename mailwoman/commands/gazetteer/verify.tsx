@@ -64,7 +64,9 @@ const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) =>
 	}, [options])
 
 	useEffect(() => {
-		if (result || error) setImmediate(() => process.exit(error || !result?.ok ? 1 : 0))
+		if (result || error) {
+			setImmediate(() => process.exit(error || !result?.ok ? 1 : 0))
+		}
 	}, [result, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

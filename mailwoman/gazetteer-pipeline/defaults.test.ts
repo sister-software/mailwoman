@@ -16,7 +16,9 @@ test("the canonical coverage recipe holds its reconstructed shape (see #1015/#10
 	for (const list of [DEFAULT_WOF_PRIORITY_COUNTRIES, DEFAULT_OVERTURE_COUNTRIES, DEFAULT_GEONAMES_COUNTRIES]) {
 		expect(new Set(list).size).toBe(list.length)
 
-		for (const cc of list) expect(cc).toMatch(/^[A-Z]{2}$/)
+		for (const cc of list) {
+			expect(cc).toMatch(/^[A-Z]{2}$/)
+		}
 	}
 	expect(DEFAULT_OVERTURE_COUNTRIES).toContain("BE") // the #1015 case
 	expect(DEFAULT_GEONAMES_COUNTRIES).toContain("GE") // the #1023/#1026 case

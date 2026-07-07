@@ -75,9 +75,13 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	}
 
 	for (const node of nodes) {
-		for (const token of node.edges.keys()) intern(token)
+		for (const token of node.edges.keys()) {
+			intern(token)
+		}
 
-		for (const place of node.places) intern(place.name)
+		for (const place of node.places) {
+			intern(place.name)
+		}
 	}
 
 	const encodedStrings = strings.map((s) => Buffer.from(s, "utf8"))

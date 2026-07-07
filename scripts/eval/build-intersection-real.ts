@@ -118,7 +118,9 @@ crossings.forEach((c, i) => {
 		const input = form.render(c.a, c.b, c.state)
 		const expected: Record<string, string> = { intersection_a: c.a, intersection_b: c.b }
 
-		if (input.includes(`, ${c.state}`)) expected.region = c.state
+		if (input.includes(`, ${c.state}`)) {
+			expected.region = c.state
+		}
 		lines.push(
 			JSON.stringify({
 				raw: input,

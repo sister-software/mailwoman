@@ -42,11 +42,15 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 		const base = c * dim
 		let maxAbs = 0
 
-		for (let i = 0; i < dim; i++) maxAbs = Math.max(maxAbs, Math.abs(w[base + i]!))
+		for (let i = 0; i < dim; i++) {
+			maxAbs = Math.max(maxAbs, Math.abs(w[base + i]!))
+		}
 		const scale = maxAbs / 127 || 1
 		scales.push(scale)
 
-		for (let i = 0; i < dim; i++) int8[base + i] = Math.max(-127, Math.min(127, Math.round(w[base + i]! / scale)))
+		for (let i = 0; i < dim; i++) {
+			int8[base + i] = Math.max(-127, Math.min(127, Math.round(w[base + i]! / scale)))
+		}
 	}
 
 	return { int8, scales }
@@ -103,7 +107,9 @@ describe("dequantizeInt8Weights", () => {
 		const out = dequantizeInt8Weights(int8, scales, 2, 4)
 
 		// Float32 storage, so compare with tolerance (1.27 round-trips to 1.26999998…).
-		for (const [i, want] of [1.27, -1.27, 0, 0.64].entries()) expect(out[i]).toBeCloseTo(want, 6)
+		for (const [i, want] of [1.27, -1.27, 0, 0.64].entries()) {
+			expect(out[i]).toBeCloseTo(want, 6)
+		}
 		expect(out[4]).toBeCloseTo(5, 6)
 		expect(out[7]).toBeCloseTo(-25, 6)
 	})

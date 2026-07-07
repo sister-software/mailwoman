@@ -80,7 +80,9 @@ function ftsTrigramQuery(s: string): string {
 	for (let i = 0; i + 3 <= s.length; i++) {
 		const g = s.slice(i, i + 3)
 
-		if (/^[\p{L}\p{N} ]{3}$/u.test(g)) grams.add(g)
+		if (/^[\p{L}\p{N} ]{3}$/u.test(g)) {
+			grams.add(g)
+		}
 	}
 
 	return [...grams].map((g) => `"${g}"`).join(" OR ")
@@ -260,7 +262,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// miss; the cascade's region bbox disambiguates any base-name ambiguity.
 			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
-			if (strippedKey && strippedKey !== nameKey) rows = probe(strippedKey)
+			if (strippedKey && strippedKey !== nameKey) {
+				rows = probe(strippedKey)
+			}
 		}
 
 		// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may be a
@@ -352,7 +356,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 						const d = haversineKm(b.lat, b.lon, c.lat, c.lon)
 						const term = (BIAS_BOOST * (b.weight ?? 1)) / (1 + d / PROX_SCALE_KM)
 
-						if (term > proxTerm) proxTerm = term
+						if (term > proxTerm) {
+							proxTerm = term
+						}
 					}
 				}
 
@@ -369,6 +375,8 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDB) this.#db.close()
+		if (this.#ownsDB) {
+			this.#db.close()
+		}
 	}
 }

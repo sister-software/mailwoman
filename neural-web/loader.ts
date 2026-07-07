@@ -114,7 +114,9 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 				continue
 			}
 
-			for (const country of Object.keys(entry.posterior)) existing.posterior[country] = 1
+			for (const country of Object.keys(entry.posterior)) {
+				existing.posterior[country] = 1
+			}
 
 			// Average a real centroid in; ignore (0,0) placeholders.
 			if (entry.lat !== 0 || entry.lon !== 0) {

@@ -166,7 +166,9 @@ if (dup !== -1 && !values.replace) {
 	process.exit(1)
 }
 
-if (dup !== -1) ledger.runs.splice(dup, 1)
+if (dup !== -1) {
+	ledger.runs.splice(dup, 1)
+}
 ledger.runs.push(row as never)
 
 const tmp = `${values.ledger}.tmp`

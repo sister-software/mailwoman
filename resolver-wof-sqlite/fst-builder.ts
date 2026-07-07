@@ -79,7 +79,9 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	// Phase 2: Build a lookup for parent chain resolution.
 	const sprByID = new Map<number, SprRow>()
 
-	for (const row of sprRows) sprByID.set(row.id, row)
+	for (const row of sprRows) {
+		sprByID.set(row.id, row)
+	}
 
 	// Also load parent rows that might be outside our placetype filter (e.g., country for region).
 	const parentStmt = db.prepare("SELECT id, name, placetype, parent_id, latitude, longitude FROM spr WHERE id = ?")
@@ -150,7 +152,9 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		const impStmt = db.prepare("SELECT id, importance FROM place_importance")
 		const impRows = impStmt.all() as unknown as Array<{ id: number; importance: number }>
 
-		for (const row of impRows) importanceMap.set(row.id, row.importance)
+		for (const row of impRows) {
+			importanceMap.set(row.id, row.importance)
+		}
 		progress("importance", `Loaded ${importanceMap.size} importance scores`)
 	} catch {
 		progress("importance", "No place_importance table — falling back to population")
@@ -190,7 +194,9 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		for (const row of nameRows) {
 			const existing = namesByPlace.get(row.id) ?? []
 
-			if (!existing.includes(row.name)) existing.push(row.name)
+			if (!existing.includes(row.name)) {
+				existing.push(row.name)
+			}
 			namesByPlace.set(row.id, existing)
 		}
 	}

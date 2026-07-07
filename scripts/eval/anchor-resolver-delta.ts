@@ -97,10 +97,14 @@ function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 			return
 		}
 
-		for (const c of n.children) walk(c)
+		for (const c of n.children) {
+			walk(c)
+		}
 	}
 
-	for (const r of tree.roots) walk(r)
+	for (const r of tree.roots) {
+		walk(r)
+	}
 
 	return found
 }
@@ -171,7 +175,9 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		i++
 
-		if (i % 500 === 0) console.error(`  ${i}/${rows.length}  (${results.length} eligible)`)
+		if (i % 500 === 0) {
+			console.error(`  ${i}/${rows.length}  (${results.length} eligible)`)
+		}
 
 		let tree: AddressTree
 

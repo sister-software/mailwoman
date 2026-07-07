@@ -55,8 +55,11 @@ for (const template of Object.keys(STRESS_TAG) as BoundaryStressTemplate[]) {
 		const got: Record<string, string> = {}
 		const collect = (o: Record<string, unknown>): void => {
 			for (const [k, v] of Object.entries(o)) {
-				if (typeof v === "string") got[k] = v
-				else if (v && typeof v === "object") collect(v as Record<string, unknown>)
+				if (typeof v === "string") {
+					got[k] = v
+				} else if (v && typeof v === "object") {
+					collect(v as Record<string, unknown>)
+				}
 			}
 		}
 		collect(json)
@@ -65,7 +68,9 @@ for (const template of Object.keys(STRESS_TAG) as BoundaryStressTemplate[]) {
 			const a = (allKeys[k] ??= { hit: 0, n: 0 })
 			a.n++
 
-			if ((got[k] ?? "").toLowerCase().trim() === String(gold).toLowerCase().trim()) a.hit++
+			if ((got[k] ?? "").toLowerCase().trim() === String(gold).toLowerCase().trim()) {
+				a.hit++
+			}
 		}
 
 		if (
@@ -73,8 +78,9 @@ for (const template of Object.keys(STRESS_TAG) as BoundaryStressTemplate[]) {
 			String(row.components[tag as keyof typeof row.components] ?? "")
 				.toLowerCase()
 				.trim()
-		)
+		) {
 			stressHit++
+		}
 	}
 	console.log(`\n## ${template} (stress tag: ${tag})`)
 	console.log(`  stress-tag exact: ${stressHit}/${N} (${((100 * stressHit) / N).toFixed(1)}%)`)

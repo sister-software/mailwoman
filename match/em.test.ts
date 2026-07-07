@@ -43,7 +43,9 @@ describe("estimateParameters (EM)", () => {
 	// with coincidental partial agreement in both classes. True match rate = 0.1.
 	const patterns: number[][] = []
 	const push = (pattern: number[], n: number) => {
-		for (let i = 0; i < n; i++) patterns.push([...pattern])
+		for (let i = 0; i < n; i++) {
+			patterns.push([...pattern])
+		}
 	}
 	push([0, 0], 90) // matches: both exact
 	push([0, 1], 5)

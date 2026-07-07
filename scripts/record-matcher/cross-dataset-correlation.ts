@@ -163,7 +163,7 @@ const SPECS: SourceSpec[] = [
 				const id = norm(r[`${prefix} HCP`])
 				const state = norm(r[`${prefix} HCP State`]).toUpperCase()
 
-				if (id && state === STATE)
+				if (id && state === STATE) {
 					out.push({
 						hcpID: `${role}-${id}`,
 						hcpName: norm(r[`${prefix} HCP Name`]),
@@ -172,6 +172,7 @@ const SPECS: SourceSpec[] = [
 						hcpState: state,
 						hcpZip: norm(r[`${prefix} HCP Zip Code`]),
 					})
+				}
 			}
 			add("Filing", "filing")
 			add("Participating", "participating")
@@ -212,7 +213,9 @@ async function main(): Promise<void> {
 					}
 				}
 
-				if (kept.length < CAP) kept.push(e)
+				if (kept.length < CAP) {
+					kept.push(e)
+				}
 			}
 
 			// Stop early only when we DON'T need the full frequency pass (otherwise scan to EOF).
@@ -230,8 +233,9 @@ async function main(): Promise<void> {
 			}
 		: undefined
 
-	if (CORPUS_FREQ)
+	if (CORPUS_FREQ) {
 		console.error(`    address-frequency table: ${addrCounts.size} distinct over ${addrTotal} ${STATE} addresses`)
+	}
 
 	// --- Phase B: geocoder. ---
 	console.error("[B] building the geocoder…")
@@ -255,7 +259,9 @@ async function main(): Promise<void> {
 			})
 			total++
 
-			if (g.lat !== null) geo++
+			if (g.lat !== null) {
+				geo++
+			}
 
 			return g
 		},
@@ -278,7 +284,9 @@ async function main(): Promise<void> {
 		console.error(`    ${spec.source}: geocoded ${dg}/${dt} (${dt ? ((100 * dg) / dt).toFixed(1) : "0"}%)`)
 
 		// Namespace ids by source so cross-source ids never collide.
-		for (const r of recs) r.id = `${spec.source}:${r.id}`
+		for (const r of recs) {
+			r.id = `${spec.source}:${r.id}`
+		}
 		records.push(...recs)
 	}
 	shardProvider.close()
@@ -314,11 +322,12 @@ async function main(): Promise<void> {
 	for (const { sources } of crossSource) {
 		const list = [...sources].sort()
 
-		for (let i = 0; i < list.length; i++)
+		for (let i = 0; i < list.length; i++) {
 			for (let j = i + 1; j < list.length; j++) {
 				const k = `${list[i]} ↔ ${list[j]}`
 				pairCounts.set(k, (pairCounts.get(k) ?? 0) + 1)
 			}
+		}
 	}
 
 	const repName = (e: ResolvedEntity) =>
@@ -384,12 +393,16 @@ async function main(): Promise<void> {
 		lines.push(`| source pair | entities linked |`)
 		lines.push(`|---|---:|`)
 
-		for (const [k, v] of [...pairCounts.entries()].sort((a, b) => b[1] - a[1])) lines.push(`| ${k} | ${v} |`)
+		for (const [k, v] of [...pairCounts.entries()].sort((a, b) => b[1] - a[1])) {
+			lines.push(`| ${k} | ${v} |`)
+		}
 		lines.push("")
 	}
 	const triple = crossSource.filter((x) => x.sources.size >= 3).length
 
-	if (triple) lines.push(`Of those, **${triple}** span all three sources.`)
+	if (triple) {
+		lines.push(`Of those, **${triple}** span all three sources.`)
+	}
 	lines.push("")
 	lines.push(`## Spot-check — the first 12 cross-source entities (verify by eye)`)
 	lines.push("")

@@ -29,7 +29,9 @@ const startedAt = Date.now()
 function readModelCard(): Record<string, unknown> | null {
 	const candidates: string[] = []
 
-	if ($public.MAILWOMAN_MODEL_CARD) candidates.push($public.MAILWOMAN_MODEL_CARD)
+	if ($public.MAILWOMAN_MODEL_CARD) {
+		candidates.push($public.MAILWOMAN_MODEL_CARD)
+	}
 
 	try {
 		candidates.push(createRequire(import.meta.url).resolve("@mailwoman/neural-weights-en-us/model-card.json"))

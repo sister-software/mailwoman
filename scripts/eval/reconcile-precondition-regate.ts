@@ -52,11 +52,17 @@ const tagvals = (tree: AddressTree): TagVals => {
 	while (st.length) {
 		const n = st.pop()!
 
-		if (n.tag === "street" && o.street === null && n.value.trim()) o.street = n.value.trim()
+		if (n.tag === "street" && o.street === null && n.value.trim()) {
+			o.street = n.value.trim()
+		}
 
-		if (n.tag === "house_number" && o.house_number === null && n.value.trim()) o.house_number = n.value.trim()
+		if (n.tag === "house_number" && o.house_number === null && n.value.trim()) {
+			o.house_number = n.value.trim()
+		}
 
-		if (n.tag === "postcode" && o.postcode === null && n.value.trim()) o.postcode = n.value.trim()
+		if (n.tag === "postcode" && o.postcode === null && n.value.trim()) {
+			o.postcode = n.value.trim()
+		}
 		st.push(...n.children)
 	}
 
@@ -85,20 +91,27 @@ for (const r of rows.slice(0, cap)) {
 	const ap = !!(arg.street && arg.house_number && arg.postcode)
 	const cp = !!(rec.street && rec.house_number && rec.postcode)
 
-	if (ap) argPrecond++
+	if (ap) {
+		argPrecond++
+	}
 
-	if (cp) recPrecond++
+	if (cp) {
+		recPrecond++
+	}
 
 	if (ap && !cp) {
 		recBreaks++
 
-		if (broke.length < 14)
+		if (broke.length < 14) {
 			broke.push(
 				`${input}\n      argmax:    hn=${arg.house_number} st=${arg.street} pc=${arg.postcode}\n      reconcile: hn=${rec.house_number} st=${rec.street} pc=${rec.postcode}`
 			)
+		}
 	}
 
-	if (cp && !ap) recFixes++
+	if (cp && !ap) {
+		recFixes++
+	}
 }
 const pc = (x: number): string => `${((100 * x) / n).toFixed(1)}%`
 console.log(`reconcile precondition re-gate (n=${n})`)
@@ -113,5 +126,7 @@ console.log(`  reconcile FIXES it (reconcile had it, argmax didn't):   ${recFixe
 if (broke.length) {
 	console.log(`\n  sample reconcile-broke-the-precondition cases:`)
 
-	for (const s of broke) console.log(`   - ${s}`)
+	for (const s of broke) {
+		console.log(`   - ${s}`)
+	}
 }

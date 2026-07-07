@@ -98,14 +98,19 @@ function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | nu
 		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 
-			if (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5))
+			if (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5)) {
 				best = { placetype, lat: n.lat, lon: n.lon }
+			}
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return best ? { lat: best.lat, lon: best.lon } : null
 }
@@ -184,7 +189,10 @@ function record(t: Tally, err: number | null) {
 	}
 	t.resolvedErrs.push(err)
 
-	for (const th of THRESHOLDS) if (err <= th) t.within[th]!++
+	for (const th of THRESHOLDS)
+		if (err <= th) {
+			t.within[th]!++
+		}
 }
 
 async function main() {
@@ -209,8 +217,9 @@ async function main() {
 		: null
 	const pelias = SYSTEMS.includes("pelias") ? await loadPelias() : null
 
-	if (SYSTEMS.includes("pelias") && !pelias)
+	if (SYSTEMS.includes("pelias") && !pelias) {
 		console.error("⚠ pelias: GEOCODE_EARTH_API_KEY or diag-geocode-earth.ts unavailable — skipping that row")
+	}
 	const sys0 = SYSTEMS.filter((s) => s !== "pelias" || pelias)
 	// Inject the lever-on column right after the base mailwoman column.
 	const sys =
@@ -221,7 +230,9 @@ async function main() {
 	const tallies: Record<string, Record<string, Tally>> = {}
 
 	// system -> locale -> tally
-	for (const s of sys) tallies[s] = {}
+	for (const s of sys) {
+		tallies[s] = {}
+	}
 
 	let totalParses = 0
 
@@ -239,7 +250,9 @@ async function main() {
 			.slice(0, N)
 			.map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
 
-		for (const s of sys) tallies[s]![cc] = newTally()
+		for (const s of sys) {
+			tallies[s]![cc] = newTally()
+		}
 		console.error(`\n[${cc.toUpperCase()}] ${rows.length} rows…`)
 		let i = 0
 
@@ -282,9 +295,13 @@ async function main() {
 			// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
 			// (~380-parse SIGKILL on the lab box). Periodic forced GC reclaims it; run with `node
 			// --expose-gc` for long panels. No-op without the flag.
-			if (++totalParses % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
+			if (++totalParses % 50 === 0) {
+				;(globalThis as { gc?: () => void }).gc?.()
+			}
 
-			if (++i % 10 === 0) console.error(`  ${i}/${rows.length}`)
+			if (++i % 10 === 0) {
+				console.error(`  ${i}/${rows.length}`)
+			}
 		}
 	}
 
@@ -304,7 +321,9 @@ async function main() {
 		const cells = sys.map((s) => {
 			const t = tallies[s]![cc]!
 
-			for (const th of THRESHOLDS) agg[s]!.within[th]! += t.within[th]!
+			for (const th of THRESHOLDS) {
+				agg[s]!.within[th]! += t.within[th]!
+			}
 			agg[s]!.n += t.n
 			agg[s]!.resolvedErrs.push(...t.resolvedErrs)
 			agg[s]!.noResult += t.noResult

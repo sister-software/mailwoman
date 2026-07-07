@@ -105,7 +105,9 @@ describe("the committed row file", () => {
 
 		// Every id-asserting row carries the human-readable cross-checks the README asks for.
 		for (const row of rows) {
-			if (row.expect.id !== undefined) expect(row.expect.name, row.input).toBeTruthy()
+			if (row.expect.id !== undefined) {
+				expect(row.expect.name, row.input).toBeTruthy()
+			}
 		}
 	})
 })

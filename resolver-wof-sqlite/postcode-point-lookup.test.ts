@@ -27,7 +27,9 @@ function seedShard(path: string, rows: Array<[number, string, string, string, nu
 		`INSERT INTO spr (id, name, placetype, country, latitude, longitude, is_current) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	)
 
-	for (const r of rows) ins.run(...r)
+	for (const r of rows) {
+		ins.run(...r)
+	}
 	db.close()
 }
 

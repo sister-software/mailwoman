@@ -47,7 +47,9 @@ export class SeededRandom {
 	choices<T>(seq: readonly T[], k: number): T[] {
 		const out: T[] = []
 
-		for (let i = 0; i < k; i++) out.push(this.choice(seq))
+		for (let i = 0; i < k; i++) {
+			out.push(this.choice(seq))
+		}
 
 		return out
 	}

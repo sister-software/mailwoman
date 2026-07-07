@@ -27,15 +27,21 @@ export interface SerializeJSONOpts {
 }
 
 function visit(node: AddressNode, out: Partial<Record<ComponentTag, string>>): void {
-	if (!(node.tag in out)) out[node.tag] = node.value
+	if (!(node.tag in out)) {
+		out[node.tag] = node.value
+	}
 
 	if (node.interpretations) {
 		for (const interp of node.interpretations) {
-			if (!(interp.tag in out)) out[interp.tag] = node.value
+			if (!(interp.tag in out)) {
+				out[interp.tag] = node.value
+			}
 		}
 	}
 
-	for (const child of node.children) visit(child, out)
+	for (const child of node.children) {
+		visit(child, out)
+	}
 }
 
 /** Project an `AddressTree` to a flat libpostal-style component map. */
@@ -50,11 +56,15 @@ export function decodeAsJSON(
 ): Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] } {
 	const out: Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] } = {}
 
-	for (const root of tree.roots) visit(root, out)
+	for (const root of tree.roots) {
+		visit(root, out)
+	}
 
 	// Always emit `unknown` (even `[]`) when asked — a consumer that opted in can iterate it without a
 	// presence check. Omitting-when-empty was a libpostal-flat-map instinct that doesn't fit the opt-in path.
-	if (opts.includeUnknown) out.unknown = unknownSpans(tree)
+	if (opts.includeUnknown) {
+		out.unknown = unknownSpans(tree)
+	}
 
 	return out
 }

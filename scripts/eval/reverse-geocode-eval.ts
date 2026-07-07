@@ -171,7 +171,9 @@ for (const row of rows) {
 		regionScored++
 		const region = result.hierarchy.find((p) => p.placetype === "region")
 
-		if (region && nameOrAliasMatches(region.id, region.name, row.expected.region)) regionMatch++
+		if (region && nameOrAliasMatches(region.id, region.name, row.expected.region)) {
+			regionMatch++
+		}
 	}
 
 	if (row.expected.locality) {
@@ -182,7 +184,9 @@ for (const row of rows) {
 		const matched = fine.some((p) => nameOrAliasMatches(p.id, p.name, row.expected.locality!))
 		const matchedLoose = matched || fine.some((p) => looseMatches(p.name, row.expected.locality!))
 
-		if (matchedLoose) localityMatchLoose++
+		if (matchedLoose) {
+			localityMatchLoose++
+		}
 
 		if (matched) {
 			localityMatch++
@@ -240,5 +244,7 @@ if (misses.length > 0) {
 	console.log("")
 	console.log(`First locality misses (surface-normalized misses excluded — these are the genuine wrong-place class):`)
 
-	for (const m of misses) console.log(m)
+	for (const m of misses) {
+		console.log(m)
+	}
 }

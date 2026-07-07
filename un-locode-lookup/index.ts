@@ -85,7 +85,9 @@ export class UnLocodeLookup {
 		for (const r of rows) {
 			const km = haversineKm(lat, lon, r.lat, r.lon)
 
-			if (km <= maxKm && (!best || km < best.km)) best = { code: `${r.country} ${r.location}`, km }
+			if (km <= maxKm && (!best || km < best.km)) {
+				best = { code: `${r.country} ${r.location}`, km }
+			}
 		}
 
 		return best?.code ?? null

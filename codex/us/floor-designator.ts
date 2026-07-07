@@ -74,7 +74,9 @@ export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, UsFloorDesignatorNa
 		out.set(row.abbreviation.toLowerCase(), row.name)
 
 		for (const v of row.variants) {
-			if (!out.has(v.toLowerCase())) out.set(v.toLowerCase(), row.name)
+			if (!out.has(v.toLowerCase())) {
+				out.set(v.toLowerCase(), row.name)
+			}
 		}
 	}
 

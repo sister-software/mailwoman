@@ -144,7 +144,9 @@ export function ingestGeonamesAliases(
 			for (const line of lines) {
 				const f = line.split("\t")
 
-				if (f[6] === "P") wanted.add(Number(f[0]))
+				if (f[6] === "P") {
+					wanted.add(Number(f[0]))
+				}
 			}
 			v2 = new Map()
 
@@ -167,7 +169,9 @@ export function ingestGeonamesAliases(
 				if (f[6] === "1" || f[7] === "1" || (f[9] ?? "").trim() !== "") {
 					const alt = (f[3] ?? "").trim()
 
-					if (alt && wanted.has(Number(f[1]))) historicNames.add(`${f[1]}|${alt}`)
+					if (alt && wanted.has(Number(f[1]))) {
+						historicNames.add(`${f[1]}|${alt}`)
+					}
 				}
 			}
 
@@ -188,17 +192,22 @@ export function ingestGeonamesAliases(
 				const official = !historicNames.has(`${gid}|${alt}`) && isOfficialLanguage(cc, lang) ? 1 : 0
 				let byName = v2.get(gid)
 
-				if (!byName) v2.set(gid, (byName = new Map()))
+				if (!byName) {
+					v2.set(gid, (byName = new Map()))
+				}
 				const prev = byName.get(alt)
 
-				if (!prev) byName.set(alt, { language: lang, privateuse: preferred ? "preferred" : "", official })
-				else {
+				if (!prev) {
+					byName.set(alt, { language: lang, privateuse: preferred ? "preferred" : "", official })
+				} else {
 					if (official && !prev.official) {
 						prev.language = lang
 						prev.official = 1
 					}
 
-					if (preferred && !prev.privateuse) prev.privateuse = "preferred"
+					if (preferred && !prev.privateuse) {
+						prev.privateuse = "preferred"
+					}
 				}
 			}
 		}
@@ -270,9 +279,13 @@ export function ingestGeonamesAliases(
 			if (addAdmin) {
 				ancestorInsert.run(nid, nid, "locality")
 
-				if (regionID >= 0) ancestorInsert.run(nid, regionID, "region")
+				if (regionID >= 0) {
+					ancestorInsert.run(nid, regionID, "region")
+				}
 
-				if (countryID >= 0) ancestorInsert.run(nid, countryID, "country")
+				if (countryID >= 0) {
+					ancestorInsert.run(nid, countryID, "country")
+				}
 			}
 			const seen = new Set([name])
 
@@ -290,7 +303,9 @@ export function ingestGeonamesAliases(
 			}
 			const pop = Number(f[14]) || 0
 
-			if (pop > 0) populationInsert.run(nid, pop)
+			if (pop > 0) {
+				populationInsert.run(nid, pop)
+			}
 			nc++
 		}
 		report({ country: cc, places: nc, skipped: false })

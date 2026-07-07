@@ -43,7 +43,9 @@ const rows = readFileSync(file, "utf8")
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
-for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
+for (const t of TAGS) {
+	stat[t] = { tp: 0, fp: 0, fn: 0 }
+}
 
 // over-fire diagnostics
 let overfire = 0 // gold region/locality token tagged as country
@@ -59,11 +61,16 @@ for (const row of rows) {
 		const e = norm(exp[t]),
 			g = norm(got[t])
 
-		if (e && g && e === g) stat[t]!.tp++
-		else {
-			if (g) stat[t]!.fp++
+		if (e && g && e === g) {
+			stat[t]!.tp++
+		} else {
+			if (g) {
+				stat[t]!.fp++
+			}
 
-			if (e) stat[t]!.fn++
+			if (e) {
+				stat[t]!.fn++
+			}
 		}
 	}
 	// over-fire: model emitted a country that is actually the gold region or locality
@@ -109,6 +116,10 @@ if (jsonOut) {
 console.log(`\nover-fire (region/locality tagged as country): ${overfire}`)
 console.log(`missed country (gold country, none emitted): ${missedCountry}`)
 
-if (overfireCases.length) console.log("\n-- over-fire cases --\n" + overfireCases.join("\n"))
+if (overfireCases.length) {
+	console.log("\n-- over-fire cases --\n" + overfireCases.join("\n"))
+}
 
-if (missedCases.length) console.log("\n-- missed-country cases --\n" + missedCases.join("\n"))
+if (missedCases.length) {
+	console.log("\n-- missed-country cases --\n" + missedCases.join("\n"))
+}

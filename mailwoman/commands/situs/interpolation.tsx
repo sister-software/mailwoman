@@ -422,12 +422,16 @@ function buildStateShard(
 
 	// Echo the child's output with a state prefix.
 	for (const line of stdout.trim().split("\n")) {
-		if (line) console.error(`  [${stateAbbr}] ${line}`)
+		if (line) {
+			console.error(`  [${stateAbbr}] ${line}`)
+		}
 	}
 
 	if (stderr.trim()) {
 		for (const line of stderr.trim().split("\n")) {
-			if (line) console.error(`  [${stateAbbr}:stderr] ${line}`)
+			if (line) {
+				console.error(`  [${stateAbbr}:stderr] ${line}`)
+			}
 		}
 	}
 
@@ -471,7 +475,9 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 				console.error(`concurrency: ${CONCURRENCY}`)
 				console.error(`release:     ${RELEASE}`)
 
-				if (FORCE) console.error("force:       true (re-building existing shards)")
+				if (FORCE) {
+					console.error("force:       true (re-building existing shards)")
+				}
 				console.error("")
 
 				mkdirSync(EDGES_DIR, { recursive: true })
@@ -603,7 +609,9 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

@@ -171,9 +171,13 @@ function antimeridianWrapped(geojson: string): boolean {
 	for (let m = re.exec(geojson); m; m = re.exec(geojson)) {
 		const lon = Number(m[1])
 
-		if (lon < min) min = lon
+		if (lon < min) {
+			min = lon
+		}
 
-		if (lon > max) max = lon
+		if (lon > max) {
+			max = lon
+		}
 	}
 
 	return max - min > 180
@@ -203,18 +207,24 @@ export async function buildCoverageTiles(
 	const instance = await DuckDBInstance.create()
 	const duck = await instance.connect()
 
-	if (opts.threads) await duck.run(`SET threads TO ${opts.threads}`)
+	if (opts.threads) {
+		await duck.run(`SET threads TO ${opts.threads}`)
+	}
 	await duck.run("INSTALL h3 FROM community; LOAD h3; INSTALL spatial; LOAD spatial; INSTALL sqlite; LOAD sqlite;")
 
 	// ATTACH every shard read-only (address-points as st<i>, interpolation as ip<i> when present).
 	for (const [i, s] of states.entries()) {
 		await duck.run(`ATTACH '${s.file}' AS st${i} (TYPE sqlite, READ_ONLY)`)
 
-		if (s.interp) await duck.run(`ATTACH '${s.interp}' AS ip${i} (TYPE sqlite, READ_ONLY)`)
+		if (s.interp) {
+			await duck.run(`ATTACH '${s.interp}' AS ip${i} (TYPE sqlite, READ_ONLY)`)
+		}
 	}
 
 	// ATTACH the WOF gazetteer read-only for the global civilization/salience backdrop (if requested).
-	if (opts.wofDB) await duck.run(`ATTACH '${opts.wofDB}' AS wof (TYPE sqlite, READ_ONLY)`)
+	if (opts.wofDB) {
+		await duck.run(`ATTACH '${opts.wofDB}' AS wof (TYPE sqlite, READ_ONLY)`)
+	}
 
 	// data_pt: res-FINE address-point counts. UNION ALL the RAW (lat, lon) across states and bin + count
 	// ONCE in the outer query. Do NOT pre-aggregate per UNION arm: DuckDB mis-binds structurally-identical
@@ -436,7 +446,9 @@ export async function buildCoverageTiles(
 	const { statSync } = await import("node:fs")
 	const pmtilesBytes = statSync(opts.out).size
 
-	if (!opts.keepNdjson) rmSync(ndjsonPath, { force: true })
+	if (!opts.keepNdjson) {
+		rmSync(ndjsonPath, { force: true })
+	}
 
 	return {
 		out: opts.out,

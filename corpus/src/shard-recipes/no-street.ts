@@ -65,8 +65,11 @@ export const noStreetRecipe: ShardRecipe = {
 					synth.template
 				)
 
-				if (ok) emitted++
-				else skipped++
+				if (ok) {
+					emitted++
+				} else {
+					skipped++
+				}
 			}
 		}
 

@@ -168,7 +168,9 @@ export async function ingestOvertureDivisions(
 		}
 		const pop = num(r.population)
 
-		if (pop > 0) populationInsert.run(nid, pop)
+		if (pop > 0) {
+			populationInsert.run(nid, pop)
+		}
 		n++
 	}
 	db.exec("COMMIT")

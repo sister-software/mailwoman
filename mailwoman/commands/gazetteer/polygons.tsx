@@ -131,7 +131,10 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 	}
 	const out: LinearRing = []
 
-	for (let i = 0; i < ring.length; i++) if (keep[i]) out.push(ring[i]!)
+	for (let i = 0; i < ring.length; i++)
+		if (keep[i]) {
+			out.push(ring[i]!)
+		}
 
 	// A degenerate ring (<4 pts after simplify) can't render — drop it by signalling null.
 	return out.length >= 4 ? out : null
@@ -206,7 +209,9 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 				const tmpOut = `${out}.tmp-${process.pid}`
 
 				for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
-					if (existsSync(stale)) rmSync(stale)
+					if (existsSync(stale)) {
+						rmSync(stale)
+					}
 				}
 
 				const dbOut = new DatabaseSync(tmpOut)
@@ -246,8 +251,9 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 						dropped++
 					}
 
-					if ((done + missing + dropped) % 2000 === 0)
+					if ((done + missing + dropped) % 2000 === 0) {
 						console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
+					}
 				}
 				dbOut.exec("COMMIT")
 				dbOut.exec("VACUUM")
@@ -260,10 +266,14 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 				// Atomic swap: move the previous DB aside, slide the new one into place, drop the backup.
 				const backup = `${out}.old-${process.pid}`
 
-				if (existsSync(out)) renameSync(out, backup)
+				if (existsSync(out)) {
+					renameSync(out, backup)
+				}
 				renameSync(tmpOut, out)
 
-				if (existsSync(backup)) rmSync(backup)
+				if (existsSync(backup)) {
+					rmSync(backup)
+				}
 
 				const mb = Math.round((bytes.b || 0) / 1024 / 1024)
 				setSummary([`${out}: ${done} polygons`, `${missing} no-geometry, ${dropped} dropped, ~${mb} MB geom`])
@@ -274,7 +284,9 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

@@ -221,14 +221,23 @@ function parseArgs(): Args {
 	for (let i = 0; i < argv.length; i++) {
 		const k = argv[i]
 
-		if (k === "--dump") a.dump = argv[++i]
-		else if (k === "--db") a.db = argv[++i]!
-		else if (k === "--label") a.label = argv[++i]!
-		else if (k === "--alphas") a.alphas = argv[++i]!
-		else if (k === "--seed") a.seed = parseInt(argv[++i]!, 10)
-		else if (k === "--cal-frac") a.calFrac = parseFloat(argv[++i]!)
-		else if (k === "--out-json") a.outJson = argv[++i]
-		else if (k === "--self-test") a.selfTest = true
+		if (k === "--dump") {
+			a.dump = argv[++i]
+		} else if (k === "--db") {
+			a.db = argv[++i]!
+		} else if (k === "--label") {
+			a.label = argv[++i]!
+		} else if (k === "--alphas") {
+			a.alphas = argv[++i]!
+		} else if (k === "--seed") {
+			a.seed = parseInt(argv[++i]!, 10)
+		} else if (k === "--cal-frac") {
+			a.calFrac = parseFloat(argv[++i]!)
+		} else if (k === "--out-json") {
+			a.outJson = argv[++i]
+		} else if (k === "--self-test") {
+			a.selfTest = true
+		}
 	}
 
 	return a

@@ -62,7 +62,9 @@ for (const [alias, entry] of Object.entries(languageAlias)) {
 	if (!canon || !/^[a-z]{2,3}$/.test(alias)) continue
 	let set = spellingsOf.get(canon)
 
-	if (!set) spellingsOf.set(canon, (set = new Set()))
+	if (!set) {
+		spellingsOf.set(canon, (set = new Set()))
+	}
 	set.add(alias)
 }
 
@@ -84,14 +86,23 @@ for (const territory of Object.keys(territoryInfo).sort()) {
 		const base = lang.split("_")[0]!
 		const spellings = [base, ...(spellingsOf.get(base) ?? [])].sort()
 
-		if (status === "official" || status === "de_facto_official") for (const s of spellings) official.add(s)
-		else if (status === "official_regional") for (const s of spellings) regional.add(s)
+		if (status === "official" || status === "de_facto_official") {
+			for (const s of spellings) {
+				official.add(s)
+			}
+		} else if (status === "official_regional") {
+			for (const s of spellings) {
+				regional.add(s)
+			}
+		}
 	}
 
 	if (official.size === 0 && regional.size === 0) continue
 	table[territory] = { official: [...official].sort() }
 
-	if (regional.size > 0) table[territory]!.regional = [...regional].sort()
+	if (regional.size > 0) {
+		table[territory]!.regional = [...regional].sort()
+	}
 }
 
 const entries = Object.entries(table)

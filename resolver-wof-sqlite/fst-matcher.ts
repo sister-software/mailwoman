@@ -29,7 +29,9 @@ export class FSTMatcher {
 	get placeCount(): number {
 		let count = 0
 
-		for (const n of this.nodes) count += n.places.length
+		for (const n of this.nodes) {
+			count += n.places.length
+		}
 
 		return count
 	}

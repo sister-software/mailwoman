@@ -80,10 +80,14 @@ function composeRaw(house: string, street: string, postcode: string, locality: s
 	const parts: string[] = []
 	const streetPart = [house, street].filter(Boolean).join(" ").trim()
 
-	if (streetPart) parts.push(streetPart)
+	if (streetPart) {
+		parts.push(streetPart)
+	}
 	const cityPart = [postcode, locality].filter(Boolean).join(" ").trim()
 
-	if (cityPart) parts.push(cityPart)
+	if (cityPart) {
+		parts.push(cityPart)
+	}
 
 	return parts.join(", ").replace(/\s+/g, " ").trim()
 }
@@ -131,15 +135,25 @@ export function createBanAdapter(): CorpusAdapter {
 
 					const components: CanonicalRow["components"] = {}
 
-					if (house) components.house_number = house
+					if (house) {
+						components.house_number = house
+					}
 
-					if (decomposed.prefix) components.street_prefix = decomposed.prefix
+					if (decomposed.prefix) {
+						components.street_prefix = decomposed.prefix
+					}
 
-					if (decomposed.street) components.street = decomposed.street
+					if (decomposed.street) {
+						components.street = decomposed.street
+					}
 
-					if (postcode) components.postcode = postcode
+					if (postcode) {
+						components.postcode = postcode
+					}
 
-					if (locality) components.locality = locality
+					if (locality) {
+						components.locality = locality
+					}
 
 					const raw = composeRaw(house, street, postcode, locality)
 

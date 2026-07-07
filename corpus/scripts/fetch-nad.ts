@@ -202,7 +202,9 @@ async function fetchChunk(
 			continue
 		}
 
-		for (const row of rows) lines.push(JSON.stringify(row))
+		for (const row of rows) {
+			lines.push(JSON.stringify(row))
+		}
 	}
 	await writeFile(chunkPath, lines.length === 0 ? "" : lines.join("\n") + "\n")
 
@@ -284,7 +286,9 @@ async function featureserverMode(opts: ReturnType<typeof parseCLIArgs>): Promise
 	process.stderr.write(`page errors:   ${totalErrors}\n`)
 	process.stderr.write(`output:        ${chunkDir}\n`)
 
-	if (totalErrors > 0) process.exitCode = 1
+	if (totalErrors > 0) {
+		process.exitCode = 1
+	}
 }
 
 async function bulkMode(opts: ReturnType<typeof parseCLIArgs>): Promise<void> {
@@ -335,9 +339,11 @@ async function bulkMode(opts: ReturnType<typeof parseCLIArgs>): Promise<void> {
 async function main(): Promise<void> {
 	const opts = parseCLIArgs()
 
-	if (opts.mode === "featureserver") await featureserverMode(opts)
-	else if (opts.mode === "bulk") await bulkMode(opts)
-	else {
+	if (opts.mode === "featureserver") {
+		await featureserverMode(opts)
+	} else if (opts.mode === "bulk") {
+		await bulkMode(opts)
+	} else {
 		process.stderr.write(`error: unknown mode "${opts.mode}" (expected featureserver|bulk)\n`)
 		process.exitCode = 2
 	}

@@ -140,7 +140,10 @@ function stripBIOPrefix(label: string): string {
 function softmax(row: readonly number[]): number[] {
 	let max = row[0]!
 
-	for (let i = 1; i < row.length; i++) if (row[i]! > max) max = row[i]!
+	for (let i = 1; i < row.length; i++)
+		if (row[i]! > max) {
+			max = row[i]!
+		}
 	const exps = row.map((v) => Math.exp(v - max))
 	const sum = exps.reduce((a, b) => a + b, 0)
 

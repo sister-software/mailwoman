@@ -35,7 +35,9 @@ export function isAllCapsInput(text: string): boolean {
 		if (c >= 97 && c <= 122) return false
 
 		// any [a-z] → mixed case, leave it alone
-		if (c >= 65 && c <= 90) upper++
+		if (c >= 65 && c <= 90) {
+			upper++
+		}
 	}
 
 	return upper >= 3
@@ -74,7 +76,9 @@ export function isAllLowerInput(text: string): boolean {
 		if (c >= 65 && c <= 90) return false
 
 		// any [A-Z] → mixed case, leave it alone
-		if (c >= 97 && c <= 122) lower++
+		if (c >= 97 && c <= 122) {
+			lower++
+		}
 	}
 
 	return lower >= 3

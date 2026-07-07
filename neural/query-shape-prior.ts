@@ -98,12 +98,16 @@ export function buildEmissionPriors(
 	const biasScale = opts.biasScale ?? 1.0
 	const matrix: number[][] = []
 
-	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
+	for (let t = 0; t < T; t++) {
+		matrix.push(new Array<number>(L).fill(0))
+	}
 
 	// Index label → column for fast lookup.
 	const labelToCol = new Map<string, number>()
 
-	for (let k = 0; k < labels.length; k++) labelToCol.set(labels[k]!, k)
+	for (let k = 0; k < labels.length; k++) {
+		labelToCol.set(labels[k]!, k)
+	}
 
 	if (shape.knownFormats.length === 0 && (!shape.regionAbbreviations || shape.regionAbbreviations.length === 0)) {
 		return matrix
@@ -290,7 +294,9 @@ export function addEmissionMatrix(emissions: number[][], priors: number[][]): nu
 		const p = priors[t] ?? new Array<number>(e.length).fill(0)
 		const row = new Array<number>(e.length)
 
-		for (let k = 0; k < e.length; k++) row[k] = e[k]! + (p[k] ?? 0)
+		for (let k = 0; k < e.length; k++) {
+			row[k] = e[k]! + (p[k] ?? 0)
+		}
 		out.push(row)
 	}
 

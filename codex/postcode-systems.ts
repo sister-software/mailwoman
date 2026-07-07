@@ -59,7 +59,9 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
 	const out: SystemCode[] = []
 
 	for (const [system, accepts] of SYSTEM_ACCEPTS) {
-		if (accepts(postcode)) out.push(system)
+		if (accepts(postcode)) {
+			out.push(system)
+		}
 	}
 
 	return out

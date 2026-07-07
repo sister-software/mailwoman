@@ -112,7 +112,9 @@ async function main(): Promise<void> {
 		)
 
 		// Encourage reclamation between sizes (RSS is a shared-process high-water — see the report note).
-		if (global.gc) global.gc()
+		if (global.gc) {
+			global.gc()
+		}
 	}
 
 	const lines: string[] = []

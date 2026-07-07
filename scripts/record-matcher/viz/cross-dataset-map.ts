@@ -83,9 +83,13 @@ for (const f of geojson.features) {
 	const combo = [...new Set(sourcesOf(f))].sort()
 	const bucket = combo.map(label).join(" + ") || "unlinked"
 
-	if (f.properties) f.properties["bucket"] = bucket
+	if (f.properties) {
+		f.properties["bucket"] = bucket
+	}
 
-	if (new Set(combo.map(agencyOf)).size >= 3) triple++
+	if (new Set(combo.map(agencyOf)).size >= 3) {
+		triple++
+	}
 	comboCounts.set(bucket, (comboCounts.get(bucket) ?? 0) + 1)
 }
 
@@ -101,6 +105,7 @@ writeFileSync(OUT, html)
 console.error(`[written] ${OUT}  (${kept}${CROSS_AGENCY_ONLY ? ` of ${total} cross-AGENCY` : ""} entities)`)
 console.error(`  source combinations:`)
 
-for (const [combo, n] of [...comboCounts.entries()].sort((a, b) => b[1] - a[1]))
+for (const [combo, n] of [...comboCounts.entries()].sort((a, b) => b[1] - a[1])) {
 	console.error(`    ${n.toString().padStart(4)}  ${combo}`)
+}
 console.error(`  spanning all three agencies: ${triple}`)

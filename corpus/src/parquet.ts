@@ -225,11 +225,17 @@ function appendShape(row: ParquetRow): Record<string, unknown> {
 		license: row.license,
 	}
 
-	if (row.locale !== null) out.locale = row.locale
+	if (row.locale !== null) {
+		out.locale = row.locale
+	}
 
-	if (row.synth_method !== null) out.synth_method = row.synth_method
+	if (row.synth_method !== null) {
+		out.synth_method = row.synth_method
+	}
 
-	if (row.synth_base_id !== null) out.synth_base_id = row.synth_base_id
+	if (row.synth_base_id !== null) {
+		out.synth_base_id = row.synth_base_id
+	}
 
 	return out
 }
@@ -302,11 +308,15 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 		}
 
 		for await (const row of rows) {
-			if (!writer) await openShard()
+			if (!writer) {
+				await openShard()
+			}
 			const pq = rowToParquet(row)
 			await writer!.appendRow(appendShape(pq) as unknown as ParquetRow)
 
-			if (shardRows === 0) firstSourceID = row.source_id
+			if (shardRows === 0) {
+				firstSourceID = row.source_id
+			}
 			lastSourceID = row.source_id
 			shardRows++
 			counts[split]++
@@ -342,7 +352,9 @@ async function hashFile(path: string): Promise<string> {
 	const hash = createHash("sha256")
 	const stream = createReadStream(path)
 
-	for await (const chunk of stream) hash.update(chunk as Buffer)
+	for await (const chunk of stream) {
+		hash.update(chunk as Buffer)
+	}
 
 	return hash.digest("hex")
 }

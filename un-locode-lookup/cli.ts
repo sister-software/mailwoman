@@ -37,14 +37,19 @@ if (process.argv[2] === "build") {
 	const near: number[] = []
 
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--db") databasePath = args[++i]
-		else if (args[i] === "--country") country = args[++i]
-		else if (args[i] === "--name") name = args[++i]
-		else if (args[i] === "--near") continue
+		if (args[i] === "--db") {
+			databasePath = args[++i]
+		} else if (args[i] === "--country") {
+			country = args[++i]
+		} else if (args[i] === "--name") {
+			name = args[++i]
+		} else if (args[i] === "--near") continue
 		else {
 			const n = Number(args[i])
 
-			if (Number.isFinite(n)) near.push(n)
+			if (Number.isFinite(n)) {
+				near.push(n)
+			}
 		}
 	}
 
@@ -55,8 +60,11 @@ if (process.argv[2] === "build") {
 	const lookup = new UnLocodeLookup({ databasePath })
 	let code: string | null = null
 
-	if (country && name) code = lookup.byName(country, name)
-	else if (near.length === 2) code = lookup.nearest(near[0]!, near[1]!)
+	if (country && name) {
+		code = lookup.byName(country, name)
+	} else if (near.length === 2) {
+		code = lookup.nearest(near[0]!, near[1]!)
+	}
 	console.log(JSON.stringify({ unLocode: code }))
 	lookup.close()
 }

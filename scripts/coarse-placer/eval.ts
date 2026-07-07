@@ -72,7 +72,9 @@ for (const r of test) {
 	const b = Math.min(9, Math.floor(p.confidence * 10))
 	buckets[b]!.n++
 
-	if (hit) buckets[b]!.ok++
+	if (hit) {
+		buckets[b]!.ok++
+	}
 }
 console.log(`coarse-placer eval — test n=${test.length}`)
 console.log(`  overall accuracy: ${((100 * correct) / test.length).toFixed(2)}%  (abstain threshold ${args.abstain})`)
@@ -81,7 +83,9 @@ console.log(`  per-class recall:`)
 for (const c of meta.classes) {
 	const s = perClass[c]
 
-	if (s) console.log(`    ${c}: ${((100 * s.ok) / s.n).toFixed(1)}%  (n=${s.n})`)
+	if (s) {
+		console.log(`    ${c}: ${((100 * s.ok) / s.n).toFixed(1)}%  (n=${s.n})`)
+	}
 }
 let ece = 0
 const N = test.length
@@ -101,7 +105,9 @@ const confLines: string[] = []
 
 for (const t of meta.classes) {
 	for (const [pred, n] of Object.entries(confusion[t] ?? {})) {
-		if (pred !== t && n >= 20) confLines.push(`    ${t}→${pred}: ${n}`)
+		if (pred !== t && n >= 20) {
+			confLines.push(`    ${t}→${pred}: ${n}`)
+		}
 	}
 }
 
@@ -135,13 +141,17 @@ try {
 		if (offMap) {
 			offN++
 
-			if (handled(p)) offOk++
-			else if (offMiss.length < 8)
+			if (handled(p)) {
+				offOk++
+			} else if (offMiss.length < 8) {
 				offMiss.push(`    ${r.script}/${r.country} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 30)}»`)
+			}
 		} else {
 			missN++
 
-			if (handled(p)) missOk++ // a latin/cjk in-map input mis-routed to OTHER = a false abstention
+			if (handled(p)) {
+				missOk++
+			} // a latin/cjk in-map input mis-routed to OTHER = a false abstention
 		}
 	}
 	console.log(`\nmulti-script off-map handling (n=${ms.length}):`)

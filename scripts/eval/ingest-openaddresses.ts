@@ -282,17 +282,23 @@ function parseArgs(): Options {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--out") out.out = args[++i]!
-		else if (a === "--cache") out.cache = args[++i]!
-		else if (a === "--target") out.target = parseInt(args[++i]!, 10)
-		else if (a === "--per-state") out.perState = parseInt(args[++i]!, 10)
-		else if (a === "--seed") out.seed = parseInt(args[++i]!, 10)
-		else if (a === "--offline") out.offline = true
-		else if (a === "--sources")
+		if (a === "--out") {
+			out.out = args[++i]!
+		} else if (a === "--cache") {
+			out.cache = args[++i]!
+		} else if (a === "--target") {
+			out.target = parseInt(args[++i]!, 10)
+		} else if (a === "--per-state") {
+			out.perState = parseInt(args[++i]!, 10)
+		} else if (a === "--seed") {
+			out.seed = parseInt(args[++i]!, 10)
+		} else if (a === "--offline") {
+			out.offline = true
+		} else if (a === "--sources") {
 			out.sources = args[++i]!.split(",")
 				.map((s) => s.trim())
 				.filter(Boolean)
-		else throw new Error(`Unknown flag: ${a}`)
+		} else throw new Error(`Unknown flag: ${a}`)
 	}
 
 	return out
@@ -489,11 +495,17 @@ function renderInput({
 	// "402 Constitution Avenue NE, Washington, DC 20002"
 	const parts: string[] = []
 
-	if (line1) parts.push(line1)
+	if (line1) {
+		parts.push(line1)
+	}
 
-	if (cityPart) parts.push(cityPart)
+	if (cityPart) {
+		parts.push(cityPart)
+	}
 
-	if (regionPost) parts.push(regionPost)
+	if (regionPost) {
+		parts.push(regionPost)
+	}
 
 	return parts.join(", ")
 }
@@ -565,7 +577,9 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 		const city = tidyText(get(cells, "city"))
 		let region = get(cells, "region").trim().toUpperCase()
 
-		if (!region) region = source.state // OA region is usually populated; fall back to source state.
+		if (!region) {
+			region = source.state
+		} // OA region is usually populated; fall back to source state.
 		const postcode = cleanPostcode(get(cells, "postcode"))
 
 		// Filter: require city AND postcode (resolver is admin-level).
@@ -620,7 +634,9 @@ function processSource(source: Source, zipPath: string, rng: () => number, perSt
 		} else {
 			const j = Math.floor(rng() * kept)
 
-			if (j < perState) reservoir[j] = record
+			if (j < perState) {
+				reservoir[j] = record
+			}
 		}
 	}
 
@@ -688,7 +704,9 @@ function main(): void {
 	const byState = new Map<string, OaRecord[]>()
 
 	for (const { source, records } of perSourceRecords) {
-		if (!byState.has(source.state)) byState.set(source.state, [])
+		if (!byState.has(source.state)) {
+			byState.set(source.state, [])
+		}
 		byState.get(source.state)!.push(...records)
 	}
 
@@ -725,7 +743,9 @@ function main(): void {
 	// Final summary to stderr.
 	const stateCounts: Record<string, number> = {}
 
-	for (const r of final) stateCounts[r.state] = (stateCounts[r.state] || 0) + 1
+	for (const r of final) {
+		stateCounts[r.state] = (stateCounts[r.state] || 0) + 1
+	}
 	process.stderr.write(`\n=== DONE ===\n`)
 	process.stderr.write(`wrote ${final.length} records → ${outPath}\n`)
 	process.stderr.write(`by state: ${JSON.stringify(stateCounts)}\n`)
@@ -733,7 +753,9 @@ function main(): void {
 	if (blocked.length) {
 		process.stderr.write(`\nBLOCKED sources (${blocked.length}):\n`)
 
-		for (const b of blocked) process.stderr.write(`  - ${b.source}: ${b.reason}\n`)
+		for (const b of blocked) {
+			process.stderr.write(`  - ${b.source}: ${b.reason}\n`)
+		}
 		process.stderr.write(
 			`\nTo fetch a blocked source manually, run:\n` +
 				blocked

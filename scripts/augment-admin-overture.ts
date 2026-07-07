@@ -76,7 +76,9 @@ async function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): Pr
 			}
 		}
 
-		if (best != null && bestD < 50) pops.set(best, pop)
+		if (best != null && bestD < 50) {
+			pops.set(best, pop)
+		}
 	}
 
 	const rows = [...pops].map(([id, population]) => ({ id, population }))
@@ -118,7 +120,9 @@ if (!OUT || COUNTRIES.length === 0) {
 
 const WORK = `${OUT}.work`
 
-if (existsSync(WORK)) unlinkSync(WORK)
+if (existsSync(WORK)) {
+	unlinkSync(WORK)
+}
 console.error(`Copying ${IN} → ${WORK} (preserves all existing coverage) ...`)
 copyFileSync(IN, WORK)
 
@@ -184,9 +188,13 @@ const integrity = (db.prepare("PRAGMA integrity_check").get() as { integrity_che
 
 if (integrity !== "ok") throw new Error(`integrity_check failed: ${integrity}`)
 
-if (existsSync(OUT)) unlinkSync(OUT)
+if (existsSync(OUT)) {
+	unlinkSync(OUT)
+}
 db.prepare("VACUUM INTO ?").run(OUT)
 db.close()
 
-if (existsSync(WORK)) unlinkSync(WORK)
+if (existsSync(WORK)) {
+	unlinkSync(WORK)
+}
 console.error(`Wrote ${OUT}`)

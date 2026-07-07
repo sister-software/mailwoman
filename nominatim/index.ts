@@ -208,7 +208,9 @@ export function createNominatimRouter(engine: NominatimEngine, options: Nominati
 	const router = Router()
 
 	// Browser-embedded geocoder clients need CORS or their cross-origin XHR is blocked before completing (#1017).
-	if (options.cors !== false) router.use(applyCors)
+	if (options.cors !== false) {
+		router.use(applyCors)
+	}
 
 	const search: RequestHandler = async (req, res) => {
 		if (!engine.search) {
@@ -302,7 +304,9 @@ export function createNominatimRouter(engine: NominatimEngine, options: Nominati
 			try {
 				await fn(req, res, next)
 			} catch {
-				if (!res.headersSent) res.status(500).json({ error: "internal error" })
+				if (!res.headersSent) {
+					res.status(500).json({ error: "internal error" })
+				}
 			}
 		}
 
@@ -340,7 +344,9 @@ export const MAILWOMAN_LICENCE = "Data © Who's On First, Overture Maps, OpenAdd
 function stableID(seed: string): number {
 	let h = 5381
 
-	for (let i = 0; i < seed.length; i++) h = (h * 33) ^ seed.charCodeAt(i)
+	for (let i = 0; i < seed.length; i++) {
+		h = (h * 33) ^ seed.charCodeAt(i)
+	}
 
 	return h >>> 0
 }
@@ -361,17 +367,29 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 		display_name: displayName,
 	}
 
-	if (r.category != null) result.class = r.category
+	if (r.category != null) {
+		result.class = r.category
+	}
 
-	if (r.type != null) result.type = r.type
+	if (r.type != null) {
+		result.type = r.type
+	}
 
-	if (r.importance != null) result.importance = r.importance
+	if (r.importance != null) {
+		result.importance = r.importance
+	}
 
-	if (r.placeRank != null) result.place_rank = r.placeRank
+	if (r.placeRank != null) {
+		result.place_rank = r.placeRank
+	}
 
-	if (r.boundingbox) result.boundingbox = r.boundingbox
+	if (r.boundingbox) {
+		result.boundingbox = r.boundingbox
+	}
 
-	if (opts.addressdetails) result.address = r.address
+	if (opts.addressdetails) {
+		result.address = r.address
+	}
 
 	return result
 }

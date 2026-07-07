@@ -126,8 +126,11 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 		const got: Record<string, string> = {}
 		const collect = (o: Record<string, unknown>): void => {
 			for (const [k, v] of Object.entries(o)) {
-				if (typeof v === "string") got[k] = v
-				else if (v && typeof v === "object") collect(v as Record<string, unknown>)
+				if (typeof v === "string") {
+					got[k] = v
+				} else if (v && typeof v === "object") {
+					collect(v as Record<string, unknown>)
+				}
 			}
 		}
 		collect(json)
@@ -136,11 +139,15 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 			const a = (perKey[k] ??= { hit: 0, n: 0 })
 			a.n++
 
-			if ((got[k] ?? "").toLowerCase().trim() === String(gold).toLowerCase().trim()) a.hit++
+			if ((got[k] ?? "").toLowerCase().trim() === String(gold).toLowerCase().trim()) {
+				a.hit++
+			}
 		}
 		const goldStress = String(row.components[tag as keyof typeof row.components] ?? "")
 
-		if ((got[tag] ?? "").toLowerCase().trim() === goldStress.toLowerCase().trim()) stressHit++
+		if ((got[tag] ?? "").toLowerCase().trim() === goldStress.toLowerCase().trim()) {
+			stressHit++
+		}
 	}
 	const stressPct = (100 * stressHit) / N
 	const street = perKey["street"]

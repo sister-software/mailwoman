@@ -61,12 +61,16 @@ function parseArgs(argv: readonly string[]): CLIArgs {
 	let drop = false
 
 	for (const a of argv) {
-		if (a === "--drop") drop = true
-		else if (a === "--help" || a === "-h") printUsageAndExit(0)
-		else if (a.startsWith("-")) {
+		if (a === "--drop") {
+			drop = true
+		} else if (a === "--help" || a === "-h") {
+			printUsageAndExit(0)
+		} else if (a.startsWith("-")) {
 			stderr.write(`mailwoman-wof-build-fts: unknown flag ${JSON.stringify(a)}\n`)
 			printUsageAndExit(2)
-		} else args.push(a)
+		} else {
+			args.push(a)
+		}
 	}
 
 	if (args.length === 0) {
@@ -123,7 +127,9 @@ export function main(argv: readonly string[]): number {
 	for (const path of args.databasePaths) {
 		const rc = buildOne(path, args.drop)
 
-		if (rc > worst) worst = rc
+		if (rc > worst) {
+			worst = rc
+		}
 	}
 
 	return worst

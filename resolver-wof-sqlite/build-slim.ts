@@ -143,7 +143,9 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 
 	progress("init", `${inputs.length} input(s) → ${opts.output}`)
 
-	if (existsSync(opts.output)) rmSync(opts.output)
+	if (existsSync(opts.output)) {
+		rmSync(opts.output)
+	}
 
 	// Open the output DB and create the empty schema. We discover the schema from the FIRST input
 	// (raw sqlite_master read — Kysely doesn't model that) so the output mirrors source column

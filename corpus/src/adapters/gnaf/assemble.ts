@@ -80,7 +80,9 @@ async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V):
 		for await (const r of psvObjects(p)) {
 			const k = r[keyCol]
 
-			if (k != null && k !== "") m.set(String(k), pick(r))
+			if (k != null && k !== "") {
+				m.set(String(k), pick(r))
+			}
 		}
 	}
 
@@ -98,7 +100,9 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 		try {
 			const c = (JSON.parse(line) as { components?: Record<string, string> }).components
 
-			if (c?.street && c?.locality && c?.postcode) keys.add(gnafHoldoutKey(c.street, c.locality, c.postcode))
+			if (c?.street && c?.locality && c?.postcode) {
+				keys.add(gnafHoldoutKey(c.street, c.locality, c.postcode))
+			}
 		} catch {
 			/* skip malformed */
 		}
@@ -120,7 +124,9 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 
 	const holdout = opts.holdoutPath ? await loadHoldout(opts.holdoutPath) : new Set<string>()
 
-	if (opts.holdoutPath) progress(`held-out eval keys: ${holdout.size}`)
+	if (opts.holdoutPath) {
+		progress(`held-out eval keys: ${holdout.size}`)
+	}
 
 	progress(`loading STREET_LOCALITY (${streetPaths.length} files) + LOCALITY (${localityPaths.length})…`)
 	const streetMap = await loadMap(streetPaths, "STREET_LOCALITY_PID", (r) => ({
@@ -157,17 +163,24 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 			}
 			let house = numberFirst + (r.NUMBER_FIRST_SUFFIX ? String(r.NUMBER_FIRST_SUFFIX) : "")
 
-			if (r.NUMBER_LAST) house = `${house}-${String(r.NUMBER_LAST)}`
+			if (r.NUMBER_LAST) {
+				house = `${house}-${String(r.NUMBER_LAST)}`
+			}
 
-			if (r.FLAT_NUMBER) house = `${String(r.FLAT_NUMBER)}/${house}`
+			if (r.FLAT_NUMBER) {
+				house = `${String(r.FLAT_NUMBER)}/${house}`
+			}
 			const tuple = { house_number: house, street, locality, region: state, postcode }
 			seen++
 
-			if (reservoir.length < opts.sampleSize) reservoir.push(tuple)
-			else {
+			if (reservoir.length < opts.sampleSize) {
+				reservoir.push(tuple)
+			} else {
 				const j = Math.floor(Math.random() * seen)
 
-				if (j < opts.sampleSize) reservoir[j] = tuple
+				if (j < opts.sampleSize) {
+					reservoir[j] = tuple
+				}
 			}
 		}
 		progress(`${state}: ${seen.toLocaleString()} valid joinable seen`)

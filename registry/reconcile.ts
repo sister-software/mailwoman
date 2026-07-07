@@ -65,9 +65,13 @@ export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): Re
 	let hasFunding = false
 
 	for (const s of sources) {
-		if (elig.has(s)) hasEligibility = true
+		if (elig.has(s)) {
+			hasEligibility = true
+		}
 
-		if (fund.has(s)) hasFunding = true
+		if (fund.has(s)) {
+			hasFunding = true
+		}
 	}
 
 	if (hasEligibility && hasFunding) return "enrolled"

@@ -102,10 +102,14 @@ for (const r of rows) {
 			nodes.push({ pt: String(n.sourceID ?? "").split(":")[0]!, name: n.value, lat: n.lat, lon: n.lon })
 		}
 
-		for (const c of n.children ?? []) visit(c)
+		for (const c of n.children ?? []) {
+			visit(c)
+		}
 	}
 
-	for (const root of resolved.roots) visit(root)
+	for (const root of resolved.roots) {
+		visit(root)
+	}
 
 	if (nodes.length === 0) continue
 	anyCoord++
@@ -122,7 +126,9 @@ for (const r of rows) {
 		locResolved++
 		adminLoc.push(haversineKm(r.lat, r.lon, loc.lat, loc.lon))
 
-		if (r.expected?.locality && loc.name && norm(loc.name) === norm(r.expected.locality)) locNameMatch++
+		if (r.expected?.locality && loc.name && norm(loc.name) === norm(r.expected.locality)) {
+			locNameMatch++
+		}
 	}
 }
 

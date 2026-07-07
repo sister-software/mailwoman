@@ -54,7 +54,9 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 	}
 
 	if (total > 0) {
-		for (let i = 0; i < LOCALE_ORDER.length; i++) vec[i]! /= total
+		for (let i = 0; i < LOCALE_ORDER.length; i++) {
+			vec[i]! /= total
+		}
 	}
 	vec[LOCALE_ORDER.length] = Math.max(-1, Math.min(1, lat / 90))
 	vec[LOCALE_ORDER.length + 1] = Math.max(-1, Math.min(1, lon / 180))
@@ -73,7 +75,9 @@ export function parseAnchorLookup(
 ): AnchorLookup {
 	const out: AnchorLookup = new Map()
 
-	for (const [pc, [posterior, lat, lon]] of Object.entries(raw)) out.set(pc, { posterior, lat, lon })
+	for (const [pc, [posterior, lat, lon]] of Object.entries(raw)) {
+		out.set(pc, { posterior, lat, lon })
+	}
 
 	return out
 }

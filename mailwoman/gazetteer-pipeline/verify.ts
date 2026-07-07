@@ -64,7 +64,9 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 
 		for (const [cc, placetypes] of Object.entries(baseline.requiredNodes)) {
 			for (const pt of placetypes) {
-				if ((probe.get(cc, pt) as { n: number }).n === 0) missing.push(`${cc}/${pt}`)
+				if ((probe.get(cc, pt) as { n: number }).n === 0) {
+					missing.push(`${cc}/${pt}`)
+				}
 			}
 		}
 		checks.push({
@@ -140,7 +142,9 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 				)
 				.get(cc) as { total: number; real: number | null }
 
-			if (c.total > 0 && (c.real ?? 0) === 0) bad.push(cc)
+			if (c.total > 0 && (c.real ?? 0) === 0) {
+				bad.push(cc)
+			}
 		}
 		checks.push({
 			check: "bbox-extents",

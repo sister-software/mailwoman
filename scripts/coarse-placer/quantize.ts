@@ -52,7 +52,9 @@ for (let c = 0; c < C; c++) {
 	for (let i = 0; i < dim; i++) {
 		const a = Math.abs(w[base + i]!)
 
-		if (a > maxAbs) maxAbs = a
+		if (a > maxAbs) {
+			maxAbs = a
+		}
 	}
 	const scale = maxAbs / 127 || 1 // all-zero row → scale 1 (q stays 0)
 	scales.push(scale)
@@ -60,12 +62,17 @@ for (let c = 0; c < C; c++) {
 	for (let i = 0; i < dim; i++) {
 		let q = Math.round(w[base + i]! / scale)
 
-		if (q > 127) q = 127
-		else if (q < -127) q = -127 // symmetric range; avoid -128 so |q|≤127
+		if (q > 127) {
+			q = 127
+		} else if (q < -127) {
+			q = -127
+		} // symmetric range; avoid -128 so |q|≤127
 		int8[base + i] = q
 		const err = Math.abs(q * scale - w[base + i]!)
 
-		if (err > maxAbsErr) maxAbsErr = err
+		if (err > maxAbsErr) {
+			maxAbsErr = err
+		}
 		sumSqErr += err * err
 	}
 }

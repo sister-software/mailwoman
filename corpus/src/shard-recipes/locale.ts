@@ -164,13 +164,20 @@ function splitCSV(line: string): string[] {
 				if (line[i + 1] === '"') {
 					cur += '"'
 					i++
-				} else inQ = false
-			} else cur += c
-		} else if (c === '"') inQ = true
-		else if (c === ",") {
+				} else {
+					inQ = false
+				}
+			} else {
+				cur += c
+			}
+		} else if (c === '"') {
+			inQ = true
+		} else if (c === ",") {
 			out.push(cur)
 			cur = ""
-		} else cur += c
+		} else {
+			cur += c
+		}
 	}
 	out.push(cur)
 
@@ -256,7 +263,9 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 				const j = Math.floor(rng() * seen)
 
 				// 0 .. seen-1
-				if (j < RESERVOIR_CAP) reservoir[j] = tuple
+				if (j < RESERVOIR_CAP) {
+					reservoir[j] = tuple
+				}
 			}
 		})
 		rl.on("close", () => {
@@ -305,7 +314,9 @@ export const localeRecipe: ShardRecipe = {
 			const reservoirRng = makeMulberry32((opts.seed ^ (0x9e3779b9 * (pi + 1))) >>> 0)
 			const t = await readTuples(parts[pi]!, reservoirRng)
 
-			for (const x of t) pool.push(x) // NOT pool.push(...t) — spreading huge arrays overflows the stack
+			for (const x of t) {
+				pool.push(x)
+			} // NOT pool.push(...t) — spreading huge arrays overflows the stack
 		}
 
 		if (pool.length === 0) {

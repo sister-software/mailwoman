@@ -58,7 +58,9 @@ function checkCase(c: (typeof cases)[number], r: GauntletResult): string[] {
 		}
 	}
 
-	if (c.expect_tier != null && r.tier !== c.expect_tier) issues.push(`tier ${r.tier} ≠ ${c.expect_tier}`)
+	if (c.expect_tier != null && r.tier !== c.expect_tier) {
+		issues.push(`tier ${r.tier} ≠ ${c.expect_tier}`)
+	}
 
 	if (c.expect_components != null) {
 		const exp = JSON.parse(c.expect_components) as Record<string, string>
@@ -66,7 +68,9 @@ function checkCase(c: (typeof cases)[number], r: GauntletResult): string[] {
 		for (const [k, v] of Object.entries(exp)) {
 			const got = componentOf(r, k)
 
-			if ((got ?? "").toLowerCase() !== v.toLowerCase()) issues.push(`${k} "${got}" ≠ "${v}"`)
+			if ((got ?? "").toLowerCase() !== v.toLowerCase()) {
+				issues.push(`${k} "${got}" ≠ "${v}"`)
+			}
 		}
 	}
 
@@ -86,7 +90,9 @@ for (const c of cases) {
 	if (c.status === "pass") {
 		gated++
 
-		if (issues.length) fails.push(`  ✗ ${c.id} "${c.input}": ${issues.join("; ")}`)
+		if (issues.length) {
+			fails.push(`  ✗ ${c.id} "${c.input}": ${issues.join("; ")}`)
+		}
 	} else if (issues.length) {
 		tracked.push(`  ~ ${c.id} [${c.status}${ref}]: ${issues.join("; ")}`)
 	} else {
@@ -99,18 +105,24 @@ console.log(
 	`\n=== Gauntlet · regression (${gated - fails.length}/${gated} gated cases pass, ${tracked.length} tracked) ===`
 )
 
-for (const f of fails) console.log(f)
+for (const f of fails) {
+	console.log(f)
+}
 
 if (tracked.length) {
 	console.log(`\ntracked (known_fail / improvement_target, non-blocking):`)
 
-	for (const t of tracked) console.log(t)
+	for (const t of tracked) {
+		console.log(t)
+	}
 }
 
 if (newlyPassing.length) {
 	console.log(`\n⚠ tracked cases that now PASS — promote to status=pass:`)
 
-	for (const p of newlyPassing) console.log(p)
+	for (const p of newlyPassing) {
+		console.log(p)
+	}
 }
 const pass = fails.length === 0
 console.log(`\nverdict: ${pass ? "PASS" : "FAIL"}`)

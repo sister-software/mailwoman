@@ -108,9 +108,13 @@ async function main(): Promise<void> {
 			if (truthLoc) {
 				nWithLoc++
 
-				if (flat.locality) locEmitted++
+				if (flat.locality) {
+					locEmitted++
+				}
 
-				if (flat.locality && norm(flat.locality) === norm(truthLoc)) locCorrect++
+				if (flat.locality && norm(flat.locality) === norm(truthLoc)) {
+					locCorrect++
+				}
 			}
 
 			if (truthRegion) {
@@ -126,7 +130,9 @@ async function main(): Promise<void> {
 					if (flat.region) {
 						splitEmitted++
 
-						if (norm(flat.region) === norm(truthRegion)) splitCorrect++
+						if (norm(flat.region) === norm(truthRegion)) {
+							splitCorrect++
+						}
 					} else if (fusionExamples.length < 12) {
 						// admin IS in the input but the parser emitted no region → a TRUE fusion/drop.
 						fusionExamples.push({
@@ -148,12 +154,15 @@ async function main(): Promise<void> {
 
 		let route: string
 
-		if (regionInInputRate === null) route = "N/A — no region truth (FR: see v1.8.0 BAN gate, région-emit 99.6%)"
-		else if (regionInInputRate < 0.15)
+		if (regionInInputRate === null) {
+			route = "N/A — no region truth (FR: see v1.8.0 BAN gate, région-emit 99.6%)"
+		} else if (regionInInputRate < 0.15) {
 			route = `COVERAGE — admin token absent from input (${p(regionInInputRate)}%); no split to learn. Lever = locality resolution + postcode→region. Parse-readiness loc-correct=${p(locCorrectRate)}%`
-		else if (adminSplitBlocker !== null && adminSplitBlocker > 0.3)
+		} else if (adminSplitBlocker !== null && adminSplitBlocker > 0.3) {
 			route = `PARSER_SHARD — admin IS in input but parser drops it (${p(adminSplitBlocker)}% of in-input rows); admin-split shard, FR template`
-		else route = `COVERAGE — parser splits the in-input admin (split=${p(adminSplitRate)}%); WOF ingest is the lever`
+		} else {
+			route = `COVERAGE — parser splits the in-input admin (split=${p(adminSplitRate)}%); WOF ingest is the lever`
+		}
 
 		results.push({
 			locale: loc,

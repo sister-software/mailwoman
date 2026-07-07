@@ -66,8 +66,11 @@ export const poBoxRecipe: ShardRecipe = {
 					synth.template
 				)
 
-				if (ok) emitted++
-				else skipped++
+				if (ok) {
+					emitted++
+				} else {
+					skipped++
+				}
 			}
 
 			// US military/diplomatic rows (#517): self-contained, one per input line at --military-ratio.
@@ -95,8 +98,11 @@ export const poBoxRecipe: ShardRecipe = {
 					mil.template
 				)
 
-				if (ok) emitted++
-				else skipped++
+				if (ok) {
+					emitted++
+				} else {
+					skipped++
+				}
 			}
 		}
 

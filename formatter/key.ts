@@ -89,7 +89,9 @@ export function canonicalKey(components: ComponentDict, opts: CanonicalKeyOption
 		if (!value) continue
 		const normalized = normalizeAddressToken(value)
 
-		if (normalized) parts.push(normalized)
+		if (normalized) {
+			parts.push(normalized)
+		}
 	}
 
 	return parts.join(separator)

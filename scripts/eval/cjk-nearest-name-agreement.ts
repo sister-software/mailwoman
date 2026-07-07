@@ -177,9 +177,13 @@ function main(): void {
 		dists.push(d)
 		const am = agree(nm, muni)
 
-		if (am) agreeMuni += 1
+		if (am) {
+			agreeMuni += 1
+		}
 
-		if (am || agree(nm, town)) agreeAny += 1
+		if (am || agree(nm, town)) {
+			agreeAny += 1
+		}
 	}
 	const n = sample.length
 	const sortedDists = dists.slice().sort((a, b) => a - b)

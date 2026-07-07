@@ -67,10 +67,14 @@ export function applyRuleArbitration(tree: AddressTree, ruleProposals: readonly 
 			node.sourceID = hit.source_id
 		}
 
-		for (const child of node.children) relabel(child)
+		for (const child of node.children) {
+			relabel(child)
+		}
 	}
 
-	for (const root of roots) relabel(root)
+	for (const root of roots) {
+		relabel(root)
+	}
 
 	// Post-relabel inventory: which tags exist, and every node span (for the overlap guard).
 	const neuralTags = new Set<string>()
@@ -79,10 +83,14 @@ export function applyRuleArbitration(tree: AddressTree, ruleProposals: readonly 
 		neuralTags.add(node.tag)
 		neuralSpans.push({ start: node.start, end: node.end })
 
-		for (const child of node.children) collect(child)
+		for (const child of node.children) {
+			collect(child)
+		}
 	}
 
-	for (const root of roots) collect(root)
+	for (const root of roots) {
+		collect(root)
+	}
 
 	// 2. Add: a rule tag the neural tree lacks entirely, on a span that overlaps no neural node.
 	for (const p of ruleProposals) {

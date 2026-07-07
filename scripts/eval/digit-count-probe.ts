@@ -95,13 +95,18 @@ async function main() {
 
 		const p5 = foldPostcode(decodeAsJSON(await neural.parse(row.raw, {})))
 
-		if (norm(p5) === norm(zip5)) r5Hit++
+		if (norm(p5) === norm(zip5)) {
+			r5Hit++
+		}
 
 		const flat4 = decodeAsJSON(await neural.parse(raw4, {}))
 		const p4 = foldPostcode(flat4)
 
-		if (norm(p4) === norm(zip4)) r4Hit++
-		else if (norm(flat4.house_number) === norm(zip4)) r4AsHouse++
+		if (norm(p4) === norm(zip4)) {
+			r4Hit++
+		} else if (norm(flat4.house_number) === norm(zip4)) {
+			r4AsHouse++
+		}
 	}
 	const pct = (x: number) => ((100 * x) / Math.max(n, 1)).toFixed(1)
 	console.log(`\ndigit-count probe (n=${n} US rows w/ 5-digit ZIP) — ${MODEL}`)

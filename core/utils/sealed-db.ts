@@ -45,7 +45,9 @@ export function isSealed(path: string): boolean {
  */
 export function sealDatabase(path: string): void {
 	// A previously sealed artifact needs the write bit back for the journal-mode switch.
-	if (isSealed(path)) chmodSync(path, 0o644)
+	if (isSealed(path)) {
+		chmodSync(path, 0o644)
+	}
 	const db = new (sqlite().DatabaseSync)(path)
 	const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
 
@@ -61,7 +63,9 @@ export function sealDatabase(path: string): void {
 	}
 
 	for (const sidecar of [`${path}-wal`, `${path}-shm`]) {
-		if (existsSync(sidecar)) unlinkSync(sidecar)
+		if (existsSync(sidecar)) {
+			unlinkSync(sidecar)
+		}
 	}
 	chmodSync(path, 0o444)
 }

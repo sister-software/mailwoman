@@ -109,7 +109,9 @@ export class LayerToggleControl implements IControl {
 			if (id.startsWith("mailwoman-")) continue
 			const group = LAYER_GROUP_PATTERNS.find((g) => g.match.test(id))?.name ?? "Other"
 
-			if (!buckets.has(group)) buckets.set(group, { name: group, layerIds: [], visible: true })
+			if (!buckets.has(group)) {
+				buckets.set(group, { name: group, layerIds: [], visible: true })
+			}
 			const bucket = buckets.get(group)!
 			bucket.layerIds.push(id)
 			// Group is "visible" if at least one of its layers is visible (default vs explicit none).

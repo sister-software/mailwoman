@@ -92,7 +92,9 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 				? value
 				: undefined
 
-		if (candidate) out.set(key, candidate.trim())
+		if (candidate) {
+			out.set(key, candidate.trim())
+		}
 	}
 
 	return out
@@ -193,7 +195,9 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 
 		const rec = recordFromFeature(parsed)
 
-		if (rec) yield rec
+		if (rec) {
+			yield rec
+		}
 	}
 }
 

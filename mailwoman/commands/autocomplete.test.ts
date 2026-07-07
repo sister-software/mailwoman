@@ -237,7 +237,9 @@ describe("resolveFSTPath", () => {
 		try {
 			expect(resolveFSTPath()).toBe("/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin")
 		} finally {
-			if (saved !== undefined) process.env["MAILWOMAN_FST_BIN"] = saved
+			if (saved !== undefined) {
+				process.env["MAILWOMAN_FST_BIN"] = saved
+			}
 		}
 	})
 

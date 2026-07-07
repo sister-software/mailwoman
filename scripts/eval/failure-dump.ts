@@ -63,15 +63,22 @@ function walk(tree: AddressTree): { best: { lat: number; lon: number; placetype:
 			(n.lat !== 0 || n.lon !== 0)
 		)
 
-		if (n.tag) nodes.push({ tag: String(n.tag), value: String(n.value ?? ""), resolved, placetype })
+		if (n.tag) {
+			nodes.push({ tag: String(n.tag), value: String(n.value ?? ""), resolved, placetype })
+		}
 
-		if (resolved && (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5)))
+		if (resolved && (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5))) {
 			best = { lat: n.lat!, lon: n.lon!, placetype }
+		}
 
-		for (const c of n.children ?? []) visit(c)
+		for (const c of n.children ?? []) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return { best, nodes }
 }
@@ -162,12 +169,18 @@ async function main() {
 			`\n=== ${cc.toUpperCase()} misses (${Object.values(tally).reduce((a, b) => a + b, 0)}/${rows.length}) ===`
 		)
 
-		for (const [k, v] of Object.entries(tally).sort((a, b) => b[1] - a[1])) console.log(`  ${v}  ${k}`)
+		for (const [k, v] of Object.entries(tally).sort((a, b) => b[1] - a[1])) {
+			console.log(`  ${v}  ${k}`)
+		}
 
-		if (samples.length) console.log(samples.join("\n"))
+		if (samples.length) {
+			console.log(samples.join("\n"))
+		}
 	}
 	console.log(`\n=== ALL-LOCALE failure tally ===`)
 
-	for (const [k, v] of Object.entries(globalTally).sort((a, b) => b[1] - a[1])) console.log(`  ${v}  ${k}`)
+	for (const [k, v] of Object.entries(globalTally).sort((a, b) => b[1] - a[1])) {
+		console.log(`  ${v}  ${k}`)
+	}
 }
 await main()

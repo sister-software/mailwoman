@@ -78,9 +78,13 @@ describe("ModelVisualizer helpers", () => {
 		expect(width).toBeGreaterThan(0)
 		expect(width).toBeLessThanOrEqual(trace.labels.length)
 
-		for (const row of trace.logits) expect(row).toHaveLength(width)
+		for (const row of trace.logits) {
+			expect(row).toHaveLength(width)
+		}
 
-		for (const idx of trace.path) expect(idx).toBeLessThan(trace.labels.length)
+		for (const idx of trace.path) {
+			expect(idx).toBeLessThan(trace.labels.length)
+		}
 
 		for (const repair of trace.repairs) {
 			expect(repair.before).toHaveLength(trace.pieces.length)

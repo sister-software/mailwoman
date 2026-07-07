@@ -74,7 +74,9 @@ for (const line of readFileSync(CITIES, "utf8").split("\n")) {
 
 	if (!name || !cc || pop < MIN_POP) continue
 
-	if (!byCountry.has(cc)) byCountry.set(cc, [])
+	if (!byCountry.has(cc)) {
+		byCountry.set(cc, [])
+	}
 	byCountry.get(cc)!.push({ name, ascii, alts, cc, pop })
 }
 
@@ -146,10 +148,15 @@ for (const [cc, cities] of byCountry) {
 			}
 		}
 
-		if (bucket === "english") res.english++
-		else if (bucket === "exonym") res.exonym++
-		else if (bucket === "city_absent") res.cityAbsent++
-		else res.countryAbsent++
+		if (bucket === "english") {
+			res.english++
+		} else if (bucket === "exonym") {
+			res.exonym++
+		} else if (bucket === "city_absent") {
+			res.cityAbsent++
+		} else {
+			res.countryAbsent++
+		}
 	}
 	results.push(res)
 }
@@ -191,7 +198,9 @@ L.push("")
 L.push("| Country | ISO2 | top cities probed |")
 L.push("| --- | --- | ---: |")
 
-for (const r of zeroCoverage) L.push(`| ${r.name} | ${r.cc} | ${r.cities} |`)
+for (const r of zeroCoverage) {
+	L.push(`| ${r.name} | ${r.cc} | ${r.cities} |`)
+}
 L.push("")
 L.push(`## Countries with rows but a missing top city (city-level gap)`)
 L.push("")

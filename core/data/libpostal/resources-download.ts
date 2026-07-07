@@ -68,7 +68,9 @@ async function sortFileInPlace(path: string): Promise<void> {
 	const lines = text.split("\n")
 
 	// Drop the empty element produced by a trailing newline so it isn't re-sorted as a blank line.
-	if (hadTrailingNewline) lines.pop()
+	if (hadTrailingNewline) {
+		lines.pop()
+	}
 	lines.sort()
 	await writeFile(path, lines.join("\n") + (hadTrailingNewline ? "\n" : ""))
 }
@@ -101,7 +103,9 @@ async function main(): Promise<void> {
 
 		// Alphabetize the contents of each dictionary file in place.
 		for (const entry of await readdir(sourceDicts, { withFileTypes: true })) {
-			if (entry.isFile()) await sortFileInPlace(join(sourceDicts, entry.name))
+			if (entry.isFile()) {
+				await sortFileInPlace(join(sourceDicts, entry.name))
+			}
 		}
 
 		// Copy the (now-sorted) dictionaries tree next to this script.

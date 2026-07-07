@@ -76,7 +76,9 @@ export const caseUpper: Augmentation = (row) => {
 	const upComponents: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(row.components)) {
-		if (v) upComponents[k as ComponentTag] = v.toUpperCase()
+		if (v) {
+			upComponents[k as ComponentTag] = v.toUpperCase()
+		}
 	}
 
 	return withAugmentation(row, "case-upper", upRaw, upComponents)
@@ -89,7 +91,9 @@ export const caseLower: Augmentation = (row) => {
 	const downComponents: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(row.components)) {
-		if (v) downComponents[k as ComponentTag] = v.toLowerCase()
+		if (v) {
+			downComponents[k as ComponentTag] = v.toLowerCase()
+		}
 	}
 
 	return withAugmentation(row, "case-lower", downRaw, downComponents)
@@ -115,7 +119,9 @@ export const doubleSpace: Augmentation = (row) => {
 	const newComponents: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(row.components)) {
-		if (v) newComponents[k as ComponentTag] = v.replace(/ /g, "  ")
+		if (v) {
+			newComponents[k as ComponentTag] = v.replace(/ /g, "  ")
+		}
 	}
 
 	return withAugmentation(row, "double-space", newRaw, newComponents)
@@ -132,7 +138,9 @@ export const accentStrip: Augmentation = (row) => {
 	const newComponents: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(row.components)) {
-		if (v) newComponents[k as ComponentTag] = stripAccents(v)
+		if (v) {
+			newComponents[k as ComponentTag] = stripAccents(v)
+		}
 	}
 
 	return withAugmentation(row, "accent-strip", stripped, newComponents)
@@ -188,7 +196,9 @@ const ALPHA_NAME = /^[\p{L}][\p{L} '.-]{3,}$/u
 function hashString(s: string): number {
 	let h = 5381
 
-	for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
+	for (let i = 0; i < s.length; i++) {
+		h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
+	}
 
 	return h >>> 0
 }
@@ -222,7 +232,9 @@ export const typoInject: Augmentation = (row) => {
 	const occurs = (needle: string): number => {
 		let n = 0
 
-		for (let i = row.raw.indexOf(needle); i >= 0; i = row.raw.indexOf(needle, i + needle.length)) n++
+		for (let i = row.raw.indexOf(needle); i >= 0; i = row.raw.indexOf(needle, i + needle.length)) {
+			n++
+		}
 
 		return n
 	}
@@ -236,7 +248,10 @@ export const typoInject: Augmentation = (row) => {
 	// Interior alpha positions only — keep the first char (most real typos are interior) + a right neighbour.
 	const positions: number[] = []
 
-	for (let i = 1; i < value.length - 1; i++) if (/\p{L}/u.test(value[i]!)) positions.push(i)
+	for (let i = 1; i < value.length - 1; i++)
+		if (/\p{L}/u.test(value[i]!)) {
+			positions.push(i)
+		}
 
 	if (positions.length === 0) return null
 	const i = positions[Math.floor(rng() * positions.length)]!
@@ -668,7 +683,9 @@ export function* synthesizeRow(
 	for (const aug of augmentations) {
 		const out = aug(row)
 
-		if (out) yield out
+		if (out) {
+			yield out
+		}
 	}
 }
 

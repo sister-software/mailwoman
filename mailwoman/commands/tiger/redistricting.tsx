@@ -70,13 +70,17 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 			while (!next.done) {
 				const ev = next.value
 
-				if (ev.phase === "download") setStatus(ev.cached ? `Using cached ${ev.file}` : `Downloaded ${ev.file}`)
-				else if (ev.phase === "extract") setStatus(`Extracted ${ev.file}`)
-				else if (ev.phase === "header") setStatus(`Header parsed: ${ev.blocks.toLocaleString()} blocks`)
-				else if (ev.phase === "load")
+				if (ev.phase === "download") {
+					setStatus(ev.cached ? `Using cached ${ev.file}` : `Downloaded ${ev.file}`)
+				} else if (ev.phase === "extract") {
+					setStatus(`Extracted ${ev.file}`)
+				} else if (ev.phase === "header") {
+					setStatus(`Header parsed: ${ev.blocks.toLocaleString()} blocks`)
+				} else if (ev.phase === "load") {
 					setStatus(
 						`Loading counts… ${ev.inserted.toLocaleString()}${ev.total ? ` / ${ev.total.toLocaleString()}` : ""}`
 					)
+				}
 				next = await gen.next()
 			}
 

@@ -82,9 +82,13 @@ function stripWord(word: string): string {
 	let end = word.length
 	const alnum = (c: string) => /[\p{L}\p{N}]/u.test(c)
 
-	while (start < end && !alnum(word[start]!)) start++
+	while (start < end && !alnum(word[start]!)) {
+		start++
+	}
 
-	while (end > start && !alnum(word[end - 1]!)) end--
+	while (end > start && !alnum(word[end - 1]!)) {
+		end--
+	}
 
 	return word.slice(start, end)
 }
@@ -117,7 +121,9 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 		let head = 0
 		const alnum = (c: string) => /[\p{L}\p{N}]/u.test(c)
 
-		while (head < surface.length && !alnum(surface[head]!)) head++
+		while (head < surface.length && !alnum(surface[head]!)) {
+			head++
+		}
 		words.push({ begin: m.index + head, end: m.index + head + stripped.length, text: stripped })
 	}
 
@@ -149,7 +155,9 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			let bits = lexicon.entries.get(key) ?? 0
 
 			// code_entries is case-SENSITIVE: the surface must already BE uppercase ("IN" ≠ "in").
-			if (n === 1) bits |= lexicon.codeEntries.get(parts[0]!) ?? 0
+			if (n === 1) {
+				bits |= lexicon.codeEntries.get(parts[0]!) ?? 0
+			}
 
 			if (bits) {
 				matchedN = n
@@ -162,7 +170,9 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			const begin = words[i]!.begin
 			const end = words[i + matchedN - 1]!.end
 
-			for (let c = begin; c < Math.min(end, text.length); c++) charBits[c] = matchedBits
+			for (let c = begin; c < Math.min(end, text.length); c++) {
+				charBits[c] = matchedBits
+			}
 			i += matchedN
 		} else {
 			i++
@@ -194,7 +204,9 @@ export function suppressGazetteerNearPostcode(
 			for (let d = -window; d <= window; d++) {
 				const j = i + d
 
-				if (j >= 0 && j < n && d !== 0) suppress[j] = true
+				if (j >= 0 && j < n && d !== 0) {
+					suppress[j] = true
+				}
 			}
 		}
 	}

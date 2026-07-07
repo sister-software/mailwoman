@@ -97,7 +97,9 @@ for (const r of rows) {
 	resolved += 1
 	const nm = norm(top.name)
 
-	if (nm.length >= 2 && norm(r.muni_romaji).includes(nm)) agree += 1
+	if (nm.length >= 2 && norm(r.muni_romaji).includes(nm)) {
+		agree += 1
+	}
 
 	if (typeof top.lat === "number" && typeof top.lon === "number") {
 		distances.push(haversineKm(top.lat, top.lon, r.lat, r.lon))

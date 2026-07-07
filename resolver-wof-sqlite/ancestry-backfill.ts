@@ -88,7 +88,9 @@ function geojsonForID(id: number, roots: readonly string[]): Record<string, unkn
 	const s = String(id)
 	const chunks: string[] = []
 
-	for (let i = 0; i < s.length; i += 3) chunks.push(s.slice(i, i + 3))
+	for (let i = 0; i < s.length; i += 3) {
+		chunks.push(s.slice(i, i + 3))
+	}
 	const rel = join(chunks.join("/"), `${s}.geojson`)
 
 	for (const root of roots) {
@@ -159,7 +161,9 @@ export function backfillAncestorsFromHierarchy(
 		const hierarchy = (props?.["wof:hierarchy"] ?? null) as Array<Record<string, number>> | null
 
 		if (!hierarchy || hierarchy.length === 0) {
-			if (!gj) noGeojson++
+			if (!gj) {
+				noGeojson++
+			}
 			continue
 		}
 
@@ -175,7 +179,9 @@ export function backfillAncestorsFromHierarchy(
 
 				if (!Number.isFinite(aid) || aid <= 0 || aid === id) continue
 
-				if (!seen.has(aid)) seen.set(aid, pt)
+				if (!seen.has(aid)) {
+					seen.set(aid, pt)
+				}
 			}
 		}
 

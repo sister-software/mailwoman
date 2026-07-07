@@ -175,7 +175,9 @@ export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScor
 			if (value) {
 				const frequency = Math.max(tf.frequency(value), tf.minimumFrequency ?? 1e-4)
 
-				if (frequency > 0) w += Math.log2(level.u / frequency) * (tf.weight ?? 1)
+				if (frequency > 0) {
+					w += Math.log2(level.u / frequency) * (tf.weight ?? 1)
+				}
 			}
 		}
 

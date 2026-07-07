@@ -171,7 +171,9 @@ async function main(): Promise<void> {
 	if (!csvName) {
 		process.stderr.write("  Available files in ZIP:\n")
 
-		for (const name of entries) process.stderr.write(`    ${name}\n`)
+		for (const name of entries) {
+			process.stderr.write(`    ${name}\n`)
+		}
 		process.stderr.write("  ✗ Could not identify outlet CSV — inspect above listing and update script\n")
 		process.exitCode = 1
 

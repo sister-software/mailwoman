@@ -136,7 +136,9 @@ export function ingestGeonamesPostal(
 			sprInsert.run(id, name, cc, best[0], best[1], best[0], best[1], best[0], best[1])
 			namesInsert.run(id, name, cc)
 
-			if (m.display !== name) namesInsert.run(id, m.display, cc)
+			if (m.display !== name) {
+				namesInsert.run(id, m.display, cc)
+			}
 			inserted++
 		}
 		db.exec("COMMIT")

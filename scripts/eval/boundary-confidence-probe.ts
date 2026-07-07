@@ -71,7 +71,9 @@ function locateSpan(raw: string, value: string, prefer: "first" | "last"): [numb
 	const re = new RegExp(`\\b${esc(value)}\\b`, "g")
 	const hits: number[] = []
 
-	for (let m = re.exec(raw); m; m = re.exec(raw)) hits.push(m.index)
+	for (let m = re.exec(raw); m; m = re.exec(raw)) {
+		hits.push(m.index)
+	}
 
 	if (hits.length === 0) {
 		const i = raw.indexOf(value)
@@ -127,11 +129,15 @@ for (const template of Object.keys(PROBES) as BoundaryStressTemplate[]) {
 		pCorrectAll.push(pCorrect)
 		let argmax = 0
 
-		for (let k = 1; k < probs.length; k++) if (probs[k]! > probs[argmax]!) argmax = k
+		for (let k = 1; k < probs.length; k++)
+			if (probs[k]! > probs[argmax]!) {
+				argmax = k
+			}
 		const argmaxLabel = LABELS[argmax] ?? "?"
 
-		if (argmax === bIdx) correct++
-		else {
+		if (argmax === bIdx) {
+			correct++
+		} else {
 			pArgmaxWhenWrong.push(probs[argmax]!)
 			confusedFor[argmaxLabel] = (confusedFor[argmaxLabel] ?? 0) + 1
 		}
@@ -149,10 +155,15 @@ for (const template of Object.keys(PROBES) as BoundaryStressTemplate[]) {
 	// sure of the wrong tag. High-entropy (capacity) when the wrong mass is smeared (low argmax prob).
 	let verdict: string
 
-	if (acc >= 80) verdict = "✓ mostly right (not the bottleneck)"
-	else if (meanPwrong >= 0.6) verdict = "SIGNAL — confidently wrong → augmentation can flip it"
-	else if (meanPwrong < 0.5) verdict = "CAPACITY — high-entropy/uncertain → wants a bigger model"
-	else verdict = "MIXED — partly confident, partly smeared"
+	if (acc >= 80) {
+		verdict = "✓ mostly right (not the bottleneck)"
+	} else if (meanPwrong >= 0.6) {
+		verdict = "SIGNAL — confidently wrong → augmentation can flip it"
+	} else if (meanPwrong < 0.5) {
+		verdict = "CAPACITY — high-entropy/uncertain → wants a bigger model"
+	} else {
+		verdict = "MIXED — partly confident, partly smeared"
+	}
 	console.log(`\n## ${template}  (probe: B-${tag}, ${why})`)
 	console.log(`  located ${located}/${N}  ·  boundary acc ${acc.toFixed(1)}%  ·  mean P(correct) ${meanPc.toFixed(3)}`)
 	console.log(

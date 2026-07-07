@@ -50,7 +50,9 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 			const start = i
 			i += 1
 
-			while (i < input.length && INLINE_SPACE.test(input[i]!)) i += 1
+			while (i < input.length && INLINE_SPACE.test(input[i]!)) {
+				i += 1
+			}
 
 			if (i - start > 1) {
 				changed = true
@@ -71,10 +73,14 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 	// Trim leading whitespace, and trailing whitespace + sentence-punctuation noise (#829 tail).
 	let lead = 0
 
-	while (lead < out.length && ANY_SPACE.test(out[lead]!)) lead += 1
+	while (lead < out.length && ANY_SPACE.test(out[lead]!)) {
+		lead += 1
+	}
 	let trail = out.length
 
-	while (trail > lead && TRAILING_NOISE.test(out[trail - 1]!)) trail -= 1
+	while (trail > lead && TRAILING_NOISE.test(out[trail - 1]!)) {
+		trail -= 1
+	}
 
 	if (lead > 0 || trail < out.length) {
 		changed = true

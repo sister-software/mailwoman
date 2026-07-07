@@ -77,7 +77,9 @@ const loadMs = performance.now() - t0
 const labels = (JSON.parse(readFileSync(values["model-card"]!, "utf8")) as { labels: string[] }).labels
 const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
-for (let i = 0; i < warmup; i++) await classifier.parse(raws[i % raws.length]!)
+for (let i = 0; i < warmup; i++) {
+	await classifier.parse(raws[i % raws.length]!)
+}
 
 const samples: number[] = []
 

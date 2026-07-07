@@ -34,7 +34,9 @@ function tablelessDBFile(): string {
 }
 
 afterAll(() => {
-	for (const d of dirs) rmSync(d, { recursive: true, force: true })
+	for (const d of dirs) {
+		rmSync(d, { recursive: true, force: true })
+	}
 })
 
 describe("empty/tableless shard degrades gracefully (#568)", () => {

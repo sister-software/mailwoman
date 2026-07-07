@@ -136,12 +136,18 @@ function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 	const aside = `${finalPath}.old-${process.pid}`
 
-	if (existsSync(finalPath)) renameSync(finalPath, aside)
+	if (existsSync(finalPath)) {
+		renameSync(finalPath, aside)
+	}
 
-	for (const sfx of ["-wal", "-shm"]) rmSync(finalPath + sfx, { force: true })
+	for (const sfx of ["-wal", "-shm"]) {
+		rmSync(finalPath + sfx, { force: true })
+	}
 	renameSync(tmpPath, finalPath)
 
-	for (const sfx of ["-wal", "-shm"]) rmSync(tmpPath + sfx, { force: true })
+	for (const sfx of ["-wal", "-shm"]) {
+		rmSync(tmpPath + sfx, { force: true })
+	}
 	rmSync(aside, { force: true })
 }
 
@@ -199,7 +205,9 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
 				const tmpOut = `${finalOut}.building-${process.pid}.db`
 
-				for (const sfx of ["", "-wal", "-shm"]) rmSync(tmpOut + sfx, { force: true })
+				for (const sfx of ["", "-wal", "-shm"]) {
+					rmSync(tmpOut + sfx, { force: true })
+				}
 
 				const db = new DatabaseSync(tmpOut)
 				db.exec("PRAGMA journal_mode = WAL;")
@@ -306,7 +314,9 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

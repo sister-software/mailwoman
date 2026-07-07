@@ -112,7 +112,9 @@ function uniqueQuantiles(sorted: number[], n: number): number[] {
 	if (sorted.length === 0) return [0]
 	const ts = new Set<number>()
 
-	for (let k = 0; k <= n; k++) ts.add(sorted[Math.floor((k / n) * (sorted.length - 1))]!)
+	for (let k = 0; k <= n; k++) {
+		ts.add(sorted[Math.floor((k / n) * (sorted.length - 1))]!)
+	}
 
 	return [...ts]
 }
@@ -127,7 +129,9 @@ function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 	for (const e of entities) {
 		const byNPI = new Map<string, number>()
 
-		for (const rec of e.records) byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
+		for (const rec of e.records) {
+			byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
+		}
 		sumCluster += choose2(e.records.length)
 
 		for (const [npi, c] of byNPI) {
@@ -137,7 +141,9 @@ function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 	}
 	let sumClass = 0
 
-	for (const total of npiTotals.values()) sumClass += choose2(total)
+	for (const total of npiTotals.values()) {
+		sumClass += choose2(total)
+	}
 	const precision = sumCluster > 0 ? tp / sumCluster : 0
 	const recall = sumClass > 0 ? tp / sumClass : 0
 
@@ -156,7 +162,9 @@ async function main(): Promise<void> {
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) list.push(alt)
+		if (list.length < 5) {
+			list.push(alt)
+		}
 		altNames.set(npi, list)
 	}
 
@@ -169,7 +177,9 @@ async function main(): Promise<void> {
 	let scanned = 0
 
 	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
+		if (++scanned % 1_000_000 === 0) {
+			console.error(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
+		}
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
 		if (practice) {
@@ -196,10 +206,14 @@ async function main(): Promise<void> {
 				kept.add(npi)
 				rows.push({ npi, name: primaryName, org, address: practice, auth })
 
-				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice, auth })
+				for (const alt of altNames.get(npi)!) {
+					rows.push({ npi, name: alt, org: alt, address: practice, auth })
+				}
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
-				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing, auth })
+				if (mailing && mailing !== practice) {
+					rows.push({ npi, name: primaryName, org, address: mailing, auth })
+				}
 			}
 		}
 	}
@@ -258,7 +272,9 @@ async function main(): Promise<void> {
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced; COST up-weights negatives
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
-	if (COST !== 1) console.error(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
+	if (COST !== 1) {
+		console.error(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
+	}
 
 	// --- Phase E: calibrate the default link threshold. The GBT logit is NOT in FS-weight units — it's
 	// trained with class-balanced weights, so logit 0 (the balanced boundary) ignores the ~1% match base
@@ -269,7 +285,9 @@ async function main(): Promise<void> {
 	const rnd = lcg(20260615)
 	const split = new Map<string, "fit" | "holdout">()
 
-	for (const npi of kept) split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+	for (const npi of kept) {
+		split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+	}
 	const fitPairs = pairs.filter(([a, b]) => split.get(a.id) === "fit" && split.get(b.id) === "fit")
 	const calibGbt = trainGBT(
 		fitPairs.map(([a, b]) => featurize(a, b)),

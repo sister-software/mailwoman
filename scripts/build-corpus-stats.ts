@@ -56,9 +56,13 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--shards" && args[i + 1]) out.shardsArg = args[++i]
-		else if (a === "--output" && args[i + 1]) out.outputPath = args[++i]
-		else if (a === "--limit-per-shard" && args[i + 1]) out.limitPerShard = Number(args[++i])
+		if (a === "--shards" && args[i + 1]) {
+			out.shardsArg = args[++i]
+		} else if (a === "--output" && args[i + 1]) {
+			out.outputPath = args[++i]
+		} else if (a === "--limit-per-shard" && args[i + 1]) {
+			out.limitPerShard = Number(args[++i])
+		}
 	}
 
 	if (!out.shardsArg || !out.outputPath) {
@@ -170,7 +174,9 @@ function main(): void {
 	for (const [k, labelMap] of bigramStats) {
 		let total = 0
 
-		for (const v of labelMap.values()) total += v
+		for (const v of labelMap.values()) {
+			total += v
+		}
 
 		if (total < MIN_BIGRAM_COUNT) {
 			bigramStats.delete(k)

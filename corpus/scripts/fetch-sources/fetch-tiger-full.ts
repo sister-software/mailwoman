@@ -152,7 +152,9 @@ function readManifest(manifestPath: string): Map<string, CountyEntry> {
 		const parsed = JSON.parse(readFileSync(manifestPath, "utf8")) as { counties?: CountyEntry[] }
 
 		for (const c of parsed.counties ?? []) {
-			if (c.filename) map.set(c.filename, { filename: c.filename, sha256: c.sha256, bytes: c.bytes })
+			if (c.filename) {
+				map.set(c.filename, { filename: c.filename, sha256: c.sha256, bytes: c.bytes })
+			}
 		}
 	} catch {
 		// Malformed manifest — treat as empty and re-fetch.

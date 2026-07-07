@@ -121,7 +121,9 @@ for (const line of readFileSync(CITIES, "utf8").split("\n")) {
 	if (!countryName) continue
 
 	// skip codes codex doesn't name
-	if (!byCountry.has(cc)) byCountry.set(cc, [])
+	if (!byCountry.has(cc)) {
+		byCountry.set(cc, [])
+	}
 	byCountry.get(cc)!.push({ name, lat, lon, cc, countryName, pop })
 }
 const sample: City[] = []
@@ -164,15 +166,23 @@ for (const c of sample) {
 	const e = perCountry.get(c.cc) ?? { n: 0, bare: 0, withCc: 0, namesake: 0, hintEmpty: 0, name: c.countryName }
 	e.n++
 
-	if (bare.ok) e.bare++
+	if (bare.ok) {
+		e.bare++
+	}
 
-	if (hint.ok) e.withCc++
+	if (hint.ok) {
+		e.withCc++
+	}
 
-	if (bare.us) e.namesake++
+	if (bare.us) {
+		e.namesake++
+	}
 
 	// A hint that resolves nothing means the queried name matches no place in that country — the record
 	// is under another surface form (exonym). A hint that resolves the WRONG place is a coverage miss.
-	if (!hint.ok && !hint.got) e.hintEmpty++
+	if (!hint.ok && !hint.got) {
+		e.hintEmpty++
+	}
 	perCountry.set(c.cc, e)
 
 	if (++done % 25 === 0) {

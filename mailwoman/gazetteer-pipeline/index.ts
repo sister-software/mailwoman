@@ -217,7 +217,9 @@ export function promoteCandidate(candidateDb: string, dataRoot: string = mailwom
 
 	// Replace any existing pointer (symlink or stray file) — never the build it points at.
 	try {
-		if (lstatSync(linkPath)) rmSync(linkPath)
+		if (lstatSync(linkPath)) {
+			rmSync(linkPath)
+		}
 	} catch {
 		// nothing there yet
 	}
@@ -276,9 +278,13 @@ export function publishGazetteer(opts: PublishOptions): PublishResult {
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
 	const args = [opts.uploadScript, "--src", opts.stageDir, "--prefix", prefix]
 
-	if (opts.bucket) args.push("--bucket", opts.bucket)
+	if (opts.bucket) {
+		args.push("--bucket", opts.bucket)
+	}
 
-	if (opts.dryRun) args.push("--dry-run")
+	if (opts.dryRun) {
+		args.push("--dry-run")
+	}
 	execFileSync("python3", args, { stdio: "inherit" })
 
 	let bumped = false

@@ -85,7 +85,9 @@ async function main(): Promise<void> {
 		sprInsert.run(id, name, lat, lon, lat, lon, lat, lon)
 		namesInsert.run(id, name)
 
-		if (display !== name) namesInsert.run(id, display)
+		if (display !== name) {
+			namesInsert.run(id, display)
+		}
 		inserted++
 	}
 	db.exec("COMMIT")
@@ -97,7 +99,9 @@ async function main(): Promise<void> {
 	db.close()
 
 	// Build-on-copy: the previous version moves aside; the new artifact swaps in atomically.
-	if (existsSync(outPath)) renameSync(outPath, `${outPath}.prev`)
+	if (existsSync(outPath)) {
+		renameSync(outPath, `${outPath}.prev`)
+	}
 	renameSync(tmpPath, outPath)
 	process.stderr.write(`wrote ${inserted} NL PC6 rows -> ${outPath}\n`)
 }

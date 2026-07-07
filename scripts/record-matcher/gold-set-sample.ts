@@ -70,7 +70,10 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 	if (a.size === 0 || b.size === 0) return 0
 	let inter = 0
 
-	for (const t of a) if (b.has(t)) inter++
+	for (const t of a)
+		if (b.has(t)) {
+			inter++
+		}
 
 	return inter / (a.size + b.size - inter)
 }
@@ -129,7 +132,9 @@ async function main(): Promise<void> {
 			parent: `${norm(r[C.parentLBN])}|${norm(r[C.parentTIN])}`.toLowerCase(),
 		}
 
-		if (!byAddr.has(addrKey)) byAddr.set(addrKey, [])
+		if (!byAddr.has(addrKey)) {
+			byAddr.set(addrKey, [])
+		}
 		byAddr.get(addrKey)!.push(p)
 		kept++
 
@@ -157,7 +162,10 @@ async function main(): Promise<void> {
 	for (const provs of byAddr.values()) {
 		const distinct = new Map<string, Prov>()
 
-		for (const p of provs) if (!distinct.has(p.npi)) distinct.set(p.npi, p)
+		for (const p of provs)
+			if (!distinct.has(p.npi)) {
+				distinct.set(p.npi, p)
+			}
 		const list = [...distinct.values()]
 
 		if (list.length < 2) continue
@@ -204,7 +212,9 @@ async function main(): Promise<void> {
 		writeFileSync(OUT, sample.map((p) => JSON.stringify(p)).join("\n") + "\n")
 		console.error(`[written] ${OUT}`)
 	} else {
-		for (const p of sample.slice(0, 10)) console.log(JSON.stringify(p))
+		for (const p of sample.slice(0, 10)) {
+			console.log(JSON.stringify(p))
+		}
 	}
 }
 

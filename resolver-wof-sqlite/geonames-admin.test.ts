@@ -28,7 +28,9 @@ let db: DatabaseSync
 function row(over: Record<number, string>): string {
 	const f = Array(19).fill("")
 
-	for (const [i, v] of Object.entries(over)) f[Number(i)] = v
+	for (const [i, v] of Object.entries(over)) {
+		f[Number(i)] = v
+	}
 
 	return f.join("\t")
 }

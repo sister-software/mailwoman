@@ -57,6 +57,8 @@ export class WOFPostcodeLookup {
 	}
 
 	close(): void {
-		for (const db of this.#dbs) db.close()
+		for (const db of this.#dbs) {
+			db.close()
+		}
 	}
 }

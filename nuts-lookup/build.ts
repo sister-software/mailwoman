@@ -48,13 +48,21 @@ export function buildNutsDB(geojsonPath: string, dbPath: string): { regions: num
 					const lon = point[0]!
 					const lat = point[1]!
 
-					if (lat < minLat) minLat = lat
+					if (lat < minLat) {
+						minLat = lat
+					}
 
-					if (lat > maxLat) maxLat = lat
+					if (lat > maxLat) {
+						maxLat = lat
+					}
 
-					if (lon < minLon) minLon = lon
+					if (lon < minLon) {
+						minLon = lon
+					}
 
-					if (lon > maxLon) maxLon = lon
+					if (lon > maxLon) {
+						maxLon = lon
+					}
 				}
 			}
 		}

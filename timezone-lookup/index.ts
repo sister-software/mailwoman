@@ -28,7 +28,9 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 		const xj = ring[j]![0]!
 		const yj = ring[j]![1]!
 
-		if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside
+		if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+			inside = !inside
+		}
 	}
 
 	return inside

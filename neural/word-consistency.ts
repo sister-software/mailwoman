@@ -79,8 +79,11 @@ export function enforceWordConsistency(
 	const idxType = labels.map((l, idx) => {
 		const t = labelType(l)
 
-		if (l.startsWith("B-")) typeB.set(t, idx)
-		else if (l.startsWith("I-")) typeI.set(t, idx)
+		if (l.startsWith("B-")) {
+			typeB.set(t, idx)
+		} else if (l.startsWith("I-")) {
+			typeI.set(t, idx)
+		}
 
 		return t
 	})
@@ -96,7 +99,9 @@ export function enforceWordConsistency(
 	const words: number[][] = []
 	let cur: number[] = []
 	const flush = (): void => {
-		if (cur.length) words.push(cur)
+		if (cur.length) {
+			words.push(cur)
+		}
 		cur = []
 	}
 

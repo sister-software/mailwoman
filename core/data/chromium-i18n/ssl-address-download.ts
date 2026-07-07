@@ -97,7 +97,9 @@ async function main(): Promise<void> {
 
 	process.stderr.write(`\n=== done: ${codes.length - failures}/${codes.length} written, ${failures} failed\n`)
 
-	if (failures > 0) process.exitCode = 1
+	if (failures > 0) {
+		process.exitCode = 1
+	}
 }
 
 // Run main() only when invoked directly (the import-safe equivalent of Python's `if __name__ ==

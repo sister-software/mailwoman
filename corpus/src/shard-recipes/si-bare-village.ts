@@ -76,8 +76,11 @@ export const siBareVillageRecipe: ShardRecipe = {
 					"Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "si-bare-village")) emitted++
-			else skipped++
+			if (alignAndWrite(write, canonical, "si-bare-village")) {
+				emitted++
+			} else {
+				skipped++
+			}
 		}
 
 		return { read, emitted, skipped }

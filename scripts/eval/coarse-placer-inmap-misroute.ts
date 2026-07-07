@@ -61,7 +61,9 @@ const COUNTRY_TOKENS =
 function stripCountry(raw: string): string {
 	let s = raw
 
-	for (let i = 0; i < 2; i++) s = s.replace(COUNTRY_TOKENS, "").trim()
+	for (let i = 0; i < 2; i++) {
+		s = s.replace(COUNTRY_TOKENS, "").trim()
+	}
 
 	return s
 }
@@ -85,10 +87,14 @@ function resolvedWOFNodes(tree: AddressTree): Array<{ id: number; rank: number }
 			out.push({ id: Number(n.placeID.slice(4)), rank: PLACETYPE_RANK[placetype] ?? -1 })
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return out
 }
@@ -186,7 +192,9 @@ async function main(): Promise<void> {
 			)
 		}
 
-		if (++done % 200 === 0) console.error(`  ${done}/${sample.length}`)
+		if (++done % 200 === 0) {
+			console.error(`  ${done}/${sample.length}`)
+		}
 	}
 
 	// Per-country + global tallies.
@@ -200,11 +208,17 @@ async function main(): Promise<void> {
 		const offRight = r.off === r.gold
 		const onRight = r.on === r.gold
 
-		if (offRight) pc.offR++
+		if (offRight) {
+			pc.offR++
+		}
 
-		if (onRight) pc.onR++
+		if (onRight) {
+			pc.onR++
+		}
 
-		if (!offRight && onRight) pc.win++
+		if (!offRight && onRight) {
+			pc.win++
+		}
 
 		if (offRight && !onRight) {
 			pc.reg++
@@ -249,8 +263,13 @@ async function main(): Promise<void> {
 	lines.push("")
 	const buckets = Object.entries(regressionBuckets).sort((a, b) => b[1] - a[1])
 
-	if (buckets.length === 0) lines.push(`_None — the prior introduced no in-map misroutes._`)
-	else for (const [k, v] of buckets) lines.push(`- \`${k}\`: ${v}`)
+	if (buckets.length === 0) {
+		lines.push(`_None — the prior introduced no in-map misroutes._`)
+	} else {
+		for (const [k, v] of buckets) {
+			lines.push(`- \`${k}\`: ${v}`)
+		}
+	}
 	lines.push("")
 
 	const regRate = (100 * totReg) / totN

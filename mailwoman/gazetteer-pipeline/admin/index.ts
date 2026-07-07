@@ -68,7 +68,9 @@ export interface BuildAdminResult {
 async function fileMD5(path: string): Promise<string> {
 	const hash = createHash("md5")
 
-	for await (const chunk of createReadStream(path)) hash.update(chunk as Buffer)
+	for await (const chunk of createReadStream(path)) {
+		hash.update(chunk as Buffer)
+	}
 
 	return hash.digest("hex")
 }
@@ -89,7 +91,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	const ingestPath = out + ".ingest"
 
-	if (existsSync(ingestPath)) unlinkSync(ingestPath)
+	if (existsSync(ingestPath)) {
+		unlinkSync(ingestPath)
+	}
 
 	phase("staging", ingestPath)
 	const db = new DatabaseSync(ingestPath)
@@ -142,7 +146,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	unlinkSync(ingestPath)
 
 	for (const sidecar of [ingestPath + "-wal", ingestPath + "-shm"]) {
-		if (existsSync(sidecar)) unlinkSync(sidecar)
+		if (existsSync(sidecar)) {
+			unlinkSync(sidecar)
+		}
 	}
 
 	phase("fts")
@@ -163,7 +169,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		const reverse = await verifyReversePanel(out)
 		verify = { ok: structural.ok && reverse.ok, checks: [...structural.checks, ...reverse.checks] }
 
-		for (const c of verify.checks) phase("verify", `${c.ok ? "✓" : "✗"} ${c.check}: ${c.detail}`)
+		for (const c of verify.checks) {
+			phase("verify", `${c.ok ? "✓" : "✗"} ${c.check}: ${c.detail}`)
+		}
 
 		if (!verify.ok) {
 			const failed = verify.checks.filter((c) => !c.ok).map((c) => c.check)

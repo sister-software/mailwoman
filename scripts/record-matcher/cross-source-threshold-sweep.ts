@@ -151,7 +151,9 @@ function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "un
 		if (!ph) continue
 		const s = r.source ?? "?"
 
-		if (!bySource.has(s)) bySource.set(s, new Set())
+		if (!bySource.has(s)) {
+			bySource.set(s, new Set())
+		}
 		bySource.get(s)!.add(ph)
 	}
 	const sources = [...bySource.keys()]
@@ -194,7 +196,9 @@ function measure(label: string, threshold: number | null, entities: ResolvedEnti
 		if (n < 2) continue
 		crossSource++
 
-		if (n >= 3) tripleSource++
+		if (n >= 3) {
+			tripleSource++
+		}
 		const ev = phoneEvidence(e)
 
 		if (ev === "corroborated") {
@@ -261,7 +265,9 @@ async function main(): Promise<void> {
 	for (const spec of SPECS) {
 		const recs = await ingestRows(rawBySource.get(spec.source)!, spec.mapping, { geocodeAddress: seam })
 
-		for (const r of recs) r.id = `${spec.source}:${r.id}`
+		for (const r of recs) {
+			r.id = `${spec.source}:${r.id}`
+		}
 		records.push(...recs)
 	}
 	shardProvider.close()

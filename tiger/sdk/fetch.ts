@@ -197,7 +197,9 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 	const re = new RegExp(`tl_${vintage}_${state}(\\d{3})_addrfeat\\.zip`, "g")
 	const counties = new Set<string>()
 
-	for (let m = re.exec(html); m; m = re.exec(html)) counties.add(m[1]!)
+	for (let m = re.exec(html); m; m = re.exec(html)) {
+		counties.add(m[1]!)
+	}
 
 	return [...counties].sort()
 }
@@ -235,28 +237,33 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	await initializeTIGERSchema(kdb)
 
 	const insertBatch = async (rows: Row[]): Promise<void> => {
-		if (level === "tabblock20")
+		if (level === "tabblock20") {
 			await kdb
 				.insertInto("tabblock20")
 				.values(rows as TIGERBlockTable[])
 				.execute()
-		else if (level === "place")
+		} else if (level === "place") {
 			await kdb
 				.insertInto("tiger_places")
 				.values(rows as TIGERPlaceTable[])
 				.execute()
-		else
+		} else {
 			await kdb
 				.insertInto("tiger_streets")
 				.values(rows as TIGERStreetTable[])
 				.execute()
+		}
 	}
 
 	try {
 		// Idempotent re-run: drop this state's rows first (state_code for blocks, statefp otherwise).
-		if (level === "tabblock20") await kdb.deleteFrom("tabblock20").where("state_code", "=", state).execute()
-		else if (level === "place") await kdb.deleteFrom("tiger_places").where("statefp", "=", state).execute()
-		else await kdb.deleteFrom("tiger_streets").where("statefp", "=", state).execute()
+		if (level === "tabblock20") {
+			await kdb.deleteFrom("tabblock20").where("state_code", "=", state).execute()
+		} else if (level === "place") {
+			await kdb.deleteFrom("tiger_places").where("statefp", "=", state).execute()
+		} else {
+			await kdb.deleteFrom("tiger_streets").where("statefp", "=", state).execute()
+		}
 
 		let inserted = 0
 		let batch: Row[] = []

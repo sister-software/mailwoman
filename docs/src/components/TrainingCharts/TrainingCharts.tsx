@@ -146,10 +146,15 @@ function niceTicks(min: number, max: number, count: number): number[] {
 	const residual = roughStep / magnitude
 	let niceStep: number
 
-	if (residual <= 1.5) niceStep = 1 * magnitude
-	else if (residual <= 3) niceStep = 2 * magnitude
-	else if (residual <= 7) niceStep = 5 * magnitude
-	else niceStep = 10 * magnitude
+	if (residual <= 1.5) {
+		niceStep = 1 * magnitude
+	} else if (residual <= 3) {
+		niceStep = 2 * magnitude
+	} else if (residual <= 7) {
+		niceStep = 5 * magnitude
+	} else {
+		niceStep = 10 * magnitude
+	}
 
 	const niceMin = Math.floor(min / niceStep) * niceStep
 	const niceMax = Math.ceil(max / niceStep) * niceStep
@@ -205,13 +210,21 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			ymx = -Infinity
 
 		for (const p of allPoints) {
-			if (p.step < xmn) xmn = p.step
+			if (p.step < xmn) {
+				xmn = p.step
+			}
 
-			if (p.step > xmx) xmx = p.step
+			if (p.step > xmx) {
+				xmx = p.step
+			}
 
-			if (p.value < ymn) ymn = p.value
+			if (p.value < ymn) {
+				ymn = p.value
+			}
 
-			if (p.value > ymx) ymx = p.value
+			if (p.value > ymx) {
+				ymx = p.value
+			}
 		}
 		const yPad = (ymx - ymn) * 0.05 || 0.01
 		const yMinData = ymn - yPad
@@ -225,10 +238,14 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 		let posMin = Infinity
 
 		for (const p of allPoints) {
-			if (p.value > 0 && p.value < posMin) posMin = p.value
+			if (p.value > 0 && p.value < posMin) {
+				posMin = p.value
+			}
 		}
 
-		if (!Number.isFinite(posMin)) posMin = 1e-6 // all values non-positive; nominal floor
+		if (!Number.isFinite(posMin)) {
+			posMin = 1e-6
+		} // all values non-positive; nominal floor
 		const posMax = Math.max(ymx, posMin * 10)
 		const logMin = Math.log10(posMin)
 		const logMax = Math.log10(posMax)
@@ -273,7 +290,9 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			for (const m of [2, 3, 5, 7]) {
 				const v = m * Math.pow(10, exp)
 
-				if (Math.log10(v) >= yMin && Math.log10(v) <= yMax) ticks.push(v)
+				if (Math.log10(v) >= yMin && Math.log10(v) <= yMax) {
+					ticks.push(v)
+				}
 			}
 		}
 
@@ -465,7 +484,9 @@ const TrainingChartsInner: React.FC = () => {
 				if (cancelled) return
 				setError(err instanceof Error ? err.message : String(err))
 			} finally {
-				if (!cancelled) setLoading(false)
+				if (!cancelled) {
+					setLoading(false)
+				}
 			}
 		}
 		load()
@@ -500,13 +521,17 @@ const TrainingChartsInner: React.FC = () => {
 					try {
 						const values = await fetchMetricValues(runName, mk)
 
-						if (!cancelled) runData.set(mk, values)
+						if (!cancelled) {
+							runData.set(mk, values)
+						}
 					} catch {
 						// Individual metric fetch failure is non-fatal
 					}
 				}
 
-				if (!cancelled) newData.set(runName, runData)
+				if (!cancelled) {
+					newData.set(runName, runData)
+				}
 			} catch {
 				// Run summary fetch failure is non-fatal
 			}
@@ -530,9 +555,13 @@ const TrainingChartsInner: React.FC = () => {
 	// Auto-poll every POLL_INTERVAL_MS
 	useEffect(() => {
 		// Clear any existing intervals
-		if (pollRef.current) clearInterval(pollRef.current)
+		if (pollRef.current) {
+			clearInterval(pollRef.current)
+		}
 
-		if (countdownRef.current) clearInterval(countdownRef.current)
+		if (countdownRef.current) {
+			clearInterval(countdownRef.current)
+		}
 
 		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setPollCountdown(POLL_INTERVAL_MS / 1000)
@@ -569,9 +598,13 @@ const TrainingChartsInner: React.FC = () => {
 		}, POLL_INTERVAL_MS)
 
 		return () => {
-			if (pollRef.current) clearInterval(pollRef.current)
+			if (pollRef.current) {
+				clearInterval(pollRef.current)
+			}
 
-			if (countdownRef.current) clearInterval(countdownRef.current)
+			if (countdownRef.current) {
+				clearInterval(countdownRef.current)
+			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedRuns, selectedMetrics])
@@ -609,8 +642,11 @@ const TrainingChartsInner: React.FC = () => {
 		setSelectedRuns((prev) => {
 			const next = new Set(prev)
 
-			if (next.has(name)) next.delete(name)
-			else next.add(name)
+			if (next.has(name)) {
+				next.delete(name)
+			} else {
+				next.add(name)
+			}
 
 			return next
 		})
@@ -620,8 +656,11 @@ const TrainingChartsInner: React.FC = () => {
 		setSelectedMetrics((prev) => {
 			const next = new Set(prev)
 
-			if (next.has(key)) next.delete(key)
-			else next.add(key)
+			if (next.has(key)) {
+				next.delete(key)
+			} else {
+				next.add(key)
+			}
 
 			return next
 		})

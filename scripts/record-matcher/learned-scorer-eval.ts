@@ -123,7 +123,9 @@ async function main(): Promise<void> {
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) list.push(alt)
+		if (list.length < 5) {
+			list.push(alt)
+		}
 		altNames.set(npi, list)
 	}
 
@@ -135,7 +137,9 @@ async function main(): Promise<void> {
 	let scanned = 0
 
 	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
+		if (++scanned % 1_000_000 === 0) {
+			console.error(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
+		}
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
 		if (practice) {
@@ -161,10 +165,14 @@ async function main(): Promise<void> {
 				kept.add(npi)
 				rows.push({ npi, name: primaryName, org, address: practice })
 
-				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice })
+				for (const alt of altNames.get(npi)!) {
+					rows.push({ npi, name: alt, org: alt, address: practice })
+				}
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
-				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing })
+				if (mailing && mailing !== practice) {
+					rows.push({ npi, name: primaryName, org, address: mailing })
+				}
 			}
 		}
 	}
@@ -224,7 +232,9 @@ async function main(): Promise<void> {
 		for (let i = 0; i < pat.length; i++) {
 			const lvl = pat[i]!
 
-			for (let l = 0; l < levelCounts[i]!; l++) f.push(lvl === l ? 1 : 0)
+			for (let l = 0; l < levelCounts[i]!; l++) {
+				f.push(lvl === l ? 1 : 0)
+			}
 		}
 		// Interaction: co-located (spatial exact = level 0) AND the names/org disagree (catch-all level).
 		const spatialExact = pat[spatialI] === 0 ? 1 : 0
@@ -269,7 +279,9 @@ async function main(): Promise<void> {
 		const rnd = lcg(seed)
 		const npiSplit = new Map<string, "train" | "test">()
 
-		for (const npi of kept) npiSplit.set(npi, rnd() < 0.67 ? "train" : "test")
+		for (const npi of kept) {
+			npiSplit.set(npi, rnd() < 0.67 ? "train" : "test")
+		}
 
 		const train: Sample[] = []
 		const test: Sample[] = []
@@ -301,22 +313,30 @@ async function main(): Promise<void> {
 			for (const s of train) {
 				let z = bias
 
-				for (let j = 0; j < dim; j++) z += w[j]! * s.x[j]!
+				for (let j = 0; j < dim; j++) {
+					z += w[j]! * s.x[j]!
+				}
 				const p = sigmoid(z)
 				const sampleW = s.y === 1 ? 1 - posWeight : posWeight
 				const err = (p - s.y) * sampleW
 
-				for (let j = 0; j < dim; j++) gw[j]! += err * s.x[j]!
+				for (let j = 0; j < dim; j++) {
+					gw[j]! += err * s.x[j]!
+				}
 				gb += err
 			}
 
-			for (let j = 0; j < dim; j++) w[j]! -= lrate * (gw[j]! / train.length + l2 * w[j]!)
+			for (let j = 0; j < dim; j++) {
+				w[j]! -= lrate * (gw[j]! / train.length + l2 * w[j]!)
+			}
 			bias -= lrate * (gb / train.length)
 		}
 		const lrScore = (x: number[]) => {
 			let z = bias
 
-			for (let j = 0; j < x.length; j++) z += w[j]! * x[j]!
+			for (let j = 0; j < x.length; j++) {
+				z += w[j]! * x[j]!
+			}
 
 			return z
 		}
@@ -353,10 +373,15 @@ async function main(): Promise<void> {
 		for (let i = 0; i < sorted.length; ) {
 			let j = i
 
-			while (j < sorted.length && sorted[j]!.s === sorted[i]!.s) j++
+			while (j < sorted.length && sorted[j]!.s === sorted[i]!.s) {
+				j++
+			}
 			const avg = (rank + (rank + (j - i) - 1)) / 2
 
-			for (let k = i; k < j; k++) if (sorted[k]!.y === 1) rankSum += avg
+			for (let k = i; k < j; k++)
+				if (sorted[k]!.y === 1) {
+					rankSum += avg
+				}
 			rank += j - i
 			i = j
 		}
@@ -374,15 +399,20 @@ async function main(): Promise<void> {
 
 			for (const d of scored) {
 				if (d.s >= t) {
-					if (d.y === 1) tp++
-					else fp++
+					if (d.y === 1) {
+						tp++
+					} else {
+						fp++
+					}
 				}
 			}
 			const precision = tp + fp > 0 ? tp / (tp + fp) : 0
 			const recall = P > 0 ? tp / P : 0
 			const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
 
-			if (f1 > best.f1) best = { f1, precision, recall }
+			if (f1 > best.f1) {
+				best = { f1, precision, recall }
+			}
 		}
 
 		return best

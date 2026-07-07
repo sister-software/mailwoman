@@ -94,25 +94,39 @@ function parseArgs(): Args {
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
 
-		if (a === "--golden-dir" && argv[i + 1]) out.goldenDir = argv[++i]
-		else if (a === "--files" && argv[i + 1])
+		if (a === "--golden-dir" && argv[i + 1]) {
+			out.goldenDir = argv[++i]
+		} else if (a === "--files" && argv[i + 1]) {
 			out.files = argv[++i]!.split(",")
 				.map((s) => s.trim())
 				.filter(Boolean)
-		else if (a === "--model" && argv[i + 1]) out.modelPath = argv[++i]
-		else if (a === "--tokenizer" && argv[i + 1]) out.tokenizerPath = argv[++i]
-		else if (a === "--model-card" && argv[i + 1]) out.modelCardPath = argv[++i]
+		} else if (a === "--model" && argv[i + 1]) {
+			out.modelPath = argv[++i]
+		} else if (a === "--tokenizer" && argv[i + 1]) {
+			out.tokenizerPath = argv[++i]
+		} else if (a === "--model-card" && argv[i + 1]) {
+			out.modelCardPath = argv[++i]
+		}
 		// Feed the postcode anchor for a 4-input anchor-trained model (else inference errors on the
 		// missing anchor inputs). Mirrors oa-resolver-eval's --model-anchor-lookup.
-		else if (a === "--model-anchor-lookup" && argv[i + 1]) out.modelAnchorLookupPath = argv[++i]
-		else if (a === "--gazetteer-lexicon" && argv[i + 1]) out.gazetteerLexiconPath = argv[++i]
+		else if (a === "--model-anchor-lookup" && argv[i + 1]) {
+			out.modelAnchorLookupPath = argv[++i]
+		} else if (a === "--gazetteer-lexicon" && argv[i + 1]) {
+			out.gazetteerLexiconPath = argv[++i]
+		}
 		// Opt OUT of the default anchor/gazetteer feed to deliberately measure the zero-feed (anchor-off)
 		// behavior of an anchor-trained model. Without this flag the standard lookup/lexicon are fed.
-		else if (a === "--no-anchor") out.noAnchor = true
-		else if (a === "--suppress-gaz-near-postcode") out.suppressGazNearPostcode = true
-		else if (a === "--conventions" && argv[i + 1]) out.conventions = argv[++i]
-		else if (a === "--bridge-gaps") out.bridgeGaps = true
-		else if (a === "--out-json" && argv[i + 1]) out.outJson = argv[++i]
+		else if (a === "--no-anchor") {
+			out.noAnchor = true
+		} else if (a === "--suppress-gaz-near-postcode") {
+			out.suppressGazNearPostcode = true
+		} else if (a === "--conventions" && argv[i + 1]) {
+			out.conventions = argv[++i]
+		} else if (a === "--bridge-gaps") {
+			out.bridgeGaps = true
+		} else if (a === "--out-json" && argv[i + 1]) {
+			out.outJson = argv[++i]
+		}
 	}
 
 	return out as Args
@@ -137,17 +151,27 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
 		const v = flat[tag]
 
-		if (v) streetParts.push(v)
+		if (v) {
+			streetParts.push(v)
+		}
 	}
 
-	if (streetParts.length > 0) out.street = streetParts.join(" ")
+	if (streetParts.length > 0) {
+		out.street = streetParts.join(" ")
+	}
 	const xs: string[] = []
 
-	if (flat.intersection_a) xs.push(flat.intersection_a)
+	if (flat.intersection_a) {
+		xs.push(flat.intersection_a)
+	}
 
-	if (flat.intersection_b) xs.push(flat.intersection_b)
+	if (flat.intersection_b) {
+		xs.push(flat.intersection_b)
+	}
 
-	if (xs.length > 0) out.street = [out.street, ...xs].filter(Boolean).join(" ")
+	if (xs.length > 0) {
+		out.street = [out.street, ...xs].filter(Boolean).join(" ")
+	}
 
 	for (const [tag, value] of Object.entries(flat) as Array<[ComponentTag, string]>) {
 		if (
@@ -160,7 +184,9 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 		)
 			continue
 
-		if (value) out[tag] = value
+		if (value) {
+			out[tag] = value
+		}
 	}
 
 	return out
@@ -201,9 +227,17 @@ interface FileReport {
 function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, string>>): FileReport {
 	const tags = new Set<string>()
 
-	for (const r of rows) for (const k of Object.keys(r.components)) tags.add(k)
+	for (const r of rows) {
+		for (const k of Object.keys(r.components)) {
+			tags.add(k)
+		}
+	}
 
-	for (const p of preds) for (const k of Object.keys(p)) tags.add(k)
+	for (const p of preds) {
+		for (const k of Object.keys(p)) {
+			tags.add(k)
+		}
+	}
 
 	const perTag: Record<string, TagMetric> = {}
 	let f1Sum = 0
@@ -220,10 +254,15 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 			const pred = norm(preds[i]![tag]),
 				gold = norm(rows[i]!.components[tag])
 
-			if (pred && gold && pred === gold) tp++
-			else if (pred && (!gold || pred !== gold)) fp++
+			if (pred && gold && pred === gold) {
+				tp++
+			} else if (pred && (!gold || pred !== gold)) {
+				fp++
+			}
 
-			if (gold && (!pred || pred !== gold)) fn++
+			if (gold && (!pred || pred !== gold)) {
+				fn++
+			}
 		}
 		const p = tp / Math.max(tp + fp, 1)
 		const r = tp / Math.max(tp + fn, 1)
@@ -240,7 +279,10 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 
 	let exact = 0
 
-	for (let i = 0; i < rows.length; i++) if (exactMatch(preds[i]!, rows[i]!.components)) exact++
+	for (let i = 0; i < rows.length; i++)
+		if (exactMatch(preds[i]!, rows[i]!.components)) {
+			exact++
+		}
 
 	return {
 		file,
@@ -386,7 +428,11 @@ async function main(): Promise<void> {
 	// Per-tag F1 side by side across the locale files (where the interference, if any, concentrates)
 	const allTags = new Set<string>()
 
-	for (const r of localeReports) for (const k of Object.keys(r.perTag)) allTags.add(k)
+	for (const r of localeReports) {
+		for (const k of Object.keys(r.perTag)) {
+			allTags.add(k)
+		}
+	}
 	console.log("## Per-tag F1 by locale\n")
 	console.log(`| Tag | ${localeReports.map((r) => r.file).join(" | ")} | Δ |`)
 	console.log(`|---|${localeReports.map(() => "--:").join("|")}|--:|`)

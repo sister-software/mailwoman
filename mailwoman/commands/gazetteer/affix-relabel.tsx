@@ -83,7 +83,9 @@ const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

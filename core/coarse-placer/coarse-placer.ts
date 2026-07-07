@@ -61,7 +61,9 @@ export function dequantizeInt8Weights(
 		const s = scales[c]!
 		const base = c * dim
 
-		for (let i = 0; i < dim; i++) out[base + i] = int8[base + i]! * s
+		for (let i = 0; i < dim; i++) {
+			out[base + i] = int8[base + i]! * s
+		}
 	}
 
 	return out
@@ -172,13 +174,18 @@ export class CoarsePlacer {
 			let s = this.#bias[c]!
 			const base = c * this.#dim
 
-			for (const i of feats) s += this.#weights[base + i]!
+			for (const i of feats) {
+				s += this.#weights[base + i]!
+			}
 			logits[c] = s / this.#temp
 		}
 		// Numerically-stable softmax.
 		let maxLogit = -Infinity
 
-		for (let c = 0; c < C; c++) if (logits[c]! > maxLogit) maxLogit = logits[c]!
+		for (let c = 0; c < C; c++)
+			if (logits[c]! > maxLogit) {
+				maxLogit = logits[c]!
+			}
 		let sum = 0
 		const probs = new Float32Array(C)
 
@@ -267,12 +274,16 @@ export function inMapPosterior(
 	const posterior: Record<string, number> = {}
 
 	for (const [cls, prob] of Object.entries(prediction.probs)) {
-		if (cls !== "OTHER" && prob >= floor) posterior[cls] = prob
+		if (cls !== "OTHER" && prob >= floor) {
+			posterior[cls] = prob
+		}
 	}
 
 	// The argmax always survives (it is ≥ every other marginal; if even it fell below the floor the
 	// prediction would have abstained upstream) — but guard anyway so the posterior is never empty.
-	if (Object.keys(posterior).length === 0) posterior[prediction.country] = prediction.confidence
+	if (Object.keys(posterior).length === 0) {
+		posterior[prediction.country] = prediction.confidence
+	}
 
 	return posterior
 }

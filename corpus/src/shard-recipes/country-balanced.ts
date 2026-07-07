@@ -99,13 +99,20 @@ function splitCSV(line: string): string[] {
 				if (line[i + 1] === '"') {
 					cur += '"'
 					i++
-				} else inQ = false
-			} else cur += c
-		} else if (c === '"') inQ = true
-		else if (c === ",") {
+				} else {
+					inQ = false
+				}
+			} else {
+				cur += c
+			}
+		} else if (c === '"') {
+			inQ = true
+		} else if (c === ",") {
 			out.push(cur)
 			cur = ""
-		} else cur += c
+		} else {
+			cur += c
+		}
 	}
 	out.push(cur)
 
@@ -184,9 +191,13 @@ function renderCountry(
 	const { house_number: hn, street, locality: loc, region: reg, postcode: pc, order } = t
 	const components: Partial<Record<ComponentTag, string>> = { house_number: hn, street, locality: loc }
 
-	if (reg) components.region = reg
+	if (reg) {
+		components.region = reg
+	}
 
-	if (pc) components.postcode = pc
+	if (pc) {
+		components.postcode = pc
+	}
 	let body: string
 
 	if (order === "us") {
@@ -387,7 +398,9 @@ export const countryBalancedRecipe: ShardRecipe = {
 			const t = readTuples(s, perSource)
 			console.error(`  ${s.csv} (${s.iso2}): ${t.length} tuples`)
 
-			for (const x of t) pool.push(x)
+			for (const x of t) {
+				pool.push(x)
+			}
 		}
 
 		if (pool.length === 0) {

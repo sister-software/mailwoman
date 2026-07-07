@@ -102,7 +102,9 @@ let failed = false
 for (const check of checks) {
 	const mark = check.ok ? "✓" : warnOnly ? "⚠" : "✗"
 
-	if (!check.ok) failed = true
+	if (!check.ok) {
+		failed = true
+	}
 	console.log(`${mark} ${check.name}: ${check.value}${check.ok ? "" : ` (expected ${npmLatest})`}`)
 }
 

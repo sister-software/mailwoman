@@ -59,14 +59,17 @@ function incDecimalString(s: string): string {
 	let i = a.length - 1
 
 	for (; i >= 0; i--) {
-		if (a[i] === "9") a[i] = "0"
-		else {
+		if (a[i] === "9") {
+			a[i] = "0"
+		} else {
 			a[i] = String(Number(a[i]) + 1)
 			break
 		}
 	}
 
-	if (i < 0) a.unshift("1")
+	if (i < 0) {
+		a.unshift("1")
+	}
 
 	return a.join("")
 }
@@ -100,10 +103,12 @@ function pyRound(x: number, nd: number = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) roundUp = true
-	else if (first === 5) {
-		if (/[1-9]/.test(rest.slice(1))) roundUp = true
-		else {
+	if (first > 5) {
+		roundUp = true
+	} else if (first === 5) {
+		if (/[1-9]/.test(rest.slice(1))) {
+			roundUp = true
+		} else {
 			// exact half → round to even
 			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
@@ -111,7 +116,9 @@ function pyRound(x: number, nd: number = 0): number {
 	}
 	let combined = intPart + keep
 
-	if (roundUp) combined = incDecimalString(combined)
+	if (roundUp) {
+		combined = incDecimalString(combined)
+	}
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
@@ -208,7 +215,9 @@ function loadZCTA(path: string): Map<string, [number, number]> {
 
 		if (lat === null || lon === null) continue
 
-		if (placed(lat, lon)) out.set(pc, [lat, lon])
+		if (placed(lat, lon)) {
+			out.set(pc, [lat, lon])
+		}
 	}
 
 	return out
@@ -221,13 +230,21 @@ function pyJsonStr(s: string): string {
 	for (const ch of s) {
 		const code = ch.codePointAt(0)!
 
-		if (ch === '"') out += '\\"'
-		else if (ch === "\\") out += "\\\\"
-		else if (ch === "\n") out += "\\n"
-		else if (ch === "\r") out += "\\r"
-		else if (ch === "\t") out += "\\t"
-		else if (code < 0x20) out += "\\u" + code.toString(16).padStart(4, "0")
-		else out += ch
+		if (ch === '"') {
+			out += '\\"'
+		} else if (ch === "\\") {
+			out += "\\\\"
+		} else if (ch === "\n") {
+			out += "\\n"
+		} else if (ch === "\r") {
+			out += "\\r"
+		} else if (ch === "\t") {
+			out += "\\t"
+		} else if (code < 0x20) {
+			out += "\\u" + code.toString(16).padStart(4, "0")
+		} else {
+			out += ch
+		}
 	}
 
 	return out + '"'
@@ -294,7 +311,11 @@ function main(): void {
 	const zcta = args.zcta ? loadZCTA(args.zcta) : new Map<string, [number, number]>()
 	const allCodes = new Set<string>()
 
-	for (const [, d] of sources) for (const k of d.keys()) allCodes.add(k)
+	for (const [, d] of sources) {
+		for (const k of d.keys()) {
+			allCodes.add(k)
+		}
+	}
 
 	const lookup: Record<string, LookupRow> = {}
 	const sortedCodes = [...allCodes].sort()
@@ -306,9 +327,13 @@ function main(): void {
 		const k = members.length
 		const posterior: Record<string, number> = {}
 
-		for (const c of members) posterior[c] = 1.0 / k
+		for (const c of members) {
+			posterior[c] = 1.0 / k
+		}
 
-		if (k > 1) collisions++
+		if (k > 1) {
+			collisions++
+		}
 		// centroid: first source (DE→FR→US) with a non-zero centroid; never overwritten by ZCTA.
 		let lat = 0.0
 		let lon = 0.0
@@ -339,10 +364,14 @@ function main(): void {
 
 	const byCountry: Record<string, number> = {}
 
-	for (const [c] of sources) byCountry[c] = Object.values(lookup).filter((v) => c in v[0]).length
+	for (const [c] of sources) {
+		byCountry[c] = Object.values(lookup).filter((v) => c in v[0]).length
+	}
 	const bySource = new Map<string | null, number>()
 
-	for (const v of Object.values(lookup)) bySource.set(v[3], (bySource.get(v[3]) ?? 0) + 1)
+	for (const v of Object.values(lookup)) {
+		bySource.set(v[3], (bySource.get(v[3]) ?? 0) + 1)
+	}
 	const placeholders = bySource.get(null) ?? 0
 
 	// Python repr of `{k or 'placeholder': n for k, n in sorted(by_source.items(), key=lambda kv: -kv[1])}`.

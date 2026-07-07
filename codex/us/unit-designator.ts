@@ -67,7 +67,9 @@ export const US_UNIT_DESIGNATOR_LOOKUP: ReadonlyMap<string, UsUnitDesignator> = 
 
 		for (const variant of US_UNIT_DESIGNATOR_VARIANTS[canonical]) {
 			// First canonical that claims a variant wins (matches the publication's ordering).
-			if (!out.has(variant.toLowerCase())) out.set(variant.toLowerCase(), canonical)
+			if (!out.has(variant.toLowerCase())) {
+				out.set(variant.toLowerCase(), canonical)
+			}
 		}
 	}
 

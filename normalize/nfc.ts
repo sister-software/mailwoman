@@ -61,7 +61,9 @@ function estimateNFCMap(input: string, output: string): number[] {
 			}
 		}
 
-		if (outStep === 2) outIdx += 1
+		if (outStep === 2) {
+			outIdx += 1
+		}
 	}
 
 	return map

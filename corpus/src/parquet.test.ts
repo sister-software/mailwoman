@@ -39,7 +39,9 @@ const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 })
 
 async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
-	for (const item of items) yield item
+	for (const item of items) {
+		yield item
+	}
 }
 
 /** Read every row from a `.parquet` file in on-disk order. */
@@ -49,7 +51,9 @@ async function readParquet(path: string): Promise<ParquetRow[]> {
 	const out: ParquetRow[] = []
 	let row: ParquetRow | null
 
-	while ((row = (await cursor.next()) as ParquetRow | null)) out.push(row)
+	while ((row = (await cursor.next()) as ParquetRow | null)) {
+		out.push(row)
+	}
 	await reader.close()
 
 	return out

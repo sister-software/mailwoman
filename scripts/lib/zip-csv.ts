@@ -63,7 +63,9 @@ export async function* csvRecordsFromZip(
 	child.stdout!.pipe(parser)
 
 	try {
-		for await (const rec of parser) yield rec as Record<string, string | undefined>
+		for await (const rec of parser) {
+			yield rec as Record<string, string | undefined>
+		}
 	} finally {
 		parser.destroy()
 		child.stdout?.destroy()
@@ -80,5 +82,7 @@ export async function* csvRecordsFromZip(
 export async function* csvRecordsFromFile(path: string): AsyncGenerator<Record<string, string | undefined>> {
 	const parser = createReadStream(path).pipe(parse(CSV_OPTS))
 
-	for await (const rec of parser) yield rec as Record<string, string | undefined>
+	for await (const rec of parser) {
+		yield rec as Record<string, string | undefined>
+	}
 }

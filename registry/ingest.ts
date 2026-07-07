@@ -87,7 +87,9 @@ export async function* streamRows(
 			}
 			const row: Record<string, string> = {}
 
-			for (let i = 0; i < header.length; i++) row[header[i]!] = fields[i] ?? ""
+			for (let i = 0; i < header.length; i++) {
+				row[header[i]!] = fields[i] ?? ""
+			}
 			yield row
 		}
 	} finally {
@@ -139,12 +141,15 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 		const h = tok(column)
 		const has = (...words: string[]): boolean => words.some((w) => h.includes(` ${w} `))
 
-		if (!mapping.email && has("email", "e mail")) mapping.email = column
-		else if (!mapping.phone && has("phone", "telephone", "tel", "mobile", "cell")) mapping.phone = column
-		else if (!mapping.id && has("id", "npi", "ein", "frn", "spin", "uuid", "guid", "key")) mapping.id = column
-		else if (has("org", "organization", "organisation", "company", "business", "facility", "agency", "employer"))
+		if (!mapping.email && has("email", "e mail")) {
+			mapping.email = column
+		} else if (!mapping.phone && has("phone", "telephone", "tel", "mobile", "cell")) {
+			mapping.phone = column
+		} else if (!mapping.id && has("id", "npi", "ein", "frn", "spin", "uuid", "guid", "key")) {
+			mapping.id = column
+		} else if (has("org", "organization", "organisation", "company", "business", "facility", "agency", "employer")) {
 			mapping.organization ??= column
-		else if (
+		} else if (
 			has(
 				"street",
 				"address",
@@ -159,15 +164,20 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 				"postcode",
 				"county"
 			)
-		)
+		) {
 			address.push(column)
-		else if (has("name", "first", "last", "given", "family", "middle", "surname", "fullname", "contact"))
+		} else if (has("name", "first", "last", "given", "family", "middle", "surname", "fullname", "contact")) {
 			name.push(column)
+		}
 	}
 
-	if (name.length) mapping.name = name.length === 1 ? name[0]! : name
+	if (name.length) {
+		mapping.name = name.length === 1 ? name[0]! : name
+	}
 
-	if (address.length) mapping.address = address
+	if (address.length) {
+		mapping.address = address
+	}
 
 	return mapping
 }
@@ -229,7 +239,9 @@ export async function ingestRow(
 		for (const [key, columns] of Object.entries(mapping.attributes)) {
 			const value = pick(row, columns)
 
-			if (value) (attributes ??= {})[key] = value
+			if (value) {
+				;(attributes ??= {})[key] = value
+			}
 		}
 	}
 

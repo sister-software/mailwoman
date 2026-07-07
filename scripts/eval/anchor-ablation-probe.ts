@@ -76,18 +76,27 @@ async function main() {
 		const onOk = norm(pOn.house_number) === hn
 		const offOk = norm(pOff.house_number) === hn
 
-		if (onOk) onHN++
+		if (onOk) {
+			onHN++
+		}
 
-		if (offOk) offHN++
+		if (offOk) {
+			offHN++
+		}
 
-		if (norm(pOn.postcode) === hn) onAsPC++
+		if (norm(pOn.postcode) === hn) {
+			onAsPC++
+		}
 
-		if (norm(pOff.postcode) === hn) offAsPC++
+		if (norm(pOff.postcode) === hn) {
+			offAsPC++
+		}
 
-		if (!onOk && offOk && flips.length < 12)
+		if (!onOk && offOk && flips.length < 12) {
 			flips.push(
 				`  raw=${JSON.stringify(row.raw)} gold.hn=${hn} | anchorON.hn=${JSON.stringify(pOn.house_number ?? null)} pc=${JSON.stringify(pOn.postcode ?? null)} → anchorOFF.hn=${JSON.stringify(pOff.house_number ?? null)} pc=${JSON.stringify(pOff.postcode ?? null)}`
 			)
+		}
 	}
 	const pct = (x: number) => ((100 * x) / Math.max(n, 1)).toFixed(1)
 	console.log(`\nanchor-ablation probe — ${MODEL}  (n=${n} rows, gold house_number = leading 5-digit + trailing ZIP)`)

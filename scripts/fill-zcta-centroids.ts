@@ -39,9 +39,13 @@ function main(): void {
 	let geonamesPath: string | undefined
 
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--db" && args[i + 1]) dbPath = args[++i]!
-		else if (args[i] === "--zcta" && args[i + 1]) zctaPath = args[++i]!
-		else if (args[i] === "--geonames" && args[i + 1]) geonamesPath = args[++i]!
+		if (args[i] === "--db" && args[i + 1]) {
+			dbPath = args[++i]!
+		} else if (args[i] === "--zcta" && args[i + 1]) {
+			zctaPath = args[++i]!
+		} else if (args[i] === "--geonames" && args[i + 1]) {
+			geonamesPath = args[++i]!
+		}
 	}
 
 	if (!existsSync(dbPath)) {

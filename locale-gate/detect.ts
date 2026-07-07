@@ -23,10 +23,14 @@ export function detectLocaleSync(
 	const scored: LocaleCandidate[] = []
 	const script = scoreByScript(shape)
 
-	if (script) scored.push(script)
+	if (script) {
+		scored.push(script)
+	}
 	const postcode = scoreByPostcode(shape)
 
-	if (postcode) scored.push(postcode)
+	if (postcode) {
+		scored.push(postcode)
+	}
 	scored.push(scoreFallback(shape))
 
 	// Sort descending by confidence; preserve scorer order on ties (stable sort).

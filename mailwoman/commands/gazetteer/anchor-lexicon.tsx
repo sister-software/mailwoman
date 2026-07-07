@@ -89,7 +89,9 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 					if ((bit === BIT.country || bit === BIT.region) && isShortCode(s)) {
 						const key = wordNorm(s).toUpperCase()
 
-						if (key) codeEntries.set(key, (codeEntries.get(key) ?? 0) | bit)
+						if (key) {
+							codeEntries.set(key, (codeEntries.get(key) ?? 0) | bit)
+						}
 
 						return
 					}
@@ -102,12 +104,18 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 
 				// ── country: COUNTRY_LOOKUP already aggregates canonical names + alpha-2 + alpha-3 + curated
 				// surface forms (lowercase-keyed) — consume it directly so this builder can't drift from codex.
-				for (const surface of COUNTRY_LOOKUP.keys()) add(surface, BIT.country)
+				for (const surface of COUNTRY_LOOKUP.keys()) {
+					add(surface, BIT.country)
+				}
 
 				// ── region (US first cut): state names + USPS abbreviations ──────────────────────────────────
-				for (const name of Object.values(US_STATE_BY_ABBREVIATION)) add(name, BIT.region)
+				for (const name of Object.values(US_STATE_BY_ABBREVIATION)) {
+					add(name, BIT.region)
+				}
 
-				for (const abbrev of US_STATE_ABBREVIATIONS) add(abbrev, BIT.region)
+				for (const abbrev of US_STATE_ABBREVIATIONS) {
+					add(abbrev, BIT.region)
+				}
 
 				// ── po_box designators (case-insensitive even when short — "Box 17" is titlecase) ────────────
 				for (const d of US_PO_BOX_DESIGNATORS) {
@@ -122,7 +130,9 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 				// ── homograph bit: surface is BOTH a country and a region candidate ──────────────────────────
 				for (const map of [entries, codeEntries]) {
 					for (const [key, bits] of map) {
-						if (bits & BIT.country && bits & BIT.region) map.set(key, bits | BIT.homograph)
+						if (bits & BIT.country && bits & BIT.region) {
+							map.set(key, bits | BIT.homograph)
+						}
 					}
 				}
 
@@ -164,7 +174,9 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

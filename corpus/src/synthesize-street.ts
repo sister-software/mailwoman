@@ -238,11 +238,17 @@ export function synthesizeStreetRow(
 				postcode: base.postcode,
 			}
 
-	if (decomposed.prefix) components.street_prefix = decomposed.prefix
+	if (decomposed.prefix) {
+		components.street_prefix = decomposed.prefix
+	}
 
-	if (decomposed.street) components.street = decomposed.street
+	if (decomposed.street) {
+		components.street = decomposed.street
+	}
 
-	if (decomposed.suffix) components.street_suffix = decomposed.suffix
+	if (decomposed.suffix) {
+		components.street_suffix = decomposed.suffix
+	}
 
 	let raw: string
 

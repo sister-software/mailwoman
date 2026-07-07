@@ -91,7 +91,9 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	const missing: ComponentTag[] = []
 
 	for (const tag of Object.keys(entry.components) as ComponentTag[]) {
-		if (!(tag in reconciled)) missing.push(tag)
+		if (!(tag in reconciled)) {
+			missing.push(tag)
+		}
 	}
 
 	return missing

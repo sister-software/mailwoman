@@ -84,7 +84,9 @@ export function createResolverBackend(
 	const aliasDB = resolvePostalCityAliasDBPath(opts.postalCityAliasDB)
 	const postalCityAliases = aliasDB ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDB }) : undefined
 
-	if (postalCityAliases) console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDB}`)
+	if (postalCityAliases) {
+		console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDB}`)
+	}
 
 	return new mod.WOFSqlitePlaceLookup({
 		databasePath: Array.isArray(wp) && wp.length === 1 ? wp[0]! : wp,

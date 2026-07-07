@@ -143,7 +143,9 @@ async function rowsFor(cc: string): Promise<string[]> {
 		// COLUMNS() preserves source-case keys; normalize to lowercase access.
 		const row: Record<string, unknown> = {}
 
-		for (const [k, v] of Object.entries(r)) row[k.toLowerCase()] = v
+		for (const [k, v] of Object.entries(r)) {
+			row[k.toLowerCase()] = v
+		}
 		const raw = assemble(row)
 
 		if (!raw || raw.length < 6 || seen.has(raw)) continue
@@ -172,19 +174,26 @@ for (const [family, countries] of Object.entries(FAMILIES)) {
 		if (rows.length === 0) continue
 
 		if (heldout) {
-			for (const raw of rows) testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc, family })
+			for (const raw of rows) {
+				testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc, family })
+			}
 			heldCC++
 			console.log(`  HELDOUT ${cc} (${family}): ${rows.length} (test-only)`)
 		} else {
 			const nVal = Math.floor(rows.length * 0.1)
 			const nTest = Math.floor(rows.length * 0.1)
 
-			for (const raw of rows.slice(0, nVal)) valAppend.push(raw)
+			for (const raw of rows.slice(0, nVal)) {
+				valAppend.push(raw)
+			}
 
-			for (const raw of rows.slice(nVal, nVal + nTest))
+			for (const raw of rows.slice(nVal, nVal + nTest)) {
 				testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc, family })
+			}
 
-			for (const raw of rows.slice(nVal + nTest)) trainAppend.push(raw)
+			for (const raw of rows.slice(nVal + nTest)) {
+				trainAppend.push(raw)
+			}
 			trainCC++
 			console.log(`  TRAIN ${cc} (${family}): ${rows.length}`)
 		}

@@ -71,7 +71,9 @@ export async function buildGauntletDeps(opts: { modelPath?: string } = {}): Prom
 		// shipped default must match the model-card's files_md5 (the card is the source of truth). A `--candidate`
 		// run intentionally grades a different artifact, so it is exempt. This gate is wired as the release
 		// before:release step (RELEASING.md), so failing here guards BOTH the gate and the ship.
-		if (!opts.modelPath) assertShippedModelMatchesCard(md5)
+		if (!opts.modelPath) {
+			assertShippedModelMatchesCard(md5)
+		}
 	}
 	const classifier = opts.modelPath
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })

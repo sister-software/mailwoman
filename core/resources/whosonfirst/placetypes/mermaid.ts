@@ -92,7 +92,9 @@ function measureMaxDepth(root: Placetype, roles: Iterable<PlacetypeRole> | undef
 		for (const child of node.findChildren(roles)) {
 			const childDepth = depth + 1
 
-			if (childDepth > maxDepth) maxDepth = childDepth
+			if (childDepth > maxDepth) {
+				maxDepth = childDepth
+			}
 
 			if (visited.has(child.name)) continue
 			visited.add(child.name)

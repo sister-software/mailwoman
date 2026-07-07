@@ -42,7 +42,9 @@ const GazetteerPromote: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 	}, [args])
 
 	useEffect(() => {
-		if (link || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (link || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [link, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

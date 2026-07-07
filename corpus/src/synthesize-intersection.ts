@@ -105,7 +105,9 @@ function buildStreetName(random: () => number): string {
 
 	const parts: string[] = []
 
-	if (random() < 0.35) parts.push(pick(DIRECTIONALS, random))
+	if (random() < 0.35) {
+		parts.push(pick(DIRECTIONALS, random))
+	}
 	parts.push(random() < 0.45 ? pick(ORDINALS, random) : pick(STREET_CORES, random))
 	parts.push(pick(SUFFIXES, random))
 
@@ -129,7 +131,9 @@ export function synthesizeIntersectionRow(
 	// Ensure distinct surface forms (and not a substring of each other — alignment needs unambiguous spans).
 	let tries = 0
 
-	while ((b === a || a.includes(b) || b.includes(a)) && tries++ < 8) b = buildStreetName(random)
+	while ((b === a || a.includes(b) || b.includes(a)) && tries++ < 8) {
+		b = buildStreetName(random)
+	}
 
 	if (b === a || a.includes(b) || b.includes(a)) return null
 
@@ -156,7 +160,9 @@ export function synthesizeIntersectionRow(
 		components.locality = base.locality
 		components.region = base.region
 
-		if (includePostcode) components.postcode = base.postcode
+		if (includePostcode) {
+			components.postcode = base.postcode
+		}
 	}
 
 	return { raw, components, locale: "en-US" }
@@ -190,7 +196,9 @@ export function generateIntersectionRows(
 		const base = bases[out.length % bases.length]!
 		const row = synthesizeIntersectionRow(base, { random })
 
-		if (row) out.push(row)
+		if (row) {
+			out.push(row)
+		}
 	}
 
 	return out

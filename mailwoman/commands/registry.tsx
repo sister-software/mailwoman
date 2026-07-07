@@ -351,7 +351,9 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			})()
 			const recs = await ingestRows(rows, mapping, { geocodeAddress: seam })
 
-			for (const record of recs) record.id = `${label}:${record.id}` // namespace ids so cross-source ids never collide
+			for (const record of recs) {
+				record.id = `${label}:${record.id}`
+			} // namespace ids so cross-source ids never collide
 			records.push(...recs)
 			perSource.push(`${label} ${recs.length}`)
 		}

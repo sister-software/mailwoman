@@ -34,8 +34,11 @@ for (const r of rows) {
 	const got: Record<string, string> = {}
 	const collect = (o: Record<string, unknown>): void => {
 		for (const [k, v] of Object.entries(o)) {
-			if (typeof v === "string") got[k] = v
-			else if (v && typeof v === "object") collect(v as Record<string, unknown>)
+			if (typeof v === "string") {
+				got[k] = v
+			} else if (v && typeof v === "object") {
+				collect(v as Record<string, unknown>)
+			}
 		}
 	}
 	collect(json)
@@ -55,7 +58,9 @@ for (const r of rows) {
 		console.log(`\n[${r.class}] ${r.raw}`)
 		console.log(`  got: ${JSON.stringify(got)}`)
 
-		for (const d of diffs) console.log(`  ✗ ${d}`)
+		for (const d of diffs) {
+			console.log(`  ✗ ${d}`)
+		}
 	}
 }
 console.log("\n=== summary ===")

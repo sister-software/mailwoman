@@ -58,9 +58,13 @@ export function jaro(a: string, b: string): number {
 	for (let i = 0; i < la; i++) {
 		if (!aMatched[i]) continue
 
-		while (!bMatched[k]) k++
+		while (!bMatched[k]) {
+			k++
+		}
 
-		if (a[i] !== b[k]) transpositions++
+		if (a[i] !== b[k]) {
+			transpositions++
+		}
 		k++
 	}
 	transpositions /= 2
@@ -89,7 +93,9 @@ export function jaroWinkler(
 	let prefix = 0
 	const limit = Math.min(maxPrefix, a.length, b.length)
 
-	while (prefix < limit && a[prefix] === b[prefix]) prefix++
+	while (prefix < limit && a[prefix] === b[prefix]) {
+		prefix++
+	}
 
 	return base + prefix * weight * (1 - base)
 }

@@ -124,7 +124,9 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 	}, [options, args])
 
 	useEffect(() => {
-		if (lines || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (lines || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [lines, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

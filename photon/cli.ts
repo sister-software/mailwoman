@@ -147,7 +147,9 @@ async function serve(): Promise<void> {
 			for (const place of hierarchy) {
 				const key = PLACETYPE_TO_KEY[place.placetype]
 
-				if (key && properties[key] == null) properties[key] = place.name
+				if (key && properties[key] == null) {
+					properties[key] = place.name
+				}
 			}
 
 			return photonCollection([photonFeature(deepest.lon, deepest.lat, properties)])

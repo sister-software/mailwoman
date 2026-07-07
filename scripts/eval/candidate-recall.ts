@@ -82,17 +82,24 @@ for (const file of files) {
 		} else {
 			const absent = !key || !keyExistsAnywhere.get(key)
 
-			if (absent) st.missAbsent++
-			else st.missElsewhere++
+			if (absent) {
+				st.missAbsent++
+			} else {
+				st.missElsewhere++
+			}
 
 			// strip-fallback: would a qualifier-stripped retry resolve this miss in-country?
 			if (STRIP) {
 				const stripped = normalizeLocalityForKey(stripLocalityQualifier(loc))
 
-				if (stripped && stripped !== key && hitInCountry.get(stripped, country)) st.recovered++
+				if (stripped && stripped !== key && hitInCountry.get(stripped, country)) {
+					st.recovered++
+				}
 			}
 
-			if (st.misses.length < sampleN) st.misses.push({ raw: loc, key, absent })
+			if (st.misses.length < sampleN) {
+				st.misses.push({ raw: loc, key, absent })
+			}
 		}
 		stats.set(country, st)
 	}
@@ -142,7 +149,8 @@ for (const c of countries) {
 	if (!s.misses.length) continue
 	console.log(`\n[${c}]`)
 
-	for (const m of s.misses)
+	for (const m of s.misses) {
 		console.log(`  ${m.absent ? "ABSENT " : "elsewhr"}  ${JSON.stringify(m.raw)} → ${JSON.stringify(m.key)}`)
+	}
 }
 db.close()

@@ -51,8 +51,11 @@ const GNAFAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [progress, setProgress] = useState<string>()
 
 	useEffect(() => {
-		if (error) setImmediate().then(() => process.exit(1))
-		else if (done) setImmediate().then(() => process.exit(0))
+		if (error) {
+			setImmediate().then(() => process.exit(1))
+		} else if (done) {
+			setImmediate().then(() => process.exit(0))
+		}
 	}, [error, done])
 
 	useEffect(() => {

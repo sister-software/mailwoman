@@ -29,7 +29,9 @@ export function readReleaseManifest(dataRoot: string): DataReleaseManifest | nul
 		const out: DataReleaseManifest = {}
 
 		for (const [family, version] of Object.entries(raw as Record<string, unknown>)) {
-			if (typeof version === "string" && version) out[family] = version
+			if (typeof version === "string" && version) {
+				out[family] = version
+			}
 		}
 
 		return Object.keys(out).length > 0 ? out : null

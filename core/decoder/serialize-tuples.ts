@@ -26,7 +26,9 @@ export interface SerializeTuplesOpts {
 function flatten(node: AddressNode, out: AddressNode[]): void {
 	out.push(node)
 
-	for (const child of node.children) flatten(child, out)
+	for (const child of node.children) {
+		flatten(child, out)
+	}
 }
 
 /** Project an `AddressTree` to a source-ordered list of (tag, value) pairs. */
@@ -38,7 +40,9 @@ export function decodeAsTuples(
 ): Array<[ComponentTag | "unknown", string]> {
 	const all: AddressNode[] = []
 
-	for (const root of tree.roots) flatten(root, all)
+	for (const root of tree.roots) {
+		flatten(root, all)
+	}
 
 	const entries: Array<{ start: number; tuple: [ComponentTag | "unknown", string] }> = all.map((n) => ({
 		start: n.start,
@@ -46,7 +50,9 @@ export function decodeAsTuples(
 	}))
 
 	if (opts.includeUnknown) {
-		for (const u of unknownSpans(tree)) entries.push({ start: u.start, tuple: ["unknown", u.value] })
+		for (const u of unknownSpans(tree)) {
+			entries.push({ start: u.start, tuple: ["unknown", u.value] })
+		}
 	}
 
 	entries.sort((a, b) => a.start - b.start)

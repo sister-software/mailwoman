@@ -92,7 +92,9 @@ function loadUsRows(dir: string): Row[] {
 				if (!line.trim()) continue
 				const r = JSON.parse(line) as Row
 
-				if (r.components?.house_number) out.push(r)
+				if (r.components?.house_number) {
+					out.push(r)
+				}
 			}
 		}
 	}
@@ -113,22 +115,30 @@ async function main() {
 	let i = 0
 
 	for (const row of rows) {
-		if (++i % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
+		if (++i % 50 === 0) {
+			;(globalThis as { gc?: () => void }).gc?.()
+		}
 		const gold = norm(row.components.house_number)
 		const pB = decodeAsJSON(await base.parse(row.raw, {})) as Record<string, string>
 		const pC = decodeAsJSON(await cand.parse(row.raw, {})) as Record<string, string>
 		const bOk = norm(pB.house_number) === gold
 		const cOk = norm(pC.house_number) === gold
 
-		if (bOk) baseRight++
+		if (bOk) {
+			baseRight++
+		}
 
-		if (cOk) candRight++
+		if (cOk) {
+			candRight++
+		}
 
 		if (bOk && !cOk) {
 			const went = whereDidItGo(pC, row.components.house_number!)
 			wentCounts[went] = (wentCounts[went] ?? 0) + 1
 
-			if (regressions.length < 40) regressions.push({ raw: row.raw, gold, went })
+			if (regressions.length < 40) {
+				regressions.push({ raw: row.raw, gold, went })
+			}
 		}
 	}
 
@@ -141,7 +151,9 @@ async function main() {
 	console.log(`Where the candidate sent the house number instead:`, JSON.stringify(wentCounts))
 	console.log(`\n--- regressed rows (gold house_number → what the candidate called it) ---`)
 
-	for (const r of regressions) console.log(`  [${r.went}]  gold.hn=${r.gold}  raw=${JSON.stringify(r.raw)}`)
+	for (const r of regressions) {
+		console.log(`  [${r.went}]  gold.hn=${r.gold}  raw=${JSON.stringify(r.raw)}`)
+	}
 }
 
 void main()

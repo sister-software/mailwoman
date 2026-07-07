@@ -77,9 +77,13 @@ export default function CalibrationShowcase({
 				if (!res.ok) throw new Error(`calibration.json ${res.status}`)
 				const json = (await res.json()) as CalibrationData
 
-				if (!cancelled) setData(json)
+				if (!cancelled) {
+					setData(json)
+				}
 			} catch (e) {
-				if (!cancelled) setError(e instanceof Error ? e.message : String(e))
+				if (!cancelled) {
+					setError(e instanceof Error ? e.message : String(e))
+				}
 			}
 		})()
 

@@ -53,9 +53,13 @@ async function main() {
 	const excludeLicenses: RegExp[] = []
 	const exIdx = argv.indexOf("--exclude-licenses")
 
-	if (exIdx >= 0 && argv[exIdx + 1]) excludeLicenses.push(...compileLicenseExcludes(argv[exIdx + 1]!))
+	if (exIdx >= 0 && argv[exIdx + 1]) {
+		excludeLicenses.push(...compileLicenseExcludes(argv[exIdx + 1]!))
+	}
 
-	if (argv.includes("--exclude-share-alike")) excludeLicenses.push(SHARE_ALIKE_PATTERN)
+	if (argv.includes("--exclude-share-alike")) {
+		excludeLicenses.push(SHARE_ALIKE_PATTERN)
+	}
 
 	process.stderr.write(`=== Corpus v${CORPUS_VERSION} build ===\n`)
 	process.stderr.write(`Output: ${OUTPUT}\n`)

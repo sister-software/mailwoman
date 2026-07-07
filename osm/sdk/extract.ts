@@ -73,7 +73,9 @@ function representativePoint(
 	// building footprint this lands a few metres inside the roof — fine for the rooftop tier.
 	let n = ring.length
 
-	if (n > 1 && ring[0]![0] === ring[n - 1]![0] && ring[0]![1] === ring[n - 1]![1]) n--
+	if (n > 1 && ring[0]![0] === ring[n - 1]![0] && ring[0]![1] === ring[n - 1]![1]) {
+		n--
+	}
 	let sx = 0
 	let sy = 0
 
@@ -138,7 +140,9 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 		}
 		const rec = toRecord(feature)
 
-		if (rec) yield rec
+		if (rec) {
+			yield rec
+		}
 	}
 	const code = await exit
 
@@ -151,5 +155,7 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
  * the association gap before deciding to write them.
  */
 export async function* extractAddrPoints(pbfPath: string): AsyncGenerator<OSMAddrRecord> {
-	for (const layer of ADDR_LAYERS) yield* runLayer(pbfPath, layer)
+	for (const layer of ADDR_LAYERS) {
+		yield* runLayer(pbfPath, layer)
+	}
 }

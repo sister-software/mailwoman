@@ -70,11 +70,17 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--shard" && args[i + 1]) out.shardPath = args[++i]
-		else if (a === "--stats" && args[i + 1]) out.statsPath = args[++i]
-		else if (a === "--rules" && args[i + 1]) out.rulesPath = args[++i]
-		else if (a === "--out-md" && args[i + 1]) out.outMd = args[++i]
-		else if (a === "--out-json" && args[i + 1]) out.outJson = args[++i]
+		if (a === "--shard" && args[i + 1]) {
+			out.shardPath = args[++i]
+		} else if (a === "--stats" && args[i + 1]) {
+			out.statsPath = args[++i]
+		} else if (a === "--rules" && args[i + 1]) {
+			out.rulesPath = args[++i]
+		} else if (a === "--out-md" && args[i + 1]) {
+			out.outMd = args[++i]
+		} else if (a === "--out-json" && args[i + 1]) {
+			out.outJson = args[++i]
+		}
 	}
 
 	if (!out.shardPath || !out.statsPath) {
@@ -157,7 +163,9 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 			continue
 		}
 
-		if (row.labels.every((l) => l === "O")) out.allORows++
+		if (row.labels.every((l) => l === "O")) {
+			out.allORows++
+		}
 
 		for (let i = 0; i < row.tokens.length; i++) {
 			const tk = row.tokens[i]!
@@ -416,7 +424,9 @@ function renderReport(args: Args, shard: ShardStats, flags: Flag[]): string {
 			lines.push(`- **[${f.severity.toUpperCase()}]** ${f.detail}`)
 		}
 
-		if (list.length > 20) lines.push(`- ... and ${list.length - 20} more`)
+		if (list.length > 20) {
+			lines.push(`- ... and ${list.length - 20} more`)
+		}
 		lines.push("")
 	}
 
@@ -453,7 +463,9 @@ function main(): void {
 	const report = renderReport(args, shard, flags)
 	console.log(report)
 
-	if (args.outMd) writeFileSync(args.outMd, report)
+	if (args.outMd) {
+		writeFileSync(args.outMd, report)
+	}
 
 	if (args.outJson) {
 		writeFileSync(

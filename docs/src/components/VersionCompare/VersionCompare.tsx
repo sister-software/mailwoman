@@ -84,12 +84,16 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 		if (spanKey) {
 			cn = cBySpan.get(spanKey) ?? null
 
-			if (cn) handledSpans.add(spanKey)
+			if (cn) {
+				handledSpans.add(spanKey)
+			}
 		} else {
 			// Positional fallback for nodes without character spans.
 			cn = cUnspanned[cUnspannedIdx] ?? null
 
-			if (cn) cUnspannedIdx++
+			if (cn) {
+				cUnspannedIdx++
+			}
 		}
 
 		if (!cn) {

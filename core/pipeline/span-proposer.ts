@@ -129,19 +129,27 @@ function tokenize(text: string): RawToken[] {
 	let i = 0
 
 	while (i < text.length) {
-		while (i < text.length && /\s/.test(text[i]!)) i++
+		while (i < text.length && /\s/.test(text[i]!)) {
+			i++
+		}
 
 		if (i >= text.length) break
 		const start = i
 
-		while (i < text.length && !/\s/.test(text[i]!)) i++
+		while (i < text.length && !/\s/.test(text[i]!)) {
+			i++
+		}
 		const body = text.slice(start, i)
 		let s = 0
 		let e = body.length
 
-		while (s < e && EDGE_PUNCT.test(body[s]!)) s++
+		while (s < e && EDGE_PUNCT.test(body[s]!)) {
+			s++
+		}
 
-		while (e > s && EDGE_PUNCT.test(body[e - 1]!)) e--
+		while (e > s && EDGE_PUNCT.test(body[e - 1]!)) {
+			e--
+		}
 		out.push({
 			body,
 			start,
@@ -170,8 +178,9 @@ function findBalancedPairs(text: string, open: string, close: string): Array<{ o
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i]!
 
-		if (ch === open) stack.push(i)
-		else if (ch === close) {
+		if (ch === open) {
+			stack.push(i)
+		} else if (ch === close) {
 			const o = stack.pop()
 
 			if (o === undefined) return null
@@ -186,12 +195,17 @@ function findBalancedPairs(text: string, open: string, close: string): Array<{ o
 function findSameCharPairs(text: string, ch: string): Array<{ open: number; close: number }> | null {
 	const positions: number[] = []
 
-	for (let i = 0; i < text.length; i++) if (text[i] === ch) positions.push(i)
+	for (let i = 0; i < text.length; i++)
+		if (text[i] === ch) {
+			positions.push(i)
+		}
 
 	if (positions.length % 2 !== 0) return null
 	const out: Array<{ open: number; close: number }> = []
 
-	for (let i = 0; i < positions.length; i += 2) out.push({ open: positions[i]!, close: positions[i + 1]! })
+	for (let i = 0; i < positions.length; i += 2) {
+		out.push({ open: positions[i]!, close: positions[i + 1]! })
+	}
 
 	return out
 }

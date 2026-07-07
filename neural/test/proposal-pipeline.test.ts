@@ -128,7 +128,9 @@ describe("filterByPolicy — policy passthrough", () => {
 		const filtered = filterByPolicy(proposals, registry, "en-us")
 		expect(filtered).toHaveLength(2)
 
-		for (const p of filtered) expect(p.source).toBe("rule")
+		for (const p of filtered) {
+			expect(p.source).toBe("rule")
+		}
 	})
 
 	test("per-component neural_only keeps only neural for that component, defaults for others", () => {

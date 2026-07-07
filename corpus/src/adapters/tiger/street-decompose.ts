@@ -44,7 +44,9 @@ function loadDictionary(filename: string): Set<string> {
 				for (const form of trimmed.split("|")) {
 					const f = form.trim().toLowerCase()
 
-					if (f) set.add(f)
+					if (f) {
+						set.add(f)
+					}
 				}
 			}
 

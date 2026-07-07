@@ -94,12 +94,16 @@ export function toPostalAddress(components: ComponentDict, opts: ToPostalAddress
 		canonicalKey: canonicalKey(components),
 	}
 
-	if (opts.raw !== undefined) record.raw = opts.raw
+	if (opts.raw !== undefined) {
+		record.raw = opts.raw
+	}
 
 	if (opts.format !== false) {
 		const formatted = formatAddress(components, country, opts.formatOptions ?? { separator: ", " })
 
-		if (formatted) record.formatted = formatted
+		if (formatted) {
+			record.formatted = formatted
+		}
 	}
 
 	return record

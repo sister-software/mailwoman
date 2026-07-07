@@ -199,7 +199,9 @@ async function main(): Promise<void> {
 				total += 1
 			}
 
-			if (total >= n * 2) done = true
+			if (total >= n * 2) {
+				done = true
+			}
 		}
 	}
 

@@ -93,9 +93,13 @@ function* streetVariants(row: TigerStreetRow): Iterable<{
 		street: decomposed.street,
 	}
 
-	if (decomposed.prefix) baseComponents.street_prefix = decomposed.prefix
+	if (decomposed.prefix) {
+		baseComponents.street_prefix = decomposed.prefix
+	}
 
-	if (decomposed.suffix) baseComponents.street_suffix = decomposed.suffix
+	if (decomposed.suffix) {
+		baseComponents.street_suffix = decomposed.suffix
+	}
 
 	if (!zipl && !zipr) {
 		yield { components: baseComponents, variantKey: "no-zip" }
@@ -112,9 +116,13 @@ function* streetVariants(row: TigerStreetRow): Iterable<{
 		return
 	}
 
-	if (zipl) yield { components: { ...baseComponents, postcode: zipl }, variantKey: `zipl-${zipl}` }
+	if (zipl) {
+		yield { components: { ...baseComponents, postcode: zipl }, variantKey: `zipl-${zipl}` }
+	}
 
-	if (zipr && zipr !== zipl) yield { components: { ...baseComponents, postcode: zipr }, variantKey: `zipr-${zipr}` }
+	if (zipr && zipr !== zipl) {
+		yield { components: { ...baseComponents, postcode: zipr }, variantKey: `zipr-${zipr}` }
+	}
 }
 
 /** Three locality-level variants, mirroring `wof-admin`'s fan-out. */

@@ -97,12 +97,18 @@ for (const input of inputs) {
 	if (neuralHadStreet && !finalHasStreet) {
 		nStreetDropped++
 
-		if (arbHadStreet) nStreetDroppedBySuffix++ // present after arbitration, gone after coherence = overlap eviction
+		if (arbHadStreet) {
+			nStreetDroppedBySuffix++
+		} // present after arbitration, gone after coherence = overlap eviction
 	}
 
-	if (val(nProps, "locality") !== val(coherent, "locality")) nLocChanged++
+	if (val(nProps, "locality") !== val(coherent, "locality")) {
+		nLocChanged++
+	}
 
-	if (val(nProps, "region") !== val(coherent, "region")) nRegChanged++
+	if (val(nProps, "region") !== val(coherent, "region")) {
+		nRegChanged++
+	}
 
 	if (verbose) {
 		console.log(`\n=== ${input}`)

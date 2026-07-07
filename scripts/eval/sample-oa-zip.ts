@@ -152,7 +152,9 @@ async function main(): Promise<void> {
 		} else {
 			const j = rng.randint(0, seen - 1)
 
-			if (j < target) reservoir[j] = row
+			if (j < target) {
+				reservoir[j] = row
+			}
 		}
 	}
 

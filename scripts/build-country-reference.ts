@@ -66,7 +66,9 @@ for (const country of countries) {
 	const entry: CountryReferenceEntry = {}
 	const cc = callingCode(country)
 
-	if (cc != null) entry.callingCode = cc
+	if (cc != null) {
+		entry.callingCode = cc
+	}
 	const currencyCodes = Object.keys(country.currencies ?? {}).sort()
 
 	if (currencyCodes.length) {
@@ -74,12 +76,18 @@ for (const country of countries) {
 		const info = country.currencies![code] ?? {}
 		entry.currency = { isoCode: code }
 
-		if (info.name) entry.currency.name = info.name
+		if (info.name) {
+			entry.currency.name = info.name
+		}
 
-		if (info.symbol) entry.currency.symbol = info.symbol
+		if (info.symbol) {
+			entry.currency.symbol = info.symbol
+		}
 	}
 
-	if (Object.keys(entry).length) rows[alpha2] = entry
+	if (Object.keys(entry).length) {
+		rows[alpha2] = entry
+	}
 }
 
 const serialize = (o: CountryReferenceEntry): string =>

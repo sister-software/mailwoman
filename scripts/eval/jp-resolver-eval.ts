@@ -47,7 +47,9 @@ const gnAdmin2 = new Map<string, string>()
 for (const line of readFileSync(dataRootPath("geonames", "JP.txt"), "utf8").split("\n")) {
 	const f = line.split("\t")
 
-	if (f.length > 5 && f[1]) gnAdmin2.set(f[1]!, f[5]!)
+	if (f.length > 5 && f[1]) {
+		gnAdmin2.set(f[1]!, f[5]!)
+	}
 }
 
 let resolved = 0
@@ -63,13 +65,17 @@ for (const r of sample) {
 	resolved += 1
 	const nm = norm(top.name)
 
-	if (nm.length >= 2 && norm(r.muni).includes(nm)) agreeKen += 1
+	if (nm.length >= 2 && norm(r.muni).includes(nm)) {
+		agreeKen += 1
+	}
 	const gn = gnAdmin2.get(r.pc)
 
 	if (gn) {
 		crossN += 1
 
-		if (nm.length >= 2 && norm(gn).includes(nm)) crossAgree += 1
+		if (nm.length >= 2 && norm(gn).includes(nm)) {
+			crossAgree += 1
+		}
 	}
 }
 console.log(`JP end-to-end (text=city token + postcode), n=${sample.length}:`)

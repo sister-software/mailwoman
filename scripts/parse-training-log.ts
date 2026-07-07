@@ -67,9 +67,13 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--input" && args[i + 1]) out.inputPath = args[++i]
-		else if (a === "--out" && args[i + 1]) out.outPath = args[++i]
-		else if (a === "--run-name" && args[i + 1]) out.runName = args[++i]
+		if (a === "--input" && args[i + 1]) {
+			out.inputPath = args[++i]
+		} else if (a === "--out" && args[i + 1]) {
+			out.outPath = args[++i]
+		} else if (a === "--run-name" && args[i + 1]) {
+			out.runName = args[++i]
+		}
 	}
 
 	if (!out.runName) {
@@ -110,7 +114,9 @@ function parseCSV(text: string, runName: string): TrainPoint[] {
 	const perTagIdx: Array<{ key: string; idx: number }> = []
 
 	for (let i = 0; i < header.length; i++) {
-		if (header[i]!.startsWith("f1.")) perTagIdx.push({ key: header[i]!, idx: i })
+		if (header[i]!.startsWith("f1.")) {
+			perTagIdx.push({ key: header[i]!, idx: i })
+		}
 	}
 
 	const out: TrainPoint[] = []
@@ -123,21 +129,31 @@ function parseCSV(text: string, runName: string): TrainPoint[] {
 		const point: TrainPoint = { run: runName, step }
 		const tl = trainLossIdx >= 0 ? cells[trainLossIdx] : ""
 
-		if (tl) point.train_loss = parseFloat(tl)
+		if (tl) {
+			point.train_loss = parseFloat(tl)
+		}
 		const vl = valLossIdx >= 0 ? cells[valLossIdx] : ""
 
-		if (vl) point.val_loss = parseFloat(vl)
+		if (vl) {
+			point.val_loss = parseFloat(vl)
+		}
 		const mf = macroF1Idx >= 0 ? cells[macroF1Idx] : ""
 
-		if (mf) point.macro_f1 = parseFloat(mf)
+		if (mf) {
+			point.macro_f1 = parseFloat(mf)
+		}
 		const lr = lrIdx >= 0 ? cells[lrIdx] : ""
 
-		if (lr) point.lr = parseFloat(lr)
+		if (lr) {
+			point.lr = parseFloat(lr)
+		}
 
 		for (const { key, idx } of perTagIdx) {
 			const v = cells[idx]
 
-			if (v) point[key as `f1.${string}`] = parseFloat(v)
+			if (v) {
+				point[key as `f1.${string}`] = parseFloat(v)
+			}
 		}
 		out.push(point)
 	}
@@ -199,8 +215,11 @@ function main(): void {
 	const points = isCSV ? parseCSV(text, args.runName) : parse(text, args.runName)
 	const json = JSON.stringify(points, null, 2)
 
-	if (args.outPath) writeFileSync(args.outPath, json)
-	else process.stdout.write(json + "\n")
+	if (args.outPath) {
+		writeFileSync(args.outPath, json)
+	} else {
+		process.stdout.write(json + "\n")
+	}
 	console.error(`Parsed ${points.length} records for run '${args.runName}' (${isCSV ? "csv" : "modal-log"} format).`)
 }
 

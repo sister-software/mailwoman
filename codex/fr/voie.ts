@@ -73,7 +73,9 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 	for (const canonical of Object.keys(FR_VOIE_TYPES) as FrenchVoieType[]) {
 		out.add(fold(canonical))
 
-		for (const abbr of FR_VOIE_TYPES[canonical]) out.add(fold(abbr))
+		for (const abbr of FR_VOIE_TYPES[canonical]) {
+			out.add(fold(abbr))
+		}
 	}
 
 	return out

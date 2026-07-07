@@ -50,14 +50,17 @@ function incDecimalString(s: string): string {
 	let i = a.length - 1
 
 	for (; i >= 0; i--) {
-		if (a[i] === "9") a[i] = "0"
-		else {
+		if (a[i] === "9") {
+			a[i] = "0"
+		} else {
 			a[i] = String(Number(a[i]) + 1)
 			break
 		}
 	}
 
-	if (i < 0) a.unshift("1")
+	if (i < 0) {
+		a.unshift("1")
+	}
 
 	return a.join("")
 }
@@ -91,10 +94,12 @@ function pyRound(x: number, nd: number = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) roundUp = true
-	else if (first === 5) {
-		if (/[1-9]/.test(rest.slice(1))) roundUp = true
-		else {
+	if (first > 5) {
+		roundUp = true
+	} else if (first === 5) {
+		if (/[1-9]/.test(rest.slice(1))) {
+			roundUp = true
+		} else {
 			// exact half → round to even
 			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
@@ -102,7 +107,9 @@ function pyRound(x: number, nd: number = 0): number {
 	}
 	let combined = intPart + keep
 
-	if (roundUp) combined = incDecimalString(combined)
+	if (roundUp) {
+		combined = incDecimalString(combined)
+	}
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
@@ -137,7 +144,10 @@ function aliasesFor(props: Record<string, unknown>, canonical: string): string[]
 		if ((isNameLabel || ALT_NAME_KEYS.has(k)) && typeof v === "string") {
 			out.add(v)
 		} else if (isNameLabel && Array.isArray(v)) {
-			for (const x of v) if (typeof x === "string") out.add(x)
+			for (const x of v)
+				if (typeof x === "string") {
+					out.add(x)
+				}
 		}
 	}
 	out.delete(canonical)
@@ -149,8 +159,11 @@ function aliasesFor(props: Record<string, unknown>, canonical: string): string[]
 function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 	const a = m.get(k)
 
-	if (a) a.push(v)
-	else m.set(k, [v])
+	if (a) {
+		a.push(v)
+	} else {
+		m.set(k, [v])
+	}
 }
 
 /** UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`. */
@@ -225,7 +238,9 @@ async function finalize(output: string): Promise<void> {
 	// Ordered (SQL ORDER BY country) summary of {rows, containing}.
 	const summary = new Map<string, { rows: number; containing: number }>()
 
-	for (const c of counts) summary.set(c.country, { rows: Number(c.n), containing: Number(c.con || 0) })
+	for (const c of counts) {
+		summary.set(c.country, { rows: Number(c.n), containing: Number(c.con || 0) })
+	}
 
 	// `countries` meta value: Python `json.dumps(summary, sort_keys=True)` → sorted keys, inner keys
 	// alphabetical (containing < rows), separators ", " / ": ".
@@ -268,7 +283,9 @@ async function finalize(output: string): Promise<void> {
 	]
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
 
-	for (const [k, v] of meta) insMeta.run(k, v)
+	for (const [k, v] of meta) {
+		insMeta.run(k, v)
+	}
 
 	db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
 	db.exec("ANALYZE")
@@ -321,7 +338,9 @@ async function build(args: Args): Promise<void> {
 					xs.push(pos[0]!)
 					ys.push(pos[1]!)
 				} else {
-					for (const cc of c as unknown[]) walk(cc)
+					for (const cc of c as unknown[]) {
+						walk(cc)
+					}
 				}
 			}
 			walk((geom as { coordinates: unknown }).coordinates)
@@ -431,7 +450,9 @@ async function build(args: Args): Promise<void> {
 				for (const idx of grid.get(`${gx + dx}|${gy + dy}`) ?? []) {
 					const d = haversineKm(plat, plon, locs[idx]!.clat, locs[idx]!.clon)
 
-					if (d <= radiusKm) cand.push({ d, idx })
+					if (d <= radiusKm) {
+						cand.push({ d, idx })
+					}
 				}
 			}
 		}

@@ -79,7 +79,9 @@ const tokenizeRaw = (raw: string): RawTok[] => {
 	const re = /[^\s,;/]+/g
 	let m: RegExpExecArray | null
 
-	while ((m = re.exec(raw)) !== null) toks.push({ text: m[0], start: m.index, end: m.index + m[0].length })
+	while ((m = re.exec(raw)) !== null) {
+		toks.push({ text: m[0], start: m.index, end: m.index + m[0].length })
+	}
 
 	return toks
 }
@@ -89,10 +91,13 @@ const flatten = (roots: unknown[]): FlatNode[] => {
 	const out: FlatNode[] = []
 	const walk = (ns: unknown[]) => {
 		for (const n of ns as { tag?: string; confidence?: number; start?: number; end?: number; children?: unknown[] }[]) {
-			if (n.tag && n.start != null && n.end != null)
+			if (n.tag && n.start != null && n.end != null) {
 				out.push({ tag: n.tag, conf: n.confidence ?? 0, start: n.start, end: n.end })
+			}
 
-			if (n.children) walk(n.children)
+			if (n.children) {
+				walk(n.children)
+			}
 		}
 	}
 	walk(roots)
@@ -222,7 +227,9 @@ async function main() {
 				const pcHits = await pcLookup.findPlace({ text: pc, country: cc, limit: 2 })
 				const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
-				if (a) anchor = { lat: a.lat, lon: a.lon }
+				if (a) {
+					anchor = { lat: a.lat, lon: a.lon }
+				}
 			}
 			const hit = await spanRescore(row.raw, (tree as { roots: unknown[] }).roots, lookup, cc, pc, anchor, GATE_KM)
 
@@ -231,17 +238,22 @@ async function main() {
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()
 			const isGold = norm(hit.text) === norm(gold)
 
-			if (isGold) s.gold++
+			if (isGold) {
+				s.gold++
+			}
 			const tLat = Number(row.lat),
 				tLon = Number(row.lon)
 			const dist = Number.isFinite(tLat) && Number.isFinite(tLon) ? haversineKm(tLat, tLon, hit.lat, hit.lon) : NaN
 
-			if (Number.isFinite(dist)) km.push(dist)
+			if (Number.isFinite(dist)) {
+				km.push(dist)
+			}
 
-			if ($public.DEBUG && !isGold)
+			if ($public.DEBUG && !isGold) {
 				console.error(
 					`  [${cc}] WRONG: raw="${row.raw}" gold="${gold}" → recovered="${hit.text}" pc=${pc ?? "-"} dist=${dist.toFixed(0)}km`
 				)
+			}
 		}
 		const kmStr = km.length ? `${pctile(km, 50).toFixed(1)}/${pctile(km, 90).toFixed(0)} (n${km.length})` : "—"
 		const lift = s.unres ? `${((100 * s.recov) / s.unres).toFixed(0)}% of unres recovered` : "—"

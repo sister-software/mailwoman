@@ -153,61 +153,101 @@ export interface OpenCageAnnotations {
 export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 	const out: OpenCageAnnotations = {}
 
-	if (set.dms) out.DMS = { lat: set.dms.lat, lng: set.dms.lon }
+	if (set.dms) {
+		out.DMS = { lat: set.dms.lat, lng: set.dms.lon }
+	}
 
-	if (set.mgrs != null) out.MGRS = set.mgrs
+	if (set.mgrs != null) {
+		out.MGRS = set.mgrs
+	}
 
-	if (set.maidenhead != null) out.Maidenhead = set.maidenhead
+	if (set.maidenhead != null) {
+		out.Maidenhead = set.maidenhead
+	}
 
-	if (set.mercator) out.Mercator = { x: set.mercator.x, y: set.mercator.y }
+	if (set.mercator) {
+		out.Mercator = { x: set.mercator.x, y: set.mercator.y }
+	}
 
-	if (set.geohash != null) out.geohash = set.geohash
+	if (set.geohash != null) {
+		out.geohash = set.geohash
+	}
 
-	if (set.qiblaBearing != null) out.qibla = set.qiblaBearing
+	if (set.qiblaBearing != null) {
+		out.qibla = set.qiblaBearing
+	}
 
 	if (set.sun) {
 		out.sun = {}
 
-		if (set.sun.rise != null) out.sun.rise = { apparent: set.sun.rise }
+		if (set.sun.rise != null) {
+			out.sun.rise = { apparent: set.sun.rise }
+		}
 
-		if (set.sun.set != null) out.sun.set = { apparent: set.sun.set }
+		if (set.sun.set != null) {
+			out.sun.set = { apparent: set.sun.set }
+		}
 	}
 
-	if (set.callingCode != null) out.callingcode = set.callingCode
+	if (set.callingCode != null) {
+		out.callingcode = set.callingCode
+	}
 
 	if (set.currency) {
 		out.currency = { iso_code: set.currency.isoCode }
 
-		if (set.currency.name != null) out.currency.name = set.currency.name
+		if (set.currency.name != null) {
+			out.currency.name = set.currency.name
+		}
 
-		if (set.currency.symbol != null) out.currency.symbol = set.currency.symbol
+		if (set.currency.symbol != null) {
+			out.currency.symbol = set.currency.symbol
+		}
 	}
 
-	if (set.flag != null) out.flag = set.flag
+	if (set.flag != null) {
+		out.flag = set.flag
+	}
 
 	if (set.timezone) {
 		out.timezone = { name: set.timezone.name }
 
-		if (set.timezone.offsetSec != null) out.timezone.offset_sec = set.timezone.offsetSec
+		if (set.timezone.offsetSec != null) {
+			out.timezone.offset_sec = set.timezone.offsetSec
+		}
 
-		if (set.timezone.offsetString != null) out.timezone.offset_string = set.timezone.offsetString
+		if (set.timezone.offsetString != null) {
+			out.timezone.offset_string = set.timezone.offsetString
+		}
 	}
 
 	if (set.nuts) {
 		out.NUTS = {}
 
-		if (set.nuts.level1 != null) out.NUTS.NUTS1 = { code: set.nuts.level1 }
+		if (set.nuts.level1 != null) {
+			out.NUTS.NUTS1 = { code: set.nuts.level1 }
+		}
 
-		if (set.nuts.level2 != null) out.NUTS.NUTS2 = { code: set.nuts.level2 }
+		if (set.nuts.level2 != null) {
+			out.NUTS.NUTS2 = { code: set.nuts.level2 }
+		}
 
-		if (set.nuts.level3 != null) out.NUTS.NUTS3 = { code: set.nuts.level3 }
+		if (set.nuts.level3 != null) {
+			out.NUTS.NUTS3 = { code: set.nuts.level3 }
+		}
 	}
 
-	if (set.unLocode != null) out.UN_LOCODE = set.unLocode
+	if (set.unLocode != null) {
+		out.UN_LOCODE = set.unLocode
+	}
 
-	if (set.wikidata != null) out.wikidata = set.wikidata
+	if (set.wikidata != null) {
+		out.wikidata = set.wikidata
+	}
 
-	if (set.fips != null) out.FIPS = { county: set.fips }
+	if (set.fips != null) {
+		out.FIPS = { county: set.fips }
+	}
 
 	return out
 }

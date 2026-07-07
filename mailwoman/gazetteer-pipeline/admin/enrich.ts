@@ -65,7 +65,9 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 		for (let i = 0; i < Math.min(keys.length, names.length); i++) {
 			const n = names[i]?.trim().toLowerCase()
 
-			if (n && keys[i]) nameToAbbr.set(n, keys[i]!)
+			if (n && keys[i]) {
+				nameToAbbr.set(n, keys[i]!)
+			}
 		}
 		const regions = db.prepare("SELECT id, name FROM spr WHERE placetype='region' AND country = ?").all(cc) as Array<{
 			id: number

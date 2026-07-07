@@ -351,7 +351,9 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 		})
 
 		// Pad or truncate to column count
-		while (values.length < columns.length) values.push(null)
+		while (values.length < columns.length) {
+			values.push(null)
+		}
 		values.length = columns.length
 
 		batch.push(values)

@@ -142,7 +142,9 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 			placetypes: ["country", "region", "county", "locality"],
 			languages: ["eng", ""],
 			onProgress: (phase, detail) => {
-				if (phase === "done") console.log(`  ${phase}: ${detail}`)
+				if (phase === "done") {
+					console.log(`  ${phase}: ${detail}`)
+				}
 			},
 		})
 		original = matcher

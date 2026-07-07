@@ -161,7 +161,9 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 
 	const ignore = ["**/*-alt-*"]
 
-	if (!placetypes.has("postalcode")) ignore.push("**/whosonfirst-data-postalcode-*/**")
+	if (!placetypes.has("postalcode")) {
+		ignore.push("**/whosonfirst-data-postalcode-*/**")
+	}
 	const filePaths = await FastGlob("**/data/**/*.geojson", {
 		cwd: opts.dataDir,
 		absolute: true,
@@ -253,7 +255,9 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 		processed++
 		commitIfNeeded()
 
-		if (processed % 25_000 === 0) opts.onProgress?.(processed, skipped, filePaths.length)
+		if (processed % 25_000 === 0) {
+			opts.onProgress?.(processed, skipped, filePaths.length)
+		}
 	}
 
 	commitIfNeeded(true)

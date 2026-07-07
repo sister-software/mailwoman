@@ -72,7 +72,9 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 					.prepare("SELECT postcode, locality_id FROM postcode_locality WHERE is_containing = 1")
 					.all() as unknown as Array<{ postcode: string; locality_id: number }>) {
 					// First containing locality per postcode wins (postcodes with one containing polygon — the norm).
-					if (!pcToLocality.has(String(r.postcode))) pcToLocality.set(String(r.postcode), Number(r.locality_id))
+					if (!pcToLocality.has(String(r.postcode))) {
+						pcToLocality.set(String(r.postcode), Number(r.locality_id))
+					}
 				}
 				pcl.close()
 
@@ -152,7 +154,9 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

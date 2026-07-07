@@ -50,7 +50,9 @@ async function fetchPage(offset: number): Promise<Loc[]> {
 
 const tmp = `${OUT}.tmp-${process.pid}`
 
-if (existsSync(tmp)) rmSync(tmp)
+if (existsSync(tmp)) {
+	rmSync(tmp)
+}
 const sink = createWriteStream(tmp, { encoding: "utf8" })
 sink.write("address;city;state;zip;lat;lon\n")
 
@@ -87,10 +89,14 @@ for (let offset = 0; ; offset += PAGE) {
 
 await new Promise<void>((resolvePromise) => sink.end(resolvePromise))
 
-if (existsSync(OUT)) renameSync(OUT, `${OUT}.prev`)
+if (existsSync(OUT)) {
+	renameSync(OUT, `${OUT}.prev`)
+}
 renameSync(tmp, OUT)
 
-if (existsSync(`${OUT}.prev`)) rmSync(`${OUT}.prev`)
+if (existsSync(`${OUT}.prev`)) {
+	rmSync(`${OUT}.prev`)
+}
 
 console.error(
 	`[fdic] DONE ${OUT} — ${written.toLocaleString()} of ${total.toLocaleString()} branches (${dropped.toLocaleString()} dropped)`

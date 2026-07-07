@@ -268,7 +268,9 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		const dropped = await loadRows()
 		expect(dropped.find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeUndefined()
 
-		for (const r of dropped) expect(r.license).not.toMatch(/^ODbL|^CC-BY-SA|^CC-SA/i)
+		for (const r of dropped) {
+			expect(r.license).not.toMatch(/^ODbL|^CC-BY-SA|^CC-SA/i)
+		}
 	})
 
 	it("passes share-alike rows through when allowShareAlike is set", async () => {

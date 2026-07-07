@@ -287,7 +287,9 @@ export function trigrams(s: string): Set<string> {
 	const t = ` ${s} `
 	const out = new Set<string>()
 
-	for (let i = 0; i + 3 <= t.length; i++) out.add(t.slice(i, i + 3))
+	for (let i = 0; i + 3 <= t.length; i++) {
+		out.add(t.slice(i, i + 3))
+	}
 
 	return out
 }
@@ -304,7 +306,10 @@ export function trigramJaccard(a: string, b: string): number {
 	if (A.size === 0 || B.size === 0) return 0
 	let inter = 0
 
-	for (const x of A) if (B.has(x)) inter++
+	for (const x of A)
+		if (B.has(x)) {
+			inter++
+		}
 
 	return inter / (A.size + B.size - inter)
 }
@@ -604,8 +609,11 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 					}
 					const list = map.get(r.adminID)
 
-					if (list) list.push(candidate)
-					else map.set(r.adminID, [candidate])
+					if (list) {
+						list.push(candidate)
+					} else {
+						map.set(r.adminID, [candidate])
+					}
 				}
 			}
 			this.#coincidentRolesCache = map
@@ -717,11 +725,15 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			if (matching.length > 1) {
 				const pools: PlaceCandidate[][] = []
 
-				for (const sh of matching) pools.push(await this.#fuzzyNameMatch(query, sh))
+				for (const sh of matching) {
+					pools.push(await this.#fuzzyNameMatch(query, sh))
+				}
 				const byID = new Map<PlaceCandidate["id"], PlaceCandidate>()
 
 				for (const c of pools.flat()) {
-					if (!byID.has(c.id)) byID.set(c.id, c)
+					if (!byID.has(c.id)) {
+						byID.set(c.id, c)
+					}
 				}
 				const merged = [...byID.values()]
 				merged.sort(
@@ -869,7 +881,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const seen = new Set(rawRows.map((r) => r.id))
 
 			for (const row of popStmt.all(...popParams, POPULATION_FETCH_LIMIT) as unknown as RawSearchRow[]) {
-				if (!seen.has(row.id)) rawRows.push(row)
+				if (!seen.has(row.id)) {
+					rawRows.push(row)
+				}
 			}
 		}
 
@@ -913,9 +927,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			if (row.lat !== null && row.lon !== null && !(row.lat === 0 && row.lon === 0)) {
 				const hints: Array<{ lat: number; lon: number; weight: number }> = []
 
-				if (query.near) hints.push({ lat: query.near.lat, lon: query.near.lon, weight: 1 })
+				if (query.near) {
+					hints.push({ lat: query.near.lat, lon: query.near.lon, weight: 1 })
+				}
 
-				for (const b of query.bias ?? []) hints.push({ lat: b.lat, lon: b.lon, weight: b.weight ?? 1 })
+				for (const b of query.bias ?? []) {
+					hints.push({ lat: b.lat, lon: b.lon, weight: b.weight ?? 1 })
+				}
 
 				let scoreTerm = 0
 
@@ -960,9 +978,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				score,
 			}
 
-			if (distanceKm !== undefined) candidate.distanceKm = distanceKm
+			if (distanceKm !== undefined) {
+				candidate.distanceKm = distanceKm
+			}
 
-			if (row.population !== null && row.population > 0) candidate.population = row.population
+			if (row.population !== null && row.population > 0) {
+				candidate.population = row.population
+			}
 
 			// Candidate bbox — parity with the WASM lookup (resolver-wof-wasm/lookup.ts), whose
 			// consumers (the demo cascade's region constraint) read it. Without this the Node
@@ -1002,7 +1024,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// Stamp the tier onto every candidate (not just when the tiering sort fires) so a downstream
 			// re-rank — #369's postcode-anchor country pin in `resolveTree` — can keep the country pin from
 			// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
-			for (const c of candidates) c.exactMatch = exactIds.has(c.id as number)
+			for (const c of candidates) {
+				c.exactMatch = exactIds.has(c.id as number)
+			}
 
 			if (exactIds.size > 0) {
 				// #905: WITHIN the exact tier, population is the PRIMARY key and the weighted score
@@ -1091,7 +1115,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		if (query.country) {
 			const cid = this.#countryWOFId(query.country)
 
-			if (cid !== null) chain.push(cid)
+			if (cid !== null) {
+				chain.push(cid)
+			}
 		}
 
 		return resolveConvention(this.#conventionSource, chain)
@@ -1169,17 +1195,24 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				if (!key) continue
 				const bag = postalAliasByGeo.get(key)
 
-				if (bag) bag.push(a.postalCity)
-				else postalAliasByGeo.set(key, [a.postalCity])
+				if (bag) {
+					bag.push(a.postalCity)
+				} else {
+					postalAliasByGeo.set(key, [a.postalCity])
+				}
 			}
 		}
 
 		const merged = new Map<number, PlaceCandidate>()
 
-		for (const c of ftsCands) merged.set(c.id as number, c)
+		for (const c of ftsCands) {
+			merged.set(c.id as number, c)
+		}
 		const missing = [...pcInfo.keys()].filter((id) => !merged.has(id))
 
-		for (const row of this.#fetchLocalitiesByID(missing)) merged.set(row.id, row)
+		for (const row of this.#fetchLocalitiesByID(missing)) {
+			merged.set(row.id, row)
+		}
 
 		const scored: Array<PlaceCandidate & { exact: boolean }> = []
 
@@ -1221,7 +1254,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const anchor = anchorRow ? merged.get(anchorRow.id) : undefined
 
 			if (anchor && (top.id as number) !== anchorRow!.id) {
-				if (haversineKm(top.lat, top.lon, anchor.lat, anchor.lon) > CF_MISMATCH_KM) top.mismatch = true
+				if (haversineKm(top.lat, top.lon, anchor.lat, anchor.lon) > CF_MISMATCH_KM) {
+					top.mismatch = true
+				}
 			}
 		}
 
@@ -1260,7 +1295,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				score: 0,
 			}
 
-			if (row.population !== null && row.population > 0) c.population = row.population
+			if (row.population !== null && row.population > 0) {
+				c.population = row.population
+			}
 
 			return c
 		})
@@ -1287,7 +1324,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				)
 				.all(...ids, trimmed) as Array<{ id: number }>
 
-			for (const r of rows) out.add(r.id)
+			for (const r of rows) {
+				out.add(r.id)
+			}
 
 			return out
 		} catch {
@@ -1304,7 +1343,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const needle = norm(trimmed)
 
 			for (const r of rows) {
-				if (r.name !== null && norm(r.name) === needle) out.add(r.id)
+				if (r.name !== null && norm(r.name) === needle) {
+					out.add(r.id)
+				}
 			}
 			// Alias pass via the shared bag parser (#523). Separated bags (built since #523) get a true
 			// per-alias equality check, ungated — matching the `names`-table branch above, where an
@@ -1315,7 +1356,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const anyCanonicalExact = out.size > 0
 
 			for (const r of rows) {
-				if (aliasBagExactMatch(r.alt_names, needle, anyCanonicalExact)) out.add(r.id)
+				if (aliasBagExactMatch(r.alt_names, needle, anyCanonicalExact)) {
+					out.add(r.id)
+				}
 			}
 		} catch {
 			// Shard without place_search either → no exact-match tier. Falls back to weighted-sum order.
@@ -1344,7 +1387,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				)
 				.all(...ids, trimmed) as Array<{ id: number }>
 
-			for (const r of rows) out.add(r.id)
+			for (const r of rows) {
+				out.add(r.id)
+			}
 		} catch {
 			// Pre-#940 gazetteer (no `official` column) or a names-less slim shard — feature inert.
 		}

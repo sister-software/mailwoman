@@ -85,14 +85,20 @@ const GEO_PRECISION = 6
 function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 	const parts: string[] = []
 
-	if (opts.includeOffsets) parts.push(`start="${node.start}"`, `end="${node.end}"`)
+	if (opts.includeOffsets) {
+		parts.push(`start="${node.start}"`, `end="${node.end}"`)
+	}
 
-	if (opts.includeConf) parts.push(`conf="${node.confidence.toFixed(2)}"`)
+	if (opts.includeConf) {
+		parts.push(`conf="${node.confidence.toFixed(2)}"`)
+	}
 
 	if (opts.includeSrc) {
 		const src = srcAttrValue(node)
 
-		if (src !== null) parts.push(`src="${escapeXml(src)}"`)
+		if (src !== null) {
+			parts.push(`src="${escapeXml(src)}"`)
+		}
 	}
 
 	// Emit lat + lon together — a centroid is meaningless with only one coordinate. Resolvers that

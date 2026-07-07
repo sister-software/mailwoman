@@ -96,7 +96,9 @@ export class MailwomanTokenizer {
 			const literal = hasSentinel ? piece.slice(SPACE_SENTINEL.length) : piece
 
 			if (hasSentinel) {
-				while (cursor < text.length && /\s/.test(text[cursor]!)) cursor++
+				while (cursor < text.length && /\s/.test(text[cursor]!)) {
+					cursor++
+				}
 			}
 
 			const start = cursor

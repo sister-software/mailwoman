@@ -63,9 +63,15 @@ function levelValues(al: unknown): string[] {
 	const s = String(al ?? "")
 	const out: string[] = []
 
-	for (const m of s.matchAll(/'value':\s*'([^']*)'/g)) out.push(m[1]!)
+	for (const m of s.matchAll(/'value':\s*'([^']*)'/g)) {
+		out.push(m[1]!)
+	}
 
-	if (!out.length) for (const m of s.matchAll(/"value":\s*"([^"]*)"/g)) out.push(m[1]!)
+	if (!out.length) {
+		for (const m of s.matchAll(/"value":\s*"([^"]*)"/g)) {
+			out.push(m[1]!)
+		}
+	}
 
 	return out
 }
@@ -148,18 +154,26 @@ for (const cc of TRAIN_COUNTRIES) {
 	const test = rows.slice(nVal, nVal + nTest)
 	const train = rows.slice(nVal + nTest)
 
-	for (const raw of train) trainAppend.push(raw)
+	for (const raw of train) {
+		trainAppend.push(raw)
+	}
 
-	for (const raw of val) valAppend.push(raw)
+	for (const raw of val) {
+		valAppend.push(raw)
+	}
 
-	for (const raw of test) testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc })
+	for (const raw of test) {
+		testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc })
+	}
 	console.log(`  TRAIN ${cc}: ${rows.length} (train ${train.length} / val ${val.length} / test ${test.length})`)
 }
 
 for (const cc of HELDOUT_COUNTRIES) {
 	const rows = await rowsFor(cc)
 
-	for (const raw of rows) testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc })
+	for (const raw of rows) {
+		testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc })
+	}
 	console.log(`  HELDOUT ${cc}: ${rows.length} (test-only)`)
 }
 ;(duck as { disconnect?: () => void }).disconnect?.()

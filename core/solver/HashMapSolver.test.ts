@@ -50,7 +50,9 @@ test("distinct classifications produce distinct Solutions", () => {
 	// classify the first word `house_number`, the rest `street` — both visible
 	words[0]!.classifications.add("house_number")
 
-	for (const word of words.slice(1)) word.classifications.add("street")
+	for (const word of words.slice(1)) {
+		word.classifications.add("street")
+	}
 
 	const map = new TestSolver().build(context)
 

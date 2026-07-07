@@ -54,7 +54,10 @@ export function detectAddressSystem(
 	const probs = softmax(localeLogits as number[])
 	let best = 0
 
-	for (let i = 1; i < probs.length; i++) if (probs[i]! > probs[best]!) best = i
+	for (let i = 1; i < probs.length; i++)
+		if (probs[i]! > probs[best]!) {
+			best = i
+		}
 	const confidence = probs[best]!
 
 	if (confidence < threshold) return null

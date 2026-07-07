@@ -80,13 +80,17 @@ export function buildSpanProposalPriors(
 
 	const matrix: number[][] = []
 
-	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
+	for (let t = 0; t < T; t++) {
+		matrix.push(new Array<number>(L).fill(0))
+	}
 
 	if (proposals.length === 0) return matrix
 
 	const labelToCol = new Map<string, number>()
 
-	for (let k = 0; k < labels.length; k++) labelToCol.set(labels[k]!, k)
+	for (let k = 0; k < labels.length; k++) {
+		labelToCol.set(labels[k]!, k)
+	}
 	const oCol = labelToCol.get("O")
 
 	for (const proposal of proposals) {

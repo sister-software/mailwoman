@@ -167,10 +167,14 @@ function collectResolved(tree: AddressTree): Resolved[] {
 			}
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return out
 }
@@ -179,7 +183,9 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
 	for (const r of rs) {
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+			best = r
+		}
 	}
 
 	return best
@@ -395,9 +401,13 @@ async function main(): Promise<void> {
 				postalCityAliases,
 			})
 
-	if (candidateDb) console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
+	if (candidateDb) {
+		console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
+	}
 
-	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
+	if (postalCityAliases) {
+		console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
+	}
 	const resolver = createWOFResolver(backend as never)
 
 	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
@@ -419,7 +429,9 @@ async function main(): Promise<void> {
 			for (const r of namesStmt.all(id) as { name: string }[]) {
 				const n = normName(r.name)
 
-				if (n) set.add(n)
+				if (n) {
+					set.add(n)
+				}
 			}
 			altCache.set(id, set)
 		}
@@ -446,7 +458,10 @@ async function main(): Promise<void> {
 			set = new Set<string>()
 
 			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
-				for (const t of normName(r.name).split(" ")) if (t.length >= 4) set.add(t)
+				for (const t of normName(r.name).split(" "))
+					if (t.length >= 4) {
+						set.add(t)
+					}
 			}
 			ancestorTokCache.set(id, set)
 		}
@@ -635,7 +650,9 @@ async function main(): Promise<void> {
 		for (const a of extractAnchors(input, postcodeLookup)) {
 			if (a.candidates.length === 0) continue
 
-			if (!best || a.confidence > best.conf) best = { posterior: a.posterior, conf: a.confidence }
+			if (!best || a.confidence > best.conf) {
+				best = { posterior: a.posterior, conf: a.confidence }
+			}
 		}
 
 		return best?.posterior
@@ -653,13 +670,21 @@ async function main(): Promise<void> {
 	const bump = (a: Agg, locMatch: boolean, regMatch: boolean, resolved: boolean, err: number | null): void => {
 		a.n++
 
-		if (locMatch) a.localityMatch++
+		if (locMatch) {
+			a.localityMatch++
+		}
 
-		if (regMatch) a.regionMatch++
+		if (regMatch) {
+			a.regionMatch++
+		}
 
-		if (resolved) a.resolved++
+		if (resolved) {
+			a.resolved++
+		}
 
-		if (err !== null) a.errs.push(err)
+		if (err !== null) {
+			a.errs.push(err)
+		}
 	}
 
 	/** Resolve one tree, return the admin-match flags + coord error vs OA's ground-truth point. */
@@ -757,14 +782,22 @@ async function main(): Promise<void> {
 		let street = false
 		let hn = false
 		const visit = (n: AddressNode): void => {
-			if (n.tag === "street") street = true
+			if (n.tag === "street") {
+				street = true
+			}
 
-			if (n.tag === "house_number") hn = true
+			if (n.tag === "house_number") {
+				hn = true
+			}
 
-			for (const c of n.children) visit(c)
+			for (const c of n.children) {
+				visit(c)
+			}
 		}
 
-		for (const r of tree.roots) visit(r)
+		for (const r of tree.roots) {
+			visit(r)
+		}
 
 		return street && hn
 	}
@@ -793,7 +826,9 @@ async function main(): Promise<void> {
 		const st = row.state || "??"
 		const m = agg[who].byState
 
-		if (!m.has(st)) m.set(st, newAgg())
+		if (!m.has(st)) {
+			m.set(st, newAgg())
+		}
 		bump(m.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 		bump(agg[who].overall, s.locMatch, s.regMatch, s.resolved, s.err)
 	}
@@ -822,12 +857,16 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		i++
 
-		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
+		if (i % 500 === 0) {
+			console.error(`  ${i}/${rows.length}`)
+		}
 
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
 		// (~380-parse SIGKILL on the lab box — it crashed the promotion-gate's de-order step tonight).
 		// Periodic forced GC reclaims it; run with `node --expose-gc`. No-op without the flag. (#787 pattern.)
-		if (i % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
+		if (i % 50 === 0) {
+			;(globalThis as { gc?: () => void }).gc?.()
+		}
 
 		// --cascade: per-row per-state shards (the production geocode cascade); falls back to the
 		// single-state --address-points/--interpolation when --cascade is off (byte-stable default).
@@ -855,7 +894,9 @@ async function main(): Promise<void> {
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
 
-		if (runAssembled && hasStreetHN(nDecorated)) neuralPrecond++
+		if (runAssembled && hasStreetHN(nDecorated)) {
+			neuralPrecond++
+		}
 
 		if (collectResolvedDump) {
 			resolvedRows.push({
@@ -875,10 +916,14 @@ async function main(): Promise<void> {
 			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
 			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
 
-			if (hit) addressPointHits++
+			if (hit) {
+				addressPointHits++
+			}
 			const st = row.state || "??"
 
-			if (!neuralAddrPtAgg.byState.has(st)) neuralAddrPtAgg.byState.set(st, newAgg())
+			if (!neuralAddrPtAgg.byState.has(st)) {
+				neuralAddrPtAgg.byState.set(st, newAgg())
+			}
 			bump(neuralAddrPtAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 			bump(neuralAddrPtAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 		}
@@ -891,10 +936,14 @@ async function main(): Promise<void> {
 			const coord = exact ?? interp
 			const ipErr = coord ? haversineKm(coord.lat, coord.lon, row.lat, row.lon) : ns.err
 
-			if (interp) interpHits++
+			if (interp) {
+				interpHits++
+			}
 			const st = row.state || "??"
 
-			if (!neuralInterpAgg.byState.has(st)) neuralInterpAgg.byState.set(st, newAgg())
+			if (!neuralInterpAgg.byState.has(st)) {
+				neuralInterpAgg.byState.set(st, newAgg())
+			}
 			bump(neuralInterpAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
 			bump(neuralInterpAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
 
@@ -911,21 +960,31 @@ async function main(): Promise<void> {
 				while (stk.length > 0) {
 					const n = stk.pop()!
 
-					if (n.tag === "street" && !s && n.value.trim()) s = n.value.trim()
+					if (n.tag === "street" && !s && n.value.trim()) {
+						s = n.value.trim()
+					}
 
-					if (n.tag === "house_number" && !hn && n.value.trim()) hn = n.value.trim()
+					if (n.tag === "house_number" && !hn && n.value.trim()) {
+						hn = n.value.trim()
+					}
 
-					if (n.tag === "postcode" && !pc && n.value.trim()) pc = n.value.trim()
+					if (n.tag === "postcode" && !pc && n.value.trim()) {
+						pc = n.value.trim()
+					}
 					stk.push(...n.children)
 				}
 				const precond = !!(s && hn && pc)
 
-				if (precond) interpPrecond++
+				if (precond) {
+					interpPrecond++
+				}
 
 				if (precond && !exact && !interp) {
 					interpFullParseMiss++
 
-					if (diagMisses.length < 5000) diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
+					if (diagMisses.length < 5000) {
+						diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
+					}
 				}
 			}
 		}
@@ -936,7 +995,9 @@ async function main(): Promise<void> {
 			const fusedErr = ac ? haversineKm(ac.lat, ac.lon, row.lat, row.lon) : ns.err
 			const st = row.state || "??"
 
-			if (!neuralAnchorAgg.byState.has(st)) neuralAnchorAgg.byState.set(st, newAgg())
+			if (!neuralAnchorAgg.byState.has(st)) {
+				neuralAnchorAgg.byState.set(st, newAgg())
+			}
 			bump(neuralAnchorAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
 			bump(neuralAnchorAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
 		}
@@ -972,11 +1033,15 @@ async function main(): Promise<void> {
 				const { tree } = await assembledPipeline(row.input, { resolveOpts: nOpts })
 				const s = scoreTree(row, collectResolved(tree))
 
-				if (!assembledAgg.byState.has(st)) assembledAgg.byState.set(st, newAgg())
+				if (!assembledAgg.byState.has(st)) {
+					assembledAgg.byState.set(st, newAgg())
+				}
 				bump(assembledAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 				bump(assembledAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
 
-				if (hasStreetHN(tree)) asmPrecond++
+				if (hasStreetHN(tree)) {
+					asmPrecond++
+				}
 			} catch {
 				/* unresolved */
 			}
@@ -985,11 +1050,15 @@ async function main(): Promise<void> {
 				const { tree } = await assembledPipeline(row.input, { arbitrate: true, resolveOpts: nOpts })
 				const s = scoreTree(row, collectResolved(tree))
 
-				if (!assembledArbAgg.byState.has(st)) assembledArbAgg.byState.set(st, newAgg())
+				if (!assembledArbAgg.byState.has(st)) {
+					assembledArbAgg.byState.set(st, newAgg())
+				}
 				bump(assembledArbAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 				bump(assembledArbAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
 
-				if (hasStreetHN(tree)) arbPrecond++
+				if (hasStreetHN(tree)) {
+					arbPrecond++
+				}
 			} catch {
 				/* unresolved */
 			}
@@ -1055,7 +1124,9 @@ async function main(): Promise<void> {
 		lines.push(overallRow("**assembled + arb**", assembledArbAgg.overall))
 	}
 
-	if (useAnchor) lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
+	if (useAnchor) {
+		lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
+	}
 
 	if (runAddrPt) {
 		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
@@ -1118,7 +1189,9 @@ async function main(): Promise<void> {
 				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
 				lines.push("sample (house_number | street | postcode ← input):")
 
-				for (const m of diagMisses.slice(0, 12)) lines.push(`  - ${m}`)
+				for (const m of diagMisses.slice(0, 12)) {
+					lines.push(`  - ${m}`)
+				}
 			}
 		}
 	}

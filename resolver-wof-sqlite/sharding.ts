@@ -162,7 +162,9 @@ export function pickShardsForPlacetype(shards: ResolvedShard[], placetype: strin
 	const matches: ResolvedShard[] = []
 
 	for (const s of shards) {
-		if (s.placetypes.includes(placetype)) matches.push(s)
+		if (s.placetypes.includes(placetype)) {
+			matches.push(s)
+		}
 	}
 
 	for (const s of shards) {
@@ -201,7 +203,9 @@ export function pickShardForPlacetype(
 	const matches: ResolvedShard[] = []
 
 	for (const s of shards) {
-		if (s.placetypes.includes(placetype)) matches.push(s)
+		if (s.placetypes.includes(placetype)) {
+			matches.push(s)
+		}
 	}
 
 	for (const s of shards) {

@@ -141,8 +141,11 @@ export function block<R>(
 				seen.add(key)
 				const bucket = index.get(key)
 
-				if (bucket) bucket.push(i)
-				else index.set(key, [i])
+				if (bucket) {
+					bucket.push(i)
+				} else {
+					index.set(key, [i])
+				}
 			}
 		}
 	})

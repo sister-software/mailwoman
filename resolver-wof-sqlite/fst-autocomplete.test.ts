@@ -26,7 +26,9 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 			placetypes: ["country", "region", "county", "locality"],
 			languages: ["eng", ""],
 			onProgress: (phase, detail) => {
-				if (phase === "done") console.log(`  ${phase}: ${detail}`)
+				if (phase === "done") {
+					console.log(`  ${phase}: ${detail}`)
+				}
 			},
 		})
 		matcher = built.matcher

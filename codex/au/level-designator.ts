@@ -125,7 +125,9 @@ export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() 
 		for (const variant of AU_LEVEL_DESIGNATOR_VARIANTS[code]) {
 			const key = variant.toLowerCase()
 
-			if (!out.has(key)) out.set(key, code)
+			if (!out.has(key)) {
+				out.set(key, code)
+			}
 		}
 	}
 

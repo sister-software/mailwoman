@@ -48,10 +48,14 @@ function collectResolved(tree: AddressTree): Resolved[] {
 			out.push({ placetype, lat: n.lat, lon: n.lon })
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return out
 }
@@ -60,7 +64,9 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
 	for (const r of rs)
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+			best = r
+		}
 
 	return best
 }

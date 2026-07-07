@@ -83,7 +83,9 @@ function isOffMapScript(s: string): boolean {
 			(cp >= 0xac00 && cp <= 0xd7af) ||
 			(cp >= 0x3400 && cp <= 0x4dbf)
 
-		if (!latin && !cjk && cp > 0x2ff) off++
+		if (!latin && !cjk && cp > 0x2ff) {
+			off++
+		}
 	}
 
 	return total > 0 && off / total > 0.6

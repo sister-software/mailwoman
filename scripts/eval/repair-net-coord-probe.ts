@@ -49,13 +49,19 @@ function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
 		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined && (n.lat !== 0 || n.lon !== 0)) {
 			const r = RANK[pt] ?? 5
 
-			if (!best || r > best.r) best = { lat: n.lat, lon: n.lon, r }
+			if (!best || r > best.r) {
+				best = { lat: n.lat, lon: n.lon, r }
+			}
 		}
 
-		for (const c of n.children ?? []) visit(c)
+		for (const c of n.children ?? []) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return best ? { lat: best.lat, lon: best.lon } : null
 }
@@ -97,8 +103,9 @@ async function main() {
 		const state = r.expected.region ?? r.state ?? ""
 		const zip = r.expected.postcode ?? ""
 
-		if (m && state && /^\d{5}$/.test(zip))
+		if (m && state && /^\d{5}$/.test(zip)) {
 			rows.push({ hn: m[1]!, street: m[2]!.trim(), state, zip, lat: r.lat, lon: r.lon })
+		}
 
 		if (rows.length >= N) break
 	}
@@ -134,17 +141,25 @@ async function main() {
 			if (cOn) {
 				const d = haversineKm(truth.lat, truth.lon, cOn.lat, cOn.lon)
 
-				if (d <= 25) strata[key].on25++
+				if (d <= 25) {
+					strata[key].on25++
+				}
 
-				if (d <= 5) strata[key].on5++
+				if (d <= 5) {
+					strata[key].on5++
+				}
 			}
 
 			if (cOff) {
 				const d = haversineKm(truth.lat, truth.lon, cOff.lat, cOff.lon)
 
-				if (d <= 25) strata[key].off25++
+				if (d <= 25) {
+					strata[key].off25++
+				}
 
-				if (d <= 5) strata[key].off5++
+				if (d <= 5) {
+					strata[key].off5++
+				}
 			}
 		}
 	}

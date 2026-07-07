@@ -289,8 +289,11 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 					}
 					const list = map.get(r.adminID)
 
-					if (list) list.push(candidate)
-					else map.set(r.adminID, [candidate])
+					if (list) {
+						list.push(candidate)
+					} else {
+						map.set(r.adminID, [candidate])
+					}
 				}
 			}
 			this.#coincidentRolesCache = map

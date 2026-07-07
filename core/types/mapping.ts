@@ -61,7 +61,9 @@ const COMPONENT_TO_LEGACY: Partial<Record<ComponentTag, Classification>> = (() =
 	const out: Partial<Record<ComponentTag, Classification>> = {}
 
 	for (const [legacy, component] of Object.entries(LEGACY_TO_COMPONENT) as Array<[Classification, ComponentTag]>) {
-		if (!(component in out)) out[component] = legacy
+		if (!(component in out)) {
+			out[component] = legacy
+		}
 	}
 
 	return out

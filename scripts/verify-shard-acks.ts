@@ -78,8 +78,11 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--manifest" && args[i + 1]) out.manifestPath = args[++i]
-		else if (a === "--verbose" || a === "-v") out.verbose = true
+		if (a === "--manifest" && args[i + 1]) {
+			out.manifestPath = args[++i]
+		} else if (a === "--verbose" || a === "-v") {
+			out.verbose = true
+		}
 	}
 
 	if (!out.manifestPath) {
