@@ -38,17 +38,20 @@
  */
 
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { lambda: { type: "string" }, "out-html": { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { lambda?: string; "out-html"?: string }
 // Illustrative prior. Production's record matcher uses λ=1e-4 (calibrated for the full multi-field
 // model with phone + spatial exact-key); here we want the boundary visible in a two-axis slice.
-const LAMBDA = Number(arg("lambda", "0.02"))
-const OUT_HTML = arg("out-html", "/tmp/geocode-first-surface.html")
+const LAMBDA = Number(values["lambda"] || "0.02")
+const OUT_HTML = values["out-html"] || "/tmp/geocode-first-surface.html"
 
 // ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment, not import,
 //    so this generator is self-contained / independent of the match package's build state). ───────────

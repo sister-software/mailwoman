@@ -42,6 +42,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
@@ -64,45 +65,35 @@ runIfScript(import.meta, async () => {
 	$.verbose = false
 
 	// --- arg parse (faithful to the .sh: --flag value; unknown / missing-required → exit 2) ---
-	let MODEL = ""
-	let INT8 = ""
-	let GATE = ""
-	let OUT_DIR = ""
-	let TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
-	let CARD = "neural-weights-en-us/model-card.json"
-	let GAZ = "data/gazetteer/anchor-lexicon-v1.json"
-	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
+	let parsed: { values: Record<string, string | boolean | undefined> }
 
-	const argv = process.argv.slice(2)
-
-	for (let i = 0; i < argv.length; i++) {
-		switch (argv[i]) {
-			case "--model":
-				MODEL = argv[++i] ?? ""
-				break
-			case "--int8":
-				INT8 = argv[++i] ?? ""
-				break
-			case "--gate":
-				GATE = argv[++i] ?? ""
-				break
-			case "--tokenizer":
-				TOK = argv[++i] ?? ""
-				break
-			case "--card":
-				CARD = argv[++i] ?? ""
-				break
-			case "--gazetteer-lexicon":
-				GAZ = argv[++i] ?? ""
-				break
-			case "--out-dir":
-				OUT_DIR = argv[++i] ?? ""
-				break
-			default:
-				console.error(`unknown arg: ${argv[i]}`)
-				process.exit(2)
-		}
+	try {
+		parsed = parseArgs({
+			options: {
+				model: { type: "string" },
+				int8: { type: "string" },
+				gate: { type: "string" },
+				tokenizer: { type: "string" },
+				card: { type: "string" },
+				"gazetteer-lexicon": { type: "string" },
+				"out-dir": { type: "string" },
+			},
+		})
+	} catch (e) {
+		console.error(`unknown arg: ${e instanceof Error ? e.message : e}`)
+		process.exit(2)
 	}
+	const args = parsed.values
+	const MODEL = (args.model as string | undefined) ?? ""
+	const INT8 = (args.int8 as string | undefined) ?? ""
+	const GATE = (args.gate as string | undefined) ?? ""
+	let OUT_DIR = (args["out-dir"] as string | undefined) ?? ""
+	const TOK =
+		(args.tokenizer as string | undefined) ??
+		String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const CARD = (args.card as string | undefined) ?? "neural-weights-en-us/model-card.json"
+	const GAZ = (args["gazetteer-lexicon"] as string | undefined) ?? "data/gazetteer/anchor-lexicon-v1.json"
+	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 	if (!MODEL || !GATE) {
 		console.error("✗ --model and --gate required")

@@ -17,22 +17,30 @@
  */
 
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { resolveEntities, type SourceRecord } from "@mailwoman/registry"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
-const SIZES = arg("sizes", "10000,50000,100000,250000,500000")
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		dup: { type: "string" },
+		em: { type: "boolean" },
+		"out-md": { type: "string" },
+		sizes: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { dup?: string; em?: boolean; "out-md"?: string; sizes?: string }
+const SIZES = (values["sizes"] || "10000,50000,100000,250000,500000")
 	.split(",")
 	.map((s) => Number(s.trim()))
 	.filter((n) => n > 0)
-const DUP = Number(arg("dup", "3")) // avg records per distinct place
-const EM = process.argv.includes("--em")
-const OUT_MD = arg("out-md", "")
+const DUP = Number(values["dup"] || "3") // avg records per distinct place
+const EM = values["em"] ?? false
+const OUT_MD = values["out-md"] || ""
 
 /** Deterministic LCG so the eval is reproducible run to run (no Math.random). */
 function lcg(seed: number): () => number {

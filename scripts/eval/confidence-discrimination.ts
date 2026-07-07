@@ -67,6 +67,8 @@ const { values: rawValues } = parseArgs({
 		"rows-in": { type: "string" },
 		"rows-out": { type: "string" },
 		svg: { type: "string" },
+		"no-messy": { type: "boolean" },
+		"no-nominatim": { type: "boolean" },
 	},
 	strict: false,
 	allowPositionals: true,
@@ -82,6 +84,8 @@ const values = rawValues as {
 	"rows-in"?: string
 	"rows-out"?: string
 	svg?: string
+	"no-messy"?: boolean
+	"no-nominatim"?: boolean
 }
 // The first collection died silently at PL ~60/80 (no JS stack → a process-level kill). Surface it
 // next time instead of exiting blind; the incremental --rows-out checkpoint makes a crash recoverable.
@@ -96,8 +100,8 @@ const CALIB = "data/eval/calibration/isotonic-en-us-v4.13.0.json"
 const MODEL = values["model"] || "out/v191/model.onnx" // shipped v4.13.0 int8
 const LOCALES = (values["locales"] || "us,it,pt,pl,fr,au").split(",")
 const N = Number(values["n"] || "80")
-const MESSY = !process.argv.includes("--no-messy")
-const NO_NOMINATIM = process.argv.includes("--no-nominatim") // skip the competitor fetch (canary/regression use)
+const MESSY = !(values["no-messy"] ?? false)
+const NO_NOMINATIM = values["no-nominatim"] ?? false // skip the competitor fetch (canary/regression use)
 const AGG = (values["agg"] || "min") as "node" | "min"
 const TAU_GRID = [0, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.92, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995]
 const THRESH_KM = 25

@@ -51,6 +51,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -58,12 +59,36 @@ import type { ParseOpts } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"default-country": { type: "string" },
+		eval: { type: "string" },
+		"examples-json": { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		"oracle-only": { type: "boolean" },
+		"out-md": { type: "string" },
+		tokenizer: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"default-country"?: string
+	eval?: string
+	"examples-json"?: string
+	limit?: string
+	model?: string
+	"model-card"?: string
+	"oracle-only"?: boolean
+	"out-md"?: string
+	tokenizer?: string
+	wof?: string
 }
-
 interface OaRow {
 	input: string
 	lat: number
@@ -193,10 +218,10 @@ const localityExpanded = (rs: Resolved[]): Resolved | undefined => {
 }
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval", "data/eval/external/openaddresses-us-sample.jsonl")
-	const limit = Number(arg("limit", "0")) || Infinity
-	const dbPath = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
-	const dc = arg("default-country", "US")
+	const evalPath = values["eval"] || "data/eval/external/openaddresses-us-sample.jsonl"
+	const limit = Number(values["limit"] || "0") || Infinity
+	const dbPath = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
+	const dc = values["default-country"] || "US"
 
 	const rows: OaRow[] = readFileSync(evalPath, "utf8")
 		.split("\n")
@@ -206,7 +231,7 @@ async function main(): Promise<void> {
 
 	// --- model (CURRENT arm). `--oracle-only` skips the model entirely (fast bucketing iteration; the
 	// `current` column is then blank — the oracle arms + buckets don't depend on the model). ---
-	const oracleOnly = process.argv.includes("--oracle-only")
+	const oracleOnly = values["oracle-only"] ?? false
 	let neural: { parse: (text: string, opts?: ParseOpts) => Promise<AddressTree> } | null = null
 	let parseOpts: ParseOpts = {}
 
@@ -214,12 +239,12 @@ async function main(): Promise<void> {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 		const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-		const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
+		const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(
-				arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+				values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 			),
-			ONNXRunner.create(arg("model", dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))),
+			ONNXRunner.create(values["model"] || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")),
 		])
 		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 		parseOpts = { postcodeRepair: true }
@@ -615,7 +640,9 @@ async function main(): Promise<void> {
 	const N = arm.current.overall.n || arm.oracleExpanded.overall.n
 	lines.push(`# OA oracle-locality diagnostic — MODEL vs RESOLVER/GAZETTEER (${N} rows)`)
 	lines.push("")
-	lines.push(`Model (CURRENT): ${arg("model") || "(default v1.5.0 int8)"} | DB: ${dbPath} | default-country: ${dc}`)
+	lines.push(
+		`Model (CURRENT): ${values["model"] || "" || "(default v1.5.0 int8)"} | DB: ${dbPath} | default-country: ${dc}`
+	)
 	lines.push("")
 	lines.push(`## Current (model parse) vs Oracle (gold locality) — locality-match`)
 	lines.push("")
@@ -716,14 +743,14 @@ async function main(): Promise<void> {
 	const report = lines.join("\n")
 	console.log(report)
 
-	if (arg("out-md")) {
-		writeFileSync(arg("out-md"), report + "\n")
-		console.error(`wrote markdown → ${arg("out-md")}`)
+	if (values["out-md"] || "") {
+		writeFileSync(values["out-md"] || "", report + "\n")
+		console.error(`wrote markdown → ${values["out-md"] || ""}`)
 	}
 
-	if (arg("examples-json")) {
+	if (values["examples-json"] || "") {
 		writeFileSync(
-			arg("examples-json"),
+			values["examples-json"] || "",
 			JSON.stringify(
 				{
 					coverage: buckets.coverage,
@@ -735,7 +762,7 @@ async function main(): Promise<void> {
 				2
 			)
 		)
-		console.error(`wrote examples → ${arg("examples-json")}`)
+		console.error(`wrote examples → ${values["examples-json"] || ""}`)
 	}
 }
 

@@ -29,6 +29,7 @@
 import { createReadStream, mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { createInterface } from "node:readline"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
@@ -48,21 +49,41 @@ import {
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		cap: { type: "string" },
+		"data-root": { type: "string" },
+		date: { type: "string" },
+		locale: { type: "string" },
+		out: { type: "string" },
+		"precision-bar": { type: "string" },
+		sources: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	cap?: string
+	"data-root"?: string
+	date?: string
+	locale?: string
+	out?: string
+	"precision-bar"?: string
+	sources?: string
+	wof?: string
 }
-
-const SOURCES = arg("sources", String(dataRootPath("record-matcher", "sources")))
-const CAP = Number(arg("cap", "6000"))
-const WOF = arg("wof", String(dataRootPath("wof", "admin-global-priority.db")))
-const DATA_ROOT = arg("data-root", mailwomanDataRoot())
-const OUT = arg("out", "registry/models/org-crosssource-gbt-en-us.ts")
-const LOCALE = arg("locale", "en-US")
+const SOURCES = values["sources"] || String(dataRootPath("record-matcher", "sources"))
+const CAP = Number(values["cap"] || "6000")
+const WOF = values["wof"] || String(dataRootPath("wof", "admin-global-priority.db"))
+const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
+const OUT = values["out"] || "registry/models/org-crosssource-gbt-en-us.ts"
+const LOCALE = values["locale"] || "en-US"
 /** #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. */
-const PRECISION_BAR = Number(arg("precision-bar", "0.95"))
-const TRAIN_DATE = arg("date", new Date().toISOString().slice(0, 10))
+const PRECISION_BAR = Number(values["precision-bar"] || "0.95")
+const TRAIN_DATE = values["date"] || new Date().toISOString().slice(0, 10)
 
 const POS = `${SOURCES}/cms-pos_hospital-other_2026q1.csv`
 const CARE_COMPARE = `${SOURCES}/cms-carecompare_hospital-general_20260706.csv`

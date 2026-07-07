@@ -28,18 +28,21 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
-const IN = arg("in", dataRootPath("record-matcher", "2026-06-16-cross-dataset-links.geojson"))
-const OUT = arg("out-html", "/tmp/cross-dataset-map.html")
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { "cross-agency-only": { type: "boolean" }, in: { type: "string" }, "out-html": { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "cross-agency-only"?: boolean; in?: string; "out-html"?: string }
+const IN = values["in"] || dataRootPath("record-matcher", "2026-06-16-cross-dataset-links.geojson")
+const OUT = values["out-html"] || "/tmp/cross-dataset-map.html"
 
 const SOURCE_LABELS: Record<string, string> = {
 	nppes: "NPPES",
@@ -60,7 +63,7 @@ const SOURCE_AGENCY: Record<string, string> = {
 	"txhhsc-nursing": "TX HHSC",
 }
 const agencyOf = (s: string) => SOURCE_AGENCY[s] ?? s
-const CROSS_AGENCY_ONLY = process.argv.includes("--cross-agency-only")
+const CROSS_AGENCY_ONLY = values["cross-agency-only"] ?? false
 
 const sourcesOf = (f: { properties: Record<string, unknown> | null }) =>
 	Array.isArray(f.properties?.["sources"]) ? (f.properties!["sources"] as string[]) : []

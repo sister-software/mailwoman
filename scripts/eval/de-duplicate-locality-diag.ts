@@ -22,16 +22,31 @@
  */
 
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"anchor-lookup": { type: "string" },
+		eval: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"anchor-lookup"?: string
+	eval?: string
+	model?: string
+	"model-card"?: string
+	tokenizer?: string
 }
-
 interface OaRow {
 	input: string
 	expected: { locality?: string; region?: string }
@@ -79,7 +94,7 @@ function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 }
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval", "data/eval/external/openaddresses-de-sample.jsonl")
+	const evalPath = values["eval"] || "data/eval/external/openaddresses-de-sample.jsonl"
 	const rows: OaRow[] = readFileSync(evalPath, "utf8")
 		.split("\n")
 		.filter((l) => l.trim())
@@ -88,14 +103,14 @@ async function main(): Promise<void> {
 	const { NeuralAddressClassifier, parseAnchorLookup } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
-	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
+	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
+	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(
-			arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+			values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 		),
-		ONNXRunner.create(arg("model", "/tmp/v093-eval/model.onnx")),
+		ONNXRunner.create(values["model"] || "/tmp/v093-eval/model.onnx"),
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]

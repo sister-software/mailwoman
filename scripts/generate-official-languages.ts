@@ -21,15 +21,13 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
-const args = process.argv.slice(2)
-const get = (flag: string): string | undefined => {
-	const i = args.indexOf(flag)
-
-	return i >= 0 ? args[i + 1] : undefined
-}
-const CLDR_VERSION = get("--cldr-version") ?? "47.0.0"
-const cldrDir = get("--cldr-dir")
+const { values: cliValues } = parseArgs({
+	options: { "cldr-version": { type: "string" }, "cldr-dir": { type: "string" } },
+})
+const CLDR_VERSION = cliValues["cldr-version"] ?? "47.0.0"
+const cldrDir = cliValues["cldr-dir"]
 const OUT_PATH = join(import.meta.dirname, "..", "codex", "country", "official-languages.ts")
 
 async function loadCLDR(file: string): Promise<unknown> {

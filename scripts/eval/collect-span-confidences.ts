@@ -40,16 +40,37 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"anchor-lookup": { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		out: { type: "string" },
+		set: { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"anchor-lookup"?: string
+	"gazetteer-lexicon"?: string
+	limit?: string
+	model?: string
+	"model-card"?: string
+	out?: string
+	set?: string
+	tokenizer?: string
 }
-
 interface CalibRow {
 	raw: string
 	gold: [string, string][]
@@ -145,9 +166,9 @@ function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean |
 }
 
 async function main(): Promise<void> {
-	const setPath = arg("set", "data/eval/calibration/calibration-set.jsonl")
-	const outPath = arg("out", "data/eval/calibration/confidences.jsonl")
-	const limit = Number(arg("limit", "0")) || Infinity
+	const setPath = values["set"] || "data/eval/calibration/calibration-set.jsonl"
+	const outPath = values["out"] || "data/eval/calibration/confidences.jsonl"
+	const limit = Number(values["limit"] || "0") || Infinity
 
 	const rows: CalibRow[] = readFileSync(setPath, "utf8")
 		.split("\n")
@@ -158,16 +179,16 @@ async function main(): Promise<void> {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
+	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
 	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(arg("tokenizer", "neural-weights-en-us/tokenizer.model")),
-		ONNXRunner.create(arg("model", "neural-weights-en-us/model.onnx")),
+		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "neural-weights-en-us/tokenizer.model"),
+		ONNXRunner.create(values["model"] || "neural-weights-en-us/model.onnx"),
 	])
 	// Ship-config channels (v4.4.0): the calibrator must describe the model AS DEPLOYED — anchor +
 	// gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
-	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
-	const gazPath = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")
+	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
+	const gazPath = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"
 	const neural = new NeuralAddressClassifier({
 		tokenizer,
 		runner,

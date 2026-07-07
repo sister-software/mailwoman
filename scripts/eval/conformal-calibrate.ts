@@ -49,21 +49,46 @@
  */
 
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"address-points": { type: "string" },
+		alpha: { type: "string" },
+		"cal-frac": { type: "string" },
+		holdout: { type: "string" },
+		interpolation: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		seed: { type: "string" },
+		tokenizer: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"address-points"?: string
+	alpha?: string
+	"cal-frac"?: string
+	holdout?: string
+	interpolation?: string
+	model?: string
+	"model-card"?: string
+	seed?: string
+	tokenizer?: string
+	wof?: string
+}
 // ---------------------------------------------------------------------------
 // CLI helpers
 // ---------------------------------------------------------------------------
-
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
 
 // ---------------------------------------------------------------------------
 // Percentile (0-indexed: p=0.9 → 90th)
@@ -177,21 +202,21 @@ interface HoldoutRow {
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-	const holdoutPath = arg("holdout", "/tmp/ood-truth.jsonl")
-	const addressPointsDb = arg("address-points", "/tmp/tx-situs.db")
-	const interpolationDb = arg("interpolation", "/tmp/tx-metro-interp.db")
-	const modelPath = arg("model", "neural-weights-en-us/model.onnx")
-	const tokenizerPath = arg("tokenizer", "neural-weights-en-us/tokenizer.model")
-	const modelCardPath = arg("model-card", "neural-weights-en-us/model-card.json")
-	const wofPaths = arg(
-		"wof",
+	const holdoutPath = values["holdout"] || "/tmp/ood-truth.jsonl"
+	const addressPointsDb = values["address-points"] || "/tmp/tx-situs.db"
+	const interpolationDb = values["interpolation"] || "/tmp/tx-metro-interp.db"
+	const modelPath = values["model"] || "neural-weights-en-us/model.onnx"
+	const tokenizerPath = values["tokenizer"] || "neural-weights-en-us/tokenizer.model"
+	const modelCardPath = values["model-card"] || "neural-weights-en-us/model-card.json"
+	const wofPaths = (
+		values["wof"] ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())
-	const calFrac = Number(arg("cal-frac", "0.5"))
-	const alpha = Number(arg("alpha", "0.9")) // target coverage level
-	const seed = Number(arg("seed", "20260614"))
+	const calFrac = Number(values["cal-frac"] || "0.5")
+	const alpha = Number(values["alpha"] || "0.9") // target coverage level
+	const seed = Number(values["seed"] || "20260614")
 
 	// --- load holdout ---
 	const rows: HoldoutRow[] = readFileSync(holdoutPath, "utf8")

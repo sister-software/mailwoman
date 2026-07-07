@@ -24,20 +24,23 @@
 
 import { createWriteStream } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import booleanContains from "@turf/boolean-contains"
 
-function arg(name: string, fb = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fb
-}
-
-const DB = arg("db", dataRootPath("tiger", "tiger-oc.db"))
-const OUT = arg("out", "/tmp/race-dots.ndjson")
-const PER = Number(arg("per", "10")) // people represented by one dot
-const LAYER = arg("layer", "dots")
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { db: { type: "string" }, layer: { type: "string" }, out: { type: "string" }, per: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { db?: string; layer?: string; out?: string; per?: string }
+const DB = values["db"] || dataRootPath("tiger", "tiger-oc.db")
+const OUT = values["out"] || "/tmp/race-dots.ndjson"
+const PER = Number(values["per"] || "10") // people represented by one dot
+const LAYER = values["layer"] || "dots"
 
 // The eight P2 categories (columns in pl_block) that partition each block's population.
 const CATEGORIES = ["hispanic", "white", "black", "asian", "aian", "nhpi", "other", "multi"] as const

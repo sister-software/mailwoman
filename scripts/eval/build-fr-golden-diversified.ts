@@ -34,12 +34,21 @@
 
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
+import { parseArgs } from "node:util"
 
 import { pyJsonDumps } from "@mailwoman/core/utils"
 import { SeededRandom } from "@mailwoman/core/utils"
 
 import { csvRecordsFromZip } from "./lib/zip-csv.ts"
 
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { inplace: { type: "boolean" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { inplace?: boolean }
 const OA_ZIP = "/tmp/oa-cache/fr__countrywide.zip"
 const OA_ENTRY = "fr/countrywide.csv"
 const OUT_FILE = "data/eval/golden/v0.1.2/dev/fr-diversified.jsonl"
@@ -251,7 +260,7 @@ function reportDistribution(rows: Record<string, unknown>[]): void {
 }
 
 async function main(): Promise<void> {
-	const inplace = process.argv.includes("--inplace")
+	const inplace = values["inplace"] ?? false
 
 	const rng = new SeededRandom(RNG_SEED)
 	const cityPool = await loadOaSamples()

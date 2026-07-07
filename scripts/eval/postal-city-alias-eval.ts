@@ -29,17 +29,34 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { WOFPostalCityAliasLookup, WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"alias-db": { type: "string" },
+		country: { type: "string" },
+		limit: { type: "string" },
+		"near-km": { type: "string" },
+		"postcode-db": { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"alias-db"?: string
+	country?: string
+	limit?: string
+	"near-km"?: string
+	"postcode-db"?: string
+	wof?: string
 }
-
 const pct = (xs: number[], p: number): number => {
 	if (xs.length === 0) return NaN
 	const s = [...xs].sort((a, b) => a - b)
@@ -48,15 +65,15 @@ const pct = (xs: number[], p: number): number => {
 }
 
 async function main(): Promise<void> {
-	const aliasDBPath = arg("alias-db", dataRootPath("wof", "postal-city-alias-us.db"))
-	const postcodeDBPath = arg("postcode-db", dataRootPath("wof", "postalcode-us.db"))
-	const wof = arg(
-		"wof",
+	const aliasDBPath = values["alias-db"] || dataRootPath("wof", "postal-city-alias-us.db")
+	const postcodeDBPath = values["postcode-db"] || dataRootPath("wof", "postalcode-us.db")
+	const wof = (
+		values["wof"] ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-us.db")}`
 	).split(",")
-	const country = arg("country", "US")
-	const limit = Number(arg("limit", "0")) // 0 = all
-	const nearKm = Number(arg("near-km", "50")) // "resolved near the postcode" threshold
+	const country = values["country"] || "US"
+	const limit = Number(values["limit"] || "0") // 0 = all
+	const nearKm = Number(values["near-km"] || "50") // "resolved near the postcode" threshold
 
 	// Truth: postcode → centroid (independent of the alias table).
 	const pcDB = new DatabaseSync(postcodeDBPath, { readOnly: true })

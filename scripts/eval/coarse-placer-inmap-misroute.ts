@@ -29,6 +29,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { CoarsePlacer, inMapPosterior } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -38,21 +39,47 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createWOFResolver, type ResolveOpts } from "@mailwoman/resolver"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"abstain-below": { type: "string" },
+		"anchor-weight": { type: "string" },
+		distribution: { type: "boolean" },
+		eval: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		"out-md": { type: "string" },
+		"per-country": { type: "string" },
+		"posterior-floor": { type: "string" },
+		tokenizer: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"abstain-below"?: string
+	"anchor-weight"?: string
+	distribution?: boolean
+	eval?: string
+	model?: string
+	"model-card"?: string
+	"out-md"?: string
+	"per-country"?: string
+	"posterior-floor"?: string
+	tokenizer?: string
+	wof?: string
 }
-
 /** The 11 in-map countries; TW is excluded — the WOF admin DB has 0 TW locality/region rows. */
 const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR"]
-const ANCHOR_WEIGHT = Number(arg("anchor-weight", "1.0"))
-const ABSTAIN_BELOW = Number(arg("abstain-below", "0.9"))
-const PER_COUNTRY = Number(arg("per-country", "200"))
+const ANCHOR_WEIGHT = Number(values["anchor-weight"] || "1.0")
+const ABSTAIN_BELOW = Number(values["abstain-below"] || "0.9")
+const PER_COUNTRY = Number(values["per-country"] || "200")
 // #928: the posterior epsilon floor under test (passed through to inMapPosterior).
-const POSTERIOR_FLOOR = Number(arg("posterior-floor", "0.05"))
+const POSTERIOR_FLOOR = Number(values["posterior-floor"] || "0.05")
 // `--distribution` feeds the full in-map posterior (vs one-hot argmax) as anchorPosterior (#244 residual).
-const DISTRIBUTION = process.argv.includes("--distribution")
+const DISTRIBUTION = values["distribution"] ?? false
 
 // Trailing explicit country tokens to strip so the country must be inferred (where the prior bites).
 const COUNTRY_TOKENS =
@@ -100,12 +127,12 @@ function resolvedWOFNodes(tree: AddressTree): Array<{ id: number; rank: number }
 }
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval", "data/coarse-placer/test.jsonl")
-	const wofPath = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
-	const modelPath = arg("model", "neural-weights-en-us/model.onnx")
-	const tokPath = arg("tokenizer", "neural-weights-en-us/tokenizer.model")
-	const cardPath = arg("model-card", "neural-weights-en-us/model-card.json")
-	const outMd = arg("out-md", "")
+	const evalPath = values["eval"] || "data/coarse-placer/test.jsonl"
+	const wofPath = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
+	const modelPath = values["model"] || "neural-weights-en-us/model.onnx"
+	const tokPath = values["tokenizer"] || "neural-weights-en-us/tokenizer.model"
+	const cardPath = values["model-card"] || "neural-weights-en-us/model-card.json"
+	const outMd = values["out-md"] || ""
 
 	// Deterministic per-country sample (first PER_COUNTRY rows of each country, stable order).
 	const all = readFileSync(evalPath, "utf8")

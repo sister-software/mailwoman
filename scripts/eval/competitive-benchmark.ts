@@ -44,6 +44,8 @@ const { values: rawValues } = parseArgs({
 		out: { type: "string" },
 		systems: { type: "string" },
 		wof: { type: "string" },
+		messy: { type: "boolean" },
+		"span-rescore": { type: "boolean" },
 	},
 	strict: false,
 	allowPositionals: true,
@@ -57,6 +59,8 @@ const values = rawValues as {
 	out?: string
 	systems?: string
 	wof?: string
+	messy?: boolean
+	"span-rescore"?: boolean
 }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
@@ -75,10 +79,10 @@ const SYSTEMS = (values["systems"] || "mailwoman,nominatim,pelias").split(",")
 const OUT = values["out"] || ""
 // --span-rescore grades mailwoman TWICE per row — base (lever off) AND #370 spanRescore (lever on) — from
 // the SAME parse, so the off→on lift sits in the same harness as Nominatim/Pelias without doubling API calls.
-const RESCORE = process.argv.includes("--span-rescore")
+const RESCORE = values["span-rescore"] ?? false
 const THRESHOLDS = [1, 5, 25] // km — coarse "right-place" tiers
 const NOMINATIM_UA = "mailwoman-benchmark/1.0 (teffen@sister.software)"
-const MESSY = process.argv.includes("--messy")
+const MESSY = values["messy"] ?? false
 // Real-world degradation — the slice where a calibrated parser should beat a search index that leans
 // on exact tokens + the comma structure + the postcode. SAFE: drops commas/dash-postcodes + lowercases
 // + abbreviates common street words; never touches the house number.

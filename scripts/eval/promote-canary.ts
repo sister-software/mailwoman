@@ -51,12 +51,20 @@ const { values: rawValues } = parseArgs({
 		n: { type: "string" },
 		out: { type: "string" },
 		shipped: { type: "string" },
+		allcaps: { type: "boolean" },
 	},
 	strict: false,
 	allowPositionals: true,
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { candidate?: string; locales?: string; n?: string; out?: string; shipped?: string }
+const values = rawValues as {
+	candidate?: string
+	locales?: string
+	n?: string
+	out?: string
+	shipped?: string
+	allcaps?: boolean
+}
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
@@ -66,7 +74,7 @@ const SHIPPED = values["shipped"] || "out/v191/model.onnx"
 const CANDIDATE = values["candidate"] || "out/v192/model-int8.onnx"
 const LOCALES = (values["locales"] || "us,it,pt,pl,fr,au").split(",")
 const N = Number(values["n"] || "60")
-const ALLCAPS = process.argv.includes("--allcaps")
+const ALLCAPS = values["allcaps"] ?? false
 const THRESH_KM = 25
 const HIGH_CONF = 0.9
 const AGG_TOL = 2 // pp aggregate right@25 regression that blocks

@@ -11,6 +11,8 @@
  *   300]
  */
 
+import { parseArgs } from "node:util"
+
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
@@ -19,7 +21,9 @@ import {
 	synthesizeBoundaryStressRow,
 } from "../../corpus/src/synthesize-boundary-stress.ts"
 
-const N = Number(process.argv[process.argv.indexOf("--n") + 1] || "300")
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({ options: { n: { type: "string" } }, strict: false, allowPositionals: true })
+const N = Number((rawValues.n as string | undefined) || "300")
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
 

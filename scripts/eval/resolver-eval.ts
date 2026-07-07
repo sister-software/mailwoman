@@ -33,6 +33,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -42,12 +43,36 @@ import { type ClassificationRecord, createAddressParser } from "mailwoman"
 
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		country: { type: "string" },
+		eval: { type: "string" },
+		"exact-tiering": { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		"out-json": { type: "string" },
+		"parent-fallback": { type: "string" },
+		tokenizer: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	country?: string
+	eval?: string
+	"exact-tiering"?: string
+	limit?: string
+	model?: string
+	"model-card"?: string
+	"out-json"?: string
+	"parent-fallback"?: string
+	tokenizer?: string
+	wof?: string
 }
-
 interface EvalRow {
 	input: string
 	expected_id: number
@@ -130,11 +155,9 @@ interface RowResult {
 }
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval", "/tmp/wof-bootstrap/eval.jsonl")
-	const limit = Number(arg("limit", "0")) || Infinity
-	const wofPaths = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
-		.split(",")
-		.map((s) => s.trim())
+	const evalPath = values["eval"] || "/tmp/wof-bootstrap/eval.jsonl"
+	const limit = Number(values["limit"] || "0") || Infinity
+	const wofPaths = (values["wof"] || dataRootPath("wof", "admin-global-priority.db")).split(",").map((s) => s.trim())
 
 	const rows: EvalRow[] = readFileSync(evalPath, "utf8")
 		.split("\n")
@@ -144,15 +167,15 @@ async function main(): Promise<void> {
 
 	// --- load parsers + resolver ---
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const modelPath = arg("model")
+	const modelPath = values["model"] || ""
 	let neural: InstanceType<typeof NeuralAddressClassifier>
 
 	if (modelPath) {
 		const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 		const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-		const modelCard = JSON.parse(readFileSync(arg("model-card"), "utf8"))
+		const modelCard = JSON.parse(readFileSync(values["model-card"] || "", "utf8"))
 		const [tokenizer, runner] = await Promise.all([
-			MailwomanTokenizer.loadFromFile(arg("tokenizer")),
+			MailwomanTokenizer.loadFromFile(values["tokenizer"] || ""),
 			ONNXRunner.create(modelPath),
 		])
 		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
@@ -163,8 +186,8 @@ async function main(): Promise<void> {
 	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	// PR1 A/B flags: `--exact-tiering false` / `--parent-fallback false` restore the pre-PR1 baseline
 	// so the before/after table is one toggle apart.
-	const exactTiering = arg("exact-tiering", "true") !== "false"
-	const parentFallback = arg("parent-fallback", "true") !== "false"
+	const exactTiering = (values["exact-tiering"] || "true") !== "false"
+	const parentFallback = (values["parent-fallback"] || "true") !== "false"
 	const backend = new WOFSqlitePlaceLookup(
 		{ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths },
 		{ exactMatchTiering: exactTiering }
@@ -172,7 +195,7 @@ async function main(): Promise<void> {
 	const resolver = createWOFResolver(backend as never)
 
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
-	const country = arg("country", "US")
+	const country = values["country"] || "US"
 	const resolveOpts = { defaultCountry: country, parentFallback }
 	console.error(`exactMatchTiering=${exactTiering} parentFallback=${parentFallback}`)
 	const results: RowResult[] = []
@@ -308,9 +331,9 @@ async function main(): Promise<void> {
 		`- VERDICT: ${pass ? "CONTINUE — build the router" : "does not clear the gate — investigate / pivot to coverage"}`
 	)
 
-	if (arg("out-json")) {
-		writeFileSync(arg("out-json"), JSON.stringify(results, null, 2))
-		console.error(`wrote ${results.length} rows → ${arg("out-json")}`)
+	if (values["out-json"] || "") {
+		writeFileSync(values["out-json"] || "", JSON.stringify(results, null, 2))
+		console.error(`wrote ${results.length} rows → ${values["out-json"] || ""}`)
 	}
 }
 

@@ -17,6 +17,7 @@
 
 import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * The build-breaking class is `<55`-style numeric prose and `{word`-style MDX JSX expressions. Uppercase `<Component>`
@@ -60,7 +61,7 @@ function violations(file: string): string[] {
 	return hits
 }
 
-const files = process.argv.slice(2)
+const { positionals: files } = parseArgs({ allowPositionals: true })
 const targets = files.length > 0 ? files : stagedDocsMarkdown()
 
 if (targets.length === 0) {

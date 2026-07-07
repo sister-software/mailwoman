@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software
@@ -30,12 +31,34 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { createRuntimePipeline } from "mailwoman"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"default-country": { type: "string" },
+		eval: { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-anchor-lookup": { type: "string" },
+		"model-card": { type: "string" },
+		"out-json": { type: "string" },
+		tokenizer: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"default-country"?: string
+	eval?: string
+	limit?: string
+	model?: string
+	"model-anchor-lookup"?: string
+	"model-card"?: string
+	"out-json"?: string
+	tokenizer?: string
+	wof?: string
 }
-
 interface GoldRow {
 	input: string
 	expected: { locality?: string | null; region?: string | null; postcode?: string | null }
@@ -81,17 +104,16 @@ function percentile(xs: number[], p: number): number {
 }
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval")
-	const limit = Number(arg("limit", "0")) || Infinity
-	const dc = arg("default-country", "")
-	const modelPath = arg("model")
-	const cardPath = arg("model-card")
-	const tokPath = arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-	const anchorPath = arg("model-anchor-lookup")
-	const wof = arg(
-		"wof",
+	const evalPath = values["eval"] || ""
+	const limit = Number(values["limit"] || "0") || Infinity
+	const dc = values["default-country"] || ""
+	const modelPath = values["model"] || ""
+	const cardPath = values["model-card"] || ""
+	const tokPath = values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+	const anchorPath = values["model-anchor-lookup"] || ""
+	const wof =
+		values["wof"] ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
-	)
 
 	if (!evalPath || !modelPath || !cardPath) throw new Error("need --eval, --model, --model-card")
 
@@ -250,7 +272,7 @@ async function main(): Promise<void> {
 		`  accuracy delta = ${report.accuracyDeltaPp >= 0 ? "+" : ""}${report.accuracyDeltaPp.toFixed(2)}pp  ·  latency p99 ×${report.latencyP99Multiplier.toFixed(2)}`
 	)
 
-	const outJson = arg("out-json")
+	const outJson = values["out-json"] || ""
 
 	if (outJson) {
 		writeFileSync(outJson, JSON.stringify(report, null, 2))
