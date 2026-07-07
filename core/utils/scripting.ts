@@ -99,9 +99,9 @@ export async function runIfScript(meta: ImportMeta, scriptCallback: ScriptCallba
 
 /**
  * The ONE blessed accessor for CLI arguments. Everything outside `core/env` + this module is forbidden from touching
- * `process.argv` directly (enforced by `scripts/lint-raw-env-argv.ts`) — prefer `node:util` `parseArgs` (which reads
- * this same slice by default) and reach for this only where `parseArgs` cannot express the grammar (e.g.
- * negative-coordinate positionals).
+ * `process.argv` directly (enforced by the `sister-software/no-process-globals` oxlint rule) — prefer `node:util`
+ * `parseArgs` (which reads this same slice by default) and reach for this only where `parseArgs` cannot express the
+ * grammar (e.g. negative-coordinate positionals).
  */
 export function cliArguments(): string[] {
 	// oxlint-disable-next-line sister-software/no-process-globals

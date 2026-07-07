@@ -6,7 +6,7 @@ stale ``value_info`` the quantizer choked on). The pins now live in THREE places
 or a local export silently differs from the browser-shipped graph:
 
 1. ``corpus-python/pyproject.toml`` ``[project.optional-dependencies].train`` — the local toolchain.
-2. ``scripts/modal/train_remote.py`` ``.pip_install(...)`` — the Modal image that produces the
+2. ``corpus-python/modal/train_remote.py`` ``.pip_install(...)`` — the Modal image that produces the
    shipped artifact.
 3. ``corpus-python/src/mailwoman_train/export_onnx.py`` — the opset the graph is exported at
    (the ``<= 17`` invariant onnxruntime-web's native WebGPU EP needs).
@@ -33,7 +33,7 @@ MAX_OPSET = 17
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = REPO_ROOT / "corpus-python" / "pyproject.toml"
-MODAL_IMAGE = REPO_ROOT / "scripts" / "modal" / "train_remote.py"
+MODAL_IMAGE = REPO_ROOT / "corpus-python" / "modal" / "train_remote.py"
 EXPORT_ONNX = REPO_ROOT / "corpus-python" / "src" / "mailwoman_train" / "export_onnx.py"
 
 PIN_RE = re.compile(r"^([A-Za-z0-9_.-]+)==([0-9][^\"'\s]*)$")

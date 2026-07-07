@@ -3,7 +3,7 @@
 **Date:** 2026-07-07 · **Status:** COMPLETE + **MECHANICALLY ENFORCED** (PRs #1032 → #1033 → #1034 → #1035)
 **The end state:** ZERO raw `process.env`/`process.argv` outside two blessed homes — `core/env/`
 (the `$public`/`$private` implementation) and `core/utils/scripting.ts` (`cliArguments`, `childEnv`,
-`scriptEntryPath`, `runIfScript`). `scripts/lint-raw-env-argv.ts` runs in `yarn lint` AND the Test
+`scriptEntryPath`, `runIfScript`). the `sister-software/no-process-globals` oxlint rule runs in `yarn lint`, pre-commit, AND the Test
 workflow and fails on any new occurrence, INCLUDING gitignored diagnostics (the recurring audit
 blind spot — rg honors .gitignore unless told otherwise). Tests stub env via `vi.stubEnv`; child
 processes get environments via `childEnv()`; parseArgs reads argv itself (never pass `args:`).
