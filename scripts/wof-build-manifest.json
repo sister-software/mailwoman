@@ -3,15 +3,7 @@
 	"artifact": "admin-global-priority.db",
 	"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos --overture-countries <see overture_divisions_supplement.countries> --geonames-countries <see geonames_supplement.countries> --overture-release 2026-06-17.0 --output /mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db",
 	"post_build": "Three steps, IN ORDER (steps 1-2 were missing pre-2026-06-08; see docs/articles/evals/2026-06-08-honest-eval.md + #440). STEP 1: node --experimental-strip-types scripts/add-region-abbrevs.ts /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (enriches `names` with state/province abbreviations from chromium-i18n libaddressinput so findPlace('VT') resolves to Vermont; without it the region parent-constraint never engages and locality lookup runs unconstrained US-wide). STEP 2: node --experimental-strip-types scripts/backfill-ancestors-from-hierarchy.ts /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (repairs only-self ancestry for multi/ambiguous-parent places \u2014 e.g. NYC, parent_id=-4 \u2014 from wof:hierarchy, so the region-descendant boost can reach them; without it region resolution regresses metros like NYC -> 'New York Mills'). STEP 3: node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (builds place_search FTS5 INCLUDING the step-1 abbreviations + place_bbox R*Tree). Step 1 must precede step 3 (FTS reads `names`); step 2 is independent of FTS.",
-	"priority_countries": [
-		"US",
-		"FR",
-		"JP",
-		"CN",
-		"KR",
-		"DE",
-		"GB"
-	],
+	"priority_countries": ["US", "FR", "JP", "CN", "KR", "DE", "GB"],
 	"repos": [
 		{
 			"name": "whosonfirst-data-admin-cn",
@@ -94,15 +86,7 @@
 			"DE": 12657,
 			"NL": 7358
 		},
-		"tables": [
-			"spr",
-			"names",
-			"concordances",
-			"place_population",
-			"ancestors",
-			"place_search",
-			"place_bbox"
-		],
+		"tables": ["spr", "names", "concordances", "place_population", "ancestors", "place_search", "place_bbox"],
 		"spr_has_bbox_columns": true
 	},
 	"overture_divisions_supplement": {
@@ -202,13 +186,7 @@
 		"also_added": "TW (16,750 localities) from the sibling whosonfirst-data-admin-tw repo \u2014 a previously-deferred gap, additive, Taipei resolves.",
 		"verified": "US resolver eval byte-identical to the pre-swap shipped DB (loc 97.6% / region 99.9% / coord p50 3.3km); priority-country locality counts unchanged; 184 region abbrevs unchanged.",
 		"bbox_source": "type=division_area (real boundary extent); #1015 \u2014 type=division carries only a degenerate label-point bbox",
-		"subtypes": [
-			"country",
-			"locality",
-			"region",
-			"county",
-			"localadmin"
-		]
+		"subtypes": ["country", "locality", "region", "county", "localadmin"]
 	},
 	"postcode_build": {
 		"_comment": "US postcodes live in a SEPARATE shard DB (the resolver routes postalcode queries to it via multi-shard ATTACH). Built with the same build-unified-wof.ts using --placetypes postalcode.",
@@ -223,14 +201,7 @@
 		},
 		"expected_output": {
 			"total_places": 42319,
-			"tables": [
-				"spr",
-				"names",
-				"place_population",
-				"ancestors",
-				"place_search",
-				"place_bbox"
-			]
+			"tables": ["spr", "names", "place_population", "ancestors", "place_search", "place_bbox"]
 		},
 		"resolver_wiring": "ResolveRouter + WofSqlitePlaceLookup take both DBs (admin-global-priority.db, postalcode-us.db); postalcode queries route to the postcode shard."
 	},
@@ -252,15 +223,7 @@
 		"_comment": "Coordinate-first candidate table (postcode \u2192 containing + nearby WOF localities). Read-only distributable asset; see resolver-wof-sqlite/POSTCODE-LOCALITY.md.",
 		"artifact": "postcode-locality-intl.db",
 		"build": "node --experimental-strip-types scripts/build-postcode-locality.ts --country <CC> --admin-repo <admin-<cc>> --postcode-db <postalcode source> --output postcode-locality-intl.db  (per country), then --finalize",
-		"countries": [
-			"DE",
-			"ES",
-			"FR",
-			"GB",
-			"IT",
-			"NL",
-			"JP"
-		],
+		"countries": ["DE", "ES", "FR", "GB", "IT", "NL", "JP"],
 		"postcode_sources": {
 			"DE/ES/FR/IT/NL": "postalcode-intl.db",
 			"GB": "postalcode-gb.db",

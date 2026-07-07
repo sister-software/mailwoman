@@ -8,14 +8,14 @@
 Three compounding failures, all demonstrated live this week:
 
 1. **Mutable shipped artifacts.** Every SQLite DB we build is supposed to be a read-only asset, but nothing enforces it. Scripts like `backfill-ancestors-from-hierarchy.ts` exist precisely to reopen an already-built DB read-write and patch it. The policy lives in memories and docstrings; the filesystem doesn't know about it.
-2. **The recipe is not the artifact.** The live `admin-global-priority.db` accumulated state from ad-hoc augment scripts (`augment-admin-*`, `build-coverage-expansion`, …) that no recorded recipe reproduces. The #1015 full rebuild faithfully reproduced the *manifest recipe* and thereby **lost ~95 countries' country/region nodes** (#1023/#1026) — the recipe and the artifact had silently diverged. A coverage-count gate (rows + distinct countries) passed while the structural regression slipped through.
-3. **The build is a scattered dance.** Building the admin gazetteer correctly takes one 700-line script plus four post-build steps in a specific order (`add-region-abbrevs` → `place_abbr` → `build-fts`, with `backfill-ancestors` folded but the others not), documented only in RELEASING.md prose and a lagging manifest. The #1015 rebuild missed two of them on the first pass. `mailwoman wof prepare` is a stale partial duplicate; `mailwoman gazetteer build` builds a *different* artifact (the candidate table). A fresh clone cannot tell what builds what.
+2. **The recipe is not the artifact.** The live `admin-global-priority.db` accumulated state from ad-hoc augment scripts (`augment-admin-*`, `build-coverage-expansion`, …) that no recorded recipe reproduces. The #1015 full rebuild faithfully reproduced the _manifest recipe_ and thereby **lost ~95 countries' country/region nodes** (#1023/#1026) — the recipe and the artifact had silently diverged. A coverage-count gate (rows + distinct countries) passed while the structural regression slipped through.
+3. **The build is a scattered dance.** Building the admin gazetteer correctly takes one 700-line script plus four post-build steps in a specific order (`add-region-abbrevs` → `place_abbr` → `build-fts`, with `backfill-ancestors` folded but the others not), documented only in RELEASING.md prose and a lagging manifest. The #1015 rebuild missed two of them on the first pass. `mailwoman wof prepare` is a stale partial duplicate; `mailwoman gazetteer build` builds a _different_ artifact (the candidate table). A fresh clone cannot tell what builds what.
 
 ## Goals
 
 - **Mechanical read-only enforcement**: a sealed artifact cannot be reopened read-write, at the OS layer, with a clear error message.
 - **First-clone usefulness**: one self-documenting command namespace where `--help` IS the data pipeline; the canonical coverage recipe lives in code as defaults, not in a manifest that lags or an artifact you reverse-engineer.
-- **Recipe ≡ artifact**: a full rebuild from the recorded recipe reproduces the shipped artifact (gated by a verify step that checks *structure*, not just counts).
+- **Recipe ≡ artifact**: a full rebuild from the recorded recipe reproduces the shipped artifact (gated by a verify step that checks _structure_, not just counts).
 - **Endgame**: `scripts/` contains only release-it hooks, CI smoke, and the eval harness. No builders, no mutators.
 
 ## Non-goals
@@ -84,30 +84,30 @@ Ink command files stay thin (parse flags → call pipeline → render progress).
 
 Runs against a staging DB, exits non-zero on any failure; `build admin` runs it automatically before sealing; `promote` refuses an unverified artifact.
 
-| Check | Catches |
-| --- | --- |
+| Check                                                                                                                                                              | Catches                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | **Country/region node census** vs a committed baseline (`gazetteer-pipeline/verify-baseline.json`: per-country expected `country`/`region`/`county` node presence) | the #1026 class — 95 countries losing their country node while row counts held |
-| Reverse EU panel (capitals + border cities → correct country) | the #1015 class (absorbs `scripts/reverse-eu-panel.ts`) |
-| US forward spot-checks: `VT`→Vermont abbrev, NYC region-descendant reachable, `place_abbr` rows > 0 | the #440 class + the missed-post-build-step class |
-| Coverage floor: rows + distinct countries ≥ baseline | gross truncation |
-| Gauntlet hook: the #1025 country-column cases | the #1023 class |
+| Reverse EU panel (capitals + border cities → correct country)                                                                                                      | the #1015 class (absorbs `scripts/reverse-eu-panel.ts`)                        |
+| US forward spot-checks: `VT`→Vermont abbrev, NYC region-descendant reachable, `place_abbr` rows > 0                                                                | the #440 class + the missed-post-build-step class                              |
+| Coverage floor: rows + distinct countries ≥ baseline                                                                                                               | gross truncation                                                               |
+| Gauntlet hook: the #1025 country-column cases                                                                                                                      | the #1023 class                                                                |
 
 The baseline JSON is updated deliberately (a reviewed diff) when coverage intentionally changes — a lagging baseline fails loudly instead of silently.
 
 ### 5. Migration map (the whole drawer, 63 top-level files + 8 subdirs)
 
-| Current | Fate |
-| --- | --- |
-| `build-unified-wof.ts`, `add-region-abbrevs.ts`, `add-ancestors.ts`, `backfill-ancestors-from-hierarchy.ts` | **delete** — subsumed by `gazetteer build admin` |
-| `augment-admin-overture.ts`, `augment-admin-official-names.ts`, `build-admin-geonames-fold.ts`, `build-coverage-expansion.ts` | **fold** their deltas into `build admin` steps (this is the #1026 cure path: their effects join the recipe), then **delete** |
-| `backfill-postcode-centroids.ts`, `fill-zcta-centroids.ts`, `build-postcode-locality*.ts` (4), `build-postalcode-nl-pc6.ts`, `audit-po-box-cedex-shard.ts` | → `gazetteer build postcode --country …` recipes; mutators folded; **delete** |
-| `build-supplemental-gazetteer.ts`, `build-pilot-anchor-lookup.ts`, `build-country-reference.ts`, `build-official-languages.ts` | → `gazetteer build <artifact>` or (for pure codegen: country-reference, official-languages) `generate-*` retained as codegen with sealed outputs |
-| `reverse-eu-panel.ts` | → `gazetteer verify` (delete script) |
-| `diag-*.ts` (6), `eval-*.ts` (5), `harness-*.ts` (2), `extract-tuples*.ts`, `log-scale-chart.ts`, `training-chart.ts`, `parse-training-log.ts` | → `scripts/eval/` & `scripts/diagnostic/` (gitignored per scripts/AGENTS.md) or **delete if stale** — triaged one by one in the plan |
-| `publish-*.ts`, `copy-weights.ts`, `bless-package.ts`, `check-release-parity.ts`, `verify-*.ts`, `smoke-*.ts`, `rewrite-workspace-imports.ts`, `release-workspace-repository.test.ts` | **stay** — release-it hooks + CI; the legitimate residents |
-| `lint-*.ts`, `generate-language-types.ts`, `generate-trace-fixture.ts`, `generate.ts`, `jsonl-to-parquet.ts`, `fst-query.ts` | stay for now (tooling); candidates for later `mailwoman dev` commands, out of scope |
-| `wof-build-manifest.json` | becomes the auto-appended build log (§2) |
-| subdirs `eval/ diagnostic/ modal/ coarse-placer/ census/ data/ lib/ record-matcher/` | untouched this pass (eval/modal are legitimate; the rest triaged in a later phase) |
+| Current                                                                                                                                                                               | Fate                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `build-unified-wof.ts`, `add-region-abbrevs.ts`, `add-ancestors.ts`, `backfill-ancestors-from-hierarchy.ts`                                                                           | **delete** — subsumed by `gazetteer build admin`                                                                                                 |
+| `augment-admin-overture.ts`, `augment-admin-official-names.ts`, `build-admin-geonames-fold.ts`, `build-coverage-expansion.ts`                                                         | **fold** their deltas into `build admin` steps (this is the #1026 cure path: their effects join the recipe), then **delete**                     |
+| `backfill-postcode-centroids.ts`, `fill-zcta-centroids.ts`, `build-postcode-locality*.ts` (4), `build-postalcode-nl-pc6.ts`, `audit-po-box-cedex-shard.ts`                            | → `gazetteer build postcode --country …` recipes; mutators folded; **delete**                                                                    |
+| `build-supplemental-gazetteer.ts`, `build-pilot-anchor-lookup.ts`, `build-country-reference.ts`, `build-official-languages.ts`                                                        | → `gazetteer build <artifact>` or (for pure codegen: country-reference, official-languages) `generate-*` retained as codegen with sealed outputs |
+| `reverse-eu-panel.ts`                                                                                                                                                                 | → `gazetteer verify` (delete script)                                                                                                             |
+| `diag-*.ts` (6), `eval-*.ts` (5), `harness-*.ts` (2), `extract-tuples*.ts`, `log-scale-chart.ts`, `training-chart.ts`, `parse-training-log.ts`                                        | → `scripts/eval/` & `scripts/diagnostic/` (gitignored per scripts/AGENTS.md) or **delete if stale** — triaged one by one in the plan             |
+| `publish-*.ts`, `copy-weights.ts`, `bless-package.ts`, `check-release-parity.ts`, `verify-*.ts`, `smoke-*.ts`, `rewrite-workspace-imports.ts`, `release-workspace-repository.test.ts` | **stay** — release-it hooks + CI; the legitimate residents                                                                                       |
+| `lint-*.ts`, `generate-language-types.ts`, `generate-trace-fixture.ts`, `generate.ts`, `jsonl-to-parquet.ts`, `fst-query.ts`                                                          | stay for now (tooling); candidates for later `mailwoman dev` commands, out of scope                                                              |
+| `wof-build-manifest.json`                                                                                                                                                             | becomes the auto-appended build log (§2)                                                                                                         |
+| subdirs `eval/ diagnostic/ modal/ coarse-placer/ census/ data/ lib/ record-matcher/`                                                                                                  | untouched this pass (eval/modal are legitimate; the rest triaged in a later phase)                                                               |
 
 ### 6. Sequencing (one spec, three PRs)
 
