@@ -38,6 +38,8 @@ import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { resolve } from "node:path"
 
+import { childEnv, cliArguments } from "@mailwoman/core/utils"
+
 const REQUIRED_FILES = [
 	{ flag: "--model", remoteName: "model.onnx", description: "ONNX classifier" },
 	{ flag: "--tokenizer", remoteName: "tokenizer.model", description: "SentencePiece tokenizer" },
@@ -89,7 +91,7 @@ interface ParsedArgs {
 }
 
 function parseArgs(): ParsedArgs {
-	const args = process.argv.slice(2)
+	const args = cliArguments()
 	const out: ParsedArgs = { setDefault: false }
 
 	for (let i = 0; i < args.length; i++) {
@@ -112,7 +114,7 @@ function fail(msg: string): never {
 }
 
 function run(cmd: string, args: string[]) {
-	const r = spawnSync(cmd, args, { stdio: "inherit", env: { ...process.env } })
+	const r = spawnSync(cmd, args, { stdio: "inherit", env: childEnv() })
 
 	if (r.status !== 0) {
 		fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)

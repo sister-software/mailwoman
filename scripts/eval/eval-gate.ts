@@ -78,7 +78,6 @@ function parseArgs(): GateArgs {
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseNodeArgs({
-		args: process.argv.slice(2),
 		options: {
 			baseline: { type: "string" },
 			candidate: { type: "string" },

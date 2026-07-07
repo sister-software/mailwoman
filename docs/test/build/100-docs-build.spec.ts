@@ -19,6 +19,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { childEnv } from "@mailwoman/core/utils"
 import { expect, test } from "@playwright/test"
 
 const execFileAsync = promisify(execFile)
@@ -53,7 +54,7 @@ test.describe("docs build", () => {
 			const result = await execFileAsync("yarn", ["build", "--out-dir", CHECK_OUT_DIR], {
 				cwd: DOCS_ROOT,
 				maxBuffer: 64 * 1024 * 1024,
-				env: { ...process.env, CI: "true" },
+				env: childEnv({ CI: "true" }),
 			})
 			stdout = result.stdout
 			stderr = result.stderr

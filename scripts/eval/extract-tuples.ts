@@ -25,7 +25,7 @@ import { closeSync, openSync, writeSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DuckDBInstance } from "@duckdb/node-api"
-import { SeededRandom } from "@mailwoman/core/utils"
+import { SeededRandom, cliArguments } from "@mailwoman/core/utils"
 
 /** A sink that appends a chunk of text to the output file. */
 type WriteFn = (chunk: string) => void
@@ -315,7 +315,7 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const argv = process.argv.slice(2)
+	const argv = cliArguments()
 	const shards: string[] = []
 	let sqlite: string | undefined
 	let output: string | undefined

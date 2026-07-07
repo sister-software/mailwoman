@@ -39,7 +39,7 @@ import * as os from "node:os"
 import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, scriptEntryPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
@@ -163,7 +163,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				// The per-state ADDRESS-POINT builder is now the sibling `situs address-points` command (the
 				// old `scripts/build-address-point-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI
 				// entry this process was started from, so dev + published installs both resolve correctly.
-				const cliEntry = process.argv[1]!
+				const cliEntry = scriptEntryPath()
 				const ansiPattern = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
 				const stripAnsi = (s: string) => s.replace(ansiPattern, "")
 

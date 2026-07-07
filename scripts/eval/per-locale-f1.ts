@@ -93,7 +93,6 @@ function parseArgs(): Args {
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseNodeArgs({
-		args: process.argv.slice(2),
 		options: {
 			"bridge-gaps": { type: "boolean" },
 			conventions: { type: "string" },

@@ -13,12 +13,16 @@
 
 import { parseArgs } from "node:util"
 
+import { cliArguments } from "@mailwoman/core/utils"
+
 import { buildUnLocodeDB } from "./build.js"
 import { UnLocodeLookup } from "./index.js"
 
-if (process.argv[2] === "build") {
+const argvAll = cliArguments()
+
+if (argvAll[0] === "build") {
 	const { values } = parseArgs({
-		args: process.argv.slice(3),
+		args: argvAll.slice(1),
 		options: { csv: { type: "string" }, out: { type: "string" } },
 	})
 
@@ -30,7 +34,7 @@ if (process.argv[2] === "build") {
 	console.error(`built ${values.out} (${rows} rows, ${withCoords} with coordinates)`)
 } else {
 	// Hand-parse so negative coordinates work as positionals.
-	const args = process.argv.slice(2)
+	const args = argvAll
 	let databasePath: string | undefined
 	let country: string | undefined
 	let name: string | undefined

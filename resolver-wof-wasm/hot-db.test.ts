@@ -25,6 +25,7 @@
 
 import { readFile } from "node:fs/promises"
 
+import { $public } from "@mailwoman/core/env"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
@@ -32,7 +33,7 @@ import { runCascade } from "../docs/src/shared/demo-helpers.js"
 import { loadSlimWOFDatabase } from "./loader.js"
 import { WOFWasmPlaceLookup } from "./lookup.js"
 
-const HOT_DB_PATH = process.env.MAILWOMAN_WOF_HOT_DB
+const HOT_DB_PATH = $public.MAILWOMAN_WOF_HOT_DB
 
 const BROOKLYN_BOROUGH = 421205765
 const NEW_YORK_LOCALITY = 85977539

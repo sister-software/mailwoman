@@ -62,7 +62,7 @@
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
 		"docs:build": "yarn workspace @mailwoman/docs build",
-		"lint": "run-s lint:oxlint lint:oxfmt lint:python",
+		"lint": "run-s lint:oxlint lint:oxfmt lint:raw-access lint:python",
 		"lint:oxlint": "oxlint",
 		"lint:oxfmt": "oxfmt --check .",
 		"lint:python": "uvx ruff@0.15.20 check corpus-python && uvx ruff@0.15.20 format --check corpus-python && python3 corpus-python/scripts/verify_toolchain.py",
@@ -76,7 +76,8 @@
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --dir ./mailwoman/test",
 		"test:unit": "vitest --exclude ./mailwoman/test",
-		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit"
+		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",
+		"lint:raw-access": "node scripts/lint-raw-env-argv.ts"
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "^1.5.3-r.3",

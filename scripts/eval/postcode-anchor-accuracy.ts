@@ -37,7 +37,6 @@ function parseArgs(): Args {
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseNodeArgs({
-		args: process.argv.slice(2),
 		options: { country: { type: "string" }, eval: { type: "string" }, shard: { type: "string", multiple: true } },
 		strict: false,
 		allowPositionals: true,

@@ -27,6 +27,8 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { basename, join } from "node:path"
 
+import { cliArguments, runIfScript } from "@mailwoman/core/utils"
+
 interface AuditOpts {
 	corpusDir: string
 	configPath?: string
@@ -381,6 +383,4 @@ function parseArgv(argv: readonly string[]): AuditOpts {
 }
 
 // Run when invoked directly (not when imported as a module for testing).
-if (import.meta.url === `file://${process.argv[1]}`) {
-	audit(parseArgv(process.argv.slice(2)))
-}
+void runIfScript(import.meta, () => audit(parseArgv(cliArguments())))

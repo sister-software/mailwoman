@@ -35,12 +35,14 @@ import { basename, dirname, extname, join } from "node:path"
 import { createInterface } from "node:readline"
 import { SQLInputValue } from "node:sqlite"
 
+import { cliArguments } from "@mailwoman/core/utils"
+
 // ---------------------------------------------------------------------------
 // CLI arg parsing (minimal — no yargs dependency needed for a utility script)
 // ---------------------------------------------------------------------------
 
 function parseArgs(): Record<string, string> {
-	const args = process.argv.slice(2)
+	const args = cliArguments()
 	const out: Record<string, string> = {}
 
 	for (let i = 0; i < args.length; i++) {

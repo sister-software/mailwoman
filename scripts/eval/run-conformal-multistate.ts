@@ -19,11 +19,10 @@ import { $ } from "zx"
 
 runIfScript(import.meta, async () => {
 	const EMPTY = "/tmp/empty-situs.db"
-	const N = process.env["CONFORMAL_N"] ?? "2000"
 	// The bash for-loop was unquoted (`for slug in ${STATES[@]}`), so a single space-joined arg splits too.
-	const args = parseArgs({ allowPositionals: true, strict: false })
-		.positionals.flatMap((a) => a.split(/\s+/))
-		.filter(Boolean)
+	const parsed = parseArgs({ options: { n: { type: "string" } }, allowPositionals: true, strict: false })
+	const N = (parsed.values.n as string | undefined) ?? "2000"
+	const args = parsed.positionals.flatMap((a) => a.split(/\s+/)).filter(Boolean)
 	const STATES = args.length ? args : ["mi", "ny", "ca", "mt"]
 
 	$.verbose = false

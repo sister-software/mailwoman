@@ -25,6 +25,8 @@ import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type AddressSystemConventions } from "@mailwoman/codex"
+import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { createScorer } from "../scorer.js"
@@ -33,8 +35,8 @@ const here = dirname(fileURLToPath(import.meta.url))
 const REPO = resolve(here, "../..")
 
 const MODEL =
-	process.env.MAILWOMAN_CAPABILITY_ONNX_MODEL ??
-	"/mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx"
+	$public.MAILWOMAN_CAPABILITY_ONNX_MODEL ??
+	String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
 const TOKENIZER = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 const GAZETTEER = resolve(REPO, "data/gazetteer/anchor-lexicon-v1.json")

@@ -13,6 +13,7 @@
  *   GO = FR street-intact rises materially AND US holds. Run: node scripts/diagnostic/fr-parse-recall-verdict.ts
  */
 
+import { parseArgs } from "node:util"
 import { resolve } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
@@ -21,7 +22,8 @@ import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/stre
 import { mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
-const PROBE_MODEL = resolve(process.env["PROBE_MODEL"] ?? "./out/v194-final/model.onnx")
+const { values: cliValues } = parseArgs({ options: { model: { type: "string" } }, strict: false, allowPositionals: true })
+const PROBE_MODEL = resolve((cliValues.model as string | undefined) ?? "./out/v194-final/model.onnx")
 
 const baseline = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const probe = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: PROBE_MODEL })

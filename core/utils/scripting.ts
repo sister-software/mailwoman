@@ -96,3 +96,27 @@ export async function runIfScript(meta: ImportMeta, scriptCallback: ScriptCallba
 
 	return runScript(scriptCallback)
 }
+
+/**
+ * The ONE blessed accessor for CLI arguments. Everything outside `core/env` + this module is forbidden from touching
+ * `process.argv` directly (enforced by `scripts/lint-raw-env-argv.ts`) — prefer `node:util` `parseArgs` (which reads
+ * this same slice by default) and reach for this only where `parseArgs` cannot express the grammar (e.g.
+ * negative-coordinate positionals).
+ */
+export function cliArguments(): string[] {
+	return process.argv.slice(2)
+}
+
+/**
+ * The ONE blessed way to build a child-process environment: the current environment with explicit overrides. Everything
+ * outside `core/env` + this module is forbidden from touching `process.env` directly (enforced by
+ * `scripts/lint-raw-env-argv.ts`) — read config through `$public`/`$private`.
+ */
+export function childEnv(overrides: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
+	return { ...process.env, ...overrides }
+}
+
+/** The path of the executing script (`argv[1]`) — for commands that re-spawn or reference their own CLI entry. */
+export function scriptEntryPath(): string {
+	return process.argv[1]!
+}

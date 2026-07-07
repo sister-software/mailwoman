@@ -13,6 +13,7 @@ import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { childEnv } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as runOptions } from "../commands/corpus/run.js"
@@ -50,7 +51,7 @@ describe("npx mailwoman corpus list", () => {
 		// otherwise pollute stderr and break the `stderr === ""` assertion.
 		const { stdout, stderr } = await exec("node", [cliBin, "corpus", "list"], {
 			timeout: 10_000,
-			env: { ...process.env, NODE_NO_WARNINGS: "1" },
+			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 		})
 		expect(stderr).toBe("")
 		expect(stdout).toMatch(/wof-admin/i)

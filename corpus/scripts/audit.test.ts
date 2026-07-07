@@ -13,7 +13,7 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 // Re-export the internals for testing. The script's CLI entry is gated on
-// `import.meta.url === file:// process.argv[1]`, so importing the module is side-effect-free.
+// `runIfScript(import.meta, …)`, so importing the module is side-effect-free.
 import { audit } from "./audit.js"
 
 const CORPUS_PATH = "/mnt/playpen/mailwoman-data/corpus/versioned/v0.3.0/corpus-v0.3.0"

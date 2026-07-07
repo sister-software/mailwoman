@@ -31,6 +31,8 @@ import { mkdir, unlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
 
+import { childEnv } from "@mailwoman/core/utils"
+
 import type { CanonicalRow, LabeledRow } from "./types.js"
 
 export type SplitName = "train" | "val" | "test"
@@ -240,7 +242,7 @@ async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string):
 
 	await new Promise<void>((resolve, reject) => {
 		// LC_ALL=C: byte-sort, locale-independent → deterministic across hosts.
-		const proc = spawn("sort", [unsortedPath, "-o", outPath], { env: { ...process.env, LC_ALL: "C" } })
+		const proc = spawn("sort", [unsortedPath, "-o", outPath], { env: childEnv({ LC_ALL: "C" }) })
 		proc.on("error", reject)
 		proc.on("exit", (code) => {
 			if (code === 0) {

@@ -226,7 +226,6 @@ function parseArgs(): Args {
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseNodeArgs({
-		args: process.argv.slice(2),
 		options: {
 			blocking: { type: "boolean" },
 			floors: { type: "string" },

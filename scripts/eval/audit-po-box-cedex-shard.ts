@@ -74,7 +74,6 @@ function parseArgs(): AuditOptions {
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseNodeArgs({
-		args: process.argv.slice(2),
 		options: { input: { type: "string" }, samples: { type: "string" } },
 		strict: false,
 		allowPositionals: true,

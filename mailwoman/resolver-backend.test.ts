@@ -6,27 +6,18 @@
 
 import { fileURLToPath } from "node:url"
 
-import { afterEach, expect, test } from "vitest"
+import { afterEach, expect, test, vi } from "vitest"
 
 import { mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.js"
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
 const THIS_FILE = fileURLToPath(import.meta.url)
-const ENV_KEYS = ["MAILWOMAN_DATA_ROOT", "MAILWOMAN_CANDIDATE_DB"] as const
-const original = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]))
-
 function setEnv(key: string, value: string | undefined): void {
-	if (value === undefined) {
-		delete process.env[key]
-	} else {
-		process.env[key] = value
-	}
+	vi.stubEnv(key, value as string)
 }
 
 afterEach(() => {
-	for (const k of ENV_KEYS) {
-		setEnv(k, original[k])
-	}
+	vi.unstubAllEnvs()
 })
 
 test("wofShardPaths: builds the admin + postcode + tail + intl + NL-PC6 shard paths under a data root (#920/#977)", () => {

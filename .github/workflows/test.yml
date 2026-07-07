@@ -52,6 +52,10 @@ jobs:
       - name: Typecheck scripts
         run: yarn typecheck:scripts
 
+      # The zero-raw-access gate: process.env/process.argv only in core/env + core/utils/scripting.
+      - name: Lint raw env/argv access
+        run: yarn lint:raw-access
+
       # The docs app ships real runtime code (the /demo page). Its typecheck sat outside CI and
       # went 7-errors red on main unnoticed — one of those errors was the LIVE demo's undefined
       # baseUrl paths (#917, broken in production since v5.0.0). This step is that bug's class fix.

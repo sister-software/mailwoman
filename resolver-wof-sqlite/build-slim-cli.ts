@@ -13,6 +13,8 @@
 
 import { exit, stderr } from "node:process"
 
+import { cliArguments, runIfScript } from "@mailwoman/core/utils"
+
 import { buildSlimWOFDatabase, type BuildSlimOptions } from "./build-slim.js"
 
 interface CLIArgs {
@@ -155,6 +157,4 @@ export async function main(rawArgv: string[]): Promise<number> {
 }
 
 // Run when invoked as a script (not when imported by tests).
-if (import.meta.url === `file://${process.argv[1]}`) {
-	main(process.argv.slice(2)).then((code) => exit(code))
-}
+void runIfScript(import.meta, async () => exit(await main(cliArguments())))

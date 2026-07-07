@@ -24,6 +24,8 @@ import { existsSync } from "node:fs"
 import { exit, stderr } from "node:process"
 import { DatabaseSync } from "node:sqlite"
 
+import { cliArguments, runIfScript } from "@mailwoman/core/utils"
+
 import { buildPlaceSearchFTS } from "./fts.js"
 
 interface CLIArgs {
@@ -136,6 +138,4 @@ export function main(argv: readonly string[]): number {
 }
 
 // Entry point — only run when invoked directly, not when imported by tests.
-if (import.meta.url === `file://${process.argv[1]}`) {
-	exit(main(process.argv.slice(2)))
-}
+void runIfScript(import.meta, () => exit(main(cliArguments())))
