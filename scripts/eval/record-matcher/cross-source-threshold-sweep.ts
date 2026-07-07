@@ -28,6 +28,7 @@
  */
 
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
@@ -49,21 +50,39 @@ import {
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		candidate: { type: "string" },
+		cap: { type: "string" },
+		"data-root": { type: "string" },
+		"out-md": { type: "string" },
+		sources: { type: "string" },
+		state: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	candidate?: string
+	cap?: string
+	"data-root"?: string
+	"out-md"?: string
+	sources?: string
+	state?: string
+	wof?: string
 }
-
-const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
-const CAP = Number(arg("cap", "2000"))
-const STATE = arg("state", "TX").toUpperCase()
-const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
-const DATA_ROOT = arg("data-root", mailwomanDataRoot())
-const OUT_MD = arg("out-md", "")
+const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
+const CAP = Number(values["cap"] || "2000")
+const STATE = (values["state"] || "TX").toUpperCase()
+const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
+const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
+const OUT_MD = values["out-md"] || ""
 // #655 option 2: a trained CROSS-SOURCE GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as
 // a third arm at its recommended threshold — the model train-cross-gbt.ts emits.
-const CANDIDATE = arg("candidate", "")
+const CANDIDATE = values["candidate"] || ""
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 

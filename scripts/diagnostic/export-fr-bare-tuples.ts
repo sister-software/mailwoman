@@ -21,12 +21,16 @@ import { createInterface } from "node:readline"
 
 import { mailwomanDataRoot } from "mailwoman/resolver-backend"
 
-import { arg } from "../lib/cli-args.ts"
+import { parseArgs } from "node:util"
 
-const N = Number(arg("n", "12000"))
-const STRIDE = Number(arg("stride", "1200"))
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({ options: { "n": { type: "string" }, "out": { type: "string" }, "stride": { type: "string" } }, strict: false, allowPositionals: true })
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "n"?: string; "out"?: string; "stride"?: string }
+const N = Number((values["n"] || "12000"))
+const STRIDE = Number((values["stride"] || "1200"))
 const BAN = `${mailwomanDataRoot()}/corpus/staging/ban-france.csv`
-const OUT = arg("out", `${mailwomanDataRoot()}/osm/fr-bare-tuples.jsonl`)
+const OUT = (values["out"] || `${mailwomanDataRoot()}/osm/fr-bare-tuples.jsonl`)
 
 // BAN header: id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune;…
 const NUMERO = 2

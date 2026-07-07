@@ -21,22 +21,39 @@
  */
 
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		cap: { type: "string" },
+		n: { type: "string" },
+		"out-jsonl": { type: "string" },
+		sources: { type: "string" },
+		state: { type: "string" },
+		tau: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	cap?: string
+	n?: string
+	"out-jsonl"?: string
+	sources?: string
+	state?: string
+	tau?: string
 }
-
-const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
-const CAP = Number(arg("cap", "200000"))
-const STATE = arg("state", "TX").toUpperCase()
-const TAU = Number(arg("tau", "0.7"))
-const N = Number(arg("n", "300"))
-const OUT = arg("out-jsonl", "")
+const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
+const CAP = Number(values["cap"] || "200000")
+const STATE = (values["state"] || "TX").toUpperCase()
+const TAU = Number(values["tau"] || "0.7")
+const N = Number(values["n"] || "300")
+const OUT = values["out-jsonl"] || ""
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
 const norm = (s: string | undefined) => (s ?? "").trim()

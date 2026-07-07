@@ -16,18 +16,21 @@
 
 import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
 import { detectLocaleSync } from "@mailwoman/locale-gate"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
-function arg(name: string, fallback: string): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
-const GOLDEN = arg("golden", "data/eval/golden/v0.1.2")
-const FALSEHOODS = arg("falsehoods", "data/eval/falsehoods")
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { falsehoods: { type: "string" }, golden: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { falsehoods?: string; golden?: string }
+const GOLDEN = values["golden"] || "data/eval/golden/v0.1.2"
+const FALSEHOODS = values["falsehoods"] || "data/eval/falsehoods"
 
 interface Sample {
 	input: string

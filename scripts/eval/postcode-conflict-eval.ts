@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software
@@ -22,12 +23,14 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { eval: { type: "string" }, "out-md": { type: "string" }, wof: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { eval?: string; "out-md"?: string; wof?: string }
 interface Row {
 	input: string
 	locale?: string
@@ -63,13 +66,13 @@ function flagged(tree: AddressTree): boolean {
 	return hit
 }
 
-const rows: Row[] = readFileSync(arg("eval", "data/eval/falsehoods/postcode-city-conflicts.jsonl"), "utf8")
+const rows: Row[] = readFileSync(values["eval"] || "data/eval/falsehoods/postcode-city-conflicts.jsonl", "utf8")
 	.split("\n")
 	.filter(Boolean)
 	.map((l) => JSON.parse(l))
 
-const wofPaths = arg(
-	"wof",
+const wofPaths = (
+	values["wof"] ||
 	`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 ).split(",")
 const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
@@ -119,9 +122,9 @@ for (const r of results) {
 const report = lines.join("\n")
 console.log(report)
 
-if (arg("out-md")) {
-	writeFileSync(arg("out-md"), report + "\n")
-	console.error(`wrote markdown → ${arg("out-md")}`)
+if (values["out-md"] || "") {
+	writeFileSync(values["out-md"] || "", report + "\n")
+	console.error(`wrote markdown → ${values["out-md"] || ""}`)
 }
 backend.close?.()
 process.exit(results.every((r) => r.ok) ? 0 : 1)

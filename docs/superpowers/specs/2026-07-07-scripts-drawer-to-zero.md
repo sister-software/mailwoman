@@ -1,6 +1,14 @@
 # UNFUCK_SCRIPTS.md — Triaging the scripts drawer to zero
 
 **Date:** 2026-07-07 · **Status:** APPROVED as amended (operator: "you've got the helm")
+**Standardization addendum (PR #1033):** the argv/env cleanup the migration left behind is DONE —
+57 local-helper/inline-scan files → `parseArgs` (codemod v2), the 4 gitignored diagnostic files with
+broken cli-args imports fixed (`rg` respects .gitignore — always recount with `--no-ignore`),
+promotion-gate converted STRICT with exit-2 parity, photon/libpostal/nominatim dispatch →
+positionals, smoke-resolve's hardcoded playpen path → `dataRootPath`. Deliberately NOT converted:
+the lookup CLIs' documented negative-coordinate hand-parse and the resolver build CLIs' structured
+tested parsers — neither is the scan anti-pattern.
+
 **Amendments at approval:** Phase 0 is COMPLETE (PRs #1027/#1028/#1030/#1031 — see
 `project-gazetteer-cli-sealed-artifacts`); Phase 2 lands as **module files in `core/coarse-placer/`**
 (not Ink commands); Phase 3 lands as **`registry/tools/` modules** (commands are a later nicety).

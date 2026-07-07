@@ -23,7 +23,16 @@
 import { readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import { parseArgs } from "node:util"
 
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { "warn-only": { type: "boolean" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "warn-only"?: boolean }
 const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
 // The demo's own fetch path (docs/src/contexts/DemoEmbed.tsx) — check what the demo actually reads,
 // not what the publisher believes it wrote.
@@ -80,7 +89,7 @@ function readDocsCurrentVersion(): string {
 	return normalizeVersion(version)
 }
 
-const warnOnly = process.argv.includes("--warn-only")
+const warnOnly = values["warn-only"] ?? false
 
 const npmLatest = await readNPMLatest()
 const checks: ParityCheck[] = []

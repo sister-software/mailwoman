@@ -22,6 +22,7 @@
  */
 
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
@@ -45,18 +46,37 @@ import {
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"data-root": { type: "string" },
+		"eval-state": { type: "string" },
+		npis: { type: "string" },
+		"out-md": { type: "string" },
+		sources: { type: "string" },
+		"train-state": { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"data-root"?: string
+	"eval-state"?: string
+	npis?: string
+	"out-md"?: string
+	sources?: string
+	"train-state"?: string
+	wof?: string
 }
-const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
-const TRAIN_STATE = arg("train-state", "TX").toUpperCase()
-const EVAL_STATE = arg("eval-state", "CA").toUpperCase()
-const NPIS = Number(arg("npis", "2000"))
-const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
-const DATA_ROOT = arg("data-root", mailwomanDataRoot())
-const OUT_MD = arg("out-md", "")
+const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
+const TRAIN_STATE = (values["train-state"] || "TX").toUpperCase()
+const EVAL_STATE = (values["eval-state"] || "CA").toUpperCase()
+const NPIS = Number(values["npis"] || "2000")
+const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
+const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
+const OUT_MD = values["out-md"] || ""
 
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`

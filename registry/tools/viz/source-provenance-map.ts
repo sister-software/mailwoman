@@ -29,22 +29,39 @@
 
 import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		cap: { type: "string" },
+		db: { type: "string" },
+		"nad-mod": { type: "string" },
+		"oa-mod": { type: "string" },
+		"out-html": { type: "string" },
+		state: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	cap?: string
+	db?: string
+	"nad-mod"?: string
+	"oa-mod"?: string
+	"out-html"?: string
+	state?: string
 }
-
-const STATE = arg("state", "ny").toLowerCase()
-const DB = arg("db", `${dataRootPath("address-points")}/address-points-us-${STATE}.db`)
-const OUT = arg("out-html", "/tmp/source-provenance.html")
-const NAD_MOD = Number(arg("nad-mod", "700")) // keep ~1/700 of NAD points
-const OA_MOD = Number(arg("oa-mod", "120")) // keep ~1/120 of OpenAddresses points
-const CAP = Number(arg("cap", "7000")) // per-source marker cap
+const STATE = (values["state"] || "ny").toLowerCase()
+const DB = values["db"] || `${dataRootPath("address-points")}/address-points-us-${STATE}.db`
+const OUT = values["out-html"] || "/tmp/source-provenance.html"
+const NAD_MOD = Number(values["nad-mod"] || "700") // keep ~1/700 of NAD points
+const OA_MOD = Number(values["oa-mod"] || "120") // keep ~1/120 of OpenAddresses points
+const CAP = Number(values["cap"] || "7000") // per-source marker cap
 
 // Collapse the raw `source` string into a human, mappable category. The address-point DB stores e.g.
 // "overture:NAD" or "overture:OpenAddresses/NY/NYC Open Data" — the suffix is the real upstream

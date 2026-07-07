@@ -17,6 +17,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 // import { Presets, SingleBar } from "cli-progress"
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
@@ -45,12 +46,14 @@ await mkdir(resourceDictionaryDirectory, {
 	recursive: true,
 })
 
-if (process.argv.length !== 3) {
+const { positionals } = parseArgs({ allowPositionals: true })
+
+if (positionals.length !== 1) {
 	console.error("usage: node %s {dbpath.sqlite}", resourceDictionaryPathBuilder("whosonfirst").toString())
 	process.exit(1)
 }
 
-const databasePath = process.argv[2]!
+const databasePath = positionals[0]!
 
 console.log(`Opening database... ${databasePath}`)
 const db = new DatabaseSync(databasePath, {

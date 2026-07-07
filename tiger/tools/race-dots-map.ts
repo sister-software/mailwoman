@@ -17,23 +17,42 @@
  */
 
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { layers, namedFlavor } from "@protomaps/basemaps"
 
-function arg(name: string, fb = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fb
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		lat: { type: "string" },
+		lng: { type: "string" },
+		out: { type: "string" },
+		per: { type: "string" },
+		"pmtiles-url": { type: "string" },
+		title: { type: "string" },
+		zoom: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	lat?: string
+	lng?: string
+	out?: string
+	per?: string
+	"pmtiles-url"?: string
+	title?: string
+	zoom?: string
 }
-
-const PMTILES_URL = arg("pmtiles-url", "http://localhost:8899/race-dots-oc.pmtiles")
-const OUT = arg("out", "/tmp/race-dots-oc.html")
-const PER = Number(arg("per", "5"))
+const PMTILES_URL = values["pmtiles-url"] || "http://localhost:8899/race-dots-oc.pmtiles"
+const OUT = values["out"] || "/tmp/race-dots-oc.html"
+const PER = Number(values["per"] || "5")
 const PER_PHRASE = PER === 1 ? "one dot is one person" : `one dot ≈ ${PER} people`
-const TITLE = arg("title", `Race in Orange County, CA — ${PER_PHRASE} (2020 Census)`)
-const CENTER_LNG = Number(arg("lng", "-117.83"))
-const CENTER_LAT = Number(arg("lat", "33.68"))
-const ZOOM = Number(arg("zoom", "9.4"))
+const TITLE = values["title"] || `Race in Orange County, CA — ${PER_PHRASE} (2020 Census)`
+const CENTER_LNG = Number(values["lng"] || "-117.83")
+const CENTER_LAT = Number(values["lat"] || "33.68")
+const ZOOM = Number(values["zoom"] || "9.4")
 
 const MAPLIBRE_VERSION = "5.24.0"
 const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp"

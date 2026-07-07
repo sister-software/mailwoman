@@ -17,6 +17,7 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
@@ -25,19 +26,37 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		anchor: { type: "string" },
+		base: { type: "string" },
+		candidate: { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		golden: { type: "string" },
+		"model-card": { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	anchor?: string
+	base?: string
+	candidate?: string
+	"gazetteer-lexicon"?: string
+	golden?: string
+	"model-card"?: string
+	tokenizer?: string
 }
-
-const BASE = arg("base", dataRootPath("models", "quantized", "model-v192-step-40000-int8.onnx"))
-const CAND = arg("candidate", "./out/v193a2/model.onnx")
-const GOLDEN = arg("golden", "data/eval/golden/v0.1.2")
-const TOK = arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-const CARD = arg("model-card", "neural-weights-en-us/model-card.json")
-const ANCHOR = arg("anchor", dataRootPath("anchor", "pilot-anchor-lookup.json"))
-const GAZ = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")
+const BASE = values["base"] || dataRootPath("models", "quantized", "model-v192-step-40000-int8.onnx")
+const CAND = values["candidate"] || "./out/v193a2/model.onnx"
+const GOLDEN = values["golden"] || "data/eval/golden/v0.1.2"
+const TOK = values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+const CARD = values["model-card"] || "neural-weights-en-us/model-card.json"
+const ANCHOR = values["anchor"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
+const GAZ = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"
 
 interface Row {
 	raw: string

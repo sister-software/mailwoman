@@ -34,18 +34,45 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { ResolvedPlace } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"anchor-weight": { type: "string" },
+		candidates: { type: "string" },
+		eval: { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		"out-json": { type: "string" },
+		"out-md": { type: "string" },
+		"postcode-shards": { type: "string" },
+		tokenizer: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"anchor-weight"?: string
+	candidates?: string
+	eval?: string
+	limit?: string
+	model?: string
+	"model-card"?: string
+	"out-json"?: string
+	"out-md"?: string
+	"postcode-shards"?: string
+	tokenizer?: string
+	wof?: string
 }
-
 interface OaRow {
 	input: string
 	lat: number
@@ -129,18 +156,18 @@ interface DeltaRow {
 }
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval", "data/eval/external/openaddresses-de-sample.jsonl")
-	const limit = Number(arg("limit", "0")) || Infinity
-	const anchorWeight = Number(arg("anchor-weight", "2.0"))
-	const K = Number(arg("candidates", "10"))
-	const wofPaths = arg(
-		"wof",
+	const evalPath = values["eval"] || "data/eval/external/openaddresses-de-sample.jsonl"
+	const limit = Number(values["limit"] || "0") || Infinity
+	const anchorWeight = Number(values["anchor-weight"] || "2.0")
+	const K = Number(values["candidates"] || "10")
+	const wofPaths = (
+		values["wof"] ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())
-	const shards = arg(
-		"postcode-shards",
+	const shards = (
+		values["postcode-shards"] ||
 		`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
 	)
 		.split(",")
@@ -155,10 +182,10 @@ async function main(): Promise<void> {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
+	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
 	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(arg("tokenizer", "neural-weights-en-us/tokenizer.model")),
-		ONNXRunner.create(arg("model", "neural-weights-en-us/model.onnx")),
+		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "neural-weights-en-us/tokenizer.model"),
+		ONNXRunner.create(values["model"] || "neural-weights-en-us/model.onnx"),
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
@@ -333,7 +360,7 @@ async function main(): Promise<void> {
 	)
 	lines.push("")
 
-	const outMd = arg("out-md")
+	const outMd = values["out-md"] || ""
 
 	if (outMd) {
 		writeFileSync(outMd, lines.join("\n") + "\n")
@@ -341,7 +368,7 @@ async function main(): Promise<void> {
 	} else {
 		console.log(lines.join("\n"))
 	}
-	const outJson = arg("out-json")
+	const outJson = values["out-json"] || ""
 
 	if (outJson) {
 		writeFileSync(outJson, JSON.stringify({ evalPath, anchorWeight, K, n, skip, results }, null, 2))

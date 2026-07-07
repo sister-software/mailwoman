@@ -54,6 +54,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
@@ -72,12 +73,86 @@ import {
 
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"ablate-to-anchor": { type: "boolean" },
+		"address-points": { type: "string" },
+		"admin-coherence": { type: "boolean" },
+		"anchor-min-conf": { type: "string" },
+		"anchor-off": { type: "boolean" },
+		"anchor-rerank": { type: "boolean" },
+		assembled: { type: "boolean" },
+		"candidate-db": { type: "string" },
+		cascade: { type: "boolean" },
+		"city-state-fallback": { type: "boolean" },
+		"data-root": { type: "string" },
+		"default-country": { type: "string" },
+		"errors-json": { type: "string" },
+		eval: { type: "string" },
+		"hierarchy-completion": { type: "boolean" },
+		interpolation: { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-anchor-lookup": { type: "string" },
+		"model-card": { type: "string" },
+		"no-admin-coherence": { type: "boolean" },
+		"normalize-case": { type: "boolean" },
+		"out-json": { type: "string" },
+		"out-md": { type: "string" },
+		"out-resolved": { type: "string" },
+		"out-rows": { type: "string" },
+		"place-country": { type: "boolean" },
+		"place-country-hard": { type: "boolean" },
+		"place-country-hard-all": { type: "boolean" },
+		"postal-city-alias-db": { type: "string" },
+		"postcode-anchor": { type: "boolean" },
+		"postcode-shards": { type: "string" },
+		"raw-case": { type: "boolean" },
+		tokenizer: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"ablate-to-anchor"?: boolean
+	"address-points"?: string
+	"admin-coherence"?: boolean
+	"anchor-min-conf"?: string
+	"anchor-off"?: boolean
+	"anchor-rerank"?: boolean
+	assembled?: boolean
+	"candidate-db"?: string
+	cascade?: boolean
+	"city-state-fallback"?: boolean
+	"data-root"?: string
+	"default-country"?: string
+	"errors-json"?: string
+	eval?: string
+	"hierarchy-completion"?: boolean
+	interpolation?: string
+	limit?: string
+	model?: string
+	"model-anchor-lookup"?: string
+	"model-card"?: string
+	"no-admin-coherence"?: boolean
+	"normalize-case"?: boolean
+	"out-json"?: string
+	"out-md"?: string
+	"out-resolved"?: string
+	"out-rows"?: string
+	"place-country"?: boolean
+	"place-country-hard"?: boolean
+	"place-country-hard-all"?: boolean
+	"postal-city-alias-db"?: string
+	"postcode-anchor"?: boolean
+	"postcode-shards"?: string
+	"raw-case"?: boolean
+	tokenizer?: string
+	wof?: string
 }
-
 interface OaRow {
 	input: string
 	lat: number
@@ -321,14 +396,14 @@ function percentile(xs: number[], p: number): number | null {
 }
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval", "data/eval/external/openaddresses-us-sample.jsonl")
-	const limit = Number(arg("limit", "0")) || Infinity
+	const evalPath = values["eval"] || "data/eval/external/openaddresses-us-sample.jsonl"
+	const limit = Number(values["limit"] || "0") || Infinity
 	// Default attaches the coordinate-first candidate shard (postcode-locality-intl.db) alongside the
 	// admin gazetteer, so locality resolution is coordinate-first by default for the locales it covers
 	// (DE/FR/GB/NL functional). It no-ops where the table has no rows (e.g. US), so US stays unchanged.
 	// Override `--wof` to measure the admin-only baseline.
-	const wofPaths = arg(
-		"wof",
+	const wofPaths = (
+		values["wof"] ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
@@ -348,20 +423,20 @@ async function main(): Promise<void> {
 	// default /mnt pilot + the repo gazetteer lexicon). `--ablate-to-anchor` drops back to anchor-only
 	// (gazetteer + conventions OFF) for the #722 before/after comparison.
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const modelAnchorPath = arg("model-anchor-lookup", "")
-	const ablateToAnchor = process.argv.includes("--ablate-to-anchor")
+	const modelAnchorPath = values["model-anchor-lookup"] || ""
+	const ablateToAnchor = values["ablate-to-anchor"] ?? false
 	// `--anchor-off` (#887): the sanctioned anchor ablation — `overrides.anchor=false` through
 	// createScorer (a loud warning, not a throw). Replaces the pre-#718 empty-anchor.json idiom,
 	// which the fail-closed gate now refuses (an empty lookup parses to size 0 → UnfedChannelError).
-	const anchorOff = process.argv.includes("--anchor-off")
+	const anchorOff = values["anchor-off"] ?? false
 	const overrides: import("@mailwoman/neural/scorer").ScorerOverrides = {
 		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
 		...(anchorOff ? { anchor: false } : {}),
 	}
 	const neural = await createScorer({
-		modelPath: arg("model"),
-		tokenizerPath: arg("tokenizer"),
-		modelCardPath: arg("model-card"),
+		modelPath: values["model"] || "",
+		tokenizerPath: values["tokenizer"] || "",
+		modelCardPath: values["model-card"] || "",
 		...(modelAnchorPath ? { anchorLookupPath: modelAnchorPath } : {}),
 		strict: true,
 		tier: "server",
@@ -384,11 +459,11 @@ async function main(): Promise<void> {
 	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range candidate-table lookup
 	// (the SAME backend + ranking the browser demo uses). This is the "CLI matches demo" gate: run the
 	// eval both ways and confirm US locality/coord don't regress before defaulting the CLI to it.
-	const candidateDb = arg("candidate-db", "")
+	const candidateDb = values["candidate-db"] || ""
 	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on the FTS
 	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
 	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
-	const postalCityAliasDB = arg("postal-city-alias-db", "")
+	const postalCityAliasDB = values["postal-city-alias-db"] || ""
 	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
 	const postalCityAliases = postalCityAliasDB
@@ -497,11 +572,7 @@ async function main(): Promise<void> {
 	// (default-ON at the classifier since #895). `--normalize-case` pins ON, `--raw-case` pins OFF,
 	// neither = the library default. Silent config shifts in a gate battery are the #718 sin — pin
 	// explicitly in pre-registered legs.
-	const normalizeCase = process.argv.includes("--normalize-case")
-		? true
-		: process.argv.includes("--raw-case")
-			? false
-			: undefined
+	const normalizeCase = (values["normalize-case"] ?? false) ? true : (values["raw-case"] ?? false) ? false : undefined
 	const parseOpts = {
 		postcodeRepair: true,
 		...(normalizeCase !== undefined ? { normalizeCase } : {}),
@@ -510,21 +581,17 @@ async function main(): Promise<void> {
 	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
 	// `--default-country <ISO|none>`; `none` disables the filter so ranking alone decides.
-	const dc = arg("default-country", "US")
+	const dc = values["default-country"] || "US"
 	// `--hierarchy-completion` (#405, generalizes #387's `--city-state-fallback`): recover the locality
 	// the parser drops for a DUAL-ROLE place (city-state or capital-seat province), via the precomputed
 	// coincident-roles relation (#403). Opt-in, default-off → by default this eval is byte-identical;
 	// pass it to measure the before/after. Applied to BOTH the neural and rules resolve paths (they
 	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
-	const hierarchyCompletion =
-		process.argv.includes("--hierarchy-completion") || process.argv.includes("--city-state-fallback")
+	const hierarchyCompletion = (values["hierarchy-completion"] ?? false) || (values["city-state-fallback"] ?? false)
 	// #895: adminCoherence is default-ON in the resolver now (drift D1 settled). Tri-state pin for gate
 	// legs: `--admin-coherence` ON, `--no-admin-coherence` OFF, neither = the library default.
-	const adminCoherence = process.argv.includes("--admin-coherence")
-		? true
-		: process.argv.includes("--no-admin-coherence")
-			? false
-			: undefined
+	const adminCoherence =
+		(values["admin-coherence"] ?? false) ? true : (values["no-admin-coherence"] ?? false) ? false : undefined
 	const resolveOpts = {
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
@@ -540,7 +607,7 @@ async function main(): Promise<void> {
 	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
 	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
 	// the address-point hit when present (the tier's whole contribution is "where", street-level).
-	const addressPointsDb = arg("address-points", "")
+	const addressPointsDb = values["address-points"] || ""
 	let addressPoints: import("@mailwoman/resolver").AddressPointLookup | null = null
 
 	if (addressPointsDb) {
@@ -552,7 +619,7 @@ async function main(): Promise<void> {
 	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
 	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
 	// long tail of valid-but-unlisted numbers the exact tier misses.
-	const interpolationDb = arg("interpolation", "")
+	const interpolationDb = values["interpolation"] || ""
 	let interpolation: import("@mailwoman/resolver").InterpolationLookup | null = null
 
 	if (interpolationDb) {
@@ -568,8 +635,8 @@ async function main(): Promise<void> {
 	// --address-points/--interpolation flags still work for a one-state run; --cascade supersedes them
 	// with multi-state per-row selection. --data-root locates the shards (<root>/address-points/,
 	// <root>/interpolation/).
-	const cascadeOn = process.argv.includes("--cascade")
-	const dataRoot = arg("data-root", mailwomanDataRoot())
+	const cascadeOn = values["cascade"] ?? false
+	const dataRoot = values["data-root"] || mailwomanDataRoot()
 	let cascadeProvider: import("mailwoman/geocode-core").ShardProvider | null = null
 
 	if (cascadeOn) {
@@ -580,11 +647,11 @@ async function main(): Promise<void> {
 	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.
 	const runAddrPt = !!addressPoints || cascadeOn
 	const runInterp = !!interpolation || cascadeOn
-	const useAnchor = process.argv.includes("--postcode-anchor")
+	const useAnchor = values["postcode-anchor"] ?? false
 	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
 	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
 	// resolves into the right country's polygon when no locale gate is set (`--default-country none`).
-	const anchorRerank = process.argv.includes("--anchor-rerank")
+	const anchorRerank = values["anchor-rerank"] ?? false
 	let postcodeLookup: {
 		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
 		close(): void
@@ -592,8 +659,8 @@ async function main(): Promise<void> {
 	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
 
 	if (useAnchor || anchorRerank) {
-		const shards = arg(
-			"postcode-shards",
+		const shards = (
+			values["postcode-shards"] ||
 			`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
 		)
 			.split(",")
@@ -607,7 +674,7 @@ async function main(): Promise<void> {
 	// real code scores ≥0.52 (valid in ≤3 countries). The 0.5 floor keeps the latter and rejects the
 	// former, so a span the position prior flags as a house number falls back to the resolver coordinate
 	// (the right city centroid) instead of placing the address at a far-away same-shaped ZIP.
-	const anchorMinConf = Number(arg("anchor-min-conf", "0.5"))
+	const anchorMinConf = Number(values["anchor-min-conf"] || "0.5")
 	/** The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`). */
 	const anchorCoordFor = (input: string): { lat: number; lon: number } | null => {
 		if (!postcodeLookup || !extractAnchors) return null
@@ -757,16 +824,16 @@ async function main(): Promise<void> {
 	// representative config — load the same bundled placer and feed it to the pipeline — which is the
 	// #743 EU country-constraint integrity fix: without it the assembled EU coords are not what a real
 	// caller sees (ambiguous EU names without a country constraint land off-continent).
-	const runAssembled = process.argv.includes("--assembled")
+	const runAssembled = values["assembled"] ?? false
 	// `--place-country-hard` (#194/#743) promotes a CONFIDENT placer guess to a HARD country filter
 	// (empty→unresolved) — the lever for the low-pop EU tail the soft prior can't move. Production-
 	// representative: gated by the built-in coverage safelist (only well-covered countries hard-filter).
 	// `--place-country-hard-all` measures UNGATED (every confident country hard-filters, via a safelist
 	// override of the full in-map set) — how per-country hard-resolve-rates are measured to GROW the
 	// safelist. Both imply the placer is loaded.
-	const useHardCountryAll = process.argv.includes("--place-country-hard-all")
-	const useHardCountry = process.argv.includes("--place-country-hard") || useHardCountryAll
-	const usePlaceCountry = process.argv.includes("--place-country") || useHardCountry
+	const useHardCountryAll = values["place-country-hard-all"] ?? false
+	const useHardCountry = (values["place-country-hard"] ?? false) || useHardCountryAll
+	const usePlaceCountry = (values["place-country"] ?? false) || useHardCountry
 	const evalPlacer = runAssembled && usePlaceCountry ? await loadDefaultPlaceCountry() : null
 
 	if (usePlaceCountry && !evalPlacer) {
@@ -836,20 +903,20 @@ async function main(): Promise<void> {
 	// Per-row failure dump (--errors-json): one record per row where neural OR v0 missed locality,
 	// carrying each parser's resolved admin names so failures can be bucketed offline (resolve-wrong
 	// vs unresolved vs neural-only vs v0-only). Aggregates are unaffected.
-	const collectErrors = !!arg("errors-json")
+	const collectErrors = !!(values["errors-json"] || "")
 	const errorRows: Record<string, unknown>[] = []
 
 	// `--out-resolved <path>`: per-row dump for the PIP-containment metric (scripts/eval/pip-containment.py).
 	// Carries the gold OA point + the neural-resolved locality's WOF id, so an offline pass can test
 	// whether the gold point lies INSIDE the resolved locality's polygon — a name-surface-independent
 	// truth check (the "Plauen" vs gold "Plauen Vogtl" name-match artifact, see the coordinate-first plan).
-	const collectResolvedDump = !!arg("out-resolved")
+	const collectResolvedDump = !!(values["out-resolved"] || "")
 	const resolvedRows: Record<string, unknown>[] = []
 
 	// `--out-rows <path>`: per-row neural-vs-v0 outcome dump (EVERY row, not just misses), for the
 	// per-address-type head-to-head (scripts/eval/per-type-report.ts buckets by input shape offline).
 	// Reuses the same scoreTree the aggregates use — no extra inference, no scoring duplication.
-	const collectRows = !!arg("out-rows")
+	const collectRows = !!(values["out-rows"] || "")
 	const outRows: Record<string, unknown>[] = []
 
 	let i = 0
@@ -1088,18 +1155,18 @@ async function main(): Promise<void> {
 	}
 
 	if (collectErrors) {
-		writeFileSync(arg("errors-json"), JSON.stringify(errorRows, null, 2))
-		console.error(`wrote ${errorRows.length} failure rows → ${arg("errors-json")}`)
+		writeFileSync(values["errors-json"] || "", JSON.stringify(errorRows, null, 2))
+		console.error(`wrote ${errorRows.length} failure rows → ${values["errors-json"] || ""}`)
 	}
 
 	if (collectRows) {
-		writeFileSync(arg("out-rows"), JSON.stringify(outRows))
-		console.error(`wrote ${outRows.length} per-row outcomes → ${arg("out-rows")}`)
+		writeFileSync(values["out-rows"] || "", JSON.stringify(outRows))
+		console.error(`wrote ${outRows.length} per-row outcomes → ${values["out-rows"] || ""}`)
 	}
 
 	if (collectResolvedDump) {
-		writeFileSync(arg("out-resolved"), JSON.stringify(resolvedRows))
-		console.error(`wrote ${resolvedRows.length} resolved rows → ${arg("out-resolved")}`)
+		writeFileSync(values["out-resolved"] || "", JSON.stringify(resolvedRows))
+		console.error(`wrote ${resolvedRows.length} resolved rows → ${values["out-resolved"] || ""}`)
 	}
 
 	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
@@ -1108,7 +1175,7 @@ async function main(): Promise<void> {
 	const lines: string[] = []
 	lines.push(`# OpenAddresses real-point resolver eval (${agg.neural.overall.n} rows, non-circular)`)
 	lines.push("")
-	lines.push(`Model: ${arg("model") || "(shipped weights)"} | WOF shards: ${wofPaths.length}`)
+	lines.push(`Model: ${values["model"] || "" || "(shipped weights)"} | WOF shards: ${wofPaths.length}`)
 	lines.push("")
 	lines.push(`## Head-to-head — neural vs v0 (Pelias parser), both through the same resolver`)
 	lines.push("")
@@ -1237,12 +1304,12 @@ async function main(): Promise<void> {
 	const report = lines.join("\n")
 	console.log(report)
 
-	if (arg("out-md")) {
-		writeFileSync(arg("out-md"), report + "\n")
-		console.error(`wrote markdown → ${arg("out-md")}`)
+	if (values["out-md"] || "") {
+		writeFileSync(values["out-md"] || "", report + "\n")
+		console.error(`wrote markdown → ${values["out-md"] || ""}`)
 	}
 
-	if (arg("out-json")) {
+	if (values["out-json"] || "") {
 		const dump = (g: { overall: Agg; byState: Map<string, Agg> }) => ({
 			overall: { ...g.overall, errs: undefined, errN: g.overall.errs.length },
 			coord: {
@@ -1252,8 +1319,8 @@ async function main(): Promise<void> {
 			},
 			byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
 		})
-		writeFileSync(arg("out-json"), JSON.stringify({ neural: dump(agg.neural), v0: dump(agg.v0) }, null, 2))
-		console.error(`wrote json → ${arg("out-json")}`)
+		writeFileSync(values["out-json"] || "", JSON.stringify({ neural: dump(agg.neural), v0: dump(agg.v0) }, null, 2))
+		console.error(`wrote json → ${values["out-json"] || ""}`)
 	}
 
 	postcodeLookup?.close()

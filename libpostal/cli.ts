@@ -67,7 +67,8 @@ function serve(): void {
 		})
 }
 
-const command = process.argv[2]
+// Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).
+const command = parseArgs({ strict: false, allowPositionals: true }).positionals[0]
 
 switch (command) {
 	case "serve":

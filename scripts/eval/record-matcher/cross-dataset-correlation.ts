@@ -20,6 +20,7 @@
  */
 
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
@@ -38,28 +39,45 @@ import {
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		cap: { type: "string" },
+		"data-root": { type: "string" },
+		"no-corpus-frequency": { type: "boolean" },
+		"out-geojson": { type: "string" },
+		"out-md": { type: "string" },
+		sources: { type: "string" },
+		state: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	cap?: string
+	"data-root"?: string
+	"no-corpus-frequency"?: boolean
+	"out-geojson"?: string
+	"out-md"?: string
+	sources?: string
+	state?: string
+	wof?: string
 }
-function hasFlag(name: string): boolean {
-	return process.argv.includes(`--${name}`)
-}
-
-const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
-const CAP = Number(arg("cap", "300")) // rows kept per source for geocoding (TX-scoped)
-const STATE = arg("state", "TX").toUpperCase()
-const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
-const DATA_ROOT = arg("data-root", mailwomanDataRoot())
-const OUT_MD = arg("out-md", "")
-const OUT_GEOJSON = arg("out-geojson", "") // the reconciliation artifact (FeatureCollection, QGIS-ready)
+const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
+const CAP = Number(values["cap"] || "300") // rows kept per source for geocoding (TX-scoped)
+const STATE = (values["state"] || "TX").toUpperCase()
+const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
+const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
+const OUT_MD = values["out-md"] || ""
+const OUT_GEOJSON = values["out-geojson"] || "" // the reconciliation artifact (FeatureCollection, QGIS-ready)
 // The inverse-address-frequency lever is a CORPUS statistic — it can't be synthesized from the geocoded
 // sample. By default we scan the FULL files (cheap, parse-free) for an in-state corpus-wide frequency
 // table and feed it to the matcher, so the proven #617 lever actually bites on a sub-sampled run. The
 // scan adds a full pass over the 4.8 GB NPPES file (~5 min); `--no-corpus-frequency` skips it and falls
 // back to resolveEntities' zero-config input-scoped default (#86).
-const CORPUS_FREQ = !hasFlag("no-corpus-frequency")
+const CORPUS_FREQ = !(values["no-corpus-frequency"] ?? false)
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 

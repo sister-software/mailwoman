@@ -21,6 +21,7 @@
 
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
@@ -41,24 +42,46 @@ import {
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		cost: { type: "string" },
+		"data-root": { type: "string" },
+		date: { type: "string" },
+		locale: { type: "string" },
+		npis: { type: "string" },
+		out: { type: "string" },
+		sources: { type: "string" },
+		state: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	cost?: string
+	"data-root"?: string
+	date?: string
+	locale?: string
+	npis?: string
+	out?: string
+	sources?: string
+	state?: string
+	wof?: string
 }
-
-const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
-const STATE = arg("state", "TX").toUpperCase()
-const NPIS = Number(arg("npis", "3000"))
-const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
-const DATA_ROOT = arg("data-root", mailwomanDataRoot())
-const OUT = arg("out", "registry/models/dedup-gbt-en-us.ts")
-const LOCALE = arg("locale", "en-US")
+const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
+const STATE = (values["state"] || "TX").toUpperCase()
+const NPIS = Number(values["npis"] || "3000")
+const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
+const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
+const OUT = values["out"] || "registry/models/dedup-gbt-en-us.ts"
+const LOCALE = values["locale"] || "en-US"
 // Cost-sensitive training (#625): up-weight the NEGATIVE (distinct-pair) class by this factor so the
 // model is more conservative about merging — directly trades recall for precision to cut over-merge.
 // 1 = the symmetric class-balanced default; >1 penalizes a false merge more than a missed one.
-const COST = Number(arg("cost", "1"))
-const TRAIN_DATE = arg("date", new Date().toISOString().slice(0, 10)) // overridable for reproducible commits
+const COST = Number(values["cost"] || "1")
+const TRAIN_DATE = values["date"] || new Date().toISOString().slice(0, 10) // overridable for reproducible commits
 
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`

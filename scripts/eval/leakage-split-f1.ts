@@ -25,15 +25,34 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		eval: { type: "string" },
+		held: { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		"out-md": { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	eval?: string
+	held?: string
+	limit?: string
+	model?: string
+	"model-card"?: string
+	"out-md"?: string
+	tokenizer?: string
 }
-
 interface OaRow {
 	input: string
 	expected: { locality?: string; region?: string; postcode?: string }
@@ -125,13 +144,9 @@ function f1(c: Counts): { p: number; r: number; f1: number } {
 }
 
 async function main(): Promise<void> {
-	const evalPath = arg("eval", "data/eval/external/openaddresses-us-sample.jsonl")
-	const held = new Set(
-		arg("held", "VT,WY,ND")
-			.split(",")
-			.map((s) => s.trim().toUpperCase())
-	)
-	const limit = Number(arg("limit", "0")) || Infinity
+	const evalPath = values["eval"] || "data/eval/external/openaddresses-us-sample.jsonl"
+	const held = new Set((values["held"] || "VT,WY,ND").split(",").map((s) => s.trim().toUpperCase()))
+	const limit = Number(values["limit"] || "0") || Infinity
 
 	const rows: OaRow[] = readFileSync(evalPath, "utf8")
 		.split("\n")
@@ -142,10 +157,10 @@ async function main(): Promise<void> {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
+	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
 	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(arg("tokenizer", "neural-weights-en-us/tokenizer.model")),
-		ONNXRunner.create(arg("model", "neural-weights-en-us/model.onnx")),
+		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "neural-weights-en-us/tokenizer.model"),
+		ONNXRunner.create(values["model"] || "neural-weights-en-us/model.onnx"),
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
@@ -197,7 +212,7 @@ async function main(): Promise<void> {
 	)
 	lines.push("")
 	lines.push(
-		`- held-out rows: ${heldN} · in-training rows: ${inN} · model: ${arg("model", "neural-weights-en-us/model.onnx")}`
+		`- held-out rows: ${heldN} · in-training rows: ${inN} · model: ${values["model"] || "neural-weights-en-us/model.onnx"}`
 	)
 	lines.push("")
 	lines.push("| tag | held-out F1 | in-training F1 | gap (in − held) |")
@@ -230,7 +245,7 @@ async function main(): Promise<void> {
 	lines.push("")
 
 	const out = lines.join("\n") + "\n"
-	const outMd = arg("out-md")
+	const outMd = values["out-md"] || ""
 
 	if (outMd) {
 		writeFileSync(outMd, out)

@@ -29,6 +29,7 @@
 import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"
 import { pathToFileURL } from "node:url"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
@@ -48,31 +49,67 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { latLngToCell } from "h3-js"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		candidate: { type: "string" },
+		"data-root": { type: "string" },
+		"dump-overmerges": { type: "string" },
+		"geo-concurrency": { type: "string" },
+		"h3-res": { type: "string" },
+		"legacy-join": { type: "boolean" },
+		"max-npis": { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		"no-train-em": { type: "boolean" },
+		"out-md": { type: "string" },
+		"parallel-geocode": { type: "boolean" },
+		sources: { type: "string" },
+		state: { type: "string" },
+		tokenizer: { type: "string" },
+		wof: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	candidate?: string
+	"data-root"?: string
+	"dump-overmerges"?: string
+	"geo-concurrency"?: string
+	"h3-res"?: string
+	"legacy-join"?: boolean
+	"max-npis"?: string
+	model?: string
+	"model-card"?: string
+	"no-train-em"?: boolean
+	"out-md"?: string
+	"parallel-geocode"?: boolean
+	sources?: string
+	state?: string
+	tokenizer?: string
+	wof?: string
 }
-
-const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
-const STATE = arg("state", "TX").toUpperCase()
-const MAX_NPIS = Number(arg("max-npis", "300"))
-const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
-const DATA_ROOT = arg("data-root", mailwomanDataRoot())
-const OUT_MD = arg("out-md", "")
-const TRAIN_EM = !process.argv.includes("--no-train-em")
+const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
+const STATE = (values["state"] || "TX").toUpperCase()
+const MAX_NPIS = Number(values["max-npis"] || "300")
+const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
+const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
+const OUT_MD = values["out-md"] || ""
+const TRAIN_EM = !(values["no-train-em"] ?? false)
 // #694 A/B: `--legacy-join` reproduces the pre-flip ingest (space-joined address columns + normalizeCase
 // OFF). Default (no flag) is the validated flip: comma-join (the correct address shape) + #690 all-caps
 // normalization. Same data + GBT, only the flip toggled — so a delta here is attributable to the flip.
-const LEGACY = process.argv.includes("--legacy-join")
+const LEGACY = values["legacy-join"] ?? false
 // Optional A/B: a path to a trained dedup-gbt TS module (exports DEDUP_GBT_MODEL + DEDUP_GBT_META) to
 // score alongside the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
-const CANDIDATE = arg("candidate", "")
+const CANDIDATE = values["candidate"] || ""
 // `--parallel-geocode`: geocode the sample across a worker pool (spliterator.geocodeStream) instead of the
 // serial in-process seam. Heavy per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2
 // workers, coordinates identical. Concurrency low on purpose (geocode is I/O-bound). `--geo-concurrency N` tunes.
-const PARALLEL_GEOCODE = process.argv.includes("--parallel-geocode")
-const GEO_CONC = Number(arg("geo-concurrency", "2"))
+const PARALLEL_GEOCODE = values["parallel-geocode"] ?? false
+const GEO_CONC = Number(values["geo-concurrency"] || "2")
 
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
@@ -313,9 +350,9 @@ async function main(): Promise<void> {
 	} else {
 		const classifier = await NeuralAddressClassifier.loadFromWeights({
 			locale: "en-US",
-			...(arg("model") ? { modelPath: arg("model") } : {}),
-			...(arg("tokenizer") ? { tokenizerPath: arg("tokenizer") } : {}),
-			...(arg("model-card") ? { modelCardPath: arg("model-card") } : {}),
+			...(values["model"] || "" ? { modelPath: values["model"] || "" } : {}),
+			...(values["tokenizer"] || "" ? { tokenizerPath: values["tokenizer"] || "" } : {}),
+			...(values["model-card"] || "" ? { modelCardPath: values["model-card"] || "" } : {}),
 		})
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
@@ -581,7 +618,7 @@ async function main(): Promise<void> {
 	// matches, the number isn't an artifact of the 50 m threshold, and cell-blocking is O(n) not O(n²).
 	// Caveat: a hard cell boundary can split a same-building pair into adjacent cells (a slight
 	// under-count vs the radius); res 10 (~65 m edge) absorbs most of it. ---
-	const H3_RES = Number(arg("h3-res", "11")) // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
+	const H3_RES = Number(values["h3-res"] || "11") // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
 	const parentH = new Map<string, string>()
 	const findH = (x: string): string => {
 		if (!parentH.has(x)) {
@@ -782,7 +819,7 @@ async function main(): Promise<void> {
 	// per-pair adjudication (same entity? distinct co-located?) is the only instrument left that can
 	// separate model error from yardstick error. Each cluster prints its members grouped by org-name
 	// label with every matcher-visible field, so a reviewer can adjudicate in one glance.
-	const DUMP_OVERMERGES = arg("dump-overmerges")
+	const DUMP_OVERMERGES = values["dump-overmerges"] || ""
 
 	if (DUMP_OVERMERGES) {
 		const rowByID = new Map(rows.map((r) => [r.npi, r]))

@@ -26,6 +26,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -148,7 +149,7 @@ const go = oracleTight && (deltaP50Rel >= 20 || closedShare >= 50)
 const L: string[] = []
 L.push(`# #825 oracle-locality injection — ${LABEL || GOLDEN} (${go ? "GO" : "NO-GO"})`)
 L.push("")
-L.push(`_Gazetteer: ${process.env["MAILWOMAN_CANDIDATE_DB"] ?? "admin shards"}. n=${n}._`)
+L.push(`_Gazetteer: ${$public.MAILWOMAN_CANDIDATE_DB ?? "admin shards"}. n=${n}._`)
 L.push(`_ORIGINAL = shipped model parse → resolve. ORACLE = gold locality resolved directly (perfect parse)._`)
 L.push("")
 L.push(

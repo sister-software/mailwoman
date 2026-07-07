@@ -21,16 +21,19 @@
 
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
+import { parseArgs } from "node:util"
 
-function arg(name: string, fallback: string): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
-const GOLDEN = arg("golden", "data/eval/golden/v0.1.2")
-const OUT = arg("out", "/tmp/perturb-eval/perturbed.jsonl")
-const PER_FILE = Number(arg("per-file", "60"))
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { golden: { type: "string" }, out: { type: "string" }, "per-file": { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { golden?: string; out?: string; "per-file"?: string }
+const GOLDEN = values["golden"] || "data/eval/golden/v0.1.2"
+const OUT = values["out"] || "/tmp/perturb-eval/perturbed.jsonl"
+const PER_FILE = Number(values["per-file"] || "60")
 
 interface GoldenRow {
 	raw: string

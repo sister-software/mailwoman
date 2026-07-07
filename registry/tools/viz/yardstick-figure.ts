@@ -25,13 +25,17 @@
  */
 
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-const OUT = arg("out-svg", "docs/articles/evals/charts/dedup-yardstick.svg")
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { "out-svg": { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "out-svg"?: string }
+const OUT = values["out-svg"] || "docs/articles/evals/charts/dedup-yardstick.svg"
 
 // ── The committed measurement (2026-06-16-dedup-dual-level-benchmark.md). ────────────────────────
 

@@ -26,6 +26,7 @@
  */
 
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -33,15 +34,33 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		eval: { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		model: { type: "string" },
+		"model-anchor-lookup": { type: "string" },
+		"model-card": { type: "string" },
+		"per-state-cap": { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	eval?: string
+	"gazetteer-lexicon"?: string
+	model?: string
+	"model-anchor-lookup"?: string
+	"model-card"?: string
+	"per-state-cap"?: string
+	tokenizer?: string
+}
 // ---------------------------------------------------------------------------
 // Args
 // ---------------------------------------------------------------------------
-
-function arg(name: string, fallback = ""): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
 
 const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")
 const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -49,13 +68,13 @@ const DEFAULT_MODEL_CARD = "neural-weights-en-us/model-card.json"
 const DEFAULT_EVAL = "data/eval/external/openaddresses-us-sample.jsonl"
 const DEFAULT_CAP = 300
 
-const modelPath = arg("model", DEFAULT_MODEL)
-const tokenizerPath = arg("tokenizer", DEFAULT_TOKENIZER)
-const modelCardPath = arg("model-card", DEFAULT_MODEL_CARD)
-const evalPath = arg("eval", DEFAULT_EVAL)
-const perStateCap = parseInt(arg("per-state-cap", String(DEFAULT_CAP)), 10)
-const anchorPath = arg("model-anchor-lookup", "")
-const gazetteerPath = arg("gazetteer-lexicon", "")
+const modelPath = values["model"] || DEFAULT_MODEL
+const tokenizerPath = values["tokenizer"] || DEFAULT_TOKENIZER
+const modelCardPath = values["model-card"] || DEFAULT_MODEL_CARD
+const evalPath = values["eval"] || DEFAULT_EVAL
+const perStateCap = parseInt(values["per-state-cap"] || String(DEFAULT_CAP), 10)
+const anchorPath = values["model-anchor-lookup"] || ""
+const gazetteerPath = values["gazetteer-lexicon"] || ""
 
 // ---------------------------------------------------------------------------
 // OA row shape
