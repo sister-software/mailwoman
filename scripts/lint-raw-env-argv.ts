@@ -11,13 +11,17 @@
  *   environments with `childEnv()`, and stub env in tests with `vi.stubEnv`.
  *
  *   Ran that gauntlet three times by hand in one week (2026-07-07/08); this script exists so there
- *   is no fourth. Wired into `yarn lint`. Scans ALL .ts/.tsx sources including gitignored
- *   diagnostics (the third sweep's blind spot was `rg` honoring .gitignore).
+ *   is no fourth. Wired into `yarn lint` + the Test workflow. Pure-Node walk (CI has no ripgrep)
+ *   over ALL .ts/.tsx sources including gitignored diagnostics (the third sweep's blind spot was
+ *   the search tooling honoring .gitignore).
  *
  *   Run: node scripts/lint-raw-env-argv.ts
  */
 
-import { execFileSync } from "node:child_process"
+import { readdirSync, readFileSync } from "node:fs"
+import { join, relative } from "node:path"
+
+const ROOT = new URL("..", import.meta.url).pathname
 
 const BLESSED = new Set([
 	"core/env/index.ts",
@@ -26,47 +30,38 @@ const BLESSED = new Set([
 	"scripts/lint-raw-env-argv.ts",
 ])
 
-/** Generated / vendored trees the scan must skip (not source). */
-const PRUNE = ["node_modules", "out", ".pi", "docs/build", "docs/.docusaurus", ".git", ".yarn"]
+/** Generated / vendored directory names the walk must skip (not source). */
+const PRUNE = new Set(["node_modules", "out", ".pi", "build", ".docusaurus", ".git", ".yarn", "__pycache__"])
 
-let listing: string
-try {
-	listing = execFileSync(
-		"rg",
-		[
-			"--no-ignore",
-			"--line-number",
-			"--type-add",
-			"src:*.{ts,tsx}",
-			"--type",
-			"src",
-			...PRUNE.flatMap((d) => ["--glob", `!**/${d}/**`]),
-			String.raw`process\.(env|argv)\b`,
-			".",
-		],
-		{ encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }
-	)
-} catch (error) {
-	const status = (error as { status?: number }).status
+const PATTERN = /process\.(env|argv)\b/
 
-	if (status === 1) {
-		console.log("✓ no raw process.env / process.argv anywhere")
-		process.exit(0)
+const offenders: string[] = []
+
+function walk(dir: string): void {
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		if (entry.isDirectory()) {
+			// Hidden dirs (.claude worktrees, .git, .yarn, …) are never source.
+			if (!PRUNE.has(entry.name) && !entry.name.startsWith(".")) walk(join(dir, entry.name))
+			continue
+		}
+
+		if (!entry.name.endsWith(".ts") && !entry.name.endsWith(".tsx")) continue
+		const path = join(dir, entry.name)
+		const rel = relative(ROOT, path)
+
+		if (BLESSED.has(rel)) continue
+		const lines = readFileSync(path, "utf8").split("\n")
+
+		for (const [i, line] of lines.entries()) {
+			if (PATTERN.test(line)) offenders.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`)
+		}
 	}
-	throw error
 }
 
-const offenders = listing
-	.trim()
-	.split("\n")
-	.filter((line) => {
-		const file = line.split(":", 1)[0]!.replace(/^\.\//, "")
-
-		return !BLESSED.has(file)
-	})
+walk(ROOT)
 
 if (offenders.length === 0) {
-	console.log(`✓ raw process.env / process.argv confined to the blessed homes (${[...BLESSED].slice(0, 3).join(", ")})`)
+	console.log("✓ raw process.env / process.argv confined to the blessed homes (core/env, core/utils/scripting.ts)")
 	process.exit(0)
 }
 
