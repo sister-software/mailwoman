@@ -43,34 +43,10 @@ import { join } from "node:path"
 const SEP = ""
 const MIN_BIGRAM_COUNT = 2
 
-interface Args {
+export interface CorpusStatsOptions {
 	shardsArg: string
 	outputPath: string
 	limitPerShard?: number
-}
-
-function parseArgs(): Args {
-	const args = process.argv.slice(2)
-	const out: Partial<Args> = {}
-
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
-
-		if (a === "--shards" && args[i + 1]) {
-			out.shardsArg = args[++i]
-		} else if (a === "--output" && args[i + 1]) {
-			out.outputPath = args[++i]
-		} else if (a === "--limit-per-shard" && args[i + 1]) {
-			out.limitPerShard = Number(args[++i])
-		}
-	}
-
-	if (!out.shardsArg || !out.outputPath) {
-		console.error("Usage: build-corpus-stats.ts --shards <dir-or-glob> --output <stats.json>")
-		process.exit(1)
-	}
-
-	return out as Args
 }
 
 function discoverShards(shardsArg: string): string[] {
@@ -117,8 +93,7 @@ for i in range(n):
 	return rows
 }
 
-function main(): void {
-	const args = parseArgs()
+export function buildCorpusStats(args: CorpusStatsOptions): void {
 	const shardPaths = discoverShards(args.shardsArg)
 	console.error(`Discovered ${shardPaths.length} parquet shard(s)`)
 
@@ -206,5 +181,3 @@ function main(): void {
 		`Wrote ${args.outputPath} (${sizeMB} MB) — ${totalRows} rows, ${tokenStats.size} tokens, ${bigramStats.size} bigrams`
 	)
 }
-
-main()

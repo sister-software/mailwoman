@@ -30,36 +30,13 @@ import { createInterface } from "node:readline"
  */
 import { alignRow } from "@mailwoman/corpus"
 
-interface Args {
+export interface AlignShardOptions {
 	input: string
 	output: string
 	corpusVersion: string
 }
 
-function parseArgs(argv: string[]): Args {
-	const out: Partial<Args> = { corpusVersion: "0.5.0" }
-
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i]
-
-		if (a === "--input") {
-			out.input = argv[++i]
-		} else if (a === "--output") {
-			out.output = argv[++i]
-		} else if (a === "--corpus-version") {
-			out.corpusVersion = argv[++i]
-		} else throw new Error(`unknown arg: ${a}`)
-	}
-
-	if (!out.input) throw new Error("--input <canonical.jsonl> required")
-
-	if (!out.output) throw new Error("--output <labeled.jsonl> required")
-
-	return out as Args
-}
-
-async function main(): Promise<void> {
-	const args = parseArgs(process.argv.slice(2))
+export async function alignCanonicalShard(args: AlignShardOptions): Promise<void> {
 	const rl = createInterface({ input: createReadStream(args.input, { encoding: "utf8" }), crlfDelay: Infinity })
 	const outStream = createWriteStream(args.output, { encoding: "utf8" })
 	let labeled = 0
@@ -88,8 +65,3 @@ async function main(): Promise<void> {
 			`  quarantine reasons: ${JSON.stringify(quarantineReasons)}`
 	)
 }
-
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
