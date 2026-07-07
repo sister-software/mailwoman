@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Deprecation shim — `mailwoman wof sync` moved. One-minor-version courtesy redirect; remove after.
+ *   Deprecation shim — `mailwoman wof prepare` moved. One-minor-version courtesy redirect; remove after.
  */
 
 import { Text } from "ink"
@@ -14,7 +14,7 @@ const WofShim = () => {
 		setImmediate(() => process.exit(1))
 	}, [])
 
-	return <Text color="yellow">{"`mailwoman wof sync` moved: use `mailwoman gazetteer inspect sync`"}</Text>
+	return <Text color="yellow">{"`mailwoman wof prepare` moved: use `mailwoman gazetteer build admin`"}</Text>
 }
 
 export default WofShim

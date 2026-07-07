@@ -11,7 +11,7 @@
  *
  *   The table is added to the `--db` IN PLACE (the original `scripts/build-importance.ts` behavior):
  *   the WOF DB must already carry `concordances` (and, for the fallback, `place_population`) — run
- *   `mailwoman wof` prepare first. Step progress streams to stderr; the final tally lands on
+ *   `mailwoman gazetteer build admin` first. Step progress streams to stderr; the final tally lands on
  *   stdout.
  */
 
@@ -103,7 +103,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 					}
 					console.error(`  ${concordances.size} unique Wikidata IDs from ${rows.length} concordance rows`)
 				} catch {
-					throw new Error("No concordances table found. Run wof/prepare first.")
+					throw new Error("No concordances table found. Run `mailwoman gazetteer build admin` first.")
 				}
 
 				// Step 2: Get or download the Wikipedia importance TSV
