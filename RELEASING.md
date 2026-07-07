@@ -102,38 +102,65 @@ The resolver's gazetteer is the custom WOF SQLite DB at
 `/mnt/playpen/mailwoman-data/wof/admin-global-priority.db` — **never** an off-the-shelf geocode.earth dump
 (different WOF ids; see `feedback-custom-wof-db-only`). It is not part of the npm/HF release; it ships
 separately (the demo's slim derivative — see the next section). You rebuild it when you add locale
-coverage. `scripts/wof-build-manifest.json` is the source of truth for the build inputs — read it first; it
-pins the repo commits and records every prior rebuild.
+coverage OR fix a source-ingest bug (e.g. #1015 — reverse geocoding crossed borders because
+Overture-backfilled places had degenerate point bboxes; the fix reads real extents from
+`type=division_area` and adds the `country` subtype). `scripts/wof-build-manifest.json` is meant to be the
+source of truth for the build inputs — read it first — BUT it can lag: the live DB's coverage was widened to
+86 Overture + 161 GeoNames countries in a Jul-2026 build that was never recorded there (the manifest still
+lists the original 15 EU locales). **When the manifest lags, reconstruct the coverage set from the live
+artifact itself** — the build stamps synthetic ids by source, so the DB _is_ the record:
 
-This runbook is the exact sequence walked for the 2026-06-20 Overture-EU swap (+15 zero-DB EU locales). Do
-the steps in order; the post-build steps and the gate are not optional — skipping them silently regresses US
-region resolution (the #440 honest-eval fix lives in steps 1–2).
+```bash
+DB=/mnt/playpen/mailwoman-data/wof/admin-global-priority.db
+# --overture-countries (Overture divisions, ids 8e12..9e12):
+sqlite3 "$DB" "SELECT group_concat(DISTINCT country) FROM spr WHERE id>=8e12 AND id<9e12 AND country<>''"
+# --geonames-countries (GeoNames alias fold, ids >=9e12):
+sqlite3 "$DB" "SELECT group_concat(DISTINCT country) FROM spr WHERE id>=9e12 AND country<>''"
+# baseline coverage to gate the rebuild against (must not regress):
+sqlite3 "$DB" "SELECT count(*), count(DISTINCT country) FROM spr WHERE is_current<>0"
+```
+
+After ANY rebuild, **update the manifest** so it stops lagging (record `overture_divisions_supplement`,
+`geonames_supplement`, and a `notes` entry).
+
+This runbook is the exact sequence walked for the 2026-06-20 Overture-EU swap (+15 zero-DB EU locales) and
+the 2026-07 #1015 reverse-bbox rebuild. Do the steps in order; the post-build steps and BOTH gates (forward +
+reverse) are not optional — skipping them silently regresses US region resolution (the #440 honest-eval fix)
+or ships a reverse geocoder that crosses borders.
 
 ### Step 1 — build to a STAGING path, never over the live DB
 
 ```bash
 node --experimental-strip-types scripts/build-unified-wof.ts \
-  --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data \
-  --overture-countries PT,PL,BE,AT,CH,CZ,DK,NO,FI,SK,SI,HR,LU,LV,LT \
-  --output /mnt/playpen/mailwoman-data/wof/admin-global-priority-eu.db
+  --data /mnt/playpen/mailwoman-data/wof/repos \
+  --overture-countries "<the 86 from the artifact query above>" \
+  --geonames-countries "<the 161 from the artifact query above>" \
+  --overture-release 2026-06-17.0 \
+  --output /mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db
 ```
 
-`whosonfirst-data` is a meta-repo nesting the admin subrepos; the sibling `whosonfirst-data-admin-us`
-carries the real US data (the nested admin-us is empty). `--overture-countries` folds the Overture
-`divisions` theme for locales the WOF repos miss (synthetic ids @ 8e12 — see the `overture_divisions_supplement`
-section of the manifest). Build to `*-eu.db`, not the live name.
+`--data` at the `repos` parent ingests every `whosonfirst-data*` subrepo (admin + postalcode); non-admin
+placetypes are filtered out, so it's correct but scans a lot — budget ~20–30 min for the full build.
+`--overture-countries` folds the Overture `divisions` theme for locales the WOF repos miss (synthetic ids
+@ 8e12); `--geonames-countries` folds the GeoNames alias tail (ids @ 9e12). **#1015:** the Overture bbox now
+comes from `type=division_area` (the boundary polygon) rather than `type=division` (the label point, a
+degenerate bbox), and `country` is in `OVERTURE_DIVISION_SUBTYPES` — both are what make the backfilled
+locales reverse-geocodable. Build to a `*.REBUILD.db` staging name, never the live one.
 
 ### Step 2 — the three post-build steps, IN ORDER
 
 ```bash
-DB=/mnt/playpen/mailwoman-data/wof/admin-global-priority-eu.db
+DB=/mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db
 node --experimental-strip-types scripts/add-region-abbrevs.ts "$DB"                 # names: VT->Vermont (~184 rows)
-node --experimental-strip-types scripts/backfill-ancestors-from-hierarchy.ts "$DB"  # NYC-style multi-parent ancestry
-node resolver-wof-sqlite/out/build-fts-cli.js --drop "$DB"                          # rebuild place_search AFTER abbrevs
+node resolver-wof-sqlite/out/build-fts-cli.js --drop "$DB"                          # place_search FTS + place_bbox R*Tree
 ```
 
-Step 1 (abbrevs) must precede the FTS rebuild — `place_search` concatenates the `names` rows, so build FTS
-last. Use `--drop` because the staging build already has an FTS to replace.
+`add-region-abbrevs` (abbrevs) must precede the FTS rebuild — `place_search` concatenates the `names` rows,
+so build FTS last. **The old step 2 (`backfill-ancestors-from-hierarchy.ts`) is now FOLDED into
+`build-unified-wof.ts`** (its Freeze phase runs the `wof:hierarchy` −4 backfill), so you don't run it
+separately anymore — but `add-region-abbrevs` and `build-fts` are NOT folded and are still mandatory.
+`build-fts` builds `place_bbox` (the R*Tree the reverse geocoder probes), so a rebuild that skips it leaves
+reverse geocoding broken even if the bboxes are correct in `spr`.
 
 ### Step 3 — the no-regression gate (do not swap without it)
 
@@ -151,18 +178,36 @@ done
 ```
 
 Also confirm: priority-country locality counts unchanged (`SELECT country, count(*) FROM spr WHERE
-placetype='locality' GROUP BY country` on both), the `names language='abbr'` count is unchanged, and a
-direct `findPlace('VT', region, US)` returns Vermont. If anything regresses, stop — don't swap.
+placetype='locality' GROUP BY country` on both), the `names language='abbr'` count is unchanged, a direct
+`findPlace('VT', region, US)` returns Vermont, and total coverage is `>=` the baseline you captured above
+(same country count, same ballpark row count). If anything regresses, stop — don't swap.
+
+### Step 3b — the REVERSE gate (#1015; skip → cross-border reverse ships)
+
+Forward and reverse are separate failure modes. The US forward gate above says nothing about reverse
+geocoding, which reads `place_bbox`. Run the reverse regression panel — EU capitals + border cities, each
+must land in the right country:
+
+```bash
+node scripts/reverse-eu-panel.ts --admin /mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db
+```
+
+Expect ~15/15 (the pre-#1015 baseline against the live DB was 6/15 — Brussels→NL, Vienna→FR, Bern→IT, …).
+A miss means the Overture extents or the `country` node didn't land — stop, don't swap.
 
 ### Step 4 — swap + record
 
 ```bash
 cd /mnt/playpen/mailwoman-data/wof
 mv admin-global-priority.db admin-global-priority.db.pre-<change>-bak   # back up the live DB
-mv admin-global-priority-eu.db admin-global-priority.db                 # promote (instant; same fs)
+mv admin-global-priority.REBUILD.db admin-global-priority.db           # promote (instant; same fs)
+# The hosted drop-in services hold the DB open — restart them to pick up the new file:
+systemctl --user restart mailwoman-photon.service                       # + nominatim if running
 ```
 
-The build freezes to `journal_mode=delete` + VACUUM, so there are no `-wal`/`-shm` sidecars to carry. Then
+The build freezes to `journal_mode=delete` + VACUUM, so there are no `-wal`/`-shm` sidecars to carry. A
+long-running server that already opened the OLD inode keeps serving it until restarted — the `mv` is atomic
+on-disk but processes don't re-`open()` on their own. Then
 add a `notes` entry + (for a new source) a section to `scripts/wof-build-manifest.json`, and commit it — the
 manifest is the reproducibility record, and a rebuild that isn't pinned there has bitten us before (the
 deleted admin-fr repo).

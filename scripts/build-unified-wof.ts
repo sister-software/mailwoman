@@ -463,10 +463,17 @@ async function main() {
 	// Phase 1: Enumerate
 	// -----------------------------------------------------------------------
 	console.error(`Scanning ${dataDir} for GeoJSON files...`)
+	// The whosonfirst-data-postalcode-* repos hold millions of postcode geojson the ADMIN build filters out by
+	// placetype anyway — enumerating + reading them is the bulk of the ingest time. Exclude them unless this build
+	// actually wants postalcode rows (#1015 — a full admin rebuild off `--data …/repos` dropped from a ~30-min scan of
+	// the postcode tail to a couple of minutes).
+	const ignore = ["**/*-alt-*"]
+
+	if (!activePlacetypes.has("postalcode")) ignore.push("**/whosonfirst-data-postalcode-*/**")
 	const filePaths = await FastGlob("**/data/**/*.geojson", {
 		cwd: dataDir,
 		absolute: true,
-		ignore: ["**/*-alt-*"],
+		ignore,
 	})
 	console.error(`  Found ${filePaths.length.toLocaleString()} files (excluding -alt- variants)`)
 
@@ -650,6 +657,13 @@ async function main() {
 	const ancestorRows = populateAncestors(db)
 	console.error(`  ancestors: ${ancestorRows} rows`)
 
+	// Index `ancestors(id)` NOW — before the −4 backfill probes it. `createUnifiedIndexes` (below) builds this same
+	// index, but it runs AFTER the backfill; without it here the backfill's per-candidate `count(*)/EXISTS` lookups
+	// full-scan the 13M-row `ancestors` table EACH time, and the build stalls for hours (found rebuilding for #1015).
+	// `ifNotExists` keeps the later `createUnifiedIndexes` a no-op.
+	console.error("  Indexing ancestors(id) for the backfill...")
+	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors(id)")
+
 	// Repair the multi-parent orphans the closure leaves only-self (#440 / #832): places with
 	// `wof:parent_id = -4` (New York City, London, …) get NO region/county ancestry from the closure,
 	// so the resolver's region-descendant filter excludes them and a small namesake wins. Read the
@@ -661,7 +675,10 @@ async function main() {
 	if (geojsonRoots.length === 0) {
 		console.error(`    WARNING: no */data geojson roots under ${dataDir}; skipping — orphans like NYC stay unreachable`)
 	} else {
-		const bf = backfillAncestorsFromHierarchy(db, geojsonRoots)
+		// Only real WOF places have `wof:hierarchy` geojson; synthetic Overture/GeoNames rows (ids >= OVERTURE_ID_BASE)
+		// never do, and probing millions of them across every repo root is what turned this step into a ~40-min stall on
+		// the wide-coverage build. Their ancestry comes from the parent_id closure above, not this backfill.
+		const bf = backfillAncestorsFromHierarchy(db, geojsonRoots, { maxId: OVERTURE_ID_BASE })
 		console.error(
 			`    +${bf.rowsAdded} rows for ${bf.placesFixed} places (${bf.noGeojson} candidates had no source geojson)`
 		)
