@@ -98,7 +98,7 @@ try {
 	process.exit(2)
 }
 
-// ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromUrls defaults) ─────────
+// ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromURLs defaults) ─────────
 const card = JSON.parse(readFileSync(CARD, "utf8"))
 
 // Postcode anchor channel from the staged binaries — the same artifacts the demo fetches. Merge

@@ -400,7 +400,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 					classifier: cls,
 					diagnostics,
 					postcodeAnchorLookup,
-				} = await neuralWeb.loadNeuralClassifierFromUrls(
+				} = await neuralWeb.loadNeuralClassifierFromURLs(
 					neuralClassifierLoadURLs(DEFAULT_LOCALE, selectedVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 				setActiveBackend(
@@ -507,7 +507,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 				setCompareBackend("")
 
 				const neuralWeb = await import("@mailwoman/neural-web")
-				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls(
+				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromURLs(
 					neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 

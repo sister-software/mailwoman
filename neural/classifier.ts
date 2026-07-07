@@ -200,7 +200,7 @@ export class NeuralAddressClassifier {
 	 *
 	 * **Node-only.** The dynamic imports keep `ONNXRunner` (onnxruntime-node) + `resolveWeights` (uses Node fs) out of
 	 * the static dependency graph, so this file can be bundled for the browser by `@mailwoman/neural-web`. Calling this
-	 * method in a browser will throw at runtime — use `loadNeuralClassifierFromUrls` from `@mailwoman/neural-web`
+	 * method in a browser will throw at runtime — use `loadNeuralClassifierFromURLs` from `@mailwoman/neural-web`
 	 * instead.
 	 */
 	static async loadFromWeights(
@@ -713,7 +713,7 @@ export class NeuralAddressClassifier {
 			throw new Error(
 				`Label/emission mismatch: model emits ${width} logits per token but the classifier was ` +
 					`configured with only ${this.labels.length} labels. Did you load a Stage 3 bundle without ` +
-					`passing its model-card labels? See loadFromWeights / loadNeuralClassifierFromUrls.`
+					`passing its model-card labels? See loadFromWeights / loadNeuralClassifierFromURLs.`
 			)
 		}
 	}

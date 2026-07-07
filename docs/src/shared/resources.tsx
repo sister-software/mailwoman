@@ -378,7 +378,7 @@ export function regionToStateSlug(region: string | undefined): string | null {
 }
 
 /**
- * Build the URL bag handed to `loadNeuralClassifierFromUrls` for a release. Shared by the demo's primary and compare
+ * Build the URL bag handed to `loadNeuralClassifierFromURLs` for a release. Shared by the demo's primary and compare
  * classifier loaders so the per-file asset layout (model / tokenizer / card / gazetteer lexicon, plus the optional
  * US/DE/FR postcode-anchor binaries) is defined exactly once.
  */

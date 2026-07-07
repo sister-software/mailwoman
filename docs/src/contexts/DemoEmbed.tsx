@@ -180,7 +180,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				// browser-safe entry. TypeScript types are narrower than the runtime API so we cast
 				// through unknown (same pattern as the demo page).
 				const neuralWeb = await import("@mailwoman/neural-web")
-				const { classifier: cls, diagnostics } = (await neuralWeb.loadNeuralClassifierFromUrls({
+				const { classifier: cls, diagnostics } = (await neuralWeb.loadNeuralClassifierFromURLs({
 					modelURL: assetURL(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerURL: assetURL(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
 					modelCardURL: assetURL(DEFAULT_LOCALE, selectedVersion, "model-card.json"),

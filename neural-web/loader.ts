@@ -43,7 +43,7 @@ export interface LoadResult {
 	postcodeAnchorLookup?: import("@mailwoman/neural").AnchorLookup
 }
 
-export interface LoadFromUrlsOpts {
+export interface LoadFromURLsOptions {
 	/** URL to the ONNX model file (e.g. `/static/mailwoman/model.onnx`). */
 	modelURL: string
 	/** URL to the SentencePiece tokenizer model (e.g. `/static/mailwoman/tokenizer.model`). */
@@ -65,7 +65,7 @@ export interface LoadFromUrlsOpts {
 	 * the anchor on. Pass the locales the model handles (e.g. US + DE). Omit for plain models — the runner then feeds the
 	 * anchor-off identity.
 	 */
-	postcodeBinaryUrls?: readonly string[]
+	postcodeBinaryURLs?: readonly string[]
 	/**
 	 * URL to the gazetteer-anchor lexicon JSON (`anchor-lexicon-v1.json`, #464 — the in-repo source is
 	 * `data/gazetteer/anchor-lexicon-v1.json`). Gazetteer-trained models (v4.2.0+, whose ONNX declares the
@@ -153,7 +153,7 @@ export function defaultGazetteerLexiconURL(modelURL: string): string {
  * true`) — every knob is inert on bundles that predate the corresponding channel, so older versions keep decoding
  * unchanged.
  */
-export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Promise<LoadResult> {
+export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): Promise<LoadResult> {
 	const fetchImpl = opts.fetchImpl ?? globalThis.fetch
 
 	if (!fetchImpl) {
@@ -173,9 +173,9 @@ export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Prom
 	const [tokenizer, runner, postcodeAnchorLookup] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
 		WebONNXRunner.fromBytes(modelBytes, opts.runner),
-		opts.postcodeBinaryUrls?.length
+		opts.postcodeBinaryURLs?.length
 			? Promise.all(
-					opts.postcodeBinaryUrls.map(async (url) =>
+					opts.postcodeBinaryURLs.map(async (url) =>
 						new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl)).toAnchorLookup()
 					)
 				).then(mergeAnchorLookups)
@@ -237,7 +237,7 @@ function warnOnUnfedTrainedChannels(
 	if (inputNames.includes("anchor_features") && !fed.postcodeAnchorLookup) {
 		console.error(
 			"[mailwoman/neural-web] This model is postcode-anchor-trained (its ONNX declares `anchor_features`) " +
-				"but no `postcodeBinaryUrls` were provided (postcode-<cc>.bin). " +
+				"but no `postcodeBinaryURLs` were provided (postcode-<cc>.bin). " +
 				"Running with zero-filled anchor features: the anchor-off identity, degraded vs the ship config."
 		)
 	}

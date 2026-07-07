@@ -94,7 +94,7 @@ threading in increment 3, keyed so earlier consumers never break (`resolve` rese
 - Public API: `async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace>`.
   Same opts as `parse`, same decode path, same repairs.
 - `parse` / `parseWithLogits` byte-stable (existing tests are the guard).
-- Browser reachability: `loadNeuralClassifierFromUrls` (`neural-web/loader.ts`) returns a real
+- Browser reachability: `loadNeuralClassifierFromURLs` (`neural-web/loader.ts`) returns a real
   `NeuralAddressClassifier`, and the docs webpack alias bundles neural-web from workspace source —
   so `traceParse` is reachable on the site with no npm release.
 
