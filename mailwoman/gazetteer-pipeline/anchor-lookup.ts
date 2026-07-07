@@ -41,10 +41,8 @@
  *   also `$MAILWOMAN_DATA_ROOT` overridable.
  */
 
-import { readFileSync, realpathSync, writeFileSync } from "node:fs"
+import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
@@ -277,32 +275,12 @@ function pyJsonValue(v: unknown): string {
 
 type LookupRow = [Record<string, number>, number, number, string | null]
 
-interface Args {
+export interface AnchorLookupOptions {
 	output: string
 	zcta?: string
 }
 
-function parseCLIArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			output: { type: "string" },
-			zcta: { type: "string" },
-		},
-	})
-
-	if (!values.output) {
-		console.error(
-			"Usage: build-pilot-anchor-lookup.ts --output <pilot-anchor-lookup.json> [--zcta <2024_Gaz_zcta.txt>]"
-		)
-		process.exit(2)
-	}
-
-	return { output: values.output, zcta: values.zcta }
-}
-
-function main(): void {
-	const args = parseCLIArgs()
-
+export function buildAnchorLookup(args: AnchorLookupOptions): void {
 	const sources: Array<[string, Map<string, Centroid>]> = [
 		["DE", loadIntl("DE")],
 		["FR", loadIntl("FR")],
@@ -390,13 +368,4 @@ function main(): void {
 			`${zctaFilled.toLocaleString("en-US")} ZCTA-filled here; sources ${sourceRepr}; ` +
 			`${placeholders.toLocaleString("en-US")} no-centroid = ${((100 * placeholders) / total).toFixed(1)}%)`
 	)
-}
-
-// Run main() only when invoked directly (the import-safe equivalent of Python's `if __name__ ==
-// "__main__"`), so importing this module evaluates it without running the build.
-const selfPath = realpathSync(fileURLToPath(import.meta.url))
-const entryPath = process.argv[1] ? realpathSync(process.argv[1]) : ""
-
-if (entryPath && entryPath === selfPath) {
-	main()
 }

@@ -50,7 +50,7 @@ import {
 	loadDistrictPolygons,
 	loadPostalDistricts,
 	normHan,
-} from "../build-postcode-locality-tw.ts"
+} from "mailwoman/gazetteer-pipeline/postcode-locality/tw"
 
 const RELEASE = "2026-06-17.0"
 

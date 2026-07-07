@@ -26,9 +26,6 @@
 import { createHash } from "node:crypto"
 import { readFileSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
-
-import { DuckDBInstance } from "@duckdb/node-api"
 
 interface ShardDescriptor {
 	split: string
@@ -64,6 +61,8 @@ async function descriptor(
 	split: string,
 	source: string
 ): Promise<ShardDescriptor> {
+	// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
+	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
 	const db = await instance.connect()
 	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${sqlString(localPath)}')`)
@@ -83,7 +82,7 @@ async function descriptor(
 	}
 }
 
-interface Args {
+export interface OverlayManifestOptions {
 	base: string
 	newDir: string
 	modalRoot: string
@@ -93,44 +92,7 @@ interface Args {
 	note: string
 }
 
-function parseCLIArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			base: { type: "string" },
-			"new-dir": { type: "string" },
-			"modal-root": { type: "string" },
-			version: { type: "string" },
-			"shard-parquet": { type: "string" },
-			source: { type: "string" },
-			note: { type: "string", default: "" },
-		},
-	})
-
-	const required = ["base", "new-dir", "modal-root", "version", "shard-parquet", "source"] as const
-	const missing = required.filter((k) => !values[k])
-
-	if (missing.length > 0) {
-		throw new Error(
-			`Usage: assemble-overlay-manifest.ts --base <MANIFEST.json> --new-dir <dir> --modal-root <path> ` +
-				`--version <ver> --shard-parquet <file> --source <id> [--note "..."]\n` +
-				`  missing: ${missing.map((k) => `--${k}`).join(", ")}`
-		)
-	}
-
-	return {
-		base: values.base!,
-		newDir: values["new-dir"]!,
-		modalRoot: values["modal-root"]!,
-		version: values.version!,
-		shardParquet: values["shard-parquet"]!,
-		source: values.source!,
-		note: values.note ?? "",
-	}
-}
-
-async function main(): Promise<void> {
-	const args = parseCLIArgs()
-
+export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
 	const base = JSON.parse(readFileSync(args.base, "utf8")) as BaseManifest
 
 	if (base.shards.some((s) => s.source === args.source)) {
@@ -175,11 +137,4 @@ async function main(): Promise<void> {
 	console.log(`  shards: ${manifest.shards.length} (${kept.length} base kept, +1 ${args.source})`)
 	console.log(`  counts: ${JSON.stringify(manifest.counts)}  total: ${manifest.total_rows}`)
 	console.log(`  ${args.source} train: ${newTrain.rows} rows (${newTrain.bytes} bytes)`)
-}
-
-if (import.meta.main) {
-	main().catch((err: unknown) => {
-		console.error(err instanceof Error ? err.message : err)
-		process.exit(1)
-	})
 }
