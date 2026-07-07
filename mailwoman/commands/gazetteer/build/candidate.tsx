@@ -24,8 +24,8 @@ import {
 	foldGeonamesIntoAdmin,
 	resolvePostcodeShards,
 	wofDir,
-} from "../../gazetteer-pipeline/index.js"
-import type { CommandComponent } from "../../sdk/cli.js"
+} from "../../../gazetteer-pipeline/index.js"
+import type { CommandComponent } from "../../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
 	admin: zod
@@ -46,7 +46,7 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [error, setError] = useState<string>()
 	const [summary, setSummary] = useState<string[]>()
 
@@ -126,4 +126,4 @@ const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 	return null // progress streams to stderr until the summary lands
 }
 
-export default GazetteerBuild
+export default GazetteerBuildCandidate
