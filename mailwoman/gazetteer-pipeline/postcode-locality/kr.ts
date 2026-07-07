@@ -38,10 +38,8 @@
  *   preserving behavior.
  */
 
-import { readFileSync, realpathSync } from "node:fs"
+import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
@@ -167,32 +165,13 @@ function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
 
-interface Args {
+export interface PostcodeLocalityKROptions {
 	geonames: string
 	adminDb: string
 	output: string
 }
 
-function parseCLIArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			geonames: { type: "string" },
-			"admin-db": { type: "string" },
-			output: { type: "string" },
-		},
-	})
-
-	if (!values.geonames || !values["admin-db"] || !values.output) {
-		console.error("Usage: build-postcode-locality-kr.ts --geonames <KR.txt> --admin-db <admin-kr.db> --output <db>")
-		process.exit(2)
-	}
-
-	return { geonames: values.geonames, adminDb: values["admin-db"], output: values.output }
-}
-
-async function main(): Promise<void> {
-	const args = parseCLIArgs()
-
+export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): Promise<void> {
 	const admin = new DatabaseSync(args.adminDb)
 
 	// Locality point index + id->name (romanized spr.name, for the human-readable row label).
@@ -426,13 +405,4 @@ async function main(): Promise<void> {
 			`dist p50/p90/p99 = ${pyStrFloat(p(0.5))}/${pyStrFloat(p(0.9))}/${pyStrFloat(p(0.99))} km, ` +
 			`${rows.length.toLocaleString("en-US")} rows -> ${args.output}`
 	)
-}
-
-// Run main() only when invoked directly (the import-safe equivalent of Python's `if __name__ ==
-// "__main__"`), so importing this module evaluates it without running the build.
-const selfPath = realpathSync(fileURLToPath(import.meta.url))
-const entryPath = process.argv[1] ? realpathSync(process.argv[1]) : ""
-
-if (entryPath && entryPath === selfPath) {
-	await main()
 }

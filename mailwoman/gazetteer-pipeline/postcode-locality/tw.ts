@@ -50,10 +50,8 @@
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-tw.db
  */
 
-import { readFileSync, realpathSync, renameSync, rmSync } from "node:fs"
+import { readFileSync, renameSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
@@ -241,36 +239,11 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 	return out
 }
 
-interface Args {
+export interface PostcodeLocalityTWOptions {
 	postalXml: string
 	divisions: string
 	adminDb: string
 	output: string
-}
-
-function parseCLIArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			"postal-xml": { type: "string" },
-			divisions: { type: "string" },
-			"admin-db": { type: "string" },
-			output: { type: "string" },
-		},
-	})
-
-	if (!values["postal-xml"] || !values.divisions || !values["admin-db"] || !values.output) {
-		console.error(
-			"Usage: build-postcode-locality-tw.ts --postal-xml <行政區經緯度.xml> --divisions <divisions-tw-admin.jsonl> --admin-db <admin-tw.db> --output <db>"
-		)
-		process.exit(2)
-	}
-
-	return {
-		postalXml: values["postal-xml"],
-		divisions: values.divisions,
-		adminDb: values["admin-db"],
-		output: values.output,
-	}
 }
 
 interface AdminPlace {
@@ -286,8 +259,7 @@ interface AdminPlace {
 	engNames: Set<string>
 }
 
-async function main(): Promise<void> {
-	const args = parseCLIArgs()
+export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
 	const districts = loadPostalDistricts(args.postalXml)
 
 	if (districts.length === 0) {
@@ -659,12 +631,4 @@ async function main(): Promise<void> {
 			`${rows.length} rows -> ${args.output}` +
 			(unmatched.length ? `\n  unmatched: ${unmatched.join(", ")}` : "")
 	)
-}
-
-// Run main() only when invoked directly (import-safe, same guard as the sibling builders).
-const selfPath = realpathSync(fileURLToPath(import.meta.url))
-const entryPath = process.argv[1] ? realpathSync(process.argv[1]) : ""
-
-if (entryPath && entryPath === selfPath) {
-	await main()
 }

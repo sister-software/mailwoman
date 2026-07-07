@@ -36,10 +36,8 @@
  *   behavior.
  */
 
-import { readFileSync, realpathSync } from "node:fs"
+import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
@@ -202,7 +200,7 @@ function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
 
-interface Args {
+export interface PostcodeLocalityJPOptions {
 	country: string
 	postalNames: string
 	geonames: string
@@ -210,36 +208,7 @@ interface Args {
 	output: string
 }
 
-function parseCLIArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			country: { type: "string" },
-			"postal-names": { type: "string" },
-			geonames: { type: "string" },
-			"admin-db": { type: "string" },
-			output: { type: "string" },
-		},
-	})
-
-	if (!values.country || !values["postal-names"] || !values.geonames || !values["admin-db"] || !values.output) {
-		console.error(
-			"Usage: build-postcode-locality-cjk.ts --country JP --postal-names <KEN_ALL_ROME.CSV> --geonames <CC.txt> --admin-db <admin.db> --output <db>"
-		)
-		process.exit(2)
-	}
-
-	return {
-		country: values.country,
-		postalNames: values["postal-names"],
-		geonames: values.geonames,
-		adminDb: values["admin-db"],
-		output: values.output,
-	}
-}
-
-async function main(): Promise<void> {
-	const args = parseCLIArgs()
-
+export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): Promise<void> {
 	const postal = args.country === "JP" ? loadKenall(args.postalNames) : new Map<string, string>()
 
 	if (postal.size === 0) {
@@ -390,13 +359,4 @@ async function main(): Promise<void> {
 			`${matched.toLocaleString("en-US")} name-matched (${matchRate}), ` +
 			`${rows.length.toLocaleString("en-US")} rows -> ${args.output}`
 	)
-}
-
-// Run main() only when invoked directly (the import-safe equivalent of Python's `if __name__ ==
-// "__main__"`), so importing this module evaluates it without running the build.
-const selfPath = realpathSync(fileURLToPath(import.meta.url))
-const entryPath = process.argv[1] ? realpathSync(process.argv[1]) : ""
-
-if (entryPath && entryPath === selfPath) {
-	await main()
 }

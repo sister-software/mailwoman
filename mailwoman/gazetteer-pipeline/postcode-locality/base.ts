@@ -35,11 +35,9 @@
  *   `--country` runs (a temp-build would wipe prior countries' rows).
  */
 
-import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
@@ -182,7 +180,7 @@ interface Locality {
 	geom: GeojsonGeometry
 }
 
-interface Args {
+export interface PostcodeLocalityBaseOptions {
 	country?: string
 	adminRepo?: string
 	postcodeDB?: string
@@ -192,43 +190,12 @@ interface Args {
 	finalize: boolean
 }
 
-function parseCLIArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			country: { type: "string" },
-			"admin-repo": { type: "string" },
-			"postcode-db": { type: "string" },
-			output: { type: "string" },
-			"radius-km": { type: "string", default: "10.0" },
-			"max-candidates": { type: "string", default: "4" },
-			finalize: { type: "boolean", default: false },
-		},
-	})
-
-	if (!values.output) {
-		console.error(
-			"Usage: build-postcode-locality.ts --output <db> [--country DE --admin-repo <dir> --postcode-db <db>] [--radius-km 10] [--max-candidates 4] [--finalize]"
-		)
-		process.exit(2)
-	}
-
-	return {
-		country: values.country,
-		adminRepo: values["admin-repo"],
-		postcodeDB: values["postcode-db"],
-		output: values.output,
-		radiusKm: Number(values["radius-km"]),
-		maxCandidates: Number.parseInt(values["max-candidates"]!, 10),
-		finalize: values.finalize,
-	}
-}
-
 /**
  * Freeze the accumulated table into a self-contained, read-only, distributable sqlite asset (the same shape as our
  * other WOF tables): a provenance/license `meta` table, query-planner stats, an integrity check, a rollback (non-WAL)
  * journal mode so there's no sidecar, and a VACUUM to compact.
  */
-async function finalize(output: string): Promise<void> {
+export async function finalizePostcodeLocality(output: string): Promise<void> {
 	const db = new DatabaseSync(output)
 	const counts = db
 		.prepare(
@@ -316,7 +283,7 @@ function geojsonFiles(dir: string): string[] {
 		.map((p) => join(dir, p))
 }
 
-async function build(args: Args): Promise<void> {
+export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOptions): Promise<void> {
 	const { country, adminRepo, postcodeDB, output, radiusKm, maxCandidates } = args
 
 	console.log(`loading ${country} locality polygons from source GeoJSON…`)
@@ -493,29 +460,4 @@ async function build(args: Args): Promise<void> {
 	out.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(output)
-}
-
-async function main(): Promise<void> {
-	const args = parseCLIArgs()
-
-	if (args.finalize) {
-		await finalize(args.output)
-
-		return
-	}
-
-	if (!(args.country && args.adminRepo && args.postcodeDB)) {
-		console.error("build mode needs --country, --admin-repo, --postcode-db (or pass --finalize)")
-		process.exit(1)
-	}
-	await build(args)
-}
-
-// Run main() only when invoked directly (the import-safe equivalent of Python's `if __name__ ==
-// "__main__"`), so `import("./build-postcode-locality.ts")` evaluates the module without running it.
-const selfPath = realpathSync(fileURLToPath(import.meta.url))
-const entryPath = process.argv[1] ? realpathSync(process.argv[1]) : ""
-
-if (entryPath && entryPath === selfPath) {
-	await main()
 }
