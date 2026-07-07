@@ -17,7 +17,7 @@
  *   faults without the optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
-import { Box, Text } from "ink"
+import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
@@ -113,7 +113,9 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 	}, [options])
 
 	useEffect(() => {
-		if (done || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (done || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [done, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>
