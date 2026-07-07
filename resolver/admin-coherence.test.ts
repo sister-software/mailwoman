@@ -110,6 +110,19 @@ function localityOf(tree: AddressTree): AddressNode | undefined {
 	return undefined
 }
 
+function regionOf(tree: AddressTree): AddressNode | undefined {
+	const stack = [...tree.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		if (n.tag === "region") return n
+		stack.push(...n.children)
+	}
+
+	return undefined
+}
+
 describe("resolveTree + adminCoherence (#263)", () => {
 	it("re-picks (region, locality) so the locality descends from the region", async () => {
 		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
@@ -226,5 +239,110 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		// Atlanta IS under the US state → it resolves in the walk; no country fall-through.
 		const at = localityOf(await resolver.resolveTree(tree("Atlanta"), { adminCoherence: true }))
 		expect(at?.lat).toBeCloseTo(33.76, 2)
+	})
+
+	it("re-picks via matchCountry when the gazetteer has NO country node + the locality is orphaned (#1023 — flattened GE hierarchy)", async () => {
+		// The 2026-07-07 admin rebuild (#1015) flattened Georgia to localities-only: no `country`-placetype
+		// node, and Tbilisi orphaned (parent_id -1). So both the country-node lookup AND the `parentID`
+		// descendant test miss it — the exact shape that regressed "Tbilisi, Georgia" → US Georgia (10,200 km).
+		// matchCountry("Georgia") → GE lets the fall-through scope by the `country` COLUMN, which is still set.
+		const usGeorgia = {
+			id: 40,
+			name: "Georgia",
+			placetype: "region",
+			country: "US",
+			lat: 32.6,
+			lon: -83.4,
+			score: 9,
+			exactMatch: true,
+		}
+		const tbilisiOrphan: ResolvedPlace = {
+			id: 51,
+			name: "Tbilisi",
+			placetype: "locality",
+			country: "GE",
+			parent_id: -1, // orphaned by the rebuild — no ancestry chain to a country node
+			lat: 41.69,
+			lon: 44.83,
+			score: 7,
+			exactMatch: true,
+		}
+		const tree = (): AddressTree => ({
+			raw: "Tbilisi, Georgia",
+			roots: [
+				node({
+					tag: "region",
+					value: "Georgia",
+					start: 9,
+					end: 16,
+					children: [node({ tag: "locality", value: "Tbilisi", start: 0, end: 7 })],
+				}),
+			],
+		})
+		const resolver = createWOFResolver(makeBackend([usGeorgia, tbilisiOrphan]))
+		const out = await resolver.resolveTree(tree(), { adminCoherence: true })
+
+		const loc = localityOf(out)
+		expect(loc?.lat).toBeCloseTo(41.69, 2)
+		expect(loc?.lon).toBeCloseTo(44.83, 2)
+		expect(loc?.metadata?.["admin_coherence_repicked"]).toBe(true)
+
+		// The greedy walk had bound the region node to the US-state namesake; the fall-through reverts that
+		// stale decoration so no wrong-country coordinate / `resolver_country` leaks into the result.
+		const region = regionOf(out)
+		expect(region?.lat).toBeUndefined()
+		expect(region?.placeID).toBeUndefined()
+		expect(region?.metadata?.["resolver_country"]).toBeUndefined()
+		expect(region?.value).toBe("Georgia") // the parsed token is preserved
+	})
+
+	it("stays inert for a domestic (region, locality) pair — matchCountry returns null for a US state name", async () => {
+		// "Georgia" names both a country and a US state, but the fall-through must never fire when the pair
+		// is genuinely domestic. Atlanta resolves under the US state in the walk, so reconcileAdminPair's
+		// unresolved-locality branch never runs — and even if it did, a Springfield-style US token
+		// ("Illinois"/"ME") returns null from matchCountry. Guards byte-stability on the domestic path.
+		const usGeorgia = {
+			id: 40,
+			name: "Georgia",
+			placetype: "region",
+			country: "US",
+			lat: 32.6,
+			lon: -83.4,
+			score: 9,
+			exactMatch: true,
+		}
+		const atlanta: ResolvedPlace = {
+			id: 41,
+			name: "Atlanta",
+			placetype: "locality",
+			country: "US",
+			parent_id: 40,
+			lat: 33.76,
+			lon: -84.42,
+			score: 9,
+			exactMatch: true,
+		}
+		const tree: AddressTree = {
+			raw: "Atlanta, Georgia",
+			roots: [
+				node({
+					tag: "region",
+					value: "Georgia",
+					start: 9,
+					end: 16,
+					children: [node({ tag: "locality", value: "Atlanta", start: 0, end: 7 })],
+				}),
+			],
+		}
+		const resolver = createWOFResolver(makeBackend([usGeorgia, atlanta]))
+		const out = await resolver.resolveTree(tree, { adminCoherence: true })
+
+		const loc = localityOf(out)
+		expect(loc?.lat).toBeCloseTo(33.76, 2)
+		// Resolved in the walk, not by the coherence pass — no re-pick marker.
+		expect(loc?.metadata?.["admin_coherence_repicked"]).toBeUndefined()
+		// The US-Georgia region decoration stands (not reverted).
+		const region = regionOf(out)
+		expect(region?.metadata?.["resolver_country"]).toBe("US")
 	})
 })
