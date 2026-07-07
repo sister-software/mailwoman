@@ -34,6 +34,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
+import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
@@ -115,11 +116,4 @@ async function main(): Promise<void> {
 	}
 }
 
-// Run main() only when invoked directly (the import-safe equivalent of Python's `if __name__ ==
-// "__main__"`), so importing this module evaluates it without cloning anything.
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-	main().catch((err: Error) => {
-		process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-		process.exitCode = 1
-	})
-}
+runIfScript(import.meta, main)

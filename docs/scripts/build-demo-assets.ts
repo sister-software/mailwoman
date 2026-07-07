@@ -31,6 +31,7 @@ import { copyFile, mkdir, stat } from "node:fs/promises"
 import { fileURLToPath } from "node:url"
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
 const STATIC_DIR = fileURLToPath(new URL("../static/mailwoman", import.meta.url))
@@ -94,11 +95,4 @@ async function main(): Promise<void> {
 	process.stderr.write(`\nadmin gazetteer source (for the candidate-table build): ${WOF_ADMIN_DB}\n`)
 }
 
-// Run main() only when invoked directly (the import-safe equivalent of Python's `if __name__ ==
-// "__main__"`), so importing this module evaluates it without staging anything.
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-	main().catch((err: Error) => {
-		process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-		process.exitCode = 1
-	})
-}
+runIfScript(import.meta, main)
