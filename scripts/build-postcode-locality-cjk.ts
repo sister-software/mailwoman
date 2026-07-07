@@ -42,6 +42,7 @@ import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { sealDatabase } from "@mailwoman/core/utils"
 
 const MATCH_RADIUS_KM = 15.0
 const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set
@@ -382,6 +383,8 @@ async function main(): Promise<void> {
 	}
 	db.exec("VACUUM")
 	db.close()
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(args.output)
 	console.log(
 		`${args.country}: ${keys.length.toLocaleString("en-US")} postcodes (KEN_ALL∩GeoNames), ` +
 			`${matched.toLocaleString("en-US")} name-matched (${matchRate}), ` +

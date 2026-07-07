@@ -26,6 +26,7 @@ import { existsSync, readFileSync, renameSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
+import { sealDatabase } from "@mailwoman/core/utils"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite"
 import { normalizePostcodeName } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
@@ -103,6 +104,8 @@ async function main(): Promise<void> {
 		renameSync(outPath, `${outPath}.prev`)
 	}
 	renameSync(tmpPath, outPath)
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(outPath)
 	process.stderr.write(`wrote ${inserted} NL PC6 rows -> ${outPath}\n`)
 }
 
