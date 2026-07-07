@@ -24,7 +24,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DuckDBInstance } from "@duckdb/node-api"
 
-import { SeededRandom } from "./lib/python-random.ts"
+import { SeededRandom } from "../lib/python-random.ts"
 
 /** A sink that appends a chunk of text to the output file. */
 type WriteFn = (chunk: string) => void
