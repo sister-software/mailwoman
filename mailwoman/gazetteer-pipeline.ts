@@ -31,6 +31,7 @@ import {
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { sealDatabase } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -194,12 +195,16 @@ export interface BuildOptions {
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
 
-	return buildCandidateTable({
+	const result = await buildCandidateTable({
 		input: opts.adminDb,
 		output: opts.out,
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
 		onProgress: opts.onProgress,
 	})
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(opts.out)
+
+	return result
 }
 
 /**

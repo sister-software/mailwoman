@@ -31,7 +31,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DuckDBInstance } from "@duckdb/node-api"
 import { isOfficialLanguage } from "@mailwoman/codex/country"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 import {
 	backfillAncestorsFromHierarchy,
 	discoverAdminDataRoots,
@@ -728,6 +728,10 @@ async function main() {
 	if (frozenMode.journal_mode !== "delete") {
 		throw new Error(`frozen DB journal_mode=${frozenMode.journal_mode}`)
 	}
+
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(outputPath)
+	console.error("  sealed 0444")
 
 	const finalSize = (statSync(outputPath).size / 1024 / 1024).toFixed(1)
 	const totalElapsed = ((performance.now() - t0) / 1000).toFixed(1)
