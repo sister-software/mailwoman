@@ -30,7 +30,7 @@ import {
 	publishGazetteer,
 	resolvePostcodeShards,
 	wofDir,
-} from "../../gazetteer-pipeline.js"
+} from "../../gazetteer-pipeline/index.js"
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({

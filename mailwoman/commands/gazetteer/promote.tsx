@@ -16,7 +16,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "../../gazetteer-pipeline.js"
+import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "../../gazetteer-pipeline/index.js"
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const ArgumentsSchema = zod.array(

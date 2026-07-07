@@ -51,7 +51,8 @@
 		"./sdk/test": "./out/sdk/test/index.js",
 		"./sdk/repo": "./out/sdk/repo.js",
 		"./sdk/scripting": "./out/sdk/scripting.js",
-		"./sdk/cli": "./out/sdk/cli.js"
+		"./sdk/cli": "./out/sdk/cli.js",
+		"./gazetteer-pipeline": "./out/gazetteer-pipeline/index.js"
 	},
 	"publishConfig": {
 		"access": "public"

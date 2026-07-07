@@ -31,8 +31,7 @@ import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { createUnifiedIndexes, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { haversineKm } from "@mailwoman/spatial"
-
-import { ingestOvertureDivisions } from "./build-unified-wof.ts"
+import { ingestOvertureDivisions } from "mailwoman/gazetteer-pipeline"
 
 /**
  * Set `place_population` for Overture-backfilled cities from a GeoNames cities dump (tab-separated: geonameid, name,
