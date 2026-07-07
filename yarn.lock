@@ -5008,6 +5008,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@protomaps/basemaps": "npm:^5.7.2"
     "@turf/boolean-contains": "npm:^7.3.5"
     kysely: "npm:^0.29.2"
     shapefile-parser: "npm:^1.0.3"
