@@ -27,7 +27,7 @@
  *   heldout caught = of the never-trained off-map families (baltic/oceania/middle-east), fraction
  *   rejected. Both move with the threshold; the Pareto is the whole story.
  *
- *   Usage: node scripts/coarse-placer/eval-openset.ts [--model <dir>] [--out-md <path>] Requires
+ *   Usage: node core/coarse-placer/tools/eval-openset.ts [--model <dir>] [--out-md <path>] Requires
  *   `yarn compile` (imports the compiled featurizer).
  */
 
@@ -37,7 +37,7 @@ import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta } from "../../core/coarse-placer/coarse-placer.ts"
+import type { CoarsePlacerMeta } from "../coarse-placer.js"
 
 type ScoreKey = "maxprob" | "p_inmap" | "energy" | "maxlogit" | "maha"
 
@@ -63,7 +63,7 @@ interface ParetoPoint {
 const root = new URL("../../", import.meta.url)
 const { featurize, COARSE_CLASSES } = (await import(
 	new URL("core/out/coarse-placer/featurize.js", root).href
-)) as typeof import("../../core/coarse-placer/featurize.ts")
+)) as typeof import("../featurize.js")
 
 const { values: args } = parseArgs({
 	options: {

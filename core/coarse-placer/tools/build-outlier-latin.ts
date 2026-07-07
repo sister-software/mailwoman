@@ -24,7 +24,7 @@ import { DuckDBInstance } from "@duckdb/node-api"
  *   dedicated test file and appends fresh OTHER rows (so don't run it twice onto the same splits
  *   without rebuilding train/val).
  *
- *   Usage: node scripts/coarse-placer/build-outlier-latin.ts [--per-country 6000] [--overture
+ *   Usage: node core/coarse-placer/tools/build-outlier-latin.ts [--per-country 6000] [--overture
  *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]
  */
 import { dataRootPath } from "@mailwoman/core/utils"

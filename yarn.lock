@@ -3401,7 +3401,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@duckdb/node-api@npm:^1.5.3-r.3":
+"@duckdb/node-api@npm:1.5.3-r.3, @duckdb/node-api@npm:^1.5.3-r.3":
   version: 1.5.3-r.3
   resolution: "@duckdb/node-api@npm:1.5.3-r.3"
   dependencies:
@@ -4679,7 +4679,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/core@workspace:core"
   dependencies:
+    "@duckdb/node-api": "npm:1.5.3-r.3"
     "@fragaria/address-formatter": "npm:^6.7.1"
+    "@mailwoman/codex": "workspace:*"
     "@types/d3-color": "npm:^3.1.3"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     axios: "npm:^1.17.0"

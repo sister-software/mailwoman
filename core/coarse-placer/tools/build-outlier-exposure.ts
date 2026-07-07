@@ -12,7 +12,7 @@
  *   off-map dominant script (not Latin, not CJK — those are the in-map countries), then APPENDED to
  *   the train/val/test splits as `country: "OTHER"`.
  *
- *   Run AFTER build-dataset.ts. Usage: node scripts/coarse-placer/build-outlier-exposure.ts
+ *   Run AFTER build-dataset.ts. Usage: node core/coarse-placer/tools/build-outlier-exposure.ts
  *   [--per-lang 2500]
  */
 

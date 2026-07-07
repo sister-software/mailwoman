@@ -17,7 +17,7 @@
  *   in-set + top1>80% + median prob_1 < 0.9 → UNDER-CONFIDENT, M2 mass-rule fix. in-set + top1<80% →
  *   low-quality signal, defer. The probe is a LINEAR model (no ONNX), so it is heat-safe.
  *
- *   Run: node scripts/coarse-placer/probe-frontier.ts [--model <dir>] [--n 2000] [--out <md>]
+ *   Run: node core/coarse-placer/tools/probe-frontier.ts [--model <dir>] [--n 2000] [--out <md>]
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -27,12 +27,12 @@ import { parseArgs } from "node:util"
 import { ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta } from "../../core/coarse-placer/coarse-placer.ts"
+import type { CoarsePlacerMeta } from "../coarse-placer.js"
 
 const root = new URL("../../", import.meta.url)
 const { CoarsePlacer } = (await import(
 	new URL("core/out/coarse-placer/coarse-placer.js", root).href
-)) as typeof import("../../core/coarse-placer/coarse-placer.ts")
+)) as typeof import("../coarse-placer.js")
 
 const { values: args } = parseArgs({
 	options: {

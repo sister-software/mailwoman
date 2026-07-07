@@ -15,14 +15,14 @@ import { parseArgs } from "node:util"
  *   Per-class scales matter because class weight magnitudes differ (OTHER's outlier-exposure rows
  *   push bigger weights than the in-map countries).
  *
- *   Verify the accuracy cost with `scripts/coarse-placer/eval-quant-compare.ts` (target: within
+ *   Verify the accuracy cost with `core/coarse-placer/tools/eval-quant-compare.ts` (target: within
  *   ~1pp).
  *
- *   Usage: node scripts/coarse-placer/quantize.ts [--in <fp32 dir>] [--out <int8 dir>]
+ *   Usage: node core/coarse-placer/tools/quantize.ts [--in <fp32 dir>] [--out <int8 dir>]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta } from "../../core/coarse-placer/coarse-placer.ts"
+import type { CoarsePlacerMeta } from "../coarse-placer.js"
 
 const { values: args } = parseArgs({
 	options: {

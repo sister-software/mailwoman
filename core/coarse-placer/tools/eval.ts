@@ -8,7 +8,7 @@
  *   (Cyrillic, Arabic, Thai, …, none of them in the 11 trained countries) SHOULD draw low
  *   confidence → abstain, which is the "probably off my loaded map" behavior the design wants.
  *
- *   Usage: node scripts/coarse-placer/eval.ts [--model <dir>] [--abstain 0.5]
+ *   Usage: node core/coarse-placer/tools/eval.ts [--model <dir>] [--abstain 0.5]
  */
 
 import { readFileSync } from "node:fs"
@@ -17,7 +17,7 @@ import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta, CoarsePrediction } from "../../core/coarse-placer/coarse-placer.ts"
+import type { CoarsePlacerMeta, CoarsePrediction } from "../coarse-placer.js"
 
 interface TestRow {
 	raw: string
@@ -33,7 +33,7 @@ interface MultiScriptRow {
 const root = new URL("../../", import.meta.url)
 const { CoarsePlacer } = (await import(
 	new URL("core/out/coarse-placer/coarse-placer.js", root).href
-)) as typeof import("../../core/coarse-placer/coarse-placer.ts")
+)) as typeof import("../coarse-placer.js")
 
 const { values: args } = parseArgs({
 	options: {

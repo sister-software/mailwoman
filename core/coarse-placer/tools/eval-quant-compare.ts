@@ -13,12 +13,12 @@ import { parseArgs } from "node:util"
  *   within ~1pp of fp32 (the milestone target). Uses the already-compiled `core/out` CoarsePlacer
  *   constructor, so it needs no recompile to validate a fresh quantization.
  *
- *   Usage: node scripts/coarse-placer/eval-quant-compare.ts [--fp32 <dir>] [--int8 <dir>] [--abstain
+ *   Usage: node core/coarse-placer/tools/eval-quant-compare.ts [--fp32 <dir>] [--int8 <dir>] [--abstain
  *   0.5]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { CoarsePlacer as CoarsePlacerClass, CoarsePlacerMeta } from "../../core/coarse-placer/coarse-placer.ts"
+import type { CoarsePlacer as CoarsePlacerClass, CoarsePlacerMeta } from "../coarse-placer.js"
 
 interface TestRow {
 	raw: string
@@ -28,7 +28,7 @@ interface TestRow {
 const root = new URL("../../", import.meta.url)
 const { CoarsePlacer } = (await import(
 	new URL("core/out/coarse-placer/coarse-placer.js", root).href
-)) as typeof import("../../core/coarse-placer/coarse-placer.ts")
+)) as typeof import("../coarse-placer.js")
 
 const { values: args } = parseArgs({
 	options: {

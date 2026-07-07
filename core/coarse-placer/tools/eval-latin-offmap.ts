@@ -14,11 +14,11 @@ import { parseArgs } from "node:util"
  *   and by source country, plus where the misses land. Run baseline (current model) and the M3
  *   retrain through this to read the before/after.
  *
- *   Usage: node scripts/coarse-placer/eval-latin-offmap.ts --model <dir> [--abstain 0.5]
+ *   Usage: node core/coarse-placer/tools/eval-latin-offmap.ts --model <dir> [--abstain 0.5]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta, CoarsePrediction } from "../../core/coarse-placer/coarse-placer.ts"
+import type { CoarsePlacerMeta, CoarsePrediction } from "../coarse-placer.js"
 
 interface OffMapRow {
 	raw: string
@@ -30,7 +30,7 @@ interface OffMapRow {
 const root = new URL("../../", import.meta.url)
 const { CoarsePlacer } = (await import(
 	new URL("core/out/coarse-placer/coarse-placer.js", root).href
-)) as typeof import("../../core/coarse-placer/coarse-placer.ts")
+)) as typeof import("../coarse-placer.js")
 
 const { values: args } = parseArgs({
 	options: {

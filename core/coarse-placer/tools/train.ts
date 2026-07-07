@@ -8,7 +8,7 @@
  *   After training, fits a single temperature on val (NLL minimization) for calibrated confidence.
  *   Writes a `meta.json` + `weights.bin` (Float32, row-major [class][feature]) artifact.
  *
- *   Usage: node scripts/coarse-placer/train.ts [--epochs 12] [--lr 0.1] [--l2 1e-6] [--out
+ *   Usage: node core/coarse-placer/tools/train.ts [--epochs 12] [--lr 0.1] [--l2 1e-6] [--out
  *   $MAILWOMAN_DATA_ROOT/coarse-placer/model] Requires `yarn compile` first (imports the compiled
  *   featurizer).
  */
@@ -27,7 +27,7 @@ interface Sample {
 const root = new URL("../../", import.meta.url)
 const { featurize, COARSE_CLASSES, FEATURE_DIM } = (await import(
 	new URL("core/out/coarse-placer/featurize.js", root).href
-)) as typeof import("../../core/coarse-placer/featurize.ts")
+)) as typeof import("../featurize.js")
 
 const { values: args } = parseArgs({
 	options: {

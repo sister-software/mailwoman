@@ -14,7 +14,7 @@
  *   - The corpus val/test shards only carry US/FR/DE, so we draw ALL splits from the rich `train`
  *       shards and do our OWN per-country 80/10/10 split (dedup on raw → no row crosses splits).
  *
- *   Usage: node scripts/coarse-placer/build-dataset.ts [--per-country 50000] Output:
+ *   Usage: node core/coarse-placer/tools/build-dataset.ts [--per-country 50000] Output:
  *   data/coarse-placer/{train,val,test}.jsonl (rows: {raw, country})
  */
 

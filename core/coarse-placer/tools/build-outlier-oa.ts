@@ -30,7 +30,7 @@ import { DuckDBInstance } from "@duckdb/node-api"
  *   Run AFTER build-dataset.ts + build-outlier-exposure.ts (it APPENDS). Re-runnable: rewrites the
  *   dedicated test file and appends fresh OTHER rows — rebuild train/val before re-running.
  *
- *   Usage: node scripts/coarse-placer/build-outlier-oa.ts --oa-dir <extracted-OA-root> [--per-country
+ *   Usage: node core/coarse-placer/tools/build-outlier-oa.ts --oa-dir <extracted-OA-root> [--per-country
  *   6000] [--data data/coarse-placer]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
