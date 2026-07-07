@@ -159,7 +159,7 @@ node resolver-wof-sqlite/out/build-fts-cli.js --drop "$DB"                      
 so build FTS last. **The old step 2 (`backfill-ancestors-from-hierarchy.ts`) is now FOLDED into
 `build-unified-wof.ts`** (its Freeze phase runs the `wof:hierarchy` −4 backfill), so you don't run it
 separately anymore — but `add-region-abbrevs` and `build-fts` are NOT folded and are still mandatory.
-`build-fts` builds `place_bbox` (the R*Tree the reverse geocoder probes), so a rebuild that skips it leaves
+`build-fts` builds `place_bbox` (the R\*Tree the reverse geocoder probes), so a rebuild that skips it leaves
 reverse geocoding broken even if the bboxes are correct in `spr`.
 
 ### Step 3 — the no-regression gate (do not swap without it)

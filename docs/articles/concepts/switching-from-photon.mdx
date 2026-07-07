@@ -23,10 +23,10 @@ curl "http://localhost:2322/reverse?lat=52.52&lon=13.405"
 
 ## Endpoint map
 
-| Photon         | Mailwoman      | Parameters honored                |
-| -------------- | -------------- | --------------------------------- |
-| `GET /api`     | `GET /api`     | `q`, `limit`, `lat`/`lon` bias     |
-| `GET /reverse` | `GET /reverse` | `lat` / `lon`                     |
+| Photon         | Mailwoman      | Parameters honored             |
+| -------------- | -------------- | ------------------------------ |
+| `GET /api`     | `GET /api`     | `q`, `limit`, `lat`/`lon` bias |
+| `GET /reverse` | `GET /reverse` | `lat` / `lon`                  |
 
 `limit` returns the top-N ranked matches (an ambiguous name like `Springfield` yields each instance),
 and `lat`/`lon` is a proximity bias — the same query near different map centers re-ranks the results

@@ -102,7 +102,8 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= 0.93 ? 1 : 0
 		f.push(officialAgree)
 		f.push(officialAgree * orgDisagree) // the roll-up core: same signer, different brand
-		f.push(officialAgree * orgDisagree * spatialExact) // …at the same place
+		f.push(officialAgree * orgDisagree * spatialExact)
+		// …at the same place
 
 		// scale into a usable range
 		return f
