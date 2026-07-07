@@ -71,7 +71,9 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 
 	const ingestPath = out + ".ingest"
 
-	if (existsSync(ingestPath)) unlinkSync(ingestPath)
+	if (existsSync(ingestPath)) {
+		unlinkSync(ingestPath)
+	}
 
 	phase("staging", ingestPath)
 	const db = new DatabaseSync(ingestPath)
@@ -134,13 +136,17 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 
 	phase("vacuum", out)
 
-	if (existsSync(out)) unlinkSync(out)
+	if (existsSync(out)) {
+		unlinkSync(out)
+	}
 	db.prepare("VACUUM INTO ?").run(out)
 	db.close()
 	unlinkSync(ingestPath)
 
 	for (const sidecar of [ingestPath + "-wal", ingestPath + "-shm"]) {
-		if (existsSync(sidecar)) unlinkSync(sidecar)
+		if (existsSync(sidecar)) {
+			unlinkSync(sidecar)
+		}
 	}
 
 	phase("fts")

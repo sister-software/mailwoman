@@ -42,6 +42,7 @@ import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 
 /** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
@@ -490,6 +491,8 @@ async function build(args: Args): Promise<void> {
 		`  wrote ${rows} rows (${nContained}/${postcodes.length} postcodes have a containing locality) → ${output}`
 	)
 	out.close()
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(output)
 }
 
 async function main(): Promise<void> {

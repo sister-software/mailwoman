@@ -44,6 +44,7 @@ import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { sealDatabase } from "@mailwoman/core/utils"
 
 const MATCH_RADIUS_KM = 20.0 // KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net
 const HANGUL = /[가-힣]/
@@ -415,6 +416,8 @@ async function main(): Promise<void> {
 	}
 	db.exec("VACUUM")
 	db.close()
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(args.output)
 
 	console.log(
 		`KR: ${total.toLocaleString("en-US")} postcodes, ${resolved.toLocaleString("en-US")} resolved ` +

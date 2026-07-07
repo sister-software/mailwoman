@@ -13,7 +13,7 @@
  *   single suffix completes the code (GB `+4` + `4` = 44); NANP members share root `+1` with their
  *   area code as the suffix, so they map to 1.
  *
- *   Usage: node scripts/build-country-reference.ts
+ *   Usage: node scripts/generate-country-reference.ts
  */
 
 import { writeFileSync } from "node:fs"
@@ -110,7 +110,7 @@ const header = `/**
  *
  *   GENERATED — do not edit by hand. Country calling codes (E.164) + currencies (ISO 4217), derived
  *   from mledoze/countries (https://github.com/mledoze/countries, ODbL). NANP members map to 1.
- *   Regenerate with scripts/build-country-reference.ts.
+ *   Regenerate with scripts/generate-country-reference.ts.
  */
 
 /** Static per-country reference: calling code + currency. */

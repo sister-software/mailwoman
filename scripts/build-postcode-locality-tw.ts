@@ -56,6 +56,7 @@ import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 
 const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set (JP/KR precedent)
@@ -651,6 +652,8 @@ async function main(): Promise<void> {
 	db.close()
 	// Build-then-move: the destination only ever sees a fully-built, integrity-checked artifact.
 	renameSync(buildPath, args.output)
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(args.output)
 	console.log(
 		`TW: ${districts.length} postal districts, ${matched} matched (${matchRate}; tiers ${JSON.stringify(tierCounts)}), ` +
 			`${rows.length} rows -> ${args.output}` +

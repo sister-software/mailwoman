@@ -9,7 +9,7 @@
  *   the #936 probe showed it pulls in cross-border quirks like Korean-in-CN, so consumers opt in).
  *   Every language appears under each ISO-639 spelling CLDR aliases to it (fi AND fin) so WOF
  *   639-3 tags, Overture BCP-47 keys, and GeoNames codes all match without mapping.
- *   Regenerate with scripts/build-official-languages.ts.
+ *   Regenerate with scripts/generate-official-languages.ts.
  */
 
 /** Official-language spellings for one territory. */
