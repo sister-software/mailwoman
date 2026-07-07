@@ -21,9 +21,16 @@
 
 import { spawn } from "node:child_process"
 import { writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { out: { type: "string" }, port: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { out?: string; port?: string }
 interface Fixture {
 	q: string
 	lat: number
@@ -67,8 +74,8 @@ interface RobustnessRow {
 	ok: boolean
 }
 
-const PORT = Number(arg("port", "8099"))
-const OUT = arg("out", "")
+const PORT = Number(values["port"] || "8099")
+const OUT = values["out"] || ""
 const THRESHOLD_KM = 25 // coarse "right place" — the drop-in resolves to admin/centroid, not rooftop
 
 // Fixed query set: city, country, and the city's known centroid (truth). Coarse error = right city.

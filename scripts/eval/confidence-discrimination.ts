@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
 import { pathToFileURL } from "node:url"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software
@@ -54,8 +55,34 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		agg: { type: "string" },
+		cache: { type: "string" },
+		locales: { type: "string" },
+		model: { type: "string" },
+		n: { type: "string" },
+		out: { type: "string" },
+		"rows-in": { type: "string" },
+		"rows-out": { type: "string" },
+		svg: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	agg?: string
+	cache?: string
+	locales?: string
+	model?: string
+	n?: string
+	out?: string
+	"rows-in"?: string
+	"rows-out"?: string
+	svg?: string
+}
 // The first collection died silently at PL ~60/80 (no JS stack → a process-level kill). Surface it
 // next time instead of exiting blind; the incremental --rows-out checkpoint makes a crash recoverable.
 process.on("unhandledRejection", (e) => console.error("UNHANDLED REJECTION:", e))
@@ -66,12 +93,12 @@ const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const WOF = [dataRootPath("wof", "admin-global-priority.db"), dataRootPath("wof", "postcode-locality-intl.db")]
 const CALIB = "data/eval/calibration/isotonic-en-us-v4.13.0.json"
-const MODEL = arg("model", "out/v191/model.onnx") // shipped v4.13.0 int8
-const LOCALES = arg("locales", "us,it,pt,pl,fr,au").split(",")
-const N = Number(arg("n", "80"))
+const MODEL = values["model"] || "out/v191/model.onnx" // shipped v4.13.0 int8
+const LOCALES = (values["locales"] || "us,it,pt,pl,fr,au").split(",")
+const N = Number(values["n"] || "80")
 const MESSY = !process.argv.includes("--no-messy")
 const NO_NOMINATIM = process.argv.includes("--no-nominatim") // skip the competitor fetch (canary/regression use)
-const AGG = arg("agg", "min") as "node" | "min"
+const AGG = (values["agg"] || "min") as "node" | "min"
 const TAU_GRID = [0, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.92, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995]
 const THRESH_KM = 25
 const NOMINATIM_UA = "mailwoman-benchmark/1.0 (teffen@sister.software)"
@@ -199,12 +226,12 @@ async function collect(): Promise<ScoredRow[]> {
 		tier: "server",
 	})
 
-	const cachePath = arg("cache", "/tmp/nominatim-messy-cache.json")
+	const cachePath = values["cache"] || "/tmp/nominatim-messy-cache.json"
 	const cache: NomCache = existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, "utf8")) : {}
 
 	// Incremental row checkpoint: append every scored row so a mid-run crash (the silent SIGKILL the
 	// first attempt hit at PL ~60/80) loses nothing. --rows-out resumes from here if present.
-	const ckpt = arg("rows-out", "")
+	const ckpt = values["rows-out"] || ""
 	const rows: ScoredRow[] =
 		ckpt && existsSync(ckpt)
 			? readFileSync(ckpt, "utf8")
@@ -393,7 +420,7 @@ function analyze(rows: ScoredRow[]): string {
 			`low-confidence bucket out-of-sample — the discrimination ${honest ? "holds" : "FAILS"} on held-out data.\n`
 	)
 
-	const svgPath = arg("svg", "")
+	const svgPath = values["svg"] || ""
 
 	if (svgPath) {
 		writeFileSync(svgPath, renderSVG(curve, nom))
@@ -448,21 +475,21 @@ function renderSVG(
 }
 
 async function main(): Promise<void> {
-	const rowsIn = arg("rows-in", "")
+	const rowsIn = values["rows-in"] || ""
 	const rows: ScoredRow[] = rowsIn
 		? readFileSync(rowsIn, "utf8")
 				.trim()
 				.split("\n")
 				.map((l) => JSON.parse(l) as ScoredRow)
 		: await collect()
-	const rowsOut = arg("rows-out", "")
+	const rowsOut = values["rows-out"] || ""
 
 	if (rowsOut && !rowsIn) {
 		writeFileSync(rowsOut, rows.map((r) => JSON.stringify(r)).join("\n") + "\n")
 		console.error(`wrote ${rowsOut} (${rows.length} rows)`)
 	}
 	const md = analyze(rows)
-	const out = arg("out", "")
+	const out = values["out"] || ""
 
 	if (out) {
 		writeFileSync(out, md)

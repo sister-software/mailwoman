@@ -48,6 +48,7 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -55,27 +56,49 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"anchor-lookup": { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		json: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		threshold: { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"anchor-lookup"?: string
+	"gazetteer-lexicon"?: string
+	json?: string
+	model?: string
+	"model-card"?: string
+	threshold?: string
+	tokenizer?: string
+}
 // -------------------------------------------------------------------------------------------------
 // Args
 // -------------------------------------------------------------------------------------------------
 
 const argv = process.argv.slice(2)
 
-const MODEL = arg("model", dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))!
-const TOKENIZER = arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))!
-const MODEL_CARD = arg("model-card", "neural-weights-en-us/model-card.json")!
-const ANCHOR_LOOKUP = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))!
-const GAZETTEER_LEXICON = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!
-const JSON_OUT = arg("json")
+const MODEL = (values["model"] || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))!
+const TOKENIZER = (values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))!
+const MODEL_CARD = (values["model-card"] || "neural-weights-en-us/model-card.json")!
+const ANCHOR_LOOKUP = (values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json"))!
+const GAZETTEER_LEXICON = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
+const JSON_OUT = values["json"] || ""
 
 /**
  * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time
  * delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of its
  * mask-off F1 is considered unharmed by the mask.
  */
-const THRESHOLD = Number(arg("threshold", "0.02"))
+const THRESHOLD = Number(values["threshold"] || "0.02")
 
 // -------------------------------------------------------------------------------------------------
 // Locale matrix (mirrors gen-capability-manifest.ts)

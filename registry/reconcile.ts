@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Coverage reconciliation (#621) — the library home for what `scripts/record-matcher/
+ *   Coverage reconciliation (#621) — the library home for what `scripts/eval/record-matcher/
  *   coverage-reconciliation.ts` does inline, so the CLI (`registry --reconcile`) and any consumer
  *   can reuse it.
  *

@@ -22,14 +22,21 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON, proposalsToTree } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createAddressParser } from "mailwoman"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { gen: { type: "string" }, out: { type: "string" }, rows: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { gen?: string; out?: string; rows?: string }
 const MODEL = dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
@@ -97,7 +104,7 @@ function partA(rowsPath: string): string[] {
 // ---- Part B: parse-structure on generated po_box / intersection / unit --------------------------
 
 function pickPlaces(n: number): Array<{ city: string; state: string; zip: string }> {
-	const rows: OutRow[] = JSON.parse(readFileSync(arg("rows"), "utf8"))
+	const rows: OutRow[] = JSON.parse(readFileSync(values["rows"] || "", "utf8"))
 	const places = rows
 		.filter((r) => r.expected.locality && r.expected.region && r.expected.postcode)
 		.map((r) => ({ city: r.expected.locality!, state: r.expected.region!, zip: r.expected.postcode! }))
@@ -123,7 +130,7 @@ async function partB(): Promise<string[]> {
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 	const v0 = createAddressParser()
 
-	const places = pickPlaces(Number(arg("gen", "150")))
+	const places = pickPlaces(Number(values["gen"] || "150"))
 	const parseV0 = async (s: string) => {
 		const sols = await v0.parse(s)
 
@@ -230,11 +237,11 @@ lines.push(
 	"_Self-emitted by `scripts/eval/per-type-report.ts`. Both parsers graded through the same resolver (Part A) or on parse structure (Part B). Turns the state-of-affairs blog's anecdotes into per-type rates._"
 )
 lines.push("")
-const partALines = partA(arg("rows"))
+const partALines = partA(values["rows"] || "")
 const partBLines = await partB()
 lines.push(...partALines, ...partBLines, ...reading())
 
-const outPath = arg("out", "/tmp/per-type-headtohead.md")
+const outPath = values["out"] || "/tmp/per-type-headtohead.md"
 writeFileSync(outPath, lines.join("\n"))
 console.error(`\nwrote → ${outPath}`)
 console.log(lines.join("\n"))

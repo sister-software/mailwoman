@@ -34,7 +34,7 @@ import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { SeededRandom } from "../lib/python-random.ts"
+import { SeededRandom } from "@mailwoman/core/utils"
 
 const SUFFIXES = /(shi|ku|cho|machi|ward|gun|ken|fu|to|son|mura|si|gun|do|gu|dong|eup|myeon|ri)$/
 

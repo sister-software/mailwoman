@@ -23,9 +23,10 @@
 import { writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
-import { pyJsonDumps } from "../lib/python-json.ts"
-import { SeededRandom } from "../lib/python-random.ts"
-import { csvRecordsFromZip, firstCSVEntry } from "../lib/zip-csv.ts"
+import { pyJsonDumps } from "@mailwoman/core/utils"
+import { SeededRandom } from "@mailwoman/core/utils"
+
+import { csvRecordsFromZip, firstCSVEntry } from "./lib/zip-csv.ts"
 
 type Row = Record<string, string | undefined>
 

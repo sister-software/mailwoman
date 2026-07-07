@@ -216,10 +216,10 @@ async function main() {
 		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
 	}
 
-	// Optional crisp-polygon DB (build-wof-polygons.mjs): a single --polygons path. Uploaded as
+	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
-	// via build-wof-polygons.mjs --admin (the --points wof-hot.db source is retired).
+	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
 	const polygonsDb = args.polygons || null
 
 	if (polygonsDb && (!existsSync(polygonsDb) || statSync(polygonsDb).size === 0)) {

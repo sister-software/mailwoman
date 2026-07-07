@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
@@ -32,11 +33,17 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
-const N = Number(arg("n", "150"))
-const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20h.db"))
-const GATE_KM = Number(arg("gate", "25"))
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { "candidate-db": { type: "string" }, gate: { type: "string" }, n: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "candidate-db"?: string; gate?: string; n?: string }
+const N = Number(values["n"] || "150")
+const CAND = values["candidate-db"] || dataRootPath("wof", "candidate-global-20h.db")
+const GATE_KM = Number(values["gate"] || "25")
 const LOCALES: [string, string][] = [
 	["IT", "data/eval/external/oa-it-coord-150.jsonl"],
 	["PT", "data/eval/external/oa-pt-coord-150.jsonl"],

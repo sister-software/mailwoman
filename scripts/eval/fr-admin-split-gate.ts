@@ -29,7 +29,36 @@ import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawStringArgs } = parseArgs({
+	options: {
+		"anchor-lookup": { type: "string" },
+		"default-country": { type: "string" },
+		"dump-rows": { type: "string" },
+		golden: { type: "string" },
+		label: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		out: { type: "string" },
+		tokenizer: { type: "string" },
+		"wof-db": { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const stringArgs = rawStringArgs as {
+	"anchor-lookup"?: string
+	"default-country"?: string
+	"dump-rows"?: string
+	golden?: string
+	label?: string
+	model?: string
+	"model-card"?: string
+	out?: string
+	tokenizer?: string
+	"wof-db"?: string
+}
 
 /**
  * CONVENTION EPOCH 2026-07-04 (#945, operator-promoted): the DEFAULT scoring coordinate is the one production's
@@ -111,11 +140,11 @@ const norm = (s: string | undefined): string =>
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 
 async function main() {
-	const goldenPath = arg("golden", "/tmp/reg/fr-admin-split-golden.jsonl")
-	const label = arg("label", "model")
+	const goldenPath = stringArgs["golden"] || "/tmp/reg/fr-admin-split-golden.jsonl"
+	const label = stringArgs["label"] || "model"
 	// Comma-separated multi-shard support (night-31): postcodeConsistency needs a resolvable postcode
 	// node, which needs a postalcode shard attached alongside the admin DB.
-	const wofDBArg = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
+	const wofDBArg = stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db")
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 	const rows = readFileSync(goldenPath, "utf8")
 		.trim()
@@ -130,17 +159,17 @@ async function main() {
 			import("mailwoman"),
 		])
 
-	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
+	const anchorPath = stringArgs["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const neural = await createScorer({
-		modelPath: arg("model"),
-		tokenizerPath: arg("tokenizer"),
-		modelCardPath: arg("model-card"),
+		modelPath: stringArgs["model"] || "",
+		tokenizerPath: stringArgs["tokenizer"] || "",
+		modelCardPath: stringArgs["model-card"] || "",
 		...(anchorPath ? { anchorLookupPath: anchorPath } : {}),
 		strict: true,
 		tier: "server",
 	})
 	// #936 option 3 gate legs: `--official-name-exact` flips the official-name sub-tier promotion on
-	// Boolean pin flags via node:util parseArgs (strict off — the string args ride the `arg()` helper).
+	// Boolean pin flags via node:util parseArgs (strict off — the string args ride the stringArgs block above).
 	// #895/#718 discipline: the tri-state pins keep gate legs reproducible against pre-flip baselines —
 	// the positive flag pins ON, the `--no-*`/inverse flag pins OFF (the historical config), no flag =
 	// the current library default. Pin explicitly in pre-registered legs.
@@ -187,7 +216,7 @@ async function main() {
 	const postalCompoundPin = tri("postal-compound-recovery", "no-postal-compound-recovery")
 	// `--default-country none` = truly UNSCOPED resolution (no country prior at all) — the #936
 	// namesake legs need it; an empty string would still be a (falsy, ambiguous) country value.
-	const defaultCountryArg = arg("default-country", "FR")
+	const defaultCountryArg = stringArgs["default-country"] || "FR"
 	const resolveOpts: {
 		defaultCountry?: string
 		adminCoherence?: boolean
@@ -314,7 +343,7 @@ async function main() {
 		gold_region_rows: hasGoldRegion,
 	}
 	console.log(JSON.stringify(summary, null, 2))
-	const outPath = arg("out")
+	const outPath = stringArgs["out"] || ""
 
 	if (outPath) {
 		writeFileSync(outPath, JSON.stringify(summary, null, 2))
@@ -322,7 +351,7 @@ async function main() {
 	}
 
 	// Per-row dump for the paired A/B bootstrap. One JSON line per golden row, index-aligned to the input.
-	const dumpPath = arg("dump-rows")
+	const dumpPath = stringArgs["dump-rows"] || ""
 
 	if (dumpPath) {
 		writeFileSync(dumpPath, rowRecords.map((r) => JSON.stringify(r)).join("\n") + "\n")

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
@@ -23,12 +24,23 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
-const MODEL = arg("model", "out/v192/model.onnx")
-const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20j.db"))
-const N = Number(arg("n", "150"))
-const FILE = arg("file", "data/eval/external/overture-us-nad-holdout.jsonl")
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"candidate-db": { type: "string" },
+		file: { type: "string" },
+		model: { type: "string" },
+		n: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "candidate-db"?: string; file?: string; model?: string; n?: string }
+const MODEL = values["model"] || "out/v192/model.onnx"
+const CAND = values["candidate-db"] || dataRootPath("wof", "candidate-global-20j.db")
+const N = Number(values["n"] || "150")
+const FILE = values["file"] || "data/eval/external/overture-us-nad-holdout.jsonl"
 
 const RANK: Record<string, number> = {
 	country: 0,

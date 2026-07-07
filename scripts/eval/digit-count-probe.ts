@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
@@ -31,14 +32,34 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
-import { arg } from "../lib/cli-args.ts"
-
-const MODEL = arg("model", "out/v192/model.onnx")
-const TOK = arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-const CARD = arg("model-card", "neural-weights-en-us/model-card.json")
-const ANCHOR = arg("anchor", dataRootPath("anchor", "pilot-anchor-lookup.json"))
-const GAZ = arg("gazetteer-lexicon", dataRootPath("anchor", "gazetteer-lexicon.json"))
-const FILE = arg("file", "data/eval/golden/v0.1.2/dev/us.jsonl")
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		anchor: { type: "string" },
+		file: { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	anchor?: string
+	file?: string
+	"gazetteer-lexicon"?: string
+	model?: string
+	"model-card"?: string
+	tokenizer?: string
+}
+const MODEL = values["model"] || "out/v192/model.onnx"
+const TOK = values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+const CARD = values["model-card"] || "neural-weights-en-us/model-card.json"
+const ANCHOR = values["anchor"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
+const GAZ = values["gazetteer-lexicon"] || dataRootPath("anchor", "gazetteer-lexicon.json")
+const FILE = values["file"] || "data/eval/golden/v0.1.2/dev/us.jsonl"
 
 interface Row {
 	raw: string

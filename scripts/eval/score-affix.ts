@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 // Affix-aware per-tag scorer. per-locale-f1's foldToComponents joins street_prefix+street+street_suffix
 // into one `street`, so it CANNOT measure the affix split. This scores the UNFOLDED decodeAsJSON
@@ -10,12 +11,30 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		conventions: { type: "string" },
+		file: { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		json: { type: "string" },
+		model: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	conventions?: string
+	file?: string
+	"gazetteer-lexicon"?: string
+	json?: string
+	model?: string
+}
 const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const file = arg("file", "data/eval/external/street-affix-real.jsonl")!
+const file = (values["file"] || "data/eval/external/street-affix-real.jsonl")!
 const TAGS = [
 	"street_prefix",
 	"street",
@@ -33,11 +52,14 @@ const TAGS = [
 
 // A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference,
 // else the zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
-const GAZ = arg("gazetteer-lexicon")
+const GAZ = values["gazetteer-lexicon"] || ""
 const suppressGaz = argv.includes("--suppress-gaz-near-postcode")
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(arg("model")!)])
+const [tokenizer, runner] = await Promise.all([
+	MailwomanTokenizer.loadFromFile(TOK),
+	ONNXRunner.create((values["model"] || "")!),
+])
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
@@ -46,7 +68,7 @@ const neural = new NeuralAddressClassifier({
 	...(GAZ ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
 	suppressGazetteerNearPostcode: suppressGaz,
 	// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
-	...(arg("conventions") ? { addressSystemConventions: arg("conventions") as "auto" } : {}),
+	...(values["conventions"] || "" ? { addressSystemConventions: (values["conventions"] || "") as "auto" } : {}),
 	// v4.4.0 corrective: --bridge-gaps merges same-tag spans split at unlabeled punctuation.
 	...(argv.includes("--bridge-gaps") ? { bridgePunctuationGaps: true } : {}),
 })
@@ -83,7 +105,9 @@ for (const row of rows) {
 		}
 	}
 }
-console.log(`# affix per-tag (unfolded) — ${arg("model")!.split("/").slice(-2).join("/")} · n=${rows.length}`)
+console.log(
+	`# affix per-tag (unfolded) — ${(values["model"] || "")!.split("/").slice(-2).join("/")} · n=${rows.length}`
+)
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
 const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
 
@@ -100,7 +124,7 @@ for (const t of TAGS) {
 // JSON sidecar (--json <path>): the machine-readable contract the gate verdict reads — the
 // markdown above is presentation. Codex-review follow-up: regex-parsing scorer tables was the
 // gate's one brittle joint.
-const jsonOut = arg("json")
+const jsonOut = values["json"] || ""
 
 if (jsonOut) {
 	const { writeFileSync } = await import("node:fs")

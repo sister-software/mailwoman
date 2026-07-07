@@ -25,10 +25,10 @@ is **v4.2.0** (`v1.0.2-consolidation-runB`); substitute per the eval-ledger row
 
 ```bash
 # 1. Train (Modal A100, ~35 min for a 20k continue; ~$2-3)
-modal run -d scripts/modal/train_remote.py --config corpus-python/src/mailwoman_train/configs/v1.0.2-consolidation-runB.yaml --resume auto
+modal run -d corpus-python/modal/train_remote.py --config corpus-python/src/mailwoman_train/configs/v1.0.2-consolidation-runB.yaml --resume auto
 
 # 2. Export ONNX (on Modal — local onnxruntime can trip ShapeInferenceError on dynamo graphs)
-modal run scripts/modal/train_remote.py::export_onnx --output-dir=/data/output-v101-runB-s42 --step=020000
+modal run corpus-python/modal/train_remote.py::export_onnx --output-dir=/data/output-v101-runB-s42 --step=020000
 modal volume get mailwoman-training output-v101-runB-s42/model.onnx ./model-fp32.onnx --force
 
 # 3. Quantize int8 (local, PINNED toolchain — see below; verify the md5 is deterministic by running twice)
@@ -45,7 +45,7 @@ before trusting anything.
 ## The pinned export/quant toolchain
 
 `torch==2.12.0 · transformers==5.9.0 · onnx==1.21.0 · onnxruntime==1.26.0 · onnxscript==0.7.0`
-(the v4.1.0 set; source of truth is `scripts/modal/train_remote.py`'s training image).
+(the v4.1.0 set; source of truth is `corpus-python/modal/train_remote.py`'s training image).
 **This set is essential**: opset ≤17 + the `value_info` strip in `quantize.py` are what
 keep the int8 graph Safari-WebGPU-safe. Check your local env against it:
 

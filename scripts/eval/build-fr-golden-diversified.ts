@@ -35,9 +35,10 @@
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import { pyJsonDumps } from "../lib/python-json.ts"
-import { SeededRandom } from "../lib/python-random.ts"
-import { csvRecordsFromZip } from "../lib/zip-csv.ts"
+import { pyJsonDumps } from "@mailwoman/core/utils"
+import { SeededRandom } from "@mailwoman/core/utils"
+
+import { csvRecordsFromZip } from "./lib/zip-csv.ts"
 
 const OA_ZIP = "/tmp/oa-cache/fr__countrywide.zip"
 const OA_ENTRY = "fr/countrywide.csv"

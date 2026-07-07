@@ -45,9 +45,8 @@ import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
-
-import { pyJsonDumps, pyReprDict } from "../lib/python-json.ts"
-import { SeededRandom } from "../lib/python-random.ts"
+import { pyJsonDumps, pyReprDict } from "@mailwoman/core/utils"
+import { SeededRandom } from "@mailwoman/core/utils"
 
 const REPO = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
 const OA_DIR = join(REPO, "data", "eval", "external")

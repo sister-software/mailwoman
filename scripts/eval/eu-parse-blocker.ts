@@ -35,12 +35,33 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"anchor-lookup": { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		out: { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"anchor-lookup"?: string
+	limit?: string
+	model?: string
+	"model-card"?: string
+	out?: string
+	tokenizer?: string
+}
 interface OaRow {
 	input: string
 	expected: { locality?: string; region?: string; postcode?: string }
@@ -60,13 +81,13 @@ const norm = (s: string | undefined): string =>
 const LOCALES = ["fr", "de", "es", "it", "nl"] as const
 
 async function main(): Promise<void> {
-	const limit = parseInt(arg("limit", "1500"), 10)
-	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
+	const limit = parseInt(values["limit"] || "1500", 10)
+	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const neural = await createScorer({
-		modelPath: arg("model", dataRootPath("models", "quantized", "model-v180-step-40000-int8.onnx")),
-		tokenizerPath: arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")),
-		modelCardPath: arg("model-card", "neural-weights-en-us/model-card.json"),
+		modelPath: values["model"] || dataRootPath("models", "quantized", "model-v180-step-40000-int8.onnx"),
+		tokenizerPath: values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"),
+		modelCardPath: values["model-card"] || "neural-weights-en-us/model-card.json",
 		...(anchorPath ? { anchorLookupPath: anchorPath } : {}),
 		strict: true,
 		tier: "server",
@@ -184,7 +205,7 @@ async function main(): Promise<void> {
 	}
 
 	console.log(JSON.stringify({ limit, results }, null, 2))
-	const out = arg("out")
+	const out = values["out"] || ""
 
 	if (out) {
 		writeFileSync(out, JSON.stringify({ limit, results }, null, 2))

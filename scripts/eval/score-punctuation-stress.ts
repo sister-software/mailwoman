@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 // Per-class scorer for the punctuation-stress eval (#518). Grades EVERY component key present in
 // each row's gold (exact match, case-insensitive) and reports per-class component accuracy plus
@@ -24,19 +25,41 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createAddressParser } from "mailwoman"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		engine: { type: "string" },
+		file: { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		json: { type: "string" },
+		model: { type: "string" },
+		"sp-ann-bias": { type: "string" },
+		"sp-bias": { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	engine?: string
+	file?: string
+	"gazetteer-lexicon"?: string
+	json?: string
+	model?: string
+	"sp-ann-bias"?: string
+	"sp-bias"?: string
+}
 const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const file = arg("file", "data/eval/external/punctuation-stress.jsonl")!
+const file = (values["file"] || "data/eval/external/punctuation-stress.jsonl")!
 
-const engine = arg("engine", "neural")!
+const engine = (values["engine"] || "neural")!
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] =
 	engine === "neural"
-		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(arg("model")!)])
+		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create((values["model"] || "")!)])
 		: [undefined!, undefined!]
 const shipConfig = !argv.includes("--no-ship-config")
 const v0 = engine === "v0" ? createAddressParser() : undefined
@@ -51,7 +74,9 @@ const neural =
 				...(shipConfig
 					? {
 							gazetteerLexicon: parseGazetteerLexicon(
-								JSON.parse(readFileSync(arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!, "utf8"))
+								JSON.parse(
+									readFileSync((values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!, "utf8")
+								)
 							),
 							suppressGazetteerNearPostcode: true,
 							addressSystemConventions: "auto" as const,
@@ -62,8 +87,8 @@ const neural =
 					? {
 							spanProposer: {
 								lexicon: buildCodexSpanLexicon(),
-								...(arg("sp-bias") ? { biasScale: +arg("sp-bias")! } : {}),
-								...(arg("sp-ann-bias") ? { annotationBiasScale: +arg("sp-ann-bias")! } : {}),
+								...(values["sp-bias"] || "" ? { biasScale: +(values["sp-bias"] || "")! } : {}),
+								...(values["sp-ann-bias"] || "" ? { annotationBiasScale: +(values["sp-ann-bias"] || "")! } : {}),
 							},
 						}
 					: {}),
@@ -140,7 +165,7 @@ for (const row of rows) {
 }
 
 console.log(
-	`# punctuation-stress — engine=${engine}${engine === "neural" ? ` · ${arg("model")!.split("/").slice(-1)} · ship-config=${shipConfig}` : " (folded gold view)"} · ${rows.length} rows`
+	`# punctuation-stress — engine=${engine}${engine === "neural" ? ` · ${(values["model"] || "")!.split("/").slice(-1)} · ship-config=${shipConfig}` : " (folded gold view)"} · ${rows.length} rows`
 )
 console.log("| class | rows | died | component acc |\n| --- | --: | --: | --: |")
 const sidecar: Record<string, { rows: number; died: number; acc: number }> = {}
@@ -165,7 +190,7 @@ for (const [cls, c] of Object.entries(byClass).sort()) {
 	}
 }
 
-const jsonOut = arg("json")
+const jsonOut = values["json"] || ""
 
 if (jsonOut) {
 	writeFileSync(jsonOut, JSON.stringify({ n: rows.length, classes: sidecar }, null, "\t") + "\n")

@@ -3,16 +3,24 @@
 // vs gold `country` on the curated real-OOD eval. Closed vocab → precision should be ~perfect.
 // Usage: node scripts/eval/probe-deterministic-country.ts [--file <jsonl>]
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { matchCountry } from "../../codex/out/country/country.js"
-import { arg } from "../lib/cli-args.ts"
 
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { file: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { file?: string }
 interface EvalRow {
 	raw: string
 	components: { country?: string | null }
 }
 
-const file = arg("file", "data/eval/external/country-real.jsonl")
+const file = values["file"] || "data/eval/external/country-real.jsonl"
 
 const rows = readFileSync(file, "utf8")
 	.split("\n")

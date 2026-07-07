@@ -30,6 +30,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -37,9 +38,16 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { ClassificationRecord } from "mailwoman"
 
-import { arg } from "../lib/cli-args.ts"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { db: { type: "string" }, n: { type: "string" }, out: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { db?: string; n?: string; out?: string }
 // --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------
 const PLACETYPE_RANK: Record<string, number> = {
 	postalcode: 6,
@@ -99,8 +107,8 @@ const pct = (xs: number[], p: number): number => {
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN)
 
 // --- args ----------------------------------------------------------------------------------------
-const DB = arg("db", dataRootPath("wof", "admin-global-priority.db"))
-const N = Number(arg("n", "200")) // per stratum
+const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")
+const N = Number(values["n"] || "200") // per stratum
 
 // --- sample FR communes (collision + unique strata) ----------------------------------------------
 const db = new DatabaseSync(DB, { readOnly: true })
@@ -265,7 +273,7 @@ const out = [
 	"",
 ].join("\n")
 
-const outPath = arg("out", "")
+const outPath = values["out"] || ""
 
 if (outPath) {
 	const { writeFileSync } = await import("node:fs")

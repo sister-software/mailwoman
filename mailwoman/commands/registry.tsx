@@ -371,7 +371,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 		const geocoded = records.filter((r) => r.address?.geocode).length
 
 		// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
-		// SAME @mailwoman/registry library as scripts/record-matcher/coverage-reconciliation.ts.
+		// SAME @mailwoman/registry library as scripts/eval/record-matcher/coverage-reconciliation.ts.
 		if (options.reconcile) {
 			const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 			const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)

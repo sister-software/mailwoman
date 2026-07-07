@@ -30,7 +30,7 @@ runIfScript(import.meta, async () => {
 	console.error(`== export step-${step} on Modal ==`)
 	const exported = await $({
 		nothrow: true,
-	})`modal run scripts/modal/train_remote.py::export_onnx --output-dir=${outDir} --step=${step}`
+	})`modal run corpus-python/modal/train_remote.py::export_onnx --output-dir=${outDir} --step=${step}`
 	console.error(`${exported.stdout}${exported.stderr}`.trim().split("\n").slice(-2).join("\n"))
 	const got = await $({
 		nothrow: true,

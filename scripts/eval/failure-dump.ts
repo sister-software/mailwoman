@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
@@ -18,16 +19,28 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"candidate-db": { type: "string" },
+		locales: { type: "string" },
+		model: { type: "string" },
+		n: { type: "string" },
+		show: { type: "string" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { "candidate-db"?: string; locales?: string; model?: string; n?: string; show?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const MODEL = arg("model", "out/v191/model.onnx")
-const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20i.db"))
-const N = Number(arg("n", "60"))
-const SHOW = Number(arg("show", "10")) // misses to print per locale
-const LOCALES = arg("locales", "it,pt,pl,at,cz,fr,au").split(",")
+const MODEL = values["model"] || "out/v191/model.onnx"
+const CAND = values["candidate-db"] || dataRootPath("wof", "candidate-global-20i.db")
+const N = Number(values["n"] || "60")
+const SHOW = Number(values["show"] || "10") // misses to print per locale
+const LOCALES = (values["locales"] || "it,pt,pl,at,cz,fr,au").split(",")
 const PC_CONSISTENCY = process.argv.includes("--postcode-consistency") // #370 Lever A probe
 
 const PLACETYPE_RANK: Record<string, number> = {

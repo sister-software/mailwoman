@@ -5,6 +5,7 @@
 		"emitDeclarationOnly": false,
 		"allowImportingTsExtensions": false
 	},
+	"references": [{ "path": "../codex" }],
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
 }
