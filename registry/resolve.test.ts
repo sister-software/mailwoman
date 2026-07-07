@@ -94,7 +94,9 @@ describe("resolveEntities", () => {
 		expect(entities.length).toBeGreaterThanOrEqual(1)
 		expect(entities.length).toBeLessThanOrEqual(records.length)
 
-		for (const e of entities) expect(e.representative).toBeDefined()
+		for (const e of entities) {
+			expect(e.representative).toBeDefined()
+		}
 	})
 
 	it("an explicit scorer takes precedence over learnedScorer (#603)", () => {

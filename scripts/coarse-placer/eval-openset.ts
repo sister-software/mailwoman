@@ -94,7 +94,9 @@ function logits(raw: string): Float64Array {
 		let s = bias[c]!
 		const base = c * D
 
-		for (const i of feats) s += W[base + i]!
+		for (const i of feats) {
+			s += W[base + i]!
+		}
 		z[c] = s
 	}
 
@@ -107,10 +109,15 @@ const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 function logsumexp(xs: number[]): number {
 	let m = -Infinity
 
-	for (const x of xs) if (x > m) m = x
+	for (const x of xs)
+		if (x > m) {
+			m = x
+		}
 	let s = 0
 
-	for (const x of xs) s += Math.exp(x - m)
+	for (const x of xs) {
+		s += Math.exp(x - m)
+	}
 
 	return m + Math.log(s)
 }
@@ -144,7 +151,9 @@ for (const r of trainRows) {
 	if (r.country === "OTHER") continue
 	const arr = byClass.get(r.country)
 
-	if (arr && arr.length < fitPerClass) arr.push(r.raw)
+	if (arr && arr.length < fitPerClass) {
+		arr.push(r.raw)
+	}
 }
 const means = new Map<string, Float64Array>() // country -> Float64Array(nIn)
 const counts = new Map<string, number>()
@@ -157,10 +166,14 @@ for (const [country, raws] of byClass) {
 	for (const raw of raws) {
 		const v = inVec(logits(raw))
 
-		for (let k = 0; k < nIn; k++) mu[k] = mu[k]! + v[k]!
+		for (let k = 0; k < nIn; k++) {
+			mu[k] = mu[k]! + v[k]!
+		}
 	}
 
-	for (let k = 0; k < nIn; k++) mu[k] = mu[k]! / raws.length
+	for (let k = 0; k < nIn; k++) {
+		mu[k] = mu[k]! / raws.length
+	}
 	means.set(country, mu)
 	counts.set(country, raws.length)
 }
@@ -177,17 +190,29 @@ for (const [country, raws] of byClass) {
 		const v = inVec(logits(raw))
 		const d = new Float64Array(nIn)
 
-		for (let k = 0; k < nIn; k++) d[k] = v[k]! - mu[k]!
+		for (let k = 0; k < nIn; k++) {
+			d[k] = v[k]! - mu[k]!
+		}
 
-		for (let a = 0; a < nIn; a++) for (let b = 0; b < nIn; b++) Sigma[a]![b] = Sigma[a]![b]! + d[a]! * d[b]!
+		for (let a = 0; a < nIn; a++) {
+			for (let b = 0; b < nIn; b++) {
+				Sigma[a]![b] = Sigma[a]![b]! + d[a]! * d[b]!
+			}
+		}
 		nTot++
 	}
 }
 
-for (let a = 0; a < nIn; a++) for (let b = 0; b < nIn; b++) Sigma[a]![b] = Sigma[a]![b]! / nTot
+for (let a = 0; a < nIn; a++) {
+	for (let b = 0; b < nIn; b++) {
+		Sigma[a]![b] = Sigma[a]![b]! / nTot
+	}
+}
 
 // Ridge for invertibility.
-for (let a = 0; a < nIn; a++) Sigma[a]![a] = Sigma[a]![a]! + 1e-3
+for (let a = 0; a < nIn; a++) {
+	Sigma[a]![a] = Sigma[a]![a]! + 1e-3
+}
 
 /** Invert a symmetric positive-definite matrix via Gauss-Jordan. */
 function inverse(M: Float64Array[]): number[][] {
@@ -195,7 +220,9 @@ function inverse(M: Float64Array[]): number[][] {
 	const A = M.map((row, i) => {
 		const r = new Float64Array(2 * n)
 
-		for (let j = 0; j < n; j++) r[j] = row[j]!
+		for (let j = 0; j < n; j++) {
+			r[j] = row[j]!
+		}
 		r[n + i] = 1
 
 		return r
@@ -204,17 +231,24 @@ function inverse(M: Float64Array[]): number[][] {
 	for (let col = 0; col < n; col++) {
 		let piv = col
 
-		for (let r = col + 1; r < n; r++) if (Math.abs(A[r]![col]!) > Math.abs(A[piv]![col]!)) piv = r
+		for (let r = col + 1; r < n; r++)
+			if (Math.abs(A[r]![col]!) > Math.abs(A[piv]![col]!)) {
+				piv = r
+			}
 		;[A[col], A[piv]] = [A[piv]!, A[col]!]
 		const d = A[col]![col]!
 
-		for (let j = 0; j < 2 * n; j++) A[col]![j] = A[col]![j]! / d
+		for (let j = 0; j < 2 * n; j++) {
+			A[col]![j] = A[col]![j]! / d
+		}
 
 		for (let r = 0; r < n; r++) {
 			if (r === col) continue
 			const f = A[r]![col]!
 
-			for (let j = 0; j < 2 * n; j++) A[r]![j] = A[r]![j]! - f * A[col]![j]!
+			for (let j = 0; j < 2 * n; j++) {
+				A[r]![j] = A[r]![j]! - f * A[col]![j]!
+			}
 		}
 	}
 
@@ -230,17 +264,23 @@ function mahaScore(z: Float64Array): number {
 	for (const mu of means.values()) {
 		const d = new Float64Array(nIn)
 
-		for (let k = 0; k < nIn; k++) d[k] = v[k]! - mu[k]!
+		for (let k = 0; k < nIn; k++) {
+			d[k] = v[k]! - mu[k]!
+		}
 		let q = 0
 
 		for (let a = 0; a < nIn; a++) {
 			let row = 0
 
-			for (let b = 0; b < nIn; b++) row += SigmaInv[a]![b]! * d[b]!
+			for (let b = 0; b < nIn; b++) {
+				row += SigmaInv[a]![b]! * d[b]!
+			}
 			q += d[a]! * row
 		}
 
-		if (q < best) best = q
+		if (q < best) {
+			best = q
+		}
 	}
 
 	return -best
@@ -300,10 +340,16 @@ const heldTest = heldoutScored.filter((_, i) => i % 2 === 1)
 function pointAt(scoreKey: ScoreKey, t: number, inSplit: ScoredRow[], heldSplit: ScoredRow[]): ParetoPoint {
 	let keepCorrect = 0
 
-	for (const o of inSplit) if (o.s[scoreKey] >= t && o.correctRoute) keepCorrect++
+	for (const o of inSplit)
+		if (o.s[scoreKey] >= t && o.correctRoute) {
+			keepCorrect++
+		}
 	let caught = 0
 
-	for (const o of heldSplit) if (o.s[scoreKey] < t) caught++
+	for (const o of heldSplit)
+		if (o.s[scoreKey] < t) {
+			caught++
+		}
 
 	return { t, inMapAcc: (100 * keepCorrect) / inSplit.length, heldCaught: (100 * caught) / heldSplit.length }
 }
@@ -317,17 +363,25 @@ function paretoFor(scoreKey: ScoreKey) {
 	const all = [...inVals.map((x) => x.v), ...heldVals].sort((a, b) => a - b)
 	const ts: number[] = []
 
-	for (let q = 0; q <= 200; q++) ts.push(all[Math.min(all.length - 1, Math.floor((q / 200) * (all.length - 1)))]!)
+	for (let q = 0; q <= 200; q++) {
+		ts.push(all[Math.min(all.length - 1, Math.floor((q / 200) * (all.length - 1)))]!)
+	}
 	const uniq = [...new Set(ts)]
 	const nIn = inVals.length
 	const nHeld = heldVals.length
 	const pts: ParetoPoint[] = uniq.map((t) => {
 		let keepCorrect = 0
 
-		for (const x of inVals) if (x.v >= t && x.ok) keepCorrect++
+		for (const x of inVals)
+			if (x.v >= t && x.ok) {
+				keepCorrect++
+			}
 		let caught = 0
 
-		for (const v of heldVals) if (v < t) caught++
+		for (const v of heldVals)
+			if (v < t) {
+				caught++
+			}
 
 		return { t, inMapAcc: (100 * keepCorrect) / nIn, heldCaught: (100 * caught) / nHeld }
 	})
@@ -340,11 +394,17 @@ function paretoFor(scoreKey: ScoreKey) {
 	for (const p of pts) {
 		const m = Math.min(p.inMapAcc, p.heldCaught)
 
-		if (m > balanced.val) balanced = { val: m, pt: p }
+		if (m > balanced.val) {
+			balanced = { val: m, pt: p }
+		}
 
-		if (p.heldCaught >= 90 && (!atHeld90 || p.inMapAcc > atHeld90.inMapAcc)) atHeld90 = p
+		if (p.heldCaught >= 90 && (!atHeld90 || p.inMapAcc > atHeld90.inMapAcc)) {
+			atHeld90 = p
+		}
 
-		if (p.inMapAcc >= 90 && (!atIn90 || p.heldCaught > atIn90.heldCaught)) atIn90 = p
+		if (p.inMapAcc >= 90 && (!atIn90 || p.heldCaught > atIn90.heldCaught)) {
+			atIn90 = p
+		}
 	}
 
 	// HONEST point: pick t* on DEV (max balanced min), freeze + report on TEST.
@@ -354,7 +414,9 @@ function paretoFor(scoreKey: ScoreKey) {
 		const d = pointAt(scoreKey, p.t, inDev, heldDev)
 		const m = Math.min(d.inMapAcc, d.heldCaught)
 
-		if (m > devBest.val) devBest = { val: m, t: p.t }
+		if (m > devBest.val) {
+			devBest = { val: m, t: p.t }
+		}
 	}
 	const heldoutTestPt = pointAt(scoreKey, devBest.t!, inTest, heldTest)
 

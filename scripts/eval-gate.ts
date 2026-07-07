@@ -79,13 +79,21 @@ function parseArgs(): GateArgs {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--baseline" && args[i + 1]) out.baselinePath = args[++i]
-		else if (a === "--candidate" && args[i + 1]) out.candidatePath = args[++i]
-		else if (a === "--recall-threshold-pp" && args[i + 1]) out.recallThresholdPp = Number(args[++i])
-		else if (a === "--recall-min-baseline-pct" && args[i + 1]) out.recallMinBaselinePct = Number(args[++i])
-		else if (a === "--hall-abs-threshold" && args[i + 1]) out.hallAbsThreshold = Number(args[++i])
-		else if (a === "--hall-rate-threshold-pct" && args[i + 1]) out.hallRateThresholdPct = Number(args[++i])
-		else if (a === "--out-md" && args[i + 1]) out.outMd = args[++i]
+		if (a === "--baseline" && args[i + 1]) {
+			out.baselinePath = args[++i]
+		} else if (a === "--candidate" && args[i + 1]) {
+			out.candidatePath = args[++i]
+		} else if (a === "--recall-threshold-pp" && args[i + 1]) {
+			out.recallThresholdPp = Number(args[++i])
+		} else if (a === "--recall-min-baseline-pct" && args[i + 1]) {
+			out.recallMinBaselinePct = Number(args[++i])
+		} else if (a === "--hall-abs-threshold" && args[i + 1]) {
+			out.hallAbsThreshold = Number(args[++i])
+		} else if (a === "--hall-rate-threshold-pct" && args[i + 1]) {
+			out.hallRateThresholdPct = Number(args[++i])
+		} else if (a === "--out-md" && args[i + 1]) {
+			out.outMd = args[++i]
+		}
 	}
 
 	if (!out.baselinePath || !out.candidatePath) {
@@ -212,7 +220,9 @@ function buildReport(
 	lines.push("| Tag | Expected | Recall (baseline → candidate) | Hallucinated (baseline → candidate) |")
 	lines.push("|-----|----------|-------------------------------|-------------------------------------|")
 
-	for (const r of rows) lines.push(r)
+	for (const r of rows) {
+		lines.push(r)
+	}
 	lines.push("")
 
 	return lines.join("\n")

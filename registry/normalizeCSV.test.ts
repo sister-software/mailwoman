@@ -26,7 +26,9 @@ function fixture(name: string, text: string): string {
 async function collect(gen: AsyncIterable<SourceRecord>): Promise<SourceRecord[]> {
 	const out: SourceRecord[] = []
 
-	for await (const r of gen) out.push(r)
+	for await (const r of gen) {
+		out.push(r)
+	}
 
 	return out
 }

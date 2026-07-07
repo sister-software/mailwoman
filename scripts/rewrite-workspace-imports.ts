@@ -55,7 +55,9 @@ function relIntoRoot(filePath: string, targetRelative: string) {
 	let rel = relative(fromDir, target)
 	rel = rel.split("\\").join("/")
 
-	if (!rel.startsWith(".")) rel = "./" + rel
+	if (!rel.startsWith(".")) {
+		rel = "./" + rel
+	}
 
 	return rel
 }

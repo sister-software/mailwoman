@@ -245,7 +245,9 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, UsStreetSuffix> = (() 
 			// Don't overwrite — first canonical that claims a variant wins (matches USPS Pub-28's
 			// ordering). E.g. "WALK" and "WALKS" both list "WALK" as a variant; "WALK" wins because it
 			// sorts first in `Object.keys`.
-			if (!out.has(variant.toLowerCase())) out.set(variant.toLowerCase(), canonical)
+			if (!out.has(variant.toLowerCase())) {
+				out.set(variant.toLowerCase(), canonical)
+			}
 		}
 	}
 

@@ -85,16 +85,22 @@ try {
 	// in GitHub Actions and uses it for Trusted Publishing.
 	const publishArgs = ["publish", tarballPath, "--tag", tag]
 
-	if (access) publishArgs.push("--access", access)
+	if (access) {
+		publishArgs.push("--access", access)
+	}
 
-	if (otp) publishArgs.push("--otp", otp)
+	if (otp) {
+		publishArgs.push("--otp", otp)
+	}
 
 	// --provenance is opt-in via MAILWOMAN_NPM_PROVENANCE=1. The npm registry
 	// rejects --provenance on private source repositories with E422 because
 	// sigstore attestations link to source code that third parties can't
 	// verify. Trusted Publishing itself works fine without --provenance; flip
 	// the env var on once the repo goes public.
-	if ($public.MAILWOMAN_NPM_PROVENANCE === "1") publishArgs.push("--provenance")
+	if ($public.MAILWOMAN_NPM_PROVENANCE === "1") {
+		publishArgs.push("--provenance")
+	}
 
 	console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
 
@@ -112,7 +118,9 @@ try {
 		process.exit(0)
 	}
 
-	if (stderr) process.stderr.write(stderr)
+	if (stderr) {
+		process.stderr.write(stderr)
+	}
 	process.exit(publishResult.status ?? 1)
 } finally {
 	rmSync(tmpDir, { recursive: true, force: true })

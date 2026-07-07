@@ -52,7 +52,9 @@ describe("usgov-nppes adapter", () => {
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
 		expect(r.country).toBe("US")
@@ -70,7 +72,9 @@ describe("usgov-nppes adapter", () => {
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
 		expect(r.country).toBe("US")
@@ -86,7 +90,9 @@ describe("usgov-nppes adapter", () => {
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.components.venue).toBe("ACME CORP")
 	})
@@ -96,7 +102,9 @@ describe("usgov-nppes adapter", () => {
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(0)
 	})
 
@@ -124,7 +132,9 @@ describe("usgov-nppes adapter", () => {
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 2 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 2 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(2)
 	})
 })

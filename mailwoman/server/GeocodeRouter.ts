@@ -255,10 +255,14 @@ function collectStreetTier(node: AddressTree["roots"][number]): Array<"address_p
 	if (node.tag === "street") {
 		const tier = node.metadata?.["resolution_tier"]
 
-		if (tier === "address_point" || tier === "interpolated") out.push(tier)
+		if (tier === "address_point" || tier === "interpolated") {
+			out.push(tier)
+		}
 	}
 
-	for (const child of node.children) out.push(...collectStreetTier(child))
+	for (const child of node.children) {
+		out.push(...collectStreetTier(child))
+	}
 
 	return out
 }

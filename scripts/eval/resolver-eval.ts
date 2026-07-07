@@ -96,13 +96,19 @@ function extractResolution(tree: AddressTree): Resolution | null {
 				placetype,
 			}
 
-			if (!best || (PLACETYPE_RANK[placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = cand
+			if (!best || (PLACETYPE_RANK[placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+				best = cand
+			}
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return best
 }
@@ -175,7 +181,9 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		i++
 
-		if (i % 250 === 0) console.error(`  ${i}/${rows.length}`)
+		if (i % 250 === 0) {
+			console.error(`  ${i}/${rows.length}`)
+		}
 		// neural
 		let nRes: Resolution | null = null
 
@@ -259,9 +267,13 @@ async function main(): Promise<void> {
 		for (const r of results) {
 			const x = pick(r)
 
-			if (x.matched) matched++
-			else if (!x.resolved) unresolved++
-			else wrong++
+			if (x.matched) {
+				matched++
+			} else if (!x.resolved) {
+				unresolved++
+			} else {
+				wrong++
+			}
 		}
 
 		return { matched, unresolved, wrong }

@@ -139,7 +139,9 @@ export function createPhotonRouter(engine: PhotonEngine, options: PhotonRouterOp
 	const router = Router()
 
 	// Browser-embedded widgets need CORS or their cross-origin XHR is blocked before the request completes (#1017).
-	if (options.cors !== false) router.use(applyCors)
+	if (options.cors !== false) {
+		router.use(applyCors)
+	}
 
 	const search: RequestHandler = async (req, res) => {
 		if (!engine.search) {
@@ -205,7 +207,9 @@ export function createPhotonRouter(engine: PhotonEngine, options: PhotonRouterOp
 			try {
 				await fn(req, res, next)
 			} catch {
-				if (!res.headersSent) res.status(500).json({ ...EMPTY, message: "internal error" })
+				if (!res.headersSent) {
+					res.status(500).json({ ...EMPTY, message: "internal error" })
+				}
 			}
 		}
 
@@ -296,14 +300,22 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 	for (const place of input.places) {
 		const proj = FORWARD_TAG_PROJECTION[place.tag]
 
-		if (proj && props[proj.key] == null) props[proj.key] = place.name
+		if (proj && props[proj.key] == null) {
+			props[proj.key] = place.name
+		}
 	}
 
-	if (input.postcode) props.postcode = input.postcode
+	if (input.postcode) {
+		props.postcode = input.postcode
+	}
 
-	if (input.country?.name && props.country == null) props.country = input.country.name
+	if (input.country?.name && props.country == null) {
+		props.country = input.country.name
+	}
 
-	if (input.country?.code) props.countrycode = input.country.code.toLowerCase()
+	if (input.country?.code) {
+		props.countrycode = input.country.code.toLowerCase()
+	}
 
 	return props
 }

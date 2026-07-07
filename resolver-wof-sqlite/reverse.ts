@@ -131,7 +131,9 @@ function toPlaceCandidate(row: CandidateRow, distanceKm?: number): PlaceCandidat
 		score: 0,
 	}
 
-	if (distanceKm !== undefined) c.distanceKm = distanceKm
+	if (distanceKm !== undefined) {
+		c.distanceKm = distanceKm
+	}
 
 	return c
 }
@@ -222,7 +224,9 @@ export class WOFReverseGeocoder implements Disposable {
 				break
 			}
 
-			if (contains === null) pointOnly.push(c)
+			if (contains === null) {
+				pointOnly.push(c)
+			}
 		}
 
 		if (!winner) {
@@ -312,7 +316,9 @@ export class WOFReverseGeocoder implements Disposable {
 			const allowed = new Set<string>(opts.placetypes)
 
 			for (let i = hierarchy.length - 1; i >= 0; i--) {
-				if (!allowed.has(hierarchy[i]!.placetype)) hierarchy.splice(i, 1)
+				if (!allowed.has(hierarchy[i]!.placetype)) {
+					hierarchy.splice(i, 1)
+				}
 			}
 		}
 		hierarchy.sort((a, b) => placetypeDepth(b.placetype) - placetypeDepth(a.placetype))
@@ -389,7 +395,9 @@ export class WOFReverseGeocoder implements Disposable {
 
 		if (cached !== undefined) return cached
 
-		if (this.#geometryCache.size >= WOFReverseGeocoder.#GEOMETRY_CACHE_CAP) this.#geometryCache.clear()
+		if (this.#geometryCache.size >= WOFReverseGeocoder.#GEOMETRY_CACHE_CAP) {
+			this.#geometryCache.clear()
+		}
 		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
 		let geometry: GeojsonGeometry | null = null
 
@@ -406,9 +414,13 @@ export class WOFReverseGeocoder implements Disposable {
 	}
 
 	close(): void {
-		if (this.#ownsAdmin) this.#admin.close()
+		if (this.#ownsAdmin) {
+			this.#admin.close()
+		}
 
-		if (this.#ownsPolygons) this.#polygons?.close()
+		if (this.#ownsPolygons) {
+			this.#polygons?.close()
+		}
 	}
 
 	[Symbol.dispose](): void {

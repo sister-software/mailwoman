@@ -101,13 +101,20 @@ function splitCSV(line: string): string[] {
 				if (line[i + 1] === '"') {
 					cur += '"'
 					i++
-				} else inQ = false
-			} else cur += c
-		} else if (c === '"') inQ = true
-		else if (c === ",") {
+				} else {
+					inQ = false
+				}
+			} else {
+				cur += c
+			}
+		} else if (c === '"') {
+			inQ = true
+		} else if (c === ",") {
 			out.push(cur)
 			cur = ""
-		} else cur += c
+		} else {
+			cur += c
+		}
 	}
 	out.push(cur)
 
@@ -253,7 +260,9 @@ export const unitRecipe: ShardRecipe = {
 			const t = readTuples(s)
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
-			for (const x of t) pool.push(x)
+			for (const x of t) {
+				pool.push(x)
+			}
 		}
 
 		if (pool.length === 0) {

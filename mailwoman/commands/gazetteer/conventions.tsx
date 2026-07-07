@@ -65,12 +65,17 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 	for (const [i, r] of rows.entries()) {
 		const at = `entry ${i} (wof_id=${r?.wof_id})`
 
-		if (typeof r?.wof_id !== "number") errors.push(`${at}: wof_id must be a number`)
-		else if (seen.has(r.wof_id)) errors.push(`${at}: duplicate wof_id`)
-		else seen.add(r.wof_id)
+		if (typeof r?.wof_id !== "number") {
+			errors.push(`${at}: wof_id must be a number`)
+		} else if (seen.has(r.wof_id)) {
+			errors.push(`${at}: duplicate wof_id`)
+		} else {
+			seen.add(r.wof_id)
+		}
 
-		if (typeof r?.source !== "string" || !r.source.trim())
+		if (typeof r?.source !== "string" || !r.source.trim()) {
 			errors.push(`${at}: every row needs non-empty 'source' provenance`)
+		}
 		const c = r?.convention
 
 		if (!c || typeof c !== "object") {
@@ -79,10 +84,14 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 		}
 
 		for (const s of c.candidateStrategies ?? [])
-			if (!known.has(s)) errors.push(`${at}: names unknown strategy "${s}" (known: ${[...known].join(", ")})`)
+			if (!known.has(s)) {
+				errors.push(`${at}: names unknown strategy "${s}" (known: ${[...known].join(", ")})`)
+			}
 
 		for (const k of Object.keys(c.scoringWeights ?? {}))
-			if (!WEIGHT_KEYS.has(k)) errors.push(`${at}: unknown scoringWeights key "${k}"`)
+			if (!WEIGHT_KEYS.has(k)) {
+				errors.push(`${at}: unknown scoringWeights key "${k}"`)
+			}
 	}
 
 	if (errors.length) throw new Error(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
@@ -121,7 +130,9 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 					.execute()
 				const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
 
-				for (const r of rows) ins.run(r.wof_id, JSON.stringify(r.convention), r.source)
+				for (const r of rows) {
+					ins.run(r.wof_id, JSON.stringify(r.convention), r.source)
+				}
 
 				// Freeze into the read-only distributable asset — same discipline as our other WOF tables.
 				await kdb.schema
@@ -140,7 +151,9 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 				}
 				const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
 
-				for (const [k, v] of Object.entries(meta)) insMeta.run(k, v)
+				for (const [k, v] of Object.entries(meta)) {
+					insMeta.run(k, v)
+				}
 
 				db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
 				db.exec("ANALYZE")
@@ -158,7 +171,9 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

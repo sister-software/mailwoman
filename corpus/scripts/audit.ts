@@ -86,7 +86,9 @@ function parseConfig(configPath: string): ParsedConfig | null {
 		}
 		const m = raw.match(/^[\t ]+([\w-]+):\s*([\d.]+)/)
 
-		if (m) weights[m[1]!] = parseFloat(m[2]!)
+		if (m) {
+			weights[m[1]!] = parseFloat(m[2]!)
+		}
 	}
 
 	return { sourceWeights: weights }
@@ -122,7 +124,9 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 		// Scale to estimated full-shard counts.
 		const scale = files.length / Math.max(sampled.length, 1)
 
-		for (const k of Object.keys(splitMap)) splitMap[k] = Math.round(splitMap[k]! * scale)
+		for (const k of Object.keys(splitMap)) {
+			splitMap[k] = Math.round(splitMap[k]! * scale)
+		}
 		stats.bySplit[split] = splitMap
 		stats.totalShards += files.length
 	}
@@ -281,7 +285,9 @@ function formatPct(v: number | "—"): string {
 function printReport(corpusDir: string, configPath: string | undefined, stats: ShardStats, rows: AuditRow[]): void {
 	console.log(`\nCorpus audit — ${corpusDir}`)
 
-	if (configPath) console.log(`Config:        ${configPath}`)
+	if (configPath) {
+		console.log(`Config:        ${configPath}`)
+	}
 	console.log(
 		`Total shards:  ${stats.totalShards}${stats.totalFiles !== stats.totalShards ? ` (${stats.totalFiles} files on disk)` : ""}`
 	)

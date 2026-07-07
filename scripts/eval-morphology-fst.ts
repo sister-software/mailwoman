@@ -94,19 +94,33 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--model" && args[i + 1]) modelPath = args[++i]
-		else if (a === "--tokenizer" && args[i + 1]) tokenizerPath = args[++i]
-		else if (a === "--model-card" && args[i + 1]) modelCardPath = args[++i]
-		else if (a === "--admin-fst" && args[i + 1]) adminFSTPath = args[++i]
-		else if (a === "--morphology-bin" && args[i + 1]) morphologyBinPath = args[++i]
-		else if (a === "--no-morphology") morphologyEnabled = false
-		else if (a === "--golden" && args[i + 1]) goldenDir = args[++i]
-		else if (a === "--max-affix-bias" && args[i + 1]) maxAffixBias = Number(args[++i])
-		else if (a === "--max-neighbour-street-bias" && args[i + 1]) maxNeighbourStreetBias = Number(args[++i])
-		else if (a === "--dep-locality-penalty" && args[i + 1]) dependentLocalityPenalty = Number(args[++i])
-		else if (a === "--out-json" && args[i + 1]) outJson = args[++i]
-		else if (a === "--name" && args[i + 1]) evalName = args[++i]
-		else if (a === "--stage3-fold") stage3Fold = true
+		if (a === "--model" && args[i + 1]) {
+			modelPath = args[++i]
+		} else if (a === "--tokenizer" && args[i + 1]) {
+			tokenizerPath = args[++i]
+		} else if (a === "--model-card" && args[i + 1]) {
+			modelCardPath = args[++i]
+		} else if (a === "--admin-fst" && args[i + 1]) {
+			adminFSTPath = args[++i]
+		} else if (a === "--morphology-bin" && args[i + 1]) {
+			morphologyBinPath = args[++i]
+		} else if (a === "--no-morphology") {
+			morphologyEnabled = false
+		} else if (a === "--golden" && args[i + 1]) {
+			goldenDir = args[++i]
+		} else if (a === "--max-affix-bias" && args[i + 1]) {
+			maxAffixBias = Number(args[++i])
+		} else if (a === "--max-neighbour-street-bias" && args[i + 1]) {
+			maxNeighbourStreetBias = Number(args[++i])
+		} else if (a === "--dep-locality-penalty" && args[i + 1]) {
+			dependentLocalityPenalty = Number(args[++i])
+		} else if (a === "--out-json" && args[i + 1]) {
+			outJson = args[++i]
+		} else if (a === "--name" && args[i + 1]) {
+			evalName = args[++i]
+		} else if (a === "--stage3-fold") {
+			stage3Fold = true
+		}
 	}
 
 	if (!modelPath || !tokenizerPath || !modelCardPath || !goldenDir) {
@@ -152,7 +166,9 @@ function foldStage3ToStage2(flat: Partial<Record<ComponentTag, string>>): Partia
 	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
 		const v = out[tag]
 
-		if (v) streetParts.push(v)
+		if (v) {
+			streetParts.push(v)
+		}
 	}
 
 	if (streetParts.length > 0) {
@@ -165,9 +181,13 @@ function foldStage3ToStage2(flat: Partial<Record<ComponentTag, string>>): Partia
 	if (out.intersection_a || out.intersection_b) {
 		const xs: string[] = []
 
-		if (out.intersection_a) xs.push(out.intersection_a)
+		if (out.intersection_a) {
+			xs.push(out.intersection_a)
+		}
 
-		if (out.intersection_b) xs.push(out.intersection_b)
+		if (out.intersection_b) {
+			xs.push(out.intersection_b)
+		}
 
 		// Combine into street if there's no existing street; otherwise leave intersection_a/b alone
 		// since the golden uses a single street value per address.
@@ -285,12 +305,17 @@ async function main() {
 	const t0 = performance.now()
 	const morphologyOpts: Record<string, number> = {}
 
-	if (args.maxAffixBias !== undefined) morphologyOpts.maxAffixBias = args.maxAffixBias
+	if (args.maxAffixBias !== undefined) {
+		morphologyOpts.maxAffixBias = args.maxAffixBias
+	}
 
-	if (args.maxNeighbourStreetBias !== undefined) morphologyOpts.maxNeighbourStreetBias = args.maxNeighbourStreetBias
+	if (args.maxNeighbourStreetBias !== undefined) {
+		morphologyOpts.maxNeighbourStreetBias = args.maxNeighbourStreetBias
+	}
 
-	if (args.dependentLocalityPenalty !== undefined)
+	if (args.dependentLocalityPenalty !== undefined) {
 		morphologyOpts.dependentLocalityPenalty = args.dependentLocalityPenalty
+	}
 
 	const parseOpts = {
 		...(adminFST
@@ -356,7 +381,9 @@ async function main() {
 			}
 		}
 
-		if (allCorrect) exactMatch++
+		if (allCorrect) {
+			exactMatch++
+		}
 
 		if (total % 500 === 0) {
 			const elapsed = (performance.now() - t0) / 1000

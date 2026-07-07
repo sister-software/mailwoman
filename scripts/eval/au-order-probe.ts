@@ -60,13 +60,19 @@ function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
 		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined && (n.lat !== 0 || n.lon !== 0)) {
 			const r = RANK[pt] ?? 5
 
-			if (!best || r > best.r) best = { lat: n.lat, lon: n.lon, r }
+			if (!best || r > best.r) {
+				best = { lat: n.lat, lon: n.lon, r }
+			}
 		}
 
-		for (const c of n.children ?? []) visit(c)
+		for (const c of n.children ?? []) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return best ? { lat: best.lat, lon: best.lon } : null
 }
@@ -105,15 +111,21 @@ async function main() {
 			(await resolver.resolveTree((await model.parse(row.raw, { postcodeRepair: true })) as never, opts)) as never
 		)
 
-		if (native && haversineKm(truth.lat, truth.lon, native.lat, native.lon) <= 25) nativeHit++
+		if (native && haversineKm(truth.lat, truth.lon, native.lat, native.lon) <= 25) {
+			nativeHit++
+		}
 		const canon = toCanonical(row.raw)
 
-		if (canon !== row.raw) reordered++
+		if (canon !== row.raw) {
+			reordered++
+		}
 		const c = bestCoord(
 			(await resolver.resolveTree((await model.parse(canon, { postcodeRepair: true })) as never, opts)) as never
 		)
 
-		if (c && haversineKm(truth.lat, truth.lon, c.lat, c.lon) <= 25) canonHit++
+		if (c && haversineKm(truth.lat, truth.lon, c.lat, c.lon) <= 25) {
+			canonHit++
+		}
 	}
 	const pct = (x: number) => ((100 * x) / Math.max(n, 1)).toFixed(0)
 	console.log(`\nAU word-order ceiling (n=${n}, ${reordered} rows reordered to canonical):`)

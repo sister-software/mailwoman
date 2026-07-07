@@ -100,7 +100,9 @@ for (const cap of SET) {
 	try {
 		const g = await geocodeAddress(q, { classifier, resolver, shards: shards.for, defaultCountry: cap.cc })
 
-		if (g.lat != null && g.lon != null) err = haversineKm(g.lat, g.lon, cap.lat, cap.lon)
+		if (g.lat != null && g.lon != null) {
+			err = haversineKm(g.lat, g.lon, cap.lat, cap.lon)
+		}
 	} catch {
 		/* unresolved */
 	}

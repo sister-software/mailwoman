@@ -106,14 +106,22 @@ export function createOvertureAdapter(): CorpusAdapter {
 					const components: CanonicalRow["components"] = {}
 
 					// Overture "S-N" / "S/N" = sin número; only keep a real numeric house number.
-					if (/^\d/.test(number)) components.house_number = number
+					if (/^\d/.test(number)) {
+						components.house_number = number
+					}
 					components.street = street
 
-					if (unit) components.unit = unit
+					if (unit) {
+						components.unit = unit
+					}
 
-					if (postcode) components.postcode = postcode
+					if (postcode) {
+						components.postcode = postcode
+					}
 
-					if (locality) components.locality = locality
+					if (locality) {
+						components.locality = locality
+					}
 
 					const raw = formatAddress(components, country, { separator: ", " })
 

@@ -93,7 +93,9 @@ runIfScript(import.meta, async () => {
 	for (const st of US_HELD_REGIONS) {
 		const r = await $({ nothrow: true })`jq -c --arg st ${st} ${"select((.state|ascii_upcase) == $st)"} ${US_SAMPLE}`
 
-		if (r.stdout) appendFileSync(US_SLICE, r.stdout)
+		if (r.stdout) {
+			appendFileSync(US_SLICE, r.stdout)
+		}
 	}
 	const US_N = (readFileSync(US_SLICE, "utf8").match(/\n/g) || []).length
 	console.error(`US held-out slice (${US_HELD_REGIONS.join("/")}): ${US_N} rows`)

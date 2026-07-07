@@ -31,7 +31,9 @@ export function pointToTileFraction(zoom: number, longitude: number, latitude: n
 	// Wrap Tile X
 	x = x % z2
 
-	if (x < 0) x = x + z2
+	if (x < 0) {
+		x = x + z2
+	}
 
 	return [zoom, x, y]
 }

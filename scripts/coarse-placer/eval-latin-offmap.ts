@@ -56,7 +56,9 @@ if (meta.quantization === "int8-per-row") {
 		const s = scales[c]!
 		const base = c * dim
 
-		for (let i = 0; i < dim; i++) weights[base + i] = int8[base + i]! * s
+		for (let i = 0; i < dim; i++) {
+			weights[base + i] = int8[base + i]! * s
+		}
 	}
 } else {
 	weights = new Float32Array(ab)
@@ -81,7 +83,9 @@ for (const r of rows) {
 	const h = handled(p)
 	n++
 
-	if (h) ok++
+	if (h) {
+		ok++
+	}
 	bump(`group:${r.group}`).n++
 	bump(`cc:${r.srcCountry}`).n++
 
@@ -91,8 +95,9 @@ for (const r of rows) {
 	} else {
 		missTo[p.country!] = (missTo[p.country!] ?? 0) + 1
 
-		if (samples.length < 8)
+		if (samples.length < 8) {
 			samples.push(`    ${r.srcCountry} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 38)}»`)
+		}
 	}
 }
 const pct = (o: number, m: number): string => `${((100 * o) / m).toFixed(1)}%`
@@ -102,16 +107,22 @@ console.log(`  by group:`)
 
 for (const k of Object.keys(by)
 	.filter((k) => k.startsWith("group:"))
-	.sort())
+	.sort()) {
 	console.log(`    ${k.slice(6).padEnd(8)} ${pct(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
+}
 console.log(`  by source country:`)
 
 for (const k of Object.keys(by)
 	.filter((k) => k.startsWith("cc:"))
-	.sort())
+	.sort()) {
 	console.log(`    ${k.slice(3).padEnd(4)} ${pct(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
+}
 const misses = Object.entries(missTo).sort((a, b) => b[1] - a[1])
 
-if (misses.length) console.log(`  misses land on: ${misses.map(([c, m]) => `${c}:${m}`).join(", ")}`)
+if (misses.length) {
+	console.log(`  misses land on: ${misses.map(([c, m]) => `${c}:${m}`).join(", ")}`)
+}
 
-if (samples.length) console.log(`  sample misplacements:\n${samples.join("\n")}`)
+if (samples.length) {
+	console.log(`  sample misplacements:\n${samples.join("\n")}`)
+}

@@ -65,7 +65,9 @@ describe("state-hi-schools adapter", () => {
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
 		expect(r.country).toBe("US")
@@ -88,7 +90,9 @@ describe("state-hi-schools adapter", () => {
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 5 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
 		expect(r.components.venue).toBe("Halau Ku Mana - PCS")
@@ -116,7 +120,9 @@ describe("state-hi-schools adapter", () => {
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 10 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 10 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.components.venue).toBe("Real School")
 	})
@@ -145,7 +151,9 @@ describe("state-hi-schools adapter", () => {
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
 
-		for await (const r of a.rows({ inputPath: p, limit: 2 })) rows.push(r)
+		for await (const r of a.rows({ inputPath: p, limit: 2 })) {
+			rows.push(r)
+		}
 		expect(rows).toHaveLength(2)
 	})
 })

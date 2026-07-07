@@ -123,7 +123,9 @@ export function mergeConventions(base: Convention, ...overrides: Array<Conventio
 	for (const o of overrides) {
 		if (!o) continue
 
-		if (o.candidateStrategies !== undefined) out.candidateStrategies = [...o.candidateStrategies]
+		if (o.candidateStrategies !== undefined) {
+			out.candidateStrategies = [...o.candidateStrategies]
+		}
 
 		if (o.scoringWeights !== undefined) {
 			out.scoringWeights = { ...(out.scoringWeights ?? WORLD_DEFAULT.scoringWeights), ...o.scoringWeights }

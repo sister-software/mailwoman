@@ -31,6 +31,7 @@ import {
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { sealDatabase } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -38,7 +39,7 @@ import { DatabaseSync } from "node:sqlite"
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 
-import { mailwomanDataRoot } from "./resolver-backend.js"
+import { mailwomanDataRoot } from "../resolver-backend.js"
 
 /**
  * The bilingual / alt-name EU set the GeoNames fold lifts (FI hard-resolve 69.5 → 85.8 %). GeoNames `<CC>.txt` dumps
@@ -194,12 +195,16 @@ export interface BuildOptions {
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
 
-	return buildCandidateTable({
+	const result = await buildCandidateTable({
 		input: opts.adminDb,
 		output: opts.out,
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
 		onProgress: opts.onProgress,
 	})
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(opts.out)
+
+	return result
 }
 
 /**
@@ -212,7 +217,9 @@ export function promoteCandidate(candidateDb: string, dataRoot: string = mailwom
 
 	// Replace any existing pointer (symlink or stray file) — never the build it points at.
 	try {
-		if (lstatSync(linkPath)) rmSync(linkPath)
+		if (lstatSync(linkPath)) {
+			rmSync(linkPath)
+		}
 	} catch {
 		// nothing there yet
 	}
@@ -271,9 +278,13 @@ export function publishGazetteer(opts: PublishOptions): PublishResult {
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
 	const args = [opts.uploadScript, "--src", opts.stageDir, "--prefix", prefix]
 
-	if (opts.bucket) args.push("--bucket", opts.bucket)
+	if (opts.bucket) {
+		args.push("--bucket", opts.bucket)
+	}
 
-	if (opts.dryRun) args.push("--dry-run")
+	if (opts.dryRun) {
+		args.push("--dry-run")
+	}
 	execFileSync("python3", args, { stdio: "inherit" })
 
 	let bumped = false
@@ -303,3 +314,7 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 
 	return `${y}-${m}-${d}${suffix}`
 }
+export * from "./defaults.js"
+export * from "./fts.js"
+export * from "./verify.js"
+export * from "./admin/index.js"

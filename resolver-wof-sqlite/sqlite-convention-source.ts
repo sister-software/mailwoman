@@ -46,7 +46,9 @@ export class SqliteConventionSource implements ConventionSource {
 				.prepare(`SELECT convention FROM ${this.#schema}.${ADDRESS_CONVENTION_TABLE} WHERE wof_id = ?`)
 				.get(wofID) as { convention: string } | undefined
 
-			if (row?.convention) value = JSON.parse(row.convention) as Convention
+			if (row?.convention) {
+				value = JSON.parse(row.convention) as Convention
+			}
 		} catch {
 			// Malformed JSON or a missing table → treat as no override (the chain falls back to
 			// WORLD_DEFAULT). The build script validates structure, so this is purely defensive.

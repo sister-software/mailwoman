@@ -44,7 +44,9 @@ export interface PostcodeBinaryEntry {
  * ones with the same prefix, which is what we want.
  */
 function encodeKey(s: string, width: number, out: Uint8Array, offset: number): void {
-	for (let i = 0; i < width; i++) out[offset + i] = i < s.length ? s.charCodeAt(i) & 0x7f : 0
+	for (let i = 0; i < width; i++) {
+		out[offset + i] = i < s.length ? s.charCodeAt(i) & 0x7f : 0
+	}
 }
 
 /**
@@ -155,8 +157,11 @@ export class PostcodeBinaryResolver {
 		while (lo < hi) {
 			const mid = (lo + hi) >>> 1
 
-			if (this.#cmpKey(mid, key) < 0) lo = mid + 1
-			else hi = mid
+			if (this.#cmpKey(mid, key) < 0) {
+				lo = mid + 1
+			} else {
+				hi = mid
+			}
 		}
 
 		// Collect the contiguous run of equal keys (one per country).

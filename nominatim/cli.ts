@@ -90,14 +90,22 @@ async function streetParts(
 function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 	const address: NominatimAddressDetails = {}
 
-	if (r.locality) address.city = r.locality
+	if (r.locality) {
+		address.city = r.locality
+	}
 
-	if (r.region) address.state = r.region
+	if (r.region) {
+		address.state = r.region
+	}
 
-	if (r.postcode) address.postcode = r.postcode
+	if (r.postcode) {
+		address.postcode = r.postcode
+	}
 
 	for (const h of r.hierarchy) {
-		if (h.tag === "country") address.country = h.value
+		if (h.tag === "country") {
+			address.country = h.value
+		}
 	}
 
 	return {
@@ -155,13 +163,19 @@ async function serve(): Promise<void> {
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDBPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
 
-	if (existsSync(tzDBPath)) annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
+	if (existsSync(tzDBPath)) {
+		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
+	}
 	const ulDBPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
 
-	if (existsSync(ulDBPath)) annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
+	if (existsSync(ulDBPath)) {
+		annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
+	}
 	const nutsDBPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
 
-	if (existsSync(nutsDBPath)) annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDBPath })))
+	if (existsSync(nutsDBPath)) {
+		annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDBPath })))
+	}
 	const annotate = composeAnnotators(annotators)
 
 	const engine: NominatimEngine = {
@@ -189,16 +203,22 @@ async function serve(): Promise<void> {
 			// Recover the street the resolver drops, so addressdetails + display_name carry it.
 			const { houseNumber, road } = await streetParts(parser, query)
 
-			if (houseNumber) resolved.address.house_number = houseNumber
+			if (houseNumber) {
+				resolved.address.house_number = houseNumber
+			}
 
-			if (road) resolved.address.road = road
+			if (road) {
+				resolved.address.road = road
+			}
 			// The country tag isn't always in the hierarchy (US admin results omit it); backfill from the
 			// US-centric-data default so the address, display_name, and flag/currency/calling-code agree.
 			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
 			const country = matchCountry(countryName)
 
 			if (country) {
-				if (!resolved.address.country) resolved.address.country = country.canonical
+				if (!resolved.address.country) {
+					resolved.address.country = country.canonical
+				}
 				resolved.address.country_code = country.iso2.toLowerCase()
 			}
 
@@ -236,11 +256,15 @@ async function serve(): Promise<void> {
 			for (const place of hierarchy) {
 				const key = PLACETYPE_TO_KEY[place.placetype]
 
-				if (key && !address[key]) address[key] = place.name
+				if (key && !address[key]) {
+					address[key] = place.name
+				}
 			}
 			const deepest = hierarchy[0]!
 
-			if (deepest.country) address.country_code = deepest.country.toLowerCase()
+			if (deepest.country) {
+				address.country_code = deepest.country.toLowerCase()
+			}
 			const resolved: ResolvedAddress = {
 				lat: params.lat,
 				lon: params.lon,

@@ -41,6 +41,7 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
+import { sealDatabase } from "@mailwoman/core/utils"
 import { Kysely, sql } from "kysely"
 
 import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.js"
@@ -142,13 +143,16 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 
 	progress("init", `${inputs.length} input(s) → ${opts.output}`)
 
-	if (existsSync(opts.output)) rmSync(opts.output)
+	if (existsSync(opts.output)) {
+		rmSync(opts.output)
+	}
 
 	// Open the output DB and create the empty schema. We discover the schema from the FIRST input
 	// (raw sqlite_master read — Kysely doesn't model that) so the output mirrors source column
 	// ordering / types. `CREATE TABLE AS SELECT` flattens types to dynamic, which would break
 	// callers that rely on column-affinity behavior.
 	const out = new DatabaseSync(opts.output)
+	let result: BuildSlimResult
 
 	try {
 		const firstSource = new DatabaseSync(inputs[0]!, { readOnly: true })
@@ -237,7 +241,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		}
 		progress("done", JSON.stringify(rowCounts))
 
-		return {
+		result = {
 			outputPath: opts.output,
 			outputBytes: statSync(opts.output).size,
 			rowCounts,
@@ -245,6 +249,10 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	} finally {
 		out.close()
 	}
+	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+	sealDatabase(opts.output)
+
+	return result
 }
 
 async function copyFromSource(

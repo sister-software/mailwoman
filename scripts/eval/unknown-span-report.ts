@@ -92,15 +92,22 @@ for (const file of FILES) {
 			contentGapChars += g.end - g.start
 			const key = gapKey(g.value)
 
-			if (key) gapFreq.set(key, (gapFreq.get(key) ?? 0) + 1)
+			if (key) {
+				gapFreq.set(key, (gapFreq.get(key) ?? 0) + 1)
+			}
 
 			const atStart = g.start === 0
 			const atEnd = g.end === tree.raw.length
 
-			if (atStart && atEnd) pos.whole += 1
-			else if (atStart) pos.leading += 1
-			else if (atEnd) pos.trailing += 1
-			else pos.interior += 1
+			if (atStart && atEnd) {
+				pos.whole += 1
+			} else if (atStart) {
+				pos.leading += 1
+			} else if (atEnd) {
+				pos.trailing += 1
+			} else {
+				pos.interior += 1
+			}
 		}
 
 		if (rowHasContent) {
@@ -145,7 +152,9 @@ L.push(`\n## Top content gaps — the shopping list (digits folded to \`#\`)\n`)
 L.push(`| Gap text | count |`)
 L.push(`| --- | ---: |`)
 
-for (const [key, n] of topGaps) L.push(`| \`${key}\` | ${n} |`)
+for (const [key, n] of topGaps) {
+	L.push(`| \`${key}\` | ${n} |`)
+}
 
 const report = L.join("\n")
 console.log(report)

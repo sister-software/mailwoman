@@ -118,7 +118,9 @@ async function main(): Promise<void> {
 	// per-k fractions that sum to 1). Also per-state for the rural-coverage signal.
 	const perK = new Map<number, Record<Bucket, number>>()
 
-	for (const k of KS) perK.set(k, { correct: 0, ranking_gap: 0, recall_gap: 0, coverage_gap: 0 })
+	for (const k of KS) {
+		perK.set(k, { correct: 0, ranking_gap: 0, recall_gap: 0, coverage_gap: 0 })
+	}
 	const byState = new Map<string, { n: number; coverage_gap: number; ranking_gap20: number; recall_gap20: number }>()
 	const rankHist: number[] = [] // 0-based rank of gold among covered rows (universe order)
 	const coverageExamples: Array<Record<string, unknown>> = [] // verify coverage gaps are real absences
@@ -129,7 +131,9 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		n++
 
-		if (n % 500 === 0) console.error(`  ${n}/${rows.length}`)
+		if (n % 500 === 0) {
+			console.error(`  ${n}/${rows.length}`)
+		}
 		const truth = normName(row.expected.locality)
 		const st = byState.get(row.state) ?? { n: 0, coverage_gap: 0, ranking_gap20: 0, recall_gap20: 0 }
 		st.n++
@@ -159,7 +163,7 @@ async function main(): Promise<void> {
 				? Math.min(...nameMatches.map((c) => haversineKm(c.lat, c.lon, row.lat, row.lon)))
 				: null
 
-			if (coverageExamples.length < 25)
+			if (coverageExamples.length < 25) {
 				coverageExamples.push({
 					input: row.input,
 					locality: row.expected.locality,
@@ -167,8 +171,11 @@ async function main(): Promise<void> {
 					name_in_wof: nameMatches.length > 0,
 					nearest_same_name_km: nearestKm === null ? null : +nearestKm.toFixed(1),
 				})
+			}
 
-			for (const k of KS) perK.get(k)!.coverage_gap++
+			for (const k of KS) {
+				perK.get(k)!.coverage_gap++
+			}
 			st.coverage_gap++
 			byState.set(row.state, st)
 			continue
@@ -181,9 +188,13 @@ async function main(): Promise<void> {
 		const regionID = await resolveRegionID(row.expected.region)
 		const q: FindPlaceQuery = { text: row.expected.locality!, placetype: ["locality"], country, limit: universeK }
 
-		if (regionID != null) q.parentID = regionID
+		if (regionID != null) {
+			q.parentID = regionID
+		}
 
-		if (row.expected.postcode) q.postcode = row.expected.postcode
+		if (row.expected.postcode) {
+			q.postcode = row.expected.postcode
+		}
 		let faithful = await lookup.findPlace(q)
 
 		if (faithful.length === 0 && q.parentID !== undefined) {
@@ -198,7 +209,9 @@ async function main(): Promise<void> {
 		if (rank < 0) {
 			// Covered, but the resolver's real query never surfaces the right place (wrong region scope /
 			// coord-first miss / FTS deep-miss) → a retrieval failure, not a ranking one.
-			for (const k of KS) perK.get(k)!.recall_gap++
+			for (const k of KS) {
+				perK.get(k)!.recall_gap++
+			}
 			st.recall_gap20++
 			byState.set(row.state, st)
 			continue
@@ -220,14 +233,21 @@ async function main(): Promise<void> {
 		for (const k of KS) {
 			const b = perK.get(k)!
 
-			if (rank === 0) b.correct++
-			else if (rank < k) b.ranking_gap++
-			else b.recall_gap++
+			if (rank === 0) {
+				b.correct++
+			} else if (rank < k) {
+				b.ranking_gap++
+			} else {
+				b.recall_gap++
+			}
 		}
 
 		if (rank !== 0) {
-			if (rank < 20) st.ranking_gap20++
-			else st.recall_gap20++
+			if (rank < 20) {
+				st.ranking_gap20++
+			} else {
+				st.recall_gap20++
+			}
 		}
 		byState.set(row.state, st)
 	}

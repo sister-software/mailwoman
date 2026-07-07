@@ -113,7 +113,9 @@ async function main(): Promise<void> {
 		} else {
 			const j = rng.randint(0, seen - 1)
 
-			if (j < perBucket) bucket[j] = { num, street, cp, city, lat: rec.lat, lon: rec.lon }
+			if (j < perBucket) {
+				bucket[j] = { num, street, cp, city, lat: rec.lat, lon: rec.lon }
+			}
 		}
 	}
 

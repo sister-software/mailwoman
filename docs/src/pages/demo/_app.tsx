@@ -59,7 +59,7 @@ import {
 	loadFSTGazetteer,
 	type MailwomanClassifierLike,
 	type MailwomanLookupLike,
-	neuralClassifierLoadUrls,
+	neuralClassifierLoadURLs,
 	regionToStateSlug,
 	type ResolvedHit,
 	streetShardURL,
@@ -82,6 +82,7 @@ interface StreetLookups {
 	interp: HTTPVFSInterpolator
 }
 
+import { useSiteConfig } from "../../hooks/site.ts"
 import { DebugControl } from "./_debug.tsx"
 import {
 	clearBbox,
@@ -115,8 +116,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 	// stay SAME-ORIGIN though — browsers block cross-origin `new Worker()` — so the worker + wasm are
 	// staged into the Pages deploy at `/mailwoman/sqljs/` by the demo-assets plugin and loaded from
 	// there, while the DB the worker range-reads lives on R2 (cross-origin, CORS-allowed).
-	const { siteConfig } = useDocusaurusContext()
-	const sqljsBaseURL = `${siteConfig.baseUrl}mailwoman/sqljs`
+	const { baseURL } = useSiteConfig()
+	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
@@ -228,8 +229,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 	// Mount: register the range-chunk service worker (persists validated DB range chunks in Cache
 	// Storage — warm repeat visits, and the root fix for mobile Safari's torn-chunk HTTP cache).
 	useEffect(() => {
-		registerRangeCacheServiceWorker(siteConfig.baseUrl)
-	}, [siteConfig.baseUrl])
+		registerRangeCacheServiceWorker(baseURL)
+	}, [baseURL])
 
 	// Drop cached range chunks belonging to other versions once a version is selected — the URLs are
 	// immutable, so old versions' chunks never expire on their own.
@@ -325,7 +326,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
 
 							for (const layer of CoverageLayers) {
-								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
+								if (!map.getLayer(layer.id)) {
+									map.addLayer(layer, firstSymbolID)
+								}
 							}
 						} catch (error) {
 							console.warn("coverage overlay wiring failed", error)
@@ -349,7 +352,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
 
 							for (const layer of RaceDotsLayers) {
-								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
+								if (!map.getLayer(layer.id)) {
+									map.addLayer(layer, firstSymbolID)
+								}
 							}
 						} catch (error) {
 							console.warn("race-dots overlay wiring failed", error)
@@ -399,8 +404,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 					classifier: cls,
 					diagnostics,
 					postcodeAnchorLookup,
-				} = await neuralWeb.loadNeuralClassifierFromUrls(
-					neuralClassifierLoadUrls(DEFAULT_LOCALE, selectedVersion, { hasAnchor: release?.hasAnchor, forceWASM })
+				} = await neuralWeb.loadNeuralClassifierFromURLs(
+					neuralClassifierLoadURLs(DEFAULT_LOCALE, selectedVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 				setActiveBackend(
 					diagnostics
@@ -415,7 +420,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, selectedVersion)
 						setFSTMatcher(fstResult.matcher)
 
-						if (fstResult.provenance) setFSTProvenance(fstResult.provenance)
+						if (fstResult.provenance) {
+							setFSTProvenance(fstResult.provenance)
+						}
 					} catch {
 						// FST not available for this version
 					}
@@ -436,7 +443,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 						try {
 							await wofLookup.warmUp()
 						} finally {
-							if (poll !== undefined) window.clearInterval(poll)
+							if (poll !== undefined) {
+								window.clearInterval(poll)
+							}
 						}
 
 						return wofLookup
@@ -455,7 +464,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 						const calTable = await calRes.json()
 
 						// Functional updater: setState would otherwise CALL a bare function arg as an updater.
-						if (!cancelled) setCalibrator(() => createCalibrator(calTable))
+						if (!cancelled) {
+							setCalibrator(() => createCalibrator(calTable))
+						}
 					}
 				} catch {
 					// No calibration table for this version.
@@ -506,8 +517,8 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 				setCompareBackend("")
 
 				const neuralWeb = await import("@mailwoman/neural-web")
-				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls(
-					neuralClassifierLoadUrls(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
+				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromURLs(
+					neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 
 				if (cancelled) return
@@ -523,7 +534,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 				console.error("Error loading compare classifier", error)
 				setCompareErrorMessage(error instanceof Error ? error.message : String(error))
 			} finally {
-				if (!cancelled) setCompareLoading(false)
+				if (!cancelled) {
+					setCompareLoading(false)
+				}
 			}
 		})()
 
@@ -690,7 +703,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 			// whole file. The bytesRead poll below shows the real number as it grows.
 			setLoadingProgress("Connecting to place index…")
 			lookupPromiseRef.current = lookupLoader((bytesRead) => {
-				if (bytesRead > 0) setLoadingProgress(`Loading place index… ${(bytesRead / 1024 / 1024).toFixed(1)} MB fetched`)
+				if (bytesRead > 0) {
+					setLoadingProgress(`Loading place index… ${(bytesRead / 1024 / 1024).toFixed(1)} MB fetched`)
+				}
 			})
 		}
 
@@ -759,7 +774,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 					polygonDBRef.current = loading
 					loading.catch(() => {
 						// Transient failure — null the ref so the next resolve retries.
-						if (polygonDBRef.current === loading) polygonDBRef.current = null
+						if (polygonDBRef.current === loading) {
+							polygonDBRef.current = null
+						}
 					})
 				}
 			})
@@ -770,8 +787,11 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 		return () => {
 			cancelled = true
 
-			if (hasIdleCallback) window.cancelIdleCallback(idleID)
-			else window.clearTimeout(idleID)
+			if (hasIdleCallback) {
+				window.cancelIdleCallback(idleID)
+			} else {
+				window.clearTimeout(idleID)
+			}
 		}
 	}, [lookupLoader, lookup, ensureLookup, manifest, selectedVersion, sqljsBaseURL])
 
@@ -1017,7 +1037,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 					const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseURL)
 					polygonDBRef.current = loading
 					loading.catch(() => {
-						if (polygonDBRef.current === loading) polygonDBRef.current = null
+						if (polygonDBRef.current === loading) {
+							polygonDBRef.current = null
+						}
 					})
 				}
 
@@ -1038,7 +1060,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 					bias.push({ lat: c.lat, lon: c.lng, weight: 1 })
 				}
 
-				if (geoBiasRef.current) bias.push({ ...geoBiasRef.current, weight: 0.6 })
+				if (geoBiasRef.current) {
+					bias.push({ ...geoBiasRef.current, weight: 0.6 })
+				}
 
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
 				const tBeforeResolve = performance.now()
@@ -1103,7 +1127,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 					try {
 						const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
 
-						if (roles.length > 0) dualRoles = roles
+						if (roles.length > 0) {
+							dualRoles = roles
+						}
 					} catch {
 						/* relation absent / query failed → no dual-role badge */
 					}
@@ -1422,8 +1448,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 							onChange={(e) => {
 								setDebug(e.target.checked)
 
-								if (!e.target.checked) setDebugTrace(null)
-								else if (result && classifier.traceParse) {
+								if (!e.target.checked) {
+									setDebugTrace(null)
+								} else if (result && classifier.traceParse) {
 									classifier
 										.traceParse(text, { addressSystemConventions: "auto" })
 										.then(setDebugTrace)

@@ -108,8 +108,9 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
 	while (stack.length > 0) {
 		const node = stack.pop()!
 
-		if (node.tag === "locality") sawLocality = true
-		else if (node.value.trim() !== "") return false
+		if (node.tag === "locality") {
+			sawLocality = true
+		} else if (node.value.trim() !== "") return false
 		stack.push(...node.children)
 	}
 
@@ -627,7 +628,9 @@ export function grouperAudit(
 		for (const n of nodes) {
 			allNodes.push({ start: n.start, end: n.end })
 
-			if (n.children) collectNodes(n.children as typeof roots)
+			if (n.children) {
+				collectNodes(n.children as typeof roots)
+			}
 		}
 	}
 	collectNodes(roots)
@@ -640,7 +643,9 @@ export function grouperAudit(
 		const k = `${c.span.start}:${c.span.end}`
 		const cur = bestTagBySpan.get(k)
 
-		if (!cur || c.score > cur.score) bestTagBySpan.set(k, { tag: c.tag, score: c.score })
+		if (!cur || c.score > cur.score) {
+			bestTagBySpan.set(k, { tag: c.tag, score: c.score })
+		}
 	}
 
 	// Tags that may appear AT MOST ONCE per address. On the joint path, the reconciler has already
@@ -652,9 +657,13 @@ export function grouperAudit(
 	const presentSingletons = new Set<ComponentTag>()
 	const collectSingletons = (nodes: typeof roots): void => {
 		for (const n of nodes) {
-			if (SINGLETON_TAGS.has(n.tag)) presentSingletons.add(n.tag)
+			if (SINGLETON_TAGS.has(n.tag)) {
+				presentSingletons.add(n.tag)
+			}
 
-			if (n.children) collectSingletons(n.children as typeof roots)
+			if (n.children) {
+				collectSingletons(n.children as typeof roots)
+			}
 		}
 	}
 	collectSingletons(roots)
@@ -695,7 +704,9 @@ export function grouperAudit(
 
 		roots.push(provisionalNode)
 
-		if (SINGLETON_TAGS.has(tag)) presentSingletons.add(tag)
+		if (SINGLETON_TAGS.has(tag)) {
+			presentSingletons.add(tag)
+		}
 	}
 
 	roots.sort((a, b) => a.start - b.start)

@@ -102,7 +102,9 @@ export function synthesizeJpAddress(
 		country: "JP",
 	}
 
-	if (neighbourhoodName) components.dependent_locality = neighbourhoodName
+	if (neighbourhoodName) {
+		components.dependent_locality = neighbourhoodName
+	}
 
 	const raw = [regionName, localityName, neighbourhoodName].filter(Boolean).join("")
 
@@ -131,7 +133,9 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 				const jpnNames = new Map<number, string>()
 
 				for (const row of jpnNamesStmt.all() as { id: number; name: string }[]) {
-					if (!jpnNames.has(row.id)) jpnNames.set(row.id, row.name)
+					if (!jpnNames.has(row.id)) {
+						jpnNames.set(row.id, row.name)
+					}
 				}
 
 				const seeds = db.prepare(`SELECT id FROM spr WHERE country='JP' AND placetype='neighbourhood'`).all() as {

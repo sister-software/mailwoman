@@ -76,7 +76,9 @@ async function main(): Promise<void> {
 		.all() as unknown as Array<{ postcode: string; postal_city: string }>
 	aliasDB.close()
 
-	if (limit > 0) rows = rows.slice(0, limit)
+	if (limit > 0) {
+		rows = rows.slice(0, limit)
+	}
 
 	const off = new WOFSqlitePlaceLookup({ databasePath: wof })
 	const on = new WOFSqlitePlaceLookup({
@@ -113,9 +115,13 @@ async function main(): Promise<void> {
 		distOff.push(dOff)
 		distOn.push(dOn)
 
-		if (rOff.mismatch) mismOff++
+		if (rOff.mismatch) {
+			mismOff++
+		}
 
-		if (rOn.mismatch) mismOn++
+		if (rOn.mismatch) {
+			mismOn++
+		}
 		const changed = rOff.id !== rOn.id || Math.abs(dOff - dOn) > 0.01
 
 		if (changed) {
@@ -124,12 +130,17 @@ async function main(): Promise<void> {
 			leverDistOn.push(dOn)
 		}
 
-		if (dOff > nearKm && dOn <= nearKm) fixed++
+		if (dOff > nearKm && dOn <= nearKm) {
+			fixed++
+		}
 
-		if (dOff <= nearKm && dOn > nearKm) regressed++
+		if (dOff <= nearKm && dOn > nearKm) {
+			regressed++
+		}
 
-		if (i % 1000 === 0)
+		if (i % 1000 === 0) {
 			console.error(`  …${i}/${rows.length} (tested ${tested}, lever-active ${leverActive}, fixed ${fixed})`)
+		}
 	}
 	off.close()
 	on.close()

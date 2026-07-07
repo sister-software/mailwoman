@@ -112,7 +112,9 @@ function uniqueQuantiles(sorted: number[], n: number): number[] {
 	if (sorted.length === 0) return [0]
 	const ts = new Set<number>()
 
-	for (let k = 0; k <= n; k++) ts.add(sorted[Math.floor((k / n) * (sorted.length - 1))]!)
+	for (let k = 0; k <= n; k++) {
+		ts.add(sorted[Math.floor((k / n) * (sorted.length - 1))]!)
+	}
 
 	return [...ts]
 }
@@ -143,13 +145,20 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 					if (line[i + 1] === '"') {
 						cur += '"'
 						i++
-					} else inQ = false
-				} else cur += ch
-			} else if (ch === '"') inQ = true
-			else if (ch === ",") {
+					} else {
+						inQ = false
+					}
+				} else {
+					cur += ch
+				}
+			} else if (ch === '"') {
+				inQ = true
+			} else if (ch === ",") {
 				cells.push(cur)
 				cur = ""
-			} else cur += ch
+			} else {
+				cur += ch
+			}
 		}
 		cells.push(cur)
 
@@ -160,7 +169,9 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 		}
 		const row: Record<string, string> = {}
 
-		for (let i = 0; i < header.length; i++) row[header[i]!] = cells[i] ?? ""
+		for (let i = 0; i < header.length; i++) {
+			row[header[i]!] = cells[i] ?? ""
+		}
 		yield row
 	}
 }
@@ -200,7 +211,9 @@ async function main(): Promise<void> {
 	let scanned = 0
 
 	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M, joined ${joined.size}`)
+		if (++scanned % 1_000_000 === 0) {
+			console.error(`    scanned ${scanned / 1e6}M, joined ${joined.size}`)
+		}
 		const practice = addr(r[N.pAddr]!, r[N.pCity]!, r[N.pState]!, r[N.pZip]!)
 
 		if (practice) {
@@ -222,7 +235,9 @@ async function main(): Promise<void> {
 	}
 
 	// Keep only NPIs present in BOTH sources — every record has a cross-source counterpart.
-	for (const npi of joined) rows.push(opByNPI.get(npi)!)
+	for (const npi of joined) {
+		rows.push(opByNPI.get(npi)!)
+	}
 	const addressFrequency = {
 		total: addrTotal,
 		distinct: addrCounts.size,
@@ -292,7 +307,9 @@ async function main(): Promise<void> {
 	const rnd = lcg(655)
 	const split = new Map<string, "fit" | "holdout">()
 
-	for (const npi of joined) split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+	for (const npi of joined) {
+		split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+	}
 	const fitIdx = pairs
 		.map((_, i) => i)
 		.filter((i) => split.get(pairs[i]![0].id) === "fit" && split.get(pairs[i]![1].id) === "fit")
@@ -320,8 +337,11 @@ async function main(): Promise<void> {
 		for (const h of holdScores) {
 			if (h.s < t) continue
 
-			if (h.y) tp++
-			else fp++
+			if (h.y) {
+				tp++
+			} else {
+				fp++
+			}
 		}
 		const precision = tp + fp > 0 ? tp / (tp + fp) : 1
 		const recall = totalPos > 0 ? tp / totalPos : 0
@@ -339,7 +359,9 @@ async function main(): Promise<void> {
 		}
 	}
 
-	if (!Number.isFinite(recommendedThreshold)) recommendedThreshold = f1MaxThreshold
+	if (!Number.isFinite(recommendedThreshold)) {
+		recommendedThreshold = f1MaxThreshold
+	}
 	console.error(
 		`    held-out (${holdIdx.length} pairs, ${totalPos} pos): precision-bar ${PRECISION_BAR} → threshold ${recommendedThreshold.toFixed(3)} (recall ${(100 * barRecall).toFixed(1)}%); F1-max ${(100 * bestF1).toFixed(1)}% @ ${f1MaxThreshold.toFixed(3)}`
 	)

@@ -55,7 +55,9 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	const put = (k: string, iso2: string) => {
 		const key = k.trim().toLowerCase()
 
-		if (key && !out.has(key)) out.set(key, iso2)
+		if (key && !out.has(key)) {
+			out.set(key, iso2)
+		}
 	}
 
 	// ISO base: canonical name + alpha-2 + alpha-3.
@@ -71,12 +73,16 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	for (const [alpha3, name] of Object.entries(Alpha3ToCountryRecord)) {
 		const iso2 = CountryISO2[name as keyof typeof CountryISO2]
 
-		if (iso2) put(alpha3, iso2) // "USA" -> US, "DEU" -> DE
+		if (iso2) {
+			put(alpha3, iso2)
+		} // "USA" -> US, "DEU" -> DE
 	}
 
 	// Curated surface forms (override — address spellings beat the ISO base on collision).
 	for (const [iso2, forms] of Object.entries(COUNTRY_SURFACE_FORMS)) {
-		for (const f of forms) out.set(f.trim().toLowerCase(), iso2)
+		for (const f of forms) {
+			out.set(f.trim().toLowerCase(), iso2)
+		}
 	}
 
 	return out

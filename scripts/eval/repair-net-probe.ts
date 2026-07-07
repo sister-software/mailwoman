@@ -55,7 +55,9 @@ async function main() {
 	const tags = ["postcode", "house_number"] as const
 	const stat: Record<string, { help: number; hurt: number; helpRows: string[]; hurtRows: string[] }> = {}
 
-	for (const t of tags) stat[t] = { help: 0, hurt: 0, helpRows: [], hurtRows: [] }
+	for (const t of tags) {
+		stat[t] = { help: 0, hurt: 0, helpRows: [], hurtRows: [] }
+	}
 
 	for (const row of rows) {
 		const off = flat(decodeAsJSON(await neural.parse(row.raw, {})))
@@ -74,17 +76,19 @@ async function main() {
 			if (offOk && !onOk) {
 				stat[t]!.hurt++
 
-				if (stat[t]!.hurtRows.length < 18)
+				if (stat[t]!.hurtRows.length < 18) {
 					stat[t]!.hurtRows.push(
 						`  raw=${JSON.stringify(row.raw)} gold.${t}=${JSON.stringify(row.components[t])} off=${JSON.stringify(off[t] ?? null)} on=${JSON.stringify(on[t] ?? null)} | on.hn=${JSON.stringify(on.house_number ?? null)} on.pc=${JSON.stringify(on.postcode ?? null)}`
 					)
+				}
 			} else if (!offOk && onOk) {
 				stat[t]!.help++
 
-				if (stat[t]!.helpRows.length < 12)
+				if (stat[t]!.helpRows.length < 12) {
 					stat[t]!.helpRows.push(
 						`  raw=${JSON.stringify(row.raw)} gold.${t}=${JSON.stringify(row.components[t])} off=${JSON.stringify(off[t] ?? null)} on=${JSON.stringify(on[t] ?? null)}`
 					)
+				}
 			}
 		}
 	}

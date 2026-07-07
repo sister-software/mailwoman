@@ -70,8 +70,11 @@ function normalizeProperties(raw: unknown): OaProperties {
 	const out: Record<string, string> = {}
 
 	for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
-		if (typeof v === "string") out[k.toLowerCase()] = v
-		else if (typeof v === "number") out[k.toLowerCase()] = String(v)
+		if (typeof v === "string") {
+			out[k.toLowerCase()] = v
+		} else if (typeof v === "number") {
+			out[k.toLowerCase()] = String(v)
+		}
 	}
 
 	return out as OaProperties
@@ -173,17 +176,29 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 					const components: CanonicalRow["components"] = {}
 
-					if (houseNumber) components.house_number = houseNumber
+					if (houseNumber) {
+						components.house_number = houseNumber
+					}
 
-					if (street) components.street = street
+					if (street) {
+						components.street = street
+					}
 
-					if (unit) components.unit = unit
+					if (unit) {
+						components.unit = unit
+					}
 
-					if (city) components.locality = city
+					if (city) {
+						components.locality = city
+					}
 
-					if (region) components.region = region
+					if (region) {
+						components.region = region
+					}
 
-					if (postcode) components.postcode = postcode
+					if (postcode) {
+						components.postcode = postcode
+					}
 
 					const raw = formatAddress(components, country, { separator: ", " })
 

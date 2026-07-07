@@ -141,10 +141,14 @@ function flatten(tree: AddressTree): ResolveResponseNode[] {
 			depth,
 		})
 
-		for (const child of node.children) walk(child, depth + 1)
+		for (const child of node.children) {
+			walk(child, depth + 1)
+		}
 	}
 
-	for (const root of tree.roots) walk(root, 0)
+	for (const root of tree.roots) {
+		walk(root, 0)
+	}
 
 	return out
 }

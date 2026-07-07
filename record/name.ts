@@ -195,12 +195,16 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	// 1. Extract a parenthetical "(Jim)" or quoted "Jim" nickname, then strip it out.
 	let working = input
 		.replace(/\s*\(([^)]+)\)\s*/g, (_m, n: string) => {
-			if (!result.nickname) result.nickname = n.trim()
+			if (!result.nickname) {
+				result.nickname = n.trim()
+			}
 
 			return " "
 		})
 		.replace(/\s*"([^"]+)"\s*/g, (_m, n: string) => {
-			if (!result.nickname) result.nickname = n.trim()
+			if (!result.nickname) {
+				result.nickname = n.trim()
+			}
 
 			return " "
 		})
@@ -231,7 +235,9 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		prefixParts.push(tokens.shift()!)
 	}
 
-	if (prefixParts.length) result.prefix = prefixParts.join(" ")
+	if (prefixParts.length) {
+		result.prefix = prefixParts.join(" ")
+	}
 
 	// 4. Trailing suffixes → suffix (a single name token must remain).
 	const suffixParts: string[] = []
@@ -269,9 +275,13 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		result.family = tokens.slice(i).join(" ")
 		const before = tokens.slice(0, particleStart)
 
-		if (before.length) result.given = before[0]
+		if (before.length) {
+			result.given = before[0]
+		}
 
-		if (before.length > 1) result.middle = before.slice(1).join(" ")
+		if (before.length > 1) {
+			result.middle = before.slice(1).join(" ")
+		}
 
 		return result
 	}
@@ -285,7 +295,9 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	result.given = tokens[0]
 	result.family = tokens[tokens.length - 1]
 
-	if (tokens.length > 2) result.middle = tokens.slice(1, -1).join(" ")
+	if (tokens.length > 2) {
+		result.middle = tokens.slice(1, -1).join(" ")
+	}
 
 	return result
 }

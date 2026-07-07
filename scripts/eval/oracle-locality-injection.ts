@@ -116,7 +116,9 @@ for (const r of rows) {
 		}
 	}
 
-	if (++done % 25 === 0) gc()
+	if (++done % 25 === 0) {
+		gc()
+	}
 }
 
 const n = rows.length

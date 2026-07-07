@@ -241,7 +241,9 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		nTotal++
 
-		if (nTotal % 200 === 0) console.error(`  ${nTotal}/${rows.length}`)
+		if (nTotal % 200 === 0) {
+			console.error(`  ${nTotal}/${rows.length}`)
+		}
 
 		try {
 			const tree = await neural.parse(row.input, parseOpts)
@@ -291,7 +293,9 @@ async function main(): Promise<void> {
 	const tiers: Tier[] = ["address_point", "interpolated"]
 	const byTier: Record<Tier, Row[]> = { address_point: [], interpolated: [] }
 
-	for (const r of resolved) byTier[r.tier].push(r)
+	for (const r of resolved) {
+		byTier[r.tier].push(r)
+	}
 
 	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on ALL resolved rows
 	const tierStats = tiers.map((t) => {

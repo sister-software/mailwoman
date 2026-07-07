@@ -100,11 +100,17 @@ for (const [country, glob] of CORPUS_SOURCES) {
 	const testRows = rows.slice(nVal, nVal + nTest)
 	const trainRows = rows.slice(nVal + nTest)
 
-	for (const raw of trainRows) train.push({ raw, country })
+	for (const raw of trainRows) {
+		train.push({ raw, country })
+	}
 
-	for (const raw of valRows) val.push({ raw, country })
+	for (const raw of valRows) {
+		val.push({ raw, country })
+	}
 
-	for (const raw of testRows) test.push({ raw, country })
+	for (const raw of testRows) {
+		test.push({ raw, country })
+	}
 	console.log(`  ${country}: train ${trainRows.length}  val ${valRows.length}  test ${testRows.length}`)
 }
 
@@ -162,11 +168,17 @@ for (const country of [...NEW_EU, ...IN_MAP_EU]) {
 	const nVal = Math.floor(rows.length * VAL_FRAC)
 	const nTest = Math.floor(rows.length * TEST_FRAC)
 
-	for (const raw of rows.slice(0, nVal)) val.push({ raw, country })
+	for (const raw of rows.slice(0, nVal)) {
+		val.push({ raw, country })
+	}
 
-	for (const raw of rows.slice(nVal, nVal + nTest)) test.push({ raw, country })
+	for (const raw of rows.slice(nVal, nVal + nTest)) {
+		test.push({ raw, country })
+	}
 
-	for (const raw of rows.slice(nVal + nTest)) train.push({ raw, country })
+	for (const raw of rows.slice(nVal + nTest)) {
+		train.push({ raw, country })
+	}
 	console.log(`  ${country} (overture): train ${rows.length - nVal - nTest}  val ${nVal}  test ${nTest}`)
 }
 

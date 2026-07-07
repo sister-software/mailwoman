@@ -67,12 +67,19 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--golden" && args[i + 1]) out.goldenDir = args[++i]
-		else if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
-		else if (a === "--tokenizer" && args[i + 1]) out.tokenizerPath = args[++i]
-		else if (a === "--model-card" && args[i + 1]) out.modelCardPath = args[++i]
-		else if (a === "--postcode-repair") out.postcodeRepair = true
-		else if (a === "--no-strict") out.strict = false
+		if (a === "--golden" && args[i + 1]) {
+			out.goldenDir = args[++i]
+		} else if (a === "--model" && args[i + 1]) {
+			out.modelPath = args[++i]
+		} else if (a === "--tokenizer" && args[i + 1]) {
+			out.tokenizerPath = args[++i]
+		} else if (a === "--model-card" && args[i + 1]) {
+			out.modelCardPath = args[++i]
+		} else if (a === "--postcode-repair") {
+			out.postcodeRepair = true
+		} else if (a === "--no-strict") {
+			out.strict = false
+		}
 	}
 
 	if (!out.goldenDir) {
@@ -238,7 +245,9 @@ async function main() {
 			}
 		}
 
-		if (allCorrect) correct++
+		if (allCorrect) {
+			correct++
+		}
 
 		if (total % 500 === 0) {
 			const elapsed = (performance.now() - t0) / 1000

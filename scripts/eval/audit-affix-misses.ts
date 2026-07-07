@@ -75,25 +75,41 @@ function formFeatures(row: { raw: string; components: Record<string, string> }):
 	const f: string[] = []
 	const { street_prefix: prefix, street_suffix: suffix } = row.components
 
-	if (prefix) f.push(prefix.length <= 2 ? "prefix-abbr" : "prefix-full")
+	if (prefix) {
+		f.push(prefix.length <= 2 ? "prefix-abbr" : "prefix-full")
+	}
 
 	if (suffix) {
 		f.push(suffix.length <= 4 && !suffix.endsWith(".") ? "suffix-abbr" : "suffix-full")
 
-		if (!COMMON_SUFFIXES.has(suffix.toLowerCase().replace(/\.$/, ""))) f.push("suffix-RARE")
+		if (!COMMON_SUFFIXES.has(suffix.toLowerCase().replace(/\.$/, ""))) {
+			f.push("suffix-RARE")
+		}
 	}
 
-	if (/\b[A-Z]{3,}\b/.test(row.raw.replace(/\b(USA|APO|FPO)\b/g, ""))) f.push("CAPS")
+	if (/\b[A-Z]{3,}\b/.test(row.raw.replace(/\b(USA|APO|FPO)\b/g, ""))) {
+		f.push("CAPS")
+	}
 
-	if (/\w\./.test(row.raw)) f.push("punct-period")
+	if (/\w\./.test(row.raw)) {
+		f.push("punct-period")
+	}
 
-	if (!row.raw.includes(",")) f.push("no-comma")
+	if (!row.raw.includes(",")) {
+		f.push("no-comma")
+	}
 
-	if ((row.components.street ?? "").includes(" ")) f.push("street-multiword")
+	if ((row.components.street ?? "").includes(" ")) {
+		f.push("street-multiword")
+	}
 
-	if (prefix && suffix) f.push("both-affixes")
+	if (prefix && suffix) {
+		f.push("both-affixes")
+	}
 
-	if (!/\d{5}/.test(row.raw)) f.push("no-postcode")
+	if (!/\d{5}/.test(row.raw)) {
+		f.push("no-postcode")
+	}
 
 	return f
 }
@@ -101,7 +117,11 @@ function formFeatures(row: { raw: string; components: Record<string, string> }):
 const featureCounts = (rowsSubset: typeof rows) => {
 	const counts = new Map<string, number>()
 
-	for (const r of rowsSubset) for (const f of formFeatures(r)) counts.set(f, (counts.get(f) ?? 0) + 1)
+	for (const r of rowsSubset) {
+		for (const f of formFeatures(r)) {
+			counts.set(f, (counts.get(f) ?? 0) + 1)
+		}
+	}
 
 	return counts
 }
@@ -117,8 +137,9 @@ for (const row of rows) {
 
 		if (!e) continue
 
-		if (norm(got[tag]) !== e)
+		if (norm(got[tag]) !== e) {
 			misses.push({ row, tag, expected: e, got: norm(got[tag]) || "(nothing)", street: norm(got.street) })
+		}
 	}
 }
 

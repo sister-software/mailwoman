@@ -114,10 +114,14 @@ export function formatFromClassificationMap(
 
 		const tag = CLASSIFICATION_TO_TAG[classification]
 
-		if (tag) components[tag] = value
+		if (tag) {
+			components[tag] = value
+		}
 	}
 
-	if (unitParts.length) components.unit = unitParts.join(" ")
+	if (unitParts.length) {
+		components.unit = unitParts.join(" ")
+	}
 
 	return formatAddress(components, country, opts)
 }
@@ -136,7 +140,9 @@ export function reconcileComponents(components: ComponentDict, raw: string): Com
 		if (!v) continue
 		const needle = v.toLowerCase().replace(/\s+/g, " ")
 
-		if (haystack.includes(needle)) out[k as ComponentTag] = v
+		if (haystack.includes(needle)) {
+			out[k as ComponentTag] = v
+		}
 	}
 
 	return out
@@ -151,35 +157,59 @@ export function toOpenCageComponents(components: ComponentDict, country: string)
 
 	const road = composeRoad(components)
 
-	if (road) out.road = road
+	if (road) {
+		out.road = road
+	}
 
-	if (components.house_number) out.house_number = components.house_number
+	if (components.house_number) {
+		out.house_number = components.house_number
+	}
 
-	if (components.venue) out.house = components.venue
+	if (components.venue) {
+		out.house = components.venue
+	}
 
-	if (components.locality) out.city = components.locality
+	if (components.locality) {
+		out.city = components.locality
+	}
 
-	if (components.dependent_locality) out.suburb = components.dependent_locality
+	if (components.dependent_locality) {
+		out.suburb = components.dependent_locality
+	}
 
-	if (components.subregion) out.county = components.subregion
+	if (components.subregion) {
+		out.county = components.subregion
+	}
 
-	if (components.region) out.state = components.region
+	if (components.region) {
+		out.state = components.region
+	}
 
 	const postcode = composePostcode(components)
 
-	if (postcode) out.postcode = postcode
+	if (postcode) {
+		out.postcode = postcode
+	}
 
-	if (components.po_box) out.po_box = components.po_box
+	if (components.po_box) {
+		out.po_box = components.po_box
+	}
 
-	if (components.attention) out.attention = components.attention
+	if (components.attention) {
+		out.attention = components.attention
+	}
 
-	if (components.country) out.country = components.country
+	if (components.country) {
+		out.country = components.country
+	}
 
 	// country_code drives template selection, not output. Only emit it alongside another component —
 	// otherwise the template renders the bare code ("US") as a fallback line, which no caller wants.
 	const cc = country.trim().toLowerCase()
 
-	if (cc && Object.keys(out).length > 0) out.country_code = cc
+	if (cc && Object.keys(out).length > 0) {
+		out.country_code = cc
+	}
 
 	return out
 }
@@ -197,15 +227,25 @@ function composeRoad(components: ComponentDict): string {
 
 	const parts: string[] = []
 
-	if (components.street_prefix) parts.push(components.street_prefix)
+	if (components.street_prefix) {
+		parts.push(components.street_prefix)
+	}
 
-	if (components.street_prefix_particle) parts.push(components.street_prefix_particle)
+	if (components.street_prefix_particle) {
+		parts.push(components.street_prefix_particle)
+	}
 
-	if (components.street) parts.push(components.street)
+	if (components.street) {
+		parts.push(components.street)
+	}
 
-	if (components.street_suffix) parts.push(components.street_suffix)
+	if (components.street_suffix) {
+		parts.push(components.street_suffix)
+	}
 
-	if (components.unit) parts.push(components.unit)
+	if (components.unit) {
+		parts.push(components.unit)
+	}
 
 	return parts.join(" ").replace(/\s+/g, " ").trim()
 }

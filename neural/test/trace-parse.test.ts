@@ -51,7 +51,9 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 	for (let t = 0; t < numTokens; t++) {
 		const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
 
-		if (t === boostIdx && labelIdx >= 0) row[labelIdx] = magnitude
+		if (t === boostIdx && labelIdx >= 0) {
+			row[labelIdx] = magnitude
+		}
 		matrix.push(row)
 	}
 

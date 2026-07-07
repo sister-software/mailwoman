@@ -136,7 +136,9 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 		})
 		const proposals = await cls.classify(makeSection("Paris 75004"), {})
 
-		for (const p of proposals) expect(p.penalty).toBe(0.25)
+		for (const p of proposals) {
+			expect(p.penalty).toBe(0.25)
+		}
 	})
 })
 

@@ -109,5 +109,6 @@ const html = toMapHTML(geojson as never, {
 writeFileSync(OUT, html)
 console.error(`[written] ${OUT}  (${features.length} points)`)
 
-for (const [bucket, n] of [...counts.entries()].sort((a, b) => b[1] - a[1]))
+for (const [bucket, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
 	console.error(`  ${n.toString().padStart(5)}  ${bucket}`)
+}

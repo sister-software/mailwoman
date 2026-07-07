@@ -78,7 +78,9 @@ async function main(): Promise<void> {
 			const ok = inTexas(g.lat, g.lon)
 			const km = haversineKm(c.tx[0], c.tx[1], g.lat, g.lon)
 
-			if (!ok) wrongRegion++
+			if (!ok) {
+				wrongRegion++
+			}
 			console.log(
 				`  ${ok ? "✓" : "✗ WRONG-REGION"}  "${variant}"  → ${g.lat.toFixed(3)},${g.lon.toFixed(3)} ` +
 					`[${g.resolution_tier ?? "?"}]  ${km > 100 ? `${km.toFixed(0)}km off TX (cf ${c.namesake})` : `${(km * 1000).toFixed(0)}m off`}`

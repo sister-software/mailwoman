@@ -155,7 +155,9 @@ function localityHash(name: string): number {
 	let h = 5381
 	const s = name.toLowerCase()
 
-	for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
+	for (let i = 0; i < s.length; i++) {
+		h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
+	}
 
 	return h
 }
@@ -175,13 +177,20 @@ function splitCSV(line: string): string[] {
 				if (line[i + 1] === '"') {
 					cur += '"'
 					i++
-				} else inQ = false
-			} else cur += c
-		} else if (c === '"') inQ = true
-		else if (c === ",") {
+				} else {
+					inQ = false
+				}
+			} else {
+				cur += c
+			}
+		} else if (c === '"') {
+			inQ = true
+		} else if (c === ",") {
 			out.push(cur)
 			cur = ""
-		} else cur += c
+		} else {
+			cur += c
+		}
 	}
 	out.push(cur)
 
@@ -386,7 +395,9 @@ function makePoBoxPhrase(
 ): string {
 	let leader = leaders[Math.floor(random() * leaders.length)]!
 
-	if (rareLeaders && random() < 0.1) leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
+	if (rareLeaders && random() < 0.1) {
+		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
+	}
 	const num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 	const phrase = leader === "#" ? `#${num}` : `${caseDial(random, leader)} ${num}`
 
@@ -434,11 +445,15 @@ function makeAuNzPoBoxPhrase(
 ): string {
 	let leader = leaders[Math.floor(random() * leaders.length)]!
 
-	if (rareLeaders && random() < 0.1) leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
+	if (rareLeaders && random() < 0.1) {
+		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
+	}
 	let num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 
 	// NZ CMB identifiers are alpha-led per the ADV358 example ("CMB B99").
-	if (leader === "CMB" && validate === isNzDeliveryService) num = `B${num}`
+	if (leader === "CMB" && validate === isNzDeliveryService) {
+		num = `B${num}`
+	}
 	const phrase = `${caseDial(random, leader)} ${num}`
 	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the AU
 	// AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
@@ -667,7 +682,9 @@ function orderComponents(components: Record<string, string>): Record<string, str
 	for (const k of COMPONENT_ORDER) {
 		const v = components[k]
 
-		if (v) out[k] = v
+		if (v) {
+			out[k] = v
+		}
 	}
 
 	return out
@@ -690,7 +707,9 @@ export const poBoxCedexRecipe: ShardRecipe = {
 			const t = readUsTuples(s)
 			console.error(`  ${s.csv}: ${t.length} tuples`)
 
-			for (const x of t) usPool.push(x)
+			for (const x of t) {
+				usPool.push(x)
+			}
 		}
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
 		const frAll = readFrTuples(80000)

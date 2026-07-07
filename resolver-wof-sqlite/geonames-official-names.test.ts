@@ -28,7 +28,9 @@ let altDir: string
 function mainRow(over: Record<number, string>): string {
 	const f = Array(19).fill("")
 
-	for (const [i, v] of Object.entries(over)) f[Number(i)] = v
+	for (const [i, v] of Object.entries(over)) {
+		f[Number(i)] = v
+	}
 
 	return f.join("\t")
 }
@@ -40,7 +42,9 @@ function mainRow(over: Record<number, string>): string {
 function altRow(gid: string, lang: string, name: string, flags: Partial<Record<4 | 5 | 6 | 7, string>> = {}): string {
 	const f = ["1", gid, lang, name, "", "", "", "", "", ""]
 
-	for (const [i, v] of Object.entries(flags)) f[Number(i)] = v as string
+	for (const [i, v] of Object.entries(flags)) {
+		f[Number(i)] = v as string
+	}
 
 	return f.join("\t")
 }

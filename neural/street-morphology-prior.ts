@@ -67,11 +67,15 @@ export function buildStreetMorphologyEmissionPriors(
 
 	const matrix: number[][] = []
 
-	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
+	for (let t = 0; t < T; t++) {
+		matrix.push(new Array<number>(L).fill(0))
+	}
 
 	const labelToCol = new Map<string, number>()
 
-	for (let k = 0; k < labels.length; k++) labelToCol.set(labels[k]!, k)
+	for (let k = 0; k < labels.length; k++) {
+		labelToCol.set(labels[k]!, k)
+	}
 
 	const bStreetPrefix = labelToCol.get("B-street_prefix")
 	const iStreetPrefix = labelToCol.get("I-street_prefix")
@@ -156,7 +160,9 @@ export function buildStreetMorphologyEmissionPriors(
 
 			if (wg.fstToken === "") continue
 
-			for (const pi of wg.pieceIndices) affixPieceIndices.push(pi)
+			for (const pi of wg.pieceIndices) {
+				affixPieceIndices.push(pi)
+			}
 		}
 
 		// Apply affix bias: positive bias toward both prefix and suffix BIO labels on the matched

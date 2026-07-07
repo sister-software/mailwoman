@@ -69,11 +69,18 @@ function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 	const walk = (n: AddressNode): void => {
 		if (found) return
 
-		if (n.tag === tag) found = n
-		else for (const c of n.children) walk(c)
+		if (n.tag === tag) {
+			found = n
+		} else {
+			for (const c of n.children) {
+				walk(c)
+			}
+		}
 	}
 
-	for (const r of tree.roots) walk(r)
+	for (const r of tree.roots) {
+		walk(r)
+	}
 
 	return found
 }
@@ -96,8 +103,9 @@ function grade(tree: AddressTree, expected: OaRow["expected"], acc: Record<strin
 		const pred = firstByTag(tree, tag)
 
 		if (gold && pred) {
-			if (valueMatch(pred.value, gold)) acc[tag]!.tp++
-			else {
+			if (valueMatch(pred.value, gold)) {
+				acc[tag]!.tp++
+			} else {
 				acc[tag]!.fp++
 				acc[tag]!.fn++
 			}
@@ -152,7 +160,9 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		i++
 
-		if (i % 1000 === 0) console.error(`  ${i}/${rows.length}`)
+		if (i % 1000 === 0) {
+			console.error(`  ${i}/${rows.length}`)
+		}
 		let tree: AddressTree
 
 		try {
@@ -164,11 +174,16 @@ async function main(): Promise<void> {
 		const isHeld = held.has(st)
 		grade(tree, row.expected, isHeld ? heldAcc : inAcc)
 
-		if (!perState[st]) perState[st] = newCounts()
+		if (!perState[st]) {
+			perState[st] = newCounts()
+		}
 		grade(tree, row.expected, perState[st]!)
 
-		if (isHeld) heldN++
-		else inN++
+		if (isHeld) {
+			heldN++
+		} else {
+			inN++
+		}
 	}
 
 	const macro = (acc: Record<string, Counts>): number => GRADED.reduce((s, t) => s + f1(acc[t]!).f1, 0) / GRADED.length

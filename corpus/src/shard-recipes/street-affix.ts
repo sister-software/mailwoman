@@ -123,13 +123,20 @@ function splitCSV(line: string): string[] {
 				if (line[i + 1] === '"') {
 					cur += '"'
 					i++
-				} else inQ = false
-			} else cur += c
-		} else if (c === '"') inQ = true
-		else if (c === ",") {
+				} else {
+					inQ = false
+				}
+			} else {
+				cur += c
+			}
+		} else if (c === '"') {
+			inQ = true
+		} else if (c === ",") {
 			out.push(cur)
 			cur = ""
-		} else cur += c
+		} else {
+			cur += c
+		}
 	}
 	out.push(cur)
 
@@ -395,7 +402,9 @@ export const streetAffixRecipe: ShardRecipe = {
 			const t = readTuples(s)
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
-			for (const x of t) pool.push(x)
+			for (const x of t) {
+				pool.push(x)
+			}
 		}
 
 		if (pool.length === 0) {
@@ -432,9 +441,13 @@ export const streetAffixRecipe: ShardRecipe = {
 			formatCounts[fmt] = (formatCounts[fmt] ?? 0) + 1
 			const hasP = !!streetComponents.street_prefix
 
-			if (hasP && streetComponents.street_suffix) affixCounts.both++
-			else if (hasP) affixCounts.prefix++
-			else affixCounts.suffix++
+			if (hasP && streetComponents.street_suffix) {
+				affixCounts.both++
+			} else if (hasP) {
+				affixCounts.prefix++
+			} else {
+				affixCounts.suffix++
+			}
 
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components, country: "US" }) + "\n")
@@ -477,7 +490,9 @@ export const streetAffixRecipe: ShardRecipe = {
 				const t = readBalanceTuples(s, perSource)
 				console.error(`  balance ${s.csv} (${s.iso2}): ${t.length} tuples`)
 
-				for (const x of t) mlPool.push(x)
+				for (const x of t) {
+					mlPool.push(x)
+				}
 			}
 			const M = mlPool.length
 			let mlGuard = 0

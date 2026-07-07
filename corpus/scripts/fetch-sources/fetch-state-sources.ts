@@ -181,7 +181,9 @@ async function main(): Promise<void> {
 	process.stderr.write(`fetched: ${fetched}\n`)
 	process.stderr.write(`failed:  ${failed}\n`)
 
-	if (failed > 0) process.exitCode = 1
+	if (failed > 0) {
+		process.exitCode = 1
+	}
 }
 
 main().catch((err: Error) => {

@@ -77,22 +77,31 @@ export function main(argv: readonly string[]): number {
 	let drop = true
 
 	for (const a of argv) {
-		if (a === "--drop") drop = true
-		else if (a === "--no-drop") drop = false
-		else if (a === "--help" || a === "-h") printUsageAndExit(0)
-		else if (a.startsWith("-")) {
+		if (a === "--drop") {
+			drop = true
+		} else if (a === "--no-drop") {
+			drop = false
+		} else if (a === "--help" || a === "-h") {
+			printUsageAndExit(0)
+		} else if (a.startsWith("-")) {
 			stderr.write(`mailwoman-wof-build-coincident-roles: unknown flag ${JSON.stringify(a)}\n`)
 			printUsageAndExit(2)
-		} else paths.push(a)
+		} else {
+			paths.push(a)
+		}
 	}
 
-	if (paths.length === 0) printUsageAndExit(2)
+	if (paths.length === 0) {
+		printUsageAndExit(2)
+	}
 	let worst = 0
 
 	for (const path of paths) {
 		const rc = buildOne(path, drop)
 
-		if (rc > worst) worst = rc
+		if (rc > worst) {
+			worst = rc
+		}
 	}
 
 	return worst

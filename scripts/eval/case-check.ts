@@ -42,9 +42,13 @@ for (const caps of samples) {
 	const capsOk = (recCaps.locality ?? "").toUpperCase() === wantLoc
 	const titleOk = (recTitle.locality ?? "").toUpperCase() === wantLoc
 
-	if (capsOk) capsLoc++
+	if (capsOk) {
+		capsLoc++
+	}
 
-	if (titleOk) titleLoc++
+	if (titleOk) {
+		titleLoc++
+	}
 	console.log(
 		`CAPS  loc=${recCaps.locality ?? "—"}  | TITLE loc=${recTitle.locality ?? "—"}  (want ${wantLoc})  ${capsOk ? "" : "CAPS-MISS"}${titleOk ? "" : " TITLE-MISS"}`
 	)

@@ -42,9 +42,13 @@ function coveredMask(tree: AddressTree): Uint8Array {
 		const lo = Math.max(0, n.start)
 		const hi = Math.min(len, n.end)
 
-		for (let i = lo; i < hi; i++) covered[i] = 1
+		for (let i = lo; i < hi; i++) {
+			covered[i] = 1
+		}
 
-		for (const c of n.children) stack.push(c)
+		for (const c of n.children) {
+			stack.push(c)
+		}
 	}
 
 	return covered
@@ -66,7 +70,9 @@ export function losslessSegments(tree: AddressTree): LosslessSegment[] {
 		const kind = covered[i] ? "covered" : "unknown"
 		let j = i + 1
 
-		while (j < len && !!covered[j] === !!covered[i]) j++
+		while (j < len && !!covered[j] === !!covered[i]) {
+			j++
+		}
 		out.push({ kind, value: tree.raw.slice(i, j), start: i, end: j })
 		i = j
 	}

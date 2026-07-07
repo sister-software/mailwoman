@@ -53,10 +53,15 @@ function parseArgs(): Args {
 	let geonamesDir: string | undefined
 
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--db" && args[i + 1]) dbPath = args[++i]
-		else if (args[i] === "--admin" && args[i + 1]) adminPath = args[++i]!
-		else if (args[i] === "--repos" && args[i + 1]) reposDir = args[++i]!
-		else if (args[i] === "--geonames" && args[i + 1]) geonamesDir = args[++i]!
+		if (args[i] === "--db" && args[i + 1]) {
+			dbPath = args[++i]
+		} else if (args[i] === "--admin" && args[i + 1]) {
+			adminPath = args[++i]!
+		} else if (args[i] === "--repos" && args[i + 1]) {
+			reposDir = args[++i]!
+		} else if (args[i] === "--geonames" && args[i + 1]) {
+			geonamesDir = args[++i]!
+		}
 	}
 
 	if (!dbPath) {
@@ -117,7 +122,9 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 				cur.lat += lat
 				cur.lon += lon
 				cur.n++
-			} else acc.set(pc, { lat, lon, n: 1 })
+			} else {
+				acc.set(pc, { lat, lon, n: 1 })
+			}
 		}
 
 		db.exec("BEGIN")
@@ -139,7 +146,9 @@ function wofIDPath(id: number): string {
 	const s = String(id)
 	const parts: string[] = []
 
-	for (let i = 0; i < s.length; i += 3) parts.push(s.slice(i, i + 3))
+	for (let i = 0; i < s.length; i += 3) {
+		parts.push(s.slice(i, i + 3))
+	}
 
 	return join(...parts, `${s}.geojson`)
 }
@@ -218,8 +227,11 @@ async function main(): Promise<void> {
 	let geonamesFixed = 0
 
 	if (geonamesDir) {
-		if (!existsSync(geonamesDir)) console.error(`Missing geonames dir, skipping: ${geonamesDir}`)
-		else geonamesFixed = await geonamesFill(db, geonamesDir)
+		if (!existsSync(geonamesDir)) {
+			console.error(`Missing geonames dir, skipping: ${geonamesDir}`)
+		} else {
+			geonamesFixed = await geonamesFill(db, geonamesDir)
+		}
 	}
 
 	// Priority 3: borrow the parent locality's centroid for every coordinate-less postcode whose parent

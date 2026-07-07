@@ -61,15 +61,25 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--input" && args[i + 1]) out.inputs!.push(args[++i]!)
-		else if (a === "--metric" && args[i + 1]) out.metric = args[++i] as Metric
-		else if (a === "--title" && args[i + 1]) out.title = args[++i]
-		else if (a === "--output" && args[i + 1]) out.output = args[++i]
-		else if (a === "--width" && args[i + 1]) out.width = Number(args[++i])
-		else if (a === "--height" && args[i + 1]) out.height = Number(args[++i])
-		else if (a === "--y-min" && args[i + 1]) out.yMin = Number(args[++i])
-		else if (a === "--y-max" && args[i + 1]) out.yMax = Number(args[++i])
-		else if (a === "--log") out.log = true
+		if (a === "--input" && args[i + 1]) {
+			out.inputs!.push(args[++i]!)
+		} else if (a === "--metric" && args[i + 1]) {
+			out.metric = args[++i] as Metric
+		} else if (a === "--title" && args[i + 1]) {
+			out.title = args[++i]
+		} else if (a === "--output" && args[i + 1]) {
+			out.output = args[++i]
+		} else if (a === "--width" && args[i + 1]) {
+			out.width = Number(args[++i])
+		} else if (a === "--height" && args[i + 1]) {
+			out.height = Number(args[++i])
+		} else if (a === "--y-min" && args[i + 1]) {
+			out.yMin = Number(args[++i])
+		} else if (a === "--y-max" && args[i + 1]) {
+			out.yMax = Number(args[++i])
+		} else if (a === "--log") {
+			out.log = true
+		}
 	}
 
 	if (!out.inputs || out.inputs.length === 0 || !out.metric || !out.output) {
@@ -169,26 +179,42 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 
 	for (const s of series) {
 		for (const [x, y] of s.points) {
-			if (x < xMin) xMin = x
+			if (x < xMin) {
+				xMin = x
+			}
 
-			if (x > xMax) xMax = x
+			if (x > xMax) {
+				xMax = x
+			}
 
-			if (y < yMin) yMin = y
+			if (y < yMin) {
+				yMin = y
+			}
 
-			if (y > yMax) yMax = y
+			if (y > yMax) {
+				yMax = y
+			}
 		}
 	}
 
-	if (args.yMin !== undefined) yMin = args.yMin
+	if (args.yMin !== undefined) {
+		yMin = args.yMin
+	}
 
-	if (args.yMax !== undefined) yMax = args.yMax
+	if (args.yMax !== undefined) {
+		yMax = args.yMax
+	}
 
 	// Pad the Y range a touch so the lines don't graze the plot edges.
 	const ySpan = yMax - yMin
 
-	if (args.yMin === undefined) yMin -= ySpan * 0.05
+	if (args.yMin === undefined) {
+		yMin -= ySpan * 0.05
+	}
 
-	if (args.yMax === undefined) yMax += ySpan * 0.05
+	if (args.yMax === undefined) {
+		yMax += ySpan * 0.05
+	}
 
 	// Log-scale transformation: map y through log10, then to pixel space.
 	// Clamp near-zero values to avoid -Infinity.
@@ -216,7 +242,9 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 					for (const m of [2, 3, 5, 7]) {
 						const v = m * Math.pow(10, exp)
 
-						if (v >= Math.pow(10, logYMin) && v <= Math.pow(10, logYMax)) ticks.push(v)
+						if (v >= Math.pow(10, logYMin) && v <= Math.pow(10, logYMax)) {
+							ticks.push(v)
+						}
 					}
 				}
 

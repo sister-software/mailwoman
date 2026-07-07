@@ -30,7 +30,9 @@ function writeCSV(...lines: string[]): string {
 async function collect(p: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
 
-	for await (const r of createUsgovIrsBmfAdapter().rows({ inputPath: p, ...extra })) out.push(r)
+	for await (const r of createUsgovIrsBmfAdapter().rows({ inputPath: p, ...extra })) {
+		out.push(r)
+	}
 
 	return out
 }
@@ -95,7 +97,9 @@ describe("usgov-irs-bmf adapter", () => {
 	it("rejects a non-US country filter", async () => {
 		const p = writeCSV("1,A,PO BOX 1,SAN JUAN,PR,00901")
 		await expect(async () => {
-			for await (const _ of createUsgovIrsBmfAdapter().rows({ inputPath: p, country: "FR" })) void _
+			for await (const _ of createUsgovIrsBmfAdapter().rows({ inputPath: p, country: "FR" })) {
+				void _
+			}
 		}).rejects.toThrow(/only US/)
 	})
 })

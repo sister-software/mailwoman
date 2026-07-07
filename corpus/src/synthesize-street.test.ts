@@ -50,9 +50,13 @@ describe("synthesizeStreetRow", () => {
 				{ random: rng }
 			)
 
-			if (r!.components.street_prefix) hasPrefix++
+			if (r!.components.street_prefix) {
+				hasPrefix++
+			}
 
-			if (r!.components.street_suffix) hasSuffix++
+			if (r!.components.street_suffix) {
+				hasSuffix++
+			}
 		}
 		// At least some should have prefix (directional sampling = ~13/18) and most should have suffix
 		expect(hasPrefix).toBeGreaterThan(5)
@@ -69,7 +73,9 @@ describe("synthesizeStreetRow", () => {
 				{ random: rng }
 			)
 
-			if (r!.components.house_number) withHN++
+			if (r!.components.house_number) {
+				withHN++
+			}
 		}
 		// Default 0.85 — allow noise
 		expect(withHN).toBeGreaterThan(70)

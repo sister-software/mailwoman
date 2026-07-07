@@ -105,7 +105,9 @@ function pickPlaces(n: number): Array<{ city: string; state: string; zip: string
 	const step = Math.max(1, Math.floor(places.length / n))
 	const out: Array<{ city: string; state: string; zip: string }> = []
 
-	for (let i = 0; i < places.length && out.length < n; i += step) out.push(places[i]!)
+	for (let i = 0; i < places.length && out.length < n; i += step) {
+		out.push(places[i]!)
+	}
 
 	return out
 }
@@ -171,9 +173,13 @@ async function partB(): Promise<string[]> {
 		for (let i = 0; i < places.length; i++) {
 			const addr = t.gen(places[i]!, i)
 
-			if (t.ok(await parseNeural(addr))) nOk++
+			if (t.ok(await parseNeural(addr))) {
+				nOk++
+			}
 
-			if (t.ok(await parseV0(addr))) vOk++
+			if (t.ok(await parseV0(addr))) {
+				vOk++
+			}
 		}
 		partBStats.push({ name: t.name, n: places.length, nOk, vOk })
 		out.push(`| ${t.name} | ${places.length} | ${pct(nOk, places.length)} | ${pct(vOk, places.length)} |`)

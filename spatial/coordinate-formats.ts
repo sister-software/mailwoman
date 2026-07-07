@@ -190,7 +190,9 @@ function latLonToUtm(lat: number, lon: number): { zone: number; easting: number;
 					((5 - T + 9 * C + 4 * C ** 2) * A ** 4) / 24 +
 					((61 - 58 * T + T ** 2 + 600 * C - 330 * UTM_EP2) * A ** 6) / 720))
 
-	if (lat < 0) northing += 10000000
+	if (lat < 0) {
+		northing += 10000000
+	}
 
 	return { zone, easting, northing }
 }
@@ -209,7 +211,9 @@ export function toMGRS(lat: number, lon: number): string {
 	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100000) - 1]!
 	let row = Math.floor(northing / 100000) % 20
 
-	if (zone % 2 === 0) row = (row + 5) % 20
+	if (zone % 2 === 0) {
+		row = (row + 5) % 20
+	}
 	const rowLetter = MGRS_ROW_LETTERS[row]!
 	const e = String(Math.floor(easting % 100000)).padStart(5, "0")
 	const n = String(Math.floor(northing % 100000)).padStart(5, "0")

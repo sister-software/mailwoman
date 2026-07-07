@@ -167,7 +167,9 @@ export function createRuntimePipeline(
 			placeCountryResolved = true
 			const fn = await loadDefaultPlaceCountry()
 
-			if (fn) stages.placeCountry = fn
+			if (fn) {
+				stages.placeCountry = fn
+			}
 		}
 		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry); a per-call
 		// runOpts value overrides each. hardPlaceCountry is DEFAULT-ON (#743, 2026-06-22): the coverage

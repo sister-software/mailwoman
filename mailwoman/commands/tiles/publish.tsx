@@ -85,7 +85,9 @@ const TilesPublish: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [error, setError] = useState<string>()
 
 	useEffect(() => {
-		if (error) setImmediate().then(() => process.exit(1))
+		if (error) {
+			setImmediate().then(() => process.exit(1))
+		}
 	}, [error])
 
 	useEffect(() => {

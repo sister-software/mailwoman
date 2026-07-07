@@ -106,7 +106,9 @@ export function pointInPolygonRings(lon: number, lat: number, rings: readonly Ge
 	let inside = false
 
 	for (const ring of rings) {
-		if (pointInRing(lon, lat, ring)) inside = !inside
+		if (pointInRing(lon, lat, ring)) {
+			inside = !inside
+		}
 	}
 
 	return inside

@@ -101,8 +101,11 @@ function splitFile(name: string, fileSeed: number): FileSplit {
 	const testLines: string[] = []
 
 	for (let i = 0; i < n; i++) {
-		if (testSet.has(i)) testLines.push(lines[i]!)
-		else devLines.push(lines[i]!)
+		if (testSet.has(i)) {
+			testLines.push(lines[i]!)
+		} else {
+			devLines.push(lines[i]!)
+		}
 	}
 
 	const devText = devLines.join("\n") + "\n"

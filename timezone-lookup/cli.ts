@@ -34,11 +34,14 @@ if (process.argv[2] === "build") {
 	const coords: number[] = []
 
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--db") databasePath = args[++i]
-		else {
+		if (args[i] === "--db") {
+			databasePath = args[++i]
+		} else {
 			const n = Number(args[i])
 
-			if (Number.isFinite(n)) coords.push(n)
+			if (Number.isFinite(n)) {
+				coords.push(n)
+			}
 		}
 	}
 	const lat = coords[0]

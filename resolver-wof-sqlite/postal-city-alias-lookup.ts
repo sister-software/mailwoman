@@ -82,6 +82,8 @@ export class WOFPostalCityAliasLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDB) this.#db.close()
+		if (this.#ownsDB) {
+			this.#db.close()
+		}
 	}
 }

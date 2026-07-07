@@ -92,7 +92,9 @@ function loadGolden(dir: string): GoldenRow[] {
 		try {
 			const lines = readFileSync(path, "utf-8").split("\n").filter(Boolean)
 
-			for (const line of lines) rows.push(JSON.parse(line))
+			for (const line of lines) {
+				rows.push(JSON.parse(line))
+			}
 		} catch {
 			// file may not exist
 		}
@@ -126,28 +128,49 @@ function extractFailureClasses(row: GoldenRow): string[] {
 	if (/kryptonite/i.test(notes)) {
 		const match = notes.match(/kryptonite\/([a-z-]+)/i)
 
-		if (match) classes.push(`kryptonite/${match[1]}`)
-		else classes.push("kryptonite/general")
+		if (match) {
+			classes.push(`kryptonite/${match[1]}`)
+		} else {
+			classes.push("kryptonite/general")
+		}
 	}
 
 	// Map to the "addresses that break geocoders" taxonomy
-	if (/ambiguous|springfield|paris.*texas/i.test(notes)) classes.push("failure/ambiguous-locality")
+	if (/ambiguous|springfield|paris.*texas/i.test(notes)) {
+		classes.push("failure/ambiguous-locality")
+	}
 
-	if (/repeated.*admin|NY-NY/i.test(notes)) classes.push("failure/repeated-admin")
+	if (/repeated.*admin|NY-NY/i.test(notes)) {
+		classes.push("failure/repeated-admin")
+	}
 
-	if (/tokeniz|whitespace/i.test(notes)) classes.push("failure/tokenization-trap")
+	if (/tokeniz|whitespace/i.test(notes)) {
+		classes.push("failure/tokenization-trap")
+	}
 
-	if (/street.*local|collisi/i.test(notes)) classes.push("failure/street-locality-collision")
+	if (/street.*local|collisi/i.test(notes)) {
+		classes.push("failure/street-locality-collision")
+	}
 
-	if (/numeric|house.*number.*postcode/i.test(notes)) classes.push("failure/numeric-chaos")
+	if (/numeric|house.*number.*postcode/i.test(notes)) {
+		classes.push("failure/numeric-chaos")
+	}
 
-	if (/unicode|transliter|non.?latin/i.test(notes)) classes.push("failure/unicode-trap")
+	if (/unicode|transliter|non.?latin/i.test(notes)) {
+		classes.push("failure/unicode-trap")
+	}
 
-	if (/language.*switch|mixed.*script/i.test(notes)) classes.push("failure/language-switch")
+	if (/language.*switch|mixed.*script/i.test(notes)) {
+		classes.push("failure/language-switch")
+	}
 
-	if (/admin.*nightmare|hierarchy/i.test(notes)) classes.push("failure/admin-nightmare")
+	if (/admin.*nightmare|hierarchy/i.test(notes)) {
+		classes.push("failure/admin-nightmare")
+	}
 
-	if (classes.length === 0) classes.push("normal")
+	if (classes.length === 0) {
+		classes.push("normal")
+	}
 
 	return classes
 }
@@ -156,7 +179,9 @@ function treeToComponents(tree: { roots: Array<{ tag?: string; value?: string }>
 	const out: Record<string, string> = {}
 
 	for (const node of tree.roots ?? []) {
-		if (node.tag && node.value) out[node.tag] = node.value
+		if (node.tag && node.value) {
+			out[node.tag] = node.value
+		}
 	}
 
 	return out
@@ -189,7 +214,9 @@ function computeMetrics(
 	let exactMatchCount = 0
 
 	for (const r of results) {
-		if (exactMatch(r.predicted, r.expected)) exactMatchCount++
+		if (exactMatch(r.predicted, r.expected)) {
+			exactMatchCount++
+		}
 	}
 
 	// Empty parse
@@ -217,9 +244,13 @@ function computeMetrics(
 						: "conf<0.5"
 		buckets[bucket]!.total++
 
-		if (isCorrect) buckets[bucket]!.correct++
+		if (isCorrect) {
+			buckets[bucket]!.correct++
+		}
 
-		if (r.confidence > 0.9 && !isCorrect) overconfidentWrongCount++
+		if (r.confidence > 0.9 && !isCorrect) {
+			overconfidentWrongCount++
+		}
 	}
 
 	const calibration: Record<string, { total: number; correct: number; accuracy: number }> = {}
@@ -232,9 +263,13 @@ function computeMetrics(
 	const allTags = new Set<string>()
 
 	for (const r of results) {
-		for (const k of Object.keys(r.expected)) allTags.add(k)
+		for (const k of Object.keys(r.expected)) {
+			allTags.add(k)
+		}
 
-		for (const k of Object.keys(r.predicted)) allTags.add(k)
+		for (const k of Object.keys(r.predicted)) {
+			allTags.add(k)
+		}
 	}
 
 	const perTag: Record<string, PerTagMetrics> = {}
@@ -250,10 +285,15 @@ function computeMetrics(
 			const pred = normalizeComponent(r.predicted[tag])
 			const gold = normalizeComponent(r.expected[tag])
 
-			if (pred && gold && pred === gold) tp++
-			else if (pred && (!gold || pred !== gold)) fp++
+			if (pred && gold && pred === gold) {
+				tp++
+			} else if (pred && (!gold || pred !== gold)) {
+				fp++
+			}
 
-			if (gold && (!pred || pred !== gold)) fn++
+			if (gold && (!pred || pred !== gold)) {
+				fn++
+			}
 		}
 		const precision = tp / Math.max(tp + fp, 1)
 		const recall = tp / Math.max(tp + fn, 1)
@@ -275,7 +315,9 @@ function computeMetrics(
 			const entry = failureClassMap.get(fc) ?? { total: 0, exactMatch: 0 }
 			entry.total++
 
-			if (isCorrect) entry.exactMatch++
+			if (isCorrect) {
+				entry.exactMatch++
+			}
 			failureClassMap.set(fc, entry)
 		}
 	}
@@ -460,11 +502,17 @@ async function main() {
 	const rows = loadGolden(goldenDir)
 	console.error(`loaded ${rows.length} golden rows`)
 
-	if (modelPath) console.error(`using custom model: ${modelPath}`)
+	if (modelPath) {
+		console.error(`using custom model: ${modelPath}`)
+	}
 
-	if (tokenizerPath) console.error(`using custom tokenizer: ${tokenizerPath}`)
+	if (tokenizerPath) {
+		console.error(`using custom tokenizer: ${tokenizerPath}`)
+	}
 
-	if (modelCardPath) console.error(`using custom model-card: ${modelCardPath}`)
+	if (modelCardPath) {
+		console.error(`using custom model-card: ${modelCardPath}`)
+	}
 
 	// Build runners
 	console.error("building runners...")
@@ -514,7 +562,9 @@ async function main() {
 
 			processed++
 
-			if (processed % 500 === 0) console.error(`  ${processed}/${rows.length}...`)
+			if (processed % 500 === 0) {
+				console.error(`  ${processed}/${rows.length}...`)
+			}
 		}
 
 		const report = computeMetrics(mode, results)

@@ -79,9 +79,13 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 	}
 
 	for (const node of nodes) {
-		for (const [token] of node.edges) intern(token)
+		for (const [token] of node.edges) {
+			intern(token)
+		}
 
-		for (const place of node.places) intern(place.name)
+		for (const place of node.places) {
+			intern(place.name)
+		}
 	}
 
 	const enc = new TextEncoder()

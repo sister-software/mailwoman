@@ -61,8 +61,11 @@ export const streetRecipe: ShardRecipe = {
 					"street-decomp"
 				)
 
-				if (ok) emitted++
-				else skipped++
+				if (ok) {
+					emitted++
+				} else {
+					skipped++
+				}
 			}
 		}
 

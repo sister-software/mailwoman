@@ -89,11 +89,15 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 			for (const v of variants) {
 				target.add(v.toLowerCase())
 
-				if (WEAK_CANONICALS.has(canonical)) weakDesignators.add(v.toLowerCase())
+				if (WEAK_CANONICALS.has(canonical)) {
+					weakDesignators.add(v.toLowerCase())
+				}
 			}
 		}
 
-		for (const phrase of us.US_PO_BOX_DESIGNATORS) deliveryPhrases.add(phrase)
+		for (const phrase of us.US_PO_BOX_DESIGNATORS) {
+			deliveryPhrases.add(phrase)
+		}
 	}
 
 	if (sys.has("au")) {

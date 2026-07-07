@@ -54,10 +54,13 @@ function pyFixed(x: number, d: number): string {
 	const rest = frac.slice(d)
 	let roundUp: boolean
 
-	if (rest[0]! > "5") roundUp = true
-	else if (rest[0]! < "5") roundUp = false
-	else if (rest.slice(1).replace(/0+$/, "").length > 0) roundUp = true
-	else {
+	if (rest[0]! > "5") {
+		roundUp = true
+	} else if (rest[0]! < "5") {
+		roundUp = false
+	} else if (rest.slice(1).replace(/0+$/, "").length > 0) {
+		roundUp = true
+	} else {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
 		roundUp = parseInt(lastKept, 10) % 2 === 1
 	}
@@ -68,14 +71,17 @@ function pyFixed(x: number, d: number): string {
 		let i = arr.length - 1
 
 		for (; i >= 0; i--) {
-			if (arr[i] === "9") arr[i] = "0"
-			else {
+			if (arr[i] === "9") {
+				arr[i] = "0"
+			} else {
 				arr[i] = String(parseInt(arr[i]!, 10) + 1)
 				break
 			}
 		}
 
-		if (i < 0) arr.unshift("1")
+		if (i < 0) {
+			arr.unshift("1")
+		}
 		digits = arr.join("")
 	}
 	const di = digits.length - d
@@ -104,14 +110,18 @@ function pyG(v: number): string {
 	if (exp < -4 || exp >= P) {
 		let mant = e.split("e")[0]!
 
-		if (mant.indexOf(".") >= 0) mant = mant.replace(/0+$/, "").replace(/\.$/, "")
+		if (mant.indexOf(".") >= 0) {
+			mant = mant.replace(/0+$/, "").replace(/\.$/, "")
+		}
 		const expSign = exp < 0 ? "-" : "+"
 		const expAbs = Math.abs(exp).toString().padStart(2, "0")
 		out = `${mant}e${expSign}${expAbs}`
 	} else {
 		let f = a.toFixed(Math.max(0, P - 1 - exp))
 
-		if (f.indexOf(".") >= 0) f = f.replace(/0+$/, "").replace(/\.$/, "")
+		if (f.indexOf(".") >= 0) {
+			f = f.replace(/0+$/, "").replace(/\.$/, "")
+		}
 		out = f
 	}
 
@@ -145,7 +155,9 @@ function normalize(run: Record<string, unknown>): LocaleScores {
 			const inner: Record<string, number> = {}
 
 			for (const [t, v] of Object.entries(tags as Record<string, unknown>)) {
-				if (typeof v === "number") inner[t] = v
+				if (typeof v === "number") {
+					inner[t] = v
+				}
 			}
 			out[locale] = inner
 		}

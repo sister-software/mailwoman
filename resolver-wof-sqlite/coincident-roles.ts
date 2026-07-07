@@ -229,8 +229,11 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
 		}
 		const list = map.get(r.admin_id)
 
-		if (list) list.push(entry)
-		else map.set(r.admin_id, [entry])
+		if (list) {
+			list.push(entry)
+		} else {
+			map.set(r.admin_id, [entry])
+		}
 	}
 
 	return map

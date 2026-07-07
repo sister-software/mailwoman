@@ -47,4 +47,6 @@ await browser.close()
 
 console.error(`[map-render] ${out}; console errors=${errors.length}`)
 
-for (const e of errors.slice(0, 6)) console.error("  " + e)
+for (const e of errors.slice(0, 6)) {
+	console.error("  " + e)
+}

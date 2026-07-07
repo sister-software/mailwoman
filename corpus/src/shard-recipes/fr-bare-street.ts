@@ -73,8 +73,11 @@ export const frBareStreetRecipe: ShardRecipe = {
 					"Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
 			}
 
-			if (alignAndWrite(write, canonical, "fr-bare-street")) emitted++
-			else skipped++
+			if (alignAndWrite(write, canonical, "fr-bare-street")) {
+				emitted++
+			} else {
+				skipped++
+			}
 		}
 
 		return { read, emitted, skipped }

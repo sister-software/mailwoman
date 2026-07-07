@@ -193,7 +193,9 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 					try {
 						const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
 
-						if (roles.length > 0) dualRoles = roles
+						if (roles.length > 0) {
+							dualRoles = roles
+						}
 					} catch {
 						/* relation absent → no dual-role badge */
 					}

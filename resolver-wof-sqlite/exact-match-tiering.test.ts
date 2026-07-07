@@ -79,9 +79,13 @@ function buildDB(regions: SeedRegion[]): DatabaseSync {
 		)
 		insertName.run(r.id, "eng", r.name)
 
-		for (const a of r.aliases ?? []) insertName.run(r.id, "abbr", a)
+		for (const a of r.aliases ?? []) {
+			insertName.run(r.id, "abbr", a)
+		}
 
-		if (r.population !== undefined) insertPop.run(r.id, r.population)
+		if (r.population !== undefined) {
+			insertPop.run(r.id, r.population)
+		}
 	}
 
 	return db

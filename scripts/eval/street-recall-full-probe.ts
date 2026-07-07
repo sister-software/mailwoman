@@ -75,15 +75,21 @@ for (const row of rows) {
 	const bOk = norm(bp.street) === gs
 	const cOk = norm(cp.street) === gs
 
-	if (bOk) baseOk++
+	if (bOk) {
+		baseOk++
+	}
 
-	if (cOk) candOk++
+	if (cOk) {
+		candOk++
+	}
 
 	if (bOk && !cOk) {
 		regr++
 
 		// the "eat" mechanism: the gold street's leading token landed in the candidate's locality span
-		if (wordIncludes(norm(cp.locality), gs.split(" ")[0]!)) eaten++
+		if (wordIncludes(norm(cp.locality), gs.split(" ")[0]!)) {
+			eaten++
+		}
 	}
 }
 

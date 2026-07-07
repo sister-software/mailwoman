@@ -100,7 +100,9 @@ function inPolygon(x: number, y: number, poly: Ring[]): boolean {
 	let c = false
 
 	for (const ring of poly) {
-		if (inRing(x, y, ring)) c = !c
+		if (inRing(x, y, ring)) {
+			c = !c
+		}
 	}
 
 	return c
@@ -141,10 +143,13 @@ function pyFixed(x: number, d: number): string {
 	const rest = frac.slice(d)
 	let roundUp: boolean
 
-	if (rest[0]! > "5") roundUp = true
-	else if (rest[0]! < "5") roundUp = false
-	else if (rest.slice(1).replace(/0+$/, "").length > 0) roundUp = true
-	else {
+	if (rest[0]! > "5") {
+		roundUp = true
+	} else if (rest[0]! < "5") {
+		roundUp = false
+	} else if (rest.slice(1).replace(/0+$/, "").length > 0) {
+		roundUp = true
+	} else {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
 		roundUp = parseInt(lastKept, 10) % 2 === 1
 	}
@@ -155,14 +160,17 @@ function pyFixed(x: number, d: number): string {
 		let i = arr.length - 1
 
 		for (; i >= 0; i--) {
-			if (arr[i] === "9") arr[i] = "0"
-			else {
+			if (arr[i] === "9") {
+				arr[i] = "0"
+			} else {
 				arr[i] = String(parseInt(arr[i]!, 10) + 1)
 				break
 			}
 		}
 
-		if (i < 0) arr.unshift("1")
+		if (i < 0) {
+			arr.unshift("1")
+		}
 		digits = arr.join("")
 	}
 	const di = digits.length - d
@@ -292,7 +300,9 @@ function main(): number {
 	console.log(`\n  rows resolved-but-polygon-missing: ${noPoly}`)
 	console.log(`\nMETRIC-ARTIFACT cases (name-match FAILED but gold point IS inside the resolved locality):`)
 
-	for (const e of artifactExamples) console.log(e)
+	for (const e of artifactExamples) {
+		console.log(e)
+	}
 
 	if (jsonOut) {
 		const n = get(overall, "n")

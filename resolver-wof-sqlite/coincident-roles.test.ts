@@ -137,11 +137,15 @@ beforeEach(() => {
 	for (const r of FIXTURE) {
 		insSpr.run(r.id, r.name, r.placetype, r.country, r.lat, r.lon, r.lat - r.d, r.lon - r.d, r.lat + r.d, r.lon + r.d)
 
-		if (r.population !== undefined) insPop.run(r.id, r.population)
+		if (r.population !== undefined) {
+			insPop.run(r.id, r.population)
+		}
 	}
 	const insAnc = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, 'region')`)
 
-	for (const [id, anc] of ANCESTRY) insAnc.run(id, anc)
+	for (const [id, anc] of ANCESTRY) {
+		insAnc.run(id, anc)
+	}
 })
 
 afterEach(() => db.close())

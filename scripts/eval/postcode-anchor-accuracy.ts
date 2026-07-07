@@ -36,9 +36,13 @@ function parseArgs(): Args {
 	const shards = [dataRootPath("wof", "postalcode-us.db"), dataRootPath("wof", "postalcode-intl.db")]
 
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--eval" && args[i + 1]) evalPath = args[++i]!
-		else if (args[i] === "--country" && args[i + 1]) country = args[++i]!
-		else if (args[i] === "--shard" && args[i + 1]) shards.push(args[++i]!)
+		if (args[i] === "--eval" && args[i + 1]) {
+			evalPath = args[++i]!
+		} else if (args[i] === "--country" && args[i + 1]) {
+			country = args[++i]!
+		} else if (args[i] === "--shard" && args[i + 1]) {
+			shards.push(args[++i]!)
+		}
 	}
 
 	return { evalPath, country, shards }

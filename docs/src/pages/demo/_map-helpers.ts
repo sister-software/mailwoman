@@ -157,18 +157,30 @@ export function geomBounds(geometry: PlaceGeometry): {
 		if (Array.isArray(node) && typeof node[0] === "number") {
 			const [lon, lat] = node as number[]
 
-			if (lon < minLon) minLon = lon
+			if (lon < minLon) {
+				minLon = lon
+			}
 
-			if (lon > maxLon) maxLon = lon
+			if (lon > maxLon) {
+				maxLon = lon
+			}
 
-			if (lat < minLat) minLat = lat
+			if (lat < minLat) {
+				minLat = lat
+			}
 
-			if (lat > maxLat) maxLat = lat
+			if (lat > maxLat) {
+				maxLat = lat
+			}
 
 			return
 		}
 
-		if (Array.isArray(node)) for (const child of node) visit(child)
+		if (Array.isArray(node)) {
+			for (const child of node) {
+				visit(child)
+			}
+		}
 	}
 	visit(geometry.coordinates)
 
@@ -200,11 +212,17 @@ export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<
 /** Tear down the resolved-place outline (layers + source) once the style is ready. */
 export function clearBbox(map: MapLibreMap): void {
 	whenStyleReady(map, () => {
-		if (map.getLayer(BBOX_FILL_LAYER)) map.removeLayer(BBOX_FILL_LAYER)
+		if (map.getLayer(BBOX_FILL_LAYER)) {
+			map.removeLayer(BBOX_FILL_LAYER)
+		}
 
-		if (map.getLayer(BBOX_LINE_LAYER)) map.removeLayer(BBOX_LINE_LAYER)
+		if (map.getLayer(BBOX_LINE_LAYER)) {
+			map.removeLayer(BBOX_LINE_LAYER)
+		}
 
-		if (map.getSource(BBOX_SOURCE)) map.removeSource(BBOX_SOURCE)
+		if (map.getSource(BBOX_SOURCE)) {
+			map.removeSource(BBOX_SOURCE)
+		}
 	})
 }
 

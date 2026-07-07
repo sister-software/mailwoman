@@ -28,8 +28,11 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--input" && args[i + 1]) out.input = args[++i]
-		else if (a === "--output" && args[i + 1]) out.output = args[++i]
+		if (a === "--input" && args[i + 1]) {
+			out.input = args[++i]
+		} else if (a === "--output" && args[i + 1]) {
+			out.output = args[++i]
+		}
 	}
 
 	if (!out.input || !out.output) {

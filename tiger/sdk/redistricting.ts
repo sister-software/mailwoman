@@ -120,7 +120,9 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 
 async function eachLine(path: string, fn: (line: string) => void): Promise<void> {
 	for await (const line of createInterface({ input: createReadStream(path), crlfDelay: Infinity })) {
-		if (line) fn(line)
+		if (line) {
+			fn(line)
+		}
 	}
 }
 

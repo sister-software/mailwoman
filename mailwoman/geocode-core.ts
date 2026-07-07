@@ -341,7 +341,9 @@ export class ShardProvider {
 	 * version map.
 	 */
 	reload(): DataReleaseManifest | null {
-		for (const h of this.#retired) h.close()
+		for (const h of this.#retired) {
+			h.close()
+		}
 		this.#retired = []
 		this.#manifest = readReleaseManifest(this.#dataRoot)
 
@@ -352,9 +354,13 @@ export class ShardProvider {
 			if (apPath === old.apPath && ipPath === old.ipPath) continue // unchanged — keep the open handle
 			this.#cache.set(slug, this.#open(slug))
 
-			if (old._ap) this.#retired.push(old._ap)
+			if (old._ap) {
+				this.#retired.push(old._ap)
+			}
 
-			if (old._ip) this.#retired.push(old._ip)
+			if (old._ip) {
+				this.#retired.push(old._ip)
+			}
 		}
 
 		return this.versions()
@@ -366,7 +372,9 @@ export class ShardProvider {
 			e._ip?.close()
 		}
 
-		for (const h of this.#retired) h.close()
+		for (const h of this.#retired) {
+			h.close()
+		}
 		this.#cache.clear()
 		this.#retired = []
 	}
@@ -422,9 +430,13 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// ON downstream). Fixes the "Portland, ME → Messina IT" class structurally, without a prior or safelist.
 	opts.adminCoherence = deps.adminCoherence !== false
 
-	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
+	if (deps.defaultCountry) {
+		opts.defaultCountry = deps.defaultCountry
+	}
 
-	if (deps.bias && deps.bias.length > 0) opts.bias = deps.bias
+	if (deps.bias && deps.bias.length > 0) {
+		opts.bias = deps.bias
+	}
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
 	// a function → that placer; false → disabled. A confident in-map guess feeds the resolver's
 	// anchorPosterior re-rank; abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
@@ -454,7 +466,9 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
 			const hardCountry = hardCountryFor(pcCountry, 1.0, opts, deps.hardPlaceCountry ?? true, deps.hardCountrySafelist)
 
-			if (hardCountry) opts.hardCountry = hardCountry
+			if (hardCountry) {
+				opts.hardCountry = hardCountry
+			}
 		}
 	}
 
@@ -479,7 +493,9 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 				deps.hardCountrySafelist
 			)
 
-			if (hardCountry) opts.hardCountry = hardCountry
+			if (hardCountry) {
+				opts.hardCountry = hardCountry
+			}
 		}
 	}
 
@@ -499,7 +515,9 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		}
 	}
 
-	if (addressPoints) opts.addressPoints = addressPoints
+	if (addressPoints) {
+		opts.addressPoints = addressPoints
+	}
 
 	if (interpolation) {
 		opts.interpolation = interpolation

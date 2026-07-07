@@ -92,10 +92,14 @@ function resolvedWOFNodes(tree: AddressTree): Array<{ id: number; rank: number; 
 			out.push({ id: Number(n.placeID.slice(4)), rank: PLACETYPE_RANK[placetype] ?? -1, placetype })
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return out
 }

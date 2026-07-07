@@ -38,7 +38,8 @@ import {
 	geonamesDir,
 	resolvePostcodeShards,
 	wofDir,
-} from "../mailwoman/out/gazetteer-pipeline.js"
+} from "mailwoman/gazetteer-pipeline"
+
 import { arg } from "./lib/cli-args.ts"
 
 const WOF = wofDir()
@@ -128,7 +129,9 @@ const fold = await foldGeonamesIntoAdmin({
 	adminForCountries: new Set(targets),
 	geonamesDir: MERGE,
 	onCountry: (e) => {
-		if (!e.skipped && e.places > 0) process.stderr.write(`\r[fold] ${e.country}: ${e.places}      `)
+		if (!e.skipped && e.places > 0) {
+			process.stderr.write(`\r[fold] ${e.country}: ${e.places}      `)
+		}
 	},
 	onPhase: (p, d) => console.error(`\n[fold:${p}]${d ? ` ${d}` : ""}`),
 })

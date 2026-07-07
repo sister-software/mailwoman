@@ -10,7 +10,9 @@
 export function identityMap(n: number): number[] {
 	const m = new Array<number>(n)
 
-	for (let i = 0; i < n; i++) m[i] = i
+	for (let i = 0; i < n; i++) {
+		m[i] = i
+	}
 
 	return m
 }

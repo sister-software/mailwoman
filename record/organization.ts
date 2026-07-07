@@ -177,9 +177,17 @@ function resolveDesignations(options?: CanonicalizeOptions): ReadonlySet<string>
 
 	const set = new Set(BASE_DESIGNATIONS)
 
-	if (jurisdictionPack) for (const token of jurisdictionPack) set.add(token)
+	if (jurisdictionPack) {
+		for (const token of jurisdictionPack) {
+			set.add(token)
+		}
+	}
 
-	if (protectPack) for (const token of protectPack) set.delete(token)
+	if (protectPack) {
+		for (const token of protectPack) {
+			set.delete(token)
+		}
+	}
 
 	return set
 }
@@ -215,8 +223,11 @@ function canonicalizeFragment(
 	for (const token of normalized.split(" ")) {
 		if (!token) continue
 
-		if (designationSet.has(token)) designations.push(token)
-		else kept.push(token)
+		if (designationSet.has(token)) {
+			designations.push(token)
+		} else {
+			kept.push(token)
+		}
 	}
 
 	return { canonical: kept.join(" "), designations }
@@ -247,7 +258,9 @@ export function canonicalizeOrganizationName(
 	if (dbaParts.length) {
 		const dba = canonicalizeFragment(dbaParts.join(" "), designationSet).canonical
 
-		if (dba) result.dba = dba
+		if (dba) {
+			result.dba = dba
+		}
 	}
 
 	return result

@@ -198,7 +198,9 @@ for (const row of gold) {
 	if (ladder) {
 		const tigerHit = interpolator.find(query)
 
-		if (tigerHit) tigerAlone.push(haversineKm(row.lat, row.lon, tigerHit.lat, tigerHit.lon) * 1000)
+		if (tigerHit) {
+			tigerAlone.push(haversineKm(row.lat, row.lon, tigerHit.lat, tigerHit.lon) * 1000)
+		}
 	}
 }
 ladder?.close()
@@ -300,7 +302,9 @@ for (const band of BANDS) {
 		console.log(`  ${band.label}: 0 rows — FLAG: no rows in this band`)
 
 		// An empty gated band is not a pass — it means we have no data to grade.
-		if (band.gateP50 !== null) allBandedPass = false
+		if (band.gateP50 !== null) {
+			allBandedPass = false
+		}
 		continue
 	}
 
@@ -318,7 +322,9 @@ for (const band of BANDS) {
 		const p90Pass = p90 <= band.gateP90
 		const verdict = p50Pass && p90Pass ? "PASS" : "MISS"
 
-		if (!p50Pass || !p90Pass) allBandedPass = false
+		if (!p50Pass || !p90Pass) {
+			allBandedPass = false
+		}
 		console.log(
 			`  ${band.label}: n=${errors.length} · gate p50 ≤ ${fmt(band.gateP50)} → ${fmt(p50)} ${p50Pass ? "PASS" : "MISS"} · gate p90 ≤ ${fmt(band.gateP90)} → ${fmt(p90)} ${p90Pass ? "PASS" : "MISS"} · band ${verdict}`
 		)

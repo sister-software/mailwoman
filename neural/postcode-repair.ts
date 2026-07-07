@@ -151,7 +151,9 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		for (let i = 0; i < tokens.length; i++) {
 			const t = tokens[i]!
 
-			if (t.start < m.end && m.start < t.end) overlap.push(i)
+			if (t.start < m.end && m.start < t.end) {
+				overlap.push(i)
+			}
 		}
 
 		if (overlap.length === 0) continue
@@ -175,7 +177,9 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 
 		// Leading smear clip: postcode tokens immediately BEFORE the snapped run are noise (e.g. a
 		// house-number digit the model over-labeled) — clear to O as before.
-		for (let j = overlap[0]! - 1; j >= 0 && isPostcodeLabel(tokens[j]!.label); j--) setLabel(j, OUTSIDE)
+		for (let j = overlap[0]! - 1; j >= 0 && isPostcodeLabel(tokens[j]!.label); j--) {
+			setLabel(j, OUTSIDE)
+		}
 
 		// Trailing smear: the model over-extended the postcode to the RIGHT. In postcode-before-city
 		// locales (DE/FR/ES/IT, "08523 Plauen") this swallows the leading characters of the city, which
@@ -200,9 +204,13 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 			if (connectsToCity) {
 				trailing.forEach((j, k) => setLabel(j, k === 0 ? LOCALITY_B : LOCALITY_I))
 
-				if (tokens[after]!.label === "B-locality") setLabel(after, LOCALITY_I)
+				if (tokens[after]!.label === "B-locality") {
+					setLabel(after, LOCALITY_I)
+				}
 			} else {
-				for (const j of trailing) setLabel(j, OUTSIDE)
+				for (const j of trailing) {
+					setLabel(j, OUTSIDE)
+				}
 			}
 		}
 	}

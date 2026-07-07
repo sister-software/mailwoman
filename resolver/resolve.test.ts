@@ -32,9 +32,13 @@ function node(
 ): AddressNode {
 	const n: AddressNode = { tag, value, start, end, confidence: 0.9, children }
 
-	if (source) n.source = source
+	if (source) {
+		n.source = source
+	}
 
-	if (sourceID) n.sourceID = sourceID
+	if (sourceID) {
+		n.sourceID = sourceID
+	}
 
 	return n
 }

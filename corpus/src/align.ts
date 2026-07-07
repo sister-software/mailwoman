@@ -93,7 +93,9 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 	for (const key of Object.keys(components)) {
 		const v = components[key as keyof typeof components]
 
-		if (typeof v === "string") components[key as keyof typeof components] = v.normalize("NFC")
+		if (typeof v === "string") {
+			components[key as keyof typeof components] = v.normalize("NFC")
+		}
 	}
 
 	const componentSpans: ComponentSpan[] = []

@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 10
   cacheKey: 10
 
 "@adobe/css-tools@npm:^4.4.0":
@@ -5056,8 +5056,8 @@ __metadata:
     "@duckdb/node-api": "npm:^1.5.3-r.3"
     "@inkjs/ui": "npm:^2.0.0"
     "@release-it-plugins/workspaces": "npm:^5.0.3"
-    "@sister.software/oxfmt-config": "npm:^9.1.0"
-    "@sister.software/oxlint-config": "npm:^9.1.0"
+    "@sister.software/oxfmt-config": "npm:^9.2.0"
+    "@sister.software/oxlint-config": "npm:^9.2.0"
     "@sister.software/tsconfig": "npm:^8.0.1"
     "@types/express": "npm:^5.0.6"
     "@types/geojson": "npm:^7946.0.16"
@@ -7097,21 +7097,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/oxfmt-config@npm:^9.1.0":
-  version: 9.1.0
-  resolution: "@sister.software/oxfmt-config@npm:9.1.0"
+"@sister.software/oxfmt-config@npm:^9.2.0":
+  version: 9.2.0
+  resolution: "@sister.software/oxfmt-config@npm:9.2.0"
   peerDependencies:
     oxfmt: 0.56.0
-  checksum: 10/ee2d979bab1c3fd6ae73676f260a741a374c21e2132b1a3475b1a5190411387aaef2c0b05afd5079233179a04338458bf1890811d061d497221036c0eaeaa2aa
+  checksum: 10/c7b6d764c8072f4473c022a1452b5f86908fe3944ecfba5f71278e9163b7df515250414a554e18ad51f65e6c4ed33f1da4a3f7627d3cbc2b58d469dbe384d12e
   languageName: node
   linkType: hard
 
-"@sister.software/oxlint-config@npm:^9.1.0":
-  version: 9.1.0
-  resolution: "@sister.software/oxlint-config@npm:9.1.0"
+"@sister.software/oxlint-config@npm:^9.2.0":
+  version: 9.2.0
+  resolution: "@sister.software/oxlint-config@npm:9.2.0"
   peerDependencies:
     oxlint: ^1.71.0
-  checksum: 10/8a114e2bf07c914e7b6472a5953660b6e7eda0a639960b405d5022d7a5afd12968aaef86350e31cf308f19fb4f643f2804692658b2af10bab7650ea8015fcadc
+  checksum: 10/35010f91bc605f23ae8955cfbbe334657de41673c5eaff3c326ff10977bd2f8d9ee2b229ed047159937e98e88144ce5434c77a7c32962af837750cb04df70c23
   languageName: node
   linkType: hard
 

@@ -23,10 +23,10 @@ fetches by version from Hugging Face, cross-origin:
 ```ts
 // src/shared/resources.tsx
 const HF_BUCKET_RESOLVE_URL = "https://huggingface.co/buckets/sister-software/mailwoman/resolve/"
-export function assetUrl(locale, version, filename) {
+export function assetURL(locale, version, filename) {
 	return `${HF_BUCKET_RESOLVE_URL}${locale}/${version}/${filename}`
 }
-// index.tsx: modelUrl / tokenizerUrl / wof-hot.db source all go through assetUrl(locale, selectedVersion, …)
+// index.tsx: modelURL / tokenizerURL / wof-hot.db source all go through assetURL(locale, selectedVersion, …)
 ```
 
 So the requests a service worker has to cache are **cross-origin to `huggingface.co`**, not same-origin. That
@@ -116,7 +116,7 @@ self.addEventListener("fetch", (event) => {
 			}
 			const res = await fetch(event.request, { redirect: "follow" })
 			if (res.ok) {
-				const version = currentVersionForUrl(url) // parse /resolve/<locale>/<version>/<file>
+				const version = currentVersionForURL(url) // parse /resolve/<locale>/<version>/<file>
 				const cache = await caches.open(`mailwoman-assets-${version}`)
 				cache.put(event.request, res.clone())
 			}
@@ -133,7 +133,7 @@ self.addEventListener("message", async (event) => {
 })
 ```
 
-(`currentVersionForUrl` keys the cache by the `locale/version` segment already present in the path, so each
+(`currentVersionForURL` keys the cache by the `locale/version` segment already present in the path, so each
 version's blobs land in their own named cache and eviction is a name comparison.)
 
 ## Storage & quota

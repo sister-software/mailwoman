@@ -143,7 +143,9 @@ function genGbPostcode(region: string, rng: SeededRandom): string {
 	// District: 1-2 digits, sometimes with a trailing letter (W1A, E14, EC1V).
 	let district = String(rng.randint(1, 99))
 
-	if (rng.random() < 0.2) district += rng.choice(ASCII_UPPERCASE)
+	if (rng.random() < 0.2) {
+		district += rng.choice(ASCII_UPPERCASE)
+	}
 	const sector = String(rng.randint(0, 9))
 	const unit = rng.choices(ASCII_UPPERCASE, 2).join("")
 
@@ -279,7 +281,9 @@ function main(): number {
 	const fd = openSync(values.output, "w")
 
 	try {
-		for (const row of [...de, ...gb]) writeSync(fd, JSON.stringify(row) + "\n")
+		for (const row of [...de, ...gb]) {
+			writeSync(fd, JSON.stringify(row) + "\n")
+		}
 	} finally {
 		closeSync(fd)
 	}

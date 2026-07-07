@@ -129,7 +129,9 @@ for (const { q, cc } of queries) {
 	const s = per.get(cc) ?? { cc, n: 0, inClass: 0, top1Correct: 0, probs: [] }
 	s.n++
 
-	if (classSet.has(cc)) s.inClass++
+	if (classSet.has(cc)) {
+		s.inClass++
+	}
 
 	if (p.country === cc) {
 		s.top1Correct++

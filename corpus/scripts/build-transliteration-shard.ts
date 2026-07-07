@@ -145,11 +145,17 @@ function appendShape(row: ParquetRow): Record<string, unknown> {
 		license: row.license,
 	}
 
-	if (row.locale !== null) out.locale = row.locale
+	if (row.locale !== null) {
+		out.locale = row.locale
+	}
 
-	if (row.synth_method !== null) out.synth_method = row.synth_method
+	if (row.synth_method !== null) {
+		out.synth_method = row.synth_method
+	}
 
-	if (row.synth_base_id !== null) out.synth_base_id = row.synth_base_id
+	if (row.synth_base_id !== null) {
+		out.synth_base_id = row.synth_base_id
+	}
 
 	return out
 }
@@ -194,7 +200,9 @@ async function writeOneShard(
 		const pq = rowToParquet(row)
 		await writer.appendRow(appendShape(pq) as unknown as ParquetRow)
 
-		if (firstSourceID === "") firstSourceID = row.source_id
+		if (firstSourceID === "") {
+			firstSourceID = row.source_id
+		}
 		lastSourceID = row.source_id
 	}
 	await writer.close()
@@ -251,8 +259,11 @@ async function main(): Promise<void> {
 		}
 		const bucket = buckets.get(canon.source)
 
-		if (bucket) bucket.push(result.row)
-		else buckets.set(canon.source, [result.row])
+		if (bucket) {
+			bucket.push(result.row)
+		} else {
+			buckets.set(canon.source, [result.row])
+		}
 	}
 	console.error(`read ${totalIn} rows; ${quarantine.length} quarantined; ${buckets.size} script buckets`)
 
@@ -305,10 +316,11 @@ async function main(): Promise<void> {
 	console.error(`  compression=${SHARD_COMPRESSION}`)
 	const pathFix = rewrittenBase.filter((s, i) => s.path !== base.shards[i]!.path).length
 
-	if (pathFix > 0)
+	if (pathFix > 0) {
 		console.error(
 			`  path-canonicalized base shards: ${pathFix} (legacy '${args.legacyPathPrefix}' → '${args.canonicalPathPrefix}')`
 		)
+	}
 }
 
 main().catch((err) => {

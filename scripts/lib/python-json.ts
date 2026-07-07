@@ -97,7 +97,9 @@ export function pyJsonDumps(value: unknown, options: PyJsonOptions = {}): string
 export function pyReprDict(entries: Iterable<readonly [string, number]>): string {
 	const parts: string[] = []
 
-	for (const [k, v] of entries) parts.push(`'${k}': ${v}`)
+	for (const [k, v] of entries) {
+		parts.push(`'${k}': ${v}`)
+	}
 
 	return "{" + parts.join(", ") + "}"
 }

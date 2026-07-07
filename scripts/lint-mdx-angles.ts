@@ -52,7 +52,9 @@ function violations(file: string): string[] {
 		if (fenced) continue
 		const stripped = line.replace(/`[^`]*`/g, "")
 
-		if (RAW_ANGLE.test(stripped)) hits.push(`${i + 1}:${line}`)
+		if (RAW_ANGLE.test(stripped)) {
+			hits.push(`${i + 1}:${line}`)
+		}
 	}
 
 	return hits
@@ -61,7 +63,9 @@ function violations(file: string): string[] {
 const files = process.argv.slice(2)
 const targets = files.length > 0 ? files : stagedDocsMarkdown()
 
-if (targets.length === 0) process.exit(0)
+if (targets.length === 0) {
+	process.exit(0)
+}
 
 let fail = false
 
@@ -72,7 +76,9 @@ for (const f of targets) {
 	if (hits.length > 0) {
 		console.error(`✗ ${f} — raw '<' before alphanumeric (MDX parses it as a JSX tag; build will fail):`)
 
-		for (const h of hits.slice(0, 5)) console.error(`    ${h}`)
+		for (const h of hits.slice(0, 5)) {
+			console.error(`    ${h}`)
+		}
 		fail = true
 	}
 }

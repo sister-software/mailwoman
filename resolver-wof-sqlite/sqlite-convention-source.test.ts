@@ -41,7 +41,9 @@ function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []
 	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0.0, 1)
 	const ins = db.prepare(`INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)`)
 
-	for (const c of conventions) ins.run(c.wof_id, JSON.stringify(c.convention), "test")
+	for (const c of conventions) {
+		ins.run(c.wof_id, JSON.stringify(c.convention), "test")
+	}
 
 	return db
 }

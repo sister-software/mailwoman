@@ -82,7 +82,10 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 	if (a.size === 0 || b.size === 0) return 0
 	let inter = 0
 
-	for (const t of a) if (b.has(t)) inter++
+	for (const t of a)
+		if (b.has(t)) {
+			inter++
+		}
 
 	return inter / (a.size + b.size - inter)
 }
@@ -140,7 +143,9 @@ async function main(): Promise<void> {
 			taxonomy: norm(r["Healthcare Provider Taxonomy Code_1"]),
 		}
 
-		if (!byAddr.has(addrKey)) byAddr.set(addrKey, [])
+		if (!byAddr.has(addrKey)) {
+			byAddr.set(addrKey, [])
+		}
 		byAddr.get(addrKey)!.push(p)
 		kept++
 
@@ -168,7 +173,10 @@ async function main(): Promise<void> {
 		// distinct NPIs at this address
 		const distinct = new Map<string, Provider>()
 
-		for (const p of provs) if (!distinct.has(p.npi)) distinct.set(p.npi, p)
+		for (const p of provs)
+			if (!distinct.has(p.npi)) {
+				distinct.set(p.npi, p)
+			}
 		const list = [...distinct.values()]
 
 		if (list.length < 2) continue
@@ -186,14 +194,22 @@ async function main(): Promise<void> {
 				if (sim >= TAU) {
 					collide++
 
-					if (a.phone && a.phone === b.phone) collideSharePhone++
+					if (a.phone && a.phone === b.phone) {
+						collideSharePhone++
+					}
 					const sameAuth = a.auth !== "" && a.auth === b.auth
 					const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
 
-					if (sameAuth) collideSameAuth++
-					else if (!sameTax) collideDistinct++
-				} else if (sim >= 0.3) mid++
-				else separable++
+					if (sameAuth) {
+						collideSameAuth++
+					} else if (!sameTax) {
+						collideDistinct++
+					}
+				} else if (sim >= 0.3) {
+					mid++
+				} else {
+					separable++
+				}
 			}
 		}
 	}

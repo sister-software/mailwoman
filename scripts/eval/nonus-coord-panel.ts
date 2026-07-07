@@ -97,9 +97,13 @@ runIfScript(import.meta, async () => {
 					? await $`node --experimental-strip-types scripts/eval/build-oa-coord-golden.ts --country ${cc} --zip ${src.zip} --entry ${src.entry} --out ${out} --n 150`
 					: await $`node --experimental-strip-types scripts/eval/build-oa-coord-golden.ts --country ${cc} --csv-glob ${src.glob} --out ${out} --n 150`
 
-			if (built.stdout.trim()) console.error(built.stdout.trimEnd())
+			if (built.stdout.trim()) {
+				console.error(built.stdout.trimEnd())
+			}
 
-			if (built.stderr.trim()) console.error(built.stderr.trimEnd())
+			if (built.stderr.trim()) {
+				console.error(built.stderr.trimEnd())
+			}
 		}
 
 		if (buildOnly) continue

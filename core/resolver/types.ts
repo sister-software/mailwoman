@@ -486,7 +486,9 @@ export function expandPlacetypeFilter(placetypes: readonly string[] | null): str
 
 	for (const placetype of placetypes) {
 		for (const expanded of PLACETYPE_FILTER_GROUPS[placetype] ?? [placetype]) {
-			if (!out.includes(expanded)) out.push(expanded)
+			if (!out.includes(expanded)) {
+				out.push(expanded)
+			}
 		}
 	}
 

@@ -173,13 +173,21 @@ async function main(): Promise<void> {
 		argmaxLat.push(a.ms)
 		jointLat.push(j.ms)
 
-		if (a.loc) argmaxLocOk++
+		if (a.loc) {
+			argmaxLocOk++
+		}
 
-		if (j.loc) jointLocOk++
+		if (j.loc) {
+			jointLocOk++
+		}
 
-		if (a.reg) argmaxRegOk++
+		if (a.reg) {
+			argmaxRegOk++
+		}
 
-		if (j.reg) jointRegOk++
+		if (j.reg) {
+			jointRegOk++
+		}
 		// Per-FIELD regression/improvement: did joint make a field WORSE (or better) than argmax had it?
 		// Per-field (not combined loc&&reg) so a low overall region-match doesn't mask a locality change.
 		const locRegressed = a.loc && !j.loc
@@ -187,11 +195,17 @@ async function main(): Promise<void> {
 		const locImproved = !a.loc && j.loc
 		const regImproved = !a.reg && j.reg
 
-		if (locRegressed || regRegressed || locImproved || regImproved) changed++
+		if (locRegressed || regRegressed || locImproved || regImproved) {
+			changed++
+		}
 
-		if (locRegressed || regRegressed) regressed++
+		if (locRegressed || regRegressed) {
+			regressed++
+		}
 
-		if (locImproved || regImproved) improved++
+		if (locImproved || regImproved) {
+			improved++
+		}
 
 		if (dumpReg && locRegressed) {
 			console.error(

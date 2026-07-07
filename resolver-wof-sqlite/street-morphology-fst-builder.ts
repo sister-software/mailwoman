@@ -129,7 +129,9 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 			if (!parsed) continue
 			const existing = canonicalToVariants.get(parsed.canonical) ?? new Set<string>()
 
-			for (const variant of parsed.variants) existing.add(variant)
+			for (const variant of parsed.variants) {
+				existing.add(variant)
+			}
 			canonicalToVariants.set(parsed.canonical, existing)
 		}
 	}

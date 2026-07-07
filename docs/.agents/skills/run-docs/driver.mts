@@ -38,7 +38,9 @@ async function withPage<T>(fn: PageCallback<T>): Promise<T> {
 
 	page.on("pageerror", (e) => consoleErrors.push(`pageerror: ${e.message}`))
 	page.on("console", (m) => {
-		if (m.type() === "error") consoleErrors.push(`console.error: ${m.text()}`)
+		if (m.type() === "error") {
+			consoleErrors.push(`console.error: ${m.text()}`)
+		}
 	})
 
 	try {
@@ -95,17 +97,23 @@ interface RouteResult {
 function reportRoute(path: string, result: RouteResult) {
 	const flags = [`HTTP ${result.status}`, `title="${result.title}"`, `console errors=${result.errors.length}`]
 
-	if (result.soft404) flags.push("SOFT-404")
+	if (result.soft404) {
+		flags.push("SOFT-404")
+	}
 	console.log(`check ${path}: ${flags.join(", ")}`)
 
-	for (const e of result.errors) console.log(`  ${e.split("\n")[0]}`)
+	for (const e of result.errors) {
+		console.log(`  ${e.split("\n")[0]}`)
+	}
 }
 
 async function cmdCheck(path: string) {
 	const result = await checkRoute(path)
 	reportRoute(path, result)
 
-	if (result.status >= 400 || result.errors.length || result.soft404) process.exit(1)
+	if (result.status >= 400 || result.errors.length || result.soft404) {
+		process.exit(1)
+	}
 }
 
 async function cmdSmoke() {
@@ -118,7 +126,9 @@ async function cmdSmoke() {
 			const result = await checkRoute(r)
 			reportRoute(r, result)
 
-			if (result.status >= 400 || result.errors.length || result.soft404) fail++
+			if (result.status >= 400 || result.errors.length || result.soft404) {
+				fail++
+			}
 		} catch (e) {
 			fail++
 
@@ -130,7 +140,9 @@ async function cmdSmoke() {
 		}
 	}
 
-	if (fail) process.exit(1)
+	if (fail) {
+		process.exit(1)
+	}
 }
 
 async function cmdEval(path: string, js: string) {

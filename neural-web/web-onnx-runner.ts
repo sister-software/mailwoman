@@ -174,7 +174,11 @@ export class WebONNXRunner implements NeuralRunner {
 				ac[i] = anchor.confidence[i] ?? 0
 				const row = anchor.features[i]
 
-				if (row) for (let d = 0; d < dim; d++) af[i * dim + d] = row[d] ?? 0
+				if (row) {
+					for (let d = 0; d < dim; d++) {
+						af[i * dim + d] = row[d] ?? 0
+					}
+				}
 			}
 			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
 			feeds.anchor_confidence = new ort.Tensor("float32", ac, [1, this.fixedSeqLen])
@@ -200,7 +204,11 @@ export class WebONNXRunner implements NeuralRunner {
 				gc[i] = gazetteer.confidence[i] ?? 0
 				const row = gazetteer.features[i]
 
-				if (row) for (let d = 0; d < dim; d++) gf[i * dim + d] = row[d] ?? 0
+				if (row) {
+					for (let d = 0; d < dim; d++) {
+						gf[i * dim + d] = row[d] ?? 0
+					}
+				}
 			}
 			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
 			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
@@ -226,7 +234,9 @@ export class WebONNXRunner implements NeuralRunner {
 			const row: number[] = new Array(numLabels)
 			const base = t * numLabels
 
-			for (let l = 0; l < numLabels; l++) row[l] = data[base + l]!
+			for (let l = 0; l < numLabels; l++) {
+				row[l] = data[base + l]!
+			}
 			logits.push(row)
 		}
 

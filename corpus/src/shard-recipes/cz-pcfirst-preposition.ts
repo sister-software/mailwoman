@@ -71,8 +71,11 @@ export const czPcFirstPrepositionRecipe: ShardRecipe = {
 					"Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "cz-pcfirst-preposition")) emitted++
-			else skipped++
+			if (alignAndWrite(write, canonical, "cz-pcfirst-preposition")) {
+				emitted++
+			} else {
+				skipped++
+			}
 		}
 
 		return { read, emitted, skipped }

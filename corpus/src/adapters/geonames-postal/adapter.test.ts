@@ -42,7 +42,9 @@ function writeFixture(...rows: string[]): string {
 async function collect(p: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
 
-	for await (const r of createGeonamesPostalAdapter().rows({ inputPath: p, ...extra })) out.push(r)
+	for await (const r of createGeonamesPostalAdapter().rows({ inputPath: p, ...extra })) {
+		out.push(r)
+	}
 
 	return out
 }

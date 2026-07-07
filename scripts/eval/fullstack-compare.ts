@@ -36,11 +36,17 @@ function parseArgs(): Args {
 	const out: Partial<Args> = { backoffMs: 3000 }
 
 	for (let i = 0; i < a.length; i++) {
-		if (a[i] === "--harness" && a[i + 1]) out.harnessPath = a[++i]
-		else if (a[i] === "--out-md" && a[i + 1]) out.outMd = a[++i]
-		else if (a[i] === "--out-json" && a[i + 1]) out.outJson = a[++i]
-		else if (a[i] === "--geocode-earth-key" && a[i + 1]) out.geocodeEarthKey = a[++i]
-		else if (a[i] === "--backoff-ms" && a[i + 1]) out.backoffMs = Number(a[++i])
+		if (a[i] === "--harness" && a[i + 1]) {
+			out.harnessPath = a[++i]
+		} else if (a[i] === "--out-md" && a[i + 1]) {
+			out.outMd = a[++i]
+		} else if (a[i] === "--out-json" && a[i + 1]) {
+			out.outJson = a[++i]
+		} else if (a[i] === "--geocode-earth-key" && a[i + 1]) {
+			out.geocodeEarthKey = a[++i]
+		} else if (a[i] === "--backoff-ms" && a[i + 1]) {
+			out.backoffMs = Number(a[++i])
+		}
 	}
 
 	if (!out.harnessPath) {
@@ -105,21 +111,37 @@ function mapPhoton(p: Props | undefined): Rec {
 	if (!p) return {}
 	const out: Rec = {}
 
-	if (p.housenumber) out.house_number = p.housenumber
+	if (p.housenumber) {
+		out.house_number = p.housenumber
+	}
 
-	if (p.street) out.street = p.street
-	else if ((p.type === "street" || p.osm_key === "highway") && p.name) out.street = p.name
+	if (p.street) {
+		out.street = p.street
+	} else if ((p.type === "street" || p.osm_key === "highway") && p.name) {
+		out.street = p.name
+	}
 
-	if (p.city) out.locality = p.city
-	else if (p.district) out.locality = p.district
+	if (p.city) {
+		out.locality = p.city
+	} else if (p.district) {
+		out.locality = p.district
+	}
 
-	if (p.state) out.region = p.state
+	if (p.state) {
+		out.region = p.state
+	}
 
-	if (p.postcode) out.postcode = p.postcode
+	if (p.postcode) {
+		out.postcode = p.postcode
+	}
 
-	if (p.country) out.country = p.country
+	if (p.country) {
+		out.country = p.country
+	}
 
-	if (!out.street && !out.house_number && p.name) out.venue = p.name
+	if (!out.street && !out.house_number && p.name) {
+		out.venue = p.name
+	}
 
 	// POI fallback
 	return out
@@ -128,18 +150,30 @@ function mapNominatim(a: Props | undefined): Rec {
 	if (!a) return {}
 	const out: Rec = {}
 
-	if (a.house_number) out.house_number = a.house_number
+	if (a.house_number) {
+		out.house_number = a.house_number
+	}
 
-	if (a.road) out.street = a.road
+	if (a.road) {
+		out.street = a.road
+	}
 	const loc = a.city || a.town || a.village || a.municipality || a.suburb
 
-	if (loc) out.locality = loc
+	if (loc) {
+		out.locality = loc
+	}
 
-	if (a.state) out.region = a.state
+	if (a.state) {
+		out.region = a.state
+	}
 
-	if (a.postcode) out.postcode = a.postcode
+	if (a.postcode) {
+		out.postcode = a.postcode
+	}
 
-	if (a.country) out.country = a.country
+	if (a.country) {
+		out.country = a.country
+	}
 
 	return out
 }
@@ -147,18 +181,31 @@ function mapGeocodeEarth(props: Props | undefined): Rec {
 	if (!props) return {}
 	const out: Rec = {}
 
-	if (props.housenumber) out.house_number = props.housenumber
+	if (props.housenumber) {
+		out.house_number = props.housenumber
+	}
 
-	if (props.street) out.street = props.street
-	else if (props.layer === "street" && props.name) out.street = props.name
+	if (props.street) {
+		out.street = props.street
+	} else if (props.layer === "street" && props.name) {
+		out.street = props.name
+	}
 
-	if (props.locality) out.locality = props.locality
+	if (props.locality) {
+		out.locality = props.locality
+	}
 
-	if (props.region) out.region = props.region
+	if (props.region) {
+		out.region = props.region
+	}
 
-	if (props.postalcode) out.postcode = props.postalcode
+	if (props.postalcode) {
+		out.postcode = props.postalcode
+	}
 
-	if (props.country) out.country = props.country
+	if (props.country) {
+		out.country = props.country
+	}
 
 	return out
 }
@@ -242,7 +289,9 @@ async function main(): Promise<void> {
 			`       photon ${row.photonScore.hits}/${row.photonScore.total}  nominatim ${row.nominatimScore.hits}/${row.nominatimScore.total}`
 		)
 
-		if (i < bothFail.length - 1) await sleep(args.backoffMs)
+		if (i < bothFail.length - 1) {
+			await sleep(args.backoffMs)
+		}
 	}
 
 	// Markdown report
@@ -280,9 +329,13 @@ async function main(): Promise<void> {
 	}
 	const mdText = md.join("\n") + "\n"
 
-	if (args.outMd) writeFileSync(args.outMd, mdText)
+	if (args.outMd) {
+		writeFileSync(args.outMd, mdText)
+	}
 
-	if (args.outJson) writeFileSync(args.outJson, JSON.stringify(results, null, 2))
+	if (args.outJson) {
+		writeFileSync(args.outJson, JSON.stringify(results, null, 2))
+	}
 	console.log(mdText)
 	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)
 }

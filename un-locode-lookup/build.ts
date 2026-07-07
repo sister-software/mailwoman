@@ -44,7 +44,9 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 		if (!r.Country || !r.Location) continue // header/country rows carry no Location
 		const coords = r.Coordinates ? parseUnLocodeCoords(r.Coordinates) : null
 
-		if (coords) withCoords++
+		if (coords) {
+			withCoords++
+		}
 		const name = r.NameWoDiacritics || r.Name || ""
 		insert.run(r.Country, r.Location, r.Name || name, foldName(name), coords?.lat ?? null, coords?.lon ?? null)
 	}

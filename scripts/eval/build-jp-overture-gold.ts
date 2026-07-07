@@ -77,7 +77,9 @@ for (const raw of text.split("\n")) {
 	const existing = kenall.get(key)
 
 	// Keep the LOWEST postcode (deterministic; the NNN-0000 catch-all when present).
-	if (!existing || postcode < existing.postcode) kenall.set(key, { postcode, muniRomaji: f[5]! })
+	if (!existing || postcode < existing.postcode) {
+		kenall.set(key, { postcode, muniRomaji: f[5]! })
+	}
 }
 
 // ---- Sample the Overture points (stream + fetchChunk) -----------------------------------------

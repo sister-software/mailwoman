@@ -99,24 +99,43 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--tests" && args[i + 1]) out.testsDir = args[++i]
-		else if (a === "--out-json" && args[i + 1]) out.outJson = args[++i]
-		else if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
-		else if (a === "--tokenizer" && args[i + 1]) out.tokenizerPath = args[++i]
-		else if (a === "--model-card" && args[i + 1]) out.modelCardPath = args[++i]
-		else if (a === "--gazetteer-lexicon" && args[i + 1]) out.gazetteerLexiconPath = args[++i]
-		else if (a === "--anchor-lookup" && args[i + 1]) out.anchorLookupPath = args[++i]
-		else if (a === "--conventions" && args[i + 1]) out.conventions = args[++i]
-		else if (a === "--bridge-gaps") out.bridgeGaps = true
-		else if (a === "--admin-fst" && args[i + 1]) out.adminFSTPath = args[++i]
-		else if (a === "--morphology-fst" && args[i + 1]) out.morphologyBinPath = args[++i]
-		else if (a === "--no-morphology") out.morphologyEnabled = false
-		else if (a === "--falsehoods" && args[i + 1]) out.falsehoodsDir = args[++i]
-		else if (a === "--postcode-repair") out.postcodeRepair = true
-		else if (a === "--unit-repair") out.unitRepair = true
-		else if (a === "--symmetric-match") out.symmetricMatch = true
-		else if (a === "--assembled") out.assembled = true
-		else if (a === "--arbitrate") out.arbitrate = true
+		if (a === "--tests" && args[i + 1]) {
+			out.testsDir = args[++i]
+		} else if (a === "--out-json" && args[i + 1]) {
+			out.outJson = args[++i]
+		} else if (a === "--model" && args[i + 1]) {
+			out.modelPath = args[++i]
+		} else if (a === "--tokenizer" && args[i + 1]) {
+			out.tokenizerPath = args[++i]
+		} else if (a === "--model-card" && args[i + 1]) {
+			out.modelCardPath = args[++i]
+		} else if (a === "--gazetteer-lexicon" && args[i + 1]) {
+			out.gazetteerLexiconPath = args[++i]
+		} else if (a === "--anchor-lookup" && args[i + 1]) {
+			out.anchorLookupPath = args[++i]
+		} else if (a === "--conventions" && args[i + 1]) {
+			out.conventions = args[++i]
+		} else if (a === "--bridge-gaps") {
+			out.bridgeGaps = true
+		} else if (a === "--admin-fst" && args[i + 1]) {
+			out.adminFSTPath = args[++i]
+		} else if (a === "--morphology-fst" && args[i + 1]) {
+			out.morphologyBinPath = args[++i]
+		} else if (a === "--no-morphology") {
+			out.morphologyEnabled = false
+		} else if (a === "--falsehoods" && args[i + 1]) {
+			out.falsehoodsDir = args[++i]
+		} else if (a === "--postcode-repair") {
+			out.postcodeRepair = true
+		} else if (a === "--unit-repair") {
+			out.unitRepair = true
+		} else if (a === "--symmetric-match") {
+			out.symmetricMatch = true
+		} else if (a === "--assembled") {
+			out.assembled = true
+		} else if (a === "--arbitrate") {
+			out.arbitrate = true
+		}
 	}
 
 	if (!out.testsDir) {
@@ -157,17 +176,20 @@ function objectLiteralToRecord(node: ts.ObjectLiteralExpression): Classification
 		const name = prop.name
 		let key: string
 
-		if (ts.isIdentifier(name)) key = name.text
-		else if (ts.isStringLiteralLike(name)) key = name.text
-		else return null
+		if (ts.isIdentifier(name)) {
+			key = name.text
+		} else if (ts.isStringLiteralLike(name)) {
+			key = name.text
+		} else return null
 		const value = prop.initializer
 
 		if (!ts.isArrayLiteralExpression(value)) return null
 		const elements: string[] = []
 
 		for (const el of value.elements) {
-			if (ts.isStringLiteralLike(el)) elements.push(el.text)
-			else return null
+			if (ts.isStringLiteralLike(el)) {
+				elements.push(el.text)
+			} else return null
 		}
 		out[key] = elements
 	}
@@ -297,17 +319,25 @@ function neuralTreeToV0Record(flat: Partial<Record<ComponentTag, string>>): {
 	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
 		const v = flat[tag]
 
-		if (v) streetParts.push(v)
+		if (v) {
+			streetParts.push(v)
+		}
 	}
 
-	if (streetParts.length > 0) out.street = [streetParts.join(" ")]
+	if (streetParts.length > 0) {
+		out.street = [streetParts.join(" ")]
+	}
 
 	if (flat.intersection_a || flat.intersection_b) {
 		const xs: string[] = []
 
-		if (flat.intersection_a) xs.push(flat.intersection_a)
+		if (flat.intersection_a) {
+			xs.push(flat.intersection_a)
+		}
 
-		if (flat.intersection_b) xs.push(flat.intersection_b)
+		if (flat.intersection_b) {
+			xs.push(flat.intersection_b)
+		}
 		out.street = [...(out.street ?? []), ...xs]
 	}
 
@@ -570,9 +600,13 @@ function printReport(results: AssertionResult[]): void {
 		const s = byFile.get(r.file) ?? { total: 0, v0_pass: 0, neural_pass: 0 }
 		s.total++
 
-		if (r.v0_pass) s.v0_pass++
+		if (r.v0_pass) {
+			s.v0_pass++
+		}
 
-		if (r.neural_pass) s.neural_pass++
+		if (r.neural_pass) {
+			s.neural_pass++
+		}
 		byFile.set(r.file, s)
 	}
 
@@ -582,9 +616,13 @@ function printReport(results: AssertionResult[]): void {
 		const s = byLocale.get(r.locale) ?? { total: 0, v0_pass: 0, neural_pass: 0 }
 		s.total++
 
-		if (r.v0_pass) s.v0_pass++
+		if (r.v0_pass) {
+			s.v0_pass++
+		}
 
-		if (r.neural_pass) s.neural_pass++
+		if (r.neural_pass) {
+			s.neural_pass++
+		}
 		byLocale.set(r.locale, s)
 	}
 
@@ -790,10 +828,11 @@ async function main(): Promise<void> {
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST as never } : {}) })
 		: undefined
 
-	if (pipeline)
+	if (pipeline) {
 		console.error(
 			`Assembled-pipeline arm ON (--assembled${args.arbitrate ? " --arbitrate" : ""}): grading runPipeline${args.arbitrate ? " with per-component arbitration" : ""} alongside raw neural.`
 		)
+	}
 
 	console.error("Running harness...")
 	const t0 = performance.now()

@@ -112,7 +112,9 @@ function fail(msg: string): never {
 function run(cmd: string, args: string[]) {
 	const r = spawnSync(cmd, args, { stdio: "inherit", env: { ...process.env } })
 
-	if (r.status !== 0) fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)
+	if (r.status !== 0) {
+		fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)
+	}
 }
 
 function runCapture(cmd: string, args: string[]) {
@@ -139,13 +141,21 @@ interface ReleaseManifest {
 async function main() {
 	const args = parseArgs()
 
-	if (!args.version) fail("--version required (e.g. v0.5.4)")
+	if (!args.version) {
+		fail("--version required (e.g. v0.5.4)")
+	}
 
-	if (!args.locale) fail("--locale required (e.g. en-us)")
+	if (!args.locale) {
+		fail("--locale required (e.g. en-us)")
+	}
 
-	if (!args.label) fail("--label required")
+	if (!args.label) {
+		fail("--label required")
+	}
 
-	if (!args.description) fail("--description required")
+	if (!args.description) {
+		fail("--description required")
+	}
 
 	// Adapt remote FST filename to the locale, in BCP-47 casing (lowercase language subtag,
 	// uppercase region subtag): "en-us" -> "en-US" -> "fst-en-US.bin". This MUST match the exact
@@ -165,12 +175,18 @@ async function main() {
 		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
 		const localPath = args[flagKey] as string | undefined
 
-		if (!localPath) fail(`${f.flag} (${f.description}) is required`)
+		if (!localPath) {
+			fail(`${f.flag} (${f.description}) is required`)
+		}
 
-		if (!existsSync(localPath)) fail(`${localPath} does not exist`)
+		if (!existsSync(localPath)) {
+			fail(`${localPath} does not exist`)
+		}
 		const size = statSync(localPath).size
 
-		if (size === 0) fail(`${localPath} is empty`)
+		if (size === 0) {
+			fail(`${localPath} is empty`)
+		}
 		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
 	}
 
@@ -185,7 +201,9 @@ async function main() {
 		: []
 
 	for (const localPath of postcodeBins) {
-		if (!existsSync(localPath) || statSync(localPath).size === 0) fail(`postcode binary ${localPath} missing/empty`)
+		if (!existsSync(localPath) || statSync(localPath).size === 0) {
+			fail(`postcode binary ${localPath} missing/empty`)
+		}
 	}
 
 	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
@@ -246,7 +264,9 @@ async function main() {
 		const url = `${BUCKET_RESOLVE}/${remoteBase}/${f.remoteName}`
 		const ok = await checkRemoteFileExists(url)
 
-		if (!ok) fail(`${f.remoteName} unreachable at ${url}`)
+		if (!ok) {
+			fail(`${f.remoteName} unreachable at ${url}`)
+		}
 		console.error(`  ✓ ${url}`)
 	}
 
@@ -254,7 +274,9 @@ async function main() {
 	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
 	const res = await fetch(releasesURL, { redirect: "follow" })
 
-	if (!res.ok) fail(`failed to fetch ${releasesURL}`)
+	if (!res.ok) {
+		fail(`failed to fetch ${releasesURL}`)
+	}
 	const releases = (await res.json()) as ReleaseManifest
 
 	const newEntry: Record<string, unknown> = {
@@ -274,15 +296,18 @@ async function main() {
 	}
 
 	for (const flag of ["hasAnchor", "hasPolygons"]) {
-		if (!newEntry[flag])
+		if (!newEntry[flag]) {
 			console.warn(
 				`⚠ ${flag}=false for ${args.version} — if the artifact will be staged to R2 later, releases.json must be re-patched or the demo silently degrades (rectangles / anchor-off).`
 			)
+		}
 	}
 
 	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]
 
-	if (args.setDefault) releases.defaultVersion = args.version
+	if (args.setDefault) {
+		releases.defaultVersion = args.version
+	}
 
 	const tmpReleases = resolve(tmpdir(), `releases-${args.locale}-${Date.now()}.json`)
 	writeFileSync(tmpReleases, JSON.stringify(releases, null, 2))

@@ -95,7 +95,9 @@ function macroF1(results: EvalResult[], useReconciled: boolean): number {
 	const tags = new Set<string>()
 
 	for (const r of results) {
-		for (const k of Object.keys(r.expected)) tags.add(k)
+		for (const k of Object.keys(r.expected)) {
+			tags.add(k)
+		}
 	}
 
 	let f1Sum = 0

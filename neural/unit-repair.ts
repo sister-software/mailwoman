@@ -141,7 +141,9 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 		for (let i = 0; i < tokens.length; i++) {
 			const t = tokens[i]!
 
-			if (t.start < m.end && m.start < t.end) overlap.push(i)
+			if (t.start < m.end && m.start < t.end) {
+				overlap.push(i)
+			}
 		}
 
 		if (overlap.length === 0) continue
@@ -166,7 +168,9 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 		overlap.forEach((i, k) => setLabel(i, k === 0 ? UNIT_B : UNIT_I))
 
 		// Local smear clip: clear unit tokens immediately flanking the snapped run.
-		for (let j = overlap[0]! - 1; j >= 0 && isUnitLabel(tokens[j]!.label); j--) setLabel(j, OUTSIDE)
+		for (let j = overlap[0]! - 1; j >= 0 && isUnitLabel(tokens[j]!.label); j--) {
+			setLabel(j, OUTSIDE)
+		}
 
 		for (let j = overlap[overlap.length - 1]! + 1; j < tokens.length && isUnitLabel(tokens[j]!.label); j++) {
 			setLabel(j, OUTSIDE)

@@ -73,17 +73,24 @@ function collectResolved(tree: AddressTree): Resolved[] {
 			})
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return out
 }
 function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_RANK): Resolved | null {
 	let best: Resolved | null = null
 
-	for (const r of rs) if (!best || (rank[r.placetype] ?? -1) > (rank[best.placetype] ?? -1)) best = r
+	for (const r of rs)
+		if (!best || (rank[r.placetype] ?? -1) > (rank[best.placetype] ?? -1)) {
+			best = r
+		}
 
 	return best
 }
@@ -241,14 +248,17 @@ async function main() {
 			if (predRegion) {
 				regionEmitted++
 
-				if (norm(predRegion) === norm(goldRegion)) regionCorrect++
+				if (norm(predRegion) === norm(goldRegion)) {
+					regionCorrect++
+				}
 				// #727: a broken diacritic subword — pred is a strict, shorter suffix of gold ("ère" of "Lozère").
 				else if (
 					goldRegion.length > predRegion.length &&
 					norm(goldRegion).endsWith(norm(predRegion)) &&
 					predRegion.length <= 4
-				)
+				) {
 					diacriticBroken++
+				}
 			}
 		}
 		// #965: mirror geocode-core's per-row scoping when `--hard-country` — coarse placer → anchorPosterior

@@ -92,7 +92,9 @@ export function detectKnownFormats(text: string, tokens: ReadonlyArray<TokenClas
 	// can be alphanumeric.
 	const poHit = detectPoBox(text, tokens)
 
-	if (poHit) hits.push(poHit)
+	if (poHit) {
+		hits.push(poHit)
+	}
 
 	return hits
 }

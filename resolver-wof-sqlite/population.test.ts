@@ -60,7 +60,9 @@ function buildFixtureDB(): DatabaseSync {
 	for (const p of FIXTURE) {
 		insertSpr.run(p.id, p.name, p.country, p.lat, p.lon, p.lat - 0.05, p.lat + 0.05, p.lon - 0.05, p.lon + 0.05)
 
-		if (p.population !== undefined) insertPop.run(p.id, p.population)
+		if (p.population !== undefined) {
+			insertPop.run(p.id, p.population)
+		}
 	}
 
 	return db
@@ -82,7 +84,9 @@ describe("buildPlaceSearchFTS — done-phase summary", () => {
 		let doneDetail: string | undefined
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
-				if (phase === "done") doneDetail = detail
+				if (phase === "done") {
+					doneDetail = detail
+				}
 			},
 		})
 		expect(doneDetail).toMatch(/FTS rows/)
@@ -154,7 +158,9 @@ describe("findPlace — population boost", () => {
 			const springfields = candidates.filter((c) => c.name === "Springfield")
 			expect(springfields.length).toBe(4)
 
-			for (const c of springfields) expect(c.population).toBeUndefined()
+			for (const c of springfields) {
+				expect(c.population).toBeUndefined()
+			}
 			// Their scores should all be equal (no population boost differentiation).
 			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
 			expect(scores.size).toBe(1)

@@ -77,9 +77,13 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 	let e = end
 	const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
 
-	while (s < e && !isWordChar(s)) s++
+	while (s < e && !isWordChar(s)) {
+		s++
+	}
 
-	while (e > s && !isWordChar(e - 1)) e--
+	while (e > s && !isWordChar(e - 1)) {
+		e--
+	}
 
 	return { start: s, end: e }
 }
@@ -95,9 +99,13 @@ function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attributi
 	const confidence = attribution.calibrate ? attribution.calibrate(rawConfidence) : rawConfidence
 	const node: AddressNode = { tag: open.tag, start, end, value, confidence, children: [] }
 
-	if (attribution.source !== undefined) node.source = attribution.source
+	if (attribution.source !== undefined) {
+		node.source = attribution.source
+	}
 
-	if (attribution.sourceID !== undefined) node.sourceID = attribution.sourceID
+	if (attribution.sourceID !== undefined) {
+		node.sourceID = attribution.sourceID
+	}
 	out.push(node)
 
 	return null
@@ -181,7 +189,9 @@ function findParent(
 function sortByStart(nodes: AddressNode[]): void {
 	nodes.sort((a, b) => a.start - b.start)
 
-	for (const n of nodes) sortByStart(n.children)
+	for (const n of nodes) {
+		sortByStart(n.children)
+	}
 }
 
 /**
@@ -200,14 +210,19 @@ export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: Buil
 	for (const span of spans) {
 		const parent = findParent(span, spans, parentOf)
 
-		if (parent) parent.children.push(span)
-		else roots.push(span)
+		if (parent) {
+			parent.children.push(span)
+		} else {
+			roots.push(span)
+		}
 	}
 
 	sortByStart(roots)
 	const tree: AddressTree = { raw, roots }
 
-	if (opts.system !== undefined) tree.system = opts.system
+	if (opts.system !== undefined) {
+		tree.system = opts.system
+	}
 
 	return tree
 }

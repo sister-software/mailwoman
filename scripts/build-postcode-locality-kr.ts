@@ -56,14 +56,17 @@ function incDecimalString(s: string): string {
 	let i = a.length - 1
 
 	for (; i >= 0; i--) {
-		if (a[i] === "9") a[i] = "0"
-		else {
+		if (a[i] === "9") {
+			a[i] = "0"
+		} else {
 			a[i] = String(Number(a[i]) + 1)
 			break
 		}
 	}
 
-	if (i < 0) a.unshift("1")
+	if (i < 0) {
+		a.unshift("1")
+	}
 
 	return a.join("")
 }
@@ -97,10 +100,12 @@ function pyRound(x: number, nd: number = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) roundUp = true
-	else if (first === 5) {
-		if (/[1-9]/.test(rest.slice(1))) roundUp = true
-		else {
+	if (first > 5) {
+		roundUp = true
+	} else if (first === 5) {
+		if (/[1-9]/.test(rest.slice(1))) {
+			roundUp = true
+		} else {
 			// exact half → round to even
 			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
@@ -108,7 +113,9 @@ function pyRound(x: number, nd: number = 0): number {
 	}
 	let combined = intPart + keep
 
-	if (roundUp) combined = incDecimalString(combined)
+	if (roundUp) {
+		combined = incDecimalString(combined)
+	}
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
@@ -202,8 +209,11 @@ async function main(): Promise<void> {
 		const bucket = grid.get(key)
 		const entry = { pid: id, la: latitude, lo: longitude }
 
-		if (bucket) bucket.push(entry)
-		else grid.set(key, [entry])
+		if (bucket) {
+			bucket.push(entry)
+		} else {
+			grid.set(key, [entry])
+		}
 	}
 
 	// Hangul locality-name index (kor + Hangul-bearing und): bare-stem -> set(ids).
@@ -219,8 +229,11 @@ async function main(): Promise<void> {
 				const key = bare(nm)
 				const set = nameIdx.get(key)
 
-				if (set) set.add(nid)
-				else nameIdx.set(key, new Set([nid]))
+				if (set) {
+					set.add(nid)
+				} else {
+					nameIdx.set(key, new Set([nid]))
+				}
 			}
 		}
 	}
@@ -256,7 +269,9 @@ async function main(): Promise<void> {
 				for (const { pid, la, lo } of grid.get(`${cx + dx}|${cy + dy}`) ?? []) {
 					const d = haversineKm(lat, lon, la, lo)
 
-					if (d <= MATCH_RADIUS_KM) out.push({ d, pid })
+					if (d <= MATCH_RADIUS_KM) {
+						out.push({ d, pid })
+					}
 				}
 			}
 		}
@@ -278,7 +293,9 @@ async function main(): Promise<void> {
 			if (lat === null || lon === null) continue
 
 			// pc -> (place, admin1, lat, lon)
-			if (!postal.has(f[1]!)) postal.set(f[1]!, [f[2]!, f[3]!, lat, lon])
+			if (!postal.has(f[1]!)) {
+				postal.set(f[1]!, [f[2]!, f[3]!, lat, lon])
+			}
 		}
 	}
 
@@ -310,7 +327,9 @@ async function main(): Promise<void> {
 		const { d: d0, pid: pid0 } = nb[0]! // point-nearest
 		dists.push(d0)
 
-		if (regionIdx.has(norm(admin1)) || regionIdx.has(bare(admin1))) provinceOk++
+		if (regionIdx.has(norm(admin1)) || regionIdx.has(bare(admin1))) {
+			provinceOk++
+		}
 		// Hangul name confirmation: a name-matched locality that is ALSO nearby (two signals agreeing —
 		// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
 		const nameIds = nameIdx.get(bare(place)) ?? new Set<number>()
@@ -332,7 +351,9 @@ async function main(): Promise<void> {
 	const insert = db.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
 	db.exec("BEGIN")
 
-	for (const r of rows) insert.run(...r)
+	for (const r of rows) {
+		insert.run(...r)
+	}
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -380,7 +401,9 @@ async function main(): Promise<void> {
 	]
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
-	for (const [k, v] of meta) insMeta.run(k, v)
+	for (const [k, v] of meta) {
+		insMeta.run(k, v)
+	}
 
 	db.exec("PRAGMA journal_mode=DELETE")
 	db.exec("ANALYZE")

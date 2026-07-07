@@ -98,9 +98,13 @@ function foldToken(s: string): string {
 const STREET_WORD_SET: ReadonlySet<string> = (() => {
 	const out = new Set<string>()
 
-	for (const w of CA_STREET_TYPES_EN) out.add(foldToken(w))
+	for (const w of CA_STREET_TYPES_EN) {
+		out.add(foldToken(w))
+	}
 
-	for (const w of CA_STREET_TYPES_FR) out.add(foldToken(w))
+	for (const w of CA_STREET_TYPES_FR) {
+		out.add(foldToken(w))
+	}
 
 	return out
 })()

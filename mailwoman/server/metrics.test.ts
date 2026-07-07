@@ -15,7 +15,9 @@ import { __resetMetricsForTest, metricsSnapshot, recordGeocode } from "./metrics
 test("metricsSnapshot: percentiles over a known reservoir [1..10]", () => {
 	__resetMetricsForTest()
 
-	for (let v = 1; v <= 10; v++) recordGeocode(v, "admin")
+	for (let v = 1; v <= 10; v++) {
+		recordGeocode(v, "admin")
+	}
 
 	const snap = metricsSnapshot()
 	expect(snap.geocode.latency_samples).toBe(10)
@@ -48,7 +50,9 @@ test("metricsSnapshot: latency values are rounded to two decimals", () => {
 test("metricsSnapshot: snapshot sorts an unsorted insertion order before taking percentiles", () => {
 	__resetMetricsForTest()
 
-	for (const v of [10, 1, 7, 3, 9, 2, 8, 4, 6, 5]) recordGeocode(v, "admin")
+	for (const v of [10, 1, 7, 3, 9, 2, 8, 4, 6, 5]) {
+		recordGeocode(v, "admin")
+	}
 	// Same multiset as [1..10] → same percentiles regardless of arrival order.
 	expect(metricsSnapshot().geocode.latency_ms).toMatchObject({ p50: 6, p90: 10, p99: 10, max: 10 })
 })

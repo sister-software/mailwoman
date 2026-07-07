@@ -127,13 +127,19 @@ export function resolvedResult(
 			const conf = n.confidence ?? 0
 			confs.push(conf)
 
-			if (!best || rank > best.rank) best = { rank, lat: n.lat, lon: n.lon, conf }
+			if (!best || rank > best.rank) {
+				best = { rank, lat: n.lat, lon: n.lon, conf }
+			}
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return best ? { lat: best.lat, lon: best.lon, nodeConf: best.conf, minConf: Math.min(...confs) } : null
 }
@@ -211,7 +217,9 @@ async function collect(): Promise<ScoredRow[]> {
 	const append = (r: ScoredRow): void => {
 		rows.push(r)
 
-		if (ckpt) appendFileSync(ckpt, JSON.stringify(r) + "\n")
+		if (ckpt) {
+			appendFileSync(ckpt, JSON.stringify(r) + "\n")
+		}
 	}
 
 	for (const cc of LOCALES) {
@@ -266,7 +274,9 @@ async function collect(): Promise<ScoredRow[]> {
 				})
 
 				// Rate-limit ONLY on a real Nominatim hit (cache miss); cached re-run skips it.
-				if (!hit) await sleep(1100)
+				if (!hit) {
+					await sleep(1100)
+				}
 			} catch (e) {
 				// One bad row must not kill the whole collection. Record a non-answer + move on.
 				console.error(`  ⚠ row failed (${cc} "${input.slice(0, 40)}"): ${(e as Error).message}`)
@@ -277,7 +287,9 @@ async function collect(): Promise<ScoredRow[]> {
 			// it (~380-parse SIGKILL on the lab box). A periodic forced GC reclaims it; run the harness
 			// with `node --expose-gc` to enable. No-op without the flag (the checkpoint+resume still
 			// covers a crash). Keyed off the GLOBAL row count, not the per-locale `i`.
-			if (rows.length % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
+			if (rows.length % 50 === 0) {
+				;(globalThis as { gc?: () => void }).gc?.()
+			}
 
 			if (i % 20 === 0) {
 				console.error(`  ${i}/${goldens.length}`)
@@ -348,7 +360,9 @@ function analyze(rows: ScoredRow[]): string {
 	L.push(`| τ | accepted | precision @25km | recall |`)
 	L.push(`|--:|--:|--:|--:|`)
 
-	for (const p of curve) L.push(`| ${p.tau.toFixed(3)} | ${p.accepted} | ${pct(p.precision)} | ${pct(p.recall)} |`)
+	for (const p of curve) {
+		L.push(`| ${p.tau.toFixed(3)} | ${p.accepted} | ${pct(p.precision)} | ${pct(p.recall)} |`)
+	}
 	L.push(`\n**Nominatim (single point, same set):** precision ${pct(nom.precision)} · recall ${pct(nom.recall)}\n`)
 
 	const beats = curve.filter((p) => !Number.isNaN(p.precision) && p.precision > nom.precision && p.recall >= 0.25)
@@ -457,4 +471,6 @@ async function main(): Promise<void> {
 	console.log(md)
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) await main()
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+	await main()
+}

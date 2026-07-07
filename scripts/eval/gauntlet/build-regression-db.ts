@@ -24,7 +24,9 @@ const tmp = `${output}.tmp-${process.pid}`
 
 mkdirSync(dirname(output), { recursive: true })
 
-if (existsSync(tmp)) rmSync(tmp)
+if (existsSync(tmp)) {
+	rmSync(tmp)
+}
 
 const db = new DatabaseSync(tmp)
 const kdb = new DatabaseClient<GauntletDatabase>({ database: db })
@@ -55,14 +57,19 @@ for (const c of REGRESSION_CASES) {
 }
 await kdb.destroy()
 
-if (existsSync(output)) renameSync(output, `${output}.prev`)
+if (existsSync(output)) {
+	renameSync(output, `${output}.prev`)
+}
 renameSync(tmp, output)
 
-if (existsSync(`${output}.prev`)) rmSync(`${output}.prev`)
+if (existsSync(`${output}.prev`)) {
+	rmSync(`${output}.prev`)
+}
 
 console.log(`[gauntlet] built ${output} — ${REGRESSION_CASES.length} cases`)
 const kinds = new Map<string, number>()
 
-for (const c of REGRESSION_CASES)
+for (const c of REGRESSION_CASES) {
 	kinds.set(`${c.country}/${c.addressKind}`, (kinds.get(`${c.country}/${c.addressKind}`) ?? 0) + 1)
+}
 console.log(`[gauntlet] coverage by kind: ${[...kinds].map(([k, n]) => `${k}=${n}`).join("  ")}`)

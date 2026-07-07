@@ -40,7 +40,9 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 	for (let t = 0; t < numTokens; t++) {
 		const row = new Array<number>(numLabels).fill(0)
 
-		if (t === boostIdx && labelIdx >= 0) row[labelIdx] = boostMagnitude
+		if (t === boostIdx && labelIdx >= 0) {
+			row[labelIdx] = boostMagnitude
+		}
 		matrix.push(row)
 	}
 

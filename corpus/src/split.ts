@@ -112,12 +112,18 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 	let corpus_version = ""
 
 	for (const row of rows) {
-		if (!corpus_version && row.corpus_version) corpus_version = row.corpus_version
+		if (!corpus_version && row.corpus_version) {
+			corpus_version = row.corpus_version
+		}
 		const split = splitForRow(row, holdouts)
 
-		if (split === "train") train.push(row.source_id)
-		else if (split === "val") val.push(row.source_id)
-		else test.push(row.source_id)
+		if (split === "train") {
+			train.push(row.source_id)
+		} else if (split === "val") {
+			val.push(row.source_id)
+		} else {
+			test.push(row.source_id)
+		}
 	}
 
 	const total = train.length + val.length + test.length
@@ -217,7 +223,9 @@ async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string):
 			try {
 				const obj = JSON.parse(line) as { source_id?: string }
 
-				if (typeof obj.source_id === "string") out.write(`${obj.source_id}\n`)
+				if (typeof obj.source_id === "string") {
+					out.write(`${obj.source_id}\n`)
+				}
 			} catch (err) {
 				reject(err as Error)
 			}
@@ -235,8 +243,11 @@ async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string):
 		const proc = spawn("sort", [unsortedPath, "-o", outPath], { env: { ...process.env, LC_ALL: "C" } })
 		proc.on("error", reject)
 		proc.on("exit", (code) => {
-			if (code === 0) resolve()
-			else reject(new Error(`sort exited with code ${code}`))
+			if (code === 0) {
+				resolve()
+			} else {
+				reject(new Error(`sort exited with code ${code}`))
+			}
 		})
 	})
 	await unlink(unsortedPath).catch(() => {})

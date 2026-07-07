@@ -69,7 +69,9 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const colorMatch: unknown[] = ["match", ["get", "cat"]]
 
-for (const [cat, color] of Object.entries(CATEGORY_COLOR)) colorMatch.push(cat, color)
+for (const [cat, color] of Object.entries(CATEGORY_COLOR)) {
+	colorMatch.push(cat, color)
+}
 colorMatch.push("#9e9e9e")
 
 const style = {

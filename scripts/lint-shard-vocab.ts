@@ -280,7 +280,9 @@ async function main(): Promise<void> {
 		for (const ps of bysrc.values()) {
 			const take = Math.max(2, pyRound(ps.length * args.fraction))
 
-			for (const p of ps.slice(0, take)) sliced.push(p)
+			for (const p of ps.slice(0, take)) {
+				sliced.push(p)
+			}
 		}
 		parts = sliced
 	}
@@ -306,7 +308,9 @@ async function main(): Promise<void> {
 			}
 		}
 
-		if ((i + 1) % 100 === 0) console.log(`  ...${i + 1}/${parts.length} parts`)
+		if ((i + 1) % 100 === 0) {
+			console.log(`  ...${i + 1}/${parts.length} parts`)
+		}
 	}
 
 	// 4. compare; flag contradictions (affix-split is expected — surfaced but tagged)
@@ -321,8 +325,11 @@ async function main(): Promise<void> {
 		if (bTotal < args.minCount || !bTag || bTag === sTag || bFrac < args.threshold) continue
 		const row: Row = [w, sTag, bTag, bFrac, bTotal]
 
-		if ((sTag === "street_suffix" || sTag === "street_prefix") && bTag === "street") affix.push(row)
-		else flagged.push(row)
+		if ((sTag === "street_suffix" || sTag === "street_prefix") && bTag === "street") {
+			affix.push(row)
+		} else {
+			flagged.push(row)
+		}
 	}
 
 	const sections: Array<[string, Row[]]> = [

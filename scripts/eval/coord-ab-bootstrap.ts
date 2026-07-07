@@ -126,7 +126,9 @@ for (let r = 0; r < reps; r++) {
 
 	dResolve.push(rc / n - rb / n)
 
-	if (eb.length && ec.length) dP50.push(median(ec) - median(eb))
+	if (eb.length && ec.length) {
+		dP50.push(median(ec) - median(eb))
+	}
 }
 
 const round = (x: number) => +x.toFixed(4)

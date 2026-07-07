@@ -147,10 +147,14 @@ function collectResolved(tree: AddressTree): Resolved[] {
 			}
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return out
 }
@@ -159,7 +163,9 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
 	for (const r of rs) {
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+			best = r
+		}
 	}
 
 	return best
@@ -179,7 +185,9 @@ const localityExpanded = (rs: Resolved[]): Resolved | undefined => {
 	let best: Resolved | undefined
 
 	for (const r of hits)
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+			best = r
+		}
 
 	return best
 }
@@ -236,7 +244,9 @@ async function main(): Promise<void> {
 			for (const r of namesStmt.all(id) as { name: string }[]) {
 				const n = normName(r.name)
 
-				if (n) set.add(n)
+				if (n) {
+					set.add(n)
+				}
 			}
 			altCache.set(id, set)
 		}
@@ -255,7 +265,10 @@ async function main(): Promise<void> {
 			set = new Set<string>()
 
 			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
-				for (const t of normName(r.name).split(" ")) if (t.length >= 4) set.add(t)
+				for (const t of normName(r.name).split(" "))
+					if (t.length >= 4) {
+						set.add(t)
+					}
 			}
 			ancestorTokCache.set(id, set)
 		}
@@ -353,11 +366,17 @@ async function main(): Promise<void> {
 	const bump = (a: Agg, loc: boolean, resolved: boolean, err: number | null): void => {
 		a.n++
 
-		if (loc) a.locMatch++
+		if (loc) {
+			a.locMatch++
+		}
 
-		if (resolved) a.resolved++
+		if (resolved) {
+			a.resolved++
+		}
 
-		if (err !== null) a.errs.push(err)
+		if (err !== null) {
+			a.errs.push(err)
+		}
 	}
 	// Three arms:
 	//   current        = model parse, scored with the production `locality`-strict filter (reproduces oa-resolver-eval).
@@ -372,7 +391,9 @@ async function main(): Promise<void> {
 	const recordTo = (which: ArmKey, state: string, loc: boolean, resolved: boolean, err: number | null): void => {
 		const m = arm[which].byState
 
-		if (!m.has(state)) m.set(state, newAgg())
+		if (!m.has(state)) {
+			m.set(state, newAgg())
+		}
 		bump(m.get(state)!, loc, resolved, err)
 		bump(arm[which].overall, loc, resolved, err)
 	}
@@ -430,7 +451,9 @@ async function main(): Promise<void> {
 			roots.push(mk("locality", goldLoc))
 		}
 
-		if (goldPc) roots.push(mk("postcode", goldPc))
+		if (goldPc) {
+			roots.push(mk("postcode", goldPc))
+		}
 
 		return { raw: `${goldLoc} ${goldReg} ${goldPc}`.trim(), roots }
 	}
@@ -440,7 +463,9 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		i++
 
-		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
+		if (i % 500 === 0) {
+			console.error(`  ${i}/${rows.length}`)
+		}
 		const state = row.state || "??"
 
 		// --- CURRENT arm: model parse (skipped under --oracle-only) ---
@@ -513,7 +538,9 @@ async function main(): Promise<void> {
 					anyByName = true
 
 					if (regionID !== null && regionAncestorStmt.get(c.id, regionID)) {
-						if (!inRegionByName) inRegionByName = { id: c.id, name: c.name, lat: c.lat, lon: c.lon }
+						if (!inRegionByName) {
+							inRegionByName = { id: c.id, name: c.name, lat: c.lat, lon: c.lon }
+						}
 					}
 				}
 			}
@@ -535,7 +562,9 @@ async function main(): Promise<void> {
 					row.lon
 				) as { id: number; name: string; placetype: string; lat: number; lon: number } | undefined
 
-				if (r) nearest = { ...r, km: haversineKm(r.lat, r.lon, row.lat, row.lon) }
+				if (r) {
+					nearest = { ...r, km: haversineKm(r.lat, r.lon, row.lat, row.lon) }
+				}
 			}
 			const NEAR_KM = 12 // a town centroid within this radius of the gold address ⇒ the place IS covered
 
@@ -647,7 +676,9 @@ async function main(): Promise<void> {
 	const stateOfBucket = (arr: OracleFail[]): Record<string, number> => {
 		const m: Record<string, number> = {}
 
-		for (const f of arr) m[f.state] = (m[f.state] ?? 0) + 1
+		for (const f of arr) {
+			m[f.state] = (m[f.state] ?? 0) + 1
+		}
 
 		return m
 	}
@@ -678,7 +709,9 @@ async function main(): Promise<void> {
 	examples("NAME-MISMATCH", buckets.nameMismatch)
 	examples("RANKING", buckets.ranking)
 
-	if (buckets.other.length > 0) examples("OTHER", buckets.other)
+	if (buckets.other.length > 0) {
+		examples("OTHER", buckets.other)
+	}
 
 	const report = lines.join("\n")
 	console.log(report)

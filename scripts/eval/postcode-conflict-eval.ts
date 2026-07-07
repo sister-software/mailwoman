@@ -47,12 +47,18 @@ function flagged(tree: AddressTree): boolean {
 	const walk = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
-		if (meta?.["postcode_city_mismatch"] === true) hit = true
+		if (meta?.["postcode_city_mismatch"] === true) {
+			hit = true
+		}
 
-		for (const c of n.children) walk(c)
+		for (const c of n.children) {
+			walk(c)
+		}
 	}
 
-	for (const r of tree.roots) walk(r)
+	for (const r of tree.roots) {
+		walk(r)
+	}
 
 	return hit
 }
@@ -75,9 +81,13 @@ const results: Array<{ row: Row; flag: boolean; ok: boolean }> = []
 for (const row of rows) {
 	const roots: AddressNode[] = []
 
-	if (row.components.locality) roots.push(node("locality", row.components.locality))
+	if (row.components.locality) {
+		roots.push(node("locality", row.components.locality))
+	}
 
-	if (row.components.postcode) roots.push(node("postcode", row.components.postcode))
+	if (row.components.postcode) {
+		roots.push(node("postcode", row.components.postcode))
+	}
 	// Country from the row's locale tag ("de-DE" → "DE") so the test set can mix locales.
 	const defaultCountry = (row.locale?.split("-")[1] ?? "").toUpperCase() || undefined
 	const resolved = await resolver.resolveTree({ raw: row.input, roots }, { defaultCountry })

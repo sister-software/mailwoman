@@ -70,7 +70,9 @@ function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boo
 async function collect(inputPath: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
 
-	for await (const r of createGeonamesAdapter().rows({ inputPath, ...extra })) out.push(r)
+	for await (const r of createGeonamesAdapter().rows({ inputPath, ...extra })) {
+		out.push(r)
+	}
 
 	return out
 }

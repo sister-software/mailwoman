@@ -378,11 +378,11 @@ export function regionToStateSlug(region: string | undefined): string | null {
 }
 
 /**
- * Build the URL bag handed to `loadNeuralClassifierFromUrls` for a release. Shared by the demo's primary and compare
+ * Build the URL bag handed to `loadNeuralClassifierFromURLs` for a release. Shared by the demo's primary and compare
  * classifier loaders so the per-file asset layout (model / tokenizer / card / gazetteer lexicon, plus the optional
  * US/DE/FR postcode-anchor binaries) is defined exactly once.
  */
-export function neuralClassifierLoadUrls(
+export function neuralClassifierLoadURLs(
 	locale: string,
 	version: string,
 	opts: { hasAnchor?: boolean; forceWASM: boolean }
@@ -399,7 +399,7 @@ export function neuralClassifierLoadUrls(
 		// — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
 		...(opts.hasAnchor
 			? {
-					postcodeBinaryUrls: [
+					postcodeBinaryURLs: [
 						assetURL(locale, version, "postcode-us.bin"),
 						assetURL(locale, version, "postcode-de.bin"),
 						assetURL(locale, version, "postcode-fr.bin"),

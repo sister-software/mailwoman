@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript (Node 26 type-stripping for the module; TSX compile for Ink commands), `node:sqlite` `DatabaseSync`, Pastel file-based commands, vitest, DuckDB (`@duckdb/node-api`, lazy-optional) for the Overture S3 pull.
 
-**Spec:** `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md`. This plan implements PR A (Tasks 1–2) and PR B (Tasks 3–16). **PR C (the augment-script archaeology + remaining builders/diagnostics sweep) is planned separately after PR B lands** — its work is characterized *with* Task 11's census tooling.
+**Spec:** `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md`. This plan implements PR A (Tasks 1–2) and PR B (Tasks 3–16). **PR C (the augment-script archaeology + remaining builders/diagnostics sweep) is planned separately after PR B lands** — its work is characterized _with_ Task 11's census tooling.
 
 ## Global Constraints
 
@@ -26,11 +26,13 @@
 ### Task 1: `sealDatabase` / `openBuiltDatabase` in `@mailwoman/core/utils` (PR A)
 
 **Files:**
+
 - Create: `core/utils/sealed-db.ts`
 - Create: `core/utils/sealed-db.test.ts`
 - Modify: `core/utils/index.ts` (add `export * from "./sealed-db.js"`)
 
 **Interfaces:**
+
 - Produces: `sealDatabase(path: string): void`, `openBuiltDatabase(path: string, opts?: { write?: boolean }): DatabaseSync`, `class SealedArtifactError extends Error`, `isSealed(path: string): boolean`. Later tasks import these from `@mailwoman/core/utils`.
 
 - [ ] **Step 1: Write the failing test**
@@ -210,12 +212,14 @@ git commit -m "feat(core): sealDatabase/openBuiltDatabase — the sealed read-on
 ### Task 2: Retrofit sealing into the existing builders (PR A)
 
 **Files:**
+
 - Modify: `mailwoman/gazetteer-pipeline.ts` — `buildCandidate` seals its output
 - Modify: `resolver-wof-sqlite/build-slim.ts` — the slim builder seals its output
 - Modify: `scripts/build-unified-wof.ts` — seal after `VACUUM INTO` (this script is deleted in Task 15; sealing it now closes the window until then)
 - Modify: `scripts/AGENTS.md` — add the invariant one-liner
 
 **Interfaces:**
+
 - Consumes: `sealDatabase` from `@mailwoman/core/utils` (Task 1).
 
 - [ ] **Step 1: Seal in `buildCandidate`** — in `mailwoman/gazetteer-pipeline.ts`, import `sealDatabase` from `@mailwoman/core/utils`; at the end of `buildCandidate` (after the underlying build returns, before the `return`), add `sealDatabase(opts.out)`.
@@ -223,7 +227,7 @@ git commit -m "feat(core): sealDatabase/openBuiltDatabase — the sealed read-on
 - [ ] **Step 3: Seal in `build-unified-wof.ts`** — after the frozen-artifact verification block (the `frozenMode` check near the end), add `sealDatabase(outputPath)` and a `console.error("  sealed 0444")`.
 - [ ] **Step 4: Policy line in `scripts/AGENTS.md`** — append to the Addendum: `- Every built SQLite DB is SEALED read-only (chmod 0444) by sealDatabase (@mailwoman/core/utils). Never reopen a shipped DB read-write — rebuild it. openBuiltDatabase enforces this with a named error.`
 - [ ] **Step 5: Verify** — Run: `yarn typecheck:scripts && npx tsc -b core mailwoman resolver-wof-sqlite && yarn vitest run core/utils/sealed-db.test.ts mailwoman/geocode-core.test.ts`
-Expected: exit 0, tests pass.
+      Expected: exit 0, tests pass.
 - [ ] **Step 6: Commit**
 
 ```bash
@@ -232,18 +236,20 @@ git add -u mailwoman/gazetteer-pipeline.ts resolver-wof-sqlite/build-slim.ts scr
 git commit -m "feat: seal every builder's output 0444 (buildCandidate, build-slim, build-unified-wof)"
 ```
 
-*(PR A can be cut here if the operator wants the invariant shipped independently.)*
+_(PR A can be cut here if the operator wants the invariant shipped independently.)_
 
 ---
 
 ### Task 3: `gazetteer-pipeline.ts` → `gazetteer-pipeline/` module (PR B)
 
 **Files:**
+
 - Move: `mailwoman/gazetteer-pipeline.ts` → `mailwoman/gazetteer-pipeline/index.ts`
 - Modify: every importer — `git grep -l 'gazetteer-pipeline.js' mailwoman/` (the `commands/gazetteer/*.tsx` files import `../../gazetteer-pipeline.js` → becomes `../../gazetteer-pipeline/index.js`)
 - Modify: `mailwoman/package.json` — if an exports-map entry names `./out/gazetteer-pipeline.js`, update it to `./out/gazetteer-pipeline/index.js` (check first; add nothing new if absent)
 
 **Interfaces:**
+
 - Produces: the module directory later tasks add files into. All existing exports (`buildCandidate`, `foldGeonamesIntoAdmin`, `DEFAULT_FOLD_COUNTRIES`, `promoteCandidate`, `publishGazetteer`, `resolvePostcodeShards`, `wofDir`, …) unchanged, now via `gazetteer-pipeline/index.js`.
 
 - [ ] **Step 1: Move** — `git mv mailwoman/gazetteer-pipeline.ts mailwoman/gazetteer-pipeline/index.ts`
@@ -256,11 +262,13 @@ git commit -m "feat: seal every builder's output 0444 (buildCandidate, build-sli
 ### Task 4: `gazetteer-pipeline/defaults.ts` — the canonical recipe as code
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/defaults.ts`
 - Create: `mailwoman/gazetteer-pipeline/defaults.test.ts`
 - Modify: `mailwoman/gazetteer-pipeline/index.ts` (add `export * from "./defaults.js"`)
 
 **Interfaces:**
+
 - Produces: `DEFAULT_WOF_PRIORITY_COUNTRIES: readonly string[]` (11), `DEFAULT_OVERTURE_COUNTRIES: readonly string[]` (86), `DEFAULT_GEONAMES_COUNTRIES: readonly string[]` (161), `DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"`, `DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"`.
 
 - [ ] **Step 1: Write the failing test**
@@ -290,28 +298,269 @@ test("the canonical coverage recipe holds its reconstructed shape (see #1015/#10
 
 ```ts
 export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
-	"CN", "DE", "ES", "FR", "GB", "IT", "JP", "KR", "NL", "TW", "US",
+	"CN",
+	"DE",
+	"ES",
+	"FR",
+	"GB",
+	"IT",
+	"JP",
+	"KR",
+	"NL",
+	"TW",
+	"US",
 ] as const
 
 export const DEFAULT_OVERTURE_COUNTRIES = [
-	"AE", "AO", "AR", "AT", "AU", "BD", "BE", "BG", "BH", "BO", "BR", "BY", "CA", "CH", "CI", "CL", "CM",
-	"CO", "CR", "CU", "CZ", "DK", "DO", "DZ", "EC", "EE", "EG", "ET", "FI", "GH", "GR", "GT", "HR", "HU",
-	"ID", "IE", "IL", "IN", "IQ", "IR", "IS", "JO", "KE", "KH", "KW", "KZ", "LB", "LK", "LT", "LU", "LV",
-	"MA", "MM", "MX", "MY", "NG", "NO", "NP", "NZ", "OM", "PA", "PE", "PH", "PK", "PL", "PT", "QA", "RO",
-	"RS", "RU", "SA", "SE", "SG", "SI", "SK", "SN", "TH", "TN", "TR", "TZ", "UA", "UG", "UY", "VE", "VN", "ZA",
+	"AE",
+	"AO",
+	"AR",
+	"AT",
+	"AU",
+	"BD",
+	"BE",
+	"BG",
+	"BH",
+	"BO",
+	"BR",
+	"BY",
+	"CA",
+	"CH",
+	"CI",
+	"CL",
+	"CM",
+	"CO",
+	"CR",
+	"CU",
+	"CZ",
+	"DK",
+	"DO",
+	"DZ",
+	"EC",
+	"EE",
+	"EG",
+	"ET",
+	"FI",
+	"GH",
+	"GR",
+	"GT",
+	"HR",
+	"HU",
+	"ID",
+	"IE",
+	"IL",
+	"IN",
+	"IQ",
+	"IR",
+	"IS",
+	"JO",
+	"KE",
+	"KH",
+	"KW",
+	"KZ",
+	"LB",
+	"LK",
+	"LT",
+	"LU",
+	"LV",
+	"MA",
+	"MM",
+	"MX",
+	"MY",
+	"NG",
+	"NO",
+	"NP",
+	"NZ",
+	"OM",
+	"PA",
+	"PE",
+	"PH",
+	"PK",
+	"PL",
+	"PT",
+	"QA",
+	"RO",
+	"RS",
+	"RU",
+	"SA",
+	"SE",
+	"SG",
+	"SI",
+	"SK",
+	"SN",
+	"TH",
+	"TN",
+	"TR",
+	"TZ",
+	"UA",
+	"UG",
+	"UY",
+	"VE",
+	"VN",
+	"ZA",
 ] as const
 
 export const DEFAULT_GEONAMES_COUNTRIES = [
-	"AD", "AF", "AG", "AI", "AL", "AM", "AS", "AT", "AW", "AX", "AZ", "BA", "BB", "BE", "BF", "BI", "BJ",
-	"BL", "BM", "BN", "BQ", "BS", "BT", "BW", "BZ", "CC", "CD", "CF", "CG", "CK", "CV", "CW", "CX", "CY",
-	"CZ", "DJ", "DK", "DM", "EH", "ER", "FI", "FJ", "FK", "FM", "FO", "GA", "GD", "GE", "GF", "GG", "GI",
-	"GL", "GM", "GN", "GP", "GQ", "GS", "GU", "GW", "GY", "HK", "HN", "HR", "HT", "IM", "JE", "JM", "KG",
-	"KI", "KM", "KN", "KP", "KY", "LA", "LC", "LI", "LR", "LS", "LT", "LU", "LV", "LY", "MC", "MD", "ME",
-	"MF", "MG", "MH", "MK", "ML", "MN", "MO", "MP", "MQ", "MR", "MS", "MT", "MU", "MV", "MW", "MZ", "NA",
-	"NC", "NE", "NF", "NI", "NO", "NR", "NU", "PF", "PG", "PL", "PM", "PN", "PR", "PS", "PW", "PY", "RE",
-	"RW", "SB", "SC", "SD", "SH", "SI", "SJ", "SK", "SL", "SM", "SO", "SR", "SS", "ST", "SV", "SX", "SY",
-	"SZ", "TC", "TD", "TF", "TG", "TJ", "TL", "TM", "TO", "TT", "TV", "UZ", "VA", "VC", "VG", "VI", "VU",
-	"WF", "WS", "XK", "YE", "YT", "ZM", "ZW",
+	"AD",
+	"AF",
+	"AG",
+	"AI",
+	"AL",
+	"AM",
+	"AS",
+	"AT",
+	"AW",
+	"AX",
+	"AZ",
+	"BA",
+	"BB",
+	"BE",
+	"BF",
+	"BI",
+	"BJ",
+	"BL",
+	"BM",
+	"BN",
+	"BQ",
+	"BS",
+	"BT",
+	"BW",
+	"BZ",
+	"CC",
+	"CD",
+	"CF",
+	"CG",
+	"CK",
+	"CV",
+	"CW",
+	"CX",
+	"CY",
+	"CZ",
+	"DJ",
+	"DK",
+	"DM",
+	"EH",
+	"ER",
+	"FI",
+	"FJ",
+	"FK",
+	"FM",
+	"FO",
+	"GA",
+	"GD",
+	"GE",
+	"GF",
+	"GG",
+	"GI",
+	"GL",
+	"GM",
+	"GN",
+	"GP",
+	"GQ",
+	"GS",
+	"GU",
+	"GW",
+	"GY",
+	"HK",
+	"HN",
+	"HR",
+	"HT",
+	"IM",
+	"JE",
+	"JM",
+	"KG",
+	"KI",
+	"KM",
+	"KN",
+	"KP",
+	"KY",
+	"LA",
+	"LC",
+	"LI",
+	"LR",
+	"LS",
+	"LT",
+	"LU",
+	"LV",
+	"LY",
+	"MC",
+	"MD",
+	"ME",
+	"MF",
+	"MG",
+	"MH",
+	"MK",
+	"ML",
+	"MN",
+	"MO",
+	"MP",
+	"MQ",
+	"MR",
+	"MS",
+	"MT",
+	"MU",
+	"MV",
+	"MW",
+	"MZ",
+	"NA",
+	"NC",
+	"NE",
+	"NF",
+	"NI",
+	"NO",
+	"NR",
+	"NU",
+	"PF",
+	"PG",
+	"PL",
+	"PM",
+	"PN",
+	"PR",
+	"PS",
+	"PW",
+	"PY",
+	"RE",
+	"RW",
+	"SB",
+	"SC",
+	"SD",
+	"SH",
+	"SI",
+	"SJ",
+	"SK",
+	"SL",
+	"SM",
+	"SO",
+	"SR",
+	"SS",
+	"ST",
+	"SV",
+	"SX",
+	"SY",
+	"SZ",
+	"TC",
+	"TD",
+	"TF",
+	"TG",
+	"TJ",
+	"TL",
+	"TM",
+	"TO",
+	"TT",
+	"TV",
+	"UZ",
+	"VA",
+	"VC",
+	"VG",
+	"VI",
+	"VU",
+	"WF",
+	"WS",
+	"XK",
+	"YE",
+	"YT",
+	"ZM",
+	"ZW",
 ] as const
 
 export const DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"
@@ -326,10 +575,12 @@ export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 ### Task 5: `admin/fold-overture.ts` — move `ingestOvertureDivisions`
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/admin/fold-overture.ts`
 - Modify: `scripts/build-unified-wof.ts` — delete the moved function + `OVERTURE_ID_BASE` + `OVERTURE_DIVISION_SUBTYPES`; import them from the module instead
 
 **Interfaces:**
+
 - Produces: `ingestOvertureDivisions(db: DatabaseSync, countries: readonly string[], release: string, idBase?: number): Promise<number>` and `export const OVERTURE_ID_BASE = 8_000_000_000_000` — exact behavior of the current script function (division_area bbox join + country subtype, #1021).
 
 - [ ] **Step 1: Move** — cut the entire `ingestOvertureDivisions` function, `OVERTURE_ID_BASE`, and `OVERTURE_DIVISION_SUBTYPES` from `scripts/build-unified-wof.ts` into the new file verbatim (keep every comment). Add the imports the body needs (`DatabaseSync` type, `DuckDBInstance` via the same lazy `await import("@duckdb/node-api")` pattern used by `overture-ingest.tsx` — convert the top-level import to a lazy one inside the function so importing the pipeline module never faults without DuckDB installed).
@@ -342,10 +593,12 @@ export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 ### Task 6: `admin/ingest-wof.ts` — extract the geojson ingest (Phases 1–2)
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/admin/ingest-wof.ts`
 - Modify: `scripts/build-unified-wof.ts` — its `main()` calls the extracted function
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
@@ -353,11 +606,15 @@ export interface IngestWOFOptions {
 	dataDir: string
 	/** Placetype allowlist. Default ADMIN_PLACETYPES (moved here). */
 	placetypes?: ReadonlySet<string>
-	concurrency?: number       // default 64
-	batchCommitSize?: number   // default 500
+	concurrency?: number // default 64
+	batchCommitSize?: number // default 500
 	onProgress?: (processed: number, total: number) => void
 }
-export interface IngestWOFResult { filesFound: number; placesIngested: number; skipped: number }
+export interface IngestWOFResult {
+	filesFound: number
+	placesIngested: number
+	skipped: number
+}
 export function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promise<IngestWOFResult>
 ```
 
@@ -371,21 +628,26 @@ export function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promise<Ing
 ### Task 7: `admin/fold-geonames.ts` — wrap the GeoNames folds
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/admin/fold-geonames.ts`
 - Modify: `scripts/build-unified-wof.ts` — Phases 2c/2d call the wrapper
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
 export interface FoldGeonamesOptions {
 	countries: readonly string[]
-	geonamesDir?: string           // default dataRootPath("geonames") — NOTE: current script hardcodes the playpen path; fix to dataRootPath here
-	alternateDir?: string          // default dataRootPath("geonames-alternate")
+	geonamesDir?: string // default dataRootPath("geonames") — NOTE: current script hardcodes the playpen path; fix to dataRootPath here
+	alternateDir?: string // default dataRootPath("geonames-alternate")
 	postalCountries?: readonly string[]
-	postalDir?: string             // default dataRootPath("geonames-postal")
+	postalDir?: string // default dataRootPath("geonames-postal")
 }
-export interface FoldGeonamesResult { placesIngested: number; postalIngested: number }
+export interface FoldGeonamesResult {
+	placesIngested: number
+	postalIngested: number
+}
 export function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions): FoldGeonamesResult
 ```
 
@@ -399,11 +661,13 @@ export function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions): FoldG
 ### Task 8: `admin/freeze.ts` — closure, backfill, roles, indexes, VACUUM
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/admin/freeze.ts`
 - Create: `mailwoman/gazetteer-pipeline/admin/freeze.test.ts`
 - Modify: `scripts/build-unified-wof.ts` — Phase 3 calls `freezeAdmin`
 
 **Interfaces:**
+
 - Consumes: `backfillAncestorsFromHierarchy`/`discoverAdminDataRoots` (`@mailwoman/resolver-wof-sqlite/ancestry-backfill`), `populateAncestors`/`createUnifiedIndexes` (`unified-schema`), `buildCoincidentRoles`, `OVERTURE_ID_BASE` (Task 5).
 - Produces:
 
@@ -413,7 +677,11 @@ export interface FreezeAdminOptions {
 	dataDir?: string
 	onPhase?: (phase: string, detail?: string) => void
 }
-export interface FreezeAdminResult { ancestorRows: number; backfillPlacesFixed: number; coincidentRoles: number }
+export interface FreezeAdminResult {
+	ancestorRows: number
+	backfillPlacesFixed: number
+	coincidentRoles: number
+}
 /** Runs IN PLACE on the staging db; caller VACUUMs INTO the final path afterwards. */
 export function freezeAdmin(db: DatabaseSync, opts?: FreezeAdminOptions): Promise<FreezeAdminResult>
 ```
@@ -440,8 +708,12 @@ test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and p
 	ins.run(3, 2, "Town", "locality", "TL")
 	const r = await freezeAdmin(db) // no dataDir → backfill skipped (fixture has no geojson)
 	expect(r.ancestorRows).toBeGreaterThan(0)
-	expect((db.prepare("SELECT COUNT(*) n FROM ancestors WHERE id = 3 AND ancestor_id != 3").get() as { n: number }).n).toBe(2)
-	expect(db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'ancestors_by_id'").get()).toBeTruthy()
+	expect(
+		(db.prepare("SELECT COUNT(*) n FROM ancestors WHERE id = 3 AND ancestor_id != 3").get() as { n: number }).n
+	).toBe(2)
+	expect(
+		db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'ancestors_by_id'").get()
+	).toBeTruthy()
 	db.close()
 })
 ```
@@ -456,11 +728,13 @@ test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and p
 ### Task 9: `admin/enrich.ts` — region abbrevs + `place_abbr` (the steps #1015 missed)
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/admin/enrich.ts`
 - Create: `mailwoman/gazetteer-pipeline/admin/enrich.test.ts`
 - (Deletion of `scripts/add-region-abbrevs.ts` happens in Task 15.)
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
@@ -468,7 +742,11 @@ export interface EnrichAdminOptions {
 	/** chromium-i18n ssl-address spec dir. Default: the core/data path add-region-abbrevs.ts uses today. */
 	specsDir?: string
 }
-export interface EnrichAdminResult { abbrevNamesAdded: number; abbrevCountries: number; placeAbbrRows: number }
+export interface EnrichAdminResult {
+	abbrevNamesAdded: number
+	abbrevCountries: number
+	placeAbbrRows: number
+}
 export function enrichAdmin(db: DatabaseSync, opts?: EnrichAdminOptions): EnrichAdminResult
 ```
 
@@ -494,9 +772,11 @@ db.exec("CREATE INDEX place_abbr_by_id ON place_abbr (id)")
 ### Task 10: `gazetteer-pipeline/fts.ts` — thin FTS wrapper
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/fts.ts`
 
 **Interfaces:**
+
 - Consumes: `buildPlaceSearchFTS(db, { drop, onProgress })` from `@mailwoman/resolver-wof-sqlite/fts`.
 - Produces: `buildFTS(db: DatabaseSync, opts?: { drop?: boolean; onProgress?: (phase: string, detail?: string) => void }): { ftsRows: number }` — passes through, returns the row count the underlying result reports.
 
@@ -509,16 +789,25 @@ db.exec("CREATE INDEX place_abbr_by_id ON place_abbr (id)")
 ### Task 11: `verify.ts` + the committed census baseline — the structural gate
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/verify.ts`
 - Create: `mailwoman/gazetteer-pipeline/verify.test.ts`
 - Create: `mailwoman/gazetteer-pipeline/verify-baseline.json`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
-export interface VerifyCheckResult { check: string; ok: boolean; detail: string }
-export interface VerifyResult { ok: boolean; checks: VerifyCheckResult[] }
+export interface VerifyCheckResult {
+	check: string
+	ok: boolean
+	detail: string
+}
+export interface VerifyResult {
+	ok: boolean
+	checks: VerifyCheckResult[]
+}
 export interface VerifyBaseline {
 	/** ISO2 → required node placetypes. A listed country MUST have ≥1 spr row of each placetype. */
 	requiredNodes: Record<string, ReadonlyArray<"country" | "region">>
@@ -526,12 +815,13 @@ export interface VerifyBaseline {
 	minCountries: number
 }
 export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyResult
-export function loadDefaultBaseline(): VerifyBaseline   // reads verify-baseline.json next to the module
+export function loadDefaultBaseline(): VerifyBaseline // reads verify-baseline.json next to the module
 export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [label: string, lat: number, lon: number, iso2: string]>
-export function verifyReversePanel(adminDBPath: string): Promise<VerifyResult>  // wraps WOFReverseGeocoder over REVERSE_PANEL_CASES
+export function verifyReversePanel(adminDBPath: string): Promise<VerifyResult> // wraps WOFReverseGeocoder over REVERSE_PANEL_CASES
 ```
 
 **Checks in `verifyAdmin`** (each one `VerifyCheckResult`):
+
 1. `node-census` — for every `baseline.requiredNodes` entry, the required placetypes exist (`SELECT COUNT(*) FROM spr WHERE country=? AND placetype=? AND is_current!=0`). Detail lists every missing `(country, placetype)`. **This is the #1026 catch.**
 2. `coverage-floor` — `COUNT(*) >= minRows` and `COUNT(DISTINCT country) >= minCountries`.
 3. `region-abbrevs` — `names WHERE language='abbr'` count > 0 AND the `VT`→Vermont join resolves (`SELECT s.name FROM place_abbr a JOIN spr s ON s.id=a.id WHERE a.abbr='VT' AND s.country='US'` returns `Vermont`).
@@ -557,6 +847,7 @@ import("./mailwoman/out/gazetteer-pipeline/verify.js").then(async (m) => {
 ```
 
 then hand-merge the #1026 list per the spec (`requiredNodes` union), and eyeball the diff.
+
 - [ ] **Step 6: Commit** — `git add mailwoman/gazetteer-pipeline/verify* && git commit -m "feat(gazetteer): structural verify gate — node census (#1026), reverse panel (#1015), abbrev/fts checks (#440)"`
 
 ---
@@ -564,26 +855,33 @@ then hand-merge the #1026 list per the spec (`requiredNodes` union), and eyeball
 ### Task 12: `admin/index.ts` — the `buildAdmin` orchestrator (+ build log, + seal)
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/admin/index.ts`
 - Modify: `mailwoman/gazetteer-pipeline/index.ts` — `export * from "./admin/index.js"`, `export * from "./verify.js"`, `export * from "./fts.js"`
 
 **Interfaces:**
+
 - Consumes: everything from Tasks 4–11 + `sealDatabase` (Task 1).
 - Produces:
 
 ```ts
 export interface BuildAdminOptions {
-	dataDir?: string              // default join(wofDir(), "repos")
-	out?: string                  // default join(wofDir(), "admin-global-priority" + DEFAULT_ADMIN_STAGING_SUFFIX)
-	overtureCountries?: readonly string[]   // default DEFAULT_OVERTURE_COUNTRIES
-	geonamesCountries?: readonly string[]   // default DEFAULT_GEONAMES_COUNTRIES
-	overtureRelease?: string      // default DEFAULT_OVERTURE_RELEASE
-	skipVerify?: boolean          // escape for fixture/dev runs; the command default is verify-on
+	dataDir?: string // default join(wofDir(), "repos")
+	out?: string // default join(wofDir(), "admin-global-priority" + DEFAULT_ADMIN_STAGING_SUFFIX)
+	overtureCountries?: readonly string[] // default DEFAULT_OVERTURE_COUNTRIES
+	geonamesCountries?: readonly string[] // default DEFAULT_GEONAMES_COUNTRIES
+	overtureRelease?: string // default DEFAULT_OVERTURE_RELEASE
+	skipVerify?: boolean // escape for fixture/dev runs; the command default is verify-on
 	onPhase?: (phase: string, detail?: string) => void
 }
 export interface BuildAdminResult {
-	out: string; placesIngested: number; overtureIngested: number; geonamesIngested: number
-	verify: VerifyResult | null; sealed: boolean; elapsedSeconds: number
+	out: string
+	placesIngested: number
+	overtureIngested: number
+	geonamesIngested: number
+	verify: VerifyResult | null
+	sealed: boolean
+	elapsedSeconds: number
 }
 export function buildAdmin(opts?: BuildAdminOptions): Promise<BuildAdminResult>
 ```
@@ -600,6 +898,7 @@ export function buildAdmin(opts?: BuildAdminOptions): Promise<BuildAdminResult>
 ### Task 13: The commands — `gazetteer build admin|candidate`, bare `build`, `verify`
 
 **Files:**
+
 - Create dir: `mailwoman/commands/gazetteer/build/`
 - Move: `mailwoman/commands/gazetteer/build.tsx` → `mailwoman/commands/gazetteer/build/candidate.tsx` (content unchanged except the component name → `GazetteerBuildCandidate`)
 - Create: `mailwoman/commands/gazetteer/build/admin.tsx`
@@ -607,6 +906,7 @@ export function buildAdmin(opts?: BuildAdminOptions): Promise<BuildAdminResult>
 - Create: `mailwoman/commands/gazetteer/verify.tsx`
 
 **Interfaces:**
+
 - Consumes: `buildAdmin`, `buildCandidate`, `foldGeonamesIntoAdmin`, `verifyAdmin`, `verifyReversePanel`, `loadDefaultBaseline` from `../../gazetteer-pipeline/index.js`.
 - Produces: CLI surface `mailwoman gazetteer build` / `build admin` / `build candidate` / `verify [--db <path>] [--reverse-panel]`.
 
@@ -622,10 +922,11 @@ export function buildAdmin(opts?: BuildAdminOptions): Promise<BuildAdminResult>
 ### Task 14: `gazetteer inspect` + retire the `wof` namespace
 
 **Files:**
+
 - Create dir: `mailwoman/commands/gazetteer/inspect/`
 - Move: `mailwoman/commands/wof/{tree,graph,mermaid,sync}.tsx` → `mailwoman/commands/gazetteer/inspect/` (fix relative import depths)
 - Delete: `mailwoman/commands/wof/prepare/` (the stale partial builder — superseded by `build admin`)
-- Replace: `mailwoman/commands/wof/` with shim files `{tree,graph,mermaid,sync,prepare}.tsx` — each renders `<Text color="yellow">`mailwoman wof X` moved: use `mailwoman gazetteer inspect X` (prepare → gazetteer build admin)`</Text>` and exits 1.
+- Replace: `mailwoman/commands/wof/` with shim files `{tree,graph,mermaid,sync,prepare}.tsx` — each renders `<Text color="yellow">`mailwoman wof X`moved: use`mailwoman gazetteer inspect X` (prepare → gazetteer build admin)`</Text>` and exits 1.
 
 - [ ] **Step 1: Move + fix imports** (`git mv`, adjust `../../sdk/cli.js` → `../../../sdk/cli.js` etc.).
 - [ ] **Step 2: Write the shims** (5 near-identical ~15-line files; template once, adjust the names).
@@ -637,12 +938,14 @@ export function buildAdmin(opts?: BuildAdminOptions): Promise<BuildAdminResult>
 ### Task 15: Deletions + docs (RELEASING.md, manifest role)
 
 **Files:**
+
 - Delete: `scripts/build-unified-wof.ts`, `scripts/add-region-abbrevs.ts`, `scripts/add-ancestors.ts`, `scripts/backfill-ancestors-from-hierarchy.ts`, `scripts/reverse-eu-panel.ts`
 - Modify: `RELEASING.md` — the "Rebuilding + swapping the canonical admin gazetteer" section
 - Modify: `scripts/wof-build-manifest.json` — `_comment` updated to declare it a build LOG (recipe = `gazetteer-pipeline/defaults.ts`)
 - Modify: `scripts/AGENTS.md` — note the gazetteer builders now live in `mailwoman/gazetteer-pipeline/`
 
 **Steps:**
+
 - [ ] **Step 1: Check for stragglers** — `rg -l 'build-unified-wof|add-region-abbrevs|add-ancestors|backfill-ancestors-from-hierarchy|reverse-eu-panel' --glob '!*/out/*' --glob '!docs/superpowers/**' .` → every hit is either a doc updated in this task or a historical eval record (leave those; they're dated point-in-time).
 - [ ] **Step 2: Delete the five scripts** (`git rm`).
 - [ ] **Step 3: Rewrite the RELEASING.md section** — Steps 1–3b collapse to:
@@ -662,6 +965,7 @@ Coverage recipe: `mailwoman/gazetteer-pipeline/defaults.ts` (code, reviewed like
 ```
 
 keeping the existing Step-4 swap/restart text (mv → bak, promote, restart services) and Step 5 (demo propagation).
+
 - [ ] **Step 4: Verify** — `yarn typecheck:scripts && npx tsc -b && yarn vitest run mailwoman core/utils` → green; `rg build-unified-wof scripts/` → no hits.
 - [ ] **Step 5: Commit** — `git commit -am "chore: delete the superseded admin-build scripts; RELEASING.md points at gazetteer build admin"`
 

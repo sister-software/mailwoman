@@ -160,7 +160,9 @@ for (const [key, floor] of Object.entries(gate.floors)) {
 	const actual = graded[key]
 	const pass = actual !== undefined && actual >= floor
 
-	if (!pass) failed = true
+	if (!pass) {
+		failed = true
+	}
 	results[key] = { floor, actual, pass }
 }
 

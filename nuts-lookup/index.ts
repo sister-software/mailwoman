@@ -27,7 +27,9 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 		const xj = ring[j]![0]!
 		const yj = ring[j]![1]!
 
-		if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside
+		if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+			inside = !inside
+		}
 	}
 
 	return inside
@@ -52,11 +54,17 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 export function nutsFromID(id: string): Nuts {
 	const nuts: Nuts = {}
 
-	if (id.length >= 3) nuts.level1 = id.slice(0, 3)
+	if (id.length >= 3) {
+		nuts.level1 = id.slice(0, 3)
+	}
 
-	if (id.length >= 4) nuts.level2 = id.slice(0, 4)
+	if (id.length >= 4) {
+		nuts.level2 = id.slice(0, 4)
+	}
 
-	if (id.length >= 5) nuts.level3 = id.slice(0, 5)
+	if (id.length >= 5) {
+		nuts.level3 = id.slice(0, 5)
+	}
 
 	return nuts
 }

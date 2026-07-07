@@ -99,7 +99,9 @@ async function main(): Promise<void> {
 
 	mkdirSync(dirname(args.output), { recursive: true })
 
-	if (existsSync(tmp)) rmSync(tmp)
+	if (existsSync(tmp)) {
+		rmSync(tmp)
+	}
 
 	const out = new DatabaseSync(tmp)
 	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
@@ -168,7 +170,9 @@ async function main(): Promise<void> {
 			out.exec("COMMIT")
 			out.exec("BEGIN")
 
-			if (written % 500_000 === 0) console.error(`[osm]   ${written.toLocaleString()} written…`)
+			if (written % 500_000 === 0) {
+				console.error(`[osm]   ${written.toLocaleString()} written…`)
+			}
 		}
 	}
 	out.exec("COMMIT")
@@ -179,10 +183,14 @@ async function main(): Promise<void> {
 	await kdb.destroy()
 
 	// Build-on-copy: only now swap the freshly-built shard into place (move any prior aside first).
-	if (existsSync(args.output)) renameSync(args.output, `${args.output}.prev`)
+	if (existsSync(args.output)) {
+		renameSync(args.output, `${args.output}.prev`)
+	}
 	renameSync(tmp, args.output)
 
-	if (existsSync(`${args.output}.prev`)) rmSync(`${args.output}.prev`)
+	if (existsSync(`${args.output}.prev`)) {
+		rmSync(`${args.output}.prev`)
+	}
 
 	const gap = total > 0 ? ((noStreet / total) * 100).toFixed(1) : "0.0"
 

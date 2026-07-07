@@ -82,7 +82,9 @@ for (const line of readFileSync(a.eval, "utf8").trim().split("\n")) {
 		if (!hit) {
 			const s = normalizeLocalityForKey(stripLocalityQualifier(loc))
 
-			if (s) hit = resolve(s, LOC_PTS)
+			if (s) {
+				hit = resolve(s, LOC_PTS)
+			}
 		}
 
 		if (hit) {

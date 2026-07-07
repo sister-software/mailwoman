@@ -153,7 +153,9 @@ const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
 async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<Record<string, number>> {
 	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
-	for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
+	for (const t of TAGS) {
+		stat[t] = { tp: 0, fp: 0, fn: 0 }
+	}
 
 	for (const row of rows) {
 		const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
@@ -163,11 +165,16 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 			const e = norm(exp[t])
 			const g = norm(got[t])
 
-			if (e && g && e === g) stat[t]!.tp++
-			else {
-				if (g) stat[t]!.fp++
+			if (e && g && e === g) {
+				stat[t]!.tp++
+			} else {
+				if (g) {
+					stat[t]!.fp++
+				}
 
-				if (e) stat[t]!.fn++
+				if (e) {
+					stat[t]!.fn++
+				}
 			}
 		}
 	}
@@ -245,7 +252,9 @@ async function buildManifest(): Promise<Capabilities> {
 				const cap: TagCapability = { maskOffF1: off[t]! }
 
 				// maskOnF1 only for forbidden-set tags — the only tags the loader's delta-gate consults.
-				if (FORBIDDEN_TAGS.has(t)) cap.maskOnF1 = on[t]!
+				if (FORBIDDEN_TAGS.has(t)) {
+					cap.maskOnF1 = on[t]!
+				}
 				perTag[t] = cap
 			}
 			capabilities[tier]![spec.system] = perTag

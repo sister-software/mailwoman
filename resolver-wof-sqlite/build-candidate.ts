@@ -88,7 +88,9 @@ interface PlaceAttrs {
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
 	const progress = opts.onProgress ?? (() => {})
 
-	if (existsSync(opts.output)) rmSync(opts.output)
+	if (existsSync(opts.output)) {
+		rmSync(opts.output)
+	}
 
 	const src = new DatabaseSync(opts.input, { readOnly: true })
 	const out = new DatabaseSync(opts.output)
@@ -296,7 +298,9 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		pc.close()
 	}
 
-	if (nPostcode > 0) progress("postcodes", `${nPostcode.toLocaleString()} postcodes`)
+	if (nPostcode > 0) {
+		progress("postcodes", `${nPostcode.toLocaleString()} postcodes`)
+	}
 
 	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---
 	if (ccodes.size > 0) {

@@ -74,7 +74,9 @@ function inverseAbbrev(locale: string): Map<string, string> {
 
 		const key = entry.to.toLowerCase()
 
-		if (!inv.has(key)) inv.set(key, entry.from)
+		if (!inv.has(key)) {
+			inv.set(key, entry.from)
+		}
 	}
 
 	return inv
@@ -111,7 +113,9 @@ function longestAlphaToken(s: string): { start: number; body: string } | null {
 
 		if (body.length < 5) continue
 
-		if (!best || body.length > best.body.length) best = { start: m.index, body }
+		if (!best || body.length > best.body.length) {
+			best = { start: m.index, body }
+		}
 	}
 
 	return best
@@ -129,8 +133,9 @@ function transposeMiddle(s: string): string | null {
 	let i = mid - 1
 
 	if (chars[i] === chars[i + 1]) {
-		if (mid + 1 < chars.length && chars[mid] !== chars[mid + 1]) i = mid
-		else return null
+		if (mid + 1 < chars.length && chars[mid] !== chars[mid + 1]) {
+			i = mid
+		} else return null
 	}
 	const swapped = [...chars]
 	const tmp = swapped[i]!
@@ -432,19 +437,25 @@ for (const [set, tally] of [
 if (fails.length) {
 	console.log(`\nNEW violations (gate-failing):`)
 
-	for (const f of fails) console.log(f)
+	for (const f of fails) {
+		console.log(f)
+	}
 }
 
 if (xfails.length) {
 	console.log(`\nknown xfails (tracked, non-blocking):`)
 
-	for (const f of xfails) console.log(f)
+	for (const f of xfails) {
+		console.log(f)
+	}
 }
 
 if (newlyPassing.length) {
 	console.log(`\n⚠ xfails that now PASS — remove from the KNOWN_*_XFAIL map:`)
 
-	for (const [key, issue] of newlyPassing) console.log(`  + ${key}  [was: ${issue}]`)
+	for (const [key, issue] of newlyPassing) {
+		console.log(`  + ${key}  [was: ${issue}]`)
+	}
 }
 // The gate fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
 const pass = invFails === 0 && dirFails === 0 && bandFails === 0

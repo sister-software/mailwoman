@@ -48,7 +48,9 @@ function inRing(x: number, y: number, ring: Ring): boolean {
 		const xj = ring[j]![0]!
 		const yj = ring[j]![1]!
 
-		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside
+		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+			inside = !inside
+		}
 		j = i
 	}
 
@@ -58,7 +60,9 @@ function inPoly(x: number, y: number, poly: Ring[]): boolean {
 	let c = false
 
 	for (const ring of poly) {
-		if (inRing(x, y, ring)) c = !c
+		if (inRing(x, y, ring)) {
+			c = !c
+		}
 	}
 
 	return c
@@ -106,7 +110,9 @@ for (const fp of globSync(ADMIN_DE + "/**/*.geojson")) {
 				xs.push(arr[0] as number)
 				ys.push(arr[1] as number)
 			} else {
-				for (const cc of arr) walk(cc)
+				for (const cc of arr) {
+					walk(cc)
+				}
 			}
 		}
 		walk(geom.coordinates)
@@ -174,7 +180,9 @@ function geomForID(wid: unknown): Geometry | null {
 	const s = String(Math.trunc(Number(wid)))
 	const chunks: string[] = []
 
-	for (let i = 0; i < s.length; i += 3) chunks.push(s.slice(i, i + 3))
+	for (let i = 0; i < s.length; i += 3) {
+		chunks.push(s.slice(i, i + 3))
+	}
 	const rel = chunks.join("/") + `/${s}.geojson`
 	let g: Geometry | null = null
 
@@ -282,6 +290,8 @@ function line(label: string, c: Counts): string {
 console.log("\n=== Resolver containment by signal (gold point inside the chosen locality) ===")
 console.log(line("OVERALL", ov))
 
-for (const st of [...by.keys()].sort()) console.log(line(st, by.get(st)!))
+for (const st of [...by.keys()].sort()) {
+	console.log(line(st, by.get(st)!))
+}
 console.log("\n  name = resolver's current name-match resolution; coord-first = postcode centroid -> PIP locality;")
 console.log("  HYBRID = either signal lands the true locality (the soft-scoring ceiling).")

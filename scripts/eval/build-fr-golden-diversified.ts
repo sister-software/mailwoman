@@ -220,11 +220,17 @@ function reportDistribution(rows: Record<string, unknown>[]): void {
 		const note = (r.notes as string) ?? ""
 		let order: string | null = null
 
-		if (note.includes("canonical")) order = "canonical"
-		else if (note.includes("reversed")) order = "pc-first"
-		else if (note.includes("locality-first")) order = "city-pc-nn"
+		if (note.includes("canonical")) {
+			order = "canonical"
+		} else if (note.includes("reversed")) {
+			order = "pc-first"
+		} else if (note.includes("locality-first")) {
+			order = "city-pc-nn"
+		}
 
-		if (order) orderCounts.set(order, (orderCounts.get(order) ?? 0) + 1)
+		if (order) {
+			orderCounts.set(order, (orderCounts.get(order) ?? 0) + 1)
+		}
 	}
 
 	console.log(`\n=== Distribution report (${rows.length} new rows) ===`)
@@ -254,14 +260,20 @@ async function main(): Promise<void> {
 
 	const dest = inplace ? GOLDEN_FILE : OUT_FILE
 
-	if (inplace) process.stderr.write(`\nAppending ${rows.length} rows to ${dest} ...\n`)
-	else process.stderr.write(`\nWriting ${rows.length} rows to ${dest} ...\n`)
+	if (inplace) {
+		process.stderr.write(`\nAppending ${rows.length} rows to ${dest} ...\n`)
+	} else {
+		process.stderr.write(`\nWriting ${rows.length} rows to ${dest} ...\n`)
+	}
 
 	mkdirSync(dirname(dest), { recursive: true })
 	const content = rows.map((row) => pyJsonDumps(row, { ensureAscii: false }) + "\n").join("")
 
-	if (inplace) appendFileSync(dest, content)
-	else writeFileSync(dest, content)
+	if (inplace) {
+		appendFileSync(dest, content)
+	} else {
+		writeFileSync(dest, content)
+	}
 
 	process.stderr.write("Done.\n")
 

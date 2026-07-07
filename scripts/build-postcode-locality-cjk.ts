@@ -54,14 +54,17 @@ function incDecimalString(s: string): string {
 	let i = a.length - 1
 
 	for (; i >= 0; i--) {
-		if (a[i] === "9") a[i] = "0"
-		else {
+		if (a[i] === "9") {
+			a[i] = "0"
+		} else {
 			a[i] = String(Number(a[i]) + 1)
 			break
 		}
 	}
 
-	if (i < 0) a.unshift("1")
+	if (i < 0) {
+		a.unshift("1")
+	}
 
 	return a.join("")
 }
@@ -95,10 +98,12 @@ function pyRound(x: number, nd: number = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) roundUp = true
-	else if (first === 5) {
-		if (/[1-9]/.test(rest.slice(1))) roundUp = true
-		else {
+	if (first > 5) {
+		roundUp = true
+	} else if (first === 5) {
+		if (/[1-9]/.test(rest.slice(1))) {
+			roundUp = true
+		} else {
 			// exact half → round to even
 			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
@@ -106,7 +111,9 @@ function pyRound(x: number, nd: number = 0): number {
 	}
 	let combined = intPart + keep
 
-	if (roundUp) combined = incDecimalString(combined)
+	if (roundUp) {
+		combined = incDecimalString(combined)
+	}
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
@@ -257,8 +264,11 @@ async function main(): Promise<void> {
 		const bucket = grid.get(key)
 		const entry = { pid: id, nm: name, la: latitude, lo: longitude }
 
-		if (bucket) bucket.push(entry)
-		else grid.set(key, [entry])
+		if (bucket) {
+			bucket.push(entry)
+		} else {
+			grid.set(key, [entry])
+		}
 	}
 
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number; nm: string }> => {
@@ -271,7 +281,9 @@ async function main(): Promise<void> {
 				for (const { pid, nm, la, lo } of grid.get(`${cx + dx}|${cy + dy}`) ?? []) {
 					const d = haversineKm(lat, lon, la, lo)
 
-					if (d <= MATCH_RADIUS_KM) out.push({ d, pid, nm })
+					if (d <= MATCH_RADIUS_KM) {
+						out.push({ d, pid, nm })
+					}
 				}
 			}
 		}
@@ -311,7 +323,9 @@ async function main(): Promise<void> {
 			rows.push([pc, args.country, hit.pid, hit.nm, muni, pyRound(hit.d, 3), 1])
 
 			for (const c2 of cands.slice(0, NEARBY_KEEP)) {
-				if (c2.pid !== hit.pid) rows.push([pc, args.country, c2.pid, c2.nm, muni, pyRound(c2.d, 3), 0])
+				if (c2.pid !== hit.pid) {
+					rows.push([pc, args.country, c2.pid, c2.nm, muni, pyRound(c2.d, 3), 0])
+				}
 			}
 		} else {
 			// no authoritative name match nearby → nearest place as a weak candidate
@@ -323,7 +337,9 @@ async function main(): Promise<void> {
 	const insert = db.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
 	db.exec("BEGIN")
 
-	for (const r of rows) insert.run(...r)
+	for (const r of rows) {
+		insert.run(...r)
+	}
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -352,7 +368,9 @@ async function main(): Promise<void> {
 	]
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
-	for (const [k, v] of meta) insMeta.run(k, v)
+	for (const [k, v] of meta) {
+		insMeta.run(k, v)
+	}
 
 	db.exec("PRAGMA journal_mode=DELETE")
 	db.exec("ANALYZE")

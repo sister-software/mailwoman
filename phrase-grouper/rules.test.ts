@@ -326,7 +326,9 @@ test("scoreLocalityPhrase: confidence is capped at 0.95", () => {
 	const text = "Las Palmas de Gran Canaria"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
 
-	for (const p of out) expect(p.confidence).toBeLessThanOrEqual(0.95)
+	for (const p of out) {
+		expect(p.confidence).toBeLessThanOrEqual(0.95)
+	}
 })
 
 test("scoreLocalityPhrase: no capitalized content → no proposals", () => {

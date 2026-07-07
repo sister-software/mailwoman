@@ -88,7 +88,9 @@ function assembleStreetValue(streetNode: AddressNode): string {
 	while (stack.length > 0) {
 		const n = stack.pop()!
 
-		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) parts.push(n)
+		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
+			parts.push(n)
+		}
 		stack.push(...n.children)
 	}
 	parts.sort((a, b) => a.start - b.start)
@@ -164,7 +166,9 @@ function analyzeRow(input: string, state: string, tree: AddressTree): RowResult 
 	const tagSet = new Set<string>()
 
 	for (const n of walkTree(roots)) {
-		if (n.value.trim()) tagSet.add(n.tag)
+		if (n.value.trim()) {
+			tagSet.add(n.tag)
+		}
 	}
 	const tags_found = [...tagSet]
 
@@ -219,13 +223,17 @@ const [tokenizer, runner] = await Promise.all([
 
 const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined
 
-if (anchorPath) console.error(`[parser-coverage-audit] anchor-lookup  : ${anchorPath}`)
+if (anchorPath) {
+	console.error(`[parser-coverage-audit] anchor-lookup  : ${anchorPath}`)
+}
 
 const gazetteerLexicon = gazetteerPath
 	? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerPath, "utf8")))
 	: undefined
 
-if (gazetteerPath) console.error(`[parser-coverage-audit] gazetteer     : ${gazetteerPath}`)
+if (gazetteerPath) {
+	console.error(`[parser-coverage-audit] gazetteer     : ${gazetteerPath}`)
+}
 
 const neural = new NeuralAddressClassifier({
 	tokenizer,
@@ -248,7 +256,9 @@ for (const row of rows) {
 	if (!row.state) continue
 	const bucket = rowsByState.get(row.state) ?? []
 
-	if (bucket.length < perStateCap) bucket.push(row)
+	if (bucket.length < perStateCap) {
+		bucket.push(row)
+	}
 	rowsByState.set(row.state, bucket)
 }
 
@@ -286,15 +296,25 @@ for (const state of stateKeys) {
 
 		stats.n++
 
-		if (result.has_house_number) stats.has_hn++
+		if (result.has_house_number) {
+			stats.has_hn++
+		}
 
-		if (result.has_street) stats.has_street++
+		if (result.has_street) {
+			stats.has_street++
+		}
 
-		if (result.has_postcode) stats.has_postcode++
+		if (result.has_postcode) {
+			stats.has_postcode++
+		}
 
-		if (result.precondition) stats.precondition++
+		if (result.precondition) {
+			stats.precondition++
+		}
 
-		if (result.reassembly_differs) stats.reassembly_differs++
+		if (result.reassembly_differs) {
+			stats.reassembly_differs++
+		}
 
 		if (!result.precondition && stats.failures.length < MAX_FAILURE_SAMPLES) {
 			stats.failures.push({ input: row.input, tags: result.tags_found })
@@ -370,11 +390,17 @@ for (const state of stateKeys) {
 	for (const f of s.failures) {
 		const missingParts: string[] = []
 
-		if (!f.tags.includes("house_number")) missingParts.push("house_number")
+		if (!f.tags.includes("house_number")) {
+			missingParts.push("house_number")
+		}
 
-		if (!f.tags.includes("street")) missingParts.push("street")
+		if (!f.tags.includes("street")) {
+			missingParts.push("street")
+		}
 
-		if (!f.tags.includes("postcode")) missingParts.push("postcode")
+		if (!f.tags.includes("postcode")) {
+			missingParts.push("postcode")
+		}
 		console.log(`- \`${f.input}\``)
 		console.log(`  - got tags: \`${f.tags.join(", ") || "(none)"}\``)
 		console.log(`  - missing: \`${missingParts.join(", ")}\``)

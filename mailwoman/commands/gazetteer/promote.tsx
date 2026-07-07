@@ -16,7 +16,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "../../gazetteer-pipeline.js"
+import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "../../gazetteer-pipeline/index.js"
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const ArgumentsSchema = zod.array(
@@ -42,7 +42,9 @@ const GazetteerPromote: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 	}, [args])
 
 	useEffect(() => {
-		if (link || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (link || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [link, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

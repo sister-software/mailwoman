@@ -116,7 +116,9 @@ export function populateAncestors(db: DatabaseSync): number {
 	}>
 	const byID = new Map<number, { parent: number; placetype: string }>()
 
-	for (const r of rows) byID.set(r.id, { parent: r.parent_id, placetype: r.placetype })
+	for (const r of rows) {
+		byID.set(r.id, { parent: r.parent_id, placetype: r.placetype })
+	}
 
 	const insert = db.prepare("INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)")
 	db.exec("BEGIN")

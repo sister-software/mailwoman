@@ -101,8 +101,9 @@ async function main() {
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()
 			const goldCands = gold ? await lookup.findPlace({ text: gold, country: cc, limit: 5 }) : []
 
-			if (goldCands.length === 0) s.cov++
-			else if (emitted && emitted.toLowerCase() !== gold.toLowerCase()) {
+			if (goldCands.length === 0) {
+				s.cov++
+			} else if (emitted && emitted.toLowerCase() !== gold.toLowerCase()) {
 				s.swap++
 				// FALSIFIER: resolve the gold locality with the row's postcode (what the rescore keeps as
 				// an anchor) and measure great-circle to truth. p50 < 10km → the swap recovers a REAL
@@ -124,8 +125,11 @@ async function main() {
 						sB5.push(Math.min(...dists))
 					}
 				}
-			} else if (!emitted) s.needsK++
-			else s.emitUn++
+			} else if (!emitted) {
+				s.needsK++
+			} else {
+				s.emitUn++
+			}
 		}
 		const swapKm =
 			sT1.length > 0
@@ -135,7 +139,9 @@ async function main() {
 			`${cc.padEnd(3)} | ${String(s.n).padEnd(3)} ${String(s.res).padEnd(3)}  ${String(s.unres).padEnd(4)} | ${String(s.swap).padEnd(3)}  ${String(s.needsK).padEnd(5)}  ${String(s.emitUn).padEnd(8)}  ${String(s.cov).padEnd(2)} | ${swapKm}`
 		)
 
-		for (const k of Object.keys(s) as (keyof typeof s)[]) T[k] += s[k]
+		for (const k of Object.keys(s) as (keyof typeof s)[]) {
+			T[k] += s[k]
+		}
 		swapTop1.push(...sT1)
 		swapBest5.push(...sB5)
 	}

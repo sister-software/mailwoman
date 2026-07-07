@@ -86,7 +86,9 @@ function loadOa(country: string, n: number, rng: SeededRandom): Record<string, u
 		const gold: string[][] = []
 
 		for (const t of OA_TAGS) {
-			if (expected[t]) gold.push([t, String(expected[t])])
+			if (expected[t]) {
+				gold.push([t, String(expected[t])])
+			}
 		}
 
 		if (gold.length === 0) continue
@@ -102,7 +104,9 @@ function reconstructSpans(tokens: string[], labels: string[]): string[][] {
 	let curTag: string | null = null
 	let curToks: string[] = []
 	const flush = (): void => {
-		if (curTag && curToks.length) spans.push([curTag, curToks.join(" ")])
+		if (curTag && curToks.length) {
+			spans.push([curTag, curToks.join(" ")])
+		}
 		curTag = null
 		curToks = []
 	}

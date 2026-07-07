@@ -109,7 +109,9 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 	const dict = getDictionary(locale)
 	const lookup = new Map<string, string>()
 
-	for (const entry of dict) lookup.set(entry.from.toLowerCase(), entry.to)
+	for (const entry of dict) {
+		lookup.set(entry.from.toLowerCase(), entry.to)
+	}
 
 	const out: string[] = []
 	const map: number[] = []
@@ -131,7 +133,9 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 		}
 		const start = i
 
-		while (i < input.length && isTokenChar(input[i]!)) i += 1
+		while (i < input.length && isTokenChar(input[i]!)) {
+			i += 1
+		}
 		const token = input.slice(start, i)
 		const tokenWithTrailingDot = i < input.length && input[i] === "." ? `${token}.` : token
 		const lookupKey = token.replace(/\.$/, "").toLowerCase()
@@ -157,7 +161,9 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 		})
 
 		// Skip the trailing period if we consumed an abbreviation with one (e.g. "St." → "Street").
-		if (i < input.length && input[i] === ".") i += 1
+		if (i < input.length && input[i] === ".") {
+			i += 1
+		}
 	}
 
 	return { text: out.join(""), map, expansions }

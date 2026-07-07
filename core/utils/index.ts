@@ -6,3 +6,4 @@
 
 export * from "./data-root.js"
 export * from "./repo.js"
+export * from "./sealed-db.js"

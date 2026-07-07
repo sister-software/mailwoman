@@ -113,7 +113,9 @@ runIfScript(import.meta, async () => {
 	const LABEL = gate.label
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
-	if (!OUT_DIR) OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
+	if (!OUT_DIR) {
+		OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
+	}
 	mkdirSync(OUT_DIR, { recursive: true })
 
 	// --- lore guard: tokenizer comparability -----------------------------------
@@ -249,7 +251,9 @@ runIfScript(import.meta, async () => {
 
 	await runBattery(MODEL, "fp32")
 
-	if (INT8) await runBattery(INT8, "int8")
+	if (INT8) {
+		await runBattery(INT8, "int8")
+	}
 	const presets = await $`node --experimental-strip-types scripts/eval/demo-preset-compare.ts --model-path=${shipModel}`
 	writeFileSync(`${OUT_DIR}/presets.md`, presets.stdout)
 
@@ -302,7 +306,9 @@ runIfScript(import.meta, async () => {
 		writeFileSync(`${OUT_DIR}/arenas.md`, `${arena.stdout}${arena.stderr}`)
 
 		// set -e: a non-zero arena run aborts the gate before the verdict.
-		if (arena.exitCode !== 0) process.exit(1)
+		if (arena.exitCode !== 0) {
+			process.exit(1)
+		}
 	}
 
 	// FR bare-street floor (#949) — the class v5.2.0 silently regressed (34/40 → 16/40) because no
@@ -357,14 +363,20 @@ runIfScript(import.meta, async () => {
 	// Folds BOTH locks: the floor verdict AND the mask-regression gate above. Either miss fails the gate.
 	const verdictArgs = ["--gate", GATE, "--out-dir", OUT_DIR]
 
-	if (INT8) verdictArgs.push("--with-int8")
+	if (INT8) {
+		verdictArgs.push("--with-int8")
+	}
 	const verdict = await $({
 		nothrow: true,
 	})`node --experimental-strip-types scripts/eval/promotion-gate-verdict.ts ${verdictArgs}`
 
-	if (verdict.stdout) process.stdout.write(verdict.stdout)
+	if (verdict.stdout) {
+		process.stdout.write(verdict.stdout)
+	}
 
-	if (verdict.stderr) process.stderr.write(verdict.stderr)
+	if (verdict.stderr) {
+		process.stderr.write(verdict.stderr)
+	}
 	const VERDICT_STATUS = verdict.exitCode ?? 0
 
 	if (VERDICT_STATUS !== 0 || MASK_GATE_STATUS !== 0) {

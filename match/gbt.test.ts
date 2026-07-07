@@ -105,7 +105,9 @@ describe("trainGBT / gbtScore", () => {
 		)
 		const reloaded = JSON.parse(JSON.stringify(model)) as GBT
 
-		for (const x of X) expect(gbtScore(reloaded, x)).toBeCloseTo(gbtScore(model, x), 10)
+		for (const x of X) {
+			expect(gbtScore(reloaded, x)).toBeCloseTo(gbtScore(model, x), 10)
+		}
 	})
 })
 

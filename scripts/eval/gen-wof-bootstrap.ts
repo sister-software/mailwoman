@@ -151,7 +151,9 @@ function loadRegions(con: DatabaseSync): Map<number, string> {
 	}>
 	const out = new Map<number, string>()
 
-	for (const r of rows) out.set(r.id, r.name)
+	for (const r of rows) {
+		out.set(r.id, r.name)
+	}
 
 	return out
 }
@@ -204,7 +206,9 @@ function samplePostcodes(con: DatabaseSync, n: number, rng: SeededRandom): SprRo
 function counter(values: Iterable<string>): Map<string, number> {
 	const m = new Map<string, number>()
 
-	for (const v of values) m.set(v, (m.get(v) ?? 0) + 1)
+	for (const v of values) {
+		m.set(v, (m.get(v) ?? 0) + 1)
+	}
 
 	return m
 }

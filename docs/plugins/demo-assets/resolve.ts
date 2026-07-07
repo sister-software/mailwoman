@@ -319,7 +319,9 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 		copied++
 	}
 
-	if (copied > 0) console.log(`[demo-assets] sql.js-httpvfs: staged ${copied} runtime asset(s)`)
+	if (copied > 0) {
+		console.log(`[demo-assets] sql.js-httpvfs: staged ${copied} runtime asset(s)`)
+	}
 
 	return true
 }

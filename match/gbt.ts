@@ -39,13 +39,17 @@ export function buildThresholds(X: number[][]): number[][] {
 		} else if (uniq.length <= 5) {
 			const t: number[] = []
 
-			for (let k = 0; k < uniq.length - 1; k++) t.push((uniq[k]! + uniq[k + 1]!) / 2)
+			for (let k = 0; k < uniq.length - 1; k++) {
+				t.push((uniq[k]! + uniq[k + 1]!) / 2)
+			}
 			out.push(t)
 		} else {
 			const sorted = [...vals].sort((p, q) => p - q)
 			const t: number[] = []
 
-			for (let q = 1; q <= 6; q++) t.push(sorted[Math.floor((q / 7) * (sorted.length - 1))]!)
+			for (let q = 1; q <= 6; q++) {
+				t.push(sorted[Math.floor((q / 7) * (sorted.length - 1))]!)
+			}
 			out.push([...new Set(t)])
 		}
 	}
@@ -105,7 +109,9 @@ function fitRegTree(
 			const lo: number[] = []
 			const hi: number[] = []
 
-			for (const i of rows) (X[i]![f]! <= thr ? lo : hi).push(i)
+			for (const i of rows) {
+				;(X[i]![f]! <= thr ? lo : hi).push(i)
+			}
 
 			if (lo.length < minLeaf || hi.length < minLeaf) continue
 			const gain = parentSSE - (nodeSSE(lo, g, w) + nodeSSE(hi, g, w))
@@ -133,7 +139,9 @@ function fitRegTree(
 function predictTree(t: TreeNode, x: number[]): number {
 	let n = t
 
-	while ("f" in n) n = x[n.f]! <= n.thr ? n.lo : n.hi
+	while ("f" in n) {
+		n = x[n.f]! <= n.thr ? n.lo : n.hi
+	}
 
 	return n.leaf
 }
@@ -164,7 +172,9 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 	for (let i = 0; i < N; i++) {
 		wtot += w[i]!
 
-		if (y[i] === 1) wpos += w[i]!
+		if (y[i] === 1) {
+			wpos += w[i]!
+		}
 	}
 	const base = Math.log((wpos + 1) / (wtot - wpos + 1)) // weighted base log-odds
 	const F = new Array<number>(N).fill(base)
@@ -173,10 +183,14 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 	for (let m = 0; m < opts.rounds; m++) {
 		const g = new Array<number>(N)
 
-		for (let i = 0; i < N; i++) g[i] = y[i]! - sigmoid(F[i]!) // negative gradient of logistic loss
+		for (let i = 0; i < N; i++) {
+			g[i] = y[i]! - sigmoid(F[i]!)
+		} // negative gradient of logistic loss
 		const tree = fitRegTree(rowsAll, X, g, w, thresholds, opts.depth, opts.minLeaf)
 
-		for (let i = 0; i < N; i++) F[i]! += opts.lr * predictTree(tree, X[i]!)
+		for (let i = 0; i < N; i++) {
+			F[i]! += opts.lr * predictTree(tree, X[i]!)
+		}
 		trees.push(tree)
 	}
 
@@ -187,7 +201,9 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 export function gbtScore(m: GBT, x: number[]): number {
 	let f = m.base
 
-	for (const t of m.trees) f += m.lr * predictTree(t, x)
+	for (const t of m.trees) {
+		f += m.lr * predictTree(t, x)
+	}
 
 	return f
 }

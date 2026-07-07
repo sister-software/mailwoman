@@ -81,7 +81,9 @@ export const DE_STATE_NAME_TO_CODE: ReadonlyMap<string, GermanStateCode> = (() =
 		"freie und hansestadt hamburg": "HH",
 	}
 
-	for (const [alias, code] of Object.entries(aliases)) out.set(alias, code)
+	for (const [alias, code] of Object.entries(aliases)) {
+		out.set(alias, code)
+	}
 
 	return out
 })()

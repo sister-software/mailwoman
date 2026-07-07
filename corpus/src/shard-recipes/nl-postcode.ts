@@ -93,8 +93,11 @@ export const nlPostcodeRecipe: ShardRecipe = {
 					"Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "nl-postcode")) emitted++
-			else skipped++
+			if (alignAndWrite(write, canonical, "nl-postcode")) {
+				emitted++
+			} else {
+				skipped++
+			}
 		}
 
 		return { read, emitted, skipped }

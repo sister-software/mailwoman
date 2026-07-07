@@ -139,7 +139,10 @@ function orgJaccard(a: Set<string>, b: Set<string>): number {
 	if (a.size === 0 || b.size === 0) return 0
 	let inter = 0
 
-	for (const t of a) if (b.has(t)) inter++
+	for (const t of a)
+		if (b.has(t)) {
+			inter++
+		}
 
 	return inter / (a.size + b.size - inter)
 }
@@ -172,7 +175,9 @@ async function main(): Promise<void> {
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) list.push(alt) // cap fan-out per NPI
+		if (list.length < 5) {
+			list.push(alt)
+		} // cap fan-out per NPI
 		altNames.set(npi, list)
 	}
 	console.error(`    ${altNames.size} NPIs with ≥1 alternate name`)
@@ -189,7 +194,9 @@ async function main(): Promise<void> {
 	let scanned = 0
 
 	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M rows, kept ${kept.size}`)
+		if (++scanned % 1_000_000 === 0) {
+			console.error(`    scanned ${scanned / 1e6}M rows, kept ${kept.size}`)
+		}
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
 		// Global address-frequency: count every practice address (one row ≈ one distinct NPI).
@@ -233,17 +240,21 @@ async function main(): Promise<void> {
 				const orgKey = isSubpart && parentKey !== "|" ? `p:${parentKey}` : `n:${npi}`
 				const eid = (a: string) => `${addressFrequencyKey(a)}|${orgKey}`
 
-				if (org) npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
+				if (org) {
+					npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
+				}
 				kept.add(npi)
 				rows.push({ npi, name: primaryName, org, address: practice, auth, taxonomy, entityID: eid(practice) })
 
 				// primary
-				for (const alt of altNames.get(npi)!)
-					rows.push({ npi, name: alt, org: alt, address: practice, auth, taxonomy, entityID: eid(practice) }) // name drift
+				for (const alt of altNames.get(npi)!) {
+					rows.push({ npi, name: alt, org: alt, address: practice, auth, taxonomy, entityID: eid(practice) })
+				} // name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
-				if (mailing && mailing !== practice)
-					rows.push({ npi, name: primaryName, org, address: mailing, auth, taxonomy, entityID: eid(mailing) }) // address variation
+				if (mailing && mailing !== practice) {
+					rows.push({ npi, name: primaryName, org, address: mailing, auth, taxonomy, entityID: eid(mailing) })
+				} // address variation
 			}
 		}
 	}
@@ -293,7 +304,9 @@ async function main(): Promise<void> {
 		})) {
 			geocoded.push(rec)
 
-			if (rec.address?.geocode) geo++
+			if (rec.address?.geocode) {
+				geo++
+			}
 		}
 		// geocodeStream yields in completion order; restore input order so downstream cluster tie-breaks are byte-stable.
 		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
@@ -321,7 +334,9 @@ async function main(): Promise<void> {
 					normalizeCase: !LEGACY,
 				})
 
-				if (g.lat !== null) geo++
+				if (g.lat !== null) {
+					geo++
+				}
 
 				return g
 			},
@@ -372,7 +387,9 @@ async function main(): Promise<void> {
 			}
 			sumCluster += choose2(e.records.length)
 
-			if (e.records.length === 1) singletons++
+			if (e.records.length === 1) {
+				singletons++
+			}
 
 			if (byNPI.size > 1) {
 				overMergedClusters++
@@ -395,7 +412,9 @@ async function main(): Promise<void> {
 		let sumClass = 0
 
 		// Σ_k C(|k|, 2)
-		for (const total of npiTotals.values()) sumClass += choose2(total)
+		for (const total of npiTotals.values()) {
+			sumClass += choose2(total)
+		}
 
 		const tp = sumCK
 		const precision = tp + (sumCluster - tp) > 0 ? tp / sumCluster : 0
@@ -432,10 +451,14 @@ async function main(): Promise<void> {
 	// the gold set proved is correct, WITHOUT the subpart flag (which the gold set showed misses 37%). ---
 	const parent = new Map<string, string>()
 	const find = (x: string): string => {
-		if (!parent.has(x)) parent.set(x, x)
+		if (!parent.has(x)) {
+			parent.set(x, x)
+		}
 		let root = x
 
-		while (parent.get(root)! !== root) root = parent.get(root)!
+		while (parent.get(root)! !== root) {
+			root = parent.get(root)!
+		}
 
 		while (parent.get(x)! !== root) {
 			const next = parent.get(x)!
@@ -449,7 +472,9 @@ async function main(): Promise<void> {
 		const ra = find(a)
 		const rb = find(b)
 
-		if (ra !== rb) parent.set(ra, rb)
+		if (ra !== rb) {
+			parent.set(ra, rb)
+		}
 	}
 
 	{
@@ -461,15 +486,18 @@ async function main(): Promise<void> {
 			// seed
 			if (!info.addrKey) continue
 
-			if (!byAddr.has(info.addrKey)) byAddr.set(info.addrKey, [])
+			if (!byAddr.has(info.addrKey)) {
+				byAddr.set(info.addrKey, [])
+			}
 			byAddr.get(info.addrKey)!.push(npi)
 		}
 
 		for (const group of byAddr.values()) {
 			for (let i = 0; i < group.length; i++) {
 				for (let j = i + 1; j < group.length; j++) {
-					if (orgJaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU)
+					if (orgJaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU) {
 						union(group[i]!, group[j]!)
+					}
 				}
 			}
 		}
@@ -491,14 +519,20 @@ async function main(): Promise<void> {
 		const c = rec.address?.geocode?.coordinate
 
 		// first geocoded record per NPI ≈ its primary practice address (primary row is pushed first)
-		if (c && !npiCoord.has(rec.id)) npiCoord.set(rec.id, c)
+		if (c && !npiCoord.has(rec.id)) {
+			npiCoord.set(rec.id, c)
+		}
 	}
 	const parentC = new Map<string, string>()
 	const findC = (x: string): string => {
-		if (!parentC.has(x)) parentC.set(x, x)
+		if (!parentC.has(x)) {
+			parentC.set(x, x)
+		}
 		let root = x
 
-		while (parentC.get(root)! !== root) root = parentC.get(root)!
+		while (parentC.get(root)! !== root) {
+			root = parentC.get(root)!
+		}
 
 		while (parentC.get(x)! !== root) {
 			const next = parentC.get(x)!
@@ -512,13 +546,17 @@ async function main(): Promise<void> {
 		const ra = findC(a)
 		const rb = findC(b)
 
-		if (ra !== rb) parentC.set(ra, rb)
+		if (ra !== rb) {
+			parentC.set(ra, rb)
+		}
 	}
 
 	{
 		const coLocated = [...npiPrimary.keys()].filter((n) => npiCoord.has(n))
 
-		for (const n of npiPrimary.keys()) findC(n)
+		for (const n of npiPrimary.keys()) {
+			findC(n)
+		}
 
 		// seed every NPI (un-geocoded ones stay singletons)
 		for (let i = 0; i < coLocated.length; i++) {
@@ -528,7 +566,9 @@ async function main(): Promise<void> {
 
 				if (haversineKm(npiCoord.get(a)!, npiCoord.get(b)!) > COLOCATION_KM) continue
 
-				if (orgJaccard(npiPrimary.get(a)!.tokens, npiPrimary.get(b)!.tokens) >= ORG_TAU) unionC(a, b)
+				if (orgJaccard(npiPrimary.get(a)!.tokens, npiPrimary.get(b)!.tokens) >= ORG_TAU) {
+					unionC(a, b)
+				}
 			}
 		}
 	}
@@ -545,10 +585,14 @@ async function main(): Promise<void> {
 	const H3_RES = Number(arg("h3-res", "11")) // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
 	const parentH = new Map<string, string>()
 	const findH = (x: string): string => {
-		if (!parentH.has(x)) parentH.set(x, x)
+		if (!parentH.has(x)) {
+			parentH.set(x, x)
+		}
 		let root = x
 
-		while (parentH.get(root)! !== root) root = parentH.get(root)!
+		while (parentH.get(root)! !== root) {
+			root = parentH.get(root)!
+		}
 
 		while (parentH.get(x)! !== root) {
 			const next = parentH.get(x)!
@@ -562,7 +606,9 @@ async function main(): Promise<void> {
 		const ra = findH(a)
 		const rb = findH(b)
 
-		if (ra !== rb) parentH.set(ra, rb)
+		if (ra !== rb) {
+			parentH.set(ra, rb)
+		}
 	}
 
 	{
@@ -575,15 +621,18 @@ async function main(): Promise<void> {
 			if (!c) continue
 			const cell = latLngToCell(c.latitude, c.longitude, H3_RES)
 
-			if (!byCell.has(cell)) byCell.set(cell, [])
+			if (!byCell.has(cell)) {
+				byCell.set(cell, [])
+			}
 			byCell.get(cell)!.push(n)
 		}
 
 		for (const group of byCell.values()) {
 			for (let i = 0; i < group.length; i++) {
 				for (let j = i + 1; j < group.length; j++) {
-					if (orgJaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU)
+					if (orgJaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU) {
 						unionH(group[i]!, group[j]!)
+					}
 				}
 			}
 		}

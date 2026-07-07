@@ -88,7 +88,9 @@ export function normalizeStreetForKey(street: string): string {
 	for (let i = 0; i < tokens.length - 1; i++) {
 		const digit = SPELLED_ORDINAL_TO_DIGIT.get(tokens[i]!)
 
-		if (digit && US_STREET_SUFFIX_LOOKUP.has(tokens[i + 1]!)) tokens[i] = digit
+		if (digit && US_STREET_SUFFIX_LOOKUP.has(tokens[i + 1]!)) {
+			tokens[i] = digit
+		}
 	}
 
 	// Directional expansion at the edges only ("N Main St" / "Main St N" — never interior
@@ -102,19 +104,27 @@ export function normalizeStreetForKey(street: string): string {
 
 	const leadPair = mergePair(tokens[0], tokens[1])
 
-	if (leadPair && tokens.length > 2) tokens.splice(0, 2, leadPair)
+	if (leadPair && tokens.length > 2) {
+		tokens.splice(0, 2, leadPair)
+	}
 	const first = edgeDirectional(tokens[0]!)
 
-	if (first && tokens.length > 1) tokens[0] = first
+	if (first && tokens.length > 1) {
+		tokens[0] = first
+	}
 
 	const tailPair = mergePair(tokens[tokens.length - 2], tokens[tokens.length - 1])
 
-	if (tailPair && tokens.length > 3) tokens.splice(tokens.length - 2, 2, tailPair)
+	if (tailPair && tokens.length > 3) {
+		tokens.splice(tokens.length - 2, 2, tailPair)
+	}
 
 	if (tokens.length > 2) {
 		const last = edgeDirectional(tokens[tokens.length - 1]!)
 
-		if (last) tokens[tokens.length - 1] = last
+		if (last) {
+			tokens[tokens.length - 1] = last
+		}
 	}
 
 	// Street-type canonicalization via the codex table (lowercase keys, UPPER canonical
@@ -192,20 +202,26 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 
 	switch (locale) {
 		case "fr":
-			for (let i = 0; i < tokens.length; i++) tokens[i] = FR_STREET_ABBREV.get(tokens[i]!) ?? tokens[i]!
+			for (let i = 0; i < tokens.length; i++) {
+				tokens[i] = FR_STREET_ABBREV.get(tokens[i]!) ?? tokens[i]!
+			}
 			break
 		case "de":
 			for (let i = 0; i < tokens.length; i++) {
 				const t = tokens[i]!
 
-				if (t.endsWith("str") && !t.endsWith("strasse")) tokens[i] = t.replace(/str$/, "strasse")
+				if (t.endsWith("str") && !t.endsWith("strasse")) {
+					tokens[i] = t.replace(/str$/, "strasse")
+				}
 			}
 			break
 		case "nl":
 			for (let i = 0; i < tokens.length; i++) {
 				const t = tokens[i]!
 
-				if (t.endsWith("str") && !t.endsWith("straat")) tokens[i] = t.replace(/str$/, "straat")
+				if (t.endsWith("str") && !t.endsWith("straat")) {
+					tokens[i] = t.replace(/str$/, "straat")
+				}
 			}
 			break
 	}
@@ -234,7 +250,9 @@ export function normalizeLocalityForKey(locality: string): string {
 export function stripLocalityQualifier(locality: string): string {
 	let s = locality.trim()
 
-	if (s.includes("/")) s = s.split("/")[0]!.trim() // "Kraubath/Mur", "St.Kanzian/Klopeiner See"
+	if (s.includes("/")) {
+		s = s.split("/")[0]!.trim()
+	} // "Kraubath/Mur", "St.Kanzian/Klopeiner See"
 	s = s.replace(/\s+[a-zà-ÿ]\.\s*\S.*$/iu, "") // abbreviated " b.Graz" / " o.Bleiburg" / " a.d. …"
 	s = s.replace(/\s+(im|an der|ob|bei|in der|unter|vor)\s+\S.*$/iu, "") // " im Simmental", " bei Graz"
 	s = s.replace(/\s+(S|N|E|W|V|Ø|Sø|Fyn|Thy|Sjælland|Jylland|[A-ZÅÄÖ]{2})$/u, "") // " S", " VD", " Thy"

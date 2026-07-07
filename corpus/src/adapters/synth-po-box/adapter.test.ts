@@ -180,7 +180,9 @@ describe("synth-po-box adapter", () => {
 		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1.0 })
 		const rows = []
 
-		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) rows.push(row)
+		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) {
+			rows.push(row)
+		}
 		expect(rows.length).toBeGreaterThanOrEqual(1)
 		expect(rows.every((r) => !/^(PSC|CMR|Unit) /.test(String(r.components.po_box)))).toBe(true)
 	})

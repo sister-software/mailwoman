@@ -142,9 +142,12 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		if (i === si) continue
 		const n = afterSplit[i]!
 
-		if (n.tag === "locality")
-			region.children.push(n) // nest sibling cities under the region
-		else out.push(n)
+		if (n.tag === "locality") {
+			region.children.push(n)
+		} // nest sibling cities under the region
+		else {
+			out.push(n)
+		}
 	}
 
 	// Only convert when there's a sibling city to nest — the unambiguous "City, State" shape. A LONE
@@ -210,7 +213,9 @@ function annotateUsRegions(node: AddressNode): void {
 		node.metadata = { ...node.metadata, country_hint: "US" }
 	}
 
-	for (const child of node.children) annotateUsRegions(child)
+	for (const child of node.children) {
+		annotateUsRegions(child)
+	}
 }
 
 /**
@@ -221,7 +226,9 @@ function annotateUsRegions(node: AddressNode): void {
 export function recognizeUSRegions(tree: AddressTree): AddressTree {
 	tree.roots = correctSiblings(tree.roots).map(correctNode)
 
-	for (const root of tree.roots) annotateUsRegions(root)
+	for (const root of tree.roots) {
+		annotateUsRegions(root)
+	}
 
 	return tree
 }

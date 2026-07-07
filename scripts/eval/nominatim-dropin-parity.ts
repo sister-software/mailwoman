@@ -139,7 +139,9 @@ const CONTRACT_FIELDS = ["place_id", "lat", "lon", "display_name"]
 function checkContract(result: NominatimResult, addressdetails: boolean): string[] {
 	const missing = CONTRACT_FIELDS.filter((f) => result[f] == null)
 
-	if (addressdetails && (typeof result.address !== "object" || result.address == null)) missing.push("address")
+	if (addressdetails && (typeof result.address !== "object" || result.address == null)) {
+		missing.push("address")
+	}
 
 	return missing
 }
@@ -212,7 +214,9 @@ try {
 			const body = await res.json()
 			const r = Array.isArray(body) ? body[0] : undefined
 
-			if (r) km = haversineKm(Number(r.lat), Number(r.lon), fx.lat, fx.lon)
+			if (r) {
+				km = haversineKm(Number(r.lat), Number(r.lon), fx.lat, fx.lon)
+			}
 		} catch {
 			/* no result */
 		}

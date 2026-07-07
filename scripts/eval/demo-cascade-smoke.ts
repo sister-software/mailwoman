@@ -98,7 +98,7 @@ try {
 	process.exit(2)
 }
 
-// ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromUrls defaults) ─────────
+// ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromURLs defaults) ─────────
 const card = JSON.parse(readFileSync(CARD, "utf8"))
 
 // Postcode anchor channel from the staged binaries — the same artifacts the demo fetches. Merge
@@ -116,7 +116,9 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 				continue
 			}
 
-			for (const country of Object.keys(entry.posterior)) existing.posterior[country] = 1
+			for (const country of Object.keys(entry.posterior)) {
+				existing.posterior[country] = 1
+			}
 
 			if (entry.lat !== 0 || entry.lon !== 0) {
 				if (existing.lat === 0 && existing.lon === 0) {
@@ -203,7 +205,9 @@ for (const row of rows) {
 	if (hits.length === 0 && postcodeNode?.value && anchorLookup) {
 		const anchorHit = anchorLookup.get(String(postcodeNode.value).toUpperCase())
 
-		if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) anchorCentroid = true
+		if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
+			anchorCentroid = true
+		}
 	}
 
 	const top = hits[0]

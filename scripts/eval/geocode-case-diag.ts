@@ -84,9 +84,13 @@ for (const raw0 of addrs) {
 	const a = await tierOf(raw)
 	const b = await tierOf(titleCaseInput(raw))
 
-	if (a.lat !== null) rawLat++
+	if (a.lat !== null) {
+		rawLat++
+	}
 
-	if (b.lat !== null) tcLat++
+	if (b.lat !== null) {
+		tcLat++
+	}
 	rawTier[a.tier] = (rawTier[a.tier] ?? 0) + 1
 	tcTier[b.tier] = (tcTier[b.tier] ?? 0) + 1
 }

@@ -16,12 +16,17 @@ const ENV_KEYS = ["MAILWOMAN_DATA_ROOT", "MAILWOMAN_CANDIDATE_DB"] as const
 const original = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]))
 
 function setEnv(key: string, value: string | undefined): void {
-	if (value === undefined) delete process.env[key]
-	else process.env[key] = value
+	if (value === undefined) {
+		delete process.env[key]
+	} else {
+		process.env[key] = value
+	}
 }
 
 afterEach(() => {
-	for (const k of ENV_KEYS) setEnv(k, original[k])
+	for (const k of ENV_KEYS) {
+		setEnv(k, original[k])
+	}
 })
 
 test("wofShardPaths: builds the admin + postcode + tail + intl + NL-PC6 shard paths under a data root (#920/#977)", () => {

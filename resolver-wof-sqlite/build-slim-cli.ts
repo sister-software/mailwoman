@@ -60,18 +60,26 @@ function parseArgs(argv: string[]): CLIArgs {
 			// postcode DB) that isn't built yet. Push only non-empty paths; build-slim skips the rest.
 			const v = argv[++i]
 
-			if (v === undefined) printUsageAndExit(2)
+			if (v === undefined) {
+				printUsageAndExit(2)
+			}
 
-			if (v) out.inputs.push(v)
+			if (v) {
+				out.inputs.push(v)
+			}
 		} else if (a === "--out") {
 			const v = argv[++i]
 
-			if (!v) printUsageAndExit(2)
+			if (!v) {
+				printUsageAndExit(2)
+			}
 			out.output = v
 		} else if (a === "--top") {
 			const v = argv[++i]
 
-			if (!v) printUsageAndExit(2)
+			if (!v) {
+				printUsageAndExit(2)
+			}
 			const n = Number(v)
 
 			if (!Number.isFinite(n) || n <= 0) {
@@ -82,7 +90,9 @@ function parseArgs(argv: string[]): CLIArgs {
 		} else if (a === "--countries") {
 			const v = argv[++i]
 
-			if (!v) printUsageAndExit(2)
+			if (!v) {
+				printUsageAndExit(2)
+			}
 			out.countries = v
 				.split(",")
 				.map((c) => c.trim())
@@ -97,7 +107,9 @@ function parseArgs(argv: string[]): CLIArgs {
 		}
 	}
 
-	if (out.inputs.length === 0 || !out.output) printUsageAndExit(2)
+	if (out.inputs.length === 0 || !out.output) {
+		printUsageAndExit(2)
+	}
 
 	return out
 }

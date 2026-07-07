@@ -56,19 +56,28 @@ function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): 
 		: db.prepare(`INSERT INTO names (id, language, name, official) VALUES (?, ?, ?, ?)`)
 	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 	const run = (id: number, language: string, name: string, official: number): void => {
-		if (opts?.omitOfficialColumn) insertName.run(id, language, name)
-		else insertName.run(id, language, name, official)
+		if (opts?.omitOfficialColumn) {
+			insertName.run(id, language, name)
+		} else {
+			insertName.run(id, language, name, official)
+		}
 	}
 
 	for (const p of places) {
 		insertSpr.run(p.id, p.name, p.country)
 		run(p.id, "", p.name, 0)
 
-		for (const a of p.aliases ?? []) run(p.id, "", a, 0)
+		for (const a of p.aliases ?? []) {
+			run(p.id, "", a, 0)
+		}
 
-		for (const a of p.officialAliases ?? []) run(p.id, "swe", a, 1)
+		for (const a of p.officialAliases ?? []) {
+			run(p.id, "swe", a, 1)
+		}
 
-		if (p.population !== undefined) insertPop.run(p.id, p.population)
+		if (p.population !== undefined) {
+			insertPop.run(p.id, p.population)
+		}
 	}
 
 	return db

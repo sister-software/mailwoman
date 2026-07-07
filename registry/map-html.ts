@@ -117,7 +117,9 @@ export function toMapHTML(
 		for (const f of geojson.features) {
 			const b = f.properties?.["bucket"] != null ? String(f.properties["bucket"]) : "—"
 
-			if (!(b in bucketColors)) bucketColors[b] = PALETTE[i++ % PALETTE.length]!
+			if (!(b in bucketColors)) {
+				bucketColors[b] = PALETTE[i++ % PALETTE.length]!
+			}
 		}
 	}
 
@@ -140,13 +142,21 @@ export function toMapHTML(
 	const features = geojson.features.map((f) => {
 		const [lng, lat] = f.geometry.coordinates
 
-		if (lng < minLng) minLng = lng
+		if (lng < minLng) {
+			minLng = lng
+		}
 
-		if (lat < minLat) minLat = lat
+		if (lat < minLat) {
+			minLat = lat
+		}
 
-		if (lng > maxLng) maxLng = lng
+		if (lng > maxLng) {
+			maxLng = lng
+		}
 
-		if (lat > maxLat) maxLat = lat
+		if (lat > maxLat) {
+			maxLat = lat
+		}
 
 		return { ...f, properties: { ...f.properties, _color: colorFor(f.properties) } }
 	})

@@ -47,20 +47,27 @@ function parseArgs(argv: string[]): CLIArgs {
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
 
-		if (a === "--in" || a === "--input") input = argv[++i]
-		else if (a === "--out" || a === "--output") output = argv[++i]
-		else if (a === "--postcodes") {
+		if (a === "--in" || a === "--input") {
+			input = argv[++i]
+		} else if (a === "--out" || a === "--output") {
+			output = argv[++i]
+		} else if (a === "--postcodes") {
 			const v = argv[++i]
 
-			if (v) postcodes.push(v)
-		} else if (a === "-h" || a === "--help") printUsageAndExit(0)
-		else {
+			if (v) {
+				postcodes.push(v)
+			}
+		} else if (a === "-h" || a === "--help") {
+			printUsageAndExit(0)
+		} else {
 			stderr.write(`unknown argument: ${a}\n`)
 			printUsageAndExit(1)
 		}
 	}
 
-	if (!input || !output) printUsageAndExit(1)
+	if (!input || !output) {
+		printUsageAndExit(1)
+	}
 
 	return { input, output, postcodes }
 }

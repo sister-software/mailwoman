@@ -68,8 +68,11 @@ export const noStreetLedRecipe: ShardRecipe = {
 					"Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "no-street-led")) emitted++
-			else skipped++
+			if (alignAndWrite(write, canonical, "no-street-led")) {
+				emitted++
+			} else {
+				skipped++
+			}
 		}
 
 		return { read, emitted, skipped }

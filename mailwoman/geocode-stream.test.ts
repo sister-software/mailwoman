@@ -15,7 +15,9 @@ import { geocodeStream } from "./geocode-stream.js"
 const fakeWorker = join(fileURLToPath(new URL("./test-fixtures/", import.meta.url)), "fake-geocode-worker.js")
 
 async function* records(n: number): AsyncIterableIterator<SourceRecord> {
-	for (let i = 0; i < n; i++) yield { id: String(i), raw: { addr: `addr ${i}` } } as SourceRecord
+	for (let i = 0; i < n; i++) {
+		yield { id: String(i), raw: { addr: `addr ${i}` } } as SourceRecord
+	}
 }
 
 describe("geocodeStream (wiring, fake worker)", () => {

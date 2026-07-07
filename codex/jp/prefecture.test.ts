@@ -18,7 +18,9 @@ describe("JP_PREFECTURES", () => {
 	it("has the legal to/dō/fu/ken split (1 to, 1 do, 2 fu, 43 ken)", () => {
 		const counts = { to: 0, do: 0, fu: 0, ken: 0 }
 
-		for (const info of Object.values(JP_PREFECTURES)) counts[info.type]++
+		for (const info of Object.values(JP_PREFECTURES)) {
+			counts[info.type]++
+		}
 		expect(counts).toEqual({ to: 1, do: 1, fu: 2, ken: 43 })
 	})
 

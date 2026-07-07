@@ -136,7 +136,9 @@ async function countLines(path: string): Promise<number> {
 
 	for await (const chunk of createReadStream(path) as AsyncIterable<Buffer>) {
 		for (let i = 0; i < chunk.length; i++) {
-			if (chunk[i] === 0x0a) count++
+			if (chunk[i] === 0x0a) {
+				count++
+			}
 		}
 	}
 

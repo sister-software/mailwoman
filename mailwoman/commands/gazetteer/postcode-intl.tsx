@@ -108,13 +108,21 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
 			cur.sumLon += lon
 			cur.n++
 
-			if (lat < cur.minLat) cur.minLat = lat
+			if (lat < cur.minLat) {
+				cur.minLat = lat
+			}
 
-			if (lat > cur.maxLat) cur.maxLat = lat
+			if (lat > cur.maxLat) {
+				cur.maxLat = lat
+			}
 
-			if (lon < cur.minLon) cur.minLon = lon
+			if (lon < cur.minLon) {
+				cur.minLon = lon
+			}
 
-			if (lon > cur.maxLon) cur.maxLon = lon
+			if (lon > cur.maxLon) {
+				cur.maxLon = lon
+			}
 		} else {
 			acc.set(key, { cc, pc, sumLat: lat, sumLon: lon, n: 1, minLat: lat, minLon: lon, maxLat: lat, maxLon: lon })
 		}
@@ -130,7 +138,9 @@ function nameVariants(pc: string, normalizeKey: NormalizeKey): string[] {
 	const stripped = pc.replace(/[\s-]/g, "")
 	const variants = [pc]
 
-	if (stripped && stripped !== pc) variants.push(stripped)
+	if (stripped && stripped !== pc) {
+		variants.push(stripped)
+	}
 	// Dedup by fold() — two forms that normalize identically need only one row.
 	const seen = new Set<string>()
 
@@ -345,7 +355,9 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 				const acc = await readGeonames(geonames, new Set(countries))
 				const byCc = new Map<string, number>()
 
-				for (const a of acc.values()) byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
+				for (const a of acc.values()) {
+					byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
+				}
 				console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
 
 				const rows = await buildShard(acc, out, normalizeLocalityForKey)
@@ -381,7 +393,9 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 	}, [options])
 
 	useEffect(() => {
-		if (summary || error) setImmediate(() => process.exit(error ? 1 : 0))
+		if (summary || error) {
+			setImmediate(() => process.exit(error ? 1 : 0))
+		}
 	}, [summary, error])
 
 	if (error) return <Text color="red">✗ {error}</Text>

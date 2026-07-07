@@ -75,18 +75,31 @@ function parseArgs(): Args {
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 
-		if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
-		else if (a === "--tokenizer" && args[i + 1]) out.tokenizerPath = args[++i]
-		else if (a === "--model-card" && args[i + 1]) out.modelCardPath = args[++i]
-		else if (a === "--tests" && args[i + 1]) out.testsDir = args[++i]
-		else if (a === "--falsehoods" && args[i + 1]) out.falsehoodsDir = args[++i]
-		else if (a === "--golden" && args[i + 1]) out.goldenDir = args[++i]
-		else if (a === "--admin-fst" && args[i + 1]) out.adminFSTPath = args[++i]
-		else if (a === "--out-json" && args[i + 1]) out.outJson = args[++i]
-		else if (a === "--gate") out.gate = true
-		else if (a === "--floor" && args[i + 1]) out.floor = Number(args[++i])
-		else if (a === "--min-count" && args[i + 1]) out.minCount = Number(args[++i])
-		else if (a === "--postcode-repair") out.postcodeRepair = true
+		if (a === "--model" && args[i + 1]) {
+			out.modelPath = args[++i]
+		} else if (a === "--tokenizer" && args[i + 1]) {
+			out.tokenizerPath = args[++i]
+		} else if (a === "--model-card" && args[i + 1]) {
+			out.modelCardPath = args[++i]
+		} else if (a === "--tests" && args[i + 1]) {
+			out.testsDir = args[++i]
+		} else if (a === "--falsehoods" && args[i + 1]) {
+			out.falsehoodsDir = args[++i]
+		} else if (a === "--golden" && args[i + 1]) {
+			out.goldenDir = args[++i]
+		} else if (a === "--admin-fst" && args[i + 1]) {
+			out.adminFSTPath = args[++i]
+		} else if (a === "--out-json" && args[i + 1]) {
+			out.outJson = args[++i]
+		} else if (a === "--gate") {
+			out.gate = true
+		} else if (a === "--floor" && args[i + 1]) {
+			out.floor = Number(args[++i])
+		} else if (a === "--min-count" && args[i + 1]) {
+			out.minCount = Number(args[++i])
+		} else if (a === "--postcode-repair") {
+			out.postcodeRepair = true
+		}
 	}
 
 	if (!out.modelPath || !out.tokenizerPath || !out.modelCardPath) {
@@ -173,9 +186,11 @@ function objectLiteralToExpected(node: ts.ObjectLiteralExpression): ParsedExpect
 		const name = prop.name
 		let key: string
 
-		if (ts.isIdentifier(name)) key = name.text
-		else if (ts.isStringLiteralLike(name)) key = name.text
-		else return null
+		if (ts.isIdentifier(name)) {
+			key = name.text
+		} else if (ts.isStringLiteralLike(name)) {
+			key = name.text
+		} else return null
 
 		if (key !== "postcode") continue
 		const value = prop.initializer
@@ -184,8 +199,9 @@ function objectLiteralToExpected(node: ts.ObjectLiteralExpression): ParsedExpect
 		const elements: string[] = []
 
 		for (const el of value.elements) {
-			if (ts.isStringLiteralLike(el)) elements.push(el.text)
-			else return null
+			if (ts.isStringLiteralLike(el)) {
+				elements.push(el.text)
+			} else return null
 		}
 
 		// Tests assert exactly one postcode per solution. Take the first.
@@ -220,7 +236,9 @@ function extractFromTestFile(file: string): Sample[] {
 					if (!ts.isObjectLiteralExpression(arg)) continue
 					const parsed = objectLiteralToExpected(arg)
 
-					if (parsed?.postcode) expectedPostcodes.push(parsed.postcode)
+					if (parsed?.postcode) {
+						expectedPostcodes.push(parsed.postcode)
+					}
 				}
 
 				if (expectedPostcodes.length > 0) {
@@ -381,7 +399,9 @@ function printReport(results: SampleResult[]): {
 		const s = byCountry.get(r.country) ?? { total: 0, pass: 0 }
 		s.total++
 
-		if (r.pass) s.pass++
+		if (r.pass) {
+			s.pass++
+		}
 		byCountry.set(r.country, s)
 	}
 	const overall = { total: results.length, pass: results.filter((r) => r.pass).length }
@@ -526,7 +546,9 @@ async function main(): Promise<void> {
 			console.error("")
 			console.error("GATE FAILED:")
 
-			for (const v of violations) console.error(`  - ${v}`)
+			for (const v of violations) {
+				console.error(`  - ${v}`)
+			}
 			process.exit(1)
 		}
 		console.error("Gate passed.")

@@ -136,7 +136,11 @@ for (const line of readFileSync(DIVISIONS, "utf8").split("\n")) {
 			return
 		}
 
-		if (Array.isArray(coords)) for (const c of coords) scan(c)
+		if (Array.isArray(coords)) {
+			for (const c of coords) {
+				scan(c)
+			}
+		}
 	}
 	scan((geometry as { coordinates?: unknown }).coordinates)
 	regionPolygons.push({
@@ -228,7 +232,9 @@ for (const s of samples) {
 	// Cross-check the NLSC-attributed levels against the geometric truth (report only).
 	levelsChecked++
 
-	if (normHan(s.district) === gold.nameHan) levelsAgree++
+	if (normHan(s.district) === gold.nameHan) {
+		levelsAgree++
+	}
 
 	// The postcode a user would attach: keyed from the point's own admin attribution (county +
 	// district — what the printed address carries), which is how the postcode reaches a query.
@@ -264,7 +270,9 @@ for (const s of samples) {
 		const goldRegion = containingPolygon(regionPolygons, s.lon, s.lat)
 		const resolvedRegion = containingPolygon(regionPolygons, top.lon, top.lat)
 
-		if (goldRegion && resolvedRegion && goldRegion.name === resolvedRegion.name) cityPassAmongFail++
+		if (goldRegion && resolvedRegion && goldRegion.name === resolvedRegion.name) {
+			cityPassAmongFail++
+		}
 	}
 }
 

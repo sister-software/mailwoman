@@ -145,19 +145,25 @@ export function synthesizeLocaleRow(
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
 
 	// ~80% keep the house number (the rest are street-only forms, also idiomatic).
-	if (base.house_number && random() < 0.8) components.house_number = base.house_number
+	if (base.house_number && random() < 0.8) {
+		components.house_number = base.house_number
+	}
 
 	// ~85% keep the postcode (canonicalized to the country's rendered form — NL spaces it). The
 	// `postcodeShape: "as-source"` rewrite happens AFTER the render: the OpenCage NL template
 	// normalizes the postcode itself, so a glued input can't survive rendering directly.
-	if (base.postcode && random() < 0.85) components.postcode = normalizePostcode(base.postcode, country)
+	if (base.postcode && random() < 0.85) {
+		components.postcode = normalizePostcode(base.postcode, country)
+	}
 
 	// International order carries the REGION in the tail ("City, Region Postcode") — the layout real
 	// US/feed renderings (and our OA eval) use. v0.9.2 rendered international order WITHOUT the region,
 	// so the model never learned to segment the tail and mangled it at eval (region absorbed into the
 	// locality / locality dropped); v0.9.3 closes that gap (#327). Native order still drops the region
 	// (the native template absorbs it into the city line, which would break verbatim alignment).
-	if (order === "international" && base.region) components.region = base.region
+	if (order === "international" && base.region) {
+		components.region = base.region
+	}
 
 	// Native order uses the address's own country template; international order uses the US template —
 	// house-first, postcode-after-city, with a region slot for the tail. Neither branch consumes a

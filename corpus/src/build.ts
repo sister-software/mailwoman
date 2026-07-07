@@ -268,7 +268,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		}
 	}
 
-	for (const s of Object.values(labeledStreams)) s.end()
+	for (const s of Object.values(labeledStreams)) {
+		s.end()
+	}
 	quarantineStream.end()
 	await Promise.all([...Object.values(labeledStreams).map(streamEnd), streamEnd(quarantineStream)])
 

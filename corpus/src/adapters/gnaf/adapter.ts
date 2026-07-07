@@ -114,7 +114,9 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 					// region (state) rides only the canonical render (order 0); the postcode-leading layouts
 					// omit it (matching the eval's serialization) so it never breaks verbatim alignment.
-					if (order === 0 && t.region) components.region = t.region
+					if (order === 0 && t.region) {
+						components.region = t.region
+					}
 
 					const aligned = reconcileComponents(components, raw)
 

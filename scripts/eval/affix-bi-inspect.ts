@@ -65,23 +65,32 @@ for (let i = 0; i < N; i++) {
 	const p = (await classifier.parseJSON(row.raw)) as Record<string, string>
 	let m: string
 
-	if (norm(p.street_suffix) === gold) m = "✓ correct separate suffix span"
-	else if (wordIncludes(norm(p.street), gold)) m = "merged INTO street (suffix not split out)"
-	else if (!p.street_suffix) m = "dropped (no street_suffix, not in street)"
-	else m = `other (suffix='${p.street_suffix}')`
+	if (norm(p.street_suffix) === gold) {
+		m = "✓ correct separate suffix span"
+	} else if (wordIncludes(norm(p.street), gold)) {
+		m = "merged INTO street (suffix not split out)"
+	} else if (!p.street_suffix) {
+		m = "dropped (no street_suffix, not in street)"
+	} else {
+		m = `other (suffix='${p.street_suffix}')`
+	}
 	mode[m] = (mode[m] ?? 0) + 1
 
-	if (examples.length < 6 && m.startsWith("merged"))
+	if (examples.length < 6 && m.startsWith("merged")) {
 		examples.push(
 			`  "${row.raw}"\n     gold: street='${row.components.street}' suffix='${row.components.street_suffix}' | got: street='${p.street ?? ""}' suffix='${p.street_suffix ?? ""}'`
 		)
+	}
 }
 
 const total = Object.values(mode).reduce((a, b) => a + b, 0)
 console.log(`\n== street-eats-affix B/I decode inspector — ${args.model ?? "dev"} (n=${total}) ==\n`)
 
-for (const [m, c] of Object.entries(mode).sort((a, b) => b[1] - a[1]))
+for (const [m, c] of Object.entries(mode).sort((a, b) => b[1] - a[1])) {
 	console.log(`  ${((100 * c) / total).toFixed(0).padStart(3)}%  ${m}  (${c})`)
+}
 
-if (examples.length) console.log(`\n  examples (merged):\n${examples.join("\n")}`)
+if (examples.length) {
+	console.log(`\n  examples (merged):\n${examples.join("\n")}`)
+}
 console.log()

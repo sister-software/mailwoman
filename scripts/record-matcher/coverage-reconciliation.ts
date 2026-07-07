@@ -165,7 +165,9 @@ async function main(): Promise<void> {
 			})
 			total++
 
-			if (g.lat !== null) geo++
+			if (g.lat !== null) {
+				geo++
+			}
 
 			return g
 		},
@@ -178,7 +180,9 @@ async function main(): Promise<void> {
 	for (const spec of SPECS) {
 		const recs = await ingestRows(rawBySource.get(spec.source)!, spec.mapping, { geocodeAddress: seam })
 
-		for (const r of recs) r.id = `${spec.source}:${r.id}`
+		for (const r of recs) {
+			r.id = `${spec.source}:${r.id}`
+		}
 		records.push(...recs)
 	}
 	shardProvider.close()

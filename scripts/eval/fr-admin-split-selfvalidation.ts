@@ -68,10 +68,14 @@ function collectResolved(tree: AddressTree): Resolved[] {
 			out.push({ id: Number(n.placeID.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
 
-		for (const c of n.children) visit(c)
+		for (const c of n.children) {
+			visit(c)
+		}
 	}
 
-	for (const r of tree.roots) visit(r)
+	for (const r of tree.roots) {
+		visit(r)
+	}
 
 	return out
 }
@@ -79,7 +83,9 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
 	for (const r of rs) {
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
+		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+			best = r
+		}
 	}
 
 	return best
@@ -194,13 +200,21 @@ async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg>
 		agg.merged.push(m.km)
 		agg.split.push(s.km)
 
-		if (d.resolved) agg.res.dropped++
+		if (d.resolved) {
+			agg.res.dropped++
+		}
 
-		if (m.resolved) agg.res.merged++
+		if (m.resolved) {
+			agg.res.merged++
+		}
 
-		if (s.resolved) agg.res.split++
+		if (s.resolved) {
+			agg.res.split++
+		}
 
-		if (d.km - s.km > 2) agg.splitBeatsDroppedBy2km++
+		if (d.km - s.km > 2) {
+			agg.splitBeatsDroppedBy2km++
+		}
 	}
 	console.error(`  ${label}: n=${agg.n} resolve-rate(d/m/s)=${agg.res.dropped}/${agg.res.merged}/${agg.res.split}`)
 

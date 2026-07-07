@@ -90,7 +90,9 @@ export function bridgePunctuationGaps(
 			// themselves decode as O — they are exactly what we bridge across).
 			let back = out.length - 1
 
-			while (back >= 0 && out[back]!.label === "O" && out[back]!.start >= (out[back - 1]?.end ?? 0)) back--
+			while (back >= 0 && out[back]!.label === "O" && out[back]!.start >= (out[back - 1]?.end ?? 0)) {
+				back--
+			}
 			const prev = back >= 0 ? out[back]! : undefined
 			const tag = token.label.replace(/^[BI]-/, "")
 			const prevTag = prev?.label.replace(/^[BI]-/, "")
