@@ -44,6 +44,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
@@ -253,7 +254,7 @@ runIfScript(import.meta, async () => {
 	// the ship artifact against the slim hot DB the demo serves. Env-gated like the other
 	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
 	// gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
-	const HOT_DB = process.env["MAILWOMAN_WOF_HOT_DB"] || "/tmp/v440-stage/en-us/v4.4.0/wof-hot.db"
+	const HOT_DB = $public.MAILWOMAN_WOF_HOT_DB || "/tmp/v440-stage/en-us/v4.4.0/wof-hot.db"
 	const HOT_STAGE = dirname(HOT_DB)
 
 	if (existsSync(HOT_DB)) {

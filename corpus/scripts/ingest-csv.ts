@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -24,6 +24,8 @@
  *   Field separator (default: ,) --skip <n> Lines to skip before header (default: 0) --no-header
  *   CSV has no header row — columns will be col_0, col_1, etc. --dry-run Infer schema and print
  *   CREATE TABLE, but don't import
+ *
+ *   DELIBERATE hand-parse: dynamic --key value pairs (columns inferred at runtime) — node:util parseArgs cannot express this shape.
  */
 
 ///<reference types="node" />

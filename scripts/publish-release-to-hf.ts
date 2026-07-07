@@ -29,6 +29,8 @@
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\
  *   --set-default
+ *
+ *   DELIBERATE hand-parse: generic --kebab-key → camelCase option derivation — node:util parseArgs cannot express this shape.
  */
 
 import { spawnSync } from "node:child_process"

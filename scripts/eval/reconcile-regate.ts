@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs"
 import { basename } from "node:path"
+import { parseArgs } from "node:util"
 
 /**
  * @copyright Sister Software
@@ -21,6 +22,7 @@ import { basename } from "node:path"
  */
 import type { AddressTree } from "@mailwoman/core/decoder"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 interface NeuralClassifier {
 	parse(input: string, opts?: { postcodeRepair?: boolean }): Promise<AddressTree>
 }
@@ -83,7 +85,7 @@ function hit(byTag: ByTag, tag: string, goldVal: string): boolean {
 	return vals.some((v) => v && (v === g || v.includes(g) || g.includes(v)))
 }
 
-const files = process.argv.slice(2)
+const files = positionals
 const pct = (h: number, n: number): string => (n ? ((100 * h) / n).toFixed(1) : "  - ")
 
 type Counts = { h: number; n: number }

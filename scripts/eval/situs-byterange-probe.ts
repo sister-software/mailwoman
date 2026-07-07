@@ -1,8 +1,10 @@
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-const f = process.argv[2] || dataRootPath("address-points", "address-points-us-ca.db")
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
+const f = positionals[0] || dataRootPath("address-points", "address-points-us-ca.db")
 const d = new DatabaseSync(f, { readOnly: true })
 const PS = (d.prepare("PRAGMA page_size").get() as { page_size: number }).page_size
 

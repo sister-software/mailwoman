@@ -35,6 +35,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 interface PerTagStats {
 	expected: number
@@ -68,7 +69,6 @@ interface GateArgs {
 }
 
 function parseArgs(): GateArgs {
-	const args = process.argv.slice(2)
 	const out: Partial<GateArgs> = {
 		recallThresholdPp: 2,
 		recallMinBaselinePct: 10,
@@ -76,25 +76,31 @@ function parseArgs(): GateArgs {
 		hallRateThresholdPct: 20,
 	}
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		args: process.argv.slice(2),
+		options: {
+			baseline: { type: "string" },
+			candidate: { type: "string" },
+			"hall-abs-threshold": { type: "string" },
+			"hall-rate-threshold-pct": { type: "string" },
+			"out-md": { type: "string" },
+			"recall-min-baseline-pct": { type: "string" },
+			"recall-threshold-pp": { type: "string" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--baseline" && args[i + 1]) {
-			out.baselinePath = args[++i]
-		} else if (a === "--candidate" && args[i + 1]) {
-			out.candidatePath = args[++i]
-		} else if (a === "--recall-threshold-pp" && args[i + 1]) {
-			out.recallThresholdPp = Number(args[++i])
-		} else if (a === "--recall-min-baseline-pct" && args[i + 1]) {
-			out.recallMinBaselinePct = Number(args[++i])
-		} else if (a === "--hall-abs-threshold" && args[i + 1]) {
-			out.hallAbsThreshold = Number(args[++i])
-		} else if (a === "--hall-rate-threshold-pct" && args[i + 1]) {
-			out.hallRateThresholdPct = Number(args[++i])
-		} else if (a === "--out-md" && args[i + 1]) {
-			out.outMd = args[++i]
-		}
-	}
+	if (values["baseline"] != null) out.baselinePath = values["baseline"] as string
+	if (values["candidate"] != null) out.candidatePath = values["candidate"] as string
+	if (values["recall-threshold-pp"] != null) out.recallThresholdPp = Number(values["recall-threshold-pp"] as string)
+	if (values["recall-min-baseline-pct"] != null)
+		out.recallMinBaselinePct = Number(values["recall-min-baseline-pct"] as string)
+	if (values["hall-abs-threshold"] != null) out.hallAbsThreshold = Number(values["hall-abs-threshold"] as string)
+	if (values["hall-rate-threshold-pct"] != null)
+		out.hallRateThresholdPct = Number(values["hall-rate-threshold-pct"] as string)
+	if (values["out-md"] != null) out.outMd = values["out-md"] as string
 
 	if (!out.baselinePath || !out.candidatePath) {
 		console.error(

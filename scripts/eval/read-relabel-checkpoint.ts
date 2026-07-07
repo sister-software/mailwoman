@@ -12,12 +12,14 @@
  */
 
 import { basename } from "node:path"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 runIfScript(import.meta, async () => {
-	const step = process.argv[2]
+	const step = positionals[0]
 
 	if (!step) throw new Error("usage: read-relabel-checkpoint.ts <zero-padded-step, e.g. 020000>")
 

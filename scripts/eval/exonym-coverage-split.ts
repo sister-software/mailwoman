@@ -19,19 +19,23 @@ import { readFileSync } from "node:fs"
  *   Usage: node scripts/eval/exonym-coverage-split.ts [--per-country 3] [--min-pop 15000] [--db <candidate.db>]
  */
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-const argv = process.argv.slice(2)
-const arg = (name: string, dflt: string): string => {
-	const i = argv.indexOf(`--${name}`)
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { db: { type: "string" }, "min-pop": { type: "string" }, "per-country": { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { db?: string; "min-pop"?: string; "per-country"?: string }
 
-	return i >= 0 && argv[i + 1] ? argv[i + 1]! : dflt
-}
-const PER_COUNTRY = Number(arg("per-country", "3"))
-const MIN_POP = Number(arg("min-pop", "15000"))
-const DB_PATH = arg("db", dataRootPath("wof", "candidate.db"))
+const PER_COUNTRY = Number(values["per-country"] || "3")
+const MIN_POP = Number(values["min-pop"] || "15000")
+const DB_PATH = values["db"] || dataRootPath("wof", "candidate.db")
 const CITIES = dataRootPath("geonames", "cities15000.txt")
 
 interface City {

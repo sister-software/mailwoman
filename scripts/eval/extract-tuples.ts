@@ -17,6 +17,8 @@
  *   --shards /mnt/playpen/mailwoman-data/wof/admin-global-priority.db\
  *   --output /tmp/tuples.jsonl\
  *   [--limit 50000]
+ *
+ *   DELIBERATE hand-parse: argparse-style greedy nargs consumption for --shards — node:util parseArgs cannot express this shape.
  */
 
 import { closeSync, openSync, writeSync } from "node:fs"

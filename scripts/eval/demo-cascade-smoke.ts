@@ -67,6 +67,7 @@ const { values: rawValues } = parseArgs({
 		model: { type: "string" },
 		"stage-dir": { type: "string" },
 		tokenizer: { type: "string" },
+		explain: { type: "boolean" },
 	},
 	strict: false,
 	allowPositionals: true,
@@ -82,6 +83,7 @@ const values = rawValues as {
 	model?: string
 	"stage-dir"?: string
 	tokenizer?: string
+	explain?: boolean
 }
 const argv = process.argv.slice(2)
 
@@ -94,7 +96,7 @@ const FST = (values["fst"] || path.join(STAGE, "fst-en-US.bin"))!
 const GAZ = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
 const FILE = (values["file"] || "data/eval/external/demo-cascade-smoke.jsonl")!
 const JSON_OUT = values["json"] || ""
-const EXPLAIN = argv.includes("--explain")
+const EXPLAIN = values["explain"] ?? false
 
 // ── Preflight: every artifact loud-missing, never a vague ENOENT mid-run ────────────────────────
 const missing = Object.entries({

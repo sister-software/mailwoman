@@ -14,9 +14,11 @@
 import { createReadStream, statSync, type Stats } from "node:fs"
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
 import { extname, join, normalize } from "node:path"
+import { parseArgs } from "node:util"
 
-const DIR = process.argv[2] || "/tmp"
-const PORT = Number(process.argv[3] || 8899)
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
+const DIR = positionals[0] || "/tmp"
+const PORT = Number(positionals[1] || 8899)
 
 const TYPES: Record<string, string> = {
 	".html": "text/html; charset=utf-8",

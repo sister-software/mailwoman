@@ -14,6 +14,7 @@
 import { existsSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -97,7 +98,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
 const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 
-const db = process.env["MAILWOMAN_CANDIDATE_DB"] ?? "admin shards"
+const db = $public.MAILWOMAN_CANDIDATE_DB ?? "admin shards"
 const rows: Array<{ cap: Cap; err: number | null }> = []
 
 for (const cap of SET) {

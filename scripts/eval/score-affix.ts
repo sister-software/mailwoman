@@ -19,6 +19,8 @@ const { values: rawValues } = parseArgs({
 		"gazetteer-lexicon": { type: "string" },
 		json: { type: "string" },
 		model: { type: "string" },
+		"bridge-gaps": { type: "boolean" },
+		"suppress-gaz-near-postcode": { type: "boolean" },
 	},
 	strict: false,
 	allowPositionals: true,
@@ -30,6 +32,8 @@ const values = rawValues as {
 	"gazetteer-lexicon"?: string
 	json?: string
 	model?: string
+	"bridge-gaps"?: boolean
+	"suppress-gaz-near-postcode"?: boolean
 }
 const argv = process.argv.slice(2)
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -53,7 +57,7 @@ const TAGS = [
 // A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference,
 // else the zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
 const GAZ = values["gazetteer-lexicon"] || ""
-const suppressGaz = argv.includes("--suppress-gaz-near-postcode")
+const suppressGaz = values["suppress-gaz-near-postcode"] ?? false
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([
@@ -70,7 +74,7 @@ const neural = new NeuralAddressClassifier({
 	// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
 	...(values["conventions"] || "" ? { addressSystemConventions: (values["conventions"] || "") as "auto" } : {}),
 	// v4.4.0 corrective: --bridge-gaps merges same-tag spans split at unlabeled punctuation.
-	...(argv.includes("--bridge-gaps") ? { bridgePunctuationGaps: true } : {}),
+	...((values["bridge-gaps"] ?? false) ? { bridgePunctuationGaps: true } : {}),
 })
 
 const rows = readFileSync(file, "utf8")

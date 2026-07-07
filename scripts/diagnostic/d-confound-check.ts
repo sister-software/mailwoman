@@ -10,6 +10,7 @@
  *   but it still resolves far → ranking. Run: node --expose-gc scripts/diagnostic/d-confound-check.ts
  */
 
+import { parseArgs } from "node:util"
 import { existsSync, readFileSync } from "node:fs"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -18,8 +19,9 @@ import { haversineKm } from "@mailwoman/spatial"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
 
-const GOLDEN = process.argv[2] ?? "data/eval/external/oa-pt-coord-150.jsonl"
-const N = Number(process.argv[3] ?? "12")
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
+const GOLDEN = positionals[0] ?? "data/eval/external/oa-pt-coord-150.jsonl"
+const N = Number(positionals[1] ?? "12")
 
 interface Row {
 	raw: string

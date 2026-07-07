@@ -41,6 +41,7 @@
 
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -69,38 +70,41 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	const out: Partial<Args> = { gate: false, floor: 0.9, minCount: 10, postcodeRepair: false }
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		args: process.argv.slice(2),
+		options: {
+			"admin-fst": { type: "string" },
+			falsehoods: { type: "string" },
+			floor: { type: "string" },
+			gate: { type: "boolean" },
+			golden: { type: "string" },
+			"min-count": { type: "string" },
+			model: { type: "string" },
+			"model-card": { type: "string" },
+			"out-json": { type: "string" },
+			"postcode-repair": { type: "boolean" },
+			tests: { type: "string" },
+			tokenizer: { type: "string" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--model" && args[i + 1]) {
-			out.modelPath = args[++i]
-		} else if (a === "--tokenizer" && args[i + 1]) {
-			out.tokenizerPath = args[++i]
-		} else if (a === "--model-card" && args[i + 1]) {
-			out.modelCardPath = args[++i]
-		} else if (a === "--tests" && args[i + 1]) {
-			out.testsDir = args[++i]
-		} else if (a === "--falsehoods" && args[i + 1]) {
-			out.falsehoodsDir = args[++i]
-		} else if (a === "--golden" && args[i + 1]) {
-			out.goldenDir = args[++i]
-		} else if (a === "--admin-fst" && args[i + 1]) {
-			out.adminFSTPath = args[++i]
-		} else if (a === "--out-json" && args[i + 1]) {
-			out.outJson = args[++i]
-		} else if (a === "--gate") {
-			out.gate = true
-		} else if (a === "--floor" && args[i + 1]) {
-			out.floor = Number(args[++i])
-		} else if (a === "--min-count" && args[i + 1]) {
-			out.minCount = Number(args[++i])
-		} else if (a === "--postcode-repair") {
-			out.postcodeRepair = true
-		}
-	}
+	if (values["model"] != null) out.modelPath = values["model"] as string
+	if (values["tokenizer"] != null) out.tokenizerPath = values["tokenizer"] as string
+	if (values["model-card"] != null) out.modelCardPath = values["model-card"] as string
+	if (values["tests"] != null) out.testsDir = values["tests"] as string
+	if (values["falsehoods"] != null) out.falsehoodsDir = values["falsehoods"] as string
+	if (values["golden"] != null) out.goldenDir = values["golden"] as string
+	if (values["admin-fst"] != null) out.adminFSTPath = values["admin-fst"] as string
+	if (values["out-json"] != null) out.outJson = values["out-json"] as string
+	if (values["gate"] != null) out.gate = true
+	if (values["floor"] != null) out.floor = Number(values["floor"] as string)
+	if (values["min-count"] != null) out.minCount = Number(values["min-count"] as string)
+	if (values["postcode-repair"] != null) out.postcodeRepair = true
 
 	if (!out.modelPath || !out.tokenizerPath || !out.modelCardPath) {
 		console.error(

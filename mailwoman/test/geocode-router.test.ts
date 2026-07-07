@@ -10,12 +10,13 @@
 
 import { existsSync } from "node:fs"
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import express from "express"
 import { describe, expect, test } from "vitest"
 
 import { GeocodeRouter } from "../server/GeocodeRouter.js"
 
-const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const txSitus = "/mnt/playpen/mailwoman-data/address-points/address-points-us-tx.db"
 const hasStack = existsSync(wofPath) && existsSync(txSitus)
 const describeIfStack = describe.skipIf(!hasStack)

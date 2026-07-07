@@ -39,6 +39,7 @@ import { execSync } from "node:child_process"
 import { readFileSync, writeFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -64,24 +65,27 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	const out: Partial<Args> = {}
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		args: process.argv.slice(2),
+		options: {
+			"out-json": { type: "string" },
+			"out-md": { type: "string" },
+			rules: { type: "string" },
+			shard: { type: "string" },
+			stats: { type: "string" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--shard" && args[i + 1]) {
-			out.shardPath = args[++i]
-		} else if (a === "--stats" && args[i + 1]) {
-			out.statsPath = args[++i]
-		} else if (a === "--rules" && args[i + 1]) {
-			out.rulesPath = args[++i]
-		} else if (a === "--out-md" && args[i + 1]) {
-			out.outMd = args[++i]
-		} else if (a === "--out-json" && args[i + 1]) {
-			out.outJson = args[++i]
-		}
-	}
+	if (values["shard"] != null) out.shardPath = values["shard"] as string
+	if (values["stats"] != null) out.statsPath = values["stats"] as string
+	if (values["rules"] != null) out.rulesPath = values["rules"] as string
+	if (values["out-md"] != null) out.outMd = values["out-md"] as string
+	if (values["out-json"] != null) out.outJson = values["out-json"] as string
 
 	if (!out.shardPath || !out.statsPath) {
 		console.error(

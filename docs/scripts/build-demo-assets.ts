@@ -30,6 +30,7 @@
 import { copyFile, mkdir, stat } from "node:fs/promises"
 import { fileURLToPath } from "node:url"
 
+import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
@@ -39,7 +40,7 @@ const WEIGHTS_PKG = fileURLToPath(new URL("../../neural-weights-en-us", import.m
 
 // Canonical custom-built admin gazetteer (never the off-the-shelf geocode.earth dumps — see the
 // feedback-custom-wof-db-only memory + scripts/wof-build-manifest.json) — the candidate-table source.
-const WOF_ADMIN_DB = process.env["PLAYPEN_WOF_ADMIN_DB"] ?? dataRootPath("wof", "admin-global-priority.db")
+const WOF_ADMIN_DB = $public.PLAYPEN_WOF_ADMIN_DB ?? dataRootPath("wof", "admin-global-priority.db")
 
 /** Whether a path exists (file or symlink). */
 async function exists(path: string): Promise<boolean> {

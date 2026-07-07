@@ -21,6 +21,7 @@
 
 import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
 const WOF_REPOS = "/mnt/playpen/mailwoman-data/wof/repos"
 
@@ -226,26 +227,15 @@ interface ResolvedRow {
 
 function main(): number {
 	// --- arg parsing: <resolved.json> [--label NAME] [--json OUT] ---------------
-	const args = process.argv.slice(2)
-	let src: string | null = null
-	let labelArg: string | null = null
-	let jsonOut: string | null = null
-	let i = 0
-
-	while (i < args.length) {
-		const a = args[i]
-
-		if (a === "--label") {
-			labelArg = args[i + 1]!
-			i += 2
-		} else if (a === "--json") {
-			jsonOut = args[i + 1]!
-			i += 2
-		} else {
-			src = a!
-			i += 1
-		}
-	}
+	// node:util parseArgs — flags + one positional source path (old scan parity: unknown flags tolerated).
+	const { values, positionals } = parseArgs({
+		options: { label: { type: "string" }, json: { type: "string" } },
+		strict: false,
+		allowPositionals: true,
+	})
+	const src: string | null = positionals[0] ?? null
+	const labelArg: string | null = (values.label as string | undefined) ?? null
+	const jsonOut: string | null = (values.json as string | undefined) ?? null
 
 	if (!src) {
 		console.error("usage: pip-containment.ts <resolved.json> [--label NAME] [--json OUT]")

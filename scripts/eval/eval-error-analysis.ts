@@ -32,6 +32,7 @@
 
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -61,26 +62,29 @@ interface Args {
 }
 
 function parseArgs(): Args {
-	const args = process.argv.slice(2)
 	const out: Partial<Args> = { postcodeRepair: false, strict: true }
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
+	const { values } = parseNodeArgs({
+		args: process.argv.slice(2),
+		options: {
+			golden: { type: "string" },
+			model: { type: "string" },
+			"model-card": { type: "string" },
+			"no-strict": { type: "boolean" },
+			"postcode-repair": { type: "boolean" },
+			tokenizer: { type: "string" },
+		},
+		strict: false,
+		allowPositionals: true,
+	})
 
-		if (a === "--golden" && args[i + 1]) {
-			out.goldenDir = args[++i]
-		} else if (a === "--model" && args[i + 1]) {
-			out.modelPath = args[++i]
-		} else if (a === "--tokenizer" && args[i + 1]) {
-			out.tokenizerPath = args[++i]
-		} else if (a === "--model-card" && args[i + 1]) {
-			out.modelCardPath = args[++i]
-		} else if (a === "--postcode-repair") {
-			out.postcodeRepair = true
-		} else if (a === "--no-strict") {
-			out.strict = false
-		}
-	}
+	if (values["golden"] != null) out.goldenDir = values["golden"] as string
+	if (values["model"] != null) out.modelPath = values["model"] as string
+	if (values["tokenizer"] != null) out.tokenizerPath = values["tokenizer"] as string
+	if (values["model-card"] != null) out.modelCardPath = values["model-card"] as string
+	if (values["postcode-repair"] != null) out.postcodeRepair = true
+	if (values["no-strict"] != null) out.strict = false
 
 	if (!out.goldenDir) {
 		console.error(

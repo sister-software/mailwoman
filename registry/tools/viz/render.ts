@@ -16,10 +16,12 @@
 
 import { resolve } from "node:path"
 import { pathToFileURL } from "node:url"
+import { parseArgs } from "node:util"
 
 import { chromium } from "playwright"
 
-const [, , inHTML, outPNG, w = "1160", h = "1000"] = process.argv
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
+const [inHTML, outPNG, w = "1160", h = "1000"] = positionals
 
 if (!inHTML || !outPNG) {
 	console.error("usage: render.ts <in.html> <out.png> [width] [height]")

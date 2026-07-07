@@ -69,6 +69,7 @@
 import { spawnSync } from "node:child_process"
 import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
+import { parseArgs as parseNodeArgs } from "node:util"
 
 interface BBox {
 	minLat: number
@@ -268,7 +269,6 @@ const SOURCES: Source[] = [
 const RESULTS_BASE = "https://results.openaddresses.io/latest/run"
 
 function parseArgs(): Options {
-	const args = process.argv.slice(2)
 	const out: Options = {
 		out: "data/eval/external/openaddresses-us-sample.jsonl",
 		cache: "/tmp/oa-cache",
@@ -279,27 +279,30 @@ function parseArgs(): Options {
 		sources: null,
 	}
 
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
+	// STRICT parseArgs — the original loop threw on unknown flags; parity preserved.
+	const { values } = parseNodeArgs({
+		options: {
+			out: { type: "string" },
+			cache: { type: "string" },
+			target: { type: "string" },
+			"per-state": { type: "string" },
+			seed: { type: "string" },
+			offline: { type: "boolean" },
+			sources: { type: "string" },
+		},
+	})
 
-		if (a === "--out") {
-			out.out = args[++i]!
-		} else if (a === "--cache") {
-			out.cache = args[++i]!
-		} else if (a === "--target") {
-			out.target = parseInt(args[++i]!, 10)
-		} else if (a === "--per-state") {
-			out.perState = parseInt(args[++i]!, 10)
-		} else if (a === "--seed") {
-			out.seed = parseInt(args[++i]!, 10)
-		} else if (a === "--offline") {
-			out.offline = true
-		} else if (a === "--sources") {
-			out.sources = args[++i]!.split(",")
-				.map((s) => s.trim())
-				.filter(Boolean)
-		} else throw new Error(`Unknown flag: ${a}`)
-	}
+	if (values.out != null) out.out = values.out
+	if (values.cache != null) out.cache = values.cache
+	if (values.target != null) out.target = parseInt(values.target, 10)
+	if (values["per-state"] != null) out.perState = parseInt(values["per-state"], 10)
+	if (values.seed != null) out.seed = parseInt(values.seed, 10)
+	if (values.offline === true) out.offline = true
+	if (values.sources != null)
+		out.sources = values.sources
+			.split(",")
+			.map((s) => s.trim())
+			.filter(Boolean)
 
 	return out
 }

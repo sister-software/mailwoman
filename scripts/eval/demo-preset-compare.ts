@@ -1,3 +1,4 @@
+import { parseArgs } from "node:util"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -9,6 +10,14 @@
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
+// Loose scan parity with the retired --flag=value find() scans: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { "model-path": { type: "string" }, "tokenizer-path": { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+const values = rawValues as { "model-path"?: string; "tokenizer-path"?: string }
+
 const PRESETS = [
 	"1600 Pennsylvania Ave NW, Washington, DC 20500",
 	"350 5th Ave, New York, NY 10118",
@@ -18,7 +27,7 @@ const PRESETS = [
 	"90210",
 ]
 
-const modelPath = process.argv.find((a) => a.startsWith("--model-path="))?.split("=")[1]
+const modelPath = values["model-path"] as string | undefined
 
 async function run() {
 	const baseline = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
@@ -33,7 +42,7 @@ async function run() {
 		console.log(`    → ${comps || "(empty)"}\n`)
 	}
 
-	const tokenizerPath = process.argv.find((a) => a.startsWith("--tokenizer-path="))?.split("=")[1]
+	const tokenizerPath = values["tokenizer-path"] as string | undefined
 
 	if (modelPath) {
 		const candidate = await NeuralAddressClassifier.loadFromWeights({ modelPath, tokenizerPath })
