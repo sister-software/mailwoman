@@ -34,7 +34,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
-import { runIfScript } from "mailwoman/sdk/scripting"
+import { runIfScript } from "@mailwoman/core/utils"
 import { $ } from "zx"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"

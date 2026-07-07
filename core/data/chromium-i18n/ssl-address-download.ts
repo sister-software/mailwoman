@@ -34,7 +34,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
-import { runIfScript } from "mailwoman/sdk/scripting"
+import { runIfScript } from "@mailwoman/core/utils"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
