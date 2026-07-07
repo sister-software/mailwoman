@@ -150,6 +150,7 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 	"CD",
 	"CF",
 	"CG",
+	"CH",
 	"CK",
 	"CV",
 	"CW",
