@@ -1,16 +1,51 @@
 #!/usr/bin/env sh
 
-# Lint-only pre-commit (2026-07-08): tests are CI's job — the Test workflow runs the full suite on
-# every push/PR. `yarn lint` = oxlint (incl. the `sister-software/no-process-globals` raw-access
-# gate), oxfmt --check, and the python toolchain checks.
+# Lint-only, STAGED-SCOPED pre-commit (2026-07-08): tests are CI's job, and repo-wide lint is CI's
+# job too (the Test workflow's Lint step runs the full `yarn lint`). The hook checks only what this
+# commit stages, so untracked WIP and unrelated drift can't block a commit.
 #
-# set -e: without it a failing `yarn lint` never blocked the commit (the hook's exit code was the
-# LAST command's) — the old lint+tests hook had this hole.
+# Caveat: the linters read the WORKING-TREE contents of staged paths — a partially-staged file is
+# checked at its worktree state (same trade-off as lint-staged without the stash dance).
+#
+# set -e: without it a failing step never blocked the commit (the hook's exit code was the LAST
+# command's) — the old lint+tests hook had this hole.
 set -e
 
-yarn lint
+# Added/Copied/Modified/Renamed only — deletions have nothing to lint. Existence-filtered so a path
+# staged and then removed from the worktree can't crash the linters.
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r f; do
+	[ -f "$f" ] && printf '%s\n' "$f"
+done)
 
-# Raw-angle MDX lint (always-on): a bare `<55` in docs prose is a build-breaking MDX-JSX parse
-# error — this class broke three builds on 2026-06-10. See the script header. (Stays a script:
-# oxlint lints TS, not .mdx prose.)
+if [ -n "$STAGED" ]; then
+	# oxlint errors on paths it can't lint, so scope it to code files. Config discovery
+	# (oxlint.config.ts, incl. the sister-software/no-process-globals raw-access gate) is
+	# path-independent — verified: explicit paths keep every rule active.
+	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
+	if [ -n "$CODE" ]; then
+		printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint
+	fi
+
+	# oxfmt errors when NO path in the list is a target (e.g. a commit staging only .yml/.sh), so
+	# scope it to the types it formats (probed on oxfmt 0.56; drift here is caught by CI's full
+	# `yarn lint` anyway).
+	FMT=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx|json|jsonc|md|mdx|toml|css|html)$' || true)
+	if [ -n "$FMT" ]; then
+		printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --check
+	fi
+
+	# Python: ruff on staged corpus-python sources; the pin-consistency check runs whenever
+	# ANYTHING under corpus-python/ is staged (pyproject/modal edits must keep agreeing).
+	PY=$(printf '%s\n' "$STAGED" | grep -E '^corpus-python/.*\.py$' || true)
+	if [ -n "$PY" ]; then
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 check
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 format --check
+	fi
+	if printf '%s\n' "$STAGED" | grep -q '^corpus-python/'; then
+		python3 corpus-python/scripts/verify_toolchain.py
+	fi
+fi
+
+# Raw-angle MDX lint — already staged-scoped by default (see the script header). A bare `<55` in
+# docs prose is a build-breaking MDX-JSX parse error; this class broke three builds on 2026-06-10.
 node scripts/lint-mdx-angles.ts

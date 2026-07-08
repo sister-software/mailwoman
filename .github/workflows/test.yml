@@ -52,10 +52,11 @@ jobs:
       - name: Typecheck scripts
         run: yarn typecheck:scripts
 
-      # The zero-raw-access gate lives in oxlint (sister-software/no-process-globals) — cheap CI backstop
-      # for commits that skipped the pre-commit hook.
+      # Full repo-wide lint (oxlint incl. sister-software/no-process-globals, oxfmt --check, python
+      # toolchain checks). This is THE complete gate: the pre-commit hook only lints STAGED files,
+      # so repo-wide drift and --no-verify commits are caught here.
       - name: Lint
-        run: yarn lint:oxlint
+        run: yarn lint
 
       # The docs app ships real runtime code (the /demo page). Its typecheck sat outside CI and
       # went 7-errors red on main unnoticed — one of those errors was the LIVE demo's undefined
