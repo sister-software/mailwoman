@@ -132,6 +132,44 @@ const applyCors: RequestHandler = (req, res, next) => {
 }
 
 /**
+ * A friendly HTML landing page for `GET /` (#1022). Upstream komoot/photon serves no root page, so there's no wire
+ * contract to match — this is pure courtesy: a browser visitor (or an evaluator kicking the tires) who pastes the bare
+ * host in gets a one-glance orientation with clickable example queries instead of Express's `Cannot GET /` 404, which
+ * reads as "the service is broken". Relative example URLs so they resolve against whatever host/port serves this.
+ */
+const ROOT_HTML = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@mailwoman/photon</title>
+<style>
+:root { color-scheme: light dark }
+body { font: 16px/1.6 system-ui, -apple-system, sans-serif; max-width: 42rem; margin: 3rem auto; padding: 0 1.25rem }
+h1 { font-size: 1.3rem; margin: 0 0 .5rem }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace }
+ul { padding-left: 1.2rem }
+li { margin: .4rem 0 }
+a { color: #2563eb }
+.q { font-family: ui-monospace, SFMono-Regular, Menlo, monospace }
+footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
+</style>
+</head>
+<body>
+<h1>@mailwoman/photon</h1>
+<p>A Photon-compatible autocomplete geocoding API — the same <code>/api</code> and <code>/reverse</code> contract, served from a SQLite gazetteer instead of an Elasticsearch cluster.</p>
+<p>Try a query:</p>
+<ul>
+<li><a class="q" href="/api?q=berlin&amp;limit=3">/api?q=berlin&amp;limit=3</a></li>
+<li><a class="q" href="/api?q=1600+pennsylvania+ave&amp;limit=1">/api?q=1600+pennsylvania+ave&amp;limit=1</a></li>
+<li><a class="q" href="/reverse?lat=52.52&amp;lon=13.405">/reverse?lat=52.52&amp;lon=13.405</a></li>
+</ul>
+<footer><a href="https://mailwoman.sister.software/docs/concepts/switching-from-photon">Switching from Photon</a> &middot; <a href="https://mailwoman.sister.software/demo">Live demo</a></footer>
+</body>
+</html>
+`
+
+/**
  * Build the Photon-compatible router around an injected {@link PhotonEngine}. Param parsing lives here; the feature
  * _projection_ (resolved place → {@link PhotonProperties}) is the staged work.
  */
@@ -141,6 +179,11 @@ export function createPhotonRouter(engine: PhotonEngine, options: PhotonRouterOp
 	// Browser-embedded widgets need CORS or their cross-origin XHR is blocked before the request completes (#1017).
 	if (options.cors !== false) {
 		router.use(applyCors)
+	}
+
+	// A helpful root banner instead of a bare `Cannot GET /` 404 — the first thing a browser visitor hits (#1022).
+	const root: RequestHandler = (_req, res) => {
+		res.type("html").send(ROOT_HTML)
 	}
 
 	const search: RequestHandler = async (req, res) => {
@@ -213,6 +256,7 @@ export function createPhotonRouter(engine: PhotonEngine, options: PhotonRouterOp
 			}
 		}
 
+	router.get("/", safe(root))
 	router.get("/api", safe(search))
 	router.get("/reverse", safe(reverse))
 
