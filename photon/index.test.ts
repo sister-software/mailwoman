@@ -168,3 +168,15 @@ test("CORS: { cors: false } disables the headers (for a proxy that owns CORS)", 
 		expect(res.headers.get("access-control-allow-origin")).toBeNull()
 	})
 })
+
+test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async () => {
+	await withServer(express().use(createPhotonRouter(engine)), async (base) => {
+		const res = await fetch(`${base}/`)
+		expect(res.status).toBe(200)
+		expect(res.headers.get("content-type")).toContain("text/html")
+		const body = await res.text()
+		expect(body).toContain("@mailwoman/photon")
+		expect(body).toContain("/api?q=") // a clickable example query
+		expect(body).toContain("switching-from-photon") // docs pointer
+	})
+})
