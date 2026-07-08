@@ -52,6 +52,11 @@ jobs:
       - name: Typecheck scripts
         run: yarn typecheck:scripts
 
+      # lint:python runs ruff via uvx — the runner image doesn't ship uv (bit 9ce83b40's push:
+      # "command not found: uvx", exit 127).
+      - name: Setup uv (ruff for lint:python)
+        uses: astral-sh/setup-uv@v7
+
       # Full repo-wide lint (oxlint incl. sister-software/no-process-globals, oxfmt --check, python
       # toolchain checks). This is THE complete gate: the pre-commit hook only lints STAGED files,
       # so repo-wide drift and --no-verify commits are caught here.
