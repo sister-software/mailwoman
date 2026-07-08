@@ -21,7 +21,7 @@ import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 
 import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural"
-import { resolveWeights } from "@mailwoman/neural/weights"
+import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, test } from "vitest"
 
 import { WebONNXRunner } from "./web-onnx-runner.js"
@@ -30,7 +30,7 @@ import { WebONNXRunner } from "./web-onnx-runner.js"
 // `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights
 // package's `model.onnx` isn't on disk; the runner's structural behavior still gets exercised by
 // the unit suite under neural/test/.
-function probeWeights(): { modelPath: string; tokenizerPath: string } | null {
+function probeWeights(): { modelPath: string; tokenizerPath: string; modelCardPath?: string } | null {
 	try {
 		const r = resolveWeights({})
 
@@ -69,7 +69,11 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 			MailwomanTokenizer.loadFromFile(weights!.tokenizerPath),
 			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
 		])
-		const classifier = new NeuralAddressClassifier({ tokenizer, runner })
+		// Thread the trained label vocabulary from the model card, same as loadFromWeights — the
+		// dev-linked weights are a Stage 3 bundle whose emission width exceeds the compile-time
+		// STAGE2_BIO_LABELS default.
+		const labels = readLabelsFromModelCard(weights!.modelCardPath)
+		const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
 		const tree = await classifier.parse("123 Main St, Springfield, IL 62704")
 		expect(tree.raw).toBe("123 Main St, Springfield, IL 62704")

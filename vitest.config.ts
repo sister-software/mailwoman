@@ -69,6 +69,16 @@ export default defineConfig({
 			{ find: "mailwoman/sdk/repo", replacement: resolve(here, "mailwoman/sdk/repo.ts") },
 			{ find: "mailwoman/sdk/cli", replacement: resolve(here, "mailwoman/sdk/cli.ts") },
 			{ find: /^mailwoman$/, replacement: resolve(here, "mailwoman/index.ts") },
+			// onnxruntime-web's `/webgpu` subpath ships browser-only bundles: under Node they fetch()
+			// their Emscripten loader as a file:// URL (undici rejects the scheme) and then import() a
+			// blob: URL (Node's ESM loader rejects that too). The root export carries a `node`
+			// condition with a Node-ready build (fs-based wasm loading), so tests resolve to it.
+			// Production imports keep `onnxruntime-web/webgpu` — this alias lives only in the vitest
+			// module graph, where WebGPU is unavailable anyway.
+			{
+				find: /^onnxruntime-web\/webgpu$/,
+				replacement: resolve(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs"),
+			},
 		],
 	},
 	test: {
