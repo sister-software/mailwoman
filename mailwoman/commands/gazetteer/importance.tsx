@@ -128,6 +128,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 				const gunzip = createGunzip()
 				const fileStream = createReadStream(gzPath)
+
 				for await (const line of TextSpliterator.fromAsync(fileStream.pipe(gunzip))) {
 					totalRows++
 
