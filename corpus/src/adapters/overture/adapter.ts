@@ -30,8 +30,7 @@
  *   `postcode` | | `locality`| `locality` (Overture address_levels municipality, or postal_city) |
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
+import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
@@ -77,74 +76,71 @@ export function createOvertureAdapter(): CorpusAdapter {
 			}
 			const country = opts.country
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-			const lines = createInterface({ input: stream, crlfDelay: Infinity })
+			// TextSpliterator streams string lines (parseLine keeps tolerating blank/`#`/malformed
+			// lines by returning null); the path string lets the lib own + dispose the file handle,
+			// including on an early `break`.
+			const lines = TextSpliterator.fromAsync(opts.inputPath)
 
 			let emitted = 0
 
-			try {
-				for await (const line of lines) {
-					if (opts.signal?.aborted) break
+			for await (const line of lines) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const r = parseLine(line)
+				const r = parseLine(line)
 
-					if (!r) continue
+				if (!r) continue
 
-					const street = r.street?.trim() ?? ""
-					const number = r.number?.trim() ?? ""
-					const unit = r.unit?.trim() ?? ""
-					const postcode = r.postcode?.trim() ?? ""
-					const locality = r.locality?.trim() ?? ""
+				const street = r.street?.trim() ?? ""
+				const number = r.number?.trim() ?? ""
+				const unit = r.unit?.trim() ?? ""
+				const postcode = r.postcode?.trim() ?? ""
+				const locality = r.locality?.trim() ?? ""
 
-					// Only useful with a street + (postcode OR locality); point-only rows quarantine anyway.
-					if (!street) continue
+				// Only useful with a street + (postcode OR locality); point-only rows quarantine anyway.
+				if (!street) continue
 
-					if (!postcode && !locality) continue
+				if (!postcode && !locality) continue
 
-					const components: CanonicalRow["components"] = {}
+				const components: CanonicalRow["components"] = {}
 
-					// Overture "S-N" / "S/N" = sin número; only keep a real numeric house number.
-					if (/^\d/.test(number)) {
-						components.house_number = number
-					}
-					components.street = street
-
-					if (unit) {
-						components.unit = unit
-					}
-
-					if (postcode) {
-						components.postcode = postcode
-					}
-
-					if (locality) {
-						components.locality = locality
-					}
-
-					const raw = formatAddress(components, country, { separator: ", " })
-
-					if (!raw) continue
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (Object.keys(aligned).length === 0) continue
-
-					yield {
-						raw,
-						components: aligned,
-						country,
-						source: OVERTURE_ADAPTER_ID,
-						source_id: stableSourceID(OVERTURE_ADAPTER_ID, aligned),
-						corpus_version: "",
-						license: OVERTURE_DEFAULT_LICENSE,
-					}
-					emitted++
+				// Overture "S-N" / "S/N" = sin número; only keep a real numeric house number.
+				if (/^\d/.test(number)) {
+					components.house_number = number
 				}
-			} finally {
-				lines.close()
-				stream.destroy()
+				components.street = street
+
+				if (unit) {
+					components.unit = unit
+				}
+
+				if (postcode) {
+					components.postcode = postcode
+				}
+
+				if (locality) {
+					components.locality = locality
+				}
+
+				const raw = formatAddress(components, country, { separator: ", " })
+
+				if (!raw) continue
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length === 0) continue
+
+				yield {
+					raw,
+					components: aligned,
+					country,
+					source: OVERTURE_ADAPTER_ID,
+					source_id: stableSourceID(OVERTURE_ADAPTER_ID, aligned),
+					corpus_version: "",
+					license: OVERTURE_DEFAULT_LICENSE,
+				}
+				emitted++
 			}
 		},
 	}

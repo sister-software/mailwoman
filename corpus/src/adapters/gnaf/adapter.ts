@@ -28,8 +28,7 @@
  *   line). Open G-NAF licence — attribute "Geoscape Australia".
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
+import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
@@ -77,65 +76,61 @@ export function createGNAFAdapter(): CorpusAdapter {
 			"G-NAF (Australia): assembled address tuples rendered in multiple word orders (canonical / postcode-first / locality-first) — teaches the model AU's postcode-first layout.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-			const lines = createInterface({ input: stream, crlfDelay: Infinity })
 			let emitted = 0
 			let idx = 0
 
-			// rotates the render order (i % 3), matching v1.9.1's rerender
-			try {
-				for await (const line of lines) {
-					if (opts.signal?.aborted) break
+			// Input is the assembled component JSONL (one tuple per line). TextSpliterator auto-disposes on
+			// loop completion and on an early `break` (abort / limit), so the old explicit handle teardown is
+			// gone; JSON.parse tolerates a trailing CR on CRLF sources and the `!line.trim()` guard skips blanks.
+			// The render order rotates (i % 3), matching v1.9.1's rerender.
+			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					if (!line.trim()) continue
+				if (!line.trim()) continue
 
-					let t: GNAFTuple
+				let t: GNAFTuple
 
-					try {
-						t = JSON.parse(line) as GNAFTuple
-					} catch {
-						continue
-					}
-
-					if (!t.house_number || !t.street || !t.locality || !t.postcode) continue
-
-					const orders = renderOrders(t)
-					const order = idx % orders.length
-					idx++
-					const raw = orders[order]!
-					const components: CanonicalRow["components"] = {
-						house_number: t.house_number,
-						street: t.street,
-						locality: t.locality,
-						postcode: t.postcode,
-					}
-
-					// region (state) rides only the canonical render (order 0); the postcode-leading layouts
-					// omit it (matching the eval's serialization) so it never breaks verbatim alignment.
-					if (order === 0 && t.region) {
-						components.region = t.region
-					}
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (Object.keys(aligned).length === 0) continue
-					yield {
-						raw,
-						components: aligned,
-						country: "AU",
-						locale: "en-AU",
-						source: GNAF_ADAPTER_ID,
-						source_id: `${stableSourceID(GNAF_ADAPTER_ID, aligned)}-o${order}`,
-						corpus_version: "",
-						license: GNAF_DEFAULT_LICENSE,
-					}
-					emitted++
+				try {
+					t = JSON.parse(line) as GNAFTuple
+				} catch {
+					continue
 				}
-			} finally {
-				lines.close()
-				stream.destroy()
+
+				if (!t.house_number || !t.street || !t.locality || !t.postcode) continue
+
+				const orders = renderOrders(t)
+				const order = idx % orders.length
+				idx++
+				const raw = orders[order]!
+				const components: CanonicalRow["components"] = {
+					house_number: t.house_number,
+					street: t.street,
+					locality: t.locality,
+					postcode: t.postcode,
+				}
+
+				// region (state) rides only the canonical render (order 0); the postcode-leading layouts
+				// omit it (matching the eval's serialization) so it never breaks verbatim alignment.
+				if (order === 0 && t.region) {
+					components.region = t.region
+				}
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length === 0) continue
+				yield {
+					raw,
+					components: aligned,
+					country: "AU",
+					locale: "en-AU",
+					source: GNAF_ADAPTER_ID,
+					source_id: `${stableSourceID(GNAF_ADAPTER_ID, aligned)}-o${order}`,
+					corpus_version: "",
+					license: GNAF_DEFAULT_LICENSE,
+				}
+				emitted++
 			}
 		},
 	}

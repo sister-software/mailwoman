@@ -66,11 +66,11 @@ export function makeMulberry32(seed: number): () => number {
 
 /** Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped). */
 export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
-	const { createReadStream } = await import("node:fs")
-	const { createInterface } = await import("node:readline")
-	const rl = createInterface({ input: createReadStream(input, { encoding: "utf8" }), crlfDelay: Infinity })
+	// TextSpliterator (not JSONSpliterator) so a malformed line is SKIPPED, not thrown — the
+	// per-line try/catch below is the tolerance this reader has always had.
+	const { TextSpliterator } = await import("spliterator")
 
-	for await (const line of rl) {
+	for await (const line of TextSpliterator.fromAsync(input)) {
 		const trimmed = line.trim()
 
 		if (!trimmed) continue

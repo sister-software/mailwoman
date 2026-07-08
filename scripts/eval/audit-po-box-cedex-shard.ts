@@ -29,12 +29,11 @@
  *   /tmp/po-box-shard/po-box-cedex-train.jsonl [--samples 8]
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isPOBox } from "@mailwoman/codex/us"
+import { JSONSpliterator } from "spliterator"
 
 const CODEX_COVERED = /^(p\.?\s*o\.?\s*box|post\s+office\s+box|firm\s+caller|caller|drawer|lockbox|box)\s+/i
 // The ENTIRE remainder after the designator must be one clean id token — space/comma-noised ids
@@ -153,7 +152,6 @@ function bioWellFormed(labels: string[]): boolean {
 
 async function main(): Promise<void> {
 	const opts = parseArgs()
-	const rl = createInterface({ input: createReadStream(opts.input, { encoding: "utf8" }), crlfDelay: Infinity })
 
 	let rows = 0
 	const failures: Array<{ reason: string; raw: string }> = []
@@ -162,9 +160,9 @@ async function main(): Promise<void> {
 	const tagCounts = { po_box: 0, cedex: 0 }
 	const samples: Array<{ raw: string; labeled: string }> = []
 
-	for await (const line of rl) {
-		if (!line.trim()) continue
-		const row = JSON.parse(line) as ShardRow
+	// JSONSpliterator yields already-parsed rows and tolerates CRLF (a trailing \r is JSON whitespace);
+	// its default skipEmpty drops blank lines, matching the old `if (!line.trim()) continue`.
+	for await (const row of JSONSpliterator.fromAsync<ShardRow>(opts.input)) {
 		rows++
 		byMethod[row.synth_method] = (byMethod[row.synth_method] ?? 0) + 1
 		const { tokens, labels, components: c } = row

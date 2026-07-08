@@ -28,13 +28,14 @@ import { spawn } from "node:child_process"
 import { createWriteStream, existsSync } from "node:fs"
 import { mkdir, rename } from "node:fs/promises"
 import { dirname, join } from "node:path"
-import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import type { AsyncDataResource } from "spliterator"
+import { TextSpliterator } from "spliterator"
 
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "./schema.js"
 import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.js"
@@ -307,7 +308,11 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 			child.stderr.on("data", (d) => (stderr += d))
 			const exited = new Promise<number>((resolve) => child.on("close", (code) => resolve(code ?? 0)))
 
-			for await (const line of createInterface({ input: child.stdout, crlfDelay: Infinity })) {
+			// spliterator's published `AsyncDataResource` type omits async chunk iterators (its own docstring
+			// lists `AsyncChunkIterator` as a member); the runtime dispatches on `Symbol.asyncIterator` and
+			// consumes the child's binary stdout chunks directly. GeoJSONSeq is line-delimited; keep the
+			// per-line `JSON.parse` in a try/catch so a malformed record is tolerated (skipped), not thrown.
+			for await (const line of TextSpliterator.fromAsync(child.stdout as unknown as AsyncDataResource)) {
 				if (!line) continue
 				let feat: { properties?: Record<string, unknown>; geometry?: unknown }
 

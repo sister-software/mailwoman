@@ -19,12 +19,12 @@
 
 ///<reference types="node" />
 
-import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
-import { createInterface } from "node:readline"
 
 import { cliArguments } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 import { alignRow } from "../src/align.js"
 import { PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, type ShardManifest, writeShards } from "../src/parquet.js"
@@ -84,9 +84,9 @@ function parseArgs(argv: readonly string[]): Args {
 }
 
 async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
-	const rl = createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })
-
-	for await (const line of rl) {
+	// JSONL source: each line is JSON.parse'd below, so a trailing CR on CRLF input is harmless
+	// whitespace to the parser and the `!line.trim()` guard drops any whitespace-only line.
+	for await (const line of TextSpliterator.fromAsync(jsonl)) {
 		if (!line.trim()) continue
 		const raw = JSON.parse(line) as Record<string, unknown>
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.

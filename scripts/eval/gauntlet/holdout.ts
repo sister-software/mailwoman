@@ -13,12 +13,11 @@
  *   Run: node scripts/eval/gauntlet/holdout.ts --candidate ./out/v194-final/model.onnx [--n 300]
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
 import { parseArgs } from "node:util"
 
 import { haversineKm } from "@mailwoman/spatial"
 import { mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { TextSpliterator } from "spliterator"
 
 import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
 
@@ -98,14 +97,16 @@ const src: SourceDef = selected // typed so the draw() closure doesn't re-widen 
 
 /** Reservoir-sample N rows with truth coords from the selected source — a genuinely fresh draw each run. */
 async function draw(n: number): Promise<Sample[]> {
-	const rl = createInterface({ input: createReadStream(src.file, { encoding: "utf8" }), crlfDelay: Infinity })
 	const res: Sample[] = []
 	let seen = 0
 	let line = 0
 
-	for await (const raw of rl) {
+	// Semicolon-delimited CSV (not JSONL) → TextSpliterator for the line layer, keep the `.split(";")`.
+	// spliterator does not normalize CRLF the way readline's crlfDelay:Infinity did; the staging files
+	// are LF today, but strip a trailing \r so the final column (the truth coord) always parses.
+	for await (const raw of TextSpliterator.fromAsync(src.file)) {
 		if (line++ === 0) continue // header
-		const s = src.parse(raw.split(";"))
+		const s = src.parse(raw.replace(/\r$/, "").split(";"))
 
 		if (!s) continue
 		seen++

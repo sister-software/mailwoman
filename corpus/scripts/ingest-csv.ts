@@ -30,12 +30,12 @@
 
 ///<reference types="node" />
 
-import { createReadStream, existsSync, mkdirSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { basename, dirname, extname, join } from "node:path"
-import { createInterface } from "node:readline"
-import { SQLInputValue } from "node:sqlite"
+import type { SQLInputValue } from "node:sqlite"
 
 import { cliArguments } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 // ---------------------------------------------------------------------------
 // CLI arg parsing (minimal — no yargs dependency needed for a utility script)
@@ -202,14 +202,16 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	// --- Pass 1: read header + sample rows for type inference ---
 	process.stderr.write(`Reading ${opts.inputPath} for schema inference...\n`)
 
-	const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-	const rl = createInterface({ input: stream, crlfDelay: Infinity })
-
+	// CRLF-safe by construction: every field below flows through stripQuotes/normalizeField, both of
+	// which `.trim()`, so a trailing CR on the last column of a CRLF file is stripped. TextSpliterator's
+	// default skipEmpty matches readline row-for-row on files with a trailing newline (the common case);
+	// it drops interior blank lines that readline would have turned into all-null rows. The early `break`
+	// closes the file descriptor.
 	let headerLine: string | null = null
 	const sampleRows: string[][] = []
 	let lineNum = 0
 
-	for await (const line of rl) {
+	for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 		lineNum++
 
 		// Skip lines before header
@@ -226,8 +228,6 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 			break
 		}
 	}
-	rl.close()
-	stream.destroy()
 
 	if (!headerLine && opts.hasHeader) {
 		throw new Error("No header line found in CSV")
@@ -307,8 +307,6 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 		`INSERT INTO "${opts.tableName}" (${tempCols}) VALUES (${columns.map(() => "?").join(", ")})`
 	)
 
-	const stream2 = createReadStream(opts.inputPath, { encoding: "utf8" })
-	const rl2 = createInterface({ input: stream2, crlfDelay: Infinity })
 	let imported = 0
 	let headerSkipped = false
 
@@ -330,7 +328,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	const batch: SQLInputValue[][] = []
 	const BATCH_SIZE = 10000
 
-	for await (const line of rl2) {
+	for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 		lineNum++
 
 		if (lineNum <= opts.skipLines) continue
@@ -378,9 +376,6 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 		doInsert()
 		imported += batch.length
 	}
-
-	rl2.close()
-	stream2.destroy()
 
 	process.stderr.write(`  Imported ${imported.toLocaleString()} rows into "${opts.tableName}"\n`)
 

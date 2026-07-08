@@ -30,10 +30,10 @@
  *   License: stamped `"Public Domain"` per 17 U.S.C. § 105 (US federal works).
  */
 
-import { createReadStream } from "node:fs"
 import { readdir } from "node:fs/promises"
 import { join } from "node:path"
-import { createInterface } from "node:readline"
+
+import { TextSpliterator } from "spliterator"
 
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -248,89 +248,87 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			let emitted = 0
 			outer: for (const shard of shards) {
 				if (opts.signal?.aborted) break
-				const stream = createReadStream(join(opts.inputPath, shard), { encoding: "utf8" })
-				const rl = createInterface({ input: stream, crlfDelay: Infinity })
+				// TextSpliterator streams string lines; the per-line try/catch below keeps the reader
+				// tolerant of malformed rows (skip silently), so TextSpliterator + explicit JSON.parse —
+				// not JSONSpliterator, which would throw. The path string lets the lib own + dispose each
+				// shard's file handle, including on the `break outer` early exit.
+				const lines = TextSpliterator.fromAsync(join(opts.inputPath, shard))
 
-				try {
-					for await (const line of rl) {
-						if (opts.signal?.aborted) break outer
+				for await (const line of lines) {
+					if (opts.signal?.aborted) break outer
 
-						if (opts.limit !== undefined && emitted >= opts.limit) break outer
+					if (opts.limit !== undefined && emitted >= opts.limit) break outer
 
-						if (!line) continue
+					if (!line) continue
 
-						let record: NADRecord
+					let record: NADRecord
 
-						try {
-							record = JSON.parse(line) as NADRecord
-						} catch {
-							continue // malformed line — skip silently
-						}
-
-						const state = (record.State ?? "").toString().trim().toUpperCase()
-
-						if (!US_STATES_SET.has(state)) continue
-
-						const locality = composeLocality(record)
-
-						if (!locality) continue
-
-						const postcode = composePostcode(record)
-
-						if (!postcode) continue
-
-						const decomposed = decomposeNADStreet(record)
-						const houseNumber = composeHouseNumber(record)
-						const venue = nonEmpty(record.LandmkName)
-						const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
-
-						const components: CanonicalRow["components"] = {
-							...(venue ? { venue } : {}),
-							...(houseNumber ? { house_number: houseNumber } : {}),
-							...(decomposed?.prefix ? { street_prefix: decomposed.prefix } : {}),
-							...(decomposed?.street ? { street: decomposed.street } : {}),
-							...(decomposed?.suffix ? { street_suffix: decomposed.suffix } : {}),
-							...(unit ? { unit } : {}),
-							locality,
-							region: state,
-							postcode,
-						}
-
-						const raw = composeRaw({
-							venue,
-							houseNumber,
-							street: decomposed?.full,
-							unit,
-							locality,
-							region: state,
-							postcode,
-						})
-
-						if (!raw) continue
-
-						const aligned = reconcileComponents(components, raw)
-
-						if (Object.keys(aligned).length <= 2) continue
-
-						const sourceID = record.UUID
-							? `${USGOV_NAD_ADAPTER_ID}-${record.UUID}`
-							: `${USGOV_NAD_ADAPTER_ID}-${record.OBJECTID ?? `${shard}:${emitted}`}`
-
-						yield {
-							raw,
-							components: aligned,
-							country: "US",
-							locale: "en-US",
-							source: USGOV_NAD_ADAPTER_ID,
-							source_id: sourceID,
-							corpus_version: "",
-							license: USGOV_NAD_DEFAULT_LICENSE,
-						}
-						emitted++
+					try {
+						record = JSON.parse(line) as NADRecord
+					} catch {
+						continue // malformed line — skip silently
 					}
-				} finally {
-					rl.close()
-					stream.destroy()
+
+					const state = (record.State ?? "").toString().trim().toUpperCase()
+
+					if (!US_STATES_SET.has(state)) continue
+
+					const locality = composeLocality(record)
+
+					if (!locality) continue
+
+					const postcode = composePostcode(record)
+
+					if (!postcode) continue
+
+					const decomposed = decomposeNADStreet(record)
+					const houseNumber = composeHouseNumber(record)
+					const venue = nonEmpty(record.LandmkName)
+					const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
+
+					const components: CanonicalRow["components"] = {
+						...(venue ? { venue } : {}),
+						...(houseNumber ? { house_number: houseNumber } : {}),
+						...(decomposed?.prefix ? { street_prefix: decomposed.prefix } : {}),
+						...(decomposed?.street ? { street: decomposed.street } : {}),
+						...(decomposed?.suffix ? { street_suffix: decomposed.suffix } : {}),
+						...(unit ? { unit } : {}),
+						locality,
+						region: state,
+						postcode,
+					}
+
+					const raw = composeRaw({
+						venue,
+						houseNumber,
+						street: decomposed?.full,
+						unit,
+						locality,
+						region: state,
+						postcode,
+					})
+
+					if (!raw) continue
+
+					const aligned = reconcileComponents(components, raw)
+
+					if (Object.keys(aligned).length <= 2) continue
+
+					const sourceID = record.UUID
+						? `${USGOV_NAD_ADAPTER_ID}-${record.UUID}`
+						: `${USGOV_NAD_ADAPTER_ID}-${record.OBJECTID ?? `${shard}:${emitted}`}`
+
+					yield {
+						raw,
+						components: aligned,
+						country: "US",
+						locale: "en-US",
+						source: USGOV_NAD_ADAPTER_ID,
+						source_id: sourceID,
+						corpus_version: "",
+						license: USGOV_NAD_DEFAULT_LICENSE,
+					}
+					emitted++
 				}
 			}
 		},

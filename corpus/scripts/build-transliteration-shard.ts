@@ -35,9 +35,9 @@ import { createHash } from "node:crypto"
 import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
-import { createInterface } from "node:readline"
 
 import { cliArguments } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 import { alignRow } from "../src/align.js"
 import { ParquetWriter } from "../src/parquet-wrapper/index.js"
@@ -113,9 +113,9 @@ function parseArgs(argv: readonly string[]): Args {
 }
 
 async function* readJsonl(jsonl: string): AsyncIterable<Record<string, unknown>> {
-	const rl = createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })
-
-	for await (const line of rl) {
+	// JSONL source: each line is JSON.parse'd below, so a trailing CR on CRLF input is harmless
+	// whitespace to the parser and the `!line.trim()` guard drops any whitespace-only line.
+	for await (const line of TextSpliterator.fromAsync(jsonl)) {
 		if (!line.trim()) continue
 		yield JSON.parse(line) as Record<string, unknown>
 	}

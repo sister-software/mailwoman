@@ -19,13 +19,13 @@ import { createReadStream, existsSync, writeFileSync } from "node:fs"
 import { get as httpsGet } from "node:https"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { createGunzip } from "node:zlib"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
+import { TextSpliterator, type AsyncDataResource } from "spliterator"
 import zod from "zod"
 
 import type { CommandComponent } from "../../sdk/cli.js"
@@ -128,13 +128,17 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 				const gunzip = createGunzip()
 				const fileStream = createReadStream(gzPath)
-				const rl = createInterface({ input: fileStream.pipe(gunzip) })
+				// The gunzip output is an AsyncIterable<Uint8Array>; spliterator accepts it at runtime, but the
+				// published `AsyncDataResource` type omits stream inputs, hence the cast.
+				const stream = fileStream.pipe(gunzip) as unknown as AsyncDataResource
 
-				for await (const line of rl) {
+				for await (const line of TextSpliterator.fromAsync(stream)) {
 					totalRows++
 
 					if (totalRows === 1 && line.startsWith("language")) continue
-					const parts = line.split("\t")
+					// spliterator keeps CRLF's trailing CR (readline stripped it); the wikidata id is the last
+					// column, so drop a trailing CR before splitting to keep the id clean.
+					const parts = line.replace(/\r$/, "").split("\t")
 
 					if (parts.length < 5) continue
 

@@ -26,12 +26,12 @@
 
 import { spawn } from "node:child_process"
 import { createHash } from "node:crypto"
-import { createReadStream, createWriteStream } from "node:fs"
+import { createWriteStream } from "node:fs"
 import { mkdir, unlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { createInterface } from "node:readline"
 
 import { childEnv } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "./types.js"
 
@@ -216,29 +216,24 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string): Promise<void> {
 	const unsortedPath = `${outPath}.unsorted`
 	const out = createWriteStream(unsortedPath, { encoding: "utf8" })
-	const rl = createInterface({ input: createReadStream(labeledJsonlPath, { encoding: "utf8" }), crlfDelay: Infinity })
-
-	await new Promise<void>((resolve, reject) => {
-		rl.on("line", (line) => {
-			if (!line) return
-
-			try {
-				const obj = JSON.parse(line) as { source_id?: string }
-
-				if (typeof obj.source_id === "string") {
-					out.write(`${obj.source_id}\n`)
-				}
-			} catch (err) {
-				reject(err as Error)
-			}
-		})
-		rl.on("close", () => {
-			out.end()
-		})
-		rl.on("error", reject)
+	const outClosed = new Promise<void>((resolve, reject) => {
 		out.on("close", () => resolve())
 		out.on("error", reject)
 	})
+
+	// JSONSpliterator parses each row (skipEmpty drops blank lines); a malformed row throws
+	// SyntaxError out of the loop, matching the prior `reject(err)` fail-loud behavior. `finally`
+	// always ends the write stream so `sort` reads a complete file even if the read throws.
+	try {
+		for await (const obj of JSONSpliterator.fromAsync<{ source_id?: string }>(labeledJsonlPath)) {
+			if (typeof obj.source_id === "string") {
+				out.write(`${obj.source_id}\n`)
+			}
+		}
+	} finally {
+		out.end()
+	}
+	await outClosed
 
 	await new Promise<void>((resolve, reject) => {
 		// LC_ALL=C: byte-sort, locale-independent → deterministic across hosts.

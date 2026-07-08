@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import { createReadStream, createWriteStream } from "node:fs"
-import { createInterface } from "node:readline"
+import { createWriteStream } from "node:fs"
 
 /**
  * Re-emit a CANONICAL jsonl ({raw, components, country, source, ...}) as a LABELED jsonl in the CURRENT align format,
@@ -29,6 +28,7 @@ import { createInterface } from "node:readline"
  * --corpus-version 0.5.0
  */
 import { alignRow } from "@mailwoman/corpus"
+import { TextSpliterator } from "spliterator"
 
 export interface AlignShardOptions {
 	input: string
@@ -37,13 +37,14 @@ export interface AlignShardOptions {
 }
 
 export async function alignCanonicalShard(args: AlignShardOptions): Promise<void> {
-	const rl = createInterface({ input: createReadStream(args.input, { encoding: "utf8" }), crlfDelay: Infinity })
+	// Read phase only — the write path stays on createWriteStream. TextSpliterator + JSON.parse keeps the
+	// original tolerance: the `!line.trim()` guard skips blank lines and a trailing CR is valid JSON whitespace.
 	const outStream = createWriteStream(args.output, { encoding: "utf8" })
 	let labeled = 0
 	let quarantined = 0
 	const quarantineReasons: Record<string, number> = {}
 
-	for await (const line of rl) {
+	for await (const line of TextSpliterator.fromAsync(args.input)) {
 		if (!line.trim()) continue
 		const canonical = JSON.parse(line) as Parameters<typeof alignRow>[0]
 		// Stamp the target corpus version so the emitted row's provenance matches the run it joins.

@@ -20,8 +20,7 @@
  *       carries a `street` field.
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
+import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.js"
 import {
@@ -90,14 +89,16 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 		async *rows(options: AdapterOptions): AsyncIterable<CanonicalRow> {
 			const random = makeRandom(opts.seed ?? Date.now())
 
-			const stream = createReadStream(options.inputPath, { encoding: "utf8" })
-			const rl = createInterface({ input: stream, crlfDelay: Infinity })
+			// TextSpliterator streams string lines; the per-line try/catch below keeps this reader
+			// tolerant of malformed rows (skipped++), so TextSpliterator + explicit JSON.parse — not
+			// JSONSpliterator, which would throw on the first bad line.
+			const lines = TextSpliterator.fromAsync(options.inputPath)
 
 			let emitted = 0
 			let skipped = 0
 			let militarySeq = 0
 
-			for await (const line of rl) {
+			for await (const line of lines) {
 				if (options.signal?.aborted) break
 
 				if (options.limit !== undefined && emitted >= options.limit) break

@@ -17,16 +17,16 @@
  */
 
 import { spawn } from "node:child_process"
-import { createReadStream, createWriteStream, existsSync } from "node:fs"
+import { createWriteStream, existsSync } from "node:fs"
 import { mkdir, rename } from "node:fs/promises"
 import { dirname, join } from "node:path"
-import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.js"
 import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "./schema.js"
@@ -118,8 +118,12 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	return false
 }
 
+// Pipe-delimited, fixed field-offset census rows — the manual `split("|")` at each call site stays (the
+// parse indexes by position, not by header). spliterator keeps CRLF's trailing CR where readline stripped
+// it, but every field this parser reads (geo GEOCODE/LOGRECNO ≤ 9, segment-1 LOGRECNO + P2 ≤ 86) sits well
+// before the final column, so the retained CR only ever lands on an unread trailing field.
 async function eachLine(path: string, fn: (line: string) => void): Promise<void> {
-	for await (const line of createInterface({ input: createReadStream(path), crlfDelay: Infinity })) {
+	for await (const line of TextSpliterator.fromAsync(path)) {
 		if (line) {
 			fn(line)
 		}
@@ -200,7 +204,7 @@ export async function* fetchRedistricting(
 		}
 
 		// Pass 2: segment 1 → P2 counts for the mapped LOGRECNOs, flushing as we go.
-		for await (const line of createInterface({ input: createReadStream(seg1Path), crlfDelay: Infinity })) {
+		for await (const line of TextSpliterator.fromAsync(seg1Path)) {
 			if (!line) continue
 			const f = line.split("|")
 			const geoid = logToGeoid.get(f[SEG_LOGRECNO] ?? "")

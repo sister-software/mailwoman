@@ -26,9 +26,8 @@
  *   [--out registry/models/org-crosssource-gbt-en-us.ts]
  */
 
-import { createReadStream, mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
-import { createInterface } from "node:readline"
 import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -48,6 +47,7 @@ import {
 } from "@mailwoman/registry"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
+import { TextSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -126,11 +126,16 @@ function uniqueQuantiles(sorted: number[], n: number): number[] {
 
 /** Stream a comma CSV with quoted fields (the OP profile format) as header-keyed rows. */
 async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> {
-	const rl = createInterface({ input: createReadStream(path), crlfDelay: Infinity })
+	// spliterator owns the line layer; the manual quote/pending re-join + tokenizer below stays
+	// (spliterator's enableQuoteHandling mis-parses embedded delimiters). spliterator does not normalize
+	// CRLF the way readline's crlfDelay:Infinity did, and the CMS POS file IS CRLF — so strip a trailing
+	// \r per physical line, or the last column (ZIP_CD) and the header keys would carry a stray \r.
+	// Default skipEmpty drops truly-empty lines, so a trailing newline can't inject a spurious empty row.
 	let header: string[] | null = null
 	let pending = ""
 
-	for await (const rawLine of rl) {
+	for await (const physicalLine of TextSpliterator.fromAsync(path)) {
+		const rawLine = physicalLine.replace(/\r$/, "")
 		// Re-join physical lines until quotes balance (quoted fields may contain newlines).
 		pending = pending ? `${pending}\n${rawLine}` : rawLine
 		const quotes = (pending.match(/"/g) ?? []).length

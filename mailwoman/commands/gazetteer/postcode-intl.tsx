@@ -37,14 +37,14 @@
  *   verbatim.
  */
 
-import { copyFileSync, createReadStream, existsSync } from "node:fs"
-import { createInterface } from "node:readline"
+import { copyFileSync, existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
+import { TSVSpliterator } from "spliterator"
 import zod from "zod"
 
 import type { CommandComponent } from "../../sdk/cli.js"
@@ -86,12 +86,11 @@ interface PostcodeAcc {
 /** Stream the GeoNames postal TSV, accumulating centroid + bbox per (country, postcode). */
 async function readGeonames(file: string, want: Set<string>): Promise<Map<string, PostcodeAcc>> {
 	const acc = new Map<string, PostcodeAcc>()
-	const rl = createInterface({ input: createReadStream(file, "utf8"), crlfDelay: Infinity })
 
-	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy
-	for await (const line of rl) {
-		if (!line) continue
-		const f = line.split("\t")
+	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy. The GeoNames allCountries
+	// postal dump is headerless (header: false) and LF-only upstream, so field indices map straight through —
+	// and empty admin columns are preserved (v3 no longer drops them), keeping the offsets aligned.
+	for await (const f of TSVSpliterator.fromAsync(file, { header: false, mode: "array" })) {
 		const cc = f[0]
 
 		if (!cc || !want.has(cc)) continue

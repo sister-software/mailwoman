@@ -36,13 +36,12 @@
  *   --states VT
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { placetypeDepth, WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
+import { JSONSpliterator } from "spliterator"
 
 const { values: args } = parseArgs({
 	options: {
@@ -102,12 +101,10 @@ const limit = args.limit ? Number(args.limit) : Infinity
 const maxApproximateKm = args["max-approx-km"] ? Number(args["max-approx-km"]) : undefined
 
 const rows: EvalRow[] = []
-const rl = createInterface({ input: createReadStream(args.eval), crlfDelay: Infinity })
 
-for await (const line of rl) {
-	if (!line.trim()) continue
-	const row = JSON.parse(line) as EvalRow
-
+// JSONSpliterator yields already-parsed rows and tolerates CRLF (a trailing \r is JSON whitespace); its
+// default skipEmpty drops blank lines. Breaking early on `limit` disposes the file handle (v3).
+for await (const row of JSONSpliterator.fromAsync<EvalRow>(args.eval)) {
 	if (!states.has(row.state?.toUpperCase())) continue
 	rows.push(row)
 

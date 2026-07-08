@@ -47,12 +47,12 @@
  *   self-contained.
  */
 
-import { createReadStream, createWriteStream, existsSync, readFileSync, type WriteStream } from "node:fs"
+import { createWriteStream, existsSync, readFileSync, type WriteStream } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { createInterface } from "node:readline"
 
 import { $public } from "@mailwoman/core/env"
+import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "./adapter.js"
 import { alignRow } from "./align.js"
@@ -334,15 +334,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 }
 
 async function* streamJsonl<T>(path: string): AsyncIterable<T> {
-	const stream = createReadStream(path, { encoding: "utf8" })
-	const rl = createInterface({ input: stream, crlfDelay: Infinity })
-
-	for await (const line of rl) {
-		const trimmed = line.trim()
-
-		if (!trimmed) continue
-		yield JSON.parse(trimmed) as T
-	}
+	// JSONSpliterator yields already-parsed rows (skipEmpty is on by default, so blank
+	// lines are dropped at the row level) and throws SyntaxError on a malformed row —
+	// same fail-loud behavior as the prior readline + bare `JSON.parse`.
+	yield* JSONSpliterator.fromAsync<T>(path)
 }
 
 function streamEnd(s: WriteStream): Promise<void> {

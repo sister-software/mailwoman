@@ -30,11 +30,9 @@
  *   scar is positional, not universal).
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
-
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { CSVSpliterator, Delimiters } from "spliterator"
 
 import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
@@ -63,12 +61,14 @@ interface AdminSplitVariant {
 /** Read the distinct commune TSV (commune, postcode, lon, lat); derive the département name. */
 async function readCommunes(path: string): Promise<CommuneRow[]> {
 	const rows: CommuneRow[] = []
-	const rl = createInterface({ input: createReadStream(path, { encoding: "utf8" }), crlfDelay: Infinity })
 
-	for await (const line of rl) {
-		if (!line) continue
-		const [commune, postcode, lon, lat] = line.split("\t")
-
+	// The TSV is headerless — every line is a commune tuple — so `header: false` keeps row 1 instead of
+	// spending it on column names. Source is repo-generated (LF); even under CRLF only the trailing `lat`
+	// column carries a CR, and it's consumed via `Number()` (whitespace-trimming), so it stays harmless.
+	for await (const [commune, postcode, lon, lat] of CSVSpliterator.fromAsync(path, {
+		columnDelimiter: Delimiters.Tab,
+		header: false,
+	})) {
 		if (!commune || !postcode) continue
 		const dep = departementForCodePostal(postcode)
 

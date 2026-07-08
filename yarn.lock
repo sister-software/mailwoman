@@ -4891,6 +4891,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     kysely: "npm:^0.29.2"
+    spliterator: "npm:^3.1.0"
   languageName: unknown
   linkType: soft
 
@@ -5017,6 +5018,7 @@ __metadata:
     "@turf/boolean-contains": "npm:^7.3.5"
     kysely: "npm:^0.29.2"
     shapefile-parser: "npm:^1.0.3"
+    spliterator: "npm:^3.1.0"
     type-fest: "npm:^5.7.0"
   languageName: unknown
   linkType: soft

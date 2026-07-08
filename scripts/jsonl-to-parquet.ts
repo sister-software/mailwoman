@@ -31,14 +31,14 @@
  */
 
 import { randomUUID } from "node:crypto"
-import { createReadStream, createWriteStream } from "node:fs"
+import { createWriteStream } from "node:fs"
 import { unlink } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { createInterface } from "node:readline"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { TextSpliterator } from "spliterator"
 
 const REQUIRED_COLUMNS = [
 	"raw",
@@ -156,11 +156,14 @@ async function main(): Promise<void> {
 	const stage = createWriteStream(stagePath, { encoding: "utf8" })
 
 	try {
-		const rl = createInterface({ input: createReadStream(args.input, { encoding: "utf8" }), crlfDelay: Infinity })
 		let rows = 0
 		let lineNo = 0
 
-		for await (const rawLine of rl) {
+		// TextSpliterator, not JSONSpliterator: the staging write below streams the RAW line bytes to
+		// DuckDB verbatim (JSON.parse here only validates), so a re-serialized JSONSpliterator row would
+		// defeat the point. CRLF is handled by the existing `rawLine.trim()` (strips a trailing \r),
+		// same as readline's crlfDelay:Infinity did.
+		for await (const rawLine of TextSpliterator.fromAsync(args.input)) {
 			lineNo++
 			const line = rawLine.trim()
 

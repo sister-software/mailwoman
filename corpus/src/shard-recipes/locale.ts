@@ -27,9 +27,9 @@
 
 import { spawn } from "node:child_process"
 import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import { type AsyncDataResource, TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
@@ -194,59 +194,61 @@ interface ColumnIndex {
 
 /**
  * Stream real tuples out of an OA source part and reservoir-sample to {@link RESERVOIR_CAP}. Reads the CSV line-by-line
- * — `unzip -p | readline` for zip parts, `createReadStream | readline` for extracted parts (both bounded memory) — and
- * keeps a uniform random sample (Algorithm R) seeded by `rng`, separate from the emit loop's PRNG. NO global dedup (a
- * 25M-key Set would OOM; OA rows are near-unique). The city passes through {@link cleanCityNoise}; the region falls
- * back to `part.region` when the row's REGION cell is empty (DE).
+ * — `unzip -p | TextSpliterator` for zip parts, `createReadStream | TextSpliterator` for extracted parts (both bounded
+ * memory) — and keeps a uniform random sample (Algorithm R) seeded by `rng`, separate from the emit loop's PRNG. NO
+ * global dedup (a 25M-key Set would OOM; OA rows are near-unique). The city passes through {@link cleanCityNoise}; the
+ * region falls back to `part.region` when the row's REGION cell is empty (DE).
  */
-function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
-	return new Promise((resolve) => {
-		let input: NodeJS.ReadableStream
+async function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
+	let input: NodeJS.ReadableStream
 
-		if (part.path) {
-			input = createReadStream(part.path, { encoding: "utf8" })
-			input.on("error", (err: Error) => {
-				console.error(`  WARN: read failed for ${part.path}: ${err.message}`)
-				resolve([])
-			})
-		} else {
-			const child = spawn("unzip", ["-p", part.zip!, part.csv!])
-			child.on("error", (err) => {
-				console.error(`  WARN: unzip failed for ${part.zip}: ${err.message}`)
-				resolve([])
-			})
-			input = child.stdout!
-		}
-		const rl = createInterface({ input, crlfDelay: Infinity })
-		const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
-		const reservoir: LocaleBaseTuple[] = []
-		let cols: ColumnIndex | null = null
-		let header: string[] | null = null
-		let seen = 0
-		let dropped = 0
-		rl.on("line", (line) => {
-			if (!line) return
+	if (part.path) {
+		// No `encoding` — TextSpliterator delimits raw bytes and decodes utf-8 itself; a string stream
+		// (from `{ encoding: "utf8" }`) would defeat its byte-range scanner.
+		input = createReadStream(part.path)
+	} else {
+		const child = spawn("unzip", ["-p", part.zip!, part.csv!])
+		child.on("error", (err) => {
+			console.error(`  WARN: unzip failed for ${part.zip}: ${err.message}`)
+		})
+		input = child.stdout!
+	}
+	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
+	const reservoir: LocaleBaseTuple[] = []
+	let cols: ColumnIndex | null = null
+	let header: string[] | null = null
+	let seen = 0
+	let dropped = 0
+
+	try {
+		// The OA header + every used cell pass through `.trim()` below, and the only columns we read
+		// (number/street/city/region/postcode) sit before the terminal HASH column — so an unnormalized
+		// trailing CR on CRLF input never reaches a value we keep. `AsyncDataResource` doesn't type the
+		// Node stream case (unzip pipe / createReadStream), but the runtime iterates it fine; the cast
+		// bridges that upstream type gap.
+		for await (const line of TextSpliterator.fromAsync(input as unknown as AsyncDataResource)) {
+			if (!line) continue
 
 			if (header === null) {
 				header = splitCSV(line).map((h) => h.trim().toLowerCase())
 				const ix = (name: string): number => header!.indexOf(name)
 				cols = { num: ix("number"), street: ix("street"), city: ix("city"), region: ix("region"), post: ix("postcode") }
 
-				return
+				continue
 			}
 
-			if (cols === null) return
+			if (cols === null) continue
 			const cells = splitCSV(line)
 			const street = get(cells, cols.street)
 			const rawCity = get(cells, cols.city)
 
-			if (!street || !rawCity) return
+			if (!street || !rawCity) continue
 			const locality = cleanCityNoise(rawCity)
 
 			if (!locality) {
 				dropped++
 
-				return
+				continue
 			}
 			const tuple: LocaleBaseTuple = {
 				house_number: get(cells, cols.num),
@@ -267,14 +269,16 @@ function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTupl
 					reservoir[j] = tuple
 				}
 			}
-		})
-		rl.on("close", () => {
-			console.error(
-				`  ${part.path ?? part.csv}: ${reservoir.length} sampled of ${seen} rows (${dropped} city-noise drops)`
-			)
-			resolve(reservoir)
-		})
-	})
+		}
+	} catch (err) {
+		console.error(`  WARN: read failed for ${part.path ?? part.zip}: ${(err as Error).message}`)
+
+		return []
+	}
+
+	console.error(`  ${part.path ?? part.csv}: ${reservoir.length} sampled of ${seen} rows (${dropped} city-noise drops)`)
+
+	return reservoir
 }
 
 export const localeRecipe: ShardRecipe = {

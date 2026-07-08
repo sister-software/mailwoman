@@ -36,8 +36,7 @@
  *   for non-US locales where district names DO appear on the envelope.
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
+import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
@@ -138,8 +137,10 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 			}
 			const country = adapterOpts.country
 
-			const stream = createReadStream(adapterOpts.inputPath, { encoding: "utf8" })
-			const lines = createInterface({ input: stream, crlfDelay: Infinity })
+			// TextSpliterator streams string lines (parseFeatureLine keeps tolerating blank/`#`/
+			// malformed lines by returning null); passing the path string lets the lib own + dispose
+			// the file handle, including on an early `break`.
+			const lines = TextSpliterator.fromAsync(adapterOpts.inputPath)
 
 			let emitted = 0
 			let shareAlikeBlocked = 0
@@ -225,9 +226,6 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					emitted++
 				}
 			} finally {
-				lines.close()
-				stream.destroy()
-
 				if (shareAlikeBlocked > 0) {
 					process.stderr.write(`  openaddresses: ${shareAlikeBlocked} share-alike rows dropped, ${emitted} kept\n`)
 				}
