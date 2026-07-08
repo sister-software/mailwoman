@@ -107,9 +107,18 @@ export interface GeocodeDeps {
 	/** Per-state shard resolver. Omit for admin-only geocoding. */
 	shards?: ShardResolver
 	/**
+	 * Authoritative national open-register rooftop shards keyed by ISO-3166 alpha-2 country (#1012) — the government
+	 * address registers (BAN-FR today, 26M points). Consulted ONLY when no US per-state situs shard matched (a non-US
+	 * parse), and AHEAD of {@link osmShards}: a national register is denser + coordinate-authoritative, so it outranks the
+	 * community OSM fallback. Inject from `@mailwoman/ban`'s `BANShardProvider`; absent = no national tier. Licence
+	 * Ouverte/Etalab (permissive) — see `ban/README.md`. The shape generalises to other national registers.
+	 */
+	nationalShards?: (country: string) => StateShards
+	/**
 	 * OSM rooftop shards keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
-	 * ONLY when no US per-state situs shard matched (a non-US parse), so the US path is untouched. Inject from
-	 * `@mailwoman/osm`'s `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
+	 * ONLY when no US per-state situs shard matched (a non-US parse) AND no {@link nationalShards} register covered the
+	 * country, so the US path is untouched and BAN wins where it exists. Inject from `@mailwoman/osm`'s
+	 * `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
 	 */
 	osmShards?: (country: string) => StateShards
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
@@ -518,9 +527,25 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		}
 	}
 
-	// OSM international rooftop tier (#247): only when no US situs shard matched (a non-US parse). An explicit
-	// defaultCountry wins; otherwise the coarse placer's country. Bbox fall-through is ON for OSM — its points
-	// often carry no postcode/locality tag, so the resolved locality's box scopes the (street, number) probe.
+	// National open-register rooftop tier (#1012): a non-US parse first consults an authoritative government
+	// address register (BAN-FR today) AHEAD of OSM — it's denser + coordinate-authoritative. BAN rows carry
+	// their own postcode + commune, so the scoped (postcode → locality) probes suffice; no bbox fall-through.
+	if (!addressPoints) {
+		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
+
+		if (country && country !== "us") {
+			const national = deps.nationalShards?.(country)
+
+			if (national?.addressPoints) {
+				addressPoints = national.addressPoints
+			}
+		}
+	}
+
+	// OSM international rooftop tier (#247): the community fallback, only when neither a US situs shard nor a
+	// national register (above) covered the country. An explicit defaultCountry wins; otherwise the coarse
+	// placer's country. Bbox fall-through is ON for OSM — its points often carry no postcode/locality tag, so
+	// the resolved locality's box scopes the (street, number) probe.
 	if (!addressPoints) {
 		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
 

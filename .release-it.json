@@ -15,6 +15,7 @@
 				"resolver",
 				"resolver-wof-sqlite",
 				"resolver-wof-wasm",
+				"ban",
 				"classifiers",
 				"corpus",
 				"neural",

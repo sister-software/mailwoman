@@ -4641,6 +4641,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/ban@workspace:*, @mailwoman/ban@workspace:ban":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/ban@workspace:ban"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    kysely: "npm:^0.29.2"
+    spliterator: "npm:^3.2.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/cartographer@workspace:*, @mailwoman/cartographer@workspace:cartographer":
   version: 0.0.0-use.local
   resolution: "@mailwoman/cartographer@workspace:cartographer"
@@ -4852,6 +4863,7 @@ __metadata:
   resolution: "@mailwoman/nominatim@workspace:nominatim"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/nuts-lookup": "workspace:*"
@@ -4899,6 +4911,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/photon@workspace:photon"
   dependencies:
+    "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
