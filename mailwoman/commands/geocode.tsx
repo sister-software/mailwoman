@@ -45,6 +45,7 @@ import {
 	ShardProvider,
 	type GeocodeResult,
 	type ShardResolver,
+	type StateShards,
 } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.js"
@@ -228,6 +229,18 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 				}
 			: shardProvider.for
 
+	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. Optional
+	// like the resolver backend above — absent `@mailwoman/ban` ⇒ no national tier (admin/OSM path unchanged),
+	// and the provider itself is a no-op when the shard isn't on disk. Keeps the CLI backend-agnostic.
+	let nationalShards: ((country: string) => StateShards) | undefined
+
+	try {
+		const { BANShardProvider } = await import("@mailwoman/ban/sdk")
+		nationalShards = new BANShardProvider(options.dataRoot).for
+	} catch {
+		nationalShards = undefined
+	}
+
 	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
 	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
 	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
@@ -263,6 +276,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			classifier,
 			resolver,
 			shards,
+			...(nationalShards ? { nationalShards } : {}),
 			parsedTree,
 			...(bias.length > 0 ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,

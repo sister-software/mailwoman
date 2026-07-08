@@ -85,6 +85,10 @@ async function serve(): Promise<void> {
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
+	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
+	// when the shard isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
+	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
+	const banShards = new BANShardProvider(mailwomanDataRoot())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 
 	const engine: PhotonEngine = {
@@ -99,7 +103,13 @@ async function serve(): Promise<void> {
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
 			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
-			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for, bias })
+			const result = await geocodeAddress(query, {
+				classifier,
+				resolver,
+				shards: shards.for,
+				nationalShards: banShards.for,
+				bias,
+			})
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
 			// #1014: decorate from the RESOLVED gazetteer place — proper-cased ancestry names (`hierarchy[].name`,

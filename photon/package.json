@@ -25,6 +25,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
