@@ -6,9 +6,9 @@
 
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { join } from "node:path"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { alignRow } from "../../align.js"
@@ -20,8 +20,7 @@ import {
 	createUsgovSamhsaTreatmentLocatorAdapter,
 } from "./adapter.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const fixtureCSV = resolve(here, "../../../fixtures/usgov-samhsa-treatment-locator/sample.csv")
+const fixtureCSV = String(repoRootPathBuilder("corpus", "fixtures", "usgov-samhsa-treatment-locator", "sample.csv"))
 
 let scratch: string
 

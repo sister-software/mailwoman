@@ -4,15 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { join } from "node:path"
-import { fileURLToPath } from "node:url"
-
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import type { SourceRecord } from "@mailwoman/registry"
 import { describe, expect, it } from "vitest"
 
 import { geocodeStream } from "./geocode-stream.js"
 
-const fakeWorker = join(fileURLToPath(new URL("./test-fixtures/", import.meta.url)), "fake-geocode-worker.js")
+const fakeWorker = String(repoRootPathBuilder("mailwoman", "test-fixtures", "fake-geocode-worker.js"))
 
 async function* records(n: number): AsyncIterableIterator<SourceRecord> {
 	for (let i = 0; i < n; i++) {

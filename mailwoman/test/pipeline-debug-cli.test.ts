@@ -13,16 +13,13 @@
  */
 
 import { execFile } from "node:child_process"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
-import { childEnv } from "@mailwoman/core/utils"
+import { childEnv, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = String(repoRootPathBuilder("out", "cli.js"))
 
 /** Strip ANSI escapes + ink spinner frames; isolate the JSON payload. */
 function extractJson(stdout: string): unknown {

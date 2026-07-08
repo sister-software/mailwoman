@@ -11,10 +11,8 @@
  *   path (#481). Uses a fake `NeuralRunner` so the suite runs in milliseconds.
  */
 
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { buildAddressTree } from "@mailwoman/core/decoder"
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import type { AnchorLookup } from "../anchor-inference.js"
@@ -25,8 +23,7 @@ import type { QueryShapeLike } from "../query-shape-prior.js"
 import { MailwomanTokenizer } from "../tokenizer.js"
 import { TRACE_PRIOR_KINDS } from "../trace.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const TOKENIZER_PATH = resolve(here, "fixtures/tokenizer-v0.1.0.model")
+const TOKENIZER_PATH = String(repoRootPathBuilder("neural", "test", "fixtures", "tokenizer-v0.1.0.model"))
 
 /** Fake runner emitting a canned logits matrix (and optional locale head) regardless of input. */
 class FakeRunner implements NeuralRunner {

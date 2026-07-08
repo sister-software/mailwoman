@@ -15,9 +15,9 @@
 
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { join } from "node:path"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { wofAdminAdapter } from "./adapters/wof-admin-json/adapter.js"
@@ -25,8 +25,7 @@ import { buildCorpus, type BuildStage } from "./build.js"
 import { ParquetReader } from "./parquet-wrapper/index.js"
 import type { ParquetRow } from "./parquet.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const fixtureRoot = resolve(here, "../fixtures/wof-admin-json")
+const fixtureRoot = String(repoRootPathBuilder("corpus", "fixtures", "wof-admin-json"))
 
 let scratch: string
 

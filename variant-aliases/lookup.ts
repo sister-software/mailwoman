@@ -11,12 +11,11 @@
  */
 
 import { readFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { resolve } from "node:path"
 
 import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.js"
 
-const moduleDir = dirname(fileURLToPath(import.meta.url))
+const moduleDir = import.meta.dirname
 
 function loadTable(): VariantAliasTable {
 	const candidates = [

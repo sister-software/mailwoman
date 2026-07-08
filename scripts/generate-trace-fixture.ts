@@ -16,14 +16,15 @@
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const OUT_PATH = resolve(here, "../docs/src/components/ModelVisualizer/fixtures/white-house.trace.json")
+const OUT_PATH = String(
+	repoRootPathBuilder("docs", "src", "components", "ModelVisualizer", "fixtures", "white-house.trace.json")
+)
 
 // parseArgs with strict positionals: a flag-looking arg errors loudly instead of being traced as
 // the literal address text and silently overwriting the committed fixture with garbage.

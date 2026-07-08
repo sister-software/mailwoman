@@ -10,13 +10,11 @@
 
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { parseSmokeRows } from "./demo-cascade-rows.js"
-
-const here = fileURLToPath(new URL(".", import.meta.url))
 
 const valid = (over: Record<string, unknown> = {}) =>
 	JSON.stringify({ input: "Brooklyn", expect: { id: 421205765, name: "Brooklyn" }, ...over })
@@ -99,7 +97,7 @@ describe("parseSmokeRows", () => {
 
 describe("the committed row file", () => {
 	it("data/eval/external/demo-cascade-smoke.jsonl satisfies the schema", () => {
-		const file = resolve(here, "../../data/eval/external/demo-cascade-smoke.jsonl")
+		const file = String(repoRootPathBuilder("data", "eval", "external", "demo-cascade-smoke.jsonl"))
 		const rows = parseSmokeRows(readFileSync(file, "utf8"), file)
 		expect(rows.length).toBeGreaterThanOrEqual(20)
 

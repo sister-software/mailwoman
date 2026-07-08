@@ -21,9 +21,9 @@
  */
 
 import { readFileSync } from "node:fs"
-import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
+
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -38,7 +38,7 @@ const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
 // not what the publisher believes it wrote.
 const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releases.json"
 
-const RELEASES_MDX_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", "docs", "articles", "releases.mdx")
+const RELEASES_MDX_PATH = String(repoRootPathBuilder("docs", "articles", "releases.mdx"))
 
 interface ParityCheck {
 	name: string

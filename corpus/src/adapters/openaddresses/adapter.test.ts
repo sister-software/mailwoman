@@ -6,17 +6,16 @@
 
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { join } from "node:path"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { OPENADDRESSES_ADAPTER_ID, OPENADDRESSES_DEFAULT_LICENSE, createOpenaddressesAdapter } from "./adapter.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const fixtureGeojsonl = resolve(here, "../../../fixtures/openaddresses/sample-us.geojson")
+const fixtureGeojsonl = String(repoRootPathBuilder("corpus", "fixtures", "openaddresses", "sample-us.geojson"))
 
 let scratch: string
 beforeEach(async () => {

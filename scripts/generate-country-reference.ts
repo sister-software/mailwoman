@@ -18,8 +18,10 @@
 
 import { writeFileSync } from "node:fs"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
+
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
-const OUT = new URL("../codex/country/reference-data.ts", import.meta.url)
+const OUT = repoRootPathBuilder("codex", "country", "reference-data.ts")
 
 /** A single country record from mledoze/countries, narrowed to the fields this script reads. */
 interface MledozeCountry {

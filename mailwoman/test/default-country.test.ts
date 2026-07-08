@@ -20,19 +20,16 @@
  */
 import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
-import { childEnv, dataRootPath } from "@mailwoman/core/utils"
+import { childEnv, dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { localeToCountry, options as parseOptions, resolverDefaultCountry } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = String(repoRootPathBuilder("out", "cli.js"))
 const GLOBAL_WOF = $public.MAILWOMAN_WOF_GLOBAL_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 
 describe("localeToCountry", () => {

@@ -20,16 +20,14 @@
  */
 
 import { readFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { MailwomanTokenizer, SPACE_SENTINEL } from "../tokenizer.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const MODEL_PATH = resolve(here, "fixtures/tokenizer-v0.1.0.model")
-const FIXTURE_PATH = resolve(here, "fixtures/tokenizer-parity-v0.1.0.json")
+const MODEL_PATH = String(repoRootPathBuilder("neural", "test", "fixtures", "tokenizer-v0.1.0.model"))
+const FIXTURE_PATH = String(repoRootPathBuilder("neural", "test", "fixtures", "tokenizer-parity-v0.1.0.json"))
 
 interface FixtureEntry {
 	raw: string

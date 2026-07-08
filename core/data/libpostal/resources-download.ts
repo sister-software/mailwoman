@@ -31,14 +31,13 @@
 import { cp, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
-import { runIfScript } from "@mailwoman/core/utils"
+import { resourceDictionaryPathBuilder, runIfScript } from "@mailwoman/core/utils"
 import { $ } from "zx"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
-const DICTIONARIES_DIR = fileURLToPath(new URL("./dictionaries", import.meta.url))
+const DICTIONARIES_DIR = String(resourceDictionaryPathBuilder("libpostal"))
 
 function parseCLIArgs() {
 	const { values } = parseArgs({

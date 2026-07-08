@@ -37,12 +37,10 @@
 
 import { execSync } from "node:child_process"
 import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { resolve } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 
 const SEP = ""
 
@@ -106,7 +104,7 @@ function parseArgs(): Args {
 		)
 		process.exit(2)
 	}
-	out.rulesPath = out.rulesPath ?? resolve(__dirname, "lint-rules.json")
+	out.rulesPath = out.rulesPath ?? String(repoRootPathBuilder("scripts", "lint-rules.json"))
 
 	return out as Args
 }

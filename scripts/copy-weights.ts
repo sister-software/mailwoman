@@ -33,13 +33,12 @@ import { spawnSync } from "node:child_process"
 import type { PathLike } from "node:fs"
 import { existsSync, readFileSync } from "node:fs"
 import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const repoRoot = resolve(here, "..")
+const repoRoot = String(repoRootPathBuilder())
 
 const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
 const dataRoot = $public.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot

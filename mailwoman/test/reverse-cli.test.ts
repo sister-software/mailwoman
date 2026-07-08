@@ -14,18 +14,15 @@
  */
 
 import { execFile } from "node:child_process"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
-import { childEnv } from "@mailwoman/core/utils"
+import { childEnv, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
 
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = String(repoRootPathBuilder("out", "cli.js"))
 
 const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB

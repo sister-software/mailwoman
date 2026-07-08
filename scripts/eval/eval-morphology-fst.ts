@@ -22,20 +22,16 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, basename as pathBasename, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { basename as pathBasename, resolve } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const REPO_ROOT = resolve(__dirname, "..")
 
 interface GoldenEntry {
 	raw: string
@@ -307,7 +303,7 @@ async function main() {
 		} else {
 			console.error("Building morphology FST in-process from libpostal dictionaries...")
 			const built = buildStreetMorphologyFST({
-				dictionariesDir: resolve(REPO_ROOT, "core", "data", "libpostal", "dictionaries"),
+				dictionariesDir: String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries")),
 			})
 			morphologyFST = built.matcher
 			console.error(`  ${built.canonicalCount} canonicals / ${built.variantCount} variants`)

@@ -41,14 +41,13 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
-import { pyJsonDumps, pyReprDict } from "@mailwoman/core/utils"
+import { pyJsonDumps, pyReprDict, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { SeededRandom } from "@mailwoman/core/utils"
 
-const REPO = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
+const REPO = String(repoRootPathBuilder())
 const OA_DIR = join(REPO, "data", "eval", "external")
 const OA_FILES: Record<string, string> = {
 	US: "openaddresses-us-sample.jsonl",

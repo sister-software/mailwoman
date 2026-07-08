@@ -4,16 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
-
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "../../types.js"
 import { createUsgovNADAdapter, USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE } from "./adapter.js"
 
-const HERE = dirname(fileURLToPath(import.meta.url))
-const FIXTURE_DIR = join(HERE, "fixtures")
+const FIXTURE_DIR = String(repoRootPathBuilder("corpus", "src", "adapters", "usgov-nad", "fixtures"))
 
 async function collect(adapter = createUsgovNADAdapter(), opts: { country?: string; limit?: number } = {}) {
 	const out: CanonicalRow[] = []

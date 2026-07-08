@@ -7,10 +7,10 @@
 import { execSync } from "node:child_process"
 import { readFileSync, writeFileSync } from "node:fs"
 import { dirname, relative, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const repoRoot = resolve(here, "..")
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
+
+const repoRoot = String(repoRootPathBuilder())
 
 /** Files to rewrite: everything under packages/, recursively, .ts/.tsx. */
 function listFiles() {

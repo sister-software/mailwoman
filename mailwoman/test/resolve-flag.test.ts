@@ -12,19 +12,16 @@
 
 import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
-import { childEnv, dataRootPath } from "@mailwoman/core/utils"
+import { childEnv, dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = String(repoRootPathBuilder("out", "cli.js"))
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH

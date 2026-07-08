@@ -16,13 +16,11 @@
  */
 
 import { readFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const readCard = (rel: string) => JSON.parse(readFileSync(resolve(here, rel), "utf8"))
+const readCard = (rel: string) => JSON.parse(readFileSync(String(repoRootPathBuilder("neural", "test", rel)), "utf8"))
 const enUs = readCard("../../neural-weights-en-us/model-card.json")
 const frFr = readCard("../../neural-weights-fr-fr/model-card.json")
 

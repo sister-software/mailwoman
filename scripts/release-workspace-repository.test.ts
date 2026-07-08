@@ -17,11 +17,11 @@
  */
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-const repoRoot = fileURLToPath(new URL("..", import.meta.url))
+const repoRoot = String(repoRootPathBuilder())
 const CANONICAL_URL = "https://github.com/sister-software/mailwoman.git"
 
 /** The published workspace set — the single source of truth release-it iterates. */

@@ -25,15 +25,14 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { childEnv, dataRootPath } from "@mailwoman/core/utils"
+import { childEnv, dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 // ---------------------------------------------------------------------------
 // Paths
 // ---------------------------------------------------------------------------
 
-const REPO_ROOT = new URL("../../", import.meta.url).pathname.replace(/\/$/, "")
-const CLI_PATH = join(REPO_ROOT, "mailwoman/out/cli.js")
+const CLI_PATH = String(repoRootPathBuilder("mailwoman", "out", "cli.js"))
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH

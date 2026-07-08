@@ -9,18 +9,16 @@
  */
 
 import { execFile } from "node:child_process"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as debugOptions } from "../commands/debug.js"
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = String(repoRootPathBuilder("out", "cli.js"))
 
 describe("--locale schema validation", () => {
 	test("parse command accepts en-US, fr-FR, en (any BCP-47 tag with optional region)", () => {

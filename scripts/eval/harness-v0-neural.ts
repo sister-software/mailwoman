@@ -27,11 +27,11 @@
  */
 
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { basename, join } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import {
 	type AnchorLookup,
 	type GazetteerLexicon,
@@ -45,10 +45,6 @@ import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
 import { type ClassificationRecord, createAddressParser, createRuntimePipeline } from "mailwoman"
 import ts from "typescript"
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const REPO_ROOT = resolve(__dirname, "..")
 
 // -------------------------------------------------------------------------------------------------
 // Args
@@ -864,7 +860,7 @@ async function main(): Promise<void> {
 		} else {
 			console.error("Building morphology FST in-process...")
 			const built = buildStreetMorphologyFST({
-				dictionariesDir: resolve(REPO_ROOT, "core", "data", "libpostal", "dictionaries"),
+				dictionariesDir: String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries")),
 			})
 			morphologyFST = built.matcher
 			console.error(`  ${built.canonicalCount} canonicals / ${built.variantCount} variants`)

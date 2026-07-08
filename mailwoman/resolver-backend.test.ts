@@ -4,14 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import { fileURLToPath } from "node:url"
-
 import { afterEach, expect, test, vi } from "vitest"
 
 import { mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.js"
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
-const THIS_FILE = fileURLToPath(import.meta.url)
+const THIS_FILE = import.meta.filename
 function setEnv(key: string, value: string | undefined): void {
 	vi.stubEnv(key, value as string)
 }
