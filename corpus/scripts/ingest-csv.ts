@@ -71,6 +71,12 @@ function parseArgs(): Record<string, string> {
 const COMMA = 44
 const DOUBLE_QUOTE = 34
 
+// These stay hand-rolled on purpose — spliterator ≥ 3.2.0's CSVSpliterator does quote handling
+// correctly now, but it can't express this tool's CLI contract: `--skip N` drops N preamble lines
+// BEFORE the header (CSVSpliterator consumes row 1 as the header immediately, with no skip-first-N
+// hook), `--no-header` auto-generates `col_0…col_N` names from the first data row's width, and the
+// separator is any single caller-supplied byte. If a future edit removes those knobs, revisit;
+// until then, don't "finish the job" by swapping in CSVSpliterator.
 function splitCSVLine(line: string, separator: number = COMMA): string[] {
 	const fields: string[] = []
 	let start = 0

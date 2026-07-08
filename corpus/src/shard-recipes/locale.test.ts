@@ -9,9 +9,13 @@
  *   suffixes, and DON'T touch the audit-verified real names a naive suffix rule would mangle.
  */
 
-import { describe, expect, it } from "vitest"
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
-import { cleanCityNoise } from "./locale.js"
+import { afterAll, describe, expect, it } from "vitest"
+
+import { cleanCityNoise, readTuples } from "./locale.js"
 
 describe("cleanCityNoise", () => {
 	it("drops ES cadastral pseudo-localities (comma / ≥4-digit run)", () => {
@@ -49,5 +53,62 @@ describe("cleanCityNoise", () => {
 
 	it("returns null when stripping leaves nothing", () => {
 		expect(cleanCityNoise("(NH)")).toBeNull()
+	})
+})
+
+describe("readTuples (OA CSV parse)", () => {
+	const dirs: string[] = []
+	const tmp = (): string => {
+		const d = mkdtempSync(join(tmpdir(), "mw-locale-"))
+		dirs.push(d)
+
+		return d
+	}
+	afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
+
+	// A tiny OA slice exercising exactly what the CSVSpliterator migration touches: a CRLF terminator
+	// (the real OA files are CRLF), a quoted field with an embedded comma, an empty REGION cell that
+	// must fall back to part.region, and a header-driven column index. rng is unused below RESERVOIR_CAP.
+	const OA_HEADER = "LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH"
+
+	it("parses quoted fields, CRLF terminators, and the region fallback", async () => {
+		const file = join(tmp(), "part.csv")
+		writeFileSync(
+			file,
+			[
+				OA_HEADER,
+				// Quoted street with an embedded comma; populated REGION.
+				'22.6,49.3,12,"Main St, West",,Springfield,dist,Bayern,38-710,id1,hash1',
+				// Empty REGION cell → must fall back to part.region.
+				"22.7,49.2,5,Elm Ave,,Shelbyville,dist,,38-711,id2,hash2",
+			].join("\r\n") + "\r\n"
+		)
+
+		const tuples = await readTuples({ path: file, region: "FallbackLand" }, () => 0)
+
+		expect(tuples).toEqual([
+			{ house_number: "12", street: "Main St, West", locality: "Springfield", region: "Bayern", postcode: "38-710" },
+			{ house_number: "5", street: "Elm Ave", locality: "Shelbyville", region: "FallbackLand", postcode: "38-711" },
+		])
+	})
+
+	it("skips rows missing street or city, and drops city-noise rows", async () => {
+		const file = join(tmp(), "part.csv")
+		writeFileSync(
+			file,
+			[
+				OA_HEADER,
+				"1,2,10,,,NoStreetCity,d,R,00000,i,h", // no street → skip
+				"1,2,11,SomeSt,,,d,R,00000,i,h", // no city → skip
+				'1,2,12,RealSt,,"Comunidad de 09076, 09150 y 09578",d,R,00000,i,h', // quoted city-noise → drop
+				"1,2,13,Keep St,,Keepville,d,R,00000,i,h", // kept
+			].join("\n") + "\n"
+		)
+
+		const tuples = await readTuples({ path: file }, () => 0)
+
+		expect(tuples).toEqual([
+			{ house_number: "13", street: "Keep St", locality: "Keepville", region: "R", postcode: "00000" },
+		])
 	})
 })
