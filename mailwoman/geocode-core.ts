@@ -28,6 +28,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
+import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
@@ -94,7 +95,10 @@ export type ShardResolver = (stateSlug: string | null) => StateShards
 
 /** The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it). */
 export interface GeocodeClassifier {
-	parse(text: string, opts?: { postcodeRepair?: boolean; normalizeCase?: boolean }): Promise<AddressTree>
+	parse(
+		text: string,
+		opts?: { postcodeRepair?: boolean; normalizeCase?: boolean; queryShape?: QueryShape }
+	): Promise<AddressTree>
 }
 
 export interface GeocodeDeps {
@@ -399,8 +403,23 @@ export async function parseForGeocode(
 	const parseInput =
 		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
 
+	// #981: apply the query-shape emission prior the runtime pipeline applies (core/pipeline/runtime-pipeline.ts:336
+	// `computeQueryShape` → `safeClassify` → parse with `queryShape`). Without it the geocode path — the drop-in
+	// servers (nominatim/photon `/api`) + the geocode CLI — diverged from the pipeline: a detected known-format span
+	// (`nl_postcode` → `B-postcode`, …) or a US region abbreviation never biased the emissions here. Computed on
+	// `parseInput` (the exact text handed to the model), matching the pipeline (which computes it on the normalized
+	// text, before the classifier's internal case-normalization). It is a NO-OP whenever the shape carries no known
+	// format and no region abbreviation (the bare `street, city` class) — `buildEmissionPriors` returns an all-zeros
+	// matrix — so both bare-form and well-formed inputs are byte-stable; it earns its keep only on the ambiguous
+	// digit-span / region-abbrev cases the model isn't already confident about.
+	const queryShape = computeQueryShape(parseInput)
+
 	return recognizeUSRegions(
-		await deps.classifier.parse(parseInput, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
+		await deps.classifier.parse(parseInput, {
+			postcodeRepair: true,
+			normalizeCase: deps.normalizeCase ?? true,
+			queryShape,
+		})
 	)
 }
 

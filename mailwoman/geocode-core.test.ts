@@ -11,9 +11,15 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { computeQueryShape } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
-import { countryFromPostcodeFormat, extractGeocodeResult } from "./geocode-core.js"
+import {
+	countryFromPostcodeFormat,
+	extractGeocodeResult,
+	type GeocodeClassifier,
+	parseForGeocode,
+} from "./geocode-core.js"
 
 describe("countryFromPostcodeFormat (#928)", () => {
 	it("matches GB postcodes (spaced and unspaced)", () => {
@@ -186,5 +192,66 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 			],
 		}
 		expect(extractGeocodeResult("berlin", tree).candidates).toHaveLength(1)
+	})
+})
+
+describe("parseForGeocode — query-shape emission prior (#981)", () => {
+	type ParseOpts = Parameters<GeocodeClassifier["parse"]>[1]
+
+	/**
+	 * A recording classifier: captures the opts geocode-core hands the model. Lets us assert the query-shape prior the
+	 * runtime pipeline applies (`core/pipeline/runtime-pipeline.ts` → `safeClassify`) now reaches the geocode path too —
+	 * without loading a real model.
+	 */
+	function recordingClassifier(): { classifier: GeocodeClassifier; calls: Array<{ text: string; opts?: ParseOpts }> } {
+		const calls: Array<{ text: string; opts?: ParseOpts }> = []
+		const classifier: GeocodeClassifier = {
+			parse(text, opts) {
+				calls.push({ text, opts })
+
+				return Promise.resolve({ raw: text, roots: [] })
+			},
+		}
+
+		return { classifier, calls }
+	}
+
+	it("passes a queryShape computed on the exact model input (converges with the runtime pipeline)", async () => {
+		const { classifier, calls } = recordingClassifier()
+		await parseForGeocode("Damrak 1, 1012 LG Amsterdam", { classifier })
+
+		expect(calls).toHaveLength(1)
+		const { text, opts } = calls[0]!
+		expect(opts?.queryShape).toBeDefined()
+		// The shape must be the one computeQueryShape derives from the SAME text handed to the model.
+		expect(opts!.queryShape).toEqual(computeQueryShape(text))
+	})
+
+	it("carries the known-format hit that biases B-postcode (the belt reaches the geocode path)", async () => {
+		const { classifier, calls } = recordingClassifier()
+		await parseForGeocode("Damrak 1, 1012 LG Amsterdam", { classifier })
+
+		const formats = calls[0]!.opts!.queryShape!.knownFormats.map((f) => f.format)
+		expect(formats).toContain("nl_postcode")
+	})
+
+	it("is an empty-format shape for the bare street+city class — nothing for the prior to bias (#981 falsified)", async () => {
+		const { classifier, calls } = recordingClassifier()
+		await parseForGeocode("Wetstraat, Brussel", { classifier })
+
+		const qs = calls[0]!.opts!.queryShape!
+		// The Wetstraat/Rue-de-la-Loi cross-border class: no known postcode format, no region abbreviation, so
+		// buildEmissionPriors returns an all-zeros matrix — the emission prior CANNOT move it. That class needs a
+		// lexical country prior, not this belt.
+		expect(qs.knownFormats).toHaveLength(0)
+		expect(qs.regionAbbreviations ?? []).toHaveLength(0)
+	})
+
+	it("computes the shape over the raw input when normalizeInput is false", async () => {
+		const { classifier, calls } = recordingClassifier()
+		await parseForGeocode("Damrak 1, 1012 LG Amsterdam", { classifier, normalizeInput: false })
+
+		expect(calls[0]!.text).toBe("Damrak 1, 1012 LG Amsterdam")
+		expect(calls[0]!.opts!.queryShape).toEqual(computeQueryShape("Damrak 1, 1012 LG Amsterdam"))
 	})
 })
