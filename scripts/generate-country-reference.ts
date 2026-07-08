@@ -18,10 +18,10 @@
 
 import { writeFileSync } from "node:fs"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
-const OUT = repoRootPathBuilder("codex", "country", "reference-data.ts")
+const OUT = repoRootPath("codex", "country", "reference-data.ts")
 
 /** A single country record from mledoze/countries, narrowed to the fields this script reads. */
 interface MledozeCountry {
@@ -125,4 +125,4 @@ export interface CountryReference {
 export const COUNTRY_REFERENCE: Record<string, CountryReference> = {`
 
 writeFileSync(OUT, `${header}\n${body}\n}\n`)
-console.error(`wrote ${OUT.pathname} (${Object.keys(rows).length} countries)`)
+console.error(`wrote ${OUT} (${Object.keys(rows).length} countries)`)

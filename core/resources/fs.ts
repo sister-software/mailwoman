@@ -13,5 +13,5 @@ import type { PathBuilderLike } from "path-ts"
  * Attempts to stat a file or directory.
  */
 export function tryStat(pathBuilderLike: PathBuilderLike): Promise<Stats | null> {
-	return stat(pathBuilderLike).catch(() => null)
+	return stat(pathBuilderLike.toString()).catch(() => null)
 }

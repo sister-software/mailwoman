@@ -7,13 +7,13 @@
 import { createReadStream } from "node:fs"
 import * as fs from "node:fs/promises"
 
-import { repoRootPathBuilder, resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
 import { pascalCase } from "change-case"
 import * as csv from "csv-parse"
 
-const outfile = repoRootPathBuilder("core", "resources", "languages", "types.gen.ts")
+const outfile = repoRootPath("core", "resources", "languages", "types.gen.ts")
 
-const dataSourcePath = resourceDictionaryPathBuilder("internal", "languages.csv")
+const dataSourcePath = resourceDictionaryPath("internal", "languages.csv")
 
 const alpha2Entries = new Map<string, string[]>()
 const alpha3bEntries = new Map<string, string[]>()
@@ -28,7 +28,7 @@ const parser = csv.parse({
 	from_line: 2,
 })
 
-const stream = createReadStream(dataSourcePath.toString()).pipe(parser)
+const stream = createReadStream(dataSourcePath).pipe(parser)
 
 for await (const columns of stream) {
 	const alpha3b = columns[0] as string
@@ -43,7 +43,7 @@ for await (const columns of stream) {
 	entryLines.push([alpha2, alpha3b])
 }
 
-const handle = await fs.open(outfile.toString(), "w")
+const handle = await fs.open(outfile, "w")
 const writeLine = (line: string) => handle.writeFile(`${line}\n`)
 
 // Header.

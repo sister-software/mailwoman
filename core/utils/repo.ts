@@ -7,7 +7,7 @@
 import { basename, dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { createPathBuilderResolver, type Join, type PathBuilder } from "path-ts"
+import { createPathBuilderResolver, createPathResolver, type Join, type PathBuilder } from "path-ts"
 
 /**
  * Aliased path to the root of the repository.
@@ -55,6 +55,12 @@ type RepoRootAbsolutePath = RepoRootAlias
 export const repoRootPathBuilder = createPathBuilderResolver<RepoRootAlias>(RepoRootAbsolutePath)
 
 /**
+ * Absolute-path-string resolver relative to the repo root — the string-returning sibling of {@link repoRootPathBuilder},
+ * for handing paths straight to `node:fs` and other string APIs without a `.toString()`.
+ */
+export const repoRootPath = createPathResolver<RepoRootAlias>(RepoRootAbsolutePath)
+
+/**
  * Path builder relative to the `@mailwoman/core` workspace root (the directory containing `package.json` for this
  * package).
  *
@@ -65,6 +71,12 @@ export const repoRootPathBuilder = createPathBuilderResolver<RepoRootAlias>(Repo
  */
 const CorePackageAbsolutePath = resolve(__dirname, "..", __isCompiledTree ? ".." : "")
 export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(CorePackageAbsolutePath)
+
+/**
+ * Absolute-path-string resolver relative to the `@mailwoman/core` workspace root — the string-returning sibling of
+ * {@link corePackagePathBuilder}.
+ */
+export const corePackagePath = createPathResolver<RepoRootAlias>(CorePackageAbsolutePath)
 
 /**
  * Path builder relative to a specific package's output directory.
@@ -90,6 +102,14 @@ export function resourceDictionaryPathBuilder<A extends AddressResource, S exten
 	...pathSegments: S
 ) {
 	return corePackagePathBuilder("data", resource, "dictionaries", ...pathSegments)
+}
+
+/**
+ * Absolute-path-string resolver for an address resource dictionary directory — the string-returning sibling of
+ * {@link resourceDictionaryPathBuilder}.
+ */
+export function resourceDictionaryPath<A extends AddressResource, S extends string[]>(resource: A, ...pathSegments: S) {
+	return corePackagePath("data", resource, "dictionaries", ...pathSegments)
 }
 
 /**

@@ -33,7 +33,7 @@ let _availableLanguages: Promise<LibPostalLanguageCode[]> | undefined
  * shared, so concurrent first callers do one `readdir`.
  */
 export function getAvailableLanguages(): Promise<LibPostalLanguageCode[]> {
-	_availableLanguages ??= readdir(libPostalDataDirectory).then((directories) => {
+	_availableLanguages ??= readdir(libPostalDataDirectory.toString()).then((directories) => {
 		const languageCodeDirectories = new Set<string>()
 
 		for (const directory of directories) {
