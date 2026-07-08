@@ -19,7 +19,7 @@ import { childEnv, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
-const cliBin = repoRootPath("out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 /** Strip ANSI escapes + ink spinner frames; isolate the JSON payload. */
 function extractJson(stdout: string): unknown {

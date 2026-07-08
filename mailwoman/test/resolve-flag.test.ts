@@ -21,7 +21,7 @@ import { describe, expect, test } from "vitest"
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const cliBin = repoRootPath("out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH

@@ -18,7 +18,7 @@ import { options as debugOptions } from "../commands/debug.js"
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const cliBin = repoRootPath("out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 describe("--locale schema validation", () => {
 	test("parse command accepts en-US, fr-FR, en (any BCP-47 tag with optional region)", () => {

@@ -29,7 +29,7 @@ import { describe, expect, test } from "vitest"
 import { localeToCountry, options as parseOptions, resolverDefaultCountry } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const cliBin = repoRootPath("out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 const GLOBAL_WOF = $public.MAILWOMAN_WOF_GLOBAL_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 
 describe("localeToCountry", () => {

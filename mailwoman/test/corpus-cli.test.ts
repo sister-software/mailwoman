@@ -17,7 +17,7 @@ import { describe, expect, test } from "vitest"
 import { options as runOptions } from "../commands/corpus/run.js"
 
 const exec = promisify(execFile)
-const cliBin = repoRootPath("out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 describe("corpus run schema validation", () => {
 	test("rejects non-alpha-2 country", () => {
