@@ -22,12 +22,10 @@
  *   fast-follow; the mapping is an explicit input here.
  */
 
-import { open } from "node:fs/promises"
-
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
 import { parse as parseCSVSync } from "csv-parse/sync"
-import { Delimiters, TextSpliterator } from "spliterator"
+import { CSVSpliterator, Delimiters } from "spliterator"
 
 import type { SourceRecord } from "./types.js"
 
@@ -45,56 +43,29 @@ export function delimiterFor(path: string): Delimiter {
 /**
  * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCSV} returns, but
  * **without loading the file into memory**. A multi-GB source (the NPPES registry is ~4.8 GB / 9.6M rows — too big for
- * `readFileSync`, which throws `ERR_STRING_TOO_LONG`) streams line by line. Keys are the original header names so a
- * {@link ColumnMapping} written against the source's headers matches. Filter/sample the stream before
- * {@link ingestRows} to keep only the rows you geocode.
+ * `readFileSync`, which throws `ERR_STRING_TOO_LONG`) streams line by line. Keys are the original header names
+ * (`normalizeKeys: false`) so a {@link ColumnMapping} written against the source's headers matches. Filter/sample the
+ * stream before {@link ingestRows} to keep only the rows you geocode.
  *
- * We stream _lines_ with spliterator's `TextSpliterator` (pure-Node, the part that handles the huge file) and split
- * each line into columns here with `String.prototype.split`. We deliberately do NOT use `CSVSpliterator`: its column
- * tokenizer hard-codes `skipEmpty` (it builds the column spliterator as `{ delimiter }` with no `skipEmpty: false`), so
- * consecutive delimiters collapse and EMPTY FIELDS ARE DROPPED — fatal for a fixed-width registry like NPPES where a
- * row of 330 columns full of empties would mis-parse to 40 and shift every value. (Upstream `spliterator` bug; revisit
- * when it's fixed.)
- *
- * Assumes an unquoted delimited file (no fields containing the delimiter) — true for these government TSVs. For small,
- * possibly-quoted CSVs use {@link parseCSV} (quote-aware, in-memory).
+ * `CSVSpliterator` (spliterator ≥ 3.2.0) handles the whole job: empty fields are preserved (a 330-column NPPES row
+ * stays 330 columns), CRLF row terminators are normalized (RFC 4180 default), and `enableQuoteHandling` makes quoted
+ * fields — embedded delimiters, embedded newlines, doubled-quote escapes — parse correctly while leaving unquoted files
+ * untouched. (This replaced a manual `TextSpliterator` + `split` workaround written against the 3.1.0 column tokenizer,
+ * which dropped empty fields and mis-parsed quotes.) Missing trailing fields land as `""`, matching the header
+ * contract. For small in-memory parses {@link parseCSV} remains.
  */
 export async function* streamRows(
 	source: string,
 	opts: { delimiter?: Delimiter } = {}
 ): AsyncGenerator<Record<string, string>> {
-	const sep = (opts.delimiter ?? delimiterFor(source)) === "tab" ? "\t" : ","
-	// Own the file handle so it's closed deterministically. spliterator's `autoDispose` only fires on
-	// natural completion, not on an early `break`/`.return()` — which then leaks the fd (a GC-time error
-	// in Node 24+). We open it, pass `autoDispose: false` so spliterator never touches our handle, and
-	// close it in `finally` (runs on completion AND when the consumer abandons the generator early).
-	const handle = await open(source, "r")
+	const columnDelimiter = (opts.delimiter ?? delimiterFor(source)) === "tab" ? Delimiters.Tab : Delimiters.Comma
 
-	try {
-		let header: string[] | null = null
-
-		for await (const line of TextSpliterator.fromAsync(handle, {
-			delimiter: Delimiters.LineFeed,
-			autoDispose: false,
-		})) {
-			if (line.length === 0) continue // blank line / trailing newline
-			const fields = line.replace(/\r$/, "").split(sep)
-
-			// tolerate CRLF
-			if (header === null) {
-				header = fields
-				continue
-			}
-			const row: Record<string, string> = {}
-
-			for (let i = 0; i < header.length; i++) {
-				row[header[i]!] = fields[i] ?? ""
-			}
-			yield row
-		}
-	} finally {
-		await handle.close()
-	}
+	yield* CSVSpliterator.fromAsync<Record<string, string>>(source, {
+		mode: "object",
+		columnDelimiter,
+		normalizeKeys: false,
+		enableQuoteHandling: true,
+	})
 }
 
 /**

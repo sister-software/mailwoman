@@ -102,11 +102,11 @@ async function draw(n: number): Promise<Sample[]> {
 	let line = 0
 
 	// Semicolon-delimited CSV (not JSONL) → TextSpliterator for the line layer, keep the `.split(";")`.
-	// spliterator does not normalize CRLF the way readline's crlfDelay:Infinity did; the staging files
-	// are LF today, but strip a trailing \r so the final column (the truth coord) always parses.
-	for await (const raw of TextSpliterator.fromAsync(src.file)) {
+	// crlf: the staging files are LF today, but the final column (the truth coord) would otherwise
+	// carry a stray \r on a CRLF source and fail to parse.
+	for await (const raw of TextSpliterator.fromAsync(src.file, { crlf: true })) {
 		if (line++ === 0) continue // header
-		const s = src.parse(raw.replace(/\r$/, "").split(";"))
+		const s = src.parse(raw.split(";"))
 
 		if (!s) continue
 		seen++

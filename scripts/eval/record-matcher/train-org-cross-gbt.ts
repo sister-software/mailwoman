@@ -126,16 +126,16 @@ function uniqueQuantiles(sorted: number[], n: number): number[] {
 
 /** Stream a comma CSV with quoted fields (the OP profile format) as header-keyed rows. */
 async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> {
-	// spliterator owns the line layer; the manual quote/pending re-join + tokenizer below stays
-	// (spliterator's enableQuoteHandling mis-parses embedded delimiters). spliterator does not normalize
-	// CRLF the way readline's crlfDelay:Infinity did, and the CMS POS file IS CRLF — so strip a trailing
-	// \r per physical line, or the last column (ZIP_CD) and the header keys would carry a stray \r.
-	// Default skipEmpty drops truly-empty lines, so a trailing newline can't inject a spurious empty row.
+	// spliterator owns the line layer (crlf is load-bearing here: the CMS POS file IS CRLF, and the
+	// last column ZIP_CD + the header keys would otherwise carry a stray \r); the manual quote/pending
+	// re-join + tokenizer below stays deliberately — spliterator ≥ 3.2.0 CAN do quote handling
+	// end-to-end, but this parse feeds model training, so its byte-for-byte behavior is pinned until a
+	// re-validation run signs off a swap. Default skipEmpty drops truly-empty lines, so a trailing
+	// newline can't inject a spurious empty row.
 	let header: string[] | null = null
 	let pending = ""
 
-	for await (const physicalLine of TextSpliterator.fromAsync(path)) {
-		const rawLine = physicalLine.replace(/\r$/, "")
+	for await (const rawLine of TextSpliterator.fromAsync(path, { crlf: true })) {
 		// Re-join physical lines until quotes balance (quoted fields may contain newlines).
 		pending = pending ? `${pending}\n${rawLine}` : rawLine
 		const quotes = (pending.match(/"/g) ?? []).length

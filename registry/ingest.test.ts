@@ -166,8 +166,9 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("preserves empty fields — consecutive delimiters do not collapse (NPPES-style alignment)", async () => {
-		// The regression CSVSpliterator failed: a row with consecutive empties must keep every column,
-		// or every value after the empty run shifts left (a 330-col NPPES row collapses to ~40 + misaligns).
+		// The regression spliterator 3.1.0's column tokenizer failed: a row with consecutive empties must
+		// keep every column, or every value after the empty run shifts left (a 330-col NPPES row collapses
+		// to ~40 + misaligns). Fixed upstream in 3.2.0; pinned here because it's fatal if it regresses.
 		const file = join(tmp(), "f.tsv")
 		writeFileSync(file, "npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n")
 		const rows: Record<string, string>[] = []
@@ -177,6 +178,32 @@ describe("streamRows (lazy delimited ingest)", () => {
 		}
 		expect(rows).toHaveLength(1)
 		expect(rows[0]).toEqual({ npi: "123", org: "", last: "", first: "", state: "NE" })
+	})
+
+	it("parses quoted fields — embedded delimiters, embedded newlines, doubled quotes (NPPES-style quoting)", async () => {
+		// New with spliterator 3.2.0's end-to-end quote handling; the previous manual-split
+		// implementation assumed unquoted files.
+		const file = join(tmp(), "f.csv")
+		writeFileSync(file, 'npi,org,city\n123,"Acme, LLC",Portland\n456,"Multi\nLine ""Quoted"" Org",Seattle\n')
+		const rows: Record<string, string>[] = []
+
+		for await (const r of streamRows(file)) {
+			rows.push(r)
+		}
+		expect(rows).toHaveLength(2)
+		expect(rows[0]).toEqual({ npi: "123", org: "Acme, LLC", city: "Portland" })
+		expect(rows[1]).toEqual({ npi: "456", org: 'Multi\nLine "Quoted" Org', city: "Seattle" })
+	})
+
+	it("normalizes CRLF row terminators — no stray \\r on the last column or header keys", async () => {
+		const file = join(tmp(), "f.csv")
+		writeFileSync(file, "npi,state\r\n123,NE\r\n")
+		const rows: Record<string, string>[] = []
+
+		for await (const r of streamRows(file)) {
+			rows.push(r)
+		}
+		expect(rows).toEqual([{ npi: "123", state: "NE" }])
 	})
 
 	it("closes the file handle on an early break (no leaked fd)", async () => {

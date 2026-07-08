@@ -129,13 +129,12 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				const gunzip = createGunzip()
 				const fileStream = createReadStream(gzPath)
 
-				for await (const line of TextSpliterator.fromAsync(fileStream.pipe(gunzip))) {
+				// crlf: the wikidata id is the last column — a CRLF source would leave a stray \r on it.
+				for await (const line of TextSpliterator.fromAsync(fileStream.pipe(gunzip), { crlf: true })) {
 					totalRows++
 
 					if (totalRows === 1 && line.startsWith("language")) continue
-					// spliterator keeps CRLF's trailing CR (readline stripped it); the wikidata id is the last
-					// column, so drop a trailing CR before splitting to keep the id clean.
-					const parts = line.replace(/\r$/, "").split("\t")
+					const parts = line.split("\t")
 
 					if (parts.length < 5) continue
 
