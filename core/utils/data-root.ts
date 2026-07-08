@@ -43,13 +43,14 @@ export function dataRootPath(...segments: string[]): string {
  * tail shard degrades to the pre-#920 pair.
  */
 export function wofShardPaths(dataRoot: string = mailwomanDataRoot()): [string, string, string, string, string] {
+	// TODO: Redo this as an object.
 	return [
-		String(resolvePathBuilder(dataRoot, "wof", "admin-global-priority.db")),
-		String(resolvePathBuilder(dataRoot, "wof", "postalcode-us.db")),
-		String(resolvePathBuilder(dataRoot, "wof", "postalcode-geonames-tail.db")),
-		String(resolvePathBuilder(dataRoot, "wof", "postalcode-intl.db")),
+		resolvePathBuilder(dataRoot, "wof", "admin-global-priority.db"),
+		resolvePathBuilder(dataRoot, "wof", "postalcode-us.db"),
+		resolvePathBuilder(dataRoot, "wof", "postalcode-geonames-tail.db"),
+		resolvePathBuilder(dataRoot, "wof", "postalcode-intl.db"),
 		// #977: the NL PC6 full-postcode shard (CBS via PDOK; scripts/build-postalcode-nl-pc6.ts) — the
 		// data the lookup's NL PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against.
-		String(resolvePathBuilder(dataRoot, "wof", "postalcode-nl-pc6.db")),
-	]
+		resolvePathBuilder(dataRoot, "wof", "postalcode-nl-pc6.db"),
+	].map((x) => x.toString()) as [string, string, string, string, string]
 }

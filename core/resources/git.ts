@@ -27,7 +27,7 @@ export async function prepareRepositoryDirectories(
 	const ownerDirectory = PathBuilder.from(localRepoDirectory, owner)
 	const repoDirectory = ownerDirectory(name)
 
-	await fs.mkdir(ownerDirectory, { recursive: true })
+	await fs.mkdir(ownerDirectory.toString(), { recursive: true })
 
 	const exists = await tryStat(repoDirectory)
 

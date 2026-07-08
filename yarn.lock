@@ -4695,7 +4695,7 @@ __metadata:
     json-colorizer: "npm:^3.0.1"
     kysely: "npm:^0.29.2"
     lru-cache: "npm:^10.4.3"
-    path-ts: "npm:^1.0.5"
+    path-ts: "npm:^2.0.1"
     pino: "npm:^10.3.1"
     pino-pretty: "npm:^13.1.3"
     pluralize: "npm:^8.0.0"
@@ -16800,7 +16800,7 @@ __metadata:
     ink: "npm:^7.0.5"
     ioredis: "npm:^5.11.1"
     pastel: "npm:^4.0.1"
-    path-ts: "npm:^1.0.5"
+    path-ts: "npm:^2.0.1"
     piscina: "npm:^5.2.0"
     pluralize: "npm:^8.0.0"
     react: "npm:^19.2.7"
@@ -19434,10 +19434,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-ts@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "path-ts@npm:1.0.5"
-  checksum: 10/68f516b969341fa7536cf9cc788285814738f8521cad575cce40bd024db8920a03d2f38e819df54bcc9b49504c5ca2fdafd9e39a20881c69c76c360cfca3fb6e
+"path-ts@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "path-ts@npm:2.0.1"
+  checksum: 10/5c468694e54f34dec83448386c81db49b94e36751b0af869cf80975df50d5c8c21086f1627ae500a387c37b4ed81d26acefa0a868da3c48daa7d1fb151e210a7
   languageName: node
   linkType: hard
 

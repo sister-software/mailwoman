@@ -45,7 +45,7 @@ export class PostcodeClassifier extends WordClassifier {
 			Iterator.from(this.countryCodes).map(async (cc) => {
 				const countryDictPath = dictPath(`${cc.toUpperCase()}.json`)
 
-				const spec: PostcodeSpec = await readFile(countryDictPath, "utf8").then(JSON.parse)
+				const spec: PostcodeSpec = await readFile(countryDictPath.toString(), "utf8").then(JSON.parse)
 
 				const pattern = new RegExp("^(" + spec.zip + ")$", "i")
 

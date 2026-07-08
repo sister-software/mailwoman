@@ -28,7 +28,7 @@ const parser = csv.parse({
 	from_line: 2,
 })
 
-const stream = createReadStream(dataSourcePath).pipe(parser)
+const stream = createReadStream(dataSourcePath.toString()).pipe(parser)
 
 for await (const columns of stream) {
 	const alpha3b = columns[0] as string
@@ -43,7 +43,7 @@ for await (const columns of stream) {
 	entryLines.push([alpha2, alpha3b])
 }
 
-const handle = await fs.open(outfile, "w")
+const handle = await fs.open(outfile.toString(), "w")
 const writeLine = (line: string) => handle.writeFile(`${line}\n`)
 
 // Header.

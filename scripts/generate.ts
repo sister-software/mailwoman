@@ -42,7 +42,7 @@ interface WOFRow {
 // language blacklist
 const blacklist = new Set<string>(["unk", "vol"])
 
-await mkdir(resourceDictionaryDirectory, {
+await mkdir(resourceDictionaryDirectory.toString(), {
 	recursive: true,
 })
 
@@ -187,14 +187,14 @@ for (const [placetype, record] of placetypeMap) {
 
 	const placetypePath = resourceDictionaryDirectory(placetype)
 
-	await mkdir(placetypePath, {
+	await mkdir(placetypePath.toString(), {
 		recursive: true,
 	})
 
 	for (const [field, fieldData] of record) {
 		const filePath = placetypePath(`${field}.txt`)
 
-		await writeFile(filePath, Array.from(fieldData).sort().join("\n"))
+		await writeFile(filePath.toString(), Array.from(fieldData).sort().join("\n"))
 	}
 }
 
