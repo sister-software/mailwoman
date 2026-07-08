@@ -9,14 +9,14 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "./adapter.js"
 
-const fixtureSQLPath = String(repoRootPathBuilder("corpus", "fixtures", "tiger", "fixture.sql"))
+const fixtureSQLPath = repoRootPath("corpus", "fixtures", "tiger", "fixture.sql")
 
 let scratch: string
 let dbPath: string

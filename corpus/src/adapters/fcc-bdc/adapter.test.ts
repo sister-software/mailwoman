@@ -9,7 +9,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.js"
@@ -22,7 +22,7 @@ import {
 	splitAddressPrimary,
 } from "./adapter.js"
 
-const fixtureSQLPath = String(repoRootPathBuilder("corpus", "fixtures", "fcc-bdc", "fixture.sql"))
+const fixtureSQLPath = repoRootPath("corpus", "fixtures", "fcc-bdc", "fixture.sql")
 
 let scratch: string
 let dbPath: string

@@ -8,12 +8,12 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { parseGoldenLine, unreachableComponents, validateGoldenDir, validateGoldenFile } from "./golden.js"
 
-const goldenDir = String(repoRootPathBuilder("data", "eval", "golden", "v0.1.0"))
+const goldenDir = repoRootPath("data", "eval", "golden", "v0.1.0")
 
 let scratch: string
 beforeEach(async () => {

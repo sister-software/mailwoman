@@ -39,7 +39,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
@@ -57,7 +57,7 @@ const TRAIN_COUNTIES: readonly County[] = [
 ]
 const GOLDEN_COUNTIES: readonly County[] = [{ fips: "50023", state: "VT", regime: "rural" }]
 
-const EVAL_GOLD_PATH = String(repoRootPathBuilder("data", "eval", "external", "intersection-real.jsonl"))
+const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-real.jsonl")
 const OA_COOK = { zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv" }
 
 /** One real crossing extracted from a county's TIGER EDGES shapefile. */

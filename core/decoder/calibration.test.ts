@@ -6,7 +6,7 @@
 
 import { readFileSync } from "node:fs"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import type { BIOLabel } from "../types/component.js"
@@ -102,7 +102,7 @@ describe("buildAddressTree calibrate hook", () => {
 
 describe("shipped isotonic table sanity", () => {
 	test("isotonic-en-us-v4.0.0.json is monotone and orders low<high confidence", () => {
-		const path = String(repoRootPathBuilder("data", "eval", "calibration", "isotonic-en-us-v4.0.0.json"))
+		const path = repoRootPath("data", "eval", "calibration", "isotonic-en-us-v4.0.0.json")
 		let table: CalibrationTable
 
 		try {

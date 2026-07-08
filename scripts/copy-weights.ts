@@ -36,9 +36,9 @@ import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 
-const repoRoot = String(repoRootPathBuilder())
+const repoRoot = repoRootPath()
 
 const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
 const dataRoot = $public.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot

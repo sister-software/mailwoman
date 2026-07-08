@@ -15,10 +15,10 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 
-const LEDGER = String(repoRootPathBuilder("evals", "scores-by-version.json"))
-const OUT = String(repoRootPathBuilder("docs", "articles", "evals", "score-trends.md"))
+const LEDGER = repoRootPath("evals", "scores-by-version.json")
+const OUT = repoRootPath("docs", "articles", "evals", "score-trends.md")
 
 const TAG_ORDER = [
 	"micro",

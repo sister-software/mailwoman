@@ -20,9 +20,9 @@ import { existsSync, readFileSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
-const PKG_DIR = String(repoRootPathBuilder("neural-weights-fr-fr"))
+const PKG_DIR = repoRootPath("neural-weights-fr-fr")
 // In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — v5.1.0
 // bsplice pair (#884). The 2026-07-02 ship missed this bump (both linkers still pinned
 // the demo-only v4.16.0 pair); the guard below now fails loud on any future miss.

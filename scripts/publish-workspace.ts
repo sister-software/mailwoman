@@ -35,9 +35,9 @@ import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
 import { $private, $public } from "@mailwoman/core/env"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 
-const repoRoot = String(repoRootPathBuilder())
+const repoRoot = repoRootPath()
 
 const workspacePath = $public.RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE
 const tag = $public.RELEASE_IT_WORKSPACES_TAG || "latest"

@@ -11,13 +11,13 @@
  *   - Variants resolve to the same PlaceEntry as their canonical
  *   - Serialize → deserialize round-trips with the new `street_affix` placetype
  */
-import { resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
+import { resourceDictionaryPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { deserializeFST, readFSTProvenance, serializeFST } from "./fst-serialize.js"
 import { buildStreetMorphologyFST } from "./street-morphology-fst-builder.js"
 
-const DICTIONARIES_DIR = String(resourceDictionaryPathBuilder("libpostal"))
+const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 
 describe("buildStreetMorphologyFST", () => {
 	it("ingests the libpostal street_types dictionaries", () => {

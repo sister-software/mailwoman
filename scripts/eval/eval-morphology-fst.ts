@@ -26,7 +26,7 @@ import { basename as pathBasename, resolve } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -303,7 +303,7 @@ async function main() {
 		} else {
 			console.error("Building morphology FST in-process from libpostal dictionaries...")
 			const built = buildStreetMorphologyFST({
-				dictionariesDir: String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries")),
+				dictionariesDir: repoRootPath("core", "data", "libpostal", "dictionaries"),
 			})
 			morphologyFST = built.matcher
 			console.error(`  ${built.canonicalCount} canonicals / ${built.variantCount} variants`)

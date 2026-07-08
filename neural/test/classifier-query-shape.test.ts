@@ -9,7 +9,7 @@
  *   specific logit shapes and verifies the queryShape opt nudges the Viterbi decoder's choices.
  */
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { NeuralAddressClassifier, type NeuralRunner } from "../classifier.js"
@@ -18,7 +18,7 @@ import type { InferResult } from "../onnx-runner.js"
 import type { QueryShapeLike } from "../query-shape-prior.js"
 import { MailwomanTokenizer } from "../tokenizer.js"
 
-const TOKENIZER_PATH = String(repoRootPathBuilder("neural", "test", "fixtures", "tokenizer-v0.1.0.model"))
+const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 /** Fake runner that emits a pre-canned logits matrix regardless of input. */
 class FakeRunner implements NeuralRunner {

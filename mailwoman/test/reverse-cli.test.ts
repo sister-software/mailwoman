@@ -17,12 +17,12 @@ import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
-import { childEnv, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { childEnv, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
 
-const cliBin = String(repoRootPathBuilder("out", "cli.js"))
+const cliBin = repoRootPath("out", "cli.js")
 
 const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB

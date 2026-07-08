@@ -11,13 +11,13 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
-import { childEnv, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { childEnv, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as runOptions } from "../commands/corpus/run.js"
 
 const exec = promisify(execFile)
-const cliBin = String(repoRootPathBuilder("out", "cli.js"))
+const cliBin = repoRootPath("out", "cli.js")
 
 describe("corpus run schema validation", () => {
 	test("rejects non-alpha-2 country", () => {

@@ -17,10 +17,10 @@
 
 import { readFileSync } from "node:fs"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-const readCard = (rel: string) => JSON.parse(readFileSync(String(repoRootPathBuilder("neural", "test", rel)), "utf8"))
+const readCard = (rel: string) => JSON.parse(readFileSync(repoRootPath("neural", "test", rel), "utf8"))
 const enUs = readCard("../../neural-weights-en-us/model-card.json")
 const frFr = readCard("../../neural-weights-fr-fr/model-card.json")
 

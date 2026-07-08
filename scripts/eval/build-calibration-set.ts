@@ -44,10 +44,10 @@ import { dirname, join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
-import { pyJsonDumps, pyReprDict, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { pyJsonDumps, pyReprDict, repoRootPath } from "@mailwoman/core/utils"
 import { SeededRandom } from "@mailwoman/core/utils"
 
-const REPO = String(repoRootPathBuilder())
+const REPO = repoRootPath()
 const OA_DIR = join(REPO, "data", "eval", "external")
 const OA_FILES: Record<string, string> = {
 	US: "openaddresses-us-sample.jsonl",

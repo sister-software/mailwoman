@@ -33,14 +33,14 @@ import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
-import { corePackagePathBuilder, runIfScript } from "@mailwoman/core/utils"
+import { corePackagePath, runIfScript } from "@mailwoman/core/utils"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-dir": { type: "string", default: String(corePackagePathBuilder("data", "chromium-i18n", "ssl-address")) },
+			"out-dir": { type: "string", default: corePackagePath("data", "chromium-i18n", "ssl-address") },
 			concurrency: { type: "string", default: "8" },
 		},
 	})

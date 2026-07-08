@@ -8,14 +8,14 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { WOF_ADMIN_ADAPTER_ID, createWOFAdminAdapter, nameSlotsFor, variantsFor } from "./adapter.js"
 
-const fixtureRoot = String(repoRootPathBuilder("corpus", "fixtures", "wof-admin-json"))
+const fixtureRoot = repoRootPath("corpus", "fixtures", "wof-admin-json")
 
 let scratch: string
 beforeEach(async () => {

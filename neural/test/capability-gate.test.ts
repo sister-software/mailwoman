@@ -24,7 +24,7 @@ import { existsSync } from "node:fs"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type AddressSystemConventions } from "@mailwoman/codex"
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { createScorer } from "../scorer.js"
@@ -34,8 +34,8 @@ const MODEL =
 	String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
 const TOKENIZER = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
-const GAZETTEER = String(repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json"))
-const MODEL_CARD = String(repoRootPathBuilder("neural-weights-en-us", "model-card.json"))
+const GAZETTEER = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
+const MODEL_CARD = repoRootPath("neural-weights-en-us", "model-card.json")
 
 // All channels must be feedable: createScorer runs the gate in `strict` mode, and the v1.5.0 card
 // declares anchor+gazetteer required — a missing channel would throw an UnfedChannelError that masks

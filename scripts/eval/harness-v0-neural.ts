@@ -31,7 +31,7 @@ import { basename, join } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	type AnchorLookup,
 	type GazetteerLexicon,
@@ -860,7 +860,7 @@ async function main(): Promise<void> {
 		} else {
 			console.error("Building morphology FST in-process...")
 			const built = buildStreetMorphologyFST({
-				dictionariesDir: String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries")),
+				dictionariesDir: repoRootPath("core", "data", "libpostal", "dictionaries"),
 			})
 			morphologyFST = built.matcher
 			console.error(`  ${built.canonicalCount} canonicals / ${built.variantCount} variants`)

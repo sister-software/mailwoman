@@ -11,14 +11,14 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as debugOptions } from "../commands/debug.js"
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const cliBin = String(repoRootPathBuilder("out", "cli.js"))
+const cliBin = repoRootPath("out", "cli.js")
 
 describe("--locale schema validation", () => {
 	test("parse command accepts en-US, fr-FR, en (any BCP-47 tag with optional region)", () => {

@@ -15,13 +15,13 @@ import { existsSync } from "node:fs"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
-import { childEnv, dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { childEnv, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const cliBin = String(repoRootPathBuilder("out", "cli.js"))
+const cliBin = repoRootPath("out", "cli.js")
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH

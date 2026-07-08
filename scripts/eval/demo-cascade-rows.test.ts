@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { parseSmokeRows } from "./demo-cascade-rows.js"
@@ -97,7 +97,7 @@ describe("parseSmokeRows", () => {
 
 describe("the committed row file", () => {
 	it("data/eval/external/demo-cascade-smoke.jsonl satisfies the schema", () => {
-		const file = String(repoRootPathBuilder("data", "eval", "external", "demo-cascade-smoke.jsonl"))
+		const file = repoRootPath("data", "eval", "external", "demo-cascade-smoke.jsonl")
 		const rows = parseSmokeRows(readFileSync(file, "utf8"), file)
 		expect(rows.length).toBeGreaterThanOrEqual(20)
 

@@ -20,7 +20,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
-import { corePackagePathBuilder } from "@mailwoman/core/utils"
+import { corePackagePath } from "@mailwoman/core/utils"
 
 export interface EnrichAdminOptions {
 	/** Chromium-i18n ssl-address spec dir. Default: the dataset packaged with `@mailwoman/core`. */
@@ -35,7 +35,7 @@ export interface EnrichAdminResult {
 
 /** Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent. */
 export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): EnrichAdminResult {
-	const specsDir = opts.specsDir ?? String(corePackagePathBuilder("data", "chromium-i18n", "ssl-address"))
+	const specsDir = opts.specsDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
 
 	db.exec("DELETE FROM names WHERE language = 'abbr'") // idempotent re-run
 

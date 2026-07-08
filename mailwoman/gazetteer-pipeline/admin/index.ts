@@ -19,7 +19,7 @@ import { createReadStream, existsSync, readFileSync, statSync, unlinkSync, write
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { repoRootPathBuilder, sealDatabase } from "@mailwoman/core/utils"
+import { repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 
 import { mailwomanDataRoot } from "../../resolver-backend.js"
 import {
@@ -190,7 +190,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	// Build log — an auto-appended record (what ran, when, fingerprint), so the manifest can't lag the
 	// artifact again (#1015's reconstruct-from-artifact). The recipe itself lives in defaults.ts.
-	const buildLogPath = opts.buildLogPath ?? String(repoRootPathBuilder("scripts", "wof-build-manifest.json"))
+	const buildLogPath = opts.buildLogPath ?? repoRootPath("scripts", "wof-build-manifest.json")
 
 	if (existsSync(buildLogPath)) {
 		phase("build-log", buildLogPath)

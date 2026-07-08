@@ -44,7 +44,7 @@ import { existsSync, readFileSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 // --- current default (npm v5.1.0 = demo defaultVersion v5.1.0) --------------
 // v5.1.0 ships the #884 vocab-splice pair: bsplice-meaninit int8 model + the spliced
@@ -54,7 +54,7 @@ import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v230-nl-postcode-int8.onnx")
 const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.7.1-nsplice", "tokenizer.model")
 
-const PKG_DIR = String(repoRootPathBuilder("neural-weights-en-us"))
+const PKG_DIR = repoRootPath("neural-weights-en-us")
 
 // The shipped-bytes truth (#397 guard): the card's files_md5 block, which release Step 4
 // re-verifies against the published tarball — so dev symlinks, the card, and npm agree.

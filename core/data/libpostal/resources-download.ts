@@ -33,11 +33,11 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
-import { resourceDictionaryPathBuilder, runIfScript } from "@mailwoman/core/utils"
+import { resourceDictionaryPath, runIfScript } from "@mailwoman/core/utils"
 import { $ } from "zx"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
-const DICTIONARIES_DIR = String(resourceDictionaryPathBuilder("libpostal"))
+const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 
 function parseCLIArgs() {
 	const { values } = parseArgs({

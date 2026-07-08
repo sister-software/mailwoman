@@ -40,7 +40,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 
 const SEP = ""
 
@@ -104,7 +104,7 @@ function parseArgs(): Args {
 		)
 		process.exit(2)
 	}
-	out.rulesPath = out.rulesPath ?? String(repoRootPathBuilder("scripts", "lint-rules.json"))
+	out.rulesPath = out.rulesPath ?? repoRootPath("scripts", "lint-rules.json")
 
 	return out as Args
 }

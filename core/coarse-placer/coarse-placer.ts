@@ -160,9 +160,9 @@ export class CoarsePlacer {
 		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
 
 		if (dir) return CoarsePlacer.fromArtifactDir(dir, opts)
-		const { corePackagePathBuilder } = await import("../utils/repo.js")
+		const { corePackagePath } = await import("../utils/repo.js")
 
-		return CoarsePlacer.fromArtifactDir(String(corePackagePathBuilder("data", "coarse-placer")), opts)
+		return CoarsePlacer.fromArtifactDir(corePackagePath("data", "coarse-placer"), opts)
 	}
 
 	predict(text: string): CoarsePrediction {

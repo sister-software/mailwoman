@@ -16,12 +16,12 @@ import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier, resolveWeights } from "../index.js"
 
-const TOKENIZER_PATH = String(repoRootPathBuilder("neural", "test", "fixtures", "tokenizer-v0.1.0.model"))
+const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const MODEL_PATH =
 	$public.MAILWOMAN_TEST_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
@@ -56,7 +56,7 @@ describe("NeuralAddressClassifier.loadFromWeights — explicit-path mode", () =>
 
 describe("resolveWeights — package auto-resolve", () => {
 	test.skipIf(!haveModel)("finds model.onnx + tokenizer.model after running link-dev-weights.ts", () => {
-		const linkScript = String(repoRootPathBuilder("neural-weights-en-us", "scripts", "link-dev-weights.ts"))
+		const linkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
 		execFileSync(process.execPath, ["--experimental-strip-types", linkScript], { stdio: "pipe" })
 
 		const r = resolveWeights({ locale: "en-us" })

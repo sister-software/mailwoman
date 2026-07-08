@@ -18,12 +18,12 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
+import { resourceDictionaryPath } from "@mailwoman/core/utils"
 
 function loadDictionary(filename: string): Set<string> {
 	const candidates = [
-		String(resourceDictionaryPathBuilder("libpostal", "fr", filename)),
-		String(resourceDictionaryPathBuilder("libpostal", "fr", filename)),
+		resourceDictionaryPath("libpostal", "fr", filename),
+		resourceDictionaryPath("libpostal", "fr", filename),
 		resolve(process.cwd(), "core/data/libpostal/dictionaries/fr", filename),
 	]
 

@@ -20,15 +20,13 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { MailwomanTokenizer, SPACE_SENTINEL } from "../tokenizer.js"
 
-const MODEL_PATH = String(repoRootPathBuilder("neural", "test", "fixtures", "tokenizer-v0.1.0.model"))
-const LARGE_FIXTURE_PATH = String(
-	repoRootPathBuilder("neural", "test", "fixtures", "tokenizer-parity-large-v0.1.0.json")
-)
+const MODEL_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+const LARGE_FIXTURE_PATH = String(repoRootPath("neural", "test", "fixtures", "tokenizer-parity-large-v0.1.0.json"))
 
 const haveLargeFixture = existsSync(LARGE_FIXTURE_PATH)
 
