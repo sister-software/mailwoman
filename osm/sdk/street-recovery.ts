@@ -16,7 +16,6 @@
 import { spawn } from "node:child_process"
 
 import { haversineKm } from "@mailwoman/spatial"
-import type { AsyncDataResource } from "spliterator"
 import { TextSpliterator } from "spliterator"
 
 const CELL_DEG = 0.003 // ~330m grid cell
@@ -125,11 +124,8 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 	})
 	const index = new StreetRecoveryIndex()
 
-	// spliterator's published `AsyncDataResource` type omits async chunk iterators (its own docstring lists
-	// `AsyncChunkIterator` as a member); the runtime dispatches on `Symbol.asyncIterator` and consumes the
-	// child's binary stdout chunks directly. Keep the per-line `JSON.parse` try/catch so a malformed record
-	// is tolerated (skipped), not thrown.
-	for await (const raw of TextSpliterator.fromAsync(proc.stdout as unknown as AsyncDataResource)) {
+	// Keep the per-line `JSON.parse` try/catch so a malformed record is tolerated (skipped), not thrown.
+	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
 		const line = raw.replace(/^/, "").trim()
 
 		if (!line) continue

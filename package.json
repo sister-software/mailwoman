@@ -103,7 +103,7 @@
 		"oxlint": "1.71.0",
 		"react": "^19.2.7",
 		"release-it": "^19.2.4",
-		"spliterator": "^3.1.0",
+		"spliterator": "^3.2.0",
 		"tap-difflet": "^0.7.2",
 		"typescript": "^6.0.3",
 		"vitest": "3.2.6",

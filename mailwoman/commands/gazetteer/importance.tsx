@@ -25,7 +25,7 @@ import { createGunzip } from "node:zlib"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
-import { TextSpliterator, type AsyncDataResource } from "spliterator"
+import { TextSpliterator } from "spliterator"
 import zod from "zod"
 
 import type { CommandComponent } from "../../sdk/cli.js"
@@ -128,11 +128,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 				const gunzip = createGunzip()
 				const fileStream = createReadStream(gzPath)
-				// The gunzip output is an AsyncIterable<Uint8Array>; spliterator accepts it at runtime, but the
-				// published `AsyncDataResource` type omits stream inputs, hence the cast.
-				const stream = fileStream.pipe(gunzip) as unknown as AsyncDataResource
-
-				for await (const line of TextSpliterator.fromAsync(stream)) {
+				for await (const line of TextSpliterator.fromAsync(fileStream.pipe(gunzip))) {
 					totalRows++
 
 					if (totalRows === 1 && line.startsWith("language")) continue

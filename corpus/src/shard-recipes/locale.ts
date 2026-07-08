@@ -29,7 +29,7 @@ import { spawn } from "node:child_process"
 import { createReadStream } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { type AsyncDataResource, TextSpliterator } from "spliterator"
+import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../adapter.js"
 import { alignRow } from "../align.js"
@@ -223,10 +223,8 @@ async function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBa
 	try {
 		// The OA header + every used cell pass through `.trim()` below, and the only columns we read
 		// (number/street/city/region/postcode) sit before the terminal HASH column — so an unnormalized
-		// trailing CR on CRLF input never reaches a value we keep. `AsyncDataResource` doesn't type the
-		// Node stream case (unzip pipe / createReadStream), but the runtime iterates it fine; the cast
-		// bridges that upstream type gap.
-		for await (const line of TextSpliterator.fromAsync(input as unknown as AsyncDataResource)) {
+		// trailing CR on CRLF input never reaches a value we keep.
+		for await (const line of TextSpliterator.fromAsync(input)) {
 			if (!line) continue
 
 			if (header === null) {

@@ -42,7 +42,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"kysely": "^0.29.2",
-		"spliterator": "^3.1.0"
+		"spliterator": "^3.2.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

@@ -32,7 +32,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"csv-parse": "^5.6.0",
-		"spliterator": "^3.1.0"
+		"spliterator": "^3.2.0"
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*",
