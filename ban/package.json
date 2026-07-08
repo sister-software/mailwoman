@@ -25,6 +25,13 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "ban"
 	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
