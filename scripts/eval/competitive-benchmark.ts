@@ -3,6 +3,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
+import { parseArgs } from "node:util"
 
 /**
  *   COMPETITIVE BENCHMARK — mailwoman vs Nominatim vs Pelias on identical real addresses, scored the
@@ -34,29 +35,55 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		"candidate-db": { type: "string" },
+		locales: { type: "string" },
+		model: { type: "string" },
+		n: { type: "string" },
+		out: { type: "string" },
+		systems: { type: "string" },
+		wof: { type: "string" },
+		messy: { type: "boolean" },
+		"span-rescore": { type: "boolean" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"candidate-db"?: string
+	locales?: string
+	model?: string
+	n?: string
+	out?: string
+	systems?: string
+	wof?: string
+	messy?: boolean
+	"span-rescore"?: boolean
+}
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 // Production-representative resolver: admin gazetteer + the intl postcode→locality shard (the
 // oa-resolver-eval default). admin-ONLY handicaps mailwoman — the postcode-coordinate-first path
 // resolves localities the admin gazetteer misses. --wof overrides (comma-separated shard paths).
-const WOF = arg(
-	"wof",
+const WOF = (
+	values["wof"] ||
 	`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 ).split(",")
-const MODEL = arg("model", "out/v191/model.onnx") // v4.13.0 int8
-const N = Number(arg("n", "40"))
-const LOCALES = arg("locales", "it,pt,pl,at,cz,fr,au").split(",")
-const SYSTEMS = arg("systems", "mailwoman,nominatim,pelias").split(",")
-const OUT = arg("out", "")
+const MODEL = values["model"] || "out/v191/model.onnx" // v4.13.0 int8
+const N = Number(values["n"] || "40")
+const LOCALES = (values["locales"] || "it,pt,pl,at,cz,fr,au").split(",")
+const SYSTEMS = (values["systems"] || "mailwoman,nominatim,pelias").split(",")
+const OUT = values["out"] || ""
 // --span-rescore grades mailwoman TWICE per row — base (lever off) AND #370 spanRescore (lever on) — from
 // the SAME parse, so the off→on lift sits in the same harness as Nominatim/Pelias without doubling API calls.
-const RESCORE = process.argv.includes("--span-rescore")
+const RESCORE = values["span-rescore"] ?? false
 const THRESHOLDS = [1, 5, 25] // km — coarse "right-place" tiers
 const NOMINATIM_UA = "mailwoman-benchmark/1.0 (teffen@sister.software)"
-const MESSY = process.argv.includes("--messy")
+const MESSY = values["messy"] ?? false
 // Real-world degradation — the slice where a calibrated parser should beat a search index that leans
 // on exact tokens + the comma structure + the postcode. SAFE: drops commas/dash-postcodes + lowercases
 // + abbreviates common street words; never touches the house number.
@@ -201,7 +228,7 @@ async function main() {
 	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	// --candidate-db <path> uses the DEMO's resolver (the byte-range candidate gazetteer, with the
 	// promoted EU postcode/GeoNames coverage); else the CLI shards (admin + postcode-locality-intl).
-	const CAND = arg("candidate-db", "")
+	const CAND = values["candidate-db"] || ""
 	const lookup = CAND
 		? new WOFCandidateTableLookup({ databasePath: CAND })
 		: new WOFSqlitePlaceLookup({ databasePath: WOF })

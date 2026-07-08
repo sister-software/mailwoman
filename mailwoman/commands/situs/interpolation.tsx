@@ -11,7 +11,7 @@
  *   `--concurrency`, default 12), retrying on 5xx / network errors, then builds one shard DB per
  *   state via that sibling command.
  *
- *   Population-ranked download order: the driver reads `scripts/data/county-population-ranked.json`
+ *   Population-ranked download order: the driver reads `mailwoman/data/county-population-ranked.json`
  *   (generated on first run from the Census Population Estimates CSV) so the most-populated
  *   counties are downloaded and built first, giving maximum address coverage in minimum wall-clock
  *   time if you kill the run early.
@@ -30,7 +30,7 @@ import * as https from "node:https"
 import * as path from "node:path"
 import { pipeline } from "node:stream/promises"
 
-import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPathBuilder, scriptEntryPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
@@ -122,12 +122,12 @@ const STATE_FIPS: Record<string, string> = {
 
 // Repo-relative anchor for the cached county-population ranking (resolves cleanly in both source +
 // compiled trees via the core repo-root builder).
-const RANKED_FILE = String(repoRootPathBuilder("scripts", "data", "county-population-ranked.json"))
+const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json"))
 
 // The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-shard` command (the old
 // `scripts/build-interpolation-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this
 // process was started from, so dev + published installs both resolve correctly.
-const CLI_ENTRY = process.argv[1]!
+const CLI_ENTRY = scriptEntryPath()
 const ANSI_PATTERN = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
 const stripAnsi = (s: string): string => s.replace(ANSI_PATTERN, "")
 

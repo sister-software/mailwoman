@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import cluster, { Worker } from "node:cluster"
+import cluster, { type Worker } from "node:cluster"
 import { availableParallelism } from "node:os"
-import { dirname, resolve as resolvePath } from "node:path"
+import { resolve as resolvePath } from "node:path"
 import * as process from "node:process"
-import { fileURLToPath } from "node:url"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
 import express from "express"
@@ -119,7 +118,7 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 		// `mailwoman/server/static/` lives next to the compiled `mailwoman/out/commands/serve.js`,
 		// so resolve relative to this file rather than relying on a repo-root path builder that
 		// pre-dated the flat-layout move.
-		const thisDir = dirname(fileURLToPath(import.meta.url))
+		const thisDir = import.meta.dirname
 		const staticPath = resolvePath(thisDir, "..", "..", "server", "static")
 
 		console.log("Serving static files from", staticPath)

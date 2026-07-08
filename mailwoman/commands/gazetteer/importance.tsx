@@ -18,13 +18,13 @@ import { createReadStream, existsSync, writeFileSync } from "node:fs"
 import { get as httpsGet } from "node:https"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { createGunzip } from "node:zlib"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
+import { TextSpliterator } from "spliterator"
 import zod from "zod"
 
 import type { CommandComponent } from "../../sdk/cli.js"
@@ -127,9 +127,9 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 				const gunzip = createGunzip()
 				const fileStream = createReadStream(gzPath)
-				const rl = createInterface({ input: fileStream.pipe(gunzip) })
 
-				for await (const line of rl) {
+				// crlf: the wikidata id is the last column — a CRLF source would leave a stray \r on it.
+				for await (const line of TextSpliterator.fromAsync(fileStream.pipe(gunzip), { crlf: true })) {
 					totalRows++
 
 					if (totalRows === 1 && line.startsWith("language")) continue

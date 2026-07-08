@@ -1,15 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { join } from "node:path"
-import { fileURLToPath } from "node:url"
-
+import { repoRootPath } from "@mailwoman/core/utils"
 import type { SourceRecord } from "@mailwoman/registry"
 import { describe, expect, it } from "vitest"
 
 import { geocodeStream } from "./geocode-stream.js"
 
-const fakeWorker = join(fileURLToPath(new URL("./test-fixtures/", import.meta.url)), "fake-geocode-worker.js")
+const fakeWorker = repoRootPath("mailwoman", "test-fixtures", "fake-geocode-worker.js")
 
 async function* records(n: number): AsyncIterableIterator<SourceRecord> {
 	for (let i = 0; i < n; i++) {

@@ -10,7 +10,9 @@
  *   names the operator's filesystem layout; everything else reads `$MAILWOMAN_DATA_ROOT`.
  */
 
-import { resolvePathBuilder } from "path-ts"
+import { resolvePath } from "path-ts"
+
+import { $public } from "../env/index.js"
 
 /**
  * The lab default data root — the ONE place this literal appears. Everything else builds on {@link dataRootPath} /
@@ -20,15 +22,15 @@ const DEFAULT_MAILWOMAN_DATA_ROOT = "/mnt/playpen/mailwoman-data"
 
 /** The Mailwoman data root: `$MAILWOMAN_DATA_ROOT` when set, else the lab default. */
 export function mailwomanDataRoot(): string {
-	return process.env["MAILWOMAN_DATA_ROOT"] ?? DEFAULT_MAILWOMAN_DATA_ROOT
+	return $public.MAILWOMAN_DATA_ROOT ?? DEFAULT_MAILWOMAN_DATA_ROOT
 }
 
 /**
  * Build an absolute path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`. Reads the env on
- * each call, so a late `process.env` change (or a test) is honored.
+ * each call, so a late environment change (or a test stub) is honored.
  */
 export function dataRootPath(...segments: string[]): string {
-	return String(resolvePathBuilder(mailwomanDataRoot(), ...segments))
+	return resolvePath(mailwomanDataRoot(), ...segments)
 }
 
 /**
@@ -40,13 +42,14 @@ export function dataRootPath(...segments: string[]): string {
  * tail shard degrades to the pre-#920 pair.
  */
 export function wofShardPaths(dataRoot: string = mailwomanDataRoot()): [string, string, string, string, string] {
+	// TODO: Redo this as an object.
 	return [
-		String(resolvePathBuilder(dataRoot, "wof", "admin-global-priority.db")),
-		String(resolvePathBuilder(dataRoot, "wof", "postalcode-us.db")),
-		String(resolvePathBuilder(dataRoot, "wof", "postalcode-geonames-tail.db")),
-		String(resolvePathBuilder(dataRoot, "wof", "postalcode-intl.db")),
+		resolvePath(dataRoot, "wof", "admin-global-priority.db"),
+		resolvePath(dataRoot, "wof", "postalcode-us.db"),
+		resolvePath(dataRoot, "wof", "postalcode-geonames-tail.db"),
+		resolvePath(dataRoot, "wof", "postalcode-intl.db"),
 		// #977: the NL PC6 full-postcode shard (CBS via PDOK; scripts/build-postalcode-nl-pc6.ts) — the
 		// data the lookup's NL PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against.
-		String(resolvePathBuilder(dataRoot, "wof", "postalcode-nl-pc6.db")),
+		resolvePath(dataRoot, "wof", "postalcode-nl-pc6.db"),
 	]
 }

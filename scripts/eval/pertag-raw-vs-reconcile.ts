@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  *   Per-tag recall: raw neural (`classifier.parse`, with street reassembled from its child
@@ -15,6 +16,7 @@ import { readFileSync } from "node:fs"
  */
 import type { AddressTree } from "@mailwoman/core/decoder"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 interface NeuralClassifier {
 	parse(input: string, opts?: { postcodeRepair?: boolean }): Promise<AddressTree>
 }
@@ -74,7 +76,7 @@ function hit(byTag: ByTag, tag: string, goldVal: string): boolean {
 
 	return vals.some((v) => v && (v === g || v.includes(g) || g.includes(v)))
 }
-const files = process.argv.slice(2)
+const files = positionals
 const tags = ["house_number", "street", "locality", "region", "postcode", "venue", "unit"]
 type Counts = { h: number; n: number }
 const acc: { raw: Record<string, Counts>; rec: Record<string, Counts> } = { raw: {}, rec: {} }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 /**
  *   #370 RESCORE-CEILING probe — sizes how much of the unresolved tail a parse<->resolve rescoring
@@ -24,14 +25,20 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { arg } from "../lib/cli-args.ts"
-
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { model: { type: "string" }, n: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { model?: string; n?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const WOF = dataRootPath("wof", "admin-global-priority.db")
-const MODEL = arg("model", "out/v191/model.onnx")
-const N = Number(arg("n", "150"))
+const MODEL = values["model"] || "out/v191/model.onnx"
+const N = Number(values["n"] || "150")
 const LOCALES: [string, string][] = [
 	["IT", "data/eval/external/oa-it-coord-150.jsonl"],
 	["PT", "data/eval/external/oa-pt-coord-150.jsonl"],

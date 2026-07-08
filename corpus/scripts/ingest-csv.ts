@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
@@ -23,21 +23,25 @@
  *   Field separator (default: ,) --skip <n> Lines to skip before header (default: 0) --no-header
  *   CSV has no header row — columns will be col_0, col_1, etc. --dry-run Infer schema and print
  *   CREATE TABLE, but don't import
+ *
+ *   DELIBERATE hand-parse: dynamic --key value pairs (columns inferred at runtime) — node:util parseArgs cannot express this shape.
  */
 
 ///<reference types="node" />
 
-import { createReadStream, existsSync, mkdirSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { basename, dirname, extname, join } from "node:path"
-import { createInterface } from "node:readline"
-import { SQLInputValue } from "node:sqlite"
+import type { SQLInputValue } from "node:sqlite"
+
+import { cliArguments } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 // ---------------------------------------------------------------------------
 // CLI arg parsing (minimal — no yargs dependency needed for a utility script)
 // ---------------------------------------------------------------------------
 
 function parseArgs(): Record<string, string> {
-	const args = process.argv.slice(2)
+	const args = cliArguments()
 	const out: Record<string, string> = {}
 
 	for (let i = 0; i < args.length; i++) {
@@ -66,6 +70,12 @@ function parseArgs(): Record<string, string> {
 const COMMA = 44
 const DOUBLE_QUOTE = 34
 
+// These stay hand-rolled on purpose — spliterator ≥ 3.2.0's CSVSpliterator does quote handling
+// correctly now, but it can't express this tool's CLI contract: `--skip N` drops N preamble lines
+// BEFORE the header (CSVSpliterator consumes row 1 as the header immediately, with no skip-first-N
+// hook), `--no-header` auto-generates `col_0…col_N` names from the first data row's width, and the
+// separator is any single caller-supplied byte. If a future edit removes those knobs, revisit;
+// until then, don't "finish the job" by swapping in CSVSpliterator.
 function splitCSVLine(line: string, separator: number = COMMA): string[] {
 	const fields: string[] = []
 	let start = 0
@@ -197,14 +207,16 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	// --- Pass 1: read header + sample rows for type inference ---
 	process.stderr.write(`Reading ${opts.inputPath} for schema inference...\n`)
 
-	const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-	const rl = createInterface({ input: stream, crlfDelay: Infinity })
-
+	// CRLF-safe by construction: every field below flows through stripQuotes/normalizeField, both of
+	// which `.trim()`, so a trailing CR on the last column of a CRLF file is stripped. TextSpliterator's
+	// default skipEmpty matches readline row-for-row on files with a trailing newline (the common case);
+	// it drops interior blank lines that readline would have turned into all-null rows. The early `break`
+	// closes the file descriptor.
 	let headerLine: string | null = null
 	const sampleRows: string[][] = []
 	let lineNum = 0
 
-	for await (const line of rl) {
+	for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 		lineNum++
 
 		// Skip lines before header
@@ -221,8 +233,6 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 			break
 		}
 	}
-	rl.close()
-	stream.destroy()
 
 	if (!headerLine && opts.hasHeader) {
 		throw new Error("No header line found in CSV")
@@ -302,8 +312,6 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 		`INSERT INTO "${opts.tableName}" (${tempCols}) VALUES (${columns.map(() => "?").join(", ")})`
 	)
 
-	const stream2 = createReadStream(opts.inputPath, { encoding: "utf8" })
-	const rl2 = createInterface({ input: stream2, crlfDelay: Infinity })
 	let imported = 0
 	let headerSkipped = false
 
@@ -325,7 +333,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	const batch: SQLInputValue[][] = []
 	const BATCH_SIZE = 10000
 
-	for await (const line of rl2) {
+	for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 		lineNum++
 
 		if (lineNum <= opts.skipLines) continue
@@ -373,9 +381,6 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 		doInsert()
 		imported += batch.length
 	}
-
-	rl2.close()
-	stream2.destroy()
 
 	process.stderr.write(`  Imported ${imported.toLocaleString()} rows into "${opts.tableName}"\n`)
 

@@ -4,9 +4,7 @@
 import { readFile } from "node:fs/promises"
 
 import { type PostcodeSpec, Span, WordClassifier } from "@mailwoman/core"
-import { corePackagePathBuilder } from "@mailwoman/core/utils"
-
-const dictPath = corePackagePathBuilder("data", "chromium-i18n", "ssl-address")
+import { corePackagePath } from "@mailwoman/core/utils"
 
 const DefaultPostcodeCountries: readonly string[] = [
 	// ---
@@ -40,7 +38,7 @@ export class PostcodeClassifier extends WordClassifier {
 	async ready(): Promise<this> {
 		const patterns = await Promise.all(
 			Iterator.from(this.countryCodes).map(async (cc) => {
-				const countryDictPath = dictPath(`${cc.toUpperCase()}.json`)
+				const countryDictPath = corePackagePath("data", "chromium-i18n", "ssl-address", `${cc.toUpperCase()}.json`)
 
 				const spec: PostcodeSpec = await readFile(countryDictPath, "utf8").then(JSON.parse)
 

@@ -18,7 +18,7 @@ import { createReadStream, existsSync, readFileSync, statSync, unlinkSync, write
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { repoRootPathBuilder, sealDatabase } from "@mailwoman/core/utils"
+import { repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 
 import { mailwomanDataRoot } from "../../resolver-backend.js"
 import {
@@ -26,6 +26,7 @@ import {
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_OVERTURE_RELEASE,
+	geonamesAdminGapCountries,
 } from "../defaults.js"
 import { buildFTS } from "../fts.js"
 import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "../verify.js"
@@ -123,8 +124,11 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	const overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
 	phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
-	phase("fold-geonames", `${geonamesCountries.length} countries`)
-	const folded = await foldGeonames(db, { countries: geonamesCountries })
+	// #1026: the A-class admin fold for the zero-coverage locales — country + region NODES + locality
+	// ancestry. Scoped to the countries actually in this run's geonames set.
+	const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
+	phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
+	const folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })
 	phase("fold-geonames", `${folded.placesIngested.toLocaleString()} places`)
 
 	phase("freeze")
@@ -185,7 +189,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	// Build log — an auto-appended record (what ran, when, fingerprint), so the manifest can't lag the
 	// artifact again (#1015's reconstruct-from-artifact). The recipe itself lives in defaults.ts.
-	const buildLogPath = opts.buildLogPath ?? String(repoRootPathBuilder("scripts", "wof-build-manifest.json"))
+	const buildLogPath = opts.buildLogPath ?? repoRootPath("scripts", "wof-build-manifest.json")
 
 	if (existsSync(buildLogPath)) {
 		phase("build-log", buildLogPath)

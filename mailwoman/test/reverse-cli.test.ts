@@ -13,19 +13,18 @@
  */
 
 import { execFile } from "node:child_process"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
+import { childEnv, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
 
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
-const ADMIN_DB = process.env["MAILWOMAN_WOF_ADMIN_DB"]
-const POLYGONS_DB = process.env["MAILWOMAN_WOF_POLYGONS_DB"]
+const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
+const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
 /** Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout. */
 function stripAnsiSpinner(stdout: string): string {
@@ -47,7 +46,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 		// the component and land on stdout.
 		await expect(
 			exec("node", [cliBin, "reverse"], {
-				env: { ...process.env, MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" },
+				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
 			})
 		).rejects.toMatchObject({
 			stderr: expect.stringMatching(/missing required argument|requires two positional arguments/),
@@ -57,7 +56,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 	test("exits non-zero when no admin DB is available", async () => {
 		await expect(
 			exec("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
-				env: { ...process.env, MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" },
+				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
 			})
 		).rejects.toMatchObject({
 			stdout: expect.stringMatching(/needs an admin DB path/),
@@ -67,7 +66,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 	test("exits non-zero for an out-of-range latitude", async () => {
 		await expect(
 			exec("node", [cliBin, "reverse", "91", "0"], {
-				env: { ...process.env, MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" },
+				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
 			})
 		).rejects.toMatchObject({
 			stdout: expect.stringMatching(/Invalid latitude/),
@@ -77,7 +76,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 	test("exits non-zero for a non-numeric argument", async () => {
 		await expect(
 			exec("node", [cliBin, "reverse", "not-a-number", "0"], {
-				env: { ...process.env, MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" },
+				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
 			})
 		).rejects.toMatchObject({
 			stdout: expect.stringMatching(/Invalid latitude/),
@@ -92,12 +91,11 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"mailwoman reverse — end-to-end against MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB",
 	() => {
-		const ENV = {
-			...process.env,
+		const ENV = childEnv({
 			MAILWOMAN_WOF_ADMIN_DB: ADMIN_DB!,
 			MAILWOMAN_WOF_POLYGONS_DB: POLYGONS_DB!,
 			NODE_NO_WARNINGS: "1",
-		}
+		})
 
 		test("New York City (40.7128, -74.0060) → JSON hierarchy contains New York + United States", async () => {
 			const result = await exec("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
@@ -124,7 +122,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			const result = await exec(
 				"node",
 				[cliBin, "reverse", "40.7128", "-74.0060", "--admin-db", ADMIN_DB!, "--polygons-db", POLYGONS_DB!],
-				{ env: { ...process.env, MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
+				{ env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 			)
 			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: Array<{ name: string }> }
 			const names = json.hierarchy.map((p) => p.name)

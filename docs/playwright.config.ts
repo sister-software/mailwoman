@@ -16,12 +16,13 @@
  *   under test/build/. Shape originally ported from sister-software/authentik's web/playwright.config.js.
  */
 
+import { $public } from "@mailwoman/core/env"
 import { defineConfig, devices } from "@playwright/test"
 
-const CI = !!process.env["CI"]
+const CI = !!$public.CI
 
 /** When set, run against a deployed URL and skip the local build+serve machinery. */
-const remoteURL = process.env["MAILWOMAN_DEMO_URL"]
+const remoteURL = $public.MAILWOMAN_DEMO_URL
 const LOCAL_PORT = 7770
 const baseURL = remoteURL ?? `http://localhost:${LOCAL_PORT}`
 

@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "5.6.0",
+	"version": "5.7.0",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"keywords": [
 		"address",
@@ -52,7 +52,8 @@
 		"./sdk/repo": "./out/sdk/repo.js",
 		"./sdk/scripting": "./out/sdk/scripting.js",
 		"./sdk/cli": "./out/sdk/cli.js",
-		"./gazetteer-pipeline": "./out/gazetteer-pipeline/index.js"
+		"./gazetteer-pipeline": "./out/gazetteer-pipeline/index.js",
+		"./gazetteer-pipeline/*": "./out/gazetteer-pipeline/*.js"
 	},
 	"publishConfig": {
 		"access": "public"
@@ -82,12 +83,12 @@
 		"ink": "^7.0.5",
 		"ioredis": "^5.11.1",
 		"pastel": "^4.0.1",
-		"path-ts": "^1.0.5",
+		"path-ts": "^2.1.0",
 		"piscina": "^5.2.0",
 		"pluralize": "^8.0.0",
 		"react": "^19.2.7",
 		"regenerate": "^1.4.2",
-		"spliterator": "^3.1.0",
+		"spliterator": "^3.2.0",
 		"zod": "^4.4.3",
 		"zx": "^8.8.5"
 	},

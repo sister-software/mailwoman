@@ -21,3 +21,24 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 - When making a database, use Kysley as the database connector. It is a thin wrapper around SQLite that provides a simple interface for creating and querying databases and is backed by the native `node:sqlite` module. It is the only supported database connector for this repo.
 - Every built SQLite DB is SEALED read-only (chmod 0444) by `sealDatabase` (`@mailwoman/core/utils`). Never reopen a shipped DB read-write — rebuild it. `openBuiltDatabase` enforces this with a named error.
 - The gazetteer builders live in `mailwoman/gazetteer-pipeline/` behind `mailwoman gazetteer build …` — NOT here. Do not add new DB build/mutation scripts to this directory; extend the pipeline module and its commands instead (see docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md).
+
+## The drawer is closed (2026-07-07; specs: 2026-07-07-scripts-cleanup-gazetteer-cli-design.md + 2026-07-07-scripts-drawer-to-zero.md in docs/superpowers/specs/)
+
+`scripts/` holds ONLY four things:
+
+1. **Release tooling** (`publish-*`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `rewrite-workspace-imports`, `release-workspace-repository.test`) + **CI smoke** (`smoke-*`) — the release pipeline's residents.
+2. **Codegen + lint tooling** (`generate-*`, `lint-*`, `jsonl-to-parquet`) — candidates for a future `mailwoman dev` namespace.
+3. **`eval/`** — the eval harness (promotion gate, gauntlet, gates, probes, the full-stack record-matcher trainers/benchmarks in `eval/record-matcher/`, eval-local helpers in `eval/lib/`).
+4. **`diagnostic/`** — gitignored one-off investigations.
+
+Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.
+
+## Zero raw `process.env` / `process.argv` (enforced)
+
+The custom `sister-software/no-process-globals` oxlint rule ERRORS on any direct
+`process.env`/`process.argv` access; the blessed sites (`core/env/`, `core/utils/scripting.ts`)
+carry explicit `oxlint-disable-next-line` comments. It runs in `yarn lint`, the pre-commit hook,
+and the Test workflow. Use `$public`/`$private` for config, `node:util` `parseArgs` for arguments
+(its default is already `process.argv.slice(2)` — never pass `args:` yourself),
+`cliArguments()`/`childEnv()`/`scriptEntryPath()`/`runIfScript` from `@mailwoman/core/utils` for the
+edge cases, and `vi.stubEnv` in tests.

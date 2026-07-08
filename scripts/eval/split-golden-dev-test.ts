@@ -22,20 +22,23 @@
 import { createHash } from "node:crypto"
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { golden: { type: "string" }, seed: { type: "string" }, "test-ratio": { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { golden?: string; seed?: string; "test-ratio"?: string }
 // -------------------------------------------------------------------------------------------------
 // Args
 // -------------------------------------------------------------------------------------------------
 
-function arg(name: string, fallback: string): string {
-	const i = process.argv.indexOf(`--${name}`)
-
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
-const GOLDEN_DIR = arg("golden", "data/eval/golden/v0.1.2")
-const TEST_RATIO = Number(arg("test-ratio", "0.1"))
-const SEED = Number(arg("seed", "20260529"))
+const GOLDEN_DIR = values["golden"] || "data/eval/golden/v0.1.2"
+const TEST_RATIO = Number(values["test-ratio"] || "0.1")
+const SEED = Number(values["seed"] || "20260529")
 
 // -------------------------------------------------------------------------------------------------
 // Deterministic PRNG (mulberry32) + Fisher-Yates

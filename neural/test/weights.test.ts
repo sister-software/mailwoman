@@ -13,18 +13,17 @@
 
 import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
+import { $public } from "@mailwoman/core/env"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier, resolveWeights } from "../index.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const TOKENIZER_PATH = resolve(here, "fixtures/tokenizer-v0.1.0.model")
+const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const MODEL_PATH =
-	process.env.MAILWOMAN_TEST_ONNX_MODEL ??
-	"/mnt/playpen/mailwoman-data/models/quantized/model-stage1-coarse-step-050000-int8.onnx"
+	$public.MAILWOMAN_TEST_ONNX_MODEL ??
+	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
 
 const haveModel = existsSync(MODEL_PATH)
 
@@ -56,7 +55,7 @@ describe("NeuralAddressClassifier.loadFromWeights — explicit-path mode", () =>
 
 describe("resolveWeights — package auto-resolve", () => {
 	test.skipIf(!haveModel)("finds model.onnx + tokenizer.model after running link-dev-weights.ts", () => {
-		const linkScript = resolve(here, "../../neural-weights-en-us/scripts/link-dev-weights.ts")
+		const linkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
 		execFileSync(process.execPath, ["--experimental-strip-types", linkScript], { stdio: "pipe" })
 
 		const r = resolveWeights({ locale: "en-us" })

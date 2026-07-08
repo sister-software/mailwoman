@@ -17,15 +17,14 @@
 
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { join } from "node:path"
 
+import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { readLabelsFromModelCard, resolveWeights } from "../weights.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const TOKENIZER_PATH = resolve(here, "fixtures/tokenizer-v0.1.0.model")
+const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 let dir: string
 

@@ -8,17 +8,15 @@
  */
 
 import { execFile } from "node:child_process"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { childEnv, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as runOptions } from "../commands/corpus/run.js"
 
 const exec = promisify(execFile)
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 describe("corpus run schema validation", () => {
 	test("rejects non-alpha-2 country", () => {
@@ -49,7 +47,7 @@ describe("npx mailwoman corpus list", () => {
 		// otherwise pollute stderr and break the `stderr === ""` assertion.
 		const { stdout, stderr } = await exec("node", [cliBin, "corpus", "list"], {
 			timeout: 10_000,
-			env: { ...process.env, NODE_NO_WARNINGS: "1" },
+			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 		})
 		expect(stderr).toBe("")
 		expect(stdout).toMatch(/wof-admin/i)

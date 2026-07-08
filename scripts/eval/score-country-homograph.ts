@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 // Country homograph scorer — the TRUE baseline for the model-first country lever.
 // Measures country/region/locality P/R/F1 (unfolded decodeAsJSON) on the hard homograph eval,
@@ -11,29 +12,53 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
-import { arg } from "../lib/cli-args.ts"
-
-const argv = process.argv.slice(2)
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: {
+		conventions: { type: "string" },
+		file: { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		json: { type: "string" },
+		model: { type: "string" },
+		"bridge-gaps": { type: "boolean" },
+		"suppress-gaz-near-postcode": { type: "boolean" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	conventions?: string
+	file?: string
+	"gazetteer-lexicon"?: string
+	json?: string
+	model?: string
+	"bridge-gaps"?: boolean
+	"suppress-gaz-near-postcode"?: boolean
+}
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 // Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its
 // candidate-tag clues; harmless for older models (the runner skips inputs the ONNX doesn't declare).
-const GAZ = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!
-const file = arg("file", "data/eval/external/country-homograph-real.jsonl")!
+const GAZ = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
+const file = (values["file"] || "data/eval/external/country-homograph-real.jsonl")!
 const TAGS = ["country", "region", "locality"] as const
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(arg("model")!)])
+const [tokenizer, runner] = await Promise.all([
+	MailwomanTokenizer.loadFromFile(TOK),
+	ONNXRunner.create((values["model"] || "")!),
+])
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
 	labels: card.labels,
 	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
 	...(existsSync(GAZ) ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
-	suppressGazetteerNearPostcode: argv.includes("--suppress-gaz-near-postcode"),
+	suppressGazetteerNearPostcode: values["suppress-gaz-near-postcode"] ?? false,
 	// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
-	...(arg("conventions") ? { addressSystemConventions: arg("conventions") as "auto" } : {}),
-	...(argv.includes("--bridge-gaps") ? { bridgePunctuationGaps: true } : {}),
+	...(values["conventions"] || "" ? { addressSystemConventions: (values["conventions"] || "") as "auto" } : {}),
+	...((values["bridge-gaps"] ?? false) ? { bridgePunctuationGaps: true } : {}),
 })
 
 const rows = readFileSync(file, "utf8")
@@ -89,7 +114,7 @@ for (const row of rows) {
 	}
 }
 
-console.log(`# country homograph baseline — ${arg("model")!.split("/").slice(-1)[0]} · n=${rows.length}`)
+console.log(`# country homograph baseline — ${(values["model"] || "")!.split("/").slice(-1)[0]} · n=${rows.length}`)
 const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
 
@@ -104,7 +129,7 @@ for (const t of TAGS) {
 	)
 }
 // JSON sidecar — the machine-readable contract for the gate verdict (markdown = presentation).
-const jsonOut = arg("json")
+const jsonOut = values["json"] || ""
 
 if (jsonOut) {
 	const { writeFileSync } = await import("node:fs")

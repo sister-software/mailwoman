@@ -5,9 +5,13 @@
  *
  * Run: node --experimental-strip-types scripts/smoke-resolve.ts
  */
+import { parseArgs } from "node:util"
+
+import { dataRootPath } from "@mailwoman/core/utils"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const DB = process.argv[2] ?? "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+const { positionals } = parseArgs({ allowPositionals: true })
+const DB = positionals[0] ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const lookup = new WOFSqlitePlaceLookup({ databasePath: DB })
 
 console.log("=== plain: 'New York' (locality) ===")

@@ -13,9 +13,9 @@
  */
 
 import { spawn } from "node:child_process"
-import { createInterface } from "node:readline"
 
 import { haversineKm } from "@mailwoman/spatial"
+import { TextSpliterator } from "spliterator"
 
 const CELL_DEG = 0.003 // ~330m grid cell
 const DENSIFY_KM = 0.02 // interpolate a vertex every ~20m along each segment
@@ -122,9 +122,9 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 		proc.on("close", resolve)
 	})
 	const index = new StreetRecoveryIndex()
-	const rl = createInterface({ input: proc.stdout!, crlfDelay: Infinity })
 
-	for await (const raw of rl) {
+	// Keep the per-line `JSON.parse` try/catch so a malformed record is tolerated (skipped), not thrown.
+	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
 		const line = raw.replace(/^/, "").trim()
 
 		if (!line) continue

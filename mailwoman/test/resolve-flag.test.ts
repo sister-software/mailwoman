@@ -11,20 +11,19 @@
 
 import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
+import { childEnv, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
-const DEFAULT_WOF_PATH = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
-const wofPath = process.env["MAILWOMAN_WOF_DB"] ?? DEFAULT_WOF_PATH
+const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
+const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDb = existsSync(wofPath)
 const describeIfWOF = describe.skipIf(!hasWOFDb)
 
@@ -49,7 +48,7 @@ describe("npx mailwoman parse --resolve error paths", () => {
 		// distribution available".
 		await expect(
 			exec("node", [cliBin, "parse", "--resolve", "123 Main St"], {
-				env: { ...process.env, MAILWOMAN_WOF_DB: "" },
+				env: childEnv({ MAILWOMAN_WOF_DB: "" }),
 			})
 		).rejects.toMatchObject({
 			stdout: expect.stringMatching(/needs a WOF SQLite path/),
@@ -62,7 +61,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		const result = await exec(
 			"node",
 			[cliBin, "parse", "--neural", "--resolve", "--format", "xml", "Springfield, Illinois"],
-			{ env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
+			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
 		// The XML root is always present.
 		expect(result.stdout).toContain("<address raw=")
@@ -80,7 +79,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		const result = await exec(
 			"node",
 			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", wofPath, "--format", "xml", "Springfield, Illinois"],
-			{ env: { ...process.env, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
+			{ env: childEnv({ NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
 		expect(result.stdout).toContain("<address raw=")
 		expect(result.stdout).toMatch(/src="resolver:/)
@@ -88,7 +87,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 
 	test("works without --resolve (regression check — flag default is off)", async () => {
 		const result = await exec("node", [cliBin, "parse", "--neural", "--format", "xml", "Springfield, Illinois"], {
-			env: { ...process.env, NODE_NO_WARNINGS: "1" },
+			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 		expect(result.stdout).toContain("<address raw=")
@@ -104,7 +103,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		const result = await exec(
 			"node",
 			[cliBin, "parse", "--resolve", "--candidates", "5", "--format", "xml", "Springfield, Illinois"],
-			{ env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
+			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
 		expect(result.stdout).toContain("<address raw=")
 		// At least one alternative element with a place attr.
@@ -117,7 +116,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		const result = await exec(
 			"node",
 			[cliBin, "parse", "--resolve", "--candidates", "3", "--format", "json", "Springfield, Illinois"],
-			{ env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
+			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
 		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
 		// The tree carries `roots` with nodes that have `alternatives` (possibly on nested children
@@ -137,7 +136,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 
 	test("without --candidates, JSON stays libpostal-flat (no tree shape leak)", async () => {
 		const result = await exec("node", [cliBin, "parse", "--resolve", "--format", "json", "Springfield"], {
-			env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" },
+			env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 		const out = JSON.parse(stripAnsiSpinner(result.stdout))

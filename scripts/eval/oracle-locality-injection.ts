@@ -23,18 +23,26 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
 
-import { arg } from "../lib/cli-args.ts"
-
-const GOLDEN = arg("golden", "")
-const LABEL = arg("label", "")
-const OUT = arg("out", "")
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { golden: { type: "string" }, label: { type: "string" }, out: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { golden?: string; label?: string; out?: string }
+const GOLDEN = values["golden"] || ""
+const LABEL = values["label"] || ""
+const OUT = values["out"] || ""
 
 if (!GOLDEN || !existsSync(GOLDEN)) {
 	console.error(`--golden <jsonl> required (got ${GOLDEN})`)
@@ -140,7 +148,7 @@ const go = oracleTight && (deltaP50Rel >= 20 || closedShare >= 50)
 const L: string[] = []
 L.push(`# #825 oracle-locality injection — ${LABEL || GOLDEN} (${go ? "GO" : "NO-GO"})`)
 L.push("")
-L.push(`_Gazetteer: ${process.env["MAILWOMAN_CANDIDATE_DB"] ?? "admin shards"}. n=${n}._`)
+L.push(`_Gazetteer: ${$public.MAILWOMAN_CANDIDATE_DB ?? "admin shards"}. n=${n}._`)
 L.push(`_ORIGINAL = shipped model parse → resolve. ORACLE = gold locality resolved directly (perfect parse)._`)
 L.push("")
 L.push(

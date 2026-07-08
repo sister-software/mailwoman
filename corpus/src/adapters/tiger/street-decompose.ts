@@ -16,16 +16,15 @@
  */
 
 import { readFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { resolve } from "node:path"
 
-const moduleDir = dirname(fileURLToPath(import.meta.url))
+import { resourceDictionaryPath } from "@mailwoman/core/utils"
 
 function loadDictionary(filename: string): Set<string> {
 	// Resolve via the @mailwoman/core data directory.
 	const candidates = [
-		resolve(moduleDir, "../../../../core/data/libpostal/dictionaries/en", filename),
-		resolve(moduleDir, "../../../../../core/data/libpostal/dictionaries/en", filename),
+		resourceDictionaryPath("libpostal", "en", filename),
+		resourceDictionaryPath("libpostal", "en", filename),
 		resolve(process.cwd(), "core/data/libpostal/dictionaries/en", filename),
 	]
 

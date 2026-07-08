@@ -16,16 +16,18 @@
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 runIfScript(import.meta, async () => {
-	const CALIB = process.argv[2]
+	const CALIB = positionals[0]
 
 	if (!CALIB) throw new Error("usage: v07-calibration-gate.ts <calib-model.onnx> [out-dir]")
-	const OUT = process.argv[3] ?? "/tmp/v07-gate"
+	const OUT = positionals[1] ?? "/tmp/v07-gate"
 	mkdirSync(OUT, { recursive: true })
 
 	const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")

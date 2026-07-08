@@ -33,6 +33,9 @@ export const PublicEnvSchema = z.object({
 	NAD_MODE: z.string().optional(),
 	NAD_URL: z.string().optional(),
 	FS_END_OID: z.string().optional(),
+	FS_CHUNK_SIZE: z.string().optional(),
+	FS_PAGE_SIZE: z.string().optional(),
+	FS_CONCURRENCY: z.string().optional(),
 	SKIP_STATE_FIPS: z.string().optional(),
 	RATE_SLEEP: z.string().optional(),
 	MAX_PARALLEL: z.string().optional(),
@@ -68,6 +71,14 @@ export const PublicEnvSchema = z.object({
 
 	// Eval scripts (`scripts/eval/*`) — diagnostic toggles + DB/probe overrides.
 	MAILWOMAN_WOF_HOT_DB: z.string().optional(),
+	/** Override the admin gazetteer used by the default-country test panel. */
+	MAILWOMAN_WOF_GLOBAL_DB: z.string().optional(),
+	/** Deployed demo URL for the docs e2e suite (skips the local build+serve machinery). */
+	MAILWOMAN_DEMO_URL: z.string().optional(),
+	/** Override the ONNX model exercised by the neural test suites. */
+	MAILWOMAN_TEST_ONNX_MODEL: z.string().optional(),
+	/** Override the ONNX model exercised by the capability gate. */
+	MAILWOMAN_CAPABILITY_ONNX_MODEL: z.string().optional(),
 	MAILWOMAN_DIAG_INTERP: z.string().optional(),
 	MAILWOMAN_DUMP_MISS_TAG: z.string().optional(),
 	MAILWOMAN_WORD_CONSISTENCY: z.string().optional(),

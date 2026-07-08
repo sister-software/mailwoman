@@ -13,16 +13,24 @@
  */
 
 import { existsSync, writeFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
+import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
 
-import { arg } from "../lib/cli-args.ts"
-
-const OUT = arg("out", "")
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+const { values: rawValues } = parseArgs({
+	options: { out: { type: "string" }, set: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { out?: string; set?: string }
+const OUT = values["out"] || ""
 const gc = (globalThis as { gc?: () => void }).gc
 
 if (typeof gc !== "function") {
@@ -84,14 +92,14 @@ const SUPPORTED: Cap[] = [
 	{ city: "Phoenix, AZ", country: "USA", cc: "US", lat: 33.45, lon: -112.07 },
 	{ city: "Denver, CO", country: "USA", cc: "US", lat: 39.74, lon: -104.99 },
 ]
-const SET = arg("set", "new") === "supported" ? SUPPORTED : CAPITALS
+const SET = (values["set"] || "new") === "supported" ? SUPPORTED : CAPITALS
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) }))
 const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 
-const db = process.env["MAILWOMAN_CANDIDATE_DB"] ?? "admin shards"
+const db = $public.MAILWOMAN_CANDIDATE_DB ?? "admin shards"
 const rows: Array<{ cap: Cap; err: number | null }> = []
 
 for (const cap of SET) {

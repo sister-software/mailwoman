@@ -3,10 +3,10 @@
 
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
+import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
 
+import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.js"
@@ -19,8 +19,7 @@ import {
 	splitAddressPrimary,
 } from "./adapter.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const fixtureSQLPath = resolve(here, "../../../fixtures/fcc-bdc/fixture.sql")
+const fixtureSQLPath = repoRootPath("corpus", "fixtures", "fcc-bdc", "fixture.sql")
 
 let scratch: string
 let dbPath: string

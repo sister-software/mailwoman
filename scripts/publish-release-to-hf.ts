@@ -28,12 +28,16 @@
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\
  *   --set-default
+ *
+ *   DELIBERATE hand-parse: generic --kebab-key → camelCase option derivation — node:util parseArgs cannot express this shape.
  */
 
 import { spawnSync } from "node:child_process"
 import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { resolve } from "node:path"
+
+import { childEnv, cliArguments } from "@mailwoman/core/utils"
 
 const REQUIRED_FILES = [
 	{ flag: "--model", remoteName: "model.onnx", description: "ONNX classifier" },
@@ -86,7 +90,7 @@ interface ParsedArgs {
 }
 
 function parseArgs(): ParsedArgs {
-	const args = process.argv.slice(2)
+	const args = cliArguments()
 	const out: ParsedArgs = { setDefault: false }
 
 	for (let i = 0; i < args.length; i++) {
@@ -109,7 +113,7 @@ function fail(msg: string): never {
 }
 
 function run(cmd: string, args: string[]) {
-	const r = spawnSync(cmd, args, { stdio: "inherit", env: { ...process.env } })
+	const r = spawnSync(cmd, args, { stdio: "inherit", env: childEnv() })
 
 	if (r.status !== 0) {
 		fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)
@@ -215,10 +219,10 @@ async function main() {
 		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
 	}
 
-	// Optional crisp-polygon DB (build-wof-polygons.mjs): a single --polygons path. Uploaded as
+	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
-	// via build-wof-polygons.mjs --admin (the --points wof-hot.db source is retired).
+	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
 	const polygonsDb = args.polygons || null
 
 	if (polygonsDb && (!existsSync(polygonsDb) || statSync(polygonsDb).size === 0)) {

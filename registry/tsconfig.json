@@ -9,6 +9,7 @@
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---
+		{ "path": "../core" },
 		{ "path": "../spatial" },
 		{ "path": "../address-id" },
 		{ "path": "../match" },

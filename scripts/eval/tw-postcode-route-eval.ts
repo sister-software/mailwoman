@@ -43,13 +43,12 @@ import { DuckDBInstance } from "@duckdb/node-api"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geometryContains } from "@mailwoman/resolver-wof-sqlite/geo"
-
 import {
 	type DivisionPolygon,
 	loadDistrictPolygons,
 	loadPostalDistricts,
 	normHan,
-} from "../build-postcode-locality-tw.ts"
+} from "mailwoman/gazetteer-pipeline/postcode-locality/tw"
 
 const RELEASE = "2026-06-17.0"
 

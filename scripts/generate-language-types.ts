@@ -4,13 +4,13 @@
 import { createReadStream } from "node:fs"
 import * as fs from "node:fs/promises"
 
-import { repoRootPathBuilder, resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
 import { pascalCase } from "change-case"
 import * as csv from "csv-parse"
 
-const outfile = repoRootPathBuilder("core", "resources", "languages", "types.gen.ts")
+const outfile = repoRootPath("core", "resources", "languages", "types.gen.ts")
 
-const dataSourcePath = resourceDictionaryPathBuilder("internal", "languages.csv")
+const dataSourcePath = resourceDictionaryPath("internal", "languages.csv")
 
 const alpha2Entries = new Map<string, string[]>()
 const alpha3bEntries = new Map<string, string[]>()

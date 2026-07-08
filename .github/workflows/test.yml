@@ -52,6 +52,17 @@ jobs:
       - name: Typecheck scripts
         run: yarn typecheck:scripts
 
+      # lint:python runs ruff via uvx — the runner image doesn't ship uv (bit 9ce83b40's push:
+      # "command not found: uvx", exit 127).
+      - name: Setup uv (ruff for lint:python)
+        uses: astral-sh/setup-uv@v7
+
+      # Full repo-wide lint (oxlint incl. sister-software/no-process-globals, oxfmt --check, python
+      # toolchain checks). This is THE complete gate: the pre-commit hook only lints STAGED files,
+      # so repo-wide drift and --no-verify commits are caught here.
+      - name: Lint
+        run: yarn lint
+
       # The docs app ships real runtime code (the /demo page). Its typecheck sat outside CI and
       # went 7-errors red on main unnoticed — one of those errors was the LIVE demo's undefined
       # baseUrl paths (#917, broken in production since v5.0.0). This step is that bug's class fix.

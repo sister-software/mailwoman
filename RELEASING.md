@@ -199,10 +199,9 @@ The manual recipe below is the same thing, step by step, for reference / one-off
 #    buildPlaceSearchFts; the canonical admin DB is never mutated. Supersedes the candidate-side
 #    stopgap scripts/build-candidate-geonames-aliases.ts (which patched a built candidate.db to MEASURE
 #    the lift before this became the durable home).
-node --experimental-strip-types scripts/build-admin-geonames-fold.ts \
-  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
-  --out /mnt/playpen/mailwoman-data/wof/admin-global-priority-geonames.db \
-  --countries FI,PL,NO,CZ,AT,LT,LV,SI,SK,HR,DK,BE,CH,LU
+# (the standalone script is retired — the fold lives in the pipeline and `gazetteer build`
+#  runs it; for a fold-on-copy without a full rebuild, `mailwoman gazetteer build --help`.)
+node mailwoman/out/cli.js gazetteer build   # admin (fold included) → candidate, turnkey
 # 1. Build the candidate table from the FOLDED admin DB + the postcode shards. The FTS5-trigram fuzzy
 #    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
 #    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames intl shard (PT/AU)

@@ -32,11 +32,11 @@ import { spawnSync } from "node:child_process"
 import { copyFileSync, lstatSync, mkdtempSync, readFileSync, readlinkSync, rmSync, unlinkSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
 import { $private, $public } from "@mailwoman/core/env"
+import { repoRootPath } from "@mailwoman/core/utils"
 
-const repoRoot = fileURLToPath(new URL("..", import.meta.url))
+const repoRoot = repoRootPath()
 
 const workspacePath = $public.RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE
 const tag = $public.RELEASE_IT_WORKSPACES_TAG || "latest"

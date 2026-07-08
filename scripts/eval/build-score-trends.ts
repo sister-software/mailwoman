@@ -13,12 +13,11 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
-const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..")
-const LEDGER = resolve(REPO, "evals/scores-by-version.json")
-const OUT = resolve(REPO, "docs/articles/evals/score-trends.md")
+import { repoRootPath } from "@mailwoman/core/utils"
+
+const LEDGER = repoRootPath("evals", "scores-by-version.json")
+const OUT = repoRootPath("docs", "articles", "evals", "score-trends.md")
 
 const TAG_ORDER = [
 	"micro",

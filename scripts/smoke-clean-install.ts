@@ -24,9 +24,10 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { fileURLToPath } from "node:url"
 
-const repoRoot = fileURLToPath(new URL("..", import.meta.url))
+import { repoRootPath } from "@mailwoman/core/utils"
+
+const repoRoot = repoRootPath()
 // The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load
 // at runtime MUST be packed here — otherwise `npm install` pulls it from the REGISTRY (the published,
 // possibly-stale version), and the smoke tests new-source-CLI against an old-registry dependency. That

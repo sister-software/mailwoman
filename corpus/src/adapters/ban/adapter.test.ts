@@ -3,17 +3,16 @@
 
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { join } from "node:path"
 
+import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.js"
 import type { CanonicalRow } from "../../types.js"
 import { BAN_ADAPTER_ID, createBanAdapter } from "./adapter.js"
 
-const here = dirname(fileURLToPath(import.meta.url))
-const fixtureCSV = resolve(here, "../../../fixtures/ban/sample.csv")
+const fixtureCSV = repoRootPath("corpus", "fixtures", "ban", "sample.csv")
 
 let scratch: string
 beforeEach(async () => {

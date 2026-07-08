@@ -11,12 +11,14 @@
  */
 
 import { basename } from "node:path"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
+const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 runIfScript(import.meta, async () => {
-	const step = process.argv[2]
+	const step = positionals[0]
 
 	if (!step) throw new Error("usage: read-relabel-checkpoint.ts <zero-padded-step, e.g. 020000>")
 
@@ -29,7 +31,7 @@ runIfScript(import.meta, async () => {
 	console.error(`== export step-${step} on Modal ==`)
 	const exported = await $({
 		nothrow: true,
-	})`modal run scripts/modal/train_remote.py::export_onnx --output-dir=${outDir} --step=${step}`
+	})`modal run corpus-python/modal/train_remote.py::export_onnx --output-dir=${outDir} --step=${step}`
 	console.error(`${exported.stdout}${exported.stderr}`.trim().split("\n").slice(-2).join("\n"))
 	const got = await $({
 		nothrow: true,

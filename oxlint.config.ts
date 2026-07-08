@@ -16,6 +16,7 @@ const config = createOxlintConfig({
 	// re-enabled — set `headers: true` (or remove this line) to enforce + autofix them repo-wide.
 	// Left off here to match the repo's prior behavior.
 	headers: false,
+	restrictProcessGlobals: true,
 	ignorePatterns: [
 		...DefaultIgnorePatterns,
 		".pi",

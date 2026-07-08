@@ -30,15 +30,16 @@
 
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
+
+import { corePackagePath, runIfScript } from "@mailwoman/core/utils"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
 function parseCLIArgs() {
 	const { values } = parseArgs({
 		options: {
-			"out-dir": { type: "string", default: fileURLToPath(new URL("./ssl-address/", import.meta.url)) },
+			"out-dir": { type: "string", default: corePackagePath("data", "chromium-i18n", "ssl-address") },
 			concurrency: { type: "string", default: "8" },
 		},
 	})
@@ -101,11 +102,4 @@ async function main(): Promise<void> {
 	}
 }
 
-// Run main() only when invoked directly (the import-safe equivalent of Python's `if __name__ ==
-// "__main__"`), so importing this module evaluates it without firing the download.
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-	main().catch((err: Error) => {
-		process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-		process.exitCode = 1
-	})
-}
+runIfScript(import.meta, main)

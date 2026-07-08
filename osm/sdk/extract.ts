@@ -15,7 +15,8 @@
  */
 
 import { spawn } from "node:child_process"
-import { createInterface } from "node:readline"
+
+import { TextSpliterator } from "spliterator"
 
 /** One OSM address feature, geometry already reduced to a single representative coordinate. */
 export interface OSMAddrRecord {
@@ -123,9 +124,9 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 		proc.on("error", reject)
 		proc.on("close", resolve)
 	})
-	const rl = createInterface({ input: proc.stdout!, crlfDelay: Infinity })
 
-	for await (const raw of rl) {
+	// Keep the per-line `JSON.parse` try/catch so a malformed record is tolerated (skipped), not thrown.
+	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
 		// GeoJSONSeq is newline-delimited; some GDAL builds prefix each record with an RS (0x1e).
 		const line = raw.replace(/^/, "").trim()
 

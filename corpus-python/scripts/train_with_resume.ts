@@ -18,12 +18,13 @@
 import { openSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
+import { cliArguments } from "@mailwoman/core/utils"
 import { $, sleep } from "zx"
 
 const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)
 const LOG = $public.LOG ?? "/tmp/stage1-train.log"
 const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml"
-const EXTRA_ARGS = process.argv.slice(2)
+const EXTRA_ARGS = cliArguments()
 
 // Open the log once in append mode; every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
 const logFd = openSync(LOG, "a")

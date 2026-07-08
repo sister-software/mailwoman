@@ -16,6 +16,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 // import { Presets, SingleBar } from "cli-progress"
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
@@ -40,16 +41,18 @@ interface WOFRow {
 // language blacklist
 const blacklist = new Set<string>(["unk", "vol"])
 
-await mkdir(resourceDictionaryDirectory, {
+await mkdir(resourceDictionaryDirectory.toString(), {
 	recursive: true,
 })
 
-if (process.argv.length !== 3) {
+const { positionals } = parseArgs({ allowPositionals: true })
+
+if (positionals.length !== 1) {
 	console.error("usage: node %s {dbpath.sqlite}", resourceDictionaryPathBuilder("whosonfirst").toString())
 	process.exit(1)
 }
 
-const databasePath = process.argv[2]!
+const databasePath = positionals[0]!
 
 console.log(`Opening database... ${databasePath}`)
 const db = new DatabaseSync(databasePath, {
@@ -183,14 +186,14 @@ for (const [placetype, record] of placetypeMap) {
 
 	const placetypePath = resourceDictionaryDirectory(placetype)
 
-	await mkdir(placetypePath, {
+	await mkdir(placetypePath.toString(), {
 		recursive: true,
 	})
 
 	for (const [field, fieldData] of record) {
 		const filePath = placetypePath(`${field}.txt`)
 
-		await writeFile(filePath, Array.from(fieldData).sort().join("\n"))
+		await writeFile(filePath.toString(), Array.from(fieldData).sort().join("\n"))
 	}
 }
 

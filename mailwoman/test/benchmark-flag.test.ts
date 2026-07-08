@@ -8,17 +8,15 @@
  */
 
 import { execFile } from "node:child_process"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { childEnv, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as parseOptions } from "../commands/parse.js"
 
 const exec = promisify(execFile)
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 describe("--benchmark schema", () => {
 	test("accepts integer in [1, 10000]", () => {
@@ -52,7 +50,7 @@ describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
 		const { stdout } = await exec(
 			process.execPath,
 			[cliBin, "parse", "--benchmark", "10", "--no-neural", "350 5th Ave, New York, NY 10118"],
-			{ env: { ...process.env, MAILWOMAN_TEST_MODE: "1" } }
+			{ env: childEnv({ MAILWOMAN_TEST_MODE: "1" }) }
 		)
 		expect(stdout).toContain("iterations + 5 warmup")
 		expect(stdout).toContain("stage")

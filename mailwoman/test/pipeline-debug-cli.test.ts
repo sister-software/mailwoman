@@ -12,15 +12,13 @@
  */
 
 import { execFile } from "node:child_process"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { childEnv, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
-const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
-const cliBin = resolve(repoRoot, "out", "cli.js")
+const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 /** Strip ANSI escapes + ink spinner frames; isolate the JSON payload. */
 function extractJson(stdout: string): unknown {
@@ -42,7 +40,7 @@ describe("parse --debug (runtime pipeline)", () => {
 		// Bare US ZIP+4 hits the fast-path (postcode_only kind, unambiguous us_zip4 hit). Doesn't
 		// require neural weights — the fast-path tree is built from QueryShape.
 		const { stdout } = await exec(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
-			env: { ...process.env, NODE_NO_WARNINGS: "1" },
+			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 		const result = extractJson(stdout) as Record<string, unknown>
@@ -74,7 +72,7 @@ describe("parse --debug (runtime pipeline)", () => {
 
 	test("locality_only fast-path identifies single-word inputs", async () => {
 		const { stdout } = await exec(process.execPath, [cliBin, "parse", "--debug", "Paris"], {
-			env: { ...process.env, NODE_NO_WARNINGS: "1" },
+			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 		const result = extractJson(stdout) as Record<string, unknown>
@@ -84,7 +82,7 @@ describe("parse --debug (runtime pipeline)", () => {
 
 	test("queryShape carries the detected known-format hit for postcode inputs", async () => {
 		const { stdout } = await exec(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
-			env: { ...process.env, NODE_NO_WARNINGS: "1" },
+			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 		const result = extractJson(stdout) as Record<string, unknown>
@@ -95,7 +93,7 @@ describe("parse --debug (runtime pipeline)", () => {
 
 	test("normalize records the offsetMap so consumers can map spans back to raw", async () => {
 		const { stdout } = await exec(process.execPath, [cliBin, "parse", "--debug", "  Paris  "], {
-			env: { ...process.env, NODE_NO_WARNINGS: "1" },
+			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 		const result = extractJson(stdout) as Record<string, unknown>
