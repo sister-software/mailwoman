@@ -286,6 +286,16 @@ export interface PhotonForwardInput {
 	country?: { name?: string; code?: string } | null
 	/** Resolved admin ancestry, most-specific first, each carrying the gazetteer's canonical name (not the parsed span). */
 	places: ReadonlyArray<{ tag: string; name: string }>
+	/**
+	 * A HOUSE-GRADE result (#1041): set only when the resolver produced a specific building coordinate — the
+	 * `address_point` (rooftop) or `interpolated` tier fired, NOT an admin centroid. {@link photonForwardProperties} then
+	 * re-tags the schema `osm_key: place` / `osm_value: house` / `type: house` and surfaces the parsed `housenumber` +
+	 * `street`, matching upstream komoot/photon's own bare-address-point shape (verified against `photon.komoot.io`: a
+	 * residential rooftop returns `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with NO
+	 * `name`). Absent → the result keeps its admin-ancestry schema. Without it a rooftop reads as `type: city` and a
+	 * client zooms to city scale (or paints a city marker) on a doorstep match — the #1041 regression.
+	 */
+	house?: { number?: string | null; street?: string | null } | null
 }
 
 /**
@@ -359,6 +369,29 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 
 	if (input.country?.code) {
 		props.countrycode = input.country.code.toLowerCase()
+	}
+
+	// #1041: house-grade override. A rooftop / interpolated coordinate is a BUILDING, not the admin locality the
+	// ancestry above would label it — re-tag the schema so a Photon client renders (and zooms to) a house, and surface
+	// the parsed housenumber + street. Matches upstream komoot/photon's bare address point (osm_key:place, osm_value:
+	// house, type:house, with housenumber + street and NO name). Drop the admin-derived `name` — else the QGIS FLF label
+	// (name + housenumber + street + city + postcode) doubles the city ("Paris 8 Boulevard du Palais Paris 75001"). The
+	// city/state/postcode/country the ancestry filled stay put (upstream carries them on a house result too).
+	if (input.house) {
+		props.osm_key = "place"
+		props.osm_value = "house"
+		props.type = "house"
+		delete props.name
+		const number = input.house.number?.trim()
+		const street = input.house.street?.trim()
+
+		if (number) {
+			props.housenumber = number
+		}
+
+		if (street) {
+			props.street = street
+		}
 	}
 
 	return props

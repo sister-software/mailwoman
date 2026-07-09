@@ -56,6 +56,16 @@ export interface GeocodeResult {
 	region: string | null
 	postcode: string | null
 	/**
+	 * The PARSED house number + full street name (reassembled from the street subtree — prefix + base + suffix, since
+	 * `street.value` alone is the bare base span), or null when the parse found neither. #1041 — lets a forward consumer
+	 * that resolved to a house-number-grade coordinate (the `address_point` / `interpolated` {@link resolution_tier})
+	 * render the result HOUSE-GRADE (`type: house` + `housenumber`/`street`, matching upstream Photon) instead of
+	 * mislabeling a rooftop as its admin locality. Populated regardless of tier (they are the parsed spans); the consumer
+	 * gates the house-grade rendering on the tier so an admin-only fallback is never dressed up as a rooftop.
+	 */
+	house_number: string | null
+	street: string | null
+	/**
 	 * ISO-3166 alpha-2 of the resolved place (the gazetteer/candidate country of the deepest resolved node), or null.
 	 * #1014 — lets a forward consumer fill `country`/`countrycode` without a full ancestry walk (the candidate backend
 	 * carries the country code even when it has no `ancestors()` table).
@@ -583,6 +593,31 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 }
 
 /**
+ * Street-name component tags — the name-bearing subtree of a `street` node (`street.value` alone is the bare base:
+ * "Sheldon" for "East Sheldon Rd"). Mirrors the resolver's `assembleStreetValue`; used to surface the FULL parsed
+ * street on the result so a house-grade forward consumer renders "Boulevard du Palais", not just "Palais". #1041.
+ */
+const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
+
+/** Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041. */
+function assembleStreetName(streetNode: AddressNode): string {
+	const parts: AddressNode[] = []
+	const stack = [streetNode]
+
+	while (stack.length > 0) {
+		const n = stack.pop()!
+
+		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
+			parts.push(n)
+		}
+		stack.push(...n.children)
+	}
+	parts.sort((a, b) => a.start - b.start)
+
+	return parts.map((n) => n.value.trim()).join(" ")
+}
+
+/**
  * Walk the resolved tree and extract the geocode result: the street node's address-point / interpolation coordinate
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
@@ -661,6 +696,11 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const locality = allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() || null
 	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null
 	const postcode = allNodes.find((n) => n.tag === "postcode")?.value?.trim() || null
+
+	// #1041: the parsed house number + full street name, so a house-grade forward consumer (photon `/api`) can decorate a
+	// rooftop / interpolated result with `housenumber`/`street` (matching upstream Photon) instead of the admin locality.
+	const houseNumber = allNodes.find((n) => n.tag === "house_number")?.value?.trim() || null
+	const street = streetNode ? assembleStreetName(streetNode) || null : null
 
 	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
 	const hierarchy = allNodes
@@ -752,6 +792,8 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		locality,
 		region,
 		postcode,
+		house_number: houseNumber,
+		street,
 		countryCode,
 		hierarchy,
 		candidates,

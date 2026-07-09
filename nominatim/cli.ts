@@ -205,6 +205,15 @@ async function serve(): Promise<void> {
 
 			if (result.lat == null || result.lon == null) return []
 			const resolved = forwardToResolved(result)
+
+			// #1041: a rooftop (`address_point`) / house-number-estimate (`interpolated`) tier is HOUSE-GRADE — tag the
+			// result `class: place` / `type: house` (upstream Nominatim's own class/type for a house), so a client that
+			// keys on `class`/`type`/`addresstype` treats it as a building, not an untyped admin hit. The admin tier
+			// (a locality centroid) carries no class/type here, as before.
+			if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") {
+				resolved.category = "place"
+				resolved.type = "house"
+			}
 			// Recover the street the resolver drops, so addressdetails + display_name carry it.
 			const { houseNumber, road } = await streetParts(parser, query)
 

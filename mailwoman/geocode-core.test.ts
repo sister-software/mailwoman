@@ -195,6 +195,78 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 	})
 })
 
+describe("extractGeocodeResult — parsed house-grade fields (#1041)", () => {
+	// A rooftop parse of "123 East Sheldon Rd 75001 Paris": the street node is stamped `address_point`, and its
+	// name-bearing subtree (prefix + base + suffix) plus the house_number nest under it (per the containment schema).
+	const rooftopTree = (tier: "address_point" | "interpolated" | "admin"): AddressTree => ({
+		raw: "123 east sheldon rd 75001 paris",
+		roots: [
+			node({
+				tag: "street",
+				value: "Sheldon",
+				start: 9,
+				end: 16,
+				metadata:
+					tier === "address_point"
+						? { resolution_tier: "address_point", address_point: { lat: 48.8548, lon: 2.3451 } }
+						: tier === "interpolated"
+							? {
+									resolution_tier: "interpolated",
+									interpolated_point: { lat: 48.8548, lon: 2.3451 },
+									uncertainty_m: 40,
+								}
+							: undefined,
+				children: [
+					node({ tag: "house_number", value: "123", start: 0, end: 3 }),
+					node({ tag: "street_prefix", value: "East", start: 4, end: 8 }),
+					node({ tag: "street_suffix", value: "Rd", start: 17, end: 19 }),
+				],
+			}),
+			node({
+				tag: "locality",
+				value: "paris",
+				lat: 48.8566,
+				lon: 2.3522,
+				metadata: { resolver_name: "Paris", resolver_country: "FR" },
+			}),
+			node({ tag: "postcode", value: "75001" }),
+		],
+	})
+
+	it("surfaces the parsed house number + FULL reassembled street on a rooftop (address_point) result", () => {
+		const r = extractGeocodeResult("123 East Sheldon Rd 75001 Paris", rooftopTree("address_point"))
+		expect(r.resolution_tier).toBe("address_point")
+		expect(r.house_number).toBe("123")
+		expect(r.street).toBe("East Sheldon Rd") // prefix + base + suffix, span-ordered — not the bare "Sheldon"
+		expect(r.lat).toBe(48.8548) // the rooftop coordinate won
+		expect(r.postcode).toBe("75001")
+	})
+
+	it("surfaces the same house-grade fields on an interpolated result", () => {
+		const r = extractGeocodeResult("123 East Sheldon Rd 75001 Paris", rooftopTree("interpolated"))
+		expect(r.resolution_tier).toBe("interpolated")
+		expect(r.house_number).toBe("123")
+		expect(r.street).toBe("East Sheldon Rd")
+	})
+
+	it("still carries the parsed spans on an admin-tier fallback (the consumer gates on the tier, not their presence)", () => {
+		const r = extractGeocodeResult("123 East Sheldon Rd 75001 Paris", rooftopTree("admin"))
+		expect(r.resolution_tier).toBe("admin") // no address_point/interpolated metadata → admin centroid
+		expect(r.house_number).toBe("123") // populated regardless of tier — informational
+		expect(r.street).toBe("East Sheldon Rd")
+	})
+
+	it("is null for both when the parse found no street / house number (a bare locality query)", () => {
+		const tree: AddressTree = {
+			raw: "berlin",
+			roots: [node({ tag: "locality", value: "Berlin", lat: 52.5, lon: 13.4 })],
+		}
+		const r = extractGeocodeResult("berlin", tree)
+		expect(r.house_number).toBeNull()
+		expect(r.street).toBeNull()
+	})
+})
+
 describe("parseForGeocode — query-shape emission prior (#981)", () => {
 	type ParseOpts = Parameters<GeocodeClassifier["parse"]>[1]
 
