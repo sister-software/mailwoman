@@ -1,8 +1,3 @@
-import { appendFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-import { parseArgs } from "node:util"
-
-import { DuckDBInstance } from "@duckdb/node-api"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -20,14 +15,20 @@ import { DuckDBInstance } from "@duckdb/node-api"
  *   model never saw — not just memorization. The in-map test.jsonl is left UNTOUCHED so the
  *   before/after in-map regression check stays clean; the Latin metric lives in its own file.
  *
- *   Run AFTER build-dataset.ts + build-outlier-exposure.ts (it appends). Re-runnable: it rewrites the
+ *   Run AFTER build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
  *   dedicated test file and appends fresh OTHER rows (so don't run it twice onto the same splits
  *   without rebuilding train/val).
  *
- *   Usage: node core/coarse-placer/tools/build-outlier-latin.ts [--per-country 6000] [--overture
- *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]
+ *   Run: `mailwoman placer build-dataset --outliers latin [--per-country 6000] [--overture
+ *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]`
  */
-import { dataRootPath } from "@mailwoman/core/utils"
+
+import { appendFileSync, writeFileSync } from "node:fs"
+import * as path from "node:path"
+
+import { dataRootPath } from "../../utils/data-root.ts"
+import { repoRootPath } from "../../utils/repo.ts"
+import { hashFNV1a } from "./fnv-hash.ts"
 
 interface LatinTestRow {
 	raw: string
@@ -36,14 +37,22 @@ interface LatinTestRow {
 	srcCountry: string
 }
 
-const { values: args } = parseArgs({
-	options: {
-		"per-country": { type: "string", default: "6000" },
-		overture: { type: "string", default: dataRootPath("overture", "2026-05-20.0") },
-		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
-	},
-})
-const PER = Number(args["per-country"])
+/** Options for {@linkcode buildOutlierLatin}. */
+export interface BuildOutlierLatinOptions {
+	/** Rows sampled per off-map country. Default 6000. */
+	perCountry?: number
+	/** Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/2026-05-20.0`. */
+	overture?: string
+	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	data?: string
+}
+
+/** Result of {@linkcode buildOutlierLatin}. */
+export interface BuildOutlierLatinResult {
+	train: number
+	val: number
+	test: number
+}
 
 // Off-map (NOT among the trained countries) and Latin-script. TRAIN feeds the OTHER class; HELDOUT
 // is test-only — the generalization probe (unseen off-map countries should still route OTHER).
@@ -76,18 +85,6 @@ function levelValues(al: unknown): string[] {
 	return out
 }
 
-/** FNV-1a → uint32, for deterministic ordering/variant choice. */
-function hash(s: string): number {
-	let h = 2166136261
-
-	for (let i = 0; i < s.length; i++) {
-		h ^= s.charCodeAt(i)
-		h = Math.imul(h, 16777619)
-	}
-
-	return h >>> 0
-}
-
 /** Assemble a plausible address string from an Overture address row. Deterministic variant by hash. */
 function assemble(r: Record<string, unknown>): string | null {
 	const num = (r.number ?? "").toString().trim()
@@ -99,7 +96,7 @@ function assemble(r: Record<string, unknown>): string | null {
 	if (!street && !locality) return null // nothing distinctive
 	const head = [num, street].filter(Boolean).join(" ")
 	const tail = [pc, locality].filter(Boolean).join(" ")
-	const h = hash(`${num}|${street}|${pc}|${locality}`)
+	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)
 
 	switch (h % 3) {
 		case 0:
@@ -111,79 +108,93 @@ function assemble(r: Record<string, unknown>): string | null {
 	}
 }
 
-const duck = await (await DuckDBInstance.create()).connect()
+/** Coarse-placer Overture Latin-off-map outlier builder — see the module doc. */
+export async function buildOutlierLatin(
+	options: BuildOutlierLatinOptions = {},
+	report?: (line: string) => void
+): Promise<BuildOutlierLatinResult> {
+	const PER = options.perCountry ?? 6000
+	const overtureDir = options.overture || dataRootPath("overture", "2026-05-20.0")
+	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-async function rowsFor(cc: string): Promise<string[]> {
-	const f = path.join(args.overture, `addresses-${cc.toLowerCase()}.parquet`)
-	let res
+	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
+	const { DuckDBInstance } = await import("@duckdb/node-api")
+	const duck = await (await DuckDBInstance.create()).connect()
 
-	try {
-		res = await duck.runAndReadAll(
-			`SELECT number, street, postcode, postal_city, address_levels FROM read_parquet('${f}') LIMIT ${PER}`
-		)
-	} catch (e) {
-		console.error(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
+	async function rowsFor(cc: string): Promise<string[]> {
+		const f = path.join(overtureDir, `addresses-${cc.toLowerCase()}.parquet`)
+		let res
 
-		return []
+		try {
+			res = await duck.runAndReadAll(
+				`SELECT number, street, postcode, postal_city, address_levels FROM read_parquet('${f}') LIMIT ${PER}`
+			)
+		} catch (e) {
+			report?.(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
+
+			return []
+		}
+		const seen = new Set<string>()
+		const out: string[] = []
+
+		for (const r of res.getRowObjects()) {
+			const raw = assemble(r)
+
+			if (!raw || seen.has(raw) || raw.length < 6) continue
+			seen.add(raw)
+			out.push(raw)
+		}
+
+		return out
 	}
-	const seen = new Set<string>()
-	const out: string[] = []
 
-	for (const r of res.getRowObjects()) {
-		const raw = assemble(r)
+	const trainAppend: string[] = []
+	const valAppend: string[] = []
+	const testRows: LatinTestRow[] = []
 
-		if (!raw || seen.has(raw) || raw.length < 6) continue
-		seen.add(raw)
-		out.push(raw)
+	// dedicated Latin off-map test: {raw, country:"OTHER", group, srcCountry}
+
+	for (const cc of TRAIN_COUNTRIES) {
+		const rows = (await rowsFor(cc)).sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
+		const nVal = Math.floor(rows.length * 0.1)
+		const nTest = Math.floor(rows.length * 0.1)
+		const val = rows.slice(0, nVal)
+		const test = rows.slice(nVal, nVal + nTest)
+		const train = rows.slice(nVal + nTest)
+
+		for (const raw of train) {
+			trainAppend.push(raw)
+		}
+
+		for (const raw of val) {
+			valAppend.push(raw)
+		}
+
+		for (const raw of test) {
+			testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc })
+		}
+		report?.(`  TRAIN ${cc}: ${rows.length} (train ${train.length} / val ${val.length} / test ${test.length})`)
 	}
 
-	return out
+	for (const cc of HELDOUT_COUNTRIES) {
+		const rows = await rowsFor(cc)
+
+		for (const raw of rows) {
+			testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc })
+		}
+		report?.(`  HELDOUT ${cc}: ${rows.length} (test-only)`)
+	}
+	;(duck as { disconnect?: () => void }).disconnect?.()
+
+	// Append OTHER rows to train/val; write the dedicated Latin off-map test file.
+	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
+	appendFileSync(path.join(dataDir, "train.jsonl"), wr(trainAppend))
+	appendFileSync(path.join(dataDir, "val.jsonl"), wr(valAppend))
+	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
+	report?.(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
+	report?.(
+		`wrote test-latin-offmap.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
+	)
+
+	return { train: trainAppend.length, val: valAppend.length, test: testRows.length }
 }
-
-const trainAppend: string[] = []
-const valAppend: string[] = []
-const testRows: LatinTestRow[] = []
-
-// dedicated Latin off-map test: {raw, country:"OTHER", group, srcCountry}
-
-for (const cc of TRAIN_COUNTRIES) {
-	const rows = (await rowsFor(cc)).sort((a, b) => hash(a) - hash(b))
-	const nVal = Math.floor(rows.length * 0.1)
-	const nTest = Math.floor(rows.length * 0.1)
-	const val = rows.slice(0, nVal)
-	const test = rows.slice(nVal, nVal + nTest)
-	const train = rows.slice(nVal + nTest)
-
-	for (const raw of train) {
-		trainAppend.push(raw)
-	}
-
-	for (const raw of val) {
-		valAppend.push(raw)
-	}
-
-	for (const raw of test) {
-		testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc })
-	}
-	console.log(`  TRAIN ${cc}: ${rows.length} (train ${train.length} / val ${val.length} / test ${test.length})`)
-}
-
-for (const cc of HELDOUT_COUNTRIES) {
-	const rows = await rowsFor(cc)
-
-	for (const raw of rows) {
-		testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc })
-	}
-	console.log(`  HELDOUT ${cc}: ${rows.length} (test-only)`)
-}
-;(duck as { disconnect?: () => void }).disconnect?.()
-
-// Append OTHER rows to train/val; write the dedicated Latin off-map test file.
-const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-appendFileSync(path.join(args.data, "train.jsonl"), wr(trainAppend))
-appendFileSync(path.join(args.data, "val.jsonl"), wr(valAppend))
-writeFileSync(path.join(args.data, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
-console.log(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
-console.log(
-	`wrote test-latin-offmap.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
-)

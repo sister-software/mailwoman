@@ -12,24 +12,33 @@
  *   off-map dominant script (not Latin, not CJK — those are the in-map countries), then APPENDED to
  *   the train/val/test splits as `country: "OTHER"`.
  *
- *   Run AFTER build-dataset.ts. Usage: node core/coarse-placer/tools/build-outlier-exposure.ts
- *   [--per-lang 2500]
+ *   Run AFTER build-dataset. Run: `mailwoman placer build-dataset --outliers exposure [--per-lang
+ *   2500]`
  */
 
 import { appendFileSync } from "node:fs"
 import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "../../utils/data-root.ts"
+import { repoRootPath } from "../../utils/repo.ts"
+import { hashFNV1a } from "./fnv-hash.ts"
 
-const { values: args } = parseArgs({
-	options: {
-		"per-lang": { type: "string", default: "2500" },
-		wof: { type: "string", default: dataRootPath("wof", "admin-global-priority.db") },
-		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
-	},
-})
+/** Options for {@linkcode buildOutlierExposure}. */
+export interface BuildOutlierExposureOptions {
+	/** Names sampled per off-map language. Default 2500. */
+	perLang?: number
+	/** WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`. */
+	wof?: string
+	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	data?: string
+}
+
+/** Result of {@linkcode buildOutlierExposure}. */
+export interface BuildOutlierExposureResult {
+	/** Total OTHER pool size (names + address-shaped variants). */
+	total: number
+}
 
 // Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW).
 const OFF_MAP_LANGS = [
@@ -109,53 +118,55 @@ function addressVariant(name: string, h: number): string {
 	}
 }
 
-const db = new DatabaseSync(args.wof, { readOnly: true })
-const PER = Number(args["per-lang"])
-const pool: string[] = []
-const seen = new Set<string>()
+/** Coarse-placer non-Latin outlier-exposure builder — see the module doc. */
+export async function buildOutlierExposure(
+	options: BuildOutlierExposureOptions = {},
+	report?: (line: string) => void
+): Promise<BuildOutlierExposureResult> {
+	const PER = options.perLang ?? 2500
+	const wofPath = options.wof || dataRootPath("wof", "admin-global-priority.db")
+	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-for (const lang of OFF_MAP_LANGS) {
-	const rows = db.prepare(`SELECT name FROM names WHERE language = ? AND length(name) >= 4 LIMIT ?`).all(lang, PER * 2)
-	let kept = 0
+	const db = new DatabaseSync(wofPath, { readOnly: true })
+	const pool: string[] = []
+	const seen = new Set<string>()
 
-	for (const r of rows) {
-		if (kept >= PER) break
-		const name = String(r.name).trim()
+	for (const lang of OFF_MAP_LANGS) {
+		const rows = db
+			.prepare(`SELECT name FROM names WHERE language = ? AND length(name) >= 4 LIMIT ?`)
+			.all(lang, PER * 2)
+		let kept = 0
 
-		if (!name || seen.has(name) || !isOffMapScript(name)) continue
-		seen.add(name)
-		pool.push(name)
-		pool.push(addressVariant(name, hash(name))) // address-shaped sibling
-		kept++
+		for (const r of rows) {
+			if (kept >= PER) break
+			const name = String(r.name).trim()
+
+			if (!name || seen.has(name) || !isOffMapScript(name)) continue
+			seen.add(name)
+			pool.push(name)
+			pool.push(addressVariant(name, hashFNV1a(name))) // address-shaped sibling
+			kept++
+		}
+		report?.(`  ${lang}: ${kept}`)
 	}
-	console.log(`  ${lang}: ${kept}`)
-}
-db.close()
+	db.close()
 
-// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as OTHER.
-pool.sort((a, b) => hash(a) - hash(b))
-const nVal = Math.floor(pool.length * 0.1)
-const nTest = Math.floor(pool.length * 0.1)
-const splits: Record<string, string[]> = {
-	val: pool.slice(0, nVal),
-	test: pool.slice(nVal, nVal + nTest),
-	train: pool.slice(nVal + nTest),
-}
-
-for (const [split, names] of Object.entries(splits)) {
-	const lines = names.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-	appendFileSync(path.join(args.data, `${split}.jsonl`), lines)
-	console.log(`appended ${names.length} OTHER → ${split}.jsonl`)
-}
-console.log(`total OTHER pool: ${pool.length}`)
-
-function hash(s: string): number {
-	let h = 2166136261
-
-	for (let i = 0; i < s.length; i++) {
-		h ^= s.charCodeAt(i)
-		h = Math.imul(h, 16777619)
+	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as OTHER.
+	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
+	const nVal = Math.floor(pool.length * 0.1)
+	const nTest = Math.floor(pool.length * 0.1)
+	const splits: Record<string, string[]> = {
+		val: pool.slice(0, nVal),
+		test: pool.slice(nVal, nVal + nTest),
+		train: pool.slice(nVal + nTest),
 	}
 
-	return h >>> 0
+	for (const [split, names] of Object.entries(splits)) {
+		const lines = names.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
+		appendFileSync(path.join(dataDir, `${split}.jsonl`), lines)
+		report?.(`appended ${names.length} OTHER → ${split}.jsonl`)
+	}
+	report?.(`total OTHER pool: ${pool.length}`)
+
+	return { total: pool.length }
 }

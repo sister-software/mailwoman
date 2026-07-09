@@ -7,40 +7,46 @@
  *   `mailwoman tiger` CLI produces.
  *
  *   Reads `tabblock20 ⋈ pl_block` (block geometry + Census 2020 P.L. 94-171 table P2 counts) and
- *   scatters one dot per `--per` people uniformly at random inside each block, tagged with its
+ *   scatters one dot per `per` people uniformly at random inside each block, tagged with its
  *   race/ethnicity category. Output is NDJSON (one GeoJSON Point Feature per line, with a
  *   `tippecanoe` layer hint) ready for `tippecanoe -o race-dots.pmtiles`.
  *
  *   Point-in-polygon uses `@turf/boolean-contains` (ships with `@mailwoman/tiger`). The dot is a
  *   _representation_, not a record: a random position inside the block it belongs to, standing in
- *   for `--per` real people of that category. It says nothing about any individual address.
+ *   for `per` real people of that category. It says nothing about any individual address.
  *
- *   Build the input DB first: mailwoman tiger fetch --state 06 --county 059 --out tiger-oc.db
- *   mailwoman tiger redistricting --state 06 --county 059 --out tiger-oc.db
+ *   Build the input DB first: `mailwoman tiger fetch --state 06 --county 059 --out tiger-oc.db` then
+ *   `mailwoman tiger redistricting --state 06 --county 059 --out tiger-oc.db`.
  *
- *   Run: node scripts/census/race-dots.ts\
- *   --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson
+ *   Run: `mailwoman tiger race-dots --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson`
  */
 
 import { createWriteStream } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import booleanContains from "@turf/boolean-contains"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: { db: { type: "string" }, layer: { type: "string" }, out: { type: "string" }, per: { type: "string" } },
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { db?: string; layer?: string; out?: string; per?: string }
-const DB = values["db"] || dataRootPath("tiger", "tiger-oc.db")
-const OUT = values["out"] || "/tmp/race-dots.ndjson"
-const PER = Number(values["per"] || "10") // people represented by one dot
-const LAYER = values["layer"] || "dots"
+/** Options for {@linkcode raceDots}. */
+export interface RaceDotsOptions {
+	/** TIGER SQLite DB (`tabblock20` ⋈ `pl_block`). Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`. */
+	db?: string
+	/** Output NDJSON path. Default `/tmp/race-dots.ndjson`. */
+	out?: string
+	/** People represented by one dot. Default 10. */
+	per?: number
+	/** Tippecanoe layer name. Default `dots`. */
+	layer?: string
+}
+
+/** Result of {@linkcode raceDots}. */
+export interface RaceDotsResult {
+	outPath: string
+	dots: number
+	skipped: number
+	blocks: number
+	/** Dots emitted per P2 category. */
+	totals: Record<string, number>
+}
 
 // The eight P2 categories (columns in pl_block) that partition each block's population.
 const CATEGORIES = ["hispanic", "white", "black", "asian", "aian", "nhpi", "other", "multi"] as const
@@ -75,97 +81,114 @@ function bbox(rings: PolygonCoords): [number, number, number, number] {
 	return [minX, minY, maxX, maxY]
 }
 
-// A block geometry is one or more polygons. Pick a sub-polygon weighted by bbox area, then
-// rejection-sample inside it with a turf containment test (handles holes + winding correctly).
-function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: number): [number, number] | null {
-	let r = Math.random() * totalArea
-	let pick = 0
+/** Race-by-dot-density NDJSON builder — see the module doc. */
+export async function raceDots(
+	options: RaceDotsOptions = {},
+	report?: (line: string) => void
+): Promise<RaceDotsResult> {
+	const DB = options.db || dataRootPath("tiger", "tiger-oc.db")
+	const OUT = options.out || "/tmp/race-dots.ndjson"
+	const PER = options.per ?? 10 // people represented by one dot
+	const LAYER = options.layer || "dots"
 
-	while (pick < polys.length - 1 && (r -= areas[pick]!) > 0) {
-		pick++
+	// Heavy dep, lazy-imported so loading the tools barrel stays cheap.
+	const { default: booleanContains } = await import("@turf/boolean-contains")
+
+	// A block geometry is one or more polygons. Pick a sub-polygon weighted by bbox area, then
+	// rejection-sample inside it with a turf containment test (handles holes + winding correctly).
+	function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: number): [number, number] | null {
+		let r = Math.random() * totalArea
+		let pick = 0
+
+		while (pick < polys.length - 1 && (r -= areas[pick]!) > 0) {
+			pick++
+		}
+		const poly = polys[pick]!
+		const polyFeature = {
+			type: "Feature" as const,
+			geometry: { type: "Polygon" as const, coordinates: poly },
+			properties: {},
+		}
+		const [minX, minY, maxX, maxY] = bbox(poly)
+
+		for (let tries = 0; tries < 60; tries++) {
+			const x = minX + Math.random() * (maxX - minX)
+			const y = minY + Math.random() * (maxY - minY)
+			const pt = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: [x, y] }, properties: {} }
+
+			if (booleanContains(polyFeature, pt)) return [x, y]
+		}
+
+		return null
 	}
-	const poly = polys[pick]!
-	const polyFeature = {
-		type: "Feature" as const,
-		geometry: { type: "Polygon" as const, coordinates: poly },
-		properties: {},
-	}
-	const [minX, minY, maxX, maxY] = bbox(poly)
 
-	for (let tries = 0; tries < 60; tries++) {
-		const x = minX + Math.random() * (maxX - minX)
-		const y = minY + Math.random() * (maxY - minY)
-		const pt = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: [x, y] }, properties: {} }
+	const db = new DatabaseSync(DB, { readOnly: true })
+	const rows = db
+		.prepare(
+			`SELECT b.geometry AS geometry, ${CATEGORIES.map((c) => `p.${c} AS ${c}`).join(", ")}
+			 FROM tabblock20 b JOIN pl_block p ON b.GEOID = p.GEOID
+			 WHERE p.pop_total > 0`
+		)
+		.all() as Array<{ geometry: string } & Record<(typeof CATEGORIES)[number], number>>
+	db.close()
 
-		if (booleanContains(polyFeature, pt)) return [x, y]
-	}
+	const out = createWriteStream(OUT)
+	const totals = new Map<string, number>()
+	let dots = 0,
+		skipped = 0
 
-	return null
-}
+	for (const row of rows) {
+		let geom: { type: string; coordinates: unknown }
 
-const db = new DatabaseSync(DB, { readOnly: true })
-const rows = db
-	.prepare(
-		`SELECT b.geometry AS geometry, ${CATEGORIES.map((c) => `p.${c} AS ${c}`).join(", ")}
-		 FROM tabblock20 b JOIN pl_block p ON b.GEOID = p.GEOID
-		 WHERE p.pop_total > 0`
-	)
-	.all() as Array<{ geometry: string } & Record<(typeof CATEGORIES)[number], number>>
-db.close()
+		try {
+			geom = JSON.parse(row.geometry)
+		} catch {
+			continue
+		}
+		const polys: PolygonCoords[] =
+			geom.type === "Polygon" ? [geom.coordinates as PolygonCoords] : (geom.coordinates as PolygonCoords[])
+		const areas = polys.map((p) => {
+			const [a, b, c, d] = bbox(p)
 
-const out = createWriteStream(OUT)
-const totals = new Map<string, number>()
-let dots = 0,
-	skipped = 0
+			return Math.max((c - a) * (d - b), 1e-12)
+		})
+		const totalArea = areas.reduce((s, a) => s + a, 0)
 
-for (const row of rows) {
-	let geom: { type: string; coordinates: unknown }
+		for (const cat of CATEGORIES) {
+			const people = row[cat]
 
-	try {
-		geom = JSON.parse(row.geometry)
-	} catch {
-		continue
-	}
-	const polys: PolygonCoords[] =
-		geom.type === "Polygon" ? [geom.coordinates as PolygonCoords] : (geom.coordinates as PolygonCoords[])
-	const areas = polys.map((p) => {
-		const [a, b, c, d] = bbox(p)
+			if (people <= 0) continue
+			const exact = people / PER
+			const n = Math.floor(exact) + (Math.random() < exact - Math.floor(exact) ? 1 : 0)
 
-		return Math.max((c - a) * (d - b), 1e-12)
-	})
-	const totalArea = areas.reduce((s, a) => s + a, 0)
+			for (let k = 0; k < n; k++) {
+				const pt = randomPointIn(polys, areas, totalArea)
 
-	for (const cat of CATEGORIES) {
-		const people = row[cat]
-
-		if (people <= 0) continue
-		const exact = people / PER
-		const n = Math.floor(exact) + (Math.random() < exact - Math.floor(exact) ? 1 : 0)
-
-		for (let k = 0; k < n; k++) {
-			const pt = randomPointIn(polys, areas, totalArea)
-
-			if (!pt) {
-				skipped++
-				continue
+				if (!pt) {
+					skipped++
+					continue
+				}
+				out.write(
+					JSON.stringify({
+						type: "Feature",
+						tippecanoe: { layer: LAYER },
+						properties: { cat },
+						geometry: { type: "Point", coordinates: [Math.round(pt[0] * 1e5) / 1e5, Math.round(pt[1] * 1e5) / 1e5] },
+					}) + "\n"
+				)
+				dots++
+				totals.set(cat, (totals.get(cat) ?? 0) + 1)
 			}
-			out.write(
-				JSON.stringify({
-					type: "Feature",
-					tippecanoe: { layer: LAYER },
-					properties: { cat },
-					geometry: { type: "Point", coordinates: [Math.round(pt[0] * 1e5) / 1e5, Math.round(pt[1] * 1e5) / 1e5] },
-				}) + "\n"
-			)
-			dots++
-			totals.set(cat, (totals.get(cat) ?? 0) + 1)
 		}
 	}
-}
 
-out.end()
-console.error(`[done] ${dots} dots from ${rows.length} blocks (1 dot ≈ ${PER} people); ${skipped} skipped`)
+	out.end()
+	await new Promise<void>((resolve) => out.on("finish", () => resolve()))
+	report?.(`[done] ${dots} dots from ${rows.length} blocks (1 dot ≈ ${PER} people); ${skipped} skipped`)
 
-for (const [cat, n] of [...totals.entries()].sort((a, b) => b[1] - a[1])) {
-	console.error(`  ${n.toString().padStart(7)}  ${cat}`)
+	for (const [cat, n] of [...totals.entries()].sort((a, b) => b[1] - a[1])) {
+		report?.(`  ${n.toString().padStart(7)}  ${cat}`)
+	}
+
+	return { outPath: OUT, dots, skipped, blocks: rows.length, totals: Object.fromEntries(totals) }
 }
