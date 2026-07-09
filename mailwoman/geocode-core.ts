@@ -28,7 +28,13 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
-import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
+import type {
+	AddressPointLookup,
+	InterpolationLookup,
+	ResolveOpts,
+	Resolver,
+	StreetCentroidLookup,
+} from "@mailwoman/resolver"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.js"
@@ -36,13 +42,14 @@ import { interpCalibrationForRegion, type InterpCalibrationTable } from "./inter
 import { recognizeUSRegions } from "./region-recognition.js"
 
 /**
- * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
+ * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.
  *
  * - `address_point` — rooftop / parcel centroid; uncertainty_m is a small floor (~1 m)
  * - `interpolated` — house-number estimate; uncertainty_m is honest (calibrated bracket span)
+ * - `street` — street centroid for a street-only query (#1042); uncertainty_m is half the street's bbox diagonal
  * - `admin` — admin centroid; uncertainty_m is null (no sub-locality estimate available)
  */
-export type ResolutionTier = "address_point" | "interpolated" | "admin"
+export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin"
 
 export interface GeocodeResult {
 	input: string
@@ -54,6 +61,16 @@ export interface GeocodeResult {
 	locality: string | null
 	region: string | null
 	postcode: string | null
+	/**
+	 * The PARSED house number + full street name (reassembled from the street subtree — prefix + base + suffix, since
+	 * `street.value` alone is the bare base span), or null when the parse found neither. #1041 — lets a forward consumer
+	 * that resolved to a house-number-grade coordinate (the `address_point` / `interpolated` {@link resolution_tier})
+	 * render the result HOUSE-GRADE (`type: house` + `housenumber`/`street`, matching upstream Photon) instead of
+	 * mislabeling a rooftop as its admin locality. Populated regardless of tier (they are the parsed spans); the consumer
+	 * gates the house-grade rendering on the tier so an admin-only fallback is never dressed up as a rooftop.
+	 */
+	house_number: string | null
+	street: string | null
 	/**
 	 * ISO-3166 alpha-2 of the resolved place (the gazetteer/candidate country of the deepest resolved node), or null.
 	 * #1014 — lets a forward consumer fill `country`/`countrycode` without a full ancestry walk (the candidate backend
@@ -87,6 +104,13 @@ export interface GeocodeResult {
 export interface StateShards {
 	addressPoints?: AddressPointLookup
 	interpolation?: InterpolationLookup
+	/**
+	 * Derived street-centroid tier (#1042) — a `GROUP BY street` roll-up of a national register's rooftop points, keyed
+	 * for a street-only query (no house number). Supplied today only by `@mailwoman/ban`'s `BANShardProvider` for FR (the
+	 * US per-state {@link ShardProvider} never opens one), so the tier is FR-only in practice and every non-FR path stays
+	 * byte-stable. Consulted BELOW the address-point/interpolation tiers, ABOVE admin.
+	 */
+	streetCentroids?: StreetCentroidLookup
 }
 
 /** Resolve the situs/interpolation shards for a state slug (e.g. `"tx"`). `null` slug → no shards. */
@@ -473,6 +497,14 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop shard for a non-US parse.
 	let placedCountry: string | null = null
 
+	// The placer's prediction, computed ONCE and UNGATED (so it's available even for a bare-locality tree, where the
+	// #912 lever below deliberately withholds it from the anchor). Reused by that lever AND by the #1042 street tier's
+	// country hint (a bare thoroughfare "Avenue des Champs-Élysées, Paris" is a bare-locality tree — the only reliable
+	// FR signal there is this ungated placer). Byte-stable: the anchor/hardCountry logic stays gated exactly as before.
+	const placerResult = placeCountry ? placeCountry(parseInput) : null
+	const streetPlacerCountry =
+		placerResult?.country && placerResult.country !== "OTHER" ? placerResult.country.toLowerCase() : null
+
 	// #928: a distinctive postcode FORMAT outranks the language-based placer (which conflates GB/US → US
 	// namesakes). When gated on and no explicit defaultCountry, set the country prior from the parsed
 	// postcode's format; the placer block below then no-ops via its `!opts.anchorPosterior` guard. Confidence
@@ -502,8 +534,8 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// #912 lever 1: the placer abstains on a single bare locality — OOD input, and the wrong soft
 	// posterior overrides the resolver's better-informed exact-tier/population ranking (see
 	// isBareLocalityTree). Explicit defaultCountry / anchorPosterior from the caller are untouched.
-	if (placeCountry && !isBareLocalityTree(tree)) {
-		const placed = placeCountry(parseInput)
+	if (placeCountry && placerResult && !isBareLocalityTree(tree)) {
+		const placed = placerResult
 		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
@@ -562,6 +594,29 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		opts.addressPoints = addressPoints
 	}
 
+	// National street-centroid tier (#1042): wire the country-keyed street-centroid PROVIDER (BAN-FR today) + the
+	// pre-resolution country hints so a STREET-ONLY query (no house number) — which no rooftop tier can serve — gets a
+	// street-level coordinate instead of the commune centroid. The resolver's applyStreetCentroid self-gates on
+	// no-house-number (a numbered query is byte-identical) and unions these hints with the RESOLVED-tree countries,
+	// because the pre-resolution country of a bare thoroughfare is unreliable (bare-locality tree / placer mis-route).
+	// US never supplies a street shard, so `provider("us")` is undefined and the US path stays byte-stable.
+	if (deps.nationalShards) {
+		const provider = deps.nationalShards
+
+		opts.streetCentroids = (country: string) => provider(country).streetCentroids
+		const hints: string[] = []
+
+		for (const c of [deps.defaultCountry?.toLowerCase(), placedCountry?.toLowerCase(), streetPlacerCountry]) {
+			if (c && !hints.includes(c)) {
+				hints.push(c)
+			}
+		}
+
+		if (hints.length > 0) {
+			opts.streetCountryHints = hints
+		}
+	}
+
 	if (interpolation) {
 		opts.interpolation = interpolation
 		// Resolve to a single multiplier: a per-region table selects by the parsed region (`stateSlug`);
@@ -579,6 +634,31 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	const resolved = await deps.resolver.resolveTree(tree, opts)
 
 	return extractGeocodeResult(input, resolved)
+}
+
+/**
+ * Street-name component tags — the name-bearing subtree of a `street` node (`street.value` alone is the bare base:
+ * "Sheldon" for "East Sheldon Rd"). Mirrors the resolver's `assembleStreetValue`; used to surface the FULL parsed
+ * street on the result so a house-grade forward consumer renders "Boulevard du Palais", not just "Palais". #1041.
+ */
+const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
+
+/** Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041. */
+function assembleStreetName(streetNode: AddressNode): string {
+	const parts: AddressNode[] = []
+	const stack = [streetNode]
+
+	while (stack.length > 0) {
+		const n = stack.pop()!
+
+		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
+			parts.push(n)
+		}
+		stack.push(...n.children)
+	}
+	parts.sort((a, b) => a.start - b.start)
+
+	return parts.map((n) => n.value.trim()).join(" ")
 }
 
 /**
@@ -624,6 +704,19 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		}
 	}
 
+	// Street-centroid tier (#1042): below rooftop/interp, above admin. Only reached for a street-only query the
+	// exact tiers couldn't serve (they require a house number), so this never displaces a rooftop coordinate.
+	if (tier !== "address_point" && tier !== "interpolated" && streetNode?.metadata?.["resolution_tier"] === "street") {
+		const sc = streetNode.metadata["street_centroid"] as { lat: number; lon: number } | undefined
+
+		if (sc) {
+			lat = sc.lat
+			lon = sc.lon
+			tier = "street"
+			uncertaintyM = (streetNode.metadata["uncertainty_m"] as number | undefined) ?? null
+		}
+	}
+
 	if (tier === "admin") {
 		// `postcode` joins the ladder (after the locality tiers, before region): a lone-postcode
 		// query resolves the postcode node itself — without it here the result reported 0,0 despite
@@ -660,6 +753,11 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const locality = allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() || null
 	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null
 	const postcode = allNodes.find((n) => n.tag === "postcode")?.value?.trim() || null
+
+	// #1041: the parsed house number + full street name, so a house-grade forward consumer (photon `/api`) can decorate a
+	// rooftop / interpolated result with `housenumber`/`street` (matching upstream Photon) instead of the admin locality.
+	const houseNumber = allNodes.find((n) => n.tag === "house_number")?.value?.trim() || null
+	const street = streetNode ? assembleStreetName(streetNode) || null : null
 
 	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
 	const hierarchy = allNodes
@@ -751,6 +849,8 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		locality,
 		region,
 		postcode,
+		house_number: houseNumber,
+		street,
 		countryCode,
 		hierarchy,
 		candidates,

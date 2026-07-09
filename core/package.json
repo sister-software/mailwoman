@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/core",
-	"version": "5.8.0",
+	"version": "5.9.0",
 	"description": "Mailwoman core: tokenization, classification primitives, solver, formatter, resources, filters, solvers, utils.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {

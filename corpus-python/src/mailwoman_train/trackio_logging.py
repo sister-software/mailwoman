@@ -136,7 +136,10 @@ def _run_config(cfg: Any) -> dict[str, Any]:
     return {
         # Human-readable legend shown in the run's config panel — so a viewer who isn't
         # steeped in the metrics knows how to read the charts (esp. the blank/gap ones).
-        "_legend": (
+        # NB: the key must NOT start with "_" — current trackio reserves the "_" prefix and
+        # raises "Config key '_legend' is reserved" from init(), which trackio_logging.py catches
+        # and silently downgrades the whole run to CSV-only (no Space dashboard). Plain "legend".
+        "legend": (
             "f1.<tag> = token-level F1 for that address component on the val set (higher is better). "
             "support.<tag> = how many val examples contain that component. A MISSING/BLANK f1.<tag> "
             "chart means support.<tag> = 0 — the val sample has no examples of that tag, so F1 is "
