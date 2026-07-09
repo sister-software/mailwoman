@@ -25,46 +25,186 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./classification": "./out/classification/index.js",
-		"./coarse-placer": "./out/coarse-placer/coarse-placer.js",
-		"./tokenization": "./out/tokenization/index.js",
-		"./types": "./out/types/index.js",
-		"./parser": "./out/parser/index.js",
-		"./solver": "./out/solver/index.js",
-		"./formatter": "./out/formatter/index.js",
-		"./decoder": "./out/decoder/index.js",
-		"./env": "./out/env/index.js",
-		"./resources": "./out/resources/index.js",
-		"./resources/languages": "./out/resources/languages/index.js",
-		"./resources/whosonfirst": "./out/resources/whosonfirst/index.js",
-		"./resources/libpostal": "./out/resources/libpostal/index.js",
-		"./utils": "./out/utils/index.js",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./classification": {
+			"node": "./classification/index.ts",
+			"default": "./out/classification/index.js",
+			"types": "./out/classification/index.d.ts"
+		},
+		"./coarse-placer": {
+			"node": "./coarse-placer/coarse-placer.ts",
+			"default": "./out/coarse-placer/coarse-placer.js",
+			"types": "./out/coarse-placer/coarse-placer.d.ts"
+		},
+		"./tokenization": {
+			"node": "./tokenization/index.ts",
+			"default": "./out/tokenization/index.js",
+			"types": "./out/tokenization/index.d.ts"
+		},
+		"./types": {
+			"node": "./types/index.ts",
+			"default": "./out/types/index.js",
+			"types": "./out/types/index.d.ts"
+		},
+		"./parser": {
+			"node": "./parser/index.ts",
+			"default": "./out/parser/index.js",
+			"types": "./out/parser/index.d.ts"
+		},
+		"./solver": {
+			"node": "./solver/index.ts",
+			"default": "./out/solver/index.js",
+			"types": "./out/solver/index.d.ts"
+		},
+		"./formatter": {
+			"node": "./formatter/index.ts",
+			"default": "./out/formatter/index.js",
+			"types": "./out/formatter/index.d.ts"
+		},
+		"./decoder": {
+			"node": "./decoder/index.ts",
+			"default": "./out/decoder/index.js",
+			"types": "./out/decoder/index.d.ts"
+		},
+		"./env": {
+			"node": "./env/index.ts",
+			"default": "./out/env/index.js",
+			"types": "./out/env/index.d.ts"
+		},
+		"./resources": {
+			"node": "./resources/index.ts",
+			"default": "./out/resources/index.js",
+			"types": "./out/resources/index.d.ts"
+		},
+		"./resources/languages": {
+			"node": "./resources/languages/index.ts",
+			"default": "./out/resources/languages/index.js",
+			"types": "./out/resources/languages/index.d.ts"
+		},
+		"./resources/whosonfirst": {
+			"node": "./resources/whosonfirst/index.ts",
+			"default": "./out/resources/whosonfirst/index.js",
+			"types": "./out/resources/whosonfirst/index.d.ts"
+		},
+		"./resources/libpostal": {
+			"node": "./resources/libpostal/index.ts",
+			"default": "./out/resources/libpostal/index.js",
+			"types": "./out/resources/libpostal/index.d.ts"
+		},
+		"./utils": {
+			"node": "./utils/index.ts",
+			"default": "./out/utils/index.js",
+			"types": "./out/utils/index.d.ts"
+		},
 		"./fs": {
 			"node": "./fs/node.ts",
 			"default": "./out/fs/node.js",
 			"types": "./out/fs/node.d.ts"
 		},
-		"./scripting": "./out/scripting/index.js",
-		"./scripting/utils": "./out/scripting/utils/index.js",
-		"./lifecycle": "./out/lifecycle/index.js",
-		"./identifiers": "./out/identifiers/index.js",
-		"./objects": "./out/objects.js",
-		"./locale": "./out/locale/index.js",
-		"./api": "./out/api/index.js",
-		"./logging": "./out/logging/index.js",
-		"./policy": "./out/policy/index.js",
-		"./pipeline": "./out/pipeline/index.js",
-		"./resolver": "./out/resolver/index.js",
-		"./kysley/client": "./out/kysley/client.js",
-		"./kysley/dialect": "./out/kysley/dialect.js",
-		"./kysley/dialect-config": "./out/kysley/dialect-config.js",
-		"./solvers": "./out/solvers/index.js",
-		"./errors": "./out/errors/index.js",
-		"./routing": "./out/routing/index.js",
-		"./solvers/*": "./out/solvers/*",
-		"./filters": "./out/filters/index.js",
-		"./filters/*": "./out/filters/*"
+		"./scripting": {
+			"node": "./scripting/index.ts",
+			"default": "./out/scripting/index.js",
+			"types": "./out/scripting/index.d.ts"
+		},
+		"./scripting/utils": {
+			"node": "./scripting/utils/index.ts",
+			"default": "./out/scripting/utils/index.js",
+			"types": "./out/scripting/utils/index.d.ts"
+		},
+		"./lifecycle": {
+			"node": "./lifecycle/index.ts",
+			"default": "./out/lifecycle/index.js",
+			"types": "./out/lifecycle/index.d.ts"
+		},
+		"./identifiers": {
+			"node": "./identifiers/index.ts",
+			"default": "./out/identifiers/index.js",
+			"types": "./out/identifiers/index.d.ts"
+		},
+		"./objects": {
+			"node": "./objects/index.ts",
+			"default": "./out/objects/index.js",
+			"types": "./out/objects/index.d.ts"
+		},
+		"./locale": {
+			"node": "./locale/index.ts",
+			"default": "./out/locale/index.js",
+			"types": "./out/locale/index.d.ts"
+		},
+		"./api": {
+			"node": "./api/index.ts",
+			"default": "./out/api/index.js",
+			"types": "./out/api/index.d.ts"
+		},
+		"./logging": {
+			"node": "./logging/index.ts",
+			"default": "./out/logging/index.js",
+			"types": "./out/logging/index.d.ts"
+		},
+		"./policy": {
+			"node": "./policy/index.ts",
+			"default": "./out/policy/index.js",
+			"types": "./out/policy/index.d.ts"
+		},
+		"./pipeline": {
+			"node": "./pipeline/index.ts",
+			"default": "./out/pipeline/index.js",
+			"types": "./out/pipeline/index.d.ts"
+		},
+		"./resolver": {
+			"node": "./resolver/index.ts",
+			"default": "./out/resolver/index.js",
+			"types": "./out/resolver/index.d.ts"
+		},
+		"./kysley/client": {
+			"node": "./kysley/client.ts",
+			"default": "./out/kysley/client.js",
+			"types": "./out/kysley/client.d.ts"
+		},
+		"./kysley/dialect": {
+			"node": "./kysley/dialect.ts",
+			"default": "./out/kysley/dialect.js",
+			"types": "./out/kysley/dialect.d.ts"
+		},
+		"./kysley/dialect-config": {
+			"node": "./kysley/dialect-config.ts",
+			"default": "./out/kysley/dialect-config.js",
+			"types": "./out/kysley/dialect-config.d.ts"
+		},
+		"./solvers": {
+			"node": "./solvers/index.ts",
+			"default": "./out/solvers/index.js",
+			"types": "./out/solvers/index.d.ts"
+		},
+		"./errors": {
+			"node": "./errors/index.ts",
+			"default": "./out/errors/index.js",
+			"types": "./out/errors/index.d.ts"
+		},
+		"./routing": {
+			"node": "./routing/index.ts",
+			"default": "./out/routing/index.js",
+			"types": "./out/routing/index.d.ts"
+		},
+		"./solvers/*": {
+			"node": "./solvers/*.ts",
+			"default": "./out/solvers/*.js",
+			"types": "./out/solvers/*.d.ts"
+		},
+		"./filters": {
+			"node": "./filters/index.ts",
+			"default": "./out/filters/index.js",
+			"types": "./out/filters/index.d.ts"
+		},
+		"./filters/*": {
+			"node": "./filters/*.ts",
+			"default": "./out/filters/*.js",
+			"types": "./out/filters/*.d.ts"
+		}
 	},
 	"publishConfig": {
 		"access": "public"
