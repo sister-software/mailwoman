@@ -27,10 +27,11 @@ export interface GeoCoordinate {
 
 /**
  * The resolution tier that produced a coordinate, mirroring mailwoman's geocoder (`address_point` > `interpolated` >
- * `admin`). Kept as a local plain union so this package stays decoupled from the heavy geocoder runtime; a
- * `GeocodeResult.resolution_tier` maps in directly.
+ * `street` > `admin`). Kept as a local plain union so this package stays decoupled from the heavy geocoder runtime; a
+ * `GeocodeResult.resolution_tier` maps in directly. (`street` = a street centroid for a street-only query, #1042 —
+ * coarser than a house-number estimate, finer than an admin centroid.)
  */
-export type ResolutionTier = "address_point" | "interpolated" | "admin"
+export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin"
 
 /** One resolved admin-hierarchy ancestor (most specific first), for spelling-invariant blocking. */
 export interface HierarchyNode {

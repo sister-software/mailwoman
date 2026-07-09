@@ -15,7 +15,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { AddressPointLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
+import type { AddressPointLookup, ResolveOpts, Resolver, StreetCentroidLookup } from "@mailwoman/resolver"
 import { describe, expect, test, vi } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier, type StateShards } from "../geocode-core.js"
@@ -90,6 +90,36 @@ describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => 
 		})
 		expect(nationalShards).not.toHaveBeenCalled()
 		expect(seen[0]?.addressPoints).toBeUndefined()
+	})
+
+	test("wires the street-centroid provider + FR hint for a non-US parse (#1042)", async () => {
+		const { resolver, seen } = captureResolver()
+		const streetLookup: StreetCentroidLookup = { find: vi.fn(() => null) }
+		await geocodeAddress("Place Bellecour, Lyon", {
+			classifier: fakeClassifier(emptyTree),
+			resolver,
+			placeCountry: false,
+			defaultCountry: "FR",
+			nationalShards: (c) => (c === "fr" ? { streetCentroids: streetLookup } : {}),
+		})
+		// A country-keyed PROVIDER (not a bare lookup): resolves the FR shard, undefined for a country BAN lacks.
+		expect(typeof seen[0]?.streetCentroids).toBe("function")
+		expect(seen[0]?.streetCentroids?.("fr")).toBe(streetLookup)
+		expect(seen[0]?.streetCentroids?.("de")).toBeUndefined()
+		// The pre-resolution hint carries the country the tier's union starts from.
+		expect(seen[0]?.streetCountryHints).toContain("fr")
+	})
+
+	test("absent nationalShards ⇒ no street-centroid tier (byte-stable, #1042)", async () => {
+		const { resolver, seen } = captureResolver()
+		await geocodeAddress("Place Bellecour, Lyon", {
+			classifier: fakeClassifier(emptyTree),
+			resolver,
+			placeCountry: false,
+			defaultCountry: "FR",
+		})
+		expect(seen[0]?.streetCentroids).toBeUndefined()
+		expect(seen[0]?.streetCountryHints).toBeUndefined()
 	})
 
 	test("absent nationalShards ⇒ byte-stable: the OSM tier serves FR unchanged (pre-#1012 behavior)", async () => {

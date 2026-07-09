@@ -206,6 +206,31 @@ export interface InterpolationLookup {
 	find(query: { street: string; number: string; postcode?: string }): InterpolatedPointHit | null
 }
 
+/**
+ * One street-CENTROID hit (#1042) — the street-level tier BELOW the exact address-point tier and ABOVE admin-centroid
+ * resolution. A street's centroid + an honest extent-derived radius, for a street-only query (no house number) that an
+ * address-point tier cannot serve by definition. Derived from a national register's rooftop points
+ * (`street-centroids-<cc>.db`, a `GROUP BY street` roll-up). `uncertaintyM` prices the coarseness (half the street's
+ * bbox diagonal) so a consumer never mistakes it for a rooftop.
+ */
+export interface StreetCentroidHit {
+	lat: number
+	lon: number
+	/** Honest coarse radius in METERS — half the street's bounding-box diagonal. */
+	uncertaintyM: number
+	source: string
+	release: string
+}
+
+/**
+ * Street-centroid lookup (#1042). Like {@link AddressPointLookup}, implementations own their normalization (the shared
+ * `resolver-wof-sqlite/street-normalize.ts`); core depends only on this contract. Scoped by `postcode` (preferred) or
+ * `locality` (the base commune) — NO house number: this is the street-only tier.
+ */
+export interface StreetCentroidLookup {
+	find(query: { street: string; postcode?: string; locality?: string }): StreetCentroidHit | null
+}
+
 export interface ResolveOpts {
 	/**
 	 * Hard cap on how many backend lookups one tree may issue. Default 10. Prevents a tree with dozens of candidate nodes
@@ -335,6 +360,30 @@ export interface ResolveOpts {
 	 * docs/articles/evals/2026-06-14-interp-radius-calibration.md.
 	 */
 	interpolationRadiusCalibration?: number
+	/**
+	 * Street-centroid tier (#1042): consulted for a STREET-ONLY query (a street/thoroughfare with NO house number) that
+	 * neither the address-point nor the interpolation tier can serve. On a hit, injects/stamps a resolved `street` node
+	 * carrying the street's centroid under a DISTINCT metadata key (`street_centroid`, `resolution_tier: "street"`,
+	 * `uncertainty_m`) — never `address_point`/`interpolated_point`, so a consumer reading the exact keys never gets a
+	 * coarse centroid mislabeled as a rooftop. The thoroughfare + commune are recovered raw-text-first (the FR no-street
+	 * class mis-parses the thoroughfare as a locality — #901 composition-insensitive), so the tier rides the model where
+	 * it works and recovers where it fails.
+	 *
+	 * A COUNTRY-KEYED PROVIDER (not a bare lookup) because the country signal for a street-only query is unreliable
+	 * BEFORE resolution: a bare thoroughfare ("Avenue des Champs-Élysées, Paris") is a bare-locality tree the placer is
+	 * skipped on, and the placer mis-routes some French streets ("Rue Sainte-Catherine" → IT). So the tier probes a UNION
+	 * of candidate countries — {@link streetCountryHints} (pre-resolution: defaultCountry + the ungated placer) PLUS the
+	 * countries the tree actually RESOLVED to — and the exact (street, base-commune) match is itself the country filter.
+	 * Opt-in; absent = byte-stable. Never fires when a house number is present (rooftop tiers untouched) or when a
+	 * street-level coordinate already resolved.
+	 */
+	streetCentroids?: (country: string) => StreetCentroidLookup | undefined
+	/**
+	 * Ordered pre-resolution country hints for the {@link streetCentroids} tier — the caller's defaultCountry and the
+	 * (ungated) coarse-placer country. The tier unions these with the resolved-tree countries. Absent = only the resolved
+	 * countries are tried.
+	 */
+	streetCountryHints?: readonly string[]
 	/**
 	 * Span-rescore tier (#370). When the tree resolved nothing, recover a dropped/fragmented locality from the raw text:
 	 * enumerate raw-token spans, exact-match the same-country gazetteer (longest-wins + postcode-consistency gate), and

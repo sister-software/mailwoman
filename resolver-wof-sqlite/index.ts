@@ -95,6 +95,13 @@ export {
 export { AddressPointInterpolator } from "./address-point-interpolation.js"
 export { AddressPointSqliteLookup } from "./address-point.js"
 export {
+	STREET_CENTROID_COLUMNS,
+	createStreetCentroidIndexes,
+	createStreetCentroidTable,
+} from "./street-centroid-schema.js"
+export type { StreetCentroidDatabase, StreetCentroidTable } from "./street-centroid-schema.js"
+export { StreetCentroidSqliteLookup } from "./street-centroid.js"
+export {
 	StreetInterpolator,
 	type InterpolatedHit,
 	type InterpolationMethod,

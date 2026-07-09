@@ -45,6 +45,7 @@
 		"./candidate-schema": "./out/candidate-schema.js",
 		"./postal-city-alias-schema": "./out/postal-city-alias-schema.js",
 		"./address-point-schema": "./out/address-point-schema.js",
+		"./street-centroid-schema": "./out/street-centroid-schema.js",
 		"./street-segment-schema": "./out/street-segment-schema.js"
 	},
 	"publishConfig": {

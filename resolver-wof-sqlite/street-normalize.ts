@@ -235,6 +235,22 @@ export function normalizeLocalityForKey(locality: string): string {
 }
 
 /**
+ * Strip a trailing French arrondissement designator from a FOLDED commune key ("paris 8e arrondissement" → "paris",
+ * "lyon 1er arrondissement" → "lyon", "marseille 10e arrondissement" → "marseille"). Paris, Lyon and Marseille are the
+ * only French communes subdivided into _arrondissements municipaux_; a national register (BAN) names each row per
+ * arrondissement, but a query names the base commune ("Place Bellecour, Lyon", never "…, Lyon 2e"). Applied on BOTH
+ * sides of the #1042 street-centroid key — build-side (deriving the `locality_base` column) and query-side (folding the
+ * probe commune) — so the two agree by construction (the one-function discipline). Input must already be folded
+ * (lower-case, diacritic-stripped); a no-op for every other commune. Returns the input unchanged if the strip would
+ * empty it.
+ */
+export function stripArrondissement(localityNorm: string): string {
+	const stripped = localityNorm.replace(/\s+\d+(?:er|e)\s+arrondissement$/, "").trim()
+
+	return stripped || localityNorm
+}
+
+/**
  * Strip a locality QUALIFIER for a query-side fallback — when an OA locality's exact normalized name misses the
  * gazetteer's canonical name, retry with the qualifier removed. OA address data carries disambiguating qualifiers the
  * gazetteer's canonical name omits: Austrian `Kraubath/Mur` and `Hart b.Graz` → `Hart`; Swiss `Lenk im Simmental` →

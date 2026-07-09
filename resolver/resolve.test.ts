@@ -15,6 +15,7 @@ import type {
 	InterpolationLookup,
 	ResolvedPlace,
 	ResolverBackend,
+	StreetCentroidLookup,
 } from "@mailwoman/core/resolver"
 import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import { describe, expect, test, vi } from "vitest"
@@ -977,5 +978,134 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const noHn = tree("Main St", [node("street", "Main St", 0, 7)])
 		await resolver.resolveTree(noHn, { interpolation: spy })
 		expect(called).toBe(false)
+	})
+})
+
+// ---------------------------------------------------------------------------
+// Street-centroid tier (#1042) — the street-only rung between interp and admin.
+// ---------------------------------------------------------------------------
+
+/** A fake street-centroid lookup that hits only for known (normalized street, commune) pairs. */
+function fakeStreetCentroids(
+	entries: Array<{ street: string; commune: string; lat: number; lon: number }>,
+	onCall?: () => void
+): StreetCentroidLookup {
+	// Mirror the FR normalizer's apostrophe/hyphen handling: strip apostrophes GLUED ("l'intendance" →
+	// "lintendance"), hyphens → space ("Sainte-Catherine" → "sainte catherine").
+	const key = (s: string, c: string) =>
+		`${s
+			.toLowerCase()
+			.replace(/['’]/g, "")
+			.replace(/-/g, " ")
+			.replace(/\s+/g, " ")
+			.trim()}|${c.toLowerCase().trim()}`
+	const map = new Map(entries.map((e) => [key(e.street, e.commune), e]))
+
+	return {
+		find: (q) => {
+			onCall?.()
+			const commune = q.locality ?? q.postcode ?? ""
+			const e = map.get(key(q.street, commune))
+
+			return e ? { lat: e.lat, lon: e.lon, uncertaintyM: 120, source: "ban:fr", release: "2026-05-18" } : null
+		},
+	}
+}
+
+/** A FR-only provider (mirrors BANShardProvider: only `fr` yields a lookup). */
+const frProvider = (lookup: StreetCentroidLookup) => (country: string) => (country === "fr" ? lookup : undefined)
+
+/** Pull the street node's stamped street-centroid tier out of a resolved tree, if any. */
+function streetTier(t: AddressTree): AddressNode | undefined {
+	const stack = [...t.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		if (n.tag === "street" && n.metadata?.["resolution_tier"] === "street") return n
+		stack.push(...n.children)
+	}
+
+	return undefined
+}
+
+describe("resolveTree — street-centroid tier (#1042)", () => {
+	test("recovers a thoroughfare the model mis-parsed as a locality (via the FR country hint)", async () => {
+		const lookup = fakeStreetCentroids([{ street: "place bellecour", commune: "Lyon", lat: 45.7576, lon: 4.8317 }])
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		// The FR no-street parse shape: thoroughfare tagged `locality`, commune tagged `region`.
+		const input = tree("Place Bellecour, Lyon", [
+			node("locality", "Place Bellecour", 0, 15),
+			node("region", "Lyon", 17, 21),
+		])
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
+		const street = streetTier(out)
+		expect(street).toBeDefined()
+		expect(street!.metadata!["street_centroid"]).toMatchObject({ lat: 45.7576, lon: 4.8317, source: "ban:fr" })
+		expect(street!.metadata!["uncertainty_m"]).toBe(120)
+	})
+
+	test("recovers the commune from the raw comma-split when the parse dropped it", async () => {
+		const lookup = fakeStreetCentroids([
+			{ street: "rue sainte catherine", commune: "Bordeaux", lat: 44.8364, lon: -0.5736 },
+		])
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		// Garbled parse (the real "Rue Sainte-Catherine, Bordeaux" shape): street present, commune lost.
+		const input = tree("Rue Sainte-Catherine, Bordeaux", [
+			node("locality", "e", 0, 1),
+			node("street", "Rue Sainte-Catherine", 0, 20),
+		])
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
+		const street = streetTier(out)
+		expect(street?.metadata?.["street_centroid"]).toMatchObject({ lat: 44.8364, lon: -0.5736 })
+	})
+
+	test("unions the RESOLVED-tree country when no hint pins it (placer mis-route recovery)", async () => {
+		// Commune resolves to France (so `resolver_country: FR` is stamped) but NO pre-resolution hint says FR.
+		const places: ResolvedPlace[] = [
+			{ id: 1, name: "Bordeaux", placetype: "locality", country: "FR", lat: 44.84, lon: -0.58, score: 9 },
+		]
+		const lookup = fakeStreetCentroids([
+			{ street: "cours de lintendance", commune: "Bordeaux", lat: 44.8419, lon: -0.5772 },
+		])
+		const resolver = createWOFResolver(new FakeResolverBackend(places))
+		const input = tree("Cours de l'Intendance, Bordeaux", [
+			node("locality", "Cours de l'Intendance", 0, 21),
+			node("locality", "Bordeaux", 23, 31),
+		])
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup) /* no hints */ })
+		expect(streetTier(out)?.metadata?.["street_centroid"]).toMatchObject({ lat: 44.8419, lon: -0.5772 })
+	})
+
+	test("never fires when a house number is present (rooftop tiers' domain)", async () => {
+		let called = false
+		const lookup = fakeStreetCentroids([{ street: "rue de rivoli", commune: "Paris", lat: 1, lon: 2 }], () => {
+			called = true
+		})
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const input = tree("10 Rue de Rivoli, Paris", [
+			node("house_number", "10", 0, 2),
+			node("street", "Rue de Rivoli", 3, 16),
+			node("locality", "Paris", 18, 23),
+		])
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
+		expect(called).toBe(false)
+		expect(streetTier(out)).toBeUndefined()
+	})
+
+	test("no matching country → the lookup is never consulted (byte-stable)", async () => {
+		let called = false
+		const lookup = fakeStreetCentroids([{ street: "place bellecour", commune: "Lyon", lat: 1, lon: 2 }], () => {
+			called = true
+		})
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const input = tree("Main Street, Springfield", [
+			node("street", "Main Street", 0, 11),
+			node("locality", "Springfield", 13, 24),
+		])
+		// Hint is US; provider only serves `fr` — so no lookup is opened.
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["us"] })
+		expect(called).toBe(false)
+		expect(streetTier(out)).toBeUndefined()
 	})
 })
