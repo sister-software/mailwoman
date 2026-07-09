@@ -105,6 +105,69 @@ test("forward: a street-primary result names the street and types as street", ()
 	expect(props.type).toBe("street")
 })
 
+// #1041 — a rooftop / interpolated result must render HOUSE-GRADE. Upstream komoot/photon labels a bare
+// residential address point `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with NO
+// `name` (verified against photon.komoot.io). Without this a rooftop inherits the admin ancestry's `type:city`
+// and a client zooms to city scale on a doorstep match.
+
+test("forward: a house-grade (rooftop) result decorates type:house + housenumber/street (#1041)", () => {
+	const props = photonForwardProperties({
+		lat: 48.8548,
+		lon: 2.3451,
+		postcode: "75001",
+		country: { name: "France", code: "FR" },
+		// The resolved ancestry is still locality→…; the `house` marker overrides the schema to house-grade.
+		places: [{ tag: "locality", name: "Paris" }],
+		house: { number: "8", street: "Boulevard du Palais" },
+	})
+	// Matches upstream komoot/photon's bare address point.
+	expect(props.type).toBe("house")
+	expect(props.osm_key).toBe("place")
+	expect(props.osm_value).toBe("house")
+	expect(props.housenumber).toBe("8")
+	expect(props.street).toBe("Boulevard du Palais")
+	// name is dropped (upstream has none for a bare address point; keeping the city here would double it in the
+	// QGIS FLF label "Paris 8 Boulevard du Palais Paris 75001").
+	expect(props.name).toBeUndefined()
+	// The admin fields the ancestry filled are retained — a house result still carries city/postcode/country.
+	expect(props.city).toBe("Paris")
+	expect(props.postcode).toBe("75001")
+	expect(props.country).toBe("France")
+	expect(props.countrycode).toBe("fr")
+})
+
+test("forward: WITHOUT `house`, the same locality resolution stays type:city (no false rooftop) (#1041)", () => {
+	const props = photonForwardProperties({ lat: 48.8566, lon: 2.3522, places: [{ tag: "locality", name: "Paris" }] })
+	expect(props.type).toBe("city")
+	expect(props.name).toBe("Paris")
+	expect(props.housenumber).toBeUndefined()
+	expect(props.street).toBeUndefined()
+})
+
+test("forward: house-grade with a missing parsed street/number still types house (fields just omitted) (#1041)", () => {
+	const props = photonForwardProperties({
+		lat: 48.8548,
+		lon: 2.3451,
+		places: [{ tag: "locality", name: "Paris" }],
+		house: { number: "8", street: null },
+	})
+	expect(props.type).toBe("house")
+	expect(props.housenumber).toBe("8")
+	expect(props.street).toBeUndefined() // null street → field simply absent, never "null"
+})
+
+test("photonForwardFeature: a house-grade input renders a type:house Point Feature (#1041)", () => {
+	const f = photonForwardFeature({
+		lat: 48.8548,
+		lon: 2.3451,
+		places: [{ tag: "locality", name: "Paris" }],
+		house: { number: "8", street: "Boulevard du Palais" },
+	})
+	expect(f.geometry.coordinates).toEqual([2.3451, 48.8548])
+	expect(f.properties.type).toBe("house")
+	expect(f.properties.housenumber).toBe("8")
+})
+
 test("photonOSMTags: maps place tiers to the Photon osm schema, with a safe fallback", () => {
 	expect(photonOSMTags("locality")).toEqual({ osm_key: "place", osm_value: "city", type: "city" })
 	expect(photonOSMTags("localadmin")).toEqual({ osm_key: "place", osm_value: "city", type: "city" }) // reverse placetype
