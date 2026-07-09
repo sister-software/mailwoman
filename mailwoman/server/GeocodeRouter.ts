@@ -249,13 +249,15 @@ const resolveTreeHandler: RequestHandler = async (req, res) => {
 }
 
 /** Pull the street node's resolution tier (if any) for the metric — mirrors extractGeocodeResult. */
-function collectStreetTier(node: AddressTree["roots"][number]): Array<"address_point" | "interpolated" | "admin"> {
-	const out: Array<"address_point" | "interpolated" | "admin"> = []
+function collectStreetTier(
+	node: AddressTree["roots"][number]
+): Array<"address_point" | "interpolated" | "street" | "admin"> {
+	const out: Array<"address_point" | "interpolated" | "street" | "admin"> = []
 
 	if (node.tag === "street") {
 		const tier = node.metadata?.["resolution_tier"]
 
-		if (tier === "address_point" || tier === "interpolated") {
+		if (tier === "address_point" || tier === "interpolated" || tier === "street") {
 			out.push(tier)
 		}
 	}

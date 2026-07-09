@@ -26,6 +26,7 @@ import {
 	type ResolveOpts,
 	type Resolver,
 	type ResolverBackend,
+	type StreetCentroidLookup,
 } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -293,6 +294,248 @@ function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, r
 		interpolation_method: hit.method,
 		...(hit.parityMatched !== undefined ? { parity_matched: hit.parityMatched } : {}),
 		...(hit.bracket !== undefined ? { interpolation_bracket: hit.bracket } : {}),
+	}
+}
+
+/**
+ * French thoroughfare (voie) type tokens — the leading word that marks a street-only span as a THOROUGHFARE rather than
+ * a place name ("Place Bellecour", "Cours de l'Intendance", "Quai des Bateliers"). Used by the #1042 street-centroid
+ * tier to recognize a thoroughfare that the model mis-parsed as a `locality` (the FR no-street class, #901).
+ * Deliberately generous — a false positive simply misses the exact street-centroid lookup and no-ops; the lookup is the
+ * real gate.
+ */
+const FR_VOIE_TYPES: ReadonlySet<string> = new Set([
+	"rue",
+	"ruelle",
+	"venelle",
+	"avenue",
+	"av",
+	"ave",
+	"boulevard",
+	"bd",
+	"bld",
+	"bvd",
+	"boul",
+	"place",
+	"pl",
+	"cours",
+	"quai",
+	"impasse",
+	"imp",
+	"allee",
+	"all",
+	"chemin",
+	"ch",
+	"che",
+	"passage",
+	"pas",
+	"square",
+	"sq",
+	"faubourg",
+	"fg",
+	"fbg",
+	"route",
+	"rte",
+	"esplanade",
+	"promenade",
+	"sentier",
+	"sente",
+	"villa",
+	"cite",
+	"hameau",
+	"montee",
+	"chaussee",
+	"traverse",
+	"mail",
+	"clos",
+	"voie",
+	"quartier",
+	"lotissement",
+	"residence",
+	"rond",
+])
+
+/** Fold to lower-case, diacritic-stripped, punctuation-free tokens — mirrors `street-normalize.ts`'s `fold`. */
+function foldVoieTokens(s: string): string[] {
+	return s
+		.normalize("NFKD")
+		.replace(/[̀-ͯ]/g, "")
+		.toLowerCase()
+		.replace(/[.,'’]/g, "")
+		.replace(/-/g, " ")
+		.split(/\s+/)
+		.filter(Boolean)
+}
+
+/** Does a string START with a French thoroughfare type token ("Rue …", "Place …")? */
+function isVoieShaped(s: string): boolean {
+	const first = foldVoieTokens(s)[0]
+
+	return first !== undefined && FR_VOIE_TYPES.has(first)
+}
+
+/** Push `v` (trimmed, non-empty, deduped, capped) onto `list`. */
+function pushCandidate(list: string[], v: string | undefined, cap: number): void {
+	const t = v?.trim()
+
+	if (t && list.length < cap && !list.includes(t)) {
+		list.push(t)
+	}
+}
+
+/**
+ * Street-centroid tier (#1042): the street-level rung BELOW the exact/interpolation tiers and ABOVE admin-centroid
+ * resolution. For a STREET-ONLY query (a thoroughfare with NO house number), stamp the street's centroid onto a
+ * `street` node so a consumer gets a street-level coordinate instead of the commune centroid (or a wrong namesake).
+ *
+ * The FR no-street class mis-parses the thoroughfare — "Place Bellecour, Lyon" parses `region=Lyon`, `locality="Place
+ * Bellecour"`; "Avenue des Champs-Élysées" truncates — so this recovers the thoroughfare + commune RAW-TEXT-first (the
+ * same substrate as span-rescore), preferring parsed nodes and falling back to the comma-split raw query. A
+ * thoroughfare is recognized by its leading voie type ({@link isVoieShaped}); the commune is any non-voie span. Every
+ * (thoroughfare, commune) pair is probed against the exact street-centroid lookup, first hit wins — a false candidate
+ * simply misses. Additive only: fires ONLY when no house number is present (rooftop tiers untouched) and no
+ * street-level coordinate already resolved, and never alters admin resolution.
+ */
+function applyStreetCentroid(
+	roots: AddressNode[],
+	raw: string,
+	provider: (country: string) => StreetCentroidLookup | undefined,
+	hints: readonly string[]
+): void {
+	let streetNode: AddressNode | undefined
+	let houseNumber = false
+	let postcode: string | undefined
+	const adminValues: string[] = [] // region / locality values, in tree order (thoroughfare and commune both hide here)
+	const resolvedCountries: string[] = [] // countries the tree actually resolved to — a post-resolution country hint
+	const stack = [...roots]
+
+	while (stack.length > 0) {
+		const n = stack.pop()!
+
+		if (n.tag === "house_number") {
+			houseNumber = true
+		}
+
+		if (n.tag === "street" && !streetNode) {
+			streetNode = n
+		}
+
+		// Never shadow a real street-level coordinate the exact/interp tiers already stamped.
+		if (n.metadata?.["resolution_tier"] === "address_point" || n.metadata?.["resolution_tier"] === "interpolated") {
+			return
+		}
+
+		if (!postcode && n.tag === "postcode" && n.value.trim()) {
+			postcode = n.value.trim()
+		}
+
+		if ((n.tag === "region" || n.tag === "locality" || n.tag === "dependent_locality") && n.value.trim()) {
+			adminValues.push(n.value.trim())
+		}
+		const rc = (n.metadata?.["resolver_country"] as string | undefined)?.trim().toLowerCase()
+
+		if (rc && !resolvedCountries.includes(rc)) {
+			resolvedCountries.push(rc)
+		}
+		stack.push(...n.children)
+	}
+
+	if (houseNumber) return // street-only tier — a numbered address is the rooftop tiers' job
+
+	// Candidate countries: pre-resolution hints (defaultCountry + ungated placer) then the resolved countries. BAN is
+	// FR-only, so a non-FR candidate simply yields no lookup; the exact (street, base-commune) match is the real filter.
+	const countries: string[] = []
+
+	for (const c of [...hints, ...resolvedCountries]) {
+		const cc = c?.trim().toLowerCase()
+
+		if (cc && !countries.includes(cc)) {
+			countries.push(cc)
+		}
+	}
+	const lookups = countries.map((c) => provider(c)).filter((l): l is StreetCentroidLookup => l != null)
+
+	if (lookups.length === 0) return
+
+	const rawSegments = raw
+		.split(",")
+		.map((s) => s.trim())
+		.filter(Boolean)
+	const CAP = 5
+
+	// Thoroughfare candidates (parsed-first, then raw): the assembled street node, any voie-shaped parsed value, any
+	// voie-shaped raw comma-segment. The parse often truncates these (Champs-Élysées → "Avenue des Champs"), so the raw
+	// segment is the recovery — a candidate that misses just advances to the next.
+	const thoroughfares: string[] = []
+
+	if (streetNode) {
+		pushCandidate(thoroughfares, assembleStreetValue(streetNode), CAP)
+	}
+
+	for (const v of adminValues) {
+		if (isVoieShaped(v)) {
+			pushCandidate(thoroughfares, v, CAP)
+		}
+	}
+
+	for (const s of rawSegments) {
+		if (isVoieShaped(s)) {
+			pushCandidate(thoroughfares, s, CAP)
+		}
+	}
+
+	if (thoroughfares.length === 0) return
+
+	// Commune candidates: non-voie parsed admin values, then non-voie raw segments (a truncated/garbled parse loses the
+	// commune — "Rue de la République, Marseille" parses `locality="e"` — so the raw "Marseille" is the recovery).
+	const communes: string[] = []
+
+	for (const v of adminValues) {
+		if (!isVoieShaped(v)) {
+			pushCandidate(communes, v, CAP)
+		}
+	}
+
+	for (const s of rawSegments) {
+		if (!isVoieShaped(s) && !thoroughfares.includes(s)) {
+			pushCandidate(communes, s, CAP)
+		}
+	}
+
+	for (const lookup of lookups) {
+		for (const street of thoroughfares) {
+			let hit = postcode ? lookup.find({ street, postcode }) : null
+
+			for (let i = 0; !hit && i < communes.length; i++) {
+				hit = lookup.find({ street, locality: communes[i]! })
+			}
+
+			if (!hit) continue
+
+			const target =
+				streetNode ??
+				(() => {
+					const injected: AddressNode = {
+						tag: "street",
+						value: street,
+						start: 0,
+						end: 0,
+						confidence: 0.5,
+						children: [],
+					}
+					roots.push(injected)
+
+					return injected
+				})()
+			target.metadata = {
+				...target.metadata,
+				street_centroid: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
+				resolution_tier: "street",
+				uncertainty_m: hit.uncertaintyM,
+			}
+
+			return
+		}
 	}
 }
 
@@ -834,6 +1077,15 @@ class WOFResolver implements Resolver {
 		// US path). Explicit opt-OUT via `spanRescore: false`; byte-stable then.
 		if (opts.spanRescore !== false) {
 			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
+		}
+
+		// Street-centroid tier (#1042): LAST, after span-rescore, so it can (a) union the span-rescore-recovered
+		// country into its FR/national country hints (a placer-misrouted street — "Rue Sainte-Catherine" → IT — leaves
+		// admin unresolved, and only span-rescore recovers the FR country signal) and (b) override a coarse recovered
+		// locality with the exact street centroid. Self-gates on no house number + no existing street-level tier, so a
+		// rooftop query is untouched; byte-stable when opts.streetCentroids absent.
+		if (opts.streetCentroids) {
+			applyStreetCentroid(newRoots, tree.raw, opts.streetCentroids, opts.streetCountryHints ?? [])
 		}
 
 		return { raw: tree.raw, roots: newRoots }

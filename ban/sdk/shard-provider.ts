@@ -15,13 +15,15 @@
 
 import { existsSync } from "node:fs"
 
-import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
+import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 
 import { streetLocaleForBANCountry, supportedBANCountries } from "./street-locale.js"
 
 /** What the cascade needs from a BAN shard — structurally a subset of mailwoman's `StateShards`. */
 export interface BANShards {
 	addressPoints?: AddressPointSqliteLookup
+	/** The #1042 derived street-centroid tier — a `GROUP BY street` roll-up, for a street-only query (no house number). */
+	streetCentroids?: StreetCentroidSqliteLookup
 }
 
 /**
@@ -40,6 +42,10 @@ export class BANShardProvider {
 		return `${this.#dataRoot}/ban/address-points-${countryCode}.db`
 	}
 
+	#streetCentroidPath(countryCode: string): string {
+		return `${this.#dataRoot}/ban/street-centroids-${countryCode}.db`
+	}
+
 	/** Resolve the BAN shards for an ISO-3166 alpha-2 country, or `{}` when none is shipped/registered. */
 	readonly for = (country: string): BANShards => {
 		const cc = country.toLowerCase()
@@ -47,14 +53,21 @@ export class BANShardProvider {
 
 		if (cached) return cached
 
-		let entry: BANShards = {}
+		const entry: BANShards = {}
 
 		// Only countries with a registered street locale AND an on-disk shard — never key with the wrong rules.
 		if (supportedBANCountries().includes(cc)) {
+			const locale = streetLocaleForBANCountry(cc)
 			const path = this.#shardPath(cc)
 
 			if (existsSync(path)) {
-				entry = { addressPoints: new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForBANCountry(cc) }) }
+				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })
+			}
+			// The #1042 derived street tier — purely additive, opened only when its artifact is on disk.
+			const streetPath = this.#streetCentroidPath(cc)
+
+			if (existsSync(streetPath)) {
+				entry.streetCentroids = new StreetCentroidSqliteLookup(streetPath, { streetLocale: locale })
 			}
 		}
 		this.#cache.set(cc, entry)
@@ -65,6 +78,7 @@ export class BANShardProvider {
 	close(): void {
 		for (const entry of this.#cache.values()) {
 			entry.addressPoints?.close()
+			entry.streetCentroids?.close()
 		}
 		this.#cache.clear()
 	}

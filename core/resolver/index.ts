@@ -24,4 +24,6 @@ export type {
 	ResolvedPlace,
 	Resolver,
 	ResolverBackend,
+	StreetCentroidHit,
+	StreetCentroidLookup,
 } from "./types.js"

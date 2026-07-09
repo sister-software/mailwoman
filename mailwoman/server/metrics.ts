@@ -18,7 +18,7 @@ const MAX_SAMPLES = 2048
 const latencies: number[] = []
 let writeIdx = 0
 
-const tierCounts: Record<ResolutionTier, number> = { address_point: 0, interpolated: 0, admin: 0 }
+const tierCounts: Record<ResolutionTier, number> = { address_point: 0, interpolated: 0, street: 0, admin: 0 }
 let total = 0
 let errors = 0
 const startedAt = Date.now()
@@ -88,6 +88,7 @@ export function __resetMetricsForTest(): void {
 	writeIdx = 0
 	tierCounts.address_point = 0
 	tierCounts.interpolated = 0
+	tierCounts.street = 0
 	tierCounts.admin = 0
 	total = 0
 	errors = 0

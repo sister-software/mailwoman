@@ -68,7 +68,7 @@ test("recordGeocode: counts total, partitions by tier, and tallies errors separa
 	const g = metricsSnapshot().geocode
 	expect(g.total).toBe(5) // every call, errors included
 	expect(g.errors).toBe(1)
-	expect(g.tiers).toEqual({ address_point: 2, interpolated: 1, admin: 1 })
+	expect(g.tiers).toEqual({ address_point: 2, interpolated: 1, street: 0, admin: 1 })
 })
 
 test("recordGeocode: an error still records its latency in the reservoir", () => {
@@ -79,7 +79,7 @@ test("recordGeocode: an error still records its latency in the reservoir", () =>
 	expect(g.latency_samples).toBe(1)
 	expect(g.latency_ms?.max).toBe(99)
 	expect(g.errors).toBe(1)
-	expect(g.tiers).toEqual({ address_point: 0, interpolated: 0, admin: 0 })
+	expect(g.tiers).toEqual({ address_point: 0, interpolated: 0, street: 0, admin: 0 })
 })
 
 test("__resetMetricsForTest: clears counters and the reservoir", () => {

@@ -45,7 +45,7 @@ describe("metrics recorder", () => {
 		const s = metricsSnapshot()
 		expect(s.geocode.total).toBe(4)
 		expect(s.geocode.errors).toBe(1)
-		expect(s.geocode.tiers).toEqual({ address_point: 1, interpolated: 1, admin: 1 })
+		expect(s.geocode.tiers).toEqual({ address_point: 1, interpolated: 1, street: 0, admin: 1 })
 		expect(s.geocode.latency_samples).toBe(4)
 		expect(s.geocode.latency_ms).not.toBeNull()
 		expect(s.geocode.latency_ms!.max).toBe(30)
