@@ -23,12 +23,13 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 const PKG_DIR = repoRootPath("neural-weights-fr-fr")
-// In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — v5.1.0
-// bsplice pair (#884). The 2026-07-02 ship missed this bump (both linkers still pinned
+// In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — v5.9.0
+// v241-fr-nsplice-ft pair. The 2026-07-02 ship missed this bump (both linkers still pinned
 // the demo-only v4.16.0 pair); the guard below now fails loud on any future miss.
-const SRC_MODEL = $public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-bsplice-meaninit-int8.onnx")
+const SRC_MODEL =
+	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v241-fr-nsplice-ft-step-12000-int8.onnx")
 const SRC_TOKENIZER =
-	$public.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.6.0-bsplice", "tokenizer.model")
+	$public.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.8.0-fr-nsplice", "tokenizer.model")
 
 if (!existsSync(SRC_MODEL)) {
 	console.error(`missing source model: ${SRC_MODEL}`)
