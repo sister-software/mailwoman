@@ -14,9 +14,9 @@
  */
 
 import { exit, stderr } from "node:process"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildCandidateTable } from "./build-candidate.ts"
 
@@ -42,41 +42,45 @@ function printUsageAndExit(code: number): never {
 	exit(code)
 }
 
-function parseArgs(argv: string[]): CLIArgs {
-	let input: string | undefined
-	let output: string | undefined
-	const postcodes: string[] = []
+function parseCandidateArgv(argv: readonly string[] | undefined) {
+	return parseArgs({
+		args: argv ? [...argv] : undefined,
+		options: {
+			in: { type: "string" },
+			input: { type: "string" },
+			out: { type: "string" },
+			output: { type: "string" },
+			postcodes: { type: "string", multiple: true, default: [] },
+			help: { type: "boolean", short: "h", default: false },
+		},
+	})
+}
 
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i]
+function parseCLIArgs(argv: readonly string[] | undefined): CLIArgs {
+	let parsed: ReturnType<typeof parseCandidateArgv>
 
-		if (a === "--in" || a === "--input") {
-			input = argv[++i]
-		} else if (a === "--out" || a === "--output") {
-			output = argv[++i]
-		} else if (a === "--postcodes") {
-			const v = argv[++i]
-
-			if (v) {
-				postcodes.push(v)
-			}
-		} else if (a === "-h" || a === "--help") {
-			printUsageAndExit(0)
-		} else {
-			stderr.write(`unknown argument: ${a}\n`)
-			printUsageAndExit(1)
-		}
+	try {
+		parsed = parseCandidateArgv(argv)
+	} catch (error) {
+		stderr.write(`mailwoman-wof-build-candidate: ${error instanceof Error ? error.message : String(error)}\n`)
+		printUsageAndExit(1)
 	}
+
+	if (parsed.values.help) {
+		printUsageAndExit(0)
+	}
+	const input = parsed.values.input ?? parsed.values.in
+	const output = parsed.values.output ?? parsed.values.out
 
 	if (!input || !output) {
 		printUsageAndExit(1)
 	}
 
-	return { input, output, postcodes }
+	return { input, output, postcodes: parsed.values.postcodes.filter(Boolean) }
 }
 
-export async function main(): Promise<number> {
-	const args = parseArgs(cliArguments())
+export async function main(argv?: readonly string[]): Promise<number> {
+	const args = parseCLIArgs(argv)
 	const t0 = Date.now()
 	const result = await buildCandidateTable({
 		input: args.input,
@@ -95,4 +99,4 @@ export async function main(): Promise<number> {
 	return 0
 }
 
-runIfScript(import.meta, main)
+runIfScript(import.meta, () => main())

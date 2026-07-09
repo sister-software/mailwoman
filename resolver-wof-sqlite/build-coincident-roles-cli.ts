@@ -16,9 +16,9 @@
 import { existsSync } from "node:fs"
 import { exit, stderr } from "node:process"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildCoincidentRoles } from "./coincident-roles.ts"
 
@@ -73,30 +73,40 @@ function buildOne(path: string, drop: boolean): number {
 	}
 }
 
-export function main(argv: readonly string[]): number {
-	const paths: string[] = []
-	// The relation is a cheap (~2 s) derived table that must reflect the current spr/ancestors, so it
-	// rebuilds by default (idempotent). `--no-drop` appends instead — only useful for incremental tests.
-	let drop = true
+function parseRolesArgv(argv: readonly string[] | undefined) {
+	return parseArgs({
+		args: argv ? [...argv] : undefined,
+		options: {
+			drop: { type: "boolean", default: false },
+			"no-drop": { type: "boolean", default: false },
+			help: { type: "boolean", short: "h", default: false },
+		},
+		allowPositionals: true,
+	})
+}
 
-	for (const a of argv) {
-		if (a === "--drop") {
-			drop = true
-		} else if (a === "--no-drop") {
-			drop = false
-		} else if (a === "--help" || a === "-h") {
-			printUsageAndExit(0)
-		} else if (a.startsWith("-")) {
-			stderr.write(`mailwoman-wof-build-coincident-roles: unknown flag ${JSON.stringify(a)}\n`)
-			printUsageAndExit(2)
-		} else {
-			paths.push(a)
-		}
+export function main(argv?: readonly string[]): number {
+	let parsed: ReturnType<typeof parseRolesArgv>
+
+	try {
+		parsed = parseRolesArgv(argv)
+	} catch (error) {
+		stderr.write(`mailwoman-wof-build-coincident-roles: ${error instanceof Error ? error.message : String(error)}\n`)
+		printUsageAndExit(2)
 	}
+
+	if (parsed.values.help) {
+		printUsageAndExit(0)
+	}
+	const paths = parsed.positionals
 
 	if (paths.length === 0) {
 		printUsageAndExit(2)
 	}
+
+	// The relation is a cheap (~2 s) derived table that must reflect the current spr/ancestors, so it
+	// rebuilds by default (idempotent). `--no-drop` appends instead — only useful for incremental tests.
+	const drop = !parsed.values["no-drop"]
 	let worst = 0
 
 	for (const path of paths) {
@@ -110,4 +120,4 @@ export function main(argv: readonly string[]): number {
 	return worst
 }
 
-runIfScript(import.meta, () => main(cliArguments()))
+runIfScript(import.meta, () => main())

@@ -106,7 +106,7 @@ describe("build-fts-cli main()", () => {
 		expect(() => main(["--bogus", "x.db"])).toThrow(/process\.exit.*"2"/)
 
 		const written = stderrSpy.mock.calls.map((c) => String(c[0])).join("")
-		expect(written).toMatch(/unknown flag/)
+		expect(written).toMatch(/Unknown option/)
 		stderrSpy.mockRestore()
 	})
 

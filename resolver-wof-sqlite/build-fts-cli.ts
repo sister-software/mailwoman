@@ -23,9 +23,9 @@
 import { existsSync } from "node:fs"
 import { exit, stderr } from "node:process"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildPlaceSearchFTS } from "./fts.ts"
 
@@ -59,29 +59,37 @@ function printUsageAndExit(code: number): never {
 	exit(code)
 }
 
-function parseArgs(argv: readonly string[]): CLIArgs {
-	const args: string[] = []
-	let drop = false
+function parseFTSArgv(argv: readonly string[] | undefined) {
+	return parseArgs({
+		args: argv ? [...argv] : undefined,
+		options: {
+			drop: { type: "boolean", default: false },
+			help: { type: "boolean", short: "h", default: false },
+		},
+		allowPositionals: true,
+	})
+}
 
-	for (const a of argv) {
-		if (a === "--drop") {
-			drop = true
-		} else if (a === "--help" || a === "-h") {
-			printUsageAndExit(0)
-		} else if (a.startsWith("-")) {
-			stderr.write(`mailwoman-wof-build-fts: unknown flag ${JSON.stringify(a)}\n`)
-			printUsageAndExit(2)
-		} else {
-			args.push(a)
-		}
+function parseCLIArgs(argv: readonly string[] | undefined): CLIArgs {
+	let parsed: ReturnType<typeof parseFTSArgv>
+
+	try {
+		parsed = parseFTSArgv(argv)
+	} catch (error) {
+		stderr.write(`mailwoman-wof-build-fts: ${error instanceof Error ? error.message : String(error)}\n`)
+		printUsageAndExit(2)
 	}
 
-	if (args.length === 0) {
+	if (parsed.values.help) {
+		printUsageAndExit(0)
+	}
+
+	if (parsed.positionals.length === 0) {
 		stderr.write(`mailwoman-wof-build-fts: expected at least one positional arg\n`)
 		printUsageAndExit(2)
 	}
 
-	return { databasePaths: args, drop }
+	return { databasePaths: parsed.positionals, drop: parsed.values.drop }
 }
 
 /**
@@ -122,8 +130,8 @@ function buildOne(path: string, drop: boolean): number {
 	}
 }
 
-export function main(argv: readonly string[]): number {
-	const args = parseArgs(argv)
+export function main(argv?: readonly string[]): number {
+	const args = parseCLIArgs(argv)
 	// Process every DB; if any fail, the worst exit code wins (so CI / scripts see failure).
 	let worst = 0
 
@@ -138,4 +146,4 @@ export function main(argv: readonly string[]): number {
 	return worst
 }
 
-runIfScript(import.meta, () => main(cliArguments()))
+runIfScript(import.meta, () => main())
