@@ -5,7 +5,10 @@
  */
 
 export * from "./data-root.ts"
-export * from "./repo.ts"
-export * from "./sealed-db.ts"
+export * from "./hash.ts"
+export * from "./jsonl.ts"
 export * from "./python-json.ts"
 export * from "./python-random.ts"
+export * from "./repo.ts"
+export * from "./sealed-db.ts"
+export * from "./stats.ts"
