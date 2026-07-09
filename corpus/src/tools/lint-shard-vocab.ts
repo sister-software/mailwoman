@@ -6,7 +6,7 @@
  *   #511 base-consistency lint, GENERALIZED + COUNTRY-SCOPED (v2) — any synthetic shard vs the base.
  *
  *   Ported from scripts/lint-shard-vocab.py (pyarrow → @duckdb/node-api); behavior preserved
- *   byte-for-byte (same flags, same stdout, same exit codes). The base-root default routes through
+ *   byte-for-byte (same flags, same stdout, same verdicts). The base-root default routes through
  *   `dataRootPath` so the lab `/mnt/playpen` literal stays in its one home
  *   (core/utils/data-root.ts) and `$MAILWOMAN_DATA_ROOT` is honored; with the env unset it equals
  *   the Python default.
@@ -25,20 +25,18 @@
  *        dwarf the locality sources (a small US-scoped spot-check read Indianapolis 54% street vs
  *        its true 219700:29 LOCALITY). The fix: tally each shard token's base tag SCOPED to the
  *        country the shard uses it in (the base has a `country` column), over a LARGE/FULL scan
- *        (--fraction, default 1.0). Pure-numeric tokens excluded (house_number/postcode are
+ *        (`fraction`, default 1.0). Pure-numeric tokens excluded (house_number/postcode are
  *        context-determined). An affix-split flag (shard street_suffix/_prefix vs base "street") is
  *        EXPECTED — the loader's affix-relabel handles it; weigh those separately.
  *
- *   Usage: node scripts/lint-shard-vocab.ts --shard <shard.parquet>
+ *   Usage: mailwoman dev lint shard-vocab --shard <shard.parquet>
  *   [--base-version v0.5.0] [--base-root <dir>] [--fraction 1.0] [--threshold 0.7] [--min-count
  *   50]
  */
 
 import { readdirSync } from "node:fs"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
 
-import { DuckDBInstance } from "@duckdb/node-api"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 /** A column-projected base/shard row: parallel token + label lists plus the row's country. */
@@ -66,7 +64,7 @@ function isDigit(token: string): boolean {
 
 /**
  * Round half to even (banker's rounding) — Python's built-in `round()` and `format(..., ".0%")` both use it, so percent
- * strings and the proportional `--fraction` slice match the Python output exactly.
+ * strings and the proportional `fraction` slice match the Python output exactly.
  */
 function pyRound(x: number): number {
 	const floor = Math.floor(x)
@@ -86,8 +84,8 @@ function pct(frac: number): string {
 
 /**
  * Format a float the way a Python f-string renders it: integer-valued floats keep one decimal (1.0 -> "1.0"),
- * everything else is its shortest decimal (0.5 -> "0.5"). Used for the `--fraction` echo so the banner matches the
- * Python print.
+ * everything else is its shortest decimal (0.5 -> "0.5"). Used for the `fraction` echo so the banner matches the Python
+ * print.
  */
 function pyFloat(n: number): string {
 	return Number.isInteger(n) ? n.toFixed(1) : String(n)
@@ -132,12 +130,17 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 	counter.set(sub, (counter.get(sub) ?? 0) + 1)
 }
 
+/** The DuckDB connection type, without a static dependency on the optional-peer package. */
+type DuckDBConnection = Awaited<
+	ReturnType<Awaited<ReturnType<(typeof import("@duckdb/node-api"))["DuckDBInstance"]["create"]>>["connect"]>
+>
+
 /**
  * Read a corpus parquet into rows, projecting only tokens/labels/country. The list columns ride out as JSON text
- * (DuckDB `to_json`) — the same trick build-unified-wof.ts uses for nested columns — and parse back to string arrays
+ * (DuckDB `to_json`) — the same trick the gazetteer builders use for nested columns — and parse back to string arrays
  * here.
  */
-async function readRows(con: Awaited<ReturnType<DuckDBInstance["connect"]>>, path: string): Promise<CorpusRow[]> {
+async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[]> {
 	const result = await con.runAndReadAll(
 		`SELECT to_json(tokens) AS tokens, to_json(labels) AS labels, country FROM read_parquet('${path}')`
 	)
@@ -160,7 +163,7 @@ async function readRows(con: Awaited<ReturnType<DuckDBInstance["connect"]>>, pat
 }
 
 /** Read just the first row's `source` value — used to group base parts for a proportional slice. */
-async function readSource(con: Awaited<ReturnType<DuckDBInstance["connect"]>>, path: string): Promise<string> {
+async function readSource(con: DuckDBConnection, path: string): Promise<string> {
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)
 	const rows = result.getRowObjects() as Array<{ source: unknown }>
 
@@ -183,52 +186,49 @@ function globParquet(dir: string): string[] {
 		.sort()
 }
 
-interface Args {
+/** Options for {@linkcode lintShardVocab}. */
+export interface LintShardVocabOptions {
+	/** The shard parquet to lint. */
 	shard: string
-	baseVersion: string
-	baseRoot: string
-	threshold: number
-	minCount: number
-	fraction: number
+	/** Base corpus version. Default `v0.5.0`. */
+	baseVersion?: string
+	/** Base corpus root. Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`. */
+	baseRoot?: string
+	/** Base-majority confidence floor for a contradiction. Default 0.7. */
+	threshold?: number
+	/** Minimum base support to judge a token. Default 50. */
+	minCount?: number
+	/** Fraction of base parts to scan (proportional per-source slice below 1.0). Default 1.0. */
+	fraction?: number
 }
 
-function parseCLIArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			shard: { type: "string" },
-			"base-version": { type: "string", default: "v0.5.0" },
-			"base-root": { type: "string", default: dataRootPath("corpus", "versioned") },
-			threshold: { type: "string", default: "0.7" },
-			"min-count": { type: "string", default: "50" },
-			fraction: { type: "string", default: "1.0" },
-		},
-	})
+/** One contradiction row: token, shard tag, base tag, base fraction, base total. */
+export type ShardVocabRow = [token: string, shardTag: string, baseTag: string, baseFrac: number, baseTotal: number]
 
-	if (!values.shard) {
-		console.error(
-			"Usage: lint-shard-vocab.ts --shard <shard.parquet> [--base-version v0.5.0] [--base-root <dir>] [--fraction 1.0] [--threshold 0.7] [--min-count 50]"
-		)
-		process.exit(2)
-	}
-
-	return {
-		shard: values.shard,
-		baseVersion: values["base-version"]!,
-		baseRoot: values["base-root"]!,
-		threshold: Number(values.threshold),
-		minCount: Number.parseInt(values["min-count"]!, 10),
-		fraction: Number(values.fraction),
-	}
+/** Findings summary returned by {@linkcode lintShardVocab}. */
+export interface LintShardVocabSummary {
+	/** Real contradictions — the command exits 1 when nonzero. */
+	errors: number
+	/** Affix-split rows (EXPECTED — the loader's affix-relabel handles them). */
+	warnings: number
+	findings: { contradictions: ShardVocabRow[]; affixSplits: ShardVocabRow[] }
 }
 
-async function main(): Promise<void> {
-	const args = parseCLIArgs()
+/** Lint a synthetic shard's (token → tag) vocabulary against the base corpus, country-scoped. */
+export async function lintShardVocab(options: LintShardVocabOptions): Promise<LintShardVocabSummary> {
+	const baseVersion = options.baseVersion ?? "v0.5.0"
+	const baseRoot = options.baseRoot ?? dataRootPath("corpus", "versioned")
+	const threshold = options.threshold ?? 0.7
+	const minCount = options.minCount ?? 50
+	const fraction = options.fraction ?? 1.0
 
+	// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
+	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
 	const con = await instance.connect()
 
 	// 1. the shard's own (token -> dominant tag) + the COUNTRIES it uses each token in
-	const shardRows = await readRows(con, args.shard)
+	const shardRows = await readRows(con, options.shard)
 	const shardTags = new Map<string, Map<string, number>>()
 	const shardCountries = new Map<string, Set<string | null>>()
 
@@ -253,16 +253,15 @@ async function main(): Promise<void> {
 	const shardVocab = new Set(shardTags.keys())
 	console.log(`shard: ${shardRows.length} rows, ${shardVocab.size} unique tokens`)
 
-	// 2. base parts — FULL by default; --fraction<1 takes a proportional per-source slice (still big)
-	const trainDir = join(args.baseRoot, args.baseVersion, `corpus-${args.baseVersion}`, "train")
+	// 2. base parts — FULL by default; fraction<1 takes a proportional per-source slice (still big)
+	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
 	let parts = globParquet(trainDir)
 
 	if (!parts.length) {
-		console.error("no base parts found")
-		process.exit(1)
+		throw new Error("no base parts found")
 	}
 
-	if (args.fraction < 1.0) {
+	if (fraction < 1.0) {
 		const bysrc = new Map<string, string[]>()
 
 		for (const p of parts) {
@@ -278,7 +277,7 @@ async function main(): Promise<void> {
 		const sliced: string[] = []
 
 		for (const ps of bysrc.values()) {
-			const take = Math.max(2, pyRound(ps.length * args.fraction))
+			const take = Math.max(2, pyRound(ps.length * fraction))
 
 			for (const p of ps.slice(0, take)) {
 				sliced.push(p)
@@ -286,9 +285,7 @@ async function main(): Promise<void> {
 		}
 		parts = sliced
 	}
-	console.log(
-		`base ${args.baseVersion}: scanning ${parts.length} parts (fraction=${pyFloat(args.fraction)}), COUNTRY-scoped`
-	)
+	console.log(`base ${baseVersion}: scanning ${parts.length} parts (fraction=${pyFloat(fraction)}), COUNTRY-scoped`)
 
 	// 3. tally each shard token's base tag, SCOPED to the country the shard uses it in
 	const baseTags = new Map<string, Map<string, number>>()
@@ -314,16 +311,15 @@ async function main(): Promise<void> {
 	}
 
 	// 4. compare; flag contradictions (affix-split is expected — surfaced but tagged)
-	type Row = [string, string, string, number, number] // w, s_tag, b_tag, b_frac, b_total
-	const flagged: Row[] = []
-	const affix: Row[] = []
+	const flagged: ShardVocabRow[] = []
+	const affix: ShardVocabRow[] = []
 
 	for (const w of shardVocab) {
 		const [sTag] = dominant(shardTags.get(w)!)
 		const [bTag, bTotal, bFrac] = dominant(baseTags.get(w) ?? new Map())
 
-		if (bTotal < args.minCount || !bTag || bTag === sTag || bFrac < args.threshold) continue
-		const row: Row = [w, sTag, bTag, bFrac, bTotal]
+		if (bTotal < minCount || !bTag || bTag === sTag || bFrac < threshold) continue
+		const row: ShardVocabRow = [w, sTag, bTag, bFrac, bTotal]
 
 		if ((sTag === "street_suffix" || sTag === "street_prefix") && bTag === "street") {
 			affix.push(row)
@@ -332,7 +328,7 @@ async function main(): Promise<void> {
 		}
 	}
 
-	const sections: Array<[string, Row[]]> = [
+	const sections: Array<[string, ShardVocabRow[]]> = [
 		["CONTRADICTION", flagged],
 		["affix-split (EXPECTED — affix-relabel handles)", affix],
 	]
@@ -349,10 +345,13 @@ async function main(): Promise<void> {
 
 	if (!flagged.length) {
 		console.log(
-			`\n✅ NO real contradictions (country-scoped, threshold ${pct(args.threshold)}, support ${args.minCount}) — shard base-consistent`
+			`\n✅ NO real contradictions (country-scoped, threshold ${pct(threshold)}, support ${minCount}) — shard base-consistent`
 		)
 	}
-	process.exit(flagged.length ? 1 : 0)
-}
 
-main()
+	return {
+		errors: flagged.length,
+		warnings: affix.length,
+		findings: { contradictions: flagged, affixSplits: affix },
+	}
+}

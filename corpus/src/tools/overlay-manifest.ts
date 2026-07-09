@@ -14,7 +14,7 @@
  *
  *   Pipeline (the recipe rides the result): node scripts/build-overture-multilocale-canonical.mjs
  *   --cap 150000 --out /tmp/ovl/overture-ml.canonical.jsonl node scripts/align-canonical-shard.ts
- *   --input <canonical> --output <labeled> --corpus-version 0.5.0 node scripts/jsonl-to-parquet.ts
+ *   --input <canonical> --output <labeled> --corpus-version 0.5.0 mailwoman dev jsonl-to-parquet
  *   --input <labeled> --output <NEW>/train/<shard-parquet> node
  *   scripts/assemble-overlay-manifest.ts --base <BASE>/MANIFEST.json --new-dir <NEW>\
  *   --modal-root /data/corpus/versioned/<ver>/<dir> --version <ver>\

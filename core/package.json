@@ -198,6 +198,11 @@
 			"node": "./filters/*.ts",
 			"default": "./out/filters/*.js",
 			"types": "./out/filters/*.d.ts"
+		},
+		"./tools": {
+			"node": "./tools/index.ts",
+			"default": "./out/tools/index.js",
+			"types": "./out/tools/index.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -346,6 +351,10 @@
 			"./filters/*": {
 				"types": "./out/filters/*.d.ts",
 				"default": "./out/filters/*.js"
+			},
+			"./tools": {
+				"types": "./out/tools/index.d.ts",
+				"default": "./out/tools/index.js"
 			}
 		},
 		"access": "public"
