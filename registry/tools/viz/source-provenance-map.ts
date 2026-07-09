@@ -20,48 +20,34 @@
  *   layer not plotted here; this map is the rooftop-point sources only.
  *
  *   SERVE THE OUTPUT OVER LOCALHOST (the house tile server CORS-restricts to localhost + the docs
- *   domains). e.g. `python3 -m http.server -d <dir>`, or `render-map.mjs` against the served URL.
+ *   domains). e.g. `python3 -m http.server -d <dir>`, or `renderServedMapToPNG` (`./render-map.ts`)
+ *   against the served URL.
  *
- *   Run: node registry/tools/viz/source-provenance-map.ts\
- *   [--state ny] [--db <address-points-us-XX.db>] [--out-html /tmp/source-provenance.html]\
- *   [--nad-mod 700] [--oa-mod 120] [--cap 7000]
+ *   Run: `mailwoman registry viz source-provenance-map [--state ny] [--db <address-points-us-XX.db>]
+ *   [--out-html /tmp/source-provenance.html] [--nad-mod 700] [--oa-mod 120] [--cap 7000]`
  */
 
 import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		cap: { type: "string" },
-		db: { type: "string" },
-		"nad-mod": { type: "string" },
-		"oa-mod": { type: "string" },
-		"out-html": { type: "string" },
-		state: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	cap?: string
-	db?: string
-	"nad-mod"?: string
-	"oa-mod"?: string
-	"out-html"?: string
+/** Options for {@linkcode sourceProvenanceMap}. */
+export interface SourceProvenanceMapOptions {
+	/** State (lowercase postal). Default ny. */
 	state?: string
+	/** Address-point DB path. Default `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<state>.db`. */
+	db?: string
+	/** Output HTML path. Default `/tmp/source-provenance.html`. */
+	outHtml?: string
+	/** Keep ~1/N of NAD points. Default 700. */
+	nadMod?: number
+	/** Keep ~1/N of OpenAddresses points. Default 120. */
+	oaMod?: number
+	/** Per-source marker cap. Default 7000. */
+	cap?: number
 }
-const STATE = (values["state"] || "ny").toLowerCase()
-const DB = values["db"] || `${dataRootPath("address-points")}/address-points-us-${STATE}.db`
-const OUT = values["out-html"] || "/tmp/source-provenance.html"
-const NAD_MOD = Number(values["nad-mod"] || "700") // keep ~1/700 of NAD points
-const OA_MOD = Number(values["oa-mod"] || "120") // keep ~1/120 of OpenAddresses points
-const CAP = Number(values["cap"] || "7000") // per-source marker cap
 
 // Collapse the raw `source` string into a human, mappable category. The address-point DB stores e.g.
 // "overture:NAD" or "overture:OpenAddresses/NY/NYC Open Data" — the suffix is the real upstream
@@ -78,54 +64,72 @@ function categorize(source: string): { bucket: string; publisher: string } {
 	return { bucket: source, publisher: source }
 }
 
-const db = new DatabaseSync(DB, { readOnly: true })
-
 type Row = { lat: number; lon: number; source: string; number: string | null; street_raw: string | null }
 
-// Two stratified samples so the smaller source (OpenAddresses, ~1/6 of NY) stays visible next to NAD.
-// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction; LIMIT caps the marker count.
-const sample = (where: string, mod: number): Row[] =>
-	db
-		.prepare(
-			`SELECT lat, lon, source, number, street_raw FROM address_point
+/** Render the per-state address-point provenance map — see the module doc. */
+export function sourceProvenanceMap(
+	options: SourceProvenanceMapOptions = {},
+	report?: (line: string) => void
+): { outHtml: string; points: number } {
+	const STATE = (options.state || "ny").toLowerCase()
+	const DB = options.db || `${dataRootPath("address-points")}/address-points-us-${STATE}.db`
+	const OUT = options.outHtml || "/tmp/source-provenance.html"
+	const NAD_MOD = options.nadMod ?? 700 // keep ~1/700 of NAD points
+	const OA_MOD = options.oaMod ?? 120 // keep ~1/120 of OpenAddresses points
+	const CAP = options.cap ?? 7000 // per-source marker cap
+
+	const db = new DatabaseSync(DB, { readOnly: true })
+
+	// Two stratified samples so the smaller source (OpenAddresses, ~1/6 of NY) stays visible next to NAD.
+	// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction; LIMIT caps the marker count.
+	const sample = (where: string, mod: number): Row[] =>
+		db
+			.prepare(
+				`SELECT lat, lon, source, number, street_raw FROM address_point
 			 WHERE ${where} AND lat IS NOT NULL AND lon IS NOT NULL AND abs(random()) % ${mod} = 0
 			 LIMIT ${CAP}`
-		)
-		.all() as Row[]
+			)
+			.all() as Row[]
 
-const rows = [...sample("source = 'overture:NAD'", NAD_MOD), ...sample("source LIKE 'overture:OpenAddresses%'", OA_MOD)]
-db.close()
+	const rows = [
+		...sample("source = 'overture:NAD'", NAD_MOD),
+		...sample("source LIKE 'overture:OpenAddresses%'", OA_MOD),
+	]
+	db.close()
 
-const counts = new Map<string, number>()
-const features = rows.map((r) => {
-	const { bucket, publisher } = categorize(r.source)
-	counts.set(bucket, (counts.get(bucket) ?? 0) + 1)
-	const addr = [r.number, r.street_raw].filter(Boolean).join(" ").trim()
+	const counts = new Map<string, number>()
+	const features = rows.map((r) => {
+		const { bucket, publisher } = categorize(r.source)
+		counts.set(bucket, (counts.get(bucket) ?? 0) + 1)
+		const addr = [r.number, r.street_raw].filter(Boolean).join(" ").trim()
 
-	return {
-		type: "Feature" as const,
-		geometry: { type: "Point" as const, coordinates: [r.lon, r.lat] },
-		properties: {
-			bucket,
-			sources: [bucket],
-			recordCount: 1,
-			geocodeTier: "address_point",
-			organization: publisher,
-			address: addr || null,
-		},
+		return {
+			type: "Feature" as const,
+			geometry: { type: "Point" as const, coordinates: [r.lon, r.lat] },
+			properties: {
+				bucket,
+				sources: [bucket],
+				recordCount: 1,
+				geocodeTier: "address_point",
+				organization: publisher,
+				address: addr || null,
+			},
+		}
+	})
+
+	const geojson = { type: "FeatureCollection" as const, features }
+	const html = toMapHTML(geojson as never, {
+		title: `Address-point provenance — ${STATE.toUpperCase()}, every point colored by its open-data source`,
+		flavor: "light",
+		colorBy: "bucket",
+	})
+
+	writeFileSync(OUT, html)
+	report?.(`[written] ${OUT}  (${features.length} points)`)
+
+	for (const [bucket, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+		report?.(`  ${n.toString().padStart(5)}  ${bucket}`)
 	}
-})
 
-const geojson = { type: "FeatureCollection" as const, features }
-const html = toMapHTML(geojson as never, {
-	title: `Address-point provenance — ${STATE.toUpperCase()}, every point colored by its open-data source`,
-	flavor: "light",
-	colorBy: "bucket",
-})
-
-writeFileSync(OUT, html)
-console.error(`[written] ${OUT}  (${features.length} points)`)
-
-for (const [bucket, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
-	console.error(`  ${n.toString().padStart(5)}  ${bucket}`)
+	return { outHtml: OUT, points: features.length }
 }

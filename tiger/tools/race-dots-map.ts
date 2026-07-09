@@ -8,51 +8,40 @@
  *   inlined here, à la `registry/map-html.ts`) under a circle layer of the dots, colored by race
  *   category. The dots PMTiles is read client-side via the `pmtiles` protocol.
  *
- *   Each dot is one of `--per` people of a category, placed at random inside its Census block — a
+ *   Each dot is one of `per` people of a category, placed at random inside its Census block — a
  *   representation, not a record about any address. Serve over localhost (the house tile server
- *   CORS-restricts to localhost + the docs domains).
+ *   CORS-restricts to localhost + the docs domains) — `mailwoman tiger race-dots-map --serve` wires
+ *   {@linkcode serveWithRangeSupport} for exactly this.
  *
- *   Run: node scripts/census/race-dots-map.ts\
- *   --pmtiles-url http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html
+ *   Run: `mailwoman tiger race-dots-map --pmtiles-url
+ *   http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-import { layers, namedFlavor } from "@protomaps/basemaps"
-
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		lat: { type: "string" },
-		lng: { type: "string" },
-		out: { type: "string" },
-		per: { type: "string" },
-		"pmtiles-url": { type: "string" },
-		title: { type: "string" },
-		zoom: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	lat?: string
-	lng?: string
+/** Options for {@linkcode raceDotsMap}. */
+export interface RaceDotsMapOptions {
+	/** Dots tileset URL the page reads client-side. Default `http://localhost:8899/race-dots-oc.pmtiles`. */
+	pmtilesURL?: string
+	/** Output HTML path. Default `/tmp/race-dots-oc.html`. */
 	out?: string
-	per?: string
-	"pmtiles-url"?: string
+	/** People represented by one dot (title/legend copy only). Default 5. */
+	per?: number
+	/** Page title. Default derives from `per`. */
 	title?: string
-	zoom?: string
+	/** Initial map center longitude. Default -117.83 (Orange County, CA). */
+	lng?: number
+	/** Initial map center latitude. Default 33.68. */
+	lat?: number
+	/** Initial map zoom. Default 9.4. */
+	zoom?: number
 }
-const PMTILES_URL = values["pmtiles-url"] || "http://localhost:8899/race-dots-oc.pmtiles"
-const OUT = values["out"] || "/tmp/race-dots-oc.html"
-const PER = Number(values["per"] || "5")
-const PER_PHRASE = PER === 1 ? "one dot is one person" : `one dot ≈ ${PER} people`
-const TITLE = values["title"] || `Race in Orange County, CA — ${PER_PHRASE} (2020 Census)`
-const CENTER_LNG = Number(values["lng"] || "-117.83")
-const CENTER_LAT = Number(values["lat"] || "33.68")
-const ZOOM = Number(values["zoom"] || "9.4")
+
+/** Result of {@linkcode raceDotsMap}. */
+export interface RaceDotsMapResult {
+	outPath: string
+	pmtilesURL: string
+}
 
 const MAPLIBRE_VERSION = "5.24.0"
 const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp"
@@ -86,43 +75,60 @@ const CATEGORY_LABEL: Record<string, string> = {
 	multi: "Two or more races",
 }
 
-const colorMatch: unknown[] = ["match", ["get", "cat"]]
+/** Race-dots MapLibre page writer — see the module doc. */
+export async function raceDotsMap(
+	options: RaceDotsMapOptions = {},
+	report?: (line: string) => void
+): Promise<RaceDotsMapResult> {
+	const PMTILES_URL = options.pmtilesURL || "http://localhost:8899/race-dots-oc.pmtiles"
+	const OUT = options.out || "/tmp/race-dots-oc.html"
+	const PER = options.per ?? 5
+	const PER_PHRASE = PER === 1 ? "one dot is one person" : `one dot ≈ ${PER} people`
+	const TITLE = options.title || `Race in Orange County, CA — ${PER_PHRASE} (2020 Census)`
+	const CENTER_LNG = options.lng ?? -117.83
+	const CENTER_LAT = options.lat ?? 33.68
+	const ZOOM = options.zoom ?? 9.4
 
-for (const [cat, color] of Object.entries(CATEGORY_COLOR)) {
-	colorMatch.push(cat, color)
-}
-colorMatch.push("#9e9e9e")
+	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
+	const { layers, namedFlavor } = await import("@protomaps/basemaps")
 
-const style = {
-	version: 8,
-	glyphs: GLYPHS_URL,
-	sprite: SPRITE_URL,
-	sources: {
-		[BASEMAP_SOURCE_ID]: { type: "vector", url: BASEMAP_TILEJSON_URL },
-		dots: { type: "vector", url: "pmtiles://" + PMTILES_URL },
-	},
-	layers: [
-		...(layers(BASEMAP_SOURCE_ID, namedFlavor("light"), { lang: "en" }) as unknown[]),
-		{
-			id: "race-dots",
-			type: "circle",
-			source: "dots",
-			"source-layer": "dots",
-			paint: {
-				"circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 0.7, 9, 1.7, 12, 2.8, 16, 4.5],
-				"circle-color": colorMatch,
-				"circle-opacity": 0.85,
-			},
+	const colorMatch: unknown[] = ["match", ["get", "cat"]]
+
+	for (const [cat, color] of Object.entries(CATEGORY_COLOR)) {
+		colorMatch.push(cat, color)
+	}
+	colorMatch.push("#9e9e9e")
+
+	const style = {
+		version: 8,
+		glyphs: GLYPHS_URL,
+		sprite: SPRITE_URL,
+		sources: {
+			[BASEMAP_SOURCE_ID]: { type: "vector", url: BASEMAP_TILEJSON_URL },
+			dots: { type: "vector", url: "pmtiles://" + PMTILES_URL },
 		},
-	],
-}
+		layers: [
+			...(layers(BASEMAP_SOURCE_ID, namedFlavor("light"), { lang: "en" }) as unknown[]),
+			{
+				id: "race-dots",
+				type: "circle",
+				source: "dots",
+				"source-layer": "dots",
+				paint: {
+					"circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 0.7, 9, 1.7, 12, 2.8, 16, 4.5],
+					"circle-color": colorMatch,
+					"circle-opacity": 0.85,
+				},
+			},
+		],
+	}
 
-const legendRows = Object.keys(CATEGORY_COLOR)
-	.map((c) => `<div><i style="background:${CATEGORY_COLOR[c]}"></i>${CATEGORY_LABEL[c]}</div>`)
-	.join("")
+	const legendRows = Object.keys(CATEGORY_COLOR)
+		.map((c) => `<div><i style="background:${CATEGORY_COLOR[c]}"></i>${CATEGORY_LABEL[c]}</div>`)
+		.join("")
 
-// The client script avoids template literals / `${` so it survives this outer template verbatim.
-const html = `<!doctype html>
+	// The client script avoids template literals / `${` so it survives this outer template verbatim.
+	const html = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -162,5 +168,8 @@ const html = `<!doctype html>
 </html>
 `
 
-writeFileSync(OUT, html)
-console.error(`[written] ${OUT}  (pmtiles: ${PMTILES_URL})`)
+	writeFileSync(OUT, html)
+	report?.(`[written] ${OUT}  (pmtiles: ${PMTILES_URL})`)
+
+	return { outPath: OUT, pmtilesURL: PMTILES_URL }
+}

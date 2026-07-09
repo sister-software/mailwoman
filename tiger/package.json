@@ -32,6 +32,11 @@
 			"default": "./out/sdk/index.js",
 			"types": "./out/sdk/index.d.ts"
 		},
+		"./tools": {
+			"node": "./tools/index.ts",
+			"default": "./out/tools/index.js",
+			"types": "./out/tools/index.d.ts"
+		},
 		".": {
 			"node": "./index.ts",
 			"default": "./out/index.js",
@@ -45,6 +50,10 @@
 			"./sdk": {
 				"types": "./out/sdk/index.d.ts",
 				"default": "./out/sdk/index.js"
+			},
+			"./tools": {
+				"types": "./out/tools/index.d.ts",
+				"default": "./out/tools/index.js"
 			},
 			".": {
 				"types": "./out/index.d.ts",

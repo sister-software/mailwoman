@@ -31,27 +31,24 @@
  *       a reproduction of a production score. The caption says so.
  *
  *   Emits a self-contained Plotly HTML (twin 3D landscapes + an annotated 2D contour). Render to PNG
- *   with `registry/tools/viz/render.mjs` (Playwright + swiftshader for headless WebGL).
+ *   with `renderPlotlyHTMLToPNG` (`./render.ts` — Playwright + swiftshader for headless WebGL).
  *
- *   Run: node registry/tools/viz/geocode-first-surface.ts\
- *   [--lambda 0.02] [--out-html /tmp/geocode-first-surface.html]
+ *   Run: `mailwoman registry viz geocode-first-surface [--lambda 0.02]
+ *   [--out-html /tmp/geocode-first-surface.html]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: { lambda: { type: "string" }, "out-html": { type: "string" } },
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { lambda?: string; "out-html"?: string }
-// Illustrative prior. Production's record matcher uses λ=1e-4 (calibrated for the full multi-field
-// model with phone + spatial exact-key); here we want the boundary visible in a two-axis slice.
-const LAMBDA = Number(values["lambda"] || "0.02")
-const OUT_HTML = values["out-html"] || "/tmp/geocode-first-surface.html"
+/** Options for {@linkcode geocodeFirstSurface}. */
+export interface GeocodeFirstSurfaceOptions {
+	/**
+	 * Illustrative prior λ. Production's record matcher uses λ=1e-4 (calibrated for the full multi-field model with phone
+	 * + spatial exact-key); here we want the boundary visible in a two-axis slice. Default 0.02.
+	 */
+	lambda?: number
+	/** Output HTML path. Default `/tmp/geocode-first-surface.html`. */
+	outHtml?: string
+}
 
 // ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment, not import,
 //    so this generator is self-contained / independent of the match package's build state). ───────────
@@ -98,84 +95,92 @@ function distanceWeight(km: number): number {
 	return levelWeight(DISTANCE_LEVELS[DISTANCE_LEVELS.length - 1]!)
 }
 
-const PRIOR = priorWeight(LAMBDA)
+/** Emit the geocode-first decision-surface Plotly HTML — see the module doc. */
+export function geocodeFirstSurface(
+	options: GeocodeFirstSurfaceOptions = {},
+	report?: (line: string) => void
+): { outHtml: string } {
+	const LAMBDA = options.lambda ?? 0.02
+	const OUT_HTML = options.outHtml || "/tmp/geocode-first-surface.html"
 
-/** String-first model: name evidence only — distance is invisible to it. */
-const pStringFirst = (sim: number, _km: number) => probabilityFromWeight(PRIOR + nameWeight(sim))
-/** Geocode-first model: name + distance evidence. */
-const pGeocodeFirst = (sim: number, km: number) => probabilityFromWeight(PRIOR + nameWeight(sim) + distanceWeight(km))
+	const PRIOR = priorWeight(LAMBDA)
 
-// ── Grid. X = string similarity 0→1. Y = geographic distance, sampled denser near 0 (log-ish) so
-//    the meaningful same-building / same-block transitions aren't a single pixel. ────────────────
+	/** String-first model: name evidence only — distance is invisible to it. */
+	const pStringFirst = (sim: number, _km: number) => probabilityFromWeight(PRIOR + nameWeight(sim))
+	/** Geocode-first model: name + distance evidence. */
+	const pGeocodeFirst = (sim: number, km: number) => probabilityFromWeight(PRIOR + nameWeight(sim) + distanceWeight(km))
 
-const NX = 60
-const NY = 60
-const KM_MAX = 50 // 0 → 50 km, log-spaced
+	// ── Grid. X = string similarity 0→1. Y = geographic distance, sampled denser near 0 (log-ish) so
+	//    the meaningful same-building / same-block transitions aren't a single pixel. ────────────────
 
-const simAxis = Array.from({ length: NX }, (_, i) => i / (NX - 1))
-// log-spaced distance: 0.005 km (5 m) → 50 km, plus a literal 0 at the front
-const kmAxis = Array.from({ length: NY }, (_, j) => {
-	const t = j / (NY - 1)
+	const NX = 60
+	const NY = 60
+	const KM_MAX = 50 // 0 → 50 km, log-spaced
 
-	return 0.005 * Math.pow(KM_MAX / 0.005, t)
-})
+	const simAxis = Array.from({ length: NX }, (_, i) => i / (NX - 1))
+	// log-spaced distance: 0.005 km (5 m) → 50 km, plus a literal 0 at the front
+	const kmAxis = Array.from({ length: NY }, (_, j) => {
+		const t = j / (NY - 1)
 
-function surface(p: (sim: number, km: number) => number): number[][] {
-	// Plotly z is row-major over y (distance), each row across x (similarity).
-	return kmAxis.map((km) => simAxis.map((sim) => p(sim, km)))
-}
+		return 0.005 * Math.pow(KM_MAX / 0.005, t)
+	})
 
-const zString = surface(pStringFirst)
-const zGeo = surface(pGeocodeFirst)
+	function surface(p: (sim: number, km: number) => number): number[][] {
+		// Plotly z is row-major over y (distance), each row across x (similarity).
+		return kmAxis.map((km) => simAxis.map((sim) => p(sim, km)))
+	}
 
-// ── The two trap points. (sim, km) chosen to sit in the off-diagonal quadrants. ─────────────────
+	const zString = surface(pStringFirst)
+	const zGeo = surface(pGeocodeFirst)
 
-interface Trap {
-	label: string
-	detail: string
-	sim: number
-	km: number
-}
-const TRAPS: Trap[] = [
-	{
-		label: "Springfield General — IL vs MA",
-		detail: "identical name, ~1500 km apart",
-		sim: 1.0,
-		km: 15, // plotted on the far plateau (real distance ~1500 km; clamped into view)
-	},
-	{
-		// "St" → "Street" canonicalizes to a high (not exact) name agreement; the trailing "Apt 2"
-		// keeps it off 1.0. Lands in the 0.88 "high" tier — same place, drifted-but-recognizable string.
-		label: "123 Main St vs 123 Main Street Apt 2",
-		detail: "same building, drifted string",
-		sim: 0.9,
-		km: 0.01,
-	},
-]
+	// ── The two trap points. (sim, km) chosen to sit in the off-diagonal quadrants. ─────────────────
 
-// Decision verdicts at each trap (for the annotation text).
-const verdict = (p: number) => (p >= 0.5 ? "MATCH" : "no")
-const trapRows = TRAPS.map((t) => ({
-	...t,
-	stringP: pStringFirst(t.sim, t.km),
-	geoP: pGeocodeFirst(t.sim, t.km),
-}))
+	interface Trap {
+		label: string
+		detail: string
+		sim: number
+		km: number
+	}
+	const TRAPS: Trap[] = [
+		{
+			label: "Springfield General — IL vs MA",
+			detail: "identical name, ~1500 km apart",
+			sim: 1.0,
+			km: 15, // plotted on the far plateau (real distance ~1500 km; clamped into view)
+		},
+		{
+			// "St" → "Street" canonicalizes to a high (not exact) name agreement; the trailing "Apt 2"
+			// keeps it off 1.0. Lands in the 0.88 "high" tier — same place, drifted-but-recognizable string.
+			label: "123 Main St vs 123 Main Street Apt 2",
+			detail: "same building, drifted string",
+			sim: 0.9,
+			km: 0.01,
+		},
+	]
 
-// ── HTML. ───────────────────────────────────────────────────────────────────────────────────────
+	// Decision verdicts at each trap (for the annotation text).
+	const verdict = (p: number) => (p >= 0.5 ? "MATCH" : "no")
+	const trapRows = TRAPS.map((t) => ({
+		...t,
+		stringP: pStringFirst(t.sim, t.km),
+		geoP: pGeocodeFirst(t.sim, t.km),
+	}))
 
-const data = {
-	simAxis,
-	kmAxis,
-	zString,
-	zGeo,
-	traps: trapRows,
-	lambda: LAMBDA,
-	prior: PRIOR,
-}
+	// ── HTML. ───────────────────────────────────────────────────────────────────────────────────────
 
-const safe = JSON.stringify(data).replace(/<\/script>/gi, "<\\/script>")
+	const data = {
+		simAxis,
+		kmAxis,
+		zString,
+		zGeo,
+		traps: trapRows,
+		lambda: LAMBDA,
+		prior: PRIOR,
+	}
 
-const html = `<!doctype html><html><head><meta charset="utf-8"/>
+	const safe = JSON.stringify(data).replace(/<\/script>/gi, "<\\/script>")
+
+	const html = `<!doctype html><html><head><meta charset="utf-8"/>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#fff;color:#111}
@@ -279,12 +284,15 @@ document.getElementByID("cap").innerHTML =
 </script>
 </body></html>`
 
-writeFileSync(OUT_HTML, html)
-console.error(`[written] ${OUT_HTML}`)
-console.error(`λ=${LAMBDA}  prior=${PRIOR.toFixed(2)} bits`)
+	writeFileSync(OUT_HTML, html)
+	report?.(`[written] ${OUT_HTML}`)
+	report?.(`λ=${LAMBDA}  prior=${PRIOR.toFixed(2)} bits`)
 
-for (const t of trapRows) {
-	console.error(
-		`  ${t.label}: string-first ${(t.stringP * 100).toFixed(1)}% (${verdict(t.stringP)}) | geocode-first ${(t.geoP * 100).toFixed(1)}% (${verdict(t.geoP)})`
-	)
+	for (const t of trapRows) {
+		report?.(
+			`  ${t.label}: string-first ${(t.stringP * 100).toFixed(1)}% (${verdict(t.stringP)}) | geocode-first ${(t.geoP * 100).toFixed(1)}% (${verdict(t.geoP)})`
+		)
+	}
+
+	return { outHtml: OUT_HTML }
 }

@@ -20,22 +20,17 @@
  *   Emits a self-contained SVG (the docs' committed-chart-asset convention — see
  *   `docs/articles/evals/charts/*.svg`), no browser required.
  *
- *   Run: node registry/tools/viz/yardstick-figure.ts\
- *   [--out-svg docs/articles/evals/charts/dedup-yardstick.svg]
+ *   Run: `mailwoman registry viz yardstick-figure
+ *   [--out-svg docs/articles/evals/charts/dedup-yardstick.svg]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: { "out-svg": { type: "string" } },
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { "out-svg"?: string }
-const OUT = values["out-svg"] || "docs/articles/evals/charts/dedup-yardstick.svg"
+/** Options for {@linkcode yardstickFigure}. */
+export interface YardstickFigureOptions {
+	/** Output SVG path. Default `docs/articles/evals/charts/dedup-yardstick.svg` (relative to cwd). */
+	outSvg?: string
+}
 
 // ── The committed measurement (2026-06-16-dedup-dual-level-benchmark.md). ────────────────────────
 
@@ -90,110 +85,120 @@ const MODELS = [
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 
-const parts: string[] = []
-const push = (s: string) => parts.push(s)
+/** Emit the dedup-yardstick slope chart as a self-contained SVG — see the module doc. */
+export function yardstickFigure(
+	options: YardstickFigureOptions = {},
+	report?: (line: string) => void
+): { outSvg: string } {
+	const OUT = options.outSvg || "docs/articles/evals/charts/dedup-yardstick.svg"
 
-push(
-	`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11"><rect width="${W}" height="${H}" fill="white"/>`
-)
+	const parts: string[] = []
+	const push = (s: string) => parts.push(s)
 
-// Title + subtitle.
-push(
-	`<text x="${W / 2}" y="24" text-anchor="middle" font-size="15" font-weight="600">The dedup F1 climbs as the entity-truth gets honest</text>`
-)
-push(
-	`<text x="${W / 2}" y="42" text-anchor="middle" font-size="11.5" fill="#555">Identical matcher output (the same clusters) graded against four rulers — 1000 TX NPIs → 2757 records, NPI held out</text>`
-)
-
-// Y gridlines + labels.
-for (let v = Y_MIN; v <= Y_MAX; v += 5) {
-	const y = yFor(v)
 	push(
-		`<line x1="${plotL}" y1="${y.toFixed(1)}" x2="${plotR}" y2="${y.toFixed(1)}" stroke="#e5e7eb" stroke-width="1"/>`
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11"><rect width="${W}" height="${H}" fill="white"/>`
 	)
-	push(`<text x="${plotL - 8}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#374151">${v}%</text>`)
-}
-push(
-	`<text transform="translate(20, ${(plotT + plotB) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#374151">entity-resolution F1</text>`
-)
 
-// X category ticks + labels + the class-count + note strip.
-GRAINS.forEach((g, i) => {
-	const x = xFor(i)
+	// Title + subtitle.
 	push(
-		`<line x1="${x.toFixed(1)}" y1="${plotT}" x2="${x.toFixed(1)}" y2="${plotB}" stroke="#f1f1f1" stroke-width="1"/>`
+		`<text x="${W / 2}" y="24" text-anchor="middle" font-size="15" font-weight="600">The dedup F1 climbs as the entity-truth gets honest</text>`
 	)
 	push(
-		`<text x="${x.toFixed(1)}" y="${plotB + 20}" text-anchor="middle" font-size="12.5" font-weight="600">${esc(g.label)}</text>`
+		`<text x="${W / 2}" y="42" text-anchor="middle" font-size="11.5" fill="#555">Identical matcher output (the same clusters) graded against four rulers — 1000 TX NPIs → 2757 records, NPI held out</text>`
 	)
-	push(
-		`<text x="${x.toFixed(1)}" y="${plotB + 36}" text-anchor="middle" font-size="10" fill="#6b7280">${g.classes} classes</text>`
-	)
-	g.note.split("\n").forEach((line, k) => {
+
+	// Y gridlines + labels.
+	for (let v = Y_MIN; v <= Y_MAX; v += 5) {
+		const y = yFor(v)
 		push(
-			`<text x="${x.toFixed(1)}" y="${plotB + 50 + k * 12}" text-anchor="middle" font-size="9" fill="#9ca3af">${esc(line)}</text>`
+			`<line x1="${plotL}" y1="${y.toFixed(1)}" x2="${plotR}" y2="${y.toFixed(1)}" stroke="#e5e7eb" stroke-width="1"/>`
 		)
-	})
-})
-
-// Model slope lines + points.
-for (const m of MODELS) {
-	const f1s = F1[m.key]!
-	const pts = f1s.map((f, i) => `${xFor(i).toFixed(1)},${yFor(f).toFixed(1)}`).join(" ")
+		push(`<text x="${plotL - 8}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#374151">${v}%</text>`)
+	}
 	push(
-		`<polyline points="${pts}" fill="none" stroke="${m.color}" stroke-width="${m.width}"${m.dash ? ` stroke-dasharray="${m.dash}"` : ""}/>`
+		`<text transform="translate(20, ${(plotT + plotB) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#374151">entity-resolution F1</text>`
 	)
-	f1s.forEach((f, i) => {
+
+	// X category ticks + labels + the class-count + note strip.
+	GRAINS.forEach((g, i) => {
 		const x = xFor(i)
-		const y = yFor(f)
-		push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${m.key === "GBT" ? 5 : 4}" fill="${m.color}"/>`)
-		// value label: above for GBT, below for FS, to avoid collision
-		const dy = m.key === "GBT" ? -10 : 16
 		push(
-			`<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="${m.key === "GBT" ? 700 : 400}" fill="${m.color}">${f.toFixed(1)}</text>`
+			`<line x1="${x.toFixed(1)}" y1="${plotT}" x2="${x.toFixed(1)}" y2="${plotB}" stroke="#f1f1f1" stroke-width="1"/>`
 		)
+		push(
+			`<text x="${x.toFixed(1)}" y="${plotB + 20}" text-anchor="middle" font-size="12.5" font-weight="600">${esc(g.label)}</text>`
+		)
+		push(
+			`<text x="${x.toFixed(1)}" y="${plotB + 36}" text-anchor="middle" font-size="10" fill="#6b7280">${g.classes} classes</text>`
+		)
+		g.note.split("\n").forEach((line, k) => {
+			push(
+				`<text x="${x.toFixed(1)}" y="${plotB + 50 + k * 12}" text-anchor="middle" font-size="9" fill="#9ca3af">${esc(line)}</text>`
+			)
+		})
 	})
-}
 
-// Legend (top-right, in the right margin).
-const lx = plotR + 16
-let ly = plotT + 6
+	// Model slope lines + points.
+	for (const m of MODELS) {
+		const f1s = F1[m.key]!
+		const pts = f1s.map((f, i) => `${xFor(i).toFixed(1)},${yFor(f).toFixed(1)}`).join(" ")
+		push(
+			`<polyline points="${pts}" fill="none" stroke="${m.color}" stroke-width="${m.width}"${m.dash ? ` stroke-dasharray="${m.dash}"` : ""}/>`
+		)
+		f1s.forEach((f, i) => {
+			const x = xFor(i)
+			const y = yFor(f)
+			push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${m.key === "GBT" ? 5 : 4}" fill="${m.color}"/>`)
+			// value label: above for GBT, below for FS, to avoid collision
+			const dy = m.key === "GBT" ? -10 : 16
+			push(
+				`<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="${m.key === "GBT" ? 700 : 400}" fill="${m.color}">${f.toFixed(1)}</text>`
+			)
+		})
+	}
 
-for (const m of MODELS) {
+	// Legend (top-right, in the right margin).
+	const lx = plotR + 16
+	let ly = plotT + 6
+
+	for (const m of MODELS) {
+		push(
+			`<line x1="${lx}" y1="${ly}" x2="${lx + 22}" y2="${ly}" stroke="${m.color}" stroke-width="${m.width}"${m.dash ? ` stroke-dasharray="${m.dash}"` : ""}/>`
+		)
+		push(`<text x="${lx + 28}" y="${ly + 3.5}" font-size="10.5" fill="#374151">${esc(m.label)}</text>`)
+		ly += 18
+	}
+
+	// The headline callout — the full climb for the shipped model, ending at the geocode-first key.
+	const gCoord = yFor(F1.GBT![3])
+	const gNPI = yFor(F1.GBT![0])
 	push(
-		`<line x1="${lx}" y1="${ly}" x2="${lx + 22}" y2="${ly}" stroke="${m.color}" stroke-width="${m.width}"${m.dash ? ` stroke-dasharray="${m.dash}"` : ""}/>`
+		`<g font-size="10.5">` +
+			`<text x="${lx}" y="${ly + 18}" font-weight="700" fill="#3578e5">+14.5pp NPI → coord</text>` +
+			`<text x="${lx}" y="${ly + 33}" fill="#555">same clusters —</text>` +
+			`<text x="${lx}" y="${ly + 46}" fill="#555">the ruler, not the model.</text>` +
+			`<text x="${lx}" y="${ly + 64}" fill="#555">over-merge 109 → 76,</text>` +
+			`<text x="${lx}" y="${ly + 77}" fill="#555">precision 43.7% → 64.6%.</text>` +
+			`</g>`
 	)
-	push(`<text x="${lx + 28}" y="${ly + 3.5}" font-size="10.5" fill="#374151">${esc(m.label)}</text>`)
-	ly += 18
+	// Bracket the GBT climb on the right edge of the plot (NPI → coord, the full honest range).
+	push(
+		`<path d="M ${(plotR - 4).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gCoord.toFixed(1)} L ${(plotR - 4).toFixed(1)} ${gCoord.toFixed(1)}" fill="none" stroke="#3578e5" stroke-width="1" opacity="0.5"/>`
+	)
+
+	// Footer caveat — the gold-set anchor.
+	push(
+		`<text x="${plotL}" y="${H - 10}" font-size="9.5" fill="#9ca3af">Gold set (2026-06-16-dedup-gold-set-tx120): 120/120 hard co-located pairs = same org, 0 genuine over-merges. The coordinate (geocode-first building key) is the tightest honest ruler; NPI charges correct same-org merges as errors.</text>`
+	)
+
+	push(`</svg>`)
+
+	writeFileSync(OUT, parts.join(""))
+	report?.(`[written] ${OUT}`)
+	report?.(
+		`  GBT F1: NPI ${F1.GBT![0]} → site ${F1.GBT![1]} → org-name ${F1.GBT![2]} → coord ${F1.GBT![3]}  (+${(F1.GBT![3] - F1.GBT![0]).toFixed(1)}pp)`
+	)
+	report?.(`  over-merge: ${OVERMERGE.GBT!.join(" → ")}`)
+
+	return { outSvg: OUT }
 }
-
-// The headline callout — the full climb for the shipped model, ending at the geocode-first key.
-const gCoord = yFor(F1.GBT![3])
-const gNPI = yFor(F1.GBT![0])
-push(
-	`<g font-size="10.5">` +
-		`<text x="${lx}" y="${ly + 18}" font-weight="700" fill="#3578e5">+14.5pp NPI → coord</text>` +
-		`<text x="${lx}" y="${ly + 33}" fill="#555">same clusters —</text>` +
-		`<text x="${lx}" y="${ly + 46}" fill="#555">the ruler, not the model.</text>` +
-		`<text x="${lx}" y="${ly + 64}" fill="#555">over-merge 109 → 76,</text>` +
-		`<text x="${lx}" y="${ly + 77}" fill="#555">precision 43.7% → 64.6%.</text>` +
-		`</g>`
-)
-// Bracket the GBT climb on the right edge of the plot (NPI → coord, the full honest range).
-push(
-	`<path d="M ${(plotR - 4).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gCoord.toFixed(1)} L ${(plotR - 4).toFixed(1)} ${gCoord.toFixed(1)}" fill="none" stroke="#3578e5" stroke-width="1" opacity="0.5"/>`
-)
-
-// Footer caveat — the gold-set anchor.
-push(
-	`<text x="${plotL}" y="${H - 10}" font-size="9.5" fill="#9ca3af">Gold set (2026-06-16-dedup-gold-set-tx120): 120/120 hard co-located pairs = same org, 0 genuine over-merges. The coordinate (geocode-first building key) is the tightest honest ruler; NPI charges correct same-org merges as errors.</text>`
-)
-
-push(`</svg>`)
-
-writeFileSync(OUT, parts.join(""))
-console.error(`[written] ${OUT}`)
-console.error(
-	`  GBT F1: NPI ${F1.GBT![0]} → site ${F1.GBT![1]} → org-name ${F1.GBT![2]} → coord ${F1.GBT![3]}  (+${(F1.GBT![3] - F1.GBT![0]).toFixed(1)}pp)`
-)
-console.error(`  over-merge: ${OVERMERGE.GBT!.join(" → ")}`)

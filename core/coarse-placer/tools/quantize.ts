@@ -1,7 +1,3 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-import { parseArgs } from "node:util"
-
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -15,83 +11,106 @@ import { parseArgs } from "node:util"
  *   Per-class scales matter because class weight magnitudes differ (OTHER's outlier-exposure rows
  *   push bigger weights than the in-map countries).
  *
- *   Verify the accuracy cost with `core/coarse-placer/tools/eval-quant-compare.ts` (target: within
- *   ~1pp).
+ *   Verify the accuracy cost with `mailwoman placer eval quant-compare` (target: within ~1pp).
  *
- *   Usage: node core/coarse-placer/tools/quantize.ts [--in <fp32 dir>] [--out <int8 dir>]
+ *   Run: `mailwoman placer quantize [--in <fp32 dir>] [--out <int8 dir>]`
  */
-import { dataRootPath } from "@mailwoman/core/utils"
 
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import * as path from "node:path"
+
+import { dataRootPath } from "../../utils/data-root.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
-const { values: args } = parseArgs({
-	options: {
-		in: { type: "string", default: dataRootPath("coarse-placer", "model") },
-		out: { type: "string", default: dataRootPath("coarse-placer", "model-int8") },
-	},
-})
-
-const meta = JSON.parse(readFileSync(path.join(args.in, "meta.json"), "utf8")) as CoarsePlacerMeta
-const buf = readFileSync(path.join(args.in, "weights.bin"))
-const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
-const w = new Float32Array(ab)
-const C = meta.classes.length
-const dim = meta.featureDim
-
-if (w.length !== C * dim) throw new Error(`weights length ${w.length} ≠ classes×dim ${C * dim}`)
-
-const int8 = new Int8Array(C * dim)
-const scales: number[] = []
-let maxAbsErr = 0
-let sumSqErr = 0
-
-for (let c = 0; c < C; c++) {
-	const base = c * dim
-	let maxAbs = 0
-
-	for (let i = 0; i < dim; i++) {
-		const a = Math.abs(w[base + i]!)
-
-		if (a > maxAbs) {
-			maxAbs = a
-		}
-	}
-	const scale = maxAbs / 127 || 1 // all-zero row → scale 1 (q stays 0)
-	scales.push(scale)
-
-	for (let i = 0; i < dim; i++) {
-		let q = Math.round(w[base + i]! / scale)
-
-		if (q > 127) {
-			q = 127
-		} else if (q < -127) {
-			q = -127
-		} // symmetric range; avoid -128 so |q|≤127
-		int8[base + i] = q
-		const err = Math.abs(q * scale - w[base + i]!)
-
-		if (err > maxAbsErr) {
-			maxAbsErr = err
-		}
-		sumSqErr += err * err
-	}
+/** Options for {@linkcode quantizeCoarsePlacer}. */
+export interface QuantizeCoarsePlacerOptions {
+	/** Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	in?: string
+	/** Int8 output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`. */
+	out?: string
 }
 
-mkdirSync(args.out, { recursive: true })
-writeFileSync(path.join(args.out, "weights.bin"), Buffer.from(int8.buffer))
-writeFileSync(
-	path.join(args.out, "meta.json"),
-	JSON.stringify({ ...meta, quantization: "int8-per-row", scales }, null, 2)
-)
+/** Result of {@linkcode quantizeCoarsePlacer}. */
+export interface QuantizeCoarsePlacerResult {
+	outDir: string
+	fp32Bytes: number
+	int8Bytes: number
+	maxAbsErr: number
+	rmse: number
+}
 
-const fp32Bytes = w.length * 4
-const int8Bytes = int8.length
-const rmse = Math.sqrt(sumSqErr / w.length)
-console.log(`coarse-placer int8 quantization`)
-console.log(`  in:  ${args.in}`)
-console.log(`  out: ${args.out}`)
-console.log(
-	`  weights: ${(fp32Bytes / 1e6).toFixed(2)} MB fp32 → ${(int8Bytes / 1e6).toFixed(2)} MB int8 (${(fp32Bytes / int8Bytes).toFixed(1)}×)`
-)
-console.log(`  per-class scales: [${scales.map((s) => s.toExponential(2)).join(", ")}]`)
-console.log(`  weight reconstruction error: max ${maxAbsErr.toExponential(2)}, rmse ${rmse.toExponential(2)}`)
+/** Coarse-placer int8 quantizer — see the module doc. */
+export async function quantizeCoarsePlacer(
+	options: QuantizeCoarsePlacerOptions = {},
+	report?: (line: string) => void
+): Promise<QuantizeCoarsePlacerResult> {
+	const inDir = options.in || dataRootPath("coarse-placer", "model")
+	const outDir = options.out || dataRootPath("coarse-placer", "model-int8")
+
+	const meta = JSON.parse(readFileSync(path.join(inDir, "meta.json"), "utf8")) as CoarsePlacerMeta
+	const buf = readFileSync(path.join(inDir, "weights.bin"))
+	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+	const w = new Float32Array(ab)
+	const C = meta.classes.length
+	const dim = meta.featureDim
+
+	if (w.length !== C * dim) throw new Error(`weights length ${w.length} ≠ classes×dim ${C * dim}`)
+
+	const int8 = new Int8Array(C * dim)
+	const scales: number[] = []
+	let maxAbsErr = 0
+	let sumSqErr = 0
+
+	for (let c = 0; c < C; c++) {
+		const base = c * dim
+		let maxAbs = 0
+
+		for (let i = 0; i < dim; i++) {
+			const a = Math.abs(w[base + i]!)
+
+			if (a > maxAbs) {
+				maxAbs = a
+			}
+		}
+		const scale = maxAbs / 127 || 1 // all-zero row → scale 1 (q stays 0)
+		scales.push(scale)
+
+		for (let i = 0; i < dim; i++) {
+			let q = Math.round(w[base + i]! / scale)
+
+			if (q > 127) {
+				q = 127
+			} else if (q < -127) {
+				q = -127
+			} // symmetric range; avoid -128 so |q|≤127
+			int8[base + i] = q
+			const err = Math.abs(q * scale - w[base + i]!)
+
+			if (err > maxAbsErr) {
+				maxAbsErr = err
+			}
+			sumSqErr += err * err
+		}
+	}
+
+	mkdirSync(outDir, { recursive: true })
+	writeFileSync(path.join(outDir, "weights.bin"), Buffer.from(int8.buffer))
+	writeFileSync(
+		path.join(outDir, "meta.json"),
+		JSON.stringify({ ...meta, quantization: "int8-per-row", scales }, null, 2)
+	)
+
+	const fp32Bytes = w.length * 4
+	const int8Bytes = int8.length
+	const rmse = Math.sqrt(sumSqErr / w.length)
+	report?.(`coarse-placer int8 quantization`)
+	report?.(`  in:  ${inDir}`)
+	report?.(`  out: ${outDir}`)
+	report?.(
+		`  weights: ${(fp32Bytes / 1e6).toFixed(2)} MB fp32 → ${(int8Bytes / 1e6).toFixed(2)} MB int8 (${(fp32Bytes / int8Bytes).toFixed(1)}×)`
+	)
+	report?.(`  per-class scales: [${scales.map((s) => s.toExponential(2)).join(", ")}]`)
+	report?.(`  weight reconstruction error: max ${maxAbsErr.toExponential(2)}, rmse ${rmse.toExponential(2)}`)
+
+	return { outDir, fp32Bytes, int8Bytes, maxAbsErr, rmse }
+}

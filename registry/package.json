@@ -36,6 +36,11 @@
 			"node": "./ingest.ts",
 			"default": "./out/ingest.js",
 			"types": "./out/ingest.d.ts"
+		},
+		"./tools": {
+			"node": "./tools/index.ts",
+			"default": "./out/tools/index.js",
+			"types": "./out/tools/index.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -56,21 +61,26 @@
 			"./ingest": {
 				"types": "./out/ingest.d.ts",
 				"default": "./out/ingest.js"
+			},
+			"./tools": {
+				"types": "./out/tools/index.d.ts",
+				"default": "./out/tools/index.js"
 			}
 		},
 		"access": "public"
 	},
 	"dependencies": {
 		"@mailwoman/address-id": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"csv-parse": "^5.6.0",
+		"h3-js": "^4.4.0",
 		"spliterator": "^3.2.0"
 	},
 	"devDependencies": {
-		"@mailwoman/core": "workspace:*",
 		"@types/node": ">=26.0.1",
 		"playwright": "^1.61.0"
 	}

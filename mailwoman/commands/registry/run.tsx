@@ -25,6 +25,7 @@ import { setImmediate } from "node:timers/promises"
 import { Spinner } from "@inkjs/ui"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	geocodeAddressVia,
@@ -43,17 +44,21 @@ import {
 	type GeocodeAddress,
 	type SourceRecord,
 } from "@mailwoman/registry"
+import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
 import { createWOFResolver } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../cli-kit/index.ts"
-import { geocodeAddress, ShardProvider, type ShardResolver } from "../geocode-core.ts"
-import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.ts"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.ts"
-import { resolverDefaultCountry } from "./parse.tsx"
+import type { CommandComponent } from "../../cli-kit/index.ts"
+import { geocodeAddress, ShardProvider, type ShardResolver } from "../../geocode-core.ts"
+import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../../resolver-backend.ts"
+import { resolverDefaultCountry } from "../parse.tsx"
+
+/** Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands. */
+export const isDefault = true
 
 // ---------------------------------------------------------------------------
 // CLI contract — args + options
@@ -267,6 +272,67 @@ async function buildGeocoder(
 	}
 }
 
+/** Command-level wiring for the record-matcher tool geocoder (`--wof`/`--data-root`/`--locale` + model swaps). */
+export interface EvalGeocoderFlags {
+	/** WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`. */
+	wof?: string
+	/** Per-state shard root. Default `$MAILWOMAN_DATA_ROOT`. */
+	dataRoot?: string
+	/** Weights locale. Default en-US. */
+	locale?: string
+	/** Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is MANDATORY with `modelPath`. */
+	modelPath?: string
+	tokenizerPath?: string
+	modelCardPath?: string
+}
+
+/**
+ * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take. This is the eval
+ * scripts' historical construction, preserved exactly: a plain `WOFSqlitePlaceLookup` over an explicit WOF path (NOT
+ * the candidate-table backend {@link buildGeocoder} uses), `defaultCountry: "US"`, `placeCountry: false`, and
+ * `postcodeRepair: true` at the parse — so migrated evals reproduce the retired scripts' numbers. Shared by the
+ * `registry train-scorer` and `registry scorer-eval` commands.
+ */
+export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
+	return async (init): Promise<EvalGeocoder> => {
+		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))
+		const dataRoot = flags.dataRoot || mailwomanDataRoot()
+		const classifier = await NeuralAddressClassifier.loadFromWeights({
+			locale: flags.locale || "en-US",
+			...(flags.modelPath ? { modelPath: flags.modelPath } : {}),
+			...(flags.tokenizerPath ? { tokenizerPath: flags.tokenizerPath } : {}),
+			...(flags.modelCardPath ? { modelCardPath: flags.modelCardPath } : {}),
+		})
+		const mod = await import("@mailwoman/resolver-wof-sqlite")
+		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: wof })
+		const resolver = createWOFResolver(lookup)
+		const shardProvider = new ShardProvider(mod, dataRoot)
+		const geocode = (raw: string) =>
+			geocodeAddress(raw, {
+				classifier,
+				resolver,
+				shards: shardProvider.for,
+				defaultCountry: "US",
+				placeCountry: false,
+				...(init?.normalizeCase !== undefined ? { normalizeCase: init.normalizeCase } : {}),
+			})
+		const seam = geocodeAddressVia({
+			parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
+			geocode,
+			country: "US",
+		})
+
+		return {
+			seam,
+			geocode,
+			close: () => {
+				shardProvider.close()
+				lookup.close()
+			},
+		}
+	}
+}
+
 /**
  * One dataset in a `--sources` config: where it lives, its mapping, an optional provenance label + row cap.
  */
@@ -371,7 +437,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 		const geocoded = records.filter((r) => r.address?.geocode).length
 
 		// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
-		// SAME @mailwoman/registry library as scripts/eval/record-matcher/coverage-reconciliation.ts.
+		// SAME @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
 		if (options.reconcile) {
 			const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 			const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)

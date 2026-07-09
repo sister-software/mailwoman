@@ -34,6 +34,11 @@
 			"default": "./out/coarse-placer/coarse-placer.js",
 			"types": "./out/coarse-placer/coarse-placer.d.ts"
 		},
+		"./coarse-placer/tools": {
+			"node": "./coarse-placer/tools/index.ts",
+			"default": "./out/coarse-placer/tools/index.js",
+			"types": "./out/coarse-placer/tools/index.d.ts"
+		},
 		"./tokenization": {
 			"node": "./tokenization/index.ts",
 			"default": "./out/tokenization/index.js",
@@ -219,6 +224,10 @@
 			"./coarse-placer": {
 				"types": "./out/coarse-placer/coarse-placer.d.ts",
 				"default": "./out/coarse-placer/coarse-placer.js"
+			},
+			"./coarse-placer/tools": {
+				"types": "./out/coarse-placer/tools/index.d.ts",
+				"default": "./out/coarse-placer/tools/index.js"
 			},
 			"./tokenization": {
 				"types": "./out/tokenization/index.d.ts",

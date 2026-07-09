@@ -23,66 +23,48 @@
  *   threshold is insufficient by construction → FS stays pinned / a cross-objective retrain (#655
  *   option 2) is the only lever.
  *
- *   Run: node scripts/eval/record-matcher/cross-source-threshold-sweep.ts\
- *   [--cap 2000] [--state TX] [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]
+ *   Run: `mailwoman registry scorer-eval threshold-sweep [--cap 2000] [--state TX]
+ *   [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
 	createGbtScorer,
 	DEDUP_GBT_META,
 	DEDUP_GBT_MODEL,
-	geocodeAddressVia,
 	ingestRows,
 	resolveEntities,
 	streamRows,
 	type ColumnMapping,
+	type GeocodeAddress,
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		candidate: { type: "string" },
-		cap: { type: "string" },
-		"data-root": { type: "string" },
-		"out-md": { type: "string" },
-		sources: { type: "string" },
-		state: { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	candidate?: string
-	cap?: string
-	"data-root"?: string
-	"out-md"?: string
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+
+/** Options for {@linkcode crossSourceThresholdSweep}. */
+export interface CrossSourceThresholdSweepOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string
+	/** Rows kept per source. Default 2000. */
+	cap?: number
+	/** State filter. Default TX. */
 	state?: string
-	wof?: string
+	/**
+	 * #655 option 2: a trained CROSS-SOURCE GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third arm
+	 * at its recommended threshold — the model `registry train-scorer cross-gbt` emits.
+	 */
+	candidate?: string
+	/** Also write the markdown report here. */
+	outMd?: string
 }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const CAP = Number(values["cap"] || "2000")
-const STATE = (values["state"] || "TX").toUpperCase()
-const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const OUT_MD = values["out-md"] || ""
-// #655 option 2: a trained CROSS-SOURCE GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as
-// a third arm at its recommended threshold — the model train-cross-gbt.ts emits.
-const CANDIDATE = values["candidate"] || ""
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
@@ -93,8 +75,7 @@ interface SourceSpec {
 	inState: (row: Record<string, string>) => boolean
 }
 
-const S = `${SOURCES}`
-const SPECS: SourceSpec[] = [
+const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	{
 		source: "txhhsc-nursing",
 		path: `${S}/txhhsc_nursing-facilities_20260611.tsv`,
@@ -240,12 +221,23 @@ function measure(label: string, threshold: number | null, entities: ResolvedEnti
 	}
 }
 
-async function main(): Promise<void> {
+/** #655 cross-source threshold sweep — see the module doc. Emits the markdown report to stdout. */
+export async function crossSourceThresholdSweep(
+	options: CrossSourceThresholdSweepOptions,
+	report?: (line: string) => void
+): Promise<{ markdown: string }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const CAP = options.cap ?? 2000
+	const STATE = (options.state || "TX").toUpperCase()
+	const OUT_MD = options.outMd || ""
+	const CANDIDATE = options.candidate || ""
+	const SPECS = buildSpecs(`${SOURCES}`, STATE)
+
 	// --- Ingest + geocode each source ONCE. ---
 	const rawBySource = new Map<string, Record<string, string>[]>()
 
 	for (const spec of SPECS) {
-		console.error(`[A] ${spec.source}: streaming + ${STATE} filter (cap ${CAP})…`)
+		report?.(`[A] ${spec.source}: streaming + ${STATE} filter (cap ${CAP})…`)
 		const kept: Record<string, string>[] = []
 
 		for await (const row of streamRows(spec.path)) {
@@ -255,29 +247,14 @@ async function main(): Promise<void> {
 			if (kept.length >= CAP) break
 		}
 		rawBySource.set(spec.source, kept)
-		console.error(`    ${spec.source}: ${kept.length} rows`)
+		report?.(`    ${spec.source}: ${kept.length} rows`)
 	}
 
-	console.error("[B] building the geocoder…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: async (raw: string) =>
-			geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-			}),
-		country: "US",
-	})
+	report?.("[B] building the geocoder…")
+	const geocoder = await options.createGeocoder()
+	const seam: GeocodeAddress = geocoder.seam
 
-	console.error("[C] geocoding + ingesting…")
+	report?.("[C] geocoding + ingesting…")
 	const records: SourceRecord[] = []
 
 	for (const spec of SPECS) {
@@ -288,10 +265,9 @@ async function main(): Promise<void> {
 		}
 		records.push(...recs)
 	}
-	shardProvider.close()
-	lookup.close()
+	geocoder.close()
 	const geocoded = records.filter((r) => r.address?.geocode).length
-	console.error(`    ${records.length} records; geocoded ${geocoded}`)
+	report?.(`    ${records.length} records; geocoded ${geocoded}`)
 
 	// --- The bundled GBT scorer over the input-scoped address-frequency basis (eval convention). ---
 	const addrCounts = new Map<string, number>()
@@ -311,7 +287,7 @@ async function main(): Promise<void> {
 	const gbtScorer = createGbtScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
 	// --- Arm 1: the FS baseline (the recall-correct baseline cross-source flows currently pin). ---
-	console.error("[D] resolving — FS baseline baseline…")
+	report?.("[D] resolving — FS baseline baseline…")
 	const fs = measure(
 		"FS baseline",
 		0,
@@ -324,7 +300,7 @@ async function main(): Promise<void> {
 	const gbtArms: ArmMetrics[] = []
 
 	for (const t of SWEEP) {
-		console.error(`[D] resolving — GBT @ threshold ${t}…`)
+		report?.(`[D] resolving — GBT @ threshold ${t}…`)
 		const { entities } = resolveEntities(records, {
 			collapseSpatial: true,
 			addressFrequency,
@@ -338,7 +314,7 @@ async function main(): Promise<void> {
 	// cross-source links at ≥ FS phone-corroboration WITHOUT over-merging (entity count must not
 	// collapse below ~90% of FS, else the "links" are giant-blob artifacts). Otherwise FS is on the
 	// frontier and threshold alone is insufficient. ---
-	const pct = (n: number, d: number) => (d > 0 ? `${((100 * n) / d).toFixed(0)}%` : "—")
+	const pct = (n: number, d: number) => formatPercent(n, d, 0)
 	// --- Arm 3 (#655 option 2): the cross-source-trained GBT at its own recommended threshold. ---
 	const candidateArms: ArmMetrics[] = []
 
@@ -357,7 +333,7 @@ async function main(): Promise<void> {
 			throw new Error(`--candidate module exports neither CROSS_SOURCE_GBT_MODEL nor ORG_CROSS_SOURCE_GBT_MODEL`)
 		const t0 = (mod.CROSS_SOURCE_GBT_META ?? mod.ORG_CROSS_SOURCE_GBT_META)?.recommendedThreshold ?? 0
 		const candScorer = createGbtScorer({ model: candModel, comparisons, addressFrequency })
-		console.error(`[E] resolving — cross-source GBT candidate @ ${t0.toFixed(3)} (±)…`)
+		report?.(`[E] resolving — cross-source GBT candidate @ ${t0.toFixed(3)} (±)…`)
 
 		for (const t of [t0 - 1, t0, t0 + 1]) {
 			candidateArms.push(
@@ -463,8 +439,8 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`[written] ${OUT_MD}`)
+		report?.(`[written] ${OUT_MD}`)
 	}
-}
 
-await main()
+	return { markdown: md }
+}

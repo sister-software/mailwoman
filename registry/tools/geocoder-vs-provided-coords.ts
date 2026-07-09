@@ -16,41 +16,30 @@
  *   it is itself a third-party geocode of unknown provenance — a large delta is a discrepancy to
  *   inspect, not automatically our error.
  *
- *   Run: node scripts/eval/record-matcher/geocoder-vs-provided-coords.ts\
- *   [--max 1176] [--wof <admin.db>] [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]
+ *   Run: `mailwoman registry scorer-eval vs-provided-coords [--max 1176] [--wof <admin.db>]
+ *   [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { streamRows } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		"data-root": { type: "string" },
-		max: { type: "string" },
-		"out-md": { type: "string" },
-		sources: { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { "data-root"?: string; max?: string; "out-md"?: string; sources?: string; wof?: string }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const MAX = Number(values["max"] || "2000")
-const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const OUT_MD = values["out-md"] || ""
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-const FILE = `${SOURCES}/txhhsc_nursing-facilities_20260611.tsv`
+/** Options for {@linkcode geocoderVsProvidedCoords}. */
+export interface GeocoderVsProvidedCoordsOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	sources?: string
+	/** Facilities geocoded. Default 2000. */
+	max?: number
+	/** Also write the markdown report here. */
+	outMd?: string
+}
+
 const norm = (s: string | undefined) => (s ?? "").trim()
 
 /** Parse a `lat,lon` string into a coordinate, or null if malformed / out of range. */
@@ -65,22 +54,25 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 	return { latitude: a!, longitude: b! }
 }
 
-function quantile(sorted: number[], q: number): number {
-	if (sorted.length === 0) return NaN
-	const i = Math.min(sorted.length - 1, Math.floor(q * sorted.length))
+// The core nearest-rank `percentile` (q in [0,100]) replaces the retired local `quantile(sorted, q)`
+// — byte-identical semantics (floor index, clamped); `?? NaN` preserves the empty-sample behavior.
+const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? NaN
 
-	return sorted[i]!
-}
+/** Geocoder validation against provided coordinates (#619) — see the module doc. Emits the report to stdout. */
+export async function geocoderVsProvidedCoords(
+	options: GeocoderVsProvidedCoordsOptions,
+	report?: (line: string) => void
+): Promise<{ markdown: string }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const MAX = options.max ?? 2000
+	const OUT_MD = options.outMd || ""
 
-async function main(): Promise<void> {
-	console.error("[A] building the geocoder…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
+	const FILE = `${SOURCES}/txhhsc_nursing-facilities_20260611.tsv`
 
-	console.error(`[B] geocoding ≤${MAX} TX nursing facilities + measuring delta to provided coords…`)
+	report?.("[A] building the geocoder…")
+	const geocoder = await options.createGeocoder()
+
+	report?.(`[B] geocoding ≤${MAX} TX nursing facilities + measuring delta to provided coords…`)
 	interface Row {
 		deltaM: number
 		tier: string
@@ -104,13 +96,7 @@ async function main(): Promise<void> {
 		}
 		scanned++
 		const address = [line, city, state, zip].filter(Boolean).join(", ")
-		const g = await geocodeAddress(address, {
-			classifier,
-			resolver,
-			shards: shardProvider.for,
-			defaultCountry: "US",
-			placeCountry: false,
-		})
+		const g = await geocoder.geocode(address)
 
 		if (g.lat === null || g.lon === null) {
 			noPlace++
@@ -120,8 +106,7 @@ async function main(): Promise<void> {
 		results.push({ deltaM, tier: g.resolution_tier ?? "unknown" })
 	}
 
-	shardProvider.close()
-	lookup.close()
+	geocoder.close()
 
 	// Overall + per-tier percentiles.
 	const all = results.map((r) => r.deltaM).sort((a, b) => a - b)
@@ -134,7 +119,7 @@ async function main(): Promise<void> {
 	}
 
 	const m = (x: number) => (x >= 1000 ? `${(x / 1000).toFixed(2)} km` : `${Math.round(x)} m`)
-	console.error(
+	report?.(
 		`    geocoded ${results.length}/${scanned} placed (${noPlace} unplaced, ${noCoord} skipped no-coord/addr); ` +
 			`p50 ${m(quantile(all, 0.5))}, p90 ${m(quantile(all, 0.9))}`
 	)
@@ -143,7 +128,7 @@ async function main(): Promise<void> {
 	lines.push(`# Geocoder vs provided coordinates (#619)`)
 	lines.push("")
 	lines.push(
-		`_Generated by \`scripts/eval/record-matcher/geocoder-vs-provided-coords.ts\`. Source: TX HHSC ` +
+		`_Generated by \`mailwoman registry scorer-eval vs-provided-coords\`. Source: TX HHSC ` +
 			`nursing-facilities (\`Geo Location\` = provided \`lat,lon\`). We geocode each facility's physical address ` +
 			`with mailwoman's parser + resolver and measure the great-circle delta to the provided point. The provided ` +
 			`coordinate is a third-party geocode of unknown provenance — a large delta is a discrepancy to inspect, not ` +
@@ -188,8 +173,8 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`\n[written] ${OUT_MD}`)
+		report?.(`\n[written] ${OUT_MD}`)
 	}
-}
 
-await main()
+	return { markdown: md }
+}

@@ -21,72 +21,45 @@
  *   - `cms-pos_hospital-other_*.csv` — Provider of Services (PRVDR_NUM, FAC_NAME, ST_ADR…).
  *   - `cms-carecompare_hospital-general_*.csv` — Care Compare (Facility ID, Facility Name, Address…).
  *
- *   Run: node scripts/eval/record-matcher/train-org-cross-gbt.ts\
- *   [--cap 6000] [--precision-bar 0.95] [--wof <admin.db>] [--data-root <dir>]\
- *   [--out registry/models/org-crosssource-gbt-en-us.ts]
+ *   Run: `mailwoman registry train-scorer org-cross-gbt [--cap 6000] [--precision-bar 0.95]
+ *   [--wof <admin.db>] [--data-root <dir>] [--out registry/models/org-crosssource-gbt-en-us.ts]`
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
-import { parseArgs } from "node:util"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
 	createMatchFeaturizer,
 	defaultBlockingKeys,
-	geocodeAddressVia,
 	ingestRows,
-	streamRows,
 	type ColumnMapping,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { TextSpliterator } from "spliterator"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		cap: { type: "string" },
-		"data-root": { type: "string" },
-		date: { type: "string" },
-		locale: { type: "string" },
-		out: { type: "string" },
-		"precision-bar": { type: "string" },
-		sources: { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	cap?: string
-	"data-root"?: string
-	date?: string
-	locale?: string
-	out?: string
-	"precision-bar"?: string
-	sources?: string
-	wof?: string
-}
-const SOURCES = values["sources"] || String(dataRootPath("record-matcher", "sources"))
-const CAP = Number(values["cap"] || "6000")
-const WOF = values["wof"] || String(dataRootPath("wof", "admin-global-priority.db"))
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const OUT = values["out"] || "registry/models/org-crosssource-gbt-en-us.ts"
-const LOCALE = values["locale"] || "en-US"
-/** #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. */
-const PRECISION_BAR = Number(values["precision-bar"] || "0.95")
-const TRAIN_DATE = values["date"] || new Date().toISOString().slice(0, 10)
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-const POS = `${SOURCES}/cms-pos_hospital-other_2026q1.csv`
-const CARE_COMPARE = `${SOURCES}/cms-carecompare_hospital-general_20260706.csv`
+/** Options for {@linkcode trainOrgCrossSourceGBT}. */
+export interface TrainOrgCrossSourceGBTOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	sources?: string
+	/** Care Compare facilities sampled. Default 6000. */
+	cap?: number
+	/** Output TS module path. Default `registry/models/org-crosssource-gbt-en-us.ts`. */
+	out?: string
+	/** Locale recorded in the model meta. Default en-US. */
+	locale?: string
+	/** #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. Default 0.95. */
+	precisionBar?: number
+	/** Training date stamped into the meta. Default today. */
+	date?: string
+}
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 const addr = (line: string, city: string, st: string, zip: string) =>
@@ -186,9 +159,24 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 	}
 }
 
-async function main(): Promise<void> {
+/** Train + emit the org-level cross-source link GBT — see the module doc. */
+export async function trainOrgCrossSourceGBT(
+	options: TrainOrgCrossSourceGBTOptions,
+	report?: (line: string) => void
+): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
+	const SOURCES = options.sources || String(dataRootPath("record-matcher", "sources"))
+	const CAP = options.cap ?? 6000
+	const OUT = options.out || "registry/models/org-crosssource-gbt-en-us.ts"
+	const LOCALE = options.locale || "en-US"
+	// #655 threshold rule: max cross-source recall subject to this held-out pairwise precision.
+	const PRECISION_BAR = options.precisionBar ?? 0.95
+	const TRAIN_DATE = options.date || new Date().toISOString().slice(0, 10)
+
+	const POS = `${SOURCES}/cms-pos_hospital-other_2026q1.csv`
+	const CARE_COMPARE = `${SOURCES}/cms-carecompare_hospital-general_20260706.csv`
+
 	// --- Phase A: Care Compare (Facility ID + name + address). ---
-	console.error("[A] streaming Care Compare…")
+	report?.("[A] streaming Care Compare…")
 	const ccByID = new Map<string, MessyRow>()
 
 	for await (const r of streamCSV(CARE_COMPARE)) {
@@ -200,10 +188,10 @@ async function main(): Promise<void> {
 		if (!ccn || !name || !address) continue
 		ccByID.set(ccn, { npi: ccn, name, org: name, address, source: "care-compare" })
 	}
-	console.error(`    ${ccByID.size} Care Compare facilities`)
+	report?.(`    ${ccByID.size} Care Compare facilities`)
 
 	// --- Phase B: the SAME CCNs from the POS file + the corpus-wide address-frequency table. ---
-	console.error("[B] streaming POS + building the frequency table…")
+	report?.("[B] streaming POS + building the frequency table…")
 	const rows: MessyRow[] = []
 	const joined = new Set<string>()
 	const addrCounts = new Map<string, number>()
@@ -235,27 +223,12 @@ async function main(): Promise<void> {
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
-	console.error(`    ${joined.size} CCN-joined facilities → ${rows.length} records`)
+	report?.(`    ${joined.size} CCN-joined facilities → ${rows.length} records`)
 
-	// --- Phase C: geocode + ingest (record.id = the NPI label; `source` rides the record). ---
-	console.error("[C] geocoding…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: (raw: string) =>
-			geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-			}),
-		country: "US",
-	})
+	// --- Phase C: geocode + ingest (record.id = the NPI label; `source` rides the record). The heavy
+	// geocoder is injected (see ./eval-geocoder.ts). ---
+	report?.("[C] geocoding…")
+	const geocoder = await options.createGeocoder()
 	// `ColumnMapping.source` is a LITERAL provenance label — ingest each source separately so every
 	// record carries its registry of origin (the cross-source filter + the sweep harness key on it).
 	const mappingFor = (source: string): ColumnMapping => ({
@@ -269,18 +242,17 @@ async function main(): Promise<void> {
 	const ccRows = rows.filter((r) => r.source === "care-compare")
 	const records: SourceRecord[] = [
 		...(await ingestRows(posRows as unknown as Record<string, string>[], mappingFor("cms-pos"), {
-			geocodeAddress: seam,
+			geocodeAddress: geocoder.seam,
 		})),
 		...(await ingestRows(ccRows as unknown as Record<string, string>[], mappingFor("care-compare"), {
-			geocodeAddress: seam,
+			geocodeAddress: geocoder.seam,
 		})),
 	]
-	shardProvider.close()
-	lookup.close()
-	console.error(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
+	geocoder.close()
+	report?.(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
 
 	// --- Phase D: block over the UNION; keep only CROSS-source pairs; featurize; label by NPI. ---
-	console.error("[D] blocking + featurizing (cross-source pairs only)…")
+	report?.("[D] blocking + featurizing (cross-source pairs only)…")
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 	const { pairs: allPairs } = block(records, defaultBlockingKeys())
@@ -289,12 +261,12 @@ async function main(): Promise<void> {
 	const Y: number[] = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
 	const posRate = Y.reduce((s, y) => s + y, 0) / Math.max(1, Y.length)
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate))
-	console.error(
+	report?.(
 		`    ${allPairs.length} blocked pairs → ${pairs.length} cross-source (${(100 * posRate).toFixed(1)}% positive)`
 	)
 
 	// --- Phase E: held-out-NPI calibration — the #655 threshold rule. ---
-	console.error("[E] held-out calibration…")
+	report?.("[E] held-out calibration…")
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 	const rnd = lcg(655)
 	const split = new Map<string, "fit" | "holdout">()
@@ -354,12 +326,12 @@ async function main(): Promise<void> {
 	if (!Number.isFinite(recommendedThreshold)) {
 		recommendedThreshold = f1MaxThreshold
 	}
-	console.error(
+	report?.(
 		`    held-out (${holdIdx.length} pairs, ${totalPos} pos): precision-bar ${PRECISION_BAR} → threshold ${recommendedThreshold.toFixed(3)} (recall ${(100 * barRecall).toFixed(1)}%); F1-max ${(100 * bestF1).toFixed(1)}% @ ${f1MaxThreshold.toFixed(3)}`
 	)
 
 	// --- Phase F: train the SHIPPED model on ALL cross-source pairs; emit the committed module. ---
-	console.error("[F] training the shipped model on all pairs…")
+	report?.("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, hyperparams)
 	const meta = {
 		version: "1.0.0",
@@ -387,7 +359,7 @@ async function main(): Promise<void> {
 		` *   The ORG-LEVEL cross-source link scorer (#655 follow-on) — trained on CCN-joined CMS POS ↔\n` +
 		` *   Care Compare facility pairs (both public domain). Scores "same facility, different registry\n` +
 		` *   text" links for org-level cross-dataset flows. Generated by\n` +
-		` *   scripts/eval/record-matcher/train-org-cross-gbt.ts — retrain + re-run rather than editing.\n` +
+		` *   \`mailwoman registry train-scorer org-cross-gbt\` (registry/tools/train-org-cross-gbt.ts) — retrain rather than editing.\n` +
 		` */\n\n` +
 		`import type { GBT } from "@mailwoman/match"\n\n` +
 		`export const ORG_CROSS_SOURCE_GBT_META = ${JSON.stringify(meta)} as const\n\n` +
@@ -395,7 +367,7 @@ async function main(): Promise<void> {
 		`export const ORG_CROSS_SOURCE_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
 	mkdirSync(dirname(OUT), { recursive: true })
 	writeFileSync(OUT, moduleSource)
-	console.error(`    ${model.trees.length} trees, ${meta.features} features -> ${OUT}`)
-}
+	report?.(`    ${model.trees.length} trees, ${meta.features} features -> ${OUT}`)
 
-await main()
+	return { out: OUT, pairs: pairs.length, recommendedThreshold }
+}

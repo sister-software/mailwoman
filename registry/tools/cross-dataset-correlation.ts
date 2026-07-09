@@ -15,69 +15,50 @@
  *
  *   Tractable cut: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
  *
- *   Run: node scripts/eval/record-matcher/cross-dataset-correlation.ts\
- *   [--cap 300] [--wof <admin.db>] [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]
+ *   Run: `mailwoman registry scorer-eval cross-dataset [--cap 300] [--wof <admin.db>]
+ *   [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	addressFrequencyKey,
-	geocodeAddressVia,
 	ingestRows,
 	resolveEntities,
 	streamRows,
 	toGeoJSON,
 	type ColumnMapping,
+	type GeocodeAddress,
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		cap: { type: "string" },
-		"data-root": { type: "string" },
-		"no-corpus-frequency": { type: "boolean" },
-		"out-geojson": { type: "string" },
-		"out-md": { type: "string" },
-		sources: { type: "string" },
-		state: { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	cap?: string
-	"data-root"?: string
-	"no-corpus-frequency"?: boolean
-	"out-geojson"?: string
-	"out-md"?: string
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+
+/** Options for {@linkcode crossDatasetCorrelation}. */
+export interface CrossDatasetCorrelationOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string
+	/** Rows kept per source for geocoding (state-scoped). Default 300. */
+	cap?: number
+	/** State filter. Default TX. */
 	state?: string
-	wof?: string
+	/**
+	 * The inverse-address-frequency lever is a CORPUS statistic — it can't be synthesized from the geocoded sample. By
+	 * default we scan the FULL files (cheap, parse-free) for an in-state corpus-wide frequency table and feed it to the
+	 * matcher, so the proven #617 lever actually bites on a sub-sampled run. The scan adds a full pass over the 4.8 GB
+	 * NPPES file (~5 min); `--no-corpus-frequency` skips it and falls back to resolveEntities' zero-config input-scoped
+	 * default (#86). Default true.
+	 */
+	corpusFrequency?: boolean
+	/** Also write the markdown report here. */
+	outMd?: string
+	/** Also write the entity FeatureCollection here (the reconciliation artifact, QGIS-ready). */
+	outGeojson?: string
 }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const CAP = Number(values["cap"] || "300") // rows kept per source for geocoding (TX-scoped)
-const STATE = (values["state"] || "TX").toUpperCase()
-const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const OUT_MD = values["out-md"] || ""
-const OUT_GEOJSON = values["out-geojson"] || "" // the reconciliation artifact (FeatureCollection, QGIS-ready)
-// The inverse-address-frequency lever is a CORPUS statistic — it can't be synthesized from the geocoded
-// sample. By default we scan the FULL files (cheap, parse-free) for an in-state corpus-wide frequency
-// table and feed it to the matcher, so the proven #617 lever actually bites on a sub-sampled run. The
-// scan adds a full pass over the 4.8 GB NPPES file (~5 min); `--no-corpus-frequency` skips it and falls
-// back to resolveEntities' zero-config input-scoped default (#86).
-const CORPUS_FREQ = !(values["no-corpus-frequency"] ?? false)
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
@@ -110,8 +91,7 @@ interface SourceSpec {
 	explode?: (row: Record<string, string>) => Record<string, string>[]
 }
 
-const S = `${SOURCES}`
-const SPECS: SourceSpec[] = [
+const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	{
 		// TX HHSC nursing facilities — facility name + physical address + a real coordinate.
 		source: "txhhsc-nursing",
@@ -199,7 +179,19 @@ const SPECS: SourceSpec[] = [
 	},
 ]
 
-async function main(): Promise<void> {
+/** Cross-dataset correlation (#618) — see the module doc. Emits the markdown report to stdout. */
+export async function crossDatasetCorrelation(
+	options: CrossDatasetCorrelationOptions,
+	report?: (line: string) => void
+): Promise<{ markdown: string }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const CAP = options.cap ?? 300 // rows kept per source for geocoding (state-scoped)
+	const STATE = (options.state || "TX").toUpperCase()
+	const OUT_MD = options.outMd || ""
+	const OUT_GEOJSON = options.outGeojson || "" // the reconciliation artifact (FeatureCollection, QGIS-ready)
+	const CORPUS_FREQ = options.corpusFrequency ?? true
+	const SPECS = buildSpecs(`${SOURCES}`, STATE)
+
 	// --- Phase A: stream each source, TX-filter, explode → keep the first CAP rows for geocoding AND
 	// (when --corpus-frequency, the default) count EVERY in-state address into a corpus-wide table. The
 	// sample is the matched set; the frequency table reflects the full TX population, so the proven
@@ -210,9 +202,7 @@ async function main(): Promise<void> {
 	let addrTotal = 0
 
 	for (const spec of SPECS) {
-		console.error(
-			`[A] ${spec.source}: streaming + ${STATE} filter (sample ${CAP}${CORPUS_FREQ ? ", full freq scan" : ""})…`
-		)
+		report?.(`[A] ${spec.source}: streaming + ${STATE} filter (sample ${CAP}${CORPUS_FREQ ? ", full freq scan" : ""})…`)
 		const kept: Record<string, string>[] = []
 
 		for await (const row of streamRows(spec.path)) {
@@ -239,7 +229,7 @@ async function main(): Promise<void> {
 			if (!CORPUS_FREQ && kept.length >= CAP) break
 		}
 		rawBySource.set(spec.source, kept)
-		console.error(`    ${spec.source}: ${kept.length} sampled`)
+		report?.(`    ${spec.source}: ${kept.length} sampled`)
 	}
 	// The in-state corpus-wide address-frequency table (the #617 lever, fed to the matcher below).
 	const addressFrequency = CORPUS_FREQ
@@ -251,42 +241,29 @@ async function main(): Promise<void> {
 		: undefined
 
 	if (CORPUS_FREQ) {
-		console.error(`    address-frequency table: ${addrCounts.size} distinct over ${addrTotal} ${STATE} addresses`)
+		report?.(`    address-frequency table: ${addrCounts.size} distinct over ${addrTotal} ${STATE} addresses`)
 	}
 
-	// --- Phase B: geocoder. ---
-	console.error("[B] building the geocoder…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
+	// --- Phase B: geocoder (injected — see ./eval-geocoder.ts). ---
+	report?.("[B] building the geocoder…")
+	const geocoder = await options.createGeocoder()
 
 	let geo = 0
 	let total = 0
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: async (raw: string) => {
-			const g = await geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-			})
-			total++
+	// Count placements at the seam (parity with the retired in-script counter).
+	const seam: GeocodeAddress = async (raw) => {
+		const g = await geocoder.seam(raw)
+		total++
 
-			if (g.lat !== null) {
-				geo++
-			}
+		if (g?.geocode) {
+			geo++
+		}
 
-			return g
-		},
-		country: "US",
-	})
+		return g
+	}
 
 	// --- Phase C: ingest each source (its own mapping + source label) into one combined record set. ---
-	console.error("[C] geocoding + ingesting all sources…")
+	report?.("[C] geocoding + ingesting all sources…")
 	const records: SourceRecord[] = []
 
 	for (const spec of SPECS) {
@@ -298,7 +275,7 @@ async function main(): Promise<void> {
 		const recs = await ingestRows(rows, spec.mapping, { geocodeAddress: seam })
 		const dg = geo - g0
 		const dt = total - t0
-		console.error(`    ${spec.source}: geocoded ${dg}/${dt} (${dt ? ((100 * dg) / dt).toFixed(1) : "0"}%)`)
+		report?.(`    ${spec.source}: geocoded ${dg}/${dt} (${dt ? ((100 * dg) / dt).toFixed(1) : "0"}%)`)
 
 		// Namespace ids by source so cross-source ids never collide.
 		for (const r of recs) {
@@ -306,14 +283,13 @@ async function main(): Promise<void> {
 		}
 		records.push(...recs)
 	}
-	shardProvider.close()
-	lookup.close()
-	console.error(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
+	geocoder.close()
+	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	// --- Phase D: resolve to canonical entities. The proven levers are default-on (#86): collapsed
 	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one; otherwise
 	// resolveEntities auto-computes the input-scoped default. ---
-	console.error("[D] resolving across sources…")
+	report?.("[D] resolving across sources…")
 	// learnedScorer:false — the GBT default is calibrated for same-dataset DEDUP, where "same address +
 	// different name" means distinct co-located providers (reject). CROSS-dataset linkage is the opposite
 	// objective: "same address + different name" is the prototypical signal of the SAME facility under a
@@ -353,12 +329,14 @@ async function main(): Promise<void> {
 		e.representative.id
 
 	// --- Report. ---
+	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
+	// numerator/denominator contract (call sites append their own "%").
 	const pct = (x: number) => (100 * x).toFixed(1)
 	const lines: string[] = []
 	lines.push(`# Cross-dataset correlation (#618 / #87 real-data run)`)
 	lines.push("")
 	lines.push(
-		`_Generated by \`scripts/eval/record-matcher/cross-dataset-correlation.ts\`. ${STATE}-scoped, ≤${CAP} rows per ` +
+		`_Generated by \`mailwoman registry scorer-eval cross-dataset\`. ${STATE}-scoped, ≤${CAP} rows per ` +
 			`source geocoded, resolved BLIND across sources (geo-first block → Fellegi-Sunter + EM → cluster) with the ` +
 			`proven levers default-on (#86). The sources share no key; an entity spanning ≥2 sources is a cross-dataset ` +
 			`link we surface for review — interpretation is the consumer's._`
@@ -448,7 +426,7 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`\n[written] ${OUT_MD}`)
+		report?.(`\n[written] ${OUT_MD}`)
 	}
 
 	// --- The reconciliation artifact: a GeoJSON FeatureCollection of every resolved entity. Each feature
@@ -457,10 +435,8 @@ async function main(): Promise<void> {
 	if (OUT_GEOJSON) {
 		const fc = toGeoJSON(entities)
 		writeFileSync(OUT_GEOJSON, JSON.stringify(fc, null, 2))
-		console.error(
-			`[written] ${OUT_GEOJSON} — ${fc.features.length} entity features (${crossSource.length} cross-source)`
-		)
+		report?.(`[written] ${OUT_GEOJSON} — ${fc.features.length} entity features (${crossSource.length} cross-source)`)
 	}
-}
 
-await main()
+	return { markdown: md }
+}

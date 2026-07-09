@@ -17,17 +17,14 @@
  *   baseline / GBT scorer / LR scorer), best F1 over a fine per-scorer threshold sweep. The metric
  *   is the dedup benchmark's clustering F1.
  *
- *   Run: node scripts/eval/record-matcher/learned-scorer-crossstate-eval.ts\
- *   [--train-state TX] [--eval-state CA] [--npis 2000] [--out-md <md>]
+ *   Run: `mailwoman registry scorer-eval cross-state [--train-state TX] [--eval-state CA]
+ *   [--npis 2000] [--out-md <md>]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
@@ -35,7 +32,6 @@ import {
 	createMatchFeaturizer,
 	DEDUP_GBT_MODEL,
 	defaultBlockingKeys,
-	geocodeAddressVia,
 	ingestRows,
 	resolveEntities,
 	streamRows,
@@ -43,43 +39,24 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		"data-root": { type: "string" },
-		"eval-state": { type: "string" },
-		npis: { type: "string" },
-		"out-md": { type: "string" },
-		sources: { type: "string" },
-		"train-state": { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	"data-root"?: string
-	"eval-state"?: string
-	npis?: string
-	"out-md"?: string
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+
+/** Options for {@linkcode scorerCrossStateEval}. */
+export interface ScorerCrossStateEvalOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string
-	"train-state"?: string
-	wof?: string
+	/** State the GBT/LR train on. Default TX. */
+	trainState?: string
+	/** Held-out state clustered. Default CA. */
+	evalState?: string
+	/** NPIs sampled per state. Default 2000. */
+	npis?: number
+	/** Also write the markdown report here. */
+	outMd?: string
 }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const TRAIN_STATE = (values["train-state"] || "TX").toUpperCase()
-const EVAL_STATE = (values["eval-state"] || "CA").toUpperCase()
-const NPIS = Number(values["npis"] || "2000")
-const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const OUT_MD = values["out-md"] || ""
-
-const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
-const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
 const C = {
 	npi: "NPI",
@@ -151,8 +128,21 @@ function scoreClusters(entities: ResolvedEntity[]): {
 	return { precision, recall, f1, overMerged }
 }
 
-async function main(): Promise<void> {
-	console.error("[A] streaming other-names…")
+/** Learned-scorer cross-state generalization (#603 Tier 2) — see the module doc. Emits the report to stdout. */
+export async function scorerCrossStateEval(
+	options: ScorerCrossStateEvalOptions,
+	report?: (line: string) => void
+): Promise<{ markdown: string }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const TRAIN_STATE = (options.trainState || "TX").toUpperCase()
+	const EVAL_STATE = (options.evalState || "CA").toUpperCase()
+	const NPIS = options.npis ?? 2000
+	const OUT_MD = options.outMd || ""
+
+	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
+	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
+
+	report?.("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
 
 	for await (const r of streamRows(OTHER_NAMES)) {
@@ -169,7 +159,7 @@ async function main(): Promise<void> {
 	}
 
 	// ONE registry pass: global address-frequency + a TRAIN-state sample + an EVAL-state sample.
-	console.error(`[B] registry pass: address-frequency + ${NPIS} ${TRAIN_STATE} (train) + ${NPIS} ${EVAL_STATE} (eval)…`)
+	report?.(`[B] registry pass: address-frequency + ${NPIS} ${TRAIN_STATE} (train) + ${NPIS} ${EVAL_STATE} (eval)…`)
 	const samples: Record<string, { rows: MessyRow[]; kept: Set<string> }> = {
 		[TRAIN_STATE]: { rows: [], kept: new Set() },
 		[EVAL_STATE]: { rows: [], kept: new Set() },
@@ -180,7 +170,7 @@ async function main(): Promise<void> {
 
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) {
-			console.error(`    scanned ${scanned / 1e6}M`)
+			report?.(`    scanned ${scanned / 1e6}M`)
 		}
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
@@ -218,43 +208,26 @@ async function main(): Promise<void> {
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
-	console.error(
+	report?.(
 		`    ${TRAIN_STATE}: ${samples[TRAIN_STATE]!.kept.size} NPIs → ${samples[TRAIN_STATE]!.rows.length} records · ` +
 			`${EVAL_STATE}: ${samples[EVAL_STATE]!.kept.size} NPIs → ${samples[EVAL_STATE]!.rows.length} records`
 	)
 
-	console.error("[C] geocoding both states…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: async (raw: string) =>
-			geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-			}),
-		country: "US",
-	})
+	report?.("[C] geocoding both states…")
+	const geocoder = await options.createGeocoder()
 	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
 	const geocodeRows = (rows: MessyRow[]) =>
-		ingestRows(rows as unknown as Record<string, string>[], mapping, { geocodeAddress: seam })
+		ingestRows(rows as unknown as Record<string, string>[], mapping, { geocodeAddress: geocoder.seam })
 	const trainRecords = await geocodeRows(samples[TRAIN_STATE]!.rows)
 	const evalRecords = await geocodeRows(samples[EVAL_STATE]!.rows)
-	shardProvider.close()
-	lookup.close()
+	geocoder.close()
 
 	// Feature basis: the SHARED production featurizer (train ≡ eval ≡ inference, one definition) over the
 	// collapsed-spatial + address-frequency comparison set (the baseline).
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
-	console.error(`[D] training GBT + LR on ${TRAIN_STATE} pairs…`)
+	report?.(`[D] training GBT + LR on ${TRAIN_STATE} pairs…`)
 	const { pairs: trainPairs } = block(trainRecords, defaultBlockingKeys())
 	const trainX = trainPairs.map(([a, b]) => featurize(a, b))
 	const trainY = trainPairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
@@ -301,7 +274,7 @@ async function main(): Promise<void> {
 	const gbtScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(gbt, featurize(a, b))
 	const lrScorer = (a: SourceRecord, b: SourceRecord) => lrSc(featurize(a, b))
 
-	console.error(`[E] clustering ${EVAL_STATE} records (FS baseline vs GBT vs LR, trained on ${TRAIN_STATE})…`)
+	report?.(`[E] clustering ${EVAL_STATE} records (FS baseline vs GBT vs LR, trained on ${TRAIN_STATE})…`)
 	interface ArmScore {
 		precision: number
 		recall: number
@@ -362,11 +335,13 @@ async function main(): Promise<void> {
 	}))
 	const dBundled = bundledArm.f1 - fs.f1
 
+	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
+	// numerator/denominator contract (call sites append their own "%").
 	const pct = (x: number) => (100 * x).toFixed(1)
 	const sgn = (x: number) => (x >= 0 ? "+" : "")
 	const dGbt = gbtArm.f1 - fs.f1
 	const dLr = lrArm.f1 - fs.f1
-	console.error(
+	report?.(
 		`    FS  ${pct(fs.f1)}%  ·  LR ${pct(lrArm.f1)}% (${sgn(dLr)}${pct(dLr)})  ·  GBT ${pct(gbtArm.f1)}% (${sgn(dGbt)}${pct(dGbt)})` +
 			`  ·  BUNDLED ${pct(bundledArm.f1)}% (${sgn(dBundled)}${pct(dBundled)})`
 	)
@@ -381,7 +356,7 @@ async function main(): Promise<void> {
 	lines.push(`# Learned-scorer CROSS-STATE generalization (#603 Tier 2) — train ${TRAIN_STATE}, evaluate ${EVAL_STATE}`)
 	lines.push("")
 	lines.push(
-		`_Generated by \`scripts/eval/record-matcher/learned-scorer-crossstate-eval.ts\`. The GBT + LR are trained on ` +
+		`_Generated by \`mailwoman registry scorer-eval cross-state\`. The GBT + LR are trained on ` +
 			`${samples[TRAIN_STATE]!.kept.size} ${TRAIN_STATE} NPIs (${trainRecords.length} records) and used to cluster ` +
 			`${samples[EVAL_STATE]!.kept.size} held-out ${EVAL_STATE} NPIs (${evalRecords.length} records) — a state the model ` +
 			`never saw — through the same \`resolveEntities\` pipeline (FS baseline / GBT scorer / LR scorer), best F1 over a fine ` +
@@ -423,7 +398,7 @@ async function main(): Promise<void> {
 		`A single train/eval state pair (${TRAIN_STATE}→${EVAL_STATE}), one geocoded sample each, a compact pure-Node GBT ` +
 			`(120 rounds, depth 3). The FS arm is the benchmark baseline (same model), so the comparison is fair. Absolute F1 ` +
 			`differs from the within-state A/B because the eval population + over-merge density differ by state. NPI-as-truth is ` +
-			`conservative. The within-state held-out-NPI A/B (\`learned-scorer-clustering-eval.ts\`) is the companion; together ` +
+			`conservative. The within-state held-out-NPI A/B (\`scorer-eval clustering\`) is the companion; together ` +
 			`they bound the generalization question a production GBM must answer._`
 	)
 	lines.push("")
@@ -432,8 +407,8 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`[written] ${OUT_MD}`)
+		report?.(`[written] ${OUT_MD}`)
 	}
-}
 
-await main()
+	return { markdown: md }
+}

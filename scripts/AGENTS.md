@@ -28,7 +28,7 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 
 1. **Release tooling** (`publish-*`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `rewrite-workspace-imports`, `release-workspace-repository.test`) + **CI smoke** (`smoke-*`) — the release pipeline's residents.
 2. **Codegen + lint tooling** (`generate-*`, `lint-*`, `jsonl-to-parquet`) — candidates for a future `mailwoman dev` namespace.
-3. **`eval/`** — the eval harness (promotion gate, gauntlet, gates, probes, the full-stack record-matcher trainers/benchmarks in `eval/record-matcher/`, eval-local helpers in `eval/lib/`).
+3. **`eval/`** — the eval harness (promotion gate, gauntlet, gates, probes, eval-local helpers in `eval/lib/`).
 4. **`diagnostic/`** — gitignored one-off investigations.
 
 Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.

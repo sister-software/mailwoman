@@ -1,8 +1,3 @@
-import { appendFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-import { parseArgs } from "node:util"
-
-import { DuckDBInstance } from "@duckdb/node-api"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -27,13 +22,19 @@ import { DuckDBInstance } from "@duckdb/node-api"
  *       "mostly Polish".
  *   - Country filter: only OFF-MAP countries (never the 11 in-map); the in-map test.jsonl is untouched.
  *
- *   Run AFTER build-dataset.ts + build-outlier-exposure.ts (it APPENDS). Re-runnable: rewrites the
+ *   Run AFTER build-dataset + the exposure outliers (it APPENDS). Re-runnable: rewrites the
  *   dedicated test file and appends fresh OTHER rows — rebuild train/val before re-running.
  *
- *   Usage: node core/coarse-placer/tools/build-outlier-oa.ts --oa-dir <extracted-OA-root> [--per-country
- *   6000] [--data data/coarse-placer]
+ *   Run: `mailwoman placer build-dataset --outliers oa --oa-dir <extracted-OA-root> [--per-country
+ *   6000]`
  */
-import { dataRootPath } from "@mailwoman/core/utils"
+
+import { appendFileSync, writeFileSync } from "node:fs"
+import * as path from "node:path"
+
+import { dataRootPath } from "../../utils/data-root.ts"
+import { repoRootPath } from "../../utils/repo.ts"
+import { hashFNV1a } from "./fnv-hash.ts"
 
 interface OaTestRow {
 	raw: string
@@ -43,14 +44,24 @@ interface OaTestRow {
 	family: string
 }
 
-const { values: args } = parseArgs({
-	options: {
-		"oa-dir": { type: "string", default: dataRootPath("openaddresses", "extracted") },
-		"per-country": { type: "string", default: "6000" },
-		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
-	},
-})
-const PER = Number(args["per-country"])
+/** Options for {@linkcode buildOutlierOA}. */
+export interface BuildOutlierOAOptions {
+	/** Extracted OpenAddresses root. Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`. */
+	oaDir?: string
+	/** Row cap per off-map country. Default 6000. */
+	perCountry?: number
+	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	data?: string
+}
+
+/** Result of {@linkcode buildOutlierOA}. */
+export interface BuildOutlierOAResult {
+	train: number
+	val: number
+	test: number
+	trainCountries: number
+	heldoutCountries: number
+}
 
 // The 11 IN-MAP countries the coarse-placer routes to — never appear in OTHER. (build-dataset.ts)
 const IN_MAP = new Set(["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"])
@@ -76,18 +87,6 @@ const FAMILIES: Record<string, string[]> = {
 // from — Baltic (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
-/** FNV-1a → uint32, deterministic ordering/variant choice. */
-function hash(s: string): number {
-	let h = 2166136261
-
-	for (let i = 0; i < s.length; i++) {
-		h ^= s.charCodeAt(i)
-		h = Math.imul(h, 16777619)
-	}
-
-	return h >>> 0
-}
-
 /** Assemble a plausible address string from an OA row — SAME shape variants as build-outlier-latin. */
 function assemble(r: Record<string, unknown>): string | null {
 	const num = (r.number ?? "").toString().trim()
@@ -101,7 +100,7 @@ function assemble(r: Record<string, unknown>): string | null {
 	// Drop raw-coord-only / PO-box-ish noise (DeepSeek gotcha): need a real street or locality token.
 	if (!street && !/[a-z]/i.test(locality)) return null
 	const head = [num, street].filter(Boolean).join(" ")
-	const h = hash(`${num}|${street}|${pc}|${locality}`)
+	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)
 
 	switch (h % 3) {
 		case 0:
@@ -113,100 +112,120 @@ function assemble(r: Record<string, unknown>): string | null {
 	}
 }
 
-const duck = await (await DuckDBInstance.create()).connect()
+/** Coarse-placer OpenAddresses Latin-off-map outlier builder — see the module doc. */
+export async function buildOutlierOA(
+	options: BuildOutlierOAOptions = {},
+	report?: (line: string) => void
+): Promise<BuildOutlierOAResult> {
+	const oaDir = options.oaDir || dataRootPath("openaddresses", "extracted")
+	const PER = options.perCountry ?? 6000
+	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-/**
- * Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under the per-country dir).
- */
-async function rowsFor(cc: string): Promise<string[]> {
-	const lc = cc.toLowerCase()
-	// OA collected layout: `<cc>/[<region>/]<source>.csv` (country at root; `summary/` excluded by
-	// rooting the glob at <cc>). `**` matches zero-or-more dirs → handles both flat + region-nested.
-	const glob = path.join(args["oa-dir"], lc, "**", "*.csv")
-	let res
+	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
+	const { DuckDBInstance } = await import("@duckdb/node-api")
+	const duck = await (await DuckDBInstance.create()).connect()
 
-	try {
-		res = await duck.runAndReadAll(
-			// union_by_name aligns the differing per-source schemas; LOWER the header access so NUMBER /
-			// number both resolve. Pull a generous superset, dedup+cap in JS.
-			`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
-		)
-	} catch (e) {
-		console.error(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
+	/**
+	 * Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under the per-country dir).
+	 */
+	async function rowsFor(cc: string): Promise<string[]> {
+		const lc = cc.toLowerCase()
+		// OA collected layout: `<cc>/[<region>/]<source>.csv` (country at root; `summary/` excluded by
+		// rooting the glob at <cc>). `**` matches zero-or-more dirs → handles both flat + region-nested.
+		const glob = path.join(oaDir, lc, "**", "*.csv")
+		let res
 
-		return []
-	}
-	const seen = new Set<string>()
-	const out: string[] = []
+		try {
+			res = await duck.runAndReadAll(
+				// union_by_name aligns the differing per-source schemas; LOWER the header access so NUMBER /
+				// number both resolve. Pull a generous superset, dedup+cap in JS.
+				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
+			)
+		} catch (e) {
+			report?.(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
 
-	for (const r of res.getRowObjects()) {
-		// COLUMNS() preserves source-case keys; normalize to lowercase access.
-		const row: Record<string, unknown> = {}
-
-		for (const [k, v] of Object.entries(r)) {
-			row[k.toLowerCase()] = v
+			return []
 		}
-		const raw = assemble(row)
+		const seen = new Set<string>()
+		const out: string[] = []
 
-		if (!raw || raw.length < 6 || seen.has(raw)) continue
-		seen.add(raw)
-		out.push(raw)
+		for (const r of res.getRowObjects()) {
+			// COLUMNS() preserves source-case keys; normalize to lowercase access.
+			const row: Record<string, unknown> = {}
 
-		if (out.length >= PER) break
+			for (const [k, v] of Object.entries(r)) {
+				row[k.toLowerCase()] = v
+			}
+			const raw = assemble(row)
+
+			if (!raw || raw.length < 6 || seen.has(raw)) continue
+			seen.add(raw)
+			out.push(raw)
+
+			if (out.length >= PER) break
+		}
+
+		return out.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	}
 
-	return out.sort((a, b) => hash(a) - hash(b))
-}
+	const trainAppend: string[] = []
+	const valAppend: string[] = []
+	const testRows: OaTestRow[] = [] // {raw, country:"OTHER", group, srcCountry, family}
+	let trainCC = 0
+	let heldCC = 0
 
-const trainAppend: string[] = []
-const valAppend: string[] = []
-const testRows: OaTestRow[] = [] // {raw, country:"OTHER", group, srcCountry, family}
-let trainCC = 0
-let heldCC = 0
+	for (const [family, countries] of Object.entries(FAMILIES)) {
+		const heldout = HELDOUT_FAMILIES.has(family)
 
-for (const [family, countries] of Object.entries(FAMILIES)) {
-	const heldout = HELDOUT_FAMILIES.has(family)
+		for (const cc of countries) {
+			if (IN_MAP.has(cc)) continue
+			const rows = await rowsFor(cc)
 
-	for (const cc of countries) {
-		if (IN_MAP.has(cc)) continue
-		const rows = await rowsFor(cc)
+			if (rows.length === 0) continue
 
-		if (rows.length === 0) continue
+			if (heldout) {
+				for (const raw of rows) {
+					testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc, family })
+				}
+				heldCC++
+				report?.(`  HELDOUT ${cc} (${family}): ${rows.length} (test-only)`)
+			} else {
+				const nVal = Math.floor(rows.length * 0.1)
+				const nTest = Math.floor(rows.length * 0.1)
 
-		if (heldout) {
-			for (const raw of rows) {
-				testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc, family })
+				for (const raw of rows.slice(0, nVal)) {
+					valAppend.push(raw)
+				}
+
+				for (const raw of rows.slice(nVal, nVal + nTest)) {
+					testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc, family })
+				}
+
+				for (const raw of rows.slice(nVal + nTest)) {
+					trainAppend.push(raw)
+				}
+				trainCC++
+				report?.(`  TRAIN ${cc} (${family}): ${rows.length}`)
 			}
-			heldCC++
-			console.log(`  HELDOUT ${cc} (${family}): ${rows.length} (test-only)`)
-		} else {
-			const nVal = Math.floor(rows.length * 0.1)
-			const nTest = Math.floor(rows.length * 0.1)
-
-			for (const raw of rows.slice(0, nVal)) {
-				valAppend.push(raw)
-			}
-
-			for (const raw of rows.slice(nVal, nVal + nTest)) {
-				testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc, family })
-			}
-
-			for (const raw of rows.slice(nVal + nTest)) {
-				trainAppend.push(raw)
-			}
-			trainCC++
-			console.log(`  TRAIN ${cc} (${family}): ${rows.length}`)
 		}
 	}
-}
-;(duck as { disconnect?: () => void }).disconnect?.()
+	;(duck as { disconnect?: () => void }).disconnect?.()
 
-const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-appendFileSync(path.join(args.data, "train.jsonl"), wr(trainAppend))
-appendFileSync(path.join(args.data, "val.jsonl"), wr(valAppend))
-writeFileSync(path.join(args.data, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
-console.log(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)
-console.log(`appended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
-console.log(
-	`wrote test-latin-offmap.jsonl: ${testRows.length} (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
-)
+	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
+	appendFileSync(path.join(dataDir, "train.jsonl"), wr(trainAppend))
+	appendFileSync(path.join(dataDir, "val.jsonl"), wr(valAppend))
+	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
+	report?.(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)
+	report?.(`appended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
+	report?.(
+		`wrote test-latin-offmap.jsonl: ${testRows.length} (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
+	)
+
+	return {
+		train: trainAppend.length,
+		val: valAppend.length,
+		test: testRows.length,
+		trainCountries: trainCC,
+		heldoutCountries: heldCC,
+	}
+}
