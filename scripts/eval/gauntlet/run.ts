@@ -39,7 +39,9 @@ const candidate = values["candidate"] || ""
 const source = values["source"] || "fr"
 const tokenizer = values["tokenizer"] || ""
 const card = values["card"] || ""
-const modelArgs = candidate ? ["--model", candidate, ...(tokenizer ? ["--tokenizer", tokenizer] : []), ...(card ? ["--card", card] : [])] : []
+const modelArgs = candidate
+	? ["--model", candidate, ...(tokenizer ? ["--tokenizer", tokenizer] : []), ...(card ? ["--card", card] : [])]
+	: []
 
 interface Layer {
 	name: string

@@ -32,9 +32,9 @@
  *       --n 1500
  */
 
-import { parseArgs } from "node:util"
 import { resolve } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { createScorer, type NeuralAddressClassifier } from "@mailwoman/neural"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
@@ -76,7 +76,9 @@ function streetInfo(tree: { roots: readonly Node[] }): { key: string; spans: num
 	while (stack.length) {
 		const n = stack.pop()!
 
-		if (STREET_TAGS.has(n.tag) && n.value.trim()) { parts.push({ value: n.value.trim(), start: n.start, end: n.end }) }
+		if (STREET_TAGS.has(n.tag) && n.value.trim()) {
+			parts.push({ value: n.value.trim(), start: n.start, end: n.end })
+		}
 		stack.push(...(n.children as Node[]))
 	}
 
@@ -86,7 +88,9 @@ function streetInfo(tree: { roots: readonly Node[] }): { key: string; spans: num
 	let prevEnd = -100
 
 	for (const p of parts) {
-		if (p.start - prevEnd > 2) { spans++ }
+		if (p.start - prevEnd > 2) {
+			spans++
+		}
 		prevEnd = p.end
 	}
 
@@ -135,36 +139,60 @@ for (const r of sample) {
 	if (bMangled) {
 		base.mangled++
 
-		if (b.spans > 1) { base.fragmented++ }
-		else { base.truncation++ }
+		if (b.spans > 1) {
+			base.fragmented++
+		} else {
+			base.truncation++
+		}
 	}
 
 	if (cMangled) {
 		cand.mangled++
 
-		if (c.spans > 1) { cand.fragmented++ }
-		else { cand.truncation++ }
+		if (c.spans > 1) {
+			cand.fragmented++
+		} else {
+			cand.truncation++
+		}
 	}
 
 	if (bMangled && !cMangled) {
 		flippedToHit++
 
-		if (examples.length < 12) { examples.push(`  ✓ "${r.street_raw}"  base→"${b.key}"  cand→"${c.key}"  (want "${want}")`) }
+		if (examples.length < 12) {
+			examples.push(`  ✓ "${r.street_raw}"  base→"${b.key}"  cand→"${c.key}"  (want "${want}")`)
+		}
 	}
 }
 
 const pct = (x: number) => ((x / sample.length) * 100).toFixed(1)
 
 console.log(`\n=== #444 FR accent-mangle rate (n=${sample.length} distinct accented BAN streets, rowid-ordered) ===`)
-console.log(`  BASELINE (shipped): mangled ${base.mangled}/${sample.length} (${pct(base.mangled)}%)  [frag ${base.fragmented} / trunc ${base.truncation}]`)
-console.log(`  CANDIDATE (splice): mangled ${cand.mangled}/${sample.length} (${pct(cand.mangled)}%)  [frag ${cand.fragmented} / trunc ${cand.truncation}]`)
-console.log(`  Δ mangle rate: ${pct(base.mangled)}% → ${pct(cand.mangled)}%  (${(((cand.mangled - base.mangled) / sample.length) * 100).toFixed(1)}pp)`)
+console.log(
+	`  BASELINE (shipped): mangled ${base.mangled}/${sample.length} (${pct(base.mangled)}%)  [frag ${base.fragmented} / trunc ${base.truncation}]`
+)
+console.log(
+	`  CANDIDATE (splice): mangled ${cand.mangled}/${sample.length} (${pct(cand.mangled)}%)  [frag ${cand.fragmented} / trunc ${cand.truncation}]`
+)
+console.log(
+	`  Δ mangle rate: ${pct(base.mangled)}% → ${pct(cand.mangled)}%  (${(((cand.mangled - base.mangled) / sample.length) * 100).toFixed(1)}pp)`
+)
 console.log(`  address_point MISS→HIT (base mangled, cand intact): ${flippedToHit}`)
 
 // --- Named #444 datapoints: parse both arms + probe the BAN address_point tier directly (MISS→HIT + coord) ---
 const datapoints = [
-	{ q: "55 Rue du Faubourg Saint-Honoré, 75008 Paris", number: "55", postcode: "75008", street_norm: "rue du faubourg saint honore" },
-	{ q: "10 Avenue des Champs-Élysées, 75008 Paris", number: "10", postcode: "75008", street_norm: "avenue des champs elysees" },
+	{
+		q: "55 Rue du Faubourg Saint-Honoré, 75008 Paris",
+		number: "55",
+		postcode: "75008",
+		street_norm: "rue du faubourg saint honore",
+	},
+	{
+		q: "10 Avenue des Champs-Élysées, 75008 Paris",
+		number: "10",
+		postcode: "75008",
+		street_norm: "avenue des champs elysees",
+	},
 	{ q: "1 Place René Cassin, 75001 Paris", number: "1", postcode: "75001", street_norm: "place rene cassin" },
 	{ q: "1 Rue de la République, 13001 Marseille", number: "1", postcode: "13001", street_norm: "rue de la republique" },
 ]
@@ -174,7 +202,7 @@ console.log(`\n--- named #444 datapoints (parse key + direct BAN address_point p
 for (const d of datapoints) {
 	const b = streetInfo(await baseline.parse(d.q, { postcodeRepair: true, normalizeCase: true }))
 	const c = streetInfo(await candidate.parse(d.q, { postcodeRepair: true, normalizeCase: true }))
-	const hit = (key: string) => (probe.get(d.postcode, key, d.number) as { lat: number; lon: number } | undefined)
+	const hit = (key: string) => probe.get(d.postcode, key, d.number) as { lat: number; lon: number } | undefined
 	const bh = hit(b.key)
 	const ch = hit(c.key)
 	console.log(`  "${d.q}"  (BAN holds street_norm="${d.street_norm}")`)
@@ -184,6 +212,8 @@ for (const d of datapoints) {
 
 console.log(`\nsample MISS→HIT flips:`)
 
-for (const e of examples) { console.log(e) }
+for (const e of examples) {
+	console.log(e)
+}
 
 db.close()
