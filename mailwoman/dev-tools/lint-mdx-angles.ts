@@ -11,13 +11,12 @@
  *   Checks STAGED docs markdown by default (pre-commit), or explicit paths when given. Skips fenced
  *   code blocks and inline code; flags raw `<` before a digit or `{` before a letter.
  *
- *   Plain-node tool-script (no env banner, no zx) — it runs on every `main` commit via the husky
- *   pre-commit hook, so it stays quiet and fast. Run: node scripts/lint-mdx-angles.ts [files...]
+ *   Stays quiet and fast — it runs on every `main` commit via the husky pre-commit hook. Run:
+ *   mailwoman dev lint mdx-angles [files...]
  */
 
 import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 /**
  * The build-breaking class is `<55`-style numeric prose and `{word`-style MDX JSX expressions. Uppercase `<Component>`
@@ -26,6 +25,27 @@ import { parseArgs } from "node:util"
  * `{raw, components}` broke main's SSG with `ReferenceError: raw is not defined`. Same fix menu: backtick it.
  */
 const RAW_ANGLE = /<[0-9]|\{[a-zA-Z]/
+
+/** Options for {@linkcode lintMDXAngles}. */
+export interface LintMDXAnglesOptions {
+	/** Files to check. Default: staged `docs/**` markdown (the pre-commit mode). */
+	files?: string[]
+}
+
+/** One flagged file: its path + the offending 1-based `line:text` hits. */
+export interface MDXAngleFinding {
+	file: string
+	hits: string[]
+}
+
+/** Findings summary returned by {@linkcode lintMDXAngles}. */
+export interface LintMDXAnglesSummary {
+	/** Number of files flagged — the command exits 1 when nonzero. */
+	errors: number
+	warnings: number
+	filesChecked: number
+	findings: MDXAngleFinding[]
+}
 
 function stagedDocsMarkdown(): string[] {
 	const out = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACM"], { encoding: "utf8" })
@@ -61,31 +81,34 @@ function violations(file: string): string[] {
 	return hits
 }
 
-const { positionals: files } = parseArgs({ allowPositionals: true })
-const targets = files.length > 0 ? files : stagedDocsMarkdown()
+/** Lint the given (or staged) docs markdown for build-breaking raw angles/braces. */
+export function lintMDXAngles(
+	options: LintMDXAnglesOptions = {},
+	report?: (line: string) => void
+): LintMDXAnglesSummary {
+	const targets = options.files?.length ? options.files : stagedDocsMarkdown()
+	const findings: MDXAngleFinding[] = []
+	let filesChecked = 0
 
-if (targets.length === 0) {
-	process.exit(0)
-}
+	for (const f of targets) {
+		if (!existsSync(f)) continue
+		filesChecked++
+		const hits = violations(f)
 
-let fail = false
+		if (hits.length > 0) {
+			report?.(`✗ ${f} — raw '<' before alphanumeric (MDX parses it as a JSX tag; build will fail):`)
 
-for (const f of targets) {
-	if (!existsSync(f)) continue
-	const hits = violations(f)
-
-	if (hits.length > 0) {
-		console.error(`✗ ${f} — raw '<' before alphanumeric (MDX parses it as a JSX tag; build will fail):`)
-
-		for (const h of hits.slice(0, 5)) {
-			console.error(`    ${h}`)
+			for (const h of hits.slice(0, 5)) {
+				report?.(`    ${h}`)
+			}
+			findings.push({ file: f, hits })
 		}
-		fail = true
 	}
-}
 
-if (fail) {
-	console.error("")
-	console.error("Fix: backtick the expression, spell it out, or escape the brace/angle.")
-	process.exit(1)
+	if (findings.length > 0) {
+		report?.("")
+		report?.("Fix: backtick the expression, spell it out, or escape the brace/angle.")
+	}
+
+	return { errors: findings.length, warnings: 0, filesChecked, findings }
 }

@@ -66,6 +66,11 @@
 			"node": "./nz/index.ts",
 			"default": "./out/nz/index.js",
 			"types": "./out/nz/index.d.ts"
+		},
+		"./tools": {
+			"node": "./tools/index.ts",
+			"default": "./out/tools/index.js",
+			"types": "./out/tools/index.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -110,6 +115,10 @@
 			"./nz": {
 				"types": "./out/nz/index.d.ts",
 				"default": "./out/nz/index.js"
+			},
+			"./tools": {
+				"types": "./out/tools/index.d.ts",
+				"default": "./out/tools/index.js"
 			}
 		},
 		"access": "public"

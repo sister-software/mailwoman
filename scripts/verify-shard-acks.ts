@@ -7,7 +7,7 @@
  *   `lint_acknowledged: true`. Exits non-zero if any flagged shard is unacknowledged, blocking the
  *   training run.
  *
- *   Pairs with `scripts/lint-corpus-shard.ts` (which emits the flag count) and the MANIFEST schema
+ *   Pairs with ``mailwoman dev lint corpus-shard`` (which emits the flag count) and the MANIFEST schema
  *   extension introduced 2026-05-29 after the v0.6.2 "5th Avenue Theatre" incident. The gating
  *   model is "report + acknowledgment, not block":
  *

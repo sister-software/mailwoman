@@ -26,7 +26,7 @@
  *   writing it would silently drop the v0.5.0 labels from the shard. Loud failure, naming the row
  *   number, instead.
  *
- *   Usage: node scripts/jsonl-to-parquet.ts --input /tmp/po-box-labeled.jsonl --output
+ *   Usage: mailwoman dev jsonl-to-parquet --input /tmp/po-box-labeled.jsonl --output
  *   /tmp/part-po-box.parquet
  */
 
@@ -35,10 +35,7 @@ import { createWriteStream } from "node:fs"
 import { unlink } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
 
-import { DuckDBInstance } from "@duckdb/node-api"
-import { runIfScript } from "@mailwoman/core/scripting"
 import { TextSpliterator } from "spliterator"
 
 const REQUIRED_COLUMNS = [
@@ -85,34 +82,21 @@ const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
 	synth_base_id: "VARCHAR",
 }
 
-interface Args {
+/** Options for {@linkcode jsonlToParquet}. */
+export interface JsonlToParquetOptions {
+	/** The labeled-row JSONL to convert. */
 	input: string
+	/** The parquet shard to write. */
 	output: string
-	rowGroupSize: number
+	/** Parquet row-group size. Default 50000. */
+	rowGroupSize?: number
 }
 
-function parseCLIArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			input: { type: "string" },
-			output: { type: "string" },
-			"row-group-size": { type: "string", default: "50000" },
-		},
-	})
-
-	if (!values.input || !values.output) {
-		throw new Error(
-			"Usage: jsonl-to-parquet.ts --input <labeled.jsonl> --output <shard.parquet> [--row-group-size 50000]"
-		)
-	}
-
-	const rowGroupSize = Number(values["row-group-size"])
-
-	if (!Number.isInteger(rowGroupSize) || rowGroupSize <= 0) {
-		throw new Error(`--row-group-size must be a positive integer (got ${JSON.stringify(values["row-group-size"])})`)
-	}
-
-	return { input: values.input, output: values.output, rowGroupSize }
+/** Summary returned by {@linkcode jsonlToParquet}. */
+export interface JsonlToParquetSummary {
+	read: number
+	written: number
+	outPath: string
 }
 
 /**
@@ -147,8 +131,16 @@ function sqlString(value: string): string {
 	return value.replace(/'/g, "''")
 }
 
-async function main(): Promise<void> {
-	const args = parseCLIArgs()
+/** Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard. */
+export async function jsonlToParquet(
+	options: JsonlToParquetOptions,
+	report?: (line: string) => void
+): Promise<JsonlToParquetSummary> {
+	const rowGroupSize = options.rowGroupSize ?? 50000
+
+	if (!Number.isInteger(rowGroupSize) || rowGroupSize <= 0) {
+		throw new Error(`rowGroupSize must be a positive integer (got ${JSON.stringify(rowGroupSize)})`)
+	}
 
 	// Stage the validated rows to a temp NDJSON, then let DuckDB type + write them. Streaming keeps
 	// memory O(1) on the Node side (the Python original buffered every column into memory first). The
@@ -164,7 +156,7 @@ async function main(): Promise<void> {
 		// DuckDB verbatim (JSON.parse here only validates), so a re-serialized JSONSpliterator row would
 		// defeat the point. CRLF is handled by the existing `rawLine.trim()` (strips a trailing \r),
 		// same as readline's crlfDelay:Infinity did.
-		for await (const rawLine of TextSpliterator.fromAsync(args.input)) {
+		for await (const rawLine of TextSpliterator.fromAsync(options.input)) {
 			lineNo++
 			const line = rawLine.trim()
 
@@ -178,11 +170,13 @@ async function main(): Promise<void> {
 		}
 		await new Promise<void>((resolve, reject) => stage.end((err?: Error | null) => (err ? reject(err) : resolve())))
 
-		console.error(`Read ${rows} rows from ${args.input}`)
+		report?.(`Read ${rows} rows from ${options.input}`)
 
 		const columnsLiteral = "{" + REQUIRED_COLUMNS.map((c) => `'${c}': '${COLUMN_TYPES[c]}'`).join(", ") + "}"
 		const selectList = REQUIRED_COLUMNS.join(", ")
 
+		// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
+		const { DuckDBInstance } = await import("@duckdb/node-api")
 		const instance = await DuckDBInstance.create()
 		const db = await instance.connect()
 		// Row order is load-bearing: the overlay-manifest assembler records first/last source_id from
@@ -191,16 +185,16 @@ async function main(): Promise<void> {
 		await db.run(
 			`COPY (SELECT ${selectList} FROM read_json('${sqlString(stagePath)}', ` +
 				`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
-				`TO '${sqlString(args.output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${args.rowGroupSize})`
+				`TO '${sqlString(options.output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
 		)
 
-		const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${sqlString(args.output)}')`)
+		const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${sqlString(options.output)}')`)
 		const written = Number(counted.getRowObjects()[0]!.n)
-		console.error(`Wrote ${written} rows to ${args.output}`)
+		report?.(`Wrote ${written} rows to ${options.output}`)
+
+		return { read: rows, written, outPath: options.output }
 	} finally {
 		stage.destroy()
 		await unlink(stagePath).catch(() => {})
 	}
 }
-
-runIfScript(import.meta, main)

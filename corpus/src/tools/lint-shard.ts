@@ -23,24 +23,21 @@
  *        mappings — flagging matches.
  *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90% of shard.
  *
- *   Output: markdown report on stdout, optional JSON sidecar via `--out-json`. Exits 0 if no errors,
- *   1 if any errors (warnings don't gate). Per the design, the MANIFEST entry for a flagged shard
- *   should require `lint_acknowledged: true` before training consumes it.
+ *   Output: markdown report on stdout, optional JSON sidecar via `outJson`. The command exits 0 if
+ *   no errors, 1 if any errors (warnings don't gate). Per the design, the MANIFEST entry for a
+ *   flagged shard should require `lint_acknowledged: true` before training consumes it.
  *
- *   Usage: node scripts/lint-corpus-shard.ts\
+ *   Usage: mailwoman dev lint corpus-shard\
  *   --shard <new-shard.parquet>\
  *   --stats <corpus-stats.json>\
- *   [--rules scripts/lint-rules.json]\
+ *   [--rules <rules.json>]\
  *   [--out-md /tmp/lint-report.md]\
  *   [--out-json /tmp/lint-report.json]
  */
 
 import { execSync } from "node:child_process"
-import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { parseArgs as parseNodeArgs } from "node:util"
-
-import { repoRootPath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 
 const SEP = ""
 
@@ -54,59 +51,32 @@ const VACUUM_CORPUS_MIN_COUNT = 100
 const BIGRAM_MIN_COUNT = 10
 const ALL_O_RATIO_CEILING = 0.9
 
-interface Args {
-	shardPath: string
-	statsPath: string
-	rulesPath: string
-	outMd?: string
-	outJson?: string
+/**
+ * Default `lint-rules.json` path — the rules ship beside this module in the source tree. tsc does not emit
+ * readFileSync'd JSON into `out/`, so the compiled tree falls back to the source-tree copy (corpus/out/src/tools/ →
+ * corpus/src/tools/). In-repo the `node` exports condition loads this module from source anyway, so the sibling URL is
+ * the common path.
+ */
+function defaultRulesPath(): string {
+	const sibling = new URL("./lint-rules.json", import.meta.url)
+
+	if (existsSync(sibling)) return fileURLToPath(sibling)
+
+	return fileURLToPath(new URL("../../../src/tools/lint-rules.json", import.meta.url))
 }
 
-function parseArgs(): Args {
-	const out: Partial<Args> = {}
-
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
-	const { values } = parseNodeArgs({
-		options: {
-			"out-json": { type: "string" },
-			"out-md": { type: "string" },
-			rules: { type: "string" },
-			shard: { type: "string" },
-			stats: { type: "string" },
-		},
-		strict: false,
-		allowPositionals: true,
-	})
-
-	if (values["shard"] != null) {
-		out.shardPath = values["shard"] as string
-	}
-
-	if (values["stats"] != null) {
-		out.statsPath = values["stats"] as string
-	}
-
-	if (values["rules"] != null) {
-		out.rulesPath = values["rules"] as string
-	}
-
-	if (values["out-md"] != null) {
-		out.outMd = values["out-md"] as string
-	}
-
-	if (values["out-json"] != null) {
-		out.outJson = values["out-json"] as string
-	}
-
-	if (!out.shardPath || !out.statsPath) {
-		console.error(
-			"Usage: lint-corpus-shard.ts --shard <parquet> --stats <stats.json> [--rules <rules.json>] [--out-md <path>] [--out-json <path>]"
-		)
-		process.exit(2)
-	}
-	out.rulesPath = out.rulesPath ?? repoRootPath("scripts", "lint-rules.json")
-
-	return out as Args
+/** Options for {@linkcode lintCorpusShard}. */
+export interface LintCorpusShardOptions {
+	/** The new shard parquet to lint. */
+	shardPath: string
+	/** Pre-computed corpus stats JSON (see `corpus-stats.ts`). */
+	statsPath: string
+	/** Anti-pattern rules JSON. Default: the `lint-rules.json` beside this module. */
+	rulesPath?: string
+	/** Write the markdown report here as well as stdout. */
+	outMd?: string
+	/** Write a JSON sidecar of the flags + summary here. */
+	outJson?: string
 }
 
 interface CorpusStats {
@@ -233,7 +203,8 @@ function majorityLabel(distribution: Map<string, number> | Record<string, number
 	return { label: bestLabel, count: bestCount, total, confidence: total === 0 ? 0 : bestCount / total }
 }
 
-interface Flag {
+/** One lint flag emitted by a check. */
+export interface LintShardFlag {
 	check: string
 	severity: "error" | "warn"
 	token?: string
@@ -246,8 +217,17 @@ interface Flag {
 	ruleID?: string
 }
 
-function checkDistributionOutliers(shard: ShardStats, corpus: CorpusStats): Flag[] {
-	const flags: Flag[] = []
+/** Findings summary returned by {@linkcode lintCorpusShard}. */
+export interface LintCorpusShardSummary {
+	errors: number
+	warnings: number
+	findings: LintShardFlag[]
+	/** The rendered markdown report (also printed to stdout). */
+	report: string
+}
+
+function checkDistributionOutliers(shard: ShardStats, corpus: CorpusStats): LintShardFlag[] {
+	const flags: LintShardFlag[] = []
 
 	for (const [token, shardLabelMap] of shard.tokens) {
 		const corpusLabelMap = corpus.tokens[token]
@@ -278,8 +258,8 @@ function checkDistributionOutliers(shard: ShardStats, corpus: CorpusStats): Flag
 	return flags
 }
 
-function checkLabelVacuum(shard: ShardStats, corpus: CorpusStats): Flag[] {
-	const flags: Flag[] = []
+function checkLabelVacuum(shard: ShardStats, corpus: CorpusStats): LintShardFlag[] {
+	const flags: LintShardFlag[] = []
 
 	for (const [token, shardLabelMap] of shard.tokens) {
 		const corpusLabelMap = corpus.tokens[token]
@@ -309,8 +289,8 @@ function checkLabelVacuum(shard: ShardStats, corpus: CorpusStats): Flag[] {
 	return flags
 }
 
-function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): Flag[] {
-	const flags: Flag[] = []
+function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): LintShardFlag[] {
+	const flags: LintShardFlag[] = []
 
 	for (const [bigram, shardLabelMap] of shard.bigrams) {
 		const corpusLabelMap = corpus.bigrams[bigram]
@@ -343,8 +323,8 @@ function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): Flag[] {
 	return flags
 }
 
-function checkRules(shard: ShardStats, rulesFile: LintRulesFile): Flag[] {
-	const flags: Flag[] = []
+function checkRules(shard: ShardStats, rulesFile: LintRulesFile): LintShardFlag[] {
+	const flags: LintShardFlag[] = []
 	const compiled = rulesFile.rules.map((r) => ({
 		rule: r,
 		regex: new RegExp(r.pattern, r.pattern_case_sensitive ? "" : "i"),
@@ -373,8 +353,8 @@ function checkRules(shard: ShardStats, rulesFile: LintRulesFile): Flag[] {
 	return flags
 }
 
-function checkSanity(shard: ShardStats): Flag[] {
-	const flags: Flag[] = []
+function checkSanity(shard: ShardStats): LintShardFlag[] {
+	const flags: LintShardFlag[] = []
 
 	if (shard.truncatedRows > 0) {
 		flags.push({
@@ -396,16 +376,20 @@ function checkSanity(shard: ShardStats): Flag[] {
 	return flags
 }
 
-function renderReport(args: Args, shard: ShardStats, flags: Flag[]): string {
+function renderReport(
+	opts: { shardPath: string; statsPath: string; rulesPath: string },
+	shard: ShardStats,
+	flags: LintShardFlag[]
+): string {
 	const errors = flags.filter((f) => f.severity === "error")
 	const warns = flags.filter((f) => f.severity === "warn")
 	const verdict = errors.length === 0 ? "**PASS** ✓" : "**FLAGGED** ⚠"
 	const lines: string[] = []
 	lines.push(`# Corpus Lint: ${verdict}`)
 	lines.push("")
-	lines.push(`- **Shard:** \`${args.shardPath}\``)
-	lines.push(`- **Corpus stats:** \`${args.statsPath}\``)
-	lines.push(`- **Rules:** \`${args.rulesPath}\``)
+	lines.push(`- **Shard:** \`${opts.shardPath}\``)
+	lines.push(`- **Corpus stats:** \`${opts.statsPath}\``)
+	lines.push(`- **Rules:** \`${opts.rulesPath}\``)
 	lines.push(`- **Shard rows:** ${shard.rowCount}`)
 	lines.push(`- **Unique tokens:** ${shard.tokens.size}`)
 	lines.push(`- **Unique bigrams:** ${shard.bigrams.size}`)
@@ -421,7 +405,7 @@ function renderReport(args: Args, shard: ShardStats, flags: Flag[]): string {
 
 		return lines.join("\n")
 	}
-	const byCheck = new Map<string, Flag[]>()
+	const byCheck = new Map<string, LintShardFlag[]>()
 
 	for (const f of flags) {
 		const arr = byCheck.get(f.check) ?? []
@@ -448,26 +432,30 @@ function renderReport(args: Args, shard: ShardStats, flags: Flag[]): string {
 	return lines.join("\n")
 }
 
-function main(): void {
-	const args = parseArgs()
-	console.error(`Reading corpus stats from ${args.statsPath}...`)
-	const corpus: CorpusStats = JSON.parse(readFileSync(args.statsPath, "utf8"))
-	console.error(
+/** Lint a shard against corpus stats + the anti-pattern rules; print the markdown report to stdout. */
+export function lintCorpusShard(
+	options: LintCorpusShardOptions,
+	report?: (line: string) => void
+): LintCorpusShardSummary {
+	const rulesPath = options.rulesPath ?? defaultRulesPath()
+	report?.(`Reading corpus stats from ${options.statsPath}...`)
+	const corpus: CorpusStats = JSON.parse(readFileSync(options.statsPath, "utf8"))
+	report?.(
 		`  ${corpus.row_count} rows from ${corpus.shard_paths.length} shard(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
 	)
 
-	console.error(`Reading shard from ${args.shardPath}...`)
-	const rows = readShard(args.shardPath)
-	console.error(`  ${rows.length} rows`)
+	report?.(`Reading shard from ${options.shardPath}...`)
+	const rows = readShard(options.shardPath)
+	report?.(`  ${rows.length} rows`)
 
-	console.error(`Computing shard stats...`)
+	report?.(`Computing shard stats...`)
 	const shard = statsFromShard(rows)
 
-	console.error(`Loading rules from ${args.rulesPath}...`)
-	const rulesFile: LintRulesFile = JSON.parse(readFileSync(args.rulesPath, "utf8"))
+	report?.(`Loading rules from ${rulesPath}...`)
+	const rulesFile: LintRulesFile = JSON.parse(readFileSync(rulesPath, "utf8"))
 
-	console.error(`Running checks...`)
-	const flags: Flag[] = [
+	report?.(`Running checks...`)
+	const flags: LintShardFlag[] = [
 		...checkDistributionOutliers(shard, corpus),
 		...checkLabelVacuum(shard, corpus),
 		...checkBigramCollisions(shard, corpus),
@@ -475,20 +463,20 @@ function main(): void {
 		...checkSanity(shard),
 	]
 
-	const report = renderReport(args, shard, flags)
-	console.log(report)
+	const rendered = renderReport({ shardPath: options.shardPath, statsPath: options.statsPath, rulesPath }, shard, flags)
+	console.log(rendered)
 
-	if (args.outMd) {
-		writeFileSync(args.outMd, report)
+	if (options.outMd) {
+		writeFileSync(options.outMd, rendered)
 	}
 
-	if (args.outJson) {
+	if (options.outJson) {
 		writeFileSync(
-			args.outJson,
+			options.outJson,
 			JSON.stringify(
 				{
-					shard: args.shardPath,
-					stats: args.statsPath,
+					shard: options.shardPath,
+					stats: options.statsPath,
 					flags,
 					summary: {
 						errors: flags.filter((f) => f.severity === "error").length,
@@ -502,13 +490,13 @@ function main(): void {
 	}
 
 	const errorCount = flags.filter((f) => f.severity === "error").length
+	const warningCount = flags.filter((f) => f.severity === "warn").length
 
 	if (errorCount > 0) {
-		console.error(`LINT FAILED: ${errorCount} error(s).`)
-		process.exit(1)
+		report?.(`LINT FAILED: ${errorCount} error(s).`)
+	} else {
+		report?.("LINT PASSED.")
 	}
-	console.error("LINT PASSED.")
-	process.exit(0)
-}
 
-main()
+	return { errors: errorCount, warnings: warningCount, findings: flags, report: rendered }
+}
