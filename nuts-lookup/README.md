@@ -14,7 +14,7 @@ npx @mailwoman/nuts-lookup build --geojson NUTS_RG_03M_2021_4326.geojson --out n
 ## Look up
 
 ```bash
-npx @mailwoman/nuts-lookup --db nuts.db 52.52 13.405
+npx @mailwoman/nuts-lookup --db nuts.db -- 52.52 13.405
 # {"nuts":{"level1":"DE3","level2":"DE30","level3":"DE300"}}   (Berlin)
 ```
 

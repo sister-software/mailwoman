@@ -6,25 +6,29 @@
  *
  *   `mailwoman-nuts` — build the NUTS polygon DB, or look up a coordinate's NUTS codes.
  *
- *   Mailwoman-nuts build --geojson NUTS_RG_03M_2021_4326.geojson --out nuts.db mailwoman-nuts --db
- *   nuts.db 52.52 13.405
+ *   ```sh
+ *   mailwoman-nuts build --geojson NUTS_RG_03M_2021_4326.geojson --out nuts.db
+ *   mailwoman-nuts --db nuts.db -- 52.52 13.405
+ *   ```
+ *
+ *   The `--` separates flags from coordinates so negative coordinates parse as positionals.
  */
 
 import { parseArgs } from "node:util"
 
-import { cliArguments } from "@mailwoman/core/scripting/utils"
-
 import { buildNutsDB } from "./build.ts"
 import { NutsLookup } from "./index.ts"
 
-const argvAll = cliArguments()
+const { values, positionals } = parseArgs({
+	options: {
+		geojson: { type: "string" },
+		out: { type: "string" },
+		db: { type: "string" },
+	},
+	allowPositionals: true,
+})
 
-if (argvAll[0] === "build") {
-	const { values } = parseArgs({
-		args: argvAll.slice(1),
-		options: { geojson: { type: "string" }, out: { type: "string" } },
-	})
-
+if (positionals[0] === "build") {
 	if (!values.geojson || !values.out) {
 		console.error("Usage: mailwoman-nuts build --geojson <path> --out <db>")
 		process.exit(1)
@@ -32,30 +36,14 @@ if (argvAll[0] === "build") {
 	const { regions } = buildNutsDB(values.geojson, values.out)
 	console.error(`built ${values.out} (${regions} regions)`)
 } else {
-	// Hand-parse so negative coordinates work as positionals.
-	const args = argvAll
-	let databasePath: string | undefined
-	const coords: number[] = []
+	const lat = Number(positionals[0])
+	const lon = Number(positionals[1])
 
-	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--db") {
-			databasePath = args[++i]
-		} else {
-			const n = Number(args[i])
-
-			if (Number.isFinite(n)) {
-				coords.push(n)
-			}
-		}
-	}
-	const lat = coords[0]
-	const lon = coords[1]
-
-	if (!databasePath || lat == null || lon == null) {
-		console.error("Usage: mailwoman-nuts --db <db> <lat> <lon>")
+	if (!values.db || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+		console.error("Usage: mailwoman-nuts --db <db> -- <lat> <lon>")
 		process.exit(1)
 	}
-	const lookup = new NutsLookup({ databasePath })
+	const lookup = new NutsLookup({ databasePath: values.db })
 	console.log(JSON.stringify({ nuts: lookup.find(lat, lon) }))
 	lookup.close()
 }
