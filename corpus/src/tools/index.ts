@@ -8,7 +8,11 @@
  *   scripts→Pastel spec).
  */
 
+export * from "./align-shard.ts"
 export * from "./audit.ts"
+export * from "./corpus-stats.ts"
+export * from "./ingest-csv.ts"
+export * from "./overlay-manifest.ts"
 export * from "./fetch/download.ts"
 export * from "./fetch/index.ts"
 export * from "./golden-expand.ts"

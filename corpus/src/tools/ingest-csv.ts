@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -12,7 +11,7 @@
  *   ## Usage
  *
  *   ```sh
- *   node corpus/scripts/ingest-csv.ts \
+ *   mailwoman corpus ingest-csv \
  *   --input /data/corpus/sources/usgov-nppes/npidata_pfile.csv \
  *   --table nppes_providers \
  *   --output /data/corpus/sources/usgov-nppes/nppes.db
@@ -26,14 +25,10 @@
  *   CREATE TABLE, but don't import
  */
 
-///<reference types="node" />
-
 import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { basename, dirname, extname, join } from "node:path"
 import type { SQLInputValue } from "node:sqlite"
-import { parseArgs } from "node:util"
 
-import { runIfScript } from "@mailwoman/core/scripting"
 import { TextSpliterator } from "spliterator"
 
 // ---------------------------------------------------------------------------
@@ -174,7 +169,7 @@ interface IngestOptions {
 	dryRun: boolean
 }
 
-async function ingestCSV(opts: IngestOptions): Promise<void> {
+async function runIngest(opts: IngestOptions): Promise<void> {
 	const sep = opts.separator.charCodeAt(0)
 
 	// --- Pass 1: read header + sample rows for type inference ---
@@ -388,48 +383,38 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	)
 }
 
-async function main() {
-	const { values } = parseArgs({
-		options: {
-			input: { type: "string" },
-			table: { type: "string" },
-			output: { type: "string" },
-			sample: { type: "string", default: "100" },
-			separator: { type: "string", default: "," },
-			skip: { type: "string", default: "0" },
-			"no-header": { type: "boolean", default: false },
-			"dry-run": { type: "boolean", default: false },
-		},
-	})
-	const inputPath = values.input
-
-	if (!inputPath) {
-		process.stderr.write(
-			"Usage: node corpus/scripts/ingest-csv.ts --input <path.csv> [--table <name>] [--output <path.db>] [--dry-run]\n"
-		)
-		process.exit(1)
-	}
-
-	if (!existsSync(inputPath)) {
-		process.stderr.write(`File not found: ${inputPath}\n`)
-		process.exit(1)
-	}
-
-	const csvName = basename(inputPath, extname(inputPath))
-	const outputPath = values.output ?? join(dirname(inputPath), csvName + ".db")
-
-	const opts: IngestOptions = {
-		inputPath,
-		tableName: values.table ?? csvName.replace(/[^a-zA-Z0-9_]/g, "_"),
-		outputPath,
-		sampleSize: parseInt(values.sample, 10),
-		separator: values.separator,
-		skipLines: parseInt(values.skip, 10),
-		hasHeader: !values["no-header"],
-		dryRun: values["dry-run"],
-	}
-
-	await ingestCSV(opts)
+/** Flag-shaped options for {@linkcode ingestCSV} — `table`/`output` derive from `input` when omitted. */
+export interface IngestCSVOptions {
+	input: string
+	table?: string
+	output?: string
+	sample?: number
+	separator?: string
+	skip?: number
+	noHeader?: boolean
+	dryRun?: boolean
 }
 
-runIfScript(import.meta, main)
+/**
+ * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows. Throws when `input` is
+ * missing. NOTE(phase1): progress narration still writes stderr directly — this predates the report-callback contract
+ * and the write sites are deep in the type-inference helpers; thread a report param if a caller ever needs to capture
+ * it.
+ */
+export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
+	if (!existsSync(options.input)) {
+		throw new Error(`File not found: ${options.input}`)
+	}
+	const csvName = basename(options.input, extname(options.input))
+
+	await runIngest({
+		inputPath: options.input,
+		tableName: options.table ?? csvName.replace(/[^a-zA-Z0-9_]/g, "_"),
+		outputPath: options.output ?? join(dirname(options.input), csvName + ".db"),
+		sampleSize: options.sample ?? 100,
+		separator: options.separator ?? ",",
+		skipLines: options.skip ?? 0,
+		hasHeader: !options.noHeader,
+		dryRun: options.dryRun ?? false,
+	})
+}

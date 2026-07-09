@@ -28,7 +28,7 @@ const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	useEffect(() => {
 		void (async () => {
 			try {
-				const { buildCorpusStats } = await import("../../corpus-tools/corpus-stats.ts")
+				const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
 				await buildCorpusStats({
 					shardsArg: options.shards,
 					outputPath: options.output,

@@ -1,4 +1,0 @@
-{
-	"extends": "@sister.software/tsconfig",
-	"references": [{ "path": "../../core" }, { "path": "../../codex" }, { "path": "../../formatter" }]
-}
