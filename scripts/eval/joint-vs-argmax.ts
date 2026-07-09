@@ -15,7 +15,7 @@ import { parseArgs } from "node:util"
  *   output. The aggregate (regression rate, accuracy delta, latency p99 multiplier) feeds the #424
  *   decision gate.
  *
- *   Run (compile core first — the pipeline loads compiled out/): node --experimental-strip-types
+ *   Run (compile core first — the pipeline loads compiled out/): node
  *   scripts/eval/joint-vs-argmax.ts\
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --limit 500\
  *   --model /tmp/v094-eval/model.onnx --model-card neural-weights-en-us/model-card.json\

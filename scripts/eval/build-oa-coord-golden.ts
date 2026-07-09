@@ -23,7 +23,7 @@
  *   (canonical / postcode-first / locality-first) so the model isn't graded on one rigid template.
  *   Streams the CSV — OOM-safe on the multi-GB dumps.
  *
- *   Usage: node --experimental-strip-types scripts/eval/build-oa-coord-golden.ts --country IT\
+ *   Usage: node scripts/eval/build-oa-coord-golden.ts --country IT\
  *   --zip /mnt/playpen/mailwoman-data/oa-cache/it__countrywide.zip\
  *   --entry it/countrywide.csv --out data/eval/external/oa-it-coord-150.jsonl --n 150
  *

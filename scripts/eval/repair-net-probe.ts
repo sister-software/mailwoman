@@ -12,7 +12,7 @@ import { parseArgs } from "node:util"
  *     HURT — repair-off correct, repair-on wrong (the over-fire: a valid trailing ZIP got clobbered)
  *   Net = HELP − HURT. The HURT rows reveal the guard the fix needs.
  *
- *   Run: node --experimental-strip-types scripts/eval/repair-net-probe.ts --model out/v192/model.onnx
+ *   Run: node scripts/eval/repair-net-probe.ts --model out/v192/model.onnx
  */
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"

@@ -14,7 +14,7 @@ python3 scripts/eval/build-calibration-set.py \
   --out data/eval/calibration/calibration-set.jsonl
 
 # 2. Run the SHIPPED model over the set → (raw span confidence, correct?) pairs.
-node --experimental-strip-types scripts/eval/collect-span-confidences.ts \
+node scripts/eval/collect-span-confidences.ts \
   --set data/eval/calibration/calibration-set.jsonl \
   --out data/eval/calibration/confidences.jsonl
 

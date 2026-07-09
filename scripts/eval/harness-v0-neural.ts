@@ -18,7 +18,7 @@
  *   file, locale, input, expected, v0_pass, neural_pass, v0_actual, neural_actual }` so downstream
  *   scripts can cluster failures by tag/locale/address-shape.
  *
- *   Usage: node --experimental-strip-types scripts/harness-v0-neural.ts\
+ *   Usage: node scripts/harness-v0-neural.ts\
  *   --tests mailwoman/test\
  *   --out-json /tmp/harness.json\
  *   [--model <onnx>] [--tokenizer <spm>] [--model-card <json>]\

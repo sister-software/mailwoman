@@ -25,7 +25,7 @@
  *   in-distribution baseline, the #566/#685 trap this very gate exists to prevent. `--no-strict`
  *   warns-and-continues for ad-hoc/legacy (pre-anchor) models instead of failing closed.
  *
- *   Usage: node --experimental-strip-types scripts/eval-error-analysis.ts\
+ *   Usage: node scripts/eval-error-analysis.ts\
  *   --golden data/eval/golden/v0.1.2 Grade a candidate: ... --model ./out/v.../model.onnx --tokenizer
  *   <spm> --model-card <json>
  */

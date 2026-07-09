@@ -31,4 +31,4 @@ The result refutes that hypothesis on the tags OA can grade. Held-out Vermont sc
 
 One caveat carries the whole result, so it's worth stating plainly. This only tests `locality`, `region`, and `postcode`, because that's all OpenAddresses gold carries. Leakage would bite hardest on STREET recognition, where memorizing a street name is the obvious shortcut, and OA can't grade street at all. A complete leakage check needs full-BIO corpus gold restricted to held-out geography, which is tracked as a follow-up on #371. And only Vermont survives in this US sample (Wyoming and North Dakota contribute zero rows), so the held-out signal is one state wide.
 
-Reproduce: `node --experimental-strip-types scripts/eval/leakage-split-f1.ts --eval data/eval/external/openaddresses-us-sample.jsonl --held VT,WY,ND --out-md <path>`.
+Reproduce: `node scripts/eval/leakage-split-f1.ts --eval data/eval/external/openaddresses-us-sample.jsonl --held VT,WY,ND --out-md <path>`.

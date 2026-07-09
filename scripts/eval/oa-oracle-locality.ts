@@ -41,7 +41,7 @@
  *
  *   `--oracle-only` skips the model (fast bucketing iteration; the `current` column is then blank).
  *
- *   Run: node --experimental-strip-types scripts/eval/oa-oracle-locality.ts\
+ *   Run: node scripts/eval/oa-oracle-locality.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl\
  *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\

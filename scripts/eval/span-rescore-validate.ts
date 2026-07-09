@@ -26,7 +26,7 @@ import { parseArgs } from "node:util"
  *   gold-match rate (did it recover the RIGHT locality), and the recovered coord p50/p90 vs truth — the
  *   honest test of whether the production rescore moves coordinates.
  *
- *   Run: node --experimental-strip-types scripts/eval/span-rescore-validate.ts [--n 150]
+ *   Run: node scripts/eval/span-rescore-validate.ts [--n 150]
  */
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"

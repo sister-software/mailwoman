@@ -30,7 +30,7 @@
  *
  *   Run (after `yarn compile`):
  *
- *   Node --experimental-strip-types scripts/eval/reverse-geocode-eval.ts\
+ *   node scripts/eval/reverse-geocode-eval.ts\
  *   --admin-db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\
  *   --polygons-db /tmp/v440-stage/en-us/v4.4.0/wof-polygons.db\
  *   --states VT

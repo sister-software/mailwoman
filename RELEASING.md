@@ -136,7 +136,7 @@ old vs new DB — the two `**neural**` rows must match):
 ```bash
 PC=/mnt/playpen/mailwoman-data/wof/postalcode-us.db
 for db in admin-global-priority.db admin-global-priority.REBUILD.db; do
-  node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
+  node scripts/eval/oa-resolver-eval.ts \
     --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
     --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
     --model-anchor-lookup <anchor.json> \
@@ -319,7 +319,7 @@ in `main`, before anything is staged:
 4. Regenerate the capabilities manifest (the fail-closed delta-gate reads it; the generator's `$comment` otherwise lies about which model it measured). The generator **refuses if a `capabilities` block already exists**, so rewrite the card WITHOUT that block first, then:
    ```bash
    yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
-   node --experimental-strip-types scripts/eval/gen-capability-manifest.ts \
+   node scripts/eval/gen-capability-manifest.ts \
      --model /mnt/playpen/.../model-v<NNN>-step-<step>-int8.onnx \
      --tokenizer /mnt/playpen/.../tokenizer.model \
      --model-card neural-weights-en-us/model-card.json --write

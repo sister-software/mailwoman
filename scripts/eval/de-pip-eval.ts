@@ -77,7 +77,7 @@ async function main() {
 	// dump <eval-jsonl> <anchor-lookup> <out-name>
 	const dump = async (evalPath: string, lookup: string, name: string): Promise<void> => {
 		const r =
-			await $`node --experimental-strip-types scripts/eval/oa-resolver-eval.ts --eval ${evalPath} --model ${MODEL} --model-card ${CARD} --tokenizer ${TOK} --model-anchor-lookup ${lookup} --default-country DE --out-resolved ${`${OUT}/${name}.json`}`
+			await $`node scripts/eval/oa-resolver-eval.ts --eval ${evalPath} --model ${MODEL} --model-card ${CARD} --tokenizer ${TOK} --model-anchor-lookup ${lookup} --default-country DE --out-resolved ${`${OUT}/${name}.json`}`
 		writeFileSync(`${OUT}/${name}.eval.md`, r.stdout)
 		writeFileSync(`${OUT}/${name}.log`, r.stderr)
 	}

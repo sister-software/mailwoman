@@ -23,7 +23,7 @@
  *   threshold is insufficient by construction → FS stays pinned / a cross-objective retrain (#655
  *   option 2) is the only lever.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/cross-source-threshold-sweep.ts\
+ *   Run: node scripts/eval/record-matcher/cross-source-threshold-sweep.ts\
  *   [--cap 2000] [--state TX] [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]
  */
 

@@ -17,7 +17,7 @@
  *   baseline / GBT scorer / LR scorer), best F1 over a fine per-scorer threshold sweep. The metric
  *   is the dedup benchmark's clustering F1.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/learned-scorer-crossstate-eval.ts\
+ *   Run: node scripts/eval/record-matcher/learned-scorer-crossstate-eval.ts\
  *   [--train-state TX] [--eval-state CA] [--npis 2000] [--out-md <md>]
  */
 

@@ -15,7 +15,7 @@ import { parseArgs } from "node:util"
  *   We build the AddressTree directly from each row's components (locality + postcode siblings) so
  *   the eval isolates the RESOLVER's conflict detection, independent of the parser.
  *
- *   Run: node --experimental-strip-types scripts/eval/postcode-conflict-eval.ts\
+ *   Run: node scripts/eval/postcode-conflict-eval.ts\
  *   --eval data/eval/falsehoods/postcode-city-conflicts.jsonl [--out-md <path>] (`--wof` defaults to
  *   admin-global-priority.db + postcode-locality-intl.db — coord-first on.)
  */

@@ -27,7 +27,7 @@
  *   1 if any errors (warnings don't gate). Per the design, the MANIFEST entry for a flagged shard
  *   should require `lint_acknowledged: true` before training consumes it.
  *
- *   Usage: node --experimental-strip-types scripts/lint-corpus-shard.ts\
+ *   Usage: node scripts/lint-corpus-shard.ts\
  *   --shard <new-shard.parquet>\
  *   --stats <corpus-stats.json>\
  *   [--rules scripts/lint-rules.json]\

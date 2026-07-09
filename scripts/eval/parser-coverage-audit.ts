@@ -15,7 +15,7 @@
  *   This script measures, PER US STATE, how often the neural parser satisfies that precondition on a
  *   held-out OA sample. No go/no-go decision is made here — the orchestrator reads the table.
  *
- *   Usage: node --experimental-strip-types scripts/eval/parser-coverage-audit.ts\
+ *   Usage: node scripts/eval/parser-coverage-audit.ts\
  *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\

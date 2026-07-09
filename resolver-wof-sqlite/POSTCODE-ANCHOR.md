@@ -61,19 +61,19 @@ curl -sL https://download.geonames.org/export/zip/ES.zip -o /tmp/ES.zip && unzip
   -d /mnt/playpen/mailwoman-data/geonames
 
 # 2. build the spr shard (point --data at a dir of the repos you want combined)
-node --experimental-strip-types scripts/build-unified-wof.ts \
+node scripts/build-unified-wof.ts \
   --data <repos-dir> --output /mnt/playpen/mailwoman-data/wof/postalcode-intl.db --placetypes postalcode
 
 # 3. backfill centroids: GeoNames first (the postcode's own centroid), then the WOF admin parent-borrow
 #    + --repos ancestor fallback for what GeoNames misses.
-node --experimental-strip-types scripts/backfill-postcode-centroids.ts \
+node scripts/backfill-postcode-centroids.ts \
   --db /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
   --geonames /mnt/playpen/mailwoman-data/geonames \
   --repos /mnt/playpen/mailwoman-data/wof/repos
 
 # 4. functional check + accuracy
-node --experimental-strip-types scripts/diagnostic/diag-postcode-anchor.ts
-node --experimental-strip-types scripts/eval/postcode-anchor-accuracy.ts \
+node scripts/diagnostic/diag-postcode-anchor.ts
+node scripts/eval/postcode-anchor-accuracy.ts \
   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
 ```
 

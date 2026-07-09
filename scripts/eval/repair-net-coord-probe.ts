@@ -16,7 +16,7 @@ import { parseArgs } from "node:util"
  *   win #723 bought (within-1km) is below this probe's resolution — that loss is the known +3.8pt #723
  *   number and is flagged, not re-measured here.
  *
- *   Run: node --experimental-strip-types scripts/eval/repair-net-coord-probe.ts --model out/v192/model.onnx \
+ *   Run: node scripts/eval/repair-net-coord-probe.ts --model out/v192/model.onnx \
  *        --candidate-db $MAILWOMAN_DATA_ROOT/wof/candidate-global-20j.db --n 150
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

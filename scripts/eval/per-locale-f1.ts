@@ -30,7 +30,7 @@
  *   zero-feed (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to
  *   override paths.
  *
- *   Usage: node --experimental-strip-types scripts/eval/per-locale-f1.ts\
+ *   Usage: node scripts/eval/per-locale-f1.ts\
  *   --golden-dir data/eval/golden/v0.1.2/dev\
  *   --model /tmp/v072-eval/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\

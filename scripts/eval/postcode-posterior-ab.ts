@@ -20,7 +20,7 @@
  *   Ported faithfully from scripts/eval/postcode-posterior-ab.py. Parquet reads go through DuckDB
  *   (`@duckdb/node-api`); the WOF SQLite reads use `node:sqlite`.
  *
- *   Usage: node --experimental-strip-types scripts/eval/postcode-posterior-ab.ts
+ *   Usage: node scripts/eval/postcode-posterior-ab.ts
  */
 
 import { globSync, readFileSync } from "node:fs"

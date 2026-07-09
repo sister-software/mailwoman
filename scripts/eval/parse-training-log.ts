@@ -30,12 +30,12 @@
  *
  *   # From a modal app id (limited to last 100 log entries by default):
  *
- *   Modal app logs ap-XXX | node --experimental-strip-types scripts/parse-training-log.ts\
+ *   Modal app logs ap-XXX | node scripts/parse-training-log.ts\
  *   --run-name v0.6.3 > /tmp/v063.json
  *
  *   # From a saved log file:
  *
- *   Node --experimental-strip-types scripts/parse-training-log.ts\
+ *   node scripts/parse-training-log.ts\
  *   --input /tmp/v063-run.log --run-name v0.6.3 --out /tmp/v063.json
  */
 

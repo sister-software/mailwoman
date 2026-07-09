@@ -16,7 +16,7 @@
  *   the source dataset per row, emits the standard eval-JSONL shape ({input, lat, lon, expected,
  *   state, source}) consumed by oa-resolver-eval/honest-eval.
  *
- *   Usage: node --experimental-strip-types scripts/eval/build-nad-holdout.ts\
+ *   Usage: node scripts/eval/build-nad-holdout.ts\
  *   [--release 2026-05-20.0] [--per-state 150] [--seed 42]\
  *   [--out data/eval/external/overture-us-nad-holdout.jsonl]
  */

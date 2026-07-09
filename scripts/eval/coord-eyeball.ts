@@ -12,7 +12,7 @@
  *   Aggregate p50 can pass while this quietly breaks the boundary in a NEW way.
  *
  *   Usage:
- *     node --experimental-strip-types scripts/eval/coord-eyeball.ts \
+ *     node scripts/eval/coord-eyeball.ts \
  *       --golden $GATE/cz-coord.jsonl --base $BASE --cand $CAND \
  *       --tokenizer $TOK --model-card $CARD --default-country CZ --n 18
  */

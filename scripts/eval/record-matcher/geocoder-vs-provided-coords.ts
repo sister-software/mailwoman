@@ -16,7 +16,7 @@
  *   it is itself a third-party geocode of unknown provenance — a large delta is a discrepancy to
  *   inspect, not automatically our error.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/geocoder-vs-provided-coords.ts\
+ *   Run: node scripts/eval/record-matcher/geocoder-vs-provided-coords.ts\
  *   [--max 1176] [--wof <admin.db>] [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]
  */
 

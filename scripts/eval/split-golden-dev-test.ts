@@ -12,7 +12,7 @@
  *   existing `--golden data/eval/golden/v0.1.2` call is unaffected; the new splits are reached via `--golden
  *   data/eval/golden/v0.1.2/{dev,test}`.
  *
- * Run: node --experimental-strip-types scripts/eval/split-golden-dev-test.ts\
+ * Run: node scripts/eval/split-golden-dev-test.ts\
  * [--golden data/eval/golden/v0.1.2] [--test-ratio 0.1] [--seed 20260529]
  *
  * Output: <golden>/dev/<file>.jsonl, <golden>/test/<file>.jsonl, and <golden>/SPLIT-MANIFEST.json (counts + sha256 +

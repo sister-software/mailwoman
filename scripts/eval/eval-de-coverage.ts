@@ -36,13 +36,13 @@ async function main() {
 	console.log("")
 	console.log("===== DE-4a: German parser F1 (held-out OA German golden) =====")
 	const r1 =
-		await $`node --experimental-strip-types scripts/eval/per-locale-f1.ts --golden-dir data/eval/external --files openaddresses-de-golden.jsonl --model ${MODEL} --tokenizer ${TOK} --model-card ${CARD}`
+		await $`node scripts/eval/per-locale-f1.ts --golden-dir data/eval/external --files openaddresses-de-golden.jsonl --model ${MODEL} --tokenizer ${TOK} --model-card ${CARD}`
 	printGrepAfter(r1.stdout, "Per-tag F1", 12)
 
 	console.log("")
 	console.log("===== DE-4b: US/FR interference tripwire (must stay within ~1pp of baseline) =====")
 	const r2 =
-		await $`node --experimental-strip-types scripts/eval/per-locale-f1.ts --golden-dir data/eval/golden/v0.1.2/dev --files us.jsonl,fr.jsonl --model ${MODEL} --tokenizer ${TOK} --model-card ${CARD}`
+		await $`node scripts/eval/per-locale-f1.ts --golden-dir data/eval/golden/v0.1.2/dev --files us.jsonl,fr.jsonl --model ${MODEL} --tokenizer ${TOK} --model-card ${CARD}`
 	console.log(
 		r2.stdout
 			.split("\n")
@@ -53,7 +53,7 @@ async function main() {
 	console.log("")
 	console.log("===== DE-5: German resolver eval (--default-country DE) =====")
 	const r3 =
-		await $`node --experimental-strip-types scripts/eval/oa-resolver-eval.ts --eval data/eval/external/openaddresses-de-sample.jsonl --limit 3000 --default-country DE --model ${MODEL} --tokenizer ${TOK} --model-card ${CARD} --wof ${WOF}`
+		await $`node scripts/eval/oa-resolver-eval.ts --eval data/eval/external/openaddresses-de-sample.jsonl --limit 3000 --default-country DE --model ${MODEL} --tokenizer ${TOK} --model-card ${CARD} --wof ${WOF}`
 	printGrepAfter(r3.stdout, "Head-to-head", 6)
 }
 

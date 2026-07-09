@@ -98,7 +98,7 @@ that it under-covers rural geocodes.
 
 ```bash
 node scripts/eval/build-situs-holdout.mjs --shard <state-situs.db> --region <ABBR> --n 2000
-node --experimental-strip-types scripts/eval/conformal-calibrate.ts \
+node scripts/eval/conformal-calibrate.ts \
   --holdout /tmp/<abbr>-situs-holdout.jsonl \
   --address-points /tmp/empty-situs.db \   # tableless → situs no-op → interp-only (#568)
   --interpolation <state-interp.db>

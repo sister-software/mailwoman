@@ -28,7 +28,7 @@
  *   multi-component addresses, not the bare "France" / "Paris" admin-name rows the wof-admin
  *   adapter emits in bulk.
  *
- *   Usage: node --experimental-strip-types scripts/eval/build-calibration-set.ts\
+ *   Usage: node scripts/eval/build-calibration-set.ts\
  *   --corpus
  *   /mnt/playpen/mailwoman-data/corpus/versioned/v0.4.0/corpus-v0.4.0/train/part-0000.parquet\
  *   --out data/eval/calibration/calibration-set.jsonl\

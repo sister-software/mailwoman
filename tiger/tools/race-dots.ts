@@ -18,7 +18,7 @@
  *   Build the input DB first: mailwoman tiger fetch --state 06 --county 059 --out tiger-oc.db
  *   mailwoman tiger redistricting --state 06 --county 059 --out tiger-oc.db
  *
- *   Run: node --experimental-strip-types scripts/census/race-dots.ts\
+ *   Run: node scripts/census/race-dots.ts\
  *   --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson
  */
 

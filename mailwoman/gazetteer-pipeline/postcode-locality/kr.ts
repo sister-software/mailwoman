@@ -26,7 +26,7 @@
  *   coarse anchor. Build-from-source: GeoNames postal KR + our custom WOF admin-kr.db (built from
  *   the whosonfirst-data-admin-kr repo, never a prebuilt geocode.earth dump).
  *
- *   Usage: node --experimental-strip-types scripts/build-postcode-locality-kr.ts\
+ *   Usage: node scripts/build-postcode-locality-kr.ts\
  *   --geonames $MAILWOMAN_DATA_ROOT/geonames/KR.txt\
  *   --admin-db $MAILWOMAN_DATA_ROOT/wof/dbs-per-country/admin-kr.db\
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-kr.db

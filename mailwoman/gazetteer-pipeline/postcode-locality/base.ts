@@ -19,7 +19,7 @@
  *   GeoJSON repos; postcode centroids from our own custom-built postalcode-intl.db (NOT a prebuilt
  *   dump).
  *
- *   Usage: node --experimental-strip-types scripts/build-postcode-locality.ts --country DE\
+ *   Usage: node scripts/build-postcode-locality.ts --country DE\
  *   --admin-repo $MAILWOMAN_DATA_ROOT/wof/repos/whosonfirst-data/whosonfirst-data-admin-de\
  *   --postcode-db $MAILWOMAN_DATA_ROOT/wof/postalcode-intl.db\
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-de.db\

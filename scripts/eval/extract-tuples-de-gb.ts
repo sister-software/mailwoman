@@ -26,7 +26,7 @@
  *       Manchester = `M`; etc.). We use a per-region prefix table and generate a synthetic
  *       sector+unit on the fly.
  *
- *   Usage: node --experimental-strip-types scripts/extract-tuples-de-gb.ts\
+ *   Usage: node scripts/extract-tuples-de-gb.ts\
  *   --sqlite /mnt/playpen/mailwoman-data/wof/admin-global-priority.db\
  *   --output /tmp/tuples-de-gb.jsonl\
  *   --limit-de 5000 --limit-gb 5000

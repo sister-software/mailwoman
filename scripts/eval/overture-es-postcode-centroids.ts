@@ -14,7 +14,7 @@
  *   IT is OUT: Overture IT postcode fill = 0% (the #474 ingest gate "≥80% else renegotiate" fails) —
  *   GeoNames stays IT's source; documented as an Overture gap.
  *
- *   Run: node --experimental-strip-types scripts/eval/overture-es-postcode-centroids.ts [--parquet
+ *   Run: node scripts/eval/overture-es-postcode-centroids.ts [--parquet
  *   <path>] [--out <db>] [--country ES]
  */
 

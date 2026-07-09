@@ -17,7 +17,7 @@ import { parseArgs } from "node:util"
  *     - covGap   : gold NOT in the gazetteer -> rescoring can't help; it's a coverage gap.
  *   recoverable = swap + needsK = #370's CEILING. Same resolver for baseline + gold-check (consistent).
  *
- *   Run: node --experimental-strip-types scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
+ *   Run: node scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"

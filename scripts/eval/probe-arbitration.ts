@@ -8,7 +8,7 @@
  *   Replicates exactly what `runPipeline`'s `arbitrate` block does: route → neural proposals ∪
  *   solved-v0 proposals → policy registry → coherence pass → (would-be) proposalsToTree.
  *
- *   Run: node --experimental-strip-types scripts/eval/probe-arbitration.ts
+ *   Run: node scripts/eval/probe-arbitration.ts
  */
 
 import { readFileSync } from "node:fs"

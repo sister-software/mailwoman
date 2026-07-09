@@ -34,8 +34,7 @@
  *   OUTPUT: threshold Q̂, empirical 90% coverage, median calibrated radius per tier, plus a 3-line
  *   calibration summary.
  *
- *   Run (no pre-compile needed — uses Node's --experimental-strip-types): node
- *   --experimental-strip-types scripts/eval/conformal-calibrate.ts\
+ *   Run (no pre-compile needed — : node scripts/eval/conformal-calibrate.ts\
  *   [--holdout /tmp/ood-truth.jsonl]\
  *   [--address-points /tmp/tx-situs.db]\
  *   [--interpolation /tmp/tx-metro-interp.db]\

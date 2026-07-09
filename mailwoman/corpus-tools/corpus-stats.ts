@@ -26,12 +26,12 @@
  *   }
  * ```
  *
- *   Usage: node --experimental-strip-types scripts/build-corpus-stats.ts\
+ *   Usage: node scripts/build-corpus-stats.ts\
  *   --shards <glob-pattern-or-dir>\
  *   --output <stats.json>
  *
  *   For a quick local-corpus baseline (limited but useful for linter testing): node
- *   --experimental-strip-types scripts/build-corpus-stats.ts\
+ *   scripts/build-corpus-stats.ts\
  *   --shards /mnt/playpen/mailwoman-data/corpus/versioned/v0.4.0/corpus-v0.4.0/train/\
  *   --output /tmp/corpus-stats-local.json
  */

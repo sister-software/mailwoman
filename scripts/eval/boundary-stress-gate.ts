@@ -21,8 +21,8 @@
  *   `requires`); without it the gate now throws rather than silently mis-decoding the 33-label
  *   STAGE3 model.
  *
- *   Run (baseline, dev weights): node --experimental-strip-types scripts/eval/boundary-stress-gate.ts
- *   Run (a fetched v1.6.0 bundle): node --experimental-strip-types
+ *   Run (baseline, dev weights): node scripts/eval/boundary-stress-gate.ts
+ *   Run (a fetched v1.6.0 bundle): node
  *   scripts/eval/boundary-stress-gate.ts\
  *   --model ./out/v160/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\

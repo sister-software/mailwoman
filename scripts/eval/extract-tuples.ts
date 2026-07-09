@@ -13,7 +13,7 @@
  *   Ported faithfully from scripts/extract-tuples.py. Parquet reads go through DuckDB
  *   (`@duckdb/node-api`); the WOF SQLite path uses `node:sqlite`.
  *
- *   Usage: node --experimental-strip-types scripts/extract-tuples.ts\
+ *   Usage: node scripts/extract-tuples.ts\
  *   --shards /mnt/playpen/mailwoman-data/wof/admin-global-priority.db\
  *   --output /tmp/tuples.jsonl\
  *   [--limit 50000]

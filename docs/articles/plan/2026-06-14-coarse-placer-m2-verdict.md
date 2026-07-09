@@ -99,6 +99,6 @@ yarn compile
 node scripts/coarse-placer/eval-openset.mjs --model $MAILWOMAN_DATA_ROOT/coarse-placer/model \
   --out-md docs/articles/evals/2026-06-14-coarse-placer-m2-openset.md
 # Phase 3 — assembled-pipeline gate with the open-set rule (bundled int8 model):
-node --experimental-strip-types scripts/eval/coarse-placer-country-disambig.ts --openset --abstain-below 0.9 \
+node scripts/eval/coarse-placer-country-disambig.ts --openset --abstain-below 0.9 \
   --out-md docs/articles/evals/2026-06-14-coarse-placer-m2-pipeline-gate.md
 ```

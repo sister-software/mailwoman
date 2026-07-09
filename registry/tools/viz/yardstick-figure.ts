@@ -20,7 +20,7 @@
  *   Emits a self-contained SVG (the docs' committed-chart-asset convention — see
  *   `docs/articles/evals/charts/*.svg`), no browser required.
  *
- *   Run: node --experimental-strip-types registry/tools/viz/yardstick-figure.ts\
+ *   Run: node registry/tools/viz/yardstick-figure.ts\
  *   [--out-svg docs/articles/evals/charts/dedup-yardstick.svg]
  */
 

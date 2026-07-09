@@ -11,7 +11,7 @@
  *   Neutral scope: this measures GEOCODER ACCURACY on real public addresses; it makes no claim about
  *   the facilities themselves.
  *
- *   Run: node --experimental-strip-types registry/tools/txhhsc-to-oarow.ts\
+ *   Run: node registry/tools/txhhsc-to-oarow.ts\
  *   --src <tsv> --out /tmp/txhhsc-oarow.jsonl
  */
 

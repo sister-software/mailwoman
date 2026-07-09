@@ -105,7 +105,7 @@ street-level tier, not for this PR.
 
 ```bash
 # baseline (both fixes off) vs both on — one toggle apart:
-node --experimental-strip-types scripts/eval/resolver-eval.ts \
+node scripts/eval/resolver-eval.ts \
   --eval /tmp/wof-bootstrap/eval.jsonl --country US \
   --exact-tiering {true|false} --parent-fallback {true|false} \
   --model <v0.7.2.onnx> --tokenizer <v0.6.0-a0> --model-card <card> \

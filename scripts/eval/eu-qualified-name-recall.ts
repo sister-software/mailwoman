@@ -27,7 +27,7 @@ import { parseArgs } from "node:util"
  *     - TRAILING-TOKEN (risky): also strip a trailing short capitalized token (`VD`, `S`, `Viz`,
  *       `Ohp`). This recovers `Roche VD` but can also eat a real name part (`Santa Cruz` → `Santa`).
  *
- *   Run: node --experimental-strip-types scripts/eval/eu-qualified-name-recall.ts [--n 150]
+ *   Run: node scripts/eval/eu-qualified-name-recall.ts [--n 150]
  */
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"

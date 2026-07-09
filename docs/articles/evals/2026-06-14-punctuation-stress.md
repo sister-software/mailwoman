@@ -93,9 +93,9 @@ actually break, and it's a sharper, cheaper target than reviving Stage 2.7.
 
 ```bash
 # v0 (deterministic, no model)
-node --experimental-strip-types scripts/eval/score-punctuation-stress.ts --engine v0
+node scripts/eval/score-punctuation-stress.ts --engine v0
 # neural ship config (folded gold, head-to-head)
-node --experimental-strip-types scripts/eval/score-punctuation-stress.ts \
+node scripts/eval/score-punctuation-stress.ts \
   --engine neural --model neural-weights-en-us/model.onnx --fold-gold
 # + span proposer (the revival question)
 … --span-proposer                       # default: no-op

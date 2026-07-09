@@ -15,7 +15,7 @@ import { parseArgs } from "node:util"
  *   Backend = the demo's candidate gazetteer (EU coverage + the postcodes the gate needs — IT resolves,
  *   so the gate bites there; PL/PT don't, so the rescore runs ungated there, exactly as in production).
  *
- *   Run: node --experimental-strip-types scripts/eval/span-rescore-e2e.ts [--n 150]
+ *   Run: node scripts/eval/span-rescore-e2e.ts [--n 150]
  */
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"

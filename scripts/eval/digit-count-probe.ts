@@ -24,7 +24,7 @@ import { parseArgs } from "node:util"
  *     v192 R4 > R5  → interference (digit-count shortcut dominates) → weight cut alone won't fix.
  *     v192 R4 ≤ R5  AND R4 ≈ R4_v191 → dilution → gnaf 2.5 suffices.
  *
- *   Run: node --experimental-strip-types scripts/eval/digit-count-probe.ts --model out/v192/model.onnx
+ *   Run: node scripts/eval/digit-count-probe.ts --model out/v192/model.onnx
  */
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"

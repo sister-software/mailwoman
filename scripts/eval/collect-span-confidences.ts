@@ -31,7 +31,7 @@
  *   - Value match is normalized exact OR either-direction substring (handles fragmentation like "Saint"
  *       vs "Saint Paul" and decomposition like "Ave" vs "Elm Ave").
  *
- *   Run: node --experimental-strip-types scripts/eval/collect-span-confidences.ts\
+ *   Run: node scripts/eval/collect-span-confidences.ts\
  *   --model neural-weights-en-us/model.onnx\
  *   --tokenizer neural-weights-en-us/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\

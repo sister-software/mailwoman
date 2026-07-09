@@ -28,7 +28,7 @@
  *   ZCTA caveat: ZCTAs approximate delivery areas, not ZIPs — PO-box-only/unique ZIPs have no ZCTA
  *   and stay placeholder. Vintage + URL: $MAILWOMAN_DATA_ROOT/census/README.md.
  *
- *   Usage: node --experimental-strip-types scripts/build-pilot-anchor-lookup.ts\
+ *   Usage: node scripts/build-pilot-anchor-lookup.ts\
  *   --zcta $MAILWOMAN_DATA_ROOT/census/2024_Gaz_zcta_national.txt\
  *   --output $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json
  *

@@ -8,7 +8,7 @@
  *   `scripts/eval-error-analysis.ts` so the rows can be diffed against the existing v0.6.0 / v0.6.1
  *   baselines in `docs/articles/evals/`.
  *
- *   Usage: node --experimental-strip-types scripts/eval-morphology-fst.ts\
+ *   Usage: node scripts/eval-morphology-fst.ts\
  *   --model /mnt/playpen/.../model-v061-step-100000-int8.onnx\
  *   --tokenizer /mnt/playpen/.../v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\

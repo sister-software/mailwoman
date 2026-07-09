@@ -9,7 +9,7 @@
  *
  * Standalone measurement — does NOT touch the shipped locale-gate pipeline.
  *
- * Run: node --experimental-strip-types scripts/eval/measure-locale-lexical.ts
+ * Run: node scripts/eval/measure-locale-lexical.ts
  */
 
 import { readdirSync, readFileSync } from "node:fs"

@@ -12,11 +12,11 @@
  *
  *   Fetch the source first: curl -sL
  *   https://raw.githubusercontent.com/openvenues/libpostal/master/test/test_parser.c -o
- *   /tmp/test_parser.c Then: node --experimental-strip-types scripts/eval/parse-libpostal-tests.ts
+ *   /tmp/test_parser.c Then: node scripts/eval/parse-libpostal-tests.ts
  *   /tmp/test_parser.c data/eval/external/libpostal-cases.jsonl
  *
  *   Run it through the harness (fair symmetric matching — see --symmetric-match): node
- *   --experimental-strip-types scripts/harness-v0-neural.ts\
+ *   scripts/harness-v0-neural.ts\
  *   --tests <empty-dir> --falsehoods <dir-with-this-jsonl>\
  *   --model <onnx> --tokenizer <spm> --model-card <json>\
  *   --postcode-repair --symmetric-match --out-json /tmp/libpostal-bench.json

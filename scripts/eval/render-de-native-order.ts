@@ -18,7 +18,7 @@
  *   source) is preserved verbatim, so `oa-resolver-eval --eval <output>` measures the same points,
  *   only rendered the way Germans write them.
  *
- *   Run: node --experimental-strip-types scripts/eval/render-de-native-order.ts\
+ *   Run: node scripts/eval/render-de-native-order.ts\
  *   --in data/eval/external/openaddresses-de-sample.jsonl\
  *   --out data/eval/external/openaddresses-de-sample-native-order.jsonl
  */

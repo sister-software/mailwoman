@@ -39,7 +39,7 @@ async function main() {
 
 	console.log("### 1/4 — per-tag recall on held-out TEST (calibration)")
 	const r1 =
-		await $`node --experimental-strip-types scripts/eval-error-analysis.ts --golden data/eval/golden/v0.1.2/test --model ${CALIB} --tokenizer ${TOK} --model-card ${CARD}`
+		await $`node scripts/eval-error-analysis.ts --golden data/eval/golden/v0.1.2/test --model ${CALIB} --tokenizer ${TOK} --model-card ${CARD}`
 	writeFileSync(`${OUT}/calib-test-pertag.md`, r1.stdout)
 
 	if (r1.stderr) {
@@ -58,7 +58,7 @@ async function main() {
 
 	console.log("### 2/4 — harness pass rate (calibration, no repair)")
 	const r2 =
-		await $`node --experimental-strip-types scripts/harness-v0-neural.ts --tests mailwoman/test --model ${CALIB} --tokenizer ${TOK} --model-card ${CARD} --out-json ${`${OUT}/calib-harness.json`}`
+		await $`node scripts/harness-v0-neural.ts --tests mailwoman/test --model ${CALIB} --tokenizer ${TOK} --model-card ${CARD} --out-json ${`${OUT}/calib-harness.json`}`
 	// grep -iE "^\| (Neural|v0 )"  (\| is a literal pipe in ERE)
 	console.log(
 		r2.stdout
@@ -69,7 +69,7 @@ async function main() {
 
 	console.log("### 3/4 — harness pass rate (calibration + postcode repair)")
 	const r3 =
-		await $`node --experimental-strip-types scripts/harness-v0-neural.ts --tests mailwoman/test --model ${CALIB} --tokenizer ${TOK} --model-card ${CARD} --postcode-repair --out-json ${`${OUT}/calib-harness-repair.json`}`
+		await $`node scripts/harness-v0-neural.ts --tests mailwoman/test --model ${CALIB} --tokenizer ${TOK} --model-card ${CARD} --postcode-repair --out-json ${`${OUT}/calib-harness-repair.json`}`
 	console.log(
 		r3.stdout
 			.split("\n")

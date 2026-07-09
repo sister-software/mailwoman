@@ -32,7 +32,7 @@ import { parseArgs } from "node:util"
  *   Reuses the shipped model's scored rows if `--shipped-rows <jsonl>` (a confidence-discrimination
  *   `--rows-out`) matches the canary input set, to avoid re-parsing.
  *
- *   Run: node --experimental-strip-types scripts/eval/promote-canary.ts\
+ *   Run: node scripts/eval/promote-canary.ts\
  *   --shipped out/v191/model.onnx --candidate out/v192/model-int8.onnx\
  *   [--locales us,it,pt,pl,fr,au] [--n 60] [--allcaps] [--out <md>]
  */

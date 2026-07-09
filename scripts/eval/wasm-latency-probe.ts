@@ -11,7 +11,7 @@
  *   graph, Node's V8 instead of Chrome's.
  *
  *   Usage:
- *     node --experimental-strip-types scripts/eval/wasm-latency-probe.ts \
+ *     node scripts/eval/wasm-latency-probe.ts \
  *       --model out/bsplice-meaninit-int8/model.onnx \
  *       --tokenizer /path/to/tokenizer.model \
  *       --golden data/eval/external/oa-cz-coord-1k.jsonl --n 200 --label bsplice-int8

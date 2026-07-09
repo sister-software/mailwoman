@@ -6,8 +6,7 @@
  *   #690 diagnostic: why does title-casing all-caps input REGRESS the geocode-core path
  *   (cross-dataset geocode rate 100%→39%) when it HELPS the resolveTree path (#619: locality
  *   90→99.7%)? Feed both the raw all-caps string and a pre-title-cased copy through the SAME
- *   geocodeAddress and compare. Run: node --experimental-strip-types
- *   scripts/eval/geocode-case-diag.ts
+ *   geocodeAddress and compare. Run: node scripts/eval/geocode-case-diag.ts
  */
 
 import { parseArgs } from "node:util"

@@ -10,7 +10,7 @@ import { parseArgs } from "node:util"
 // has no street_prefix/street_suffix (joined into street, the harness fold convention) and no
 // cedex (excluded from its denominator) — each engine is graded on its own vocabulary's view of
 // identical gold, stated in the report header.
-// Usage: node --experimental-strip-types scripts/eval/score-punctuation-stress.ts --model <onnx>
+// Usage: node scripts/eval/score-punctuation-stress.ts --model <onnx>
 //   [--engine neural|v0] [--file data/eval/external/punctuation-stress.jsonl] [--no-ship-config]
 //   [--span-proposer]  — enable the Stage 2.7 span proposer (#518 M2+M3; default-off, NOT ship config)
 import { decodeAsJSON } from "@mailwoman/core/decoder"

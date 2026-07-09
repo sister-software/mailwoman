@@ -17,7 +17,7 @@
  *       whether each parser emits the correct STRUCTURE (a `po_box` tag, both intersection sides, a
  *       unit with its designator). The "ground truth" is the known type.
  *
- *   Run: node --experimental-strip-types scripts/eval/per-type-report.ts\
+ *   Run: node scripts/eval/per-type-report.ts\
  *   --rows /tmp/oa-rows.json --out docs/articles/evals/2026-06-17-per-type-headtohead.md
  */
 

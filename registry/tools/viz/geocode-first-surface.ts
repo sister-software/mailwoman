@@ -33,7 +33,7 @@
  *   Emits a self-contained Plotly HTML (twin 3D landscapes + an annotated 2D contour). Render to PNG
  *   with `registry/tools/viz/render.mjs` (Playwright + swiftshader for headless WebGL).
  *
- *   Run: node --experimental-strip-types registry/tools/viz/geocode-first-surface.ts\
+ *   Run: node registry/tools/viz/geocode-first-surface.ts\
  *   [--lambda 0.02] [--out-html /tmp/geocode-first-surface.html]
  */
 

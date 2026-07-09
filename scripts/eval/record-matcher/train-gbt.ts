@@ -14,7 +14,7 @@
  *   eval's job; this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
  *   then re-measures generalization against the FS baseline.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/train-gbt.ts\
+ *   Run: node scripts/eval/record-matcher/train-gbt.ts\
  *   [--state TX] [--npis 3000] [--wof <admin.db>] [--data-root <dir>]\
  *   [--out registry/models/dedup-gbt-en-us.ts]
  */

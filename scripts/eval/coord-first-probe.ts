@@ -17,7 +17,7 @@
  *   GeoJSON repo; postcode centroids from our own custom-built postalcode-intl.db (NOT a prebuilt
  *   WOF dump).
  *
- *   Usage: node --experimental-strip-types scripts/eval/coord-first-probe.ts
+ *   Usage: node scripts/eval/coord-first-probe.ts
  *
  *   Ported faithfully from scripts/eval/coord-first-probe.py.
  */

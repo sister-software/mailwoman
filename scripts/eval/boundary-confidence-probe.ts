@@ -14,7 +14,7 @@
  *   - The histogram of what the boundary gets confused FOR (e.g. locality -> I-street = "street ate
  *       it")
  *
- *   Run: node --experimental-strip-types scripts/eval/boundary-confidence-probe.ts\
+ *   Run: node scripts/eval/boundary-confidence-probe.ts\
  *   --model ./out/v160/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json --n 200

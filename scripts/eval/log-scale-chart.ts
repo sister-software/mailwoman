@@ -9,7 +9,7 @@
  *
  *   Usage:
  *
- *   Node --experimental-strip-types scripts/log-scale-chart.ts\
+ *   node scripts/log-scale-chart.ts\
  *   --input docs/articles/evals/charts/v06x-val-loss.svg\
  *   --output docs/articles/evals/charts/v06x-val-loss-log.svg
  */

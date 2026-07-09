@@ -20,7 +20,7 @@
  *   Usage (after `yarn compile`):
  *
  *   ```
- *   node --experimental-strip-types scripts/eval/demo-cascade-smoke.ts \
+ *   node scripts/eval/demo-cascade-smoke.ts \
  *   [--stage-dir /tmp/v440-stage/en-us/v4.4.0] [--db <wof-hot.db>] [--model <onnx>] \
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>] [--fst <fst.bin>] \
  *   [--gazetteer-lexicon <lexicon.json>] [--file <rows.jsonl>] [--json <sidecar.json>] \

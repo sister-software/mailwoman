@@ -42,13 +42,13 @@
  *   flag_count=0 and pass. New shards SHOULD record their flag count even if zero (defensive
  *   against silent under-counting from a future linter rule addition).
  *
- *   Usage: node --experimental-strip-types scripts/verify-shard-acks.ts\
+ *   Usage: node scripts/verify-shard-acks.ts\
  *   --manifest /tmp/MANIFEST.json
  *
  *   # Or run against the live Modal volume (downloads first):
  *
  *   Modal volume get mailwoman-training corpus/.../MANIFEST.json /tmp/MANIFEST.json node
- *   --experimental-strip-types scripts/verify-shard-acks.ts --manifest /tmp/MANIFEST.json
+ *   scripts/verify-shard-acks.ts --manifest /tmp/MANIFEST.json
  */
 
 import { readFileSync } from "node:fs"

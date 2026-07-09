@@ -21,7 +21,7 @@
  *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
  *   registry via `streamRows` (#616), so nothing loads whole.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/nppes-dedup-benchmark.ts\
+ *   Run: node scripts/eval/record-matcher/nppes-dedup-benchmark.ts\
  *   [--state TX] [--max-npis 300] [--wof <admin.db>] [--data-root <dir>] [--no-train-em]\
  *   [--out-md docs/articles/evals/<date>-nppes-dedup-benchmark.md]
  */

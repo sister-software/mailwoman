@@ -15,7 +15,7 @@
  *   Ported faithfully from scripts/eval/pip-containment.py (pure JSON + filesystem geojson, no
  *   numpy).
  *
- *   Usage: node --experimental-strip-types scripts/eval/pip-containment.ts <resolved.json> [--label
+ *   Usage: node scripts/eval/pip-containment.ts <resolved.json> [--label
  *   NAME] [--json OUT]
  */
 

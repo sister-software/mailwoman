@@ -29,7 +29,7 @@
  *        context-determined). An affix-split flag (shard street_suffix/_prefix vs base "street") is
  *        EXPECTED — the loader's affix-relabel handles it; weigh those separately.
  *
- *   Usage: node --experimental-strip-types scripts/lint-shard-vocab.ts --shard <shard.parquet>
+ *   Usage: node scripts/lint-shard-vocab.ts --shard <shard.parquet>
  *   [--base-version v0.5.0] [--base-root <dir>] [--fraction 1.0] [--threshold 0.7] [--min-count
  *   50]
  */

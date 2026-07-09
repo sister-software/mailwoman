@@ -20,7 +20,7 @@
  *   locality in the `postcode_locality` shard), so the headline is reported over the LEVER-ACTIVE
  *   subset (rows where ON ≠ OFF) as well as the full divergent set.
  *
- *   Run: node --experimental-strip-types scripts/eval/postal-city-alias-eval.ts\
+ *   Run: node scripts/eval/postal-city-alias-eval.ts\
  *   --alias-db $MAILWOMAN_DATA_ROOT/wof/postal-city-alias-us.db\
  *   --postcode-db $MAILWOMAN_DATA_ROOT/wof/postalcode-us.db\
  *   --wof

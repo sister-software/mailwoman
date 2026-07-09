@@ -44,7 +44,7 @@ import { parseArgs } from "node:util"
  *   `--rows-out <jsonl>` to persist the graded rows, then `--rows-in <jsonl>` to re-sweep / re-plot
  *   instantly without re-parsing. Nominatim is disk-cached and only rate-limited on a cache miss.
  *
- *   Run: node --experimental-strip-types scripts/eval/confidence-discrimination.ts\
+ *   Run: node scripts/eval/confidence-discrimination.ts\
  *   [--locales us,it,pt,pl,fr,au] [--n 80] [--model out/v191/model.onnx] [--no-messy]\
  *   [--rows-out <jsonl>] [--rows-in <jsonl>] [--out <md>] [--svg <svg>]\
  *   [--cache /tmp/nominatim-messy-cache.json] [--agg node|min]

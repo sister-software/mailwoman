@@ -35,7 +35,7 @@
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
- *   Node --experimental-strip-types scripts/eval/mask-regression-gate.ts\
+ *   node scripts/eval/mask-regression-gate.ts\
  *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json

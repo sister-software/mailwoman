@@ -12,7 +12,7 @@ import { parseArgs } from "node:util"
  *   not the repair). If anchor-OFF flips the leading from postcode→house_number, the binary anchor is
  *   the culprit → the fix is a richer anchor (region-congruence), not more data.
  *
- *   Run: node --experimental-strip-types scripts/eval/anchor-ablation-probe.ts --model out/v192/model.onnx
+ *   Run: node scripts/eval/anchor-ablation-probe.ts --model out/v192/model.onnx
  */
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"

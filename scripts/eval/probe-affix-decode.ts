@@ -4,7 +4,7 @@ import { parseArgs } from "node:util"
 // Probe: does a model emit street_prefix/street_suffix in the RAW (unfolded) decode?
 // per-locale-f1's foldToComponents joins prefix+street+suffix into one `street`, hiding the split.
 // This prints decodeAsJSON(tree) verbatim so we can see what the model actually tags.
-// Usage: node --experimental-strip-types scripts/eval/probe-affix-decode.ts --model <onnx> [--file <jsonl>]
+// Usage: node scripts/eval/probe-affix-decode.ts --model <onnx> [--file <jsonl>]
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"

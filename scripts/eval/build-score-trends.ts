@@ -9,7 +9,7 @@
  *
  *   Ported faithfully from scripts/eval/build-score-trends.py (pure JSON → markdown, no numpy).
  *
- *   Regenerate: node --experimental-strip-types scripts/eval/build-score-trends.ts Output:
+ *   Regenerate: node scripts/eval/build-score-trends.ts Output:
  *   docs/articles/evals/score-trends.md (GENERATED — do not hand-edit)
  */
 

@@ -25,7 +25,7 @@ import { parseArgs } from "node:util"
  *   earth.ts via a DYNAMIC import, so this committed harness degrades gracefully (Pelias row skipped)
  *   for anyone without the operator's diag.
  *
- *   Run: GEOCODE_EARTH_API_KEY=… node --experimental-strip-types scripts/eval/competitive-benchmark.ts \
+ *   Run: GEOCODE_EARTH_API_KEY=… node scripts/eval/competitive-benchmark.ts \
  *          [--n 40] [--locales it,pt,pl,at,cz,fr,au] [--systems mailwoman,nominatim,pelias] [--out <md>]
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

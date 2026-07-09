@@ -15,7 +15,7 @@
  *   `osm/README.md` for the licensing boundary + the lawyer sign-off gate before any shard ships.
  *
  *   Usage:
- *     node --experimental-strip-types osm/scripts/build-rooftop-shard.ts \
+ *     node osm/scripts/build-rooftop-shard.ts \
  *       --country fr --slug idf --release 260627 \
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */

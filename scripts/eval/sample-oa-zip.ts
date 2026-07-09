@@ -11,7 +11,7 @@
  *   other openaddresses-*-sample.jsonl files: {input, lat, lon,
  *   expected:{locality,region,postcode}, state, source}.
  *
- *   Usage: node --experimental-strip-types scripts/eval/sample-oa-zip.ts --zip
+ *   Usage: node scripts/eval/sample-oa-zip.ts --zip
  *   /tmp/oa-cache/fr__countrywide.zip\
  *   --country FR --target 3000 --seed 42 --out data/eval/external/openaddresses-fr-sample.jsonl
  *

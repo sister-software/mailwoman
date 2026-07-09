@@ -21,7 +21,7 @@
  *   - `cms-pos_hospital-other_*.csv` — Provider of Services (PRVDR_NUM, FAC_NAME, ST_ADR…).
  *   - `cms-carecompare_hospital-general_*.csv` — Care Compare (Facility ID, Facility Name, Address…).
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/train-org-cross-gbt.ts\
+ *   Run: node scripts/eval/record-matcher/train-org-cross-gbt.ts\
  *   [--cap 6000] [--precision-bar 0.95] [--wof <admin.db>] [--data-root <dir>]\
  *   [--out registry/models/org-crosssource-gbt-en-us.ts]
  */

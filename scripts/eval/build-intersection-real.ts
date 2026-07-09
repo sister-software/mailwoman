@@ -17,7 +17,7 @@
  *   https://www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<fips>_edges.zip (unzipped) Read via
  *   DuckDB spatial ST_Read — no shapefile dependency.
  *
- *   Usage: node --experimental-strip-types scripts/eval/build-intersection-real.ts\
+ *   Usage: node scripts/eval/build-intersection-real.ts\
  *   [--edges-dir /tmp/tiger-edges] [--per-county 6] [--seed 42]\
  *   [--out data/eval/external/intersection-real.jsonl]
  */

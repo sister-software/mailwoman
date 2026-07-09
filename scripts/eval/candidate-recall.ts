@@ -10,7 +10,7 @@
  *   the misses so we can tell a missing-alias gap (enrichable) from an edit-distance variant
  *   (#531).
  *
- *   Usage: node --experimental-strip-types scripts/eval/candidate-recall.ts\
+ *   Usage: node scripts/eval/candidate-recall.ts\
  *   --db $MAILWOMAN_DATA_ROOT/wof/candidate-global-intl.db\
  *   --eval '/tmp/reg/eu-eval-*.jsonl' [--sample 15]
  */

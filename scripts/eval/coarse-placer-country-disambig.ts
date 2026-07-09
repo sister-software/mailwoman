@@ -28,7 +28,7 @@
  *   right-country rate at NO in-map regression. Abstain/OTHER rows MUST be byte-identical OFF vs ON
  *   (a strong invariant the run asserts).
  *
- *   Run: node --experimental-strip-types scripts/eval/coarse-placer-country-disambig.ts\
+ *   Run: node scripts/eval/coarse-placer-country-disambig.ts\
  *   --eval data/eval/external/country-homograph-real.jsonl\
  *   --wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\
  *   --model neural-weights-en-us/model.onnx\

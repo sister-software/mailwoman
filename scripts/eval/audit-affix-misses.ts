@@ -9,7 +9,7 @@
  *   surface-form features and compares them against what the shard builder actually varies
  *   (abbr/full per affix, Title-case, four layouts) — the #487 audit method, applied to affix.
  *
- *   Usage: node --experimental-strip-types scripts/eval/audit-affix-misses.ts\
+ *   Usage: node scripts/eval/audit-affix-misses.ts\
  *   --model <int8.onnx> [--file data/eval/external/street-affix-real.jsonl]\
  *   [--gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json]
  */

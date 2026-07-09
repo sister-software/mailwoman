@@ -17,9 +17,9 @@
  *
  *   Ported faithfully from scripts/eval/per-locale-f1-floors.py (pure JSON + regex, no numpy).
  *
- *   Usage: node --experimental-strip-types scripts/eval/per-locale-f1.ts ... --out-json
- *   /tmp/plf1.json node --experimental-strip-types scripts/eval/per-locale-f1-floors.ts --report
- *   /tmp/plf1.json [--floors floors.json --blocking] node --experimental-strip-types
+ *   Usage: node scripts/eval/per-locale-f1.ts ... --out-json
+ *   /tmp/plf1.json node scripts/eval/per-locale-f1-floors.ts --report
+ *   /tmp/plf1.json [--floors floors.json --blocking] node
  *   scripts/eval/per-locale-f1-floors.ts --self-test
  */
 

@@ -25,7 +25,7 @@
  *   Gate: ≥5% mean centroid-error reduction (SPLIT vs DROPPED) on the collision stratum, else STOP —
  *   the premise is false and no retrain can fix it.
  *
- *   Run (compiled CLI): node --experimental-strip-types scripts/eval/fr-admin-split-selfvalidation.ts\
+ *   Run (compiled CLI): node scripts/eval/fr-admin-split-selfvalidation.ts\
  *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 

@@ -12,7 +12,7 @@
  *   peak RSS. Geocoding is NOT in scope here (it's the per-record cost measured elsewhere) — this
  *   isolates the matcher's block/score/cluster cost as a function of N.
  *
- *   Run: node --experimental-strip-types registry/tools/matcher-scale.ts\
+ *   Run: node registry/tools/matcher-scale.ts\
  *   [--sizes 10000,50000,100000,250000,500000] [--dup 3] [--em] [--out-md <md>]
  */
 

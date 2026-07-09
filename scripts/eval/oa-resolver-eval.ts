@@ -34,7 +34,7 @@
  *   318 → 11 km) with admin match unchanged — the postcode tier between admin-centroid and
  *   street-level.
  *
- *   Run: node --experimental-strip-types scripts/eval/oa-resolver-eval.ts\
+ *   Run: node scripts/eval/oa-resolver-eval.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000\
  *   --model /tmp/v072-eval/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\

@@ -17,7 +17,7 @@ import { parseArgs } from "node:util"
  *   the deepest `address_levels` value with a `postal_city` fallback — the same rule the corpus
  *   adapter uses. Heavy native DuckDB lives in scripts/ only (never @mailwoman/corpus).
  *
- *   Usage: node --experimental-strip-types scripts/eval/build-eu-eval-set.ts\
+ *   Usage: node scripts/eval/build-eu-eval-set.ts\
  *   --countries BE,AT,CH,DK,SK,SI,LU,LV,LT --release 2026-06-17.0 --limit 1200 --out-dir /tmp/reg
  */
 import { DuckDBInstance } from "@duckdb/node-api"

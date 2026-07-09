@@ -27,7 +27,7 @@
  *   Gate: with `--gate`, exit nonzero if any country with >`--min-count` (default 10) entries has
  *   postcode accuracy below `--floor` (default 0.9).
  *
- *   Usage: node --experimental-strip-types scripts/harness-postcode.ts\
+ *   Usage: node scripts/harness-postcode.ts\
  *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v060-step-100000-int8.onnx\
  *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\

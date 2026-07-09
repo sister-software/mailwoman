@@ -14,7 +14,7 @@
  *   anchor on/off only differs for an anchor-trained (4-input) model; for a plain model both
  *   columns are identical (the anchor inputs are ignored / absent).
  *
- *   Usage: node --experimental-strip-types scripts/eval/de-order-eval.ts\
+ *   Usage: node scripts/eval/de-order-eval.ts\
  *   --model /tmp/v092-eval/model.onnx --card /tmp/v092-eval/model-card.json\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json\
@@ -96,7 +96,7 @@ async function main() {
 		// must not let that exit code abort before the 2x2 summary prints (it false-failed de.native_locality).
 		const r = await $({
 			nothrow: true,
-		})`node --experimental-strip-types scripts/eval/oa-resolver-eval.ts --eval ${evalJsonl} --model ${model} --model-card ${card} --tokenizer ${tok} ${anchorArgs} --default-country ${country}`
+		})`node scripts/eval/oa-resolver-eval.ts --eval ${evalJsonl} --model ${model} --model-card ${card} --tokenizer ${tok} ${anchorArgs} --default-country ${country}`
 		writeFileSync(join(out, `${outName}.md`), r.stdout)
 		writeFileSync(join(out, `${outName}.log`), r.stderr)
 	}

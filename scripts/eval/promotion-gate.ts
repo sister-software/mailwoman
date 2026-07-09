@@ -8,7 +8,7 @@
  *   machine-readable verdict. Exists so promotion gates are ENFORCED, not night-shift discipline,
  *   and so "why did this model ship?" has a one-file answer.
  *
- *   Usage: node --experimental-strip-types scripts/eval/promotion-gate.ts\
+ *   Usage: node scripts/eval/promotion-gate.ts\
  *   --model <fp32.onnx> [--int8 <int8.onnx>]\
  *   --gate scripts/eval/gates/<spec>.json\
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
@@ -208,36 +208,36 @@ async function main() {
 	const runBattery = async (m: string, tag: string): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 		const perLocale =
-			await $`node --experimental-strip-types scripts/eval/per-locale-f1.ts --model ${m} --tokenizer ${TOK} --model-card ${CARD} --model-anchor-lookup ${LK} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
+			await $`node scripts/eval/per-locale-f1.ts --model ${m} --tokenizer ${TOK} --model-card ${CARD} --model-anchor-lookup ${LK} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-per-locale.md`, perLocale.stdout)
 		const affix =
-			await $`node --experimental-strip-types scripts/eval/score-affix.ts --model ${m} ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-affix.json`}`
+			await $`node scripts/eval/score-affix.ts --model ${m} ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-affix.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-affix.md`, affix.stdout)
 		const unit =
-			await $`node --experimental-strip-types scripts/eval/score-affix.ts --model ${m} --file data/eval/external/unit-real-designators.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-unit.json`}`
+			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/unit-real-designators.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-unit.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-unit.md`, unit.stdout)
 		const country =
-			await $`node --experimental-strip-types scripts/eval/score-country-homograph.ts --model ${m} ${GAZ_ARGS} --suppress-gaz-near-postcode --json ${`${OUT_DIR}/${tag}-country.json`}`
+			await $`node scripts/eval/score-country-homograph.ts --model ${m} ${GAZ_ARGS} --suppress-gaz-near-postcode --json ${`${OUT_DIR}/${tag}-country.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-country.md`, country.stdout)
 		// v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
 		const pobox =
-			await $`node --experimental-strip-types scripts/eval/score-affix.ts --model ${m} --file data/eval/external/po-box-cedex-val.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-pobox.json`}`
+			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/po-box-cedex-val.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-pobox.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-pobox.md`, pobox.stdout)
 		const intersection =
-			await $`node --experimental-strip-types scripts/eval/score-affix.ts --model ${m} --file data/eval/external/intersection-real.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-intersection.json`}`
+			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/intersection-real.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-intersection.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-intersection.md`, intersection.stdout)
 		// Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488):
 		const watchVt =
-			await $`node --experimental-strip-types scripts/eval/score-affix.ts --model ${m} --file data/eval/external/intersection-golden-vt.jsonl ${GAZ_ARGS}`
+			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/intersection-golden-vt.jsonl ${GAZ_ARGS}`
 		writeFileSync(`${OUT_DIR}/${tag}-watch-intersection-vt.md`, watchVt.stdout)
 		const watchGlue =
-			await $`node --experimental-strip-types scripts/eval/score-affix.ts --model ${m} --file data/eval/external/glue-rows-perturb.jsonl ${GAZ_ARGS}`
+			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/glue-rows-perturb.jsonl ${GAZ_ARGS}`
 		writeFileSync(`${OUT_DIR}/${tag}-watch-glue.md`, watchGlue.stdout)
 		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report) — nothrow,
 		// combine stdout+stderr like the bash `> … 2>&1 || true`.
 		const deorder = await $({
 			nothrow: true,
-		})`node --experimental-strip-types scripts/eval/de-order-eval.ts --model ${m} --card ${CARD} --tokenizer ${TOK} --anchor-lookup ${LK} --out ${`${OUT_DIR}/${tag}-deorder`}`
+		})`node scripts/eval/de-order-eval.ts --model ${m} --card ${CARD} --tokenizer ${TOK} --anchor-lookup ${LK} --out ${`${OUT_DIR}/${tag}-deorder`}`
 		writeFileSync(`${OUT_DIR}/${tag}-deorder.md`, `${deorder.stdout}${deorder.stderr}`)
 	}
 
@@ -246,7 +246,7 @@ async function main() {
 	if (INT8) {
 		await runBattery(INT8, "int8")
 	}
-	const presets = await $`node --experimental-strip-types scripts/eval/demo-preset-compare.ts --model-path=${shipModel}`
+	const presets = await $`node scripts/eval/demo-preset-compare.ts --model-path=${shipModel}`
 	writeFileSync(`${OUT_DIR}/presets.md`, presets.stdout)
 
 	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
@@ -260,7 +260,7 @@ async function main() {
 	if (existsSync(HOT_DB)) {
 		const cascade = await $({
 			nothrow: true,
-		})`node --experimental-strip-types scripts/eval/demo-cascade-smoke.ts --db ${HOT_DB} --stage-dir ${HOT_STAGE} --model ${shipModel} --tokenizer ${TOK} --card ${CARD} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/cascade-smoke.json`}`
+		})`node scripts/eval/demo-cascade-smoke.ts --db ${HOT_DB} --stage-dir ${HOT_STAGE} --model ${shipModel} --tokenizer ${TOK} --card ${CARD} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/cascade-smoke.json`}`
 		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, cascade.stdout)
 
 		if (cascade.exitCode !== 0) {
@@ -300,7 +300,7 @@ async function main() {
 		]
 		const arena = await $({
 			nothrow: true,
-		})`node --experimental-strip-types scripts/eval/external-arenas.ts ${arenaArgs}`
+		})`node scripts/eval/external-arenas.ts ${arenaArgs}`
 		writeFileSync(`${OUT_DIR}/arenas.md`, `${arena.stdout}${arena.stderr}`)
 
 		// set -e: a non-zero arena run aborts the gate before the verdict.
@@ -342,7 +342,7 @@ async function main() {
 		console.log("== mask-regression gate (#718) ==")
 		const mask = await $({
 			nothrow: true,
-		})`node --experimental-strip-types scripts/eval/mask-regression-gate.ts --model ${shipModel} --tokenizer ${TOK} --model-card ${CARD} --anchor-lookup ${LK} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/mask-regression.json`}`
+		})`node scripts/eval/mask-regression-gate.ts --model ${shipModel} --tokenizer ${TOK} --model-card ${CARD} --anchor-lookup ${LK} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/mask-regression.json`}`
 		writeFileSync(`${OUT_DIR}/mask-regression.md`, `${mask.stdout}${mask.stderr}`)
 		MASK_GATE_STATUS = mask.exitCode ?? 0
 
@@ -366,7 +366,7 @@ async function main() {
 	}
 	const verdict = await $({
 		nothrow: true,
-	})`node --experimental-strip-types scripts/eval/promotion-gate-verdict.ts ${verdictArgs}`
+	})`node scripts/eval/promotion-gate-verdict.ts ${verdictArgs}`
 
 	if (verdict.stdout) {
 		process.stdout.write(verdict.stdout)
@@ -393,7 +393,7 @@ async function main() {
 
 	console.log(
 		`\nledger (#885): on promote, append this run —\n` +
-			`  node --experimental-strip-types scripts/eval/ledger-append.ts \\\n` +
+			`  node scripts/eval/ledger-append.ts \\\n` +
 			`    --out-dir ${OUT_DIR} --model-version <npm-semver> \\\n` +
 			`    --run-id ${LABEL.replace(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
 			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${CARD}`

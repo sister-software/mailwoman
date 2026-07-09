@@ -58,7 +58,7 @@ holds up.
 1. **Score the baseline:**
 
    ```bash
-   node --experimental-strip-types scripts/eval-morphology-fst.ts \
+   node scripts/eval-morphology-fst.ts \
      --model $MAILWOMAN_DATA_ROOT/.../model-v060.onnx \
      --tokenizer $MAILWOMAN_DATA_ROOT/.../v0.6.0-a0/tokenizer.model \
      --model-card neural-weights-en-us/model-card.json \
@@ -73,7 +73,7 @@ holds up.
 3. **Run the gate:**
 
    ```bash
-   node --experimental-strip-types scripts/eval-gate.ts \
+   node scripts/eval-gate.ts \
      --baseline /tmp/eval-v060.json \
      --candidate /tmp/eval-v062.json \
      --out-md /tmp/gate-report.md

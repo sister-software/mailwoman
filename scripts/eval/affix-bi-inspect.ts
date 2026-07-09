@@ -10,7 +10,7 @@
  *   Characterizing it says whether the fix is cheap (decode/CRF-transition/label) or wants
  *   augmentation like hn-after.
  *
- *   Run: node --experimental-strip-types scripts/eval/affix-bi-inspect.ts\
+ *   Run: node scripts/eval/affix-bi-inspect.ts\
  *   --model ./out/v160/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json --n 300

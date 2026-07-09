@@ -19,8 +19,8 @@
  *   idle). Grade a few locales, let it cool, repeat — or run on Modal. Use --build-only to
  *   materialise the goldens (cool) without grading.
  *
- *   Usage: node --experimental-strip-types scripts/eval/nonus-coord-panel.ts fr it pt pl au # build +
- *   grade these node --experimental-strip-types scripts/eval/nonus-coord-panel.ts --build-only at
+ *   Usage: node scripts/eval/nonus-coord-panel.ts fr it pt pl au # build +
+ *   grade these node scripts/eval/nonus-coord-panel.ts --build-only at
  *   be cz # just build the goldens
  *
  *   Source map: OA ships per-locale in three on-disk forms — the per-country `oa-cache` zips, entries
@@ -103,8 +103,8 @@ async function main() {
 			// Builder noise goes to stderr (the bash `>&2`) so it never pollutes the table on stdout.
 			const built =
 				src.kind === "zip"
-					? await $`node --experimental-strip-types scripts/eval/build-oa-coord-golden.ts --country ${cc} --zip ${src.zip} --entry ${src.entry} --out ${out} --n 150`
-					: await $`node --experimental-strip-types scripts/eval/build-oa-coord-golden.ts --country ${cc} --csv-glob ${src.glob} --out ${out} --n 150`
+					? await $`node scripts/eval/build-oa-coord-golden.ts --country ${cc} --zip ${src.zip} --entry ${src.entry} --out ${out} --n 150`
+					: await $`node scripts/eval/build-oa-coord-golden.ts --country ${cc} --csv-glob ${src.glob} --out ${out} --n 150`
 
 			if (built.stdout.trim()) {
 				console.error(built.stdout.trimEnd())
@@ -120,7 +120,7 @@ async function main() {
 		// A grade failure for one locale must not abort the whole panel (the bash `set -e`), so guard it.
 		const graded = await $({
 			nothrow: true,
-		})`node --experimental-strip-types scripts/eval/fr-admin-split-gate.ts --model ${model} --tokenizer ${tok} --model-card ${card} --anchor-lookup ${anchor} --golden ${out} --default-country ${CC} --label ${cc} --out ${jsonPath}`
+		})`node scripts/eval/fr-admin-split-gate.ts --model ${model} --tokenizer ${tok} --model-card ${card} --anchor-lookup ${anchor} --golden ${out} --default-country ${CC} --label ${cc} --out ${jsonPath}`
 
 		if (graded.exitCode === 0) {
 			const g = JSON.parse(readFileSync(jsonPath, "utf-8"))

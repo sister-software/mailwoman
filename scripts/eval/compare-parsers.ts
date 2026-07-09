@@ -7,7 +7,7 @@
  *   parser) and the neural classifier, print the decoded component maps side by side. Surfaces the
  *   concrete "where each one wins / they differ" examples for the state-of-affairs post.
  *
- *   Run: node --experimental-strip-types scripts/eval/compare-parsers.ts
+ *   Run: node scripts/eval/compare-parsers.ts
  */
 
 import { readFileSync } from "node:fs"

@@ -19,7 +19,7 @@
  *   Until KEN_ALL lands, this metric UNDERCOUNTS true resolution accuracy; treat the number as a
  *   floor.
  *
- *   Usage: node --experimental-strip-types scripts/eval/cjk-nearest-name-agreement.ts\
+ *   Usage: node scripts/eval/cjk-nearest-name-agreement.ts\
  *   --geonames /mnt/playpen/mailwoman-data/geonames/JP.txt --country JP\
  *   --admin-db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db --placetype county --sample
  *   3000

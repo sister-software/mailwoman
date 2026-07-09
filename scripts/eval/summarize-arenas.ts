@@ -12,7 +12,7 @@
  *
  *   Ported faithfully from scripts/eval/summarize-arenas.py (pure JSON, no numpy).
  *
- *   Usage: node --experimental-strip-types scripts/eval/summarize-arenas.ts <out-dir>
+ *   Usage: node scripts/eval/summarize-arenas.ts <out-dir>
  *   <postal-cases.jsonl>
  */
 

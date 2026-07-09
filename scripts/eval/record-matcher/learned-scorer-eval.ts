@@ -31,7 +31,7 @@
  *   train-TX/eval-held-out-state split (#603 Tier 2); this probe bounds the pairwise-ranking gain
  *   cheaply first.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/learned-scorer-eval.ts [--npis 1500]\
+ *   Run: node scripts/eval/record-matcher/learned-scorer-eval.ts [--npis 1500]\
  *   [--seeds 8] [--wof <admin.db>] [--data-root <dir>] [--seed 1] [--out-md <md>]
  */
 

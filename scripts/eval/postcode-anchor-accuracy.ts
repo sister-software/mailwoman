@@ -14,7 +14,7 @@
  *   resolution a "which city/region" anchor needs; the eval just confirms the borrow lands in the
  *   right town.
  *
- *   Run: node --experimental-strip-types scripts/eval/postcode-anchor-accuracy.ts\
+ *   Run: node scripts/eval/postcode-anchor-accuracy.ts\
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 

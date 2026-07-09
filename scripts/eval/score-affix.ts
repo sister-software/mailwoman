@@ -4,7 +4,7 @@ import { parseArgs } from "node:util"
 // Affix-aware per-tag scorer. per-locale-f1's foldToComponents joins street_prefix+street+street_suffix
 // into one `street`, so it CANNOT measure the affix split. This scores the UNFOLDED decodeAsJSON
 // output against split ground truth: exact-match (case-insensitive) P/R/F1 per tag.
-// Usage: node --experimental-strip-types scripts/eval/score-affix.ts --model <onnx> [--file <jsonl>]
+// Usage: node scripts/eval/score-affix.ts --model <onnx> [--file <jsonl>]
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"

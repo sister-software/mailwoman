@@ -69,7 +69,7 @@ is a property of the calibration set, not the geometry), and the caller supplies
 
 ```bash
 sqlite3 /tmp/empty-situs.db "CREATE TABLE address_point (street_norm TEXT NOT NULL, street_key TEXT NOT NULL, number TEXT NOT NULL, unit TEXT, postcode TEXT, locality_norm TEXT, street_raw TEXT NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL, source TEXT NOT NULL, release TEXT NOT NULL);"
-node --experimental-strip-types scripts/eval/conformal-calibrate.ts \
+node scripts/eval/conformal-calibrate.ts \
   --holdout /tmp/ood-truth.jsonl \
   --address-points /tmp/empty-situs.db \
   --interpolation $MAILWOMAN_DATA_ROOT/interpolation/interpolation-us-tx.db

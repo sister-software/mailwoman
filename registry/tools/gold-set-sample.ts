@@ -16,7 +16,7 @@
  *   (human or LLM-as-judge, flagged as such) can label "same real-world entity? yes/no" and we can
  *   MEASURE how often the programmatic truth matches judgment.
  *
- *   Run: node --experimental-strip-types registry/tools/gold-set-sample.ts\
+ *   Run: node registry/tools/gold-set-sample.ts\
  *   [--cap 200000] [--state TX] [--tau 0.7] [--n 300] [--out-jsonl <path>]
  */
 

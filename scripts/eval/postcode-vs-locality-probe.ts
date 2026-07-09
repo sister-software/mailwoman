@@ -12,7 +12,7 @@ import { parseArgs } from "node:util"
  *   BOTH coordinates against the rooftop truth. Answers "does adding this country's postcodes beat
  *   the locality-centroid path on the assembled coordinate?" — grade the coordinate, not the name.
  *
- *   Run: node --experimental-strip-types scripts/eval/postcode-vs-locality-probe.ts\
+ *   Run: node scripts/eval/postcode-vs-locality-probe.ts\
  *   --db <candidate.db> --eval /tmp/reg/eu-eval-at.jsonl --country AT
  */
 import { haversineKm } from "@mailwoman/spatial"

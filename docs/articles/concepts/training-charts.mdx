@@ -53,23 +53,23 @@ Two scripts, no library dependency:
 modal volume get mailwoman-training output-v062/train_log.csv /tmp/v062.csv
 
 # 2. Parse into structured JSON:
-node --experimental-strip-types scripts/parse-training-log.ts \
+node scripts/parse-training-log.ts \
   --input /tmp/v062.csv --run-name v0.6.2 --out /tmp/v062.json
 
 # 3. Generate the chart (linear):
-node --experimental-strip-types scripts/training-chart.ts \
+node scripts/training-chart.ts \
   --input /tmp/v062.json --input /tmp/v062b.json \
   --metric val_loss --title "v0.6.2 vs v0.6.2b val_loss" \
   --output docs/articles/evals/charts/v06x-val-loss.svg
 
 # 4. Generate the log-scale variant (for the toggle):
-node --experimental-strip-types scripts/training-chart.ts \
+node scripts/training-chart.ts \
   --input /tmp/v062.json --input /tmp/v062b.json \
   --metric val_loss --title "v0.6.2 vs v0.6.2b val_loss" --log \
   --output docs/articles/evals/charts/v06x-val-loss-log.svg
 
 # Or transform an existing linear SVG:
-node --experimental-strip-types scripts/log-scale-chart.ts \
+node scripts/log-scale-chart.ts \
   --input docs/articles/evals/charts/v06x-val-loss.svg \
   --output docs/articles/evals/charts/v06x-val-loss-log.svg
 ```

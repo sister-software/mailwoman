@@ -10,7 +10,7 @@
  *   the in-state Texas city. This probes a curated set of TX namesake cities, with and without ZIP,
  *   and flags any result outside the Texas bounding box.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/geocoder-namesake-probe.ts
+ *   Run: node scripts/eval/record-matcher/geocoder-namesake-probe.ts
  */
 
 import { parseArgs } from "node:util"

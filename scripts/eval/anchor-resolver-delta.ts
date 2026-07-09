@@ -24,7 +24,7 @@
  *   4. Log: did the top-1 flip? the score margin the new winner overcame? did the pick match gold
  *        better? was a wrong-country pick corrected to the anchor's country?
  *
- *   Run: node --experimental-strip-types scripts/eval/anchor-resolver-delta.ts\
+ *   Run: node scripts/eval/anchor-resolver-delta.ts\
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --limit 2000\
  *   --model neural-weights-en-us/model.onnx\
  *   --tokenizer neural-weights-en-us/tokenizer.model\

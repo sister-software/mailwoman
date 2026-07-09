@@ -35,14 +35,14 @@ async function main() {
 		console.log(`######## ${reg} ########`)
 		// >/dev/null dropped stdout; stderr went to the terminal — forward it.
 		const built =
-			await $`node --experimental-strip-types scripts/eval/build-situs-holdout.ts --shard ${dataRootPath("address-points", `address-points-us-${slug}.db`)} --region ${reg} --n ${N}`
+			await $`node scripts/eval/build-situs-holdout.ts --shard ${dataRootPath("address-points", `address-points-us-${slug}.db`)} --region ${reg} --n ${N}`
 
 		if (built.stderr) {
 			process.stderr.write(built.stderr)
 		}
 
 		const r =
-			await $`node --experimental-strip-types scripts/eval/conformal-calibrate.ts --holdout ${`/tmp/${slug}-situs-holdout.jsonl`} --address-points ${EMPTY} --interpolation ${dataRootPath("interpolation", `interpolation-us-${slug}.db`)}`
+			await $`node scripts/eval/conformal-calibrate.ts --holdout ${`/tmp/${slug}-situs-holdout.jsonl`} --address-points ${EMPTY} --interpolation ${dataRootPath("interpolation", `interpolation-us-${slug}.db`)}`
 		console.log(
 			r.stdout
 				.split("\n")

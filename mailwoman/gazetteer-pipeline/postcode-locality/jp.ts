@@ -23,7 +23,7 @@
  *   Japan Post), points from GeoNames (already an in-project source for DE/ES/IT/NL); both are
  *   source material, not prebuilt dumps.
  *
- *   Usage (JP): node --experimental-strip-types scripts/build-postcode-locality-cjk.ts --country JP\
+ *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\
  *   --postal-names $MAILWOMAN_DATA_ROOT/KEN_ALL_ROME/KEN_ALL_ROME.CSV\
  *   --geonames $MAILWOMAN_DATA_ROOT/geonames/JP.txt\
  *   --admin-db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\

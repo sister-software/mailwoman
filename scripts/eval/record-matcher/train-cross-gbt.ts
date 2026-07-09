@@ -25,7 +25,7 @@
  *   - `openpayments_covered-recipient-profile_*.csv` — the OP profile supplement (NPI, profile
  *       first/last, profile practice address).
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/train-cross-gbt.ts\
+ *   Run: node scripts/eval/record-matcher/train-cross-gbt.ts\
  *   [--state TX] [--npis 2000] [--precision-bar 0.95] [--wof <admin.db>] [--data-root <dir>]\
  *   [--out registry/models/crosssource-gbt-en-us.ts]
  */

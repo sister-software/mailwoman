@@ -63,7 +63,7 @@ authored entries. The `.db` is the compiled, queryable form.
 
 ```bash
 # build from source (validates strategy names; rejects unknown ones loudly)
-node --experimental-strip-types scripts/build-conventions.ts \
+node scripts/build-conventions.ts \
   --src data/conventions/conventions.json \
   --output /mnt/playpen/mailwoman-data/wof/conventions.db
 ```

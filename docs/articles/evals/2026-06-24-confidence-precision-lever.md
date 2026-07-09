@@ -52,10 +52,10 @@ The plan opened as a head-to-head against Nominatim on the same messy set. That 
 ## Reproduce
 
 ```bash
-node --experimental-strip-types scripts/eval/confidence-discrimination.ts \
+node scripts/eval/confidence-discrimination.ts \
   --locales us,it,pt,pl,fr,au --n 80 --rows-out /tmp/rows.jsonl --out scorecard.md --svg curve.svg
 # re-analyze instantly from the cached rows (no re-parse, no API):
-node --experimental-strip-types scripts/eval/confidence-discrimination.ts --rows-in /tmp/rows.jsonl --agg min
+node scripts/eval/confidence-discrimination.ts --rows-in /tmp/rows.jsonl --agg min
 ```
 
 The harness separates collection (parse + resolve + grade, the expensive part) from analysis (sweep + plot), checkpoints every row so a crash resumes, and rate-limits Nominatim only on a cache miss.

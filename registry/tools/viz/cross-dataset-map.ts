@@ -23,7 +23,7 @@
  *   count as one) — the harder cross-agency slice; most raw links are FCC-internal (RHC ↔
  *   commitments).
  *
- *   Run: node --experimental-strip-types registry/tools/viz/cross-dataset-map.ts\
+ *   Run: node registry/tools/viz/cross-dataset-map.ts\
  *   [--in <links.geojson>] [--out-html /tmp/cross-dataset-map.html] [--cross-agency-only]
  */
 

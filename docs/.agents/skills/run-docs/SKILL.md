@@ -30,7 +30,7 @@ You don't need to build for dev. Two optional pre-steps:
 - **`/demo` static assets.** The page renders without them but live address resolution won't work. To enable, the weights workspace must have its binaries linked first:
 
   ```bash
-  node --experimental-strip-types ../neural-weights-en-us/scripts/link-dev-weights.ts
+  node ../neural-weights-en-us/scripts/link-dev-weights.ts
   node docs/scripts/build-demo-assets.ts
   ```
 

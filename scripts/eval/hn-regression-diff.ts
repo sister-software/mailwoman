@@ -11,7 +11,7 @@
  *   house-number value instead (postcode / street / dropped). Both run anchor-ON + gazetteer +
  *   suppression, exactly as production.
  *
- *   Run: node --experimental-strip-types --expose-gc scripts/eval/hn-regression-diff.ts\
+ *   Run: node --expose-gc scripts/eval/hn-regression-diff.ts\
  *   --base <v192 int8> --candidate <A2 int8> [--golden data/eval/golden/v0.1.2]
  */
 

@@ -10,7 +10,7 @@
  * Ground truth: golden v0.1.2 `country` field + falsehoods `locale` region subtag. Detected: region subtag of
  * `detectLocaleSync(...).locale`.
  *
- * Run: node --experimental-strip-types scripts/eval/measure-locale-gate.ts\
+ * Run: node scripts/eval/measure-locale-gate.ts\
  * [--golden data/eval/golden/v0.1.2] [--falsehoods data/eval/falsehoods]
  */
 

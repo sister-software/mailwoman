@@ -17,7 +17,7 @@ import { parseArgs } from "node:util"
  *   FINEST resolved coordinate (whatever tier produced it) so coverage and parse-quality don't get
  *   tangled, and separately reports the locality name-match rate so you can see which is which.
  *
- *   Usage: node --experimental-strip-types scripts/eval/eu-coord-direct.ts\
+ *   Usage: node scripts/eval/eu-coord-direct.ts\
  *   --eval /tmp/reg/eu-eval-pt.jsonl --country PT\
  *   --wof-db
  *   $MAILWOMAN_DATA_ROOT/wof/admin-overture-eu.db,$MAILWOMAN_DATA_ROOT/wof/postcode-locality-intl.db

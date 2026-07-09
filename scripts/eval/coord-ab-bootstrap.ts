@@ -20,7 +20,7 @@
  *   (resolved-only, unconfounded by the unresolved penalty — the resolve-rate diff carries coverage).
  *
  *   Usage:
- *     node --experimental-strip-types scripts/eval/coord-ab-bootstrap.ts \
+ *     node scripts/eval/coord-ab-bootstrap.ts \
  *       --baseline /tmp/gate/us-v4150.rows.jsonl --candidate /tmp/gate/us-v196.rows.jsonl \
  *       --mode ni --ni-delta 1 --resolve-floor 0.03 --label us
  */

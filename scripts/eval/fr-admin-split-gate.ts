@@ -14,7 +14,7 @@
  *   v1.8.0 candidate; promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 AND the US
  *   guardrail (separate oa-resolver-eval run) holds.
  *
- *   Run: node --experimental-strip-types scripts/eval/fr-admin-split-gate.ts\
+ *   Run: node scripts/eval/fr-admin-split-gate.ts\
  *   --model <int8.onnx> --tokenizer <tok> --model-card neural-weights-en-us/model-card.json\
  *   --anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json\
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json

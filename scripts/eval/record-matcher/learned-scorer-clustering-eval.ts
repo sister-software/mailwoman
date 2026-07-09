@@ -24,7 +24,7 @@
  *   split (not a held-out STATE — generalization across states is the next axis), a compact
  *   pure-Node GBT.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/learned-scorer-clustering-eval.ts\
+ *   Run: node scripts/eval/record-matcher/learned-scorer-clustering-eval.ts\
  *   [--npis 2000] [--split 0.67] [--seed 1] [--out-md <md>]
  */
 

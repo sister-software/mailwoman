@@ -14,12 +14,12 @@
  *
  *   # Single run, val_loss curve:
  *
- *   Node --experimental-strip-types scripts/training-chart.ts\
+ *   node scripts/training-chart.ts\
  *   --input /tmp/v063.json --metric val_loss --output /tmp/v063-loss.svg
  *
  *   # Multi-run overlay (the operator's "same noise pattern" case):
  *
- *   Node --experimental-strip-types scripts/training-chart.ts\
+ *   node scripts/training-chart.ts\
  *   --input /tmp/v062.json --input /tmp/v062b.json --input /tmp/v063.json\
  *   --metric val_loss --title "v0.6.x training val_loss"\
  *   --output /tmp/v06x-loss-comparison.svg

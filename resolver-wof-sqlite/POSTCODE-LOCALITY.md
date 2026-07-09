@@ -33,20 +33,20 @@ GeoJSON repo (locality polygons) and a postcode SQLite (centroids).
 
 ```bash
 # one per country into the shared asset
-node --experimental-strip-types scripts/build-postcode-locality.ts --country DE \
+node scripts/build-postcode-locality.ts --country DE \
   --admin-repo   .../whosonfirst-data/whosonfirst-data-admin-de \
   --postcode-db  .../postalcode-intl.db \
   --output       .../postcode-locality-intl.db
 
 # GB: postcodes aren't in postalcode-intl.db — build a GB postcode DB from source first
-node --experimental-strip-types scripts/build-unified-wof.ts \
+node scripts/build-unified-wof.ts \
   --data .../whosonfirst-data-postalcode-gb --output .../postalcode-gb.db --placetypes postalcode
-node --experimental-strip-types scripts/build-postcode-locality.ts --country GB \
+node scripts/build-postcode-locality.ts --country GB \
   --admin-repo .../whosonfirst-data-admin-gb --postcode-db .../postalcode-gb.db \
   --output .../postcode-locality-intl.db
 
 # freeze into the read-only distributable asset (meta + VACUUM + integrity)
-node --experimental-strip-types scripts/build-postcode-locality.ts --output .../postcode-locality-intl.db --finalize
+node scripts/build-postcode-locality.ts --output .../postcode-locality-intl.db --finalize
 ```
 
 ## Coverage (built 2026-06-04)

@@ -14,7 +14,7 @@ import { parseArgs } from "node:util"
  *   reordered number is what AU-native-order training data (#208 G-NAF) should unlock — no resolver
  *   trick, the model already knows these places.
  *
- *   Run: node --experimental-strip-types scripts/eval/au-order-probe.ts --candidate-db <db> [--n 60]
+ *   Run: node scripts/eval/au-order-probe.ts --candidate-db <db> [--n 60]
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"

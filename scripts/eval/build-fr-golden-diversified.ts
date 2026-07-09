@@ -19,11 +19,11 @@
  *   components.street holds the full OA STREET value — matching the pattern used in the existing
  *   Sainte-Livrade BAN rows (not the hand-split prefix/particle form).
  *
- *   Usage: node --experimental-strip-types scripts/eval/build-fr-golden-diversified.ts writes
+ *   Usage: node scripts/eval/build-fr-golden-diversified.ts writes
  *   data/eval/golden/v0.1.2/dev/fr-diversified.jsonl (preview) then you manually merge into
  *   fr.jsonl
  *
- *   Or: node --experimental-strip-types scripts/eval/build-fr-golden-diversified.ts --inplace appends
+ *   Or: node scripts/eval/build-fr-golden-diversified.ts --inplace appends
  *   directly to data/eval/golden/v0.1.2/dev/fr.jsonl
  *
  *   Ported faithfully from scripts/eval/build-fr-golden-diversified.py. NOTE: the seeded RNG

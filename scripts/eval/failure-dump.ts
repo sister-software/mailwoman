@@ -11,7 +11,7 @@ import { parseArgs } from "node:util"
  *
  *   No external API — this is mailwoman against itself, so it's free + fast.
  *
- *   Run: node --experimental-strip-types scripts/eval/failure-dump.ts \
+ *   Run: node scripts/eval/failure-dump.ts \
  *          --candidate-db $MAILWOMAN_DATA_ROOT/wof/candidate-global-20i.db [--n 60] [--show 10]
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

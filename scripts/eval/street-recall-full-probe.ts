@@ -13,7 +13,7 @@
  *   the candidate's locality (the "eat" mechanism). The v1.7.0 gate aborts/flags if the candidate
  *   drops >1pp below v1.5.1 here.
  *
- *   Run: node --experimental-strip-types scripts/eval/street-recall-full-probe.ts\
+ *   Run: node scripts/eval/street-recall-full-probe.ts\
  *   --baseline $MAILWOMAN_DATA_ROOT/models/quantized/model-v151-step-40000-int8.onnx\
  *   --candidate ./out/v170/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\

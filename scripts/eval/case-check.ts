@@ -5,7 +5,7 @@
  *
  *   #619 follow-up probe: does the neural parser degrade on ALL-CAPS input (the TX HHSC facility
  *   distribution) vs the same address in title case? Confirms/refutes the case-robustness gap. Run:
- *   node --experimental-strip-types scripts/eval/case-check.ts
+ *   node scripts/eval/case-check.ts
  */
 
 import { readFileSync } from "node:fs"

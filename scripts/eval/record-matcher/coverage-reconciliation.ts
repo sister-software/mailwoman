@@ -25,7 +25,7 @@
  *   sampling artifact — is the consumer's call, not ours. This is strictly a set-membership
  *   reconciliation, never an allegation.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/coverage-reconciliation.ts\
+ *   Run: node scripts/eval/record-matcher/coverage-reconciliation.ts\
  *   [--cap 2000] [--wof <admin.db>] [--data-root <dir>] [--out-md <md>] [--out-geojson <geojson>]
  */
 

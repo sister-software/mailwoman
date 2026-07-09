@@ -17,7 +17,7 @@
  *   validates the result is parseable JSON before writing (write-to-temp, then rename).
  *
  *   Usage:
- *     node --experimental-strip-types scripts/eval/ledger-append.ts \
+ *     node scripts/eval/ledger-append.ts \
  *       --out-dir /path/to/gate-out --model-version 5.0.0 \
  *       --run-id v193a3-anchor-absorption-step080000-rescore-20260702 \
  *       --model-path "@mailwoman/neural-weights-en-us@5.0.0" \

@@ -12,7 +12,7 @@
  *   by tabulating the regression rows' failure modes (absorbed-into-street / became-other-tag /
  *   dropped).
  *
- *   Run: node --experimental-strip-types scripts/eval/locality-regression-probe.ts\
+ *   Run: node scripts/eval/locality-regression-probe.ts\
  *   --baseline $MAILWOMAN_DATA_ROOT/models/quantized/model-v151-step-40000-int8.onnx\
  *   --candidate ./out/v160/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\

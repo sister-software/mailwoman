@@ -22,7 +22,7 @@
  *   needs"](../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md): 2pp recall, 100 absolute
  *   hallucination spike, 20% hallucination-rate ceiling.
  *
- *   Usage: node --experimental-strip-types scripts/eval-gate.ts\
+ *   Usage: node scripts/eval-gate.ts\
  *   --baseline /tmp/eval-v0.6.1.json\
  *   --candidate /tmp/eval-v0.6.2.json\
  *   [--recall-threshold-pp 2]\

@@ -66,7 +66,7 @@ plateau (real-data realism is the lever; we just don't have enough of it yet).
 ## Reproduce
 
 ```bash
-node --experimental-strip-types scripts/ingest-overture-addresses.ts --release 2026-05-20.0 \
+node scripts/ingest-overture-addresses.ts --release 2026-05-20.0 \
   --countries PL,BR,MX,PT,CZ,CA,LI --limit 6000
 node scripts/coarse-placer/build-outlier-latin.mjs            # appends OTHER + writes the test file
 node scripts/coarse-placer/eval-latin-offmap.mjs --model .../coarse-placer/model        # baseline

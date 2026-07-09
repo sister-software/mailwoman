@@ -15,7 +15,7 @@
  *
  *   Tractable cut: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
  *
- *   Run: node --experimental-strip-types scripts/eval/record-matcher/cross-dataset-correlation.ts\
+ *   Run: node scripts/eval/record-matcher/cross-dataset-correlation.ts\
  *   [--cap 300] [--wof <admin.db>] [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]
  */
 

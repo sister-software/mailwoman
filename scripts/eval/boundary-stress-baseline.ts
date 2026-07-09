@@ -7,7 +7,7 @@
  *   each stress shape and parses them through the CURRENT neural model — how badly does today's
  *   model place these boundaries? Quantifies the #1-lever gap the shard targets + the lift a
  *   retrain should show. Per-shape, per-stress-tag exact-match accuracy (case-insensitive).
- *   Read-only. Run: node --experimental-strip-types scripts/eval/boundary-stress-baseline.ts [--n
+ *   Read-only. Run: node scripts/eval/boundary-stress-baseline.ts [--n
  *   300]
  */
 

@@ -23,7 +23,7 @@
  *       wrong). Regressions are bucketed by the wrong country the prior introduced — a SYSTEMATIC
  *       bucket (e.g. many DE→NL) is the misroute class that would block default-on.
  *
- *   Run: node --experimental-strip-types scripts/eval/coarse-placer-inmap-misroute.ts\
+ *   Run: node scripts/eval/coarse-placer-inmap-misroute.ts\
  *   [--per-country 200] [--abstain-below 0.9] [--out-md <path>]
  */
 

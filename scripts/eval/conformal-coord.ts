@@ -23,8 +23,8 @@
  *
  *   Ported faithfully from scripts/eval/conformal-coord.py. SQLite reads go through `node:sqlite`.
  *
- *   Usage: node --experimental-strip-types scripts/eval/conformal-coord.ts --dump
- *   /tmp/resolved-de-v094.json --label DE [--out-json …] node --experimental-strip-types
+ *   Usage: node scripts/eval/conformal-coord.ts --dump
+ *   /tmp/resolved-de-v094.json --label DE [--out-json …] node
  *   scripts/eval/conformal-coord.ts --self-test
  */
 

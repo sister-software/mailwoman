@@ -26,7 +26,7 @@
  *       how often the two distinct NPIs ALSO share a phone (so phone over-links, can't separate)
  *       …and derives a precision/F1 CEILING under stated assumptions, with the caveats called out.
  *
- *   Run: node --experimental-strip-types registry/tools/dedup-ceiling.ts\
+ *   Run: node registry/tools/dedup-ceiling.ts\
  *   [--cap 50000] [--state TX] [--sources <dir>] [--tau 0.7] [--out-md <md>]
  */
 

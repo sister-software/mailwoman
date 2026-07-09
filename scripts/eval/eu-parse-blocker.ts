@@ -25,7 +25,7 @@
  *   is measured by the v1.8.0 BAN gate (région-emit 99.6%), not this sample — FR is reported but
  *   excluded from the metric.
  *
- *   Run (resolver/neural compiled — `yarn compile`): node --experimental-strip-types
+ *   Run (resolver/neural compiled — `yarn compile`): node
  *   scripts/eval/eu-parse-blocker.ts\
  *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v180-step-40000-int8.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\

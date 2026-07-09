@@ -23,7 +23,7 @@
  *   départements = 16 rows; DE has no manifest holdout). Abort/de-risk per the plan: a held-out
  *   slice below 1000 rows is reported as UNTRUSTED, not scored.
  *
- *   Usage: node --experimental-strip-types scripts/eval/honest-eval.ts\
+ *   Usage: node scripts/eval/honest-eval.ts\
  *   [--model neural-weights-en-us/model.onnx] [--card neural-weights-en-us/model-card.json]\
  *   [--tokenizer ...]\
  *   [--wof <admin.db>,<postcode.db>] # DB under test (default: canonical) [--label fixed] # a tag for
@@ -130,7 +130,7 @@ async function main() {
 		}
 		const resolved = `${TMP}/${tag}.json`
 		const evalOut =
-			await $`node --experimental-strip-types scripts/eval/oa-resolver-eval.ts --eval ${slice} --model ${MODEL} --model-card ${CARD} --tokenizer ${TOK} --wof ${WOF} --default-country ${cc} --out-resolved ${resolved}`
+			await $`node scripts/eval/oa-resolver-eval.ts --eval ${slice} --model ${MODEL} --model-card ${CARD} --tokenizer ${TOK} --wof ${WOF} --default-country ${cc} --out-resolved ${resolved}`
 		writeFileSync(`${TMP}/${tag}.eval.md`, evalOut.stdout)
 		writeFileSync(`${TMP}/${tag}.log`, evalOut.stderr)
 		// neural row: | **neural** | loc% | reg% | resolved% | p50 | p90 | p99 |

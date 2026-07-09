@@ -47,7 +47,7 @@ async function main() {
 		console.error(`\n== score-affix · ${basename(evalFile)} ==`)
 		const scored = await $({
 			nothrow: true,
-		})`node --experimental-strip-types scripts/eval/score-affix.ts --model ${local} --file ${evalFile} --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --suppress-gaz-near-postcode`
+		})`node scripts/eval/score-affix.ts --model ${local} --file ${evalFile} --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --suppress-gaz-near-postcode`
 		console.error(scored.stdout.split("\n").slice(0, 9).join("\n"))
 	}
 

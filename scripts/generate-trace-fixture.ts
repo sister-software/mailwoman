@@ -7,7 +7,7 @@
  *   locally-resolved en-us weights (`@mailwoman/neural-weights-en-us`). Committed so docs CI
  *   never needs a model download. Re-run after any trace-schema change or weights bump:
  *
- *       node --experimental-strip-types scripts/generate-trace-fixture.ts ["custom address"]
+ *       node scripts/generate-trace-fixture.ts ["custom address"]
  *
  *   NOTE: on machines without the anchor lookup ($MAILWOMAN_DATA_ROOT), loadFromWeights warns
  *   and the trace's `anchor` channel is absent — the component's "channel not fed" state. The

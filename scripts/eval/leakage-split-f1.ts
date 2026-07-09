@@ -19,7 +19,7 @@
  *   an upper bound on leakage, not a clean isolation. Reported per-state so the confound is
  *   visible.
  *
- *   Run: node --experimental-strip-types scripts/eval/leakage-split-f1.ts\
+ *   Run: node scripts/eval/leakage-split-f1.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl --held VT,WY,ND\
  *   [--model neural-weights-en-us/model.onnx --tokenizer ... --model-card ... --out-md <path>]
  */

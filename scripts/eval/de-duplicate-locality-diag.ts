@@ -15,7 +15,7 @@
  *   Parse-level (no resolver): we check whether the model's locality span matches the expected
  *   locality.
  *
- *   Run: node --experimental-strip-types scripts/eval/de-duplicate-locality-diag.ts\
+ *   Run: node scripts/eval/de-duplicate-locality-diag.ts\
  *   --eval data/eval/external/openaddresses-de-sample.jsonl\
  *   --model /tmp/v093-eval/model.onnx --model-card neural-weights-en-us/model-card.json\
  *   [--anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json]
@@ -154,5 +154,3 @@ async function main(): Promise<void> {
 	console.log(`| distinct (München/Bayern) | ${acc.distinct.n} | ${pct(acc.distinct)} |`)
 	console.error(`\nduplicate ${pct(acc.dup)} (n=${acc.dup.n}) vs distinct ${pct(acc.distinct)} (n=${acc.distinct.n})`)
 }
-
-void main()

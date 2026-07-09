@@ -24,7 +24,7 @@
  *   reranker; else expand coverage. DeepSeek's bet: US coverage 12-15%, ranking 3-5% → coverage
  *   wins.
  *
- *   Run (resolver-wof-sqlite must be compiled — `yarn compile`): node --experimental-strip-types
+ *   Run (resolver-wof-sqlite must be compiled — `yarn compile`): node
  *   scripts/eval/three-gap-matrix.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl\
  *   --wof-db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\
