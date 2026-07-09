@@ -15,7 +15,8 @@
 
 import { exit, stderr } from "node:process"
 
-import { cliArguments, runIfScript } from "@mailwoman/core/utils"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildCandidateTable } from "./build-candidate.js"
 
@@ -74,8 +75,8 @@ function parseArgs(argv: string[]): CLIArgs {
 	return { input, output, postcodes }
 }
 
-export async function main(rawArgv: string[]): Promise<number> {
-	const args = parseArgs(rawArgv)
+export async function main(): Promise<number> {
+	const args = parseArgs(cliArguments())
 	const t0 = Date.now()
 	const result = await buildCandidateTable({
 		input: args.input,
@@ -94,11 +95,4 @@ export async function main(rawArgv: string[]): Promise<number> {
 	return 0
 }
 
-void runIfScript(import.meta, async () => {
-	main(cliArguments())
-		.then((code) => exit(code))
-		.catch((err) => {
-			stderr.write(`${err instanceof Error ? err.stack : String(err)}\n`)
-			exit(1)
-		})
-})
+runIfScript(main)

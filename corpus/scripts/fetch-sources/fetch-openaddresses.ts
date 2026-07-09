@@ -74,6 +74,7 @@ import { pipeline } from "node:stream/promises"
 import { parseArgs } from "node:util"
 
 import { $private, $public } from "@mailwoman/core/env"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { $ } from "zx"
 
 $.verbose = false
@@ -403,7 +404,4 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 	process.stdout.write(`    --output $OUT_ROOT\n`)
 }
 
-main().catch((err: Error) => {
-	process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-	process.exitCode = 1
-})
+runIfScript(main)

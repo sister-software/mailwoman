@@ -23,7 +23,8 @@ import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })
-runIfScript(import.meta, async () => {
+
+async function main() {
 	const CALIB = positionals[0]
 
 	if (!CALIB) throw new Error("usage: v07-calibration-gate.ts <calib-model.onnx> [out-dir]")
@@ -87,4 +88,6 @@ runIfScript(import.meta, async () => {
 
 	console.log("")
 	console.log(`Gate artifacts written to ${OUT}/. Apply the decision tree on the numbers above.`)
-})
+}
+
+runIfScript(main)

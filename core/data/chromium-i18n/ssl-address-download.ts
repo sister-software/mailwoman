@@ -33,7 +33,8 @@ import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
-import { corePackagePath, runIfScript } from "@mailwoman/core/utils"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { corePackagePath } from "@mailwoman/core/utils"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
@@ -103,4 +104,4 @@ async function main(): Promise<void> {
 	}
 }
 
-runIfScript(import.meta, main)
+runIfScript(main)

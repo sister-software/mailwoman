@@ -35,6 +35,7 @@ import { resolve } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -327,7 +328,4 @@ async function main() {
 	}
 }
 
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
+runIfScript(main)

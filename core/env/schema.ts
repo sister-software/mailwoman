@@ -33,6 +33,7 @@ export const PublicEnvSchema = z.object({
 	NAD_MODE: z.string().optional(),
 	NAD_URL: z.string().optional(),
 	FS_END_OID: z.string().optional(),
+	FS_START_OID: z.string().optional(),
 	FS_CHUNK_SIZE: z.string().optional(),
 	FS_PAGE_SIZE: z.string().optional(),
 	FS_CONCURRENCY: z.string().optional(),

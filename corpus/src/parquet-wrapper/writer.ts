@@ -28,7 +28,9 @@ import {
 	ParquetSchemaDefinitionCache,
 } from "./schema.js"
 
-/** A typed Parquet writer, wrapping the base Parquet writer. */
+/**
+ * A typed Parquet writer, wrapping the base Parquet writer.
+ */
 export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWriter implements AsyncDisposable {
 	declare schema: ParquetSchema<T>
 	protected static readonly SchemaDefinitionCache = new ParquetSchemaDefinitionCache()

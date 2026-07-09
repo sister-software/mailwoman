@@ -357,7 +357,4 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((err: Error) => {
-	process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-	process.exitCode = 1
-})
+runIfScript(main)

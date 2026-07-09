@@ -31,6 +31,7 @@ import { basename, join } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	type AnchorLookup,
@@ -915,7 +916,4 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
+runIfScript(main)

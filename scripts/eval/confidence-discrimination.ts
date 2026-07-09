@@ -51,7 +51,8 @@ import { parseArgs } from "node:util"
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createCalibrator } from "@mailwoman/core/decoder"
-import { dataRootPath, runIfScript } from "@mailwoman/core/utils"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -502,4 +503,4 @@ async function main(): Promise<void> {
 	console.log(md)
 }
 
-await runIfScript(import.meta, main)
+runIfScript(main)

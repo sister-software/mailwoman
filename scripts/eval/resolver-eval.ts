@@ -36,6 +36,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -337,7 +338,4 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((e) => {
-	console.error(e)
-	process.exit(1)
-})
+runIfScript(main)

@@ -34,7 +34,7 @@ import { parseArgs } from "node:util"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
-runIfScript(import.meta, async () => {
+async function main() {
 	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash `| tail` did.
 	$.verbose = false
 
@@ -133,4 +133,6 @@ runIfScript(import.meta, async () => {
 	if (summary.stderr.trim()) {
 		console.error(summary.stderr.trimEnd())
 	}
-})
+}
+
+runIfScript(main)

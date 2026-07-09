@@ -28,12 +28,14 @@
 
 ///<reference types="node" />
 
-import { cp, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises"
+import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
-import { resourceDictionaryPath, runIfScript } from "@mailwoman/core/utils"
+import { isDirectory } from "@mailwoman/core/fs"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { resourceDictionaryPath } from "@mailwoman/core/utils"
 import { $ } from "zx"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
@@ -47,15 +49,6 @@ function parseCLIArgs() {
 	})
 
 	return { force: values.force! }
-}
-
-/** Whether a path exists and is a directory. */
-async function isDirectory(path: string): Promise<boolean> {
-	try {
-		return (await stat(path)).isDirectory()
-	} catch {
-		return false
-	}
 }
 
 /**
@@ -115,4 +108,4 @@ async function main(): Promise<void> {
 	}
 }
 
-runIfScript(import.meta, main)
+runIfScript(main)

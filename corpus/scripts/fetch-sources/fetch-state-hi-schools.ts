@@ -31,12 +31,6 @@
  *   ## Flags
  *
  *   - `--out-root <path>` (env `OUT_ROOT`) — destination root; default `./data/corpus/sources`
- *
- *   ## Dependencies (operator-side)
- *
- *   - `python3` with `openpyxl` (XLSX → CSV)
- *     - Debian/Ubuntu:  `sudo apt-get install -y python3-openpyxl`
- *     - macOS Homebrew: `brew install python && pip3 install openpyxl`
  */
 
 ///<reference types="node" />
@@ -48,6 +42,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { $ } from "zx"
 
 const SOURCE_URL = "https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx"
@@ -57,12 +52,11 @@ const XLSX_FILENAME = "HI_Public_Schools_List.xlsx"
 
 /**
  * The XLSX → CSV converter: concatenate every sheet under one shared header (the first sheet's). Runs as `python3 -c
- * <script> <xlsx-path> <csv-path>`, so `sys.argv[1]`/`sys.argv[2]` are the I/O paths.
+ * <script> <xlsx-path> <csv-path>`, so `sys.argv[1]`/`sys.argv[2]` are the I/O paths. TODO: Get rid of this.
  */
 const PY_CONVERT = `
 import csv
 import sys
-import { runIfScript } from "@mailwoman/core/utils"
 from openpyxl import load_workbook
 
 xlsx_path, csv_path = sys.argv[1], sys.argv[2]
@@ -238,9 +232,4 @@ async function main(): Promise<void> {
 	process.stderr.write(`  MANIFEST written to ${manifestPath}\n`)
 }
 
-void runIfScript(import.meta, async () => {
-	main().catch((err: Error) => {
-		process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-		process.exitCode = 1
-	})
-})
+runIfScript(main)

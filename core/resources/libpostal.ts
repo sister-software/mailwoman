@@ -7,6 +7,7 @@
 import { readdir } from "node:fs/promises"
 import { availableParallelism } from "node:os"
 
+import { tryStat } from "@mailwoman/core/fs"
 import { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
 import { TextNormalizer, type TextNormalizerInit } from "@mailwoman/core/tokenization"
 import { PathBuilder } from "path-ts"
@@ -15,7 +16,6 @@ import { TextSpliterator } from "spliterator"
 
 import { resourceDictionaryPathBuilder } from "../utils/repo.js"
 import { takeAsync } from "./collections.js"
-import { tryStat } from "./fs.js"
 import { LocaleIndex } from "./LocaleIndex.js"
 
 const batchSize = availableParallelism()

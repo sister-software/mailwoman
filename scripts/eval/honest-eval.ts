@@ -37,7 +37,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
-runIfScript(import.meta, async () => {
+async function main() {
 	// zx: capture output ourselves and slice/parse in JS the way the bash awk/jq/grep pipes did.
 	$.verbose = false
 
@@ -183,4 +183,6 @@ runIfScript(import.meta, async () => {
 	} else {
 		console.log(emit)
 	}
-})
+}
+
+runIfScript(main)

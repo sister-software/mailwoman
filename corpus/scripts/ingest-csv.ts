@@ -34,6 +34,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { basename, dirname, extname, join } from "node:path"
 import type { SQLInputValue } from "node:sqlite"
 
+import { runIfScript } from "@mailwoman/core/scripting"
 import { cliArguments } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
@@ -416,41 +417,38 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Entry point
-// ---------------------------------------------------------------------------
+async function main() {
+	const cliArgs = parseArgs()
 
-const cliArgs = parseArgs()
+	const inputPath = cliArgs.input
 
-const inputPath = cliArgs.input
+	if (!inputPath) {
+		process.stderr.write(
+			"Usage: npx tsx ingest-csv.ts --input <path.csv> [--table <name>] [--output <path.db>] [--dry-run]\n"
+		)
+		process.exit(1)
+	}
 
-if (!inputPath) {
-	process.stderr.write(
-		"Usage: npx tsx ingest-csv.ts --input <path.csv> [--table <name>] [--output <path.db>] [--dry-run]\n"
-	)
-	process.exit(1)
+	if (!existsSync(inputPath)) {
+		process.stderr.write(`File not found: ${inputPath}\n`)
+		process.exit(1)
+	}
+
+	const csvName = basename(inputPath, extname(inputPath))
+	const outputPath = cliArgs.output ?? join(dirname(inputPath), csvName + ".db")
+
+	const opts: IngestOptions = {
+		inputPath,
+		tableName: cliArgs.table ?? csvName.replace(/[^a-zA-Z0-9_]/g, "_"),
+		outputPath,
+		sampleSize: parseInt(cliArgs.sample ?? "100", 10),
+		separator: cliArgs.separator ?? ",",
+		skipLines: parseInt(cliArgs.skip ?? "0", 10),
+		hasHeader: cliArgs["no-header"] !== "true",
+		dryRun: cliArgs["dry-run"] === "true",
+	}
+
+	await ingestCSV(opts)
 }
 
-if (!existsSync(inputPath)) {
-	process.stderr.write(`File not found: ${inputPath}\n`)
-	process.exit(1)
-}
-
-const csvName = basename(inputPath, extname(inputPath))
-const outputPath = cliArgs.output ?? join(dirname(inputPath), csvName + ".db")
-
-const opts: IngestOptions = {
-	inputPath,
-	tableName: cliArgs.table ?? csvName.replace(/[^a-zA-Z0-9_]/g, "_"),
-	outputPath,
-	sampleSize: parseInt(cliArgs.sample ?? "100", 10),
-	separator: cliArgs.separator ?? ",",
-	skipLines: parseInt(cliArgs.skip ?? "0", 10),
-	hasHeader: cliArgs["no-header"] !== "true",
-	dryRun: cliArgs["dry-run"] === "true",
-}
-
-ingestCSV(opts).catch((err) => {
-	process.stderr.write(`Fatal: ${err}\n`)
-	process.exit(1)
-})
+runIfScript(main)

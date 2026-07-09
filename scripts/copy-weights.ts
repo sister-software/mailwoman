@@ -36,6 +36,7 @@ import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
 
 const repoRoot = repoRootPath()
@@ -164,7 +165,4 @@ async function removeIfPresent(path: PathLike) {
 	}
 }
 
-main().catch((err) => {
-	process.stderr.write(`copy-weights failed: ${err.message}\n`)
-	process.exit(1)
-})
+runIfScript(main)

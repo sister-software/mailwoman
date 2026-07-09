@@ -29,7 +29,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
-runIfScript(import.meta, async () => {
+async function main() {
 	$.verbose = false
 
 	let model = ""
@@ -142,4 +142,6 @@ runIfScript(import.meta, async () => {
 	console.log(`| native DE  | ${loc("de-native-off")} | ${loc("de-native-on")} |`)
 	console.log("")
 	console.log(`no-regression: US ${loc("us-on")} · FR ${loc("fr-on")}`)
-})
+}
+
+runIfScript(main)

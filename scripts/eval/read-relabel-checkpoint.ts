@@ -18,7 +18,8 @@ import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })
-runIfScript(import.meta, async () => {
+
+async function main() {
 	const step = positionals[0]
 
 	if (!step) throw new Error("usage: read-relabel-checkpoint.ts <zero-padded-step, e.g. 020000>")
@@ -51,4 +52,6 @@ runIfScript(import.meta, async () => {
 	}
 
 	console.error(`\nmodel: ${local} (keep for the fp32-to-fp32 gate at 40k)`)
-})
+}
+
+runIfScript(main)

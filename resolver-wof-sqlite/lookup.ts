@@ -14,7 +14,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
-import { Kysely, sql } from "kysely"
+import { Kysely } from "kysely"
 
 import { ancestorLineage } from "./ancestry.js"
 import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.js"
@@ -1496,6 +1496,3 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 
 	return out.join(" ")
 }
-
-// `sql` is imported only because future Kysely-typed queries will use it; silence "unused" linting.
-void sql

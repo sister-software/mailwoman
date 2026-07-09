@@ -40,6 +40,13 @@
 		"./resources/whosonfirst": "./out/resources/whosonfirst/index.js",
 		"./resources/libpostal": "./out/resources/libpostal/index.js",
 		"./utils": "./out/utils/index.js",
+		"./fs": {
+			"node": "./fs/node.ts",
+			"default": "./out/fs/node.js",
+			"types": "./out/fs/node.d.ts"
+		},
+		"./scripting": "./out/scripting/index.js",
+		"./scripting/utils": "./out/scripting/utils/index.js",
 		"./lifecycle": "./out/lifecycle/index.js",
 		"./identifiers": "./out/identifiers/index.js",
 		"./objects": "./out/objects.js",
@@ -69,7 +76,6 @@
 		"change-case": "^5.4.4",
 		"d3-color": "^3.1.0",
 		"d3-scale-chromatic": "^3.1.0",
-		"es-main": "^1.4.0",
 		"fast-glob": "^3.3.3",
 		"http-status-codes": "^2.3.0",
 		"json-colorizer": "^3.0.1",

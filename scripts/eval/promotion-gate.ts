@@ -61,7 +61,7 @@ interface ModelCard {
 	training: { tokenizer_version: string }
 }
 
-runIfScript(import.meta, async () => {
+async function main() {
 	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash redirects did.
 	$.verbose = false
 
@@ -398,4 +398,6 @@ runIfScript(import.meta, async () => {
 			`    --run-id ${LABEL.replace(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
 			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${CARD}`
 	)
-})
+}
+
+runIfScript(main)

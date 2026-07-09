@@ -13,7 +13,8 @@
 
 import { exit, stderr } from "node:process"
 
-import { cliArguments, runIfScript } from "@mailwoman/core/utils"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildSlimWOFDatabase, type BuildSlimOptions } from "./build-slim.js"
 
@@ -156,5 +157,4 @@ export async function main(rawArgv: string[]): Promise<number> {
 	}
 }
 
-// Run when invoked as a script (not when imported by tests).
-void runIfScript(import.meta, async () => exit(await main(cliArguments())))
+runIfScript(() => main(cliArguments()))

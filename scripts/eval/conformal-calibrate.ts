@@ -52,6 +52,7 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
@@ -476,7 +477,4 @@ async function main(): Promise<void> {
 	console.log("")
 }
 
-main().catch((e) => {
-	console.error(e)
-	process.exit(1)
-})
+runIfScript(main)

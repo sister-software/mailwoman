@@ -45,6 +45,7 @@ import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
@@ -486,7 +487,4 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
+runIfScript(main)

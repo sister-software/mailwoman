@@ -33,6 +33,7 @@ import { parseArgs as parseNodeArgs } from "node:util"
 
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isPOBox } from "@mailwoman/codex/us"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { JSONSpliterator } from "spliterator"
 
 const CODEX_COVERED = /^(p\.?\s*o\.?\s*box|post\s+office\s+box|firm\s+caller|caller|drawer|lockbox|box)\s+/i
@@ -245,7 +246,4 @@ async function main(): Promise<void> {
 	console.log(`\nPASS: all ${rows} rows clean`)
 }
 
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
+runIfScript(main)

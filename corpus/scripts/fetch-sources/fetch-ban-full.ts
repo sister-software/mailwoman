@@ -40,7 +40,8 @@ import { parseArgs } from "node:util"
 import { gunzipSync } from "node:zlib"
 
 import { $public } from "@mailwoman/core/env"
-import { runIfScript } from "@mailwoman/core/utils"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
@@ -341,9 +342,4 @@ async function main(): Promise<void> {
 	}
 }
 
-void runIfScript(import.meta, async () => {
-	main().catch((err: Error) => {
-		process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-		process.exitCode = 1
-	})
-})
+runIfScript(main)

@@ -19,7 +19,10 @@
 		"./package.json": "./package.json",
 		".": "./out/src/index.js",
 		"./types": "./out/src/types.js",
-		"./format": "./out/src/format.js"
+		"./format": "./out/src/format.js",
+		"./license": "./out/src/license.js",
+		"./build": "./out/src/build.js",
+		"./adapters": "./out/src/adapters/index.js"
 	},
 	"publishConfig": {
 		"access": "public"

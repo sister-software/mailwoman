@@ -28,6 +28,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -258,4 +259,4 @@ async function main(): Promise<void> {
 	)
 }
 
-void main()
+runIfScript(main)

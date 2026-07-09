@@ -17,7 +17,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
-runIfScript(import.meta, async () => {
+async function main() {
 	const EMPTY = "/tmp/empty-situs.db"
 	// The bash for-loop was unquoted (`for slug in ${STATES[@]}`), so a single space-joined arg splits too.
 	const parsed = parseArgs({ options: { n: { type: "string" } }, allowPositionals: true, strict: false })
@@ -55,4 +55,6 @@ runIfScript(import.meta, async () => {
 		)
 		console.log("")
 	}
-})
+}
+
+runIfScript(main)

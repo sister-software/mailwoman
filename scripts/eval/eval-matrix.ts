@@ -35,6 +35,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { runIfScript } from "@mailwoman/core/scripting"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createAddressParser, createRuntimePipeline } from "mailwoman"
 
@@ -611,7 +612,4 @@ async function main() {
 	}
 }
 
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
+runIfScript(main)

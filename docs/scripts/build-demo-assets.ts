@@ -31,10 +31,10 @@ import { copyFile, mkdir, stat } from "node:fs/promises"
 import { fileURLToPath } from "node:url"
 
 import { $public } from "@mailwoman/core/env"
+import { tryStat } from "@mailwoman/core/fs"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
-
 const STATIC_DIR = fileURLToPath(new URL("../static/mailwoman", import.meta.url))
 const WEIGHTS_PKG = fileURLToPath(new URL("../../neural-weights-en-us", import.meta.url))
 
@@ -42,24 +42,13 @@ const WEIGHTS_PKG = fileURLToPath(new URL("../../neural-weights-en-us", import.m
 // feedback-custom-wof-db-only memory + scripts/wof-build-manifest.json) — the candidate-table source.
 const WOF_ADMIN_DB = $public.PLAYPEN_WOF_ADMIN_DB ?? dataRootPath("wof", "admin-global-priority.db")
 
-/** Whether a path exists (file or symlink). */
-async function exists(path: string): Promise<boolean> {
-	try {
-		await stat(path)
-
-		return true
-	} catch {
-		return false
-	}
-}
-
 async function main(): Promise<void> {
 	await mkdir(STATIC_DIR, { recursive: true })
 
 	const modelSrc = `${WEIGHTS_PKG}/model.onnx`
 	process.stderr.write(`==> model.onnx (from ${modelSrc})\n`)
 
-	if (!(await exists(modelSrc))) {
+	if (!(await tryStat(modelSrc))) {
 		process.stderr.write(`ERROR: ${modelSrc} missing.\n`)
 		process.stderr.write("Run neural-weights-en-us/scripts/link-dev-weights.ts first or pass --weights.\n")
 		process.exitCode = 1
@@ -96,4 +85,4 @@ async function main(): Promise<void> {
 	process.stderr.write(`\nadmin gazetteer source (for the candidate-table build): ${WOF_ADMIN_DB}\n`)
 }
 
-runIfScript(import.meta, main)
+runIfScript(main)

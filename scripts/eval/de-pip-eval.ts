@@ -20,7 +20,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
-runIfScript(import.meta, async () => {
+async function main() {
 	let MODEL = ""
 	let CARD = ""
 	let TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -106,4 +106,6 @@ runIfScript(import.meta, async () => {
 	console.log(`intl   anchor-OFF: ${await pip("intl-off")}`)
 	console.log("")
 	console.log(`(per-state name-vs-PIP breakdown: python3 scripts/eval/pip-containment.py ${OUT}/intl-on.json)`)
-})
+}
+
+runIfScript(main)

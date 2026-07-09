@@ -1,6 +1,6 @@
-import { ResourceError } from "../errors/index.js"
-import { ServiceRepository } from "../lifecycle/index.js"
-import { ConsoleLogger } from "../logging/index.js"
+import { ResourceError } from "../../errors/index.js"
+import { ServiceRepository } from "../../lifecycle/index.js"
+import { ConsoleLogger } from "../../logging/index.js"
 
 /**
  * Logs an error that occurred while running a script.

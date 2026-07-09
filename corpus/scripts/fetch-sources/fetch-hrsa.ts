@@ -109,7 +109,4 @@ async function main(): Promise<void> {
 	process.stderr.write(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}\n`)
 }
 
-main().catch((err: Error) => {
-	process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-	process.exitCode = 1
-})
+runIfScript(main)

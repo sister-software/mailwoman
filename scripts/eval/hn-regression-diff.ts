@@ -20,6 +20,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
@@ -175,4 +176,4 @@ async function main() {
 	}
 }
 
-void main()
+runIfScript(main)

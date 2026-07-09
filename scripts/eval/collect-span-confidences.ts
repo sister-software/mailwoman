@@ -43,6 +43,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
@@ -250,4 +251,4 @@ async function main(): Promise<void> {
 	console.error(`  OA spans=${byOa.length}  corpus spans=${byCorpus.length}`)
 }
 
-void main()
+runIfScript(main)

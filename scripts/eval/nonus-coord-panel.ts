@@ -62,7 +62,7 @@ function srcFor(cc: string): Src {
 	}
 }
 
-runIfScript(import.meta, async () => {
+async function main() {
 	$.verbose = false
 
 	const outDir = "data/eval/external"
@@ -129,4 +129,6 @@ runIfScript(import.meta, async () => {
 			console.log(`${cc}\tGRADE-FAILED (see gate output)`)
 		}
 	}
-})
+}
+
+runIfScript(main)

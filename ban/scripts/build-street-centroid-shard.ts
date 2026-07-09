@@ -41,6 +41,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 import {
 	createStreetCentroidIndexes,
@@ -265,4 +266,4 @@ async function main(): Promise<void> {
 	)
 }
 
-await main()
+runIfScript(main)

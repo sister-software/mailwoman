@@ -61,6 +61,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
+import { runIfScript } from "@mailwoman/core/scripting"
 
 const SLUG = "usgov-nad"
 const FEATURE_SERVICE_URL =
@@ -78,7 +79,9 @@ interface ChunkManifest {
 	complete: boolean
 }
 
-function envInt(name: "FS_CHUNK_SIZE" | "FS_PAGE_SIZE" | "FS_CONCURRENCY", fallback: number): number {
+type FileSystemConfigurationKey = "FS_CHUNK_SIZE" | "FS_PAGE_SIZE" | "FS_CONCURRENCY" | "FS_START_OID"
+
+function envInt(name: FileSystemConfigurationKey, fallback: number): number {
 	const v = $public[name]
 
 	return v ? Number.parseInt(v, 10) : fallback
@@ -348,8 +351,4 @@ async function main(): Promise<void> {
 		process.exitCode = 2
 	}
 }
-
-main().catch((err: Error) => {
-	process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-	process.exitCode = 1
-})
+runIfScript(main)

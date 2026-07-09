@@ -38,6 +38,7 @@ import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { resolve } from "node:path"
 
+import { runIfScript } from "@mailwoman/core/scripting"
 import { childEnv, cliArguments } from "@mailwoman/core/utils"
 
 const REQUIRED_FILES = [
@@ -322,7 +323,4 @@ async function main() {
 	console.error(`  Demo: https://mailwoman.sister.software/demo/`)
 }
 
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
+runIfScript(main)

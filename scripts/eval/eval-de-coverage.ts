@@ -24,7 +24,7 @@ function printGrepAfter(stdout: string, needle: string, after: number): void {
 	}
 }
 
-runIfScript(import.meta, async () => {
+async function main() {
 	const MODEL = positionals[0] ?? "/tmp/v072-eval/model.onnx"
 	const TOK = positionals[1] ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 	const CARD = positionals[2] ?? "/tmp/v072-eval/model-card.json"
@@ -55,4 +55,6 @@ runIfScript(import.meta, async () => {
 	const r3 =
 		await $`node --experimental-strip-types scripts/eval/oa-resolver-eval.ts --eval data/eval/external/openaddresses-de-sample.jsonl --limit 3000 --default-country DE --model ${MODEL} --tokenizer ${TOK} --model-card ${CARD} --wof ${WOF}`
 	printGrepAfter(r3.stdout, "Head-to-head", 6)
-})
+}
+
+runIfScript(main)

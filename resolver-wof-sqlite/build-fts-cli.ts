@@ -24,7 +24,8 @@ import { existsSync } from "node:fs"
 import { exit, stderr } from "node:process"
 import { DatabaseSync } from "node:sqlite"
 
-import { cliArguments, runIfScript } from "@mailwoman/core/utils"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildPlaceSearchFTS } from "./fts.js"
 
@@ -137,5 +138,4 @@ export function main(argv: readonly string[]): number {
 	return worst
 }
 
-// Entry point — only run when invoked directly, not when imported by tests.
-void runIfScript(import.meta, () => exit(main(cliArguments())))
+runIfScript(() => main(cliArguments()))

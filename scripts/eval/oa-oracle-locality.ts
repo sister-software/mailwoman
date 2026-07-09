@@ -54,6 +54,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { ParseOpts } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -766,7 +767,4 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((e) => {
-	console.error(e)
-	process.exit(1)
-})
+runIfScript(main)

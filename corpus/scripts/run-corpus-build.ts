@@ -7,13 +7,13 @@
 
 ///<reference types="node" />
 
+import "@mailwoman/corpus/adapters"
 import { parseArgs } from "node:util"
 
-import { defaultAdapterRegistry } from "../src/adapter.js"
-import { buildCorpus } from "../src/build.js"
-import { compileLicenseExcludes, SHARE_ALIKE_PATTERN } from "../src/license.js"
-// Import adapters so they self-register
-import "../src/adapters/index.js"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { defaultAdapterRegistry } from "@mailwoman/corpus"
+import { buildCorpus } from "@mailwoman/corpus/build"
+import { compileLicenseExcludes, SHARE_ALIKE_PATTERN } from "@mailwoman/corpus/license"
 
 const CORPUS_VERSION = "0.3.0"
 const OUTPUT = `/mnt/playpen/mailwoman-data/corpus/versioned/v${CORPUS_VERSION}`
@@ -98,7 +98,4 @@ async function main() {
 	}
 }
 
-main().catch((err) => {
-	process.stderr.write(`Fatal: ${err}\n`)
-	process.exit(1)
-})
+runIfScript(main)

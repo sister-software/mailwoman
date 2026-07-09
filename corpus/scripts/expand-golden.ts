@@ -66,6 +66,7 @@ import { parseArgs } from "node:util"
 
 import { ParquetReader } from "@dsnp/parquetjs"
 import { $private } from "@mailwoman/core/env"
+import { runIfScript } from "@mailwoman/core/scripting"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -531,7 +532,4 @@ async function main() {
 	process.stderr.write(`output:           ${opts.outputPath}\n`)
 }
 
-main().catch((err: Error) => {
-	process.stderr.write(`fatal: ${err.message}\n${err.stack}\n`)
-	process.exitCode = 1
-})
+runIfScript(main)

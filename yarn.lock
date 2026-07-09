@@ -4700,7 +4700,6 @@ __metadata:
     change-case: "npm:^5.4.4"
     d3-color: "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
-    es-main: "npm:^1.4.0"
     fast-glob: "npm:^3.3.3"
     http-status-codes: "npm:^2.3.0"
     json-colorizer: "npm:^3.0.1"
@@ -12951,13 +12950,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es-main@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "es-main@npm:1.4.0"
-  checksum: 10/6ef8719db8e441bdaff9d0f471463a29a1b716cefd531115992e3bab4d2b5cd9cb9acf19cb64dd43626388346d5911fb7c9c2bc8b71a8ba1628bed0c051efcf9
-  languageName: node
-  linkType: hard
-
 "es-module-lexer@npm:^1.7.0":
   version: 1.7.0
   resolution: "es-module-lexer@npm:1.7.0"
@@ -16808,7 +16800,6 @@ __metadata:
     chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"
-    es-main: "npm:^1.4.0"
     express: "npm:^5.2.1"
     fast-glob: "npm:^3.3.3"
     geojson: "npm:^0.5.0"

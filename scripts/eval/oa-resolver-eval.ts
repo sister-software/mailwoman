@@ -61,6 +61,7 @@ import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -1326,7 +1327,4 @@ async function main(): Promise<void> {
 	postcodeLookup?.close()
 }
 
-main().catch((e) => {
-	console.error(e)
-	process.exit(1)
-})
+runIfScript(main)

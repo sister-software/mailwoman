@@ -37,6 +37,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { ResolvedPlace } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -380,4 +381,4 @@ async function main(): Promise<void> {
 	postcodeLookup.close?.()
 }
 
-void main()
+runIfScript(main)

@@ -23,12 +23,11 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
+import { runIfScript } from "@mailwoman/core/scripting"
 import { cliArguments } from "@mailwoman/core/utils"
+import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "@mailwoman/corpus"
+import type { CanonicalRow, LabeledRow, ShardManifest } from "@mailwoman/corpus"
 import { TextSpliterator } from "spliterator"
-
-import { alignRow } from "../src/align.js"
-import { PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, type ShardManifest, writeShards } from "../src/parquet.js"
-import type { CanonicalRow, LabeledRow } from "../src/types.js"
 
 interface Args {
 	jsonl: string
@@ -176,7 +175,4 @@ async function main(): Promise<void> {
 	console.error(`  compression=${SHARD_COMPRESSION}`)
 }
 
-main().catch((err) => {
-	console.error(`fatal: ${err instanceof Error ? err.stack : err}`)
-	process.exit(1)
-})
+runIfScript(main)

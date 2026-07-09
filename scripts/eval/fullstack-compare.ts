@@ -25,6 +25,8 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
+import { runIfScript } from "@mailwoman/core/scripting"
+
 interface Args {
 	harnessPath: string
 	outMd?: string
@@ -359,7 +361,4 @@ async function main(): Promise<void> {
 	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)
 }
 
-main().catch((e) => {
-	console.error(e)
-	process.exit(1)
-})
+runIfScript(main)

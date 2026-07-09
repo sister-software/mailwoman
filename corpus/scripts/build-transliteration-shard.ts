@@ -36,22 +36,19 @@ import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 
+import { runIfScript } from "@mailwoman/core/scripting"
 import { cliArguments } from "@mailwoman/core/utils"
-import { TextSpliterator } from "spliterator"
-
-import { alignRow } from "../src/align.js"
-import { ParquetWriter } from "../src/parquet-wrapper/index.js"
 import {
-	LABELED_ROW_SCHEMA,
+	alignRow,
 	PARQUET_COLUMNS,
 	ROW_GROUP_SIZE,
-	rowToParquet,
 	SHARD_COMPRESSION,
-	type ParquetRow,
-	type ShardDescriptor,
-	type ShardManifest,
-} from "../src/parquet.js"
-import type { CanonicalRow, LabeledRow } from "../src/types.js"
+	LABELED_ROW_SCHEMA,
+	ParquetWriter,
+	rowToParquet,
+} from "@mailwoman/corpus"
+import type { CanonicalRow, LabeledRow, ShardManifest, ParquetRow, ShardDescriptor } from "@mailwoman/corpus"
+import { TextSpliterator } from "spliterator"
 
 interface Args {
 	jsonl: string
@@ -325,7 +322,4 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((err) => {
-	console.error(`fatal: ${err instanceof Error ? err.stack : err}`)
-	process.exit(1)
-})
+runIfScript(main)

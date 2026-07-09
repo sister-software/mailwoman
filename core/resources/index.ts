@@ -6,7 +6,6 @@
 
 export * from "./collections.js"
 export * from "./debugging.js"
-export * from "./fs.js"
 export * from "./git.js"
 export * from "./languages/index.js"
 export * from "./libaddressinput.js"

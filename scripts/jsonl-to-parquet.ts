@@ -38,6 +38,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { TextSpliterator } from "spliterator"
 
 const REQUIRED_COLUMNS = [
@@ -202,9 +203,4 @@ async function main(): Promise<void> {
 	}
 }
 
-if (import.meta.main) {
-	main().catch((err: unknown) => {
-		console.error(err instanceof Error ? err.message : err)
-		process.exit(1)
-	})
-}
+runIfScript(main)
