@@ -34,12 +34,15 @@ import { buildGauntletDeps, runOne } from "./harness.ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
-	options: { model: { type: "string" } },
+	// `tokenizer`/`card`: a tokenizer-SPLICE candidate (#444/#884/#912) needs its new vocab paired with the
+	// model, or the new embedding rows stay dormant (shipped tokenizer emits no ids for them) and the splice
+	// is invisible to this layer. Model-only bumps omit them.
+	options: { model: { type: "string" }, tokenizer: { type: "string" }, card: { type: "string" } },
 	strict: false,
 	allowPositionals: true,
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { model?: string }
+const values = rawValues as { model?: string; tokenizer?: string; card?: string }
 const INV_EPSILON_KM = 0.001 // 1m — same address, identical resolution expected.
 const DIR_NEAR_KM = 5 // dropping the postcode may lose the rooftop, but must still land in the right area.
 const BAND_NEAR_KM = 5 // a corrupted surface may shift the parse, but must stay within the tolerance band.
@@ -293,7 +296,15 @@ const dropPostcode = (s: string) =>
 		.replace(/\s+/g, " ")
 		.trim()
 
-const deps = await buildGauntletDeps(values["model"] || "" ? { modelPath: values["model"] || "" } : {})
+const deps = await buildGauntletDeps(
+	values["model"] || ""
+		? {
+				modelPath: values["model"] || "",
+				...(values["tokenizer"] ? { tokenizerPath: values["tokenizer"] as string } : {}),
+				...(values["card"] ? { modelCardPath: values["card"] as string } : {}),
+			}
+		: {}
+)
 
 interface Tally {
 	checks: number

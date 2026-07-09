@@ -15,6 +15,7 @@
 
 import { parseArgs } from "node:util"
 
+import { resolveWeights } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 import { mailwomanDataRoot } from "mailwoman/resolver-backend"
 import { TextSpliterator } from "spliterator"
@@ -23,14 +24,25 @@ import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
-	options: { candidate: { type: "string" }, n: { type: "string" }, source: { type: "string" } },
+	options: {
+		candidate: { type: "string" },
+		n: { type: "string" },
+		source: { type: "string" },
+		// A tokenizer-SPLICE candidate (#444/#884/#912) ships a NEW vocab; grading it needs the candidate
+		// tokenizer (+ card) paired with the candidate model. Production is then also run through the SHIPPED
+		// trio (createScorer both sides) so the only variables are the ONNX + the vocab. Omit for a model-only bump.
+		tokenizer: { type: "string" },
+		card: { type: "string" },
+	},
 	strict: false,
 	allowPositionals: true,
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { candidate?: string; n?: string; source?: string }
+const values = rawValues as { candidate?: string; n?: string; source?: string; tokenizer?: string; card?: string }
 const N = Number(values["n"] || "300")
 const CANDIDATE = values["candidate"] || ""
+const CAND_TOKENIZER = values["tokenizer"] || ""
+const CAND_CARD = values["card"] || ""
 const SOURCE = (values["source"] || "fr").toLowerCase()
 const TOLS = [0.1, 0.5, 5] as const // rooftop / street / locality (km)
 const GATE_TOL = 5 // the z-test runs at the locality bucket (the dominant resolvable tier)
@@ -163,11 +175,23 @@ console.error(`[gauntlet/holdout] drawing ${N} fresh ${src.label} addresses…`)
 const sample = await draw(N)
 console.error(`[gauntlet/holdout] scoring production vs candidate on the SAME ${sample.length} addresses…`)
 
-const prodDeps = await buildGauntletDeps({})
+// A splice candidate (--tokenizer given) swaps the vocab, so production must ALSO run through the SHIPPED
+// (model, tokenizer, card) trio via createScorer — otherwise the two sides have different anchor/gazetteer
+// wiring and the z-test is confounded. resolveWeights gives the shipped trio for the production side.
+const shipped = CAND_TOKENIZER ? resolveWeights({ locale: "en-us" }) : null
+const prodDeps = await buildGauntletDeps(
+	shipped
+		? { modelPath: shipped.modelPath, tokenizerPath: shipped.tokenizerPath, modelCardPath: shipped.modelCardPath }
+		: {}
+)
 const prod = await score(prodDeps, sample)
 prodDeps.close()
 
-const candDeps = await buildGauntletDeps({ modelPath: CANDIDATE })
+const candDeps = await buildGauntletDeps(
+	CAND_TOKENIZER
+		? { modelPath: CANDIDATE, tokenizerPath: CAND_TOKENIZER, modelCardPath: CAND_CARD || undefined }
+		: { modelPath: CANDIDATE }
+)
 const cand = await score(candDeps, sample)
 candDeps.close()
 

@@ -13,7 +13,7 @@ import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
 import { OSMShardProvider } from "@mailwoman/osm/sdk"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { type GeocodeResult, geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
@@ -54,8 +54,17 @@ function assertShippedModelMatchesCard(materializedMd5: string): void {
 /**
  * Build the geocode deps. `modelPath` swaps ONLY the ONNX (same tokenizer/card/anchor/gazetteer soft-feed), so the
  * held-out gate can grade a candidate against production fairly; omit it for the shipped default.
+ *
+ * `tokenizerPath` (+ optional `modelCardPath`) additionally swaps the VOCAB — required to grade a tokenizer-SPLICE
+ * candidate (#444/#884/#912), whose model has extra embedding rows a plain `modelPath` swap can never exercise (the
+ * shipped tokenizer emits no ids for the new pieces, so the candidate would score byte-identical to production and the
+ * splice would be invisible). When a tokenizer is given the classifier is built via `createScorer` (which wires the
+ * anchor + gazetteer soft-feeds the model requires); pair it with the matching shipped trio on the production side so
+ * the ONLY variables are the ONNX + the vocab (see holdout.ts).
  */
-export async function buildGauntletDeps(opts: { modelPath?: string } = {}): Promise<GauntletDeps> {
+export async function buildGauntletDeps(
+	opts: { modelPath?: string; tokenizerPath?: string; modelCardPath?: string } = {}
+): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
 	// loadFromWeights symlink can point at an old training base, not the shipped model) is never silent.
@@ -71,13 +80,20 @@ export async function buildGauntletDeps(opts: { modelPath?: string } = {}): Prom
 		// shipped default must match the model-card's files_md5 (the card is the source of truth). A `--candidate`
 		// run intentionally grades a different artifact, so it is exempt. This gate is wired as the release
 		// before:release step (RELEASING.md), so failing here guards BOTH the gate and the ship.
-		if (!opts.modelPath) {
+		if (!opts.modelPath && !opts.tokenizerPath) {
 			assertShippedModelMatchesCard(md5)
 		}
 	}
-	const classifier = opts.modelPath
-		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
-		: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	const classifier = opts.tokenizerPath
+		? await createScorer({
+				modelPath: resolve(opts.modelPath ?? "neural-weights-en-us/model.onnx"),
+				tokenizerPath: resolve(opts.tokenizerPath),
+				modelCardPath: resolve(opts.modelCardPath ?? "neural-weights-en-us/model-card.json"),
+				locale: "en-us",
+			})
+		: opts.modelPath
+			? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
+			: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
