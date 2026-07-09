@@ -22,27 +22,15 @@
  *
  *   GATE: any INV violation, a DIR that fails to resolve near the anchor, or a NEW (untracked) BAND miss
  *   fails the run. Run:
- *     node scripts/eval/gauntlet/metamorphic.ts [--model <candidate.onnx>]
+ *     mailwoman eval gauntlet --layer metamorphic [--candidate <candidate.onnx>]
  */
-
-import { parseArgs } from "node:util"
 
 import { abbreviationDictionary } from "@mailwoman/normalize"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { buildGauntletDeps, runOne } from "./harness.ts"
+import type { GauntletLayerOptions } from "./regression.ts"
 
-// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	// `tokenizer`/`card`: a tokenizer-SPLICE candidate (#444/#884/#912) needs its new vocab paired with the
-	// model, or the new embedding rows stay dormant (shipped tokenizer emits no ids for them) and the splice
-	// is invisible to this layer. Model-only bumps omit them.
-	options: { model: { type: "string" }, tokenizer: { type: "string" }, card: { type: "string" } },
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { model?: string; tokenizer?: string; card?: string }
 const INV_EPSILON_KM = 0.001 // 1m — same address, identical resolution expected.
 const DIR_NEAR_KM = 5 // dropping the postcode may lose the rooftop, but must still land in the right area.
 const BAND_NEAR_KM = 5 // a corrupted surface may shift the parse, but must stay within the tolerance band.
@@ -296,24 +284,12 @@ const dropPostcode = (s: string) =>
 		.replace(/\s+/g, " ")
 		.trim()
 
-const deps = await buildGauntletDeps(
-	values["model"] || ""
-		? {
-				modelPath: values["model"] || "",
-				...(values["tokenizer"] ? { tokenizerPath: values["tokenizer"] as string } : {}),
-				...(values["card"] ? { modelCardPath: values["card"] as string } : {}),
-			}
-		: {}
-)
-
 interface Tally {
 	checks: number
 	held: number
 	fails: number
 	xfail: number
 }
-const invTally = new Map<string, Tally>()
-const bandTally = new Map<string, Tally>()
 
 function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
 	const t = m.get(name) ?? { checks: 0, held: 0, fails: 0, xfail: 0 }
@@ -321,166 +297,183 @@ function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
 	m.set(name, t)
 }
 
-let invChecks = 0
-let invFails = 0
-let dirChecks = 0
-let dirFails = 0
-let bandChecks = 0
-let bandFails = 0
-const fails: string[] = []
-const xfails: string[] = []
-const xfailHit = new Set<string>()
-const bandXfailHit = new Set<string>()
+/** Run the metamorphic layer. Returns `pass` (no NEW INV/DIR/BAND violation beyond the tracked xfails). */
+export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
+	const deps = await buildGauntletDeps(
+		options.model
+			? {
+					modelPath: options.model,
+					...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
+					...(options.card ? { modelCardPath: options.card } : {}),
+				}
+			: {}
+	)
 
-for (const base of BASES) {
-	const canon = await runOne(base.input, deps)
+	const invTally = new Map<string, Tally>()
+	const bandTally = new Map<string, Tally>()
 
-	// INV: every label-preserving perturbation must reproduce the canonical coordinate + tier.
-	for (const p of INV) {
-		const perturbed = p.f(base.input, base)
+	let invChecks = 0
+	let invFails = 0
+	let dirChecks = 0
+	let dirFails = 0
+	let bandChecks = 0
+	let bandFails = 0
+	const fails: string[] = []
+	const xfails: string[] = []
+	const xfailHit = new Set<string>()
+	const bandXfailHit = new Set<string>()
 
-		if (perturbed == null) continue // perturbation not applicable to this base (e.g. no expandable suffix)
+	for (const base of BASES) {
+		const canon = await runOne(base.input, deps)
 
-		invChecks++
-		bump(invTally, p.name, "checks")
-		const r = await runOne(perturbed, deps)
-		const moved =
-			r.tier !== canon.tier ||
-			(canon.lat != null && r.lat != null && haversineKm(canon.lat, canon.lon!, r.lat, r.lon!) > INV_EPSILON_KM) ||
-			(canon.lat == null) !== (r.lat == null)
+		// INV: every label-preserving perturbation must reproduce the canonical coordinate + tier.
+		for (const p of INV) {
+			const perturbed = p.f(base.input, base)
 
-		if (!moved) {
-			bump(invTally, p.name, "held")
-			continue
+			if (perturbed == null) continue // perturbation not applicable to this base (e.g. no expandable suffix)
+
+			invChecks++
+			bump(invTally, p.name, "checks")
+			const r = await runOne(perturbed, deps)
+			const moved =
+				r.tier !== canon.tier ||
+				(canon.lat != null && r.lat != null && haversineKm(canon.lat, canon.lon!, r.lat, r.lon!) > INV_EPSILON_KM) ||
+				(canon.lat == null) !== (r.lat == null)
+
+			if (!moved) {
+				bump(invTally, p.name, "held")
+				continue
+			}
+			const key = `${p.name}|${base.input}`
+			const tracked = KNOWN_INV_XFAIL.get(key)
+			const line = `INV[${p.name}] "${base.input}" → "${perturbed}" · tier ${canon.tier}→${r.tier}, coord ${canon.lat},${canon.lon} → ${r.lat},${r.lon}`
+
+			if (tracked) {
+				xfailHit.add(key)
+				bump(invTally, p.name, "xfail")
+				xfails.push(`  ~ ${line}  [xfail: ${tracked}]`)
+			} else {
+				invFails++
+				bump(invTally, p.name, "fails")
+				fails.push(`  ✗ ${line}`)
+			}
 		}
-		const key = `${p.name}|${base.input}`
-		const tracked = KNOWN_INV_XFAIL.get(key)
-		const line = `INV[${p.name}] "${base.input}" → "${perturbed}" · tier ${canon.tier}→${r.tier}, coord ${canon.lat},${canon.lon} → ${r.lat},${r.lon}`
 
-		if (tracked) {
-			xfailHit.add(key)
-			bump(invTally, p.name, "xfail")
-			xfails.push(`  ~ ${line}  [xfail: ${tracked}]`)
-		} else {
-			invFails++
-			bump(invTally, p.name, "fails")
-			fails.push(`  ✗ ${line}`)
+		// DIR: dropping the postcode must still resolve near the with-postcode anchor.
+		if (base.postcode) {
+			dirChecks++
+			const dropped = await runOne(dropPostcode(base.input), deps)
+			const ok =
+				dropped.lat != null &&
+				canon.lat != null &&
+				haversineKm(canon.lat, canon.lon!, dropped.lat, dropped.lon!) <= DIR_NEAR_KM
+
+			if (!ok) {
+				dirFails++
+				fails.push(
+					`  ✗ DIR[drop-postcode] "${base.input}" → "${dropPostcode(base.input)}" landed ${dropped.lat},${dropped.lon} (anchor ${canon.lat},${canon.lon})`
+				)
+			}
+		}
+
+		// BAND: a corrupting perturbation may shift the parse, but must land within the tolerance band.
+		for (const p of BAND) {
+			const perturbed = p.f(base.input, base)
+
+			if (perturbed == null || perturbed === base.input) continue
+
+			if (canon.lat == null) continue // no clean anchor to measure a band against
+
+			bandChecks++
+			bump(bandTally, p.name, "checks")
+			const r = await runOne(perturbed, deps)
+			const dist = r.lat != null ? haversineKm(canon.lat, canon.lon!, r.lat, r.lon!) : null
+			const ok = dist != null && dist <= BAND_NEAR_KM
+
+			if (ok) {
+				bump(bandTally, p.name, "held")
+				continue
+			}
+			const key = `${p.name}|${base.input}`
+			const tracked = KNOWN_BAND_XFAIL.get(key)
+			const movedBy = dist != null ? `${dist.toFixed(1)}km` : "no-resolve"
+			const line = `BAND[${p.name}] "${base.input}" → "${perturbed}" · moved ${movedBy} (anchor ${canon.lat},${canon.lon} → ${r.lat},${r.lon})`
+
+			if (tracked) {
+				bandXfailHit.add(key)
+				bump(bandTally, p.name, "xfail")
+				xfails.push(`  ~ ${line}  [xfail: ${tracked}]`)
+			} else {
+				bandFails++
+				bump(bandTally, p.name, "fails")
+				fails.push(`  ✗ ${line}`)
+			}
+		}
+	}
+	deps.close()
+
+	// Anti-rot: a tracked xfail that did NOT fire has been fixed — surface it so the list can't accrete stale entries.
+	const newlyPassing = [
+		...[...KNOWN_INV_XFAIL].filter(([key]) => !xfailHit.has(key)),
+		...[...KNOWN_BAND_XFAIL].filter(([key]) => !bandXfailHit.has(key)),
+	]
+
+	console.log(`\n=== Gauntlet · metamorphic ===`)
+	console.log(
+		`  INV  (label-preserving, ≤1m):  ${invChecks - invFails - xfailHit.size}/${invChecks} held, ${xfailHit.size} known-xfail`
+	)
+	console.log(`  DIR  (drop-postcode, ≤5km):    ${dirChecks - dirFails}/${dirChecks} held`)
+	console.log(
+		`  BAND (corrupting, ≤5km):       ${bandChecks - bandFails - bandXfailHit.size}/${bandChecks} held, ${bandXfailHit.size} known-xfail`
+	)
+
+	console.log(`\nper-class:`)
+
+	for (const [set, tally] of [
+		["INV", invTally],
+		["BAND", bandTally],
+	] as const) {
+		const order = set === "INV" ? INV : BAND
+
+		for (const p of order) {
+			const t = tally.get(p.name)
+
+			if (!t) continue
+			const heldStr = `${t.held}/${t.checks} held`
+			const notes = [t.fails ? `${t.fails} FAIL` : "", t.xfail ? `${t.xfail} xfail` : ""].filter(Boolean).join(", ")
+			console.log(`  ${set}[${p.name}]`.padEnd(22) + `${heldStr}${notes ? ` (${notes})` : ""}`)
 		}
 	}
 
-	// DIR: dropping the postcode must still resolve near the with-postcode anchor.
-	if (base.postcode) {
-		dirChecks++
-		const dropped = await runOne(dropPostcode(base.input), deps)
-		const ok =
-			dropped.lat != null &&
-			canon.lat != null &&
-			haversineKm(canon.lat, canon.lon!, dropped.lat, dropped.lon!) <= DIR_NEAR_KM
+	if (fails.length) {
+		console.log(`\nNEW violations (gate-failing):`)
 
-		if (!ok) {
-			dirFails++
-			fails.push(
-				`  ✗ DIR[drop-postcode] "${base.input}" → "${dropPostcode(base.input)}" landed ${dropped.lat},${dropped.lon} (anchor ${canon.lat},${canon.lon})`
-			)
+		for (const f of fails) {
+			console.log(f)
 		}
 	}
 
-	// BAND: a corrupting perturbation may shift the parse, but must land within the tolerance band.
-	for (const p of BAND) {
-		const perturbed = p.f(base.input, base)
+	if (xfails.length) {
+		console.log(`\nknown xfails (tracked, non-blocking):`)
 
-		if (perturbed == null || perturbed === base.input) continue
-
-		if (canon.lat == null) continue // no clean anchor to measure a band against
-
-		bandChecks++
-		bump(bandTally, p.name, "checks")
-		const r = await runOne(perturbed, deps)
-		const dist = r.lat != null ? haversineKm(canon.lat, canon.lon!, r.lat, r.lon!) : null
-		const ok = dist != null && dist <= BAND_NEAR_KM
-
-		if (ok) {
-			bump(bandTally, p.name, "held")
-			continue
-		}
-		const key = `${p.name}|${base.input}`
-		const tracked = KNOWN_BAND_XFAIL.get(key)
-		const movedBy = dist != null ? `${dist.toFixed(1)}km` : "no-resolve"
-		const line = `BAND[${p.name}] "${base.input}" → "${perturbed}" · moved ${movedBy} (anchor ${canon.lat},${canon.lon} → ${r.lat},${r.lon})`
-
-		if (tracked) {
-			bandXfailHit.add(key)
-			bump(bandTally, p.name, "xfail")
-			xfails.push(`  ~ ${line}  [xfail: ${tracked}]`)
-		} else {
-			bandFails++
-			bump(bandTally, p.name, "fails")
-			fails.push(`  ✗ ${line}`)
+		for (const f of xfails) {
+			console.log(f)
 		}
 	}
-}
-deps.close()
 
-// Anti-rot: a tracked xfail that did NOT fire has been fixed — surface it so the list can't accrete stale entries.
-const newlyPassing = [
-	...[...KNOWN_INV_XFAIL].filter(([key]) => !xfailHit.has(key)),
-	...[...KNOWN_BAND_XFAIL].filter(([key]) => !bandXfailHit.has(key)),
-]
+	if (newlyPassing.length) {
+		console.log(`\n⚠ xfails that now PASS — remove from the KNOWN_*_XFAIL map:`)
 
-console.log(`\n=== Gauntlet · metamorphic ===`)
-console.log(
-	`  INV  (label-preserving, ≤1m):  ${invChecks - invFails - xfailHit.size}/${invChecks} held, ${xfailHit.size} known-xfail`
-)
-console.log(`  DIR  (drop-postcode, ≤5km):    ${dirChecks - dirFails}/${dirChecks} held`)
-console.log(
-	`  BAND (corrupting, ≤5km):       ${bandChecks - bandFails - bandXfailHit.size}/${bandChecks} held, ${bandXfailHit.size} known-xfail`
-)
-
-console.log(`\nper-class:`)
-
-for (const [set, tally] of [
-	["INV", invTally],
-	["BAND", bandTally],
-] as const) {
-	const order = set === "INV" ? INV : BAND
-
-	for (const p of order) {
-		const t = tally.get(p.name)
-
-		if (!t) continue
-		const heldStr = `${t.held}/${t.checks} held`
-		const notes = [t.fails ? `${t.fails} FAIL` : "", t.xfail ? `${t.xfail} xfail` : ""].filter(Boolean).join(", ")
-		console.log(`  ${set}[${p.name}]`.padEnd(22) + `${heldStr}${notes ? ` (${notes})` : ""}`)
+		for (const [key, issue] of newlyPassing) {
+			console.log(`  + ${key}  [was: ${issue}]`)
+		}
 	}
+	// The gate fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
+	const pass = invFails === 0 && dirFails === 0 && bandFails === 0
+	const trackedTotal = xfailHit.size + bandXfailHit.size
+	console.log(
+		`\nverdict: ${pass ? "PASS" : "FAIL"}${pass && trackedTotal ? ` (with ${trackedTotal} tracked xfails)` : ""}`
+	)
+
+	return { pass }
 }
-
-if (fails.length) {
-	console.log(`\nNEW violations (gate-failing):`)
-
-	for (const f of fails) {
-		console.log(f)
-	}
-}
-
-if (xfails.length) {
-	console.log(`\nknown xfails (tracked, non-blocking):`)
-
-	for (const f of xfails) {
-		console.log(f)
-	}
-}
-
-if (newlyPassing.length) {
-	console.log(`\n⚠ xfails that now PASS — remove from the KNOWN_*_XFAIL map:`)
-
-	for (const [key, issue] of newlyPassing) {
-		console.log(`  + ${key}  [was: ${issue}]`)
-	}
-}
-// The gate fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
-const pass = invFails === 0 && dirFails === 0 && bandFails === 0
-const trackedTotal = xfailHit.size + bandXfailHit.size
-console.log(
-	`\nverdict: ${pass ? "PASS" : "FAIL"}${pass && trackedTotal ? ` (with ${trackedTotal} tracked xfails)` : ""}`
-)
-process.exit(pass ? 0 : 1)

@@ -4894,7 +4894,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/osm@workspace:osm":
+"@mailwoman/osm@workspace:*, @mailwoman/osm@workspace:osm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/osm@workspace:osm"
   dependencies:
@@ -4957,6 +4957,7 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/node": "npm:>=26.0.1"
     csv-parse: "npm:^5.6.0"
+    h3-js: "npm:^4.4.0"
     playwright: "npm:^1.61.0"
     spliterator: "npm:^3.2.0"
   languageName: unknown
@@ -16788,11 +16789,13 @@ __metadata:
     "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/osm": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"

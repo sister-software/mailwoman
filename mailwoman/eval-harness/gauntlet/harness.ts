@@ -14,10 +14,10 @@ import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
-import { OSMShardProvider } from "@mailwoman/osm/sdk"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { type GeocodeResult, geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
-import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
+
+import { type GeocodeResult, geocodeAddress, ShardProvider } from "../../geocode-core.ts"
+import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
 
 export interface GauntletDeps {
 	geocode(input: string): Promise<GeocodeResult>
@@ -98,6 +98,10 @@ export async function buildGauntletDeps(
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
+	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
+	// Pastel imports every command module at CLI startup — a static import here would break the
+	// published `mailwoman` CLI outright rather than only this maintainer-run gate.
+	const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
 	const osmProvider = new OSMShardProvider(mailwomanDataRoot())
 
 	return {

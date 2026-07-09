@@ -8,16 +8,16 @@
  *   machine-readable verdict. Exists so promotion gates are ENFORCED, not night-shift discipline,
  *   and so "why did this model ship?" has a one-file answer.
  *
- *   Usage: node scripts/eval/promotion-gate.ts\
+ *   Usage: mailwoman eval gate\
  *   --model <fp32.onnx> [--int8 <int8.onnx>]\
- *   --gate scripts/eval/gates/<spec>.json\
+ *   --gate mailwoman/eval-harness/gates/<spec>.json\
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
  *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/gate-<label>]
  *
  *   Behavior:
  *
  *   - Runs: per-locale-f1 (US/FR, tokenizer-enforced), score-affix (+ unit-real),
- *       score-country-homograph, de-order-eval, demo-preset-compare. When --int8 is given, re-runs
+ *       score-country-homograph, de-order-eval, preset-compare. When --int8 is given, re-runs
  *       the per-tag battery on the int8 artifact and enforces the fp32↔int8 delta cap.
  *   - Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve against the slim hot DB
  *       (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips LOUD when the DB is absent; floor
@@ -27,6 +27,13 @@
  *       "second lock" beside createScorer's load-time capability delta-gate.
  *   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
  *   - Exit 0 = every floor met AND the mask-regression lock held; exit 1 = any miss.
+ *
+ *   The gate SPAWNS the standing probe scorers (`scripts/eval/per-locale-f1.ts`, `score-affix.ts`,
+ *   `score-country-homograph.ts`, `de-order-eval.ts`, `external-arenas.ts`,
+ *   `demo-cascade-smoke.ts`, `scripts/diagnostic/fr-parse-recall.ts`) exactly as before — those
+ *   stay in the scripts drawer pending the probe triage — while the migrated legs (preset-compare,
+ *   mask-regression, the verdict assembler) run in-process from this module dir, capturing the
+ *   same lines into the same artifact files.
  *
  *   Lore encoded (the traps that bit before — see CONTRIBUTING_MODEL_WORK.mdx):
  *
@@ -41,14 +48,17 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-import { parseArgs } from "node:util"
+import { basename, dirname } from "node:path"
+import { fileURLToPath } from "node:url"
 
 import { $public } from "@mailwoman/core/env"
-import { runIfScript } from "@mailwoman/core/scripting"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { $ } from "zx"
+
+import { maskRegressionGate } from "./mask-regression.ts"
+import { presetCompare } from "./preset-compare.ts"
+import { assemblePromotionVerdict } from "./promotion-gate-verdict.ts"
 
 interface GateSpec {
 	label: string
@@ -62,44 +72,68 @@ interface ModelCard {
 	training: { tokenizer_version: string }
 }
 
-async function main() {
+/** Options for {@linkcode runPromotionGate}. */
+export interface PromotionGateOptions {
+	/** Candidate fp32 ONNX (required). */
+	model?: string
+	/** Quantized int8 sibling — re-runs the per-tag battery and enforces the delta cap. */
+	int8?: string
+	/** Gate-spec JSON: a path, or a bare spec name resolved against the bundled `gates/` dir (required). */
+	gate?: string
+	/** Tokenizer path. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`. */
+	tokenizer?: string
+	/** Model-card JSON. Default `neural-weights-en-us/model-card.json`. */
+	card?: string
+	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
+	gazetteerLexicon?: string
+	/** Battery output dir. Default `/tmp/gate-<label>-<hhmm>`. */
+	outDir?: string
+}
+
+/**
+ * Resolve a `--gate` value to a real file. A path that exists wins verbatim; otherwise the basename is looked up in the
+ * `gates/` dir shipped beside this module — `new URL`-relative for the source tree, with a compiled-tree fallback (tsc
+ * does not emit readFileSync'd JSON into `out/`, so `mailwoman/out/eval-harness/` reads the source-tree copy at
+ * `mailwoman/eval-harness/gates/`; the lint-rules.json pattern). Old `scripts/eval/gates/<spec>.json` invocations
+ * therefore keep working by basename.
+ */
+export function resolveGateSpecPath(gate: string): string {
+	if (existsSync(gate)) return gate
+
+	const name = basename(gate)
+	const sibling = new URL(`./gates/${name}`, import.meta.url)
+
+	if (existsSync(sibling)) return fileURLToPath(sibling)
+
+	const sourceTree = new URL(`../../eval-harness/gates/${name}`, import.meta.url)
+
+	if (existsSync(sourceTree)) return fileURLToPath(sourceTree)
+
+	// Let the readFileSync at the call site throw with the operator's original path.
+	return gate
+}
+
+/**
+ * Run the full promotion-gate battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
+ * held, 1 = any miss, 2 = usage / lore-guard refusal.
+ */
+export async function runPromotionGate(options: PromotionGateOptions): Promise<number> {
 	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash redirects did.
 	$.verbose = false
 
-	// --- arg parse (faithful to the .sh: --flag value; unknown / missing-required → exit 2) ---
-	let parsed: { values: Record<string, string | boolean | undefined> }
-
-	try {
-		parsed = parseArgs({
-			options: {
-				model: { type: "string" },
-				int8: { type: "string" },
-				gate: { type: "string" },
-				tokenizer: { type: "string" },
-				card: { type: "string" },
-				"gazetteer-lexicon": { type: "string" },
-				"out-dir": { type: "string" },
-			},
-		})
-	} catch (e) {
-		console.error(`unknown arg: ${e instanceof Error ? e.message : e}`)
-		process.exit(2)
-	}
-	const args = parsed.values
-	const MODEL = (args.model as string | undefined) ?? ""
-	const INT8 = (args.int8 as string | undefined) ?? ""
-	const GATE = (args.gate as string | undefined) ?? ""
-	let OUT_DIR = (args["out-dir"] as string | undefined) ?? ""
-	const TOK =
-		(args.tokenizer as string | undefined) ??
-		String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-	const CARD = (args.card as string | undefined) ?? "neural-weights-en-us/model-card.json"
-	const GAZ = (args["gazetteer-lexicon"] as string | undefined) ?? "data/gazetteer/anchor-lexicon-v1.json"
+	const MODEL = options.model ?? ""
+	const INT8 = options.int8 ?? ""
+	const GATE = options.gate ? resolveGateSpecPath(options.gate) : ""
+	let OUT_DIR = options.outDir ?? ""
+	const TOK = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const CARD = options.card ?? "neural-weights-en-us/model-card.json"
+	const GAZ = options.gazetteerLexicon ?? "data/gazetteer/anchor-lexicon-v1.json"
 	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 	if (!MODEL || !GATE) {
 		console.error("✗ --model and --gate required")
-		process.exit(2)
+
+		return 2
 	}
 
 	const gate = JSON.parse(readFileSync(GATE, "utf8")) as GateSpec
@@ -119,7 +153,8 @@ async function main() {
 		console.error(
 			`✗ tokenizer path '${TOK}' does not contain card tokenizer_version '${CARD_TOK}' — F1 would be incomparable`
 		)
-		process.exit(2)
+
+		return 2
 	}
 
 	// --- lore guard: recompile-before-eval --------------------------------------
@@ -168,18 +203,21 @@ async function main() {
 
 	if (modelDql !== "0") {
 		console.error(`✗ --model '${MODEL}' carries int8 quant nodes — it is not an fp32 artifact`)
-		process.exit(2)
+
+		return 2
 	}
 
 	if (INT8) {
 		if (int8Dql === "0") {
 			console.error(`✗ --int8 '${INT8}' has no quant nodes — it is not a quantized artifact`)
-			process.exit(2)
+
+			return 2
 		}
 
 		if ((await md5(MODEL)) === (await md5(INT8))) {
 			console.error("✗ --model and --int8 are byte-identical — one is mislabeled")
-			process.exit(2)
+
+			return 2
 		}
 	}
 
@@ -247,8 +285,17 @@ async function main() {
 	if (INT8) {
 		await runBattery(INT8, "int8")
 	}
-	const presets = await $`node scripts/eval/demo-preset-compare.ts --model-path=${shipModel}`
-	writeFileSync(`${OUT_DIR}/presets.md`, presets.stdout)
+	// In-process since the eval-harness migration (was `node scripts/eval/demo-preset-compare.ts`);
+	// same capture: the report lines land in presets.md, a failure is tolerated like the old child's
+	// self-caught `.catch(console.error)` (partial output kept, gate continues).
+	const presetLines: string[] = []
+
+	try {
+		await presetCompare({ modelPath: shipModel }, (line) => presetLines.push(line))
+	} catch (error) {
+		console.error(`⚠ preset-compare errored: ${error instanceof Error ? error.message : String(error)}`)
+	}
+	writeFileSync(`${OUT_DIR}/presets.md`, presetLines.map((line) => `${line}\n`).join(""))
 
 	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
 	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer gates). Runs on
@@ -306,7 +353,7 @@ async function main() {
 
 		// set -e: a non-zero arena run aborts the gate before the verdict.
 		if (arena.exitCode !== 0) {
-			process.exit(1)
+			return 1
 		}
 	}
 
@@ -325,7 +372,8 @@ async function main() {
 
 		if (bare.exitCode !== 0) {
 			console.error(`✗ fr.bare_street_intact FAIL (floor ${bareStreetFloor}%) — see ${OUT_DIR}/fr-bare-street.md`)
-			process.exit(1)
+
+			return 1
 		}
 
 		console.log(`✓ fr.bare_street_intact PASS (floor ${bareStreetFloor}%)`)
@@ -336,16 +384,33 @@ async function main() {
 	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta-gate (it catches
 	// INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
 	// on the release path here, NOT Test CI (#582). Only meaningful when the spec declares a conventions
-	// mask; skipped = PASS otherwise. Its exit folds into the final verdict below.
+	// mask; skipped = PASS otherwise. Its status folds into the final verdict below. In-process since the
+	// eval-harness migration; the report lines land in mask-regression.md as the child capture did, and a
+	// throw is recorded there like the old child's stderr stack.
 	let MASK_GATE_STATUS = 0
 
 	if (CONV_MODE) {
 		console.log("== mask-regression gate (#718) ==")
-		const mask = await $({
-			nothrow: true,
-		})`node scripts/eval/mask-regression-gate.ts --model ${shipModel} --tokenizer ${TOK} --model-card ${CARD} --anchor-lookup ${LK} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/mask-regression.json`}`
-		writeFileSync(`${OUT_DIR}/mask-regression.md`, `${mask.stdout}${mask.stderr}`)
-		MASK_GATE_STATUS = mask.exitCode ?? 0
+		const maskLines: string[] = []
+
+		try {
+			const mask = await maskRegressionGate(
+				{
+					model: shipModel,
+					tokenizer: TOK,
+					modelCard: CARD,
+					anchorLookup: String(LK),
+					gazetteerLexicon: GAZ,
+					json: `${OUT_DIR}/mask-regression.json`,
+				},
+				(line) => maskLines.push(line)
+			)
+			MASK_GATE_STATUS = mask.pass ? 0 : 1
+		} catch (error) {
+			maskLines.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
+			MASK_GATE_STATUS = 1
+		}
+		writeFileSync(`${OUT_DIR}/mask-regression.md`, maskLines.map((line) => `${line}\n`).join(""))
 
 		if (MASK_GATE_STATUS === 0) {
 			console.log("✓ mask-regression gate PASS (no tag regresses >2pp under the conventions mask)")
@@ -358,31 +423,24 @@ async function main() {
 		console.log("⚠ mask-regression gate SKIPPED — spec declares no requires_conventions (no mask in the ship config)")
 	}
 
-	// --- collect + verify (node does the parsing; this orchestrates) ------------
+	// --- collect + verify --------------------------------------------------------
 	// Folds BOTH locks: the floor verdict AND the mask-regression gate above. Either miss fails the gate.
-	const verdictArgs = ["--gate", GATE, "--out-dir", OUT_DIR]
+	let VERDICT_STATUS = 0
 
-	if (INT8) {
-		verdictArgs.push("--with-int8")
+	try {
+		const { failed } = assemblePromotionVerdict({ gate: GATE, outDir: OUT_DIR, withInt8: Boolean(INT8) })
+		VERDICT_STATUS = failed ? 1 : 0
+	} catch (error) {
+		console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
+		VERDICT_STATUS = 1
 	}
-	const verdict = await $({
-		nothrow: true,
-	})`node scripts/eval/promotion-gate-verdict.ts ${verdictArgs}`
-
-	if (verdict.stdout) {
-		process.stdout.write(verdict.stdout)
-	}
-
-	if (verdict.stderr) {
-		process.stderr.write(verdict.stderr)
-	}
-	const VERDICT_STATUS = verdict.exitCode ?? 0
 
 	if (VERDICT_STATUS !== 0 || MASK_GATE_STATUS !== 0) {
 		if (MASK_GATE_STATUS !== 0) {
 			console.error(`✗ gate FAILED the mask-regression lock (#718) — see ${OUT_DIR}/mask-regression.md`)
 		}
-		process.exit(1)
+
+		return 1
 	}
 
 	// --- ledger (#885) — the update is automatic, not discipline ------------------
@@ -394,11 +452,11 @@ async function main() {
 
 	console.log(
 		`\nledger (#885): on promote, append this run —\n` +
-			`  node scripts/eval/ledger-append.ts \\\n` +
+			`  node mailwoman/out/cli.js eval ledger-append \\\n` +
 			`    --out-dir ${OUT_DIR} --model-version <npm-semver> \\\n` +
 			`    --run-id ${LABEL.replace(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
 			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${CARD}`
 	)
-}
 
-runIfScript(import.meta, main)
+	return 0
+}

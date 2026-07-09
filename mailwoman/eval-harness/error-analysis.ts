@@ -25,17 +25,15 @@
  *   in-distribution baseline, the #566/#685 trap this very gate exists to prevent. `--no-strict`
  *   warns-and-continues for ad-hoc/legacy (pre-anchor) models instead of failing closed.
  *
- *   Usage: node scripts/eval-error-analysis.ts\
+ *   Usage: mailwoman eval error-analysis\
  *   --golden data/eval/golden/v0.1.2 Grade a candidate: ... --model ./out/v.../model.onnx --tokenizer
  *   <spm> --model-card <json>
  */
 
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { parseArgs as parseNodeArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { runIfScript } from "@mailwoman/core/scripting"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -52,72 +50,20 @@ interface CategoryStats {
 	examples: Array<{ raw: string; detail: string }>
 }
 
-interface Args {
-	goldenDir: string
-	modelPath?: string
-	tokenizerPath?: string
-	modelCardPath?: string
-	postcodeRepair: boolean
-	/** STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. */
-	strict: boolean
-}
-
-function parseArgs(): Args {
-	const out: Partial<Args> = { postcodeRepair: false, strict: true }
-
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
-	const { values } = parseNodeArgs({
-		options: {
-			golden: { type: "string" },
-			model: { type: "string" },
-			"model-card": { type: "string" },
-			"no-strict": { type: "boolean" },
-			"postcode-repair": { type: "boolean" },
-			tokenizer: { type: "string" },
-		},
-		strict: false,
-		allowPositionals: true,
-	})
-
-	if (values["golden"] != null) {
-		out.goldenDir = values["golden"] as string
-	}
-
-	if (values["model"] != null) {
-		out.modelPath = values["model"] as string
-	}
-
-	if (values["tokenizer"] != null) {
-		out.tokenizerPath = values["tokenizer"] as string
-	}
-
-	if (values["model-card"] != null) {
-		out.modelCardPath = values["model-card"] as string
-	}
-
-	if (values["postcode-repair"] != null) {
-		out.postcodeRepair = true
-	}
-
-	if (values["no-strict"] != null) {
-		out.strict = false
-	}
-
-	if (!out.goldenDir) {
-		console.error(
-			"Usage: node scripts/eval-error-analysis.ts --golden <golden-dir> " +
-				"[--model <onnx> --tokenizer <spm> --model-card <json>] [--postcode-repair]"
-		)
-		process.exit(1)
-	}
-
-	// --model requires the tokenizer + card to build a non-default classifier.
-	if (out.modelPath && (!out.tokenizerPath || !out.modelCardPath)) {
-		console.error("--model requires --tokenizer and --model-card")
-		process.exit(1)
-	}
-
-	return out as Args
+/** Options for {@linkcode evalErrorAnalysis}. */
+export interface ErrorAnalysisOptions {
+	/** Golden eval-set dir (`us.jsonl` / `fr.jsonl` / `adversarial.jsonl`). */
+	golden?: string
+	/** Candidate ONNX (requires `tokenizer` + `modelCard`). Omit for the shipped dev weights. */
+	model?: string
+	/** Candidate tokenizer path. */
+	tokenizer?: string
+	/** Candidate model-card path. */
+	modelCard?: string
+	/** Parse with postcode repair enabled. */
+	postcodeRepair?: boolean
+	/** STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true. */
+	strict?: boolean
 }
 
 function loadGolden(dir: string): GoldenEntry[] {
@@ -141,21 +87,43 @@ function loadGolden(dir: string): GoldenEntry[] {
 	return entries
 }
 
-async function main() {
-	const args = parseArgs()
-	const golden = loadGolden(args.goldenDir)
+/**
+ * Run the categorized error analysis. Markdown report on stdout, progress on stderr. Returns the old script's exit
+ * code: 0 = report emitted, 1 = usage error.
+ */
+export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<number> {
+	const postcodeRepair = options.postcodeRepair ?? false
+	const strict = options.strict ?? true
+
+	if (!options.golden) {
+		console.error(
+			"Usage: mailwoman eval error-analysis --golden <golden-dir> " +
+				"[--model <onnx> --tokenizer <spm> --model-card <json>] [--postcode-repair]"
+		)
+
+		return 1
+	}
+
+	// --model requires the tokenizer + card to build a non-default classifier.
+	if (options.model && (!options.tokenizer || !options.modelCard)) {
+		console.error("--model requires --tokenizer and --model-card")
+
+		return 1
+	}
+
+	const golden = loadGolden(options.golden)
 	console.error(`Loaded ${golden.length} golden entries`)
 
 	console.error("Loading model...")
-	const parseOpts = args.postcodeRepair
+	const parseOpts = postcodeRepair
 		? ({ postcodeRepair: true } as Parameters<NeuralAddressClassifier["parse"]>[1])
 		: undefined
 	// Full SHIP-CONFIG via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
 	// conventions channels the model was trained against (per the model-card `requires` block) so a
 	// `--model` candidate is graded in-distribution, the same as the dev-weights default. createScorer
 	// fails closed in strict mode if a declared channel can't actually be fed; `--no-strict` opts out.
-	const resolved = args.modelPath
-		? { modelPath: args.modelPath, tokenizerPath: args.tokenizerPath!, modelCardPath: args.modelCardPath! }
+	const resolved = options.model
+		? { modelPath: options.model, tokenizerPath: options.tokenizer!, modelCardPath: options.modelCard! }
 		: resolveWeights({ locale: "en-us" })
 
 	if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
@@ -164,7 +132,7 @@ async function main() {
 		modelPath: resolved.modelPath,
 		tokenizerPath: resolved.tokenizerPath,
 		modelCardPath: resolved.modelCardPath,
-		strict: args.strict,
+		strict,
 	})
 
 	const missed: CategoryStats = { total: 0, examples: [] }
@@ -173,8 +141,6 @@ async function main() {
 	const boundaryErrors: CategoryStats = { total: 0, examples: [] }
 	let correct = 0
 	let total = 0
-
-	const tagConfusion = new Map<string, Map<string, number>>()
 
 	// Per-tag stats: { tag → { expected_count, correct_count, missed_count, boundary_count, confused_count } }
 	type TagStats = {
@@ -282,7 +248,7 @@ async function main() {
 	console.log("# Error Analysis Report")
 	console.log("")
 	console.log(`**Golden set:** ${golden.length} entries`)
-	console.log(`**Model:** ${args.modelPath ?? "default weights"}${args.postcodeRepair ? " (+postcode-repair)" : ""}`)
+	console.log(`**Model:** ${options.model ?? "default weights"}${postcodeRepair ? " (+postcode-repair)" : ""}`)
 	console.log(`**Time:** ${elapsed}s`)
 	console.log("")
 	console.log("## Summary")
@@ -326,6 +292,6 @@ async function main() {
 		}
 		console.log("")
 	}
-}
 
-runIfScript(import.meta, main)
+	return 0
+}

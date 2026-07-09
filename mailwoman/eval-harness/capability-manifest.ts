@@ -28,7 +28,7 @@
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
- *   Node --experimental-strip-types scripts/eval/gen-capability-manifest.ts\
+ *   Mailwoman eval capability-manifest\
  *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\
@@ -39,7 +39,6 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -47,38 +46,21 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 
-// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		"anchor-lookup": { type: "string" },
-		"gazetteer-lexicon": { type: "string" },
-		model: { type: "string" },
-		"model-card": { type: "string" },
-		tokenizer: { type: "string" },
-		write: { type: "boolean" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	"anchor-lookup"?: string
-	"gazetteer-lexicon"?: string
+/** Options for {@linkcode generateCapabilityManifest}. */
+export interface CapabilityManifestOptions {
+	/** ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`. */
 	model?: string
-	"model-card"?: string
+	/** SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`. */
 	tokenizer?: string
+	/** Model card JSON. Default `neural-weights-en-us/model-card.json`. */
+	modelCard?: string
+	/** Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`. */
+	anchorLookup?: string
+	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
+	gazetteerLexicon?: string
+	/** Surgically insert the `capabilities` block into the model card (else dry run). */
 	write?: boolean
 }
-// -------------------------------------------------------------------------------------------------
-// Args
-// -------------------------------------------------------------------------------------------------
-
-const MODEL = (values["model"] || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))!
-const TOKENIZER = (values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))!
-const MODEL_CARD = (values["model-card"] || "neural-weights-en-us/model-card.json")!
-const ANCHOR_LOOKUP = (values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json"))!
-const GAZETTEER_LEXICON = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
-const WRITE = values["write"] ?? false
 
 // -------------------------------------------------------------------------------------------------
 // Tier + locale matrix
@@ -222,7 +204,15 @@ interface TagCapability {
 
 type Capabilities = Record<string, Record<string, Record<string, TagCapability>>>
 
-async function buildManifest(): Promise<Capabilities> {
+interface ResolvedPaths {
+	model: string
+	tokenizer: string
+	modelCard: string
+	anchorLookup: string
+	gazetteerLexicon: string
+}
+
+async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 	const capabilities: Capabilities = {}
 
 	for (const [tier, tierOverrides] of Object.entries(TIERS)) {
@@ -234,11 +224,11 @@ async function buildManifest(): Promise<Capabilities> {
 
 			// mask-OFF: conventions disabled. createScorer warns (declared-required override) — expected.
 			const offScorer = await createScorer({
-				modelPath: MODEL,
-				tokenizerPath: TOKENIZER,
-				modelCardPath: MODEL_CARD,
-				anchorLookupPath: ANCHOR_LOOKUP,
-				gazetteerLexiconPath: GAZETTEER_LEXICON,
+				modelPath: paths.model,
+				tokenizerPath: paths.tokenizer,
+				modelCardPath: paths.modelCard,
+				anchorLookupPath: paths.anchorLookup,
+				gazetteerLexiconPath: paths.gazetteerLexicon,
 				strict: true,
 				// The generator must construct the scorer WHILE the card's `capabilities` block may not
 				// yet exist; the loader's delta-gate is a no-op until the block is written. After a
@@ -251,11 +241,11 @@ async function buildManifest(): Promise<Capabilities> {
 			// mask-ON: conventions in `auto` mode (reads the model's locale head → applies the detected
 			// system's forbiddenTags). This is the SHIP behavior whose damage we measure.
 			const onScorer = await createScorer({
-				modelPath: MODEL,
-				tokenizerPath: TOKENIZER,
-				modelCardPath: MODEL_CARD,
-				anchorLookupPath: ANCHOR_LOOKUP,
-				gazetteerLexiconPath: GAZETTEER_LEXICON,
+				modelPath: paths.model,
+				tokenizerPath: paths.tokenizer,
+				modelCardPath: paths.modelCard,
+				anchorLookupPath: paths.anchorLookup,
+				gazetteerLexiconPath: paths.gazetteerLexicon,
 				strict: true,
 				overrides: { ...tierOverrides, conventions: "auto" },
 			})
@@ -298,49 +288,61 @@ function rowsHaveTag(rows: Row[], tag: string): boolean {
 }
 
 // -------------------------------------------------------------------------------------------------
-// Main
+// Entry
 // -------------------------------------------------------------------------------------------------
 
-const capabilities = await buildManifest()
-
-console.log("\n--- capabilities block ---")
-console.log(JSON.stringify({ capabilities }, null, "\t"))
-
-if (WRITE) {
-	// Provenance key alongside the tier keys; ignored by readers (`lookupTagCapability` skips it).
-	;(capabilities as Record<string, unknown>).$comment =
-		"Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability " +
-		"manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask " +
-		"OFF; maskOnF1 = the same with mask ON (recorded only for tags some codex forbiddenTags row " +
-		"suppresses — the loader's delta-gate consults only those). createScorer FAILS CLOSED when a " +
-		"conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a " +
-		"real capability). Generated by scripts/eval/gen-capability-manifest.ts against the v1.5.0 int8."
-
-	// SURGICAL insert (not a JSON round-trip): the shipped card hand-formats compact inline objects
-	// (`"anchor": { "required": true }`) that a `JSON.stringify` would expand, spuriously reordering a
-	// shipped artifact. Instead, append ONE new top-level key, byte-preserving everything else. The
-	// card is validated JSON, so its tail is `…\n}\n` (root close); we splice `,\n\t"capabilities":…`
-	// before that final brace, one indent level deep (each block line tab-prefixed).
-	const original = readFileSync(MODEL_CARD, "utf8")
-	const lastBrace = original.lastIndexOf("}")
-
-	if (lastBrace < 0) throw new Error(`model-card has no closing brace: ${MODEL_CARD}`)
-
-	if (JSON.parse(original).capabilities !== undefined) {
-		// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
-		throw new Error(
-			`${MODEL_CARD} already has a \`capabilities\` block — \`git checkout\` it first, then re-run --write ` +
-				`(the surgical insert appends; it does not replace).`
-		)
+/** Measure the per-tier × system × tag capability manifest; optionally patch it into the model card. */
+export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
+	const paths: ResolvedPaths = {
+		model: options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")),
+		tokenizer: options.tokenizer || String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")),
+		modelCard: options.modelCard || "neural-weights-en-us/model-card.json",
+		anchorLookup: options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json")),
+		gazetteerLexicon: options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json",
 	}
-	const block = JSON.stringify(capabilities, null, "\t")
-		.split("\n")
-		.map((line) => "\t" + line)
-		.join("\n")
-	const before = original.slice(0, lastBrace).replace(/\s*$/, "")
-	const after = original.slice(lastBrace) // the final "}\n"
-	writeFileSync(MODEL_CARD, `${before},\n\t"capabilities": ${block.trimStart()}\n${after}`)
-	console.error(`\nSurgically inserted the \`capabilities\` block into ${MODEL_CARD}`)
-} else {
-	console.error("\n(dry run — pass --write to patch the model card)")
+	const WRITE = options.write ?? false
+
+	const capabilities = await buildManifest(paths)
+
+	console.log("\n--- capabilities block ---")
+	console.log(JSON.stringify({ capabilities }, null, "\t"))
+
+	if (WRITE) {
+		// Provenance key alongside the tier keys; ignored by readers (`lookupTagCapability` skips it).
+		;(capabilities as Record<string, unknown>).$comment =
+			"Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability " +
+			"manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask " +
+			"OFF; maskOnF1 = the same with mask ON (recorded only for tags some codex forbiddenTags row " +
+			"suppresses — the loader's delta-gate consults only those). createScorer FAILS CLOSED when a " +
+			"conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a " +
+			"real capability). Generated by `mailwoman eval capability-manifest` against the v1.5.0 int8."
+
+		// SURGICAL insert (not a JSON round-trip): the shipped card hand-formats compact inline objects
+		// (`"anchor": { "required": true }`) that a `JSON.stringify` would expand, spuriously reordering a
+		// shipped artifact. Instead, append ONE new top-level key, byte-preserving everything else. The
+		// card is validated JSON, so its tail is `…\n}\n` (root close); we splice `,\n\t"capabilities":…`
+		// before that final brace, one indent level deep (each block line tab-prefixed).
+		const original = readFileSync(paths.modelCard, "utf8")
+		const lastBrace = original.lastIndexOf("}")
+
+		if (lastBrace < 0) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
+
+		if (JSON.parse(original).capabilities !== undefined) {
+			// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
+			throw new Error(
+				`${paths.modelCard} already has a \`capabilities\` block — \`git checkout\` it first, then re-run --write ` +
+					`(the surgical insert appends; it does not replace).`
+			)
+		}
+		const block = JSON.stringify(capabilities, null, "\t")
+			.split("\n")
+			.map((line) => "\t" + line)
+			.join("\n")
+		const before = original.slice(0, lastBrace).replace(/\s*$/, "")
+		const after = original.slice(lastBrace) // the final "}\n"
+		writeFileSync(paths.modelCard, `${before},\n\t"capabilities": ${block.trimStart()}\n${after}`)
+		console.error(`\nSurgically inserted the \`capabilities\` block into ${paths.modelCard}`)
+	} else {
+		console.error("\n(dry run — pass --write to patch the model card)")
+	}
 }

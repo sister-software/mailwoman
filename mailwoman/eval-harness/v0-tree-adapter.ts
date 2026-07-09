@@ -23,10 +23,10 @@
  *   (v0-via-adapter >= 85% of v0 standalone component accuracy on canonical) catches an adapter
  *   that drops too much.
  *
- *   NOTE(phase5a): `mailwoman/eval-harness/v0-tree-adapter.ts` is a COPY of this file, taken when
- *   `oa-resolver-eval` migrated into the eval-harness. This copy stays only for the probes pending
- *   triage (`resolver-eval.ts`, `fr-admin-split-selfvalidation.ts`); delete it with them, or
- *   repoint survivors at the eval-harness copy.
+ *   NOTE(phase5a): this is a COPY of `scripts/eval/v0-tree-adapter.ts`, taken when
+ *   `oa-resolver-eval` migrated into the eval-harness. The original stays behind because two probes
+ *   pending triage (`resolver-eval.ts`, `fr-admin-split-selfvalidation.ts`) still import it; the
+ *   probe triage should delete that copy and repoint any survivor here.
  */
 
 import { buildAddressTree, type AddressTree, type DecoderToken } from "@mailwoman/core/decoder"

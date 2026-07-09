@@ -64,9 +64,9 @@ Run for _every_ candidate, regardless of what you changed (this is what
 | German native order | `scripts/eval/de-order-eval.ts`                                                    | NO-REGRESSION                           |
 | Unit retention      | unit-real designators eval                                                         | ≥ 88                                    |
 | Affix split         | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold gated numbers                      |
-| Demo smoke          | `eval-model` skill / `demo-preset-compare.ts`                                      | presets stable                          |
+| Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                               | presets stable                          |
 | Honest geography    | `scripts/eval/honest-eval.ts`                                                      | region-match + coord p50/p90 + PIP hold |
-| Input robustness    | `scripts/eval/gauntlet/metamorphic.ts` (INV/DIR)                                   | no new drift; xfails tracked            |
+| Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                            | no new drift; xfails tracked            |
 
 The input-robustness gate is the metamorphic layer of the Gauntlet — label-preserving
 perturbations that must not move the assembled coordinate. See
@@ -81,7 +81,7 @@ and produces numbers that look real (the zero-fill trap; it has bitten the count
 first affix audit).
 
 Plus your tag's pre-registered real-OOD gate. Pass → append the run to
-`evals/scores-by-version.json` via `scripts/eval/ledger-append.ts` (the promotion gate prints the
+`evals/scores-by-version.json` via `mailwoman eval ledger-append` (the promotion gate prints the
 pre-filled command on every PASS — fill in the npm semver at promote time) and write the dated
 report in `docs/articles/evals/`.
 

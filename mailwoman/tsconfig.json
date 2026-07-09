@@ -21,6 +21,8 @@
 		{ "path": "../query-shape" },
 		{ "path": "../registry" },
 		{ "path": "../resolver-wof-sqlite" },
-		{ "path": "../ban" }
+		{ "path": "../ban" },
+		{ "path": "../spatial" },
+		{ "path": "../osm" }
 	]
 }

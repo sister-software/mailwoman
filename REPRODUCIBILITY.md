@@ -35,7 +35,7 @@ modal volume get mailwoman-training output-v101-runB-s42/model.onnx ./model-fp32
 corpus-python/.venv/bin/python -m mailwoman_train.cli quantize --input ./model-fp32.onnx --output ./model-int8.onnx
 
 # 4. Gate (one command — the gate spec is the contract)
-node scripts/eval/promotion-gate.ts --model ./model-fp32.onnx --int8 ./model-int8.onnx --gate scripts/eval/gates/v4.2.0-ship.json
+node mailwoman/out/cli.js eval gate --model ./model-fp32.onnx --int8 ./model-int8.onnx --gate mailwoman/eval-harness/gates/v4.2.0-ship.json
 ```
 
 Expected: int8 md5 `9eb4a99f6db06cccff57939f657c09f9` (v4.2.0's shipped bytes), gate PASS

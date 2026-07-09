@@ -12,14 +12,13 @@
  *   fdic-us.csv, build-on-copy. The pool is the FAST draw — holdout.ts reservoir-samples it in milliseconds
  *   instead of streaming the 5 GB BAN file. Re-run to refresh (FDIC re-indexes ~monthly).
  *
- *   Run: node scripts/eval/gauntlet/build-fdic-holdout.ts
+ *   Run: mailwoman eval gauntlet-build fdic-holdout
  */
 
 import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
 
-import { mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { mailwomanDataRoot } from "../../resolver-backend.ts"
 
-const OUT = `${mailwomanDataRoot()}/corpus/staging/fdic-us.csv`
 const API = "https://banks.data.fdic.gov/api/locations"
 const PAGE = 10_000
 const FIELDS = "ADDRESS,CITY,STALP,ZIP,LATITUDE,LONGITUDE"
@@ -48,56 +47,60 @@ async function fetchPage(offset: number): Promise<Loc[]> {
 	return (body.data ?? []).map((d) => d.data)
 }
 
-const tmp = `${OUT}.tmp-${process.pid}`
+/** Fetch the FDIC BankFind branch pool and swap it into the staging path (build-on-copy). */
+export async function buildFDICHoldout(): Promise<void> {
+	const OUT = `${mailwomanDataRoot()}/corpus/staging/fdic-us.csv`
+	const tmp = `${OUT}.tmp-${process.pid}`
 
-if (existsSync(tmp)) {
-	rmSync(tmp)
-}
-const sink = createWriteStream(tmp, { encoding: "utf8" })
-sink.write("address;city;state;zip;lat;lon\n")
-
-let total = 0
-let written = 0
-let dropped = 0
-
-for (let offset = 0; ; offset += PAGE) {
-	const rows = await fetchPage(offset)
-
-	if (rows.length === 0) break
-	total += rows.length
-
-	for (const r of rows) {
-		const address = (r.ADDRESS ?? "").trim()
-		const city = (r.CITY ?? "").trim()
-		const state = (r.STALP ?? "").trim()
-		const zip = (r.ZIP ?? "").trim()
-		const lat = Number(r.LATITUDE)
-		const lon = Number(r.LONGITUDE)
-
-		if (!address || !city || !state || !plausibleUs(lat, lon)) {
-			dropped++
-			continue
-		}
-		// Semicolons can't appear in a US street address/city; no escaping needed.
-		sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
-		written++
+	if (existsSync(tmp)) {
+		rmSync(tmp)
 	}
+	const sink = createWriteStream(tmp, { encoding: "utf8" })
+	sink.write("address;city;state;zip;lat;lon\n")
+
+	let total = 0
+	let written = 0
+	let dropped = 0
+
+	for (let offset = 0; ; offset += PAGE) {
+		const rows = await fetchPage(offset)
+
+		if (rows.length === 0) break
+		total += rows.length
+
+		for (const r of rows) {
+			const address = (r.ADDRESS ?? "").trim()
+			const city = (r.CITY ?? "").trim()
+			const state = (r.STALP ?? "").trim()
+			const zip = (r.ZIP ?? "").trim()
+			const lat = Number(r.LATITUDE)
+			const lon = Number(r.LONGITUDE)
+
+			if (!address || !city || !state || !plausibleUs(lat, lon)) {
+				dropped++
+				continue
+			}
+			// Semicolons can't appear in a US street address/city; no escaping needed.
+			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
+			written++
+		}
+		console.error(
+			`[fdic] offset ${offset.toLocaleString()} → ${written.toLocaleString()} written, ${dropped.toLocaleString()} dropped`
+		)
+	}
+
+	await new Promise<void>((resolvePromise) => sink.end(resolvePromise))
+
+	if (existsSync(OUT)) {
+		renameSync(OUT, `${OUT}.prev`)
+	}
+	renameSync(tmp, OUT)
+
+	if (existsSync(`${OUT}.prev`)) {
+		rmSync(`${OUT}.prev`)
+	}
+
 	console.error(
-		`[fdic] offset ${offset.toLocaleString()} → ${written.toLocaleString()} written, ${dropped.toLocaleString()} dropped`
+		`[fdic] DONE ${OUT} — ${written.toLocaleString()} of ${total.toLocaleString()} branches (${dropped.toLocaleString()} dropped)`
 	)
 }
-
-await new Promise<void>((resolvePromise) => sink.end(resolvePromise))
-
-if (existsSync(OUT)) {
-	renameSync(OUT, `${OUT}.prev`)
-}
-renameSync(tmp, OUT)
-
-if (existsSync(`${OUT}.prev`)) {
-	rmSync(`${OUT}.prev`)
-}
-
-console.error(
-	`[fdic] DONE ${OUT} — ${written.toLocaleString()} of ${total.toLocaleString()} branches (${dropped.toLocaleString()} dropped)`
-)

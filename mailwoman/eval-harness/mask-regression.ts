@@ -22,11 +22,10 @@
  *
  *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE GATE — run with weights on disk
  *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
- *   Hook it into the release path (scripts/eval/promotion-gate.ts / the publish flow), NOT into
- *   Test CI.
+ *   Hook it into the release path (`mailwoman eval gate` / the publish flow), NOT into Test CI.
  *
- *   Mechanics: reuses the `gen-capability-manifest.ts` scoring machinery verbatim — `createScorer`
- *   (so the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
+ *   Mechanics: reuses the `capability-manifest.ts` scoring machinery verbatim — `createScorer` (so
+ *   the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
  *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't
  *   see it). The DIFFERENCE from the manifest generator: that one records `maskOnF1` only for
@@ -35,20 +34,18 @@
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
- *   node scripts/eval/mask-regression-gate.ts\
- *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
- *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
- *   --model-card neural-weights-en-us/model-card.json
+ *   `mailwoman eval mask-regression --model <int8.onnx> --tokenizer <spm> --model-card <json>`
  *
- *   Exit 0 = no tag regresses more than the threshold under the mask (PASS). Exit 1 = at least one
- *   tag regresses (the offending `(locale, tag, maskOff, maskOn, delta)` rows are printed).
+ *   PASS = no tag regresses more than the threshold under the mask; FAIL = at least one tag
+ *   regresses (the offending `(locale, tag, maskOff, maskOn, delta)` rows are printed).
  *
- *   `--threshold <pp>` overrides the default 0.02 (2pp). `--json <path>` writes the full per-tag
- *   delta table (every locale × tag, not just violations) for the release record.
+ *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
+ *   locale × tag, not just violations) for the release record. All narration goes through the
+ *   `report` sink (stderr by default) — the promotion gate captures it into
+ *   `<out-dir>/mask-regression.md`.
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -56,50 +53,30 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 
-// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		"anchor-lookup": { type: "string" },
-		"gazetteer-lexicon": { type: "string" },
-		json: { type: "string" },
-		model: { type: "string" },
-		"model-card": { type: "string" },
-		threshold: { type: "string" },
-		tokenizer: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	"anchor-lookup"?: string
-	"gazetteer-lexicon"?: string
-	json?: string
+/** Options for {@linkcode maskRegressionGate}. */
+export interface MaskRegressionOptions {
+	/** ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`. */
 	model?: string
-	"model-card"?: string
-	threshold?: string
+	/** SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`. */
 	tokenizer?: string
+	/** Model card JSON. Default `neural-weights-en-us/model-card.json`. */
+	modelCard?: string
+	/** Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`. */
+	anchorLookup?: string
+	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
+	gazetteerLexicon?: string
+	/**
+	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time
+	 * delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of
+	 * its mask-off F1 is considered unharmed by the mask. Default 0.02.
+	 */
+	threshold?: number
+	/** Write the full per-tag delta table JSON here. */
+	json?: string
 }
-// -------------------------------------------------------------------------------------------------
-// Args
-// -------------------------------------------------------------------------------------------------
-
-const MODEL = (values["model"] || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))!
-const TOKENIZER = (values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))!
-const MODEL_CARD = (values["model-card"] || "neural-weights-en-us/model-card.json")!
-const ANCHOR_LOOKUP = (values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json"))!
-const GAZETTEER_LEXICON = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
-const JSON_OUT = values["json"] || ""
-
-/**
- * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time
- * delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of its
- * mask-off F1 is considered unharmed by the mask.
- */
-const THRESHOLD = Number(values["threshold"] || "0.02")
 
 // -------------------------------------------------------------------------------------------------
-// Locale matrix (mirrors gen-capability-manifest.ts)
+// Locale matrix (mirrors capability-manifest.ts)
 // -------------------------------------------------------------------------------------------------
 
 interface LocaleEvalSpec {
@@ -119,7 +96,7 @@ const LOCALES: LocaleEvalSpec[] = [
 ]
 
 // The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts /
-// gen-capability-manifest.ts). Every tag here gets a mask-off↔mask-on delta computed.
+// capability-manifest.ts). Every tag here gets a mask-off↔mask-on delta computed.
 const TAGS = [
 	"street_prefix",
 	"street",
@@ -140,7 +117,7 @@ const TAGS = [
 ] as const
 
 // -------------------------------------------------------------------------------------------------
-// Scoring (unfolded exact-match per-tag F1 — score-affix.ts / gen-capability-manifest.ts machinery)
+// Scoring (unfolded exact-match per-tag F1 — score-affix.ts / capability-manifest.ts machinery)
 // -------------------------------------------------------------------------------------------------
 
 interface Row {
@@ -229,21 +206,33 @@ interface Delta {
 	inScope: boolean
 }
 
-async function run(): Promise<number> {
+/** Run the mask-off vs mask-on per-tag battery. Returns `pass` (no tag regresses beyond the threshold). */
+export async function maskRegressionGate(
+	options: MaskRegressionOptions = {},
+	report: (line: string) => void = console.error
+): Promise<{ pass: boolean; violations: Delta[] }> {
+	const MODEL = options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
+	const TOKENIZER = options.tokenizer || String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const MODEL_CARD = options.modelCard || "neural-weights-en-us/model-card.json"
+	const ANCHOR_LOOKUP = options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json"))
+	const GAZETTEER_LEXICON = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
+	const JSON_OUT = options.json || ""
+	const THRESHOLD = options.threshold ?? 0.02
+
 	for (const p of [MODEL, TOKENIZER, MODEL_CARD]) {
 		if (!existsSync(p)) throw new Error(`required artifact not found: ${p}`)
 	}
 
-	console.error(`mask-regression-gate (#718): threshold ${(THRESHOLD * 100).toFixed(1)}pp`)
-	console.error(`  model      ${MODEL}`)
-	console.error(`  tokenizer  ${TOKENIZER}`)
-	console.error(`  model-card ${MODEL_CARD}`)
+	report(`mask-regression-gate (#718): threshold ${(THRESHOLD * 100).toFixed(1)}pp`)
+	report(`  model      ${MODEL}`)
+	report(`  tokenizer  ${TOKENIZER}`)
+	report(`  model-card ${MODEL_CARD}`)
 
 	const deltas: Delta[] = []
 
 	for (const spec of LOCALES) {
 		const rows = loadRows(spec.files)
-		console.error(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
+		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
 		// Full SHIP-CONFIG otherwise (anchor-on + gazetteer-on — createScorer's defaults). Only the
 		// conventions channel toggles. `strict: true` fails closed if a declared channel can't be fed,
@@ -281,13 +270,13 @@ async function run(): Promise<number> {
 	}
 
 	// --- report the full per-tag delta table (every in-scope tag) ---------------------------------
-	console.error(`\n--- per-tag mask-off vs mask-on F1 (in-scope tags) ---`)
-	console.error(`  locale  tag                    maskOff   maskOn     Δpp`)
+	report(`\n--- per-tag mask-off vs mask-on F1 (in-scope tags) ---`)
+	report(`  locale  tag                    maskOff   maskOn     Δpp`)
 
 	for (const d of deltas) {
 		if (!d.inScope) continue
 		const flag = d.delta > THRESHOLD * 100 ? "  ✗ REGRESSION" : ""
-		console.error(
+		report(
 			`  ${d.locale.padEnd(6)}  ${d.tag.padEnd(20)}  ${String(d.maskOff).padStart(7)}  ${String(d.maskOn).padStart(7)}  ${(d.delta >= 0 ? "+" : "") + d.delta.toFixed(1).padStart(5)}${flag}`
 		)
 	}
@@ -315,33 +304,31 @@ async function run(): Promise<number> {
 				"\t"
 			)
 		)
-		console.error(`\nWrote per-tag delta table → ${JSON_OUT}`)
+		report(`\nWrote per-tag delta table → ${JSON_OUT}`)
 	}
 
 	if (violations.length > 0) {
-		console.error(
+		report(
 			`\n✗ FAIL — ${violations.length} tag(s) regress more than ${thresholdPp.toFixed(1)}pp under the conventions mask:`
 		)
 
 		for (const v of violations) {
-			console.error(
+			report(
 				`  (${v.locale}, ${v.tag}): maskOff ${v.maskOff} → maskOn ${v.maskOn}  Δ=${v.delta.toFixed(1)}pp > ${thresholdPp.toFixed(1)}pp`
 			)
 		}
-		console.error(
+		report(
 			`\nThe conventions mask provably harms a tag the model emits. Either narrow the codex ` +
 				`forbiddenTags for the offending locale, or re-certify and prove the mask is benign.`
 		)
 
-		return 1
+		return { pass: false, violations }
 	}
 
-	console.error(
+	report(
 		`\n✓ PASS — no tag regresses more than ${thresholdPp.toFixed(1)}pp under the conventions mask ` +
 			`(${LOCALES.length} locale(s), ${TAGS.length} tags each).`
 	)
 
-	return 0
+	return { pass: true, violations }
 }
-
-process.exit(await run())
