@@ -169,6 +169,7 @@
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"chalk": "^5.6.2",
 		"change-case": "^5.4.4",
 		"d3-scale-chromatic": "^3.1.0",

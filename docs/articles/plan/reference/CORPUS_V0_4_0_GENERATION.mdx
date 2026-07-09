@@ -248,7 +248,7 @@ rows fit comfortably.
 ### What Thread B2 adds
 
 1. Runs the transliteration generator end-to-end against the full seed pool.
-2. New [`build-transliteration-shard.ts`](../../../../corpus/scripts/build-transliteration-shard.ts)
+2. New `build-transliteration-shard.ts` (now `corpus/src/tools/shard-translit.ts`)
    mirroring `build-kryptonite-shard.ts` — buckets canonical rows by `source` and emits
    one parquet shard per script (`train/part-translit-<slug>.parquet`).
 3. Composes the new MANIFEST as `(v0.3.0 base shards) + (Thread B kryptonite shard) +

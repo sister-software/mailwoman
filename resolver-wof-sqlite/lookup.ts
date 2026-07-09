@@ -77,7 +77,7 @@ export interface WOFSqlitePlaceLookupOpts {
 	 * errors loudly if it doesn't.
 	 *
 	 * With multi-shard, `buildFTS: true` builds the index on the **main** shard only. Other shards must be pre-built via
-	 * `mailwoman-wof-build-fts` — operator script for predictable cost.
+	 * `mailwoman gazetteer build fts` — operator script for predictable cost.
 	 */
 	buildFTS?: boolean
 	/**
@@ -1419,7 +1419,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	#assertFTSExists(): void {
 		if (!placeSearchFTSExists(this.#db)) {
 			throw new Error(
-				"WOFSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman-wof-build-fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
+				"WOFSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman gazetteer build fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
 			)
 		}
 	}

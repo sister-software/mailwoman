@@ -61,8 +61,8 @@ function resolveAdminDBPath(options: zod.infer<typeof OptionsSchema>): string {
 	if (!path) {
 		throw new Error(
 			"reverse needs an admin DB path. Set $MAILWOMAN_WOF_ADMIN_DB or pass --admin-db <path>. " +
-				"Build one with `mailwoman-wof-build-fts <path-to-wof.db>` after building the WOF SQLite " +
-				"distribution with `mailwoman-wof-build-slim`."
+				"Build one with `mailwoman gazetteer build fts <path-to-wof.db>` after building the WOF SQLite " +
+				"distribution with `mailwoman gazetteer build admin`."
 		)
 	}
 

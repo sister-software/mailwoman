@@ -4971,11 +4971,6 @@ __metadata:
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     kysely: "npm:^0.29.2"
-  bin:
-    mailwoman-wof-build-candidate: ./out/build-candidate-cli.js
-    mailwoman-wof-build-coincident-roles: ./out/build-coincident-roles-cli.js
-    mailwoman-wof-build-fts: ./out/build-fts-cli.js
-    mailwoman-wof-build-slim: ./out/build-slim-cli.js
   languageName: unknown
   linkType: soft
 
@@ -16797,6 +16792,7 @@ __metadata:
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"

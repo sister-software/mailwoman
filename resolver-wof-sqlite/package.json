@@ -8,12 +8,6 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "resolver-wof-sqlite"
 	},
-	"bin": {
-		"mailwoman-wof-build-candidate": "./out/build-candidate-cli.js",
-		"mailwoman-wof-build-coincident-roles": "./out/build-coincident-roles-cli.js",
-		"mailwoman-wof-build-fts": "./out/build-fts-cli.js",
-		"mailwoman-wof-build-slim": "./out/build-slim-cli.js"
-	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",

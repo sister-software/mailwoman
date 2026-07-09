@@ -272,7 +272,7 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 		throw new Error(
 			"--resolve needs a WOF SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Download from https://data.geocode.earth/wof/dist/sqlite/ and pre-build the FTS5 index " +
-				"with `npx mailwoman-wof-build-fts <path>`."
+				"with `mailwoman gazetteer build fts <path>`."
 		)
 	}
 
