@@ -1407,6 +1407,88 @@ def mean_init_nsplice():
 
 
 @app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v241_fr_nsplice():
+    """#444 — stage the FR-diacritic init_from FINE-TUNE (the #1047 falsification's principled fix).
+    Pulls the v0.8.0-fr-nsplice tokenizer (v0.7.1's 63913 + 2406 FR diacritic pieces from OA-FR street/
+    city text; md5 04995524…, #900 overlap gate PASS, US byte-identical) + refreshes the training code/
+    config (v2.4.1-fr-nsplice-ft.yaml). The v230-nl-postcode (v5.4.0) step-005000 base checkpoint, the
+    v0.10.1-nl-postcode corpus, and the v0.7.1-nsplice base tokenizer are already on the volume from the
+    v5.4.0 chain — not re-synced. Prints a container-side isfile verify block AFTER vol.commit() (the
+    `modal volume put` blind-spot doesn't apply here — writes go through container rclone + commit)."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.8.0-fr-nsplice tokenizer + code/config from R2...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/models/tokenizer/v0.8.0-fr-nsplice/ {VOL_MOUNT}/models/tokenizer/v0.8.0-fr-nsplice/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+    for check, path in [
+        ("v2.4.1 config", f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.4.1-fr-nsplice-ft.yaml"),
+        ("fr-nsplice tokenizer", f"{VOL_MOUNT}/models/tokenizer/v0.8.0-fr-nsplice/tokenizer.model"),
+        ("v0.7.1 base tokenizer", f"{VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/tokenizer.model"),
+        (
+            "v230 base ckpt",
+            f"{VOL_MOUNT}/output-v230-nl-postcode-full-s42/checkpoints/step-005000/pytorch_model.bin",
+        ),
+        (
+            "corpus train dir",
+            f"{VOL_MOUNT}/corpus/versioned/v0.10.1-nl-postcode/corpus-v0.10.1-nl-postcode/train",
+        ),
+    ]:
+        ok = os.path.isfile(path) or os.path.isdir(path)
+        print(f"  {check} present:", ok)
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=1200,
+)
+def mean_init_fr_nsplice():
+    """#444: expand the shipped v230-nl-postcode (v5.4.0) step-005000 checkpoint's token_embeddings to
+    the v0.8.0-fr-nsplice vocab (FVT mean-init — the pytorch-checkpoint twin of the onnx-mean-init that
+    produced the staged v240 candidate; identical FVT math). Writes /data/models/fr-nsplice-expanded,
+    the init_from base for v2.4.1-fr-nsplice-ft. Prints old→new vocab (expect 63913 → 66319) and a
+    container-side isfile verify of the written checkpoint AFTER vol.commit()."""
+    import sys
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from pathlib import Path
+
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/fr-nsplice-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v230-nl-postcode-full-s42/checkpoints/step-005000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.8.0-fr-nsplice/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
     volumes={VOL_MOUNT: vol},
     image=training_image,
     timeout=600,
