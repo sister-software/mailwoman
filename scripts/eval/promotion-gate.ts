@@ -46,7 +46,8 @@ import { parseArgs } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { childEnv, dataRootPath } from "@mailwoman/core/utils"
+import { childEnv } from "@mailwoman/core/scripting/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { $ } from "zx"
 
 interface GateSpec {

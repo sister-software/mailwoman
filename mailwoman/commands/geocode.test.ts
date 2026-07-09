@@ -25,7 +25,8 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { childEnv, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { childEnv } from "@mailwoman/core/scripting/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 // ---------------------------------------------------------------------------

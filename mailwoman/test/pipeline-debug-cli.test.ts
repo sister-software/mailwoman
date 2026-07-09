@@ -15,7 +15,8 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
-import { childEnv, repoRootPath } from "@mailwoman/core/utils"
+import { childEnv } from "@mailwoman/core/scripting/utils"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)

@@ -36,9 +36,9 @@ Everything else lives where it belongs: gazetteer builders → `mailwoman/gazett
 ## Zero raw `process.env` / `process.argv` (enforced)
 
 The custom `sister-software/no-process-globals` oxlint rule ERRORS on any direct
-`process.env`/`process.argv` access; the blessed sites (`core/env/`, `core/utils/scripting.ts`)
+`process.env`/`process.argv` access; the blessed sites (`core/env/`, `core/scripting/utils/`)
 carry explicit `oxlint-disable-next-line` comments. It runs in `yarn lint`, the pre-commit hook,
 and the Test workflow. Use `$public`/`$private` for config, `node:util` `parseArgs` for arguments
 (its default is already `process.argv.slice(2)` — never pass `args:` yourself),
-`cliArguments()`/`childEnv()`/`scriptEntryPath()`/`runIfScript` from `@mailwoman/core/utils` for the
-edge cases, and `vi.stubEnv` in tests.
+`cliArguments()`/`childEnv()`/`scriptEntryPath()` from `@mailwoman/core/scripting/utils` (and
+`runIfScript` from `@mailwoman/core/scripting`) for the edge cases, and `vi.stubEnv` in tests.
