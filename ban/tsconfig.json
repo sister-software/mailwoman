@@ -1,0 +1,14 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"emitDeclarationOnly": false,
+		"allowImportingTsExtensions": false
+	},
+	"exclude": ["./out/**/*"],
+	"references": [
+		// ---
+		{ "path": "../core" },
+		{ "path": "../resolver-wof-sqlite" }
+	]
+}

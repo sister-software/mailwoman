@@ -10,6 +10,12 @@ description: A Photon-compatible autocomplete API without the Elasticsearch clus
 also an Elasticsearch cluster you feed a Photon import before it answers anything. Mailwoman speaks the
 same `/api` contract from a SQLite file, so your autocomplete keeps working without the cluster.
 
+**Try it first.** We host a live instance at [photon.sister.software](https://photon.sister.software) —
+nothing to install, no import to wait on. Open
+[`/api?q=berlin&limit=3`](https://photon.sister.software/api?q=berlin&limit=3) in a browser (or point your
+existing Photon client at the host) and read the GeoJSON that comes back. When it looks right, the one
+command below runs the same thing on your own machine.
+
 ## One command
 
 ```bash

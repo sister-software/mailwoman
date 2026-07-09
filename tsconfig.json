@@ -24,6 +24,7 @@
 		{ "path": "./spatial" },
 		{ "path": "./tiger" },
 		{ "path": "./osm" },
+		{ "path": "./ban" },
 		{ "path": "./cartographer" },
 		{ "path": "./codex" },
 		{ "path": "./classifiers" },

@@ -8,6 +8,7 @@
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../ban" },
 		{ "path": "../annotations" },
 		{ "path": "../codex" },
 		{ "path": "../spatial" },

@@ -27,6 +27,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
+import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
@@ -93,7 +94,10 @@ export type ShardResolver = (stateSlug: string | null) => StateShards
 
 /** The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it). */
 export interface GeocodeClassifier {
-	parse(text: string, opts?: { postcodeRepair?: boolean; normalizeCase?: boolean }): Promise<AddressTree>
+	parse(
+		text: string,
+		opts?: { postcodeRepair?: boolean; normalizeCase?: boolean; queryShape?: QueryShape }
+	): Promise<AddressTree>
 }
 
 export interface GeocodeDeps {
@@ -102,9 +106,18 @@ export interface GeocodeDeps {
 	/** Per-state shard resolver. Omit for admin-only geocoding. */
 	shards?: ShardResolver
 	/**
+	 * Authoritative national open-register rooftop shards keyed by ISO-3166 alpha-2 country (#1012) — the government
+	 * address registers (BAN-FR today, 26M points). Consulted ONLY when no US per-state situs shard matched (a non-US
+	 * parse), and AHEAD of {@link osmShards}: a national register is denser + coordinate-authoritative, so it outranks the
+	 * community OSM fallback. Inject from `@mailwoman/ban`'s `BANShardProvider`; absent = no national tier. Licence
+	 * Ouverte/Etalab (permissive) — see `ban/README.md`. The shape generalises to other national registers.
+	 */
+	nationalShards?: (country: string) => StateShards
+	/**
 	 * OSM rooftop shards keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
-	 * ONLY when no US per-state situs shard matched (a non-US parse), so the US path is untouched. Inject from
-	 * `@mailwoman/osm`'s `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
+	 * ONLY when no US per-state situs shard matched (a non-US parse) AND no {@link nationalShards} register covered the
+	 * country, so the US path is untouched and BAN wins where it exists. Inject from `@mailwoman/osm`'s
+	 * `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
 	 */
 	osmShards?: (country: string) => StateShards
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
@@ -398,8 +411,23 @@ export async function parseForGeocode(
 	const parseInput =
 		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
 
+	// #981: apply the query-shape emission prior the runtime pipeline applies (core/pipeline/runtime-pipeline.ts:336
+	// `computeQueryShape` → `safeClassify` → parse with `queryShape`). Without it the geocode path — the drop-in
+	// servers (nominatim/photon `/api`) + the geocode CLI — diverged from the pipeline: a detected known-format span
+	// (`nl_postcode` → `B-postcode`, …) or a US region abbreviation never biased the emissions here. Computed on
+	// `parseInput` (the exact text handed to the model), matching the pipeline (which computes it on the normalized
+	// text, before the classifier's internal case-normalization). It is a NO-OP whenever the shape carries no known
+	// format and no region abbreviation (the bare `street, city` class) — `buildEmissionPriors` returns an all-zeros
+	// matrix — so both bare-form and well-formed inputs are byte-stable; it earns its keep only on the ambiguous
+	// digit-span / region-abbrev cases the model isn't already confident about.
+	const queryShape = computeQueryShape(parseInput)
+
 	return recognizeUSRegions(
-		await deps.classifier.parse(parseInput, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
+		await deps.classifier.parse(parseInput, {
+			postcodeRepair: true,
+			normalizeCase: deps.normalizeCase ?? true,
+			queryShape,
+		})
 	)
 }
 
@@ -498,9 +526,25 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		}
 	}
 
-	// OSM international rooftop tier (#247): only when no US situs shard matched (a non-US parse). An explicit
-	// defaultCountry wins; otherwise the coarse placer's country. Bbox fall-through is ON for OSM — its points
-	// often carry no postcode/locality tag, so the resolved locality's box scopes the (street, number) probe.
+	// National open-register rooftop tier (#1012): a non-US parse first consults an authoritative government
+	// address register (BAN-FR today) AHEAD of OSM — it's denser + coordinate-authoritative. BAN rows carry
+	// their own postcode + commune, so the scoped (postcode → locality) probes suffice; no bbox fall-through.
+	if (!addressPoints) {
+		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
+
+		if (country && country !== "us") {
+			const national = deps.nationalShards?.(country)
+
+			if (national?.addressPoints) {
+				addressPoints = national.addressPoints
+			}
+		}
+	}
+
+	// OSM international rooftop tier (#247): the community fallback, only when neither a US situs shard nor a
+	// national register (above) covered the country. An explicit defaultCountry wins; otherwise the coarse
+	// placer's country. Bbox fall-through is ON for OSM — its points often carry no postcode/locality tag, so
+	// the resolved locality's box scopes the (street, number) probe.
 	if (!addressPoints) {
 		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
 
