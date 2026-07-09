@@ -29,23 +29,25 @@
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\
  *   --set-default
- *
- *   DELIBERATE hand-parse: generic --kebab-key → camelCase option derivation — node:util parseArgs cannot express this shape.
  */
 
 import { spawnSync } from "node:child_process"
 import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { resolve } from "node:path"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { childEnv, cliArguments } from "@mailwoman/core/scripting/utils"
+import { childEnv } from "@mailwoman/core/scripting/utils"
 
-const REQUIRED_FILES = [
-	{ flag: "--model", remoteName: "model.onnx", description: "ONNX classifier" },
-	{ flag: "--tokenizer", remoteName: "tokenizer.model", description: "SentencePiece tokenizer" },
-	{ flag: "--model-card", remoteName: "model-card.json", description: "Model card JSON" },
-	{ flag: "--fst", remoteName: "fst-en-US.bin", description: "FST gazetteer (filename varies by locale)" },
+/** The parseArgs option names of the required per-release artifacts. */
+type RequiredFileOption = "model" | "tokenizer" | "model-card" | "fst"
+
+const REQUIRED_FILES: Array<{ option: RequiredFileOption; remoteName: string; description: string }> = [
+	{ option: "model", remoteName: "model.onnx", description: "ONNX classifier" },
+	{ option: "tokenizer", remoteName: "tokenizer.model", description: "SentencePiece tokenizer" },
+	{ option: "model-card", remoteName: "model-card.json", description: "Model card JSON" },
+	{ option: "fst", remoteName: "fst-en-US.bin", description: "FST gazetteer (filename varies by locale)" },
 	// The slim wof-hot.db was RETIRED 2026-06-20: the demo's admin tier now byte-range-resolves
 	// against the global candidate table, hosted version-independently at
 	// mailwoman/gazetteer/<ver>/candidate.db (NOT a per-release asset — it's model-independent). See
@@ -72,41 +74,30 @@ async function servedOnDemoPath(_name: string, _locale: string, _version: string
 }
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
-/**
- * Parsed CLI flags. The known flags are string-valued; `setDefault` is the only boolean. The index signature carries
- * the dynamically-keyed reads (`args[flagKey]` from REQUIRED_FILES).
- */
-interface ParsedArgs {
-	setDefault: boolean
-	version?: string
-	locale?: string
-	label?: string
-	description?: string
-	model?: string
-	modelSize?: string
-	steps?: string
-	postcodes?: string
-	gazetteerLexicon?: string
-	polygons?: string
-	[flag: string]: string | boolean | undefined
-}
+function parseCLIArgs() {
+	const { values } = parseArgs({
+		options: {
+			version: { type: "string" },
+			locale: { type: "string" },
+			label: { type: "string" },
+			description: { type: "string" },
+			model: { type: "string" },
+			tokenizer: { type: "string" },
+			"model-card": { type: "string" },
+			fst: { type: "string" },
+			"model-size": { type: "string" },
+			steps: { type: "string" },
+			postcodes: { type: "string" },
+			"gazetteer-lexicon": { type: "string" },
+			polygons: { type: "string" },
+			"set-default": { type: "boolean", default: false },
+			// Retired 2026-06-20 with the slim wof-hot.db (see the REQUIRED_FILES note). Still accepted so
+			// RELEASING.md's documented invocations don't hard-fail; the value is ignored.
+			"wof-hot": { type: "string" },
+		},
+	})
 
-function parseArgs(): ParsedArgs {
-	const args = cliArguments()
-	const out: ParsedArgs = { setDefault: false }
-
-	for (let i = 0; i < args.length; i++) {
-		const arg = args[i]!
-
-		if (arg === "--set-default") {
-			out.setDefault = true
-		} else if (arg.startsWith("--") && i + 1 < args.length) {
-			const key = arg.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
-			out[key] = args[++i]
-		}
-	}
-
-	return out
+	return values
 }
 
 function fail(msg: string): never {
@@ -144,7 +135,7 @@ interface ReleaseManifest {
 }
 
 async function main() {
-	const args = parseArgs()
+	const args = parseCLIArgs()
 
 	if (!args.version) {
 		fail("--version required (e.g. v0.5.4)")
@@ -177,11 +168,10 @@ async function main() {
 
 	// --- Phase 1: verify all local files exist ---
 	for (const f of REQUIRED_FILES) {
-		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
-		const localPath = args[flagKey] as string | undefined
+		const localPath = args[f.option]
 
 		if (!localPath) {
-			fail(`${f.flag} (${f.description}) is required`)
+			fail(`--${f.option} (${f.description}) is required`)
 		}
 
 		if (!existsSync(localPath)) {
@@ -215,7 +205,7 @@ async function main() {
 	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
 	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
 	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
-	const gazetteerLexicon = args.gazetteerLexicon || null
+	const gazetteerLexicon = args["gazetteer-lexicon"] || null
 
 	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || statSync(gazetteerLexicon).size === 0)) {
 		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
@@ -235,9 +225,8 @@ async function main() {
 	const remoteBase = `${args.locale}/${args.version}`
 
 	for (const f of REQUIRED_FILES) {
-		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1]!.toUpperCase())
 		// Existence already enforced in Phase 1's guard loop, so this flag is present.
-		const localPath = args[flagKey] as string
+		const localPath = args[f.option]!
 		const dst = `${BUCKET_PATH}/${remoteBase}/${f.remoteName}`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", localPath, dst])
@@ -288,7 +277,7 @@ async function main() {
 		version: args.version,
 		label: args.label,
 		description: args.description,
-		modelSize: args.modelSize ?? `${Math.round(statSync(args.model as string).size / 1024 / 1024)} MB`,
+		modelSize: args["model-size"] ?? `${Math.round(statSync(args.model!).size / 1024 / 1024)} MB`,
 		tokenizerVocab: 48000,
 		steps: args.steps ? parseInt(args.steps, 10) : 100000,
 		hasFST: true,
@@ -310,7 +299,7 @@ async function main() {
 
 	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]
 
-	if (args.setDefault) {
+	if (args["set-default"]) {
 		releases.defaultVersion = args.version
 	}
 
