@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -7,8 +6,8 @@
  *   Build per-script parquet shards from the DeepSeek-generated transliteration JSONL and emit the
  *   corpus-v0.4.0 MANIFEST that combines them with the existing kryptonite + v0.3.0 shards.
  *
- *   Sibling to `build-kryptonite-shard.ts`. The two scripts share the same composition pattern: take
- *   a base MANIFEST, append new shards, write a combined MANIFEST. Differences specific to
+ *   Sibling to `shard-kryptonite.ts`. The two modules share the same composition pattern: take a
+ *   base MANIFEST, append new shards, write a combined MANIFEST. Differences specific to
  *   transliteration:
  *
  *   - One JSONL contains rows from N target scripts (source = `deepseek-translit-<slug>`). We bucket by
@@ -23,77 +22,34 @@
  *   See docs/articles/plan/reference/CORPUS_V0_4_0_GENERATION.md for prompts, model, and the
  *   reproducibility contract.
  *
- *   Usage: node corpus/scripts/build-transliteration-shard.ts\
- *   --jsonl /data/corpus/versioned/v0.4.0/transliteration/canonical-transliteration.jsonl\
- *   --base-manifest /data/corpus/versioned/v0.4.0/corpus-v0.4.0/MANIFEST.json\
- *   --out-dir /data/corpus/versioned/v0.4.0
+ *   Invoke via `mailwoman corpus shard translit \
+ *   --jsonl /data/corpus/versioned/v0.4.0/transliteration/canonical-transliteration.jsonl \
+ *   --base-manifest /data/corpus/versioned/v0.4.0/corpus-v0.4.0/MANIFEST.json \
+ *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-///<reference types="node" />
-
-import { createHash } from "node:crypto"
-import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
 
-import { runIfScript } from "@mailwoman/core/scripting"
-import {
-	alignRow,
-	PARQUET_COLUMNS,
-	ROW_GROUP_SIZE,
-	SHARD_COMPRESSION,
-	LABELED_ROW_SCHEMA,
-	ParquetWriter,
-	rowToParquet,
-} from "@mailwoman/corpus"
-import type { CanonicalRow, LabeledRow, ShardManifest, ParquetRow, ShardDescriptor } from "@mailwoman/corpus"
-import { TextSpliterator } from "spliterator"
+import { iterateJSONL, sha256File } from "@mailwoman/core/utils"
 
-interface Args {
+import { alignRow } from "../align.ts"
+import { ParquetWriter } from "../parquet-wrapper/index.ts"
+import type { ParquetRow, ShardDescriptor, ShardManifest } from "../parquet.ts"
+import { LABELED_ROW_SCHEMA, PARQUET_COLUMNS, ROW_GROUP_SIZE, rowToParquet, SHARD_COMPRESSION } from "../parquet.ts"
+import type { CanonicalRow, LabeledRow } from "../types.ts"
+
+export interface ShardTranslitOptions {
 	jsonl: string
 	baseManifest: string
 	outDir: string
-	corpusVersion: string
-	canonicalPathPrefix: string
-	legacyPathPrefix: string
-}
-
-function parseShardArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			jsonl: { type: "string" },
-			"base-manifest": { type: "string" },
-			"out-dir": { type: "string" },
-			"corpus-version": { type: "string", default: "0.4.0" },
-			"canonical-path-prefix": { type: "string", default: "/data/" },
-			"legacy-path-prefix": { type: "string", default: "/mnt/playpen/mailwoman-data/" },
-		},
-	})
-
-	if (!values.jsonl) throw new Error("--jsonl required")
-
-	if (!values["base-manifest"]) throw new Error("--base-manifest required")
-
-	if (!values["out-dir"]) throw new Error("--out-dir required")
-
-	return {
-		jsonl: values.jsonl,
-		baseManifest: values["base-manifest"],
-		outDir: values["out-dir"],
-		corpusVersion: values["corpus-version"],
-		canonicalPathPrefix: values["canonical-path-prefix"],
-		legacyPathPrefix: values["legacy-path-prefix"],
-	}
-}
-
-async function* readJsonl(jsonl: string): AsyncIterable<Record<string, unknown>> {
-	// JSONL source: each line is JSON.parse'd below, so a trailing CR on CRLF input is harmless
-	// whitespace to the parser and the `!line.trim()` guard drops any whitespace-only line.
-	for await (const line of TextSpliterator.fromAsync(jsonl)) {
-		if (!line.trim()) continue
-		yield JSON.parse(line) as Record<string, unknown>
-	}
+	/** Default `"0.4.0"`. */
+	corpusVersion?: string
+	/** Default `"/data/"`. */
+	canonicalPathPrefix?: string
+	/** Default `"/mnt/playpen/mailwoman-data/"`. */
+	legacyPathPrefix?: string
 }
 
 function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): CanonicalRow {
@@ -137,22 +93,6 @@ function appendShape(row: ParquetRow): Record<string, unknown> {
 	return out
 }
 
-async function hashFile(path: string): Promise<string> {
-	const hash = createHash("sha256")
-
-	for await (const chunk of createReadStream(path)) {
-		hash.update(chunk as Buffer)
-	}
-
-	return hash.digest("hex")
-}
-
-interface ScriptShardResult {
-	source: string
-	descriptor: ShardDescriptor
-	quarantinedReasons: string[]
-}
-
 /**
  * Write one shard for a single source slug. Returns the populated ShardDescriptor + a list of quarantine reasons for
  * rows that failed alignment.
@@ -185,7 +125,7 @@ async function writeOneShard(
 	await writer.close()
 
 	const fileStat = await stat(outPath)
-	const sha256 = await hashFile(outPath)
+	const sha256 = await sha256File(outPath)
 
 	return {
 		split: "train",
@@ -209,14 +149,19 @@ function canonicalizeShardPath(path: string, legacyPrefix: string, canonicalPref
 	return path
 }
 
-async function main(): Promise<void> {
-	const args = parseShardArgs()
+export async function buildTranslitShard(
+	options: ShardTranslitOptions,
+	report?: (line: string) => void
+): Promise<void> {
+	const corpusVersion = options.corpusVersion ?? "0.4.0"
+	const canonicalPathPrefix = options.canonicalPathPrefix ?? "/data/"
+	const legacyPathPrefix = options.legacyPathPrefix ?? "/mnt/playpen/mailwoman-data/"
 
-	if (!existsSync(args.jsonl)) throw new Error(`jsonl not found: ${args.jsonl}`)
+	if (!existsSync(options.jsonl)) throw new Error(`jsonl not found: ${options.jsonl}`)
 
-	if (!existsSync(args.baseManifest)) throw new Error(`base-manifest not found: ${args.baseManifest}`)
+	if (!existsSync(options.baseManifest)) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
-	const corpusDir = join(args.outDir, `corpus-v${args.corpusVersion}`)
+	const corpusDir = join(options.outDir, `corpus-v${corpusVersion}`)
 	const trainDir = join(corpusDir, "train")
 	await mkdir(trainDir, { recursive: true })
 
@@ -225,9 +170,9 @@ async function main(): Promise<void> {
 	const quarantine: string[] = []
 	let totalIn = 0
 
-	for await (const raw of readJsonl(args.jsonl)) {
+	for await (const raw of iterateJSONL<Record<string, unknown>>(options.jsonl)) {
 		totalIn++
-		const canon = toCanonicalRow(raw, args.corpusVersion)
+		const canon = toCanonicalRow(raw, corpusVersion)
 		const result = alignRow(canon)
 
 		if (result.kind !== "labeled") {
@@ -242,7 +187,7 @@ async function main(): Promise<void> {
 			buckets.set(canon.source, [result.row])
 		}
 	}
-	console.error(`read ${totalIn} rows; ${quarantine.length} quarantined; ${buckets.size} script buckets`)
+	report?.(`read ${totalIn} rows; ${quarantine.length} quarantined; ${buckets.size} script buckets`)
 
 	const newShards: ShardDescriptor[] = []
 	const sortedKeys = [...buckets.keys()].sort()
@@ -251,28 +196,28 @@ async function main(): Promise<void> {
 		const rows = buckets.get(source)!
 		const slug = source.startsWith("deepseek-translit-") ? source.slice("deepseek-translit-".length) : source
 		const outPath = join(trainDir, `part-translit-${slug}.parquet`)
-		const descriptor = await writeOneShard(rows, outPath, source, args.corpusVersion)
+		const descriptor = await writeOneShard(rows, outPath, source, corpusVersion)
 		newShards.push(descriptor)
-		console.error(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
+		report?.(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
 	}
 
 	if (quarantine.length > 0) {
 		const qPath = join(corpusDir, "quarantine-transliteration.tsv")
 		writeFileSync(qPath, quarantine.join("\n") + "\n", "utf8")
-		console.error(`quarantine log → ${qPath} (${quarantine.length} rows)`)
+		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)
 	}
 
 	// Compose final MANIFEST: rewrite base.shards paths from /mnt/playpen/... → /data/... and append
 	// the new translit shards. Kryptonite shard already lives in the base manifest (it was written
 	// there by Thread B).
-	const base = JSON.parse(readFileSync(args.baseManifest, "utf8")) as ShardManifest
+	const base = JSON.parse(readFileSync(options.baseManifest, "utf8")) as ShardManifest
 	const rewrittenBase = base.shards.map((sh) => ({
 		...sh,
-		path: canonicalizeShardPath(sh.path, args.legacyPathPrefix, args.canonicalPathPrefix),
+		path: canonicalizeShardPath(sh.path, legacyPathPrefix, canonicalPathPrefix),
 	}))
 	const newTrainRows = newShards.reduce((sum, sh) => sum + sh.rows, 0)
 	const combined: ShardManifest = {
-		corpus_version: args.corpusVersion,
+		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
 		rows_per_shard: base.rows_per_shard,
 		row_group_size: base.row_group_size ?? ROW_GROUP_SIZE,
@@ -287,17 +232,13 @@ async function main(): Promise<void> {
 
 	const combinedPath = join(corpusDir, "MANIFEST.json")
 	writeFileSync(combinedPath, JSON.stringify(combined, null, 2) + "\n", "utf8")
-	console.error(`wrote combined manifest → ${combinedPath}`)
-	console.error(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newTrainRows})`)
-	console.error(`  shards=${combined.shards.length} (base=${base.shards.length}, added=${newShards.length})`)
-	console.error(`  compression=${SHARD_COMPRESSION}`)
+	report?.(`wrote combined manifest → ${combinedPath}`)
+	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newTrainRows})`)
+	report?.(`  shards=${combined.shards.length} (base=${base.shards.length}, added=${newShards.length})`)
+	report?.(`  compression=${SHARD_COMPRESSION}`)
 	const pathFix = rewrittenBase.filter((s, i) => s.path !== base.shards[i]!.path).length
 
 	if (pathFix > 0) {
-		console.error(
-			`  path-canonicalized base shards: ${pathFix} (legacy '${args.legacyPathPrefix}' → '${args.canonicalPathPrefix}')`
-		)
+		report?.(`  path-canonicalized base shards: ${pathFix} (legacy '${legacyPathPrefix}' → '${canonicalPathPrefix}')`)
 	}
 }
-
-runIfScript(import.meta, main)

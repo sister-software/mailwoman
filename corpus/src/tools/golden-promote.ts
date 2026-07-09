@@ -1,11 +1,10 @@
-#!/usr/bin/env npx tsx
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
  *   Promote LLM-synthesized golden-set candidates into a versioned golden dir, with
- *   human-typed-likelihood filters + dedup. Companion to `expand-golden.ts`.
+ *   human-typed-likelihood filters + dedup. Companion to `golden-expand.ts`.
  *
  *   ## What it does
  *
@@ -25,29 +24,17 @@
  *   ## Usage
  *
  *   ```sh
- *   npx tsx packages/corpus/scripts/promote-golden.ts \
+ *   mailwoman corpus golden promote \
  *   --input data/eval/golden/candidates/expand-20260518-162627.jsonl \
  *   --bump-to v0.1.1 \
  *   --prior v0.1.0
- * ```
- *
- *   ## Flags
- *
- *   - `--input <path>` — candidates JSONL (required)
- *   - `--bump-to <version>` — target golden version dir (required, e.g. `v0.1.1`)
- *   - `--prior <version>` — previous version to forward-copy + dedup against (default `v0.1.0`)
- *   - `--golden-root <path>` — golden dir root; default `data/eval/golden`
- *   - `--no-filters` — skip the human-typed-likelihood filters (keep everything that passed
- *       expand-golden's validator)
- *   - `--dry-run` — report what would be written but don't touch disk
+ *   ```
  */
 
-import { createHash } from "node:crypto"
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
+import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
 
-///<reference types="node" />
+import { readJSONL, sha256File, writeJSONL } from "@mailwoman/core/utils"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -63,39 +50,26 @@ interface GoldenEntry {
 	provenance?: { provider: string; model: string }
 }
 
-interface PromoteStats {
+export interface PromoteStats {
 	candidatesIn: number
 	filteredOut: { glued: number; postcodeLeading: number; suspicious: number; duplicate: number; forwardDup: number }
 	kept: number
 	perCountry: Record<string, number>
 }
 
-// ── CLI ────────────────────────────────────────────────────────────────────
-
-function parseCLI() {
-	const { values } = parseArgs({
-		options: {
-			input: { type: "string" },
-			"bump-to": { type: "string" },
-			prior: { type: "string", default: "v0.1.0" },
-			"golden-root": { type: "string", default: "data/eval/golden" },
-			"no-filters": { type: "boolean", default: false },
-			"dry-run": { type: "boolean", default: false },
-		},
-	})
-
-	if (!values.input) throw new Error("--input is required")
-
-	if (!values["bump-to"]) throw new Error("--bump-to is required (e.g. v0.1.1)")
-
-	return {
-		inputPath: values.input,
-		bumpTo: values["bump-to"],
-		prior: values.prior!,
-		goldenRoot: values["golden-root"]!,
-		applyFilters: !values["no-filters"],
-		dryRun: values["dry-run"]!,
-	}
+export interface PromoteGoldenOptions {
+	/** Candidates JSONL (required). */
+	input: string
+	/** Target golden version dir (required, e.g. `v0.1.1`). */
+	bumpTo: string
+	/** Previous version to forward-copy + dedup against. Default `v0.1.0`. */
+	prior?: string
+	/** Golden dir root. Default `data/eval/golden`. */
+	goldenRoot?: string
+	/** Skip the human-typed-likelihood filters (keep everything that passed expand-golden's validator). */
+	noFilters?: boolean
+	/** Report what would be written but don't touch disk. */
+	dryRun?: boolean
 }
 
 // ── Filters ───────────────────────────────────────────────────────────────
@@ -158,52 +132,47 @@ function isSuspicious(entry: GoldenEntry): boolean {
 
 // ── IO ─────────────────────────────────────────────────────────────────────
 
-function readJsonl<T>(path: string): T[] {
+/** Read a JSONL, tolerating a missing file (returns `[]`) — prior golden dirs may lack a bucket. */
+function readJSONLIfPresent<T>(path: string): T[] {
 	if (!existsSync(path)) return []
 
-	return readFileSync(path, "utf8")
-		.split("\n")
-		.filter((l) => l.trim().length > 0)
-		.map((l) => JSON.parse(l) as T)
-}
-
-function writeJsonl(path: string, entries: object[]): void {
-	const text = entries.map((e) => JSON.stringify(e)).join("\n") + (entries.length > 0 ? "\n" : "")
-	writeFileSync(path, text)
-}
-
-function sha256(path: string): string {
-	return createHash("sha256").update(readFileSync(path)).digest("hex")
+	return readJSONL<T>(path)
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────
 
-function main() {
-	const opts = parseCLI()
+export async function promoteGolden(
+	options: PromoteGoldenOptions,
+	report?: (line: string) => void
+): Promise<PromoteStats> {
+	const prior = options.prior ?? "v0.1.0"
+	const goldenRoot = options.goldenRoot ?? "data/eval/golden"
+	const applyFilters = !options.noFilters
+	const dryRun = options.dryRun ?? false
 
-	process.stderr.write(`reading candidates: ${opts.inputPath}\n`)
-	const candidates = readJsonl<GoldenEntry>(opts.inputPath)
-	process.stderr.write(`  ${candidates.length} candidates loaded\n`)
+	report?.(`reading candidates: ${options.input}`)
+	const candidates = readJSONLIfPresent<GoldenEntry>(options.input)
+	report?.(`  ${candidates.length} candidates loaded`)
 
 	// Forward-copy base: existing entries from the prior golden version go forward verbatim,
 	// and we dedupe new candidates against them so v_new = v_old ∪ accepted_candidates.
-	const priorDir = join(opts.goldenRoot, opts.prior)
+	const priorDir = join(goldenRoot, prior)
 	const priorEntries: { country: string; entries: GoldenEntry[] }[] = []
 	const seenNormalized = new Set<string>()
 
 	if (existsSync(priorDir)) {
 		for (const f of readdirSync(priorDir).filter((n) => n.endsWith(".jsonl"))) {
 			const country = f.replace(".jsonl", "").toUpperCase()
-			const entries = readJsonl<GoldenEntry>(join(priorDir, f))
+			const entries = readJSONLIfPresent<GoldenEntry>(join(priorDir, f))
 			priorEntries.push({ country, entries })
 
 			for (const e of entries) {
 				seenNormalized.add(normalize(e.raw))
 			}
-			process.stderr.write(`  prior ${country}: ${entries.length} entries (forward-copy base)\n`)
+			report?.(`  prior ${country}: ${entries.length} entries (forward-copy base)`)
 		}
 	} else {
-		process.stderr.write(`  ⚠ prior dir ${priorDir} not found — starting fresh\n`)
+		report?.(`  ⚠ prior dir ${priorDir} not found — starting fresh`)
 	}
 
 	// Filter pass
@@ -231,7 +200,7 @@ function main() {
 			continue
 		}
 
-		if (opts.applyFilters) {
+		if (applyFilters) {
 			if (isComponentsGlued(cand)) {
 				stats.filteredOut.glued++
 				continue
@@ -273,31 +242,31 @@ function main() {
 	}
 
 	// Output
-	const outDir = join(opts.goldenRoot, opts.bumpTo)
-	process.stderr.write(`\n=== plan ===\n`)
-	process.stderr.write(`output dir: ${outDir}${opts.dryRun ? " (dry-run)" : ""}\n`)
+	const outDir = join(goldenRoot, options.bumpTo)
+	report?.(`=== plan ===`)
+	report?.(`output dir: ${outDir}${dryRun ? " (dry-run)" : ""}`)
 
 	for (const [key, entries] of buckets) {
-		process.stderr.write(`  ${key.toLowerCase()}.jsonl: ${entries.length} entries\n`)
+		report?.(`  ${key.toLowerCase()}.jsonl: ${entries.length} entries`)
 	}
-	process.stderr.write(`\n=== filter stats ===\n`)
-	process.stderr.write(`candidates in:        ${stats.candidatesIn}\n`)
-	process.stderr.write(`  filtered (glued):           ${stats.filteredOut.glued}\n`)
-	process.stderr.write(`  filtered (postcode-lead):   ${stats.filteredOut.postcodeLeading}\n`)
-	process.stderr.write(`  filtered (suspicious):      ${stats.filteredOut.suspicious}\n`)
-	process.stderr.write(`  filtered (dup-in-batch):    ${stats.filteredOut.duplicate}\n`)
-	process.stderr.write(`  filtered (dup-vs-prior):    ${stats.filteredOut.forwardDup}\n`)
-	process.stderr.write(`  kept:                       ${stats.kept}\n`)
-	process.stderr.write(`per-country (kept):\n`)
+	report?.(`=== filter stats ===`)
+	report?.(`candidates in:        ${stats.candidatesIn}`)
+	report?.(`  filtered (glued):           ${stats.filteredOut.glued}`)
+	report?.(`  filtered (postcode-lead):   ${stats.filteredOut.postcodeLeading}`)
+	report?.(`  filtered (suspicious):      ${stats.filteredOut.suspicious}`)
+	report?.(`  filtered (dup-in-batch):    ${stats.filteredOut.duplicate}`)
+	report?.(`  filtered (dup-vs-prior):    ${stats.filteredOut.forwardDup}`)
+	report?.(`  kept:                       ${stats.kept}`)
+	report?.(`per-country (kept):`)
 
 	for (const [c, n] of Object.entries(stats.perCountry).sort((a, b) => b[1] - a[1])) {
-		process.stderr.write(`  ${c}: ${n}\n`)
+		report?.(`  ${c}: ${n}`)
 	}
 
-	if (opts.dryRun) {
-		process.stderr.write(`\n(dry-run: no files written)\n`)
+	if (dryRun) {
+		report?.(`(dry-run: no files written)`)
 
-		return
+		return stats
 	}
 
 	mkdirSync(outDir, { recursive: true })
@@ -308,33 +277,28 @@ function main() {
 		files: Record<string, { entries: number; sha256: string }>
 	} = {
 		promoted_at: new Date().toISOString(),
-		from: opts.inputPath,
-		from_sha256: sha256(opts.inputPath),
+		from: options.input,
+		from_sha256: await sha256File(options.input),
 		files: {},
 	}
 
 	for (const [key, entries] of buckets) {
 		const filename = `${key.toLowerCase()}.jsonl`
 		const path = join(outDir, filename)
-		writeJsonl(path, entries)
-		manifest.files[filename] = { entries: entries.length, sha256: sha256(path) }
+		writeJSONL(path, entries)
+		manifest.files[filename] = { entries: entries.length, sha256: await sha256File(path) }
 	}
 
 	// Forward-copy non-.jsonl files (README.md, etc.) from prior
 	if (existsSync(priorDir)) {
 		for (const f of readdirSync(priorDir).filter((n) => !n.endsWith(".jsonl"))) {
 			copyFileSync(join(priorDir, f), join(outDir, f))
-			process.stderr.write(`  forward-copied: ${f}\n`)
+			report?.(`  forward-copied: ${f}`)
 		}
 	}
 
 	writeFileSync(join(outDir, "MANIFEST.json"), JSON.stringify(manifest, null, 2) + "\n")
-	process.stderr.write(`\n✓ promoted to ${outDir}\n`)
-}
+	report?.(`✓ promoted to ${outDir}`)
 
-try {
-	main()
-} catch (err) {
-	process.stderr.write(`fatal: ${(err as Error).message}\n`)
-	process.exitCode = 1
+	return stats
 }

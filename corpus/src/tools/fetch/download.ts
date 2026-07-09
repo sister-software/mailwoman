@@ -12,6 +12,20 @@ import { existsSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 import { setTimeout as sleep } from "node:timers/promises"
 
+/** The option base every `mailwoman corpus fetch <source>` module extends. */
+export interface BaseFetchOptions {
+	/** Destination root for downloaded source data. Each source writes its own subdirectory. */
+	outRoot: string
+}
+
+/** The per-run result every fetch module returns; the command maps `failed > 0` to exit code 1. */
+export interface FetchSummary {
+	fetched: number
+	skipped: number
+	failed: number
+	failedCodes: string[]
+}
+
 /** A status worth retrying: rate limiting or a server-side failure. */
 export function isTransientStatus(status: number): boolean {
 	return status === 429 || (status >= 500 && status <= 599)
