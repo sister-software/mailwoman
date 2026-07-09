@@ -10,13 +10,14 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 // Re-export the internals for testing. The script's CLI entry is gated on
 // `runIfScript(import.meta, …)`, so importing the module is side-effect-free.
 import { audit } from "./audit.ts"
 
-const CORPUS_PATH = "/mnt/playpen/mailwoman-data/corpus/versioned/v0.3.0/corpus-v0.3.0"
+const CORPUS_PATH = dataRootPath("corpus", "versioned", "v0.3.0", "corpus-v0.3.0")
 const hasCorpus = existsSync(CORPUS_PATH)
 
 describe.skipIf(!hasCorpus)("audit — integration", () => {

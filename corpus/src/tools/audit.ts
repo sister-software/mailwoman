@@ -1,10 +1,9 @@
-#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus-audit` — per-source shard-count vs source_weight diagnostic.
+ *   `mailwoman corpus audit` — per-source shard-count vs source_weight diagnostic.
  *
  *   Reads a corpus dir's MANIFEST.json (or scans shards directly), counts shards per source,
  *   optionally loads a training config to pair the counts with the configured source_weights, and
@@ -13,24 +12,13 @@
  *   Would have caught v0.3.0's "NAD = 411/674 train shards × 2.0 weight = ~75% of sampled mix"
  *   finding before the v0.3.0 retrospective surfaced it.
  *
- *   Usage: node corpus/scripts/audit.ts <corpus_dir> [--config <training-config.yaml>]
- *
- *   Example: node corpus/scripts/audit.ts
- *   /mnt/playpen/mailwoman-data/corpus/versioned/v0.3.0/corpus-v0.3.0\
- *   --config corpus-python/src/mailwoman_train/configs/v0_4_0.yaml
- *
- *   Exits 0 always; emits warnings to stderr and the audit table to stdout.
+ *   Emits warnings to stderr and the audit table to stdout; never throws on an empty corpus.
  */
-
-///<reference types="node" />
 
 import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { basename, join } from "node:path"
-import { parseArgs } from "node:util"
 
-import { runIfScript } from "@mailwoman/core/scripting"
-
-interface AuditOpts {
+export interface AuditOpts {
 	corpusDir: string
 	configPath?: string
 	/**
@@ -362,27 +350,3 @@ export function audit(opts: AuditOpts): void {
 	const rows = buildAuditRows(trainStats, config?.sourceWeights ?? {})
 	printReport(opts.corpusDir, opts.configPath, stats, rows)
 }
-
-function parseArgv(): AuditOpts {
-	const { values, positionals } = parseArgs({
-		options: {
-			config: { type: "string" },
-			sample: { type: "string" },
-		},
-		allowPositionals: true,
-	})
-	const corpusDir = positionals[0]
-
-	if (!corpusDir) {
-		console.error("Usage: audit.ts <corpus_dir> [--config <yaml>] [--sample <n>]")
-		process.exit(2)
-	}
-
-	return {
-		corpusDir,
-		configPath: values.config,
-		sampleShardCount: values.sample ? parseInt(values.sample, 10) : undefined,
-	}
-}
-
-runIfScript(import.meta, () => audit(parseArgv()))
