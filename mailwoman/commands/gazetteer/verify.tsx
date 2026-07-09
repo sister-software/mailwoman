@@ -13,18 +13,11 @@
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
+import { Text } from "ink"
 import zod from "zod"
 
-import {
-	loadDefaultBaseline,
-	verifyAdmin,
-	type VerifyCheckResult,
-	verifyReversePanel,
-	wofDir,
-} from "../../gazetteer-pipeline/index.ts"
-import type { CommandComponent } from "../../sdk/cli.ts"
+import { CheckList, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
+import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } from "../../gazetteer-pipeline/index.ts"
 
 const OptionsSchema = zod.object({
 	db: zod.string().optional().describe("Admin DB to verify. Default <data-root>/wof/admin-global-priority.db"),
@@ -37,54 +30,30 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [result, setResult] = useState<{ ok: boolean; checks: VerifyCheckResult[] }>()
+	const state = useCommandTask(
+		async () => {
+			const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
+			console.error(`Verifying ${dbPath}...`)
+			const db = new DatabaseSync(dbPath, { readOnly: true })
+			const structural = verifyAdmin(db, loadDefaultBaseline())
+			db.close()
+			const checks = [...structural.checks]
+			let ok = structural.ok
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
-				console.error(`Verifying ${dbPath}...`)
-				const db = new DatabaseSync(dbPath, { readOnly: true })
-				const structural = verifyAdmin(db, loadDefaultBaseline())
-				db.close()
-				const checks = [...structural.checks]
-				let ok = structural.ok
-
-				if (options.reversePanel) {
-					const reverse = await verifyReversePanel(dbPath)
-					checks.push(...reverse.checks)
-					ok = ok && reverse.ok
-				}
-				setResult({ ok, checks })
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
+			if (options.reversePanel) {
+				const reverse = await verifyReversePanel(dbPath)
+				checks.push(...reverse.checks)
+				ok = ok && reverse.ok
 			}
-		})()
-	}, [options])
 
-	useEffect(() => {
-		if (result || error) {
-			setImmediate(() => process.exit(error || !result?.ok ? 1 : 0))
-		}
-	}, [result, error])
+			return { ok, checks }
+		},
+		(result) => (result.ok ? 0 : 1)
+	)
 
-	if (error) return <Text color="red">✗ {error}</Text>
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	if (result) {
-		return (
-			<Box flexDirection="column">
-				{result.checks.map((c, i) => (
-					<Text key={i} color={c.ok ? "green" : "red"}>
-						{c.ok ? "✓" : "✗"} {c.check}: {c.detail}
-					</Text>
-				))}
-				<Text color={result.ok ? "green" : "red"}>
-					{result.ok ? "PASS" : "FAIL"} ({result.checks.filter((c) => c.ok).length}/{result.checks.length} checks)
-				</Text>
-			</Box>
-		)
-	}
+	if (state.status === "done") return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 
 	return null
 }

@@ -39,6 +39,7 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
+import type { CommandComponent } from "../cli-kit/index.ts"
 import {
 	geocodeAddress,
 	parseForGeocode,
@@ -49,7 +50,6 @@ import {
 } from "../geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.ts"
-import type { CommandComponent } from "../sdk/cli.ts"
 import { resolverDefaultCountry } from "./parse.tsx"
 
 // ---------------------------------------------------------------------------

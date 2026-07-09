@@ -21,13 +21,13 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
+import type { CommandComponent } from "../../cli-kit/index.ts"
 import {
 	DEFAULT_CANDIDATE_OUT,
 	defaultGazetteerVersion,
 	publishGazetteer,
 	wofDir,
 } from "../../gazetteer-pipeline/index.ts"
-import type { CommandComponent } from "../../sdk/cli.ts"
 
 const ArgumentsSchema = zod.array(
 	zod.string().describe(`Candidate DB to publish. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}`)

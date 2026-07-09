@@ -47,7 +47,7 @@ import { useEffect, useState } from "react"
 import { TSVSpliterator } from "spliterator"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.ts"
+import type { CommandComponent } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	geonames: zod

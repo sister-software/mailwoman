@@ -36,7 +36,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.ts"
+import type { CommandComponent } from "../../cli-kit/index.ts"
 
 const DEFAULT_RELEASE = "2026-05-20.0"
 const S3_GLOB = (release: string) =>

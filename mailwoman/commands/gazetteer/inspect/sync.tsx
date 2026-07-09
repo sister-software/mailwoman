@@ -21,7 +21,7 @@ import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
 
-import type { CommandComponent } from "../../../sdk/cli.ts"
+import type { CommandComponent } from "../../../cli-kit/index.ts"
 
 const BATCH_SIZE = availableParallelism()
 const WOF_REPO_OWNER = "whosonfirst-data"
