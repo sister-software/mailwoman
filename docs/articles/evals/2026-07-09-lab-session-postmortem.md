@@ -12,9 +12,9 @@ lost its `é` at the parser, missed a rooftop the data held, and rendered as a l
 
 ## Shipped
 
-| release | contents |
-| --- | --- |
-| **v5.8.0** | #1012 BAN FR address-point tier (26M rooftops, @1km 37.4→87.9% in-BAN, Nominatim-independent 13/14 <200 m); #1023 namesake fix; first publish of `@mailwoman/ban` (OIDC can't create packages — operator one-time token publish + trusted-publisher config, then CI) |
+| release    | contents                                                                                                                                                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **v5.8.0** | #1012 BAN FR address-point tier (26M rooftops, @1km 37.4→87.9% in-BAN, Nominatim-independent 13/14 <200 m); #1023 namesake fix; first publish of `@mailwoman/ban` (OIDC can't create packages — operator one-time token publish + trusted-publisher config, then CI)     |
 | **v5.9.0** | **v241 model promotion**: `v2.4.1-fr-nsplice-ft` (init_from fine-tune on the `v0.8.0-fr-nsplice` spliced tokenizer) + #1046 street-centroid tier (2.2M streets derived from the sealed BAN artifact, voies 0/8→7/8) + #1043 house-grade decoration + #1047/#1048 tooling |
 
 v241 gate table (full version on #444): mangle 23.5→**17.7%** int8, Honoré+René fixed, held-out
