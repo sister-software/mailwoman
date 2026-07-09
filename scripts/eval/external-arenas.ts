@@ -115,7 +115,7 @@ async function main() {
 	const runArena = async (name: string, dir: string): Promise<void> => {
 		console.log(`== arena: ${name} ==`)
 		const r =
-			await $`node scripts/harness-v0-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --symmetric-match --out-json ${join(outDir, `${name}.results.json`)}`
+			await $`node scripts/eval/harness-v0-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --symmetric-match --out-json ${join(outDir, `${name}.results.json`)}`
 		writeFileSync(join(outDir, `${name}.stderr`), r.stderr)
 		console.log(r.stdout.split("\n").slice(-40).join("\n"))
 	}
