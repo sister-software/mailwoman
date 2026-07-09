@@ -31,66 +31,43 @@
  *   train-TX/eval-held-out-state split (#603 Tier 2); this probe bounds the pairwise-ranking gain
  *   cheaply first.
  *
- *   Run: node scripts/eval/record-matcher/learned-scorer-eval.ts [--npis 1500]\
- *   [--seeds 8] [--wof <admin.db>] [--data-root <dir>] [--seed 1] [--out-md <md>]
+ *   Run: `mailwoman registry scorer-eval pairwise [--npis 1500] [--seeds 8] [--wof <admin.db>]
+ *   [--data-root <dir>] [--seed 1] [--out-md <md>]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
 	defaultBlockingKeys,
-	geocodeAddressVia,
 	ingestRows,
 	streamRows,
 	type ColumnMapping,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		"data-root": { type: "string" },
-		npis: { type: "string" },
-		"out-md": { type: "string" },
-		seed: { type: "string" },
-		seeds: { type: "string" },
-		sources: { type: "string" },
-		state: { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	"data-root"?: string
-	npis?: string
-	"out-md"?: string
-	seed?: string
-	seeds?: string
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+
+/** Options for {@linkcode scorerPairwiseEval}. */
+export interface ScorerPairwiseEvalOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string
+	/** State filter. Default TX. */
 	state?: string
-	wof?: string
+	/** NPIs sampled. Default 1500. */
+	npis?: number
+	/** Base PRNG seed. Default 1. */
+	seed?: number
+	/** Train/test splits averaged. Default 8. */
+	seeds?: number
+	/** Also write the markdown report here. */
+	outMd?: string
 }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const STATE = (values["state"] || "TX").toUpperCase()
-const NPIS = Number(values["npis"] || "1500")
-const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const SEED = Number(values["seed"] || "1")
-const OUT_MD = values["out-md"] || ""
-
-const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
-const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
 const C = {
 	npi: "NPI",
@@ -131,9 +108,22 @@ interface MessyRow {
 	address: string
 }
 
-async function main(): Promise<void> {
+/** Learned-scorer pairwise probe (#603) — see the module doc. Emits the markdown report to stdout. */
+export async function scorerPairwiseEval(
+	options: ScorerPairwiseEvalOptions,
+	report?: (line: string) => void
+): Promise<{ markdown: string }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const STATE = (options.state || "TX").toUpperCase()
+	const NPIS = options.npis ?? 1500
+	const SEED = options.seed ?? 1
+	const OUT_MD = options.outMd || ""
+
+	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
+	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
+
 	// --- Data-gen: same NPI-keyed records as the dedup benchmark. ---
-	console.error("[A] streaming other-names…")
+	report?.("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
 
 	for await (const r of streamRows(OTHER_NAMES)) {
@@ -149,7 +139,7 @@ async function main(): Promise<void> {
 		altNames.set(npi, list)
 	}
 
-	console.error(`[B] full registry pass: address-frequency table + ${NPIS} ${STATE} sample…`)
+	report?.(`[B] full registry pass: address-frequency table + ${NPIS} ${STATE} sample…`)
 	const rows: MessyRow[] = []
 	const kept = new Set<string>()
 	const addrCounts = new Map<string, number>()
@@ -158,7 +148,7 @@ async function main(): Promise<void> {
 
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) {
-			console.error(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
+			report?.(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
 		}
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
@@ -201,34 +191,19 @@ async function main(): Promise<void> {
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
-	console.error(`    ${kept.size} NPIs → ${rows.length} records`)
+	report?.(`    ${kept.size} NPIs → ${rows.length} records`)
 
-	console.error("[C] geocoding…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: async (raw: string) =>
-			geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-			}),
-		country: "US",
-	})
+	report?.("[C] geocoding…")
+	const geocoder = await options.createGeocoder()
 	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
-	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, { geocodeAddress: seam })
-	shardProvider.close()
-	lookup.close()
+	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
+		geocodeAddress: geocoder.seam,
+	})
+	geocoder.close()
 
 	// --- Block + feature extraction. The model (collapsed spatial + address-frequency) defines the
 	// comparisons; EM-fit it for the FS baseline. ---
-	console.error("[D] blocking + features…")
+	report?.("[D] blocking + features…")
 	const model = buildDefaultModel({ collapseSpatial: true, addressFrequency })
 	const { pairs } = block(records, defaultBlockingKeys())
 	const patterns = pairs.map(([a, b]) => agreementPattern(model.comparisons, a, b))
@@ -438,8 +413,8 @@ async function main(): Promise<void> {
 		return best
 	}
 
-	console.error("[E] training across seeds…")
-	const SEEDS = Number(values["seeds"] || "8")
+	report?.("[E] training across seeds…")
+	const SEEDS = options.seeds ?? 8
 	const splits = Array.from({ length: SEEDS }, (_, k) => runSplit(SEED + k))
 	const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
 	const std = (xs: number[]) => {
@@ -475,18 +450,20 @@ async function main(): Promise<void> {
 	for (const r of splits) {
 		const dl = auc(r.lrScored) - auc(r.fsScored)
 		const dg = auc(r.gbtScored) - auc(r.fsScored)
-		console.error(
+		report?.(
 			`    seed ${r.seed}: ${r.trainN}tr/${r.testN}te  FS ${auc(r.fsScored).toFixed(4)}  ` +
 				`LR ${auc(r.lrScored).toFixed(4)} (Δ${dl >= 0 ? "+" : ""}${dl.toFixed(4)})  ` +
 				`GBT ${auc(r.gbtScored).toFixed(4)} (Δ${dg >= 0 ? "+" : ""}${dg.toFixed(4)})`
 		)
 	}
-	console.error(
+	report?.(
 		`    mean/${SEEDS} — FS ${mean(fsAucs).toFixed(4)}  LR ${mean(lrAucs).toFixed(4)} (Δ${meanDelta >= 0 ? "+" : ""}${meanDelta.toFixed(4)})  ` +
 			`GBT ${mean(gbtAucs).toFixed(4)} (Δ${meanGbtVsFs >= 0 ? "+" : ""}${meanGbtVsFs.toFixed(4)} vs FS, ` +
 			`${meanGbtVsLr >= 0 ? "+" : ""}${meanGbtVsLr.toFixed(4)} vs LR)`
 	)
 
+	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
+	// numerator/denominator contract (call sites append their own "%").
 	const pct = (x: number) => (100 * x).toFixed(1)
 	const f4 = (x: number) => x.toFixed(4)
 	const sgn = (x: number) => (x >= 0 ? "+" : "")
@@ -494,7 +471,7 @@ async function main(): Promise<void> {
 	lines.push(`# Learned-scorer probe (#603) — does a model beat Fellegi-Sunter on the FS feature vector?`)
 	lines.push("")
 	lines.push(
-		`_Generated by \`scripts/eval/record-matcher/learned-scorer-eval.ts\`. ${kept.size} ${STATE} NPIs → ${records.length} ` +
+		`_Generated by \`mailwoman registry scorer-eval pairwise\`. ${kept.size} ${STATE} NPIs → ${records.length} ` +
 			`records, geocoded. Candidate pairs are split BY NPI into train/test (no NPI's records cross the split), repeated ` +
 			`over ${SEEDS} seeds to bound split variance. Two learned scorers over the FS agreement pattern + over-merge ` +
 			`interaction features (spatial-exact × name-disagree, spatial-exact × org-disagree, address crowdedness) — features ` +
@@ -605,8 +582,8 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`[written] ${OUT_MD}`)
+		report?.(`[written] ${OUT_MD}`)
 	}
-}
 
-await main()
+	return { markdown: md }
+}

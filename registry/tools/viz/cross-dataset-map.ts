@@ -17,32 +17,34 @@
  *
  *   SERVE THE OUTPUT OVER LOCALHOST (the house tile server CORS-restricts to localhost + the docs
  *   domains; a file:// page shows accurate markers on a blank basemap). e.g. `python3 -m
- *   http.server -d <dir>` then open the page; or use `render-map.mjs` against the served URL.
+ *   http.server -d <dir>` then open the page; or use `renderServedMapToPNG` (`./render-map.ts`)
+ *   against the served URL.
  *
  *   `--cross-agency-only` keeps just the entities whose sources span >1 AGENCY (the two FCC datasets
  *   count as one) — the harder cross-agency slice; most raw links are FCC-internal (RHC ↔
  *   commitments).
  *
- *   Run: node registry/tools/viz/cross-dataset-map.ts\
- *   [--in <links.geojson>] [--out-html /tmp/cross-dataset-map.html] [--cross-agency-only]
+ *   Run: `mailwoman registry viz cross-dataset-map [--in <links.geojson>]
+ *   [--out-html /tmp/cross-dataset-map.html] [--cross-agency-only]`
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: { "cross-agency-only": { type: "boolean" }, in: { type: "string" }, "out-html": { type: "string" } },
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { "cross-agency-only"?: boolean; in?: string; "out-html"?: string }
-const IN = values["in"] || dataRootPath("record-matcher", "2026-06-16-cross-dataset-links.geojson")
-const OUT = values["out-html"] || "/tmp/cross-dataset-map.html"
+/** Options for {@linkcode crossDatasetMap}. */
+export interface CrossDatasetMapOptions {
+	/**
+	 * The `cross-dataset-links` GeoJSON. Default
+	 * `$MAILWOMAN_DATA_ROOT/record-matcher/2026-06-16-cross-dataset-links.geojson`.
+	 */
+	in?: string
+	/** Output HTML path. Default `/tmp/cross-dataset-map.html`. */
+	outHtml?: string
+	/** Keep only entities whose sources span >1 agency (the two FCC datasets count as one). */
+	crossAgencyOnly?: boolean
+}
 
 const SOURCE_LABELS: Record<string, string> = {
 	nppes: "NPPES",
@@ -63,52 +65,63 @@ const SOURCE_AGENCY: Record<string, string> = {
 	"txhhsc-nursing": "TX HHSC",
 }
 const agencyOf = (s: string) => SOURCE_AGENCY[s] ?? s
-const CROSS_AGENCY_ONLY = values["cross-agency-only"] ?? false
 
 const sourcesOf = (f: { properties: Record<string, unknown> | null }) =>
 	Array.isArray(f.properties?.["sources"]) ? (f.properties!["sources"] as string[]) : []
 
-const parsed = JSON.parse(readFileSync(IN, "utf8")) as {
-	type: "FeatureCollection"
-	features: Array<{ properties: Record<string, unknown> | null }>
-}
-const total = parsed.features.length
-const geojson = CROSS_AGENCY_ONLY
-	? { ...parsed, features: parsed.features.filter((f) => new Set(sourcesOf(f).map(agencyOf)).size > 1) }
-	: parsed
+/** Render the cross-dataset-links GeoJSON to a bucket-colored MapLibre HTML page. */
+export function crossDatasetMap(
+	options: CrossDatasetMapOptions = {},
+	report?: (line: string) => void
+): { outHtml: string; kept: number; total: number; triple: number } {
+	const IN = options.in || dataRootPath("record-matcher", "2026-06-16-cross-dataset-links.geojson")
+	const OUT = options.outHtml || "/tmp/cross-dataset-map.html"
+	const CROSS_AGENCY_ONLY = options.crossAgencyOnly ?? false
 
-// Synthesize a `bucket` per entity = its sorted source-combination, so toMapHTML colors by the link
-// TYPE (two-source vs the rarer all-three-source spans) rather than the binary cross/single status.
-let triple = 0
-const comboCounts = new Map<string, number>()
+	const parsed = JSON.parse(readFileSync(IN, "utf8")) as {
+		type: "FeatureCollection"
+		features: Array<{ properties: Record<string, unknown> | null }>
+	}
+	const total = parsed.features.length
+	const geojson = CROSS_AGENCY_ONLY
+		? { ...parsed, features: parsed.features.filter((f) => new Set(sourcesOf(f).map(agencyOf)).size > 1) }
+		: parsed
 
-for (const f of geojson.features) {
-	const combo = [...new Set(sourcesOf(f))].sort()
-	const bucket = combo.map(label).join(" + ") || "unlinked"
+	// Synthesize a `bucket` per entity = its sorted source-combination, so toMapHTML colors by the link
+	// TYPE (two-source vs the rarer all-three-source spans) rather than the binary cross/single status.
+	let triple = 0
+	const comboCounts = new Map<string, number>()
 
-	if (f.properties) {
-		f.properties["bucket"] = bucket
+	for (const f of geojson.features) {
+		const combo = [...new Set(sourcesOf(f))].sort()
+		const bucket = combo.map(label).join(" + ") || "unlinked"
+
+		if (f.properties) {
+			f.properties["bucket"] = bucket
+		}
+
+		if (new Set(combo.map(agencyOf)).size >= 3) {
+			triple++
+		}
+		comboCounts.set(bucket, (comboCounts.get(bucket) ?? 0) + 1)
 	}
 
-	if (new Set(combo.map(agencyOf)).size >= 3) {
-		triple++
+	const kept = geojson.features.length
+	const scope = CROSS_AGENCY_ONLY ? "across agencies" : "across sources"
+	const html = toMapHTML(geojson as never, {
+		title: `Cross-dataset entity links — ${kept} resolved ${scope} (no shared key)`,
+		flavor: "light",
+		colorBy: "bucket",
+	})
+
+	writeFileSync(OUT, html)
+	report?.(`[written] ${OUT}  (${kept}${CROSS_AGENCY_ONLY ? ` of ${total} cross-AGENCY` : ""} entities)`)
+	report?.(`  source combinations:`)
+
+	for (const [combo, n] of [...comboCounts.entries()].sort((a, b) => b[1] - a[1])) {
+		report?.(`    ${n.toString().padStart(4)}  ${combo}`)
 	}
-	comboCounts.set(bucket, (comboCounts.get(bucket) ?? 0) + 1)
+	report?.(`  spanning all three agencies: ${triple}`)
+
+	return { outHtml: OUT, kept, total, triple }
 }
-
-const kept = geojson.features.length
-const scope = CROSS_AGENCY_ONLY ? "across agencies" : "across sources"
-const html = toMapHTML(geojson as never, {
-	title: `Cross-dataset entity links — ${kept} resolved ${scope} (no shared key)`,
-	flavor: "light",
-	colorBy: "bucket",
-})
-
-writeFileSync(OUT, html)
-console.error(`[written] ${OUT}  (${kept}${CROSS_AGENCY_ONLY ? ` of ${total} cross-AGENCY` : ""} entities)`)
-console.error(`  source combinations:`)
-
-for (const [combo, n] of [...comboCounts.entries()].sort((a, b) => b[1] - a[1])) {
-	console.error(`    ${n.toString().padStart(4)}  ${combo}`)
-}
-console.error(`  spanning all three agencies: ${triple}`)

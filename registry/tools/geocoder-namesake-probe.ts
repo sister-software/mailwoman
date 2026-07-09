@@ -10,27 +10,18 @@
  *   the in-state Texas city. This probes a curated set of TX namesake cities, with and without ZIP,
  *   and flags any result outside the Texas bounding box.
  *
- *   Run: node scripts/eval/record-matcher/geocoder-namesake-probe.ts
+ *   Run: `mailwoman registry scorer-eval namesake-probe`
  */
 
-import { parseArgs } from "node:util"
-
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: { "data-root": { type: "string" }, wof: { type: "string" } },
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { "data-root"?: string; wof?: string }
-const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+
+/** Options for {@linkcode geocoderNamesakeProbe}. */
+export interface GeocoderNamesakeProbeOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+}
 
 // TX namesake cities with their real Texas coordinates + the famous foreign/other namesake to watch for.
 const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: string }> = [
@@ -49,24 +40,16 @@ const TX_BBOX = { latMin: 25.8, latMax: 36.6, lonMin: -106.7, lonMax: -93.4 }
 const inTexas = (lat: number, lon: number) =>
 	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax
 
-async function main(): Promise<void> {
-	console.error("[A] building the geocoder…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
+/** Admin-tier wrong-region probe (#619 tail) — see the module doc. Prints one line per variant to stdout. */
+export async function geocoderNamesakeProbe(
+	options: GeocoderNamesakeProbeOptions,
+	report?: (line: string) => void
+): Promise<{ wrongRegion: number; total: number }> {
+	report?.("[A] building the geocoder…")
+	const geocoder = await options.createGeocoder()
+	const geo = geocoder.geocode
 
-	const geo = (address: string) =>
-		geocodeAddress(address, {
-			classifier,
-			resolver,
-			shards: shardProvider.for,
-			defaultCountry: "US",
-			placeCountry: false,
-		})
-
-	console.error("[B] probing TX namesake cities (with ZIP / without ZIP)…\n")
+	report?.("[B] probing TX namesake cities (with ZIP / without ZIP)…\n")
 	let wrongRegion = 0
 	let total = 0
 
@@ -91,9 +74,8 @@ async function main(): Promise<void> {
 			)
 		}
 	}
-	shardProvider.close()
-	lookup.close()
+	geocoder.close()
 	console.log(`\n  ${wrongRegion}/${total} variants resolved OUTSIDE Texas (wrong-region).`)
-}
 
-await main()
+	return { wrongRegion, total }
+}

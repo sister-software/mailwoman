@@ -25,18 +25,14 @@
  *   sampling artifact — is the consumer's call, not ours. This is strictly a set-membership
  *   reconciliation, never an allegation.
  *
- *   Run: node scripts/eval/record-matcher/coverage-reconciliation.ts\
- *   [--cap 2000] [--wof <admin.db>] [--data-root <dir>] [--out-md <md>] [--out-geojson <geojson>]
+ *   Run: `mailwoman registry scorer-eval coverage-reconciliation [--cap 2000] [--wof <admin.db>]
+ *   [--data-root <dir>] [--out-md <md>] [--out-geojson <geojson>]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { dataRootPath } from "@mailwoman/core/utils"
 import {
-	geocodeAddressVia,
 	ingestRows,
 	reconcileCoverage,
 	reconciliationGeoJSON,
@@ -44,43 +40,28 @@ import {
 	resolveEntities,
 	streamRows,
 	type ColumnMapping,
+	type GeocodeAddress,
 	type ReconcileConfig,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		cap: { type: "string" },
-		"data-root": { type: "string" },
-		"out-geojson": { type: "string" },
-		"out-md": { type: "string" },
-		sources: { type: "string" },
-		state: { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	cap?: string
-	"data-root"?: string
-	"out-geojson"?: string
-	"out-md"?: string
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+
+/** Options for {@linkcode coverageReconciliation}. */
+export interface CoverageReconciliationOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string
+	/** Rows kept per source. Default 2000. */
+	cap?: number
+	/** State filter. Default TX. */
 	state?: string
-	wof?: string
+	/** Also write the markdown report here. */
+	outMd?: string
+	/** Also write the bucket-tagged GeoJSON here. */
+	outGeojson?: string
 }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const CAP = Number(values["cap"] || "2000")
-const STATE = (values["state"] || "TX").toUpperCase()
-const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const OUT_MD = values["out-md"] || ""
-const OUT_GEOJSON = values["out-geojson"] || ""
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
@@ -95,8 +76,7 @@ interface SourceSpec {
 	inState: (row: Record<string, string>) => boolean
 }
 
-const S = `${SOURCES}`
-const SPECS: SourceSpec[] = [
+const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	{
 		source: "txhhsc-nursing",
 		path: `${S}/txhhsc_nursing-facilities_20260611.tsv`,
@@ -144,12 +124,23 @@ const SPECS: SourceSpec[] = [
 	},
 ]
 
-async function main(): Promise<void> {
+/** Coverage reconciliation (#621) — see the module doc. Emits the markdown report to stdout. */
+export async function coverageReconciliation(
+	options: CoverageReconciliationOptions,
+	report?: (line: string) => void
+): Promise<{ markdown: string }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const CAP = options.cap ?? 2000
+	const STATE = (options.state || "TX").toUpperCase()
+	const OUT_MD = options.outMd || ""
+	const OUT_GEOJSON = options.outGeojson || ""
+	const SPECS = buildSpecs(`${SOURCES}`, STATE)
+
 	// --- Ingest each source into one combined record set (geo-first resolve). ---
 	const rawBySource = new Map<string, Record<string, string>[]>()
 
 	for (const spec of SPECS) {
-		console.error(`[A] ${spec.source}: streaming + ${STATE} filter (cap ${CAP})…`)
+		report?.(`[A] ${spec.source}: streaming + ${STATE} filter (cap ${CAP})…`)
 		const kept: Record<string, string>[] = []
 
 		for await (const row of streamRows(spec.path)) {
@@ -159,40 +150,27 @@ async function main(): Promise<void> {
 			if (kept.length >= CAP) break
 		}
 		rawBySource.set(spec.source, kept)
-		console.error(`    ${spec.source}: ${kept.length} rows`)
+		report?.(`    ${spec.source}: ${kept.length} rows`)
 	}
 
-	console.error("[B] building the geocoder…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
+	report?.("[B] building the geocoder…")
+	const geocoder = await options.createGeocoder()
 
 	let geo = 0
 	let total = 0
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: async (raw: string) => {
-			const g = await geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-			})
-			total++
+	// Count placements at the seam (parity with the retired in-script counter).
+	const seam: GeocodeAddress = async (raw) => {
+		const g = await geocoder.seam(raw)
+		total++
 
-			if (g.lat !== null) {
-				geo++
-			}
+		if (g?.geocode) {
+			geo++
+		}
 
-			return g
-		},
-		country: "US",
-	})
+		return g
+	}
 
-	console.error("[C] geocoding + ingesting…")
+	report?.("[C] geocoding + ingesting…")
 	const records: SourceRecord[] = []
 
 	for (const spec of SPECS) {
@@ -203,11 +181,10 @@ async function main(): Promise<void> {
 		}
 		records.push(...recs)
 	}
-	shardProvider.close()
-	lookup.close()
-	console.error(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
+	geocoder.close()
+	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
-	console.error("[D] resolving + reconciling…")
+	report?.("[D] resolving + reconciling…")
 	// learnedScorer:false — reconciliation joins eligibility ↔ funding ACROSS datasets (recall-oriented):
 	// the same facility under different operational names is the signal we want, which the dedup-calibrated
 	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS baseline for this cross-dataset join.
@@ -222,7 +199,7 @@ async function main(): Promise<void> {
 	const md = reconciliationReport(result, {
 		title: "Coverage reconciliation — eligibility ↔ enrollment (#621)",
 		scopeNote:
-			`Generated by \`scripts/eval/record-matcher/coverage-reconciliation.ts\`. ${STATE}-scoped, ≤${CAP} rows per ` +
+			`Generated by \`mailwoman registry scorer-eval coverage-reconciliation\`. ${STATE}-scoped, ≤${CAP} rows per ` +
 			`source, resolved BLIND across sources. **Eligibility** = NPPES org NPIs + TX HHSC nursing facilities; ` +
 			`**funding/enrollment** = FCC Rural Health Care filings. Each resolved entity is classified by which kinds ` +
 			`of source its records span.`,
@@ -240,13 +217,13 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`[written] ${OUT_MD}`)
+		report?.(`[written] ${OUT_MD}`)
 	}
 
 	if (OUT_GEOJSON) {
 		writeFileSync(OUT_GEOJSON, JSON.stringify(geojson))
-		console.error(`[written] ${OUT_GEOJSON} (${geojson.features.length} features)`)
+		report?.(`[written] ${OUT_GEOJSON} (${geojson.features.length} features)`)
 	}
-}
 
-await main()
+	return { markdown: md }
+}

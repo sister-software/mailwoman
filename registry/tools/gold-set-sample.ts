@@ -16,45 +16,30 @@
  *   (human or LLM-as-judge, flagged as such) can label "same real-world entity? yes/no" and we can
  *   MEASURE how often the programmatic truth matches judgment.
  *
- *   Run: node registry/tools/gold-set-sample.ts\
- *   [--cap 200000] [--state TX] [--tau 0.7] [--n 300] [--out-jsonl <path>]
+ *   Run: `mailwoman registry gold-set-sample [--cap 200000] [--state TX] [--tau 0.7] [--n 300]
+ *   [--out-jsonl <path>]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		cap: { type: "string" },
-		n: { type: "string" },
-		"out-jsonl": { type: "string" },
-		sources: { type: "string" },
-		state: { type: "string" },
-		tau: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	cap?: string
-	n?: string
-	"out-jsonl"?: string
+/** Options for {@linkcode goldSetSample}. */
+export interface GoldSetSampleOptions {
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string
+	/** Providers sampled from the registry. Default 200000. */
+	cap?: number
+	/** State filter. Default TX. */
 	state?: string
-	tau?: string
+	/** Org-name Jaccard collision threshold. Default 0.7. */
+	tau?: number
+	/** Adjudication sample size. Default 300. */
+	n?: number
+	/** Write the sampled pairs here as JSONL (otherwise the first 10 print to stdout). */
+	outJsonl?: string
 }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const CAP = Number(values["cap"] || "200000")
-const STATE = (values["state"] || "TX").toUpperCase()
-const TAU = Number(values["tau"] || "0.7")
-const N = Number(values["n"] || "300")
-const OUT = values["out-jsonl"] || ""
-const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 const STOP = new Set([
@@ -121,8 +106,20 @@ interface Prov {
 	parent: string
 }
 
-async function main(): Promise<void> {
-	console.error(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
+/** Gold-set P3 (#625) — sample the HARD co-located name-collision slice for adjudication. */
+export async function goldSetSample(
+	options: GoldSetSampleOptions = {},
+	report?: (line: string) => void
+): Promise<{ hardPairs: number; sampled: number }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const CAP = options.cap ?? 200000
+	const STATE = (options.state || "TX").toUpperCase()
+	const TAU = options.tau ?? 0.7
+	const N = options.n ?? 300
+	const OUT = options.outJsonl || ""
+	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
+
+	report?.(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
 	const byAddr = new Map<string, Prov[]>()
 	let kept = 0
 
@@ -157,7 +154,7 @@ async function main(): Promise<void> {
 
 		if (kept >= CAP) break
 	}
-	console.error(`    ${kept} providers at ${byAddr.size} addresses`)
+	report?.(`    ${kept} providers at ${byAddr.size} addresses`)
 
 	// Hard pairs: co-located, name-similar (≥τ), DISTINCT NPIs that programmatic truth can't confidently
 	// collapse (NOT subparts of the same parent). Tag the programmatic verdict so adjudication can grade it.
@@ -218,21 +215,21 @@ async function main(): Promise<void> {
 			}
 		}
 	}
-	console.error(`    ${hard.length} hard co-located name-collision pairs (non-flagged-subpart)`)
+	report?.(`    ${hard.length} hard co-located name-collision pairs (non-flagged-subpart)`)
 
 	// Deterministic spread sample of N (stride, not head — avoid file-order bias, the dedup-ceiling lesson).
 	const stride = Math.max(1, Math.floor(hard.length / N))
 	const sample = hard.filter((_, i) => i % stride === 0).slice(0, N)
-	console.error(`    sampling ${sample.length} (stride ${stride}) for adjudication`)
+	report?.(`    sampling ${sample.length} (stride ${stride}) for adjudication`)
 
 	if (OUT) {
 		writeFileSync(OUT, sample.map((p) => JSON.stringify(p)).join("\n") + "\n")
-		console.error(`[written] ${OUT}`)
+		report?.(`[written] ${OUT}`)
 	} else {
 		for (const p of sample.slice(0, 10)) {
 			console.log(JSON.stringify(p))
 		}
 	}
-}
 
-await main()
+	return { hardPairs: hard.length, sampled: sample.length }
+}

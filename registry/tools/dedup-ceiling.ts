@@ -26,36 +26,28 @@
  *       how often the two distinct NPIs ALSO share a phone (so phone over-links, can't separate)
  *       …and derives a precision/F1 CEILING under stated assumptions, with the caveats called out.
  *
- *   Run: node registry/tools/dedup-ceiling.ts\
- *   [--cap 50000] [--state TX] [--sources <dir>] [--tau 0.7] [--out-md <md>]
+ *   Run: `mailwoman registry dedup-ceiling [--cap 50000] [--state TX] [--sources <dir>] [--tau 0.7]
+ *   [--out-md <md>]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		cap: { type: "string" },
-		"out-md": { type: "string" },
-		sources: { type: "string" },
-		state: { type: "string" },
-		tau: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { cap?: string; "out-md"?: string; sources?: string; state?: string; tau?: string }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const CAP = Number(values["cap"] || "50000")
-const STATE = (values["state"] || "TX").toUpperCase()
-const TAU = Number(values["tau"] || "0.7")
-const OUT_MD = values["out-md"] || ""
-const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
+/** Options for {@linkcode dedupCeiling}. */
+export interface DedupCeilingOptions {
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	sources?: string
+	/** Providers sampled from the registry. Default 50000. */
+	cap?: number
+	/** State filter. Default TX. */
+	state?: string
+	/** Org-name Jaccard collision threshold. Default 0.7. */
+	tau?: number
+	/** Also write the markdown report here. */
+	outMd?: string
+}
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
@@ -116,9 +108,20 @@ interface Provider {
 	taxonomy: string
 }
 
-async function main(): Promise<void> {
+/** #625 ceiling measurement — see the module doc. Emits the markdown report to stdout. */
+export async function dedupCeiling(
+	options: DedupCeilingOptions = {},
+	report?: (line: string) => void
+): Promise<{ markdown: string; pairs: number; collide: number }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const CAP = options.cap ?? 50000
+	const STATE = (options.state || "TX").toUpperCase()
+	const TAU = options.tau ?? 0.7
+	const OUT_MD = options.outMd || ""
+	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
+
 	// --- Stream TX type-2 (org) providers; one primary record per NPI at its practice address. ---
-	console.error(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
+	report?.(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
 	const byAddr = new Map<string, Provider[]>()
 	let kept = 0
 	let scanned = 0
@@ -160,7 +163,7 @@ async function main(): Promise<void> {
 
 		if (kept >= CAP) break
 	}
-	console.error(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
+	report?.(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
 
 	// --- Over co-located distinct-NPI pairs: the org-similarity distribution + collision rate. ---
 	let sharedAddresses = 0
@@ -231,7 +234,7 @@ async function main(): Promise<void> {
 	// a precision-ceiling BAND (optimistic: only `collide` over-merge; conservative: `collide` + half
 	// of `mid`). Recall is NOT the binding constraint here (NPPES same-NPI records almost always share
 	// either address or org), so the F1 ceiling tracks the precision ceiling. ---
-	const pct = (n: number, d: number) => (d > 0 ? `${((100 * n) / d).toFixed(1)}%` : "—")
+	const pct = formatPercent
 	const collisionRate = pairs > 0 ? collide / pairs : 0
 
 	const lines: string[] = []
@@ -345,8 +348,8 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`[written] ${OUT_MD}`)
+		report?.(`[written] ${OUT_MD}`)
 	}
-}
 
-await main()
+	return { markdown: md, pairs, collide }
+}

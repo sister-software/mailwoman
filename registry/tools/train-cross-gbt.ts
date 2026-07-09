@@ -25,75 +25,49 @@
  *   - `openpayments_covered-recipient-profile_*.csv` — the OP profile supplement (NPI, profile
  *       first/last, profile practice address).
  *
- *   Run: node scripts/eval/record-matcher/train-cross-gbt.ts\
- *   [--state TX] [--npis 2000] [--precision-bar 0.95] [--wof <admin.db>] [--data-root <dir>]\
- *   [--out registry/models/crosssource-gbt-en-us.ts]
+ *   Run: `mailwoman registry train-scorer cross-gbt [--state TX] [--npis 2000]
+ *   [--precision-bar 0.95] [--wof <admin.db>] [--data-root <dir>]
+ *   [--out registry/models/crosssource-gbt-en-us.ts]`
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
-import { parseArgs } from "node:util"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
 	createMatchFeaturizer,
 	defaultBlockingKeys,
-	geocodeAddressVia,
 	ingestRows,
 	streamRows,
 	type ColumnMapping,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { TextSpliterator } from "spliterator"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		"data-root": { type: "string" },
-		date: { type: "string" },
-		locale: { type: "string" },
-		npis: { type: "string" },
-		out: { type: "string" },
-		"precision-bar": { type: "string" },
-		sources: { type: "string" },
-		state: { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	"data-root"?: string
-	date?: string
-	locale?: string
-	npis?: string
-	out?: string
-	"precision-bar"?: string
-	sources?: string
-	state?: string
-	wof?: string
-}
-const SOURCES = values["sources"] || String(dataRootPath("record-matcher", "sources"))
-const STATE = (values["state"] || "TX").toUpperCase()
-const NPIS = Number(values["npis"] || "2000")
-const WOF = values["wof"] || String(dataRootPath("wof", "admin-global-priority.db"))
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const OUT = values["out"] || "registry/models/crosssource-gbt-en-us.ts"
-const LOCALE = values["locale"] || "en-US"
-/** #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. */
-const PRECISION_BAR = Number(values["precision-bar"] || "0.95")
-const TRAIN_DATE = values["date"] || new Date().toISOString().slice(0, 10)
+import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
-const OP_PROFILE = `${SOURCES}/openpayments_covered-recipient-profile_20260603.csv`
+/** Options for {@linkcode trainCrossSourceGBT}. */
+export interface TrainCrossSourceGBTOptions {
+	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	createGeocoder: EvalGeocoderFactory
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	sources?: string
+	/** State filter. Default TX. */
+	state?: string
+	/** NPIs sampled. Default 2000. */
+	npis?: number
+	/** Output TS module path. Default `registry/models/crosssource-gbt-en-us.ts`. */
+	out?: string
+	/** Locale recorded in the model meta. Default en-US. */
+	locale?: string
+	/** #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. Default 0.95. */
+	precisionBar?: number
+	/** Training date stamped into the meta. Default today. */
+	date?: string
+}
 
 const N = {
 	npi: "NPI",
@@ -202,9 +176,25 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 	}
 }
 
-async function main(): Promise<void> {
+/** Train + emit the cross-source link GBT — see the module doc. */
+export async function trainCrossSourceGBT(
+	options: TrainCrossSourceGBTOptions,
+	report?: (line: string) => void
+): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
+	const SOURCES = options.sources || String(dataRootPath("record-matcher", "sources"))
+	const STATE = (options.state || "TX").toUpperCase()
+	const NPIS = options.npis ?? 2000
+	const OUT = options.out || "registry/models/crosssource-gbt-en-us.ts"
+	const LOCALE = options.locale || "en-US"
+	// #655 threshold rule: max cross-source recall subject to this held-out pairwise precision.
+	const PRECISION_BAR = options.precisionBar ?? 0.95
+	const TRAIN_DATE = options.date || new Date().toISOString().slice(0, 10)
+
+	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
+	const OP_PROFILE = `${SOURCES}/openpayments_covered-recipient-profile_20260603.csv`
+
 	// --- Phase A: Open Payments TX practitioners (NPI + profile name + profile address). ---
-	console.error(`[A] streaming the OP profile supplement (${STATE})…`)
+	report?.(`[A] streaming the OP profile supplement (${STATE})…`)
 	const opByNPI = new Map<string, MessyRow>()
 
 	for await (const r of streamCSV(OP_PROFILE)) {
@@ -225,11 +215,11 @@ async function main(): Promise<void> {
 		if (!name || !address) continue
 		opByNPI.set(npi, { npi, name, org: "", address, source: "openpayments" })
 	}
-	console.error(`    ${opByNPI.size} OP ${STATE} practitioners`)
+	report?.(`    ${opByNPI.size} OP ${STATE} practitioners`)
 
 	// --- Phase B: the SAME NPIs from NPPES (practice address + legal name) + the corpus-wide
 	// address-frequency table (one full registry pass, identical to train-gbt). ---
-	console.error("[B] full registry pass: address-frequency table + the NPI-joined NPPES rows…")
+	report?.("[B] full registry pass: address-frequency table + the NPI-joined NPPES rows…")
 	const rows: MessyRow[] = []
 	const joined = new Set<string>()
 	const addrCounts = new Map<string, number>()
@@ -238,7 +228,7 @@ async function main(): Promise<void> {
 
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) {
-			console.error(`    scanned ${scanned / 1e6}M, joined ${joined.size}`)
+			report?.(`    scanned ${scanned / 1e6}M, joined ${joined.size}`)
 		}
 		const practice = addr(r[N.pAddr]!, r[N.pCity]!, r[N.pState]!, r[N.pZip]!)
 
@@ -269,27 +259,12 @@ async function main(): Promise<void> {
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
-	console.error(`    ${joined.size} NPI-joined pairs → ${rows.length} records`)
+	report?.(`    ${joined.size} NPI-joined pairs → ${rows.length} records`)
 
-	// --- Phase C: geocode + ingest (record.id = the NPI label; `source` rides the record). ---
-	console.error("[C] geocoding…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
-	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup)
-	const shardProvider = new ShardProvider(mod, DATA_ROOT)
-	const seam = geocodeAddressVia({
-		parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: (raw: string) =>
-			geocodeAddress(raw, {
-				classifier,
-				resolver,
-				shards: shardProvider.for,
-				defaultCountry: "US",
-				placeCountry: false,
-			}),
-		country: "US",
-	})
+	// --- Phase C: geocode + ingest (record.id = the NPI label; `source` rides the record). The heavy
+	// geocoder is injected (see ./eval-geocoder.ts). ---
+	report?.("[C] geocoding…")
+	const geocoder = await options.createGeocoder()
 	// `ColumnMapping.source` is a LITERAL provenance label — ingest each source separately so every
 	// record carries its registry of origin (the cross-source filter + the sweep harness key on it).
 	const mappingFor = (source: string): ColumnMapping => ({
@@ -303,18 +278,17 @@ async function main(): Promise<void> {
 	const opRows = rows.filter((r) => r.source === "openpayments")
 	const records: SourceRecord[] = [
 		...(await ingestRows(nppesRows as unknown as Record<string, string>[], mappingFor("nppes"), {
-			geocodeAddress: seam,
+			geocodeAddress: geocoder.seam,
 		})),
 		...(await ingestRows(opRows as unknown as Record<string, string>[], mappingFor("openpayments"), {
-			geocodeAddress: seam,
+			geocodeAddress: geocoder.seam,
 		})),
 	]
-	shardProvider.close()
-	lookup.close()
-	console.error(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
+	geocoder.close()
+	report?.(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
 
 	// --- Phase D: block over the UNION; keep only CROSS-source pairs; featurize; label by NPI. ---
-	console.error("[D] blocking + featurizing (cross-source pairs only)…")
+	report?.("[D] blocking + featurizing (cross-source pairs only)…")
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 	const { pairs: allPairs } = block(records, defaultBlockingKeys())
@@ -323,12 +297,12 @@ async function main(): Promise<void> {
 	const Y: number[] = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
 	const posRate = Y.reduce((s, y) => s + y, 0) / Math.max(1, Y.length)
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate))
-	console.error(
+	report?.(
 		`    ${allPairs.length} blocked pairs → ${pairs.length} cross-source (${(100 * posRate).toFixed(1)}% positive)`
 	)
 
 	// --- Phase E: held-out-NPI calibration — the #655 threshold rule. ---
-	console.error("[E] held-out calibration…")
+	report?.("[E] held-out calibration…")
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 	const rnd = lcg(655)
 	const split = new Map<string, "fit" | "holdout">()
@@ -388,12 +362,12 @@ async function main(): Promise<void> {
 	if (!Number.isFinite(recommendedThreshold)) {
 		recommendedThreshold = f1MaxThreshold
 	}
-	console.error(
+	report?.(
 		`    held-out (${holdIdx.length} pairs, ${totalPos} pos): precision-bar ${PRECISION_BAR} → threshold ${recommendedThreshold.toFixed(3)} (recall ${(100 * barRecall).toFixed(1)}%); F1-max ${(100 * bestF1).toFixed(1)}% @ ${f1MaxThreshold.toFixed(3)}`
 	)
 
 	// --- Phase F: train the SHIPPED model on ALL cross-source pairs; emit the committed module. ---
-	console.error("[F] training the shipped model on all pairs…")
+	report?.("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, hyperparams)
 	const meta = {
 		version: "1.0.0",
@@ -430,7 +404,7 @@ async function main(): Promise<void> {
 		`export const CROSS_SOURCE_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
 	mkdirSync(dirname(OUT), { recursive: true })
 	writeFileSync(OUT, moduleSource)
-	console.error(`    ${model.trees.length} trees, ${meta.features} features -> ${OUT}`)
-}
+	report?.(`    ${model.trees.length} trees, ${meta.features} features -> ${OUT}`)
 
-await main()
+	return { out: OUT, pairs: pairs.length, recommendedThreshold }
+}

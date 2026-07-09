@@ -12,35 +12,25 @@
  *   peak RSS. Geocoding is NOT in scope here (it's the per-record cost measured elsewhere) — this
  *   isolates the matcher's block/score/cluster cost as a function of N.
  *
- *   Run: node registry/tools/matcher-scale.ts\
- *   [--sizes 10000,50000,100000,250000,500000] [--dup 3] [--em] [--out-md <md>]
+ *   Run: `mailwoman registry matcher-scale [--sizes 10000,50000,100000,250000,500000] [--dup 3]
+ *   [--em] [--out-md <md>]`
  */
 
 import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 import { resolveEntities, type SourceRecord } from "@mailwoman/registry"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		dup: { type: "string" },
-		em: { type: "boolean" },
-		"out-md": { type: "string" },
-		sizes: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { dup?: string; em?: boolean; "out-md"?: string; sizes?: string }
-const SIZES = (values["sizes"] || "10000,50000,100000,250000,500000")
-	.split(",")
-	.map((s) => Number(s.trim()))
-	.filter((n) => n > 0)
-const DUP = Number(values["dup"] || "3") // avg records per distinct place
-const EM = values["em"] ?? false
-const OUT_MD = values["out-md"] || ""
+/** Options for {@linkcode matcherScale}. */
+export interface MatcherScaleOptions {
+	/** Record counts to sweep. Default `[10000, 50000, 100000, 250000, 500000]`. */
+	sizes?: number[]
+	/** Average records per distinct place. Default 3. */
+	dup?: number
+	/** Fit the FS m/u with EM per size (slower). Default false. */
+	em?: boolean
+	/** Also write the markdown report here. */
+	outMd?: string
+}
 
 /** Deterministic LCG so the eval is reproducible run to run (no Math.random). */
 function lcg(seed: number): () => number {
@@ -59,9 +49,9 @@ function lcg(seed: number): () => number {
  * coordinate, so geo-cell + canonical-key blocking groups them and scoring links them — the realistic shape of a dedup
  * workload.
  */
-function generate(n: number, seed = 1): SourceRecord[] {
+function generate(n: number, dup: number, seed = 1): SourceRecord[] {
 	const rnd = lcg(seed)
-	const places = Math.max(1, Math.round(n / DUP))
+	const places = Math.max(1, Math.round(n / dup))
 	const records: SourceRecord[] = new Array(n)
 
 	for (let i = 0; i < n; i++) {
@@ -91,7 +81,16 @@ function generate(n: number, seed = 1): SourceRecord[] {
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(0)} MB`
 const sec = (ms: number) => `${(ms / 1000).toFixed(2)} s`
 
-async function main(): Promise<void> {
+/** Pure-Node matcher scale eval — see the module doc. Emits the markdown report to stdout. */
+export async function matcherScale(
+	options: MatcherScaleOptions = {},
+	report?: (line: string) => void
+): Promise<{ markdown: string }> {
+	const SIZES = options.sizes?.length ? options.sizes : [10000, 50000, 100000, 250000, 500000]
+	const DUP = options.dup ?? 3 // avg records per distinct place
+	const EM = options.em ?? false
+	const OUT_MD = options.outMd || ""
+
 	interface Measurement {
 		n: number
 		records: number
@@ -103,7 +102,7 @@ async function main(): Promise<void> {
 	const rows: Measurement[] = []
 
 	for (const n of SIZES) {
-		const records = generate(n)
+		const records = generate(n, DUP)
 		const t0 = performance.now()
 		// learnedScorer:false — this measures the FS-baseline pipeline throughput baseline (the learned scorer
 		// is now default-on; its per-pair tree eval is a separate cost, not what this scale number tracks).
@@ -115,9 +114,7 @@ async function main(): Promise<void> {
 		const wallMs = performance.now() - t0
 		const rssBytes = process.memoryUsage().rss
 		rows.push({ n, records: records.length, entities: entities.length, candidatePairs, wallMs, rssBytes })
-		console.error(
-			`    N=${n}: ${sec(wallMs)}, ${candidatePairs} pairs → ${entities.length} entities, RSS ${mb(rssBytes)}`
-		)
+		report?.(`    N=${n}: ${sec(wallMs)}, ${candidatePairs} pairs → ${entities.length} entities, RSS ${mb(rssBytes)}`)
 
 		// Encourage reclamation between sizes (RSS is a shared-process high-water — see the report note).
 		if (global.gc) {
@@ -178,8 +175,8 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`[written] ${OUT_MD}`)
+		report?.(`[written] ${OUT_MD}`)
 	}
-}
 
-await main()
+	return { markdown: md }
+}

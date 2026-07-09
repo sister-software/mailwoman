@@ -11,73 +11,77 @@
  *   Neutral scope: this measures GEOCODER ACCURACY on real public addresses; it makes no claim about
  *   the facilities themselves.
  *
- *   Run: node registry/tools/txhhsc-to-oarow.ts\
- *   --src <tsv> --out /tmp/txhhsc-oarow.jsonl
+ *   Run: `mailwoman registry convert tx-hhsc [--src <tsv>] [--out /tmp/txhhsc-oarow.jsonl]`
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-const { values } = parseArgs({
-	options: {
-		src: {
-			type: "string",
-			default: String(dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv")),
-		},
-		out: { type: "string", default: "/tmp/txhhsc-oarow.jsonl" },
-	},
-})
-const src = values.src!
-const out = values.out!
-
-const lines = readFileSync(src, "utf8")
-	.split("\n")
-	.filter((l) => l.trim())
-const header = lines[0]!.split("\t")
-const col = (name: string) => header.indexOf(name)
-const cAddr = col("Physical Address")
-const cCity = col("Physical Address CITY")
-const cState = col("Physical Address State")
-const cZip = col("Physical Address Zipcode")
-const cGeo = col("Geo Location")
+/** Options for {@linkcode convertTXHHSC}. */
+export interface TXHHSCConvertOptions {
+	/** The TX HHSC nursing-facilities TSV. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`. */
+	src?: string
+	/** Output OaRow JSONL path. Default `/tmp/txhhsc-oarow.jsonl`. */
+	out?: string
+}
 
 const GEO = /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/
 
-const records: string[] = []
-let skipped = 0
+/** Convert the TX HHSC nursing-facilities TSV into OaRow JSONL for `oa-resolver-eval`. */
+export function convertTXHHSC(
+	options: TXHHSCConvertOptions = {},
+	report?: (line: string) => void
+): { written: number; skipped: number; out: string } {
+	const src = options.src || String(dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv"))
+	const out = options.out || "/tmp/txhhsc-oarow.jsonl"
 
-for (const line of lines.slice(1)) {
-	const f = line.split("\t")
-	const addr = (f[cAddr] ?? "").trim()
-	const city = (f[cCity] ?? "").trim()
-	const zip = (f[cZip] ?? "").trim()
-	const m = GEO.exec(f[cGeo] ?? "")
+	const lines = readFileSync(src, "utf8")
+		.split("\n")
+		.filter((l) => l.trim())
+	const header = lines[0]!.split("\t")
+	const col = (name: string) => header.indexOf(name)
+	const cAddr = col("Physical Address")
+	const cCity = col("Physical Address CITY")
+	const cZip = col("Physical Address Zipcode")
+	const cGeo = col("Geo Location")
 
-	if (!addr || !city || !m) {
-		skipped++
-		continue
+	const records: string[] = []
+	let skipped = 0
+
+	for (const line of lines.slice(1)) {
+		const f = line.split("\t")
+		const addr = (f[cAddr] ?? "").trim()
+		const city = (f[cCity] ?? "").trim()
+		const zip = (f[cZip] ?? "").trim()
+		const m = GEO.exec(f[cGeo] ?? "")
+
+		if (!addr || !city || !m) {
+			skipped++
+			continue
+		}
+		const lat = Number(m[1])
+		const lon = Number(m[2])
+
+		// Sanity: TX bounding box (rejects swapped/garbage coords).
+		if (lat < 25 || lat > 37 || lon > -93 || lon < -107) {
+			skipped++
+			continue
+		}
+		records.push(
+			JSON.stringify({
+				input: `${addr}, ${city}, TX ${zip}`,
+				lat,
+				lon,
+				expected: { locality: city, region: "TX", postcode: zip },
+				state: "TX",
+				source: "txhhsc:nursing-facilities",
+			})
+		)
 	}
-	const lat = Number(m[1])
-	const lon = Number(m[2])
 
-	// Sanity: TX bounding box (rejects swapped/garbage coords).
-	if (lat < 25 || lat > 37 || lon > -93 || lon < -107) {
-		skipped++
-		continue
-	}
-	records.push(
-		JSON.stringify({
-			input: `${addr}, ${city}, TX ${zip}`,
-			lat,
-			lon,
-			expected: { locality: city, region: "TX", postcode: zip },
-			state: "TX",
-			source: "txhhsc:nursing-facilities",
-		})
-	)
+	writeFileSync(out, records.join("\n") + "\n")
+	report?.(`wrote ${records.length} rows (skipped ${skipped}) → ${out}`)
+
+	return { written: records.length, skipped, out }
 }
-
-writeFileSync(out, records.join("\n") + "\n")
-console.error(`wrote ${records.length} rows (skipped ${skipped}) → ${out}`)

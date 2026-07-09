@@ -21,98 +21,73 @@
  *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
  *   registry via `streamRows` (#616), so nothing loads whole.
  *
- *   Run: node scripts/eval/record-matcher/nppes-dedup-benchmark.ts\
- *   [--state TX] [--max-npis 300] [--wof <admin.db>] [--data-root <dir>] [--no-train-em]\
- *   [--out-md docs/articles/evals/<date>-nppes-dedup-benchmark.md]
+ *   Run: `mailwoman registry scorer-eval nppes-benchmark [--state TX] [--max-npis 300]
+ *   [--wof <admin.db>] [--data-root <dir>] [--no-train-em]
+ *   [--out-md docs/articles/evals/<date>-nppes-dedup-benchmark.md]`
  */
 
 import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"
 import { pathToFileURL } from "node:url"
-import { parseArgs } from "node:util"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm, type GBT } from "@mailwoman/match"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
-	geocodeAddressVia,
 	ingestRows,
 	resolveEntities,
 	streamRows,
 	type ColumnMapping,
+	type GeocodeAddress,
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { createWOFResolver } from "@mailwoman/resolver"
 import { latLngToCell } from "h3-js"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
-// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		candidate: { type: "string" },
-		"data-root": { type: "string" },
-		"dump-overmerges": { type: "string" },
-		"geo-concurrency": { type: "string" },
-		"h3-res": { type: "string" },
-		"legacy-join": { type: "boolean" },
-		"max-npis": { type: "string" },
-		model: { type: "string" },
-		"model-card": { type: "string" },
-		"no-train-em": { type: "boolean" },
-		"out-md": { type: "string" },
-		"parallel-geocode": { type: "boolean" },
-		sources: { type: "string" },
-		state: { type: "string" },
-		tokenizer: { type: "string" },
-		wof: { type: "string" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	candidate?: string
-	"data-root"?: string
-	"dump-overmerges"?: string
-	"geo-concurrency"?: string
-	"h3-res"?: string
-	"legacy-join"?: boolean
-	"max-npis"?: string
-	model?: string
-	"model-card"?: string
-	"no-train-em"?: boolean
-	"out-md"?: string
-	"parallel-geocode"?: boolean
+import type { EvalGeocodeStream, EvalGeocoderFactory } from "./eval-geocoder.ts"
+
+/** Options for {@linkcode nppesDedupBenchmark}. */
+export interface NPPESDedupBenchmarkOptions {
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). Model-swap
+	 * overrides (`--model`/`--tokenizer`/`--model-card`) are the COMMAND's factory config, not tool options.
+	 */
+	createGeocoder: EvalGeocoderFactory
+	/** The threaded geocode surface — required when {@linkcode parallelGeocode} is set. */
+	geocodeStream?: EvalGeocodeStream
+	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string
+	/** State filter. Default TX. */
 	state?: string
-	tokenizer?: string
-	wof?: string
+	/** NPIs sampled. Default 300. */
+	maxNpis?: number
+	/** EM-train the FS arms (label-free). Default true; `--no-train-em` uses the seeds. */
+	trainEm?: boolean
+	/**
+	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + normalizeCase OFF). Default off (the
+	 * validated flip: comma-join + #690 all-caps normalization). Same data + GBT, only the flip toggled — so a delta here
+	 * is attributable to the flip.
+	 */
+	legacyJoin?: boolean
+	/**
+	 * Optional A/B: a path to a trained dedup-gbt TS module (exports DEDUP_GBT_MODEL + DEDUP_GBT_META) to score alongside
+	 * the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
+	 */
+	candidate?: string
+	/** Write the #625 gold-set adjudication packet (org-name-grain over-merged clusters) here. */
+	dumpOvermerges?: string
+	/** H3 resolution for the org-name-h3 truth grain. Default 11 (≈25 m edge). */
+	h3Res?: number
+	/**
+	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the serial in-process seam. Heavy
+	 * per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2 workers, coordinates identical.
+	 */
+	parallelGeocode?: boolean
+	/** Worker-pool concurrency for {@linkcode parallelGeocode}. Default 2 (geocode is I/O-bound). */
+	geoConcurrency?: number
+	/** Also write the markdown report here. */
+	outMd?: string
 }
-const SOURCES = values["sources"] || dataRootPath("record-matcher", "sources")
-const STATE = (values["state"] || "TX").toUpperCase()
-const MAX_NPIS = Number(values["max-npis"] || "300")
-const WOF = values["wof"] || dataRootPath("wof", "admin-global-priority.db")
-const DATA_ROOT = values["data-root"] || mailwomanDataRoot()
-const OUT_MD = values["out-md"] || ""
-const TRAIN_EM = !(values["no-train-em"] ?? false)
-// #694 A/B: `--legacy-join` reproduces the pre-flip ingest (space-joined address columns + normalizeCase
-// OFF). Default (no flag) is the validated flip: comma-join (the correct address shape) + #690 all-caps
-// normalization. Same data + GBT, only the flip toggled — so a delta here is attributable to the flip.
-const LEGACY = values["legacy-join"] ?? false
-// Optional A/B: a path to a trained dedup-gbt TS module (exports DEDUP_GBT_MODEL + DEDUP_GBT_META) to
-// score alongside the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
-const CANDIDATE = values["candidate"] || ""
-// `--parallel-geocode`: geocode the sample across a worker pool (spliterator.geocodeStream) instead of the
-// serial in-process seam. Heavy per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2
-// workers, coordinates identical. Concurrency low on purpose (geocode is I/O-bound). `--geo-concurrency N` tunes.
-const PARALLEL_GEOCODE = values["parallel-geocode"] ?? false
-const GEO_CONC = Number(values["geo-concurrency"] || "2")
-
-const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
-const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
 // NPPES column names (verbatim from the file headers).
 const C = {
@@ -199,9 +174,26 @@ interface MessyRow {
 	entityID: string
 }
 
-async function main(): Promise<void> {
+/** The #617 NPPES dedup benchmark — see the module doc. Emits the markdown report to stdout. */
+export async function nppesDedupBenchmark(
+	options: NPPESDedupBenchmarkOptions,
+	report?: (line: string) => void
+): Promise<{ markdown: string }> {
+	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
+	const STATE = (options.state || "TX").toUpperCase()
+	const MAX_NPIS = options.maxNpis ?? 300
+	const OUT_MD = options.outMd || ""
+	const TRAIN_EM = options.trainEm ?? true
+	const LEGACY = options.legacyJoin ?? false
+	const CANDIDATE = options.candidate || ""
+	const PARALLEL_GEOCODE = options.parallelGeocode ?? false
+	const GEO_CONC = options.geoConcurrency ?? 2
+
+	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
+	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
+
 	// --- Phase A: the variation set — NPIs that carry ≥1 alternate organization name. ---
-	console.error("[A] streaming other-names…")
+	report?.("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
 
 	for await (const r of streamRows(OTHER_NAMES)) {
@@ -216,11 +208,11 @@ async function main(): Promise<void> {
 		} // cap fan-out per NPI
 		altNames.set(npi, list)
 	}
-	console.error(`    ${altNames.size} NPIs with ≥1 alternate name`)
+	report?.(`    ${altNames.size} NPIs with ≥1 alternate name`)
 
 	// --- Phase B: ONE full registry pass — build the GLOBAL address-frequency table (every practice
 	// address, so the sharing structure is corpus-wide, not sample-biased) AND collect the sample. ---
-	console.error(`[B] full registry pass: address-frequency table + ${MAX_NPIS} ${STATE} sample…`)
+	report?.(`[B] full registry pass: address-frequency table + ${MAX_NPIS} ${STATE} sample…`)
 	const rows: MessyRow[] = []
 	const kept = new Set<string>()
 	// Per-NPI primary org name + practice address key — the basis for the ORG-NAME entity-truth.
@@ -231,7 +223,7 @@ async function main(): Promise<void> {
 
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) {
-			console.error(`    scanned ${scanned / 1e6}M rows, kept ${kept.size}`)
+			report?.(`    scanned ${scanned / 1e6}M rows, kept ${kept.size}`)
 		}
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
@@ -300,16 +292,15 @@ async function main(): Promise<void> {
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
-	console.error(
+	report?.(
 		`    ${kept.size} NPIs → ${rows.length} records; address table: ${addrCounts.size} distinct over ${addrTotal} rows`
 	)
 
-	// --- Phase C: geocode + ingest (the NPI rides on record.id as the held-out label). ---
-	console.error("[C] building the geocoder + geocoding records…")
-	// Model-swap (night shift 2026-06-18): point at a specific exported model for a multi-version curve
-	// (mirrors scripts/eval/eval-matrix.ts / compare-parsers.ts). modelCardPath is MANDATORY when modelPath
-	// is set — without it a STAGE3 model silently mis-decodes into empty parses (neural/weights.ts). Bare
-	// call (no --model) keeps the default dev-weights behavior.
+	// --- Phase C: geocode + ingest (the NPI rides on record.id as the held-out label). The heavy
+	// geocoder is injected (see ./eval-geocoder.ts); model-swap for a multi-version curve rides the
+	// command's factory config (--model/--tokenizer/--model-card; modelCardPath is MANDATORY when
+	// modelPath is set — without it a STAGE3 model silently mis-decodes into empty parses). ---
+	report?.("[C] building the geocoder + geocoding records…")
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -328,16 +319,14 @@ async function main(): Promise<void> {
 		// Threaded geocode: normalize on the main thread, then hand records to a worker pool that each rebuild the
 		// classifier/resolver/shards from config. `address` is a single pre-joined column here, so `--legacy-join`
 		// (a separator toggle) is a no-op for this path; `normalizeCase` follows the worker default (on).
-		const { geocodeStream } = await import("mailwoman/geocode-stream")
+		if (!options.geocodeStream) {
+			throw new Error("parallelGeocode requires the injected geocodeStream (see ./eval-geocoder.ts)")
+		}
 		const normalized = await ingestRows(rows as unknown as Record<string, string>[], mapping)
 		const order = new Map(normalized.map((r, i) => [r.id, i]))
 		const geocoded: SourceRecord[] = []
 
-		for await (const rec of geocodeStream(normalized, {
-			mapping,
-			geocode: { wofDBPath: WOF, dataRoot: DATA_ROOT, locale: "en-US", country: "US" },
-			concurrency: GEO_CONC,
-		})) {
+		for await (const rec of options.geocodeStream(normalized, { mapping, concurrency: GEO_CONC })) {
 			geocoded.push(rec)
 
 			if (rec.address?.geocode) {
@@ -348,45 +337,25 @@ async function main(): Promise<void> {
 		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 		records = geocoded
 	} else {
-		const classifier = await NeuralAddressClassifier.loadFromWeights({
-			locale: "en-US",
-			...(values["model"] || "" ? { modelPath: values["model"] || "" } : {}),
-			...(values["tokenizer"] || "" ? { tokenizerPath: values["tokenizer"] || "" } : {}),
-			...(values["model-card"] || "" ? { modelCardPath: values["model-card"] || "" } : {}),
-		})
-		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: WOF })
-		const resolver = createWOFResolver(lookup)
-		const shardProvider = new ShardProvider(mod, DATA_ROOT)
-		const seam = geocodeAddressVia({
-			parse: async (raw: string) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-			geocode: async (raw: string) => {
-				const g = await geocodeAddress(raw, {
-					classifier,
-					resolver,
-					shards: shardProvider.for,
-					defaultCountry: "US",
-					placeCountry: false,
-					normalizeCase: !LEGACY,
-				})
+		const geocoder = await options.createGeocoder({ normalizeCase: !LEGACY })
+		// Count placements at the seam (parity with the retired in-script counter).
+		const countedSeam: GeocodeAddress = async (raw) => {
+			const g = await geocoder.seam(raw)
 
-				if (g.lat !== null) {
-					geo++
-				}
+			if (g?.geocode) {
+				geo++
+			}
 
-				return g
-			},
-			country: "US",
-		})
+			return g
+		}
 
 		records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
-			geocodeAddress: seam,
+			geocodeAddress: countedSeam,
 			addressSeparator: LEGACY ? " " : ", ",
 		})
-		shardProvider.close()
-		lookup.close()
+		geocoder.close()
 	}
-	console.error(`    geocoded ${geo}/${rows.length} (${((100 * geo) / rows.length).toFixed(1)}%)`)
+	report?.(`    geocoded ${geo}/${rows.length} (${((100 * geo) / rows.length).toFixed(1)}%)`)
 
 	// --- Phase E: score recovered clusters vs the NPI grouping (record.id = the held-out NPI). ---
 	const choose2 = (n: number) => (n * (n - 1)) / 2
@@ -618,7 +587,7 @@ async function main(): Promise<void> {
 	// matches, the number isn't an artifact of the 50 m threshold, and cell-blocking is O(n) not O(n²).
 	// Caveat: a hard cell boundary can split a same-building pair into adjacent cells (a slight
 	// under-count vs the radius); res 10 (~65 m edge) absorbs most of it. ---
-	const H3_RES = Number(values["h3-res"] || "11") // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
+	const H3_RES = options.h3Res ?? 11 // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
 	const parentH = new Map<string, string>()
 	const findH = (x: string): string => {
 		if (!parentH.has(x)) {
@@ -678,7 +647,7 @@ async function main(): Promise<void> {
 	// --- Phase D: the comparison-model lever progression — toggle each lever ON in turn at the default
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
-	console.error(`[D] resolving the lever progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
+	report?.(`[D] resolving the lever progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
 	type LeverConfig = {
 		addressFrequency?: typeof addressFrequency | false
 		collapseSpatial?: boolean
@@ -785,10 +754,10 @@ async function main(): Promise<void> {
 	})
 	const base = sweep[0]! // threshold 0, full lever stack
 	const best = sweep.reduce((a, b) => (b.score.f1 > a.score.f1 ? b : a))
-	console.error(
+	report?.(
 		`    progression @ threshold 0: ${progression.map((p) => `${(100 * p.score.f1).toFixed(1)}%`).join(" → ")} F1`
 	)
-	console.error(
+	report?.(
 		`    default F1 ${(100 * base.score.f1).toFixed(1)}% → best F1 ${(100 * best.score.f1).toFixed(1)}% @ threshold ${best.t}`
 	)
 
@@ -819,14 +788,14 @@ async function main(): Promise<void> {
 	// per-pair adjudication (same entity? distinct co-located?) is the only instrument left that can
 	// separate model error from yardstick error. Each cluster prints its members grouped by org-name
 	// label with every matcher-visible field, so a reviewer can adjudicate in one glance.
-	const DUMP_OVERMERGES = values["dump-overmerges"] || ""
+	const DUMP_OVERMERGES = options.dumpOvermerges || ""
 
 	if (DUMP_OVERMERGES) {
 		const rowByID = new Map(rows.map((r) => [r.npi, r]))
 		const out: string[] = [
 			"# #625 gold-set adjudication packet — org-name-grain over-merged clusters (GBT, shipped config)",
 			"",
-			`TX --max-npis ${MAX_NPIS} · ${records.length} records · generated by nppes-dedup-benchmark --dump-overmerges`,
+			`TX --max-npis ${MAX_NPIS} · ${records.length} records · generated by \`registry scorer-eval nppes-benchmark --dump-overmerges\``,
 			"",
 			"For each cluster: the matcher fused records that the org-name truth says belong to DIFFERENT entities.",
 			"Adjudicate each: **[same]** one real-world entity (yardstick error — the truth under-collapsed) or",
@@ -861,7 +830,7 @@ async function main(): Promise<void> {
 			out.push("")
 		})
 		writeFileSync(DUMP_OVERMERGES, out.join("\n"))
-		console.error(`    adjudication packet: ${n} over-merged clusters -> ${DUMP_OVERMERGES}`)
+		report?.(`    adjudication packet: ${n} over-merged clusters -> ${DUMP_OVERMERGES}`)
 	}
 
 	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
@@ -886,22 +855,24 @@ async function main(): Promise<void> {
 			npi: scoreEntities(res.entities, npiLabel),
 			entity: scoreEntities(res.entities, entityLabel),
 		}
-		console.error(
+		report?.(
 			`    candidate ${CANDIDATE}: NPI ${(100 * cand.npi.f1).toFixed(1)}% / entity ${(100 * cand.entity.f1).toFixed(1)}%`
 		)
 	}
-	console.error(
+	report?.(
 		`    truth-grains — GBT NPI ${(100 * gbtNPI.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}% → org-name-coord ${(100 * gbtOrgCoord.f1).toFixed(1)}% → org-name-h3 ${(100 * gbtOrgH3.f1).toFixed(1)}% (res ${H3_RES}); ` +
 			`FS: NPI ${(100 * fsNPI.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}% / org-coord ${(100 * fsOrgCoord.f1).toFixed(1)}%`
 	)
 
+	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
+	// numerator/denominator contract (call sites append their own "%").
 	const pct = (x: number) => (100 * x).toFixed(1)
 	const signed = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(1)}pp`
 	const lines: string[] = []
 	lines.push(`# NPPES NPI dedup benchmark (#617)`)
 	lines.push("")
 	lines.push(
-		`_Generated by \`scripts/eval/record-matcher/nppes-dedup-benchmark.ts\`. Sample: ${kept.size} ${STATE} NPIs with ≥1 ` +
+		`_Generated by \`mailwoman registry scorer-eval nppes-benchmark\`. Sample: ${kept.size} ${STATE} NPIs with ≥1 ` +
 			`alternate name → ${N} records (${(N / kept.size).toFixed(1)}/NPI) from real registry + other-names + ` +
 			`mailing-vs-practice variation. Matcher run BLIND to the NPI${TRAIN_EM ? ", EM-trained (label-free)" : ""}; ` +
 			`geocoded ${pct(geo / N)}% of addresses. The NPI is held-out ground truth._`
@@ -1102,8 +1073,8 @@ async function main(): Promise<void> {
 
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
-		console.error(`\n[written] ${OUT_MD}`)
+		report?.(`\n[written] ${OUT_MD}`)
 	}
-}
 
-await main()
+	return { markdown: md }
+}
