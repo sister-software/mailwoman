@@ -12,7 +12,7 @@
 
 import { parseArgs } from "node:util"
 
-import { cliArguments } from "@mailwoman/core/utils"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildNutsDB } from "./build.ts"
 import { NutsLookup } from "./index.ts"

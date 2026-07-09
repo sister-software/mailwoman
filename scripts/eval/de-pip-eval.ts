@@ -16,8 +16,8 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
 async function main() {

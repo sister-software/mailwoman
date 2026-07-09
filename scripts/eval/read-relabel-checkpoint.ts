@@ -14,7 +14,7 @@
 import { basename } from "node:path"
 import { parseArgs } from "node:util"
 
-import { runIfScript } from "mailwoman/sdk/scripting"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { $ } from "zx"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })

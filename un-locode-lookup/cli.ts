@@ -13,7 +13,7 @@
 
 import { parseArgs } from "node:util"
 
-import { cliArguments } from "@mailwoman/core/utils"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildUnLocodeDB } from "./build.ts"
 import { UnLocodeLookup } from "./index.ts"

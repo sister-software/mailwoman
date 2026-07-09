@@ -37,7 +37,7 @@ import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/utils"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 import {
 	alignRow,
 	PARQUET_COLUMNS,

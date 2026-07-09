@@ -32,8 +32,8 @@ import { fileURLToPath } from "node:url"
 
 import { $public } from "@mailwoman/core/env"
 import { tryStat } from "@mailwoman/core/fs"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 const STATIC_DIR = fileURLToPath(new URL("../static/mailwoman", import.meta.url))
 const WEIGHTS_PKG = fileURLToPath(new URL("../../neural-weights-en-us", import.meta.url))

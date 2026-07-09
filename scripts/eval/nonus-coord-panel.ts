@@ -38,8 +38,8 @@ import { existsSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
 /** Locale → a zip-entry source or a CSV glob. Mirrors the bash `src_for`; extend as needed. */

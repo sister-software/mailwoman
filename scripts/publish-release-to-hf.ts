@@ -39,7 +39,7 @@ import { tmpdir } from "node:os"
 import { resolve } from "node:path"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { childEnv, cliArguments } from "@mailwoman/core/utils"
+import { childEnv, cliArguments } from "@mailwoman/core/scripting/utils"
 
 const REQUIRED_FILES = [
 	{ flag: "--model", remoteName: "model.onnx", description: "ONNX classifier" },

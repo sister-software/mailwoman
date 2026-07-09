@@ -18,7 +18,7 @@
 import { openSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
-import { cliArguments } from "@mailwoman/core/utils"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { $, sleep } from "zx"
 
 const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)

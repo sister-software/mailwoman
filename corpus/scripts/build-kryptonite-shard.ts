@@ -24,7 +24,7 @@ import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/utils"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "@mailwoman/corpus"
 import type { CanonicalRow, LabeledRow, ShardManifest } from "@mailwoman/corpus"
 import { TextSpliterator } from "spliterator"

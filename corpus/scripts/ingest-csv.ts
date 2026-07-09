@@ -35,7 +35,7 @@ import { basename, dirname, extname, join } from "node:path"
 import type { SQLInputValue } from "node:sqlite"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/utils"
+import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { TextSpliterator } from "spliterator"
 
 // ---------------------------------------------------------------------------

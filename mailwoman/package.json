@@ -73,11 +73,6 @@
 			"default": "./out/sdk/test/index.js",
 			"types": "./out/sdk/test/index.d.ts"
 		},
-		"./sdk/scripting": {
-			"node": "./sdk/scripting.ts",
-			"default": "./out/sdk/scripting.js",
-			"types": "./out/sdk/scripting.d.ts"
-		},
 		"./sdk/cli": {
 			"node": "./sdk/cli.ts",
 			"default": "./out/sdk/cli.js",

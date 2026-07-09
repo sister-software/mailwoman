@@ -1,4 +1,4 @@
-import type { ScriptCallback } from "../utils/scripting.ts"
+import type { ScriptCallback } from "./utils/index.ts"
 
 /**
  * Given the calling module's import.meta object, runs the callback if that module is the entry script.
