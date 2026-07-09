@@ -42,7 +42,7 @@ const { values: rawValues } = parseArgs({
 	allowPositionals: true,
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { model?: string }
+const values = rawValues as { model?: string; tokenizer?: string; card?: string }
 const INV_EPSILON_KM = 0.001 // 1m — same address, identical resolution expected.
 const DIR_NEAR_KM = 5 // dropping the postcode may lose the rooftop, but must still land in the right area.
 const BAND_NEAR_KM = 5 // a corrupted surface may shift the parse, but must stay within the tolerance band.

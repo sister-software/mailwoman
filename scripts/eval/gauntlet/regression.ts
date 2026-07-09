@@ -32,7 +32,7 @@ const { values: rawValues } = parseArgs({
 	allowPositionals: true,
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { model?: string }
+const values = rawValues as { model?: string; tokenizer?: string; card?: string }
 const DEFAULT_TOL_M = 5000
 
 /** Map an expect_components key to the assembled-result field it asserts. */
