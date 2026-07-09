@@ -5,10 +5,12 @@
  *
  *   Root vitest config — runs tests across every workspace from the repo root.
  *
- *   Workspace package.json `exports` fields point at compiled `./out/.../index.js` paths that don't
- *   exist before `tsc` has run (and the shared tsconfig is `emitDeclarationOnly`, so `tsc` never
- *   emits `.js`). The aliases below redirect each `@mailwoman/*` import to the matching source
- *   `.ts`, so vitest can run from a clean checkout. Order matters — more specific entries first.
+ *   Historical premise: workspace `exports` pointed only at compiled `./out/.../index.js` paths, so
+ *   these aliases redirected each `@mailwoman/*` import to source `.ts` for clean-checkout runs.
+ *   Since the first-class-TS migration, every exports entry carries a `node` condition pointing at
+ *   the source `.ts`, so most of this list is redundant with plain exports resolution and is a
+ *   removal candidate. It stays for now because Vite's applied condition set differs from Node's.
+ *   Order matters — more specific entries first.
  */
 
 /// <reference types="vitest/config" />
@@ -37,6 +39,8 @@ export default defineConfig({
 			// `objects` is a bare file (core/objects.ts), so it must beat the generic dir rule below — a
 			// transitive import (e.g. @mailwoman/spatial → @mailwoman/core/objects) hits this from any test.
 			{ find: /^@mailwoman\/core\/objects$/, replacement: resolve(here, "core/objects.ts") },
+			// `fs` is the node build (core/fs/node.ts), not a directory index — must beat the generic rule.
+			{ find: /^@mailwoman\/core\/fs$/, replacement: resolve(here, "core/fs/node.ts") },
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "core/$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "core/index.ts") },
 			// Sibling workspaces.
@@ -66,7 +70,6 @@ export default defineConfig({
 			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
 			{ find: "mailwoman/server", replacement: resolve(here, "mailwoman/server/index.ts") },
 			{ find: "mailwoman/sdk/test", replacement: resolve(here, "mailwoman/sdk/test/index.ts") },
-			{ find: "mailwoman/sdk/repo", replacement: resolve(here, "mailwoman/sdk/repo.ts") },
 			{ find: "mailwoman/sdk/cli", replacement: resolve(here, "mailwoman/sdk/cli.ts") },
 			{ find: /^mailwoman$/, replacement: resolve(here, "mailwoman/index.ts") },
 			// onnxruntime-web's `/webgpu` subpath ships browser-only bundles: under Node they fetch()

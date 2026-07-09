@@ -17,18 +17,101 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./country": "./out/country/index.js",
-		"./us": "./out/us/index.js",
-		"./de": "./out/de/index.js",
-		"./fr": "./out/fr/index.js",
-		"./ca": "./out/ca/index.js",
-		"./gb": "./out/gb/index.js",
-		"./jp": "./out/jp/index.js",
-		"./au": "./out/au/index.js",
-		"./nz": "./out/nz/index.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./country": {
+			"node": "./country/index.ts",
+			"default": "./out/country/index.js",
+			"types": "./out/country/index.d.ts"
+		},
+		"./us": {
+			"node": "./us/index.ts",
+			"default": "./out/us/index.js",
+			"types": "./out/us/index.d.ts"
+		},
+		"./de": {
+			"node": "./de/index.ts",
+			"default": "./out/de/index.js",
+			"types": "./out/de/index.d.ts"
+		},
+		"./fr": {
+			"node": "./fr/index.ts",
+			"default": "./out/fr/index.js",
+			"types": "./out/fr/index.d.ts"
+		},
+		"./ca": {
+			"node": "./ca/index.ts",
+			"default": "./out/ca/index.js",
+			"types": "./out/ca/index.d.ts"
+		},
+		"./gb": {
+			"node": "./gb/index.ts",
+			"default": "./out/gb/index.js",
+			"types": "./out/gb/index.d.ts"
+		},
+		"./jp": {
+			"node": "./jp/index.ts",
+			"default": "./out/jp/index.js",
+			"types": "./out/jp/index.d.ts"
+		},
+		"./au": {
+			"node": "./au/index.ts",
+			"default": "./out/au/index.js",
+			"types": "./out/au/index.d.ts"
+		},
+		"./nz": {
+			"node": "./nz/index.ts",
+			"default": "./out/nz/index.js",
+			"types": "./out/nz/index.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./country": {
+				"types": "./out/country/index.d.ts",
+				"default": "./out/country/index.js"
+			},
+			"./us": {
+				"types": "./out/us/index.d.ts",
+				"default": "./out/us/index.js"
+			},
+			"./de": {
+				"types": "./out/de/index.d.ts",
+				"default": "./out/de/index.js"
+			},
+			"./fr": {
+				"types": "./out/fr/index.d.ts",
+				"default": "./out/fr/index.js"
+			},
+			"./ca": {
+				"types": "./out/ca/index.d.ts",
+				"default": "./out/ca/index.js"
+			},
+			"./gb": {
+				"types": "./out/gb/index.d.ts",
+				"default": "./out/gb/index.js"
+			},
+			"./jp": {
+				"types": "./out/jp/index.d.ts",
+				"default": "./out/jp/index.js"
+			},
+			"./au": {
+				"types": "./out/au/index.d.ts",
+				"default": "./out/au/index.js"
+			},
+			"./nz": {
+				"types": "./out/nz/index.d.ts",
+				"default": "./out/nz/index.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

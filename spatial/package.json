@@ -22,10 +22,30 @@
 	"exports": {
 		"./package.json": "./package.json",
 		"./schema/*.json": "./dist/schema/*.json",
-		"./sdk": "./out/sdk/index.js",
-		".": "./out/index.js"
+		"./sdk": {
+			"node": "./sdk/index.ts",
+			"default": "./out/sdk/index.js",
+			"types": "./out/sdk/index.d.ts"
+		},
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			"./schema/*.json": "./dist/schema/*.json",
+			"./sdk": {
+				"types": "./out/sdk/index.d.ts",
+				"default": "./out/sdk/index.js"
+			},
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

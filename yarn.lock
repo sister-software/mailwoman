@@ -16784,6 +16784,7 @@ __metadata:
   dependencies:
     "@fragaria/address-formatter": "npm:^6.7.1"
     "@inkjs/ui": "npm:^2.0.0"
+    "@mailwoman/ban": "workspace:*"
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"

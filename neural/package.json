@@ -18,17 +18,92 @@
 	"sideEffects": false,
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./postcode-anchor": "./out/postcode-anchor.js",
-		"./postcode-binary-resolver": "./out/postcode-binary-resolver.js",
-		"./soft-features": "./out/soft-features.js",
-		"./scorer": "./out/scorer.js",
-		"./tokenizer": "./out/tokenizer.js",
-		"./onnx-runner": "./out/onnx-runner.js",
-		"./weights": "./out/weights.js",
-		"./browser": "./out/browser.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./postcode-anchor": {
+			"node": "./postcode-anchor.ts",
+			"default": "./out/postcode-anchor.js",
+			"types": "./out/postcode-anchor.d.ts"
+		},
+		"./postcode-binary-resolver": {
+			"node": "./postcode-binary-resolver.ts",
+			"default": "./out/postcode-binary-resolver.js",
+			"types": "./out/postcode-binary-resolver.d.ts"
+		},
+		"./soft-features": {
+			"node": "./soft-features.ts",
+			"default": "./out/soft-features.js",
+			"types": "./out/soft-features.d.ts"
+		},
+		"./scorer": {
+			"node": "./scorer.ts",
+			"default": "./out/scorer.js",
+			"types": "./out/scorer.d.ts"
+		},
+		"./tokenizer": {
+			"node": "./tokenizer.ts",
+			"default": "./out/tokenizer.js",
+			"types": "./out/tokenizer.d.ts"
+		},
+		"./onnx-runner": {
+			"node": "./onnx-runner.ts",
+			"default": "./out/onnx-runner.js",
+			"types": "./out/onnx-runner.d.ts"
+		},
+		"./weights": {
+			"node": "./weights.ts",
+			"default": "./out/weights.js",
+			"types": "./out/weights.d.ts"
+		},
+		"./browser": {
+			"node": "./browser.ts",
+			"default": "./out/browser.js",
+			"types": "./out/browser.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./postcode-anchor": {
+				"types": "./out/postcode-anchor.d.ts",
+				"default": "./out/postcode-anchor.js"
+			},
+			"./postcode-binary-resolver": {
+				"types": "./out/postcode-binary-resolver.d.ts",
+				"default": "./out/postcode-binary-resolver.js"
+			},
+			"./soft-features": {
+				"types": "./out/soft-features.d.ts",
+				"default": "./out/soft-features.js"
+			},
+			"./scorer": {
+				"types": "./out/scorer.d.ts",
+				"default": "./out/scorer.js"
+			},
+			"./tokenizer": {
+				"types": "./out/tokenizer.d.ts",
+				"default": "./out/tokenizer.js"
+			},
+			"./onnx-runner": {
+				"types": "./out/onnx-runner.d.ts",
+				"default": "./out/onnx-runner.js"
+			},
+			"./weights": {
+				"types": "./out/weights.d.ts",
+				"default": "./out/weights.js"
+			},
+			"./browser": {
+				"types": "./out/browser.d.ts",
+				"default": "./out/browser.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

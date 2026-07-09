@@ -46,7 +46,6 @@ const rootRelative: Record<string, string> = {
 	"mailwoman/server": "server/index.js",
 	"mailwoman/sdk/cli": "sdk/cli.js",
 	"mailwoman/sdk/test": "sdk/test/index.js",
-	"mailwoman/sdk/repo": "sdk/repo.js",
 }
 
 function relIntoRoot(filePath: string, targetRelative: string) {

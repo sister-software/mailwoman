@@ -24,31 +24,218 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./fts": "./out/fts.js",
-		"./build-slim": "./out/build-slim.js",
-		"./fst-builder": "./out/fst-builder.js",
-		"./street-morphology-fst-builder": "./out/street-morphology-fst-builder.js",
-		"./fst-matcher": "./out/fst-matcher.js",
-		"./fst-serialize": "./out/fst-serialize.js",
-		"./fst-autocomplete": "./out/fst-autocomplete.js",
-		"./fst-types": "./out/fst-types.js",
-		"./fst-deserialize-web": "./out/fst-deserialize-web.js",
-		"./unified-schema": "./out/unified-schema.js",
-		"./ancestry-backfill": "./out/ancestry-backfill.js",
-		"./coincident-roles": "./out/coincident-roles.js",
-		"./geonames-aliases": "./out/geonames-aliases.js",
-		"./geonames-postal": "./out/geonames-postal.js",
-		"./geo": "./out/geo.js",
-		"./street-normalize": "./out/street-normalize.js",
-		"./build-candidate": "./out/build-candidate.js",
-		"./candidate-schema": "./out/candidate-schema.js",
-		"./postal-city-alias-schema": "./out/postal-city-alias-schema.js",
-		"./address-point-schema": "./out/address-point-schema.js",
-		"./street-centroid-schema": "./out/street-centroid-schema.js",
-		"./street-segment-schema": "./out/street-segment-schema.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./fts": {
+			"node": "./fts.ts",
+			"default": "./out/fts.js",
+			"types": "./out/fts.d.ts"
+		},
+		"./build-slim": {
+			"node": "./build-slim.ts",
+			"default": "./out/build-slim.js",
+			"types": "./out/build-slim.d.ts"
+		},
+		"./fst-builder": {
+			"node": "./fst-builder.ts",
+			"default": "./out/fst-builder.js",
+			"types": "./out/fst-builder.d.ts"
+		},
+		"./street-morphology-fst-builder": {
+			"node": "./street-morphology-fst-builder.ts",
+			"default": "./out/street-morphology-fst-builder.js",
+			"types": "./out/street-morphology-fst-builder.d.ts"
+		},
+		"./fst-matcher": {
+			"node": "./fst-matcher.ts",
+			"default": "./out/fst-matcher.js",
+			"types": "./out/fst-matcher.d.ts"
+		},
+		"./fst-serialize": {
+			"node": "./fst-serialize.ts",
+			"default": "./out/fst-serialize.js",
+			"types": "./out/fst-serialize.d.ts"
+		},
+		"./fst-autocomplete": {
+			"node": "./fst-autocomplete.ts",
+			"default": "./out/fst-autocomplete.js",
+			"types": "./out/fst-autocomplete.d.ts"
+		},
+		"./fst-types": {
+			"node": "./fst-types.ts",
+			"default": "./out/fst-types.js",
+			"types": "./out/fst-types.d.ts"
+		},
+		"./fst-deserialize-web": {
+			"node": "./fst-deserialize-web.ts",
+			"default": "./out/fst-deserialize-web.js",
+			"types": "./out/fst-deserialize-web.d.ts"
+		},
+		"./unified-schema": {
+			"node": "./unified-schema.ts",
+			"default": "./out/unified-schema.js",
+			"types": "./out/unified-schema.d.ts"
+		},
+		"./ancestry-backfill": {
+			"node": "./ancestry-backfill.ts",
+			"default": "./out/ancestry-backfill.js",
+			"types": "./out/ancestry-backfill.d.ts"
+		},
+		"./coincident-roles": {
+			"node": "./coincident-roles.ts",
+			"default": "./out/coincident-roles.js",
+			"types": "./out/coincident-roles.d.ts"
+		},
+		"./geonames-aliases": {
+			"node": "./geonames-aliases.ts",
+			"default": "./out/geonames-aliases.js",
+			"types": "./out/geonames-aliases.d.ts"
+		},
+		"./geonames-postal": {
+			"node": "./geonames-postal.ts",
+			"default": "./out/geonames-postal.js",
+			"types": "./out/geonames-postal.d.ts"
+		},
+		"./geo": {
+			"node": "./geo.ts",
+			"default": "./out/geo.js",
+			"types": "./out/geo.d.ts"
+		},
+		"./street-normalize": {
+			"node": "./street-normalize.ts",
+			"default": "./out/street-normalize.js",
+			"types": "./out/street-normalize.d.ts"
+		},
+		"./build-candidate": {
+			"node": "./build-candidate.ts",
+			"default": "./out/build-candidate.js",
+			"types": "./out/build-candidate.d.ts"
+		},
+		"./candidate-schema": {
+			"node": "./candidate-schema.ts",
+			"default": "./out/candidate-schema.js",
+			"types": "./out/candidate-schema.d.ts"
+		},
+		"./postal-city-alias-schema": {
+			"node": "./postal-city-alias-schema.ts",
+			"default": "./out/postal-city-alias-schema.js",
+			"types": "./out/postal-city-alias-schema.d.ts"
+		},
+		"./address-point-schema": {
+			"node": "./address-point-schema.ts",
+			"default": "./out/address-point-schema.js",
+			"types": "./out/address-point-schema.d.ts"
+		},
+		"./street-centroid-schema": {
+			"node": "./street-centroid-schema.ts",
+			"default": "./out/street-centroid-schema.js",
+			"types": "./out/street-centroid-schema.d.ts"
+		},
+		"./street-segment-schema": {
+			"node": "./street-segment-schema.ts",
+			"default": "./out/street-segment-schema.js",
+			"types": "./out/street-segment-schema.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./fts": {
+				"types": "./out/fts.d.ts",
+				"default": "./out/fts.js"
+			},
+			"./build-slim": {
+				"types": "./out/build-slim.d.ts",
+				"default": "./out/build-slim.js"
+			},
+			"./fst-builder": {
+				"types": "./out/fst-builder.d.ts",
+				"default": "./out/fst-builder.js"
+			},
+			"./street-morphology-fst-builder": {
+				"types": "./out/street-morphology-fst-builder.d.ts",
+				"default": "./out/street-morphology-fst-builder.js"
+			},
+			"./fst-matcher": {
+				"types": "./out/fst-matcher.d.ts",
+				"default": "./out/fst-matcher.js"
+			},
+			"./fst-serialize": {
+				"types": "./out/fst-serialize.d.ts",
+				"default": "./out/fst-serialize.js"
+			},
+			"./fst-autocomplete": {
+				"types": "./out/fst-autocomplete.d.ts",
+				"default": "./out/fst-autocomplete.js"
+			},
+			"./fst-types": {
+				"types": "./out/fst-types.d.ts",
+				"default": "./out/fst-types.js"
+			},
+			"./fst-deserialize-web": {
+				"types": "./out/fst-deserialize-web.d.ts",
+				"default": "./out/fst-deserialize-web.js"
+			},
+			"./unified-schema": {
+				"types": "./out/unified-schema.d.ts",
+				"default": "./out/unified-schema.js"
+			},
+			"./ancestry-backfill": {
+				"types": "./out/ancestry-backfill.d.ts",
+				"default": "./out/ancestry-backfill.js"
+			},
+			"./coincident-roles": {
+				"types": "./out/coincident-roles.d.ts",
+				"default": "./out/coincident-roles.js"
+			},
+			"./geonames-aliases": {
+				"types": "./out/geonames-aliases.d.ts",
+				"default": "./out/geonames-aliases.js"
+			},
+			"./geonames-postal": {
+				"types": "./out/geonames-postal.d.ts",
+				"default": "./out/geonames-postal.js"
+			},
+			"./geo": {
+				"types": "./out/geo.d.ts",
+				"default": "./out/geo.js"
+			},
+			"./street-normalize": {
+				"types": "./out/street-normalize.d.ts",
+				"default": "./out/street-normalize.js"
+			},
+			"./build-candidate": {
+				"types": "./out/build-candidate.d.ts",
+				"default": "./out/build-candidate.js"
+			},
+			"./candidate-schema": {
+				"types": "./out/candidate-schema.d.ts",
+				"default": "./out/candidate-schema.js"
+			},
+			"./postal-city-alias-schema": {
+				"types": "./out/postal-city-alias-schema.d.ts",
+				"default": "./out/postal-city-alias-schema.js"
+			},
+			"./address-point-schema": {
+				"types": "./out/address-point-schema.d.ts",
+				"default": "./out/address-point-schema.js"
+			},
+			"./street-centroid-schema": {
+				"types": "./out/street-centroid-schema.d.ts",
+				"default": "./out/street-centroid-schema.js"
+			},
+			"./street-segment-schema": {
+				"types": "./out/street-segment-schema.d.ts",
+				"default": "./out/street-segment-schema.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

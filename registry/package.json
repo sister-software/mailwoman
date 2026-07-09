@@ -17,12 +17,47 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./resolve": "./out/resolve.js",
-		"./geojson": "./out/geojson.js",
-		"./ingest": "./out/ingest.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./resolve": {
+			"node": "./resolve.ts",
+			"default": "./out/resolve.js",
+			"types": "./out/resolve.d.ts"
+		},
+		"./geojson": {
+			"node": "./geojson.ts",
+			"default": "./out/geojson.js",
+			"types": "./out/geojson.d.ts"
+		},
+		"./ingest": {
+			"node": "./ingest.ts",
+			"default": "./out/ingest.js",
+			"types": "./out/ingest.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./resolve": {
+				"types": "./out/resolve.d.ts",
+				"default": "./out/resolve.js"
+			},
+			"./geojson": {
+				"types": "./out/geojson.d.ts",
+				"default": "./out/geojson.js"
+			},
+			"./ingest": {
+				"types": "./out/ingest.d.ts",
+				"default": "./out/ingest.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

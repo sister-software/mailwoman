@@ -19,10 +19,29 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./build": "./out/build.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./build": {
+			"node": "./build.ts",
+			"default": "./out/build.js",
+			"types": "./out/build.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./build": {
+				"types": "./out/build.d.ts",
+				"default": "./out/build.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

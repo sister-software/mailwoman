@@ -17,10 +17,22 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
 		"./*": "./out/*"
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./*": "./out/*"
+		},
 		"access": "public"
 	},
 	"dependencies": {

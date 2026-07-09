@@ -17,11 +17,38 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./format": "./out/format.js",
-		"./key": "./out/key.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./format": {
+			"node": "./format.ts",
+			"default": "./out/format.js",
+			"types": "./out/format.d.ts"
+		},
+		"./key": {
+			"node": "./key.ts",
+			"default": "./out/key.js",
+			"types": "./out/key.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./format": {
+				"types": "./out/format.d.ts",
+				"default": "./out/format.js"
+			},
+			"./key": {
+				"types": "./out/key.d.ts",
+				"default": "./out/key.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

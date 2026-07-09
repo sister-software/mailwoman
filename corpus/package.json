@@ -17,14 +17,65 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/src/index.js",
-		"./types": "./out/src/types.js",
-		"./format": "./out/src/format.js",
-		"./license": "./out/src/license.js",
-		"./build": "./out/src/build.js",
-		"./adapters": "./out/src/adapters/index.js"
+		".": {
+			"node": "./src/index.ts",
+			"default": "./out/src/index.js",
+			"types": "./out/src/index.d.ts"
+		},
+		"./types": {
+			"node": "./src/types.ts",
+			"default": "./out/src/types.js",
+			"types": "./out/src/types.d.ts"
+		},
+		"./format": {
+			"node": "./src/format.ts",
+			"default": "./out/src/format.js",
+			"types": "./out/src/format.d.ts"
+		},
+		"./license": {
+			"node": "./src/license.ts",
+			"default": "./out/src/license.js",
+			"types": "./out/src/license.d.ts"
+		},
+		"./build": {
+			"node": "./src/build.ts",
+			"default": "./out/src/build.js",
+			"types": "./out/src/build.d.ts"
+		},
+		"./adapters": {
+			"node": "./src/adapters/index.ts",
+			"default": "./out/src/adapters/index.js",
+			"types": "./out/src/adapters/index.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/src/index.d.ts",
+				"default": "./out/src/index.js"
+			},
+			"./types": {
+				"types": "./out/src/types.d.ts",
+				"default": "./out/src/types.js"
+			},
+			"./format": {
+				"types": "./out/src/format.d.ts",
+				"default": "./out/src/format.js"
+			},
+			"./license": {
+				"types": "./out/src/license.d.ts",
+				"default": "./out/src/license.js"
+			},
+			"./build": {
+				"types": "./out/src/build.d.ts",
+				"default": "./out/src/build.js"
+			},
+			"./adapters": {
+				"types": "./out/src/adapters/index.d.ts",
+				"default": "./out/src/adapters/index.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

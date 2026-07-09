@@ -17,16 +17,83 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./blocking": "./out/blocking.js",
-		"./clustering": "./out/clustering.js",
-		"./comparators": "./out/comparators.js",
-		"./distance": "./out/distance.js",
-		"./fellegi-sunter": "./out/fellegi-sunter.js",
-		"./em": "./out/em.js",
-		"./tf": "./out/tf.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./blocking": {
+			"node": "./blocking.ts",
+			"default": "./out/blocking.js",
+			"types": "./out/blocking.d.ts"
+		},
+		"./clustering": {
+			"node": "./clustering.ts",
+			"default": "./out/clustering.js",
+			"types": "./out/clustering.d.ts"
+		},
+		"./comparators": {
+			"node": "./comparators.ts",
+			"default": "./out/comparators.js",
+			"types": "./out/comparators.d.ts"
+		},
+		"./distance": {
+			"node": "./distance.ts",
+			"default": "./out/distance.js",
+			"types": "./out/distance.d.ts"
+		},
+		"./fellegi-sunter": {
+			"node": "./fellegi-sunter.ts",
+			"default": "./out/fellegi-sunter.js",
+			"types": "./out/fellegi-sunter.d.ts"
+		},
+		"./em": {
+			"node": "./em.ts",
+			"default": "./out/em.js",
+			"types": "./out/em.d.ts"
+		},
+		"./tf": {
+			"node": "./tf.ts",
+			"default": "./out/tf.js",
+			"types": "./out/tf.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./blocking": {
+				"types": "./out/blocking.d.ts",
+				"default": "./out/blocking.js"
+			},
+			"./clustering": {
+				"types": "./out/clustering.d.ts",
+				"default": "./out/clustering.js"
+			},
+			"./comparators": {
+				"types": "./out/comparators.d.ts",
+				"default": "./out/comparators.js"
+			},
+			"./distance": {
+				"types": "./out/distance.d.ts",
+				"default": "./out/distance.js"
+			},
+			"./fellegi-sunter": {
+				"types": "./out/fellegi-sunter.d.ts",
+				"default": "./out/fellegi-sunter.js"
+			},
+			"./em": {
+				"types": "./out/em.d.ts",
+				"default": "./out/em.js"
+			},
+			"./tf": {
+				"types": "./out/tf.d.ts",
+				"default": "./out/tf.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

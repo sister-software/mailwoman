@@ -17,11 +17,38 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./resolve": "./out/resolve.js",
-		"./span-rescore": "./out/span-rescore.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./resolve": {
+			"node": "./resolve.ts",
+			"default": "./out/resolve.js",
+			"types": "./out/resolve.d.ts"
+		},
+		"./span-rescore": {
+			"node": "./span-rescore.ts",
+			"default": "./out/span-rescore.js",
+			"types": "./out/span-rescore.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./resolve": {
+				"types": "./out/resolve.d.ts",
+				"default": "./out/resolve.js"
+			},
+			"./span-rescore": {
+				"types": "./out/span-rescore.d.ts",
+				"default": "./out/span-rescore.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

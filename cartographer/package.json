@@ -18,17 +18,84 @@
 	"exports": {
 		"./package.json": "./package.json",
 		"./schema/*.json": "./dist/schema/*.json",
-		"./scripts/*": "./out/scripts/*.js",
-		"./styles": "./out/styles/index.js",
-		"./tiles": "./out/tiles/index.js",
-		"./tiles/coords": "./out/tiles/coords.js",
-		"./base": "./out/base/index.js",
-		"./bdc": "./out/bdc/index.js",
-		"./coverage": "./out/coverage/index.js",
-		"./race-dots": "./out/race-dots/index.js",
-		".": "./out/index.js"
+		"./styles": {
+			"node": "./styles/index.ts",
+			"default": "./out/styles/index.js",
+			"types": "./out/styles/index.d.ts"
+		},
+		"./tiles": {
+			"node": "./tiles/index.ts",
+			"default": "./out/tiles/index.js",
+			"types": "./out/tiles/index.d.ts"
+		},
+		"./tiles/coords": {
+			"node": "./tiles/coords.ts",
+			"default": "./out/tiles/coords.js",
+			"types": "./out/tiles/coords.d.ts"
+		},
+		"./base": {
+			"node": "./base/index.ts",
+			"default": "./out/base/index.js",
+			"types": "./out/base/index.d.ts"
+		},
+		"./bdc": {
+			"node": "./bdc/index.ts",
+			"default": "./out/bdc/index.js",
+			"types": "./out/bdc/index.d.ts"
+		},
+		"./coverage": {
+			"node": "./coverage/index.ts",
+			"default": "./out/coverage/index.js",
+			"types": "./out/coverage/index.d.ts"
+		},
+		"./race-dots": {
+			"node": "./race-dots/index.ts",
+			"default": "./out/race-dots/index.js",
+			"types": "./out/race-dots/index.d.ts"
+		},
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			"./schema/*.json": "./dist/schema/*.json",
+			"./styles": {
+				"types": "./out/styles/index.d.ts",
+				"default": "./out/styles/index.js"
+			},
+			"./tiles": {
+				"types": "./out/tiles/index.d.ts",
+				"default": "./out/tiles/index.js"
+			},
+			"./tiles/coords": {
+				"types": "./out/tiles/coords.d.ts",
+				"default": "./out/tiles/coords.js"
+			},
+			"./base": {
+				"types": "./out/base/index.d.ts",
+				"default": "./out/base/index.js"
+			},
+			"./bdc": {
+				"types": "./out/bdc/index.d.ts",
+				"default": "./out/bdc/index.js"
+			},
+			"./coverage": {
+				"types": "./out/coverage/index.d.ts",
+				"default": "./out/coverage/index.js"
+			},
+			"./race-dots": {
+				"types": "./out/race-dots/index.d.ts",
+				"default": "./out/race-dots/index.js"
+			},
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

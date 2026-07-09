@@ -17,12 +17,6 @@
 		"THIRD_PARTY_NOTICES.md"
 	],
 	"type": "module",
-	"imports": {
-		"#*": {
-			"development": "./*.ts",
-			"default": "./out/*.js"
-		}
-	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -126,9 +120,9 @@
 			"types": "./out/identifiers/index.d.ts"
 		},
 		"./objects": {
-			"node": "./objects/index.ts",
-			"default": "./out/objects/index.js",
-			"types": "./out/objects/index.d.ts"
+			"node": "./objects.ts",
+			"default": "./out/objects.js",
+			"types": "./out/objects.d.ts"
 		},
 		"./locale": {
 			"node": "./locale/index.ts",
@@ -207,6 +201,153 @@
 		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./classification": {
+				"types": "./out/classification/index.d.ts",
+				"default": "./out/classification/index.js"
+			},
+			"./coarse-placer": {
+				"types": "./out/coarse-placer/coarse-placer.d.ts",
+				"default": "./out/coarse-placer/coarse-placer.js"
+			},
+			"./tokenization": {
+				"types": "./out/tokenization/index.d.ts",
+				"default": "./out/tokenization/index.js"
+			},
+			"./types": {
+				"types": "./out/types/index.d.ts",
+				"default": "./out/types/index.js"
+			},
+			"./parser": {
+				"types": "./out/parser/index.d.ts",
+				"default": "./out/parser/index.js"
+			},
+			"./solver": {
+				"types": "./out/solver/index.d.ts",
+				"default": "./out/solver/index.js"
+			},
+			"./formatter": {
+				"types": "./out/formatter/index.d.ts",
+				"default": "./out/formatter/index.js"
+			},
+			"./decoder": {
+				"types": "./out/decoder/index.d.ts",
+				"default": "./out/decoder/index.js"
+			},
+			"./env": {
+				"types": "./out/env/index.d.ts",
+				"default": "./out/env/index.js"
+			},
+			"./resources": {
+				"types": "./out/resources/index.d.ts",
+				"default": "./out/resources/index.js"
+			},
+			"./resources/languages": {
+				"types": "./out/resources/languages/index.d.ts",
+				"default": "./out/resources/languages/index.js"
+			},
+			"./resources/whosonfirst": {
+				"types": "./out/resources/whosonfirst/index.d.ts",
+				"default": "./out/resources/whosonfirst/index.js"
+			},
+			"./resources/libpostal": {
+				"types": "./out/resources/libpostal/index.d.ts",
+				"default": "./out/resources/libpostal/index.js"
+			},
+			"./utils": {
+				"types": "./out/utils/index.d.ts",
+				"default": "./out/utils/index.js"
+			},
+			"./fs": {
+				"types": "./out/fs/node.d.ts",
+				"default": "./out/fs/node.js"
+			},
+			"./scripting": {
+				"types": "./out/scripting/index.d.ts",
+				"default": "./out/scripting/index.js"
+			},
+			"./scripting/utils": {
+				"types": "./out/scripting/utils/index.d.ts",
+				"default": "./out/scripting/utils/index.js"
+			},
+			"./lifecycle": {
+				"types": "./out/lifecycle/index.d.ts",
+				"default": "./out/lifecycle/index.js"
+			},
+			"./identifiers": {
+				"types": "./out/identifiers/index.d.ts",
+				"default": "./out/identifiers/index.js"
+			},
+			"./objects": {
+				"types": "./out/objects.d.ts",
+				"default": "./out/objects.js"
+			},
+			"./locale": {
+				"types": "./out/locale/index.d.ts",
+				"default": "./out/locale/index.js"
+			},
+			"./api": {
+				"types": "./out/api/index.d.ts",
+				"default": "./out/api/index.js"
+			},
+			"./logging": {
+				"types": "./out/logging/index.d.ts",
+				"default": "./out/logging/index.js"
+			},
+			"./policy": {
+				"types": "./out/policy/index.d.ts",
+				"default": "./out/policy/index.js"
+			},
+			"./pipeline": {
+				"types": "./out/pipeline/index.d.ts",
+				"default": "./out/pipeline/index.js"
+			},
+			"./resolver": {
+				"types": "./out/resolver/index.d.ts",
+				"default": "./out/resolver/index.js"
+			},
+			"./kysley/client": {
+				"types": "./out/kysley/client.d.ts",
+				"default": "./out/kysley/client.js"
+			},
+			"./kysley/dialect": {
+				"types": "./out/kysley/dialect.d.ts",
+				"default": "./out/kysley/dialect.js"
+			},
+			"./kysley/dialect-config": {
+				"types": "./out/kysley/dialect-config.d.ts",
+				"default": "./out/kysley/dialect-config.js"
+			},
+			"./solvers": {
+				"types": "./out/solvers/index.d.ts",
+				"default": "./out/solvers/index.js"
+			},
+			"./errors": {
+				"types": "./out/errors/index.d.ts",
+				"default": "./out/errors/index.js"
+			},
+			"./routing": {
+				"types": "./out/routing/index.d.ts",
+				"default": "./out/routing/index.js"
+			},
+			"./solvers/*": {
+				"types": "./out/solvers/*.d.ts",
+				"default": "./out/solvers/*.js"
+			},
+			"./filters": {
+				"types": "./out/filters/index.d.ts",
+				"default": "./out/filters/index.js"
+			},
+			"./filters/*": {
+				"types": "./out/filters/*.d.ts",
+				"default": "./out/filters/*.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {
