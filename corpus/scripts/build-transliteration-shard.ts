@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -23,7 +23,7 @@
  *   See docs/articles/plan/reference/CORPUS_V0_4_0_GENERATION.md for prompts, model, and the
  *   reproducibility contract.
  *
- *   Usage: npx tsx corpus/scripts/build-transliteration-shard.ts\
+ *   Usage: node corpus/scripts/build-transliteration-shard.ts\
  *   --jsonl /data/corpus/versioned/v0.4.0/transliteration/canonical-transliteration.jsonl\
  *   --base-manifest /data/corpus/versioned/v0.4.0/corpus-v0.4.0/MANIFEST.json\
  *   --out-dir /data/corpus/versioned/v0.4.0
@@ -35,9 +35,9 @@ import { createHash } from "node:crypto"
 import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 import {
 	alignRow,
 	PARQUET_COLUMNS,
@@ -59,54 +59,32 @@ interface Args {
 	legacyPathPrefix: string
 }
 
-function parseArgs(argv: readonly string[]): Args {
-	const out: Partial<Args> = {
-		corpusVersion: "0.4.0",
-		canonicalPathPrefix: "/data/",
-		legacyPathPrefix: "/mnt/playpen/mailwoman-data/",
+function parseShardArgs(): Args {
+	const { values } = parseArgs({
+		options: {
+			jsonl: { type: "string" },
+			"base-manifest": { type: "string" },
+			"out-dir": { type: "string" },
+			"corpus-version": { type: "string", default: "0.4.0" },
+			"canonical-path-prefix": { type: "string", default: "/data/" },
+			"legacy-path-prefix": { type: "string", default: "/mnt/playpen/mailwoman-data/" },
+		},
+	})
+
+	if (!values.jsonl) throw new Error("--jsonl required")
+
+	if (!values["base-manifest"]) throw new Error("--base-manifest required")
+
+	if (!values["out-dir"]) throw new Error("--out-dir required")
+
+	return {
+		jsonl: values.jsonl,
+		baseManifest: values["base-manifest"],
+		outDir: values["out-dir"],
+		corpusVersion: values["corpus-version"],
+		canonicalPathPrefix: values["canonical-path-prefix"],
+		legacyPathPrefix: values["legacy-path-prefix"],
 	}
-
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i]!
-		const next = argv[i + 1]
-
-		switch (a) {
-			case "--jsonl":
-				out.jsonl = next
-				i++
-				break
-			case "--base-manifest":
-				out.baseManifest = next
-				i++
-				break
-			case "--out-dir":
-				out.outDir = next
-				i++
-				break
-			case "--corpus-version":
-				out.corpusVersion = next ?? out.corpusVersion
-				i++
-				break
-			case "--canonical-path-prefix":
-				out.canonicalPathPrefix = next ?? out.canonicalPathPrefix
-				i++
-				break
-			case "--legacy-path-prefix":
-				out.legacyPathPrefix = next ?? out.legacyPathPrefix
-				i++
-				break
-			default:
-				throw new Error(`unknown arg ${a}`)
-		}
-	}
-
-	if (!out.jsonl) throw new Error("--jsonl required")
-
-	if (!out.baseManifest) throw new Error("--base-manifest required")
-
-	if (!out.outDir) throw new Error("--out-dir required")
-
-	return out as Args
 }
 
 async function* readJsonl(jsonl: string): AsyncIterable<Record<string, unknown>> {
@@ -232,7 +210,7 @@ function canonicalizeShardPath(path: string, legacyPrefix: string, canonicalPref
 }
 
 async function main(): Promise<void> {
-	const args = parseArgs(cliArguments())
+	const args = parseShardArgs()
 
 	if (!existsSync(args.jsonl)) throw new Error(`jsonl not found: ${args.jsonl}`)
 

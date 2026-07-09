@@ -12,9 +12,9 @@
  */
 
 import { exit, stderr } from "node:process"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 import { buildSlimWOFDatabase, type BuildSlimOptions } from "./build-slim.ts"
 
@@ -52,79 +52,58 @@ function printUsageAndExit(code: number): never {
 	exit(code)
 }
 
-function parseArgs(argv: string[]): CLIArgs {
-	const out: CLIArgs = { inputs: [], output: "", topLocalities: 1000, countries: ["US"], dropNames: false }
+function parseSlimArgv(argv: readonly string[] | undefined) {
+	return parseArgs({
+		args: argv ? [...argv] : undefined,
+		options: {
+			in: { type: "string", multiple: true, default: [] },
+			out: { type: "string" },
+			top: { type: "string", default: "1000" },
+			countries: { type: "string", default: "US" },
+			"drop-names": { type: "boolean", default: false },
+			help: { type: "boolean", short: "h", default: false },
+		},
+	})
+}
 
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i]
+function parseCLIArgs(argv: readonly string[] | undefined): CLIArgs {
+	let parsed: ReturnType<typeof parseSlimArgv>
 
-		if (a === "--in") {
-			// Consume the value even when empty — callers pass `--in ""` for a shard (e.g. a custom
-			// postcode DB) that isn't built yet. Push only non-empty paths; build-slim skips the rest.
-			const v = argv[++i]
-
-			if (v === undefined) {
-				printUsageAndExit(2)
-			}
-
-			if (v) {
-				out.inputs.push(v)
-			}
-		} else if (a === "--out") {
-			const v = argv[++i]
-
-			if (!v) {
-				printUsageAndExit(2)
-			}
-			out.output = v
-		} else if (a === "--top") {
-			const v = argv[++i]
-
-			if (!v) {
-				printUsageAndExit(2)
-			}
-			const n = Number(v)
-
-			if (!Number.isFinite(n) || n <= 0) {
-				stderr.write(`--top must be a positive number; got '${v}'\n`)
-				exit(2)
-			}
-			out.topLocalities = n
-		} else if (a === "--countries") {
-			const v = argv[++i]
-
-			if (!v) {
-				printUsageAndExit(2)
-			}
-			out.countries = v
-				.split(",")
-				.map((c) => c.trim())
-				.filter(Boolean)
-		} else if (a === "--drop-names") {
-			out.dropNames = true
-		} else if (a === "--help" || a === "-h") {
-			printUsageAndExit(0)
-		} else {
-			stderr.write(`unknown argument: '${a}'\n`)
-			printUsageAndExit(2)
-		}
-	}
-
-	if (out.inputs.length === 0 || !out.output) {
+	try {
+		parsed = parseSlimArgv(argv)
+	} catch (error) {
+		stderr.write(`mailwoman-wof-build-slim: ${error instanceof Error ? error.message : String(error)}\n`)
 		printUsageAndExit(2)
 	}
 
-	return out
+	if (parsed.values.help) {
+		printUsageAndExit(0)
+	}
+
+	// Callers pass `--in ""` for a shard (e.g. a custom postcode DB) that isn't built yet — keep
+	// only non-empty paths; build-slim skips the rest.
+	const inputs = parsed.values.in.filter(Boolean)
+	const output = parsed.values.out
+	const top = Number(parsed.values.top)
+
+	if (!Number.isFinite(top) || top <= 0) {
+		stderr.write(`--top must be a positive number; got '${parsed.values.top}'\n`)
+		exit(2)
+	}
+	const countries = parsed.values.countries
+		.split(",")
+		.map((c) => c.trim())
+		.filter(Boolean)
+
+	if (inputs.length === 0 || !output) {
+		printUsageAndExit(2)
+	}
+
+	return { inputs, output, topLocalities: top, countries, dropNames: parsed.values["drop-names"] }
 }
 
-export async function main(rawArgv: string[]): Promise<number> {
-	let args: CLIArgs
-
-	try {
-		args = parseArgs(rawArgv)
-	} catch {
-		return 2
-	}
+export async function main(argv?: readonly string[]): Promise<number> {
+	const args = parseCLIArgs(argv)
 
 	const opts: BuildSlimOptions = {
 		inputs: args.inputs,
@@ -157,4 +136,4 @@ export async function main(rawArgv: string[]): Promise<number> {
 	}
 }
 
-runIfScript(import.meta, () => main(cliArguments()))
+runIfScript(import.meta, () => main())

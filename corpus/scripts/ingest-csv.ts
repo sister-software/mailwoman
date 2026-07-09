@@ -12,7 +12,7 @@
  *   ## Usage
  *
  *   ```sh
- *   npx tsx packages/corpus/scripts/ingest-csv.ts \
+ *   node corpus/scripts/ingest-csv.ts \
  *   --input /data/corpus/sources/usgov-nppes/npidata_pfile.csv \
  *   --table nppes_providers \
  *   --output /data/corpus/sources/usgov-nppes/nppes.db
@@ -24,8 +24,6 @@
  *   Field separator (default: ,) --skip <n> Lines to skip before header (default: 0) --no-header
  *   CSV has no header row — columns will be col_0, col_1, etc. --dry-run Infer schema and print
  *   CREATE TABLE, but don't import
- *
- *   DELIBERATE hand-parse: dynamic --key value pairs (columns inferred at runtime) — node:util parseArgs cannot express this shape.
  */
 
 ///<reference types="node" />
@@ -33,37 +31,10 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { basename, dirname, extname, join } from "node:path"
 import type { SQLInputValue } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { TextSpliterator } from "spliterator"
-
-// ---------------------------------------------------------------------------
-// CLI arg parsing (minimal — no yargs dependency needed for a utility script)
-// ---------------------------------------------------------------------------
-
-function parseArgs(): Record<string, string> {
-	const args = cliArguments()
-	const out: Record<string, string> = {}
-
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]!
-
-		if (a.startsWith("--")) {
-			const key = a.slice(2)
-			const next = args[i + 1]
-
-			if (next && !next.startsWith("--")) {
-				out[key] = next
-				i++
-			} else {
-				out[key] = "true"
-			}
-		}
-	}
-
-	return out
-}
 
 // ---------------------------------------------------------------------------
 // Core: quote-aware CSV field splitting
@@ -418,13 +389,23 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 }
 
 async function main() {
-	const cliArgs = parseArgs()
-
-	const inputPath = cliArgs.input
+	const { values } = parseArgs({
+		options: {
+			input: { type: "string" },
+			table: { type: "string" },
+			output: { type: "string" },
+			sample: { type: "string", default: "100" },
+			separator: { type: "string", default: "," },
+			skip: { type: "string", default: "0" },
+			"no-header": { type: "boolean", default: false },
+			"dry-run": { type: "boolean", default: false },
+		},
+	})
+	const inputPath = values.input
 
 	if (!inputPath) {
 		process.stderr.write(
-			"Usage: npx tsx ingest-csv.ts --input <path.csv> [--table <name>] [--output <path.db>] [--dry-run]\n"
+			"Usage: node corpus/scripts/ingest-csv.ts --input <path.csv> [--table <name>] [--output <path.db>] [--dry-run]\n"
 		)
 		process.exit(1)
 	}
@@ -435,17 +416,17 @@ async function main() {
 	}
 
 	const csvName = basename(inputPath, extname(inputPath))
-	const outputPath = cliArgs.output ?? join(dirname(inputPath), csvName + ".db")
+	const outputPath = values.output ?? join(dirname(inputPath), csvName + ".db")
 
 	const opts: IngestOptions = {
 		inputPath,
-		tableName: cliArgs.table ?? csvName.replace(/[^a-zA-Z0-9_]/g, "_"),
+		tableName: values.table ?? csvName.replace(/[^a-zA-Z0-9_]/g, "_"),
 		outputPath,
-		sampleSize: parseInt(cliArgs.sample ?? "100", 10),
-		separator: cliArgs.separator ?? ",",
-		skipLines: parseInt(cliArgs.skip ?? "0", 10),
-		hasHeader: cliArgs["no-header"] !== "true",
-		dryRun: cliArgs["dry-run"] === "true",
+		sampleSize: parseInt(values.sample, 10),
+		separator: values.separator,
+		skipLines: parseInt(values.skip, 10),
+		hasHeader: !values["no-header"],
+		dryRun: values["dry-run"],
 	}
 
 	await ingestCSV(opts)

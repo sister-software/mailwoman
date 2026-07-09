@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -11,7 +11,7 @@
  *   See docs/articles/plan/reference/CORPUS_V0_4_0_GENERATION.md for the why; that doc also pins the
  *   DeepSeek model version + prompt versions used to produce the JSONL.
  *
- *   Usage: npx tsx corpus/scripts/build-kryptonite-shard.ts\
+ *   Usage: node corpus/scripts/build-kryptonite-shard.ts\
  *   --jsonl /data/corpus/versioned/v0.4.0/kryptonite/canonical-kryptonite.jsonl\
  *   --base-manifest /data/corpus/versioned/v0.3.0/corpus-v0.3.0/MANIFEST.json\
  *   --out-dir /data/corpus/versioned/v0.4.0
@@ -22,9 +22,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "@mailwoman/corpus"
 import type { CanonicalRow, LabeledRow, ShardManifest } from "@mailwoman/corpus"
 import { TextSpliterator } from "spliterator"
@@ -37,49 +37,30 @@ interface Args {
 	source: string
 }
 
-function parseArgs(argv: readonly string[]): Args {
-	const out: Partial<Args> = {
-		corpusVersion: "0.4.0",
-		source: "deepseek-kryptonite",
+function parseShardArgs(): Args {
+	const { values } = parseArgs({
+		options: {
+			jsonl: { type: "string" },
+			"base-manifest": { type: "string" },
+			"out-dir": { type: "string" },
+			"corpus-version": { type: "string", default: "0.4.0" },
+			source: { type: "string", default: "deepseek-kryptonite" },
+		},
+	})
+
+	if (!values.jsonl) throw new Error("--jsonl required")
+
+	if (!values["base-manifest"]) throw new Error("--base-manifest required")
+
+	if (!values["out-dir"]) throw new Error("--out-dir required")
+
+	return {
+		jsonl: values.jsonl,
+		baseManifest: values["base-manifest"],
+		outDir: values["out-dir"],
+		corpusVersion: values["corpus-version"],
+		source: values.source,
 	}
-
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i]!
-		const next = argv[i + 1]
-
-		switch (a) {
-			case "--jsonl":
-				out.jsonl = next
-				i++
-				break
-			case "--base-manifest":
-				out.baseManifest = next
-				i++
-				break
-			case "--out-dir":
-				out.outDir = next
-				i++
-				break
-			case "--corpus-version":
-				out.corpusVersion = next ?? out.corpusVersion
-				i++
-				break
-			case "--source":
-				out.source = next ?? out.source
-				i++
-				break
-			default:
-				throw new Error(`unknown arg ${a}`)
-		}
-	}
-
-	if (!out.jsonl) throw new Error("--jsonl required")
-
-	if (!out.baseManifest) throw new Error("--base-manifest required")
-
-	if (!out.outDir) throw new Error("--out-dir required")
-
-	return out as Args
 }
 
 async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
@@ -117,7 +98,7 @@ async function* labeledRows(jsonl: string, corpusVersion: string, quarantineLog:
 }
 
 async function main(): Promise<void> {
-	const args = parseArgs(cliArguments())
+	const args = parseShardArgs()
 
 	if (!existsSync(args.jsonl)) throw new Error(`jsonl not found: ${args.jsonl}`)
 

@@ -15,7 +15,8 @@ import { existsSync } from "node:fs"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
-import { childEnv, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { childEnv } from "@mailwoman/core/scripting/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { options as parseOptions } from "../commands/parse.tsx"

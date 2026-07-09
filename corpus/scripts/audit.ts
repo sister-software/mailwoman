@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -13,9 +13,9 @@
  *   Would have caught v0.3.0's "NAD = 411/674 train shards × 2.0 weight = ~75% of sampled mix"
  *   finding before the v0.3.0 retrospective surfaced it.
  *
- *   Usage: npx tsx corpus/scripts/audit.ts <corpus_dir> [--config <training-config.yaml>]
+ *   Usage: node corpus/scripts/audit.ts <corpus_dir> [--config <training-config.yaml>]
  *
- *   Example: npx tsx corpus/scripts/audit.ts
+ *   Example: node corpus/scripts/audit.ts
  *   /mnt/playpen/mailwoman-data/corpus/versioned/v0.3.0/corpus-v0.3.0\
  *   --config corpus-python/src/mailwoman_train/configs/v0_4_0.yaml
  *
@@ -26,9 +26,9 @@
 
 import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { basename, join } from "node:path"
+import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 interface AuditOpts {
 	corpusDir: string
@@ -363,24 +363,26 @@ export function audit(opts: AuditOpts): void {
 	printReport(opts.corpusDir, opts.configPath, stats, rows)
 }
 
-function parseArgv(argv: readonly string[]): AuditOpts {
-	if (argv.length < 1) {
-		console.error("Usage: audit.ts <corpus_dir> [--config <yaml>]")
+function parseArgv(): AuditOpts {
+	const { values, positionals } = parseArgs({
+		options: {
+			config: { type: "string" },
+			sample: { type: "string" },
+		},
+		allowPositionals: true,
+	})
+	const corpusDir = positionals[0]
+
+	if (!corpusDir) {
+		console.error("Usage: audit.ts <corpus_dir> [--config <yaml>] [--sample <n>]")
 		process.exit(2)
 	}
-	const opts: AuditOpts = { corpusDir: argv[0]! }
 
-	for (let i = 1; i < argv.length; i++) {
-		if (argv[i] === "--config" && argv[i + 1]) {
-			opts.configPath = argv[i + 1]
-			i++
-		} else if (argv[i] === "--sample" && argv[i + 1]) {
-			opts.sampleShardCount = parseInt(argv[i + 1]!, 10)
-			i++
-		}
+	return {
+		corpusDir,
+		configPath: values.config,
+		sampleShardCount: values.sample ? parseInt(values.sample, 10) : undefined,
 	}
-
-	return opts
 }
 
-runIfScript(import.meta, () => audit(parseArgv(cliArguments())))
+runIfScript(import.meta, () => audit(parseArgv()))

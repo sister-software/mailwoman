@@ -13,19 +13,18 @@
  *   Ported faithfully from scripts/extract-tuples.py. Parquet reads go through DuckDB
  *   (`@duckdb/node-api`); the WOF SQLite path uses `node:sqlite`.
  *
- *   Usage: node scripts/extract-tuples.ts\
- *   --shards /mnt/playpen/mailwoman-data/wof/admin-global-priority.db\
+ *   Usage: node scripts/eval/extract-tuples.ts\
  *   --output /tmp/tuples.jsonl\
- *   [--limit 50000]
- *
- *   DELIBERATE hand-parse: argparse-style greedy nargs consumption for --shards — node:util parseArgs cannot express this shape.
+ *   [--sqlite /mnt/playpen/mailwoman-data/wof/admin-global-priority.db]\
+ *   [--limit 50000]\
+ *   <shard.parquet>...
  */
 
 import { closeSync, openSync, writeSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { SeededRandom } from "@mailwoman/core/utils"
 
 /** A sink that appends a chunk of text to the output file. */
@@ -315,35 +314,26 @@ interface Args {
 	limit?: number
 }
 
-function parseArgs(): Args {
-	const argv = cliArguments()
-	const shards: string[] = []
-	let sqlite: string | undefined
-	let output: string | undefined
-	let limit: number | undefined
+function parseCLIArgs(): Args {
+	const { values, positionals } = parseArgs({
+		options: {
+			sqlite: { type: "string" },
+			output: { type: "string" },
+			limit: { type: "string" },
+		},
+		allowPositionals: true,
+	})
 
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i]
-
-		if (a === "--shards") {
-			// argparse nargs="*": greedily consume following non-flag tokens.
-			while (i + 1 < argv.length && !argv[i + 1]!.startsWith("-")) {
-				shards.push(argv[++i]!)
-			}
-		} else if (a === "--sqlite") {
-			sqlite = argv[++i]
-		} else if (a === "--output") {
-			output = argv[++i]
-		} else if (a === "--limit") {
-			limit = parseInt(argv[++i]!, 10)
-		}
+	return {
+		shards: positionals,
+		sqlite: values.sqlite,
+		output: values.output,
+		limit: values.limit ? parseInt(values.limit, 10) : undefined,
 	}
-
-	return { shards, sqlite, output, limit }
 }
 
 async function main(): Promise<number> {
-	const args = parseArgs()
+	const args = parseCLIArgs()
 
 	if (!args.output) {
 		console.error("error: the following arguments are required: --output")

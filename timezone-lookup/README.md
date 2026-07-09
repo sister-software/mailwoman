@@ -15,7 +15,7 @@ npx @mailwoman/timezone-lookup build --geojson combined-with-oceans.json --out t
 ## Look up
 
 ```bash
-npx @mailwoman/timezone-lookup --db timezone.db 40.7128 -74.0060
+npx @mailwoman/timezone-lookup --db timezone.db -- 40.7128 -74.0060
 # {"timezone":"America/New_York","offsetSec":-18000}
 ```
 

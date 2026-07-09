@@ -29,9 +29,10 @@ export type ScriptCallback = (...args: unknown[]) => unknown | Promise<unknown>
 /**
  * Cleans up services and exits the script cleanly.
  *
+ * @param exitCode - Explicit exit code; when omitted, whatever `process.exitCode` the script set (default 0) stands.
  * @internal
  */
-export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode = 0): Promise<void> {
+export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?: number): Promise<void> {
 	ConsoleLogger.debug(`\n[${signal}] Shutting down...`)
 
 	const timeout = setTimeout(() => {
@@ -49,12 +50,13 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode =
 		.catch(logScriptError)
 		.finally(() => {
 			clearTimeout(timeout)
-			process.exit(exitCode)
+			process.exit(exitCode ?? process.exitCode ?? 0)
 		})
 }
 
 /**
- * Runs a script callback and handles cleanup.
+ * Runs a script callback and handles cleanup. A callback that throws exits 1; a clean return exits with
+ * `process.exitCode` (default 0).
  *
  * @internal
  */
@@ -64,8 +66,14 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
 
 	return Promise.resolve()
 		.then(() => scriptCallback())
-		.catch(logScriptError)
-		.then(() => postScriptCleanup())
+		.then(
+			() => postScriptCleanup(),
+			(error) => {
+				logScriptError(error)
+
+				return postScriptCleanup("SIGTERM", 1)
+			}
+		)
 		.catch(() => postScriptCleanup("SIGTERM", 1))
 }
 
@@ -73,7 +81,8 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
  * The ONE blessed accessor for CLI arguments. Everything outside `core/env` + this module is forbidden from touching
  * `process.argv` directly (enforced by the `sister-software/no-process-globals` oxlint rule) — prefer `node:util`
  * `parseArgs` (which reads this same slice by default) and reach for this only where `parseArgs` cannot express the
- * grammar (e.g. negative-coordinate positionals).
+ * grammar (e.g. verbatim passthrough of undeclared flags to a child process — see
+ * `corpus-python/scripts/train_with_resume.ts`).
  */
 export function cliArguments(): string[] {
 	// oxlint-disable-next-line sister-software/no-process-globals

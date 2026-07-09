@@ -19,7 +19,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
-import { childEnv } from "@mailwoman/core/utils"
+import { childEnv } from "@mailwoman/core/scripting/utils"
 import { expect, test } from "@playwright/test"
 
 const execFileAsync = promisify(execFile)
