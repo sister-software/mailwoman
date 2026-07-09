@@ -77,7 +77,10 @@ export class NutsLookup {
 	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
 		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
 		this.#byLevelBox = this.#db.prepare(
-			`SELECT nutsID, geom FROM nuts_regions
+			// The explicit alias pins the JS key: for a bare column ref, sqlite3_column_name returns the
+			// SCHEMA's declared casing (`nutsId` in every shipped nuts.db — plus `nutsID` from builds made
+			// in the window the casing sweep had renamed the DDL), not the query's spelling.
+			`SELECT nutsId AS nutsID, geom FROM nuts_regions
 			 WHERE level = ? AND minLat <= ? AND maxLat >= ? AND minLon <= ? AND maxLon >= ?`
 		)
 	}
