@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -22,7 +22,7 @@
  *
  *   ```sh
  *   OUT_ROOT=/data/corpus/sources \
- *     npx tsx packages/corpus/scripts/fetch-sources/fetch-ban-full.ts
+ *     node corpus/scripts/fetch-sources/fetch-ban-full.ts
  *   ```
  *
  *   ## Flags
@@ -41,7 +41,6 @@ import { gunzipSync } from "node:zlib"
 
 import { $public } from "@mailwoman/core/env"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
