@@ -89,6 +89,10 @@ To make publish robust regardless of repo state, `scripts/publish-workspace.ts` 
 
 `yarn 4`'s `workspace:*` protocol is yarn-specific. `npm publish` ships the literal string and consumers hit `EUNSUPPORTEDPROTOCOL`. `yarn pack` translates `workspace:*` to the concrete sibling version in the tarball. That's why `publish-workspace.ts` does pack-then-publish instead of either tool alone.
 
+### Pitfall: `exports` carries a dev-only `node → .ts` condition — `publishConfig.exports` is what ships
+
+Since the first-class-TS migration, every workspace's `exports` entries put a `node` condition first, pointing at the source `.ts` (plain `node` runs source in the repo, no build step), with `default`/`types` pointing at `out/`. Published tarballs ship only `out/**` — the source path would dangle — so each publishable workspace also carries `publishConfig.exports`, the same map with `node` stripped (`types` first, then `default`). `yarn pack` substitutes it into the tarball's package.json; verified against real tarballs. **When adding or changing an exports entry, update both maps** — a subpath present only in the dev map works locally and 404s for consumers.
+
 ### Recovering from a partial release
 
 If a release fails partway through publishing:
@@ -111,6 +115,7 @@ If a release fails partway through publishing:
 
 ## Workspace + test conventions
 
+- **Source runs directly under `node`** (type stripping, no flags): relative imports use explicit `.ts` extensions, and each workspace tsconfig sets `rewriteRelativeImportExtensions: true` so `tsc` emits `.js` specifiers into `out/`. `erasableSyntaxOnly: true` is enforced everywhere — no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces. tsc rewrites dynamic `import()` string literals too, comments (`/* webpackIgnore: true */`) included.
 - Each workspace has its own `tsconfig.json` + (for `core/` and `neural/`) a `vitest.config.ts` that aliases sibling `@mailwoman/*` subpath imports to source. This lets `yarn test` run without a precompile step. The cross-package aliases are fiddly — see the file headers for the resolution rules.
 - `core/utils/repo.ts` has a `__isCompiledTree` flag that distinguishes source mode from compiled mode for path-builder math. Don't reach across that boundary without reading the comment.
 - **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath("wof", "x.db")` / `mailwomanDataRoot()` (`core/utils/data-root.ts`, a path-ts `resolvePathBuilder` over `$MAILWOMAN_DATA_ROOT`). The lab `/mnt/playpen/mailwoman-data` default lives in **exactly one place** (`data-root.ts`); never re-hardcode it in shipped code or scripts. In docs/comments/help-text reference `$MAILWOMAN_DATA_ROOT`, not the literal. The helper resolves cleanly from `scripts/` too (it's just another `@mailwoman/core/*` subpath import).
