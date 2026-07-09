@@ -46,6 +46,11 @@
 			"node": "./src/adapters/index.ts",
 			"default": "./out/src/adapters/index.js",
 			"types": "./out/src/adapters/index.d.ts"
+		},
+		"./tools": {
+			"node": "./src/tools/index.ts",
+			"default": "./out/src/tools/index.js",
+			"types": "./out/src/tools/index.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -74,6 +79,10 @@
 			"./adapters": {
 				"types": "./out/src/adapters/index.d.ts",
 				"default": "./out/src/adapters/index.js"
+			},
+			"./tools": {
+				"types": "./out/src/tools/index.d.ts",
+				"default": "./out/src/tools/index.js"
 			}
 		},
 		"access": "public"

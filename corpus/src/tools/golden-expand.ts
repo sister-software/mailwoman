@@ -1,4 +1,3 @@
-#!/usr/bin/env npx tsx
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -13,7 +12,7 @@
  *   doesn't scale. Pure-LLM generation (invent raw + labels from scratch) is too noisy — labels
  *   would be unverified.
  *
- *   This script takes the middle path:
+ *   This module takes the middle path:
  *
  *   1. **Seeds come from corpus-v0.2.0 test shard** — already through the alignment pipeline, so labels
  *        are pipeline-verified.
@@ -27,46 +26,32 @@
  *
  *   ```sh
  *   DEEPSEEK_API_KEY=sk-... \
- *   npx tsx packages/corpus/scripts/expand-golden.ts \
+ *   mailwoman corpus golden expand \
  *   --count 1000 \
  *   --variants 5 \
  *   --output data/eval/golden/candidates/expand-$(date +%Y%m%d-%H%M%S).jsonl
- * ```
- *
- *   ## Flags
- *
- *   - `--corpus <path>` — corpus test shard glob; default
- *       `/mnt/playpen/mailwoman-data/corpus/versioned/v0.2.0/corpus-v0.2.0/test/*.parquet`
- *   - `--count <n>` — total seeds to process; default `100` (pilot)
- *   - `--variants <n>` — variants requested per seed; default `5`
- *   - `--output <path>` — JSONL output; default `data/eval/golden/candidates/expand-<ts>.jsonl`
- *   - `--provider deepseek|anthropic` — LLM provider; default `deepseek`
- *   - `--model <name>` — model id; default depends on provider
- *   - `--concurrency <n>` — parallel LLM calls; default `4`
+ *   ```
  *
  *   ## Env
  *
- *   - `DEEPSEEK_API_KEY` — required for `--provider deepseek`
- *   - `ANTHROPIC_API_KEY` — required for `--provider anthropic`
+ *   - `DEEPSEEK_API_KEY` — required for provider `deepseek`
+ *   - `ANTHROPIC_API_KEY` — required for provider `anthropic`
  *
- *   ## What this script does NOT do
+ *   ## What this module does NOT do
  *
  *   - Does not commit anything or modify the versioned golden dir. Candidates land in
  *       `data/eval/golden/candidates/` for operator review (skim, prune, then run
- *       `promote-golden.ts`).
+ *       `mailwoman corpus golden promote`).
  *   - Does not score the LLM's quality — that's an eyeball job after pilot lands.
  *   - Does not retry hallucinated candidates. Cost of wasted tokens is trivial (~$0.0006/each).
  */
 
-///<reference types="node" />
-
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir } from "node:fs/promises"
 import { dirname } from "node:path"
-import { parseArgs } from "node:util"
 
 import { ParquetReader } from "@dsnp/parquetjs"
 import { $private } from "@mailwoman/core/env"
-import { runIfScript } from "@mailwoman/core/scripting"
+import { dataRootPath, writeJSONL } from "@mailwoman/core/utils"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -104,38 +89,31 @@ interface GoldenCandidate {
 	provenance: { provider: string; model: string }
 }
 
-// ── CLI ────────────────────────────────────────────────────────────────────
+export interface ExpandGoldenOptions {
+	/** Corpus test shard path(s), comma-separated. Default: the v0.2.0 test shard under the data root. */
+	corpus?: string
+	/** Total seeds to process. Default `100` (pilot). */
+	count?: number
+	/** Variants requested per seed. Default `5`. */
+	variants?: number
+	/** JSONL output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`. */
+	output?: string
+	/** LLM provider. Default `deepseek`. */
+	provider?: "deepseek" | "anthropic"
+	/** Model id. Default depends on provider. */
+	model?: string
+	/** Parallel LLM calls. Default `4`. */
+	concurrency?: number
+	/** Comma-separated source allow-list. */
+	includeSources?: string
+}
 
-function parseCLI() {
-	const { values } = parseArgs({
-		options: {
-			corpus: {
-				type: "string",
-				default: "/mnt/playpen/mailwoman-data/corpus/versioned/v0.2.0/corpus-v0.2.0/test/part-0000.parquet",
-			},
-			count: { type: "string", default: "100" },
-			variants: { type: "string", default: "5" },
-			output: { type: "string" },
-			provider: { type: "string", default: "deepseek" },
-			model: { type: "string" },
-			concurrency: { type: "string", default: "4" },
-			"include-sources": { type: "string" },
-		},
-	})
-	const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
-
-	return {
-		corpusPath: values.corpus!,
-		count: Number.parseInt(values.count!, 10),
-		variants: Number.parseInt(values.variants!, 10),
-		outputPath: values.output ?? `data/eval/golden/candidates/expand-${ts}.jsonl`,
-		provider: values.provider! as "deepseek" | "anthropic",
-		model: values.model ?? (values.provider === "anthropic" ? "claude-haiku-4-5-20251001" : "deepseek-chat"),
-		concurrency: Number.parseInt(values.concurrency!, 10),
-		includeSources: values["include-sources"]
-			? new Set(values["include-sources"].split(",").map((s) => s.trim()))
-			: null,
-	}
+export interface ExpandGoldenSummary {
+	seedsProcessed: number
+	kept: number
+	dropped: number
+	errored: number
+	outputPath: string
 }
 
 // ── Seed loading ──────────────────────────────────────────────────────────
@@ -180,15 +158,20 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 	return out
 }
 
-async function loadSeeds(corpusPath: string, count: number, includeSources: Set<string> | null): Promise<Seed[]> {
+async function loadSeeds(
+	corpusPath: string,
+	count: number,
+	includeSources: Set<string> | null,
+	report?: (line: string) => void
+): Promise<Seed[]> {
 	const paths = corpusPath
 		.split(",")
 		.map((p) => p.trim())
 		.filter(Boolean)
-	process.stderr.write(`reading seeds from ${paths.length} shard(s) (target: ${count}, stratified)\n`)
+	report?.(`reading seeds from ${paths.length} shard(s) (target: ${count}, stratified)`)
 
 	if (includeSources) {
-		process.stderr.write(`  include-sources filter: ${Array.from(includeSources).join(", ")}\n`)
+		report?.(`  include-sources filter: ${Array.from(includeSources).join(", ")}`)
 	}
 
 	// Stratified sampling: read all rows from all shards, group by source. Bounded by per-source
@@ -209,7 +192,7 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 			if (!row) break
 			scanned++
 
-			// Source allow-list (CLI --include-sources) — applied early to skip parsing rows we won't use
+			// Source allow-list (--include-sources) — applied early to skip parsing rows we won't use
 			if (includeSources && !includeSources.has(row.source)) continue
 			const components = decodeComponents(row.tokens ?? [], row.labels ?? [])
 
@@ -239,13 +222,13 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 		await reader.close()
 	}
 
-	process.stderr.write(
-		`  scanned ${scanned} rows across ${paths.length} shard(s); thin-components dropped: ${skippedThinComponents}\n`
+	report?.(
+		`  scanned ${scanned} rows across ${paths.length} shard(s); thin-components dropped: ${skippedThinComponents}`
 	)
-	process.stderr.write(`  per-source pool sizes:\n`)
+	report?.(`  per-source pool sizes:`)
 
 	for (const [src, pool] of bySource) {
-		process.stderr.write(`    ${src}: ${pool.length}\n`)
+		report?.(`    ${src}: ${pool.length}`)
 	}
 
 	// Round-robin sample. Each source gives floor(count / nSources) seeds; rounding goes
@@ -269,10 +252,10 @@ async function loadSeeds(corpusPath: string, count: number, includeSources: Set<
 		picked.push(...pool.slice(0, take))
 
 		if (take < target) {
-			process.stderr.write(`    ⚠ ${src}: requested ${target}, pool had ${pool.length}\n`)
+			report?.(`    ⚠ ${src}: requested ${target}, pool had ${pool.length}`)
 		}
 	}
-	process.stderr.write(`  → loaded ${picked.length} seeds across ${sources.length} sources\n`)
+	report?.(`  → loaded ${picked.length} seeds across ${sources.length} sources`)
 
 	return picked
 }
@@ -319,7 +302,7 @@ N: ${n}`
 function makeDeepseekProvider(model: string): LlmProvider {
 	const apiKey = $private.DEEPSEEK_API_KEY
 
-	if (!apiKey) throw new Error("DEEPSEEK_API_KEY env var is required for --provider deepseek")
+	if (!apiKey) throw new Error("DEEPSEEK_API_KEY env var is required for provider deepseek")
 
 	return {
 		name: "deepseek",
@@ -353,7 +336,7 @@ function makeDeepseekProvider(model: string): LlmProvider {
 function makeAnthropicProvider(model: string): LlmProvider {
 	const apiKey = $private.ANTHROPIC_API_KEY
 
-	if (!apiKey) throw new Error("ANTHROPIC_API_KEY env var is required for --provider anthropic")
+	if (!apiKey) throw new Error("ANTHROPIC_API_KEY env var is required for provider anthropic")
 
 	return {
 		name: "anthropic",
@@ -451,29 +434,39 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 
 // ── Main pipeline ─────────────────────────────────────────────────────────
 
-async function main() {
-	const opts = parseCLI()
-	const provider = opts.provider === "anthropic" ? makeAnthropicProvider(opts.model) : makeDeepseekProvider(opts.model)
-	process.stderr.write(`provider: ${provider.name}  model: ${provider.model}\n`)
+export async function expandGolden(
+	options: ExpandGoldenOptions = {},
+	report?: (line: string) => void
+): Promise<ExpandGoldenSummary> {
+	const corpusPath =
+		options.corpus ?? dataRootPath("corpus", "versioned", "v0.2.0", "corpus-v0.2.0", "test", "part-0000.parquet")
+	const count = options.count ?? 100
+	const variants = options.variants ?? 5
+	const providerName = options.provider ?? "deepseek"
+	const model = options.model ?? (providerName === "anthropic" ? "claude-haiku-4-5-20251001" : "deepseek-chat")
+	const concurrencyLimit = options.concurrency ?? 4
+	const includeSources = options.includeSources ? new Set(options.includeSources.split(",").map((s) => s.trim())) : null
+	const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
+	const outputPath = options.output ?? `data/eval/golden/candidates/expand-${ts}.jsonl`
 
-	const seeds = await loadSeeds(opts.corpusPath, opts.count, opts.includeSources)
+	const provider = providerName === "anthropic" ? makeAnthropicProvider(model) : makeDeepseekProvider(model)
+	report?.(`provider: ${provider.name}  model: ${provider.model}`)
+
+	const seeds = await loadSeeds(corpusPath, count, includeSources, report)
 
 	if (seeds.length === 0) {
-		process.stderr.write("no seeds loaded — corpus path or filter is wrong\n")
-		process.exitCode = 2
-
-		return
+		throw new Error("no seeds loaded — corpus path or filter is wrong")
 	}
 
-	await mkdir(dirname(opts.outputPath), { recursive: true })
-	const outLines: string[] = []
+	await mkdir(dirname(outputPath), { recursive: true })
+	const outRows: GoldenCandidate[] = []
 	let kept = 0
 	let dropped = 0
 	let errored = 0
 
 	// Bounded-concurrency worker pool
 	let cursor = 0
-	const workers = Array.from({ length: Math.min(opts.concurrency, seeds.length) }, async () => {
+	const workers = Array.from({ length: Math.min(concurrencyLimit, seeds.length) }, async () => {
 		while (true) {
 			const i = cursor++
 
@@ -481,7 +474,7 @@ async function main() {
 			const seed = seeds[i]!
 
 			try {
-				const candidates = await provider.generateVariants(seed, opts.variants)
+				const candidates = await provider.generateVariants(seed, variants)
 
 				for (const cand of candidates) {
 					if (validate(seed, cand)) {
@@ -500,7 +493,7 @@ async function main() {
 						for (const tag of goldenCandidate.dropped_components) {
 							delete goldenCandidate.components[tag]
 						}
-						outLines.push(JSON.stringify(goldenCandidate))
+						outRows.push(goldenCandidate)
 						kept++
 					} else {
 						dropped++
@@ -508,28 +501,24 @@ async function main() {
 				}
 			} catch (err) {
 				errored++
-				process.stderr.write(`  ✗ seed ${seed.source_id}: ${(err as Error).message}\n`)
+				report?.(`  ✗ seed ${seed.source_id}: ${(err as Error).message}`)
 			}
 
 			if ((i + 1) % 10 === 0) {
-				process.stderr.write(
-					`  progress: ${i + 1}/${seeds.length}  kept=${kept}  dropped=${dropped}  errored=${errored}\n`
-				)
+				report?.(`  progress: ${i + 1}/${seeds.length}  kept=${kept}  dropped=${dropped}  errored=${errored}`)
 			}
 		}
 	})
 	await Promise.all(workers)
 
-	await writeFile(opts.outputPath, outLines.join("\n") + (outLines.length ? "\n" : ""))
-	process.stderr.write(`\n=== summary ===\n`)
-	process.stderr.write(`seeds processed:  ${seeds.length}\n`)
-	process.stderr.write(`candidates kept:  ${kept}\n`)
-	process.stderr.write(`candidates dropped (validator): ${dropped}\n`)
-	process.stderr.write(`seeds with errors: ${errored}\n`)
-	process.stderr.write(
-		`yield: ${seeds.length > 0 ? ((kept / (seeds.length * opts.variants)) * 100).toFixed(1) : "0"}%\n`
-	)
-	process.stderr.write(`output:           ${opts.outputPath}\n`)
-}
+	writeJSONL(outputPath, outRows)
+	report?.(`=== summary ===`)
+	report?.(`seeds processed:  ${seeds.length}`)
+	report?.(`candidates kept:  ${kept}`)
+	report?.(`candidates dropped (validator): ${dropped}`)
+	report?.(`seeds with errors: ${errored}`)
+	report?.(`yield: ${seeds.length > 0 ? ((kept / (seeds.length * variants)) * 100).toFixed(1) : "0"}%`)
+	report?.(`output:           ${outputPath}`)
 
-runIfScript(import.meta, main)
+	return { seedsProcessed: seeds.length, kept, dropped, errored, outputPath }
+}

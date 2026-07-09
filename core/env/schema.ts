@@ -27,7 +27,7 @@ export const PublicEnvSchema = z.object({
 	// The gazetteer/model data root (`core/utils/data-root.ts`, `scripts/copy-weights.ts`).
 	MAILWOMAN_DATA_ROOT: z.string().optional(),
 
-	// Corpus source-fetch scripts (`corpus/scripts/fetch-*`). Callers do their own numeric/boolean parsing on these,
+	// Corpus source-fetch tools (`corpus/src/tools/fetch/*` — env knobs are now command flags; these remain for compat). Callers do their own numeric/boolean parsing on these,
 	// so they stay raw strings — the schema only gates which keys surface, not how they're coerced.
 	OUT_ROOT: z.string().optional(),
 	NAD_MODE: z.string().optional(),
@@ -111,7 +111,7 @@ export const PrivateEnvSchema = z.object({
 	RCLONE_S3_ACCESS_KEY_ID: z.string().optional(),
 	RCLONE_S3_SECRET_ACCESS_KEY: z.string().optional(),
 
-	// OpenAddresses batch-download API token (`corpus/scripts/fetch-sources/fetch-openaddresses.ts`).
+	// OpenAddresses batch-download API token (`corpus/src/tools/fetch/openaddresses.ts`).
 	OA_BATCH_TOKEN: z.string().optional(),
 
 	// npm 2FA OTP for the release publish flow (`scripts/publish-workspace.ts`).

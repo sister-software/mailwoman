@@ -32,7 +32,7 @@ const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	useEffect(() => {
 		void (async () => {
 			try {
-				const { assembleOverlayManifest } = await import("../../corpus-tools/overlay-manifest.ts")
+				const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools")
 				await assembleOverlayManifest({
 					base: options.base,
 					newDir: options.newDir,

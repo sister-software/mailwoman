@@ -18,7 +18,10 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import type { CommandComponent } from "../../../cli-kit/index.ts"
+
+/** Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands. */
+export const isDefault = true
 
 const ArgumentsSchema = zod
 	.array(zod.string().describe("Recipe name (omit with --list to see the registry)"))

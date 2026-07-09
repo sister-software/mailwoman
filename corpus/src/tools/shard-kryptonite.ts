@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -11,64 +10,35 @@
  *   See docs/articles/plan/reference/CORPUS_V0_4_0_GENERATION.md for the why; that doc also pins the
  *   DeepSeek model version + prompt versions used to produce the JSONL.
  *
- *   Usage: node corpus/scripts/build-kryptonite-shard.ts\
- *   --jsonl /data/corpus/versioned/v0.4.0/kryptonite/canonical-kryptonite.jsonl\
- *   --base-manifest /data/corpus/versioned/v0.3.0/corpus-v0.3.0/MANIFEST.json\
- *   --out-dir /data/corpus/versioned/v0.4.0
+ *   Invoke via `mailwoman corpus shard kryptonite \
+ *   --jsonl /data/corpus/versioned/v0.4.0/kryptonite/canonical-kryptonite.jsonl \
+ *   --base-manifest /data/corpus/versioned/v0.3.0/corpus-v0.3.0/MANIFEST.json \
+ *   --out-dir /data/corpus/versioned/v0.4.0`
  */
-
-///<reference types="node" />
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
 
-import { runIfScript } from "@mailwoman/core/scripting"
-import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "@mailwoman/corpus"
-import type { CanonicalRow, LabeledRow, ShardManifest } from "@mailwoman/corpus"
-import { TextSpliterator } from "spliterator"
+import { iterateJSONL } from "@mailwoman/core/utils"
 
-interface Args {
+import { alignRow } from "../align.ts"
+import type { ShardManifest } from "../parquet.ts"
+import { PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "../parquet.ts"
+import type { CanonicalRow, LabeledRow } from "../types.ts"
+
+export interface ShardKryptoniteOptions {
 	jsonl: string
 	baseManifest: string
 	outDir: string
-	corpusVersion: string
-	source: string
-}
-
-function parseShardArgs(): Args {
-	const { values } = parseArgs({
-		options: {
-			jsonl: { type: "string" },
-			"base-manifest": { type: "string" },
-			"out-dir": { type: "string" },
-			"corpus-version": { type: "string", default: "0.4.0" },
-			source: { type: "string", default: "deepseek-kryptonite" },
-		},
-	})
-
-	if (!values.jsonl) throw new Error("--jsonl required")
-
-	if (!values["base-manifest"]) throw new Error("--base-manifest required")
-
-	if (!values["out-dir"]) throw new Error("--out-dir required")
-
-	return {
-		jsonl: values.jsonl,
-		baseManifest: values["base-manifest"],
-		outDir: values["out-dir"],
-		corpusVersion: values["corpus-version"],
-		source: values.source,
-	}
+	/** Default `"0.4.0"`. */
+	corpusVersion?: string
+	/** Default `"deepseek-kryptonite"`. */
+	source?: string
 }
 
 async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
-	// JSONL source: each line is JSON.parse'd below, so a trailing CR on CRLF input is harmless
-	// whitespace to the parser and the `!line.trim()` guard drops any whitespace-only line.
-	for await (const line of TextSpliterator.fromAsync(jsonl)) {
-		if (!line.trim()) continue
-		const raw = JSON.parse(line) as Record<string, unknown>
+	for await (const raw of iterateJSONL<Record<string, unknown>>(jsonl)) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
 		yield {
@@ -97,43 +67,47 @@ async function* labeledRows(jsonl: string, corpusVersion: string, quarantineLog:
 	}
 }
 
-async function main(): Promise<void> {
-	const args = parseShardArgs()
+export async function buildKryptoniteShard(
+	options: ShardKryptoniteOptions,
+	report?: (line: string) => void
+): Promise<void> {
+	const corpusVersion = options.corpusVersion ?? "0.4.0"
+	const source = options.source ?? "deepseek-kryptonite"
 
-	if (!existsSync(args.jsonl)) throw new Error(`jsonl not found: ${args.jsonl}`)
+	if (!existsSync(options.jsonl)) throw new Error(`jsonl not found: ${options.jsonl}`)
 
-	if (!existsSync(args.baseManifest)) throw new Error(`base-manifest not found: ${args.baseManifest}`)
+	if (!existsSync(options.baseManifest)) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
-	await mkdir(args.outDir, { recursive: true })
+	await mkdir(options.outDir, { recursive: true })
 
 	const quarantine: string[] = []
 	const newManifest = await writeShards(
-		{ train: labeledRows(args.jsonl, args.corpusVersion, quarantine) },
-		{ outputDir: args.outDir, corpusVersion: args.corpusVersion }
+		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
+		{ outputDir: options.outDir, corpusVersion }
 	)
 
-	console.error(
+	report?.(
 		`wrote ${newManifest.total_rows} rows into ${newManifest.shards.length} shard(s); ` +
 			`quarantined ${quarantine.length}`
 	)
 
 	if (quarantine.length > 0) {
-		const qPath = join(args.outDir, `corpus-v${args.corpusVersion}`, "quarantine-kryptonite.tsv")
+		const qPath = join(options.outDir, `corpus-v${corpusVersion}`, "quarantine-kryptonite.tsv")
 		writeFileSync(qPath, quarantine.join("\n") + "\n", "utf8")
-		console.error(`quarantine log → ${qPath}`)
+		report?.(`quarantine log → ${qPath}`)
 	}
 
 	// Stamp the new shard's source field for audit.ts (which prefers shard.source over
 	// first_source_id-prefix inference). Without this, deepseek-kryptonite IDs would have
 	// to match a prefix in KNOWN_SOURCE_PREFIXES — we add it there too as a belt-and-braces.
 	for (const sh of newManifest.shards) {
-		;(sh as unknown as { source: string }).source = args.source
+		;(sh as unknown as { source: string }).source = source
 	}
 
 	// Compose the final corpus-v0.4.0 manifest: every shard from base + the new shard(s).
-	const base = JSON.parse(readFileSync(args.baseManifest, "utf8")) as ShardManifest
+	const base = JSON.parse(readFileSync(options.baseManifest, "utf8")) as ShardManifest
 	const combined: ShardManifest = {
-		corpus_version: args.corpusVersion,
+		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
 		rows_per_shard: base.rows_per_shard,
 		row_group_size: base.row_group_size ?? ROW_GROUP_SIZE,
@@ -148,12 +122,10 @@ async function main(): Promise<void> {
 	// Stamp source on the legacy v0.3.0 shards too, so audit's shard.source path is the
 	// authoritative one. v0.3.0 shards mix sources; we use the first_source_id-prefix
 	// inference for them (audit.ts will re-derive on its own when shard.source is absent).
-	const combinedPath = join(args.outDir, `corpus-v${args.corpusVersion}`, "MANIFEST.json")
+	const combinedPath = join(options.outDir, `corpus-v${corpusVersion}`, "MANIFEST.json")
 	writeFileSync(combinedPath, JSON.stringify(combined, null, 2) + "\n", "utf8")
-	console.error(`wrote combined manifest → ${combinedPath}`)
-	console.error(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newManifest.total_rows})`)
-	console.error(`  shards=${combined.shards.length} (base=${base.shards.length}, added=${newManifest.shards.length})`)
-	console.error(`  compression=${SHARD_COMPRESSION}`)
+	report?.(`wrote combined manifest → ${combinedPath}`)
+	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newManifest.total_rows})`)
+	report?.(`  shards=${combined.shards.length} (base=${base.shards.length}, added=${newManifest.shards.length})`)
+	report?.(`  compression=${SHARD_COMPRESSION}`)
 }
-
-runIfScript(import.meta, main)

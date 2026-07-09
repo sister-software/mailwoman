@@ -11,7 +11,7 @@
  *   commercial address space with full structured components.
  *
  *   The adapter consumes NDJSON shards produced by `fetch-nad.ts`'s featureserver mode (operator
- *   pre-downloads via `npx tsx packages/corpus/scripts/fetch-nad.ts`). Each shard is per-OID-range
+ *   pre-downloads via `mailwoman corpus fetch nad`). Each shard is per-OID-range
  *   `oids_<start>-<end>.ndjson` with a sibling `.manifest.json`. Adapter iterates every `.ndjson`
  *   in the input directory, skipping the `quarantined-bash-bug/` subdir (legacy of the bash-
  *   fetcher's silent-page-failure bug).

@@ -28,7 +28,7 @@ const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	useEffect(() => {
 		void (async () => {
 			try {
-				const { alignCanonicalShard } = await import("../../corpus-tools/align-shard.ts")
+				const { alignCanonicalShard } = await import("@mailwoman/corpus/tools")
 				await alignCanonicalShard({
 					input: options.input,
 					output: options.output,

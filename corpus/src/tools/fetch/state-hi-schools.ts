@@ -1,4 +1,3 @@
-#!/usr/bin/env npx tsx
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -8,47 +7,35 @@
  *   `state-hi-schools` adapter can consume.
  *
  *   Upstream is a single XLSX (~64 KB) with two sheets — `HIDOE` (~258 district schools) and `PCS`
- *   (~38 public charter schools). Both sheets share the same header. This script concatenates them
+ *   (~38 public charter schools). Both sheets share the same header. This module concatenates them
  *   under one shared header so the adapter can stream a single CSV.
  *
  *   License: Hawaii state government open data (Tier A — state PD-equivalent).
  *
- *   TypeScript port of the bash `fetch-state-hi-schools.sh`, matching the style of the other corpus
- *   fetch scripts (fetch-nad). Built-in `fetch` (gzip/brotli) replaces curl for the download; the
- *   XLSX → CSV step still rides `python3` + `openpyxl` via zx — there is no clean node equivalent
- *   without adding a workbook-parsing dependency.
+ *   Built-in `fetch` (gzip/brotli) replaces curl for the download; the XLSX → CSV step still rides
+ *   `python3` + `openpyxl` via `node:child_process` — there is no clean node equivalent without
+ *   adding a workbook-parsing dependency.
  *
- *   ## Usage
- *
- *   ```sh
- *   OUT_ROOT=/data/corpus/sources \
- *     npx tsx packages/corpus/scripts/fetch-sources/fetch-state-hi-schools.ts
- *   ```
- *
- *   Defaults to writing under `./data/corpus/sources/` in the repo root. Idempotent: if the dest CSV
- *   exists and sha matches MANIFEST, skips download.
- *
- *   ## Flags
- *
- *   - `--out-root <path>` (env `OUT_ROOT`) — destination root; default `./data/corpus/sources`
+ *   Invoke via `mailwoman corpus fetch state-hi-schools --out-root <path>`. Idempotent: if the dest
+ *   CSV exists and sha matches MANIFEST, skips download.
  */
 
-///<reference types="node" />
-
-import { createHash } from "node:crypto"
+import { spawn, spawnSync } from "node:child_process"
 import { existsSync, mkdirSync, statSync } from "node:fs"
-import { readFile, unlink, writeFile } from "node:fs/promises"
+import { unlink } from "node:fs/promises"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
 
-import { $public } from "@mailwoman/core/env"
-import { runIfScript } from "@mailwoman/core/scripting"
-import { $ } from "zx"
+import { sha256File } from "@mailwoman/core/utils"
+
+import type { BaseFetchOptions, FetchSummary } from "./download.ts"
+import { downloadToFile, readManifest, writeManifest } from "./download.ts"
 
 const SOURCE_URL = "https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx"
 const SLUG = "state-hi-schools"
 const CSV_FILENAME = "HI_Public_Schools_List.csv"
 const XLSX_FILENAME = "HI_Public_Schools_List.xlsx"
+
+export type FetchStateHISchoolsOptions = BaseFetchOptions
 
 /**
  * The XLSX → CSV converter: concatenate every sheet under one shared header (the first sheet's). Runs as `python3 -c
@@ -103,16 +90,6 @@ interface Manifest {
 	notes: string
 }
 
-function parseCLIArgs() {
-	const { values } = parseArgs({
-		options: {
-			"out-root": { type: "string", default: $public.OUT_ROOT ?? "data/corpus/sources" },
-		},
-	})
-
-	return { outRoot: values["out-root"]! }
-}
-
 /** Mimic `numfmt --to=iec` for a friendly byte-size log line. */
 function iec(bytes: number): string {
 	if (bytes < 1024) return String(bytes)
@@ -130,92 +107,97 @@ function iec(bytes: number): string {
 	return `${rounded}${units[i] ?? ""}`
 }
 
-async function sha256OfFile(path: string): Promise<string> {
-	return createHash("sha256")
-		.update(await readFile(path))
-		.digest("hex")
+/**
+ * Run the openpyxl converter. Its stderr narration streams straight through to the process stderr (matching the old
+ * `stdio: inherit` behavior) rather than routing through `report` — the python child owns those lines.
+ */
+async function convertXLSXToCSV(xlsxPath: string, csvPath: string): Promise<void> {
+	const child = spawn("python3", ["-c", PY_CONVERT, xlsxPath, csvPath], {
+		stdio: ["ignore", "inherit", "inherit"],
+	})
+	await new Promise<void>((resolve, reject) => {
+		child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`python3 converter exited with ${code}`))))
+		child.on("error", reject)
+	})
 }
 
-async function main(): Promise<void> {
-	$.verbose = false
-	const opts = parseCLIArgs()
-	const destDir = join(opts.outRoot, SLUG)
+export async function fetchStateHISchools(
+	options: FetchStateHISchoolsOptions,
+	report?: (line: string) => void
+): Promise<FetchSummary> {
+	const destDir = join(options.outRoot, SLUG)
 	mkdirSync(destDir, { recursive: true })
 
 	const xlsxDest = join(destDir, XLSX_FILENAME)
 	const csvDest = join(destDir, CSV_FILENAME)
 	const manifestPath = join(destDir, "MANIFEST.json")
 
-	process.stderr.write(`=== ${SLUG}\n`)
+	report?.(`=== ${SLUG}`)
 
 	// Idempotency: skip if CSV exists and sha matches recorded MANIFEST.
-	if (existsSync(manifestPath) && existsSync(csvDest)) {
-		try {
-			const recorded = JSON.parse(await readFile(manifestPath, "utf8")) as Partial<Manifest>
+	if (existsSync(csvDest)) {
+		const recorded = await readManifest<Partial<Manifest>>(manifestPath)
 
-			if (recorded.sha256 && recorded.filename === CSV_FILENAME) {
-				const actualSha = await sha256OfFile(csvDest)
+		if (recorded?.sha256 && recorded.filename === CSV_FILENAME) {
+			const actualSha = await sha256File(csvDest)
 
-				if (actualSha === recorded.sha256) {
-					process.stderr.write(`  ✓ Already current (sha256 matches MANIFEST) — skipping download.\n`)
+			if (actualSha === recorded.sha256) {
+				report?.(`  ✓ Already current (sha256 matches MANIFEST) — skipping download.`)
 
-					return
-				}
+				return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
 			}
-		} catch {
-			// Corrupt manifest — fall through and re-fetch.
 		}
 	}
 
 	// Preflight: openpyxl must be importable.
-	const preflight = await $({ nothrow: true })`python3 -c ${"import openpyxl"}`
+	const preflight = spawnSync("python3", ["-c", "import openpyxl"], { stdio: "ignore" })
 
-	if (preflight.exitCode !== 0) {
-		process.stderr.write(
+	if (preflight.status !== 0) {
+		report?.(
 			`  ✗ python3 with the \`openpyxl\` package is required to convert the HIDOE XLSX.\n` +
 				`    Debian/Ubuntu:  sudo apt-get install -y python3-openpyxl\n` +
-				`    macOS Homebrew: brew install python && pip3 install openpyxl\n`
+				`    macOS Homebrew: brew install python && pip3 install openpyxl`
 		)
-		process.exitCode = 1
 
-		return
+		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
 	// Download XLSX.
-	process.stderr.write(`  Downloading ${SOURCE_URL} ...\n`)
-	const res = await fetch(SOURCE_URL, {
-		headers: { "Accept-Encoding": "gzip, br" },
-		signal: AbortSignal.timeout(600_000),
-	})
+	report?.(`  Downloading ${SOURCE_URL} ...`)
 
-	if (!res.ok) {
-		process.stderr.write(`  ✗ Download failed (HTTP ${res.status} ${res.statusText})\n`)
-		process.exitCode = 1
+	try {
+		await downloadToFile({
+			url: SOURCE_URL,
+			dest: xlsxDest,
+			timeoutMs: 600_000,
+			headers: { "Accept-Encoding": "gzip, br" },
+			report,
+		})
+	} catch (err) {
+		report?.(`  ✗ Download failed (${(err as Error).message})`)
 
-		return
+		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
-	await writeFile(xlsxDest, Buffer.from(await res.arrayBuffer()))
 
 	const xlsxSize = statSync(xlsxDest).size
-	process.stderr.write(`  Downloaded XLSX: ${iec(xlsxSize)}\n`)
+	report?.(`  Downloaded XLSX: ${iec(xlsxSize)}`)
 
 	if (xlsxSize < 1024) {
-		process.stderr.write(`  ✗ Response too small (${xlsxSize} bytes) — probable error page\n`)
-		process.exitCode = 1
+		report?.(`  ✗ Response too small (${xlsxSize} bytes) — probable error page`)
 
-		return
+		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
 	// Convert XLSX → CSV (concatenate both sheets under one shared header).
-	process.stderr.write(`  Converting XLSX → CSV (concatenating sheets) ...\n`)
-	await $({ stdio: ["ignore", "inherit", "inherit"] })`python3 -c ${PY_CONVERT} ${xlsxDest} ${csvDest}`
+	report?.(`  Converting XLSX → CSV (concatenating sheets) ...`)
+	await convertXLSXToCSV(xlsxDest, csvDest)
 
 	const csvSize = statSync(csvDest).size
-	const csvSha = await sha256OfFile(csvDest)
+	const csvSha = await sha256File(csvDest)
 
 	// Remove XLSX (CSV is the canonical artifact the adapter consumes).
 	await unlink(xlsxDest)
-	process.stderr.write(`  Removed XLSX (CSV kept)\n`)
+	report?.(`  Removed XLSX (CSV kept)`)
 
 	// Write MANIFEST.
 	const manifest: Manifest = {
@@ -226,10 +208,10 @@ async function main(): Promise<void> {
 		bytes: csvSize,
 		notes: "Converted from XLSX (sheets HIDOE + PCS concatenated under shared header).",
 	}
-	await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n")
+	await writeManifest(manifestPath, manifest)
 
-	process.stderr.write(`  ✓ ${iec(csvSize)}  sha256=${csvSha}\n`)
-	process.stderr.write(`  MANIFEST written to ${manifestPath}\n`)
+	report?.(`  ✓ ${iec(csvSize)}  sha256=${csvSha}`)
+	report?.(`  MANIFEST written to ${manifestPath}`)
+
+	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
 }
-
-runIfScript(import.meta, main)

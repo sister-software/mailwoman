@@ -18,9 +18,8 @@ import { createWriteStream } from "node:fs"
  * land in the new format with zero drift. That is exactly what this does: canonical jsonl in → labeled jsonl out, one
  * `alignRow` per row, quarantine on miss.
  *
- * It is the uniform counterpart to corpus/scripts/build-kryptonite-shard.ts (which couples to a base manifest and
- * writes parquet directly). Output goes to jsonl so it joins the SAME jsonl-to-parquet path every other overlay shard
- * uses.
+ * It is the uniform counterpart to corpus/src/tools/shard-kryptonite.ts (which couples to a base manifest and writes
+ * parquet directly). Output goes to jsonl so it joins the SAME jsonl-to-parquet path every other overlay shard uses.
  *
  * Usage: node scripts/align-canonical-shard.ts\
  * --input /path/canonical-kryptonite.jsonl\

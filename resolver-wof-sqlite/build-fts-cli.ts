@@ -17,7 +17,7 @@
  *   Why a plain-args CLI rather than Ink / Pastel: this is a one-shot operator script, not an
  *   interactive TUI. The dep weight of inkjs / pastel would dominate the script's footprint and
  *   doesn't match how operators expect to drive a build step (`script /path/to/db` + stderr
- *   progress). Matches the spirit of `corpus/scripts/*.ts`.
+ *   progress). Matches the corpus fetch/build tools' operator ergonomics.
  */
 
 import { existsSync } from "node:fs"

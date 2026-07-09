@@ -23,9 +23,10 @@
  *   # then push the overlay to R2 + sync + `modal run -d ... --config <recipe>.yaml --resume none`.
  */
 
-import { createHash } from "node:crypto"
 import { readFileSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+
+import { sha256Hex } from "@mailwoman/core/utils"
 
 interface ShardDescriptor {
 	split: string
@@ -75,7 +76,7 @@ async function descriptor(
 		compression: "SNAPPY",
 		rows: sids.length,
 		bytes: statSync(localPath).size,
-		sha256: createHash("sha256").update(readFileSync(localPath)).digest("hex"),
+		sha256: sha256Hex(readFileSync(localPath)),
 		first_source_id: sids[0]!,
 		last_source_id: sids[sids.length - 1]!,
 		source,
