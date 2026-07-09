@@ -284,6 +284,97 @@ def mean_init_embeddings(
     return old_vocab, new_vocab
 
 
+def _fvt_rows(base_tokenizer: Path, spliced_tokenizer: Path, emb):  # -> np.ndarray
+    """The FVT mean-init rows for the spliced-in pieces, computed from an existing embedding matrix.
+
+    Mirrors the mean-init in ``mean_init_embeddings`` (the pytorch state-dict path) exactly, on numpy so
+    the ONNX-graph path can reuse it: each new row = the mean of the OLD tokenizer's constituent-piece
+    embeddings for that piece's surface, global mean if the surface has no in-vocab constituents.
+    ``emb`` is the old [old_vocab, hidden] matrix as a numpy array.
+    """
+    import numpy as np
+
+    spliced = sp_pb2.ModelProto()
+    spliced.ParseFromString(spliced_tokenizer.read_bytes())
+    new_vocab = len(spliced.pieces)
+    old_vocab, hidden = emb.shape
+    if new_vocab < old_vocab:
+        raise ValueError(f"spliced vocab {new_vocab} < embedding vocab {old_vocab} — wrong tokenizer?")
+
+    old_sp = spm.SentencePieceProcessor(model_file=str(base_tokenizer))
+    emb_mean = emb.mean(0)
+    new_rows = np.empty((new_vocab - old_vocab, hidden), dtype=emb.dtype)
+    for idx in range(old_vocab, new_vocab):
+        surface = spliced.pieces[idx].piece.replace("▁", " ")
+        constituents = [i for i in old_sp.encode(surface, out_type=int) if i < old_vocab]
+        new_rows[idx - old_vocab] = emb[constituents].mean(0) if constituents else emb_mean
+    return new_rows, old_vocab, new_vocab
+
+
+def mean_init_onnx_embeddings(
+    fp32_onnx: Path,
+    base_tokenizer: Path,
+    spliced_tokenizer: Path,
+    out_fp32: Path,
+    *,
+    int8_onnx: Path | None = None,
+    out_int8: Path | None = None,
+    emb_name: str = "inner.token_embeddings.weight",
+) -> tuple[int, int]:
+    """Expand an EXPORTED ONNX model's token_embeddings to the spliced vocab (FVT mean-init), in place.
+
+    This is the local, checkpoint-free twin of ``mean_init_embeddings``. The prior nsplice ran mean-init
+    on the Modal volume where the training ``pytorch_model.bin`` lived, then re-exported ONNX. When only
+    the shipped ONNX is on hand, the SAME surgery is exact on the graph: in this BIO token-classifier the
+    ONLY vocab-dependent tensor is ``inner.token_embeddings.weight`` (the label head is [hidden, num_labels],
+    independent of vocab), so growing that one initializer and mean-initing the new rows is byte-for-byte what
+    a re-export would produce. Every other node — encoder, CRF, anchor/gaz heads — is untouched, which is why
+    source/other-locale inference stays byte-identical (their input_ids never index the appended rows).
+
+    fp32: read the float initializer, append the FVT rows. int8 (optional): the embedding is stored as a
+    per-tensor-quantized ``<emb>_quantized`` (uint8) + scalar ``_scale`` / ``_zero_point``; the new rows are
+    quantized with the SAME params (round(x/scale)+zp, clamped) — means of existing rows lie inside the
+    existing value range, so no re-calibration is needed. Returns (old_vocab, new_vocab).
+    """
+    import numpy as np
+    import onnx
+    from onnx import numpy_helper
+
+    m = onnx.load(str(fp32_onnx))
+    inits = {i.name: i for i in m.graph.initializer}
+    if emb_name not in inits:
+        raise KeyError(f"{emb_name} not in {fp32_onnx} initializers: {sorted(inits)[:8]}…")
+    emb = numpy_helper.to_array(inits[emb_name])
+    new_rows, old_vocab, new_vocab = _fvt_rows(base_tokenizer, spliced_tokenizer, emb)
+    grown = np.concatenate([emb, new_rows], axis=0)
+    inits[emb_name].CopyFrom(numpy_helper.from_array(grown, name=emb_name))
+    out_fp32.parent.mkdir(parents=True, exist_ok=True)
+    onnx.save(m, str(out_fp32))
+
+    if int8_onnx is not None and out_int8 is not None:
+        mi = onnx.load(str(int8_onnx))
+        qi = {i.name: i for i in mi.graph.initializer}
+        qname, sname, zname = f"{emb_name}_quantized", f"{emb_name}_scale", f"{emb_name}_zero_point"
+        for req in (qname, sname, zname):
+            if req not in qi:
+                raise KeyError(f"{req} not in {int8_onnx} initializers: {sorted(qi)[:8]}…")
+        q = numpy_helper.to_array(qi[qname])
+        scale = float(numpy_helper.to_array(qi[sname]))
+        zp = int(numpy_helper.to_array(qi[zname]))
+        # Sanity: the quant inverse must reproduce an existing quantized row from its fp32 source.
+        recon = np.clip(np.round(emb[old_vocab - 1] / scale) + zp, 0, 255).astype(q.dtype)
+        mism = int((recon != q[old_vocab - 1]).sum())
+        if mism > emb.shape[1] // 20:  # allow a few rounding-boundary ticks, not a wholesale mismatch
+            raise AssertionError(f"int8 quant-inverse mismatch on row {old_vocab - 1}: {mism}/{emb.shape[1]} — scale/zp wrong?")
+        q_new = np.clip(np.round(new_rows / scale) + zp, 0, 255).astype(q.dtype)
+        grown_q = np.concatenate([q, q_new], axis=0)
+        qi[qname].CopyFrom(numpy_helper.from_array(grown_q, name=qname))
+        out_int8.parent.mkdir(parents=True, exist_ok=True)
+        onnx.save(mi, str(out_int8))
+
+    return old_vocab, new_vocab
+
+
 def _main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -294,6 +385,15 @@ def _main() -> None:
     bt.add_argument("--base-tokenizer", type=Path, required=True)
     bt.add_argument("--out-tokenizer", type=Path, required=True)
     bt.add_argument("--vocab-size", type=int, default=24_000)
+    bt.add_argument(
+        "--per-file-cap",
+        type=int,
+        default=400_000,
+        help="rows read per OA CSV before breaking. The CZ/PL/Nordic recipes had many small "
+        "per-region dumps, so 400k/file sampled the whole country; FR ships ONE giant "
+        "fr/countrywide.csv, so a low cap reads only the top departments — raise it (or feed a "
+        "pre-sampled national extract) to keep the diacritic-piece corpus geographically fair.",
+    )
     bt.add_argument("--work-dir", type=Path, default=Path("out/bsplice-work"))
     bt.add_argument(
         "--trained-samples",
@@ -323,12 +423,28 @@ def _main() -> None:
     mi.add_argument("--spliced-tokenizer", type=Path, required=True)
     mi.add_argument("--out-dir", type=Path, required=True)
 
+    oi = sub.add_parser(
+        "onnx-mean-init",
+        help="expand an EXPORTED ONNX model's token_embeddings to the spliced vocab (checkpoint-free)",
+    )
+    oi.add_argument("--fp32-onnx", type=Path, required=True)
+    oi.add_argument("--base-tokenizer", type=Path, required=True)
+    oi.add_argument("--spliced-tokenizer", type=Path, required=True)
+    oi.add_argument("--out-fp32", type=Path, required=True)
+    oi.add_argument("--int8-onnx", type=Path, default=None)
+    oi.add_argument("--out-int8", type=Path, default=None)
+
     args = ap.parse_args()
     if args.cmd == "build-tokenizer":
         args.work_dir.mkdir(parents=True, exist_ok=True)
         corpus = args.work_dir / "slavic-corpus.txt"
         n = build_slavic_corpus(
-            args.oa_root, args.locales.split(","), corpus, extra_text=args.extra_text, extra_repeat=args.extra_repeat
+            args.oa_root,
+            args.locales.split(","),
+            corpus,
+            per_file_cap=args.per_file_cap,
+            extra_text=args.extra_text,
+            extra_repeat=args.extra_repeat,
         )
         print(f"corpus: {n} lines")
         sp_model = train_diacritic_sp(corpus, args.work_dir / "slavic-sp", vocab_size=args.vocab_size)
@@ -348,6 +464,18 @@ def _main() -> None:
     elif args.cmd == "mean-init":
         old_v, new_v = mean_init_embeddings(args.checkpoint, args.base_tokenizer, args.spliced_tokenizer, args.out_dir)
         print(f"expanded token_embeddings {old_v} -> {new_v}; wrote {args.out_dir}")
+    elif args.cmd == "onnx-mean-init":
+        old_v, new_v = mean_init_onnx_embeddings(
+            args.fp32_onnx,
+            args.base_tokenizer,
+            args.spliced_tokenizer,
+            args.out_fp32,
+            int8_onnx=args.int8_onnx,
+            out_int8=args.out_int8,
+        )
+        print(f"expanded ONNX token_embeddings {old_v} -> {new_v}; wrote {args.out_fp32}")
+        if args.out_int8:
+            print(f"  int8 twin written {args.out_int8}")
 
 
 if __name__ == "__main__":

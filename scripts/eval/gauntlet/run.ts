@@ -22,15 +22,24 @@ import { parseArgs } from "node:util"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
-	options: { candidate: { type: "string" }, source: { type: "string" } },
+	options: {
+		candidate: { type: "string" },
+		source: { type: "string" },
+		// A tokenizer-SPLICE candidate (#444/#884/#912) ships a new vocab — forward it so the held-out layer
+		// pairs the candidate model with the candidate tokenizer (and runs production through the shipped trio).
+		tokenizer: { type: "string" },
+		card: { type: "string" },
+	},
 	strict: false,
 	allowPositionals: true,
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as { candidate?: string; source?: string }
+const values = rawValues as { candidate?: string; source?: string; tokenizer?: string; card?: string }
 const candidate = values["candidate"] || ""
 const source = values["source"] || "fr"
-const modelArgs = candidate ? ["--model", candidate] : []
+const tokenizer = values["tokenizer"] || ""
+const card = values["card"] || ""
+const modelArgs = candidate ? ["--model", candidate, ...(tokenizer ? ["--tokenizer", tokenizer] : []), ...(card ? ["--card", card] : [])] : []
 
 interface Layer {
 	name: string
@@ -45,7 +54,15 @@ const layers: Layer[] = [
 if (candidate) {
 	layers.push({
 		name: "held-out",
-		argv: ["scripts/eval/gauntlet/holdout.ts", "--candidate", candidate, "--source", source],
+		argv: [
+			"scripts/eval/gauntlet/holdout.ts",
+			"--candidate",
+			candidate,
+			"--source",
+			source,
+			...(tokenizer ? ["--tokenizer", tokenizer] : []),
+			...(card ? ["--card", card] : []),
+		],
 	})
 } else {
 	console.log("[gauntlet] no --candidate → skipping the held-out generalization layer (self-check mode)")

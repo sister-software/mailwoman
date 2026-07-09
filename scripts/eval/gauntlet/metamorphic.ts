@@ -34,7 +34,10 @@ import { buildGauntletDeps, runOne } from "./harness.ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
-	options: { model: { type: "string" } },
+	// `tokenizer`/`card`: a tokenizer-SPLICE candidate (#444/#884/#912) needs its new vocab paired with the
+	// model, or the new embedding rows stay dormant (shipped tokenizer emits no ids for them) and the splice
+	// is invisible to this layer. Model-only bumps omit them.
+	options: { model: { type: "string" }, tokenizer: { type: "string" }, card: { type: "string" } },
 	strict: false,
 	allowPositionals: true,
 })
@@ -293,7 +296,15 @@ const dropPostcode = (s: string) =>
 		.replace(/\s+/g, " ")
 		.trim()
 
-const deps = await buildGauntletDeps(values["model"] || "" ? { modelPath: values["model"] || "" } : {})
+const deps = await buildGauntletDeps(
+	values["model"] || ""
+		? {
+				modelPath: values["model"] || "",
+				...(values["tokenizer"] ? { tokenizerPath: values["tokenizer"] as string } : {}),
+				...(values["card"] ? { modelCardPath: values["card"] as string } : {}),
+			}
+		: {}
+)
 
 interface Tally {
 	checks: number
