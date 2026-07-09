@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { assertCongruent } from "mailwoman/sdk/test"
+import { assertCongruent } from "mailwoman/test-kit"
 import { expect, test } from "vitest"
 
 import { TokenContext } from "./context.ts"

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { assertDeepSerialized } from "mailwoman/sdk/test"
+import { assertDeepSerialized } from "mailwoman/test-kit"
 import { expect, test } from "vitest"
 
 import { permutate } from "./permutate.ts"
