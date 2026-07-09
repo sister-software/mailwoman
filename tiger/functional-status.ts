@@ -9,54 +9,56 @@
  *
  * @title TIGER Functional Status
  */
-export enum TIGERFunctionalStatus {
+export const TIGERFunctionalStatus = {
 	/**
 	 * Active government providing primary general-purpose functions. Active entity (federally recognized entities only).
 	 */
-	ActiveGovernment = "A",
+	ActiveGovernment: "A",
 	/**
 	 * Active government that is partially consolidated with another government but with separate officials providing
 	 * primary general-purpose functions.
 	 */
-	PartiallyConsolidatedActiveGovernment = "B",
+	PartiallyConsolidatedActiveGovernment: "B",
 	/**
 	 * Active government consolidated with another government with a single set of officials.
 	 */
-	ActiveGovernmentConsolidated = "C",
+	ActiveGovernmentConsolidated: "C",
 	/**
 	 * Active government providing special-purpose functions.
 	 */
-	ActiveGovernmentSpecialPurpose = "E",
+	ActiveGovernmentSpecialPurpose: "E",
 	/**
 	 * Fictitious entity created to fill the Census Bureau geographic hierarchy
 	 */
-	FictitiousEntity = "F",
+	FictitiousEntity: "F",
 	/**
 	 * Active government that is subordinate to another unit of government.
 	 */
-	SubordinateActiveGovernment = "G",
+	SubordinateActiveGovernment: "G",
 	/**
 	 * Inactive governmental unit that has the power to provide primary special-purpose functions.
 	 */
-	InActiveGovernmentalUnit = "I",
+	InActiveGovernmentalUnit: "I",
 	/**
 	 * Inactive, nonfunctioning legal real property entity with potential quasi-legal administrative functions.
 	 */
-	InactiveNonFunctioningLegalRealPropertyEntity = "L",
+	InactiveNonFunctioningLegalRealPropertyEntity: "L",
 	/**
 	 * Active legal real property entity with quasi-legal functions.
 	 */
-	ActiveLegalRealPropertyEntity = "M",
+	ActiveLegalRealPropertyEntity: "M",
 	/**
 	 * Non-functioning legal entity.
 	 */
-	NonFunctioningLegalEntity = "N",
+	NonFunctioningLegalEntity: "N",
 	/**
 	 * Statistical entity.
 	 */
-	StatisticalEntity = "S",
+	StatisticalEntity: "S",
 	/**
 	 * Active state-recognized entity.
 	 */
-	ActiveStateRecognizedEntity = "T",
-}
+	ActiveStateRecognizedEntity: "T",
+} as const
+
+export type TIGERFunctionalStatus = (typeof TIGERFunctionalStatus)[keyof typeof TIGERFunctionalStatus]

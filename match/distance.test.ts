@@ -6,14 +6,14 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { LatLon } from "./blocking.js"
+import type { LatLon } from "./blocking.ts"
 import {
 	DEFAULT_DISTANCE_LEVELS,
 	DEFAULT_SPATIAL_LEVELS,
 	distanceComparison,
 	haversineKm,
 	spatialComparison,
-} from "./distance.js"
+} from "./distance.ts"
 
 describe("haversineKm", () => {
 	it("is 0 for identical points", () => {

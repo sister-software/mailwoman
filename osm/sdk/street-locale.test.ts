@@ -11,7 +11,7 @@
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { expect, test } from "vitest"
 
-import { streetLocaleForCountry, supportedOSMCountries } from "./street-locale.js"
+import { streetLocaleForCountry, supportedOSMCountries } from "./street-locale.ts"
 
 test("fr: the Paris acceptance address keys consistently", () => {
 	const key = normalizeStreetForKeyLocale("Rue du Chevaleret", "fr")

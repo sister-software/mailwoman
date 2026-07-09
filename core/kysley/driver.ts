@@ -18,7 +18,7 @@ import {
 	SelectQueryNode,
 } from "kysely"
 
-import type { SqliteDialectConfig } from "#kysley/dialect-config"
+import type { SqliteDialectConfig } from "./dialect-config.ts"
 
 class ConnectionMutex {
 	#promise?: Promise<void>

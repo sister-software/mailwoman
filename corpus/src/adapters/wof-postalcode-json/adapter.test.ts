@@ -11,9 +11,9 @@ import { join } from "node:path"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { runAdapter } from "../../runner.js"
-import type { CanonicalRow } from "../../types.js"
-import { WOF_POSTALCODE_ADAPTER_ID, createWOFPostalcodeAdapter, postcodeVariantsFor } from "./adapter.js"
+import { runAdapter } from "../../runner.ts"
+import type { CanonicalRow } from "../../types.ts"
+import { WOF_POSTALCODE_ADAPTER_ID, createWOFPostalcodeAdapter, postcodeVariantsFor } from "./adapter.ts"
 
 const fixtureRoot = repoRootPath("corpus", "fixtures", "wof-postalcode-json")
 

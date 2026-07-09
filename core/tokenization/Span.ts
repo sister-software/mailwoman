@@ -12,11 +12,11 @@ import {
 	type Classification,
 	type ClassificationMatch,
 	ClassificationsMatchMap,
-} from "../classification/Classification.js"
-import type { Displayable } from "../resources/debugging.js"
-import type { Alpha3bLanguageCode } from "../resources/languages/index.js"
-import type { LibPostalLanguageCode } from "../resources/libpostal.js"
-import { Graph } from "./Graph.js"
+} from "../classification/Classification.ts"
+import type { Displayable } from "../resources/debugging.ts"
+import type { Alpha3bLanguageCode } from "../resources/languages/index.ts"
+import type { LibPostalLanguageCode } from "../resources/libpostal.ts"
+import { Graph } from "./Graph.ts"
 
 const MAX_SPAN_LENGTH = 140
 

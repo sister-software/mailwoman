@@ -16,7 +16,7 @@ import { exit, stderr } from "node:process"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 
-import { buildSlimWOFDatabase, type BuildSlimOptions } from "./build-slim.js"
+import { buildSlimWOFDatabase, type BuildSlimOptions } from "./build-slim.ts"
 
 interface CLIArgs {
 	inputs: string[]

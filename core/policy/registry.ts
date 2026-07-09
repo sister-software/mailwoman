@@ -12,8 +12,8 @@
 
 import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
 
-import { buildDefaultPolicies, defaultPolicyFor } from "./defaults.js"
-import type { ClassifierPolicy, PolicyMode, PolicyRegistry } from "./policy.js"
+import { buildDefaultPolicies, defaultPolicyFor } from "./defaults.ts"
+import type { ClassifierPolicy, PolicyMode, PolicyRegistry } from "./policy.ts"
 
 const GLOBAL_LOCALE_KEY = "*"
 

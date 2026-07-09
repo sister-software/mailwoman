@@ -7,6 +7,6 @@
  *   (Postleitzahl), and the federal states (Bundesländer).
  */
 
-export * from "./bundesland.js"
-export * from "./postleitzahl.js"
-export * from "./street-type.js"
+export * from "./bundesland.ts"
+export * from "./postleitzahl.ts"
+export * from "./street-type.ts"

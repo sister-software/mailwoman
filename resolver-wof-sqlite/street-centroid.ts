@@ -23,13 +23,13 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/resolver"
 
-import { hasTable } from "./sqlite-utils.js"
+import { hasTable } from "./sqlite-utils.ts"
 import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	type StreetLocale,
 	stripArrondissement,
-} from "./street-normalize.js"
+} from "./street-normalize.ts"
 
 /** The weighted-centroid + extent + provenance an aggregate probe projects. `lat` is null when nothing matched. */
 interface AggRow {

@@ -15,7 +15,7 @@ import { join } from "node:path"
 
 import { afterAll, describe, expect, test } from "vitest"
 
-import { CoarsePlacer, dequantizeInt8Weights, FEATURE_DIM, featurize, inMapPosterior } from "./coarse-placer.js"
+import { CoarsePlacer, dequantizeInt8Weights, FEATURE_DIM, featurize, inMapPosterior } from "./coarse-placer.ts"
 
 const tmpRoot = mkdtempSync(join(tmpdir(), "coarse-placer-test-"))
 afterAll(() => rmSync(tmpRoot, { recursive: true, force: true }))

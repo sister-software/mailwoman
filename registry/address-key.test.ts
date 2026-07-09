@@ -8,8 +8,8 @@ import { isPostalAddressID } from "@mailwoman/address-id"
 import { block } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
 
-import { addressIDBlockingKey, postalAddressID } from "./address-key.js"
-import type { SourceRecord } from "./types.js"
+import { addressIDBlockingKey, postalAddressID } from "./address-key.ts"
+import type { SourceRecord } from "./types.ts"
 
 function record(id: string, raw: string, lat: number, lon: number, geocoded = true): SourceRecord {
 	return {

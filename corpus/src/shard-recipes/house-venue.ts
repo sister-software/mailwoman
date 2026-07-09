@@ -10,8 +10,8 @@
  *   scripts/build-house-venue-shard.mjs.
  */
 
-import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "../synthesize-house-venue.js"
-import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.js"
+import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "../synthesize-house-venue.ts"
+import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 
 const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 

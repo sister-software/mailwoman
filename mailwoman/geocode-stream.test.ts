@@ -8,7 +8,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import type { SourceRecord } from "@mailwoman/registry"
 import { describe, expect, it } from "vitest"
 
-import { geocodeStream } from "./geocode-stream.js"
+import { geocodeStream } from "./geocode-stream.ts"
 
 const fakeWorker = repoRootPath("mailwoman", "test-fixtures", "fake-geocode-worker.js")
 

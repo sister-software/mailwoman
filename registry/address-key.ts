@@ -17,7 +17,7 @@
 import { createPostalAddressID, type PostalAddressID } from "@mailwoman/address-id"
 import { type BlockingKey, exactKey } from "@mailwoman/match"
 
-import type { SourceRecord } from "./types.js"
+import type { SourceRecord } from "./types.ts"
 
 /**
  * The stable address primary key for a record, or null when it isn't geocoded (no coordinate → no locality cell) or

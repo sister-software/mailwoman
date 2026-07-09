@@ -13,7 +13,7 @@
  *   loudly; a hand-loosened one ships the next #1026.
  */
 
-import type { VerifyBaseline } from "./verify.js"
+import type { VerifyBaseline } from "./verify.ts"
 
 export const DEFAULT_VERIFY_BASELINE: VerifyBaseline = {
 	requiredNodes: {

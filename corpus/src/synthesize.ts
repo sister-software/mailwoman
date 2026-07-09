@@ -35,9 +35,9 @@ import {
 } from "@mailwoman/codex/us"
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 
-import { alignRow, assertSpanInvariants, type ComponentSpan } from "./align.js"
-import { whitespaceTokenizer, type Tokenizer } from "./tokenize.js"
-import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.js"
+import { alignRow, assertSpanInvariants, type ComponentSpan } from "./align.ts"
+import { whitespaceTokenizer, type Tokenizer } from "./tokenize.ts"
+import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.ts"
 
 /**
  * An augmentation transforms a single row. Return `null` if the augmentation doesn't apply (e.g. accent-strip on a row

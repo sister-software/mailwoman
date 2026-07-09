@@ -16,11 +16,11 @@
  *   3. {@link cluster Cluster} — resolve the non-transitive pairwise link graph into canonical entities.
  */
 
-export * from "./blocking.js"
-export * from "./clustering.js"
-export * from "./comparators.js"
-export * from "./distance.js"
-export * from "./em.js"
-export * from "./fellegi-sunter.js"
-export * from "./gbt.js"
-export * from "./tf.js"
+export * from "./blocking.ts"
+export * from "./clustering.ts"
+export * from "./comparators.ts"
+export * from "./distance.ts"
+export * from "./em.ts"
+export * from "./fellegi-sunter.ts"
+export * from "./gbt.ts"
+export * from "./tf.ts"

@@ -6,9 +6,9 @@
 
 import { Span } from "@mailwoman/core/tokenization"
 
-import type { Classification } from "./Classification.js"
-import { type ClassifierSchemeConfig, phraseMatchesScheme } from "./scheme.js"
-import { SectionClassifier } from "./SectionClassifier.js"
+import type { Classification } from "./Classification.ts"
+import { type ClassifierSchemeConfig, phraseMatchesScheme } from "./scheme.ts"
+import { SectionClassifier } from "./SectionClassifier.ts"
 
 /**
  * Compute the cartesian product of two or more arrays.

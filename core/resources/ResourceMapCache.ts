@@ -60,10 +60,14 @@ export class ResourceMapCache<
 	 */
 	public displayName: string = "ResourceMapCache"
 
+	protected readonly factoryLike: F
+
 	constructor(ResourceConstructor: ResourceConstructor<K, R>)
 	constructor(factory: ResourceFactory<K, R>)
-	constructor(protected readonly factoryLike: F) {
+	constructor(factoryLike: F) {
 		super()
+
+		this.factoryLike = factoryLike
 	}
 
 	/**

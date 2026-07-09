@@ -7,7 +7,7 @@
 import type { LibPostalLanguageCode, LocaleIndex } from "@mailwoman/core/resources"
 import { Span, TokenContext } from "@mailwoman/core/tokenization"
 
-import type { Classifier, ClassifierOptions } from "./BaseClassifier.js"
+import type { Classifier, ClassifierOptions } from "./BaseClassifier.ts"
 
 export abstract class WordClassifier implements Classifier {
 	/**

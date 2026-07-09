@@ -6,8 +6,8 @@
 
 import type { GeoFeature, MultiPolygonLiteral } from "@mailwoman/spatial"
 
-import { GeoIDPart } from "./geoid.js"
-import type { TIGERTabulatedBlockProperties } from "./tabulation-block.js"
+import { GeoIDPart } from "./geoid.ts"
+import type { TIGERTabulatedBlockProperties } from "./tabulation-block.ts"
 
 //#region FIPS Codes
 
@@ -20,160 +20,162 @@ import type { TIGERTabulatedBlockProperties } from "./tabulation-block.js"
  * @see {@linkcode FIPSTerritoryCode} for territories.
  * @see {@linkcode AdminLevel1Code} for a combined set of states and territories.
  */
-export enum FIPSStateCode {
+export const FIPSStateCode = {
 	/** @title Alabama */
-	AL = "01",
+	AL: "01",
 
 	/** @title Alaska */
-	AK = "02",
+	AK: "02",
 
 	/** @title Arizona */
-	AZ = "04",
+	AZ: "04",
 
 	/** @title Arkansas */
-	AR = "05",
+	AR: "05",
 
 	/** @title California */
-	CA = "06",
+	CA: "06",
 
 	/** @title Colorado */
-	CO = "08",
+	CO: "08",
 
 	/** @title Connecticut */
-	CT = "09",
+	CT: "09",
 
 	/** @title Delaware */
-	DE = "10",
+	DE: "10",
 
 	/** @title District Of Columbia */
-	DC = "11",
+	DC: "11",
 
 	/** @title Florida */
-	FL = "12",
+	FL: "12",
 
 	/** @title Georgia */
-	GA = "13",
+	GA: "13",
 
 	/** @title Hawaii */
-	HI = "15",
+	HI: "15",
 
 	/** @title Idaho */
-	ID = "16",
+	ID: "16",
 
 	/** @title Illinois */
-	IL = "17",
+	IL: "17",
 
 	/** @title Indiana */
-	IN = "18",
+	IN: "18",
 
 	/** @title Iowa */
-	IA = "19",
+	IA: "19",
 
 	/** @title Kansas */
-	KS = "20",
+	KS: "20",
 
 	/** @title Kentucky */
-	KY = "21",
+	KY: "21",
 
 	/** @title Louisiana */
-	LA = "22",
+	LA: "22",
 
 	/** @title Maine */
-	ME = "23",
+	ME: "23",
 
 	/** @title Maryland */
-	MD = "24",
+	MD: "24",
 
 	/** @title Massachusetts */
-	MA = "25",
+	MA: "25",
 
 	/** @title Michigan */
-	MI = "26",
+	MI: "26",
 
 	/** @title Minnesota */
-	MN = "27",
+	MN: "27",
 
 	/** @title Mississippi */
-	MS = "28",
+	MS: "28",
 
 	/** @title Missouri */
-	MO = "29",
+	MO: "29",
 
 	/** @title Montana */
-	MT = "30",
+	MT: "30",
 
 	/** @title Nebraska */
-	NE = "31",
+	NE: "31",
 
 	/** @title Nevada */
-	NV = "32",
+	NV: "32",
 
 	/** @title New Hampshire */
-	NH = "33",
+	NH: "33",
 
 	/** @title New Jersey */
-	NJ = "34",
+	NJ: "34",
 
 	/** @title New Mexico */
-	NM = "35",
+	NM: "35",
 
 	/** @title New York */
-	NY = "36",
+	NY: "36",
 
 	/** @title North Carolina */
-	NC = "37",
+	NC: "37",
 
 	/** @title North Dakota */
-	ND = "38",
+	ND: "38",
 
 	/** @title Ohio */
-	OH = "39",
+	OH: "39",
 
 	/** @title Oklahoma */
-	OK = "40",
+	OK: "40",
 
 	/** @title Oregon */
-	OR = "41",
+	OR: "41",
 
 	/** @title Pennsylvania */
-	PA = "42",
+	PA: "42",
 
 	/** @title Rhode Island */
-	RI = "44",
+	RI: "44",
 
 	/** @title South Carolina */
-	SC = "45",
+	SC: "45",
 
 	/** @title South Dakota */
-	SD = "46",
+	SD: "46",
 
 	/** @title Tennessee */
-	TN = "47",
+	TN: "47",
 
 	/** @title Texas */
-	TX = "48",
+	TX: "48",
 
 	/** @title Utah */
-	UT = "49",
+	UT: "49",
 
 	/** @title Vermont */
-	VT = "50",
+	VT: "50",
 
 	/** @title Virginia */
-	VA = "51",
+	VA: "51",
 
 	/** @title Washington */
-	WA = "53",
+	WA: "53",
 
 	/** @title West Virginia */
-	WV = "54",
+	WV: "54",
 
 	/** @title Wisconsin */
-	WI = "55",
+	WI: "55",
 
 	/** @title Wyoming */
-	WY = "56",
-}
+	WY: "56",
+} as const
+
+export type FIPSStateCode = (typeof FIPSStateCode)[keyof typeof FIPSStateCode]
 
 /**
  * FIPS codes for US Territories.
@@ -186,27 +188,29 @@ export enum FIPSStateCode {
  * @see {@linkcode FIPSStateCode} for states.
  * @see {@linkcode AdminLevel1Code} for a combined set of states and territories.
  */
-export enum FIPSTerritoryCode {
+export const FIPSTerritoryCode = {
 	/**
 	 * @title Johnston Atoll
 	 */
-	JA = "74",
+	JA: "74",
 
 	/** @title American Samoa */
-	AS = "60",
+	AS: "60",
 
 	/** @title Guam */
-	GU = "66",
+	GU: "66",
 
 	/** @title Northern Mariana Islands */
-	MP = "69",
+	MP: "69",
 
 	/** @title Puerto Rico */
-	PR = "72",
+	PR: "72",
 
 	/** @title Virgin Islands */
-	VI = "78",
-}
+	VI: "78",
+} as const
+
+export type FIPSTerritoryCode = (typeof FIPSTerritoryCode)[keyof typeof FIPSTerritoryCode]
 
 /**
  * A combined set of FIPS codes for US States and Territories.
@@ -284,68 +288,72 @@ export function isAdminLevel1FIPSCode(code: string | null | undefined): code is 
  * @maxLength 2
  * @public
  */
-export enum StateAbbreviation {
-	"Alaska" = "AK",
-	"Alabama" = "AL",
-	"Arkansas" = "AR",
-	"Arizona" = "AZ",
-	"California" = "CA",
-	"Colorado" = "CO",
-	"Connecticut" = "CT",
-	"District of Columbia" = "DC",
-	"Delaware" = "DE",
-	"Florida" = "FL",
-	"Georgia" = "GA",
-	"Hawaii" = "HI",
-	"Iowa" = "IA",
-	"Idaho" = "ID",
-	"Illinois" = "IL",
-	"Indiana" = "IN",
-	"Kansas" = "KS",
-	"Kentucky" = "KY",
-	"Louisiana" = "LA",
-	"Massachusetts" = "MA",
-	"Maryland" = "MD",
-	"Maine" = "ME",
-	"Michigan" = "MI",
-	"Minnesota" = "MN",
-	"Missouri" = "MO",
-	"Mississippi" = "MS",
-	"Montana" = "MT",
-	"North Carolina" = "NC",
-	"North Dakota" = "ND",
-	"Nebraska" = "NE",
-	"New Hampshire" = "NH",
-	"New Jersey" = "NJ",
-	"New Mexico" = "NM",
-	"Nevada" = "NV",
-	"New York" = "NY",
-	"Ohio" = "OH",
-	"Oklahoma" = "OK",
-	"Oregon" = "OR",
-	"Pennsylvania" = "PA",
-	"Rhode Island" = "RI",
-	"South Carolina" = "SC",
-	"South Dakota" = "SD",
-	"Tennessee" = "TN",
-	"Texas" = "TX",
-	"Utah" = "UT",
-	"Virginia" = "VA",
-	"Vermont" = "VT",
-	"Washington" = "WA",
-	"Wisconsin" = "WI",
-	"West Virginia" = "WV",
-	"Wyoming" = "WY",
-}
+export const StateAbbreviation = {
+	Alaska: "AK",
+	Alabama: "AL",
+	Arkansas: "AR",
+	Arizona: "AZ",
+	California: "CA",
+	Colorado: "CO",
+	Connecticut: "CT",
+	"District of Columbia": "DC",
+	Delaware: "DE",
+	Florida: "FL",
+	Georgia: "GA",
+	Hawaii: "HI",
+	Iowa: "IA",
+	Idaho: "ID",
+	Illinois: "IL",
+	Indiana: "IN",
+	Kansas: "KS",
+	Kentucky: "KY",
+	Louisiana: "LA",
+	Massachusetts: "MA",
+	Maryland: "MD",
+	Maine: "ME",
+	Michigan: "MI",
+	Minnesota: "MN",
+	Missouri: "MO",
+	Mississippi: "MS",
+	Montana: "MT",
+	"North Carolina": "NC",
+	"North Dakota": "ND",
+	Nebraska: "NE",
+	"New Hampshire": "NH",
+	"New Jersey": "NJ",
+	"New Mexico": "NM",
+	Nevada: "NV",
+	"New York": "NY",
+	Ohio: "OH",
+	Oklahoma: "OK",
+	Oregon: "OR",
+	Pennsylvania: "PA",
+	"Rhode Island": "RI",
+	"South Carolina": "SC",
+	"South Dakota": "SD",
+	Tennessee: "TN",
+	Texas: "TX",
+	Utah: "UT",
+	Virginia: "VA",
+	Vermont: "VT",
+	Washington: "WA",
+	Wisconsin: "WI",
+	"West Virginia": "WV",
+	Wyoming: "WY",
+} as const
 
-export enum TerritoryAbbreviation {
-	"American Samoa" = "AS",
-	"Johnston Atoll" = "JA",
-	"Guam" = "GU",
-	"Virgin Islands" = "VI",
-	"Northern Mariana Islands" = "MP",
-	"Puerto Rico" = "PR",
-}
+export type StateAbbreviation = (typeof StateAbbreviation)[keyof typeof StateAbbreviation]
+
+export const TerritoryAbbreviation = {
+	"American Samoa": "AS",
+	"Johnston Atoll": "JA",
+	Guam: "GU",
+	"Virgin Islands": "VI",
+	"Northern Mariana Islands": "MP",
+	"Puerto Rico": "PR",
+} as const
+
+export type TerritoryAbbreviation = (typeof TerritoryAbbreviation)[keyof typeof TerritoryAbbreviation]
 
 /**
  * Two-letter abbreviations of a US states and territories.
@@ -370,65 +378,67 @@ export const AdminLevel1Abbreviation = {
  *
  * @public
  */
-export enum StateName {
-	AS = "American Samoa",
-	AK = "Alaska",
-	AL = "Alabama",
-	AR = "Arkansas",
-	AZ = "Arizona",
-	CA = "California",
-	CO = "Colorado",
-	CT = "Connecticut",
-	DC = "District of Columbia",
-	DE = "Delaware",
-	FL = "Florida",
-	GA = "Georgia",
-	HI = "Hawaii",
-	IA = "Iowa",
-	ID = "Idaho",
-	IL = "Illinois",
-	IN = "Indiana",
-	JA = "Johnston Atoll",
-	KS = "Kansas",
-	KY = "Kentucky",
-	LA = "Louisiana",
-	MA = "Massachusetts",
-	MD = "Maryland",
-	ME = "Maine",
-	MI = "Michigan",
-	MN = "Minnesota",
-	MO = "Missouri",
-	MS = "Mississippi",
-	MT = "Montana",
-	NC = "North Carolina",
-	ND = "North Dakota",
-	NE = "Nebraska",
-	NH = "New Hampshire",
-	NJ = "New Jersey",
-	NM = "New Mexico",
-	NV = "Nevada",
-	NY = "New York",
-	OH = "Ohio",
-	OK = "Oklahoma",
-	OR = "Oregon",
-	PA = "Pennsylvania",
-	PR = "Puerto Rico",
-	RI = "Rhode Island",
-	SC = "South Carolina",
-	SD = "South Dakota",
-	TN = "Tennessee",
-	TX = "Texas",
-	UT = "Utah",
-	VA = "Virginia",
-	VT = "Vermont",
-	WA = "Washington",
-	WI = "Wisconsin",
-	WV = "West Virginia",
-	WY = "Wyoming",
-	VI = "Virgin Islands",
-	MP = "Northern Mariana Islands",
-	GU = "Guam",
-}
+export const StateName = {
+	AS: "American Samoa",
+	AK: "Alaska",
+	AL: "Alabama",
+	AR: "Arkansas",
+	AZ: "Arizona",
+	CA: "California",
+	CO: "Colorado",
+	CT: "Connecticut",
+	DC: "District of Columbia",
+	DE: "Delaware",
+	FL: "Florida",
+	GA: "Georgia",
+	HI: "Hawaii",
+	IA: "Iowa",
+	ID: "Idaho",
+	IL: "Illinois",
+	IN: "Indiana",
+	JA: "Johnston Atoll",
+	KS: "Kansas",
+	KY: "Kentucky",
+	LA: "Louisiana",
+	MA: "Massachusetts",
+	MD: "Maryland",
+	ME: "Maine",
+	MI: "Michigan",
+	MN: "Minnesota",
+	MO: "Missouri",
+	MS: "Mississippi",
+	MT: "Montana",
+	NC: "North Carolina",
+	ND: "North Dakota",
+	NE: "Nebraska",
+	NH: "New Hampshire",
+	NJ: "New Jersey",
+	NM: "New Mexico",
+	NV: "Nevada",
+	NY: "New York",
+	OH: "Ohio",
+	OK: "Oklahoma",
+	OR: "Oregon",
+	PA: "Pennsylvania",
+	PR: "Puerto Rico",
+	RI: "Rhode Island",
+	SC: "South Carolina",
+	SD: "South Dakota",
+	TN: "Tennessee",
+	TX: "Texas",
+	UT: "Utah",
+	VA: "Virginia",
+	VT: "Vermont",
+	WA: "Washington",
+	WI: "Wisconsin",
+	WV: "West Virginia",
+	WY: "Wyoming",
+	VI: "Virgin Islands",
+	MP: "Northern Mariana Islands",
+	GU: "Guam",
+} as const
+
+export type StateName = (typeof StateName)[keyof typeof StateName]
 
 //#endregion
 

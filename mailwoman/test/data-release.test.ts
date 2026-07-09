@@ -14,8 +14,8 @@ import { join } from "node:path"
 
 import { afterAll, describe, expect, test } from "vitest"
 
-import { readReleaseManifest, resolveShardPath } from "../data-release.js"
-import { ShardProvider } from "../geocode-core.js"
+import { readReleaseManifest, resolveShardPath } from "../data-release.ts"
+import { ShardProvider } from "../geocode-core.ts"
 
 const dirs: string[] = []
 function tmp(): string {

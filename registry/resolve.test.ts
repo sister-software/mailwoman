@@ -7,9 +7,9 @@
 import { scorePair, type TermFrequencyTable } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
 
-import { toGeoJSON } from "./geojson.js"
-import { addressFrequencyKey, buildDefaultModel, resolveEntities } from "./resolve.js"
-import type { SourceRecord } from "./types.js"
+import { toGeoJSON } from "./geojson.ts"
+import { addressFrequencyKey, buildDefaultModel, resolveEntities } from "./resolve.ts"
+import type { SourceRecord } from "./types.ts"
 
 function clinic(
 	id: string,

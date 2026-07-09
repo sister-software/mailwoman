@@ -16,7 +16,7 @@ import { existsSync } from "node:fs"
 
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 
-import { streetLocaleForCountry, supportedOSMCountries } from "./street-locale.js"
+import { streetLocaleForCountry, supportedOSMCountries } from "./street-locale.ts"
 
 /** What the cascade needs from an OSM shard — structurally a subset of mailwoman's `StateShards`. */
 export interface OSMShards {

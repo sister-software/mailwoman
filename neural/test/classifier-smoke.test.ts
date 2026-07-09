@@ -19,9 +19,9 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import { NeuralAddressClassifier } from "../classifier.js"
-import { ONNXRunner } from "../onnx-runner.js"
-import { MailwomanTokenizer } from "../tokenizer.js"
+import { NeuralAddressClassifier } from "../classifier.ts"
+import { ONNXRunner } from "../onnx-runner.ts"
+import { MailwomanTokenizer } from "../tokenizer.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const MODEL_PATH =

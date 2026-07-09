@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isPostleitzahl, leitzoneOf, normalizePLZ, PLZ_LEITZONEN } from "./postleitzahl.js"
+import { isPostleitzahl, leitzoneOf, normalizePLZ, PLZ_LEITZONEN } from "./postleitzahl.ts"
 
 describe("normalizePLZ", () => {
 	it("strips the D- / DE- country prefix to the bare five digits", () => {

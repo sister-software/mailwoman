@@ -16,7 +16,7 @@ import { useEffect, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 const DEFAULT_CORPUS_DIR = "/data/corpus/versioned"

@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./classifier.js"
-export * from "./component.js"
-export * from "./mapping.js"
+export * from "./classifier.ts"
+export * from "./component.ts"
+export * from "./mapping.ts"

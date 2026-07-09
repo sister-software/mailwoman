@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type AddressGeocode, type PostalAddress, toPostalAddress, withGeocode } from "./address.js"
+import { type AddressGeocode, type PostalAddress, toPostalAddress, withGeocode } from "./address.ts"
 
 const US: PostalAddress["components"] = {
 	house_number: "123",

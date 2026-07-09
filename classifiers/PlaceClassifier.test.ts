@@ -6,7 +6,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { PlaceClassifier } from "./PlaceClassifier.js"
+import { PlaceClassifier } from "./PlaceClassifier.ts"
 
 const classifier = await new PlaceClassifier().ready()
 

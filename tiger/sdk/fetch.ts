@@ -36,8 +36,8 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "./schema.js"
-import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.js"
+import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "./schema.ts"
+import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.ts"
 
 const CENSUS_HOST = "https://www2.census.gov"
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()

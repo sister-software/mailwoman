@@ -21,21 +21,21 @@ import { DatabaseSync } from "node:sqlite"
 
 import { repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 
-import { mailwomanDataRoot } from "../../resolver-backend.js"
+import { mailwomanDataRoot } from "../../resolver-backend.ts"
 import {
 	DEFAULT_ADMIN_STAGING_SUFFIX,
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_OVERTURE_RELEASE,
 	geonamesAdminGapCountries,
-} from "../defaults.js"
-import { buildFTS } from "../fts.js"
-import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "../verify.js"
-import { enrichAdmin } from "./enrich.js"
-import { foldGeonames } from "./fold-geonames.js"
-import { ingestOvertureDivisions } from "./fold-overture.js"
-import { freezeAdmin } from "./freeze.js"
-import { ingestWOF } from "./ingest-wof.js"
+} from "../defaults.ts"
+import { buildFTS } from "../fts.ts"
+import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "../verify.ts"
+import { enrichAdmin } from "./enrich.ts"
+import { foldGeonames } from "./fold-geonames.ts"
+import { ingestOvertureDivisions } from "./fold-overture.ts"
+import { freezeAdmin } from "./freeze.ts"
+import { ingestWOF } from "./ingest-wof.ts"
 
 export interface BuildAdminOptions {
 	/** WOF repos root. Default `<data-root>/wof/repos`. */
@@ -218,11 +218,11 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 }
 
 // Re-export the step functions so `gazetteer-pipeline/admin` is a complete surface on its own.
-export * from "./enrich.js"
-export * from "./fold-geonames.js"
-export * from "./fold-overture.js"
-export * from "./freeze.js"
-export * from "./ingest-wof.js"
+export * from "./enrich.ts"
+export * from "./fold-geonames.ts"
+export * from "./fold-overture.ts"
+export * from "./freeze.ts"
+export * from "./ingest-wof.ts"
 
 /** Byte-size of the built artifact — a convenience for command summaries. */
 export function artifactSizeMB(path: string): number {

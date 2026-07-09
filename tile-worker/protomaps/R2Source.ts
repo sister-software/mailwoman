@@ -7,7 +7,7 @@
 import { ResourceError } from "@mailwoman/core/errors"
 import { EtagMismatch, type RangeResponse, type Source } from "pmtiles"
 
-import { assertR2KeyMatch, assertR2ObjectBody } from "../storage.js"
+import { assertR2KeyMatch, assertR2ObjectBody } from "../storage.ts"
 
 export class KeyNotFoundError extends Error {
 	constructor(message: string) {

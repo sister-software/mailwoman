@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { composeMaps, identityMap } from "./offset-map.js"
+import { composeMaps, identityMap } from "./offset-map.ts"
 
 test("identityMap: [0, 1, …, n-1]", () => {
 	expect(identityMap(0)).toEqual([])

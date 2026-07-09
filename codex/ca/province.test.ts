@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { CA_PROVINCES, isCanadianProvinceCode, lookupCanadianProvince } from "./province.js"
+import { CA_PROVINCES, isCanadianProvinceCode, lookupCanadianProvince } from "./province.ts"
 
 describe("CA_PROVINCES", () => {
 	it("covers all 13 provinces and territories", () => {

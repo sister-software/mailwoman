@@ -8,8 +8,8 @@
  */
 import { describe, expect, it } from "vitest"
 
-import { applyCjkNormalization } from "./cjk.js"
-import { normalize } from "./compute.js"
+import { applyCjkNormalization } from "./cjk.ts"
+import { normalize } from "./compute.ts"
 
 describe("applyCjkNormalization", () => {
 	it("strips the postal mark 〒 (the byte-fallback OOV that poisons the postcode parse)", () => {

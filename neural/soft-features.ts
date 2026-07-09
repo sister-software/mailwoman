@@ -18,9 +18,9 @@
  *   reason).
  */
 
-import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
-import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
-import type { TokenizedPiece } from "./tokenizer.js"
+import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.ts"
+import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.ts"
+import type { TokenizedPiece } from "./tokenizer.ts"
 
 /** A built soft-feature channel: per-piece feature rows + per-piece confidence. */
 export interface SoftFeatureChannel {

@@ -30,10 +30,10 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { ancestorLineage, placetypeDepth } from "./ancestry.js"
-import { PLACE_BBOX_TABLE } from "./fts.js"
-import { geometryContains, haversineKm, type GeojsonGeometry } from "./geo.js"
-import type { PlaceCandidate, WOFPlacetype } from "./types.js"
+import { ancestorLineage, placetypeDepth } from "./ancestry.ts"
+import { PLACE_BBOX_TABLE } from "./fts.ts"
+import { geometryContains, haversineKm, type GeojsonGeometry } from "./geo.ts"
+import type { PlaceCandidate, WOFPlacetype } from "./types.ts"
 
 /**
  * How the deepest returned place was confirmed:

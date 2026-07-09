@@ -4,22 +4,22 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./anchor-inference.js"
-export * from "./classifier.js"
-export * from "./gazetteer-inference.js"
-export * from "./labels.js"
-export * from "./onnx-runner.js"
-export * from "./postcode-anchor.js"
-export * from "./postcode-binary-resolver.js"
-export * from "./proposal-classifier.js"
-export { addEmissionMatrix, buildEmissionPriors } from "./query-shape-prior.js"
-export type { BuildPriorsOpts, KnownFormatHitLike, QueryShapeLike, TokenLike } from "./query-shape-prior.js"
-export * from "./scorer.js"
-export * from "./soft-features.js"
-export * from "./span-proposal-prior.js"
-export * from "./span-proposer-lexicon.js"
-export * from "./tokenizer.js"
-export * from "./trace.js"
+export * from "./anchor-inference.ts"
+export * from "./classifier.ts"
+export * from "./gazetteer-inference.ts"
+export * from "./labels.ts"
+export * from "./onnx-runner.ts"
+export * from "./postcode-anchor.ts"
+export * from "./postcode-binary-resolver.ts"
+export * from "./proposal-classifier.ts"
+export { addEmissionMatrix, buildEmissionPriors } from "./query-shape-prior.ts"
+export type { BuildPriorsOpts, KnownFormatHitLike, QueryShapeLike, TokenLike } from "./query-shape-prior.ts"
+export * from "./scorer.ts"
+export * from "./soft-features.ts"
+export * from "./span-proposal-prior.ts"
+export * from "./span-proposer-lexicon.ts"
+export * from "./tokenizer.ts"
+export * from "./trace.ts"
 export {
 	buildBIOEndMask,
 	buildBIOStartMask,
@@ -27,6 +27,6 @@ export {
 	perTokenArgmax,
 	softmax,
 	viterbi,
-} from "./viterbi.js"
-export type { ViterbiInput, ViterbiResult } from "./viterbi.js"
-export * from "./weights.js"
+} from "./viterbi.ts"
+export type { ViterbiInput, ViterbiResult } from "./viterbi.ts"
+export * from "./weights.ts"

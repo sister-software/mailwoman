@@ -24,7 +24,7 @@
 
 import type { CircleLayerSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 
-import { TileSetSourceID } from "../styles/sources.js"
+import { TileSetSourceID } from "../styles/sources.ts"
 
 export const RaceDotsTileSetID = TileSetSourceID("race-dots-la")
 

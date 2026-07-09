@@ -6,8 +6,8 @@
 
 import { expect, test } from "vitest"
 
-import type { GeojsonPosition } from "./geo.js"
-import { bboxAround, geometryContains, pointInPolygonRings, pointInRing } from "./geo.js"
+import type { GeojsonPosition } from "./geo.ts"
+import { bboxAround, geometryContains, pointInPolygonRings, pointInRing } from "./geo.ts"
 
 // A unit square ring in [lon, lat], closed.
 const SQUARE: GeojsonPosition[] = [

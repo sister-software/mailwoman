@@ -9,10 +9,10 @@ import { readFileSync } from "node:fs"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import type { BIOLabel } from "../types/component.js"
-import { buildAddressTree } from "./build-tree.js"
-import { createCalibrator, type CalibrationTable } from "./calibration.js"
-import type { AddressNode, DecoderToken } from "./types.js"
+import type { BIOLabel } from "../types/component.ts"
+import { buildAddressTree } from "./build-tree.ts"
+import { createCalibrator, type CalibrationTable } from "./calibration.ts"
+import type { AddressNode, DecoderToken } from "./types.ts"
 
 function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
 	return { piece, start, end, label, confidence }

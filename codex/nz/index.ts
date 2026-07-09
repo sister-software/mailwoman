@@ -8,5 +8,5 @@
  *   Restante) and the 4-digit postcode. NZ addresses carry no state/region line.
  */
 
-export * from "./delivery-service.js"
-export * from "./postcode.js"
+export * from "./delivery-service.ts"
+export * from "./postcode.ts"

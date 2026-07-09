@@ -10,8 +10,8 @@ import { setTimeout } from "node:timers/promises"
 import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { dirname } from "path-ts"
 
-import { PlacetypeDataSource, type PlacetypeDataSourceOptions } from "./PlacetypeDataSource.js"
-import type { WhosOnFirstPlacetype } from "./placetypes/definition.js"
+import { PlacetypeDataSource, type PlacetypeDataSourceOptions } from "./PlacetypeDataSource.ts"
+import type { WhosOnFirstPlacetype } from "./placetypes/definition.ts"
 
 export class DataSourceCache extends DisposableStack {
 	#placetypeToLanguage = new Map<WhosOnFirstPlacetype, Map<Alpha3bLanguageCode, PlacetypeDataSource>>()

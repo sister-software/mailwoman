@@ -24,7 +24,7 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../sdk/cli.js"
+import type { CommandComponent } from "../sdk/cli.ts"
 
 const ArgumentsSchema = zod
 	.array(zod.string())

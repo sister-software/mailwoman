@@ -12,7 +12,7 @@
 
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
-import type { EntityGeoData, ResolvedEntity, SourceRecord } from "./types.js"
+import type { EntityGeoData, ResolvedEntity, SourceRecord } from "./types.ts"
 
 /** Assemble a display name from a record's parsed person name, if any. */
 function displayName(record: SourceRecord): string | null {

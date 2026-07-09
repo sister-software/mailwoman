@@ -13,8 +13,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { WOFSqlitePlaceLookup } from "./lookup.js"
-import { SqliteConventionSource } from "./sqlite-convention-source.js"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
+import { SqliteConventionSource } from "./sqlite-convention-source.ts"
 
 /**
  * A minimal WOF fixture (DE country #90 + Plauen) WITH an attached `address_convention` table in the same schema, so

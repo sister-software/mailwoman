@@ -29,16 +29,16 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { ComponentTag } from "../decoder/types.js"
-import type { ResolvedPlace } from "../resolver/types.js"
-import { Span } from "../tokenization/index.js"
+import type { ComponentTag } from "../decoder/types.ts"
+import type { ResolvedPlace } from "../resolver/types.ts"
+import { Span } from "../tokenization/index.ts"
 import {
 	reconcileSpans,
 	type ClassifierCandidate,
 	type ParentChainLookup,
 	type ResolverCandidatesLookup,
-} from "./reconcile.js"
-import type { PhraseProposal } from "./types.js"
+} from "./reconcile.ts"
+import type { PhraseProposal } from "./types.ts"
 
 // ---------- Test helpers ----------
 

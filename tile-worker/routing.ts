@@ -6,8 +6,8 @@
 
 import { type URLPatternPathParameters, URLRoutePattern } from "@mailwoman/core/routing"
 
-import { retrieveCachedResponse } from "./caching.js"
-import { applyAccessControlAllowOrigin } from "./cors.js"
+import { retrieveCachedResponse } from "./caching.ts"
+import { applyAccessControlAllowOrigin } from "./cors.ts"
 
 /**
  * Environment bindings associated with the API service.
@@ -49,11 +49,19 @@ const DefaultAllowedMethods: ReadonlySet<HTTPMethod> = new Set(["GET", "HEAD", "
  * Create a route handler.
  */
 export class WorkerRoute<Pattern extends string = string, Env = TileWorkerEnv> {
+	public readonly pattern: URLRoutePattern<Pattern>
+	public readonly handler: RouteHandler<Env, Pattern>
+	public readonly methods: ReadonlySet<HTTPMethod>
+
 	constructor(
-		public readonly pattern: URLRoutePattern<Pattern>,
-		public readonly handler: RouteHandler<Env, Pattern>,
-		public readonly methods: ReadonlySet<HTTPMethod>
-	) {}
+		pattern: URLRoutePattern<Pattern>,
+		handler: RouteHandler<Env, Pattern>,
+		methods: ReadonlySet<HTTPMethod>
+	) {
+		this.pattern = pattern
+		this.handler = handler
+		this.methods = methods
+	}
 
 	static GET<Pattern extends string = string, Env = TileWorkerEnv>(
 		pattern: Pattern,

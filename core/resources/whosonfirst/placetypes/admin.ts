@@ -13,7 +13,7 @@ import {
 } from "@mailwoman/core/resources/languages"
 import type { Feature, Geometry } from "geojson"
 
-import type { WhosOnFirstPlacetype } from "./definition.js"
+import type { WhosOnFirstPlacetype } from "./definition.ts"
 
 export interface WOFBaseProperties {
 	"wof:id": number

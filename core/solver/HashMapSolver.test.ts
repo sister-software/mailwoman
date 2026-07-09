@@ -8,7 +8,7 @@ import type { Classification } from "@mailwoman/core/classification"
 import { TokenContext } from "@mailwoman/core/tokenization"
 import { expect, test } from "vitest"
 
-import { HashMapSolver } from "./HashMapSolver.js"
+import { HashMapSolver } from "./HashMapSolver.ts"
 
 /** Concrete subclass exposing the protected `generateHashMap` for direct unit testing. */
 class TestSolver extends HashMapSolver {

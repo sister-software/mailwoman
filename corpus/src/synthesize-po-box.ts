@@ -24,7 +24,7 @@
  *   - USPS DMM 508 §4.1.4 / §4.5.4 — PO Box and street-addressed PO Box
  */
 
-import type { CanonicalRow } from "./types.js"
+import type { CanonicalRow } from "./types.ts"
 
 export interface PoBoxBaseTuple {
 	locality: string

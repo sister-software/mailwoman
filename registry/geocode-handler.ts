@@ -7,8 +7,8 @@
  * neural model / SQLite). `geocode-worker.ts` builds the real seam from config and wraps this.
  */
 
-import { type ColumnMapping, type GeocodeAddress, pick } from "./ingest.js"
-import type { SourceRecord } from "./types.js"
+import { type ColumnMapping, type GeocodeAddress, pick } from "./ingest.ts"
+import type { SourceRecord } from "./types.ts"
 
 /**
  * Build the handler `geocodeStream` runs per normalized record: recompute the joined address string from `record.raw` +

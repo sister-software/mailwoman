@@ -11,8 +11,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { bboxAround, haversineKm } from "./geo.js"
-import { WOFSqlitePlaceLookup } from "./lookup.js"
+import { bboxAround, haversineKm } from "./geo.ts"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 interface FixturePlace {
 	id: number

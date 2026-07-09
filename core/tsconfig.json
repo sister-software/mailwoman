@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
-		"allowImportingTsExtensions": false
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
 	},
 	"references": [{ "path": "../codex" }],
 	"include": ["./**/*"],

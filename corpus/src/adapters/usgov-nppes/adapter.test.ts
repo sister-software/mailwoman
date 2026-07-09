@@ -10,8 +10,8 @@ import { join } from "node:path"
 
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { InMemoryAdapterRegistry } from "../../adapter.js"
-import { createUsgovNPPESAdapter, USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE } from "./adapter.js"
+import { InMemoryAdapterRegistry } from "../../adapter.ts"
+import { createUsgovNPPESAdapter, USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE } from "./adapter.ts"
 
 const CSV_HEADER = [
 	"NPI",

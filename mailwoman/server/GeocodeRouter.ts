@@ -30,10 +30,10 @@ import {
 	type GeocodeResult,
 	regionSlugFromTree,
 	ShardProvider,
-} from "../geocode-core.js"
-import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp-calibration.js"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.js"
-import { recordGeocode } from "./metrics.js"
+} from "../geocode-core.ts"
+import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp-calibration.ts"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.ts"
+import { recordGeocode } from "./metrics.ts"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
 const DATA_ROOT = mailwomanDataRoot()

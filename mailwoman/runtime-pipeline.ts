@@ -28,8 +28,8 @@ import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
-import { loadDefaultPlaceCountry } from "./default-placer.js"
-import { createAddressParser } from "./utils/parser.js"
+import { loadDefaultPlaceCountry } from "./default-placer.ts"
+import { createAddressParser } from "./utils/parser.ts"
 
 export interface CreateRuntimePipelineOpts {
 	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */

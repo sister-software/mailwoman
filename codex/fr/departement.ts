@@ -11,7 +11,7 @@
  *   département. This table is therefore the hinge between `code-postal.ts` and `region.ts`.
  */
 
-import type { FrenchRegionCode } from "./region.js"
+import type { FrenchRegionCode } from "./region.ts"
 
 /** Per-département record: code (2-digit, or `2A`/`2B`, or 3-digit DOM) + name + its région. */
 export interface DepartementInfo {

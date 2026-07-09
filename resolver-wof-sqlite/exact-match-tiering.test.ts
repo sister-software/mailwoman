@@ -23,8 +23,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, describe, expect, test } from "vitest"
 
-import type { RankingWeights } from "./lookup.js"
-import { WOFSqlitePlaceLookup } from "./lookup.js"
+import type { RankingWeights } from "./lookup.ts"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 interface SeedRegion {
 	placetype?: string

@@ -15,9 +15,9 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { AddressPointInterpolator } from "./address-point-interpolation.js"
-import { type AddressPointDatabase, createAddressPointTable } from "./address-point-schema.js"
-import { StreetInterpolator } from "./interpolation.js"
+import { AddressPointInterpolator } from "./address-point-interpolation.ts"
+import { type AddressPointDatabase, createAddressPointTable } from "./address-point-schema.ts"
+import { StreetInterpolator } from "./interpolation.ts"
 
 interface SeedPoint {
 	street_key: string

@@ -118,7 +118,7 @@ export function createLogger(prefix?: string, ...args: string[][]): Logger {
  * A singleton logger instance for the browser.
  *
  * ```js
- * import { ConsoleLogger } from "#logger/browser"
+ * import { ConsoleLogger } from "@mailwoman/core/logging"
  *
  * ConsoleLogger.info("Hello, world!")
  * ```

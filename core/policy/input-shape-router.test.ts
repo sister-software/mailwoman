@@ -19,16 +19,16 @@ import { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
-import { filterByPolicy } from "../parser/proposal-pipeline.js"
-import { policyRegistryFromRoute } from "./from-config.js"
+import { filterByPolicy } from "../parser/proposal-pipeline.ts"
+import { policyRegistryFromRoute } from "./from-config.ts"
 import {
 	type InputShapeRoute,
 	type RouterKindSignal,
 	type RouterPlacerSignal,
 	type RouterShapeSignal,
 	routeInputShape,
-} from "./input-shape-router.js"
-import { InMemoryPolicyRegistry } from "./registry.js"
+} from "./input-shape-router.ts"
+import { InMemoryPolicyRegistry } from "./registry.ts"
 
 function kind(k: string, confidence: number): RouterKindSignal {
 	return { kind: k, confidence }

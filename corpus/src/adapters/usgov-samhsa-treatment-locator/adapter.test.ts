@@ -11,14 +11,14 @@ import { join } from "node:path"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { alignRow } from "../../align.js"
-import { runAdapter } from "../../runner.js"
-import type { CanonicalRow } from "../../types.js"
+import { alignRow } from "../../align.ts"
+import { runAdapter } from "../../runner.ts"
+import type { CanonicalRow } from "../../types.ts"
 import {
 	USGOV_SAMHSA_ADAPTER_ID,
 	USGOV_SAMHSA_DEFAULT_LICENSE,
 	createUsgovSamhsaTreatmentLocatorAdapter,
-} from "./adapter.js"
+} from "./adapter.ts"
 
 const fixtureCSV = repoRootPath("corpus", "fixtures", "usgov-samhsa-treatment-locator", "sample.csv")
 

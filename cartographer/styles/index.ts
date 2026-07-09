@@ -4,5 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./layers.js"
-export * from "./sources.js"
+export * from "./layers.ts"
+export * from "./sources.ts"

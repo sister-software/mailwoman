@@ -16,7 +16,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { describe, expect, it } from "vitest"
 
-import { GEONAMES_POSTAL_ID_BASE, ingestGeonamesPostal, normalizePostcodeName } from "./geonames-postal.js"
+import { GEONAMES_POSTAL_ID_BASE, ingestGeonamesPostal, normalizePostcodeName } from "./geonames-postal.ts"
 
 describe("normalizePostcodeName (the #920 name law)", () => {
 	it("strips the spaced CZ/SK form to the query-token shape", () => {

@@ -14,8 +14,8 @@ import { promisify } from "node:util"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import { options as debugOptions } from "../commands/debug.js"
-import { options as parseOptions } from "../commands/parse.js"
+import { options as debugOptions } from "../commands/debug.tsx"
+import { options as parseOptions } from "../commands/parse.tsx"
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")

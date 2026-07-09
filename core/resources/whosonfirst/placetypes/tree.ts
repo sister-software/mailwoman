@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { PlacetypeRole } from "./definition.js"
-import { Placetype } from "./Placetype.js"
+import type { PlacetypeRole } from "./definition.ts"
+import { Placetype } from "./Placetype.ts"
 
 /**
  * A node in the nested placetype tree produced by {@linkcode generatePlacetypeTree}.

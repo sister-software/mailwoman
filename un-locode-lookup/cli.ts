@@ -15,8 +15,8 @@ import { parseArgs } from "node:util"
 
 import { cliArguments } from "@mailwoman/core/utils"
 
-import { buildUnLocodeDB } from "./build.js"
-import { UnLocodeLookup } from "./index.js"
+import { buildUnLocodeDB } from "./build.ts"
+import { UnLocodeLookup } from "./index.ts"
 
 const argvAll = cliArguments()
 

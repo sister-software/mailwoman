@@ -12,7 +12,7 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../sdk/cli.js"
+import type { CommandComponent } from "../../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	output: zod.string().describe("Output JSON path (e.g. pilot-anchor-lookup.json)"),
@@ -28,7 +28,7 @@ const GazetteerBuildAnchorLookup: CommandComponent<typeof OptionsSchema> = ({ op
 	useEffect(() => {
 		void (async () => {
 			try {
-				const { buildAnchorLookup } = await import("../../../gazetteer-pipeline/anchor-lookup.js")
+				const { buildAnchorLookup } = await import("../../../gazetteer-pipeline/anchor-lookup.ts")
 				buildAnchorLookup({ output: options.output, zcta: options.zcta })
 				setDone(`anchor lookup → ${options.output}`)
 			} catch (e) {

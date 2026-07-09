@@ -10,7 +10,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { describe, expect, it } from "vitest"
 
-import { isSealed, openBuiltDatabase, SealedArtifactError, sealDatabase } from "./sealed-db.js"
+import { isSealed, openBuiltDatabase, SealedArtifactError, sealDatabase } from "./sealed-db.ts"
 
 function makeDB(): string {
 	const dir = mkdtempSync(join(tmpdir(), "sealed-db-"))

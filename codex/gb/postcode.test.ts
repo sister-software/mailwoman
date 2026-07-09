@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { inwardCode, isUkPostcode, normalizeUkPostcode, outwardCode, postcodeArea } from "./postcode.js"
+import { inwardCode, isUkPostcode, normalizeUkPostcode, outwardCode, postcodeArea } from "./postcode.ts"
 
 describe("normalizeUkPostcode", () => {
 	it("uppercases and inserts the single canonical space before the inward 3 chars", () => {

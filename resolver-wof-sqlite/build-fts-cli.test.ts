@@ -14,8 +14,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { main } from "./build-fts-cli.js"
-import { placeSearchFTSExists } from "./fts.js"
+import { main } from "./build-fts-cli.ts"
+import { placeSearchFTSExists } from "./fts.ts"
 
 let scratch: string
 

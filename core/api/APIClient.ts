@@ -13,8 +13,8 @@ import {
 	setupCache,
 } from "axios-cache-interceptor"
 
-import { ServiceSymbol } from "../lifecycle/ServiceSymbol.js"
-import { delegateAxiosError } from "./responses.js"
+import { ServiceSymbol } from "../lifecycle/ServiceSymbol.ts"
+import { delegateAxiosError } from "./responses.ts"
 
 export type { IRuntimeLogger }
 

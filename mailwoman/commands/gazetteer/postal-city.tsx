@@ -29,7 +29,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	candidateDb: zod.string().describe("Candidate DB to add the side-index to (MODIFIED IN PLACE — run on a copy first)"),

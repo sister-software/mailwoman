@@ -6,8 +6,8 @@
 
 import { ResourceError } from "@mailwoman/core/errors"
 
-import type { GeoObjectLiteral } from "../objects.js"
-import type { LineStringPath } from "./line-string.js"
+import type { GeoObjectLiteral } from "../objects.ts"
+import type { LineStringPath } from "./line-string.ts"
 
 /**
  * An array of positions forming a closed shape, such as a country or a lake.
@@ -156,23 +156,25 @@ export function polygonToOSMFilter(input: PolygonLiteral): string {
  *
  * @category OSM
  */
-export enum OSMNodeTag {
-	HouseNumber = "addr:housenumber",
-	PostCode = "addr:postcode",
-	Street = "addr:street",
-	State = "addr:state",
-	City = "addr:city",
-	Website = "website",
-	Email = "email",
-	Phone = "phone",
-	Shop = "shop",
-	Brand = "brand",
-	Cuisine = "cuisine",
-	Name = "name",
-	Healthcare = "healthcare",
-	Office = "office",
-	Amenity = "amenity",
-}
+export const OSMNodeTag = {
+	HouseNumber: "addr:housenumber",
+	PostCode: "addr:postcode",
+	Street: "addr:street",
+	State: "addr:state",
+	City: "addr:city",
+	Website: "website",
+	Email: "email",
+	Phone: "phone",
+	Shop: "shop",
+	Brand: "brand",
+	Cuisine: "cuisine",
+	Name: "name",
+	Healthcare: "healthcare",
+	Office: "office",
+	Amenity: "amenity",
+} as const
+
+export type OSMNodeTag = (typeof OSMNodeTag)[keyof typeof OSMNodeTag]
 
 export const ForbiddenResidentialOSMNodeTags: ReadonlySet<OSMNodeTag> = new Set<OSMNodeTag>([
 	OSMNodeTag.Shop,

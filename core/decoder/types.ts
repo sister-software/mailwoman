@@ -26,7 +26,7 @@
  *   essential.
  */
 
-import type { BIOLabel, ComponentTag } from "../types/component.js"
+import type { BIOLabel, ComponentTag } from "../types/component.ts"
 
 export type { BIOLabel, ComponentTag }
 

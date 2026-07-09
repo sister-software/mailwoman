@@ -37,10 +37,10 @@ import type {
 	StreetCentroidLookup,
 } from "@mailwoman/resolver"
 
-import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
-import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.js"
-import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.js"
-import { recognizeUSRegions } from "./region-recognition.js"
+import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
+import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
+import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
+import { recognizeUSRegions } from "./region-recognition.ts"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.

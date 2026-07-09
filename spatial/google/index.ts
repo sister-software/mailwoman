@@ -4,4 +4,4 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./place-id.js"
+export * from "./place-id.ts"

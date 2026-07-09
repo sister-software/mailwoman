@@ -14,7 +14,11 @@ import {
 } from "@mailwoman/core"
 
 export class RelationshipFilter implements Solver {
-	constructor(protected rules: FilterRelationRule[]) {}
+	protected rules: FilterRelationRule[]
+
+	constructor(rules: FilterRelationRule[]) {
+		this.rules = rules
+	}
 
 	protected applyRelation(relation: FilterRelation, solutions: readonly Solution[]): Solution[] {
 		return solutions.filter((solution) => {

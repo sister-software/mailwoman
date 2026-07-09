@@ -13,9 +13,9 @@
  *   city-state. The shared span means every role gets the same `value`.
  */
 
-import type { ComponentTag } from "../types/component.js"
-import type { AddressNode, AddressTree } from "./types.js"
-import { type UnknownSpan, unknownSpans } from "./unknown-spans.js"
+import type { ComponentTag } from "../types/component.ts"
+import type { AddressNode, AddressTree } from "./types.ts"
+import { type UnknownSpan, unknownSpans } from "./unknown-spans.ts"
 
 /** Options for {@link decodeAsJSON}. */
 export interface SerializeJSONOpts {

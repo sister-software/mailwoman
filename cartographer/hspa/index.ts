@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-// import { LayerSpecificationListInput } from "../styles/layers.js"
-import { TileSetSourceID } from "../styles/sources.js"
+// import { LayerSpecificationListInput } from "../styles/layers.ts"
+import { TileSetSourceID } from "../styles/sources.ts"
 
 /**
  * Identifier for the Health Service Provider Access tile set.

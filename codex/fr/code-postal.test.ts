@@ -12,7 +12,7 @@ import {
 	isCodePostal,
 	normalizeCodePostal,
 	regionForCodePostal,
-} from "./code-postal.js"
+} from "./code-postal.ts"
 
 describe("normalizeCodePostal", () => {
 	it("strips an F- prefix and whitespace to the bare five digits", () => {

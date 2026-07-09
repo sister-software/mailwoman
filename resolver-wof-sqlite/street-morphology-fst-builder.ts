@@ -26,9 +26,9 @@
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-import type { FSTNode } from "./fst-matcher.js"
-import { FSTMatcher, normalizeTokens } from "./fst-matcher.js"
-import type { FSTProvenance, PlaceEntry } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.ts"
+import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
+import type { FSTProvenance, PlaceEntry } from "./fst-types.ts"
 
 /**
  * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned, well above any realistic WOF

@@ -23,8 +23,8 @@ import {
 	type VerifyCheckResult,
 	verifyReversePanel,
 	wofDir,
-} from "../../gazetteer-pipeline/index.js"
-import type { CommandComponent } from "../../sdk/cli.js"
+} from "../../gazetteer-pipeline/index.ts"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	db: zod.string().optional().describe("Admin DB to verify. Default <data-root>/wof/admin-global-priority.db"),

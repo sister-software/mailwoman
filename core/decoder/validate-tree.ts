@@ -23,9 +23,9 @@
  *        postcode-only or city-only input is a degenerate-but-valid parse, not a violation.
  */
 
-import type { ComponentTag } from "../types/component.js"
-import { containmentFor } from "./containment.js"
-import type { AddressNode, AddressTree } from "./types.js"
+import type { ComponentTag } from "../types/component.ts"
+import { containmentFor } from "./containment.ts"
+import type { AddressNode, AddressTree } from "./types.ts"
 
 /**
  * Tags that cannot stand alone: each is a sub-component of a specific structural anchor (street / locality / venue /

@@ -10,9 +10,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type LatLon, block, geoCellKey } from "./blocking.js"
-import { cluster } from "./clustering.js"
-import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.js"
+import { type LatLon, block, geoCellKey } from "./blocking.ts"
+import { cluster } from "./clustering.ts"
+import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.ts"
 
 type Clinic = { id: string; given: string; family: string; canonical: string; coord: LatLon }
 

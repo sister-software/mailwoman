@@ -12,8 +12,8 @@ import { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
 
-import { applyRuleArbitration } from "./arbitrate-tree.js"
-import type { AddressNode, AddressTree } from "./types.js"
+import { applyRuleArbitration } from "./arbitrate-tree.ts"
+import type { AddressNode, AddressTree } from "./types.ts"
 
 function rp(component: ComponentTag, body: string, start: number, confidence = 1): ClassificationProposal {
 	return {

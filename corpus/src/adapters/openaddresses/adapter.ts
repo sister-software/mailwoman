@@ -38,10 +38,10 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { stableSourceID } from "../../adapter.js"
-import { formatAddress, reconcileComponents } from "../../format.js"
-import { SHARE_ALIKE_PATTERN } from "../../license.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import { stableSourceID } from "../../adapter.ts"
+import { formatAddress, reconcileComponents } from "../../format.ts"
+import { SHARE_ALIKE_PATTERN } from "../../license.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"

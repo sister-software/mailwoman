@@ -28,8 +28,8 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.js"
-import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "./schema.js"
+import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.ts"
+import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "./schema.ts"
 
 const REDISTRICTING_BASE =
 	"https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171"

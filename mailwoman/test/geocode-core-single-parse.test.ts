@@ -13,7 +13,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts, Resolver } from "@mailwoman/resolver"
 import { describe, expect, test, vi } from "vitest"
 
-import { geocodeAddress, type GeocodeClassifier, parseForGeocode } from "../geocode-core.js"
+import { geocodeAddress, type GeocodeClassifier, parseForGeocode } from "../geocode-core.ts"
 
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {
 	return { parse: vi.fn(async () => tree) }

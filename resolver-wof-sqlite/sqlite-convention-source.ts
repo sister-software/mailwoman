@@ -17,7 +17,7 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
-import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "./convention.js"
+import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "./convention.ts"
 
 export class SqliteConventionSource implements ConventionSource {
 	readonly #db: DatabaseSync

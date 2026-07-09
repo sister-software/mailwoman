@@ -23,9 +23,9 @@
  *   (V2); was population u32 (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0)
  */
 
-import type { FSTNode } from "./fst-matcher.js"
-import { FSTMatcher } from "./fst-matcher.js"
-import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.ts"
+import { FSTMatcher } from "./fst-matcher.ts"
+import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
 const MAGIC = Buffer.from("FST\0", "ascii")
 const VERSION = 4

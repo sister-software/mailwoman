@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { decomposeStreet } from "./street-decompose.js"
+import { decomposeStreet } from "./street-decompose.ts"
 
 describe("decomposeStreet", () => {
 	it("leading directional + street type", () => {

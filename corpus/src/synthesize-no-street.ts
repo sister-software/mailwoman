@@ -37,7 +37,7 @@
  *   `synthesize-po-box.ts`; the same `NoStreetBaseTuple` shape is consumed.
  */
 
-import type { CanonicalRow } from "./types.js"
+import type { CanonicalRow } from "./types.ts"
 
 // -------------------------------------------------------------------------------------------------
 // Types

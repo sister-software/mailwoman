@@ -8,7 +8,7 @@
 
 import type { JsonObject } from "type-fest"
 
-import { isIterable } from "./collections.js"
+import { isIterable } from "./collections.ts"
 
 type SetLike<T> = { has(value: T): boolean } | Iterable<T>
 

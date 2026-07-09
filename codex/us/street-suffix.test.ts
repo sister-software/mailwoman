@@ -14,7 +14,7 @@ import {
 	matchTrailingSuffix,
 	US_STREET_SUFFIX_LOOKUP,
 	US_STREET_SUFFIX_PREFERRED_ABBR,
-} from "./street-suffix.js"
+} from "./street-suffix.ts"
 
 describe("US_STREET_SUFFIX_LOOKUP", () => {
 	it("maps canonical, full-word, and abbreviated variants to the canonical key", () => {

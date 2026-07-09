@@ -15,7 +15,7 @@ import {
 	probabilityFromWeight,
 	scorePair,
 	similarityComparison,
-} from "./fellegi-sunter.js"
+} from "./fellegi-sunter.ts"
 
 // The StatCan/ONS first-name levels (the recipe the research pass surfaced). m/u are project-specific
 // — re-estimated by EM in practice — but they anchor the weight math here.

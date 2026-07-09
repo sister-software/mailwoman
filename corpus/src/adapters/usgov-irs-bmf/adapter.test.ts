@@ -10,8 +10,8 @@ import { join } from "node:path"
 
 import { beforeEach, describe, expect, it } from "vitest"
 
-import type { CanonicalRow } from "../../types.js"
-import { createUsgovIrsBmfAdapter, USGOV_IRS_BMF_ADAPTER_ID, USGOV_IRS_BMF_DEFAULT_LICENSE } from "./adapter.js"
+import type { CanonicalRow } from "../../types.ts"
+import { createUsgovIrsBmfAdapter, USGOV_IRS_BMF_ADAPTER_ID, USGOV_IRS_BMF_DEFAULT_LICENSE } from "./adapter.ts"
 
 const HEADER = "EIN,NAME,STREET,CITY,STATE,ZIP"
 

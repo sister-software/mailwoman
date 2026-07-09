@@ -24,7 +24,7 @@ import { createHash, type Hash } from "node:crypto"
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import type { CanonicalRow, CorpusAdapter } from "./types.js"
+import type { CanonicalRow, CorpusAdapter } from "./types.ts"
 
 /**
  * Lookup table for corpus adapters.

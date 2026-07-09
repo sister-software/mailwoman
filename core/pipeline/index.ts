@@ -6,7 +6,7 @@
  *   Runtime pipeline coordinator — see `STAGES.md` for the full contract.
  */
 
-export { reconcileSpans } from "./reconcile.js"
+export { reconcileSpans } from "./reconcile.ts"
 export type {
 	ClassifierCandidate,
 	ParentChainLookup,
@@ -15,12 +15,12 @@ export type {
 	ReconcileOpts,
 	ResolverCandidatesLookup,
 	ScoreBreakdown,
-} from "./reconcile.js"
-export { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.js"
-export { aggregateSpanLogits } from "./span-logit-aggregation.js"
-export type { SpanBounds, TokenPiece } from "./span-logit-aggregation.js"
-export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "./span-proposer.js"
-export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "./span-proposer.js"
+} from "./reconcile.ts"
+export { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.ts"
+export { aggregateSpanLogits } from "./span-logit-aggregation.ts"
+export type { SpanBounds, TokenPiece } from "./span-logit-aggregation.ts"
+export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "./span-proposer.ts"
+export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "./span-proposer.ts"
 export type {
 	AddressClassifier,
 	ClassifierOpts,
@@ -39,4 +39,4 @@ export type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 	UserLocation,
-} from "./types.js"
+} from "./types.ts"

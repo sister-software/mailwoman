@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { InMemoryAdapterRegistry, canonicalDedupKey, stableSourceID, streamingSha256 } from "./adapter.js"
-import type { CanonicalRow, CorpusAdapter } from "./types.js"
+import { InMemoryAdapterRegistry, canonicalDedupKey, stableSourceID, streamingSha256 } from "./adapter.ts"
+import type { CanonicalRow, CorpusAdapter } from "./types.ts"
 
 function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
 	return {

@@ -6,14 +6,14 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isUsStateAbbreviation } from "./state.js"
+import { isUsStateAbbreviation } from "./state.ts"
 import {
 	isZipCode,
 	pluckStateZIPCode,
 	StateAbbreviationZipCodePrefixRecord,
 	ZipCodePatterns,
 	ZipCodePrefixAbbreviationMap,
-} from "./zipcode.js"
+} from "./zipcode.ts"
 
 describe("isZipCode", () => {
 	it("accepts 5-digit and ZIP+4 forms", () => {

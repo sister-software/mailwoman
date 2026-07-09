@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { canonicalizeOrganizationName } from "./organization.js"
+import { canonicalizeOrganizationName } from "./organization.ts"
 
 describe("canonicalizeOrganizationName", () => {
 	it("returns null for empty input", () => {

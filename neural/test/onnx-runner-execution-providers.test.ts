@@ -11,7 +11,7 @@
 import ort from "onnxruntime-node"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { ONNXRunner } from "../onnx-runner.js"
+import { ONNXRunner } from "../onnx-runner.ts"
 
 const fakeSession = () =>
 	({ inputNames: [], outputNames: [], run: async () => ({}) }) as unknown as ort.InferenceSession

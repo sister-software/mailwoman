@@ -6,9 +6,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import { estimateParameters } from "./em.js"
-import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.js"
-import { buildTermFrequencyTable, withTermFrequency } from "./tf.js"
+import { estimateParameters } from "./em.ts"
+import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.ts"
+import { buildTermFrequencyTable, withTermFrequency } from "./tf.ts"
 
 const EXACT_DIFF: ComparisonLevel[] = [
 	{ label: "exact", minSimilarity: 1.0, m: 0.9, u: 0.05 },

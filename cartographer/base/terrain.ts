@@ -6,7 +6,7 @@
 
 import { type RasterDEMSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 
-import { TileSetSourceID } from "../styles/sources.js"
+import { TileSetSourceID } from "../styles/sources.ts"
 
 /**
  * Creates a raster DEM source specification for terrain data.

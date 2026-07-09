@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./intersection.js"
-export * from "./person.js"
-export * from "./street.js"
-export * from "./street_name.js"
-export * from "./subdivision.js"
-export * from "./venue.js"
+export * from "./intersection.ts"
+export * from "./person.ts"
+export * from "./street.ts"
+export * from "./street_name.ts"
+export * from "./subdivision.ts"
+export * from "./venue.ts"

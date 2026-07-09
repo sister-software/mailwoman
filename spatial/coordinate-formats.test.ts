@@ -15,7 +15,7 @@ import {
 	toMaidenhead,
 	toMercator,
 	toMGRS,
-} from "./coordinate-formats.js"
+} from "./coordinate-formats.ts"
 
 // The White House (38.8977, -77.0365) — reference values cross-checked against published converters.
 const LAT = 38.8977

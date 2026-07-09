@@ -22,8 +22,8 @@ import {
 	resolveConvention,
 	SeedConventionSource,
 	WORLD_DEFAULT,
-} from "./convention.js"
-import { WOFSqlitePlaceLookup } from "./lookup.js"
+} from "./convention.ts"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 describe("convention engine — merge + resolve", () => {
 	it("WORLD_DEFAULT reproduces the pre-engine coordinate-first dispatch", () => {

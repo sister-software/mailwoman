@@ -26,10 +26,10 @@ import { spawnSync } from "node:child_process"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type UsUnitDesignator } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
-import type { CanonicalRow } from "../types.js"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
+import type { CanonicalRow } from "../types.ts"
+import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /** A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region. */
 interface UnitSource {

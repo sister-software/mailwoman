@@ -7,9 +7,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import { expect, test } from "vitest"
 
-import { enrichAdmin } from "./admin/enrich.js"
-import { buildFTS } from "./fts.js"
-import { REVERSE_PANEL_CASES, type VerifyBaseline, verifyAdmin } from "./verify.js"
+import { enrichAdmin } from "./admin/enrich.ts"
+import { buildFTS } from "./fts.ts"
+import { REVERSE_PANEL_CASES, type VerifyBaseline, verifyAdmin } from "./verify.ts"
 
 const TINY_BASELINE: VerifyBaseline = {
 	requiredNodes: { TL: ["country", "region"] },

@@ -12,8 +12,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildPlaceSearchFTS } from "./fts.js"
-import { WOFSqlitePlaceLookup } from "./lookup.js"
+import { buildPlaceSearchFTS } from "./fts.ts"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 interface FixturePlace {
 	id: number

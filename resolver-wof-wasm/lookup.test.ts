@@ -17,8 +17,8 @@ import { DatabaseSync } from "node:sqlite"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import { loadSlimWOFDatabase } from "./loader.js"
-import { WOFWasmPlaceLookup } from "./lookup.js"
+import { loadSlimWOFDatabase } from "./loader.ts"
+import { WOFWasmPlaceLookup } from "./lookup.ts"
 
 let scratch: string
 let slimBytes: Uint8Array

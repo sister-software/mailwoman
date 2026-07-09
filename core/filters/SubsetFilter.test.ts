@@ -7,7 +7,7 @@
 import { Solution, SolutionMatch, SolverContext, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { SubsetFilter } from "./SubsetFilter.js"
+import { SubsetFilter } from "./SubsetFilter.ts"
 
 test("duplicate: remove dupes", () => {
 	const sp1 = new SolutionMatch(Span.from("A"), "house_number")

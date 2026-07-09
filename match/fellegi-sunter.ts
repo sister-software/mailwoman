@@ -25,7 +25,7 @@
  *   those build on: given the levels, it produces the weights, the probability, and the decision.
  */
 
-import { nameSimilarity } from "./comparators.js"
+import { nameSimilarity } from "./comparators.ts"
 
 /** One agreement level of a comparison, with its match / non-match probabilities. */
 export interface ComparisonLevel {

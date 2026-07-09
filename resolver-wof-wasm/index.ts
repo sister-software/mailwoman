@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-export { loadSlimWOFDatabase, type LoadSlimOpts } from "./loader.js"
-export { WOFWasmPlaceLookup, type WOFWasmPlaceLookupOpts } from "./lookup.js"
+export { loadSlimWOFDatabase, type LoadSlimOpts } from "./loader.ts"
+export { WOFWasmPlaceLookup, type WOFWasmPlaceLookupOpts } from "./lookup.ts"
 
 // Re-export the shared interface types so callers don't need both packages on the typed path.
 export type {

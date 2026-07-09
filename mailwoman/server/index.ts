@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./AddressRouter.js"
-export * from "./GeocodeRouter.js"
-export * from "./HealthRouter.js"
-export * from "./ResolveRouter.js"
+export * from "./AddressRouter.ts"
+export * from "./GeocodeRouter.ts"
+export * from "./HealthRouter.ts"
+export * from "./ResolveRouter.ts"

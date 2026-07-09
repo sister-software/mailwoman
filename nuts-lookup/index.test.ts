@@ -8,7 +8,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { expect, test } from "vitest"
 
-import { makeNutsAnnotator, nutsFromID, NutsLookup, pointInMultiPolygon } from "./index.js"
+import { makeNutsAnnotator, nutsFromID, NutsLookup, pointInMultiPolygon } from "./index.ts"
 
 test("nutsFromID: derives nested levels by prefix", () => {
 	expect(nutsFromID("DE300")).toEqual({ level1: "DE3", level2: "DE30", level3: "DE300" })

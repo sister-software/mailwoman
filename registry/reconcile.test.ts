@@ -12,8 +12,8 @@ import {
 	reconciliationGeoJSON,
 	reconciliationReport,
 	type ReconcileConfig,
-} from "./reconcile.js"
-import type { ResolvedEntity, SourceRecord } from "./types.js"
+} from "./reconcile.ts"
+import type { ResolvedEntity, SourceRecord } from "./types.ts"
 
 const CONFIG: ReconcileConfig = {
 	eligibilitySources: ["nppes", "txhhsc"],

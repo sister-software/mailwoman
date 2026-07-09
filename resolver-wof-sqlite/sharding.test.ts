@@ -8,7 +8,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { deriveSchemaName, pickShardForPlacetype, resolveShards } from "./sharding.js"
+import { deriveSchemaName, pickShardForPlacetype, resolveShards } from "./sharding.ts"
 
 describe("deriveSchemaName", () => {
 	test("strips whosonfirst-data prefix and -latest.db suffix", () => {

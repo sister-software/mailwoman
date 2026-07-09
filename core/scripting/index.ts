@@ -1,4 +1,4 @@
-import type { ScriptCallback } from "../utils/scripting.js"
+import type { ScriptCallback } from "../utils/scripting.ts"
 
 /**
  * Given a module's import.meta object, resolves if the module was run as a NPM script.

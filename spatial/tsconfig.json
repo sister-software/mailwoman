@@ -5,7 +5,8 @@
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
 		"emitDeclarationOnly": false,
-		"allowImportingTsExtensions": false
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
 	},
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [

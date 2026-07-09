@@ -16,8 +16,8 @@ import {
 	type QueryCompiler,
 } from "kysely"
 
-import type { SqliteDialectConfig } from "#kysley/dialect-config"
-import { SqliteDriver } from "#kysley/driver"
+import type { SqliteDialectConfig } from "./dialect-config.ts"
+import { SqliteDriver } from "./driver.ts"
 
 /**
  * SQLite dialect that uses the [`node:sqlite`](https://nodejs.org/api/sqlite.html) library.

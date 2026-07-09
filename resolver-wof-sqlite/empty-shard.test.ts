@@ -15,9 +15,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterAll, describe, expect, it } from "vitest"
 
-import { AddressPointInterpolator } from "./address-point-interpolation.js"
-import { AddressPointSqliteLookup } from "./address-point.js"
-import { StreetInterpolator } from "./interpolation.js"
+import { AddressPointInterpolator } from "./address-point-interpolation.ts"
+import { AddressPointSqliteLookup } from "./address-point.ts"
+import { StreetInterpolator } from "./interpolation.ts"
 
 const query = { street: "Main St", number: "100", postcode: "03301" }
 const dirs: string[] = []

@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { buildFSTEmissionPriors, type FSTMatcherLike, type FSTMatchLike, type FSTPlaceEntryLike } from "./fst-prior.js"
-import { STAGE2_BIO_LABELS } from "./labels.js"
+import { buildFSTEmissionPriors, type FSTMatcherLike, type FSTMatchLike, type FSTPlaceEntryLike } from "./fst-prior.ts"
+import { STAGE2_BIO_LABELS } from "./labels.ts"
 
 function labelCol(label: string): number {
 	return STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])

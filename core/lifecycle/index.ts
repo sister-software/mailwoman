@@ -6,6 +6,6 @@
  *   Lifecycle utilities.
  */
 
-export * from "./lru-cache.js"
-export * from "./services.js"
-export * from "./ServiceSymbol.js"
+export * from "./lru-cache.ts"
+export * from "./services.ts"
+export * from "./ServiceSymbol.ts"

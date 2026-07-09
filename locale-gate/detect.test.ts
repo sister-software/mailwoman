@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { detectLocaleSync } from "./detect.js"
-import type { NormalizedInputLite, QueryShapeLike } from "./types.js"
+import { detectLocaleSync } from "./detect.ts"
+import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
 function input(normalized: string): NormalizedInputLite {
 	return { raw: normalized, normalized }

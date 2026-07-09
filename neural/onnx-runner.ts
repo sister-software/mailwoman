@@ -17,8 +17,8 @@ import { promises as fs } from "node:fs"
 
 import ort from "onnxruntime-node"
 
-import { ANCHOR_FEATURE_DIM } from "./anchor-inference.js"
-import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.js"
+import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
+import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.ts"
 
 export interface ONNXRunnerOpts {
 	/** If true, load the model immediately in `create()`. Default false. */
@@ -60,12 +60,12 @@ export class ONNXRunner {
 	public readonly fixedSeqLen: number
 
 	private readonly executionProviders: string[]
+	private readonly modelPath: string
+	private readonly modelBytes: Uint8Array | null
 
-	private constructor(
-		private readonly modelPath: string,
-		private readonly modelBytes: Uint8Array | null,
-		opts: ONNXRunnerOpts
-	) {
+	private constructor(modelPath: string, modelBytes: Uint8Array | null, opts: ONNXRunnerOpts) {
+		this.modelPath = modelPath
+		this.modelBytes = modelBytes
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 		const requested = opts.executionProviders ?? ["cpu"]
 		// CPU is the universal final fallback — append it so a GPU-only list still has somewhere to land.

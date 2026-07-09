@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { flattenObject, isRecordLike, omitNullable, pick, tryParsingJSON } from "./objects.js"
+import { flattenObject, isRecordLike, omitNullable, pick, tryParsingJSON } from "./objects.ts"
 
 test("pick: selects the listed keys from an array of keys", () => {
 	expect(pick({ a: 1, b: 2, c: 3 }, ["a", "c"])).toEqual({ a: 1, c: 3 })

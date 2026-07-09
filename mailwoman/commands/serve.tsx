@@ -15,8 +15,8 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../sdk/cli.js"
-import { AddressRouter, GeocodeRouter, HealthRouter, ResolveRouter } from "../server/index.js"
+import type { CommandComponent } from "../sdk/cli.ts"
+import { AddressRouter, GeocodeRouter, HealthRouter, ResolveRouter } from "../server/index.ts"
 
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 	options: { cpus = availableParallelism() },

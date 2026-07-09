@@ -33,10 +33,10 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceID } from "../../adapter.js"
-import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
-import { reconcileComponents } from "../../format.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import { stableSourceID } from "../../adapter.ts"
+import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
+import { reconcileComponents } from "../../format.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 export const STATE_HI_SCHOOLS_ADAPTER_ID = "state-hi-schools"
 export const STATE_HI_SCHOOLS_DEFAULT_LICENSE = "Public Domain"

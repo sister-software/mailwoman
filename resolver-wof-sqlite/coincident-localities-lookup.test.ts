@@ -12,8 +12,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildCoincidentRoles } from "./coincident-roles.js"
-import { WOFSqlitePlaceLookup } from "./lookup.js"
+import { buildCoincidentRoles } from "./coincident-roles.ts"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 let db: DatabaseSync
 let lookup: WOFSqlitePlaceLookup

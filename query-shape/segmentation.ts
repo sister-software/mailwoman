@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { Segment, SegmentSeparator } from "./types.js"
+import type { Segment, SegmentSeparator } from "./types.ts"
 
 /**
  * Comma / newline / tab separate segments. Locale-aware grammar reserved for future (JP whitespace, KR honorifics).

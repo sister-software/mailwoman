@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { collapseWhitespace } from "./whitespace.js"
+import { collapseWhitespace } from "./whitespace.ts"
 
 describe("collapseWhitespace", () => {
 	it("leaves single-spaced text unchanged", () => {

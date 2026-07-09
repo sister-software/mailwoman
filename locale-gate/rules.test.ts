@@ -6,8 +6,8 @@
 
 import { expect, test } from "vitest"
 
-import { scoreByPostcode, scoreByScript, scoreFallback } from "./rules.js"
-import type { QueryShapeLike } from "./types.js"
+import { scoreByPostcode, scoreByScript, scoreFallback } from "./rules.ts"
+import type { QueryShapeLike } from "./types.ts"
 
 const fmt = (format: string, confidence = 0.9, start = 0, end = 5) => ({
 	format,

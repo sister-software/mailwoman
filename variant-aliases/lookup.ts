@@ -13,7 +13,7 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.js"
+import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.ts"
 
 const moduleDir = import.meta.dirname
 

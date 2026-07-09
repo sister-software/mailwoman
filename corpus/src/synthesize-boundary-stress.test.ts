@@ -11,13 +11,13 @@
 
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.js"
+import { alignRow } from "./align.ts"
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,
 	type SynthesizedBoundaryStressRow,
-} from "./synthesize-boundary-stress.js"
-import type { CanonicalRow } from "./types.js"
+} from "./synthesize-boundary-stress.ts"
+import type { CanonicalRow } from "./types.ts"
 
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0

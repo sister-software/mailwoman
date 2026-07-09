@@ -14,7 +14,7 @@ import { promisify } from "node:util"
 import { childEnv, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import { options as runOptions } from "../commands/corpus/run.js"
+import { options as runOptions } from "../commands/corpus/run.tsx"
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")

@@ -11,14 +11,14 @@
 
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.js"
+import { alignRow } from "./align.ts"
 import {
 	DEFAULT_US_BASES,
 	generateIntersectionRows,
 	synthesizeIntersectionRow,
 	type SynthesizedIntersectionRow,
-} from "./synthesize-intersection.js"
-import type { CanonicalRow } from "./types.js"
+} from "./synthesize-intersection.ts"
+import type { CanonicalRow } from "./types.ts"
 
 /** Deterministic PRNG so tests are reproducible. */
 function mulberry32(seed: number): () => number {

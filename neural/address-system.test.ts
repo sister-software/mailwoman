@@ -12,7 +12,7 @@
 import { conventionsForSystem } from "@mailwoman/codex"
 import { describe, expect, it } from "vitest"
 
-import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.js"
+import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
 
 /** Logits that put `prob` mass on `idx` (softmax of one-hot × scale). */
 function confident(idx: number, scale = 10): number[] {

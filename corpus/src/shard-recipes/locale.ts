@@ -31,10 +31,10 @@ import { createReadStream } from "node:fs"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { CSVSpliterator } from "spliterator"
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
-import { type LocaleBaseTuple, synthesizeLocaleRow } from "../synthesize-german.js"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
+import { type LocaleBaseTuple, synthesizeLocaleRow } from "../synthesize-german.ts"
+import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * One per-country OA source part: either a cached `zip` + `csv` member (streamed via `unzip -p`) or an extracted plain

@@ -32,8 +32,8 @@
  *   value); the gate re-run is the arbiter.
  */
 
-import type { ClassificationProposal } from "../types/index.js"
-import type { AddressNode, AddressTree } from "./types.js"
+import type { ClassificationProposal } from "../types/index.ts"
+import type { AddressNode, AddressTree } from "./types.ts"
 
 function cloneNode(node: AddressNode): AddressNode {
 	return { ...node, children: node.children.map(cloneNode) }

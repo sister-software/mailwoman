@@ -13,7 +13,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { StreetInterpolator } from "./interpolation.js"
+import { StreetInterpolator } from "./interpolation.ts"
 
 interface SeedSegment {
 	street_norm: string

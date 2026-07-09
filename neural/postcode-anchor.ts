@@ -34,7 +34,7 @@ import { isGermanStreetToken } from "@mailwoman/codex/de"
 import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetSuffixToken, isUsStateAbbreviation } from "@mailwoman/codex/us"
 
-import { collectMatches } from "./postcode-repair.js"
+import { collectMatches } from "./postcode-repair.ts"
 
 /** A gazetteer hit for a postcode string. `lat`/`lon` of 0 means "known postcode, no centroid yet". */
 export interface PostcodePlace {

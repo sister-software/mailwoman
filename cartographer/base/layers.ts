@@ -7,10 +7,10 @@
 import { layers } from "@protomaps/basemaps"
 import { type LayerSpecification } from "maplibre-gl"
 
-import { MailwomanBaseFlavor, MailwomanBaseTileSetID } from "../base/theme.js"
-import { LayerID } from "../styles/layers.js"
-import { BuildingLayers } from "./buildings.js"
-import { HillshadeTileSetID } from "./terrain.js"
+import { MailwomanBaseFlavor, MailwomanBaseTileSetID } from "../base/theme.ts"
+import { LayerID } from "../styles/layers.ts"
+import { BuildingLayers } from "./buildings.ts"
+import { HillshadeTileSetID } from "./terrain.ts"
 
 export const HillsLayerID = LayerID(HillshadeTileSetID, "hills")
 

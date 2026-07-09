@@ -6,6 +6,6 @@
  *   Core API utilities.
  */
 
-export * from "./APIClient.js"
-export * from "./headless.js"
-export * from "./responses.js"
+export * from "./APIClient.ts"
+export * from "./headless.ts"
+export * from "./responses.ts"

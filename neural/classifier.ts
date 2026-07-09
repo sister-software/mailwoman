@@ -26,27 +26,27 @@ import {
 } from "@mailwoman/core/decoder"
 import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
-import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.js"
-import type { AnchorLookup } from "./anchor-inference.js"
-import { normalizeInputCase } from "./case-normalize.js"
-import { buildFSTEmissionPriors, type FSTMatcherLike } from "./fst-prior.js"
-import type { GazetteerLexicon } from "./gazetteer-inference.js"
-import { STAGE2_BIO_LABELS } from "./labels.js"
-import type { InferResult } from "./onnx-runner.js"
-import { repairPostcodeLabels } from "./postcode-repair.js"
-import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
-import { buildSoftFeatures, type SoftFeatureChannel } from "./soft-features.js"
-import { bridgePunctuationGaps } from "./span-bridge.js"
-import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.js"
-import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
-import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
-import { MailwomanTokenizer } from "./tokenizer.js"
-import { TRACE_PRIOR_KINDS } from "./trace.js"
-import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.js"
-import { repairUnitLabels } from "./unit-repair.js"
-import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.js"
-import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
-import { enforceWordConsistency } from "./word-consistency.js"
+import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
+import type { AnchorLookup } from "./anchor-inference.ts"
+import { normalizeInputCase } from "./case-normalize.ts"
+import { buildFSTEmissionPriors, type FSTMatcherLike } from "./fst-prior.ts"
+import type { GazetteerLexicon } from "./gazetteer-inference.ts"
+import { STAGE2_BIO_LABELS } from "./labels.ts"
+import type { InferResult } from "./onnx-runner.ts"
+import { repairPostcodeLabels } from "./postcode-repair.ts"
+import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
+import { buildSoftFeatures, type SoftFeatureChannel } from "./soft-features.ts"
+import { bridgePunctuationGaps } from "./span-bridge.ts"
+import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.ts"
+import { buildCodexSpanLexicon } from "./span-proposer-lexicon.ts"
+import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.ts"
+import { MailwomanTokenizer } from "./tokenizer.ts"
+import { TRACE_PRIOR_KINDS } from "./trace.ts"
+import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.ts"
+import { repairUnitLabels } from "./unit-repair.ts"
+import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.ts"
+import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.ts"
+import { enforceWordConsistency } from "./word-consistency.ts"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
@@ -166,8 +166,10 @@ export class NeuralAddressClassifier {
 	#defaultProposerCfg: SpanProposerConfig | undefined
 	private readonly startTransitions: number[]
 	private readonly endTransitions: number[]
+	private readonly cfg: NeuralAddressClassifierConfig
 
-	constructor(private readonly cfg: NeuralAddressClassifierConfig) {
+	constructor(cfg: NeuralAddressClassifierConfig) {
+		this.cfg = cfg
 		this.labels = cfg.labels ?? STAGE2_BIO_LABELS
 		this.decodeMode = cfg.decode ?? "viterbi"
 		const structural = buildBIOTransitionMask(this.labels)
@@ -219,11 +221,11 @@ export class NeuralAddressClassifier {
 			{ PostcodeBinaryResolver },
 			fs,
 		] = await Promise.all([
-			import(/* webpackIgnore: true */ "./onnx-runner.js"),
-			import(/* webpackIgnore: true */ "./weights.js"),
-			import(/* webpackIgnore: true */ "./anchor-inference.js"),
-			import(/* webpackIgnore: true */ "./gazetteer-inference.js"),
-			import(/* webpackIgnore: true */ "./postcode-binary-resolver.js"),
+			import(/* webpackIgnore: true */ "./onnx-runner.ts"),
+			import(/* webpackIgnore: true */ "./weights.ts"),
+			import(/* webpackIgnore: true */ "./anchor-inference.ts"),
+			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
+			import(/* webpackIgnore: true */ "./postcode-binary-resolver.ts"),
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
 		const resolved: ResolvedWeights = resolveWeights(opts)

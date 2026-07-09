@@ -18,9 +18,9 @@ import { createRequire } from "node:module"
 import { $public } from "@mailwoman/core/env"
 import { type RequestHandler, Router } from "express"
 
-import { readReleaseManifest } from "../data-release.js"
-import { mailwomanDataRoot, wofShardPaths } from "../resolver-backend.js"
-import { metricsSnapshot } from "./metrics.js"
+import { readReleaseManifest } from "../data-release.ts"
+import { mailwomanDataRoot, wofShardPaths } from "../resolver-backend.ts"
+import { metricsSnapshot } from "./metrics.ts"
 
 const DATA_ROOT = mailwomanDataRoot()
 const startedAt = Date.now()

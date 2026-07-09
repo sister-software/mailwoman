@@ -42,7 +42,7 @@ import {
 	type NominatimEngine,
 	type ResolvedAddress,
 	toNominatimResult,
-} from "./index.js"
+} from "./index.ts"
 
 /** WOF placetype → Nominatim address key. */
 const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {

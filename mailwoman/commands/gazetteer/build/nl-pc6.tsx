@@ -12,7 +12,7 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../sdk/cli.js"
+import type { CommandComponent } from "../../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	csv: zod.string().optional().describe("CBS PC6 centroid CSV. Default <data-root>/cbs/pc6-centroids.csv"),
@@ -28,7 +28,7 @@ const GazetteerBuildNLPC6: CommandComponent<typeof OptionsSchema> = ({ options }
 	useEffect(() => {
 		void (async () => {
 			try {
-				const { buildNLPC6Shard } = await import("../../../gazetteer-pipeline/postcode/nl-pc6.js")
+				const { buildNLPC6Shard } = await import("../../../gazetteer-pipeline/postcode/nl-pc6.ts")
 				const r = await buildNLPC6Shard({ csvPath: options.csv, out: options.out })
 				setDone(`nl-pc6: ${r.inserted.toLocaleString()} PC6 rows (skipped ${r.skipped}) → ${r.out} — sealed 0444`)
 			} catch (e) {

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { getAllAliases, lookupVariantAliases } from "./lookup.js"
+import { getAllAliases, lookupVariantAliases } from "./lookup.ts"
 
 describe("lookupVariantAliases", () => {
 	it("exact locale match — Australian 'servo' in en-AU", () => {

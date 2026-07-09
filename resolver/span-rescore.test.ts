@@ -12,8 +12,8 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { createWOFResolver } from "./resolve.js"
-import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
+import { createWOFResolver } from "./resolve.ts"
+import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
 
 const norm = (s: string): string =>
 	s

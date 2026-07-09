@@ -19,7 +19,7 @@
  *   and `docs/articles/plan/phases/PHASE_8_v0_5_0_fresh_slate.md` § E for the v0.5.0 thread.
  */
 
-export { groupPhrases, groupPhrasesSync } from "./group.js"
+export { groupPhrases, groupPhrasesSync } from "./group.ts"
 export {
 	scoreHyphenatedCompound,
 	scoreLocalityPhrase,
@@ -29,8 +29,8 @@ export {
 	scoreStreetPhrase,
 	scoreVenuePhrase,
 	tokenizeSegment,
-} from "./rules.js"
-export type { SegmentToken } from "./rules.js"
+} from "./rules.ts"
+export type { SegmentToken } from "./rules.ts"
 export type {
 	GroupPhrasesOpts,
 	LocaleHint,
@@ -40,4 +40,4 @@ export type {
 	PhraseProposal,
 	QueryShapeLike,
 	Section,
-} from "./types.js"
+} from "./types.ts"

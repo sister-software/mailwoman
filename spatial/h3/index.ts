@@ -7,7 +7,7 @@
 import { cellToLatLng } from "h3-js"
 import type { Tagged } from "type-fest"
 
-import { GeoPoint, type PointLiteral } from "../geometries/point.js"
+import { GeoPoint, type PointLiteral } from "../geometries/point.ts"
 
 /**
  * A H3 cell index, full 64 bits.

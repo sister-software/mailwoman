@@ -6,9 +6,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.js"
-import { whitespaceTokenizer } from "./tokenize.js"
-import type { CanonicalRow } from "./types.js"
+import { alignRow } from "./align.ts"
+import { whitespaceTokenizer } from "./tokenize.ts"
+import type { CanonicalRow } from "./types.ts"
 
 const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	raw: "",

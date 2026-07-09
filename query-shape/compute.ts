@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { classifyToken, foldInputClass, tokenizeForClass } from "./character-class.js"
-import { detectKnownFormats } from "./known-formats.js"
-import { detectRegionAbbreviations } from "./region-abbreviations.js"
-import { segment } from "./segmentation.js"
-import type { ComputeQueryShapeOpts, NormalizedInputLite, QueryShape, TokenClass, WhitespacePattern } from "./types.js"
+import { classifyToken, foldInputClass, tokenizeForClass } from "./character-class.ts"
+import { detectKnownFormats } from "./known-formats.ts"
+import { detectRegionAbbreviations } from "./region-abbreviations.ts"
+import { segment } from "./segmentation.ts"
+import type { ComputeQueryShapeOpts, NormalizedInputLite, QueryShape, TokenClass, WhitespacePattern } from "./types.ts"
 
 function detectWhitespacePattern(text: string): WhitespacePattern {
 	let hasTab = false

@@ -8,11 +8,11 @@
  */
 import { describe, expect, it } from "vitest"
 
-import type { ComponentTag } from "../types/component.js"
-import { decodeAsJSON } from "./serialize-json.js"
-import { decodeAsTuples } from "./serialize-tuples.js"
-import { decodeAsXML } from "./serialize-xml.js"
-import type { AddressNode, AddressTree } from "./types.js"
+import type { ComponentTag } from "../types/component.ts"
+import { decodeAsJSON } from "./serialize-json.ts"
+import { decodeAsTuples } from "./serialize-tuples.ts"
+import { decodeAsXML } from "./serialize-xml.ts"
+import type { AddressNode, AddressTree } from "./types.ts"
 
 function node(tag: ComponentTag, start: number, end: number, value: string, children: AddressNode[] = []): AddressNode {
 	return { tag, value, start, end, confidence: 1, children }

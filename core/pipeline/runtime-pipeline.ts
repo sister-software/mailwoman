@@ -12,14 +12,14 @@
  *   Implementation contract per `docs/articles/plan/reference/STAGES.md`.
  */
 
-import { applyRuleArbitration } from "../decoder/arbitrate-tree.js"
-import type { AddressNode, AddressTree } from "../decoder/types.js"
-import { routeInputShape } from "../policy/input-shape-router.js"
-import type { ComponentTag } from "../types/component.js"
-import { prefetchReconcileLookups } from "./reconcile-lookups.js"
-import type { ClassifierCandidate } from "./reconcile.js"
-import { reconcileSpans } from "./reconcile.js"
-import { aggregateSpanLogits } from "./span-logit-aggregation.js"
+import { applyRuleArbitration } from "../decoder/arbitrate-tree.ts"
+import type { AddressNode, AddressTree } from "../decoder/types.ts"
+import { routeInputShape } from "../policy/input-shape-router.ts"
+import type { ComponentTag } from "../types/component.ts"
+import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
+import type { ClassifierCandidate } from "./reconcile.ts"
+import { reconcileSpans } from "./reconcile.ts"
+import { aggregateSpanLogits } from "./span-logit-aggregation.ts"
 import type {
 	AddressClassifier,
 	ClassifierOpts,
@@ -33,7 +33,7 @@ import type {
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
-} from "./types.js"
+} from "./types.ts"
 
 /**
  * Known QueryShape format strings that indicate "this token is a postcode". Mirrors the set in

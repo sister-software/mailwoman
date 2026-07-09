@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Span } from "./Span.js"
+import { Span } from "./Span.ts"
 
 const JOIN_CHAR = " "
 

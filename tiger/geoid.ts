@@ -6,7 +6,7 @@
 
 import type { Tagged } from "type-fest"
 
-import { AdminLevel1Code, FIPSStateCode } from "./state.js"
+import { AdminLevel1Code, FIPSStateCode } from "./state.ts"
 
 //#region Tagged FIPS types
 
@@ -210,46 +210,48 @@ export type FIPSCongressionalDistrictCode = Tagged<string, "FIPSConressionalDist
  *
  * @internal
  */
-export enum GeoIDPart {
+export const GeoIDPart = {
 	/**
 	 * The state code part of a GeoID.
 	 *
 	 * Sometimes considered the administrative area level 1 code.
 	 */
-	State = "state_code",
+	State: "state_code",
 	/**
 	 * The county code part of a GeoID.
 	 *
 	 * Sometimes considered the administrative area level 2 code.
 	 */
-	County = "county_code",
+	County: "county_code",
 	/**
 	 * The county subdivision code part of a GeoID.
 	 *
 	 * Sometimes considered the administrative area level 3 code.
 	 */
-	CountySubDivision = "county_sub_division_code",
+	CountySubDivision: "county_sub_division_code",
 	/**
 	 * The congressional district code part of a GeoID.
 	 */
-	CongressionalDistrict = "congressional_district_code",
+	CongressionalDistrict: "congressional_district_code",
 	/**
 	 * A place as defined by the Census, such as a city or town.
 	 */
-	Place = "place_code",
+	Place: "place_code",
 	/**
 	 * The tract code part of a GeoID. The third most granular part.
 	 */
-	Tract = "tract_code",
+	Tract: "tract_code",
 	/**
 	 * The block group code part of a GeoID. The second most granular part.
 	 */
-	BlockGroup = "block_group_code",
+	BlockGroup: "block_group_code",
 	/**
 	 * The block code part of a GeoID. The most granular part.
 	 */
-	Block = "block_code",
-}
+	Block: "block_code",
+} as const
+
+export type GeoIDPart = (typeof GeoIDPart)[keyof typeof GeoIDPart]
 
 /**
  * Mapping of GeoID parts to their respective FIPS codes types.

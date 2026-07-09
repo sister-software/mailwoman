@@ -8,9 +8,9 @@ import { existsSync } from "node:fs"
 
 import { beforeAll, describe, expect, it } from "vitest"
 
-import { buildFSTFromWOF } from "./fst-builder.js"
-import { FSTMatcher, type FSTNode } from "./fst-matcher.js"
-import { deserializeFST, serializeFST } from "./fst-serialize.js"
+import { buildFSTFromWOF } from "./fst-builder.ts"
+import { FSTMatcher, type FSTNode } from "./fst-matcher.ts"
+import { deserializeFST, serializeFST } from "./fst-serialize.ts"
 
 // --- Unit tests with a synthetic trie ---
 

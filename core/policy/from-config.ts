@@ -26,10 +26,10 @@
  *   and won't save a JSON file. This loader is where the contract is enforced.)
  */
 
-import { COMPONENT_TAGS, type ComponentTag } from "../types/component.js"
-import type { InputShapeRoute } from "./input-shape-router.js"
-import type { PolicyMode } from "./policy.js"
-import { InMemoryPolicyRegistry } from "./registry.js"
+import { COMPONENT_TAGS, type ComponentTag } from "../types/component.ts"
+import type { InputShapeRoute } from "./input-shape-router.ts"
+import type { PolicyMode } from "./policy.ts"
+import { InMemoryPolicyRegistry } from "./registry.ts"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const ENTRY_FIELDS = new Set(["mode", "confidence_threshold"])

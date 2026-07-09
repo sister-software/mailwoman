@@ -10,7 +10,7 @@
  *   highest-confidence non-null result; ties broken by scorer order (most-specific first).
  */
 
-import type { QueryShapeLike } from "./types.js"
+import type { QueryShapeLike } from "./types.ts"
 
 export interface LocaleCandidate {
 	locale: string

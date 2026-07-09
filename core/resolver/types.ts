@@ -13,7 +13,7 @@
  *   See `docs/plan/phases/PHASE_4_3_resolver_integration.md` for the design intent.
  */
 
-import type { AddressTree, ComponentTag } from "../decoder/types.js"
+import type { AddressTree, ComponentTag } from "../decoder/types.ts"
 
 /**
  * One candidate place returned by a resolver. Mirrors the shape used by `@mailwoman/core/resolver-wof-sqlite`'s

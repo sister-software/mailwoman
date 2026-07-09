@@ -18,7 +18,7 @@ import { parseArgs } from "node:util"
  */
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta, CoarsePrediction } from "../coarse-placer.js"
+import type { CoarsePlacerMeta, CoarsePrediction } from "../coarse-placer.ts"
 
 interface OffMapRow {
 	raw: string
@@ -30,7 +30,7 @@ interface OffMapRow {
 const root = new URL("../../", import.meta.url)
 const { CoarsePlacer } = (await import(
 	new URL("core/out/coarse-placer/coarse-placer.js", root).href
-)) as typeof import("../coarse-placer.js")
+)) as typeof import("../coarse-placer.ts")
 
 const { values: args } = parseArgs({
 	options: {

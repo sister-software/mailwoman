@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ConsoleLogger } from "../logging/index.js"
+import { ConsoleLogger } from "../logging/index.ts"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

@@ -40,10 +40,10 @@ import {
 } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
-import type { CanonicalRow } from "../types.js"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
+import type { CanonicalRow } from "../types.ts"
+import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 // Same OA cache as the unit shard. Train = every NON-Vermont state; eval = Vermont (the holdout).
 interface UsSource {

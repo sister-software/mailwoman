@@ -6,11 +6,11 @@
 
 import { describe, expect, it } from "vitest"
 
-import { classifyToken, tokenizeForClass } from "./character-class.js"
-import { computeQueryShape } from "./compute.js"
-import { detectRegionAbbreviations } from "./region-abbreviations.js"
-import { segment } from "./segmentation.js"
-import type { TokenClass } from "./types.js"
+import { classifyToken, tokenizeForClass } from "./character-class.ts"
+import { computeQueryShape } from "./compute.ts"
+import { detectRegionAbbreviations } from "./region-abbreviations.ts"
+import { segment } from "./segmentation.ts"
+import type { TokenClass } from "./types.ts"
 
 function makeTokenClasses(text: string): TokenClass[] {
 	const spans = tokenizeForClass(text)

@@ -6,8 +6,8 @@
 
 import { describe, expect, test } from "vitest"
 
-import { enUS, frFR, jaJP } from "./profiles/index.js"
-import { InMemoryLocaleRegistry } from "./registry.js"
+import { enUS, frFR, jaJP } from "./profiles/index.ts"
+import { InMemoryLocaleRegistry } from "./registry.ts"
 
 describe("InMemoryLocaleRegistry — registration", () => {
 	test("register / get / list round-trip", () => {

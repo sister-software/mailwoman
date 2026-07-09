@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { type AnnotationSet, type Annotator, composeAnnotators, toNative, toOpenCage } from "./index.js"
+import { type AnnotationSet, type Annotator, composeAnnotators, toNative, toOpenCage } from "./index.ts"
 
 test("composeAnnotators: merges partial results from multiple annotators", async () => {
 	const coords: Annotator = () => ({ geohash: "dqcjqcp84", mgrs: "18SUJ23480647" })

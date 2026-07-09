@@ -12,7 +12,7 @@
  *   on it. See `ban/README.md` for the licensing boundary.
  */
 
-export * from "./fetch.js"
-export * from "./extract.js"
-export * from "./street-locale.js"
-export * from "./shard-provider.js"
+export * from "./fetch.ts"
+export * from "./extract.ts"
+export * from "./street-locale.ts"
+export * from "./shard-provider.ts"

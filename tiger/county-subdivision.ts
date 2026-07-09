@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { TIGERClassCode } from "./class-code.js"
-import type { TIGERFunctionalStatus } from "./functional-status.js"
-import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.js"
-import type { AdminLevel1Code } from "./state.js"
+import type { TIGERClassCode } from "./class-code.ts"
+import type { TIGERFunctionalStatus } from "./functional-status.ts"
+import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
+import type { AdminLevel1Code } from "./state.ts"
 
 /**
  * Census Geographic subdivision of a county.

@@ -6,8 +6,8 @@
 
 import { expect, test } from "vitest"
 
-import type { WOFProperties } from "./admin.js"
-import { parsePlacetypeSource, pluckFileNameLanguageCode, pluckPlacetypeSpec } from "./admin.js"
+import type { WOFProperties } from "./admin.ts"
+import { parsePlacetypeSource, pluckFileNameLanguageCode, pluckPlacetypeSpec } from "./admin.ts"
 
 const baseProps = (over: Partial<WOFProperties> = {}): WOFProperties =>
 	({

@@ -30,8 +30,8 @@
  *   parent's own value. Documented in the package README.
  */
 
-import type { AddressNode, AddressTree } from "./types.js"
-import { unknownSpans } from "./unknown-spans.js"
+import type { AddressNode, AddressTree } from "./types.ts"
+import { unknownSpans } from "./unknown-spans.ts"
 
 export interface SerializeXMLOpts {
 	/** Pretty-print with line breaks and indentation. Default true. */

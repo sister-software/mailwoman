@@ -11,10 +11,10 @@ import { join } from "node:path"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { alignRow } from "../../align.js"
-import { runAdapter } from "../../runner.js"
-import type { CanonicalRow } from "../../types.js"
-import { USGOV_HRSA_FQHC_ADAPTER_ID, USGOV_HRSA_FQHC_DEFAULT_LICENSE, createUsgovHrsaFqhcAdapter } from "./adapter.js"
+import { alignRow } from "../../align.ts"
+import { runAdapter } from "../../runner.ts"
+import type { CanonicalRow } from "../../types.ts"
+import { USGOV_HRSA_FQHC_ADAPTER_ID, USGOV_HRSA_FQHC_DEFAULT_LICENSE, createUsgovHrsaFqhcAdapter } from "./adapter.ts"
 
 const fixtureCSV = repoRootPath("corpus", "fixtures", "usgov-hrsa-fqhc", "sample.csv")
 

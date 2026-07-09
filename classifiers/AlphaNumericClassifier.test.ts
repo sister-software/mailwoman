@@ -7,7 +7,7 @@
 import { ClassificationsMatchMap } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { AlphaNumericClassifier } from "./AlphaNumericClassifier.js"
+import { AlphaNumericClassifier } from "./AlphaNumericClassifier.ts"
 
 const classifier = new AlphaNumericClassifier()
 

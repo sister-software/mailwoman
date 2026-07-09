@@ -19,7 +19,7 @@
  *   consumes the shape.
  */
 
-import type { TokenLike } from "./query-shape-prior.js"
+import type { TokenLike } from "./query-shape-prior.ts"
 
 const SPACE_SENTINEL = "▁"
 

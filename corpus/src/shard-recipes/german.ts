@@ -17,10 +17,10 @@
 
 import { spawnSync } from "node:child_process"
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
-import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.js"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
+import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.ts"
+import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A German OA source (cached zip) + the Bundesland the file covers (OA's REGION column is empty for DE).

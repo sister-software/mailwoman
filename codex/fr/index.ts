@@ -7,8 +7,8 @@
  *   postal), and the admin hierarchy of départements and régions.
  */
 
-export * from "./cedex.js"
-export * from "./code-postal.js"
-export * from "./departement.js"
-export * from "./region.js"
-export * from "./voie.js"
+export * from "./cedex.ts"
+export * from "./code-postal.ts"
+export * from "./departement.ts"
+export * from "./region.ts"
+export * from "./voie.ts"

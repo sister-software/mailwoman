@@ -26,7 +26,7 @@ import { $public } from "@mailwoman/core/env"
 import { childEnv, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import { localeToCountry, options as parseOptions, resolverDefaultCountry } from "../commands/parse.js"
+import { localeToCountry, options as parseOptions, resolverDefaultCountry } from "../commands/parse.tsx"
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")

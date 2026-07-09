@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { applyNFC } from "./nfc.js"
+import { applyNFC } from "./nfc.ts"
 
 // Combining acute accent (U+0301) and the composed forms, by codepoint — so the test's intent
 // doesn't depend on how this file's literal characters happen to be normalized on disk.

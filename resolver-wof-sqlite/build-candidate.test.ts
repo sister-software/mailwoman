@@ -24,8 +24,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildCandidateTable } from "./build-candidate.js"
-import { normalizeLocalityForKey } from "./street-normalize.js"
+import { buildCandidateTable } from "./build-candidate.ts"
+import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 const ALIAS_SEP = "\u{E000}"
 

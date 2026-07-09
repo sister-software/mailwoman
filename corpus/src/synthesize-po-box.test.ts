@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.js"
+import { alignRow } from "./align.ts"
 import {
 	composePoBoxPhrase,
 	countryToLocale,
@@ -14,8 +14,8 @@ import {
 	supportedLocales,
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
-} from "./synthesize-po-box.js"
-import type { CanonicalRow } from "./types.js"
+} from "./synthesize-po-box.ts"
+import type { CanonicalRow } from "./types.ts"
 
 // Deterministic RNG for reproducible tests.
 function seededRandom(seed: number): () => number {

@@ -6,7 +6,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { CompoundStreetClassifier } from "./CompoundStreetClassifier.js"
+import { CompoundStreetClassifier } from "./CompoundStreetClassifier.ts"
 
 const classifier = await new CompoundStreetClassifier().ready()
 

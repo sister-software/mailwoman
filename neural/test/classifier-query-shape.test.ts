@@ -12,11 +12,11 @@
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-import { NeuralAddressClassifier, type NeuralRunner } from "../classifier.js"
-import { STAGE2_BIO_LABELS } from "../labels.js"
-import type { InferResult } from "../onnx-runner.js"
-import type { QueryShapeLike } from "../query-shape-prior.js"
-import { MailwomanTokenizer } from "../tokenizer.js"
+import { NeuralAddressClassifier, type NeuralRunner } from "../classifier.ts"
+import { STAGE2_BIO_LABELS } from "../labels.ts"
+import type { InferResult } from "../onnx-runner.ts"
+import type { QueryShapeLike } from "../query-shape-prior.ts"
+import { MailwomanTokenizer } from "../tokenizer.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 

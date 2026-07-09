@@ -49,11 +49,11 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import { geocodeAddress, ShardProvider, type ShardResolver } from "../geocode-core.js"
-import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.js"
-import type { CommandComponent } from "../sdk/cli.js"
-import { resolverDefaultCountry } from "./parse.js"
+import { geocodeAddress, ShardProvider, type ShardResolver } from "../geocode-core.ts"
+import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.ts"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../resolver-backend.ts"
+import type { CommandComponent } from "../sdk/cli.ts"
+import { resolverDefaultCountry } from "./parse.tsx"
 
 // ---------------------------------------------------------------------------
 // CLI contract — args + options

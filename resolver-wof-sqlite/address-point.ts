@@ -19,9 +19,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/resolver"
 
-import type { AddressPointTable } from "./address-point-schema.js"
-import { hasTable } from "./sqlite-utils.js"
-import { normalizeLocalityForKey, normalizeStreetForKeyLocale, type StreetLocale } from "./street-normalize.js"
+import type { AddressPointTable } from "./address-point-schema.ts"
+import { hasTable } from "./sqlite-utils.ts"
+import { normalizeLocalityForKey, normalizeStreetForKeyLocale, type StreetLocale } from "./street-normalize.ts"
 
 /**
  * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a column rename in

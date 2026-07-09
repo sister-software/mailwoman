@@ -9,9 +9,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { ResolvedPlace, ResolverBackend } from "../resolver/types.js"
-import { prefetchReconcileLookups } from "./reconcile-lookups.js"
-import type { ClassifierCandidate } from "./reconcile.js"
+import type { ResolvedPlace, ResolverBackend } from "../resolver/types.ts"
+import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
+import type { ClassifierCandidate } from "./reconcile.ts"
 
 const place = (id: number, name: string): ResolvedPlace =>
 	({ id, name, placetype: "locality", lat: 1, lon: 2 }) as ResolvedPlace

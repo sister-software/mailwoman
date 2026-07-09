@@ -15,7 +15,7 @@
  *   paint every word.
  */
 
-import type { TokenizedPiece } from "./tokenizer.js"
+import type { TokenizedPiece } from "./tokenizer.ts"
 
 /**
  * The candidate-tag-set feature width: country/region/po_box/cedex/homograph (the lexicon's slot count). Used for the

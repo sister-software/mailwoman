@@ -16,7 +16,7 @@
  *   3. pc-first   "«pc» «city», «st» «n»"   (the 7% floor — the anchor the others converge to)
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.js"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
 export const noStreetLedRecipe: ShardRecipe = {
 	name: "no-street-led",

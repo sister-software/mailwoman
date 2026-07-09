@@ -6,8 +6,8 @@
 
 import { expect, test } from "vitest"
 
-import { Span } from "./Span.js"
-import { fieldsFuncBoundary, fieldsFuncWhiteSpace, splitByField } from "./split.js"
+import { Span } from "./Span.ts"
+import { fieldsFuncBoundary, fieldsFuncWhiteSpace, splitByField } from "./split.ts"
 
 test("boundary: no commas or quotes", () => {
 	const span = Span.from("SoHo New York USA")

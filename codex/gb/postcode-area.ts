@@ -22,7 +22,7 @@
  *   a UK postcode is not a county.
  */
 
-import type { UkCountryCode } from "./country.js"
+import type { UkCountryCode } from "./country.ts"
 
 /** Northern Ireland is a single postcode area: BT (Belfast). */
 const NORTHERN_IRELAND_AREAS = ["BT"] as const

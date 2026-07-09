@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { TIGERClassCode } from "./class-code.js"
-import { TIGERFunctionalStatus } from "./functional-status.js"
+import { TIGERClassCode } from "./class-code.ts"
+import { TIGERFunctionalStatus } from "./functional-status.ts"
 import {
 	type FIPSBlockCode,
 	type FIPSBlockGroupCode,
@@ -15,9 +15,9 @@ import {
 	type FIPSPlaceCode,
 	type FIPSTractCode,
 	GeoIDPart,
-} from "./geoid.js"
-import { LegalStatisticalAreaDescription } from "./legal-statistical-area.js"
-import { FIPSStateCode } from "./state.js"
+} from "./geoid.ts"
+import { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
+import { FIPSStateCode } from "./state.ts"
 
 /**
  * A code indicating the classification of the block, i.e. urban or rural.
@@ -27,84 +27,91 @@ import { FIPSStateCode } from "./state.js"
  * @minLength 1
  * @maxLength 1
  */
-export enum TIGERGeographicClassification {
-	Urban = "U",
-	Rural = "R",
-}
+export const TIGERGeographicClassification = {
+	Urban: "U",
+	Rural: "R",
+} as const
+
+export type TIGERGeographicClassification =
+	(typeof TIGERGeographicClassification)[keyof typeof TIGERGeographicClassification]
 
 /**
  * @title Land/Water Block Type
  *
  * A code indicating the type of feature represented by the land/water block.
  */
-export enum LandWaterBlockType {
+export const LandWaterBlockType = {
 	/**
 	 * Block is land.
 	 */
-	Land = "L",
+	Land: "L",
 	/**
 	 * Block is water.
 	 */
-	Water = "W",
-}
+	Water: "W",
+} as const
+
+export type LandWaterBlockType = (typeof LandWaterBlockType)[keyof typeof LandWaterBlockType]
 
 /**
  * @title TIGER Property
  */
-export enum TIGERProperty {
+export const TIGERProperty = {
 	/**
 	 * @title Geographic Identifier
 	 */
-	GeoID = "GEOID",
+	GeoID: "GEOID",
 	/**
 	 * @title Display Name
 	 */
-	DisplayName = "display_name",
+	DisplayName: "display_name",
 	/**
 	 * @title Urban/Rural Code
 	 */
-	UrbanRuralCode = "urban_rural_code",
+	UrbanRuralCode: "urban_rural_code",
 	/**
 	 * @title Urban Area Code
 	 */
-	UrbanizedAreaCode = "urbanized_area_code",
+	UrbanizedAreaCode: "urbanized_area_code",
 	/**
 	 * @title Land Area (square meters)
 	 */
-	LandAreaSqm = "land_area_sqm",
+	LandAreaSqm: "land_area_sqm",
 	/**
 	 * @title Water Area (square meters)
 	 */
-	WaterAreaSqm = "water_area_sqm",
+	WaterAreaSqm: "water_area_sqm",
 	/**
 	 * @title Housing Unit Count
 	 */
-	HousingUnitCount = "housing_unit_count",
+	HousingUnitCount: "housing_unit_count",
 	/**
 	 * @title Population Count
 	 */
-	Population = "population",
+	Population: "population",
 	/**
 	 * @title Functional Status
 	 */
-	FunctionalStatus = "functional_status",
+	FunctionalStatus: "functional_status",
 	/**
 	 * @title Centroid Latitude
 	 */
-	CentroidLatitude = "latitude",
+	CentroidLatitude: "latitude",
 	/**
 	 * @title Centroid Longitude
 	 */
-	CentroidLongitude = "longitude",
+	CentroidLongitude: "longitude",
 	/**
 	 * @title Legal/Statistical Area Description
 	 */
-	LegalStatisticalAreaDescription = "legal_statistical_area_description",
+	LegalStatisticalAreaDescription: "legal_statistical_area_description",
 	/**
 	 * @title MAF/TIGER Feature Class Code
 	 */
-	ClassCode = "class_code",
-}
+	ClassCode: "class_code",
+} as const
+
+export type TIGERProperty = (typeof TIGERProperty)[keyof typeof TIGERProperty]
 
 /**
  * Properties common to all Census.

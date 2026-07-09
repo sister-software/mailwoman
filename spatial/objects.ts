@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type BBox2DLiteral, type BBox3DLiteral, is2DBBox } from "./bbox.js"
+import { type BBox2DLiteral, type BBox3DLiteral, is2DBBox } from "./bbox.ts"
 
 /**
  * GeoJSON object types.

@@ -8,15 +8,15 @@
 
 import { describe, expect, test } from "vitest"
 
-import { Span } from "../tokenization/Span.js"
-import type { BIOLabel } from "../types/component.js"
-import type { ClassificationProposal } from "../types/index.js"
-import { buildAddressTree } from "./build-tree.js"
-import { proposalsToTree } from "./proposals-to-tree.js"
-import { decodeAsJSON } from "./serialize-json.js"
-import { decodeAsTuples } from "./serialize-tuples.js"
-import { decodeAsXML } from "./serialize-xml.js"
-import type { DecoderToken } from "./types.js"
+import { Span } from "../tokenization/Span.ts"
+import type { BIOLabel } from "../types/component.ts"
+import type { ClassificationProposal } from "../types/index.ts"
+import { buildAddressTree } from "./build-tree.ts"
+import { proposalsToTree } from "./proposals-to-tree.ts"
+import { decodeAsJSON } from "./serialize-json.ts"
+import { decodeAsTuples } from "./serialize-tuples.ts"
+import { decodeAsXML } from "./serialize-xml.ts"
+import type { DecoderToken } from "./types.ts"
 
 function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
 	return { piece, start, end, label, confidence }

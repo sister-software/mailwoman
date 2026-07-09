@@ -30,8 +30,8 @@ import {
 	publishGazetteer,
 	resolvePostcodeShards,
 	wofDir,
-} from "../../gazetteer-pipeline/index.js"
-import type { CommandComponent } from "../../sdk/cli.js"
+} from "../../gazetteer-pipeline/index.ts"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	admin: zod.string().optional().describe("Admin source DB. Default <data-root>/wof/admin-global-priority.db"),

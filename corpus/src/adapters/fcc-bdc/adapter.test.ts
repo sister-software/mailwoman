@@ -12,15 +12,15 @@ import { DatabaseSync } from "node:sqlite"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { runAdapter } from "../../runner.js"
-import type { CanonicalRow } from "../../types.js"
+import { runAdapter } from "../../runner.ts"
+import type { CanonicalRow } from "../../types.ts"
 import {
 	FCC_BDC_ADAPTER_ID,
 	FCC_BDC_DEFAULT_LICENSE,
 	buildPostcode,
 	createFccBdcAdapter,
 	splitAddressPrimary,
-} from "./adapter.js"
+} from "./adapter.ts"
 
 const fixtureSQLPath = repoRootPath("corpus", "fixtures", "fcc-bdc", "fixture.sql")
 

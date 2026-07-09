@@ -38,14 +38,14 @@ import { isCedex } from "@mailwoman/codex/fr"
 import { isNzDeliveryService, isNzPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
 
-import { alignRow } from "../align.js"
+import { alignRow } from "../align.ts"
 import {
 	maybeNoisifyBoxNumber,
 	PO_BOX_LOCALE_TEMPLATES,
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
-} from "../synthesize-po-box.js"
-import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.js"
+} from "../synthesize-po-box.ts"
+import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the

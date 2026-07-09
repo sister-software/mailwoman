@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { __resetMetricsForTest, metricsSnapshot, recordGeocode } from "./metrics.js"
+import { __resetMetricsForTest, metricsSnapshot, recordGeocode } from "./metrics.ts"
 
 // `percentile` is module-private, so we exercise it through the public `metricsSnapshot`
 // surface. The estimator is nearest-rank by index: idx = min(n-1, floor(p·n)), so for the

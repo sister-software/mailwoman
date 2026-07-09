@@ -7,7 +7,7 @@
 import { ClassificationsMatchMap, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { CentralEuropeanStreetNameClassifier } from "./CentralEuropeanStreetNameClassifier.js"
+import { CentralEuropeanStreetNameClassifier } from "./CentralEuropeanStreetNameClassifier.ts"
 
 const classifier = new CentralEuropeanStreetNameClassifier()
 

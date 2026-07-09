@@ -9,8 +9,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { SerializedSolution } from "../solver/index.js"
-import { solutionToProposals } from "./solution-to-proposals.js"
+import type { SerializedSolution } from "../solver/index.ts"
+import { solutionToProposals } from "./solution-to-proposals.ts"
 
 function match(classification: string, value: string, start: number, confidence: number) {
 	return { classification, value, start, end: start + value.length, confidence }

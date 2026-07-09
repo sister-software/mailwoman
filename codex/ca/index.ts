@@ -7,6 +7,6 @@
  *   postal codes, and the provinces and territories.
  */
 
-export * from "./postal-code.js"
-export * from "./province.js"
-export * from "./street-type.js"
+export * from "./postal-code.ts"
+export * from "./province.ts"
+export * from "./street-type.ts"

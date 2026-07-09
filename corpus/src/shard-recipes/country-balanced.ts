@@ -29,10 +29,10 @@ import { spawnSync } from "node:child_process"
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
-import type { CanonicalRow } from "../types.js"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
+import type { CanonicalRow } from "../types.ts"
+import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 // v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
 // ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted

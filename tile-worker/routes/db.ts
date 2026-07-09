@@ -6,11 +6,11 @@
 
 import { ResourceError } from "@mailwoman/core/errors"
 
-import { cacheResponse } from "../caching.js"
-import { applyAccessControlAllowOrigin } from "../cors.js"
-import { parseRangeHeader } from "../ranges.js"
-import { WorkerRoute } from "../routing.js"
-import { assertR2KeyMatch, assertR2ObjectBody } from "../storage.js"
+import { cacheResponse } from "../caching.ts"
+import { applyAccessControlAllowOrigin } from "../cors.ts"
+import { parseRangeHeader } from "../ranges.ts"
+import { WorkerRoute } from "../routing.ts"
+import { assertR2KeyMatch, assertR2ObjectBody } from "../storage.ts"
 
 //#region Database Retrieval
 const DB_ROUTE_PATTERN = "/db/:databaseName([a-z0-9_\\-]+).:fileExtension([a-z0-9]+)"

@@ -24,8 +24,8 @@
  *   convention.
  */
 
-import type { AnchorLookup } from "./anchor-inference.js"
-import type { PostcodePlace } from "./postcode-anchor.js"
+import type { AnchorLookup } from "./anchor-inference.ts"
+import type { PostcodePlace } from "./postcode-anchor.ts"
 
 const MAGIC = 0x31_42_43_50 // "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31)
 const REC_TAIL = 5 // countryIdx(1) + latQ(2) + lonQ(2)

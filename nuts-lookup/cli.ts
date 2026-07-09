@@ -14,8 +14,8 @@ import { parseArgs } from "node:util"
 
 import { cliArguments } from "@mailwoman/core/utils"
 
-import { buildNutsDB } from "./build.js"
-import { NutsLookup } from "./index.js"
+import { buildNutsDB } from "./build.ts"
+import { NutsLookup } from "./index.ts"
 
 const argvAll = cliArguments()
 

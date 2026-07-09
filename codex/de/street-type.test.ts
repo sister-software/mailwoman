@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { DE_STREET_SUFFIXES, isGermanStreetToken } from "./street-type.js"
+import { DE_STREET_SUFFIXES, isGermanStreetToken } from "./street-type.ts"
 
 describe("isGermanStreetToken", () => {
 	it("matches fused compound streets via their suffix", () => {

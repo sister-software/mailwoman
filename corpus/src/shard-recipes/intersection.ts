@@ -41,10 +41,10 @@ import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { repoRootPath } from "@mailwoman/core/utils"
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
-import type { CanonicalRow, LabeledRow } from "../types.js"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
+import type { CanonicalRow, LabeledRow } from "../types.ts"
+import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 interface County {
 	fips: string

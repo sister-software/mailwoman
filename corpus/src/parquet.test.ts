@@ -10,7 +10,7 @@ import { join } from "node:path"
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { ParquetReader } from "./parquet-wrapper/index.js"
+import { ParquetReader } from "./parquet-wrapper/index.ts"
 import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
@@ -19,8 +19,8 @@ import {
 	rowToParquet,
 	writeShards,
 	type ParquetRow,
-} from "./parquet.js"
-import type { LabeledRow } from "./types.js"
+} from "./parquet.ts"
+import type { LabeledRow } from "./types.ts"
 
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	raw: "Paris",

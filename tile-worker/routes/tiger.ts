@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { WorkerRoute } from "../routing.js"
-import { TileMetadataRoute, TileRoute } from "./tile.js"
+import { WorkerRoute } from "../routing.ts"
+import { TileMetadataRoute, TileRoute } from "./tile.ts"
 
 //#region Tile Retrieval
 

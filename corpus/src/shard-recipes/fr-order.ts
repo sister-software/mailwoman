@@ -34,10 +34,10 @@ import { spawnSync } from "node:child_process"
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
-import type { CanonicalRow } from "../types.js"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
+import type { CanonicalRow } from "../types.ts"
+import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 const SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
 

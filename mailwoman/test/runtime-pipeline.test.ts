@@ -12,7 +12,7 @@ import type { AddressClassifier } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/resolver"
 import { describe, expect, it, vi } from "vitest"
 
-import { createRuntimePipeline } from "../runtime-pipeline.js"
+import { createRuntimePipeline } from "../runtime-pipeline.ts"
 
 function fakeClassifier(): AddressClassifier {
 	return {

@@ -18,13 +18,13 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildCandidateTable } from "./build-candidate.js"
-import { WOFCandidateTableLookup } from "./candidate-lookup.js"
+import { buildCandidateTable } from "./build-candidate.ts"
+import { WOFCandidateTableLookup } from "./candidate-lookup.ts"
 import {
 	createPostalCityCandidateTable,
 	POSTAL_CITY_CANDIDATE_TABLE,
 	type PostalCityCandidateDatabase,
-} from "./postal-city-candidate-schema.js"
+} from "./postal-city-candidate-schema.ts"
 
 let scratch: string
 let candidatePath: string

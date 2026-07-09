@@ -16,10 +16,10 @@ import { join } from "node:path"
 
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
-import { autocomplete } from "../../resolver-wof-sqlite/fst-autocomplete.js"
-import { FSTMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.js"
-import { serializeFST } from "../../resolver-wof-sqlite/fst-serialize.js"
-import { resolveFSTPath, runAutocomplete } from "./autocomplete.js"
+import { autocomplete } from "../../resolver-wof-sqlite/fst-autocomplete.ts"
+import { FSTMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.ts"
+import { serializeFST } from "../../resolver-wof-sqlite/fst-serialize.ts"
+import { resolveFSTPath, runAutocomplete } from "./autocomplete.tsx"
 
 // ---------------------------------------------------------------------------
 // Fixture helpers

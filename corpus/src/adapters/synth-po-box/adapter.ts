@@ -22,15 +22,15 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { stableSourceID } from "../../adapter.js"
+import { stableSourceID } from "../../adapter.ts"
 import {
 	countryToLocale,
 	REGION_OPTIONAL_LOCALES,
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
 	type PoBoxBaseTuple,
-} from "../../synthesize-po-box.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+} from "../../synthesize-po-box.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 export const SYNTH_PO_BOX_ADAPTER_ID = "synth-po-box"
 export const SYNTH_PO_BOX_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"

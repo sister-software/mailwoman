@@ -15,7 +15,7 @@ import {
 	geometryToWKB,
 	geometryToWKT,
 	wellKnownGeometryToGeoJSON,
-} from "./well-known-text.js"
+} from "./well-known-text.ts"
 
 const POINT: GeometryLiteral = { type: "Point", coordinates: [30, 10] }
 

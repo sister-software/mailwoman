@@ -9,7 +9,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { approxCircleGeometry, geomBounds, type PlaceGeometry } from "./_map-helpers.js"
+import { approxCircleGeometry, geomBounds, type PlaceGeometry } from "./_map-helpers.ts"
 
 describe("geomBounds", () => {
 	test("computes the bounding box of a simple polygon ring", () => {

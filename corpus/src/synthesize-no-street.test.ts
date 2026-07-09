@@ -15,7 +15,7 @@ import {
 	type NoStreetTemplate,
 	STREET_SIDE_TAGS,
 	synthesizeNoStreetRow,
-} from "./synthesize-no-street.js"
+} from "./synthesize-no-street.ts"
 
 function seededRandom(seed: number): () => number {
 	let s = seed

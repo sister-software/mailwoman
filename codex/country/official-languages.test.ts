@@ -11,7 +11,7 @@
 
 import { expect, test } from "vitest"
 
-import { isOfficialLanguage, OFFICIAL_LANGUAGES } from "./official-languages.js"
+import { isOfficialLanguage, OFFICIAL_LANGUAGES } from "./official-languages.ts"
 
 test("bilingual Finland: Swedish is official under both ISO spellings", () => {
 	expect(isOfficialLanguage("FI", "sv")).toBe(true)

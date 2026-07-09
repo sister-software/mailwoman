@@ -11,7 +11,7 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	input: zod.string().describe("Canonical jsonl input"),
@@ -28,7 +28,7 @@ const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	useEffect(() => {
 		void (async () => {
 			try {
-				const { alignCanonicalShard } = await import("../../corpus-tools/align-shard.js")
+				const { alignCanonicalShard } = await import("../../corpus-tools/align-shard.ts")
 				await alignCanonicalShard({
 					input: options.input,
 					output: options.output,

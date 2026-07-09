@@ -10,7 +10,7 @@
  *   — scrape it).
  */
 
-import type { ResolutionTier } from "../geocode-core.js"
+import type { ResolutionTier } from "../geocode-core.ts"
 
 /** Recent-latency reservoir size. ~2k samples gives stable p99 without unbounded memory. */
 const MAX_SAMPLES = 2048

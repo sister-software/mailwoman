@@ -4,4 +4,4 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./well-known-text.js"
+export * from "./well-known-text.ts"

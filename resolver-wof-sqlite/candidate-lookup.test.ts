@@ -22,8 +22,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildCandidateTable } from "./build-candidate.js"
-import { WOFCandidateTableLookup } from "./candidate-lookup.js"
+import { buildCandidateTable } from "./build-candidate.ts"
+import { WOFCandidateTableLookup } from "./candidate-lookup.ts"
 
 const ALIAS_SEP = "\u{E000}"
 

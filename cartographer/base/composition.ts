@@ -11,10 +11,10 @@ import {
 	LayerSpecificationList,
 	type LayerSpecificationListInput,
 	type LayerSpecificationListItem,
-} from "../styles/layers.js"
-import { type TileSetSourceRecord } from "../styles/sources.js"
-import { BaseLayers } from "./layers.js"
-import { createTerrainDEMSource, HillshadeTileSetID } from "./terrain.js"
+} from "../styles/layers.ts"
+import { type TileSetSourceRecord } from "../styles/sources.ts"
+import { BaseLayers } from "./layers.ts"
+import { createTerrainDEMSource, HillshadeTileSetID } from "./terrain.ts"
 
 //#endregion
 

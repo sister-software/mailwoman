@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { createLightSpec, createSkySpec, StyleSpecificationComposer } from "./composition.js"
+import { createLightSpec, createSkySpec, StyleSpecificationComposer } from "./composition.ts"
 
 //#region createLightSpec
 

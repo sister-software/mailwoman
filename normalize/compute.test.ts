@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { normalize } from "./compute.js"
+import { normalize } from "./compute.ts"
 
 describe("normalize — defaults", () => {
 	it("returns identity for already-clean input", () => {

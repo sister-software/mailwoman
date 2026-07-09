@@ -40,9 +40,9 @@
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { formatAddress, reconcileComponents } from "../../format.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
-import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "../../wof-json.js"
+import { formatAddress, reconcileComponents } from "../../format.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
+import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "../../wof-json.ts"
 
 const COUNTRY_DISPLAY_NAME: Record<string, string> = {
 	US: "United States of America",

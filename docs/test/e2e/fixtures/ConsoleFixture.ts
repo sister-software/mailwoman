@@ -8,7 +8,7 @@
 
 import type { Page, Request } from "@playwright/test"
 
-import { classify, isIgnored, listFailures } from "../utils/console-policy.js"
+import { classify, isIgnored, listFailures } from "../utils/console-policy.ts"
 
 export interface CapturedEvent {
 	kind: "console" | "pageerror" | "requestfailed"

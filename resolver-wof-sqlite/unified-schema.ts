@@ -16,7 +16,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
-import type { WOFDatabase } from "./schema.js"
+import type { WOFDatabase } from "./schema.ts"
 
 export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 	// PRAGMAs stay raw — not Kysely-modelled, and these tune the bulk build.

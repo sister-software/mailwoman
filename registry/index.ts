@@ -11,13 +11,13 @@
  *   for, finally standing on a calibrated, label-free matcher.
  */
 
-export * from "./address-key.js"
-export * from "./geojson.js"
-export * from "./ingest.js"
-export * from "./geocode-handler.js"
-export * from "./learned-scorer.js"
-export * from "./map-html.js"
-export * from "./models/dedup-gbt-en-us.js"
-export * from "./reconcile.js"
-export * from "./resolve.js"
-export * from "./types.js"
+export * from "./address-key.ts"
+export * from "./geojson.ts"
+export * from "./ingest.ts"
+export * from "./geocode-handler.ts"
+export * from "./learned-scorer.ts"
+export * from "./map-html.ts"
+export * from "./models/dedup-gbt-en-us.ts"
+export * from "./reconcile.ts"
+export * from "./resolve.ts"
+export * from "./types.ts"

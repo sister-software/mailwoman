@@ -6,7 +6,7 @@
 
 import { afterEach, expect, test, vi } from "vitest"
 
-import { mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.js"
+import { mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.ts"
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
 const THIS_FILE = import.meta.filename

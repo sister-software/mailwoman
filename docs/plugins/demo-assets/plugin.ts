@@ -21,7 +21,7 @@ import { resolve } from "node:path"
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import webpack from "webpack"
 
-import { buildWorkspaceAliases, stageSQLJSHTTPVFS } from "./resolve.js"
+import { buildWorkspaceAliases, stageSQLJSHTTPVFS } from "./resolve.ts"
 
 export default function demoAssetsPlugin(context: LoadContext): Plugin {
 	const docsDir = context.siteDir

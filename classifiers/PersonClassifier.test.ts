@@ -6,7 +6,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { PersonClassifier } from "./PersonClassifier.js"
+import { PersonClassifier } from "./PersonClassifier.ts"
 
 const classifier = await new PersonClassifier().ready()
 

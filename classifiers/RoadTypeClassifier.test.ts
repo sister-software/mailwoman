@@ -7,7 +7,7 @@
 import { ClassificationsMatchMap } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { RoadTypeClassifier } from "./RoadTypeClassifier.js"
+import { RoadTypeClassifier } from "./RoadTypeClassifier.ts"
 
 const classifier = await new RoadTypeClassifier().ready()
 

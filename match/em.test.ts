@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { agreementPattern, estimateParameters } from "./em.js"
-import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.js"
+import { agreementPattern, estimateParameters } from "./em.ts"
+import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.ts"
 
 const TWO_LEVELS: ComparisonLevel[] = [
 	{ label: "exact", minSimilarity: 1.0, m: 0.9, u: 0.1 },

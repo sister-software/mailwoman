@@ -6,8 +6,8 @@
 
 import { expect, test } from "vitest"
 
-import type { WOFRecord } from "./wof-json.js"
-import { buildAncestryIndex, extractNameVariants, isCurrentFeature, normalizeNameKey } from "./wof-json.js"
+import type { WOFRecord } from "./wof-json.ts"
+import { buildAncestryIndex, extractNameVariants, isCurrentFeature, normalizeNameKey } from "./wof-json.ts"
 
 // `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are out of scope
 // here; these are the pure object→value / map→map helpers.

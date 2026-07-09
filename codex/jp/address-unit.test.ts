@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isJapaneseAdminSuffix, JP_ADMIN_SUFFIXES, JP_BLOCK_MARKERS, stripAdminSuffix } from "./address-unit.js"
+import { isJapaneseAdminSuffix, JP_ADMIN_SUFFIXES, JP_BLOCK_MARKERS, stripAdminSuffix } from "./address-unit.ts"
 
 describe("JP_ADMIN_SUFFIXES / JP_BLOCK_MARKERS", () => {
 	it("carries the prefecture-level and city-level admin markers", () => {

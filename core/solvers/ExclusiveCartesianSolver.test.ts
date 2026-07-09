@@ -7,7 +7,7 @@
 import { Solution, SolutionMatch, Span, TokenContext } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { ExclusiveCartesianSolver } from "./ExclusiveCartesianSolver.js"
+import { ExclusiveCartesianSolver } from "./ExclusiveCartesianSolver.ts"
 
 /**
  * The static `exclusiveCartesian` is the pure core of this solver: it computes the cartesian product across

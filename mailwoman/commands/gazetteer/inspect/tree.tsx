@@ -22,7 +22,7 @@ import { PathBuilder } from "path-ts"
 import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../sdk/cli.js"
+import type { CommandComponent } from "../../../sdk/cli.ts"
 
 const BATCH_SIZE = availableParallelism()
 

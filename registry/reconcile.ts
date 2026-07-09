@@ -29,7 +29,7 @@
 
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
-import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.js"
+import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.ts"
 
 /** Which source labels denote eligibility vs funding/enrollment. */
 export interface ReconcileConfig {

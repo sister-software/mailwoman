@@ -7,8 +7,8 @@
 import { ResourceError } from "@mailwoman/core/errors"
 import type { GeoFeature, PointLiteral } from "@mailwoman/spatial"
 
-import { applyAccessControlAllowOrigin } from "../cors.js"
-import { WorkerRoute } from "../routing.js"
+import { applyAccessControlAllowOrigin } from "../cors.ts"
+import { WorkerRoute } from "../routing.ts"
 
 const CFGeolocationProperties = [
 	"country",

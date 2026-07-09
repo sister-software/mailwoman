@@ -13,7 +13,7 @@
  *   system does not assume there are rule classifiers for every locale.
  */
 
-import type { LocaleProfile } from "../locale.js"
+import type { LocaleProfile } from "../locale.ts"
 
 export const jaJP: LocaleProfile = {
 	locale: "ja-JP",

@@ -27,7 +27,7 @@ import { DatabaseSync } from "node:sqlite"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 
-import { buildPlaceSearchFTS } from "./fts.js"
+import { buildPlaceSearchFTS } from "./fts.ts"
 
 interface CLIArgs {
 	databasePaths: string[]

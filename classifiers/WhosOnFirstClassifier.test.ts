@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { WhosOnFirstClassifier } from "./WhosOnFirstClassifier.js"
+import { WhosOnFirstClassifier } from "./WhosOnFirstClassifier.ts"
 
 const classifier = await new WhosOnFirstClassifier().ready()
 

@@ -8,7 +8,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { expect, test } from "vitest"
 
-import { foldName, makeUnLocodeAnnotator, parseUnLocodeCoords, UnLocodeLookup } from "./index.js"
+import { foldName, makeUnLocodeAnnotator, parseUnLocodeCoords, UnLocodeLookup } from "./index.ts"
 
 test("foldName: strips diacritics, lowercases, collapses whitespace", () => {
 	expect(foldName("Nagykovácsi")).toBe("nagykovacsi")

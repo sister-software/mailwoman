@@ -38,7 +38,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	state: zod.string().optional().describe("US state abbreviation, e.g. VT"),

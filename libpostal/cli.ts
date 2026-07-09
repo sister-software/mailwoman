@@ -19,7 +19,7 @@ import { expandAbbreviations, normalize } from "@mailwoman/normalize"
 import express from "express"
 import { createAddressParser } from "mailwoman"
 
-import { createLibpostalRouter, type LibpostalEngine, type ParseMatch } from "./index.js"
+import { createLibpostalRouter, type LibpostalEngine, type ParseMatch } from "./index.ts"
 
 function serve(): void {
 	const { values } = parseArgs({

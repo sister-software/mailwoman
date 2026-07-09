@@ -13,7 +13,7 @@ import {
 	isAuLevelDesignator,
 	matchAuLevelDesignator,
 	normalizeAuLevelDesignator,
-} from "./level-designator.js"
+} from "./level-designator.ts"
 
 describe("AU_LEVEL_DESIGNATORS", () => {
 	it("carries the nine AS 4590.1-2017 level-type codes", () => {

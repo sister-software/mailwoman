@@ -4,5 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./DebugOutputBuilder.js"
-export * from "./parser.js"
+export * from "./DebugOutputBuilder.ts"
+export * from "./parser.ts"

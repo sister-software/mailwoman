@@ -22,8 +22,8 @@ import {
 	scoreStructuredAddress,
 	scoreVague,
 	scoreVenueLandmark,
-} from "./rules.js"
-import type { LocaleHint, NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "./types.js"
+} from "./rules.ts"
+import type { LocaleHint, NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "./types.ts"
 
 interface KindScorer {
 	kind: QueryKind

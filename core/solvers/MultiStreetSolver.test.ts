@@ -7,7 +7,7 @@
 import { Solution, SolutionMatch, TokenContext } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { MultiStreetSolver } from "./MultiStreetSolver.js"
+import { MultiStreetSolver } from "./MultiStreetSolver.ts"
 
 /**
  * Helper: build a TokenContext, tag two of its words as `street`, and tag the phrase that spans both of them as

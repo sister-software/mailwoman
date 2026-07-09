@@ -9,11 +9,11 @@
  *   they hang off of.
  */
 
-export * from "./floor-designator.js"
-export * from "./military-address.js"
-export * from "./po-box.js"
-export * from "./state.js"
-export * from "./street-directional.js"
-export * from "./street-suffix.js"
-export * from "./unit-designator.js"
-export * from "./zipcode.js"
+export * from "./floor-designator.ts"
+export * from "./military-address.ts"
+export * from "./po-box.ts"
+export * from "./state.ts"
+export * from "./street-directional.ts"
+export * from "./street-suffix.ts"
+export * from "./unit-designator.ts"
+export * from "./zipcode.ts"

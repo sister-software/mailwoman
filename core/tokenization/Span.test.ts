@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { Span } from "./Span.js"
+import { Span } from "./Span.ts"
 
 test("constructor: defaults", () => {
 	const span = Span.from()

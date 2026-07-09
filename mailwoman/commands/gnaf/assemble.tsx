@@ -23,7 +23,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	standardDir: zod.string().describe("G-NAF `Standard` directory holding the per-state *_psv.psv tables"),

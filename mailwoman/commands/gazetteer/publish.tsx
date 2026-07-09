@@ -26,8 +26,8 @@ import {
 	defaultGazetteerVersion,
 	publishGazetteer,
 	wofDir,
-} from "../../gazetteer-pipeline/index.js"
-import type { CommandComponent } from "../../sdk/cli.js"
+} from "../../gazetteer-pipeline/index.ts"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const ArgumentsSchema = zod.array(
 	zod.string().describe(`Candidate DB to publish. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}`)

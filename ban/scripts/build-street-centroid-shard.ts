@@ -51,8 +51,8 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street-centroid-schema"
 import { stripArrondissement } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.js"
-import { streetLocaleForBANCountry } from "../sdk/street-locale.js"
+import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.ts"
+import { streetLocaleForBANCountry } from "../sdk/street-locale.ts"
 
 interface BuildArgs {
 	country: string

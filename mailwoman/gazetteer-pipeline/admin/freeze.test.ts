@@ -8,7 +8,7 @@ import { DatabaseSync } from "node:sqlite"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { expect, test } from "vitest"
 
-import { freezeAdmin } from "./freeze.js"
+import { freezeAdmin } from "./freeze.ts"
 
 test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and passes integrity", async () => {
 	const db = new DatabaseSync(":memory:")

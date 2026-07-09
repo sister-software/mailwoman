@@ -15,7 +15,7 @@ import {
 	type LibpostalEngine,
 	type ParseMatch,
 	toLibpostalComponents,
-} from "./index.js"
+} from "./index.ts"
 
 test("toLibpostalComponents: maps our classifications to libpostal labels, in order", () => {
 	const matches: ParseMatch[] = [

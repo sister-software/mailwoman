@@ -10,8 +10,8 @@ import { join } from "node:path"
 
 import { beforeEach, describe, expect, it } from "vitest"
 
-import type { CanonicalRow } from "../../types.js"
-import { createGeonamesPostalAdapter, GEONAMES_POSTAL_ADAPTER_ID, GEONAMES_POSTAL_DEFAULT_LICENSE } from "./adapter.js"
+import type { CanonicalRow } from "../../types.ts"
+import { createGeonamesPostalAdapter, GEONAMES_POSTAL_ADAPTER_ID, GEONAMES_POSTAL_DEFAULT_LICENSE } from "./adapter.ts"
 
 let scratch: string
 beforeEach(() => {

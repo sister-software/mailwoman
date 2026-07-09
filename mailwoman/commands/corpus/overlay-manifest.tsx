@@ -11,7 +11,7 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	base: zod.string().describe("Base corpus manifest path"),
@@ -32,7 +32,7 @@ const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	useEffect(() => {
 		void (async () => {
 			try {
-				const { assembleOverlayManifest } = await import("../../corpus-tools/overlay-manifest.js")
+				const { assembleOverlayManifest } = await import("../../corpus-tools/overlay-manifest.ts")
 				await assembleOverlayManifest({
 					base: options.base,
 					newDir: options.newDir,

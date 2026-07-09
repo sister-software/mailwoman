@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { BIO_LABELS, BIOLabel, COMPONENT_TAGS, ComponentTag } from "./component.js"
+import { BIO_LABELS, BIOLabel, COMPONENT_TAGS, ComponentTag } from "./component.ts"
 
 describe("COMPONENT_TAGS", () => {
 	test("every tag is unique", () => {

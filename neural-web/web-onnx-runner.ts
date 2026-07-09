@@ -70,11 +70,12 @@ export class WebONNXRunner implements NeuralRunner {
 	public diagnostics: WebONNXRunnerDiagnostics | null = null
 	#session: ort.InferenceSession | null = null
 	#loadPromise: Promise<ort.InferenceSession> | null = null
+	private readonly modelBytes: Uint8Array
+	private readonly opts: WebONNXRunnerOpts
 
-	private constructor(
-		private readonly modelBytes: Uint8Array,
-		private readonly opts: WebONNXRunnerOpts
-	) {
+	private constructor(modelBytes: Uint8Array, opts: WebONNXRunnerOpts) {
+		this.modelBytes = modelBytes
+		this.opts = opts
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 	}
 

@@ -19,7 +19,7 @@
  */
 
 // haversineKm is the canonical implementation in @mailwoman/spatial; re-exported so this package's
-// readers keep importing it from "./geo.js" (the spatial dep is transitive via @mailwoman/resolver).
+// readers keep importing it from "./geo.ts" (the spatial dep is transitive via @mailwoman/resolver).
 export { haversineKm } from "@mailwoman/spatial"
 
 /** WGS-84 degrees → radians. */

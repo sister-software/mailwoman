@@ -6,9 +6,9 @@
 
 import { Kysely, type KyselyConfig } from "kysely"
 
-import type { Database } from "#db/schema"
-import { SqliteDialect } from "#kysley/dialect"
-import type { SqliteDialectConfig } from "#kysley/dialect-config"
+import type { Database } from "../db/schema.ts"
+import type { SqliteDialectConfig } from "./dialect-config.ts"
+import { SqliteDialect } from "./dialect.ts"
 
 /**
  * A Kysely client for SQLite that uses the `node:sqlite` library.

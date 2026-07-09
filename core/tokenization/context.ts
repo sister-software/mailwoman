@@ -11,9 +11,9 @@ import {
 	type Solution,
 } from "@mailwoman/core/solver"
 
-import { permutate } from "./permutate.js"
-import { type SerializedSpan, Span } from "./Span.js"
-import { fieldsFuncBoundary, fieldsFuncHyphenOrWhiteSpace, fieldsFuncWhiteSpace, splitByField } from "./split.js"
+import { permutate } from "./permutate.ts"
+import { type SerializedSpan, Span } from "./Span.ts"
+import { fieldsFuncBoundary, fieldsFuncHyphenOrWhiteSpace, fieldsFuncWhiteSpace, splitByField } from "./split.ts"
 
 export interface SerializedTokenContext {
 	span: SerializedSpan

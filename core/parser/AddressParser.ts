@@ -19,7 +19,7 @@ import {
 import { TokenContext } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ProposalClassifier } from "@mailwoman/core/types"
 
-import { runProposalPipeline, type WritebackResult } from "./proposal-pipeline.js"
+import { runProposalPipeline, type WritebackResult } from "./proposal-pipeline.ts"
 
 export interface AddressParserOptions {
 	classifiers?: Iterable<Classifier | ClassifierConstructor>

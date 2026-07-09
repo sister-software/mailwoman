@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 
 // Re-export the internals for testing. The script's CLI entry is gated on
 // `runIfScript(import.meta, …)`, so importing the module is side-effect-free.
-import { audit } from "./audit.js"
+import { audit } from "./audit.ts"
 
 const CORPUS_PATH = "/mnt/playpen/mailwoman-data/corpus/versioned/v0.3.0/corpus-v0.3.0"
 const hasCorpus = existsSync(CORPUS_PATH)

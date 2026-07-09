@@ -14,9 +14,9 @@ import { PathBuilder } from "path-ts"
 import pluralize from "pluralize"
 import { TextSpliterator } from "spliterator"
 
-import { resourceDictionaryPathBuilder } from "../utils/repo.js"
-import { takeAsync } from "./collections.js"
-import { LocaleIndex } from "./LocaleIndex.js"
+import { resourceDictionaryPathBuilder } from "../utils/repo.ts"
+import { takeAsync } from "./collections.ts"
+import { LocaleIndex } from "./LocaleIndex.ts"
 
 const batchSize = availableParallelism()
 const libPostalDataDirectory = resourceDictionaryPathBuilder("libpostal")

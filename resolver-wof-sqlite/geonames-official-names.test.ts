@@ -17,7 +17,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { ingestGeonamesAliases } from "./geonames-aliases.js"
+import { ingestGeonamesAliases } from "./geonames-aliases.ts"
 
 type Row = Record<string, string | number | null>
 

@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { classifyKindSync } from "./classify.js"
-import type { NormalizedInputLite, QueryShapeLike } from "./types.js"
+import { classifyKindSync } from "./classify.ts"
+import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
 function input(normalized: string): NormalizedInputLite {
 	return { raw: normalized, normalized }

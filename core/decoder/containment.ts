@@ -28,8 +28,8 @@
  *   call-site churn. See `AddressSystem` in `./types.ts`.
  */
 
-import type { ComponentTag } from "../types/component.js"
-import type { AddressSystem } from "./types.js"
+import type { ComponentTag } from "../types/component.ts"
+import type { AddressSystem } from "./types.ts"
 
 /** Preferred-parent ordering for each tag. Empty / missing = always root. */
 export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = {

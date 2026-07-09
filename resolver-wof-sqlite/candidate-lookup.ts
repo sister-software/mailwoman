@@ -27,14 +27,14 @@ import { DatabaseSync } from "node:sqlite"
 
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
 
-import { CANDIDATE_FTS_TABLE } from "./candidate-fts.js"
-import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.js"
-import { haversineKm } from "./geo.js"
-import { trigramJaccard } from "./lookup.js"
-import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.js"
-import { hasTable } from "./sqlite-utils.js"
-import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.js"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.js"
+import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
+import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
+import { haversineKm } from "./geo.ts"
+import { trigramJaccard } from "./lookup.ts"
+import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
+import { hasTable } from "./sqlite-utils.ts"
+import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
 export interface WOFCandidateTableLookupOpts {
 	/** Path to a `candidate.db` built by `build-candidate.ts`. Opened read-only. */

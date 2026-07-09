@@ -6,7 +6,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { MiddleInitialClassifier } from "./MiddleInitialClassifier.js"
+import { MiddleInitialClassifier } from "./MiddleInitialClassifier.ts"
 
 const classifier = new MiddleInitialClassifier()
 

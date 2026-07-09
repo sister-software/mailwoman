@@ -13,7 +13,7 @@ import { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
-import { resolveProposalOverlaps } from "./resolve-proposal-overlaps.js"
+import { resolveProposalOverlaps } from "./resolve-proposal-overlaps.ts"
 
 /** Build a proposal with an explicit span (`new Span(body, start)` derives `end = start + len`). */
 function p(component: ComponentTag, body: string, start: number, confidence: number): ClassificationProposal {

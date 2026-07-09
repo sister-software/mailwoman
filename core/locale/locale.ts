@@ -15,7 +15,7 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import type { ClassifierPolicy } from "../policy/policy.js"
+import type { ClassifierPolicy } from "../policy/policy.ts"
 
 export interface LocaleProfile {
 	/** BCP-47 locale tag (e.g. `"en-US"`, `"fr-FR"`, `"ja-JP"`). */

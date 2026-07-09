@@ -18,8 +18,8 @@ import type { Section } from "@mailwoman/core/types"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import { NeuralAddressClassifier } from "../classifier.js"
-import { createNeuralProposalClassifier } from "../proposal-classifier.js"
+import { NeuralAddressClassifier } from "../classifier.ts"
+import { createNeuralProposalClassifier } from "../proposal-classifier.ts"
 
 /** Minimal duck-typed Section — see proposal-classifier.ts for why we don't construct real Spans. */
 function makeSection(body: string, start = 0): Section {

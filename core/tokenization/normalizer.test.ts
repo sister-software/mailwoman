@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { TextNormalizer } from "./normalizer.js"
+import { TextNormalizer } from "./normalizer.ts"
 
 test("normalizerr: hyphen", () => {
 	const value = " Value-With-Some-Hyphen "

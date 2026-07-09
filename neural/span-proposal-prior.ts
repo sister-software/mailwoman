@@ -28,7 +28,7 @@
 
 import type { ProposedSpan } from "@mailwoman/core/pipeline"
 
-import type { TokenLike } from "./query-shape-prior.js"
+import type { TokenLike } from "./query-shape-prior.ts"
 
 export interface SpanProposalPriorOpts {
 	/**

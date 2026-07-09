@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./DataSourceCache.js"
-export * from "./loader.js"
-export * from "./PlacetypeDataSource.js"
-export * from "./placetypes/index.js"
+export * from "./DataSourceCache.ts"
+export * from "./loader.ts"
+export * from "./PlacetypeDataSource.ts"
+export * from "./placetypes/index.ts"

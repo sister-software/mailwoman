@@ -16,8 +16,8 @@
  *   implements this interface natively. The solver consumes one normalized shape.
  */
 
-import type { Span } from "../tokenization/index.js"
-import type { ComponentTag } from "./component.js"
+import type { Span } from "../tokenization/index.ts"
+import type { ComponentTag } from "./component.ts"
 
 /**
  * Sections in Mailwoman are sub-Spans of the tokenized input (split by boundary characters: commas, line breaks, etc.).

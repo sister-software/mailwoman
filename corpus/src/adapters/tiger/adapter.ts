@@ -36,10 +36,10 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { lookupFipsState } from "../../codex/us-fips-state.js"
-import { formatAddress, reconcileComponents } from "../../format.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
-import { decomposeStreet } from "./street-decompose.js"
+import { lookupFipsState } from "../../codex/us-fips-state.ts"
+import { formatAddress, reconcileComponents } from "../../format.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
+import { decomposeStreet } from "./street-decompose.ts"
 
 export const TIGER_ADAPTER_ID = "tiger"
 export const TIGER_DEFAULT_LICENSE = "Public Domain"

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { computeQueryShape } from "./compute.js"
+import { computeQueryShape } from "./compute.ts"
 
 describe("computeQueryShape — end-to-end", () => {
 	it("classifies a US ZIP correctly", () => {

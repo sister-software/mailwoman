@@ -7,7 +7,7 @@
 import { assertClassification } from "mailwoman/sdk/test"
 import { expect, test } from "vitest"
 
-import { ToponymClassifier } from "./ToponymClassifier.js"
+import { ToponymClassifier } from "./ToponymClassifier.ts"
 
 const classifier = await new ToponymClassifier().ready()
 

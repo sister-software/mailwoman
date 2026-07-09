@@ -16,8 +16,8 @@ import {
 	scoreStructuredAddress,
 	scoreVague,
 	scoreVenueLandmark,
-} from "./rules.js"
-import type { NormalizedInputLite, QueryShapeLike } from "./types.js"
+} from "./rules.ts"
+import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
 const input = (normalized: string): NormalizedInputLite => ({ raw: normalized, normalized })
 const fmt = (format: string, start: number, end: number, confidence = 0.9) => ({

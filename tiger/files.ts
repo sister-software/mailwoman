@@ -6,7 +6,7 @@
  *   TIGER Census data utilities.
  */
 
-import { AdminLevel1Code } from "./state.js"
+import { AdminLevel1Code } from "./state.ts"
 
 //#region Constants
 
@@ -15,57 +15,61 @@ import { AdminLevel1Code } from "./state.js"
  *
  * @category Census
  */
-export enum TIGERLevel {
-	State = "us_state",
-	County = "county",
-	CountySubdivision = "cousub",
-	Tract = "tract",
-	BlockGroup = "bg",
-	Block = "tabblock20",
-}
+export const TIGERLevel = {
+	State: "us_state",
+	County: "county",
+	CountySubdivision: "cousub",
+	Tract: "tract",
+	BlockGroup: "bg",
+	Block: "tabblock20",
+} as const
+
+export type TIGERLevel = (typeof TIGERLevel)[keyof typeof TIGERLevel]
 
 /**
  * File extension for TIGER data files.
  *
  * @category Census
  */
-export enum TIGERFileExtension {
+export const TIGERFileExtension = {
 	/**
 	 * Feature geometry, i.e. the shape of the geographic area.
 	 */
-	Shape = ".shp",
+	Shape: ".shp",
 	/**
 	 * Index of the feature geometry for quick access.
 	 */
-	Index = ".shx",
+	Index: ".shx",
 	/**
 	 * Tabular attribute metadata.
 	 */
-	Attributes = ".dbf",
+	Attributes: ".dbf",
 	/**
 	 * Coordinate system information. Describes the projection of the geographic data.
 	 */
-	Projection = ".prj",
+	Projection: ".prj",
 	/**
 	 * Federal Geographic Data Committee (FGDC) metadata.
 	 */
-	FGDCMetadata = ".shp.xml",
+	FGDCMetadata: ".shp.xml",
 	/**
 	 * International Organization for Standardization (ISO 191) metadata.
 	 */
-	ISOMetadata = ".shp.iso.xml",
+	ISOMetadata: ".shp.iso.xml",
 	/**
 	 * ISO 191 (entity and attribute) metadata.
 	 */
-	EntityAttributeMetadata = ".shp.ea.iso.xml",
+	EntityAttributeMetadata: ".shp.ea.iso.xml",
 
 	/**
 	 * Compressed ZIP archive.
 	 */
-	Zip = ".zip",
+	Zip: ".zip",
 
-	None = "",
-}
+	None: "",
+} as const
+
+export type TIGERFileExtension = (typeof TIGERFileExtension)[keyof typeof TIGERFileExtension]
 
 /**
  * Order of TIGER levels for processing, from largest to smallest.
@@ -126,7 +130,7 @@ export type TIGERStateLevelZIPPath<
 	SFC extends AdminLevel1Code,
 	Level extends TIGERLevel,
 	Vintage extends number = TIGERCurrentVintage,
-> = `/geo/tiger/TIGER${Vintage}/${Uppercase<Level>}/${TIGERStateLevelFileName<SFC, Level, TIGERFileExtension.Zip, Vintage>}`
+> = `/geo/tiger/TIGER${Vintage}/${Uppercase<Level>}/${TIGERStateLevelFileName<SFC, Level, typeof TIGERFileExtension.Zip, Vintage>}`
 
 /**
  * Template function to generate a TIGER ZIP file path.
@@ -176,13 +180,18 @@ export interface TIGERLevelManifest<
 	Level extends TIGERLevel,
 	Vintage extends number = number,
 > {
-	Shape: TIGERStateLevelFileName<SFC, Level, TIGERFileExtension.Shape, Vintage>
-	Index: TIGERStateLevelFileName<SFC, Level, TIGERFileExtension.Index, Vintage>
-	Attributes: TIGERStateLevelFileName<SFC, Level, TIGERFileExtension.Attributes, Vintage>
-	Projection: TIGERStateLevelFileName<SFC, Level, TIGERFileExtension.Projection, Vintage>
-	FGDCMetadata: TIGERStateLevelFileName<SFC, Level, TIGERFileExtension.FGDCMetadata, Vintage>
-	ISOMetadata: TIGERStateLevelFileName<SFC, Level, TIGERFileExtension.ISOMetadata, Vintage>
-	EntityAttributeMetadata: TIGERStateLevelFileName<SFC, Level, TIGERFileExtension.EntityAttributeMetadata, Vintage>
+	Shape: TIGERStateLevelFileName<SFC, Level, typeof TIGERFileExtension.Shape, Vintage>
+	Index: TIGERStateLevelFileName<SFC, Level, typeof TIGERFileExtension.Index, Vintage>
+	Attributes: TIGERStateLevelFileName<SFC, Level, typeof TIGERFileExtension.Attributes, Vintage>
+	Projection: TIGERStateLevelFileName<SFC, Level, typeof TIGERFileExtension.Projection, Vintage>
+	FGDCMetadata: TIGERStateLevelFileName<SFC, Level, typeof TIGERFileExtension.FGDCMetadata, Vintage>
+	ISOMetadata: TIGERStateLevelFileName<SFC, Level, typeof TIGERFileExtension.ISOMetadata, Vintage>
+	EntityAttributeMetadata: TIGERStateLevelFileName<
+		SFC,
+		Level,
+		typeof TIGERFileExtension.EntityAttributeMetadata,
+		Vintage
+	>
 }
 
 export function TIGERLevelManifest<
@@ -222,10 +231,10 @@ export function TIGERLevelManifest<
  * A full TIGER manifest for a specific state.
  */
 export interface TIGERStateManifest<SFC extends AdminLevel1Code, Vintage extends number = TIGERCurrentVintage> {
-	Tract: TIGERLevelManifest<SFC, TIGERLevel.Tract, Vintage>
-	CountySubdivision: TIGERLevelManifest<SFC, TIGERLevel.CountySubdivision, Vintage>
-	BlockGroup: TIGERLevelManifest<SFC, TIGERLevel.BlockGroup, Vintage>
-	Block: TIGERLevelManifest<SFC, TIGERLevel.Block, Vintage>
+	Tract: TIGERLevelManifest<SFC, typeof TIGERLevel.Tract, Vintage>
+	CountySubdivision: TIGERLevelManifest<SFC, typeof TIGERLevel.CountySubdivision, Vintage>
+	BlockGroup: TIGERLevelManifest<SFC, typeof TIGERLevel.BlockGroup, Vintage>
+	Block: TIGERLevelManifest<SFC, typeof TIGERLevel.Block, Vintage>
 }
 
 export function TIGERStateManifest<SFC extends AdminLevel1Code, Vintage extends number = TIGERCurrentVintage>(

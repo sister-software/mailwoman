@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { canonicalKey, normalizeAddressToken } from "./key.js"
+import { canonicalKey, normalizeAddressToken } from "./key.ts"
 
 describe("normalizeAddressToken", () => {
 	it("lowercases and collapses whitespace", () => {

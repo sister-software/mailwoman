@@ -10,9 +10,9 @@
  *   use `decodeAsXML` when containment matters.
  */
 
-import type { ComponentTag } from "../types/component.js"
-import type { AddressNode, AddressTree } from "./types.js"
-import { unknownSpans } from "./unknown-spans.js"
+import type { ComponentTag } from "../types/component.ts"
+import type { AddressNode, AddressTree } from "./types.ts"
+import { unknownSpans } from "./unknown-spans.ts"
 
 /** Options for {@link decodeAsTuples}. */
 export interface SerializeTuplesOpts {

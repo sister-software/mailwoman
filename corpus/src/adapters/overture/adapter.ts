@@ -32,9 +32,9 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { stableSourceID } from "../../adapter.js"
-import { formatAddress, reconcileComponents } from "../../format.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import { stableSourceID } from "../../adapter.ts"
+import { formatAddress, reconcileComponents } from "../../format.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 export const OVERTURE_ADAPTER_ID = "overture"
 export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"

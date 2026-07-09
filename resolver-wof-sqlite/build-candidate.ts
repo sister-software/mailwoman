@@ -33,14 +33,14 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
-import { createCandidateFTS } from "./candidate-fts.js"
+import { createCandidateFTS } from "./candidate-fts.ts"
 import {
 	CANDIDATE_COLUMNS,
 	createCandidateStagingTables,
 	createCandidateTable,
 	type CandidateDatabase,
-} from "./candidate-schema.js"
-import { normalizeLocalityForKey } from "./street-normalize.js"
+} from "./candidate-schema.ts"
+import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 /** Boundary-preserving alias-bag separator (#523, U+E000). */
 const ALIAS_SEP = "\u{E000}"

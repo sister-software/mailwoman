@@ -36,9 +36,9 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
-import { formatAddress, reconcileComponents } from "../../format.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
+import { formatAddress, reconcileComponents } from "../../format.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"

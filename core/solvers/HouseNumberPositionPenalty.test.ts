@@ -7,7 +7,7 @@
 import { Alpha2LanguageCode, Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { HouseNumberPositionPenalty } from "./HouseNumberPositionPenalty.js"
+import { HouseNumberPositionPenalty } from "./HouseNumberPositionPenalty.ts"
 
 /**
  * Build a `street` match carrying a single language so the solver can read `street.languages`. The solver keys its

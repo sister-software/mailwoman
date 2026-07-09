@@ -26,7 +26,7 @@ import type {
 	FillLayerSpecification,
 	VectorSourceSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
-import { TileSetSourceID } from "../styles/sources.js"
+import { TileSetSourceID } from "../styles/sources.ts"
 
 export const CoverageTileSetID = TileSetSourceID("coverage-v5")
 

@@ -19,7 +19,7 @@ import {
 	extractGeocodeResult,
 	type GeocodeClassifier,
 	parseForGeocode,
-} from "./geocode-core.js"
+} from "./geocode-core.ts"
 
 describe("countryFromPostcodeFormat (#928)", () => {
 	it("matches GB postcodes (spaced and unspaced)", () => {

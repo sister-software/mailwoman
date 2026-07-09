@@ -11,9 +11,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.js"
-import { type LocaleBaseTuple, synthesizeGermanRow, synthesizeLocaleRow } from "./synthesize-german.js"
-import type { CanonicalRow } from "./types.js"
+import { alignRow } from "./align.ts"
+import { type LocaleBaseTuple, synthesizeGermanRow, synthesizeLocaleRow } from "./synthesize-german.ts"
+import type { CanonicalRow } from "./types.ts"
 
 const BERLIN: LocaleBaseTuple = {
 	house_number: "27",

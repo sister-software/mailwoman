@@ -6,9 +6,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import { classifyToken, tokenizeForClass } from "./character-class.js"
-import { detectKnownFormats } from "./known-formats.js"
-import type { KnownFormat, TokenClass } from "./types.js"
+import { classifyToken, tokenizeForClass } from "./character-class.ts"
+import { detectKnownFormats } from "./known-formats.ts"
+import type { KnownFormat, TokenClass } from "./types.ts"
 
 function tokenize(text: string): TokenClass[] {
 	return tokenizeForClass(text).map((span) => ({

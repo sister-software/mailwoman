@@ -20,8 +20,8 @@
  *   run including this shard.
  */
 
-import { decomposeFrStreet } from "../adapters/ban/street-decompose.js"
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.js"
+import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
 export const frBareStreetRecipe: ShardRecipe = {
 	name: "fr-bare-street",

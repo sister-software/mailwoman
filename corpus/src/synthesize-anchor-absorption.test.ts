@@ -7,8 +7,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.js"
-import { synthesizeAnchorAbsorptionRow, type AnchorAbsorptionTemplate } from "./synthesize-anchor-absorption.js"
+import { alignRow } from "./align.ts"
+import { synthesizeAnchorAbsorptionRow, type AnchorAbsorptionTemplate } from "./synthesize-anchor-absorption.ts"
 
 // A deterministic RNG so the assertions are stable.
 function seeded(seed: number): () => number {

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { segment } from "./segmentation.js"
+import { segment } from "./segmentation.ts"
 
 describe("segment", () => {
 	it("splits on commas", () => {

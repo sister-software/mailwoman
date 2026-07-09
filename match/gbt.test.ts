@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { buildThresholds, type GBT, gbtScore, trainGBT } from "./gbt.js"
+import { buildThresholds, type GBT, gbtScore, trainGBT } from "./gbt.ts"
 
 /** Deterministic LCG so the synthetic data + the test are reproducible (no Math.random). */
 function lcg(seed: number): () => number {

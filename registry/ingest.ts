@@ -27,7 +27,7 @@ import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeo
 import { parse as parseCSVSync } from "csv-parse/sync"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
-import type { SourceRecord } from "./types.js"
+import type { SourceRecord } from "./types.ts"
 
 /** Resolve a raw address string into a {@link PostalAddress}. The seam to mailwoman's geocoder. */
 export type GeocodeAddress = (raw: string) => Promise<PostalAddress | null> | PostalAddress | null

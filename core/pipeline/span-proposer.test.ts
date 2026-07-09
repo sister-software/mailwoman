@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans, type SpanProposerLexicon } from "./span-proposer.js"
+import { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans, type SpanProposerLexicon } from "./span-proposer.ts"
 
 /** Codex-shaped fixture lexicon (the real one is built from @mailwoman/codex in neural). */
 const LEXICON: SpanProposerLexicon = {

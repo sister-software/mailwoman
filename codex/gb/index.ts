@@ -8,7 +8,7 @@
  *   vocabulary.
  */
 
-export * from "./country.js"
-export * from "./postcode-area.js"
-export * from "./postcode.js"
-export * from "./street-type.js"
+export * from "./country.ts"
+export * from "./postcode-area.ts"
+export * from "./postcode.ts"
+export * from "./street-type.ts"

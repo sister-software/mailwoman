@@ -19,8 +19,8 @@
  *   downstream contract.
  */
 
-import type { ComponentTag } from "../types/component.js"
-import type { ClassifierCandidate } from "./reconcile.js"
+import type { ComponentTag } from "../types/component.ts"
+import type { ClassifierCandidate } from "./reconcile.ts"
 
 /**
  * A token piece with character-level offsets into the original text.

@@ -11,7 +11,7 @@
  *   `@mailwoman/codex`.
  */
 
-export { DEFAULT_PLACETYPE_MAP, PLACETYPE_FILTER_GROUPS, expandPlacetypeFilter, isPlacetypeFallback } from "./types.js"
+export { DEFAULT_PLACETYPE_MAP, PLACETYPE_FILTER_GROUPS, expandPlacetypeFilter, isPlacetypeFallback } from "./types.ts"
 export type {
 	AddressPointHit,
 	AddressPointLookup,
@@ -26,4 +26,4 @@ export type {
 	ResolverBackend,
 	StreetCentroidHit,
 	StreetCentroidLookup,
-} from "./types.js"
+} from "./types.ts"

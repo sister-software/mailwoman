@@ -5,9 +5,9 @@
  */
 import { describe, expect, it } from "vitest"
 
-import type { ComponentTag } from "../types/component.js"
-import type { AddressNode, AddressTree } from "./types.js"
-import { isLossless, losslessSegments, unknownSpans } from "./unknown-spans.js"
+import type { ComponentTag } from "../types/component.ts"
+import type { AddressNode, AddressTree } from "./types.ts"
+import { isLossless, losslessSegments, unknownSpans } from "./unknown-spans.ts"
 
 function node(tag: ComponentTag, start: number, end: number, value: string, children: AddressNode[] = []): AddressNode {
 	return { tag, value, start, end, confidence: 1, children }

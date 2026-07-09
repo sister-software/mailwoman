@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { countrySurfaceForms, isCountryToken, matchCountry } from "./country.js"
+import { countrySurfaceForms, isCountryToken, matchCountry } from "./country.ts"
 
 test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to the iso2", () => {
 	expect(matchCountry("US")?.iso2).toBe("US")

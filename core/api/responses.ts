@@ -8,8 +8,8 @@
 
 import { AxiosError, HttpStatusCode, isAxiosError } from "axios"
 
-import { ResourceError } from "../errors/schema.js"
-import { ConsoleLogger } from "../logging/index.js"
+import { ResourceError } from "../errors/schema.ts"
+import { ConsoleLogger } from "../logging/index.ts"
 
 /**
  * A response container, wrapping the actual response body.

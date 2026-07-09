@@ -13,7 +13,7 @@
 
 import { resolvePath } from "path-ts"
 
-import { $public } from "../env/index.js"
+import { $public } from "../env/index.ts"
 
 /**
  * The lab default data root — the ONE place this literal appears. Everything else builds on {@link dataRootPath} /

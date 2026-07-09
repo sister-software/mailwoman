@@ -14,7 +14,7 @@ import { resolve } from "node:path"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-import { parseSmokeRows } from "./demo-cascade-rows.js"
+import { parseSmokeRows } from "./demo-cascade-rows.ts"
 
 const valid = (over: Record<string, unknown> = {}) =>
 	JSON.stringify({ input: "Brooklyn", expect: { id: 421205765, name: "Brooklyn" }, ...over })

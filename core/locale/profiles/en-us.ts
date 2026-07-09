@@ -8,7 +8,7 @@
  *   0 — neural weights ship in Phase 3.
  */
 
-import type { LocaleProfile } from "../locale.js"
+import type { LocaleProfile } from "../locale.ts"
 
 export const enUS: LocaleProfile = {
 	locale: "en-US",

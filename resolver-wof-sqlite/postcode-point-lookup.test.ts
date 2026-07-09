@@ -15,7 +15,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { WOFPostcodeLookup } from "./postcode-point-lookup.js"
+import { WOFPostcodeLookup } from "./postcode-point-lookup.ts"
 
 /** Create a minimal postcode shard with the columns the lookup reads. */
 function seedShard(path: string, rows: Array<[number, string, string, string, number, number, number]>): void {

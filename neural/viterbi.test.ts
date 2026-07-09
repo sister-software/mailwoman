@@ -13,7 +13,7 @@ import {
 	perTokenArgmax,
 	softmax,
 	viterbi,
-} from "./viterbi.js"
+} from "./viterbi.ts"
 
 const NEG_INF = -1e9
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"] as const

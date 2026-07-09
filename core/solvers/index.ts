@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./ExclusiveCartesianSolver.js"
-export * from "./HouseNumberPositionPenalty.js"
-export * from "./LeadingAreaDeclassifier.js"
-export * from "./MultiStreetSolver.js"
-export * from "./OrphanedLevelTypeDeclassifier.js"
-export * from "./OrphanedUnitTypeDeclassifier.js"
-export * from "./PostcodePositionPenalty.js"
-export * from "./VenueCaptureSolver.js"
+export * from "./ExclusiveCartesianSolver.ts"
+export * from "./HouseNumberPositionPenalty.ts"
+export * from "./LeadingAreaDeclassifier.ts"
+export * from "./MultiStreetSolver.ts"
+export * from "./OrphanedLevelTypeDeclassifier.ts"
+export * from "./OrphanedUnitTypeDeclassifier.ts"
+export * from "./PostcodePositionPenalty.ts"
+export * from "./VenueCaptureSolver.ts"

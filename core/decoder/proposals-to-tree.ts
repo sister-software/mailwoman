@@ -14,9 +14,9 @@
  *   pipeline.
  */
 
-import type { Span } from "../tokenization/index.js"
-import type { ClassificationProposal, ClassificationProposalSource, ComponentTag } from "../types/index.js"
-import type { AddressNode, AddressTree } from "./types.js"
+import type { Span } from "../tokenization/index.ts"
+import type { ClassificationProposal, ClassificationProposalSource, ComponentTag } from "../types/index.ts"
+import type { AddressNode, AddressTree } from "./types.ts"
 
 export function proposalsToTree(raw: string, proposals: readonly ClassificationProposal[]): AddressTree {
 	const roots: AddressNode[] = proposals.map((p) => ({

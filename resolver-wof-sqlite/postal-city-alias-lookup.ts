@@ -20,7 +20,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
-import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
+import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.ts"
 
 export interface WOFPostalCityAliasLookupOpts {
 	/** Path to a `postal-city-alias-<cc>.db` built by `build-postal-city-alias.ts`. Opened read-only. */

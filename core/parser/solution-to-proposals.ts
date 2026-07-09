@@ -16,9 +16,9 @@
  *   filesystem-bound init; downstream proposal consumers read only `start` / `end` / `body`.
  */
 
-import type { SerializedSolution } from "../solver/index.js"
-import type { Span } from "../tokenization/index.js"
-import { type ClassificationProposal, legacyClassificationToComponentTag } from "../types/index.js"
+import type { SerializedSolution } from "../solver/index.ts"
+import type { Span } from "../tokenization/index.ts"
+import { type ClassificationProposal, legacyClassificationToComponentTag } from "../types/index.ts"
 
 /**
  * Project a solved v0 solution's matches into `rule`-sourced proposals. Matches whose legacy classification has no

@@ -17,7 +17,7 @@ import { existsSync } from "node:fs"
 
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 
-import { streetLocaleForBANCountry, supportedBANCountries } from "./street-locale.js"
+import { streetLocaleForBANCountry, supportedBANCountries } from "./street-locale.ts"
 
 /** What the cascade needs from a BAN shard — structurally a subset of mailwoman's `StateShards`. */
 export interface BANShards {

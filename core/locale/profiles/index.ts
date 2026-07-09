@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./en-us.js"
-export * from "./fr-fr.js"
-export * from "./ja-jp.js"
+export * from "./en-us.ts"
+export * from "./fr-fr.ts"
+export * from "./ja-jp.ts"

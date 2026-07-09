@@ -10,8 +10,8 @@
  *   browser.
  */
 
-import { $public } from "../env/index.js"
-import { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.js"
+import { $public } from "../env/index.ts"
+import { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
 
 /** Serialized model: metadata in JSON, the dense `weights` (row-major [class][feature]) alongside. */
 export interface CoarsePlacerArtifact {
@@ -160,7 +160,7 @@ export class CoarsePlacer {
 		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
 
 		if (dir) return CoarsePlacer.fromArtifactDir(dir, opts)
-		const { corePackagePath } = await import("../utils/repo.js")
+		const { corePackagePath } = await import("../utils/repo.ts")
 
 		return CoarsePlacer.fromArtifactDir(corePackagePath("data", "coarse-placer"), opts)
 	}

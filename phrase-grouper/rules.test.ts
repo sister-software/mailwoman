@@ -16,8 +16,8 @@ import {
 	scoreVenuePhrase,
 	type SegmentToken,
 	tokenizeSegment,
-} from "./rules.js"
-import type { PhraseProposal, QueryShapeLike } from "./types.js"
+} from "./rules.ts"
+import type { PhraseProposal, QueryShapeLike } from "./types.ts"
 
 /**
  * Build the `SegmentToken[]` for a single segment string the same way `tokenizeSegment` does, but keep it explicit in

@@ -19,7 +19,7 @@ import {
 	ingestRows,
 	parseCSV,
 	streamRows,
-} from "./ingest.js"
+} from "./ingest.ts"
 
 const CSV = `id,name,org,street,city,state,zip,phone,email
 c1,Dr. Robert Smith,Acme Health LLC,123 Main St,Portland,OR,97201,503-555-0100,Bob@Acme.org

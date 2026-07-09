@@ -6,7 +6,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { UnitDesignatorClassifier } from "./UnitDesignatorClassifier.js"
+import { UnitDesignatorClassifier } from "./UnitDesignatorClassifier.ts"
 
 const classifier = await new UnitDesignatorClassifier().ready()
 

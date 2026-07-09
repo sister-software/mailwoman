@@ -8,7 +8,7 @@ import { DatabaseSync } from "node:sqlite"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { expect, test } from "vitest"
 
-import { enrichAdmin } from "./enrich.js"
+import { enrichAdmin } from "./enrich.ts"
 
 test("enrichAdmin adds region abbreviations (VT→Vermont) and builds place_abbr", async () => {
 	const db = new DatabaseSync(":memory:")

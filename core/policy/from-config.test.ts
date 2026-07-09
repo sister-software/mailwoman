@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { policyRegistryFromConfig } from "./from-config.js"
+import { policyRegistryFromConfig } from "./from-config.ts"
 
 describe("policyRegistryFromConfig", () => {
 	it("loads locale-scoped and global entries over the defaults", () => {

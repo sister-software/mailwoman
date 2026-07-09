@@ -14,7 +14,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { createWOFResolver } from "./resolve.js"
+import { createWOFResolver } from "./resolve.ts"
 
 // "ME" → Messina (IT, greedy top by population) and Maine (US) — both exact abbrev matches.
 const MESSINA = {

@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { isUniformlyCased, smartCamelCase, smartCapitalCase, smartSnakeCase } from "./identifiers.js"
+import { isUniformlyCased, smartCamelCase, smartCapitalCase, smartSnakeCase } from "./identifiers.ts"
 
 test("smartSnakeCase: snake-cases mixed-case names", () => {
 	expect(smartSnakeCase("streetName")).toBe("street_name")

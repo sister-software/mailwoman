@@ -7,9 +7,9 @@
 import type { PostalAddress } from "@mailwoman/record"
 import { describe, expect, it } from "vitest"
 
-import { makeGeocodeHandler } from "./geocode-handler.js"
-import type { GeocodeAddress } from "./ingest.js"
-import type { SourceRecord } from "./types.js"
+import { makeGeocodeHandler } from "./geocode-handler.ts"
+import type { GeocodeAddress } from "./ingest.ts"
+import type { SourceRecord } from "./types.ts"
 
 const rec = (raw: Record<string, string>): SourceRecord => ({ id: "x", raw }) as SourceRecord
 

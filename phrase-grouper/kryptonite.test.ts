@@ -19,8 +19,8 @@
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
-import { groupPhrasesSync } from "./group.js"
-import type { NormalizedInputLite, PhraseKind, PhraseProposal } from "./types.js"
+import { groupPhrasesSync } from "./group.ts"
+import type { NormalizedInputLite, PhraseKind, PhraseProposal } from "./types.ts"
 
 function input(text: string): NormalizedInputLite {
 	return { raw: text, normalized: text }

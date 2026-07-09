@@ -8,10 +8,10 @@ import { existsSync } from "node:fs"
 
 import { beforeAll, describe, expect, it } from "vitest"
 
-import { autocomplete } from "./fst-autocomplete.js"
-import { buildFSTFromWOF } from "./fst-builder.js"
-import { FSTMatcher } from "./fst-matcher.js"
-import type { PlaceEntry, PlacetypeID } from "./fst-types.js"
+import { autocomplete } from "./fst-autocomplete.ts"
+import { buildFSTFromWOF } from "./fst-builder.ts"
+import { FSTMatcher } from "./fst-matcher.ts"
+import type { PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
 const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const HAS_WOF = existsSync(WOF_DB)

@@ -11,12 +11,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import { extractPostcodeAnchors } from "./postcode-anchor.js"
+import { extractPostcodeAnchors } from "./postcode-anchor.ts"
 import {
 	PostcodeBinaryResolver,
 	serializePostcodeBinary,
 	type PostcodeBinaryEntry,
-} from "./postcode-binary-resolver.js"
+} from "./postcode-binary-resolver.ts"
 
 const ENTRIES: PostcodeBinaryEntry[] = [
 	{ postcode: "94105", country: "US", lat: 37.789, lon: -122.396 },

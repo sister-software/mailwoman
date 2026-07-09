@@ -21,7 +21,7 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
-import { DEFAULT_VERIFY_BASELINE } from "./verify-baseline.js"
+import { DEFAULT_VERIFY_BASELINE } from "./verify-baseline.ts"
 
 export interface VerifyCheckResult {
 	check: string

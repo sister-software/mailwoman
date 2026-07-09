@@ -10,7 +10,7 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "./adapter.js"
+import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "./adapter.ts"
 
 function writeFixture(rows: Array<Record<string, unknown>>): string {
 	const path = join(tmpdir(), `synth-po-box-fixture-${Math.random().toString(36).slice(2)}.jsonl`)

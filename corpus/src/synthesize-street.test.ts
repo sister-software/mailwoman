@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { synthesizeStreetRow } from "./synthesize-street.js"
+import { synthesizeStreetRow } from "./synthesize-street.ts"
 
 function seededRandom(seed: number): () => number {
 	let s = seed

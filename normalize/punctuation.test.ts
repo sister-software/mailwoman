@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { applyPunctuation } from "./punctuation.js"
+import { applyPunctuation } from "./punctuation.ts"
 
 test("applyPunctuation: input with no fancy punctuation is unchanged (identity map)", () => {
 	const r = applyPunctuation("123 Main St")

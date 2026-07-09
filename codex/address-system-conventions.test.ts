@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "./address-system-conventions.js"
+import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "./address-system-conventions.ts"
 
 describe("FR address-system conventions (#719)", () => {
 	it("does NOT forbid street_prefix — FR uses a LEADING street type the current model emits correctly", () => {

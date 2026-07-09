@@ -8,7 +8,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { expect, test } from "vitest"
 
-import { makeTimezoneAnnotator, offsetSecForTimezone, pointInMultiPolygon, TimezoneLookup } from "./index.js"
+import { makeTimezoneAnnotator, offsetSecForTimezone, pointInMultiPolygon, TimezoneLookup } from "./index.ts"
 
 const SQUARE: number[][][][] = [
 	[

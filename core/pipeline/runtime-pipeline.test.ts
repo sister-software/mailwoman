@@ -9,11 +9,11 @@
 
 import { describe, expect, it, vi } from "vitest"
 
-import type { AddressNode, AddressTree } from "../decoder/types.js"
-import type { Resolver } from "../resolver/types.js"
-import type { Span } from "../tokenization/index.js"
-import type { ClassificationProposal, ComponentTag } from "../types/index.js"
-import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.js"
+import type { AddressNode, AddressTree } from "../decoder/types.ts"
+import type { Resolver } from "../resolver/types.ts"
+import type { Span } from "../tokenization/index.ts"
+import type { ClassificationProposal, ComponentTag } from "../types/index.ts"
+import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.ts"
 import type {
 	AddressClassifier,
 	LocaleHint,
@@ -21,7 +21,7 @@ import type {
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
-} from "./types.js"
+} from "./types.ts"
 
 function fakeTree(raw: string, roots: AddressNode[] = []): AddressTree {
 	return { raw, roots }

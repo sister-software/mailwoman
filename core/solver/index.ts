@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./BaseSolver.js"
-export * from "./HashMapSolver.js"
-export * from "./mask.js"
-export * from "./Solution.js"
-export * from "./SolutionMatch.js"
+export * from "./BaseSolver.ts"
+export * from "./HashMapSolver.ts"
+export * from "./mask.ts"
+export * from "./Solution.ts"
+export * from "./SolutionMatch.ts"

@@ -37,10 +37,10 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { InterpolationLookup } from "@mailwoman/resolver"
 
-import { haversineKm } from "./geo.js"
-import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.js"
-import { hasTable } from "./sqlite-utils.js"
-import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
+import { haversineKm } from "./geo.ts"
+import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.ts"
+import { hasTable } from "./sqlite-utils.ts"
+import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.ts"
 
 /**
  * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known point (`t = 2`). Past

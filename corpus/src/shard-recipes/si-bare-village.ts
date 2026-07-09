@@ -24,7 +24,7 @@
  *   trailing «V» = locality (the binding the resolver needs).
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.js"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
 export const siBareVillageRecipe: ShardRecipe = {
 	name: "si-bare-village",

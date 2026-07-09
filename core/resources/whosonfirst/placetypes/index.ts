@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./admin.js"
-export * from "./definition.js"
-export * from "./graph.js"
-export * from "./mermaid.js"
-export * from "./Placetype.js"
-export * from "./tree.js"
+export * from "./admin.ts"
+export * from "./definition.ts"
+export * from "./graph.ts"
+export * from "./mermaid.ts"
+export * from "./Placetype.ts"
+export * from "./tree.ts"

@@ -7,7 +7,7 @@
 import { ClassificationsMatchMap, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { UnitClassifier } from "./UnitClassifier.js"
+import { UnitClassifier } from "./UnitClassifier.ts"
 
 const classifier = new UnitClassifier()
 

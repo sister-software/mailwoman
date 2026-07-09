@@ -24,7 +24,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { WOFSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 // US regions, their USPS abbreviations (what add-region-abbrevs writes into `names`), and two
 // same-named towns ("Sheldon") — the Vermont one small, the Iowa one larger — plus the ancestry

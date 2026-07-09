@@ -12,7 +12,7 @@ import {
 	matchLeadingDesignator,
 	US_UNIT_DESIGNATOR_LOOKUP,
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
-} from "./unit-designator.js"
+} from "./unit-designator.ts"
 
 describe("US_UNIT_DESIGNATOR_LOOKUP", () => {
 	it("maps canonical, full-word, and abbreviated variants to the canonical key", () => {

@@ -7,7 +7,7 @@
 import { assertCongruent } from "mailwoman/sdk/test"
 import { expect, test } from "vitest"
 
-import { TokenContext } from "./context.js"
+import { TokenContext } from "./context.ts"
 
 test("constructor: basic", () => {
 	const context = new TokenContext("100 Main Street")

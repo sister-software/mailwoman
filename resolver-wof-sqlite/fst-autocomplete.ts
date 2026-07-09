@@ -17,8 +17,8 @@
  *       needs; without it "new yor" returns nothing useful. (#587)
  */
 
-import { FSTMatcher, normalizeTokens } from "./fst-matcher.js"
-import type { PlaceEntry } from "./fst-types.js"
+import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
+import type { PlaceEntry } from "./fst-types.ts"
 
 export interface AutocompleteResult {
 	query: string

@@ -27,7 +27,7 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { createScorer } from "../scorer.js"
+import { createScorer } from "../scorer.ts"
 
 const MODEL =
 	$public.MAILWOMAN_CAPABILITY_ONNX_MODEL ??

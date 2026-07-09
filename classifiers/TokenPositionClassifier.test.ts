@@ -7,7 +7,7 @@
 import { Span, TokenContext } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { TokenPositionClassifier } from "./TokenPositionClassifier.js"
+import { TokenPositionClassifier } from "./TokenPositionClassifier.ts"
 
 const classifier = new TokenPositionClassifier()
 

@@ -20,7 +20,7 @@ import type {
 import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import { describe, expect, test, vi } from "vitest"
 
-import { createWOFResolver } from "./resolve.js"
+import { createWOFResolver } from "./resolve.ts"
 
 function node(
 	tag: ComponentTag,

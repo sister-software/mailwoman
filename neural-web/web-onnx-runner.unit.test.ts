@@ -42,7 +42,7 @@ vi.mock("onnxruntime-web/webgpu", () => {
 })
 
 // Import AFTER the mock declaration (vi.mock is hoisted, but keep the reading order honest).
-const { WebONNXRunner } = await import("./web-onnx-runner.js")
+const { WebONNXRunner } = await import("./web-onnx-runner.ts")
 
 interface FedTensor {
 	type: string
@@ -189,7 +189,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 describe("defaultGazetteerLexiconURL", () => {
 	test("derives the sibling anchor-lexicon-v1.json beside the model URL", async () => {
-		const { defaultGazetteerLexiconURL } = await import("./loader.js")
+		const { defaultGazetteerLexiconURL } = await import("./loader.ts")
 		expect(defaultGazetteerLexiconURL("https://public.sister.software/mailwoman/en-us/v4.4.0/model.onnx")).toBe(
 			"https://public.sister.software/mailwoman/en-us/v4.4.0/anchor-lexicon-v1.json"
 		)

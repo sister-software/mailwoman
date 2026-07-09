@@ -14,8 +14,8 @@ import { parseArgs } from "node:util"
 
 import { cliArguments } from "@mailwoman/core/utils"
 
-import { buildTimezoneDB } from "./build.js"
-import { offsetSecForTimezone, TimezoneLookup } from "./index.js"
+import { buildTimezoneDB } from "./build.ts"
+import { offsetSecForTimezone, TimezoneLookup } from "./index.ts"
 
 const argvAll = cliArguments()
 

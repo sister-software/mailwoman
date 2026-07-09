@@ -14,7 +14,7 @@ import { join } from "node:path"
 
 import { afterAll, describe, expect, test } from "vitest"
 
-import { DEFAULT_MAPPING, loadMapping, loadSources } from "../commands/registry.js"
+import { DEFAULT_MAPPING, loadMapping, loadSources } from "../commands/registry.tsx"
 
 const dirs: string[] = []
 function tmp(): string {

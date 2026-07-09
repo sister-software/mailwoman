@@ -13,8 +13,8 @@
 import { proposeSpans, type ProposedSpan } from "@mailwoman/core/pipeline"
 import { describe, expect, it } from "vitest"
 
-import { buildSpanProposalPriors } from "../span-proposal-prior.js"
-import { buildCodexSpanLexicon } from "../span-proposer-lexicon.js"
+import { buildSpanProposalPriors } from "../span-proposal-prior.ts"
+import { buildCodexSpanLexicon } from "../span-proposer-lexicon.ts"
 
 const LABELS = ["O", "B-unit", "I-unit", "B-po_box", "I-po_box", "B-house_number", "I-house_number"] as const
 

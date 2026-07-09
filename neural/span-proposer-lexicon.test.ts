@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
+import { buildCodexSpanLexicon } from "./span-proposer-lexicon.ts"
 
 test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-service regex", () => {
 	const lex = buildCodexSpanLexicon(["us"])

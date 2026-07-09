@@ -11,7 +11,7 @@
  *   intentionally — refactoring sharing is a separate task.
  */
 
-import type { SpanRange } from "./types.js"
+import type { SpanRange } from "./types.ts"
 
 export interface AbbreviationEntry {
 	from: string // short form (case-insensitive match)

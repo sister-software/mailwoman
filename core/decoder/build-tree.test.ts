@@ -6,9 +6,9 @@
 
 import { describe, expect, test } from "vitest"
 
-import type { BIOLabel } from "../types/component.js"
-import { buildAddressTree } from "./build-tree.js"
-import type { AddressNode, DecoderToken } from "./types.js"
+import type { BIOLabel } from "../types/component.ts"
+import { buildAddressTree } from "./build-tree.ts"
+import type { AddressNode, DecoderToken } from "./types.ts"
 
 /** Construct a DecoderToken — confidence defaults to 1.0 for fixture brevity. */
 function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {

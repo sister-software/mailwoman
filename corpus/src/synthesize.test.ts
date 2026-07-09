@@ -7,7 +7,7 @@
 import { BIO_LABELS, type ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.js"
+import { alignRow } from "./align.ts"
 import {
 	AUGMENTATIONS,
 	accentStrip,
@@ -29,8 +29,8 @@ import {
 	unitDesignatorAbbreviate,
 	unitDesignatorExpand,
 	zipPlus4DashDrop,
-} from "./synthesize.js"
-import type { CanonicalRow, LabeledRow } from "./types.js"
+} from "./synthesize.ts"
+import type { CanonicalRow, LabeledRow } from "./types.ts"
 
 const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	raw: "",

@@ -28,7 +28,7 @@ import { useEffect, useState } from "react"
 import { TextSpliterator } from "spliterator"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"
 

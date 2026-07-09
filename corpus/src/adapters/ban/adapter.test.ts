@@ -11,9 +11,9 @@ import { join } from "node:path"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { runAdapter } from "../../runner.js"
-import type { CanonicalRow } from "../../types.js"
-import { BAN_ADAPTER_ID, createBanAdapter } from "./adapter.js"
+import { runAdapter } from "../../runner.ts"
+import type { CanonicalRow } from "../../types.ts"
+import { BAN_ADAPTER_ID, createBanAdapter } from "./adapter.ts"
 
 const fixtureCSV = repoRootPath("corpus", "fixtures", "ban", "sample.csv")
 

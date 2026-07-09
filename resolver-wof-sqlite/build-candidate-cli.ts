@@ -18,7 +18,7 @@ import { exit, stderr } from "node:process"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 
-import { buildCandidateTable } from "./build-candidate.js"
+import { buildCandidateTable } from "./build-candidate.ts"
 
 interface CLIArgs {
 	input: string

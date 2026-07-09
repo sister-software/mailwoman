@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { jaro, jaroWinkler, levenshteinSimilarity, nameSimilarity } from "./comparators.js"
+import { jaro, jaroWinkler, levenshteinSimilarity, nameSimilarity } from "./comparators.ts"
 
 describe("jaro", () => {
 	it("is 1 for identical strings and 0 for an empty operand", () => {

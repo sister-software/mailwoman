@@ -22,7 +22,7 @@
  *   safe to import from anywhere. The real signals satisfy these shapes by construction.
  */
 
-import type { PolicyMode } from "./policy.js"
+import type { PolicyMode } from "./policy.ts"
 
 /** Minimal kind-classifier signal. Compatible with `QueryKindResult` (`core/pipeline/types.ts`). */
 export interface RouterKindSignal {

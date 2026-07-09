@@ -15,7 +15,7 @@
  *   emitted by the Python `anchor_feature_vector` — any drift fails the test.
  */
 
-import type { TokenizedPiece } from "./tokenizer.js"
+import type { TokenizedPiece } from "./tokenizer.ts"
 
 /**
  * The locale class order — MUST match Python `mailwoman_train/labels.py::LOCALE_COUNTRIES`. The posterior occupies

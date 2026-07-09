@@ -32,7 +32,7 @@ import {
 	type TermFrequencyTable,
 } from "@mailwoman/match"
 
-import type { SourceRecord } from "./types.js"
+import type { SourceRecord } from "./types.ts"
 
 /** Inputs shared by the featurizer + the scorer factory. */
 export interface LearnedFeatureConfig {

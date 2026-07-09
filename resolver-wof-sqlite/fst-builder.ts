@@ -13,9 +13,9 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import type { FSTNode } from "./fst-matcher.js"
-import { FSTMatcher, normalizeTokens } from "./fst-matcher.js"
-import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.ts"
+import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
+import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
 const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"country",

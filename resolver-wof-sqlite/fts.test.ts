@@ -17,7 +17,7 @@ import {
 	buildPlaceSearchFTS,
 	PLACE_SEARCH_TABLE,
 	placeSearchFTSExists,
-} from "./fts.js"
+} from "./fts.ts"
 
 function buildBaseSchema(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")

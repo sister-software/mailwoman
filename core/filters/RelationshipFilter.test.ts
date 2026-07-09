@@ -7,7 +7,7 @@
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { RelationshipFilter } from "./RelationshipFilter.js"
+import { RelationshipFilter } from "./RelationshipFilter.ts"
 
 test("postcode_preceeds_street: remove postcode", () => {
 	const s1 = Span.from("A")

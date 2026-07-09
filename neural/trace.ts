@@ -17,7 +17,7 @@
 import type { SystemCode } from "@mailwoman/codex"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
-import type { SoftFeatureChannel } from "./soft-features.js"
+import type { SoftFeatureChannel } from "./soft-features.ts"
 
 /**
  * The emission priors the decode path may compose, in application order. The ORDERED constant is the single source for

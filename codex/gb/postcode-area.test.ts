@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { countryOfPostcode, countryOfPostcodeArea, GB_POSTCODE_AREA_COUNTRY } from "./postcode-area.js"
+import { countryOfPostcode, countryOfPostcodeArea, GB_POSTCODE_AREA_COUNTRY } from "./postcode-area.ts"
 
 describe("GB_POSTCODE_AREA_COUNTRY", () => {
 	it("maps the explicit non-England areas to their country", () => {

@@ -4,7 +4,8 @@
 		"allowSyntheticDefaultImports": true,
 		"emitDecoratorMetadata": true,
 		"emitDeclarationOnly": false,
-		"allowImportingTsExtensions": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
 		"experimentalDecorators": true
 	},
 	"exclude": ["./out/**/*"],

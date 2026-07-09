@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { parsePersonName } from "./name.js"
+import { parsePersonName } from "./name.ts"
 
 describe("parsePersonName", () => {
 	it("returns null for empty input", () => {

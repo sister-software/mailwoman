@@ -12,7 +12,7 @@
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import { bridgePunctuationGaps } from "./span-bridge.js"
+import { bridgePunctuationGaps } from "./span-bridge.ts"
 
 const tok = (piece: string, start: number, label: string, confidence = 0.9): DecoderToken =>
 	({ piece, start, end: start + piece.length, label, confidence }) as DecoderToken

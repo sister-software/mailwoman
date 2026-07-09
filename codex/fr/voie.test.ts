@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isFrenchStreetWord } from "./voie.js"
+import { isFrenchStreetWord } from "./voie.ts"
 
 describe("isFrenchStreetWord", () => {
 	it("matches canonical voie words, case- and accent-insensitive", () => {

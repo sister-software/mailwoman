@@ -24,7 +24,7 @@ import { extname, join } from "node:path"
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 
-import { reconcileComponents } from "./format.js"
+import { reconcileComponents } from "./format.ts"
 
 const TAG_SET = new Set<string>(COMPONENT_TAGS as readonly string[])
 

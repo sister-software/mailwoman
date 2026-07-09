@@ -11,9 +11,9 @@ import { join } from "node:path"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { runAdapter } from "../../runner.js"
-import type { CanonicalRow } from "../../types.js"
-import { OPENADDRESSES_ADAPTER_ID, OPENADDRESSES_DEFAULT_LICENSE, createOpenaddressesAdapter } from "./adapter.js"
+import { runAdapter } from "../../runner.ts"
+import type { CanonicalRow } from "../../types.ts"
+import { OPENADDRESSES_ADAPTER_ID, OPENADDRESSES_DEFAULT_LICENSE, createOpenaddressesAdapter } from "./adapter.ts"
 
 const fixtureGeojsonl = repoRootPath("corpus", "fixtures", "openaddresses", "sample-us.geojson")
 

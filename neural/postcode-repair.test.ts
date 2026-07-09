@@ -12,7 +12,7 @@
 import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import { repairPostcodeLabels } from "./postcode-repair.js"
+import { repairPostcodeLabels } from "./postcode-repair.ts"
 
 /** Build a char-aligned token. */
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {

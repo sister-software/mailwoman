@@ -30,9 +30,9 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { stableSourceID } from "../../adapter.js"
-import { reconcileComponents } from "../../format.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import { stableSourceID } from "../../adapter.ts"
+import { reconcileComponents } from "../../format.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 export const GNAF_ADAPTER_ID = "gnaf"
 /** Open G-NAF is freely redistributable with attribution to Geoscape Australia (CC-BY-style). */

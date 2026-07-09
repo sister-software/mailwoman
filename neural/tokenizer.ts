@@ -53,7 +53,11 @@ export interface EncodeResult {
 }
 
 export class MailwomanTokenizer {
-	private constructor(private readonly processor: SentencePieceProcessor) {}
+	private readonly processor: SentencePieceProcessor
+
+	private constructor(processor: SentencePieceProcessor) {
+		this.processor = processor
+	}
 
 	/** Load from a base64-encoded `tokenizer.model`. Use for in-memory / test setups. */
 	static async loadFromBase64(b64: string): Promise<MailwomanTokenizer> {

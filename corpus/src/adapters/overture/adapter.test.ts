@@ -10,9 +10,9 @@ import { join } from "node:path"
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { runAdapter } from "../../runner.js"
-import type { CanonicalRow } from "../../types.js"
-import { OVERTURE_ADAPTER_ID, OVERTURE_DEFAULT_LICENSE, createOvertureAdapter } from "./adapter.js"
+import { runAdapter } from "../../runner.ts"
+import type { CanonicalRow } from "../../types.ts"
+import { OVERTURE_ADAPTER_ID, OVERTURE_DEFAULT_LICENSE, createOvertureAdapter } from "./adapter.ts"
 
 let scratch: string
 beforeEach(async () => {

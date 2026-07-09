@@ -39,7 +39,7 @@ import { sealDatabase } from "@mailwoman/core/utils"
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 
-import { mailwomanDataRoot } from "../resolver-backend.js"
+import { mailwomanDataRoot } from "../resolver-backend.ts"
 
 /**
  * The bilingual / alt-name EU set the GeoNames fold lifts (FI hard-resolve 69.5 → 85.8 %). GeoNames `<CC>.txt` dumps
@@ -314,8 +314,8 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 
 	return `${y}-${m}-${d}${suffix}`
 }
-export * from "./defaults.js"
-export * from "./fts.js"
-export * from "./verify.js"
-export * from "./admin/index.js"
-export * from "./postcode/index.js"
+export * from "./defaults.ts"
+export * from "./fts.ts"
+export * from "./verify.ts"
+export * from "./admin/index.ts"
+export * from "./postcode/index.ts"

@@ -18,8 +18,8 @@ import "@mailwoman/core"
 import { TokenContext } from "@mailwoman/core/tokenization"
 import { describe, expect, test } from "vitest"
 
-import { wrapLegacyClassifier } from "./adapter.js"
-import { HouseNumberClassifier } from "./HouseNumberClassifier.js"
+import { wrapLegacyClassifier } from "./adapter.ts"
+import { HouseNumberClassifier } from "./HouseNumberClassifier.ts"
 
 const SECTION = "6220 SE Salmon St"
 

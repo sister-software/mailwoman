@@ -11,16 +11,16 @@
  *   what used to be `@mailwoman/core/resolver`.
  */
 
-export { RemoteResolver, serializableResolveOpts } from "./remote-resolver.js"
+export { RemoteResolver, serializableResolveOpts } from "./remote-resolver.ts"
 export type {
 	RemoteResolverOpts,
 	ResolveTreeRequest,
 	ResolveTreeResponse,
 	SerializableResolveOpts,
-} from "./remote-resolver.js"
-export { createWOFResolver } from "./resolve.js"
-export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
-export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.js"
+} from "./remote-resolver.ts"
+export { createWOFResolver } from "./resolve.ts"
+export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
+export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
 
 // The type contract + placetype helpers live in core (pure types, keep core a leaf). Re-export so
 // consumers get the whole surface from `@mailwoman/resolver`.

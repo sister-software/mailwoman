@@ -6,6 +6,7 @@
 	"extends": "@sister.software/tsconfig",
 	"compilerOptions": {
 		"noEmit": true,
+		"erasableSyntaxOnly": true,
 		"emitDeclarationOnly": false,
 		"declaration": false,
 		"declarationMap": false,

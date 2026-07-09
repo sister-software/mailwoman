@@ -6,7 +6,7 @@
  *   GeoJSON Geometry Entry Point
  */
 
-export * from "./collection.js"
-export * from "./line-string.js"
-export * from "./point.js"
-export * from "./polygon.js"
+export * from "./collection.ts"
+export * from "./line-string.ts"
+export * from "./point.ts"
+export * from "./polygon.ts"

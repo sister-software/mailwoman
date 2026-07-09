@@ -28,7 +28,7 @@
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { layers, namedFlavor } from "@protomaps/basemaps"
 
-import type { EntityGeoData } from "./types.js"
+import type { EntityGeoData } from "./types.ts"
 
 /** MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major. */
 const MAPLIBRE_VERSION = "5.24.0"

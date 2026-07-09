@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./block-operations.js"
-export * from "./TIGERTabulatedBlockEntity.js"
-export * from "./TIGERTractEntity.js"
+export * from "./block-operations.ts"
+export * from "./TIGERTabulatedBlockEntity.ts"
+export * from "./TIGERTractEntity.ts"

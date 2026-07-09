@@ -4,5 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./codes.js"
-export * from "./names.js"
+export * from "./codes.ts"
+export * from "./names.ts"

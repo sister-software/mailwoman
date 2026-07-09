@@ -21,14 +21,14 @@
  *   for".
  */
 
-import { normalizeAuPostcode } from "./au/index.js"
-import { normalizeCaPostalCode } from "./ca/index.js"
-import { normalizePLZ } from "./de/index.js"
-import { normalizeCodePostal } from "./fr/index.js"
-import { normalizeUkPostcode } from "./gb/index.js"
-import { normalizeJpPostalCode } from "./jp/index.js"
-import { normalizeNzPostcode } from "./nz/index.js"
-import { isZipCode } from "./us/index.js"
+import { normalizeAuPostcode } from "./au/index.ts"
+import { normalizeCaPostalCode } from "./ca/index.ts"
+import { normalizePLZ } from "./de/index.ts"
+import { normalizeCodePostal } from "./fr/index.ts"
+import { normalizeUkPostcode } from "./gb/index.ts"
+import { normalizeJpPostalCode } from "./jp/index.ts"
+import { normalizeNzPostcode } from "./nz/index.ts"
+import { isZipCode } from "./us/index.ts"
 
 /** A codex address-system code — the subpath under `@mailwoman/codex/<system>`. */
 export type SystemCode = "us" | "de" | "fr" | "ca" | "gb" | "jp" | "au" | "nz"

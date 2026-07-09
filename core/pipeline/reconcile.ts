@@ -37,9 +37,9 @@
  *   `docs/articles/concepts/the-knowledge-ladder.md` § Reconcile for the design rationale.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
-import type { ResolvedPlace } from "../resolver/types.js"
-import type { PhraseProposal } from "./types.js"
+import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.ts"
+import type { ResolvedPlace } from "../resolver/types.ts"
+import type { PhraseProposal } from "./types.ts"
 
 /**
  * One classifier interpretation for one input span. Pins the Thread C-s contract for the reconciler — the real

@@ -16,8 +16,8 @@
  *   schema natively distinguishes them.
  */
 
-import type { Classification } from "../classification/index.js"
-import type { ComponentTag } from "./component.js"
+import type { Classification } from "../classification/index.ts"
+import type { ComponentTag } from "./component.ts"
 
 /**
  * Static mapping table. Tags not in this table map to `null` (treated as "not a component" — internal classifier

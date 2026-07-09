@@ -10,10 +10,10 @@ import FastGlob, { type Entry } from "fast-glob"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import type { Displayable } from "../debugging.js"
-import { ResourceMapCache } from "../ResourceMapCache.js"
-import { DisposableSet } from "../set.js"
-import { parsePlacetypeSource } from "./placetypes/admin.js"
+import type { Displayable } from "../debugging.ts"
+import { ResourceMapCache } from "../ResourceMapCache.ts"
+import { DisposableSet } from "../set.ts"
+import { parsePlacetypeSource } from "./placetypes/admin.ts"
 
 /**
  * Index mapping a specific value to originating languages.

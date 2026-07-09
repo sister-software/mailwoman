@@ -27,7 +27,7 @@ interface Sample {
 const root = new URL("../../", import.meta.url)
 const { featurize, COARSE_CLASSES, FEATURE_DIM } = (await import(
 	new URL("core/out/coarse-placer/featurize.js", root).href
-)) as typeof import("../featurize.js")
+)) as typeof import("../featurize.ts")
 
 const { values: args } = parseArgs({
 	options: {

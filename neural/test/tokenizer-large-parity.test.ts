@@ -23,7 +23,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import { MailwomanTokenizer, SPACE_SENTINEL } from "../tokenizer.js"
+import { MailwomanTokenizer, SPACE_SENTINEL } from "../tokenizer.ts"
 
 const MODEL_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const LARGE_FIXTURE_PATH = String(repoRootPath("neural", "test", "fixtures", "tokenizer-parity-large-v0.1.0.json"))

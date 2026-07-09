@@ -11,7 +11,7 @@
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
-import { COUNTRY_REFERENCE } from "./reference-data.js"
+import { COUNTRY_REFERENCE } from "./reference-data.ts"
 
 const REGIONAL_INDICATOR_BASE = 0x1f1e6
 const A_UPPER = "A".charCodeAt(0)

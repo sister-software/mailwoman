@@ -35,8 +35,8 @@ import { join } from "node:path"
 
 import { TextSpliterator } from "spliterator"
 
-import { reconcileComponents } from "../../format.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import { reconcileComponents } from "../../format.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"

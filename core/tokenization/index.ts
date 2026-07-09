@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./context.js"
-export * from "./Graph.js"
-export * from "./normalizer.js"
-export * from "./permutate.js"
-export * from "./Span.js"
+export * from "./context.ts"
+export * from "./Graph.ts"
+export * from "./normalizer.ts"
+export * from "./permutate.ts"
+export * from "./Span.ts"

@@ -15,7 +15,7 @@ import { join } from "node:path"
 
 import { afterAll, describe, expect, it } from "vitest"
 
-import { cleanCityNoise, readTuples } from "./locale.js"
+import { cleanCityNoise, readTuples } from "./locale.ts"
 
 describe("cleanCityNoise", () => {
 	it("drops ES cadastral pseudo-localities (comma / ≥4-digit run)", () => {

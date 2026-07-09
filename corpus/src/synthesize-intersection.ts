@@ -19,7 +19,7 @@
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */
 
-import type { CanonicalRow } from "./types.js"
+import type { CanonicalRow } from "./types.ts"
 
 /** Street name cores (no suffix) — proper-noun streets that often appear bare. */
 const STREET_CORES = [

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.js"
+import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
 
 describe("interpCalibrationForRegion (#374/#584 per-region wiring)", () => {
 	it("selects the measured factor by region (slug is lowercase from regionToStateSlug)", () => {

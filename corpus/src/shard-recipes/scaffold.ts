@@ -9,8 +9,8 @@
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
  */
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
 
 /**
  * {@link stableSourceID}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that aren't

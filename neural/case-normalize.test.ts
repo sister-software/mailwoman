@@ -12,7 +12,7 @@ import {
 	normalizeInputCase,
 	restoreLowerInput,
 	titleCaseInput,
-} from "./case-normalize.js"
+} from "./case-normalize.ts"
 
 test("isAllCapsInput: a pure-ASCII shouting address qualifies", () => {
 	expect(isAllCapsInput("214 JONES RD, ELKHART, TX 75839")).toBe(true)

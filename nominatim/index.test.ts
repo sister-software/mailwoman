@@ -16,7 +16,7 @@ import {
 	type ResolvedAddress,
 	toFeatureCollection,
 	toNominatimResult,
-} from "./index.js"
+} from "./index.ts"
 
 const dc: ResolvedAddress = {
 	lat: 38.8977,

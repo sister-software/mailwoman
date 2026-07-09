@@ -6,9 +6,9 @@
  *   ISO 3166-1 country reference + surface-form recognition (the `country` parity lever).
  */
 
-export * from "./codes.js"
-export * from "./country.js"
-export * from "./names.js"
-export * from "./official-languages.js"
-export * from "./reference-data.js"
-export * from "./reference.js"
+export * from "./codes.ts"
+export * from "./country.ts"
+export * from "./names.ts"
+export * from "./official-languages.ts"
+export * from "./reference-data.ts"
+export * from "./reference.ts"

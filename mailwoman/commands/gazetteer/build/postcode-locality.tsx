@@ -21,7 +21,7 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../sdk/cli.js"
+import type { CommandComponent } from "../../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	recipe: zod.enum(["base", "jp", "kr", "tw"]).describe("Which postcode-locality table to build"),
@@ -57,7 +57,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 				switch (options.recipe) {
 					case "base": {
 						const { buildPostcodeLocalityBase, finalizePostcodeLocality } =
-							await import("../../../gazetteer-pipeline/postcode-locality/base.js")
+							await import("../../../gazetteer-pipeline/postcode-locality/base.ts")
 
 						if (options.finalize) {
 							await finalizePostcodeLocality(options.output)
@@ -75,7 +75,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 						break
 					}
 					case "jp": {
-						const { buildPostcodeLocalityJP } = await import("../../../gazetteer-pipeline/postcode-locality/jp.js")
+						const { buildPostcodeLocalityJP } = await import("../../../gazetteer-pipeline/postcode-locality/jp.ts")
 						await buildPostcodeLocalityJP({
 							country: options.country ?? "JP",
 							postalNames: need("postal-names", options.postalNames),
@@ -86,7 +86,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 						break
 					}
 					case "kr": {
-						const { buildPostcodeLocalityKR } = await import("../../../gazetteer-pipeline/postcode-locality/kr.js")
+						const { buildPostcodeLocalityKR } = await import("../../../gazetteer-pipeline/postcode-locality/kr.ts")
 						await buildPostcodeLocalityKR({
 							geonames: need("geonames", options.geonames),
 							adminDb: need("admin-db", options.adminDb),
@@ -95,7 +95,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 						break
 					}
 					case "tw": {
-						const { buildPostcodeLocalityTW } = await import("../../../gazetteer-pipeline/postcode-locality/tw.js")
+						const { buildPostcodeLocalityTW } = await import("../../../gazetteer-pipeline/postcode-locality/tw.ts")
 						await buildPostcodeLocalityTW({
 							postalXml: need("postal-xml", options.postalXml),
 							divisions: need("divisions", options.divisions),

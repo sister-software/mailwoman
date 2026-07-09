@@ -11,7 +11,7 @@ import { dirname, join, resolve } from "node:path"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { parseGoldenLine, unreachableComponents, validateGoldenDir, validateGoldenFile } from "./golden.js"
+import { parseGoldenLine, unreachableComponents, validateGoldenDir, validateGoldenFile } from "./golden.ts"
 
 const goldenDir = repoRootPath("data", "eval", "golden", "v0.1.0")
 

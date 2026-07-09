@@ -33,7 +33,7 @@ import { join } from "node:path"
 import { childEnv } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
-import type { CanonicalRow, LabeledRow } from "./types.js"
+import type { CanonicalRow, LabeledRow } from "./types.ts"
 
 export type SplitName = "train" | "val" | "test"
 

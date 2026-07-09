@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./reader.js"
-export * from "./schema.js"
-export * from "./writer.js"
+export * from "./reader.ts"
+export * from "./schema.ts"
+export * from "./writer.ts"

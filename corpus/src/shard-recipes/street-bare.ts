@@ -17,10 +17,10 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
-import { alignRow } from "../align.js"
-import { DEFAULT_US_BASES } from "../synthesize-intersection.js"
-import { synthesizeStreetRow, type StreetBaseTuple } from "../synthesize-street.js"
-import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.js"
+import { alignRow } from "../align.ts"
+import { DEFAULT_US_BASES } from "../synthesize-intersection.ts"
+import { synthesizeStreetRow, type StreetBaseTuple } from "../synthesize-street.ts"
+import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
 
 export const streetBareRecipe: ShardRecipe = {
 	name: "street-bare",

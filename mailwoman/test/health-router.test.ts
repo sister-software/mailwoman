@@ -11,8 +11,8 @@
 import express from "express"
 import { describe, expect, test } from "vitest"
 
-import { HealthRouter } from "../server/HealthRouter.js"
-import { __resetMetricsForTest, metricsSnapshot, recordGeocode } from "../server/metrics.js"
+import { HealthRouter } from "../server/HealthRouter.ts"
+import { __resetMetricsForTest, metricsSnapshot, recordGeocode } from "../server/metrics.ts"
 
 function buildApp() {
 	const app = express()

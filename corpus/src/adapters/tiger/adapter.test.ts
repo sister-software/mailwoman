@@ -12,9 +12,9 @@ import { DatabaseSync } from "node:sqlite"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { runAdapter } from "../../runner.js"
-import type { CanonicalRow } from "../../types.js"
-import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "./adapter.js"
+import { runAdapter } from "../../runner.ts"
+import type { CanonicalRow } from "../../types.ts"
+import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "./adapter.ts"
 
 const fixtureSQLPath = repoRootPath("corpus", "fixtures", "tiger", "fixture.sql")
 

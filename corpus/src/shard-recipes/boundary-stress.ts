@@ -12,9 +12,9 @@
  *   `synthesizeBoundaryStressRow` is NOT re-exported from the corpus index — imported directly here.
  */
 
-import { alignRow } from "../align.js"
-import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "../synthesize-boundary-stress.js"
-import { makeMulberry32, type ShardRecipe, shardSourceID } from "./scaffold.js"
+import { alignRow } from "../align.ts"
+import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "../synthesize-boundary-stress.ts"
+import { makeMulberry32, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
 // Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality
 // drop on bare "City, STATE" rows WITHOUT becoming a locality-first majority), and

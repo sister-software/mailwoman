@@ -10,7 +10,7 @@ import {
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
 	geonamesAdminGapCountries,
-} from "./defaults.js"
+} from "./defaults.ts"
 
 test("the canonical coverage recipe holds its reconstructed shape (see #1015/#1021)", () => {
 	expect(DEFAULT_WOF_PRIORITY_COUNTRIES).toHaveLength(11)

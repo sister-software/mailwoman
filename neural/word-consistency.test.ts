@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { enforceWordConsistency } from "./word-consistency.js"
+import { enforceWordConsistency } from "./word-consistency.ts"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"] as const
 /** A logit row peaking at `idx` (softmaxes to high prob there). */

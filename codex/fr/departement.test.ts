@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { departementInfo, FR_DEPARTEMENTS } from "./departement.js"
+import { departementInfo, FR_DEPARTEMENTS } from "./departement.ts"
 
 test("departementInfo: metropolitan code → name + région", () => {
 	expect(departementInfo("13")).toEqual({ code: "13", name: "Bouches-du-Rhône", region: "PAC" })

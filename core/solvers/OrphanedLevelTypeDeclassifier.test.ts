@@ -7,7 +7,7 @@
 import { Solution, SolutionMatch, Span, type SolverContext } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { OrphanedLevelTypeDeclassifier } from "./OrphanedLevelTypeDeclassifier.js"
+import { OrphanedLevelTypeDeclassifier } from "./OrphanedLevelTypeDeclassifier.ts"
 
 test("level missing: remove orphaned level_designator", () => {
 	const s1 = Span.from("A")

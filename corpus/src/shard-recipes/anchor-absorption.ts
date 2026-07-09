@@ -16,10 +16,10 @@ import { readFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { stableSourceID } from "../adapter.js"
-import { alignRow } from "../align.js"
-import { synthesizeAnchorAbsorptionRow } from "../synthesize-anchor-absorption.js"
-import { makeLcg, type ShardRecipe } from "./scaffold.js"
+import { stableSourceID } from "../adapter.ts"
+import { alignRow } from "../align.ts"
+import { synthesizeAnchorAbsorptionRow } from "../synthesize-anchor-absorption.ts"
+import { makeLcg, type ShardRecipe } from "./scaffold.ts"
 
 // The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through
 // the data-root helper (the lab default is `$MAILWOMAN_DATA_ROOT`), never re-hardcoded.

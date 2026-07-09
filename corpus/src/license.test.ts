@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { compileLicenseExcludes, licenseExcluded, SHARE_ALIKE_PATTERN } from "./license.js"
+import { compileLicenseExcludes, licenseExcluded, SHARE_ALIKE_PATTERN } from "./license.ts"
 
 describe("license exclusion (#26)", () => {
 	it("SHARE_ALIKE_PATTERN matches Tier-C share-alike, not Tier-A/B", () => {

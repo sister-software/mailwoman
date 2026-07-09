@@ -16,11 +16,11 @@
 
 import { describe, expect, test } from "vitest"
 
-import type { BIOLabel } from "../types/component.js"
-import { buildAddressTree } from "./build-tree.js"
-import { containmentFor, PARENT_OF, WESTERN_PARENT_OF } from "./containment.js"
-import type { DecoderToken } from "./types.js"
-import { validateTree } from "./validate-tree.js"
+import type { BIOLabel } from "../types/component.ts"
+import { buildAddressTree } from "./build-tree.ts"
+import { containmentFor, PARENT_OF, WESTERN_PARENT_OF } from "./containment.ts"
+import type { DecoderToken } from "./types.ts"
+import { validateTree } from "./validate-tree.ts"
 
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }

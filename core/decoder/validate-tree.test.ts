@@ -10,9 +10,9 @@
 
 import { describe, expect, test } from "vitest"
 
-import { buildAddressTree } from "./build-tree.js"
-import type { AddressNode, BIOLabel, DecoderToken } from "./types.js"
-import { validateTree } from "./validate-tree.js"
+import { buildAddressTree } from "./build-tree.ts"
+import type { AddressNode, BIOLabel, DecoderToken } from "./types.ts"
+import { validateTree } from "./validate-tree.ts"
 
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }

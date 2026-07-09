@@ -6,8 +6,8 @@
 
 import { test as base } from "@playwright/test"
 
-import { ConsoleFixture } from "./fixtures/ConsoleFixture.js"
-import { DemoFixture } from "./fixtures/DemoFixture.js"
+import { ConsoleFixture } from "./fixtures/ConsoleFixture.ts"
+import { DemoFixture } from "./fixtures/DemoFixture.ts"
 
 export { expect } from "@playwright/test"
 

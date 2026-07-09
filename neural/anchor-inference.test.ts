@@ -16,8 +16,8 @@ import {
 	anchorFeatureVector,
 	buildAnchorFeatures,
 	type AnchorLookup,
-} from "./anchor-inference.js"
-import type { TokenizedPiece } from "./tokenizer.js"
+} from "./anchor-inference.ts"
+import type { TokenizedPiece } from "./tokenizer.ts"
 
 describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () => {
 	it("locale order matches Python LOCALE_COUNTRIES", () => {

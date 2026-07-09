@@ -11,6 +11,6 @@
 // "Class extends value undefined".
 export * from "@mailwoman/core"
 export * from "@mailwoman/classifiers"
-export * from "./runtime-pipeline.js"
-export * from "./default-placer.js"
-export * from "./utils/index.js"
+export * from "./runtime-pipeline.ts"
+export * from "./default-placer.ts"
+export * from "./utils/index.ts"

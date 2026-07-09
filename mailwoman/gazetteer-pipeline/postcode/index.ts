@@ -17,16 +17,16 @@ import { DatabaseSync } from "node:sqlite"
 
 import { sealDatabase } from "@mailwoman/core/utils"
 
-import { mailwomanDataRoot } from "../../resolver-backend.js"
-import { ingestWOF } from "../admin/ingest-wof.js"
-import { buildFTS } from "../fts.js"
-import { type CentroidFillResult, fillPostcodeCentroids } from "./centroid-fills.js"
+import { mailwomanDataRoot } from "../../resolver-backend.ts"
+import { ingestWOF } from "../admin/ingest-wof.ts"
+import { buildFTS } from "../fts.ts"
+import { type CentroidFillResult, fillPostcodeCentroids } from "./centroid-fills.ts"
 import {
 	fillGeonamesPlaceholders,
 	fillPlaceholderCentroids,
 	parseGeonamesCentroids,
 	parseZCTACentroids,
-} from "./zcta-centroids.js"
+} from "./zcta-centroids.ts"
 
 export interface BuildPostcodeShardOptions {
 	/** ISO-2 country whose `whosonfirst-data-postalcode-<cc>` repo to ingest. */
@@ -160,5 +160,5 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	return { out, postcodesIngested: ingest.placesIngested, zctaFilled, geonamesUSFilled, fills, sealed: true }
 }
 
-export * from "./centroid-fills.js"
-export * from "./zcta-centroids.js"
+export * from "./centroid-fills.ts"
+export * from "./zcta-centroids.ts"

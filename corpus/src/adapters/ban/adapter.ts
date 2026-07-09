@@ -34,10 +34,10 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceID } from "../../adapter.js"
-import { reconcileComponents } from "../../format.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
-import { decomposeFrStreet } from "./street-decompose.js"
+import { stableSourceID } from "../../adapter.ts"
+import { reconcileComponents } from "../../format.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
+import { decomposeFrStreet } from "./street-decompose.ts"
 
 export const BAN_ADAPTER_ID = "ban"
 

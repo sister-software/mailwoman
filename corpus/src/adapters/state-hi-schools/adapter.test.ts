@@ -10,12 +10,12 @@ import { join } from "node:path"
 
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { InMemoryAdapterRegistry } from "../../adapter.js"
+import { InMemoryAdapterRegistry } from "../../adapter.ts"
 import {
 	createStateHiSchoolsAdapter,
 	STATE_HI_SCHOOLS_ADAPTER_ID,
 	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
-} from "./adapter.js"
+} from "./adapter.ts"
 
 const CSV_HEADER = [
 	"code",

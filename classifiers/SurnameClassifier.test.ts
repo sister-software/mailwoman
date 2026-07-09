@@ -6,7 +6,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { SurnameClassifier } from "./SurnameClassifier.js"
+import { SurnameClassifier } from "./SurnameClassifier.ts"
 
 const classifier = await new SurnameClassifier().ready()
 

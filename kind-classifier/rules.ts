@@ -10,7 +10,7 @@
  *   regex set per new locale, not 50K dictionary entries.
  */
 
-import type { NormalizedInputLite, QueryShapeLike } from "./types.js"
+import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
 /** Landmark vocabulary — phrases that suggest a vague-location description rather than an address. */
 const LANDMARK_LEADERS = [

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isJapanesePrefectureCode, JP_PREFECTURES, lookupJapanesePrefecture } from "./prefecture.js"
+import { isJapanesePrefectureCode, JP_PREFECTURES, lookupJapanesePrefecture } from "./prefecture.ts"
 
 describe("JP_PREFECTURES", () => {
 	it("covers all 47 prefectures", () => {

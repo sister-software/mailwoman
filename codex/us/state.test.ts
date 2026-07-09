@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { isUsStateAbbreviation, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION, US_STATE_NAMES } from "./state.js"
+import { isUsStateAbbreviation, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION, US_STATE_NAMES } from "./state.ts"
 
 test("isUsStateAbbreviation: true for a sample of states, DC, and territories", () => {
 	for (const abbr of ["CA", "NY", "TX", "AK", "HI", "DC", "PR", "GU", "VI", "MP", "AS"]) {

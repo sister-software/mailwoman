@@ -6,8 +6,8 @@
 
 import { expect, test } from "vitest"
 
-import { toGeoJSON } from "./geojson.js"
-import type { ResolvedEntity, SourceRecord } from "./types.js"
+import { toGeoJSON } from "./geojson.ts"
+import type { ResolvedEntity, SourceRecord } from "./types.ts"
 
 const record = (id: string, o: Partial<SourceRecord> = {}): SourceRecord => ({ id, ...o }) as SourceRecord
 const entity = (o: Partial<ResolvedEntity>): ResolvedEntity =>

@@ -42,9 +42,9 @@ import { createReadStream } from "node:fs"
 import { mkdir, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { ParquetWriter, type ParquetSchemaDefinition } from "./parquet-wrapper/index.js"
-import type { SplitName } from "./split.js"
-import type { LabeledRow } from "./types.js"
+import { ParquetWriter, type ParquetSchemaDefinition } from "./parquet-wrapper/index.ts"
+import type { SplitName } from "./split.ts"
+import type { LabeledRow } from "./types.ts"
 
 /** Row groups flush at this many rows (parquetjs internal cadence within a shard). */
 export const ROW_GROUP_SIZE = 50_000

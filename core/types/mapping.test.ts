@@ -10,7 +10,7 @@ import {
 	componentTagToLegacyClassification,
 	legacyClassificationToComponentTag,
 	MAPPED_LEGACY_CLASSIFICATIONS,
-} from "./mapping.js"
+} from "./mapping.ts"
 
 test("legacyClassificationToComponentTag: maps the directly-named tags", () => {
 	expect(legacyClassificationToComponentTag("country")).toBe("country")

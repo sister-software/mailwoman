@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { expandAbbreviations } from "./abbreviations.js"
+import { expandAbbreviations } from "./abbreviations.ts"
 
 describe("expandAbbreviations — en-US", () => {
 	it("expands street suffixes (St → Street)", () => {

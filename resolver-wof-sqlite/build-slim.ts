@@ -44,8 +44,8 @@ import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { Kysely, sql } from "kysely"
 
-import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.js"
-import type { NamesTable, SprTable } from "./schema.js"
+import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.ts"
+import type { NamesTable, SprTable } from "./schema.ts"
 
 export interface BuildSlimOptions {
 	/** Input WOF SQLite distributions. Each should already have spr / names / place_population tables. */

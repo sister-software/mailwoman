@@ -15,8 +15,8 @@ import { join } from "node:path"
 
 import { expect, test } from "vitest"
 
-import { extractBANAddrPoints } from "./extract.js"
-import { streetLocaleForBANCountry, supportedBANCountries } from "./street-locale.js"
+import { extractBANAddrPoints } from "./extract.ts"
+import { streetLocaleForBANCountry, supportedBANCountries } from "./street-locale.ts"
 
 const HEADER =
 	"id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune;code_insee_ancienne_commune;nom_ancienne_commune;x;y;lon;lat;type_position;alias;nom_ld;libelle_acheminement;nom_afnor;source_position;source_nom_voie;certification_commune;cad_parcelles"

@@ -16,8 +16,8 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/registry"
 import { createWOFResolver } from "@mailwoman/resolver"
 
-import { geocodeAddress, parseForGeocode, ShardProvider } from "./geocode-core.js"
-import type { GeocodeStreamConfig } from "./geocode-stream.js"
+import { geocodeAddress, parseForGeocode, ShardProvider } from "./geocode-core.ts"
+import type { GeocodeStreamConfig } from "./geocode-stream.ts"
 
 const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
 	mapping: ColumnMapping

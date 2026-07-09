@@ -11,7 +11,7 @@ import { Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	shards: zod.string().describe("Comma-separated parquet shard paths or a directory"),
@@ -28,7 +28,7 @@ const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	useEffect(() => {
 		void (async () => {
 			try {
-				const { buildCorpusStats } = await import("../../corpus-tools/corpus-stats.js")
+				const { buildCorpusStats } = await import("../../corpus-tools/corpus-stats.ts")
 				await buildCorpusStats({
 					shardsArg: options.shards,
 					outputPath: options.output,

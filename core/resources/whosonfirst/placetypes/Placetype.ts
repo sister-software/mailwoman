@@ -9,15 +9,15 @@ import * as fs from "node:fs/promises"
 import FastGlob from "fast-glob"
 import { PathBuilder } from "path-ts"
 
-import { takeInParallel } from "../../collections.js"
-import { prepareRepositoryDirectories, type RepositorySource } from "../../git.js"
+import { takeInParallel } from "../../collections.ts"
+import { prepareRepositoryDirectories, type RepositorySource } from "../../git.ts"
 import {
 	normalizePlacetypeDefinition,
 	type PlacetypeDefinition,
 	type PlacetypeDefinitionInit,
 	type PlacetypeRole,
 	PlacetypeRoleOrder,
-} from "./definition.js"
+} from "./definition.ts"
 
 export const PLACETYPES_REPO_SOURCE = {
 	url: "https://github.com/whosonfirst/whosonfirst-placetypes.git",

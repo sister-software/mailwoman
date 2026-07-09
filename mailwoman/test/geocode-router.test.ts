@@ -15,7 +15,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import express from "express"
 import { describe, expect, test } from "vitest"
 
-import { GeocodeRouter } from "../server/GeocodeRouter.js"
+import { GeocodeRouter } from "../server/GeocodeRouter.ts"
 
 const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))

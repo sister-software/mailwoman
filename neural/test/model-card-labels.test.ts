@@ -23,7 +23,7 @@ import { join } from "node:path"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { readLabelsFromModelCard, resolveWeights } from "../weights.js"
+import { readLabelsFromModelCard, resolveWeights } from "../weights.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 

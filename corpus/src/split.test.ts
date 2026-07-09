@@ -17,7 +17,7 @@ import {
 	splitRows,
 	writeSplitManifests,
 	writeSplitManifestsFromLabeledFiles,
-} from "./split.js"
+} from "./split.ts"
 
 interface MinRow {
 	source_id: string

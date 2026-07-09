@@ -6,8 +6,8 @@
 
 import { type GeoFeature, type MultiPolygonLiteral } from "@mailwoman/spatial"
 
-import { TIGERProperty, type TIGERPropertyRecord } from "./constants.js"
-import type { FIPSTractGeoID, GeoIDPart, ParsedGeoIDTractLevel } from "./geoid.js"
+import { TIGERProperty, type TIGERPropertyRecord } from "./constants.ts"
+import type { FIPSTractGeoID, GeoIDPart, ParsedGeoIDTractLevel } from "./geoid.ts"
 
 /**
  * @title TIGER Tract
@@ -35,16 +35,16 @@ export interface TIGERTract extends ParsedGeoIDTractLevel {
  */
 export type TIGERTractProperties = Pick<
 	TIGERPropertyRecord<FIPSTractGeoID>,
-	| TIGERProperty.GeoID
-	| GeoIDPart.State
-	| GeoIDPart.County
-	| GeoIDPart.Tract
-	| TIGERProperty.ClassCode
-	| TIGERProperty.FunctionalStatus
-	| TIGERProperty.LandAreaSqm
-	| TIGERProperty.WaterAreaSqm
-	| TIGERProperty.CentroidLongitude
-	| TIGERProperty.CentroidLatitude
+	| typeof TIGERProperty.GeoID
+	| typeof GeoIDPart.State
+	| typeof GeoIDPart.County
+	| typeof GeoIDPart.Tract
+	| typeof TIGERProperty.ClassCode
+	| typeof TIGERProperty.FunctionalStatus
+	| typeof TIGERProperty.LandAreaSqm
+	| typeof TIGERProperty.WaterAreaSqm
+	| typeof TIGERProperty.CentroidLongitude
+	| typeof TIGERProperty.CentroidLatitude
 >
 
 /**

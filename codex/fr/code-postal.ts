@@ -26,8 +26,8 @@
 
 import type { Tagged } from "type-fest"
 
-import { departementInfo, type DepartementCode, type DepartementInfo } from "./departement.js"
-import { FR_REGIONS, type FrenchRegionInfo } from "./region.js"
+import { departementInfo, type DepartementCode, type DepartementInfo } from "./departement.ts"
+import { FR_REGIONS, type FrenchRegionInfo } from "./region.ts"
 
 /**
  * A French postal code: five digits (`75008`). Same shape as a US ZIP or a German PLZ — the shape alone does not

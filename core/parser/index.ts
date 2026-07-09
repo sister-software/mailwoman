@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./AddressParser.js"
-export * from "./proposal-pipeline.js"
-export * from "./solution-to-proposals.js"
+export * from "./AddressParser.ts"
+export * from "./proposal-pipeline.ts"
+export * from "./solution-to-proposals.ts"

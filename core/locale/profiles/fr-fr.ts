@@ -10,7 +10,7 @@
  *   included here.
  */
 
-import type { LocaleProfile } from "../locale.js"
+import type { LocaleProfile } from "../locale.ts"
 
 export const frFR: LocaleProfile = {
 	locale: "fr-FR",

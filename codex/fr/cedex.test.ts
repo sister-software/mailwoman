@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isCedex, matchCedex } from "./cedex.js"
+import { isCedex, matchCedex } from "./cedex.ts"
 
 describe("matchCedex", () => {
 	it("matches the canonical terminal phrase with office number", () => {

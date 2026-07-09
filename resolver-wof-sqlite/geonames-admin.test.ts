@@ -15,7 +15,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { ingestGeonamesAliases } from "./geonames-aliases.js"
+import { ingestGeonamesAliases } from "./geonames-aliases.ts"
 
 /** A loose SQLite row shape for the test's column probes (avoids `any` — oxlint no-explicit-any). */
 type Row = Record<string, string | number | null>

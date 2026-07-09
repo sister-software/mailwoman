@@ -15,8 +15,8 @@ import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { buildCoverageTiles, type CoverageBuildResult } from "../../coverage-core.js"
-import type { CommandComponent } from "../../sdk/cli.js"
+import { buildCoverageTiles, type CoverageBuildResult } from "../../coverage-core.ts"
+import type { CommandComponent } from "../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	states: zod.string().optional().default("all").describe("Comma-separated state slugs (e.g. CA,TX) or 'all'"),

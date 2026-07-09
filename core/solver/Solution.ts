@@ -14,7 +14,7 @@ import {
 import { formatAddress } from "@mailwoman/core/formatter"
 import type { TokenContext } from "@mailwoman/core/tokenization"
 
-import { type SerializedSolutionMatch, SolutionMatch } from "./SolutionMatch.js"
+import { type SerializedSolutionMatch, SolutionMatch } from "./SolutionMatch.ts"
 
 export interface SerializedSolution {
 	score: number

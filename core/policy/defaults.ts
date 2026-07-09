@@ -10,7 +10,7 @@
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 
-import type { ClassifierPolicy, PolicyMode } from "./policy.js"
+import type { ClassifierPolicy, PolicyMode } from "./policy.ts"
 
 /**
  * Build a fresh array of policies — one per `ComponentTag`, all in `mode`. Returns a new array on each call; callers

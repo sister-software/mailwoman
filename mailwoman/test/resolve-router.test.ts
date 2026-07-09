@@ -15,7 +15,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import express from "express"
 import { describe, expect, test } from "vitest"
 
-import { ResolveRouter } from "../server/ResolveRouter.js"
+import { ResolveRouter } from "../server/ResolveRouter.ts"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH

@@ -12,7 +12,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts } from "@mailwoman/core/resolver"
 import { describe, expect, test, vi } from "vitest"
 
-import { RemoteResolver, serializableResolveOpts } from "./remote-resolver.js"
+import { RemoteResolver, serializableResolveOpts } from "./remote-resolver.ts"
 
 const tree: AddressTree = {
 	raw: "100 Main St, Austin, TX",

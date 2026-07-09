@@ -38,7 +38,7 @@ import {
 	photonOSMTags,
 	type PhotonEngine,
 	type PhotonProperties,
-} from "./index.js"
+} from "./index.ts"
 
 /** WOF placetype → Photon property key. */
 const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {

@@ -10,22 +10,24 @@
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Pub 28 Appendix C1}
  */
 
-import { matchCase } from "./street-suffix.js"
+import { matchCase } from "./street-suffix.ts"
 
 /**
  * The 8 directional abbreviations accepted by the USPS. The USPS prefers the abbreviation over the fully-spelled-out
  * name.
  */
-export enum DirectionalAbbreviation {
-	NORTH = "N",
-	EAST = "E",
-	SOUTH = "S",
-	WEST = "W",
-	NORTHEAST = "NE",
-	NORTHWEST = "NW",
-	SOUTHEAST = "SE",
-	SOUTHWEST = "SW",
-}
+export const DirectionalAbbreviation = {
+	NORTH: "N",
+	EAST: "E",
+	SOUTH: "S",
+	WEST: "W",
+	NORTHEAST: "NE",
+	NORTHWEST: "NW",
+	SOUTHEAST: "SE",
+	SOUTHWEST: "SW",
+} as const
+
+export type DirectionalAbbreviation = (typeof DirectionalAbbreviation)[keyof typeof DirectionalAbbreviation]
 
 /** The 8 directional names accepted by the USPS (intercardinals spaced, per the publication). */
 export const DirectionalNames = [

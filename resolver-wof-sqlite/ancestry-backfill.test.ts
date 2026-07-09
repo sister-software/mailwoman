@@ -11,7 +11,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { backfillAncestorsFromHierarchy, discoverAdminDataRoots } from "./ancestry-backfill.js"
+import { backfillAncestorsFromHierarchy, discoverAdminDataRoots } from "./ancestry-backfill.ts"
 
 let root: string
 

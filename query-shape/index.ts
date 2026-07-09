@@ -13,11 +13,11 @@
  *   `docs/articles/plan/reference/STAGES.md` for how this fits into the runtime pipeline.
  */
 
-export { classifyCodepoint, classifyToken, foldInputClass } from "./character-class.js"
-export { computeQueryShape } from "./compute.js"
-export { detectKnownFormats } from "./known-formats.js"
-export { detectRegionAbbreviations } from "./region-abbreviations.js"
-export { segment } from "./segmentation.js"
+export { classifyCodepoint, classifyToken, foldInputClass } from "./character-class.ts"
+export { computeQueryShape } from "./compute.ts"
+export { detectKnownFormats } from "./known-formats.ts"
+export { detectRegionAbbreviations } from "./region-abbreviations.ts"
+export { segment } from "./segmentation.ts"
 export type {
 	CharacterClass,
 	ComputeQueryShapeOpts,
@@ -32,4 +32,4 @@ export type {
 	TokenCharacterClass,
 	TokenClass,
 	WhitespacePattern,
-} from "./types.js"
+} from "./types.ts"

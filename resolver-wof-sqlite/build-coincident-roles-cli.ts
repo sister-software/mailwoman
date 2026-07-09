@@ -20,7 +20,7 @@ import { DatabaseSync } from "node:sqlite"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 
-import { buildCoincidentRoles } from "./coincident-roles.js"
+import { buildCoincidentRoles } from "./coincident-roles.ts"
 
 function printUsageAndExit(code: number): never {
 	stderr.write(

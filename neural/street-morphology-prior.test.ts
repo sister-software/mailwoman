@@ -10,9 +10,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type FSTMatcherLike, type FSTMatchLike, type FSTPlaceEntryLike } from "./fst-prior.js"
-import { STAGE3_BIO_LABELS } from "./labels.js"
-import { buildStreetMorphologyEmissionPriors } from "./street-morphology-prior.js"
+import { type FSTMatcherLike, type FSTMatchLike, type FSTPlaceEntryLike } from "./fst-prior.ts"
+import { STAGE3_BIO_LABELS } from "./labels.ts"
+import { buildStreetMorphologyEmissionPriors } from "./street-morphology-prior.ts"
 
 function labelCol(label: string): number {
 	return STAGE3_BIO_LABELS.indexOf(label as (typeof STAGE3_BIO_LABELS)[number])

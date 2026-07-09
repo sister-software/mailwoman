@@ -6,8 +6,8 @@
  *   GeoJSON Line String
  */
 
-import type { GeoObjectLiteral } from "../objects.js"
-import type { Coordinates2D, Coordinates3D } from "../position.js"
+import type { GeoObjectLiteral } from "../objects.ts"
+import type { Coordinates2D, Coordinates3D } from "../position.ts"
 
 /**
  * An array of positions forming a line, such as a road or a path.

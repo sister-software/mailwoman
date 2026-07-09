@@ -7,9 +7,9 @@
 import { type GBT, gbtScore, type TermFrequencyTable, trainGBT } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
 
-import { createGbtScorer, createMatchFeaturizer } from "./learned-scorer.js"
-import { buildDefaultModel } from "./resolve.js"
-import type { SourceRecord } from "./types.js"
+import { createGbtScorer, createMatchFeaturizer } from "./learned-scorer.ts"
+import { buildDefaultModel } from "./resolve.ts"
+import type { SourceRecord } from "./types.ts"
 
 // A frequency table where one address string is "crowded" (weak identity evidence) and the rest rare.
 const addressFrequency: TermFrequencyTable = {

@@ -37,7 +37,7 @@ import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta } from "../coarse-placer.js"
+import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
 type ScoreKey = "maxprob" | "p_inmap" | "energy" | "maxlogit" | "maha"
 
@@ -63,7 +63,7 @@ interface ParetoPoint {
 const root = new URL("../../", import.meta.url)
 const { featurize, COARSE_CLASSES } = (await import(
 	new URL("core/out/coarse-placer/featurize.js", root).href
-)) as typeof import("../featurize.js")
+)) as typeof import("../featurize.ts")
 
 const { values: args } = parseArgs({
 	options: {

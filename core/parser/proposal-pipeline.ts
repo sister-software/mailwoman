@@ -15,17 +15,17 @@
  *   Pure module: no resource imports, no top-level await. Safe to import from anywhere.
  */
 
-import { policyRegistryFromRoute } from "../policy/from-config.js"
-import type { InputShapeRoute } from "../policy/input-shape-router.js"
-import type { PolicyRegistry } from "../policy/policy.js"
-import type { Span, TokenContext } from "../tokenization/index.js"
+import { policyRegistryFromRoute } from "../policy/from-config.ts"
+import type { InputShapeRoute } from "../policy/input-shape-router.ts"
+import type { PolicyRegistry } from "../policy/policy.ts"
+import type { Span, TokenContext } from "../tokenization/index.ts"
 import {
 	type ClassificationProposal,
 	type ClassifierContext,
 	type ComponentTag,
 	componentTagToLegacyClassification,
 	type ProposalClassifier,
-} from "../types/index.js"
+} from "../types/index.ts"
 
 /**
  * Run every classifier against every section, concatenate the results.

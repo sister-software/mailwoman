@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import type { MultiPolygonCoords } from "./index.js"
+import type { MultiPolygonCoords } from "./index.ts"
 
 interface NutsFeature {
 	properties: { NUTS_ID: string; LEVL_CODE: number }

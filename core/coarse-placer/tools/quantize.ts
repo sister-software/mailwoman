@@ -22,7 +22,7 @@ import { parseArgs } from "node:util"
  */
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta } from "../coarse-placer.js"
+import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
 const { values: args } = parseArgs({
 	options: {

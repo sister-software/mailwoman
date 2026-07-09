@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from "./types.js"
+import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from "./types.ts"
 
 /** Codepoint-level character class. */
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"

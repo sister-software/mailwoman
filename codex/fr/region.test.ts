@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { FR_DEPARTEMENTS } from "./departement.js"
-import { FR_REGIONS, isFrenchRegionCode, lookupFrenchRegion } from "./region.js"
+import { FR_DEPARTEMENTS } from "./departement.ts"
+import { FR_REGIONS, isFrenchRegionCode, lookupFrenchRegion } from "./region.ts"
 
 describe("FR_REGIONS", () => {
 	it("covers all 18 régions (13 metropolitan + 5 overseas)", () => {

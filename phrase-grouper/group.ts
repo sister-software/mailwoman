@@ -23,8 +23,8 @@ import {
 	scoreVenuePhrase,
 	tokenizeSegment,
 	type SegmentToken,
-} from "./rules.js"
-import type { GroupPhrasesOpts, LocaleHint, NormalizedInputLite, PhraseProposal, QueryShapeLike } from "./types.js"
+} from "./rules.ts"
+import type { GroupPhrasesOpts, LocaleHint, NormalizedInputLite, PhraseProposal, QueryShapeLike } from "./types.ts"
 
 /**
  * Walk every QueryShape segment and emit one `tokens-by-segment` list. Falls back to treating the whole input as a

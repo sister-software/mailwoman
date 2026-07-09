@@ -24,7 +24,7 @@ import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural"
 import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, test } from "vitest"
 
-import { WebONNXRunner } from "./web-onnx-runner.js"
+import { WebONNXRunner } from "./web-onnx-runner.ts"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via
 // `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights

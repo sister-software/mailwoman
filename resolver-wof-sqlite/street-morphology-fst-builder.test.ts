@@ -14,8 +14,8 @@
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-import { deserializeFST, readFSTProvenance, serializeFST } from "./fst-serialize.js"
-import { buildStreetMorphologyFST } from "./street-morphology-fst-builder.js"
+import { deserializeFST, readFSTProvenance, serializeFST } from "./fst-serialize.ts"
+import { buildStreetMorphologyFST } from "./street-morphology-fst-builder.ts"
 
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 

@@ -11,7 +11,7 @@ import { DatabaseSync } from "node:sqlite"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { expect, test } from "vitest"
 
-import { fillPostcodeCentroids } from "./centroid-fills.js"
+import { fillPostcodeCentroids } from "./centroid-fills.ts"
 
 test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordinates untouched", async () => {
 	// The staging shard: two postcodes — one placeholder (parented), one already placed.

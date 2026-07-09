@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { cluster, representative } from "./clustering.js"
+import { cluster, representative } from "./clustering.ts"
 
 const r1 = { id: "1" }
 const r2 = { id: "2" }

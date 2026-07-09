@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
+import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-postcode", "I-postcode", "B-po_box", "I-po_box"]
 

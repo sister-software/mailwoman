@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { CloudflareWorkerPMTiles } from "../protomaps/index.js"
-import { WorkerRoute } from "../routing.js"
+import { CloudflareWorkerPMTiles } from "../protomaps/index.ts"
+import { WorkerRoute } from "../routing.ts"
 
 export const HomeRoute = WorkerRoute.GET("/", () => {
 	return new Response(

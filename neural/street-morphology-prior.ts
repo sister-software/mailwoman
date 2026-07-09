@@ -22,8 +22,8 @@
  *   instance.
  */
 
-import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "./fst-prior.js"
-import type { TokenLike } from "./query-shape-prior.js"
+import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "./fst-prior.ts"
+import type { TokenLike } from "./query-shape-prior.ts"
 
 export interface StreetMorphologyPriorOpts {
 	/** Multiplier on the base bias before {@linkcode maxBias} is applied. Default 1.0. */

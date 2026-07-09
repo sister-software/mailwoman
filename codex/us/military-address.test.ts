@@ -14,7 +14,7 @@ import {
 	US_ARMED_FORCES_REGIONS,
 	US_MILITARY_POST_OFFICE_CODES,
 	US_MILITARY_UNIT_DESIGNATORS,
-} from "./military-address.js"
+} from "./military-address.ts"
 
 describe("US_MILITARY_POST_OFFICE_CODES", () => {
 	it("carries the three USPS Pub 28 location codes", () => {

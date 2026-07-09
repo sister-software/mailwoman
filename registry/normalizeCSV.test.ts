@@ -10,8 +10,8 @@ import { join } from "node:path"
 
 import { afterAll, describe, expect, it } from "vitest"
 
-import { normalizeCSV } from "./ingest.js"
-import type { SourceRecord } from "./types.js"
+import { normalizeCSV } from "./ingest.ts"
+import type { SourceRecord } from "./types.ts"
 
 const dir = mkdtempSync(join(tmpdir(), "normalize-csv-"))
 afterAll(() => rmSync(dir, { recursive: true, force: true }))

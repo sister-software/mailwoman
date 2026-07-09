@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { parseTileCoordParams, pointToTile, pointToTileFraction } from "./coords.js"
+import { parseTileCoordParams, pointToTile, pointToTileFraction } from "./coords.ts"
 
 // Web Mercator slippy-map math: at zoom z there are z2 = 2^z tiles per axis. The X fraction is
 // z2·(lon/360 + 0.5), wrapped into [0, z2). The Y fraction is z2·(0.5 − ln((1+sin)/(1−sin))/(4π)),

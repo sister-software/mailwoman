@@ -18,9 +18,9 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { type StreetCentroidDatabase, createStreetCentroidTable } from "./street-centroid-schema.js"
-import { StreetCentroidSqliteLookup } from "./street-centroid.js"
-import { stripArrondissement } from "./street-normalize.js"
+import { type StreetCentroidDatabase, createStreetCentroidTable } from "./street-centroid-schema.ts"
+import { StreetCentroidSqliteLookup } from "./street-centroid.ts"
+import { stripArrondissement } from "./street-normalize.ts"
 
 interface Seed {
 	street_norm: string

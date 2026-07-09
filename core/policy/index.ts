@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./defaults.js"
-export * from "./from-config.js"
-export * from "./input-shape-router.js"
-export * from "./policy.js"
-export * from "./registry.js"
+export * from "./defaults.ts"
+export * from "./from-config.ts"
+export * from "./input-shape-router.ts"
+export * from "./policy.ts"
+export * from "./registry.ts"

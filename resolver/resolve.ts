@@ -30,7 +30,7 @@ import {
 } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.js"
+import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with

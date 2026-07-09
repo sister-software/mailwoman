@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./InvalidSolutionFilter.js"
-export * from "./RelationshipFilter.js"
-export * from "./SubsetFilter.js"
-export * from "./TokenDistanceFilter.js"
+export * from "./InvalidSolutionFilter.ts"
+export * from "./RelationshipFilter.ts"
+export * from "./SubsetFilter.ts"
+export * from "./TokenDistanceFilter.ts"

@@ -15,7 +15,7 @@
  *   See `docs/articles/plan/reference/STAGES.md` § Stage 2 for the contract.
  */
 
-export { detectLocale, detectLocaleSync } from "./detect.js"
-export { scoreByPostcode, scoreByScript, scoreFallback } from "./rules.js"
-export type { LocaleCandidate } from "./rules.js"
-export type { DetectLocaleOpts, LocaleHint, LocaleTag, NormalizedInputLite, QueryShapeLike } from "./types.js"
+export { detectLocale, detectLocaleSync } from "./detect.ts"
+export { scoreByPostcode, scoreByScript, scoreFallback } from "./rules.ts"
+export type { LocaleCandidate } from "./rules.ts"
+export type { DetectLocaleOpts, LocaleHint, LocaleTag, NormalizedInputLite, QueryShapeLike } from "./types.ts"

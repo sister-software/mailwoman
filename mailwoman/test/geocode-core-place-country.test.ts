@@ -14,7 +14,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts, Resolver } from "@mailwoman/resolver"
 import { describe, expect, test, vi } from "vitest"
 
-import { geocodeAddress, type GeocodeClassifier } from "../geocode-core.js"
+import { geocodeAddress, type GeocodeClassifier } from "../geocode-core.ts"
 
 /** A classifier that returns a fixed tree (no region → admin-only path, no shards needed). */
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {

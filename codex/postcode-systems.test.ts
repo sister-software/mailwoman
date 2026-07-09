@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { candidateSystemsForPostcode } from "./postcode-systems.js"
+import { candidateSystemsForPostcode } from "./postcode-systems.ts"
 
 describe("candidateSystemsForPostcode", () => {
 	it("a bare 5-digit code is eligible for every numeric-postcode system (shape can't split them)", () => {

@@ -15,8 +15,8 @@
  *   visited in classifier-score order so the budget goes to the likeliest spans.
  */
 
-import type { ResolvedPlace, ResolverBackend } from "../resolver/types.js"
-import type { ClassifierCandidate, ParentChainLookup, ResolverCandidatesLookup } from "./reconcile.js"
+import type { ResolvedPlace, ResolverBackend } from "../resolver/types.ts"
+import type { ClassifierCandidate, ParentChainLookup, ResolverCandidatesLookup } from "./reconcile.ts"
 
 const RESOLVABLE_TAGS = new Set(["country", "region", "locality", "dependent_locality", "county", "subregion"])
 

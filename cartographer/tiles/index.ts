@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./api.js"
-export * from "./coords.js"
-export * from "./schema.js"
+export * from "./api.ts"
+export * from "./coords.ts"
+export * from "./schema.ts"

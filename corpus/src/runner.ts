@@ -31,8 +31,8 @@ import { createWriteStream, type WriteStream } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 
-import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "./adapter.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "./types.js"
+import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "./adapter.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "./types.ts"
 
 /** Snapshot of the runner's state, emitted on every progress tick. */
 export interface RunnerProgress {

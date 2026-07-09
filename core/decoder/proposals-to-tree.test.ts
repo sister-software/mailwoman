@@ -9,9 +9,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { ComponentTag } from "../types/index.js"
-import { proposalsToTree, treeToProposals } from "./proposals-to-tree.js"
-import type { AddressTree } from "./types.js"
+import type { ComponentTag } from "../types/index.ts"
+import { proposalsToTree, treeToProposals } from "./proposals-to-tree.ts"
+import type { AddressTree } from "./types.ts"
 
 describe("treeToProposals", () => {
 	it("walks nodes depth-first (incl. children) into proposals with the given source/sourceID", () => {

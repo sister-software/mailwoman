@@ -10,9 +10,9 @@
  *   build-time operation).
  */
 
-import type { FSTNode } from "./fst-matcher.js"
-import { FSTMatcher } from "./fst-matcher.js"
-import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.js"
+import type { FSTNode } from "./fst-matcher.ts"
+import { FSTMatcher } from "./fst-matcher.ts"
+import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8

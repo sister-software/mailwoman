@@ -15,8 +15,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, describe, expect, test } from "vitest"
 
-import { resolveStreet } from "./demo-helpers.js"
-import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "./httpvfs-street.js"
+import { resolveStreet } from "./demo-helpers.ts"
+import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "./httpvfs-street.ts"
 
 /** Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape). */
 function stubWorker(db: DatabaseSync) {

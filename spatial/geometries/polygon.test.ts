@@ -13,7 +13,7 @@ import {
 	polygonToOSMFilter,
 	type OSMOverpassElement,
 	type PolygonLiteral,
-} from "./polygon.js"
+} from "./polygon.ts"
 
 const SOLID: PolygonLiteral = {
 	type: "Polygon",

@@ -7,7 +7,7 @@
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { VenueCaptureSolver } from "./VenueCaptureSolver.js"
+import { VenueCaptureSolver } from "./VenueCaptureSolver.ts"
 
 /**
  * NOTE: In its current form `VenueCaptureSolver` is effectively a no-op. Its loop bodies only `continue` and never

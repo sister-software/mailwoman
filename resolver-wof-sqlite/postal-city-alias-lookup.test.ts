@@ -19,9 +19,9 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { WOFSqlitePlaceLookup } from "./lookup.js"
-import { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
-import { createPostalCityAliasTable, type PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
+import { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.ts"
+import { createPostalCityAliasTable, type PostalCityAliasDatabase } from "./postal-city-alias-schema.ts"
 
 /** A `postal_city_alias` fixture DB with the production DDL + a divergent and a non-divergent row. */
 async function buildAliasDB(): Promise<DatabaseSync> {

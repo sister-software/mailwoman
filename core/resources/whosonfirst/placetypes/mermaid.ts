@@ -7,8 +7,8 @@
 import { rgb } from "d3-color"
 import { interpolateViridis } from "d3-scale-chromatic"
 
-import { type PlacetypeRole, PlacetypeRoles } from "./definition.js"
-import { Placetype } from "./Placetype.js"
+import { type PlacetypeRole, PlacetypeRoles } from "./definition.ts"
+import { Placetype } from "./Placetype.ts"
 
 /**
  * Mermaid's `classDef` parser uses commas to separate style properties, so an `rgb(r, g, b)` value (which

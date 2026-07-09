@@ -14,8 +14,8 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import { artifactSizeMB, buildPostcodeShard } from "../../../gazetteer-pipeline/index.js"
-import type { CommandComponent } from "../../../sdk/cli.js"
+import { artifactSizeMB, buildPostcodeShard } from "../../../gazetteer-pipeline/index.ts"
+import type { CommandComponent } from "../../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	country: zod.string().describe("ISO-2 country (the whosonfirst-data-postalcode-<cc> repo to build)"),

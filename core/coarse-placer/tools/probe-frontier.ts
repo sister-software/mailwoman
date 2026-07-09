@@ -27,12 +27,12 @@ import { parseArgs } from "node:util"
 import { ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 
-import type { CoarsePlacerMeta } from "../coarse-placer.js"
+import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
 const root = new URL("../../", import.meta.url)
 const { CoarsePlacer } = (await import(
 	new URL("core/out/coarse-placer/coarse-placer.js", root).href
-)) as typeof import("../coarse-placer.js")
+)) as typeof import("../coarse-placer.ts")
 
 const { values: args } = parseArgs({
 	options: {

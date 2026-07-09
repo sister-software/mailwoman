@@ -18,8 +18,8 @@
  *   by the caller) — an undetected system parses exactly as before.
  */
 
-import { CODE_POSTAL_PATTERN } from "./fr/code-postal.js"
-import type { SystemCode } from "./postcode-systems.js"
+import { CODE_POSTAL_PATTERN } from "./fr/code-postal.ts"
+import type { SystemCode } from "./postcode-systems.ts"
 
 export interface AddressSystemConventions {
 	/**

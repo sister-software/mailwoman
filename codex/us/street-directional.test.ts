@@ -13,7 +13,7 @@ import {
 	matchLeadingDirectional,
 	pluckDirectionalName,
 	renderDirectional,
-} from "./street-directional.js"
+} from "./street-directional.ts"
 
 test("pluckDirectionalName: abbreviation → full USPS name, case-insensitive", () => {
 	expect(pluckDirectionalName("N")).toBe("NORTH")

@@ -15,7 +15,7 @@ import {
 	normalizeLocalityForKey,
 	normalizeStreetForKey,
 	stripLocalityQualifier,
-} from "./street-normalize.js"
+} from "./street-normalize.ts"
 
 describe("normalizeStreetForKey", () => {
 	it("collides USPS suffix variants", () => {

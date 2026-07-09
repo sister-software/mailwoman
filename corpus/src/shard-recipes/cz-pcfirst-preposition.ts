@@ -14,7 +14,7 @@
  *   cycle (the lesson); canonical and city-first keep the polarity balanced (the v1.9.9 lesson).
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.js"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
 export const czPcFirstPrepositionRecipe: ShardRecipe = {
 	name: "cz-pcfirst-preposition",

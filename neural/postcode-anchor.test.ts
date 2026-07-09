@@ -17,7 +17,7 @@ import {
 	normalizePostcode,
 	type PostcodePlace,
 	type PostcodeResolver,
-} from "./postcode-anchor.js"
+} from "./postcode-anchor.ts"
 
 /** A fake gazetteer: exact-match map from normalized postcode → hits. */
 class FakeResolver implements PostcodeResolver {

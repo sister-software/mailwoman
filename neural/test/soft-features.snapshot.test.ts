@@ -16,10 +16,10 @@
 
 import { describe, expect, it } from "vitest"
 
-import { ANCHOR_FEATURE_DIM, anchorFeatureVector, type AnchorLookup } from "../anchor-inference.js"
-import { parseGazetteerLexicon } from "../gazetteer-inference.js"
-import { buildSoftFeatures } from "../soft-features.js"
-import type { TokenizedPiece } from "../tokenizer.js"
+import { ANCHOR_FEATURE_DIM, anchorFeatureVector, type AnchorLookup } from "../anchor-inference.ts"
+import { parseGazetteerLexicon } from "../gazetteer-inference.ts"
+import { buildSoftFeatures } from "../soft-features.ts"
+import type { TokenizedPiece } from "../tokenizer.ts"
 
 const piece = (p: string, start: number, end: number): TokenizedPiece =>
 	({ piece: p, id: 0, start, end }) as unknown as TokenizedPiece

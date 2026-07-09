@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { formatAddress, toOpenCageComponents } from "./format.js"
+import { formatAddress, toOpenCageComponents } from "./format.ts"
 
 describe("formatAddress", () => {
 	it("renders a canonical US address across newlines by default (no country line when 'country' is absent)", () => {

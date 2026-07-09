@@ -4,5 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./shared.js"
-export * from "./utils.js"
+export * from "./shared.ts"
+export * from "./utils.ts"

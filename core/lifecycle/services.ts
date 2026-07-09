@@ -6,9 +6,9 @@
  *   Utilities for creating branded nominal types.
  */
 
-import { ResourceError } from "../errors/schema.js"
-import { ConsoleLogger } from "../logging/index.js"
-import { ServiceSymbol } from "./ServiceSymbol.js"
+import { ResourceError } from "../errors/schema.ts"
+import { ConsoleLogger } from "../logging/index.ts"
+import { ServiceSymbol } from "./ServiceSymbol.ts"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

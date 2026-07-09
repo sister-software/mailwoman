@@ -54,20 +54,20 @@ import { join } from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { JSONSpliterator } from "spliterator"
 
-import { defaultAdapterRegistry } from "./adapter.js"
-import { alignRow } from "./align.js"
-import { licenseExcluded } from "./license.js"
-import { writeShards, type ShardManifest } from "./parquet.js"
-import { runAdapter, type AdapterRunManifest } from "./runner.js"
+import { defaultAdapterRegistry } from "./adapter.ts"
+import { alignRow } from "./align.ts"
+import { licenseExcluded } from "./license.ts"
+import { writeShards, type ShardManifest } from "./parquet.ts"
+import { runAdapter, type AdapterRunManifest } from "./runner.ts"
 import {
 	defaultHoldouts,
 	splitForRow,
 	writeSplitManifestsFromLabeledFiles,
 	type SplitManifest,
 	type SplitName,
-} from "./split.js"
-import { defaultAugmentationsForCountry, synthesizeRow } from "./synthesize.js"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "./types.js"
+} from "./split.ts"
+import { defaultAugmentationsForCountry, synthesizeRow } from "./synthesize.ts"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "./types.ts"
 
 /** Stage tags surfaced to `onProgress`. */
 export type BuildStage = "adapter-run" | "align" | "split" | "shard" | "manifest"

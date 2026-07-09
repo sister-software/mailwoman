@@ -22,7 +22,7 @@ import { $public } from "@mailwoman/core/env"
 import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 
-import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.js"
+import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.ts"
 
 /** One node in the response's flat list — what the UI renders for each resolved component. */
 export interface ResolveResponseNode {

@@ -27,7 +27,7 @@
 
 import type { Tagged } from "type-fest"
 
-import type { CanadianProvinceCode } from "./province.js"
+import type { CanadianProvinceCode } from "./province.ts"
 
 /**
  * A Canadian postal code: `A1A 1A1`. Six alphanumeric characters in a strict Letter-Digit-Letter-Digit-Letter-Digit

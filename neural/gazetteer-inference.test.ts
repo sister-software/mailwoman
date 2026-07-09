@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { buildGazetteerFeatures, gazetteerCharPaint, parseGazetteerLexicon } from "./gazetteer-inference.js"
-import type { TokenizedPiece } from "./tokenizer.js"
+import { buildGazetteerFeatures, gazetteerCharPaint, parseGazetteerLexicon } from "./gazetteer-inference.ts"
+import type { TokenizedPiece } from "./tokenizer.ts"
 
 const BITS = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
 const LEXICON = parseGazetteerLexicon({

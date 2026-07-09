@@ -9,7 +9,7 @@
  *   territories, and the 4-digit postcode.
  */
 
-export * from "./delivery-service.js"
-export * from "./level-designator.js"
-export * from "./postcode.js"
-export * from "./state.js"
+export * from "./delivery-service.ts"
+export * from "./level-designator.ts"
+export * from "./postcode.ts"
+export * from "./state.ts"

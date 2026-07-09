@@ -16,7 +16,7 @@ import {
 	normalizeInputCase,
 	restoreLowerInput,
 	titleCaseInput,
-} from "../case-normalize.js"
+} from "../case-normalize.ts"
 
 describe("isAllCapsInput", () => {
 	it("detects a pure-ASCII all-caps address", () => {

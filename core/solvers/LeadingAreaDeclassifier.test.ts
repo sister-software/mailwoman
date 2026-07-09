@@ -7,7 +7,7 @@
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { LeadingAreaDeclassifier } from "./LeadingAreaDeclassifier.js"
+import { LeadingAreaDeclassifier } from "./LeadingAreaDeclassifier.ts"
 
 /**
  * Rule: within a solution, an admin match (locality / region / country) is removed when it ends before the last

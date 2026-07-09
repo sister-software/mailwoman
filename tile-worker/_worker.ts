@@ -9,14 +9,14 @@
 import type { ExportedHandler } from "@cloudflare/workers-types"
 import { ResourceError } from "@mailwoman/core/errors"
 
-import { applyAccessControlAllowOrigin } from "./cors.js"
-import { DatabaseRetrieveRoute } from "./routes/db.js"
-import { GeolocateRoute } from "./routes/geolocation.js"
-import { HealthCheckRoute, HomeRoute } from "./routes/healthcheck.js"
-import { BroadbandProviderTileMetadataRoute, BroadbandProviderTileRoute } from "./routes/provider.js"
-import { TIGERTileMetadataRoute, TIGERTileRoute } from "./routes/tiger.js"
-import { TileMetadataRoute, TileRoute } from "./routes/tile.js"
-import { delegateRequest, type RouteContext, type TileWorkerEnv } from "./routing.js"
+import { applyAccessControlAllowOrigin } from "./cors.ts"
+import { DatabaseRetrieveRoute } from "./routes/db.ts"
+import { GeolocateRoute } from "./routes/geolocation.ts"
+import { HealthCheckRoute, HomeRoute } from "./routes/healthcheck.ts"
+import { BroadbandProviderTileMetadataRoute, BroadbandProviderTileRoute } from "./routes/provider.ts"
+import { TIGERTileMetadataRoute, TIGERTileRoute } from "./routes/tiger.ts"
+import { TileMetadataRoute, TileRoute } from "./routes/tile.ts"
+import { delegateRequest, type RouteContext, type TileWorkerEnv } from "./routing.ts"
 
 const handler: ExportedHandler<TileWorkerEnv> = {
 	fetch: (request, env, ctx) => {

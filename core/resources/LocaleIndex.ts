@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { TextNormalizer } from "../tokenization/normalizer.js"
-import type { Displayable } from "./debugging.js"
+import { TextNormalizer } from "../tokenization/normalizer.ts"
+import type { Displayable } from "./debugging.ts"
 
 /**
  * Options for the locale index.

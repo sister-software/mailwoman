@@ -26,7 +26,7 @@ import {
 	ParquetSchema,
 	type ParquetSchemaDefinition,
 	ParquetSchemaDefinitionCache,
-} from "./schema.js"
+} from "./schema.ts"
 
 /**
  * A typed Parquet writer, wrapping the base Parquet writer.

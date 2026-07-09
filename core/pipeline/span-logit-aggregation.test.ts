@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { aggregateSpanLogits, type SpanBounds, type TokenPiece } from "./span-logit-aggregation.js"
+import { aggregateSpanLogits, type SpanBounds, type TokenPiece } from "./span-logit-aggregation.ts"
 
 // Minimal 5-label vocab for testing: O, B-locality, I-locality, B-region, I-region
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"]

@@ -37,8 +37,8 @@
  *   a raw byte-fallback piece) is the path to a clean win — tracked on #727.
  */
 
-import { SPACE_SENTINEL } from "./tokenizer.js"
-import { softmax } from "./viterbi.js"
+import { SPACE_SENTINEL } from "./tokenizer.ts"
+import { softmax } from "./viterbi.ts"
 
 export interface WordConsistencyResult {
 	/** A new per-piece label-index array, word-consistent (input is not mutated). */

@@ -30,9 +30,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { InterpolationLookup } from "@mailwoman/resolver"
 
-import { haversineKm } from "./geo.js"
-import { hasTable } from "./sqlite-utils.js"
-import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
+import { haversineKm } from "./geo.ts"
+import { hasTable } from "./sqlite-utils.ts"
+import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.ts"
 
 /**
  * How an interpolated answer was computed (#483 Method 2):
