@@ -503,4 +503,4 @@ async function main(): Promise<void> {
 	console.log(md)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

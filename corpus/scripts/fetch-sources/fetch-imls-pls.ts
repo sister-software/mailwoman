@@ -209,4 +209,4 @@ async function main(): Promise<void> {
 	process.stderr.write(`  MANIFEST written to ${manifestPath}\n`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

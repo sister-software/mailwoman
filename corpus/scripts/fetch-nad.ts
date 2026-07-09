@@ -351,4 +351,4 @@ async function main(): Promise<void> {
 		process.exitCode = 2
 	}
 }
-runIfScript(main)
+runIfScript(import.meta, main)

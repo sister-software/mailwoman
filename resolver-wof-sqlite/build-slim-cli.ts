@@ -157,4 +157,4 @@ export async function main(rawArgv: string[]): Promise<number> {
 	}
 }
 
-runIfScript(() => main(cliArguments()))
+runIfScript(import.meta, () => main(cliArguments()))

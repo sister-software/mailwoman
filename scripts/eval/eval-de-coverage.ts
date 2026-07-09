@@ -57,4 +57,4 @@ async function main() {
 	printGrepAfter(r3.stdout, "Head-to-head", 6)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

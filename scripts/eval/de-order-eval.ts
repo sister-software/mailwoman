@@ -144,4 +144,4 @@ async function main() {
 	console.log(`no-regression: US ${loc("us-on")} · FR ${loc("fr-on")}`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

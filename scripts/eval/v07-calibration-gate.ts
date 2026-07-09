@@ -90,4 +90,4 @@ async function main() {
 	console.log(`Gate artifacts written to ${OUT}/. Apply the decision tree on the numbers above.`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

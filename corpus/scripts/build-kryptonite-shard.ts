@@ -175,4 +175,4 @@ async function main(): Promise<void> {
 	console.error(`  compression=${SHARD_COMPRESSION}`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

@@ -138,4 +138,4 @@ export function main(argv: readonly string[]): number {
 	return worst
 }
 
-runIfScript(() => main(cliArguments()))
+runIfScript(import.meta, () => main(cliArguments()))

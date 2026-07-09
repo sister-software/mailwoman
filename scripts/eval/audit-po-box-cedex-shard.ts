@@ -246,4 +246,4 @@ async function main(): Promise<void> {
 	console.log(`\nPASS: all ${rows} rows clean`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

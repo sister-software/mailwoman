@@ -487,4 +487,4 @@ async function main(): Promise<void> {
 	}
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

@@ -323,4 +323,4 @@ async function main() {
 	console.error(`  Demo: https://mailwoman.sister.software/demo/`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

@@ -165,4 +165,4 @@ async function removeIfPresent(path: PathLike) {
 	}
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

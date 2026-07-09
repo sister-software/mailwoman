@@ -131,4 +131,4 @@ async function main() {
 	}
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

@@ -108,4 +108,4 @@ async function main() {
 	console.log(`(per-state name-vs-PIP breakdown: python3 scripts/eval/pip-containment.py ${OUT}/intl-on.json)`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

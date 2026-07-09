@@ -381,4 +381,4 @@ async function main(): Promise<void> {
 	postcodeLookup.close?.()
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

@@ -383,4 +383,4 @@ function parseArgv(argv: readonly string[]): AuditOpts {
 	return opts
 }
 
-runIfScript(() => audit(parseArgv(cliArguments())))
+runIfScript(import.meta, () => audit(parseArgv(cliArguments())))

@@ -532,4 +532,4 @@ async function main() {
 	process.stderr.write(`output:           ${opts.outputPath}\n`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

@@ -451,4 +451,4 @@ async function main() {
 	await ingestCSV(opts)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

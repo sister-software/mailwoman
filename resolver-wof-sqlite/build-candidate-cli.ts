@@ -95,4 +95,4 @@ export async function main(): Promise<number> {
 	return 0
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

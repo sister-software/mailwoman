@@ -361,4 +361,4 @@ async function main(): Promise<void> {
 	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

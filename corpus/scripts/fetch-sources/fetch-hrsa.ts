@@ -109,4 +109,4 @@ async function main(): Promise<void> {
 	process.stderr.write(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}\n`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

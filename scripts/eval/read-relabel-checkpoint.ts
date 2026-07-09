@@ -54,4 +54,4 @@ async function main() {
 	console.error(`\nmodel: ${local} (keep for the fp32-to-fp32 gate at 40k)`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

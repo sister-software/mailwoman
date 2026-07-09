@@ -246,4 +246,4 @@ async function main() {
 	console.log(JSON.stringify(report, null, 2))
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

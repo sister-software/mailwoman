@@ -404,4 +404,4 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 	process.stdout.write(`    --output $OUT_ROOT\n`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

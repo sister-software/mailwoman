@@ -85,4 +85,4 @@ async function main(): Promise<void> {
 	process.stderr.write(`\nadmin gazetteer source (for the candidate-table build): ${WOF_ADMIN_DB}\n`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)

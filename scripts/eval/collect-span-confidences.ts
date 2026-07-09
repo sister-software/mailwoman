@@ -251,4 +251,4 @@ async function main(): Promise<void> {
 	console.error(`  OA spans=${byOa.length}  corpus spans=${byCorpus.length}`)
 }
 
-runIfScript(main)
+runIfScript(import.meta, main)
