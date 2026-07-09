@@ -35,7 +35,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.ts"
+import type { CommandComponent } from "../../cli-kit/index.ts"
 
 /** State abbreviation → state FIPS prefix, for picking county files out of --edges-dir. */
 const STATE_FIPS: Record<string, string> = {

@@ -15,7 +15,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../sdk/cli.ts"
+import type { CommandComponent } from "../cli-kit/index.ts"
 import { AddressRouter, GeocodeRouter, HealthRouter, ResolveRouter } from "../server/index.ts"
 
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({

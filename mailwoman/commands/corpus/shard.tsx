@@ -18,7 +18,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.ts"
+import type { CommandComponent } from "../../cli-kit/index.ts"
 
 const ArgumentsSchema = zod
 	.array(zod.string().describe("Recipe name (omit with --list to see the registry)"))

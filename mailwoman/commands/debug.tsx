@@ -10,7 +10,7 @@ import { createAddressParser, createDiagnosticReport } from "mailwoman"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../sdk/cli.ts"
+import type { CommandComponent } from "../cli-kit/index.ts"
 
 const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address"))
 const DebugConfigSchema = zod.object({

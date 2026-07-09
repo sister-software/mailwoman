@@ -35,7 +35,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.ts"
+import type { CommandComponent } from "../../cli-kit/index.ts"
 
 const BIT = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
 const SLOTS = ["country", "region", "po_box", "cedex", "homograph"]

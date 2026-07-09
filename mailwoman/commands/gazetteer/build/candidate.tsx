@@ -16,6 +16,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
+import type { CommandComponent } from "../../../cli-kit/index.ts"
 import {
 	buildCandidate,
 	DEFAULT_ADMIN_DB,
@@ -25,7 +26,6 @@ import {
 	resolvePostcodeShards,
 	wofDir,
 } from "../../../gazetteer-pipeline/index.ts"
-import type { CommandComponent } from "../../../sdk/cli.ts"
 
 const OptionsSchema = zod.object({
 	admin: zod

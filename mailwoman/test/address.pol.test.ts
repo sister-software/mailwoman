@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { assert } from "mailwoman/sdk/test"
+import { assert } from "mailwoman/test-kit"
 
 assert(
 	"Szewska 6, Kraków",

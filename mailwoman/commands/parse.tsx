@@ -19,8 +19,8 @@ import { createAddressParser, createDiagnosticReport, createRuntimePipeline } fr
 import { useEffect, useState } from "react"
 import zod from "zod"
 
+import type { CommandComponent } from "../cli-kit/index.ts"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
-import type { CommandComponent } from "../sdk/cli.ts"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u

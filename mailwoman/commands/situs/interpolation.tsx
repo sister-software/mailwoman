@@ -37,7 +37,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.ts"
+import type { CommandComponent } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	edgesDir: zod.string().default("/tmp/tiger-edges").describe("Download destination for TIGER ZIP + SHP files"),

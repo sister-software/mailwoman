@@ -87,6 +87,16 @@
 			"node": "./gazetteer-pipeline/*.ts",
 			"default": "./out/gazetteer-pipeline/*.js",
 			"types": "./out/gazetteer-pipeline/*.d.ts"
+		},
+		"./cli-kit": {
+			"node": "./cli-kit/index.ts",
+			"default": "./out/cli-kit/index.js",
+			"types": "./out/cli-kit/index.d.ts"
+		},
+		"./test-kit": {
+			"node": "./test-kit/index.ts",
+			"default": "./out/test-kit/index.js",
+			"types": "./out/test-kit/index.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -131,6 +141,14 @@
 			"./gazetteer-pipeline/*": {
 				"types": "./out/gazetteer-pipeline/*.d.ts",
 				"default": "./out/gazetteer-pipeline/*.js"
+			},
+			"./cli-kit": {
+				"types": "./out/cli-kit/index.d.ts",
+				"default": "./out/cli-kit/index.js"
+			},
+			"./test-kit": {
+				"types": "./out/test-kit/index.d.ts",
+				"default": "./out/test-kit/index.js"
 			}
 		},
 		"access": "public"
