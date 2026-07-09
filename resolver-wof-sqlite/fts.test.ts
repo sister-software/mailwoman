@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the FTS5 build helpers used by both `WOFSqlitePlaceLookup` and the
- *   `mailwoman-wof-build-fts` CLI.
+ *   `mailwoman gazetteer build fts` CLI.
  */
 
 import { DatabaseSync } from "node:sqlite"

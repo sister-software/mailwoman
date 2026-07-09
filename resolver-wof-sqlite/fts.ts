@@ -6,7 +6,7 @@
  *   FTS5 index lifecycle for the WOF SQLite distribution.
  *
  *   Shared by `WOFSqlitePlaceLookup` (lazy build via `buildFTS: true`) and the operator-side
- *   `mailwoman-wof-build-fts` CLI (ahead-of-time build to avoid first-open latency in production).
+ *   `mailwoman gazetteer build fts` CLI (ahead-of-time build to avoid first-open latency in production).
  *
  *   Upstream WOF SQLite distributions do NOT ship FTS5. The index lives in a `place_search` virtual
  *   table whose rows mirror `(spr.id, spr.name, GROUP_CONCAT(names.name))` — one current,

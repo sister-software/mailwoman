@@ -84,14 +84,14 @@ bunzip2 whosonfirst-data-admin-us-latest.db.bz2
 Upstream WOF SQLite distributions ship a `places` table but **not** an FTS5 index. The resolver needs FTS5 to do fast prefix + token-bag matching. Two options:
 
 1. **`buildFts: true` on construction** — builds the index lazily on first open. Cost is one-time but expensive (~minutes on the full US admin shard). Use for prototyping.
-2. **Pre-build the index with `mailwoman-wof-build-fts`** — ship the DB with the index included so first-open is fast. Recommended for production.
+2. **Pre-build the index with `mailwoman gazetteer build fts`** — ship the DB with the index included so first-open is fast. Recommended for production.
 
-### `mailwoman-wof-build-fts` CLI
+### `mailwoman gazetteer build fts`
 
 A one-shot operator script ships with this package as a `bin`:
 
 ```bash
-npx mailwoman-wof-build-fts /path/to/whosonfirst-data-admin-us-latest.db
+mailwoman gazetteer build fts /path/to/whosonfirst-data-admin-us-latest.db
 ```
 
 The CLI:
@@ -107,27 +107,30 @@ The CLI:
 
 ```bash
 # Refresh after pulling a newer WOF dump
-npx mailwoman-wof-build-fts /path/to/wof.db --drop
+mailwoman gazetteer build fts /path/to/wof.db --drop
 ```
 
 `--drop` rebuilds from scratch — useful after refreshing the `places` / `names` tables from a newer dump. Without `--drop` the CLI is a no-op when the index is already present.
 
-### `mailwoman-wof-build-slim` CLI
+### Slim builds (retired CLI — module only)
 
 Builds a trimmed WOF SQLite distribution sized for browser-side deployments (Path B of the demo plan). The full admin-US distribution is ~4 GB; a slim US bundle with the top-1k localities by population plus all postcodes lands at **~35 MB** — small enough to ship as a static asset.
 
 ```bash
 # Defaults: --top 1000 localities, --countries US, drops geojson after building aux tables
-npx mailwoman-wof-build-slim \
+# The slim wof-hot.db distribution is RETIRED (2026-06-20): the demo byte-range-resolves
+# against the global candidate table. `buildSlimWOFDatabase` remains importable from
+# `@mailwoman/resolver-wof-sqlite/build-slim` for test fixtures. Historical invocation:
+# mailwoman-wof-build-slim \
   --in /path/to/whosonfirst-data-admin-us-latest.db \
   --in /path/to/whosonfirst-data-postalcode-us-latest.db \
   --out /path/to/wof-hot.db
 
 # Tinier — top 100 localities only
-npx mailwoman-wof-build-slim --in admin-us.db --out wof-tiny.db --top 100
+# mailwoman-wof-build-slim --in admin-us.db --out wof-tiny.db --top 100
 
 # Multi-country
-npx mailwoman-wof-build-slim --in admin-na.db --out wof-na.db --countries US,CA,MX
+# mailwoman-wof-build-slim --in admin-na.db --out wof-na.db --countries US,CA,MX
 ```
 
 What survives in the slim DB:
@@ -201,7 +204,7 @@ lookup.findPlace({
 When the R*Tree index isn't present (DBs built before this feature), the bbox-hard-filter is
 silently dropped to preserve backwards compatibility. The proximity boost still works without the
 R*Tree because it computes haversine distance against the centroid columns directly. Rebuild with
-`mailwoman-wof-build-fts --drop <path>` to gain the bbox index.
+`mailwoman gazetteer build fts <path> --drop` to gain the bbox index.
 
 All weights are configurable via the second ctor argument:
 

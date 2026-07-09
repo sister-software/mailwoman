@@ -151,8 +151,8 @@ await parse("350 5TH AVE, NEW YORK, NY 10118", {
 ## Geocoding
 
 Resolution turns parsed components into a Who's On First place ID and coordinate. It needs a
-gazetteer SQLite database — build one with the bundled `mailwoman-wof-build-slim` +
-`mailwoman-wof-build-fts` tools, or point at a prebuilt shard. The resolver is
+gazetteer SQLite database — build one with `mailwoman gazetteer build admin` +
+`mailwoman gazetteer build fts`, or point at a prebuilt shard. The resolver is
 administrative/postcode-level, not rooftop: it returns place centroids (locality, region,
 postcode), not delivery-point coordinates.
 

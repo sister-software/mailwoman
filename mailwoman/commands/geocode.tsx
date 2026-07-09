@@ -169,7 +169,7 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 	if (paths.length === 0) {
 		throw new Error(
 			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
-				"Build one with `mailwoman-wof-build-slim` + `mailwoman-wof-build-fts`."
+				"Build one with `mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
 		)
 	}
 

@@ -59,7 +59,7 @@ export interface ReverseGeocodeResult {
 export interface WOFReverseGeocoderOpts {
 	/**
 	 * Path to the admin gazetteer DB (e.g. `admin-global-priority.db`) — must carry `spr`, `ancestors`, and the
-	 * package-built `place_bbox` R*Tree (`mailwoman-wof-build-fts`). Mutually exclusive with `adminDatabase`.
+	 * package-built `place_bbox` R*Tree (`mailwoman gazetteer build fts`). Mutually exclusive with `adminDatabase`.
 	 */
 	adminDBPath?: string
 	/** Pre-opened admin DB — primarily for tests against an inline fixture. */
@@ -180,7 +180,7 @@ export class WOFReverseGeocoder implements Disposable {
 		if (!hasBbox) {
 			throw new Error(
 				`WOFReverseGeocoder: the admin DB has no \`${PLACE_BBOX_TABLE}\` R*Tree. Build it with ` +
-					"`mailwoman-wof-build-fts <path-to-wof.db>` (see resolver-wof-sqlite/README.md)."
+					"`mailwoman gazetteer build fts <path-to-wof.db>` (see resolver-wof-sqlite/README.md)."
 			)
 		}
 

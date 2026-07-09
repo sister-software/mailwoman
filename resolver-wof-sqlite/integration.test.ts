@@ -15,7 +15,7 @@
  *   2. `/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
  *        documented in the README + handover doc).
  *
- *   Assumes the `place_search` FTS5 table is already built (run `mailwoman-wof-build-fts` ahead of
+ *   Assumes the `place_search` FTS5 table is already built (run `mailwoman gazetteer build fts` ahead of
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.
  */
 
