@@ -365,7 +365,9 @@ def mean_init_onnx_embeddings(
         recon = np.clip(np.round(emb[old_vocab - 1] / scale) + zp, 0, 255).astype(q.dtype)
         mism = int((recon != q[old_vocab - 1]).sum())
         if mism > emb.shape[1] // 20:  # allow a few rounding-boundary ticks, not a wholesale mismatch
-            raise AssertionError(f"int8 quant-inverse mismatch on row {old_vocab - 1}: {mism}/{emb.shape[1]} — scale/zp wrong?")
+            raise AssertionError(
+                f"int8 quant-inverse mismatch on row {old_vocab - 1}: {mism}/{emb.shape[1]} — scale/zp wrong?"
+            )
         q_new = np.clip(np.round(new_rows / scale) + zp, 0, 255).astype(q.dtype)
         grown_q = np.concatenate([q, q_new], axis=0)
         qi[qname].CopyFrom(numpy_helper.from_array(grown_q, name=qname))
