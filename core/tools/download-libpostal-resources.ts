@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -17,8 +16,7 @@
  *   ## Usage
  *
  *   ```sh
- *   node core/data/libpostal/resources-download.ts
- *   node core/data/libpostal/resources-download.ts --force   # overwrite an existing ./dictionaries
+ *   mailwoman dev download libpostal-resources [--force]
  *   ```
  *
  *   ## Flags
@@ -26,30 +24,15 @@
  *   - `--force` — delete an existing `./dictionaries` directory instead of erroring out
  */
 
-///<reference types="node" />
-
 import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
 
 import { isDirectory } from "@mailwoman/core/fs"
-import { runIfScript } from "@mailwoman/core/scripting"
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
-import { $ } from "zx"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
-
-function parseCLIArgs() {
-	const { values } = parseArgs({
-		options: {
-			force: { type: "boolean", default: false },
-		},
-	})
-
-	return { force: values.force! }
-}
 
 /**
  * Sort a single dictionary file in place by code point (matching `LC_ALL=C sort`). Blank lines sort to the top, exactly
@@ -68,24 +51,30 @@ async function sortFileInPlace(path: string): Promise<void> {
 	await writeFile(path, lines.join("\n") + (hadTrailingNewline ? "\n" : ""))
 }
 
-async function main(): Promise<void> {
-	const { force } = parseCLIArgs()
-
+/**
+ * Shallow-clone libpostal, alphabetize each dictionary file, and install the tree at the checked-in
+ * `core/data/libpostal/dictionaries`. Refuses to clobber an existing tree unless `force`. zx is lazy-imported
+ * (dev-grade dependency — the pipeline convention).
+ */
+export async function downloadLibpostalResources(
+	options: { force?: boolean } = {},
+	report?: (line: string) => void
+): Promise<void> {
 	// Guard the destination exactly as the bash version did: refuse to clobber unless --force.
 	if (await isDirectory(DICTIONARIES_DIR)) {
-		if (force) {
-			process.stderr.write("Warning: The dictionaries directory already exists. Deleting it due to --force flag.\n")
+		if (options.force) {
+			report?.("Warning: The dictionaries directory already exists. Deleting it due to --force flag.")
 			await rm(DICTIONARIES_DIR, { recursive: true, force: true })
 		} else {
-			process.stderr.write(
-				"Error: The dictionaries directory already exists. Please remove it first or use the --force flag.\n"
-			)
-			process.exitCode = 1
-
-			return
+			// Guidance-grade refusal: suppress the stack so the CLI renders just the message
+			// (core can't import mailwoman/cli-kit's commandError — wrong dependency direction).
+			const error = new Error("The dictionaries directory already exists. Remove it first or pass --force.")
+			error.stack = error.message
+			throw error
 		}
 	}
 
+	const { $ } = await import("zx")
 	const tempDir = await mkdtemp(join(tmpdir(), "libpostal-"))
 
 	try {
@@ -101,11 +90,9 @@ async function main(): Promise<void> {
 			}
 		}
 
-		// Copy the (now-sorted) dictionaries tree next to this script.
+		// Copy the (now-sorted) dictionaries tree into the checked-in data home.
 		await cp(sourceDicts, DICTIONARIES_DIR, { recursive: true })
 	} finally {
 		await rm(tempDir, { recursive: true, force: true })
 	}
 }
-
-runIfScript(import.meta, main)
