@@ -740,8 +740,8 @@
 		},
 		{
 			"term": "inference",
-			"definition": "Running a trained model on new input to get predictions — as opposed to training, which produces the model. Mailwoman's inference path is the staged pipeline a user actually calls.",
-			"relatedTerms": ["training", "production scorer", "staged pipeline"]
+			"definition": "Running the trained model on new input to get predictions, as opposed to training, which produces the model. In Mailwoman that means a small transformer encoder reads an address string and classifies every token — house number, street, locality, region, postcode, and the rest. A Who's On First gazetteer can feed soft location hints into the pass, but the model makes the final call on every label. Where a generative model writes text token by token, Mailwoman's output is a retrieval-augmented token classification: one label per input piece.",
+			"relatedTerms": ["training", "anchor inference", "gazetteer", "staged pipeline", "production scorer"]
 		},
 		{
 			"term": "input-shape router",
