@@ -281,7 +281,7 @@ Read this first — it's the 30-minute version once you know the shape. Three ba
 | backend       | tool                                   | what it feeds                                                                  |
 | ------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
 | **npm**       | `publish.yml` (CI, OIDC)               | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
-| **HF bucket** | `scripts/publish-release-to-hf.ts`     | the npm fetch source + HF-direct `loadFromWeights`                             |
+| **HF bucket** | `mailwoman release hf`                 | the npm fetch source + HF-direct `loadFromWeights`                             |
 | **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.sister.software`, NOT HF)                      |
 
 The end-to-end order that worked: **gate (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
@@ -350,8 +350,8 @@ Assemble a staging dir mirroring the R2 layout: `<src>/en-us/v<NEW>/{the 10 arti
 ### Step 3 — stage HF, then R2, then verify BOTH backends agree
 
 ```bash
-HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.ts \
-  --version v<NEW> --locale en-us --label "..." --description "..." \
+HF_TOKEN=$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v<NEW> \
+  --locale en-us --label "..." --description "..." \
   --model <src>/.../model.onnx --tokenizer ... --model-card ... --fst <src>/.../fst-en-US.bin \
   --wof-hot <src>/.../wof-hot.db --gazetteer-lexicon <src>/.../anchor-lexicon-v1.json \
   --postcodes "<csv of postcode-*.bin>" --polygons <src>/.../wof-polygons.db --steps <step> --set-default
@@ -469,8 +469,8 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 1. **Stage the model on HF first** (operator's host — needs only the HF token, no npm auth):
 
    ```bash
-   HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.ts \
-     --version v<version> --locale en-us \
+   HF_TOKEN=$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v<version> \
+     --locale en-us \
      --model <model.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json \
      --fst <fst-en-US.bin> --wof-hot <wof-hot.db> --set-default
    ```
@@ -508,6 +508,6 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 - **Weights publish from CI** — the `neural-weights-*` npm publish is local-only (the binaries aren't on the
   runner). A future step could have CI fetch them from Hugging Face before publishing, mirroring what the demo
   already does at runtime.
-- **`publish-release-to-hf.ts` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
+- **`mailwoman release hf` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
   is a separate manual command after the npm release, not part of `yarn release`.
 - **Changelog generation** — release-it can emit one via the `@release-it/conventional-changelog` plugin. Not configured yet because commit messages haven't standardized on Conventional Commits.

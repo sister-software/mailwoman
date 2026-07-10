@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -18,7 +17,7 @@
  *
  *   After upload, releases.json is updated in-place and re-uploaded.
  *
- *   Usage: HF_TOKEN=... node scripts/publish-release-to-hf.ts\
+ *   Usage: HF_TOKEN=... node mailwoman/out/cli.js release hf\
  *   --version v0.5.4\
  *   --locale en-us\
  *   --model /path/to/model-int8.onnx\
@@ -35,13 +34,19 @@ import { spawnSync } from "node:child_process"
 import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { resolve } from "node:path"
-import { parseArgs } from "node:util"
 
-import { runIfScript } from "@mailwoman/core/scripting"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
 /** The parseArgs option names of the required per-release artifacts. */
 type RequiredFileOption = "model" | "tokenizer" | "model-card" | "fst"
+
+/** The camelCase {@linkcode PublishHFOptions} field for each required-file option id. */
+const OPTION_TO_FIELD = {
+	model: "model",
+	tokenizer: "tokenizer",
+	"model-card": "modelCard",
+	fst: "fst",
+} as const satisfies Record<RequiredFileOption, keyof PublishHFOptions>
 
 const REQUIRED_FILES: Array<{ option: RequiredFileOption; remoteName: string; description: string }> = [
 	{ option: "model", remoteName: "model.onnx", description: "ONNX classifier" },
@@ -74,35 +79,32 @@ async function servedOnDemoPath(_name: string, _locale: string, _version: string
 }
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
-function parseCLIArgs() {
-	const { values } = parseArgs({
-		options: {
-			version: { type: "string" },
-			locale: { type: "string" },
-			label: { type: "string" },
-			description: { type: "string" },
-			model: { type: "string" },
-			tokenizer: { type: "string" },
-			"model-card": { type: "string" },
-			fst: { type: "string" },
-			"model-size": { type: "string" },
-			steps: { type: "string" },
-			postcodes: { type: "string" },
-			"gazetteer-lexicon": { type: "string" },
-			polygons: { type: "string" },
-			"set-default": { type: "boolean", default: false },
-			// Retired 2026-06-20 with the slim wof-hot.db (see the REQUIRED_FILES note). Still accepted so
-			// RELEASING.md's documented invocations don't hard-fail; the value is ignored.
-			"wof-hot": { type: "string" },
-		},
-	})
-
-	return values
+/** Options for {@linkcode publishReleaseToHF} — the retired `wofHot` is accepted and ignored. */
+export interface PublishHFOptions {
+	version?: string
+	locale?: string
+	label?: string
+	description?: string
+	model?: string
+	tokenizer?: string
+	modelCard?: string
+	fst?: string
+	modelSize?: string
+	steps?: number
+	postcodes?: string
+	gazetteerLexicon?: string
+	polygons?: string
+	setDefault?: boolean
+	/** Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail. */
+	wofHot?: string
 }
 
 function fail(msg: string): never {
-	console.error(`✗ ${msg}`)
-	process.exit(1)
+	// Guidance-grade refusal: stack suppressed so the CLI renders exactly `✗ <msg>` (the old
+	// script's output shape) instead of a stack dump.
+	const error = new Error(msg)
+	error.stack = msg
+	throw error
 }
 
 function run(cmd: string, args: string[]) {
@@ -134,11 +136,9 @@ interface ReleaseManifest {
 	defaultVersion?: string
 }
 
-async function main() {
-	const args = parseCLIArgs()
-
+export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> {
 	if (!args.version) {
-		fail("--version required (e.g. v0.5.4)")
+		fail("version argument required (e.g. mailwoman release hf v5.9.0 …)")
 	}
 
 	if (!args.locale) {
@@ -168,7 +168,7 @@ async function main() {
 
 	// --- Phase 1: verify all local files exist ---
 	for (const f of REQUIRED_FILES) {
-		const localPath = args[f.option]
+		const localPath = args[OPTION_TO_FIELD[f.option]]
 
 		if (!localPath) {
 			fail(`--${f.option} (${f.description}) is required`)
@@ -205,7 +205,7 @@ async function main() {
 	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
 	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
 	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
-	const gazetteerLexicon = args["gazetteer-lexicon"] || null
+	const gazetteerLexicon = args.gazetteerLexicon || null
 
 	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || statSync(gazetteerLexicon).size === 0)) {
 		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
@@ -226,7 +226,7 @@ async function main() {
 
 	for (const f of REQUIRED_FILES) {
 		// Existence already enforced in Phase 1's guard loop, so this flag is present.
-		const localPath = args[f.option]!
+		const localPath = args[OPTION_TO_FIELD[f.option]]!
 		const dst = `${BUCKET_PATH}/${remoteBase}/${f.remoteName}`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", localPath, dst])
@@ -277,9 +277,9 @@ async function main() {
 		version: args.version,
 		label: args.label,
 		description: args.description,
-		modelSize: args["model-size"] ?? `${Math.round(statSync(args.model!).size / 1024 / 1024)} MB`,
+		modelSize: args.modelSize ?? `${Math.round(statSync(args.model!).size / 1024 / 1024)} MB`,
 		tokenizerVocab: 48000,
-		steps: args.steps ? parseInt(args.steps, 10) : 100000,
+		steps: args.steps ?? 100000,
 		hasFST: true,
 		hasWOFDb: true,
 		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
@@ -299,7 +299,7 @@ async function main() {
 
 	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]
 
-	if (args["set-default"]) {
+	if (args.setDefault) {
 		releases.defaultVersion = args.version
 	}
 
@@ -311,5 +311,3 @@ async function main() {
 	console.error(`\n✓ ${args.version} (${args.locale}) published successfully.`)
 	console.error(`  Demo: https://mailwoman.sister.software/demo/`)
 }
-
-runIfScript(import.meta, main)
