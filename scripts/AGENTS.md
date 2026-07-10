@@ -26,7 +26,7 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 
 `scripts/` holds ONLY four things:
 
-1. **Release tooling** (`publish-*`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `rewrite-workspace-imports`, `release-workspace-repository.test`) + **CI smoke** (`smoke-*`) — the release pipeline's residents.
+1. **Release tooling** (`publish-workspace`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `rewrite-workspace-imports`, `release-workspace-repository.test`) + **CI smoke** (`smoke-*`) — the release pipeline's residents.
 2. **Codegen + lint tooling** (`generate-*`, `lint-*`, `jsonl-to-parquet`) — candidates for a future `mailwoman dev` namespace.
 3. **`eval/`** — the referenced probe battery — CI/skill/RELEASING/gate-spawned probes only, triaged 2026-07-10 (plus the Python calibration scripts and the
    eval-local helpers in `eval/lib/`). The LIVING GATES moved out (phase 5a of the 2026-07-09

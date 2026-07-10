@@ -1,9 +1,9 @@
 {
-	"zipex": "4000,1001,2500",
+	"id": "data/SI",
 	"key": "SI",
 	"name": "SLOVENIA",
 	"fmt": "%N%n%O%n%A%nSI-%Z %C",
-	"postprefix": "SI-",
 	"zip": "\\d{4}",
-	"id": "data/SI"
+	"zipex": "4000,1001,2500",
+	"postprefix": "SI-"
 }

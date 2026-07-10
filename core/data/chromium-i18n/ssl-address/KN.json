@@ -1,12 +1,12 @@
 {
-	"require": "ACS",
+	"id": "data/KN",
 	"key": "KN",
 	"name": "SAINT KITTS AND NEVIS",
-	"fmt": "%N%n%O%n%A%n%C, %S",
 	"lang": "en",
-	"sub_isoids": "N~K",
-	"sub_keys": "Nevis~St. Kitts",
 	"languages": "en",
+	"fmt": "%N%n%O%n%A%n%C, %S",
+	"require": "ACS",
 	"state_name_type": "island",
-	"id": "data/KN"
+	"sub_keys": "Nevis~St. Kitts",
+	"sub_isoids": "N~K"
 }
