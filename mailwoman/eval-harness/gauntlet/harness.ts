@@ -103,12 +103,25 @@ export async function buildGauntletDeps(
 	// published `mailwoman` CLI outright rather than only this maintainer-run gate.
 	const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
 	const osmProvider = new OSMShardProvider(mailwomanDataRoot())
+	// The BAN national-register tier (#1012) sits AHEAD of OSM in production (geocode.tsx wires it the
+	// same way) — without it here the gauntlet graded an OSM-first cascade production never runs, and
+	// the fr-chevaleret-bare pin silently guarded the wrong tier (caught 2026-07-10 when the BAN tier's
+	// missing bbox fall-through regressed the bare form in production while this gate stayed green).
+	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
+	const banProvider = new BANShardProvider(mailwomanDataRoot())
 
 	return {
 		geocode: (input: string) =>
-			geocodeAddress(input, { classifier, resolver, shards: shardProvider.for, osmShards: osmProvider.for }),
+			geocodeAddress(input, {
+				classifier,
+				resolver,
+				shards: shardProvider.for,
+				nationalShards: banProvider.for,
+				osmShards: osmProvider.for,
+			}),
 		close: () => {
 			shardProvider.close()
+			banProvider.close()
 			osmProvider.close()
 		},
 	}
