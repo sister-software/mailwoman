@@ -84,6 +84,13 @@
 	overflow: visible;
 }
 
+/* MapLibre anchors its top-right control stack (layer toggles) at the map's top edge — which is
+   the viewport top here, under the fixed Docusaurus navbar. Push it below the navbar so the
+   controls aren't clipped. */
+.mapWrap :global(.maplibregl-ctrl-top-right) {
+	top: var(--ifm-navbar-height, 60px);
+}
+
 .map {
 	position: absolute;
 	inset: 0;

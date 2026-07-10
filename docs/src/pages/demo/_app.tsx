@@ -72,6 +72,13 @@ const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca
 const INTERP_RADIUS_DEFAULT = 1.95
 
 /**
+ * Race-by-dot-density overlay (#race-dots) master switch. Off for now: the US-census demographic categories don't
+ * travel — they read poorly for non-US demo audiences. Flip to re-wire; the LayerToggleControl rows reappear
+ * automatically since they're derived from the live style's layers.
+ */
+const RACE_DOTS_ENABLED = false
+
+/**
  * Spans that together make up the street name — assembled in source order for the situs/interp query.
  */
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
@@ -361,7 +368,9 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 						}
 					}
 
-					map.on("load", wireRaceDots)
+					if (RACE_DOTS_ENABLED) {
+						map.on("load", wireRaceDots)
+					}
 				}
 			} catch (error) {
 				if (cancelled) return
