@@ -52,13 +52,13 @@ It grades the ASSEMBLED output (coordinate + tier), not per-tag F1 — the lesso
 
 ```bash
 # Self-check on the shipped default (regression + metamorphic):
-node scripts/eval/gauntlet/run.ts
+node mailwoman/out/cli.js eval gauntlet
 
 # Promote gate for a candidate model (adds the held-out candidate-vs-prod z-test):
-node scripts/eval/gauntlet/run.ts --candidate ./out/<version>/model.onnx [--source us]
+node mailwoman/out/cli.js eval gauntlet --candidate ./out/<version>/model.onnx [--source us]
 ```
 
-A non-zero exit blocks the ship. The three layers (`scripts/eval/gauntlet/`): **regression** (the curated
+A non-zero exit blocks the ship. The three layers (`mailwoman/eval-harness/gauntlet/`): **regression** (the curated
 executable bug log — a fixed bug must stay fixed; gates `status=pass`, tracks `known_fail`/`improvement_target`),
 **metamorphic** (un-gameable INV/DIR surface-form relations; gates minus tracked xfails), and **held-out**
 (a fresh BAN/FDIC draw, candidate-vs-prod z-test — the generalization blocker, wins on conflict). Not yet a
@@ -136,7 +136,7 @@ old vs new DB — the two `**neural**` rows must match):
 ```bash
 PC=/mnt/playpen/mailwoman-data/wof/postalcode-us.db
 for db in admin-global-priority.db admin-global-priority.REBUILD.db; do
-  node scripts/eval/oa-resolver-eval.ts \
+  node mailwoman/out/cli.js eval oa-resolver \
     --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
     --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
     --model-anchor-lookup <anchor.json> \
@@ -196,9 +196,10 @@ The manual recipe below is the same thing, step by step, for reference / one-off
 #    into a COPY of the admin DB's canonical spr/names so the candidate build carries Karjaa↔Karis
 #    natively (FI hard-resolve 69.5→85.8%, coverage 74.4→94.0%) — the alt-name attaches to the real
 #    WOF place ("Karjaa" → Karis), not a duplicate row. Reuses ingestGeonamesAliases +
-#    buildPlaceSearchFts; the canonical admin DB is never mutated. Supersedes the candidate-side
-#    stopgap scripts/build-candidate-geonames-aliases.ts (which patched a built candidate.db to MEASURE
-#    the lift before this became the durable home).
+#    buildPlaceSearchFts; the canonical admin DB is never mutated. Supersedes the retired
+#    candidate-side stopgap (build-candidate-geonames-aliases, which patched a built candidate.db to
+#    MEASURE the lift before this became the durable home — the fold now lives in
+#    mailwoman/gazetteer-pipeline/admin/fold-geonames.ts, run by `mailwoman gazetteer build`).
 # (the standalone script is retired — the fold lives in the pipeline and `gazetteer build`
 #  runs it; for a fold-on-copy without a full rebuild, `mailwoman gazetteer build --help`.)
 node mailwoman/out/cli.js gazetteer build   # admin (fold included) → candidate, turnkey
@@ -206,7 +207,7 @@ node mailwoman/out/cli.js gazetteer build   # admin (fold included) → candidat
 #    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
 #    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames intl shard (PT/AU)
 #    + Overture-derived postcode centroids (CA + the EU-coverage locales), each built with
-#      node scripts/eval/overture-es-postcode-centroids.ts --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
+#      node mailwoman/out/cli.js eval es-postcode-centroids --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
 #    (--pc-len 0 = no lpad, the Overture-to-Overture / non-numeric-format case). Each ZIP becomes a
 #    `postalcode` candidate row so findPlace(postalcode) resolves directly, and postcodes resolve ~100%
 #    at ~1-2km even where the locality misses (LT 0→100%, NO 75→100%, FI/SK 80→100%). The demo cascade
@@ -288,7 +289,7 @@ The end-to-end order that worked: **gate (revised if needed) → commit card+con
 - **Only TWO model-card fields are pipeline-breaking**: `version` (publish.yml derives `MODEL_VERSION` from it) and `files_md5.model.onnx` (re-verified at `yarn pack`). Everything else in the card (`model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block) is provenance — get it honest, but a typo there won't break the publish. Move fast on the prose, slow on those two.
 - **The `neural-weights-fr-fr` card silently drifts.** It is NOT auto-bumped (release-it only touches `package.json`), so its `version` + `model_lineage` rot — found it stuck at `4.6.0` / "v1.5.0-fr-order" while it had long shipped the en-us binary. Reconcile both fields every model promotion.
 - **`release.config.json` silently drifts from the card, and copy-weights trusts the config.** The card is the source of truth for _which_ model ships; `release.config.json#weights.model` is the PATH copy-weights.ts materializes from. They must move in the SAME commit as the card (Step 1 items 2+3) — when they don't, copy-weights materializes the SUPERSEDED model and the Gauntlet gate grades it silently (#1024: config lagged at v220 `a64ad2e6` while the v5.4.0 promote shipped v230 `ea785a70`, costing a bisect detour). **Guardrail (#1024):** the Gauntlet harness now asserts the materialized `neural-weights-en-us/model.onnx` md5 == the card's `files_md5["model.onnx"]` for the shipped default and FAILS the gate on mismatch. Since the gate is the release `before:release` step, a drifted config can no longer ship. #1005 fixed the dev-weights-symlink half of the same class; this is the release-config half.
-- **Gate floor comparison is `>=`** (`scripts/eval/promotion-gate.ts`). A floor set exactly AT the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A gate that needs a floor lowered gets a **new gate file** with a stated `$revision_*` reason (no silent drift); the full gate is ~12–15 min, so set the floors right the first time.
+- **Gate floor comparison is `>=`** (`mailwoman eval gate`, `mailwoman/eval-harness/promotion-gate.ts`). A floor set exactly AT the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A gate that needs a floor lowered gets a **new gate file** with a stated `$revision_*` reason (no silent drift); the full gate is ~12–15 min, so set the floors right the first time.
 - **The R2 demo repoint is "carry-forward + overwrite 2 files."** Between model versions ONLY `model.onnx` and `model-card.json` change — tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json`, `calibration.json` are byte-identical. Fastest path: boto3-`download` ALL of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend entry + `defaultVersion`), one `publish-demo-assets-to-r2.py --src`. ~60 MB, two commands. (The bucket is `nexus-public`, creds are `RCLONE_S3_PUBLIC_*`.)
 - **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation, NOT a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `/mnt/playpen source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
 - **Canonical artifact paths** (so you don't hunt): model int8 → `/mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `/mnt/playpen/mailwoman-data/models/tokenizer/<ver>/tokenizer.model`; FST → `/mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the gate ran against — use this, not the prior bucket's).
@@ -319,7 +320,7 @@ in `main`, before anything is staged:
 4. Regenerate the capabilities manifest (the fail-closed delta-gate reads it; the generator's `$comment` otherwise lies about which model it measured). The generator **refuses if a `capabilities` block already exists**, so rewrite the card WITHOUT that block first, then:
    ```bash
    yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
-   node scripts/eval/gen-capability-manifest.ts \
+   node mailwoman/out/cli.js eval capability-manifest \
      --model /mnt/playpen/.../model-v<NNN>-step-<step>-int8.onnx \
      --tokenizer /mnt/playpen/.../tokenizer.model \
      --model-card neural-weights-en-us/model-card.json --write

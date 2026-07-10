@@ -174,7 +174,7 @@ with the weights and delete the _next_ checkpoint, not the resume target.
 **Before uploading a model artifact to HF, run the full per-tag error analysis and compare against the current default release:**
 
 ```bash
-node scripts/eval-error-analysis.ts --golden data/eval/golden/v0.1.2 > /tmp/<version>-error-analysis.md
+node mailwoman/out/cli.js eval error-analysis --golden data/eval/golden/v0.1.2 > /tmp/<version>-error-analysis.md
 ```
 
 Abort the upload if **any tag regresses >2pp from the default release**, unless:

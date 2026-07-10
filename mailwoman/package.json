@@ -170,6 +170,7 @@
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"chalk": "^5.6.2",
 		"change-case": "^5.4.4",
 		"d3-scale-chromatic": "^3.1.0",
@@ -187,6 +188,9 @@
 		"spliterator": "^3.2.0",
 		"zod": "^4.4.3",
 		"zx": "^8.8.5"
+	},
+	"devDependencies": {
+		"@mailwoman/osm": "workspace:*"
 	},
 	"peerDependencies": {
 		"@duckdb/node-api": "1.5.3-r.3",
