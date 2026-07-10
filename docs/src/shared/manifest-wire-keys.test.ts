@@ -71,7 +71,7 @@ describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 	for (const rel of [
 		"../pages/demo/_app.tsx",
 		"../contexts/DemoEmbed.tsx",
-		"../../../scripts/publish-release-to-hf.ts",
+		"../../../mailwoman/release-tools/publish-hf.ts",
 	]) {
 		test(`${rel} is house-cased only`, () => {
 			const src = readFileSync(new URL(rel, import.meta.url), "utf8")

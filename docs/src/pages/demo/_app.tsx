@@ -56,6 +56,8 @@ import {
 	type FSTMatcherLike,
 	type FSTProvenanceLike,
 	HOSTED_STREET_SLUGS,
+	NATIONAL_STREET_FALLBACK_SLUG,
+	NATIONAL_STREET_SLUGS,
 	loadFSTGazetteer,
 	type MailwomanClassifierLike,
 	type MailwomanLookupLike,
@@ -83,10 +85,10 @@ const RACE_DOTS_ENABLED = false
  */
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
-/** The per-state street lookups, loaded together (lazy by region). */
+/** The per-state street lookups, loaded together (lazy by region). National (country) shards carry no interp. */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
-	interp: HTTPVFSInterpolator
+	interp: HTTPVFSInterpolator | undefined
 }
 
 import { useSiteConfig } from "../../hooks/site.ts"
@@ -745,6 +747,17 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 				p = (async () => {
 					const { loadHTTPVFSDatabase } = await import("../../shared/httpvfs-resolver")
 					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("../../shared/httpvfs-street")
+
+					// National shards (fr): situs only — the register has no TIGER-style interpolation
+					// sibling — and the street keys were built with the country's normalizer.
+					if (NATIONAL_STREET_SLUGS.has(slug)) {
+						const situsW = await loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL)
+
+						return {
+							situs: new HTTPVFSAddressPointLookup(situsW, { streetLocale: slug as "fr" }),
+							interp: undefined,
+						}
+					}
 					const [situsW, interpW] = await Promise.all([
 						loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL),
 						loadHTTPVFSDatabase(streetShardURL(slug, "interp"), sqljsBaseURL),
@@ -962,9 +975,21 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 				const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
 				const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
 
-				if (streetValue && houseNumberNode?.value && stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)) {
+				// US per-state path when the parsed region names a hosted state; otherwise try the national
+				// shards (fr) — the keyed (street, number, postcode/locality) probes are self-validating
+				// against the register, so a wrong-country attempt is a cheap ~KB miss (the locale gate
+				// can't supply the country here: it's script+postcode by design and falls back en-US on
+				// exactly these no-postcode inputs, #1039).
+				const streetSlug =
+					stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)
+						? stateSlug
+						: stateSlug
+							? undefined
+							: NATIONAL_STREET_FALLBACK_SLUG
+
+				if (streetValue && houseNumberNode?.value && streetSlug) {
 					try {
-						const street = await ensureStreetLookups(stateSlug)
+						const street = await ensureStreetLookups(streetSlug)
 
 						if (street) {
 							streetResolution = await resolveStreet(
@@ -974,7 +999,7 @@ export const DemoApp: React.FC<DemoAppProps> = ({ initialCenter, debugDefault = 
 								localityNodes[0]?.value ? String(localityNodes[0].value) : undefined,
 								street.situs,
 								street.interp,
-								INTERP_RADIUS_BY_REGION[stateSlug] ?? INTERP_RADIUS_DEFAULT
+								INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT
 							)
 						}
 					} catch (streetErr) {

@@ -222,8 +222,23 @@ export function assetURL(locale: string, version: string, filename: string): str
  * per-model-version).
  */
 export function streetShardURL(slug: string, kind: "situs" | "interp"): string {
+	// National (non-US) shards live under their country ("fr" → street/fr/national/situs.db); US
+	// shards keep the per-state layout.
+	if (NATIONAL_STREET_SLUGS.has(slug)) return `${ASSET_BASE_URL}street/${slug}/national/${kind}.db`
+
 	return `${ASSET_BASE_URL}street/us/${slug}/${kind}.db`
 }
+
+/**
+ * Country-level national street shards (#1012 BAN-FR): one situs DB per country, no interpolation shard. The demo's
+ * street tier tries these when the US per-state path doesn't claim the query — safe because the keyed (street, number,
+ * postcode/locality) probes are self-validating against the register (a wrong-country probe is a cheap ~KB miss, never
+ * a false hit).
+ */
+export const NATIONAL_STREET_SLUGS = new Set(["fr"])
+
+/** The single national slug the demo's street tier falls back to when no hosted US state claims the query. */
+export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 
 /**
  * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is MODEL-INDEPENDENT — it changes when
