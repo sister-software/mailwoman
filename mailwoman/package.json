@@ -156,11 +156,13 @@
 	"dependencies": {
 		"@fragaria/address-formatter": "^6.7.1",
 		"@inkjs/ui": "^2.0.0",
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
+		"@mailwoman/formatter": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/neural": "workspace:*",

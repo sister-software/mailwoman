@@ -6,6 +6,7 @@
 
 import type { AddressInfo } from "node:net"
 
+import type { SchemaOrgPlace } from "@mailwoman/annotations"
 import express from "express"
 import { expect, test } from "vitest"
 
@@ -13,6 +14,7 @@ import {
 	createNominatimRouter,
 	MAILWOMAN_LICENCE,
 	type NominatimEngine,
+	nominatimResultToSchemaOrg,
 	type ResolvedAddress,
 	toFeatureCollection,
 	toNominatimResult,
@@ -85,6 +87,55 @@ test("toNominatimResult: carries class/type/importance/boundingbox when present"
 	expect(r.type).toBe("government")
 	expect(r.importance).toBe(0.8)
 	expect(r.boundingbox).toEqual(["38.89", "38.90", "-77.04", "-77.03"])
+})
+
+// #1052 — schema.org Place/PostalAddress/GeoCoordinates JSON-LD as an alternate output format (`format=jsonld`).
+
+test("nominatimResultToSchemaOrg: projects a result's address into a schema.org Place (#1052)", () => {
+	const place = nominatimResultToSchemaOrg(toNominatimResult(dc, { addressdetails: true }))
+
+	expect(place["@context"]).toBe("https://schema.org")
+	expect(place["@type"]).toBe("Place")
+	expect(place.geo).toEqual({ "@type": "GeoCoordinates", latitude: 38.8977, longitude: -77.0365 })
+	expect(place.address?.["@type"]).toBe("PostalAddress")
+	expect(place.address?.streetAddress).toBe("1600 Pennsylvania Ave NW")
+	expect(place.address?.addressLocality).toBe("Washington")
+	expect(place.address?.addressRegion).toBe("DC")
+	expect(place.address?.postalCode).toBe("20500")
+	expect(place.address?.addressCountry).toBe("US") // country_code "us" → uppercased alpha-2
+})
+
+// Echoes params.addressdetails into the result so the route test also proves the router FORCES it for jsonld.
+const jsonldEngine: NominatimEngine = {
+	search: async (params) => [toNominatimResult(dc, { addressdetails: params.addressdetails })],
+	reverse: async (params) => toNominatimResult(dc, { addressdetails: params.addressdetails }),
+}
+
+test("route: /search?format=jsonld returns schema.org Place[] and forces addressdetails (#1052)", async () => {
+	await withServer(express().use(createNominatimRouter(jsonldEngine)), async (base) => {
+		const res = await fetch(`${base}/search?q=1600+pennsylvania+ave&format=jsonld`)
+		expect(res.status).toBe(200)
+		const body = (await res.json()) as SchemaOrgPlace[]
+		expect(Array.isArray(body)).toBe(true)
+		const place = body[0]!
+		expect(place["@type"]).toBe("Place")
+		// jsonld forced addressdetails on (the client did not pass it), so the PostalAddress is fully populated.
+		expect(place.address?.streetAddress).toBe("1600 Pennsylvania Ave NW")
+		expect(place.address?.addressLocality).toBe("Washington")
+		expect(place.address?.addressCountry).toBe("US")
+	})
+})
+
+test("route: /reverse?format=jsonld returns a single schema.org Place (#1052)", async () => {
+	await withServer(express().use(createNominatimRouter(jsonldEngine)), async (base) => {
+		const res = await fetch(`${base}/reverse?lat=38.8977&lon=-77.0365&format=jsonld`)
+		expect(res.status).toBe(200)
+		const place = (await res.json()) as SchemaOrgPlace
+		expect(place["@context"]).toBe("https://schema.org")
+		expect(place["@type"]).toBe("Place")
+		expect(place.address?.addressLocality).toBe("Washington")
+		expect(place.address?.addressCountry).toBe("US")
+	})
 })
 
 const corsEngine: NominatimEngine = { status: async () => ({ status: 0, message: "OK" }) }
