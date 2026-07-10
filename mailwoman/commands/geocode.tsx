@@ -29,9 +29,11 @@
 import { existsSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
+import { type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { $public } from "@mailwoman/core/env"
 import { isBareLocalityTree } from "@mailwoman/core/pipeline"
+import { formatAddress } from "@mailwoman/formatter"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
@@ -140,10 +142,13 @@ const OptionsSchema = zod.object({
 			"Abstention threshold for --place-country: below this calibrated confidence the prior is skipped. Default 0.9."
 		),
 	format: zod
-		.enum(["json", "text"])
+		.enum(["json", "text", "jsonld"])
 		.optional()
 		.default("json")
-		.describe('Output format. "json" (default) emits a machine-readable object; "text" prints a human summary.'),
+		.describe(
+			'Output format. "json" (default) emits the native machine-readable result; "text" prints a human summary; ' +
+				'"jsonld" emits a schema.org Place/PostalAddress/GeoCoordinates JSON-LD object (the web\'s native address format).'
+		),
 })
 
 // ---------------------------------------------------------------------------
@@ -289,13 +294,49 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			placeCountry: placer ? (t: string) => placer.predict(t) : false,
 		})
 
-		return options.format === "text" ? formatText(result) : JSON.stringify(result, null, 2)
+		if (options.format === "text") return formatText(result)
+
+		if (options.format === "jsonld") return JSON.stringify(geocodeToSchemaOrg(result), null, 2)
+
+		return JSON.stringify(result, null, 2)
 	} finally {
 		explicitAp?.close()
 		explicitIp?.close()
 		shardProvider.close()
 		lookup.close()
 	}
+}
+
+// ---------------------------------------------------------------------------
+// schema.org JSON-LD projection (#1052)
+// ---------------------------------------------------------------------------
+
+/**
+ * Project a {@link GeocodeResult} into a schema.org `Place` JSON-LD object (`--format jsonld`, #1052). `streetAddress`
+ * is rendered locale-aware by `@mailwoman/formatter` (house number placement follows the resolved country); the rest of
+ * the mapping (locality/region/postcode/ISO country → PostalAddress; coordinate → GeoCoordinates) lives in
+ * `@mailwoman/annotations`' {@link toSchemaOrg}. Lossy by design: tiers/uncertainty/candidates don't fit the vocabulary
+ * and are dropped.
+ */
+function geocodeToSchemaOrg(result: GeocodeResult): SchemaOrgPlace {
+	const streetAddress = formatAddress(
+		{
+			...(result.house_number ? { house_number: result.house_number } : {}),
+			...(result.street ? { street: result.street } : {}),
+		},
+		result.countryCode ?? "US",
+		{ separator: " " }
+	)
+
+	return toSchemaOrg({
+		lat: result.lat,
+		lon: result.lon,
+		streetAddress: streetAddress || undefined,
+		locality: result.locality ?? undefined,
+		region: result.region ?? undefined,
+		postalCode: result.postcode ?? undefined,
+		countryCode: result.countryCode ?? undefined,
+	})
 }
 
 // ---------------------------------------------------------------------------

@@ -4911,6 +4911,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/photon@workspace:photon"
   dependencies:
+    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
@@ -16782,11 +16783,13 @@ __metadata:
   dependencies:
     "@fragaria/address-formatter": "npm:^6.7.1"
     "@inkjs/ui": "npm:^2.0.0"
+    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"
+    "@mailwoman/formatter": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/neural": "workspace:*"

@@ -15,11 +15,19 @@
  *   `/reverse`, #805 `/lookup` + `/status`. Routes whose engine method is absent answer `501`.
  */
 
-import type { OpenCageAnnotations } from "@mailwoman/annotations"
+import {
+	composeStreetAddress,
+	type OpenCageAnnotations,
+	type SchemaOrgPlace,
+	toSchemaOrg,
+} from "@mailwoman/annotations"
 import { type RequestHandler, Router } from "express"
 
-/** Output serialization formats Nominatim supports. `jsonv2` is the modern default. */
-export type NominatimFormat = "jsonv2" | "json" | "geojson"
+/**
+ * Output serialization formats Nominatim supports. `jsonv2` is the modern default. `jsonld` is the Mailwoman extension
+ * (#1052) — schema.org `Place` JSON-LD, not part of upstream Nominatim.
+ */
+export type NominatimFormat = "jsonv2" | "json" | "geojson" | "jsonld"
 
 /**
  * The structured address breakdown returned under `address` when `addressdetails=1`. Keys mirror Nominatim's
@@ -121,7 +129,7 @@ export interface NominatimEngine {
 const DEFAULT_LIMIT = 10
 
 function parseFormat(raw: unknown): NominatimFormat {
-	return raw === "geojson" || raw === "json" ? raw : "jsonv2"
+	return raw === "geojson" || raw === "json" || raw === "jsonld" ? raw : "jsonv2"
 }
 
 function parseBool(raw: unknown): boolean {
@@ -273,12 +281,21 @@ export function createNominatimRouter(engine: NominatimEngine, options: Nominati
 			countrycodes: asString(q["countrycodes"])?.split(","),
 			limit: Number(q["limit"] ?? DEFAULT_LIMIT) || DEFAULT_LIMIT,
 			bounded: parseBool(q["bounded"]),
-			addressdetails: parseBool(q["addressdetails"]),
+			// #1052: jsonld projects the address breakdown into a PostalAddress, so it needs the details block.
+			addressdetails: parseBool(q["addressdetails"]) || q["format"] === "jsonld",
 			format: parseFormat(q["format"]),
 			acceptLanguage: asString(q["accept-language"]),
 		}
 		const results = await engine.search(params)
-		res.json(params.format === "geojson" ? toFeatureCollection(results) : results)
+
+		if (params.format === "geojson") {
+			res.json(toFeatureCollection(results))
+		} else if (params.format === "jsonld") {
+			// #1052: re-serialize the SAME results as schema.org `Place[]`; jsonv2 stays the default.
+			res.json(results.map(nominatimResultToSchemaOrg))
+		} else {
+			res.json(results)
+		}
 	}
 
 	const reverse: RequestHandler = async (req, res) => {
@@ -306,12 +323,21 @@ export function createNominatimRouter(engine: NominatimEngine, options: Nominati
 			lat,
 			lon,
 			zoom: q["zoom"] != null ? Number(q["zoom"]) : undefined,
-			addressdetails: parseBool(q["addressdetails"]),
+			// #1052: jsonld projects the address breakdown into a PostalAddress, so it needs the details block.
+			addressdetails: parseBool(q["addressdetails"]) || q["format"] === "jsonld",
 			format: parseFormat(q["format"]),
 			acceptLanguage: asString(q["accept-language"]),
 		}
 		const result = await engine.reverse(params)
-		res.json(params.format === "geojson" ? toFeatureCollection(result ? [result] : []) : result)
+
+		if (params.format === "geojson") {
+			res.json(toFeatureCollection(result ? [result] : []))
+		} else if (params.format === "jsonld") {
+			// #1052: a single reverse hit → one schema.org `Place` (or null when unresolved).
+			res.json(result ? nominatimResultToSchemaOrg(result) : null)
+		} else {
+			res.json(result)
+		}
 	}
 
 	const lookup: RequestHandler = async (req, res) => {
@@ -436,4 +462,25 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 	}
 
 	return result
+}
+
+/**
+ * Project a Nominatim result into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the OUTPUT-format
+ * projection. Reads the result's `address` breakdown (populated because the router forces `addressdetails` for
+ * `jsonld`) plus the coordinate, re-serializing the SAME resolved place. `streetAddress` is the plain
+ * house-number-first join (house_number + road); `addressCountry` is ISO-3166 alpha-2 (uppercased).
+ */
+export function nominatimResultToSchemaOrg(r: NominatimResult): SchemaOrgPlace {
+	const a = r.address ?? {}
+	const streetAddress = composeStreetAddress({ houseNumber: a.house_number, street: a.road })
+
+	return toSchemaOrg({
+		lat: r.lat ? Number(r.lat) : null,
+		lon: r.lon ? Number(r.lon) : null,
+		streetAddress: streetAddress || undefined,
+		locality: a.city ?? a.town ?? a.village,
+		region: a.state,
+		postalCode: a.postcode,
+		countryCode: a.country_code,
+	})
 }

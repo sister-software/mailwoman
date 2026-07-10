@@ -191,6 +191,41 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
 		expect(stdout).toMatch(/resolution_tier/)
 		expect(stdout).toMatch(/coordinate/)
 	}, 60_000)
+
+	test("--format=jsonld emits a valid schema.org Place JSON-LD object (#1052)", () => {
+		const stdout = execFileSync(
+			process.execPath,
+			[
+				CLI_PATH,
+				"geocode",
+				TX_ADDRESS,
+				`--resolve-db=${wofPath}`,
+				`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
+				`--interpolation-db=${TX_INTERPOLATION_DB}`,
+				"--format=jsonld",
+			],
+			{ encoding: "utf8", timeout: 60_000 }
+		)
+
+		const place = JSON.parse(stdout) as {
+			"@context": string
+			"@type": string
+			geo?: { "@type": string; latitude: number; longitude: number }
+			address?: { "@type": string; streetAddress?: string; addressRegion?: string; addressCountry?: string }
+		}
+
+		expect(place["@context"]).toBe("https://schema.org")
+		expect(place["@type"]).toBe("Place")
+		// A street-level TX geocode carries a coordinate and a PostalAddress with the street line + ISO country.
+		expect(place.geo?.["@type"]).toBe("GeoCoordinates")
+		expect(place.geo?.latitude).toBeGreaterThan(29.5)
+		expect(place.geo?.latitude).toBeLessThan(31.5)
+		expect(place.address?.["@type"]).toBe("PostalAddress")
+		expect(place.address?.streetAddress).toMatch(/Flower Hill/i)
+		expect(place.address?.addressCountry).toBe("US")
+		// Lossy by design: no resolution tier / uncertainty / candidates leak into the JSON-LD.
+		expect(stdout).not.toMatch(/resolution_tier|uncertainty_m|candidates/)
+	}, 60_000)
 })
 
 /**

@@ -6,11 +6,14 @@
 
 import type { AddressInfo } from "node:net"
 
+import type { SchemaOrgPlace } from "@mailwoman/annotations"
 import express from "express"
 import { expect, test } from "vitest"
 
 import {
 	createPhotonRouter,
+	photonFeature,
+	photonFeatureToSchemaOrg,
 	photonForwardCollection,
 	photonForwardFeature,
 	type PhotonForwardInput,
@@ -241,6 +244,95 @@ test("photonForwardFeature: wraps properties as a Point Feature at [lon, lat]", 
 	expect(f.type).toBe("Feature")
 	expect(f.geometry).toEqual({ type: "Point", coordinates: [13.4, 52.5] })
 	expect(f.properties.city).toBe("Berlin")
+})
+
+// #1052 — schema.org Place/PostalAddress/GeoCoordinates JSON-LD as an alternate output format (`format=jsonld`).
+
+test("photonFeatureToSchemaOrg: projects a house feature into a schema.org Place (#1052)", () => {
+	const feature = photonForwardFeature({
+		lat: 48.8548,
+		lon: 2.3451,
+		postcode: "75001",
+		country: { name: "France", code: "FR" },
+		places: [{ tag: "locality", name: "Paris" }],
+		house: { number: "8", street: "Boulevard du Palais" },
+	})
+	const place = photonFeatureToSchemaOrg(feature)
+
+	expect(place["@context"]).toBe("https://schema.org")
+	expect(place["@type"]).toBe("Place")
+	expect(place.geo).toEqual({ "@type": "GeoCoordinates", latitude: 48.8548, longitude: 2.3451 })
+	expect(place.address?.["@type"]).toBe("PostalAddress")
+	expect(place.address?.streetAddress).toBe("8 Boulevard du Palais")
+	expect(place.address?.addressLocality).toBe("Paris")
+	expect(place.address?.postalCode).toBe("75001")
+	expect(place.address?.addressCountry).toBe("FR") // ISO-3166 alpha-2, uppercased
+})
+
+const jsonldEngine: PhotonEngine = {
+	search: async () =>
+		photonForwardCollection(
+			{
+				primary: {
+					lat: 48.8548,
+					lon: 2.3451,
+					postcode: "75001",
+					country: { name: "France", code: "FR" },
+					places: [{ tag: "locality", name: "Paris" }],
+					house: { number: "8", street: "Boulevard du Palais" },
+				},
+				alternatives: [],
+			},
+			1
+		),
+	reverse: async () => ({
+		type: "FeatureCollection",
+		features: [
+			photonFeature(2.3522, 48.8566, {
+				osm_key: "place",
+				osm_value: "city",
+				type: "city",
+				name: "Paris",
+				city: "Paris",
+				countrycode: "fr",
+			}),
+		],
+	}),
+}
+
+test("route: /reverse?format=jsonld returns schema.org Place[] JSON-LD (#1052)", async () => {
+	await withServer(express().use(createPhotonRouter(jsonldEngine)), async (base) => {
+		const res = await fetch(`${base}/reverse?lat=48.8566&lon=2.3522&format=jsonld`)
+		expect(res.status).toBe(200)
+		const body = (await res.json()) as SchemaOrgPlace[]
+		expect(Array.isArray(body)).toBe(true)
+		const place = body[0]!
+		expect(place["@context"]).toBe("https://schema.org")
+		expect(place["@type"]).toBe("Place")
+		expect(place.name).toBe("Paris")
+		expect(place.address?.addressLocality).toBe("Paris")
+		expect(place.address?.addressCountry).toBe("FR")
+	})
+})
+
+test("route: /api?format=jsonld returns schema.org Place[] JSON-LD; default stays GeoJSON (#1052)", async () => {
+	await withServer(express().use(createPhotonRouter(jsonldEngine)), async (base) => {
+		const res = await fetch(`${base}/api?q=8+boulevard+du+palais&format=jsonld`)
+		expect(res.status).toBe(200)
+		const body = (await res.json()) as SchemaOrgPlace[]
+		expect(Array.isArray(body)).toBe(true)
+		const place = body[0]!
+		expect(place["@context"]).toBe("https://schema.org")
+		expect(place["@type"]).toBe("Place")
+		expect(place.address?.["@type"]).toBe("PostalAddress")
+		expect(place.address?.streetAddress).toBe("8 Boulevard du Palais")
+		expect(place.address?.addressCountry).toBe("FR")
+		expect(place.geo?.latitude).toBeCloseTo(48.8548)
+
+		// The native GeoJSON FeatureCollection stays the default (no format param).
+		const def = (await (await fetch(`${base}/api?q=x`)).json()) as { type: string }
+		expect(def.type).toBe("FeatureCollection")
+	})
 })
 
 test("CORS: permissive Access-Control-Allow-Origin on responses (upstream Photon parity)", async () => {

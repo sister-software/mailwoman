@@ -14,6 +14,7 @@
  *   / the Photon child); routes whose engine method is absent answer `501`.
  */
 
+import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
 import { type RequestHandler, Router } from "express"
 
 /**
@@ -209,7 +210,10 @@ export function createPhotonRouter(engine: PhotonEngine, options: PhotonRouterOp
 			osmTag: asStringArray(q["osm_tag"]),
 			layer: asStringArray(q["layer"]),
 		}
-		res.json(await engine.search(params))
+		const collection = await engine.search(params)
+		// #1052: `format=jsonld` re-serializes the SAME FeatureCollection as schema.org `Place[]` JSON-LD;
+		// the native GeoJSON FeatureCollection stays the default.
+		res.json(asString(q["format"]) === "jsonld" ? photonToSchemaOrg(collection) : collection)
 	}
 
 	const reverse: RequestHandler = async (req, res) => {
@@ -240,7 +244,9 @@ export function createPhotonRouter(engine: PhotonEngine, options: PhotonRouterOp
 			lang: asString(q["lang"]),
 			radius: q["radius"] != null ? Number(q["radius"]) : undefined,
 		}
-		res.json(await engine.reverse(params))
+		const collection = await engine.reverse(params)
+		// #1052: `format=jsonld` re-serializes the reverse FeatureCollection as schema.org `Place[]` JSON-LD.
+		res.json(asString(q["format"]) === "jsonld" ? photonToSchemaOrg(collection) : collection)
 	}
 
 	// Safety net: malformed input or an engine fault returns an empty FeatureCollection, never a crash.
@@ -441,4 +447,32 @@ export function photonForwardCollection(result: PhotonForwardResult, limit: numb
 	}
 
 	return photonCollection(features)
+}
+
+/**
+ * Project a Photon `Feature` into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the OUTPUT-format
+ * projection. Reads the feature's already-decorated {@link PhotonProperties} (housenumber/street/city/state/postcode/
+ * countrycode + the coordinate), so it stays a pure re-serialization of the SAME resolved place the FeatureCollection
+ * carries. `streetAddress` is the plain house-number-first join (the light router has no locale formatter).
+ */
+export function photonFeatureToSchemaOrg(feature: PhotonFeature): SchemaOrgPlace {
+	const p = feature.properties
+	const [lon, lat] = feature.geometry.coordinates
+	const streetAddress = composeStreetAddress({ houseNumber: p.housenumber, street: p.street })
+
+	return toSchemaOrg({
+		lat,
+		lon,
+		name: p.name,
+		streetAddress: streetAddress || undefined,
+		locality: p.city,
+		region: p.state,
+		postalCode: p.postcode,
+		countryCode: p.countrycode,
+	})
+}
+
+/** Project a whole Photon `FeatureCollection` into an array of schema.org `Place` objects (`format=jsonld`). #1052. */
+export function photonToSchemaOrg(collection: PhotonFeatureCollection): SchemaOrgPlace[] {
+	return collection.features.map(photonFeatureToSchemaOrg)
 }
