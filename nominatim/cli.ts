@@ -142,9 +142,38 @@ async function serve(): Promise<void> {
 	// one already fetched to the data root (`mailwoman fetch-gazetteer` writes `<data-root>/wof/candidate.db`).
 	// Absent → admin-only (US-optimized) — the no-download default.
 	const conventionCandidate = join(mailwomanDataRoot(), "wof", "candidate.db")
+
+	// #1009 kin: an EXPLICIT --candidate-db that doesn't exist must error loudly, not silently fall
+	// back to ambient data.
+	if (values["candidate-db"] && !existsSync(values["candidate-db"])) {
+		console.error(`✗ --candidate-db not found: ${values["candidate-db"]}`)
+		process.exit(1)
+	}
 	const candidateDb =
 		resolveCandidateDBPath(values["candidate-db"]) ??
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
+
+	// #1009: fail FRIENDLY before the resolver's internal shard error — same message shape as
+	// @mailwoman/photon's pre-flight (kept in lockstep; docs/switching pages are the maintained pointer).
+	if (!candidateDb && wofPaths.length === 0) {
+		console.error(
+			[
+				"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
+				"",
+				"  Fastest path (worldwide resolution, ~1.4 GB, byte-range friendly):",
+				`    mkdir -p ${join(mailwomanDataRoot(), "wof")}`,
+				`    curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \\`,
+				`      -o ${conventionCandidate}`,
+				"",
+				"  Then re-run `serve` (the file is auto-detected at that path), or point at your own:",
+				"    --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)",
+				"    $MAILWOMAN_WOF_DB / <data-root>/wof/*.db          (admin WOF distribution)",
+				"",
+				"  Docs: https://mailwoman.sister.software/docs/switching/nominatim",
+			].join("\n")
+		)
+		process.exit(1)
+	}
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const parser = createAddressParser()

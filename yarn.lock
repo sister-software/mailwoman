@@ -4834,7 +4834,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-en-us@workspace:neural-weights-en-us":
+"@mailwoman/neural-weights-en-us@workspace:*, @mailwoman/neural-weights-en-us@workspace:neural-weights-en-us":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-en-us@workspace:neural-weights-en-us"
   languageName: unknown
@@ -4865,6 +4865,7 @@ __metadata:
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
+    "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/nuts-lookup": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
@@ -4913,6 +4914,7 @@ __metadata:
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
+    "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     express: "npm:^5.2.1"

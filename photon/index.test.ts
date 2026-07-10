@@ -156,6 +156,40 @@ test("forward: house-grade with a missing parsed street/number still types house
 	expect(props.street).toBeUndefined() // null street → field simply absent, never "null"
 })
 
+test("forward: street-grade re-tags highway/street with the FULL name in `name` (#1050)", () => {
+	const props = photonForwardProperties({
+		lat: 45.7655,
+		lon: 4.8358,
+		postcode: "69002",
+		country: { name: "France", code: "FR" },
+		places: [{ tag: "locality", name: "Lyon" }],
+		street: { name: "Rue de la République" },
+	})
+	// Matches upstream komoot's street results (verified live 2026-07-10): full name in `name`,
+	// highway osm_key, type street — never the locality's type:city / first-token truncation.
+	expect(props.type).toBe("street")
+	expect(props.osm_key).toBe("highway")
+	expect(props.osm_value).toBe("residential")
+	expect(props.name).toBe("Rue de la République")
+	// Ancestry stays as context.
+	expect(props.city).toBe("Lyon")
+	expect(props.postcode).toBe("69002")
+	expect(props.countrycode).toBe("fr")
+})
+
+test("forward: house wins over street when both are set (#1050)", () => {
+	const props = photonForwardProperties({
+		lat: 45.7655,
+		lon: 4.8358,
+		places: [{ tag: "locality", name: "Lyon" }],
+		house: { number: "10", street: "Rue de la République" },
+		street: { name: "Rue de la République" },
+	})
+	expect(props.type).toBe("house")
+	expect(props.housenumber).toBe("10")
+	expect(props.name).toBeUndefined()
+})
+
 test("photonForwardFeature: a house-grade input renders a type:house Point Feature (#1041)", () => {
 	const f = photonForwardFeature({
 		lat: 48.8548,
