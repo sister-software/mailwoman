@@ -21,7 +21,12 @@ import type { AddressPointHit, AddressPointLookup } from "@mailwoman/resolver"
 
 import type { AddressPointTable } from "./address-point-schema.ts"
 import { hasTable } from "./sqlite-utils.ts"
-import { normalizeLocalityForKey, normalizeStreetForKeyLocale, type StreetLocale } from "./street-normalize.ts"
+import {
+	normalizeLocalityForKey,
+	normalizeStreetForKeyLocale,
+	stripArrondissement,
+	type StreetLocale,
+} from "./street-normalize.ts"
 
 /**
  * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a column rename in
@@ -89,9 +94,14 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 		}
 
 		if (!row && query.locality) {
-			row = this.#byLocality.get(normalizeLocalityForKey(query.locality), streetNorm, number) as
-				| AddressPointRow
-				| undefined
+			// FR shards key arrondissement communes at the base city (both-sides fold, see the BAN
+			// builder + stripArrondissement) — fold the probe too so "Paris 13e Arrondissement" and
+			// "Paris" both hit. No-op for "us" shards and every non-arrondissement commune.
+			const localityKey =
+				this.#locale === "fr"
+					? stripArrondissement(normalizeLocalityForKey(query.locality))
+					: normalizeLocalityForKey(query.locality)
+			row = this.#byLocality.get(localityKey, streetNorm, number) as AddressPointRow | undefined
 		}
 
 		// Bbox fall-through (#247): the point carries no postcode/locality of its own, but its coordinate falls

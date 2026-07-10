@@ -22,6 +22,9 @@ import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKey,
+	normalizeStreetForKeyLocale,
+	type StreetLocale,
+	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /** The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns. */
@@ -55,9 +58,12 @@ export interface StreetPointHit {
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
 	#available: Promise<boolean> | undefined
+	#locale: StreetLocale
 
-	constructor(worker: HTTPVFSDB) {
+	/** `streetLocale` must match the shard's build locale (the node class's contract) — default "us". */
+	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
+		this.#locale = opts.streetLocale ?? "us"
 	}
 
 	/**
@@ -83,7 +89,7 @@ export class HTTPVFSAddressPointLookup {
 		locality?: string
 	}): Promise<StreetPointHit | null> {
 		if (!(await this.#hasTable())) return null
-		const streetNorm = normalizeStreetForKey(query.street)
+		const streetNorm = normalizeStreetForKeyLocale(query.street, this.#locale)
 		const number = query.number.trim().toLowerCase()
 
 		if (!streetNorm || !number) return null
@@ -103,10 +109,16 @@ export class HTTPVFSAddressPointLookup {
 		}
 
 		if (rows.length === 0 && query.locality) {
+			// FR shards fold arrondissement communes to the base city on both sides (the node class +
+			// BAN builder discipline) — mirror it here so the twins stay in lockstep.
+			const localityKey =
+				this.#locale === "fr"
+					? stripArrondissement(normalizeLocalityForKey(query.locality))
+					: normalizeLocalityForKey(query.locality)
 			rows = rowsFromExec(
 				await this.#worker.db.exec(
 					select(
-						`locality_norm = ${sqlStr(normalizeLocalityForKey(query.locality))} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
+						`locality_norm = ${sqlStr(localityKey)} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
 					)
 				)
 			)
