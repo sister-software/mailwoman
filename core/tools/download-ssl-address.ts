@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -17,8 +16,7 @@
  *   ## Usage
  *
  *   ```sh
- *   node core/data/chromium-i18n/ssl-address-download.ts
- *   node core/data/chromium-i18n/ssl-address-download.ts --concurrency 16
+ *   mailwoman dev download ssl-address [--concurrency 16]
  *   ```
  *
  *   ## Flags
@@ -27,29 +25,19 @@
  *   - `--concurrency <n>` — parallel per-country fetches; default `8`
  */
 
-///<reference types="node" />
-
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { parseArgs } from "node:util"
 
-import { runIfScript } from "@mailwoman/core/scripting"
 import { corePackagePath } from "@mailwoman/core/utils"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
-function parseCLIArgs() {
-	const { values } = parseArgs({
-		options: {
-			"out-dir": { type: "string", default: corePackagePath("data", "chromium-i18n", "ssl-address") },
-			concurrency: { type: "string", default: "8" },
-		},
-	})
-
-	return {
-		outDir: values["out-dir"]!,
-		concurrency: Number.parseInt(values.concurrency!, 10),
-	}
+/** Flag-shaped options for {@linkcode downloadSSLAddress}. */
+export interface DownloadSSLAddressOptions {
+	/** Destination directory. Default: the checked-in `core/data/chromium-i18n/ssl-address`. */
+	outDir?: string
+	/** Parallel per-country fetches. Default 8. */
+	concurrency?: number
 }
 
 /** Fetch the `~`-delimited country list and return it as an array of ISO codes. */
@@ -70,12 +58,20 @@ async function fetchCountry(cc: string, outDir: string): Promise<void> {
 	await writeFile(join(outDir, `${cc}.json`), await res.text())
 }
 
-async function main(): Promise<void> {
-	const { outDir, concurrency } = parseCLIArgs()
+/**
+ * Download every country's ssl-address metadata record. Returns the failure count (the command maps `failed > 0` to
+ * exit 1).
+ */
+export async function downloadSSLAddress(
+	options: DownloadSSLAddressOptions = {},
+	report?: (line: string) => void
+): Promise<{ written: number; failed: number }> {
+	const outDir = options.outDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
+	const concurrency = options.concurrency ?? 8
 	await mkdir(outDir, { recursive: true })
 
 	const codes = await fetchCountryCodes()
-	process.stderr.write(`=== ssl-address: ${codes.length} countries → ${outDir}\n`)
+	report?.(`=== ssl-address: ${codes.length} countries → ${outDir}`)
 
 	let nextSlot = 0
 	let failures = 0
@@ -88,20 +84,16 @@ async function main(): Promise<void> {
 
 			try {
 				await fetchCountry(cc, outDir)
-				process.stderr.write(`  ✓ ${cc}\n`)
+				report?.(`  ✓ ${cc}`)
 			} catch (err) {
 				failures++
-				process.stderr.write(`  ✗ ${cc}: ${(err as Error).message}\n`)
+				report?.(`  ✗ ${cc}: ${(err as Error).message}`)
 			}
 		}
 	})
 	await Promise.all(workers)
 
-	process.stderr.write(`\n=== done: ${codes.length - failures}/${codes.length} written, ${failures} failed\n`)
+	report?.(`=== done: ${codes.length - failures}/${codes.length} written, ${failures} failed`)
 
-	if (failures > 0) {
-		process.exitCode = 1
-	}
+	return { written: codes.length - failures, failed: failures }
 }
-
-runIfScript(import.meta, main)

@@ -1,6 +1,6 @@
 # Scripts → Pastel commands: the framework-consistency arc
 
-**Date:** 2026-07-09 · **Status:** SHIPPED 2026-07-10 (phases 0–5 merged to main; follow-ups: retrofit pre-existing commands onto useCommandTask, regen-churn stash, docs/scripts/build-demo-assets.ts pinned by run-docs skill)
+**Date:** 2026-07-09 · **Status:** SHIPPED 2026-07-10 (phases 0–5 merged to main; follow-ups all closed 2026-07-10: fleet retrofit, regen churn landed properly, build-demo-assets.ts deleted with the run-docs skill repointed at the plugin)
 **Driver:** Operator directive: "all our scripts live in their respective packages and there's a consistent use of the framework instead of all these horrible little scripts."
 **Prior art:** `2026-07-07-scripts-drawer-to-zero.md` (executed — moved script logic into packages as modules, deferred commands as "a later nicety"; this arc is that later) and `2026-07-07-scripts-cleanup-gazetteer-cli-design.md` (the gazetteer half, shipped).
 

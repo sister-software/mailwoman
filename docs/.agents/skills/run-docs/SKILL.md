@@ -31,10 +31,12 @@ You don't need to build for dev. Two optional pre-steps:
 
   ```bash
   node ../neural-weights-en-us/scripts/link-dev-weights.ts
-  node docs/scripts/build-demo-assets.ts
   ```
 
-  Skip both if you only care about prose pages or the demo's static UI.
+  The demo-assets Docusaurus plugin stages the assets automatically in `loadContent()` — both
+  `yarn start` and `yarn build` — once the weights are linked (the retired
+  `docs/scripts/build-demo-assets.ts` manual step is gone). Skip if you only care about prose
+  pages or the demo's static UI.
 
 - **Production build.** Static output to `build/`:
   ```bash
@@ -100,7 +102,7 @@ The Playwright e2e suite (`test/browser/*.spec.ts`) targets the live `/demo` pag
 - **`@docusaurus/theme-mermaid` is listed but not always installed.** If `yarn start` errors with "Docusaurus was unable to resolve the `@docusaurus/theme-mermaid` theme," run `yarn install` from `docs/`. The lockfile knows about it; whatever cleared `node_modules/` (a `yarn clean`, a workspace migration) left it stale.
 - **The dev server uses port 7770, not the Docusaurus default 3000.** Hardcoded in `package.json` scripts. Don't `curl :3000`.
 - **`networkidle` is required, not `domcontentloaded`.** Docusaurus is SPA-ish; `domcontentloaded` fires before the React hydration assets land and your screenshot will show "Loading..." The driver already uses `networkidle`; if you write your own Playwright snippet, do the same.
-- **`/demo/` renders without the `static/mailwoman/*.onnx,*.model,*.db` artifacts** but address resolution won't work — clicking "Parse + resolve" silently no-ops or errors in the console. The page screenshot looks correct; the feature is broken. If you're testing the demo _behavior_, run `node docs/scripts/build-demo-assets.ts` first (which needs `$MAILWOMAN_DATA_ROOT/wof/...` or `PLAYPEN_WOF_*_DB` env overrides).
+- **`/demo/` renders without the `static/mailwoman/*.onnx,*.model,*.db` artifacts** but address resolution won't work — clicking "Parse + resolve" silently no-ops or errors in the console. The page screenshot looks correct; the feature is broken. If you're testing the demo _behavior_, link the weights (`node ../neural-weights-en-us/scripts/link-dev-weights.ts`) and restart `yarn start` — the demo-assets plugin stages the artifacts at server start (needs `$MAILWOMAN_DATA_ROOT/wof/...` or `PLAYPEN_WOF_*_DB` env overrides).
 - **The driver does not launch or kill the dev server.** This is deliberate — Docusaurus's first build is slow and you'll typically run the driver 5–20 times against one server. Tear down explicitly with `pkill -f 'docusaurus start'` when done.
 
 ## Troubleshooting

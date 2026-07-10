@@ -113,7 +113,7 @@ const missing = Object.entries({
 if (missing.length > 0) {
 	console.error(
 		`✗ demo-cascade smoke: missing artifacts —\n${missing.join("\n")}\n` +
-			"  Stage a demo release (node docs/scripts/build-demo-assets.ts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
+			"  Stage a demo release (yarn start/build in docs/ — the demo-assets plugin stages the artifacts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
 	)
 	process.exit(2)
 }

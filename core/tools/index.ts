@@ -8,4 +8,6 @@
  *   scripts→Pastel spec).
  */
 
+export * from "./download-libpostal-resources.ts"
+export * from "./download-ssl-address.ts"
 export * from "./generate-language-types.ts"
