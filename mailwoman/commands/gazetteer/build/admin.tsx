@@ -11,10 +11,9 @@
  */
 
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import { artifactSizeMB, buildAdmin } from "../../../gazetteer-pipeline/index.ts"
 
 const OptionsSchema = zod.object({
@@ -46,47 +45,32 @@ const csv = (raw: string | undefined): string[] | undefined =>
 		: undefined
 
 const GazetteerBuildAdmin: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const result = await buildAdmin({
+			dataDir: options.data,
+			out: options.out,
+			overtureCountries: csv(options.overtureCountries),
+			geonamesCountries: csv(options.geonamesCountries),
+			overtureRelease: options.overtureRelease,
+			skipVerify: options.skipVerify,
+			onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+		})
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const result = await buildAdmin({
-					dataDir: options.data,
-					out: options.out,
-					overtureCountries: csv(options.overtureCountries),
-					geonamesCountries: csv(options.geonamesCountries),
-					overtureRelease: options.overtureRelease,
-					skipVerify: options.skipVerify,
-					onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
-				})
+		return [
+			`admin gazetteer: ${result.out} (${artifactSizeMB(result.out)} MB, ${result.elapsedSeconds}s)`,
+			`${result.placesIngested.toLocaleString()} WOF + ${result.overtureIngested.toLocaleString()} overture + ${result.geonamesIngested.toLocaleString()} geonames`,
+			result.verify ? `verify: PASS (${result.verify.checks.length} checks)` : "verify: SKIPPED (--skip-verify)",
+			"sealed 0444",
+			"next: swap per RELEASING.md, then `mailwoman gazetteer build candidate`",
+		]
+	})
 
-				setSummary([
-					`admin gazetteer: ${result.out} (${artifactSizeMB(result.out)} MB, ${result.elapsedSeconds}s)`,
-					`${result.placesIngested.toLocaleString()} WOF + ${result.overtureIngested.toLocaleString()} overture + ${result.geonamesIngested.toLocaleString()} geonames`,
-					result.verify ? `verify: PASS (${result.verify.checks.length} checks)` : "verify: SKIPPED (--skip-verify)",
-					"sealed 0444",
-					"next: swap per RELEASING.md, then `mailwoman gazetteer build candidate`",
-				])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
-		}
-	}, [summary, error])
-
-	if (error) return <Text color="red">✗ {error}</Text>
-
-	if (summary) {
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

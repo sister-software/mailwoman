@@ -13,10 +13,9 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import {
 	artifactSizeMB,
 	buildAdmin,
@@ -37,52 +36,37 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		console.error("▸ build admin (staging)")
+		const admin = await buildAdmin({
+			dataDir: options.data,
+			skipVerify: options.skipVerify,
+			onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+		})
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				console.error("▸ build admin (staging)")
-				const admin = await buildAdmin({
-					dataDir: options.data,
-					skipVerify: options.skipVerify,
-					onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
-				})
+		const candidateOut = join(wofDir(), DEFAULT_CANDIDATE_OUT)
+		console.error(`▸ build candidate ← ${admin.out}`)
+		const shards = resolvePostcodeShards()
+		const candidate = await buildCandidate({
+			adminDb: admin.out,
+			out: candidateOut,
+			postcodeShards: shards,
+			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
+		})
 
-				const candidateOut = join(wofDir(), DEFAULT_CANDIDATE_OUT)
-				console.error(`▸ build candidate ← ${admin.out}`)
-				const shards = resolvePostcodeShards()
-				const candidate = await buildCandidate({
-					adminDb: admin.out,
-					out: candidateOut,
-					postcodeShards: shards,
-					onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
-				})
+		return [
+			`admin: ${admin.out} (${artifactSizeMB(admin.out)} MB) — ${admin.verify ? "verify PASS" : "verify SKIPPED"}, sealed`,
+			`candidate: ${candidateOut} (${artifactSizeMB(candidateOut)} MB) — ${candidate.rows.toLocaleString()} rows, sealed`,
+			"next: mailwoman gazetteer verify --db <admin>, then swap + promote per RELEASING.md",
+		]
+	})
 
-				setSummary([
-					`admin: ${admin.out} (${artifactSizeMB(admin.out)} MB) — ${admin.verify ? "verify PASS" : "verify SKIPPED"}, sealed`,
-					`candidate: ${candidateOut} (${artifactSizeMB(candidateOut)} MB) — ${candidate.rows.toLocaleString()} rows, sealed`,
-					"next: mailwoman gazetteer verify --db <admin>, then swap + promote per RELEASING.md",
-				])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
-		}
-	}, [summary, error])
-
-	if (error) return <Text color="red">✗ {error}</Text>
-
-	if (summary) {
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

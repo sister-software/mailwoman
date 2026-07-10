@@ -13,7 +13,6 @@
 
 import * as fs from "node:fs/promises"
 import { availableParallelism } from "node:os"
-import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import {
@@ -26,10 +25,9 @@ import {
 import * as d3Chromatic from "d3-scale-chromatic"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
-import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const BATCH_SIZE = availableParallelism()
 
@@ -78,7 +76,7 @@ function resolveInterpolator(raw: string | undefined): InterpolateColorCallback 
 	const fn = D3_INTERPOLATORS[raw.toLowerCase()]
 
 	if (!fn) {
-		throw new Error(`Unknown interpolator '${raw}'. Available: ${D3_INTERPOLATOR_NAMES.join(", ")}.`)
+		throw commandError(`Unknown interpolator '${raw}'. Available: ${D3_INTERPOLATOR_NAMES.join(", ")}.`)
 	}
 
 	return fn
@@ -95,7 +93,7 @@ function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 
 	for (const role of parsed) {
 		if (!valid.has(role)) {
-			throw new Error(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
+			throw commandError(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
 		}
 	}
 
@@ -103,79 +101,50 @@ function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 }
 
 const WOFMermaid: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
-	const [markup, setMarkup] = useState<string>()
-	const [error, setError] = useState<string>()
-
-	const localRepoDirectory = useMemo(() => (args[0] ? PathBuilder.from(args[0]) : null), [args])
 	const placetypeName = args[1]
 
-	useEffect(() => {
-		if (!localRepoDirectory) {
-			setError("Missing required positional argument: <localRepoDirectory>")
-
-			return
+	const state = useCommandTask(async () => {
+		if (!args[0]) {
+			throw commandError("Missing required positional argument: <localRepoDirectory>")
 		}
+
+		const localRepoDirectory = PathBuilder.from(args[0])
 
 		if (!placetypeName) {
-			setError("Missing required positional argument: <placetype>")
-
-			return
+			throw commandError("Missing required positional argument: <placetype>")
 		}
 
-		let roles: PlacetypeRole[] | undefined
-		let interpolator: InterpolateColorCallback | undefined
+		const roles: PlacetypeRole[] | undefined = parseRoles(options.roles)
+		const interpolator: InterpolateColorCallback | undefined = resolveInterpolator(options.interpolator)
 
-		try {
-			roles = parseRoles(options.roles)
-			interpolator = resolveInterpolator(options.interpolator)
-		} catch (err) {
-			setError((err as Error).message)
+		await Placetype.prepare({ batchSize: BATCH_SIZE, localRepoDirectory })
 
-			return
+		const placetype = Placetype.find(placetypeName)
+
+		if (!placetype) {
+			throw commandError(
+				`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a clone of whosonfirst/whosonfirst-placetypes (run \`mailwoman wof sync\` first).`
+			)
 		}
 
-		;(async () => {
-			await Placetype.prepare({ batchSize: BATCH_SIZE, localRepoDirectory })
+		const chart = generateMermaidMarkup(placetype, { roles, edgeInterpolator: interpolator })
 
-			const placetype = Placetype.find(placetypeName)
+		if (options.output) {
+			await fs.writeFile(options.output, chart + "\n", "utf8")
+		} else {
+			// Write Mermaid directly to stdout so long classDef / linkStyle lines aren't
+			// word-wrapped by Ink's <Text> renderer — Mermaid won't parse a broken line.
+			process.stdout.write(chart + "\n")
+		}
 
-			if (!placetype) {
-				throw new Error(
-					`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a clone of whosonfirst/whosonfirst-placetypes (run \`mailwoman wof sync\` first).`
-				)
-			}
+		return chart
+	})
 
-			const chart = generateMermaidMarkup(placetype, { roles, edgeInterpolator: interpolator })
-
-			if (options.output) {
-				await fs.writeFile(options.output, chart + "\n", "utf8")
-			} else {
-				// Write Mermaid directly to stdout so long classDef / linkStyle lines aren't
-				// word-wrapped by Ink's <Text> renderer — Mermaid won't parse a broken line.
-				process.stdout.write(chart + "\n")
-			}
-
-			setMarkup(chart)
-		})().catch((err) => setError((err as Error).message))
-	}, [localRepoDirectory, placetypeName, options.roles, options.output, options.interpolator])
-
-	useEffect(() => {
-		if (!error) return
-		setImmediate().then(() => process.exit(1))
-	}, [error])
-
-	useEffect(() => {
-		if (markup === undefined) return
-
-		if (options.output) return // let Ink render the success summary; exit naturally
-		setImmediate().then(() => process.exit(0))
-	}, [markup, options.output])
-
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (markup === undefined) {
+	if (state.status === "running") {
 		return <Spinner />
 	}
 

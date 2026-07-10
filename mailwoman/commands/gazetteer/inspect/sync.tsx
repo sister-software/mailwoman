@@ -17,11 +17,11 @@ import {
 } from "@mailwoman/core"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const BATCH_SIZE = availableParallelism()
 const WOF_REPO_OWNER = "whosonfirst-data"
@@ -67,23 +67,19 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 
 	const allow = useMemo(() => parseReposFilter(options.repos), [options.repos])
 
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		const discovered = $.sync`gh repo list ${WOF_REPO_OWNER} --no-archived --limit 1000 --json 'name' --json 'url'`
 			.json<Omit<RepositorySource, "owner">[]>()
 			.map((entry): RepositorySource => ({ ...entry, owner: WOF_REPO_OWNER }))
 
 		const filtered = allow ? discovered.filter((entry) => allow.has(entry.name)) : discovered
-		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot repo discovery; refactor pending
-		setRepos([...filtered, PLACETYPES_REPO_SOURCE])
-	}, [localRepoDirectory, allow])
-
-	useEffect(() => {
-		if (!repos || !repos.length) return
+		const sources = [...filtered, PLACETYPES_REPO_SOURCE]
+		setRepos(sources)
 
 		const abortController = new AbortController()
 
 		const batchIterator = takeInParallel(
-			repos,
+			sources,
 			BATCH_SIZE,
 			async (entry) => {
 				await synchronizeRepo(entry, localRepoDirectory)
@@ -93,23 +89,17 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 			abortController.signal
 		)
 
-		Array.fromAsync(batchIterator)
+		await Array.fromAsync(batchIterator)
 
-		return () => {
-			abortController.abort()
-		}
-	}, [repos, localRepoDirectory])
-
-	useEffect(() => {
-		if (!repos) return
-
-		if (syncCount < repos.length) return
-
-		Placetype.prepare({
+		await Placetype.prepare({
 			batchSize: BATCH_SIZE,
 			localRepoDirectory,
 		})
-	}, [localRepoDirectory, repos, syncCount])
+	})
+
+	if (state.status === "error") {
+		return <Text color="red">✗ {state.message}</Text>
+	}
 
 	if (!repos) {
 		return <Text>Fetching repo list...</Text>

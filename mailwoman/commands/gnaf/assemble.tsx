@@ -16,14 +16,12 @@
  *   training shard never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
  */
 
-import { setImmediate } from "node:timers/promises"
-
-import { assembleGNAF, type GNAFAssembleResult } from "@mailwoman/corpus"
+import { assembleGNAF } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	standardDir: zod.string().describe("G-NAF `Standard` directory holding the per-state *_psv.psv tables"),
@@ -46,33 +44,22 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GNAFAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<GNAFAssembleResult>()
 	const [progress, setProgress] = useState<string>()
-
-	useEffect(() => {
-		if (error) {
-			setImmediate().then(() => process.exit(1))
-		} else if (done) {
-			setImmediate().then(() => process.exit(0))
-		}
-	}, [error, done])
-
-	useEffect(() => {
-		assembleGNAF({
+	const state = useCommandTask(async () => {
+		return assembleGNAF({
 			standardDir: options.standardDir,
 			sampleSize: options.n,
 			out: options.out,
 			holdoutPath: options.holdout,
 			onProgress: setProgress,
 		})
-			.then(setDone)
-			.catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
-	}, [options])
+	})
 
-	if (error) return <Text color="red">{error}</Text>
+	if (state.status === "error") return <Text color="red">{state.message}</Text>
 
-	if (done) {
+	if (state.status === "done") {
+		const done = state.result
+
 		return (
 			<Box flexDirection="column">
 				<Text>

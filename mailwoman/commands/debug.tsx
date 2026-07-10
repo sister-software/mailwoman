@@ -7,10 +7,9 @@
 import { Spinner } from "@inkjs/ui"
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport } from "mailwoman"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../cli-kit/index.ts"
 
 const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address"))
 const DebugConfigSchema = zod.object({
@@ -23,31 +22,22 @@ const DebugConfigSchema = zod.object({
 export { ArgumentsSchema as args, DebugConfigSchema as options }
 
 const DebugCommand: CommandComponent<typeof DebugConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
-	const [output, setOutput] = useState<string>()
-	const [error, setError] = useState<string>()
-
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		const parser = createAddressParser()
 		const parseOpts = options.locale ? { verbose: true as const, locale: options.locale } : { verbose: true as const }
 
-		parser
-			.parse(args[0]!, parseOpts)
-			.then(createDiagnosticReport)
-			.then(setOutput)
-			.catch((err) => setError(err.message))
+		return parser.parse(args[0]!, parseOpts).then(createDiagnosticReport)
+	})
 
-		return
-	}, [args, options.locale])
-
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (!output) {
+	if (state.status !== "done") {
 		return <Spinner />
 	}
 
-	return <Text>{output}</Text>
+	return <Text>{state.result}</Text>
 }
 
 export default DebugCommand

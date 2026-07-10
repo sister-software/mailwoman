@@ -10,15 +10,13 @@
  *   registered ids). On success, prints a one-line summary and the path to the manifest file.
  */
 
-import { setImmediate } from "node:timers/promises"
-
 import { ProgressBar } from "@inkjs/ui"
-import { defaultAdapterRegistry, runAdapter, type AdapterRunManifest } from "@mailwoman/corpus"
+import { defaultAdapterRegistry, runAdapter } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 const ArgumentsSchema = zod.array(zod.string().describe("Adapter id (e.g. wof-admin, ban, openaddresses)"))
 
@@ -53,30 +51,16 @@ const RunConfigSchema = zod.object({
 export { ArgumentsSchema as args, RunConfigSchema as options }
 
 const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
-	const [error, setError] = useState<string>()
 	const [progress, setProgress] = useState<{ yielded: number; written: number; bytes: number }>({
 		yielded: 0,
 		written: 0,
 		bytes: 0,
 	})
-	const [manifest, setManifest] = useState<AdapterRunManifest>()
-
-	useEffect(() => {
-		if (error) {
-			setImmediate().then(() => process.exit(1))
-		} else if (manifest) {
-			setImmediate().then(() => process.exit(0))
-		}
-	}, [error, manifest])
-
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		const adapterID = args[0]
 
 		if (!adapterID) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
-			setError("missing positional argument: <adapter-id>")
-
-			return
+			throw commandError("missing positional argument: <adapter-id>")
 		}
 
 		const adapter = defaultAdapterRegistry.get(adapterID)
@@ -84,13 +68,12 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 		if (!adapter) {
 			const ids = defaultAdapterRegistry.ids()
 			const hint = ids.length === 0 ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
-			setError(`unknown adapter id ${JSON.stringify(adapterID)}; ${hint}`)
-
-			return
+			throw commandError(`unknown adapter id ${JSON.stringify(adapterID)}; ${hint}`)
 		}
 
 		const ac = new AbortController()
-		runAdapter({
+
+		return runAdapter({
 			adapter,
 			adapterOptions: {
 				inputPath: options.input,
@@ -106,17 +89,15 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 				setProgress({ yielded: snap.yielded, written: snap.written, bytes: snap.bytes })
 			},
 		})
-			.then((m) => setManifest(m))
-			.catch((err: Error) => setError(err.message))
+	})
 
-		return () => ac.abort()
-	}, [args, options])
-
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (manifest) {
+	if (state.status === "done") {
+		const manifest = state.result
+
 		return (
 			<Box flexDirection="column">
 				<Text>

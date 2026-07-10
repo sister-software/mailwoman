@@ -13,10 +13,9 @@ import { join } from "node:path"
 
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "../../gazetteer-pipeline/index.ts"
 
 const ArgumentsSchema = zod.array(
@@ -27,33 +26,21 @@ const OptionsSchema = zod.object({})
 export { ArgumentsSchema as args, OptionsSchema as options }
 
 const GazetteerPromote: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args }) => {
-	const [error, setError] = useState<string>()
-	const [link, setLink] = useState<{ from: string; to: string }>()
+	const state = useCommandTask(async () => {
+		const root = mailwomanDataRoot()
+		const candidateDb = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const linkPath = promoteCandidate(candidateDb, root)
 
-	useEffect(() => {
-		try {
-			const root = mailwomanDataRoot()
-			const candidateDb = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
-			const linkPath = promoteCandidate(candidateDb, root)
-			setLink({ from: linkPath, to: candidateDb })
-		} catch (e) {
-			setError(e instanceof Error ? e.message : String(e))
-		}
-	}, [args])
+		return { from: linkPath, to: candidateDb }
+	})
 
-	useEffect(() => {
-		if (link || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
-		}
-	}, [link, error])
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	if (error) return <Text color="red">✗ {error}</Text>
-
-	if (link) {
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
 				<Text color="green">
-					✓ promoted: {link.from} → {link.to}
+					✓ promoted: {state.result.from} → {state.result.to}
 				</Text>
 				<Text> drop-ins (nominatim/photon) now auto-use this gazetteer worldwide — no --candidate-db needed</Text>
 			</Box>

@@ -33,10 +33,9 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const ADMIN_PLACETYPES = new Set(["locality", "localadmin", "region", "county", "borough", "macroregion", "country"])
 
@@ -163,138 +162,124 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 }
 
 const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const out = options.out
+		const points = options.points ?? ""
+		const admin = options.admin ?? ""
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const out = options.out
-				const points = options.points ?? ""
-				const admin = options.admin ?? ""
-
-				if (!out) {
-					throw new Error(
-						"usage: mailwoman gazetteer polygons (--points <wof-hot.db> | --admin <admin.db> [--countries US,DE]) --out <wof-polygons.db> [--tol 0.004]"
-					)
-				}
-
-				if ((!points && !admin) || (points && admin)) {
-					throw new Error("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
-				}
-				const countries = options.countries
-					? options.countries
-							.split(",")
-							.map((c) => c.trim().toUpperCase())
-							.filter(Boolean)
-					: null
-				const repos = options.repos
-				const tol = options.tol
-
-				const srcPath = points || admin
-				const src = new DatabaseSync(srcPath, { readOnly: true })
-				const where = countries
-					? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
-					: `placetype NOT IN ('postalcode')`
-				const rows = (
-					src
-						.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`)
-						.all(...(countries ?? [])) as unknown as SprRow[]
-				).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
-				src.close()
-
-				// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
-				// readonly artifact — never write the live path in case the build dies halfway). The
-				// original .mjs wrote `out` directly; this hardens it without changing the result.
-				const tmpOut = `${out}.tmp-${process.pid}`
-
-				for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
-					if (existsSync(stale)) {
-						rmSync(stale)
-					}
-				}
-
-				const dbOut = new DatabaseSync(tmpOut)
-				// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
-				const kdb = new DatabaseClient({ database: dbOut })
-				await kdb.schema
-					.createTable("polygons")
-					.addColumn("id", "integer", (c) => c.primaryKey())
-					.addColumn("geom", "text", (c) => c.notNull())
-					.execute()
-				const insert = dbOut.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
-
-				let done = 0
-				let missing = 0
-				let dropped = 0
-				dbOut.exec("BEGIN")
-
-				for (const r of rows) {
-					const path = geojsonPath(repos, r.country, r.id)
-
-					if (!existsSync(path)) {
-						missing++
-						continue
-					}
-
-					try {
-						const feat = JSON.parse(readFileSync(path, "utf8")) as { geometry?: RawGeometry }
-						const simp = feat.geometry ? simplify(feat.geometry, tol) : null
-
-						if (!simp) {
-							dropped++
-							continue
-						}
-						insert.run(r.id, JSON.stringify(simp))
-						done++
-					} catch {
-						dropped++
-					}
-
-					if ((done + missing + dropped) % 2000 === 0) {
-						console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
-					}
-				}
-				dbOut.exec("COMMIT")
-				dbOut.exec("VACUUM")
-				const bytes = dbOut.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
-					n: number
-					b: number | null
-				}
-				await kdb.destroy() // closes the underlying `dbOut` handle
-
-				// Atomic swap: move the previous DB aside, slide the new one into place, drop the backup.
-				const backup = `${out}.old-${process.pid}`
-
-				if (existsSync(out)) {
-					renameSync(out, backup)
-				}
-				renameSync(tmpOut, out)
-
-				if (existsSync(backup)) {
-					rmSync(backup)
-				}
-
-				const mb = Math.round((bytes.b || 0) / 1024 / 1024)
-				setSummary([`${out}: ${done} polygons`, `${missing} no-geometry, ${dropped} dropped, ~${mb} MB geom`])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+		if (!out) {
+			throw commandError(
+				"usage: mailwoman gazetteer polygons (--points <wof-hot.db> | --admin <admin.db> [--countries US,DE]) --out <wof-polygons.db> [--tol 0.004]"
+			)
 		}
-	}, [summary, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		if ((!points && !admin) || (points && admin)) {
+			throw commandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
+		}
+		const countries = options.countries
+			? options.countries
+					.split(",")
+					.map((c) => c.trim().toUpperCase())
+					.filter(Boolean)
+			: null
+		const repos = options.repos
+		const tol = options.tol
 
-	if (summary) {
+		const srcPath = points || admin
+		const src = new DatabaseSync(srcPath, { readOnly: true })
+		const where = countries
+			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
+			: `placetype NOT IN ('postalcode')`
+		const rows = (
+			src
+				.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`)
+				.all(...(countries ?? [])) as unknown as SprRow[]
+		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
+		src.close()
+
+		// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
+		// readonly artifact — never write the live path in case the build dies halfway). The
+		// original .mjs wrote `out` directly; this hardens it without changing the result.
+		const tmpOut = `${out}.tmp-${process.pid}`
+
+		for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
+			if (existsSync(stale)) {
+				rmSync(stale)
+			}
+		}
+
+		const dbOut = new DatabaseSync(tmpOut)
+		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
+		const kdb = new DatabaseClient({ database: dbOut })
+		await kdb.schema
+			.createTable("polygons")
+			.addColumn("id", "integer", (c) => c.primaryKey())
+			.addColumn("geom", "text", (c) => c.notNull())
+			.execute()
+		const insert = dbOut.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
+
+		let done = 0
+		let missing = 0
+		let dropped = 0
+		dbOut.exec("BEGIN")
+
+		for (const r of rows) {
+			const path = geojsonPath(repos, r.country, r.id)
+
+			if (!existsSync(path)) {
+				missing++
+				continue
+			}
+
+			try {
+				const feat = JSON.parse(readFileSync(path, "utf8")) as { geometry?: RawGeometry }
+				const simp = feat.geometry ? simplify(feat.geometry, tol) : null
+
+				if (!simp) {
+					dropped++
+					continue
+				}
+				insert.run(r.id, JSON.stringify(simp))
+				done++
+			} catch {
+				dropped++
+			}
+
+			if ((done + missing + dropped) % 2000 === 0) {
+				console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
+			}
+		}
+		dbOut.exec("COMMIT")
+		dbOut.exec("VACUUM")
+		const bytes = dbOut.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
+			n: number
+			b: number | null
+		}
+		await kdb.destroy() // closes the underlying `dbOut` handle
+
+		// Atomic swap: move the previous DB aside, slide the new one into place, drop the backup.
+		const backup = `${out}.old-${process.pid}`
+
+		if (existsSync(out)) {
+			renameSync(out, backup)
+		}
+		renameSync(tmpOut, out)
+
+		if (existsSync(backup)) {
+			rmSync(backup)
+		}
+
+		const mb = Math.round((bytes.b || 0) / 1024 / 1024)
+
+		return [`${out}: ${done} polygons`, `${missing} no-geometry, ${dropped} dropped, ~${mb} MB geom`]
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

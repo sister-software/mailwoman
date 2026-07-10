@@ -81,6 +81,18 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 }
 /* oxlint-enable react-hooks/exhaustive-deps */
 
+/**
+ * Build a guidance-grade error whose rendered form is exactly `message` — no stack. {@linkcode useCommandTask} renders
+ * `error.stack ?? error.message`, which is right for unexpected failures but turns deliberate user-facing guidance
+ * ("Set $MAILWOMAN_WOF_DB…") into a stack dump. Throw `commandError(msg)` for those instead of `new Error(msg)`.
+ */
+export function commandError(message: string): Error {
+	const error = new Error(message)
+	error.stack = message
+
+	return error
+}
+
 /** One ✓/✗ line in a {@linkcode CheckList}. */
 export interface Check {
 	ok: boolean

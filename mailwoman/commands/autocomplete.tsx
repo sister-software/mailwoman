@@ -19,10 +19,9 @@ import { readFileSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 
 export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 
@@ -72,7 +71,7 @@ export async function runAutocomplete(
 	const fstPath = opts.fstPath
 
 	if (!existsSync(fstPath)) {
-		throw new Error(
+		throw commandError(
 			`FST binary not found at ${fstPath}.\n` +
 				`Pass --fst <path>, set $MAILWOMAN_FST_BIN, or build the FST with:\n` +
 				`  mailwoman fst build --db /path/to/wof-admin.db --output fst-en-US.bin`
@@ -85,7 +84,7 @@ export async function runAutocomplete(
 		buf = readFileSync(fstPath)
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err)
-		throw new Error(`Failed to read FST binary at ${fstPath}: ${msg}`)
+		throw commandError(`Failed to read FST binary at ${fstPath}: ${msg}`)
 	}
 
 	// Dynamic import keeps @mailwoman/resolver-wof-sqlite a true optional peer dep — only loaded
@@ -99,7 +98,7 @@ export async function runAutocomplete(
 		matcher = deserializeFST(buf)
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err)
-		throw new Error(`Malformed FST binary at ${fstPath}: ${msg}`)
+		throw commandError(`Malformed FST binary at ${fstPath}: ${msg}`)
 	}
 
 	const result = autocomplete(matcher, prefix, { maxSuggestions: opts.limit ?? 10 })
@@ -130,47 +129,28 @@ const AutocompleteCommand: CommandComponent<typeof AutocompleteConfigSchema, typ
 	options,
 	args,
 }) => {
-	const [output, setOutput] = useState<string>()
-	const [error, setError] = useState<string>()
-
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		const prefix = args[0]
 
 		if (!prefix) {
-			// Intentional: surface the usage error through the same render-then-exit pattern as parse.tsx.
-			// The "cascading renders" the rule warns about are not a real cost here — the effect
-			// short-circuits with `return`.
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			setError("Usage: mailwoman autocomplete <prefix> [--limit N] [--fst <path>]")
-
-			return
+			throw commandError("Usage: mailwoman autocomplete <prefix> [--limit N] [--fst <path>]")
 		}
 
 		const fstPath = resolveFSTPath(options.fst)
+		const entries = await runAutocomplete(prefix, { fstPath, limit: options.limit })
 
-		runAutocomplete(prefix, { fstPath, limit: options.limit })
-			.then((entries) => {
-				if (options.json) {
-					setOutput(JSON.stringify(entries, null, 2))
-				} else {
-					setOutput(formatSuggestions(entries))
-				}
-			})
-			.catch((err: unknown) => {
-				const msg = err instanceof Error ? err.message : String(err)
-				setError(msg)
-			})
-	}, [args, options])
+		return options.json ? JSON.stringify(entries, null, 2) : formatSuggestions(entries)
+	})
 
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (!output) {
+	if (state.status === "running") {
 		return <Text dimColor>Searching...</Text>
 	}
 
-	return <Text>{output}</Text>
+	return <Text>{state.result}</Text>
 }
 
 export default AutocompleteCommand

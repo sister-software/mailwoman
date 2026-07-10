@@ -13,10 +13,9 @@ import { join } from "node:path"
 
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import {
 	buildCandidate,
 	DEFAULT_ADMIN_DB,
@@ -47,75 +46,60 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const root = mailwomanDataRoot()
+		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
+		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const countries = options.countries
+			? options.countries
+					.split(",")
+					.map((s) => s.trim().toUpperCase())
+					.filter(Boolean)
+			: DEFAULT_FOLD_COUNTRIES
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const root = mailwomanDataRoot()
-				const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
-				const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
-				const countries = options.countries
-					? options.countries
-							.split(",")
-							.map((s) => s.trim().toUpperCase())
-							.filter(Boolean)
-					: DEFAULT_FOLD_COUNTRIES
+		let adminDb = adminIn
 
-				let adminDb = adminIn
-
-				if (options.fold) {
-					const foldOut = options.foldOut ?? adminIn.replace(/\.db$/, "-geonames.db")
-					console.error(`▸ GeoNames upstream fold (${countries.join(",")}) → ${foldOut}`)
-					const f = await foldGeonamesIntoAdmin({
-						adminIn,
-						adminOut: foldOut,
-						countries,
-						onCountry: (e) =>
-							console.error(
-								`  ${e.country}: ${e.skipped ? "(dump missing — skipped)" : `${e.places.toLocaleString()} places`}`
-							),
-						onPhase: (p, d) => console.error(`  [${p}]${d ? ` ${d}` : ""}`),
-					})
+		if (options.fold) {
+			const foldOut = options.foldOut ?? adminIn.replace(/\.db$/, "-geonames.db")
+			console.error(`▸ GeoNames upstream fold (${countries.join(",")}) → ${foldOut}`)
+			const f = await foldGeonamesIntoAdmin({
+				adminIn,
+				adminOut: foldOut,
+				countries,
+				onCountry: (e) =>
 					console.error(
-						`  folded ${f.ingested.toLocaleString()} places; place_search ${f.placeSearchRows.toLocaleString()} rows`
-					)
-					adminDb = foldOut
-				}
-
-				const shards = resolvePostcodeShards(undefined, root)
-				console.error(`▸ candidate build ← ${adminDb} (${shards.length} postcode shards; FTS baked in)`)
-				const r = await buildCandidate({
-					adminDb,
-					out,
-					postcodeShards: shards,
-					onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
-				})
-
-				setSummary([
-					`gazetteer: ${out}`,
-					`${r.rows.toLocaleString()} rows — ${r.primaries.toLocaleString()} primary, ${r.aliases.toLocaleString()} alias, ${r.postcodes.toLocaleString()} postcode (from ${r.places.toLocaleString()} places)`,
-					`next: mailwoman gazetteer promote   (then publish, or run gazetteer release for all of it)`,
-				])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+						`  ${e.country}: ${e.skipped ? "(dump missing — skipped)" : `${e.places.toLocaleString()} places`}`
+					),
+				onPhase: (p, d) => console.error(`  [${p}]${d ? ` ${d}` : ""}`),
+			})
+			console.error(
+				`  folded ${f.ingested.toLocaleString()} places; place_search ${f.placeSearchRows.toLocaleString()} rows`
+			)
+			adminDb = foldOut
 		}
-	}, [summary, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		const shards = resolvePostcodeShards(undefined, root)
+		console.error(`▸ candidate build ← ${adminDb} (${shards.length} postcode shards; FTS baked in)`)
+		const r = await buildCandidate({
+			adminDb,
+			out,
+			postcodeShards: shards,
+			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
+		})
 
-	if (summary) {
+		return [
+			`gazetteer: ${out}`,
+			`${r.rows.toLocaleString()} rows — ${r.primaries.toLocaleString()} primary, ${r.aliases.toLocaleString()} alias, ${r.postcodes.toLocaleString()} postcode (from ${r.places.toLocaleString()} places)`,
+			`next: mailwoman gazetteer promote   (then publish, or run gazetteer release for all of it)`,
+		]
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

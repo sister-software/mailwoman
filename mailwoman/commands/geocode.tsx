@@ -27,7 +27,6 @@
  */
 
 import { existsSync } from "node:fs"
-import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
@@ -36,10 +35,9 @@ import { isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 import {
 	geocodeAddress,
 	parseForGeocode,
@@ -167,7 +165,7 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 	).filter((p: string) => existsSync(p))
 
 	if (paths.length === 0) {
-		throw new Error(
+		throw commandError(
 			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Build one with `mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
 		)
@@ -195,7 +193,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	try {
 		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
 	} catch {
-		throw new Error(
+		throw commandError(
 			"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
 		)
 	}
@@ -206,7 +204,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
-		throw new Error(
+		throw commandError(
 			"geocode requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
 				"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
 		)
@@ -266,7 +264,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 				const [coords, w] = part.split(":")
 				const [lat, lon] = coords!.split(",").map(Number)
 
-				if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error(`--bias: bad point '${part}'`)
+				if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw commandError(`--bias: bad point '${part}'`)
 
 				return { lat: lat!, lon: lon!, ...(w !== undefined ? { weight: Number(w) } : {}) }
 			})
@@ -344,38 +342,27 @@ function formatText(result: GeocodeResult): string {
 // ---------------------------------------------------------------------------
 
 const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
-	const [output, setOutput] = useState<string>()
-	const [error, setError] = useState<string>()
-
-	useEffect(() => {
-		if (error) {
-			setImmediate().then(() => process.exit(1))
-		}
-	}, [error])
-
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		const input = args[0]
 
 		if (!input || input.trim().length === 0) {
-			setError('geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")')
-
-			return
+			throw commandError(
+				'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
+			)
 		}
 
-		runGeocode(input.trim(), options)
-			.then(setOutput)
-			.catch((err: unknown) => setError((err as Error).message))
-	}, [args, options])
+		return runGeocode(input.trim(), options)
+	})
 
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (!output) {
+	if (state.status !== "done") {
 		return <Spinner />
 	}
 
-	return <Text>{output}</Text>
+	return <Text>{state.result}</Text>
 }
 
 export default GeocodeCommand

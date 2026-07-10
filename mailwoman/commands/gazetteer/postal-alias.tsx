@@ -33,10 +33,9 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	release: zod
@@ -55,103 +54,88 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const out = options.out ?? dataRootPath("wof", "postal-city-alias-us.db")
+		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
+		const minCount = options.minCount
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const out = options.out ?? dataRootPath("wof", "postal-city-alias-us.db")
-				const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
-				const minCount = options.minCount
+		mkdirSync(dirname(out), { recursive: true })
+		rmSync(out, { force: true })
 
-				mkdirSync(dirname(out), { recursive: true })
-				rmSync(out, { force: true })
+		// @duckdb/node-api is an OPTIONAL peer dep — import it dynamically so merely loading this
+		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when
+		// the peer isn't installed.
+		const { DuckDBInstance } = await import("@duckdb/node-api")
 
-				// @duckdb/node-api is an OPTIONAL peer dep — import it dynamically so merely loading this
-				// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when
-				// the peer isn't installed.
-				const { DuckDBInstance } = await import("@duckdb/node-api")
+		console.error(`▸ aggregating ${parquet} (min-count ${minCount})`)
+		const instance = await DuckDBInstance.create()
+		const duck = await instance.connect()
+		const result = await duck.runAndReadAll(`
+			SELECT
+				trim(postcode) AS postcode,
+				lower(trim(postal_city)) AS postal_city,
+				lower(trim(address_levels[2].value)) AS geo_locality,
+				count(*)::BIGINT AS n
+			FROM read_parquet('${parquet}')
+			WHERE nullif(trim(postcode), '') IS NOT NULL
+				AND nullif(trim(postal_city), '') IS NOT NULL
+				AND nullif(trim(address_levels[2].value), '') IS NOT NULL
+			GROUP BY 1, 2, 3
+			HAVING count(*) >= ${minCount}
+		`)
+		const rows = result.getRowObjects() as {
+			postcode: string
+			postal_city: string
+			geo_locality: string
+			n: bigint
+		}[]
 
-				console.error(`▸ aggregating ${parquet} (min-count ${minCount})`)
-				const instance = await DuckDBInstance.create()
-				const duck = await instance.connect()
-				const result = await duck.runAndReadAll(`
-					SELECT
-						trim(postcode) AS postcode,
-						lower(trim(postal_city)) AS postal_city,
-						lower(trim(address_levels[2].value)) AS geo_locality,
-						count(*)::BIGINT AS n
-					FROM read_parquet('${parquet}')
-					WHERE nullif(trim(postcode), '') IS NOT NULL
-						AND nullif(trim(postal_city), '') IS NOT NULL
-						AND nullif(trim(address_levels[2].value), '') IS NOT NULL
-					GROUP BY 1, 2, 3
-					HAVING count(*) >= ${minCount}
-				`)
-				const rows = result.getRowObjects() as {
-					postcode: string
-					postal_city: string
-					geo_locality: string
-					n: bigint
-				}[]
+		console.error(`▸ writing ${rows.length.toLocaleString()} rows → ${out}`)
+		const db = new DatabaseSync(out)
+		db.exec("PRAGMA journal_mode = WAL;")
+		// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests
+		// use, so this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw
+		// parquet reader; the hot INSERT below stays on the raw `db` handle.
+		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal-city-alias-schema")
+		const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
+		await createPostalCityAliasTable(kdb)
+		const insert = db.prepare(
+			"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?, ?, ?, ?, ?, ?, ?)"
+		)
+		db.exec("BEGIN")
+		let divergent = 0
 
-				console.error(`▸ writing ${rows.length.toLocaleString()} rows → ${out}`)
-				const db = new DatabaseSync(out)
-				db.exec("PRAGMA journal_mode = WAL;")
-				// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests
-				// use, so this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw
-				// parquet reader; the hot INSERT below stays on the raw `db` handle.
-				const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal-city-alias-schema")
-				const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
-				await createPostalCityAliasTable(kdb)
-				const insert = db.prepare(
-					"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?, ?, ?, ?, ?, ?, ?)"
-				)
-				db.exec("BEGIN")
-				let divergent = 0
-
-				for (const r of rows) {
-					const isDivergent = r.postal_city !== r.geo_locality ? 1 : 0
-					divergent += isDivergent
-					insert.run(
-						r.postcode,
-						r.postal_city,
-						r.geo_locality,
-						Number(r.n),
-						isDivergent,
-						"overture:US",
-						String(options.release)
-					)
-				}
-				db.exec("COMMIT")
-				// Indexes were created by createPostalCityAliasTable above; just checkpoint + compact.
-				db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
-				await kdb.destroy()
-
-				setSummary([
-					`postal-city alias: ${out}`,
-					`${rows.length.toLocaleString()} (postcode, postal_city, geo_locality) pairs (n >= ${minCount})`,
-					`divergent pairs: ${divergent.toLocaleString()} (${((100 * divergent) / Math.max(1, rows.length)).toFixed(1)}%)`,
-				])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+		for (const r of rows) {
+			const isDivergent = r.postal_city !== r.geo_locality ? 1 : 0
+			divergent += isDivergent
+			insert.run(
+				r.postcode,
+				r.postal_city,
+				r.geo_locality,
+				Number(r.n),
+				isDivergent,
+				"overture:US",
+				String(options.release)
+			)
 		}
-	}, [summary, error])
+		db.exec("COMMIT")
+		// Indexes were created by createPostalCityAliasTable above; just checkpoint + compact.
+		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+		await kdb.destroy()
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		return [
+			`postal-city alias: ${out}`,
+			`${rows.length.toLocaleString()} (postcode, postal_city, geo_locality) pairs (n >= ${minCount})`,
+			`divergent pairs: ${divergent.toLocaleString()} (${((100 * divergent) / Math.max(1, rows.length)).toFixed(1)}%)`,
+		]
+	})
 
-	if (summary) {
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

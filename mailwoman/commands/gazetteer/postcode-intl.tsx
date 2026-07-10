@@ -43,11 +43,10 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import { TSVSpliterator } from "spliterator"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	geonames: zod
@@ -322,87 +321,68 @@ async function foldIntoCandidate(
 }
 
 const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
+		const out = options.out ?? dataRootPath("wof", "postalcode-geonames-intl.db")
+		const countries = options.countries
+			? options.countries
+					.split(",")
+					.map((s) => s.trim().toUpperCase())
+					.filter(Boolean)
+			: ["PL", "CZ"]
+		const foldInto = options.foldInto
+		const foldOut = options.foldOut
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
-				const out = options.out ?? dataRootPath("wof", "postalcode-geonames-intl.db")
-				const countries = options.countries
-					? options.countries
-							.split(",")
-							.map((s) => s.trim().toUpperCase())
-							.filter(Boolean)
-					: ["PL", "CZ"]
-				const foldInto = options.foldInto
-				const foldOut = options.foldOut
-
-				if (!existsSync(geonames)) {
-					setError(`Missing GeoNames file: ${geonames}`)
-
-					return
-				}
-
-				// street-normalize lives in the optional `@mailwoman/resolver-wof-sqlite` peer — load it
-				// dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault when
-				// the peer isn't installed.
-				const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
-
-				console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
-				const acc = await readGeonames(geonames, new Set(countries))
-				const byCc = new Map<string, number>()
-
-				for (const a of acc.values()) {
-					byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
-				}
-				console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
-
-				const rows = await buildShard(acc, out, normalizeLocalityForKey)
-				console.error(`Wrote ${rows} spr rows (both separator variants) → ${out}`)
-
-				const lines = [
-					`postcode shard: ${out}`,
-					`${rows.toLocaleString()} spr rows — ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")} (total ${acc.size})`,
-				]
-
-				if (foldInto && foldOut) {
-					if (!existsSync(foldInto)) {
-						setError(`Missing --fold-into candidate DB: ${foldInto}`)
-
-						return
-					}
-					console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
-					const n = await foldIntoCandidate(out, foldInto, foldOut, normalizeLocalityForKey)
-					console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
-					lines.push(`folded ${n.toLocaleString()} postcode candidate rows → ${foldOut}`)
-				} else {
-					console.error(
-						`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`
-					)
-					lines.push(`shard only — feed it to build-candidate via --postcodes for the canonical rebuild`)
-				}
-
-				setSummary(lines)
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+		if (!existsSync(geonames)) {
+			throw commandError(`Missing GeoNames file: ${geonames}`)
 		}
-	}, [summary, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		// street-normalize lives in the optional `@mailwoman/resolver-wof-sqlite` peer — load it
+		// dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault when
+		// the peer isn't installed.
+		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
 
-	if (summary) {
+		console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
+		const acc = await readGeonames(geonames, new Set(countries))
+		const byCc = new Map<string, number>()
+
+		for (const a of acc.values()) {
+			byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
+		}
+		console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
+
+		const rows = await buildShard(acc, out, normalizeLocalityForKey)
+		console.error(`Wrote ${rows} spr rows (both separator variants) → ${out}`)
+
+		const lines = [
+			`postcode shard: ${out}`,
+			`${rows.toLocaleString()} spr rows — ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")} (total ${acc.size})`,
+		]
+
+		if (foldInto && foldOut) {
+			if (!existsSync(foldInto)) {
+				throw commandError(`Missing --fold-into candidate DB: ${foldInto}`)
+			}
+			console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
+			const n = await foldIntoCandidate(out, foldInto, foldOut, normalizeLocalityForKey)
+			console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
+			lines.push(`folded ${n.toLocaleString()} postcode candidate rows → ${foldOut}`)
+		} else {
+			console.error(
+				`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`
+			)
+			lines.push(`shard only — feed it to build-candidate via --postcodes for the canonical rebuild`)
+		}
+
+		return lines
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

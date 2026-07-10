@@ -14,15 +14,13 @@
  *   the CLI handles partial builds during development.
  */
 
-import { setImmediate } from "node:timers/promises"
-
 import { buildCorpus, defaultAdapterRegistry, type BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 /**
  * `--inputs` accepts either:
@@ -67,28 +65,14 @@ const BuildConfigSchema = zod.object({
 export { BuildConfigSchema as options }
 
 const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<{ total: number; aligned: number; quarantined: number; adapters: number }>()
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
-
-	useEffect(() => {
-		if (error) {
-			setImmediate().then(() => process.exit(1))
-		} else if (done) {
-			setImmediate().then(() => process.exit(0))
-		}
-	}, [error, done])
-
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		let inputsParsed: Record<string, zod.infer<typeof AdapterInputSchema>>
 
 		try {
 			inputsParsed = InputsSchema.parse(JSON.parse(options.inputs))
 		} catch (err) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
-			setError(`invalid --inputs JSON: ${(err as Error).message}`)
-
-			return
+			throw commandError(`invalid --inputs JSON: ${(err as Error).message}`)
 		}
 
 		const adapterInputs: Record<string, AdapterOptions> = Object.fromEntries(
@@ -96,7 +80,7 @@ const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) =>
 		)
 
 		const adapters = defaultAdapterRegistry.list()
-		buildCorpus({
+		const m = await buildCorpus({
 			outputDir: options.output,
 			corpusVersion: options.corpusVersion,
 			adapters,
@@ -105,20 +89,20 @@ const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) =>
 			rowsPerShard: options.rowsPerShard,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
-			.then((m) =>
-				setDone({
-					total: m.shards.total_rows,
-					aligned: m.total_aligned_rows,
-					quarantined: m.quarantine_count,
-					adapters: m.adapters.length,
-				})
-			)
-			.catch((err: Error) => setError(err.message))
-	}, [options])
 
-	if (error) return <Text color="red">{error}</Text>
+		return {
+			total: m.shards.total_rows,
+			aligned: m.total_aligned_rows,
+			quarantined: m.quarantine_count,
+			adapters: m.adapters.length,
+		}
+	})
 
-	if (done) {
+	if (state.status === "error") return <Text color="red">{state.message}</Text>
+
+	if (state.status === "done") {
+		const done = state.result
+
 		return (
 			<Box flexDirection="column">
 				<Text>

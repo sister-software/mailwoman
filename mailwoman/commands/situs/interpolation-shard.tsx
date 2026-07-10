@@ -32,10 +32,9 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 /** State abbreviation → state FIPS prefix, for picking county files out of --edges-dir. */
 const STATE_FIPS: Record<string, string> = {
@@ -152,89 +151,84 @@ function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 }
 
 const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {
+			throw commandError(
+				`--state required (one of: ${Object.keys(STATE_FIPS).join(", ")} — extend STATE_FIPS for others)`
+			)
+		}
+		const STATE = options.state.toUpperCase()
+		const finalOut = options.out ?? dataRootPath("interpolation", `interpolation-us-${STATE.toLowerCase()}.db`)
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {
-					throw new Error(
-						`--state required (one of: ${Object.keys(STATE_FIPS).join(", ")} — extend STATE_FIPS for others)`
-					)
-				}
-				const STATE = options.state.toUpperCase()
-				const finalOut = options.out ?? dataRootPath("interpolation", `interpolation-us-${STATE.toLowerCase()}.db`)
+		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
+		// and the DuckDB spatial reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
+		// published CLI doesn't force them on every consumer.
+		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
+		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street-normalize")
 
-				// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
-				// and the DuckDB spatial reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
-				// published CLI doesn't force them on every consumer.
-				let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
-				let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street-normalize")
+		try {
+			segmentSchema = await import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
+			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
+		} catch {
+			throw commandError(
+				"situs interpolation-shard requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared street-segment schema + normalizer)."
+			)
+		}
+		let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
 
-				try {
-					segmentSchema = await import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
-					streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
-				} catch {
-					throw new Error(
-						"situs interpolation-shard requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared street-segment schema + normalizer)."
-					)
-				}
-				let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
+		try {
+			;({ DuckDBInstance } = await import("@duckdb/node-api"))
+		} catch {
+			throw commandError(
+				"@duckdb/node-api is not installed — `situs interpolation-shard` is a maintainer-only data command"
+			)
+		}
+		const { STREET_SEGMENT_COLUMNS, createStreetSegmentTable, createStreetSegmentIndexes } = segmentSchema
+		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
-				try {
-					;({ DuckDBInstance } = await import("@duckdb/node-api"))
-				} catch {
-					throw new Error(
-						"@duckdb/node-api is not installed — `situs interpolation-shard` is a maintainer-only data command"
-					)
-				}
-				const { STREET_SEGMENT_COLUMNS, createStreetSegmentTable, createStreetSegmentIndexes } = segmentSchema
-				const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
+		const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).sort()
 
-				const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).sort()
+		if (shapefiles.length === 0) {
+			throw commandError(
+				`no tl_*_${STATE_FIPS[STATE]}???_edges.shp under ${options.edgesDir} — download TIGER EDGES first`
+			)
+		}
+		console.error(`${shapefiles.length} county shapefiles for ${STATE}`)
 
-				if (shapefiles.length === 0) {
-					throw new Error(
-						`no tl_*_${STATE_FIPS[STATE]}???_edges.shp under ${options.edgesDir} — download TIGER EDGES first`
-					)
-				}
-				console.error(`${shapefiles.length} county shapefiles for ${STATE}`)
+		mkdirSync(dirname(finalOut), { recursive: true })
+		// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
+		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
-				mkdirSync(dirname(finalOut), { recursive: true })
-				// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
-				const tmpOut = `${finalOut}.building-${process.pid}.db`
+		for (const sfx of ["", "-wal", "-shm"]) {
+			rmSync(tmpOut + sfx, { force: true })
+		}
 
-				for (const sfx of ["", "-wal", "-shm"]) {
-					rmSync(tmpOut + sfx, { force: true })
-				}
-
-				const db = new DatabaseSync(tmpOut)
-				db.exec("PRAGMA journal_mode = WAL;")
-				// DDL via the SHARED street-segment-schema builder (the table the reader + tests use) so this
-				// producer can't drift. DuckDB below is the raw spatial reader; the hot INSERT stays on `db`.
-				const kdb = new DatabaseClient<StreetSegmentDatabase>({ database: db })
-				await createStreetSegmentTable(kdb)
-				const insert = db.prepare(
-					`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
+		const db = new DatabaseSync(tmpOut)
+		db.exec("PRAGMA journal_mode = WAL;")
+		// DDL via the SHARED street-segment-schema builder (the table the reader + tests use) so this
+		// producer can't drift. DuckDB below is the raw spatial reader; the hot INSERT stays on `db`.
+		const kdb = new DatabaseClient<StreetSegmentDatabase>({ database: db })
+		await createStreetSegmentTable(kdb)
+		const insert = db.prepare(
+			`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
 					 VALUES (${STREET_SEGMENT_COLUMNS.map(() => "?").join(", ")})`
-				)
+		)
 
-				const instance = await DuckDBInstance.create()
-				const duck = await instance.connect()
-				await duck.run("INSTALL spatial; LOAD spatial;")
+		const instance = await DuckDBInstance.create()
+		const duck = await instance.connect()
+		await duck.run("INSTALL spatial; LOAD spatial;")
 
-				let sides = 0
-				let skippedNonNumeric = 0
-				const parityCounts = { odd: 0, even: 0, mixed: 0 }
+		let sides = 0
+		let skippedNonNumeric = 0
+		const parityCounts = { odd: 0, even: 0, mixed: 0 }
 
-				db.exec("BEGIN")
+		db.exec("BEGIN")
 
-				for (const shp of shapefiles) {
-					const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
-					// Address-carrying road edges only; geometry as GeoJSON text so the JS side stays
-					// shapefile-free (same ST_Read approach as build-intersection-real.ts).
-					const result = await duck.runAndReadAll(`
+		for (const shp of shapefiles) {
+			const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
+			// Address-carrying road edges only; geometry as GeoJSON text so the JS side stays
+			// shapefile-free (same ST_Read approach as build-intersection-real.ts).
+			const result = await duck.runAndReadAll(`
 						SELECT FULLNAME AS name, LFROMADD, LTOADD, RFROMADD, RTOADD, ZIPL, ZIPR,
 							ST_AsGeoJSON(geom) AS geojson
 						FROM ST_Read('${shp}')
@@ -242,89 +236,79 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 							AND (LFROMADD IS NOT NULL OR RFROMADD IS NOT NULL)
 					`)
 
-					for (const r of result.getRowObjects() as Record<string, unknown>[]) {
-						const streetRaw = String(r.name)
-						const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(streetRaw))
+			for (const r of result.getRowObjects() as Record<string, unknown>[]) {
+				const streetRaw = String(r.name)
+				const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(streetRaw))
 
-						if (!streetNorm) continue
-						const geom = JSON.parse(String(r.geojson)) as { type: string; coordinates: number[][] }
+				if (!streetNorm) continue
+				const geom = JSON.parse(String(r.geojson)) as { type: string; coordinates: number[][] }
 
-						if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
-						// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
-						const polyline = JSON.stringify(
-							geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
-						)
+				if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
+				// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
+				const polyline = JSON.stringify(
+					geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
+				)
 
-						for (const [side, fromRaw, toRaw, zip] of [
-							["L", r.LFROMADD, r.LTOADD, r.ZIPL],
-							["R", r.RFROMADD, r.RTOADD, r.ZIPR],
-						] as const) {
-							if (fromRaw === null && toRaw === null) continue
-							const from = parseHn(fromRaw)
-							const to = parseHn(toRaw)
+				for (const [side, fromRaw, toRaw, zip] of [
+					["L", r.LFROMADD, r.LTOADD, r.ZIPL],
+					["R", r.RFROMADD, r.RTOADD, r.ZIPR],
+				] as const) {
+					if (fromRaw === null && toRaw === null) continue
+					const from = parseHn(fromRaw)
+					const to = parseHn(toRaw)
 
-							if (from === null || to === null) {
-								skippedNonNumeric++
-								continue
-							}
-							const parity = parityOf(from, to)
-							parityCounts[parity]++
-							insert.run(
-								streetNorm,
-								side,
-								from,
-								to,
-								Math.min(from, to),
-								Math.max(from, to),
-								parity,
-								zip === null || zip === undefined ? null : String(zip),
-								countyFips,
-								streetRaw,
-								polyline,
-								"tiger:edges",
-								String(options.release)
-							)
-							sides++
-						}
+					if (from === null || to === null) {
+						skippedNonNumeric++
+						continue
 					}
-					console.error(`  ${countyFips}: done (${sides} sides so far)`)
-				}
-				db.exec("COMMIT")
-				await createStreetSegmentIndexes(kdb)
-				db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
-				const stats = db
-					.prepare(
-						"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment"
+					const parity = parityOf(from, to)
+					parityCounts[parity]++
+					insert.run(
+						streetNorm,
+						side,
+						from,
+						to,
+						Math.min(from, to),
+						Math.max(from, to),
+						parity,
+						zip === null || zip === undefined ? null : String(zip),
+						countyFips,
+						streetRaw,
+						polyline,
+						"tiger:edges",
+						String(options.release)
 					)
-					.get() as Record<string, number>
-				await kdb.destroy()
-
-				swapDatabaseIntoPlace(tmpOut, finalOut)
-
-				setSummary([
-					`${sides} segment-sides → ${finalOut}`,
-					`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
-					`parity: odd ${parityCounts.odd} · even ${parityCounts.even} · mixed ${parityCounts.mixed}`,
-					`skipped non-numeric ranges: ${skippedNonNumeric}`,
-				])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
+					sides++
+				}
 			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+			console.error(`  ${countyFips}: done (${sides} sides so far)`)
 		}
-	}, [summary, error])
+		db.exec("COMMIT")
+		await createStreetSegmentIndexes(kdb)
+		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+		const stats = db
+			.prepare(
+				"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment"
+			)
+			.get() as Record<string, number>
+		await kdb.destroy()
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		swapDatabaseIntoPlace(tmpOut, finalOut)
 
-	if (summary) {
+		return [
+			`${sides} segment-sides → ${finalOut}`,
+			`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
+			`parity: odd ${parityCounts.odd} · even ${parityCounts.even} · mixed ${parityCounts.mixed}`,
+			`skipped non-numeric ranges: ${skippedNonNumeric}`,
+		]
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

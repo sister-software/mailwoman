@@ -14,16 +14,14 @@
 
 import * as fs from "node:fs/promises"
 import { availableParallelism } from "node:os"
-import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { generatePlacetypeGraph, Placetype, type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
-import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const BATCH_SIZE = availableParallelism()
 
@@ -61,7 +59,7 @@ function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 
 	for (const role of parsed) {
 		if (!valid.has(role)) {
-			throw new Error(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
+			throw commandError(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
 		}
 	}
 
@@ -69,78 +67,48 @@ function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 }
 
 const WOFGraph: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
-	const [done, setDone] = useState(false)
-	const [error, setError] = useState<string>()
-
-	const localRepoDirectory = useMemo(() => (args[0] ? PathBuilder.from(args[0]) : null), [args])
 	const placetypeName = args[1]
 
-	useEffect(() => {
-		if (!localRepoDirectory) {
-			setError("Missing required positional argument: <localRepoDirectory>")
-
-			return
+	const state = useCommandTask(async () => {
+		if (!args[0]) {
+			throw commandError("Missing required positional argument: <localRepoDirectory>")
 		}
+
+		const localRepoDirectory = PathBuilder.from(args[0])
 
 		if (!placetypeName) {
-			setError("Missing required positional argument: <placetype>")
-
-			return
+			throw commandError("Missing required positional argument: <placetype>")
 		}
 
-		let roles: PlacetypeRole[] | undefined
+		const roles: PlacetypeRole[] | undefined = parseRoles(options.roles)
 
-		try {
-			roles = parseRoles(options.roles)
-		} catch (err) {
-			setError((err as Error).message)
+		await Placetype.prepare({ batchSize: BATCH_SIZE, localRepoDirectory })
 
-			return
+		const placetype = Placetype.find(placetypeName)
+
+		if (!placetype) {
+			throw commandError(
+				`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a clone of whosonfirst/whosonfirst-placetypes (run \`mailwoman wof sync\` first).`
+			)
 		}
 
-		;(async () => {
-			await Placetype.prepare({ batchSize: BATCH_SIZE, localRepoDirectory })
+		const graph = generatePlacetypeGraph(placetype, roles)
+		const serialized = options.compact ? JSON.stringify(graph) : JSON.stringify(graph, null, 2)
 
-			const placetype = Placetype.find(placetypeName)
+		if (options.output) {
+			await fs.writeFile(options.output, serialized + "\n", "utf8")
+		} else {
+			// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
+			// lines (compact mode is one very long line; pretty mode is fine either way).
+			process.stdout.write(serialized + "\n")
+		}
+	})
 
-			if (!placetype) {
-				throw new Error(
-					`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a clone of whosonfirst/whosonfirst-placetypes (run \`mailwoman wof sync\` first).`
-				)
-			}
-
-			const graph = generatePlacetypeGraph(placetype, roles)
-			const serialized = options.compact ? JSON.stringify(graph) : JSON.stringify(graph, null, 2)
-
-			if (options.output) {
-				await fs.writeFile(options.output, serialized + "\n", "utf8")
-			} else {
-				// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
-				// lines (compact mode is one very long line; pretty mode is fine either way).
-				process.stdout.write(serialized + "\n")
-			}
-
-			setDone(true)
-		})().catch((err) => setError((err as Error).message))
-	}, [localRepoDirectory, placetypeName, options.roles, options.output, options.compact])
-
-	useEffect(() => {
-		if (!error) return
-		setImmediate().then(() => process.exit(1))
-	}, [error])
-
-	useEffect(() => {
-		if (!done) return
-
-		if (options.output) return // let Ink render the success summary; exit naturally
-		setImmediate().then(() => process.exit(0))
-	}, [done, options.output])
-
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (!done) {
+	if (state.status === "running") {
 		return <Spinner />
 	}
 

@@ -35,10 +35,9 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	state: zod.string().optional().describe("US state abbreviation, e.g. VT"),
@@ -102,127 +101,120 @@ function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 }
 
 const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
+		const OA_MODE = Boolean(options.oaCSV)
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
-				const OA_MODE = Boolean(options.oaCSV)
+		if (!options.state) {
+			throw commandError("--state required (US state abbreviation, e.g. VT)")
+		}
 
-				if (!options.state) {
-					throw new Error("--state required (US state abbreviation, e.g. VT)")
-				}
+		if (options.countyFips && !/^\d{5}$/.test(options.countyFips)) {
+			throw commandError("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
+		}
+		const STATE = options.state.toUpperCase()
+		const PARQUET = dataRootPath("overture", options.release, "addresses-us.parquet")
+		const finalOut = options.out ?? dataRootPath("address-points", `address-points-us-${STATE.toLowerCase()}.db`)
 
-				if (options.countyFips && !/^\d{5}$/.test(options.countyFips)) {
-					throw new Error("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
-				}
-				const STATE = options.state.toUpperCase()
-				const PARQUET = dataRootPath("overture", options.release, "addresses-us.parquet")
-				const finalOut = options.out ?? dataRootPath("address-points", `address-points-us-${STATE.toLowerCase()}.db`)
+		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
+		// and the DuckDB parquet/CSV reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
+		// published CLI doesn't force them on every consumer.
+		let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address-point-schema")
+		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street-normalize")
 
-				// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
-				// and the DuckDB parquet/CSV reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
-				// published CLI doesn't force them on every consumer.
-				let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address-point-schema")
-				let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street-normalize")
+		try {
+			pointSchema = await import("@mailwoman/resolver-wof-sqlite/address-point-schema")
+			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
+		} catch {
+			throw commandError(
+				"situs address-points requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared address-point schema + normalizer)."
+			)
+		}
+		let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
 
-				try {
-					pointSchema = await import("@mailwoman/resolver-wof-sqlite/address-point-schema")
-					streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
-				} catch {
-					throw new Error(
-						"situs address-points requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared address-point schema + normalizer)."
-					)
-				}
-				let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
+		try {
+			;({ DuckDBInstance } = await import("@duckdb/node-api"))
+		} catch {
+			throw commandError("@duckdb/node-api is not installed — `situs address-points` is a maintainer-only data command")
+		}
+		const { ADDRESS_POINT_COLUMNS, createAddressPointTable, createAddressPointIndexes } = pointSchema
+		const { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } = streetNormalize
 
-				try {
-					;({ DuckDBInstance } = await import("@duckdb/node-api"))
-				} catch {
-					throw new Error(
-						"@duckdb/node-api is not installed — `situs address-points` is a maintainer-only data command"
-					)
-				}
-				const { ADDRESS_POINT_COLUMNS, createAddressPointTable, createAddressPointIndexes } = pointSchema
-				const { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } = streetNormalize
+		// Build the dataset allow-list (normalised to lower-case for a case-insensitive match).
+		// Empty = no filter (keep everything).
+		const allowedDatasets: Set<string> = new Set(
+			options.licenseFilter
+				? options.licenseFilter
+						.split(",")
+						.map((d) => d.trim().toLowerCase())
+						.filter(Boolean)
+				: []
+		)
 
-				// Build the dataset allow-list (normalised to lower-case for a case-insensitive match).
-				// Empty = no filter (keep everything).
-				const allowedDatasets: Set<string> = new Set(
-					options.licenseFilter
-						? options.licenseFilter
-								.split(",")
-								.map((d) => d.trim().toLowerCase())
-								.filter(Boolean)
-						: []
-				)
+		mkdirSync(dirname(finalOut), { recursive: true })
+		// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
+		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
-				mkdirSync(dirname(finalOut), { recursive: true })
-				// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
-				const tmpOut = `${finalOut}.building-${process.pid}.db`
+		for (const sfx of ["", "-wal", "-shm"]) {
+			rmSync(tmpOut + sfx, { force: true })
+		}
 
-				for (const sfx of ["", "-wal", "-shm"]) {
-					rmSync(tmpOut + sfx, { force: true })
-				}
+		const instance = await DuckDBInstance.create()
+		const duck = await instance.connect()
 
-				const instance = await DuckDBInstance.create()
-				const duck = await instance.connect()
+		// Optional thread cap (national driver sets this so concurrent state builds don't oversubscribe cores).
+		if (options.threads && /^\d+$/.test(options.threads)) {
+			await duck.run(`SET threads TO ${options.threads}`)
+		}
+		// Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
+		// DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
+		let countyFilter = ""
 
-				// Optional thread cap (national driver sets this so concurrent state builds don't oversubscribe cores).
-				if (options.threads && /^\d+$/.test(options.threads)) {
-					await duck.run(`SET threads TO ${options.threads}`)
-				}
-				// Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
-				// DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
-				let countyFilter = ""
-
-				if (options.countyFips) {
-					await duck.run("INSTALL spatial; LOAD spatial;")
-					countyFilter = `AND ST_Contains(
+		if (options.countyFips) {
+			await duck.run("INSTALL spatial; LOAD spatial;")
+			countyFilter = `AND ST_Contains(
 							(SELECT geom FROM ST_Read('${options.countyBoundary}') WHERE GEOID = '${options.countyFips}'),
 							ST_Point(lon, lat))`
-				}
-				// License filter: pushed into DuckDB so the parquet scan drops ineligible rows before transfer.
-				// lower() matches case-insensitively against our normalised allow-list.
-				const datasetFilter =
-					allowedDatasets.size > 0
-						? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
-						: ""
+		}
+		// License filter: pushed into DuckDB so the parquet scan drops ineligible rows before transfer.
+		// lower() matches case-insensitively against our normalised allow-list.
+		const datasetFilter =
+			allowedDatasets.size > 0
+				? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
+				: ""
 
-				const db = new DatabaseSync(tmpOut)
-				// DDL + column order come from the SHARED schema (address-point-schema) so the writer can't drift
-				// from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
-				// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
-				db.exec("PRAGMA journal_mode = WAL;")
-				const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
-				await createAddressPointTable(kdb)
+		const db = new DatabaseSync(tmpOut)
+		// DDL + column order come from the SHARED schema (address-point-schema) so the writer can't drift
+		// from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
+		// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
+		db.exec("PRAGMA journal_mode = WAL;")
+		const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+		await createAddressPointTable(kdb)
 
-				const insert = db.prepare(
-					`INSERT INTO address_point (${ADDRESS_POINT_COLUMNS.join(", ")})
+		const insert = db.prepare(
+			`INSERT INTO address_point (${ADDRESS_POINT_COLUMNS.join(", ")})
 					 VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
-				)
+		)
 
-				// Provenance accounting: per-dataset counts across ALL rows returned by DuckDB (pre-JS drop).
-				// When --license-filter is active DuckDB already dropped the ineligible rows, so this reflects the
-				// kept set. `totalReturned` feeds the kept-vs-dropped summary below.
-				const datasetCounts = new Map<string, number>()
-				let kept = 0
-				let totalReturned = 0
+		// Provenance accounting: per-dataset counts across ALL rows returned by DuckDB (pre-JS drop).
+		// When --license-filter is active DuckDB already dropped the ineligible rows, so this reflects the
+		// kept set. `totalReturned` feeds the kept-vs-dropped summary below.
+		const datasetCounts = new Map<string, number>()
+		let kept = 0
+		let totalReturned = 0
 
-				// STREAM the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the
-				// whole result — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap that way (OOM 2026-06-14).
-				// stream()+fetchChunk() keeps JS memory bounded to one chunk; the growing data lives in the
-				// on-disk SQLite WAL inside a single transaction.
-				const oaCSVList = OA_MODE
-					? options
-							.oaCSV!.split(",")
-							.map((p) => `'${p.trim()}'`)
-							.join(", ")
-					: ""
-				const streamSQL = OA_MODE
-					? `SELECT
+		// STREAM the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the
+		// whole result — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap that way (OOM 2026-06-14).
+		// stream()+fetchChunk() keeps JS memory bounded to one chunk; the growing data lives in the
+		// on-disk SQLite WAL inside a single transaction.
+		const oaCSVList = OA_MODE
+			? options
+					.oaCSV!.split(",")
+					.map((p) => `'${p.trim()}'`)
+					.join(", ")
+			: ""
+		const streamSQL = OA_MODE
+			? `SELECT
 							NUMBER AS number, STREET AS street, NULLIF(trim(UNIT), '') AS unit,
 							NULLIF(trim(POSTCODE), '') AS postcode,
 							NULLIF(trim(CITY), '') AS locality,
@@ -230,7 +222,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 							LAT AS lat, LON AS lon
 						FROM read_csv([${oaCSVList}], header = true, all_varchar = true)
 						WHERE nullif(trim(STREET), '') IS NOT NULL AND nullif(trim(NUMBER), '') IS NOT NULL`
-					: `SELECT
+			: `SELECT
 							number, street, unit, postcode,
 							coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS locality,
 							sources[1].dataset AS dataset,
@@ -241,72 +233,72 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 							AND nullif(trim(number), '') IS NOT NULL
 							${countyFilter}
 							${datasetFilter}`
-				const stream = await duck.stream(streamSQL)
-				// A streamed DataChunk carries no column names of its own, so pull them off the result once.
-				const colNames = stream.columnNames()
-				db.exec("BEGIN")
+		const stream = await duck.stream(streamSQL)
+		// A streamed DataChunk carries no column names of its own, so pull them off the result once.
+		const colNames = stream.columnNames()
+		db.exec("BEGIN")
 
-				for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
-					const rows = chunk.getRowObjects(colNames) as Record<string, unknown>[]
+		for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
+			const rows = chunk.getRowObjects(colNames) as Record<string, unknown>[]
 
-					for (const r of rows) {
-						totalReturned++
-						const dataset = String(r.dataset ?? "unknown")
-						datasetCounts.set(dataset, (datasetCounts.get(dataset) ?? 0) + 1)
+			for (const r of rows) {
+				totalReturned++
+				const dataset = String(r.dataset ?? "unknown")
+				datasetCounts.set(dataset, (datasetCounts.get(dataset) ?? 0) + 1)
 
-						const streetRaw = String(r.street)
-						const streetNorm = normalizeStreetForKey(streetRaw)
+				const streetRaw = String(r.street)
+				const streetNorm = normalizeStreetForKey(streetRaw)
 
-						if (!streetNorm) continue
-						const lat = Number(r.lat)
-						const lon = Number(r.lon)
+				if (!streetNorm) continue
+				const lat = Number(r.lat)
+				const lon = Number(r.lon)
 
-						if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue // OA rows can carry empty coords
-						const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
-						insert.run(
-							streetNorm,
-							canonicalizeRouteKey(streetNorm),
-							String(r.number).trim().toLowerCase(),
-							r.unit ? String(r.unit).trim().toLowerCase() : null,
-							r.postcode ? String(r.postcode).trim() : null,
-							locality,
-							streetRaw,
-							lat,
-							lon,
-							OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
-							OA_MODE ? "openaddresses-latest" : String(options.release)
-						)
-						kept++
-					}
-				}
-				db.exec("COMMIT")
-				console.error(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`)
-				await createAddressPointIndexes(kdb)
-				db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
-				const stats = db
-					.prepare(
-						"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point"
-					)
-					.get() as Record<string, number>
+				if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue // OA rows can carry empty coords
+				const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
+				insert.run(
+					streetNorm,
+					canonicalizeRouteKey(streetNorm),
+					String(r.number).trim().toLowerCase(),
+					r.unit ? String(r.unit).trim().toLowerCase() : null,
+					r.postcode ? String(r.postcode).trim() : null,
+					locality,
+					streetRaw,
+					lat,
+					lon,
+					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
+					OA_MODE ? "openaddresses-latest" : String(options.release)
+				)
+				kept++
+			}
+		}
+		db.exec("COMMIT")
+		console.error(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`)
+		await createAddressPointIndexes(kdb)
+		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+		const stats = db
+			.prepare(
+				"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point"
+			)
+			.get() as Record<string, number>
 
-				// --- Provenance summary --- always emitted so the operator can audit which licenses a shard carries.
-				const lines: string[] = [
-					`${kept} points → ${finalOut}`,
-					`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`,
-					`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
-					`provenance (${STATE}, release ${options.release}):`,
-				]
-				const sortedDatasets = [...datasetCounts.entries()].sort((a, b) => b[1] - a[1])
+		// --- Provenance summary --- always emitted so the operator can audit which licenses a shard carries.
+		const lines: string[] = [
+			`${kept} points → ${finalOut}`,
+			`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`,
+			`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
+			`provenance (${STATE}, release ${options.release}):`,
+		]
+		const sortedDatasets = [...datasetCounts.entries()].sort((a, b) => b[1] - a[1])
 
-				for (const [dataset, count] of sortedDatasets) {
-					lines.push(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)
-				}
+		for (const [dataset, count] of sortedDatasets) {
+			lines.push(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)
+		}
 
-				if (allowedDatasets.size > 0) {
-					// The DuckDB query already excluded non-allowed rows, so totalReturned is the kept count.
-					// Run a secondary count (cheap: parquet predicate pushdown on a single column) for the
-					// total-minus-kept so the operator can see how much the filter dropped.
-					const totalResult = await duck.runAndReadAll(`
+		if (allowedDatasets.size > 0) {
+			// The DuckDB query already excluded non-allowed rows, so totalReturned is the kept count.
+			// Run a secondary count (cheap: parquet predicate pushdown on a single column) for the
+			// total-minus-kept so the operator can see how much the filter dropped.
+			const totalResult = await duck.runAndReadAll(`
 						SELECT count(*) AS n
 						FROM read_parquet('${PARQUET}')
 						WHERE address_levels[1].value = '${STATE}'
@@ -314,36 +306,26 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 							AND nullif(trim(number), '') IS NOT NULL
 							${countyFilter}
 					`)
-					const totalUnfiltered = Number((totalResult.getRowObjects()[0] as Record<string, unknown>).n)
-					const keptCount = totalReturned
-					const droppedCount = totalUnfiltered - keptCount
-					lines.push(
-						`license-filter: ${[...allowedDatasets].join(", ")} → kept ${keptCount.toLocaleString()} / dropped ${droppedCount.toLocaleString()} (of ${totalUnfiltered.toLocaleString()} total parquet rows for ${STATE})`
-					)
-				}
-
-				await kdb.destroy() // closes the underlying `db` handle
-				swapDatabaseIntoPlace(tmpOut, finalOut)
-
-				setSummary(lines)
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+			const totalUnfiltered = Number((totalResult.getRowObjects()[0] as Record<string, unknown>).n)
+			const keptCount = totalReturned
+			const droppedCount = totalUnfiltered - keptCount
+			lines.push(
+				`license-filter: ${[...allowedDatasets].join(", ")} → kept ${keptCount.toLocaleString()} / dropped ${droppedCount.toLocaleString()} (of ${totalUnfiltered.toLocaleString()} total parquet rows for ${STATE})`
+			)
 		}
-	}, [summary, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		await kdb.destroy() // closes the underlying `db` handle
+		swapDatabaseIntoPlace(tmpOut, finalOut)
 
-	if (summary) {
+		return lines
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

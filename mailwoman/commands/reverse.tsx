@@ -16,15 +16,12 @@
  *   - 1 bad arguments or DB path missing / wrong
  */
 
-import { setImmediate } from "node:timers/promises"
-
 import { Spinner } from "@inkjs/ui"
 import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 
 const ArgumentsSchema = zod
 	.array(zod.string())
@@ -59,7 +56,7 @@ function resolveAdminDBPath(options: zod.infer<typeof OptionsSchema>): string {
 	const path = options.adminDb ?? $public.MAILWOMAN_WOF_ADMIN_DB
 
 	if (!path) {
-		throw new Error(
+		throw commandError(
 			"reverse needs an admin DB path. Set $MAILWOMAN_WOF_ADMIN_DB or pass --admin-db <path>. " +
 				"Build one with `mailwoman gazetteer build fts <path-to-wof.db>` after building the WOF SQLite " +
 				"distribution with `mailwoman gazetteer build admin`."
@@ -79,7 +76,7 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
-		throw new Error(
+		throw commandError(
 			"reverse requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
 				"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
 		)
@@ -134,54 +131,39 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 }
 
 const ReverseCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
-	const [output, setOutput] = useState<string>()
-	const [error, setError] = useState<string>()
-
-	useEffect(() => {
-		if (error) {
-			setImmediate().then(() => process.exit(1))
-		}
-	}, [error])
-
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		const rawLat = args[0]
 		const rawLon = args[1]
 
 		if (!rawLat || !rawLon) {
-			setError("reverse requires two positional arguments: <lat> <lon>  (e.g. mailwoman reverse 40.7128 -74.0060)")
-
-			return
+			throw commandError(
+				"reverse requires two positional arguments: <lat> <lon>  (e.g. mailwoman reverse 40.7128 -74.0060)"
+			)
 		}
 
 		const lat = Number(rawLat)
 		const lon = Number(rawLon)
 
 		if (!Number.isFinite(lat) || Math.abs(lat) > 90) {
-			setError(`Invalid latitude ${JSON.stringify(rawLat)} — must be a number in [-90, 90].`)
-
-			return
+			throw commandError(`Invalid latitude ${JSON.stringify(rawLat)} — must be a number in [-90, 90].`)
 		}
 
 		if (!Number.isFinite(lon) || Math.abs(lon) > 180) {
-			setError(`Invalid longitude ${JSON.stringify(rawLon)} — must be a number in [-180, 180].`)
-
-			return
+			throw commandError(`Invalid longitude ${JSON.stringify(rawLon)} — must be a number in [-180, 180].`)
 		}
 
-		runReverse(lat, lon, options)
-			.then(setOutput)
-			.catch((err: unknown) => setError((err as Error).message))
-	}, [args, options])
+		return runReverse(lat, lon, options)
+	})
 
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (!output) {
+	if (state.status !== "done") {
 		return <Spinner />
 	}
 
-	return <Text>{output}</Text>
+	return <Text>{state.result}</Text>
 }
 
 export default ReverseCommand

@@ -18,6 +18,10 @@ import zod from "zod"
 import type { CommandComponent } from "../cli-kit/index.ts"
 import { AddressRouter, GeocodeRouter, HealthRouter, ResolveRouter } from "../server/index.ts"
 
+// NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
+// move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup,
+// and ChildThread's effect boots the express server; there is no `setImmediate(process.exit)` here).
+
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 	options: { cpus = availableParallelism() },
 }) => {
