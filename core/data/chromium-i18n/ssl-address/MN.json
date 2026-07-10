@@ -1,9 +1,9 @@
 {
-	"zipex": "65030,65270",
+	"id": "data/MN",
 	"key": "MN",
 	"name": "MONGOLIA",
 	"fmt": "%N%n%O%n%A%n%C%n%S %Z",
 	"zip": "\\d{5}",
-	"posturl": "http://www.zipcode.mn/",
-	"id": "data/MN"
+	"zipex": "65030,65270",
+	"posturl": "http://www.zipcode.mn/"
 }

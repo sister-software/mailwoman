@@ -1,12 +1,12 @@
 {
-	"sub_isoids": "FUN~NMG~NMA~~NIT~NUI~NKF~NKL~VAI",
+	"id": "data/TV",
 	"key": "TV",
 	"name": "TUVALU",
-	"fmt": "%N%n%O%n%A%n%C%n%S",
-	"state_name_type": "island",
 	"lang": "tyv",
-	"sub_keys": "Funafuti~Nanumanga~Nanumea~Niulakita~Niutao~Nui~Nukufetau~Nukulaelae~Vaitupu",
 	"languages": "tyv",
+	"fmt": "%N%n%O%n%A%n%C%n%S",
 	"upper": "ACS",
-	"id": "data/TV"
+	"state_name_type": "island",
+	"sub_keys": "Funafuti~Nanumanga~Nanumea~Niulakita~Niutao~Nui~Nukufetau~Nukulaelae~Vaitupu",
+	"sub_isoids": "FUN~NMG~NMA~~NIT~NUI~NKF~NKL~VAI"
 }

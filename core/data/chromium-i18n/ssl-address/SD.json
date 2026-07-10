@@ -1,9 +1,9 @@
 {
-	"zipex": "11042,11113",
+	"id": "data/SD",
 	"key": "SD",
 	"name": "SUDAN",
 	"fmt": "%N%n%O%n%A%n%C%n%Z",
 	"zip": "\\d{5}",
-	"locality_name_type": "district",
-	"id": "data/SD"
+	"zipex": "11042,11113",
+	"locality_name_type": "district"
 }

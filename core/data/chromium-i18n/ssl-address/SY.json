@@ -1,6 +1,1 @@
-{
-	"locality_name_type": "district",
-	"id": "data/SY",
-	"key": "SY",
-	"name": "SYRIA"
-}
+{ "id": "data/SY", "key": "SY", "name": "SYRIA", "locality_name_type": "district" }
