@@ -118,6 +118,17 @@ What breaks: a dictionary-based locality classifier (the standard Pelias approac
 
 This is the bitter-lesson case for address parsing. A rule classifier cannot tell the difference; it needs context. A transformer encoder ([Neural classification](../../concepts/neural-classification.mdx)) sees the whole sentence and can learn that `"Paris"` followed by `"Cafe"` is part of a `venue` span, while `"Paris"` preceded by a comma and followed by `"Ontario"` is a `locality` span. The "Buffalo, NY / Buffalo Wild Wings, Buffalo, NY" pair is in Mailwoman's adversarial eval set for exactly this reason.
 
+Four field specimens, contributed by a conference attendee in Paris (July 2026) — all real venues, all with the toponym pointing the wrong way:
+
+| venue name              | actual address                             | the trap                                                                      |
+| ----------------------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `COMER parís.méxico`    | 96 Rue d'Hauteville, 75010 Paris           | two toponyms, Spanish orthography, dot-joined — and neither is the answer     |
+| `2Ne1 Paris Bubble Tea` | 89 Rue Beaubourg, 75003 Paris              | digit-leading brand + "Paris" as decoration, not location                     |
+| `Shinjuku Pigalle`      | 52 Rue Condorcet, 75009 Paris              | a Tokyo ward and a Paris district in one name; the address contains neither   |
+| `Shinjuku`              | 166 Bd de Stalingrad, 94200 Ivry-sur-Seine | a bare foreign toponym as the whole venue name — the hardest call of the four |
+
+When we ran these against our own live endpoint the day we received them, three of four resolved confidently to the wrong continent — including one to Comer, Georgia, USA, a namesake nobody in the conversation had predicted (the Spanish verb "comer" happens to be a town). We publish that result rather than hide it: these cases are now tracked improvement targets in the release gauntlet, and the bare-`Shinjuku` case is annotated as genuinely ambiguous — a lone toponym query plausibly _does_ mean Tokyo, and only conversational context says otherwise. An honest geocoder's job on that one is low confidence, not a lucky guess.
+
 ## 5. Numeric chaos
 
 House numbers and street numbers that violate the assumptions baked into regex classifiers.
