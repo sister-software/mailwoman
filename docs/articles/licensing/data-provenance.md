@@ -27,20 +27,21 @@ reviewing counsel, and date it.
 ## Where the data comes from
 
 Every source below is recorded with its license at the point it enters the pipeline. The authoritative
-catalog is [`address-data-sources.mdx`](../plan/reference/address-data-sources.mdx); the legal notices
-live in [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md).
+catalog is [`address-data-sources.mdx`](../plan/reference/address-data-sources.mdx); the legal notices ship as `THIRD_PARTY_NOTICES.md` in the source distribution, and each
+built data artifact carries its own `ATTRIBUTION.json` recording source, release, and license
+at build time.
 
-| Source                 | License             | Obligation                                     | Role in Mailwoman                                        |
-| ---------------------- | ------------------- | ---------------------------------------------- | -------------------------------------------------------- |
-| Who's On First (WOF)   | CC0                 | none (public domain)                           | the gazetteer anchor — every place keeps its WOF id      |
-| US Census TIGER        | Public Domain       | none                                           | US street interpolation + the situs rooftop base         |
-| Overture               | CDLA-Permissive-2.0 | attribution                                    | US address points; coverage centroids                    |
-| OpenAddresses          | per-source, varies  | per-source attribution / share-alike           | US gap states (e.g. Hawaii); cross-checked centroids     |
-| GeoNames               | CC-BY 4.0           | attribution                                    | the village-level + bilingual alt-name coverage fold     |
-| France BAN             | Licence Ouverte 2.0 | attribution (we elect this over its dual ODbL) | FR street training corpus                                |
-| **OpenStreetMap**      | **ODbL**            | **attribution + share-alike**                  | **optional** non-US rooftop shards — quarantined (below) |
-| libpostal dictionaries | MIT                 | attribution                                    | bundled normalization data (`core/data/`)                |
-| libaddressinput        | Apache-2.0          | attribution                                    | bundled format rules (`core/data/`)                      |
+| Source                 | License             | Obligation                                     | Role in Mailwoman                                                                |
+| ---------------------- | ------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| Who's On First (WOF)   | CC0                 | none (public domain)                           | the gazetteer anchor — every place keeps its WOF id                              |
+| US Census TIGER        | Public Domain       | none                                           | US street interpolation + the situs rooftop base                                 |
+| Overture               | CDLA-Permissive-2.0 | attribution                                    | US address points; coverage centroids                                            |
+| OpenAddresses          | per-source, varies  | per-source attribution / share-alike           | US gap states (e.g. Hawaii); cross-checked centroids                             |
+| GeoNames               | CC-BY 4.0           | attribution                                    | the village-level + bilingual alt-name coverage fold                             |
+| France BAN             | Licence Ouverte 2.0 | attribution (we elect this over its dual ODbL) | FR rooftop + street tiers (26M address points) and the FR street training corpus |
+| **OpenStreetMap**      | **ODbL**            | **attribution + share-alike**                  | **optional** non-US rooftop shards — quarantined (below)                         |
+| libpostal dictionaries | MIT                 | attribution                                    | bundled normalization data (`core/data/`)                                        |
+| libaddressinput        | Apache-2.0          | attribution                                    | bundled format rules (`core/data/`)                                              |
 
 The deliberate design choice is in the first row: **WOF is the anchor and the eval key**, and supplemental
 data attaches as attributes on WOF-keyed entities, never as imported foreign-id records. That keeps the
