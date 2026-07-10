@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/normalize",
-	"version": "5.9.0",
+	"version": "5.10.0",
 	"description": "Stage 1 of the runtime pipeline — deterministic input preprocessing (Unicode NFC, punctuation, whitespace, abbreviation). Pure functions, no ML.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
