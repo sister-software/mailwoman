@@ -560,8 +560,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	}
 
 	// National open-register rooftop tier (#1012): a non-US parse first consults an authoritative government
-	// address register (BAN-FR today) AHEAD of OSM — it's denser + coordinate-authoritative. BAN rows carry
-	// their own postcode + commune, so the scoped (postcode → locality) probes suffice; no bbox fall-through.
+	// address register (BAN-FR today) AHEAD of OSM — it's denser + coordinate-authoritative. Bbox
+	// fall-through is ON here too (like OSM below): the register's ROWS carry postcode + commune, but the
+	// QUERY often doesn't ("181 Rue du Chevaleret, Paris" — no postcode, and BAN communes are
+	// INSEE-arrondissement-granular so the locality probe keys "paris" ≠ "paris 13e arrondissement"). The
+	// resolved locality's box then scopes the (street, number) probe; measured safe — zero ambiguous
+	// (street, number) pairs across Paris arrondissements in the 2026-05-18 BAN shard.
 	if (!addressPoints) {
 		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
 
@@ -570,6 +574,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 			if (national?.addressPoints) {
 				addressPoints = national.addressPoints
+				opts.addressPointBboxFallback = true
 			}
 		}
 	}

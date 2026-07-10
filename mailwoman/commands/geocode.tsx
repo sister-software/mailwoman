@@ -213,8 +213,13 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths: wofPath })
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
-	// specific file); an unset tier still falls back to the region-derived per-state shard.
-	const explicitAp = options.addressPointsDb ? new mod.AddressPointSqliteLookup(options.addressPointsDb) : undefined
+	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
+	// locale follows --locale's region (fr-FR → "fr") — the shard's keys were built with its country's
+	// normalizer, and a "us"-keyed probe against an FR shard silently misses wherever the rules diverge.
+	const explicitApLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
+	const explicitAp = options.addressPointsDb
+		? new mod.AddressPointSqliteLookup(options.addressPointsDb, { streetLocale: explicitApLocale })
+		: undefined
 	const explicitIp = options.interpolationDb
 		? new mod.StreetInterpolator({ dbPath: options.interpolationDb })
 		: undefined
