@@ -513,6 +513,11 @@
 			"relatedTerms": ["record matching", "scoring", "EM estimation"]
 		},
 		{
+			"term": "fertility",
+			"definition": "How many tokenizer pieces it takes to spell a word: fertility 1 means whole words survive tokenization, fertility 3 means they arrive in fragments. High fertility hurts sequence labeling directly — the model has to reassemble a word before it can label it, and fragment boundaries are where labels break. Mailwoman measured this on French street names: accented words splitting at the accent ('René' → '▁Ren' + 'é') caused real geocoding misses, and lowering French fertility was worth a tokenizer revision plus a retrain.",
+			"relatedTerms": ["tokenizer", "subword tokenization", "SentencePiece", "diacritic", "per-locale F1"]
+		},
+		{
 			"term": "FiLM modulation",
 			"abbreviation": "Feature-wise Linear Modulation",
 			"definition": "A parameter-efficient adaptation that scales and shifts feature vectors by learned per-example multipliers and biases. Used in self-conditioning to make parsing decisions locale-aware without retraining the whole model.",
@@ -1149,6 +1154,11 @@
 			"term": "per-locale F1",
 			"definition": "Per-tag accuracy computed separately for each locale (US, FR, DE…) rather than aggregated, surfacing locale-specific regressions that macro F1 would mask under the dominant locale.",
 			"relatedTerms": ["macro F1", "cross-pollution", "parity scorecard"]
+		},
+		{
+			"term": "perplexity",
+			"definition": "How surprised a language model is by held-out text, expressed as the effective number of choices it was weighing per token; lower means better prediction. It is the standard health metric for generative models, with a classic trap: it is computed per token, so models with different tokenizers cannot be compared on it. Mailwoman does not gate on perplexity — a token classifier is graded on labels and, ultimately, coordinates — but the same trap governs our own metrics: parse-F1 is never compared across tokenizer versions.",
+			"relatedTerms": ["language model", "tokenizer", "cross-entropy", "eval"]
 		},
 		{
 			"term": "phase",
