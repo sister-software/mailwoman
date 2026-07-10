@@ -222,9 +222,12 @@ export function assetURL(locale: string, version: string, filename: string): str
  * per-model-version).
  */
 export function streetShardURL(slug: string, kind: "situs" | "interp"): string {
-	// National (non-US) shards live under their country ("fr" → street/fr/national/situs.db); US
-	// shards keep the per-state layout.
-	if (NATIONAL_STREET_SLUGS.has(slug)) return `${ASSET_BASE_URL}street/${slug}/national/${kind}.db`
+	// National (non-US) shards live under their country at a DATED path (immutable Cache-Control means
+	// a rebuilt shard needs a fresh URL — the admin-gazetteer discipline); US shards keep the
+	// per-state layout. Bump the version when the BAN artifact is rebuilt + re-uploaded.
+	if (NATIONAL_STREET_SLUGS.has(slug)) {
+		return `${ASSET_BASE_URL}street/${slug}/${NATIONAL_STREET_SHARD_VERSION}/${kind}.db`
+	}
 
 	return `${ASSET_BASE_URL}street/us/${slug}/${kind}.db`
 }
@@ -236,6 +239,9 @@ export function streetShardURL(slug: string, kind: "situs" | "interp"): string {
  * a false hit).
  */
 export const NATIONAL_STREET_SLUGS = new Set(["fr"])
+
+/** Dated national-shard release (2026-07-10: the #1044 quote-fix + arrondissement-fold rebuild, md5 bc387335). */
+export const NATIONAL_STREET_SHARD_VERSION = "2026-07-10"
 
 /** The single national slug the demo's street tier falls back to when no hosted US state claims the query. */
 export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
