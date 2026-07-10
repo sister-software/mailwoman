@@ -11,12 +11,11 @@
  */
 
 import { Box, Text } from "ink"
-import { setImmediate } from "node:timers/promises"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import zod from "zod"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { buildCoverageTiles, type CoverageBuildResult } from "../../coverage-core.ts"
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { buildCoverageTiles } from "../../coverage-core.ts"
+import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	states: zod.string().optional().default("all").describe("Comma-separated state slugs (e.g. CA,TX) or 'all'"),
@@ -66,21 +65,14 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const CoverageBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<CoverageBuildResult>()
 	const [stage, setStage] = useState<{ name: string; message: string }>()
-
-	useEffect(() => {
-		if (error) setImmediate().then(() => process.exit(1))
-		else if (done) setImmediate().then(() => process.exit(0))
-	}, [error, done])
-
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		const rollup = options.rollup
 			.split(",")
 			.map((s) => Number(s.trim()))
 			.filter((n) => Number.isInteger(n) && n < options.fineRes)
-		buildCoverageTiles(
+
+		return buildCoverageTiles(
 			{
 				states: options.states,
 				excludeStates: options.excludeStates.split(",").map((s) => s.trim()).filter(Boolean),
@@ -105,13 +97,13 @@ const CoverageBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			},
 			(name, message) => setStage({ name, message })
 		)
-			.then(setDone)
-			.catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
-	}, [options])
+	})
 
-	if (error) return <Text color="red">{error}</Text>
+	if (state.status === "error") return <Text color="red">{state.message}</Text>
 
-	if (done) {
+	if (state.status === "done") {
+		const done = state.result
+
 		return (
 			<Box flexDirection="column">
 				<Text>

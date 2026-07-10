@@ -9,10 +9,9 @@
  */
 
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	output: zod.string().describe("Output JSON path (e.g. pilot-anchor-lookup.json)"),
@@ -22,30 +21,16 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerBuildAnchorLookup: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<string>()
+	const state = useCommandTask(async () => {
+		const { buildAnchorLookup } = await import("../../../gazetteer-pipeline/anchor-lookup.ts")
+		buildAnchorLookup({ output: options.output, zcta: options.zcta })
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const { buildAnchorLookup } = await import("../../../gazetteer-pipeline/anchor-lookup.ts")
-				buildAnchorLookup({ output: options.output, zcta: options.zcta })
-				setDone(`anchor lookup → ${options.output}`)
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
+		return `anchor lookup → ${options.output}`
+	})
 
-	useEffect(() => {
-		if (done || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
-		}
-	}, [done, error])
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	if (error) return <Text color="red">✗ {error}</Text>
-
-	if (done) return <Text color="green">✓ {done}</Text>
+	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
 
 	return null
 }

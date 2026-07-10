@@ -18,10 +18,9 @@
  */
 
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	recipe: zod.enum(["base", "jp", "kr", "tw"]).describe("Which postcode-locality table to build"),
@@ -42,85 +41,71 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<string>()
+	const state = useCommandTask(async () => {
+		const need = (name: string, v: string | undefined): string => {
+			if (!v) throw commandError(`--${name} is required for --recipe ${options.recipe}`)
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const need = (name: string, v: string | undefined): string => {
-					if (!v) throw new Error(`--${name} is required for --recipe ${options.recipe}`)
-
-					return v
-				}
-
-				switch (options.recipe) {
-					case "base": {
-						const { buildPostcodeLocalityBase, finalizePostcodeLocality } =
-							await import("../../../gazetteer-pipeline/postcode-locality/base.ts")
-
-						if (options.finalize) {
-							await finalizePostcodeLocality(options.output)
-							break
-						}
-						await buildPostcodeLocalityBase({
-							country: need("country", options.country),
-							adminRepo: need("admin-repo", options.adminRepo),
-							postcodeDB: need("postcode-db", options.postcodeDb),
-							output: options.output,
-							radiusKm: Number(options.radiusKm ?? "10.0"),
-							maxCandidates: Number.parseInt(options.maxCandidates ?? "4", 10),
-							finalize: false,
-						})
-						break
-					}
-					case "jp": {
-						const { buildPostcodeLocalityJP } = await import("../../../gazetteer-pipeline/postcode-locality/jp.ts")
-						await buildPostcodeLocalityJP({
-							country: options.country ?? "JP",
-							postalNames: need("postal-names", options.postalNames),
-							geonames: need("geonames", options.geonames),
-							adminDb: need("admin-db", options.adminDb),
-							output: options.output,
-						})
-						break
-					}
-					case "kr": {
-						const { buildPostcodeLocalityKR } = await import("../../../gazetteer-pipeline/postcode-locality/kr.ts")
-						await buildPostcodeLocalityKR({
-							geonames: need("geonames", options.geonames),
-							adminDb: need("admin-db", options.adminDb),
-							output: options.output,
-						})
-						break
-					}
-					case "tw": {
-						const { buildPostcodeLocalityTW } = await import("../../../gazetteer-pipeline/postcode-locality/tw.ts")
-						await buildPostcodeLocalityTW({
-							postalXml: need("postal-xml", options.postalXml),
-							divisions: need("divisions", options.divisions),
-							adminDb: need("admin-db", options.adminDb),
-							output: options.output,
-						})
-						break
-					}
-				}
-				setDone(`postcode-locality (${options.recipe}): ${options.output} — sealed 0444`)
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (done || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+			return v
 		}
-	}, [done, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		switch (options.recipe) {
+			case "base": {
+				const { buildPostcodeLocalityBase, finalizePostcodeLocality } =
+					await import("../../../gazetteer-pipeline/postcode-locality/base.ts")
 
-	if (done) return <Text color="green">✓ {done}</Text>
+				if (options.finalize) {
+					await finalizePostcodeLocality(options.output)
+					break
+				}
+				await buildPostcodeLocalityBase({
+					country: need("country", options.country),
+					adminRepo: need("admin-repo", options.adminRepo),
+					postcodeDB: need("postcode-db", options.postcodeDb),
+					output: options.output,
+					radiusKm: Number(options.radiusKm ?? "10.0"),
+					maxCandidates: Number.parseInt(options.maxCandidates ?? "4", 10),
+					finalize: false,
+				})
+				break
+			}
+			case "jp": {
+				const { buildPostcodeLocalityJP } = await import("../../../gazetteer-pipeline/postcode-locality/jp.ts")
+				await buildPostcodeLocalityJP({
+					country: options.country ?? "JP",
+					postalNames: need("postal-names", options.postalNames),
+					geonames: need("geonames", options.geonames),
+					adminDb: need("admin-db", options.adminDb),
+					output: options.output,
+				})
+				break
+			}
+			case "kr": {
+				const { buildPostcodeLocalityKR } = await import("../../../gazetteer-pipeline/postcode-locality/kr.ts")
+				await buildPostcodeLocalityKR({
+					geonames: need("geonames", options.geonames),
+					adminDb: need("admin-db", options.adminDb),
+					output: options.output,
+				})
+				break
+			}
+			case "tw": {
+				const { buildPostcodeLocalityTW } = await import("../../../gazetteer-pipeline/postcode-locality/tw.ts")
+				await buildPostcodeLocalityTW({
+					postalXml: need("postal-xml", options.postalXml),
+					divisions: need("divisions", options.divisions),
+					adminDb: need("admin-db", options.adminDb),
+					output: options.output,
+				})
+				break
+			}
+		}
+
+		return `postcode-locality (${options.recipe}): ${options.output} — sealed 0444`
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
 
 	return null // progress streams to stderr until the summary lands
 }

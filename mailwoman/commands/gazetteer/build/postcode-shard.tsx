@@ -11,10 +11,9 @@
  */
 
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import { artifactSizeMB, buildPostcodeShard } from "../../../gazetteer-pipeline/index.ts"
 
 const OptionsSchema = zod.object({
@@ -29,51 +28,36 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerBuildPostcodeShard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const result = await buildPostcodeShard({
+			country: options.country,
+			out: options.out,
+			reposDir: options.repos,
+			zctaPath: options.zcta,
+			geonamesPostalDir: options.geonamesPostal,
+			adminPath: options.admin,
+			onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+		})
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const result = await buildPostcodeShard({
-					country: options.country,
-					out: options.out,
-					reposDir: options.repos,
-					zctaPath: options.zcta,
-					geonamesPostalDir: options.geonamesPostal,
-					adminPath: options.admin,
-					onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
-				})
+		return [
+			`postcode shard: ${result.out} (${artifactSizeMB(result.out)} MB)`,
+			`${result.postcodesIngested.toLocaleString()} postcodes; placed ${result.fills.placedBefore.toLocaleString()} → ${result.fills.placedAfter.toLocaleString()} of ${result.fills.total.toLocaleString()}` +
+				(result.zctaFilled
+					? ` (zcta ${result.zctaFilled.toLocaleString()}` +
+						(result.geonamesUSFilled ? `, geonames-us ${result.geonamesUSFilled.toLocaleString()}` : "") +
+						")"
+					: ""),
+			"sealed 0444",
+			"next: swap per RELEASING.md (postcode shards ride wofShardPaths)",
+		]
+	})
 
-				setSummary([
-					`postcode shard: ${result.out} (${artifactSizeMB(result.out)} MB)`,
-					`${result.postcodesIngested.toLocaleString()} postcodes; placed ${result.fills.placedBefore.toLocaleString()} → ${result.fills.placedAfter.toLocaleString()} of ${result.fills.total.toLocaleString()}` +
-						(result.zctaFilled
-							? ` (zcta ${result.zctaFilled.toLocaleString()}` +
-								(result.geonamesUSFilled ? `, geonames-us ${result.geonamesUSFilled.toLocaleString()}` : "") +
-								")"
-							: ""),
-					"sealed 0444",
-					"next: swap per RELEASING.md (postcode shards ride wofShardPaths)",
-				])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
-		}
-	}, [summary, error])
-
-	if (error) return <Text color="red">✗ {error}</Text>
-
-	if (summary) {
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

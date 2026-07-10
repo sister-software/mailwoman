@@ -33,10 +33,9 @@ import * as path from "node:path"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const DEFAULT_RELEASE = "2026-05-20.0"
 const S3_GLOB = (release: string) =>
@@ -98,210 +97,192 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 }
 
 const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
-
-	useEffect(() => {
-		void (async () => {
-			try {
-				if (!options.countries) {
-					setError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")
-
-					return
-				}
-
-				const release = options.release ?? DEFAULT_RELEASE
-				const countries = options.countries.split(",").map((c) => c.trim().toUpperCase())
-				const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
-				const outRoot = options.out ?? dataRootPath("overture")
-				const outDir = path.join(outRoot, release)
-				mkdirSync(outDir, { recursive: true })
-
-				// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load
-				// it dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault
-				// when the native binding isn't installed.
-				const { DuckDBInstance } = await import("@duckdb/node-api")
-				const instance = await DuckDBInstance.create()
-				const db = await instance.connect()
-
-				// Anonymous access to the public Overture bucket — region only, no credentials.
-				await db.run("INSTALL httpfs; LOAD httpfs;")
-				await db.run("INSTALL spatial; LOAD spatial;")
-				await db.run("SET s3_region='us-west-2';")
-				// Modest thread count + a hard memory ceiling: DuckDB's default (all cores) over the
-				// Overture addresses theme OOM-killed this box once (2026-06-19, naive read_parquet).
-				// COPY streams to disk, so the caps cost little; they bound scan parallelism + buffers.
-				await db.run("SET threads=4;")
-				await db.run("SET memory_limit='8GB';")
-
-				const countryParquet = (cc: string) => path.join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
-
-				/**
-				 * Materialize one country into local Parquet. Column set preserves the Overture schema verbatim (nested
-				 * `sources` + `address_levels` included) plus lon/lat decoded from the WKB point via the spatial extension.
-				 */
-				const ingestCountry = async (cc: string): Promise<void> => {
-					const limitClause = limit ? `LIMIT ${limit}` : ""
-					const dest = countryParquet(cc)
-					const started = Date.now()
-					await db.run(`
-						COPY (
-							SELECT
-								id,
-								country,
-								postcode,
-								street,
-								number,
-								unit,
-								address_levels,
-								postal_city,
-								sources,
-								version,
-								ST_X(geometry) AS lon,
-								ST_Y(geometry) AS lat
-							FROM read_parquet('${S3_GLOB(release)}', hive_partitioning = 1)
-							WHERE country = '${cc}'
-							${limitClause}
-						) TO '${dest}' (FORMAT PARQUET, COMPRESSION SNAPPY)
-					`)
-					const secs = ((Date.now() - started) / 1000).toFixed(0)
-					console.error(`[ingest] ${cc} -> ${dest} (${secs}s)`)
-				}
-
-				/**
-				 * Emit the flattened corpus-input JSONL the `overture` corpus adapter consumes (`{ street, number, unit,
-				 * postcode, locality }`), so `@mailwoman/corpus` stays free of the heavy native DuckDB binding. `street` is
-				 * kept WHOLE (keyword included); the downstream affix-relabel splits `street_prefix`. `locality` flattens the
-				 * `address_levels` municipality (the deepest level) with a `postal_city` fallback.
-				 */
-				const emitCorpusJsonl = async (cc: string): Promise<void> => {
-					const src = countryParquet(cc)
-					const dest = path.join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
-					await db.run(`
-						COPY (
-							SELECT
-								street,
-								number,
-								unit,
-								postcode,
-								COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS locality
-							FROM read_parquet('${src}')
-							WHERE street IS NOT NULL AND trim(street) <> ''
-								AND (
-									(postcode IS NOT NULL AND trim(postcode) <> '')
-									OR len(address_levels) > 0
-									OR (postal_city IS NOT NULL AND trim(postal_city) <> '')
-								)
-						) TO '${dest}' (FORMAT JSON)
-					`)
-					console.error(`[corpus-jsonl] ${cc} -> ${dest}`)
-				}
-
-				/** Probe one country's LOCAL Parquet for the fill-rate report. */
-				const probeCountry = async (cc: string): Promise<CountryProbe | null> => {
-					const src = countryParquet(cc)
-					const fillExprs = FILL_FIELDS.map(
-						(f) => `round(100.0 * count(nullif(trim(${f}), '')) / count(*), 1) AS ${f}_pct`
-					).join(",\n\t\t\t")
-
-					const totals = await db.runAndReadAll(`
-						SELECT
-							count(*)::BIGINT AS rows,
-							${fillExprs},
-							round(100.0 * count(*) FILTER (len(address_levels) > 0) / count(*), 1) AS address_levels_pct,
-							round(100.0 * count(*) FILTER (
-								len(list_filter(sources, s -> s.dataset ILIKE '%openaddress%')) > 0
-							) / count(*), 1) AS oa_lineage_pct
-						FROM read_parquet('${src}')
-					`)
-					const row = totals.getRowObjects()[0] as Record<string, unknown>
-
-					if (!row || Number(row.rows) === 0) return null
-
-					const datasetRows = await db.runAndReadAll(`
-						SELECT u.dataset AS dataset, count(*)::BIGINT AS n
-						FROM (SELECT unnest(sources) AS u FROM read_parquet('${src}'))
-						GROUP BY 1 ORDER BY n DESC
-					`)
-					const datasets: Record<string, number> = {}
-
-					for (const d of datasetRows.getRowObjects() as { dataset: string; n: bigint }[]) {
-						datasets[d.dataset ?? "(null)"] = Number(d.n)
-					}
-
-					const fill_pct: Record<string, number> = {}
-
-					for (const f of FILL_FIELDS) {
-						fill_pct[f] = Number(row[`${f}_pct`])
-					}
-
-					return {
-						country: cc,
-						rows: Number(row.rows),
-						fill_pct,
-						address_levels_pct: Number(row.address_levels_pct),
-						datasets,
-						oa_lineage_pct: Number(row.oa_lineage_pct),
-					}
-				}
-
-				const probes: CountryProbe[] = []
-
-				for (const cc of countries) {
-					if (!options.probeOnly) {
-						await ingestCountry(cc)
-					}
-
-					if (options.corpusJsonl) {
-						await emitCorpusJsonl(cc)
-					}
-					const probe = await probeCountry(cc)
-
-					if (probe) {
-						probes.push(probe)
-						console.error(
-							`[probe] ${cc}: ${probe.rows} rows · postcode ${probe.fill_pct.postcode}% · ` +
-								`postal_city ${probe.fill_pct.postal_city}% · OA-lineage ${probe.oa_lineage_pct}%`
-						)
-					} else {
-						console.error(`[probe] ${cc}: no rows found — check the country code or release`)
-					}
-				}
-
-				writeFileSync(path.join(outDir, "fill-rates.json"), JSON.stringify({ release, probes }, null, "\t"))
-				writeFileSync(path.join(outDir, "fill-rates.md"), renderMarkdown(release, probes))
-				console.error(`[done] report -> ${path.join(outDir, "fill-rates.{json,md}")}`)
-
-				db.closeSync()
-
-				const lines = [
-					`overture ingest: ${outDir}`,
-					`release ${release} · ${countries.join(",")} · ${probes.length} probed`,
-					`report: fill-rates.json + fill-rates.md`,
-					...probes.map(
-						(p) =>
-							`${p.country}: ${p.rows.toLocaleString("en-US")} rows · postcode ${p.fill_pct.postcode}% · OA ${p.oa_lineage_pct}%`
-					),
-				]
-				setSummary(lines)
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+	const state = useCommandTask(async () => {
+		if (!options.countries) {
+			throw commandError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")
 		}
-	}, [summary, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		const release = options.release ?? DEFAULT_RELEASE
+		const countries = options.countries.split(",").map((c) => c.trim().toUpperCase())
+		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
+		const outRoot = options.out ?? dataRootPath("overture")
+		const outDir = path.join(outRoot, release)
+		mkdirSync(outDir, { recursive: true })
 
-	if (summary) {
+		// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load
+		// it dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault
+		// when the native binding isn't installed.
+		const { DuckDBInstance } = await import("@duckdb/node-api")
+		const instance = await DuckDBInstance.create()
+		const db = await instance.connect()
+
+		// Anonymous access to the public Overture bucket — region only, no credentials.
+		await db.run("INSTALL httpfs; LOAD httpfs;")
+		await db.run("INSTALL spatial; LOAD spatial;")
+		await db.run("SET s3_region='us-west-2';")
+		// Modest thread count + a hard memory ceiling: DuckDB's default (all cores) over the
+		// Overture addresses theme OOM-killed this box once (2026-06-19, naive read_parquet).
+		// COPY streams to disk, so the caps cost little; they bound scan parallelism + buffers.
+		await db.run("SET threads=4;")
+		await db.run("SET memory_limit='8GB';")
+
+		const countryParquet = (cc: string) => path.join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
+
+		/**
+		 * Materialize one country into local Parquet. Column set preserves the Overture schema verbatim (nested `sources` +
+		 * `address_levels` included) plus lon/lat decoded from the WKB point via the spatial extension.
+		 */
+		const ingestCountry = async (cc: string): Promise<void> => {
+			const limitClause = limit ? `LIMIT ${limit}` : ""
+			const dest = countryParquet(cc)
+			const started = Date.now()
+			await db.run(`
+				COPY (
+					SELECT
+						id,
+						country,
+						postcode,
+						street,
+						number,
+						unit,
+						address_levels,
+						postal_city,
+						sources,
+						version,
+						ST_X(geometry) AS lon,
+						ST_Y(geometry) AS lat
+					FROM read_parquet('${S3_GLOB(release)}', hive_partitioning = 1)
+					WHERE country = '${cc}'
+					${limitClause}
+				) TO '${dest}' (FORMAT PARQUET, COMPRESSION SNAPPY)
+			`)
+			const secs = ((Date.now() - started) / 1000).toFixed(0)
+			console.error(`[ingest] ${cc} -> ${dest} (${secs}s)`)
+		}
+
+		/**
+		 * Emit the flattened corpus-input JSONL the `overture` corpus adapter consumes (`{ street, number, unit, postcode,
+		 * locality }`), so `@mailwoman/corpus` stays free of the heavy native DuckDB binding. `street` is kept WHOLE
+		 * (keyword included); the downstream affix-relabel splits `street_prefix`. `locality` flattens the `address_levels`
+		 * municipality (the deepest level) with a `postal_city` fallback.
+		 */
+		const emitCorpusJsonl = async (cc: string): Promise<void> => {
+			const src = countryParquet(cc)
+			const dest = path.join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
+			await db.run(`
+				COPY (
+					SELECT
+						street,
+						number,
+						unit,
+						postcode,
+						COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS locality
+					FROM read_parquet('${src}')
+					WHERE street IS NOT NULL AND trim(street) <> ''
+						AND (
+							(postcode IS NOT NULL AND trim(postcode) <> '')
+							OR len(address_levels) > 0
+							OR (postal_city IS NOT NULL AND trim(postal_city) <> '')
+						)
+				) TO '${dest}' (FORMAT JSON)
+			`)
+			console.error(`[corpus-jsonl] ${cc} -> ${dest}`)
+		}
+
+		/** Probe one country's LOCAL Parquet for the fill-rate report. */
+		const probeCountry = async (cc: string): Promise<CountryProbe | null> => {
+			const src = countryParquet(cc)
+			const fillExprs = FILL_FIELDS.map(
+				(f) => `round(100.0 * count(nullif(trim(${f}), '')) / count(*), 1) AS ${f}_pct`
+			).join(",\n\t\t\t")
+
+			const totals = await db.runAndReadAll(`
+				SELECT
+					count(*)::BIGINT AS rows,
+					${fillExprs},
+					round(100.0 * count(*) FILTER (len(address_levels) > 0) / count(*), 1) AS address_levels_pct,
+					round(100.0 * count(*) FILTER (
+						len(list_filter(sources, s -> s.dataset ILIKE '%openaddress%')) > 0
+					) / count(*), 1) AS oa_lineage_pct
+				FROM read_parquet('${src}')
+			`)
+			const row = totals.getRowObjects()[0] as Record<string, unknown>
+
+			if (!row || Number(row.rows) === 0) return null
+
+			const datasetRows = await db.runAndReadAll(`
+				SELECT u.dataset AS dataset, count(*)::BIGINT AS n
+				FROM (SELECT unnest(sources) AS u FROM read_parquet('${src}'))
+				GROUP BY 1 ORDER BY n DESC
+			`)
+			const datasets: Record<string, number> = {}
+
+			for (const d of datasetRows.getRowObjects() as { dataset: string; n: bigint }[]) {
+				datasets[d.dataset ?? "(null)"] = Number(d.n)
+			}
+
+			const fill_pct: Record<string, number> = {}
+
+			for (const f of FILL_FIELDS) {
+				fill_pct[f] = Number(row[`${f}_pct`])
+			}
+
+			return {
+				country: cc,
+				rows: Number(row.rows),
+				fill_pct,
+				address_levels_pct: Number(row.address_levels_pct),
+				datasets,
+				oa_lineage_pct: Number(row.oa_lineage_pct),
+			}
+		}
+
+		const probes: CountryProbe[] = []
+
+		for (const cc of countries) {
+			if (!options.probeOnly) {
+				await ingestCountry(cc)
+			}
+
+			if (options.corpusJsonl) {
+				await emitCorpusJsonl(cc)
+			}
+			const probe = await probeCountry(cc)
+
+			if (probe) {
+				probes.push(probe)
+				console.error(
+					`[probe] ${cc}: ${probe.rows} rows · postcode ${probe.fill_pct.postcode}% · ` +
+						`postal_city ${probe.fill_pct.postal_city}% · OA-lineage ${probe.oa_lineage_pct}%`
+				)
+			} else {
+				console.error(`[probe] ${cc}: no rows found — check the country code or release`)
+			}
+		}
+
+		writeFileSync(path.join(outDir, "fill-rates.json"), JSON.stringify({ release, probes }, null, "\t"))
+		writeFileSync(path.join(outDir, "fill-rates.md"), renderMarkdown(release, probes))
+		console.error(`[done] report -> ${path.join(outDir, "fill-rates.{json,md}")}`)
+
+		db.closeSync()
+
+		return [
+			`overture ingest: ${outDir}`,
+			`release ${release} · ${countries.join(",")} · ${probes.length} probed`,
+			`report: fill-rates.json + fill-rates.md`,
+			...probes.map(
+				(p) =>
+					`${p.country}: ${p.rows.toLocaleString("en-US")} rows · postcode ${p.fill_pct.postcode}% · OA ${p.oa_lineage_pct}%`
+			),
+		]
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

@@ -20,7 +20,6 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
-import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -48,10 +47,9 @@ import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tool
 import { createWOFResolver } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 import { geocodeAddress, ShardProvider, type ShardResolver } from "../../geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../../resolver-backend.ts"
@@ -197,7 +195,7 @@ export function loadMapping(
 		try {
 			provided = JSON.parse(text) as Partial<ColumnMapping>
 		} catch (err) {
-			throw new Error(`--mapping is neither a readable file nor valid JSON: ${(err as Error).message}`)
+			throw commandError(`--mapping is neither a readable file nor valid JSON: ${(err as Error).message}`)
 		}
 	}
 
@@ -208,7 +206,7 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
 	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
-		throw new Error("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")
+		throw commandError("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")
 	}
 
 	return path
@@ -229,7 +227,7 @@ async function buildGeocoder(
 	try {
 		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
 	} catch {
-		throw new Error(
+		throw commandError(
 			"registry requires the neural weights. Install @mailwoman/neural-weights-en-us (or a --locale match)."
 		)
 	}
@@ -239,7 +237,7 @@ async function buildGeocoder(
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
-		throw new Error("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
+		throw commandError("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
 	}
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend; else FTS over wofPath.
@@ -357,11 +355,11 @@ export function loadSources(option: string): MultiSourceSpec[] {
 	try {
 		parsed = JSON.parse(text)
 	} catch (err) {
-		throw new Error(`--sources is neither a readable file nor valid JSON: ${(err as Error).message}`)
+		throw commandError(`--sources is neither a readable file nor valid JSON: ${(err as Error).message}`)
 	}
 
 	if (!Array.isArray(parsed) || parsed.some((s) => !s || typeof (s as MultiSourceSpec).path !== "string")) {
-		throw new Error("--sources must be a JSON array of { path, mapping, source?, delimiter?, limit? }.")
+		throw commandError("--sources must be a JSON array of { path, mapping, source?, delimiter?, limit? }.")
 	}
 
 	return parsed as MultiSourceSpec[]
@@ -444,7 +442,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			const fundingSources = specs.filter((s) => s.role === "funding").map(labelOf)
 
 			if (!eligibilitySources.length || !fundingSources.length) {
-				throw new Error(
+				throw commandError(
 					'--reconcile needs each --sources entry tagged with `role: "eligibility"` or `role: "funding"` ' +
 						"(at least one of each)."
 				)
@@ -488,7 +486,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 
 async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	if (options.reconcile) {
-		throw new Error(
+		throw commandError(
 			"--reconcile is a cross-source mode: pass --sources <config.json> (each entry tagged with a " +
 				"`role`), not a single positional CSV."
 		)
@@ -528,46 +526,33 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 // ---------------------------------------------------------------------------
 
 const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
-	const [output, setOutput] = useState<string>()
-	const [error, setError] = useState<string>()
-
-	useEffect(() => {
-		if (error) {
-			setImmediate().then(() => process.exit(1))
+	const state = useCommandTask(async () => {
+		// `loadSources` can throw on a malformed config — the hook routes its error to the same handler.
+		if (options.sources) {
+			return runMultiSource(loadSources(options.sources), options)
 		}
-	}, [error])
 
-	useEffect(() => {
-		// `loadSources` can throw on a malformed config — wrap so its error routes to the same handler.
-		const task = options.sources
-			? Promise.resolve().then(() => runMultiSource(loadSources(options.sources!), options))
-			: (() => {
-					const csv = args?.[0]
+		const csv = args?.[0]
 
-					if (!csv || csv.trim().length === 0) {
-						return Promise.reject(
-							new Error(
-								"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
-									"e.g. mailwoman registry contacts.csv --out entities.geojson"
-							)
-						)
-					}
+		if (!csv || csv.trim().length === 0) {
+			throw commandError(
+				"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
+					"e.g. mailwoman registry contacts.csv --out entities.geojson"
+			)
+		}
 
-					return runRegistry(csv.trim(), options)
-				})()
+		return runRegistry(csv.trim(), options)
+	})
 
-		task.then(setOutput).catch((err: unknown) => setError((err as Error).message))
-	}, [args, options])
-
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (!output) {
+	if (state.status !== "done") {
 		return <Spinner />
 	}
 
-	return <Text>{output}</Text>
+	return <Text>{state.result}</Text>
 }
 
 export default RegistryCommand

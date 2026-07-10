@@ -32,10 +32,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	src: zod
@@ -94,94 +93,81 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 			}
 	}
 
-	if (errors.length) throw new Error(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
+	if (errors.length) throw commandError(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
 }
 
 const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const { BUILTIN_STRATEGY_NAMES } = await import("@mailwoman/resolver-wof-sqlite")
+		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const { BUILTIN_STRATEGY_NAMES } = await import("@mailwoman/resolver-wof-sqlite")
-				const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
+		const src = options.src
+		const output = options.output ?? dataRootPath("wof", "conventions.db")
 
-				const src = options.src
-				const output = options.output ?? dataRootPath("wof", "conventions.db")
+		const rows = JSON.parse(readFileSync(src, "utf8")) as AuthoredConvention[]
 
-				const rows = JSON.parse(readFileSync(src, "utf8")) as AuthoredConvention[]
+		if (!Array.isArray(rows)) throw commandError(`${src} must be a JSON array of authored conventions`)
+		validate(rows, KNOWN)
 
-				if (!Array.isArray(rows)) throw new Error(`${src} must be a JSON array of authored conventions`)
-				validate(rows, KNOWN)
+		const db = new DatabaseSync(output)
+		// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `db` handle.
+		const kdb = new DatabaseClient({ database: db })
+		await kdb.schema.dropTable("address_convention").ifExists().execute()
+		await kdb.schema.dropTable("meta").ifExists().execute()
+		await kdb.schema
+			.createTable("address_convention")
+			// wof_id: the WOF admin polygon this profile attaches to. convention: the Convention JSON.
+			// source: provenance — why this row exists / where it came from.
+			.addColumn("wof_id", "integer", (c) => c.primaryKey())
+			.addColumn("convention", "text", (c) => c.notNull())
+			.addColumn("source", "text", (c) => c.notNull())
+			.execute()
+		const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
 
-				const db = new DatabaseSync(output)
-				// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `db` handle.
-				const kdb = new DatabaseClient({ database: db })
-				await kdb.schema.dropTable("address_convention").ifExists().execute()
-				await kdb.schema.dropTable("meta").ifExists().execute()
-				await kdb.schema
-					.createTable("address_convention")
-					// wof_id: the WOF admin polygon this profile attaches to. convention: the Convention JSON.
-					// source: provenance — why this row exists / where it came from.
-					.addColumn("wof_id", "integer", (c) => c.primaryKey())
-					.addColumn("convention", "text", (c) => c.notNull())
-					.addColumn("source", "text", (c) => c.notNull())
-					.execute()
-				const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
-
-				for (const r of rows) {
-					ins.run(r.wof_id, JSON.stringify(r.convention), r.source)
-				}
-
-				// Freeze into the read-only distributable asset — same discipline as our other WOF tables.
-				await kdb.schema
-					.createTable("meta")
-					.addColumn("key", "text", (c) => c.primaryKey())
-					.addColumn("value", "text")
-					.execute()
-				const meta: Record<string, string> = {
-					name: "mailwoman-conventions",
-					description: "Geographic Rule Engine convention profiles, keyed by WOF polygon id (Direction E)",
-					schema_version: "1",
-					source:
-						"Authored profiles compiled from data/conventions/conventions.json (built from source, not a prebuilt dump)",
-					rows: String(rows.length),
-					strategies_known: [...KNOWN].join(","),
-				}
-				const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
-
-				for (const [k, v] of Object.entries(meta)) {
-					insMeta.run(k, v)
-				}
-
-				db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
-				db.exec("ANALYZE")
-				const ok = (db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }).integrity_check
-
-				if (ok !== "ok") throw new Error(`integrity_check failed: ${ok}`)
-				db.exec("VACUUM")
-				await kdb.destroy() // closes the underlying `db` handle
-
-				setSummary([`conventions: ${output}`, `${rows.length} convention(s) compiled, integrity=ok`])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+		for (const r of rows) {
+			ins.run(r.wof_id, JSON.stringify(r.convention), r.source)
 		}
-	}, [summary, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		// Freeze into the read-only distributable asset — same discipline as our other WOF tables.
+		await kdb.schema
+			.createTable("meta")
+			.addColumn("key", "text", (c) => c.primaryKey())
+			.addColumn("value", "text")
+			.execute()
+		const meta: Record<string, string> = {
+			name: "mailwoman-conventions",
+			description: "Geographic Rule Engine convention profiles, keyed by WOF polygon id (Direction E)",
+			schema_version: "1",
+			source:
+				"Authored profiles compiled from data/conventions/conventions.json (built from source, not a prebuilt dump)",
+			rows: String(rows.length),
+			strategies_known: [...KNOWN].join(","),
+		}
+		const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
 
-	if (summary) {
+		for (const [k, v] of Object.entries(meta)) {
+			insMeta.run(k, v)
+		}
+
+		db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
+		db.exec("ANALYZE")
+		const ok = (db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }).integrity_check
+
+		if (ok !== "ok") throw new Error(`integrity_check failed: ${ok}`)
+		db.exec("VACUUM")
+		await kdb.destroy() // closes the underlying `db` handle
+
+		const summary = [`conventions: ${output}`, `${rows.length} convention(s) compiled, integrity=ok`]
+
+		return summary
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

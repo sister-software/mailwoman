@@ -9,10 +9,9 @@
  */
 
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	csv: zod.string().optional().describe("CBS PC6 centroid CSV. Default <data-root>/cbs/pc6-centroids.csv"),
@@ -22,30 +21,16 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerBuildNLPC6: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<string>()
+	const state = useCommandTask(async () => {
+		const { buildNLPC6Shard } = await import("../../../gazetteer-pipeline/postcode/nl-pc6.ts")
+		const r = await buildNLPC6Shard({ csvPath: options.csv, out: options.out })
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const { buildNLPC6Shard } = await import("../../../gazetteer-pipeline/postcode/nl-pc6.ts")
-				const r = await buildNLPC6Shard({ csvPath: options.csv, out: options.out })
-				setDone(`nl-pc6: ${r.inserted.toLocaleString()} PC6 rows (skipped ${r.skipped}) → ${r.out} — sealed 0444`)
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
+		return `nl-pc6: ${r.inserted.toLocaleString()} PC6 rows (skipped ${r.skipped}) → ${r.out} — sealed 0444`
+	})
 
-	useEffect(() => {
-		if (done || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
-		}
-	}, [done, error])
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	if (error) return <Text color="red">✗ {error}</Text>
-
-	if (done) return <Text color="green">✓ {done}</Text>
+	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
 
 	return null
 }

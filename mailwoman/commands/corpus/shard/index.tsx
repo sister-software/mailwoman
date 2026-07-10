@@ -15,10 +15,9 @@ import { createWriteStream } from "node:fs"
 
 import { getShardRecipe, listShardRecipes, type ShardRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../../../cli-kit/index.ts"
 
 /** Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands. */
 export const isDefault = true
@@ -55,89 +54,72 @@ export { ArgumentsSchema as args, OptionsSchema as options }
 const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
 
 const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
-	const [error, setError] = useState<string>()
-	const [lines, setLines] = useState<string[]>()
-
-	useEffect(() => {
-		void (async () => {
-			try {
-				if (options.list || args.length === 0) {
-					setLines([
-						"recipes:",
-						...listShardRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
-						"",
-						"usage: mailwoman corpus shard <recipe> --output <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
-					])
-
-					return
-				}
-
-				const name = args[0]!
-				const recipe = getShardRecipe(name)
-
-				if (!recipe) {
-					throw new Error(`unknown recipe "${name}". Run \`mailwoman corpus shard --list\`.`)
-				}
-
-				if (!options.output) throw new Error("--output <out.jsonl> required")
-
-				if (recipe.mode === "tuples" && !options.input) throw new Error(`recipe "${name}" needs --input <tuples.jsonl>`)
-
-				if (recipe.mode === "generate" && !options.count) throw new Error(`recipe "${name}" needs --count <N>`)
-
-				const seed = options.seed != null ? Number(options.seed) : Date.now()
-				const opts: ShardRecipeOpts = {
-					output: options.output,
-					seed,
-					variants: Number(options.variants) || 1,
-					input: options.input,
-					count: num(options.count),
-					golden: options.golden,
-					sourceName: options.sourceName,
-					houseNumberProb: num(options.houseNumberProb),
-					pmbRatio: num(options.pmbRatio),
-					militaryRatio: num(options.militaryRatio),
-					reversedFraction: num(options.reversedFraction),
-					edgesDir: options.edgesDir,
-					country: options.country,
-					intlFraction: num(options.intlFraction),
-					bareProb: num(options.bareProb),
-					hnProb: num(options.hnProb),
-					communes: options.communes,
-					multilocaleCount: num(options.multilocaleCount),
-				}
-
-				console.error(`▸ shard recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
-				const stream = createWriteStream(options.output, { encoding: "utf8" })
-				const write = (line: string): void => {
-					stream.write(line)
-				}
-				const stats = await recipe.run(opts, write)
-				stream.end()
-				await new Promise<void>((res) => stream.on("finish", () => res()))
-
-				setLines([
-					`recipe: ${name}`,
-					`${stats.emitted.toLocaleString()} rows emitted, ${stats.skipped.toLocaleString()} skipped${stats.read != null ? `, ${stats.read.toLocaleString()} read` : ""} → ${options.output}`,
-				])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options, args])
-
-	useEffect(() => {
-		if (lines || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+	const state = useCommandTask(async () => {
+		if (options.list || args.length === 0) {
+			return [
+				"recipes:",
+				...listShardRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
+				"",
+				"usage: mailwoman corpus shard <recipe> --output <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
+			]
 		}
-	}, [lines, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		const name = args[0]!
+		const recipe = getShardRecipe(name)
 
-	if (lines) {
+		if (!recipe) {
+			throw commandError(`unknown recipe "${name}". Run \`mailwoman corpus shard --list\`.`)
+		}
+
+		if (!options.output) throw commandError("--output <out.jsonl> required")
+
+		if (recipe.mode === "tuples" && !options.input) throw commandError(`recipe "${name}" needs --input <tuples.jsonl>`)
+
+		if (recipe.mode === "generate" && !options.count) throw commandError(`recipe "${name}" needs --count <N>`)
+
+		const seed = options.seed != null ? Number(options.seed) : Date.now()
+		const opts: ShardRecipeOpts = {
+			output: options.output,
+			seed,
+			variants: Number(options.variants) || 1,
+			input: options.input,
+			count: num(options.count),
+			golden: options.golden,
+			sourceName: options.sourceName,
+			houseNumberProb: num(options.houseNumberProb),
+			pmbRatio: num(options.pmbRatio),
+			militaryRatio: num(options.militaryRatio),
+			reversedFraction: num(options.reversedFraction),
+			edgesDir: options.edgesDir,
+			country: options.country,
+			intlFraction: num(options.intlFraction),
+			bareProb: num(options.bareProb),
+			hnProb: num(options.hnProb),
+			communes: options.communes,
+			multilocaleCount: num(options.multilocaleCount),
+		}
+
+		console.error(`▸ shard recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
+		const stream = createWriteStream(options.output, { encoding: "utf8" })
+		const write = (line: string): void => {
+			stream.write(line)
+		}
+		const stats = await recipe.run(opts, write)
+		stream.end()
+		await new Promise<void>((res) => stream.on("finish", () => res()))
+
+		return [
+			`recipe: ${name}`,
+			`${stats.emitted.toLocaleString()} rows emitted, ${stats.skipped.toLocaleString()} skipped${stats.read != null ? `, ${stats.read.toLocaleString()} read` : ""} → ${options.output}`,
+		]
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{lines.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i}>{line}</Text>
 				))}
 			</Box>

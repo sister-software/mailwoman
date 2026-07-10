@@ -12,10 +12,9 @@
 import { join } from "node:path"
 
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../../cli-kit/index.ts"
+import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import { wofDir } from "../../../gazetteer-pipeline/index.ts"
 
 const ArgumentsSchema = zod.array(zod.string().describe("Queries to probe"))
@@ -30,73 +29,57 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState(false)
+	const state = useCommandTask(async () => {
+		if (args.length === 0) throw commandError("pass at least one query")
+		const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
+		const maxResults = Number.parseInt(options.max ?? "10", 10)
+		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				if (args.length === 0) throw new Error("pass at least one query")
-				const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
-				const maxResults = Number.parseInt(options.max ?? "10", 10)
-				const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
+		console.error(`Building FST from ${dbPath}...`)
+		const start = performance.now()
+		const { matcher, result } = buildFSTFromWOF({
+			dbPath,
+			countries: ["US"],
+			placetypes: ["country", "region", "county", "locality"],
+			languages: ["eng", ""],
+		})
+		console.error(
+			`Built: ${result.stateCount} states, ${result.placeCount} places, ${result.edgeCount} edges (${((performance.now() - start) / 1000).toFixed(1)}s)\n`
+		)
 
-				console.error(`Building FST from ${dbPath}...`)
-				const start = performance.now()
-				const { matcher, result } = buildFSTFromWOF({
-					dbPath,
-					countries: ["US"],
-					placetypes: ["country", "region", "county", "locality"],
-					languages: ["eng", ""],
-				})
-				console.error(
-					`Built: ${result.stateCount} states, ${result.placeCount} places, ${result.edgeCount} edges (${((performance.now() - start) / 1000).toFixed(1)}s)\n`
-				)
+		for (const query of args) {
+			const q = matcher.query(query)
+			console.log(`"${query}" → path: [${q.path.map((t) => `"${t}"`).join(", ")}]`)
+			console.log(`  State: ${q.stateID}, Accepting: ${q.accepting.length} interpretations`)
 
-				for (const query of args) {
-					const q = matcher.query(query)
-					console.log(`"${query}" → path: [${q.path.map((t) => `"${t}"`).join(", ")}]`)
-					console.log(`  State: ${q.stateID}, Accepting: ${q.accepting.length} interpretations`)
+			if (q.accepting.length > 0) {
+				const sorted = [...q.accepting].sort((a, b) => b.importance - a.importance)
+				console.log(`  Top by importance:`)
 
-					if (q.accepting.length > 0) {
-						const sorted = [...q.accepting].sort((a, b) => b.importance - a.importance)
-						console.log(`  Top by importance:`)
-
-						for (const p of sorted.slice(0, maxResults)) {
-							const imp = p.importance > 0 ? ` imp ${p.importance.toFixed(4)}` : ""
-							const chain = p.parentChain.length > 0 ? ` chain=[${p.parentChain.join("→")}]` : ""
-							console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofID}`)
-						}
-
-						if (sorted.length > maxResults) {
-							console.log(`    ... and ${sorted.length - maxResults} more`)
-						}
-					}
-
-					if (options.showContinuations && q.continuations.length > 0) {
-						const shown = q.continuations.sort((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
-						console.log(`  Continuations (${q.continuations.length} total):`)
-
-						for (const c of shown) {
-							console.log(`    "${c.token}"${c.acceptingCount > 0 ? ` → ${c.acceptingCount} places` : ""}`)
-						}
-					}
-					console.log()
+				for (const p of sorted.slice(0, maxResults)) {
+					const imp = p.importance > 0 ? ` imp ${p.importance.toFixed(4)}` : ""
+					const chain = p.parentChain.length > 0 ? ` chain=[${p.parentChain.join("→")}]` : ""
+					console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofID}`)
 				}
-				setDone(true)
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
+
+				if (sorted.length > maxResults) {
+					console.log(`    ... and ${sorted.length - maxResults} more`)
+				}
 			}
-		})()
-	}, [args, options])
 
-	useEffect(() => {
-		if (done || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+			if (options.showContinuations && q.continuations.length > 0) {
+				const shown = q.continuations.sort((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
+				console.log(`  Continuations (${q.continuations.length} total):`)
+
+				for (const c of shown) {
+					console.log(`    "${c.token}"${c.acceptingCount > 0 ? ` → ${c.acceptingCount} places` : ""}`)
+				}
+			}
+			console.log()
 		}
-	}, [done, error])
+	})
 
-	if (error) return <Text color="red">✗ {error}</Text>
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
 	return null
 }

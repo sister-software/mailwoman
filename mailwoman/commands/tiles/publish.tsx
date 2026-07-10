@@ -25,16 +25,14 @@
  */
 
 import { existsSync, statSync } from "node:fs"
-import { setImmediate } from "node:timers/promises"
 
 import { Spinner } from "@inkjs/ui"
 import { $private } from "@mailwoman/core/env"
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	file: zod.string().describe("Path to the .pmtiles archive to upload"),
@@ -49,9 +47,9 @@ export { OptionsSchema as options }
 const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY"] as const
 
 async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<string> {
-	if (!existsSync(options.file)) throw new Error(`--file not found: ${options.file}`)
+	if (!existsSync(options.file)) throw commandError(`--file not found: ${options.file}`)
 
-	if (!options.file.endsWith(".pmtiles")) throw new Error(`--file must be a .pmtiles archive: ${options.file}`)
+	if (!options.file.endsWith(".pmtiles")) throw commandError(`--file must be a .pmtiles archive: ${options.file}`)
 
 	const key = `${options.prefix}/${options.tileset}.pmtiles`
 	const sizeMb = statSync(options.file).size / 1024 / 1024
@@ -64,7 +62,7 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 	const missing = REQUIRED_ENV.filter((v) => !$private[v])
 
 	if (missing.length) {
-		throw new Error(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
+		throw commandError(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
 	}
 
 	// rclone reads RCLONE_S3_* from the inherited env for the on-the-fly `:s3:` remote. The flags skip the
@@ -74,33 +72,20 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 	const result = await $({ nothrow: true, quiet: true })`rclone copyto ${options.file} ${remote} ${flags}`
 
 	if (result.exitCode !== 0) {
-		throw new Error(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
+		throw commandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
 	}
 
 	return `✓ ${options.bucket}/${key} (${sizeMb.toFixed(1)} MB)\n  served at ${servedAt}`
 }
 
 const TilesPublish: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [output, setOutput] = useState<string>()
-	const [error, setError] = useState<string>()
+	const state = useCommandTask(() => publishTiles(options))
 
-	useEffect(() => {
-		if (error) {
-			setImmediate().then(() => process.exit(1))
-		}
-	}, [error])
+	if (state.status === "error") return <Text color="red">{state.message}</Text>
 
-	useEffect(() => {
-		publishTiles(options)
-			.then(setOutput)
-			.catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
-	}, [options])
+	if (state.status === "done") return <Text>{state.result}</Text>
 
-	if (error) return <Text color="red">{error}</Text>
-
-	if (!output) return <Spinner label={`publishing ${options.tileset}.pmtiles to R2…`} />
-
-	return <Text>{output}</Text>
+	return <Spinner label={`publishing ${options.tileset}.pmtiles to R2…`} />
 }
 
 export default TilesPublish

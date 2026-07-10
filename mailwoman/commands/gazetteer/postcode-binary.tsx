@@ -32,10 +32,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 // imports), so the value import is safe at module level — no heavy ONNX runtime is pulled in.
 import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 interface LocaleSource {
 	country: string
@@ -107,91 +106,76 @@ function aggregateGbOutward(
 }
 
 const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const wof = dataRootPath("wof")
+		const outDir = options.out
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const wof = dataRootPath("wof")
-				const outDir = options.out
+		const locales: LocaleSource[] = []
 
-				const locales: LocaleSource[] = []
+		for (const spec of options.locale ?? []) {
+			const [country, db] = spec.split(":")
 
-				for (const spec of options.locale ?? []) {
-					const [country, db] = spec.split(":")
-
-					if (country && db) {
-						locales.push({ country, db: db.startsWith("/") ? db : join(wof, db) })
-					}
-				}
-
-				if (locales.length === 0) {
-					locales.push(
-						{ country: "US", db: join(wof, "postalcode-us.db") },
-						{ country: "NL", db: join(wof, "postalcode-intl.db") },
-						{ country: "FR", db: join(wof, "postalcode-intl.db") },
-						{ country: "DE", db: join(wof, "postalcode-intl.db") },
-						{ country: "ES", db: join(wof, "postalcode-intl.db") },
-						{ country: "IT", db: join(wof, "postalcode-intl.db") },
-						{ country: "GB", db: join(wof, "postalcode-gb.db") }
-					)
-				}
-
-				let written = 0
-
-				for (const { country, db } of locales) {
-					if (!existsSync(db)) {
-						console.error(`skip ${country}: missing ${db}`)
-						continue
-					}
-					const conn = new DatabaseSync(db, { readOnly: true })
-					const rows = conn
-						.prepare(
-							`SELECT name, country, latitude AS lat, longitude AS lon FROM spr
-							 WHERE placetype='postalcode' AND is_current!=0 AND country=?`
-						)
-						.all(country) as Array<{ name: string; country: string; lat: number; lon: number }>
-					conn.close()
-
-					const entries: PostcodeBinaryEntry[] =
-						country === "GB"
-							? aggregateGbOutward(rows)
-							: rows.map((r) => ({
-									postcode: String(r.name),
-									country: String(r.country),
-									lat: Number(r.lat),
-									lon: Number(r.lon),
-								}))
-					const bytes = serializePostcodeBinary(entries)
-					const outPath = join(outDir, `postcode-${country.toLowerCase()}.bin`)
-					writeFileSync(outPath, bytes)
-					written++
-					const placed = entries.filter((e) => e.lat !== 0 || e.lon !== 0).length
-					console.error(
-						`${country}: ${entries.length.toLocaleString()} codes (${placed.toLocaleString()} placed) → ${outPath} (${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
-					)
-				}
-
-				setSummary([`postcode binaries → ${outDir}`, `wrote ${written} of ${locales.length} locale binary(ies)`])
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
+			if (country && db) {
+				locales.push({ country, db: db.startsWith("/") ? db : join(wof, db) })
 			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
 		}
-	}, [summary, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		if (locales.length === 0) {
+			locales.push(
+				{ country: "US", db: join(wof, "postalcode-us.db") },
+				{ country: "NL", db: join(wof, "postalcode-intl.db") },
+				{ country: "FR", db: join(wof, "postalcode-intl.db") },
+				{ country: "DE", db: join(wof, "postalcode-intl.db") },
+				{ country: "ES", db: join(wof, "postalcode-intl.db") },
+				{ country: "IT", db: join(wof, "postalcode-intl.db") },
+				{ country: "GB", db: join(wof, "postalcode-gb.db") }
+			)
+		}
 
-	if (summary) {
+		let written = 0
+
+		for (const { country, db } of locales) {
+			if (!existsSync(db)) {
+				console.error(`skip ${country}: missing ${db}`)
+				continue
+			}
+			const conn = new DatabaseSync(db, { readOnly: true })
+			const rows = conn
+				.prepare(
+					`SELECT name, country, latitude AS lat, longitude AS lon FROM spr
+					 WHERE placetype='postalcode' AND is_current!=0 AND country=?`
+				)
+				.all(country) as Array<{ name: string; country: string; lat: number; lon: number }>
+			conn.close()
+
+			const entries: PostcodeBinaryEntry[] =
+				country === "GB"
+					? aggregateGbOutward(rows)
+					: rows.map((r) => ({
+							postcode: String(r.name),
+							country: String(r.country),
+							lat: Number(r.lat),
+							lon: Number(r.lon),
+						}))
+			const bytes = serializePostcodeBinary(entries)
+			const outPath = join(outDir, `postcode-${country.toLowerCase()}.bin`)
+			writeFileSync(outPath, bytes)
+			written++
+			const placed = entries.filter((e) => e.lat !== 0 || e.lon !== 0).length
+			console.error(
+				`${country}: ${entries.length.toLocaleString()} codes (${placed.toLocaleString()} placed) → ${outPath} (${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
+			)
+		}
+
+		return [`postcode binaries → ${outDir}`, `wrote ${written} of ${locales.length} locale binary(ies)`]
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

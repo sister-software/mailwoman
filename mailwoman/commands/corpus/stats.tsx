@@ -8,10 +8,9 @@
  */
 
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	shards: zod.string().describe("Comma-separated parquet shard paths or a directory"),
@@ -22,34 +21,20 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<string>()
+	const state = useCommandTask(async () => {
+		const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
+		await buildCorpusStats({
+			shardsArg: options.shards,
+			outputPath: options.output,
+			limitPerShard: options.limitPerShard ? Number(options.limitPerShard) : undefined,
+		})
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
-				await buildCorpusStats({
-					shardsArg: options.shards,
-					outputPath: options.output,
-					limitPerShard: options.limitPerShard ? Number(options.limitPerShard) : undefined,
-				})
-				setDone("done")
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
+		return "done"
+	})
 
-	useEffect(() => {
-		if (done || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
-		}
-	}, [done, error])
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	if (error) return <Text color="red">✗ {error}</Text>
-
-	if (done) return <Text color="green">✓ {done}</Text>
+	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
 
 	return null
 }

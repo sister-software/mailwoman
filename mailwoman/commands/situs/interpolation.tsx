@@ -34,10 +34,9 @@ import { pipeline } from "node:stream/promises"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	edgesDir: zod.string().default("/tmp/tiger-edges").describe("Download destination for TIGER ZIP + SHP files"),
@@ -442,185 +441,170 @@ function buildStateShard(
 type StateResult = { state: string; counties: number; segments: number; wallMs: number; skipped?: boolean }
 
 const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [summary, setSummary] = useState<string[]>()
+	const state = useCommandTask(async () => {
+		const EDGES_DIR = options.edgesDir
+		const OUT_DIR = options.outDir ?? dataRootPath("interpolation")
+		const RELEASE = options.release
+		const CONCURRENCY = options.concurrency
+		const FORCE = options.force
+		const DOWNLOAD_ONLY = options.downloadOnly
+		const BUILD_ONLY = options.buildOnly
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const EDGES_DIR = options.edgesDir
-				const OUT_DIR = options.outDir ?? dataRootPath("interpolation")
-				const RELEASE = options.release
-				const CONCURRENCY = options.concurrency
-				const FORCE = options.force
-				const DOWNLOAD_ONLY = options.downloadOnly
-				const BUILD_ONLY = options.buildOnly
+		// States to process — filtered by --states flag if provided.
+		const TARGET_STATES = options.states
+			? options.states
+					.toUpperCase()
+					.split(",")
+					.map((s) => s.trim())
+					.filter((s) => s in STATE_FIPS)
+			: Object.keys(STATE_FIPS)
 
-				// States to process — filtered by --states flag if provided.
-				const TARGET_STATES = options.states
-					? options.states
-							.toUpperCase()
-							.split(",")
-							.map((s) => s.trim())
-							.filter((s) => s in STATE_FIPS)
-					: Object.keys(STATE_FIPS)
-
-				if (TARGET_STATES.length === 0) {
-					throw new Error("No valid states specified. Check --states values against the STATE_FIPS map.")
-				}
-
-				console.error("=== National TIGER interpolation shard build ===")
-				console.error(`states:      ${TARGET_STATES.join(", ")}`)
-				console.error(`edges-dir:   ${EDGES_DIR}`)
-				console.error(`out-dir:     ${OUT_DIR}`)
-				console.error(`concurrency: ${CONCURRENCY}`)
-				console.error(`release:     ${RELEASE}`)
-
-				if (FORCE) {
-					console.error("force:       true (re-building existing shards)")
-				}
-				console.error("")
-
-				mkdirSync(EDGES_DIR, { recursive: true })
-				mkdirSync(OUT_DIR, { recursive: true })
-
-				// ── Step 1: load county population ranking ─────────────────────────────
-				console.error("Step 1: county population ranking")
-				const allCounties = await loadRankedCounties()
-				console.error(`  ${allCounties.length} counties in ranking`)
-
-				// Filter to target states only
-				const targetFipsSet = new Set(TARGET_STATES.map((s) => STATE_FIPS[s]))
-				let counties = allCounties.filter((c) => targetFipsSet.has(c.stateFips))
-
-				// Apply --top-counties cap if set
-				const topN = options.topCounties ?? null
-
-				if (topN !== null) {
-					counties = counties.slice(0, topN)
-					console.error(`  capped to top ${topN} counties by population`)
-				}
-
-				console.error(`  ${counties.length} counties to process`)
-				console.error("")
-
-				// ── Step 2: download ZIPs ──────────────────────────────────────────────
-				if (!BUILD_ONLY) {
-					console.error(`Step 2: downloading TIGER EDGES ZIPs (concurrency=${CONCURRENCY})`)
-					const BASE = "https://www2.census.gov/geo/tiger/TIGER2023/EDGES"
-					const tasks: DownloadTask[] = counties.map((c) => {
-						const geoid = c.geoid // 5-digit: stateFips + countyFips
-						const zipFile = `tl_2023_${geoid}_edges.zip`
-
-						return {
-							geoid,
-							zipURL: `${BASE}/${zipFile}`,
-							zipPath: path.join(EDGES_DIR, zipFile),
-						}
-					})
-					const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR)
-					console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
-
-					if (failed.length > 0) {
-						console.error(`  failed GEOIDs: ${failed.slice(0, 20).join(", ")}${failed.length > 20 ? " …" : ""}`)
-					}
-					console.error("")
-				}
-
-				if (DOWNLOAD_ONLY) {
-					console.error("--download-only: stopping after downloads.")
-					setSummary([`interpolation: ${OUT_DIR}`, "--download-only: stopped after downloads."])
-
-					return
-				}
-
-				// ── Step 3: determine which states have ≥1 county SHP ─────────────────
-				console.error("Step 3: building per-state shards")
-				// States from our target list that have at least one downloaded county SHP
-				const availableStates = TARGET_STATES.filter((abbr) => {
-					const fips = STATE_FIPS[abbr]
-					const pattern = new RegExp(`tl_\\d+_${fips}\\d{3}_edges\\.shp$`)
-
-					return readdirSync(EDGES_DIR).some((f) => pattern.test(f))
-				})
-
-				if (availableStates.length === 0) {
-					throw new Error("No county SHPs found in edges-dir for any target state. Run without --build-only first.")
-				}
-				console.error(`  ${availableStates.length} states with available SHPs: ${availableStates.join(", ")}`)
-				console.error("")
-
-				// ── Step 4: build shards sequentially ─────────────────────────────────
-				// Sequential (not parallel): each shard script uses DuckDB + SQLite; they're already
-				// I/O + DuckDB-parallel internally. Running states concurrently risks memory OOM on the
-				// 32K-row state builds and complicates progress reporting.
-				const wallStart = Date.now()
-				let totalSegments = 0
-				let builtStates = 0
-				const stateResults: StateResult[] = []
-
-				for (const abbr of availableStates) {
-					console.error(`Building ${abbr}…`)
-					const result = buildStateShard(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
-
-					if (result === null) {
-						// skipped (already exists, no --force)
-						stateResults.push({ state: abbr, counties: 0, segments: 0, wallMs: 0, skipped: true })
-						continue
-					}
-					builtStates++
-					totalSegments += result.segments
-					stateResults.push({
-						state: abbr,
-						counties: result.counties,
-						segments: result.segments,
-						wallMs: result.wallMs,
-					})
-					const elapsed = (result.wallMs / 1000).toFixed(1)
-					console.error(
-						`  ${abbr}: ${result.counties} counties, ${result.segments.toLocaleString()} segment-sides, ${elapsed}s`
-					)
-					console.error("")
-				}
-
-				// ── Summary ────────────────────────────────────────────────────────────
-				const totalWallMs = Date.now() - wallStart
-				const lines = [
-					`interpolation: ${OUT_DIR}`,
-					`States built:    ${builtStates} / ${availableStates.length}`,
-					`Total segments:  ${totalSegments.toLocaleString()}`,
-					`Wall clock:      ${(totalWallMs / 1000).toFixed(1)}s`,
-					`Per-state:`,
-				]
-
-				for (const r of stateResults) {
-					if (r.skipped) {
-						lines.push(`  ${r.state}: SKIPPED (already built)`)
-					} else {
-						lines.push(
-							`  ${r.state}: ${r.counties} counties · ${r.segments.toLocaleString()} segments · ${(r.wallMs / 1000).toFixed(1)}s`
-						)
-					}
-				}
-				setSummary(lines)
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
-
-	useEffect(() => {
-		if (summary || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
+		if (TARGET_STATES.length === 0) {
+			throw commandError("No valid states specified. Check --states values against the STATE_FIPS map.")
 		}
-	}, [summary, error])
 
-	if (error) return <Text color="red">✗ {error}</Text>
+		console.error("=== National TIGER interpolation shard build ===")
+		console.error(`states:      ${TARGET_STATES.join(", ")}`)
+		console.error(`edges-dir:   ${EDGES_DIR}`)
+		console.error(`out-dir:     ${OUT_DIR}`)
+		console.error(`concurrency: ${CONCURRENCY}`)
+		console.error(`release:     ${RELEASE}`)
 
-	if (summary) {
+		if (FORCE) {
+			console.error("force:       true (re-building existing shards)")
+		}
+		console.error("")
+
+		mkdirSync(EDGES_DIR, { recursive: true })
+		mkdirSync(OUT_DIR, { recursive: true })
+
+		// ── Step 1: load county population ranking ─────────────────────────────
+		console.error("Step 1: county population ranking")
+		const allCounties = await loadRankedCounties()
+		console.error(`  ${allCounties.length} counties in ranking`)
+
+		// Filter to target states only
+		const targetFipsSet = new Set(TARGET_STATES.map((s) => STATE_FIPS[s]))
+		let counties = allCounties.filter((c) => targetFipsSet.has(c.stateFips))
+
+		// Apply --top-counties cap if set
+		const topN = options.topCounties ?? null
+
+		if (topN !== null) {
+			counties = counties.slice(0, topN)
+			console.error(`  capped to top ${topN} counties by population`)
+		}
+
+		console.error(`  ${counties.length} counties to process`)
+		console.error("")
+
+		// ── Step 2: download ZIPs ──────────────────────────────────────────────
+		if (!BUILD_ONLY) {
+			console.error(`Step 2: downloading TIGER EDGES ZIPs (concurrency=${CONCURRENCY})`)
+			const BASE = "https://www2.census.gov/geo/tiger/TIGER2023/EDGES"
+			const tasks: DownloadTask[] = counties.map((c) => {
+				const geoid = c.geoid // 5-digit: stateFips + countyFips
+				const zipFile = `tl_2023_${geoid}_edges.zip`
+
+				return {
+					geoid,
+					zipURL: `${BASE}/${zipFile}`,
+					zipPath: path.join(EDGES_DIR, zipFile),
+				}
+			})
+			const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR)
+			console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
+
+			if (failed.length > 0) {
+				console.error(`  failed GEOIDs: ${failed.slice(0, 20).join(", ")}${failed.length > 20 ? " …" : ""}`)
+			}
+			console.error("")
+		}
+
+		if (DOWNLOAD_ONLY) {
+			console.error("--download-only: stopping after downloads.")
+
+			return [`interpolation: ${OUT_DIR}`, "--download-only: stopped after downloads."]
+		}
+
+		// ── Step 3: determine which states have ≥1 county SHP ─────────────────
+		console.error("Step 3: building per-state shards")
+		// States from our target list that have at least one downloaded county SHP
+		const availableStates = TARGET_STATES.filter((abbr) => {
+			const fips = STATE_FIPS[abbr]
+			const pattern = new RegExp(`tl_\\d+_${fips}\\d{3}_edges\\.shp$`)
+
+			return readdirSync(EDGES_DIR).some((f) => pattern.test(f))
+		})
+
+		if (availableStates.length === 0) {
+			throw commandError("No county SHPs found in edges-dir for any target state. Run without --build-only first.")
+		}
+		console.error(`  ${availableStates.length} states with available SHPs: ${availableStates.join(", ")}`)
+		console.error("")
+
+		// ── Step 4: build shards sequentially ─────────────────────────────────
+		// Sequential (not parallel): each shard script uses DuckDB + SQLite; they're already
+		// I/O + DuckDB-parallel internally. Running states concurrently risks memory OOM on the
+		// 32K-row state builds and complicates progress reporting.
+		const wallStart = Date.now()
+		let totalSegments = 0
+		let builtStates = 0
+		const stateResults: StateResult[] = []
+
+		for (const abbr of availableStates) {
+			console.error(`Building ${abbr}…`)
+			const result = buildStateShard(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
+
+			if (result === null) {
+				// skipped (already exists, no --force)
+				stateResults.push({ state: abbr, counties: 0, segments: 0, wallMs: 0, skipped: true })
+				continue
+			}
+			builtStates++
+			totalSegments += result.segments
+			stateResults.push({
+				state: abbr,
+				counties: result.counties,
+				segments: result.segments,
+				wallMs: result.wallMs,
+			})
+			const elapsed = (result.wallMs / 1000).toFixed(1)
+			console.error(
+				`  ${abbr}: ${result.counties} counties, ${result.segments.toLocaleString()} segment-sides, ${elapsed}s`
+			)
+			console.error("")
+		}
+
+		// ── Summary ────────────────────────────────────────────────────────────
+		const totalWallMs = Date.now() - wallStart
+		const lines = [
+			`interpolation: ${OUT_DIR}`,
+			`States built:    ${builtStates} / ${availableStates.length}`,
+			`Total segments:  ${totalSegments.toLocaleString()}`,
+			`Wall clock:      ${(totalWallMs / 1000).toFixed(1)}s`,
+			`Per-state:`,
+		]
+
+		for (const r of stateResults) {
+			if (r.skipped) {
+				lines.push(`  ${r.state}: SKIPPED (already built)`)
+			} else {
+				lines.push(
+					`  ${r.state}: ${r.counties} counties · ${r.segments.toLocaleString()} segments · ${(r.wallMs / 1000).toFixed(1)}s`
+				)
+			}
+		}
+
+		return lines
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status === "done") {
 		return (
 			<Box flexDirection="column">
-				{summary.map((line, i) => (
+				{state.result.map((line, i) => (
 					<Text key={i} color={i === 0 ? "green" : undefined}>
 						{i === 0 ? "✓ " : "  "}
 						{line}

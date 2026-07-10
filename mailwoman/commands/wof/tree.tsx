@@ -7,12 +7,14 @@
  */
 
 import { Text } from "ink"
-import { useEffect } from "react"
+
+import { useCommandTask } from "../../cli-kit/index.ts"
 
 const WofShim = () => {
-	useEffect(() => {
-		setImmediate(() => process.exit(1))
-	}, [])
+	useCommandTask(
+		async () => {},
+		() => 1
+	)
 
 	return <Text color="yellow">{"`mailwoman wof tree` moved: use `mailwoman gazetteer inspect tree`"}</Text>
 }

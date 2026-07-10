@@ -4,8 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { setImmediate } from "node:timers/promises"
-
 import { Spinner } from "@inkjs/ui"
 import { type AddressTree, decodeAsJSON, decodeAsTuples, decodeAsXML, proposalsToTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
@@ -16,10 +14,9 @@ import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwo
 import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
@@ -137,11 +134,11 @@ function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 	for (const spec of specs) {
 		const m = POLICY_SPEC_RE.exec(spec)
 
-		if (!m) throw new Error(`Invalid --policy spec ${spec}; expected <component>=<mode>`)
+		if (!m) throw commandError(`Invalid --policy spec ${spec}; expected <component>=<mode>`)
 		const [, component, mode] = m
 
 		if (!POLICY_MODES.includes(mode as PolicyMode)) {
-			throw new Error(`Unknown policy mode ${mode}; valid: ${POLICY_MODES.join(", ")}`)
+			throw commandError(`Unknown policy mode ${mode}; valid: ${POLICY_MODES.join(", ")}`)
 		}
 		out.push({ component: component as ComponentTag, mode: mode as PolicyMode })
 	}
@@ -150,84 +147,49 @@ function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 }
 
 const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
-	const [output, setOutput] = useState<string>()
-	const [error, setError] = useState<string>()
-
-	useEffect(() => {
-		if (error) {
-			// Render the error once, then exit non-zero so callers (scripts, CI) see the failure.
-			// Mirrors the pattern in corpus/run.tsx — setImmediate() yields so the React render flushes
-			// to stderr/stdout before the process tears down.
-			setImmediate().then(() => process.exit(1))
-		}
-	}, [error])
-
-	useEffect(() => {
+	const state = useCommandTask(async () => {
 		const input = args[0]!
 
 		if (options.benchmark !== undefined) {
 			if (options.isolated || (options.policy && options.policy.length > 0) || options.neural) {
-				// Intentional: surface the validation error through the same render-then-exit pattern
-				// as the async setError paths below (see the useEffect on [error] above). The
-				// "cascading renders" the rule warns about are not a real cost here because the
-				// effect short-circuits with `return`.
-				// eslint-disable-next-line react-hooks/set-state-in-effect
-				setError(
+				throw commandError(
 					"--benchmark requires the default runtime-pipeline path (incompatible with --isolated / --policy / --neural)"
 				)
-
-				return
 			}
-			runBenchmark(input, options, options.benchmark)
-				.then(setOutput)
-				.catch((err) => setError(err.message))
 
-			return
+			return runBenchmark(input, options, options.benchmark)
 		}
 
 		// --isolated: legacy rule-only path (the pre-pipeline default).
 		if (options.isolated) {
-			runIsolated(input, options)
-				.then(setOutput)
-				.catch((err) => setError(err.message))
-
-			return
+			return runIsolated(input, options)
 		}
 
 		// --policy implies the legacy proposal/policy path.
 		if (options.policy && options.policy.length > 0) {
 			const policyOverrides = parsePolicySpecs(options.policy)
-			runNeural(input, options, policyOverrides)
-				.then(setOutput)
-				.catch((err) => setError(err.message))
 
-			return
+			return runNeural(input, options, policyOverrides)
 		}
 
 		// --neural without --policy: legacy direct-neural path (kept for parity with old behavior).
 		if (options.neural) {
-			runNeural(input, options, [])
-				.then(setOutput)
-				.catch((err) => setError(err.message))
-
-			return
+			return runNeural(input, options, [])
 		}
 
 		// Default: runtime pipeline.
-		runPipeline(input, options)
-			.then(setOutput)
-			.catch((err) => setError(err.message))
-	}, [args, options])
+		return runPipeline(input, options)
+	})
 
-	if (error) {
-		return <Text color="red">{error}</Text>
+	if (state.status === "error") {
+		return <Text color="red">{state.message}</Text>
 	}
 
-	if (!output) {
+	if (state.status !== "done") {
 		return <Spinner />
 	}
 
-	return <Text>{output}</Text>
+	return <Text>{state.result}</Text>
 }
 
 /**
@@ -269,7 +231,7 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
-		throw new Error(
+		throw commandError(
 			"--resolve needs a WOF SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Download from https://data.geocode.earth/wof/dist/sqlite/ and pre-build the FTS5 index " +
 				"with `mailwoman gazetteer build fts <path>`."
@@ -339,7 +301,7 @@ async function withResolver<T>(
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
-		throw new Error(
+		throw commandError(
 			"--resolve requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
 				"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
 		)
