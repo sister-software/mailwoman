@@ -22,7 +22,7 @@
  *   départements = 16 rows; DE has no manifest holdout). Abort/de-risk per the plan: a held-out
  *   slice below 1000 rows is reported as UNTRUSTED, not scored.
  *
- *   Usage: node --experimental-strip-types scripts/eval/honest-eval.ts\
+ *   Usage: node scripts/eval/honest-eval.ts\
  *   [--model neural-weights-en-us/model.onnx] [--card neural-weights-en-us/model-card.json]\
  *   [--tokenizer ...]\
  *   [--wof <admin.db>,<postcode.db>] # DB under test (default: canonical) [--label fixed] # a tag for
@@ -32,11 +32,11 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { runIfScript } from "mailwoman/sdk/scripting"
 import { $ } from "zx"
 
-runIfScript(import.meta, async () => {
+async function main() {
 	// zx: capture output ourselves and slice/parse in JS the way the bash awk/jq/grep pipes did.
 	$.verbose = false
 
@@ -129,7 +129,7 @@ runIfScript(import.meta, async () => {
 		}
 		const resolved = `${TMP}/${tag}.json`
 		const evalOut =
-			await $`node --experimental-strip-types scripts/eval/oa-resolver-eval.ts --eval ${slice} --model ${MODEL} --model-card ${CARD} --tokenizer ${TOK} --wof ${WOF} --default-country ${cc} --out-resolved ${resolved}`
+			await $`node scripts/eval/oa-resolver-eval.ts --eval ${slice} --model ${MODEL} --model-card ${CARD} --tokenizer ${TOK} --wof ${WOF} --default-country ${cc} --out-resolved ${resolved}`
 		writeFileSync(`${TMP}/${tag}.eval.md`, evalOut.stdout)
 		writeFileSync(`${TMP}/${tag}.log`, evalOut.stderr)
 		// neural row: | **neural** | loc% | reg% | resolved% | p50 | p90 | p99 |
@@ -182,4 +182,6 @@ runIfScript(import.meta, async () => {
 	} else {
 		console.log(emit)
 	}
-})
+}
+
+runIfScript(import.meta, main)

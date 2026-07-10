@@ -16,10 +16,10 @@
  *   All three are scored with --symmetric-match (v0 scored on the same loose subset matcher as neural
  *   — fair to remapped/dropped-tag cases) and --postcode-repair.
  *
- *   Usage (default shipped weights): node --experimental-strip-types scripts/eval/external-arenas.ts
+ *   Usage (default shipped weights): node scripts/eval/external-arenas.ts
  *   Against a specific model (e.g. a fresh v0.7.2 export): MODEL=/path/model.int8.onnx
  *   TOKENIZER=/path/tokenizer.model\
- *   MODELCARD=/path/model-card.json node --experimental-strip-types scripts/eval/external-arenas.ts
+ *   MODELCARD=/path/model-card.json node scripts/eval/external-arenas.ts
  *
  *   Emits per-arena three-bucket tables (neural-only / both / v0-only / both-fail) and, for the
  *   postal arena, a breakdown by edge_class. Run `yarn compile` first — the harness resolves
@@ -30,10 +30,10 @@ import { copyFileSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
-import { runIfScript } from "mailwoman/sdk/scripting"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { $ } from "zx"
 
-runIfScript(import.meta, async () => {
+async function main() {
 	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash `| tail` did.
 	$.verbose = false
 
@@ -94,7 +94,7 @@ runIfScript(import.meta, async () => {
 	// 1. (re)generate the perturbation arena from golden v0.1.2.
 	console.log("== regenerating perturbation arena ==")
 	const perturbed =
-		await $`node --experimental-strip-types scripts/eval/perturb-golden.ts --golden data/eval/golden/v0.1.2 --out ${join(outDir, "perturb", "perturbed.jsonl")} --per-file 60`
+		await $`node scripts/eval/perturb-golden.ts --golden data/eval/golden/v0.1.2 --out ${join(outDir, "perturb", "perturbed.jsonl")} --per-file 60`
 
 	if (perturbed.stdout.trim()) {
 		console.log(perturbed.stdout.trimEnd())
@@ -114,7 +114,7 @@ runIfScript(import.meta, async () => {
 	const runArena = async (name: string, dir: string): Promise<void> => {
 		console.log(`== arena: ${name} ==`)
 		const r =
-			await $`node --experimental-strip-types scripts/harness-v0-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --symmetric-match --out-json ${join(outDir, `${name}.results.json`)}`
+			await $`node scripts/eval/harness-v0-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --symmetric-match --out-json ${join(outDir, `${name}.results.json`)}`
 		writeFileSync(join(outDir, `${name}.stderr`), r.stderr)
 		console.log(r.stdout.split("\n").slice(-40).join("\n"))
 	}
@@ -125,11 +125,12 @@ runIfScript(import.meta, async () => {
 
 	console.log("")
 	console.log("== three-bucket summary + postal edge-class breakdown ==")
-	const summary =
-		await $`node --experimental-strip-types scripts/eval/summarize-arenas.ts ${outDir} data/eval/external/postal-cases.jsonl`
+	const summary = await $`node scripts/eval/summarize-arenas.ts ${outDir} data/eval/external/postal-cases.jsonl`
 	console.log(summary.stdout.trimEnd())
 
 	if (summary.stderr.trim()) {
 		console.error(summary.stderr.trimEnd())
 	}
-})
+}
+
+runIfScript(import.meta, main)

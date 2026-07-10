@@ -11,7 +11,7 @@
  *   as the whitespace trim, so span alignment survives.
  */
 
-import { identityMap } from "./offset-map.js"
+import { identityMap } from "./offset-map.ts"
 
 const INLINE_SPACE = /[ \t]/
 const ANY_SPACE = /[ \t\n\r]/

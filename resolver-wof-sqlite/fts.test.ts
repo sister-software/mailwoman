@@ -3,7 +3,7 @@
 
 /**
  *   Tests for the FTS5 build helpers used by both `WOFSqlitePlaceLookup` and the
- *   `mailwoman-wof-build-fts` CLI.
+ *   `mailwoman gazetteer build fts` CLI.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -16,7 +16,7 @@ import {
 	buildPlaceSearchFTS,
 	PLACE_SEARCH_TABLE,
 	placeSearchFTSExists,
-} from "./fts.js"
+} from "./fts.ts"
 
 function buildBaseSchema(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")

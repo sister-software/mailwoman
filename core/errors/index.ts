@@ -5,4 +5,4 @@
  *   Utilities for working with errors.
  */
 
-export * from "./schema.js"
+export * from "./schema.ts"

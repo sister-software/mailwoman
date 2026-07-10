@@ -1,8 +1,8 @@
 {
-	"zipex": "6090,34413",
+	"id": "data/TZ",
 	"key": "TZ",
 	"name": "TANZANIA (UNITED REP.)",
 	"fmt": "%N%n%O%n%A%n%Z %C",
 	"zip": "\\d{4,5}",
-	"id": "data/TZ"
+	"zipex": "6090,34413"
 }

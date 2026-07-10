@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { groupPhrases, groupPhrasesSync } from "./group.js"
+import { groupPhrases, groupPhrasesSync } from "./group.ts"
 import {
 	scoreHyphenatedCompound,
 	scoreLocalityPhrase,
@@ -18,8 +18,8 @@ import {
 	scoreStreetPhrase,
 	scoreVenuePhrase,
 	tokenizeSegment,
-} from "./rules.js"
-import type { NormalizedInputLite, PhraseGrouper, PhraseProposal, QueryShapeLike } from "./types.js"
+} from "./rules.ts"
+import type { NormalizedInputLite, PhraseGrouper, PhraseProposal, QueryShapeLike } from "./types.ts"
 
 function input(normalized: string): NormalizedInputLite {
 	return { raw: normalized, normalized }

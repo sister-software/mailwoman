@@ -7,4 +7,4 @@
  *   ingestion surface and `./scripts/build-rooftop-shard` for the build CLI.
  */
 
-export * from "./sdk/index.js"
+export * from "./sdk/index.ts"

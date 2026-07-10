@@ -6,7 +6,8 @@
 		"emitDeclarationOnly": false,
 		"noEmit": false,
 		"experimentalDecorators": true,
-		"allowImportingTsExtensions": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
 		"types": ["@cloudflare/workers-types"],
 		"resolveJsonModule": true
 	},

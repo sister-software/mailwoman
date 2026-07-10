@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export * from "./DebugOutputBuilder.js"
-export * from "./parser.js"
+export * from "./DebugOutputBuilder.ts"
+export * from "./parser.ts"

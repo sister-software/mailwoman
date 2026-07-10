@@ -4,7 +4,7 @@
 import { ClassificationsMatchMap } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { DirectionalClassifier } from "./DirectionalClassifier.js"
+import { DirectionalClassifier } from "./DirectionalClassifier.ts"
 
 const classifier = await new DirectionalClassifier().ready()
 

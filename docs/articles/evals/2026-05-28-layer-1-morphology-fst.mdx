@@ -104,7 +104,7 @@ will use.
 
 ```bash
 # Baseline: v0.6.1 + admin FST only
-node --experimental-strip-types scripts/eval-morphology-fst.ts \
+node scripts/eval-morphology-fst.ts \
   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v061-step-100000-int8.onnx \
   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
@@ -113,7 +113,7 @@ node --experimental-strip-types scripts/eval-morphology-fst.ts \
   --no-morphology
 
 # With morphology FST (defaults)
-node --experimental-strip-types scripts/eval-morphology-fst.ts \
+node scripts/eval-morphology-fst.ts \
   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v061-step-100000-int8.onnx \
   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
@@ -121,7 +121,7 @@ node --experimental-strip-types scripts/eval-morphology-fst.ts \
   --golden data/eval/golden/v0.1.2
 
 # Tuned (low affix bias, strong dep_loc penalty)
-node --experimental-strip-types scripts/eval-morphology-fst.ts \
+node scripts/eval-morphology-fst.ts \
   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v061-step-100000-int8.onnx \
   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \

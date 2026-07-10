@@ -3,7 +3,7 @@
 
 import { Span, TokenContext } from "@mailwoman/core/tokenization"
 
-import type { Classifier } from "./BaseClassifier.js"
+import type { Classifier } from "./BaseClassifier.ts"
 
 export interface SectionClassifierUtils {
 	findPhrasesContaining: (child: Span) => Span[]

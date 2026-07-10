@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { deserializeFSTWeb, readFSTProvenanceWeb } from "./fst-deserialize-web.js"
+import { deserializeFSTWeb, readFSTProvenanceWeb } from "./fst-deserialize-web.ts"
 
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8

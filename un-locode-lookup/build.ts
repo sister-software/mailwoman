@@ -12,7 +12,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { parse } from "csv-parse/sync"
 
-import { foldName, parseUnLocodeCoords } from "./index.js"
+import { foldName, parseUnLocodeCoords } from "./index.ts"
 
 interface CSVRow {
 	Country: string

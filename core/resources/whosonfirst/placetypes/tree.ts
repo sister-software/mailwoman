@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { PlacetypeRole } from "./definition.js"
-import { Placetype } from "./Placetype.js"
+import type { PlacetypeRole } from "./definition.ts"
+import { Placetype } from "./Placetype.ts"
 
 /**
  * A node in the nested placetype tree produced by {@linkcode generatePlacetypeTree}.

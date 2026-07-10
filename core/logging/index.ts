@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export * from "./shared.js"
-export * from "./utils.js"
+export * from "./shared.ts"
+export * from "./utils.ts"

@@ -14,7 +14,7 @@
  *   `osm/README.md` for the licensing boundary + the lawyer sign-off gate before any shard ships.
  *
  *   Usage:
- *     node --experimental-strip-types osm/scripts/build-rooftop-shard.ts \
+ *     node osm/scripts/build-rooftop-shard.ts \
  *       --country fr --slug idf --release 260627 \
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
@@ -34,9 +34,9 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-import { extractAddrPoints } from "../sdk/extract.js"
-import { normalizeStreetForKeyLocale, streetLocaleForCountry } from "../sdk/street-locale.js"
-import { buildStreetRecoveryIndex } from "../sdk/street-recovery.js"
+import { extractAddrPoints } from "../sdk/extract.ts"
+import { normalizeStreetForKeyLocale, streetLocaleForCountry } from "../sdk/street-locale.ts"
+import { buildStreetRecoveryIndex } from "../sdk/street-recovery.ts"
 
 interface BuildArgs {
 	country: string

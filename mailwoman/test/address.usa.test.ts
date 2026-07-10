@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { assert } from "mailwoman/sdk/test"
+import { assert } from "mailwoman/test-kit"
 
 assert(
 	"wrigley field",

@@ -3,7 +3,7 @@
 
 import { expect, test } from "vitest"
 
-import { StreetPrefixClassifier } from "./StreetPrefixClassifier.js"
+import { StreetPrefixClassifier } from "./StreetPrefixClassifier.ts"
 
 const classifier = await new StreetPrefixClassifier().ready()
 

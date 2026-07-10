@@ -6,7 +6,7 @@
  *   `lint_acknowledged: true`. Exits non-zero if any flagged shard is unacknowledged, blocking the
  *   training run.
  *
- *   Pairs with `scripts/lint-corpus-shard.ts` (which emits the flag count) and the MANIFEST schema
+ *   Pairs with ``mailwoman dev lint corpus-shard`` (which emits the flag count) and the MANIFEST schema
  *   extension introduced 2026-05-29 after the v0.6.2 "5th Avenue Theatre" incident. The gating
  *   model is "report + acknowledgment, not block":
  *
@@ -41,13 +41,13 @@
  *   flag_count=0 and pass. New shards SHOULD record their flag count even if zero (defensive
  *   against silent under-counting from a future linter rule addition).
  *
- *   Usage: node --experimental-strip-types scripts/verify-shard-acks.ts\
+ *   Usage: node scripts/verify-shard-acks.ts\
  *   --manifest /tmp/MANIFEST.json
  *
  *   # Or run against the live Modal volume (downloads first):
  *
  *   Modal volume get mailwoman-training corpus/.../MANIFEST.json /tmp/MANIFEST.json node
- *   --experimental-strip-types scripts/verify-shard-acks.ts --manifest /tmp/MANIFEST.json
+ *   scripts/verify-shard-acks.ts --manifest /tmp/MANIFEST.json
  */
 
 import { readFileSync } from "node:fs"

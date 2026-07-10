@@ -2,7 +2,8 @@
 	"extends": "@sister.software/tsconfig",
 	"compilerOptions": {
 		"emitDeclarationOnly": false,
-		"allowImportingTsExtensions": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
 		"allowSyntheticDefaultImports": true,
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,

@@ -15,7 +15,7 @@
  *       `kind=amenity` / `kind=brand` proposals, gated by locale-gate output).
  */
 
-export { VARIANT_ALIAS_VERSION, getAllAliases, lookupVariantAliases } from "./lookup.js"
+export { VARIANT_ALIAS_VERSION, getAllAliases, lookupVariantAliases } from "./lookup.ts"
 export type {
 	AliasLookupResult,
 	AmenityAlias,
@@ -23,4 +23,4 @@ export type {
 	VariantAlias,
 	VariantAliasTable,
 	VariantKind,
-} from "./types.js"
+} from "./types.ts"

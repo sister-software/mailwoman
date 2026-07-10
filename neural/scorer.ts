@@ -25,12 +25,12 @@ import { existsSync, readFileSync } from "node:fs"
 import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.js"
-import { NeuralAddressClassifier } from "./classifier.js"
-import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.js"
-import { ONNXRunner } from "./onnx-runner.js"
-import { PostcodeBinaryResolver } from "./postcode-binary-resolver.js"
-import { MailwomanTokenizer } from "./tokenizer.js"
+import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.ts"
+import { NeuralAddressClassifier } from "./classifier.ts"
+import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.ts"
+import { ONNXRunner } from "./onnx-runner.ts"
+import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
+import { MailwomanTokenizer } from "./tokenizer.ts"
 import {
 	inferRequiredChannelsFromInputs,
 	lookupTagCapability,
@@ -39,7 +39,7 @@ import {
 	readRequiredChannels,
 	resolveWeights,
 	type RequiredChannels,
-} from "./weights.js"
+} from "./weights.ts"
 
 /**
  * Delta threshold for the capability-manifest gate (#718/#719): a conventions row may forbid a tag only if the mask
@@ -201,7 +201,7 @@ function assertConventionsRespectCapabilities(modelCardPath: string, tier: strin
 			warnedNoCapabilities = true
 			console.error(
 				`[createScorer] model-card has no \`capabilities\` block — the conventions capability-gate ` +
-					`(#718/#719) is SKIPPED. Regenerate the card via scripts/eval/gen-capability-manifest.ts to ` +
+					`(#718/#719) is SKIPPED. Regenerate the card via \`mailwoman eval capability-manifest\` to ` +
 					`certify per-tag capability and enable the gate.`
 			)
 		}

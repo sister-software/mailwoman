@@ -1,10 +1,10 @@
 {
-	"zipex": "BBND 1ZZ",
+	"id": "data/IO",
 	"key": "IO",
 	"name": "BRITISH INDIAN OCEAN TERRITORY",
 	"fmt": "%N%n%O%n%A%n%C%n%Z",
 	"require": "ACZ",
-	"zip": "BBND 1ZZ",
 	"upper": "CZ",
-	"id": "data/IO"
+	"zip": "BBND 1ZZ",
+	"zipex": "BBND 1ZZ"
 }

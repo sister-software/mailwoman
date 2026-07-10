@@ -3,10 +3,9 @@
 
 import * as fs from "node:fs/promises"
 
+import { tryStat } from "@mailwoman/core/fs"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { $ } from "zx"
-
-import { tryStat } from "./fs.js"
 
 /**
  * Metadata for a repository source.

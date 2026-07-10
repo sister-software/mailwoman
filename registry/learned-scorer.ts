@@ -6,7 +6,7 @@
  *   {@link ResolveConfig.scorer}. Two pieces:
  *
  *   1. {@link createMatchFeaturizer} — the ONE feature extractor for a candidate pair, used identically
- *        at train time (`scripts/eval/record-matcher/train-gbt.ts`), eval time (the learned-scorer
+ *        at train time (`registry/tools/train-gbt.ts`), eval time (the learned-scorer
  *        evals), and inference time (here). A pair → one-hot of each comparison's agreement level +
  *        the over-merge interaction terms (co-located × name/org disagreement) + address
  *        crowdedness.
@@ -31,7 +31,7 @@ import {
 	type TermFrequencyTable,
 } from "@mailwoman/match"
 
-import type { SourceRecord } from "./types.js"
+import type { SourceRecord } from "./types.ts"
 
 /** Inputs shared by the featurizer + the scorer factory. */
 export interface LearnedFeatureConfig {

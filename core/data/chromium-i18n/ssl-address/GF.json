@@ -1,11 +1,11 @@
 {
-	"zipex": "97300",
+	"id": "data/GF",
 	"key": "GF",
 	"name": "FRENCH GUIANA",
 	"fmt": "%O%n%N%n%A%n%Z %C %X",
-	"posturl": "http://www.laposte.fr/Particulier/Utiliser-nos-outils-pratiques/Outils-et-documents/Trouvez-un-code-postal",
 	"require": "ACZ",
-	"zip": "9[78]3\\d{2}",
 	"upper": "ACX",
-	"id": "data/GF"
+	"zip": "9[78]3\\d{2}",
+	"zipex": "97300",
+	"posturl": "http://www.laposte.fr/Particulier/Utiliser-nos-outils-pratiques/Outils-et-documents/Trouvez-un-code-postal"
 }

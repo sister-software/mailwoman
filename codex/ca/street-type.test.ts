@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isCanadianDirectional, isCanadianStreetWord } from "./street-type.js"
+import { isCanadianDirectional, isCanadianStreetWord } from "./street-type.ts"
 
 describe("isCanadianStreetWord", () => {
 	it("matches English street types, case-insensitive", () => {

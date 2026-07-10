@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { decomposeFrStreet } from "./street-decompose.js"
+import { decomposeFrStreet } from "./street-decompose.ts"
 
 describe("decomposeFrStreet", () => {
 	it("single-word street type prefix", () => {

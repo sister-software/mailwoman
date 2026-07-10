@@ -3,7 +3,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { ChainClassifier } from "./ChainClassifier.js"
+import { ChainClassifier } from "./ChainClassifier.ts"
 
 const classifier = await new ChainClassifier().ready()
 

@@ -7,13 +7,13 @@ tags: [decoder, corpus, methodology, multilocale, lossless, advanced]
 
 Feed an address into a sequence labeler and part of it goes missing. The model tags the tokens it recognizes — house number, street, city — and the characters it doesn't understand fall on the floor. `decodeAsJSON` hands you back a tidy object with every field in its place, and nothing in that object tells you the model just shrugged at a fifth of the input.
 
-So you ship that parser. It looks great on the addresses you tested it against. And you have no real idea what it's dropping in production, because the output format was built to hide exactly that.
+So you ship that parser. It looks great on the addresses you tested it against. And you have no idea what it's dropping in production, because the output format was built to hide exactly that.
 
 {/* truncate */}
 
 We got tired of not knowing. So we made the decoder keep a promise: every byte of the input lands in exactly one typed span, including the bytes we can't classify. The runs the model leaves untagged stop being absence and become a thing you can hold — an `unknown` span, with a start, an end, and the literal text the model couldn't place. Concatenate all the spans back together and you get the original string, character for character. Nothing gets lost, because there's nowhere left for it to go.
 
-That's a small change to a decoder. It turns into a diagnostic you can point at real data.
+That's a small change to a decoder. It turns into a diagnostic you can point at production addresses.
 
 ## The shopping list
 

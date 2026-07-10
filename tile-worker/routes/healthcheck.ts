@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { CloudflareWorkerPMTiles } from "../protomaps/index.js"
-import { WorkerRoute } from "../routing.js"
+import { CloudflareWorkerPMTiles } from "../protomaps/index.ts"
+import { WorkerRoute } from "../routing.ts"
 
 export const HomeRoute = WorkerRoute.GET("/", () => {
 	return new Response(

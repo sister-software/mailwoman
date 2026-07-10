@@ -1,8 +1,8 @@
 {
 	"_comment": "BUILD LOG (append-only), auto-written by `mailwoman gazetteer build admin` \u2014 what ran, when, verify result, md5. The RECIPE lives in code: mailwoman/gazetteer-pipeline/defaults.ts (reviewed like code; no more reconstruct-from-artifact, #1015). The build_command/post_build/overture/geonames sections below are HISTORICAL records of the pre-CLI era.",
 	"artifact": "admin-global-priority.db",
-	"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos --overture-countries <see overture_divisions_supplement.countries> --geonames-countries <see geonames_supplement.countries> --overture-release 2026-06-17.0 --output /mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db",
-	"post_build": "Three steps, IN ORDER (steps 1-2 were missing pre-2026-06-08; see docs/articles/evals/2026-06-08-honest-eval.md + #440). STEP 1: node --experimental-strip-types scripts/add-region-abbrevs.ts /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (enriches `names` with state/province abbreviations from chromium-i18n libaddressinput so findPlace('VT') resolves to Vermont; without it the region parent-constraint never engages and locality lookup runs unconstrained US-wide). STEP 2: node --experimental-strip-types scripts/backfill-ancestors-from-hierarchy.ts /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (repairs only-self ancestry for multi/ambiguous-parent places \u2014 e.g. NYC, parent_id=-4 \u2014 from wof:hierarchy, so the region-descendant boost can reach them; without it region resolution regresses metros like NYC -> 'New York Mills'). STEP 3: node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (builds place_search FTS5 INCLUDING the step-1 abbreviations + place_bbox R*Tree). Step 1 must precede step 3 (FTS reads `names`); step 2 is independent of FTS.",
+	"build_command": "node scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos --overture-countries <see overture_divisions_supplement.countries> --geonames-countries <see geonames_supplement.countries> --overture-release 2026-06-17.0 --output /mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db",
+	"post_build": "Three steps, IN ORDER (steps 1-2 were missing pre-2026-06-08; see docs/articles/evals/2026-06-08-honest-eval.md + #440). STEP 1: node scripts/add-region-abbrevs.ts /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (enriches `names` with state/province abbreviations from chromium-i18n libaddressinput so findPlace('VT') resolves to Vermont; without it the region parent-constraint never engages and locality lookup runs unconstrained US-wide). STEP 2: node scripts/backfill-ancestors-from-hierarchy.ts /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (repairs only-self ancestry for multi/ambiguous-parent places \u2014 e.g. NYC, parent_id=-4 \u2014 from wof:hierarchy, so the region-descendant boost can reach them; without it region resolution regresses metros like NYC -> 'New York Mills'). STEP 3: node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (builds place_search FTS5 INCLUDING the step-1 abbreviations + place_bbox R*Tree). Step 1 must precede step 3 (FTS reads `names`); step 2 is independent of FTS.",
 	"priority_countries": ["US", "FR", "JP", "CN", "KR", "DE", "GB"],
 	"repos": [
 		{
@@ -91,7 +91,7 @@
 	},
 	"overture_divisions_supplement": {
 		"_comment": "2026-06-20: the canonical admin DB gained coverage for 15 zero-DB EU locales the WOF repos don't carry, sourced from the Overture Maps `divisions` theme and folded into the SAME build via build-unified-wof.ts --overture-countries (project-eu-coverage-not-retrain; docs/articles/plan/2026-06-19-coordinate-leverage-sprint.md). Coordinate p50 solved for 14/15 at ES/IT/NL parity, zero GPU. Rows carry synthetic ids based at 8e12 (no collision with WOF ids <~2e9); the post-build + FTS steps treat them uniformly. NOT the off-the-shelf Overture-everything \u2014 only divisions for these locales, alongside the custom WOF DB.",
-		"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data --overture-countries PT,PL,BE,AT,CH,CZ,DK,NO,FI,SK,SI,HR,LU,LV,LT --output <out>.db  (then the same 3 post_build steps IN ORDER)",
+		"build_command": "node scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data --overture-countries PT,PL,BE,AT,CH,CZ,DK,NO,FI,SK,SI,HR,LU,LV,LT --output <out>.db  (then the same 3 post_build steps IN ORDER)",
 		"overture_release": "2026-06-17.0",
 		"countries": [
 			"AE",
@@ -191,8 +191,8 @@
 	"postcode_build": {
 		"_comment": "US postcodes live in a SEPARATE shard DB (the resolver routes postalcode queries to it via multi-shard ATTACH). Built with the same build-unified-wof.ts using --placetypes postalcode.",
 		"artifact": "postalcode-us.db",
-		"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-us --output /mnt/playpen/mailwoman-data/wof/postalcode-us.db --placetypes postalcode",
-		"post_build": "Three steps, IN ORDER. STEP 1: node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/postalcode-us.db   (FTS + R*Tree). STEP 2: node --experimental-strip-types scripts/fill-zcta-centroids.ts   (#525 pass 1: fills (0,0)-placeholder centroids from the Census ZCTA Gazetteer \u2014 /mnt/playpen/mailwoman-data/census/README.md \u2014 stamping per-row provenance in `centroid_source` as `census-zcta-2024`; never overwrites a real WOF coordinate; residual ~10% are PO-box/unique ZIPs with no ZCTA). STEP 3 (optional, requires US.txt): node --experimental-strip-types scripts/fill-zcta-centroids.ts --geonames /mnt/playpen/mailwoman-data/geonames/US.txt   (#525 pass 2: fills remaining (0,0) rows from GeoNames US postal file \u2014 download.geonames.org/export/zip/US.zip, CC-BY 4.0, attribute 'GeoNames (CC-BY 4.0)' in any artifact that ships these rows \u2014 stamping provenance as `geonames-us`; covers some PO-box/unique ZIPs not in ZCTA; idempotent, re-checks latitude=0). US.txt absent = step silently skipped (ZCTA residuals stay placeholder).",
+		"build_command": "node scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-us --output /mnt/playpen/mailwoman-data/wof/postalcode-us.db --placetypes postalcode",
+		"post_build": "Three steps, IN ORDER. STEP 1: node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/postalcode-us.db   (FTS + R*Tree). STEP 2: node scripts/fill-zcta-centroids.ts   (#525 pass 1: fills (0,0)-placeholder centroids from the Census ZCTA Gazetteer \u2014 /mnt/playpen/mailwoman-data/census/README.md \u2014 stamping per-row provenance in `centroid_source` as `census-zcta-2024`; never overwrites a real WOF coordinate; residual ~10% are PO-box/unique ZIPs with no ZCTA). STEP 3 (optional, requires US.txt): node scripts/fill-zcta-centroids.ts --geonames /mnt/playpen/mailwoman-data/geonames/US.txt   (#525 pass 2: fills remaining (0,0) rows from GeoNames US postal file \u2014 download.geonames.org/export/zip/US.zip, CC-BY 4.0, attribute 'GeoNames (CC-BY 4.0)' in any artifact that ships these rows \u2014 stamping provenance as `geonames-us`; covers some PO-box/unique ZIPs not in ZCTA; idempotent, re-checks latitude=0). US.txt absent = step silently skipped (ZCTA residuals stay placeholder).",
 		"repo": {
 			"name": "whosonfirst-data-postalcode-us",
 			"url": "https://github.com/whosonfirst-data/whosonfirst-data-postalcode-us",
@@ -208,7 +208,7 @@
 	"postcode_build_gb": {
 		"_comment": "GB postcodes for the coordinate-first postcode\u2192locality table (acquired from source 2026-06-04). 2.72M unit postcodes; geojson is committed directly (only meta CSVs are LFS).",
 		"artifact": "postalcode-gb.db",
-		"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-gb --output /mnt/playpen/mailwoman-data/wof/postalcode-gb.db --placetypes postalcode",
+		"build_command": "node scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-gb --output /mnt/playpen/mailwoman-data/wof/postalcode-gb.db --placetypes postalcode",
 		"repo": {
 			"name": "whosonfirst-data-postalcode-gb",
 			"url": "https://github.com/whosonfirst-data/whosonfirst-data-postalcode-gb",
@@ -222,7 +222,7 @@
 	"postcode_locality_asset": {
 		"_comment": "Coordinate-first candidate table (postcode \u2192 containing + nearby WOF localities). Read-only distributable asset; see resolver-wof-sqlite/POSTCODE-LOCALITY.md.",
 		"artifact": "postcode-locality-intl.db",
-		"build": "node --experimental-strip-types scripts/build-postcode-locality.ts --country <CC> --admin-repo <admin-<cc>> --postcode-db <postalcode source> --output postcode-locality-intl.db  (per country), then --finalize",
+		"build": "node scripts/build-postcode-locality.ts --country <CC> --admin-repo <admin-<cc>> --postcode-db <postalcode source> --output postcode-locality-intl.db  (per country), then --finalize",
 		"countries": ["DE", "ES", "FR", "GB", "IT", "NL", "JP"],
 		"postcode_sources": {
 			"DE/ES/FR/IT/NL": "postalcode-intl.db",
@@ -244,7 +244,7 @@
 	"postcode_locality_cjk": {
 		"_comment": "CJK postcode\u2192locality via authoritative NAME-MATCH (not PIP \u2014 WOF CJK has no municipality polygons). Same postcode_locality table, consumed by the same postcode_area_resolution strategy. See resolver-wof-sqlite/POSTCODE-LOCALITY.md (CJK section) + docs/articles/evals/2026-06-05-cjk-arena.md.",
 		"artifact": "postcode-locality-intl.db (JP rows merged in)",
-		"build": "node --experimental-strip-types scripts/build-postcode-locality-cjk.ts --country JP --postal-names KEN_ALL_ROME.CSV --geonames geonames/JP.txt --admin-db admin-global-priority.db --output postcode-locality-jp.db ; then merge into postcode-locality-intl.db",
+		"build": "node scripts/build-postcode-locality-cjk.ts --country JP --postal-names KEN_ALL_ROME.CSV --geonames geonames/JP.txt --admin-db admin-global-priority.db --output postcode-locality-jp.db ; then merge into postcode-locality-intl.db",
 		"repos": {
 			"whosonfirst-data-admin-jp": "6ac4e1339705",
 			"whosonfirst-data-admin-kr": "132b675fea1e",

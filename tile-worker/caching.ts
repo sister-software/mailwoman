@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { RouteContext } from "./routing.js"
+import type { RouteContext } from "./routing.ts"
 
 const CACHE_NAME = "2026-26-15-00-00-00"
 

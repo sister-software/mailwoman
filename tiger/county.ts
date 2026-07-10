@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { TIGERClassCode } from "./class-code.js"
-import { TIGERFunctionalStatus } from "./functional-status.js"
-import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.js"
-import type { AdminLevel1Code } from "./state.js"
+import { TIGERClassCode } from "./class-code.ts"
+import { TIGERFunctionalStatus } from "./functional-status.ts"
+import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
+import type { AdminLevel1Code } from "./state.ts"
 
 /**
  * @title TIGER County

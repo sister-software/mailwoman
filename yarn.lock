@@ -4700,7 +4700,6 @@ __metadata:
     change-case: "npm:^5.4.4"
     d3-color: "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
-    es-main: "npm:^1.4.0"
     fast-glob: "npm:^3.3.3"
     http-status-codes: "npm:^2.3.0"
     json-colorizer: "npm:^3.0.1"
@@ -4895,7 +4894,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/osm@workspace:osm":
+"@mailwoman/osm@workspace:*, @mailwoman/osm@workspace:osm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/osm@workspace:osm"
   dependencies:
@@ -4958,6 +4957,7 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/node": "npm:>=26.0.1"
     csv-parse: "npm:^5.6.0"
+    h3-js: "npm:^4.4.0"
     playwright: "npm:^1.61.0"
     spliterator: "npm:^3.2.0"
   languageName: unknown
@@ -4972,11 +4972,6 @@ __metadata:
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     kysely: "npm:^0.29.2"
-  bin:
-    mailwoman-wof-build-candidate: ./out/build-candidate-cli.js
-    mailwoman-wof-build-coincident-roles: ./out/build-coincident-roles-cli.js
-    mailwoman-wof-build-fts: ./out/build-fts-cli.js
-    mailwoman-wof-build-slim: ./out/build-slim-cli.js
   languageName: unknown
   linkType: soft
 
@@ -12951,13 +12946,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es-main@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "es-main@npm:1.4.0"
-  checksum: 10/6ef8719db8e441bdaff9d0f471463a29a1b716cefd531115992e3bab4d2b5cd9cb9acf19cb64dd43626388346d5911fb7c9c2bc8b71a8ba1628bed0c051efcf9
-  languageName: node
-  linkType: hard
-
 "es-module-lexer@npm:^1.7.0":
   version: 1.7.0
   resolution: "es-module-lexer@npm:1.7.0"
@@ -16792,6 +16780,7 @@ __metadata:
   dependencies:
     "@fragaria/address-formatter": "npm:^6.7.1"
     "@inkjs/ui": "npm:^2.0.0"
+    "@mailwoman/ban": "workspace:*"
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
@@ -16800,15 +16789,17 @@ __metadata:
     "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/osm": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"
-    es-main: "npm:^1.4.0"
     express: "npm:^5.2.1"
     fast-glob: "npm:^3.3.3"
     geojson: "npm:^0.5.0"

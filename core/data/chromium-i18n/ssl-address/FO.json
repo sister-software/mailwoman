@@ -1,10 +1,10 @@
 {
-	"zipex": "100",
+	"id": "data/FO",
 	"key": "FO",
 	"name": "FAROE ISLANDS",
 	"fmt": "%N%n%O%n%A%nFO%Z %C",
-	"postprefix": "FO",
 	"zip": "\\d{3}",
-	"posturl": "http://www.postur.fo/",
-	"id": "data/FO"
+	"zipex": "100",
+	"posturl": "https://www.posta.fo/fo/forsida/finn-postnr-stad/",
+	"postprefix": "FO"
 }

@@ -1,6 +1,6 @@
 ---
 name: mailwoman-release
-description: Codifies the mailwoman npm release — a coordinated version bump across ALL @mailwoman/* workspaces (the model included), published ENTIRELY via CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag FIRST — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (publish-release-to-hf.ts), the dry-run-then-real CI dispatch, and PUBLISHED-tarball md5 verification. The demo repoint is a SEPARATE follow-up. Use when promoting a trained model to npm or cutting any npm release ("publish", "release", "ship v…", "promote the model").
+description: Codifies the mailwoman npm release — a coordinated version bump across ALL @mailwoman/* workspaces (the model included), published ENTIRELY via CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag FIRST — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (`mailwoman release hf`), the dry-run-then-real CI dispatch, and PUBLISHED-tarball md5 verification. The demo repoint is a SEPARATE follow-up. Use when promoting a trained model to npm or cutting any npm release ("publish", "release", "ship v…", "promote the model").
 ---
 
 # Mailwoman Release Skill
@@ -93,8 +93,8 @@ curl -fSL "https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-u
 
 # Stage (HF_TOKEN from .env; hf CLI authed as the org). Uploads to en-us/v<target>/ (additive, safe):
 HF_TOKEN=$(grep -E '^HF_TOKEN=' .env | cut -d= -f2-) \
-node scripts/publish-release-to-hf.ts \
-  --version v<target> --locale en-us \
+node mailwoman/out/cli.js release hf v<target> \
+  --locale en-us \
   --model neural-weights-en-us/model.onnx \
   --tokenizer neural-weights-en-us/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
@@ -151,7 +151,7 @@ Then fast-forward local main: `git merge --ff-only origin/main`.
 ## Step 5 — the demo is SEPARATE (do not conflate with the npm ship)
 
 The npm publish leaves the browser demo (mailwoman.sister.software/demo) on the OLD model.
-`publish-release-to-hf.ts` without `--set-default` leaves HF `releases.json` `defaultVersion`
+`mailwoman release hf` without `--set-default` leaves HF `releases.json` `defaultVersion`
 unchanged. To repoint the demo: set HF default (`--set-default` or patch `releases.json`), upload the
 model to R2 (`public.sister.software/mailwoman/en-us/v<target>/`), and bump the demo version constant
 in `docs/src/`. Heed the `hasPolygons=false` warning (demo degrades to rectangles/anchor-off if the

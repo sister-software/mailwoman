@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { ConsoleLogger } from "../logging/index.js"
+import { ConsoleLogger } from "../logging/index.ts"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

@@ -26,7 +26,7 @@ Produced by the scripts-side ingest tool (which does the DuckDB / S3 heavy lifti
 heavy native `@duckdb/node-api`):
 
 ```bash
-node --experimental-strip-types scripts/ingest-overture-addresses.ts \
+node scripts/ingest-overture-addresses.ts \
   --release 2026-06-17.0 --countries ES,IT,NL,PT --corpus-jsonl
 # → /mnt/playpen/mailwoman-data/overture/2026-06-17.0/overture-<cc>.corpus.jsonl  (+ addresses-<cc>.parquet + fill-rates.{json,md})
 ```

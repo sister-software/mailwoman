@@ -19,7 +19,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildSlimWOFDatabase } from "./build-slim.js"
+import { buildSlimWOFDatabase } from "./build-slim.ts"
 
 let scratch: string
 

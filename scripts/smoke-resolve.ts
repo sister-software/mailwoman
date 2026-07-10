@@ -3,7 +3,7 @@
  * ancestors + FTS are built. Tests plain text lookup AND ancestors-based parent-constraint scoping (the Springfield
  * problem).
  *
- * Run: node --experimental-strip-types scripts/smoke-resolve.ts
+ * Run: node scripts/smoke-resolve.ts
  */
 import { parseArgs } from "node:util"
 

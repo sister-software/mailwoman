@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { HillsLayerID } from "../base/layers.js"
-import type { LayerSpecificationListInput } from "../styles/layers.js"
-import { TileSetSourceID } from "../styles/sources.js"
+import { HillsLayerID } from "../base/layers.ts"
+import type { LayerSpecificationListInput } from "../styles/layers.ts"
+import { TileSetSourceID } from "../styles/sources.ts"
 
 export const TIGERTractsTileSetID = TileSetSourceID("tiger-tracts")
 export const TIGERBlocksTileSetID = TileSetSourceID("tiger-blocks")

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from "./types.js"
+import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from "./types.ts"
 
 /** Codepoint-level character class. */
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"

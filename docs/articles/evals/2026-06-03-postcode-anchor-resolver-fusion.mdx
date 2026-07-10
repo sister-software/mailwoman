@@ -67,7 +67,7 @@ and the position-aware confidence means it runs on the anchor's own judgment, no
 Reproduce:
 
 ```bash
-node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
+node scripts/eval/oa-resolver-eval.ts \
   --eval data/eval/external/openaddresses-de-sample.jsonl --limit 1500 --default-country DE \
   --model <onnx> --tokenizer <tok> --model-card <card> \
   --wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db \

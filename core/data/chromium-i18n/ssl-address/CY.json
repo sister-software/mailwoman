@@ -1,8 +1,8 @@
 {
-	"zipex": "2008,3304,1900",
+	"id": "data/CY",
 	"key": "CY",
 	"name": "CYPRUS",
 	"fmt": "%N%n%O%n%A%n%Z %C",
 	"zip": "\\d{4}",
-	"id": "data/CY"
+	"zipex": "2008,3304,1900"
 }

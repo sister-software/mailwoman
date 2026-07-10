@@ -1,8 +1,8 @@
 {
-	"zipex": "54541,54551,54404,13009",
+	"id": "data/KW",
 	"key": "KW",
 	"name": "KUWAIT",
 	"fmt": "%N%n%O%n%A%n%Z %C",
 	"zip": "\\d{5}",
-	"id": "data/KW"
+	"zipex": "54541,54551,54404,13009"
 }

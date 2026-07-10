@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"allowSyntheticDefaultImports": true,
 		"emitDeclarationOnly": false,
-		"allowImportingTsExtensions": false
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
 	},
 	"exclude": ["./out/**/*"],
 	"references": [

@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export * from "./types.gen.js"
-import { Alpha2LabelMap, Alpha2LanguageCode, Alpha3bLabelMap, type Alpha3bLanguageCode } from "./types.gen.js"
+export * from "./types.gen.ts"
+import { Alpha2LabelMap, Alpha2LanguageCode, Alpha3bLabelMap, type Alpha3bLanguageCode } from "./types.gen.ts"
 
 /**
  * Prefixed languages are those which use a street prefix instead of a suffix.

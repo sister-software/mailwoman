@@ -7,7 +7,7 @@
 
 import { expect, type Page } from "@playwright/test"
 
-import type { ConsoleFixture } from "./ConsoleFixture.js"
+import type { ConsoleFixture } from "./ConsoleFixture.ts"
 
 export interface ResolvedResult {
 	/** Component table rows: `{ tag, value, confidence }` per parsed BIO node. */

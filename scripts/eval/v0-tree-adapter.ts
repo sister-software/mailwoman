@@ -21,6 +21,11 @@
  *   still can't place is dropped (logged via the return's `dropped` count). The preliminary gate
  *   (v0-via-adapter >= 85% of v0 standalone component accuracy on canonical) catches an adapter
  *   that drops too much.
+ *
+ *   NOTE(phase5a): `mailwoman/eval-harness/v0-tree-adapter.ts` is a COPY of this file, taken when
+ *   `oa-resolver-eval` migrated into the eval-harness. This copy stays only for the probes pending
+ *   triage (`resolver-eval.ts`, `fr-admin-split-selfvalidation.ts`); delete it with them, or
+ *   repoint survivors at the eval-harness copy.
  */
 
 import { buildAddressTree, type AddressTree, type DecoderToken } from "@mailwoman/core/decoder"

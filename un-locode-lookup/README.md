@@ -17,7 +17,7 @@ npx @mailwoman/un-locode-lookup build --csv code-list.csv --out un-locode.db
 npx @mailwoman/un-locode-lookup --db un-locode.db --country NL --name "Rotterdam"
 # {"unLocode":"NL RTM"}
 
-npx @mailwoman/un-locode-lookup --db un-locode.db --near 40.7128 -74.0060
+npx @mailwoman/un-locode-lookup --db un-locode.db -- 40.7128 -74.0060
 # {"unLocode":"US NYC"}
 ```
 

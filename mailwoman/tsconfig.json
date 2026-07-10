@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
-		"allowImportingTsExtensions": false
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*", "./server/static/**"],
@@ -20,6 +21,8 @@
 		{ "path": "../query-shape" },
 		{ "path": "../registry" },
 		{ "path": "../resolver-wof-sqlite" },
-		{ "path": "../ban" }
+		{ "path": "../ban" },
+		{ "path": "../spatial" },
+		{ "path": "../osm" }
 	]
 }

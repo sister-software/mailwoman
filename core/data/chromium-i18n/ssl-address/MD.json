@@ -1,9 +1,9 @@
 {
-	"zipex": "2012,2019",
+	"id": "data/MD",
 	"key": "MD",
 	"name": "Rep. MOLDOVA",
 	"fmt": "%N%n%O%n%A%nMD-%Z %C",
-	"postprefix": "MD-",
 	"zip": "\\d{4}",
-	"id": "data/MD"
+	"zipex": "2012,2019",
+	"postprefix": "MD-"
 }

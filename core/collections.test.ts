@@ -3,7 +3,7 @@
 
 import { expect, test } from "vitest"
 
-import { isIndexedIterable, isIterable, iterateInParallel, pivot, sumOf, take } from "./collections.js"
+import { isIndexedIterable, isIterable, iterateInParallel, pivot, sumOf, take } from "./collections.ts"
 
 test("sumOf: totals the named numeric property across an iterable", () => {
 	const items = [{ n: 1 }, { n: 2 }, { n: 3 }]

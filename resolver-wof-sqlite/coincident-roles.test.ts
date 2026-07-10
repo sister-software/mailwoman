@@ -16,7 +16,7 @@ import {
 	coincidentRolesExists,
 	loadCoincidentRoles,
 	type CoincidentRole,
-} from "./coincident-roles.js"
+} from "./coincident-roles.ts"
 
 interface FixtureRow {
 	id: number

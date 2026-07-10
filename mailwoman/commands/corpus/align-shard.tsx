@@ -7,10 +7,9 @@
  */
 
 import { Text } from "ink"
-import { useEffect, useState } from "react"
 import zod from "zod"
 
-import type { CommandComponent } from "../../sdk/cli.js"
+import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	input: zod.string().describe("Canonical jsonl input"),
@@ -21,34 +20,20 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const [error, setError] = useState<string>()
-	const [done, setDone] = useState<string>()
+	const state = useCommandTask(async () => {
+		const { alignCanonicalShard } = await import("@mailwoman/corpus/tools")
+		await alignCanonicalShard({
+			input: options.input,
+			output: options.output,
+			corpusVersion: options.corpusVersion,
+		})
 
-	useEffect(() => {
-		void (async () => {
-			try {
-				const { alignCanonicalShard } = await import("../../corpus-tools/align-shard.js")
-				await alignCanonicalShard({
-					input: options.input,
-					output: options.output,
-					corpusVersion: options.corpusVersion,
-				})
-				setDone("done")
-			} catch (e) {
-				setError(e instanceof Error ? e.message : String(e))
-			}
-		})()
-	}, [options])
+		return "done"
+	})
 
-	useEffect(() => {
-		if (done || error) {
-			setImmediate(() => process.exit(error ? 1 : 0))
-		}
-	}, [done, error])
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	if (error) return <Text color="red">✗ {error}</Text>
-
-	if (done) return <Text color="green">✓ {done}</Text>
+	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
 
 	return null
 }

@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { WorkerRoute } from "../routing.js"
-import { TileMetadataRoute, TileRoute } from "./tile.js"
+import { WorkerRoute } from "../routing.ts"
+import { TileMetadataRoute, TileRoute } from "./tile.ts"
 
 //#region Tile Retrieval
 

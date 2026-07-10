@@ -33,8 +33,7 @@
  *   OUTPUT: threshold Q̂, empirical 90% coverage, median calibrated radius per tier, plus a 3-line
  *   calibration summary.
  *
- *   Run (no pre-compile needed — uses Node's --experimental-strip-types): node
- *   --experimental-strip-types scripts/eval/conformal-calibrate.ts\
+ *   Run (no pre-compile needed — : node scripts/eval/conformal-calibrate.ts\
  *   [--holdout /tmp/ood-truth.jsonl]\
  *   [--address-points /tmp/tx-situs.db]\
  *   [--interpolation /tmp/tx-metro-interp.db]\
@@ -51,6 +50,7 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
@@ -475,7 +475,4 @@ async function main(): Promise<void> {
 	console.log("")
 }
 
-main().catch((e) => {
-	console.error(e)
-	process.exit(1)
-})
+runIfScript(import.meta, main)

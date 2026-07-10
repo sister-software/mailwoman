@@ -29,10 +29,10 @@ import { createWriteStream } from "node:fs"
 import { mkdir, unlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { childEnv } from "@mailwoman/core/utils"
+import { childEnv } from "@mailwoman/core/scripting/utils"
 import { JSONSpliterator } from "spliterator"
 
-import type { CanonicalRow, LabeledRow } from "./types.js"
+import type { CanonicalRow, LabeledRow } from "./types.ts"
 
 export type SplitName = "train" | "val" | "test"
 

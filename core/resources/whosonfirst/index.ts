@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export * from "./DataSourceCache.js"
-export * from "./loader.js"
-export * from "./PlacetypeDataSource.js"
-export * from "./placetypes/index.js"
+export * from "./DataSourceCache.ts"
+export * from "./loader.ts"
+export * from "./PlacetypeDataSource.ts"
+export * from "./placetypes/index.ts"

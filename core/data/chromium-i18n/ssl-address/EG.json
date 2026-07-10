@@ -1,16 +1,16 @@
 {
-	"sub_lnames": "Aswan Governorate~Asyut Governorate~Alexandria Governorate~Ismailia Governorate~Luxor Governorate~Red Sea Governorate~El Beheira Governorate~Giza Governorate~Dakahlia Governorate~Suez Governorate~Ash Sharqia Governorate~Gharbia Governorate~Faiyum Governorate~Cairo Governorate~Qalyubia Governorate~Menofia Governorate~Menia Governorate~New Valley Governorate~Beni Suef Governorate~Port Said Governorate~South Sinai Governorate~Damietta Governorate~Sohag Governorate~North Sinai Governorate~Qena Governorate~Kafr El Sheikh Governorate~Matrouh Governorate",
-	"lfmt": "%N%n%O%n%A%n%C%n%S%n%Z",
-	"zipex": "12411,11599",
-	"sub_isoids": "ASN~AST~ALX~IS~LX~BA~BH~GZ~DK~SUZ~SHR~GH~FYM~C~KB~MNF~MN~WAD~BNS~PTS~JS~DT~SHG~SIN~KN~KFS~MT",
+	"id": "data/EG",
 	"key": "EG",
 	"name": "EGYPT",
-	"fmt": "%N%n%O%n%A%n%C%n%S%n%Z",
-	"sub_zipexs": "81000~71000~21000,23000~41000~85000~84000~22000~12000~35000~43000~44000~31000~63000~11000~13000~32000~61000~72000~62000~42000~46000~34000~82000~45000~83000~33000~51000",
 	"lang": "ar",
-	"zip": "\\d{5}",
-	"sub_keys": "أسوان~أسيوط~الإسكندرية~الإسماعيلية~الأقصر~البحر الأحمر~البحيرة~الجيزة~الدقهلية~السويس~الشرقية~الغربية~الفيوم~القاهرة~القليوبية~المنوفية~المنيا~الوادي الجديد~بني سويف~بورسعيد~جنوب سيناء~دمياط~سوهاج~شمال سيناء~قنا~كفر الشيخ~مطروح",
 	"languages": "ar",
+	"fmt": "%N%n%O%n%A%n%C%n%S%n%Z",
+	"lfmt": "%N%n%O%n%A%n%C%n%S%n%Z",
+	"zip": "\\d{5}",
+	"zipex": "12411,11599",
+	"sub_keys": "أسوان~أسيوط~الإسكندرية~الإسماعيلية~الأقصر~البحر الأحمر~البحيرة~الجيزة~الدقهلية~السويس~الشرقية~الغربية~الفيوم~القاهرة~القليوبية~المنوفية~المنيا~الوادي الجديد~بني سويف~بورسعيد~جنوب سيناء~دمياط~سوهاج~شمال سيناء~قنا~كفر الشيخ~مطروح",
+	"sub_lnames": "Aswan Governorate~Asyut Governorate~Alexandria Governorate~Ismailia Governorate~Luxor Governorate~Red Sea Governorate~El Beheira Governorate~Giza Governorate~Dakahlia Governorate~Suez Governorate~Ash Sharqia Governorate~Gharbia Governorate~Faiyum Governorate~Cairo Governorate~Qalyubia Governorate~Menofia Governorate~Menia Governorate~New Valley Governorate~Beni Suef Governorate~Port Said Governorate~South Sinai Governorate~Damietta Governorate~Sohag Governorate~North Sinai Governorate~Qena Governorate~Kafr El Sheikh Governorate~Matrouh Governorate",
 	"sub_zips": "81~71~2[13]~41~85~84~22~12~35~43~44~31~63~11~13~32~61~72~62~42~46~34~82~45~83~33~51",
-	"id": "data/EG"
+	"sub_zipexs": "81000~71000~21000,23000~41000~85000~84000~22000~12000~35000~43000~44000~31000~63000~11000~13000~32000~61000~72000~62000~42000~46000~34000~82000~45000~83000~33000~51000",
+	"sub_isoids": "ASN~AST~ALX~IS~LX~BA~BH~GZ~DK~SUZ~SHR~GH~FYM~C~KB~MNF~MN~WAD~BNS~PTS~JS~DT~SHG~SIN~KN~KFS~MT"
 }

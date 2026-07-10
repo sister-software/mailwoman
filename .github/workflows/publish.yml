@@ -20,7 +20,7 @@
 # bucket (the same files the demo loads, no auth) before publish, so the
 # binaries don't need to be on the runner. Prerequisite for a real run:
 # the model for this version must already be staged on HF — push it with
-# scripts/publish-release-to-hf.ts (HF token, run on the operator's host)
+# `mailwoman release hf` (HF token, run on the operator's host)
 # first. (A prior R2 weights-pull lived here; mailwoman-assets is the
 # training-data bucket, the pull never reliably shipped a model, and it
 # was removed. The model store is Hugging Face.)
@@ -94,7 +94,7 @@ jobs:
       # R2 pull and means the whole release, weights included, publishes from CI
       # via OIDC: no npm credentials anywhere. Requires the model AND the #718
       # soft-feed postcode binaries to be staged on HF for this version (push them
-      # with scripts/publish-release-to-hf.ts --postcodes postcode-us.bin,postcode-fr.bin
+      # with `mailwoman release hf <version> --postcodes postcode-us.bin,postcode-fr.bin`
       # before dispatching a real run; the gazetteer lexicon is a checked-in repo
       # file). Skipped on dry runs so a preview doesn't depend on HF staging.
       - name: Fetch weight binaries from Hugging Face
@@ -112,7 +112,7 @@ jobs:
           # without them the published package warns + runs anchor-OFF (the #566/#685 OOD crater). The
           # per-country PCB1 postcode binaries are built from the WOF shard (not buildable on CI), so
           # they ride the bucket; both land under en-us/v<version>/ by basename via
-          # `publish-release-to-hf.ts --postcodes postcode-us.bin,postcode-fr.bin`.
+          # `mailwoman release hf <version> --postcodes postcode-us.bin,postcode-fr.bin`.
           $CURL "${BASE}/postcode-us.bin" -o neural-weights-en-us/postcode-us.bin
           $CURL "${BASE}/postcode-fr.bin" -o neural-weights-fr-fr/postcode-fr.bin
           # fr-fr shares the en-us model for now (locale-specific weights are future work).

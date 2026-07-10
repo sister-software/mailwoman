@@ -4,7 +4,7 @@
 import { Solution, SolutionMatch, Span } from "@mailwoman/core"
 import { expect, test } from "vitest"
 
-import { OrphanedUnitTypeDeclassifier } from "./OrphanedUnitTypeDeclassifier.js"
+import { OrphanedUnitTypeDeclassifier } from "./OrphanedUnitTypeDeclassifier.ts"
 
 test("UnitClassification missing: remove unit_type", () => {
 	const s1 = Span.from("A")

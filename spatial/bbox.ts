@@ -5,9 +5,9 @@
  *   GeoJSON Bounding Boxes
  */
 
-import type { PolygonLiteral, SolidPolygonPath } from "./geometries/polygon.js"
-import { clampLatitude, wrapLongitude } from "./position.js"
-import { CoordinateProjection } from "./projection.js"
+import type { PolygonLiteral, SolidPolygonPath } from "./geometries/polygon.ts"
+import { clampLatitude, wrapLongitude } from "./position.ts"
+import { CoordinateProjection } from "./projection.ts"
 
 //#region Bounding Box Literals
 

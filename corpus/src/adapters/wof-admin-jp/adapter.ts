@@ -30,7 +30,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 export const WOF_ADMIN_JP_ADAPTER_ID = "wof-admin-jp"
 

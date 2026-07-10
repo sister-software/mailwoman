@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export * from "./ExclusiveCartesianSolver.js"
-export * from "./HouseNumberPositionPenalty.js"
-export * from "./LeadingAreaDeclassifier.js"
-export * from "./MultiStreetSolver.js"
-export * from "./OrphanedLevelTypeDeclassifier.js"
-export * from "./OrphanedUnitTypeDeclassifier.js"
-export * from "./PostcodePositionPenalty.js"
-export * from "./VenueCaptureSolver.js"
+export * from "./ExclusiveCartesianSolver.ts"
+export * from "./HouseNumberPositionPenalty.ts"
+export * from "./LeadingAreaDeclassifier.ts"
+export * from "./MultiStreetSolver.ts"
+export * from "./OrphanedLevelTypeDeclassifier.ts"
+export * from "./OrphanedUnitTypeDeclassifier.ts"
+export * from "./PostcodePositionPenalty.ts"
+export * from "./VenueCaptureSolver.ts"

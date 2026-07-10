@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export * from "./admin.js"
-export * from "./definition.js"
-export * from "./graph.js"
-export * from "./mermaid.js"
-export * from "./Placetype.js"
-export * from "./tree.js"
+export * from "./admin.ts"
+export * from "./definition.ts"
+export * from "./graph.ts"
+export * from "./mermaid.ts"
+export * from "./Placetype.ts"
+export * from "./tree.ts"

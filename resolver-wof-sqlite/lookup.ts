@@ -13,10 +13,10 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
-import { Kysely, sql } from "kysely"
+import { Kysely } from "kysely"
 
-import { ancestorLineage } from "./ancestry.js"
-import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.js"
+import { ancestorLineage } from "./ancestry.ts"
+import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.ts"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -25,7 +25,7 @@ import {
 	type ConventionSource,
 	type ResolvedConvention,
 	type Strategy,
-} from "./convention.js"
+} from "./convention.ts"
 import {
 	aliasBagExactMatch,
 	buildPlaceSearchFTS,
@@ -34,19 +34,19 @@ import {
 	placeBboxExists,
 	placePopulationExists,
 	placeSearchFTSExists,
-} from "./fts.js"
-import { bboxAround, haversineKm } from "./geo.js"
-import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
-import type { WOFDatabase } from "./schema.js"
+} from "./fts.ts"
+import { bboxAround, haversineKm } from "./geo.ts"
+import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.ts"
+import type { WOFDatabase } from "./schema.ts"
 import {
 	pickShardForPlacetype,
 	pickShardsForPlacetype,
 	resolveShards,
 	type ResolvedShard,
 	type ShardConfig,
-} from "./sharding.js"
-import { SqliteConventionSource } from "./sqlite-convention-source.js"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.js"
+} from "./sharding.ts"
+import { SqliteConventionSource } from "./sqlite-convention-source.ts"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
 export interface WOFSqlitePlaceLookupOpts {
 	/**
@@ -76,7 +76,7 @@ export interface WOFSqlitePlaceLookupOpts {
 	 * errors loudly if it doesn't.
 	 *
 	 * With multi-shard, `buildFTS: true` builds the index on the **main** shard only. Other shards must be pre-built via
-	 * `mailwoman-wof-build-fts` — operator script for predictable cost.
+	 * `mailwoman gazetteer build fts` — operator script for predictable cost.
 	 */
 	buildFTS?: boolean
 	/**
@@ -1418,7 +1418,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	#assertFTSExists(): void {
 		if (!placeSearchFTSExists(this.#db)) {
 			throw new Error(
-				"WOFSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman-wof-build-fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
+				"WOFSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman gazetteer build fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
 			)
 		}
 	}
@@ -1495,6 +1495,3 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 
 	return out.join(" ")
 }
-
-// `sql` is imported only because future Kysely-typed queries will use it; silence "unused" linting.
-void sql

@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { assertCongruent } from "mailwoman/sdk/test"
+import { assertCongruent } from "mailwoman/test-kit"
 import { expect, test } from "vitest"
 
-import { TokenContext } from "./context.js"
+import { TokenContext } from "./context.ts"
 
 test("constructor: basic", () => {
 	const context = new TokenContext("100 Main Street")

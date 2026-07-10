@@ -26,7 +26,7 @@
  *   untouched.
  */
 
-import { identityMap } from "./offset-map.js"
+import { identityMap } from "./offset-map.ts"
 
 export interface CjkResult {
 	text: string

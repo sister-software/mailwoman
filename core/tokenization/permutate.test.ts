@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { assertDeepSerialized } from "mailwoman/sdk/test"
+import { assertDeepSerialized } from "mailwoman/test-kit"
 import { expect, test } from "vitest"
 
-import { permutate } from "./permutate.js"
-import { Span } from "./Span.js"
+import { permutate } from "./permutate.ts"
+import { Span } from "./Span.ts"
 
 function selectByIndex<T>(items: Iterable<T>, ...selectedIndices: number[]): T[] {
 	const indexedItems = Array.from(items)

@@ -36,10 +36,10 @@ import type {
 	StreetCentroidLookup,
 } from "@mailwoman/resolver"
 
-import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
-import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.js"
-import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.js"
-import { recognizeUSRegions } from "./region-recognition.js"
+import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
+import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
+import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
+import { recognizeUSRegions } from "./region-recognition.ts"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.
@@ -559,8 +559,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	}
 
 	// National open-register rooftop tier (#1012): a non-US parse first consults an authoritative government
-	// address register (BAN-FR today) AHEAD of OSM — it's denser + coordinate-authoritative. BAN rows carry
-	// their own postcode + commune, so the scoped (postcode → locality) probes suffice; no bbox fall-through.
+	// address register (BAN-FR today) AHEAD of OSM — it's denser + coordinate-authoritative. Bbox
+	// fall-through is ON here too (like OSM below): the register's ROWS carry postcode + commune, but the
+	// QUERY often doesn't ("181 Rue du Chevaleret, Paris" — no postcode, and BAN communes are
+	// INSEE-arrondissement-granular so the locality probe keys "paris" ≠ "paris 13e arrondissement"). The
+	// resolved locality's box then scopes the (street, number) probe; measured safe — zero ambiguous
+	// (street, number) pairs across Paris arrondissements in the 2026-05-18 BAN shard.
 	if (!addressPoints) {
 		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
 
@@ -569,6 +573,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 			if (national?.addressPoints) {
 				addressPoints = national.addressPoints
+				opts.addressPointBboxFallback = true
 			}
 		}
 	}

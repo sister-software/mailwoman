@@ -26,9 +26,16 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 
 `scripts/` holds ONLY four things:
 
-1. **Release tooling** (`publish-*`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `rewrite-workspace-imports`, `release-workspace-repository.test`) + **CI smoke** (`smoke-*`) — the release pipeline's residents.
+1. **Release tooling** (`publish-workspace`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `rewrite-workspace-imports`, `release-workspace-repository.test`) + **CI smoke** (`smoke-*`) — the release pipeline's residents.
 2. **Codegen + lint tooling** (`generate-*`, `lint-*`, `jsonl-to-parquet`) — candidates for a future `mailwoman dev` namespace.
-3. **`eval/`** — the eval harness (promotion gate, gauntlet, gates, probes, the full-stack record-matcher trainers/benchmarks in `eval/record-matcher/`, eval-local helpers in `eval/lib/`).
+3. **`eval/`** — the referenced probe battery — CI/skill/RELEASING/gate-spawned probes only, triaged 2026-07-10 (plus the Python calibration scripts and the
+   eval-local helpers in `eval/lib/`). The LIVING GATES moved out (phase 5a of the 2026-07-09
+   scripts-to-pastel spec): promotion gate, gauntlet (+ its builders), ledger-append, capability
+   manifest, oa-resolver eval, error analysis, preset compare, mask-regression, and the gate-spec
+   JSONs all live in `mailwoman/eval-harness/` behind `mailwoman eval …`. One exception:
+   `eval/oa-resolver-eval.ts` is a forwarding SHIM kept so the standing probes that spawn it
+   (de-order-eval — a gate battery leg — honest-eval, eval-de-coverage, de-pip-eval) keep working
+   until the probe triage.
 4. **`diagnostic/`** — gitignored one-off investigations.
 
 Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.
@@ -36,9 +43,9 @@ Everything else lives where it belongs: gazetteer builders → `mailwoman/gazett
 ## Zero raw `process.env` / `process.argv` (enforced)
 
 The custom `sister-software/no-process-globals` oxlint rule ERRORS on any direct
-`process.env`/`process.argv` access; the blessed sites (`core/env/`, `core/utils/scripting.ts`)
+`process.env`/`process.argv` access; the blessed sites (`core/env/`, `core/scripting/utils/`)
 carry explicit `oxlint-disable-next-line` comments. It runs in `yarn lint`, the pre-commit hook,
 and the Test workflow. Use `$public`/`$private` for config, `node:util` `parseArgs` for arguments
 (its default is already `process.argv.slice(2)` — never pass `args:` yourself),
-`cliArguments()`/`childEnv()`/`scriptEntryPath()`/`runIfScript` from `@mailwoman/core/utils` for the
-edge cases, and `vi.stubEnv` in tests.
+`cliArguments()`/`childEnv()`/`scriptEntryPath()` from `@mailwoman/core/scripting/utils` (and
+`runIfScript` from `@mailwoman/core/scripting`) for the edge cases, and `vi.stubEnv` in tests.

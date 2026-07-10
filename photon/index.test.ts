@@ -14,7 +14,7 @@ import {
 	photonForwardProperties,
 	photonOSMTags,
 	type PhotonEngine,
-} from "./index.js"
+} from "./index.ts"
 
 const engine: PhotonEngine = {
 	search: async () => ({ type: "FeatureCollection", features: [] }),

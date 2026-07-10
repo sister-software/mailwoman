@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { KnownFormat, KnownFormatHit, TokenClass } from "./types.js"
+import type { KnownFormat, KnownFormatHit, TokenClass } from "./types.ts"
 
 /**
  * Universal postcode + PO-box patterns. Each entry is a regex that matches a token (or a small sequence of tokens

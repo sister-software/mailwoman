@@ -17,7 +17,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, ResolveOpts, Resolver, StreetCentroidLookup } from "@mailwoman/resolver"
 import { describe, expect, test, vi } from "vitest"
 
-import { geocodeAddress, type GeocodeClassifier, type StateShards } from "../geocode-core.js"
+import { geocodeAddress, type GeocodeClassifier, type StateShards } from "../geocode-core.ts"
 
 /** A classifier that returns a fixed tree (no region → admin-only path, no US situs shards needed). */
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {
@@ -58,8 +58,11 @@ describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => 
 			osmShards: (c) => (c === "fr" ? { addressPoints: osmLookup } : {}),
 		})
 		expect(seen[0]?.addressPoints).toBe(banLookup)
-		// BAN rows carry their own postcode + commune → the scoped probes suffice; no bbox fall-through.
-		expect(seen[0]?.addressPointBboxFallback).toBeUndefined()
+		// Bbox fall-through is ON for the national tier (2026-07-10): the register's ROWS carry
+		// postcode + commune, but the QUERY often doesn't — and BAN communes are INSEE-arrondissement-
+		// granular, so a city-level locality probe ("paris") misses "paris 13e arrondissement". The
+		// resolved locality's box scopes the (street, number) probe instead (fr-chevaleret-bare).
+		expect(seen[0]?.addressPointBboxFallback).toBe(true)
 	})
 
 	test("falls through to the OSM tier when no national register covers the country", async () => {

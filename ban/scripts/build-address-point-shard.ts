@@ -54,11 +54,12 @@ import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
+	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-import { extractBANAddrPoints } from "../sdk/extract.js"
-import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.js"
-import { streetLocaleForBANCountry } from "../sdk/street-locale.js"
+import { extractBANAddrPoints } from "../sdk/extract.ts"
+import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.ts"
+import { streetLocaleForBANCountry } from "../sdk/street-locale.ts"
 
 interface BuildArgs {
 	country: string
@@ -193,7 +194,10 @@ async function main(): Promise<void> {
 				number,
 				null,
 				rec.postcode,
-				rec.city ? normalizeLocalityForKey(rec.city) : null,
+				// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris") —
+				// the SAME both-sides discipline the #1042 street-centroid key uses, so a query's
+				// "Paris" hits directly (fr-chevaleret-bare). No-op for every other commune.
+				rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
 				rec.street,
 				rec.lat,
 				rec.lon,

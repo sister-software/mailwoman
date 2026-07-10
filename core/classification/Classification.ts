@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { Displayable } from "../resources/debugging.js"
-import type { Alpha3bLanguageCode } from "../resources/languages/index.js"
-import type { LibPostalLanguageCode } from "../resources/libpostal.js"
+import type { Displayable } from "../resources/debugging.ts"
+import type { Alpha3bLanguageCode } from "../resources/languages/index.ts"
+import type { LibPostalLanguageCode } from "../resources/libpostal.ts"
 
 /**
  * Classification recognized by Mailwoman.

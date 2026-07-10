@@ -3,7 +3,7 @@
 
 /**
  *   Docusaurus plugin that manages the /demo page's static assets (model.onnx, tokenizer.model,
- *   fst-en-US.bin, wof-hot.db) and the workspace webpack aliases needed to bundle @mailwoman/*
+ *   fst-en-US.bin) and the workspace webpack aliases needed to bundle @mailwoman/*
  *   packages for the browser.
  *
  *   Replaces the previous build-demo-assets.sh script + inline workspaceAliasPlugin. All heavy binary
@@ -20,7 +20,7 @@ import { resolve } from "node:path"
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import webpack from "webpack"
 
-import { buildWorkspaceAliases, stageSQLJSHTTPVFS } from "./resolve.js"
+import { buildWorkspaceAliases, stageSQLJSHTTPVFS } from "./resolve.ts"
 
 export default function demoAssetsPlugin(context: LoadContext): Plugin {
 	const docsDir = context.siteDir

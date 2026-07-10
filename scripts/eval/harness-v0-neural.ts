@@ -17,7 +17,7 @@
  *   file, locale, input, expected, v0_pass, neural_pass, v0_actual, neural_actual }` so downstream
  *   scripts can cluster failures by tag/locale/address-shape.
  *
- *   Usage: node --experimental-strip-types scripts/harness-v0-neural.ts\
+ *   Usage: node scripts/harness-v0-neural.ts\
  *   --tests mailwoman/test\
  *   --out-json /tmp/harness.json\
  *   [--model <onnx>] [--tokenizer <spm>] [--model-card <json>]\
@@ -30,6 +30,7 @@ import { basename, join } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	type AnchorLookup,
@@ -914,7 +915,4 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
+runIfScript(import.meta, main)

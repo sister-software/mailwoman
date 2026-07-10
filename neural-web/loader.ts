@@ -22,7 +22,7 @@ import {
 	PostcodeBinaryResolver,
 } from "@mailwoman/neural/browser"
 
-import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.js"
+import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
 
 export type { WebONNXRunnerDiagnostics }
 

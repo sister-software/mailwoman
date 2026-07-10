@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type BBox2DLiteral, type BBox3DLiteral, is2DBBox } from "./bbox.js"
+import { type BBox2DLiteral, type BBox3DLiteral, is2DBBox } from "./bbox.ts"
 
 /**
  * GeoJSON object types.

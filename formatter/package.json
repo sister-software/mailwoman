@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/formatter",
-	"version": "5.9.0",
+	"version": "5.10.0",
 	"description": "The inverse of the parser: render Mailwoman `ComponentTag` components into an idiomatic, locale-aware address string — plus a canonical, normalized match key for record linkage. Consolidates the former core/formatter stub and corpus synthesis formatter behind one API.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -17,11 +17,38 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./format": "./out/format.js",
-		"./key": "./out/key.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./format": {
+			"node": "./format.ts",
+			"default": "./out/format.js",
+			"types": "./out/format.d.ts"
+		},
+		"./key": {
+			"node": "./key.ts",
+			"default": "./out/key.js",
+			"types": "./out/key.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./format": {
+				"types": "./out/format.d.ts",
+				"default": "./out/format.js"
+			},
+			"./key": {
+				"types": "./out/key.d.ts",
+				"default": "./out/key.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {

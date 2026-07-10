@@ -1,10 +1,10 @@
 {
-	"zipex": "1234 AB,2490 AA",
+	"id": "data/NL",
 	"key": "NL",
 	"name": "NETHERLANDS",
 	"fmt": "%O%n%N%n%A%n%Z %C",
 	"require": "ACZ",
-	"zip": "[1-9][0-9]{3} ?(?!SA|SD|SS)[A-Z]{2}",
-	"posturl": "http://www.postnl.nl/voorthuis/",
-	"id": "data/NL"
+	"zip": "[1-9]\\d{3} ?(?:[A-RT-Z][A-Z]|S[BCE-RT-Z])",
+	"zipex": "1234 AB,2490 AA",
+	"posturl": "http://www.postnl.nl/voorthuis/"
 }

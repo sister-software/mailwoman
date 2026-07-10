@@ -19,7 +19,7 @@
 - **File conventions:** every new `.ts`/`.tsx` file starts with the 4-line `@copyright Sister Software / @license AGPL-3.0 / @author Teffen Ellis, et al.` docblock plus a purpose paragraph. Indentation is tabs. Workspace files live at workspace root (no `src/`); docs components live in `docs/src/components/<Name>/`.
 - **Acronym casing:** whole-component caps (`parseJSON`, not `parseJson`). No new acronym identifiers are expected in this plan; if one appears, cap it whole.
 - **Docs type discipline:** `docs/src/shared/resources.tsx` uses locally-defined structural `*Like` types — do NOT import types from `@mailwoman/neural` into docs.
-- **Run TS directly:** `node --experimental-strip-types <file>` for scripts; `yarn vitest --run <path>` for tests (root vitest config resolves the `@mailwoman/*` source aliases).
+- **Run TS directly:** `node <file>` for scripts; `yarn vitest --run <path>` for tests (root vitest config resolves the `@mailwoman/*` source aliases).
 
 ---
 
@@ -674,7 +674,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
  *   locally-resolved en-us weights (`@mailwoman/neural-weights-en-us`). Committed so docs CI
  *   never needs a model download. Re-run after any trace-schema change or weights bump:
  *
- *       node --experimental-strip-types scripts/generate-trace-fixture.ts ["custom address"]
+ *       node scripts/generate-trace-fixture.ts ["custom address"]
  *
  *   NOTE: on machines without the anchor lookup ($MAILWOMAN_DATA_ROOT), loadFromWeights warns
  *   and the trace's `anchor` channel is absent — the component's "channel not fed" state. The
@@ -702,10 +702,10 @@ console.log(`wrote ${OUT_PATH} (${trace.pieces.length} pieces, ${trace.labels.le
 
 - [ ] **Step 2: Run it and sanity-check the output**
 
-Run: `node --experimental-strip-types scripts/generate-trace-fixture.ts`
+Run: `node scripts/generate-trace-fixture.ts`
 Expected: `wrote …/white-house.trace.json (N pieces, 33 labels)`; an anchor-channel warning on this laptop is expected (see script docstring). Then verify:
 
-Run: `node --experimental-strip-types -e 'const t = require("./docs/src/components/ModelVisualizer/fixtures/white-house.trace.json"); console.log(t.tokens.map((x) => x.label).join(" "))'`
+Run: `node -e 'const t = require("./docs/src/components/ModelVisualizer/fixtures/white-house.trace.json"); console.log(t.tokens.map((x) => x.label).join(" "))'`
 Expected: a plausible BIO sequence containing `B-house_number`, `B-street`, `B-locality`, `B-region`, `B-postcode` labels.
 
 - [ ] **Step 3: Commit**

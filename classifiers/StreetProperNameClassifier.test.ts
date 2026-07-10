@@ -3,7 +3,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { StreetProperNameClassifier } from "./StreetProperNameClassifier.js"
+import { StreetProperNameClassifier } from "./StreetProperNameClassifier.ts"
 
 const classifier = new StreetProperNameClassifier()
 

@@ -14,7 +14,7 @@
  * - Lowercase : drop capitalization cues
  * - Glue : collapse the space between region and postcode ("OR97214")
  *
- * Run: node --experimental-strip-types scripts/eval/perturb-golden.ts\
+ * Run: node scripts/eval/perturb-golden.ts\
  * --golden data/eval/golden/v0.1.2 --out /tmp/perturb-eval/perturbed.jsonl [--per-file 60] Then run
  * it through harness-v0-neural with --symmetric-match (see that flag).
  */

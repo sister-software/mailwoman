@@ -187,7 +187,7 @@ falsehoods catalog is the right capability-boundary regression suite for any fut
 ## Reproducing
 
 ```bash
-node --experimental-strip-types scripts/harness-v0-neural.ts \
+node scripts/harness-v0-neural.ts \
   --tests mailwoman/test \
   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v060-step-100000-int8.onnx \
   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \

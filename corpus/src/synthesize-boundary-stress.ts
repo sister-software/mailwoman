@@ -48,7 +48,7 @@
  *   base-locale shard. `synthesize-boundary-stress.test.ts` proves the alignments.
  */
 
-import type { CanonicalRow } from "./types.js"
+import type { CanonicalRow } from "./types.ts"
 
 export type BoundaryStressTemplate =
 	| "street-eats-affix"

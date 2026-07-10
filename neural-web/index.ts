@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export { defaultGazetteerLexiconURL, loadNeuralClassifierFromURLs, type LoadFromURLsOptions } from "./loader.js"
-export { DEFAULT_FIXED_SEQ_LEN, WebONNXRunner, type WebONNXRunnerOpts } from "./web-onnx-runner.js"
+export { defaultGazetteerLexiconURL, loadNeuralClassifierFromURLs, type LoadFromURLsOptions } from "./loader.ts"
+export { DEFAULT_FIXED_SEQ_LEN, WebONNXRunner, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
 
 // Re-export the public neural surface so callers don't need both packages on the typed path.
 // Pull from the browser-safe entry — the default entry would drag onnxruntime-node + node:fs

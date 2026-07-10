@@ -19,7 +19,7 @@
  *   Usage (after `yarn compile`):
  *
  *   ```
- *   node --experimental-strip-types scripts/eval/demo-cascade-smoke.ts \
+ *   node scripts/eval/demo-cascade-smoke.ts \
  *   [--stage-dir /tmp/v440-stage/en-us/v4.4.0] [--db <wof-hot.db>] [--model <onnx>] \
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>] [--fst <fst.bin>] \
  *   [--gazetteer-lexicon <lexicon.json>] [--file <rows.jsonl>] [--json <sidecar.json>] \
@@ -112,7 +112,7 @@ const missing = Object.entries({
 if (missing.length > 0) {
 	console.error(
 		`✗ demo-cascade smoke: missing artifacts —\n${missing.join("\n")}\n` +
-			"  Stage a demo release (node docs/scripts/build-demo-assets.ts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
+			"  Stage a demo release (yarn start/build in docs/ — the demo-assets plugin stages the artifacts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
 	)
 	process.exit(2)
 }

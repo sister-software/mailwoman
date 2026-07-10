@@ -6,7 +6,7 @@
  *   fancy character is a single codepoint that maps to a single ASCII char.
  */
 
-import { identityMap } from "./offset-map.js"
+import { identityMap } from "./offset-map.ts"
 
 const REPLACEMENTS = new Map<string, string>([
 	["‘", "'"], // ‘

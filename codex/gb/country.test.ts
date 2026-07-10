@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "./country.js"
+import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "./country.ts"
 
 describe("GB_COUNTRIES", () => {
 	it("covers the four constituent countries of the UK", () => {

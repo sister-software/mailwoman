@@ -5,7 +5,7 @@ import { parseArgs } from "node:util"
 // Measures country/region/locality P/R/F1 (unfolded decodeAsJSON) on the hard homograph eval,
 // PLUS the over-fire confusion: how often a gold region/locality span is mistagged as `country`
 // (the "trailing token = country" failure), and how often gold country is missed.
-// Usage: node --experimental-strip-types scripts/eval/score-country-homograph.ts --model <onnx> [--file <jsonl>]
+// Usage: node scripts/eval/score-country-homograph.ts --model <onnx> [--file <jsonl>]
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"

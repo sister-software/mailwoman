@@ -10,7 +10,7 @@ import {
 	US_FLOOR_DESIGNATOR_PREFERRED_ABBR,
 	US_FLOOR_DESIGNATOR_TOKENS,
 	US_FLOOR_DESIGNATORS,
-} from "./floor-designator.js"
+} from "./floor-designator.ts"
 
 describe("US_FLOOR_DESIGNATORS", () => {
 	it("carries the four USPS Pub 28 C2 floor-class designators", () => {

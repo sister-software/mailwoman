@@ -165,7 +165,7 @@ the gap.
 ## Reproducing this diagnostic
 
 ```bash
-node --experimental-strip-types scripts/harness-postcode.ts \
+node scripts/harness-postcode.ts \
   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v060-step-100000-int8.onnx \
   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
@@ -178,7 +178,7 @@ node --experimental-strip-types scripts/harness-postcode.ts \
 For gate use in CI:
 
 ```bash
-node --experimental-strip-types scripts/harness-postcode.ts ... --gate --floor 0.9 --min-count 10
+node scripts/harness-postcode.ts ... --gate --floor 0.9 --min-count 10
 ```
 
 Exits nonzero on any country with ≥ 10 samples and accuracy below the

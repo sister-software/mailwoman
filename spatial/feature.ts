@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type GeometryLiteral } from "./geometries/index.js"
+import { type GeometryLiteral } from "./geometries/index.ts"
 
 export interface IdentifiableGeoFeature {
 	GEOID: string | number

@@ -14,7 +14,7 @@
  *   2. `/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
  *        documented in the README + handover doc).
  *
- *   Assumes the `place_search` FTS5 table is already built (run `mailwoman-wof-build-fts` ahead of
+ *   Assumes the `place_search` FTS5 table is already built (run `mailwoman gazetteer build fts` ahead of
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.
  */
 
@@ -24,7 +24,7 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import { WOFSqlitePlaceLookup } from "./lookup.js"
+import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH

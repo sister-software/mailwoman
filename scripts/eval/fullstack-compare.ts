@@ -14,7 +14,7 @@
  *
  *   Politeness: 3s backoff between cases (Nominatim's usage policy is ≤1 req/s + a UA header).
  *
- *   Usage: node --experimental-strip-types scripts/eval/fullstack-compare.ts\
+ *   Usage: node scripts/eval/fullstack-compare.ts\
  *   --harness /tmp/v072-eval/harness.json\
  *   --out-md /tmp/fullstack-compare.md --out-json /tmp/fullstack-compare.json
  *
@@ -23,6 +23,8 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
+
+import { runIfScript } from "@mailwoman/core/scripting"
 
 interface Args {
 	harnessPath: string
@@ -358,7 +360,4 @@ async function main(): Promise<void> {
 	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)
 }
 
-main().catch((e) => {
-	console.error(e)
-	process.exit(1)
-})
+runIfScript(import.meta, main)

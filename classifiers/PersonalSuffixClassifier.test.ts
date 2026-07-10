@@ -3,7 +3,7 @@
 
 import { assertClassification } from "mailwoman/sdk/test"
 
-import { PersonalSuffixClassifier } from "./PersonalSuffixClassifier.js"
+import { PersonalSuffixClassifier } from "./PersonalSuffixClassifier.ts"
 
 const classifier = await new PersonalSuffixClassifier().ready()
 

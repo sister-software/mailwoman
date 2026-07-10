@@ -12,7 +12,7 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
-import { OVERTURE_ID_BASE } from "./fold-overture.js"
+import { OVERTURE_ID_BASE } from "./fold-overture.ts"
 
 export interface FreezeAdminOptions {
 	/**

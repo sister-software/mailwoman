@@ -27,7 +27,7 @@
  *   decompose-mode pressure.
  */
 
-import type { CanonicalRow } from "./types.js"
+import type { CanonicalRow } from "./types.ts"
 
 export interface HouseVenueBaseTuple {
 	locality: string

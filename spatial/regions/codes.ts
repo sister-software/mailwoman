@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { RegionName } from "./names.js"
+import type { RegionName } from "./names.ts"
 
 /**
  * M.49 region codes for continents.

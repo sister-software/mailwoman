@@ -1,10 +1,10 @@
 {
-	"zipex": "TKCA 1ZZ",
+	"id": "data/TC",
 	"key": "TC",
 	"name": "TURKS AND CAICOS ISLANDS",
 	"fmt": "%N%n%O%n%A%n%C%n%Z",
 	"require": "ACZ",
-	"zip": "TKCA 1ZZ",
 	"upper": "CZ",
-	"id": "data/TC"
+	"zip": "TKCA 1ZZ",
+	"zipex": "TKCA 1ZZ"
 }

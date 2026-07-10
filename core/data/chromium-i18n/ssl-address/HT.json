@@ -1,9 +1,9 @@
 {
-	"zipex": "6120,5310,6110,8510",
+	"id": "data/HT",
 	"key": "HT",
 	"name": "HAITI",
 	"fmt": "%N%n%O%n%A%nHT%Z %C",
-	"postprefix": "HT",
 	"zip": "\\d{4}",
-	"id": "data/HT"
+	"zipex": "6120,5310,6110,8510",
+	"postprefix": "HT"
 }

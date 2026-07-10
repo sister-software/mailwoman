@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { TextNormalizer } from "../tokenization/normalizer.js"
-import type { Displayable } from "./debugging.js"
+import { TextNormalizer } from "../tokenization/normalizer.ts"
+import type { Displayable } from "./debugging.ts"
 
 /**
  * Options for the locale index.

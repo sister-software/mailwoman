@@ -1,7 +1,7 @@
 # Competitive benchmark — mailwoman vs Nominatim vs Pelias (2026-06-23)
 
 _The honest head-to-head, run for trade-show readiness. Harness: `scripts/eval/competitive-benchmark.ts`._
-_Reproduce: `node --experimental-strip-types scripts/eval/competitive-benchmark.ts --n 150 --locales it,pt,pl,at,cz,fr,au` (Pelias via geocode.earth; Nominatim via the public API at ~1 req/s)._
+_Reproduce: `node scripts/eval/competitive-benchmark.ts --n 150 --locales it,pt,pl,at,cz,fr,au` (Pelias via geocode.earth; Nominatim via the public API at ~1 req/s)._
 
 ## Method (and why it's built this way)
 

@@ -3,7 +3,7 @@
 
 import { expect, test } from "vitest"
 
-import { CompoundUnitDesignatorClassifier } from "./CompoundUnitDesignatorClassifier.js"
+import { CompoundUnitDesignatorClassifier } from "./CompoundUnitDesignatorClassifier.ts"
 
 const classifier = await new CompoundUnitDesignatorClassifier().ready()
 

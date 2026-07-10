@@ -22,7 +22,7 @@
  *
  * > =3pp overall, with no perturbed regression -> build routing; else pivot to coverage.
  *
- *   Run (against the CUSTOM gazetteer — never an off-the-shelf dump): node --experimental-strip-types
+ *   Run (against the CUSTOM gazetteer — never an off-the-shelf dump): node
  *   scripts/eval/resolver-eval.ts\
  *   --eval /tmp/wof-bootstrap/eval.jsonl\
  *   --model /tmp/v072-eval/model.onnx\
@@ -35,6 +35,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -336,7 +337,4 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((e) => {
-	console.error(e)
-	process.exit(1)
-})
+runIfScript(import.meta, main)

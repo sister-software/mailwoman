@@ -30,7 +30,7 @@
  *   - Value match is normalized exact OR either-direction substring (handles fragmentation like "Saint"
  *       vs "Saint Paul" and decomposition like "Ave" vs "Elm Ave").
  *
- *   Run: node --experimental-strip-types scripts/eval/collect-span-confidences.ts\
+ *   Run: node scripts/eval/collect-span-confidences.ts\
  *   --model neural-weights-en-us/model.onnx\
  *   --tokenizer neural-weights-en-us/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\
@@ -42,6 +42,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
@@ -249,4 +250,4 @@ async function main(): Promise<void> {
 	console.error(`  OA spans=${byOa.length}  corpus spans=${byCorpus.length}`)
 }
 
-void main()
+runIfScript(import.meta, main)

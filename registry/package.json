@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/registry",
-	"version": "5.9.0",
+	"version": "5.10.0",
 	"description": "The geocode-first record-matching application: resolve messy contact/organization records into canonical, geocoded entities (block → score → cluster) and export them as GeoJSON for spatial analysis. The clinic-funding use case mailwoman was built for.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -17,25 +17,70 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./resolve": "./out/resolve.js",
-		"./geojson": "./out/geojson.js",
-		"./ingest": "./out/ingest.js"
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./resolve": {
+			"node": "./resolve.ts",
+			"default": "./out/resolve.js",
+			"types": "./out/resolve.d.ts"
+		},
+		"./geojson": {
+			"node": "./geojson.ts",
+			"default": "./out/geojson.js",
+			"types": "./out/geojson.d.ts"
+		},
+		"./ingest": {
+			"node": "./ingest.ts",
+			"default": "./out/ingest.js",
+			"types": "./out/ingest.d.ts"
+		},
+		"./tools": {
+			"node": "./tools/index.ts",
+			"default": "./out/tools/index.js",
+			"types": "./out/tools/index.d.ts"
+		}
 	},
 	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			},
+			"./resolve": {
+				"types": "./out/resolve.d.ts",
+				"default": "./out/resolve.js"
+			},
+			"./geojson": {
+				"types": "./out/geojson.d.ts",
+				"default": "./out/geojson.js"
+			},
+			"./ingest": {
+				"types": "./out/ingest.d.ts",
+				"default": "./out/ingest.js"
+			},
+			"./tools": {
+				"types": "./out/tools/index.d.ts",
+				"default": "./out/tools/index.js"
+			}
+		},
 		"access": "public"
 	},
 	"dependencies": {
 		"@mailwoman/address-id": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"csv-parse": "^5.6.0",
+		"h3-js": "^4.4.0",
 		"spliterator": "^3.2.0"
 	},
 	"devDependencies": {
-		"@mailwoman/core": "workspace:*",
 		"@types/node": ">=26.0.1",
 		"playwright": "^1.61.0"
 	}

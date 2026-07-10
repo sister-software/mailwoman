@@ -10,7 +10,7 @@ import {
 	formatFromClassificationMap,
 	reconcileComponents,
 	toOpenCageComponents,
-} from "./format.js"
+} from "./format.ts"
 
 const US_ADDRESS: ComponentDict = {
 	house_number: "123",

@@ -65,4 +65,4 @@ on the trained candidate (`gate rubric` in the night plan — FR centroid-shift,
 is what counts; this only proves the ceiling is worth climbing toward. It is: a 55–61% reduction and
 a 0% → 97% resolve-rate flip on the merge class.
 
-Reproduce: `node --experimental-strip-types scripts/eval/fr-admin-split-selfvalidation.ts --n 200`.
+Reproduce: `node scripts/eval/fr-admin-split-selfvalidation.ts --n 200`.

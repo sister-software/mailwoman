@@ -1,8 +1,8 @@
 import { z } from "zod"
 
-import { loadEnvFile } from "./load.js"
-import { cwdPathBuilder } from "./paths.js"
-import { PrivateEnvSchema, PublicEnvSchema } from "./schema.js"
+import { loadEnvFile } from "./load.ts"
+import { cwdPathBuilder } from "./paths.ts"
+import { PrivateEnvSchema, PublicEnvSchema } from "./schema.ts"
 
 // The optional `.env` is read once (it can't change mid-process); the real environment is layered on top
 // LIVE. `process.env` can change during a process — a test stubbing a var, a late setter — and `$public` /

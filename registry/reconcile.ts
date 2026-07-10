@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Coverage reconciliation (#621) — the library home for what `scripts/eval/record-matcher/
+ *   Coverage reconciliation (#621) — the library home for what `registry/tools/
  *   coverage-reconciliation.ts` does inline, so the CLI (`registry --reconcile`) and any consumer
  *   can reuse it.
  *
@@ -28,7 +28,7 @@
 
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
-import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.js"
+import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.ts"
 
 /** Which source labels denote eligibility vs funding/enrollment. */
 export interface ReconcileConfig {

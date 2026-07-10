@@ -8,7 +8,7 @@
 
 import type { Tagged } from "type-fest"
 
-import { isUsStateAbbreviation, type UsStateAbbreviation } from "./state.js"
+import { isUsStateAbbreviation, type UsStateAbbreviation } from "./state.ts"
 
 /**
  * USPS-recognized ZIP code digits.

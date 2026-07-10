@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { Segment, SegmentSeparator } from "./types.js"
+import type { Segment, SegmentSeparator } from "./types.ts"
 
 /**
  * Comma / newline / tab separate segments. Locale-aware grammar reserved for future (JP whitespace, KR honorifics).

@@ -12,7 +12,7 @@
  *   See `docs/articles/plan/reference/STAGES.md` § Stage 2.5 for the contract.
  */
 
-export { classifyKind, classifyKindSync } from "./classify.js"
+export { classifyKind, classifyKindSync } from "./classify.ts"
 export {
 	scoreIntersection,
 	scoreLandmark,
@@ -21,5 +21,5 @@ export {
 	scorePostcodeOnly,
 	scoreStructuredAddress,
 	scoreVague,
-} from "./rules.js"
-export type { LocaleHint, NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "./types.js"
+} from "./rules.ts"
+export type { LocaleHint, NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "./types.ts"

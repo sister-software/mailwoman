@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { createMask } from "@mailwoman/core"
-import { parser } from "mailwoman/sdk/test"
+import { parser } from "mailwoman/test-kit"
 import { expect, test } from "vitest"
 
 const testCases: Array<[input: string, output: string]> = [
