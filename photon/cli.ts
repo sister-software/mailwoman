@@ -77,9 +77,41 @@ async function serve(): Promise<void> {
 	// Candidate gazetteer = worldwide resolution (see @mailwoman/nominatim). --candidate-db /
 	// $MAILWOMAN_CANDIDATE_DB, else auto-use one fetched to `<data-root>/wof/candidate.db`; absent → admin-only.
 	const conventionCandidate = join(mailwomanDataRoot(), "wof", "candidate.db")
+
+	// #1009 kin: an EXPLICIT --candidate-db that doesn't exist must error loudly, not silently fall
+	// back to whatever ambient data-root file happens to be present (a typo'd path would serve the
+	// wrong gazetteer without a word).
+	if (values["candidate-db"] && !existsSync(values["candidate-db"])) {
+		console.error(`✗ --candidate-db not found: ${values["candidate-db"]}`)
+		process.exit(1)
+	}
 	const candidateDb =
 		resolveCandidateDBPath(values["candidate-db"]) ??
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
+
+	// #1009: fail FRIENDLY before the resolver throws its internal "resolveShards: at least one shard
+	// is required" — a stranger's first `npx @mailwoman/photon serve` must say exactly what data is
+	// missing and the one command that fixes it. Kept in sync with the docs' hosted-artifact layout
+	// (mailwoman.sister.software/docs/switching/photon — the maintained pointer).
+	if (!candidateDb && wofPaths.length === 0) {
+		console.error(
+			[
+				"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
+				"",
+				"  Fastest path (worldwide resolution, ~1.4 GB, byte-range friendly):",
+				`    mkdir -p ${join(mailwomanDataRoot(), "wof")}`,
+				`    curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \\`,
+				`      -o ${conventionCandidate}`,
+				"",
+				"  Then re-run `serve` (the file is auto-detected at that path), or point at your own:",
+				"    --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)",
+				"    $MAILWOMAN_WOF_DB / <data-root>/wof/*.db          (admin WOF distribution)",
+				"",
+				"  Docs: https://mailwoman.sister.software/docs/switching/photon",
+			].join("\n")
+		)
+		process.exit(1)
+	}
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
@@ -121,6 +153,9 @@ async function serve(): Promise<void> {
 			// parsed housenumber + street so photonForwardProperties decorates it `type: house` (matching upstream Photon)
 			// instead of inheriting the admin locality's `type: city`. The admin tier (a locality centroid) never does.
 			const houseGrade = result.resolution_tier === "address_point" || result.resolution_tier === "interpolated"
+			// #1050: the street-centroid tier is STREET-GRADE — full assembled street name in `name`,
+			// highway/street osm tags (the parallel of the #1041 house treatment).
+			const streetGrade = result.resolution_tier === "street"
 			const primary: PhotonForwardInput = {
 				lat: result.lat,
 				lon: result.lon,
@@ -128,6 +163,7 @@ async function serve(): Promise<void> {
 				country: country ? { name: country.canonical, code: country.iso2 } : undefined,
 				places: result.hierarchy.map((h) => ({ tag: h.tag, name: h.name })),
 				...(houseGrade ? { house: { number: result.house_number, street: result.street } } : {}),
+				...(streetGrade ? { street: { name: result.street } } : {}),
 			}
 			// #1016: candidates[0] is the primary itself; its ranked alternatives (Springfield MA/IL/…) become the
 			// extra features, up to the requested `limit`. Each alternative is a single resolved place.

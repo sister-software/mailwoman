@@ -296,6 +296,16 @@ export interface PhotonForwardInput {
 	 * client zooms to city scale (or paints a city marker) on a doorstep match — the #1041 regression.
 	 */
 	house?: { number?: string | null; street?: string | null } | null
+	/**
+	 * A STREET-GRADE result (#1050): set when the street-centroid tier (#1042/#1046) fired — a street-level coordinate,
+	 * below rooftop/interp, above admin. {@link photonForwardProperties} re-tags it `osm_key: highway` / `osm_value:
+	 * residential` / `type: street` with the FULL assembled street name in `name` — matching upstream komoot's street
+	 * results (verified live 2026-07-10: a street primary returns `{osm_key:"highway", osm_value:<class>, type:"street",
+	 * name:"Rue de la République", city, …}`; the street name rides `name`, not `street`). Without it a street centroid
+	 * reads `type: city` with the city's name — the #1050 regression. `house` wins when both are set (a numbered query
+	 * never street-tiers).
+	 */
+	street?: { name?: string | null } | null
 }
 
 /**
@@ -377,6 +387,13 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 	// house, type:house, with housenumber + street and NO name). Drop the admin-derived `name` — else the QGIS FLF label
 	// (name + housenumber + street + city + postcode) doubles the city ("Paris 8 Boulevard du Palais Paris 75001"). The
 	// city/state/postcode/country the ancestry filled stay put (upstream carries them on a house result too).
+	// #1050: street-grade — the street-centroid tier fired. Re-tag per upstream's street shape (full
+	// name in `name`, highway/street osm tags); the admin ancestry (city/state/…) stays as context.
+	if (input.street?.name && !input.house) {
+		props.name = input.street.name
+		Object.assign(props, { osm_key: "highway", osm_value: "residential", type: "street" })
+	}
+
 	if (input.house) {
 		props.osm_key = "place"
 		props.osm_value = "house"

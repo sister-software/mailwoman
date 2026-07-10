@@ -40,6 +40,7 @@
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/nuts-lookup": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",

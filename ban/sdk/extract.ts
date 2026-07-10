@@ -19,7 +19,7 @@
 import { createReadStream } from "node:fs"
 import { createGunzip } from "node:zlib"
 
-import { TextSpliterator } from "spliterator"
+import { CSVSpliterator } from "spliterator"
 
 /** One BAN address point. Every field but `rep`/`postcode`/`city` is guaranteed present by the source. */
 export interface BANAddrRecord {
@@ -37,24 +37,16 @@ export interface BANAddrRecord {
 	lat: number
 }
 
-/** The BAN CSV columns this ingest reads — resolved to indices off the header row. */
+/** The BAN CSV columns this ingest reads (validated against the first parsed row — header drift fails LOUDLY). */
 const REQUIRED_COLUMNS = ["numero", "rep", "nom_voie", "code_postal", "nom_commune", "lon", "lat"] as const
 
-type ColumnIndex = Record<(typeof REQUIRED_COLUMNS)[number], number>
-
-/** Map the header line to the indices of the columns we read; throws if the dump is missing a required column. */
-function headerIndices(header: string): ColumnIndex {
-	const cols = header.split(";").map((c) => c.trim())
-	const idx = {} as ColumnIndex
-
+/** Throw if the dump's header is missing a required column — a rename upstream must not silently skip every row. */
+function assertRequiredColumns(row: Record<string, unknown>): void {
 	for (const name of REQUIRED_COLUMNS) {
-		const at = cols.indexOf(name)
-
-		if (at < 0) throw new Error(`BAN CSV header is missing required column "${name}" (got: ${cols.join(", ")})`)
-		idx[name] = at
+		if (!(name in row)) {
+			throw new Error(`BAN CSV header is missing required column "${name}" (got: ${Object.keys(row).join(", ")})`)
+		}
 	}
-
-	return idx
 }
 
 /** A readable stream over `csvPath`, transparently gunzipping a `.csv.gz` input. */
@@ -70,35 +62,39 @@ function openCSV(csvPath: string): NodeJS.ReadableStream {
  * caller's job for anything finer). The `rep` suffix is normalised to lower-case or null.
  */
 export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BANAddrRecord> {
-	let idx: ColumnIndex | null = null
+	// CSVSpliterator (quote-correct since spliterator 3.2.0) replaces the 2026-07-09 hand-rolled
+	// `split(";")` that leaked CSV quotes into lieu-dit street keys (#1044): quoted fields unwrap,
+	// doubled inner quotes fold, and a quoted `;` no longer mis-splits the row.
+	let checkedHeader = false
 
-	for await (const line of TextSpliterator.fromAsync(openCSV(csvPath))) {
-		const row = typeof line === "string" ? line : String(line)
-
-		if (!row) continue
-
-		if (!idx) {
-			idx = headerIndices(row)
-			continue
+	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(openCSV(csvPath), {
+		mode: "object",
+		columnDelimiter: ";",
+		// Opt-in end-to-end quoting: wrapping quotes strip, doubled quotes unescape, quoted `;` does
+		// not split — the #1044 fix proper.
+		enableQuoteHandling: true,
+	})) {
+		if (!checkedHeader) {
+			assertRequiredColumns(row)
+			checkedHeader = true
 		}
-		const cols = row.split(";")
-		const numero = cols[idx.numero]?.trim()
-		const street = cols[idx.nom_voie]?.trim()
+		const numero = row.numero?.trim()
+		const street = row.nom_voie?.trim()
 
 		if (!numero || !street) continue
 		// Guard the empty-string trap: `Number("")` is 0 (finite), which would write a bogus (0,0) point —
 		// so require a non-empty coord string BEFORE parsing, then the finite check catches garbage.
-		const lonStr = cols[idx.lon]?.trim()
-		const latStr = cols[idx.lat]?.trim()
+		const lonStr = row.lon?.trim()
+		const latStr = row.lat?.trim()
 
 		if (!lonStr || !latStr) continue
 		const lon = Number(lonStr)
 		const lat = Number(latStr)
 
 		if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue
-		const rep = cols[idx.rep]?.trim()
-		const postcode = cols[idx.code_postal]?.trim()
-		const city = cols[idx.nom_commune]?.trim()
+		const rep = row.rep?.trim()
+		const postcode = row.code_postal?.trim()
+		const city = row.nom_commune?.trim()
 
 		yield {
 			numero,
