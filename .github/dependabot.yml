@@ -1,0 +1,61 @@
+# Dependabot version-update config (grouped weekly, all three ecosystems).
+#
+# Security updates are a separate GitHub feature (repo settings) and are NOT
+# affected by the `ignore` blocks below — ignores only mute *version* PRs;
+# security alerts and their PRs still fire for ignored packages.
+version: 2
+updates:
+  # Yarn 4 workspaces — the single root lockfile covers every workspace, so
+  # one npm block at "/" updates all of them. Minor + patch land as one
+  # grouped weekly PR; majors arrive as separate PRs.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      npm-dependencies:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # onnxruntime bumps change inference output. They go through the eval
+      # gate as deliberate operator moves (neural-web additionally pins an
+      # exact ORT dev build), never as bot PRs.
+      - dependency-name: "onnxruntime-node"
+      - dependency-name: "onnxruntime-web"
+
+  # corpus-python (pyproject.toml + uv.lock).
+  - package-ecosystem: "uv"
+    directory: "/corpus-python"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      python-dependencies:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Exact pins guarding the int8 / mobile-Safari WebGPU invariant — read
+      # the pin comment in corpus-python/pyproject.toml before bumping.
+      - dependency-name: "torch"
+      - dependency-name: "onnx"
+      - dependency-name: "onnxruntime"
+
+  # Workflow actions — handles both tag pins (@v7) and SHA pins (updates the
+  # SHA and the trailing `# vX` comment). All updates in one grouped PR.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      actions:
+        patterns:
+          - "*"
