@@ -53,3 +53,7 @@ review.jsonl
 ## Scoped to the two generator-owned dirs — hand-written *.snap.json/*.trace.json elsewhere stay format-checked.
 neural/test/fixtures/*.snap.json
 docs/src/components/ModelVisualizer/fixtures/*.trace.json
+
+## Generated SBOM artifacts (scripts/generate-sbom.ts) — SPDX 2.3 + CycloneDX 1.5 output regenerated
+## per release; the generator's serialization is the source of truth, not oxfmt's.
+docs/static/sbom/*.json
