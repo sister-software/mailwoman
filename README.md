@@ -6,6 +6,8 @@
 
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/sister-software/mailwoman)
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13577/badge)](https://www.bestpractices.dev/projects/13577)
+
 Mailwoman turns free-text postal addresses into structured components — house number,
 street, locality, region, postcode, country — and resolves them to coordinates against an
 open gazetteer. It is a small transformer encoder (~30M params) doing BIO token
