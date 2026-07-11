@@ -88,7 +88,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@dsnp/parquetjs": "1.8.7",
+		"@dsnp/parquetjs": "1.8.8",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
@@ -99,6 +99,6 @@
 		"spliterator": "^3.2.0"
 	},
 	"devDependencies": {
-		"@types/node": ">=24.18.0"
+		"@types/node": ">=26.1.1"
 	}
 }

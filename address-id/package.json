@@ -36,9 +36,9 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
-		"h3-js": "^4.4.0"
+		"h3-js": "^4.5.0"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.0.1"
+		"@types/node": ">=26.1.1"
 	}
 }

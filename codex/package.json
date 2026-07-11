@@ -124,7 +124,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"type-fest": "^5.7.0"
+		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {
 		"@mailwoman/annotations": "workspace:*"
