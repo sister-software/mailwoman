@@ -1,0 +1,88 @@
+{
+	"$schema": "https://fundingjson.org/schema/v1.1.0.json",
+	"entity": {
+		"type": "individual",
+		"role": "owner",
+		"name": "Teffen Ellis",
+		"email": "teffen@sister.software",
+		"description": "Creator and maintainer of Mailwoman, publishing as Sister Software. I build open, self-hostable address infrastructure: a small neural address parser plus geocoder that runs from reproducible, open-data artifacts — no cloud dependency, no per-query cost.",
+		"webpageUrl": {
+			"url": "https://mailwoman.sister.software"
+		}
+	},
+	"projects": [
+		{
+			"guid": "mailwoman",
+			"name": "Mailwoman",
+			"description": "An open-source (AGPL-3.0, dual-licensed) geocoder and postal-address parser. A ~29M-parameter neural model parses messy multilingual addresses; readonly SQLite artifacts built from open data (OpenStreetMap, Who's On First, Overture, national open address registers such as France's BAN) resolve them to coordinates — on a server, offline, or entirely in the browser via WebAssembly. Drop-in compatible with the Nominatim, Photon, and libpostal APIs. Every data artifact is reproducible and checksummed; every model release is gated by a published evaluation methodology.",
+			"webpageUrl": {
+				"url": "https://mailwoman.sister.software"
+			},
+			"repositoryUrl": {
+				"url": "https://github.com/sister-software/mailwoman",
+				"wellKnown": "https://github.com/sister-software/mailwoman/blob/main/.well-known/funding-manifest-urls"
+			},
+			"licenses": ["spdx:AGPL-3.0-only"],
+			"tags": [
+				"geocoding",
+				"address-parsing",
+				"gis",
+				"openstreetmap",
+				"machine-learning",
+				"sqlite",
+				"typescript",
+				"self-hosted",
+				"offline-first",
+				"open-data"
+			]
+		}
+	],
+	"funding": {
+		"channels": [
+			{
+				"guid": "bank-transfer",
+				"type": "bank",
+				"address": "",
+				"description": "Bank transfer (ACH/SEPA/wire). Contact teffen@sister.software for invoicing and account details."
+			},
+			{
+				"guid": "email",
+				"type": "other",
+				"address": "teffen@sister.software",
+				"description": "Email contact for any funding arrangement, grants administration, or invoicing questions."
+			}
+		],
+		"plans": [
+			{
+				"guid": "country-register",
+				"status": "active",
+				"name": "One national address register, end to end",
+				"description": "Fund the ingestion of one country's open address register into a sealed, reproducible geocoding artifact (the France/BAN recipe: 26M addresses, rooftop precision, provenance chain included) plus its evaluation panel. Each register is an independently verifiable milestone.",
+				"amount": 5000,
+				"currency": "USD",
+				"frequency": "one-time",
+				"channels": ["bank-transfer", "email"]
+			},
+			{
+				"guid": "sustained-development",
+				"status": "active",
+				"name": "Sustained development",
+				"description": "Ongoing work across the parser, resolver, data pipelines, evaluation infrastructure, and drop-in APIs — including the maintenance nobody funds: gazetteer rebuilds, regression gates, dependency care.",
+				"amount": 2000,
+				"currency": "USD",
+				"frequency": "monthly",
+				"channels": ["bank-transfer", "email"]
+			},
+			{
+				"guid": "any-support",
+				"status": "active",
+				"name": "Any amount",
+				"description": "Every contribution funds open address infrastructure: open data in, reproducible artifacts out.",
+				"amount": 0,
+				"currency": "USD",
+				"frequency": "one-time",
+				"channels": ["bank-transfer", "email"]
+			}
+		]
+	}
+}
