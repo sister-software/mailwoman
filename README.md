@@ -1,12 +1,31 @@
-# Mailwoman
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/static/img/mailwoman-seal-magenta.svg">
+    <img src="docs/static/img/mailwoman-seal-navy.svg" alt="" width="96" height="96">
+  </picture>
+</p>
 
-**A calibrated, retrieval-augmented postal-address parser.**
+<h1 align="center">Mailwoman</h1>
 
-![NPM License](https://img.shields.io/npm/l/mailwoman?color=%23663399)
+<p align="center"><strong>A calibrated, retrieval-augmented postal-address parser.</strong></p>
 
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/sister-software/mailwoman)
+<p align="center">
+  <a href="https://www.npmjs.com/package/mailwoman"><img alt="npm version" src="https://img.shields.io/npm/v/mailwoman?color=ff00b0&label=npm"></a>
+  <a href="https://github.com/sister-software/mailwoman/actions/workflows/test.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/sister-software/mailwoman/test.yml?branch=main&label=tests"></a>
+  <a href="https://www.bestpractices.dev/projects/13577"><img alt="OpenSSF Best Practices" src="https://www.bestpractices.dev/projects/13577/badge"></a>
+  <img alt="license" src="https://img.shields.io/npm/l/mailwoman?color=663399">
+  <img alt="node version" src="https://img.shields.io/node/v/mailwoman?color=339933">
+</p>
 
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13577/badge)](https://www.bestpractices.dev/projects/13577)
+<p align="center">
+  <a href="https://mailwoman.sister.software/demo"><strong>Live demo</strong></a> ·
+  <a href="https://mailwoman.sister.software">Docs & blog</a> ·
+  <a href="https://mailwoman.sister.software/articles/getting-started/">Getting started</a>
+</p>
+
+<p align="center">
+  <img src="docs/static/img/readme-terminal.svg" alt="Terminal session: npx mailwoman parse turns a free-text address into structured JSON components" width="760">
+</p>
 
 Mailwoman turns free-text postal addresses into structured components — house number,
 street, locality, region, postcode, country — and resolves them to coordinates against an
@@ -22,19 +41,6 @@ gazetteer.
 npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 ```
 
-```json
-{
-	"region": "CA",
-	"locality": "Mountain View",
-	"street": "Amphitheatre",
-	"house_number": "1600",
-	"street_suffix": "Parkway",
-	"postcode": "94043"
-}
-```
-
-**Try it live (in your browser):** https://mailwoman.sister.software/demo
-
 ## Installation
 
 ```bash
@@ -43,7 +49,10 @@ npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 
 That installs the CLI, the neural runtime, and the US-English model weights. For French
 addresses, add `@mailwoman/neural-weights-fr-fr`. For coordinate resolution, add
-`@mailwoman/resolver-wof-sqlite`. Requires Node.js ≥ 22.5.1.
+`@mailwoman/resolver-wof-sqlite`.
+
+> [!IMPORTANT]
+> Requires Node.js ≥ 24.18.0.
 
 ## CLI
 
@@ -81,6 +90,36 @@ loading, and configuration — is documented in the [`mailwoman` package
 README](./mailwoman/README.md) and in [Getting
 started](https://mailwoman.sister.software/articles/getting-started/).
 
+## Drop-in servers
+
+Already running a geocoding stack? Three HTTP servers speak the wire formats your clients
+use today — no PostgreSQL, no Elasticsearch, no `osm2pgsql` import:
+
+| Package                               | Speaks                                                | Start it                         |
+| ------------------------------------- | ----------------------------------------------------- | -------------------------------- |
+| [`@mailwoman/nominatim`](./nominatim) | Nominatim — `/search`, `/reverse`, `/status`          | `npx @mailwoman/nominatim serve` |
+| [`@mailwoman/photon`](./photon)       | Photon autocomplete — `/api`, `/reverse` (GeoJSON)    | `npx @mailwoman/photon serve`    |
+| [`@mailwoman/libpostal`](./libpostal) | libpostal — `/parse`, `/expand` (no gazetteer needed) | `npx @mailwoman/libpostal serve` |
+
+Point geopy's `Nominatim(domain="localhost:8080")` at the first one and forward + reverse
+geocoding keep working. Every result carries an OpenCage-style `annotations` block —
+IANA timezone, UN/LOCODE, EU NUTS codes, coordinate formats, sun times, currency —
+composed by [`@mailwoman/annotations`](./annotations).
+
+## How it compares
+
+This table compares what each system needs to run, not how well it performs. Mailwoman
+began as a fork of Pelias Parser and ships wire-compatible drop-ins for the other three.
+
+|                               | Mailwoman                       | libpostal          | Nominatim                  | Photon                         |
+| ----------------------------- | ------------------------------- | ------------------ | -------------------------- | ------------------------------ |
+| Footprint                     | ~30 MB model + SQLite gazetteer | multi-GB data blob | PostgreSQL + planet import | Elasticsearch/OpenSearch index |
+| Runs in the browser           | ✓ (WebGPU / WASM)               | ✗                  | ✗                          | ✗                              |
+| Parse → labeled components    | ✓ with calibrated confidence    | ✓                  | —                          | —                              |
+| Forward + reverse geocoding   | ✓ (Who's On First gazetteer)    | ✗ (parse only)     | ✓                          | ✓                              |
+| Autocomplete / type-ahead     | ✓ (Photon-compatible API)       | ✗                  | ✗                          | ✓                              |
+| Annotations (tz, currency, …) | ✓ OpenCage-style block          | ✗                  | ✗                          | ✗                              |
+
 ## How it works
 
 The problem splits in two:
@@ -99,11 +138,35 @@ scores: when it says `0.88`, it is right about 88% of the time.
 For the longer version, read [What Mailwoman
 Is](https://mailwoman.sister.software/articles/concepts/what-mailwoman-is/).
 
-## Documentation
+## Locale coverage
 
-- [Documentation & blog](https://mailwoman.sister.software)
-- [Getting started](https://mailwoman.sister.software/articles/getting-started/)
-- [Live demo](https://mailwoman.sister.software/demo)
+A locale appears here only when a coordinate-graded eval backs it.
+
+| Tier                                 | Locales                                                | What backs the claim                                                                                         |
+| ------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **1 — first-class, floor-gated**     | US, FR                                                 | Per-tag eval floors gate every release. FR coordinate panel (n=3000): 100% resolve, resolved-p90 6.6 km      |
+| **2 — trained + coordinate-paneled** | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Per-locale coordinate panels (n=1000 each), resolved-p90 ≤ 10 km across the set; NL resolved-p50 0.05 km     |
+| **3 — trained, thinly measured**     | NO, SE                                                 | Coordinate panels exist, but residual misses are not yet fully characterized. Claims beyond this: unverified |
+
+The [browser demo](https://mailwoman.sister.software/demo) carries the same coverage. Full
+receipts live in the [scope declaration](./docs/articles/plan/SCOPE.mdx) and the [eval
+reports](./docs/articles/evals/).
+
+## Beyond parse + geocode
+
+`mailwoman` is the entry point to 33 published packages. The rest of the toolkit:
+
+| Package                                             | What it does                                                                                      |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [`@mailwoman/formatter`](./formatter)               | The inverse of the parser — render components back to a locale-aware string + canonical match key |
+| [`@mailwoman/match`](./match)                       | Geocode-first record matcher: block → score → cluster (Fellegi-Sunter)                            |
+| [`@mailwoman/registry`](./registry)                 | Resolve messy address records to geocoded entities, export GeoJSON                                |
+| [`@mailwoman/address-id`](./address-id)             | Stable address primary key (`<state>.<H3-cell>.<hash>`) for joins + dedup                         |
+| [`@mailwoman/annotations`](./annotations)           | The OpenCage-style annotation composer behind the drop-in servers                                 |
+| [`@mailwoman/timezone-lookup`](./timezone-lookup)   | Coordinate → IANA timezone (point-in-polygon, `node:sqlite`)                                      |
+| [`@mailwoman/un-locode-lookup`](./un-locode-lookup) | Place → UN/LOCODE trade-location codes                                                            |
+| [`@mailwoman/nuts-lookup`](./nuts-lookup)           | EU coordinate → NUTS statistical regions                                                          |
+| [`@mailwoman/codex`](./codex)                       | Per-address-system postal reference data + branded types                                          |
 
 ## License
 
@@ -123,6 +186,7 @@ under the MIT license, and Mailwoman bundles third-party data under its own term
 
 ## Developing Mailwoman
 
+> [!NOTE]
 > **This section is for working _on_ Mailwoman in this repository.** If you only want to
 > _use_ Mailwoman, the published packages above are all you need — you do not need to clone
 > the repo, build anything, or read any further.
