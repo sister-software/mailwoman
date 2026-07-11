@@ -244,11 +244,11 @@ The current neural model (v0.4.0) emits 10 of these: country, region, locality, 
 
 The three HTTP drop-ins each ship a machine-readable [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html) specification — the endpoints, query parameters, response shapes, the schema.org `jsonld` variants, and the documented divergences from each upstream. Point Swagger UI, Redoc, a client generator, or a contract test at them.
 
-| Drop-in                                                                     | Endpoints                                   | Specification                                          |
-| --------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
-| [`@mailwoman/photon`](https://www.npmjs.com/package/@mailwoman/photon)       | `/api`, `/reverse`                          | [photon.yaml](pathname:///openapi/photon.yaml)         |
-| [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status` | [nominatim.yaml](pathname:///openapi/nominatim.yaml)   |
-| [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                         | [libpostal.yaml](pathname:///openapi/libpostal.yaml)   |
+| Drop-in                                                                      | Endpoints                                   | Specification                                        |
+| ---------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------- |
+| [`@mailwoman/photon`](https://www.npmjs.com/package/@mailwoman/photon)       | `/api`, `/reverse`                          | [photon.yaml](pathname:///openapi/photon.yaml)       |
+| [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status` | [nominatim.yaml](pathname:///openapi/nominatim.yaml) |
+| [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                         | [libpostal.yaml](pathname:///openapi/libpostal.yaml) |
 
 The source of truth for each is `openapi.yaml` at the workspace root; the copies above are published as static site assets. All three validate against the OpenAPI standard with zero errors under [Redocly CLI](https://redocly.com/docs/cli):
 
