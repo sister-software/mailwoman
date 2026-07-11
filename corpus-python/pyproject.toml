@@ -29,7 +29,7 @@ train = [
 	"torch==2.12.0",
 	"transformers==5.9.0",
 	"datasets>=2.19",
-	"onnx==1.21.0",
+	"onnx==1.22.0",
 	"onnxruntime==1.26.0",
 	"tqdm>=4.66",
 	# Optional experiment tracking. Logging is best-effort and guarded at runtime
