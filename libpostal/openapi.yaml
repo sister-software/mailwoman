@@ -1,0 +1,268 @@
+# @mailwoman/libpostal — OpenAPI 3.1 specification
+#
+# The libpostal-compatible parse/expand HTTP drop-in (/parse, /expand) served by
+# `npx @mailwoman/libpostal serve`. Wire shapes taken verbatim from libpostal/index.ts +
+# libpostal/cli.ts.
+#
+# Validate (Redocly CLI 2.38.0, zero errors):
+#   cd libpostal && npx --yes @redocly/cli@latest lint openapi.yaml
+
+openapi: 3.1.0
+
+info:
+  title: "@mailwoman/libpostal"
+  version: 5.10.1
+  summary: libpostal-compatible address parse / expand API.
+  description: >
+    A drop-in replacement for [libpostal](https://github.com/openvenues/libpostal)'s REST
+    server — the same `/parse` (`parse_address`) and `/expand` (`expand_address`) contract,
+    backed by Mailwoman's calibrated neural address parser. The lowest-dependency drop-in:
+    `/parse` needs no gazetteer, just the model.
+
+
+    **Drop-in compatibility.** `/parse` returns an ordered array of `{ label, value }`
+    components, mapping Mailwoman's `ComponentTag` classifications onto libpostal's OSM-derived
+    labels (`street`→`road`, `locality`→`city`, `region`→`state`, …). Unmapped classifications
+    pass through unchanged.
+
+
+    **Known divergences from upstream libpostal.**
+
+    - `/expand` is deterministic. Mailwoman's normalization is rule-based, so `/expand` returns
+      the original string plus its normalized + abbreviation-expanded forms — one canonical
+      alternative set, not libpostal's probabilistic multi-variant hypothesis expansion.
+    - `GET /` serves a friendly HTML banner; libpostal's own REST server has no root page.
+
+
+    **Request forms.** Both `/parse` and `/expand` accept `GET` (with a query-string parameter)
+    and `POST` (with a JSON body). The `serve` CLI reads query-string parameters directly; mount
+    a JSON body parser (e.g. `express.json()`) to accept `POST` JSON bodies.
+
+
+    **CORS.** Permissive CORS is on by default (`Access-Control-Allow-Origin: *`, and a `204`
+    answer to preflight `OPTIONS` — the `POST /parse` preflight needs it). Disable with
+    `serve --no-cors` when a reverse proxy already owns the headers.
+  license:
+    name: AGPL-3.0-only OR LicenseRef-Commercial
+    identifier: AGPL-3.0-only
+  contact:
+    name: Sister Software
+    url: https://mailwoman.sister.software
+
+externalDocs:
+  description: Switching from libpostal (setup, divergences)
+  url: https://mailwoman.sister.software/docs/concepts/switching-from-libpostal
+
+servers:
+  - url: http://{host}:{port}
+    description: Self-hosted server (`npx @mailwoman/libpostal serve`).
+    variables:
+      host:
+        default: 127.0.0.1
+        description: The host `serve` binds (default 0.0.0.0; reach it at 127.0.0.1).
+      port:
+        default: "8081"
+        description: The port passed to `serve --port` (default 8081).
+
+# These endpoints require no authentication (self-host); declared explicitly for tooling.
+security: []
+
+tags:
+  - name: parsing
+    description: Address parsing and expansion endpoints.
+  - name: meta
+    description: Non-parsing informational endpoints.
+
+paths:
+  /:
+    get:
+      operationId: getRoot
+      summary: Landing page
+      description: A friendly HTML banner with clickable example queries (in place of a bare `Cannot GET /` 404).
+      tags: [meta]
+      responses:
+        "200":
+          description: HTML landing page.
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /parse:
+    get:
+      operationId: parseGet
+      summary: Parse an address (query string)
+      description: Parse a free-text address into ordered labeled components.
+      tags: [parsing]
+      parameters:
+        - name: query
+          in: query
+          description: The address to parse. `address` is accepted as an alias.
+          required: false
+          schema: { type: string }
+        - name: address
+          in: query
+          description: Alias for `query`.
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          $ref: "#/components/responses/ParseResult"
+        "400":
+          $ref: "#/components/responses/MissingQuery"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      operationId: parsePost
+      summary: Parse an address (JSON body)
+      description: Parse a free-text address into ordered labeled components.
+      tags: [parsing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ParseRequest" }
+            example: { query: "1600 Pennsylvania Ave NW, Washington DC 20500" }
+      responses:
+        "200":
+          $ref: "#/components/responses/ParseResult"
+        "400":
+          $ref: "#/components/responses/MissingQuery"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /expand:
+    get:
+      operationId: expandGet
+      summary: Expand an address (query string)
+      description: Return the normalized + abbreviation-expanded forms of an address (deterministic; see the divergence note).
+      tags: [parsing]
+      parameters:
+        - name: address
+          in: query
+          description: The address to expand.
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          $ref: "#/components/responses/ExpandResult"
+        "400":
+          $ref: "#/components/responses/MissingAddress"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+    post:
+      operationId: expandPost
+      summary: Expand an address (JSON body)
+      description: Return the normalized + abbreviation-expanded forms of an address (deterministic; see the divergence note).
+      tags: [parsing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExpandRequest" }
+            example: { address: "1600 pennsylvania ave nw" }
+      responses:
+        "200":
+          $ref: "#/components/responses/ExpandResult"
+        "400":
+          $ref: "#/components/responses/MissingAddress"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+components:
+  responses:
+    ParseResult:
+      description: The ordered libpostal components.
+      content:
+        application/json:
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/LibpostalComponent" }
+          example:
+            - { label: house_number, value: "1600" }
+            - { label: road, value: Pennsylvania Ave NW }
+            - { label: city, value: Washington }
+            - { label: state, value: DC }
+            - { label: postcode, value: "20500" }
+    ExpandResult:
+      description: The deterministic expansion set.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ExpandResponse" }
+          example:
+            expansions:
+              - "1600 pennsylvania ave nw"
+              - "1600 pennsylvania avenue northwest"
+    MissingQuery:
+      description: The required `query` (or `address`) parameter is missing.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { error: "query is required" }
+    MissingAddress:
+      description: The required `address` parameter is missing.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { error: "address is required" }
+    InternalError:
+      description: An unexpected engine fault. Returns a clean JSON error, never a stack trace.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { error: "internal error" }
+    NotImplemented:
+      description: The backing engine method is not wired for this deployment.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { error: "expand not implemented" }
+
+  schemas:
+    ParseRequest:
+      type: object
+      description: A `/parse` request body. Provide `query` (or its alias `address`).
+      properties:
+        query: { type: string, description: The address to parse. }
+        address: { type: string, description: Alias for `query`. }
+      additionalProperties: false
+
+    ExpandRequest:
+      type: object
+      description: An `/expand` request body.
+      required: [address]
+      properties:
+        address: { type: string, description: The address to expand. }
+      additionalProperties: false
+
+    LibpostalComponent:
+      type: object
+      description: A libpostal `parse_address` component — a label and the text span it covers, in order.
+      required: [label, value]
+      properties:
+        label: { type: string, description: "The libpostal label, e.g. `house_number`, `road`, `city`, `state`, `postcode`." }
+        value: { type: string, description: The text the label covers. }
+      additionalProperties: false
+
+    ExpandResponse:
+      type: object
+      description: The `/expand` response.
+      required: [expansions]
+      properties:
+        expansions:
+          type: array
+          description: The distinct expanded forms (original + normalized + abbreviation-expanded), order preserved.
+          items: { type: string }
+      additionalProperties: false
+
+    Error:
+      type: object
+      description: A JSON error envelope.
+      required: [error]
+      properties:
+        error: { type: string }
+      additionalProperties: false

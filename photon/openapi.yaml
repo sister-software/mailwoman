@@ -1,0 +1,376 @@
+# @mailwoman/photon — OpenAPI 3.1 specification
+#
+# The Photon-compatible autocomplete / reverse geocoding drop-in (GeoJSON FeatureCollection
+# over /api + /reverse) served by `npx @mailwoman/photon serve`. Wire shapes taken verbatim
+# from photon/index.ts + photon/cli.ts.
+#
+# Validate (Redocly CLI 2.38.0, zero errors):
+#   cd photon && npx --yes @redocly/cli@latest lint openapi.yaml
+
+openapi: 3.1.0
+
+info:
+  title: "@mailwoman/photon"
+  version: 5.10.1
+  summary: Photon-compatible autocomplete / type-ahead geocoding API.
+  description: >
+    A drop-in replacement for [Photon](https://github.com/komoot/photon) — the same `/api`
+    (forward / autocomplete) and `/reverse` contract, returning GeoJSON `FeatureCollection`s,
+    served from a SQLite gazetteer over the Mailwoman engine instead of an Elasticsearch cluster.
+
+
+    **Drop-in compatibility.** Point an existing Photon client (`leaflet-control-geocoder`,
+    `@openrunner/photon-geocoder`, …) at this server and forward + reverse geocoding work
+    unchanged. Every response is a GeoJSON `FeatureCollection` of `Point` features
+    (RFC 7946), and each feature's `properties` carry the OSM-derived key names a Photon
+    client reads (`osm_key`, `osm_value`, `type`, `name`, `housenumber`, `street`, `city`,
+    `state`, `country`, `countrycode`, …).
+
+
+    **Known divergences from upstream Photon.**
+
+    - `format=jsonld` is a Mailwoman extension (not in upstream Photon): it re-serializes the
+      *same* resolved places as an array of [schema.org `Place`](https://schema.org/Place)
+      JSON-LD objects. The native GeoJSON `FeatureCollection` stays the default.
+    - Results are ranked by the Mailwoman resolver (population-first candidate scoring with an
+      optional proximity re-rank), not Photon's Elasticsearch relevance model — ordering can
+      differ. The dedicated prefix-first FST autocomplete front is a refinement still in flight.
+    - `GET /` serves a friendly HTML banner; upstream Photon has no root page.
+
+
+    **CORS.** Permissive CORS is on by default (`Access-Control-Allow-Origin: *`, and a `204`
+    answer to preflight `OPTIONS`), matching upstream Photon — browser-embedded map widgets
+    need it. Disable with `serve --no-cors` when a reverse proxy already owns the headers.
+  license:
+    name: AGPL-3.0-only OR LicenseRef-Commercial
+    identifier: AGPL-3.0-only
+  contact:
+    name: Sister Software
+    url: https://mailwoman.sister.software
+
+externalDocs:
+  description: Switching from Photon (setup, hosted data, divergences)
+  url: https://mailwoman.sister.software/docs/concepts/switching-from-photon
+
+servers:
+  - url: https://photon.sister.software
+    description: Hosted public trial endpoint (conservative rate limits).
+  - url: http://{host}:{port}
+    description: Local self-hosted server (`npx @mailwoman/photon serve`).
+    variables:
+      host:
+        default: 127.0.0.1
+        description: The host `serve` binds (default 0.0.0.0; reach it at 127.0.0.1).
+      port:
+        default: "2322"
+        description: The port passed to `serve --port` (default 2322).
+
+# These endpoints require no authentication (public / self-host); declared explicitly for tooling.
+security: []
+
+tags:
+  - name: geocoding
+    description: Forward (autocomplete) and reverse geocoding endpoints.
+  - name: meta
+    description: Non-geocoding informational endpoints.
+
+paths:
+  /:
+    get:
+      operationId: getRoot
+      summary: Landing page
+      description: A friendly HTML banner with clickable example queries (in place of a bare `Cannot GET /` 404).
+      tags: [meta]
+      responses:
+        "200":
+          description: HTML landing page.
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api:
+    get:
+      operationId: search
+      summary: Forward / autocomplete geocoding
+      description: >
+        Parse and resolve a free-text query into ranked places, returning a GeoJSON
+        `FeatureCollection` (or a schema.org `Place[]` when `format=jsonld`).
+      tags: [geocoding]
+      parameters:
+        - $ref: "#/components/parameters/Query"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Lang"
+        - name: lat
+          in: query
+          description: Latitude of a proximity bias (soft re-rank). Only applied when `lon` is also present.
+          required: false
+          schema: { type: number, format: double, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          description: Longitude of a proximity bias (soft re-rank). Only applied when `lat` is also present.
+          required: false
+          schema: { type: number, format: double, minimum: -180, maximum: 180 }
+        - name: osm_tag
+          in: query
+          description: Filter results by OSM tag (repeatable). Photon `key`, `key:value`, or `:value` syntax.
+          required: false
+          explode: true
+          schema:
+            type: array
+            items: { type: string }
+        - name: layer
+          in: query
+          description: Filter results by layer (repeatable), e.g. `city`, `street`, `house`.
+          required: false
+          explode: true
+          schema:
+            type: array
+            items: { type: string }
+        - $ref: "#/components/parameters/Format"
+      responses:
+        "200":
+          description: >
+            A GeoJSON `FeatureCollection` of ranked `Point` features (default), or — when
+            `format=jsonld` — an array of schema.org `Place` objects.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/PhotonFeatureCollection"
+                  - type: array
+                    items: { $ref: "#/components/schemas/SchemaOrgPlace" }
+              example:
+                type: FeatureCollection
+                features:
+                  - type: Feature
+                    geometry:
+                      type: Point
+                      coordinates: [13.405, 52.52]
+                    properties:
+                      osm_key: place
+                      osm_value: city
+                      type: city
+                      name: Berlin
+                      state: Berlin
+                      country: Germany
+                      countrycode: de
+        "400":
+          description: The required `q` parameter is missing.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorFeatureCollection" }
+              example: { type: FeatureCollection, features: [], message: "q is required" }
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /reverse:
+    get:
+      operationId: reverse
+      summary: Reverse geocoding
+      description: >
+        Resolve a coordinate to the nearest place(s), returning a GeoJSON `FeatureCollection`
+        (or a schema.org `Place[]` when `format=jsonld`).
+      tags: [geocoding]
+      parameters:
+        - name: lat
+          in: query
+          description: Latitude to reverse geocode.
+          required: true
+          schema: { type: number, format: double, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          description: Longitude to reverse geocode.
+          required: true
+          schema: { type: number, format: double, minimum: -180, maximum: 180 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Lang"
+        - name: radius
+          in: query
+          description: Optional search radius (km) around the coordinate.
+          required: false
+          schema: { type: number, format: double, minimum: 0 }
+        - $ref: "#/components/parameters/Format"
+      responses:
+        "200":
+          description: >
+            A GeoJSON `FeatureCollection` for the nearest place(s) (default), or — when
+            `format=jsonld` — an array of schema.org `Place` objects.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/PhotonFeatureCollection"
+                  - type: array
+                    items: { $ref: "#/components/schemas/SchemaOrgPlace" }
+        "400":
+          description: "`lat`/`lon` are missing or out of range."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorFeatureCollection" }
+              example: { type: FeatureCollection, features: [], message: "lat and lon are required" }
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+components:
+  parameters:
+    Query:
+      name: q
+      in: query
+      description: The free-text query to geocode (e.g. `1600 pennsylvania ave`).
+      required: true
+      schema: { type: string, minLength: 1 }
+    Limit:
+      name: limit
+      in: query
+      description: Maximum number of features to return.
+      required: false
+      schema: { type: integer, minimum: 1, default: 15 }
+    Lang:
+      name: lang
+      in: query
+      description: Preferred result language (BCP-47 / ISO code).
+      required: false
+      schema: { type: string }
+    Format:
+      name: format
+      in: query
+      description: >
+        Output serialization. Omit for the native GeoJSON `FeatureCollection`. `jsonld`
+        (a Mailwoman extension) returns an array of schema.org `Place` objects instead.
+      required: false
+      schema:
+        type: string
+        enum: [jsonld]
+
+  responses:
+    InternalError:
+      description: An unexpected engine fault. Returns an empty `FeatureCollection` with a message, never a stack trace.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorFeatureCollection" }
+          example: { type: FeatureCollection, features: [], message: "internal error" }
+    NotImplemented:
+      description: The backing engine method is not wired for this deployment.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorFeatureCollection" }
+          example: { type: FeatureCollection, features: [], message: "search not implemented" }
+
+  schemas:
+    PhotonFeatureCollection:
+      type: object
+      description: A GeoJSON `FeatureCollection` of Photon result features (RFC 7946).
+      externalDocs:
+        description: GeoJSON (RFC 7946)
+        url: https://www.rfc-editor.org/rfc/rfc7946
+      required: [type, features]
+      properties:
+        type: { const: FeatureCollection }
+        features:
+          type: array
+          items: { $ref: "#/components/schemas/PhotonFeature" }
+      additionalProperties: false
+
+    PhotonFeature:
+      type: object
+      description: A GeoJSON `Point` feature carrying Photon properties.
+      required: [type, geometry, properties]
+      properties:
+        type: { const: Feature }
+        geometry: { $ref: "#/components/schemas/PointGeometry" }
+        properties: { $ref: "#/components/schemas/PhotonProperties" }
+      additionalProperties: false
+
+    PointGeometry:
+      type: object
+      description: A GeoJSON `Point` geometry — `coordinates` are `[longitude, latitude]`.
+      required: [type, coordinates]
+      properties:
+        type: { const: Point }
+        coordinates:
+          type: array
+          description: "`[longitude, latitude]` (RFC 7946 position order)."
+          minItems: 2
+          maxItems: 3
+          items: { type: number }
+      additionalProperties: false
+
+    PhotonProperties:
+      type: object
+      description: >
+        OSM-derived feature properties, populated from the resolved place. `osm_key`,
+        `osm_value`, and `type` are always present so a Photon client never dereferences
+        `undefined`. Unlisted keys may also appear.
+      properties:
+        osm_id: { type: [integer, string] }
+        osm_type: { type: string }
+        osm_key: { type: string, description: "OSM key, e.g. `place`, `highway`, `building`." }
+        osm_value: { type: string, description: "OSM value, e.g. `city`, `house`, `residential`." }
+        type: { type: string, description: "Photon place type, e.g. `city`, `street`, `house`, `country`." }
+        name: { type: string }
+        housenumber: { type: string }
+        street: { type: string }
+        postcode: { type: string }
+        city: { type: string }
+        district: { type: string }
+        county: { type: string }
+        state: { type: string }
+        country: { type: string }
+        countrycode: { type: string, description: "ISO-3166 alpha-2, lowercased." }
+        extent:
+          type: array
+          description: "Bounding box `[minLon, maxLat, maxLon, minLat]` (Photon convention)."
+          minItems: 4
+          maxItems: 4
+          items: { type: number }
+      additionalProperties: true
+
+    ErrorFeatureCollection:
+      type: object
+      description: An empty `FeatureCollection` with a human-readable `message` — the shape every Photon error uses.
+      required: [type, features, message]
+      properties:
+        type: { const: FeatureCollection }
+        features:
+          type: array
+          items: { $ref: "#/components/schemas/PhotonFeature" }
+        message: { type: string }
+      additionalProperties: false
+
+    SchemaOrgPlace:
+      type: object
+      description: A schema.org `Place` JSON-LD object (the `format=jsonld` projection). Only populated fields are emitted.
+      externalDocs:
+        description: schema.org Place
+        url: https://schema.org/Place
+      required: ["@context", "@type"]
+      properties:
+        "@context": { const: "https://schema.org" }
+        "@type": { const: Place }
+        name: { type: string }
+        geo:
+          type: object
+          required: ["@type", latitude, longitude]
+          properties:
+            "@type": { const: GeoCoordinates }
+            latitude: { type: number }
+            longitude: { type: number }
+          additionalProperties: false
+        address:
+          type: object
+          required: ["@type"]
+          properties:
+            "@type": { const: PostalAddress }
+            streetAddress: { type: string }
+            postOfficeBoxNumber: { type: string }
+            addressLocality: { type: string }
+            addressRegion: { type: string }
+            postalCode: { type: string }
+            addressCountry: { type: string, description: "ISO-3166 alpha-2 (uppercased)." }
+          additionalProperties: false
+      additionalProperties: false
