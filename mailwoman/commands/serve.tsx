@@ -37,8 +37,26 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap; refactor pending
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
+		// Tracks whether ANY worker has ever reached "listening" — distinguishes a genuine boot
+		// failure (every worker died before one of them opened the port) from an ordinary shutdown
+		// after a healthy run. `cluster.on("listening", …)` mirrors the per-worker wiring in
+		// WorkerStatus, but at the primary, where the exit handler below can see it.
+		let anyListened = false
+		let liveWorkerCount = cpus
+
+		cluster.on("listening", () => {
+			anyListened = true
+		})
+
 		cluster.on("exit", (worker, code, signal) => {
 			console.log(`[${signal}] (${code}) Worker ${worker.process.pid} exited`)
+
+			liveWorkerCount--
+
+			if (liveWorkerCount === 0 && !anyListened) {
+				// A boot that never listened is a failed boot — supervisors must see nonzero.
+				process.exit(1)
+			}
 		})
 
 		// Graceful shutdown: a TERM/INT delivered to the PRIMARY pid (docker stop, systemctl stop)
@@ -63,7 +81,15 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 				})
 				worker.process.kill(signal)
 			}
-			setTimeout(() => process.exit(0), 10_000).unref()
+			setTimeout(() => {
+				// A wedged worker must not survive the primary holding the port.
+				for (const worker of alive) {
+					if (!worker.isDead()) {
+						worker.process.kill("SIGKILL")
+					}
+				}
+				process.exit(0)
+			}, 10_000).unref()
 		}
 
 		process.once("SIGINT", () => forward("SIGINT"))
