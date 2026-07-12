@@ -154,6 +154,40 @@ test("expand with an engine: 200 with expansions; missing address is the legacy 
 	expect(await missing.json()).toEqual({ error: "address is required" })
 })
 
+test("POST /expand accepts a JSON body", async () => {
+	const app = createLibpostalApp(expandingEngine)
+	const res = await app.request("/expand", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ address: "1600 penn" }),
+	})
+	expect(res.status).toBe(200)
+	expect(await res.json()).toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
+})
+
+test("POST /expand: a `query` field is inert (expand has no query alias) — `address` still wins", async () => {
+	const app = createLibpostalApp(expandingEngine)
+	const res = await app.request("/expand", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ query: "ignored", address: "1600 penn" }),
+	})
+	expect(res.status).toBe(200)
+	expect(await res.json()).toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
+})
+
+test("POST with a body over the 100 KiB cap answers 413, not a buffered crash", async () => {
+	const app = createLibpostalApp(fixtureEngine)
+	const oversized = JSON.stringify({ query: "x".repeat(103_000) })
+	const res = await app.request("/parse", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: oversized,
+	})
+	expect(res.status).toBe(413)
+	expect(await res.json()).toEqual({ error: "request body too large" })
+})
+
 test("an engine fault answers the clean legacy 500, never a crash", async () => {
 	const app = createLibpostalApp({
 		parse: async () => {

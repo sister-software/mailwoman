@@ -10,10 +10,18 @@
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { attachOpenAPIDocs } from "@mailwoman/api-kit"
 import packageJson from "@mailwoman/libpostal/package.json" with { type: "json" }
+import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
 
 import type { LibpostalEngine } from "./engine.ts"
 import { registerLibpostalRoutes } from "./routes.ts"
+
+/**
+ * 100 KiB — express.json's default cap, the closest thing to a legacy precedent for this endpoint. There is no legacy
+ * 413 contract to match; the `{ error: "request body too large" }` envelope below is a recorded free choice, shaped
+ * like the rest of this API's error responses.
+ */
+const MAX_BODY_BYTES = 102_400
 
 /** Options for {@link createLibpostalApp}. */
 export interface LibpostalAppOptions {
@@ -36,6 +44,15 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 
 	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire contract).
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
+
+	// Ahead of the canonicalizers (which buffer the full body into memory) so an oversized POST is rejected
+	// before that buffering happens, not after.
+	const guardBodySize = bodyLimit({
+		maxSize: MAX_BODY_BYTES,
+		onError: (c) => c.json({ error: "request body too large" }, 413),
+	})
+	app.use("/parse", guardBodySize)
+	app.use("/expand", guardBodySize)
 
 	registerLibpostalRoutes(app, engine)
 	attachOpenAPIDocs(app, { title: packageJson.name, version: packageJson.version })

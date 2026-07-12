@@ -146,7 +146,13 @@ const expandPostRoute = createRoute({
 	responses: expandResponses,
 })
 
-/** Read the JSON body if present and parseable; a missing/malformed body is `{}` (legacy tolerance). */
+/**
+ * Read the JSON body if present and parseable; a missing/malformed body is `{}` (legacy tolerance).
+ *
+ * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees (well-formed JSON, string-only contract
+ * fields) — deliberate defense in depth. Don't drop this side's tolerance just because the middleware upstream makes it
+ * look redundant; the two are meant to fail safe independently.
+ */
 async function readBody(c: Context): Promise<Record<string, unknown>> {
 	try {
 		const body = (await c.req.json()) as unknown
@@ -160,6 +166,9 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
 /**
  * Coalesce candidate params by raw presence, not truthiness — an empty-but-present string must survive coalescing so it
  * wins precedence over a lower-priority param (legacy wire parity: the old handler trimmed AFTER coalescing).
+ *
+ * The `typeof value === "string"` check re-guards what `canonicalizeJSONBody` already guarantees (only string-typed
+ * contract fields survive) — deliberate defense in depth, not a redundancy to simplify away.
  */
 const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
 
