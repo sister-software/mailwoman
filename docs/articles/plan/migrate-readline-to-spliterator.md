@@ -30,34 +30,34 @@ result as `node:readline` while adding:
 
 ## Call-site inventory
 
-| File                                                     | Pattern                                                                            | Spliterator replacement                                                                          |
+| File | Pattern | Spliterator replacement |
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----- |
-| `corpus/scripts/build-kryptonite-shard.ts:87`            | `createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })` | `TextSpliterator.fromAsync(jsonl)`                                                               |
-| `corpus/scripts/build-transliteration-shard.ts:116`      | same shape                                                                         | `TextSpliterator.fromAsync(jsonl)`                                                               |
-| `corpus/scripts/ingest-csv.ts:206,311`                   | CSV ingest — two passes                                                            | `CSVSpliterator.fromAsync(path, { mode: "array" })` ⚠️                                           |
-| `corpus/src/build.ts:338`                                | `streamJsonl<T>` helper                                                            | `JSONSpliterator.fromAsync<T>(path)`                                                             |
-| `corpus/src/split.ts:219`                                | shuffle-split of labeled JSONL                                                     | `JSONSpliterator.fromAsync(labeledJsonlPath)` (read phase only; write needs `createWriteStream`) |
-| `corpus/src/adapters/gnaf/adapter.ts:81`                 | pipe-delimited G-NAF                                                               | `TSVSpliterator.fromAsync` with `delimiter: "                                                    | "`    |
-| `corpus/src/adapters/openaddresses/adapter.ts:142`       | OA GeoJSONL                                                                        | `JSONSpliterator.fromAsync(adapterOpts.inputPath)`                                               |
-| `corpus/src/adapters/overture/adapter.ts:81`             | Overture JSONL                                                                     | `JSONSpliterator.fromAsync(opts.inputPath)`                                                      |
-| `corpus/src/adapters/synth-po-box/adapter.ts:94`         | synthetic PO box JSONL                                                             | `JSONSpliterator.fromAsync(options.inputPath)`                                                   |
-| `corpus/src/adapters/usgov-nad/adapter.ts:252`           | NAD GeoJSON                                                                        | `JSONSpliterator.fromAsync(join(opts.inputPath, shard))`                                         |
-| `corpus/src/shard-recipes/fr-admin-split.ts:66`          | `readCommunes` CSV                                                                 | `CSVSpliterator.fromAsync(path, { mode: "object" })`                                             |
-| `corpus/src/shard-recipes/locale.ts:220`                 | OA CSV reservoir sample                                                            | `CSVSpliterator.fromAsync(input, { mode: "array" })`                                             |
-| `corpus/src/shard-recipes/scaffold.ts:71`                | tuple JSONL → `ShardTuple`                                                         | `JSONSpliterator.fromAsync<ShardTuple>(input)`                                                   |
-| `mailwoman/commands/gazetteer/importance.tsx:131`        | gzipped TSV via `createInterface({ input: fileStream.pipe(gunzip) })`              | `TextSpliterator.fromAsync(fileStream.pipe(gunzip), { delimiter: Delimiters.Tab })`              |
-| `mailwoman/commands/gazetteer/postcode-intl.tsx:89`      | GeoNames TSV                                                                       | `TSVSpliterator.fromAsync(file)`                                                                 |
-| `mailwoman/corpus-tools/align-shard.ts:40`               | canonicalize JSONL + rewrite                                                       | `JSONSpliterator.fromAsync(args.input)` (read phase)                                             |
-| `scripts/jsonl-to-parquet.ts:159`                        | validate JSONL → DuckDB                                                            | `JSONSpliterator.fromAsync(args.input)`                                                          |
-| `scripts/eval/audit-po-box-cedex-shard.ts:156`           | JSONL audit                                                                        | `JSONSpliterator.fromAsync(opts.input)`                                                          |
-| `scripts/eval/reverse-geocode-eval.ts:105`               | JSONL eval rows                                                                    | `JSONSpliterator.fromAsync(args.eval)`                                                           |
-| `scripts/eval/gauntlet/holdout.ts:101`                   | JSONL reservoir sample                                                             | `JSONSpliterator.fromAsync(src.file)`                                                            |
-| `scripts/eval/record-matcher/train-cross-gbt.ts:146`     | CSV with manual quote handling                                                     | `CSVSpliterator.fromAsync(path, { mode: "object", enableQuoteHandling: true })`                  |
-| `scripts/eval/record-matcher/train-org-cross-gbt.ts:129` | same pattern                                                                       | same                                                                                             |
-| `tiger/sdk/fetch.ts:310`                                 | `ogr2ogr` stdout (GeoJSON per line)                                                | `JSONSpliterator.fromAsync(child.stdout)` ⚠️                                                     |
-| `tiger/sdk/redistricting.ts:122,203`                     | pipe-delimited census files                                                        | `TSVSpliterator.fromAsync(path, { delimiter: "                                                   | " })` |
-| `osm/sdk/extract.ts:127`                                 | `osmconvert` stdout                                                                | `TextSpliterator.fromAsync(proc.stdout)`                                                         |
-| `osm/sdk/street-recovery.ts:126`                         | `osmconvert` stdout                                                                | `TextSpliterator.fromAsync(proc.stdout)`                                                         |
+| `corpus/scripts/build-kryptonite-shard.ts:87` | `createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })` | `TextSpliterator.fromAsync(jsonl)` |
+| `corpus/scripts/build-transliteration-shard.ts:116` | same shape | `TextSpliterator.fromAsync(jsonl)` |
+| `corpus/scripts/ingest-csv.ts:206,311` | CSV ingest — two passes | `CSVSpliterator.fromAsync(path, { mode: "array" })` ⚠️ |
+| `corpus/src/build.ts:338` | `streamJsonl<T>` helper | `JSONSpliterator.fromAsync<T>(path)` |
+| `corpus/src/split.ts:219` | shuffle-split of labeled JSONL | `JSONSpliterator.fromAsync(labeledJsonlPath)` (read phase only; write needs `createWriteStream`) |
+| `corpus/src/adapters/gnaf/adapter.ts:81` | pipe-delimited G-NAF | `TSVSpliterator.fromAsync` with `delimiter: "                                                    | "` |
+| `corpus/src/adapters/openaddresses/adapter.ts:142` | OA GeoJSONL | `JSONSpliterator.fromAsync(adapterOpts.inputPath)` |
+| `corpus/src/adapters/overture/adapter.ts:81` | Overture JSONL | `JSONSpliterator.fromAsync(opts.inputPath)` |
+| `corpus/src/adapters/synth-po-box/adapter.ts:94` | synthetic PO box JSONL | `JSONSpliterator.fromAsync(options.inputPath)` |
+| `corpus/src/adapters/usgov-nad/adapter.ts:252` | NAD GeoJSON | `JSONSpliterator.fromAsync(join(opts.inputPath, shard))` |
+| `corpus/src/shard-recipes/fr-admin-split.ts:66` | `readCommunes` CSV | `CSVSpliterator.fromAsync(path, { mode: "object" })` |
+| `corpus/src/shard-recipes/locale.ts:220` | OA CSV reservoir sample | `CSVSpliterator.fromAsync(input, { mode: "array" })` |
+| `corpus/src/shard-recipes/scaffold.ts:71` | tuple JSONL → `ShardTuple` | `JSONSpliterator.fromAsync<ShardTuple>(input)` |
+| `mailwoman/commands/gazetteer/importance.tsx:131` | gzipped TSV via `createInterface({ input: fileStream.pipe(gunzip) })` | `TextSpliterator.fromAsync(fileStream.pipe(gunzip), { delimiter: Delimiters.Tab })` |
+| `mailwoman/commands/gazetteer/postcode-intl.tsx:89` | GeoNames TSV | `TSVSpliterator.fromAsync(file)` |
+| `mailwoman/corpus-tools/align-shard.ts:40` | canonicalize JSONL + rewrite | `JSONSpliterator.fromAsync(args.input)` (read phase) |
+| `scripts/jsonl-to-parquet.ts:159` | validate JSONL → DuckDB | `JSONSpliterator.fromAsync(args.input)` |
+| `scripts/eval/audit-po-box-cedex-shard.ts:156` | JSONL audit | `JSONSpliterator.fromAsync(opts.input)` |
+| `scripts/eval/reverse-geocode-eval.ts:105` | JSONL eval rows | `JSONSpliterator.fromAsync(args.eval)` |
+| `scripts/eval/gauntlet/holdout.ts:101` | JSONL reservoir sample | `JSONSpliterator.fromAsync(src.file)` |
+| `scripts/eval/record-matcher/train-cross-gbt.ts:146` | CSV with manual quote handling | `CSVSpliterator.fromAsync(path, { mode: "object", enableQuoteHandling: true })` |
+| `scripts/eval/record-matcher/train-org-cross-gbt.ts:129` | same pattern | same |
+| `tiger/sdk/fetch.ts:310` | `ogr2ogr` stdout (GeoJSON per line) | `JSONSpliterator.fromAsync(child.stdout)` ⚠️ |
+| `tiger/sdk/redistricting.ts:122,203` | pipe-delimited census files | `TSVSpliterator.fromAsync(path, { delimiter: "                                                   | " })` |
+| `osm/sdk/extract.ts:127` | `osmconvert` stdout | `TextSpliterator.fromAsync(proc.stdout)` |
+| `osm/sdk/street-recovery.ts:126` | `osmconvert` stdout | `TextSpliterator.fromAsync(proc.stdout)` |
 
 > ⚠️ denotes a call site that warrants extra care (see "Risks" below).
 
