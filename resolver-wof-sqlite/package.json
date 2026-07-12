@@ -237,6 +237,6 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"kysely": "^0.29.2"
+		"kysely": "^0.29.3"
 	}
 }
