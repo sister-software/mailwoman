@@ -28,20 +28,19 @@ export const ParseRequestSchema = z
 	})
 	.openapi("ParseRequest")
 
+/** One `ParseOutcome.components` entry — mirrors {@linkcode ParseComponent} (`engine.ts`). */
+export const ParseComponentSchema = z.object({ tag: z.string(), value: z.string() }).openapi("ParseComponent")
+
 /**
- * `POST /v1/parse` response — a loose mirror of {@linkcode ParseOutcome} (`engine.ts`). `solutions` entries aren't fully
- * modeled: `SerializedSolution` (`@mailwoman/core/solver`) carries the solver's internal match/classification detail,
- * which is the engine's contract, not this wire schema's — `score`/`penalty` are the two fields every solution always
- * carries (always-present numbers, cheap to pin accurately); `classifications`/`matches` stay loose passthrough.
+ * `POST /v1/parse` response — mirrors {@linkcode ParseOutcome} (`engine.ts`): the ordered components plus the full
+ * decoded tree. `tree` is the same loose-tree idiom {@link ResolveResponseSchema} uses (`api/schema.ts:134-146`) — the
+ * decoder's `AddressTree` is the engine's contract, not this wire schema's.
  */
 export const ParseOutcomeSchema = z
 	.object({
-		input: z.object({
-			body: z.string(),
-			start: z.number(),
-			end: z.number(),
-		}),
-		solutions: z.array(z.looseObject({ score: z.number(), penalty: z.number() })),
+		input: z.string(),
+		components: z.array(ParseComponentSchema),
+		tree: z.looseObject({ roots: z.array(z.unknown()) }),
 		debug: z.string().optional(),
 	})
 	.openapi("ParseOutcome")

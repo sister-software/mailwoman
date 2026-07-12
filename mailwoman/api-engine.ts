@@ -13,26 +13,24 @@
  *   `createServeEngine` builds the shared stack ONCE, at boot, instead of express's lazy
  *   first-request memoized promise — the CLI's `serve` command awaits it before listening, so a
  *   misconfigured deployment fails FRIENDLY at boot (the #1009 pattern the drop-ins already use)
- *   instead of a runtime 503 on the first request. When the classifier/resolver stack can't be built
- *   (missing WOF data, or `@mailwoman/neural` / `@mailwoman/resolver-wof-sqlite` unresolvable), the
- *   returned engine still carries `parse` (the rule-based parser needs no gazetteer) and `health`
- *   (must answer even when broken) — `geocode`/`batch`/`resolveTree`/`reload` are simply absent, and
- *   `@mailwoman/api`'s routes answer 501/503 for those on their own.
+ *   instead of a runtime 503 on the first request. `parse` speaks native neural output (`ParseOutcome`
+ *   = ordered components + the decoded `AddressTree`, the same language `/v1/resolve` speaks) — it
+ *   needs only the model weights, loaded ONCE here and reused by the geocode stack below, so it is
+ *   built independently of the WOF-data gate: a WOF-less boot still answers `/v1/parse`, while
+ *   `geocode`/`batch`/`resolveTree`/`reload` are simply absent (`@mailwoman/api`'s routes answer 503
+ *   for those on their own). When the weights themselves are unresolvable (`@mailwoman/neural`
+ *   missing, or no weights package installed), `parse` is ALSO absent and the routes answer 501 — no
+ *   rules fallback (the legacy-excision's point). `health` always answers, even when everything else
+ *   is broken.
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
 import { join } from "node:path"
 
-import type {
-	BatchRow,
-	GeocodeOutcome,
-	HealthData,
-	MailwomanAPIEngine,
-	ParseOutcome,
-	ResolveTreeOutcome,
-} from "@mailwoman/api"
+import type { BatchRow, GeocodeOutcome, HealthData, MailwomanAPIEngine, ResolveTreeOutcome } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
+import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
@@ -47,8 +45,6 @@ import {
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.ts"
-import { createDiagnosticReport } from "./utils/DebugOutputBuilder.ts"
-import { createAddressParser } from "./utils/parser.ts"
 
 /** Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`). */
 const DATA_ROOT = mailwomanDataRoot()
@@ -219,31 +215,46 @@ export interface ServeEngine {
  * command) decides whether to boot degraded (parse+health only) or exit friendly.
  */
 export async function createServeEngine(): Promise<ServeEngine> {
-	// The rule-based parser needs no gazetteer — always available, even when the geocode/resolve stack below fails to
-	// build. Ported from `AddressRouter`'s handler.
-	const parser = createAddressParser()
-
-	const parse: MailwomanAPIEngine["parse"] = async (address, opts) => {
-		const result = await parser.parse(address, { verbose: true })
-		const { solutions, context } = result
-		const outcome: ParseOutcome = {
-			input: { body: context.span.body, start: context.span.start, end: context.span.end },
-			solutions: solutions.map((solution) => solution.toJSON()),
-			debug: opts.debug ? createDiagnosticReport(result) : undefined,
-		}
-
-		return outcome
-	}
-
 	// `health` reads files best-effort and never throws — wired unconditionally, matching `HealthRouter`'s "answers even
 	// when broken" contract.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
 
-	let neuralMod: typeof import("@mailwoman/neural")
-	let resolverMod: typeof import("@mailwoman/resolver-wof-sqlite")
+	// Parse needs only the model weights — not the gazetteer. Load them independently of the WOF-data gate below so
+	// `/v1/parse` answers whenever weights resolve, even on a geocode-degraded boot. The classifier instance loaded
+	// here is reused by the geocode stack below — weights load ONCE per boot.
+	let parse: MailwomanAPIEngine["parse"]
+	let neuralMod: typeof import("@mailwoman/neural") | undefined
+	let classifier: GeocodeClassifier | undefined
 
 	try {
 		neuralMod = await import("@mailwoman/neural")
+		classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
+		const parseClassifier = classifier
+		parse = async (address, opts) => {
+			const tree = await parseClassifier.parse(address, { postcodeRepair: true })
+
+			return {
+				input: address,
+				components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
+				tree,
+				debug: opts.debug ? decodeAsXML(tree) : undefined,
+			}
+		}
+	} catch {
+		// Weights unresolvable — leave parse undefined; the route answers 501 with its existing guard.
+		console.error("createServeEngine: neural weights not found — /v1/parse disabled (501)")
+	}
+
+	if (!neuralMod || !classifier) {
+		console.error("createServeEngine: @mailwoman/neural + @mailwoman/resolver-wof-sqlite are required")
+
+		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
+	}
+
+	let resolverMod: typeof import("@mailwoman/resolver-wof-sqlite")
+
+	try {
 		resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
 		console.error("createServeEngine: @mailwoman/neural + @mailwoman/resolver-wof-sqlite are required")
@@ -256,6 +267,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin shard) is a valid boot
 	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight gate below checks BOTH,
 	// mirroring the drop-ins' `!candidateDb && wofPaths.length === 0` gate rather than `GeocodeRouter`'s WOF-only check.
+	// This gate governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
 	const candidateDb = resolveCandidateDBPath()
 
 	if (paths.length === 0 && !candidateDb) {
@@ -264,7 +276,6 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
 	}
 
-	const classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const backend = createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, DATA_ROOT)

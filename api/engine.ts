@@ -8,13 +8,19 @@
  *   exception — it's wired in-package from `@mailwoman/formatter` (the surface exists to expose it).
  */
 
-import type { AddressTree } from "@mailwoman/core/decoder"
-import type { SerializedSolution } from "@mailwoman/core/solver"
+import type { AddressTree } from "@mailwoman/core"
 
-/** One parse outcome: the tokenized input span + ranked solutions (the legacy /parse shape). */
+/** One parsed component in reading order (a `ComponentTag` + the covered text). */
+export interface ParseComponent {
+	tag: string
+	value: string
+}
+
+/** One parse outcome: ordered components + the full decoded tree (the same language `/v1/resolve` speaks). */
 export interface ParseOutcome {
-	input: { body: string; start: number; end: number }
-	solutions: SerializedSolution[]
+	input: string
+	components: ParseComponent[]
+	tree: AddressTree
 	debug?: string
 }
 
