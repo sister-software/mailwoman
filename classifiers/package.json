@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/classifiers",
-	"version": "5.10.1",
+	"version": "6.0.0",
 	"description": "Mailwoman rule-based classifiers.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
