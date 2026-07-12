@@ -49,7 +49,9 @@
  *
  *   Empirically verified each check fires independently: dropping a schema field breaks `_KeysMatch` AND
  *   Direction 2; narrowing one field's type (e.g. `lat` non-nullable) breaks Direction 1 only; adding a
- *   schema field `GeocodeResult` doesn't have breaks `_KeysMatch` AND Direction 2.
+ *   schema field `GeocodeResult` doesn't have breaks `_KeysMatch` alone when the field is optional, and
+ *   `_KeysMatch` AND Direction 1 when it's required (Direction 2 permits width subtyping, so an extra
+ *   schema-side field can never break it).
  *
  *   `vitest`'s own `expectTypeOf`/`assertType` were deliberately NOT used — they only gain teeth under
  *   `vitest --typecheck` (a mode this repo doesn't run; its default `typecheck.include` is `*.test-d.ts`
