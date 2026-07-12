@@ -19,7 +19,7 @@ dependencies = [
 # Heavy ML deps live under [train] so plain tokenizer-training and corpus utilities
 # can install without dragging PyTorch / Transformers / ONNX onto every machine.
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "ruff==0.15.20"]
+dev = ["pytest>=9.1.1", "ruff==0.15.21"]
 train = [
 	# Pinned to the exact export/quant toolchain that produced the v4.1.0 ONNX artifact
 	# (2026-06-09). Unpinned `>=` drifted (transformers→5.x, onnx→1.21) and broke int8
@@ -31,7 +31,7 @@ train = [
 	"datasets>=5.0.0",
 	"onnx==1.22.0",
 	"onnxruntime==1.26.0",
-	"tqdm>=4.66",
+	"tqdm>=4.68.4",
 	# Optional experiment tracking. Logging is best-effort and guarded at runtime
 	# (see mailwoman_train/trackio_logging.py) so its absence never breaks a train run.
 	"trackio",
