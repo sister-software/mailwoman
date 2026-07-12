@@ -48,14 +48,18 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 		const forward = (signal: NodeJS.Signals) => {
 			const alive = Object.values(cluster.workers ?? {}).filter(Boolean) as Worker[]
 
-			if (alive.length === 0) process.exit(0)
+			if (alive.length === 0) {
+				process.exit(0)
+			}
 			let remaining = alive.length
 
 			for (const worker of alive) {
 				worker.once("exit", () => {
 					remaining--
 
-					if (remaining === 0) process.exit(0)
+					if (remaining === 0) {
+						process.exit(0)
+					}
 				})
 				worker.process.kill(signal)
 			}
@@ -164,13 +168,19 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 				onListen: () => cluster.worker?.send("HTTP server ready"),
 			})
 
+			// Duplicate signal deliveries (group signal + primary forward) must be no-ops — the drain runs once.
+			let draining = false
+
 			const shutdown = () => {
+				if (draining) return
+				draining = true
+
 				console.error(`[serve] worker ${process.pid} draining`)
 				void handle?.close().finally(() => process.exit(0))
 			}
 
-			process.once("SIGINT", shutdown)
-			process.once("SIGTERM", shutdown)
+			process.on("SIGINT", shutdown)
+			process.on("SIGTERM", shutdown)
 		})()
 
 		return () => void handle?.close()
