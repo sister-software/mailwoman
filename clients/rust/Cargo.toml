@@ -1,0 +1,32 @@
+[package]
+name = "mailwoman-client"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+description = "Typed Rust clients for Mailwoman's Photon / Nominatim / libpostal drop-in geocoding APIs, generated from their OpenAPI 3.1 specs."
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository = "https://github.com/sister-software/mailwoman"
+homepage = "https://mailwoman.sister.software"
+documentation = "https://docs.rs/mailwoman-client"
+readme = "README.md"
+keywords = ["geocoding", "photon", "nominatim", "libpostal", "openapi"]
+categories = ["api-bindings", "science::geo"]
+# The vendored specs + the src are all that ship; nothing else is needed to build.
+include = ["src/**/*", "openapi/*.yaml", "examples/**/*", "README.md"]
+
+[dependencies]
+# progenitor's generate_api! proc-macro synthesizes the client at compile time from the vendored
+# spec; the generated code calls into progenitor::progenitor_client (re-exported by progenitor,
+# so no separate progenitor-client dep). reqwest MUST match the version progenitor 0.14 uses
+# (0.13) — a second reqwest in the graph makes the generated client fail to typecheck.
+progenitor = "0.14"
+# rustls (not native-tls) so the crate builds without a system OpenSSL / pkg-config — portable
+# for consumers and CI. default-features=false drops the native-tls default.
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+futures-core = "0.3"
+bytes = "1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

@@ -123,6 +123,18 @@ data/eval/calibration/confidences.jsonl
 .env.*
 
 corpus-python/.pytest_cache/
+
+# Generated API clients (clients/python + clients/rust) — build artifacts + caches.
+# The generated source under clients/python/mailwoman_client/{photon,nominatim,libpostal} and
+# clients/rust/openapi/ IS committed (that's the shipped client); only build output is ignored.
+**/.pytest_cache/
+**/.ruff_cache/
+clients/python/build/
+clients/python/dist/
+clients/rust/target/
+# Library crate: don't commit the lockfile (resolved per-consumer).
+clients/rust/Cargo.lock
+
 output/
 # Per-run training-output download dirs (e.g. output-v150-fr-order-s42/ — pulled from the Modal
 # volume to local during a re-gate; each holds a ~113MB model.onnx). The exact `output/` above

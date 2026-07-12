@@ -1,0 +1,65 @@
+[project]
+name = "mailwoman-client"
+version = "0.1.0"
+description = "Typed Python clients for Mailwoman's Photon / Nominatim / libpostal drop-in geocoding APIs, generated from their OpenAPI 3.1 specs."
+readme = "README.md"
+license = { text = "AGPL-3.0-only OR LicenseRef-Commercial" }
+requires-python = ">=3.10"
+authors = [{ name = "Sister Software", email = "contact@sister.software" }]
+keywords = ["geocoding", "photon", "nominatim", "libpostal", "openapi", "mailwoman", "address"]
+
+# The generated code (mailwoman_client/{photon,nominatim,libpostal}) needs only httpx (the
+# transport) + attrs (the models). No dateutil — none of the three specs carry a date/datetime
+# format. Pins mirror openapi-python-client's own runtime floor.
+dependencies = ["httpx>=0.23,<0.29", "attrs>=22.2.0"]
+
+classifiers = [
+	"Development Status :: 4 - Beta",
+	"Intended Audience :: Developers",
+	"License :: OSI Approved :: GNU Affero General Public License v3",
+	"Operating System :: OS Independent",
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12",
+	"Programming Language :: Python :: 3.13",
+	"Topic :: Scientific/Engineering :: GIS",
+	"Topic :: Software Development :: Libraries :: Python Modules",
+	"Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://mailwoman.sister.software"
+Documentation = "https://mailwoman.sister.software/docs"
+Repository = "https://github.com/sister-software/mailwoman"
+Issues = "https://github.com/sister-software/mailwoman/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "ruff==0.15.20"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["mailwoman_client*"]
+
+[tool.setuptools.package-data]
+# Ship the PEP 561 marker so consumers' type-checkers see the generated types.
+mailwoman_client = ["py.typed"]
+
+# Ruff — the Python analog of the repo's oxlint + oxfmt setup, mirroring corpus-python's config.
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+src = ["mailwoman_client", "tests"]
+# The three drop-in subpackages are GENERATED verbatim by openapi-python-client (which runs its
+# own ruff pass) and are overwritten on regen — don't lint/format them as hand-maintained code.
+extend-exclude = ["mailwoman_client/photon", "mailwoman_client/nominatim", "mailwoman_client/libpostal"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+docstring-code-format = true

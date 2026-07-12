@@ -1,0 +1,655 @@
+# GENERATED — do not edit. 3.0.3 down-convert of the published 3.1 spec.
+# Produced by clients/rust/scripts/downgrade-spec.py (see clients/README.md).
+openapi: 3.0.3
+info:
+  title: '@mailwoman/nominatim'
+  version: 5.10.1
+  description: "A drop-in replacement for [Nominatim](https://nominatim.org) — the same `/search`, `/reverse`,\
+    \ `/lookup`, and `/status` contract, returning `jsonv2` result objects (and `geojson` / `jsonld` on\
+    \ request), served from a SQLite gazetteer over the Mailwoman engine instead of a PostgreSQL/PostGIS\
+    \ `osm2pgsql` import.\n\n**Drop-in compatibility.** Point an existing Nominatim client (`geopy`, …)\
+    \ at this server and forward + reverse geocoding work unchanged. Result objects carry the fields Nominatim\
+    \ clients parse — `place_id`, `licence`, `lat`, `lon`, `display_name`, `boundingbox`, `class`, `type`,\
+    \ `importance`, and the `address` breakdown when `addressdetails=1`.\n\n**Known divergences from upstream\
+    \ Nominatim.**\n- Every result carries an OpenCage-style `annotations` block (coordinate formats,\
+    \ country\n  flag, calling code, currency, and — when their data bundles are present — IANA timezone,\n\
+    \  UN/LOCODE, and EU NUTS codes). Plain Nominatim returns none of these.\n- `format=jsonld` is a Mailwoman\
+    \ extension (not in upstream Nominatim): it re-serializes\n  each result as a [schema.org `Place`](https://schema.org/Place)\
+    \ JSON-LD object. `jsonv2`\n  stays the default.\n- `/lookup` is part of the router contract but is\
+    \ not wired in the bundled `serve` engine\n  yet, so it answers `501`.\n- `licence` reports the Mailwoman\
+    \ data sources (Who's On First, Overture Maps,\n  OpenAddresses, US Census TIGER), not OSM/ODbL.\n\
+    - `GET /` serves a friendly HTML banner; Nominatim itself has only `/status`.\n\n**CORS.** Permissive\
+    \ CORS is on by default (`Access-Control-Allow-Origin: *`, and a `204` answer to preflight `OPTIONS`).\
+    \ Disable with `serve --no-cors` when a reverse proxy already owns the headers.\n"
+  license:
+    name: AGPL-3.0-only OR LicenseRef-Commercial
+  contact:
+    name: Sister Software
+    url: https://mailwoman.sister.software
+externalDocs:
+  description: Switching from Nominatim (setup, hosted data, divergences)
+  url: https://mailwoman.sister.software/docs/concepts/switching-from-nominatim
+servers:
+- url: http://{host}:{port}
+  description: Self-hosted server (`npx @mailwoman/nominatim serve`).
+  variables:
+    host:
+      default: 127.0.0.1
+      description: The host `serve` binds (default 0.0.0.0; reach it at 127.0.0.1).
+    port:
+      default: '8080'
+      description: The port passed to `serve --port` (default 8080).
+security: []
+tags:
+- name: geocoding
+  description: Forward, reverse, and id-based geocoding endpoints.
+- name: meta
+  description: Health and informational endpoints.
+paths:
+  /:
+    get:
+      operationId: getRoot
+      summary: Landing page
+      description: A friendly HTML banner with clickable example queries (in place of a bare `Cannot GET
+        /` 404).
+      tags:
+      - meta
+      responses:
+        '200':
+          description: HTML landing page.
+          content:
+            text/html:
+              schema:
+                type: string
+  /search:
+    get:
+      operationId: search
+      summary: Forward geocoding
+      description: 'Geocode a free-text `q`, or a structured (`street`/`city`/`state`/`postalcode`/`country`)
+        query, into ranked results.
+
+        '
+      tags:
+      - geocoding
+      parameters:
+      - name: q
+        in: query
+        description: Free-text query. Mutually exclusive with the structured parameters.
+        required: false
+        schema:
+          type: string
+      - name: street
+        in: query
+        description: Structured query — street (with optional house number).
+        required: false
+        schema:
+          type: string
+      - name: city
+        in: query
+        description: Structured query — city.
+        required: false
+        schema:
+          type: string
+      - name: county
+        in: query
+        description: Structured query — county.
+        required: false
+        schema:
+          type: string
+      - name: state
+        in: query
+        description: Structured query — state / region.
+        required: false
+        schema:
+          type: string
+      - name: country
+        in: query
+        description: Structured query — country.
+        required: false
+        schema:
+          type: string
+      - name: postalcode
+        in: query
+        description: Structured query — postal code.
+        required: false
+        schema:
+          type: string
+      - name: countrycodes
+        in: query
+        description: 'Comma-separated ISO-3166 alpha-2 codes restricting results to those countries (Nominatim
+          semantics — a hard restriction; the first is applied as the country constraint).
+
+          '
+        required: false
+        schema:
+          type: string
+      - $ref: '#/components/parameters/Limit'
+      - name: bounded
+        in: query
+        description: Restrict results to the viewbox (`1`) or not (`0`).
+        required: false
+        schema:
+          type: integer
+          enum:
+          - 0
+          - 1
+          default: 0
+      - $ref: '#/components/parameters/AddressDetails'
+      - $ref: '#/components/parameters/Format'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: 'An array of result objects (`jsonv2`/`json`), a GeoJSON `FeatureCollection` (`geojson`),
+            or an array of schema.org `Place` objects (`jsonld`).
+
+            '
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/NominatimResult'
+                - $ref: '#/components/schemas/NominatimFeatureCollection'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/SchemaOrgPlace'
+              example:
+              - place_id: 240087473
+                licence: Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER
+                lat: '38.8977'
+                lon: '-77.0365'
+                display_name: 1600, Pennsylvania Avenue NW, Washington, DC, 20500, United States
+                class: place
+                type: house
+                address:
+                  house_number: '1600'
+                  road: Pennsylvania Avenue NW
+                  city: Washington
+                  state: DC
+                  postcode: '20500'
+                  country: United States
+                  country_code: us
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+  /reverse:
+    get:
+      operationId: reverse
+      summary: Reverse geocoding
+      description: Resolve a coordinate to the nearest address (point-in-polygon over the WOF admin hierarchy).
+      tags:
+      - geocoding
+      parameters:
+      - name: lat
+        in: query
+        description: Latitude to reverse geocode.
+        required: true
+        schema:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+      - name: lon
+        in: query
+        description: Longitude to reverse geocode.
+        required: true
+        schema:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+      - name: zoom
+        in: query
+        description: Level of detail (Nominatim zoom, 0–18).
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 18
+      - $ref: '#/components/parameters/AddressDetails'
+      - $ref: '#/components/parameters/Format'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: 'A single result object (`jsonv2`/`json`), a GeoJSON `FeatureCollection` (`geojson`),
+            or a schema.org `Place` (`jsonld`). Returns JSON `null` when nothing resolves.
+
+            '
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/NominatimResult'
+                - $ref: '#/components/schemas/NominatimFeatureCollection'
+                - $ref: '#/components/schemas/SchemaOrgPlace'
+                nullable: true
+        '400':
+          description: '`lat`/`lon` are missing or out of range.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: lat and lon are required
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+  /lookup:
+    get:
+      operationId: lookup
+      summary: Look up known place ids
+      description: 'Resolve one or more OSM/place ids to result objects. Part of the router contract;
+        not wired in the bundled `serve` engine yet (answers `501`).
+
+        '
+      tags:
+      - geocoding
+      parameters:
+      - name: osm_ids
+        in: query
+        description: Comma-separated place ids to look up.
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/AddressDetails'
+      - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: An array of result objects (`jsonv2`/`json`) or a GeoJSON `FeatureCollection` (`geojson`).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/NominatimResult'
+                - $ref: '#/components/schemas/NominatimFeatureCollection'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+  /status:
+    get:
+      operationId: status
+      summary: Service status
+      description: Health check plus data version. Mirrors Nominatim's `/status?format=json`.
+      tags:
+      - meta
+      responses:
+        '200':
+          description: 'Service status. `status: 0` means OK.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NominatimStatus'
+              example:
+                status: 0
+                message: OK
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: Maximum number of results to return.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+    AddressDetails:
+      name: addressdetails
+      in: query
+      description: Include a structured `address` breakdown (`1`) or not (`0`). Forced on for `format=jsonld`.
+      required: false
+      schema:
+        type: integer
+        enum:
+        - 0
+        - 1
+        default: 0
+    Format:
+      name: format
+      in: query
+      description: 'Output serialization. `jsonv2` (default) and `json` return result objects; `geojson`
+        returns a `FeatureCollection`; `jsonld` (a Mailwoman extension) returns schema.org `Place` JSON-LD.
+
+        '
+      required: false
+      schema:
+        type: string
+        enum:
+        - jsonv2
+        - json
+        - geojson
+        - jsonld
+        default: jsonv2
+    AcceptLanguage:
+      name: accept-language
+      in: query
+      description: Preferred result language(s) (BCP-47), as a query parameter.
+      required: false
+      schema:
+        type: string
+  responses:
+    InternalError:
+      description: An unexpected engine fault. Returns a clean JSON error, never a stack trace.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: internal error
+    NotImplemented:
+      description: The backing engine method is not wired for this deployment.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: 'lookup not implemented (see #805)'
+  schemas:
+    NominatimResult:
+      type: object
+      description: A Nominatim result object (the shape `geopy` and friends parse).
+      required:
+      - place_id
+      - licence
+      - lat
+      - lon
+      - display_name
+      properties:
+        place_id: {}
+        licence:
+          type: string
+          description: The attribution string for the resolved data sources.
+        osm_type:
+          type: string
+        osm_id: {}
+        lat:
+          type: string
+          description: Latitude, as a string (Nominatim convention).
+        lon:
+          type: string
+          description: Longitude, as a string (Nominatim convention).
+        display_name:
+          type: string
+        boundingbox:
+          type: array
+          description: '`[south, north, west, east]` as strings (Nominatim convention).'
+          minItems: 4
+          maxItems: 4
+          items:
+            type: string
+        class:
+          type: string
+        type:
+          type: string
+        importance:
+          type: number
+        place_rank:
+          type: integer
+        address:
+          $ref: '#/components/schemas/NominatimAddressDetails'
+        geojson:
+          description: Present when `format=geojson` or `polygon_geojson=1` — a GeoJSON geometry.
+        annotations:
+          $ref: '#/components/schemas/OpenCageAnnotations'
+      additionalProperties: true
+    NominatimAddressDetails:
+      type: object
+      description: The structured address breakdown returned under `address` when `addressdetails=1`.
+        Keys mirror Nominatim's OSM-derived tag names.
+      properties:
+        house_number:
+          type: string
+        road:
+          type: string
+        neighbourhood:
+          type: string
+        suburb:
+          type: string
+        city:
+          type: string
+        town:
+          type: string
+        village:
+          type: string
+        county:
+          type: string
+        state:
+          type: string
+        postcode:
+          type: string
+        country:
+          type: string
+        country_code:
+          type: string
+          description: ISO-3166 alpha-2, lowercased.
+      additionalProperties:
+        type: string
+    NominatimStatus:
+      type: object
+      description: 'The `/status` payload. `status: 0` means OK.'
+      required:
+      - status
+      - message
+      properties:
+        status:
+          type: integer
+          description: '`0` = OK; non-zero = a fault code.'
+        message:
+          type: string
+        data_updated:
+          type: string
+          description: When the underlying data was last built (ISO-8601).
+      additionalProperties: false
+    NominatimFeatureCollection:
+      type: object
+      description: A GeoJSON `FeatureCollection` — the `format=geojson` envelope (RFC 7946).
+      externalDocs:
+        description: GeoJSON (RFC 7946)
+        url: https://www.rfc-editor.org/rfc/rfc7946
+      required:
+      - type
+      - features
+      properties:
+        type:
+          enum:
+          - FeatureCollection
+        features:
+          type: array
+          items:
+            type: object
+            required:
+            - type
+            - properties
+            - geometry
+            properties:
+              type:
+                enum:
+                - Feature
+              properties:
+                type: object
+                additionalProperties: true
+              geometry:
+                description: A GeoJSON geometry (the place polygon when present, else a Point).
+              bbox:
+                type: array
+                description: '`[west, south, east, north]` (GeoJSON bbox order).'
+                minItems: 4
+                maxItems: 4
+                items:
+                  type: number
+            additionalProperties: true
+      additionalProperties: false
+    OpenCageAnnotations:
+      type: object
+      description: 'The OpenCage-style enrichment block, keyed and cased as OpenCage documents it. A Mailwoman
+        extension over upstream Nominatim. Only populated fields are emitted.
+
+        '
+      externalDocs:
+        description: OpenCage annotations
+        url: https://opencagedata.com/api#annotations
+      properties:
+        DMS:
+          type: object
+          properties:
+            lat:
+              type: string
+            lng:
+              type: string
+        MGRS:
+          type: string
+        Maidenhead:
+          type: string
+        Mercator:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+        geohash:
+          type: string
+        qibla:
+          type: number
+        sun:
+          type: object
+          properties:
+            rise:
+              type: object
+              additionalProperties:
+                type: number
+            set:
+              type: object
+              additionalProperties:
+                type: number
+        callingcode:
+          type: number
+        currency:
+          type: object
+          properties:
+            iso_code:
+              type: string
+            name:
+              type: string
+            symbol:
+              type: string
+        flag:
+          type: string
+          description: The country's flag emoji.
+        timezone:
+          type: object
+          properties:
+            name:
+              type: string
+            offset_sec:
+              type: number
+            offset_string:
+              type: string
+        NUTS:
+          type: object
+          description: EU NUTS region codes (when the NUTS data bundle is present).
+          properties:
+            NUTS0:
+              type: object
+              properties:
+                code:
+                  type: string
+            NUTS1:
+              type: object
+              properties:
+                code:
+                  type: string
+            NUTS2:
+              type: object
+              properties:
+                code:
+                  type: string
+            NUTS3:
+              type: object
+              properties:
+                code:
+                  type: string
+        UN_LOCODE:
+          type: string
+        wikidata:
+          type: string
+        FIPS:
+          type: object
+          properties:
+            county:
+              type: string
+      additionalProperties: true
+    SchemaOrgPlace:
+      type: object
+      description: A schema.org `Place` JSON-LD object (the `format=jsonld` projection). Only populated
+        fields are emitted.
+      externalDocs:
+        description: schema.org Place
+        url: https://schema.org/Place
+      required:
+      - '@context'
+      - '@type'
+      properties:
+        '@context':
+          enum:
+          - https://schema.org
+        '@type':
+          enum:
+          - Place
+        name:
+          type: string
+        geo:
+          type: object
+          required:
+          - '@type'
+          - latitude
+          - longitude
+          properties:
+            '@type':
+              enum:
+              - GeoCoordinates
+            latitude:
+              type: number
+            longitude:
+              type: number
+          additionalProperties: false
+        address:
+          type: object
+          required:
+          - '@type'
+          properties:
+            '@type':
+              enum:
+              - PostalAddress
+            streetAddress:
+              type: string
+            postOfficeBoxNumber:
+              type: string
+            addressLocality:
+              type: string
+            addressRegion:
+              type: string
+            postalCode:
+              type: string
+            addressCountry:
+              type: string
+              description: ISO-3166 alpha-2 (uppercased).
+          additionalProperties: false
+      additionalProperties: false
+    Error:
+      type: object
+      description: A JSON error envelope.
+      required:
+      - error
+      properties:
+        error:
+          type: string
+      additionalProperties: false

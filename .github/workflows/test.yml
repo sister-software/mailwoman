@@ -78,3 +78,21 @@ jobs:
       # effect — all invisible in-repo, all fatal to a fresh `npm install`.
       - name: Clean-install smoke test
         run: yarn ci:smoke
+
+  # The generated Python + Rust API clients (clients/) live OUTSIDE the yarn workspaces, so the `test`
+  # job above never touches them. This proves the composed Python package still imports and the
+  # generated Rust still compiles — i.e. the code committed under clients/ is in sync with the specs
+  # and both distributables are buildable. Neither step hits the network (compile-only for Rust).
+  clients:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+      - name: Python client — import smoke
+        working-directory: clients/python
+        run: uv run python -c "from mailwoman_client import PhotonClient, NominatimClient, LibpostalClient"
+      - name: Rust client — compile generated code
+        working-directory: clients/rust
+        run: cargo build --examples
