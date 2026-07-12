@@ -238,6 +238,18 @@ test("reverse with a null engine result serializes null (jsonv2) and an empty Fe
 	expect(await geo.json()).toEqual({ type: "FeatureCollection", features: [] })
 })
 
+test("/reverse 400 bodies are the exact legacy envelopes (missing and out-of-range)", async () => {
+	const app = createNominatimApp({ reverse: async () => null })
+
+	const missing = await app.request("/reverse")
+	expect(missing.status).toBe(400)
+	expect(await missing.json()).toEqual({ error: "lat and lon are required" })
+
+	const outOfRange = await app.request("/reverse?lat=91&lon=0")
+	expect(outOfRange.status).toBe(400)
+	expect(await outOfRange.json()).toEqual({ error: "lat must be in [-90, 90] and lon in [-180, 180]" })
+})
+
 test("lookup has no jsonld branch — format=jsonld returns the raw results (legacy quirk preserved)", async () => {
 	const results = [{ place_id: 1, licence: "L", lat: "1", lon: "2", display_name: "X" }]
 	const app = createNominatimApp({ lookup: async () => results })
@@ -281,6 +293,7 @@ test("countrycodes and osm_ids comma-split; limit defaults to 10 on absent/inval
 	await app.request("/lookup?osm_ids=N1,W2,R3")
 	expect(seenSearch[0]?.countrycodes).toEqual(["de", "fr"])
 	expect(seenSearch[1]?.limit).toBe(10)
+	expect(seenSearch[0]?.limit).toBe(10)
 	expect(seenLookup[0]?.osmIds).toEqual(["N1", "W2", "R3"])
 })
 
