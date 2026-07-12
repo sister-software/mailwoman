@@ -250,10 +250,13 @@ The three HTTP drop-ins each ship a machine-readable [OpenAPI 3.1](https://spec.
 | [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status` | [nominatim.yaml](pathname:///openapi/nominatim.yaml) |
 | [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                         | [libpostal.yaml](pathname:///openapi/libpostal.yaml) |
 
-For nominatim, the source of truth is `openapi.yaml` at the workspace root, for now — the copy above is published as a static site asset. photon's and libpostal's documents are each emitted at runtime from their route tables (`GET /openapi.json`); neither has a checked-in yaml to keep in sync. All three validate against the OpenAPI standard with zero errors under [Redocly CLI](https://redocly.com/docs/cli):
+The source of truth is the route table, not a checked-in file. All three drop-ins build their OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests, and emit it at runtime from a running server — `GET /openapi.json`. There's nothing to keep in sync by hand: change a route, the document changes with it.
+
+To lint a running server's document with [Redocly CLI](https://redocly.com/docs/cli), fetch it to a temp file first (Redocly's `lint` doesn't read stdin):
 
 ```bash
-npx --yes @redocly/cli@latest lint nominatim/openapi.yaml
-# @mailwoman/photon has no checked-in yaml — its document is emitted at runtime, GET /openapi.json
-# @mailwoman/libpostal has no checked-in yaml — its document is emitted at runtime, GET /openapi.json
+npx @mailwoman/nominatim serve --port 8081 --candidate-db <path> &
+curl -s http://127.0.0.1:8081/openapi.json -o /tmp/nominatim-openapi.json
+npx --yes @redocly/cli@latest lint /tmp/nominatim-openapi.json
+# photon and libpostal serve the same way — GET /openapi.json — swap the package and port
 ```

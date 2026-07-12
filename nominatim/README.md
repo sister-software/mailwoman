@@ -3,7 +3,7 @@
 A **Nominatim-compatible HTTP geocoding API** over the [Mailwoman](https://mailwoman.sister.software) engine. Point an existing Nominatim client at it and forward + reverse geocoding work — no PostgreSQL, no `osm2pgsql` import.
 
 ```bash
-npx @mailwoman/nominatim serve --port 8080 --data <gazetteer-or-bundle>
+npx @mailwoman/nominatim serve --port 8080 --candidate-db <gazetteer-or-bundle>
 ```
 
 ```python
