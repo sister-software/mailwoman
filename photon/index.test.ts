@@ -438,3 +438,30 @@ test("GET /openapi.json serves the emitted 3.1 document", async () => {
 	expect(doc.openapi).toBe("3.1.0")
 	expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/", "/api", "/reverse"]))
 })
+
+test("an engine fault answers the clean legacy 500 envelope, never a crash", async () => {
+	const app = createPhotonApp({
+		search: async () => {
+			throw new Error("resolver exploded")
+		},
+	})
+	const res = await app.request("/api?q=berlin")
+	expect(res.status).toBe(500)
+	expect(await res.json()).toEqual({ type: "FeatureCollection", features: [], message: "internal error" })
+})
+
+test("absent engine methods answer the exact legacy 501 envelopes", async () => {
+	const app = createPhotonApp({})
+
+	const search = await app.request("/api?q=berlin")
+	expect(search.status).toBe(501)
+	expect(await search.json()).toEqual({ type: "FeatureCollection", features: [], message: "search not implemented" })
+
+	const reverse = await app.request("/reverse?lat=52.5&lon=13.4")
+	expect(reverse.status).toBe(501)
+	expect(await reverse.json()).toEqual({
+		type: "FeatureCollection",
+		features: [],
+		message: "reverse not implemented",
+	})
+})

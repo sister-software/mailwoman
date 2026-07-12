@@ -39,7 +39,7 @@ import { createPhotonApp, type PhotonEngine } from "@mailwoman/photon"
 
 const engine: PhotonEngine = {/* search, reverse — backed by your Mailwoman pipeline */}
 const app = createPhotonApp(engine)
-serveNode({ fetch: app.fetch, port: 2322 })
+serveNode({ fetch: app.fetch, port: 2322, hostname: "0.0.0.0" })
 ```
 
 ## CORS
