@@ -23,26 +23,28 @@ curl "http://localhost:2322/reverse?lat=38.8977&lon=-77.0365"
 
 ## Endpoints
 
-| Endpoint   | Photon contract                                    |
-| ---------- | -------------------------------------------------- |
-| `/api`     | forward / autocomplete → GeoJSON FeatureCollection |
-| `/reverse` | `lat`/`lon` → GeoJSON FeatureCollection            |
+| Endpoint        | Photon contract                                      |
+| --------------- | ---------------------------------------------------- |
+| `/api`          | forward / autocomplete → GeoJSON FeatureCollection   |
+| `/reverse`      | `lat`/`lon` → GeoJSON FeatureCollection              |
+| `/openapi.json` | emitted OpenAPI 3.1 document for `/api` + `/reverse` |
 
 Backed by Mailwoman's FST autocomplete tier (#190/#587) + parse → resolve.
 
 ## Library use
 
 ```ts
-import express from "express"
-import { createPhotonRouter, type PhotonEngine } from "@mailwoman/photon"
+import { serveNode } from "@mailwoman/api-kit"
+import { createPhotonApp, type PhotonEngine } from "@mailwoman/photon"
 
 const engine: PhotonEngine = {/* search, reverse — backed by your Mailwoman pipeline */}
-express().use(createPhotonRouter(engine)).listen(2322)
+const app = createPhotonApp(engine)
+serveNode({ fetch: app.fetch, port: 2322 })
 ```
 
 ## CORS
 
-Map widgets (`leaflet-control-geocoder`, `@openrunner/photon-geocoder`) call this cross-origin from the browser, so the server sends permissive CORS by default — `Access-Control-Allow-Origin: *` and a `204` answer to preflight `OPTIONS`, matching upstream Photon. Behind a reverse proxy that already sets the headers, turn it off with `--no-cors` (or `createPhotonRouter(engine, { cors: false })`).
+Map widgets (`leaflet-control-geocoder`, `@openrunner/photon-geocoder`) call this cross-origin from the browser, so the server sends permissive CORS by default — `Access-Control-Allow-Origin: *` and a `204` answer to preflight `OPTIONS`, matching upstream Photon. Behind a reverse proxy that already sets the headers, turn it off with `--no-cors` (or `createPhotonApp(engine, { cors: false })`).
 
 ## Status
 

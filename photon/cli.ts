@@ -223,7 +223,7 @@ async function serve(): Promise<void> {
 					: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
 			)
 			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
-			console.error(`  endpoints: GET /api  GET /reverse`)
+			console.error(`  endpoints: GET /api  GET /reverse  GET /openapi.json`)
 		},
 	})
 }
