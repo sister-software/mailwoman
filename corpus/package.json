@@ -92,7 +92,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
-		"csv-parse": "^5.6.0",
+		"csv-parse": "^7.0.1",
 		"fast-glob": "^3.3.3",
 		"fastest-levenshtein": "^1.0.16",
 		"lru-cache": "^11.5.2",
