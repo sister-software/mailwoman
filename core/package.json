@@ -379,7 +379,7 @@
 		"http-status-codes": "^2.3.0",
 		"json-colorizer": "^3.0.1",
 		"kysely": "^0.29.2",
-		"lru-cache": "^10.4.3",
+		"lru-cache": "^11.5.2",
 		"path-ts": "^2.1.0",
 		"pino": "^10.3.1",
 		"pino-pretty": "^13.1.3",

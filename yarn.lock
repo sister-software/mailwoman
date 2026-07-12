@@ -4406,7 +4406,7 @@ __metadata:
     http-status-codes: "npm:^2.3.0"
     json-colorizer: "npm:^3.0.1"
     kysely: "npm:^0.29.2"
-    lru-cache: "npm:^10.4.3"
+    lru-cache: "npm:^11.5.2"
     path-ts: "npm:^2.1.0"
     pino: "npm:^10.3.1"
     pino-pretty: "npm:^13.1.3"
@@ -4430,7 +4430,7 @@ __metadata:
     csv-parse: "npm:^5.6.0"
     fast-glob: "npm:^3.3.3"
     fastest-levenshtein: "npm:^1.0.16"
-    lru-cache: "npm:^10.4.3"
+    lru-cache: "npm:^11.5.2"
     spliterator: "npm:^3.2.0"
   languageName: unknown
   linkType: soft
@@ -15710,7 +15710,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:^10.0.1, lru-cache@npm:^10.4.3":
+"lru-cache@npm:^10.0.1":
   version: 10.4.3
   resolution: "lru-cache@npm:10.4.3"
   checksum: 10/e6e90267360476720fa8e83cc168aa2bf0311f3f2eea20a6ba78b90a885ae72071d9db132f40fda4129c803e7dcec3a6b6a6fbb44ca90b081630b810b5d6a41a
@@ -15721,6 +15721,13 @@ __metadata:
   version: 11.5.1
   resolution: "lru-cache@npm:11.5.1"
   checksum: 10/02c4f73967d91fb101f4accf8ebac9e0541e08e16d987bdb9e9737f13e5f2c4bc33c593b98ec30e4486bf899bc97edb36fbd133684b36087336559e41edafdea
+  languageName: node
+  linkType: hard
+
+"lru-cache@npm:^11.5.2":
+  version: 11.5.2
+  resolution: "lru-cache@npm:11.5.2"
+  checksum: 10/122789c66605ddf29df58ff279e9e2c9499499d0b80b895ec524496f14bcde045d1582e3e38008f3457226d98067556719573b352119d6be8bdb1f8849f85681
   languageName: node
   linkType: hard
 
