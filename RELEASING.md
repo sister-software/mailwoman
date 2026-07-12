@@ -552,14 +552,27 @@ publish" should mean that for every side effect a dispatch can have, not just th
 
 Nothing below is done yet. `publish_clients: true` will fail closed (a readable `::error::`, not a bare 401) until both are in place:
 
-1. **PyPI** — create an account at <https://pypi.org/account/register/>, enable 2FA, and either claim
-   the `mailwoman-client` project name with a first manual `uv publish` from a local checkout (a brand
-   new PyPI project can't be created via a token alone until it exists — same shape as npm's Trusted
-   Publishing bootstrap trap above) or configure a **pending Trusted Publisher**
-   (<https://pypi.org/manage/account/publishing/>, repo `sister-software/mailwoman`, workflow
-   `.github/workflows/publish.yml`, job `clients`) before the name is claimed, which lets the very first
-   publish also run from CI. Either way, mint a token scoped to the `mailwoman-client` project once it
-   exists and store it as the repo secret `PYPI_API_TOKEN`.
+1. **PyPI** — create an account at <https://pypi.org/account/register/>, enable 2FA, and mint an
+   **account-scoped** API token (<https://pypi.org/manage/account/token/>, scope "Entire account" —
+   not a project-scoped token, which can't be minted until the project exists). Unlike a project token,
+   an account-scoped token CAN create a brand-new project on its first publish, so either:
+   - publish the first release **locally** — `UV_PUBLISH_TOKEN=<token> uv publish` from
+     `clients-build/python/`, after a checkout that already ran `mailwoman clients generate`; or
+   - store that same account-scoped token as the repo secret `PYPI_API_TOKEN` and let the existing
+     `clients` CI job do it — its "Publish Python client to PyPI" step already runs plain `uv publish`
+     against `UV_PUBLISH_TOKEN`, no other wiring required for a token-based first publish.
+
+   Once `mailwoman-client` exists on PyPI, swap `PYPI_API_TOKEN` for a narrower **project-scoped**
+   token for routine releases.
+
+   Trusted Publishing (OIDC, no token in the repo at all) is a **future enhancement**, not something
+   already wired: the `clients` job requests only `permissions: contents: read`, and its publish step
+   is a bare `uv publish`. Adding it would mean granting the job `id-token: write`, registering a PyPI
+   Trusted Publisher (repo `sister-software/mailwoman`, workflow `.github/workflows/publish.yml`, job
+   `clients`), and switching the step to `uv publish --trusted-publishing automatic`. None of that
+   exists today — as shipped, `publish_clients: true` fails closed on a missing `PYPI_API_TOKEN`, not
+   on missing OIDC.
+
 2. **crates.io** — sign in at <https://crates.io/> with GitHub, verify the account email (crates.io
    refuses to publish until it's verified), create a token at
    <https://crates.io/settings/tokens> (scopes `publish-new` + `publish-update`), and store it as the

@@ -242,6 +242,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: main
+          # Least privilege (see the job's `permissions: contents: read` above): this job never
+          # pushes, so it has no business holding a credential that could.
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v6

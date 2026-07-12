@@ -244,12 +244,12 @@ The current neural model (v0.4.0) emits 10 of these: country, region, locality, 
 
 The three HTTP drop-ins — plus the native `/v1/*` surface `mailwoman serve` ships — each expose a machine-readable [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html) specification: the endpoints, query parameters, response shapes, the schema.org `jsonld` variants, and (for the drop-ins) the documented divergences from each upstream. Point Swagger UI, Redoc, a client generator, or a contract test at them.
 
-| Drop-in                                                                      | Endpoints                                                            | Specification                                        |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------- |
-| [`@mailwoman/photon`](https://www.npmjs.com/package/@mailwoman/photon)       | `/api`, `/reverse`                                                   | [photon.json](pathname:///openapi/photon.json)       |
-| [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status`                          | [nominatim.json](pathname:///openapi/nominatim.json) |
-| [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                                                  | [libpostal.json](pathname:///openapi/libpostal.json) |
-| `mailwoman serve` (native `/v1/*` surface)                                   | `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format` | [mailwoman.json](pathname:///openapi/mailwoman.json) |
+| Drop-in                                                                      | Endpoints                                                                                                 | Specification                                        |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [`@mailwoman/photon`](https://www.npmjs.com/package/@mailwoman/photon)       | `/api`, `/reverse`                                                                                        | [photon.json](pathname:///openapi/photon.json)       |
+| [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status`                                                               | [nominatim.json](pathname:///openapi/nominatim.json) |
+| [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                                                                                       | [libpostal.json](pathname:///openapi/libpostal.json) |
+| `mailwoman serve` (native `/v1/*` surface)                                   | `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, `/v1/reload`, `/health`, `/metrics` | [mailwoman.json](pathname:///openapi/mailwoman.json) |
 
 The source of truth is the route table, not a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and nothing to keep in sync by hand:
 
@@ -275,10 +275,10 @@ npx --yes @redocly/cli@latest lint /tmp/nominatim-openapi.json
 `mailwoman-client` bundles a typed client per language for all four surfaces above — the three HTTP
 drop-ins plus the native `mailwoman serve` API:
 
-| Language | Package                                                                     | Generator                                                                              |
-| -------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Python   | [`mailwoman-client`](https://pypi.org/project/mailwoman-client/) (PyPI)     | [`openapi-python-client`](https://github.com/openapi-generators/openapi-python-client) |
-| Rust     | [`mailwoman-client`](https://crates.io/crates/mailwoman-client) (crates.io) | [`progenitor`](https://github.com/oxidecomputer/progenitor)                            |
+| Language | Package                        | Generator                                                                              |
+| -------- | ------------------------------ | -------------------------------------------------------------------------------------- |
+| Python   | `mailwoman-client` (PyPI)      | [`openapi-python-client`](https://github.com/openapi-generators/openapi-python-client) |
+| Rust     | `mailwoman-client` (crates.io) | [`progenitor`](https://github.com/oxidecomputer/progenitor)                            |
 
 Same one-directional discipline as the specs themselves: route tables → emitted OpenAPI documents →
 generated clients, nothing hand-maintained downstream of the spec. `mailwoman clients generate`
