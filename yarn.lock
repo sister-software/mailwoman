@@ -4398,7 +4398,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/api-kit@workspace:api-kit":
+"@mailwoman/api-kit@workspace:*, @mailwoman/api-kit@workspace:api-kit":
   version: 0.0.0-use.local
   resolution: "@mailwoman/api-kit@workspace:api-kit"
   dependencies:
@@ -4565,8 +4565,9 @@ __metadata:
   resolution: "@mailwoman/libpostal@workspace:libpostal"
   dependencies:
     "@hono/zod-openapi": "npm:^1.4.0"
+    "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
-    express: "npm:^5.2.1"
+    hono: "npm:^4.12.29"
     mailwoman: "workspace:*"
   bin:
     libpostal: ./out/cli.js

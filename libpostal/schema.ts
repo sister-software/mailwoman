@@ -41,7 +41,7 @@ export const ExpandResponseSchema = z
 	})
 	.openapi("ExpandResponse")
 
-/** Libpostal's JSON error envelope. */
+/** Mirrors libpostal's JSON error envelope. */
 export const ErrorSchema = z
 	.object({
 		error: z.string(),

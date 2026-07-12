@@ -15,11 +15,11 @@
 
 import { parseArgs } from "node:util"
 
+import { serveNode } from "@mailwoman/api-kit"
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
-import express from "express"
 import { createAddressParser } from "mailwoman"
 
-import { createLibpostalRouter, type LibpostalEngine, type ParseMatch } from "./index.ts"
+import { createLibpostalApp, type LibpostalEngine, type ParseMatch } from "./index.ts"
 
 function serve(): void {
 	const { values } = parseArgs({
@@ -58,13 +58,19 @@ function serve(): void {
 		},
 	}
 
-	express()
-		.use(createLibpostalRouter(engine, { cors: values.cors }))
-		.listen(port, host, () => {
-			console.error(`[@mailwoman/libpostal] listening on http://${host}:${port}`)
+	// Temporary boot wiring — Task 6 owns the real CLI rewrite (Pastel arc).
+	const app = createLibpostalApp(engine, { cors: values.cors })
+
+	serveNode({
+		fetch: app.fetch,
+		port,
+		hostname: host,
+		onListen: (info) => {
+			console.error(`[@mailwoman/libpostal] listening on http://${host}:${info.port}`)
 			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
 			console.error(`  endpoints: POST/GET /parse  POST/GET /expand`)
-		})
+		},
+	})
 }
 
 // Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).

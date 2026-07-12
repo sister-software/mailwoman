@@ -38,8 +38,9 @@
 	},
 	"dependencies": {
 		"@hono/zod-openapi": "^1.4.0",
+		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
-		"express": "^5.2.1",
+		"hono": "^4.12.29",
 		"mailwoman": "workspace:*"
 	}
 }
