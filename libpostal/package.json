@@ -37,6 +37,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@hono/zod-openapi": "^1.4.0",
 		"@mailwoman/normalize": "workspace:*",
 		"express": "^5.2.1",
 		"mailwoman": "workspace:*"
