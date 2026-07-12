@@ -166,7 +166,9 @@ function buildHealthData(): HealthData {
 			data_root: DATA_ROOT,
 			// Versioned-switchover provenance (#485): the releases.json pin, or null in legacy mode.
 			versions: readReleaseManifest(DATA_ROOT),
-			wof_dbs: wofPaths(),
+			// The express HealthRouter existsSync-filtered here where GeocodeRouter's wofPaths() didn't;
+			// this diagnostic field keeps the health-side behavior (no phantom env paths in "what's deployed").
+			wof_dbs: wofPaths().filter((p) => existsSync(p)),
 			situs_states: countShards("address-points", "address-points"),
 			interpolation_states: countShards("interpolation", "interpolation"),
 		},
