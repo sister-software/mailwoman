@@ -52,7 +52,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@fragaria/address-formatter": "^6.7.1",
+		"@fragaria/address-formatter": "^7.0.0",
 		"@mailwoman/core": "workspace:*"
 	},
 	"devDependencies": {
