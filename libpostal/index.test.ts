@@ -9,6 +9,7 @@ import { expect, test } from "vitest"
 import {
 	COMPONENT_TO_LIBPOSTAL,
 	createLibpostalApp,
+	treeToParseMatches,
 	type LibpostalEngine,
 	type ParseMatch,
 	toLibpostalComponents,
@@ -302,4 +303,37 @@ test("duplicate query params use the first value (never-contract: old code crash
 	const app = createLibpostalApp(fixtureEngine)
 	const res = await app.request("/parse?query=a&query=b")
 	expect(res.status).toBe(200)
+})
+
+test("treeToParseMatches: assembles the street-name family into one street match, reading order", () => {
+	const tree = {
+		raw: "1600 East Sheldon Rd, Springfield",
+		roots: [
+			{
+				tag: "street",
+				value: "Sheldon",
+				start: 5,
+				end: 12,
+				confidence: 0.9,
+				children: [
+					{ tag: "house_number", value: "1600", start: 0, end: 4, confidence: 0.95, children: [] },
+					{ tag: "street_prefix", value: "East", start: 5, end: 9, confidence: 0.9, children: [] },
+					{ tag: "street_suffix", value: "Rd", start: 18, end: 20, confidence: 0.9, children: [] },
+				],
+			},
+			{ tag: "locality", value: "Springfield", start: 22, end: 33, confidence: 0.9, children: [] },
+		],
+	} as never
+
+	expect(treeToParseMatches(tree)).toEqual([
+		{ classification: "house_number", value: "1600" },
+		{ classification: "street", value: "East Sheldon Rd" },
+		{ classification: "locality", value: "Springfield" },
+	])
+})
+
+test("COMPONENT_TO_LIBPOSTAL: plan-2 additions", () => {
+	expect(COMPONENT_TO_LIBPOSTAL.subregion).toBe("state_district")
+	expect(COMPONENT_TO_LIBPOSTAL.intersection_a).toBe("road")
+	expect(COMPONENT_TO_LIBPOSTAL.intersection_b).toBe("road")
 })
