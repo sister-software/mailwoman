@@ -8,4 +8,5 @@
  *   package that owns the wire contract (see the 2026-07-12 design spec's anti-meta guardrails).
  */
 
-export {}
+export * from "./openapi.ts"
+export * from "./serve.ts"
