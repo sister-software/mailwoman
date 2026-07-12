@@ -4643,7 +4643,6 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/timezone-lookup": "workspace:*"
     "@mailwoman/un-locode-lookup": "workspace:*"
-    express: "npm:^5.2.1"
     hono: "npm:^4.12.29"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"

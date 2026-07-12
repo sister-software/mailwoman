@@ -4,17 +4,16 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { AddressInfo } from "node:net"
-
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
-import express from "express"
 import { expect, test } from "vitest"
 
 import {
-	createNominatimRouter,
+	createNominatimApp,
 	MAILWOMAN_LICENCE,
 	type NominatimEngine,
+	type NominatimLookupParams,
 	nominatimResultToSchemaOrg,
+	type NominatimSearchParams,
 	type ResolvedAddress,
 	toFeatureCollection,
 	toNominatimResult,
@@ -112,78 +111,194 @@ const jsonldEngine: NominatimEngine = {
 }
 
 test("route: /search?format=jsonld returns schema.org Place[] and forces addressdetails (#1052)", async () => {
-	await withServer(express().use(createNominatimRouter(jsonldEngine)), async (base) => {
-		const res = await fetch(`${base}/search?q=1600+pennsylvania+ave&format=jsonld`)
-		expect(res.status).toBe(200)
-		const body = (await res.json()) as SchemaOrgPlace[]
-		expect(Array.isArray(body)).toBe(true)
-		const place = body[0]!
-		expect(place["@type"]).toBe("Place")
-		// jsonld forced addressdetails on (the client did not pass it), so the PostalAddress is fully populated.
-		expect(place.address?.streetAddress).toBe("1600 Pennsylvania Ave NW")
-		expect(place.address?.addressLocality).toBe("Washington")
-		expect(place.address?.addressCountry).toBe("US")
-	})
+	const app = createNominatimApp(jsonldEngine)
+	const res = await app.request("/search?q=1600+pennsylvania+ave&format=jsonld")
+	expect(res.status).toBe(200)
+	const body = (await res.json()) as SchemaOrgPlace[]
+	expect(Array.isArray(body)).toBe(true)
+	const place = body[0]!
+	expect(place["@type"]).toBe("Place")
+	// jsonld forced addressdetails on (the client did not pass it), so the PostalAddress is fully populated.
+	expect(place.address?.streetAddress).toBe("1600 Pennsylvania Ave NW")
+	expect(place.address?.addressLocality).toBe("Washington")
+	expect(place.address?.addressCountry).toBe("US")
 })
 
 test("route: /reverse?format=jsonld returns a single schema.org Place (#1052)", async () => {
-	await withServer(express().use(createNominatimRouter(jsonldEngine)), async (base) => {
-		const res = await fetch(`${base}/reverse?lat=38.8977&lon=-77.0365&format=jsonld`)
-		expect(res.status).toBe(200)
-		const place = (await res.json()) as SchemaOrgPlace
-		expect(place["@context"]).toBe("https://schema.org")
-		expect(place["@type"]).toBe("Place")
-		expect(place.address?.addressLocality).toBe("Washington")
-		expect(place.address?.addressCountry).toBe("US")
-	})
+	const app = createNominatimApp(jsonldEngine)
+	const res = await app.request("/reverse?lat=38.8977&lon=-77.0365&format=jsonld")
+	expect(res.status).toBe(200)
+	const place = (await res.json()) as SchemaOrgPlace
+	expect(place["@context"]).toBe("https://schema.org")
+	expect(place["@type"]).toBe("Place")
+	expect(place.address?.addressLocality).toBe("Washington")
+	expect(place.address?.addressCountry).toBe("US")
 })
 
 const corsEngine: NominatimEngine = { status: async () => ({ status: 0, message: "OK" }) }
 
-/** Boot the app on an ephemeral port, hand the base URL to `fn`, always close. */
-async function withServer(app: express.Express, fn: (base: string) => Promise<void>): Promise<void> {
-	const server = app.listen(0)
-	await new Promise((resolve) => server.once("listening", resolve))
-	const { port } = server.address() as AddressInfo
-
-	try {
-		await fn(`http://127.0.0.1:${port}`)
-	} finally {
-		await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())))
-	}
-}
-
 test("CORS: permissive Access-Control-Allow-Origin on responses (browser clients)", async () => {
-	await withServer(express().use(createNominatimRouter(corsEngine)), async (base) => {
-		const res = await fetch(`${base}/status`)
-		expect(res.headers.get("access-control-allow-origin")).toBe("*")
-	})
+	const app = createNominatimApp(corsEngine)
+	const res = await app.request("/status")
+	expect(res.headers.get("access-control-allow-origin")).toBe("*")
 })
 
 test("CORS: preflight OPTIONS answers 204 with CORS headers", async () => {
-	await withServer(express().use(createNominatimRouter(corsEngine)), async (base) => {
-		const res = await fetch(`${base}/search`, { method: "OPTIONS" })
-		expect(res.status).toBe(204)
-		expect(res.headers.get("access-control-allow-origin")).toBe("*")
-		expect(res.headers.get("access-control-allow-methods")).toContain("GET")
+	const app = createNominatimApp(corsEngine)
+	const res = await app.request("/search", {
+		method: "OPTIONS",
+		headers: { origin: "https://example.com", "access-control-request-method": "GET" },
 	})
+	expect(res.status).toBe(204)
+	expect(res.headers.get("access-control-allow-origin")).toBe("*")
+	expect(res.headers.get("access-control-allow-methods")).toContain("GET")
 })
 
 test("CORS: { cors: false } disables the headers (for a proxy that owns CORS)", async () => {
-	await withServer(express().use(createNominatimRouter(corsEngine, { cors: false })), async (base) => {
-		const res = await fetch(`${base}/status`)
-		expect(res.headers.get("access-control-allow-origin")).toBeNull()
-	})
+	const app = createNominatimApp(corsEngine, { cors: false })
+	const res = await app.request("/status")
+	expect(res.headers.get("access-control-allow-origin")).toBeNull()
 })
 
 test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async () => {
-	await withServer(express().use(createNominatimRouter(corsEngine)), async (base) => {
-		const res = await fetch(`${base}/`)
-		expect(res.status).toBe(200)
-		expect(res.headers.get("content-type")).toContain("text/html")
-		const body = await res.text()
-		expect(body).toContain("@mailwoman/nominatim")
-		expect(body).toContain("/search?q=") // a clickable example query
-		expect(body).toContain("switching-from-nominatim") // docs pointer
+	const app = createNominatimApp(corsEngine)
+	const res = await app.request("/")
+	expect(res.status).toBe(200)
+	expect(res.headers.get("content-type")).toContain("text/html")
+	const body = await res.text()
+	expect(body).toContain("@mailwoman/nominatim")
+	expect(body).toContain("/search?q=") // a clickable example query
+	expect(body).toContain("switching-from-nominatim") // docs pointer
+})
+
+// Pinning tests — the four nominatim wrinkles (wire contract) + the parsing/error-envelope guarantees.
+
+test("/status without an engine method answers 200 OK, not 501 (the one non-501 absent-method default)", async () => {
+	const app = createNominatimApp({})
+	const res = await app.request("/status")
+	expect(res.status).toBe(200)
+	expect(await res.json()).toEqual({ status: 0, message: "OK" })
+})
+
+test("absent engine methods answer the exact issue-ref 501 bodies", async () => {
+	const app = createNominatimApp({})
+
+	for (const [path, message] of [
+		["/search?q=berlin", "search not implemented (see #802)"],
+		["/reverse?lat=52.5&lon=13.4", "reverse not implemented (see #803)"],
+		["/lookup?osm_ids=N1", "lookup not implemented (see #805)"],
+	] as const) {
+		const res = await app.request(path)
+		expect(res.status).toBe(501)
+		expect(await res.json()).toEqual({ error: message })
+	}
+})
+
+test("unknown format falls back to jsonv2 (raw results array)", async () => {
+	const app = createNominatimApp({ search: async () => [] })
+	const res = await app.request("/search?q=berlin&format=xml")
+	expect(res.status).toBe(200)
+	expect(await res.json()).toEqual([])
+})
+
+test("format=jsonld forces addressdetails on search and reverse, but plain parseBool governs lookup", async () => {
+	const seen: Array<boolean | undefined> = []
+	const app = createNominatimApp({
+		search: async (p) => {
+			seen.push(p.addressdetails)
+
+			return []
+		},
+		reverse: async (p) => {
+			seen.push(p.addressdetails)
+
+			return null
+		},
+		lookup: async (p) => {
+			seen.push(p.addressdetails)
+
+			return []
+		},
 	})
+
+	await app.request("/search?q=x&format=jsonld")
+	await app.request("/reverse?lat=1&lon=1&format=jsonld")
+	await app.request("/lookup?osm_ids=N1&format=jsonld")
+	expect(seen).toEqual([true, true, false])
+})
+
+test("reverse with a null engine result serializes null (jsonv2) and an empty FeatureCollection (geojson)", async () => {
+	const app = createNominatimApp({ reverse: async () => null })
+
+	const plain = await app.request("/reverse?lat=52.5&lon=13.4")
+	expect(plain.status).toBe(200)
+	expect(await plain.json()).toBeNull()
+
+	const geo = await app.request("/reverse?lat=52.5&lon=13.4&format=geojson")
+	expect(await geo.json()).toEqual({ type: "FeatureCollection", features: [] })
+})
+
+test("lookup has no jsonld branch — format=jsonld returns the raw results (legacy quirk preserved)", async () => {
+	const results = [{ place_id: 1, licence: "L", lat: "1", lon: "2", display_name: "X" }]
+	const app = createNominatimApp({ lookup: async () => results })
+	const res = await app.request("/lookup?osm_ids=N1&format=jsonld")
+	expect(await res.json()).toEqual(results)
+})
+
+test("repeated single-valued params are treated as absent (asString(array) → undefined; never a 400)", async () => {
+	let seen: NominatimSearchParams | undefined
+	const app = createNominatimApp({
+		search: async (p) => {
+			seen = p
+
+			return []
+		},
+	})
+	const res = await app.request("/search?q=berlin&q=paris&limit=5")
+	expect(res.status).toBe(200)
+	expect(seen?.q).toBeUndefined()
+	expect(seen?.limit).toBe(5)
+})
+
+test("countrycodes and osm_ids comma-split; limit defaults to 10 on absent/invalid", async () => {
+	const seenSearch: NominatimSearchParams[] = []
+	const seenLookup: NominatimLookupParams[] = []
+	const app = createNominatimApp({
+		search: async (p) => {
+			seenSearch.push(p)
+
+			return []
+		},
+		lookup: async (p) => {
+			seenLookup.push(p)
+
+			return []
+		},
+	})
+
+	await app.request("/search?q=x&countrycodes=de,fr")
+	await app.request("/search?q=x&limit=abc")
+	await app.request("/lookup?osm_ids=N1,W2,R3")
+	expect(seenSearch[0]?.countrycodes).toEqual(["de", "fr"])
+	expect(seenSearch[1]?.limit).toBe(10)
+	expect(seenLookup[0]?.osmIds).toEqual(["N1", "W2", "R3"])
+})
+
+test("an engine fault answers the clean legacy 500 envelope", async () => {
+	const app = createNominatimApp({
+		search: async () => {
+			throw new Error("resolver exploded")
+		},
+	})
+	const res = await app.request("/search?q=x")
+	expect(res.status).toBe(500)
+	expect(await res.json()).toEqual({ error: "internal error" })
+})
+
+test("GET /openapi.json serves the emitted 3.1 document with all five paths", async () => {
+	const app = createNominatimApp({})
+	const res = await app.request("/openapi.json")
+	const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> }
+	expect(doc.openapi).toBe("3.1.0")
+	expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/", "/search", "/reverse", "/lookup", "/status"]))
 })
