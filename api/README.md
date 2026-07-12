@@ -85,11 +85,12 @@ serveNode({ fetch: app.fetch, port: 3000, hostname: "0.0.0.0" })
 
 ## Metrics
 
-`POST /v1/geocode` records timing to [`@mailwoman/api-kit`](../api-kit)'s generic in-process metrics —
-`GET /metrics` returns the live snapshot (latency percentiles, per-tier counts). The tier is read from
-`outcome["resolution_tier"]` (falling back to `"admin"`); a thrown engine error records the reserved
-`"error"` tier before rethrowing into the `500` safety net. `POST /v1/batch` records only whole-call
-latency here — per-row metrics are the engine's responsibility.
+`POST /v1/geocode` and `POST /v1/batch` record timing to [`@mailwoman/api-kit`](../api-kit)'s generic
+in-process metrics — `GET /metrics` returns the live snapshot (latency percentiles, per-tier counts).
+`/v1/geocode`'s tier is read from `outcome["resolution_tier"]` (falling back to `"admin"`); `/v1/batch`
+records whole-call latency under the fixed `"batch"` tier — per-row tier metrics are the engine's job
+(phase 4b). A thrown engine error records the reserved `"error"` tier before rethrowing into the `500`
+safety net.
 
 ## Status
 

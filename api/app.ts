@@ -70,7 +70,16 @@ export function createMailwomanAPI(engine: MailwomanAPIEngine, options: Mailwoma
 
 	// Safety net: an engine fault answers the native envelope, never a crash. `detail` carries the raw message —
 	// this surface is ours to design, so (unlike the vendor-constrained drop-in envelopes) we can be helpful.
-	app.onError((error, c) => apiError(c, 500, "internal error", error instanceof Error ? error.message : String(error)))
+	app.onError((error, c) => {
+		// A malformed request body is a client-side syntax error, not a server fault — Hono's zod-openapi
+		// validator throws before a route's own hook ever sees the body, so it lands here instead of the
+		// per-route 400s in routes.ts. Answer 400, not the 500 net (which stays reserved for engine faults).
+		if (error instanceof Error && error.message.includes("Malformed JSON")) {
+			return apiError(c, 400, "invalid request body", "malformed JSON")
+		}
+
+		return apiError(c, 500, "internal error", error instanceof Error ? error.message : String(error))
+	})
 
 	// Ahead of the handlers (which buffer the body into memory) so an oversized POST is rejected before that
 	// buffering happens, not after — mirrors the libpostal precedent.

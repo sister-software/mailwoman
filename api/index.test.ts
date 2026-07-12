@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { resetMetricsForTest } from "@mailwoman/api-kit"
+import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
 import type { SerializedSolution } from "@mailwoman/core/solver"
 import { beforeEach, expect, test } from "vitest"
 
@@ -239,6 +239,18 @@ test("POST /v1/batch: engine.batch absent -> 503", async () => {
 	})
 	expect(res.status).toBe(503)
 	expect(await res.json()).toEqual({ error: "geocoder not available" })
+})
+
+test("/v1/batch records whole-call latency under the batch tier", async () => {
+	resetMetricsForTest()
+	const app = createMailwomanAPI({ batch: async () => ({ results: [] }) })
+	await app.request("/v1/batch", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ addresses: ["x"] }),
+	})
+	const snapshot = metricsSnapshot()
+	expect(snapshot.timings.tiers["batch"]).toBe(1)
 })
 
 // ---------------------------------------------------------------------------------------------
@@ -477,4 +489,15 @@ test("an engine fault answers the native 500 envelope with a helpful detail, nev
 	const res = await app.request("/v1/parse?address=x")
 	expect(res.status).toBe(500)
 	expect(await res.json()).toEqual({ error: "internal error", detail: "model exploded" })
+})
+
+test("malformed JSON answers a 400 envelope, not a 500", async () => {
+	const app = createMailwomanAPI({})
+	const res = await app.request("/v1/format", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: "{truncated",
+	})
+	expect(res.status).toBe(400)
+	expect(await res.json()).toEqual({ error: "invalid request body", detail: "malformed JSON" })
 })

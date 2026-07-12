@@ -315,11 +315,19 @@ export function registerMailwomanAPIRoutes(
 
 			if (!engine.batch) return c.json({ error: "geocoder not available" }, 503)
 
-			// Per-row metrics are the ENGINE's responsibility (phase 4b) — this app records only whole-call
-			// latency, and only implicitly (each row's `recordTimed` call, if any, lives inside `engine.batch`).
-			const outcome = await engine.batch(addresses)
+			// Whole-call latency, recorded under the "batch" tier. Per-row tier metrics are the ENGINE's
+			// responsibility (phase 4b) — this app only times the call as a unit.
+			const t0 = performance.now()
 
-			return c.json(outcome, 200)
+			try {
+				const outcome = await engine.batch(addresses)
+				recordTimed(performance.now() - t0, "batch")
+
+				return c.json(outcome, 200)
+			} catch (error) {
+				recordTimed(performance.now() - t0, "error")
+				throw error
+			}
 		},
 		(result, c) => {
 			if (!result.success) return c.json({ error: "body must be { addresses: string[] }" }, 400)
