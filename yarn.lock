@@ -1980,10 +1980,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cloudflare/workers-types@npm:^4.20260608.1":
-  version: 4.20260619.1
-  resolution: "@cloudflare/workers-types@npm:4.20260619.1"
-  checksum: 10/9ad7ad6f19a58b6c2e5aa0a157fd3833a78544f4de61b859defa9470ec26d578b944005963737595e09342c2d44a60550bd54673fa3be269abbc935cd894f932
+"@cloudflare/workers-types@npm:^5.20260712.1":
+  version: 5.20260712.1
+  resolution: "@cloudflare/workers-types@npm:5.20260712.1"
+  checksum: 10/128c2676dfeeea63c42db2e3a14dab523b5892d7ddc4b4e56289eec98a91b7ea1698eea88f4a62ecc124b934a9fcec63c39edffe74045ca3aba9166ae894388b
   languageName: node
   linkType: hard
 
@@ -4826,7 +4826,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/tile-worker@workspace:tile-worker"
   dependencies:
-    "@cloudflare/workers-types": "npm:^4.20260608.1"
+    "@cloudflare/workers-types": "npm:^5.20260712.1"
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
