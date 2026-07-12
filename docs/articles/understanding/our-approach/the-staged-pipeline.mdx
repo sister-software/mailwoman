@@ -110,7 +110,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Failures it owns.**
 
-- Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The honest answer is to surface the list, not pretend one is correct.
+- Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The right answer is to surface the list, not pretend one is correct.
 
 **Today.** [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) AND surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
 

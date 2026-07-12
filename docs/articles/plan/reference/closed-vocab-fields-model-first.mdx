@@ -43,8 +43,8 @@ overlay buys perfect precision only on the cases that were never hard.
 established lexicon signals as a _soft channel, never a substitution_. A post-parse
 override is precisely the substitution we ruled out.
 
-**The honest framing:** a wrong `country` is a wrong _continent_ downstream, so the
-instinct to want a hard guarantee is sound — but the place to enforce it is the
+**The instinct is right, the layer is wrong.** A wrong `country` is a wrong _continent_
+downstream, so wanting a hard guarantee is sound — but the place to enforce it is the
 **resolver, using calibrated confidence** (we ship isotonic `conf=`): if the model is
 low-confidence _and_ the gazetteer has an unambiguous match, the resolver may prefer the
 lookup as a candidate. That is a downstream re-rank at the resolution layer, not a
@@ -71,7 +71,7 @@ representation (same machinery as the postcode anchor), and the model decides ev
 - **Binary gazetteer-match flag** — "this token/sequence is a known country surface form."
   Its main job is **long-tail recall**: with ~250 countries at realistic prevalence, a
   small country appears a handful of times in training; the flag gives the model a prior
-  it can't get from the subword embeddings of 3 examples. (It cannot help truly OOV /
+  it can't get from the subword embeddings of 3 examples. (It cannot help OOV /
   misspelled forms — there the model is on its own, which is correct.)
 - **Known-homograph flag** — "this surface form is _also_ a US state / region name." This
   is the single highest-value bit: it tells the model "context is non-negotiable here,
@@ -98,7 +98,7 @@ Built to deny the model the cheap shortcut and give it a fair shot:
   (that re-creates the over-fire). Target **~12–18%** of rows carrying a country, then
   compensate the imbalance with a **class-weighted CRF loss (~3–5× on B/I-country)** plus
   light **transition regularization**, rather than raw oversampling. Validate on a
-  _production-prevalence_ (~5%) held-out set so the transition prior stays honest.
+  _production-prevalence_ (~5%) held-out set so the transition prior stays representative.
 
 ## Eval-first — because the last measurement misled us
 

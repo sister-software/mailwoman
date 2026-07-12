@@ -39,7 +39,7 @@ deployer's existing legal basis. We never become a processor of it.
   exist; no cookies are set.
 
 Because we hold no user accounts and no query history, data-subject requests (access,
-deletion, portability) have a short honest answer: there is nothing on file to return or
+deletion, portability) have a short answer: there is nothing on file to return or
 delete beyond the transient operational logs described above. Requests and questions are
 welcome at the contact address.
 

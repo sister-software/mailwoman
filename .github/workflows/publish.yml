@@ -238,47 +238,10 @@ jobs:
           # pushes, so it has no business holding a credential that could.
           persist-credentials: false
 
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-          cache: yarn
-
-      - name: Enable Corepack (yarn 4)
-        run: corepack enable
-
-      # Same action + pin `test.yml` already uses for `lint:python`'s ruff-via-uvx step — `uv`/`uvx`
-      # aren't preinstalled on the runner image.
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v7
-
-      # `@stable` is the action's own documented usage (a tracking ref it repoints itself, not a
-      # release tag) — the canonical way to pull this action, matching how the rest of this file pins
-      # third-party actions by ref rather than SHA (see `astral-sh/setup-uv@v7` above).
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install dependencies
-        run: yarn install --immutable
-
-      - name: Compile
-        run: yarn compile
-
-      # The full pipeline this job replays locally-verified in Task 3: emit all 8 OpenAPI documents →
-      # generate the Python package (openapi-python-client) → assemble the Rust crate (progenitor) →
-      # `uv build` + wheel import-check → `cargo check --examples`. A non-zero exit here fails the job
-      # before either upload-artifact step runs, so a broken generator/spec drift never gets an
-      # artifact that looks shippable.
+      # The build block lives in the local composite action (shared with publish-clients.yml's
+      # generate job) — setup, compile, `mailwoman clients generate`, crate tarball.
       - name: Generate + verify API clients
-        run: node mailwoman/out/cli.js clients generate
-
-      # `actions/upload-artifact` can't glob a directory tree into one file, so the Rust crate (a
-      # whole directory: Cargo.toml, src/, vendored openapi/*.json, examples/) is tarred first. The
-      # `cargo check --examples` step above leaves a `target/` build cache under the crate dir —
-      # excluded here, since it's regenerable local build output, not part of what `cargo publish`
-      # would ship (Cargo.toml's own `include` list already excludes it from the crate contents).
-      - name: Package Rust crate artifact
-        run: tar --exclude=target -czf clients-build/mailwoman-client-rust.tar.gz -C clients-build rust
+        uses: ./.github/actions/generate-clients
 
       - name: Upload Python client artifact
         uses: actions/upload-artifact@v7

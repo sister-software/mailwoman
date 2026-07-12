@@ -77,7 +77,7 @@ Two consequences worth holding onto:
 
 ## Don't reach for all your cores
 
-Here's the part that surprises people, and the reason `geocodeStream` defaults its `concurrency` low instead of to your core count. Geocoding looks CPU-bound, but it isn't — it's latency- and memory-bound. Every row makes random reads into that multi-gigabyte WOF database, and the classifier already spreads each inference across several cores. Stack more workers on top and they don't get more compute; they contend for the same memory bandwidth and the same DB pages.
+This is why `geocodeStream` defaults its `concurrency` low instead of to your core count, and it surprises people: geocoding looks CPU-bound, but it is latency- and memory-bound. Every row makes random reads into that multi-gigabyte WOF database, and the classifier already spreads each inference across several cores. Stack more workers on top and they don't get more compute; they contend for the same memory bandwidth and the same DB pages.
 
 A sweep over real NPPES addresses on a 16-core box, single 4 GB gazetteer:
 

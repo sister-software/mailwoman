@@ -525,11 +525,14 @@ Three workflows share the client story. `publish.yml`'s `clients` job (runs afte
 regenerates the Python (`mailwoman-client` on PyPI) and Rust (`mailwoman-client` on crates.io) API
 clients — typed wrappers over the Photon / Nominatim / libpostal drop-ins plus the native `/v1/*`
 surface, generated from the OpenAPI documents those surfaces already emit — and uploads them as
-**inspection artifacts only**. Registry publishing lives in two dedicated, environment-bound,
-manually-dispatched workflows: **`publish-python.yml`** (PyPI Trusted Publishing / OIDC, `pypi`
-environment — PyPI's trust binds to that exact filename, so never rename it without updating the
-PyPI-side publisher config) and **`publish-cargo.yml`** (`cargo` environment, whose
-`CARGO_REGISTRY_TOKEN` environment secret is the credential). See `docs/articles/api.mdx` "Client
+**inspection artifacts only**. Registry publishing lives in ONE dedicated,
+manually-dispatched workflow: **`publish-clients.yml`** — a `generate` job builds and verifies both
+clients once, then per-registry jobs publish the exact artifact bytes downstream: `pypi` (Trusted
+Publishing / OIDC, `pypi` environment — PyPI's trust binds to the `publish-clients.yml` filename, so
+never rename it without updating the PyPI-side publisher config) and `cargo` (`cargo` environment,
+whose `CARGO_REGISTRY_TOKEN` environment secret is the credential). The `publish_python` /
+`publish_cargo` dispatch inputs (default true) make single-registry retries cheap — nothing
+regenerates. See `docs/articles/api.mdx` "Client
 libraries" for what the clients are; this section is the release-operator's view.
 
 > **Sequencing — do not publish clients before the next npm release.** The generated clients stamp
@@ -554,25 +557,27 @@ the assembled crate). That half runs unconditionally: it's the same local, recei
 `progenitor`/`openapi-python-client` fails the job and shows up on every dispatch, not just the runs
 where someone remembers to check. Nothing in `publish.yml` ever reaches a registry.
 
-To actually publish, dispatch the dedicated workflow(s) from the Actions UI — each regenerates from
-`main` and publishes its half:
+To actually publish, dispatch `Publish API clients` (`publish-clients.yml`) from the Actions UI. It
+builds once from `main` (the same composite the release-run inspection artifacts use), then:
 
-- **Python → PyPI:** run `Publish Python client` (`publish-python.yml`). Auth is Trusted Publishing —
-  the job's `pypi` environment + this filename are what PyPI verifies in the OIDC claims; there is no
-  token anywhere. `uv publish --trusted-publishing always` fails loud if the PyPI-side publisher
-  config drifts from the file/environment names.
-- **Rust → crates.io:** run `Publish Rust client` (`publish-cargo.yml`). Auth is the
-  `CARGO_REGISTRY_TOKEN` secret in the `cargo` GitHub environment (not a repo-level secret — the
+- **`pypi` job:** downloads the wheel/sdist artifact and publishes via Trusted Publishing — the
+  job's `pypi` environment + the `publish-clients.yml` filename are what PyPI verifies in the OIDC
+  claims; no token anywhere. `uv publish --trusted-publishing always` fails loud on config drift.
+- **`cargo` job:** downloads + extracts the crate tarball and `cargo publish`es it with the
+  `CARGO_REGISTRY_TOKEN` secret from the `cargo` GitHub environment (not a repo-level secret — the
   job's `environment: cargo` declaration is what makes it resolvable).
+
+Uncheck `publish_python` / `publish_cargo` at dispatch for a single-registry run (e.g. retrying one
+registry after an account-level rejection).
 
 ### Registry provisioning — state as of 2026-07-12
 
 Provisioned by the operator:
 
 - **`pypi` GitHub environment** (no secrets — OIDC only) + a PyPI Trusted Publisher configured against
-  `publish-python.yml`. Before the first dispatch, double-check the PyPI-side pending-publisher entry:
+  `publish-clients.yml` (migrated from the retired `publish-python.yml` when publishing consolidated). Before the first dispatch, double-check the PyPI-side pending-publisher entry:
   project name must be **`mailwoman-client`** (what the generator stamps), repository
-  `sister-software/mailwoman`, workflow filename `publish-python.yml`, and — if the publisher config
+  `sister-software/mailwoman`, workflow filename `publish-clients.yml`, and — if the publisher config
   names an environment — it must say `pypi` (the job declares it either way; a mismatch fails the OIDC
   exchange with a readable PyPI error).
 - **`cargo` GitHub environment** carrying `CARGO_REGISTRY_TOKEN`. crates.io has no pre-claim step —
@@ -620,7 +625,7 @@ never be used to validate a real change — the verify step is the entire point.
 - **`mailwoman release hf` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
   is a separate manual command after the npm release, not part of `yarn release`.
 - **Client-package first publish** — provisioning is DONE (see "Client packages" above: `pypi` +
-  `cargo` environments, Trusted Publisher bound to `publish-python.yml`). What remains is dispatching
-  `publish-python.yml` + `publish-cargo.yml` once — AFTER the next npm release, per the sequencing
-  note above.
+  `cargo` environments, Trusted Publisher now bound to `publish-clients.yml`). First publishes are DONE for
+  PyPI (`mailwoman-client` 6.0.0 live via Trusted Publishing); crates.io publishes via
+  `publish-clients.yml` (the `cargo` job) once the account email is verified.
 - **Changelog generation** — release-it can emit one via the `@release-it/conventional-changelog` plugin. Not configured yet because commit messages haven't standardized on Conventional Commits.

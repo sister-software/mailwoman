@@ -12,7 +12,7 @@ tags:
 
 Before you can judge a parser, you need to know what it is parsing _for_. Address parsing is not an academic exercise in string labelling — it exists to route physical objects to physical places through a system designed in the 19th century and patched ever since.
 
-This article walks through what happens when you mail a letter. The point is not the mechanics. The point is that the postal system is **already fuzzy** — it handles ambiguity through human intervention, local knowledge, and layered fallbacks — and a parser that is honest about its own uncertainty is more faithful to the real world than one that returns a confident wrong answer.
+This article walks through what happens when you mail a letter. The mechanics matter less than what they show: the postal system is **already fuzzy** — it handles ambiguity through human intervention, local knowledge, and layered fallbacks — and a parser that reports its own uncertainty is more faithful to the real world than one that returns a confident wrong answer.
 
 ## Step 1 — Collection
 
@@ -65,7 +65,7 @@ The postal system has **four layers of ambiguity resolution**, escalating from c
 | 3. Carrier local knowledge      | Human walking | ~$0.50/piece (amortized) | Most of the rest           |
 | 4. Dead letter / return         | Disposal      | ~$1.00+                  | The rest                   |
 
-A parser that returns **"I'm 70% sure this is Springfield IL, 25% Springfield MA, 5% Springfield MO"** is mimicking Layer 2 — human triage — before the letter ever leaves the sender's computer. It tells the downstream system: "you need more information before you can route this." That is _more honest_ than returning "Springfield IL" with 98% confidence because the gazetteer has a population-weighted default.
+A parser that returns **"I'm 70% sure this is Springfield IL, 25% Springfield MA, 5% Springfield MO"** is mimicking Layer 2 — human triage — before the letter ever leaves the sender's computer. It tells the downstream system: "you need more information before you can route this." That serves the consumer better than returning "Springfield IL" with 98% confidence because the gazetteer has a population-weighted default.
 
 The design principle for Mailwoman's confidence model: **a low-confidence correct answer is better than a high-confidence wrong one.** The postal system already works this way. The carrier would rather get an envelope that says "maybe 142 Elm St?" than one that says "definitely 140 Elm St" when the correct address is 142. The machine said it was uncertain — the human can fix it. The machine said it was certain, so the human didn't look.
 

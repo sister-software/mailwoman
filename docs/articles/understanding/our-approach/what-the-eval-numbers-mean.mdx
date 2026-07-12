@@ -57,21 +57,21 @@ The concrete failure: the model invented a `dependent_locality` (a sub-city neig
 
 In hybrid mode, the neural model's overconfidence drowns out the rules entirely — when the neural decoder says "this token is a dependent_locality" at 95% confidence and the rule parser disagrees, the neural vote wins. This is why hybrid and neural show identical numbers: the rules never get a say.
 
-### The reconciler fixes the honesty problem
+### The reconciler fixes the overconfidence problem
 
 Hybrid-joint mode (the reconciler) drops overconfident-wrong from 54.5% to 0.1%. How? By checking whether the parsed components form a consistent real-world hierarchy. "Is there actually a city called Houston in a state called NY?" If not, the parse is rejected or rewritten.
 
 The reconciler also eliminates empty parses entirely (0.0%) — it always produces _something_, even if conservative.
 
-The trade-off: exact match drops from 30.8% (rule-only) to 6.0% (hybrid-joint). The reconciler is more honest but less precise on well-formed addresses. This is a calibration-vs-accuracy trade-off that the next iteration will address by re-adding class weights to the training recipe.
+The trade-off: exact match drops from 30.8% (rule-only) to 6.0% (hybrid-joint). The reconciler is better calibrated but less precise on well-formed addresses. This is a calibration-vs-accuracy trade-off that the next iteration will address by re-adding class weights to the training recipe.
 
 ### The architecture is working, the quality isn't there yet
 
-The staged pipeline — rules for structure, neural for ambiguity, reconciler for honesty — is producing the behaviour it was designed for. Each layer adds value:
+The staged pipeline — rules for structure, neural for ambiguity, reconciler for calibration — is producing the behaviour it was designed for. Each layer adds value:
 
 - Rules contribute high precision on common patterns.
 - Neural contributes coverage on unusual inputs (0% empty parse vs rules' 6.3%).
-- Reconciler contributes honesty (0.1% overconfident-wrong vs 54.5%).
+- Reconciler contributes calibration (0.1% overconfident-wrong vs 54.5%).
 
 The quality gap is in the neural classifier's per-component accuracy. This is addressable without architectural changes: class-weighted cross-entropy (pulling the model's attention back to underperforming tags) and longer training are both now safe to try because the dual-loss instability that blocked them is gone.
 

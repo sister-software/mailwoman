@@ -12,7 +12,7 @@ tags:
 If you've tried to describe Mailwoman to someone and reached for "it's like
 libpostal but neural" or "it's a geocoder without Elasticsearch," you've felt
 the problem: both are true and neither is the thing. This page gives the
-project its name, its lineage, and the two disciplines that keep it honest.
+project its name, its lineage, and the two failure modes it guards against.
 It's the page to read when the component count starts to feel like complexity
 instead of architecture — because the system is layered, not tangled, and the
 layers have a logic.
@@ -124,7 +124,7 @@ headroom: the model could grow severalfold before challenging a
 conservative mobile budget — the constraint that actually binds is iteration
 cost, and that's the one worth defending.
 
-## The discipline that keeps it honest
+## Two ways to un-make it
 
 Two failure modes can un-make this architecture, and both have names
 in our history:

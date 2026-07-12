@@ -10,9 +10,9 @@ tags:
 # Choosing the dedup yardstick — why org-name, not NPI
 
 "How good is the matcher at deduplication?" sounds like a question with one
-number for an answer. It isn't. The honest answer is _"against which ruler?"_ —
+number for an answer. It isn't. The answer is _"against which ruler?"_ —
 and on the NPPES provider registry, the ruler you reach for first is the one that
-quietly lies to you.
+lies to you.
 
 The setup is the cleanest kind of held-out truth: the **NPI** (National Provider
 Identifier) is a stable, government-issued key, assigned once per registration.
@@ -40,7 +40,7 @@ The lower its measured precision, the better it may actually be working.
 
 The fix is not a better model; it's a better ruler. We grade the **identical**
 matcher output against four entity-truths, ordered from over-segmenting to
-honest:
+tightest:
 
 - **NPI** — one entity per registration. Over-segments every multi-subpart org.
 - **site** — collapse NPPES-flagged subparts back into their parent, then split
@@ -56,7 +56,7 @@ honest:
   **building** (within 50 m), not the address string. `1504 Taub Loop` and `1504
 Taub Lp Ste 100` key apart as strings yet geocode to one point, so this collapses
   the same-building same-org pairs the string key leaves split. It is the
-  geocode-first key, and the tightest honest ruler.
+  geocode-first key, and the tightest ruler of the four.
 
 The same 2757-record sample carries **1000 NPI** classes → **1456 site** → **956
 org-name** → **928 org-name (coord)**. The class count first _expands_ (site splits

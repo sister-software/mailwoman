@@ -28,17 +28,17 @@ We measured the gap with Expected Calibration Error. Bucket the predictions by s
 
 The fix doesn't touch the model. It's the same move you'd make with a cheap kitchen thermometer that reads ten degrees low. You don't crack it open and re-machine the probe; you tape a little card to the handle that says "reads 340, it is 350."
 
-We build that card by running the shipped model over a pile of addresses where we already know the answer, watching where its stated confidence drifts from how often it turns out correct, and fitting a lookup table that translates raw confidence into an honest one. The fit is _isotonic_, which is a fancy word for a simple promise: the translation never runs backwards, so a raw 0.9 always maps to at least as much corrected confidence as a raw 0.8. Twenty bins, monotone, nothing exotic. And we calibrate the number you actually read, the per-span `conf=` aggregated across a span's tokens, rather than some internal per-token probability you'd never see.
+We build that card by running the shipped model over a pile of addresses where we already know the answer, watching where its stated confidence drifts from how often it turns out correct, and fitting a lookup table that translates raw confidence into a calibrated one. The fit is _isotonic_, which is a fancy word for a simple promise: the translation never runs backwards, so a raw 0.9 always maps to at least as much corrected confidence as a raw 0.8. Twenty bins, monotone, nothing exotic. And we calibrate the number you actually read, the per-span `conf=` aggregated across a span's tokens, rather than some internal per-token probability you'd never see.
 
-The result, measured on addresses the fit never saw: ECE 0.060 → 0.0055, an eleven-fold tightening. The Brier score, another honesty measure, drops from 0.029 to 0.024. The `conf=` now means roughly what it says.
+The result, measured on addresses the fit never saw: ECE 0.060 → 0.0055, an eleven-fold tightening. The Brier score, another calibration measure, drops from 0.029 to 0.024. The `conf=` now means roughly what it says.
 
 Here it is, drawn live from the shipped model's own held-out reliability — the left panel is the promise, the right is what you do with it:
 
 <CalibrationShowcase />
 
-On the left, each dot is a confidence bin; its height is how often those spans were actually right, and a perfectly honest forecaster sits on the dashed diagonal. The amber dots — raw softmax — float above the line in the middle bands (the under-statement), then the teal dots settle back onto it. On the right is the move that makes calibration pay rent: raise the auto-accept bar and the precision of what you keep climbs while coverage falls, so you can pick a point — accept above 0.90, say — and know you're auto-handling ~97% of spans at ~98% precision, routing the rest to review.
+On the left, each dot is a confidence bin; its height is how often those spans were actually right, and a perfectly calibrated forecaster sits on the dashed diagonal. The amber dots — raw softmax — float above the line in the middle bands (the under-statement), then the teal dots settle back onto it. On the right is the move that makes calibration pay rent: raise the auto-accept bar and the precision of what you keep climbs while coverage falls, so you can pick a point — accept above 0.90, say — and know you're auto-handling ~97% of spans at ~98% precision, routing the rest to review.
 
-## Where the honesty lives
+## Why the number doesn't flatter itself
 
 Two details keep this from being a number that flatters itself.
 

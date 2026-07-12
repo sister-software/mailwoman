@@ -28,7 +28,7 @@ curl "http://localhost:8081/parse?query=1600 Pennsylvania Ave NW, Washington DC 
 | libpostal              | Mailwoman          | Notes                                             |
 | ---------------------- | ------------------ | ------------------------------------------------- |
 | `parse_address(addr)`  | `POST/GET /parse`  | ordered `[{label, value}]`, libpostal's label set |
-| `expand_address(addr)` | `POST/GET /expand` | normalized forms (see the honest note)            |
+| `expand_address(addr)` | `POST/GET /expand` | normalized forms (see the gaps below)             |
 
 The `ComponentTag` → libpostal label mapping is close to 1:1 (`street` → `road`, `locality` → `city`,
 `region` → `state`, `postcode` → `postcode`, …); unmapped tags pass through unchanged.
@@ -39,7 +39,7 @@ The `ComponentTag` → libpostal label mapping is close to 1:1 (`street` → `ro
   — and the same engine geocodes, so parse and resolve share one pipeline.
 - **Lowest-dependency drop-in.** `/parse` needs no gazetteer at all; it's just the model.
 
-## The honest gaps
+## What's missing
 
 - **`/expand` returns one alternative, not many.** Mailwoman's normalization is deterministic, so it
   returns the original plus the normalized + abbreviation-expanded form, not libpostal's probabilistic

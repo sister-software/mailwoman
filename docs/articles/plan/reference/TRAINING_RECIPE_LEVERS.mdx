@@ -106,7 +106,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **Current value: 0.0.** Disabled in all v0.5.x runs. The 54.5% overconfident-wrong rate suggests we should turn it on — label smoothing directly addresses confidence calibration. However, the reconciler already addresses the overconfidence problem at the pipeline level (0.1% overconfident-wrong in hybrid-joint mode), so per-model calibration is lower priority.
 
-**Next experiment.** label_smoothing=0.1 is the standard starting point. Expected effect: slightly lower peak macro_f1 (the model hedges its predictions) but more honest confidence scores.
+**Next experiment.** label_smoothing=0.1 is the standard starting point. Expected effect: slightly lower peak macro_f1 (the model hedges its predictions) but better-calibrated confidence scores.
 
 ## Optimizer levers
 

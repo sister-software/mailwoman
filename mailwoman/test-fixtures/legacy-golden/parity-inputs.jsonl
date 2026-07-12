@@ -1,0 +1,376 @@
+{"file":"mailwoman/test/address.aus.test.ts","input":"6000, NSW, Australia","expected":[{"postcode":["6000"],"region":["NSW"],"country":["Australia"]}]}
+{"file":"mailwoman/test/address.aus.test.ts","input":"Unit 12/345 Main St","expected":[{"unit_designator":["Unit"],"unit":["12"],"house_number":["345"],"street":["Main St"]}]}
+{"file":"mailwoman/test/address.aus.test.ts","input":"U 12 345 Main St","expected":[{"unit_designator":["U"],"unit":["12"],"house_number":["345"],"street":["Main St"]}]}
+{"file":"mailwoman/test/address.aus.test.ts","input":"Apartment 12/345 Main St","expected":[{"unit_designator":["Apartment"],"unit":["12"],"house_number":["345"],"street":["Main St"]}]}
+{"file":"mailwoman/test/address.aus.test.ts","input":"Apt 12/345 Main St","expected":[{"unit_designator":["Apt"],"unit":["12"],"house_number":["345"],"street":["Main St"]}]}
+{"file":"mailwoman/test/address.aus.test.ts","input":"Lot 12/345 Main St","expected":[{"unit_designator":["Lot"],"unit":["12"],"house_number":["345"],"street":["Main St"]}]}
+{"file":"mailwoman/test/address.aus.test.ts","input":"U12/345 Main St","expected":[{"unit_designator":["U"],"unit":["12"],"house_number":["345"],"street":["Main St"]}]}
+{"file":"mailwoman/test/address.aus.test.ts","input":"Lot 12/345 Illawarra Road Marrickville NSW 2204","expected":[{"unit_designator":["Lot"],"unit":["12"],"house_number":["345"],"street":["Illawarra Road"],"locality":["Marrickville"],"region":["NSW"],"postcode":["2204"]}]}
+{"file":"mailwoman/test/address.aus.test.ts","input":"Lot 2, Burrows Avenue, EDMONDSON PARK, NSW, Australia","expected":[{"unit_designator":["Lot"],"unit":["2"],"street":["Burrows Avenue"],"locality":["EDMONDSON PARK"],"region":["NSW"],"country":["Australia"]}]}
+{"file":"mailwoman/test/address.bra.test.ts","input":"Rua Raul Leite Magalhães, 65, Tapiraí - SP, 18180-000, Brazil","expected":[{"street":["Rua Raul Leite Magalhães"],"house_number":["65"],"locality":["Tapiraí"],"region":["SP"],"postcode":["18180-000"],"country":["Brazil"]}]}
+{"file":"mailwoman/test/address.cze.test.ts","input":"Korunní 810, Praha","expected":[{"street":["Korunní"],"house_number":["810"],"locality":["Praha"]}]}
+{"file":"mailwoman/test/address.cze.test.ts","input":"Kájovská 68, Český Krumlov","expected":[{"street":["Kájovská"],"house_number":["68"],"locality":["Český Krumlov"]}]}
+{"file":"mailwoman/test/address.cze.test.ts","input":"Beethovenova 641/9, Brno","expected":[{"street":["Beethovenova"],"house_number":["641/9"],"locality":["Brno"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Am Falkpl. 5, 10437 Berlin","expected":[{"street":["Am Falkpl."],"house_number":["5"],"postcode":["10437"],"locality":["Berlin"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Am Nordkanal 11, 47877 Willich","expected":[{"street":["Am Nordkanal"],"house_number":["11"],"postcode":["47877"],"locality":["Willich"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Am Bürgerpark 15-18, 13156, Berlin","expected":[{"street":["Am Bürgerpark"],"house_number":["15-18"],"postcode":["13156"],"locality":["Berlin"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Kaschk Bar, Linienstraße 40 10119 Berlin","expected":[{"venue":["Kaschk Bar"],"street":["Linienstraße"],"house_number":["40"],"postcode":["10119"],"locality":["Berlin"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Genter Straße 16a, Munich, Germany","expected":[{"street":["Genter Straße"],"house_number":["16a"],"locality":["Munich"],"country":["Germany"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Esplanade, Berlin","expected":[{"street":["Esplanade"],"locality":["Berlin"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Esplanade 17, Berlin","expected":[{"street":["Esplanade"],"house_number":["17"],"locality":["Berlin"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"17 Esplanade, Berlin","expected":[{"house_number":["17"],"street":["Esplanade"],"locality":["Berlin"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Königsallee Düsseldorf","expected":[{"street":["Königsallee"],"locality":["Düsseldorf"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Rathausplatz","expected":[{"street":["Rathausplatz"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Plutoweg","expected":[{"street":["Plutoweg"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Dorfstrasse","expected":[{"street":["Dorfstrasse"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"Eberswalder Straße 100 104","expected":[{"street":["Eberswalder Straße"],"house_number":["100"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"25 Straße 50","expected":[{"street":["25 Straße"],"house_number":["50"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"25 Straße, 50","expected":[{"street":["25 Straße"],"house_number":["50"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"25 Strada 50","expected":[{"street":["25 Strada"],"house_number":["50"]}]}
+{"file":"mailwoman/test/address.deu.test.ts","input":"25 Strada, 50","expected":[{"street":["25 Strada"],"house_number":["50"]}]}
+{"file":"mailwoman/test/address.esp.test.ts","input":"Carrer d'Aragó 155 08011 Barcelona","expected":[{"street":["Carrer d'Aragó"],"house_number":["155"],"postcode":["08011"],"locality":["Barcelona"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue Montmartre","expected":[{"street":["Rue Montmartre"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"123 Rue Montmartre, Paris","expected":[{"house_number":["123"],"street":["Rue Montmartre"],"locality":["Paris"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue de Paris","expected":[{"street":["Rue de Paris"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue de la Paix","expected":[{"street":["Rue de la Paix"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Boulevard du Général Charles De Gaulle","expected":[{"street":["Boulevard du Général Charles De Gaulle"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"11 Boulevard Saint Germains","expected":[{"house_number":["11"],"street":["Boulevard Saint Germains"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue Saint Anne","expected":[{"street":["Rue Saint Anne"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Boulevard Charles De Gaulle","expected":[{"street":["Boulevard Charles De Gaulle"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Allée Victor Hugo","expected":[{"street":["Allée Victor Hugo"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Avenue Aristide Briand","expected":[{"street":["Avenue Aristide Briand"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue Henri Barbusse Paris France","expected":[{"street":["Rue Henri Barbusse"],"locality":["Paris"],"country":["France"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue du Général Leclerc Dunkerque France","expected":[{"street":["Rue du Général Leclerc"],"locality":["Dunkerque"],"country":["France"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Avenue de Sainte Rose de Lima","expected":[{"street":["Avenue de Sainte Rose de Lima"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue du Capitaine Galinat Marseille France","expected":[{"street":["Rue du Capitaine Galinat"],"locality":["Marseille"],"country":["France"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue Jean Baptiste Clément","expected":[{"street":["Rue Jean Baptiste Clément"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Mery Sur Oise","expected":[{"locality":["Mery Sur Oise"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Méry Sur Oise","expected":[{"locality":["Méry Sur Oise"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Méry-Sur-Oise","expected":[{"locality":["Méry-Sur-Oise"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Mery-Sur-Oise","expected":[{"locality":["Mery-Sur-Oise"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"4 Cité Du Cardinal Lemoine 75005 Paris","expected":[{"house_number":["4"],"street":["Cité Du Cardinal Lemoine"],"postcode":["75005"],"locality":["Paris"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"32 Rue Du 4 Septembre","expected":[{"house_number":["32"],"street":["Rue Du 4 Septembre"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"12 Cité Roland Garros","expected":[{"house_number":["12"],"street":["Cité Roland Garros"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue de l'Amiral Galache, Toulouse","expected":[{"street":["Rue de l'Amiral Galache"],"locality":["Toulouse"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue de l'Inspecteur Alles Paris","expected":[{"street":["Rue de l'Inspecteur Alles"],"locality":["Paris"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue de l'Empereur Julien Paris","expected":[{"street":["Rue de l'Empereur Julien"],"locality":["Paris"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Rue de l'Adjudant Réau Paris","expected":[{"street":["Rue de l'Adjudant Réau"],"locality":["Paris"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"10 Boulevard Saint-Germains Paris","expected":[{"house_number":["10"],"street":["Boulevard Saint-Germains"],"locality":["Paris"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Paris 75000, France","expected":[{"locality":["Paris"],"postcode":["75000"],"country":["France"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Esplanade de la Liberté","expected":[{"street":["Esplanade de la Liberté"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Esplanade du Géneral de Gaulle","expected":[{"street":["Esplanade du Géneral de Gaulle"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"Esplanade Méditerranée","expected":[{"street":["Esplanade Méditerranée"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"1 bis Av. Amélie, 92320 Châtillon, France","expected":[{"house_number":["1 bis"],"street":["Av. Amélie"],"postcode":["92320"],"locality":["Châtillon"],"country":["France"]}]}
+{"file":"mailwoman/test/address.fra.test.ts","input":"1 ter Av. Amélie, 92320 Châtillon, France","expected":[{"house_number":["1 ter"],"street":["Av. Amélie"],"postcode":["92320"],"locality":["Châtillon"],"country":["France"]}]}
+{"file":"mailwoman/test/address.gbr.test.ts","input":"Rushendon Furlong","expected":[{"street":["Rushendon Furlong"]}]}
+{"file":"mailwoman/test/address.gbr.test.ts","input":"Broadway Market, London","expected":[{"street":["Broadway Market"],"locality":["London"]}]}
+{"file":"mailwoman/test/address.gbr.test.ts","input":"24-28 Broadway Market, London","expected":[{"house_number":["24-28"],"street":["Broadway Market"],"locality":["London"]}]}
+{"file":"mailwoman/test/address.hrv.test.ts","input":"Zadarska 17, Pula","expected":[{"street":["Zadarska"],"house_number":["17"],"locality":["Pula"]}]}
+{"file":"mailwoman/test/address.ind.test.ts","input":"100, Mahalakshmi Rd, Ganesh Nagar, Kirti Nagar, New Sanghavi, Pimpri-Chinchwad, Maharashtra 411027","expected":[{"house_number":["100"],"street":["Mahalakshmi Rd"],"locality":["Pimpri-Chinchwad"],"region":["Maharashtra"],"postcode":["411027"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Julianastraat, Heel","expected":[{"street":["Julianastraat"],"locality":["Heel"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Lindenlaan, Sint Odilienberg","expected":[{"street":["Lindenlaan"],"locality":["Sint Odilienberg"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Bosserdijk, Hoogland","expected":[{"street":["Bosserdijk"],"locality":["Hoogland"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Rubicondreef, Utrecht","expected":[{"street":["Rubicondreef"],"locality":["Utrecht"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"St Ludgerusstraat, Utrecht","expected":[{"street":["Ludgerusstraat"],"locality":["Utrecht"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Lange Groenendaal, Gouda","expected":[{"street":["Lange Groenendaal"],"locality":["Gouda"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Achter Clarenburg, Utrecht","expected":[{"street":["Achter Clarenburg"],"locality":["Utrecht"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Rozenburg","expected":[{"locality":["Rozenburg"]},{"street":["Rozenburg"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Bloemendaal","expected":[{"locality":["Bloemendaal"]},{"street":["Bloemendaal"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Brinkstraat 87, 7512EC, Enschede","expected":[{"street":["Brinkstraat"],"house_number":["87"],"postcode":["7512EC"],"locality":["Enschede"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Blekerssngl, Gouda","expected":[{"street":["Blekerssngl"],"locality":["Gouda"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Weerdsingel O.Z., Utrecht","expected":[{"street":["Weerdsingel O.Z."],"locality":["Utrecht"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Oranjelaan Westzijde 41, Puttershoek","expected":[{"street":["Oranjelaan Westzijde"],"house_number":["41"],"locality":["Puttershoek"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Rembrandtplein, Amsterdam","expected":[{"street":["Rembrandtplein"],"locality":["Amsterdam"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Korte Tiendeweg, Gouda","expected":[{"street":["Korte Tiendeweg"],"locality":["Gouda"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Burgemeester Martenssingel, Gouda","expected":[{"street":["Burgemeester Martenssingel"],"locality":["Gouda"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Agorabaan, Lelystad","expected":[{"street":["Agorabaan"],"locality":["Lelystad"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"1234AB, Amsterdam","expected":[{"postcode":["1234AB"],"locality":["Amsterdam"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Haarlemmerdijk 12, 1234ST, Amsterdam","expected":[{"street":["Haarlemmerdijk"],"house_number":["12"],"postcode":["1234ST"],"locality":["Amsterdam"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"1234SA, Amsterdam","expected":[{"locality":["Amsterdam"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Haarlemmerdijk 12, 1234SS, Amsterdam","expected":[{"street":["Haarlemmerdijk"],"house_number":["12"],"locality":["Amsterdam"]}]}
+{"file":"mailwoman/test/address.nld.test.ts","input":"Haarlemmerdijk 12, 0123AB, Amsterdam","expected":[{"street":["Haarlemmerdijk"],"house_number":["12"],"locality":["Amsterdam"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Skredderplassen 20","expected":[{"street":["Skredderplassen"],"house_number":["20"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Henrik Walters plass 3","expected":[{"street":["Henrik Walters plass"],"house_number":["3"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Vestre Haugen 74","expected":[{"street":["Vestre Haugen"],"house_number":["74"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Maria Dehlis vei 15","expected":[{"street":["Maria Dehlis vei"],"house_number":["15"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Gamle Drammensvei 163","expected":[{"street":["Gamle Drammensvei"],"house_number":["163"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Grense Jakobselv veien 311","expected":[{"street":["Grense Jakobselv veien"],"house_number":["311"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Epleskogen 39A","expected":[{"street":["Epleskogen"],"house_number":["39A"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Øvste Skogen 121","expected":[{"street":["Øvste Skogen"],"house_number":["121"]}]}
+{"file":"mailwoman/test/address.nor.test.ts","input":"Tindvegen nedre 44B","expected":[{"street":["Tindvegen nedre"],"house_number":["44B"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"21 Viaduct Harbour Avenue","expected":[{"house_number":["21"],"street":["Viaduct Harbour Avenue"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"30 Town Point Road","expected":[{"house_number":["30"],"street":["Town Point Road"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"2 Te Mako Mako Lane","expected":[{"house_number":["2"],"street":["Te Mako Mako Lane"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"56 Blue Ridge Drive","expected":[{"house_number":["56"],"street":["Blue Ridge Drive"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"14 Glen Neaves","expected":[{"house_number":["14"],"street":["Glen Neaves"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"516 Old Taupo Road","expected":[{"house_number":["516"],"street":["Old Taupo Road"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"5658 State Highway 27","expected":[{"house_number":["5658"],"street":["State Highway 27"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"2 Meadows Lane","expected":[{"house_number":["2"],"street":["Meadows Lane"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"19 Francis Drake Street","expected":[{"house_number":["19"],"street":["Francis Drake Street"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"115-121 Hutt Park Road","expected":[{"house_number":["115-121"],"street":["Hutt Park Road"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"62 Garden Road","expected":[{"house_number":["62"],"street":["Garden Road"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"26 Pine Hill Rise","expected":[{"house_number":["26"],"street":["Pine Hill Rise"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"23 Old Wharf Road","expected":[{"house_number":["23"],"street":["Old Wharf Road"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"183 Vista Paku","expected":[{"house_number":["183"],"street":["Vista Paku"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"109 Mathesons Corner Road","expected":[{"house_number":["109"],"street":["Mathesons Corner Road"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"81 Park Terrace","expected":[{"house_number":["81"],"street":["Park Terrace"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"320 Cannon Hill Crescent","expected":[{"house_number":["320"],"street":["Cannon Hill Crescent"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"16 The Stables","expected":[{"house_number":["16"],"street":["The Stables"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"35 Forbes Road","expected":[{"house_number":["35"],"street":["Forbes Road"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"40 O'Shannessey Street","expected":[{"house_number":["40"],"street":["O'Shannessey Street"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"4207 Mountain Road","expected":[{"house_number":["4207"],"street":["Mountain Road"]}]}
+{"file":"mailwoman/test/address.nzd.test.ts","input":"Mt Victoria Rd, Wellington","expected":[{"street":["Mt Victoria Rd"],"locality":["Wellington"]}]}
+{"file":"mailwoman/test/address.pol.test.ts","input":"Szewska 6, Kraków","expected":[{"street":["Szewska"],"house_number":["6"],"locality":["Kraków"]}]}
+{"file":"mailwoman/test/address.pol.test.ts","input":"aleja Wojska Polskiego 178","expected":[{"street":["aleja Wojska Polskiego"],"house_number":["178"]}]}
+{"file":"mailwoman/test/address.pol.test.ts","input":"aleja 29 listopada 11","expected":[{"street":["aleja 29 listopada"],"house_number":["11"]}]}
+{"file":"mailwoman/test/address.pol.test.ts","input":"aleja Wojska 178","expected":[{"street":["aleja Wojska"],"house_number":["178"]}]}
+{"file":"mailwoman/test/address.pol.test.ts","input":"Ulica Strzelecka 12, Nowy Sącz","expected":[{"street":["Ulica Strzelecka"],"house_number":["12"],"locality":["Nowy Sącz"]}]}
+{"file":"mailwoman/test/address.pol.test.ts","input":"Żorska 11, 47-400","expected":[{"street":["Żorska"],"house_number":["11"],"postcode":["47-400"]}]}
+{"file":"mailwoman/test/address.prt.test.ts","input":"Rua Luis de Camoes","expected":[{"street":["Rua Luis de Camoes"]}]}
+{"file":"mailwoman/test/address.prt.test.ts","input":"Rua Padre Cruz 31 3060-187 Cantanhede","expected":[{"street":["Rua Padre Cruz"],"house_number":["31"],"postcode":["3060-187"],"locality":["Cantanhede"]}]}
+{"file":"mailwoman/test/address.prt.test.ts","input":"Tv. da Horta 27A","expected":[{"street":["Tv. da Horta"],"house_number":["27A"]}]}
+{"file":"mailwoman/test/address.prt.test.ts","input":"R Academia das Ciências 17C 1200-030 Lisboa","expected":[{"street":["R Academia das Ciências"],"house_number":["17C"],"postcode":["1200-030"],"region":["Lisboa"]}]}
+{"file":"mailwoman/test/address.prt.test.ts","input":"Rua do Sol a Santa Catarina 17B, 1200-452 Lisboa","expected":[{"street":["Rua do Sol a Santa Catarina"],"house_number":["17B"],"postcode":["1200-452"],"region":["Lisboa"]}]}
+{"file":"mailwoman/test/address.prt.test.ts","input":"Tv. dos Fiéis de Deus 12C Lisboa Portugal","expected":[{"street":["Tv. dos Fiéis de Deus"],"house_number":["12C"],"region":["Lisboa"],"country":["Portugal"]}]}
+{"file":"mailwoman/test/address.prt.test.ts","input":"rua godinho de faria 1200","expected":[{"street":["rua godinho de faria"],"house_number":["1200"]}]}
+{"file":"mailwoman/test/address.prt.test.ts","input":"rua godinho de faria 1200 porto","expected":[{"street":["rua godinho de faria"],"house_number":["1200"],"locality":["porto"]}]}
+{"file":"mailwoman/test/address.rom.test.ts","input":"Bulevardul Iuliu Maniu, Bucharest","expected":[{"street":["Bulevardul Iuliu Maniu"],"locality":["Bucharest"]}]}
+{"file":"mailwoman/test/address.rom.test.ts","input":"Bdul Iuliu Maniu 111 Bucharest","expected":[{"street":["Bdul Iuliu Maniu"],"house_number":["111"],"locality":["Bucharest"]}]}
+{"file":"mailwoman/test/address.rom.test.ts","input":"Splaiul Independenței 313","expected":[{"street":["Splaiul Independenței"],"house_number":["313"]}]}
+{"file":"mailwoman/test/address.rom.test.ts","input":"15 Strada Doctor Carol Davila","expected":[{"house_number":["15"],"street":["Strada Doctor Carol Davila"]}]}
+{"file":"mailwoman/test/address.rom.test.ts","input":"Calea Victoriei 54 Bucharest ","expected":[{"street":["Calea Victoriei"],"house_number":["54"],"locality":["Bucharest"]}]}
+{"file":"mailwoman/test/address.svk.test.ts","input":"Divadelná 41/3, Trnava","expected":[{"street":["Divadelná"],"house_number":["41/3"],"locality":["Trnava"]}]}
+{"file":"mailwoman/test/address.swe.test.ts","input":"Gamla Varmdovagen 6","expected":[{"street":["Gamla Varmdovagen"],"house_number":["6"]}]}
+{"file":"mailwoman/test/address.swe.test.ts","input":"Gamla Varmdovägen 6","expected":[{"street":["Gamla Varmdovägen"],"house_number":["6"]}]}
+{"file":"mailwoman/test/address.swe.test.ts","input":"Gamla Varmdo vägen 6","expected":[{"street":["Gamla Varmdo vägen"],"house_number":["6"]}]}
+{"file":"mailwoman/test/address.swe.test.ts","input":"Ångermannagatan 80, Vällingby","expected":[{"street":["Ångermannagatan"],"house_number":["80"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"wrigley field","expected":[{"street":["wrigley field"]},{"venue":["wrigley field"]},{"locality":["field"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Martin Luther King Jr. Blvd.","expected":[{"street":["Martin Luther King Jr. Blvd."]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"E Cesar Chavez St","expected":[{"street":["E Cesar Chavez St"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Riverbend Club Dr Se","expected":[{"street":["Riverbend Club Dr Se"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"S Interstate 35","expected":[{"street":["S Interstate 35"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"E William Cannon Dr","expected":[{"street":["E William Cannon Dr"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Branch Rd","expected":[{"street":["Branch Rd"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Manor Rd","expected":[{"street":["Manor Rd"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Fm 3009 TX","expected":[{"street":["Fm 3009"],"region":["TX"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1900 SE A ST, SAN FRANCISCO","expected":[{"house_number":["1900"],"street":["SE A ST"],"locality":["SAN FRANCISCO"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1900 SE F ST, SAN FRANCISCO","expected":[{"house_number":["1900"],"street":["SE F ST"],"locality":["SAN FRANCISCO"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"22024 main st, ca","expected":[{"house_number":["22024"],"street":["main st"],"region":["ca"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"90210","expected":[{"postcode":["90210"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"90210, CA","expected":[{"postcode":["90210"],"region":["CA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"90210 Foo","expected":[]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE","expected":[{"street":["N FISKE AVE"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE P","expected":[{"street":["N FISKE AVE"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE Po","expected":[{"street":["N FISKE AVE"],"region":["Po"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE Por","expected":[{"street":["N FISKE AVE"],"region":["Por"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE Port","expected":[{"street":["N FISKE AVE"],"locality":["Port"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE Portl","expected":[{"street":["N FISKE AVE"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE Portla","expected":[{"street":["N FISKE AVE"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE Portlan","expected":[{"street":["N FISKE AVE"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N FISKE AVE Portland","expected":[{"street":["N FISKE AVE"],"locality":["Portland"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N DWIGHT AVE Portland O","expected":[{"street":["N DWIGHT AVE"],"locality":["Portland"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N DWIGHT AVE Portland Or","expected":[{"street":["N DWIGHT AVE"],"locality":["Portland"],"region":["Or"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N DWIGHT AVE Portland Ore","expected":[{"street":["N DWIGHT AVE"],"locality":["Portland"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N DWIGHT AVE Portland Oreg","expected":[{"street":["N DWIGHT AVE"],"locality":["Portland"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N DWIGHT AVE Portland Orego","expected":[{"street":["N DWIGHT AVE"],"locality":["Portland"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"N DWIGHT AVE Portland Oregon","expected":[{"street":["N DWIGHT AVE"],"locality":["Portland"],"region":["Oregon"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"University of Hawaii","expected":[{"venue":["University of Hawaii"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"University of Hawaii at Hilo","expected":[{"venue":["University of Hawaii at Hilo"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Highway 72","expected":[{"street":["Highway 72"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1210a Highway 10 W IA","expected":[{"house_number":["1210a"],"street":["Highway 10 W"],"region":["IA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1210a State Highway 10","expected":[{"house_number":["1210a"],"street":["State Highway 10"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1389a County Road 42 IA","expected":[{"house_number":["1389a"],"street":["County Road 42"],"region":["IA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"9600 S Interstate 35 TX","expected":[{"house_number":["9600"],"street":["S Interstate 35"],"region":["TX"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"9600 Interstate 35 TX","expected":[{"house_number":["9600"],"street":["Interstate 35"],"region":["TX"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Interstate 35","expected":[{"street":["Interstate 35"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Fm 3009, TX","expected":[{"street":["Fm 3009"],"region":["TX"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"CA 72","expected":[{"street":["CA 72"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1210a IA 10 W IA","expected":[{"house_number":["1210a"],"street":["IA 10 W"],"region":["IA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1210a California 10","expected":[{"house_number":["1210a"],"street":["California 10"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1389a IA 42 IA","expected":[{"house_number":["1389a"],"street":["IA 42"],"region":["IA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1111 MD 760, Lusby, MD, USA","expected":[{"house_number":["1111"],"street":["MD 760"],"locality":["Lusby"],"region":["MD"],"country":["USA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"52 Ten Eyck St Apt 3 Brooklyn NY","expected":[{"house_number":["52"],"street":["Ten Eyck St"],"unit_designator":["Apt"],"unit":["3"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"52 Ten Eyck St Apt 3b Brooklyn NY","expected":[{"house_number":["52"],"street":["Ten Eyck St"],"unit_designator":["Apt"],"unit":["3b"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"52 Ten Eyck St Apt 3B Brooklyn NY","expected":[{"house_number":["52"],"street":["Ten Eyck St"],"unit_designator":["Apt"],"unit":["3B"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"52 Ten Eyck St Apt #3b Brooklyn NY","expected":[{"house_number":["52"],"street":["Ten Eyck St"],"unit_designator":["Apt"],"unit":["#3b"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"52 Ten Eyck St 3 Brooklyn NY","expected":[{"house_number":["52"],"street":["Ten Eyck St"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"52 Ten Eyck St 3 Brooklyn NY","expected":[{"house_number":["52"],"street":["Ten Eyck St"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"6 Montague Terrace Apt #A2 Brooklyn NY","expected":[{"house_number":["6"],"street":["Montague Terrace"],"unit_designator":["Apt"],"unit":["#A2"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"6 Montague Terrace #2A Brooklyn NY","expected":[{"house_number":["6"],"street":["Montague Terrace"],"unit":["#2A"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"6 Montague Terrace Apt #A-2 Brooklyn NY","expected":[{"house_number":["6"],"street":["Montague Terrace"],"unit_designator":["Apt"],"unit":["#A-2"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"#6 Montague Terrace Brooklyn NY","expected":[{"street":["Montague Terrace"],"locality":["Brooklyn"],"region":["NY"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"E Cesar Chavez St","expected":[{"street":["E Cesar Chavez St"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Riverbend Club Dr Se","expected":[{"street":["Riverbend Club Dr Se"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"E William Cannon Dr","expected":[{"street":["E William Cannon Dr"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"3551 W. Hillsboro Blvd Deerfield Beach, FL 33442","expected":[{"house_number":["3551"],"street":["W. Hillsboro Blvd"],"locality":["Deerfield Beach"],"region":["FL"],"postcode":["33442"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"1384 Cambridge Beltway, Cambridge, MD 21613, USA","expected":[{"house_number":["1384"],"street":["Cambridge Beltway"],"locality":["Cambridge"],"region":["MD"],"postcode":["21613"],"country":["USA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"866 E 178th St, Bronx, NY 10460, USA","expected":[{"house_number":["866"],"street":["E 178th St"],"locality":["Bronx"],"region":["NY"],"postcode":["10460"],"country":["USA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"866 E 178th St, Staten Island, NY 10460, USA","expected":[{"house_number":["866"],"street":["E 178th St"],"locality":["Staten Island"],"region":["NY"],"postcode":["10460"],"country":["USA"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"12 main st, boston massachusetts","expected":[{"house_number":["12"],"street":["main st"],"locality":["boston"],"region":["massachusetts"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"12 main st, boston ma","expected":[{"house_number":["12"],"street":["main st"],"locality":["boston"],"region":["ma"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Broadway, Manhattan","expected":[{"street":["Broadway"],"locality":["Manhattan"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"24 Broadway, Manhattan","expected":[{"house_number":["24"],"street":["Broadway"],"locality":["Manhattan"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Broadway 24, Manhattan","expected":[{"street":["Broadway"],"house_number":["24"],"locality":["Manhattan"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"East Broadway, Manhattan","expected":[{"street":["East Broadway"],"locality":["Manhattan"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"24 East Broadway, Manhattan","expected":[{"house_number":["24"],"street":["East Broadway"],"locality":["Manhattan"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"West Broadway, Manhattan","expected":[{"street":["West Broadway"],"locality":["Manhattan"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"24 West Broadway, Manhattan","expected":[{"house_number":["24"],"street":["West Broadway"],"locality":["Manhattan"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Jefferson Parish","expected":[{"locality":["Jefferson"]}]}
+{"file":"mailwoman/test/address.usa.test.ts","input":"Mills County","expected":[{"locality":["Mills"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"2649 Logan Road, Eight Mile Plains, QLD 4113","expected":[{"house_number":["2649"],"street":["Logan Road"],"locality":["Eight Mile Plains"],"region":["QLD"],"postcode":["4113"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"2649 Logan Road Eight Mile Plains, QLD 4113","expected":[{"house_number":["2649"],"street":["Logan Road"],"locality":["Eight Mile Plains"],"region":["QLD"],"postcode":["4113"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"1 Queen Street, Brisbane 4000","expected":[{"house_number":["1"],"street":["Queen Street"],"locality":["Brisbane"],"postcode":["4000"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"754 Robinson Rd West, Aspley, QLD 4035","expected":[{"house_number":["754"],"street":["Robinson Rd West"],"locality":["Aspley"],"region":["QLD"],"postcode":["4035"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"Sydney 2000","expected":[{"locality":["Sydney"],"postcode":["2000"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"Perth","expected":[{"locality":["Perth"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"1/135 Ferny Way, Ferny Grove 4054","expected":[{"house_number":["1/135"],"street":["Ferny Way"],"locality":["Ferny Grove"],"postcode":["4054"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"Eight Mile Plains 4113","expected":[{"locality":["Eight Mile Plains"],"postcode":["4113"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"8/437 St Kilda Road Melbourne, VIC ","expected":[{"house_number":["8/437"],"street":["St Kilda Road"],"locality":["Melbourne"],"region":["VIC"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"BOOM","expected":[{"locality":["BOOM"]}]}
+{"file":"mailwoman/test/addressit.aus.test.ts","input":"Eight Mile Plains 9999","expected":[{"locality":["Eight Mile Plains"],"postcode":["9999"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"123 Main St, New York, NY 10010","expected":[{"house_number":["123"],"street":["Main St"],"locality":["New York"],"region":["NY"],"postcode":["10010"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"123 Main St New York, NY 10010","expected":[{"house_number":["123"],"street":["Main St"],"locality":["New York"],"region":["NY"],"postcode":["10010"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"123 Main St New York NY 10010","expected":[{"house_number":["123"],"street":["Main St"],"locality":["New York"],"region":["NY"],"postcode":["10010"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"123 E 21st st, Brooklyn NY 11020","expected":[{"house_number":["123"],"street":["E 21st st"],"locality":["Brooklyn"],"region":["NY"],"postcode":["11020"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"754 Pharr Rd, Atlanta, Georgia 31035","expected":[{"house_number":["754"],"street":["Pharr Rd"],"locality":["Atlanta"],"region":["Georgia"],"postcode":["31035"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"601 21st Ave N, Myrtle Beach, South Carolina 29577","expected":[{"house_number":["601"],"street":["21st Ave N"],"locality":["Myrtle Beach"],"region":["South Carolina"],"postcode":["29577"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"425 W 23rd St, New York, NY 10011","expected":[{"house_number":["425"],"street":["W 23rd St"],"locality":["New York"],"region":["NY"],"postcode":["10011"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"1035 Comanchee Trl, West Columbia, South Carolina 29169","expected":[{"house_number":["1035"],"street":["Comanchee Trl"],"locality":["West Columbia"],"region":["South Carolina"],"postcode":["29169"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"Texas 76013","expected":[{"region":["Texas"],"postcode":["76013"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"Dallas","expected":[{"locality":["Dallas"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"California","expected":[{"region":["California"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"New York","expected":[{"locality":["New York"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"New York, NY","expected":[{"locality":["New York"],"region":["NY"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"New York, New York","expected":[{"locality":["New York"],"region":["New York"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"Santa Monica, California 90407","expected":[{"locality":["Santa Monica"],"region":["California"],"postcode":["90407"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"Grand canyon 86023","expected":[{"locality":["Grand canyon"],"postcode":["86023"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"CT, 06410","expected":[{"region":["CT"],"postcode":["06410"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"BOOM","expected":[{"locality":["BOOM"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"Niagara Falls 76B09","expected":[{"locality":["Niagara Falls"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"Mt Tabor Park, 6220 SE Salmon St, Portland, OR 97215, USA","expected":[{"venue":["Mt Tabor Park"],"house_number":["6220"],"street":["SE Salmon St"],"locality":["Portland"],"region":["OR"],"postcode":["97215"],"country":["USA"]}]}
+{"file":"mailwoman/test/addressit.usa.test.ts","input":"Mt","expected":[{"region":["Mt"]}]}
+{"file":"mailwoman/test/compound_street.test.ts","input":"Foostraße","expected":[{"street":["Foostraße"]}]}
+{"file":"mailwoman/test/compound_street.test.ts","input":"Foostraße Rd","expected":[{"street":["Foostraße"]}]}
+{"file":"mailwoman/test/compound_street.test.ts","input":"foo st and","expected":[{"street":["foo st"]}]}
+{"file":"mailwoman/test/compound_street.test.ts","input":"Foostraße 1","expected":[{"street":["Foostraße"],"house_number":["1"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"main pl","expected":[{"street":["main pl"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"west main st","expected":[{"street":["west main st"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"main st west","expected":[{"street":["main st west"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"10th ave","expected":[{"street":["10th ave"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"10 ave","expected":[{"street":["10 ave"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 main pl","expected":[{"house_number":["1"],"street":["main pl"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"100 10th ave","expected":[{"house_number":["100"],"street":["10th ave"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"100 10 ave","expected":[{"house_number":["100"],"street":["10 ave"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 north main blvd","expected":[{"house_number":["1"],"street":["north main blvd"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 main blvd north","expected":[{"house_number":["1"],"street":["main blvd north"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"30 west 26th street","expected":[{"house_number":["30"],"street":["west 26th street"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"West 26th Street, New York, NYC, 10010","expected":[{"street":["West 26th Street"],"locality":["New York"],"postcode":["10010"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"Portland Cafe Portland OR","expected":[{"venue":["Portland Cafe"],"locality":["Portland"],"region":["OR"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 Foo St N","expected":[{"house_number":["1"],"street":["Foo St"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 Foo St S","expected":[{"house_number":["1"],"street":["Foo St"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 Foo St E","expected":[{"house_number":["1"],"street":["Foo St"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 Foo St W","expected":[{"house_number":["1"],"street":["Foo St"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 Foo St NW","expected":[{"house_number":["1"],"street":["Foo St NW"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 Foo St NE","expected":[{"house_number":["1"],"street":["Foo St NE"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 Foo St SW","expected":[{"house_number":["1"],"street":["Foo St SW"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 Foo St SE","expected":[{"house_number":["1"],"street":["Foo St SE"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 San Francisco","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 California","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 USA","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 San Francisco California","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 San Francisco USA","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 San Francisco California USA","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 California USA","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"1 90210","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"Apartment","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"Unit","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"Space","expected":[]}
+{"file":"mailwoman/test/functional.test.ts","input":"new south wales aus","expected":[{"region":["new south wales"],"country":["aus"]}]}
+{"file":"mailwoman/test/functional.test.ts","input":"jasper ga","expected":[{"locality":["jasper"],"region":["ga"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Main St & Second Ave","expected":[{"street":["Main St","Second Ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Main St @ Second Ave","expected":[{"street":["Main St","Second Ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Main St and Second Ave","expected":[{"street":["Main St","Second Ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"12th Avenue and California Street","expected":[{"street":["12th Avenue","California Street"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"15th Avenue and Fulton Street","expected":[{"street":["15th Avenue","Fulton Street"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"17th Avenue & Anza Street","expected":[{"street":["17th Avenue","Anza Street"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Gleimstraße an der ecke von Schönhauser Allee","expected":[{"street":["Gleimstraße","Schönhauser Allee"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Gleimstraße und Schönhauserallee","expected":[{"street":["Gleimstraße","Schönhauserallee"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"& b","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"@ b","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"at b","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"a &","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"a @","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"a at","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"& street","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"@ street","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"carrer &","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"carrer @","expected":[]}
+{"file":"mailwoman/test/intersection.test.ts","input":"at street","expected":[{"street":["at street"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"corner street","expected":[{"street":["corner street"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"carrer en","expected":[{"street":["carrer en"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"carrer con","expected":[{"street":["carrer con"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"foo & bar","expected":[{"street":["foo","bar"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"foo and bar","expected":[{"street":["foo","bar"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"foo at bar","expected":[{"street":["foo","bar"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"foo @ bar","expected":[{"street":["foo","bar"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"main st & side ave","expected":[{"street":["main st","side ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"main st & side","expected":[{"street":["main st","side"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"main & side ave","expected":[{"street":["main","side ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"main & side","expected":[{"street":["main","side"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"1st st & 2nd ave","expected":[{"street":["1st st","2nd ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"1st st & 2nd","expected":[{"street":["1st st","2nd"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"1st & 2nd ave","expected":[{"street":["1st","2nd ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"1st & 2nd","expected":[{"street":["1st","2nd"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"1 st & 2 ave","expected":[{"street":["1 st","2 ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"1 st & 2","expected":[{"street":["1 st","2"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"1 & 2 ave","expected":[{"street":["1","2 ave"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"1 & 2","expected":[{"street":["1","2"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"SW 6th & Pine","expected":[{"street":["SW 6th","Pine"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"9th and Lambert","expected":[{"street":["9th","Lambert"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"filbert & 32nd","expected":[{"street":["filbert","32nd"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"national air and space museum","expected":[{"venue":["national air and space museum"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Oak St At 16th St, Paso Robles, CA 93446, USA","expected":[{"street":["Oak St","16th St"],"locality":["Paso Robles"],"region":["CA"],"postcode":["93446"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"N State St At E Grand Ave, Chicago, IL 60654, USA","expected":[{"street":["N State St","E Grand Ave"],"locality":["Chicago"],"region":["IL"],"postcode":["60654"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"E Illinois St At N State St, Chicago, IL 60611, USA","expected":[{"street":["E Illinois St","N State St"],"locality":["Chicago"],"region":["IL"],"postcode":["60611"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"112th St E At 17th St Sw, Puyallup, WA 98373, USA","expected":[{"street":["112th St E","17th St Sw"],"locality":["Puyallup"],"region":["WA"],"postcode":["98373"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Sw 152nd Ave At Sw 280th St, Naranja, FL 33032, USA","expected":[{"street":["Sw 152nd Ave","Sw 280th St"],"locality":["Naranja"],"region":["FL"],"postcode":["33032"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Stonecroft Blvd At Westfields Blvd, Chantilly, VA 20152, USA","expected":[{"street":["Stonecroft Blvd","Westfields Blvd"],"locality":["Chantilly"],"region":["VA"],"postcode":["20152"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Hennepin Ave At S 3rd St, Minneapolis, MN 55401, USA","expected":[{"street":["Hennepin Ave","S 3rd St"],"locality":["Minneapolis"],"region":["MN"],"postcode":["55401"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Sylvester Hwy At Branch Rd, Albany, GA 31705, USA","expected":[{"street":["Sylvester Hwy","Branch Rd"],"locality":["Albany"],"region":["GA"],"postcode":["31705"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"E Riverside Dr At Montopolis Dr, Austin, TX 78741, USA","expected":[{"street":["E Riverside Dr","Montopolis Dr"],"locality":["Austin"],"region":["TX"],"postcode":["78741"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"E Riverside Dr At Wickersham Ln, Austin, TX 78741, USA","expected":[{"street":["E Riverside Dr","Wickersham Ln"],"locality":["Austin"],"region":["TX"],"postcode":["78741"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Red River St At E Cesar Chavez St, Austin, TX 78701, USA","expected":[{"street":["Red River St","E Cesar Chavez St"],"locality":["Austin"],"region":["TX"],"postcode":["78701"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"N Wells St At W Division St, Chicago, IL 60610, USA","expected":[{"street":["N Wells St","W Division St"],"locality":["Chicago"],"region":["IL"],"postcode":["60610"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Wiederstein Rd At Fm 3009, Schertz, TX 78154, USA","expected":[{"street":["Wiederstein Rd","Fm 3009"],"locality":["Schertz"],"region":["TX"],"postcode":["78154"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Kingston Pike At Granite Dr, Circleville, OH 43113, USA","expected":[{"street":["Kingston Pike","Granite Dr"],"locality":["Circleville"],"region":["OH"],"postcode":["43113"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Manor Rd At Airport Blvd, Austin, TX 78722, USA","expected":[{"street":["Manor Rd","Airport Blvd"],"locality":["Austin"],"region":["TX"],"postcode":["78722"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"S Interstate 35 At E William Cannon Dr, Austin, TX 78744, USA","expected":[{"street":["S Interstate 35","E William Cannon Dr"],"locality":["Austin"],"region":["TX"],"postcode":["78744"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"E Riverside Dr At Burton Dr, Austin, TX 78741, USA","expected":[{"street":["E Riverside Dr","Burton Dr"],"locality":["Austin"],"region":["TX"],"postcode":["78741"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Napier Field Rd At Scott Rd, Dothan, AL 36303, USA","expected":[{"street":["Napier Field Rd","Scott Rd"],"locality":["Dothan"],"region":["AL"],"postcode":["36303"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"16th St At H St, Sacramento, CA 95814, USA","expected":[{"street":["16th St","H St"],"locality":["Sacramento"],"region":["CA"],"postcode":["95814"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"N Halsted St At W Lake St, Chicago, IL 60661, USA","expected":[{"street":["N Halsted St","W Lake St"],"locality":["Chicago"],"region":["IL"],"postcode":["60661"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"College Park Dr At Gosling Rd, Conroe, TX 77384, USA","expected":[{"street":["College Park Dr","Gosling Rd"],"locality":["Conroe"],"region":["TX"],"postcode":["77384"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Hall Ave At N Cherry St, Wallingford, CT 06492, USA","expected":[{"street":["Hall Ave","N Cherry St"],"locality":["Wallingford"],"region":["CT"],"postcode":["06492"],"country":["USA"]}]}
+{"file":"mailwoman/test/intersection.test.ts","input":"Pinemont Dr At N Shepherd Dr, Houston, TX 77018, USA","expected":[{"street":["Pinemont Dr","N Shepherd Dr"],"locality":["Houston"],"region":["TX"],"postcode":["77018"],"country":["USA"]}]}
+{"file":"mailwoman/test/libpostal.test.ts","input":"3360 Grand Ave Oakland 94610-2737 CA","expected":[{"house_number":["3360"],"street":["Grand Ave"],"locality":["Oakland"],"postcode":["94610-2737"],"region":["CA"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"École Paul Valéry Montpellier","expected":[{"venue":["École Paul Valéry"],"locality":["Montpellier"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"Université de Montpellier","expected":[{"venue":["Université de Montpellier"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"École Jules Vernes Villetaneuse","expected":[{"venue":["École Jules Vernes"],"locality":["Villetaneuse"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"ZAC de la Tuilerie, Villars-les-Dombes, France","expected":[{"venue":["ZAC de la Tuilerie"],"locality":["Villars-les-Dombes"],"country":["France"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"Bibliothèque François Mitterrand Paris","expected":[{"venue":["Bibliothèque François Mitterrand"],"locality":["Paris"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"ZI les grasses Péronnas","expected":[{"venue":["ZI les grasses"],"locality":["Péronnas"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"ZAC du Pré Polliat","expected":[{"venue":["ZAC du Pré"],"locality":["Polliat"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"ZAC sous la Combe Lavancia-Epercy","expected":[{"venue":["ZAC sous la Combe"],"locality":["Lavancia-Epercy"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"ZA Entraigues Embrun","expected":[{"venue":["ZA Entraigues"],"locality":["Embrun"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"Place Sohier Vervins","expected":[{"street":["Place Sohier"],"locality":["Vervins"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"CC des Fours à Chaux Montluçon","expected":[{"street":["CC des Fours à Chaux"],"locality":["Montluçon"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"Parc Des Clots Upie","expected":[{"street":["Parc Des Clots"],"locality":["Upie"]}]}
+{"file":"mailwoman/test/place.fra.test.ts","input":"ZAC du centre Bourg Saint-Sébastien-De-Morsent","expected":[{"street":["ZAC du centre"],"locality":["Saint-Sébastien-De-Morsent"]}]}
+{"file":"mailwoman/test/transit.test.ts","input":"Stop 1","expected":[{"venue":["Stop 1"]}]}
+{"file":"mailwoman/test/transit.test.ts","input":"Stop 10010","expected":[{"venue":["Stop 10010"]}]}
+{"file":"mailwoman/test/venue.usa.test.ts","input":"Air & Space Museum Washington DC","expected":[{"venue":["Air & Space Museum"],"locality":["Washington"],"region":["DC"]}]}
+{"file":"mailwoman/test/venue.usa.test.ts","input":"Empire State Building NYC","expected":[{"venue":["Empire State Building"],"locality":["NYC"]}]}
+{"file":"mailwoman/test/venue.usa.test.ts","input":"Donald W Reynolds Stadium","expected":[{"venue":["Donald W Reynolds Stadium"]}]}
+{"file":"mailwoman/test/venue.usa.test.ts","input":"Donald W. Reynolds Stadium","expected":[{"venue":["Donald W. Reynolds Stadium"]}]}
+{"file":"mailwoman/test/venue.usa.test.ts","input":"Universal Studios Japan","expected":[{"venue":["Universal Studios"],"country":["Japan"]}]}
+{"file":"mailwoman/test/venue.usa.test.ts","input":"philadelphia museum of art","expected":[{"venue":["philadelphia museum of art"]}]}

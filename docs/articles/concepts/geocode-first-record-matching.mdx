@@ -149,7 +149,7 @@ Distance then re-enters at the **scoring** stage, two ways, and both help:
   text is sparse, and it generalizes across regions far better than a text model).
 
 Our bet — the part nobody has published — is doing this on a parser and geocoder
-we _own and calibrate_, so the matcher can condition on the geocode's own honesty.
+we _own and calibrate_, so the matcher can condition on the geocode's own stated uncertainty.
 And there is a tax, which we pay openly. Geocoder error is large, heavy-tailed,
 and non-Gaussian, with a hard urban→rural gradient (street-interpolation median
 ~38 m urban, ~201 m rural; Cayo & Talbot, Zimmerman et al.). Two rules fall out:
@@ -207,9 +207,9 @@ evidence says they pay — never the foundation:
   samples, infer the column→field mapping, cache it. One call per _source schema_,
   not per row. The most painful onboarding step, deleted.
 
-## The discipline that keeps it honest
+## Four rules, carried over
 
-The same four rules that keep the geocoder honest govern the matcher:
+The four rules the geocoder already lives by govern the matcher too:
 
 - **Configuration dominates the model.** Across ~40,000 pipeline configs, F1 spans
   nearly the full [0,1] range, and cheap sampling-based auto-tuning recovers >95%
@@ -264,7 +264,7 @@ threshold — and the matcher spends its effort only on the messy rest.
 The literature has spatial entity resolution, and it has calibrated probabilistic
 linkage, and it has neural address parsing — as three separate fields with three
 separate citation graphs. What it does not have is one system that owns the parser,
-owns the geocoder, calibrates both, and then feeds that calibrated location and its
-honesty directly into a Fellegi-Sunter matcher as a first-class, quality-weighted
+owns the geocoder, calibrates both, and then feeds that calibrated location,
+uncertainty and all, into a Fellegi-Sunter matcher as a quality-weighted
 feature. That's either a moat or a warning, and the only way to learn which is to
 build it and grade it against real clinic data. That's the work.

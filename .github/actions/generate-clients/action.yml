@@ -1,0 +1,55 @@
+# Local composite action: the client-generation build block, defined once.
+#
+# Consumed by publish.yml's `clients` job (inspection artifacts on every
+# release dispatch) and publish-clients.yml's `generate` job (the publish
+# path). Runs the full receipt-verified pipeline — emit all 8 OpenAPI
+# documents, generate the Python package (openapi-python-client), assemble the
+# Rust crate (progenitor), `uv build` + wheel import-check, `cargo check
+# --examples` — leaving artifacts under `clients-build/` for the caller to
+# upload. A non-zero exit means a broken generator or spec drift; callers
+# must treat that as fatal (composite steps propagate failure by default).
+name: Generate API clients
+description: Compile the repo and run `mailwoman clients generate` (Python + Rust, verified)
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: yarn
+
+    - name: Enable Corepack (yarn 4)
+      shell: bash
+      run: corepack enable
+
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest").
+        version: "0.11.16"
+
+    # `@stable` is this action's own documented canonical usage (a tracking ref it repoints
+    # itself, not a release tag).
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install dependencies
+      shell: bash
+      run: yarn install --immutable
+
+    - name: Compile
+      shell: bash
+      run: yarn compile
+
+    - name: Generate + verify API clients
+      shell: bash
+      run: node mailwoman/out/cli.js clients generate
+
+    # `actions/upload-artifact` can't glob a directory tree into one file, so the Rust crate
+    # (Cargo.toml, src/, vendored openapi/*.json, examples/, license texts) is tarred here for the
+    # caller. `target/` is `cargo check` build cache — regenerable, never shipped.
+    - name: Package Rust crate artifact
+      shell: bash
+      run: tar --exclude=target -czf clients-build/mailwoman-client-rust.tar.gz -C clients-build rust
