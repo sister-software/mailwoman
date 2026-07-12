@@ -4865,7 +4865,7 @@ __metadata:
     "@release-it-plugins/workspaces": "npm:^5.0.3"
     "@sister.software/oxfmt-config": "npm:^9.3.0"
     "@sister.software/oxlint-config": "npm:^9.3.0"
-    "@sister.software/tsconfig": "npm:^8.0.1"
+    "@sister.software/tsconfig": "npm:^9.3.0"
     "@types/geojson": "npm:^7946.0.16"
     "@types/node": "npm:^26.1.1"
     "@types/pluralize": "npm:^0.0.33"
@@ -6745,10 +6745,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/tsconfig@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "@sister.software/tsconfig@npm:8.0.1"
-  checksum: 10/28a2be8f2ee2b166217d8f3ff02df1b199502a08bbc8a25982ae9a7087da964c92cf1ce8c8fe77c664dee79e7cfc1601a3786b48e16ec5ea2a69a8454f07a9c8
+"@sister.software/tsconfig@npm:^9.3.0":
+  version: 9.3.0
+  resolution: "@sister.software/tsconfig@npm:9.3.0"
+  checksum: 10/f920f128709efe65bd6116b2b72fd59a0702c5b3f93cdc6e8de84a881ac3b0a8e7524803777f9d64095186c12ed778d247cfb6e2835c19231982812f7b02640e
   languageName: node
   linkType: hard
 
