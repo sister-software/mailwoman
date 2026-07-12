@@ -41,7 +41,7 @@ properly.
 
 ## Training on truth nobody had to label
 
-Here's the part worth stealing. The two registries share the NPI column — an external key the
+This part is worth stealing. The two registries share the NPI column — an external key the
 matcher's features never see. Join NPPES to Open Payments on NPI and you get thousands of
 ground-truth "same provider, independently typed text" pairs, **for free, with no annotation
 budget**. Train a scorer on those labels and it learns the cross-registry objective directly:
@@ -65,7 +65,7 @@ of them true same-provider pairs by the NPI key.
 Every drifted pair like the one at the top of this page links; the co-located stranger next door
 doesn't. That's the whole job.
 
-One honest boundary, because we measure these things: this scorer is trained on _practitioners_ —
+One boundary, because we measure these things: this scorer is trained on _practitioners_ —
 people, with given and family names. Pointed at **organization-level** cross-dataset linking
 (clinic rosters, funding filings), its person-name features go dark and it over-links; the
 classical Fellegi–Sunter baseline stays pinned there until an org-level label source exists. The
@@ -90,4 +90,4 @@ node scripts/record-matcher/cross-source-threshold-sweep.ts \
 The same recipe extends to any registry pair with a shared key — PECOS by NPI, SAM.gov by UEI, IRS
 BMF by EIN. The key gives you labels; the geocoder gives you the blocking; the scorer learns the
 rest. See [Geocode-first record matching](./geocode-first-record-matching.mdx) for the architecture
-and [the dedup yardstick](./dedup-entity-truth.mdx) for how we grade it honestly.
+and [the dedup yardstick](./dedup-entity-truth.mdx) for how we grade it.

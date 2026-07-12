@@ -19,7 +19,7 @@ So the question that matters isn't "does it parse `1600 Pennsylvania Avenue NW,
 Washington, DC 20500`?" Of course it does. It's "does `1600 PENNSYLVANIA AVE
 NW,WASHINGTON DC` land on the same rooftop?" This page is how Mailwoman answers
 that: three layers that absorb surface noise before it can move the coordinate,
-and the gates that keep those layers honest.
+and the gates that verify each layer holds.
 
 ## The absorption stack
 
@@ -129,7 +129,7 @@ removal, so the list can't rot into the Pelias pass-list trap it was built to av
 
 Casing and spacing are green, cleared by the two normalizer levers above (#829's
 lowercase restore and the trailing-punctuation trim) with no retraining. The EN suffix
-abbreviations hold. The tracked xfails are honest about the rest: the FR `Boulevard`→`Bd`
+abbreviations hold. The tracked xfails record the rest: the FR `Boulevard`→`Bd`
 swap drops from a rooftop to admin tier (the street gazetteer stores the expanded type,
 so the abbreviation misses the point-tier name match, a resolver gap rather than a model
 one), house-number spelling misses the band outright, and a single-char typo in a
@@ -158,7 +158,7 @@ It's a generator you run when you want that arena, not a standing gate.
 ## The coverage matrix
 
 Put the perturbation classes against the layers that absorb them and the gates that
-watch them, and the honest picture falls out, thin spots included.
+watch them, and the full picture falls out, thin spots included.
 
 | Class                                        | `normalize/` (runtime)                     | Trained (corpus aug) | Gated                                                                                                     |
 | -------------------------------------------- | ------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------- |

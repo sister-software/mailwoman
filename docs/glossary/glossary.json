@@ -1264,7 +1264,7 @@
 		},
 		{
 			"term": "recall",
-			"definition": "Of the spans that truly are a given tag, the fraction the model found. High recall means few misses. Paired with precision to compute F1.",
+			"definition": "Of the spans whose gold label is a given tag, the fraction the model found. High recall means few misses. Paired with precision to compute F1.",
 			"aliases": ["sensitivity"],
 			"relatedTerms": ["precision", "F1 score", "macro F1"]
 		},

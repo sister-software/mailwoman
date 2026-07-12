@@ -127,7 +127,7 @@ Four field specimens, contributed by a conference attendee in Paris (July 2026) 
 | `Shinjuku Pigalle`      | 52 Rue Condorcet, 75009 Paris              | a Tokyo ward and a Paris district in one name; the address contains neither   |
 | `Shinjuku`              | 166 Bd de Stalingrad, 94200 Ivry-sur-Seine | a bare foreign toponym as the whole venue name — the hardest call of the four |
 
-When we ran these against our own live endpoint the day we received them, three of four resolved confidently to the wrong continent — including one to Comer, Georgia, USA, a namesake nobody in the conversation had predicted (the Spanish verb "comer" happens to be a town). We publish that result rather than hide it: these cases are now tracked improvement targets in the release gauntlet, and the bare-`Shinjuku` case is annotated as genuinely ambiguous — a lone toponym query plausibly _does_ mean Tokyo, and only conversational context says otherwise. An honest geocoder's job on that one is low confidence, not a lucky guess.
+When we ran these against our own live endpoint the day we received them, three of four resolved confidently to the wrong continent — including one to Comer, Georgia, USA, a namesake nobody in the conversation had predicted (the Spanish verb "comer" happens to be a town). We publish that result rather than hide it: these cases are now tracked improvement targets in the release gauntlet, and the bare-`Shinjuku` case is annotated as irreducibly ambiguous — a lone toponym query plausibly _does_ mean Tokyo, and only conversational context says otherwise. The right output on that one is low confidence, not a lucky guess.
 
 ## 5. Numeric chaos
 
@@ -223,7 +223,7 @@ Newport
 
 What breaks: there are 41 Springfields in the United States alone. `"Springfield"` with no qualifier is undecidable. `"Springfield, MA"` narrows it to one but `"Springfield, IL"` or `"Springfield, MO"` are equally valid. Famously the running joke of The Simpsons is that the show's Springfield is never identified by state.
 
-A resolver that picks the most populous candidate when no region is provided will pick Springfield, MO (~170K residents). That may not be what the consumer wanted. There is no honest fix without more context (IP geolocation, user-supplied country, prior place mentions).
+A resolver that picks the most populous candidate when no region is provided will pick Springfield, MO (~170K residents). That may not be what the consumer wanted. There is no fix without more context (IP geolocation, user-supplied country, prior place mentions).
 
 ## How these failure modes compound
 
@@ -247,7 +247,7 @@ Geocoders that report their failures openly — surface low confidence, return c
 | Failure class                           | Pattern                         | Mailwoman's situation today                                          |
 | --------------------------------------- | ------------------------------- | -------------------------------------------------------------------- |
 | Locality/business ambiguity             | "Paris Cafe in Paris"           | neural classifier learns context; needs more training                |
-| Duplicate names across countries/states | "Springfield"                   | unfixable without context; honest answer is a candidate list         |
+| Duplicate names across countries/states | "Springfield"                   | unfixable without context; the answer is a candidate list            |
 | Multilingual scripts                    | CJK, Arabic, Cyrillic           | byte-fallback prevents crash; per-locale weights needed for accuracy |
 | Inconsistent abbreviations              | "Avenue" vs "Ave" vs "Av"       | synthesis pass in corpus build covers common cases                   |
 | Whitespace/punctuation variance         | "12 1/2 Main St"                | subword tokenizer is robust; CRF helps span recovery                 |

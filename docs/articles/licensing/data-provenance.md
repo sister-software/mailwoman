@@ -11,7 +11,7 @@ The [code licensing](./index.md) pages cover the engine: AGPL or commercial. Thi
 **data**, where Mailwoman's gazetteer comes from, the license each source carries, and the one boundary
 that needs your attention before you ship anything OSM-derived.
 
-The short version: the core gazetteer is built entirely from permissive sources, so a resolved coordinate
+In short: the core gazetteer is built entirely from permissive sources, so a resolved coordinate
 carries no copyleft. One optional precision tier (OpenStreetMap rooftop) is share-alike, and it is walled
 off from the core so its obligations never leak into the default product.
 

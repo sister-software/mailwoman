@@ -195,9 +195,9 @@ This failure class is outside the parser's reach. It lives in the UI layer: auto
 
 ## What this means for a parser
 
-The failure taxonomy converges on one principle: **the parser should be honest about ambiguity.** Every failure above is a case where the human provided enough information for a knowledgeable local to find the right place, but the parser returned a single confident answer that was wrong.
+The failure taxonomy converges on one principle: **the parser should surface ambiguity instead of guessing through it.** Every failure above is a case where the human provided enough information for a knowledgeable local to find the right place, but the parser returned a single confident answer that was wrong.
 
-The correct design response is not to make the parser smarter. It is to make the parser more honest:
+The correct design response is not to make the parser smarter. It is to make the parser report what it cannot decide:
 
 - Return candidates, not a single answer.
 - Surface ambiguity when multiple equally-valid interpretations exist.

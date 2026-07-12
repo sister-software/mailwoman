@@ -1,7 +1,7 @@
 ---
 title: Switching from Nominatim
 sidebar_label: Switching from Nominatim
-description: Point your existing Nominatim client at Mailwoman — the endpoint map, the response differences, and the honest gaps.
+description: Point your existing Nominatim client at Mailwoman — the endpoint map, the response differences, and what's missing.
 ---
 
 # Switching from Nominatim
@@ -54,7 +54,7 @@ Mailwoman ignores: `extratags`, `namedetails`, `dedupe`, `polygon_text`/`_svg`/`
 - **Attribution.** The `licence` field names the data sources (Who's On First, Overture, OpenAddresses,
   TIGER) rather than OSM.
 
-## The honest gaps
+## What's missing
 
 - **Coordinate precision varies by coverage.** Where the address-point and street shards reach,
   `/search` returns the rooftop or an interpolated point — `1600 Pennsylvania Avenue NW` resolves to the
