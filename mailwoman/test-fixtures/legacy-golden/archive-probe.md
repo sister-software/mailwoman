@@ -78,6 +78,6 @@ PROBE OK: 2 solutions
 - **npm install:** Completed without EUNSUPPORTEDPROTOCOL. The `workspace:*` protocol translation held during publish to npm registry.
 - **Parser construction:** `createAddressParser()` from `mailwoman@6.0.0` instantiated successfully.
 - **Parse result:** Returned an array of solutions with expected v1 schema (classifications, matches, score, penalty). Solution count: 2.
-- **Artifact integrity:** All required parsers (@mailwoman/classifiers, neural weights, libpostal binaries) resolved from the published packages.
+- **Artifact integrity:** @mailwoman/classifiers + the libpostal dictionary data resolved from the published packages and drove a successful parse. (The neural runtime's postinstall was blocked by npm allow-scripts and was not exercised — irrelevant to the rules-parser archive premise this probe validates.)
 
 The archive premise — v6.0.0 packages are a complete, self-contained snapshot that reproduces the legacy parser as-is — is confirmed.
