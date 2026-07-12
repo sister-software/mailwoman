@@ -40,6 +40,30 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 		cluster.on("exit", (worker, code, signal) => {
 			console.log(`[${signal}] (${code}) Worker ${worker.process.pid} exited`)
 		})
+
+		// Graceful shutdown: a TERM/INT delivered to the PRIMARY pid (docker stop, systemctl stop)
+		// never reaches worker JS handlers — Node's cluster teardown bypasses them. Forward the
+		// signal explicitly so each worker's serveNode drain actually runs, then exit once they're
+		// gone (bounded — a hung worker must not wedge the shutdown).
+		const forward = (signal: NodeJS.Signals) => {
+			const alive = Object.values(cluster.workers ?? {}).filter(Boolean) as Worker[]
+
+			if (alive.length === 0) process.exit(0)
+			let remaining = alive.length
+
+			for (const worker of alive) {
+				worker.once("exit", () => {
+					remaining--
+
+					if (remaining === 0) process.exit(0)
+				})
+				worker.process.kill(signal)
+			}
+			setTimeout(() => process.exit(0), 10_000).unref()
+		}
+
+		process.once("SIGINT", () => forward("SIGINT"))
+		process.once("SIGTERM", () => forward("SIGTERM"))
 	}, [cpus])
 
 	if (!workers) {
@@ -141,6 +165,7 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 			})
 
 			const shutdown = () => {
+				console.error(`[serve] worker ${process.pid} draining`)
 				void handle?.close().finally(() => process.exit(0))
 			}
 
