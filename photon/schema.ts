@@ -50,6 +50,56 @@ export const PhotonMessageCollectionSchema = z
 	.openapi("PhotonMessageCollection")
 
 /**
+ * The schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node — mirrors `@mailwoman/annotations`'s
+ * `SchemaOrgGeoCoordinates` interface. Hand-modeled locally (no import from `@mailwoman/annotations`) matching this
+ * package's existing wire-schema convention: each surface owns its own doc-accuracy schemas rather than sharing a
+ * schema across the package boundary.
+ */
+export const SchemaOrgGeoCoordinatesSchema = z
+	.object({
+		"@type": z.literal("GeoCoordinates"),
+		latitude: z.number(),
+		longitude: z.number(),
+	})
+	.openapi("SchemaOrgGeoCoordinates")
+
+/** The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node — mirrors `SchemaOrgPostalAddress`. */
+export const SchemaOrgPostalAddressSchema = z
+	.object({
+		"@type": z.literal("PostalAddress"),
+		streetAddress: z.string().optional(),
+		postOfficeBoxNumber: z.string().optional(),
+		addressLocality: z.string().optional(),
+		addressRegion: z.string().optional(),
+		postalCode: z.string().optional(),
+		addressCountry: z.string().optional(),
+	})
+	.openapi("SchemaOrgPostalAddress")
+
+/**
+ * The `format=jsonld` re-serialization (#1052) — mirrors `@mailwoman/annotations`'s `SchemaOrgPlace` interface, the
+ * shape `photonToSchemaOrg` actually produces.
+ */
+export const SchemaOrgPlaceSchema = z
+	.object({
+		"@context": z.literal("https://schema.org"),
+		"@type": z.literal("Place"),
+		name: z.string().optional(),
+		geo: SchemaOrgGeoCoordinatesSchema.optional(),
+		address: SchemaOrgPostalAddressSchema.optional(),
+	})
+	.openapi("SchemaOrgPlace")
+
+/**
+ * The real `/api` + `/reverse` 200 response union (#1052 doc accuracy): a GeoJSON FeatureCollection by default, or an
+ * array of schema.org `Place` JSON-LD objects when `format=jsonld` — see `routes.ts`'s handlers (`photonToSchemaOrg`).
+ * Doc-only; the wire behavior is unchanged.
+ */
+export const PhotonResponseSchema = z
+	.union([PhotonFeatureCollectionSchema, z.array(SchemaOrgPlaceSchema)])
+	.openapi("PhotonResponse")
+
+/**
  * A query param that may legally repeat (or that a client may repeat without the validator being allowed to answer for
  * us). Validator-proof: accepts one value or many; the doc override keeps the emitted parameter schema exact.
  */

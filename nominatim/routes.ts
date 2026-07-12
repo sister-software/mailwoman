@@ -23,8 +23,9 @@ import { nominatimResultToSchemaOrg, toFeatureCollection } from "./format.ts"
 import {
 	ErrorSchema,
 	lookupQueryParams,
-	NominatimResultSchema,
-	NominatimResultsSchema,
+	NominatimLookupResponseSchema,
+	NominatimReverseResponseSchema,
+	NominatimSearchResponseSchema,
 	NominatimStatusSchema,
 	reverseQueryParams,
 	searchQueryParams,
@@ -107,7 +108,7 @@ const errorContent = (description: string) => ({
 const searchResponses = {
 	200: {
 		description: "A jsonv2 result array (or a geojson FeatureCollection / jsonld Place[] per `format`).",
-		content: { "application/json": { schema: NominatimResultsSchema } },
+		content: { "application/json": { schema: NominatimSearchResponseSchema } },
 	},
 	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
 	501: errorContent("The backing engine method is not wired for this deployment."),
@@ -116,7 +117,7 @@ const searchResponses = {
 const reverseResponses = {
 	200: {
 		description: "A single jsonv2 result (or `null`; a geojson FeatureCollection / jsonld Place per `format`).",
-		content: { "application/json": { schema: NominatimResultSchema } },
+		content: { "application/json": { schema: NominatimReverseResponseSchema } },
 	},
 	400: errorContent("Missing or out-of-range `lat`/`lon`."),
 	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
@@ -126,7 +127,7 @@ const reverseResponses = {
 const lookupResponses = {
 	200: {
 		description: "A jsonv2 result array (or a geojson FeatureCollection when format=geojson).",
-		content: { "application/json": { schema: NominatimResultsSchema } },
+		content: { "application/json": { schema: NominatimLookupResponseSchema } },
 	},
 	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
 	501: errorContent("The backing engine method is not wired for this deployment."),

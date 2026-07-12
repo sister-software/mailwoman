@@ -12,10 +12,11 @@
 		"./contexts/*": "./src/contexts/*.tsx"
 	},
 	"scripts": {
-		"build": "docusaurus build",
+		"build": "yarn prebuild && docusaurus build",
 		"build-storybook": "storybook build",
 		"clear": "docusaurus clear",
 		"docusaurus": "docusaurus",
+		"prebuild": "node ../mailwoman/out/cli.js openapi --out ./static/openapi/mailwoman.json && node ../libpostal/out/cli.js openapi --out ./static/openapi/libpostal.json && node ../photon/out/cli.js openapi --out ./static/openapi/photon.json && node ../nominatim/out/cli.js openapi --out ./static/openapi/nominatim.json",
 		"serve": "docusaurus serve --host 0.0.0.0 --port 7770",
 		"start": "docusaurus start --host 0.0.0.0 --port 7770 --no-open",
 		"storybook": "storybook dev -p 6006 --no-open",

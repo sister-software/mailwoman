@@ -242,21 +242,30 @@ The current neural model (v0.4.0) emits 10 of these: country, region, locality, 
 
 ## Drop-in server specifications (OpenAPI 3.1)
 
-The three HTTP drop-ins each ship a machine-readable [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html) specification — the endpoints, query parameters, response shapes, the schema.org `jsonld` variants, and the documented divergences from each upstream. Point Swagger UI, Redoc, a client generator, or a contract test at them.
+The three HTTP drop-ins — plus the native `/v1/*` surface `mailwoman serve` ships — each expose a machine-readable [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html) specification: the endpoints, query parameters, response shapes, the schema.org `jsonld` variants, and (for the drop-ins) the documented divergences from each upstream. Point Swagger UI, Redoc, a client generator, or a contract test at them.
 
-| Drop-in                                                                      | Endpoints                                   | Specification                                        |
-| ---------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------- |
-| [`@mailwoman/photon`](https://www.npmjs.com/package/@mailwoman/photon)       | `/api`, `/reverse`                          | [photon.yaml](pathname:///openapi/photon.yaml)       |
-| [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status` | [nominatim.yaml](pathname:///openapi/nominatim.yaml) |
-| [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                         | [libpostal.yaml](pathname:///openapi/libpostal.yaml) |
+| Drop-in                                                                      | Endpoints                                                            | Specification                                        |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------- |
+| [`@mailwoman/photon`](https://www.npmjs.com/package/@mailwoman/photon)       | `/api`, `/reverse`                                                   | [photon.json](pathname:///openapi/photon.json)       |
+| [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status`                          | [nominatim.json](pathname:///openapi/nominatim.json) |
+| [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                                                  | [libpostal.json](pathname:///openapi/libpostal.json) |
+| `mailwoman serve` (native `/v1/*` surface)                                   | `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format` | [mailwoman.json](pathname:///openapi/mailwoman.json) |
 
-The source of truth is the route table, not a checked-in file. All three drop-ins build their OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests, and emit it at runtime from a running server — `GET /openapi.json`. There's nothing to keep in sync by hand: change a route, the document changes with it.
+The source of truth is the route table, not a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and nothing to keep in sync by hand:
 
-To lint a running server's document with [Redocly CLI](https://redocly.com/docs/cli), fetch it to a temp file first (Redocly's `lint` doesn't read stdin):
+- **At runtime**, from a running server — `GET /openapi.json`.
+- **Ahead of time**, from each surface's own CLI — `mailwoman-photon openapi`, `mailwoman-nominatim openapi`, `mailwoman-libpostal openapi`, `mailwoman openapi` — which prints the document to stdout (or `--out <path>`) without booting the real engine or opening a data root. This is what stamps the four JSON files linked above: the docs site's `prebuild` script runs all four emitters into `static/openapi/` before every build, so those copies are a build product, not a file to hand-edit.
+
+To lint a running server's document with [Redocly CLI](https://redocly.com/docs/cli), fetch it to a temp file first (Redocly's `lint` doesn't read stdin) — or skip the server and lint the CLI's own output directly:
 
 ```bash
+# From a running server:
 npx @mailwoman/nominatim serve --port 8081 --candidate-db <path> &
 curl -s http://127.0.0.1:8081/openapi.json -o /tmp/nominatim-openapi.json
 npx --yes @redocly/cli@latest lint /tmp/nominatim-openapi.json
 # photon and libpostal serve the same way — GET /openapi.json — swap the package and port
+
+# Or straight from the CLI (no server, no data root needed):
+npx @mailwoman/nominatim openapi --out /tmp/nominatim-openapi.json
+npx --yes @redocly/cli@latest lint /tmp/nominatim-openapi.json
 ```

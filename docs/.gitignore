@@ -14,6 +14,10 @@
 # sql.js-httpvfs worker/wasm — staged into the Pages deploy at build time by the demo-assets plugin.
 /static/mailwoman/sqljs/
 
+# OpenAPI spec copies — build products of the `prebuild` script (four `openapi` CLI subcommands),
+# never handwritten or checked in. See articles/api.mdx's "Drop-in server specifications" section.
+/static/openapi/*.json
+
 # Generated files
 .docusaurus
 .cache-loader
