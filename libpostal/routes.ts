@@ -9,7 +9,7 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import type { Context, Next } from "hono"
+import type { Context, MiddlewareHandler } from "hono"
 
 import { type LibpostalEngine, toLibpostalComponents } from "./engine.ts"
 import {
@@ -164,28 +164,67 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
 const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
 
 /**
- * Legacy tolerance: a malformed JSON body must behave like an absent one, falling through to query params — the old
- * express handler never mounted a body parser at all, so a malformed body was simply inert there. zod-openapi's own
- * body validator doesn't share that tolerance: it throws on unparseable JSON, which aborts straight to `app.onError`
- * before either its schema check or our `readBody` above ever runs. Pre-read the body ourselves and, if it fails to
- * parse, swap in a fresh, benign `{}` request so every downstream reader sees a clean empty body.
+ * The zod-openapi auto body validator runs before the handlers and would reject or throw on request shapes the legacy
+ * endpoint tolerated (malformed JSON, non-JSON content types, non-string fields, bodyless POSTs). Canonicalize every
+ * POST body into well-formed JSON carrying only the string-typed contract fields, so validation can never fail and
+ * every wire decision stays in the handlers.
  */
-async function tolerateMalformedJSON(c: Context, next: Next): Promise<void> {
-	if (c.req.method === "POST" && c.req.raw.body) {
-		const text = await c.req.raw.text()
-		let sanitized = text
+const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
+	if (c.req.method === "POST") {
+		let fields: Record<string, string> = {}
 
 		try {
-			JSON.parse(text)
+			const raw = c.req.raw.body ? await c.req.raw.text() : ""
+			const parsed = raw ? (JSON.parse(raw) as unknown) : {}
+
+			if (typeof parsed === "object" && parsed !== null) {
+				for (const key of ["query", "address"] as const) {
+					const value = (parsed as Record<string, unknown>)[key]
+
+					if (typeof value === "string") {
+						fields[key] = value
+					}
+				}
+			}
 		} catch {
-			sanitized = "{}"
+			fields = {}
 		}
 
+		const headers = new Headers(c.req.raw.headers)
+		headers.delete("content-length")
+		headers.set("content-type", "application/json")
+
 		c.req.raw = new Request(c.req.raw.url, {
-			method: c.req.raw.method,
-			headers: c.req.raw.headers,
-			body: sanitized,
+			method: "POST",
+			headers,
+			body: JSON.stringify(fields),
 		})
+	}
+
+	await next()
+}
+
+/**
+ * The zod-openapi auto query validator rejects array-valued repeated params (`?query=a&query=b`) with its own error
+ * shape before the handlers run. Keep only the first value of each contract param — the value `c.req.query()` reads
+ * anyway — so query validation can never fail either.
+ */
+const canonicalizeQueryParams: MiddlewareHandler = async (c, next) => {
+	if (c.req.method === "GET") {
+		const url = new URL(c.req.raw.url)
+
+		for (const key of ["query", "address"] as const) {
+			const values = url.searchParams.getAll(key)
+
+			if (values.length > 1) {
+				url.searchParams.delete(key)
+				url.searchParams.set(key, values[0]!)
+			}
+		}
+
+		if (url.toString() !== c.req.raw.url) {
+			c.req.raw = new Request(url, c.req.raw)
+		}
 	}
 
 	await next()
@@ -193,8 +232,10 @@ async function tolerateMalformedJSON(c: Context, next: Next): Promise<void> {
 
 /** Register the libpostal-compatible routes against an injected engine. */
 export function registerLibpostalRoutes(app: OpenAPIHono, engine: LibpostalEngine): void {
-	app.use("/parse", tolerateMalformedJSON)
-	app.use("/expand", tolerateMalformedJSON)
+	app.use("/parse", canonicalizeJSONBody)
+	app.use("/expand", canonicalizeJSONBody)
+	app.use("/parse", canonicalizeQueryParams)
+	app.use("/expand", canonicalizeQueryParams)
 
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 

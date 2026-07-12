@@ -218,3 +218,54 @@ test("GET /openapi.json serves the emitted 3.1 document", async () => {
 	expect(doc.openapi).toBe("3.1.0")
 	expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/", "/parse", "/expand"]))
 })
+
+test("POST with a non-string body field is treated as absent (never-contract: old code crashed to 500)", async () => {
+	const app = createLibpostalApp(fixtureEngine)
+
+	const alone = await app.request("/parse", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ query: 42 }),
+	})
+	expect(alone.status).toBe(400)
+	expect(await alone.json()).toEqual({ error: "query is required" })
+
+	const withFallback = await app.request("/parse?address=1600+pennsylvania+ave", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ query: 42 }),
+	})
+	expect(withFallback.status).toBe(200)
+})
+
+test("POST with a form-encoded body leaves the body inert like the served legacy endpoint", async () => {
+	const app = createLibpostalApp(fixtureEngine)
+
+	const withParam = await app.request("/parse?query=1600+pennsylvania+ave", {
+		method: "POST",
+		headers: { "content-type": "application/x-www-form-urlencoded" },
+		body: "query=ignored",
+	})
+	expect(withParam.status).toBe(200)
+
+	const without = await app.request("/parse", {
+		method: "POST",
+		headers: { "content-type": "application/x-www-form-urlencoded" },
+		body: "query=ignored",
+	})
+	expect(without.status).toBe(400)
+	expect(await without.json()).toEqual({ error: "query is required" })
+})
+
+test("bodyless POST with a JSON content-type answers the legacy 400, not a validator 500", async () => {
+	const app = createLibpostalApp(fixtureEngine)
+	const res = await app.request("/parse", { method: "POST", headers: { "content-type": "application/json" } })
+	expect(res.status).toBe(400)
+	expect(await res.json()).toEqual({ error: "query is required" })
+})
+
+test("duplicate query params use the first value (never-contract: old code crashed to 500)", async () => {
+	const app = createLibpostalApp(fixtureEngine)
+	const res = await app.request("/parse?query=a&query=b")
+	expect(res.status).toBe(200)
+})
