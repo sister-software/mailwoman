@@ -94,8 +94,7 @@ By making a contribution to this project, I certify that:
 
 ## Prerequisites
 
-- **Node ≥ 22.5.1.** The runtime uses `node:sqlite`, which landed in 22.5. The
-  repo itself is developed on Node 26.
+- **Node ≥ 24.18.0** (the published `engines` floor). The repo itself is developed on Node 26.
 - **Yarn 4** via Corepack — don't install Yarn globally.
 - **git**, and a POSIX-ish shell for the helper scripts.
 

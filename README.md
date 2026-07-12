@@ -20,7 +20,7 @@
 <p align="center">
   <a href="https://mailwoman.sister.software/demo"><strong>Live demo</strong></a> ·
   <a href="https://mailwoman.sister.software">Docs & blog</a> ·
-  <a href="https://mailwoman.sister.software/articles/getting-started/">Getting started</a>
+  <a href="https://mailwoman.sister.software/docs/getting-started/">Getting started</a>
 </p>
 
 <p align="center">
@@ -34,8 +34,8 @@ classification over a 33-label schema. It is **not** an LLM and nothing about it
 generative — boring NER, which is the point for short, structured strings.
 
 It runs in Node.js and the browser, with no Elasticsearch and no multi-gigabyte libpostal
-install. The model is about 30 MB and resolves admin/postcode coordinates from a SQLite
-gazetteer.
+install. The model is about 30 MB and resolves coordinates from a SQLite gazetteer at the finest
+tier available — admin, postcode, street, or rooftop (US and French national registers).
 
 ```bash
 npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
@@ -120,6 +120,22 @@ began as a fork of Pelias Parser and ships wire-compatible drop-ins for the othe
 | Autocomplete / type-ahead     | ✓ (Photon-compatible API)       | ✗                  | ✗                          | ✓                              |
 | Annotations (tz, currency, …) | ✓ OpenCage-style block          | ✗                  | ✗                          | ✗                              |
 
+## Drop-in servers
+
+Migrating off Nominatim, Photon, or libpostal? Each has a compatible server — same wire
+contract, from a SQLite file instead of a cluster. A hosted Photon-compatible endpoint is
+live for evaluation:
+
+```bash
+curl "https://photon.sister.software/api?q=berlin&limit=3"   # hosted — nothing to install
+npx @mailwoman/photon    serve   # Photon-compatible    /api, /reverse
+npx @mailwoman/nominatim serve   # Nominatim-compatible /search, /reverse, /status
+npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
+```
+
+OpenAPI 3.1 specifications for all three ship in each package and at
+[mailwoman.sister.software/openapi](https://mailwoman.sister.software/openapi/photon.yaml).
+
 ## How it works
 
 The problem splits in two:
@@ -136,7 +152,7 @@ The confidence numbers the parser returns are calibrated probabilities, not heur
 scores: when it says `0.88`, it is right about 88% of the time.
 
 For the longer version, read [What Mailwoman
-Is](https://mailwoman.sister.software/articles/concepts/what-mailwoman-is/).
+Is](https://mailwoman.sister.software/docs/concepts/what-mailwoman-is/).
 
 ## Locale coverage
 
@@ -177,6 +193,12 @@ Mailwoman is dual-licensed:
   for network services, your source.
 - **A commercial license** for closed-source/commercial use without the AGPL's source-sharing
   obligation. Contact `teffen@sister.software`.
+
+Release notes live in the [release matrix](https://mailwoman.sister.software/docs/releases/);
+what we do and don't collect is stated plainly in the
+[privacy policy](https://mailwoman.sister.software/docs/licensing/privacy/); funders and sponsors
+can read our machine-readable [funding.json](https://mailwoman.sister.software/funding.json).
+Report security vulnerabilities privately per [`SECURITY.md`](./SECURITY.md).
 
 Portions of Mailwoman derived from [Pelias Parser](https://github.com/pelias/parser) remain
 under the MIT license, and Mailwoman bundles third-party data under its own terms. See
