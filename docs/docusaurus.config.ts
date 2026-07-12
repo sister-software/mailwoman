@@ -189,6 +189,8 @@ const config: Config = {
 	],
 
 	themeConfig: {
+		// Default og:image / twitter:card for every page; the same card is uploaded
+		// as the GitHub repo social preview. Regenerate via docs/scripts/social-card.html.
 		image: "img/social-card.png",
 		colorMode: {
 			respectPrefersColorScheme: true,
