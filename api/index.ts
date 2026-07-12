@@ -9,10 +9,14 @@
  *   `@mailwoman/libpostal`), nothing here mimics a third-party API — this is Mailwoman's own wire
  *   contract, so schemas are strict and validator-enforced rather than tolerant of legacy quirks.
  *
- *   Like its siblings, the package is engine-agnostic: routes (Task 3) take a
- *   {@link MailwomanAPIEngine}; the `mailwoman` CLI wires the real parse/geocode/resolve stack
- *   (phase 4b). The engine contract lives in `engine.ts`; the zod wire schemas in `schema.ts`.
+ *   Like its siblings, the package is engine-agnostic: routes take a {@link MailwomanAPIEngine}; the
+ *   `mailwoman` CLI wires the real parse/geocode/resolve stack (phase 4b). The Hono app (CORS +
+ *   body-size guard + the strict-validation error envelope + the emitted OpenAPI document) lives in
+ *   `app.ts`; route definitions + handlers (incl. `registerMailwomanAPIRoutes`) in `routes.ts`; the
+ *   engine contract in `engine.ts`; the zod wire schemas in `schema.ts`.
  */
 
+export * from "./app.ts"
 export * from "./engine.ts"
+export * from "./routes.ts"
 export * from "./schema.ts"
