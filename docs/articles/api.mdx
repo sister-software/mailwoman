@@ -255,5 +255,5 @@ The source of truth for each is `openapi.yaml` at the workspace root; the copies
 ```bash
 npx --yes @redocly/cli@latest lint photon/openapi.yaml
 npx --yes @redocly/cli@latest lint nominatim/openapi.yaml
-npx --yes @redocly/cli@latest lint libpostal/openapi.yaml
+# @mailwoman/libpostal has no checked-in yaml — its document is emitted at runtime, GET /openapi.json
 ```
