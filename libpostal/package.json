@@ -40,6 +40,7 @@
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"hono": "^4.12.29",
-		"mailwoman": "workspace:*"
+		"mailwoman": "workspace:*",
+		"zod": "^4.4.3"
 	}
 }

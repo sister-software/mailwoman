@@ -4569,6 +4569,7 @@ __metadata:
     "@mailwoman/normalize": "workspace:*"
     hono: "npm:^4.12.29"
     mailwoman: "workspace:*"
+    zod: "npm:^4.4.3"
   bin:
     libpostal: ./out/cli.js
   languageName: unknown
