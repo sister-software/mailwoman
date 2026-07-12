@@ -42,8 +42,13 @@ updates:
           - "patch"
     ignore:
       # Exact pins guarding the int8 / mobile-Safari WebGPU invariant — read
-      # the pin comment in corpus-python/pyproject.toml before bumping.
+      # the pin comment in corpus-python/pyproject.toml before bumping. The
+      # list mirrors verify_toolchain.py's INVARIANT_DEPS: a bump to any of
+      # these must land in pyproject AND the Modal image together, through
+      # the export-verification discipline, so bot PRs (which touch only
+      # pyproject) always fail the verify-toolchain CI gate.
       - dependency-name: "torch"
+      - dependency-name: "transformers"
       - dependency-name: "onnx"
       - dependency-name: "onnxruntime"
 
