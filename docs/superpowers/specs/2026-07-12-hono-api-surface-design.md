@@ -59,7 +59,9 @@ Plumbing only:
 - `serve()` — `@hono/node-server` wrapper with the house flags (port, host, graceful shutdown).
 - Error-envelope middleware + the native error schema.
 - Spec-emit helper: route table → 3.1/3.0 documents, plus a mounted `/openapi.json` endpoint.
-- Shared wire atoms: `LonLat`, `BBox`, GeoJSON `Feature`/`FeatureCollection` envelopes, locale param.
+- Shared wire atoms: ~~`LonLat`~~ (2026-07-12: struck — zero consumers across three surfaces; returns with its
+  first consumer per the anti-meta guardrail), `BBox`, GeoJSON `Feature`/`FeatureCollection` envelopes, locale
+  param.
 - Metrics hooks ported from `mailwoman/server/metrics.ts` (its test moves too).
 
 ### Drop-ins: `photon/`, `nominatim/`, `libpostal/`
