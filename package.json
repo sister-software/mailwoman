@@ -84,7 +84,7 @@
 	"devDependencies": {
 		"@duckdb/node-api": "^1.5.3-r.3",
 		"@inkjs/ui": "^2.0.0",
-		"@release-it-plugins/workspaces": "^5.0.3",
+		"@release-it-plugins/workspaces": "^6.0.0",
 		"@sister.software/oxfmt-config": "^9.3.0",
 		"@sister.software/oxlint-config": "^9.3.0",
 		"@sister.software/tsconfig": "^8.0.1",

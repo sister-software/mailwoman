@@ -4862,7 +4862,7 @@ __metadata:
   dependencies:
     "@duckdb/node-api": "npm:^1.5.3-r.3"
     "@inkjs/ui": "npm:^2.0.0"
-    "@release-it-plugins/workspaces": "npm:^5.0.3"
+    "@release-it-plugins/workspaces": "npm:^6.0.0"
     "@sister.software/oxfmt-config": "npm:^9.3.0"
     "@sister.software/oxlint-config": "npm:^9.3.0"
     "@sister.software/tsconfig": "npm:^8.0.1"
@@ -6389,9 +6389,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@release-it-plugins/workspaces@npm:^5.0.3":
-  version: 5.0.3
-  resolution: "@release-it-plugins/workspaces@npm:5.0.3"
+"@release-it-plugins/workspaces@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@release-it-plugins/workspaces@npm:6.0.0"
   dependencies:
     detect-indent: "npm:^6.1.0"
     detect-newline: "npm:^3.1.0"
@@ -6399,11 +6399,11 @@ __metadata:
     semver: "npm:^7.7.2"
     url-join: "npm:^4.0.1"
     validate-peer-dependencies: "npm:^1.2.0"
-    walk-sync: "npm:^2.2.0"
+    walk-sync: "npm:^4.0.2"
     yaml: "npm:^2.8.0"
   peerDependencies:
     release-it: ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/0ed4139845af4ec585613ded98ecd779e5f271584278e09a6962770d97f1abe1c4d7425fd94240ba3baba70935cde51408bad4bbce7c59bbaf32897208a3c39d
+  checksum: 10/4d0c5755d4a6e26d2547fe69758aadb5b23f7d0d38e7ecf497723e14e8460a34e35257e31af762815dd9df52406a81278a7050def43ae41062f074e2e99eb06f
   languageName: node
   linkType: hard
 
@@ -12283,7 +12283,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ensure-posix-path@npm:^1.1.0":
+"ensure-posix-path@npm:^1.1.1":
   version: 1.1.1
   resolution: "ensure-posix-path@npm:1.1.1"
   checksum: 10/90ac69f48a08003abe6f194b75bad78c3320762bd193a063eb76cd8f696be6a34e1524f16435eeee09ccbe3a719a7fb76409dead3ccedd10e32d906ff050457b
@@ -15908,7 +15908,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matcher-collection@npm:^2.0.0":
+"matcher-collection@npm:^2.0.1":
   version: 2.0.1
   resolution: "matcher-collection@npm:2.0.1"
   dependencies:
@@ -16942,7 +16942,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:^10.2.2":
+"minimatch@npm:^10.0.3, minimatch@npm:^10.2.2":
   version: 10.2.5
   resolution: "minimatch@npm:10.2.5"
   dependencies:
@@ -23084,15 +23084,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"walk-sync@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "walk-sync@npm:2.2.0"
+"walk-sync@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "walk-sync@npm:4.0.2"
   dependencies:
-    "@types/minimatch": "npm:^3.0.3"
-    ensure-posix-path: "npm:^1.1.0"
-    matcher-collection: "npm:^2.0.0"
-    minimatch: "npm:^3.0.4"
-  checksum: 10/e579b574f769977a739607d4feba40ded8931ff641f26964ea5a10a280d648d1c1aca260e9ab60288f16d69500ff33687d3ba5fa4dbd427090123189f0f0c9b6
+    ensure-posix-path: "npm:^1.1.1"
+    matcher-collection: "npm:^2.0.1"
+    minimatch: "npm:^10.0.3"
+  checksum: 10/a66e3c351929c10aa3756c113dcca8f46711896f417b27c8627de33b83ce09c173953b2451884426efd0d5c7e745dbcec7124c6ee4d3ed2bf46e5e9f76e11754
   languageName: node
   linkType: hard
 
