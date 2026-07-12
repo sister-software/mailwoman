@@ -4630,7 +4630,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/nominatim@workspace:nominatim"
   dependencies:
+    "@hono/zod-openapi": "npm:^1.4.0"
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
@@ -4642,7 +4644,9 @@ __metadata:
     "@mailwoman/timezone-lookup": "workspace:*"
     "@mailwoman/un-locode-lookup": "workspace:*"
     express: "npm:^5.2.1"
+    hono: "npm:^4.12.29"
     mailwoman: "workspace:*"
+    zod: "npm:^4.4.3"
   bin:
     nominatim: ./out/cli.js
   languageName: unknown

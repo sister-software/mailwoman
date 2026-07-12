@@ -37,7 +37,9 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@hono/zod-openapi": "^1.4.0",
 		"@mailwoman/annotations": "workspace:*",
+		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
@@ -49,6 +51,8 @@
 		"@mailwoman/timezone-lookup": "workspace:*",
 		"@mailwoman/un-locode-lookup": "workspace:*",
 		"express": "^5.2.1",
-		"mailwoman": "workspace:*"
+		"hono": "^4.12.29",
+		"mailwoman": "workspace:*",
+		"zod": "^4.4.3"
 	}
 }

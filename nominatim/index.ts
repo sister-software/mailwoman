@@ -13,118 +13,26 @@
  *
  *   Implementation is staged across the epic (#801): #804 the result formatter, #802 `/search`, #803
  *   `/reverse`, #805 `/lookup` + `/status`. Routes whose engine method is absent answer `501`.
+ *
+ *   Wire types + the engine contract live in `engine.ts`; the RESOLVED-address → Nominatim-schema
+ *   formatter lives in `format.ts`; the zod wire schemas live in `schema.ts`.
  */
 
-import {
-	composeStreetAddress,
-	type OpenCageAnnotations,
-	type SchemaOrgPlace,
-	toSchemaOrg,
-} from "@mailwoman/annotations"
 import { type RequestHandler, Router } from "express"
 
-/**
- * Output serialization formats Nominatim supports. `jsonv2` is the modern default. `jsonld` is the Mailwoman extension
- * (#1052) — schema.org `Place` JSON-LD, not part of upstream Nominatim.
- */
-export type NominatimFormat = "jsonv2" | "json" | "geojson" | "jsonld"
+import type {
+	NominatimEngine,
+	NominatimFormat,
+	NominatimLookupParams,
+	NominatimReverseParams,
+	NominatimSearchParams,
+	NominatimStatus,
+} from "./engine.ts"
+import { nominatimResultToSchemaOrg, toFeatureCollection } from "./format.ts"
 
-/**
- * The structured address breakdown returned under `address` when `addressdetails=1`. Keys mirror Nominatim's
- * OSM-derived tag names; populated from Mailwoman's `ComponentTag` / resolved ancestor lineage (mapping owned by
- * #804).
- */
-export interface NominatimAddressDetails {
-	house_number?: string
-	road?: string
-	neighbourhood?: string
-	suburb?: string
-	city?: string
-	town?: string
-	village?: string
-	county?: string
-	state?: string
-	postcode?: string
-	country?: string
-	country_code?: string
-	[key: string]: string | undefined
-}
-
-/** A single Nominatim result object (the shape geopy and friends parse). */
-export interface NominatimResult {
-	place_id: number | string
-	licence: string
-	osm_type?: string
-	osm_id?: number | string
-	lat: string
-	lon: string
-	display_name: string
-	/** `[south, north, west, east]` as strings, per Nominatim. */
-	boundingbox?: [string, string, string, string]
-	class?: string
-	type?: string
-	importance?: number
-	place_rank?: number
-	address?: NominatimAddressDetails
-	/** Present when `format=geojson` or `polygon_geojson=1`. */
-	geojson?: unknown
-	/** OpenCage-style enrichment block (timezone, coordinate formats, …); attached by the engine. */
-	annotations?: OpenCageAnnotations
-}
-
-/** Parsed `/search` parameters (free-text OR structured; never both). */
-export interface NominatimSearchParams {
-	q?: string
-	street?: string
-	city?: string
-	county?: string
-	state?: string
-	country?: string
-	postalcode?: string
-	countrycodes?: string[]
-	limit: number
-	viewbox?: [number, number, number, number]
-	bounded?: boolean
-	addressdetails?: boolean
-	format: NominatimFormat
-	acceptLanguage?: string
-}
-
-/** Parsed `/reverse` parameters. */
-export interface NominatimReverseParams {
-	lat: number
-	lon: number
-	zoom?: number
-	addressdetails?: boolean
-	format: NominatimFormat
-	acceptLanguage?: string
-}
-
-/** Parsed `/lookup` parameters. */
-export interface NominatimLookupParams {
-	osmIds: string[]
-	addressdetails?: boolean
-	format: NominatimFormat
-}
-
-/** Nominatim `/status` payload. */
-export interface NominatimStatus {
-	status: number
-	message: string
-	data_updated?: string
-}
-
-/**
- * The geocoding engine the router delegates to. Each method is optional; a route whose method is not provided answers
- * `501 Not Implemented`. The real implementation (Mailwoman parse → resolve, plus `WOFReverseGeocoder`) is wired by the
- * CLI and fleshed out across #802–#805.
- */
-export interface NominatimEngine {
-	search?(params: NominatimSearchParams): Promise<NominatimResult[]>
-	reverse?(params: NominatimReverseParams): Promise<NominatimResult | null>
-	lookup?(params: NominatimLookupParams): Promise<NominatimResult[]>
-	status?(): Promise<NominatimStatus>
-}
+export * from "./engine.ts"
+export * from "./format.ts"
+export * from "./schema.ts"
 
 const DEFAULT_LIMIT = 10
 
@@ -138,45 +46,6 @@ function parseBool(raw: unknown): boolean {
 
 function asString(raw: unknown): string | undefined {
 	return typeof raw === "string" && raw.length > 0 ? raw : undefined
-}
-
-/** A GeoJSON `FeatureCollection` — the `format=geojson` envelope. */
-export interface NominatimFeatureCollection {
-	type: "FeatureCollection"
-	features: Array<{
-		type: "Feature"
-		properties: Record<string, unknown>
-		geometry: unknown
-		bbox?: [number, number, number, number]
-	}>
-}
-
-/**
- * Render results as a GeoJSON `FeatureCollection` (`format=geojson`). Nominatim moves the coordinate into `geometry` (a
- * Point, or the place polygon when one is present), `boundingbox` ([south, north, west, east]) into a GeoJSON `bbox`
- * ([west, south, east, north]), and the remaining result fields into `properties`. Rows without a coordinate are
- * dropped — a Feature needs a geometry.
- */
-export function toFeatureCollection(results: readonly NominatimResult[]): NominatimFeatureCollection {
-	const features: NominatimFeatureCollection["features"] = []
-
-	for (const r of results) {
-		if (r.lat == null || r.lon == null) continue
-		const { lat, lon, boundingbox, geojson, ...properties } = r
-		const feature: NominatimFeatureCollection["features"][number] = {
-			type: "Feature",
-			properties,
-			geometry: geojson ?? { type: "Point", coordinates: [Number(lon), Number(lat)] },
-		}
-
-		if (boundingbox?.length === 4) {
-			// boundingbox is [south, north, west, east]; GeoJSON bbox is [west, south, east, north].
-			feature.bbox = [Number(boundingbox[2]), Number(boundingbox[0]), Number(boundingbox[3]), Number(boundingbox[1])]
-		}
-		features.push(feature)
-	}
-
-	return { type: "FeatureCollection", features }
 }
 
 /** Options for {@link createNominatimRouter}. */
@@ -386,101 +255,4 @@ export function createNominatimRouter(engine: NominatimEngine, options: Nominati
 	router.get("/status", safe(status))
 
 	return router
-}
-
-/**
- * A resolved address in a neutral shape, the input to {@link toNominatimResult}. The engine maps its native
- * geocode/reverse result into this; the formatter renders it as a Nominatim result. This is the #804 mapping seam, kept
- * dependency-free (no `@mailwoman/*` import) so it stays unit-testable.
- */
-export interface ResolvedAddress {
-	lat: number | null
-	lon: number | null
-	address: NominatimAddressDetails
-	/** Pre-rendered display name; falls back to the address values joined by ", ". */
-	displayName?: string
-	category?: string
-	type?: string
-	importance?: number
-	placeRank?: number
-	boundingbox?: [string, string, string, string]
-	/** A stable id from the resolver (WOF/GERS); a deterministic hash is used when absent. */
-	placeID?: string | number
-}
-
-/** The attribution string emitted as `licence` (the data sources Mailwoman resolves over). */
-export const MAILWOMAN_LICENCE = "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER"
-
-function stableID(seed: string): number {
-	let h = 5381
-
-	for (let i = 0; i < seed.length; i++) {
-		h = (h * 33) ^ seed.charCodeAt(i)
-	}
-
-	return h >>> 0
-}
-
-/**
- * Render a {@link ResolvedAddress} as a Nominatim result. `addressdetails` gates the `address` block, matching
- * Nominatim. The `annotations` block is attached by the caller (empty until the annotations layer lands).
- */
-export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean } = {}): NominatimResult {
-	const displayName = r.displayName ?? Object.values(r.address).filter(Boolean).join(", ")
-	const lat = r.lat != null ? String(r.lat) : ""
-	const lon = r.lon != null ? String(r.lon) : ""
-	const result: NominatimResult = {
-		place_id: r.placeID ?? stableID(`${lat},${lon},${displayName}`),
-		licence: MAILWOMAN_LICENCE,
-		lat,
-		lon,
-		display_name: displayName,
-	}
-
-	if (r.category != null) {
-		result.class = r.category
-	}
-
-	if (r.type != null) {
-		result.type = r.type
-	}
-
-	if (r.importance != null) {
-		result.importance = r.importance
-	}
-
-	if (r.placeRank != null) {
-		result.place_rank = r.placeRank
-	}
-
-	if (r.boundingbox) {
-		result.boundingbox = r.boundingbox
-	}
-
-	if (opts.addressdetails) {
-		result.address = r.address
-	}
-
-	return result
-}
-
-/**
- * Project a Nominatim result into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the OUTPUT-format
- * projection. Reads the result's `address` breakdown (populated because the router forces `addressdetails` for
- * `jsonld`) plus the coordinate, re-serializing the SAME resolved place. `streetAddress` is the plain
- * house-number-first join (house_number + road); `addressCountry` is ISO-3166 alpha-2 (uppercased).
- */
-export function nominatimResultToSchemaOrg(r: NominatimResult): SchemaOrgPlace {
-	const a = r.address ?? {}
-	const streetAddress = composeStreetAddress({ houseNumber: a.house_number, street: a.road })
-
-	return toSchemaOrg({
-		lat: r.lat ? Number(r.lat) : null,
-		lon: r.lon ? Number(r.lon) : null,
-		streetAddress: streetAddress || undefined,
-		locality: a.city ?? a.town ?? a.village,
-		region: a.state,
-		postalCode: a.postcode,
-		countryCode: a.country_code,
-	})
 }
