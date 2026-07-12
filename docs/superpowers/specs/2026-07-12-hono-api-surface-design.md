@@ -84,16 +84,19 @@ Express dependency dropped. Routes whose engine method is absent still answer `5
 The native surface, `mailwoman/server/`'s successor:
 
 - `POST/GET /v1/parse` — runtime pipeline parse.
-- `POST/GET /v1/geocode` — parse + resolve.
-- `POST/GET /v1/resolve` — resolve a component dict.
+- ~~`POST/GET /v1/geocode`~~ **(2026-07-12 amendment, Task 3 of the 4b cutover plan):** implemented `POST /v1/geocode` — POST-only, parse + resolve.
+- ~~`POST/GET /v1/resolve`~~ **(2026-07-12 amendment, Task 3):** implemented `POST /v1/resolve` — POST-only, resolve a component dict.
 - `POST /v1/format` — `@mailwoman/formatter` called directly (`formatAddress` / `canonicalKey`).
 - `GET /health`.
+- **(2026-07-12 amendment, Task 3 — not in the original sketch):** `POST /v1/batch` — batch geocode over an `addresses` array, rows trimmed, bounded by `$public.MAILWOMAN_BATCH_CONCURRENCY`/`MAILWOMAN_BATCH_MAX`.
+- **(2026-07-12 amendment, Task 3 — not in the original sketch):** `POST /v1/reload` — reload the shard provider.
+- **(2026-07-12 amendment, Task 3 — not in the original sketch):** `GET /metrics` — api-kit request-timing metrics.
 
 Native responses use the api-kit error envelope and camelCase field conventions — this surface is ours; vendor constraints do not apply.
 
 ### `mailwoman serve`
 
-Mounts all four sub-apps at prefixes (`/photon`, `/nominatim`, `/libpostal`, `/` native). Per-package `npx @mailwoman/<x> serve` CLIs remain the published drop-in story.
+~~Mounts all four sub-apps at prefixes (`/photon`, `/nominatim`, `/libpostal`, `/` native).~~ **(2026-07-12 amendment, Task 3 of the 4b cutover plan):** this doesn't ship as designed. The drop-in packages depend on `mailwoman` (their CLIs wire engines from `mailwoman/geocode-core`), so `mailwoman serve` importing `createPhotonApp`/`createNominatimApp`/`createLibpostalApp` would create a dependency cycle. `mailwoman serve` therefore serves the **native `/v1` surface only**. Every surface app and its engine wiring stays exportable, so a unified process (all four mounted together) is a compose-your-own script the operator writes against those exports — documented as an example, not shipped as a command. Per-package `npx @mailwoman/<x> serve` CLIs remain the deployment story.
 
 ### Clients + release workflow
 
