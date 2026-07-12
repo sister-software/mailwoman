@@ -51,9 +51,15 @@ training_image = (
         # here that raises the opset or changes the quant scheme is a Safari decision, not
         # a free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
         # Query the live image set with `modal run scripts/modal/train_remote.py::versions`.
+        # onnx 1.21.0→1.22.0 (2026-07-12): security parity with pyproject (GHSA-hwpq-hmq9-wj77,
+        # Dependabot #1057) — verify-toolchain requires the pins agree. Opset (export_onnx.py)
+        # and quant scheme (onnxruntime, unchanged) are untouched, but the 1.22.0 set is NOT
+        # yet export-verified: the first export off this image must re-confirm graph identity
+        # (opset 17, 28×DynamicQuantizeLinear/MatMulInteger, 0 reverse-slices) before shipping.
+        # quantize.py's value_info strip stays until that export proves it unnecessary.
         "torch==2.12.0",
         "transformers==5.9.0",
-        "onnx==1.21.0",
+        "onnx==1.22.0",
         "onnxruntime==1.26.0",
         "onnxscript==0.7.0",
         # --- non-graph deps (unpinned floors are fine) ---------------------------------
