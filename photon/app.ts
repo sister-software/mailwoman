@@ -41,7 +41,28 @@ export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions 
 	app.onError((_error, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))
 
 	registerPhotonRoutes(app, engine)
-	attachOpenAPIDocs(app, { title: packageJson.name, version: packageJson.version })
+	attachOpenAPIDocs(app, {
+		title: packageJson.name,
+		version: packageJson.version,
+		description: packageJson.description,
+		license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
+		contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
+		externalDocs: {
+			description: "Switching from Photon",
+			url: "https://mailwoman.sister.software/docs/concepts/switching-from-photon",
+		},
+		servers: [
+			{
+				url: "http://{host}:{port}",
+				variables: { host: { default: "127.0.0.1" }, port: { default: "2322" } },
+			},
+		],
+		security: [],
+		tags: [
+			{ name: "geocoding", description: "Forward autocomplete and reverse geocoding." },
+			{ name: "meta", description: "Health and deploy-time operations." },
+		],
+	})
 
 	return app
 }

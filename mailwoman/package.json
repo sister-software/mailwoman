@@ -63,11 +63,6 @@
 			"default": "./out/resolver-backend.js",
 			"types": "./out/resolver-backend.d.ts"
 		},
-		"./server": {
-			"node": "./server/index.ts",
-			"default": "./out/server/index.js",
-			"types": "./out/server/index.d.ts"
-		},
 		"./sdk/test": {
 			"node": "./sdk/test/index.ts",
 			"default": "./out/sdk/test/index.js",
@@ -118,10 +113,6 @@
 				"types": "./out/resolver-backend.d.ts",
 				"default": "./out/resolver-backend.js"
 			},
-			"./server": {
-				"types": "./out/server/index.d.ts",
-				"default": "./out/server/index.js"
-			},
 			"./sdk/test": {
 				"types": "./out/sdk/test/index.d.ts",
 				"default": "./out/sdk/test/index.js"
@@ -156,6 +147,8 @@
 	"dependencies": {
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/annotations": "workspace:*",
+		"@mailwoman/api": "workspace:*",
+		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
@@ -175,7 +168,6 @@
 		"chalk": "^5.6.2",
 		"change-case": "^5.4.4",
 		"d3-scale-chromatic": "^3.1.0",
-		"express": "^5.2.1",
 		"fast-glob": "^3.3.3",
 		"geojson": "^0.5.0",
 		"ink": "^7.0.5",

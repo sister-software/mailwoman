@@ -7,8 +7,10 @@
 		"erasableSyntaxOnly": true
 	},
 	"include": ["./**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*", "./server/static/**"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
 	"references": [
+		{ "path": "../api" },
+		{ "path": "../api-kit" },
 		{ "path": "../core" },
 		{ "path": "../resolver" },
 		{ "path": "../classifiers" },

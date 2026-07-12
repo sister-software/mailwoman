@@ -5,7 +5,7 @@
  *
  *   Unit tests for `RemoteResolver` + `serializableResolveOpts` — transport behavior with a stubbed
  *   fetch, no network. The live round-trip against a real resolver service is covered in
- *   `mailwoman/test/geocode-router.test.ts`.
+ *   `mailwoman/test/api-engine.test.ts`.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -52,7 +52,7 @@ describe("RemoteResolver", () => {
 	test("POSTs { tree, opts(stripped) } and returns the response tree", async () => {
 		const resolved: AddressTree = { raw: tree.raw, roots: [{ ...tree.roots[0]!, placeID: "wof:1" } as never] }
 		const fetchSpy = stubFetch({ tree: resolved })
-		const r = new RemoteResolver({ endpoint: "http://resolver/api/resolve-tree", fetch: fetchSpy })
+		const r = new RemoteResolver({ endpoint: "http://resolver/v1/resolve", fetch: fetchSpy })
 
 		const got = await r.resolveTree(tree, { defaultCountry: "US", addressPoints: {} as AddressPointLookup })
 

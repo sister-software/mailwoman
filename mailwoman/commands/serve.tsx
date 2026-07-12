@@ -6,21 +6,27 @@
 
 import cluster, { type Worker } from "node:cluster"
 import { availableParallelism } from "node:os"
-import { resolve as resolvePath } from "node:path"
-import * as process from "node:process"
+// Default import, not `* as process` — the ESM namespace object for `node:process` only reflects
+// the process object's OWN properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`,
+// `emit`) live on its prototype chain and are silently absent from `import *`. SIGINT/SIGTERM below
+// need `.once`, so this must be the real singleton.
+import process from "node:process"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
-import express from "express"
+import { createMailwomanAPI } from "@mailwoman/api"
+import { serveNode, type ServerHandle } from "@mailwoman/api-kit"
+import { $public } from "@mailwoman/core/env"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
+import { createServeEngine } from "../api-engine.ts"
 import type { CommandComponent } from "../cli-kit/index.ts"
-import { AddressRouter, GeocodeRouter, HealthRouter, ResolveRouter } from "../server/index.ts"
 
 // NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
-// move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup,
-// and ChildThread's effect boots the express server; there is no `setImmediate(process.exit)` here).
+// move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup, and
+// ChildThread's effect boots the @mailwoman/api Hono app over a node listener; there is no
+// `setImmediate(process.exit)` here — SIGINT/SIGTERM now drive an explicit graceful `server.close()`).
 
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 	options: { cpus = availableParallelism() },
@@ -31,9 +37,63 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap; refactor pending
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
+		// Tracks whether ANY worker has ever reached "listening" — distinguishes a genuine boot
+		// failure (every worker died before one of them opened the port) from an ordinary shutdown
+		// after a healthy run. `cluster.on("listening", …)` mirrors the per-worker wiring in
+		// WorkerStatus, but at the primary, where the exit handler below can see it.
+		let anyListened = false
+		let liveWorkerCount = cpus
+
+		cluster.on("listening", () => {
+			anyListened = true
+		})
+
 		cluster.on("exit", (worker, code, signal) => {
 			console.log(`[${signal}] (${code}) Worker ${worker.process.pid} exited`)
+
+			liveWorkerCount--
+
+			if (liveWorkerCount === 0 && !anyListened) {
+				// A boot that never listened is a failed boot — supervisors must see nonzero.
+				process.exit(1)
+			}
 		})
+
+		// Graceful shutdown: a TERM/INT delivered to the PRIMARY pid (docker stop, systemctl stop)
+		// never reaches worker JS handlers — Node's cluster teardown bypasses them. Forward the
+		// signal explicitly so each worker's serveNode drain actually runs, then exit once they're
+		// gone (bounded — a hung worker must not wedge the shutdown).
+		const forward = (signal: NodeJS.Signals) => {
+			const alive = Object.values(cluster.workers ?? {}).filter(Boolean) as Worker[]
+
+			if (alive.length === 0) {
+				process.exit(0)
+			}
+			let remaining = alive.length
+
+			for (const worker of alive) {
+				worker.once("exit", () => {
+					remaining--
+
+					if (remaining === 0) {
+						process.exit(0)
+					}
+				})
+				worker.process.kill(signal)
+			}
+			setTimeout(() => {
+				// A wedged worker must not survive the primary holding the port.
+				for (const worker of alive) {
+					if (!worker.isDead()) {
+						worker.process.kill("SIGKILL")
+					}
+				}
+				process.exit(0)
+			}, 10_000).unref()
+		}
+
+		process.once("SIGINT", () => forward("SIGINT"))
+		process.once("SIGTERM", () => forward("SIGTERM"))
 	}, [cpus])
 
 	if (!workers) {
@@ -113,27 +173,43 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 
 const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { port, host } }) => {
 	useEffect(() => {
-		const app = express()
+		let handle: ServerHandle | undefined
 
-		// 2mb body cap accommodates a full /api/batch (up to MAILWOMAN_BATCH_MAX addresses).
-		app.use(express.json({ limit: "2mb" }))
-		app.use(HealthRouter)
-		app.use(AddressRouter)
-		app.use(GeocodeRouter)
-		app.use(ResolveRouter)
+		void (async () => {
+			const { engine, preflight } = await createServeEngine()
 
-		// `mailwoman/server/static/` lives next to the compiled `mailwoman/out/commands/serve.js`,
-		// so resolve relative to this file rather than relying on a repo-root path builder that
-		// pre-dated the flat-layout move.
-		const thisDir = import.meta.dirname
-		const staticPath = resolvePath(thisDir, "..", "..", "server", "static")
+			if (!preflight.ok) {
+				console.error(preflight.message)
+				process.exit(1)
+			}
 
-		console.log("Serving static files from", staticPath)
-		app.use(express.static(staticPath))
+			// 2 MiB body cap (accommodates a full /v1/batch up to MAILWOMAN_BATCH_MAX addresses) is
+			// createMailwomanAPI's own default — carried from the express server's `express.json({ limit: "2mb" })`.
+			const app = createMailwomanAPI(engine, { batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) })
 
-		app.listen(port, host, () => {
-			cluster.worker?.send("HTTP server ready")
-		})
+			handle = serveNode({
+				fetch: app.fetch,
+				port,
+				hostname: host,
+				onListen: () => cluster.worker?.send("HTTP server ready"),
+			})
+
+			// Duplicate signal deliveries (group signal + primary forward) must be no-ops — the drain runs once.
+			let draining = false
+
+			const shutdown = () => {
+				if (draining) return
+				draining = true
+
+				console.error(`[serve] worker ${process.pid} draining`)
+				void handle?.close().finally(() => process.exit(0))
+			}
+
+			process.on("SIGINT", shutdown)
+			process.on("SIGTERM", shutdown)
+		})()
+
+		return () => void handle?.close()
 	}, [host, port])
 
 	return null
