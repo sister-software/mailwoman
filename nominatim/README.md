@@ -16,28 +16,30 @@ geo.reverse((38.8977, -77.0365))
 
 ## Endpoints
 
-| Endpoint   | Nominatim contract                                       | Status  |
-| ---------- | -------------------------------------------------------- | ------- |
-| `/search`  | free-text `q` + structured forward geocoding             | ✓       |
-| `/reverse` | `lat`/`lon` → nearest address (`WofReverseGeocoder` PIP) | ✓       |
-| `/status`  | health + data version                                    | ✓       |
-| `/lookup`  | resolve known place ids                                  | planned |
+| Endpoint        | Nominatim contract                                            | Status  |
+| --------------- | ------------------------------------------------------------- | ------- |
+| `/search`       | free-text `q` + structured forward geocoding                  | ✓       |
+| `/reverse`      | `lat`/`lon` → nearest address (`WofReverseGeocoder` PIP)      | ✓       |
+| `/status`       | health + data version                                         | ✓       |
+| `/lookup`       | resolve known place ids                                       | planned |
+| `/openapi.json` | emitted OpenAPI 3.1 document for search/reverse/lookup/status | ✓       |
 
 ## Library use
 
 The package is engine-agnostic — embed it in your own server:
 
 ```ts
-import express from "express"
-import { createNominatimRouter, type NominatimEngine } from "@mailwoman/nominatim"
+import { serveNode } from "@mailwoman/api-kit"
+import { createNominatimApp, type NominatimEngine } from "@mailwoman/nominatim"
 
 const engine: NominatimEngine = {/* search, reverse, lookup, status — backed by your Mailwoman pipeline */}
-express().use(createNominatimRouter(engine)).listen(8080)
+const app = createNominatimApp(engine)
+serveNode({ fetch: app.fetch, port: 8080, hostname: "0.0.0.0" })
 ```
 
 ## CORS
 
-Browser-embedded geocoder clients call this cross-origin, so the server sends permissive CORS by default — `Access-Control-Allow-Origin: *` and a `204` answer to preflight `OPTIONS`. Behind a reverse proxy that already sets the headers, turn it off with `--no-cors` (or `createNominatimRouter(engine, { cors: false })`).
+Browser-embedded geocoder clients call this cross-origin, so the server sends permissive CORS by default — `Access-Control-Allow-Origin: *` and a `204` answer to preflight `OPTIONS`. Behind a reverse proxy that already sets the headers, turn it off with `--no-cors` (or `createNominatimApp(engine, { cors: false })`).
 
 ## Annotations
 
