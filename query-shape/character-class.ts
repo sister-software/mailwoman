@@ -131,7 +131,7 @@ export function classifyToken(text: string): TokenCharacterClass {
 	let hasArabic = false
 	let hasPunct = false
 
-	for (let i = 0; i < text.length; ) {
+	for (let i = 0; i < text.length;) {
 		const cp = text.codePointAt(i)!
 		i += cp > 0xffff ? 2 : 1
 		const cls = classifyCodepoint(cp)

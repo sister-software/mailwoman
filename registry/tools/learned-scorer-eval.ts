@@ -365,7 +365,7 @@ export async function scorerPairwiseEval(
 		let rank = 1
 		let rankSum = 0
 
-		for (let i = 0; i < sorted.length; ) {
+		for (let i = 0; i < sorted.length;) {
 			let j = i
 
 			while (j < sorted.length && sorted[j]!.s === sorted[i]!.s) {

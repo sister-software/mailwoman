@@ -31,9 +31,7 @@ The package is engine-agnostic — embed it in your own server:
 import express from "express"
 import { createNominatimRouter, type NominatimEngine } from "@mailwoman/nominatim"
 
-const engine: NominatimEngine = {
-	/* search, reverse, lookup, status — backed by your Mailwoman pipeline */
-}
+const engine: NominatimEngine = {/* search, reverse, lookup, status — backed by your Mailwoman pipeline */}
 express().use(createNominatimRouter(engine)).listen(8080)
 ```
 

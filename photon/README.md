@@ -36,9 +36,7 @@ Backed by Mailwoman's FST autocomplete tier (#190/#587) + parse → resolve.
 import express from "express"
 import { createPhotonRouter, type PhotonEngine } from "@mailwoman/photon"
 
-const engine: PhotonEngine = {
-	/* search, reverse — backed by your Mailwoman pipeline */
-}
+const engine: PhotonEngine = {/* search, reverse — backed by your Mailwoman pipeline */}
 express().use(createPhotonRouter(engine)).listen(2322)
 ```
 
