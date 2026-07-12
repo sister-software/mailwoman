@@ -52,11 +52,11 @@ training_image = (
         # a free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
         # Query the live image set with `modal run scripts/modal/train_remote.py::versions`.
         # onnx 1.21.0→1.22.0 (2026-07-12): security parity with pyproject (GHSA-hwpq-hmq9-wj77,
-        # Dependabot #1057) — verify-toolchain requires the pins agree. Opset (export_onnx.py)
-        # and quant scheme (onnxruntime, unchanged) are untouched, but the 1.22.0 set is NOT
-        # yet export-verified: the first export off this image must re-confirm graph identity
-        # (opset 17, 28×DynamicQuantizeLinear/MatMulInteger, 0 reverse-slices) before shipping.
-        # quantize.py's value_info strip stays until that export proves it unnecessary.
+        # Dependabot #1057) — verify-toolchain requires the pins agree. VERIFIED same day by
+        # re-export + re-quant of v241-fr-nsplice-ft step-12000 off this image: fp32 BYTE-
+        # IDENTICAL to the 1.21.0-era export (md5 1c58b0a0) and int8 BYTE-IDENTICAL to the
+        # shipped production artifact (md5 121162e6) — the bump provably does not touch the
+        # graph. quantize.py's value_info strip stays (exercised in that run, harmless).
         "torch==2.12.0",
         "transformers==5.9.0",
         "onnx==1.22.0",
