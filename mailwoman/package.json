@@ -154,7 +154,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@fragaria/address-formatter": "^6.7.1",
+		"@fragaria/address-formatter": "^7.0.0",
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
