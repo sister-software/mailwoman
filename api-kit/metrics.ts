@@ -8,7 +8,8 @@
  *   dependency-arrow correction). Dependency-free: monotonic counters per string-keyed tier + a
  *   bounded reservoir of recent latencies for percentile estimation. Callers own their tier
  *   vocabulary (e.g. `mailwoman`'s `ResolutionTier`); this module only ever sees `string`.
- *   Surfaced by `GET /metrics`; reset on process restart (no persistence — scrape it).
+ *   Surfaced by `GET /metrics`; reset on process restart (no persistence — scrape it). Per-process
+ *   state: under `node:cluster` each worker reports its own snapshot — aggregate at the scraper.
  */
 
 /** Recent-latency reservoir size. ~2k samples gives stable p99 without unbounded memory. */

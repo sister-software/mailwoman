@@ -338,6 +338,9 @@ export function registerMailwomanAPIRoutes(
 
 	app.openapi(
 		resolveRoute,
+		// Metrics are the ENGINE's responsibility here (phase 4b): the express predecessor recorded the
+		// street node's stamped resolution tier per call — the wired engine must carry that over, and
+		// must trim batch rows the same way (the route passes raw input through).
 		async (c) => {
 			if (!engine.resolveTree) return c.json({ error: "resolver not available" }, 503)
 			const { tree, opts } = c.req.valid("json")
