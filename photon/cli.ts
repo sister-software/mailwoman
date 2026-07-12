@@ -245,6 +245,12 @@ function openapi(): void {
 		allowPositionals: true,
 	})
 
+	if (values.flavor !== "3.1" && values.flavor !== "3.0") {
+		console.error(`✗ --flavor must be "3.1" or "3.0" (got "${values.flavor}")`)
+		console.error("Usage: mailwoman-photon openapi [--flavor 3.1|3.0] [--out <path>]")
+		process.exit(1)
+	}
+
 	const app = createPhotonApp({})
 
 	printOpenAPIDocument(app, PHOTON_DOC_INFO, values)

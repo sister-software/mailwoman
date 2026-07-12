@@ -61,6 +61,22 @@ function emitterCLIPath(surface: ClientSurface): string {
 	return repoRootPath(surface, "out", "cli.js")
 }
 
+/**
+ * The two repo-root license files (verified present: `LICENSE.md` — AGPL-3.0-only + a Commercial-License pointer — and
+ * `COMMERCIAL-LICENSE.md` — the full commercial agreement text) that every generated package's SPDX expression
+ * (`AGPL-3.0-only OR LicenseRef-Commercial`) references. Both artifacts must carry both files verbatim: an AGPL
+ * conveyance requires the license text to travel with the source, and `LicenseRef-Commercial` is meaningless without
+ * the referenced text alongside it.
+ */
+const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
+
+/** Copy the repo-root license files into `destDir` (a package/crate root) — shared by the Python + Rust assembly steps. */
+function copyLicenseFiles(destDir: string): void {
+	for (const filename of LICENSE_FILENAMES) {
+		copyFileSync(repoRootPath(filename), join(destDir, filename))
+	}
+}
+
 /** Absolute paths to each surface's emitted document, per flavor. */
 export interface SpecPaths {
 	v31: Record<ClientSurface, string>
@@ -207,6 +223,11 @@ readme = "README.md"
 # A plain SPDX expression string, not the { text = "…" } table — setuptools >= 77 deprecates the
 # table form (a build-time warning that would otherwise show up in every receipt).
 license = "AGPL-3.0-only OR LicenseRef-Commercial"
+# Explicit PEP 639 \`license-files\` (setuptools' default \`LICEN[CS]E*\` glob only catches LICENSE.md,
+# not COMMERCIAL-LICENSE.md — the "LicenseRef-Commercial" half of the SPDX expression above would ship
+# unreferenced without this). Both files are copied into this package root by copyLicenseFiles() during
+# assembly; setuptools stages them under the wheel's dist-info/licenses/ and the sdist root.
+license-files = ["LICENSE.md", "COMMERCIAL-LICENSE.md"]
 requires-python = ">=3.10"
 authors = [{ name = "Sister Software", email = "contact@sister.software" }]
 keywords = ["geocoding", "photon", "nominatim", "libpostal", "openapi", "mailwoman", "address"]
@@ -242,7 +263,9 @@ Issues = "https://github.com/sister-software/mailwoman/issues"
 dev = ["pytest>=7.0", "ruff==0.15.20"]
 
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+# >=77: the first release with PEP 639 \`license-files\` + the plain-string SPDX \`license\` expression
+# above stabilized (pre-77 either ignores license-files or warns on the SPDX string form).
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -457,28 +480,12 @@ function pythonReadme(): string {
 	return lines.join("\n")
 }
 
-function pythonExample(): string {
-	return `"""Forward-geocode "berlin" against the hosted Photon trial endpoint and print the top 3 hits.
-
-Run: \`\`python examples/search_berlin.py\`\` (from the package root, after \`pip install -e .\`).
-"""
-
-from mailwoman_client import PhotonClient
-from mailwoman_client.photon.api.geocoding import search
-
-client = PhotonClient.hosted()  # https://photon.sister.software
-result = search.sync(client=client, q="berlin", limit=3)
-
-for feature in result.features:
-    lon, lat = feature.geometry.coordinates
-    props = feature.properties
-    print(f"{props.name} ({props.type_}) — {lat:.4f}, {lon:.4f} [{props.country or '?'}]")
-`
-}
-
 /**
- * Write the pyproject.toml + README.md + `mailwoman_client/__init__.py` + `py.typed` + example — the salvaged layout,
- * adapted for the fourth `mailwoman` module.
+ * Write the pyproject.toml + README.md + `mailwoman_client/__init__.py` + `py.typed` + license texts — the salvaged
+ * layout, adapted for the fourth `mailwoman` module. No `examples/` dir: the salvaged `search_berlin.py` example wasn't
+ * wired into either `[tool.setuptools.packages.find]` (wheel) or a MANIFEST.in (sdist), so it was silently dropped from
+ * both built artifacts. The README's own "Usage" section already carries the same snippet inline, so it isn't lost —
+ * just not duplicated as a file that never shipped.
  */
 function assemblePythonPackage(pythonDir: string, version: string, phase: (p: string, d?: string) => void): void {
 	phase("python-assemble", pythonDir)
@@ -486,8 +493,9 @@ function assemblePythonPackage(pythonDir: string, version: string, phase: (p: st
 	writeFileSync(join(pythonDir, "README.md"), pythonReadme())
 	writeFileSync(join(pythonDir, "mailwoman_client", "__init__.py"), pythonInitPy())
 	writeFileSync(join(pythonDir, "mailwoman_client", "py.typed"), "")
-	mkdirSync(join(pythonDir, "examples"), { recursive: true })
-	writeFileSync(join(pythonDir, "examples", "search_berlin.py"), pythonExample())
+	// AGPL conveyance + the LicenseRef-Commercial target (see license-files above): copied into the package root,
+	// not the mailwoman_client/ subpackage, matching where setuptools looks relative to pyproject.toml.
+	copyLicenseFiles(pythonDir)
 }
 
 /**
@@ -542,8 +550,11 @@ documentation = "https://docs.rs/mailwoman-client"
 readme = "README.md"
 keywords = ["geocoding", "photon", "nominatim", "libpostal", "openapi"]
 categories = ["api-bindings", "science::geo"]
-# The vendored specs + the src are all that ship; nothing else is needed to build.
-include = ["src/**/*", "openapi/*.json", "examples/**/*", "README.md"]
+# The vendored specs + the src are all that ship; nothing else is needed to build. LICENSE.md +
+# COMMERCIAL-LICENSE.md are copied into the crate root by copyLicenseFiles() during assembly — Cargo's
+# packager only ships files this list names, so both must be listed explicitly (the \`license\` field
+# above is metadata only; it doesn't embed the referenced text).
+include = ["src/**/*", "openapi/*.json", "examples/**/*", "README.md", "LICENSE.md", "COMMERCIAL-LICENSE.md"]
 
 [dependencies]
 # progenitor's generate_api! proc-macro synthesizes the client at compile time from the vendored
@@ -752,8 +763,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /**
- * Vendor the 3.0 specs + write Cargo.toml/src/lib.rs/README.md/examples/basic.rs — the salvaged crate pattern, adapted
- * for the fourth `mailwoman` module.
+ * Vendor the 3.0 specs + write Cargo.toml/src/lib.rs/README.md/examples/basic.rs + the license texts — the salvaged
+ * crate pattern, adapted for the fourth `mailwoman` module.
  */
 function assembleRustCrate(
 	specPaths: SpecPaths,
@@ -775,6 +786,8 @@ function assembleRustCrate(
 	writeFileSync(join(rustDir, "src", "lib.rs"), rustLibRs())
 	writeFileSync(join(rustDir, "README.md"), rustReadme())
 	writeFileSync(join(rustDir, "examples", "basic.rs"), rustExample())
+	// AGPL conveyance + the LicenseRef-Commercial target (see the Cargo.toml `include` list above).
+	copyLicenseFiles(rustDir)
 }
 
 /**
