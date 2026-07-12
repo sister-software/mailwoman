@@ -11,7 +11,7 @@ dependencies = [
 	# PyArrow was dropped in Phase 1.5 (#18 §4) when corpus build moved to JS-native Parquet
 	# via @dsnp/parquetjs, then re-added in Phase 2 (issue #10) for the training data loader.
 	"sentencepiece>=0.2.0",
-	"pyarrow>=15",
+	"pyarrow>=25.0.0",
 	"pyyaml>=6",
 	"numpy>=1.26,<3",
 ]
