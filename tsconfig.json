@@ -47,6 +47,7 @@
 		{ "path": "./mailwoman" },
 		{ "path": "./annotations" },
 		{ "path": "./api-kit" },
+		{ "path": "./api" },
 		{ "path": "./nominatim" },
 		{ "path": "./photon" },
 		{ "path": "./libpostal" },

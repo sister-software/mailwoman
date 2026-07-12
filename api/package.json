@@ -1,0 +1,45 @@
+{
+	"name": "@mailwoman/api",
+	"version": "5.10.1",
+	"description": "The native Mailwoman HTTP API — engine-agnostic /v1 surface (parse, geocode, batch, resolve, format) with health, metrics, and an emitted OpenAPI document.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "api"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			}
+		},
+		"access": "public"
+	},
+	"dependencies": {
+		"@hono/zod-openapi": "^1.4.0",
+		"@mailwoman/api-kit": "workspace:*",
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/formatter": "workspace:*",
+		"hono": "^4.12.29",
+		"zod": "^4.4.3"
+	}
+}
