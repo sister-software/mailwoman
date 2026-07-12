@@ -56,6 +56,10 @@ jobs:
       # "command not found: uvx", exit 127).
       - name: Setup uv (ruff for lint:python)
         uses: astral-sh/setup-uv@v7
+        with:
+          # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest";
+          # silences setup-uv's could-not-determine-version fallback warning).
+          version: "0.11.16"
 
       # Full repo-wide lint (oxlint incl. sister-software/no-process-globals, oxfmt --check, python
       # toolchain checks). This is THE complete gate: the pre-commit hook only lints STAGED files,

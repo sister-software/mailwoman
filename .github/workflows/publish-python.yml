@@ -61,6 +61,10 @@ jobs:
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
+        with:
+          # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest";
+          # silences setup-uv's could-not-determine-version fallback warning).
+          version: "0.11.16"
 
       # The generator's Rust half runs `cargo check --examples` as part of its
       # verify gate, so the toolchain is needed even on the Python publish path.

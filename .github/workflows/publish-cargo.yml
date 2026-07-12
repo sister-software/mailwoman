@@ -52,6 +52,10 @@ jobs:
       # import-check are part of the verify gate).
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
+        with:
+          # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest";
+          # silences setup-uv's could-not-determine-version fallback warning).
+          version: "0.11.16"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
