@@ -1,0 +1,87 @@
+# Publish the generated Python API client (`mailwoman-client`) to PyPI via
+# Trusted Publishing (OIDC) — no token secret anywhere.
+#
+# THE FILENAME IS LOAD-BEARING: PyPI's Trusted Publisher configuration binds to
+# this exact workflow path (`.github/workflows/publish-python.yml`) plus the
+# `pypi` GitHub environment declared on the job below. Renaming this file (or
+# the environment) silently breaks the OIDC exchange until the PyPI-side
+# publisher config is updated to match. The pending-publisher project name on
+# PyPI must be `mailwoman-client` (what `mailwoman clients generate` stamps
+# into the generated pyproject).
+#
+# The client is regenerated from `main` at dispatch time — its version syncs to
+# `mailwoman/package.json`, so ALWAYS dispatch this AFTER the npm release it
+# should match (see RELEASING.md "Client packages": PyPI rejects a re-upload of
+# an already-published version, so a client-only fix rides the next release
+# train). Joins the `publish` concurrency group so a dispatch can't race an
+# in-flight npm release into generating at a mid-bump version.
+name: Publish Python client
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  # Mints the OIDC token PyPI's Trusted Publisher verifies. Scoped to this
+  # workflow only — the main publish.yml's clients job deliberately has no
+  # id-token permission (it never publishes).
+  id-token: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish-python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The GitHub environment PyPI's Trusted Publisher config expects to see in
+    # the OIDC claims. No secrets live in it — the trust IS the credential.
+    environment: pypi
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The generated client's version syncs to mailwoman/package.json on
+          # main (same rationale as publish.yml's clients job — the release
+          # flow is main-only by construction).
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+
+      # The generator's Rust half runs `cargo check --examples` as part of its
+      # verify gate, so the toolchain is needed even on the Python publish path.
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      # Full generate + verify (8 spec emissions, openapi-python-client, uv
+      # build + wheel import-check, cargo check) — a failure here stops the
+      # publish before anything reaches PyPI.
+      - name: Generate + verify API clients
+        run: node mailwoman/out/cli.js clients generate
+
+      # `--trusted-publishing always` fails loud if the OIDC exchange doesn't
+      # happen (e.g. the PyPI-side publisher config drifted from this
+      # file/environment) instead of falling back to prompting for a token.
+      - name: Publish to PyPI (Trusted Publishing)
+        working-directory: clients-build/python
+        run: uv publish --trusted-publishing always
