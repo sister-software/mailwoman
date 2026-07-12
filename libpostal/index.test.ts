@@ -100,6 +100,41 @@ test("parse without a query answers the exact legacy 400 body", async () => {
 	}
 })
 
+test("an empty higher-precedence query param wins precedence and 400s (legacy parity — no fallback to address)", async () => {
+	const app = createLibpostalApp(fixtureEngine)
+
+	const viaQuery = await app.request("/parse?query=&address=1600+pennsylvania+ave")
+	expect(viaQuery.status).toBe(400)
+	expect(await viaQuery.json()).toEqual({ error: "query is required" })
+
+	const viaBody = await app.request("/parse?address=1600+pennsylvania+ave", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ query: "" }),
+	})
+	expect(viaBody.status).toBe(400)
+	expect(await viaBody.json()).toEqual({ error: "query is required" })
+})
+
+test("POST /parse with malformed JSON is tolerated like the served legacy endpoint (falls through to query params)", async () => {
+	const app = createLibpostalApp(fixtureEngine)
+
+	const withParam = await app.request("/parse?query=1600+pennsylvania+ave", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: "{truncated",
+	})
+	expect(withParam.status).toBe(200)
+
+	const without = await app.request("/parse", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: "{truncated",
+	})
+	expect(without.status).toBe(400)
+	expect(await without.json()).toEqual({ error: "query is required" })
+})
+
 test("expand without an engine method answers the exact legacy 501 body", async () => {
 	const app = createLibpostalApp(fixtureEngine)
 	const res = await app.request("/expand?address=x")
@@ -145,6 +180,17 @@ test("CORS: preflight OPTIONS answers 204 with CORS headers (POST /parse is pref
 	expect(res.status).toBe(204)
 	expect(res.headers.get("access-control-allow-origin")).toBe("*")
 	expect(res.headers.get("access-control-allow-methods")).toContain("POST")
+})
+
+test("CORS preflight carries the legacy header values (Allow-Headers *, Max-Age 86400)", async () => {
+	const app = createLibpostalApp(fixtureEngine)
+	const res = await app.request("/parse", {
+		method: "OPTIONS",
+		headers: { origin: "https://example.com", "access-control-request-method": "POST" },
+	})
+	expect(res.status).toBe(204)
+	expect(res.headers.get("access-control-allow-headers")).toBe("*")
+	expect(res.headers.get("access-control-max-age")).toBe("86400")
 })
 
 test("CORS: { cors: false } disables the headers (for a proxy that owns CORS)", async () => {

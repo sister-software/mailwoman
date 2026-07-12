@@ -19,8 +19,9 @@ import { registerLibpostalRoutes } from "./routes.ts"
 export interface LibpostalAppOptions {
 	/**
 	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
-	 * with `204`. Default `true` — browser clients need it (#1017). Set `false` when a reverse proxy already owns the
-	 * CORS headers.
+	 * with `204`. Default `true` — without it, a cross-origin XHR (including the `POST /parse` preflight) is blocked
+	 * outright, and browser clients need this to work at all (#1017). Set `false` for deployments where a reverse proxy
+	 * already owns the CORS headers.
 	 */
 	cors?: boolean
 }

@@ -9,7 +9,7 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import type { Context } from "hono"
+import type { Context, Next } from "hono"
 
 import { type LibpostalEngine, toLibpostalComponents } from "./engine.ts"
 import {
@@ -157,19 +157,54 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
 	}
 }
 
-const asTrimmedString = (value: unknown): string | undefined =>
-	typeof value === "string" && value.trim() ? value.trim() : undefined
+/**
+ * Coalesce candidate params by raw presence, not truthiness — an empty-but-present string must survive coalescing so it
+ * wins precedence over a lower-priority param (legacy wire parity: the old handler trimmed AFTER coalescing).
+ */
+const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
+
+/**
+ * Legacy tolerance: a malformed JSON body must behave like an absent one, falling through to query params — the old
+ * express handler never mounted a body parser at all, so a malformed body was simply inert there. zod-openapi's own
+ * body validator doesn't share that tolerance: it throws on unparseable JSON, which aborts straight to `app.onError`
+ * before either its schema check or our `readBody` above ever runs. Pre-read the body ourselves and, if it fails to
+ * parse, swap in a fresh, benign `{}` request so every downstream reader sees a clean empty body.
+ */
+async function tolerateMalformedJSON(c: Context, next: Next): Promise<void> {
+	if (c.req.method === "POST" && c.req.raw.body) {
+		const text = await c.req.raw.text()
+		let sanitized = text
+
+		try {
+			JSON.parse(text)
+		} catch {
+			sanitized = "{}"
+		}
+
+		c.req.raw = new Request(c.req.raw.url, {
+			method: c.req.raw.method,
+			headers: c.req.raw.headers,
+			body: sanitized,
+		})
+	}
+
+	await next()
+}
 
 /** Register the libpostal-compatible routes against an injected engine. */
 export function registerLibpostalRoutes(app: OpenAPIHono, engine: LibpostalEngine): void {
+	app.use("/parse", tolerateMalformedJSON)
+	app.use("/expand", tolerateMalformedJSON)
+
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 
 	const parse = async (c: Context, body: Record<string, unknown>) => {
-		const query =
-			asTrimmedString(body.query) ??
-			asTrimmedString(c.req.query("query")) ??
-			asTrimmedString(body.address) ??
-			asTrimmedString(c.req.query("address"))
+		const query = (
+			rawParam(body.query) ??
+			rawParam(c.req.query("query")) ??
+			rawParam(body.address) ??
+			rawParam(c.req.query("address"))
+		)?.trim()
 
 		if (!query) return c.json({ error: "query is required" }, 400)
 
@@ -179,7 +214,7 @@ export function registerLibpostalRoutes(app: OpenAPIHono, engine: LibpostalEngin
 	const expand = async (c: Context, body: Record<string, unknown>) => {
 		if (!engine.expand) return c.json({ error: "expand not implemented" }, 501)
 
-		const address = asTrimmedString(body.address) ?? asTrimmedString(c.req.query("address"))
+		const address = (rawParam(body.address) ?? rawParam(c.req.query("address")))?.trim()
 
 		if (!address) return c.json({ error: "address is required" }, 400)
 
