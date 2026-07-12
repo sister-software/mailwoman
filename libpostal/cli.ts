@@ -58,17 +58,16 @@ function serve(): void {
 		},
 	}
 
-	// Temporary boot wiring — Task 6 owns the real CLI rewrite (Pastel arc).
 	const app = createLibpostalApp(engine, { cors: values.cors })
 
 	serveNode({
 		fetch: app.fetch,
 		port,
 		hostname: host,
-		onListen: (info) => {
-			console.error(`[@mailwoman/libpostal] listening on http://${host}:${info.port}`)
+		onListen: () => {
+			console.error(`[@mailwoman/libpostal] listening on http://${host}:${port}`)
 			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
-			console.error(`  endpoints: POST/GET /parse  POST/GET /expand`)
+			console.error(`  endpoints: POST/GET /parse  POST/GET /expand  GET /openapi.json`)
 		},
 	})
 }
