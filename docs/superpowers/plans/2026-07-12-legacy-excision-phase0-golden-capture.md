@@ -339,7 +339,7 @@ console.error(
 - [ ] **Step 6: Run the extractor**
 
 Run: `node mailwoman/dev-tools/extract-parity-corpus.run.ts`
-Expected: `extracted <N> assert() cases from 27 parity files (<M> non-literal)` with N ≥ 400 (address.usa alone has 73) and M small (likely 0). If parity file count ≠ 27, list the test-kit importers (`grep -l 'mailwoman/test-kit' mailwoman/test/*.test.ts`) and reconcile before proceeding. Spot-check: `head -2 mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl` shows well-formed rows.
+Expected: `extracted <N> assert() cases from 27 parity files (<M> non-literal)` with N = 376 (measured: grep of assert( call sites across the 27 files = 376, verified 2026-07-12; the original ≥400 was an estimate) and M small (likely 0). If parity file count ≠ 27, list the test-kit importers (`grep -l 'mailwoman/test-kit' mailwoman/test/*.test.ts`) and reconcile before proceeding. Spot-check: `head -2 mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl` shows well-formed rows.
 
 - [ ] **Step 7: Commit**
 
@@ -800,7 +800,7 @@ test("parity-inputs.jsonl: every row has a file, an input, and expected records"
 		expected?: unknown[]
 	}>
 
-	expect(rows.length).toBeGreaterThanOrEqual(400)
+	expect(rows.length).toBeGreaterThanOrEqual(370)
 
 	for (const row of rows) {
 		expect(typeof row.file).toBe("string")
@@ -826,7 +826,7 @@ test("v1-parse-golden.jsonl: outcomes carry solutions arrays", () => {
 		outcome?: { solutions?: unknown[] }
 	}>
 
-	expect(rows.length).toBeGreaterThanOrEqual(400)
+	expect(rows.length).toBeGreaterThanOrEqual(350)
 
 	for (const row of rows) {
 		expect(typeof row.input).toBe("string")
@@ -840,7 +840,7 @@ test("libpostal parse-golden.jsonl: wire rows are [{label, value}] under status 
 		body?: Array<{ label?: string; value?: string }>
 	}>
 
-	expect(rows.length).toBeGreaterThanOrEqual(400)
+	expect(rows.length).toBeGreaterThanOrEqual(350)
 
 	for (const row of rows) {
 		expect(row.status).toBe(200)
