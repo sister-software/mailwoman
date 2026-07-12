@@ -7,7 +7,6 @@
 export * from "./classification/index.ts"
 export * from "./collections.ts"
 export * from "./decoder/index.ts"
-export * from "./formatter/index.ts"
 export * from "./identifiers.ts"
 export * from "./parser/index.ts"
 export * from "./pipeline/index.ts"

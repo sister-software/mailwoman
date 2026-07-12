@@ -17,7 +17,7 @@ function match(classification: string, value: string, start: number, confidence:
 }
 
 function solution(matches: ReturnType<typeof match>[]): SerializedSolution {
-	return { score: 1, penalty: 0, classifications: {}, formatted_address: "", matches } as unknown as SerializedSolution
+	return { score: 1, penalty: 0, classifications: {}, matches } as unknown as SerializedSolution
 }
 
 describe("solutionToProposals", () => {
