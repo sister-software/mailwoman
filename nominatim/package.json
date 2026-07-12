@@ -14,8 +14,7 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"README.md",
-		"openapi.yaml"
+		"README.md"
 	],
 	"type": "module",
 	"exports": {
