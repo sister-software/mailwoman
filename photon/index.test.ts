@@ -4,39 +4,30 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { AddressInfo } from "node:net"
-
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
-import express from "express"
 import { expect, test } from "vitest"
 
 import {
-	createPhotonRouter,
+	createPhotonApp,
 	photonFeature,
 	photonFeatureToSchemaOrg,
 	photonForwardCollection,
 	photonForwardFeature,
+	type PhotonEngine,
 	type PhotonForwardInput,
 	photonForwardProperties,
 	photonOSMTags,
-	type PhotonEngine,
+	type PhotonSearchParams,
 } from "./index.ts"
 
-const engine: PhotonEngine = {
+/** Fixture engine: `search` resolves a fixed empty collection. */
+const searchEngine: PhotonEngine = {
 	search: async () => ({ type: "FeatureCollection", features: [] }),
 }
 
-/** Boot the app on an ephemeral port, hand the base URL to `fn`, always close. */
-async function withServer(app: express.Express, fn: (base: string) => Promise<void>): Promise<void> {
-	const server = app.listen(0)
-	await new Promise((resolve) => server.once("listening", resolve))
-	const { port } = server.address() as AddressInfo
-
-	try {
-		await fn(`http://127.0.0.1:${port}`)
-	} finally {
-		await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())))
-	}
+/** Fixture engine: `reverse` resolves a fixed empty collection. */
+const reverseEngine: PhotonEngine = {
+	reverse: async () => ({ type: "FeatureCollection", features: [] }),
 }
 
 // #1014 — forward /api must decorate properties from the RESOLVED gazetteer place (proper-cased
@@ -301,71 +292,149 @@ const jsonldEngine: PhotonEngine = {
 }
 
 test("route: /reverse?format=jsonld returns schema.org Place[] JSON-LD (#1052)", async () => {
-	await withServer(express().use(createPhotonRouter(jsonldEngine)), async (base) => {
-		const res = await fetch(`${base}/reverse?lat=48.8566&lon=2.3522&format=jsonld`)
-		expect(res.status).toBe(200)
-		const body = (await res.json()) as SchemaOrgPlace[]
-		expect(Array.isArray(body)).toBe(true)
-		const place = body[0]!
-		expect(place["@context"]).toBe("https://schema.org")
-		expect(place["@type"]).toBe("Place")
-		expect(place.name).toBe("Paris")
-		expect(place.address?.addressLocality).toBe("Paris")
-		expect(place.address?.addressCountry).toBe("FR")
-	})
+	const app = createPhotonApp(jsonldEngine)
+	const res = await app.request("/reverse?lat=48.8566&lon=2.3522&format=jsonld")
+	expect(res.status).toBe(200)
+	const body = (await res.json()) as SchemaOrgPlace[]
+	expect(Array.isArray(body)).toBe(true)
+	const place = body[0]!
+	expect(place["@context"]).toBe("https://schema.org")
+	expect(place["@type"]).toBe("Place")
+	expect(place.name).toBe("Paris")
+	expect(place.address?.addressLocality).toBe("Paris")
+	expect(place.address?.addressCountry).toBe("FR")
 })
 
 test("route: /api?format=jsonld returns schema.org Place[] JSON-LD; default stays GeoJSON (#1052)", async () => {
-	await withServer(express().use(createPhotonRouter(jsonldEngine)), async (base) => {
-		const res = await fetch(`${base}/api?q=8+boulevard+du+palais&format=jsonld`)
-		expect(res.status).toBe(200)
-		const body = (await res.json()) as SchemaOrgPlace[]
-		expect(Array.isArray(body)).toBe(true)
-		const place = body[0]!
-		expect(place["@context"]).toBe("https://schema.org")
-		expect(place["@type"]).toBe("Place")
-		expect(place.address?.["@type"]).toBe("PostalAddress")
-		expect(place.address?.streetAddress).toBe("8 Boulevard du Palais")
-		expect(place.address?.addressCountry).toBe("FR")
-		expect(place.geo?.latitude).toBeCloseTo(48.8548)
+	const app = createPhotonApp(jsonldEngine)
+	const res = await app.request("/api?q=8+boulevard+du+palais&format=jsonld")
+	expect(res.status).toBe(200)
+	const body = (await res.json()) as SchemaOrgPlace[]
+	expect(Array.isArray(body)).toBe(true)
+	const place = body[0]!
+	expect(place["@context"]).toBe("https://schema.org")
+	expect(place["@type"]).toBe("Place")
+	expect(place.address?.["@type"]).toBe("PostalAddress")
+	expect(place.address?.streetAddress).toBe("8 Boulevard du Palais")
+	expect(place.address?.addressCountry).toBe("FR")
+	expect(place.geo?.latitude).toBeCloseTo(48.8548)
 
-		// The native GeoJSON FeatureCollection stays the default (no format param).
-		const def = (await (await fetch(`${base}/api?q=x`)).json()) as { type: string }
-		expect(def.type).toBe("FeatureCollection")
-	})
+	// The native GeoJSON FeatureCollection stays the default (no format param).
+	const def = (await (await app.request("/api?q=x")).json()) as { type: string }
+	expect(def.type).toBe("FeatureCollection")
 })
 
 test("CORS: permissive Access-Control-Allow-Origin on responses (upstream Photon parity)", async () => {
-	await withServer(express().use(createPhotonRouter(engine)), async (base) => {
-		const res = await fetch(`${base}/api?q=berlin`)
-		expect(res.headers.get("access-control-allow-origin")).toBe("*")
-	})
+	const app = createPhotonApp(searchEngine)
+	const res = await app.request("/api?q=berlin")
+	expect(res.headers.get("access-control-allow-origin")).toBe("*")
 })
 
 test("CORS: preflight OPTIONS answers 204 with CORS headers", async () => {
-	await withServer(express().use(createPhotonRouter(engine)), async (base) => {
-		const res = await fetch(`${base}/api`, { method: "OPTIONS" })
-		expect(res.status).toBe(204)
-		expect(res.headers.get("access-control-allow-origin")).toBe("*")
-		expect(res.headers.get("access-control-allow-methods")).toContain("GET")
+	const app = createPhotonApp(searchEngine)
+	const res = await app.request("/api", {
+		method: "OPTIONS",
+		headers: { origin: "https://example.com", "access-control-request-method": "GET" },
 	})
+	expect(res.status).toBe(204)
+	expect(res.headers.get("access-control-allow-origin")).toBe("*")
+	expect(res.headers.get("access-control-allow-methods")).toContain("GET")
 })
 
 test("CORS: { cors: false } disables the headers (for a proxy that owns CORS)", async () => {
-	await withServer(express().use(createPhotonRouter(engine, { cors: false })), async (base) => {
-		const res = await fetch(`${base}/api?q=berlin`)
-		expect(res.headers.get("access-control-allow-origin")).toBeNull()
-	})
+	const app = createPhotonApp(searchEngine, { cors: false })
+	const res = await app.request("/api?q=berlin")
+	expect(res.headers.get("access-control-allow-origin")).toBeNull()
 })
 
 test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async () => {
-	await withServer(express().use(createPhotonRouter(engine)), async (base) => {
-		const res = await fetch(`${base}/`)
-		expect(res.status).toBe(200)
-		expect(res.headers.get("content-type")).toContain("text/html")
-		const body = await res.text()
-		expect(body).toContain("@mailwoman/photon")
-		expect(body).toContain("/api?q=") // a clickable example query
-		expect(body).toContain("switching-from-photon") // docs pointer
+	const app = createPhotonApp(searchEngine)
+	const res = await app.request("/")
+	expect(res.status).toBe(200)
+	expect(res.headers.get("content-type")).toContain("text/html")
+	const body = await res.text()
+	expect(body).toContain("@mailwoman/photon")
+	expect(body).toContain("/api?q=") // a clickable example query
+	expect(body).toContain("switching-from-photon") // docs pointer
+})
+
+// Pinning tests (Phase-2 Task 3) — the `legacyQuery` adapter's express-shaped observable contract.
+
+test("repeated q answers the legacy 400 envelope (express array shape preserved)", async () => {
+	const app = createPhotonApp(searchEngine)
+	const res = await app.request("/api?q=berlin&q=paris")
+	expect(res.status).toBe(400)
+	expect(await res.json()).toEqual({ type: "FeatureCollection", features: [], message: "q is required" })
+})
+
+test("repeated lat on /reverse answers the legacy 400 (Number(array) is NaN)", async () => {
+	const app = createPhotonApp(reverseEngine)
+	const res = await app.request("/reverse?lat=52.5&lat=52.6&lon=13.4")
+	expect(res.status).toBe(400)
+	expect(await res.json()).toEqual({ type: "FeatureCollection", features: [], message: "lat and lon are required" })
+})
+
+test("repeated osm_tag and layer reach the engine as arrays (contractual repeatable params)", async () => {
+	let seen: PhotonSearchParams | undefined
+	const app = createPhotonApp({
+		search: async (params) => {
+			seen = params
+
+			return { type: "FeatureCollection", features: [] }
+		},
 	})
+	const res = await app.request("/api?q=berlin&osm_tag=place:city&osm_tag=place:town&layer=city&layer=locality")
+	expect(res.status).toBe(200)
+	expect(seen?.osmTag).toEqual(["place:city", "place:town"])
+	expect(seen?.layer).toEqual(["city", "locality"])
+})
+
+test("limit falls back to 15 on absent, non-numeric, and zero values (legacy Number(x) || 15)", async () => {
+	const seen: number[] = []
+	const app = createPhotonApp({
+		search: async (params) => {
+			seen.push(params.limit)
+
+			return { type: "FeatureCollection", features: [] }
+		},
+	})
+
+	for (const suffix of ["", "&limit=abc", "&limit=0"]) {
+		await app.request(`/api?q=berlin${suffix}`)
+	}
+	expect(seen).toEqual([15, 15, 15])
+})
+
+test("non-numeric bias lat/lon on /api is tolerated (soft bias — NaN reaches the engine, no 400)", async () => {
+	let seen: PhotonSearchParams | undefined
+	const app = createPhotonApp({
+		search: async (params) => {
+			seen = params
+
+			return { type: "FeatureCollection", features: [] }
+		},
+	})
+	const res = await app.request("/api?q=berlin&lat=abc&lon=13.4")
+	expect(res.status).toBe(200)
+	expect(Number.isNaN(seen?.lat)).toBe(true)
+})
+
+test("out-of-range /reverse coordinates answer the exact range 400", async () => {
+	const app = createPhotonApp(reverseEngine)
+	const res = await app.request("/reverse?lat=91&lon=13.4")
+	expect(res.status).toBe(400)
+	expect(await res.json()).toEqual({
+		type: "FeatureCollection",
+		features: [],
+		message: "lat must be in [-90, 90] and lon in [-180, 180]",
+	})
+})
+
+test("GET /openapi.json serves the emitted 3.1 document", async () => {
+	const app = createPhotonApp(searchEngine)
+	const res = await app.request("/openapi.json")
+	expect(res.status).toBe(200)
+	const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> }
+	expect(doc.openapi).toBe("3.1.0")
+	expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/", "/api", "/reverse"]))
 })

@@ -4689,7 +4689,6 @@ __metadata:
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    express: "npm:^5.2.1"
     hono: "npm:^4.12.29"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"

@@ -18,6 +18,7 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -30,7 +31,7 @@ import {
 } from "mailwoman/resolver-backend"
 
 import {
-	createPhotonRouter,
+	createPhotonApp,
 	photonCollection,
 	photonFeature,
 	photonForwardCollection,
@@ -207,10 +208,13 @@ async function serve(): Promise<void> {
 		},
 	}
 
-	const express = (await import("express")).default
-	express()
-		.use(createPhotonRouter(engine, { cors: values.cors }))
-		.listen(port, host, () => {
+	const app = createPhotonApp(engine, { cors: values.cors })
+
+	serveNode({
+		fetch: app.fetch,
+		port,
+		hostname: host,
+		onListen: () => {
 			console.error(`[@mailwoman/photon] listening on http://${host}:${port}`)
 			console.error(`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
 			console.error(
@@ -220,7 +224,8 @@ async function serve(): Promise<void> {
 			)
 			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
 			console.error(`  endpoints: GET /api  GET /reverse`)
-		})
+		},
+	})
 }
 
 // Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).
