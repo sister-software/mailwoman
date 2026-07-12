@@ -4376,7 +4376,6 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
-    maplibre-contour: "npm:^0.1.0"
     maplibre-gl: "npm:^5.24.0"
     type-fest: "npm:^5.8.0"
   languageName: unknown
@@ -15906,13 +15905,6 @@ __metadata:
     mailwoman: ./out/cli.js
   languageName: unknown
   linkType: soft
-
-"maplibre-contour@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "maplibre-contour@npm:0.1.0"
-  checksum: 10/2552f1ef05ec1757843ca4f7ab0c2e6193b2e55306d49304bb9b155da3eecab3ec1084e0d3932f5128a2d88dd0e11ac2210aad9df3897491e1e4e1fce412849e
-  languageName: node
-  linkType: hard
 
 "maplibre-gl@npm:^5.24.0":
   version: 5.24.0

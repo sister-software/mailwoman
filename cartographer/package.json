@@ -105,7 +105,6 @@
 		"@maplibre/maplibre-gl-style-spec": "^25.0.2",
 		"@protomaps/basemaps": "^5.7.2",
 		"d3-scale-chromatic": "^3.1.0",
-		"maplibre-contour": "^0.1.0",
 		"maplibre-gl": "^5.24.0",
 		"type-fest": "^5.8.0"
 	},
