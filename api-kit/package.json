@@ -1,14 +1,13 @@
 {
-	"name": "@mailwoman/libpostal",
+	"name": "@mailwoman/api-kit",
 	"version": "5.10.1",
-	"description": "libpostal drop-in — a libpostal-compatible parse/expand HTTP API over Mailwoman's neural address parser. The lowest-dependency drop-in: parse needs no gazetteer. Run it with `npx @mailwoman/libpostal serve`.",
+	"description": "API plumbing for Mailwoman's HTTP surfaces — Hono node serve wrapper, OpenAPI emit helpers, shared wire atoms. Plumbing only: domain schemas live with their routes.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/sister-software/mailwoman.git",
-		"directory": "libpostal"
+		"directory": "api-kit"
 	},
-	"bin": "./out/cli.js",
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
@@ -36,11 +35,9 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@hono/node-server": "^2.0.8",
 		"@hono/zod-openapi": "^1.4.0",
-		"@mailwoman/api-kit": "workspace:*",
-		"@mailwoman/normalize": "workspace:*",
 		"hono": "^4.12.29",
-		"mailwoman": "workspace:*",
 		"zod": "^4.4.3"
 	}
 }

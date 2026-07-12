@@ -17,6 +17,7 @@
 	"workspaces": [
 		"mailwoman",
 		"annotations",
+		"api-kit",
 		"nominatim",
 		"photon",
 		"libpostal",

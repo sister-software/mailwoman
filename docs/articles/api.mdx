@@ -250,10 +250,10 @@ The three HTTP drop-ins each ship a machine-readable [OpenAPI 3.1](https://spec.
 | [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status` | [nominatim.yaml](pathname:///openapi/nominatim.yaml) |
 | [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                         | [libpostal.yaml](pathname:///openapi/libpostal.yaml) |
 
-The source of truth for each is `openapi.yaml` at the workspace root; the copies above are published as static site assets. All three validate against the OpenAPI standard with zero errors under [Redocly CLI](https://redocly.com/docs/cli):
+For photon and nominatim, the source of truth is `openapi.yaml` at the workspace root, for now — the copies above are published as static site assets. libpostal's document is emitted at runtime from its route table (`GET /openapi.json`); there's no checked-in yaml to keep in sync. All three validate against the OpenAPI standard with zero errors under [Redocly CLI](https://redocly.com/docs/cli):
 
 ```bash
 npx --yes @redocly/cli@latest lint photon/openapi.yaml
 npx --yes @redocly/cli@latest lint nominatim/openapi.yaml
-npx --yes @redocly/cli@latest lint libpostal/openapi.yaml
+# @mailwoman/libpostal has no checked-in yaml — its document is emitted at runtime, GET /openapi.json
 ```

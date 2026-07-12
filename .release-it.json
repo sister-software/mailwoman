@@ -5,6 +5,7 @@
 			"workspaces": [
 				"core",
 				"annotations",
+				"api-kit",
 				"spatial",
 				"normalize",
 				"query-shape",
