@@ -1,0 +1,399 @@
+{"input":"6000, NSW, Australia","status":200,"body":[{"label":"postcode","value":"6000"},{"label":"state","value":"NSW"},{"label":"country","value":"Australia"}]}
+{"input":"Unit 12/345 Main St","status":200,"body":[{"label":"unit_designator","value":"Unit"},{"label":"unit","value":"12"},{"label":"house_number","value":"345"},{"label":"road","value":"Main St"}]}
+{"input":"U 12 345 Main St","status":200,"body":[{"label":"unit_designator","value":"U"},{"label":"unit","value":"12"},{"label":"house_number","value":"345"},{"label":"road","value":"Main St"}]}
+{"input":"Apartment 12/345 Main St","status":200,"body":[{"label":"unit_designator","value":"Apartment"},{"label":"unit","value":"12"},{"label":"house_number","value":"345"},{"label":"road","value":"Main St"}]}
+{"input":"Apt 12/345 Main St","status":200,"body":[{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"12"},{"label":"house_number","value":"345"},{"label":"road","value":"Main St"}]}
+{"input":"Lot 12/345 Main St","status":200,"body":[{"label":"unit_designator","value":"Lot"},{"label":"unit","value":"12"},{"label":"house_number","value":"345"},{"label":"road","value":"Main St"}]}
+{"input":"U12/345 Main St","status":200,"body":[{"label":"unit_designator","value":"U"},{"label":"unit","value":"12"},{"label":"house_number","value":"345"},{"label":"road","value":"Main St"}]}
+{"input":"Lot 12/345 Illawarra Road Marrickville NSW 2204","status":200,"body":[{"label":"unit_designator","value":"Lot"},{"label":"unit","value":"12"},{"label":"house_number","value":"345"},{"label":"road","value":"Illawarra Road"},{"label":"city","value":"Marrickville"},{"label":"state","value":"NSW"},{"label":"postcode","value":"2204"}]}
+{"input":"Lot 2, Burrows Avenue, EDMONDSON PARK, NSW, Australia","status":200,"body":[{"label":"unit_designator","value":"Lot"},{"label":"unit","value":"2"},{"label":"road","value":"Burrows Avenue"},{"label":"city","value":"EDMONDSON PARK"},{"label":"state","value":"NSW"},{"label":"country","value":"Australia"}]}
+{"input":"Rua Raul Leite Magalhães, 65, Tapiraí - SP, 18180-000, Brazil","status":200,"body":[{"label":"road","value":"Rua Raul Leite Magalhães"},{"label":"house_number","value":"65"},{"label":"city","value":"Tapiraí"},{"label":"state","value":"SP"},{"label":"postcode","value":"18180-000"},{"label":"country","value":"Brazil"}]}
+{"input":"Korunní 810, Praha","status":200,"body":[{"label":"road","value":"Korunní"},{"label":"house_number","value":"810"},{"label":"city","value":"Praha"}]}
+{"input":"Kájovská 68, Český Krumlov","status":200,"body":[{"label":"road","value":"Kájovská"},{"label":"house_number","value":"68"},{"label":"city","value":"Český Krumlov"}]}
+{"input":"Beethovenova 641/9, Brno","status":200,"body":[{"label":"road","value":"Beethovenova"},{"label":"house_number","value":"641/9"},{"label":"city","value":"Brno"}]}
+{"input":"Am Falkpl. 5, 10437 Berlin","status":200,"body":[{"label":"road","value":"Am Falkpl."},{"label":"house_number","value":"5"},{"label":"postcode","value":"10437"},{"label":"city","value":"Berlin"}]}
+{"input":"Am Nordkanal 11, 47877 Willich","status":200,"body":[{"label":"road","value":"Am Nordkanal"},{"label":"house_number","value":"11"},{"label":"postcode","value":"47877"},{"label":"city","value":"Willich"}]}
+{"input":"Am Bürgerpark 15-18, 13156, Berlin","status":200,"body":[{"label":"road","value":"Am Bürgerpark"},{"label":"house_number","value":"15-18"},{"label":"postcode","value":"13156"},{"label":"city","value":"Berlin"}]}
+{"input":"Kaschk Bar, Linienstraße 40 10119 Berlin","status":200,"body":[{"label":"house","value":"Kaschk Bar"},{"label":"road","value":"Linienstraße"},{"label":"house_number","value":"40"},{"label":"postcode","value":"10119"},{"label":"city","value":"Berlin"}]}
+{"input":"Genter Straße 16a, Munich, Germany","status":200,"body":[{"label":"road","value":"Genter Straße"},{"label":"house_number","value":"16a"},{"label":"city","value":"Munich"},{"label":"country","value":"Germany"}]}
+{"input":"Esplanade, Berlin","status":200,"body":[{"label":"road","value":"Esplanade"},{"label":"city","value":"Berlin"}]}
+{"input":"Esplanade 17, Berlin","status":200,"body":[{"label":"road","value":"Esplanade"},{"label":"house_number","value":"17"},{"label":"city","value":"Berlin"}]}
+{"input":"17 Esplanade, Berlin","status":200,"body":[{"label":"house_number","value":"17"},{"label":"road","value":"Esplanade"},{"label":"city","value":"Berlin"}]}
+{"input":"Königsallee Düsseldorf","status":200,"body":[{"label":"road","value":"Königsallee"},{"label":"city","value":"Düsseldorf"}]}
+{"input":"Rathausplatz","status":200,"body":[{"label":"road","value":"Rathausplatz"}]}
+{"input":"Plutoweg","status":200,"body":[{"label":"road","value":"Plutoweg"}]}
+{"input":"Dorfstrasse","status":200,"body":[{"label":"road","value":"Dorfstrasse"}]}
+{"input":"Eberswalder Straße 100 104","status":200,"body":[{"label":"road","value":"Eberswalder Straße"},{"label":"house_number","value":"100"}]}
+{"input":"25 Straße 50","status":200,"body":[{"label":"road","value":"25 Straße"},{"label":"house_number","value":"50"}]}
+{"input":"25 Straße, 50","status":200,"body":[{"label":"road","value":"25 Straße"},{"label":"house_number","value":"50"}]}
+{"input":"25 Strada 50","status":200,"body":[{"label":"road","value":"25 Strada"},{"label":"house_number","value":"50"}]}
+{"input":"25 Strada, 50","status":200,"body":[{"label":"road","value":"25 Strada"},{"label":"house_number","value":"50"}]}
+{"input":"Carrer d'Aragó 155 08011 Barcelona","status":200,"body":[{"label":"road","value":"Carrer d'Aragó"},{"label":"house_number","value":"155"},{"label":"postcode","value":"08011"},{"label":"city","value":"Barcelona"}]}
+{"input":"Rue Montmartre","status":200,"body":[{"label":"road","value":"Rue Montmartre"}]}
+{"input":"123 Rue Montmartre, Paris","status":200,"body":[{"label":"house_number","value":"123"},{"label":"road","value":"Rue Montmartre"},{"label":"city","value":"Paris"}]}
+{"input":"Rue de Paris","status":200,"body":[{"label":"road","value":"Rue de Paris"}]}
+{"input":"Rue de la Paix","status":200,"body":[{"label":"road","value":"Rue de la Paix"}]}
+{"input":"Boulevard du Général Charles De Gaulle","status":200,"body":[{"label":"road","value":"Boulevard du Général Charles De Gaulle"}]}
+{"input":"11 Boulevard Saint Germains","status":200,"body":[{"label":"house_number","value":"11"},{"label":"road","value":"Boulevard Saint Germains"}]}
+{"input":"Rue Saint Anne","status":200,"body":[{"label":"road","value":"Rue Saint Anne"}]}
+{"input":"Boulevard Charles De Gaulle","status":200,"body":[{"label":"road","value":"Boulevard Charles De Gaulle"}]}
+{"input":"Allée Victor Hugo","status":200,"body":[{"label":"road","value":"Allée Victor Hugo"}]}
+{"input":"Avenue Aristide Briand","status":200,"body":[{"label":"road","value":"Avenue Aristide Briand"}]}
+{"input":"Rue Henri Barbusse Paris France","status":200,"body":[{"label":"road","value":"Rue Henri Barbusse"},{"label":"city","value":"Paris"},{"label":"country","value":"France"}]}
+{"input":"Rue du Général Leclerc Dunkerque France","status":200,"body":[{"label":"road","value":"Rue du Général Leclerc"},{"label":"city","value":"Dunkerque"},{"label":"country","value":"France"}]}
+{"input":"Avenue de Sainte Rose de Lima","status":200,"body":[{"label":"road","value":"Avenue de Sainte Rose de Lima"}]}
+{"input":"Rue du Capitaine Galinat Marseille France","status":200,"body":[{"label":"road","value":"Rue du Capitaine Galinat"},{"label":"city","value":"Marseille"},{"label":"country","value":"France"}]}
+{"input":"Rue Jean Baptiste Clément","status":200,"body":[{"label":"road","value":"Rue Jean Baptiste Clément"}]}
+{"input":"Mery Sur Oise","status":200,"body":[{"label":"city","value":"Mery Sur Oise"}]}
+{"input":"Méry Sur Oise","status":200,"body":[{"label":"city","value":"Méry Sur Oise"}]}
+{"input":"Méry-Sur-Oise","status":200,"body":[{"label":"city","value":"Méry-Sur-Oise"}]}
+{"input":"Mery-Sur-Oise","status":200,"body":[{"label":"city","value":"Mery-Sur-Oise"}]}
+{"input":"4 Cité Du Cardinal Lemoine 75005 Paris","status":200,"body":[{"label":"house_number","value":"4"},{"label":"road","value":"Cité Du Cardinal Lemoine"},{"label":"postcode","value":"75005"},{"label":"city","value":"Paris"}]}
+{"input":"32 Rue Du 4 Septembre","status":200,"body":[{"label":"house_number","value":"32"},{"label":"road","value":"Rue Du 4 Septembre"}]}
+{"input":"12 Cité Roland Garros","status":200,"body":[{"label":"house_number","value":"12"},{"label":"road","value":"Cité Roland Garros"}]}
+{"input":"Rue de l'Amiral Galache, Toulouse","status":200,"body":[{"label":"road","value":"Rue de l'Amiral Galache"},{"label":"city","value":"Toulouse"}]}
+{"input":"Rue de l'Inspecteur Alles Paris","status":200,"body":[{"label":"road","value":"Rue de l'Inspecteur Alles"},{"label":"city","value":"Paris"}]}
+{"input":"Rue de l'Empereur Julien Paris","status":200,"body":[{"label":"road","value":"Rue de l'Empereur Julien"},{"label":"city","value":"Paris"}]}
+{"input":"Rue de l'Adjudant Réau Paris","status":200,"body":[{"label":"road","value":"Rue de l'Adjudant Réau"},{"label":"city","value":"Paris"}]}
+{"input":"10 Boulevard Saint-Germains Paris","status":200,"body":[{"label":"house_number","value":"10"},{"label":"road","value":"Boulevard Saint-Germains"},{"label":"city","value":"Paris"}]}
+{"input":"Paris 75000, France","status":200,"body":[{"label":"city","value":"Paris"},{"label":"postcode","value":"75000"},{"label":"country","value":"France"}]}
+{"input":"Esplanade de la Liberté","status":200,"body":[{"label":"road","value":"Esplanade de la Liberté"}]}
+{"input":"Esplanade du Géneral de Gaulle","status":200,"body":[{"label":"road","value":"Esplanade du Géneral de Gaulle"}]}
+{"input":"Esplanade Méditerranée","status":200,"body":[{"label":"road","value":"Esplanade Méditerranée"}]}
+{"input":"1 bis Av. Amélie, 92320 Châtillon, France","status":200,"body":[{"label":"house_number","value":"1 bis"},{"label":"road","value":"Av. Amélie"},{"label":"postcode","value":"92320"},{"label":"city","value":"Châtillon"},{"label":"country","value":"France"}]}
+{"input":"1 ter Av. Amélie, 92320 Châtillon, France","status":200,"body":[{"label":"house_number","value":"1 ter"},{"label":"road","value":"Av. Amélie"},{"label":"postcode","value":"92320"},{"label":"city","value":"Châtillon"},{"label":"country","value":"France"}]}
+{"input":"Rushendon Furlong","status":200,"body":[{"label":"road","value":"Rushendon Furlong"}]}
+{"input":"Broadway Market, London","status":200,"body":[{"label":"road","value":"Broadway Market"},{"label":"city","value":"London"}]}
+{"input":"24-28 Broadway Market, London","status":200,"body":[{"label":"house_number","value":"24-28"},{"label":"road","value":"Broadway Market"},{"label":"city","value":"London"}]}
+{"input":"Zadarska 17, Pula","status":200,"body":[{"label":"road","value":"Zadarska"},{"label":"house_number","value":"17"},{"label":"city","value":"Pula"}]}
+{"input":"100, Mahalakshmi Rd, Ganesh Nagar, Kirti Nagar, New Sanghavi, Pimpri-Chinchwad, Maharashtra 411027","status":200,"body":[{"label":"house_number","value":"100"},{"label":"road","value":"Mahalakshmi Rd"},{"label":"city","value":"Pimpri-Chinchwad"},{"label":"state","value":"Maharashtra"},{"label":"postcode","value":"411027"}]}
+{"input":"Julianastraat, Heel","status":200,"body":[{"label":"road","value":"Julianastraat"},{"label":"city","value":"Heel"}]}
+{"input":"Lindenlaan, Sint Odilienberg","status":200,"body":[{"label":"road","value":"Lindenlaan"},{"label":"city","value":"Sint Odilienberg"}]}
+{"input":"Bosserdijk, Hoogland","status":200,"body":[{"label":"road","value":"Bosserdijk"},{"label":"city","value":"Hoogland"}]}
+{"input":"Rubicondreef, Utrecht","status":200,"body":[{"label":"road","value":"Rubicondreef"},{"label":"city","value":"Utrecht"}]}
+{"input":"St Ludgerusstraat, Utrecht","status":200,"body":[{"label":"road","value":"Ludgerusstraat"},{"label":"city","value":"Utrecht"}]}
+{"input":"Lange Groenendaal, Gouda","status":200,"body":[{"label":"road","value":"Lange Groenendaal"},{"label":"city","value":"Gouda"}]}
+{"input":"Achter Clarenburg, Utrecht","status":200,"body":[{"label":"road","value":"Achter Clarenburg"},{"label":"city","value":"Utrecht"}]}
+{"input":"Rozenburg","status":200,"body":[{"label":"city","value":"Rozenburg"}]}
+{"input":"Bloemendaal","status":200,"body":[{"label":"city","value":"Bloemendaal"}]}
+{"input":"Brinkstraat 87, 7512EC, Enschede","status":200,"body":[{"label":"road","value":"Brinkstraat"},{"label":"house_number","value":"87"},{"label":"postcode","value":"7512EC"},{"label":"city","value":"Enschede"}]}
+{"input":"Blekerssngl, Gouda","status":200,"body":[{"label":"road","value":"Blekerssngl"},{"label":"city","value":"Gouda"}]}
+{"input":"Weerdsingel O.Z., Utrecht","status":200,"body":[{"label":"road","value":"Weerdsingel O.Z."},{"label":"city","value":"Utrecht"}]}
+{"input":"Oranjelaan Westzijde 41, Puttershoek","status":200,"body":[{"label":"road","value":"Oranjelaan Westzijde"},{"label":"house_number","value":"41"},{"label":"city","value":"Puttershoek"}]}
+{"input":"Rembrandtplein, Amsterdam","status":200,"body":[{"label":"road","value":"Rembrandtplein"},{"label":"city","value":"Amsterdam"}]}
+{"input":"Korte Tiendeweg, Gouda","status":200,"body":[{"label":"road","value":"Korte Tiendeweg"},{"label":"city","value":"Gouda"}]}
+{"input":"Burgemeester Martenssingel, Gouda","status":200,"body":[{"label":"road","value":"Burgemeester Martenssingel"},{"label":"city","value":"Gouda"}]}
+{"input":"Agorabaan, Lelystad","status":200,"body":[{"label":"road","value":"Agorabaan"},{"label":"city","value":"Lelystad"}]}
+{"input":"1234AB, Amsterdam","status":200,"body":[{"label":"postcode","value":"1234AB"},{"label":"city","value":"Amsterdam"}]}
+{"input":"Haarlemmerdijk 12, 1234ST, Amsterdam","status":200,"body":[{"label":"road","value":"Haarlemmerdijk"},{"label":"house_number","value":"12"},{"label":"postcode","value":"1234ST"},{"label":"city","value":"Amsterdam"}]}
+{"input":"1234SA, Amsterdam","status":200,"body":[{"label":"city","value":"Amsterdam"}]}
+{"input":"Haarlemmerdijk 12, 1234SS, Amsterdam","status":200,"body":[{"label":"road","value":"Haarlemmerdijk"},{"label":"house_number","value":"12"},{"label":"city","value":"Amsterdam"}]}
+{"input":"Haarlemmerdijk 12, 0123AB, Amsterdam","status":200,"body":[{"label":"road","value":"Haarlemmerdijk"},{"label":"house_number","value":"12"},{"label":"city","value":"Amsterdam"}]}
+{"input":"Skredderplassen 20","status":200,"body":[{"label":"road","value":"Skredderplassen"},{"label":"house_number","value":"20"}]}
+{"input":"Henrik Walters plass 3","status":200,"body":[{"label":"road","value":"Henrik Walters plass"},{"label":"house_number","value":"3"}]}
+{"input":"Vestre Haugen 74","status":200,"body":[{"label":"road","value":"Vestre Haugen"},{"label":"house_number","value":"74"}]}
+{"input":"Maria Dehlis vei 15","status":200,"body":[{"label":"road","value":"Maria Dehlis vei"},{"label":"house_number","value":"15"}]}
+{"input":"Gamle Drammensvei 163","status":200,"body":[{"label":"road","value":"Gamle Drammensvei"},{"label":"house_number","value":"163"}]}
+{"input":"Grense Jakobselv veien 311","status":200,"body":[{"label":"road","value":"Grense Jakobselv veien"},{"label":"house_number","value":"311"}]}
+{"input":"Epleskogen 39A","status":200,"body":[{"label":"road","value":"Epleskogen"},{"label":"house_number","value":"39A"}]}
+{"input":"Øvste Skogen 121","status":200,"body":[{"label":"road","value":"Øvste Skogen"},{"label":"house_number","value":"121"}]}
+{"input":"Tindvegen nedre 44B","status":200,"body":[{"label":"road","value":"Tindvegen nedre"},{"label":"house_number","value":"44B"}]}
+{"input":"21 Viaduct Harbour Avenue","status":200,"body":[{"label":"house_number","value":"21"},{"label":"road","value":"Viaduct Harbour Avenue"}]}
+{"input":"30 Town Point Road","status":200,"body":[{"label":"house_number","value":"30"},{"label":"road","value":"Town Point Road"}]}
+{"input":"2 Te Mako Mako Lane","status":200,"body":[{"label":"house_number","value":"2"},{"label":"road","value":"Te Mako Mako Lane"}]}
+{"input":"56 Blue Ridge Drive","status":200,"body":[{"label":"house_number","value":"56"},{"label":"road","value":"Blue Ridge Drive"}]}
+{"input":"14 Glen Neaves","status":200,"body":[{"label":"house_number","value":"14"},{"label":"road","value":"Glen Neaves"}]}
+{"input":"516 Old Taupo Road","status":200,"body":[{"label":"house_number","value":"516"},{"label":"road","value":"Old Taupo Road"}]}
+{"input":"5658 State Highway 27","status":200,"body":[{"label":"house_number","value":"5658"},{"label":"road","value":"State Highway 27"}]}
+{"input":"2 Meadows Lane","status":200,"body":[{"label":"house_number","value":"2"},{"label":"road","value":"Meadows Lane"}]}
+{"input":"19 Francis Drake Street","status":200,"body":[{"label":"house_number","value":"19"},{"label":"road","value":"Francis Drake Street"}]}
+{"input":"115-121 Hutt Park Road","status":200,"body":[{"label":"house_number","value":"115-121"},{"label":"road","value":"Hutt Park Road"}]}
+{"input":"62 Garden Road","status":200,"body":[{"label":"house_number","value":"62"},{"label":"road","value":"Garden Road"}]}
+{"input":"26 Pine Hill Rise","status":200,"body":[{"label":"house_number","value":"26"},{"label":"road","value":"Pine Hill Rise"}]}
+{"input":"23 Old Wharf Road","status":200,"body":[{"label":"house_number","value":"23"},{"label":"road","value":"Old Wharf Road"}]}
+{"input":"183 Vista Paku","status":200,"body":[{"label":"house_number","value":"183"},{"label":"road","value":"Vista Paku"}]}
+{"input":"109 Mathesons Corner Road","status":200,"body":[{"label":"house_number","value":"109"},{"label":"road","value":"Mathesons Corner Road"}]}
+{"input":"81 Park Terrace","status":200,"body":[{"label":"house_number","value":"81"},{"label":"road","value":"Park Terrace"}]}
+{"input":"320 Cannon Hill Crescent","status":200,"body":[{"label":"house_number","value":"320"},{"label":"road","value":"Cannon Hill Crescent"}]}
+{"input":"16 The Stables","status":200,"body":[{"label":"house_number","value":"16"},{"label":"road","value":"The Stables"}]}
+{"input":"35 Forbes Road","status":200,"body":[{"label":"house_number","value":"35"},{"label":"road","value":"Forbes Road"}]}
+{"input":"40 O'Shannessey Street","status":200,"body":[{"label":"house_number","value":"40"},{"label":"road","value":"O'Shannessey Street"}]}
+{"input":"4207 Mountain Road","status":200,"body":[{"label":"house_number","value":"4207"},{"label":"road","value":"Mountain Road"}]}
+{"input":"Mt Victoria Rd, Wellington","status":200,"body":[{"label":"road","value":"Mt Victoria Rd"},{"label":"city","value":"Wellington"}]}
+{"input":"Szewska 6, Kraków","status":200,"body":[{"label":"road","value":"Szewska"},{"label":"house_number","value":"6"},{"label":"city","value":"Kraków"}]}
+{"input":"aleja Wojska Polskiego 178","status":200,"body":[{"label":"road","value":"aleja Wojska Polskiego"},{"label":"house_number","value":"178"}]}
+{"input":"aleja 29 listopada 11","status":200,"body":[{"label":"road","value":"aleja 29 listopada"},{"label":"house_number","value":"11"}]}
+{"input":"aleja Wojska 178","status":200,"body":[{"label":"road","value":"aleja Wojska"},{"label":"house_number","value":"178"}]}
+{"input":"Ulica Strzelecka 12, Nowy Sącz","status":200,"body":[{"label":"road","value":"Ulica Strzelecka"},{"label":"house_number","value":"12"},{"label":"city","value":"Nowy Sącz"}]}
+{"input":"Żorska 11, 47-400","status":200,"body":[{"label":"road","value":"Żorska"},{"label":"house_number","value":"11"},{"label":"postcode","value":"47-400"}]}
+{"input":"Rua Luis de Camoes","status":200,"body":[{"label":"road","value":"Rua Luis de Camoes"}]}
+{"input":"Rua Padre Cruz 31 3060-187 Cantanhede","status":200,"body":[{"label":"road","value":"Rua Padre Cruz"},{"label":"house_number","value":"31"},{"label":"postcode","value":"3060-187"},{"label":"city","value":"Cantanhede"}]}
+{"input":"Tv. da Horta 27A","status":200,"body":[{"label":"road","value":"Tv. da Horta"},{"label":"house_number","value":"27A"}]}
+{"input":"R Academia das Ciências 17C 1200-030 Lisboa","status":200,"body":[{"label":"road","value":"R Academia das Ciências"},{"label":"house_number","value":"17C"},{"label":"postcode","value":"1200-030"},{"label":"state","value":"Lisboa"}]}
+{"input":"Rua do Sol a Santa Catarina 17B, 1200-452 Lisboa","status":200,"body":[{"label":"road","value":"Rua do Sol a Santa Catarina"},{"label":"house_number","value":"17B"},{"label":"postcode","value":"1200-452"},{"label":"state","value":"Lisboa"}]}
+{"input":"Tv. dos Fiéis de Deus 12C Lisboa Portugal","status":200,"body":[{"label":"road","value":"Tv. dos Fiéis de Deus"},{"label":"house_number","value":"12C"},{"label":"state","value":"Lisboa"},{"label":"country","value":"Portugal"}]}
+{"input":"rua godinho de faria 1200","status":200,"body":[{"label":"road","value":"rua godinho de faria"},{"label":"house_number","value":"1200"}]}
+{"input":"rua godinho de faria 1200 porto","status":200,"body":[{"label":"road","value":"rua godinho de faria"},{"label":"house_number","value":"1200"},{"label":"city","value":"porto"}]}
+{"input":"Bulevardul Iuliu Maniu, Bucharest","status":200,"body":[{"label":"road","value":"Bulevardul Iuliu Maniu"},{"label":"city","value":"Bucharest"}]}
+{"input":"Bdul Iuliu Maniu 111 Bucharest","status":200,"body":[{"label":"road","value":"Bdul Iuliu Maniu"},{"label":"house_number","value":"111"},{"label":"city","value":"Bucharest"}]}
+{"input":"Splaiul Independenței 313","status":200,"body":[{"label":"road","value":"Splaiul Independenței"},{"label":"house_number","value":"313"}]}
+{"input":"15 Strada Doctor Carol Davila","status":200,"body":[{"label":"house_number","value":"15"},{"label":"road","value":"Strada Doctor Carol Davila"}]}
+{"input":"Calea Victoriei 54 Bucharest ","status":200,"body":[{"label":"road","value":"Calea Victoriei"},{"label":"house_number","value":"54"},{"label":"city","value":"Bucharest"}]}
+{"input":"Divadelná 41/3, Trnava","status":200,"body":[{"label":"road","value":"Divadelná"},{"label":"house_number","value":"41/3"},{"label":"city","value":"Trnava"}]}
+{"input":"Gamla Varmdovagen 6","status":200,"body":[{"label":"road","value":"Gamla Varmdovagen"},{"label":"house_number","value":"6"}]}
+{"input":"Gamla Varmdovägen 6","status":200,"body":[{"label":"road","value":"Gamla Varmdovägen"},{"label":"house_number","value":"6"}]}
+{"input":"Gamla Varmdo vägen 6","status":200,"body":[{"label":"road","value":"Gamla Varmdo vägen"},{"label":"house_number","value":"6"}]}
+{"input":"Ångermannagatan 80, Vällingby","status":200,"body":[{"label":"road","value":"Ångermannagatan"},{"label":"house_number","value":"80"}]}
+{"input":"wrigley field","status":200,"body":[{"label":"road","value":"wrigley field"}]}
+{"input":"Martin Luther King Jr. Blvd.","status":200,"body":[{"label":"road","value":"Martin Luther King Jr. Blvd."}]}
+{"input":"E Cesar Chavez St","status":200,"body":[{"label":"road","value":"E Cesar Chavez St"}]}
+{"input":"Riverbend Club Dr Se","status":200,"body":[{"label":"road","value":"Riverbend Club Dr Se"}]}
+{"input":"S Interstate 35","status":200,"body":[{"label":"road","value":"S Interstate 35"}]}
+{"input":"E William Cannon Dr","status":200,"body":[{"label":"road","value":"E William Cannon Dr"}]}
+{"input":"Branch Rd","status":200,"body":[{"label":"road","value":"Branch Rd"}]}
+{"input":"Manor Rd","status":200,"body":[{"label":"road","value":"Manor Rd"}]}
+{"input":"Fm 3009 TX","status":200,"body":[{"label":"road","value":"Fm 3009"},{"label":"state","value":"TX"}]}
+{"input":"1900 SE A ST, SAN FRANCISCO","status":200,"body":[{"label":"house_number","value":"1900"},{"label":"road","value":"SE A ST"},{"label":"city","value":"SAN FRANCISCO"}]}
+{"input":"1900 SE F ST, SAN FRANCISCO","status":200,"body":[{"label":"house_number","value":"1900"},{"label":"road","value":"SE F ST"},{"label":"city","value":"SAN FRANCISCO"}]}
+{"input":"22024 main st, ca","status":200,"body":[{"label":"house_number","value":"22024"},{"label":"road","value":"main st"},{"label":"state","value":"ca"}]}
+{"input":"90210","status":200,"body":[{"label":"postcode","value":"90210"}]}
+{"input":"90210, CA","status":200,"body":[{"label":"postcode","value":"90210"},{"label":"state","value":"CA"}]}
+{"input":"90210 Foo","status":200,"body":[]}
+{"input":"N FISKE AVE","status":200,"body":[{"label":"road","value":"N FISKE AVE"}]}
+{"input":"N FISKE AVE P","status":200,"body":[{"label":"road","value":"N FISKE AVE"}]}
+{"input":"N FISKE AVE Po","status":200,"body":[{"label":"road","value":"N FISKE AVE"},{"label":"state","value":"Po"}]}
+{"input":"N FISKE AVE Por","status":200,"body":[{"label":"road","value":"N FISKE AVE"},{"label":"state","value":"Por"}]}
+{"input":"N FISKE AVE Port","status":200,"body":[{"label":"road","value":"N FISKE AVE"},{"label":"city","value":"Port"}]}
+{"input":"N FISKE AVE Portl","status":200,"body":[{"label":"road","value":"N FISKE AVE"}]}
+{"input":"N FISKE AVE Portla","status":200,"body":[{"label":"road","value":"N FISKE AVE"}]}
+{"input":"N FISKE AVE Portlan","status":200,"body":[{"label":"road","value":"N FISKE AVE"}]}
+{"input":"N FISKE AVE Portland","status":200,"body":[{"label":"road","value":"N FISKE AVE"},{"label":"city","value":"Portland"}]}
+{"input":"N DWIGHT AVE Portland O","status":200,"body":[{"label":"road","value":"N DWIGHT AVE"},{"label":"city","value":"Portland"}]}
+{"input":"N DWIGHT AVE Portland Or","status":200,"body":[{"label":"road","value":"N DWIGHT AVE"},{"label":"city","value":"Portland"},{"label":"state","value":"Or"}]}
+{"input":"N DWIGHT AVE Portland Ore","status":200,"body":[{"label":"road","value":"N DWIGHT AVE"},{"label":"city","value":"Portland"}]}
+{"input":"N DWIGHT AVE Portland Oreg","status":200,"body":[{"label":"road","value":"N DWIGHT AVE"},{"label":"city","value":"Portland"}]}
+{"input":"N DWIGHT AVE Portland Orego","status":200,"body":[{"label":"road","value":"N DWIGHT AVE"},{"label":"city","value":"Portland"}]}
+{"input":"N DWIGHT AVE Portland Oregon","status":200,"body":[{"label":"road","value":"N DWIGHT AVE"},{"label":"city","value":"Portland"},{"label":"state","value":"Oregon"}]}
+{"input":"University of Hawaii","status":200,"body":[{"label":"house","value":"University of Hawaii"}]}
+{"input":"University of Hawaii at Hilo","status":200,"body":[{"label":"house","value":"University of Hawaii at Hilo"}]}
+{"input":"Highway 72","status":200,"body":[{"label":"road","value":"Highway 72"}]}
+{"input":"1210a Highway 10 W IA","status":200,"body":[{"label":"house_number","value":"1210a"},{"label":"road","value":"Highway 10 W"},{"label":"state","value":"IA"}]}
+{"input":"1210a State Highway 10","status":200,"body":[{"label":"house_number","value":"1210a"},{"label":"road","value":"State Highway 10"}]}
+{"input":"1389a County Road 42 IA","status":200,"body":[{"label":"house_number","value":"1389a"},{"label":"road","value":"County Road 42"},{"label":"state","value":"IA"}]}
+{"input":"9600 S Interstate 35 TX","status":200,"body":[{"label":"house_number","value":"9600"},{"label":"road","value":"S Interstate 35"},{"label":"state","value":"TX"}]}
+{"input":"9600 Interstate 35 TX","status":200,"body":[{"label":"house_number","value":"9600"},{"label":"road","value":"Interstate 35"},{"label":"state","value":"TX"}]}
+{"input":"Interstate 35","status":200,"body":[{"label":"road","value":"Interstate 35"}]}
+{"input":"Fm 3009, TX","status":200,"body":[{"label":"road","value":"Fm 3009"},{"label":"state","value":"TX"}]}
+{"input":"CA 72","status":200,"body":[{"label":"road","value":"CA 72"}]}
+{"input":"1210a IA 10 W IA","status":200,"body":[{"label":"house_number","value":"1210a"},{"label":"road","value":"IA 10 W"},{"label":"state","value":"IA"}]}
+{"input":"1210a California 10","status":200,"body":[{"label":"house_number","value":"1210a"},{"label":"road","value":"California 10"}]}
+{"input":"1389a IA 42 IA","status":200,"body":[{"label":"house_number","value":"1389a"},{"label":"road","value":"IA 42"},{"label":"state","value":"IA"}]}
+{"input":"1111 MD 760, Lusby, MD, USA","status":200,"body":[{"label":"house_number","value":"1111"},{"label":"road","value":"MD 760"},{"label":"city","value":"Lusby"},{"label":"state","value":"MD"},{"label":"country","value":"USA"}]}
+{"input":"52 Ten Eyck St Apt 3 Brooklyn NY","status":200,"body":[{"label":"house_number","value":"52"},{"label":"road","value":"Ten Eyck St"},{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"3"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"52 Ten Eyck St Apt 3b Brooklyn NY","status":200,"body":[{"label":"house_number","value":"52"},{"label":"road","value":"Ten Eyck St"},{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"3b"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"52 Ten Eyck St Apt 3B Brooklyn NY","status":200,"body":[{"label":"house_number","value":"52"},{"label":"road","value":"Ten Eyck St"},{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"3B"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"52 Ten Eyck St Apt #3b Brooklyn NY","status":200,"body":[{"label":"house_number","value":"52"},{"label":"road","value":"Ten Eyck St"},{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"#3b"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"52 Ten Eyck St 3 Brooklyn NY","status":200,"body":[{"label":"house_number","value":"52"},{"label":"road","value":"Ten Eyck St"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"6 Montague Terrace Apt #A2 Brooklyn NY","status":200,"body":[{"label":"house_number","value":"6"},{"label":"road","value":"Montague Terrace"},{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"#A2"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"6 Montague Terrace #2A Brooklyn NY","status":200,"body":[{"label":"house_number","value":"6"},{"label":"road","value":"Montague Terrace"},{"label":"unit","value":"#2A"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"6 Montague Terrace Apt #A-2 Brooklyn NY","status":200,"body":[{"label":"house_number","value":"6"},{"label":"road","value":"Montague Terrace"},{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"#A-2"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"#6 Montague Terrace Brooklyn NY","status":200,"body":[{"label":"road","value":"Montague Terrace"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"}]}
+{"input":"3551 W. Hillsboro Blvd Deerfield Beach, FL 33442","status":200,"body":[{"label":"house_number","value":"3551"},{"label":"road","value":"W. Hillsboro Blvd"},{"label":"city","value":"Deerfield Beach"},{"label":"state","value":"FL"},{"label":"postcode","value":"33442"}]}
+{"input":"1384 Cambridge Beltway, Cambridge, MD 21613, USA","status":200,"body":[{"label":"house_number","value":"1384"},{"label":"road","value":"Cambridge Beltway"},{"label":"city","value":"Cambridge"},{"label":"state","value":"MD"},{"label":"postcode","value":"21613"},{"label":"country","value":"USA"}]}
+{"input":"866 E 178th St, Bronx, NY 10460, USA","status":200,"body":[{"label":"house_number","value":"866"},{"label":"road","value":"E 178th St"},{"label":"city","value":"Bronx"},{"label":"state","value":"NY"},{"label":"postcode","value":"10460"},{"label":"country","value":"USA"}]}
+{"input":"866 E 178th St, Staten Island, NY 10460, USA","status":200,"body":[{"label":"house_number","value":"866"},{"label":"road","value":"E 178th St"},{"label":"city","value":"Staten Island"},{"label":"state","value":"NY"},{"label":"postcode","value":"10460"},{"label":"country","value":"USA"}]}
+{"input":"12 main st, boston massachusetts","status":200,"body":[{"label":"house_number","value":"12"},{"label":"road","value":"main st"},{"label":"city","value":"boston"},{"label":"state","value":"massachusetts"}]}
+{"input":"12 main st, boston ma","status":200,"body":[{"label":"house_number","value":"12"},{"label":"road","value":"main st"},{"label":"city","value":"boston"},{"label":"state","value":"ma"}]}
+{"input":"Broadway, Manhattan","status":200,"body":[{"label":"road","value":"Broadway"},{"label":"city","value":"Manhattan"}]}
+{"input":"24 Broadway, Manhattan","status":200,"body":[{"label":"house_number","value":"24"},{"label":"road","value":"Broadway"},{"label":"city","value":"Manhattan"}]}
+{"input":"Broadway 24, Manhattan","status":200,"body":[{"label":"road","value":"Broadway"},{"label":"house_number","value":"24"},{"label":"city","value":"Manhattan"}]}
+{"input":"East Broadway, Manhattan","status":200,"body":[{"label":"road","value":"East Broadway"},{"label":"city","value":"Manhattan"}]}
+{"input":"24 East Broadway, Manhattan","status":200,"body":[{"label":"house_number","value":"24"},{"label":"road","value":"East Broadway"},{"label":"city","value":"Manhattan"}]}
+{"input":"West Broadway, Manhattan","status":200,"body":[{"label":"road","value":"West Broadway"},{"label":"city","value":"Manhattan"}]}
+{"input":"24 West Broadway, Manhattan","status":200,"body":[{"label":"house_number","value":"24"},{"label":"road","value":"West Broadway"},{"label":"city","value":"Manhattan"}]}
+{"input":"Jefferson Parish","status":200,"body":[{"label":"city","value":"Jefferson"}]}
+{"input":"Mills County","status":200,"body":[{"label":"city","value":"Mills"}]}
+{"input":"2649 Logan Road, Eight Mile Plains, QLD 4113","status":200,"body":[{"label":"house_number","value":"2649"},{"label":"road","value":"Logan Road"},{"label":"city","value":"Eight Mile Plains"},{"label":"state","value":"QLD"},{"label":"postcode","value":"4113"}]}
+{"input":"2649 Logan Road Eight Mile Plains, QLD 4113","status":200,"body":[{"label":"house_number","value":"2649"},{"label":"road","value":"Logan Road"},{"label":"city","value":"Eight Mile Plains"},{"label":"state","value":"QLD"},{"label":"postcode","value":"4113"}]}
+{"input":"1 Queen Street, Brisbane 4000","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Queen Street"},{"label":"city","value":"Brisbane"},{"label":"postcode","value":"4000"}]}
+{"input":"754 Robinson Rd West, Aspley, QLD 4035","status":200,"body":[{"label":"house_number","value":"754"},{"label":"road","value":"Robinson Rd West"},{"label":"city","value":"Aspley"},{"label":"state","value":"QLD"},{"label":"postcode","value":"4035"}]}
+{"input":"Sydney 2000","status":200,"body":[{"label":"city","value":"Sydney"},{"label":"postcode","value":"2000"}]}
+{"input":"Perth","status":200,"body":[{"label":"city","value":"Perth"}]}
+{"input":"1/135 Ferny Way, Ferny Grove 4054","status":200,"body":[{"label":"house_number","value":"1/135"},{"label":"road","value":"Ferny Way"},{"label":"city","value":"Ferny Grove"},{"label":"postcode","value":"4054"}]}
+{"input":"Eight Mile Plains 4113","status":200,"body":[{"label":"city","value":"Eight Mile Plains"},{"label":"postcode","value":"4113"}]}
+{"input":"8/437 St Kilda Road Melbourne, VIC ","status":200,"body":[{"label":"house_number","value":"8/437"},{"label":"road","value":"St Kilda Road"},{"label":"city","value":"Melbourne"},{"label":"state","value":"VIC"}]}
+{"input":"BOOM","status":200,"body":[{"label":"city","value":"BOOM"}]}
+{"input":"Eight Mile Plains 9999","status":200,"body":[{"label":"city","value":"Eight Mile Plains"},{"label":"postcode","value":"9999"}]}
+{"input":"123 Main St, New York, NY 10010","status":200,"body":[{"label":"house_number","value":"123"},{"label":"road","value":"Main St"},{"label":"city","value":"New York"},{"label":"state","value":"NY"},{"label":"postcode","value":"10010"}]}
+{"input":"123 Main St New York, NY 10010","status":200,"body":[{"label":"house_number","value":"123"},{"label":"road","value":"Main St"},{"label":"city","value":"New York"},{"label":"state","value":"NY"},{"label":"postcode","value":"10010"}]}
+{"input":"123 Main St New York NY 10010","status":200,"body":[{"label":"house_number","value":"123"},{"label":"road","value":"Main St"},{"label":"city","value":"New York"},{"label":"state","value":"NY"},{"label":"postcode","value":"10010"}]}
+{"input":"123 E 21st st, Brooklyn NY 11020","status":200,"body":[{"label":"house_number","value":"123"},{"label":"road","value":"E 21st st"},{"label":"city","value":"Brooklyn"},{"label":"state","value":"NY"},{"label":"postcode","value":"11020"}]}
+{"input":"754 Pharr Rd, Atlanta, Georgia 31035","status":200,"body":[{"label":"house_number","value":"754"},{"label":"road","value":"Pharr Rd"},{"label":"city","value":"Atlanta"},{"label":"state","value":"Georgia"},{"label":"postcode","value":"31035"}]}
+{"input":"601 21st Ave N, Myrtle Beach, South Carolina 29577","status":200,"body":[{"label":"house_number","value":"601"},{"label":"road","value":"21st Ave N"},{"label":"city","value":"Myrtle Beach"},{"label":"state","value":"South Carolina"},{"label":"postcode","value":"29577"}]}
+{"input":"425 W 23rd St, New York, NY 10011","status":200,"body":[{"label":"house_number","value":"425"},{"label":"road","value":"W 23rd St"},{"label":"city","value":"New York"},{"label":"state","value":"NY"},{"label":"postcode","value":"10011"}]}
+{"input":"1035 Comanchee Trl, West Columbia, South Carolina 29169","status":200,"body":[{"label":"house_number","value":"1035"},{"label":"road","value":"Comanchee Trl"},{"label":"city","value":"West Columbia"},{"label":"state","value":"South Carolina"},{"label":"postcode","value":"29169"}]}
+{"input":"Texas 76013","status":200,"body":[{"label":"state","value":"Texas"},{"label":"postcode","value":"76013"}]}
+{"input":"Dallas","status":200,"body":[{"label":"city","value":"Dallas"}]}
+{"input":"California","status":200,"body":[{"label":"state","value":"California"}]}
+{"input":"New York","status":200,"body":[{"label":"city","value":"New York"}]}
+{"input":"New York, NY","status":200,"body":[{"label":"city","value":"New York"},{"label":"state","value":"NY"}]}
+{"input":"New York, New York","status":200,"body":[{"label":"city","value":"New York"},{"label":"state","value":"New York"}]}
+{"input":"Santa Monica, California 90407","status":200,"body":[{"label":"city","value":"Santa Monica"},{"label":"state","value":"California"},{"label":"postcode","value":"90407"}]}
+{"input":"Grand canyon 86023","status":200,"body":[{"label":"city","value":"Grand canyon"},{"label":"postcode","value":"86023"}]}
+{"input":"CT, 06410","status":200,"body":[{"label":"state","value":"CT"},{"label":"postcode","value":"06410"}]}
+{"input":"Niagara Falls 76B09","status":200,"body":[{"label":"city","value":"Niagara Falls"}]}
+{"input":"Mt Tabor Park, 6220 SE Salmon St, Portland, OR 97215, USA","status":200,"body":[{"label":"house","value":"Mt Tabor Park"},{"label":"house_number","value":"6220"},{"label":"road","value":"SE Salmon St"},{"label":"city","value":"Portland"},{"label":"state","value":"OR"},{"label":"postcode","value":"97215"},{"label":"country","value":"USA"}]}
+{"input":"Mt","status":200,"body":[{"label":"state","value":"Mt"}]}
+{"input":"Foostraße","status":200,"body":[{"label":"road","value":"Foostraße"}]}
+{"input":"Foostraße Rd","status":200,"body":[{"label":"road","value":"Foostraße"}]}
+{"input":"foo st and","status":200,"body":[{"label":"road","value":"foo st"}]}
+{"input":"Foostraße 1","status":200,"body":[{"label":"road","value":"Foostraße"},{"label":"house_number","value":"1"}]}
+{"input":"main pl","status":200,"body":[{"label":"road","value":"main pl"}]}
+{"input":"west main st","status":200,"body":[{"label":"road","value":"west main st"}]}
+{"input":"main st west","status":200,"body":[{"label":"road","value":"main st west"}]}
+{"input":"10th ave","status":200,"body":[{"label":"road","value":"10th ave"}]}
+{"input":"10 ave","status":200,"body":[{"label":"road","value":"10 ave"}]}
+{"input":"1 main pl","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"main pl"}]}
+{"input":"100 10th ave","status":200,"body":[{"label":"house_number","value":"100"},{"label":"road","value":"10th ave"}]}
+{"input":"100 10 ave","status":200,"body":[{"label":"house_number","value":"100"},{"label":"road","value":"10 ave"}]}
+{"input":"1 north main blvd","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"north main blvd"}]}
+{"input":"1 main blvd north","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"main blvd north"}]}
+{"input":"30 west 26th street","status":200,"body":[{"label":"house_number","value":"30"},{"label":"road","value":"west 26th street"}]}
+{"input":"West 26th Street, New York, NYC, 10010","status":200,"body":[{"label":"road","value":"West 26th Street"},{"label":"city","value":"New York"},{"label":"postcode","value":"10010"}]}
+{"input":"Portland Cafe Portland OR","status":200,"body":[{"label":"house","value":"Portland Cafe"},{"label":"city","value":"Portland"},{"label":"state","value":"OR"}]}
+{"input":"1 Foo St N","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Foo St"}]}
+{"input":"1 Foo St S","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Foo St"}]}
+{"input":"1 Foo St E","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Foo St"}]}
+{"input":"1 Foo St W","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Foo St"}]}
+{"input":"1 Foo St NW","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Foo St NW"}]}
+{"input":"1 Foo St NE","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Foo St NE"}]}
+{"input":"1 Foo St SW","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Foo St SW"}]}
+{"input":"1 Foo St SE","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Foo St SE"}]}
+{"input":"1 San Francisco","status":200,"body":[]}
+{"input":"1 California","status":200,"body":[]}
+{"input":"1 USA","status":200,"body":[]}
+{"input":"1 San Francisco California","status":200,"body":[]}
+{"input":"1 San Francisco USA","status":200,"body":[]}
+{"input":"1 San Francisco California USA","status":200,"body":[]}
+{"input":"1 California USA","status":200,"body":[]}
+{"input":"1 90210","status":200,"body":[]}
+{"input":"Apartment","status":200,"body":[]}
+{"input":"Unit","status":200,"body":[]}
+{"input":"Space","status":200,"body":[]}
+{"input":"new south wales aus","status":200,"body":[{"label":"state","value":"new south wales"},{"label":"country","value":"aus"}]}
+{"input":"jasper ga","status":200,"body":[{"label":"city","value":"jasper"},{"label":"state","value":"ga"}]}
+{"input":"Main St & Second Ave","status":200,"body":[{"label":"road","value":"Main St"},{"label":"road","value":"Second Ave"}]}
+{"input":"Main St @ Second Ave","status":200,"body":[{"label":"road","value":"Main St"},{"label":"road","value":"Second Ave"}]}
+{"input":"Main St and Second Ave","status":200,"body":[{"label":"road","value":"Main St"},{"label":"road","value":"Second Ave"}]}
+{"input":"12th Avenue and California Street","status":200,"body":[{"label":"road","value":"12th Avenue"},{"label":"road","value":"California Street"}]}
+{"input":"15th Avenue and Fulton Street","status":200,"body":[{"label":"road","value":"15th Avenue"},{"label":"road","value":"Fulton Street"}]}
+{"input":"17th Avenue & Anza Street","status":200,"body":[{"label":"road","value":"17th Avenue"},{"label":"road","value":"Anza Street"}]}
+{"input":"Gleimstraße an der ecke von Schönhauser Allee","status":200,"body":[{"label":"road","value":"Gleimstraße"},{"label":"road","value":"Schönhauser Allee"}]}
+{"input":"Gleimstraße und Schönhauserallee","status":200,"body":[{"label":"road","value":"Gleimstraße"},{"label":"road","value":"Schönhauserallee"}]}
+{"input":"& b","status":200,"body":[]}
+{"input":"@ b","status":200,"body":[]}
+{"input":"at b","status":200,"body":[]}
+{"input":"a &","status":200,"body":[]}
+{"input":"a @","status":200,"body":[]}
+{"input":"a at","status":200,"body":[]}
+{"input":"& street","status":200,"body":[]}
+{"input":"@ street","status":200,"body":[]}
+{"input":"carrer &","status":200,"body":[]}
+{"input":"carrer @","status":200,"body":[]}
+{"input":"at street","status":200,"body":[{"label":"road","value":"at street"}]}
+{"input":"corner street","status":200,"body":[{"label":"road","value":"corner street"}]}
+{"input":"carrer en","status":200,"body":[{"label":"road","value":"carrer en"}]}
+{"input":"carrer con","status":200,"body":[{"label":"road","value":"carrer con"}]}
+{"input":"foo & bar","status":200,"body":[{"label":"road","value":"foo"},{"label":"road","value":"bar"}]}
+{"input":"foo and bar","status":200,"body":[{"label":"road","value":"foo"},{"label":"road","value":"bar"}]}
+{"input":"foo at bar","status":200,"body":[{"label":"road","value":"foo"},{"label":"road","value":"bar"}]}
+{"input":"foo @ bar","status":200,"body":[{"label":"road","value":"foo"},{"label":"road","value":"bar"}]}
+{"input":"main st & side ave","status":200,"body":[{"label":"road","value":"main st"},{"label":"road","value":"side ave"}]}
+{"input":"main st & side","status":200,"body":[{"label":"road","value":"main st"},{"label":"road","value":"side"}]}
+{"input":"main & side ave","status":200,"body":[{"label":"road","value":"main"},{"label":"road","value":"side ave"}]}
+{"input":"main & side","status":200,"body":[{"label":"road","value":"main"},{"label":"road","value":"side"}]}
+{"input":"1st st & 2nd ave","status":200,"body":[{"label":"road","value":"1st st"},{"label":"road","value":"2nd ave"}]}
+{"input":"1st st & 2nd","status":200,"body":[{"label":"road","value":"1st st"},{"label":"road","value":"2nd"}]}
+{"input":"1st & 2nd ave","status":200,"body":[{"label":"road","value":"1st"},{"label":"road","value":"2nd ave"}]}
+{"input":"1st & 2nd","status":200,"body":[{"label":"road","value":"1st"},{"label":"road","value":"2nd"}]}
+{"input":"1 st & 2 ave","status":200,"body":[{"label":"road","value":"1 st"},{"label":"road","value":"2 ave"}]}
+{"input":"1 st & 2","status":200,"body":[{"label":"road","value":"1 st"},{"label":"road","value":"2"}]}
+{"input":"1 & 2 ave","status":200,"body":[{"label":"road","value":"1"},{"label":"road","value":"2 ave"}]}
+{"input":"1 & 2","status":200,"body":[{"label":"road","value":"1"},{"label":"road","value":"2"}]}
+{"input":"SW 6th & Pine","status":200,"body":[{"label":"road","value":"SW 6th"},{"label":"road","value":"Pine"}]}
+{"input":"9th and Lambert","status":200,"body":[{"label":"road","value":"9th"},{"label":"road","value":"Lambert"}]}
+{"input":"filbert & 32nd","status":200,"body":[{"label":"road","value":"filbert"},{"label":"road","value":"32nd"}]}
+{"input":"national air and space museum","status":200,"body":[{"label":"house","value":"national air and space museum"}]}
+{"input":"Oak St At 16th St, Paso Robles, CA 93446, USA","status":200,"body":[{"label":"road","value":"Oak St"},{"label":"road","value":"16th St"},{"label":"city","value":"Paso Robles"},{"label":"state","value":"CA"},{"label":"postcode","value":"93446"},{"label":"country","value":"USA"}]}
+{"input":"N State St At E Grand Ave, Chicago, IL 60654, USA","status":200,"body":[{"label":"road","value":"N State St"},{"label":"road","value":"E Grand Ave"},{"label":"city","value":"Chicago"},{"label":"state","value":"IL"},{"label":"postcode","value":"60654"},{"label":"country","value":"USA"}]}
+{"input":"E Illinois St At N State St, Chicago, IL 60611, USA","status":200,"body":[{"label":"road","value":"E Illinois St"},{"label":"road","value":"N State St"},{"label":"city","value":"Chicago"},{"label":"state","value":"IL"},{"label":"postcode","value":"60611"},{"label":"country","value":"USA"}]}
+{"input":"112th St E At 17th St Sw, Puyallup, WA 98373, USA","status":200,"body":[{"label":"road","value":"112th St E"},{"label":"road","value":"17th St Sw"},{"label":"city","value":"Puyallup"},{"label":"state","value":"WA"},{"label":"postcode","value":"98373"},{"label":"country","value":"USA"}]}
+{"input":"Sw 152nd Ave At Sw 280th St, Naranja, FL 33032, USA","status":200,"body":[{"label":"road","value":"Sw 152nd Ave"},{"label":"road","value":"Sw 280th St"},{"label":"city","value":"Naranja"},{"label":"state","value":"FL"},{"label":"postcode","value":"33032"},{"label":"country","value":"USA"}]}
+{"input":"Stonecroft Blvd At Westfields Blvd, Chantilly, VA 20152, USA","status":200,"body":[{"label":"road","value":"Stonecroft Blvd"},{"label":"road","value":"Westfields Blvd"},{"label":"city","value":"Chantilly"},{"label":"state","value":"VA"},{"label":"postcode","value":"20152"},{"label":"country","value":"USA"}]}
+{"input":"Hennepin Ave At S 3rd St, Minneapolis, MN 55401, USA","status":200,"body":[{"label":"road","value":"Hennepin Ave"},{"label":"road","value":"S 3rd St"},{"label":"city","value":"Minneapolis"},{"label":"state","value":"MN"},{"label":"postcode","value":"55401"},{"label":"country","value":"USA"}]}
+{"input":"Sylvester Hwy At Branch Rd, Albany, GA 31705, USA","status":200,"body":[{"label":"road","value":"Sylvester Hwy"},{"label":"road","value":"Branch Rd"},{"label":"city","value":"Albany"},{"label":"state","value":"GA"},{"label":"postcode","value":"31705"},{"label":"country","value":"USA"}]}
+{"input":"E Riverside Dr At Montopolis Dr, Austin, TX 78741, USA","status":200,"body":[{"label":"road","value":"E Riverside Dr"},{"label":"road","value":"Montopolis Dr"},{"label":"city","value":"Austin"},{"label":"state","value":"TX"},{"label":"postcode","value":"78741"},{"label":"country","value":"USA"}]}
+{"input":"E Riverside Dr At Wickersham Ln, Austin, TX 78741, USA","status":200,"body":[{"label":"road","value":"E Riverside Dr"},{"label":"road","value":"Wickersham Ln"},{"label":"city","value":"Austin"},{"label":"state","value":"TX"},{"label":"postcode","value":"78741"},{"label":"country","value":"USA"}]}
+{"input":"Red River St At E Cesar Chavez St, Austin, TX 78701, USA","status":200,"body":[{"label":"road","value":"Red River St"},{"label":"road","value":"E Cesar Chavez St"},{"label":"city","value":"Austin"},{"label":"state","value":"TX"},{"label":"postcode","value":"78701"},{"label":"country","value":"USA"}]}
+{"input":"N Wells St At W Division St, Chicago, IL 60610, USA","status":200,"body":[{"label":"road","value":"N Wells St"},{"label":"road","value":"W Division St"},{"label":"city","value":"Chicago"},{"label":"state","value":"IL"},{"label":"postcode","value":"60610"},{"label":"country","value":"USA"}]}
+{"input":"Wiederstein Rd At Fm 3009, Schertz, TX 78154, USA","status":200,"body":[{"label":"road","value":"Wiederstein Rd"},{"label":"road","value":"Fm 3009"},{"label":"city","value":"Schertz"},{"label":"state","value":"TX"},{"label":"postcode","value":"78154"},{"label":"country","value":"USA"}]}
+{"input":"Kingston Pike At Granite Dr, Circleville, OH 43113, USA","status":200,"body":[{"label":"road","value":"Kingston Pike"},{"label":"road","value":"Granite Dr"},{"label":"city","value":"Circleville"},{"label":"state","value":"OH"},{"label":"postcode","value":"43113"},{"label":"country","value":"USA"}]}
+{"input":"Manor Rd At Airport Blvd, Austin, TX 78722, USA","status":200,"body":[{"label":"road","value":"Manor Rd"},{"label":"road","value":"Airport Blvd"},{"label":"city","value":"Austin"},{"label":"state","value":"TX"},{"label":"postcode","value":"78722"},{"label":"country","value":"USA"}]}
+{"input":"S Interstate 35 At E William Cannon Dr, Austin, TX 78744, USA","status":200,"body":[{"label":"road","value":"S Interstate 35"},{"label":"road","value":"E William Cannon Dr"},{"label":"city","value":"Austin"},{"label":"state","value":"TX"},{"label":"postcode","value":"78744"},{"label":"country","value":"USA"}]}
+{"input":"E Riverside Dr At Burton Dr, Austin, TX 78741, USA","status":200,"body":[{"label":"road","value":"E Riverside Dr"},{"label":"road","value":"Burton Dr"},{"label":"city","value":"Austin"},{"label":"state","value":"TX"},{"label":"postcode","value":"78741"},{"label":"country","value":"USA"}]}
+{"input":"Napier Field Rd At Scott Rd, Dothan, AL 36303, USA","status":200,"body":[{"label":"road","value":"Napier Field Rd"},{"label":"road","value":"Scott Rd"},{"label":"city","value":"Dothan"},{"label":"state","value":"AL"},{"label":"postcode","value":"36303"},{"label":"country","value":"USA"}]}
+{"input":"16th St At H St, Sacramento, CA 95814, USA","status":200,"body":[{"label":"road","value":"16th St"},{"label":"road","value":"H St"},{"label":"city","value":"Sacramento"},{"label":"state","value":"CA"},{"label":"postcode","value":"95814"},{"label":"country","value":"USA"}]}
+{"input":"N Halsted St At W Lake St, Chicago, IL 60661, USA","status":200,"body":[{"label":"road","value":"N Halsted St"},{"label":"road","value":"W Lake St"},{"label":"city","value":"Chicago"},{"label":"state","value":"IL"},{"label":"postcode","value":"60661"},{"label":"country","value":"USA"}]}
+{"input":"College Park Dr At Gosling Rd, Conroe, TX 77384, USA","status":200,"body":[{"label":"road","value":"College Park Dr"},{"label":"road","value":"Gosling Rd"},{"label":"city","value":"Conroe"},{"label":"state","value":"TX"},{"label":"postcode","value":"77384"},{"label":"country","value":"USA"}]}
+{"input":"Hall Ave At N Cherry St, Wallingford, CT 06492, USA","status":200,"body":[{"label":"road","value":"Hall Ave"},{"label":"road","value":"N Cherry St"},{"label":"city","value":"Wallingford"},{"label":"state","value":"CT"},{"label":"postcode","value":"06492"},{"label":"country","value":"USA"}]}
+{"input":"Pinemont Dr At N Shepherd Dr, Houston, TX 77018, USA","status":200,"body":[{"label":"road","value":"Pinemont Dr"},{"label":"road","value":"N Shepherd Dr"},{"label":"city","value":"Houston"},{"label":"state","value":"TX"},{"label":"postcode","value":"77018"},{"label":"country","value":"USA"}]}
+{"input":"3360 Grand Ave Oakland 94610-2737 CA","status":200,"body":[{"label":"house_number","value":"3360"},{"label":"road","value":"Grand Ave"},{"label":"city","value":"Oakland"},{"label":"postcode","value":"94610-2737"},{"label":"state","value":"CA"}]}
+{"input":"École Paul Valéry Montpellier","status":200,"body":[{"label":"house","value":"École Paul Valéry"},{"label":"city","value":"Montpellier"}]}
+{"input":"Université de Montpellier","status":200,"body":[{"label":"house","value":"Université de Montpellier"}]}
+{"input":"École Jules Vernes Villetaneuse","status":200,"body":[{"label":"house","value":"École Jules Vernes"},{"label":"city","value":"Villetaneuse"}]}
+{"input":"ZAC de la Tuilerie, Villars-les-Dombes, France","status":200,"body":[{"label":"house","value":"ZAC de la Tuilerie"},{"label":"city","value":"Villars-les-Dombes"},{"label":"country","value":"France"}]}
+{"input":"Bibliothèque François Mitterrand Paris","status":200,"body":[{"label":"house","value":"Bibliothèque François Mitterrand"},{"label":"city","value":"Paris"}]}
+{"input":"ZI les grasses Péronnas","status":200,"body":[{"label":"house","value":"ZI les grasses"},{"label":"city","value":"Péronnas"}]}
+{"input":"ZAC du Pré Polliat","status":200,"body":[{"label":"house","value":"ZAC du Pré"},{"label":"city","value":"Polliat"}]}
+{"input":"ZAC sous la Combe Lavancia-Epercy","status":200,"body":[{"label":"house","value":"ZAC sous la Combe"},{"label":"city","value":"Lavancia-Epercy"}]}
+{"input":"ZA Entraigues Embrun","status":200,"body":[{"label":"house","value":"ZA Entraigues"},{"label":"city","value":"Embrun"}]}
+{"input":"Place Sohier Vervins","status":200,"body":[{"label":"road","value":"Place Sohier"},{"label":"city","value":"Vervins"}]}
+{"input":"CC des Fours à Chaux Montluçon","status":200,"body":[{"label":"road","value":"CC des Fours à Chaux"},{"label":"city","value":"Montluçon"}]}
+{"input":"Parc Des Clots Upie","status":200,"body":[{"label":"road","value":"Parc Des Clots"},{"label":"city","value":"Upie"}]}
+{"input":"ZAC du centre Bourg Saint-Sébastien-De-Morsent","status":200,"body":[{"label":"road","value":"ZAC du centre"},{"label":"city","value":"Saint-Sébastien-De-Morsent"}]}
+{"input":"Stop 1","status":200,"body":[{"label":"house","value":"Stop 1"}]}
+{"input":"Stop 10010","status":200,"body":[{"label":"house","value":"Stop 10010"}]}
+{"input":"Air & Space Museum Washington DC","status":200,"body":[{"label":"house","value":"Air & Space Museum"},{"label":"city","value":"Washington"},{"label":"state","value":"DC"}]}
+{"input":"Empire State Building NYC","status":200,"body":[{"label":"house","value":"Empire State Building"},{"label":"city","value":"NYC"}]}
+{"input":"Donald W Reynolds Stadium","status":200,"body":[{"label":"house","value":"Donald W Reynolds Stadium"}]}
+{"input":"Donald W. Reynolds Stadium","status":200,"body":[{"label":"house","value":"Donald W. Reynolds Stadium"}]}
+{"input":"Universal Studios Japan","status":200,"body":[{"label":"house","value":"Universal Studios"},{"label":"country","value":"Japan"}]}
+{"input":"philadelphia museum of art","status":200,"body":[{"label":"house","value":"philadelphia museum of art"}]}
+{"input":"PO Box 1234, Springfield IL 62701","status":200,"body":[{"label":"road","value":"PO Box"},{"label":"house_number","value":"1234"},{"label":"city","value":"Springfield"},{"label":"state","value":"IL"},{"label":"postcode","value":"62701"}]}
+{"input":"P.O. Box 88, Portland, OR 97201","status":200,"body":[{"label":"road","value":"P.O. Box"},{"label":"house_number","value":"88"},{"label":"city","value":"Portland"},{"label":"state","value":"OR"},{"label":"postcode","value":"97201"}]}
+{"input":"Postfach 10 01 10, 60311 Frankfurt am Main","status":200,"body":[{"label":"road","value":"Postfach"},{"label":"house_number","value":"10"},{"label":"postcode","value":"60311"},{"label":"city","value":"Frankfurt"},{"label":"state","value":"am"}]}
+{"input":"Apt 4B, 350 5th Ave, New York, NY 10118","status":200,"body":[{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"4B"},{"label":"house_number","value":"350"},{"label":"road","value":"5th Ave"},{"label":"city","value":"New York"},{"label":"state","value":"NY"},{"label":"postcode","value":"10118"}]}
+{"input":"350 5th Ave Apt 4B, New York, NY 10118","status":200,"body":[{"label":"house_number","value":"350"},{"label":"road","value":"5th Ave"},{"label":"unit_designator","value":"Apt"},{"label":"unit","value":"4B"},{"label":"city","value":"New York"},{"label":"state","value":"NY"},{"label":"postcode","value":"10118"}]}
+{"input":"Unit 12, 200 George St, Sydney NSW 2000","status":200,"body":[{"label":"unit_designator","value":"Unit"},{"label":"unit","value":"12"},{"label":"house_number","value":"200"},{"label":"road","value":"George St"},{"label":"city","value":"Sydney"},{"label":"state","value":"NSW"},{"label":"postcode","value":"2000"}]}
+{"input":"Level 3, 100 Collins St, Melbourne VIC 3000","status":200,"body":[]}
+{"input":"Suite 900, 1 Market St, San Francisco, CA 94105","status":200,"body":[{"label":"unit_designator","value":"Suite"},{"label":"unit","value":"900"},{"label":"house_number","value":"1"},{"label":"road","value":"Market St"},{"label":"city","value":"San Francisco"},{"label":"state","value":"CA"},{"label":"postcode","value":"94105"}]}
+{"input":"Flat 2, 10 Downing Street, London SW1A 2AA","status":200,"body":[{"label":"unit_designator","value":"Flat"},{"label":"unit","value":"2"},{"label":"house_number","value":"10"},{"label":"road","value":"Downing Street"},{"label":"city","value":"London"}]}
+{"input":"3rd Floor, 1 Canada Square, London E14 5AB","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Canada Square"},{"label":"city","value":"London"}]}
+{"input":"30 W 26th St 6th Floor, New York, NY 10010","status":200,"body":[{"label":"house_number","value":"30"},{"label":"road","value":"W 26th St"},{"label":"city","value":"New York"},{"label":"state","value":"NY"},{"label":"postcode","value":"10010"}]}
+{"input":"Stiege 2 Tür 14, Praterstraße 5, 1020 Wien","status":200,"body":[{"label":"road","value":"Praterstraße"},{"label":"house_number","value":"5"},{"label":"postcode","value":"1020"},{"label":"city","value":"Wien"}]}
+{"input":"Eingang B, Hauptstraße 12, 10827 Berlin","status":200,"body":[{"label":"road","value":"Hauptstraße"},{"label":"house_number","value":"12"},{"label":"postcode","value":"10827"},{"label":"city","value":"Berlin"}]}
+{"input":"escalera 2, planta 3, Calle de Alcalá 45, 28014 Madrid","status":200,"body":[{"label":"house_number","value":"3"},{"label":"road","value":"Calle"},{"label":"city","value":"Alcalá"},{"label":"postcode","value":"28014"},{"label":"state","value":"Madrid"}]}
+{"input":"Piso 2, puerta B, Gran Vía 28, 28013 Madrid","status":200,"body":[{"label":"road","value":"Gran Vía"},{"label":"house_number","value":"28"},{"label":"postcode","value":"28013"},{"label":"city","value":"Madrid"}]}
+{"input":"Trappa 3, Drottninggatan 71A, 111 36 Stockholm","status":200,"body":[{"label":"road","value":"Drottninggatan"},{"label":"house_number","value":"71A"},{"label":"city","value":"Stockholm"}]}
+{"input":"opgang 2, Nørrebrogade 155, 2200 København N","status":200,"body":[{"label":"road","value":"Nørrebrogade"},{"label":"house_number","value":"155"},{"label":"postcode","value":"2200"}]}
+{"input":"Bâtiment C, 12 Rue de Rivoli, 75004 Paris","status":200,"body":[{"label":"house_number","value":"12"},{"label":"road","value":"Rue de Rivoli"},{"label":"postcode","value":"75004"},{"label":"city","value":"Paris"}]}
+{"input":"12 Rue de Rivoli, appartement 34, 75004 Paris","status":200,"body":[{"label":"house_number","value":"12"},{"label":"road","value":"Rue de Rivoli"},{"label":"postcode","value":"75004"},{"label":"city","value":"Paris"}]}
+{"input":"Main St & 3rd Ave, Columbus, OH","status":200,"body":[{"label":"road","value":"Main St"},{"label":"road","value":"3rd Ave"},{"label":"city","value":"Columbus"},{"label":"state","value":"OH"}]}
+{"input":"Hollywood Blvd and Vine St, Los Angeles, CA","status":200,"body":[{"label":"house","value":"Hollywood Blvd and Vine St"},{"label":"city","value":"Los Angeles"},{"label":"state","value":"CA"}]}
+{"input":"Empire State Building, 350 5th Ave, New York, NY","status":200,"body":[{"label":"house","value":"Empire State Building"},{"label":"house_number","value":"350"},{"label":"road","value":"5th Ave"},{"label":"city","value":"New York"},{"label":"state","value":"NY"}]}
+{"input":"CVS Pharmacy, 630 Lexington Ave, New York, NY","status":200,"body":[{"label":"house","value":"CVS Pharmacy"},{"label":"house_number","value":"630"},{"label":"road","value":"Lexington Ave"},{"label":"city","value":"New York"},{"label":"state","value":"NY"}]}
+{"input":"221B Baker Street, London NW1 6XE","status":200,"body":[{"label":"house_number","value":"221B"},{"label":"road","value":"Baker Street"},{"label":"city","value":"London"}]}
+{"input":"1600 Amphitheatre Pkwy, Mountain View, CA 94043","status":200,"body":[{"label":"house_number","value":"1600"},{"label":"road","value":"Amphitheatre Pkwy"},{"label":"city","value":"Mountain View"},{"label":"state","value":"CA"},{"label":"postcode","value":"94043"}]}
+{"input":"1 Infinite Loop, Cupertino, CA 95014","status":200,"body":[{"label":"house_number","value":"1"},{"label":"road","value":"Infinite Loop"},{"label":"city","value":"Cupertino"},{"label":"state","value":"CA"},{"label":"postcode","value":"95014"}]}
+{"input":"c/o John Smith, 500 Oak Ln, Austin TX 78701","status":200,"body":[{"label":"road","value":"c/o John Smith"},{"label":"house_number","value":"500"},{"label":"city","value":"Austin"},{"label":"state","value":"TX"},{"label":"postcode","value":"78701"}]}
+{"input":"1-chōme-1-2 Ōtemachi, Chiyoda City, Tōkyō 100-0004","status":200,"body":[{"label":"city","value":"Chiyoda"},{"label":"state","value":"Tōkyō"},{"label":"postcode","value":"100-0004"}]}

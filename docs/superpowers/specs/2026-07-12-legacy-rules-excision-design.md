@@ -46,7 +46,16 @@ Plus one probe before trusting the archive: `npm i @mailwoman/classifiers@6.0.0 
 
 ## Projection layer
 
-`toLibpostal()` joins `toOpenCage()`/`toNative()` in `@mailwoman/annotations` — the annotation contract is already the seam for output-format projections, so libpostal's label taxonomy becomes one more projection, not a private map inside the drop-in server.
+`toLibpostal()` joins `toOpenCage()`/`toNative()` in `@mailwoman/annotations` — the annotation contract is already where output-format projections live, so libpostal's label taxonomy becomes one more projection, not a private map inside the drop-in server.
+
+**Plan-1 discovery (2026-07-12):** `libpostal/engine.ts` already carries `COMPONENT_TO_LIBPOSTAL` + `toLibpostalComponents()` serving the current wire (v1 classification names overlap `ComponentTag` names for the mapped set, so the same map covers both eras). Plan 2 hoists or extends that map rather than writing one from scratch; the open choice there is hoist-into-`annotations` vs extend-in-place.
+
+**Plan-2 amendments (2026-07-12, scout-verified against source):**
+
+1. **The projection stays in `libpostal/engine.ts` (extend-in-place).** `@mailwoman/annotations` is the coordinate-keyed _enrichment_ contract (`AnnotationSet` = dms/mgrs/timezone/currency/…, projected by `toOpenCage()`/`toNative()`); it has no component/tag vocabulary and is the wrong home for a parse-component projection. The paragraph above stands corrected.
+2. **"Native neural output" for `/v1/parse` means the decoder serializers, not `AnnotationSet`:** ordered `[ComponentTag, value]` components (`decodeAsTuples`) plus the loose `AddressTree` shape `/v1/resolve` already speaks (`{ roots }`). Same correction as (1): `AnnotationSet` was the wrong term in §Decisions.
+3. **The drop-in gates are structured comparisons, not byte-equality.** The neural tag vocabulary differs from the rules parser's by design (street splits into `street_prefix`/`street`/`street_suffix`; no `unit_designator`; values are case-normalized). Byte-identity with the rules-era goldens is unattainable for any engine swap. Gates become: (a) wire-shape validity (labels within the libpostal vocabulary post-projection, reading order preserved), (b) pre-registered per-label agreement floors vs the goldens after case-folding + street assembly (house_number ≥ 0.97, postcode ≥ 0.97, road ≥ 0.90 — pre-registered before any gate run), (c) a committed diff report classing every divergence (known-vocab / improvement / regression) for review. The nominatim `road` field additionally gets _richer_ by design (full assembled prefix+base+suffix vs the bare rules `street` value) — an adjudicated-improvement class, not a regression.
+4. **`streetParts` needs no replacement parse at all:** `GeocodeResult.house_number`/`.street` already carry the spans (#1041), populated from the same neural parse the geocode runs. The nominatim swap is a deletion.
 
 - Direction: `ComponentTag` → libpostal labels (`street → road`, `locality → city`, `region → state`, …). `core/types/mapping.ts` is retained as the taxonomy bridge (it survives the excision precisely because the projections and the parity conversion need it).
 - Labels the neural taxonomy can't distinguish (`house`, `near`, `category`): omit, log-once. They are near-absent in the golden corpus; if the gate shows otherwise, that's a board issue, not a blocker.
