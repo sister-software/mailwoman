@@ -4409,6 +4409,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/api@workspace:api":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/api@workspace:api"
+  dependencies:
+    "@hono/zod-openapi": "npm:^1.4.0"
+    "@mailwoman/api-kit": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/formatter": "workspace:*"
+    hono: "npm:^4.12.29"
+    zod: "npm:^4.4.3"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/ban@workspace:*, @mailwoman/ban@workspace:ban":
   version: 0.0.0-use.local
   resolution: "@mailwoman/ban@workspace:ban"

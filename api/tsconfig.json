@@ -1,0 +1,18 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true
+	},
+	// `package.json` is imported directly (self-referencing `@mailwoman/api/package.json` import for
+	// the emitted OpenAPI doc's `info.version`, following the photon/nominatim precedent). Under
+	// `composite: true`, tsc's declaration-emit file-list check (TS6307) doesn't recognize a JSON
+	// file reached only via the `./**/*` glob below — it must be named explicitly.
+	"files": ["./package.json"],
+	"include": ["./**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [{ "path": "../api-kit" }, { "path": "../core" }, { "path": "../formatter" }]
+}

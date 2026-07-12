@@ -18,6 +18,7 @@
 		"mailwoman",
 		"annotations",
 		"api-kit",
+		"api",
 		"nominatim",
 		"photon",
 		"libpostal",

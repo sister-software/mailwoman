@@ -53,6 +53,30 @@ test("emitOpenAPIDocuments: returns both 3.1 and 3.0 flavors from the same route
 	expect(Object.keys((v30 as { paths: object }).paths)).toContain("/ping")
 })
 
+test("emitOpenAPIDocuments: full-info options land servers/security/license/tags on the v31 document", () => {
+	const app = createPingApp()
+	const { v31 } = emitOpenAPIDocuments(app, {
+		title: "@mailwoman/api-kit test",
+		version: "0.0.0",
+		servers: [{ url: "http://localhost" }],
+		security: [],
+		license: { name: "AGPL-3.0-only" },
+		tags: [{ name: "meta" }],
+	})
+
+	const doc = v31 as {
+		servers?: unknown[]
+		security?: unknown[]
+		tags?: unknown[]
+		info: { license?: { name: string } }
+	}
+
+	expect(doc.servers).toEqual([{ url: "http://localhost" }])
+	expect(doc.security).toEqual([])
+	expect(doc.info.license?.name).toBe("AGPL-3.0-only")
+	expect(doc.tags).toEqual([{ name: "meta" }])
+})
+
 test("serveNode: binds, answers over real HTTP, closes cleanly", async () => {
 	const app = createPingApp()
 

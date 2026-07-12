@@ -48,7 +48,7 @@ function asString(raw: unknown): string | undefined {
  * Express's `req.query` shape: `string` for a single value, `string[]` for repeats. The legacy parsing helpers
  * (`asString`, `parseFormat`, `parseBool`, `Number(...)`) — and their observable degenerate behaviors (repeated `q` →
  * `asString(array)` → undefined → silently treated as absent, never a 400) — key off exactly this shape, so the
- * handlers consume it unchanged. Null-prototype, matching express-simple's req.query shape (a repeated ?**proto**=
+ * handlers consume it unchanged. Null-prototype, matching express-simple's req.query shape (a repeated `?__proto__=`
  * param must create an own property, not reparent the object).
  */
 function legacyQuery(c: Context): Record<string, string | string[]> {

@@ -46,8 +46,8 @@ function asStringArray(raw: unknown): string[] | undefined {
  * repeated `lat` → NaN → 400) — key off exactly this shape, so the handlers consume it unchanged. Do NOT dedup or
  * canonicalize here: photon's repeatable params (`osm_tag`, `layer`) are contract, and its duplicate-param 400s are
  * contract too (unlike libpostal, where duplicates were never-contract — see the phase-1 adjudications).
- * Null-prototype, matching express-simple's req.query shape (a repeated ?**proto**= param must create an own property,
- * not reparent the object).
+ * Null-prototype, matching express-simple's req.query shape (a repeated `?__proto__=` param must create an own
+ * property, not reparent the object).
  */
 function legacyQuery(c: Context): Record<string, string | string[]> {
 	const out: Record<string, string | string[]> = Object.create(null)
