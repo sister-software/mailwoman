@@ -4680,7 +4680,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/photon@workspace:photon"
   dependencies:
+    "@hono/zod-openapi": "npm:^1.4.0"
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
@@ -4688,7 +4690,9 @@ __metadata:
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     express: "npm:^5.2.1"
+    hono: "npm:^4.12.29"
     mailwoman: "workspace:*"
+    zod: "npm:^4.4.3"
   bin:
     photon: ./out/cli.js
   languageName: unknown
