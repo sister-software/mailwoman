@@ -179,7 +179,19 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 			const { engine, preflight } = await createServeEngine()
 
 			if (!preflight.ok) {
-				console.error(preflight.message)
+				// Every cluster worker runs createServeEngine() independently, so with --cpus N every one of
+				// them hits this same failure and would print the identical banner N times. Node assigns
+				// cluster worker `id`s synchronously (1, 2, 3, ...) at fork() time in the PRIMARY, before any
+				// worker's async preflight resolves — so `cluster.worker.id === 1` deterministically picks the
+				// FIRST-forked worker, regardless of which worker's preflight check happens to finish first.
+				// Only that one worker prints; the rest exit silently. Chosen over a primary-side pre-fork
+				// check (the primary doesn't otherwise call createServeEngine() at all, and duplicating its
+				// import/db-existence gate there just to avoid forking would be the more invasive change) and
+				// over routing the message back through the primary's cluster "exit" handler (would require an
+				// IPC round-trip for what's a one-line dedupe).
+				if (cluster.worker?.id === 1) {
+					console.error(preflight.message)
+				}
 				process.exit(1)
 			}
 

@@ -30,8 +30,9 @@ export const ParseRequestSchema = z
 
 /**
  * `POST /v1/parse` response — a loose mirror of {@linkcode ParseOutcome} (`engine.ts`). `solutions` entries aren't fully
- * modeled: `SerializedSolution` carries the solver's internal match/classification detail, which is the engine's
- * contract, not this wire schema's.
+ * modeled: `SerializedSolution` (`@mailwoman/core/solver`) carries the solver's internal match/classification detail,
+ * which is the engine's contract, not this wire schema's — `score`/`penalty` are the two fields every solution always
+ * carries (always-present numbers, cheap to pin accurately); `classifications`/`matches` stay loose passthrough.
  */
 export const ParseOutcomeSchema = z
 	.object({
@@ -40,7 +41,7 @@ export const ParseOutcomeSchema = z
 			start: z.number(),
 			end: z.number(),
 		}),
-		solutions: z.array(z.looseObject({})),
+		solutions: z.array(z.looseObject({ score: z.number(), penalty: z.number() })),
 		debug: z.string().optional(),
 	})
 	.openapi("ParseOutcome")
@@ -52,8 +53,65 @@ export const GeocodeRequestSchema = z
 	})
 	.openapi("GeocodeRequest")
 
-/** `POST /v1/geocode` response — the geocode-core `GeocodeResult` shape passed through verbatim. */
-export const GeocodeOutcomeSchema = z.looseObject({}).openapi("GeocodeOutcome")
+/**
+ * One `GeocodeOutcome.hierarchy` entry — locality → country, most specific first. `name` is the resolved gazetteer name
+ * (proper-cased canonical); `value` is the raw parsed span. Mirrors `GeocodeResult["hierarchy"]` entries
+ * (`mailwoman/geocode-core.ts`), hand-modeled — see {@link GeocodeOutcomeSchema} for the no-import rationale.
+ */
+const GeocodeHierarchyEntrySchema = z
+	.object({
+		tag: z.string(),
+		value: z.string(),
+		name: z.string(),
+		lat: z.number().optional(),
+		lon: z.number().optional(),
+		placeID: z.string().optional(),
+	})
+	.openapi("GeocodeHierarchyEntry")
+
+/**
+ * One `GeocodeOutcome.candidates` entry — a ranked alternative place for the query's primary result (the winning place
+ * first, then same-query runner-ups). Mirrors `GeocodeResult["candidates"]` entries.
+ */
+const GeocodeCandidateSchema = z
+	.object({
+		name: z.string(),
+		tag: z.string(),
+		lat: z.number(),
+		lon: z.number(),
+		countryCode: z.string().nullable(),
+		placeID: z.string().optional(),
+	})
+	.openapi("GeocodeCandidate")
+
+/**
+ * `POST /v1/geocode` response — a hand-modeled mirror of `GeocodeResult`'s wire shape (`mailwoman/geocode-core.ts`),
+ * `.loose()` so a field the engine adds that this schema doesn't yet know about still rides through undocumented rather
+ * than being stripped or rejected. DOC-ACCURACY ONLY: the route passes `engine.geocode()`'s outcome through verbatim
+ * (`GeocodeOutcome = Record<string, unknown>`, `api/engine.ts`) — nothing here validates a real response, so a
+ * schema/engine mismatch can never reject or mutate a result at runtime. Deliberately carries NO import from
+ * `mailwoman` (the engine-agnosticism boundary — `mailwoman` is the one workspace allowed to depend on
+ * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time tripwire that
+ * catches this shape drifting from the real `GeocodeResult` interface.
+ */
+export const GeocodeOutcomeSchema = z
+	.object({
+		input: z.string(),
+		lat: z.number().nullable(),
+		lon: z.number().nullable(),
+		resolution_tier: z.enum(["address_point", "interpolated", "street", "admin"]),
+		uncertainty_m: z.number().nullable(),
+		locality: z.string().nullable(),
+		region: z.string().nullable(),
+		postcode: z.string().nullable(),
+		house_number: z.string().nullable(),
+		street: z.string().nullable(),
+		countryCode: z.string().nullable(),
+		hierarchy: z.array(GeocodeHierarchyEntrySchema),
+		candidates: z.array(GeocodeCandidateSchema),
+	})
+	.loose()
+	.openapi("GeocodeOutcome")
 
 /** `POST /v1/batch` request body. */
 export const BatchRequestSchema = z
@@ -109,5 +167,16 @@ export const FormatResponseSchema = z
 	})
 	.openapi("FormatResponse")
 
-/** `GET /health` response — loose: the engine's `HealthData` block (model card, data-root inventory) is engine-defined. */
-export const HealthResponseSchema = z.looseObject({}).openapi("HealthResponse")
+/**
+ * `GET /health` response — `status`/`uptime_s` are stamped by the ROUTE itself, unconditionally, regardless of engine
+ * (`api/routes.ts`'s `healthRoute` handler: `{ status: "ok", uptime_s, ...engine.health?.() }`), so those two are cheap
+ * + accurate to pin. Everything else is `HealthData` (`api/engine.ts`) — an engine-defined block (model card, data-root
+ * inventory for `mailwoman serve`; something else entirely for another engine) — stays loose.
+ */
+export const HealthResponseSchema = z
+	.object({
+		status: z.literal("ok"),
+		uptime_s: z.number(),
+	})
+	.loose()
+	.openapi("HealthResponse")

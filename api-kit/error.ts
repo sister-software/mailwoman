@@ -20,7 +20,13 @@ export const APIErrorSchema = z
 	})
 	.openapi("APIError")
 
-/** Respond with the native error envelope. */
-export function apiError(c: Context, status: ContentfulStatusCode, error: string, detail?: string) {
+/**
+ * Respond with the native error envelope. `status` is generic (not the flat `ContentfulStatusCode` union) so the
+ * returned `TypedResponse`'s status stays the CALLER'S literal (e.g. `503`), not the whole union — required for use
+ * inside an `app.openapi(route, handler)` handler body (`@mailwoman/api/routes.ts`), where the framework checks the
+ * handler's return type against that specific route's declared per-status `responses` map. A flat-typed `status` param
+ * would widen every branch to "any content-carrying status", which no single declared response branch matches.
+ */
+export function apiError<S extends ContentfulStatusCode>(c: Context, status: S, error: string, detail?: string) {
 	return c.json(detail === undefined ? { error } : { error, detail }, status)
 }
