@@ -29,13 +29,12 @@
 # Python + Rust API clients (`mailwoman clients generate` — Phase 5 Task 4)
 # against whatever `mailwoman/package.json` reads on `main` at that point (the
 # just-bumped version on a real run, unchanged on a dry run) and uploads both
-# as workflow artifacts on EVERY dispatch. It only pushes to PyPI/crates.io
-# when the operator opts in via the `publish_clients` input AND the run is not
-# a dry run — see RELEASING.md "Client packages" for the one-time registry
-# provisioning this requires (PyPI + crates.io accounts, `PYPI_API_TOKEN` +
-# `CARGO_REGISTRY_TOKEN` secrets). Additive only: this job never runs before
-# or blocks `publish`, and default-false `publish_clients` means an ordinary
-# dispatch behaves exactly as before this job existed.
+# as workflow artifacts on EVERY dispatch — inspection copies only. This
+# workflow NEVER publishes clients: registry publishing lives in the two
+# environment-bound workflows `publish-python.yml` (PyPI Trusted Publishing,
+# `pypi` environment — PyPI's trust binds to that exact filename) and
+# `publish-cargo.yml` (`cargo` environment's CARGO_REGISTRY_TOKEN secret),
+# dispatched separately by the operator. See RELEASING.md "Client packages".
 name: NPM Publish
 
 on:
@@ -53,11 +52,6 @@ on:
         type: boolean
       publish_only:
         description: "Finish a partial release: skip release-it's version bump/tag (already done) and just publish each workspace at its current version via OIDC (--tolerate-republish). Use when a prior run bumped+tagged but failed mid-publish."
-        required: false
-        default: false
-        type: boolean
-      publish_clients:
-        description: "Publish generated API clients to PyPI/crates.io (requires PYPI_API_TOKEN + CARGO_REGISTRY_TOKEN secrets; provision accounts first — see RELEASING.md)"
         required: false
         default: false
         type: boolean
@@ -211,20 +205,18 @@ jobs:
           fi
           echo "All workspaces published."
 
-  # Regenerate + (optionally) publish the Python + Rust API clients (Phase 5 Task 4). Additive: this
-  # job never gates or reshapes `publish` above — it only starts once that job has already succeeded
-  # (`needs: publish`), so it can't turn a working npm release red, and a run where `publish_clients`
-  # stays at its default `false` behaves exactly like this workflow did before this job existed
-  # (artifacts still build every dispatch — see below — but nothing leaves the runner).
+  # Regenerate the Python + Rust API clients (Phase 5 Task 4) as INSPECTION ARTIFACTS — this job
+  # never publishes anything (registry publishing = publish-python.yml / publish-cargo.yml, each
+  # bound to its GitHub environment). Additive: it only starts once `publish` has already succeeded
+  # (`needs: publish`), so it can't turn a working npm release red.
   clients:
     needs: publish
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # NOTE: this job occupies the workflow-level `publish` concurrency group even when
-    # `publish_clients=false` (artifact generation always runs on dispatch). A follow-up dispatch —
-    # notably the `publish_only` recovery path — queues behind it for the cold setup+generate leg.
-    # During an incident: cancel THIS job from the Actions UI (safe — it publishes nothing when
-    # ungated) to free the queue immediately.
+    # NOTE: this job occupies the workflow-level `publish` concurrency group (artifact generation
+    # always runs on dispatch). A follow-up dispatch — notably the `publish_only` recovery path —
+    # queues behind it for the cold setup+generate leg. During an incident: cancel THIS job from the
+    # Actions UI (always safe — it publishes nothing) to free the queue immediately.
     # Least privilege: this job doesn't push commits/tags (unlike `publish`) and doesn't use npm's
     # OIDC Trusted Publishing, so it needs neither `contents: write` nor `id-token: write`.
     permissions:
@@ -302,46 +294,3 @@ jobs:
           path: clients-build/mailwoman-client-rust.tar.gz
           if-no-files-found: error
 
-      # Gated on the operator's explicit opt-in AND excludes dry runs — `dry_run=true` means "preview,
-      # don't actually publish", and letting `publish_clients=true` slip a REAL PyPI upload through a
-      # preview run would violate that contract even though the brief only specified the
-      # `publish_clients` gate. `inputs.publish_clients`/`inputs.dry_run` are used bare (no `== 'true'`
-      # string compare) to match how `dry_run`/`publish_only` are already read elsewhere in this file
-      # (`!inputs.dry_run`, `inputs.publish_only && !inputs.dry_run`) — workflow_dispatch `type:
-      # boolean` inputs are real booleans in the `inputs` context, not strings.
-      #
-      # The token-presence check runs as the first thing inside the step (not a separate step) so a
-      # missing secret fails with one readable `::error::` line instead of `uv publish`/`cargo
-      # publish`'s own cryptic 401, matching the pattern the "Fetch weight binaries" step above already
-      # uses for its own precondition checks.
-      - name: Publish Python client to PyPI
-        if: ${{ inputs.publish_clients && !inputs.dry_run }}
-        working-directory: clients-build/python
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: | # shell
-          if [ -z "${UV_PUBLISH_TOKEN}" ]; then
-            echo "::error::publish_clients=true but the PYPI_API_TOKEN secret is not set. Provision a PyPI account + token (or Trusted Publisher) first — see RELEASING.md 'Client packages'."
-            exit 1
-          fi
-          uv publish
-
-      # No `--no-verify`: verified locally (Task 4) that `cargo publish`'s default isolated verify
-      # build — which packages the crate into `target/package/`, a COPY separate from the working
-      # tree — successfully finds the vendored `openapi/*.json` specs there (they're in Cargo.toml's
-      # `include` list) and rebuilds cleanly. No `--allow-dirty` either: also verified locally that
-      # `cargo publish --dry-run` raises no dirty-working-tree warning even though `clients-build/`
-      # sits inside this git repository, because every file under it is gitignored (`/clients-build/`
-      # in `.gitignore`) and cargo's dirty check reads git status, which omits ignored paths by
-      # default — there's nothing to override.
-      - name: Publish Rust client to crates.io
-        if: ${{ inputs.publish_clients && !inputs.dry_run }}
-        working-directory: clients-build/rust
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: | # shell
-          if [ -z "${CARGO_REGISTRY_TOKEN}" ]; then
-            echo "::error::publish_clients=true but the CARGO_REGISTRY_TOKEN secret is not set. Provision a crates.io account + token first — see RELEASING.md 'Client packages'."
-            exit 1
-          fi
-          cargo publish

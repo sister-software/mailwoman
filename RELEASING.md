@@ -521,68 +521,66 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 
 ## Client packages
 
-`publish.yml` carries a second job, `clients`, that runs after `publish` succeeds. It regenerates the
-Python (`mailwoman-client` on PyPI) and Rust (`mailwoman-client` on crates.io) API clients — typed
-wrappers over the Photon / Nominatim / libpostal drop-ins plus the native `/v1/*` surface, generated
-from the OpenAPI documents those surfaces already emit. See `docs/articles/api.mdx` "Client libraries"
-for what they are and how to use them; this section is the release-operator's view.
+Three workflows share the client story. `publish.yml`'s `clients` job (runs after `publish` succeeds)
+regenerates the Python (`mailwoman-client` on PyPI) and Rust (`mailwoman-client` on crates.io) API
+clients — typed wrappers over the Photon / Nominatim / libpostal drop-ins plus the native `/v1/*`
+surface, generated from the OpenAPI documents those surfaces already emit — and uploads them as
+**inspection artifacts only**. Registry publishing lives in two dedicated, environment-bound,
+manually-dispatched workflows: **`publish-python.yml`** (PyPI Trusted Publishing / OIDC, `pypi`
+environment — PyPI's trust binds to that exact filename, so never rename it without updating the
+PyPI-side publisher config) and **`publish-cargo.yml`** (`cargo` environment, whose
+`CARGO_REGISTRY_TOKEN` environment secret is the credential). See `docs/articles/api.mdx` "Client
+libraries" for what the clients are; this section is the release-operator's view.
 
-> **Incident note:** the `clients` job holds the workflow's `publish` concurrency slot even when
-> `publish_clients=false`, so a `publish_only` recovery dispatch queues behind its setup+generate leg
-> (minutes, cold). If you're mid-incident, cancel the running `clients` job from the Actions UI first —
-> it publishes nothing when ungated, and cancelling frees the queue immediately.
+> **Sequencing — do not publish clients before the next npm release.** The generated clients stamp
+> `mailwoman/package.json`'s version and document the `/v1` + emitted-spec surfaces, which exist on
+> `main` but in **no published npm release yet** (the Hono migration ships in the next release, a
+> MAJOR). Dispatching either publish workflow before that release would claim the current version
+> number on PyPI/crates.io for a client describing endpoints nobody can install — and both registries
+> permanently burn published version numbers. First client publish = right after the next npm release.
 
-### Artifacts always build; the registry push is gated
+> **Incident note:** the `clients` job holds the workflow's `publish` concurrency slot, so a
+> `publish_only` recovery dispatch queues behind its setup+generate leg (minutes, cold). If you're
+> mid-incident, cancel the running `clients` job from the Actions UI first — it publishes nothing,
+> ever, and cancelling frees the queue immediately. (The two client-publish workflows join the same
+> `publish` concurrency group by design, so they can't race a release into a mid-bump version.)
+
+### Artifacts always build; publishing is its own dispatch
 
 Every dispatch of `publish.yml` — including a `dry_run` — regenerates both clients and uploads them as
 workflow artifacts (`mailwoman-client-python`: the wheel + sdist; `mailwoman-client-rust`: a tarball of
 the assembled crate). That half runs unconditionally: it's the same local, receipt-verified pipeline as
 `mailwoman clients generate` (below), so a broken generator or a spec that drifted out from under
-`progenitor`/`openapi-python-client` fails the job and shows up in every PR-adjacent dispatch, not just
-the runs where someone remembers to check.
+`progenitor`/`openapi-python-client` fails the job and shows up on every dispatch, not just the runs
+where someone remembers to check. Nothing in `publish.yml` ever reaches a registry.
 
-Actually publishing those artifacts to PyPI/crates.io is a separate, explicit opt-in: the
-`publish_clients` workflow-dispatch input (boolean, default `false`). Leaving it `false` — the default —
-means an ordinary release behaves exactly as it did before this job existed; nothing reaches either
-registry. Set it `true` only once the one-time provisioning below is done, and never on a `dry_run`
-(the job refuses to publish on a dry run regardless of `publish_clients`, since "preview, don't actually
-publish" should mean that for every side effect a dispatch can have, not just the npm one).
+To actually publish, dispatch the dedicated workflow(s) from the Actions UI — each regenerates from
+`main` and publishes its half:
 
-### Operator TODO — one-time registry provisioning
+- **Python → PyPI:** run `Publish Python client` (`publish-python.yml`). Auth is Trusted Publishing —
+  the job's `pypi` environment + this filename are what PyPI verifies in the OIDC claims; there is no
+  token anywhere. `uv publish --trusted-publishing always` fails loud if the PyPI-side publisher
+  config drifts from the file/environment names.
+- **Rust → crates.io:** run `Publish Rust client` (`publish-cargo.yml`). Auth is the
+  `CARGO_REGISTRY_TOKEN` secret in the `cargo` GitHub environment (not a repo-level secret — the
+  job's `environment: cargo` declaration is what makes it resolvable).
 
-Nothing below is done yet. `publish_clients: true` will fail closed (a readable `::error::`, not a bare 401) until both are in place:
+### Registry provisioning — state as of 2026-07-12
 
-1. **PyPI** — create an account at <https://pypi.org/account/register/>, enable 2FA, and mint an
-   **account-scoped** API token (<https://pypi.org/manage/account/token/>, scope "Entire account" —
-   not a project-scoped token, which can't be minted until the project exists). Unlike a project token,
-   an account-scoped token CAN create a brand-new project on its first publish, so either:
-   - publish the first release **locally** — `UV_PUBLISH_TOKEN=<token> uv publish` from
-     `clients-build/python/`, after a checkout that already ran `mailwoman clients generate`; or
-   - store that same account-scoped token as the repo secret `PYPI_API_TOKEN` and let the existing
-     `clients` CI job do it — its "Publish Python client to PyPI" step already runs plain `uv publish`
-     against `UV_PUBLISH_TOKEN`, no other wiring required for a token-based first publish.
+Provisioned by the operator:
 
-   Once `mailwoman-client` exists on PyPI, swap `PYPI_API_TOKEN` for a narrower **project-scoped**
-   token for routine releases.
+- **`pypi` GitHub environment** (no secrets — OIDC only) + a PyPI Trusted Publisher configured against
+  `publish-python.yml`. Before the first dispatch, double-check the PyPI-side pending-publisher entry:
+  project name must be **`mailwoman-client`** (what the generator stamps), repository
+  `sister-software/mailwoman`, workflow filename `publish-python.yml`, and — if the publisher config
+  names an environment — it must say `pypi` (the job declares it either way; a mismatch fails the OIDC
+  exchange with a readable PyPI error).
+- **`cargo` GitHub environment** carrying `CARGO_REGISTRY_TOKEN`. crates.io has no pre-claim step —
+  the first successful `cargo publish` creates the crate. Confirm the crates.io account email is
+  verified (crates.io refuses publishes until it is).
 
-   Trusted Publishing (OIDC, no token in the repo at all) is a **future enhancement**, not something
-   already wired: the `clients` job requests only `permissions: contents: read`, and its publish step
-   is a bare `uv publish`. Adding it would mean granting the job `id-token: write`, registering a PyPI
-   Trusted Publisher (repo `sister-software/mailwoman`, workflow `.github/workflows/publish.yml`, job
-   `clients`), and switching the step to `uv publish --trusted-publishing automatic`. None of that
-   exists today — as shipped, `publish_clients: true` fails closed on a missing `PYPI_API_TOKEN`, not
-   on missing OIDC.
-
-2. **crates.io** — sign in at <https://crates.io/> with GitHub, verify the account email (crates.io
-   refuses to publish until it's verified), create a token at
-   <https://crates.io/settings/tokens> (scopes `publish-new` + `publish-update`), and store it as the
-   repo secret `CARGO_REGISTRY_TOKEN`. crates.io has no separate "claim the name first" step —
-   `cargo publish` creates the crate on its first successful run, token-authenticated, so CI can do the
-   first publish itself once the secret exists.
-3. **Both names were still free as of 2026-07-12** (404 on `pypi.org/pypi/mailwoman-client/json` and
-   `crates.io/api/v1/crates/mailwoman-client`) — reserved by intent, not yet claimed. Claim them before
-   they're gone; nothing else in this repo depends on the name, but a squatted `mailwoman-client` on
-   either registry would force a rename across both client packages, their docs, and this runbook.
+Both registry names (`mailwoman-client` on PyPI and crates.io) were unclaimed as of 2026-07-12 —
+reserved by intent, not yet claimed. The first dispatches claim them.
 
 ### Version sync — a client-only fix can't republish alone
 
@@ -621,7 +619,8 @@ never be used to validate a real change — the verify step is the entire point.
   already does at runtime.
 - **`mailwoman release hf` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
   is a separate manual command after the npm release, not part of `yarn release`.
-- **Client-package registry provisioning** — see "Client packages" above. The `clients` CI job builds
-  and artifacts the Python/Rust clients on every dispatch already; it can't publish either until the
-  operator provisions the PyPI + crates.io accounts and secrets.
+- **Client-package first publish** — provisioning is DONE (see "Client packages" above: `pypi` +
+  `cargo` environments, Trusted Publisher bound to `publish-python.yml`). What remains is dispatching
+  `publish-python.yml` + `publish-cargo.yml` once — AFTER the next npm release, per the sequencing
+  note above.
 - **Changelog generation** — release-it can emit one via the `@release-it/conventional-changelog` plugin. Not configured yet because commit messages haven't standardized on Conventional Commits.
