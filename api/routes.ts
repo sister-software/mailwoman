@@ -41,7 +41,11 @@ import {
 	ResolveResponseSchema,
 } from "./schema.ts"
 
-/** Default `POST /v1/batch` row cap — carried from the express server's `$public.MAILWOMAN_BATCH_MAX` default. */
+/**
+ * Default `POST /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted. This is the
+ * standalone-engine default, not derived from env — `mailwoman serve` always passes the env-derived value explicitly
+ * (`$public.MAILWOMAN_BATCH_MAX`, default 1000; see `core/env/schema.ts`).
+ */
 export const DEFAULT_BATCH_MAX = 500
 
 const startedAt = Date.now()

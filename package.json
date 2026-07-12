@@ -88,7 +88,6 @@
 		"@sister.software/oxfmt-config": "^9.3.0",
 		"@sister.software/oxlint-config": "^9.3.0",
 		"@sister.software/tsconfig": "^8.0.1",
-		"@types/express": "^5.0.6",
 		"@types/geojson": "^7946.0.16",
 		"@types/node": "^26.1.1",
 		"@types/pluralize": "^0.0.33",
