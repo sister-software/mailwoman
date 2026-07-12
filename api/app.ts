@@ -9,7 +9,7 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { apiError, attachOpenAPIDocs } from "@mailwoman/api-kit"
+import { apiError, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import packageJson from "@mailwoman/api/package.json" with { type: "json" }
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
@@ -43,6 +43,33 @@ export interface MailwomanAPIOptions {
  */
 function summarizeValidationError(error: { issues: Array<{ path: PropertyKey[]; message: string }> }): string {
 	return error.issues.map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`).join("; ")
+}
+
+/**
+ * The document info stamped into the emitted OpenAPI document. Exported (not inlined) so the `mailwoman openapi`
+ * command can call `emitOpenAPIDocuments` with the SAME info the mounted `/openapi.json` route (below, via
+ * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.
+ */
+export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
+	title: packageJson.name,
+	version: packageJson.version,
+	description: packageJson.description,
+	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
+	contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
+	servers: [
+		{
+			url: "http://{host}:{port}",
+			variables: { host: { default: "127.0.0.1" }, port: { default: "3000" } },
+		},
+	],
+	security: [],
+	tags: [
+		{ name: "parsing", description: "Free-text address parsing." },
+		{ name: "geocoding", description: "Address-to-coordinate resolution." },
+		{ name: "resolving", description: "Gazetteer resolution over an already-decoded address tree." },
+		{ name: "formatting", description: "Component-dict rendering — the inverse of parsing." },
+		{ name: "meta", description: "Health, metrics, and deploy-time operations." },
+	],
 }
 
 /** Build the native Mailwoman app around an injected {@link MailwomanAPIEngine}. */
@@ -93,27 +120,7 @@ export function createMailwomanAPI(engine: MailwomanAPIEngine, options: Mailwoma
 
 	registerMailwomanAPIRoutes(app, engine, { batchMax: options.batchMax ?? DEFAULT_BATCH_MAX })
 
-	attachOpenAPIDocs(app, {
-		title: packageJson.name,
-		version: packageJson.version,
-		description: packageJson.description,
-		license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-		contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
-		servers: [
-			{
-				url: "http://{host}:{port}",
-				variables: { host: { default: "127.0.0.1" }, port: { default: "3000" } },
-			},
-		],
-		security: [],
-		tags: [
-			{ name: "parsing", description: "Free-text address parsing." },
-			{ name: "geocoding", description: "Address-to-coordinate resolution." },
-			{ name: "resolving", description: "Gazetteer resolution over an already-decoded address tree." },
-			{ name: "formatting", description: "Component-dict rendering — the inverse of parsing." },
-			{ name: "meta", description: "Health, metrics, and deploy-time operations." },
-		],
-	})
+	attachOpenAPIDocs(app, MAILWOMAN_API_DOC_INFO)
 
 	return app
 }

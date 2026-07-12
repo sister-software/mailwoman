@@ -16,6 +16,10 @@ beforeEach(() => {
 
 const fixtureSolution: SerializedSolution = { score: 1, penalty: 0, classifications: {}, matches: [] }
 
+/** The `detail` text every "engine method absent" 503 carries — see `routes.ts`'s `GEOCODER_UNAVAILABLE_DETAIL`. */
+const GEOCODER_UNAVAILABLE_DETAIL =
+	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
+
 function fixtureParseOutcome(address: string, debug: boolean): ParseOutcome {
 	return {
 		input: { body: address, start: 0, end: address.length },
@@ -159,7 +163,7 @@ test("POST /v1/geocode: engine.geocode absent -> 503 (deps missing in production
 		body: JSON.stringify({ address: "x" }),
 	})
 	expect(res.status).toBe(503)
-	expect(await res.json()).toEqual({ error: "geocoder not available" })
+	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
 test("POST /v1/geocode: a thrown engine error is recorded as an error tier, then rethrown into the 500 net", async () => {
@@ -238,7 +242,7 @@ test("POST /v1/batch: engine.batch absent -> 503", async () => {
 		body: JSON.stringify({ addresses: ["a"] }),
 	})
 	expect(res.status).toBe(503)
-	expect(await res.json()).toEqual({ error: "geocoder not available" })
+	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
 test("/v1/batch records whole-call latency under the batch tier", async () => {
@@ -288,7 +292,7 @@ test("POST /v1/resolve: engine.resolveTree absent -> 503", async () => {
 		body: JSON.stringify({ tree: { raw: "x", roots: [] } }),
 	})
 	expect(res.status).toBe(503)
-	expect(await res.json()).toEqual({ error: "resolver not available" })
+	expect(await res.json()).toEqual({ error: "resolver not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
 // ---------------------------------------------------------------------------------------------
@@ -306,7 +310,7 @@ test("POST /v1/reload: engine.reload absent -> 503", async () => {
 	const app = createMailwomanAPI({})
 	const res = await app.request("/v1/reload", { method: "POST" })
 	expect(res.status).toBe(503)
-	expect(await res.json()).toEqual({ error: "geocoder not available" })
+	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
 // ---------------------------------------------------------------------------------------------

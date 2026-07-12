@@ -8,6 +8,9 @@
  *   (progenitor), replacing the old hand-downgrade step.
  */
 
+import { mkdirSync, writeFileSync } from "node:fs"
+import { dirname } from "node:path"
+
 import type { OpenAPIHono } from "@hono/zod-openapi"
 
 /**
@@ -57,5 +60,30 @@ export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { 
 	return {
 		v31: app.getOpenAPI31Document({ openapi: "3.1.0", ...toDocumentConfig(info) } as never),
 		v30: app.getOpenAPIDocument({ openapi: "3.0.3", ...toDocumentConfig(info) } as never),
+	}
+}
+
+/**
+ * The shared body of every surface's `openapi` CLI subcommand (the three drop-ins + `mailwoman openapi`): pick the
+ * flavor `emitOpenAPIDocuments` produces (`--flavor 3.0` → the 3.0.3 diet client generators like progenitor want;
+ * default 3.1.0), then either print it to stdout or write it to `out`. Always compact (single-line) JSON — never
+ * pretty-printed — so the stdout form is a stable `startsWith('{"openapi":"3.1.0"')` smoke check, matching what a live
+ * `/openapi.json` response looks like. `out`'s parent directory is created if missing (the docs build writes into a
+ * gitignored, not-yet-existing `docs/static/openapi/`). One place owns this so the four emitters can't drift out of
+ * lockstep with each other.
+ */
+export function printOpenAPIDocument(
+	app: OpenAPIHono,
+	info: OpenAPIDocInfo,
+	opts: { flavor?: string; out?: string } = {}
+): void {
+	const { v31, v30 } = emitOpenAPIDocuments(app, info)
+	const json = JSON.stringify(opts.flavor === "3.0" ? v30 : v31)
+
+	if (opts.out) {
+		mkdirSync(dirname(opts.out), { recursive: true })
+		writeFileSync(opts.out, `${json}\n`)
+	} else {
+		console.log(json)
 	}
 }

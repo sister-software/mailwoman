@@ -242,21 +242,119 @@ The current neural model (v0.4.0) emits 10 of these: country, region, locality, 
 
 ## Drop-in server specifications (OpenAPI 3.1)
 
-The three HTTP drop-ins each ship a machine-readable [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html) specification — the endpoints, query parameters, response shapes, the schema.org `jsonld` variants, and the documented divergences from each upstream. Point Swagger UI, Redoc, a client generator, or a contract test at them.
+The three HTTP drop-ins — plus the native `/v1/*` surface `mailwoman serve` ships — each expose a machine-readable [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html) specification: the endpoints, query parameters, response shapes, the schema.org `jsonld` variants, and (for the drop-ins) the documented divergences from each upstream. Point Swagger UI, Redoc, a client generator, or a contract test at them.
 
-| Drop-in                                                                      | Endpoints                                   | Specification                                        |
-| ---------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------- |
-| [`@mailwoman/photon`](https://www.npmjs.com/package/@mailwoman/photon)       | `/api`, `/reverse`                          | [photon.yaml](pathname:///openapi/photon.yaml)       |
-| [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status` | [nominatim.yaml](pathname:///openapi/nominatim.yaml) |
-| [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                         | [libpostal.yaml](pathname:///openapi/libpostal.yaml) |
+| Drop-in                                                                      | Endpoints                                                                                                 | Specification                                        |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [`@mailwoman/photon`](https://www.npmjs.com/package/@mailwoman/photon)       | `/api`, `/reverse`                                                                                        | [photon.json](pathname:///openapi/photon.json)       |
+| [`@mailwoman/nominatim`](https://www.npmjs.com/package/@mailwoman/nominatim) | `/search`, `/reverse`, `/lookup`, `/status`                                                               | [nominatim.json](pathname:///openapi/nominatim.json) |
+| [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                                                                                       | [libpostal.json](pathname:///openapi/libpostal.json) |
+| `mailwoman serve` (native `/v1/*` surface)                                   | `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, `/v1/reload`, `/health`, `/metrics` | [mailwoman.json](pathname:///openapi/mailwoman.json) |
 
-The source of truth is the route table, not a checked-in file. All three drop-ins build their OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests, and emit it at runtime from a running server — `GET /openapi.json`. There's nothing to keep in sync by hand: change a route, the document changes with it.
+The source of truth is the route table, not a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and nothing to keep in sync by hand:
 
-To lint a running server's document with [Redocly CLI](https://redocly.com/docs/cli), fetch it to a temp file first (Redocly's `lint` doesn't read stdin):
+- **At runtime**, from a running server — `GET /openapi.json`.
+- **Ahead of time**, from each surface's own CLI — `mailwoman-photon openapi`, `mailwoman-nominatim openapi`, `mailwoman-libpostal openapi`, `mailwoman openapi` — which prints the document to stdout (or `--out <path>`) without booting the real engine or opening a data root. This is what stamps the four JSON files linked above: the docs site's `prebuild` script runs all four emitters into `static/openapi/` before every build, so those copies are a build product, not a file to hand-edit.
+
+To lint a running server's document with [Redocly CLI](https://redocly.com/docs/cli), fetch it to a temp file first (Redocly's `lint` doesn't read stdin) — or skip the server and lint the CLI's own output directly:
 
 ```bash
+# From a running server:
 npx @mailwoman/nominatim serve --port 8081 --candidate-db <path> &
 curl -s http://127.0.0.1:8081/openapi.json -o /tmp/nominatim-openapi.json
 npx --yes @redocly/cli@latest lint /tmp/nominatim-openapi.json
 # photon and libpostal serve the same way — GET /openapi.json — swap the package and port
+
+# Or straight from the CLI (no server, no data root needed):
+npx @mailwoman/nominatim openapi --out /tmp/nominatim-openapi.json
+npx --yes @redocly/cli@latest lint /tmp/nominatim-openapi.json
 ```
+
+## Client libraries
+
+`mailwoman-client` bundles a typed client per language for all four surfaces above — the three HTTP
+drop-ins plus the native `mailwoman serve` API:
+
+| Language | Package                        | Generator                                                                              |
+| -------- | ------------------------------ | -------------------------------------------------------------------------------------- |
+| Python   | `mailwoman-client` (PyPI)      | [`openapi-python-client`](https://github.com/openapi-generators/openapi-python-client) |
+| Rust     | `mailwoman-client` (crates.io) | [`progenitor`](https://github.com/oxidecomputer/progenitor)                            |
+
+Same one-directional discipline as the specs themselves: route tables → emitted OpenAPI documents →
+generated clients, nothing hand-maintained downstream of the spec. `mailwoman clients generate`
+(`mailwoman/tools/generate-clients.ts`) emits all eight documents (each surface, 3.1 + the
+progenitor-diet 3.0.3 — `openapiv3`, which progenitor depends on, only understands 3.0.x), runs
+`openapi-python-client` once per surface to assemble a Python package
+(`mailwoman_client.{photon,nominatim,libpostal,mailwoman}`), vendors the 3.0 documents into a Rust
+crate whose four modules each expand `progenitor::generate_api!` at compile time, then **verifies**
+both actually build: `uv build` the Python package + import-check the wheel in an ephemeral
+environment, `cargo check --examples` the crate. Nothing generated is committed — regenerate any time
+the specs change.
+
+**Not yet published.** Both packages build and verify cleanly on every `mailwoman clients generate`
+run, but neither has shipped to a registry yet — that's gated behind an operator step (provisioning a
+PyPI account and a crates.io account, each with a publish token) documented in the repo's
+`RELEASING.md`. Once provisioned, the same generation pipeline runs inside a gated CI job: it always
+builds the artifacts on a release dispatch, and only pushes to PyPI/crates.io when the operator
+explicitly opts in for that run. Until then, build them yourself:
+
+```bash
+mailwoman clients generate
+# clients-build/python/dist/mailwoman_client-<version>-py3-none-any.whl
+# clients-build/rust/  (cargo check --examples already passed; cargo package/publish when ready)
+```
+
+### Python usage
+
+Forward-geocode against the hosted Photon trial endpoint (`https://photon.sister.software`, no local
+server needed):
+
+```python
+from mailwoman_client import PhotonClient
+from mailwoman_client.photon.api.geocoding import search
+
+client = PhotonClient.hosted()  # or PhotonClient(base_url="http://127.0.0.1:2322") to self-host
+result = search.sync(client=client, q="berlin", limit=3)
+
+for feature in result.features:
+    lon, lat = feature.geometry.coordinates
+    print(feature.properties.name, lat, lon)
+```
+
+`PhotonClient`, `NominatimClient`, `LibpostalClient`, and `MailwomanClient` all default to their
+surface's local `serve` port, so they work against a self-hosted server out of the box; pass
+`base_url=` to point elsewhere. Every generated endpoint module also exposes an `asyncio` coroutine
+alongside `sync`.
+
+### Rust usage
+
+```rust
+use mailwoman_client::photon::types::PhotonResponse;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = mailwoman_client::photon_hosted(); // https://photon.sister.software
+
+    let response = client
+        .search(None, None, None, None, Some(3), None, None, Some("berlin"))
+        .await?;
+
+    if let PhotonResponse::PhotonFeatureCollection(fc) = response.into_inner() {
+        for feature in &fc.features {
+            println!("{:?}", feature.properties);
+        }
+    }
+    Ok(())
+}
+```
+
+`photon_local()` / `nominatim_local()` / `libpostal_local()` / `mailwoman_local()` point at each
+surface's local `serve` port; construct a module client directly (`mailwoman_client::nominatim::Client::new("http://…")`)
+for anything else. The transport is `reqwest` over **rustls**, so the build host needs a C compiler +
+CMake (rustls' default crypto provider, `aws-lc-rs`, builds a small C library) but not system OpenSSL.
+
+Both languages are AGPL-3.0-only OR LicenseRef-Commercial, matching the rest of the repo. The
+`mailwoman_client`/`mailwoman-client` naming, module layout, and license carry forward from an earlier
+prototype branch (`feat/api-clients`, superseded and left unmerged) — the difference is this pipeline
+sources every spec from the emitters above instead of a checked-in `openapi.yaml`, and adds the native
+`mailwoman` surface as a fourth module.

@@ -18,12 +18,7 @@ import {
 	type PhotonSearchParams,
 } from "./engine.ts"
 import { photonToSchemaOrg } from "./projection.ts"
-import {
-	PhotonFeatureCollectionSchema,
-	PhotonMessageCollectionSchema,
-	reverseQueryParams,
-	searchQueryParams,
-} from "./schema.ts"
+import { PhotonMessageCollectionSchema, PhotonResponseSchema, reverseQueryParams, searchQueryParams } from "./schema.ts"
 
 const DEFAULT_LIMIT = 15
 
@@ -105,7 +100,7 @@ const messageContent = (description: string) => ({
 const collectionResponses = {
 	200: {
 		description: "A GeoJSON FeatureCollection (or schema.org Place[] when format=jsonld).",
-		content: { "application/json": { schema: PhotonFeatureCollectionSchema } },
+		content: { "application/json": { schema: PhotonResponseSchema } },
 	},
 	400: messageContent("A required or malformed parameter."),
 	500: messageContent("An unexpected engine fault. An empty FeatureCollection with a message, never a crash."),

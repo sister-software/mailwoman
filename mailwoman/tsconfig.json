@@ -8,6 +8,12 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
+	// `files` is NOT filtered by `exclude` (exclude only prunes `include`'s glob results) — this is the
+	// one deliberate carve-out from the blanket `./test/**/*` exclude above. api-schema-drift.test.ts is a
+	// compile-time-only check (a `z.infer` <-> `GeocodeResult` assignability pin); vitest's esbuild
+	// transform strips types without checking them, so it needs to ride through `tsc -b` (`yarn compile`)
+	// to mean anything. See that file's header for the full rationale.
+	"files": ["./test/api-schema-drift.test.ts"],
 	"references": [
 		{ "path": "../api" },
 		{ "path": "../api-kit" },

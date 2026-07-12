@@ -8,7 +8,7 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs } from "@mailwoman/api-kit"
+import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import packageJson from "@mailwoman/nominatim/package.json" with { type: "json" }
 import { cors } from "hono/cors"
 
@@ -23,6 +23,34 @@ export interface NominatimAppOptions {
 	 * (#1017). Set `false` when a reverse proxy already owns the CORS headers.
 	 */
 	cors?: boolean
+}
+
+/**
+ * The document info stamped into the emitted OpenAPI document. Exported (not inlined) so the CLI's `openapi` subcommand
+ * can call `emitOpenAPIDocuments` with the SAME info the mounted `/openapi.json` route (below, via
+ * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.
+ */
+export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
+	title: packageJson.name,
+	version: packageJson.version,
+	description: packageJson.description,
+	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
+	contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
+	externalDocs: {
+		description: "Switching from Nominatim",
+		url: "https://mailwoman.sister.software/docs/concepts/switching-from-nominatim",
+	},
+	servers: [
+		{
+			url: "http://{host}:{port}",
+			variables: { host: { default: "127.0.0.1" }, port: { default: "8080" } },
+		},
+	],
+	security: [],
+	tags: [
+		{ name: "geocoding", description: "Forward geocoding, reverse geocoding, and OSM id lookup." },
+		{ name: "meta", description: "Health and deploy-time operations." },
+	],
 }
 
 /** Build the Nominatim-compatible app around an injected {@link NominatimEngine}. */
@@ -40,28 +68,7 @@ export function createNominatimApp(engine: NominatimEngine, options: NominatimAp
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
 	registerNominatimRoutes(app, engine)
-	attachOpenAPIDocs(app, {
-		title: packageJson.name,
-		version: packageJson.version,
-		description: packageJson.description,
-		license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-		contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
-		externalDocs: {
-			description: "Switching from Nominatim",
-			url: "https://mailwoman.sister.software/docs/concepts/switching-from-nominatim",
-		},
-		servers: [
-			{
-				url: "http://{host}:{port}",
-				variables: { host: { default: "127.0.0.1" }, port: { default: "8080" } },
-			},
-		],
-		security: [],
-		tags: [
-			{ name: "geocoding", description: "Forward geocoding, reverse geocoding, and OSM id lookup." },
-			{ name: "meta", description: "Health and deploy-time operations." },
-		],
-	})
+	attachOpenAPIDocs(app, NOMINATIM_DOC_INFO)
 
 	return app
 }
