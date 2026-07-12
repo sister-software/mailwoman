@@ -156,6 +156,8 @@
 	"dependencies": {
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/annotations": "workspace:*",
+		"@mailwoman/api": "workspace:*",
+		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/codex": "workspace:*",

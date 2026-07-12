@@ -9,6 +9,8 @@
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*", "./server/static/**"],
 	"references": [
+		{ "path": "../api" },
+		{ "path": "../api-kit" },
 		{ "path": "../core" },
 		{ "path": "../resolver" },
 		{ "path": "../classifiers" },

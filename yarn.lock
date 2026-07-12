@@ -4409,7 +4409,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/api@workspace:api":
+"@mailwoman/api@workspace:*, @mailwoman/api@workspace:api":
   version: 0.0.0-use.local
   resolution: "@mailwoman/api@workspace:api"
   dependencies:
@@ -15933,6 +15933,8 @@ __metadata:
   dependencies:
     "@inkjs/ui": "npm:^2.0.0"
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/api": "workspace:*"
+    "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/codex": "workspace:*"
