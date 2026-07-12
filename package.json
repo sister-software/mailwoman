@@ -106,7 +106,7 @@
 		"release-it": "^19.2.4",
 		"spliterator": "^3.2.0",
 		"typescript": "^6.0.3",
-		"vitest": "3.2.6",
+		"vitest": "4.1.10",
 		"zx": "^8.8.5"
 	},
 	"resolutions": {
