@@ -46,7 +46,9 @@ Plus one probe before trusting the archive: `npm i @mailwoman/classifiers@6.0.0 
 
 ## Projection layer
 
-`toLibpostal()` joins `toOpenCage()`/`toNative()` in `@mailwoman/annotations` — the annotation contract is already the seam for output-format projections, so libpostal's label taxonomy becomes one more projection, not a private map inside the drop-in server.
+`toLibpostal()` joins `toOpenCage()`/`toNative()` in `@mailwoman/annotations` — the annotation contract is already where output-format projections live, so libpostal's label taxonomy becomes one more projection, not a private map inside the drop-in server.
+
+**Plan-1 discovery (2026-07-12):** `libpostal/engine.ts` already carries `COMPONENT_TO_LIBPOSTAL` + `toLibpostalComponents()` serving the current wire (v1 classification names overlap `ComponentTag` names for the mapped set, so the same map covers both eras). Plan 2 hoists or extends that map rather than writing one from scratch; the open choice there is hoist-into-`annotations` vs extend-in-place.
 
 - Direction: `ComponentTag` → libpostal labels (`street → road`, `locality → city`, `region → state`, …). `core/types/mapping.ts` is retained as the taxonomy bridge (it survives the excision precisely because the projections and the parity conversion need it).
 - Labels the neural taxonomy can't distinguish (`house`, `near`, `category`): omit, log-once. They are near-absent in the golden corpus; if the gate shows otherwise, that's a board issue, not a blocker.
