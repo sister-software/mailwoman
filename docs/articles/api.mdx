@@ -269,3 +269,92 @@ npx --yes @redocly/cli@latest lint /tmp/nominatim-openapi.json
 npx @mailwoman/nominatim openapi --out /tmp/nominatim-openapi.json
 npx --yes @redocly/cli@latest lint /tmp/nominatim-openapi.json
 ```
+
+## Client libraries
+
+`mailwoman-client` bundles a typed client per language for all four surfaces above — the three HTTP
+drop-ins plus the native `mailwoman serve` API:
+
+| Language | Package                                                                     | Generator                                                                              |
+| -------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Python   | [`mailwoman-client`](https://pypi.org/project/mailwoman-client/) (PyPI)     | [`openapi-python-client`](https://github.com/openapi-generators/openapi-python-client) |
+| Rust     | [`mailwoman-client`](https://crates.io/crates/mailwoman-client) (crates.io) | [`progenitor`](https://github.com/oxidecomputer/progenitor)                            |
+
+Same one-directional discipline as the specs themselves: route tables → emitted OpenAPI documents →
+generated clients, nothing hand-maintained downstream of the spec. `mailwoman clients generate`
+(`mailwoman/tools/generate-clients.ts`) emits all eight documents (each surface, 3.1 + the
+progenitor-diet 3.0.3 — `openapiv3`, which progenitor depends on, only understands 3.0.x), runs
+`openapi-python-client` once per surface to assemble a Python package
+(`mailwoman_client.{photon,nominatim,libpostal,mailwoman}`), vendors the 3.0 documents into a Rust
+crate whose four modules each expand `progenitor::generate_api!` at compile time, then **verifies**
+both actually build: `uv build` the Python package + import-check the wheel in an ephemeral
+environment, `cargo check --examples` the crate. Nothing generated is committed — regenerate any time
+the specs change.
+
+**Not yet published.** Both packages build and verify cleanly on every `mailwoman clients generate`
+run, but neither has shipped to a registry yet — that's gated behind an operator step (provisioning a
+PyPI account and a crates.io account, each with a publish token) documented in the repo's
+`RELEASING.md`. Once provisioned, the same generation pipeline runs inside a gated CI job: it always
+builds the artifacts on a release dispatch, and only pushes to PyPI/crates.io when the operator
+explicitly opts in for that run. Until then, build them yourself:
+
+```bash
+mailwoman clients generate
+# clients-build/python/dist/mailwoman_client-<version>-py3-none-any.whl
+# clients-build/rust/  (cargo check --examples already passed; cargo package/publish when ready)
+```
+
+### Python usage
+
+Forward-geocode against the hosted Photon trial endpoint (`https://photon.sister.software`, no local
+server needed):
+
+```python
+from mailwoman_client import PhotonClient
+from mailwoman_client.photon.api.geocoding import search
+
+client = PhotonClient.hosted()  # or PhotonClient(base_url="http://127.0.0.1:2322") to self-host
+result = search.sync(client=client, q="berlin", limit=3)
+
+for feature in result.features:
+    lon, lat = feature.geometry.coordinates
+    print(feature.properties.name, lat, lon)
+```
+
+`PhotonClient`, `NominatimClient`, `LibpostalClient`, and `MailwomanClient` all default to their
+surface's local `serve` port, so they work against a self-hosted server out of the box; pass
+`base_url=` to point elsewhere. Every generated endpoint module also exposes an `asyncio` coroutine
+alongside `sync`.
+
+### Rust usage
+
+```rust
+use mailwoman_client::photon::types::PhotonResponse;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = mailwoman_client::photon_hosted(); // https://photon.sister.software
+
+    let response = client
+        .search(None, None, None, None, Some(3), None, None, Some("berlin"))
+        .await?;
+
+    if let PhotonResponse::PhotonFeatureCollection(fc) = response.into_inner() {
+        for feature in &fc.features {
+            println!("{:?}", feature.properties);
+        }
+    }
+    Ok(())
+}
+```
+
+`photon_local()` / `nominatim_local()` / `libpostal_local()` / `mailwoman_local()` point at each
+surface's local `serve` port; construct a module client directly (`mailwoman_client::nominatim::Client::new("http://…")`)
+for anything else. The transport is `reqwest` over **rustls**, so the build host needs a C compiler +
+CMake (rustls' default crypto provider, `aws-lc-rs`, builds a small C library) but not system OpenSSL.
+
+Both languages are AGPL-3.0-only OR LicenseRef-Commercial, matching the rest of the repo. The
+`mailwoman_client`/`mailwoman-client` naming, module layout, and license carry forward from an earlier
+prototype branch (`feat/api-clients`, superseded and left unmerged) — the difference is this pipeline
+sources every spec from the emitters above instead of a checked-in `openapi.yaml`, and adds the native
+`mailwoman` surface as a fourth module.
