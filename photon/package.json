@@ -14,8 +14,7 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"README.md",
-		"openapi.yaml"
+		"README.md"
 	],
 	"type": "module",
 	"exports": {
@@ -37,14 +36,17 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@hono/zod-openapi": "^1.4.0",
 		"@mailwoman/annotations": "workspace:*",
+		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
-		"express": "^5.2.1",
-		"mailwoman": "workspace:*"
+		"hono": "^4.12.29",
+		"mailwoman": "workspace:*",
+		"zod": "^4.4.3"
 	}
 }
