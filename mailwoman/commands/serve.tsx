@@ -6,21 +6,27 @@
 
 import cluster, { type Worker } from "node:cluster"
 import { availableParallelism } from "node:os"
-import { resolve as resolvePath } from "node:path"
-import * as process from "node:process"
+// Default import, not `* as process` — the ESM namespace object for `node:process` only reflects
+// the process object's OWN properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`,
+// `emit`) live on its prototype chain and are silently absent from `import *`. SIGINT/SIGTERM below
+// need `.once`, so this must be the real singleton.
+import process from "node:process"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
-import express from "express"
+import { createMailwomanAPI } from "@mailwoman/api"
+import { serveNode, type ServerHandle } from "@mailwoman/api-kit"
+import { $public } from "@mailwoman/core/env"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
+import { createServeEngine } from "../api-engine.ts"
 import type { CommandComponent } from "../cli-kit/index.ts"
-import { AddressRouter, GeocodeRouter, HealthRouter, ResolveRouter } from "../server/index.ts"
 
 // NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
-// move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup,
-// and ChildThread's effect boots the express server; there is no `setImmediate(process.exit)` here).
+// move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup, and
+// ChildThread's effect boots the @mailwoman/api Hono app over a node listener; there is no
+// `setImmediate(process.exit)` here — SIGINT/SIGTERM now drive an explicit graceful `server.close()`).
 
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 	options: { cpus = availableParallelism() },
@@ -113,27 +119,36 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 
 const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { port, host } }) => {
 	useEffect(() => {
-		const app = express()
+		let handle: ServerHandle | undefined
 
-		// 2mb body cap accommodates a full /api/batch (up to MAILWOMAN_BATCH_MAX addresses).
-		app.use(express.json({ limit: "2mb" }))
-		app.use(HealthRouter)
-		app.use(AddressRouter)
-		app.use(GeocodeRouter)
-		app.use(ResolveRouter)
+		void (async () => {
+			const { engine, preflight } = await createServeEngine()
 
-		// `mailwoman/server/static/` lives next to the compiled `mailwoman/out/commands/serve.js`,
-		// so resolve relative to this file rather than relying on a repo-root path builder that
-		// pre-dated the flat-layout move.
-		const thisDir = import.meta.dirname
-		const staticPath = resolvePath(thisDir, "..", "..", "server", "static")
+			if (!preflight.ok) {
+				console.error(preflight.message)
+				process.exit(1)
+			}
 
-		console.log("Serving static files from", staticPath)
-		app.use(express.static(staticPath))
+			// 2 MiB body cap (accommodates a full /v1/batch up to MAILWOMAN_BATCH_MAX addresses) is
+			// createMailwomanAPI's own default — carried from the express server's `express.json({ limit: "2mb" })`.
+			const app = createMailwomanAPI(engine, { batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) })
 
-		app.listen(port, host, () => {
-			cluster.worker?.send("HTTP server ready")
-		})
+			handle = serveNode({
+				fetch: app.fetch,
+				port,
+				hostname: host,
+				onListen: () => cluster.worker?.send("HTTP server ready"),
+			})
+
+			const shutdown = () => {
+				void handle?.close().finally(() => process.exit(0))
+			}
+
+			process.once("SIGINT", shutdown)
+			process.once("SIGTERM", shutdown)
+		})()
+
+		return () => void handle?.close()
 	}, [host, port])
 
 	return null
