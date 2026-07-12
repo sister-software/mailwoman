@@ -1,0 +1,147 @@
+# Publish the generated API clients — build ONCE, publish per registry from
+# the same artifact.
+#
+# Three jobs: `generate` runs the receipt-verified pipeline once and uploads
+# both artifacts; `pypi` and `cargo` each download their half and publish those
+# exact bytes — no regeneration, no cross-language rebuild. The publish jobs
+# are individually skippable via the `publish_python` / `publish_cargo`
+# dispatch inputs (default true), so a single-registry retry (e.g. crates.io's
+# verified-email gate on the first attempt) republishes in seconds.
+#
+# AUTH — two different mechanisms, both environment-bound:
+# - PyPI: Trusted Publishing (OIDC). PyPI's publisher config binds to THIS
+#   FILENAME (`.github/workflows/publish-clients.yml`) + the `pypi`
+#   environment. Renaming this file (or the environment) breaks the OIDC
+#   exchange until the PyPI-side config is updated to match. (This file
+#   superseded `publish-python.yml` — the PyPI publisher config was migrated
+#   accordingly.)
+# - crates.io: the `CARGO_REGISTRY_TOKEN` secret in the `cargo` GitHub
+#   environment — the job's `environment: cargo` declaration is what makes it
+#   resolvable.
+#
+# SEQUENCING: the generated clients stamp `mailwoman/package.json`'s version —
+# ALWAYS dispatch AFTER the npm release they should match (both registries
+# permanently burn published version numbers; a client-only fix rides the next
+# release train — RELEASING.md "Client packages"). Joins the `publish`
+# concurrency group so a dispatch can't race an in-flight npm release into
+# generating at a mid-bump version.
+name: Publish API clients
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_python:
+        description: "Publish the Python client to PyPI (Trusted Publishing via the pypi environment)"
+        required: false
+        default: true
+        type: boolean
+      publish_cargo:
+        description: "Publish the Rust client to crates.io (CARGO_REGISTRY_TOKEN from the cargo environment)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # `ref: main`: the generated client's version syncs to mailwoman/package.json on main (the
+      # release flow is main-only by construction — `.release-it.json` git.requireBranch).
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Generate + verify API clients
+        uses: ./.github/actions/generate-clients
+
+      - name: Upload Python client artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mailwoman-client-python
+          path: clients-build/python/dist/*
+          if-no-files-found: error
+
+      - name: Upload Rust client artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mailwoman-client-rust
+          path: clients-build/mailwoman-client-rust.tar.gz
+          if-no-files-found: error
+
+  pypi:
+    if: ${{ inputs.publish_python }}
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The GitHub environment PyPI's Trusted Publisher config expects in the OIDC claims. No secrets
+    # live in it — the trust IS the credential.
+    environment: pypi
+    permissions:
+      contents: read
+      # Mints the OIDC token PyPI verifies. Scoped to this job only.
+      id-token: write
+    steps:
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest").
+          version: "0.11.16"
+
+      - name: Download Python client artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: mailwoman-client-python
+          path: dist
+
+      # Publishes the EXACT bytes the generate job verified — no regeneration. `--trusted-publishing
+      # always` fails loud if the OIDC exchange doesn't happen (e.g. the PyPI-side publisher config
+      # drifted from this file/environment name).
+      - name: Publish to PyPI (Trusted Publishing)
+        run: uv publish --trusted-publishing always dist/*
+
+  cargo:
+    if: ${{ inputs.publish_cargo }}
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Resolves CARGO_REGISTRY_TOKEN from the environment's secrets.
+    environment: cargo
+    steps:
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Download Rust client artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: mailwoman-client-rust
+
+      - name: Extract crate
+        run: tar xzf mailwoman-client-rust.tar.gz
+
+      # Token-presence guard first: a readable ::error:: beats cargo's 401. `cargo publish` runs its
+      # own isolated verify build against the downloaded crate source (the vendored openapi/*.json
+      # are in Cargo.toml's include list), so the toolchain above is required even though nothing is
+      # regenerated. The extracted tree isn't a git checkout, so cargo's dirty-tree check doesn't
+      # apply; --allow-dirty stays unnecessary.
+      - name: Publish to crates.io
+        working-directory: rust
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: | # shell
+          if [ -z "${CARGO_REGISTRY_TOKEN}" ]; then
+            echo "::error::CARGO_REGISTRY_TOKEN is not resolvable — is it still set in the 'cargo' GitHub environment?"
+            exit 1
+          fi
+          cargo publish
