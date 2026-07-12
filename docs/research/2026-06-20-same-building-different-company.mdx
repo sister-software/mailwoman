@@ -71,9 +71,7 @@ npm install @mailwoman/registry
 ```ts
 import { resolveEntities, toMapHTML } from "@mailwoman/registry"
 
-const entities = await resolveEntities(records, {
-	/* sensible defaults */
-})
+const entities = await resolveEntities(records, {/* sensible defaults */})
 // → clustered entities, each with a coordinate, a cohesion score, and the records it merged
 ```
 

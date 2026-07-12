@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared street-level geocode cascade — the reusable core behind the `geocode` CLI command AND the
- *   server's `/api/geocode` + `/api/batch` endpoints (#485). One implementation of the cascade, so
- *   the CLI and the service never drift.
+ *   Shared street-level geocode cascade — the reusable core behind the `geocode` CLI command AND
+ *   `mailwoman serve`'s `/v1/geocode` + `/v1/batch` endpoints (via `api-engine.ts`, #485). One
+ *   implementation of the cascade, so the CLI and the service never drift.
  *
  *   Cascade (the eval-validated path — 98.8% within 100m on the non-circular Travis holdout):
  *

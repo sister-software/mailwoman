@@ -60,6 +60,11 @@ pids
 out
 dist
 
+# `mailwoman clients generate` output (mailwoman/tools/generate-clients.ts) — the emitted specs +
+# the assembled/verified Python package and Rust crate. One-directional build product, never
+# committed; the gated CI job (publish.yml) regenerates it fresh on every dispatch.
+/clients-build/
+
 # Yarn (without zero-installs)
 # https://yarnpkg.com/getting-started/qa
 .pnp.*

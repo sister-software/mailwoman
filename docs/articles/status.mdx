@@ -144,6 +144,6 @@ work queue to the full geocoder is
 - Multi-locale ensemble (en-US + fr-FR weights in the same runtime).
 - Korean addresses (no open data path). Japanese addresses **are** supported via the
   postcode-route resolver (Geographic Rule Engine).
-- A supported server API — `mailwoman/server` ships an experimental Express server
-  (`/api/parse`, `/api/resolve`); production service hardening is
+- A supported server API — `mailwoman serve` ships `@mailwoman/api`'s native `/v1/*` surface
+  (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`); production service hardening is
   [#485](https://github.com/sister-software/mailwoman/issues/485).

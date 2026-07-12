@@ -1,0 +1,103 @@
+---
+sidebar_position: 14
+title: Methodology — falsification-first, gate-promoted
+sidebar_label: Methodology
+description: How Mailwoman development runs — every change is a hypothesis with a pre-registered gate, negative results ship with mechanisms, and the eval suite is an executable bug log.
+tags:
+  - concepts
+  - training
+  - eval
+---
+
+# Methodology — falsification-first, gate-promoted
+
+Model work tempts you toward vibes. A metric moved, the demo feels better, ship it. Every team
+says they resist this; the resistance only holds if it's built into the machinery rather than
+the mood. This article describes the machinery: how a change moves from hypothesis to shipped,
+and why the same rules that keep the work rigorous are the ones that keep it open.
+
+One sentence, if you want it portable: **we run the scientific method on an engineering
+budget.** The model is ~29M parameters, so the full loop — hypothesis, probe, retrain, gate,
+ship or falsify — fits inside an evening. Cheap inference is the advertised benefit of small
+models; cheap _rigor_ is the underrated one.
+
+## Hypothesis to shipped
+
+Every change starts as a hypothesis with a named, measurable prediction, and the first move is
+the cheapest test that could kill it. A 30-minute GPU run waits behind a 2-minute probe; a
+retrain waits behind a data-side lever; a lever waits behind a diagnostic that characterizes
+the failure. Most hypotheses die at the probe stage, which is the point — the expensive step
+runs only on survivors.
+
+A concrete week (July 2026, all in the public tracker): French accented street names were
+losing their diacritics at the tokenizer. The cheap fix — splicing merged French pieces into
+the vocabulary with mean-initialized embeddings, a trick that had worked twice for other
+languages — was tried first, measured, and _made things worse_, for a reason worth knowing:
+the isolated `é` piece carried a strongly-trained signal, and averaging embeddings inherited
+its confidence. That falsification, with its mechanism, became the spec for the fix that
+worked: a 12,000-step fine-tune on the spliced tokenizer. Thirty-three minutes on one A100.
+Falsified, respecified, retrained, gated, and shipped between dinner and sunrise.
+
+## Ablation with a control group
+
+An ablation tells you what a component contributes. Ours carry an extra obligation: every
+change must prove what it _didn't_ touch. When a lever targets French, the untouched panels —
+US, German, the gauntlet's regression cases — must come back **byte-identical**, not "roughly
+flat." The null hypothesis is verified, never assumed.
+
+The same discipline pins the variable under test. The fine-tune above held the training corpus
+byte-for-byte constant so the spliced tokenizer was the _only_ moving part; when the result
+improved, there was exactly one candidate explanation. Single-variable arms plus byte-stable
+controls: ablation, with the control group most ablation studies skip.
+
+## Per-locale floors
+
+Coverage grows one locale at a time, and each locale gets its own floor — a panel and a
+threshold that later changes must not sink. A lever that lifts French while taxing
+English would pass any aggregate metric; it cannot pass a per-locale gate. This is what lets
+the system take on new address conventions without silently spending the quality budget of the
+old ones. (For why aggregates mislead in this domain specifically, see
+[Eval discipline](./eval-discipline).)
+
+## Gates that can't drift
+
+The failure mode of self-administered rigor is the goalpost that moves between runs — the re-derived
+baseline, the softened threshold, the deleted test. Three structural rules close it:
+
+- **Baselines are pinned artifacts.** A baseline is recorded with its checksum and the verbatim
+  command that produced it, at creation time. Comparing against a re-derived baseline under a
+  different tokenizer or model label is a category error, and the harness refuses it.
+- **Expected failures are tracked, not hidden.** A known-bad case is an `xfail` with an issue
+  reference — it stays visible in every run's output. Deleting a failing case and tracking it
+  are different acts, and the diff shows which one happened.
+- **The regression suite is an executable bug log.** Every bug ever fixed remains a permanent,
+  named test with its coordinates and tolerances. A fixed bug that un-fixes fails the gate —
+  loudly, before release, as one did the night before v5.6.0 shipped, when a data rebuild
+  re-broke a namesake case the suite had guarded for weeks.
+
+Promotion runs through three layers: the regression log, metamorphic invariants (uppercasing
+an address, adding a trailing dot, or a one-letter typo must not move the pin — properties
+that need no answer key and so can't be overfit), and a held-out draw where candidate and
+production models compete on addresses neither has seen, judged by a z-test. The held-out
+layer wins every conflict with a prettier metric.
+
+## Negative results are deliverables
+
+A falsified hypothesis with a mechanism is treated as shipped work — written up in the issue
+tracker with the measurement that killed it and the reason it failed, at the same standard as
+a feature. This is partly honesty and partly economics: the falsification record is what stops
+the same dead lever from being re-run six months later, and in practice the mechanism inside a
+failure is usually the specification for the fix. The tracker holds weeks where the falsified
+hypotheses outnumbered the shipped features, and those were good weeks.
+
+## Openness as the enforcement mechanism
+
+Keeping research open while keeping it rigorous is usually framed as a tension. We've found
+the opposite: **the public record is the rigor.** A published baseline can't be replaced
+without a visible diff, and neither can an xfail. A falsification posted with its mechanism
+stays findable when the retry gets tempting. Every claim in the docs traces to an eval whose
+harness is in the repo, which means anyone — including us, six months later — can check
+whether the number still holds.
+
+The disciplines above would be worth keeping in a private codebase. In an open one, they stop
+being self-administered: the audience is the control group.

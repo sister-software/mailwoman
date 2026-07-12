@@ -670,6 +670,47 @@
 				}
 			},
 			"notes": "v2.2.0-full-family promoted from the 2026-07-03 archive at the #901 operator fork (fixes #949: FR bare street 16->34/40; CZ wrong-city 13.7->6.6, SK 13.3->6.6; SE +4.6pp; Abo fixed; US/FR ni identical; SI +2.7pp trade floored by #942 default-ON). POST-SHIP battery on the published pair: every floor PASS incl. fr.postcode at exactly its revised 99.2 floor (gate v5.3.0-family.json) and fr.cedex_real recovered 89.4->93.1 (the 07-02 scorecard's unsigned drift substantially healed). Re-score cadence entry #2. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): int8_delta.us.country_homograph_f1. [graded_artifact=int8; gate=v5.3.0-family; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v530-postship]"
+		},
+		{
+			"run_id": "v2-4-1-fr-nsplice-ft-20260709",
+			"model_version": "5.9.0",
+			"model_path": "@mailwoman/neural-weights-en-us@5.9.0",
+			"corpus_version": "corpus-v0.10.1-nl-postcode",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v2.3.0-nl-postcode): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-09",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 12000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.5,
+					"country_homograph": 85.1,
+					"micro": 87.5,
+					"locality": 78.3,
+					"region": 90.7,
+					"street": 82.6,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 89.8,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.2,
+					"house_number": 98.8,
+					"region": 50.2,
+					"cedex_real": 93.3
+				},
+				"de": {
+					"native_locality_anchor_on": 91.3
+				},
+				"arena": {
+					"perturb": 81
+				}
+			},
+			"notes": "Promoted 2026-07-09 via the gauntlet battery (mangle 23.5→17.7% int8, Honoré+René repros, held-out FR z=+0.90 / US z=+0.29 — table on #444); this promotion-gate run executed post-hoc for the ledger per the re-anchor discipline. Tokenizer v0.8.0-fr-nsplice (spliced; training-free path falsified first, #1047). Clears the int8 homograph floor outright (85.1 vs 83.3) — the 5.3.0/5.4.0 adjudicated int8-delta exception is no longer needed. [graded_artifact=int8; gate=v2.3.0-nl-postcode; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fc0a4401-3bda-4fa5-b4b9-4031dda9cbeb/scratchpad/gate-v241-ledger]"
 		}
 	]
 }

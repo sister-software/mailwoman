@@ -1,0 +1,99 @@
+---
+title: Which languages Mailwoman handles well
+tags:
+  - concepts
+  - locales
+  - evals
+---
+
+# Which languages Mailwoman handles well
+
+If you've evaluated geocoders before, you've seen the coverage page: a world map,
+mostly colored in, with the caveats in a footnote. We'd rather tell you where the
+footnotes live. Mailwoman only claims a locale when a coordinate-graded eval
+exists for it — the internal ledger is the tier table in the
+[scope declaration](../plan/SCOPE.mdx), and this page is the plain-language read of
+that table.
+
+"Handles well" is three separate claims, and they don't move together.
+
+1. **Parse quality** — does the model label the parts of an address correctly?
+2. **Coordinate resolution** — does the resolved point land in the right place?
+3. **Rooftop data** — is there an open address register behind it, so a house
+   number resolves to the building instead of the street or the town?
+
+A language can score well on one layer and poorly on another. The tiers below say
+which layers back each claim.
+
+## First class: US English and French
+
+Both carry per-tag floors in the release gate — a model that regresses either does
+not ship. Both have rooftop-grade open registers wired in: the US situs layer
+(124.9M address points, built from state and federal open data) and the French BAN
+(26M points, Licence Ouverte). A house number in Lyon or Louisville resolves to the
+building, at 1 m reported uncertainty, and both paths are pinned by regression
+suites that run in the browser against production.
+
+French is the more instructive story. The tokenizer originally fragmented accented
+street names ("Allée" split at the "é" and dropped the word), which cost real
+resolution on exactly the addresses a French user types first. Fixing it took a
+vocabulary splice plus a fine-tune so the merged pieces got gradient steps — the
+training-free shortcut measurably made things worse before the retrain fixed it.
+The lesson generalizes: diacritics are a tokenizer problem before they are a model
+problem, and we now check fertility on every new locale.
+
+## Coordinate-paneled: most of western and central Europe, plus Australia
+
+Italian, Portuguese, Polish, Czech, German, Spanish, Dutch, Croatian, Slovak,
+Danish, and Finnish are trained locales with per-locale coordinate panels (n=1000
+each) behind them, resolving with p90 under 10 km everywhere and much better in
+most places. Dutch is the standout: block-level postcodes take it to 0.05 km
+median. Austrian, Belgian, and Swiss addresses ride the German/French/Dutch
+handling with their own panel rows. Australian English has its own rooftop-grade
+register (G-NAF).
+
+German also carries a gate floor of its own, and the West Slavic set (Czech,
+Polish, Slovak, Slovenian) got the same tokenizer-splice treatment as French —
+their wrong-city rates sit in single digits.
+
+One caveat for this tier: resolution is locality-and-postcode grade, not rooftop.
+A Warsaw address lands in the right neighborhood, not on the roof, because no open
+national register is wired in yet.
+
+## Thin: Norwegian, Swedish, Slovenian
+
+Each of these is trained and paneled, and each has a named failure we track. Norway
+resolves at 92.7% with a long residual tail. The Swedish exonym class (Åbo for
+Turku) and the Slovenian leading-name boundary class (village names that start
+like street names) are improvement-target rows in the regression gauntlet: they run
+on every release, and they don't pass yet. If your
+data is heavy in these locales, try it on your sample before committing.
+
+## Structured differently: Japanese
+
+Japan resolves by postcode route through a per-country convention engine, not
+through the neural parser — Japanese addressing is regular enough that rules beat
+a sequence labeler there, and we make no parse-quality claim. It works well for
+what it is (~95% on the convention suite); it is a different mechanism with
+different failure modes. Taiwan and Korea are open work, not claims.
+
+## Known gap: British English
+
+The one evaluators poke at first, so here it is up front. UK addresses parse
+better than you'd expect — a postcode-format prior routes them correctly most of
+the time — but there is no UK training corpus, because the usable open data
+carries a share-alike license that conflicts with how we distribute training
+shards. The blocker is licensing, not modeling, and the issue tracking it has a
+check-back owner. Ireland, Hungary, and Romania sit behind the same gate.
+
+Non-Latin scripts (Cyrillic, Hangul, Han, Armenian) have synthetic transliteration
+exposure in the corpus, so the parser degrades gracefully instead of shattering.
+We don't count graceful degradation as support.
+
+## Short version
+
+Floor-gated on US English and French with rooftop data behind both;
+coordinate-paneled across ~14 European locales at sub-10 km p90; Japan by
+postcode route; Britain is the known gap, blocked on licensing. When a locale is
+missing from this page, that is also a claim: we haven't measured it, so we don't
+say it works.

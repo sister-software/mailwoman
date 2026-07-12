@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/tiger",
-	"version": "5.10.1",
+	"version": "6.0.0",
 	"description": "US Census TIGER/Line data processing and analysis.",
 	"keywords": [
 		"census",
@@ -69,10 +69,10 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@turf/boolean-contains": "^7.3.5",
-		"kysely": "^0.29.2",
+		"kysely": "^0.29.3",
 		"shapefile-parser": "^1.0.3",
 		"spliterator": "^3.2.0",
-		"type-fest": "^5.7.0"
+		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {
 		"@protomaps/basemaps": "^5.7.2"

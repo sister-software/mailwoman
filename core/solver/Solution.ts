@@ -8,7 +8,6 @@ import {
 	type ClassificationRecord,
 	isVisibleClassification,
 } from "@mailwoman/core/classification"
-import { formatAddress } from "@mailwoman/core/formatter"
 import type { TokenContext } from "@mailwoman/core/tokenization"
 
 import { type SerializedSolutionMatch, SolutionMatch } from "./SolutionMatch.ts"
@@ -17,7 +16,6 @@ export interface SerializedSolution {
 	score: number
 	penalty: number
 	classifications: ClassificationRecord
-	formatted_address: string
 	matches: SerializedSolutionMatch[]
 }
 
@@ -141,7 +139,6 @@ export class Solution {
 		const serialized: SerializedSolution = {
 			score: parseFloat(score.toFixed(2)),
 			penalty: parseFloat(penalty.toFixed(2)),
-			formatted_address: formatAddress(classificationIDMap),
 			classifications: Object.fromEntries(classificationIDMap) as ClassificationRecord,
 			matches: matches.map((match) => match.toJSON()),
 		}

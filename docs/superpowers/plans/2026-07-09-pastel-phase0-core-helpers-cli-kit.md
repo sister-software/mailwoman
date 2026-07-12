@@ -334,9 +334,7 @@ import { createElement as h, useEffect, useState } from "react"
 
 /** The lifecycle of a command's one-shot async task. */
 export type CommandTaskState<T> =
-	| { status: "running" }
-	| { status: "done"; result: T }
-	| { status: "error"; message: string }
+	{ status: "running" } | { status: "done"; result: T } | { status: "error"; message: string }
 
 /**
  * Run a command's one-shot async task and own the exit-code discipline: rejection renders the error

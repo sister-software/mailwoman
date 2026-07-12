@@ -5,6 +5,7 @@
 			"workspaces": [
 				"core",
 				"annotations",
+				"api-kit",
 				"spatial",
 				"normalize",
 				"query-shape",
@@ -22,6 +23,7 @@
 				"neural-weights-en-us",
 				"neural-weights-fr-fr",
 				"formatter",
+				"api",
 				"record",
 				"match",
 				"address-id",

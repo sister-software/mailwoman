@@ -94,8 +94,7 @@ By making a contribution to this project, I certify that:
 
 ## Prerequisites
 
-- **Node ≥ 22.5.1.** The runtime uses `node:sqlite`, which landed in 22.5. The
-  repo itself is developed on Node 26.
+- **Node ≥ 24.18.0** (the published `engines` floor). The repo itself is developed on Node 26.
 - **Yarn 4** via Corepack — don't install Yarn globally.
 - **git**, and a POSIX-ish shell for the helper scripts.
 
@@ -148,7 +147,7 @@ changing anything structural. The short version:
 | `yarn test`                            | vitest, watch mode                                                 |
 | `yarn ci:test`                         | vitest, single run (what CI runs)                                  |
 | `yarn typecheck:scripts`               | type-checks the `scripts/` toolshed (it's outside the build graph) |
-| `yarn lint`                            | prettier + eslint                                                  |
+| `yarn lint`                            | oxlint + oxfmt (Oxc toolchain)                                     |
 | `yarn workspace @mailwoman/docs start` | the docs site at http://localhost:7770                             |
 
 A vitest config in `core/` and `neural/` aliases sibling `@mailwoman/*` imports
@@ -174,8 +173,7 @@ node mailwoman/out/cli.js --help
 - **Branch off `main`.** Open the PR against `main`.
 - **Conventional commits.** Match the existing history: `feat(scope): …`,
   `fix(scope): …`, `refactor(scope): …`, `docs(scope): …`, `chore(scope): …`.
-- **The pre-commit hook** (Husky + lint-staged) runs prettier, eslint, and the
-  relevant tests on your staged files. Let it run; it catches the formatting and
+- **The pre-commit hook** (Husky + lint-staged) runs oxlint and oxfmt on your staged files. Let it run; it catches the formatting and
   type drift that CI would otherwise bounce. It only checks staged files, so for
   a change that spans packages, run the full `yarn ci:test` before pushing.
 - **CI must be green** — the Test and Docs workflows run on every push. A red

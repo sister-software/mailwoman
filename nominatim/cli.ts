@@ -18,6 +18,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
+import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
@@ -25,7 +26,6 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
-import express from "express"
 import { createAddressParser } from "mailwoman"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
@@ -36,9 +36,10 @@ import {
 } from "mailwoman/resolver-backend"
 
 import {
-	createNominatimRouter,
+	createNominatimApp,
 	type NominatimAddressDetails,
 	type NominatimEngine,
+	NOMINATIM_DOC_INFO,
 	type ResolvedAddress,
 	toNominatimResult,
 } from "./index.ts"
@@ -335,9 +336,13 @@ async function serve(): Promise<void> {
 		},
 	}
 
-	express()
-		.use(createNominatimRouter(engine, { cors: values.cors }))
-		.listen(port, host, () => {
+	const app = createNominatimApp(engine, { cors: values.cors })
+
+	serveNode({
+		fetch: app.fetch,
+		port,
+		hostname: host,
+		onListen: () => {
 			console.error(`[@mailwoman/nominatim] listening on http://${host}:${port}`)
 			console.error(`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
 			console.error(
@@ -346,8 +351,36 @@ async function serve(): Promise<void> {
 					: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
 			)
 			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
-			console.error(`  endpoints: GET /search  GET /reverse  GET /lookup  GET /status`)
-		})
+			console.error(`  endpoints: GET /search  GET /reverse  GET /lookup  GET /status  GET /openapi.json`)
+		},
+	})
+}
+
+/**
+ * `openapi` — print (or `--out`-write) the emitted OpenAPI document for this surface. Builds the app around an
+ * all-optional stub {@link NominatimEngine} (`{}` — every route answers 501 under this stub, but the document itself
+ * only reflects the ROUTE TABLE, not handler behavior) so this NEVER boots the neural classifier or opens a gazetteer
+ * DB: pure route-table introspection, fast regardless of data-root state. `--flavor 3.0` prints the 3.0.3 diet instead
+ * of the default 3.1.0.
+ */
+function openapi(): void {
+	const { values } = parseArgs({
+		options: {
+			flavor: { type: "string", default: "3.1" },
+			out: { type: "string" },
+		},
+		allowPositionals: true,
+	})
+
+	if (values.flavor !== "3.1" && values.flavor !== "3.0") {
+		console.error(`✗ --flavor must be "3.1" or "3.0" (got "${values.flavor}")`)
+		console.error("Usage: mailwoman-nominatim openapi [--flavor 3.1|3.0] [--out <path>]")
+		process.exit(1)
+	}
+
+	const app = createNominatimApp({})
+
+	printOpenAPIDocument(app, NOMINATIM_DOC_INFO, values)
 }
 
 // Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).
@@ -357,7 +390,16 @@ switch (command) {
 	case "serve":
 		await serve()
 		break
+	case "openapi":
+		openapi()
+		break
 	default:
-		console.error("Usage: mailwoman-nominatim serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]")
+		console.error(
+			[
+				"Usage: mailwoman-nominatim <command>",
+				"  serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]",
+				"  openapi [--flavor 3.1|3.0] [--out <path>]",
+			].join("\n")
+		)
 		process.exit(command ? 1 : 0)
 }

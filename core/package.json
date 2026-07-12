@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/core",
-	"version": "5.10.1",
+	"version": "6.0.0",
 	"description": "Mailwoman core: tokenization, classification primitives, solver, formatter, resources, filters, solvers, utils.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -58,11 +58,6 @@
 			"node": "./solver/index.ts",
 			"default": "./out/solver/index.js",
 			"types": "./out/solver/index.d.ts"
-		},
-		"./formatter": {
-			"node": "./formatter/index.ts",
-			"default": "./out/formatter/index.js",
-			"types": "./out/formatter/index.d.ts"
 		},
 		"./decoder": {
 			"node": "./decoder/index.ts",
@@ -245,10 +240,6 @@
 				"types": "./out/solver/index.d.ts",
 				"default": "./out/solver/index.js"
 			},
-			"./formatter": {
-				"types": "./out/formatter/index.d.ts",
-				"default": "./out/formatter/index.js"
-			},
 			"./decoder": {
 				"types": "./out/decoder/index.d.ts",
 				"default": "./out/decoder/index.js"
@@ -369,8 +360,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@fragaria/address-formatter": "^6.7.1",
-		"axios": "^1.17.0",
+		"axios": "^1.18.1",
 		"axios-cache-interceptor": "^1.12.0",
 		"change-case": "^5.4.4",
 		"d3-color": "^3.1.0",
@@ -378,8 +368,8 @@
 		"fast-glob": "^3.3.3",
 		"http-status-codes": "^2.3.0",
 		"json-colorizer": "^3.0.1",
-		"kysely": "^0.29.2",
-		"lru-cache": "^10.4.3",
+		"kysely": "^0.29.3",
+		"lru-cache": "^11.5.2",
 		"path-ts": "^2.1.0",
 		"pino": "^10.3.1",
 		"pino-pretty": "^13.1.3",

@@ -4,11 +4,18 @@
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
-		"erasableSyntaxOnly": true
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true
 	},
+	// `package.json` is imported directly (see the self-referencing `@mailwoman/photon/package.json` import Task 3's
+	// app.ts performs, used to stamp the OpenAPI doc's `info.version`). Under `composite: true`, tsc's declaration-emit
+	// file-list check (TS6307) doesn't recognize a JSON file reached only via the `./**/*` glob below — it must be
+	// named explicitly.
+	"files": ["./package.json"],
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../api-kit" },
 		{ "path": "../ban" },
 		{ "path": "../codex" },
 		{ "path": "../neural" },

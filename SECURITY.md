@@ -20,9 +20,9 @@ We're happy to credit you in the release notes if you'd like.
 
 ## Supported versions
 
-Mailwoman is pre-1.0 in spirit even though the npm version is 4.x — the public
+Mailwoman is pre-1.0 in spirit even though the npm version is 5.x — the public
 API is still settling. Security fixes land on the **latest published minor**
-(`4.x`). We don't backport to older minors; upgrading forward is the supported
+(`5.x`). We don't backport to older minors; upgrading forward is the supported
 path.
 
 ## Scope

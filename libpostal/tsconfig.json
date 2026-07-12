@@ -4,9 +4,14 @@
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
-		"erasableSyntaxOnly": true
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true
 	},
+	// `package.json` is imported directly (see app.ts's self-referencing `@mailwoman/libpostal/package.json` import,
+	// used to stamp the OpenAPI doc's `info.version`). Under `composite: true`, tsc's declaration-emit file-list check
+	// (TS6307) doesn't recognize a JSON file reached only via the `./**/*` glob below — it must be named explicitly.
+	"files": ["./package.json"],
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../mailwoman" }, { "path": "../normalize" }]
+	"references": [{ "path": "../api-kit" }, { "path": "../mailwoman" }, { "path": "../normalize" }]
 }

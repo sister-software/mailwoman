@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/resolver-wof-wasm",
-	"version": "5.10.1",
+	"version": "6.0.0",
 	"description": "Who's On First WASM resolver — browser-side PlaceLookup backed by @sqlite.org/sqlite-wasm. Drop-in replacement for @mailwoman/resolver-wof-sqlite when you need a static-asset deploy (Phase B of the demo plan).",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {

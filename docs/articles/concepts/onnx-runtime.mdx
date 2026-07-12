@@ -59,12 +59,8 @@ import { readFileSync } from "node:fs"
 
 const session = await InferenceSession.create(readFileSync("model.onnx"))
 
-const inputIds = new BigInt64Array([
-	/* tokenized address */
-])
-const attentionMask = new BigInt64Array([
-	/* 1s for real tokens, 0s for padding */
-])
+const inputIds = new BigInt64Array([/* tokenized address */])
+const attentionMask = new BigInt64Array([/* 1s for real tokens, 0s for padding */])
 
 const results = await session.run({
 	input_ids: new ort.Tensor("int64", inputIds, [1, seq_len]),

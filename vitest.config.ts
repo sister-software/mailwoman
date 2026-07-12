@@ -44,6 +44,8 @@ export default defineConfig({
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "core/index.ts") },
 			// Sibling workspaces.
 			{ find: /^@mailwoman\/address-id$/, replacement: resolve(here, "address-id/index.ts") },
+			{ find: /^@mailwoman\/api-kit$/, replacement: resolve(here, "api-kit/index.ts") },
+			{ find: /^@mailwoman\/api$/, replacement: resolve(here, "api/index.ts") },
 			{ find: /^@mailwoman\/classifiers\/(.+)$/, replacement: resolve(here, "classifiers/$1") },
 			{ find: /^@mailwoman\/classifiers$/, replacement: resolve(here, "classifiers/index.ts") },
 			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolve(here, "corpus/src/$1.ts") },
@@ -67,7 +69,6 @@ export default defineConfig({
 			{ find: /^@mailwoman\/variant-aliases$/, replacement: resolve(here, "variant-aliases/index.ts") },
 			{ find: /^@mailwoman\/phrase-grouper$/, replacement: resolve(here, "phrase-grouper/index.ts") },
 			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
-			{ find: "mailwoman/server", replacement: resolve(here, "mailwoman/server/index.ts") },
 			{ find: "mailwoman/sdk/test", replacement: resolve(here, "mailwoman/sdk/test/index.ts") },
 			{ find: "mailwoman/sdk/cli", replacement: resolve(here, "mailwoman/sdk/cli.ts") },
 			{ find: /^mailwoman$/, replacement: resolve(here, "mailwoman/index.ts") },
