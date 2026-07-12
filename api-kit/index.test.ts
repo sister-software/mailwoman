@@ -7,7 +7,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
 import { expect, test } from "vitest"
 
-import { attachOpenAPIDocs, emitOpenAPIDocuments, serveNode } from "./index.ts"
+import { attachOpenAPIDocs, emitOpenAPIDocuments, serveNode, type ServerHandle } from "./index.ts"
 
 /** A minimal one-route app shared by the doc + serve tests. */
 function createPingApp(): OpenAPIHono {
@@ -55,21 +55,23 @@ test("emitOpenAPIDocuments: returns both 3.1 and 3.0 flavors from the same route
 
 test("serveNode: binds, answers over real HTTP, closes cleanly", async () => {
 	const app = createPingApp()
-	let bound = 0
-	const server = serveNode({
-		fetch: app.fetch,
-		port: 0, // ephemeral
-		hostname: "127.0.0.1",
-		onListen: (i) => {
-			bound = i.port
-		},
-	})
+
+	let server: ServerHandle | undefined
 
 	try {
+		const bound = await new Promise<number>((resolve) => {
+			server = serveNode({
+				fetch: app.fetch,
+				port: 0, // ephemeral
+				hostname: "127.0.0.1",
+				onListen: (info) => resolve(info.port),
+			})
+		})
+
 		expect(bound).toBeGreaterThan(0)
 		const res = await fetch(`http://127.0.0.1:${bound}/ping`)
 		expect(await res.json()).toEqual({ ok: true })
 	} finally {
-		await server.close()
+		await server?.close()
 	}
 })
