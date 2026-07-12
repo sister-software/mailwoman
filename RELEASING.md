@@ -527,6 +527,11 @@ wrappers over the Photon / Nominatim / libpostal drop-ins plus the native `/v1/*
 from the OpenAPI documents those surfaces already emit. See `docs/articles/api.mdx` "Client libraries"
 for what they are and how to use them; this section is the release-operator's view.
 
+> **Incident note:** the `clients` job holds the workflow's `publish` concurrency slot even when
+> `publish_clients=false`, so a `publish_only` recovery dispatch queues behind its setup+generate leg
+> (minutes, cold). If you're mid-incident, cancel the running `clients` job from the Actions UI first —
+> it publishes nothing when ungated, and cancelling frees the queue immediately.
+
 ### Artifacts always build; the registry push is gated
 
 Every dispatch of `publish.yml` — including a `dry_run` — regenerates both clients and uploads them as

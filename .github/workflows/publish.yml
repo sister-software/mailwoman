@@ -220,6 +220,11 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # NOTE: this job occupies the workflow-level `publish` concurrency group even when
+    # `publish_clients=false` (artifact generation always runs on dispatch). A follow-up dispatch —
+    # notably the `publish_only` recovery path — queues behind it for the cold setup+generate leg.
+    # During an incident: cancel THIS job from the Actions UI (safe — it publishes nothing when
+    # ungated) to free the queue immediately.
     # Least privilege: this job doesn't push commits/tags (unlike `publish`) and doesn't use npm's
     # OIDC Trusted Publishing, so it needs neither `contents: write` nor `id-token: write`.
     permissions:
