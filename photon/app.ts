@@ -8,7 +8,7 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs } from "@mailwoman/api-kit"
+import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import packageJson from "@mailwoman/photon/package.json" with { type: "json" }
 import { cors } from "hono/cors"
 
@@ -26,6 +26,34 @@ export interface PhotonAppOptions {
 	cors?: boolean
 }
 
+/**
+ * The document info stamped into the emitted OpenAPI document. Exported (not inlined) so the CLI's `openapi` subcommand
+ * can call `emitOpenAPIDocuments` with the SAME info the mounted `/openapi.json` route (below, via
+ * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.
+ */
+export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
+	title: packageJson.name,
+	version: packageJson.version,
+	description: packageJson.description,
+	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
+	contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
+	externalDocs: {
+		description: "Switching from Photon",
+		url: "https://mailwoman.sister.software/docs/concepts/switching-from-photon",
+	},
+	servers: [
+		{
+			url: "http://{host}:{port}",
+			variables: { host: { default: "127.0.0.1" }, port: { default: "2322" } },
+		},
+	],
+	security: [],
+	tags: [
+		{ name: "geocoding", description: "Forward autocomplete and reverse geocoding." },
+		{ name: "meta", description: "Health and deploy-time operations." },
+	],
+}
+
 /** Build the Photon-compatible app around an injected {@link PhotonEngine}. */
 export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
@@ -41,28 +69,7 @@ export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions 
 	app.onError((_error, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))
 
 	registerPhotonRoutes(app, engine)
-	attachOpenAPIDocs(app, {
-		title: packageJson.name,
-		version: packageJson.version,
-		description: packageJson.description,
-		license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-		contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
-		externalDocs: {
-			description: "Switching from Photon",
-			url: "https://mailwoman.sister.software/docs/concepts/switching-from-photon",
-		},
-		servers: [
-			{
-				url: "http://{host}:{port}",
-				variables: { host: { default: "127.0.0.1" }, port: { default: "2322" } },
-			},
-		],
-		security: [],
-		tags: [
-			{ name: "geocoding", description: "Forward autocomplete and reverse geocoding." },
-			{ name: "meta", description: "Health and deploy-time operations." },
-		],
-	})
+	attachOpenAPIDocs(app, PHOTON_DOC_INFO)
 
 	return app
 }

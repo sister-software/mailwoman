@@ -18,7 +18,7 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
-import { serveNode } from "@mailwoman/api-kit"
+import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -32,6 +32,7 @@ import {
 
 import {
 	createPhotonApp,
+	PHOTON_DOC_INFO,
 	photonCollection,
 	photonFeature,
 	photonForwardCollection,
@@ -228,6 +229,27 @@ async function serve(): Promise<void> {
 	})
 }
 
+/**
+ * `openapi` — print (or `--out`-write) the emitted OpenAPI document for this surface. Builds the app around an
+ * all-optional stub {@link PhotonEngine} (`{}` — every route answers 501 under this stub, but the document itself only
+ * reflects the ROUTE TABLE, not handler behavior) so this NEVER boots the neural classifier or opens a gazetteer DB:
+ * pure route-table introspection, fast regardless of data-root state. `--flavor 3.0` prints the 3.0.3 diet instead of
+ * the default 3.1.0.
+ */
+function openapi(): void {
+	const { values } = parseArgs({
+		options: {
+			flavor: { type: "string", default: "3.1" },
+			out: { type: "string" },
+		},
+		allowPositionals: true,
+	})
+
+	const app = createPhotonApp({})
+
+	printOpenAPIDocument(app, PHOTON_DOC_INFO, values)
+}
+
 // Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).
 const command = parseArgs({ strict: false, allowPositionals: true }).positionals[0]
 
@@ -235,7 +257,16 @@ switch (command) {
 	case "serve":
 		await serve()
 		break
+	case "openapi":
+		openapi()
+		break
 	default:
-		console.error("Usage: mailwoman-photon serve [--port 2322] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]")
+		console.error(
+			[
+				"Usage: mailwoman-photon <command>",
+				"  serve [--port 2322] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]",
+				"  openapi [--flavor 3.1|3.0] [--out <path>]",
+			].join("\n")
+		)
 		process.exit(command ? 1 : 0)
 }

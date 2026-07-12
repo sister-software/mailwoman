@@ -19,7 +19,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
-import { serveNode } from "@mailwoman/api-kit"
+import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
@@ -40,6 +40,7 @@ import {
 	createNominatimApp,
 	type NominatimAddressDetails,
 	type NominatimEngine,
+	NOMINATIM_DOC_INFO,
 	type ResolvedAddress,
 	toNominatimResult,
 } from "./index.ts"
@@ -356,6 +357,27 @@ async function serve(): Promise<void> {
 	})
 }
 
+/**
+ * `openapi` — print (or `--out`-write) the emitted OpenAPI document for this surface. Builds the app around an
+ * all-optional stub {@link NominatimEngine} (`{}` — every route answers 501 under this stub, but the document itself
+ * only reflects the ROUTE TABLE, not handler behavior) so this NEVER boots the neural classifier or opens a gazetteer
+ * DB: pure route-table introspection, fast regardless of data-root state. `--flavor 3.0` prints the 3.0.3 diet instead
+ * of the default 3.1.0.
+ */
+function openapi(): void {
+	const { values } = parseArgs({
+		options: {
+			flavor: { type: "string", default: "3.1" },
+			out: { type: "string" },
+		},
+		allowPositionals: true,
+	})
+
+	const app = createNominatimApp({})
+
+	printOpenAPIDocument(app, NOMINATIM_DOC_INFO, values)
+}
+
 // Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).
 const command = parseArgs({ strict: false, allowPositionals: true }).positionals[0]
 
@@ -363,7 +385,16 @@ switch (command) {
 	case "serve":
 		await serve()
 		break
+	case "openapi":
+		openapi()
+		break
 	default:
-		console.error("Usage: mailwoman-nominatim serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]")
+		console.error(
+			[
+				"Usage: mailwoman-nominatim <command>",
+				"  serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]",
+				"  openapi [--flavor 3.1|3.0] [--out <path>]",
+			].join("\n")
+		)
 		process.exit(command ? 1 : 0)
 }

@@ -15,11 +15,11 @@
 
 import { parseArgs } from "node:util"
 
-import { serveNode } from "@mailwoman/api-kit"
+import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
 import { createAddressParser } from "mailwoman"
 
-import { createLibpostalApp, type LibpostalEngine, type ParseMatch } from "./index.ts"
+import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, type ParseMatch } from "./index.ts"
 
 function serve(): void {
 	const { values } = parseArgs({
@@ -72,6 +72,27 @@ function serve(): void {
 	})
 }
 
+/**
+ * `openapi` — print (or `--out`-write) the emitted OpenAPI document for this surface. Builds the app around a stub
+ * engine (`parse` is the one required {@link LibpostalEngine} method — a no-op is enough) so this NEVER boots the real
+ * neural parser: pure route-table introspection, fast regardless of data-root state. `--flavor 3.0` prints the 3.0.3
+ * diet instead of the default 3.1.0.
+ */
+function openapi(): void {
+	const { values } = parseArgs({
+		options: {
+			flavor: { type: "string", default: "3.1" },
+			out: { type: "string" },
+		},
+		allowPositionals: true,
+	})
+
+	const stubEngine: LibpostalEngine = { parse: async () => [] }
+	const app = createLibpostalApp(stubEngine)
+
+	printOpenAPIDocument(app, LIBPOSTAL_DOC_INFO, values)
+}
+
 // Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).
 const command = parseArgs({ strict: false, allowPositionals: true }).positionals[0]
 
@@ -79,7 +100,16 @@ switch (command) {
 	case "serve":
 		serve()
 		break
+	case "openapi":
+		openapi()
+		break
 	default:
-		console.error("Usage: mailwoman-libpostal serve [--port 8081] [--host 0.0.0.0] [--no-cors]")
+		console.error(
+			[
+				"Usage: mailwoman-libpostal <command>",
+				"  serve [--port 8081] [--host 0.0.0.0] [--no-cors]",
+				"  openapi [--flavor 3.1|3.0] [--out <path>]",
+			].join("\n")
+		)
 		process.exit(command ? 1 : 0)
 }
