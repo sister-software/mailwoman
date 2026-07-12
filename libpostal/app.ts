@@ -55,7 +55,28 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 	app.use("/expand", guardBodySize)
 
 	registerLibpostalRoutes(app, engine)
-	attachOpenAPIDocs(app, { title: packageJson.name, version: packageJson.version })
+	attachOpenAPIDocs(app, {
+		title: packageJson.name,
+		version: packageJson.version,
+		description: packageJson.description,
+		license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
+		contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
+		externalDocs: {
+			description: "Switching from libpostal",
+			url: "https://mailwoman.sister.software/docs/concepts/switching-from-libpostal",
+		},
+		servers: [
+			{
+				url: "http://{host}:{port}",
+				variables: { host: { default: "127.0.0.1" }, port: { default: "8081" } },
+			},
+		],
+		security: [],
+		tags: [
+			{ name: "parsing", description: "Free-text address parsing and component expansion." },
+			{ name: "meta", description: "Health and deploy-time operations." },
+		],
+	})
 
 	return app
 }
