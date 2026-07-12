@@ -19,6 +19,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
+import { serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
@@ -26,7 +27,6 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
-import express from "express"
 import { createAddressParser } from "mailwoman"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
@@ -37,7 +37,7 @@ import {
 } from "mailwoman/resolver-backend"
 
 import {
-	createNominatimRouter,
+	createNominatimApp,
 	type NominatimAddressDetails,
 	type NominatimEngine,
 	type ResolvedAddress,
@@ -336,9 +336,13 @@ async function serve(): Promise<void> {
 		},
 	}
 
-	express()
-		.use(createNominatimRouter(engine, { cors: values.cors }))
-		.listen(port, host, () => {
+	const app = createNominatimApp(engine, { cors: values.cors })
+
+	serveNode({
+		fetch: app.fetch,
+		port,
+		hostname: host,
+		onListen: () => {
 			console.error(`[@mailwoman/nominatim] listening on http://${host}:${port}`)
 			console.error(`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
 			console.error(
@@ -347,8 +351,9 @@ async function serve(): Promise<void> {
 					: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
 			)
 			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
-			console.error(`  endpoints: GET /search  GET /reverse  GET /lookup  GET /status`)
-		})
+			console.error(`  endpoints: GET /search  GET /reverse  GET /lookup  GET /status  GET /openapi.json`)
+		},
+	})
 }
 
 // Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).
