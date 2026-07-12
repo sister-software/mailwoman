@@ -24,6 +24,18 @@
 # first. (A prior R2 weights-pull lived here; mailwoman-assets is the
 # training-data bucket, the pull never reliably shipped a model, and it
 # was removed. The model store is Hugging Face.)
+#
+# A second job, `clients`, runs after `publish` succeeds: it regenerates the
+# Python + Rust API clients (`mailwoman clients generate` — Phase 5 Task 4)
+# against whatever `mailwoman/package.json` reads on `main` at that point (the
+# just-bumped version on a real run, unchanged on a dry run) and uploads both
+# as workflow artifacts on EVERY dispatch. It only pushes to PyPI/crates.io
+# when the operator opts in via the `publish_clients` input AND the run is not
+# a dry run — see RELEASING.md "Client packages" for the one-time registry
+# provisioning this requires (PyPI + crates.io accounts, `PYPI_API_TOKEN` +
+# `CARGO_REGISTRY_TOKEN` secrets). Additive only: this job never runs before
+# or blocks `publish`, and default-false `publish_clients` means an ordinary
+# dispatch behaves exactly as before this job existed.
 name: NPM Publish
 
 on:
@@ -41,6 +53,11 @@ on:
         type: boolean
       publish_only:
         description: "Finish a partial release: skip release-it's version bump/tag (already done) and just publish each workspace at its current version via OIDC (--tolerate-republish). Use when a prior run bumped+tagged but failed mid-publish."
+        required: false
+        default: false
+        type: boolean
+      publish_clients:
+        description: "Publish generated API clients to PyPI/crates.io (requires PYPI_API_TOKEN + CARGO_REGISTRY_TOKEN secrets; provision accounts first — see RELEASING.md)"
         required: false
         default: false
         type: boolean
@@ -193,3 +210,130 @@ jobs:
             exit 1
           fi
           echo "All workspaces published."
+
+  # Regenerate + (optionally) publish the Python + Rust API clients (Phase 5 Task 4). Additive: this
+  # job never gates or reshapes `publish` above — it only starts once that job has already succeeded
+  # (`needs: publish`), so it can't turn a working npm release red, and a run where `publish_clients`
+  # stays at its default `false` behaves exactly like this workflow did before this job existed
+  # (artifacts still build every dispatch — see below — but nothing leaves the runner).
+  clients:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Least privilege: this job doesn't push commits/tags (unlike `publish`) and doesn't use npm's
+    # OIDC Trusted Publishing, so it needs neither `contents: write` nor `id-token: write`.
+    permissions:
+      contents: read
+    steps:
+      # `ref: main` (not the dispatch SHA) is deliberate: on a real (non-dry-run, non-publish_only)
+      # run, the `publish` job above just committed + pushed the version bump to `main` via
+      # release-it. The default checkout would pin `github.sha` — the commit that existed BEFORE that
+      # push — which would generate clients at the OLD, already-superseded version. Checking out
+      # `main` fresh pulls that just-pushed commit instead, so `mailwoman/package.json`'s version (the
+      # version every generated client syncs to — see `mailwoman/tools/generate-clients.ts`) is
+      # correct. This is safe because the whole publish flow is main-only by construction
+      # (`.release-it.json`'s `git.requireBranch: "main"` already refuses to release from anywhere
+      # else), so `main` and "the release that just ran" always agree once `publish` has succeeded.
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      # Same action + pin `test.yml` already uses for `lint:python`'s ruff-via-uvx step — `uv`/`uvx`
+      # aren't preinstalled on the runner image.
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+
+      # `@stable` is the action's own documented usage (a tracking ref it repoints itself, not a
+      # release tag) — the canonical way to pull this action, matching how the rest of this file pins
+      # third-party actions by ref rather than SHA (see `astral-sh/setup-uv@v7` above).
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      # The full pipeline this job replays locally-verified in Task 3: emit all 8 OpenAPI documents →
+      # generate the Python package (openapi-python-client) → assemble the Rust crate (progenitor) →
+      # `uv build` + wheel import-check → `cargo check --examples`. A non-zero exit here fails the job
+      # before either upload-artifact step runs, so a broken generator/spec drift never gets an
+      # artifact that looks shippable.
+      - name: Generate + verify API clients
+        run: node mailwoman/out/cli.js clients generate
+
+      # `actions/upload-artifact` can't glob a directory tree into one file, so the Rust crate (a
+      # whole directory: Cargo.toml, src/, vendored openapi/*.json, examples/) is tarred first. The
+      # `cargo check --examples` step above leaves a `target/` build cache under the crate dir —
+      # excluded here, since it's regenerable local build output, not part of what `cargo publish`
+      # would ship (Cargo.toml's own `include` list already excludes it from the crate contents).
+      - name: Package Rust crate artifact
+        run: tar --exclude=target -czf clients-build/mailwoman-client-rust.tar.gz -C clients-build rust
+
+      - name: Upload Python client artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mailwoman-client-python
+          path: clients-build/python/dist/*
+          if-no-files-found: error
+
+      - name: Upload Rust client artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mailwoman-client-rust
+          path: clients-build/mailwoman-client-rust.tar.gz
+          if-no-files-found: error
+
+      # Gated on the operator's explicit opt-in AND excludes dry runs — `dry_run=true` means "preview,
+      # don't actually publish", and letting `publish_clients=true` slip a REAL PyPI upload through a
+      # preview run would violate that contract even though the brief only specified the
+      # `publish_clients` gate. `inputs.publish_clients`/`inputs.dry_run` are used bare (no `== 'true'`
+      # string compare) to match how `dry_run`/`publish_only` are already read elsewhere in this file
+      # (`!inputs.dry_run`, `inputs.publish_only && !inputs.dry_run`) — workflow_dispatch `type:
+      # boolean` inputs are real booleans in the `inputs` context, not strings.
+      #
+      # The token-presence check runs as the first thing inside the step (not a separate step) so a
+      # missing secret fails with one readable `::error::` line instead of `uv publish`/`cargo
+      # publish`'s own cryptic 401, matching the pattern the "Fetch weight binaries" step above already
+      # uses for its own precondition checks.
+      - name: Publish Python client to PyPI
+        if: ${{ inputs.publish_clients && !inputs.dry_run }}
+        working-directory: clients-build/python
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: | # shell
+          if [ -z "${UV_PUBLISH_TOKEN}" ]; then
+            echo "::error::publish_clients=true but the PYPI_API_TOKEN secret is not set. Provision a PyPI account + token (or Trusted Publisher) first — see RELEASING.md 'Client packages'."
+            exit 1
+          fi
+          uv publish
+
+      # No `--no-verify`: verified locally (Task 4) that `cargo publish`'s default isolated verify
+      # build — which packages the crate into `target/package/`, a COPY separate from the working
+      # tree — successfully finds the vendored `openapi/*.json` specs there (they're in Cargo.toml's
+      # `include` list) and rebuilds cleanly. No `--allow-dirty` either: also verified locally that
+      # `cargo publish --dry-run` raises no dirty-working-tree warning even though `clients-build/`
+      # sits inside this git repository, because every file under it is gitignored (`/clients-build/`
+      # in `.gitignore`) and cargo's dirty check reads git status, which omits ignored paths by
+      # default — there's nothing to override.
+      - name: Publish Rust client to crates.io
+        if: ${{ inputs.publish_clients && !inputs.dry_run }}
+        working-directory: clients-build/rust
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: | # shell
+          if [ -z "${CARGO_REGISTRY_TOKEN}" ]; then
+            echo "::error::publish_clients=true but the CARGO_REGISTRY_TOKEN secret is not set. Provision a crates.io account + token first — see RELEASING.md 'Client packages'."
+            exit 1
+          fi
+          cargo publish

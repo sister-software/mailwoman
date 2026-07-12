@@ -519,6 +519,83 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 > bucket is the **training-data** store (corpus + tokenizer for Modal), not a release store; the pull was
 > unreliable and never shipped a model, and it's been removed.
 
+## Client packages
+
+`publish.yml` carries a second job, `clients`, that runs after `publish` succeeds. It regenerates the
+Python (`mailwoman-client` on PyPI) and Rust (`mailwoman-client` on crates.io) API clients — typed
+wrappers over the Photon / Nominatim / libpostal drop-ins plus the native `/v1/*` surface, generated
+from the OpenAPI documents those surfaces already emit. See `docs/articles/api.mdx` "Client libraries"
+for what they are and how to use them; this section is the release-operator's view.
+
+### Artifacts always build; the registry push is gated
+
+Every dispatch of `publish.yml` — including a `dry_run` — regenerates both clients and uploads them as
+workflow artifacts (`mailwoman-client-python`: the wheel + sdist; `mailwoman-client-rust`: a tarball of
+the assembled crate). That half runs unconditionally: it's the same local, receipt-verified pipeline as
+`mailwoman clients generate` (below), so a broken generator or a spec that drifted out from under
+`progenitor`/`openapi-python-client` fails the job and shows up in every PR-adjacent dispatch, not just
+the runs where someone remembers to check.
+
+Actually publishing those artifacts to PyPI/crates.io is a separate, explicit opt-in: the
+`publish_clients` workflow-dispatch input (boolean, default `false`). Leaving it `false` — the default —
+means an ordinary release behaves exactly as it did before this job existed; nothing reaches either
+registry. Set it `true` only once the one-time provisioning below is done, and never on a `dry_run`
+(the job refuses to publish on a dry run regardless of `publish_clients`, since "preview, don't actually
+publish" should mean that for every side effect a dispatch can have, not just the npm one).
+
+### Operator TODO — one-time registry provisioning
+
+Nothing below is done yet. `publish_clients: true` will fail closed (a readable `::error::`, not a bare 401) until both are in place:
+
+1. **PyPI** — create an account at <https://pypi.org/account/register/>, enable 2FA, and either claim
+   the `mailwoman-client` project name with a first manual `uv publish` from a local checkout (a brand
+   new PyPI project can't be created via a token alone until it exists — same shape as npm's Trusted
+   Publishing bootstrap trap above) or configure a **pending Trusted Publisher**
+   (<https://pypi.org/manage/account/publishing/>, repo `sister-software/mailwoman`, workflow
+   `.github/workflows/publish.yml`, job `clients`) before the name is claimed, which lets the very first
+   publish also run from CI. Either way, mint a token scoped to the `mailwoman-client` project once it
+   exists and store it as the repo secret `PYPI_API_TOKEN`.
+2. **crates.io** — sign in at <https://crates.io/> with GitHub, verify the account email (crates.io
+   refuses to publish until it's verified), create a token at
+   <https://crates.io/settings/tokens> (scopes `publish-new` + `publish-update`), and store it as the
+   repo secret `CARGO_REGISTRY_TOKEN`. crates.io has no separate "claim the name first" step —
+   `cargo publish` creates the crate on its first successful run, token-authenticated, so CI can do the
+   first publish itself once the secret exists.
+3. **Both names were still free as of 2026-07-12** (404 on `pypi.org/pypi/mailwoman-client/json` and
+   `crates.io/api/v1/crates/mailwoman-client`) — reserved by intent, not yet claimed. Claim them before
+   they're gone; nothing else in this repo depends on the name, but a squatted `mailwoman-client` on
+   either registry would force a rename across both client packages, their docs, and this runbook.
+
+### Version sync — a client-only fix can't republish alone
+
+The clients don't carry an independent version; `mailwoman clients generate` reads
+`mailwoman/package.json` (the same version the `api`/`photon`/`nominatim`/`libpostal` npm packages
+already release at in lockstep — see `mailwoman/tools/generate-clients.ts`) and stamps both the Python
+`pyproject.toml` and the Rust `Cargo.toml` with it. That's a deliberate simplification over the
+superseded `feat/api-clients` branch's design (which versioned the clients against the OpenAPI contract,
+independently of the engine release) — one fewer version scheme to track, in exchange for one real
+constraint: **a client-only fix (a generator bug, a hand-written ergonomics change in
+`mailwoman_client/__init__.py` or `src/lib.rs`) cannot ship at a patch version of its own.** PyPI and
+crates.io both permanently reject re-publishing an already-used version number, exactly like npm, so
+there is no "5.10.1, republished" escape hatch. The remedy is to ride the next scheduled release
+train — cut an ordinary `yarn release` / `publish.yml` dispatch (code-only is fine) and the client fix
+goes out at that version alongside everything else. If this constraint ever becomes a real bottleneck
+(a client-only bug that can't wait), that's the trigger to revisit the sync decision, not a workaround
+to reach for first.
+
+### Local receipt — before touching the pipeline or provisioning anything
+
+```bash
+yarn compile
+node mailwoman/out/cli.js clients generate
+```
+
+Emits all 8 OpenAPI documents, generates the Python package and assembles the Rust crate, then verifies
+both actually build (`uv build` + a wheel import-check; `cargo check --examples`) — the same 7-check
+pipeline the `clients` CI job replays on every dispatch. Output lands under gitignored `clients-build/`;
+nothing it produces is committed. `--skip-verify` exists for a faster template-only loop but should
+never be used to validate a real change — the verify step is the entire point.
+
 ## What's NOT automated yet
 
 - **Weights publish from CI** — the `neural-weights-*` npm publish is local-only (the binaries aren't on the
@@ -526,4 +603,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
   already does at runtime.
 - **`mailwoman release hf` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
   is a separate manual command after the npm release, not part of `yarn release`.
+- **Client-package registry provisioning** — see "Client packages" above. The `clients` CI job builds
+  and artifacts the Python/Rust clients on every dispatch already; it can't publish either until the
+  operator provisions the PyPI + crates.io accounts and secrets.
 - **Changelog generation** — release-it can emit one via the `@release-it/conventional-changelog` plugin. Not configured yet because commit messages haven't standardized on Conventional Commits.
