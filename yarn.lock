@@ -4361,7 +4361,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
-    "@maplibre/maplibre-gl-style-spec": "npm:^24.9.0"
+    "@maplibre/maplibre-gl-style-spec": "npm:^25.0.2"
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
@@ -4817,6 +4817,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mapbox/jsonlint-lines-primitives@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "@mapbox/jsonlint-lines-primitives@npm:2.0.3"
+  checksum: 10/99404df11b1840153c910154c238f62ba0ea7cfab6aa7ed3bad1e522d31b746bfad78b23e6ee4887196acec76759f1863b5cb4f5e2d95d0dc2a8ea73091c78f6
+  languageName: node
+  linkType: hard
+
 "@mapbox/point-geometry@npm:^1.1.0, @mapbox/point-geometry@npm:~1.1.0":
   version: 1.1.0
   resolution: "@mapbox/point-geometry@npm:1.1.0"
@@ -4897,7 +4904,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@maplibre/maplibre-gl-style-spec@npm:^24.8.1, @maplibre/maplibre-gl-style-spec@npm:^24.9.0":
+"@maplibre/maplibre-gl-style-spec@npm:^24.8.1":
   version: 24.10.0
   resolution: "@maplibre/maplibre-gl-style-spec@npm:24.10.0"
   dependencies:
@@ -4912,6 +4919,24 @@ __metadata:
     gl-style-migrate: dist/gl-style-migrate.mjs
     gl-style-validate: dist/gl-style-validate.mjs
   checksum: 10/7d580c71a7978ffd6c93a95a9178eb55fa0777eb63f1954afec58934e940a7d1432ecd51e98b725e01ae97298b7a60d6a2a19a863952fad45f97ae609ad0d886
+  languageName: node
+  linkType: hard
+
+"@maplibre/maplibre-gl-style-spec@npm:^25.0.2":
+  version: 25.0.2
+  resolution: "@maplibre/maplibre-gl-style-spec@npm:25.0.2"
+  dependencies:
+    "@mapbox/jsonlint-lines-primitives": "npm:^2.0.3"
+    "@mapbox/unitbezier": "npm:^1.0.0"
+    json-stringify-pretty-compact: "npm:^4.0.0"
+    minimist: "npm:^1.2.8"
+    quickselect: "npm:^3.0.0"
+    tinyqueue: "npm:^3.0.0"
+  bin:
+    gl-style-format: dist/gl-style-format.mjs
+    gl-style-migrate: dist/gl-style-migrate.mjs
+    gl-style-validate: dist/gl-style-validate.mjs
+  checksum: 10/003ff8978ddb45e73c9c71204ef007bb0eb6d6cfa2a17c9c77c66c3c690dc277fa0eac363e6c8198190a42e78f0f0b6307cd0ad3562739aa2691b3563597df36
   languageName: node
   linkType: hard
 
