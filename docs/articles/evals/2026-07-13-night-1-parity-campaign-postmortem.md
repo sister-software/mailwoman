@@ -1,0 +1,86 @@
+# 2026-07-13 — Parity campaign night 1: three cheap levers closed with receipts
+
+Conn granted ~01:30 UTC (operator nearby). Goal: execute the campaign runbook's probe sequence
+(`docs/superpowers/plans/2026-07-13-parity-campaign-runbook.md`). Gate: `mailwoman eval parity`
+(floors house_number ≥ 0.97, postcode ≥ 0.97, street ≥ 0.90; splice-candidate baseline
+0.7273 / 0.9861 / 0.4033).
+
+## What shipped
+
+- **Router probe** (`mailwoman/dev-tools/router-kind-probe.run.ts`, committed): the `QueryKind`
+  union has NO fragment kind; measured over parity-derived classes, bare streets scatter
+  (locality_only 37/76, intersection 23, landmark 11) and are structurally inseparable from bare
+  localities. **Routing path closed.**
+- **Probe 0 — street-morphology bias** (`eval parity --street-morphology`, committed): floors move
+  within noise (hn 0.7013→0.7078, street 0.3967→0.4000 on shipped weights) and AU full-agree
+  REGRESSES 55→40% (unit/lot patterns flip toward street). **Capped-to-harmful at default scale;
+  closed.**
+- **Probe 0b — bolt-on CRF transitions** (`corpus-python/.../fit_crf_transitions.py`, committed;
+  8M-row bigram fit, v0.5.0 corpus, label order from the model card): raw log-probs crater
+  everything (postcode 0.9861→0.2083); row-max-centered still harms (street 0.4033→0.2200,
+  postcode →0.8194). Candidate state verified restored after each. **Closed at both scales.**
+
+Production state: unchanged (no HF/npm/demo changes; the v242 splice candidates on the data root
+are unmodified).
+
+## What went well
+
+- **Characterize-before-fix paid three times.** Each closed lever cost minutes and produced a
+  mechanism, not just a number: the router can't name fragments; morphology bias trades AU units
+  for marginal street recall; a base-corpus sequence prior actively entrenches full-address order
+  against the fragment distribution — which is positive evidence FOR the fragment-shard training
+  thesis (the distribution mismatch is real and sequence-level).
+- The `--weights-cache` grading path (PR #1099) made candidate A/B cycles trivial and
+  channel-honest all night.
+- A stale memory got corrected by reading source: the street-morphology prior was built
+  (`neural/street-morphology-prior.ts`), not "designed, not built".
+
+## What could've gone better
+
+- The first transition fit launched against a ~573 GB corpus glob after misreading `du -s` KB as
+  bytes — killed, zero output, ~4 min lost. `--max-files` sampling was the obvious opening move
+  for a 33×33 count.
+- Probe 0 ran on shipped weights while 0b ran on the splice candidate — deliberate (each probe vs
+  its natural baseline) but the postmortem table below has to carry two baselines; next session
+  should standardize on the candidate.
+
+## Decisions made autonomously
+
+- **Did NOT launch the GPU fragment-shard assay (probe 1).** The runbook allowed it; I held it.
+  Reasons: shard synthesis + the #511 base-consistency scan deserve unhurried care (the scars are
+  all about hasty shards), and every zero-training result tonight strengthened the case that the
+  assay's job is confirmation of the span-head ceiling, not a hail-mary — it loses nothing by
+  running early next session. Alternative was launching a rushed shard tonight; rejected.
+- Treadmill-guard adjacent: stopped transition-scale exploration after two same-direction failures
+  (raw, centered) rather than hunting a third temperature.
+
+## Open questions (operator)
+
+1. Probe 0's AU regression suggests the morphology bias needs per-pattern gating if it's ever
+   revisited — park permanently, or file an issue?
+2. Scoreboard grading (DeepSeek session 019f590a): prediction 1 HELD (bias didn't fix numeric
+   neighbors), prediction 3 PARTIALLY HELD (fragment routing structurally poor — vocabulary gap,
+   deeper than predicted; structured precision ~94% as predicted). Prediction 2 (assay residual
+   signature) pends probe 1. Structural running total: 2/2 graded so far.
+
+## Concrete next steps
+
+1. Fragment shard synthesis (`corpus/` recipe: bare streets from dictionaries/FST by construction,
+   street+trailing-number locale formats, truncations of existing gold) + the #511 source-scoped
+   base-consistency scan — CPU, careful work, next session's opener.
+2. Probe 1 GPU assay per runbook (short decaying schedule, eval every 500 steps, parity floors as
+   early-stop; read-out = span-exact-match lag + trailing-number→postcode persistence).
+3. If ceiling confirmed → #727 arc (GLiNER-lite span loss first), with variant-B (fragment-mixed)
+   transitions refit available at train time via the committed fitter.
+
+## Numbers
+
+|                     |                                                        |
+| ------------------- | ------------------------------------------------------ |
+| Shift               | ~01:30–03:50 UTC, 2026-07-13                           |
+| Models trained      | 0 (three zero-training probes, by design)              |
+| Modal GPU           | $0                                                     |
+| Local compute       | ~6 parity evals (354 rows each), one 8M-row bigram fit |
+| NaN incidents       | 0                                                      |
+| Regressions shipped | 0 (all probe artifacts reverted; candidate verified)   |
+| Levers closed       | 3 (router, morphology bias, bolt-on transitions)       |
