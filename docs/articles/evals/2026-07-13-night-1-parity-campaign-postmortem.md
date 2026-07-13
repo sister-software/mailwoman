@@ -1,4 +1,4 @@
-# 2026-07-13 — Parity campaign night 1: three cheap levers closed with receipts
+# 2026-07-13 — Parity campaign night 1: three cheap levers closed, the data lever confirmed
 
 Conn granted ~01:30 UTC (operator nearby). Goal: execute the campaign runbook's probe sequence
 (`docs/superpowers/plans/2026-07-13-parity-campaign-runbook.md`). Gate: `mailwoman eval parity`
@@ -72,6 +72,35 @@ are unmodified).
    early-stop; read-out = span-exact-match lag + trailing-number→postcode persistence).
 3. If ceiling confirmed → #727 arc (GLiNER-lite span loss first), with variant-B (fragment-mixed)
    transitions refit available at train time via the committed fitter.
+
+## Probe 1 — the fragment-shard assay (UPDATE, ~06:00 UTC)
+
+Launched after the operator's course-correction ("the shift runs to 15:00 — complete the task"):
+`v2.5.0-fragment-assay` on Modal (init_from the SHIPPED v241 step-012000, one lever = the
+123,272-row balanced-polarity fragment shard at weight 6.0, lr 1e-5 constant, 6k steps, ~2h A100).
+
+**Verdict: the data lever is REAL on the current architecture — DeepSeek prediction 2 FALSIFIED.**
+All separators moved together (no span-exact lag): fragment-dev span-exact 0.142→0.481,
+tag-accuracy 0.241→0.537, trailing-number→postcode 0.218→**0.084**. Parity: street
+0.4033→**0.5333** (+13pp), house_number 0.7273→0.7532, postcode held 0.9861; FR full-agree
+20→39%, NO 0→44%, DE 29→41%, **US held 41%**. Saturated at step 2000; NO late overfit through
+6000 (the v196 scar did not reproduce at 1e-5/6k). Regression: AU 55→40% (the compact lot/unit
+class the shard deliberately excluded — shard-v2 material).
+
+Residual street failures after the assay are ~all mangle-class (offset bleed after diacritics),
+i.e. exactly what the splice lever removes → **the consolidation run launched**:
+`v2.5.1-fragment-splice` (v0.9.0-multisplice tokenizer, FVT mean-init-expanded v241 via the new
+`mean_init_multisplice` modal fn, lr 5e-5/12k — the splice-adaptation idiom). Grades + the
+standard gate set follow when it lands.
+
+Data-integrity scar worth its own line: **zipping multiple pyarrow ChunkedArrays is not
+row-aligned.** It silently fabricated the first #511 scan and biased the first transition fit to
+the wof-admin block (base shards are source-homogeneous+ordered). Everything re-ran on
+`iter_batches().to_pylist()`; `build_fragment_shard.py` carries the warning comment.
+
+Scoreboard (session 019f590a): prediction 1 HELD, prediction 3 PARTIALLY HELD, prediction 2
+**FALSIFIED** — structural 2/3. The falsification is the good kind: the cheap lever sufficed where
+the consult predicted architecture work.
 
 ## Numbers
 
