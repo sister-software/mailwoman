@@ -63,12 +63,17 @@ bare-locality robustness at 2k steps — the two objectives that oscillated unde
 oscillation was an optimization-dynamics artifact, not a 29M-param ceiling. Street 0.4833 is low
 only because 2k ≪ 8k; the diagnostic wasn't a candidate.
 
-Two caveats kept honest: (1) the residual 5 flips are all postcode-adjacent VT cases where "VT"
-absorbs into the street span — the **#727 boundary-digit-absorption class**, which schedule does
-not touch and is now the named last lever. (2) "pins clean" is PARSE-level; the v255 FAIL was a
-COORDINATE assertion, and the gauntlet harness only takes a candidate via explicit `--model` (the
-#718 zero-fill trap) or a destructive package swap — so the coordinate-level Dublin gauntlet was
-NOT re-run. A package-swap gauntlet is queued for verification.
+Residual (persists under gentle schedule): the 5 flips are all postcode-adjacent VT cases where
+"VT" absorbs into the street span — the **#727 boundary-digit-absorption class**, which schedule
+does not touch and is now the named last lever.
+
+**Caveat RESOLVED (same day):** the coordinate-level check was the open question — "pins clean"
+was PARSE-level, and the v255 FAIL was a COORDINATE assertion. Rather than the #718-trap `--model`
+path or a destructive package swap, a `--weights-cache` path was added to the gauntlet (#9, commit
+e0ab8b32; mirrors `eval parity --weights-cache`, resolves the candidate package-shaped). v256
+graded through it (md5-confirmed the cache model loaded, not the shipped one) and **PASSED the
+regression layer 30/30 gated cases — including the Dublin bare-city coordinate pin** that broke
+v255. The schedule verdict is now confirmed at the coordinate level, not just the parse level.
 
 **Next (operator greenlight):** `v2.5.7-fragment-v5-gentle-full` staged and committed but NOT
 launched — the full 8k run at v256's gentle schedule. Expected to recover street toward 0.55–0.60
