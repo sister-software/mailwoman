@@ -21,12 +21,22 @@ messy input) points at structured span prediction.
    made it the cheap falsifier). The hypothesis held: span-consistency pressure fixes boundary
    absorption without touching the BIO head. **v2.6.1 (full 8k, same head/weight) running** to test
    whether it deepens + lifts aggregate street.
-2. **Higher weight / FSemi-CRF head** — the escalation once v2.6.1 lands. If 8k@0.5 moves the
-   boundary class further but plateaus, next is a weight sweep (0.5 → 1.0/1.5, one variable) on the
-   cheap current head BEFORE the FSemi-CRF architecture (span enumeration + filtered semi-Markov
-   decode — new export path, #378 SLO check, capability-manifest rework, multi-night). Escalate to
-   FSemi-CRF only if the simple head's weight sweep plateaus.
-3. **Fertility follow-up (EuroBERT lens):** digit-piece fertility drove the boundary-bleed class;
+   **Stage-1 CONCLUSIVE (2026-07-14):** the simple head plateaus at 3/5 boundary cases (flips 5→2)
+   on BOTH knobs — v2.6.0 (2k, w0.5), v2.6.1 (8k, w0.5), v2.6.2 (2k, w1.5) are IDENTICAL on the
+   boundary class (2 flips: `VT 05068, New St` + `n main st nd 58852`) and aggregate parity street
+   (0.5281), and w1.5 slightly hurt house_number (0.767→0.753). So the partial win is real, stable,
+   and free — but the residual is NOT weight- or duration-limited. The 2 stubborn cases are
+   multi-boundary (region between a postcode and a street), which start/end pressure alone can't
+   resolve; that is genuinely FSemi-CRF territory.
+2. **FSemi-CRF head** — the confirmed next arc (stage-1 exhausted the cheap lever). The full #727
+   design: span enumeration + filtered semi-Markov decode, so the model scores whole (start, end,
+   type) spans instead of per-token tags. Architecture change: new export path, #378 browser-SLO
+   check, capability-manifest rework — a deliberate multi-night arc, not a probe. Keep the stage-1
+   span-boundary head (`use_span_boundary_head`) as a co-trained auxiliary; it's free and helps.
+3. **Fertility follow-up (orthogonal, cheap):** the 2 stubborn cases pair a region with a postcode
+   digit-run; a digit-atomicity tokenizer pass (splice whole-number pieces) may help independent of
+   the head. Measure vocab growth vs #378 first.
+4. **Fertility follow-up (EuroBERT lens):** digit-piece fertility drove the boundary-bleed class;
    a digit-atomicity pass over the tokenizer (splice whole-number pieces 1..999?) is a cheap
    orthogonal probe — but vocab growth vs #378 SLO must be measured first.
 
