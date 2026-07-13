@@ -79,6 +79,28 @@ v255. The schedule verdict is now confirmed at the coordinate level, not just th
 launched — the full 8k run at v256's gentle schedule. Expected to recover street toward 0.55–0.60
 without the oscillation. Held for greenlight because the probe result reframes the fork itself.
 
+## v257 trained + graded (greenlit + run same day)
+
+Operator greenlit the fork ("unblock those and move forward"); v257 trained (8k, gentle, 0 NaN,
+loss 0.75→0.70) and graded package-shaped. It is the campaign's **first stable candidate**:
+
+| gate                    | v257                           | vs shipped | vs v255 unstable peak |
+| ----------------------- | ------------------------------ | ---------- | --------------------- |
+| parity street (triaged) | 0.5356                         | +0.139     | −0.060                |
+| parity house_number     | 0.7671                         | +0.066     | ~                     |
+| parity postcode         | 0.9861 PASS                    | ~          | ~                     |
+| gauntlet regression     | **PASS** (Dublin held)         | holds      | v255 **FAILED**       |
+| gauntlet metamorphic    | **PASS** (5 anchor-off xfails) | holds      | ~                     |
+| US flip census          | 5 region / 0 locality per 600  | preserved  | better than v255      |
+
+v257 trades ~6pp of v255's unstable street peak for full gauntlet stability + preserved US recall —
+the schedule fix at 8k scale. It does **not** clear the SWAPS street floor (0.90), so the v7 swaps
+stay gated; the residual is the #727 boundary-absorption class (golden confused-tags confirm it:
+"05770 VT DELONG LN" → street got "VT Delong"). **NOT promoted:** doesn't unblock v7, needs card
+regen, and the golden 2pp gate is schema-confounded (golden v0.1.2 uses the flat pre-split street
+schema — parity is the schema-correct gate). Promote-as-strict-improvement is a clean operator call.
+Full grade: `models/candidates/v257-fragment-v5-gentle-full/MANIFEST.md`.
+
 ## Decisions under the standing grant
 
 Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Did NOT
