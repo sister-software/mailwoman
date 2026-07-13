@@ -436,6 +436,7 @@ def iter_rows(
     augment_region_prob: float = 0.0,
     augment_glue_prob: float = 0.0,
     augment_case_prob: float = 0.0,
+    augment_punct_drop_prob: float = 0.0,
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
@@ -486,7 +487,11 @@ def iter_rows(
     except StopIteration:
         pass
     do_augment = (
-        augment_directional_prob > 0 or augment_region_prob > 0 or augment_glue_prob > 0 or augment_case_prob > 0
+        augment_directional_prob > 0
+        or augment_region_prob > 0
+        or augment_glue_prob > 0
+        or augment_case_prob > 0
+        or augment_punct_drop_prob > 0
     )
 
     def _emit(row: dict) -> Iterator[dict]:
@@ -495,7 +500,13 @@ def iter_rows(
         # the source row on the no-op path, so relabel copies before mutating.
         if do_augment:
             for augmented in augment_row(
-                row, rng, augment_directional_prob, augment_region_prob, augment_glue_prob, augment_case_prob
+                row,
+                rng,
+                augment_directional_prob,
+                augment_region_prob,
+                augment_glue_prob,
+                augment_case_prob,
+                augment_punct_drop_prob,
             ):
                 if affix_relabel_lexicon is not None:
                     augmented = {**augmented, "labels": list(augmented["labels"])}
@@ -567,6 +578,7 @@ def iter_encoded(
         augment_region_prob=cfg_data.augment_region_prob,
         augment_glue_prob=getattr(cfg_data, "augment_glue_prob", 0.0),
         augment_case_prob=getattr(cfg_data, "augment_case_prob", 0.0),
+        augment_punct_drop_prob=getattr(cfg_data, "augment_punct_drop_prob", 0.0),
         affix_relabel_lexicon=affix_relabel_lexicon,
     ):
         # v0.5.0 stopgap (#519 offset-unit mismatch): the corpus stores span offsets in UTF-16 code

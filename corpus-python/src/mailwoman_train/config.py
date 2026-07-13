@@ -45,6 +45,11 @@ class DataConfig:
     # model that a lowercase query is the same address (the #829 lowercase-sensitivity class). Model-first
     # vs a deterministic case-normalizer. 0 = disabled (rng-stream bit-identical).
     augment_case_prob: float = 0.0
+    # Punct-drop augmentation (#1101): probability a row yields an extra DELIMITER-FREE copy —
+    # separator commas + wrapping quotes stripped (gap-only; interior apostrophes kept), raw + tokens +
+    # char-offset spans all re-targeted. Teaches robustness to whitespace-only input (64% of parity
+    # gold). Model-first vs a deterministic delimiter-normalizer. 0 = disabled (rng-stream bit-identical).
+    augment_punct_drop_prob: float = 0.0
     # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
     # (built by scripts/build-pilot-anchor-lookup.ts). When set AND model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
