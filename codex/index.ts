@@ -15,7 +15,10 @@
  *   Systems are exposed as namespaces (`import { us } from "@mailwoman/codex"`) and as subpaths
  *   (`import { lookupStreetSuffix } from "@mailwoman/codex/us"`). The cross-system
  *   `candidateSystemsForPostcode` (the inverse of the per-slice postcode patterns) is a top-level
- *   export.
+ *   export. `levels` is the per-locale LEVEL/floor ordinal-semantics table (#1100) — like
+ *   `candidateSystemsForPostcode`, it's inherently multi-locale, so it lives at the codex root
+ *   (`./level-semantics.ts`) and is namespaced rather than given its own `@mailwoman/codex/<x>`
+ *   subpath.
  */
 
 export {
@@ -29,6 +32,7 @@ export * as de from "./de/index.ts"
 export * as fr from "./fr/index.ts"
 export * as gb from "./gb/index.ts"
 export * as jp from "./jp/index.ts"
+export * as levels from "./level-semantics.ts"
 export * as nz from "./nz/index.ts"
 export { candidateSystemsForPostcode, type SystemCode } from "./postcode-systems.ts"
 export * as us from "./us/index.ts"
