@@ -121,10 +121,12 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
     return sampled, sampled_cities, sampled_city_postcodes, sampled_units
 
 
-def street_rows_from_corpus(parquet_glob: str, countries: set[str], cap: int) -> dict[str, list[str]]:
-    """Bare street surfaces per country, lifted from an existing corpus's street spans."""
+def span_rows_from_corpus(
+    parquet_glob: str, countries: set[str] | None, cap: int, tag: str = "street"
+) -> dict[str, list[str]]:
+    """Bare surfaces of one span tag per country (countries=None -> ALL), lifted from an existing corpus."""
     rng = random.Random(f"{SEED}:corpus")
-    out: dict[str, set[str]] = {c: set() for c in countries}
+    out: dict[str, set[str]] = {c: set() for c in countries} if countries else {}
 
     done = False
 
@@ -140,19 +142,22 @@ def street_rows_from_corpus(parquet_glob: str, countries: set[str], cap: int) ->
             for row in batch.to_pylist():
                 c = row["country"]
 
+                if countries is None and c not in out:
+                    out[c] = set()
+
                 if c not in out or len(out[c]) >= cap * 2:
                     continue
 
                 text = row["raw"]
 
                 for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True):
-                    if t == "street":
+                    if t == tag:
                         surface = text[s:e].strip()
 
                         if 3 <= len(surface) <= 48 and not surface.isdigit():
                             out[c].add(surface)
 
-            if all(len(v) >= cap * 2 for v in out.values()):
+            if out and all(len(v) >= cap * 2 for v in out.values()):
                 done = True
                 break
 
@@ -234,6 +239,12 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--oa-root", type=Path, required=True)
     ap.add_argument("--corpus-parquet-glob", required=True)
+    ap.add_argument(
+        "--locality-parquet-glob",
+        default="",
+        help="Separate glob for the GLOBAL locality-twin harvest (admin/ban blocks; the main glob "
+        "typically points at the US-only tiger block). Defaults to the main glob.",
+    )
     ap.add_argument("--out-parquet", type=Path, required=True)
     ap.add_argument("--out-dev", type=Path, required=True)
     ap.add_argument("--per-locale-cap", type=int, default=PER_LOCALE_CAP)
@@ -281,7 +292,26 @@ def main() -> None:
             f"{locale_dir}: {len(pairs)} pairs, {len(cities)} localities, {len(city_postcodes)} loc+pc, {len(units)} units"
         )
 
-    corpus_streets = street_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap)
+    corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap)
+    # Shard-v3: GLOBAL bare-locality twins (all countries; cap/4 each) — the gauntlet
+    # global-dublin-bare regression showed famous cities outside the OA shard locales lose their
+    # locality reading once fragment street-mass grows. Harvested from real corpus locality spans.
+    corpus_localities = span_rows_from_corpus(
+        args.locality_parquet_glob or args.corpus_parquet_glob, None, args.per_locale_cap // 4, tag="locality"
+    )
+
+    for country, localities in sorted(corpus_localities.items()):
+        for name in localities:
+            push(
+                render(name, None, tag="locality"),
+                country,
+                "und",
+                "Synthetic — fragment-assay; locality surfaces from corpus v0.5.0 spans",
+            )
+
+    print(
+        f"corpus locality twins: {sum(len(v) for v in corpus_localities.values())} across {len(corpus_localities)} countries"
+    )
 
     for country, streets in sorted(corpus_streets.items()):
         for street in streets:
