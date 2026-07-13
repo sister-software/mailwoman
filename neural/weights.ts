@@ -24,9 +24,25 @@
 
 import { existsSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
+import { homedir } from "node:os"
 import { dirname, resolve } from "node:path"
 
 const req = createRequire(import.meta.url)
+
+/**
+ * The user-level npm-prefix cache the CLI weights guard installs into (`mailwoman parse --download-weights`, plan 3).
+ * Laid out by `npm install --prefix`, so a cached package dir sits at
+ * `<cache>/node_modules/@mailwoman/neural-weights-<locale>` and resolves sibling artifacts exactly like an installed
+ * package.
+ */
+export function weightsCacheDir(): string {
+	return resolve(homedir(), ".cache", "mailwoman", "weights")
+}
+
+/** The weights package for a locale tag, normalized to the all-lowercase BCP-47 package convention. */
+export function weightsPackageName(locale?: string): string {
+	return `@mailwoman/neural-weights-${(locale ?? "en-us").toLowerCase()}`
+}
 
 export interface ResolveWeightsOpts {
 	/** BCP-47-ish locale tag, e.g. "en-us" or "fr-fr". Used to pick the weights package. */
@@ -48,6 +64,11 @@ export interface ResolveWeightsOpts {
 	 * the loader feeds only the resolved channels.
 	 */
 	tier?: "server" | "pocket"
+	/**
+	 * Override the user-level weights cache root probed after package resolution fails (plan 3 guard). Defaults to
+	 * {@link weightsCacheDir}. Primarily a test seam.
+	 */
+	cacheRoot?: string
 }
 
 export interface ResolvedWeights {
@@ -103,26 +124,55 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	// `neural-weights-fr-fr`). The CLI's locale validation accepts canonical `en-US` / `fr-FR`
 	// casing, so we normalize here rather than at the callsite.
 	const locale = (opts.locale ?? "en-us").toLowerCase()
-	const packageName = `@mailwoman/neural-weights-${locale}`
-	let packageDir: string
+	const packageName = weightsPackageName(locale)
 
+	// 1. Installed package (workspace or node_modules).
 	try {
 		const pkgJsonPath = req.resolve(`${packageName}/package.json`)
-		packageDir = dirname(pkgJsonPath)
-	} catch {
-		throw new Error(
-			`Could not resolve ${packageName}. Install it via: npm install ${packageName}\n` +
-				`Or pass --model + --tokenizer with explicit paths.`
-		)
+
+		return resolveFromPackageDir(dirname(pkgJsonPath), locale, opts, `package:${packageName}`, tried)
+	} catch (error) {
+		// A resolvable package with missing model files stays LOUD (the metadata-only dev-checkout
+		// trap) — only a failed module resolution falls through to the cache probe.
+		if (error instanceof Error && error.message.includes("missing model files")) throw error
 	}
 
+	// 2. The user-level weights cache (npm-prefix layout written by `mailwoman parse
+	// --download-weights`, plan 3). Requires both binaries — a metadata-only cache install must NOT
+	// resolve (it would load nothing); it falls through to the actionable not-found error below.
+	const cacheDir = resolve(opts.cacheRoot ?? weightsCacheDir(), "node_modules", packageName)
+
+	if (existsSync(resolve(cacheDir, "model.onnx")) && existsSync(resolve(cacheDir, "tokenizer.model"))) {
+		return resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
+	}
+
+	throw new Error(
+		`Could not resolve ${packageName}. Install it via: npm install ${packageName}\n` +
+			`Also probed the weights cache: ${cacheDir}\n` +
+			`Or run \`mailwoman parse --download-weights\`, or pass --model + --tokenizer with explicit paths.`
+	)
+}
+
+/**
+ * Resolve the full artifact set from a weights package directory — the shipped layout is identical whether the dir came
+ * from module resolution (`package:`) or the guard's cache prefix (`cache:`), so the sibling artifacts (model card, CRF
+ * transitions, anchor binary, gazetteer lexicon) resolve the same way for both. Throws when the model files themselves
+ * are missing.
+ */
+function resolveFromPackageDir(
+	packageDir: string,
+	locale: string,
+	opts: ResolveWeightsOpts,
+	source: string,
+	tried: string[]
+): ResolvedWeights {
 	const modelPath = opts.modelPath ?? resolve(packageDir, "model.onnx")
 	const tokenizerPath = opts.tokenizerPath ?? resolve(packageDir, "tokenizer.model")
 	tried.push(modelPath, tokenizerPath)
 
 	if (!existsSync(modelPath) || !existsSync(tokenizerPath)) {
 		throw new Error(
-			`Weights package ${packageName} resolved at ${packageDir} but is missing model files.\n` +
+			`Weights package resolved at ${packageDir} but is missing model files.\n` +
 				`Tried:\n  ${tried.join("\n  ")}\n` +
 				`Run \`scripts/link-dev-weights.ts\` inside the package to symlink dev weights, ` +
 				`or pass --model + --tokenizer with explicit paths.`
@@ -153,7 +203,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 		crfTransitionsPath,
 		...(anchorLookupPath ? { anchorLookupPath } : {}),
 		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
-		source: `package:${packageName}`,
+		source,
 	}
 }
 
