@@ -7,11 +7,15 @@
 import { describe, expect, it } from "vitest"
 
 import {
+	isSecondaryUnitDesignatorToken,
 	isUnitDesignatorToken,
 	lookupUnitDesignator,
 	matchLeadingDesignator,
+	matchLeadingDesignatorWithRange,
 	US_UNIT_DESIGNATOR_LOOKUP,
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
+	US_UNIT_DESIGNATOR_REQUIRES_RANGE,
+	US_UNIT_DESIGNATOR_VARIANTS,
 } from "./unit-designator.ts"
 
 describe("US_UNIT_DESIGNATOR_LOOKUP", () => {
@@ -70,5 +74,116 @@ describe("lookupUnitDesignator + isUnitDesignatorToken", () => {
 		expect(isUnitDesignatorToken("STE")).toBe(true)
 		expect(isUnitDesignatorToken("floor")).toBe(true)
 		expect(isUnitDesignatorToken("4B")).toBe(false)
+	})
+})
+
+describe("US_UNIT_DESIGNATOR_VARIANTS table integrity", () => {
+	const canonicals = Object.keys(US_UNIT_DESIGNATOR_VARIANTS) as (keyof typeof US_UNIT_DESIGNATOR_VARIANTS)[]
+
+	it("has exactly the 24 USPS Pub-28 Appendix C2 designators", () => {
+		expect(canonicals).toHaveLength(24)
+	})
+
+	it("has no variant string claimed by two different canonicals", () => {
+		const owner = new Map<string, string>()
+
+		for (const canonical of canonicals) {
+			for (const variant of US_UNIT_DESIGNATOR_VARIANTS[canonical]) {
+				const existing = owner.get(variant)
+
+				expect(existing, `variant ${variant} claimed by both ${existing} and ${canonical}`).toBeUndefined()
+				owner.set(variant, canonical)
+			}
+		}
+	})
+
+	it("every canonical resolves to itself in the lookup (case-insensitive)", () => {
+		for (const canonical of canonicals) {
+			expect(US_UNIT_DESIGNATOR_LOOKUP.get(canonical.toLowerCase())).toBe(canonical)
+		}
+	})
+
+	it("every canonical has US_UNIT_DESIGNATOR_REQUIRES_RANGE + US_UNIT_DESIGNATOR_PREFERRED_ABBR entries", () => {
+		for (const canonical of canonicals) {
+			expect(typeof US_UNIT_DESIGNATOR_REQUIRES_RANGE[canonical]).toBe("boolean")
+			expect(typeof US_UNIT_DESIGNATOR_PREFERRED_ABBR[canonical]).toBe("string")
+		}
+	})
+})
+
+describe("US_UNIT_DESIGNATOR_REQUIRES_RANGE", () => {
+	it("flags the designators Pub-28 marks as requiring a secondary number", () => {
+		for (const canonical of ["APARTMENT", "BUILDING", "DEPARTMENT", "FLOOR", "ROOM", "SUITE", "UNIT"] as const) {
+			expect(US_UNIT_DESIGNATOR_REQUIRES_RANGE[canonical]).toBe(true)
+		}
+	})
+
+	it("does not flag the standalone designators", () => {
+		for (const canonical of [
+			"BASEMENT",
+			"FRONT",
+			"LOBBY",
+			"LOWER",
+			"OFFICE",
+			"PENTHOUSE",
+			"REAR",
+			"SIDE",
+			"UPPER",
+		] as const) {
+			expect(US_UNIT_DESIGNATOR_REQUIRES_RANGE[canonical]).toBe(false)
+		}
+	})
+})
+
+describe("matchLeadingDesignatorWithRange", () => {
+	it("captures the designator + trailing range when present", () => {
+		expect(matchLeadingDesignatorWithRange("Apt 4B")).toEqual({
+			canonical: "APARTMENT",
+			matched: "Apt",
+			range: "4B",
+			requiresRange: true,
+		})
+		expect(matchLeadingDesignatorWithRange("SUITE 200")).toEqual({
+			canonical: "SUITE",
+			matched: "SUITE",
+			range: "200",
+			requiresRange: true,
+		})
+	})
+
+	it("leaves range undefined for a standalone designator", () => {
+		expect(matchLeadingDesignatorWithRange("Basement")).toEqual({
+			canonical: "BASEMENT",
+			matched: "Basement",
+			range: undefined,
+			requiresRange: false,
+		})
+		expect(matchLeadingDesignatorWithRange("Penthouse")).toEqual({
+			canonical: "PENTHOUSE",
+			matched: "Penthouse",
+			range: undefined,
+			requiresRange: false,
+		})
+	})
+
+	it("returns null on a bare identifier, non-designator, or empty input", () => {
+		expect(matchLeadingDesignatorWithRange("4B")).toBeNull()
+		expect(matchLeadingDesignatorWithRange("Main")).toBeNull()
+		expect(matchLeadingDesignatorWithRange("")).toBeNull()
+	})
+})
+
+describe("isSecondaryUnitDesignatorToken", () => {
+	it("mirrors isUnitDesignatorToken under Pub-28's own term", () => {
+		expect(isSecondaryUnitDesignatorToken("Apt")).toBe(true)
+		expect(isSecondaryUnitDesignatorToken("ste")).toBe(true)
+		expect(isSecondaryUnitDesignatorToken("Floor")).toBe(true)
+	})
+
+	it("is false for non-designator tokens", () => {
+		expect(isSecondaryUnitDesignatorToken("MAIN")).toBe(false)
+		expect(isSecondaryUnitDesignatorToken("123")).toBe(false)
+		expect(isSecondaryUnitDesignatorToken("")).toBe(false)
+		expect(isSecondaryUnitDesignatorToken(null)).toBe(false)
 	})
 })
