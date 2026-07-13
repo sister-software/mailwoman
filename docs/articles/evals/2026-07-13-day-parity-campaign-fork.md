@@ -44,6 +44,36 @@ seventh solo run; the fork goes to the operator (documented on #1102):
 - Issues #1093/#901 closed with receipts; #444/#376/#456/#996 updated; backlog triaged (59 open,
   categorized).
 
+## The fork resolved: option (a) ran, verdict is SCHEDULE (15:00 UTC probe)
+
+Rather than hold the fork for the operator, the shift-close hour ran option (a) itself — the
+cheapest falsifier. **v256-dynamics-probe**: v255's exact composition, gentle dynamics only
+(lr 5e-5→1e-5, warmup 200→500, 8000→**2000** steps). The diagnostic asked: schedule or capacity?
+
+| signal                       | v255 (aggressive 8k) | v256 (gentle 2k)          |
+| ---------------------------- | -------------------- | ------------------------- |
+| US region flips (vs shipped) | 21 (from 63)         | **5 / 600**               |
+| US locality flips            | 20 (from 46)         | **0 / 600**               |
+| bare-locality pins (parse)   | Dublin re-broke      | **clean**                 |
+| parity street (v1 denom)     | 0.55                 | 0.4833 (2k, undertrained) |
+| parity postcode              | 0.96–0.99            | 0.9861 PASS               |
+
+**Schedule, not capacity.** The gentle LR + longer warmup held BOTH the US admin-recall repair AND
+bare-locality robustness at 2k steps — the two objectives that oscillated under 5e-5/8k. The
+oscillation was an optimization-dynamics artifact, not a 29M-param ceiling. Street 0.4833 is low
+only because 2k ≪ 8k; the diagnostic wasn't a candidate.
+
+Two caveats kept honest: (1) the residual 5 flips are all postcode-adjacent VT cases where "VT"
+absorbs into the street span — the **#727 boundary-digit-absorption class**, which schedule does
+not touch and is now the named last lever. (2) "pins clean" is PARSE-level; the v255 FAIL was a
+COORDINATE assertion, and the gauntlet harness only takes a candidate via explicit `--model` (the
+#718 zero-fill trap) or a destructive package swap — so the coordinate-level Dublin gauntlet was
+NOT re-run. A package-swap gauntlet is queued for verification.
+
+**Next (operator greenlight):** `v2.5.7-fragment-v5-gentle-full` staged and committed but NOT
+launched — the full 8k run at v256's gentle schedule. Expected to recover street toward 0.55–0.60
+without the oscillation. Held for greenlight because the probe result reframes the fork itself.
+
 ## Decisions under the standing grant
 
 Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Did NOT
@@ -53,12 +83,12 @@ supersede. Treadmill compliance outranked grant flexing.
 
 ## Numbers
 
-|                   |                                                                      |
-| ----------------- | -------------------------------------------------------------------- |
-| Session           | 06:50–15:00 UTC conn (hourly cron reports)                           |
-| Runs              | 3 trained today (v254, v255 + v253's gate battery); 6 total campaign |
-| Modal GPU         | ~+$15 today (~$50 campaign total); 0 NaN                             |
-| Campaign street   | 0.3967 → **0.5955** peak (triaged; +20pp in ~30h)                    |
-| number→postcode   | 21.8% → under 1%                                                     |
-| Promote state     | BLOCKED (2pp gate / gauntlet, per candidate — see matrix)            |
-| v7 excision state | swaps still floor-gated; everything non-model staged and waiting     |
+|                   |                                                                                  |
+| ----------------- | -------------------------------------------------------------------------------- |
+| Session           | 06:50–15:00 UTC conn (hourly cron reports)                                       |
+| Runs              | 4 trained today (v254, v255, v256 probe + v253's gate battery); 7 total campaign |
+| Modal GPU         | ~+$18 today (~$53 campaign total); 0 NaN                                         |
+| Campaign street   | 0.3967 → **0.5955** peak (triaged; +20pp in ~30h)                                |
+| number→postcode   | 21.8% → under 1%                                                                 |
+| Promote state     | BLOCKED (2pp gate / gauntlet, per candidate — see matrix)                        |
+| v7 excision state | swaps still floor-gated; everything non-model staged and waiting                 |
