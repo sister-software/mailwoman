@@ -41,7 +41,7 @@
 - e2e cache flow with the REAL registry: scratch `cacheRoot` → `npm install --prefix` the published weights → `resolveWeights({cacheRoot})` resolves incl. sibling artifacts → classifier loads and parses. (Uses a scratch dir, not the real `~/.cache`.)
 - Interactive prompt under a pty (`script -qec … /dev/null` with piped `n\n` / `y\n`): decline renders degraded output + banner; `--degraded` and `--download-weights` behave non-interactively.
 - Binary-less-install probe: point the pin at a known metadata-only version (or simulate by removing `model.onnx` from the scratch install) → actionable error text.
-- File the board issue: publish workflow should maintain a `weights-latest` dist-tag on binary-carrying weights versions; the guard's `@latest` fallback switches to it once it exists.
+- ~~File the dist-tag board issue~~ Executor finding (2026-07-13): npm view shows 5.10.0 AND 6.0.0 weights tarballs both ~40 MB — code-only releases DO ship binaries (the publish flow stages them regardless of release_weights). The metadata-only trap is not observed on the registry; the post-install probe stays as defense-in-depth, no issue filed.
 - Receipts: transcripts of all four in the PR body; `yarn tsc -b`; full `yarn vitest --run` over touched workspaces.
 
 ### Task 5: PR
