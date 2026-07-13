@@ -302,6 +302,63 @@ def render_unit(unit: str, number: str, street: str) -> dict:
     }
 
 
+def admin_pairs_from_corpus(parquet_glob: str, cap: int) -> list[tuple[str, str]]:
+    """(locality, region) surface pairs from US corpus rows (both spans present) — the #1102
+    counterweight: teaches the locality<->region boundary the twin mass eroded."""
+    rng = random.Random(f"{SEED}:adminpairs")
+    pairs: set[tuple[str, str]] = set()
+
+    for path in sorted(globlib.glob(parquet_glob, recursive=True)):
+        for batch in pq.ParquetFile(path).iter_batches(
+            columns=["raw", "span_starts", "span_ends", "span_tags", "country"], batch_size=8192
+        ):
+            for row in batch.to_pylist():
+                if row["country"] != "US" or len(pairs) >= cap * 3:
+                    continue
+
+                text = row["raw"]
+                locality = region = None
+
+                for s_, e_, t_ in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True):
+                    if t_ == "locality":
+                        locality = text[s_:e_].strip()
+                    elif t_ == "region":
+                        region = text[s_:e_].strip()
+
+                if locality and region and 3 <= len(locality) <= 40 and 2 <= len(region) <= 20:
+                    pairs.add((locality, region))
+
+            if len(pairs) >= cap * 3:
+                break
+
+        if len(pairs) >= cap * 3:
+            break
+
+    return rng.sample(sorted(pairs), min(cap, len(pairs)))
+
+
+def render_admin_pair(locality: str, region: str) -> dict:
+    """US "LOCALITY REGION" comma-free pair — the locality<->region boundary row."""
+    locality_tokens, region_tokens = locality.split(), region.split()
+    tokens = locality_tokens + region_tokens
+    labels = (
+        ["B-locality"]
+        + ["I-locality"] * (len(locality_tokens) - 1)
+        + ["B-region"]
+        + ["I-region"] * (len(region_tokens) - 1)
+    )
+    text = f"{locality} {region}"
+
+    return {
+        "raw": text,
+        "tokens": tokens,
+        "labels": labels,
+        "span_starts": [0, len(locality) + 1],
+        "span_ends": [len(locality), len(text)],
+        "span_tags": ["locality", "region"],
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--oa-root", type=Path, required=True)
@@ -393,6 +450,34 @@ def main() -> None:
             )
 
         print(f"famous-locality twins: {len(famous)}")
+
+    # Shard-v5 (#1102): US admin-context pairs + directional-prefixed locality twin boost.
+    admin_pairs = admin_pairs_from_corpus(args.corpus_parquet_glob, args.per_locale_cap)
+
+    for locality, region in admin_pairs:
+        push(
+            render_admin_pair(locality, region),
+            "US",
+            "en-US",
+            "Synthetic — fragment-assay; (locality, region) pairs from corpus US spans",
+        )
+
+    directional_localities = [
+        (loc, reg)
+        for loc, reg in admin_pairs
+        if loc.split()[0].rstrip(".").upper()
+        in {"N", "S", "E", "W", "NORTH", "SOUTH", "EAST", "WEST", "NE", "NW", "SE", "SW"}
+    ]
+
+    for loc, _ in directional_localities:
+        push(
+            render(loc, None, tag="locality"),
+            "US",
+            "en-US",
+            "Synthetic — fragment-assay; directional-prefixed US localities (the N-Hartland flip class)",
+        )
+
+    print(f"US admin pairs: {len(admin_pairs)} (directional-locality twins: {len(directional_localities)})")
 
     corpus_localities = span_rows_from_corpus(
         args.locality_parquet_glob or args.corpus_parquet_glob, None, args.per_locale_cap // 4, tag="locality"
