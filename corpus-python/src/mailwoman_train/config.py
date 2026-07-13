@@ -187,6 +187,12 @@ class ModelConfig:
     # rows whose gold country has a conventions row (mirror: conventions.py <- codex). The
     # inference mask's training half; hypothesis = FR region recovers (16.2 was the v4.3.0 tail).
     use_conventions_loss_mask: bool = False
+    # Span-boundary aux head (#727 GLiNER-lite probe): a training-only 2-logit head predicting per-token
+    # span START (B-*) and END (entity token whose successor doesn't continue it), supervised from the BIO
+    # labels. Adds boundary-placement pressure against the region→street absorption residual. Inference-
+    # invariant (never exported). span_boundary_loss_weight scales the aux BCE leg; 0 disables it.
+    use_span_boundary_head: bool = False
+    span_boundary_loss_weight: float = 0.0
     # Must match the lexicon JSON's feature_dim (slot count).
     gazetteer_feature_dim: int = 5
 

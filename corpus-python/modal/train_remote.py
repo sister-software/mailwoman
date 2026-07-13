@@ -330,6 +330,46 @@ def sync_v061():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=1200,
+)
+def sync_src_727():
+    """SOURCE-ONLY sync (#727 span-boundary probe): pull `corpus-python/src/` from R2 → volume and clear the
+    stale `__pycache__` (the night-3 pyc gotcha — a container-side `.py` overwrite leaves a shadowing `.pyc`).
+    No corpus pull — the v257 corpus + tokenizer already persist on the volume. Verifies the span-boundary head
+    actually landed in model.py before returning, so a stale sync can't silently train the OLD architecture."""
+    import shutil
+    import subprocess
+
+    print("Syncing corpus-python/src/ from R2 (container-side, #727)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+
+    # Verify the new architecture + config landed — a stale sync must fail loud, not train the old model.
+    model_src = open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/model.py").read()
+    cfg727 = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.6.0-span-boundary-probe.yaml"
+    has_head = "use_span_boundary_head" in model_src and "span_boundary_head = nn.Linear" in model_src
+    print("  span-boundary head in model.py on volume:", has_head)
+    print("  v2.6.0 config present:", os.path.isfile(cfg727))
+    if not has_head or not os.path.isfile(cfg727):
+        raise RuntimeError("sync verify FAILED — span head or config missing on volume; do NOT launch")
+    print("\n#727 source sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=3600,
 )
 def sync_v080():
