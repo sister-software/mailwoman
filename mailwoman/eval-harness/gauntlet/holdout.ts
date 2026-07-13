@@ -36,6 +36,12 @@ export interface HoldoutLayerOptions {
 	tokenizer?: string
 	/** Candidate model-card (paired with `tokenizer`). */
 	card?: string
+	/**
+	 * Package-shaped candidate weights dir — the #718-safe path (see {@link GauntletLayerOptions.weightsCacheRoot}). Like
+	 * a splice candidate it carries its own vocab, so production also runs through the SHIPPED trio to keep the z-test
+	 * clean.
+	 */
+	weightsCacheRoot?: string
 }
 
 const TOLS = [0.1, 0.5, 5] as const // rooftop / street / locality (km)
@@ -166,6 +172,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	const CANDIDATE = options.candidate || ""
 	const CAND_TOKENIZER = options.tokenizer || ""
 	const CAND_CARD = options.card || ""
+	const CAND_CACHE = options.weightsCacheRoot || ""
 	const SOURCE = (options.source || "fr").toLowerCase()
 
 	const sources = holdoutSources()
@@ -178,7 +185,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	}
 	const src: SourceDef = selected
 
-	if (!CANDIDATE) {
+	if (!CANDIDATE && !CAND_CACHE) {
 		console.error("Usage: mailwoman eval gauntlet --layer holdout --candidate <model.onnx> [--n 300]")
 
 		return { pass: false, exitCode: 2 }
@@ -187,10 +194,10 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	const sample = await draw(src, N)
 	console.error(`[gauntlet/holdout] scoring production vs candidate on the SAME ${sample.length} addresses…`)
 
-	// A splice candidate (--tokenizer given) swaps the vocab, so production must ALSO run through the SHIPPED
-	// (model, tokenizer, card) trio via createScorer — otherwise the two sides have different anchor/gazetteer
-	// wiring and the z-test is confounded. resolveWeights gives the shipped trio for the production side.
-	const shipped = CAND_TOKENIZER ? resolveWeights({ locale: "en-us" }) : null
+	// A splice/multisplice candidate (--tokenizer or --weights-cache) swaps the vocab, so production must ALSO run
+	// through the SHIPPED (model, tokenizer, card) trio via createScorer — otherwise the two sides have different
+	// anchor/gazetteer wiring and the z-test is confounded. resolveWeights gives the shipped trio for production.
+	const shipped = CAND_TOKENIZER || CAND_CACHE ? resolveWeights({ locale: "en-us" }) : null
 	const prodDeps = await buildGauntletDeps(
 		shipped
 			? { modelPath: shipped.modelPath, tokenizerPath: shipped.tokenizerPath, modelCardPath: shipped.modelCardPath }
@@ -200,9 +207,11 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	prodDeps.close()
 
 	const candDeps = await buildGauntletDeps(
-		CAND_TOKENIZER
-			? { modelPath: CANDIDATE, tokenizerPath: CAND_TOKENIZER, modelCardPath: CAND_CARD || undefined }
-			: { modelPath: CANDIDATE }
+		CAND_CACHE
+			? { weightsCacheRoot: CAND_CACHE }
+			: CAND_TOKENIZER
+				? { modelPath: CANDIDATE, tokenizerPath: CAND_TOKENIZER, modelCardPath: CAND_CARD || undefined }
+				: { modelPath: CANDIDATE }
 	)
 	const cand = await score(candDeps, sample)
 	candDeps.close()

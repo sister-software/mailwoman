@@ -41,6 +41,12 @@ export interface GauntletRunOptions {
 	tokenizer?: string
 	/** Candidate model-card (paired with `tokenizer`). */
 	card?: string
+	/**
+	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`) — the #718-safe path
+	 * for a splice/multisplice candidate; mirrors `eval parity --weights-cache`. Takes precedence over
+	 * `candidate`/`tokenizer`.
+	 */
+	weightsCacheRoot?: string
 	/** Run ONE layer instead of the combined gate. */
 	layer?: GauntletLayer
 	/** Held-out fresh-draw sample size. Default 300. */
@@ -53,6 +59,7 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 		model: options.candidate,
 		tokenizer: options.tokenizer,
 		card: options.card,
+		weightsCacheRoot: options.weightsCacheRoot,
 	}
 
 	switch (layer) {
@@ -68,6 +75,7 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 					source: options.source,
 					tokenizer: options.tokenizer,
 					card: options.card,
+					weightsCacheRoot: options.weightsCacheRoot,
 				})
 			).exitCode
 	}
@@ -83,7 +91,7 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 		return { exitCode: await runLayer(options.layer, options) }
 	}
 
-	const candidate = options.candidate || ""
+	const candidate = options.candidate || options.weightsCacheRoot || ""
 	const layers: GauntletLayer[] = ["regression", "metamorphic"]
 
 	// The held-out layer is candidate-vs-prod — it only runs when a candidate model is supplied.

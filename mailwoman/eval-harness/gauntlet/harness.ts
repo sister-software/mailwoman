@@ -63,12 +63,20 @@ function assertShippedModelMatchesCard(materializedMd5: string): void {
  * the ONLY variables are the ONNX + the vocab (see holdout.ts).
  */
 export async function buildGauntletDeps(
-	opts: { modelPath?: string; tokenizerPath?: string; modelCardPath?: string } = {}
+	opts: { modelPath?: string; tokenizerPath?: string; modelCardPath?: string; weightsCacheRoot?: string } = {}
 ): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
+	// A candidate laid out as a package-shaped weights dir (`<cacheRoot>/node_modules/@mailwoman/neural-weights-en-us`).
+	// PREFER THIS over modelPath for a candidate with a DIFFERENT vocab (splice/multisplice): `loadFromWeights({cacheRoot})`
+	// resolves the model + tokenizer + card + anchor/gazetteer siblings package-shaped, exactly as production does — the
+	// #718-safe path, identical to `eval parity --weights-cache`. A bare `modelPath` swap feeds NO soft channels (the
+	// zero-fill trap) AND keeps the shipped tokenizer, so a multisplice candidate would score byte-identical to prod.
+	const cacheModel = opts.weightsCacheRoot
+		? resolve(opts.weightsCacheRoot, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")
+		: undefined
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
 	// loadFromWeights symlink can point at an old training base, not the shipped model) is never silent.
-	const effModel = opts.modelPath ? resolve(opts.modelPath) : resolve("neural-weights-en-us/model.onnx")
+	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolve("neural-weights-en-us/model.onnx"))
 
 	if (existsSync(effModel)) {
 		const md5 = createHash("md5").update(readFileSync(effModel)).digest("hex")
@@ -80,20 +88,22 @@ export async function buildGauntletDeps(
 		// shipped default must match the model-card's files_md5 (the card is the source of truth). A `--candidate`
 		// run intentionally grades a different artifact, so it is exempt. This gate is wired as the release
 		// before:release step (RELEASING.md), so failing here guards BOTH the gate and the ship.
-		if (!opts.modelPath && !opts.tokenizerPath) {
+		if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot) {
 			assertShippedModelMatchesCard(md5)
 		}
 	}
-	const classifier = opts.tokenizerPath
-		? await createScorer({
-				modelPath: resolve(opts.modelPath ?? "neural-weights-en-us/model.onnx"),
-				tokenizerPath: resolve(opts.tokenizerPath),
-				modelCardPath: resolve(opts.modelCardPath ?? "neural-weights-en-us/model-card.json"),
-				locale: "en-us",
-			})
-		: opts.modelPath
-			? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
-			: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	const classifier = opts.weightsCacheRoot
+		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: opts.weightsCacheRoot })
+		: opts.tokenizerPath
+			? await createScorer({
+					modelPath: resolve(opts.modelPath ?? "neural-weights-en-us/model.onnx"),
+					tokenizerPath: resolve(opts.tokenizerPath),
+					modelCardPath: resolve(opts.modelCardPath ?? "neural-weights-en-us/model-card.json"),
+					locale: "en-us",
+				})
+			: opts.modelPath
+				? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
+				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)

@@ -35,6 +35,12 @@ export interface GauntletLayerOptions {
 	tokenizer?: string
 	/** Candidate model-card (paired with `tokenizer`). */
 	card?: string
+	/**
+	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`). The #718-safe path
+	 * for a splice/multisplice candidate — resolves model + tokenizer + card + soft-feed siblings package-shaped, exactly
+	 * like `eval parity --weights-cache`. Takes precedence over `model`/`tokenizer`/`card`.
+	 */
+	weightsCacheRoot?: string
 }
 
 const DEFAULT_TOL_M = 5000
@@ -95,13 +101,15 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	}
 
 	const deps = await buildGauntletDeps(
-		options.model
-			? {
-					modelPath: options.model,
-					...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
-					...(options.card ? { modelCardPath: options.card } : {}),
-				}
-			: {}
+		options.weightsCacheRoot
+			? { weightsCacheRoot: options.weightsCacheRoot }
+			: options.model
+				? {
+						modelPath: options.model,
+						...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
+						...(options.card ? { modelCardPath: options.card } : {}),
+					}
+				: {}
 	)
 	const fails: string[] = [] // status=pass that failed → BLOCK
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking

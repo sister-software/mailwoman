@@ -23,6 +23,12 @@ const OptionsSchema = zod.object({
 	source: zod.string().default("fr").describe("held-out: truth source (fr = BAN, us = FDIC)"),
 	tokenizer: zod.string().optional().describe("Tokenizer-splice candidate: the candidate tokenizer"),
 	card: zod.string().optional().describe("Tokenizer-splice candidate: the candidate model-card"),
+	weightsCache: zod
+		.string()
+		.optional()
+		.describe(
+			"Package-shaped candidate weights dir (<root>/node_modules/@mailwoman/neural-weights-en-us) — #718-safe, mirrors eval parity --weights-cache; preferred for splice/multisplice candidates"
+		),
 	layer: zod
 		.enum(["regression", "metamorphic", "holdout"])
 		.optional()
@@ -34,7 +40,7 @@ export { OptionsSchema as options }
 
 const EvalGauntlet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		async () => (await runGauntlet(options)).exitCode,
+		async () => (await runGauntlet({ ...options, weightsCacheRoot: options.weightsCache })).exitCode,
 		(exitCode) => exitCode
 	)
 
