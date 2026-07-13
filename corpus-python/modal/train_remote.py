@@ -1495,6 +1495,38 @@ def mean_init_fr_nsplice():
 
 
 @app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=1200,
+)
+def mean_init_multisplice():
+    """Parity campaign composite (night-1): expand the SHIPPED v241 step-012000 checkpoint's
+    token_embeddings to the v0.9.0-multisplice vocab (12-locale diacritic splice + pt/no top-up;
+    FVT mean-init, identical math to the fr precedent). Writes /data/models/multisplice-expanded,
+    the init_from base for v2.5.1-fragment-splice. Prints old→new vocab (expect 66319 → 73143) and a
+    container-side isfile verify of the written checkpoint AFTER vol.commit()."""
+    import sys
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from pathlib import Path
+
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/multisplice-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v241-fr-nsplice-ft-s42/checkpoints/step-012000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.8.0-fr-nsplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
     volumes={VOL_MOUNT: vol},
     image=training_image,
     timeout=600,
