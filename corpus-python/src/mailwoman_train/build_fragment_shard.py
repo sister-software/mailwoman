@@ -70,6 +70,8 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
     rng = random.Random(f"{SEED}:{locale_dir}")
     pairs: dict[str, str] = {}
     cities: set[str] = set()
+    city_postcodes: set[tuple[str, str]] = set()
+    units: set[tuple[str, str, str]] = set()
 
     for csv_path in sorted(globlib.glob(str(oa_root / locale_dir / "**" / "*.csv"), recursive=True)):
         with open(csv_path, newline="", encoding="utf-8", errors="replace") as fh:
@@ -77,6 +79,7 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
             cols = {c.upper(): c for c in reader.fieldnames or []}
             street_col, number_col = cols.get("STREET"), cols.get("NUMBER")
             city_col = cols.get("CITY")
+            unit_col, postcode_col = cols.get("UNIT"), cols.get("POSTCODE")
 
             if not street_col:
                 continue
@@ -86,11 +89,20 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
                 number = (row.get(number_col) or "").strip() if number_col else ""
                 city = (row.get(city_col) or "").strip() if city_col else ""
 
+                postcode = (row.get(postcode_col) or "").strip() if postcode_col else ""
+                unit = (row.get(unit_col) or "").strip() if unit_col else ""
+
                 if city and 3 <= len(city) <= 48 and not city.isdigit() and len(cities) < cap * 3:
                     cities.add(city)
 
+                if city and postcode and 3 <= len(postcode) <= 10 and len(city_postcodes) < cap * 2:
+                    city_postcodes.add((city, postcode))
+
                 if not street or len(street) < 3 or len(street) > 48 or street.isdigit():
                     continue
+
+                if unit and number and len(unit) <= 12 and len(number) <= 8 and len(units) < cap:
+                    units.add((unit, number, street))
 
                 if street not in pairs:
                     pairs[street] = number
@@ -103,8 +115,10 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
 
     sampled = rng.sample(sorted(pairs.items()), min(cap, len(pairs)))
     sampled_cities = rng.sample(sorted(cities), min(cap // 2, len(cities)))
+    sampled_city_postcodes = rng.sample(sorted(city_postcodes), min(cap // 2, len(city_postcodes)))
+    sampled_units = rng.sample(sorted(units), min(cap // 2, len(units)))
 
-    return sampled, sampled_cities
+    return sampled, sampled_cities, sampled_city_postcodes, sampled_units
 
 
 def street_rows_from_corpus(parquet_glob: str, countries: set[str], cap: int) -> dict[str, list[str]]:
@@ -175,6 +189,47 @@ def render(surface: str, number: str | None, tag: str = "street") -> dict:
     }
 
 
+def render_locality_postcode(city: str, postcode: str) -> dict:
+    """Shard-v2 (v251 read-out): the "Eight Mile Plains 4113" class — locality + trailing postcode."""
+    tokens = city.split() + [postcode]
+    labels = ["B-locality"] + ["I-locality"] * (len(city.split()) - 1) + ["B-postcode"]
+    text = f"{city} {postcode}"
+
+    return {
+        "raw": text,
+        "tokens": tokens,
+        "labels": labels,
+        "span_starts": [0, len(city) + 1],
+        "span_ends": [len(city), len(text)],
+        "span_tags": ["locality", "postcode"],
+    }
+
+
+def render_unit(unit: str, number: str, street: str) -> dict:
+    """Shard-v2: AU compact unit rows — "UNIT 711 139 BOUVERIE STREET" (unit, house_number, street)."""
+    unit_tokens, street_tokens = unit.split(), street.split()
+    tokens = unit_tokens + [number] + street_tokens
+    labels = (
+        ["B-unit"]
+        + ["I-unit"] * (len(unit_tokens) - 1)
+        + ["B-house_number"]
+        + ["B-street"]
+        + ["I-street"] * (len(street_tokens) - 1)
+    )
+    text = f"{unit} {number} {street}"
+    number_start = len(unit) + 1
+    street_start = number_start + len(number) + 1
+
+    return {
+        "raw": text,
+        "tokens": tokens,
+        "labels": labels,
+        "span_starts": [0, number_start, street_start],
+        "span_ends": [len(unit), number_start + len(number), len(text)],
+        "span_tags": ["unit", "house_number", "street"],
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--oa-root", type=Path, required=True)
@@ -203,7 +258,7 @@ def main() -> None:
         )
 
     for locale_dir, (country, locale, trailing) in sorted(OA_LOCALES.items()):
-        pairs, cities = collect_oa_pairs(args.oa_root, locale_dir, args.per_locale_cap)
+        pairs, cities, city_postcodes, units = collect_oa_pairs(args.oa_root, locale_dir, args.per_locale_cap)
         license_note = f"Synthetic — fragment-assay; street/number/city from OpenAddresses {locale_dir}"
 
         for street, number in pairs:
@@ -216,7 +271,15 @@ def main() -> None:
         for city in cities:
             push(render(city, None, tag="locality"), country, locale, license_note)
 
-        print(f"{locale_dir}: {len(pairs)} pairs, {len(cities)} localities")
+        for city, postcode in city_postcodes:
+            push(render_locality_postcode(city, postcode), country, locale, license_note)
+
+        for unit, number, street in units:
+            push(render_unit(unit, number, street), country, locale, license_note)
+
+        print(
+            f"{locale_dir}: {len(pairs)} pairs, {len(cities)} localities, {len(city_postcodes)} loc+pc, {len(units)} units"
+        )
 
     corpus_streets = street_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap)
 
