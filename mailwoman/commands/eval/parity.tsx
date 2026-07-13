@@ -24,6 +24,14 @@ const OptionsSchema = zod.object({
 	tokenizer: zod.string().optional().describe("Candidate tokenizer.model"),
 	card: zod.string().optional().describe("Candidate model-card.json (label vocab for --model)"),
 	fixtures: zod.string().optional().describe("Fixture JSONL override (default: the committed parity corpus)"),
+	weightsCache: zod
+		.string()
+		.optional()
+		.describe(
+			"Grade a candidate laid out package-shaped under <dir>/node_modules/@mailwoman/neural-weights-<locale> " +
+				"(feeds anchor/gazetteer/calibration siblings — PREFER over --model for candidates; the explicit-path " +
+				"branch grades a channel-starved model)"
+		),
 	failing: zod.coerce
 		.number()
 		.int()
@@ -46,6 +54,7 @@ const EvalParity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					tokenizerPath: options.tokenizer,
 					modelCardPath: options.card,
 					fixturesPath: options.fixtures,
+					weightsCacheRoot: options.weightsCache,
 					failing: options.failing,
 				})
 			).exitCode,
