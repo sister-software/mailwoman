@@ -40,6 +40,11 @@ export interface ParityEvalOptions {
 	 * model — the #718 zero-fill trap.
 	 */
 	weightsCacheRoot?: string
+	/**
+	 * Probe 0 (campaign runbook): feed the decode-time street-morphology emission bias, built from the in-repo libpostal
+	 * `street_types` dictionaries (all locales). Zero-training lever.
+	 */
+	streetMorphology?: boolean
 	/** List the first N disagreeing inputs per floor label. */
 	failing?: number
 }
@@ -70,12 +75,23 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		cacheRoot: options.weightsCacheRoot,
 	})
 
+	let fstStreetMorphology: import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined
+
+	if (options.streetMorphology) {
+		const { buildStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder")
+		const built = buildStreetMorphologyFST({ dictionariesDir: "core/data/libpostal/dictionaries" })
+		fstStreetMorphology = built.matcher
+		console.log(
+			`street-morphology bias ON: ${built.locales.length} locales, ${built.variantCount} variants (${built.canonicalCount} canonical)`
+		)
+	}
+
 	const tallies = new Map(PARITY_FLOORS.map((f) => [f.label, { hit: 0, total: 0, failing: [] as string[] }]))
 	const byCountry = new Map<string, { cases: number; fullAgree: number }>()
 
 	for (const fixture of live) {
 		const expect = fixture.expect!
-		const tuples = decodeAsTuples(await classifier.parse(fixture.input, { postcodeRepair: true }))
+		const tuples = decodeAsTuples(await classifier.parse(fixture.input, { postcodeRepair: true, fstStreetMorphology }))
 		const byTag = new Map<string, string[]>()
 
 		for (const [tag, value] of tuples) {

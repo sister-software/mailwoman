@@ -32,6 +32,11 @@ const OptionsSchema = zod.object({
 				"(feeds anchor/gazetteer/calibration siblings — PREFER over --model for candidates; the explicit-path " +
 				"branch grades a channel-starved model)"
 		),
+	streetMorphology: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe("Probe 0: decode-time street-morphology emission bias (libpostal street_types, all locales)"),
 	failing: zod.coerce
 		.number()
 		.int()
@@ -55,6 +60,7 @@ const EvalParity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					modelCardPath: options.card,
 					fixturesPath: options.fixtures,
 					weightsCacheRoot: options.weightsCache,
+					streetMorphology: options.streetMorphology,
 					failing: options.failing,
 				})
 			).exitCode,
