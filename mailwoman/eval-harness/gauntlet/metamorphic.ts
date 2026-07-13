@@ -228,6 +228,11 @@ const INV: Perturbation[] = [
 	{ name: "ws", f: (s) => s.replace(/ /g, "  ") },
 	{ name: "trail-dot", f: (s) => `${s}.` },
 	{ name: "comma-tight", f: (s) => s.replace(/, /g, ",") }, // surface-form: drop the space after a comma
+	// Delimiter-free invariant (#1101): a whitespace-only address (commas removed, tokens still
+	// space-separated) must resolve identically — whitespace-only is 64% of the parity gold. The fix
+	// half (punctuation-drop training augmentation) closes any deterministic failure this surfaces; a
+	// failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
+	{ name: "comma-drop", f: (s) => s.replace(/,/g, "") },
 	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) }, // expanded→abbreviated suffix (trained both ways)
 ]
 
@@ -254,7 +259,13 @@ const BAND: Perturbation[] = [
 // house_number ("2 Bd") pre-lookup — fixed by enabling Stage-1 `expandAbbreviations` in the geocode
 // path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp; EN suffixes deliberately untouched). Keep the
 // anti-rot loop honest: a NEW deterministic INV break belongs here with a tracked note, never silently gated.
-const KNOWN_INV_XFAIL = new Map<string, string>([])
+// comma-drop (#1101 delimiter-free invariant): the FR "Rue du Chevaleret" base loses rooftop resolution
+// when its comma is stripped (address_point → admin tier, coord → null) — the comma-free parsing gap the
+// punctuation-drop training augmentation (#1101) exists to close. Tracked here (visible, non-blocking) until
+// that augmentation lands; the anti-rot loop will flag it "newly passing" the moment a retrain fixes it.
+const KNOWN_INV_XFAIL = new Map<string, string>([
+	["comma-drop|181 Rue du Chevaleret, Paris", "#1101: comma-free FR address loses rooftop (address_point→admin)"],
+])
 
 /**
  * Known, DETERMINISTIC BAND misses — the tolerance-band analog of KNOWN_INV_XFAIL, same anti-rot bookkeeping. These are
