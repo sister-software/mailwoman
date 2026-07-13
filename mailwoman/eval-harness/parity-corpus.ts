@@ -3,8 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The parity-corpus eval (#1093) — the rescued v1 hand-written gold (354 live fixtures across 20
- *   countries) scored against a checkpoint, parse-only. This is the model campaign's gate for the
+ *   The parity-corpus eval (#1093) — the rescued v1 hand-written gold scored against a checkpoint,
+ *   parse-only. The ratified default gate is the triaged corpus (321 live across 20 countries; see
+ *   PARITY_FIXTURES_PATH below); pass `--fixtures` for the 354-live pre-triage v1 denominator. This
+ *   is the model campaign's gate for the
  *   HELD plan-2 swaps: the per-label floors below are the SAME pre-registered floors the swap gates
  *   carry (house_number ≥ 0.97, postcode ≥ 0.97, street-family ≥ 0.90 — never edited to green; a
  *   miss is an adjudication). Comparison is case-folded, whitespace-collapsed; the street label
@@ -18,7 +20,18 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 
-export const PARITY_FIXTURES_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
+/**
+ * Default gate corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
+ * assertions plus 33 gold-triage tombstones (rules-idiosyncratic fixtures a neural parser should not be graded against
+ * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs; each carries a `dropped` reason). Proposal
+ * + per-fixture rationale: `docs/articles/evals/2026-07-13-parity-gold-triage.md`. The pre-#875 v1 corpus stays
+ * reproducible via `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always prints which corpus
+ * + how many tombstones it skipped, so the denominator is never silent.
+ */
+export const PARITY_FIXTURES_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
+
+/** The pre-triage v1 corpus — kept for reproducing the original denominator via `--fixtures`. */
+export const PARITY_FIXTURES_V1_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
 
 /** Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap gates. */
 export const PARITY_FLOORS = [
@@ -134,7 +147,10 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		byCountry.set(fixture.country, country)
 	}
 
-	console.log(`parity corpus: ${live.length} live fixtures (${fixtures.length - live.length} tombstones skipped)`)
+	const corpusName = (options.fixturesPath ?? PARITY_FIXTURES_PATH).split("/").pop()
+	console.log(
+		`parity corpus: ${corpusName} — ${live.length} live fixtures (${fixtures.length - live.length} tombstones skipped)`
+	)
 	console.log("")
 	console.log("label          agree      rate    floor  verdict")
 

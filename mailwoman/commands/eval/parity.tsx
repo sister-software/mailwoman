@@ -23,7 +23,12 @@ const OptionsSchema = zod.object({
 	model: zod.string().optional().describe("Candidate model.onnx (omit for the shipped default)"),
 	tokenizer: zod.string().optional().describe("Candidate tokenizer.model"),
 	card: zod.string().optional().describe("Candidate model-card.json (label vocab for --model)"),
-	fixtures: zod.string().optional().describe("Fixture JSONL override (default: the committed parity corpus)"),
+	fixtures: zod
+		.string()
+		.optional()
+		.describe(
+			"Fixture JSONL override (default: the ratified triaged corpus; pass parity-corpus.jsonl for the pre-triage v1 denominator)"
+		),
 	weightsCache: zod
 		.string()
 		.optional()

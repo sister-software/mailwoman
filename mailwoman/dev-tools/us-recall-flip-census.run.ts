@@ -46,7 +46,13 @@ async function extract(classifier: NeuralAddressClassifier, raw: string): Promis
 	return byTag
 }
 
-const flips = new Map<string, { count: number; where: Map<string, number>; samples: string[] }>()
+interface FlipEntry {
+	count: number
+	where: Map<string, number>
+	samples: string[]
+}
+
+const flips = new Map<string, FlipEntry>()
 
 for (const row of rows) {
 	const base = await extract(baseline, row.raw)
@@ -71,7 +77,7 @@ for (const row of rows) {
 				}
 			}
 
-			const entry = flips.get(tag) ?? { count: 0, where: new Map(), samples: [] }
+			const entry: FlipEntry = flips.get(tag) ?? { count: 0, where: new Map<string, number>(), samples: [] }
 			entry.count++
 			entry.where.set(went, (entry.where.get(went) ?? 0) + 1)
 
