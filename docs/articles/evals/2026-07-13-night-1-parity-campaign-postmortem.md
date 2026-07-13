@@ -102,6 +102,25 @@ Scoreboard (session 019f590a): prediction 1 HELD, prediction 3 PARTIALLY HELD, p
 **FALSIFIED** — structural 2/3. The falsification is the good kind: the cheap lever sufficed where
 the consult predicted architecture work.
 
+## The training arc (UPDATE 2, shift close): four runs, a gauntlet-green candidate
+
+| run                        | one variable                         | parity (hn / pc / street)         | verdict                                                        |
+| -------------------------- | ------------------------------------ | --------------------------------- | -------------------------------------------------------------- |
+| shipped v241               | —                                    | .7013 / .9861 / .3967             | baseline                                                       |
+| v2.5.0 assay (6k)          | fragment shard v1                    | .7532 / .9861 / .5333             | data lever CONFIRMED; pred-2 falsified                         |
+| v2.5.1 consolidation (12k) | + multisplice tokenizer (mean-init)  | .7922@2k / .9444 / .5467@12k      | mangle cured at char level; pc regression classed (loc+pc gap) |
+| v2.5.2 (8k)                | shard-v2: AU units + loc+pc polarity | .7597 / **.9861 PASS** / .5500@2k | pc restored; gauntlet FAIL: global-dublin-bare                 |
+| v2.5.3 (8k)                | shard-v3: +11k global locality twins | .7403 / **.9861 PASS** / .5233    | **FULL GAUNTLET PASS** — staged, not promoted                  |
+
+Iteration discipline held: each run changed one named lever answering the previous read-out's
+classed failure — no knob oscillated (treadmill guard never fired). The Dublin→Melbourne
+whack-a-mole exposed the durable design for shard-v4: DETERMINISTIC twins from the gazetteer's
+top-population localities, closing the famous-city class instead of sampling instances.
+
+Candidates staged with MANIFESTs: `models/candidates/v252-fragment-v2` (do-not-promote, Dublin
+pin) and `models/candidates/v253-fragment-v3` (gauntlet-green; per-locale-F1 + error-analysis
+legs and the operator's promote call outstanding).
+
 ## Numbers
 
 |                     |                                                        |
