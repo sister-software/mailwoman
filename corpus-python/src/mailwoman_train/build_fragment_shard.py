@@ -72,6 +72,7 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
     cities: set[str] = set()
     city_postcodes: set[tuple[str, str]] = set()
     units: set[tuple[str, str, str]] = set()
+    triples: set[tuple[str, str, str]] = set()
 
     for csv_path in sorted(globlib.glob(str(oa_root / locale_dir / "**" / "*.csv"), recursive=True)):
         with open(csv_path, newline="", encoding="utf-8", errors="replace") as fh:
@@ -104,6 +105,9 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
                 if unit and number and len(unit) <= 12 and len(number) <= 8 and len(units) < cap:
                     units.add((unit, number, street))
 
+                if city and number and len(number) <= 8 and 3 <= len(city) <= 40 and len(triples) < cap:
+                    triples.add((street, number, city))
+
                 if street not in pairs:
                     pairs[street] = number
 
@@ -117,8 +121,9 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
     sampled_cities = rng.sample(sorted(cities), min(cap // 2, len(cities)))
     sampled_city_postcodes = rng.sample(sorted(city_postcodes), min(cap // 2, len(city_postcodes)))
     sampled_units = rng.sample(sorted(units), min(cap // 2, len(units)))
+    sampled_triples = rng.sample(sorted(triples), min(cap // 2, len(triples)))
 
-    return sampled, sampled_cities, sampled_city_postcodes, sampled_units
+    return sampled, sampled_cities, sampled_city_postcodes, sampled_units, sampled_triples
 
 
 def span_rows_from_corpus(
@@ -210,6 +215,68 @@ def render_locality_postcode(city: str, postcode: str) -> dict:
     }
 
 
+COUNTRY_NAMES = {
+    "AT": "Austria",
+    "CH": "Switzerland",
+    "CZ": "Czech Republic",
+    "DK": "Denmark",
+    "ES": "Spain",
+    "FI": "Finland",
+    "HR": "Croatia",
+    "NL": "Netherlands",
+    "NO": "Norway",
+    "PL": "Poland",
+    "PT": "Portugal",
+    "SE": "Sweden",
+    "SI": "Slovenia",
+    "SK": "Slovakia",
+    "AU": "Australia",
+    "NZ": "New Zealand",
+}
+
+
+def render_context(street: str, number: str, city: str, country: str, trailing: bool, with_country: bool) -> dict:
+    """Shard-v4: COMMA-FREE context rows — the failure-census headline class (71/143 street misses
+    were unpunctuated street<->admin boundaries: "Rue Henri Barbusse Paris France"). Euro order
+    STREET NUMBER CITY [COUNTRY]; en order NUMBER STREET CITY [COUNTRY]. No punctuation anywhere."""
+    parts: list[tuple[str, str]] = []  # (tag, text)
+
+    if trailing:
+        parts = [("street", street), ("house_number", number), ("locality", city)]
+    else:
+        parts = [("house_number", number), ("street", street), ("locality", city)]
+
+    if with_country:
+        parts.append(("country", COUNTRY_NAMES[country]))
+
+    tokens: list[str] = []
+    labels: list[str] = []
+    span_starts: list[int] = []
+    span_ends: list[int] = []
+    span_tags: list[str] = []
+    cursor = 0
+    pieces: list[str] = []
+
+    for tag, text in parts:
+        text_tokens = text.split()
+        tokens.extend(text_tokens)
+        labels.extend([f"B-{tag}"] + [f"I-{tag}"] * (len(text_tokens) - 1))
+        span_starts.append(cursor)
+        span_ends.append(cursor + len(text))
+        span_tags.append(tag)
+        pieces.append(text)
+        cursor += len(text) + 1
+
+    return {
+        "raw": " ".join(pieces),
+        "tokens": tokens,
+        "labels": labels,
+        "span_starts": span_starts,
+        "span_ends": span_ends,
+        "span_tags": span_tags,
+    }
+
+
 def render_unit(unit: str, number: str, street: str) -> dict:
     """Shard-v2: AU compact unit rows — "UNIT 711 139 BOUVERIE STREET" (unit, house_number, street)."""
     unit_tokens, street_tokens = unit.split(), street.split()
@@ -240,6 +307,13 @@ def main() -> None:
     ap.add_argument("--oa-root", type=Path, required=True)
     ap.add_argument("--corpus-parquet-glob", required=True)
     ap.add_argument(
+        "--famous-localities-file",
+        default="",
+        help="Shard-v4: newline list of top-population locality names (deterministic famous-city "
+        "twins — closes the Dublin/Melbourne sampling-lottery class; build from the candidate "
+        "gazetteer, population-ranked).",
+    )
+    ap.add_argument(
         "--locality-parquet-glob",
         default="",
         help="Separate glob for the GLOBAL locality-twin harvest (admin/ban blocks; the main glob "
@@ -269,7 +343,7 @@ def main() -> None:
         )
 
     for locale_dir, (country, locale, trailing) in sorted(OA_LOCALES.items()):
-        pairs, cities, city_postcodes, units = collect_oa_pairs(args.oa_root, locale_dir, args.per_locale_cap)
+        pairs, cities, city_postcodes, units, triples = collect_oa_pairs(args.oa_root, locale_dir, args.per_locale_cap)
         license_note = f"Synthetic — fragment-assay; street/number/city from OpenAddresses {locale_dir}"
 
         for street, number in pairs:
@@ -288,14 +362,38 @@ def main() -> None:
         for unit, number, street in units:
             push(render_unit(unit, number, street), country, locale, license_note)
 
+        # Shard-v4: comma-free context rows (the census headline class — 71/143 street misses were
+        # unpunctuated street<->admin boundaries). Alternate rows carry the English country name.
+        for index, (street, number, city) in enumerate(triples):
+            push(
+                render_context(street, number, city, country, trailing, with_country=index % 2 == 0),
+                country,
+                locale,
+                license_note,
+            )
+
         print(
-            f"{locale_dir}: {len(pairs)} pairs, {len(cities)} localities, {len(city_postcodes)} loc+pc, {len(units)} units"
+            f"{locale_dir}: {len(pairs)} pairs, {len(cities)} localities, {len(city_postcodes)} loc+pc, "
+            f"{len(units)} units, {len(triples)} context"
         )
 
     corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap)
     # Shard-v3: GLOBAL bare-locality twins (all countries; cap/4 each) — the gauntlet
     # global-dublin-bare regression showed famous cities outside the OA shard locales lose their
     # locality reading once fragment street-mass grows. Harvested from real corpus locality spans.
+    if args.famous_localities_file:
+        famous = [line.strip() for line in open(args.famous_localities_file, encoding="utf-8") if line.strip()]
+
+        for name in famous:
+            push(
+                render(name, None, tag="locality"),
+                "ZZ",
+                "und",
+                "Synthetic — fragment-assay; top-population locality names from the candidate gazetteer (WOF-derived)",
+            )
+
+        print(f"famous-locality twins: {len(famous)}")
+
     corpus_localities = span_rows_from_corpus(
         args.locality_parquet_glob or args.corpus_parquet_glob, None, args.per_locale_cap // 4, tag="locality"
     )
