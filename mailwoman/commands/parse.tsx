@@ -11,12 +11,15 @@ import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
 import { InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
+import { weightsPackageName } from "@mailwoman/neural/weights"
 import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
+import React from "react"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
+import { probeWeights, WeightsGuard, type WeightsOutcome } from "../cli-kit/weights-guard.tsx"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
@@ -69,6 +72,22 @@ const ParseConfigSchema = zod.object({
 		.optional()
 		.default(false)
 		.describe("In pipeline mode, skip the neural classifier (run normalize + queryShape + kind + resolver only)."),
+	downloadWeights: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"If the locale's neural weights aren't installed, download them into ~/.cache/mailwoman/weights " +
+				"without prompting, then parse. Non-interactive-safe (CI, pipes)."
+		),
+	degraded: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"Run the structural pipeline stages only (normalize, query-shape, kind, grouper) without the neural " +
+				"encoder, even when weights are installed. A stderr banner names what's degraded."
+		),
 	format: zod
 		.enum(["json", "tuple", "xml"])
 		.optional()
@@ -147,6 +166,39 @@ function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 }
 
 const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+	// The weights guard wraps the DEFAULT pipeline path only — explicit --model/--tokenizer paths and
+	// the legacy/benchmark/noNeural paths keep their existing loading semantics untouched (plan 3;
+	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
+	const guardEligible =
+		!options.isolated &&
+		options.benchmark === undefined &&
+		!(options.policy && options.policy.length > 0) &&
+		!options.neural &&
+		!options.noNeural &&
+		!options.model &&
+		!options.tokenizer
+
+	if (guardEligible && (options.degraded || options.downloadWeights || !probeWeights(options.locale).ok)) {
+		return (
+			<WeightsGuard locale={options.locale} autoDownload={options.downloadWeights} forceDegraded={options.degraded}>
+				{(outcome) => <ParseTask options={options} args={args} weightsOutcome={outcome} />}
+			</WeightsGuard>
+		)
+	}
+
+	return <ParseTask options={options} args={args} weightsOutcome="neural" />
+}
+
+/** The actual parse work, one hook-owning component below the guard so the prompt can render first. */
+function ParseTask({
+	options,
+	args,
+	weightsOutcome,
+}: {
+	options: zod.infer<typeof ParseConfigSchema>
+	args: zod.infer<typeof ArgumentsSchema>
+	weightsOutcome: WeightsOutcome
+}): React.ReactElement {
 	const state = useCommandTask(async () => {
 		const input = args[0]!
 
@@ -175,6 +227,12 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 		// --neural without --policy: legacy direct-neural path (kept for parity with old behavior).
 		if (options.neural) {
 			return runNeural(input, options, [])
+		}
+
+		// Guard said degraded (user declined the download, download failed, or --degraded): the real
+		// pipeline minus the encoder. "unavailable" falls through to runPipeline's legacy chain.
+		if (weightsOutcome === "declined") {
+			return runDegraded(input, options)
 		}
 
 		// Default: runtime pipeline.
@@ -338,6 +396,26 @@ function serializeTree(
 			// on each node). Otherwise stay libpostal-compat (flat tag→value).
 			return opts.includeAlternatives ? JSON.stringify(tree, null, 2) : JSON.stringify(decodeAsJSON(tree), null, 2)
 	}
+}
+
+/**
+ * Encoder-less structural parse (plan 3): the REAL pipeline stages (normalize → query-shape → locale-gate → kind →
+ * grouper fast-paths) with no neural classifier. The tree carries what the structural stages can prove (postcode_only /
+ * locality_only fast-paths populate it; free-form addresses may yield an empty tree). Banner goes to stderr so stdout
+ * stays machine-parseable.
+ */
+async function runDegraded(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+	console.error(
+		"⚠ degraded parse: the neural encoder is not loaded — output carries structural-pipeline results only.\n" +
+			`  Upgrade: npm install ${weightsPackageName(options.locale)}   or   mailwoman parse --download-weights <address>`
+	)
+
+	const pipeline = createRuntimePipeline({})
+	const result = await pipeline(input, { locale: options.locale })
+
+	return options.debug
+		? JSON.stringify(serializeResult(result, options.format), null, 2)
+		: serializeTree(result.tree, options.format, { includeAlternatives: false })
 }
 
 /** Legacy rule-only path. Used by --isolated and as a graceful fallback when neural is unavailable. */
