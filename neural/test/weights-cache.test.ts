@@ -74,6 +74,22 @@ describe("resolveWeights cache fallback", () => {
 		)
 	})
 
+	test("an EXPLICIT cacheRoot outranks an installed package (candidate grading, en-US resolves in-repo)", () => {
+		const packageDir = join(cacheRoot, "node_modules", "@mailwoman/neural-weights-en-us")
+
+		mkdirSync(packageDir, { recursive: true })
+
+		for (const file of ["model.onnx", "tokenizer.model"]) {
+			writeFileSync(join(packageDir, file), "stub")
+		}
+
+		// The workspace package exists and resolves, but the explicit cacheRoot names the candidate.
+		const resolved = resolveWeights({ locale: "en-US", cacheRoot })
+
+		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-us")
+		expect(resolved.modelPath).toBe(join(packageDir, "model.onnx"))
+	})
+
 	test("helpers: cache dir + package-name builder", () => {
 		expect(weightsCacheDir()).toMatch(/\.cache[/\\]mailwoman[/\\]weights$/)
 		expect(weightsPackageName("en-US")).toBe("@mailwoman/neural-weights-en-us")

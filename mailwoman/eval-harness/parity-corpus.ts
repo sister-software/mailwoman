@@ -33,6 +33,13 @@ export interface ParityEvalOptions {
 	tokenizerPath?: string
 	modelCardPath?: string
 	fixturesPath?: string
+	/**
+	 * Grade a candidate laid out as a package-shaped weights dir
+	 * (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`). PREFER THIS over modelPath/tokenizerPath for
+	 * candidates: the explicit-path branch feeds NO sibling channels (anchor/gazetteer/calibration) and grades a crippled
+	 * model — the #718 zero-fill trap.
+	 */
+	weightsCacheRoot?: string
 	/** List the first N disagreeing inputs per floor label. */
 	failing?: number
 }
@@ -60,6 +67,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		modelPath: options.modelPath,
 		tokenizerPath: options.tokenizerPath,
 		modelCardPath: options.modelCardPath,
+		cacheRoot: options.weightsCacheRoot,
 	})
 
 	const tallies = new Map(PARITY_FLOORS.map((f) => [f.label, { hit: 0, total: 0, failing: [] as string[] }]))

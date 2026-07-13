@@ -126,6 +126,18 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	const locale = (opts.locale ?? "en-us").toLowerCase()
 	const packageName = weightsPackageName(locale)
 
+	const cacheDir = resolve(opts.cacheRoot ?? weightsCacheDir(), "node_modules", packageName)
+	const cacheHasBinaries = () =>
+		existsSync(resolve(cacheDir, "model.onnx")) && existsSync(resolve(cacheDir, "tokenizer.model"))
+
+	// 0. An EXPLICIT cacheRoot is authoritative — it names a candidate/package dir the caller wants
+	// graded (eval harnesses laying out a candidate bundle). In-repo the workspace weights package
+	// always resolves, so a fallback-ordered cache could never be reached for grading; the explicit
+	// override exists precisely for that. The IMPLICIT default cache stays a fallback (step 2).
+	if (opts.cacheRoot && cacheHasBinaries()) {
+		return resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
+	}
+
 	// 1. Installed package (workspace or node_modules).
 	try {
 		const pkgJsonPath = req.resolve(`${packageName}/package.json`)
@@ -140,9 +152,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	// 2. The user-level weights cache (npm-prefix layout written by `mailwoman parse
 	// --download-weights`, plan 3). Requires both binaries — a metadata-only cache install must NOT
 	// resolve (it would load nothing); it falls through to the actionable not-found error below.
-	const cacheDir = resolve(opts.cacheRoot ?? weightsCacheDir(), "node_modules", packageName)
-
-	if (existsSync(resolve(cacheDir, "model.onnx")) && existsSync(resolve(cacheDir, "tokenizer.model"))) {
+	if (cacheHasBinaries()) {
 		return resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
