@@ -34,11 +34,9 @@ messy input) points at structured span prediction.
    check, capability-manifest rework — a deliberate multi-night arc, not a probe. Keep the stage-1
    span-boundary head (`use_span_boundary_head`) as a co-trained auxiliary; it's free and helps.
 3. **Fertility follow-up (orthogonal, cheap):** the 2 stubborn cases pair a region with a postcode
-   digit-run; a digit-atomicity tokenizer pass (splice whole-number pieces) may help independent of
-   the head. Measure vocab growth vs #378 first.
-4. **Fertility follow-up (EuroBERT lens):** digit-piece fertility drove the boundary-bleed class;
-   a digit-atomicity pass over the tokenizer (splice whole-number pieces 1..999?) is a cheap
-   orthogonal probe — but vocab growth vs #378 SLO must be measured first.
+   digit-run, and digit-piece fertility drove the boundary-bleed class (EuroBERT lens); a
+   digit-atomicity tokenizer pass (splice whole-number pieces 1..999?) may help independent of the
+   head. Measure vocab growth vs the #378 SLO first.
 
 ## Standing constraints
 
