@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
 	"version": "5.9.0",
-	"model_lineage": "v2.4.1-fr-nsplice-ft — the PRINCIPLED FR-diacritic fix (#444): an init_from FINE-TUNE that gives the merged FR diacritic pieces GRADIENT STEPS, the retrain the #1047 falsification specified. #1047 proved the TRAINING-FREE vocab-splice (the v240 mean-init candidate) net-REGRESSES FR streets (mangle 23.5%->26.4%): FVT mean-init of a merged FR piece — E(▸René) = mean(E[▸Ren], E[é]) — inherits é's strong, well-trained O-signal (the en-US line trained FROM SCRATCH on v0.7.1 with abundant FR é->O), so the whole ▸René token tags O and the word drops entirely. Mean-init alone can't teach the merged pieces; that needs training. THE RECIPE = v2.3.0-nl-postcode-full (shipped v5.4.0 lineage / v230) VERBATIM, four deltas: (1) tokenizer_dir -> v0.8.0-fr-nsplice (v0.7.1's 63913 + 2406 FR diacritic pieces; md5 04995524, #900 gate PASS, US byte-identical by construction); (2) init_from -> /data/models/fr-nsplice-expanded = the v230 (v5.4.0) step-005000 checkpoint's token_embeddings FVT mean-init-expanded 63913->66319 (mean_init_fr_nsplice, the pytorch-checkpoint twin of the onnx-mean-init that produced the staged v240 candidate — same FVT math, so the init IS numerically the v240 mean-init candidate as a trainable checkpoint); (3) SCHEDULE -> the vocab-splice fine-tune schedule (v1.9.7/v1.9.8/v1.9.9/v2.1.0 idiom): constant lr 5.0e-5, warmup 200, 12000 steps, eval/save every 2000 (5x v230's same-vocab 1e-5 so the new FR rows MOVE off the inherited O-signal); (4) fresh v241 output dir. Corpus (v0.10.1-nl-postcode, 699 shards, raw-text RE-TOKENIZED through the spliced tokenizer at load so the FR pieces fire and get gradient), all source/country weights, model config (crf_loss_weight 0.0; conventions loss-mask OFF), anchor/gaz knobs, class_weights, seed 42, batch 128, bf16 — v230-VERBATIM. The spliced vocab + its gradient steps are the only variable. Final step 12000: train_loss 0.647, val_loss 0.868, val_macro_f1 0.7579, zero NaN. A100-SXM4-40GB, ~31 min. PRIOR LINEAGE (v230 / shipped v5.4.0 and back): v2.3.0-nl-postcode — init_from FINE-TUNE of v5.3.0 (v2.2.0-full-family) step-100000 + synth-nl-postcode@6.0, the four leading-name-boundary family shards pinned @12.0 (fr-bare-street/si-village/no-street-led/cz-pcfirst). LR 1e-5, warmup 1000, 5000 steps (~0.7 A100-h fine-tune vs a 3.6h from-scratch — the DeepSeek-signed recipe: the 'any fine-tune tips the #901 family' lore is surgery-lineage-specific, and v5.3.0 is from-scratch so it took the pinned fine-tune WITHOUT tipping the sentinels). THE FIX (#924): the model read the digits-first Dutch postcode '1012 LG' as house_number(1012)+street(LG), pulling the locality into the US situs tier ('1012 LG Amsterdam' -> Amsterdam, NY). Now parses postcode '1012 LG' natively (NL failing-shapes 27->29/31; postcode-tag F1 1.000). Gains beyond NL: US inverse-risk (4-digit house# NOT misread as postcode) 9->10/10 — the fine-tune even fixed a pre-existing leak; FR bare-street chevaleret PARSE fixed (locality=Paris, street='Rue du Chevaleret' vs v5.3.0's fragmentation) — the chevaleret metamorphic gauntlet rows reclassified #829 (resolver case-norm exposed by the better parse, not a regression). GATE: 17/17 per-tag floors PASS (us.postcode 96.2, homograph 85.1, micro 86.8, street 82.1, fr.postcode 99.3), fr.bare_street_intact 85% (#949 leg), mask-regression PASS, arena 79, gauntlet PASS (5 #901 sentinels HELD). macro_f1 0.7613->0.7558 (noise). CARRIED int8-homograph exception: int8<->fp32 delta 2.4 vs the 1.5 cap (fp32 passes every floor; int8 homograph 85.1 clears its 83.3 floor) — the same per-artifact exception v5.3.0 shipped with; cap unchanged for the next candidate. CALIBRATION: v5.3.0's isotonic tables carried (opt-in; the fine-tune's confidence shift is small; re-fit is a follow-up). PRIOR LINEAGE: v2.2.0-full-family / step 100000 — the FIRST ground-up from-scratch train on the spliced vocab (v0.8-era schedule: lr 1.5e-4, warmup 1000, batch 128; corpus v0.10.0 = 698 shards incl. the four-orthography leading-name-boundary family @6.0: fr-bare-street #831 / si-bare-village / no-street-led / cz-pcfirst-preposition; tokenizer v0.7.1-nsplice UNCHANGED — model-only bump). Archived NO-PROMOTE 2026-07-03 under the pre-#942 calculus (SI sentinels model-level fail); PROMOTED 2026-07-04 after the same-stack re-gate under the #942 floor (operator fork on #901). THE HEADLINE: fixes #949 — the shipped v5.2.0 pair fragmented FR streets bare AND anchored (16/40, 13/40 on the standing 40-row harness; 'Allée'→'e' at the é piece boundary; ungated because no fr.street floor existed) — v2.2.0 reads 34/40 bare / 37/40 anchored. Re-gate: US-2k ni PASS (p50 3.27 IDENTICAL), FR-3k ni PASS deconfounded (1.30km both), CZ wrong-city 13.7→6.6%, SK 13.3→6.6%, PL 7.1→6.2%; SE +4.6pp resolve (90.2→94.8), Åbo 0.12km vs 859km. TRADES (operator-approved, stated): SI wrong-city 8.7→11.4% (+2.7pp) / resolve −1.5pp — the composition-insensitive no-street class, floored model-independently by postalCompoundRecovery (#942 default-ON: candidate+floor recovered ALL 55 composition-lost rows, SI 92.2→100% resolve on the insurance leg); fr.postcode 99.2 (floor revised 99.3→99.2, scripts/eval/gates/v5.3.0-family.json, stated reason); int8 homograph quantization delta 2.4 vs the 1.5 cap (fp32 passes every floor; int8 homograph 85.1 clears its 83.3 floor) — per-artifact exception, cap unchanged. PRIOR LINEAGE (the v5.2.0 base this replaces): v5.1.0 bsplice-expanded (UNCHANGED encoder — see below) + the #912-lever-4 NORDIC vocab-splice with FVT mean-init embeddings (the same training-free #884 mechanism, second application): +5,331 Nordic diacritic pieces from OA fi/se/no/dk/is STREET/CITY text + the gazetteer ALIAS names (the exonym feed — 'Åbo' is Swedish for Turku and appears in no native OA text; without alias mass the piece is never minted and the decode drop survives, measured as the 134km v1 residual). Tokenizer v0.7.1-nsplice = v0.6.0-bsplice + the Nordic pieces; English tokenization byte-identical; US resolution byte-identical 2000/2000. Gate: 14/14 per-locale ni PASS (incl. the five #900-accepted acute-vowel overlap locales CZ/ES/PL/SI/SK), SE resolve 83.8→90.2% (p90res 113→12.7km), NO 92.7→98.1%, DK 91.4→95.2%, Åbo→Turku 0.12km. PRIOR LINEAGE: v1.9.3a3-anchor-absorption encoder (UNCHANGED, step 80000 — see the v4.15.0 lineage below) + the #884 UNIGRAM vocab-splice with FVT mean-init embeddings — the training-free CZ/PL/SK/SI diacritic fix. The 48k SentencePiece vocab carried the diacritic CHARACTERS but no multi-char subwords containing them, so every diacritic isolated its own piece (Vysoká → [▁V, ys, ok, á], ~3.3× English fertility) and the fragmented span resolved to the WRONG CITY. A shard retrain (v196) was falsified (held US, regressed CZ wrong-city 44→58% at convergence). The fix: train a CZ/PL SP unigram, splice ONLY its diacritic-bearing pieces into the vocab (48,000 → 58,582; a diacritic piece can never match an ASCII span, so English tokenizes byte-identically BY CONSTRUCTION — asserted 0/2000), and FVT mean-init the 10,582 new embedding rows from their old-tokenizer constituents. The encoder is byte-for-byte v1.9.3a3; a 2k fine-tune was ablated and retired as slightly harmful. Slovak + Slovenian ride the same pieces for free (shared codepoints + morphology). PRIOR LINEAGE: v1.9.3a3-anchor-absorption / step 80000 — the #220/#723 postcode-anchor-pollution fix on top of v1.9.2-multilocale-au (shipped v4.14.0). Pre-seeded from the v1.9.2 step-040000 checkpoint, continued to 80k on A100. TWO coordinated levers: (1) anchor_paint_mode=shaped — the postcode anchor is painted at TRAIN time on the same postcode-SHAPED spans inference fires on (neural/postcode-anchor.ts collectMatches), closing the #723 WHERE gap (training only ever saw the anchor on GOLD postcode spans, so the model never learned to OVERRIDE a present anchor when a leading 5-digit token is a house number that looks like a ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the locality discriminator — leading-5-digit + trailing-postcode → house_number, + locality → house_number, + NO locality + state → postcode (the VT E911 format). RESULT: SLICE-H anchor-ON 20→100 (the #723 leading-5-digit house# bug fixed) at ZERO coordinate cost, confirmed by the non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7→97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3→259.1; VT — the E911 leading-postcode state where the entire trade lives — FLAT at the coordinate (loc 92.6=92.6), SD +1.0. Trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3), both coordinate-invisible; gate revised (scripts/eval/gates/v4.15.0-boundary.json) with a stated reason, operator-approved. mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config (requires) UNCHANGED from v1.9.2.",
-	"phase": "CANDIDATE (gate pending; operator decides promotion) — #444 FR diacritic vocab-splice init_from FINE-TUNE (run v2.4.1-fr-nsplice-ft-s42, checkpoint step-012000). Trained on the v0.8.0-fr-nsplice tokenizer (v0.7.1-nsplice + 2406 FR diacritic pieces), init_from the v240 mean-init-expanded checkpoint (v230 step-005000 embeddings FVT mean-init-expanded to 66319 rows). The merged FR pieces now receive gradient instead of inheriting é's O-signal. US byte-identical tokenizer (by construction); non-FR locales share only the 0.596% é/ê/ô-neighbor pieces.",
+	"model_lineage": "v2.6.1-span-boundary-full — init_from v2.5.7-fragment-v5-gentle-full (v257) + the STAGE3 span-boundary aux head (BCE weight 0.5), 8k steps, gentle schedule (lr 1e-5, warmup 500). Tokenizer v0.9.0-multisplice (73,143). The aux head trains boundary placement and is DISCARDED at export — the shipped ONNX is the plain BIO tagger whose ENCODER absorbed the boundary pressure. Gates: US region→street flips 5→2 vs v257, parity postcode 0.9861 PASS, parity street 0.5281 (+13pp vs v241), gauntlet regression+metamorphic PASS (Dublin pin held). Golden country recall 82.0% vs shipped 88.6% is a DOCUMENTED gate exception (#1104): the −6.6pp is entirely on non-postal WOF-admin hierarchy rows (220/224 golden country-gold rows); on real-postal addresses country recall+precision are IDENTICAL to shipped (falsifier, DeepSeek session 019f5f2c). The country-lexicon atlas channel is the permanent fix, in progress.",
+	"phase": "PROMOTED (6.1.0) — v261 span-boundary head (#727 stage-1): init_from the stable v257 (fragment campaign) + a training-only span-boundary aux head that shrinks the region→street boundary-absorption class. Inference-invariant (aux head off the logits path, not exported).",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "corpus-v0.10.1-nl-postcode = 699 shards; the v0.10.0 boundary-family base + synth-nl-postcode (#924). Raw text + char-offset spans RE-TOKENIZED through v0.8.0-fr-nsplice at load.",
-		"tokenizer_version": "0.8.0-fr-nsplice",
-		"steps": 12000,
-		"best_step": 12000,
+		"corpus_version": "v257 fragment-campaign corpus (shard-v5) re-tokenized through v0.9.0-multisplice; span-boundary aux head from BIO labels.",
+		"tokenizer_version": "0.9.0-multisplice",
+		"steps": 8000,
+		"best_step": 8000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v2.4.1-fr-nsplice-ft: init_from FINE-TUNE (fresh optimizer over the mean-init-expanded checkpoint; --resume auto on a fresh output_dir resolves to no checkpoint -> honors init_from, model weights only). init_from /data/models/fr-nsplice-expanded. Constant lr 5.0e-5, warmup 200, batch 128, bf16, seed 42, 12000 steps (~31 min A100, loss 0.647, val macro_f1 0.7579, zero NaN). anchor_paint_mode=shaped + gazetteer choreography carried; conventions loss-mask OFF; CE-only (crf_loss_weight 0.0). Config corpus-python/src/mailwoman_train/configs/v2.4.1-fr-nsplice-ft.yaml (PR #1048).",
+		"recipe": "v2.6.1-span-boundary-full: init_from FINE-TUNE off v257 step-008000, use_span_boundary_head=true (0.5), lr 1e-5, warmup 500, 8k on A100.",
 		"tokenizer_splice": "tokenizer_splice.py build-tokenizer --locales fr --per-file-cap 2000000 over OA fr/countrywide.csv (seed 42, 350k-line corpus, unigram vocab 24000) -> splice 2406 non-ASCII FR pieces into v0.7.1-nsplice (English byte-identity asserted). UNCHANGED from v240 (md5 04995524). The v241 delta over v240 is that the new embedding rows now receive GRADIENT via the init_from fine-tune, not just FVT mean-init.",
 		"data_attribution": [
 			"OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
@@ -27,9 +27,9 @@
 		"num_attention_heads": 6,
 		"intermediate_size": 1536,
 		"max_position_embeddings": 128,
-		"vocab_size": 66319,
+		"vocab_size": 73143,
 		"num_labels": 33,
-		"params": "33.9M (6-layer/384-hidden encoder + the 66319-piece nsplice embedding; init_from the v230-lineage encoder, fine-tuned 12k steps on the v0.8.0-fr-nsplice vocab)",
+		"params": "~29M (6-layer/384-hidden encoder + 73,143-piece multisplice embedding; init_from v257, 8k fine-tune w/ a non-exported span-boundary aux head)",
 		"crf_at_training": false,
 		"crf_at_inference": true,
 		"phrase_priors": true
@@ -340,52 +340,52 @@
 		}
 	},
 	"files_md5": {
-		"$comment": "Shipped artifacts: model.onnx IS the int8 (v241-fr-nsplice-ft step-12000); tokenizer v0.8.0-fr-nsplice.",
-		"model.onnx": "121162e6c19b6367c77d53050b336244",
-		"tokenizer.model": "04995524cceb4d2bf689e77338f80de2"
+		"$comment": "Shipped: model.onnx = int8 v261-span-boundary-full step-8000; tokenizer v0.9.0-multisplice.",
+		"model.onnx": "de59c0a7888efe315a3e22608d8b37fd",
+		"tokenizer.model": "5c01cdcd4ae25849c5cb26b69fd3dde9"
 	},
 	"capabilities": {
 		"server": {
 			"us": {
 				"street_prefix": {
-					"maskOffF1": 1.9
+					"maskOffF1": 0.9
 				},
 				"street": {
-					"maskOffF1": 24
+					"maskOffF1": 24.2
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 98.3
+					"maskOffF1": 94.5
 				},
 				"locality": {
-					"maskOffF1": 75.6
+					"maskOffF1": 79.2
 				},
 				"region": {
-					"maskOffF1": 89.7
+					"maskOffF1": 90.8
 				},
 				"postcode": {
-					"maskOffF1": 98.6
+					"maskOffF1": 96.9
 				},
 				"country": {
-					"maskOffF1": 68.9
+					"maskOffF1": 60.9
 				},
 				"unit": {
-					"maskOffF1": 9.5
+					"maskOffF1": 5.2
 				},
 				"intersection_a": {
-					"maskOffF1": 28.6
+					"maskOffF1": 100
 				},
 				"intersection_b": {
-					"maskOffF1": 33.3
+					"maskOffF1": 100
 				},
 				"po_box": {
-					"maskOffF1": 64.2
+					"maskOffF1": 63.2
 				},
 				"venue": {
-					"maskOffF1": 90.9
+					"maskOffF1": 93.4
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -393,10 +393,10 @@
 			},
 			"fr": {
 				"street_prefix": {
-					"maskOffF1": 77.8
+					"maskOffF1": 100
 				},
 				"street": {
-					"maskOffF1": 54.5
+					"maskOffF1": 90.9
 				},
 				"house_number": {
 					"maskOffF1": 100
@@ -412,44 +412,44 @@
 		"pocket": {
 			"us": {
 				"street_prefix": {
-					"maskOffF1": 1.9
+					"maskOffF1": 0.9
 				},
 				"street": {
-					"maskOffF1": 23.9
+					"maskOffF1": 23.4
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 98.2
+					"maskOffF1": 87.9
 				},
 				"locality": {
-					"maskOffF1": 59.4
+					"maskOffF1": 59.7
 				},
 				"region": {
-					"maskOffF1": 72.5
+					"maskOffF1": 74.6
 				},
 				"postcode": {
-					"maskOffF1": 98.6
+					"maskOffF1": 92.3
 				},
 				"country": {
 					"maskOffF1": 0
 				},
 				"unit": {
-					"maskOffF1": 10
+					"maskOffF1": 5.2
 				},
 				"intersection_a": {
-					"maskOffF1": 16.7
+					"maskOffF1": 50
 				},
 				"intersection_b": {
-					"maskOffF1": 9.1
+					"maskOffF1": 40
 				},
 				"po_box": {
-					"maskOffF1": 63
+					"maskOffF1": 62.1
 				},
 				"venue": {
-					"maskOffF1": 90.8
+					"maskOffF1": 90.7
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -457,10 +457,10 @@
 			},
 			"fr": {
 				"street_prefix": {
-					"maskOffF1": 77.8
+					"maskOffF1": 100
 				},
 				"street": {
-					"maskOffF1": 54.5
+					"maskOffF1": 90.9
 				},
 				"house_number": {
 					"maskOffF1": 100
@@ -473,6 +473,6 @@
 				}
 			}
 		},
-		"$comment": "Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask OFF; maskOnF1 = the same with mask ON (recorded only for tags some codex forbiddenTags row suppresses — the loader's delta-gate consults only those). createScorer FAILS CLOSED when a conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a real capability). Generated by scripts/eval/gen-capability-manifest.ts against the v1.5.0 int8."
+		"$comment": "Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask OFF; maskOnF1 = the same with mask ON (recorded only for tags some codex forbiddenTags row suppresses — the loader's delta-gate consults only those). createScorer FAILS CLOSED when a conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a real capability). Generated by `mailwoman eval capability-manifest` against the v1.5.0 int8."
 	}
 }

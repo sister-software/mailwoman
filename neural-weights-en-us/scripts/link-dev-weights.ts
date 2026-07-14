@@ -47,12 +47,11 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 // --- current default (npm v5.9.0 = demo defaultVersion v5.9.0) --------------
-// v5.9.0 ships the FR-sprint pair: v241-fr-nsplice-ft (step-12000) int8 model + the
-// v0.8.0-fr-nsplice tokenizer — another coordinated model + tokenizer bump, so BOTH
+// 6.1.0 ships v261-span-boundary-full (step-8000) int8 model + the v0.9.0-multisplice tokenizer — another coordinated model + tokenizer bump, so BOTH
 // paths moved this ship. Bump these two paths on each ship; the expected md5s live in
 // model-card.json `files_md5` (single source — see the header).
-const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v241-fr-nsplice-ft-step-12000-int8.onnx")
-const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.8.0-fr-nsplice", "tokenizer.model")
+const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v261-span-boundary-full-step-008000-int8.onnx")
+const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 
 const PKG_DIR = repoRootPath("neural-weights-en-us")
 

@@ -4,11 +4,11 @@
 	"locales": ["en-us", "fr-fr"],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
-		"model": "models/quantized/model-v241-fr-nsplice-ft-step-12000-int8.onnx",
-		"tokenizer": "models/tokenizer/v0.8.0-fr-nsplice/tokenizer.model",
-		"tokenizerVersion": "0.8.0-fr-nsplice",
-		"trainingStep": 12000,
-		"lineage": "v2.4.1-fr-nsplice-ft — init_from FINE-TUNE on the v0.8.0-fr-nsplice spliced tokenizer (FR diacritic pieces merged; #444/#1047 falsified the training-free mean-init, this run gives the merged pieces gradient steps). Base: v240 mean-init candidate ← v230 step-005000. 12k steps, constant lr 5e-5. Gates: FR accent mangle 23.5%→17.7% int8 (md5 121162e6c19b6367c77d53050b336244), Honoré+René fixed, held-out FR z=+0.90 / US z=+0.29, non-FR drift ~0. Residual: Champs-Élysées (É-after-hyphen)."
+		"model": "models/quantized/model-v261-span-boundary-full-step-008000-int8.onnx",
+		"tokenizer": "models/tokenizer/v0.9.0-multisplice/tokenizer.model",
+		"tokenizerVersion": "0.9.0-multisplice",
+		"trainingStep": 8000,
+		"lineage": "v2.6.1-span-boundary-full — v261 (#727 stage-1). init_from v257 + span-boundary aux head (not exported). Street +13pp vs v241, gauntlet PASS. Golden country −6.6pp is a documented cosmetic gate exception (#1104): WOF-admin-only, real-postal unchanged."
 	},
 	"softFeed": {
 		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.ts so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode shard (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to weights.dataRoot/wof. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) — the publish workflow places them via the HF fetch step.",
