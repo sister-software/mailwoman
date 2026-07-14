@@ -28,6 +28,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 
 import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.ts"
 import { NeuralAddressClassifier } from "./classifier.ts"
+import { parseCountryLexicon, type CountryLexicon } from "./country-inference.ts"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.ts"
 import { ONNXRunner } from "./onnx-runner.ts"
 import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
@@ -55,6 +56,9 @@ export const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup
 
 /** Default gazetteer-anchor lexicon (codex-generated, repo-relative). */
 export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
+
+/** Default country-surface lexicon (codex-generated, repo-relative, #1104). */
+export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v1.json"
 
 /**
  * Resolve the anchor lookup source the scorer feeds when the caller passes no `anchorLookupPath` (#718 D1): prefer the
@@ -88,6 +92,20 @@ function defaultGazetteerLexicon(locale: string | undefined): string | undefined
 	}
 }
 
+/**
+ * Resolve the country lexicon path the scorer feeds when the caller passes no `countryLexiconPath` (#1104): prefer the
+ * repo-relative codex lexicon (the eval default), else the soft-feed sibling shipped in the weights package.
+ */
+function defaultCountryLexicon(locale: string | undefined): string | undefined {
+	if (existsSync(DEFAULT_COUNTRY_LEXICON)) return DEFAULT_COUNTRY_LEXICON
+
+	try {
+		return resolveWeights({ locale }).countryLexiconPath
+	} catch {
+		return undefined
+	}
+}
+
 /** Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1). */
 function loadAnchorLookup(source: { path: string; binary: boolean }): AnchorLookup {
 	return source.binary
@@ -105,6 +123,8 @@ export interface ScorerOverrides {
 	anchor?: boolean
 	/** `false` to ablate the gazetteer channel even when the card declares it required. */
 	gazetteer?: boolean
+	/** `false` to ablate the country-lexicon channel even when the card declares it required (#1104). */
+	country?: boolean
 	/**
 	 * Pin / disable the conventions mode (`"auto"` | a `SystemCode` | `false` to disable) regardless of the card's
 	 * declaration.
@@ -133,6 +153,11 @@ export interface CreateScorerOpts {
 	 * shipped in the weights package (#718 D1).
 	 */
 	gazetteerLexiconPath?: string
+	/**
+	 * Country-surface lexicon path (#1104). Default {@link DEFAULT_COUNTRY_LEXICON} when it exists, else the soft-feed
+	 * sibling shipped in the weights package.
+	 */
+	countryLexiconPath?: string
 	/**
 	 * Locale tag (e.g. `"en-us"`) used to resolve the weights-package soft-feed siblings when the default `/mnt` /
 	 * repo-relative paths are absent (#718 D1). Only consulted for that fallback; the model/tokenizer/card are always
@@ -337,6 +362,34 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
+	// --- Country-lexicon channel (#1104) ----------------------------------------------------------
+	const countryLexiconPath = opts.countryLexiconPath ?? defaultCountryLexicon(opts.locale)
+	const countryRequired = declared.country?.required ?? false
+	let countryLexicon: CountryLexicon | undefined
+
+	if (overrides.country === false) {
+		if (countryRequired) {
+			console.error(
+				`[createScorer] OVERRIDE: country channel ABLATED (override country:false) but the ` +
+					`model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the country clue.`
+			)
+		}
+	} else {
+		countryLexicon =
+			countryLexiconPath && existsSync(countryLexiconPath)
+				? parseCountryLexicon(JSON.parse(readFileSync(countryLexiconPath, "utf8")))
+				: undefined
+
+		if (countryRequired && !countryLexicon) {
+			fail(
+				strict,
+				`country channel is declared REQUIRED by the model-card but the lexicon file was not found ` +
+					`at ${countryLexiconPath ?? DEFAULT_COUNTRY_LEXICON}. Provide a valid --country-lexicon, or pass ` +
+					`overrides.country=false for a deliberate ablation.`
+			)
+		}
+	}
+
 	// --- Conventions mode -------------------------------------------------------------------------
 	const conventionsRequired = declared.conventions?.required ?? false
 	const declaredConventionsMode = declared.conventions?.mode ?? "auto"
@@ -382,6 +435,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(labels ? { labels } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
+		...(countryLexicon ? { countryLexicon } : {}),
 		suppressGazetteerNearPostcode,
 		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
 		bridgePunctuationGaps,

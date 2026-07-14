@@ -29,6 +29,7 @@ import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mail
 import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
 import type { AnchorLookup } from "./anchor-inference.ts"
 import { normalizeInputCase } from "./case-normalize.ts"
+import type { CountryLexicon } from "./country-inference.ts"
 import { buildFSTEmissionPriors, type FSTMatcherLike } from "./fst-prior.ts"
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
@@ -57,7 +58,8 @@ export interface NeuralRunner {
 	infer(
 		tokenIds: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
 	): Promise<InferResult>
 }
 
@@ -104,6 +106,14 @@ export interface NeuralAddressClassifierConfig {
 	 * from `./gazetteer-inference.js`.
 	 */
 	gazetteerLexicon?: GazetteerLexicon
+	/**
+	 * Optional country-lexicon (#1104). When set, `parse` builds per-piece country-surface clues (`[country_surface,
+	 * country_ambiguous]`) from the text + this lexicon and feeds them to the runner — for models trained with the
+	 * country channel (exported with the `country_features`/`country_confidence` ONNX inputs). Omit for plain models.
+	 * Load via `parseCountryLexicon` from `./country-inference.js`. Unlike the gazetteer country slot, this channel is
+	 * NOT zeroed by `suppressGazetteerNearPostcode`.
+	 */
+	countryLexicon?: CountryLexicon
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): when true, zero the gazetteer clue on pieces adjacent to a
 	 * postcode-anchor hit (needs both `gazetteerLexicon` and `postcodeAnchorLookup`). Targets the region-clue→postcode
@@ -218,6 +228,7 @@ export class NeuralAddressClassifier {
 			{ resolveWeights, readLabelsFromModelCard, readCrfTransitions, readRequiredChannels },
 			{ parseAnchorLookup },
 			{ parseGazetteerLexicon },
+			{ parseCountryLexicon },
 			{ PostcodeBinaryResolver },
 			fs,
 		] = await Promise.all([
@@ -225,6 +236,7 @@ export class NeuralAddressClassifier {
 			import(/* webpackIgnore: true */ "./weights.ts"),
 			import(/* webpackIgnore: true */ "./anchor-inference.ts"),
 			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
+			import(/* webpackIgnore: true */ "./country-inference.ts"),
 			import(/* webpackIgnore: true */ "./postcode-binary-resolver.ts"),
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
@@ -289,6 +301,26 @@ export class NeuralAddressClassifier {
 			)
 		}
 
+		// Country-lexicon channel (#1104): same soft-feed pattern. Ships with the server tier; pocket is anchor-only.
+		let countryLexicon: CountryLexicon | undefined
+
+		if (resolved.countryLexiconPath) {
+			try {
+				countryLexicon = parseCountryLexicon(JSON.parse(fs.readFileSync(resolved.countryLexiconPath, "utf8")))
+			} catch (err) {
+				warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(err as Error).message}`)
+			}
+		}
+
+		if (declared?.country?.required && !countryLexicon && opts.tier !== "pocket") {
+			warnUnfedChannel(
+				"country",
+				resolved.countryLexiconPath
+					? `lexicon at ${resolved.countryLexiconPath} could not be parsed`
+					: `no country-surface-lexicon-v1.json found in the weights package`
+			)
+		}
+
 		// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
 		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
 		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
@@ -304,6 +336,7 @@ export class NeuralAddressClassifier {
 			endTransitions: crf?.endTransitions,
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
+			...(countryLexicon ? { countryLexicon } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 			...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
 		})
@@ -389,6 +422,7 @@ export class NeuralAddressClassifier {
 			pieces: pieces.map((p) => ({ piece: p.piece, id: p.id, start: p.start, end: p.end })),
 			...(trace.anchor ? { anchor: trace.anchor } : {}),
 			...(trace.gazetteer ? { gazetteer: trace.gazetteer } : {}),
+			...(trace.country ? { country: trace.country } : {}),
 			logits,
 			// The axis rides with the values (self-describing — consumers must not hardcode the order).
 			...(trace.localeLogits ? { localeLogits: trace.localeLogits, localeCountries: [...LOCALE_COUNTRIES] } : {}),
@@ -421,6 +455,7 @@ export class NeuralAddressClassifier {
 		trace?: {
 			anchor?: SoftFeatureChannel
 			gazetteer?: SoftFeatureChannel
+			country?: SoftFeatureChannel
 			localeLogits?: number[]
 			detectedSystem: SystemCode | null
 			systemSource: "off" | "auto" | "pinned"
@@ -439,9 +474,10 @@ export class NeuralAddressClassifier {
 		const soft = buildSoftFeatures(text, pieces, {
 			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
 			gazetteerLexicon: this.cfg.gazetteerLexicon,
+			countryLexicon: this.cfg.countryLexicon,
 			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
 		})
-		const { logits, localeLogits } = await this.cfg.runner.infer(ids, soft.anchor, soft.gazetteer)
+		const { logits, localeLogits } = await this.cfg.runner.infer(ids, soft.anchor, soft.gazetteer, soft.country)
 
 		this.assertEmissionWidth(logits)
 
@@ -672,6 +708,7 @@ export class NeuralAddressClassifier {
 						trace: {
 							...(soft.anchor ? { anchor: soft.anchor } : {}),
 							...(soft.gazetteer ? { gazetteer: soft.gazetteer } : {}),
+							...(soft.country ? { country: soft.country } : {}),
 							...(localeLogits ? { localeLogits } : {}),
 							detectedSystem,
 							systemSource,
@@ -845,7 +882,7 @@ export interface ParseOpts {
  * exists to surface).
  */
 const warnedUnfedChannels = new Set<string>()
-function warnUnfedChannel(channel: "anchor" | "gazetteer", detail: string): void {
+function warnUnfedChannel(channel: "anchor" | "gazetteer" | "country", detail: string): void {
 	if (warnedUnfedChannels.has(channel)) return
 	warnedUnfedChannels.add(channel)
 	console.error(

@@ -76,6 +76,8 @@ export interface NeuralParseTrace {
 	anchor?: SoftFeatureChannel
 	/** Gazetteer channel exactly as fed (post-suppression). Absent = channel not fed. */
 	gazetteer?: SoftFeatureChannel
+	/** Country-lexicon channel exactly as fed (#1104). Absent = channel not fed. */
+	country?: SoftFeatureChannel
 	/** Raw model emissions, pre-prior — `logits[tokenIdx][labelIdx]`. */
 	logits: number[][]
 	/** Locale-head output, index-aligned with `localeCountries`. Absent on models without the head. */

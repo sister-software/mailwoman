@@ -100,6 +100,12 @@ export interface ResolvedWeights {
 	 * gazetteer channel is deliberately skipped). Read by the `loadFromWeights` soft-feed via `parseGazetteerLexicon`.
 	 */
 	gazetteerLexiconPath?: string
+	/**
+	 * Path to the country-surface lexicon (`country-surface-lexicon-v1.json`, #1104) shipped beside the resolved model.
+	 * `undefined` when the package doesn't ship it, OR when `opts.tier === "pocket"` (anchor-only). Read by the
+	 * `loadFromWeights` soft-feed via `parseCountryLexicon`.
+	 */
+	countryLexiconPath?: string
 	/** "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve. */
 	source: string
 }
@@ -205,6 +211,10 @@ function resolveFromPackageDir(
 	const gazetteerCandidate = resolve(packageDir, "anchor-lexicon-v1.json")
 	const gazetteerLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(gazetteerCandidate) ? gazetteerCandidate : undefined
+	// Country-lexicon sibling (#1104): ships with the server tier alongside the gazetteer; pocket is anchor-only.
+	const countryCandidate = resolve(packageDir, "country-surface-lexicon-v1.json")
+	const countryLexiconPath =
+		opts.tier === "pocket" ? undefined : existsSync(countryCandidate) ? countryCandidate : undefined
 
 	return {
 		modelPath,
@@ -213,6 +223,7 @@ function resolveFromPackageDir(
 		crfTransitionsPath,
 		...(anchorLookupPath ? { anchorLookupPath } : {}),
 		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
+		...(countryLexiconPath ? { countryLexiconPath } : {}),
 		source,
 	}
 }
@@ -291,6 +302,8 @@ export interface RequiredChannels {
 	anchor?: { required: boolean }
 	/** Gazetteer-anchor channel (#464). */
 	gazetteer?: { required: boolean }
+	/** Country-lexicon channel (#1104). */
+	country?: { required: boolean }
 	/** Address-system conventions (#511 Tier A). `mode` mirrors `ParseOpts.addressSystemConventions`. */
 	conventions?: { required: boolean; mode?: "auto" | string }
 	/** Punctuation-gap span bridge (v4.4.0 corrective). */
@@ -337,7 +350,7 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 	const obj = requires as Record<string, unknown>
 
 	// Channel entries must be `{ required: boolean, ... }`; a present-but-shapeless entry is corrupt.
-	for (const channel of ["anchor", "gazetteer", "conventions", "bridge"] as const) {
+	for (const channel of ["anchor", "gazetteer", "country", "conventions", "bridge"] as const) {
 		const entry = obj[channel]
 
 		if (entry === undefined) continue
@@ -378,6 +391,7 @@ export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): 
 	return {
 		...(names.has("anchor_features") ? { anchor: { required: true } } : {}),
 		...(names.has("gazetteer_features") ? { gazetteer: { required: true } } : {}),
+		...(names.has("country_features") ? { country: { required: true } } : {}),
 	}
 }
 

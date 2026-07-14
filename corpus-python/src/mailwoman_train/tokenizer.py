@@ -431,6 +431,7 @@ def encode_row(
     anchor_paint_mode: str = "gold",
     gazetteer_lexicon=None,
     gazetteer_choreography: bool = False,
+    country_lexicon=None,
     span_starts: Sequence[int] | None = None,
     span_ends: Sequence[int] | None = None,
     span_tags: Sequence[str] | None = None,
@@ -525,4 +526,20 @@ def encode_row(
             gconfs = gconfs + [0.0] * pad_needed
         out["gazetteer_features"] = gfeats
         out["gazetteer_confidence"] = gconfs
+
+    if country_lexicon is not None:
+        # Country-lexicon channel (#1104): per-piece [country_surface, country_ambiguous] painted from
+        # the RAW SURFACE only (never labels; identical at train + inference). Independent of the
+        # near-postcode gazetteer choreography — a trailing "…12345 USA" keeps its country clue.
+        from .country_lexicon import COUNTRY_FEATURE_DIM, realign_country_to_pieces
+
+        cfeats, cconfs = realign_country_to_pieces(raw, list(spans), country_lexicon)
+        cfeats = cfeats[:max_length]
+        cconfs = cconfs[:max_length]
+        czero = [0.0] * COUNTRY_FEATURE_DIM
+        if pad_needed > 0:
+            cfeats = cfeats + [czero] * pad_needed
+            cconfs = cconfs + [0.0] * pad_needed
+        out["country_features"] = cfeats
+        out["country_confidence"] = cconfs
     return out
