@@ -36,7 +36,7 @@ A rule parser asks "which of my patterns does this string match?" Mailwoman asks
 
 ## The string becomes pieces
 
-You'd split on whitespace. The model can't, because it has to handle `75008Paris`, `St,Portland`, and scripts with no spaces at all. Instead the input is segmented into subword pieces drawn from a fixed vocabulary (currently 66,319 pieces) learned from address text — a SentencePiece unigram model with byte fallback, so no input is unencodable. Our example becomes 21 pieces:
+You'd split on whitespace. The model can't, because it has to handle `75008Paris`, `St,Portland`, and scripts with no spaces at all. Instead the input is segmented into subword pieces drawn from a fixed vocabulary (currently 73,143 pieces) learned from address text — a SentencePiece unigram model with byte fallback, so no input is unencodable. Our example becomes 21 pieces:
 
 ```text
 ▁2 1 1 9 ▁S E ▁Belmont ▁St ▁ Apt ▁3 , ▁Portland , ▁ OR ▁9 7 2 1 4
@@ -48,7 +48,7 @@ One distinction matters more than the segmentation itself: every piece carries c
 
 ## Scoring every piece
 
-A hand-written rule encodes context: "a number followed by a street name is a house number." The learned version of that rule is the encoder — a small transformer (six layers, 384 wide, about 34M parameters in the current weights; one model, not one per locale) in which every piece attends to every other piece. `2119` is scored in view of the `Belmont St` after it and the `97214` at the end; context runs in both directions.
+A hand-written rule encodes context: "a number followed by a street name is a house number." The learned version of that rule is the encoder — a small transformer (six layers, 384 wide, about 29M parameters in the current weights; one model, not one per locale) in which every piece attends to every other piece. `2119` is scored in view of the `Belmont St` after it and the `97214` at the end; context runs in both directions.
 
 The encoder's output is a table of scores: for each of the 21 pieces, a score for each of 33 possible labels. These per-piece score rows are called emissions. Nothing has been decided yet. The emissions are evidence, and two more things get a say before any label is final.
 
@@ -80,13 +80,13 @@ Valid labels become spans, and spans become a tree. Each component attaches to t
 
 ```xml
 <address raw="2119 SE Belmont St Apt 3, Portland, OR 97214">
-	<region start="36" end="38" conf="0.92">OR
+	<region start="36" end="38" conf="0.93">OR
 		<locality start="26" end="34" conf="0.95">Portland
-			<street start="8" end="15" conf="0.90">Belmont
+			<street start="8" end="15" conf="0.86">Belmont
 				<house_number start="0" end="4" conf="0.91">2119</house_number>
-				<street_prefix start="5" end="7" conf="0.57">SE</street_prefix>
+				<street_prefix start="5" end="7" conf="0.54">SE</street_prefix>
 				<street_suffix start="16" end="18" conf="0.89">St</street_suffix>
-				<unit start="19" end="24" conf="0.89">Apt 3</unit>
+				<unit start="19" end="24" conf="0.88">Apt 3</unit>
 			</street>
 			<postcode start="39" end="44" conf="0.89">97214</postcode>
 		</locality>
