@@ -1,6 +1,9 @@
 ---
 sidebar_position: 21
 title: FST gazetteer prior
+role: concept
+audience: product-reader
+source-of-truth: mailwoman/runtime-pipeline.ts, mailwoman/commands/parse.tsx, resolver-wof-sqlite/street-morphology-fst-builder.ts
 tags:
   - concepts
   - neural
@@ -14,7 +17,7 @@ tags:
 
 The FST (finite-state transducer) gazetteer prior is the structure that lets the neural classifier benefit from everything Who's On First already knows. The neural model knows grammar; the gazetteer knows places. The FST is the bridge — pre-computed at build time so the classifier can consult it at inference time without paying gazetteer-lookup costs per token.
 
-This article explains the idea behind it, the build-time vs query-time split that makes it cheap, and how it slots into the rest of the pipeline.
+This article explains the idea behind it, the build-time vs query-time split that makes it cheap, and how it slots into the rest of the pipeline. It's also the reference for what's actually wired into production: `mailwoman parse` builds this admin FST from a WOF SQLite database and threads it through `createRuntimePipeline`. The mechanism generalizes past admin data — the same shallow-fusion pattern speech recognition uses to blend a learned model with world knowledge at decode time; see [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) for that framing and for the street-morphology FST, which exists but isn't wired into the runtime pipeline yet.
 
 ## "If you knew this, you'd know that..."
 
@@ -232,7 +235,7 @@ The FST is one node in a longer pipeline of cached work. The unified SQLite is a
 ## What the FST does not do
 
 - **It does not resolve.** It tells the classifier which spans _could_ be places. Producing a single canonical place ID + coordinates is the resolver's job (see [Resolver and Who's On First](./resolver-and-wof.mdx)).
-- **It does not handle streets.** v1 ships admin-only (countries, regions, localities, postcodes). Streets would add ~3-5M unique names and require metro-area sharding for the browser; tracked as Phase 2+ in [`FST_GAZETTEER_LM.md`](../plan/reference/FST_GAZETTEER_LM.mdx).
+- **It does not carry individual street names.** This FST ships admin-only (countries, regions, localities, postcodes). A gazetteer of specific street names (`"5th Avenue"`, `"Rue de Rivoli"` as named entities) would add ~3-5M unique names and require metro-area sharding for the browser; still tracked as Phase 2+ in [`FST_GAZETTEER_LM.md`](../plan/reference/FST_GAZETTEER_LM.mdx). That's a different, much smaller thing from the street-**morphology** FST — generic street-type vocabulary (`avenue`, `road`, `rue`), not specific names — which does exist; see [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx#the-morphology-fst) for what it covers and its current wiring status.
 - **It does not override the model.** The bias is additive and capped. If the model is confident the input says "Paris, TX," the FST prior on French Paris doesn't change the outcome.
 
 ## See it in action

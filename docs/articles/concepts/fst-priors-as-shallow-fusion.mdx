@@ -1,6 +1,9 @@
 ---
 sidebar_position: 28
 title: FST priors as shallow fusion
+role: concept
+audience: product-reader
+source-of-truth: mailwoman/runtime-pipeline.ts, mailwoman/commands/parse.tsx, neural/classifier.ts, mailwoman/eval-harness/parity-corpus.ts
 tags:
   - concepts
   - neural
@@ -20,9 +23,15 @@ a foreign address pattern.
 The FST priors fix this by giving the model world knowledge at inference
 time. They're an instance of **shallow fusion** — the same architectural
 pattern modern automatic speech recognition uses to blend acoustic models
-with language models. This article explains the shallow-fusion analogy and
-how the two FSTs in mailwoman (admin + morphology) compose with the
-encoder's emissions.
+with language models. This article explains the shallow-fusion analogy,
+and — since the two FSTs Mailwoman defines are at different stages of
+being wired up — is precise about which one runs where. The **admin FST**
+is wired into the production runtime pipeline and the CLI today. The
+**morphology FST** exists as a built artifact and runs in eval harnesses;
+it isn't wired into the default runtime pipeline yet. [FST gazetteer
+prior](./fst-gazetteer-prior.mdx) is the full reference for the admin
+FST's mechanics; this page is the framing plus the morphology-FST detail
+that page doesn't cover.
 
 ## The shallow-fusion pattern
 
@@ -65,6 +74,8 @@ final_emissions = encoder_logits + queryShape_bias + admin_fst_bias + morphology
 viterbi_path = viterbi(final_emissions, transitions_mask)
 ```
 
+This is the full picture the classifier supports — `morphology_fst_bias` is a real term the code can add. In a default `mailwoman parse`, it's zero, because nothing wires the morphology FST in yet (see above); `admin_fst_bias` is the one live by default.
+
 The biases are capped at 3.0 logits (per the
 [FST gazetteer prior](./fst-gazetteer-prior.mdx) design). A confident
 encoder decision (raw logit > 5) is not overridden by a 3-logit bias.
@@ -73,44 +84,38 @@ bias is decisive.
 
 ## The admin FST
 
-Pre-computed at build time from the WOF SQLite gazetteer. For each
-WOF placetype (`country`, `region`, `county`, `locality`, `borough`,
-`neighbourhood`, `postalcode`, `campus`, `dependency`) and each
-country in scope, every place name is tokenized and inserted into a
-trie. Terminal states carry `PlaceEntry` records:
+Pre-computed at build time from the WOF SQLite gazetteer: every place
+name (`country`, `region`, `county`, `locality`, `borough`,
+`neighbourhood`, `postalcode`, `campus`, `dependency`) tokenized into a
+trie, with a positive bias toward the matching placetype's BIO labels
+and a negative bias against competing tags (`B-street`,
+`B-house_number`, `B-venue`) on the same tokens, capped at 3.0 logits.
+[FST gazetteer prior](./fst-gazetteer-prior.mdx) has the full build,
+the `PlaceEntry` shape, and worked examples — that's the reference for
+this FST; this page just needed the shape of it for the analogy above.
 
-```
-PlaceEntry {
-  wofID,          // unique place ID in WOF
-  placetype,      // 'locality' | 'region' | ...
-  name,           // canonical name
-  parentChain,    // [country_id, region_id, ...] for context
-  importance,     // Wikipedia-based ranking [0..1]
-  lat, lon
-}
-```
-
-At inference, the matcher walks token sequences through the trie. When
-a sequence ends at an accepting state, the prior generates a positive
-bias toward the matching placetype's BIO labels (`B-locality` for a
-locality match, etc.) AND a negative bias against competing tags on
-those same tokens (`B-street`, `B-house_number`, `B-venue`).
-
-The full design is in
-[FST gazetteer prior](./fst-gazetteer-prior.mdx). Key constants:
-
-- 3.0 logit cap
-- Suppression on `B/I-street`, `B/I-house_number`, `B/I-venue` for matched admin tokens
-- Suppression scale 1.5x
+This is the FST that's actually wired into production: `mailwoman parse`
+builds it from the WOF SQLite database whenever one is available
+(`tryBuildFST` in `mailwoman/commands/parse.tsx`) and passes it into
+`createRuntimePipeline({ fst, ... })`, which threads it through to the
+classifier as `opts.fst`.
 
 ## The morphology FST
 
-Built later (v0.6.3 work). Reads libpostal's `street_types.txt`
-dictionaries — 60 locales, ~1700 canonical street-typing affixes
-(`Street`, `Avenue`, `Road`, `Boulevard`, `Lane`, `rue`, `Calle`,
-`Straße`, etc.) — and indexes them in a trie. Variants of the same
-canonical (`avenue|av|ave|aven|...`) all point to the same `PlaceEntry`
-with `placetype: "street_affix"`.
+Built later (v0.6.3 work) but not yet wired the same way. Reads
+libpostal's `street_types.txt` dictionaries — 60 locales, ~1700
+canonical street-typing affixes (`Street`, `Avenue`, `Road`,
+`Boulevard`, `Lane`, `rue`, `Calle`, `Straße`, etc.) — and indexes them
+in a trie. Variants of the same canonical (`avenue|av|ave|aven|...`)
+all point to the same `PlaceEntry` with `placetype: "street_affix"`.
+The builder (`resolver-wof-sqlite/street-morphology-fst-builder.ts`)
+and the classifier-side hook (`neural/classifier.ts`'s
+`opts.fstStreetMorphology`) both exist and are exercised in the parity
+eval harness (`mailwoman/eval-harness/parity-corpus.ts`). What's
+missing is the production wire: `createRuntimePipeline` and the CLI
+have no `fstStreetMorphology` option today, so this prior doesn't run
+in a default `mailwoman parse`. Everything below describes the
+mechanism as built and eval-tested, not the shipped default path.
 
 The prior is a TWO-pass bias:
 

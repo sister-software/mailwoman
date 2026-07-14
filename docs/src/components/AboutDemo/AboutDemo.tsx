@@ -31,10 +31,10 @@ const AboutDemoInner: React.FC = () => {
 				<section className={styles.section}>
 					<h3 className={styles.sectionHeading}>Neural model</h3>
 					<p>
-						A 29.3M-parameter BERT-style encoder classifies each token into one of 33 BIO labels covering 16 address
+						A 33.9M-parameter BERT-style encoder classifies each token into one of 33 BIO labels covering 16 address
 						components (street, house number, unit, locality, region, postcode, venue, country, intersection, etc.). It
 						runs entirely in your browser via <strong>onnxruntime-web</strong> (WebGPU with WASM SIMD fallback). The
-						model ships as a 29.8 MB int8-quantized ONNX bundle; fp32 weights are also available for higher accuracy.
+						model ships as a 36.8 MB int8-quantized ONNX bundle; fp32 weights are also available for higher accuracy.
 					</p>
 				</section>
 

@@ -29,6 +29,11 @@ import styles from "./styles.module.css"
  * From → to B-locality I-locality O ────────────────────────────────────────── B-locality -2.0 +1.5 0 I-locality -1.0
  * +2.0 0 O +0.5 -∞ +1.0
  *
+ * ILLUSTRATIVE, not shipped: the soft scores (+1.5, +2.0, …) show what a learned transition matrix would look like.
+ * Mailwoman's shipped decoder uses only the structural BIO mask (0 for valid transitions, −∞ for invalid) — no learned
+ * transition scores train or ship (first CE-only at v0.5.0, permanent from v0.6.3 on; see
+ * docs/articles/concepts/crf-decoder.mdx). The −∞ row is the part that matches production.
+ *
  * Key insight:
  *
  * - B-locality → I-locality (+1.5) is strongly preferred over B-locality → B-locality (-2.0), so Viterbi chains "Saint"
@@ -124,7 +129,10 @@ export const CRFDiff: React.FC = () => {
 			{/* Transition matrix */}
 			<div className={styles.matrixSection}>
 				<div className={styles.decodeLabel}>
-					Transition scores <span style={{ fontWeight: 400, fontSize: "0.75rem" }}>(additive log-prob, learned)</span>
+					Transition scores{" "}
+					<span style={{ fontWeight: 400, fontSize: "0.75rem" }}>
+						(additive log-prob — illustrative: what a learned transition matrix would look like, not what ships)
+					</span>
 				</div>
 				<table className={styles.matrix}>
 					<thead>
@@ -148,7 +156,8 @@ export const CRFDiff: React.FC = () => {
 				</table>
 				<div className={`${styles.note}`} style={{ marginTop: "0.5rem" }}>
 					Green = allowed transition · Blue = strongly preferred · Red = structurally forbidden (−∞). The Viterbi path
-					(B → I) scores +1.5; the argmax path (B → B) scores −2.0, so Viterbi wins by 3.5 log-prob.
+					(B → I) scores +1.5; the argmax path (B → B) scores −2.0, so Viterbi wins by 3.5 log-prob. The soft scores are
+					hypothetical — Mailwoman's shipped table carries only 0 and −∞.
 				</div>
 			</div>
 		</div>
