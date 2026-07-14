@@ -528,7 +528,7 @@ def main() -> None:
             f"{len(units)} units, {len(triples)} context"
         )
 
-    corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap, max_parts=150)
+    corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap, max_parts=30)
     # Shard-v3: GLOBAL bare-locality twins (all countries; cap/4 each) — the gauntlet
     # global-dublin-bare regression showed famous cities outside the OA shard locales lose their
     # locality reading once fragment street-mass grows. Harvested from real corpus locality spans.
@@ -578,7 +578,7 @@ def main() -> None:
         None,
         args.per_locale_cap // 4,
         tag="locality",
-        max_parts=150,
+        max_parts=12,
     )
 
     for country, localities in sorted(corpus_localities.items()):
@@ -613,25 +613,30 @@ def main() -> None:
     _country_note = (
         "Synthetic — fragment-assay; #1104 country counterweight (corpus street × locality + codex surface tail)"
     )
-    # The golden country classes are US + FR heavy (us.jsonl / fr.jsonl); DE rounds out the common tails.
-    # A modest cap (not the full 4000) bounds the extra scan — a few thousand country rows × the fragment
-    # weight is ample counterweight without letting country dominate the shard.
-    country_seed_countries = {"US", "FR", "DE"}
+    # US is the biggest golden country class (us.jsonl) and the corpus's US streets (tiger/nad) are what
+    # --corpus-parquet-glob points at. FR streets live in a DIFFERENT source block (BAN) that this glob
+    # doesn't cover, so seed US only here; FR/DE ride the 16 OA-locale country rows + a later BAN pass if
+    # still short. A modest cap keeps country from dominating the shard.
+    country_seed_countries = {"US"}
     number_first = {"US", "GB", "CA", "FR"}  # NUMBER STREET; the rest (DE/IT/ES/AT/…) are STREET NUMBER
     country_cap = min(args.per_locale_cap, 1500)
-    # Bound the scan (max_parts) — DE streets are sparse in the corpus, so an unbounded scan walks all
-    # 700 parts hunting a cap it never reaches (the 2026-07-14 90-min hang). 120 parts surfaces plenty
-    # of US/FR and whatever DE the head carries.
     country_seed_streets = span_rows_from_corpus(
-        args.corpus_parquet_glob, country_seed_countries, country_cap, tag="street", max_parts=120
+        args.corpus_parquet_glob, country_seed_countries, country_cap, tag="street", max_parts=40
     )
     country_rng = random.Random(f"{SEED}:countryrows")
     country_rows = 0
 
+    # US localities: the NAD admin pairs (English city names), NOT corpus_localities — the wof-admin
+    # locality harvest carries alternate-language surfaces ("Сельма"/"п'єдмонт"), which would teach a
+    # nonsense "English-street cyrillic-city USA" tail. ASCII-filter as a safety net for any locale.
+    country_localities: dict[str, list[str]] = {"US": [loc for loc, _ in admin_pairs]}
+
     for c in sorted(country_seed_countries):
         surfaces = COUNTRY_SURFACES.get(c, [])
-        streets = country_seed_streets.get(c, [])
-        localities = corpus_localities.get(c, [])
+        streets = [s for s in country_seed_streets.get(c, []) if s.isascii()]
+        localities = [
+            locality for locality in country_localities.get(c, corpus_localities.get(c, [])) if locality.isascii()
+        ]
 
         if not (surfaces and streets and localities):
             continue
