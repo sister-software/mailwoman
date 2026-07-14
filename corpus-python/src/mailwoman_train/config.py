@@ -213,6 +213,12 @@ class ModelConfig:
     use_country_anchor: bool = False
     # Must match the country lexicon JSON's feature_dim (emitted [country_surface, country_ambiguous]).
     country_feature_dim: int = 2
+    # #1104 homograph-guard softener. Scales the country_ambiguous dim (index 1) of country_features
+    # BEFORE country_projection — 1.0 = the v263 behavior (hard ambiguous guard); <1.0 softens the
+    # suppression of homograph countries (Georgia/Jordan) that over-fired on the country-homograph
+    # probe (89.8→82.6). The scale is a registered buffer, so it BAKES INTO the exported ONNX — no
+    # lexicon or inference change; inference feeds the raw [surface, ambiguous] and the graph scales it.
+    country_ambiguous_scale: float = 1.0
 
 
 @dataclass
