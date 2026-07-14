@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/api-kit",
-	"version": "6.2.0",
+	"version": "6.2.1",
 	"description": "API plumbing for Mailwoman's HTTP surfaces — Hono node serve wrapper, OpenAPI emit helpers, shared wire atoms. Plumbing only: domain schemas live with their routes.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
