@@ -18,6 +18,7 @@ import { promises as fs } from "node:fs"
 import ort from "onnxruntime-node"
 
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
+import { COUNTRY_FEATURE_DIM } from "./country-inference.ts"
 import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.ts"
 
 export interface ONNXRunnerOpts {
@@ -147,7 +148,8 @@ export class ONNXRunner {
 	async infer(
 		tokenIds: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
 	): Promise<InferResult> {
 		const session = await this.ensureSession()
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
@@ -220,6 +222,34 @@ export class ONNXRunner {
 				GAZETTEER_FEATURE_DIM,
 			])
 			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
+		}
+
+		// Country-lexicon channel (#1104): same feed contract as the gazetteer. Feature width read from the supplied
+		// rows (COUNTRY_FEATURE_DIM); a country-trained model with no lexicon supplied gets the confidence=0 identity.
+		if (country && session.inputNames.includes("country_features")) {
+			const dim = country.features[0]?.length ?? 0
+			const cf = new Float32Array(this.fixedSeqLen * dim)
+			const cc = new Float32Array(this.fixedSeqLen)
+
+			for (let i = 0; i < seqLen; i++) {
+				cc[i] = country.confidence[i] ?? 0
+				const row = country.features[i]
+
+				if (row) {
+					for (let d = 0; d < dim; d++) {
+						cf[i * dim + d] = row[d] ?? 0
+					}
+				}
+			}
+			feeds.country_features = new ort.Tensor("float32", cf, [1, this.fixedSeqLen, dim])
+			feeds.country_confidence = new ort.Tensor("float32", cc, [1, this.fixedSeqLen])
+		} else if (session.inputNames.includes("country_features")) {
+			feeds.country_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * COUNTRY_FEATURE_DIM), [
+				1,
+				this.fixedSeqLen,
+				COUNTRY_FEATURE_DIM,
+			])
+			feeds.country_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
 		const output = await session.run(feeds)

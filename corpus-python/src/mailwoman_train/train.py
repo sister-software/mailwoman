@@ -63,6 +63,10 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
     if "gazetteer_features" in batch:
         tb["gazetteer_features"] = torch.tensor(batch["gazetteer_features"], dtype=torch.float32, device=device)
         tb["gazetteer_confidence"] = torch.tensor(batch["gazetteer_confidence"], dtype=torch.float32, device=device)
+    # Country-lexicon channel (#1104): same presence contract — only when a country lexicon is configured.
+    if "country_features" in batch:
+        tb["country_features"] = torch.tensor(batch["country_features"], dtype=torch.float32, device=device)
+        tb["country_confidence"] = torch.tensor(batch["country_confidence"], dtype=torch.float32, device=device)
     return tb
 
 

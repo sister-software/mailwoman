@@ -59,6 +59,11 @@ class DataConfig:
     # AND model.use_gazetteer_anchor is on, the loader paints per-piece multi-hot membership clues
     # from the RAW SURFACE (never gold labels — same computation at train + inference). None → off.
     gazetteer_lexicon_path: str | None = None
+    # Country-lexicon channel (#1104). Path to the codex-generated country-surface lexicon JSON (built
+    # by codex/tools/build-country-surface-lexicon.ts). When set AND model.use_country_anchor is on,
+    # the loader paints per-piece [country_surface, country_ambiguous] clues from the RAW SURFACE
+    # (never gold labels — same computation at train + inference). None → the country channel is off.
+    country_lexicon_path: str | None = None
     # Gazetteer channel choreography (#464, v0.9.13 postcode fix). When True (with anchor + gazetteer
     # channels on), zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, so the model
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
@@ -200,6 +205,14 @@ class ModelConfig:
     span_boundary_loss_weight: float = 0.0
     # Must match the lexicon JSON's feature_dim (slot count).
     gazetteer_feature_dim: int = 5
+    # Country-lexicon channel (#1104). When on (with data.country_lexicon_path set), the encoder takes
+    # a per-token [country_surface, country_ambiguous] clue painted from the raw surface by the codex
+    # country lexicon and injects ``c·(W_c·features + v_CTRY)`` at the input embedding — its OWN
+    # projection, independent of the gazetteer's shared 5-hot slot and NOT zeroed near a postcode. The
+    # clue informs; the model decides (model-first). Default False keeps existing numerics bit-identical.
+    use_country_anchor: bool = False
+    # Must match the country lexicon JSON's feature_dim (emitted [country_surface, country_ambiguous]).
+    country_feature_dim: int = 2
 
 
 @dataclass
