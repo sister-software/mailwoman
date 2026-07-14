@@ -359,6 +359,70 @@ def render_admin_pair(locality: str, region: str) -> dict:
     }
 
 
+# Country surfaces come from @mailwoman/codex (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME), NOT re-derived
+# here — the codex is the single source of truth. `codex/tools/export-country-surfaces.ts` snapshots it
+# across the TS→Python boundary into the data file below (regenerate it when the codex changes). Filter
+# to word-forms (len ≥ 3) so an address TAIL is "USA" / "United States", never the bare "US" alpha-2
+# code (ambiguous with a US state code at the tail). Golden gold IS the surface, e.g.
+# "6220 SE Salmon St, Portland, OR 97215, USA" → country="USA".
+_COUNTRY_SURFACES_RAW = json.loads(
+    (Path(__file__).parent / "data" / "country-surfaces.json").read_text(encoding="utf-8")
+)["surfaces"]
+COUNTRY_SURFACES: dict[str, list[str]] = {
+    iso2: [f for f in forms if len(f) >= 3] for iso2, forms in _COUNTRY_SURFACES_RAW.items()
+}
+COUNTRY_SURFACES = {iso2: forms for iso2, forms in COUNTRY_SURFACES.items() if forms}
+
+
+def render_country_context(street: str, number: str, city: str, country_name: str, trailing: bool, comma: bool) -> dict:
+    """#1104 country counterweight: a full address ENDING in a country token, comma'd OR comma-free, so the
+    fine-tune keeps the country class alive — the shard-v5 mass (bare streets/localities/admin pairs) is
+    country-SPARSE and eroded country recall 88.6%→82.0%. Fields are groups (number+street space-joined as
+    one unit); groups are joined by ", " (comma'd) or " " (comma-free). Cursor-tracks char-offset spans."""
+    groups: list[list[tuple[str, str]]] = (
+        [[("street", street), ("house_number", number)]]
+        if trailing
+        else [[("house_number", number), ("street", street)]]
+    )
+    groups += [[("locality", city)], [("country", country_name)]]
+    sep = ", " if comma else " "
+
+    tokens: list[str] = []
+    labels: list[str] = []
+    span_starts: list[int] = []
+    span_ends: list[int] = []
+    span_tags: list[str] = []
+    surfaces: list[str] = []
+    cursor = 0
+
+    for gi, group in enumerate(groups):
+        if gi > 0:
+            cursor += len(sep)
+        parts: list[str] = []
+
+        for pi, (tag, text) in enumerate(group):
+            if pi > 0:
+                cursor += 1  # intra-group space
+            text_tokens = text.split()
+            tokens.extend(text_tokens)
+            labels.extend([f"B-{tag}"] + [f"I-{tag}"] * (len(text_tokens) - 1))
+            span_starts.append(cursor)
+            span_ends.append(cursor + len(text))
+            span_tags.append(tag)
+            parts.append(text)
+            cursor += len(text)
+        surfaces.append(" ".join(parts))
+
+    return {
+        "raw": sep.join(surfaces),
+        "tokens": tokens,
+        "labels": labels,
+        "span_starts": span_starts,
+        "span_ends": span_ends,
+        "span_tags": span_tags,
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--oa-root", type=Path, required=True)
@@ -428,6 +492,30 @@ def main() -> None:
                 locale,
                 license_note,
             )
+
+        # Shard-v6 (#1104): COUNTRY counterweight — the shard-v5 mass is country-sparse, which eroded
+        # country recall 88.6%→82.0% on the fragment lineage. Emit a full address ENDING in the country
+        # token per triple, BOTH comma'd and comma-free (golden has both), rotating the codex surface
+        # forms, so the fine-tune keeps the country class alive without touching the fragment gains.
+        surfaces = COUNTRY_SURFACES.get(country, [])
+
+        if surfaces:
+            for si, (street, number, city) in enumerate(triples):
+                if not number or len(number) > 8:
+                    continue
+                surface = surfaces[si % len(surfaces)]
+                push(
+                    render_country_context(street, number, city, surface, trailing, comma=True),
+                    country,
+                    locale,
+                    license_note,
+                )
+                push(
+                    render_country_context(street, number, city, surface, trailing, comma=False),
+                    country,
+                    locale,
+                    license_note,
+                )
 
         print(
             f"{locale_dir}: {len(pairs)} pairs, {len(cities)} localities, {len(city_postcodes)} loc+pc, "
@@ -506,6 +594,56 @@ def main() -> None:
             )
 
         print(f"corpus:{country}: {len(streets)} bare streets")
+
+    # Shard-v6 (#1104): country counterweight. The golden country classes are US + FR heavy, and NEITHER
+    # is an OA_LOCALES locale, so those tails had ZERO signal — the country-sparse fine-tune eroded
+    # recall 88.6%→82.0%. The corpus rarely co-locates street+locality in one row (WOF-admin-heavy), so
+    # synthesize by ZIPPING separate street + locality pools (both DO exist in the corpus) with a codex
+    # country surface tail (COUNTRY_SURFACES, sourced from @mailwoman/codex), comma'd AND comma-free.
+    _country_note = (
+        "Synthetic — fragment-assay; #1104 country counterweight (corpus street × locality + codex surface tail)"
+    )
+    # The golden country classes are US + FR heavy (us.jsonl / fr.jsonl); DE rounds out the common tails.
+    # A modest cap (not the full 4000) bounds the extra scan — a few thousand country rows × the fragment
+    # weight is ample counterweight without letting country dominate the shard.
+    country_seed_countries = {"US", "FR", "DE"}
+    number_first = {"US", "GB", "CA", "FR"}  # NUMBER STREET; the rest (DE/IT/ES/AT/…) are STREET NUMBER
+    country_cap = min(args.per_locale_cap, 1500)
+    country_seed_streets = span_rows_from_corpus(
+        args.corpus_parquet_glob, country_seed_countries, country_cap, tag="street"
+    )
+    country_rng = random.Random(f"{SEED}:countryrows")
+    country_rows = 0
+
+    for c in sorted(country_seed_countries):
+        surfaces = COUNTRY_SURFACES.get(c, [])
+        streets = country_seed_streets.get(c, [])
+        localities = corpus_localities.get(c, [])
+
+        if not (surfaces and streets and localities):
+            continue
+
+        trailing_c = c not in number_first
+
+        for si, street in enumerate(streets):
+            locality = localities[si % len(localities)]
+            number = str(country_rng.randint(1, 3999))
+            surface = surfaces[si % len(surfaces)]
+            push(
+                render_country_context(street, number, locality, surface, trailing_c, comma=True),
+                c,
+                "und",
+                _country_note,
+            )
+            push(
+                render_country_context(street, number, locality, surface, trailing_c, comma=False),
+                c,
+                "und",
+                _country_note,
+            )
+            country_rows += 2
+
+    print(f"#1104 country counterweight: {country_rows} rows across the seed countries")
 
     rng.shuffle(rows)
     dev_count = len(rows) // 10
