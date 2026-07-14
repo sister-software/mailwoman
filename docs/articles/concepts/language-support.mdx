@@ -49,8 +49,10 @@ Danish, and Finnish are trained locales with per-locale coordinate panels (n=100
 each) behind them, resolving with p90 under 10 km everywhere and much better in
 most places. Dutch is the standout: block-level postcodes take it to 0.05 km
 median. Austrian, Belgian, and Swiss addresses ride the German/French/Dutch
-handling with their own panel rows. Australian English has its own rooftop-grade
-register (G-NAF).
+handling with their own panel rows. Australian English trained on G-NAF, the
+national address register, but that register only fed the training corpus — no
+AU rooftop shard is wired into the resolver, so Australian addresses resolve at
+the same locality-and-postcode grade as the rest of this tier.
 
 German also carries a gate floor of its own, and the West Slavic set (Czech,
 Polish, Slovak, Slovenian) got the same tokenizer-splice treatment as French —
