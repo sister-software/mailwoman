@@ -84,7 +84,9 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 			}
 		}
 
-		if (exact) spanHits++
+		if (exact) {
+			spanHits++
+		}
 
 		const numberGold = gold.find(([tag]) => tag === "house_number")
 
@@ -92,7 +94,9 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 			numberRows++
 			const postcodeValues = (byTag.get("postcode") ?? []).map(fold)
 
-			if (postcodeValues.includes(fold(numberGold[1]))) numberAsPostcode++
+			if (postcodeValues.includes(fold(numberGold[1]))) {
+				numberAsPostcode++
+			}
 		}
 	}
 

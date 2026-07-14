@@ -32,8 +32,11 @@ function classOf(expect: Record<string, string[]>): string {
 	const has = (t: string) => tags.includes(t)
 
 	if (tags.length === 1 && has("street")) return "bare_street"
+
 	if (tags.length === 2 && has("street") && has("house_number")) return "street_number"
+
 	if (tags.length === 1 && has("locality")) return "bare_locality"
+
 	if (has("locality") || has("postcode") || has("region") || has("country")) return "structured"
 
 	return "other"

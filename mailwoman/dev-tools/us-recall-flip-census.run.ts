@@ -81,8 +81,9 @@ for (const row of rows) {
 			entry.count++
 			entry.where.set(went, (entry.where.get(went) ?? 0) + 1)
 
-			if (entry.samples.length < 4)
+			if (entry.samples.length < 4) {
 				entry.samples.push(`${JSON.stringify(row.raw)} gold ${tag}=${JSON.stringify(gold)} -> ${went}`)
+			}
 			flips.set(tag, entry)
 		}
 	}
@@ -95,5 +96,7 @@ for (const [tag, { count, where, samples }] of flips.entries()) {
 		console.log(`  ${went}: ${n}`)
 	}
 
-	for (const s of samples) console.log(`   ${s}`)
+	for (const s of samples) {
+		console.log(`   ${s}`)
+	}
 }

@@ -132,9 +132,13 @@ for (const parityCase of cases) {
 	const alternatives = parityCase.expected.length - 1
 	const out: ParityFixture = { ...fixture, expect }
 
-	if (alternatives > 0) out.alternatives = alternatives
+	if (alternatives > 0) {
+		out.alternatives = alternatives
+	}
 
-	if (unmapped.length > 0) out.droppedTags = unmapped
+	if (unmapped.length > 0) {
+		out.droppedTags = unmapped
+	}
 
 	fixtures.push(out)
 }

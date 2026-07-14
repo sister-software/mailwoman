@@ -137,13 +137,17 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		for (const [tag, goldValues] of Object.entries(expect)) {
 			if (PARITY_FLOORS.some((f) => f.label === tag)) continue
 
-			if (fold((byTag.get(tag) ?? []).join(" ")) !== fold(goldValues.join(" "))) caseAgrees = false
+			if (fold((byTag.get(tag) ?? []).join(" ")) !== fold(goldValues.join(" "))) {
+				caseAgrees = false
+			}
 		}
 
 		const country = byCountry.get(fixture.country) ?? { cases: 0, fullAgree: 0 }
 		country.cases++
 
-		if (caseAgrees) country.fullAgree++
+		if (caseAgrees) {
+			country.fullAgree++
+		}
 		byCountry.set(fixture.country, country)
 	}
 
@@ -161,7 +165,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const rate = total ? hit / total : 1
 		const ok = rate >= floor
 
-		if (!ok) pass = false
+		if (!ok) {
+			pass = false
+		}
 		console.log(
 			`${label.padEnd(13)} ${`${hit}/${total}`.padStart(8)}  ${rate.toFixed(4).padStart(7)}  ${floor.toFixed(2).padStart(5)}  ${ok ? "PASS" : "FAIL"}`
 		)
