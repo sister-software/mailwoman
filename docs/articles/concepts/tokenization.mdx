@@ -41,20 +41,16 @@ The neural classifier works with **subwords**. Instead of treating "New" and "Ne
 
 Why subwords? Two reasons:
 
-1. **Vocabulary size is bounded.** A word-level tokenizer trained on a multi-million-row corpus needs a vocabulary of millions of words. A subword tokenizer hits the same coverage with a 16,000-piece vocabulary by sharing pieces between words.
+1. **Vocabulary size is bounded.** A word-level tokenizer trained on a multi-million-row corpus needs a vocabulary of millions of words. A subword tokenizer hits the same coverage with a 73,143-piece vocabulary by sharing pieces between words.
 2. **Unseen words are handled gracefully.** "Pennsyvana" (a typo for "Pennsylvania") would be a complete unknown to a word-level tokenizer. A subword tokenizer breaks it into pieces it has seen — `["▁Penn", "syv", "ana"]` — and the model can still extract meaning.
 
 Mailwoman uses [SentencePiece](https://github.com/google/sentencepiece), an open-source subword tokenizer library originally from Google. The specific algorithm is **unigram language model** tokenization, which tends to produce slightly more linguistically-aware splits than the BPE alternative.
 
-Mailwoman's tokenizer was trained from scratch on the corpus. The current shipping version is **v0.1.0** (16K vocab); a new **A1 tokenizer** (48K vocab, multi-script) is validated and waiting for the CE-only classifier train to complete.
+Mailwoman's tokenizer started from a from-scratch SentencePiece unigram build. Since then it has grown through targeted vocabulary splices rather than full retrains: new diacritic-bearing pieces are trained on the affected locale's own corpus, then spliced into the existing vocabulary. Every spliced piece contains a codepoint absent from the base languages' text, so it can never match an English or French span; splicing in new coverage can't silently change how an already-shipping locale tokenizes. The added embedding rows are mean-initialized from their old-tokenizer constituents before a short fine-tune gives them real gradient.
 
-| Version           | Vocab  | Character coverage | Training data                                             | Status                                                         |
-| ----------------- | ------ | ------------------ | --------------------------------------------------------- | -------------------------------------------------------------- |
-| v0.1.0 (shipping) | 16,000 | 99.95%             | 1M US + 1M FR from `corpus-v0.1.1`                        | In production                                                  |
-| A1 (validated)    | 48,000 | 99.99%             | 500K US + 500K FR + 73K multi-script from `corpus-v0.4.0` | Trained; byte-fallback 36.7%→18.2%; pending classifier weights |
+The **shipping tokenizer is v0.9.0-multisplice** (73,143 pieces, byte fallback on): the base vocabulary plus a French diacritic splice (v0.8.0-fr-nsplice, +2,406 pieces) and a further splice adding Czech, Polish, Slovak, and Slovenian diacritic coverage among other locales ([#884](https://github.com/sister-software/mailwoman/issues/884), shipped v5.1.0). See [Which languages Mailwoman handles well](./language-support.mdx) for the fertility story that made the splice necessary; French's accent fragmentation is the canonical example.
 
 - **Special tokens:** `[UNK]` (unknown), `[PAD]` (padding), `[BOS]` / `[EOS]` (beginning/end of sequence)
-- **A1 additions:** 2,110 user-defined symbols (US state codes, postcode literal formats, country abbreviations) to prevent byte-fallback on known address tokens. See [`tokenizer-a0-baseline.md`](../plan/reference/tokenizer-a0-baseline.mdx) for the A0→A1 measurement story.
 
 ```mermaid
 flowchart LR
@@ -103,9 +99,9 @@ The byte fallback comes from SentencePiece's `byte_fallback: true` setting in th
 
 ## Where this lives in the code
 
-- **Word tokenizer (rules):** the v1 core, around `core/tokenize/`
-- **Subword tokenizer (neural):** `neural/tokenizer.ts` + the trained model at `packages/neural-weights-en-us/tokenizer.model`
-- **Training:** `corpus-python/scripts/train_tokenizer.py` (run once, output committed to `/data/models/tokenizer/v0.1.0/`)
+- **Word tokenizer (rules):** the v1 core, around `core/tokenization/`
+- **Subword tokenizer (neural):** `neural/tokenizer.ts` + the trained model at `neural-weights-en-us/tokenizer.model`
+- **Training:** `corpus-python/src/mailwoman_train/tokenizer_splice.py` (the shipping tokenizer is built by splicing new diacritic coverage into the existing vocab, not a full retrain); output lives under `$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice/`
 
 ## See it in action
 
