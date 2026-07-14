@@ -83,6 +83,8 @@ coverage
 !/mailwoman/commands/coverage/**
 !/cartographer/coverage/
 !/cartographer/coverage/**
+!/docs/articles/evals/coverage/
+!/docs/articles/evals/coverage/**
 playwright-report
 playwright-traces
 test-results

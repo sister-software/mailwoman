@@ -45,6 +45,11 @@ class DataConfig:
     # model that a lowercase query is the same address (the #829 lowercase-sensitivity class). Model-first
     # vs a deterministic case-normalizer. 0 = disabled (rng-stream bit-identical).
     augment_case_prob: float = 0.0
+    # Punct-drop augmentation (#1101): probability a row yields an extra DELIMITER-FREE copy —
+    # separator commas + wrapping quotes stripped (gap-only; interior apostrophes kept), raw + tokens +
+    # char-offset spans all re-targeted. Teaches robustness to whitespace-only input (64% of parity
+    # gold). Model-first vs a deterministic delimiter-normalizer. 0 = disabled (rng-stream bit-identical).
+    augment_punct_drop_prob: float = 0.0
     # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
     # (built by scripts/build-pilot-anchor-lookup.ts). When set AND model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
@@ -187,6 +192,12 @@ class ModelConfig:
     # rows whose gold country has a conventions row (mirror: conventions.py <- codex). The
     # inference mask's training half; hypothesis = FR region recovers (16.2 was the v4.3.0 tail).
     use_conventions_loss_mask: bool = False
+    # Span-boundary aux head (#727 GLiNER-lite probe): a training-only 2-logit head predicting per-token
+    # span START (B-*) and END (entity token whose successor doesn't continue it), supervised from the BIO
+    # labels. Adds boundary-placement pressure against the region→street absorption residual. Inference-
+    # invariant (never exported). span_boundary_loss_weight scales the aux BCE leg; 0 disables it.
+    use_span_boundary_head: bool = False
+    span_boundary_loss_weight: float = 0.0
     # Must match the lexicon JSON's feature_dim (slot count).
     gazetteer_feature_dim: int = 5
 

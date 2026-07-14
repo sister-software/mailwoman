@@ -130,7 +130,7 @@ The FST gazetteer prior ([concept doc](./fst-gazetteer-prior.mdx)) gives the neu
 
 For administrative tags (`country`, `region`, `locality`, `postcode`), both kinds of evidence are present and the model uses them. For street tags (`street`, `street_prefix`, `street_suffix`), only the _negative_ signal is available — and only in the form "this token is not an admin place." There is no positive evidence that says "this token _is_ a street," because the FST has no street placetypes to match.
 
-The empirical consequence shows up in [v0.6.1's error analysis](../evals/v0.6.1-error-analysis.mdx). When training added a 100K-row synthetic street-decomposition corpus, the model learned to decompose subcomponents — but with no inference-time anchor for "this is a street," the decomposition energy leaked into `dependent_locality` (the schema's only labeled "below locality" slot). `dependent_locality` hallucinated 1066 times where v0.6.0 emitted zero.
+The empirical consequence shows up in [v0.6.1's error analysis](../evals/model-versions/v0.6.1-error-analysis.mdx). When training added a 100K-row synthetic street-decomposition corpus, the model learned to decompose subcomponents — but with no inference-time anchor for "this is a street," the decomposition energy leaked into `dependent_locality` (the schema's only labeled "below locality" slot). `dependent_locality` hallucinated 1066 times where v0.6.0 emitted zero.
 
 This is the schema speaking. The model is doing the right thing under the wrong inputs: given that streets and dep_locality look structurally similar (both sit below locality in the containment tree) and only one has gazetteer backing, it picks the one with backing.
 
@@ -200,4 +200,4 @@ Each layer addresses a different vacuum. The cheapest layers don't subsume the m
 - [FST gazetteer prior](./fst-gazetteer-prior.mdx) — the prior this article extends
 - [FST gazetteer LM reference](../plan/reference/FST_GAZETTEER_LM.mdx) — Phase 2 (streets) is the layer 2 work
 - [Falsehoods about street names](../understanding/why-its-hard/falsehoods-streets.mdx) — the catalog of edge cases each layer addresses
-- [v0.6.1 error analysis](../evals/v0.6.1-error-analysis.mdx) — the empirical regression that surfaced the gap
+- [v0.6.1 error analysis](../evals/model-versions/v0.6.1-error-analysis.mdx) — the empirical regression that surfaced the gap

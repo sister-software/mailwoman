@@ -230,6 +230,8 @@ class MailwomanCoarseEncoder(nn.Module):
         gazetteer_feature_dim: int = 5,
         use_affix_head: bool = False,
         use_conventions_loss_mask: bool = False,
+        use_span_boundary_head: bool = False,
+        span_boundary_loss_weight: float = 0.0,
         use_char_embed: bool = False,
         char_vocab_size: int = 0,
         char_embed_dim: int = 64,
@@ -428,6 +430,23 @@ class MailwomanCoarseEncoder(nn.Module):
             for k, lid in enumerate(affix_ids):
                 lut[lid] = k + 1
             self.register_buffer("affix_target_lut", lut, persistent=False)
+
+        # Span-boundary auxiliary head (#727, GLiNER-lite probe). A TRAINING-ONLY 2-logit head over the
+        # final hidden state predicting, per token, whether an entity span STARTS (a B-* tag) and whether
+        # one ENDS here (an entity token whose successor doesn't continue it). The BIO head places tags;
+        # this head places boundaries, and the shared encoder must satisfy both — the pressure targets the
+        # boundary-absorption residual (a region token pulled into an adjacent street span, "05149 VT
+        # Tucker Road" → "VT" absorbed into street). It never touches the exported inference graph (like the
+        # locale aux-CE, the loss consumes it and the ONNX path emits only `logits`), so stage-1 carries no
+        # export / browser-SLO cost — that is why it is the cheapest #727 falsifier.
+        self.use_span_boundary_head = use_span_boundary_head
+        self.span_boundary_loss_weight = float(span_boundary_loss_weight)
+        if use_span_boundary_head:
+            self.span_boundary_head = nn.Linear(hidden_size, 2)  # [start, end] logits
+            is_begin = torch.tensor([ID_TO_LABEL[i].startswith("B-") for i in range(num_labels)], dtype=torch.bool)
+            is_inside = torch.tensor([ID_TO_LABEL[i].startswith("I-") for i in range(num_labels)], dtype=torch.bool)
+            self.register_buffer("bio_is_begin", is_begin, persistent=False)
+            self.register_buffer("bio_is_inside", is_inside, persistent=False)
 
         # CRF decoder (Stage 2 / v0.3.0 onwards). Adds ~num_labels² + 2·num_labels learned
         # scalars (483 for 21 labels) — negligible vs the encoder's ~30M parameters.
@@ -748,6 +767,40 @@ class MailwomanCoarseEncoder(nn.Module):
             locale_term = self.locale_loss_weight * locale_ce
             loss = locale_term if loss is None else loss + locale_term.to(loss.dtype)
 
+        # Span-boundary auxiliary loss (#727). Per-token BCE on span START (B-*) and END (entity token
+        # whose successor doesn't continue it), supervised from the BIO labels. Computed in fp32 — the
+        # CRF NaN scar (v0.6.0) says any structural/transition-style leg gets fp32 headroom, and BCE
+        # over masked positions is cheap. Masked to real, non-ignore tokens; a batch with no valid
+        # position contributes nothing (guards the 0/0 → NaN edge).
+        if (
+            self.use_span_boundary_head
+            and labels is not None
+            and attention_mask is not None
+            and self.span_boundary_loss_weight > 0
+        ):
+            valid = attention_mask.bool() & labels.ne(-100)  # (B, S)
+            if bool(valid.any()):
+                safe = labels.clamp_min(0)
+                is_b = self.bio_is_begin[safe]  # (B, S) bool
+                is_i = self.bio_is_inside[safe]
+                in_entity = is_b | is_i
+                # END: an entity token whose next token is not an I- continuation (BIO-valid → same entity).
+                next_is_i = torch.zeros_like(is_i)
+                next_is_i[:, :-1] = is_i[:, 1:]
+                start_tgt = is_b.float()
+                end_tgt = (in_entity & ~next_is_i).float()
+                # Run the head in the ambient (autocast) dtype, then upcast the LOGITS to fp32 for a
+                # stable BCE — the same pattern the locale aux-CE uses (`locale_logits.float()`). Upcasting
+                # `h` before the matmul instead would clash with the bf16 head weights (mat1/mat2 dtype).
+                sb_logits = self.span_boundary_head(h)  # (B, S, 2), ambient dtype
+                targets = torch.stack([start_tgt, end_tgt], dim=-1)  # (B, S, 2)
+                per_pos = nn.functional.binary_cross_entropy_with_logits(
+                    sb_logits.float(), targets, reduction="none"
+                ).mean(dim=-1)  # (B, S)
+                sb_loss = per_pos[valid].mean()
+                sb_term = self.span_boundary_loss_weight * sb_loss
+                loss = sb_term if loss is None else loss + sb_term.to(loss.dtype)
+
         return _CoarseEncoderOutput(logits=logits, loss=loss, locale_logits=locale_logits)
 
     @torch.no_grad()
@@ -889,6 +942,10 @@ class MailwomanCoarseEncoder(nn.Module):
             "gazetteer_feature_dim": int(self.gazetteer_feature_dim),
             "use_affix_head": bool(self.use_affix_head),
             "use_conventions_loss_mask": bool(self.use_conventions_loss_mask),
+            # Span-boundary aux head (#727). Persisted so a resume rebuilds the head; the exported ONNX
+            # ignores it (training-only, off the logits path).
+            "use_span_boundary_head": bool(self.use_span_boundary_head),
+            "span_boundary_loss_weight": float(self.span_boundary_loss_weight),
             # CharCNN front-end (#825). False/0 on SentencePiece checkpoints; loaders branch on the flag
             # to materialize the char_cnn module at the persisted char-vocab width + kernel geometry.
             "use_char_embed": bool(self.use_char_embed),
@@ -949,6 +1006,9 @@ class MailwomanCoarseEncoder(nn.Module):
             use_gazetteer_anchor=cfg.get("use_gazetteer_anchor", False),
             use_affix_head=cfg.get("use_affix_head", False),
             use_conventions_loss_mask=cfg.get("use_conventions_loss_mask", False),
+            # Span-boundary aux head (#727). Default off for back-compat with pre-#727 checkpoints.
+            use_span_boundary_head=cfg.get("use_span_boundary_head", False),
+            span_boundary_loss_weight=cfg.get("span_boundary_loss_weight", 0.0),
             gazetteer_feature_dim=cfg.get("gazetteer_feature_dim", 5),
             # CharCNN front-end (#825). Default off for back-compat with SentencePiece checkpoints.
             use_char_embed=cfg.get("use_char_embed", False),
@@ -1020,6 +1080,9 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         # Dedicated affix head (#492).
         use_affix_head=getattr(cfg.model, "use_affix_head", False),
         use_conventions_loss_mask=getattr(cfg.model, "use_conventions_loss_mask", False),
+        # Span-boundary aux head (#727, GLiNER-lite probe).
+        use_span_boundary_head=getattr(cfg.model, "use_span_boundary_head", False),
+        span_boundary_loss_weight=getattr(cfg.model, "span_boundary_loss_weight", 0.0),
         # CharCNN front-end (#825). char_vocab_size threaded from the loader; the rest from cfg.model.
         use_char_embed=getattr(cfg.model, "use_char_embed", False),
         char_vocab_size=char_vocab_size,

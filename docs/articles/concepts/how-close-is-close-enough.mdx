@@ -30,7 +30,7 @@ A single accuracy number ("p50 3 km") answers none of these on its own. It's onl
 
 ## The three tiers, and what each is actually worth
 
-Mailwoman resolves to the finest tier it has data for, and labels which one it used (measured on 1172 real TX facility addresses, [`2026-06-17-geocoder-vs-provided-coords`](../evals/2026-06-17-geocoder-vs-provided-coords.md)):
+Mailwoman resolves to the finest tier it has data for, and labels which one it used (measured on 1172 real TX facility addresses, [`2026-06-17-geocoder-vs-provided-coords`](../evals/resolver-geo/2026-06-17-geocoder-vs-provided-coords.md)):
 
 | tier            | what it is                                     |  coord p50 | when it fires               |
 | --------------- | ---------------------------------------------- | ---------: | --------------------------- |
@@ -44,7 +44,7 @@ So the first half of "close enough" is **which tier did we reach**, because the 
 
 ## Trust the radius, not the point
 
-A tier label is coarse. The per-parse answer to "how close is this one?" is the **calibrated uncertainty radius** the geocoder reports alongside the coordinate. The discipline here is absolute, and it's the whole reason the number is trustworthy ([`2026-06-14-interp-radius-calibration`](../evals/2026-06-14-interp-radius-calibration.md)):
+A tier label is coarse. The per-parse answer to "how close is this one?" is the **calibrated uncertainty radius** the geocoder reports alongside the coordinate. The discipline here is absolute, and it's the whole reason the number is trustworthy ([`2026-06-14-interp-radius-calibration`](../evals/calibration/2026-06-14-interp-radius-calibration.md)):
 
 > A radius is only meaningful if it's calibrated. If we say ±87 m it must contain the truth ~90% of the time — not 72%. Otherwise the number is decoration.
 

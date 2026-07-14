@@ -1,11 +1,14 @@
 ---
 title: Displaying Results on a Map
 id: display-on-a-map
+role: guide
+audience: product-reader
+source-of-truth: registry/resolve.ts, registry/geojson.ts, registry/map-html.ts
 ---
 
 Coordinates in a JSON array tell you the geocoder worked. They don't tell you whether the _answers_ are right — that a cluster of clinics really sits where you'd expect, that the three records you merged into one entity actually share a building. For that you need to see them on a map, and you'd rather not stand up a tile server and a frontend to glance at a few hundred points.
 
-`@mailwoman/registry` renders a self-contained map for you. You hand it resolved entities; it hands back a single HTML file you open in a browser.
+`@mailwoman/registry` renders a self-contained map for you. You hand it resolved entities; it hands back a single HTML file you open in a browser. By the end you'll have a `map.html` you can open locally or serve from anywhere. [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers how `resolveEntities` gets from raw records to the entities this recipe maps.
 
 ## From records to a map
 

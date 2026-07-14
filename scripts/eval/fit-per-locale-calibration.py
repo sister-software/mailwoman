@@ -17,7 +17,7 @@ Usage:
   python3 scripts/eval/fit-per-locale-calibration.py \
     --conf data/eval/calibration/confidences.jsonl \
     --out data/eval/calibration/isotonic-per-locale-en-us-v4.0.0.json \
-    --report docs/articles/evals/2026-06-07-per-locale-calibration.md
+    --report docs/articles/evals/calibration/2026-06-07-per-locale-calibration.md
 """
 
 import argparse
@@ -86,7 +86,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--conf", default=str(REPO / "data/eval/calibration/confidences.jsonl"))
     ap.add_argument("--out", default=str(REPO / "data/eval/calibration/isotonic-per-locale-en-us-v4.0.0.json"))
-    ap.add_argument("--report", default=str(REPO / "docs/articles/evals/2026-06-07-per-locale-calibration.md"))
+    ap.add_argument("--report", default=str(REPO / "docs/articles/evals/calibration/2026-06-07-per-locale-calibration.md"))
     ap.add_argument("--seed", type=int, default=20260607)
     ap.add_argument("--model-version", default="4.0.0")
     args = ap.parse_args()

@@ -1,16 +1,16 @@
 {
 	"name": "neural-weights-fr-fr",
-	"version": "5.2.0",
-	"model_lineage": "Ships the en-us v5.2.0 nsplice-v2 model (bsplice-expanded + the #912-lever-4 Nordic vocab-splice, FVT mean-init; tokenizer v0.7.1-nsplice). One model serves both locales; see the en-us card for the full lineage + gate record.",
-	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v1.9.3a3 model)",
+	"version": "6.1.0",
+	"model_lineage": "Ships the en-us v261 (v2.6.1-span-boundary-full, #727 stage-1) model — init_from v257 + a non-exported span-boundary aux head; tokenizer v0.9.0-multisplice (73,143). One model serves both locales; see the en-us card for the full lineage, gate record, and the documented #1104 country gate exception.",
+	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v261 model, shipped as 6.1.0)",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "fr-fr",
 	"training": {
-		"corpus_version": "0.5.0 (char-offset span labels #519) + synth-fr-order shard (#561)",
-		"tokenizer_version": "0.6.0-a0",
-		"steps": 40000,
+		"corpus_version": "v257 fragment-campaign corpus (shard-v5) re-tokenized through v0.9.0-multisplice; span-boundary aux head from BIO labels.",
+		"tokenizer_version": "0.9.0-multisplice",
+		"steps": 8000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"note": "Identical artifact to neural-weights-en-us 4.6.0 / v1.5.0-fr-order (one multi-locale model serves both, copied at publish time). See that card's training/recipe for full provenance."
+		"note": "Identical artifact to neural-weights-en-us 6.1.0 / v261 span-boundary-full (one multi-locale model serves both, copied at publish time). See that card's training/recipe for full provenance."
 	},
 	"requires": {
 		"$comment": "SHIP-CONFIG mirrored from neural-weights-en-us (#718/#721): this package ships en-us's model, so its required channels are identical. createScorer / loadFromWeights read this and feed anchor + gazetteer + the conventions mask; running channel-OFF is the #566/#685 OOD crater. Reconciled in #721 — this block was previously ABSENT, so loadFromWeights gave fr-fr a partial (anchor + gazetteer only) ship-config.",

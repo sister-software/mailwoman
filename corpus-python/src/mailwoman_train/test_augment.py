@@ -7,12 +7,13 @@ import pytest
 from .augment import (
     _expand_token,
     augment_row,
+    drop_separator_punct,
     glue_region_postcode,
     lowercase_row,
     row_span_triple,
     splice_expansion,
 )
-from .tokenizer import PieceSpan, realign_labels_to_pieces, realign_spans_to_pieces
+from .tokenizer import PieceSpan, realign_labels_to_pieces, realign_spans_to_pieces, whitespace_spans
 
 
 def test_expand_token_single_word():
@@ -338,6 +339,131 @@ def test_row_span_triple_partial_raises():
 def test_row_span_triple_nonparallel_raises():
     with pytest.raises(ValueError, match="not parallel"):
         row_span_triple({"raw": "x", "span_starts": [0], "span_ends": [1, 2], "span_tags": ["street"]})
+
+
+# --- Punct-drop augmentation (#1101, delimiter-free / whitespace-only) ---------------------------
+
+
+def _punct_row() -> dict:
+    """`123 Main St, Portland, OR 97214` — two SEPARATOR commas (chars 11, 21), both in gaps."""
+    return {
+        "raw": "123 Main St, Portland, OR 97214",
+        "tokens": ["123", "Main", "St,", "Portland,", "OR", "97214"],
+        "labels": ["B-house_number", "B-street", "I-street", "B-locality", "B-region", "B-postcode"],
+        "span_starts": [0, 4, 13, 23, 26],
+        "span_ends": [3, 11, 21, 25, 31],
+        "span_tags": ["house_number", "street", "locality", "region", "postcode"],
+        "country": "US",
+        "source": "tiger",
+    }
+
+
+def test_punct_drop_removes_separator_commas_and_retargets_spans():
+    dropped = drop_separator_punct(_punct_row())
+    assert dropped is not None
+    assert dropped["raw"] == "123 Main St Portland OR 97214"
+    # The critical property: every span still slices its ORIGINAL entity text in the mutated raw.
+    assert _slices(dropped) == [
+        ("house_number", "123"),
+        ("street", "Main St"),
+        ("locality", "Portland"),
+        ("region", "OR"),
+        ("postcode", "97214"),
+    ]
+    _assert_span_invariants(dropped)
+    # Tokens carry no commas and stay relocatable in the mutated raw (whitespace_spans must not raise).
+    assert dropped["tokens"] == ["123", "Main", "St", "Portland", "OR", "97214"]
+    assert dropped["labels"] == _punct_row()["labels"]
+    whitespace_spans(dropped["raw"], dropped["tokens"])
+
+
+def test_punct_drop_preserves_interior_apostrophe():
+    """A gap comma is dropped; an apostrophe INSIDE the venue span is kept (drop is gap-only)."""
+    row = {
+        "raw": "Ben & Jerry's, Burlington",
+        "tokens": ["Ben", "&", "Jerry's,", "Burlington"],
+        "labels": ["B-venue", "I-venue", "I-venue", "B-locality"],
+        "span_starts": [0, 15],
+        "span_ends": [13, 25],
+        "span_tags": ["venue", "locality"],
+    }
+    dropped = drop_separator_punct(row)
+    assert dropped is not None
+    assert dropped["raw"] == "Ben & Jerry's Burlington"
+    assert _slices(dropped) == [("venue", "Ben & Jerry's"), ("locality", "Burlington")]
+    _assert_span_invariants(dropped)
+
+
+def test_punct_drop_removes_standalone_punct_token():
+    """A comma that is its OWN whitespace token is dropped from tokens/labels, not left empty."""
+    row = {
+        "raw": "Portland , OR",
+        "tokens": ["Portland", ",", "OR"],
+        "labels": ["B-locality", "O", "B-region"],
+        "span_starts": [0, 11],
+        "span_ends": [8, 13],
+        "span_tags": ["locality", "region"],
+    }
+    dropped = drop_separator_punct(row)
+    assert dropped is not None
+    assert dropped["raw"] == "Portland  OR"  # the comma char removed; its surrounding spaces remain
+    assert dropped["tokens"] == ["Portland", "OR"]
+    assert dropped["labels"] == ["B-locality", "B-region"]
+    assert _slices(dropped) == [("locality", "Portland"), ("region", "OR")]
+
+
+def test_punct_drop_strips_wrapping_quotes():
+    row = {
+        "raw": '"350 5th Ave"',
+        "tokens": ['"350', "5th", 'Ave"'],
+        "labels": ["B-house_number", "B-street", "I-street"],
+        "span_starts": [1, 5],
+        "span_ends": [4, 12],
+        "span_tags": ["house_number", "street"],
+    }
+    dropped = drop_separator_punct(row)
+    assert dropped is not None
+    assert dropped["raw"] == "350 5th Ave"
+    assert _slices(dropped) == [("house_number", "350"), ("street", "5th Ave")]
+    assert dropped["tokens"] == ["350", "5th", "Ave"]
+
+
+def test_punct_drop_without_spans_returns_none():
+    """Legacy (span-less) row: can't tell a separator comma from an interior one → skip, don't guess."""
+    assert (
+        drop_separator_punct(
+            {"raw": "Portland, OR", "tokens": ["Portland,", "OR"], "labels": ["B-locality", "B-region"]}
+        )
+        is None
+    )
+
+
+def test_punct_drop_no_separator_punct_returns_none():
+    assert drop_separator_punct(_spanned_directional_row()) is None
+
+
+def test_punct_drop_leaves_original_row_untouched():
+    row = _punct_row()
+    drop_separator_punct(row)
+    assert row["raw"] == "123 Main St, Portland, OR 97214"
+    assert row["span_ends"] == [3, 11, 21, 25, 31]
+
+
+def test_punct_drop_default_off_preserves_rng_stream():
+    """With the knob at 0 the rng stream is bit-identical to a no-punct-drop config (guarded fire)."""
+    a = random.Random(7)
+    b = random.Random(7)
+    list(augment_row(_punct_row(), a, directional_prob=0.0, region_prob=0.0))
+    list(augment_row(_punct_row(), b, directional_prob=0.0, region_prob=0.0, punct_drop_prob=0.0))
+    assert a.random() == b.random()
+
+
+def test_punct_drop_fires_via_augment_row():
+    results = list(
+        augment_row(_punct_row(), random.Random(1), directional_prob=0.0, region_prob=0.0, punct_drop_prob=1.0)
+    )
+    assert results[0]["raw"] == "123 Main St, Portland, OR 97214"  # original first, unchanged
+    assert any(r["raw"] == "123 Main St Portland OR 97214" for r in results[1:])
 
 
 # --- Raw splicing for expansions (PR #534 open question 3) ---------------------------------------

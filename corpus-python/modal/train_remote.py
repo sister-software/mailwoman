@@ -330,6 +330,140 @@ def sync_v061():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=1200,
+)
+def sync_src_727():
+    """SOURCE-ONLY sync (#727 span-boundary probe): pull `corpus-python/src/` from R2 → volume and clear the
+    stale `__pycache__` (the night-3 pyc gotcha — a container-side `.py` overwrite leaves a shadowing `.pyc`).
+    No corpus pull — the v257 corpus + tokenizer already persist on the volume. Verifies the span-boundary head
+    actually landed in model.py before returning, so a stale sync can't silently train the OLD architecture."""
+    import shutil
+    import subprocess
+
+    print("Syncing corpus-python/src/ from R2 (container-side, #727)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+
+    # Verify the new architecture + config landed — a stale sync must fail loud, not train the old model.
+    model_src = open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/model.py").read()
+    cfg727 = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.6.0-span-boundary-probe.yaml"
+    has_head = "use_span_boundary_head" in model_src and "span_boundary_head = nn.Linear" in model_src
+    print("  span-boundary head in model.py on volume:", has_head)
+    print("  v2.6.0 config present:", os.path.isfile(cfg727))
+    if not has_head or not os.path.isfile(cfg727):
+        raise RuntimeError("sync verify FAILED — span head or config missing on volume; do NOT launch")
+    print("\n#727 source sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1200,
+)
+def sync_v6():
+    """Pull the v0.10.7-fragment-v6 OVERLAY (#1104 country-counterweight fragment shard) + latest src from
+    R2. The 699 base shards persist on the volume from prior runs (the overlay MANIFEST re-roots them to
+    /data/v0.5.0 paths), so only the overlay dir + the config need pulling. Clears pycache, commits,
+    verifies the overlay + config landed before returning."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.10.7-fragment-v6 overlay + src from R2 (container-side, #1104)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+
+    overlay = f"{VOL_MOUNT}/corpus/versioned/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.9.0-country-counterweight.yaml"
+    manifest = os.path.isfile(f"{overlay}/MANIFEST.json")
+    frag = os.path.isfile(f"{overlay}/train/part-fragment.parquet")
+    base0 = os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/test/part-0000.parquet")
+    print(
+        f"  overlay MANIFEST: {manifest} | fragment shard: {frag} | v2.9.0 config: {os.path.isfile(cfg)} | base shard: {base0}"
+    )
+    if not (manifest and frag and os.path.isfile(cfg) and base0):
+        raise RuntimeError("sync verify FAILED — overlay/config/base missing on volume; do NOT launch")
+    print("\n#1104 v6 overlay sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1200,
+)
+def sync_v7():
+    """Pull the v0.10.8-fragment-v7 OVERLAY (#1104 country-counterweight fragment shard) + latest src from
+    R2. The 699 base shards persist on the volume from prior runs (the overlay MANIFEST re-roots them to
+    /data/v0.5.0 paths), so only the overlay dir + the config need pulling. Clears pycache, commits,
+    verifies the overlay + config landed before returning."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.10.8-fragment-v7 overlay + src from R2 (container-side, #1104)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+
+    overlay = f"{VOL_MOUNT}/corpus/versioned/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.9.1-country-leading.yaml"
+    manifest = os.path.isfile(f"{overlay}/MANIFEST.json")
+    frag = os.path.isfile(f"{overlay}/train/part-fragment.parquet")
+    base0 = os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/test/part-0000.parquet")
+    print(
+        f"  overlay MANIFEST: {manifest} | fragment shard: {frag} | v2.9.0 config: {os.path.isfile(cfg)} | base shard: {base0}"
+    )
+    if not (manifest and frag and os.path.isfile(cfg) and base0):
+        raise RuntimeError("sync verify FAILED — overlay/config/base missing on volume; do NOT launch")
+    print("\n#1104 v7 overlay sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=3600,
 )
 def sync_v080():
@@ -1486,6 +1620,38 @@ def mean_init_fr_nsplice():
         Path(f"{VOL_MOUNT}/output-v230-nl-postcode-full-s42/checkpoints/step-005000"),
         Path(f"{VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/tokenizer.model"),
         Path(f"{VOL_MOUNT}/models/tokenizer/v0.8.0-fr-nsplice/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=1200,
+)
+def mean_init_multisplice():
+    """Parity campaign composite (night-1): expand the SHIPPED v241 step-012000 checkpoint's
+    token_embeddings to the v0.9.0-multisplice vocab (12-locale diacritic splice + pt/no top-up;
+    FVT mean-init, identical math to the fr precedent). Writes /data/models/multisplice-expanded,
+    the init_from base for v2.5.1-fragment-splice. Prints old→new vocab (expect 66319 → 73143) and a
+    container-side isfile verify of the written checkpoint AFTER vol.commit()."""
+    import sys
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from pathlib import Path
+
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/multisplice-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v241-fr-nsplice-ft-s42/checkpoints/step-012000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.8.0-fr-nsplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
         out,
     )
     vol.commit()

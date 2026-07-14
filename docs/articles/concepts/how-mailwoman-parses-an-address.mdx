@@ -1,0 +1,105 @@
+---
+sidebar_position: 1
+title: How Mailwoman parses an address
+description: One address followed through the whole parse — subword pieces, per-label scores, gazetteer priors, Viterbi decoding, and the component tree the resolver receives.
+role: concept
+audience: product-reader
+source-of-truth: neural/classifier.ts, core/decoder/build-tree.ts, neural-weights-en-us/model-card.json, plan/reference/SCHEMA.mdx
+---
+
+# How Mailwoman parses an address
+
+If you've run Pelias or libpostal, you already have a working model of address parsing: split the string on whitespace, match tokens against dictionaries and gazetteers, apply patterns, break ties with heuristics. Mailwoman keeps more of that than you might expect. The dictionary lookup is still here, the tie-breaking is still here; what changes is that the per-token judgment is learned from data instead of written by hand.
+
+This page follows one address through the whole parse. The outputs below are what the shipped model produces, captured verbatim:
+
+```bash
+mailwoman parse "2119 SE Belmont St Apt 3, Portland, OR 97214"
+```
+
+```json
+{
+	"region": "OR",
+	"locality": "Portland",
+	"street": "Belmont",
+	"house_number": "2119",
+	"street_prefix": "SE",
+	"street_suffix": "St",
+	"unit": "Apt 3",
+	"postcode": "97214"
+}
+```
+
+## Parsing as labeling
+
+A rule parser asks "which of my patterns does this string match?" Mailwoman asks a smaller question, many times: "which component does this piece of the string belong to?" Every character span in the input gets a label — `house_number`, `street`, `locality`, `postcode` — or no label at all. The parse above is eight labeled spans. Assigning a label to every position in a sequence is what the NLP literature calls sequence labeling, the same task family as named-entity recognition. That's the entire framing; everything below is the machinery that makes the labels come out right.
+
+## The string becomes pieces
+
+You'd split on whitespace. The model can't, because it has to handle `75008Paris`, `St,Portland`, and scripts with no spaces at all. Instead the input is segmented into subword pieces drawn from a fixed vocabulary (currently 66,319 pieces) learned from address text — a SentencePiece unigram model with byte fallback, so no input is unencodable. Our example becomes 21 pieces:
+
+```text
+▁2 1 1 9 ▁S E ▁Belmont ▁St ▁ Apt ▁3 , ▁Portland , ▁ OR ▁9 7 2 1 4
+```
+
+The `▁` marks "starts a new word." Common address words are single pieces (`▁Belmont`, `▁Portland`, `▁St`); digit strings split apart (`2119` is four pieces, `97214` is five). The vocabulary was tuned on addresses, so it fragments differently than a prose tokenizer would.
+
+One distinction matters more than the segmentation itself: every piece carries character offsets into your original string (`▁Belmont` covers characters 8 through 15). When the parse is assembled, each component's value is sliced out of the raw input by those offsets — never reassembled from pieces. Pieces are internal bookkeeping. You always get your own bytes back, spacing and casing intact.
+
+## Scoring every piece
+
+A hand-written rule encodes context: "a number followed by a street name is a house number." The learned version of that rule is the encoder — a small transformer (six layers, 384 wide, about 34M parameters in the current weights; one model, not one per locale) in which every piece attends to every other piece. `2119` is scored in view of the `Belmont St` after it and the `97214` at the end; context runs in both directions.
+
+The encoder's output is a table of scores: for each of the 21 pieces, a score for each of 33 possible labels. These per-piece score rows are called emissions. Nothing has been decided yet. The emissions are evidence, and two more things get a say before any label is final.
+
+## From labels to spans: BIO and the schema
+
+Why 33 labels for 16 components? Because a label has to say where a component starts. Each component tag `X` becomes two labels: `B-X` (begins a span) and `I-X` (continues it), plus one shared `O` for "not part of any component." 16 tags × 2 + 1 = 33. A one-word city is a lone `B-locality`; `New York` is `B-locality` followed by `I-locality`. And where two same-type names sit in one query — an intersection like `5th Ave & 42nd St` — the schema doesn't lean on span boundaries to keep them apart: the two cross streets get distinct tags, `intersection_a` and `intersection_b`.
+
+The 16 tags are drawn from the `ComponentTag` schema, which is defined once, in [the component schema reference](../plan/reference/SCHEMA.mdx). That page owns the tag names and their meanings; when any other page disagrees with it, it wins. The union also declares tags the current model doesn't emit (Japanese block-addressing, `attention`), reserved for future training stages. Note the spellings are snake_case — `house_number`, `dependent_locality` — and they match what you saw in the JSON above.
+
+## Where the gazetteer pushes back
+
+In Pelias, the gazetteer is an authority: if the token matches a place name, it is a place. Mailwoman uses the same kind of reference data but demotes it from verdict to evidence. Deterministic knowledge enters the parse at two points.
+
+**At decode time, as a bounded nudge.** Place names from the WhosOnFirst gazetteer are compiled into a token trie (an FST). When a run of pieces matches a known place name, the matching labels get a bonus added to their emission scores — scaled by the place's importance, and capped — while `street`, `house_number`, and `venue` labels on those same pieces get a fixed push down. The cap is sized so that, at full strength, the bonus multiplies a label's probability by about 20×: enough to settle an uncertain call, not enough to overrule a confident one. A venue named after a town stays a venue. The same additive channel carries structural hints from the query-shape stage and phrase-span proposals. If you want the signal-fusion math, [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) goes deeper.
+
+**As inputs the model was trained to read.** Two retrieval channels are fed to the encoder alongside the pieces. The postcode anchor runs per-country shape checks and then a gazetteer membership lookup, and reports "this span exists as a postcode, in these countries" with a confidence: zero for strings that match a postcode shape but exist nowhere, which is how a 5-digit house number avoids being read as a ZIP. The gazetteer lexicon channel supplies per-token candidate-tag clues (known country names, region names, PO-box and CEDEX markers, and known homographs). The model learned during training how much weight each clue deserves in context. The weights bundle declares both channels required, and the loader checks they were fed instead of silently scoring out of distribution.
+
+There is also one hard constraint: when the detected addressing system forbids a tag, that tag is removed from the decoder's vocabulary outright. French postal conventions have a leading street type ("Rue de Rivoli") and no trailing USPS-style suffix, so a detected-French parse cannot emit `street_suffix` at all.
+
+The split is consistent throughout: the facts (a gazetteer row, a postcode table, a conventions entry) are deterministic and inspectable; the judgment about how much to trust them in a given string is learned.
+
+## Decoding a valid sequence and building the tree
+
+Reading off each piece's highest-scoring label can produce nonsense: a continuation label with no beginning, or a span that switches tags mid-word. A rule parser prevents this with ordering heuristics. Mailwoman prevents it with a validity table and a best-path search: `I-X` may only follow `B-X` or `I-X`, no sequence may open with a continuation, everything else is permitted. The Viterbi algorithm then finds the highest-scoring label sequence that obeys the table — considering the whole sequence at once, so a weak label at one position can be overruled by what fits its neighbors.
+
+What ships is narrower than the textbook version: the validity table is hand-coded structure, not learned. Training scores each piece's label on its own, so no label-to-label preferences are learned, and none ship with the model. The model card's `crf_at_inference: true` refers to this Viterbi pass over the structural constraints — which is already a strict improvement over per-piece argmax, because orphan continuations ("Saint Petersburg" losing its "Saint") can't survive it.
+
+Valid labels become spans, and spans become a tree. Each component attaches to the nearest span whose tag can contain it, per a fixed containment table: postcode under locality, house number under street, street under locality. Nearest, not most-recent — in `75004 Paris` the postcode attaches to the locality even though it appears first, so the tree is independent of source ordering. Span edges are trimmed of stray punctuation, and each node keeps its character offsets and a confidence (the model's probability for the chosen labels; a calibrated version is available opt-in). The same parse as a tree:
+
+```xml
+<address raw="2119 SE Belmont St Apt 3, Portland, OR 97214">
+	<region start="36" end="38" conf="0.92">OR
+		<locality start="26" end="34" conf="0.95">Portland
+			<street start="8" end="15" conf="0.90">Belmont
+				<house_number start="0" end="4" conf="0.91">2119</house_number>
+				<street_prefix start="5" end="7" conf="0.57">SE</street_prefix>
+				<street_suffix start="16" end="18" conf="0.89">St</street_suffix>
+				<unit start="19" end="24" conf="0.89">Apt 3</unit>
+			</street>
+			<postcode start="39" end="44" conf="0.89">97214</postcode>
+		</locality>
+	</region>
+</address>
+```
+
+This tree is the handoff. The resolver walks it top-down and decorates nodes with coordinates and attribution, scoping each child's lookup to its resolved parent — a `Springfield` under a resolved `Illinois` searches Illinois, not Massachusetts. Resolution is its own subject with its own machinery; the parse ends here.
+
+## What one model covers, and how it fails
+
+Mailwoman ships one trained model. The `en-us` and `fr-fr` weight packages currently contain the same binary — the publish workflow copies the en-us artifacts into the fr-fr package — and that one model is trained on a multi-country corpus, which is why the sharing works. Coverage claims are graded per locale, by coordinate accuracy on held-out government address points, and the current tier table lives in [the scope declaration](../plan/SCOPE.mdx): US and France are first-class and floor-gated; fourteen more locales are trained and coordinate-paneled; a thin tail is measured but under-powered; Japan is resolver-route only, with no parser training claim. Outside the tiers, output quality is unverified: the table is the boundary of the claim.
+
+The characteristic failures are span-shaped, because the parse is span-shaped. Boundary slips: the tag is right but the edge is fuzzy, catching a comma or dropping a trailing character (the tree builder trims the worst of this). Fragmentation: a multi-word name splits into two spans, so `Saint Paul` risks becoming two localities (a whitespace-adjacency repair in the tree builder catches the common case). Lookalikes: strings whose shape belongs to another component, the 5-digit house number being the classic; this is what the postcode anchor's membership check exists for. And namesakes — `Portland, ME` versus `Portland, OR` — are deliberately not the parser's problem; the parse hands both to the resolver, where gazetteer context settles them.
+
+For current measured accuracy, per-tag and per-locale, see [the eval reports](../evals/index.mdx). The parity scorecards there are the standing answer to "how good is it now," and they're dated, so you can tell what "now" meant when a number was written down.

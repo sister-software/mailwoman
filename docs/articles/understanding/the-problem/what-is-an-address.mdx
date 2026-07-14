@@ -99,7 +99,7 @@ Four ways to write the same address. The parser has to handle all of them, and t
 
 **5. Different locales have different rules.**
 
-US addresses put the postcode after the region. French addresses put it before the locality. Japanese addresses are essentially the reverse of European ones — country first, then prefecture, then municipality, then a building number. Mailwoman's model is per-locale (separate weights for en-US and fr-FR; Japan is a planned future locale) precisely because there is no universal address grammar.
+US addresses put the postcode after the region. French addresses put it before the locality. Japanese addresses are essentially the reverse of European ones — country first, then prefecture, then municipality, then a building number. Mailwoman's model is trained on a combined multi-country corpus rather than a universal template, precisely because there is no universal address grammar; Japan today is resolver-route only, with no parser training claim (see [the scope declaration](../../plan/SCOPE.mdx) for the current locale tiers).
 
 ## The adversarial cases
 

@@ -38,10 +38,10 @@ This worked, but it ran into the same limit every rule-based parser hits: the lo
 
 Mailwoman v2 — what you are reading docs for — keeps the rule classifiers but adds a **neural classifier** alongside them. Both run; both produce candidate labels; a per-component **policy** decides which one's vote counts more for each address component type. The migration is gradual on purpose: rules stay until the neural classifier's metrics prove it does better.
 
-The neural classifier is a small transformer model (about 9 million parameters — see [`concepts/neural-classification.md`](../../concepts/neural-classification.mdx)) trained on a 677-million-row corpus built from many open data sources. It ships in two pieces:
+The neural classifier is a small transformer model (about 34M parameters in the current weights — see [`concepts/how-mailwoman-parses-an-address.md`](../../concepts/how-mailwoman-parses-an-address.mdx)) trained on a corpus built from many open data sources and rebuilt many times over — see [`concepts/training-pipeline.md`](../../concepts/training-pipeline.mdx) for how it's constructed. It ships in two pieces:
 
 - `@mailwoman/neural` — the runtime that loads the model and runs inference (works in Node.js and the browser).
-- `@mailwoman/neural-weights-en-us` and `@mailwoman/neural-weights-fr-fr` — the model files (one per locale).
+- `@mailwoman/neural-weights-en-us` and `@mailwoman/neural-weights-fr-fr` — the model files. Two npm packages, but one trained model today: the publish workflow copies the en-us artifacts into the fr-fr package. Locale-specific weights are future work.
 
 The Pelias side of the equation — the gazetteer + resolver — is also evolving. Mailwoman now ships its own resolver against Who's On First as a SQLite database, both server-side and in the browser via WebAssembly. See [`concepts/resolver-and-wof.md`](../../concepts/resolver-and-wof.mdx).
 
@@ -50,7 +50,7 @@ The Pelias side of the equation — the gazetteer + resolver — is also evolvin
 - **The two-job split.** Parse, then resolve. Same as Pelias. Same as every modern geocoder.
 - **The output shape.** Mailwoman emits parsed components with confidence scores and offsets, the same surface a Pelias consumer would expect.
 - **The CLI ergonomics.** `mailwoman parse <input>` is the entry point.
-- **Multi-locale design.** Mailwoman ships separate weight packages per locale (en-us, fr-fr) and the architecture is built around the idea that locales are first-class (see [`plan/reference/ARCHITECTURE.md`](../../plan/reference/ARCHITECTURE.mdx)).
+- **Multi-locale packaging.** Mailwoman ships a separate weights package per locale (en-us, fr-fr) — a packaging boundary for a locale to get its own trained weights without a breaking change, even though today both packages carry the same model (see [`plan/reference/ARCHITECTURE.md`](../../plan/reference/ARCHITECTURE.mdx)).
 
 ## What we deliberately do differently: no span left behind
 

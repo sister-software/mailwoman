@@ -282,6 +282,84 @@ def lowercase_row(row: dict) -> dict | None:
     return {**row, "raw": raw.lower(), "tokens": [t.lower() for t in row["tokens"]]}
 
 
+# Separator punctuation the punct-drop augmentation strips: the delimiters that SEPARATE fields but
+# carry no component identity (comma between "Portland" and "OR", wrapping quotes). Apostrophes inside a
+# name ("Ben & Jerry's") sit INSIDE the entity span and are never touched — the drop is gap-only.
+DROP_PUNCT: frozenset[str] = frozenset(",\"'")
+
+
+def drop_separator_punct(row: dict, drop_chars: frozenset[str] = DROP_PUNCT) -> dict | None:
+    """Return a copy of ``row`` with SEPARATOR punctuation (gap commas/quotes) removed from ``raw`` —
+    the delimiter-free / whitespace-only form (#1101; whitespace-only is 64% of the parity gold).
+
+    GAP-ONLY by construction: a punct char is dropped ONLY when it falls in a gap between entity spans
+    (no char-offset span [s, e) covers it), so entity surfaces — including interior apostrophes like
+    "Ben & Jerry's" — are never mutated and no span can shrink to empty. Everything stays aligned:
+
+    - ``raw``: the gap punct chars are deleted.
+    - char-offset spans (#519): remapped by ``new = old − (dropped chars strictly before old)``. A
+      span's start is always a COVERED char (never a drop position), and its exclusive end shifts only
+      by the drops before it — so entity boundaries land exactly on the same characters in the new raw.
+    - ``tokens`` / ``labels``: each token is rebuilt from its char range minus the drop positions; a
+      token that was ONLY separator punct (a standalone ``","``) is dropped along with its label. This
+      keeps ``whitespace_spans`` able to relocate every token in the mutated raw (the glue augmentation
+      can leave tokens intact because it never alters a token's own characters; punct-drop does).
+
+    Returns ``None`` for a legacy (span-less) row — without spans we can't tell a separator comma from
+    one inside an entity, so we skip rather than risk corrupting a label. Also ``None`` when the row has
+    no droppable separator punct (nothing to yield)."""
+    triple = row_span_triple(row)
+    if triple is None:
+        return None
+    starts, ends, tags = triple
+    raw: str = row["raw"]
+
+    covered = [False] * len(raw)
+    for s, e in zip(starts, ends, strict=True):
+        for p in range(max(0, s), min(len(raw), e)):
+            covered[p] = True
+
+    drop_positions = sorted(p for p, c in enumerate(raw) if c in drop_chars and not covered[p])
+    if not drop_positions:
+        return None
+    drop_set = set(drop_positions)
+
+    # old offset -> count of dropped chars strictly before it (for the span remap).
+    def shifted(offset: int) -> int:
+        # bisect without importing: dropped positions are sorted; count those < offset.
+        lo, hi = 0, len(drop_positions)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if drop_positions[mid] < offset:
+                lo = mid + 1
+            else:
+                hi = mid
+        return offset - lo
+
+    new_raw = "".join(c for p, c in enumerate(raw) if p not in drop_set)
+    new_starts = [shifted(s) for s in starts]
+    new_ends = [shifted(e) for e in ends]
+
+    ws = whitespace_spans(raw, row["tokens"])
+    new_tokens: list[str] = []
+    new_labels: list[str] = []
+    for (ts, te), label in zip(ws, row["labels"], strict=True):
+        rebuilt = "".join(raw[j] for j in range(ts, te) if j not in drop_set)
+        if rebuilt:
+            new_tokens.append(rebuilt)
+            new_labels.append(label)
+
+    return {
+        **row,
+        "raw": new_raw,
+        "tokens": new_tokens,
+        "labels": new_labels,
+        "span_starts": new_starts,
+        "span_ends": new_ends,
+        "span_tags": list(tags),
+    }
+
+
 def augment_row(
     row: dict,
     rng: random.Random,
@@ -289,6 +367,7 @@ def augment_row(
     region_prob: float = 0.3,
     glue_prob: float = 0.0,
     case_prob: float = 0.0,
+    punct_drop_prob: float = 0.0,
 ) -> Iterator[dict]:
     """Yield the original row, then optionally an augmented copy.
 
@@ -343,3 +422,10 @@ def augment_row(
         lowered = lowercase_row(row)
         if lowered is not None:
             yield lowered
+
+    # Punct-drop augmentation (#1101): a delimiter-free / whitespace-only copy (separator commas +
+    # quotes stripped). The prob guard keeps the rng stream bit-identical for configs at 0.
+    if punct_drop_prob > 0 and rng.random() < punct_drop_prob:
+        dropped = drop_separator_punct(row)
+        if dropped is not None:
+            yield dropped
