@@ -1,0 +1,110 @@
+---
+sidebar_position: 3
+title: How Mailwoman resolves a place
+description: One parsed address followed onto the map — gazetteer retrieval, candidate ranking, containment checks, namesake disambiguation, and the precision ladder that decides which coordinate you get.
+role: concept
+audience: product-reader
+source-of-truth: resolver/resolve.ts, core/resolver/types.ts, resolver-wof-sqlite/lookup.ts, mailwoman/geocode-core.ts
+---
+
+# How Mailwoman resolves a place
+
+[The parsing page](./how-mailwoman-parses-an-address.mdx) ends with a handoff: a tree of labeled spans (this text is a locality, this one a postcode) and no coordinates anywhere. Resolution is the second half of the job. If you've run Pelias or Nominatim, you already know its raw materials: a gazetteer, an admin hierarchy, population-weighted ranking. Mailwoman keeps all three. The part worth a page is what happens around them: the parse tree is checked against the map, the map is allowed to talk back, and the coordinate you get names its own precision.
+
+As before, one address through the whole thing, captured verbatim:
+
+```bash
+mailwoman geocode "413 S 8th St, Springfield, IL 62701" --format text
+```
+
+```text
+input:            413 S 8th St, Springfield, IL 62701
+resolution_tier:  address_point
+coordinate:       39.797779, -89.645386
+uncertainty_m:    1
+locality:         Springfield
+region:           IL
+postcode:         62701
+hierarchy:
+  locality             Springfield [wof:85940429] (39.7710, -89.6539)
+  region               IL [wof:85688697] (40.1242, -89.1486)
+```
+
+That's Abraham Lincoln's house. The rest of this page accounts for those lines: which of America's many Springfields, why the coordinate is a rooftop rather than a city centroid, and what `uncertainty_m: 1` is promising.
+
+## What resolution adds
+
+The parse asserted that "Springfield" is _used as_ a locality. Resolution asks the question the parse deliberately avoided: which Springfield, of the ones that exist? Three things come back. **Identity**: each resolved node is stamped with the winning place's stable [WhosOnFirst](./resolver-and-wof.mdx) ID, so the result plugs into anything else that speaks WOF. **A coordinate**, from the finest data available (here a rooftop, elsewhere perhaps only a town centroid). And **objections**: when the map contradicts the parse, the conflict is surfaced rather than averaged away.
+
+You can watch the decoration land on the same tree the parsing page ended with (`mailwoman parse --resolve`, XML projection):
+
+```xml
+<address raw="413 S 8th St, Springfield, IL 62701">
+	<region start="27" end="29" conf="0.91" src="resolver:region:85688697" lat="40.124199" lon="-89.148632" place="wof:85688697">IL
+		<locality start="14" end="25" conf="0.94" src="resolver:locality:85940429" lat="39.770987" lon="-89.653852" place="wof:85940429">Springfield
+			<street start="6" end="9" conf="0.95">8th
+				<house_number start="0" end="3" conf="0.89">413</house_number>
+				<street_prefix start="4" end="5" conf="0.96">S</street_prefix>
+				<street_suffix start="10" end="12" conf="0.91">St</street_suffix>
+			</street>
+			<postcode start="30" end="35" conf="0.91">62701</postcode>
+		</locality>
+	</region>
+</address>
+```
+
+The spans, offsets, and confidences are the parser's, untouched. What's new is `place=`, the coordinates, and the `src=` attribution flipping to `resolver`, with the classifier's original claim preserved in metadata. Parsing and resolving stay separate jobs on purpose: the model owns the grammar, the gazetteer owns the atlas, and either side can be upgraded without retraining the other. [What Mailwoman is](./what-mailwoman-is.mdx) makes that argument in full.
+
+## The atlas on disk
+
+Everything the resolver consults is a read-only SQLite artifact, built ahead of time and sealed with provenance and a release date. The spine is WhosOnFirst — the same open gazetteer Pelias uses, chosen for stable IDs and a containment hierarchy. The reference build's admin layer carries about 4.1 million places across 244 countries, each with alternate names, population, bounding box, and ancestor chain. Beside it sit postcode shards (US postcode centroids, Dutch PC6 codes at street-block grain, a GeoNames-derived international tail) and the rooftop layers: about 125 million US address points from the National Address Database and OpenAddresses, sharded per state, and 26 million French points from BAN, the national address register. These artifacts are built or downloaded separately from the packages; the browser demo reads a hosted copy of the same gazetteer over byte-range requests, so demo and server agree.
+
+## From a span to candidates
+
+The resolver walks the tree top-down. At each node whose tag names a place (country, region, locality, postcode) it asks the backend one question: _what places carry this name, of this type, under these constraints?_ Lookups are budgeted (ten per tree, five candidates each, by default), and tags with no place semantics (`house_number`, `unit`) are never queried.
+
+Retrieval is an exact probe on normalized name keys, with a trigram index as the fuzzy net beneath it. Ranking is a strict hierarchy:
+
+1. **Exact name matches outrank partial matches.** A place named exactly "Springfield" beats every "Springfield Gardens" the index also returns.
+2. **Within a tier, prominence decides** — capped log-population, plus a proximity term when the caller supplies a map viewport or user location. This is the importance ranking a Pelias reader expects, confined to breaking ties _within_ match quality: applied across tiers, population pulls "ME" to Missouri (a populous partial match) over Maine (the exact one).
+3. **The raw text-match score is the last tiebreak.** Full-text scores penalize a famous city's long, alias-heavy index entry (measured at roughly 15 BM25 points against a tiny namesake's clean one), so the text score admits candidates to the pool but doesn't get to order them.
+
+Under that ranking, a bare `Springfield` with no other evidence resolves to Springfield, Missouri — the most populous holder of the name. That's the right answer to a question with no context.
+
+## The tree must agree with the map
+
+Our query isn't a bare Springfield: the parse nested it under a region. The walk is top-down, so `IL` resolves first, to Illinois, and the locality lookup below it is scoped to descendants of Illinois in the gazetteer's containment graph. The Missouri Springfield never enters the pool. This is the namesake problem — which Berlin, which Warsaw — settled by the same containment logic [the tree builder](./containment-and-tree-projection.mdx) used to nest the spans, now enforced against the map instead of the string.
+
+Scoping is a bet that the parent resolved correctly, so it's hedged, and the hedges carry most of the namesake work:
+
+- **An empty scope triggers one retry without the parent** (the country constraint stays). A gazetteer whose ancestor chain is missing a link shouldn't turn a resolvable town into a null.
+- **A resolved region whose child locality failed** means the greedy order probably picked the wrong region: a bare "ME" reads as Maine, but also as Messina, Italy. A post-walk pass re-asks the question jointly: which same-named region candidate has a locality of this name under it? Both nodes are re-picked as a pair, and the swap is recorded on the node.
+- **An explicit country token gets the same joint treatment.** For "Vienna, Austria" the resolver re-picks the locality to the same-named place inside the country the address itself names; the resolved output is the Austrian capital (48.2085, 16.3721), not a populous namesake abroad.
+- **A resolved postcode is an anchor.** Postcodes are unambiguous within a country in a way town names are not. A locality that resolves more than 50 km from its sibling postcode gets re-picked to the same-named candidate nearest that postcode; if none reconciles, the coordinate falls back to the postcode's area and the node is flagged `postcode_city_mismatch` — the case where your input, not the map, is likely wrong. This pass exists because of a measured failure class: "06260 Saint-Pierre", one of many French Saint-Pierres, once resolved 617 km from its own postcode.
+- **When nothing resolved at all**, a last-resort pass re-reads the raw text against the gazetteer — the model occasionally fragments an accented name ("Grudziądz") into pieces no lookup can match — and injects the recovered locality, marked as recovered rather than asserted.
+
+Every pass stamps what it did into node metadata (`admin_coherence_repicked`, `postcode_city_mismatch`, `span_rescore`, …), and each fires only on failure, so a tree that resolved cleanly passes through byte-identical. Nothing is settled silently; you can always see which side won.
+
+## The precision ladder
+
+Admin resolution ends at centroids. "Springfield" is a point near the middle of town: for our query, about 3 km from Lincoln's door. The ladder is what runs after the admin walk, each rung consulted only when the rung above found nothing:
+
+1. **Rooftop** (`address_point`) — an exact (street, house number) match in an address-point shard, scoped by postcode or locality. Our example lands here: the matching row carries its own provenance (`source: "overture:NAD"`, `release: "2026-05-20.0"`) into the node's metadata, and `uncertainty_m` reports the 1 m floor — a registered address point, which no estimate is ever allowed to overwrite.
+2. **Interpolation** (`interpolated`) — no exact point, but the house number falls within a known range along a street segment (US TIGER data). The estimate carries a priced radius: half the segment length, times a per-region conformal calibration factor (1.44 in dense DC up to 3.12 in Arizona sprawl, 1.95 where unmeasured), sized so the stated radius contains the true point about 90% of the time; the raw radius covered only ~72%, a number that looked precise and wasn't.
+3. **Street centroid** (`street`) — for queries with no house number at all ("Place Bellecour, Lyon"): the center of the street itself, radius half the street's extent. Backed by the BAN register today, so French coverage in practice.
+4. **Admin centroid** (`admin`) — the floor that exists wherever the gazetteer has the place: a locality, postcode, or region centroid, with `uncertainty_m: null` because no finer estimate exists to price.
+
+The tier leads the output for a reason: `resolution_tier` names the rung, `uncertainty_m` prices it, and whether that's close enough depends on _your_ task — routing a truck needs the rooftop; assigning a sales territory doesn't. [How close is close enough?](./how-close-is-close-enough.mdx) is the full version of that argument, with measured accuracy per rung.
+
+## What to trust, and how much
+
+Two kinds of numbers ride on a result, answering different questions. The `conf=` on each span is the parser's ("how sure am I this text is a locality?"), and an [isotonic-calibrated](./confidence-calibration.mdx) version is available, so 0.94 can mean right-about-94%-of-the-time rather than a mood. The resolve side does not compress into one score. It reports the tier and radius, plus named flags where evidence conflicted, because its failure modes differ in kind, not degree:
+
+- **Coverage gaps.** No rooftop shard for a region means the ladder stops at the admin rung — and says so. The coordinate is still the right town; nothing in the output dresses a centroid up as a rooftop.
+- **Namesakes.** The coherence passes break most of them. Where the gazetteer's own hierarchy can't settle one, the runner-up candidates ride along on the node (`alternatives`), so a consumer can re-rank with context Mailwoman doesn't have.
+- **Contradictory input.** `postcode_city_mismatch` means the address disagrees with the map — a transposed postcode, a stale city name. The returned point is the safer of the two readings, but the flag is the real finding.
+- **Stand-in placetypes.** When a region span matched only a broader admin tier (an Italian _regione_ is a `macroregion` in WOF's taxonomy), `resolution_quality: "fallback"` records that a coarser tier stood in.
+
+## Where it's strong, where it's thin
+
+Coverage is claimed per locale and only where a coordinate-graded eval exists; the current tier table lives in [the scope declaration](../plan/SCOPE.mdx): US and France first-class and floor-gated, fourteen more locales trained and coordinate-paneled, Japan resolver-route only. Where the rooftop tiers have data, accuracy is a property of the data, not the model — so the open frontier is coverage, and it's kept visible: the [demo map](https://mailwoman.sister.software/demo) carries a coverage overlay that fogs exactly the places the resolver can't yet pin (the build is documented in [the coverage-overlay runbook](../plan/reference/coverage-overlay.mdx)). For the measured record — the resolver ladder, interpolation calibration, the postcode anchor, per-locale coordinate panels — see [the resolver & geo eval reports](../evals/resolver-geo/index.mdx), dated so you can tell what "now" meant when each number was written down.
