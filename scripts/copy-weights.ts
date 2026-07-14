@@ -48,6 +48,7 @@ const SOURCE_TOKENIZER = $public.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(dataRoot
 
 const SOFT_FEED = config.softFeed ?? {}
 const SOURCE_GAZETTEER = SOFT_FEED.gazetteerLexicon ? resolve(repoRoot, SOFT_FEED.gazetteerLexicon) : null
+const SOURCE_COUNTRY = SOFT_FEED.countryLexicon ? resolve(repoRoot, SOFT_FEED.countryLexicon) : null
 
 const TARGETS = config.locales.map((locale: string) => `neural-weights-${locale}`)
 
@@ -117,6 +118,18 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		await removeIfPresent(dest)
 		await copyFile(SOURCE_GAZETTEER, dest)
 		process.stderr.write(`copied soft-feed → ${workspace}/anchor-lexicon-v1.json\n`)
+	}
+
+	// Country-surface lexicon (#1104) — the dedicated country soft-feed vocabulary, copied verbatim from
+	// the repo source. Ships alongside the gazetteer lexicon for models whose card carries requires.country.
+	if (SOURCE_COUNTRY) {
+		if (!(await exists(SOURCE_COUNTRY))) {
+			throw new Error(`Missing country lexicon: ${SOURCE_COUNTRY}\nSet softFeed.countryLexicon in release.config.json.`)
+		}
+		const dest = resolve(dir, "country-surface-lexicon-v1.json")
+		await removeIfPresent(dest)
+		await copyFile(SOURCE_COUNTRY, dest)
+		process.stderr.write(`copied soft-feed → ${workspace}/country-surface-lexicon-v1.json\n`)
 	}
 
 	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode shard. The locale's

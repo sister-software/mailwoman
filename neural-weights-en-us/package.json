@@ -16,6 +16,7 @@
 		"calibration-per-locale.json",
 		"postcode-us.bin",
 		"anchor-lexicon-v1.json",
+		"country-surface-lexicon-v1.json",
 		"README.md"
 	],
 	"publishConfig": {
