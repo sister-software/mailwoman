@@ -127,15 +127,21 @@ def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tup
 
 
 def span_rows_from_corpus(
-    parquet_glob: str, countries: set[str] | None, cap: int, tag: str = "street"
+    parquet_glob: str, countries: set[str] | None, cap: int, tag: str = "street", max_parts: int | None = None
 ) -> dict[str, list[str]]:
-    """Bare surfaces of one span tag per country (countries=None -> ALL), lifted from an existing corpus."""
+    """Bare surfaces of one span tag per country (countries=None -> ALL), lifted from an existing corpus.
+
+    ``max_parts`` bounds the scan: without it, a REQUESTED country that is SPARSE in the corpus (e.g. DE
+    streets) never hits ``cap*2``, so the ``done`` break never fires and the loop walks all ~700 parts
+    (263M rows) — a 90+ min hang measured 2026-07-14. Bound the scan for such calls; the source-ordered
+    corpus surfaces enough of the common countries in the first N parts.
+    """
     rng = random.Random(f"{SEED}:corpus")
     out: dict[str, set[str]] = {c: set() for c in countries} if countries else {}
 
     done = False
 
-    for path in sorted(globlib.glob(parquet_glob, recursive=True)):
+    for path in sorted(globlib.glob(parquet_glob, recursive=True))[:max_parts]:
         if done:
             break
 
@@ -609,8 +615,11 @@ def main() -> None:
     country_seed_countries = {"US", "FR", "DE"}
     number_first = {"US", "GB", "CA", "FR"}  # NUMBER STREET; the rest (DE/IT/ES/AT/…) are STREET NUMBER
     country_cap = min(args.per_locale_cap, 1500)
+    # Bound the scan (max_parts) — DE streets are sparse in the corpus, so an unbounded scan walks all
+    # 700 parts hunting a cap it never reaches (the 2026-07-14 90-min hang). 120 parts surfaces plenty
+    # of US/FR and whatever DE the head carries.
     country_seed_streets = span_rows_from_corpus(
-        args.corpus_parquet_glob, country_seed_countries, country_cap, tag="street"
+        args.corpus_parquet_glob, country_seed_countries, country_cap, tag="street", max_parts=120
     )
     country_rng = random.Random(f"{SEED}:countryrows")
     country_rows = 0
