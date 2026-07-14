@@ -1,6 +1,9 @@
 ---
 title: UN/LOCODE Lookup
 id: un-locode-lookup
+role: guide
+audience: product-reader
+source-of-truth: un-locode-lookup/index.ts, un-locode-lookup/build.ts, un-locode-lookup/cli.ts
 ---
 
 A **UN/LOCODE** is the UNECE's code for a trade-and-transport location — `US NYC` for New York, `NL RTM` for Rotterdam. If you're moving freight, filing customs, or matching a shipping record to a place, you need these codes, and you usually have either a place name or a coordinate to start from. The [`@mailwoman/un-locode-lookup`](https://www.npmjs.com/package/@mailwoman/un-locode-lookup) package goes both ways, over the UNECE code list in a `node:sqlite` database.
@@ -17,13 +20,13 @@ npx @mailwoman/un-locode-lookup build --csv code-list.csv --out un-locode.db
 
 ## CLI usage
 
-By country and place name, or by nearest coordinate:
+By country and place name, or by nearest coordinate. The coordinate form needs a leading `--` before the negative longitude, or the CLI's flag parser reads `-74.0060` as an unknown option:
 
 ```bash
 npx @mailwoman/un-locode-lookup --db un-locode.db --country NL --name "Rotterdam"
 # {"unLocode":"NL RTM"}
 
-npx @mailwoman/un-locode-lookup --db un-locode.db --near 40.7128 -74.0060
+npx @mailwoman/un-locode-lookup --db un-locode.db -- 40.7128 -74.0060
 # {"unLocode":"US NYC"}
 ```
 
