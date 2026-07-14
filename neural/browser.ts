@@ -22,6 +22,11 @@ export * from "./postcode-binary-resolver.ts"
 // model and feeds the clue at inference (gazetteer-trained models REQUIRE it; zero-filled clues are
 // the measured train/inference mismatch — see CONTRIBUTING_MODEL_WORK.mdx "zero-fill trap").
 export * from "./gazetteer-inference.ts"
+// Browser-safe country-lexicon channel (#1104): the dedicated country soft-feed parser + feature
+// builder (`[country_surface, country_ambiguous]`). Pure JS over a JSON lexicon — the demo fetches
+// country-surface-lexicon-v1.json alongside the model and feeds it (country-channel models, v6.2.0+,
+// REQUIRE it: the ONNX declares `country_features` and zero-filled clues are the train/inference mismatch).
+export * from "./country-inference.ts"
 // Browser-safe soft-feature choreography (#718): the pure `buildSoftFeatures` that composes the
 // anchor + gazetteer channels (+ near-postcode suppression). No `fs`. The Node-only `./scorer` (which
 // constructs the ONNXRunner + reads the card/lookup/lexicon from disk) is deliberately NOT re-exported

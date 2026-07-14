@@ -19,7 +19,7 @@
  *   - The optional `locale_logits` output (v4.3.0+ locale head) surfaces as `localeLogits`.
  */
 
-import { ANCHOR_FEATURE_DIM, GAZETTEER_FEATURE_DIM } from "@mailwoman/neural/browser"
+import { ANCHOR_FEATURE_DIM, COUNTRY_FEATURE_DIM, GAZETTEER_FEATURE_DIM } from "@mailwoman/neural/browser"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
@@ -162,6 +162,61 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(Object.keys(feeds).sort()).toEqual(["attention_mask", "input_ids"])
 	})
 
+	// #1104 country channel — v6.2.0+ models declare `country_features`/`country_confidence`. The runner
+	// must feed them (real or zero-filled) exactly like the gazetteer channel, else ORT throws.
+	test("country-channel graph (v6.2.0+) + NO country provided → zero-filled structural fallback, not a throw", async () => {
+		const session = mockSession([
+			"input_ids",
+			"attention_mask",
+			"anchor_features",
+			"anchor_confidence",
+			"gazetteer_features",
+			"gazetteer_confidence",
+			"country_features",
+			"country_confidence",
+		])
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+
+		// Pre-wiring this rejected with ORT's `input 'country_features' is missing in 'feeds'` (the v263 browser break).
+		const result = await runner.infer([5, 6, 7])
+		expect(result.logits.length).toBe(3)
+
+		const feeds = session.runCalls[0]!
+		expect(feeds.country_features!.dims).toEqual([1, SEQ, COUNTRY_FEATURE_DIM])
+		expect(feeds.country_confidence!.dims).toEqual([1, SEQ])
+		expect((feeds.country_features!.data as Float32Array).every((v) => v === 0)).toBe(true)
+		expect((feeds.country_confidence!.data as Float32Array).every((v) => v === 0)).toBe(true)
+	})
+
+	test("caller-provided country features are fed through verbatim", async () => {
+		const session = mockSession(["input_ids", "attention_mask", "country_features", "country_confidence"])
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+
+		const countryRow = [1, 0] // [country_surface, country_ambiguous], featureDim = 2
+		await runner.infer([5, 6], undefined, undefined, {
+			features: [countryRow, countryRow.map(() => 0)],
+			confidence: [1, 0],
+		})
+
+		const feeds = session.runCalls[0]!
+		const cf = feeds.country_features!.data as Float32Array
+		expect(Array.from(cf.subarray(0, COUNTRY_FEATURE_DIM))).toEqual(countryRow)
+		expect(Array.from(cf.subarray(COUNTRY_FEATURE_DIM, 2 * COUNTRY_FEATURE_DIM))).toEqual([0, 0])
+		const cc = feeds.country_confidence!.data as Float32Array
+		expect(cc[0]).toBe(1)
+		expect(cc[1]).toBe(0)
+	})
+
+	test("plain graph (no country inputs) + country features provided → clue is NOT fed", async () => {
+		const session = mockSession(["input_ids", "attention_mask"])
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+
+		await runner.infer([5], undefined, undefined, { features: [[1, 0]], confidence: [1] })
+
+		const feeds = session.runCalls[0]!
+		expect(Object.keys(feeds).sort()).toEqual(["attention_mask", "input_ids"])
+	})
+
 	test("locale_logits output surfaces as `localeLogits` when the graph exports it", async () => {
 		mockSession(["input_ids", "attention_mask"], { localeLogits: [0.25, 0.5, 0.125, 0.125] })
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
@@ -195,5 +250,17 @@ describe("defaultGazetteerLexiconURL", () => {
 		)
 		// Relative URLs stay relative.
 		expect(defaultGazetteerLexiconURL("/static/mailwoman/model.onnx")).toBe("/static/mailwoman/anchor-lexicon-v1.json")
+	})
+})
+
+describe("defaultCountryLexiconURL", () => {
+	test("derives the sibling country-surface-lexicon-v1.json beside the model URL", async () => {
+		const { defaultCountryLexiconURL } = await import("./loader.ts")
+		expect(defaultCountryLexiconURL("https://public.sister.software/mailwoman/en-us/v6.2.0/model.onnx")).toBe(
+			"https://public.sister.software/mailwoman/en-us/v6.2.0/country-surface-lexicon-v1.json"
+		)
+		expect(defaultCountryLexiconURL("/static/mailwoman/model.onnx")).toBe(
+			"/static/mailwoman/country-surface-lexicon-v1.json"
+		)
 	})
 })

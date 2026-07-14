@@ -15,10 +15,12 @@
 
 import {
 	type AnchorLookup,
+	type CountryLexicon,
 	type GazetteerLexicon,
 	MailwomanTokenizer,
 	NeuralAddressClassifier,
 	type NeuralAddressClassifierConfig,
+	parseCountryLexicon,
 	parseGazetteerLexicon,
 	PostcodeBinaryResolver,
 } from "@mailwoman/neural/browser"
@@ -79,6 +81,15 @@ export interface LoadFromURLsOptions {
 	 * Pass `null` to skip the fetch entirely.
 	 */
 	gazetteerLexiconURL?: string | null
+	/**
+	 * URL to the country-surface lexicon JSON (`country-surface-lexicon-v1.json`, #1104 — the in-repo source is
+	 * `data/gazetteer/country-surface-lexicon-v1.json`). Country-channel models (v6.2.0+, whose ONNX declares the
+	 * `country_features`/`country_confidence` inputs) REQUIRE this clue at inference — same zero-fill trap as the
+	 * gazetteer. Defaults to `country-surface-lexicon-v1.json` next to `modelURL`; a fetch miss does NOT throw, but a
+	 * country-trained model with no lexicon runs country-off (loud `console.error`, structurally valid). Pass `null` to
+	 * skip.
+	 */
+	countryLexiconURL?: string | null
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent to a postcode-anchor
 	 * hit. Defaults to TRUE — it pairs with the train-time half on every gazetteer-trained bundle (v4.2.0+) and is inert
@@ -146,6 +157,14 @@ export function defaultGazetteerLexiconURL(modelURL: string): string {
 }
 
 /**
+ * Default location of the country-surface lexicon (#1104): `country-surface-lexicon-v1.json` as a sibling of the model
+ * file — the release bundle lays it out beside anchor-lexicon-v1.json.
+ */
+export function defaultCountryLexiconURL(modelURL: string): string {
+	return modelURL.replace(/[^/]*$/, "country-surface-lexicon-v1.json")
+}
+
+/**
  * Convenience factory: fetch model + tokenizer, build the runner, return a classifier. The tokenizer is loaded via the
  * existing `loadFromBase64` path so this file shares zero Node-only code with `@mailwoman/neural/classifier`'s
  * `loadFromWeights`.
@@ -164,12 +183,15 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 	const gazetteerLexiconURL =
 		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
+	const countryLexiconURL =
+		opts.countryLexiconURL === null ? null : (opts.countryLexiconURL ?? defaultCountryLexiconURL(opts.modelURL))
 
-	const [modelBytes, tokenizerBytes, labels, gazetteerLexicon] = await Promise.all([
+	const [modelBytes, tokenizerBytes, labels, gazetteerLexicon, countryLexicon] = await Promise.all([
 		fetchBytes(opts.modelURL, fetchImpl),
 		fetchBytes(opts.tokenizerURL, fetchImpl),
 		opts.modelCardURL ? fetchLabelsFromModelCard(opts.modelCardURL, fetchImpl) : Promise.resolve(null),
 		gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
+		countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
 	])
 
 	const [tokenizer, runner, postcodeAnchorLookup] = await Promise.all([
@@ -191,6 +213,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(labels ? { labels } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
+		...(countryLexicon ? { countryLexicon } : {}),
 		suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? true,
 		...(conventions ? { addressSystemConventions: conventions } : {}),
 		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
@@ -199,6 +222,8 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	warnOnUnfedTrainedChannels(runner, {
 		gazetteerLexicon,
 		gazetteerLexiconURL,
+		countryLexicon,
+		countryLexiconURL,
 		postcodeAnchorLookup,
 	})
 
@@ -217,12 +242,26 @@ function warnOnUnfedTrainedChannels(
 	fed: {
 		gazetteerLexicon: GazetteerLexicon | null
 		gazetteerLexiconURL: string | null
+		countryLexicon: CountryLexicon | null
+		countryLexiconURL: string | null
 		postcodeAnchorLookup: AnchorLookup | undefined
 	}
 ): void {
 	const inputNames = runner.inputNames
 
 	if (!inputNames) return
+
+	if (inputNames.includes("country_features") && !fed.countryLexicon) {
+		console.error(
+			"[mailwoman/neural-web] This model is country-channel-trained (its ONNX declares `country_features`) " +
+				"but no country lexicon was loaded" +
+				(fed.countryLexiconURL
+					? ` — \`country-surface-lexicon-v1.json\` could not be fetched from ${fed.countryLexiconURL}. ` +
+						"Upload the lexicon next to model.onnx, or pass `countryLexiconURL` explicitly."
+					: " — `countryLexiconURL` was explicitly disabled (null). ") +
+				" Running with zero-filled country clues: country tagging will be degraded (train/inference mismatch)."
+		)
+	}
 
 	if (inputNames.includes("gazetteer_features") && !fed.gazetteerLexicon) {
 		console.error(
@@ -263,6 +302,25 @@ async function fetchGazetteerLexicon(url: string, fetchImpl: typeof fetch): Prom
 	if (!res.ok) return null
 
 	return parseGazetteerLexicon((await res.json()) as Parameters<typeof parseGazetteerLexicon>[0])
+}
+
+/**
+ * Fetch + parse `country-surface-lexicon-v1.json` (#1104). Same contract as `fetchGazetteerLexicon`: a missing file
+ * returns null (matters iff the model declares `country_features`); a present-but-malformed lexicon throws via
+ * `parseCountryLexicon`'s validation.
+ */
+async function fetchCountryLexicon(url: string, fetchImpl: typeof fetch): Promise<CountryLexicon | null> {
+	let res: Response
+
+	try {
+		res = await fetchImpl(url)
+	} catch {
+		return null
+	}
+
+	if (!res.ok) return null
+
+	return parseCountryLexicon((await res.json()) as Parameters<typeof parseCountryLexicon>[0])
 }
 
 /**
