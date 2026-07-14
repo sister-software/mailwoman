@@ -108,7 +108,7 @@ After training, the **eval** stage runs the model against the held-out golden se
 - Decode the BIO labels back into component strings (find the contiguous spans, slice out the original characters).
 - Compare to the gold components.
 
-The output is a markdown report and a JSON dump under `docs/articles/evals/`. Per-component precision, recall, F1, plus an overall "exact match" rate and a calibration histogram (does confidence match accuracy?).
+The output is a markdown report and a JSON dump under `docs/articles/evals/`. Per-component [precision, recall, F1](./quality-and-evaluation.mdx), plus an overall "exact match" rate and a calibration histogram (does confidence match accuracy?).
 
 The eval report is committed to git as part of the ship PR — see [the latest Tier 2 ship's eval report](../evals/model-versions/stage2-step-001800-eval.mdx) for the v3.0.0 numbers (filename preserves the historical "stage2" naming).
 

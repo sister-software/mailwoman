@@ -43,7 +43,7 @@ Dutch: `Gondel 2695, Lelystad` — area Gondel, street 26, number 95. No separat
 
 London has seventeen different High Streets. Without a postcode, `10 High Street, London` is ambiguous across seventeen locations. The resolver needs the postcode or locality to disambiguate, but the parser may have already assigned `locality=London` to all seventeen.
 
-This is the same problem as duplicate locality names (Springfield, Paris) but at a finer grain. The resolver's concordance scoring (Stage 5) handles this by checking whether a `(street, locality, region, postcode)` tuple is jointly coherent in WOF — but WOF does not index street names, only administrative places. Street duplication is outside the resolver's concordance reach.
+This is the same problem as duplicate locality names (Springfield, Paris) but at a finer grain. The resolver's concordance scoring (Stage 5) handles this by checking whether a `(street, locality, region, postcode)` tuple is jointly coherent in WOF — but [WOF does not index street names](../../concepts/wof-hierarchy-gap.mdx), only administrative places. Street duplication is outside the resolver's concordance reach.
 
 ### "A road has exactly one name."
 
@@ -81,7 +81,7 @@ The staged pipeline addresses the falsehoods in layers:
 
 ## What Mailwoman still can't do
 
-- **Dependent streets.** The schema has no `dependent_street` tag. `6 Elm Avenue, Runcorn Road` would parse as `street=Runcorn Road` with `Elm Avenue` either dropped or classified as a second street. The resolver cannot use dependent-street relationships because WOF doesn't encode them.
+- **Dependent streets.** The schema has no `dependent_street` tag. `6 Elm Avenue, Runcorn Road` would parse as `street=Runcorn Road` with `Elm Avenue` either dropped or classified as a second street. The resolver cannot use [dependent-street relationships](../../concepts/street-supplement-architecture.mdx) because WOF doesn't encode them.
 - **Street disambiguation without postcodes.** `10 High Street, London` is structurally ambiguous and the resolver cannot resolve it without a postcode or borough. The parser correctly identifies the components; the resolver correctly identifies the ambiguity. The downstream application must decide.
 - **Grid-based addressing.** Mannheim's `R 5, 6-13` requires block-and-row tags that Mailwoman's current schema does not have. Japan's `1-1-1` format is supported through the JP-specific tags (`district`, `block`, `sub_block`, `building_number`) but these are deferred to Phase 6.
 

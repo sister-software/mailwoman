@@ -158,7 +158,7 @@ interface PipelineOpts {
 }
 ```
 
-Joint reconcile requires a classifier with `parseWithLogits` support (the `NeuralAddressClassifier` has this) and the phrase grouper. It runs beam search over phrase proposals × classifier top-K × resolver candidates with WOF concordance scoring. It is **opt-in (default `false`)** — argmax is the default decode. Reconcile was retired as the default in [#566](https://github.com/sister-software/mailwoman/issues/566): graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0%. The code and A/B harnesses remain; set `jointReconcile: true` to opt back in (`forceJointReconcile` is the deprecated alias).
+[Joint reconcile](./concepts/joint-decoding-walkthrough.mdx) requires a classifier with `parseWithLogits` support (the `NeuralAddressClassifier` has this) and the phrase grouper. It runs beam search over phrase proposals × classifier top-K × resolver candidates with WOF concordance scoring. It is **opt-in (default `false`)** — argmax is the default decode. Reconcile was retired as the default in [#566](https://github.com/sister-software/mailwoman/issues/566): graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0%. The code and A/B harnesses remain; set `jointReconcile: true` to opt back in (`forceJointReconcile` is the deprecated alias).
 
 ## CLI
 
@@ -212,11 +212,11 @@ const lookup = new WOFWasmPlaceLookup({ db })
 const resolver = createWOFResolver(lookup as unknown as ResolverBackend)
 ```
 
-The demo at `/demo` is the reference browser integration.
+The demo at [`/demo`](https://mailwoman.sister.software/demo) is the reference browser integration.
 
 ## Component tags
 
-The full `ComponentTag` union (source of truth: `core/types/component.ts`):
+The full [`ComponentTag` union](./plan/reference/SCHEMA.mdx) (source of truth: `core/types/component.ts`):
 
 | Tag                  | Description            | Example            |
 | -------------------- | ---------------------- | ------------------ |

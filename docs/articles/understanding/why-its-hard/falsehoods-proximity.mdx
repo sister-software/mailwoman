@@ -98,7 +98,7 @@ The reverse geocode is answering "what place is at this coordinate?" not "what a
 
 **The resolver can return multiple candidates per address component.** `locality=Springfield` returns 34 candidates, each with a different coordinate. The downstream system can choose the one that matches additional context (state, postcode) or surface all of them. The resolver does not pretend to know which Springfield when it doesn't.
 
-**Confidence is per-component, not spatial.** The parser's confidence score is about the label — "I'm 95% sure this token is a locality" — not about the coordinate — "I'm 95% sure the locality is within 500 meters of this point." The resolver's score is about gazetteer match quality, not spatial accuracy. Separating these into different signals (label confidence, resolver match quality, spatial precision metadata) is future work.
+**[Confidence is per-component, not spatial](../../concepts/confidence-calibration.mdx).** The parser's confidence score is about the label — "I'm 95% sure this token is a locality" — not about the coordinate — "I'm 95% sure the locality is within 500 meters of this point." The resolver's score is about gazetteer match quality, not spatial accuracy. Separating these into different signals (label confidence, resolver match quality, spatial precision metadata) is future work.
 
 ## What Mailwoman still can't do
 

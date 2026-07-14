@@ -205,7 +205,7 @@ Item 3 is what this pipeline produces. Specifically:
 
 The WOF spot-check (2026-05-24) confirmed the raw `spr` table's parent_id chains are trustworthy (18/20 correct) but surfaced two findings the prepare pipeline needs to address:
 
-1. **Name aliasing**: "Saint Petersburg" not found via bare `name` lookup — WOF stores it as "St. Petersburg". The `variant`/`short` columns in `PlacetypeDataSource` are designed for exactly this; they just need to be populated.
+1. **Name aliasing**: "Saint Petersburg" not found via bare `name` lookup — [a known WOF gotcha](./whosonfirst-gotchas.mdx) — WOF stores it as "St. Petersburg". The `variant`/`short` columns in `PlacetypeDataSource` are designed for exactly this; they just need to be populated.
 2. **Disambiguation**: bare-name lookup without `parent_id` filtering picks the wrong record (a Nebraska village named "New York" outranks NYC by alphabetical ID ordering). The `find` query needs a `parent_id` filter or population-weighted ranking.
 
 Both findings are closed by completing the prepare pipeline (populates the variant columns) and using `PlacetypeDataSource.find` with appropriate criteria (filters by parent_id or placetype).

@@ -8,7 +8,7 @@ tags:
 
 # Record-matcher source-data catalog
 
-The public datasets the record-matcher resolves, their schemas, the column mappings, and the join keys.
+The public datasets [the record-matcher](../../concepts/geocode-first-record-matching.mdx) resolves, their schemas, the column mappings, and the join keys.
 These are **real public compliance/reporting datasets** with **no shared entity key across them** and heavy
 within-dataset repetition — resolving them into deduplicated, cross-linked entities is what makes them
 analyzable. Our scope is the **resolution**; whatever correlations surface are the data consumer's to

@@ -103,7 +103,7 @@ For a geocoder that consumes these databases, the maintenance burden is lower �
 
 The parser should not try to be a database — it should not store every address, or attempt to resolve "Springfield" to a coordinate without context.
 
-The parser's job is to **extract structured components from a string** — to say "this token is a locality, this token is a region, and their relationship to each other is administrative containment." The resolver's job is to look up those components in a gazetteer and return candidates with confidence scores. The resolver can be updated independently of the parser when gazetteers change.
+[The parser's job](../../concepts/how-mailwoman-parses-an-address.mdx) is to **extract structured components from a string** — to say "this token is a locality, this token is a region, and their relationship to each other is administrative containment." The resolver's job is to look up those components in a gazetteer and return candidates with confidence scores. The resolver can be updated independently of the parser when gazetteers change.
 
 A parser that tries to memorize addresses will be wrong on every address that changed since the training data was collected. A parser that learns the _structure_ of addresses — what tokens look like, how they group, what ordering patterns are statistically likely — will generalize to new addresses in new construction in renamed municipalities. The database fallacy is the belief that the first kind of parser can be made complete. It can't, and there's no reason to build one that tries.
 

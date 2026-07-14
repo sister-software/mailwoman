@@ -16,7 +16,7 @@ lies to you.
 
 The setup is the cleanest kind of held-out truth: the **NPI** (National Provider
 Identifier) is a stable, government-issued key, assigned once per registration.
-Run the matcher blind to the NPI, then grade its clusters against it. Two records
+Run [the matcher](./geocode-first-record-matching.mdx) blind to the NPI, then grade its clusters against it. Two records
 that share an NPI _should_ land together; a cluster fusing two NPIs is an
 over-merge; an NPI split across clusters is an under-merge. No labels, no
 adjudication — just count. Tempting, and on this registry, wrong by construction.

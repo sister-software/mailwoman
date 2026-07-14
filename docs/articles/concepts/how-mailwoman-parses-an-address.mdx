@@ -73,7 +73,7 @@ The split is consistent throughout: the facts (a gazetteer row, a postcode table
 
 ## Decoding a valid sequence and building the tree
 
-Reading off each piece's highest-scoring label can produce nonsense: a continuation label with no beginning, or a span that switches tags mid-word. A rule parser prevents this with ordering heuristics. Mailwoman prevents it with a validity table and a best-path search: `I-X` may only follow `B-X` or `I-X`, no sequence may open with a continuation, everything else is permitted. The Viterbi algorithm then finds the highest-scoring label sequence that obeys the table — considering the whole sequence at once, so a weak label at one position can be overruled by what fits its neighbors.
+Reading off each piece's highest-scoring label can produce nonsense: a continuation label with no beginning, or a span that switches tags mid-word. A rule parser prevents this with ordering heuristics. Mailwoman prevents it with a validity table and a best-path search: `I-X` may only follow `B-X` or `I-X`, no sequence may open with a continuation, everything else is permitted. The [Viterbi algorithm](./viterbi-and-bio-validity.mdx) then finds the highest-scoring label sequence that obeys the table — considering the whole sequence at once, so a weak label at one position can be overruled by what fits its neighbors.
 
 What ships is narrower than the textbook version: the validity table is hand-coded structure, not learned. Training scores each piece's label on its own, so no label-to-label preferences are learned, and none ship with the model. The model card's `crf_at_inference: true` refers to this Viterbi pass over the structural constraints — which is already a strict improvement over per-piece argmax, because orphan continuations ("Saint Petersburg" losing its "Saint") can't survive it.
 
@@ -95,7 +95,7 @@ Valid labels become spans, and spans become a tree. Each component attaches to t
 </address>
 ```
 
-This tree is the handoff. The resolver walks it top-down and decorates nodes with coordinates and attribution, scoping each child's lookup to its resolved parent — a `Springfield` under a resolved `Illinois` searches Illinois, not Massachusetts. Resolution is its own subject with its own machinery; the parse ends here.
+This tree is the handoff. The resolver walks it top-down and decorates nodes with coordinates and attribution, scoping each child's lookup to its resolved parent — a `Springfield` under a resolved `Illinois` searches Illinois, not Massachusetts. [Resolution is its own subject](./how-mailwoman-resolves-a-place.mdx) with its own machinery; the parse ends here.
 
 ## What one model covers, and how it fails
 

@@ -85,7 +85,7 @@ The full distribution is what the server-side resolver uses; the slim is what th
 
 ## 22% postcode placeholder problem
 
-Worth knowing because it has bitten Mailwoman's eval scores: WOF ships placeholder lat/lon `(0, 0)` for about 22% of US postcodes. The data quality is on WOF's roadmap to fix but the placeholders are real today.
+Worth knowing because it has bitten Mailwoman's eval scores: WOF ships placeholder lat/lon `(0, 0)` for about 22% of US postcodes — [a known WOF data-model quirk](./whosonfirst-gotchas.mdx). The data quality is on WOF's roadmap to fix but the placeholders are real today.
 
 Mailwoman's resolver drops any candidate whose coordinates are `(0, 0)` from results. The demo's `FailureDiagnostic` panel surfaces this case explicitly when a postcode-only query returns no usable hits ("WOF ships placeholder lat/lon for ~22% of US postcodes — known issue").
 

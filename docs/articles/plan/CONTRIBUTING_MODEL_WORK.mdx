@@ -36,7 +36,7 @@ hands.
   overrides it. We measured the override version and reversed it; read
   [Closed-vocab fields: model-first](./reference/closed-vocab-fields-model-first.mdx) before
   proposing a deterministic tagger.
-- **Format quirks both systems miss** (rare edge shapes): consider a query-shape route before a
+- **Format quirks both systems miss** (rare edge shapes): consider a [query-shape route](./reference/QUERY_SHAPE.mdx) before a
   shard — some formats are structurally different enough that routing beats tagging.
 - **Cross-locale grammar leakage** (a convention from one address system firing in another —
   USPS suffix logic on French streets): **a conventions row + the decode-time mask**, not a

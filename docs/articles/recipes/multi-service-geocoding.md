@@ -31,7 +31,7 @@ A local pass costs CPU time and nothing else, so "geocode all of it, twice if yo
 
 ## The routing decision
 
-Every result carries a `resolution_tier` plus a calibrated `uncertainty_m` radius. The tier is one of `address_point` (a rooftop or parcel point), `interpolated` (a house-number estimate along the street), `street` (a street centroid: the query named a street but no house number), or `admin` (a locality or region centroid) — see the [API reference](../api.mdx#drop-in-server-specifications-openapi-31) for the full response shape. Together they are the routing decision, made explicit per row. Partition on it:
+Every result carries a [`resolution_tier` plus a calibrated `uncertainty_m` radius](../concepts/how-close-is-close-enough.mdx). The tier is one of `address_point` (a rooftop or parcel point), `interpolated` (a house-number estimate along the street), `street` (a street centroid: the query named a street but no house number), or `admin` (a locality or region centroid) — see the [API reference](../api.mdx#drop-in-server-specifications-openapi-31) for the full response shape. Together they are the routing decision, made explicit per row. Partition on it:
 
 ```ts
 const kept = []

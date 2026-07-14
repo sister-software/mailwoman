@@ -9,7 +9,7 @@ hide_footer: true
 
 A Software Bill of Materials is a machine-readable inventory of everything a package ships and
 depends on — every transitive dependency, its version, and its license. We publish one for each
-release of the `mailwoman` package in **both** of the open SBOM standards, so downstream teams can
+[release](../releases.mdx) of the `mailwoman` package in **both** of the open SBOM standards, so downstream teams can
 run their own supply-chain, license, and vulnerability tooling against Mailwoman without taking our
 word for anything.
 
