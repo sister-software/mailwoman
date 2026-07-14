@@ -4,6 +4,8 @@ id: parallel-csv-ingest
 role: guide
 audience: product-reader
 source-of-truth: registry/ingest.ts, mailwoman/geocode-stream.ts, mailwoman/geocode-worker.ts
+prerequisites: "@mailwoman/registry; a CSV too big for memory; gazetteer data for the optional geocode stage"
+verified-with: mailwoman v6.1.0
 ---
 
 Someone hands you a national dataset as a single CSV — the NPPES provider registry (millions of rows), an FCC broadband availability drop, a state address export. You need every row normalized into the same shape, and ideally a coordinate on each one. Two things stand in the way: the file won't fit in memory, and geocoding a million addresses one after another takes hours. This recipe is the shape that handles both — a streaming normalize core you can hold in your head, plus an optional threaded geocode stage you bolt on only when the per-row cost earns it.

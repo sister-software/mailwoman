@@ -4,6 +4,8 @@ id: display-on-a-map
 role: guide
 audience: product-reader
 source-of-truth: registry/resolve.ts, registry/geojson.ts, registry/map-html.ts
+prerequisites: "@mailwoman/registry, plus resolved entities to plot"
+verified-with: mailwoman v6.1.0
 ---
 
 Coordinates in a JSON array tell you the geocoder worked. They don't tell you whether the _answers_ are right — that a cluster of clinics really sits where you'd expect, that the three records you merged into one entity actually share a building. For that you need to see them on a map, and you'd rather not stand up a tile server and a frontend to glance at a few hundred points.

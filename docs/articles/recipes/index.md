@@ -3,7 +3,7 @@ sidebar_title: Overview
 title: Recipes
 sidebar_position: 0
 hide_footer: true
-role: guide
+role: landing
 audience: product-reader
 source-of-truth: self
 ---
