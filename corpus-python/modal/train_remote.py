@@ -417,6 +417,53 @@ def sync_v6():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=1200,
+)
+def sync_v7():
+    """Pull the v0.10.8-fragment-v7 OVERLAY (#1104 country-counterweight fragment shard) + latest src from
+    R2. The 699 base shards persist on the volume from prior runs (the overlay MANIFEST re-roots them to
+    /data/v0.5.0 paths), so only the overlay dir + the config need pulling. Clears pycache, commits,
+    verifies the overlay + config landed before returning."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.10.8-fragment-v7 overlay + src from R2 (container-side, #1104)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+
+    overlay = f"{VOL_MOUNT}/corpus/versioned/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.9.1-country-leading.yaml"
+    manifest = os.path.isfile(f"{overlay}/MANIFEST.json")
+    frag = os.path.isfile(f"{overlay}/train/part-fragment.parquet")
+    base0 = os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/test/part-0000.parquet")
+    print(
+        f"  overlay MANIFEST: {manifest} | fragment shard: {frag} | v2.9.0 config: {os.path.isfile(cfg)} | base shard: {base0}"
+    )
+    if not (manifest and frag and os.path.isfile(cfg) and base0):
+        raise RuntimeError("sync verify FAILED — overlay/config/base missing on volume; do NOT launch")
+    print("\n#1104 v7 overlay sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=3600,
 )
 def sync_v080():
