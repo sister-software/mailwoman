@@ -93,6 +93,7 @@ export interface PublishHFOptions {
 	steps?: number
 	postcodes?: string
 	gazetteerLexicon?: string
+	countryLexicon?: string
 	polygons?: string
 	setDefault?: boolean
 	/** Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail. */
@@ -211,6 +212,14 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
 	}
 
+	// country-surface-lexicon-v1.json (#1104). REQUIRED for country-channel models (v6.2.0+, ONNX
+	// declares country_features + the card carries requires.country); ships beside anchor-lexicon-v1.json.
+	const countryLexicon = args.countryLexicon || null
+
+	if (countryLexicon && (!existsSync(countryLexicon) || statSync(countryLexicon).size === 0)) {
+		fail(`country lexicon ${countryLexicon} missing/empty`)
+	}
+
 	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
@@ -243,6 +252,12 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		const dst = `${BUCKET_PATH}/${remoteBase}/anchor-lexicon-v1.json`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", gazetteerLexicon, dst])
+	}
+
+	if (countryLexicon) {
+		const dst = `${BUCKET_PATH}/${remoteBase}/country-surface-lexicon-v1.json`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", countryLexicon, dst])
 	}
 
 	if (polygonsDb) {
