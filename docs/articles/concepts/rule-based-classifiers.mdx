@@ -119,7 +119,7 @@ Notes:
 - **Multi-word things.** N-gram sweeps work for 2- and 3-token cases. "Saint Petersburg, FL" is fine; "Mt Tabor Forest Preserve" (a 4-token venue) is harder.
 - **Negative evidence.** Rules can say "this looks like X". They cannot easily say "this looks like X but only in the absence of Y".
 
-These weaknesses are the motivation for the neural classifier. See [Neural classification](./neural-classification.mdx).
+These weaknesses are the motivation for the neural classifier. See [How the model reasons](./how-the-model-reasons.mdx).
 
 ## How rule classifiers and the neural classifier coexist
 
@@ -145,5 +145,5 @@ This is the Ship-of-Theseus pattern. The neural classifier earns each component 
 ## See also
 
 - [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — the components rule classifiers label
-- [Neural classification](./neural-classification.mdx) — the v2 alternative
+- [How the model reasons](./how-the-model-reasons.mdx) — the learned alternative, emissions through decode
 - [How it works now](../understanding/our-approach/how-it-works-now.mdx) — the hybrid in action
