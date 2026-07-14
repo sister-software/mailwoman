@@ -35,7 +35,7 @@ The `ComponentTag` → libpostal label mapping is close to 1:1 (`street` → `ro
 
 ## What's different
 
-- **A neural tagger, not a CRF.** The model is calibrated, so you also get a confidence you can route on
+- **A neural tagger, not a CRF.** The model is calibrated, so you also get [a confidence you can route on](./confidence-calibration.mdx)
   — and the same engine geocodes, so parse and resolve share one pipeline.
 - **Lowest-dependency drop-in.** `/parse` needs no gazetteer at all; it's just the model.
 

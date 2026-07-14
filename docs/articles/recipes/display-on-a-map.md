@@ -30,7 +30,7 @@ writeFileSync("map.html", html)
 
 ## What you're looking at
 
-The page renders on the house stack: MapLibre GL over a Protomaps vector basemap, the same one the demo map uses. Markers encode the resolution story: by default, colour shows how many source datasets agreed on an entity — a point that ≥2 datasets pinned stands out from a single-source one, which is the cross-dataset confirmation you're usually scanning for. If your reconciliation output tags each entity with a `bucket`, the map colours by that instead. You can force either with the `colorBy` option, and pick a basemap with `flavor`:
+The page renders on the house stack: MapLibre GL over a Protomaps vector basemap, the same one [the demo map](https://mailwoman.sister.software/demo) uses. Markers encode the resolution story: by default, colour shows how many source datasets agreed on an entity — a point that ≥2 datasets pinned stands out from a single-source one, which is the cross-dataset confirmation you're usually scanning for. If your reconciliation output tags each entity with a `bucket`, the map colours by that instead. You can force either with the `colorBy` option, and pick a basemap with `flavor`:
 
 ```ts
 toMapHTML(fc, { title: "Funded sites", flavor: "dark", colorBy: "sources" })

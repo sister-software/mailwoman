@@ -118,7 +118,7 @@ Input: "NY-NY Steakhouse, Houston, TX"
 Model: (sees full input) → first "NY" part of venue, second "NY" part of venue
 ```
 
-The model conditions on the surrounding tokens because the transformer's self-attention mechanism gives every token access to every other token's representation. "NY" next to "Steakhouse" is venue. "NY" next to "10001" is region. The model learns this distinction from corpus co-occurrence patterns.
+The model conditions on the surrounding tokens because the transformer's [self-attention mechanism](../../concepts/attention-and-bidirectional-context.mdx) gives every token access to every other token's representation. "NY" next to "Steakhouse" is venue. "NY" next to "10001" is region. The model learns this distinction from corpus co-occurrence patterns.
 
 ### 2. Multi-word span coherence
 

@@ -7,8 +7,8 @@ description: A capability comparison against the geocoders and parsers you might
 # How Mailwoman compares
 
 If you're geocoding addresses, you've already met the trade-off. The hosted APIs (Google, Mapbox,
-OpenCage) are easy to start with and bill you forever, with a key you have to guard and a rate limit you
-have to design around. The self-hosted stacks (Nominatim, Photon, Pelias) are free, but they ask you to
+[OpenCage](./switching-from-opencage.mdx)) are easy to start with and bill you forever, with a key you have to guard and a rate limit you
+have to design around. The self-hosted stacks ([Nominatim](./switching-from-nominatim.mdx), [Photon](./switching-from-photon.mdx), [Pelias](./switching-from-pelias.mdx)) are free, but they ask you to
 run PostgreSQL or Elasticsearch and feed it the planet before you can resolve a single address.
 
 Mailwoman is the calibrated neural parser plus a geocoder that runs from a SQLite file — and, when you
@@ -44,7 +44,7 @@ geocode in the browser. You get forward and reverse geocoding, autocomplete, and
 the same model — and the OpenCage-style **annotations** block (timezone, coordinate formats, calling
 code, flag, and more) attached to every result, which the other self-hosted stacks don't return at all.
 
-And when you're migrating, you don't rewrite your client. Point it at the matching package:
+And when you're migrating from Nominatim, Photon, or [libpostal](./switching-from-libpostal.mdx), you don't rewrite your client. Point it at the matching package:
 
 ```bash
 npx @mailwoman/nominatim serve   # Nominatim-compatible /search, /reverse, /lookup, /status

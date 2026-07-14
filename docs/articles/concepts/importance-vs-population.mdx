@@ -29,7 +29,7 @@ The Wikipedia importance score is derived from Nominatim's algorithm — Wikiped
 
 ## How they relate
 
-When the FST builder loads importance scores, it follows this fallback chain (`resolver-wof-sqlite/fst-builder.ts:134-152`):
+When the [FST builder](./fst-gazetteer-prior.mdx) loads importance scores, it follows this fallback chain (`resolver-wof-sqlite/fst-builder.ts:134-152`):
 
 1. **If `place_importance` exists**: use it directly. Each WOF place gets an `importance ∈ [0, 1]` from Wikipedia.
 2. **Else if `place_population` exists**: synthesize:

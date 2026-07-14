@@ -89,7 +89,7 @@ Venue-level:         venue / attention / po_box
 JP-specific:         prefecture / municipality / district / block / sub_block / building_number / building_name
 ```
 
-And the containment rules (`core/decoder/containment.ts`) wire those tags into a tree that _does_ have streets:
+And the [containment rules](./containment-and-tree-projection.mdx) (`core/decoder/containment.ts`) wire those tags into a tree that _does_ have streets:
 
 ```mermaid
 flowchart TB
@@ -136,7 +136,7 @@ This is the schema speaking. The model is doing the right thing under the wrong 
 
 ## Four layers that close the gap
 
-The supplement to WOF is not a single artifact. It's a stack:
+The [supplement](./street-supplement-architecture.mdx) to WOF is not a single artifact. It's a stack:
 
 ```mermaid
 flowchart TB

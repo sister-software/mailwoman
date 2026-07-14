@@ -32,7 +32,7 @@ This is how Google Maps, Apple Maps, and every ride-sharing app work. The user t
 
 ## What you lose
 
-- **Batch processing.** You cannot show suggestions to a million addresses in a CSV file. Human-in-the-loop requires a human. Batch geocoding requires a parser that works without one.
+- **[Batch processing](../../recipes/batch-geocoding.md).** You cannot show suggestions to a million addresses in a CSV file. Human-in-the-loop requires a human. Batch geocoding requires a parser that works without one.
 - **Automation.** Every address that needs human confirmation is a step in a workflow that could have been automatic. If 95% of addresses are unambiguous and 5% need confirmation, the 5% drives your support costs.
 - **The user's patience.** `Springfield, IL` has one obvious candidate. Showing a dropdown of 34 Springfields is noise. The system should recognize when there's a single high-confidence match and skip the confirmation. Knowing when to skip requires a confidence signal — which requires a parser.
 - **The user who doesn't know their address.** A gift recipient, a new mover, a tourist types what they think the address is, and it might be wrong. The system shows candidates, and the user picks whichever looks right — which can also be wrong. Without ground truth in the loop, this is just two layers of guessing.
@@ -52,3 +52,4 @@ This is the architecture behind the Phase 5 Studio: a web UI where humans correc
 - [Gazetteer-first geocoding](./simple-gazetteer-first.mdx) — another suggestion-engine approach
 - [How humans break addresses](../why-its-hard/how-humans-break-addresses.mdx) — the failure modes the human corrects
 - [How it will work](../our-approach/how-it-will-work.mdx) — Phase 5 Studio, the human-correction feedback loop
+- [The case for simple geocoders](./the-case-for-simple-geocoders.mdx) — the series index this article belongs to

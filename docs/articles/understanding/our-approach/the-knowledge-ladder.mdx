@@ -166,7 +166,7 @@ The implementation is beam search over `(span × tag × resolver)` with incremen
 
 Concrete cases this addresses:
 
-- **"NY-NY Steakhouse, Houston, TX"** — classifier tags NY twice as region (it appears twice in the venue brand). Resolver can't find a hierarchy where Houston, TX coexists with NY as a region. Stage 5 reweights the NY tokens toward `venue` (the classifier's second-best interpretation) because that's the only interpretation that's joint-coherent.
+- **["NY-NY Steakhouse, Houston, TX"](../../concepts/joint-decoding-walkthrough.mdx)** — classifier tags NY twice as region (it appears twice in the venue brand). Resolver can't find a hierarchy where Houston, TX coexists with NY as a region. Stage 5 reweights the NY tokens toward `venue` (the classifier's second-best interpretation) because that's the only interpretation that's joint-coherent.
 - **"Paris, Texas"** vs **"Paris, France"** — same locality classifier output, different hierarchy resolution. Stage 5's concordance scoring picks the Texas reading because the joint TX-region assignment matches Paris-TX's parent chain.
 - **"Saint Petersburg, FL"** — CRF prevents the orphan-I split; Stage 5 ensures the joint span resolves to St Pete, FL (not the Russian city), because FL is in St-Pete-FL's parent chain and Russia is not.
 

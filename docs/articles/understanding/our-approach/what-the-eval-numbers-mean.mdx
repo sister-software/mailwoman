@@ -5,7 +5,7 @@ title: What the eval numbers mean
 
 # What the eval numbers mean
 
-Mailwoman evaluates itself by running against a set of 4,535 hand-labelled addresses (the "golden set") and measuring how well each pipeline mode does. This article explains the four modes, the metrics, and what the v0.5.0 results mean — in plain terms.
+Mailwoman [evaluates itself](../../concepts/quality-and-evaluation.mdx) by running against a set of 4,535 hand-labelled addresses (the "golden set") and measuring how well each pipeline mode does. This article explains the four modes, the metrics, and what the v0.5.0 results mean — in plain terms.
 
 ## The four modes
 
@@ -80,4 +80,5 @@ The quality gap is in the neural classifier's per-component accuracy. This is ad
 - [The staged pipeline](./the-staged-pipeline.mdx) — how the four modes compose
 - [The knowledge ladder](./the-knowledge-ladder.mdx) — why each layer exists
 - [Dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.mdx) — why the training was unstable before and what fixed it
+- [Training-run charts](../../concepts/training-charts.mdx) — the loss curves behind these numbers
 - [v0.5.0 — as shipped](../../plan/v0-5-0-shipped.mdx) — what the six threads delivered

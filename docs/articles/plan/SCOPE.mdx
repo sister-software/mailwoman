@@ -20,11 +20,11 @@ the rules that hold each claim to evidence.
 
 ## Two workstreams, not one
 
-1. **The geocoder** — the staged pipeline (normalize → parse → resolve → coordinate), the
+1. **The geocoder** — the [staged pipeline](./reference/STAGES.mdx) (normalize → parse → resolve → coordinate), the
    drop-in API surfaces (`@mailwoman/{nominatim,photon,libpostal}` + annotations), the browser
    runtime, and the coverage/demo stack. The daily queue is
    [epic #488](https://github.com/sister-software/mailwoman/issues/488).
-2. **Record matching / entity resolution** — geocode-first matching of messy records to resolved
+2. **Record matching / entity resolution** — [geocode-first matching](../concepts/geocode-first-record-matching.mdx) of messy records to resolved
    places (`formatter` / `record` / `match` / `registry`; Fellegi–Sunter + the gated GBT scorer).
    Its own epics: [#598](https://github.com/sister-software/mailwoman/issues/598),
    [#602](https://github.com/sister-software/mailwoman/issues/602),
@@ -69,7 +69,7 @@ These are the disciplines the trajectory review said not to change, plus the two
    the released model ([#203](https://github.com/sister-software/mailwoman/issues/203)'s class —
    enforce structurally, in the release train, not by memory). A win that doesn't reach the demo
    is discounted to zero.
-3. **Pre-registered gates; falsified levers get reverted, not shipped.** The config is the
+3. **Pre-registered gates; [falsified levers get reverted, not shipped](../concepts/methodology.mdx).** The config is the
    contract; gate revisions are written, attributed, and operator-approved.
 4. **Repair retirement** ([#486](https://github.com/sister-software/mailwoman/issues/486)):
    every post-model patch shrinks at each consolidation. Decode-time overrides are scaffolding

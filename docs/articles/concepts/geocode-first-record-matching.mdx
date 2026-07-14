@@ -228,7 +228,7 @@ The four rules the geocoder already lives by govern the matcher too:
 
 Two records at the same address might be the same clinic — or two of the forty
 providers who share a hospital campus. The matcher's strongest precision lever is
-**inverse-address-frequency**: down-weight a shared address by how many distinct
+[inverse-address-frequency](./spatial-expectation-and-density.mdx): down-weight a shared address by how many distinct
 entities sit on it, so a lonely address is strong evidence of identity and a
 crowded one is nearly none. It's on by default.
 

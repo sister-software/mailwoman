@@ -42,3 +42,7 @@ If our work has helped you, please consider donating to Mailwoman's developer fu
 ## Commercial Usage
 
 A "[**commercial use license**](./commercial.md)" is mandatory as soon as you develop commercial activities involving the Mailwoman software without disclosing the source code of your own applications.
+
+## See also
+
+- [Software Bill of Materials](./sbom.md) — the machine-readable dependency inventory published for each release under this license

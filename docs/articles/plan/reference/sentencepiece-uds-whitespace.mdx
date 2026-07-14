@@ -18,3 +18,7 @@ Fix: substitute ` ` → `▁` (U+2581 LOWER ONE EIGHTH BLOCK) in every UDS liter
 Where this lives: corpus-python/src/mailwoman_train/tokenizer_train.py — `_normalize_uds_for_sp`. Test: corpus-python/tests/mailwoman_train/test_tokenizer_train.py::test_user_defined_postcode_kept_whole.
 
 Why it bites: there's no error log. SP silently treats the UDS as never-matching, and byte-fallback eats the result. If you're measuring byte-fallback rate (or pulling postcode UDS for must-keep-whole guarantees) and the rate looks higher than expected, check this first.
+
+## See also
+
+- [Tokenizer A0 — baseline](./tokenizer-a0-baseline.mdx) — the tokenizer retrain that hit this gotcha

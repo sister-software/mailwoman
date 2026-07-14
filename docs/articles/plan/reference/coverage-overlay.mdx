@@ -11,7 +11,7 @@
 A demo-map overlay that answers **"where do we need data"** at a glance — covered → clear (basemap shows through), uncovered → gray fog. Two layers in one tileset:
 
 1. **US rooftop fine map** — shades each US area by address-point density (street/block detail). The original overlay; reveals the "looks covered until you zoom in, then the gaps go gray" holes.
-2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, weighted by importance (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
+2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, [weighted by importance](./WIKIPEDIA_IMPORTANCE.mdx) (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
 
 - **Live:** `https://tiles.sister.software/coverage-v5.json` (XYZ vector tiles via the tile worker).
 - **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · honest fog_. The user picks one.
@@ -138,3 +138,7 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 3. **AK** — the antimeridian guard now DROPS wrapped hexes (so AK partial-renders if its shard is included); a proper fix splits the boundary at ±180 in `coverage-core.ts` instead of dropping.
 4. **Importance refresh cadence** — `place_importance` is built onto a WOF-DB copy; re-run `build-importance` when WOF or the Nominatim importance dump refreshes, then re-bake.
 5. **Browser perf** — the ~1 GiB / 59M-feature archive serves per-tile (fine in practice), but worth watching dense-metro z12 tile sizes if it feels slow.
+
+## See also
+
+- [Data, locales, and coverage](../../concepts/data-locales-and-coverage.mdx) — the coverage-claims concept page this overlay makes visible on the demo map

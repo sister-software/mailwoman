@@ -43,7 +43,7 @@ Franchise queries have three components: a **brand name**, an optional **sub-bra
 
 A geocoder that only matches "McDonald's" against an exact-string index will miss every slang and regional variant. A geocoder that matches all variants requires an **alias table** mapping user-facing terms to brand identifiers.
 
-The alias table isn't a translation dictionary — it maps every name people use for a chain onto one brand identifier, so "Macca's" in Australia, "Mickey D's" in the US, and "マクド" in Kansai all resolve to the same brand.
+The alias table isn't a translation dictionary — it [maps every name people use for a chain onto one brand identifier](../../concepts/synonymy-and-homonymy.mdx), so "Macca's" in Australia, "Mickey D's" in the US, and "マクド" in Kansai all resolve to the same brand.
 
 ## Sub-brand problem
 
