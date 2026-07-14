@@ -268,3 +268,10 @@ owns the geocoder, calibrates both, and then feeds that calibrated location,
 uncertainty and all, into a Fellegi-Sunter matcher as a quality-weighted
 feature. That's either a moat or a warning, and the only way to learn which is to
 build it and grade it against real clinic data. That's the work.
+
+## See also
+
+- [Record-matcher data catalog](./record-matcher-data-catalog.md) — what each source dataset is, where it lives, and how its columns map into the matcher
+- [Record-matcher sources (reference)](../plan/reference/record-matcher-sources.md) — the machine-readable source registry the catalog narrates
+- [Choosing the dedup yardstick](./dedup-entity-truth.mdx) — why org-name, not NPI, grades the matcher's decision surface
+- [Case study: cross-registry linking](./cross-registry-linking.mdx) — the same doctor in two federal registries, matched through the geocode
