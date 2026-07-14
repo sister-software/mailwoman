@@ -4,6 +4,8 @@ id: multi-service-geocoding
 role: guide
 audience: product-reader
 source-of-truth: api/schema.ts, mailwoman/geocode-core.ts
+prerequisites: a running mailwoman serve instance; a paid geocoder account for the fallback tier
+verified-with: mailwoman v6.1.0
 ---
 
 You have a table of addresses and a hosted geocoder that bills per request — every request, easy row or hard. At today's list prices that's somewhere between twenty cents and five dollars per thousand, depending on the provider and your volume. Multiply it out: a million-row table is $200 to $5,000 **per pass**, and if the table refreshes nightly, you buy it again tomorrow. The no-cost route caps you on rate instead: the public Nominatim server asks for at most one request per second, which puts the same million rows at eleven days.

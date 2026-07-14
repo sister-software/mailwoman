@@ -1,0 +1,63 @@
+# Quarterly docs freshness sweep (docs-architecture cleanup, Phase 4).
+#
+# Runs docs/scripts/list-stale-docs.ts — pages whose `review-by:` frontmatter date has
+# passed — and files the result as ONE issue titled "Docs freshness sweep", updating the
+# existing open issue in place rather than filing duplicates. Pages without `review-by:`
+# are skipped by design: the field is the opt-in that marks a page as maintained, so
+# archival evidence (eval reports, phase plans, retrospectives) is never churned.
+#
+# Quarterly = the 14th of Jan/Apr/Jul/Oct, matching the review-by cadence seeded on the
+# policy pages (first subjects come due 2026-10-14). No install, no build: the lister
+# runs on node built-ins straight off the checkout. workflow_dispatch is the manual
+# escape hatch to re-run a sweep after fixing pages.
+name: Docs freshness sweep
+
+on:
+  schedule:
+    - cron: "0 6 14 1,4,7,10 *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+# One sweep at a time, queued not cancelled: the find-then-edit/create issue lookup is not
+# atomic, so concurrent runs (a dispatch racing the cron) could each miss the other's issue
+# and double-file.
+concurrency:
+  group: docs-freshness
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: List pages past review-by
+        run: node docs/scripts/list-stale-docs.ts > sweep-body.md
+
+      - name: Open or update the sweep issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -s sweep-body.md ]; then
+            echo "No pages past review-by — nothing to file."
+            exit 0
+          fi
+          existing=$(gh issue list --state open --search '"Docs freshness sweep" in:title' --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Updating existing issue #$existing"
+            gh issue edit "$existing" --body-file sweep-body.md
+          else
+            gh issue create --title "Docs freshness sweep" --body-file sweep-body.md
+          fi

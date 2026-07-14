@@ -1,7 +1,9 @@
 # Build + deploy the Docusaurus docs site.
 #
-# On pull_request: build-only (catches broken links, MDX parse errors).
-# On push to main: build + deploy to GitHub Pages.
+# On pull_request: structure gate + build (catches broken links, MDX parse errors, and —
+# before any install — frontmatter/duplicate-title/orphan regressions via
+# docs/scripts/check-docs-structure.ts).
+# On push to main: same, then deploy to GitHub Pages.
 #
 # Binary assets (model.onnx, tokenizer.model, fst-en-US.bin, wof-hot.db) are
 # fetched at runtime from the HF Bucket (sister-software/mailwoman), NOT bundled
@@ -70,6 +72,15 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: yarn
+
+      # Fast structural gate (docs-architecture cleanup, Phase 4): frontmatter vocabulary +
+      # required fields, exact duplicate titles, orphan pages. Static parse over node built-ins
+      # only — no install, no build — so a structural regression fails in seconds instead of
+      # after the full Docusaurus build. Policy: docs/articles/contributing-docs.mdx.
+      # (--disable-warning: sidebars.ts is format-ambiguous — the docs workspace can't carry
+      # type:module without breaking the Docusaurus SSR bundle; see docs/scripts/package.json.)
+      - name: Docs structure checks
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check-docs-structure.ts
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable

@@ -1,0 +1,97 @@
+---
+title: Contributing to the docs
+description: Page roles, required frontmatter, when a new page is warranted, and how to retire one.
+role: reference
+audience: contributor
+source-of-truth: docs/scripts/check-docs-structure.ts, docs/superpowers/plans/2026-07-14-documentation-architecture-cleanup.md
+owner: docs maintainers
+review-by: 2026-10-14
+---
+
+# Contributing to the docs
+
+The rules below are the documentation-architecture policy in its contributor-facing form. CI enforces
+the structural parts (`docs/scripts/check-docs-structure.ts`, run by the Docs workflow on every PR
+that touches the site); the editorial parts are reviewer discipline. Run the gate locally with
+`yarn workspace @mailwoman/docs lint:structure`.
+
+## Declare the page's role
+
+Every maintained page declares what kind of page it is in frontmatter, and each role has a contract:
+
+| Role        | Reader need                           | Time horizon            | Canonicality              | Required frontmatter                           |
+| ----------- | ------------------------------------- | ----------------------- | ------------------------- | ---------------------------------------------- |
+| `guide`     | accomplish a task                     | evergreen               | one preferred path        | `audience`, `prerequisites`, `verified-with`   |
+| `tutorial`  | learn by doing                        | evergreen but versioned | one learning journey      | `audience`, `prerequisites`, `verified-with`   |
+| `concept`   | understand a stable idea              | evergreen               | one explanatory home      | `audience`, `source-of-truth`, `review-by`     |
+| `reference` | look up a precise contract            | release-bound           | authoritative             | `source-of-truth`, `generated-from` or `owner` |
+| `decision`  | understand an active choice           | active until superseded | links to accepted outcome | `status`, `owner`, `superseded-by` when closed |
+| `evidence`  | inspect a result or historical record | immutable/datestamped   | cited by maintained pages | `date`, `status`, `promoted-conclusions`       |
+
+One site-specific addition: `landing`, for pure navigation surfaces (the front door, a section
+index) — required field: `audience`.
+
+You don't have to backfill `role:` onto old pages. CI requires it on the entry pages, the four
+canonical concept pages, and every recipe, and validates the vocabulary and required fields anywhere
+it's declared. Add the fields when you touch a page.
+
+## Set `status:` when a record opens or closes
+
+The page chrome (`src/theme/DocItem/Content`) renders two `status:` values above the title:
+`active-decision` for an open design record, and `superseded` — always paired with a
+`superseded-by:` link to the successor. Pages in the Archive sidebar get a dated "Historical record"
+banner automatically, no frontmatter needed. See
+[Joint consistency resolution](./plan/2026-06-29-joint-consistency-resolution.mdx) for the rendered
+chrome. Free-text `status:` values are reserved for the dated eval records (a delegated workstream);
+everywhere else the vocabulary is enforced.
+
+## New page, or update a canonical one?
+
+Four concept pages own the recurring reader questions. If your material answers one of these, extend
+the owner — don't open a parallel page:
+
+- **How does parsing work?** → [How Mailwoman parses an address](./concepts/how-mailwoman-parses-an-address.mdx)
+- **How does a parse become a coordinate?** → [How Mailwoman resolves a place](./concepts/how-mailwoman-resolves-a-place.mdx)
+- **What's covered, where, from what data?** → [Data, locales, and coverage](./concepts/data-locales-and-coverage.mdx)
+- **How good is it, and how do we know?** → [Quality and evaluation](./concepts/quality-and-evaluation.mdx)
+
+A new page needs a reader question none of these owns — name that question in the PR description.
+Contracts belong in Reference; a duplicated explanation is a future contradiction.
+
+## Retiring a page
+
+- [ ] Move its sidebar entry to the Archive section in `sidebars.ts`. The file stays where it is —
+      the URL must not change, and the Archive banner takes over from there.
+- [ ] If a successor exists, set `status: superseded` and `superseded-by:` on the retired page.
+- [ ] Repoint inbound links from maintained pages to the successor.
+- [ ] Don't touch publicness. Reorganization never changes what's published: nothing excluded from
+      the build becomes public — and nothing public gets unpublished — as a side effect of a move.
+      Promoting an internal record to the public site is its own explicit decision, per page, with
+      operator sign-off, and only for records with no internal references, no security-sensitive
+      detail, and evidentiary value (a maintained page wants to cite them). Demotion is for mistakes, not age: a page leaves the
+      public site only if it should never have been public. Dated records keep their URLs and their
+      point-in-time content.
+
+## Editorial rules
+
+- **Analog first.** The core reader is a cartography/geodata practitioner. Introduce every learned
+  mechanism through the rule-world thing it replaces — gazetteer lookup before FST prior,
+  hand-written pattern before per-token score, tie-breaking heuristics before Viterbi — and keep
+  statistical depth one link away from the entry path.
+- **Captured outputs are executed, never hand-typed.** If a page shows a command's output, run the
+  command and paste what it printed. `verified-with:` records the version you ran it against.
+- **Release-bound numbers cite the shipped npm model.** Parameter counts, sizes, and scores come
+  from the published artifacts, and they're refreshed at release time —
+  ["Step 5 — refresh the docs' release-bound numbers" in RELEASING.md](https://github.com/sister-software/mailwoman/blob/main/RELEASING.md#step-5--refresh-the-docs-release-bound-numbers).
+- **Name the property.** The word "honest" (and its cluster) stays out of prose — say what the
+  page actually claims: the eval holds out the training data, the coverage number excludes
+  interpolation. Harness identifiers (`honest-eval`, `coverage-honest`) are exempt.
+
+## What CI checks
+
+`check-docs-structure.ts` fails a PR on: an unknown `role:`/`status:` value or a missing required
+field, an exact duplicate `title:` across the published site, and a page reachable by URL but absent
+from every sidebar. Deliberate exceptions live in `docs/scripts/docs-structure-allowlist.ts`, each
+with a reason. A quarterly sweep (`.github/workflows/docs-freshness.yml`) files one "Docs freshness
+sweep" issue listing pages whose `review-by:` date has passed — pages without `review-by:` are
+never swept, so archival evidence stays untouched.
