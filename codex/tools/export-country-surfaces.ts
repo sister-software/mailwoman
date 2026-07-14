@@ -26,7 +26,9 @@ for (const [iso2, forms] of Object.entries(COUNTRY_SURFACE_FORMS)) {
 }
 
 for (const [iso2, name] of ISO2_TO_NAME) {
-	if (!surfaces[iso2]) surfaces[iso2] = [name]
+	if (!surfaces[iso2]) {
+		surfaces[iso2] = [name]
+	}
 }
 
 const out = resolve(import.meta.dirname, "../../corpus-python/src/mailwoman_train/data/country-surfaces.json")
