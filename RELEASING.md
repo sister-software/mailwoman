@@ -412,12 +412,34 @@ against the real shipped weights, not a staging candidate:
    `docs/src/components/AboutDemo/AboutDemo.tsx`),
    `docs/articles/understanding/our-approach/from-pelias-to-mailwoman.mdx`, and
    `docs/articles/status.mdx` + `docs/articles/releases.mdx` (params, vocab size, int8/fp32 size —
-   byte-verify each against the artifact; don't trust the prose you're replacing).
+   byte-verify each against **the model card** `neural-weights-en-us/model-card.json`
+   (`architecture`, `format`, `files_md5`); don't trust the prose you're replacing. A fine-tune off
+   the same lineage often changes NONE of these — confirm via the card rather than assuming drift.
+   These are a **different measurement** from the npm package download/unpacked size quoted in
+   `getting-started.mdx` — get those from the registry, never by arithmetic: `npm view
+@mailwoman/neural-weights-en-us@<version> dist.unpackedSize` for the unpacked figure, and a
+   `curl -r 0-0` range-request (`content-range: bytes 0-0/<total>`) against the tarball URL for the
+   compressed download figure.
 2. **Re-run the docs' captured CLI examples** (`mailwoman parse`, `mailwoman geocode`, the
    `/v1/batch` curl captures) against the newly-promoted weights, and refresh only the output blocks
    whose real bytes changed — byte-exact, leave unchanged blocks and surrounding prose untouched.
-3. **Run the `mailwoman eval ledger-append` command** the promotion gate printed on its PASS output,
-   so `evals/scores-by-version.json` picks up the new row.
+   **On a fresh worktree/host, `link-dev-weights.ts` linking `model.onnx`/`tokenizer.model` is not
+   enough** — a model whose card `requires` an anchor/gazetteer/country channel also needs
+   `anchor-lexicon-v1.json` + `country-surface-lexicon-v1.json` (copy from this repo's own
+   `data/gazetteer/`) and any `postcode-<cc>.bin` in the weights package dir, or the capture runs
+   silently degraded through the legacy rule-only fallback (no error — a stderr banner names each
+   missing channel; if you don't see one, you didn't check hard enough). Re-verify the md5 guard
+   passes with no `#397 guard` error before trusting a capture.
+   **If the demo is deliberately held back on an older model** (its runtime doesn't yet feed a new
+   required input channel — see the 6.2.0 precedent below), the demo's own captured screenshots/text
+   stay on the OLD version; only the library/CLI/server captures move to the new one. Say so
+   explicitly in `status.mdx` rather than letting the version mismatch read as an oversight.
+3. **Check `evals/scores-by-version.json` for the new version's row** (`mailwoman eval
+ledger-append`, printed by the promotion gate on its PASS output, is what writes it) — but that
+   command is the OPERATOR's to run, from the session that held the gate's PASS output. If your task
+   is a docs-only refresh and you don't have that output in hand, don't fabricate or backfill the
+   row: verify presence/absence in the ledger and report it, and flag any still-missing prior
+   version's row you notice along the way (they accumulate silently otherwise).
 
 `status.mdx` and `releases.mdx` change together or not at all (each page says so) — a model
 promotion always touches both: a new row on the releases matrix, a re-verified banner on status.
