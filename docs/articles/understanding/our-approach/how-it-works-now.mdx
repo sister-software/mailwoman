@@ -76,7 +76,7 @@ Two kinds of classifier run in parallel:
 
 **Rule classifiers** (from Mailwoman v1): `house_number`, `postcode`, `whos_on_first`, `street_prefix`, `street_suffix`, and others. Deterministic, dictionary/regex-based. Correct for the bounded cases they cover.
 
-**Neural classifier**: a 9-million-parameter encoder-only transformer trained from scratch on Mailwoman's corpus. Emits per-token BIO labels using a 21-class vocabulary (country, region, locality, postcode, street, house_number, venue, and associated `I-` and `B-` variants). See [Neural classification](../../concepts/neural-classification.mdx).
+**Neural classifier**: a 9-million-parameter encoder-only transformer trained from scratch on Mailwoman's corpus. Emits per-token BIO labels using a 21-class vocabulary (country, region, locality, postcode, street, house_number, venue, and associated `I-` and `B-` variants). See [How the model reasons](../../concepts/how-the-model-reasons.mdx).
 
 The v0.5.0 classifier (Thread C-s) adds two architectural changes gated behind config flags:
 

@@ -116,7 +116,7 @@ Quebec Grill, Quebec City
 
 What breaks: a dictionary-based locality classifier (the standard Pelias approach) fires on `"London"` in `"London Drugs"` and on `"Paris"` in `"Paris Cafe"`. Now the parser has two locality proposals — one for the venue's name and one for the actual locality — and the solver may pick the wrong one.
 
-This is the bitter-lesson case for address parsing. A rule classifier cannot tell the difference; it needs context. A transformer encoder ([Neural classification](../../concepts/neural-classification.mdx)) sees the whole sentence and can learn that `"Paris"` followed by `"Cafe"` is part of a `venue` span, while `"Paris"` preceded by a comma and followed by `"Ontario"` is a `locality` span. The "Buffalo, NY / Buffalo Wild Wings, Buffalo, NY" pair is in Mailwoman's adversarial eval set for exactly this reason.
+This is the bitter-lesson case for address parsing. A rule classifier cannot tell the difference; it needs context. A transformer encoder ([How the model reasons](../../concepts/how-the-model-reasons.mdx)) sees the whole sentence and can learn that `"Paris"` followed by `"Cafe"` is part of a `venue` span, while `"Paris"` preceded by a comma and followed by `"Ontario"` is a `locality` span. The "Buffalo, NY / Buffalo Wild Wings, Buffalo, NY" pair is in Mailwoman's adversarial eval set for exactly this reason.
 
 Four field specimens, contributed by a conference attendee in Paris (July 2026) — all real venues, all with the toponym pointing the wrong way:
 
@@ -263,5 +263,5 @@ A geocoder that handles half of these well is already useful. A geocoder that ha
 
 - [What is an address?](../the-problem/what-is-an-address.mdx) — the data model these failure modes operate against
 - [Rule-based classifiers](../../concepts/rule-based-classifiers.mdx) — what regex-and-dictionary approaches can and cannot do
-- [Neural classification](../../concepts/neural-classification.mdx) — why a transformer encoder helps with the context-dependent cases
+- [How the model reasons](../../concepts/how-the-model-reasons.mdx) — why a transformer encoder helps with the context-dependent cases
 - [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) — how the candidate-search side handles ambiguity

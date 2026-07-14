@@ -1,0 +1,14 @@
+/**
+ * Record-class chrome (see ./index.tsx). The Infima `alert alert--warning|info` classes carry the
+ * light/dark palette; this module only slims the banner down from admonition scale to chrome
+ * scale — smaller type, tighter padding, no shadow — so it reads as page metadata, not content.
+ */
+
+.recordChrome {
+	--ifm-alert-padding-vertical: 0.5rem;
+	--ifm-alert-padding-horizontal: 0.75rem;
+	--ifm-alert-shadow: none;
+
+	margin-bottom: 1.25rem;
+	font-size: 0.875rem;
+}
