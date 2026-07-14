@@ -19,7 +19,7 @@ Every attempt to build a comprehensive address database has produced a partial, 
 
 ### The USPS AMS
 
-The US Postal Service maintains the **Address Management System** (AMS), the closest thing to a master list for US addresses. It contains every delivery point the USPS recognizes — about 165 million addresses. It is not public. It is licensed to commercial mailers under strict terms. It does not include addresses that USPS does not deliver to (many rural areas, some apartment buildings that use cluster boxes with non-standard numbering). It does not include the names people actually use for places — only the USPS-preferred form.
+The US Postal Service maintains the **Address Management System** (AMS), the closest thing to a master list for US addresses. It contains every delivery point the USPS recognizes — about 165 million addresses. It is not public. It is licensed to commercial mailers under strict terms. It does not include addresses that USPS does not deliver to (many rural areas, some apartment buildings that use cluster boxes with non-standard numbering). It does not include the names people use for places — only the USPS-preferred form.
 
 ### National address gazetteers
 
@@ -37,7 +37,7 @@ Each is built for a different purpose: postal delivery (USPS), land registration
 
 OSM's `addr:*` tags are volunteer-contributed, uneven in coverage, and structurally different from government gazetteers. OSM tags individual buildings (`addr:housenumber=12`, `addr:street=République`) rather than mailing addresses. An apartment building with 50 units is one OSM node with one housenumber. The mailing addresses for those 50 units (Apt 1A through Apt 5J) are not in OSM.
 
-OSM is excellent for what it is — a collaborative map of the physical world. It is not an address database and was never designed to be one.
+OSM is a collaborative map of the physical world, not an address database — it was never designed to be one.
 
 ### The union of all sources
 
@@ -101,11 +101,11 @@ For a geocoder that consumes these databases, the maintenance burden is lower �
 
 ## What this means for a parser
 
-The parser should not try to be a database. It should not store every address. It should not attempt to resolve "Springfield" to a coordinate without context.
+The parser should not try to be a database — it should not store every address, or attempt to resolve "Springfield" to a coordinate without context.
 
 The parser's job is to **extract structured components from a string** — to say "this token is a locality, this token is a region, and their relationship to each other is administrative containment." The resolver's job is to look up those components in a gazetteer and return candidates with confidence scores. The resolver can be updated independently of the parser when gazetteers change.
 
-A parser that tries to memorize addresses will be wrong on every address that changed since the training data was collected. A parser that learns the _structure_ of addresses — what tokens look like, how they group, what ordering patterns are statistically likely — will generalize to new addresses in new construction in renamed municipalities. The database fallacy is the belief that the first kind of parser can be made complete. The response is that it cannot, and it shouldn't try.
+A parser that tries to memorize addresses will be wrong on every address that changed since the training data was collected. A parser that learns the _structure_ of addresses — what tokens look like, how they group, what ordering patterns are statistically likely — will generalize to new addresses in new construction in renamed municipalities. The database fallacy is the belief that the first kind of parser can be made complete. It can't, and there's no reason to build one that tries.
 
 ## See also
 

@@ -10,7 +10,7 @@ tags:
 
 # Close-enough geocoding
 
-Not every application needs sub-meter accuracy. For most applications, "in the right city" is close enough. A geocode that places a customer in the correct metropolitan area is sufficient for market analysis, sales territory assignment, and regional logistics. The coordinate doesn't need to be correct — it needs to be useful.
+Not every application needs sub-meter accuracy. For most applications, "in the right city" is close enough. A geocode that places a customer in the correct metropolitan area is sufficient for market analysis, sales territory assignment, and regional logistics. The coordinate needs to be useful for the task, not necessarily correct.
 
 ## The approach
 
@@ -30,13 +30,13 @@ This is the economic argument for "close enough" — the cost of higher precisio
 
 ## What you lose
 
-- **The last mile.** A package placed at the ZIP centroid in rural Montana is 15 miles from the actual delivery point. The regional sort correctly routes it to the right post office. The carrier who delivers it knows the route. The geocode was wrong but the package arrived — because the postal system's last mile is human, not algorithmic.
-- **The false confidence of high precision.** A coordinate with 8 decimal places looks authoritative. It implies sub-millimeter accuracy. The consumer trusts it. A coordinate with 1 decimal place (10-kilometer precision) looks approximate. The consumer treats it accordingly. The high-precision coordinate may be less accurate than the low-precision one — the extra digits are noise, not signal — but the consumer trusts the precise-looking one more.
+- **The last mile.** A package placed at the ZIP centroid in rural Montana is 15 miles from the actual delivery point. The regional sort correctly routes it to the right post office, and the carrier who delivers it knows the route. The geocode was wrong, but the package arrived anyway, because the postal system's last mile is human, not algorithmic.
+- **The false confidence of high precision.** A coordinate with 8 decimal places looks authoritative and implies sub-millimeter accuracy, so the consumer trusts it. A coordinate with 1 decimal place (10-kilometer precision) looks approximate, so the consumer treats it accordingly. The high-precision coordinate may in fact be less accurate: the extra digits can be noise rather than signal, yet the consumer still trusts the precise-looking one more.
 - **The misuse case.** You built a geocoder for market analysis. Someone uses it for delivery routing. The geocoder was "close enough" for its intended use case. It is catastrophically wrong for the unintended one. The geocoder has no way to signal its intended precision level. The consumer has no way to know.
-- **The concentrated tail.** 90% of your addresses geocode to within acceptable precision. The 10% that don't are in rural areas, new construction, and informal settlements — the populations where precision matters most. "Close enough" for the average is "not close at all" for the edge.
+- **The concentrated tail.** 90% of your addresses geocode to within acceptable precision. The 10% that don't are concentrated in rural areas, new construction, and informal settlements — the populations where precision matters most and is hardest to get.
 - **The changing requirement.** You built a geocoder for statistical aggregation. Two years later, the business wants delivery routing. The geocoder that was "close enough" is now wrong by an order of magnitude. Retooling to higher precision requires rebuilding the geocoding infrastructure.
 
-## The precision spectrum
+## Precision spectrum
 
 Your application lives somewhere on this spectrum. Know where.
 

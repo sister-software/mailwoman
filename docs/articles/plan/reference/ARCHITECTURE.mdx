@@ -254,7 +254,7 @@ spaCy validates the family choice — when the industry-standard NER toolkit's f
 
 ### Multi-head extension (Phase 4+)
 
-The spaCy pipeline pattern — one shared encoder + multiple task heads — is a powerful future direction. Candidates if/when we want them:
+The spaCy pipeline pattern — one shared encoder + multiple task heads — is worth revisiting later. Candidates if/when we want them:
 
 - **Venue vs address-part head**: a binary classifier per token to help compositional disambiguation (`Buffalo Health Clinic Buffalo NY` — is "Buffalo" venue-token or locality-token?). Useful for [[project-mailwoman-bitter-lesson]]'s kryptonite cases.
 - **Locale detection head**: predicts `en-US` vs `fr-FR` vs `ja-JP` for the whole input, lets `LocaleDetector` (currently a separate concern) ride the same encoder.
@@ -290,7 +290,7 @@ None of these are Phase 0–3 scope. Filed for Phase 4 territory or beyond. spaC
 - **User-facing**: "A small ONNX model that reads an address string and tells you, with per-component confidence, what each piece of it means."
 - **For the bitter-lesson audience**: "The contextual-parser half of a contextual-parser-plus-constraint-solver geocoder front-end. The transformer proposes; the policy registry + solver dispose."
 
-Notably NOT: a translator (no language pair, no autoregressive output). Not a generative model.
+Not a translator (no language pair, no autoregressive output) and not a generative model.
 
 ## Training cadence vs. plan (2026-05-18 reframing)
 
@@ -298,10 +298,10 @@ The original phase plan (`phases/PHASE_2_training.md`) targeted a **single train
 
 Why the change:
 
-- **>95% F1 in one shot was aspirational.** Address parsing from scratch on a noisy real-world corpus is harder than that target acknowledged. Real ship gates are lower (~0.85 F1 on coarse components is useful in production with proper calibration).
+- **>95% F1 in one shot was aspirational.** Address parsing from scratch on a noisy real-world corpus is harder than that target acknowledged. Ship gates are lower (~0.85 F1 on coarse components is useful in production with proper calibration).
 - **Shipping below-target IS the bitter-lesson framing.** Per [[project-mailwoman-graceful-failure]], the success metric is graceful failure, not max F1. A 0.85-F1 model with 0.88 calibration in its conf>0.9 bucket is more useful than a 0.95-F1 model with 0.33 calibration (the v0.1.0 situation).
 - **Ship-of-Theseus coexistence makes shipping safe.** The neural classifier adds proposals alongside the rule classifiers via the policy registry; we don't have to wait for parity to start using it.
-- **Iteration > single-run.** Each cycle produces real artifacts: ONNX weights, model card, eval report, npm package shape, demo updates. Compounding wins.
+- **Iteration > single-run.** Each cycle produces artifacts: ONNX weights, model card, eval report, npm package shape, demo updates.
 
 ### Iteration history (live)
 
@@ -319,7 +319,7 @@ Why the change:
 
 A single training run is fixed-step-count, not fixed-epoch. v0.2.0's 50K steps × 128 effective batch = 6.4M examples seen ≈ **2.4% of the 263M-row corpus per pass**. Adding NAD (62M) + OA-CA (10M) + state backfills bumps the corpus to ~340M rows; same 50K steps still finishes in ~6.5-10h. The model is nowhere near training-data-limited; more corpus → more diversity per example seen, not more wall-clock.
 
-What ACTUALLY costs more time per iteration:
+What costs more time per iteration:
 
 1. **Vocabulary tier expansion** — adding venue/street/house_number labels requires adapter alignment updates (every adapter's `align.ts` emits the new labels where source data supports it) + golden set verification + corpus rebuild (~260 min). This is the bulk of v0.3.0 work.
 2. **CRF decoder + label smoothing** — small training-time additions, big calibration/coherence wins, lands in the same retrain.
@@ -327,7 +327,7 @@ What ACTUALLY costs more time per iteration:
 
 ### Re-framed success metric per iteration
 
-Not "did F1 hit 95%" but "is the artifact independently shippable and a measurable improvement over the prior iteration?" The eval ledger at `evals/scores-by-version.json` makes this empirical — every shipped run gets a row, with corpus + eval-set sha-pinning so the deltas are apples-to-apples.
+The metric per iteration is whether the artifact is independently shippable and a measurable improvement over the prior one, not whether F1 hit 95%. The eval ledger at `evals/scores-by-version.json` makes this empirical — every shipped run gets a row, with corpus + eval-set sha-pinning so the deltas are apples-to-apples.
 
 ## Why this shape
 
@@ -372,7 +372,7 @@ The corpus already carries `source` per-row (every alignment + augmentation tags
   (postcode "75005" :src wof-postalcode :conf 0.93))
 ```
 
-### Key insight: provenance is already flowing through training
+### Provenance is already flowing through training
 
 `source_weights` (shipped 2026-05-18 in PR #44) affects what the trained model emphasizes during training even though the model itself doesn't emit source labels. The Resolver at inference time **surfaces** what was implicit in training. The data path:
 

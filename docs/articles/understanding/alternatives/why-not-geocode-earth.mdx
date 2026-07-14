@@ -30,7 +30,7 @@ The key differences from Google:
 
 Geocode.earth's core selling point is that you can inspect the data, run it yourself, or pay them to run it for you. The hosted service is a convenience, not a lock-in.
 
-## The Pelias parser
+## Pelias parser
 
 Geocode.earth uses the same Pelias rule-based parser that Mailwoman v1 was forked from. This parser is:
 
@@ -45,7 +45,7 @@ It also has the same limitations that motivated Mailwoman's neural classifier:
 - **International fragility.** Every locale needs its own rule set, hand-written by someone who reads the language.
 - **No graceful degradation.** Rules match or don't — binary. There is no confidence gradient between "confident" and "guess."
 
-These are not bugs for geocode.earth's use case — Pelias on hosted infrastructure is fast, reliable, and good enough for most address formats. They are the reason Mailwoman exists as a separate project: building a neural parser that can learn from data rather than encoding every address shape as a rule.
+For geocode.earth's use case, these are acceptable tradeoffs: Pelias on hosted infrastructure is fast, reliable, and good enough for most address formats. They are also why Mailwoman exists as a separate project, built to learn from data rather than encode every address shape as a rule.
 
 ## Why not self-host Pelias?
 

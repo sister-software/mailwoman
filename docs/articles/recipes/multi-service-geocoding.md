@@ -12,7 +12,7 @@ You have a table of addresses and a hosted geocoder that bills per request — e
 
 None of that is a complaint about the services. OpenCage wraps aggregated open data in a pleasant API with friendly storage terms; Google's rooftop coverage is hard to beat; the public Nominatim instance is a donation to the commons that deserves the gentle use its policy asks for. The waste is on your side of the wire: most rows in a real table are ordinary, well-formed addresses that don't need a premium answer, and each one bills like the hard ones.
 
-So don't send them. Run Mailwoman on your own hardware as the first pass over everything, and spend money only on the residual — the rows the free pass couldn't pin well enough for your use case. By the end of this recipe you'll have that cascade wired up: geocode everything locally first, then route only what the free pass couldn't pin well enough to a paid API. What makes it practical is that Mailwoman's result tells you, per row, how good its answer is.
+So don't send them. Run Mailwoman on your own hardware as the first pass over everything, and spend money only on the residual. By the end of this recipe you'll have that cascade wired up: geocode everything locally first, then route only what the free pass couldn't pin well enough to a paid API. What makes it practical is that Mailwoman's result tells you, per row, how good its answer is.
 
 ## Pass one: everything, locally
 

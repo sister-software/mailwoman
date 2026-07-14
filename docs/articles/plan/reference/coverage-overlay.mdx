@@ -129,7 +129,7 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 - **DuckDB multi-ATTACH mis-binds.** `ATTACH`ing N sqlite DBs and `UNION ALL`-ing structurally-identical _aggregating_ subqueries (`h3_latlng_to_cell(…) … GROUP BY 1` per arm) silently binds every arm to the **first** attached DB (a 49-state build reported 3× CA's points in CA's cells). **Fix:** `UNION ALL` the **raw** columns, aggregate **once** in the outer query. (Already done in `coverage-core.ts` — don't undo it.)
 - **`.gitignore` bare `coverage` rule** (the vitest report dir) matches any dir named `coverage` at any depth — it was silently swallowing `mailwoman/commands/coverage/` and `cartographer/coverage/`. Scoped `!`-negations are in `.gitignore`; keep them or the command + module vanish from git/npm-publish.
 - **Don't serve PMTiles client-side.** XYZ via the tile worker only.
-- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale; it does NOT subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — honest, since a postcode IS coarse. Don't "finish" it to street level.
+- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale; it does NOT subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode IS coarse. Don't "finish" it to street level.
 
 ## Follow-ups / open work
 

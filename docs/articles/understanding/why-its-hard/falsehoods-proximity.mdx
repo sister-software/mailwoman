@@ -13,7 +13,7 @@ tags:
 
 _"Close enough" is a statement about your use case, not about the coordinate. A geocode that is correct for statistical aggregation may be catastrophically wrong for emergency dispatch. And the coordinate itself answers a question — "the front door" — that nobody bothered to define._
 
-## The falsehoods
+## Falsehoods
 
 ### "An address has one correct coordinate."
 
@@ -50,7 +50,7 @@ USPS delivery to a rural address: the mailbox is at the road, 200 meters from th
 
 A geocode that is "close enough" for market analysis (city-level) is wrong by 5 kilometers for last-mile delivery. A geocode that is "close enough" for delivery routing (street segment) is wrong by 50 meters for emergency dispatch. The same coordinate can be useful for one consumer and useless for another.
 
-The failure mode: a geocoder returns a coordinate at "95% confidence." The consumer assumes this means "within 5 meters of the front door." The geocoder meant "within the correct ZIP code." The consumer routes an ambulance to the ZIP centroid. The ambulance is 8 miles from the actual address.
+A geocoder returns a coordinate at "95% confidence." The consumer assumes this means "within 5 meters of the front door." The geocoder meant "within the correct ZIP code." The consumer routes an ambulance to the ZIP centroid, 8 miles from the actual address.
 
 ### "The geocode is the front door."
 

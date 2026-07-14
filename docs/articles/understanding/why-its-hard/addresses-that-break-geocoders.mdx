@@ -127,7 +127,7 @@ Four field specimens, contributed by a conference attendee in Paris (July 2026) 
 | `Shinjuku Pigalle`      | 52 Rue Condorcet, 75009 Paris              | a Tokyo ward and a Paris district in one name; the address contains neither   |
 | `Shinjuku`              | 166 Bd de Stalingrad, 94200 Ivry-sur-Seine | a bare foreign toponym as the whole venue name — the hardest call of the four |
 
-When we ran these against our own live endpoint the day we received them, three of four resolved confidently to the wrong continent — including one to Comer, Georgia, USA, a namesake nobody in the conversation had predicted (the Spanish verb "comer" happens to be a town). We publish that result rather than hide it: these cases are now tracked improvement targets in the release gauntlet, and the bare-`Shinjuku` case is annotated as irreducibly ambiguous — a lone toponym query plausibly _does_ mean Tokyo, and only conversational context says otherwise. The right output on that one is low confidence, not a lucky guess.
+We ran these against our own live endpoint the day we received them. Three of four resolved confidently to the wrong continent, including one to Comer, Georgia, USA — a namesake nobody in the conversation had predicted (the Spanish verb "comer" happens to be a town). These cases are now tracked as improvement targets in the release gauntlet. The bare-`Shinjuku` case is annotated as irreducibly ambiguous: a lone toponym query plausibly _does_ mean Tokyo, and only conversational context says otherwise, so the correct output there is a low-confidence result rather than a guessed coordinate.
 
 ## 5. Numeric chaos
 
@@ -257,7 +257,7 @@ Geocoders that report their failures openly — surface low confidence, return c
 | Unicode normalisation                   | NFC vs NFD                      | resolver normalises before lookup                                    |
 | Transliteration drift                   | "Beograd / Белград"             | WOF carries multi-language names; resolves to same ID                |
 
-A geocoder that handles half of these well is already useful. A geocoder that handles all of them does not exist.
+A geocoder that handles half of these well is already useful; none handles all of them.
 
 ## See also
 

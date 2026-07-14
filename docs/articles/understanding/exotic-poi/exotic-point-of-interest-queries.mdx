@@ -10,13 +10,13 @@ tags:
 
 # Exotic point-of-interest queries
 
-Not every geocoder query is an address. A large fraction of real-world searches ask for **points of interest** — named places, categories of things, brands, landmarks, and transit infrastructure. "Find the nearest gas station" is not an address. "Where is the Eiffel Tower?" is not an address. "Show me every Hilton in Manhattan" is not an address.
+Not every geocoder query is an address. A large fraction of real-world searches ask for **points of interest** — named places, categories of things, brands, landmarks, and transit infrastructure: "Find the nearest gas station," "Where is the Eiffel Tower?", "Show me every Hilton in Manhattan." None of these are addresses.
 
-These queries are structurally different from address queries. An address has ordered components (number, street, city, state, postcode) with predictable patterns. A POI query is a name, a category, or a category with a location constraint. The parser that handles `350 5th Ave, New York, NY 10118` will fail on `water fountain near me` — not because the parser is broken, but because the input is a fundamentally different kind of query.
+These queries are structurally different from address queries. An address has ordered components (number, street, city, state, postcode) with predictable patterns. A POI query is a name, a category, or a category with a location constraint. The parser that handles `350 5th Ave, New York, NY 10118` will fail on `water fountain near me` — not because the parser is broken, but because the input is a different kind of query.
 
 This series catalogues the categories of POI queries, how traditional geocoders handle them, and what Mailwoman's architecture does (and doesn't) do for each.
 
-## The categories
+## Categories
 
 | Query type                                          | Example                                                 | What the user wants                                                |
 | --------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -36,7 +36,7 @@ The right behavior for a POI query is:
 2. **Extract the POI type and location constraints.** `gas station near Springfield, IL` → POI type = `fuel`, location = `Springfield, IL`. The location constraint can be an address or place name, which Mailwoman can parse normally.
 3. **Resolve against a POI database.** The resolver needs a POI index (OSM amenities, WOF venues, a franchise location dataset) to answer "nearest gas station." Mailwoman's resolver currently indexes administrative places, not POIs.
 
-POI queries are the next frontier for Mailwoman after address parsing stabilizes. The architecture supports them — the staged pipeline can route POI queries to a different resolver — but the infrastructure (POI index, POI kind classifier, regional variant aliases) is not yet built.
+POI queries come after address parsing stabilizes. The architecture supports them — the staged pipeline can route POI queries to a different resolver — but the infrastructure (POI index, POI kind classifier, regional variant aliases) is not yet built.
 
 ## See also
 

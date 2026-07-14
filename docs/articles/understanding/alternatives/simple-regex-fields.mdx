@@ -43,7 +43,7 @@ This is not address parsing in the Mailwoman sense. It is field extraction with 
 
 Mailwoman's locale gate (Stage 2) and kind classifier (Stage 2.5) serve the same function as the positional anchor: "this is a US address in standard ordering." The difference is that Mailwoman learns the ordering from data rather than hardcoding it per country.
 
-A system that starts with regex-anchored field extraction can add Mailwoman as a **second pass for the extracted fields.** The regex extracts the street name; Mailwoman parses it into `street_prefix=W, street=Somerville, street_suffix=Ave`. The regex extracts the postcode; Mailwoman's resolver uses it as a search-space constraint. The regex does the heavy lifting on the structured parts; Mailwoman adds detail on the parts that need context.
+A system that starts with regex-anchored field extraction can add Mailwoman as a **second pass for the extracted fields.** The regex extracts the street name; Mailwoman parses it into `street_prefix=W, street=Somerville, street_suffix=Ave`. The regex extracts the postcode; Mailwoman's resolver uses it as a search-space constraint on top of that.
 
 ## See also
 

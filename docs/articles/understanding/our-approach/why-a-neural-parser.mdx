@@ -74,7 +74,7 @@ The model is the **contextual parser** half of a "contextual parser + constraint
 
 ## Why rules still exist
 
-Rules are not being replaced. They are being **augmented**.
+Rules are being augmented, not replaced.
 
 Mailwoman v2 keeps every rule classifier from v1:
 
@@ -134,7 +134,7 @@ Rules either match or don't — binary. The neural model outputs probabilities. 
 - **High confidence on locality/region, low confidence on street** → partial route with ambiguity flag.
 - **Low confidence everywhere** → escalate to manual review.
 
-This is the **graceful failure** that the operator's Paris, Texas talk described as the target behavior: "The mail carrier squinting at bad handwriting and figuring it out anyway." The model doesn't figure it out. It tells you it can't — and saying so is more useful than a confident wrong answer.
+This is the **graceful failure** that the operator's Paris, Texas talk described as the target behavior: "The mail carrier squinting at bad handwriting and figuring it out anyway." Unlike the mail carrier, the model doesn't figure out ambiguous input; it signals when it can't, and that signal is more useful downstream than a confident wrong answer.
 
 ## What the neural parser doesn't change
 
@@ -151,9 +151,9 @@ This section is a roadmap snapshot from the training-stability crisis of May 202
 
 :::
 
-As of May 2026, Mailwoman is actively working through training stability challenges described in the [v0.5.0 retrospective](pathname:///research/2026-05-24-v0-5-0-c-train-bisect). The architecture — the Knowledge Ladder, the phrase grouper, the reconciler, the staged pipeline — is in place. The training recipe is being refined to produce stable model weights on the expanded corpus.
+As of May 2026, Mailwoman is working through training stability challenges described in the [v0.5.0 retrospective](pathname:///research/2026-05-24-v0-5-0-c-train-bisect). The architecture — the Knowledge Ladder, the phrase grouper, the reconciler, the staged pipeline — is in place. The training recipe is being refined to produce stable model weights on the expanded corpus.
 
-The direction is not in question. The question is whether the current training approach can reach the architecture's potential — and that is an empirical question being answered right now in the training log.
+The architecture direction holds. What's open is whether the current training approach can reach its potential, a question the training log is answering in real time.
 
 ## See also
 

@@ -97,7 +97,7 @@ The output:
 
 To a consumer, this looks like a high-quality parse. Every component has high confidence. The address structure is valid (street prefix + locality + region). The fact that "Saint" should be part of the locality is invisible in the confidence numbers — each individual classifier did its job correctly.
 
-This is the confidence trap: **aggregating per-component confidence hides combination errors.** The parser is confident about each piece and wrong about the whole. The consumer trusts the high scores and routes the package to "Street address: Saint, City: Petersburg, FL" — which the USPS will reject or misroute.
+Aggregating per-component confidence hides combination errors — the parser is confident about each piece and wrong about the whole. The consumer trusts the high scores and routes the package to "Street address: Saint, City: Petersburg, FL," which the USPS will reject or misroute.
 
 ## Why rules can't fix it
 
@@ -157,7 +157,7 @@ The staged pipeline doesn't eliminate ambiguity. It moves the ambiguity to where
 - The classifier can still mis-type a span. But it has the full context of the input, rather than one token in isolation.
 - The reconciler can still pick a wrong joint interpretation. But it has resolver feedback — the world hierarchy is a constraint the traditional solver never had.
 
-The point is not that Mailwoman is perfect. The point is that the traditional pipeline has a structural ceiling: **context-free decisions that context-sensitive decisions downstream cannot reverse.** Mailwoman moves the context-sensitive decisions upstream, where they belong.
+The traditional pipeline has a structural ceiling: **context-free decisions that context-sensitive decisions downstream cannot reverse.** Mailwoman isn't perfect, but it moves the context-sensitive decisions upstream, where they belong.
 
 ## See also
 

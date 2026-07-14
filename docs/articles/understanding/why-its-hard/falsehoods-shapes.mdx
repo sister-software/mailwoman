@@ -10,15 +10,15 @@ tags:
 
 # Falsehoods programmers believe about address shapes and dimensions
 
-_An address is not necessarily a point on a map. It is not necessarily a polygon. It is not necessarily a discrete building. It is not necessarily at ground level. It is not necessarily the only address at its coordinates. And it is not necessarily stationary._
+_An address is not always a point on a map, a polygon, or a discrete building. It may not sit at ground level, may not be the only address at its coordinates, and may not stay in one place._
 
-## The falsehoods
+## Falsehoods
 
 ### "An address is a lat/lon point."
 
 Postcodes, rural routes, and descriptive addresses all represent areas or paths, not points. A ZIP code centroid in rural Montana is off by 10-15 miles from any actual delivery point. The centroid is a convenience for map rendering, not a geographic truth about the address.
 
-The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS does not publish ZIP code boundaries as polygons — they are carrier routes, not areas. A ZIP code follows the path a carrier walks. It does not enclose a region.
+The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS does not publish ZIP code boundaries as polygons — they are carrier routes, not areas. A ZIP code follows the path a carrier walks.
 
 UK postcodes cover ~15 addresses on average — effectively points. But UK postcode sectors (the first half of the postcode, e.g., `SW1A`) cover neighborhoods. The same postcode system produces both point-level and area-level resolution depending on which part you use.
 
@@ -69,7 +69,7 @@ Houseboats, ships, and mobile homes have addresses that move. A houseboat moored
 
 Offshore platforms have addresses but not fixed coordinates relative to land. A North Sea oil platform's address is its name and block number, not a lat/lon on a standard map projection. Military forward operating bases have addresses that exist only as long as the base exists.
 
-Douglas Perreault's condo in Florida changed address three times in a few years — same physical location, four different written addresses due to post office changes and block renaming. The address stayed still; the label moved around it.
+Douglas Perreault's condo in Florida changed address three times in a few years — same physical location, four different written addresses due to post office changes and block renaming.
 
 ### "An address has a street-facing entrance."
 
