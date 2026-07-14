@@ -156,6 +156,18 @@ non-latin:
   label: Non-Latin scripts
   description: Articles about CJK, Cyrillic, Arabic, Hangul, and other non-Latin address formats.
 
+record-matching:
+  label: Record matching
+  description: Articles about entity resolution, record linkage, deduplication, and the geocode-first matcher.
+
+eval:
+  label: Evaluation
+  description: Articles about evaluation methodology, metrics (F1, coordinate error), calibration, and parity scorecards.
+
+data-source:
+  label: Data source
+  description: Articles about external data providers — BAN, OpenAddresses, TIGER, OSM, NAD, Who's On First, and other gazetteer feeds.
+
 #endregion
 
 #region Theme

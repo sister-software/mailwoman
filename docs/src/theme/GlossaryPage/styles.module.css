@@ -1,0 +1,119 @@
+/* Tag filter bar */
+.tagFilterBar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	justify-content: center;
+	margin-bottom: 1.5rem;
+	padding: 0.75rem 1rem;
+	background: var(--ifm-color-emphasis-100);
+	border-radius: 0.5rem;
+}
+
+.tagButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.3rem 0.7rem;
+	font-size: 0.82rem;
+	font-weight: 500;
+	border: 1.5px solid var(--ifm-color-emphasis-300);
+	border-radius: 999px;
+	background: var(--ifm-background-color);
+	color: var(--ifm-color-emphasis-700);
+	cursor: pointer;
+	transition: all 0.15s ease;
+	user-select: none;
+	white-space: nowrap;
+}
+
+.tagButton:hover {
+	border-color: var(--ifm-color-primary);
+	color: var(--ifm-color-primary);
+}
+
+.tagButtonActive {
+	background: var(--ifm-color-primary);
+	border-color: var(--ifm-color-primary);
+	color: #fff;
+}
+
+.tagButtonActive:hover {
+	background: var(--ifm-color-primary-dark);
+	border-color: var(--ifm-color-primary-dark);
+	color: #fff;
+}
+
+.tagCount {
+	font-size: 0.7rem;
+	opacity: 0.75;
+}
+
+.tagClearAll {
+	font-size: 0.78rem;
+	padding: 0.3rem 0.8rem;
+	margin-left: 0.25rem;
+	border: 1.5px dashed var(--ifm-color-emphasis-400);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--ifm-color-emphasis-600);
+	cursor: pointer;
+	transition: all 0.15s ease;
+	white-space: nowrap;
+}
+
+.tagClearAll:hover {
+	border-color: var(--ifm-color-danger);
+	color: var(--ifm-color-danger);
+}
+
+/* Tag badges on term items */
+.termTags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+	margin-top: 0.6rem;
+	padding-top: 0.6rem;
+	border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.termTagBadge {
+	display: inline-block;
+	padding: 0.1rem 0.45rem;
+	font-size: 0.7rem;
+	font-weight: 500;
+	border-radius: 999px;
+	background: var(--ifm-color-emphasis-200);
+	color: var(--ifm-color-emphasis-700);
+	white-space: nowrap;
+}
+
+/* Active filter count badge */
+.activeFilterCount {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	text-align: center;
+	margin-bottom: 1rem;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .tagButton {
+	background: var(--ifm-background-surface-color);
+}
+
+[data-theme="dark"] .termTagBadge {
+	background: var(--ifm-color-emphasis-300);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.tagFilterBar {
+		gap: 0.35rem;
+		padding: 0.5rem 0.7rem;
+	}
+
+	.tagButton {
+		padding: 0.25rem 0.55rem;
+		font-size: 0.75rem;
+	}
+}
