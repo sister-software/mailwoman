@@ -1,0 +1,169 @@
+---
+title: "Failure report — shipped · v263"
+description: "Cross-model parser failure comparison over golden:dev — which address classes each candidate trades, and what stays beyond reach."
+date: 2026-07-14
+tags: [eval, failure-report]
+---
+
+# Parser failure report
+
+**Corpus** `golden:dev` · **4255** fixtures · **models** `shipped`, `v263`. Every gold label is graded (floor labels compare the street/prefix/suffix family); a fixture "fails" a label when the parse disagrees with the hand gold.
+
+> **Note:** golden gold uses the flat pre-split `street` schema, so the `street` row reads confounded here (the model splits prefix/street/suffix). `country` / `region` / `locality` / `postcode` / `house_number` are single-tag and valid — that is where a class trade shows.
+
+## Per-model failure count
+
+| model     | fixtures with ≥1 label failure | rate |
+| --------- | -----------------------------: | ---: |
+| `shipped` |                           1095 |  26% |
+| `v263`    |                           1101 |  26% |
+
+## Failures by label — the class each candidate trades
+
+A count that **rises** across candidates (bold, with the delta vs the first model) is a class the candidate silently traded. This is the row that flags a regression the floor gates miss — e.g. `country` degrading across the fragment lineage.
+
+| label                    | shipped |          v263 |
+| ------------------------ | ------: | ------------: |
+| `region`                 |     556 | **580 (+24)** |
+| `locality`               |     477 |  **481 (+4)** |
+| `street`                 |     432 |  **437 (+5)** |
+| `postcode`               |      92 |   **98 (+6)** |
+| `venue`                  |      87 |            86 |
+| `house_number`           |      74 |            76 |
+| `country`                |      34 |            24 |
+| `dependent_locality`     |      34 |            34 |
+| `street_prefix`          |       6 |             6 |
+| `street_prefix_particle` |       6 |             6 |
+| `po_box`                 |       4 |             4 |
+| `attention`              |       1 |             1 |
+| `cedex`                  |       1 |             1 |
+| `unit`                   |       1 |             1 |
+
+## Correlation — failure rate by structural class
+
+Read across a row: a class that fails **more** on one model is the shape of what that candidate traded (delimiter-free, non-ASCII, short inputs, per country).
+
+| structural class |        shipped |           v263 |
+| ---------------- | -------------: | -------------: |
+| whitespace-only  |  248/919 (27%) |  255/919 (28%) |
+| has comma        | 845/3312 (26%) | 844/3312 (25%) |
+| non-ASCII        |  396/827 (48%) |  390/827 (47%) |
+| has country gold |  127/224 (57%) |  117/224 (52%) |
+| ≤3 tokens        | 349/1251 (28%) | 356/1251 (28%) |
+| US               | 750/2527 (30%) | 761/2527 (30%) |
+| FR               | 276/1546 (18%) | 283/1546 (18%) |
+| ZZ (synthetic)   |        0/0 (—) |        0/0 (—) |
+
+## Beyond reach — fails on every model (1073)
+
+The persistent core: addresses no current candidate parses. Per-country breakdown (the correlation), then a sample.
+
+| country | beyond-reach fixtures |
+| ------- | --------------------: |
+| `US`    |                   747 |
+| `FR`    |                   273 |
+| `UN`    |                    40 |
+| `AD`    |                    12 |
+| `U.`    |                     1 |
+
+### Sample (first 40 of 1073)
+
+| country | input                                                                       | source        |
+| ------- | --------------------------------------------------------------------------- | ------------- |
+| `AD`    | `New York, New York Steakhouse, 3790 Las Vegas Blvd S, Las Vegas, NV 89109` | `adversarial` |
+| `AD`    | `Athens, Georgia Café, 200 College Ave, Athens, GA 30601`                   | `adversarial` |
+| `AD`    | `Boston, Massachusetts Pizza Co., 50 Broadway, Brooklyn, NY 11201`          | `adversarial` |
+| `AD`    | `Miami, Florida Surf Shop, 100 Ocean Dr, San Diego, CA 92101`               | `adversarial` |
+| `AD`    | `Nashville, Tennessee BBQ Pit, 75 Elm Ave, Atlanta, GA 30308`               | `adversarial` |
+| `AD`    | `P'tit St. Denis Café, 500 Boul. Saint-Laurent, Montreal, QC H2X 2T6`       | `adversarial` |
+| `AD`    | `Sainte-Marie Bistro, 25 Rue Sainte-Catherine, Montreal, QC H3B 1A3`        | `adversarial` |
+| `AD`    | `123Main St, Portland, OR 97214`                                            | `adversarial` |
+| `AD`    | `50.Tremont.St,Boston,MA,02108`                                             | `adversarial` |
+| `AD`    | `123 Main St c/o John Smith, Portland, OR 97214`                            | `adversarial` |
+| `AD`    | `123 Main St #4B, Portland, OR 97214`                                       | `adversarial` |
+| `AD`    | `Center`                                                                    | `adversarial` |
+| `FR`    | `10 Rue de la République, 75008 Paris`                                      | `fr`          |
+| `FR`    | `45 Cours Lafayette, 69003 Lyon`                                            | `fr`          |
+| `FR`    | `1 bis Avenue des Champs-Élysées, 75008 Paris, France`                      | `fr`          |
+| `FR`    | `100 Rue de la Paix, 75008 CEDEX 08 Paris`                                  | `fr`          |
+| `FR`    | `Paris 8e`                                                                  | `fr`          |
+| `FR`    | `Hôtel de Ville, 4 Place de l'Hôtel-de-Ville, 75004 Paris`                  | `fr`          |
+| `FR`    | `7 Promenade des Anglais, 06000 Nice`                                       | `fr`          |
+| `FR`    | `Île-de-France, France`                                                     | `fr`          |
+| `FR`    | `15 rue de la république, 75008 paris`                                      | `fr`          |
+| `FR`    | `Шом, Creuse, France`                                                       | `fr`          |
+| `FR`    | `Шом, Creuse`                                                               | `fr`          |
+| `FR`    | `Creuse, Шом, France`                                                       | `fr`          |
+| `FR`    | `France, Шом, Creuse`                                                       | `fr`          |
+| `FR`    | `富尔内勒, Lozère, France`                                                  | `fr`          |
+| `FR`    | `France, Lozère, 富尔内勒`                                                  | `fr`          |
+| `FR`    | `富尔内勒 Lozère`                                                           | `fr`          |
+| `FR`    | `LOZÈRE 富尔内勒 FRANCE`                                                    | `fr`          |
+| `FR`    | `France, Lozere, Runik yozuv`                                               | `fr`          |
+| `FR`    | `Lozere, Runik yozuv`                                                       | `fr`          |
+| `FR`    | `France, Creuse, Сен-Дизье-Леирен`                                          | `fr`          |
+| `FR`    | `Фрессіне-де-Лозер, Lozère, France`                                         | `fr`          |
+| `FR`    | `FRANCE, LOZÈRE, Фрессіне-де-Лозер`                                         | `fr`          |
+| `FR`    | `Фрессіне-де-Лозер Lozère`                                                  | `fr`          |
+| `FR`    | `Creuse, Thauron`                                                           | `fr`          |
+| `FR`    | `Creuse, Le Chauchet, France`                                               | `fr`          |
+| `FR`    | `France, Creuse, Le Chauchet`                                               | `fr`          |
+| `FR`    | `卡萨尼亚, Lozère`                                                          | `fr`          |
+| `FR`    | `卡萨尼亚 Lozère`                                                           | `fr`          |
+
+## Model-specific — where candidates disagree (50)
+
+A ✓ under one model and a failure under another = a fix or a regression **between** candidates — the diff you track release-over-release.
+
+| country | input                                                                        | shipped                                                      | v263                                                |
+| ------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
+| `AD`    | `Phone: 555-1234 — 200 Elm St, Springfield, IL 62701`                        | ✓                                                            | house_number→`55-1234 200`                          |
+| `FR`    | `Manailly Creuse FRANCE`                                                     | ✓                                                            | region→`Creuse FRANCE` · country→`∅`                |
+| `FR`    | `Lizières Creuse France`                                                     | ✓                                                            | region→`Creuse France` · country→`∅`                |
+| `FR`    | `Montredon Lozère France`                                                    | ✓                                                            | locality→`Montredon Lozère` · region→`∅`            |
+| `FR`    | `Ла-Нуай Creuse France`                                                      | ✓                                                            | locality→`Ла-Нуай Creuse` · region→`∅`              |
+| `FR`    | `47110 2 place de verdun sainte-livrade-sur-lot`                             | street→`Place DE` · locality→`Verdun Sainte-Livrade-Sur-Lot` | ✓                                                   |
+| `FR`    | `Woustviller 57915 France`                                                   | ✓                                                            | postcode→`57915 France`                             |
+| `FR`    | `13940 Mollégès, France`                                                     | ✓                                                            | locality→`∅`                                        |
+| `FR`    | `IFS 14123 France`                                                           | ✓                                                            | postcode→`14123 France`                             |
+| `FR`    | `62119 Dourges France`                                                       | ✓                                                            | postcode→`62119 France`                             |
+| `FR`    | `Le Puy-Sainte-Réparade 13610`                                               | locality→`Le`                                                | ✓                                                   |
+| `FR`    | `59112 Ann ullin, France`                                                    | ✓                                                            | locality→`ullin`                                    |
+| `FR`    | `France, 59112 Ann ullin`                                                    | ✓                                                            | locality→`France Ann ullin`                         |
+| `FR`    | `Wimereux, 62930`                                                            | locality→`∅`                                                 | ✓                                                   |
+| `UN`    | `United States of America, Медоу Ејкерс, WY`                                 | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `Патни, Vermont, United States of America`                                   | ✓                                                            | locality→`Патни, Vermont` · region→`∅`              |
+| `UN`    | `United States of America, ND, Лорейн`                                       | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, ND, هاغو`                                         | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, Vermont, Содом`                                   | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `Vermont, United States of America`                                          | ✓                                                            | region→`∅`                                          |
+| `UN`    | `United States of America, ND, Monroe`                                       | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `Wyoming, ہلزڈیل وائیومنگ, United States of America`                         | locality→`Wyoming ہلزڈیل وائیومنگ` · region→`∅`              | ✓                                                   |
+| `UN`    | `United States of America, VT, Уэтерсфилд`                                   | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, Wyoming, هوباک وایومینگ`                          | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `علاالدین وایومینگ, Wyoming, United States of America`                       | ✓                                                            | locality→`علاالدین وایومینگ, Wyoming` · region→`∅`  |
+| `UN`    | `United States of America, North Dakota, Bloomfield`                         | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, اوپهام قوزئی داکوتا, ND`                          | locality→`اوپهام وزئی داکوتا` · country→`∅`                  | ✓                                                   |
+| `UN`    | `United States of America, VT, Вотерфорд`                                    | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, Vermont, Монтпилиер`                              | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, لئونارد داکوتای شمالی, ND`                        | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, Wyoming, بیر ریور`                                | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, Wyoming, Antilop`                                 | country→`∅`                                                  | ✓                                                   |
+| `UN`    | `United States of America, North Dakota, واتفورد سیتی قوزئی داکوتا`          | locality→`واتفورد سیتی وزئی داکوتا` · country→`∅`            | ✓                                                   |
+| `US`    | `Cider Mill Rd VT 05161, US`                                                 | ✓                                                            | street→`Cider VT Mill Rd` · region→`∅`              |
+| `US`    | `STATE RTE 100, VT 05350, USA`                                               | ✓                                                            | street→`State Rte 100 VT` · region→`∅`              |
+| `US`    | `122R Ave Southwest ND 58655`                                                | ✓                                                            | street→`Ave Southwest`                              |
+| `US`    | `VT 05051 Deerfield Ln`                                                      | ✓                                                            | street→`VT Deerfield Ln` · region→`∅`               |
+| `US`    | `Farson Branch Library, 30 Hwy 28 Farson-Eden School Bldg, Farson, WY 82932` | ✓                                                            | street→`Hwy 28 Farson-Eden School`                  |
+| `US`    | `Manchester Community Library, 138 CEMETERY AVE RTE 7A, Manchester VT`       | street→`CEMETERY AVE RTE`                                    | ✓                                                   |
+| `US`    | `US اوبران North Dakota`                                                     | locality→`US اوبران`                                         | ✓                                                   |
+| `US`    | `بروکهورست وایومینگ, Wyoming, US`                                            | ✓                                                            | locality→`بروکهورست وایومینگ, Wyoming` · region→`∅` |
+| `US`    | `North Dakota, Antilopo`                                                     | ✓                                                            | locality→`North Dakota Antilopo` · region→`∅`       |
+| `US`    | `هئیل, North Dakota, US`                                                     | ✓                                                            | locality→`هئیل, North` · region→`Dakota`            |
+| `US`    | `US - ND - نومي`                                                             | ✓                                                            | locality→`ND - نومي` · region→`∅`                   |
+| `US`    | `US, ND, Antilopalar`                                                        | ✓                                                            | locality→`Antilo` · region→`ND palar`               |
+| `US`    | `US, Хак, ND`                                                                | locality→`US Хак`                                            | ✓                                                   |
+| `US`    | `SARDGEEN ARBON PLLC, 110 W FAYETTE ST STE 1110, SYRACUSE, NY 13202`         | ✓                                                            | street→`W Fayette ST`                               |
+| `US`    | `Seyfarth Shaw Fairweather, 1211 Ave of the America, New York, New York`     | ✓                                                            | street→`Ave of the`                                 |
+| `US`    | `Jo Ann Brinkley, PO BOX 7298, Glen Rose, TX 76043`                          | ✓                                                            | street→`BOX 7298`                                   |
+| `US`    | `Virginia Stricklin, 9122 Heathcliff, San Antonio, TX 78254, US`             | ✓                                                            | region→`TX US`                                      |
