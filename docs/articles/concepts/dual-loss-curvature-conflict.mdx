@@ -161,8 +161,6 @@ This is a one-line configuration change: `crf_loss_weight = 0.0`. The structural
 
 ### Three lessons that generalise
 
-Three lessons that generalise:
-
 1. **"Add two losses together with weights" can be a disaster.** Two loss functions can have wildly different gradient magnitudes even when their loss _values_ look comparable. Multiplicative scaling on the loss value does not produce balanced contributions to the optimizer.
 2. **Cheap diagnostics first.** The gradient-norm probe took 5 minutes and answered more than a month of retraining experiments. Always exhaust the zero-GPU diagnostic ladder before a retrain.
 3. **ML debugging is more like programming debugging than the field admits.** Bisect, isolate, instrument, hypothesise, test. The hard part is finding the right vocabulary for what's happening inside the model. Once you have it, the bug is usually findable.

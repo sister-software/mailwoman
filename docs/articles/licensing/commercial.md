@@ -13,6 +13,6 @@ and saves you from having to conform to our open-source requirements and restric
 
 When you purchase a commercial license, you'll also have direct contact with the engineers who built Mailwoman.
 
-A ‘commercial use’ license is mandatory as soon as you develop commercial activities involving the Mailwoman software without disclosing the source code of your own applications.
+A "commercial use" license is mandatory as soon as you develop commercial activities involving the Mailwoman software without disclosing the source code of your own applications.
 
 Contact `teffen [at] sister [dot] software` for inquiries about commercial licensing, or to request a quote for your project.

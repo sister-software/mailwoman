@@ -162,7 +162,7 @@ flowchart LR
     T4["'Buffalo'"] -->|matches| F4["same 14 places again"]
 ```
 
-For `"Buffalo Health Clinic, Buffalo"`, the FST quietly tells the decoder: the first `Buffalo` _could_ be a locality, but the next two tokens _can't_ be. That's enough for the decoder to read the whole `Buffalo Health Clinic` span as a venue, with the trailing `Buffalo` as the actual locality.
+For `"Buffalo Health Clinic, Buffalo"`, the FST tells the decoder: the first `Buffalo` _could_ be a locality, but the next two tokens _can't_ be. That's enough for the decoder to read the whole `Buffalo Health Clinic` span as a venue, with the trailing `Buffalo` as the actual locality.
 
 This is information the gazetteer always had. Before the FST, the model had to learn it from corpus statistics. Now it's an explicit emission bias the model gets for free.
 
@@ -183,7 +183,7 @@ flowchart LR
     FST --> M2["Neural model decode<br>(consults the prior)"]
 ```
 
-The same upfront enumeration of hierarchy chains feeds both sides. The corpus side bakes the chain into the training distribution so the model sees plausible (city, region, country) tuples in their canonical forms. The FST side keeps the chain accessible at inference for the cases the model can't memorize. Build-time work; query-time payoff; train-time payoff.
+The same upfront enumeration of hierarchy chains feeds both sides. The corpus side bakes the chain into the training distribution so the model sees plausible (city, region, country) tuples in their canonical forms. The FST side keeps the chain accessible at inference for the cases the model can't memorize. One build-time enumeration pays off at both training time and query time.
 
 ## Wikipedia importance, not population
 

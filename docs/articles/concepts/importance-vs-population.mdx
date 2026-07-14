@@ -70,11 +70,11 @@ This is structural duplication, but the two signals are not redundant — they f
 
 ### Resolver's BM25 length penalty
 
-The resolver's `populationBoost: 4.0` exists because SQLite FTS5's BM25 normalizes by document length. The `place_search` table concatenates ALL multilingual name variants into a single `alt_names` column. Famous places have huge `alt_names` (NYC's is ~10K characters with 100+ languages); same-name peers have tiny `alt_names`. BM25 prefers the document with proportionally-more matches per token, which can rank a 50K-population impostor above an 8.8M-population real city.
+The resolver's `populationBoost: 4.0` exists because SQLite FTS5's BM25 normalizes by document length. The `place_search` table concatenates ALL multilingual name variants into a single `alt_names` column. Famous places have huge `alt_names` (NYC's is ~10K characters with 100+ languages); same-name peers have tiny `alt_names`. BM25 prefers the document with proportionally-more matches per token, which can rank a 50K-population namesake above the 8.8M-population city the query almost certainly means.
 
 **Attempts at column-weighted BM25** (`bm25(place_search, 1, 10, 1)` — name 10×, alt_names 1×) **don't fix this**: FTS5's doc-length normalization uses the row's total content length across all columns, not just the weighted ones. A row with bloated `alt_names` is penalized everywhere, even when scoring the `name` column in isolation.
 
-The structural fix is to split `alt_names` into a separate FTS5 table with its own length statistics. Until then, `populationBoost: 4.0` is a tuning value that works for most cases but fails for the worst extremes (NYC vs West New York is the canonical example).
+The structural fix is to split `alt_names` into a separate FTS5 table with its own length statistics. Until then, `populationBoost: 4.0` is a tuning value that works for most cases but fails for the worst extremes; NYC vs West New York is the standing example.
 
 ### Importance for non-English places
 

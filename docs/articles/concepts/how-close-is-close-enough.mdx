@@ -44,7 +44,7 @@ So the first half of "close enough" is **which tier did we reach**, because the 
 
 ## Trust the radius, not the point
 
-A tier label is coarse. The per-parse answer to "how close is this one?" is the **calibrated uncertainty radius** the geocoder reports alongside the coordinate. The discipline here is absolute, and it's the whole reason the number is trustworthy ([`2026-06-14-interp-radius-calibration`](../evals/calibration/2026-06-14-interp-radius-calibration.md)):
+A tier label is coarse. The per-parse answer to "how close is this one?" is the **calibrated uncertainty radius** the geocoder reports alongside the coordinate. One rule governs that number, and it's the reason you can trust it ([`2026-06-14-interp-radius-calibration`](../evals/calibration/2026-06-14-interp-radius-calibration.md)):
 
 > A radius is only meaningful if it's calibrated. If we say ±87 m it must contain the truth ~90% of the time — not 72%. Otherwise the number is decoration.
 

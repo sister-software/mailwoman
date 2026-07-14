@@ -58,7 +58,7 @@ The spans, offsets, and confidences are the parser's, untouched. What's new is `
 
 ## The atlas on disk
 
-Everything the resolver consults is a read-only SQLite artifact, built ahead of time and sealed with provenance and a release date. The spine is WhosOnFirst — the same open gazetteer Pelias uses, chosen for stable IDs and a containment hierarchy. The reference build's admin layer carries about 4.1 million places across 244 countries, each with alternate names, population, bounding box, and ancestor chain. Beside it sit postcode shards (US postcode centroids, Dutch PC6 codes at street-block grain, a GeoNames-derived international tail) and the rooftop layers: about 125 million US address points from the National Address Database and OpenAddresses, sharded per state, and 26 million French points from BAN, the national address register. These artifacts are built or downloaded separately from the packages; the browser demo reads a hosted copy of the same gazetteer over byte-range requests, so demo and server agree.
+Everything the resolver consults is a read-only SQLite artifact, built ahead of time and sealed with provenance and a release date. The base layer is WhosOnFirst — the same open gazetteer Pelias uses, chosen for stable IDs and a containment hierarchy. The reference build's admin layer carries about 4.1 million places across 244 countries, each with alternate names, population, bounding box, and ancestor chain. Beside it sit postcode shards (US postcode centroids, Dutch PC6 codes at street-block grain, a GeoNames-derived international tail) and the rooftop layers: about 125 million US address points from the National Address Database and OpenAddresses, sharded per state, and 26 million French points from BAN, the national address register. These artifacts are built or downloaded separately from the packages; the browser demo reads a hosted copy of the same gazetteer over byte-range requests, so demo and server agree.
 
 ## From a span to candidates
 
@@ -103,7 +103,7 @@ Two kinds of numbers ride on a result, answering different questions. The `conf=
 
 - **Coverage gaps.** No rooftop shard for a region means the ladder stops at the admin rung — and says so. The coordinate is still the right town; nothing in the output dresses a centroid up as a rooftop.
 - **Namesakes.** The coherence passes break most of them. Where the gazetteer's own hierarchy can't settle one, the runner-up candidates ride along on the node (`alternatives`), so a consumer can re-rank with context Mailwoman doesn't have.
-- **Contradictory input.** `postcode_city_mismatch` means the address disagrees with the map — a transposed postcode, a stale city name. The returned point is the safer of the two readings, but the flag is the real finding.
+- **Contradictory input.** `postcode_city_mismatch` means the address disagrees with the map — a transposed postcode, a stale city name. The returned point is the safer of the two readings; the flag is the part worth acting on.
 - **Stand-in placetypes.** When a region span matched only a broader admin tier (an Italian _regione_ is a `macroregion` in WOF's taxonomy), `resolution_quality: "fallback"` records that a coarser tier stood in.
 
 ## Where it's strong, where it's thin

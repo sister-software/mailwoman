@@ -92,7 +92,7 @@ The browser path optionally uses **WebGPU** (where available) for GPU accelerati
 
 `@mailwoman/neural-web` wraps this with the same API as `@mailwoman/neural` so consumer code rarely has to know whether it is running in Node or in the browser.
 
-## The size budget
+## Size budget
 
 ONNX gives us portability. **int8 quantization** gives us a small enough file to ship to the browser.
 
@@ -106,7 +106,7 @@ ONNX gives us portability. **int8 quantization** gives us a small enough file to
 
 For context, a single high-resolution photo on a typical news site is 200 KB to 2 MB. A modern app bundle is 5–20 MB. 60 MB is large but not unreasonable for a one-time cold load.
 
-## The export caveats
+## Export caveats
 
 A few subtle issues come up during ONNX export:
 

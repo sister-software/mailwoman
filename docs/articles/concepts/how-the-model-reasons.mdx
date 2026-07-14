@@ -61,9 +61,8 @@ It is **not** a context-sensitive grammar either. CSG would require explicit
 context-conditioned rules. The neural model learns soft, probabilistic,
 context-dependent biases without explicit grammar rules.
 
-The right framing: **the model is a learned soft transducer over the full
-input, anchored by world-knowledge priors, with structural validity enforced
-by Viterbi.**
+**The model is a learned soft transducer over the full input, anchored by
+world-knowledge priors, with structural validity enforced by Viterbi.**
 
 ## Where context-sensitivity actually lives
 
@@ -131,9 +130,11 @@ depends on whether the previous token was labeled `B-locality` (in which
 case `I-locality` is a candidate but B-region is too) or labeled something
 else.
 
-If learned CRF transitions are present (v0.6.4+ with `crf_fp32=true`), those
-add a learned probabilistic preference for certain label-pair transitions on
-top of the structural mask.
+No learned transition preferences ship: training scores each token's label
+independently, and the soft CRF table that would have added them diverged in
+training and was permanently disabled (see [the CRF decoder](./crf-decoder.mdx)
+for that history). The hard validity mask above is the only label-pair
+coupling at decode time.
 
 ## How street recognition specifically works
 

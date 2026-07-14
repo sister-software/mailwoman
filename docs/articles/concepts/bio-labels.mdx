@@ -90,7 +90,7 @@ The last 6 tags — `street_prefix` through `intersection_b` — are the Stage 3
 
 ## The orphan-I problem
 
-Here is where BIO labelling gets interesting. A naive token classifier picks the highest-probability label for each token independently. This produces sequences like:
+A naive token classifier picks the highest-probability label for each token independently. This produces sequences like:
 
 ```
 Saint    → O                        ← the model wasn't sure, picked O
@@ -104,7 +104,7 @@ What happens when the decoder reconstructs the span? Depending on how it handles
 - **Strict mode** — drop the orphan. "Saint Petersburg" becomes "Petersburg" (a 1-token locality starting at Petersburg). This is the "Saint Petersburg → Petersburg" bug visible in Mailwoman v0.2.0.
 - **Forgiving mode** — treat the orphan-I as a `B-X`. "Saint Petersburg" becomes two adjacent localities. Worse.
 
-Neither is what the data actually wants. The data wants `B-locality, I-locality`.
+Neither is what the data wants: `B-locality, I-locality`.
 
 ## How Mailwoman fixes this
 
@@ -130,7 +130,7 @@ flowchart LR
 
 BIO labels are simple enough that:
 
-- **The model architecture stays small.** No special span-prediction heads. Just a per-token classifier.
+- **The model architecture stays small.** No special span-prediction heads — just a per-token classifier.
 - **Training data is easy to generate.** Given `(raw, components)` from a corpus adapter, you align each component's text to its tokens and emit `B-` for the first token and `I-` for the rest.
 - **Evaluation is straightforward.** Compare predicted spans to gold spans; compute precision, recall, F1 per tag.
 

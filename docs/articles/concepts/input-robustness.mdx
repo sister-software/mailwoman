@@ -78,7 +78,7 @@ surface variation because the training data contains it: casing permutations
 (`corpus/src/shard-recipes/intersection.ts`, `locale.ts`), abbreviation variants in
 both directions (`street-affix.ts`, the `unit.ts` designators from #454,
 `fr-bare-street.ts`). This is where `Ave` and `Avenue` both become the same street
-to the model. No rule rewrote one into the other; the model simply saw both forms
+to the model. No rule rewrote one into the other; the model saw both forms
 in training and learned they point at the same place.
 
 This is the layer that makes Layer 1's abstention safe. Because the model trains on
@@ -174,7 +174,7 @@ reinforced in the corpus, and held green by a standing invariant. The bottom fou
 to be blind spots. They run through the metamorphic gate now, and the surprise was that
 several of them already hold. The EN suffix abbreviations pass the strict metre
 invariant. Ordinal street spelling (`5th`↔`Fifth`) stays inside the tolerance band even
-though nothing trains it. The genuine gaps came out smaller than feared, and they're
+though nothing trains it. The gaps came out smaller than feared, and they're
 named in the xfail maps rather than hiding: a French street-type abbreviation the
 resolver can't match at rooftop tier, house-number spelling, and single-character typos
 that lose a locality or street when the anchor and gazetteer channels are off. Each one

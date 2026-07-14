@@ -35,7 +35,7 @@ building, at 1 m reported uncertainty, and both paths are pinned by regression
 suites that run in the browser against production.
 
 French is the more instructive story. The tokenizer originally fragmented accented
-street names ("Allée" split at the "é" and dropped the word), which cost real
+street names ("Allée" split at the "é" and dropped the word), which cost
 resolution on exactly the addresses a French user types first. Fixing it took a
 vocabulary splice plus a fine-tune so the merged pieces got gradient steps — the
 training-free shortcut measurably made things worse before the retrain fixed it.

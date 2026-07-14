@@ -19,7 +19,7 @@ applies to tags the model must learn from context, not to every starved tag —
 see [Two kinds of starved tag](#two-kinds-of-starved-tag--and-why-the-model-handles-both)
 at the end.)
 
-This has names at three altitudes:
+This has names at four altitudes:
 
 - **Philosophy** calls it _via negativa_ — defining a thing by what it is not.
 - **Art** calls it **negative space** — you draw the vase by drawing the gap.
@@ -61,7 +61,7 @@ retrains. So negative space is a strong **hypothesis**, not a theorem.
 
 Which is exactly why coverage work is gated on **measurability first**. Before
 generating corpus rows for a starved tag, the eval set must carry enough held-out
-examples of it that its F1 is real signal, not noise from a handful of rows (see
+examples of it that its F1 is signal, not noise from a handful of rows (see
 [eval discipline](./eval-discipline.mdx) and the val-set stratification work). The
 coverage eval is the apparatus that lets the numbers say whether negative space
 held for our model — whether covering `unit` lifted `street`/`locality` precision,

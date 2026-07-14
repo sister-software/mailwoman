@@ -84,8 +84,8 @@ hands you matching keys with the _right_ topology:
 - **structured components with confidence** — you compare field-by-field, and you
   _know which fields to trust_.
 
-You never match on the formatted string. You match on the resolved place. The
-lossy-template problem doesn't get solved — it stops existing.
+You never match on the formatted string. You match on the resolved place, and
+the lossy-template problem disappears with the string it lived in.
 
 ## Entity resolution is three problems, not one
 
@@ -236,7 +236,7 @@ But rarity is only meaningful against a population. The lever counts how often e
 address appears across the records you hand it — so when you dedupe a _whole_
 dataset, the input is the corpus and it just works. Hand it a thin sample and
 there's nothing to be rare against: every address looks unique, the signal
-flattens, and you quietly fall back to baseline. The fix is cheap — the frequency
+flattens, and the lever degrades to baseline with no warning. The fix is cheap — the frequency
 table is a parse-free string scan, no geocoding — so when you're matching a slice,
 build the table over the full source and pass it in. The one thing you can't do is
 conjure rarity from a single record with nothing to compare it to.
