@@ -429,6 +429,43 @@ def render_country_context(street: str, number: str, city: str, country_name: st
     }
 
 
+def render_country_leading(surface: str, region: str, locality: str) -> dict:
+    """#1104 v2.9.1: a LEADING-position country admin row — "United States of America, Wyoming, Лорейн"
+    (country FIRST, then region, then locality). This is the golden WOF-admin distribution the v290
+    tail-only counterweight missed; the locality may be NON-Latin (transliterated WOF alt-names), which
+    is the point — it teaches country recognition when the locality context is non-Latin. Comma-joined
+    single-token-per-field groups; cursor-tracked spans."""
+    fields = [("country", surface), ("region", region), ("locality", locality)]
+    tokens: list[str] = []
+    labels: list[str] = []
+    span_starts: list[int] = []
+    span_ends: list[int] = []
+    span_tags: list[str] = []
+    pieces: list[str] = []
+    cursor = 0
+
+    for i, (tag, text) in enumerate(fields):
+        if i > 0:
+            cursor += 2  # ", "
+        text_tokens = text.split()
+        tokens.extend(text_tokens)
+        labels.extend([f"B-{tag}"] + [f"I-{tag}"] * (len(text_tokens) - 1))
+        span_starts.append(cursor)
+        span_ends.append(cursor + len(text))
+        span_tags.append(tag)
+        pieces.append(text)
+        cursor += len(text)
+
+    return {
+        "raw": ", ".join(pieces),
+        "tokens": tokens,
+        "labels": labels,
+        "span_starts": span_starts,
+        "span_ends": span_ends,
+        "span_tags": span_tags,
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--oa-root", type=Path, required=True)
@@ -661,7 +698,27 @@ def main() -> None:
             )
             country_rows += 2
 
-    print(f"#1104 country counterweight: {country_rows} rows across the seed countries")
+    # v2.9.1 (#1104): LEADING-position country rows — "United States of America, Wyoming, Лорейн"
+    # (country FIRST). The v290 tail-only counterweight recovered tail cases but MISSED this WOF-admin
+    # distribution (12/60 golden misses, all leading-position + non-Latin locality). Regions from NAD
+    # admin_pairs; localities from corpus_localities["US"] INCLUDING non-Latin (the point — teach country
+    # when the locality context is non-Latin). Rotate the codex surfaces (the golden favors the long
+    # "United States of America" form here).
+    us_regions = [reg for _, reg in admin_pairs]
+    us_localities_all = corpus_localities.get("US", [])
+    us_surfaces = COUNTRY_SURFACES.get("US", [])
+    leading_rows = 0
+
+    if us_regions and us_localities_all and us_surfaces:
+        n = min(len(us_regions), country_cap)
+        for i in range(n):
+            surface = us_surfaces[i % len(us_surfaces)]
+            region = us_regions[i]
+            locality = us_localities_all[i % len(us_localities_all)]
+            push(render_country_leading(surface, region, locality), "US", "und", _country_note + " (leading)")
+            leading_rows += 1
+
+    print(f"#1104 country counterweight: {country_rows} tail + {leading_rows} leading rows")
 
     rng.shuffle(rows)
     dev_count = len(rows) // 10
