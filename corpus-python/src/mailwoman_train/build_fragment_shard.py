@@ -528,7 +528,7 @@ def main() -> None:
             f"{len(units)} units, {len(triples)} context"
         )
 
-    corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap)
+    corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap, max_parts=150)
     # Shard-v3: GLOBAL bare-locality twins (all countries; cap/4 each) — the gauntlet
     # global-dublin-bare regression showed famous cities outside the OA shard locales lose their
     # locality reading once fragment street-mass grows. Harvested from real corpus locality spans.
@@ -574,7 +574,11 @@ def main() -> None:
     print(f"US admin pairs: {len(admin_pairs)} (directional-locality twins: {len(directional_localities)})")
 
     corpus_localities = span_rows_from_corpus(
-        args.locality_parquet_glob or args.corpus_parquet_glob, None, args.per_locale_cap // 4, tag="locality"
+        args.locality_parquet_glob or args.corpus_parquet_glob,
+        None,
+        args.per_locale_cap // 4,
+        tag="locality",
+        max_parts=150,
     )
 
     for country, localities in sorted(corpus_localities.items()):
