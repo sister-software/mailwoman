@@ -21,7 +21,7 @@ This is the architecture behind [Airmail](https://github.com/ellenhp/airmail), t
 3. **Rank results.** Score each hit by: name match quality (exact > prefix > fuzzy), placetype priority (locality > region > country, or configurable), population (larger places score higher, all else equal), and token coverage (an n-gram that covers more of the input scores higher).
 4. **Return the best placetype match.** The result is a place with a placetype, coordinate, and parent chain. The system does not distinguish between "this token is a street" and "this token is a locality" — it only knows "this n-gram matches a place in the index."
 
-This is elegant. It avoids every parsing problem by not parsing. The gazetteer knows what places exist. The search engine finds which place names appear in the input. The ranker picks the best one.
+It avoids every parsing problem by not parsing: the gazetteer knows what places exist, the search engine finds which place names appear in the input, and the ranker picks the best one.
 
 ## When it works
 

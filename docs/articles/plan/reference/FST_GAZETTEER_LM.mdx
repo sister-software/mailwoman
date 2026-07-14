@@ -30,7 +30,7 @@ Phases 1-2 shipped in v0.5.2 ([#170](https://github.com/sister-software/mailwoma
 
 ## Architecture overview
 
-### The FST data structure
+### FST data structure
 
 ```ts
 FSTState {
@@ -91,9 +91,9 @@ if (opts?.fst) {
 // → Viterbi decode over biased emissions
 ```
 
-The FST prior gets STRONGER as the prefix grows longer — a "wedge that tightens with information." A bare "S" spreads bias across many places; "San Fran" concentrates it on San Francisco.
+The FST prior gets STRONGER as the prefix grows longer. A bare "S" spreads bias across many places; "San Fran" concentrates it on San Francisco.
 
-### The WFST analogy to speech recognition
+### WFST analogy to speech recognition
 
 | Speech recognition            | Address parsing                             |
 | ----------------------------- | ------------------------------------------- |

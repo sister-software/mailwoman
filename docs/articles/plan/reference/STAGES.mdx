@@ -134,7 +134,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 export function computeQueryShape(input: string | NormalizedInputLite, opts?: ComputeQueryShapeOpts): QueryShape
 ```
 
-**Threading.** Once computed, `QueryShape` is threaded through every subsequent stage as additional context. It is not its own stage.
+**Reuse.** Once computed, `QueryShape` passes into every subsequent stage as additional context. It is not its own stage.
 
 **Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (Slice A of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Pure functions, no ML, zero workspace dependencies. Detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), PO Box / BP. Hyphen / apostrophe / underscore are "connectors" so `"10118-1234"` and `"Saint-Denis"` stay one token. Accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
 
@@ -274,7 +274,7 @@ Per "possibilities not constraints", the grouper emits overlapping proposals fre
 
 **Purpose.** Per-token BIO labelling. The current Mailwoman model (`@mailwoman/neural` + `@mailwoman/neural-weights-*`).
 
-**Interface.** The `Classifier` interface from [`INTERFACES.md`](./INTERFACES.mdx), with `QueryShape` and `LocaleHint` threaded into `ClassifierContext`:
+**Interface.** The `Classifier` interface from [`INTERFACES.md`](./INTERFACES.mdx), with `QueryShape` and `LocaleHint` added to `ClassifierContext`:
 
 ```ts
 // extends the existing ClassifierContext in INTERFACES.md
@@ -607,7 +607,7 @@ These don't belong to one stage; they affect composition.
 
 The staging picture is now formalized. Implementation order, in suggested priority:
 
-1. **Stage 1 + boundary QueryShape together.** Cheap to build, unlocks every downstream improvement.
+1. **Stage 1 + boundary QueryShape together.** Cheap to build; every downstream improvement depends on it.
 2. **Stage 6 candidate-list API.** Small change, big win for failure mode #8.
 3. **Stage 2 + Stage 2.5 together.** Enables fast paths AND informs the encoder.
 4. **JS Viterbi for Stage 4a.** Already on the v0.4.0 list.

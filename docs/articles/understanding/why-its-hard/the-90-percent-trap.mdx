@@ -85,11 +85,11 @@ The cost is engineering time — building the parser, maintaining the corpus pip
 
 ## Why not just use what works for the 90% and fall back for the rest?
 
-This is the most common architecture: call Google/geocode.earth for the 90% that parses cleanly, fall back to manual review for the 10% that doesn't. The problem: **the fallback cost dominates the total.**
+This is the most common architecture: call Google/geocode.earth for the 90% that parses cleanly, fall back to manual review for the 10% that doesn't. But the fallback cost dominates the total.
 
 Manual address correction costs between $0.50 and $5.00 per address depending on the complexity (a call center agent, a field visit, a returned package). If the geocoder fails on 10% of 1 million addresses, that is 100,000 manual corrections at $0.50-$5.00 each — $50,000 to $500,000 per month. The API cost for the 90% is $4,500 per month (at Google's rate). The fallback cost is 10-100× the API cost.
 
-Reducing the failure rate from 10% to 5% halves the manual-correction cost. Reducing it from 10% to 2% reduces it by 80%. The payoff is measured in manual reviews avoided. Every percentage point of parser accuracy past 90% shrinks the pile of addresses a human has to touch — which is where the thousands of dollars per month actually come from.
+Reducing the failure rate from 10% to 5% halves the manual-correction cost. Reducing it from 10% to 2% reduces it by 80%. The payoff is measured in manual reviews avoided. Every percentage point of parser accuracy past 90% shrinks the pile of addresses a human has to touch — which is where the thousands of dollars per month come from.
 
 ## What Mailwoman's approach means for this problem
 
@@ -99,7 +99,7 @@ Mailwoman does not target 100% accuracy. No parser does. It targets:
 - **Retrainability.** When a specific address class fails, you can add it to the corpus and retrain. The corpus pipeline is designed for this — the adapter pattern makes adding a new data source a few hundred lines of TypeScript.
 - **Component-level improvement.** The policy registry lets you improve one component at a time. If the neural model is weak on `region` but strong on `street`, you can use the neural model for `street` and keep the rule classifier for `region`. You don't have to wait for every component to beat the baseline before shipping.
 
-The economic argument for owning your parser is not "it will be better than Google's." It is "you can make it better where you need it, and the cost of the failures you can't fix at Google is higher than the cost of running your own."
+The economic argument for owning your parser is that you can make it better where you need it — the cost of the failures you can't fix at Google is higher than the cost of running your own.
 
 ## See also
 

@@ -66,7 +66,7 @@ USPS uses delivery names that often differ from municipal boundaries:
 | Miami, FL 33122       | Doral               |
 | Miami, FL 33134       | Coral Gables        |
 
-USPS assigns mailing city names for carrier-route efficiency, not for geographic correctness. The same physical building can have a mailing address in "Los Angeles" and a legal address in "Beverly Hills." Both are real. Neither is wrong. The parser's job is to recognize the distinction, not to pick one.
+USPS assigns mailing city names for carrier-route efficiency, not for geographic correctness. The same physical building can have a mailing address in "Los Angeles" and a legal address in "Beverly Hills." Both are legitimate. The parser's job is to recognize the distinction, not to pick one.
 
 ## II. They put things in the wrong order
 
@@ -183,7 +183,7 @@ The building at 123 Main Street contains 20 apartments. The human omitted the un
 
 ### ZIP code centroid as exact address
 
-A ZIP code is a delivery route, not a point. But many mapping services return a centroid when given only a ZIP code — and label it "the address." The human copies the coordinates. The parser now has what looks like a high-confidence geocode that is actually a ZIP-level approximation, off by up to several miles.
+A ZIP code is a delivery route, not a point. But many mapping services return a centroid when given only a ZIP code — and label it "the address." The human copies the coordinates. The parser now has what looks like a high-confidence geocode that is a ZIP-level approximation, off by up to several miles.
 
 This is an input-quality problem, not a parser problem, but the parser is the first system that can detect it: if the input is `90210` and nothing else, the parser should return `postcode=90210` at high confidence and `locality` at low confidence — not `locality=Beverly Hills` at high confidence inferred from the postcode.
 
@@ -197,7 +197,7 @@ This failure class is outside the parser's reach. It lives in the UI layer: auto
 
 The failure taxonomy converges on one principle: **the parser should surface ambiguity instead of guessing through it.** Every failure above is a case where the human provided enough information for a knowledgeable local to find the right place, but the parser returned a single confident answer that was wrong.
 
-The correct design response is not to make the parser smarter. It is to make the parser report what it cannot decide:
+The correct design response is to make the parser report what it cannot decide, not to make it smarter:
 
 - Return candidates, not a single answer.
 - Surface ambiguity when multiple equally-valid interpretations exist.

@@ -24,7 +24,7 @@ The normalization pipeline:
 4. **Remove noise tokens.** Apartment numbers, "Attn:" lines, floor numbers — if your database doesn't have them, strip them from the input.
 5. **Fuzzy match.** After normalization, compute edit distance or Jaccard similarity between the input and each candidate. Return the best match above a threshold.
 
-This is not parsing. It is not understanding address structure. It is string normalization plus similarity matching. It works surprisingly well when your universe of possible addresses is bounded.
+It's string normalization plus similarity matching, not true parsing or structural understanding, and it works surprisingly well when your universe of possible addresses is bounded.
 
 ## When it works
 

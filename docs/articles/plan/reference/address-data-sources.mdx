@@ -7,9 +7,9 @@ Compiled with web-search verification of canonical agency URLs. Some per-state e
 ## Why state sources matter for an address NER model
 
 1. **Component supervision is automatic.** State directories are typically already field-structured (separate columns for street, city, postcode, etc.). BIO tags derive from which column each token came from — no manual labeling required.
-2. **Format diversity per-state.** 50 states + DC means 50+ schema flavors, abbreviation conventions, and transcription styles. Excellent for training format robustness.
+2. **Format diversity per-state.** 50 states + DC means 50+ schema flavors, abbreviation conventions, and transcription styles — useful raw material for training format robustness.
 3. **Venue+address pairs are everywhere.** Every facility/professional/establishment listing pairs an organization name with a structured address — natural `B-venue` / `I-venue` training spans.
-4. **Residential coverage.** Real estate, contractor, cosmetology, notary, and license-lookup tools surface actual home/office addresses that federal facility datasets don't.
+4. **Residential coverage.** Real estate, contractor, cosmetology, notary, and license-lookup tools surface home/office addresses that federal facility datasets miss.
 
 ## Formats to watch for beyond CSV
 
@@ -48,7 +48,7 @@ For maximum licensing safety on published model weights, restrict to US-federal 
 
 ## Gazetteer / resolver coordinate sources (companion layer)
 
-Everything below this section is **corpus** material — address _strings_ and name/address pairs to train the BIO parser. This section is the other half: the **gazetteer** the resolver and the postcode anchor consume — the datasets that turn a parsed span into a place + coordinate. Different shopping list, and it's where WOF's gaps actually bite (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
+Everything below this section is **corpus** material — address _strings_ and name/address pairs to train the BIO parser. This section is the other half: the **gazetteer** the resolver and the postcode anchor consume — the datasets that turn a parsed span into a place + coordinate. Different shopping list, and it's where WOF's gaps bite (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
 
 WOF is an excellent **admin** gazetteer (the in-DB hierarchy + ancestors table is our Elasticsearch-free differentiator), and it's **CC0**, which is half of why it came naturally. But it was never complete for every token type: no street node (neighbourhood → address directly), thin and uneven postcode geometry outside a few countries (US/NL carry own coords; DE ~66% placeable via ancestor-borrow; ES/IT orphan-heavy and effectively unplaceable), and limited POI/venue coverage. The canonical fix is the rest of the Pelias four-layer stack — **WOF** (admin) + **OpenAddresses** (addresses/postcodes) + **OpenStreetMap** (streets/POIs) + **GeoNames** (places/postcodes) — supplemented per gap.
 
@@ -61,7 +61,7 @@ WOF is an excellent **admin** gazetteer (the in-DB hierarchy + ancestors table i
 
 ### Probe: GeoNames vs the WOF postcode gap (2026-06-03)
 
-Measured GeoNames postal against the WOF shard's actual gap (the postcodes WOF carries as membership but cannot place). GeoNames carries coordinates for **100%** of its DE/ES/IT records:
+Measured GeoNames postal against the gap in the WOF shard (the postcodes WOF carries as membership but cannot place). GeoNames carries coordinates for **100%** of its DE/ES/IT records:
 
 | locale | WOF placement              | GeoNames closes                                                 | result                                                                                                       |
 | ------ | -------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -76,7 +76,7 @@ So GeoNames postal is the cheap, CC-BY fill for ES/IT (and roughly half of DE's 
 
 The Meta/Microsoft/AWS/TomTom consortium (2023+, post-dates the corpus catalog below). Its **Places** theme is a large open POI dataset and its **Addresses** theme folds in OpenAddresses, so it covers two of our three gaps in one source, with stable **GERS** entity IDs. Distributed as cloud parquet (DuckDB/S3). The one to probe before committing to per-source OSM imports.
 
-### Licensing gradient (the real selection axis)
+### Licensing gradient
 
 For an AGPL product, license terms decide more than coverage does:
 

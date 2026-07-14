@@ -10,9 +10,9 @@ tags:
 
 # How mail delivery actually works
 
-Before you can judge a parser, you need to know what it is parsing _for_. Address parsing is not an academic exercise in string labelling — it exists to route physical objects to physical places through a system designed in the 19th century and patched ever since.
+Before you can judge a parser, you need to know what it is parsing _for_. Address parsing exists to route physical objects to physical places, through a system designed in the 19th century and patched ever since.
 
-This article walks through what happens when you mail a letter. The mechanics matter less than what they show: the postal system is **already fuzzy** — it handles ambiguity through human intervention, local knowledge, and layered fallbacks — and a parser that reports its own uncertainty is more faithful to the real world than one that returns a confident wrong answer.
+This article walks through what happens when you mail a letter, because the mechanics show something important: the postal system is **already fuzzy**. It handles ambiguity through human intervention, local knowledge, and layered fallbacks, and a parser that reports its own uncertainty is more faithful to the real world than one that returns a confident wrong answer.
 
 ## Step 1 — Collection
 
@@ -26,7 +26,7 @@ At the destination P&DC, the letter passes through an **optical character reader
 
 If the OCR cannot read the address — handwriting, smudged ink, non-standard formatting, foreign scripts — the system takes a photograph of the envelope and sends it to a **Remote Encoding Center** (REC). A human operator at a keyboard sees the photograph for about **two seconds** and types the ZIP code. Another human sees the street number and street name. Between them, they produce enough information for the sorting machines to route it.
 
-The RECs handle roughly **200 million pieces per year**. That is 200 million pieces where the machine gave up and a human squinted at bad handwriting and figured it out anyway. This is the postal equivalent of graceful degradation. The system does not fail on bad input — it escalates.
+The RECs handle roughly **200 million pieces per year**. That is 200 million pieces where the machine gave up and a human squinted at bad handwriting and figured it out anyway. This is the postal equivalent of graceful degradation: the system escalates bad input instead of failing on it.
 
 ## Step 3 — ZIP+4 resolution
 
@@ -42,7 +42,7 @@ The letter arrives at the destination post office, sorted into trays by carrier 
 
 Carriers possess **local knowledge** that no database has. They know that the blue house on Elm Street is 142 Elm, even though the mailbox says 140. They know that the new apartment building at the end of the block uses the address of the demolished warehouse that stood there before, because USPS hasn't updated the delivery sequence yet. They know that the occupant of 15 Main Street moved to Florida six months ago and mail should be forwarded.
 
-This is the deepest layer of the postal system's fuzziness: the human at the end of the chain who overrides the machine's decisions. It is how the system works every single day.
+This is the deepest layer of the postal system's fuzziness: the human at the end of the chain who overrides the machine's decisions.
 
 ## Step 5 — What happens when the address is wrong
 
@@ -67,7 +67,7 @@ The postal system has **four layers of ambiguity resolution**, escalating from c
 
 A parser that returns **"I'm 70% sure this is Springfield IL, 25% Springfield MA, 5% Springfield MO"** is mimicking Layer 2 — human triage — before the letter ever leaves the sender's computer. It tells the downstream system: "you need more information before you can route this." That serves the consumer better than returning "Springfield IL" with 98% confidence because the gazetteer has a population-weighted default.
 
-The design principle for Mailwoman's confidence model: **a low-confidence correct answer is better than a high-confidence wrong one.** The postal system already works this way. The carrier would rather get an envelope that says "maybe 142 Elm St?" than one that says "definitely 140 Elm St" when the correct address is 142. The machine said it was uncertain — the human can fix it. The machine said it was certain, so the human didn't look.
+The design principle for Mailwoman's confidence model: **a low-confidence correct answer is better than a high-confidence wrong one.** The postal system already works this way. The carrier would rather get an envelope that says "maybe 142 Elm St?" than one that says "definitely 140 Elm St" when the correct address is 142. An uncertain machine gets a second look from a human; a falsely confident one does not.
 
 ## See also
 

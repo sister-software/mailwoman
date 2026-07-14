@@ -27,7 +27,7 @@ A franchise query names a specific chain or brand. The user doesn't want the nea
 
 Franchise queries have three components: a **brand name**, an optional **sub-brand** or **feature filter**, and an optional **location constraint**. The brand name is the hard part — it may not match what the franchise calls itself, and it varies by region.
 
-## The brand-name problem
+## Brand-name problem
 
 "McDonalds" is the official brand name. Users also search for:
 
@@ -43,9 +43,9 @@ Franchise queries have three components: a **brand name**, an optional **sub-bra
 
 A geocoder that only matches "McDonald's" against an exact-string index will miss every slang and regional variant. A geocoder that matches all variants requires an **alias table** mapping user-facing terms to brand identifiers.
 
-You might expect the geocoder to translate these the way a dictionary maps one language to another, turning "Macca's" into "McDonald's" before it searches. That instinct misreads the problem. "Macca's" in Australia, "Mickey D's" in the US, and "マクド" in Kansai are all names real people use for the same golden arches. The alias table codifies that web of names so any one of them reaches the brand identifier. Search McDonald's or Maccas, and the geocoder knows you mean the same chain.
+The alias table isn't a translation dictionary — it maps every name people use for a chain onto one brand identifier, so "Macca's" in Australia, "Mickey D's" in the US, and "マクド" in Kansai all resolve to the same brand.
 
-## The sub-brand problem
+## Sub-brand problem
 
 Franchises have sub-brands that differ in meaningful ways:
 
@@ -55,7 +55,7 @@ Franchises have sub-brands that differ in meaningful ways:
 
 A query for `Walmart` could mean any of the sub-brands. A query for `Walmart Supercenter` is specific. The geocoder should return the nearest Supercenter for the specific query and the nearest any-Walmart for the generic query. This requires the POI index to include sub-brand classification.
 
-## The location-constraint problem
+## Location-constraint problem
 
 `Walmart near Springfield, IL` requires two operations:
 

@@ -12,9 +12,9 @@ tags:
 
 Not every geocoding problem needs a neural parser. This series steel-mans the reasonably defensible compromises that work for most applications — the architectures that ship in days, cover 90% of addresses, and cost nothing to maintain. Each article describes one approach, when it works, what it loses, and where Mailwoman fits (or doesn't).
 
-These are not straw men. They are the architectures most production geocoders actually use, and for many applications they are the right choice. Mailwoman exists for the applications where they are not.
+These are the architectures most production geocoders actually use, and for many applications they are the right choice. Mailwoman exists for the applications where they are not.
 
-## The compromises
+## Compromises
 
 | Compromise                                            | What you do                                                           | What you lose                                 |
 | ----------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------- |
@@ -37,7 +37,7 @@ The simple architectures win when:
 - You have a week, not a year.
 - You do not need graceful degradation — a confident wrong answer is acceptable if it's rare enough.
 
-These conditions describe most geocoding use cases. The simple architectures are not the wrong choice for most applications. They are the right choice. Mailwoman exists for the applications where they are not.
+These conditions describe most geocoding use cases — for them, the simple architectures are the right choice. Mailwoman exists for the applications where they are not.
 
 ## When to choose Mailwoman
 
