@@ -1003,6 +1003,9 @@ class MailwomanCoarseEncoder(nn.Module):
             # to materialize country_projection / country_token_embedding at the feature width.
             "use_country_anchor": bool(self.use_country_anchor),
             "country_feature_dim": int(self.country_feature_dim),
+            # #1104 homograph-guard scale — MUST serialize so export/reload rebuild with the same scale
+            # the checkpoint was trained at (else export defaults to 1.0 and the softening is silently lost).
+            "country_ambiguous_scale": float(self.country_ambiguous_scale),
             "use_affix_head": bool(self.use_affix_head),
             "use_conventions_loss_mask": bool(self.use_conventions_loss_mask),
             # Span-boundary aux head (#727). Persisted so a resume rebuilds the head; the exported ONNX
