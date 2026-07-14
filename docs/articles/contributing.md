@@ -1,7 +1,6 @@
 ---
 sidebar_title: Contributing
 title: Contributing & feedback
-sidebar_position: 5
 hide_footer: true
 ---
 
