@@ -18,7 +18,7 @@
  *
  *   The design + thresholds are validated on a 7-locale coordinate panel
  *   (`scripts/eval/span-rescore-validate.ts`, eval
- *   `docs/articles/evals/2026-06-23-370-span-rescore.mdx`): longest-exact-match-wins (the gold
+ *   `docs/articles/evals/experiments/2026-06-23-370-span-rescore.mdx`): longest-exact-match-wins (the gold
  *   locality is usually the LONGER, more-specific name — shortest- wins grabs the ambiguous prefix
  *   "Tomaszów" of "Tomaszów Mazowiecki", 135 km off), and a postcode- consistency gate that rejects
  *   a match far from where the postcode resolves (kills coverage-gap false-positives where the

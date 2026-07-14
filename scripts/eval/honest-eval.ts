@@ -16,7 +16,7 @@
  *
  *   Per DeepSeek (2026-06-08): lead the scorecard with region-match + coord p50/p90 (100% checkable,
  *   transparent to polygon coverage); treat locality-PIP as a coverage-adjusted secondary. See
- *   docs/articles/evals/2026-06-08-honest-eval.md.
+ *   docs/articles/evals/experiments/2026-06-08-honest-eval.md.
  *
  *   Held-out slices (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/
  *   Lozère/Creuse. Only US/VT clears the 1000-row trust floor in the current samples (FR held-out
@@ -27,7 +27,7 @@
  *   [--model neural-weights-en-us/model.onnx] [--card neural-weights-en-us/model-card.json]\
  *   [--tokenizer ...]\
  *   [--wof <admin.db>,<postcode.db>] # DB under test (default: canonical) [--label fixed] # a tag for
- *   the report [--out docs/articles/evals/2026-06-08-honest-eval.md] [--tmp /tmp/honest]
+ *   the report [--out docs/articles/evals/experiments/2026-06-08-honest-eval.md] [--tmp /tmp/honest]
  */
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"

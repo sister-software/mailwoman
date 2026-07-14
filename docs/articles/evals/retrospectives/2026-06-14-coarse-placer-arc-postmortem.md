@@ -1,6 +1,6 @@
 # Postmortem — the coarse-placer arc, M1 → default-on → v4.9.0 (2026-06-14 day shift)
 
-_The collaborative day-shift continuation of [night 15](./2026-06-14-night-15-postmortem.md). Night 15
+_The collaborative day-shift continuation of [night 15](../night-shifts/2026-06-14-night-15-postmortem.md). Night 15
 shipped the coarse-placer as an int8 **model** (#581) — a 0.79 MB linear country router that nothing
 consumed yet. This shift wired it into the geocoder as a **soft country prior**, proved it safe at every
 step, flipped it **on by default**, and shipped the whole thing to npm as **v4.9.0**. Five PRs in a clean

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Regression suite for the region-abbreviation resolution path — the 2026-06-08 honest-eval
- *   headline fix (docs/articles/evals/2026-06-08-night-9-postmortem.md, #440/#441). On a
+ *   headline fix (docs/articles/evals/night-shifts/2026-06-08-night-9-postmortem.md, #440/#441). On a
  *   leakage-free Vermont slice the resolver scored 93.7% locality name-match while 326km wrong: a
  *   region given as a USPS abbreviation ("VT") didn't resolve (WOF stores "Vermont"; the FTS had no
  *   abbreviations), so the locality lookup ran UNCONSTRAINED across the whole country and a

@@ -24,9 +24,9 @@ import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
  * Default gate corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
  * assertions plus 33 gold-triage tombstones (rules-idiosyncratic fixtures a neural parser should not be graded against
  * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs; each carries a `dropped` reason). Proposal
- * + per-fixture rationale: `docs/articles/evals/2026-07-13-parity-gold-triage.md`. The pre-#875 v1 corpus stays
- * reproducible via `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always prints which corpus
- * + how many tombstones it skipped, so the denominator is never silent.
+ * + per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`. The pre-#875 v1
+ * corpus stays reproducible via `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always prints
+ * which corpus + how many tombstones it skipped, so the denominator is never silent.
  */
 export const PARITY_FIXTURES_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 

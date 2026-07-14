@@ -10,7 +10,7 @@
  *
  *   Reports per-file / per-locale / per-tag pass rates, side-by-side. This is the "honest assessment"
  *   mentioned in the [Layer 1 eval
- *   doc](../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md) — the neural classifier has
+ *   doc](../docs/articles/evals/experiments/2026-05-28-layer-1-morphology-fst.md) — the neural classifier has
  *   never been measured against the rule-based pipeline's hand-tuned acceptance criteria, and that
  *   gap is exactly what drives v0.6.2's recipe.
  *

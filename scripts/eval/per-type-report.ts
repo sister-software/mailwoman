@@ -18,7 +18,7 @@
  *       unit with its designator). The "ground truth" is the known type.
  *
  *   Run: node scripts/eval/per-type-report.ts\
- *   --rows /tmp/oa-rows.json --out docs/articles/evals/2026-06-17-per-type-headtohead.md
+ *   --rows /tmp/oa-rows.json --out docs/articles/evals/competitive-parity/2026-06-17-per-type-headtohead.md
  */
 
 import { readFileSync, writeFileSync } from "node:fs"

@@ -16,7 +16,7 @@
  *   Tractable cut: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
  *
  *   Run: `mailwoman registry scorer-eval cross-dataset [--cap 300] [--wof <admin.db>]
- *   [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]`
+ *   [--data-root <dir>] [--out-md docs/articles/evals/matcher-dedup/<date>-...md]`
  */
 
 import { writeFileSync } from "node:fs"

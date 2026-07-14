@@ -152,7 +152,7 @@ of how calibration shakes out.
    treat admin names — a deterministic FST that recognizes country-
    specific shapes and biases the model toward labeling the matched
    span as postcode. Layer 1.5 of the
-   [shallow-fusion architecture](../concepts/fst-priors-as-shallow-fusion.mdx).
+   [shallow-fusion architecture](../../concepts/fst-priors-as-shallow-fusion.mdx).
 4. **Train on more diverse postcode data.** OpenAddresses-EU covers GB,
    CA, NL, DE; ingesting it would give the model real-world distribution
    of the patterns it currently misses. Doesn't address tokenizer
@@ -187,7 +187,7 @@ target is for it to pass.
 
 ## See also
 
-- [v0.6.x cycle retrospective + v0.7 plan](../retrospectives/v0-6-x-cycle-retrospective.mdx)
-- [FST priors as shallow fusion](../concepts/fst-priors-as-shallow-fusion.mdx) —
+- [v0.6.x cycle retrospective + v0.7 plan](../../retrospectives/v0-6-x-cycle-retrospective.mdx)
+- [FST priors as shallow fusion](../../concepts/fst-priors-as-shallow-fusion.mdx) —
   the architectural pattern that a postcode FST would slot into
 - `scripts/harness-postcode.ts` — the harness itself

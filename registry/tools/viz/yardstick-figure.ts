@@ -15,7 +15,7 @@
  *
  *   A slope chart over four rulers (NPI → site → org-name → org-name-coord) for the shipped GBT
  *   scorer and the FS baseline. Numbers are the committed measurement in
- *   `docs/articles/evals/2026-06-16-dedup-dual-level-benchmark.md` (1000 TX NPIs → 2757 records).
+ *   `docs/articles/evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md` (1000 TX NPIs → 2757 records).
  *
  *   Emits a self-contained SVG (the docs' committed-chart-asset convention — see
  *   `docs/articles/evals/charts/*.svg`), no browser required.

@@ -7,7 +7,7 @@
  *   surpass-v1.5.0). Teaches the model to SPLIT the département out of the locality on
  *   bare/space/comma-delimited French place rows — the admin-deciding failure class the pre-GPU
  *   self-validation proved moves the resolved coordinate (collision communes −61%; see
- *   docs/articles/evals/2026-06-19-fr-admin-split-prevalidation.md). Ported from
+ *   docs/articles/evals/experiments/2026-06-19-fr-admin-split-prevalidation.md). Ported from
  *   scripts/build-fr-admin-split-shard.mjs.
  *
  *   Failure shapes (the model currently mis-handles all of these):

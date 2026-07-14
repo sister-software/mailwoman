@@ -17,7 +17,7 @@
  *   inspect, not automatically our error.
  *
  *   Run: `mailwoman registry scorer-eval vs-provided-coords [--max 1176] [--wof <admin.db>]
- *   [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]`
+ *   [--data-root <dir>] [--out-md docs/articles/evals/resolver-geo/<date>-...md]`
  */
 
 import { writeFileSync } from "node:fs"

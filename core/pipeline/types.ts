@@ -38,7 +38,7 @@ export interface PipelineOpts {
 	 * `parseWithLogits`; when either is absent the pipeline uses argmax regardless.
 	 *
 	 * Set `jointReconcile: true` to opt back into reconcile (the A/B harnesses do). Report:
-	 * docs/articles/evals/2026-06-14-reconcile-retirement.md.
+	 * docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
 	 */
 	jointReconcile?: boolean
 	/** @deprecated Use {@link jointReconcile}. Retained as an explicit override for the A/B harnesses. */

@@ -127,7 +127,9 @@ const config: Config = {
 					// audience. The technical eval reports stay published (concept pages cite them as
 					// evidence). Where a kept page linked to one of these, the link was reduced to plain text
 					// (onBrokenLinks is "throw"). To re-publish a doc, remove its pattern here.
-					exclude: ["reviews/**", "evals/*postmortem*", "evals/*night-shift-session-report*"],
+					// The `**` matches the topic subdirs (evals/{night-shifts,retrospectives}/…) the reports
+					// were foldered into — a postmortem stays unpublished wherever it lands in the tree.
+					exclude: ["reviews/**", "evals/**/*postmortem*", "evals/**/*night-shift-session-report*"],
 					remarkPlugins: [
 						[
 							glossaryRemarkPlugin,
@@ -266,7 +268,7 @@ const config: Config = {
 					title: "Docs",
 					items: [
 						{ label: "Plan", to: "/docs/plan" },
-						{ label: "Eval reports", to: "/docs/evals/stage1-coarse-v0.1.0-vs-golden-v0.1.2" },
+						{ label: "Eval reports", to: "/docs/evals/" },
 						{ label: "Retrospectives", to: "/docs/retrospectives" },
 					],
 				},
