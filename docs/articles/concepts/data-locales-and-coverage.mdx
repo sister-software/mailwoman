@@ -1,0 +1,121 @@
+---
+sidebar_position: 4
+title: Data, locales, and coverage
+description: Which places Mailwoman can read and which it can pin to the map — the locale tiers as declared, the data layers behind each claim, and where the coverage runs out.
+role: concept
+audience: product-reader
+source-of-truth: plan/SCOPE.mdx, plan/reference/address-data-sources.mdx, licensing/data-provenance.md
+---
+
+# Data, locales, and coverage
+
+Old topographic sheets carried a reliability diagram in the margin: a small inset dividing the map into the parts surveyed on the ground, the parts compiled from aerial photography, and the parts sketched from older sources. Same sheet, same symbols, three grades of trust. This page is that inset for Mailwoman: which places the system handles, from what data, and where the trust runs out.
+
+One distinction organizes everything below. "Supported" is two separate claims, and a locale can hold one without the other:
+
+1. **The parser can read it.** The model was trained on the locale's address grammar, so [the spans come out labeled correctly](./how-mailwoman-parses-an-address.mdx): street, house number, postcode, town.
+2. **The gazetteer can pin it.** The reference data behind [the resolver](./how-mailwoman-resolves-a-place.mdx) has a coordinate at the grain you need — a rooftop, a street segment, or only a town centroid.
+
+Reading is a property of the trained model; pinning is a property of data artifacts on disk. They are built separately and they fail separately, which is why the two addresses below parse equally well while one lands on a doorstep and the other on a town.
+
+## Two runs, one distinction
+
+Both runs below are captured verbatim, with `$MAILWOMAN_WOF_DB` pointing at the reference admin gazetteer. First, a Tier-1 address — the Élysée Palace, by street and number:
+
+```bash
+mailwoman geocode "55 Rue du Faubourg Saint-Honoré, 75008 Paris" --locale fr-FR --format text
+```
+
+```text
+input:            55 Rue du Faubourg Saint-Honoré, 75008 Paris
+resolution_tier:  address_point
+coordinate:       48.870630, 2.316931
+uncertainty_m:    1
+locality:         Paris
+postcode:         75008
+hierarchy:
+  locality             Paris [wof:1159322569] (48.8566, 2.3428)
+```
+
+Now a Tier-2 address, in the middle of Kraków's old town:
+
+```bash
+mailwoman geocode "ul. Floriańska 3, 31-019 Kraków" --default-country none --format text
+```
+
+```text
+input:            ul. Floriańska 3, 31-019 Kraków
+resolution_tier:  admin
+coordinate:       50.061430, 19.936580
+locality:         Kraków
+postcode:         31-019
+hierarchy:
+  locality             Kraków [wof:9000000568126] (50.0614, 19.9366)
+```
+
+Both addresses parse equally well. The Polish one comes out fully labeled — `street: "ul. Floriańska"`, `house_number: "3"`, `postcode: "31-019"`, `locality: "Kraków"` — exactly as the French one does. What differs is the data available to pin those labels. France has BAN, a national open address register wired into the resolver's rooftop tier, so the French run reports `address_point` and a 1 m uncertainty: a registered doorway. Poland has no open register wired in, so the ladder walks down to its floor and returns the locality centroid, labeled `admin`, with no uncertainty line at all — a town-grade point carries no radius worth promising. The house number in the Polish query contributed nothing to the coordinate. On the Polish eval panel the median miss from this kind of centroid resolution is 2.45 km.
+
+One operational footnote from the second command: `--default-country none`. The default `en-US` locale scopes the resolver to the United States, and under that scope this same query returns Krakow, Michigan. Coverage questions are routing questions too; if your input spans countries, unpin the scope or set it per batch.
+
+## The tiers, as declared
+
+The tier table lives in [the scope declaration](../plan/SCOPE.mdx), and it is a statement about evidence, not a switch in the code: a locale is claimed only when a coordinate-graded eval exists for it. Summarized, with what membership means when you run the thing:
+
+| Tier                             | Locales                                                | What you get                                                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — first-class, floor-gated     | US, FR                                                 | Per-tag accuracy floors in the release gate (a regressing model does not ship) plus rooftop registers behind both. FR panel (n=3000): 100% resolve, resolved-p90 6.6 km   |
+| 2 — trained + coordinate-paneled | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Parses reliably; resolves to locality-and-postcode grade, not rooftop. Panels (n=1000; BE n=640): resolve rates 87.8% (BE) to 100%, resolved-p90 10 km or less everywhere |
+| 3 — thinly measured              | NO, SE                                                 | Trained and paneled, with named residual failure classes. NO resolves 92.7%; the SE panel is small (n=173), so claims beyond it are unverified                            |
+| resolver-route only              | JP                                                     | Postcode-route resolution through a per-country convention engine; no parser training claim at all                                                                        |
+| blocked / queued                 | GB, IE, HU, RO, KR                                     | External constraints, mostly licensing (below), each with a check-back owner                                                                                              |
+
+The scope table also carries a row this summary folds out: its tier 4 records a shipped tokenizer change for the diacritic-heavy locales, a change record rather than a coverage grade.
+
+Two clarifications the table can't carry. First, there is one trained model. The `en-us` and `fr-fr` weight packages currently ship the same binary, trained on a multi-country corpus; locale-specific weights are future work, and the tiers describe how well that one model plus the data serves each locale. Second, Tier 2 is exactly the "parses often, resolves thin" case the Kraków run demonstrated. The Dutch panel is the outlier that proves the axis is data: block-grain PC6 postcodes take NL to a 0.05 km median without any rooftop register, because the postcode data is nearly rooftop-grade by itself.
+
+Absence from the table is also a claim. The Ulaanbaatar address you try will probably still resolve (the admin gazetteer covers most of the world), but nothing has measured how well, so nothing is promised.
+
+## What the data is
+
+Everything the resolver consults is a read-only SQLite artifact, sealed at build time with an `ATTRIBUTION.json` recording source, release, and license. The layers, from coarse to fine:
+
+- **The admin base layer.** Derived from [WhosOnFirst](./resolver-and-wof.mdx): 4.09 million places across 244 countries, each with alternate names, population, bounding box, and ancestor chain. This is the layer that exists nearly everywhere, and it is what "resolves to a centroid" means.
+- **Postcode layers.** US postcode centroids, Dutch PC6 codes at street-block grain, and a GeoNames-derived tail for much of the rest of the world, folded onto WOF-keyed entries.
+- **Rooftop registers.** The precision tier. The US situs layer: 124.9 million address points across 50 per-state shards, built from the National Address Database and OpenAddresses (release 2026-05-20.0). The French BAN layer: 26.0 million points across 101 départements (release 2026-05-18). These two are why Tier 1 reports 1 m uncertainties and Tier 2 does not.
+- **Interpolation and street data.** US TIGER street segments for house-number ranges; BAN street centroids for French street-only queries.
+- **Reference data in the packages.** [`@mailwoman/codex`](https://www.npmjs.com/package/@mailwoman/codex) (per-address-system facts: USPS suffixes, ZIP shapes), locale-gated variant aliases, and the bundled libpostal dictionaries and libaddressinput format rules.
+
+The full source catalog, with per-source notes and the licensing gradient, is [the address-data-sources reference](../plan/reference/address-data-sources.mdx).
+
+Provenance is a design constraint. The shipped core is built entirely from permissive sources (WOF is CC0, TIGER and NAD are public domain, Overture is CDLA-Permissive, GeoNames is CC-BY, BAN is Licence Ouverte), so a resolved coordinate carries no copyleft. An OpenStreetMap-derived rooftop tier exists in code for countries without an open register, but OSM's ODbL is share-alike, so those shards are quarantined behind a structural boundary and are not enabled in any published artifact pending legal review. [The data licensing page](../licensing/data-provenance.md) walks the whole boundary.
+
+## Where coverage runs out
+
+Coverage gives out by degrees. [The precision ladder](./how-mailwoman-resolves-a-place.mdx#the-precision-ladder) consults each rung only when the finer one has nothing, so a missing register degrades the answer rather than emptying it: no rooftop point means an interpolated estimate, no street segment means a postcode or locality centroid, and the output names the rung it used. What you must not do is ignore `resolution_tier` and treat every coordinate as a delivery point — the Kraków result is a correct town, not a correct door.
+
+The floor drops away only when the gazetteer has never heard of the place. Then the parse survives and the coordinate does not:
+
+```text
+input:            17 Qwzzyk Lane, Blorenfeld
+resolution_tier:  admin
+coordinate:       (unresolved)
+locality:         Blorenfeld
+```
+
+No point is invented. An unresolved span stays a labeled span, and downstream code can tell the difference.
+
+The visual evidence for all of this is on [the demo map](https://mailwoman.sister.software/demo). Its Layers panel carries two coverage overlays, "Coverage · optimistic fog" and "Coverage · honest fog": populated places the resolver cannot yet pin render as gray fog, weighted by importance, while rooftop and postcode coverage clears the fog. The optimistic reading lifts partial coverage so gaps surface as you zoom in; the second reading shades by what the data can do today. The fog sits exactly where civilization exists and our data does not — much of Africa, the Middle East, Central and South Asia, and South America, plus gaps like the UK and Ireland. The overlay build is documented in [the coverage-overlay runbook](../plan/reference/coverage-overlay.mdx).
+
+## Where the parser's knowledge comes from
+
+The model's side of "supported" is the training corpus: open, field-structured address records — national registers, state GIS address points, federal facility directories — aligned to BIO labels by per-source adapters and frozen into named corpus versions. The counts change with every rebuild, so they live with the pipeline docs rather than here: [corpus construction](./corpus-construction.mdx) covers the sources and alignment, [the training pipeline](./training-pipeline.mdx) the path from rows to shipped weights. One rule from that pipeline shows up on this page's map: a license filter excludes share-alike sources from training shards, and the usable open data for Britain and Ireland is share-alike. That is why GB sits in the blocked row — a licensing gate with a check-back owner, not a modeling failure.
+
+## Checking your own area
+
+Three instruments, in the order you'd reach for them:
+
+- **The demo map.** Type your own addresses at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) and flip the coverage overlays on. The fog answers "is my region pinned or sketched" faster than any table.
+- **The eval record.** [The eval reports](../evals/index.mdx) are the graded, dated evidence behind every claim above — the [parity scorecards](../evals/competitive-parity/index.mdx) for per-tag parse quality, the [resolver and geo panels](../evals/resolver-geo/index.mdx) for coordinate accuracy per locale.
+- **Your own sample.** The two-command pattern at the top of this page works on your data. If your addresses are heavy in a Tier-2 or Tier-3 locale, run a few hundred through `mailwoman geocode` and read the `resolution_tier` distribution before committing; [which languages Mailwoman handles well](./language-support.mdx) is the plain-language companion read, per language rather than per data layer.
+
+When a place is missing from the tiers, the fog, and the panels, that is the answer: unmeasured, therefore unclaimed. The tier table moves when new data and new evals land, and the scope declaration is where it moves first.

@@ -399,6 +399,29 @@ curl -s -o /dev/null -w '%{http_code}' https://registry.npmjs.org/mailwoman/<NEW
 cd $(mktemp -d) && npm init -y >/dev/null && npm install mailwoman@<NEW> --dry-run     # exit 0, no 404
 ```
 
+### Step 5 — refresh the docs' release-bound numbers
+
+Every model promotion leaves the same three-part staleness behind — a number copied from the old
+card, a CLI capture from the old weights. Do this AFTER Step 4 (the model is live), so captures run
+against the real shipped weights, not a staging candidate:
+
+1. **Refresh the model-card-derived numbers** on the known surfaces: the two flagship concept pages
+   (`docs/articles/concepts/how-mailwoman-parses-an-address.mdx`,
+   `docs/articles/concepts/how-mailwoman-resolves-a-place.mdx`),
+   `docs/articles/concepts/tokenization.mdx`, the homepage (`docs/src/pages/index.tsx` +
+   `docs/src/components/AboutDemo/AboutDemo.tsx`),
+   `docs/articles/understanding/our-approach/from-pelias-to-mailwoman.mdx`, and
+   `docs/articles/status.mdx` + `docs/articles/releases.mdx` (params, vocab size, int8/fp32 size —
+   byte-verify each against the artifact; don't trust the prose you're replacing).
+2. **Re-run the docs' captured CLI examples** (`mailwoman parse`, `mailwoman geocode`, the
+   `/v1/batch` curl captures) against the newly-promoted weights, and refresh only the output blocks
+   whose real bytes changed — byte-exact, leave unchanged blocks and surrounding prose untouched.
+3. **Run the `mailwoman eval ledger-append` command** the promotion gate printed on its PASS output,
+   so `evals/scores-by-version.json` picks up the new row.
+
+`status.mdx` and `releases.mdx` change together or not at all (each page says so) — a model
+promotion always touches both: a new row on the releases matrix, a re-verified banner on status.
+
 ### Pitfall: `.release-it.json` must list EVERY runtime dep of `mailwoman`
 
 `mailwoman`'s `workspace:*` deps are translated to concrete `<NEW>` versions by `yarn pack`. If a dep

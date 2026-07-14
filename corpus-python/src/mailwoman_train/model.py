@@ -228,6 +228,8 @@ class MailwomanCoarseEncoder(nn.Module):
         inject_first_token: bool = False,
         use_gazetteer_anchor: bool = False,
         gazetteer_feature_dim: int = 5,
+        use_country_anchor: bool = False,
+        country_feature_dim: int = 2,
         use_affix_head: bool = False,
         use_conventions_loss_mask: bool = False,
         use_span_boundary_head: bool = False,
@@ -282,6 +284,15 @@ class MailwomanCoarseEncoder(nn.Module):
         # tokens get g_i=0 — no regime switch, same continuum argument as the postcode anchor.
         self.use_gazetteer_anchor = use_gazetteer_anchor
         self.gazetteer_feature_dim = int(gazetteer_feature_dim) if use_gazetteer_anchor else 0
+        # Country-lexicon conditioning channel (#1104). Same additive input-layer shape as the gazetteer
+        # anchor: t_i = c_i · (W_c·country_features + v_CTRY), where country_features is the per-token
+        # [country_surface, country_ambiguous] clue painted from the RAW SURFACE by the codex country
+        # lexicon — never labels, so train and inference share one computation. Country is a CLOSED,
+        # enumerable class (~250 surfaces) the learned grammar mislabels in the WOF-admin leading
+        # long-form case; this de-entangles the country signal from the gazetteer's shared 5-hot slot
+        # (its own projection + cue) and is NOT zeroed near a postcode. Clue informs, model decides.
+        self.use_country_anchor = use_country_anchor
+        self.country_feature_dim = int(country_feature_dim) if use_country_anchor else 0
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -376,6 +387,17 @@ class MailwomanCoarseEncoder(nn.Module):
         else:
             self.gazetteer_projection = None
             self.gazetteer_token_embedding = None
+
+        # Country-lexicon projection W_c (feature_dim→hidden) + learned v_CTRY cue (#1104). None when
+        # off (forward skips it → bit-identical to a no-country encoder).
+        self.country_projection: nn.Linear | None
+        self.country_token_embedding: nn.Parameter | None
+        if self.use_country_anchor:
+            self.country_projection = nn.Linear(self.country_feature_dim, hidden_size, bias=True)
+            self.country_token_embedding = nn.Parameter(torch.zeros(hidden_size))
+        else:
+            self.country_projection = None
+            self.country_token_embedding = None
 
         self.blocks = nn.ModuleList(
             [
@@ -517,6 +539,8 @@ class MailwomanCoarseEncoder(nn.Module):
         anchor_confidence: torch.Tensor | None = None,
         gazetteer_features: torch.Tensor | None = None,
         gazetteer_confidence: torch.Tensor | None = None,
+        country_features: torch.Tensor | None = None,
+        country_confidence: torch.Tensor | None = None,
         char_ids: torch.Tensor | None = None,
     ) -> _CoarseEncoderOutput:
         # Token embedding source: char-composed (CharCNN over per-token char IDs, shape (B, S, W)) or the
@@ -622,6 +646,27 @@ class MailwomanCoarseEncoder(nn.Module):
             raise ValueError(
                 "gazetteer_features supplied but use_gazetteer_anchor=False — rebuild the "
                 "encoder with use_gazetteer_anchor=True or drop the gazetteer arguments"
+            )
+
+        # Country-lexicon injection (#1104). Per-token additive: t_i = c_i · (W_c·features + v_CTRY),
+        # added to the input embedding. Confidence is 1.0 where a country surface fires, 0 elsewhere —
+        # the no-clue identity (same continuum as the other channels). Independent of the gazetteer's
+        # near-postcode suppression: a trailing "…12345 USA" keeps its country clue.
+        if self.country_projection is not None and self.country_token_embedding is not None:
+            if country_features is None or country_confidence is None:
+                country_features = torch.zeros(bsz, seq, self.country_feature_dim, dtype=h.dtype, device=h.device)
+                country_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
+            elif country_features.shape != (bsz, seq, self.country_feature_dim):
+                raise ValueError(
+                    f"country_features shape {tuple(country_features.shape)} != "
+                    f"({bsz}, {seq}, {self.country_feature_dim})"
+                )
+            ctry_vec = self.country_projection(country_features.to(h.dtype)) + self.country_token_embedding
+            h = h + country_confidence.to(h.dtype).unsqueeze(-1) * ctry_vec
+        elif country_features is not None:
+            raise ValueError(
+                "country_features supplied but use_country_anchor=False — rebuild the "
+                "encoder with use_country_anchor=True or drop the country arguments"
             )
 
         h = self.input_dropout(self.input_ln(h))
@@ -940,6 +985,10 @@ class MailwomanCoarseEncoder(nn.Module):
             # Gazetteer-anchor channel (#464). False/0 on pre-gazetteer weights.
             "use_gazetteer_anchor": bool(self.use_gazetteer_anchor),
             "gazetteer_feature_dim": int(self.gazetteer_feature_dim),
+            # Country-lexicon channel (#1104). False/0 on pre-country weights; loaders branch on the flag
+            # to materialize country_projection / country_token_embedding at the feature width.
+            "use_country_anchor": bool(self.use_country_anchor),
+            "country_feature_dim": int(self.country_feature_dim),
             "use_affix_head": bool(self.use_affix_head),
             "use_conventions_loss_mask": bool(self.use_conventions_loss_mask),
             # Span-boundary aux head (#727). Persisted so a resume rebuilds the head; the exported ONNX
@@ -1004,6 +1053,9 @@ class MailwomanCoarseEncoder(nn.Module):
             anchor_feature_dim=cfg.get("anchor_feature_dim", NUM_LOCALES + 2),
             inject_first_token=cfg.get("inject_first_token", False),
             use_gazetteer_anchor=cfg.get("use_gazetteer_anchor", False),
+            # Country-lexicon channel (#1104). Default off for back-compat with pre-country checkpoints.
+            use_country_anchor=cfg.get("use_country_anchor", False),
+            country_feature_dim=cfg.get("country_feature_dim", 2),
             use_affix_head=cfg.get("use_affix_head", False),
             use_conventions_loss_mask=cfg.get("use_conventions_loss_mask", False),
             # Span-boundary aux head (#727). Default off for back-compat with pre-#727 checkpoints.
@@ -1077,6 +1129,9 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         # validates the JSON's feature_dim against this at startup via the trainer).
         use_gazetteer_anchor=getattr(cfg.model, "use_gazetteer_anchor", False),
         gazetteer_feature_dim=getattr(cfg.model, "gazetteer_feature_dim", 5),
+        # Country-lexicon channel (#1104). feature_dim follows the country lexicon's emitted width (2).
+        use_country_anchor=getattr(cfg.model, "use_country_anchor", False),
+        country_feature_dim=getattr(cfg.model, "country_feature_dim", 2),
         # Dedicated affix head (#492).
         use_affix_head=getattr(cfg.model, "use_affix_head", False),
         use_conventions_loss_mask=getattr(cfg.model, "use_conventions_loss_mask", False),

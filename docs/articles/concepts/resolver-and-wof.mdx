@@ -91,13 +91,13 @@ Mailwoman's resolver drops any candidate whose coordinates are `(0, 0)` from res
 
 ## What the resolver does not do
 
-- **Address-point lookup.** Given `"350 5th Ave, New York"`, the resolver returns the centroid of New York City, not the precise rooftop of 350 5th Ave. Rooftop-precision geocoding requires a different dataset (commercial address-point databases) and is out of scope for the open Mailwoman pipeline.
+- **Rooftop precision outside the covered registers.** Where an address-point shard exists, the resolver returns the exact address point, not a locality centroid, at 1 m reported uncertainty: the US situs layer (~125M points, built from NAD and OpenAddresses) and the French BAN register (26M points) are the two live shards today. Outside that coverage, the ladder falls back to interpolation, then a street or admin centroid. [How Mailwoman resolves a place](./how-mailwoman-resolves-a-place.mdx) walks the full precision ladder and what each rung promises.
 - **Reverse geocoding.** "What place is at coordinates (40.7128, -74.0060)?" is a separate query shape. The R\*Tree index supports it but the public Mailwoman API does not expose a reverse-geocode endpoint today.
 - **Routing.** "How do I get from A to B?" is a graph problem on the road network, not a gazetteer query.
 
 ## Where this lives in the code
 
-- **Server resolver:** `resolver-wof-sqlite/` (uses `better-sqlite3`)
+- **Server resolver:** `resolver-wof-sqlite/` (uses `node:sqlite`)
 - **Browser resolver:** `resolver-wof-wasm/` (uses `@sqlite.org/sqlite-wasm`)
 - **Slim builder:** `corpus/scripts/build-wof-slim.ts`
 - **Demo integration:** `docs/src/pages/demo/index.tsx` (the cascade + the `FailureDiagnostic` panel)
@@ -106,4 +106,5 @@ Mailwoman's resolver drops any candidate whose coordinates are `(0, 0)` from res
 ## See also
 
 - [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — the components the resolver receives
+- [How Mailwoman resolves a place](./how-mailwoman-resolves-a-place.mdx) — the full walk from parsed components to a coordinate, including the precision ladder
 - [How it works now](../understanding/our-approach/how-it-works-now.mdx) — where the resolver fits in the live demo flow

@@ -76,6 +76,10 @@ class EncodedExample:
     # tag-set clues + ``(max_length,)`` confidence, or None when no lexicon is configured.
     gazetteer_features: list[list[float]] | None = None
     gazetteer_confidence: list[float] | None = None
+    # Country-lexicon channel (#1104). Per-piece ``(max_length, 2)`` [country_surface,
+    # country_ambiguous] clue + ``(max_length,)`` confidence, or None when no country lexicon is set.
+    country_features: list[list[float]] | None = None
+    country_confidence: list[float] | None = None
 
 
 def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, float]]:
@@ -562,6 +566,12 @@ def iter_encoded(
         from .gazetteer_anchor import load_gazetteer_lexicon
 
         gazetteer_lexicon = load_gazetteer_lexicon(cfg_data.gazetteer_lexicon_path)
+    # Country-lexicon (#1104): loaded once. None → no country features (back-compat).
+    country_lexicon = None
+    if getattr(cfg_data, "country_lexicon_path", None):
+        from .country_lexicon import load_country_lexicon
+
+        country_lexicon = load_country_lexicon(cfg_data.country_lexicon_path)
     affix_relabel_lexicon = None
     if getattr(cfg_data, "affix_relabel_lexicon_path", None):
         affix_relabel_lexicon = AffixRelabelLexicon.load(cfg_data.affix_relabel_lexicon_path)
@@ -607,6 +617,7 @@ def iter_encoded(
             anchor_paint_mode=getattr(cfg_data, "anchor_paint_mode", "gold"),
             gazetteer_lexicon=gazetteer_lexicon,
             gazetteer_choreography=getattr(cfg_data, "gazetteer_choreography", False),
+            country_lexicon=country_lexicon,
             # v0.5.0 char-offset labels (#519): rows from a span-schema shard train FROM the
             # spans (encode_row builds the per-char label array from them; the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
@@ -629,6 +640,8 @@ def iter_encoded(
             anchor_confidence=enc.get("anchor_confidence"),
             gazetteer_features=enc.get("gazetteer_features"),
             gazetteer_confidence=enc.get("gazetteer_confidence"),
+            country_features=enc.get("country_features"),
+            country_confidence=enc.get("country_confidence"),
         )
 
 
@@ -650,6 +663,10 @@ def collate(batch: list[EncodedExample]) -> dict:
     if batch and batch[0].gazetteer_features is not None:
         out["gazetteer_features"] = [ex.gazetteer_features for ex in batch]
         out["gazetteer_confidence"] = [ex.gazetteer_confidence for ex in batch]
+    # Country-lexicon channel (#1104): same presence contract.
+    if batch and batch[0].country_features is not None:
+        out["country_features"] = [ex.country_features for ex in batch]
+        out["country_confidence"] = [ex.country_confidence for ex in batch]
     return out
 
 

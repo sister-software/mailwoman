@@ -8,34 +8,40 @@ description: What ships today, what's behind a flag, and what's still experiment
 
 This page is the single source of truth for what works in Mailwoman right now.
 
-:::info[Verified as of 2026-07-14 — release 6.0.0]
-The current npm release is **6.0.0** (`npm view mailwoman version`; `git tag` confirms `v6.0.0` at
-`e4957876`), a breaking, code-only major — the Hono API-surface cutover. All four HTTP surfaces
-(the native `mailwoman serve` plus the photon/nominatim/libpostal drop-ins) now run on one shared
-Hono stack, and the express server is deleted in full with no compatibility shim. See
-[Releases & capabilities](./releases.mdx) for the row.
+:::info[Verified as of 2026-07-14 — release 6.1.0]
+The current npm release is **6.1.0** (`npm view mailwoman version`; `git tag` confirms `v6.1.0`), a
+minor that promotes the trained model to **the v261 span-boundary line**. The prior release, 6.0.0,
+was a breaking, code-only major — the Hono API-surface cutover. All four HTTP surfaces (the native
+`mailwoman serve` plus the photon/nominatim/libpostal drop-ins) run on one shared Hono stack, and
+the express server is deleted in full with no compatibility shim. See
+[Releases & capabilities](./releases.mdx) for both rows.
 
-Its **weights are the 5.9.0 line unchanged** (`v2.4.1-fr-nsplice-ft` — no training commits landed
-between `v5.10.1` and `v6.0.0`, and the onnx 1.22.0 export-toolchain bump was re-verified
-byte-identical against the shipped `model.onnx`). 5.9.0's model headline was **the principled
-#444 FR-diacritic fix**: a training-free vocab splice had regressed FR street parsing (accent
-mangle rate 23.5% → 26.4%) because the merged diacritic pieces inherited a strong "ignore me"
-signal from their component pieces with no gradient of their own to move off it; a targeted
-fine-tune gave those pieces gradient, bringing the mangle rate to **17.7%** and holding
-US z=+0.29 / FR z=+0.90 on the held-out battery, gate PASS 17/17.
+**The current model is v261** (`v2.6.1-span-boundary-full`,
+[#727](https://github.com/sister-software/mailwoman/issues/727) stage-1) — an init_from fine-tune
+of the stable `v257` fragment-campaign line plus a training-only span-boundary auxiliary head
+(discarded at export; the shipped ONNX is the plain BIO tagger whose encoder absorbed the boundary
+pressure). It shrinks the region→street boundary-absorption class (US region→street flips 5→2 vs
+v257), parity street 0.5281 (+13pp vs v241), gauntlet regression+metamorphic PASS (Dublin pin
+held). Golden country recall 82.0% vs shipped 88.6% (−6.6pp) ships as a **documented cosmetic gate
+exception** ([#1104](https://github.com/sister-software/mailwoman/issues/1104)): the drop
+concentrates entirely on 220 of 224 non-postal WOF-admin-hierarchy golden rows; on real-postal
+addresses country recall and precision are identical across the whole fragment lineage (v241,
+v257, v261 — a DeepSeek-signed falsifier). The tokenizer is unchanged, `v0.9.0-multisplice`
+(73,143 pieces). See the [v261 promotion + gate exception](./evals/2026-07-14-v261-promote-country-gate-exception.md)
+note for the full gate table.
 
 **The per-tag tables below are frozen at the 2026-07-02 full re-score of the earlier 5.0.0/v4.15.0
-line** (the #885 measurement re-anchor). Five model releases have shipped since without a fresh
-full re-score (5.1.0 → 5.4.0, then 5.9.0); their measured deltas are narrated release-by-release —
-not folded into a new scorecard — on [Releases & capabilities](./releases.mdx), which is the
-current per-release source of truth. Treat the [parity
-scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md) below as a historical
-baseline, not the shipped model's live per-tag truth.
+line** (the #885 measurement re-anchor). Six model releases have shipped since without a fresh
+full re-score (5.1.0 → 5.4.0, then 5.9.0, then 6.1.0); their measured deltas are narrated
+release-by-release — not folded into a new scorecard — on
+[Releases & capabilities](./releases.mdx), which is the current per-release source of truth. Treat
+the [parity scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md) below as a
+historical baseline, not the shipped model's live per-tag truth.
 :::
 
 ## Packages
 
-All publishable workspaces release in lockstep; the current npm version is **6.0.0**.
+All publishable workspaces release in lockstep; the current npm version is **6.1.0**.
 
 | Package                                                                                       | Description                                                         |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -49,24 +55,24 @@ All publishable workspaces release in lockstep; the current npm version is **6.0
 | `@mailwoman/resolver-wof-sqlite` / `-wasm`                                                    | WOF gazetteer resolver (Node SQLite / browser WASM)                 |
 | `@mailwoman/neural-web`                                                                       | Browser-side neural classifier (onnxruntime-web)                    |
 
-## Model weights (the 5.9.0 line, carried unchanged into 6.0.0)
+## Model weights (the v261 line, shipped 6.1.0)
 
-| Property             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Lineage**          | `v2.4.1-fr-nsplice-ft` @ step 12k — an init_from FINE-TUNE of `v2.3.0-nl-postcode` (v5.4.0) on the `v0.8.0-fr-nsplice` spliced tokenizer, which itself built on `v2.2.0-full-family` (v5.3.0, the FR street-fragmentation fix) and the `v0.6.0-bsplice`/`v0.7.1-nsplice` diacritic vocab splices (v5.1.0/v5.2.0). Gives the merged FR diacritic pieces gradient after a training-free mean-init splice was falsified for regressing FR streets ([#1047](https://github.com/sister-software/mailwoman/pull/1047)) |
-| **Architecture**     | 33.9M params — 6-layer encoder, 384 hidden, 6 heads, 66,319-piece SentencePiece embedding (expanded from the 48K-vocab v4.15.0 line by the diacritic + FR-nsplice vocab splices)                                                                                                                                                                                                                                                                                                                                 |
-| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`) — unchanged                                                                                                                                                                                                                                                                                                                                                                                         |
-| **Training corpus**  | `corpus-v0.10.1-nl-postcode` = 699 shards (the v0.10.0 boundary-family base + the synth-nl-postcode shard, [#924](https://github.com/sister-software/mailwoman/issues/924)) · tokenizer `v0.8.0-fr-nsplice` (md5 `04995524…`)                                                                                                                                                                                                                                                                                    |
-| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`)                                                                                                                                                                                                                                                                                                                   |
-| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **Size**             | 36.8 MB int8 ONNX (146.6 MB fp32) · opset 17 · max sequence 128                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Property             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Lineage**          | `v2.6.1-span-boundary-full` (v261) @ step 8k — an init_from FINE-TUNE of `v257` (the stable fragment-campaign line) plus a training-only span-boundary auxiliary head (BCE weight 0.5, gentle schedule), discarded at export ([#727](https://github.com/sister-software/mailwoman/issues/727) stage-1). Shrinks the region→street boundary-absorption class; ships through a documented cosmetic gate exception on golden country recall ([#1104](https://github.com/sister-software/mailwoman/issues/1104)) |
+| **Architecture**     | ~29M params — 6-layer encoder, 384 hidden, 6 heads, 73,143-piece SentencePiece embedding (`v0.9.0-multisplice`, unchanged from 5.1.0–5.9.0)                                                                                                                                                                                                                                                                                                                                                                  |
+| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`) — unchanged                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Training corpus**  | v257 fragment-campaign corpus (shard-v5) re-tokenized through `v0.9.0-multisplice`; span-boundary aux head trained from BIO labels · tokenizer `v0.9.0-multisplice` (md5 `5c01cdcd…`)                                                                                                                                                                                                                                                                                                                        |
+| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`)                                                                                                                                                                                                                                                                                                               |
+| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Size**             | 37.6 MB int8 ONNX (146.6 MB fp32) · opset 17 · max sequence 128                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ### Per-tag health (summary)
 
 The full per-tag table — two lenses, golden-dev and real-OOD — lives in the
 [parity scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md). It is frozen at the
-2026-07-02 re-score of the 5.0.0/v4.15.0 line, one model generation behind the shipped 5.9.0 line
+2026-07-02 re-score of the 5.0.0/v4.15.0 line, six model generations behind the shipped v261 line
 above — read it as a historical baseline, not this model's live numbers. The sortable summary:
 
 import { F1ScoreTable } from "@site/src/components/F1ScoreTable/F1ScoreTable"
@@ -134,7 +140,7 @@ weights bundle as `calibration.json`) to make those scores honest probabilities 
 ## Browser demo
 
 The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) runs the
-int8 model (36.8 MB, the 5.9.0 line) via `@mailwoman/neural-web` plus a **byte-range global
+int8 model (37.6 MB, the v261 line) via `@mailwoman/neural-web` plus a **byte-range global
 gazetteer** — the FTS-free "candidate" table (~530 MB, queried over `sql.js-httpvfs`; a resolve
 touches ~12 range fetches regardless of file size) with global admin coverage + **US + EU postcode
 resolution** and a debounced FST place-autocomplete in the search box. US **street-level
@@ -146,19 +152,23 @@ calls the classifier's argmax path directly; joint reconcile is not active in th
 
 ## Model line (July 2026)
 
-The shipped weights are the **5.9.0 line** (`v2.4.1-fr-nsplice-ft`, carried unchanged through
-5.10.x and into 6.0.0 — 6.0.0 itself is a code-only major, the Hono API cutover; no training
-commits landed in that window). Five model releases shipped between the 5.0.0/v4.15.0 line
-(documented in past versions of this page) and today, each held to the **shipped assembled
-coordinate or a targeted repro**, not raw label-F1: v5.1.0 (`v0.6.0-bsplice` tokenizer splice)
-fixed Slavic diacritic fragmentation — CZ/PL/SK/SI wrong-city roughly halved, US byte-identical;
-v5.2.0 (`v0.7.1-nsplice`) extended the splice to Nordic diacritics (SE resolve 83.8 → 90.2%);
-v5.3.0 (`v2.2.0-full-family`, from scratch) fixed the FR street fragmentation the v5.2.0 splice had
-shipped ungated (bare 16/40 → 34/40, anchored 13/40 → 37/40); v5.4.0 (`v2.3.0-nl-postcode`,
-fine-tune) fixed a Dutch digits-first postcode misread that was pulling `1012 LG Amsterdam` into
-the US situs tier; v5.9.0 (`v2.4.1-fr-nsplice-ft`, fine-tune) gave the merged FR diacritic pieces
-gradient after a training-free vocab splice was falsified for regressing FR streets, cutting the
-accent mangle rate 23.5% → 17.7%. Full per-release evidence lives on
+The shipped weights are the **v261 line** (`v2.6.1-span-boundary-full`, promoted 6.1.0 —
+[#727](https://github.com/sister-software/mailwoman/issues/727) stage-1). Six model releases
+shipped between the 5.0.0/v4.15.0 line (documented in past versions of this page) and today, each
+held to the **shipped assembled coordinate or a targeted repro**, not raw label-F1: v5.1.0
+(`v0.6.0-bsplice` tokenizer splice) fixed Slavic diacritic fragmentation — CZ/PL/SK/SI wrong-city
+roughly halved, US byte-identical; v5.2.0 (`v0.7.1-nsplice`) extended the splice to Nordic
+diacritics (SE resolve 83.8 → 90.2%); v5.3.0 (`v2.2.0-full-family`, from scratch) fixed the FR
+street fragmentation the v5.2.0 splice had shipped ungated (bare 16/40 → 34/40, anchored 13/40 →
+37/40); v5.4.0 (`v2.3.0-nl-postcode`, fine-tune) fixed a Dutch digits-first postcode misread that
+was pulling `1012 LG Amsterdam` into the US situs tier; v5.9.0 (`v2.4.1-fr-nsplice-ft`, fine-tune)
+gave the merged FR diacritic pieces gradient after a training-free vocab splice was falsified for
+regressing FR streets, cutting the accent mangle rate 23.5% → 17.7%; v6.1.0/v261
+(`v2.6.1-span-boundary-full`, fine-tune off the stable v257 fragment-campaign line) trained a
+span-boundary auxiliary head to shrink the region→street boundary-absorption class (US region→street
+flips 5→2 vs v257, parity street +13pp vs v241), shipping through a documented cosmetic gate
+exception on golden country recall ([#1104](https://github.com/sister-software/mailwoman/issues/1104) —
+real-postal country recall and precision are unaffected). Full per-release evidence lives on
 [Releases & capabilities](./releases.mdx), which this page points to for anything shipped after
 the last full re-score. The ordered work queue to the full geocoder is
 [epic #488](https://github.com/sister-software/mailwoman/issues/488).

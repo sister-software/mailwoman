@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "6.1.0",
-	"model_lineage": "v2.6.1-span-boundary-full — init_from v2.5.7-fragment-v5-gentle-full (v257) + the STAGE3 span-boundary aux head (BCE weight 0.5), 8k steps, gentle schedule (lr 1e-5, warmup 500). Tokenizer v0.9.0-multisplice (73,143). The aux head trains boundary placement and is DISCARDED at export — the shipped ONNX is the plain BIO tagger whose ENCODER absorbed the boundary pressure. Gates: US region→street flips 5→2 vs v257, parity postcode 0.9861 PASS, parity street 0.5281 (+13pp vs v241), gauntlet regression+metamorphic PASS (Dublin pin held). Golden country recall 82.0% vs shipped 88.6% is a DOCUMENTED gate exception (#1104): the −6.6pp is entirely on non-postal WOF-admin hierarchy rows (220/224 golden country-gold rows); on real-postal addresses country recall+precision are IDENTICAL to shipped (falsifier, DeepSeek session 019f5f2c). The country-lexicon atlas channel is the permanent fix, in progress.",
-	"phase": "PROMOTED (6.1.0) — v261 span-boundary head (#727 stage-1): init_from the stable v257 (fragment campaign) + a training-only span-boundary aux head that shrinks the region→street boundary-absorption class. Inference-invariant (aux head off the logits path, not exported).",
+	"version": "6.2.0",
+	"model_lineage": "v2.6.3-country-channel (v263, #1104) — init_from v261 (v2.6.1-span-boundary-full) + the dedicated country soft-feed channel ON, 8k steps, gentle schedule (lr 1e-5, warmup 500). Tokenizer v0.9.0-multisplice (73,143). The country channel is a 2-dim [country_surface, country_ambiguous] additive feature with its OWN projection + confidence (immune to suppress_gazetteer_near_postcode, unlike the shared gazetteer country slot — the #1104 signal-salience fix); it is the atlas analogue of Pelias's WhosOnFirstClassifier. This is the REAL fix that replaces v261's cosmetic country exception: golden country recall 84.8→89.3% (clears the 88.6% v241 bar), real-postal country recall+hallucination IDENTICAL to v261 (falsifier 3/4, 1%), held-out coordinate PASS both locales (US z −0.16 / FR z −0.17), gauntlet regression+metamorphic PASS. It carries a coordinate-INVISIBLE golden region per-tag trade (+24 fails, concentrated on trailing-country tails like 'VT 05161, US' where the country channel out-competes the adjacent region abbrev) — operator-approved, documented in docs/articles/evals/2026-07-14-v263-country-channel-result.md.",
+	"phase": "PROMOTED (6.2.0) — v263 country-channel (#1104): init_from v261 + the dedicated country soft-feed channel. requires.country is now a fed channel; createScorer/loadFromWeights feed the country-surface lexicon and fail closed if it is missing.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "v257 fragment-campaign corpus (shard-v5) re-tokenized through v0.9.0-multisplice; span-boundary aux head from BIO labels.",
+		"corpus_version": "v257 fragment-campaign corpus (shard-v5) — UNCHANGED from v261; the country channel paints features on existing rows from the country-surface lexicon at encode time (no new shard).",
 		"tokenizer_version": "0.9.0-multisplice",
 		"steps": 8000,
 		"best_step": 8000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v2.6.1-span-boundary-full: init_from FINE-TUNE off v257 step-008000, use_span_boundary_head=true (0.5), lr 1e-5, warmup 500, 8k on A100.",
+		"recipe": "v2.6.3-country-channel: init_from FINE-TUNE off v261 step-008000, use_country_anchor=true (country_feature_dim=2, lexicon country-surface-lexicon-v1.json), use_span_boundary_head=true (0.5), lr 1e-5, warmup 500, 8k on A100.",
 		"tokenizer_splice": "tokenizer_splice.py build-tokenizer --locales fr --per-file-cap 2000000 over OA fr/countrywide.csv (seed 42, 350k-line corpus, unigram vocab 24000) -> splice 2406 non-ASCII FR pieces into v0.7.1-nsplice (English byte-identity asserted). UNCHANGED from v240 (md5 04995524). The v241 delta over v240 is that the new embedding rows now receive GRADIENT via the init_from fine-tune, not just FVT mean-init.",
 		"data_attribution": [
 			"OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
@@ -35,11 +35,14 @@
 		"phrase_priors": true
 	},
 	"requires": {
-		"$comment": "The SHIP-CONFIG this model was TRAINED against (#718) — UNCHANGED from v1.5.0 (v1.8.0 cloned the v1.5.0-fr-order ship config; the single training variable was the fr-admin-split shard). The canonical ProductionScorer (@mailwoman/neural's createScorer) reads this and FAILS CLOSED if a required channel isn't actually fed — closing the #566/#685 trap where a channel-trained model scored channel-OFF silently goes OOD. Read off the gate it shipped against (scripts/eval/gates/v0.5.0-bridge.json: requires_gazetteer_lexicon=true, requires_conventions=auto, requires_bridge=false) plus anchor (the model exports anchor_features). Additive metadata only.",
+		"$comment": "The SHIP-CONFIG this model was TRAINED against (#718). v263 adds `country` (the #1104 dedicated country soft-feed channel) to the prior anchor+gazetteer+conventions config. The canonical ProductionScorer (@mailwoman/neural's createScorer) reads this and FAILS CLOSED if a required channel isn't actually fed — closing the #566/#685 trap where a channel-trained model scored channel-OFF silently goes OOD. The server tier feeds anchor+gazetteer+country; the pocket tier is anchor-only (its capabilities country=0 by construction). Additive metadata only.",
 		"anchor": {
 			"required": true
 		},
 		"gazetteer": {
+			"required": true
+		},
+		"country": {
 			"required": true
 		},
 		"conventions": {
@@ -104,7 +107,7 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v2.6.1-span-boundary-full (v261, #727 stage-1), shipped as 6.1.0. init_from the stable v257 fragment-campaign checkpoint + a training-only STAGE3 span-boundary aux head (BCE 0.5) that shrinks region→street boundary absorption; the aux head is DISCARDED at export, so the shipped int8 is the plain 33-label BIO tagger whose encoder absorbed the pressure. Tokenizer v0.9.0-multisplice (73,143). Gates: parity street 0.5281 (+13pp vs v241), US region→street flips 5→2 (census /600), postcode 0.9861 PASS, gauntlet regression+metamorphic PASS. The golden country recall −6.6pp (88.6→82.0) is a DOCUMENTED cosmetic gate exception (#1104): 220/224 golden country-gold rows are non-postal WOF-admin hierarchy strings; on the real-postal subset country recall AND precision are IDENTICAL to shipped (falsifier, DeepSeek session 019f5f2c). The permanent fix is the country-lexicon atlas soft-feed channel (feat/country-lexicon-channel), in progress. Full write-up: docs/articles/evals/2026-07-14-v261-promote-country-gate-exception.md. CALIBRATION: the carried isotonic tables were fitted on the v5.3.0 lineage; opt-in, default output unaffected; a re-fit against v261's confidence distribution is a tracked follow-up.",
+	"notes": "v2.6.3-country-channel (v263, #1104), shipped as 6.2.0. init_from v261 + the dedicated country soft-feed channel ON (2-dim [country_surface, country_ambiguous], its own projection + confidence, immune to suppress_gazetteer_near_postcode). This is the REAL #1104 fix that replaces v261's documented cosmetic country exception. Grade (package-shaped, --weights-cache, #718): golden country recall 84.8→89.3% (clears the 88.6% v241 bar; fixes 19 / breaks 9); real-postal country recall 3/4 + hallucination 1% IDENTICAL to v261 (falsifier); held-out coordinate z-test PASS both locales (US z −0.16 on 300 FDIC, FR z −0.17 on 300 BAN); gauntlet regression+metamorphic PASS. TRADE: a coordinate-INVISIBLE golden region per-tag regression (+24 fails, 556→580) concentrated on trailing-country tails ('VT 05161, US' → region dropped as the country channel out-competes the region abbrev) — operator-approved, coordinate flat. Full write-up: docs/articles/evals/2026-07-14-v263-country-channel-result.md. CALIBRATION: the carried isotonic tables were fitted on the v5.3.0 lineage; opt-in, default output unaffected; a re-fit is a tracked follow-up.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32, opset 17)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=73143 (v0.9.0-multisplice; ships WITH the model, both runtimes load it from this bundle)",
@@ -198,7 +201,7 @@
 			"us_2k_non_inferiority": {
 				"row_dump": "BYTE-IDENTICAL to shipped v4.15.0 int8 (diff 0 everywhere)",
 				"coord_p50_km": 3.31,
-				"resolve_rate": 1.0,
+				"resolve_rate": 1,
 				"region_correct": 0.999
 			},
 			"tokenization_examples": "Vysoká 4→1 piece, Grudziądz 6→1, Świętokrzyska 9→1, Čistá 5→2; SK fertility −51.9%, SI −35.2% on diacritic-bearing names with zero SK/SI-specific pieces"
@@ -340,8 +343,8 @@
 		}
 	},
 	"files_md5": {
-		"$comment": "Shipped: model.onnx = int8 v261-span-boundary-full step-8000; tokenizer v0.9.0-multisplice.",
-		"model.onnx": "de59c0a7888efe315a3e22608d8b37fd",
+		"$comment": "Shipped: model.onnx = int8 v263-country-channel step-8000; tokenizer v0.9.0-multisplice.",
+		"model.onnx": "34289d215e0c1ba1e663337999ca3cbd",
 		"tokenizer.model": "5c01cdcd4ae25849c5cb26b69fd3dde9"
 	},
 	"capabilities": {
@@ -351,26 +354,26 @@
 					"maskOffF1": 0.9
 				},
 				"street": {
-					"maskOffF1": 24.2
+					"maskOffF1": 24.4
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 94.5
+					"maskOffF1": 94.1
 				},
 				"locality": {
-					"maskOffF1": 79.2
+					"maskOffF1": 79
 				},
 				"region": {
-					"maskOffF1": 90.8
+					"maskOffF1": 90.5
 				},
 				"postcode": {
-					"maskOffF1": 96.9
+					"maskOffF1": 96.6
 				},
 				"country": {
-					"maskOffF1": 60.9
+					"maskOffF1": 67
 				},
 				"unit": {
 					"maskOffF1": 5.2
@@ -422,22 +425,22 @@
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 87.9
+					"maskOffF1": 87.4
 				},
 				"locality": {
-					"maskOffF1": 59.7
+					"maskOffF1": 59.8
 				},
 				"region": {
-					"maskOffF1": 74.6
+					"maskOffF1": 73.2
 				},
 				"postcode": {
-					"maskOffF1": 92.3
+					"maskOffF1": 91.9
 				},
 				"country": {
 					"maskOffF1": 0
 				},
 				"unit": {
-					"maskOffF1": 5.2
+					"maskOffF1": 5.1
 				},
 				"intersection_a": {
 					"maskOffF1": 50
@@ -449,7 +452,7 @@
 					"maskOffF1": 62.1
 				},
 				"venue": {
-					"maskOffF1": 90.7
+					"maskOffF1": 90.5
 				},
 				"dependent_locality": {
 					"maskOffF1": 0

@@ -18,7 +18,7 @@ Two signals in the resolver/FST distinguish "the famous one" from "the tiny same
 
 **`place_population`** is built during the main WOF SQLite build (`scripts/build-unified-wof.ts`). When the script reads each WOF GeoJSON file, it pulls `wof:population` (preferred) or `gn:population` (fallback) from the `properties` block and stores it in `place_population.population`. No external download needed.
 
-**`place_importance`** is built by a separate script (`scripts/build-importance.ts`) after the main DB exists. It:
+**`place_importance`** is built by a separate script (`scripts/build-importance.ts`) after the main DB exists — see [Wikipedia importance scores](../plan/reference/WIKIPEDIA_IMPORTANCE.mdx) for the full ETL this feeds. It:
 
 1. Downloads `wikimedia-importance.csv.gz` from `nominatim.org/data/`.
 2. Parses the TSV: `(language, title, importance_score, wikidata_id)`.

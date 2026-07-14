@@ -464,6 +464,58 @@ def sync_v7():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=1200,
+)
+def sync_country_channel():
+    """Pull the #1104 country-lexicon CHANNEL activation: latest src (the channel code + the new
+    v2.6.3-country-channel config) + the country-surface lexicon into /data/gazetteer/. The corpus is
+    UNCHANGED from v261 (v0.10.6-fragment-v5, already on the volume — the channel paints features on
+    existing rows from the lexicon at encode time, no new shard), and the init_from checkpoint
+    (output-v261-span-boundary-full-s42/step-008000) persists from the v261 run. So only src + the one
+    lexicon need pulling. Clears pycache, commits, verifies config + lexicon + init_from + base corpus."""
+    import shutil
+    import subprocess
+
+    print("Syncing #1104 country-channel src + lexicon from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        # additive: the country lexicon lands beside the persisted anchor/affix lexicons in /data/gazetteer/.
+        f"rclone copy :s3:{BUCKET}/gazetteer/ {VOL_MOUNT}/gazetteer/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.6.3-country-channel.yaml"
+    lex = f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json"
+    init = f"{VOL_MOUNT}/output-v261-span-boundary-full-s42/checkpoints/step-008000"
+    corpus0 = f"{VOL_MOUNT}/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5/MANIFEST.json"
+    ok_cfg, ok_lex, ok_init, ok_corpus = (
+        os.path.isfile(cfg),
+        os.path.isfile(lex),
+        os.path.isdir(init),
+        os.path.isfile(corpus0),
+    )
+    print(f"  config: {ok_cfg} | country lexicon: {ok_lex} | init_from ckpt: {ok_init} | base corpus: {ok_corpus}")
+    if not (ok_cfg and ok_lex and ok_init and ok_corpus):
+        raise RuntimeError("sync verify FAILED — config/lexicon/init_from/corpus missing on volume; do NOT launch")
+    print("\n#1104 country-channel sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=3600,
 )
 def sync_v080():

@@ -48,6 +48,10 @@ def export_to_onnx(
     # inference runtime to feed the candidate-tag clues.
     has_gaz = bool(getattr(model_cpu, "use_gazetteer_anchor", False))
     gaz_dim = int(getattr(model_cpu, "gazetteer_feature_dim", 0))
+    # Country-lexicon channel (#1104): the inputs must exist in the graph for the inference runtime to
+    # feed the country-surface clues. Shipped on top of anchor+gaz (the production ship-config).
+    has_country = bool(getattr(model_cpu, "use_country_anchor", False))
+    country_dim = int(getattr(model_cpu, "country_feature_dim", 0))
     # Locale head (#511 Tier A / conventions layer): when the model carries the PR3 self-conditioning
     # head, export its pooled posterior as a SECOND output ("locale_logits", shape [batch, num_locales],
     # labels.LOCALE_COUNTRIES order). Consumers fetch outputs by name, so this is backward-compatible;
@@ -113,6 +117,35 @@ def export_to_onnx(
             )
             return (out.logits, out.locale_logits) if self.with_locale else out.logits
 
+    class _LogitsOnlyAnchorGazCountry(nn.Module):
+        def __init__(self, inner: nn.Module) -> None:
+            super().__init__()
+            self.inner = inner
+            self.with_locale = False
+
+        def forward(
+            self,
+            input_ids: torch.Tensor,
+            attention_mask: torch.Tensor,
+            anchor_features: torch.Tensor,
+            anchor_confidence: torch.Tensor,
+            gazetteer_features: torch.Tensor,
+            gazetteer_confidence: torch.Tensor,
+            country_features: torch.Tensor,
+            country_confidence: torch.Tensor,
+        ) -> torch.Tensor:
+            out = self.inner(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                anchor_features=anchor_features,
+                anchor_confidence=anchor_confidence,
+                gazetteer_features=gazetteer_features,
+                gazetteer_confidence=gazetteer_confidence,
+                country_features=country_features,
+                country_confidence=country_confidence,
+            )
+            return (out.logits, out.locale_logits) if self.with_locale else out.logits
+
     class _LogitsOnlyGaz(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
@@ -146,7 +179,42 @@ def export_to_onnx(
         torch.zeros((1, max_length, gaz_dim), dtype=torch.float32),
         torch.zeros((1, max_length), dtype=torch.float32),
     )
-    if has_anchor and has_gaz:
+    country_args = (
+        torch.zeros((1, max_length, country_dim), dtype=torch.float32),
+        torch.zeros((1, max_length), dtype=torch.float32),
+    )
+    # The country channel ships on top of anchor+gaz (the production ship-config). Exporting it in any
+    # other combination is unsupported — a country-trained model whose ONNX lacked the country inputs
+    # would silently run country-OFF (the #566/#685 OOD trap), so fail loud instead.
+    if has_country and not (has_anchor and has_gaz):
+        raise NotImplementedError(
+            "use_country_anchor is only exportable alongside the anchor + gazetteer channels "
+            "(the production ship-config); got has_anchor="
+            f"{has_anchor}, has_gaz={has_gaz}, has_country={has_country}."
+        )
+    if has_anchor and has_gaz and has_country:
+        export_model = _LogitsOnlyAnchorGazCountry(model_cpu).eval()
+        args = (dummy_ids, dummy_mask, *anchor_args, *gaz_args, *country_args)
+        input_names = [
+            "input_ids",
+            "attention_mask",
+            "anchor_features",
+            "anchor_confidence",
+            "gazetteer_features",
+            "gazetteer_confidence",
+            "country_features",
+            "country_confidence",
+        ]
+        dynamic_shapes = {
+            **base_dynamic,
+            "anchor_features": {0: "batch", 1: "sequence"},  # dim 2 (feature_dim) is fixed
+            "anchor_confidence": {0: "batch", 1: "sequence"},
+            "gazetteer_features": {0: "batch", 1: "sequence"},
+            "gazetteer_confidence": {0: "batch", 1: "sequence"},
+            "country_features": {0: "batch", 1: "sequence"},
+            "country_confidence": {0: "batch", 1: "sequence"},
+        }
+    elif has_anchor and has_gaz:
         export_model = _LogitsOnlyAnchorGaz(model_cpu).eval()
         args = (dummy_ids, dummy_mask, *anchor_args, *gaz_args)
         input_names = [

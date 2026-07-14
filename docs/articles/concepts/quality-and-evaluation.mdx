@@ -1,0 +1,103 @@
+---
+sidebar_position: 5
+title: Quality and evaluation
+description: How Mailwoman grades itself — the coordinate-first grading rule, the reports/ledger/scorecard evidence trail, the promotion gates that decide what ships, what a calibrated confidence means, and where quality drops.
+role: concept
+audience: product-reader
+source-of-truth: plan/CONTRIBUTING_MODEL_WORK.mdx, evals/scores-by-version.json, plan/reference/eval-ledger.schema.json, plan/SCOPE.mdx
+---
+
+# Quality and evaluation
+
+The [parsing](./how-mailwoman-parses-an-address.mdx) and [resolution](./how-mailwoman-resolves-a-place.mdx) walkthroughs both end the same way: for current accuracy, see the eval reports. If you're deciding whether to trust this system with a workload, that pointer deserves a page of its own: what gets graded, where the numbers live, what stops a bad model from shipping, and where the current line is weak. Every number should trace to a dated artifact you can open; this page is the map of those artifacts.
+
+## Two grades, and which one to watch
+
+The parse and the geocode are graded separately, because they fail separately. The parse grade is per-component: for each tag (street, locality, postcode, …), how often the labeled span matches a gold label, scored as F1 against a fixed golden set plus held-out real-world slices. The geocode grade is the coordinate: great-circle distance from the resolved point to a surveyed truth point, read at the median and the tail, plus resolve-rate within a stated tolerance.
+
+Watch the coordinate grade. A parse can be flawless and the answer still useless — "Springfield" tagged perfectly as a locality and resolved to the wrong state's Springfield is a few-hundred-kilometre error wearing a correct label. The project's [scope declaration](../plan/SCOPE.mdx) makes this a standing rule: "Grade the assembled coordinate, never label-F1 alone." Label metrics stay in the battery as a drift backstop, on a re-score cadence described below.
+
+The rule was paid for. An early resolver eval scored 93.7% locality name-match on a Vermont slice while the median resolved coordinate sat 326 km from the truth — right names, wrong states, invisible to a string metric. The run that surfaced this (the `honest-eval` harness, [2026-06-08](../evals/experiments/2026-06-08-honest-eval.mdx)) is why coordinate grading leads everywhere now.
+
+The corpus also holds geography out of training entirely (Vermont, Wyoming, and North Dakota for the US; Corse, Lozère, and Creuse for France — `corpus/src/split.ts`), so eval rows drawn there measure generalization rather than memory. [Eval discipline](./eval-discipline.mdx) covers the rest of the craft: adversarial slices, false-negative bucketing, oracle substitution to attribute error to the right pipeline stage.
+
+## Where the numbers live
+
+Three artifacts, each with a different job.
+
+**The dated eval reports** ([`evals/`](../evals/index.mdx)) are the narrative record: gate runs, benchmarks, diagnostics, and postmortems, grouped by topic (competitive parity, model versions, resolver and geo, calibration, coverage). Reports are point-in-time and say so; each states its own eval set, channels, and quantization, because those evolve between eras.
+
+**The score ledger** ([`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json), repo root) is the machine-readable spine: one row per training run that produced shippable weights or a measured baseline, validated against [a JSON schema](../plan/reference/eval-ledger.schema.json). Every row pins its provenance — which corpus, which eval set, which artifact bytes. From the v5.0.0 row, verbatim:
+
+```json
+{
+	"run_id": "v193a3-anchor-absorption-step080000-rescore-20260702",
+	"model_path": "@mailwoman/neural-weights-en-us@5.0.0 (model.onnx md5 4dec4f460a934949580d8e7b43adae7e; weights = the v4.15.0 line unchanged)",
+	"eval_set_version": "promotion-gate battery (v4.15.0-boundary): golden v0.1.2 + real-OOD + arena perturb"
+}
+```
+
+The ledger has a documented hole: rows for 4.5.0 through 4.16.2 were never populated — it froze at v4.4.0 and was revived at the 2026-07-02 measurement re-anchor ([#885](https://github.com/sister-software/mailwoman/issues/885)), whose full re-score produced the v5.0.0 row above. The missing versions' headlines live in [the release history](../releases.mdx) and each version's `model-card.json`, and appending is now automated at the gate, so the freeze pattern shouldn't recur.
+
+**The parity scorecards** ([`evals/competitive-parity/`](../evals/competitive-parity/index.mdx)) are the authoritative per-tag tables. Each is emitted by the gate battery rather than hand-edited, names its graded artifacts by md5-pinned path (the published npm tarball's bytes, never a dev symlink), quotes the gate's floors above its tables, and keeps failing rows in view. The [latest full re-score](../evals/competitive-parity/parity-scorecard-2026-07-02.md) covers the shipped 5.0.0 line: 17 of 17 floors passed, and two regressions that no floor had caught went on the record — `fr.cedex_real` drifting 96.1 to 89.4 across eleven promotes, and an unfloored libpostal arena slipping 36 to 30. The cedex drift was largely recovered (89.4 to 93.1) two days later, in the v5.3.0 row: recorded, then repaired, both in the open.
+
+## What gates a change
+
+Nothing promotes on a felt improvement. The full procedure is [the model-work runbook](../plan/CONTRIBUTING_MODEL_WORK.mdx); the reader's version is three mechanisms.
+
+**Gates are pre-registered.** The target numbers and no-regression bounds for a change are written into the training config before the first optimizer step runs; the runbook's phrasing is "If you can't define the gate, you aren't ready to train." Written down first, a gate can't quietly bend around the result it was meant to judge.
+
+**Every candidate runs the same battery**, whatever the change touched: per-locale F1 floors for the US and France, a German word-order check, unit and affix retention, the six demo presets, coordinate metrics on held-out geography, and a metamorphic layer where label-preserving perturbations (casing, punctuation, a one-letter typo) must not move the resolved coordinate ([input robustness](./input-robustness.mdx) explains why that layer can't be overfit). The battery is a CLI:
+
+```text
+$ mailwoman eval gate --help
+Usage: Mailwoman CLI eval gate [options]
+
+Promotion gate (#479) — eval battery + gate-spec floors → verdict.json
+
+Options:
+  --model [model]                          Candidate fp32 ONNX (required)
+  --int8 [int8]                            Quantized int8 sibling — adds the int8 battery + delta cap
+  --gate [gate]                            Gate-spec JSON: a path, or a spec name resolved against eval-harness/gates/ (required)
+  …
+```
+
+(Trimmed; the other flags select tokenizer, model card, lexicon, output directory.) A pass prints the pre-filled `mailwoman eval ledger-append` command, so clearing the gate and extending the public record are one motion.
+
+**Floors don't drift.** Between re-scores a floor is a fixed contract: measured-equals-floor passes, below fails, and shipping a failure anyway requires a written, operator-approved revision noted in that version's ledger row. Two floors currently sit at zero margin on purpose (`us.postcode` 95.0, `fr.postcode` 99.3, both set to measured values in a documented trade); any loss there fails loudly rather than eroding quietly. Because a promote only checks the floors its spec names, a cadence rule backstops them: every five promotes, or any promote that lowers a floor, triggers a full per-tag re-score, published as a dated scorecard. The rule exists because v4.4.0 to v4.15.0 went eleven promotes without one; the re-anchor that paid the debt found the drift bounded and surfaced the two unsigned declines above — the kind a per-promote gate cannot catch.
+
+A lever that fails its gate is reverted, and the falsification is written up with its mechanism at the same standard as a feature. [Methodology](./methodology.mdx) covers that side: pinned baselines, tracked expected-failures, and the regression suite as an executable bug log.
+
+## What a confidence of 0.88 means
+
+Each parsed span carries a `conf=` value; the parsing page noted a calibrated version exists. What calibration buys: a calibrated 0.88 means the span is right about 88% of the time — a frequency you can set a threshold on, rather than a report of the model's mood.
+
+The mechanism is an isotonic lookup table fitted on addresses with known answers and graded on a slice the fit never touched. Measured there, expected calibration error dropped from 0.060 to 0.0055, and [the calibration page](./confidence-calibration.mdx) reports the real-world-only figure (0.019, on OpenAddresses rows) next to the combined one, because the in-domain half flatters the result, and the flattery should stay visible. A single global table also leaves error on specific locales: raw Dutch spans measured 0.156 against 0.005 with their own table (the [per-locale report](../evals/calibration/2026-07-04-per-locale-calibration-v530.md) has the full set), so the weights package ships both `calibration.json` and `calibration-per-locale.json`.
+
+It's opt-in (`createCalibrator` from `@mailwoman/core/decoder`), because silently rewriting `conf=` values would break any consumer that pinned to the raw ones.
+
+The resolve side gets the same treatment through a different number: `uncertainty_m`. The raw interpolation radius contained the true point only about 72% of the time; a conformal calibration factor, fitted per region, makes the shipped radius a bound that holds roughly 90% of the time. [How close is close enough?](./how-close-is-close-enough.mdx) turns that into a decision procedure for your tolerance.
+
+## How the comparisons are run
+
+Mailwoman is benchmarked against Nominatim, Pelias, and libpostal on the coordinate, in one harness, with identical inputs: the same raw address string and the same country hint, passed in each system's own dialect (Nominatim's `countrycodes`, Pelias's `boundary.country`). The primary metric is resolve-rate within 25 km of truth, a no-result counted as a miss. That threshold is coarse deliberately: Mailwoman often resolves to centroid tiers, and a distance-to-rooftop metric would reward the incumbents wherever they hold a rooftop. Right-place is the fair primary test, and secondary metrics (conditional median error, the 1 km and 5 km tiers) keep the centroid-versus-rooftop trade visible. The [3-way benchmark](../evals/competitive-parity/2026-06-23-competitive-benchmark-3way.md) documents the scoring choices in full (including a correction that had been understating Pelias), and the dated head-to-heads live in [the competitive-parity reports](../evals/competitive-parity/index.mdx). Scores aren't quoted here; they age, and the reports carry their dates. [How Mailwoman compares](./how-mailwoman-compares.mdx) holds the capability-level comparison.
+
+## Where quality drops
+
+**Outside the claimed locales.** Coverage is claimed per locale and only with evidence: in the scope declaration's words, "a locale is only _claimed_ when a coordinate-graded eval exists for it." The [tier table](../plan/SCOPE.mdx) is the boundary — US and France first-class and floor-gated; fourteen more locales trained and coordinate-paneled; Norway and Sweden thinly measured (the Swedish panel: n=173, low power); Japan resolver-route only, with no parser training claim. Beyond the table, output quality is unverified (no evidence either way), and a sample of your own data settles it faster than any claim here could.
+
+**On tags the golden set barely contains.** Golden-dev per-tag numbers mislead for thin tags: `unit` reads 6.3 there and 92.3 on the real-world slice, because the golden set scarcely exercises it. The runbook's rule: for campaign tags, the real-OOD column is the truth. Check which eval column a per-tag figure came from before trusting it.
+
+**On input shapes the corpus never taught.** Multi-script and transliterated addresses are a known limitation, kept in a separately-reported adversarial slice rather than mixed into headline numbers: deltas there measure whether the limitation got fixed, not whether a release regressed. The characteristic parse failures (boundary slips, fragmented multi-word names, lookalike digit strings) are described in [the parsing walkthrough](./how-mailwoman-parses-an-address.mdx).
+
+**Where the fine-grained data ends.** Wherever a rooftop shard exists, accuracy is a property of the data. The gap is coverage: on a 1,172-address Texas facility panel, the rooftop tier fired on 47% of rows and interpolation on a further 12.5%, leaving roughly 40% at town centroids. The result says so itself (`resolution_tier: "admin"`), and the [demo map](https://mailwoman.sister.software/demo)'s coverage overlay fogs exactly the places the resolver can't yet pin.
+
+## Checking your own workload
+
+Everything above is measured on our panels, and your addresses are not our panels. Three cheap checks, in order of effort:
+
+1. **Run the demo presets, then your own strays.** The [demo](https://mailwoman.sister.software/demo)'s six preset addresses are the same ones every release must hold stable (`mailwoman eval preset-compare`); paste in a dozen of your ugliest real rows after them.
+2. **Batch a sample.** Point [`POST /v1/batch`](../recipes/batch-geocoding.md) at a few hundred representative rows. If you hold known-good coordinates for any of them, grade the way this project does: distance from truth, median and tail, not string similarity.
+3. **Read the fields that price the answer.** `resolution_tier` names the grain reached, `uncertainty_m` bounds the error, and calibrated `conf=` supports a threshold — accept above it, route the rest to review. Good enough is a comparison against your tolerance; those three fields make the comparison possible.
+
+If a claim in these docs and the artifact it points to ever disagree, the artifact wins — and the disagreement is a bug worth [filing](https://github.com/sister-software/mailwoman/issues).

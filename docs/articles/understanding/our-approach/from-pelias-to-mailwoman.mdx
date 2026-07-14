@@ -38,7 +38,7 @@ This worked, but it ran into the same limit every rule-based parser hits: the lo
 
 Mailwoman v2 — what you are reading docs for — keeps the rule classifiers but adds a **neural classifier** alongside them. Both run; both produce candidate labels; a per-component **policy** decides which one's vote counts more for each address component type. The migration is gradual on purpose: rules stay until the neural classifier's metrics prove it does better.
 
-The neural classifier is a small transformer model (about 34M parameters in the current weights — see [`concepts/how-mailwoman-parses-an-address.md`](../../concepts/how-mailwoman-parses-an-address.mdx)) trained on a corpus built from many open data sources and rebuilt many times over — see [`concepts/training-pipeline.md`](../../concepts/training-pipeline.mdx) for how it's constructed. It ships in two pieces:
+The neural classifier is a small transformer model (about 29M parameters in the current weights — see [`concepts/how-mailwoman-parses-an-address.md`](../../concepts/how-mailwoman-parses-an-address.mdx)) trained on a corpus built from many open data sources and rebuilt many times over — see [`concepts/training-pipeline.md`](../../concepts/training-pipeline.mdx) for how it's constructed. It ships in two pieces:
 
 - `@mailwoman/neural` — the runtime that loads the model and runs inference (works in Node.js and the browser).
 - `@mailwoman/neural-weights-en-us` and `@mailwoman/neural-weights-fr-fr` — the model files. Two npm packages, but one trained model today: the publish workflow copies the en-us artifacts into the fr-fr package. Locale-specific weights are future work.

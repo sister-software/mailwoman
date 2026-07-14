@@ -5,7 +5,7 @@ sidebar_label: Data catalog
 
 # Record-matcher data catalog
 
-The cross-dataset record-matcher resolves entities across several public datasets that share no common key. This page documents what each dataset is, where it lives, and how its columns map into the matcher — so a run is reproducible and the mappings are version-controlled rather than folklore.
+The cross-dataset record-matcher resolves entities across several public datasets that share no common key — see [Geocode-first record matching](./geocode-first-record-matching.mdx) for how the matcher itself works. This page documents what each dataset is, where it lives, and how its columns map into the matcher — so a run is reproducible and the mappings are version-controlled rather than folklore.
 
 These are **public compliance and reporting datasets**, published per-program in a fragmented, non-deduplicated shape. The matcher's job is **entity resolution**: given the same place described by different publishers under different operational names, recognize that it's one place. Whether any resulting correlation means anything is the data consumer's call, not ours.
 

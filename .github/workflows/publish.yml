@@ -133,9 +133,14 @@ jobs:
           # (no bucket dependency); matches release.config.json softFeed.gazetteerLexicon + copy-weights.
           cp data/gazetteer/anchor-lexicon-v1.json neural-weights-en-us/anchor-lexicon-v1.json
           cp data/gazetteer/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json
+          # The country-surface lexicon (#1104) — same story: a checked-in repo artifact the country channel
+          # feeds when the card carries requires.country. Copy into both packages (matches softFeed.countryLexicon).
+          cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-en-us/country-surface-lexicon-v1.json
+          cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-fr-fr/country-surface-lexicon-v1.json
           for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx \
                    neural-weights-en-us/postcode-us.bin neural-weights-fr-fr/postcode-fr.bin \
-                   neural-weights-en-us/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json; do
+                   neural-weights-en-us/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json \
+                   neural-weights-en-us/country-surface-lexicon-v1.json neural-weights-fr-fr/country-surface-lexicon-v1.json; do
               [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} fully staged on HF (model + tokenizer + --postcodes postcode-us.bin,postcode-fr.bin)?"; exit 1; }
           done
           ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin

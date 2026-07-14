@@ -13,9 +13,9 @@ address from the CLI. About five minutes.
 
 - **Node.js ≥24.18.0.** Mailwoman's source runs directly under `node` (type stripping, no build
   step for consumers) — earlier versions can't strip types the way the package expects.
-- **~33 MB download for the English weights.** `@mailwoman/neural-weights-en-us` ships a 36.8 MB
+- **~33 MB download for the English weights.** `@mailwoman/neural-weights-en-us` ships a 37.6 MB
   int8 ONNX model plus the tokenizer and a couple of small lookup files; npm compresses that to a
-  ~33 MB download (~40 MB unpacked). French weights (`@mailwoman/neural-weights-fr-fr`) are a
+  ~33 MB download (~41 MB unpacked). French weights (`@mailwoman/neural-weights-fr-fr`) are a
   separate, similarly-sized package.
 
 ## Install
@@ -54,9 +54,9 @@ Output:
 
 ```
 region: "NY" (confidence: 0.93)
-  locality: "New York" (confidence: 0.90)
+  locality: "New York" (confidence: 0.89)
     street: "5th" (confidence: 0.95)
-      house_number: "350" (confidence: 0.88)
+      house_number: "350" (confidence: 0.87)
       street_suffix: "Ave" (confidence: 0.95)
     postcode: "10118" (confidence: 0.92)
 ```

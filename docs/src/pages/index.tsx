@@ -75,7 +75,7 @@ function Gallery(): ReactNode {
 							<h3 className={styles.cardTitle}>Geocode on-device</h3>
 							<p className={styles.cardBody}>
 								Resolve an address to a real coordinate with no server, no API key, and no query leaving the machine. A
-								36.8 MB model and a byte-ranged global gazetteer do it in the tab.
+								37.6 MB model and a byte-ranged global gazetteer do it in the tab.
 							</p>
 							<code className={styles.cardTransform}>"350 5th Ave, New York" → 40.7484, -73.9857 · rooftop</code>
 							<p className={styles.cardLinks}>
