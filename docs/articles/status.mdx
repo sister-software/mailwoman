@@ -20,7 +20,7 @@ It trades us.postcode label-F1 −2 on a rare leading-postcode (VT E911) case; t
 revised with an operator-approved, stated reason. The per-tag tables below are from the
 **2026-07-02 full re-score** of this shipped line (the #885 measurement re-anchor — the first
 complete per-tag scorecard since 2026-06-11): the
-[parity scorecard](./evals/parity-scorecard-2026-07-02.md) is the live per-tag truth; for which
+[parity scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md) is the live per-tag truth; for which
 release added which capability, see [Releases & capabilities](./releases.mdx).
 :::
 
@@ -56,7 +56,7 @@ All publishable workspaces release in lockstep; the current npm version is **5.0
 ### Per-tag health (summary)
 
 The full per-tag table — two lenses, golden-dev and real-OOD — lives in the
-[parity scorecard](./evals/parity-scorecard-2026-07-02.md). The sortable summary:
+[parity scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md). The sortable summary:
 
 import { F1ScoreTable } from "@site/src/components/F1ScoreTable/F1ScoreTable"
 
@@ -79,7 +79,7 @@ The trend, in words:
   0 → 89.1, cedex 0 → 96.1, intersections 0 → 100 (real-OOD, P ≥ 95) — and the v4.3.0 arena
   debt (perturb 64 → 72, now a gated floor). The span bridge ships as required decode config:
   dotted surfaces ("P.O. Box") are structurally unlabelable in the corpus format; the bridge is
-  the containment ([ship gate](./evals/2026-06-11-v4.4.0-ship-gate.md) tells the three-battery story).
+  the containment ([ship gate](./evals/model-versions/2026-06-11-v4.4.0-ship-gate.md) tells the three-battery story).
 - **Closed by the relabel (v4.3.0):** the affix ceiling was never capacity — it was a 1,039:1
   label contradiction in the training mix ([#492](https://github.com/sister-software/mailwoman/issues/492) →
   [#511](https://github.com/sister-software/mailwoman/issues/511)). Affixes now 93.6/96.6 (int8,

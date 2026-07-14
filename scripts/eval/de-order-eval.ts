@@ -8,7 +8,7 @@
  *   order (the layout our OA de-sample ships) — with the postcode anchor fed and ablated
  *   (oa-resolver-eval's `--anchor-off` → `overrides.anchor=false`, the #718-sanctioned declared
  *   ablation; #887), plus US + FR for the no-regression gate. The German "collapse" was
- *   substantially an eval-order artifact (docs/articles/evals/2026-06-06-anchor-pilot.md); this
+ *   substantially an eval-order artifact (docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md); this
  *   makes native-vs-international a first-class, repeatable measurement instead of a one-off.
  *   Self-emits every figure (each run writes its own .md), then prints a 2x2 + US/FR summary. NOTE:
  *   anchor on/off only differs for an anchor-trained (4-input) model; for a plain model both

@@ -50,7 +50,7 @@ import type { ResolvedEntity, SourceRecord } from "./types.ts"
  * Used to count how many distinct entities share an address across the WHOLE corpus (computable over millions of rows
  * without geocoding) and to look that frequency up at match time. It's the inverse-frequency signal: a crowded
  * clinic/billing address is weak evidence of identity; a lonely address is strong. (See
- * docs/articles/evals/2026-06-15-nppes-dedup-benchmark.md.)
+ * docs/articles/evals/matcher-dedup/2026-06-15-nppes-dedup-benchmark.md.)
  */
 export function addressFrequencyKey(raw: string): string {
 	return raw

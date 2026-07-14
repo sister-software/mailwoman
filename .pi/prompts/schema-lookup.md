@@ -50,7 +50,7 @@ rg -n "$1" gates/ 2>/dev/null || echo "No gate config references $1"
 ## 8. Recent scorecard performance
 
 ```bash
-rg -n "$1" docs/articles/evals/parity-scorecard-*.md | tail -5
+rg -n "$1" docs/articles/evals/competitive-parity/parity-scorecard-*.md | tail -5
 ```
 
 Report the most recent measured F1 for this tag.

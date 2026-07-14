@@ -6,7 +6,7 @@ title: "v0.6.2 step 100K eval — HOLD per gate, but v0.6.3 directly addresses t
 # v0.6.2 step 100K eval
 
 The v0.6.2 corpus-rebalance retrain (per the
-[street-supplement architecture](../concepts/street-supplement-architecture.mdx))
+[street-supplement architecture](../../concepts/street-supplement-architecture.mdx))
 reached step 100K and was evaluated against v0.6.0 via the 2D pre-publish gate +
 v0-vs-neural harness. Verdict: **HOLD** (1 gate violation), but the picture is much
 better than the step-20K early eval suggested, and v0.6.3 — pre-staged on Modal — directly
@@ -47,9 +47,9 @@ The val_loss and macro_f1 over training steps (v0.6.2 full-weight run alongside
 the v0.6.2b half-weight parallel). The val_loss bouncing was per-batch noise,
 not a structural overconfidence pattern — macro_f1 stayed remarkably flat.
 
-![v0.6.2 vs v0.6.2b val_loss](./charts/v06x-val-loss.svg)
+![v0.6.2 vs v0.6.2b val_loss](../charts/v06x-val-loss.svg)
 
-![v0.6.2 vs v0.6.2b macro_f1](./charts/v06x-macro-f1.svg)
+![v0.6.2 vs v0.6.2b macro_f1](../charts/v06x-macro-f1.svg)
 
 ### Per-tag F1 over training
 
@@ -61,18 +61,18 @@ distribution.
 
 The headline tags:
 
-![v0.6.2 vs v0.6.2b f1.house_number](./charts/v06x-f1-house_number.svg)
+![v0.6.2 vs v0.6.2b f1.house_number](../charts/v06x-f1-house_number.svg)
 
-![v0.6.2 vs v0.6.2b f1.dependent_locality](./charts/v06x-f1-dependent_locality.svg)
+![v0.6.2 vs v0.6.2b f1.dependent_locality](../charts/v06x-f1-dependent_locality.svg)
 
 `dependent_locality` is 0 throughout both runs — confirming the v0.6.1
 regression is fully fixed at training time, not just at golden-eval time.
 `house_number` stays near the 0.99 val-set ceiling (the regression to 74%
 shows up only on golden's harsher OpenAddresses cases).
 
-![v0.6.2 vs v0.6.2b f1.locality](./charts/v06x-f1-locality.svg)
+![v0.6.2 vs v0.6.2b f1.locality](../charts/v06x-f1-locality.svg)
 
-![v0.6.2 vs v0.6.2b f1.postcode](./charts/v06x-f1-postcode.svg)
+![v0.6.2 vs v0.6.2b f1.postcode](../charts/v06x-f1-postcode.svg)
 
 `postcode` climbs steadily into the 0.98 band on both runs — matches the
 +8.2pp golden-set gain. `locality` saturates around 0.81 — matches the
@@ -112,7 +112,7 @@ shouldn't be admin spans.
 1. **Direct:** synth-no-street's adversarial venues included `5th Avenue Theatre` and
    `7th Street Bistro`. These taught the model that `5th`/`7th` (which should be
    `house_number` in real addresses) belong to venues. (See
-   [`corpus-poisoning-vulnerability.md`](../concepts/corpus-poisoning-vulnerability.mdx) for the broader analysis.)
+   [`corpus-poisoning-vulnerability.md`](../../concepts/corpus-poisoning-vulnerability.mdx) for the broader analysis.)
 2. **Distributional:** adding 122K rows where `house_number` is absent shifted the training
    distribution toward "house_number is rare," so the model under-emits the tag.
 
@@ -183,11 +183,11 @@ Artifacts land in `/tmp/v062-eval-step-100000/`:
 
 ## See also
 
-- [v0-vs-neural harness](2026-05-28-v0-vs-neural-harness.mdx) — the 14.4% baseline
-- [Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.mdx) — the decoder-only fix
+- [v0-vs-neural harness](./2026-05-28-v0-vs-neural-harness.mdx) — the 14.4% baseline
+- [Layer 1 morphology FST eval](../experiments/2026-05-28-layer-1-morphology-fst.mdx) — the decoder-only fix
   result that established the v0.6.x recipe
-- [fp32-CRF diagnostic](2026-05-28-fp32-crf-diagnostic.mdx) — the precondition experiment
+- [fp32-CRF diagnostic](./2026-05-28-fp32-crf-diagnostic.mdx) — the precondition experiment
   that confirmed CRF can ship in v0.6.4
-- [Street-supplement architecture](../concepts/street-supplement-architecture.mdx) — the
+- [Street-supplement architecture](../../concepts/street-supplement-architecture.mdx) — the
   design framework
 - 2026-05-28 night-2 postmortem — what started all this

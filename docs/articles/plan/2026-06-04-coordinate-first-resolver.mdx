@@ -6,7 +6,7 @@ DeepSeek-signed across the Pilot-A postmortem consult (`.agents/skills/deepseek-
 
 ## Why now
 
-[PR3 Pilot A](../evals/2026-06-04-pr3-pilot-a-eval.mdx) (self-conditioning, from scratch US/FR/DE) came back a clean negative: DE locality resolver-match 25.6% vs v0.7.2's 77.4%, the v0.8.0 span collapse reproduced via a new mechanism, on correct data, and _converged_ (flat 10k→20k). The decoder follow-up — the [postcode-trim](https://github.com/sister-software/mailwoman/pull/272), which hands a swallowed city-start back to the city — fixed the parse (`auen Vogtl` → `Plauen Vogtl`, +36pp DE exact-locality) and moved the resolver **zero**.
+[PR3 Pilot A](../evals/experiments/2026-06-04-pr3-pilot-a-eval.mdx) (self-conditioning, from scratch US/FR/DE) came back a clean negative: DE locality resolver-match 25.6% vs v0.7.2's 77.4%, the v0.8.0 span collapse reproduced via a new mechanism, on correct data, and _converged_ (flat 10k→20k). The decoder follow-up — the [postcode-trim](https://github.com/sister-software/mailwoman/pull/272), which hands a swallowed city-start back to the city — fixed the parse (`auen Vogtl` → `Plauen Vogtl`, +36pp DE exact-locality) and moved the resolver **zero**.
 
 That zero is the whole story. The parse was string-perfect and the resolver still missed, because **our resolver matches the parsed locality string against WOF names, and OA's gold carries a region suffix WOF doesn't store** (`Plauen Vogtl` vs WOF's `Plauen`). Even v0.7.2, which parses German cleanly, only resolves 54.7% of Saxony for this reason. We were optimising a name-equality the gazetteer's canonical names can't satisfy.
 
@@ -85,6 +85,6 @@ The parser extracts raw text; the resolver assigns authoritative geography by pr
 
 ## Related
 
-- [PR3 Pilot A eval](../evals/2026-06-04-pr3-pilot-a-eval.mdx) — the negative result that pointed here.
+- [PR3 Pilot A eval](../evals/experiments/2026-06-04-pr3-pilot-a-eval.mdx) — the negative result that pointed here.
 - [Anchor-based parsing direction](./2026-06-03-anchor-based-parsing.mdx) — the parser-side direction this complements.
 - Issues: #227 (population tiebreak), #189 (alt-names FTS table), #242 (the self-conditioning pilot — now closed negative), epic #239.

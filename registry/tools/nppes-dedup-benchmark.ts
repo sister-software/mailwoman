@@ -23,7 +23,7 @@
  *
  *   Run: `mailwoman registry scorer-eval nppes-benchmark [--state TX] [--max-npis 300]
  *   [--wof <admin.db>] [--data-root <dir>] [--no-train-em]
- *   [--out-md docs/articles/evals/<date>-nppes-dedup-benchmark.md]`
+ *   [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
  */
 
 import { writeFileSync } from "node:fs"

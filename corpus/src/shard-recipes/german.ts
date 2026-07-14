@@ -12,7 +12,7 @@
  *
  *   ORDER ROBUSTNESS (2026-06-06): mixing the two renderings stops a native-only shard from teaching
  *   German order so well it reads the US/feed-order eval as a "collapse". See
- *   docs/articles/evals/2026-06-06-anchor-pilot.md (the order-artifact correction).
+ *   docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md (the order-artifact correction).
  */
 
 import { spawnSync } from "node:child_process"

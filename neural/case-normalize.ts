@@ -7,7 +7,7 @@
  *   JONES RD, ELKHART, TX 75839`) is partly out-of-domain for a model trained on mixed-case text —
  *   it drops/mis-bounds tokens (`PALESTINE` → locality `ALESTINE`). Title-casing an all-caps input
  *   before the model recovers it (measured: TX HHSC locality 90.1% → 99.7%,
- *   `docs/articles/evals/2026-06-17-geocoder-vs-provided-coords.md`).
+ *   `docs/articles/evals/resolver-geo/2026-06-17-geocoder-vs-provided-coords.md`).
  *
  *   Detection is deliberately STRICT — only a fully-shouting input qualifies — so mixed-case input is
  *   never touched (the caller's byte-stable path). Distinct from the identifier-casing all-caps

@@ -9,8 +9,8 @@
  *   region, postcode, country}.
  *
  *   Rationale: the [2026-05-28 night-2
- *   postmortem](../../docs/articles/evals/2026-05-28-night-2-postmortem.md) and the [layer-1
- *   eval](../../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md) showed that synth-street
+ *   postmortem](../../docs/articles/evals/night-shifts/2026-05-28-night-2-postmortem.md) and the [layer-1
+ *   eval](../../docs/articles/evals/experiments/2026-05-28-layer-1-morphology-fst.md) showed that synth-street
  *   pushed the model into a high-confidence "decompose mode" that leaked into `dependent_locality`.
  *   Per DeepSeek's turn-2 recipe, the model needs explicit counter-examples: addresses where the
  *   model should NOT emit street labels. This synthesizer is that source.

@@ -51,8 +51,8 @@ export interface LocaleSynthesisOpts {
 	 * house-AFTER-street, postcode-BEFORE-city). `"international"` renders house-FIRST, postcode-AFTER-city — the US/GB
 	 * layout that international feeds, US-centric systems, and our own OpenAddresses de-sample impose on non-US
 	 * addresses. Training both teaches the model that a German address can arrive either way, so the eval's US-order
-	 * rendering stops reading as a collapse. See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact
-	 * correction).
+	 * rendering stops reading as a collapse. See `docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md` (the
+	 * order-artifact correction).
 	 */
 	order?: "native" | "international"
 	/**

@@ -49,7 +49,7 @@ locale head exported + fr mask). Ship config now includes `addressSystemConventi
 (fixed this gate) — not directly comparable to v4.3.0's 85.1; both clear the 83.3 floor.
 
 The authoritative gate record, including the honest-eval VT leg (region 99.6, coord p50/p90
-3.4/7.4 km) and the FAIL→corrective→PASS story: [v4.3.0 ship gate](./2026-06-11-v4.3.0-ship-gate.md).
+3.4/7.4 km) and the FAIL→corrective→PASS story: [v4.3.0 ship gate](../model-versions/2026-06-11-v4.3.0-ship-gate.md).
 
 Open per-tag gaps after this release: po_box/cedex (deferred coverage lever — both Montréal
 gate rows), FR region tail (27.6 → 16.2, unfloored), the US glue/post-directional boundary

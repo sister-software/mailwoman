@@ -402,8 +402,8 @@ export async function runPipeline(
 	// neural mangles the street); it never measured the geocode precondition our evals grade on raw
 	// neural, so the regression was invisible. The destructive piece is the grouper HN-bundling (see
 	// the tracked issue); until that's fixed, argmax is the correct default. Set `jointReconcile: true`
-	// to opt back into reconcile (the A/B harnesses do). Report: docs/articles/evals/2026-06-14-
-	// reconcile-retirement.md.
+	// to opt back into reconcile (the A/B harnesses do). Report:
+	// docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
 	const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? false
 	const useJointReconcile =
 		jointEnabled && phraseProposals.length > 0 && stages.classifier && "parseWithLogits" in stages.classifier

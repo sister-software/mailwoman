@@ -88,9 +88,9 @@ export interface CoarsePlacerOpts {
 	 * decouples "is it in-map at all?" (the reject question) from "which country?" (the routing question) — so a
 	 * clearly-in-map-but-country-ambiguous address (mass split across several in-map countries) is KEPT rather than
 	 * wrongly rejected. It clears the 90/90 the default max-prob rule cannot (post-hoc, no retrain: heldout-family
-	 * generalization 89→91 — see docs/articles/evals/2026-06-14-coarse-placer-m2-openset.md). The returned `confidence`
-	 * becomes the routed in-map country's marginal probability (the soft-prior posterior weight). Default `false` = the
-	 * M1 max-prob rule (byte-stable; can still return `OTHER`).
+	 * generalization 89→91 — see docs/articles/evals/resolver-geo/2026-06-14-coarse-placer-m2-openset.md). The returned
+	 * `confidence` becomes the routed in-map country's marginal probability (the soft-prior posterior weight). Default
+	 * `false` = the M1 max-prob rule (byte-stable; can still return `OTHER`).
 	 */
 	openSet?: boolean
 }

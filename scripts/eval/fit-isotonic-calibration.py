@@ -26,7 +26,7 @@ Usage:
   python3 scripts/eval/fit-isotonic-calibration.py \
     --conf data/eval/calibration/confidences.jsonl \
     --out data/eval/calibration/isotonic-en-us-v4.0.0.json \
-    --report docs/articles/evals/2026-06-07-isotonic-calibration.md \
+    --report docs/articles/evals/calibration/2026-06-07-isotonic-calibration.md \
     [--bins 20 --ece-bins 15 --seed 20260607 --model neural-weights-en-us --model-version 4.0.0]
 """
 
@@ -114,7 +114,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--conf", default=str(REPO / "data/eval/calibration/confidences.jsonl"))
     ap.add_argument("--out", default=str(REPO / "data/eval/calibration/isotonic-en-us-v4.0.0.json"))
-    ap.add_argument("--report", default=str(REPO / "docs/articles/evals/2026-06-07-isotonic-calibration.md"))
+    ap.add_argument("--report", default=str(REPO / "docs/articles/evals/calibration/2026-06-07-isotonic-calibration.md"))
     ap.add_argument("--bins", type=int, default=20, help="lookup-table bins")
     ap.add_argument("--ece-bins", type=int, default=15, help="bins for ECE measurement")
     ap.add_argument("--seed", type=int, default=20260607)

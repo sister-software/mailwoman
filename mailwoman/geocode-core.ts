@@ -172,7 +172,8 @@ export interface GeocodeDeps {
 	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound; `1` or `undefined`
 	 * keeps the raw half-segment heuristic. Accepts either a single multiplier (the legacy Travis 1.7) OR a per-region
 	 * {@link InterpCalibrationTable} — when a table is supplied the factor is selected by the parsed region (DC 1.44 … AZ
-	 * 3.12, `default` otherwise, #584). See `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`.
+	 * 3.12, `default` otherwise, #584). See
+	 * `docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
 	interpCalibration?: number | InterpCalibrationTable
 	/**

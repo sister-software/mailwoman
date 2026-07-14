@@ -15,7 +15,7 @@ defers system-multiplicity architecture (per-locale routing) to v0.8.
 
 This is the technical postmortem. The forward plan in section 5 is the
 synthesis of two DeepSeek consults (turns 11 and 12) plus the
-[postcode-only diagnostic](../evals/2026-05-29-postcode-diagnostic.mdx)
+[postcode-only diagnostic](../evals/model-versions/2026-05-29-postcode-diagnostic.mdx)
 run on v0.6.0.
 
 ## 1. What was attempted
@@ -149,7 +149,7 @@ implications:
 ### 3.4 Postcode failures are endemic, not exotic
 
 The
-[postcode-only diagnostic](../evals/2026-05-29-postcode-diagnostic.mdx)
+[postcode-only diagnostic](../evals/model-versions/2026-05-29-postcode-diagnostic.mdx)
 on v0.6.0 found postcode exact-match at 75.9% overall — 80.5% US, 70.1%
 FR, 57% DE, 0% GB/CA/NL. The failure mechanism is visible in the data:
 SentencePiece fragments multi-token alphanumeric postcodes into pieces
@@ -183,7 +183,7 @@ For the record, so future-us doesn't relitigate these:
   constraint here. See DeepSeek turn 12's tier list.
 - **CRF disablement did not cause v0.6.x failures.** v0.6.x was
   CE-only because of the bf16 NaN issue in CRF transitions. The
-  [fp32-CRF fix](../evals/2026-05-28-fp32-crf-diagnostic.mdx) is
+  [fp32-CRF fix](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx) is
   verified — but enabling CRF on top of v0.6.x's overconfident model
   would have amplified the failure, not fixed it.
 - **Model capacity was not the binding constraint.** 29.3M params, 6
@@ -329,9 +329,9 @@ before forcing a methodology rethink.
 
 ## See also
 
-- [Postcode-only diagnostic (v0.6.0)](../evals/2026-05-29-postcode-diagnostic.mdx)
-- [v0.6.2 step 100K eval](../evals/2026-05-29-v0.6.2-100k-eval.mdx)
-- [v0.6.3 step 100K eval](../evals/2026-05-29-v0.6.3-100k-eval.mdx)
+- [Postcode-only diagnostic (v0.6.0)](../evals/model-versions/2026-05-29-postcode-diagnostic.mdx)
+- [v0.6.2 step 100K eval](../evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx)
+- [v0.6.3 step 100K eval](../evals/model-versions/2026-05-29-v0.6.3-100k-eval.mdx)
 - [v0.4.0 ablation campaign](./v0-4-0-ablation-campaign.mdx) — the
   previous retrospective; follows the same shape.
 - [How the model reasons](../concepts/how-the-model-reasons.mdx) — the

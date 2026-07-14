@@ -103,7 +103,8 @@ function parseScorecard(markdown: string): ParsedScorecard | null {
 }
 
 function findLatestScorecard(): string | null {
-	const evalsDir = resolve(PROJECT_ROOT, "docs/articles/evals")
+	// Scorecards live under the competitive-parity topic subdir since the 2026-07-14 evals reorg.
+	const evalsDir = resolve(PROJECT_ROOT, "docs/articles/evals/competitive-parity")
 	let files: string[]
 
 	try {
@@ -330,7 +331,7 @@ export default function (pi: ExtensionAPI) {
 			const scorecardPath = findLatestScorecard()
 
 			if (!scorecardPath) {
-				ctx.ui.notify("No parity scorecards found in docs/articles/evals/", "error")
+				ctx.ui.notify("No parity scorecards found in docs/articles/evals/competitive-parity/", "error")
 
 				return
 			}

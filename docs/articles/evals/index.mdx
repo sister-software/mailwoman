@@ -1,0 +1,31 @@
+---
+sidebar_position: 0
+title: Eval reports
+description: What Mailwoman can do, measured — and how it got there.
+---
+
+# Eval reports
+
+The measurement record behind every released model and resolver change: gates, benchmarks, and
+diagnostics. Reports are grouped by what they measure, in roughly the order you'd read them to see
+what the system does and how it improved.
+
+## By topic
+
+- **[Retrospectives](./retrospectives/)** — day- and session-level wrap-ups that narrate an arc: what shipped, what failed, what the next lever is.
+- **[Competitive & parity](./competitive-parity/)** — head-to-head against Nominatim, Pelias, and libpostal; the parity scorecards and cross-model failure reports.
+- **[Model versions](./model-versions/)** — per-release eval matrices, ship-gates, promotions, and error analyses. The version-over-version scoreboard.
+- **[Resolver & geo](./resolver-geo/)** — coordinate accuracy: the resolver ladder, the coarse placer, situs cascade, and the postcode anchor.
+- **[Matcher & dedup](./matcher-dedup/)** — record matching and entity resolution: the Fellegi-Sunter and learned scorers, dedup ceilings, cross-source generalization.
+- **[Calibration](./calibration/)** — confidence and uncertainty: isotonic + conformal calibration, per-locale reliability, the interpolation radius.
+- **[Coverage](./coverage/)** — geographic breadth: fill rates and multi-locale coverage.
+- **[Experiments](./experiments/)** — one-off probes, stress tests, and feasibility studies that didn't (or didn't yet) become a release lever.
+- **[Night shifts](./night-shifts/)** — dated autonomous-session logs. Mostly kept in-repo for the record, not published.
+
+## Cross-cutting
+
+- **[Pre-publish 2D eval gate](./eval-gate)** — the mechanical guard every neural-weights release clears.
+- **[Per-tag score trends](./score-trends)** — generated per-tag scores across releases (regenerated after each ledger row).
+
+Reports are point-in-time. Eval sets, channels, and quantization evolve between eras, so adjacent
+columns compare cleanly and distant ones are directional — each report states its own conditions.

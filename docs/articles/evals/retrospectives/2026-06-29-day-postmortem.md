@@ -44,4 +44,4 @@ No measured residual justified a learned model. The international lever was cove
 - **"Tbilisi, Georgia" (full-name country)** still mis-routes to US Georgia — the reverse namesake plus the coverage-added intl localities lacking parent ancestry. A #266 data-quality follow-up.
 - **#261** (case-aug retrain, gate-failed) and **#259** (the dev-symlink that made the #261 gate baseline unfaithful) remain operator calls.
 
-Design reference: [`plan/2026-06-29-joint-consistency-resolution.mdx`](../plan/2026-06-29-joint-consistency-resolution.mdx).
+Design reference: [`plan/2026-06-29-joint-consistency-resolution.mdx`](../../plan/2026-06-29-joint-consistency-resolution.mdx).

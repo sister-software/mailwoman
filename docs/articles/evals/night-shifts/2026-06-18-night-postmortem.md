@@ -12,7 +12,7 @@ gated NO-PROMOTE) through build → #511 lint → recipe → retrain → gate. N
 
 _(Living document — sketched as the shift runs; final numbers + verdict at the end.)_
 
-> **CORRECTION (post-shift re-eval, 2026-06-18):** the PROMOTE recommendation in §6 is **retracted.** The shift benchmarked v1.7.0 against v1.5.1, which was never the production default — v1.5.0 is (md5-confirmed). Re-graded against v1.5.0 on the assembled coordinate, v1.7.0 is **flat** (US locality-match 83.8 vs 83.9, p50 3.3 vs 3.3 km) and **regresses country-homograph by 2.4** (the 83.3 floor is v1.5.0's real score, not stale). Verdict: **HOLD v1.5.0, do not promote.** Full re-eval: [v1.5.0 vs v1.7.0 head-to-head](./2026-06-18-v150-vs-v170-head-to-head.md); see the Addendum at the end.
+> **CORRECTION (post-shift re-eval, 2026-06-18):** the PROMOTE recommendation in §6 is **retracted.** The shift benchmarked v1.7.0 against v1.5.1, which was never the production default — v1.5.0 is (md5-confirmed). Re-graded against v1.5.0 on the assembled coordinate, v1.7.0 is **flat** (US locality-match 83.8 vs 83.9, p50 3.3 vs 3.3 km) and **regresses country-homograph by 2.4** (the 83.3 floor is v1.5.0's real score, not stale). Verdict: **HOLD v1.5.0, do not promote.** Full re-eval: [v1.5.0 vs v1.7.0 head-to-head](../model-versions/2026-06-18-v150-vs-v170-head-to-head.md); see the Addendum at the end.
 
 ## 1. What shipped
 
@@ -202,7 +202,7 @@ weight-3.0). The production default is **v1.5.0** (model-card 4.6.0; md5 `4674d3
 "fr.house_number +10.2, v1.5.1 was failing its floor", "stale country floor") was measured against
 that worse model.
 
-Re-anchored to v1.5.0 ([head-to-head](./2026-06-18-v150-vs-v170-head-to-head.md)):
+Re-anchored to v1.5.0 ([head-to-head](../model-versions/2026-06-18-v150-vs-v170-head-to-head.md)):
 
 - **US assembled coordinates: FLAT** — locality-match 83.8% vs 83.9%, coord p50 3.3 vs 3.3 km, p90
   10.7 vs 10.7. The locality F1 gain (real at the label level) does not reach the coordinate.
@@ -245,7 +245,7 @@ all along and the eval couldn't see it.
 - **the coordinate cascade** (the big one) — `oa-resolver-eval` resolved to the admin centroid (p50
   3.3 km) and never wired the situs cascade the geocoder actually ships. Graded against what ships,
   the same 10k rows are **p50 0.0 km, 85.9% within 100 m** — three orders of magnitude tighter
-  ([situs-cascade-eval](./2026-06-18-situs-cascade-eval.md), `dd3628da`).
+  ([situs-cascade-eval](../resolver-geo/2026-06-18-situs-cascade-eval.md), `dd3628da`).
 
 ### This RETRACTS the Addendum's "lever moved"
 

@@ -17,7 +17,7 @@ Each floor tag has a `bar` (minimum F1). Tags must clear their bars in the parit
 ## 2. Find the latest parity scorecard
 
 ```bash
-ls docs/articles/evals/parity-scorecard-*.md | tail -1 | xargs cat
+ls docs/articles/evals/competitive-parity/parity-scorecard-*.md | tail -1 | xargs cat
 ```
 
 Extract the per-tag F1 table (Lens 2). Cross-reference against the gate config floors.
@@ -48,7 +48,7 @@ Compare against the previous parity scorecard. Any tag that regressed more than 
 - A documented decision (gated vs. flagged-not-gated)
 
 ```bash
-ls docs/articles/evals/parity-scorecard-*.md | tail -2
+ls docs/articles/evals/competitive-parity/parity-scorecard-*.md | tail -2
 # diff the Lens 2 tables between the two most recent scorecards
 ```
 

@@ -357,7 +357,7 @@ export interface ResolveOpts {
 	 * and preserves the raw value under `uncertainty_raw_m`. Absent = raw heuristic (byte-stable). The factor is the
 	 * CALLER's (it's a property of the calibration set, not the geometry); the geocode CLI passes the TX-derived 1.70.
 	 * Re-calibrate on a multi-region holdout before treating it as national-exact. Report:
-	 * docs/articles/evals/2026-06-14-interp-radius-calibration.md.
+	 * docs/articles/evals/calibration/2026-06-14-interp-radius-calibration.md.
 	 */
 	interpolationRadiusCalibration?: number
 	/**
@@ -390,7 +390,7 @@ export interface ResolveOpts {
 	 * inject the recovered locality as a resolved node. Targets the EU no-result tail the model leaves when it fragments
 	 * an accented locality token ("Grudziądz" → "Grudzi"+"dz", #555). **Default-ON** (promoted 2026-06-25 — same-harness
 	 * EU+AU +1pp @25km, zero regressions); set `false` to opt out (byte-stable then). Never disturbs a tree that already
-	 * resolved (the #685 brake). Validated in `docs/articles/evals/2026-06-23-370-span-rescore.mdx` +
+	 * resolved (the #685 brake). Validated in `docs/articles/evals/experiments/2026-06-23-370-span-rescore.mdx` +
 	 * `2026-06-25-eu-competitive-standing.md`.
 	 */
 	spanRescore?: boolean

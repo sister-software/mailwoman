@@ -5,7 +5,7 @@
  *
  *   The default coarse-placer (#244) for the user-facing geocoding surfaces. As of the M2 misrouting
  *   gate (0 misroutes across 2 000 in-map addresses, 10 countries — see
- *   docs/articles/evals/2026-06-14-coarse-placer-inmap-misroute.md) the soft country prior runs
+ *   docs/articles/evals/resolver-geo/2026-06-14-coarse-placer-inmap-misroute.md) the soft country prior runs
  *   **on by default**: `geocodeAddress` and `createRuntimePipeline` load THIS bundled placer unless
  *   the caller passes their own `placeCountry` or opts out with `placeCountry: false`.
  *

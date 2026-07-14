@@ -33,7 +33,7 @@ Confirm the tokenizer version matches the model card's `training.tokenizer_versi
 ## 3. Parity gate (if model version is changing)
 
 ```bash
-ls docs/articles/evals/parity-scorecard-*.md | tail -1 | xargs cat | head -60
+ls docs/articles/evals/competitive-parity/parity-scorecard-*.md | tail -1 | xargs cat | head -60
 ```
 
 Every floored tag must clear its bar. Regressions must be characterized in the gate doc with a root cause. Unfloored regressions must carry a documented reason (e.g., FR region).

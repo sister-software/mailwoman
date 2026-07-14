@@ -156,7 +156,7 @@ export interface RankingWeights {
 	 * ordering: **match quality is the primary key, prominence (population) the secondary key WITHIN a tier.**
 	 * Springfield-IL-over-MA still works (both exact → same tier → population decides); ME→Maine now works (only Maine is
 	 * exact → higher tier → population never gets to override it). See
-	 * docs/articles/evals/2026-05-30-resolver-exact-match.md.
+	 * docs/articles/evals/resolver-geo/2026-05-30-resolver-exact-match.md.
 	 *
 	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`); a pathological exact match that
 	 * falls outside that window is not rescued. For the region-abbrev case the window is comfortably sufficient (a

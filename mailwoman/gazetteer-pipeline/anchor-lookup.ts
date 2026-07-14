@@ -12,7 +12,7 @@
  *
  *   - **posterior**: UNIFORM over the countries whose postal gazetteer contains the code (the posterior
  *       the A/B measurement settled on —
- *       `docs/articles/evals/2026-06-05-postcode-posterior-ab.md`). A German PLZ that collides with
+ *       `docs/articles/evals/calibration/2026-06-05-postcode-posterior-ab.md`). A German PLZ that collides with
  *       a US ZIP (e.g. 10115) comes back `{"DE": 0.5, "US": 0.5}`.
  *   - **centroid**: taken from the first source that has a real centroid, in DE→FR→US order, so the
  *       collapse-relevant European rows get a European centroid on a collision. The centroid is the

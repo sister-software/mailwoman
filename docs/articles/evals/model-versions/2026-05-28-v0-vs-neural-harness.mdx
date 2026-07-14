@@ -146,7 +146,7 @@ This is the "honest assessment" the postmortem called for. The implications:
 
 The harness also accepts a `--falsehoods <dir>` argument for JSONL files of structured rows.
 `data/eval/falsehoods/streets.jsonl` lands the catalog from
-[`falsehoods-streets.md`](../understanding/why-its-hard/falsehoods-streets.mdx) as 22 explicit
+[`falsehoods-streets.md`](../../understanding/why-its-hard/falsehoods-streets.mdx) as 22 explicit
 test rows — Piccadilly, rue de Rivoli, Plein 1944, Avenue Road, Gondel 2695, the
 A1-as-composite-street, dependent streets, Japanese block addressing, rural routes, Mannheim
 grid. Each row carries `falsehood` (the category) and `expected_failure` (whether this is a
@@ -201,10 +201,10 @@ Total runtime: ~5 seconds for 376 assertions.
 
 ## See also
 
-- [Street-supplement architecture](../concepts/street-supplement-architecture.mdx) — the design context
-- [Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.mdx) — preceding eval that
+- [Street-supplement architecture](../../concepts/street-supplement-architecture.mdx) — the design context
+- [Layer 1 morphology FST eval](../experiments/2026-05-28-layer-1-morphology-fst.mdx) — preceding eval that
   established the decoder-only fix is insufficient
-- [Falsehoods about street names](../understanding/why-its-hard/falsehoods-streets.mdx) — the
+- [Falsehoods about street names](../../understanding/why-its-hard/falsehoods-streets.mdx) — the
   edge cases the harness's falsehoods row source captures
 - 2026-05-28 night-2 postmortem — postmortem that triggered
   this assessment
