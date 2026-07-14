@@ -1,6 +1,9 @@
 ---
 title: Looking up a Timezone
 id: timezone-lookup
+role: guide
+audience: product-reader
+source-of-truth: timezone-lookup/index.ts, timezone-lookup/build.ts, timezone-lookup/cli.ts
 ---
 
 You have a coordinate and you want the IANA timezone it lands in — `America/New_York`, `Asia/Tokyo`. The [`@mailwoman/timezone-lookup`](https://www.npmjs.com/package/@mailwoman/timezone-lookup) package does the point-in-polygon for you, over [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder) polygons in a `node:sqlite` database. The UTC offset comes from `Intl`, so there's no tz-database dependency to keep patched.
@@ -19,12 +22,14 @@ That's a one-time step. The `.db` is an immutable artifact — build it in CI, s
 
 ## CLI usage
 
-Hand it a latitude and longitude:
+Hand it a latitude and longitude. A leading `--` is required before a negative longitude, or the CLI's flag parser reads `-74.0060` as an unknown option and errors:
 
 ```bash
-npx @mailwoman/timezone-lookup --db timezone.db 40.7128 -74.0060
-# {"timezone":"America/New_York","offsetSec":-18000}
+npx @mailwoman/timezone-lookup --db timezone.db -- 40.7128 -74.0060
+# {"timezone":"America/New_York","offsetSec":-14400}
 ```
+
+(The offset is the current UTC offset for that timezone: `-14400` is EDT in July, `-18000` for EST outside daylight saving.)
 
 ## Programmatic usage
 

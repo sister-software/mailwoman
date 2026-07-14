@@ -1,6 +1,9 @@
 ---
 title: Ingesting Giant CSVs
 id: parallel-csv-ingest
+role: guide
+audience: product-reader
+source-of-truth: registry/ingest.ts, mailwoman/geocode-stream.ts, mailwoman/geocode-worker.ts
 ---
 
 Someone hands you a national dataset as a single CSV — the NPPES provider registry (millions of rows), an FCC broadband availability drop, a state address export. You need every row normalized into the same shape, and ideally a coordinate on each one. Two things stand in the way: the file won't fit in memory, and geocoding a million addresses one after another takes hours. This recipe is the shape that handles both — a streaming normalize core you can hold in your head, plus an optional threaded geocode stage you bolt on only when the per-row cost earns it.
@@ -46,7 +49,7 @@ import { normalizeCSV } from "@mailwoman/registry"
 import { geocodeStream } from "mailwoman/geocode-stream"
 
 const geocode = {
-	wofDbPath: "/data/wof/admin-global-priority.db",
+	wofDBPath: "/data/wof/admin-global-priority.db",
 	dataRoot: "/data",
 	locale: "en-US",
 	country: "US",
@@ -96,3 +99,5 @@ If your gazetteer fits in RAM, or you've sharded it across disks, your curve wil
 ## When to stop at `normalize`
 
 Not every ingest needs a coordinate. If you're loading records to dedupe by name and org, or to join on an ID, the address never gets geocoded — so there's no heavy stage to thread, and `normalizeCSV` on its own is the whole job. Reaching for `geocodeStream` there would only add worker overhead to microsecond work, the exact loss from two sections ago. Thread the stage that earns it; leave the cheap one alone.
+
+Once you have geocoded `SourceRecord`s, [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers the dedup/entity-resolution step this ingest usually feeds, and [Displaying results on a map](./display-on-a-map.md) covers turning the output into a map you can eyeball.

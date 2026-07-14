@@ -1,6 +1,9 @@
 ---
 title: Coarsening a Coordinate for Privacy
 id: privacy-coordinate-rounding
+role: guide
+audience: product-reader
+source-of-truth: spatial/coordinate-formats.ts
 ---
 
 You geocoded a customer's address and got a rooftop coordinate back — accurate to a few metres. That precision is the whole point when you're routing a driver to the door. It's a liability when you're about to store the point in an analytics table, share it with a partner, or plot a thousand customers on a public dashboard. A rooftop point _is_ the house; you usually want the neighbourhood.
@@ -39,7 +42,7 @@ A geohash encodes a coordinate as a string where every character you drop widens
 ```ts
 import { toGeohash } from "@mailwoman/spatial"
 
-toGeohash(40.7484, -73.9857) // precision 9 ≈ 4.8 m: "dr5ru7p4n"
+toGeohash(40.7484, -73.9857) // precision 9 ≈ 4.8 m: "dr5ru6j28"
 toGeohash(40.7484, -73.9857, 5) // ≈ 4.9 km: "dr5ru"
 ```
 
@@ -53,4 +56,4 @@ toGeohash(40.7484, -73.9857, 5) // ≈ 4.9 km: "dr5ru"
 
 Because the cell boundaries are fixed, every address inside `dr5ru` shares the prefix — you can group, join, or count by the truncated string and know that two records in the same cell really are neighbours. Store the geohash, not the point, and the precision you didn't keep is precision you can't leak.
 
-One thing to name plainly: coarsening is one-way by design, but it is not anonymity. A precision-6 cell over a rural address can still hold exactly one house. If the guarantee you need is "this point cannot be traced to a person," coarsening is a layer, not the whole answer — pair it with aggregation thresholds (suppress any cell with fewer than _k_ records) before anything goes public.
+One thing to name plainly: coarsening is one-way by design, but it is not anonymity. A precision-6 cell over a rural address can still hold exactly one house. If the guarantee you need is "this point cannot be traced to a person," coarsening is a layer, not the whole answer — pair it with aggregation thresholds (suppress any cell with fewer than _k_ records) before anything goes public. See [Privacy policy & legal posture](../licensing/privacy.md) for where Mailwoman's own data-handling design sits relative to this.
