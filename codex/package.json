@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/codex",
-	"version": "6.1.0",
+	"version": "6.2.0",
 	"description": "Per-address-system postal reference data + branded types (USPS street suffixes, US ZIP codes). Pure, zero-runtime-dep — the shared canonical home for postal-system primitives the parser, resolver, and synthesis layers all reach for.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
