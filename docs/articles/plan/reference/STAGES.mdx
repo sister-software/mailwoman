@@ -404,7 +404,7 @@ export interface ParseTree {
 
 Score per beam = `phrase_conf × classifier_score × resolver_score × concordance_bonus`. Concordance bonus is **+1** in log-space for a fully consistent WOF parent_id chain across all admin pairs in the assignment, **-Infinity** (hard veto) for an explicit chain contradiction, **0** when no admin signal is available. Per-axis pruning (kSpan / kTag / kResolver) keeps the search tight.
 
-**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23). Closes the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. Wired as the DEFAULT Stage 5 when the phrase grouper and a `parseWithLogits` classifier are both present; falls back to argmax otherwise. Set `jointReconcile: false` to opt out.
+**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23), built to close the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. **Retired as the default on 2026-06-14 ([#566](https://github.com/sister-software/mailwoman/issues/566)):** graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0% of the catalogue, so **argmax is the default decode**. The code and A/B harnesses remain; `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
 
 **Future.** Add learned-reranker comparison now that joint decoding has a kryptonite-eval baseline. Long-term: replace the concordance scoring with a learned reranker trained on the kryptonite catalogue.
 
@@ -413,7 +413,7 @@ Score per beam = `phrase_conf × classifier_score × resolver_score × concordan
 **Open questions.**
 
 - Should `Components` carry a "global confidence" (probability the whole parse is correct)? Recommend: yes — `ParseTree.confidence` is the softmaxed equivalent; carry forward into the resolver.
-- ~~Joint decoding wired as default vs opt-in?~~ **Resolved (v4.4.0):** DEFAULT when the phrase grouper + `parseWithLogits` are wired; `jointReconcile: false` to opt out; `forceJointReconcile` is the deprecated alias.
+- ~~Joint decoding wired as default vs opt-in?~~ **Resolved twice:** default-on at v4.4.0, then retired to opt-in on 2026-06-14 ([#566](https://github.com/sister-software/mailwoman/issues/566)) on the assembled-pipeline grade. Argmax is the default; `jointReconcile: true` opts back in.
 
 ## Stage 6 — Resolve with candidates
 
