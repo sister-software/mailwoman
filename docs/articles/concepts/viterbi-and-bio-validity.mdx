@@ -1,6 +1,9 @@
 ---
 sidebar_position: 29
 title: Viterbi and BIO validity
+role: concept
+audience: product-reader
+source-of-truth: neural/viterbi.ts, corpus-python/src/mailwoman_train/labels.py
 tags:
   - concepts
   - neural
@@ -21,8 +24,10 @@ after a `B-X` (begin of the same tag) or another `I-X`. The sequence
 in the middle of a span with no begin.
 
 The Viterbi decoder enforces this grammar globally. This article
-explains how, why it matters, and how learned CRF transitions
-(coming in v0.6.4) extend the picture.
+explains how, why it matters, and why no learned CRF transitions
+ship alongside it today — see [CRF decoder](./crf-decoder.mdx) for
+the short version, and [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx#decoding-a-valid-sequence-and-building-the-tree)
+for this step in the context of a full parse.
 
 ## The BIO label space
 
@@ -83,18 +88,12 @@ best_path = argmax over all valid sequences s of (
 ```
 
 The emission scores come from the encoder + priors. The transition
-scores come from:
-
-1. **The structural BIO mask** (always present): `-∞` for invalid
-   transitions, 0 for valid ones. Hard constraint.
-2. **Learned CRF transitions** (optional, when shipped): a learned
-   matrix of `transition_logit[from_label][to_label]`. Soft preference
-   for common label-pair transitions vs rare ones.
-
-In v0.6.x today, only the structural mask is active (the
-[fp32-CRF diagnostic](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx)
-confirmed the bf16-CRF NaN issue; v0.6.4 will enable learned CRF
-transitions with the fp32 fix).
+scores come from a single source today: **the structural BIO mask**
+(always present) — `-∞` for invalid transitions, `0` for valid ones.
+That's the whole matrix. There's no second, learned layer of transition
+scores stacked on top of it; see [CRF decoder](./crf-decoder.mdx) for
+why — CRF training was tried, destabilized repeatedly, and has been
+permanently disabled (CE-only) since v0.6.3.
 
 The output is a valid label sequence that maximizes the total score.
 Per-token argmaxes that violate BIO are replaced with the
@@ -141,59 +140,62 @@ Consider: `B-region → B-locality` is structurally valid. So is
 always followed by `postcode` (`MA 02101`), not another locality. The
 structural mask treats both as equally allowed.
 
-Learned CRF transitions encode the statistical preference. After
-training, the transition matrix would have higher score for
-`B-region → B-postcode` than for `B-region → B-locality`. The Viterbi
-pass would then prefer the more common sequence.
+A learned transition matrix could in principle encode that statistical
+preference — after training, it would score `B-region → B-postcode`
+higher than `B-region → B-locality`, and Viterbi would prefer the more
+common sequence. Mailwoman doesn't ship one. Viterbi runs on emission
+scores alone, which is what ships today. It works well enough because
+the encoder's emissions already carry most of the sequencing signal
+via attention — a learned transition layer would be an additive
+refinement on top of that, not a replacement for it.
 
-Without learned CRF, Viterbi just falls back on emission scores —
-which is what we ship today. It works because the encoder emissions
-already encode most of the sequencing signal via attention. The CRF
-would be additive improvement, not a replacement for the encoder.
+## Why there's no learned CRF
 
-## Why learned CRF was disabled in v0.6.x
+Mailwoman tried this. A trainable CRF shipped in v3.0.0, and Stage 3's
+33×33 transition matrix (masked `-∞` entries) was re-attempted more
+than once — including a run that hit NaN gradients traced to bf16
+precision on the masked `logsumexp`, described in the
+[fp32-CRF diagnostic](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx).
+Every attempt after v0.4.0's loss-scale fix still diverged, three times
+over. The recipe first went CE-only (`crf_loss_weight: 0.0`) at v0.5.0,
+and apart from those labeled diagnostic reactivations (the v0.6.2 fp32
+probe), every config from v0.6.3 on has stayed at `0.0` — the current
+one included. [Dual-loss curvature
+conflict](./dual-loss-curvature-conflict.mdx) has the full diagnostic
+story of why the two losses fought instead of cooperating. There's no
+active plan to revisit it — the structural mask alone already buys the
+concrete win (no orphan-I), and the encoder's attention covers most of
+the rest.
 
-The
-2026-05-28 night-shift postmortem
-captured the story: enabling learned CRF transitions in Stage 3 (33×33
-transition matrix with masked `-∞` entries) caused NaN gradients
-twice during training. The
-[fp32-CRF diagnostic](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx)
-identified the root cause: bf16 precision is insufficient for the
-masked `logsumexp` over `-∞` entries. The fix is to run just the CRF
-forward in fp32 while the rest of the model stays bf16 — `crf_fp32:
-true` in the v0.6.4 yaml.
+## What a learned CRF would buy (if one ever ships)
 
-v0.6.3 ships without learned CRF (CE-only). v0.6.4 will turn it on.
-
-## What CRF buys (and what it doesn't)
-
-CRF buys soft transition preferences that the encoder didn't pick up
-strongly from training data. Examples:
+A learned transition layer would add soft transition preferences on
+top of the hard structural mask. For example:
 
 - `B-house_number` is almost always followed by `B-street` or `O,
-B-street`. CRF can encode this preference.
+B-street` — a learned matrix could encode that preference.
 - `B-postcode` rarely precedes anything (it's usually the last
-  component). CRF can encode "B-postcode → O" preference.
+  component) — `B-postcode → O` could get a boost.
 - `B-street_prefix → B-street` is common; `B-street_prefix →
-B-locality` is rare. CRF can rank these.
+B-locality` is rare — a learned matrix could rank these apart.
 
-CRF doesn't buy:
+It would not buy:
 
 - Better encoder representations. The encoder is the upstream learner;
-  CRF is downstream.
+  a CRF layer is downstream of it, not a substitute for it.
 - Handling of novel patterns. If a sequence isn't represented well in
-  training, CRF has no opinion.
-- Inference speed. CRF Viterbi over learned transitions is slightly
-  slower than the structural-mask-only version (matrix lookups per
+  training, a transition matrix has no opinion either.
+- Inference speed. Viterbi over a learned matrix is marginally slower
+  than the structural-mask-only version (one more score lookup per
   transition).
 
 ## Decoder modes
 
 The `parse()` API accepts a `decode` option:
 
-- `"viterbi"` (default): full Viterbi with BIO mask + (optional) CRF
-  transitions. Produces structurally valid sequences.
+- `"viterbi"` (default): full Viterbi over the BIO validity mask — no
+  learned transitions ship, so this is the mask alone. Produces
+  structurally valid sequences.
 - `"argmax"`: per-token argmax with no sequence consideration. Faster
   but produces invalid sequences. Used in ablation studies to measure
   how much Viterbi contributes vs how much is in the encoder.
@@ -203,12 +205,15 @@ uses `"viterbi"`.
 
 ## See also
 
+- [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx) —
+  the full parse this step plugs into
 - [How the model reasons](./how-the-model-reasons.mdx) — the central
   pipeline doc
 - [Attention and bidirectional context](./attention-and-bidirectional-context.mdx) — what's UPSTREAM of Viterbi
 - [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) —
   the additive biases on the emissions Viterbi consumes
-- [fp32-CRF diagnostic](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx) —
-  why learned CRF was disabled in v0.6.x and how v0.6.4 brings it back
+- [CRF decoder](./crf-decoder.mdx) — the short version of this page
+- [Dual-loss curvature conflict](./dual-loss-curvature-conflict.mdx) —
+  why learned CRF training was abandoned
 - [BIO labels](./bio-labels.mdx) — the per-tag label space (existing
   reference)

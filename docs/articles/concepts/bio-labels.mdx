@@ -1,6 +1,9 @@
 ---
 sidebar_position: 6
 title: BIO labels
+role: concept
+audience: product-reader
+source-of-truth: corpus-python/src/mailwoman_train/labels.py, neural-weights-en-us/model-card.json
 tags:
   - concepts
   - neural
@@ -11,7 +14,7 @@ tags:
 
 BIO labelling is the trick that lets a token classifier (which decides one token at a time) emit **spans** (groups of consecutive tokens that mean one thing together). It is the standard approach for sequence labelling tasks in NLP — Named Entity Recognition, part-of-speech tagging, address parsing.
 
-This article explains the scheme, why it works, and a failure mode that Mailwoman v3.0.0 specifically fixes.
+This article explains the scheme, why it works, and a failure mode (the orphan-I) that motivated the decode-time fix covered in [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx#decoding-a-valid-sequence-and-building-the-tree). For the full walkthrough of a parse, start there; this page is the deep dive on the label space itself.
 
 ## The scheme
 
@@ -34,7 +37,7 @@ The span "Saint Petersburg" is signalled by one `B-locality` followed by one `I-
 
 ## The full Mailwoman vocabulary
 
-Mailwoman v3.0.0 uses 21 BIO labels:
+The current active set (Stage 3, shipped since v0.6.0) has 16 component tags, each split into `{B-, I-}` plus one shared `O` — 16 × 2 + 1 = 33 BIO labels, matching `neural-weights-en-us/model-card.json`'s `num_labels: 33`:
 
 | label                                          | example token                          |
 | ---------------------------------------------- | -------------------------------------- |
@@ -47,15 +50,21 @@ Mailwoman v3.0.0 uses 21 BIO labels:
 | `B-subregion`, `I-subregion`                   | `"Brooklyn"`                           |
 | `B-cedex`, `I-cedex`                           | `"CEDEX"` `"08"` (FR-specific)         |
 | `B-venue`, `I-venue`                           | `"Wrigley"` `"Field"`                  |
-| `B-street`, `I-street`                         | `"5th"` `"Ave"`                        |
+| `B-street`, `I-street`                         | `"5th"` (the street's base name)       |
 | `B-house_number`, `I-house_number`             | `"350"`, `"10"` `"bis"`                |
+| `B-street_prefix`, `I-street_prefix`           | `"SE"` (directional, before the name)  |
+| `B-street_suffix`, `I-street_suffix`           | `"St"`, `"Ave"` (the street type)      |
+| `B-unit`, `I-unit`                             | `"Apt"` `"3"`                          |
+| `B-po_box`, `I-po_box`                         | `"PO"` `"Box"` `"4"`                   |
+| `B-intersection_a`, `I-intersection_a`         | `"5th"` `"Ave"` (first cross street)   |
+| `B-intersection_b`, `I-intersection_b`         | `"42nd"` `"St"` (second cross street)  |
 
-10 tags × `{B-, I-}` + `O` = 21 labels. The neural model's final classifier layer has 21 outputs and the model picks the highest-probability label for each token.
+The neural model's final classifier layer has 33 outputs; the model picks a score for every label at every position (an [emission](./how-mailwoman-parses-an-address.mdx#scoring-every-piece)), and the decoder — not raw per-token argmax — turns those scores into a label sequence.
 
 In code:
 
 ```ts
-const STAGE2_TAGS = [
+const STAGE3_TAGS = [
 	"country",
 	"region",
 	"locality",
@@ -66,11 +75,17 @@ const STAGE2_TAGS = [
 	"venue",
 	"street",
 	"house_number",
+	"street_prefix",
+	"street_suffix",
+	"unit",
+	"po_box",
+	"intersection_a",
+	"intersection_b",
 ]
-const STAGE2_BIO_LABELS = ["O", ...STAGE2_TAGS.flatMap((t) => [`B-${t}`, `I-${t}`])]
+const STAGE3_BIO_LABELS = ["O", ...STAGE3_TAGS.flatMap((t) => [`B-${t}`, `I-${t}`])]
 ```
 
-(The first 7 tags — through `cedex` — are the original "Tier 1" coarse vocabulary; the last 3 are the "Tier 2" expansion added in v3.0.0. Historically called "Stage 1/2" — see PHASE_2_training.md for the terminology note.)
+The last 6 tags — `street_prefix` through `intersection_b` — are the Stage 3 expansion, shipped in v0.6.0: decomposing the monolithic `street` tag into prefix/base/suffix and adding `unit`, `po_box`, and paired intersection tags. `labels.py` keeps the earlier Stage 1 and Stage 2 vocabularies (7 and 10 tags) defined alongside Stage 3 so historical checkpoints and eval reports can still be diffed against older label sets — but Stage 3 is what every current training config and shipped model uses.
 
 ## The orphan-I problem
 
@@ -90,34 +105,25 @@ What happens when the decoder reconstructs the span? Depending on how it handles
 
 Neither is what the data actually wants. The data wants `B-locality, I-locality`.
 
-## How Mailwoman v3.0.0 fixes this
+## How Mailwoman fixes this
 
-The fix is the **CRF decoder** — see [CRF decoder](./crf-decoder.mdx) for the full story. In short:
+The fix is decode-time, not learned. A fixed **BIO-validity table** pins the impossible transitions — `O → I-X`, `B-X → I-Y` where `X ≠ Y` — to negative infinity, and the **Viterbi algorithm** searches for the highest-scoring label sequence that respects the table, rather than picking each token's label independently. The orphan-I is structurally excluded: there's no valid path through it.
 
-- During training, the CRF learns a transition matrix between every pair of labels. Some transitions are pinned to negative infinity: `O → I-X` is impossible, `B-X → I-Y` (where `X ≠ Y`) is impossible.
-- During decoding, the CRF runs the **Viterbi algorithm**: find the highest-probability sequence of labels that obeys every transition rule. The orphan-I is structurally excluded.
-
-The result: a model that is uncertain about "Saint" between `O` and `B-locality` will still produce a structurally valid sequence at decode time. "Saint Petersburg" comes out as one locality span.
+The result: a model that is uncertain about "Saint" between `O` and `B-locality` will still produce a structurally valid sequence at decode time. "Saint Petersburg" comes out as one locality span. See [CRF decoder](./crf-decoder.mdx) for why this is narrower than a full learned CRF, and what that page's name still refers to.
 
 ```mermaid
 flowchart LR
-    subgraph A[Without CRF — per-token argmax]
+    subgraph A[Per-token argmax — no validity check]
         A1["Saint → O"]
         A2["Petersburg → I-locality"]
         A3["Result: 'Petersburg' (orphan-I dropped)"]
     end
-    subgraph B[With CRF — Viterbi decode]
+    subgraph B[Viterbi over the BIO-validity table]
         B1["Saint → B-locality"]
         B2["Petersburg → I-locality"]
         B3["Result: 'Saint Petersburg'"]
     end
 ```
-
-## A subtlety the v3.0.0 ship caught
-
-The training-time CRF and the production-time decoder must agree. v3.0.0 trained with CRF and evaluated with CRF Viterbi, so the eval reports the structurally-valid metrics. But the JavaScript runtime in `@mailwoman/neural` still uses per-token argmax. The "Saint Petersburg" win is therefore only half-real today — the underlying probabilities are better (because the model learned with the CRF as a structural prior), but the runtime decoding does not exploit them fully.
-
-v0.4.0 ([issue #116](https://github.com/sister-software/mailwoman/issues/116)) ports the Viterbi loop to JavaScript and exports the transition matrix in the ONNX bundle.
 
 ## The other reason BIO works well
 
@@ -131,11 +137,10 @@ This pattern is one of the most-tested approaches in NLP. CoNLL-2003 (the canoni
 
 ## Where this lives in the code
 
-- **Label vocabulary:** `corpus-python/src/mailwoman_train/labels.py` (`STAGE2_BIO_LABELS`, `ACTIVE_BIO_LABELS`)
+- **Label vocabulary:** `corpus-python/src/mailwoman_train/labels.py` (`STAGE3_BIO_LABELS`, `ACTIVE_BIO_LABELS`)
 - **TypeScript mirror:** `core/types/component.ts` (`BIO_LABELS`)
 - **Training-time alignment:** `corpus/src/align.ts` (turns `(raw, components)` into per-token BIO labels)
-- **Inference-time decoding:** `neural/decoder.ts` (per-token argmax today; Viterbi in v0.4.0)
-- **CRF transition mask:** `corpus-python/src/mailwoman_train/crf.py` (`build_bio_transition_mask`)
+- **Inference-time decoding:** `neural/viterbi.ts` (`buildBIOTransitionMask`, `viterbi`) — see [CRF decoder](./crf-decoder.mdx)
 
 ## See it in action
 
@@ -150,6 +155,7 @@ Expand the **BIO labels** section to see the word-level BIO label breakdown for 
 
 ## See also
 
+- [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx) — the full parse this label space plugs into
 - [CRF decoder](./crf-decoder.mdx) — the structural-validity layer
 - [Tokenization](./tokenization.mdx) — what gets labelled
 - [Training pipeline](./training-pipeline.mdx) — how BIO labels become training data

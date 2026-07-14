@@ -1,74 +1,25 @@
 ---
 sidebar_position: 1
 title: Deep dives
+role: concept
+audience: product-reader
+source-of-truth: self
 ---
 
 # Concept deep dives
 
-This track has one article per concept. The articles are independent — read them in any order. If you are new to Mailwoman, read [`understanding/`](../understanding/README.mdx) first.
+Fifty articles, one per concept. Each is independent — read them in any order. If you want the problem framed before the solution, read [`understanding/`](../understanding/README.mdx) first.
 
-## Suggested reading order
+New to Mailwoman? Start with [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx) for the walkthrough — one address, followed through the whole parse — then [What Mailwoman is](./what-mailwoman-is.mdx) for the product boundary: what the system claims to do, and what it deliberately doesn't. Everything else here is a deep dive behind one of those two pages.
 
-A useful order if you want to follow the data and code from input to output:
+## The clusters
 
-1. [Tokenization](./tokenization.mdx) — splitting strings into tokens
-2. [Rule-based classifiers](./rule-based-classifiers.mdx) — the Mailwoman v1 approach
-3. [BIO labels](./bio-labels.mdx) — how the neural model marks spans
-4. [Neural classification](./neural-classification.mdx) — what a transformer encoder does
-5. [CRF decoder](./crf-decoder.mdx) — fixing structurally-invalid label sequences
-6. [Training pipeline](./training-pipeline.mdx) — from corpus to model file
-7. [Corpus construction](./corpus-construction.mdx) — how the training data is built
-8. [ONNX runtime](./onnx-runtime.mdx) — running the model in production
-9. [Resolver and Who's On First](./resolver-and-wof.mdx) — turning labels into coordinates
-
-Additional articles:
-
-- [Joint decoding walkthrough](./joint-decoding-walkthrough.mdx) — how the reconciler picks coherent interpretations
-- [Reconcile empty-parse bonus](./reconcile-empty-parse-bonus.mdx) — handling the "model gives up" failure mode
-- [Dual-role places](./dual-role-places.mdx) — completing the dropped locality of a city-state or capital-seat province
-- [Synthetic corpus validation](./synthetic-corpus-validation.mdx) — how we validate LLM-generated training data
-- [DeepSeek reasoning budget](./deepseek-reasoning-budget.mdx) — the adversarial corpus generation pipeline
-- [Staged pipeline contract](./staged-pipeline-contract.mdx) — implementer-facing TypeScript contracts
-
-Articles moved to [`understanding/`](../understanding/README.mdx) in May 2026:
-
-- [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — now at Tier 1 position 8
-- [Addresses that break geocoders](../understanding/why-its-hard/addresses-that-break-geocoders.mdx) — now at Tier 1 position 9
-- [The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx) — now at Tier 1 position 14
-- [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx) — now at Tier 1 position 15
-
-## Dependency map
-
-Some concepts assume others:
-
-```mermaid
-flowchart TD
-    A[Tokenization]
-    B[Rule-based classifiers]
-    C[BIO labels]
-    D[Neural classification]
-    E[CRF decoder]
-    F[Training pipeline]
-    G[Corpus construction]
-    H[ONNX runtime]
-    I[Resolver and WOF]
-    A --> C
-    C --> D
-    D --> E
-    D --> F
-    F --> G
-    F --> H
-```
-
-You can short-circuit: if you know what a transformer is, skip directly to [CRF decoder](./crf-decoder.mdx). If you want a tour of the training side, jump to [Training pipeline](./training-pipeline.mdx).
+- **Parsing internals** — tokenization, BIO labels, the Viterbi decoder, the FST priors, attention. What happens between a raw string and a labeled tree. Start at [How the model reasons](./how-the-model-reasons.mdx).
+- **Training and corpus** — how the training data gets built, validated, and turned into a model. Start at [Training pipeline](./training-pipeline.mdx).
+- **Resolver and gazetteer** — turning labeled spans into coordinates against Who's On First. Start at [Resolver and Who's On First](./resolver-and-wof.mdx).
+- **Record matching** — geocode-first entity resolution for messy records with no shared ID. Start at [Geocode-first record matching](./geocode-first-record-matching.mdx).
+- **Switching guides** — coming from Pelias, libpostal, Nominatim, Photon, or OpenCage? These map the differences directly, starting with [How Mailwoman compares](./how-mailwoman-compares.mdx).
 
 ## Article shape
 
-Each article is about 5–10 minutes to read, with:
-
-- A short motivation: why this concept matters in Mailwoman.
-- An explanation that defines its terms on first use.
-- A diagram where structure helps (built with [mermaid](https://mermaid.js.org/)).
-- A short code-or-data example.
-- Pointers into the source code for readers who want to go further.
-- A "See also" list.
+Each article is about 5–10 minutes to read, with a short motivation, an explanation that defines its terms on first use, a diagram where structure helps, a short code-or-data example, pointers into the source for readers who want to go further, and a "See also" list.
