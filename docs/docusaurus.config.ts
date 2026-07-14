@@ -205,6 +205,11 @@ const config: Config = {
 				themeVariables: { primaryColor: "#ffffff", lineColor: "#21201c" },
 			},
 		},
+		algolia: {
+			appId: "1AEXFQAAAJ",
+			indexName: "Mailwoman Site",
+			apiKey: "637194a77c844e7df987b51d59505272",
+		},
 		navbar: {
 			title: "Mailwoman",
 			logo: {
