@@ -35,7 +35,7 @@ Every word matters:
   nothing about it is generative. For a closed label set over short strings,
   this is the most boring, battle-proven architecture in NLP. Boring is a
   feature.
-- **Microlanguage.** Addresses are a real language in the strict sense: a
+- **Microlanguage.** Addresses are a language in the strict sense: a
   grammar (regional, conventional, frequently violated) over a vocabulary
   that's partly open (street names, venue names) and partly a finite atlas
   (places that exist). That split — open grammar, closed world — is the entire
@@ -63,18 +63,18 @@ This one sentence is the architecture. Everything in the pipeline is the
 model (grammar), a knowledge base (world), or evidence routing between the
 two. The two halves scale independently — corpus and compute grow the
 grammar; data builds grow the atlas — and neither requires the other to
-retrain. Asking a model to memorize the world's place names is where capacity
-goes to die; asking a database to understand "Friedrichstraße 43-45, 10117
-Berlin-Mitte" written four different ways is where rule systems went to die.
-Each side does the job the other is structurally bad at.
+retrain. Asking a model to memorize the world's place names burns capacity it doesn't
+have to spend; asking a database to understand "Friedrichstraße 43-45, 10117
+Berlin-Mitte" written four different ways asks it to do what rule systems have
+always failed at. Each side does the job the other is structurally bad at.
 
 ## The sieve and the posterior
 
 The systems Mailwoman replaces — elaborate regexes, cascading pattern
 matchers, libpostal's averaged perceptron, Pelias's rules — are **sieves**.
 Input either fits a slot or falls through to the next pattern, and what those
-systems call confidence is _rule specificity_: certainty about the
-template, silence about the world. A sieve cannot say "I'm not sure." Novel
+systems call confidence is _rule specificity_: how tightly the template
+matched, not how likely the reading is to be correct. A sieve cannot say "I'm not sure." Novel
 input doesn't get a hedged answer; it gets a hole.
 
 A calibrated model inverts this. Mailwoman doesn't ask _"which of my patterns
@@ -92,7 +92,7 @@ posteriors bend.
 ## The bitter lesson, read carefully
 
 The bitter lesson is routinely misread as "no knowledge engineering." It
-actually says: no knowledge engineering _inside the learner_. The pre-model
+says: no knowledge engineering _inside the learner_. The pre-model
 machines encoded the world's structure into the rules themselves, which is
 why every novel input was a hole. Mailwoman puts the grammar in weights and
 the atlas in a database — knowledge engineering on the _outside_, where it
@@ -125,7 +125,7 @@ device. Tier B ("library"): the identical pipeline with full SQLite payloads
 on a server or desktop, where street-level data lives. The pocket claim stays
 true because it's scoped, not because we stopped checking. There is also
 headroom: the model could grow severalfold before challenging a
-conservative mobile budget — the constraint that actually binds is iteration
+conservative mobile budget — the constraint that binds is iteration
 cost, and that's the one worth defending.
 
 ## Two ways to un-make it

@@ -54,7 +54,7 @@ For corpora harvested from real sources (NPPES, NAD, WOF, BAN), alignment proble
 
 For LLM-generated corpora, alignment problems are inherent to the generation process. The model is producing both the surface and the annotation in the same forward pass; nothing forces internal consistency. Even with temperature=0 and `reasoning_effort=low`, the 1–2% rate persists.
 
-This shifts the validator from "quality filter" to "trust boundary". Without it, you are training on data the LLM only thinks it generated correctly. With it, every row in the corpus is provably consistent with its annotation.
+This shifts the validator from "quality filter" to "trust boundary" — the difference between training on data the LLM only thinks it generated correctly, and training on data that's provably consistent with its own annotation.
 
 ## What the validator does not catch
 
@@ -76,7 +76,7 @@ Any future synthetic-corpus pipeline should ship with:
 2. **A reject-rate floor expectation** in the pipeline's README. If you see reject rate drop to zero, that is a bug in the validator, not a quality breakthrough.
 3. **A `corpus-audit` pass before declaring done** — the validator is necessary but not sufficient.
 
-The cost is low (a few hundred lines of Python). The value is high (the corpus you train on is the corpus you think you have).
+The cost is low (a few hundred lines of Python); the value is high (you can trust that the corpus matches its own annotations).
 
 ## See also
 

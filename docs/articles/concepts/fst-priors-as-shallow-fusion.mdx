@@ -36,7 +36,7 @@ that page doesn't cover.
 
 ## The shallow-fusion pattern
 
-Speech recognition has the same shape of problem: a learned model
+Speech recognition faces the same problem: a learned model
 (acoustic → phoneme sequences) needs world knowledge (which phoneme
 sequences are real words / valid sentences) it didn't learn from data
 alone. The solution that works in production: compute the acoustic
@@ -93,7 +93,7 @@ and a negative bias against competing tags (`B-street`,
 `B-house_number`, `B-venue`) on the same tokens, capped at 3.0 logits.
 [FST gazetteer prior](./fst-gazetteer-prior.mdx) has the full build,
 the `PlaceEntry` shape, and worked examples — that's the reference for
-this FST; this page just needed the shape of it for the analogy above.
+this FST; this page only needs the summary above for the analogy.
 
 This is the FST that's actually wired into production: `mailwoman parse`
 builds it from the WOF SQLite database whenever one is available

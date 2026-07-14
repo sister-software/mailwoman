@@ -24,8 +24,8 @@ for the rows.
 [#1104](https://github.com/sister-software/mailwoman/issues/1104)) — an init_from fine-tune of v261
 that turns ON a **dedicated country soft-feed channel** (a 2-dim `[country_surface, country_ambiguous]`
 additive feature with its own projection + confidence, immune to the near-postcode gazetteer
-suppression). This is the atlas analogue of Pelias's `WhosOnFirstClassifier`, and it is the **real
-fix that closes the country regression** v261 had shipped as a documented cosmetic exception: golden
+suppression). This is the atlas analogue of Pelias's `WhosOnFirstClassifier`, and it closes the
+country regression v261 had shipped as a documented cosmetic exception: golden
 country recall recovers **84.8% → 89.3%** (clears the 88.6% v241 bar), the real-postal country guard
 holds (recall + hallucination identical to v261, DeepSeek-signed falsifier), and the held-out
 coordinate z-test PASSES on both locales (US z −0.16 on 300 FDIC, FR z −0.17 on 300 BAN) with the
@@ -110,7 +110,7 @@ The trend, in words:
   first conventions-layer slice: the model's locale head is exported and OBEYED (fr mask).
 - **Formerly "open gaps," now closed:** the two rows this section used to flag are both resolved.
   FR venue/region ([#330](https://github.com/sister-software/mailwoman/issues/330)) was a
-  measurement artifact — the model's real FR venue F1 is 89.1+ and région 99.6% in-distribution,
+  measurement artifact — the model's FR venue F1 is 89.1+ and région 99.6% in-distribution,
   not the 0%/19% a synthetic multi-script eval implied. Intersections
   ([#487](https://github.com/sister-software/mailwoman/issues/487)) were fixed by the v4.4.0
   real-TIGER intersection shard (0 → 100/100 real, 94.9/96.1 VT golden).
@@ -140,7 +140,7 @@ label-wins cost coord p50 3.3 → 1069 km and broke the street+house_number geoc
 ## Confidence
 
 Every node carries a confidence score; pass a calibrator (isotonic, shipped per-locale in the
-weights bundle as `calibration.json`) to make those scores honest probabilities — see
+weights bundle as `calibration.json`) so a score of 0.90 means right-about-90%-of-the-time — see
 [Confidence calibration](./concepts/confidence-calibration.mdx) for what the numbers mean.
 
 ## Browser demo

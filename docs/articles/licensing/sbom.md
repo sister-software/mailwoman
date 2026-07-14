@@ -29,8 +29,8 @@ tooling in the trust path.
 
 ## Standards adherence
 
-We don't just emit these files; we validate them against each standard's reference tooling on every
-regeneration. The commands and their results:
+We validate these files against each standard's reference tooling on every regeneration. The
+commands and their results:
 
 **SPDX** — validated with the SPDX project's own reference library,
 [`spdx-tools`](https://pypi.org/project/spdx-tools/) (`pyspdxtools`, v0.8.5):
