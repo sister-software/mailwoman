@@ -707,12 +707,18 @@ def main() -> None:
     us_regions = [reg for _, reg in admin_pairs]
     us_localities_all = corpus_localities.get("US", [])
     us_surfaces = COUNTRY_SURFACES.get("US", [])
+    # v2.9.2 (#1104): weight the LEADING surfaces to the MULTI-WORD forms ("United States of America",
+    # "United States"). The v291 probe pinned the residual EXACTLY there: short leading forms ("USA, AZ,
+    # …" → country=USA) already parse; only the long form fails ("United States of America, …" → the
+    # 4-token phrase reads as a STREET). Rotating all 6 surfaces gave the long form only ~1/6 of leading
+    # rows. Bias to the multi-word forms so the model gets enough signal to stop reading them as street.
+    leading_surfaces = [s for s in us_surfaces if len(s.split()) >= 2] or us_surfaces
     leading_rows = 0
 
-    if us_regions and us_localities_all and us_surfaces:
+    if us_regions and us_localities_all and leading_surfaces:
         n = min(len(us_regions), country_cap)
         for i in range(n):
-            surface = us_surfaces[i % len(us_surfaces)]
+            surface = leading_surfaces[i % len(leading_surfaces)]
             region = us_regions[i]
             locality = us_localities_all[i % len(us_localities_all)]
             push(render_country_leading(surface, region, locality), "US", "und", _country_note + " (leading)")
