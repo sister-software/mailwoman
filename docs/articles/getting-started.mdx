@@ -1,83 +1,37 @@
 ---
 sidebar_position: 2
 title: Getting started
-description: Install Mailwoman and parse your first address in 5 minutes.
+description: Install Mailwoman and parse your first address in about five minutes.
 ---
 
 # Getting started
 
-Mailwoman parses address strings into structured components and resolves them against open gazetteer data. It runs in Node.js and the browser.
+This walks through installing Mailwoman, parsing an address from Node.js, and parsing the same
+address from the CLI. About five minutes.
 
-## Installation
+## Prerequisites
 
-```bash npm2yarn
+- **Node.js ≥24.18.0.** Mailwoman's source runs directly under `node` (type stripping, no build
+  step for consumers) — earlier versions can't strip types the way the package expects.
+- **~33 MB download for the English weights.** `@mailwoman/neural-weights-en-us` ships a 36.8 MB
+  int8 ONNX model plus the tokenizer and a couple of small lookup files; npm compresses that to a
+  ~33 MB download (~40 MB unpacked). French weights (`@mailwoman/neural-weights-fr-fr`) are a
+  separate, similarly-sized package.
+
+## Install
+
+```bash
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 ```
 
-This installs the CLI, the neural runtime, and the US English model weights (~25 MB). For French addresses, add `@mailwoman/neural-weights-fr-fr`.
+This installs the CLI, the neural runtime, and the English weights. Add
+`@mailwoman/neural-weights-fr-fr` for French addresses.
 
-## Your first parse
+## Your first parse (Node.js)
 
-### Node.js
-
-```ts
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const tree = await classifier.parse("350 5th Ave, New York, NY 10118")
-
-for (const node of tree.roots) {
-	console.log(`${node.tag}: "${node.value}" (confidence: ${node.confidence.toFixed(2)})`)
-}
-```
-
-Output:
-
-```
-house_number: "350" (confidence: 0.94)
-street: "5th Ave" (confidence: 0.72)
-locality: "New York" (confidence: 0.65)
-region: "NY" (confidence: 0.88)
-postcode: "10118" (confidence: 0.91)
-```
-
-Those confidence numbers are calibrated probabilities, not vibes — pass the bundled per-locale
-calibrator and "0.88" means right-about-88%-of-the-time. See
-[Confidence calibration](./concepts/confidence-calibration.mdx) for how to load it and what the
-numbers mean.
-
-### CLI
-
-```bash
-mailwoman parse "350 5th Ave, New York, NY 10118"
-```
-
-Add `--resolve` to look up components against the Who's On First gazetteer:
-
-```bash
-mailwoman parse "350 5th Ave, New York, NY 10118" --resolve --resolve-db ./wof.sqlite
-```
-
-Output format options: `--format json` (default), `--format tuple`, `--format xml`.
-
-### Browser
-
-```ts
-import { loadNeuralClassifierFromURLs } from "@mailwoman/neural-web"
-
-const classifier = await loadNeuralClassifierFromURLs({
-	modelURL: "/mailwoman/model.onnx",
-	tokenizerURL: "/mailwoman/tokenizer.model",
-})
-
-const tree = await classifier.parse("350 5th Ave, New York, NY 10118")
-```
-
-See the [demo page](/demo) for a live example with map integration.
-
-## Using the staged pipeline
-
-The `classifier.parse()` call above uses a direct neural path. For the full staged pipeline — normalize → query shape → kind classify → phrase group → token classify → resolve — use `createRuntimePipeline`:
+The recommended entry point is `createRuntimePipeline` from the `mailwoman` package — it wires up
+the full stage pipeline (normalize → locale gate → kind classify → phrase group → token classify)
+around whatever classifier and resolver you give it:
 
 ```ts
 import { createRuntimePipeline } from "mailwoman"
@@ -87,40 +41,92 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 const pipeline = createRuntimePipeline({ classifier })
 
 const result = await pipeline("350 5th Ave, New York, NY 10118")
-// result.tree — the parsed address
-// result.timing — per-stage wall-clock breakdown
-// result.queryShape — structural input priors
-// result.kind — query category (structured_address, postcode_only, etc.)
-// result.phraseProposals — span boundaries from the phrase grouper
+
+function printNode(node, depth = 0) {
+	console.log(`${"  ".repeat(depth)}${node.tag}: "${node.value}" (confidence: ${node.confidence.toFixed(2)})`)
+	for (const child of node.children) printNode(child, depth + 1)
+}
+
+for (const root of result.tree.roots) printNode(root)
 ```
 
-Fast-path routing: bare postcodes and single localities skip the neural classifier automatically.
+Output:
 
-## Adding resolution
-
-The resolver turns parsed components into place IDs and coordinates:
-
-```ts
-import { createWOFResolver } from "@mailwoman/resolver"
-
-const resolver = await createWOFResolver({ dbPath: "./wof.sqlite" })
-const pipeline = createRuntimePipeline({ classifier, resolver })
-
-const result = await pipeline("350 5th Ave, New York, NY 10118")
-// result.tree roots now carry wof:id + lat/lon for matched components
 ```
+region: "NY" (confidence: 0.93)
+  locality: "New York" (confidence: 0.90)
+    street: "5th" (confidence: 0.95)
+      house_number: "350" (confidence: 0.88)
+      street_suffix: "Ave" (confidence: 0.95)
+    postcode: "10118" (confidence: 0.92)
+```
+
+`result.tree.roots` isn't a flat list with one entry per component. It's nested by containment — a
+`region` contains its `locality`, which contains its `street` and `postcode`, and so on — so walk
+it with recursion, not a single loop.
+
+The confidence numbers are calibrated probabilities, not vibes: pass the bundled per-locale
+calibrator and "0.90" means right-about-90%-of-the-time. See
+[Confidence calibration](./concepts/confidence-calibration.mdx) for how to load it.
+
+`result` also carries `result.kind` (the query-shape classification, e.g. `structured_address`),
+`result.path` (`"full"` or `"fast-path"`), and `result.timing` (per-stage wall-clock in
+milliseconds) — see [API reference](./api.mdx) for the full `PipelineResult` shape.
+
+:::info[Direct classifier access]
+If you don't need the staged pipeline — normalize, locale gate, phrase grouping, resolution —
+`NeuralAddressClassifier.parse()` on its own runs the neural stage alone and returns the same
+`AddressTree` shape. See [API reference](./api.mdx#neuraladdressclassifier) for the signature.
+:::
+
+## CLI
+
+The same parse from the command line, once weights are installed:
+
+```bash
+mailwoman parse "350 5th Ave, New York, NY 10118"
+```
+
+Output:
+
+```json
+{
+	"region": "NY",
+	"locality": "New York",
+	"street": "5th",
+	"house_number": "350",
+	"street_suffix": "Ave",
+	"postcode": "10118"
+}
+```
+
+This is the flattened projection (`--format json`, the default) — one key per component tag,
+easier to skim than the nested tree. `--format tuple` emits `[tag, value]` pairs; `--format xml`
+emits the nested tree as XML. Add `--resolve --resolve-db <path-to-wof.sqlite>` to look up
+components against a Who's On First gazetteer distribution — see
+[API reference](./api.mdx#createwofresolverbackend) for what that adds and where to get a
+distribution.
 
 ## Honest caveats
 
-- **The resolver is administrative/postcode-level**, not rooftop. It returns place centroids (locality, region, postcode), not delivery-point coordinates.
-- **Neural model quality varies by component.** `house_number` F1 is 0.79. `street` and `venue` are lower. Coarse components (country, region, locality) are better served by the rule-based WOF dictionary classifiers in the hybrid pipeline.
-- **Non-Latin scripts have limited support.** The current tokenizer (v0.1.0, 16K vocab) falls back to raw bytes on CJK, Cyrillic, and other non-Latin scripts.
-- **Browser cold load is ~60 MB** (25 MB model + 35 MB gazetteer). Cached after first visit.
-- **Full-parse exact match is low** (~8% on the golden set). The model is early-stage. The architecture is additive — rule classifiers handle what the model doesn't.
+- **The resolver you'd reach with `--resolve` here is administrative/postcode-level, not
+  rooftop.** It returns place centroids (locality, region, postcode), not delivery-point
+  coordinates. Rooftop and interpolated street-level resolution exist, but through the separate,
+  richer `mailwoman geocode` command — see [Status](./status.mdx) for what's covered.
+- **Model quality varies by component and locale.** Some tags are strong, some are still
+  developing. [Status](./status.mdx) is the current per-tag picture; don't rely on a specific
+  number quoted here going stale under you.
+- **Non-Latin scripts still degrade.** The tokenizer falls back to byte-level encoding on
+  scripts it has no dedicated subwords for (Cyrillic, CJK, Arabic) — confidence drops and span
+  boundaries get less reliable. Several Latin-diacritic scripts (French, Czech, Polish, Slovak,
+  Slovenian, the Nordic languages) have dedicated tokenizer coverage; see
+  [Releases & capabilities](./releases.mdx) for which release added which.
 
 ## Where to go next
 
-- [Status](/docs/status) — what ships, what's experimental
-- [API reference](/docs/api) — type signatures and configuration
-- [How it works now](/docs/understanding/our-approach/how-it-works-now) — the staged pipeline in detail
-- [Why a neural parser?](/docs/understanding/our-approach/why-a-neural-parser) — the motivation
+- [Status](./status.mdx) — what ships today, what's behind a flag, what's still experimental
+- [API reference](./api.mdx) — full type signatures, configuration, and output shapes
+- [The knowledge ladder](./understanding/our-approach/the-knowledge-ladder.mdx) — the staged
+  pipeline's design principle, stage by stage
+- [Why a neural parser?](./understanding/our-approach/why-a-neural-parser.mdx) — the motivation
+  for a learned parser over hand-written rules
