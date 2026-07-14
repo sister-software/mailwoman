@@ -48,7 +48,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, dirname } from "node:path"
+import { basename, dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { $public } from "@mailwoman/core/env"
@@ -86,6 +86,12 @@ export interface PromotionGateOptions {
 	card?: string
 	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
 	gazetteerLexicon?: string
+	/**
+	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us` — the #718-safe path
+	 * that feeds anchor+gazetteer+country via loadFromWeights, the only in-distribution grade for a country-channel model
+	 * (v6.2.0+). Alternative to --model/--int8; takes precedence.
+	 */
+	weightsCache?: string
 	/** Battery output dir. Default `/tmp/gate-<label>-<hhmm>`. */
 	outDir?: string
 }
@@ -130,8 +136,18 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const GAZ = options.gazetteerLexicon ?? "data/gazetteer/anchor-lexicon-v1.json"
 	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
-	if (!MODEL || !GATE) {
-		console.error("✗ --model and --gate required")
+	// PACKAGE-SHAPED (#718-safe): when --weights-cache is set, the graded artifact + its tokenizer/card
+	// are the cache's own siblings. The metric probes load it via loadFromWeights (feeding anchor +
+	// gazetteer + COUNTRY — the only in-distribution grade for a country-channel model); the
+	// country-orthogonal downstream legs (preset / cascade / arena / fr-recall / mask) stay on the
+	// explicit --model path against these EFF_TOK/EFF_CARD siblings.
+	const WC = options.weightsCache ?? ""
+	const WC_MODEL = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/model.onnx") : ""
+	const EFF_TOK = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/tokenizer.model") : TOK
+	const EFF_CARD = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/model-card.json") : CARD
+
+	if (!GATE || (!MODEL && !WC)) {
+		console.error("✗ --gate and one of --model / --weights-cache required")
 
 		return 2
 	}
@@ -146,10 +162,12 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	mkdirSync(OUT_DIR, { recursive: true })
 
 	// --- lore guard: tokenizer comparability -----------------------------------
-	const card = JSON.parse(readFileSync(CARD, "utf8")) as ModelCard
+	const card = JSON.parse(readFileSync(EFF_CARD, "utf8")) as ModelCard
 	const CARD_TOK = card.training.tokenizer_version
 
-	if (!TOK.includes(CARD_TOK)) {
+	// Skipped for --weights-cache: loadFromWeights pairs the package's own tokenizer + card internally,
+	// so the (unused) explicit TOK path won't contain the card's version string.
+	if (!WC && !TOK.includes(CARD_TOK)) {
 		console.error(
 			`✗ tokenizer path '${TOK}' does not contain card tokenizer_version '${CARD_TOK}' — F1 would be incomparable`
 		)
@@ -184,40 +202,53 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		return r.stdout.trim().split(/\s+/)[0] ?? ""
 	}
 
-	const modelDql = await dql(MODEL)
-	const provLines = [
-		`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
-		`MODEL  ${await md5(MODEL)}  dql=${modelDql}  ${MODEL}`,
-	]
-	let int8Dql = ""
+	// --weights-cache: one artifact (the shipped package int8) — log its provenance, skip the
+	// fp32/int8 dual-artifact assertions (they exist for the --model fp32 + --int8 sibling flow).
+	if (WC) {
+		const wcDql = await dql(WC_MODEL)
+		const provenance =
+			[
+				`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
+				`WEIGHTS-CACHE  ${await md5(WC_MODEL)}  dql=${wcDql}  ${WC_MODEL}`,
+			].join("\n") + "\n"
+		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance)
+		process.stdout.write(provenance)
+	} else {
+		const modelDql = await dql(MODEL)
+		const provLines = [
+			`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
+			`MODEL  ${await md5(MODEL)}  dql=${modelDql}  ${MODEL}`,
+		]
+		let int8Dql = ""
 
-	if (INT8) {
-		int8Dql = await dql(INT8)
-		provLines.push(`INT8   ${await md5(INT8)}  dql=${int8Dql}  ${INT8}`)
-	}
-	const provenance = provLines.join("\n") + "\n"
-	writeFileSync(`${OUT_DIR}/provenance.txt`, provenance) // tee → file …
-	process.stdout.write(provenance)
+		if (INT8) {
+			int8Dql = await dql(INT8)
+			provLines.push(`INT8   ${await md5(INT8)}  dql=${int8Dql}  ${INT8}`)
+		}
+		const provenance = provLines.join("\n") + "\n"
+		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance) // tee → file …
+		process.stdout.write(provenance)
 
-	//                       … and stdout
+		//                       … and stdout
 
-	if (modelDql !== "0") {
-		console.error(`✗ --model '${MODEL}' carries int8 quant nodes — it is not an fp32 artifact`)
-
-		return 2
-	}
-
-	if (INT8) {
-		if (int8Dql === "0") {
-			console.error(`✗ --int8 '${INT8}' has no quant nodes — it is not a quantized artifact`)
+		if (modelDql !== "0") {
+			console.error(`✗ --model '${MODEL}' carries int8 quant nodes — it is not an fp32 artifact`)
 
 			return 2
 		}
 
-		if ((await md5(MODEL)) === (await md5(INT8))) {
-			console.error("✗ --model and --int8 are byte-identical — one is mislabeled")
+		if (INT8) {
+			if (int8Dql === "0") {
+				console.error(`✗ --int8 '${INT8}' has no quant nodes — it is not a quantized artifact`)
 
-			return 2
+				return 2
+			}
+
+			if ((await md5(MODEL)) === (await md5(INT8))) {
+				console.error("✗ --model and --int8 are byte-identical — one is mislabeled")
+
+				return 2
+			}
 		}
 	}
 
@@ -242,48 +273,62 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		BRIDGE_MODE = "1"
 	}
 
-	const shipModel = INT8 || MODEL
+	const shipModel = WC ? WC_MODEL : INT8 || MODEL
 
 	const runBattery = async (m: string, tag: string): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
+		// Package-shaped (#718): the metric probes (which support --weights-cache) load ALL channels —
+		// anchor + gazetteer + COUNTRY — from the package. The country-orthogonal de-order watch lens
+		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = WC_MODEL when WC.
+		const plFlags = WC
+			? ["--weights-cache", WC]
+			: ["--model", m, "--tokenizer", TOK, "--model-card", CARD, "--model-anchor-lookup", String(LK)]
+		const probeFlags = WC ? ["--weights-cache", WC] : ["--model", m]
 		const perLocale =
-			await $`node scripts/eval/per-locale-f1.ts --model ${m} --tokenizer ${TOK} --model-card ${CARD} --model-anchor-lookup ${LK} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
+			await $`node scripts/eval/per-locale-f1.ts ${plFlags} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-per-locale.md`, perLocale.stdout)
 		const affix =
-			await $`node scripts/eval/score-affix.ts --model ${m} ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-affix.json`}`
+			await $`node scripts/eval/score-affix.ts ${probeFlags} ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-affix.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-affix.md`, affix.stdout)
 		const unit =
-			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/unit-real-designators.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-unit.json`}`
+			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/unit-real-designators.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-unit.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-unit.md`, unit.stdout)
 		const country =
-			await $`node scripts/eval/score-country-homograph.ts --model ${m} ${GAZ_ARGS} --suppress-gaz-near-postcode --json ${`${OUT_DIR}/${tag}-country.json`}`
+			await $`node scripts/eval/score-country-homograph.ts ${probeFlags} ${GAZ_ARGS} --suppress-gaz-near-postcode --json ${`${OUT_DIR}/${tag}-country.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-country.md`, country.stdout)
 		// v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
 		const pobox =
-			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/po-box-cedex-val.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-pobox.json`}`
+			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/po-box-cedex-val.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-pobox.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-pobox.md`, pobox.stdout)
 		const intersection =
-			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/intersection-real.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-intersection.json`}`
+			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/intersection-real.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-intersection.json`}`
 		writeFileSync(`${OUT_DIR}/${tag}-intersection.md`, intersection.stdout)
 		// Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488):
 		const watchVt =
-			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/intersection-golden-vt.jsonl ${GAZ_ARGS}`
+			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/intersection-golden-vt.jsonl ${GAZ_ARGS}`
 		writeFileSync(`${OUT_DIR}/${tag}-watch-intersection-vt.md`, watchVt.stdout)
 		const watchGlue =
-			await $`node scripts/eval/score-affix.ts --model ${m} --file data/eval/external/glue-rows-perturb.jsonl ${GAZ_ARGS}`
+			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/glue-rows-perturb.jsonl ${GAZ_ARGS}`
 		writeFileSync(`${OUT_DIR}/${tag}-watch-glue.md`, watchGlue.stdout)
 		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report) — nothrow,
 		// combine stdout+stderr like the bash `> … 2>&1 || true`.
 		const deorder = await $({
 			nothrow: true,
-		})`node scripts/eval/de-order-eval.ts --model ${m} --card ${CARD} --tokenizer ${TOK} --anchor-lookup ${LK} --out ${`${OUT_DIR}/${tag}-deorder`}`
+		})`node scripts/eval/de-order-eval.ts --model ${m} --card ${EFF_CARD} --tokenizer ${EFF_TOK} --anchor-lookup ${LK} --out ${`${OUT_DIR}/${tag}-deorder`}`
 		writeFileSync(`${OUT_DIR}/${tag}-deorder.md`, `${deorder.stdout}${deorder.stderr}`)
 	}
 
-	await runBattery(MODEL, "fp32")
+	// --weights-cache grades the single shipped package (int8) in the primary slot; the verdict reads
+	// the `fp32-*` files (its primary-artifact slot) with withInt8=false. The --model path keeps the
+	// fp32 + optional int8 dual-artifact flow.
+	if (WC) {
+		await runBattery(WC_MODEL, "fp32")
+	} else {
+		await runBattery(MODEL, "fp32")
 
-	if (INT8) {
-		await runBattery(INT8, "int8")
+		if (INT8) {
+			await runBattery(INT8, "int8")
+		}
 	}
 	// In-process since the eval-harness migration (was `node scripts/eval/demo-preset-compare.ts`);
 	// same capture: the report lines land in presets.md, a failure is tolerated like the old child's
@@ -308,7 +353,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	if (existsSync(HOT_DB)) {
 		const cascade = await $({
 			nothrow: true,
-		})`node scripts/eval/demo-cascade-smoke.ts --db ${HOT_DB} --stage-dir ${HOT_STAGE} --model ${shipModel} --tokenizer ${TOK} --card ${CARD} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/cascade-smoke.json`}`
+		})`node scripts/eval/demo-cascade-smoke.ts --db ${HOT_DB} --stage-dir ${HOT_STAGE} --model ${shipModel} --tokenizer ${EFF_TOK} --card ${EFF_CARD} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/cascade-smoke.json`}`
 		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, cascade.stdout)
 
 		if (cascade.exitCode !== 0) {
@@ -334,9 +379,9 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			"--model",
 			shipModel,
 			"--tokenizer",
-			TOK,
+			EFF_TOK,
 			"--model-card",
-			CARD,
+			EFF_CARD,
 			"--gazetteer-lexicon",
 			GAZ,
 			"--anchor-lookup",
@@ -367,7 +412,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		const bare = await $({
 			nothrow: true,
 			env: childEnv(),
-		})`node scripts/diagnostic/fr-parse-recall.ts --model ${shipModel} --tokenizer ${TOK} --model-card ${CARD} --floor ${String(bareStreetFloor)} --json ${`${OUT_DIR}/fr-bare-street.json`}`
+		})`node scripts/diagnostic/fr-parse-recall.ts --model ${shipModel} --tokenizer ${EFF_TOK} --model-card ${EFF_CARD} --floor ${String(bareStreetFloor)} --json ${`${OUT_DIR}/fr-bare-street.json`}`
 		writeFileSync(`${OUT_DIR}/fr-bare-street.md`, `${bare.stdout}${bare.stderr}`)
 
 		if (bare.exitCode !== 0) {
@@ -397,8 +442,8 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			const mask = await maskRegressionGate(
 				{
 					model: shipModel,
-					tokenizer: TOK,
-					modelCard: CARD,
+					tokenizer: EFF_TOK,
+					modelCard: EFF_CARD,
 					anchorLookup: String(LK),
 					gazetteerLexicon: GAZ,
 					json: `${OUT_DIR}/mask-regression.json`,
@@ -455,7 +500,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			`  node mailwoman/out/cli.js eval ledger-append \\\n` +
 			`    --out-dir ${OUT_DIR} --model-version <npm-semver> \\\n` +
 			`    --run-id ${LABEL.replace(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
-			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${CARD}`
+			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${EFF_CARD}`
 	)
 
 	return 0

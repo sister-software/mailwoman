@@ -33,6 +33,12 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.describe("Gazetteer lexicon JSON (default data/gazetteer/anchor-lexicon-v1.json)"),
+	weightsCache: zod
+		.string()
+		.optional()
+		.describe(
+			"Package-shaped candidate weights dir (<root>/node_modules/@mailwoman/neural-weights-en-us) — #718-safe, feeds anchor+gazetteer+country via loadFromWeights; the only correct grade for a country-channel model (v6.2.0+). Alternative to --model."
+		),
 	outDir: zod.string().optional().describe("Battery output dir (default /tmp/gate-<label>-<hhmm>)"),
 })
 
