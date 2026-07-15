@@ -16,6 +16,7 @@
 import { readFileSync } from "node:fs"
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
@@ -58,6 +59,11 @@ export interface ParityEvalOptions {
 	 * `street_types` dictionaries (all locales). Zero-training lever.
 	 */
 	streetMorphology?: boolean
+	/**
+	 * Ship-config word-consistency heal (default true since the 2026-07-15 gate revision — production parses heal, so the
+	 * gate grades the healed parse). Pass `false` to reproduce pre-heal baselines.
+	 */
+	wordConsistency?: boolean
 	/** List the first N disagreeing inputs per floor label. */
 	failing?: number
 }
@@ -104,7 +110,16 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 	for (const fixture of live) {
 		const expect = fixture.expect!
-		const tuples = decodeAsTuples(await classifier.parse(fixture.input, { postcodeRepair: true, fstStreetMorphology }))
+		// Ship-config parse (gate-revision 2026-07-15): production's safeClassify/parseForGeocode heal
+		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the gate must grade the same parse the swapped
+		// surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
+		const tuples = decodeAsTuples(
+			await classifier.parse(fixture.input, {
+				postcodeRepair: true,
+				fstStreetMorphology,
+				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
+			})
+		)
 		const byTag = new Map<string, string[]>()
 
 		for (const [tag, value] of tuples) {
