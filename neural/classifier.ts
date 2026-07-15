@@ -47,7 +47,7 @@ import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from 
 import { repairUnitLabels } from "./unit-repair.ts"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.ts"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.ts"
-import { enforceWordConsistency } from "./word-consistency.ts"
+import { enforceWordConsistency, type WordConsistencyOpts } from "./word-consistency.ts"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
@@ -154,10 +154,12 @@ export interface NeuralAddressClassifierConfig {
 
 	/**
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off → byte-identical. When
-	 * true, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
-	 * emissions (see word-consistency.ts). Per-parse `ParseOptions.enforceWordConsistency` overrides this default.
+	 * enabled, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
+	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable WITH the #727 confidence gates
+	 * (floor / byte-fallback skip / slash grouping); `true` = the original ungated vote. Per-parse
+	 * `ParseOptions.enforceWordConsistency` overrides this default.
 	 */
-	enforceWordConsistency?: boolean
+	enforceWordConsistency?: boolean | WordConsistencyOpts
 }
 
 /**
@@ -631,9 +633,12 @@ export class NeuralAddressClassifier {
 		// word whose pieces already agree is untouched. See word-consistency.ts.
 		let healedConfidence: Map<number, number> | null = null
 
-		if (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false) {
+		const wordConsistency = opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false
+
+		if (wordConsistency) {
 			const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []
-			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices)
+			const wcOpts = typeof wordConsistency === "object" ? wordConsistency : undefined
+			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices, wcOpts)
 			labelIndices = wc.labelIndices
 			healedConfidence = wc.healedConfidence
 
@@ -822,9 +827,10 @@ export interface ParseOpts {
 
 	/**
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Overrides the classifier's
-	 * `enforceWordConsistency` config default for this parse. See word-consistency.ts.
+	 * `enforceWordConsistency` config default for this parse. Pass a `WordConsistencyOpts` object to enable with the
+	 * confidence gates; `true` = the ungated vote. See word-consistency.ts.
 	 */
-	enforceWordConsistency?: boolean
+	enforceWordConsistency?: boolean | WordConsistencyOpts
 
 	/**
 	 * When true, run the deterministic secondary-unit regex repair pass on the decoded label sequence before

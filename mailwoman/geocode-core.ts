@@ -26,7 +26,12 @@ import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
+import {
+	type ClassifierOpts,
+	hardCountryFor,
+	isBareLocalityTree,
+	WORD_CONSISTENCY_SHIP_DEFAULT,
+} from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import type {
@@ -121,7 +126,12 @@ export type ShardResolver = (stateSlug: string | null) => StateShards
 export interface GeocodeClassifier {
 	parse(
 		text: string,
-		opts?: { postcodeRepair?: boolean; normalizeCase?: boolean; queryShape?: QueryShape }
+		opts?: {
+			postcodeRepair?: boolean
+			normalizeCase?: boolean
+			queryShape?: QueryShape
+			enforceWordConsistency?: ClassifierOpts["enforceWordConsistency"]
+		}
 	): Promise<AddressTree>
 }
 
@@ -453,6 +463,8 @@ export async function parseForGeocode(
 			postcodeRepair: true,
 			normalizeCase: deps.normalizeCase ?? true,
 			queryShape,
+			// Word-consistency heal on by default (2026-07-15) — semantics in neural/word-consistency.ts.
+			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
 	)
 }

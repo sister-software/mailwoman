@@ -34,6 +34,7 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -62,6 +63,11 @@ export interface ErrorAnalysisOptions {
 	modelCard?: string
 	/** Parse with postcode repair enabled. */
 	postcodeRepair?: boolean
+	/**
+	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15). Off by default so
+	 * pre-flip baselines stay reproducible; pass it to grade the shipped pipeline configuration.
+	 */
+	wordConsistency?: boolean
 	/** STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true. */
 	strict?: boolean
 }
@@ -115,9 +121,12 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	console.error(`Loaded ${golden.length} golden entries`)
 
 	console.error("Loading model...")
-	const parseOpts = postcodeRepair
-		? ({ postcodeRepair: true } as Parameters<NeuralAddressClassifier["parse"]>[1])
-		: undefined
+	const repairOpts = {
+		...(postcodeRepair ? { postcodeRepair: true } : {}),
+		...(options.wordConsistency ? { enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT } : {}),
+	}
+	const parseOpts =
+		Object.keys(repairOpts).length > 0 ? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1]) : undefined
 	// Full SHIP-CONFIG via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
 	// conventions channels the model was trained against (per the model-card `requires` block) so a
 	// `--model` candidate is graded in-distribution, the same as the dev-weights default. createScorer

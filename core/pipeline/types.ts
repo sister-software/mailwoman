@@ -202,7 +202,26 @@ export interface ClassifierOpts {
 	 * restores the raw-case parse.
 	 */
 	normalizeCase?: boolean
+	/**
+	 * Per-word BIO consistency repair (#727): force each SentencePiece word whose pieces DISAGREE in type to one tag via
+	 * a confidence-weighted vote. Structural mirror of `@mailwoman/neural`'s `WordConsistencyOpts` (core carries no
+	 * neural dependency) — see `neural/word-consistency.ts` for the semantics of each gate.
+	 */
+	enforceWordConsistency?:
+		| boolean
+		| { minMeanConfidence?: number; skipByteFallbackWords?: boolean; splitOnPunctuation?: boolean }
 }
+
+/**
+ * The word-consistency setting production parses ship with (2026-07-15): heal intra-word tag disagreement, with the
+ * punctuation-separator + byte-fallback gates on and no confidence floor — the configuration that cleared golden
+ * us/fr/adversarial and the parity floors with zero per-file regressions. One constant so the pipeline's
+ * `safeClassify`, `parseForGeocode`, and the eval harness can't drift apart.
+ */
+export const WORD_CONSISTENCY_SHIP_DEFAULT = {
+	skipByteFallbackWords: true,
+	splitOnPunctuation: true,
+} as const satisfies ClassifierOpts["enforceWordConsistency"]
 
 export interface AddressClassifier {
 	parse(text: string, opts?: ClassifierOpts): Promise<AddressTree>

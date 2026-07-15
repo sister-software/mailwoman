@@ -47,7 +47,12 @@ import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
+import {
+	NeuralAddressClassifier,
+	parseAnchorLookup,
+	parseGazetteerLexicon,
+	parseWordConsistencyEnv,
+} from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
@@ -431,10 +436,8 @@ async function main(): Promise<void> {
 		const dumpTag = $public.MAILWOMAN_DUMP_MISS_TAG
 
 		for (const row of rows) {
-			const tree = await neural.parse(
-				row.raw,
-				$public.MAILWOMAN_WORD_CONSISTENCY === "1" ? { enforceWordConsistency: true } : {}
-			)
+			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
+			const tree = await neural.parse(row.raw, wordConsistency ? { enforceWordConsistency: wordConsistency } : {})
 			const pred = foldToComponents(decodeAsJSON(tree))
 			preds.push(pred)
 
