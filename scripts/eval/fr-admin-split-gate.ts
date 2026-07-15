@@ -27,6 +27,7 @@ import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/cor
 import { $public } from "@mailwoman/core/env"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
@@ -264,7 +265,7 @@ async function main() {
 		rowIdx++
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
-			enforceWordConsistency: $public.MAILWOMAN_WORD_CONSISTENCY === "1",
+			enforceWordConsistency: parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY),
 			...(normalizeCasePin !== undefined ? { normalizeCase: normalizeCasePin } : {}),
 		})
 		const flat = decodeAsJSON(tree) as Record<string, string>

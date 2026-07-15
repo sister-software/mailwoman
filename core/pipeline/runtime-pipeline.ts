@@ -20,6 +20,7 @@ import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
 import type { ClassifierCandidate } from "./reconcile.ts"
 import { reconcileSpans } from "./reconcile.ts"
 import { aggregateSpanLogits } from "./span-logit-aggregation.ts"
+import { WORD_CONSISTENCY_SHIP_DEFAULT } from "./types.ts"
 import type {
 	AddressClassifier,
 	ClassifierOpts,
@@ -566,7 +567,16 @@ async function safeClassify(
 	try {
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
 		// default-ON at the classifier since #895 (unset runs it; explicit false pins the raw-case parse).
-		return await classifier.parse(text, { queryShape, fst, postcodeRepair: true, normalizeCase })
+		// Word-consistency heal on by default (2026-07-15): arbitrates intra-word tag disagreement only, with the
+		// punctuation-separator + byte-fallback gates — clean win across golden us/fr/adversarial + parity floors.
+		// Semantics in neural/word-consistency.ts.
+		return await classifier.parse(text, {
+			queryShape,
+			fst,
+			postcodeRepair: true,
+			normalizeCase,
+			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+		})
 	} catch {
 		return { raw: text, roots: [] }
 	}

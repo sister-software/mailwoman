@@ -14,6 +14,7 @@ import type { Resolver } from "../resolver/types.ts"
 import type { Span } from "../tokenization/index.ts"
 import type { ClassificationProposal, ComponentTag } from "../types/index.ts"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.ts"
+import { WORD_CONSISTENCY_SHIP_DEFAULT } from "./types.ts"
 import type {
 	AddressClassifier,
 	LocaleHint,
@@ -168,7 +169,11 @@ describe("runPipeline — stage composition", () => {
 			computeQueryShape: () => shape,
 			classifier,
 		})
-		expect(classifier.parse).toHaveBeenCalledWith("10118", { queryShape: shape, postcodeRepair: true })
+		expect(classifier.parse).toHaveBeenCalledWith("10118", {
+			queryShape: shape,
+			postcodeRepair: true,
+			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+		})
 	})
 
 	it("threads PipelineOpts.normalizeCase to classifier.parse (#690)", async () => {

@@ -23,6 +23,10 @@ const OptionsSchema = zod.object({
 	tokenizer: zod.string().optional().describe("Candidate tokenizer"),
 	modelCard: zod.string().optional().describe("Candidate model-card"),
 	postcodeRepair: zod.boolean().default(false).describe("Parse with postcode repair enabled"),
+	wordConsistency: zod
+		.boolean()
+		.default(false)
+		.describe("Parse with the production word-consistency heal (ship default since 2026-07-15)"),
 	strict: zod
 		.boolean()
 		.default(true)
