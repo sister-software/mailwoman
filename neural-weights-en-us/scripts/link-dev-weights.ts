@@ -47,10 +47,10 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 // --- current default (npm v5.9.0 = demo defaultVersion v5.9.0) --------------
-// 6.2.0 ships v263-country-channel (step-8000) int8 model + the v0.9.0-multisplice tokenizer (tokenizer UNCHANGED from
+// 6.3.0 ships v264-country-softguard (step-8000) int8 model + the v0.9.0-multisplice tokenizer (tokenizer UNCHANGED from
 // 6.1.0; only the model moved — the #1104 country channel). Bump these two paths on each ship; the expected md5s live in
 // model-card.json `files_md5` (single source — see the header).
-const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v263-country-channel-step-008000-int8.onnx")
+const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v264-country-softguard-step-008000-int8.onnx")
 const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 
 const PKG_DIR = repoRootPath("neural-weights-en-us")

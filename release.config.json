@@ -1,14 +1,14 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
-	"version": "6.2.0",
+	"version": "6.3.0",
 	"locales": ["en-us", "fr-fr"],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
-		"model": "models/quantized/model-v263-country-channel-step-008000-int8.onnx",
+		"model": "models/quantized/model-v264-country-softguard-step-008000-int8.onnx",
 		"tokenizer": "models/tokenizer/v0.9.0-multisplice/tokenizer.model",
 		"tokenizerVersion": "0.9.0-multisplice",
 		"trainingStep": 8000,
-		"lineage": "v2.6.3-country-channel — v263 (#1104). init_from v261 + the dedicated country soft-feed channel ON (2-dim [country_surface, country_ambiguous]). Golden country recall 84.8→89.3% (the real atlas-channel fix, replacing v261's cosmetic exception); real-postal guard held (3/4, halluc 1%); held-out coordinate PASS both locales (US z −0.16, FR z −0.17). Coordinate-invisible golden region per-tag trade (+24, trailing-country tails), documented + operator-approved."
+		"lineage": "v2.6.4-country-softguard — v264 (#1104). init_from v263 + country_ambiguous_scale 0.5 (softens the homograph guard; baked into the ONNX, no lexicon/inference change). STRICTLY DOMINATES v263: country-homograph 82.6→85.1, golden WOF-admin country 89.3→91.1%, real-postal+halluc held (3/4, 1%), held-out coordinate PASS both locales (US z −0.14, FR z +0.25), aggregate −3. No trade. (v265 0.25 probed; 0.5 chosen for balance.)"
 	},
 	"softFeed": {
 		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.ts so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode shard (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to weights.dataRoot/wof. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) — the publish workflow places them via the HF fetch step.",

@@ -1,8 +1,8 @@
 {
 	"name": "neural-weights-fr-fr",
-	"version": "6.2.0",
-	"model_lineage": "Ships the en-us v263 (v2.6.3-country-channel, #1104) model — init_from v261 + the dedicated country soft-feed channel; tokenizer v0.9.0-multisplice (73,143). One model serves both locales; see the en-us card for the full lineage, the v263 grade, and the documented coordinate-invisible region trade.",
-	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v263 model, shipped as 6.2.0)",
+	"version": "6.3.0",
+	"model_lineage": "Ships the en-us v264 (v2.6.4-country-softguard, #1104) model — init_from v263 with country_ambiguous_scale 0.5 (softens the homograph guard, baked into the ONNX); tokenizer v0.9.0-multisplice (73,143). One model serves both locales; see the en-us card for the full lineage + the v264 grade (strictly dominates v263 on country, no trade).",
+	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v264 model, shipped as 6.3.0)",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "fr-fr",
 	"training": {
@@ -10,7 +10,7 @@
 		"tokenizer_version": "0.9.0-multisplice",
 		"steps": 8000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"note": "Identical artifact to neural-weights-en-us 6.2.0 / v263 country-channel (one multi-locale model serves both, copied at publish time). See that card's training/recipe for full provenance."
+		"note": "Identical artifact to neural-weights-en-us 6.3.0 / v264 country-softguard (one multi-locale model serves both, copied at publish time). See that card's training/recipe for full provenance."
 	},
 	"requires": {
 		"$comment": "SHIP-CONFIG mirrored from neural-weights-en-us (#718/#721): this package ships en-us's model, so its required channels are identical — including `country` (the #1104 dedicated country soft-feed channel added in v263). createScorer / loadFromWeights read this and feed anchor + gazetteer + country + the conventions mask; running channel-OFF is the #566/#685 OOD crater.",
