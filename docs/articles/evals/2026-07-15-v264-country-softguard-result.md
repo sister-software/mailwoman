@@ -41,12 +41,23 @@ flagged surface and v263 trusted it too little everywhere. At scale 0.5 the mode
 recall, and precision holds (falsifier hallucination unchanged) because the softer bit is still an
 informative false-positive signal, just not a near-veto.
 
-## Headroom
+## The 0.25 probe (v265) — the operator asked; here's the sweep
 
-0.5 recovers roughly half the homograph gap (82.6 → 85.1 of the 82.6 → 89.8 country-OFF range). A smaller
-scale (0.25) would likely recover more homograph recall, but risks eroding the precision the guard buys
-(hallucinations). 0.5 is the conservative clean win; 0.25 is a follow-up worth a probe if maximal homograph
-recall is wanted.
+v265 (`country_ambiguous_scale: 0.25`, init_from v263, same A/B base) probed whether a stronger soften
+recovers more. It does — without over-softening (precision + hallucination held):
+
+| scale                     | country-homograph | golden WOF-admin country | halluc | aggregate fails | coord US / FR |
+| ------------------------- | ----------------- | ------------------------ | ------ | --------------- | ------------- |
+| v263 (1.0, shipped)       | 82.6              | 89.3%                    | 1%     | 1101            | flat          |
+| **v264 (0.5) — PROMOTED** | 85.1              | **91.1%**                | 1%     | **1098**        | PASS / PASS   |
+| v265 (0.25)               | **87.5**          | 90.6%                    | 1%     | 1101            | PASS / PASS   |
+
+Both scales beat v263 on every axis. The split: **0.25 maximizes the narrow homograph probe** (n=54,
+synthetic), **0.5 maximizes the broad WOF-admin country** (n=224, the #1104 target) **and aggregate**
+(n=4255), by ~1 row each. Precision (0 false-positives) and hallucination (1%) held at every scale — 0.25
+did not over-soften. **Decision (operator, 2026-07-15): promote v264 (0.5)** — the balanced default,
+strongest on the larger-sample metrics; the homograph edge of 0.25 is on a small synthetic slice. 0.25
+stays a graded candidate should the homograph lens ever be weighted higher.
 
 ## Reproduce
 
