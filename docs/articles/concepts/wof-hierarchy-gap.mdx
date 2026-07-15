@@ -71,9 +71,9 @@ The hierarchy goes administrative all the way down to `neighbourhood`/`microhood
 The omission is principled, not an oversight:
 
 1. **Streets are linear, not point or polygonal.** WOF stores geometries. A locality has a polygon, an address has a point. A street is a line — closer to OSM ways than to WOF places.
-2. **Streets recur per-locality.** London has [seventeen different High Streets](../understanding/why-its-hard/falsehoods-streets.mdx). A unique identifier for "High Street" doesn't exist without disambiguation by parent locality. WOF assigns one ID per place; streets break that assumption.
+2. **Streets recur per-locality.** London has [seventeen different High Streets](../understanding/why-its-hard/falsehoods/falsehoods-streets.mdx). A unique identifier for "High Street" doesn't exist without disambiguation by parent locality. WOF assigns one ID per place; streets break that assumption.
 3. **Streets are owned by different authorities.** Administrative places are governed by census bureaus, statistical offices, and political entities. Streets are governed by highway departments, postal services, and municipal planning. WOF concords with administrative authorities; street data lives elsewhere.
-4. **Streets compose differently across locales.** US street grammars assume `[number] [name] [type]`. French addresses are `[number] [type] [name]`. Japanese addresses [skip streets entirely](../understanding/why-its-hard/falsehoods-streets.mdx#addresses-have-a-street-at-all). Mannheim uses a grid. A single hierarchical slot can't encode this.
+4. **Streets compose differently across locales.** US street grammars assume `[number] [name] [type]`. French addresses are `[number] [type] [name]`. Japanese addresses [skip streets entirely](../understanding/why-its-hard/falsehoods/falsehoods-streets.mdx#addresses-have-a-street-at-all). Mannheim uses a grid. A single hierarchical slot can't encode this.
 
 WOF's decision to stop at `neighbourhood → address` is correct _for a place gazetteer_. It just leaves a gap _for an address parser_.
 
@@ -199,5 +199,5 @@ Each layer addresses a different vacuum. The cheapest layers don't subsume the m
 
 - [FST gazetteer prior](./fst-gazetteer-prior.mdx) — the prior this article extends
 - [FST gazetteer LM reference](../plan/reference/FST_GAZETTEER_LM.mdx) — Phase 2 (streets) is the layer 2 work
-- [Falsehoods about street names](../understanding/why-its-hard/falsehoods-streets.mdx) — the catalog of edge cases each layer addresses
+- [Falsehoods about street names](../understanding/why-its-hard/falsehoods/falsehoods-streets.mdx) — the catalog of edge cases each layer addresses
 - [v0.6.1 error analysis](../evals/model-versions/v0.6.1-error-analysis.mdx) — the empirical regression that surfaced the gap
