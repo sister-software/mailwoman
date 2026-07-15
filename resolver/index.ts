@@ -19,6 +19,8 @@ export type {
 	SerializableResolveOpts,
 } from "./remote-resolver.ts"
 export { createWOFResolver } from "./resolve.ts"
+export { finestResolvedCoordinate, isImplausibleResolution } from "./plausibility.ts"
+export type { PlausibilityVerdict, ResolvedCoordinate } from "./plausibility.ts"
 export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
 export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
 
