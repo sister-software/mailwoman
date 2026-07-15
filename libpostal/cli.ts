@@ -67,7 +67,7 @@ function serve(): void {
 		onListen: () => {
 			console.error(`[@mailwoman/libpostal] listening on http://${host}:${port}`)
 			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
-			console.error(`  endpoints: POST/GET /parse  POST/GET /expand  GET /openapi.json`)
+			console.error(`  endpoints: GET /  POST/GET /parse  POST/GET /expand  GET /openapi.json`)
 		},
 	})
 }

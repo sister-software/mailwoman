@@ -352,7 +352,7 @@ async function serve(): Promise<void> {
 					: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
 			)
 			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
-			console.error(`  endpoints: GET /search  GET /reverse  GET /lookup  GET /status  GET /openapi.json`)
+			console.error(`  endpoints: GET /  GET /search  GET /reverse  GET /lookup  GET /status  GET /openapi.json`)
 		},
 	})
 }
