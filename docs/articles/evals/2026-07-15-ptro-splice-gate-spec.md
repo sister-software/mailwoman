@@ -6,12 +6,12 @@ commitment to a per-locale non-inferiority leg, declared in advance. The FR n=30
 from v5.1.0 is the template.
 
 **Commit-record caveat (honest sequencing).** This file was authored before any leg was graded, and
-its bars are unedited since. But the commit that was supposed to land it first _failed silently_ (an
-`oxfmt` crash swallowed by a `tail -1` pipe), so it entered git AFTER the v266 grading below rather
-than before it. The bars were not tuned to the result — v266 is a no-op, so there was nothing to tune
-toward — but the git record cannot prove that ordering, and pretending otherwise is worth less than
-saying so. The protocol lesson is in the night-3 postmortem: verify the commit landed, don't trust
-the pipe.
+its bars are unedited since. But the commit that was supposed to land it first _failed silently_ —
+the pre-commit hook runs the compiled CLI and `out/` was stale from another branch, and a `tail -1`
+pipe hid the error — so it entered git AFTER the v266 grading below rather than before it. The bars
+were not tuned to the result (v266 is a no-op; there was nothing to tune toward), but the git record
+cannot prove that ordering, and pretending otherwise is worth less than saying so. Protocol lesson in
+the night-3 postmortem: verify the commit landed, and rebuild `out/` after any branch switch.
 
 ## The candidate
 
