@@ -102,9 +102,6 @@ const sidebars: SidebarsConfig = {
 				},
 			],
 		},
-		// A narrow, dated debugging gotcha that doesn't fit any of the categories above.
-		// Kept in-nav per "do not drop pages" — parked at the end as an appendix.
-		"understanding/onnxruntime-web-webgpu-gotcha",
 	],
 	reference: [
 		"plan/SCOPE",

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 29
+sidebar_position: 2
 title: Falsehoods about address format
 tags:
   - domain
@@ -77,7 +77,7 @@ Middlesex, Scunthorpe, Penistone, and many others are real English place names. 
 
 **The normalizer (Stage 1)** handles Unicode normalization (NFD → NFC), case folding, and whitespace collapsing. The normalizer operates on bytes, not semantics — it cleans the input for downstream stages without making classification decisions.
 
-**[The tokenizer](../../concepts/tokenization.mdx)** uses SentencePiece with byte-fallback. Characters in the trained vocabulary (16K for A0, 48K for A1) produce subword tokens with known embeddings. Characters outside the vocabulary fall back to byte-level encoding — the model sees raw bytes and learns byte-level patterns. This means the tokenizer can handle any Unicode character, even scripts that were not in the training data, without crashing or producing garbage.
+**[The tokenizer](../../../concepts/tokenization.mdx)** uses SentencePiece with byte-fallback. Characters in the trained vocabulary (16K for A0, 48K for A1) produce subword tokens with known embeddings. Characters outside the vocabulary fall back to byte-level encoding — the model sees raw bytes and learns byte-level patterns. This means the tokenizer can handle any Unicode character, even scripts that were not in the training data, without crashing or producing garbage.
 
 **The locale gate (Stage 2)** detects the script family before classification. CJK characters → `ja-JP`, Cyrillic → `ru`, Arabic → `ar`. The locale detection biases the classifier's expectations: a Japanese-formatted address triggers Japanese ordering expectations, a Cyrillic address triggers Russian postcode patterns. The classifier does not need to handle every script's ordering simultaneously.
 
@@ -95,6 +95,6 @@ Middlesex, Scunthorpe, Penistone, and many others are real English place names. 
 
 - [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.mdx)
 - [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
-- [How humans break addresses](./how-humans-break-addresses.mdx) — the failure taxonomy organized by root cause
-- [What is a postcode?](../the-problem/what-is-a-postcode.mdx) — why postcode formats vary by country
-- [The database fallacy](./the-database-fallacy.mdx) — why addresses change and databases don't keep up
+- [How humans break addresses](../how-humans-break-addresses.mdx) — the failure taxonomy organized by root cause
+- [What is a postcode?](../../the-problem/what-is-a-postcode.mdx) — why postcode formats vary by country
+- [The database fallacy](../the-database-fallacy.mdx) — why addresses change and databases don't keep up

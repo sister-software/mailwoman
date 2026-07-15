@@ -1,5 +1,5 @@
 ---
-sidebar_position: 24
+sidebar_position: 1
 title: Falsehoods about addresses
 tags:
   - domain
@@ -18,7 +18,7 @@ This article series is inspired by and cites Michael Tandy's [original catalogue
 
 Tandy's falsehoods are not edge cases. They are the central cases that rule-based geocoders fail on. Each falsehood is a place where a human can see what's happening ("that's a building number, even though it's a fraction") but a regex cannot. The thesis of Mailwoman's neural approach is that a model trained on diverse address data can learn to handle these cases without explicit rules, including combinations of falsehoods that no rule set could enumerate.
 
-Mailwoman is not the first project to notice this. Deepparse (2020) showed that a BiLSTM could match libpostal on structured addresses. The academic literature since has confirmed that transformers beat CRFs on noisy and multilingual address data. What Mailwoman adds is a **[staged pipeline](../our-approach/the-staged-pipeline.mdx)** that separates concerns: a phrase grouper proposes boundaries, a neural classifier types spans, a CRF enforces sequence validity, and a reconciler checks joint coherence against a gazetteer. Each stage handles a different class of falsehood without the others needing to know about it.
+Mailwoman is not the first project to notice this. Deepparse (2020) showed that a BiLSTM could match libpostal on structured addresses. The academic literature since has confirmed that transformers beat CRFs on noisy and multilingual address data. What Mailwoman adds is a **[staged pipeline](../../our-approach/the-staged-pipeline.mdx)** that separates concerns: a phrase grouper proposes boundaries, a neural classifier types spans, a CRF enforces sequence validity, and a reconciler checks joint coherence against a gazetteer. Each stage handles a different class of falsehood without the others needing to know about it.
 
 ## Categories
 
@@ -40,6 +40,6 @@ If you haven't read Michael Tandy's original article, start there: [Falsehoods p
 
 ## See also
 
-- [How mail delivery actually works](../the-problem/how-mail-delivery-works.mdx) — the system these falsehoods enter
-- [How humans break addresses](./how-humans-break-addresses.mdx) — the failure taxonomy organized by root cause
-- [The tokenization tautology](./the-tokenization-tautology.mdx) — why rule-based parsers can't handle combinations of falsehoods
+- [How mail delivery actually works](../../the-problem/how-mail-delivery-works.mdx) — the system these falsehoods enter
+- [How humans break addresses](../how-humans-break-addresses.mdx) — the failure taxonomy organized by root cause
+- [The tokenization tautology](../the-tokenization-tautology.mdx) — why rule-based parsers can't handle combinations of falsehoods
