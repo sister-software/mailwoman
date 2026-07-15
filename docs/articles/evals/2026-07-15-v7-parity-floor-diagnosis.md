@@ -82,32 +82,59 @@ pervasive street-parsing quality problem (boundary-absorption, FR/Romance street
 accent, city-absorption) that holds whether or not the input carries admin context. It would not
 vanish on production traffic.
 
-## Strategic fork (for the operator)
+## Coordinate parity — measured
 
-The parity floors are **parse-tag byte parity** (`fold(actual) === fold(gold)`), a proxy the swap
-gates inherited from plan 2. But the drop-in surfaces (`/v1/parse`, libpostal, nominatim) ultimately
-serve a **geocode**, and on full addresses the neural model already matches the rules parser's
-coordinate through the same resolver (`eval oa-resolver`: neural coord p50 6.3 km vs v0 6.0 km, p90
-14.8 vs 15.0, within noise; the gap is region-match and the p99 tail). Many of the
-parse-tag failures above (`Königsallee Düsseldorf` as one street span, `Korunní 8`/`10`) still resolve
-to the correct place.
+The swap gates use **parse-tag byte parity** (`fold(actual) === fold(gold)`), a proxy inherited from
+plan 2. The drop-in surfaces serve a **geocode**, so the question that matters for the swap is whether
+the neural parse resolves to the same place as the rules parse. Measured over the 321 live fixtures,
+each resolved through the same WOF resolver with both the rules tree and the v264 tree
+(`scratchpad/coord-parity.mjs`):
 
-Three ways forward, in the author's recommended order:
+| subset                  | both resolved | within 1 km | within 25 km | median Δ | p90 Δ   |
+| ----------------------- | ------------: | ----------: | -----------: | -------: | ------- |
+| all both-resolved       |           164 |       76.8% |        78.7% |   0.0 km | 384 km  |
+| neural street tags PASS |            74 |       98.6% |        ~100% |   0.0 km | 0.0 km  |
+| neural street tags FAIL |            45 |       53.3% |        60.0% |   0.0 km | 1631 km |
 
-1. **Re-gate the swap on coordinate parity, not parse-tag parity** (recommended). Measure whether the
-   v1-rules→resolver and v264-neural→resolver coordinates agree on the drop-in traffic distribution.
-   If they do, v7 unblocks now with no model campaign — the 0.90 parse-tag floor is over-strict for
-   what production needs. **This is the decisive next experiment; it is not yet run — do not treat the
-   coordinate-safety claim as proven.**
-2. **#727 stage-2 (FSemi-CRF span head)** for the ~39% boundary class — the deepest lever, a
-   multi-night arc, addresses the largest single context-invariant class. Stage-1 (aux head) plateaued
-   at 5→2 flips, so this is the only remaining model lever for that class.
-3. **Thin fragment fallback** — keep a narrow rules/structural fallback for the bare-autocomplete
-   distribution the model plateaus on, ship v7 model-primary. Softens the "delete rules" goal but
-   unblocks without a campaign.
+(135 of the 321 resolve under neither parser — bare street fragments with no admin anchor to geocode
+to, so they cannot move the swap either way.)
 
-A further 29M shard campaign (option 0, the default continuation) is **not** recommended as the lead:
-the evidence says it re-plateaus.
+The signal is two-sided:
+
+- **When the neural street parse is correct, the geocode is coordinate-safe**: 98.6% within 1 km of
+  the rules geocode, median 0 km. The parse-tag failures that are benign boundary/assembly differences
+  (`Königsallee Düsseldorf` tagged as one street span) resolve to the same place.
+- **When the neural parse fails, a tail diverges hard**: 40% of the street-failing subset move >25 km,
+  often to a garbage geocode — `1210a IA 10 W IA` → American Samoa (10,053 km), `California` →
+  Maryland, `Texas 76013` → Michigan, bare `6000, NSW, Australia` → the AU country centroid. These are
+  the bare-fragment / US-highway / bare-state-name classes.
+
+A **pure** coordinate re-gate does not hold: it ships that tail. But the tail lands on input classes
+the pipeline can detect, which is the opening.
+
+Caveats: this measures neural-vs-rules divergence, not accuracy against ground truth (the corpus has
+no gold coords, and the rules parser is sometimes the wrong one); and the corpus is deliberately
+fragment/edge-case-heavy, so the >25 km tail is smaller on real drop-in traffic than the 21% here.
+
+## Recommended path: neural-primary with a bounded fallback
+
+The garbage-geocode tail concentrates on classes the runtime pipeline already separates. Three
+components bound it, in priority order:
+
+1. **Route on kind.** The pipeline classifies input kind at stage 2.5 (`@mailwoman/kind-classifier`:
+   `structured_address` / `postcode_only` / `intersection` / …). Gate the swap so `structured_address`
+   uses the neural parser (coordinate-safe per the table above) and the bare-fragment kinds keep the
+   rules/structural fallback until the model clears them.
+2. **Plausibility guard on the resolution.** Fall back when the neural resolution is implausible for
+   the input's country signal — a country-centroid hit, or a cross-country jump like `California` →
+   Maryland. A cheap post-resolve check, no model change.
+3. **Ship v7 on this hybrid gate**, not the 0.90 parse-tag floor. The swap is neural-primary; the
+   fallback shrinks as the model improves and is deleted when it stops firing.
+
+This unblocks v7 without a model campaign that re-plateaus and without shipping the tail a pure
+coordinate re-gate would. **#727 stage-2 (FSemi-CRF span head)** stays the model lever for the ~39%
+boundary class and shrinks the fallback further. A **29M shard campaign is not recommended as the
+lead**: the plateau evidence says it re-plateaus.
 
 ## Reproduction
 
