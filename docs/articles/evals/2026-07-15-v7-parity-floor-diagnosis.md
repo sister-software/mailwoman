@@ -131,6 +131,16 @@ components bound it, in priority order:
 3. **Ship v7 on this hybrid gate**, not the 0.90 parse-tag floor. The swap is neural-primary; the
    fallback shrinks as the model improves and is deleted when it stops firing.
 
+**Measured** (`scratchpad/coord-parity.mjs`, extended with the kind-classifier + both guards). The
+18-fixture garbage tail breaks down: the kind-router catches 11 (non-structured kinds → rules
+fallback), and of the 7 that classify as `structured_address`, the plausibility guard catches 4
+(country-centroid hit or out-of-country coord). Together they bound the tail from 18 to **3 of 321
+live fixtures (0.9%)**, at a cost of **zero false-positive fallbacks** — none of the 81 coordinate-safe
+structured fixtures trip either guard. The surviving 3 are structured, in-country, wrong-locality
+neural resolutions, and their archetype is the #727 boundary class (`Korunní 810, Praha` → wrong
+Czech city). So the hybrid gate ships **paired with** #727 stage-2, which erases that residual, not as
+a permanent substitute for the model work.
+
 This unblocks v7 without a model campaign that re-plateaus and without shipping the tail a pure
 coordinate re-gate would. **#727 stage-2 (FSemi-CRF span head)** stays the model lever for the ~39%
 boundary class and shrinks the fallback further. A **29M shard campaign is not recommended as the
@@ -140,4 +150,10 @@ lead**: the plateau evidence says it re-plateaus.
 
 - `node mailwoman/out/cli.js eval parity --weights-cache scratchpad/v264-cache [--failing 50]`
 - context probe / tokenizer probe / contextful-split scripts: `scratchpad/{ctx-probe2,tok-probe,parity-split}.mjs`
+- coordinate parity + kind-router + guards: `scratchpad/coord-parity.mjs` (resolve each fixture through
+  both parsers, compare coords, cross-tab the tail against the kind-classifier + plausibility guards)
 - v257 recipe: `corpus-python/src/mailwoman_train/configs/v2.5.7-fragment-v5-gentle-full.yaml`
+
+The guard measurement's tail (n=18) is small, so the 11/7 and 4/3 splits are noisy; and it grades
+neural-vs-rules divergence, not ground-truth accuracy. Treat the 0.9% residual as an order-of-magnitude
+result — the tail is bounded to low single digits, not that it is exactly three.
