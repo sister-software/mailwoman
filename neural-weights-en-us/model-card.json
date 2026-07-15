@@ -1,8 +1,8 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "6.2.0",
-	"model_lineage": "v2.6.3-country-channel (v263, #1104) — init_from v261 (v2.6.1-span-boundary-full) + the dedicated country soft-feed channel ON, 8k steps, gentle schedule (lr 1e-5, warmup 500). Tokenizer v0.9.0-multisplice (73,143). The country channel is a 2-dim [country_surface, country_ambiguous] additive feature with its OWN projection + confidence (immune to suppress_gazetteer_near_postcode, unlike the shared gazetteer country slot — the #1104 signal-salience fix); it is the atlas analogue of Pelias's WhosOnFirstClassifier. This is the REAL fix that replaces v261's cosmetic country exception: golden country recall 84.8→89.3% (clears the 88.6% v241 bar), real-postal country recall+hallucination IDENTICAL to v261 (falsifier 3/4, 1%), held-out coordinate PASS both locales (US z −0.16 / FR z −0.17), gauntlet regression+metamorphic PASS. It carries a coordinate-INVISIBLE golden region per-tag trade (+24 fails, concentrated on trailing-country tails like 'VT 05161, US' where the country channel out-competes the adjacent region abbrev) — operator-approved, documented in docs/articles/evals/2026-07-14-v263-country-channel-result.md.",
-	"phase": "PROMOTED (6.2.0) — v263 country-channel (#1104): init_from v261 + the dedicated country soft-feed channel. requires.country is now a fed channel; createScorer/loadFromWeights feed the country-surface lexicon and fail closed if it is missing.",
+	"version": "6.3.0",
+	"model_lineage": "v2.6.4-country-softguard (v264, #1104) — init_from v263 (v2.6.3-country-channel), ONE variable: model.country_ambiguous_scale 1.0→0.5. Tokenizer v0.9.0-multisplice (73,143), country lexicon UNCHANGED. The scale softens the country channel's homograph guard (the country_ambiguous dim is scaled 0.5 before country_projection, via a buffer that BAKES INTO the ONNX — no lexicon/inference/browser change). v263's hard guard over-suppressed homograph countries; v264 STRICTLY DOMINATES v263 with no trade: country-homograph F1 82.6→85.1, golden WOF-admin country 89.3→91.1%, real-postal recall+hallucination HELD (3/4, 1%), held-out coordinate PASS both locales (US z −0.14 / FR z +0.25), aggregate golden label-fails −3. The v265 (0.25) probe recovered more homograph (87.5) but slightly less WOF-admin (90.6) — 0.5 chosen for balance. Documented in docs/articles/evals/2026-07-15-v264-country-softguard-result.md.",
+	"phase": "PROMOTED (6.3.0) — v264 country-softguard (#1104): init_from v263 + country_ambiguous_scale 0.5. Softens the homograph guard (recovers homograph AND WOF-admin country recall, no trade). requires.country unchanged; the softening is baked into the ONNX (no lexicon/inference change).",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "en-us",
 	"training": {
@@ -11,7 +11,7 @@
 		"steps": 8000,
 		"best_step": 8000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v2.6.3-country-channel: init_from FINE-TUNE off v261 step-008000, use_country_anchor=true (country_feature_dim=2, lexicon country-surface-lexicon-v1.json), use_span_boundary_head=true (0.5), lr 1e-5, warmup 500, 8k on A100.",
+		"recipe": "v2.6.4-country-softguard: init_from FINE-TUNE off v263 step-008000, country_ambiguous_scale=0.5 (the ONE variable vs v263), use_country_anchor=true (country_feature_dim=2, lexicon UNCHANGED), use_span_boundary_head=true (0.5), lr 1e-5, warmup 500, 8k on A100.",
 		"tokenizer_splice": "tokenizer_splice.py build-tokenizer --locales fr --per-file-cap 2000000 over OA fr/countrywide.csv (seed 42, 350k-line corpus, unigram vocab 24000) -> splice 2406 non-ASCII FR pieces into v0.7.1-nsplice (English byte-identity asserted). UNCHANGED from v240 (md5 04995524). The v241 delta over v240 is that the new embedding rows now receive GRADIENT via the init_from fine-tune, not just FVT mean-init.",
 		"data_attribution": [
 			"OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
@@ -107,7 +107,7 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v2.6.3-country-channel (v263, #1104), shipped as 6.2.0. init_from v261 + the dedicated country soft-feed channel ON (2-dim [country_surface, country_ambiguous], its own projection + confidence, immune to suppress_gazetteer_near_postcode). This is the REAL #1104 fix that replaces v261's documented cosmetic country exception. Grade (package-shaped, --weights-cache, #718): golden country recall 84.8→89.3% (clears the 88.6% v241 bar; fixes 19 / breaks 9); real-postal country recall 3/4 + hallucination 1% IDENTICAL to v261 (falsifier); held-out coordinate z-test PASS both locales (US z −0.16 on 300 FDIC, FR z −0.17 on 300 BAN); gauntlet regression+metamorphic PASS. TRADE: a coordinate-INVISIBLE golden region per-tag regression (+24 fails, 556→580) concentrated on trailing-country tails ('VT 05161, US' → region dropped as the country channel out-competes the region abbrev) — operator-approved, coordinate flat. Full write-up: docs/articles/evals/2026-07-14-v263-country-channel-result.md. CALIBRATION: the carried isotonic tables were fitted on the v5.3.0 lineage; opt-in, default output unaffected; a re-fit is a tracked follow-up.",
+	"notes": "v2.6.4-country-softguard (v264, #1104), shipped as 6.3.0. init_from v263 with country_ambiguous_scale=0.5 — softens the country channel's homograph guard, which v263's hard guard (1.0) had over-applied. STRICTLY DOMINATES v263, no trade. Grade (package-shaped, eval gate --weights-cache, #718): country-homograph F1 82.6→85.1; golden WOF-admin country recall 89.3→91.1% (softening helped BOTH distributions — the hard guard was over-suppressing country broadly); real-postal country recall 3/4 + hallucination 1% HELD; held-out coordinate z-test PASS both locales (US z −0.14 / FR z +0.25); aggregate golden label-fails 1101→1098 (−3). The v265 (0.25) probe recovered more homograph (87.5) but slightly less WOF-admin (90.6); 0.5 chosen for balance (best on the larger-sample metrics). The scale is BAKED INTO the ONNX (a forward-pass buffer) — no lexicon/inference/browser change; the country lexicon + neural-web are unchanged from 6.2.x. Full write-up: docs/articles/evals/2026-07-15-v264-country-softguard-result.md. CALIBRATION: the carried isotonic tables were fitted on the v5.3.0 lineage; opt-in, default output unaffected; a re-fit is a tracked follow-up.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32, opset 17)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=73143 (v0.9.0-multisplice; ships WITH the model, both runtimes load it from this bundle)",
@@ -343,8 +343,8 @@
 		}
 	},
 	"files_md5": {
-		"$comment": "Shipped: model.onnx = int8 v263-country-channel step-8000; tokenizer v0.9.0-multisplice.",
-		"model.onnx": "34289d215e0c1ba1e663337999ca3cbd",
+		"$comment": "Shipped: model.onnx = int8 v264-country-softguard step-8000; tokenizer v0.9.0-multisplice.",
+		"model.onnx": "3e534072985d92bbbfa8b88d89ec53dc",
 		"tokenizer.model": "5c01cdcd4ae25849c5cb26b69fd3dde9"
 	},
 	"capabilities": {
@@ -354,7 +354,7 @@
 					"maskOffF1": 0.9
 				},
 				"street": {
-					"maskOffF1": 24.4
+					"maskOffF1": 24.5
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
@@ -367,16 +367,16 @@
 					"maskOffF1": 79
 				},
 				"region": {
-					"maskOffF1": 90.5
+					"maskOffF1": 90.4
 				},
 				"postcode": {
 					"maskOffF1": 96.6
 				},
 				"country": {
-					"maskOffF1": 67
+					"maskOffF1": 67.2
 				},
 				"unit": {
-					"maskOffF1": 5.2
+					"maskOffF1": 5.1
 				},
 				"intersection_a": {
 					"maskOffF1": 100
@@ -388,7 +388,7 @@
 					"maskOffF1": 63.2
 				},
 				"venue": {
-					"maskOffF1": 93.4
+					"maskOffF1": 93.3
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -425,16 +425,16 @@
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 87.4
+					"maskOffF1": 87.1
 				},
 				"locality": {
-					"maskOffF1": 59.8
+					"maskOffF1": 59.9
 				},
 				"region": {
 					"maskOffF1": 73.2
 				},
 				"postcode": {
-					"maskOffF1": 91.9
+					"maskOffF1": 91.7
 				},
 				"country": {
 					"maskOffF1": 0
@@ -452,7 +452,7 @@
 					"maskOffF1": 62.1
 				},
 				"venue": {
-					"maskOffF1": 90.5
+					"maskOffF1": 90.6
 				},
 				"dependent_locality": {
 					"maskOffF1": 0

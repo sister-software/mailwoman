@@ -11,7 +11,7 @@ tags:
 
 # Falsehoods programmers believe about address format
 
-## The falsehoods
+## Falsehoods
 
 Programmers consistently assume addresses are written in ASCII, follow a fixed ordering, don't contain special characters, and stay the same over time. Real addresses violate all of these — and the violations compound: an address that uses Cyrillic, in non-Western ordering, with an apostrophe in the street name, at a location that changed jurisdictions last year.
 
@@ -77,7 +77,7 @@ Middlesex, Scunthorpe, Penistone, and many others are real English place names. 
 
 **The normalizer (Stage 1)** handles Unicode normalization (NFD → NFC), case folding, and whitespace collapsing. The normalizer operates on bytes, not semantics — it cleans the input for downstream stages without making classification decisions.
 
-**The tokenizer** uses SentencePiece with byte-fallback. Characters in the trained vocabulary (16K for A0, 48K for A1) produce subword tokens with known embeddings. Characters outside the vocabulary fall back to byte-level encoding — the model sees raw bytes and learns byte-level patterns. This means the tokenizer can handle any Unicode character, even scripts that were not in the training data, without crashing or producing garbage.
+**[The tokenizer](../../concepts/tokenization.mdx)** uses SentencePiece with byte-fallback. Characters in the trained vocabulary (16K for A0, 48K for A1) produce subword tokens with known embeddings. Characters outside the vocabulary fall back to byte-level encoding — the model sees raw bytes and learns byte-level patterns. This means the tokenizer can handle any Unicode character, even scripts that were not in the training data, without crashing or producing garbage.
 
 **The locale gate (Stage 2)** detects the script family before classification. CJK characters → `ja-JP`, Cyrillic → `ru`, Arabic → `ar`. The locale detection biases the classifier's expectations: a Japanese-formatted address triggers Japanese ordering expectations, a Cyrillic address triggers Russian postcode patterns. The classifier does not need to handle every script's ordering simultaneously.
 

@@ -15,7 +15,7 @@ This is the design reference for the work that fills the [WOF hierarchy gap](./w
 
 The high-level shape: WOF's placetype hierarchy stops at `address` and has no street node. Mailwoman's tag schema promises a street layer but the inference-time prior (the FST gazetteer) does not back it. Four layers fill the gap, plus a fifth piece (brand FST) and a sixth (locality-conditional gating) sit alongside them. Each layer addresses a different vacuum; they don't substitute.
 
-## The four layers
+## Four layers
 
 ```mermaid
 flowchart TB

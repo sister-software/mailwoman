@@ -73,6 +73,7 @@ const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 interface Args {
 	goldenDir: string
 	files: string[]
+	weightsCache?: string
 	modelPath?: string
 	tokenizerPath?: string
 	modelCardPath?: string
@@ -106,6 +107,7 @@ function parseArgs(): Args {
 			"out-json": { type: "string" },
 			"suppress-gaz-near-postcode": { type: "boolean" },
 			tokenizer: { type: "string" },
+			"weights-cache": { type: "string" },
 		},
 		strict: false,
 		allowPositionals: true,
@@ -120,6 +122,10 @@ function parseArgs(): Args {
 			.split(",")
 			.map((s) => s.trim())
 			.filter(Boolean)
+	}
+
+	if (values["weights-cache"] != null) {
+		out.weightsCache = values["weights-cache"] as string
 	}
 
 	if (values["model"] != null) {
@@ -341,10 +347,18 @@ async function main(): Promise<void> {
 
 	let neural: NeuralAddressClassifier
 
-	// FOOTGUN GUARD: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
-	// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
-	// different checkpoints scored byte-identical. Refuse to guess; fail loud.
-	if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
+	// PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft
+	// channels (anchor + gazetteer + country) from `<root>/node_modules/@mailwoman/neural-weights-en-us`
+	// via loadFromWeights, exactly as production does — the only way to grade a country-channel model
+	// (v6.2.0+) in-distribution. Mirrors the gauntlet + `eval parity --weights-cache`. Takes precedence
+	// over the explicit --model path.
+	if (args.weightsCache) {
+		console.error(`Weights:    package-shaped from ${args.weightsCache} (loadFromWeights cacheRoot)`)
+		neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: args.weightsCache })
+	} else if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
+		// FOOTGUN GUARD: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
+		// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
+		// different checkpoints scored byte-identical. Refuse to guess; fail loud.
 		if (!args.modelPath || !args.tokenizerPath || !args.modelCardPath) {
 			throw new Error(
 				"--model requires --tokenizer AND --model-card together (refusing to silently fall back to " +

@@ -4,6 +4,8 @@ id: privacy-coordinate-rounding
 role: guide
 audience: product-reader
 source-of-truth: spatial/coordinate-formats.ts
+prerequisites: "@mailwoman/spatial"
+verified-with: mailwoman v6.1.0
 ---
 
 You geocoded a customer's address and got a rooftop coordinate back — accurate to a few metres. That precision is the whole point when you're routing a driver to the door. It's a liability when you're about to store the point in an analytics table, share it with a partner, or plot a thousand customers on a public dashboard. A rooftop point _is_ the house; you usually want the neighbourhood.

@@ -1,0 +1,4 @@
+{
+	"description": "Module-format marker only, NOT a workspace (the root workspace list is explicit). Scopes docs/scripts to ESM so plain `node docs/scripts/*.ts` runs without the MODULE_TYPELESS reparse warning — the docs workspace itself can't carry type:module because Docusaurus's CJS SSR server bundle would then load as ESM and break (`require.resolveWeak is not a function`).",
+	"type": "module"
+}

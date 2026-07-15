@@ -24,7 +24,7 @@ Each completion carries a `relationship_type` (`city-state`, `capital-seat`, or 
 
 ## Picking the right city
 
-A few admins map to more than one same-name locality, so completion has to choose. The rule is population first: the principal city is the populous one, and it can sit farther from the admin centroid than a tiny same-name hamlet — Niigata prefecture's centroid is dragged out to sea, so the real Niigata city is 41 km away while a 0-population point is closer. Nearest centroid breaks a population tie. When two candidates tie on both, completion abstains rather than guess, because a wrong locality is worse than a missing one.
+A few admins map to more than one same-name locality, so completion has to choose. The rule is [population first](./importance-vs-population.mdx): the principal city is the populous one, and it can sit farther from the admin centroid than a tiny same-name hamlet — Niigata prefecture's centroid is dragged out to sea, so the real Niigata city is 41 km away while a 0-population point is closer. Nearest centroid breaks a population tie. When two candidates tie on both, completion abstains rather than guess, because a wrong locality is worse than a missing one.
 
 Completion is on by default. A Berlin address that used to resolve to nothing comes back with its locality; pass `hierarchyCompletion: false` to opt out, and resolution is byte-for-byte what it was. It's safe by construction — completion only fires for a dual-role region whose locality the parser dropped, and no-ops entirely when the loaded gazetteer carries no `coincident_roles` table.
 

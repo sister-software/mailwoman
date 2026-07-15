@@ -9,7 +9,7 @@ hide_footer: true
 
 A Software Bill of Materials is a machine-readable inventory of everything a package ships and
 depends on — every transitive dependency, its version, and its license. We publish one for each
-release of the `mailwoman` package in **both** of the open SBOM standards, so downstream teams can
+[release](../releases.mdx) of the `mailwoman` package in **both** of the open SBOM standards, so downstream teams can
 run their own supply-chain, license, and vulnerability tooling against Mailwoman without taking our
 word for anything.
 
@@ -29,8 +29,8 @@ tooling in the trust path.
 
 ## Standards adherence
 
-We don't just emit these files; we validate them against each standard's reference tooling on every
-regeneration. The commands and their results:
+We validate these files against each standard's reference tooling on every regeneration. The
+commands and their results:
 
 **SPDX** — validated with the SPDX project's own reference library,
 [`spdx-tools`](https://pypi.org/project/spdx-tools/) (`pyspdxtools`, v0.8.5):

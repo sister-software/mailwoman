@@ -4,6 +4,8 @@ id: un-locode-lookup
 role: guide
 audience: product-reader
 source-of-truth: un-locode-lookup/index.ts, un-locode-lookup/build.ts, un-locode-lookup/cli.ts
+prerequisites: "@mailwoman/un-locode-lookup (server-side, node:sqlite); the UNECE code list to build the DB"
+verified-with: mailwoman v6.1.0
 ---
 
 A **UN/LOCODE** is the UNECE's code for a trade-and-transport location — `US NYC` for New York, `NL RTM` for Rotterdam. If you're moving freight, filing customs, or matching a shipping record to a place, you need these codes, and you usually have either a place name or a coordinate to start from. The [`@mailwoman/un-locode-lookup`](https://www.npmjs.com/package/@mailwoman/un-locode-lookup) package goes both ways, over the UNECE code list in a `node:sqlite` database.

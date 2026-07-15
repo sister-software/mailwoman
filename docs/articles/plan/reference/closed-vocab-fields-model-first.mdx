@@ -12,7 +12,7 @@ the project's model-first ethos. This doc is the corrected design record. Pressu
 across a two-turn DeepSeek consult; see the rationale below.
 :::
 
-## The decision
+## Decision
 
 1. **The model is the authority for every field, including closed-vocab ones.** We do
    not override its output with a lookup table.
@@ -50,10 +50,10 @@ low-confidence _and_ the gazetteer has an unambiguous match, the resolver may pr
 lookup as a candidate. That is a downstream re-rank at the resolution layer, not a
 parser substitution — the same safety, at the right layer.
 
-## The revised taxonomy (three tiers, all model-first)
+## Revised taxonomy (three tiers, all model-first)
 
-The night-9 "open-vocab → train / closed-vocab → deterministic" split was too coarse. The
-real partition is by _what the field needs to learn_:
+The night-9 "open-vocab → train / closed-vocab → deterministic" split was too coarse; the
+partition that matters is by _what the field needs to learn_:
 
 | Tier                                                 | Fields                                   | Treatment                                                                                                                                            |
 | ---------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -63,7 +63,7 @@ real partition is by _what the field needs to learn_:
 
 The deterministic _override_ appears in none of them.
 
-## The architecture: a soft gazetteer anchor
+## Architecture: a soft gazetteer anchor
 
 For `country`, the matcher produces per-token features fed into the transformer's token
 representation (same machinery as the postcode anchor), and the model decides every tag:
@@ -83,7 +83,7 @@ representation (same machinery as the postcode anchor), and the model decides ev
 
 The matcher (codex) is reused, not discarded — it stops overriding and starts informing.
 
-## The data + training recipe
+## Data + training recipe
 
 Built to deny the model the cheap shortcut and give it a fair shot:
 
@@ -104,7 +104,7 @@ Built to deny the model the cheap shortcut and give it a fair shot:
 
 Before any retrain, build a **hard, non-gameable homograph eval** (~500–1000 rows) and
 re-measure the current model to get the _true_ baseline (the 27% figure was a separate
-US-order artifact; the real number under homograph stress is unknown). It must contain:
+US-order artifact; the number under homograph stress is unknown). It must contain:
 
 - ≥50 **homograph pairs** (same ambiguous token, opposite label, distinguished only by real
   neighbor tokens — no regex-exploitable tell).

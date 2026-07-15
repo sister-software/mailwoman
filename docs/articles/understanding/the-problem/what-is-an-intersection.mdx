@@ -108,9 +108,9 @@ The intersection tags are part of the schema but the resolver path for intersect
 
 ## What intersections tell us about address structure
 
-Intersection addresses expose a deeper truth about addresses: **the "housenumber + street" format is one convention among many.** A parser that assumes every address has a building number will fail on intersection queries. A parser that treats `intersection_a` and `intersection_b` as first-class components can handle both conventional and intersection addresses without architectural change.
+Intersection addresses show that **the "housenumber + street" format is one convention among many**, not a universal requirement. A parser that assumes every address has a building number will fail on intersection queries. A parser that treats `intersection_a` and `intersection_b` as first-class components can handle both conventional and intersection addresses without architectural change.
 
-This is the same principle behind the Japanese street-free addressing system (Phase 6 of the implementation plan): the schema must accommodate address formats that do not fit the Anglophone "number + street + city" template. Intersections are the mildest version of this. Block-based addressing (Japan) and informal addressing (rural areas, developing economies) are the harder versions. The architecture that handles intersections gracefully is the architecture that can scale to those cases.
+This is the same principle behind the Japanese street-free addressing system (Phase 6 of the implementation plan): the schema must accommodate address formats that do not fit the Anglophone "number + street + city" template. Intersections are the mildest version of this; block-based addressing (Japan) and informal addressing (rural areas, developing economies) are harder versions of the same problem. A schema that handles intersections without an architectural change is better positioned to handle those harder cases too.
 
 ## See also
 

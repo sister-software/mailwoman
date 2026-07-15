@@ -516,6 +516,52 @@ def sync_country_channel():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=1200,
+)
+def sync_country_softguard():
+    """Pull the #1104 homograph-guard SOFTENER: latest src (the model.py country_ambiguous_scale knob +
+    the v2.6.4-country-softguard config). Corpus + country lexicon + the init_from checkpoint
+    (output-v263-country-channel-s42/step-008000) all persist from the v263 run — the softener is a
+    model-config scale, no data change. Clears pycache, commits, verifies the v264 config + v263 init
+    checkpoint + lexicon + base corpus."""
+    import shutil
+    import subprocess
+
+    print("Syncing #1104 country-softguard src from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    print(f"\n[1/1] {cmd[:90]}...")
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+    vol.commit()
+
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.6.4-country-softguard.yaml"
+    lex = f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json"
+    init = f"{VOL_MOUNT}/output-v263-country-channel-s42/checkpoints/step-008000"
+    corpus0 = f"{VOL_MOUNT}/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5/MANIFEST.json"
+    ok_cfg, ok_lex, ok_init, ok_corpus = (
+        os.path.isfile(cfg),
+        os.path.isfile(lex),
+        os.path.isdir(init),
+        os.path.isfile(corpus0),
+    )
+    print(f"  config: {ok_cfg} | country lexicon: {ok_lex} | v263 init ckpt: {ok_init} | base corpus: {ok_corpus}")
+    if not (ok_cfg and ok_lex and ok_init and ok_corpus):
+        raise RuntimeError("sync verify FAILED — config/lexicon/init_from/corpus missing on volume; do NOT launch")
+    print("\n#1104 country-softguard sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=3600,
 )
 def sync_v080():

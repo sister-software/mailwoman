@@ -12,7 +12,7 @@ tags:
 
 # Falsehoods programmers believe about administrative hierarchy
 
-## The falsehoods
+## Falsehoods
 
 Programmers consistently assume addresses have states, counties, and a single unambiguous city — modeled after the US Postal Service's preferred format. Most of the world does not.
 
@@ -72,7 +72,7 @@ Geocoders that maintain their own administrative boundary snapshots go stale. Th
 
 **The resolver (Stage 6)** returns top-K candidates per administrative span. `Springfield` returns 34 candidates. `Quebec` returns both the province and the city. The resolver does not pick one — it surfaces all of them.
 
-**The reconciler (Stage 5)** uses WOF parent chains to pick the coherent candidate. If the address is `Springfield, IL`, the reconciler picks the Springfield whose parent chain contains Illinois. If the address is just `Springfield`, the reconciler returns all candidates and lets the downstream application decide. This is the architectural win: the parser identifies components, the resolver returns possibilities, the reconciler picks the coherent one — and if no single candidate is coherent, the ambiguity is surfaced rather than hidden.
+**The reconciler (Stage 5)** uses WOF parent chains to pick the coherent candidate. If the address is `Springfield, IL`, the reconciler picks the Springfield whose parent chain contains Illinois. If the address is just `Springfield`, the reconciler returns all candidates and lets the downstream application decide. The parser identifies components, the resolver returns possibilities, and the reconciler picks the coherent one. If no single candidate is coherent, the reconciler surfaces the ambiguity instead of picking one anyway.
 
 ## What Mailwoman still can't do
 

@@ -22,6 +22,7 @@ const { values: rawValues } = parseArgs({
 		model: { type: "string" },
 		"bridge-gaps": { type: "boolean" },
 		"suppress-gaz-near-postcode": { type: "boolean" },
+		"weights-cache": { type: "string" },
 	},
 	strict: false,
 	allowPositionals: true,
@@ -35,6 +36,7 @@ const values = rawValues as {
 	model?: string
 	"bridge-gaps"?: boolean
 	"suppress-gaz-near-postcode"?: boolean
+	"weights-cache"?: string
 }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
@@ -44,22 +46,31 @@ const GAZ = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.js
 const file = (values["file"] || "data/eval/external/country-homograph-real.jsonl")!
 const TAGS = ["country", "region", "locality"] as const
 
-const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([
-	MailwomanTokenizer.loadFromFile(TOK),
-	ONNXRunner.create((values["model"] || "")!),
-])
-const neural = new NeuralAddressClassifier({
-	tokenizer,
-	runner,
-	labels: card.labels,
-	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
-	...(existsSync(GAZ) ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
-	suppressGazetteerNearPostcode: values["suppress-gaz-near-postcode"] ?? false,
-	// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
-	...(values["conventions"] || "" ? { addressSystemConventions: (values["conventions"] || "") as "auto" } : {}),
-	...((values["bridge-gaps"] ?? false) ? { bridgePunctuationGaps: true } : {}),
-})
+// PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels
+// (anchor + gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a
+// country-channel model (v6.2.0+), which is exactly what this country probe must feed. Precedence over --model.
+const WEIGHTS_CACHE = values["weights-cache"] || ""
+const neural = WEIGHTS_CACHE
+	? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
+	: await (async () => {
+			const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+			const [tokenizer, runner] = await Promise.all([
+				MailwomanTokenizer.loadFromFile(TOK),
+				ONNXRunner.create((values["model"] || "")!),
+			])
+
+			return new NeuralAddressClassifier({
+				tokenizer,
+				runner,
+				labels: card.labels,
+				postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
+				...(existsSync(GAZ) ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
+				suppressGazetteerNearPostcode: values["suppress-gaz-near-postcode"] ?? false,
+				// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
+				...(values["conventions"] || "" ? { addressSystemConventions: (values["conventions"] || "") as "auto" } : {}),
+				...((values["bridge-gaps"] ?? false) ? { bridgePunctuationGaps: true } : {}),
+			})
+		})()
 
 const rows = readFileSync(file, "utf8")
 	.split("\n")

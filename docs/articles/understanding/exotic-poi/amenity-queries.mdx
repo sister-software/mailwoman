@@ -30,13 +30,13 @@ An amenity query asks for the nearest instance of a generic category. The user d
 
 The query has two parts: a **category** (what kind of thing) and an **implicit location constraint** (near where the user is, or near a specified place). The category is the hard part — the geocoder must map the user's words to a category taxonomy.
 
-## The category-taxonomy problem
+## Category-taxonomy problem
 
 "Gas station" in English maps to `amenity=fuel` in OSM's taxonomy. "Gas station" in Australian English ("servo") maps to the same tag. "Petrol station" in British English also maps to the same tag. The same physical thing — a place that sells fuel for vehicles — has multiple names, and the geocoder must recognize all of them.
 
 The problem compounds across languages: `ガソリンスタンド` (gasorin sutando, Japanese), `加油站` (jiāyóuzhàn, Chinese), `Tankstelle` (German), `station-service` (French). Every language has its own word for "gas station." A geocoder that only recognizes English amenity names is useless for most of the world's population.
 
-At first glance you'd expect the geocoder to translate here, rendering "gas station" into French before it searches. But translation is the wrong lens. "Gas station", "servo", `Tankstelle`, and `station-service` all point at one underlying category, the way English "road", Spanish "camino", and Japanese "通り" (do-ri) all name the same kind of thing. The geocoder maps each label to a shared, language-independent category (`amenity=fuel`) and searches that. Ask for a gas station or a servo, and it finds the same pumps.
+The geocoder isn't translating labels between languages. "Gas station", "servo", `Tankstelle`, and `station-service` all point at one underlying category, the way English "road", Spanish "camino", and Japanese "通り" (do-ri) all name the same kind of thing. The geocoder maps each label to that shared, language-independent category (`amenity=fuel`) and searches it once.
 
 ## How traditional geocoders handle amenity queries
 

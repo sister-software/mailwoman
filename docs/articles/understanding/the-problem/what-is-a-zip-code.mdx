@@ -79,11 +79,11 @@ There is no authoritative table of "ZIP code → city." The USPS publishes a **C
 - A single city can have multiple ZIP codes. New York City has about 170.
 - The mapping changes with ZIP code boundary adjustments.
 
-This is why geocoders that maintain their own "ZIP to city" lookup tables go stale. The mapping is a living administrative artifact, not a fixed geographic fact.
+This is why geocoders that maintain their own "ZIP to city" lookup tables go stale: the mapping changes whenever ZIP boundaries do, so there is no fixed version to cache.
 
 ## What this means for a parser
 
-A parser trained primarily on US addresses will learn that a 5-digit number after a state abbreviation is a ZIP code. This is correct — for the US. When the parser encounters a 5-digit postcode in a different position (before the locality, as in French formatting) or a postcode that does not match the 5-digit pattern (Canadian A1A 1A1, UK SW1A 1AA), the learned expectation becomes a liability.
+A parser trained primarily on US addresses will learn that a 5-digit number after a state abbreviation is a ZIP code — correct for the US, but a liability once it meets a 5-digit postcode in a different position (before the locality, as in French formatting) or one that doesn't match the 5-digit pattern (Canadian A1A 1A1, UK SW1A 1AA).
 
 The ZIP code format is not a universal postcode format. A parser that treats it as one will:
 

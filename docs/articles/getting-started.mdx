@@ -2,6 +2,10 @@
 sidebar_position: 2
 title: Getting started
 description: Install Mailwoman and parse your first address in about five minutes.
+role: guide
+audience: product-reader
+prerequisites: Node.js ≥24.18.0
+verified-with: mailwoman v6.1.0
 ---
 
 # Getting started
@@ -56,7 +60,7 @@ Output:
 region: "NY" (confidence: 0.93)
   locality: "New York" (confidence: 0.89)
     street: "5th" (confidence: 0.95)
-      house_number: "350" (confidence: 0.87)
+      house_number: "350" (confidence: 0.88)
       street_suffix: "Ave" (confidence: 0.95)
     postcode: "10118" (confidence: 0.92)
 ```
@@ -107,7 +111,7 @@ components against a Who's On First gazetteer distribution — see
 [API reference](./api.mdx#createwofresolverbackend) for what that adds and where to get a
 distribution.
 
-## Honest caveats
+## Caveats
 
 - **The resolver you'd reach with `--resolve` here is administrative/postcode-level, not
   rooftop.** It returns place centroids (locality, region, postcode), not delivery-point
@@ -120,7 +124,8 @@ distribution.
   scripts it has no dedicated subwords for (Cyrillic, CJK, Arabic) — confidence drops and span
   boundaries get less reliable. Several Latin-diacritic scripts (French, Czech, Polish, Slovak,
   Slovenian, the Nordic languages) have dedicated tokenizer coverage; see
-  [Releases & capabilities](./releases.mdx) for which release added which.
+  [Releases & capabilities](./releases.mdx) for which release added which, and
+  [which languages Mailwoman handles well](./concepts/language-support.mdx) for the full picture.
 
 ## Where to go next
 

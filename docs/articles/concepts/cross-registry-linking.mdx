@@ -24,7 +24,7 @@ Join on name + address and you lose this pair. Fuzzy-match the strings and you d
 positives from the medical building next door. So the join gets done by hand, or it doesn't get done —
 and a compliance team ends up with two provider universes that never reconcile.
 
-## The geocode-first move
+## Geocode-first move
 
 Mailwoman's record matcher doesn't try to make the strings agree. It resolves each record to a
 **place** — parse the address with the neural parser, geocode it, take the coordinate and the
@@ -50,7 +50,7 @@ address drift and name drift are what _agreement_ looks like across sources.
 Both files are public domain. The whole pipeline — download, parse, geocode, block, train — runs on
 one machine, with no API keys and no per-row geocoding invoice.
 
-## The numbers
+## Numbers
 
 Texas, one afternoon, one machine. 1,954 practitioners present in both registries (the NPI join),
 3,908 records — **100% geocoded**. Blocking produced 175,200 cross-registry candidate pairs, 1.1%

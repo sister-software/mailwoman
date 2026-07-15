@@ -11,7 +11,7 @@ These are **public compliance and reporting datasets**, published per-program in
 
 The machine-readable catalog — provenance plus the `ColumnMapping` per source — is committed at [`registry/configs/record-matcher-sources.json`](https://github.com/sister-software/mailwoman/blob/main/registry/configs/record-matcher-sources.json). This page is its prose companion.
 
-## The join model
+## Join model
 
 There is **no shared key across publishers**. The NPI is internal to NPPES; the HCP Number is internal to the FCC; the Facility ID is internal to TX HHSC. So the matcher doesn't join on an identifier — it joins on the **geocoded location** (each address goes through mailwoman's parser + resolver to a coordinate) plus **name/organization agreement**. That geocode-first, label-free approach is the premise of the contact/org matcher ([#598](https://github.com/sister-software/mailwoman/issues/598), [#615](https://github.com/sister-software/mailwoman/issues/615)): the resolved _place_ is the key, not the address string.
 

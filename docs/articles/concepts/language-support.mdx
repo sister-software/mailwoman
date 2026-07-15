@@ -17,7 +17,7 @@ that table.
 
 "Handles well" is three separate claims, and they don't move together.
 
-1. **Parse quality** — does the model label the parts of an address correctly?
+1. **Parse quality** — does the model [label the parts of an address](./how-mailwoman-parses-an-address.mdx) correctly?
 2. **Coordinate resolution** — does the resolved point land in the right place?
 3. **Rooftop data** — is there an open address register behind it, so a house
    number resolves to the building instead of the street or the town?
@@ -35,7 +35,7 @@ building, at 1 m reported uncertainty, and both paths are pinned by regression
 suites that run in the browser against production.
 
 French is the more instructive story. The tokenizer originally fragmented accented
-street names ("Allée" split at the "é" and dropped the word), which cost real
+street names ("Allée" split at the "é" and dropped the word), which cost
 resolution on exactly the addresses a French user types first. Fixing it took a
 vocabulary splice plus a fine-tune so the merged pieces got gradient steps — the
 training-free shortcut measurably made things worse before the retrain fixed it.

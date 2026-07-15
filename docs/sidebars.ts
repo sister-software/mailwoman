@@ -127,6 +127,7 @@ const sidebars: SidebarsConfig = {
 		"plan/reference/sentencepiece-uds-whitespace",
 	],
 	contribute: [
+		"contributing-docs",
 		"plan/CONTRIBUTING_MODEL_WORK",
 		"plan/reference/OPERATIONS",
 		"plan/reference/coverage-overlay",

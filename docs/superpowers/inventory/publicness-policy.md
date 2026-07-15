@@ -1,5 +1,7 @@
 # Archive/publicness policy — draft for agreement
 
+> **Public home (Phase 4, 2026-07-14):** this policy now lives in [`docs/articles/contributing-docs.mdx`](../../articles/contributing-docs.mdx) ("Retiring a page"); this file is the signed original, kept for provenance.
+
 _Phase 0 deliverable of the documentation-architecture cleanup. Status: **draft — needs operator sign-off** before any page moves. Once agreed, Phase 4 promotes this into the contributor-facing documentation policy._
 
 ## Principles

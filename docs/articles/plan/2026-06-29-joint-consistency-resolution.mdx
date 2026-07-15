@@ -85,17 +85,17 @@ exactly the country-pin reflex this document is trying to retire.
 
 ## The placer demotes to gap-filler
 
-This is the part to hold onto. The coarse placer does not disappear; it changes job. Where the
+The coarse placer does not disappear; it changes job. Where the
 gazetteer is rich, geography disambiguates and the placer is silent. Where the gazetteer is thin — a
 locality missing under any candidate parent — joint consistency returns nothing, and the placer's prior
-is what keeps a sparsely-covered country from resolving to "no answer." Primary signal: the graph.
-Fallback: the prior. The `HARD_PLACE_COUNTRY_SAFELIST` is the piece this most directly undercuts; its
+is what keeps a sparsely-covered country from resolving to "no answer." The graph is the primary
+signal; the prior is the fallback. The `HARD_PLACE_COUNTRY_SAFELIST` is the piece this most directly undercuts; its
 job shrinks as the graph's grows, and the docs already half-disown it (the 2026-06-26 postmortem
 measured that widening it changes nothing, because the placer abstains and it never gates).
 
-## The quick cache is the substrate, not a list
+## The quick cache reuses the gazetteer, not a list
 
-There is room for a "well-known place" fast path, and we already have its substrate: the candidate-table
+There is room for a "well-known place" fast path, and the pieces already exist: the candidate-table
 byte-range gazetteer (`WofCandidateTableLookup`, `candidate-schema.ts`) — a `WITHOUT ROWID` B-tree keyed
 by `name_key`, denormalized so a resolve is a single probe, population-ranked. The constraint graph does
 not replace it; it **re-ranks within it**, choosing the joint-consistent candidate over the merely
@@ -125,8 +125,8 @@ scopes two things we do not have today (#265):
   address. Its larger payoff may be routing (which normalizer, which abbreviations, which field order,
   which gazetteer slice), not disambiguation.
 - An **address-system → country-set** linkage. "Parses like a US address" makes US _and_ Canada
-  candidate postal systems, and floats their regions up — a derived prior, softer and more honest than a
-  whole-string guess. Not built.
+  candidate postal systems, and floats their regions up — a derived prior, softer and better grounded
+  than a whole-string guess. Not built.
 
 ## Non-goals
 

@@ -134,7 +134,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 export function computeQueryShape(input: string | NormalizedInputLite, opts?: ComputeQueryShapeOpts): QueryShape
 ```
 
-**Threading.** Once computed, `QueryShape` is threaded through every subsequent stage as additional context. It is not its own stage.
+**Reuse.** Once computed, `QueryShape` passes into every subsequent stage as additional context. It is not its own stage.
 
 **Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (Slice A of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Pure functions, no ML, zero workspace dependencies. Detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), PO Box / BP. Hyphen / apostrophe / underscore are "connectors" so `"10118-1234"` and `"Saint-Denis"` stay one token. Accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
 
@@ -274,7 +274,7 @@ Per "possibilities not constraints", the grouper emits overlapping proposals fre
 
 **Purpose.** Per-token BIO labelling. The current Mailwoman model (`@mailwoman/neural` + `@mailwoman/neural-weights-*`).
 
-**Interface.** The `Classifier` interface from [`INTERFACES.md`](./INTERFACES.mdx), with `QueryShape` and `LocaleHint` threaded into `ClassifierContext`:
+**Interface.** The `Classifier` interface from [`INTERFACES.md`](./INTERFACES.mdx), with `QueryShape` and `LocaleHint` added to `ClassifierContext`:
 
 ```ts
 // extends the existing ClassifierContext in INTERFACES.md
@@ -308,7 +308,7 @@ export interface ClassifierContext {
 
 ### Stage 4a — CRF
 
-Today's implementation. Linear-chain CRF over a frozen BIO transition mask. Eliminates orphan-`I` sequences ("Saint Petersburg → Petersburg" bug).
+Today's implementation. [Linear-chain CRF](../../concepts/crf-decoder.mdx) over a frozen BIO transition mask. Eliminates orphan-`I` sequences ("Saint Petersburg → Petersburg" bug).
 
 **Interface.**
 
@@ -404,7 +404,7 @@ export interface ParseTree {
 
 Score per beam = `phrase_conf × classifier_score × resolver_score × concordance_bonus`. Concordance bonus is **+1** in log-space for a fully consistent WOF parent_id chain across all admin pairs in the assignment, **-Infinity** (hard veto) for an explicit chain contradiction, **0** when no admin signal is available. Per-axis pruning (kSpan / kTag / kResolver) keeps the search tight.
 
-**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23). Closes the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. Wired as the DEFAULT Stage 5 when the phrase grouper and a `parseWithLogits` classifier are both present; falls back to argmax otherwise. Set `jointReconcile: false` to opt out.
+**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23), built to close the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. **Retired as the default on 2026-06-14 ([#566](https://github.com/sister-software/mailwoman/issues/566)):** graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0% of the catalogue, so **argmax is the default decode**. The code and A/B harnesses remain; `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
 
 **Future.** Add learned-reranker comparison now that joint decoding has a kryptonite-eval baseline. Long-term: replace the concordance scoring with a learned reranker trained on the kryptonite catalogue.
 
@@ -413,7 +413,7 @@ Score per beam = `phrase_conf × classifier_score × resolver_score × concordan
 **Open questions.**
 
 - Should `Components` carry a "global confidence" (probability the whole parse is correct)? Recommend: yes — `ParseTree.confidence` is the softmaxed equivalent; carry forward into the resolver.
-- ~~Joint decoding wired as default vs opt-in?~~ **Resolved (v4.4.0):** DEFAULT when the phrase grouper + `parseWithLogits` are wired; `jointReconcile: false` to opt out; `forceJointReconcile` is the deprecated alias.
+- ~~Joint decoding wired as default vs opt-in?~~ **Resolved twice:** default-on at v4.4.0, then retired to opt-in on 2026-06-14 ([#566](https://github.com/sister-software/mailwoman/issues/566)) on the assembled-pipeline grade. Argmax is the default; `jointReconcile: true` opts back in.
 
 ## Stage 6 — Resolve with candidates
 
@@ -607,7 +607,7 @@ These don't belong to one stage; they affect composition.
 
 The staging picture is now formalized. Implementation order, in suggested priority:
 
-1. **Stage 1 + boundary QueryShape together.** Cheap to build, unlocks every downstream improvement.
+1. **Stage 1 + boundary QueryShape together.** Cheap to build; every downstream improvement depends on it.
 2. **Stage 6 candidate-list API.** Small change, big win for failure mode #8.
 3. **Stage 2 + Stage 2.5 together.** Enables fast paths AND informs the encoder.
 4. **JS Viterbi for Stage 4a.** Already on the v0.4.0 list.

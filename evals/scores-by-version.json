@@ -711,6 +711,129 @@
 				}
 			},
 			"notes": "Promoted 2026-07-09 via the gauntlet battery (mangle 23.5→17.7% int8, Honoré+René repros, held-out FR z=+0.90 / US z=+0.29 — table on #444); this promotion-gate run executed post-hoc for the ledger per the re-anchor discipline. Tokenizer v0.8.0-fr-nsplice (spliced; training-free path falsified first, #1047). Clears the int8 homograph floor outright (85.1 vs 83.3) — the 5.3.0/5.4.0 adjudicated int8-delta exception is no longer needed. [graded_artifact=int8; gate=v2.3.0-nl-postcode; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fc0a4401-3bda-4fa5-b4b9-4031dda9cbeb/scratchpad/gate-v241-ledger]"
+		},
+		{
+			"run_id": "hono-api-cutover-6-0-0",
+			"model_version": "6.0.0",
+			"model_path": "@mailwoman/neural-weights-en-us@6.0.0",
+			"corpus_version": "corpus-v0.10.1-nl-postcode",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v2.3.0-nl-postcode): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-09",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 12000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.5,
+					"country_homograph": 85.1,
+					"micro": 87.5,
+					"locality": 78.3,
+					"region": 90.7,
+					"street": 82.6,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 89.8,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.2,
+					"house_number": 98.8,
+					"region": 50.2,
+					"cedex_real": 93.3
+				},
+				"de": {
+					"native_locality_anchor_on": 91.3
+				},
+				"arena": {
+					"perturb": 81
+				}
+			},
+			"notes": "Code-only Hono API-surface cutover (#1084/#1085); the trained model is UNCHANGED from 5.9.0 (v2.4.1-fr-nsplice-ft, v241) — its model-card stayed at 5.9.0. Metrics carried from the 5.9.0 row, not re-graded (a model-unchanged code release produces byte-identical parses). See releases.mdx."
+		},
+		{
+			"run_id": "v2-6-1-span-boundary-full-20260714",
+			"model_version": "6.1.0",
+			"model_path": "@mailwoman/neural-weights-en-us@6.1.0",
+			"corpus_version": "v257 fragment-campaign corpus (shard-v5) re-tokenized through v0.9.0-multisplice; span-boundary aux head from BIO labels.",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v5.3.0-family): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-14",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.9,
+					"country_homograph": 89.8,
+					"micro": 87.2,
+					"locality": 78.7,
+					"region": 90.4,
+					"street": 81.7,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.8,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.9,
+					"house_number": 96.5,
+					"region": 47.2,
+					"cedex_real": 87.6
+				},
+				"de": {
+					"native_locality_anchor_on": 91.5
+				},
+				"arena": {
+					"perturb": 80
+				}
+			},
+			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v261 (#727 stage-1 span-boundary) shipped on the gauntlet COORDINATE gate + operator-approved documented country cosmetic exception (#1104), NOT this v5.3.0-family parity gate. One floor-fail, coordinate-invisible (operator-excepted): fr.postcode 98.9<99.2 — a small FR-postcode dip shared across the multisplice/fragment line, held-out FR coordinate flat. country_homograph 89.x PASSES (v261 has no country channel). See releases.mdx 6.1.0 row. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v261-610]"
+		},
+		{
+			"run_id": "v2-6-3-country-channel-20260714",
+			"model_version": "6.2.0",
+			"model_path": "@mailwoman/neural-weights-en-us@6.2.0",
+			"corpus_version": "v257 fragment-campaign corpus (shard-v5) — UNCHANGED from v261; the country channel paints features on existing rows from the country-surface lexicon at encode time (no new shard).",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v5.3.0-family): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-14",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.7,
+					"country_homograph": 82.6,
+					"micro": 87.1,
+					"locality": 78.5,
+					"region": 90,
+					"street": 81.9,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.9,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.8,
+					"house_number": 96.5,
+					"region": 44.2,
+					"cedex_real": 87.8
+				},
+				"de": {
+					"native_locality_anchor_on": 91.4
+				},
+				"arena": {
+					"perturb": 80
+				}
+			},
+			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v263 shipped on the gauntlet COORDINATE gate + operator-approved documented per-tag trades, NOT this v5.3.0-family parity gate. Two floor-fails, both coordinate-invisible (operator-excepted): us.country_homograph 82.6<83.3 (the country channel's ambiguity guard over-suppresses homograph countries Georgia/Jordan/Jamaica — trades homograph recall for precision) and fr.postcode 98.8<99.2. The channel LIFTS WOF-admin/golden country recall 84.8->89.3% (the #1104 target); held-out US/FR coordinate flat (z -0.16/-0.17). See 2026-07-14-v263-country-channel-result.md. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): us.country_homograph_f1, fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v263-620]"
 		}
 	]
 }

@@ -4,6 +4,8 @@ id: batch-geocoding
 role: guide
 audience: product-reader
 source-of-truth: api/routes.ts, api/schema.ts, mailwoman/api-engine.ts
+prerequisites: a running mailwoman serve instance with gazetteer data
+verified-with: mailwoman v6.1.0
 ---
 
 You have a spreadsheet — ten thousand addresses, a CSV a colleague dropped in Slack, a nightly export from your CRM — and you want a coordinate for every row. Firing ten thousand individual requests works, but you'll spend most of the wall-clock time on HTTP overhead and you'll have to write the concurrency control yourself. The Mailwoman server has a bulk endpoint for exactly this. By the time you're done here you'll have one `curl` command that turns a list of addresses into a list of coordinates, in order, with the failure cases handled.

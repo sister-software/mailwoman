@@ -30,7 +30,7 @@ the failure. Most hypotheses die at the probe stage, which is the point — the 
 runs only on survivors.
 
 A concrete week (July 2026, all in the public tracker): French accented street names were
-losing their diacritics at the tokenizer. The cheap fix — splicing merged French pieces into
+losing their diacritics at the [tokenizer](./tokenization.mdx). The cheap fix — splicing merged French pieces into
 the vocabulary with mean-initialized embeddings, a trick that had worked twice for other
 languages — was tried first, measured, and _made things worse_, for a reason worth knowing:
 the isolated `é` piece carried a strongly-trained signal, and averaging embeddings inherited

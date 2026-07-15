@@ -14,7 +14,7 @@ tags:
 
 A postcode is a **routing instruction**, not a geographic area. It tells a postal service how to sort and deliver mail. It does not tell a geocoder where a building is, what municipality it belongs to, or what polygon contains it. Confusing these two things is the most common error in address geocoding — and the source of a surprising fraction of production bugs.
 
-## What postcodes actually encode
+## What postcodes encode
 
 Every postal system uses postcodes differently, but the common thread is **hierarchical routing**:
 
@@ -64,7 +64,7 @@ Postcodes are designed for sorting machines and carrier routes, not for maps. Ev
 - **They prioritize delivery efficiency over geographic coherence.** A postcode boundary that follows a creek saves the carrier a bridge crossing. It makes no geographic sense on a map, but it saves 20 minutes of driving per day.
 - **They serve multiple delivery modes.** The same ZIP code can include street addresses, PO boxes, and general-delivery addresses, all routed to different places at the same post office.
 
-A postcode is a remarkably effective system for moving mail. It is a remarkably bad system for locating things. The geocoder's job is to bridge that gap — to interpret the routing instruction as a spatial hint without pretending it's a spatial truth.
+A postcode is built to move mail, not to locate things. The geocoder's job is to treat it as a spatial hint for the resolver, not as a spatial fact on its own.
 
 ## See also
 

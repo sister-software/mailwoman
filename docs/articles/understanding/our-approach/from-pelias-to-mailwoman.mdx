@@ -55,7 +55,7 @@ The Pelias side of the equation — the gazetteer + resolver — is also evolvin
 ## What we deliberately do differently: no span left behind
 
 One Pelias behavior we do **not** carry forward. The Pelias parser's solver is lossy by
-design: spans that don't fit the winning interpretation are quietly demoted to
+design: spans that don't fit the winning interpretation are demoted to
 "accessory" information and punted to the resolver. If your only goal is "resolve to a
 point", that's a reasonable economy. But it forecloses the geocoder-_adjacent_ jobs —
 chiefly **record linkage**, deciding whether two rows in two datasets describe the same

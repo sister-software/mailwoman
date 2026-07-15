@@ -9,7 +9,7 @@ Captures the design intent for the `QueryShape` sub-system, a stage 2 + 2.5 addi
 - **Implementation phase:** not yet opened. Will land alongside Stage 2 + Stage 2.5 work in the staged-pipeline rollout.
 - **Cross-references:** [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.mdx), [`concepts/addresses-that-break-geocoders`](../../understanding/why-its-hard/addresses-that-break-geocoders.mdx), [`reference/ARCHITECTURE`](./ARCHITECTURE.mdx).
 
-## The bitter-lesson framing test
+## Bitter-lesson framing test
 
 Mailwoman v1 (Pelias lineage) hit the long-tail trap by using rules to encode _place knowledge_: dictionaries of 50K city names, hand-curated state abbreviation tables, country-specific keyword sets. Every new locale meant a new dictionary, and the maintenance burden compounded.
 
@@ -26,7 +26,7 @@ The QueryShape sub-system intentionally avoids that trap by restricting itself t
 
 Compare to v1's gazetteer-based locality classifier (~50K place names per locale). That is the long-tail explosion this sub-system explicitly does not bring back.
 
-## The `QueryShape` data structure
+## `QueryShape` data structure
 
 ```ts
 interface QueryShape {
@@ -76,7 +76,7 @@ interface KnownFormatHit {
 
 Compute time: microseconds. No ML. Runs on every input before the encoder.
 
-## The four primitives
+## Four primitives
 
 ### 1. Meta queries (character class)
 
@@ -165,9 +165,9 @@ flowchart LR
     S6 --> O["Top-k places"]
 ```
 
-QueryShape is computed once, at the boundary between Stage 1 and Stage 2, and threaded through the rest of the pipeline as additional context. It is not its own stage — it is a shared data structure that Stages 2, 2.5, 3 (optional), and 6 all consume.
+QueryShape is computed once, at the boundary between Stage 1 and Stage 2, and passed to the rest of the pipeline as additional context. It is not its own stage — it is a shared data structure that Stages 2, 2.5, 3 (optional), and 6 all consume.
 
-## The packaging decision
+## Packaging decision
 
 Bundle as a single workspace package:
 

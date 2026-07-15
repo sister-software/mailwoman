@@ -17,8 +17,6 @@ copyright Sister Software and released under the dual license described below
 codebase; third-party data sources and their licenses are cataloged on the
 [data licensing & provenance](./data-provenance.md) page.
 
-Whether your business depends on self-hosted geocoding or you just want to use Mailwoman for personal projects, we have a license that fits your needs.
-
 A [**commercial license**](./commercial.md) grants you full ownership and control over your products,
 and saves you from having to conform to our open-source requirements and restrictions.
 

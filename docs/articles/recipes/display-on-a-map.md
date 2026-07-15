@@ -4,6 +4,8 @@ id: display-on-a-map
 role: guide
 audience: product-reader
 source-of-truth: registry/resolve.ts, registry/geojson.ts, registry/map-html.ts
+prerequisites: "@mailwoman/registry, plus resolved entities to plot"
+verified-with: mailwoman v6.1.0
 ---
 
 Coordinates in a JSON array tell you the geocoder worked. They don't tell you whether the _answers_ are right — that a cluster of clinics really sits where you'd expect, that the three records you merged into one entity actually share a building. For that you need to see them on a map, and you'd rather not stand up a tile server and a frontend to glance at a few hundred points.
@@ -28,7 +30,7 @@ writeFileSync("map.html", html)
 
 ## What you're looking at
 
-The page renders on the house stack: MapLibre GL over a Protomaps vector basemap, the same one the demo map uses. The markers carry the resolution story, not just the point. By default the colour tells you how many source datasets agreed on an entity — a point that ≥2 datasets pinned stands out from a single-source one, which is the cross-dataset confirmation you're usually scanning for. If your reconciliation output tags each entity with a `bucket`, the map colours by that instead. You can force either with the `colorBy` option, and pick a basemap with `flavor`:
+The page renders on the house stack: MapLibre GL over a Protomaps vector basemap, the same one [the demo map](https://mailwoman.sister.software/demo) uses. Markers encode the resolution story: by default, colour shows how many source datasets agreed on an entity — a point that ≥2 datasets pinned stands out from a single-source one, which is the cross-dataset confirmation you're usually scanning for. If your reconciliation output tags each entity with a `bucket`, the map colours by that instead. You can force either with the `colorBy` option, and pick a basemap with `flavor`:
 
 ```ts
 toMapHTML(fc, { title: "Funded sites", flavor: "dark", colorBy: "sources" })

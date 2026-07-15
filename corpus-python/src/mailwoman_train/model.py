@@ -230,6 +230,7 @@ class MailwomanCoarseEncoder(nn.Module):
         gazetteer_feature_dim: int = 5,
         use_country_anchor: bool = False,
         country_feature_dim: int = 2,
+        country_ambiguous_scale: float = 1.0,
         use_affix_head: bool = False,
         use_conventions_loss_mask: bool = False,
         use_span_boundary_head: bool = False,
@@ -293,6 +294,7 @@ class MailwomanCoarseEncoder(nn.Module):
         # (its own projection + cue) and is NOT zeroed near a postcode. Clue informs, model decides.
         self.use_country_anchor = use_country_anchor
         self.country_feature_dim = int(country_feature_dim) if use_country_anchor else 0
+        self.country_ambiguous_scale = float(country_ambiguous_scale)
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -395,9 +397,18 @@ class MailwomanCoarseEncoder(nn.Module):
         if self.use_country_anchor:
             self.country_projection = nn.Linear(self.country_feature_dim, hidden_size, bias=True)
             self.country_token_embedding = nn.Parameter(torch.zeros(hidden_size))
+            # #1104 homograph-guard softener: a per-dim scale applied to country_features BEFORE the
+            # projection. Dim 0 (country_surface) stays 1.0; dim 1 (country_ambiguous) scales by
+            # country_ambiguous_scale (1.0 = v263 hard guard). A registered buffer so it EXPORTS as a
+            # constant into the ONNX graph — inference feeds the raw feature, the graph does the scaling.
+            scale = torch.ones(self.country_feature_dim)
+            if self.country_feature_dim >= 2:
+                scale[1] = self.country_ambiguous_scale
+            self.register_buffer("country_feature_scale", scale, persistent=False)
         else:
             self.country_projection = None
             self.country_token_embedding = None
+            self.country_feature_scale = None
 
         self.blocks = nn.ModuleList(
             [
@@ -661,7 +672,10 @@ class MailwomanCoarseEncoder(nn.Module):
                     f"country_features shape {tuple(country_features.shape)} != "
                     f"({bsz}, {seq}, {self.country_feature_dim})"
                 )
-            ctry_vec = self.country_projection(country_features.to(h.dtype)) + self.country_token_embedding
+            # #1104 homograph-guard softener: scale the ambiguous dim (buffer [1.0, ambiguous_scale])
+            # before projection. No-op at scale 1.0 (v263); bakes into the ONNX at export.
+            scaled_country = country_features.to(h.dtype) * self.country_feature_scale.to(h.dtype)
+            ctry_vec = self.country_projection(scaled_country) + self.country_token_embedding
             h = h + country_confidence.to(h.dtype).unsqueeze(-1) * ctry_vec
         elif country_features is not None:
             raise ValueError(
@@ -989,6 +1003,9 @@ class MailwomanCoarseEncoder(nn.Module):
             # to materialize country_projection / country_token_embedding at the feature width.
             "use_country_anchor": bool(self.use_country_anchor),
             "country_feature_dim": int(self.country_feature_dim),
+            # #1104 homograph-guard scale — MUST serialize so export/reload rebuild with the same scale
+            # the checkpoint was trained at (else export defaults to 1.0 and the softening is silently lost).
+            "country_ambiguous_scale": float(self.country_ambiguous_scale),
             "use_affix_head": bool(self.use_affix_head),
             "use_conventions_loss_mask": bool(self.use_conventions_loss_mask),
             # Span-boundary aux head (#727). Persisted so a resume rebuilds the head; the exported ONNX
@@ -1056,6 +1073,7 @@ class MailwomanCoarseEncoder(nn.Module):
             # Country-lexicon channel (#1104). Default off for back-compat with pre-country checkpoints.
             use_country_anchor=cfg.get("use_country_anchor", False),
             country_feature_dim=cfg.get("country_feature_dim", 2),
+            country_ambiguous_scale=cfg.get("country_ambiguous_scale", 1.0),
             use_affix_head=cfg.get("use_affix_head", False),
             use_conventions_loss_mask=cfg.get("use_conventions_loss_mask", False),
             # Span-boundary aux head (#727). Default off for back-compat with pre-#727 checkpoints.
@@ -1132,6 +1150,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         # Country-lexicon channel (#1104). feature_dim follows the country lexicon's emitted width (2).
         use_country_anchor=getattr(cfg.model, "use_country_anchor", False),
         country_feature_dim=getattr(cfg.model, "country_feature_dim", 2),
+        country_ambiguous_scale=getattr(cfg.model, "country_ambiguous_scale", 1.0),
         # Dedicated affix head (#492).
         use_affix_head=getattr(cfg.model, "use_affix_head", False),
         use_conventions_loss_mask=getattr(cfg.model, "use_conventions_loss_mask", False),

@@ -4,6 +4,8 @@ id: timezone-lookup
 role: guide
 audience: product-reader
 source-of-truth: timezone-lookup/index.ts, timezone-lookup/build.ts, timezone-lookup/cli.ts
+prerequisites: "@mailwoman/timezone-lookup (server-side, node:sqlite); a timezone-boundary-builder release to build the DB"
+verified-with: mailwoman v6.1.0
 ---
 
 You have a coordinate and you want the IANA timezone it lands in — `America/New_York`, `Asia/Tokyo`. The [`@mailwoman/timezone-lookup`](https://www.npmjs.com/package/@mailwoman/timezone-lookup) package does the point-in-polygon for you, over [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder) polygons in a `node:sqlite` database. The UTC offset comes from `Intl`, so there's no tz-database dependency to keep patched.

@@ -56,10 +56,10 @@ that the presence of a 2-letter all-caps token (`OR`) and a 5-digit token
 (`97215`) is structurally relevant to the locality decision.
 
 By layer 6, the mixing has propagated multiple times. `Portland`'s
-representation encodes not just "this is a word that could be a locality"
-but "this is a word in a sequence where the following tokens have the
-shape of a US state abbreviation + ZIP code, so the locality
-interpretation is strongly supported."
+representation captures more than a generic "this could be a locality"
+guess — it encodes the specific structural signal that the following
+tokens have the shape of a US state abbreviation + ZIP code, which
+strongly supports the locality interpretation.
 
 The same happens in reverse. `OR`'s representation is informed by
 `Portland`'s — it learns that being preceded by a locality-shaped token

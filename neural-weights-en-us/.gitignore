@@ -9,3 +9,7 @@
 # WOF postcode shard + data/gazetteer/, not committed (mirrors model.onnx/tokenizer.model).
 /postcode-*.bin
 /anchor-lexicon-v1.json
+
+# The #1104 country soft-feed channel's lexicon artifact (same treatment as anchor-lexicon-v1.json
+# above — copied from data/gazetteer/ at dev-link/publish time, not committed here).
+/country-surface-lexicon-v1.json
