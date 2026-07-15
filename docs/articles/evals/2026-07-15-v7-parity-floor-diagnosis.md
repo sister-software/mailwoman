@@ -109,8 +109,8 @@ The signal is two-sided:
   Maryland, `Texas 76013` → Michigan, bare `6000, NSW, Australia` → the AU country centroid. These are
   the bare-fragment / US-highway / bare-state-name classes.
 
-A **pure** coordinate re-gate does not hold: it ships that tail. But the tail lands on input classes
-the pipeline can detect, which is the opening.
+A **pure** coordinate re-gate does not hold: it ships that tail. The tail lands on input classes the
+pipeline can already detect, which is what the recommended path below exploits.
 
 Caveats: this measures neural-vs-rules divergence, not accuracy against ground truth (the corpus has
 no gold coords, and the rules parser is sometimes the wrong one); and the corpus is deliberately
