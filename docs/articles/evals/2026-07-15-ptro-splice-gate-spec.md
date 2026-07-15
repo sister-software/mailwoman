@@ -116,6 +116,36 @@ fresh pre-registration with six legs, graded before promotion; that is a new gat
 amendment to this one, and it is deliberately NOT rushed to fit a shift boundary. Artifacts staged
 for it: `scratchpad/v267-cache` (package-shaped, vocab 75,207), int8 39.9 MB (v264: 39.8 MB, +0.3%).
 
+### v267 characterization (measured, NOT a gate run — the legs it needs aren't pre-registered yet)
+
+Ship-config parity, full per-fixture diff vs v264 (`scratchpad/diff-v264-v267.mjs`, untruncated):
+
+|                                               | v264          | v267                                      |
+| --------------------------------------------- | ------------- | ----------------------------------------- |
+| parity street                                 | 0.5730        | **0.5768** (+1 fixture)                   |
+| parity house_number                           | 0.8082        | 0.8082 (flat)                             |
+| parity postcode                               | 0.9861        | 0.9861 (flat)                             |
+| PT street-tag                                 | 5/8           | **6/8**                                   |
+| RO street-tag                                 | 4/5           | **5/5**                                   |
+| CZ / PL / SK street-tag                       | 2/3, 5/6, 1/1 | unchanged                                 |
+| **ASCII-only fixtures with any output drift** | —             | **0** (the byte-identity guarantee holds) |
+
+Net street +1 = **fixed 2, broke 1**. The two fixes are the exact target rows
+(`Tv. dos Fiéis de Deus…`, `Splaiul Independenței 313`). The break is real and worth naming:
+
+> `BR v1-address.bra-1` `"Rua Raul Leite Magalhães, 65, Tapiraí - SP, 18180-000, Brazil"` —
+> street `"Rua Raul Leite Magalhães"` → **`""`** (emitted nowhere).
+
+**Brazilian** Portuguese — a PT-family locale that is not in the overlap gate's `--trained-samples`
+list at all, so the gate never saw it. That is a gap in the gate's locale inventory, not just this
+candidate's problem: `pt-BR` (and the OA `br` set) should join the standing sample list before any
+PT-touching splice is graded again.
+
+A methodology note worth keeping: `eval parity --failing 50` initially appeared to show an ASCII US
+row (`N FISKE AVE Port`) breaking, which would have contradicted the byte-identity guarantee. It was
+a **truncation artifact** — the list is capped at 50, so fixtures shift in and out of the window
+between runs. The full diff shows zero ASCII drift. Never diff two runs through a truncated list.
+
 ## Decision rule, fixed now
 
 Ship **only** on a clean sweep: every accepted-locale leg within its bar, PT/RO improved, no floor
