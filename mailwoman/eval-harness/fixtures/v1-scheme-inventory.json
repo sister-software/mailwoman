@@ -1,0 +1,945 @@
+{
+	"description": "v1 rules-parser composite-classifier scheme inventory, rescued verbatim before the v7 legacy excision deletes @mailwoman/classifiers. Each entry is a confidence-weighted phrase-pattern claim about a real address form (the 'phrase-ification' schemes); `example` is the original author's inline example. Rescued 2026-07-15 (night-3) from classifiers/composite/*.ts.",
+	"provenance": {
+		"commit": "b7432c42504613fe5bcb6a1b165659aa30e3dd85",
+		"files": [
+			"classifiers/composite/intersection.ts",
+			"classifiers/composite/person.ts",
+			"classifiers/composite/street.ts",
+			"classifiers/composite/street_name.ts",
+			"classifiers/composite/subdivision.ts",
+			"classifiers/composite/venue.ts"
+		]
+	},
+	"schemes": [
+		{
+			"classifier": "intersection",
+			"index": 0,
+			"example": "SW 6th & Pine",
+			"scheme": [
+				{
+					"is": ["directional"],
+					"not": ["intersection", "street_suffix"]
+				},
+				{
+					"is": ["alpha", "numeric", "ordinal"],
+					"not": ["intersection", "street_suffix"]
+				},
+				{
+					"is": ["intersection"],
+					"not": ["street", "street_suffix"]
+				},
+				{
+					"is": ["alpha", "numeric", "ordinal"],
+					"not": ["intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "intersection",
+			"index": 1,
+			"example": "Foo St and Bar St",
+			"scheme": [
+				{
+					"is": ["alpha", "numeric", "ordinal"],
+					"not": ["intersection", "street_suffix"],
+					"confidence": 0.81,
+					"classification": "street"
+				},
+				{
+					"is": ["intersection"],
+					"not": ["street", "street_suffix"]
+				},
+				{
+					"is": ["alpha", "numeric", "ordinal"],
+					"not": ["intersection"],
+					"confidence": 0.82,
+					"classification": "street"
+				}
+			]
+		},
+		{
+			"classifier": "intersection",
+			"index": 2,
+			"example": "Foo and Bar St",
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["intersection", "street", "street_suffix"],
+					"confidence": 0.53,
+					"classification": "street"
+				},
+				{
+					"is": ["intersection"],
+					"not": ["street", "street_suffix"]
+				},
+				{
+					"is": ["alpha", "numeric", "ordinal"],
+					"not": ["intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "intersection",
+			"index": 3,
+			"example": "Foo St and Bar",
+			"scheme": [
+				{
+					"is": ["alpha", "numeric", "ordinal"],
+					"not": ["intersection"]
+				},
+				{
+					"is": ["intersection"],
+					"not": ["street", "street_suffix"]
+				},
+				{
+					"is": ["alpha", "numeric", "ordinal"],
+					"not": ["intersection", "street"],
+					"confidence": 0.56,
+					"classification": "street"
+				}
+			]
+		},
+		{
+			"classifier": "intersection",
+			"index": 4,
+			"example": "Foo and Bar",
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["intersection", "street", "street_suffix"],
+					"confidence": 0.57,
+					"classification": "street"
+				},
+				{
+					"is": ["intersection"],
+					"not": ["street", "street_suffix"]
+				},
+				{
+					"is": ["alpha"],
+					"not": ["intersection", "street", "street_suffix"],
+					"confidence": 0.58,
+					"classification": "street"
+				}
+			]
+		},
+		{
+			"classifier": "person",
+			"index": 0,
+			"example": "Anne Marie",
+			"confidence": 0.25,
+			"scheme": [
+				{
+					"is": ["given_name"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["given_name"],
+					"not": ["street", "street_prefix", "stop_word"]
+				}
+			]
+		},
+		{
+			"classifier": "person",
+			"index": 1,
+			"example": "Georges Bizet",
+			"confidence": 0.5,
+			"scheme": [
+				{
+					"is": ["given_name"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["surname"],
+					"not": ["street", "street_prefix", "stop_word"]
+				}
+			]
+		},
+		{
+			"classifier": "person",
+			"index": 2,
+			"example": "Rose de Lima",
+			"confidence": 0.5,
+			"scheme": [
+				{
+					"is": ["given_name"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["surname"],
+					"not": ["street", "street_prefix", "stop_word"]
+				}
+			]
+		},
+		{
+			"classifier": "person",
+			"index": 3,
+			"example": "Donald W. Reynolds",
+			"confidence": 0.5,
+			"scheme": [
+				{
+					"is": ["given_name"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["given_name", "surname", "middle_initial"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["surname"],
+					"not": ["street", "street_prefix", "stop_word"]
+				}
+			]
+		},
+		{
+			"classifier": "person",
+			"index": 4,
+			"example": "Unknown surname",
+			"confidence": 0.1,
+			"scheme": [
+				{
+					"is": ["given_name"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha"],
+					"not": ["street", "street_prefix", "stop_word"]
+				}
+			]
+		},
+		{
+			"classifier": "person",
+			"index": 5,
+			"example": "Unknown surname",
+			"confidence": 0.1,
+			"scheme": [
+				{
+					"is": ["given_name"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha"],
+					"not": ["street", "street_prefix", "stop_word"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 0,
+			"example": "Main Street",
+			"confidence": 0.82,
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["street_suffix"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 1,
+			"example": "Rue Montmartre or Boulevard Charles De Gaulle",
+			"confidence": 0.88,
+			"scheme": [
+				{
+					"is": ["street_prefix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha", "person", "street_name"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 2,
+			"example": "26th Street",
+			"confidence": 0.87,
+			"scheme": [
+				{
+					"is": ["ordinal"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["street_suffix"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 3,
+			"example": "26 Street",
+			"confidence": 0.86,
+			"scheme": [
+				{
+					"is": ["numeric"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["street_suffix"],
+					"not": ["street", "intersection", "road_type"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 4,
+			"example": "The Stables",
+			"confidence": 0.82,
+			"scheme": [
+				{
+					"is": ["stop_word"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["place"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 5,
+			"example": "SW 26th",
+			"confidence": 0.77,
+			"scheme": [
+				{
+					"is": ["directional"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["ordinal"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 6,
+			"example": "St Kilda Road",
+			"confidence": 0.85,
+			"scheme": [
+				{
+					"is": ["personal_suffix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["street_suffix"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 7,
+			"example": "N Main",
+			"confidence": 0.98,
+			"scheme": [
+				{
+					"is": ["directional"],
+					"not": ["intersection", "street"]
+				},
+				{
+					"is": ["street"],
+					"not": ["intersection", "directional"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 8,
+			"example": "Martin Luther King Blvd.",
+			"confidence": 0.82,
+			"scheme": [
+				{
+					"is": ["person"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["street_suffix"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 9,
+			"example": "Martin Luther King Jr. Blvd.",
+			"confidence": 0.81,
+			"scheme": [
+				{
+					"is": ["person"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["personal_suffix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["street_suffix"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 10,
+			"example": "Rue De Paris",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["street_prefix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha", "person"],
+					"not": ["street", "street_prefix"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 11,
+			"example": "Boulevard De La Paix",
+			"confidence": 0.79,
+			"scheme": [
+				{
+					"is": ["street_prefix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha"],
+					"not": ["street", "street_prefix"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 12,
+			"example": "Rue Saint Anne",
+			"confidence": 0.91,
+			"scheme": [
+				{
+					"is": ["street_prefix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["personal_title"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha", "given_name", "person"],
+					"not": ["street", "street_prefix"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 13,
+			"example": "Aleja Wojska Polskiego",
+			"confidence": 0.91,
+			"scheme": [
+				{
+					"is": ["street_prefix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["place"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha", "given_name", "person"],
+					"not": ["street", "street_prefix"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 14,
+			"example": "Aleja 11 Listopada",
+			"confidence": 0.84,
+			"scheme": [
+				{
+					"is": ["street_prefix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["numeric"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha", "given_name", "person"],
+					"not": ["street", "street_prefix"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 15,
+			"example": "Boulevard du Général Charles De Gaulle",
+			"confidence": 0.81,
+			"scheme": [
+				{
+					"is": ["street_prefix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["personal_title"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["alpha", "given_name", "person"],
+					"not": ["street", "street_prefix"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 16,
+			"example": "Avenue Aristide Briand or Allée Victor Hugo",
+			"confidence": 0.92,
+			"scheme": [
+				{
+					"is": ["street_prefix"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["given_name", "alpha"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["surname"],
+					"not": ["street", "street_prefix"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 17,
+			"example": "Broadway Market",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["street_proper_name"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["street_suffix"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 18,
+			"example": "Broadway",
+			"confidence": 0.82,
+			"scheme": [
+				{
+					"is": ["street_proper_name"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 19,
+			"example": "+++ Main Street",
+			"confidence": 0.84,
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["street", "intersection", "stop_word"]
+				},
+				{
+					"is": ["street"],
+					"not": ["directional"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 20,
+			"example": "Highway 27",
+			"confidence": 0.84,
+			"scheme": [
+				{
+					"is": ["road_type", "toponym"]
+				},
+				{
+					"is": ["numeric"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 21,
+			"example": "+++ +++ Main Street",
+			"confidence": 0.84,
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["street", "intersection", "stop_word"]
+				},
+				{
+					"is": ["street"],
+					"not": ["directional"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 22,
+			"example": "Main Street West",
+			"confidence": 0.88,
+			"scheme": [
+				{
+					"is": ["street"],
+					"not": ["directional"]
+				},
+				{
+					"is": ["directional"],
+					"not": ["street", "intersection", "end_token_single_character"]
+				}
+			]
+		},
+		{
+			"classifier": "street",
+			"index": 23,
+			"example": "West Main Street",
+			"confidence": 0.88,
+			"scheme": [
+				{
+					"is": ["directional"],
+					"not": ["street", "intersection", "end_token_single_character"]
+				},
+				{
+					"is": ["street"],
+					"not": ["directional"]
+				}
+			]
+		},
+		{
+			"classifier": "street_name",
+			"index": 0,
+			"example": "dos Fiéis",
+			"confidence": 0.5,
+			"scheme": [
+				{
+					"is": ["stop_word"],
+					"not": ["directional", "intersection"]
+				},
+				{
+					"is": ["alpha", "person"],
+					"not": ["street", "intersection", "street_suffix"]
+				}
+			]
+		},
+		{
+			"classifier": "street_name",
+			"index": 1,
+			"example": "Academia das Ciências",
+			"confidence": 0.5,
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["street", "intersection", "stop_word", "street_prefix"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["directional"]
+				},
+				{
+					"is": ["alpha", "person"],
+					"not": ["street", "intersection", "street_suffix"]
+				}
+			]
+		},
+		{
+			"classifier": "street_name",
+			"index": 2,
+			"example": "du 4 septembre",
+			"confidence": 0.5,
+			"scheme": [
+				{
+					"is": ["stop_word"],
+					"not": ["intersection"]
+				},
+				{
+					"is": ["numeric"],
+					"not": ["postcode"]
+				},
+				{
+					"is": ["alpha"],
+					"not": ["street", "intersection", "locality"]
+				}
+			]
+		},
+		{
+			"classifier": "street_name",
+			"index": 3,
+			"example": "dos Fiéis de Deus",
+			"confidence": 0.5,
+			"scheme": [
+				{
+					"is": ["street_name"],
+					"not": ["street", "intersection"]
+				},
+				{
+					"is": ["street_name"],
+					"not": ["street", "intersection"]
+				}
+			]
+		},
+		{
+			"classifier": "subdivision",
+			"index": 0,
+			"example": "10 bis / 10 ter",
+			"confidence": 0.99,
+			"scheme": [
+				{
+					"is": ["house_number"],
+					"not": ["intersection"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["intersection", "punctuation"]
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 0,
+			"example": "University Hospital",
+			"confidence": 0.9,
+			"scheme": [
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				},
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 1,
+			"example": "+++ Park",
+			"confidence": 0.7,
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["street", "intersection", "stop_word"]
+				},
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 2,
+			"example": "Mt +++ Park",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				},
+				{
+					"is": ["place", "venue"],
+					"not": []
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 3,
+			"example": "Air & Space Museum",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["street", "intersection", "stop_word"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street"]
+				},
+				{
+					"is": ["place", "venue"],
+					"not": []
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 4,
+			"example": "National Air & Space Museum",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["alpha"],
+					"not": ["street", "intersection", "stop_word"]
+				},
+				{
+					"is": ["place", "venue"],
+					"not": []
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 5,
+			"example": "Stop 10792",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["place", "venue"],
+					"not": ["street", "intersection", "stop_word"]
+				},
+				{
+					"is": ["numeric"],
+					"not": []
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 6,
+			"example": "University of Somewhere",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street"]
+				},
+				{
+					"is": ["area"],
+					"not": ["street"]
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 7,
+			"example": "Ecole Jules Vernes",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				},
+				{
+					"is": ["person"],
+					"not": ["street"]
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 8,
+			"example": "boost confidence slightly above street for \"Donald W\"",
+			"confidence": 0.82,
+			"scheme": [
+				{
+					"is": ["person"],
+					"not": ["street"]
+				},
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 9,
+			"example": "ZAC du Pré",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				},
+				{
+					"is": ["street_name"],
+					"not": ["street"]
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 10,
+			"example": "ZAC de la Tuilerie",
+			"confidence": 0.8,
+			"scheme": [
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				},
+				{
+					"is": ["stop_word"],
+					"not": ["street"]
+				},
+				{
+					"is": ["street_name"],
+					"not": ["street"]
+				}
+			]
+		},
+		{
+			"classifier": "venue",
+			"index": 11,
+			"example": "ZA Entraigues",
+			"confidence": 0.7,
+			"scheme": [
+				{
+					"is": ["place", "venue"],
+					"not": ["street"]
+				},
+				{
+					"is": ["alpha"],
+					"not": ["street"]
+				}
+			]
+		}
+	]
+}
