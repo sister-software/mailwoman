@@ -33,10 +33,21 @@ messy input) points at structured span prediction.
    type) spans instead of per-token tags. Architecture change: new export path, #378 browser-SLO
    check, capability-manifest rework — a deliberate multi-night arc, not a probe. Keep the stage-1
    span-boundary head (`use_span_boundary_head`) as a co-trained auxiliary; it's free and helps.
+   **Stage-2 is now fully scoped — see `2026-07-15-727-stage2-kbest-plan.md`** (night-3): k-best
+   decode + resolver rerank ratified by the operator, design consult-reviewed, and the zero-training
+   falsifier probe run — naive decode hardening does NOT clear the residual (seg@1 0.453 vs ship
+   0.584) but oracle@10 street = 0.749 (+16.5pt headroom for k-best + rerank). The bare-fragment
+   recall class (66% of street failures, measured night-3) needs the kind-posterior soft channel +
+   recall-weighted loss ON TOP of the span head — the head alone won't fix polarity.
 3. **Fertility follow-up (orthogonal, cheap):** the 2 stubborn cases pair a region with a postcode
    digit-run, and digit-piece fertility drove the boundary-bleed class (EuroBERT lens); a
    digit-atomicity tokenizer pass (splice whole-number pieces 1..999?) may help independent of the
    head. Measure vocab growth vs the #378 SLO first.
+   **Deprioritized (night-3 partition, 2026-07-15):** multi-digit house numbers are the
+   BEST-performing digit form on the parity corpus (17.3% fail vs 29.2% short-digit, 73.3%
+   alphanumeric) — per-digit shattering does not correlate with failure, so the splice's premise
+   is counter-evidenced. The PT/RO diacritic splice (byte-fallback coverage gap, probe-confirmed)
+   outranks it in the tokenizer-work queue.
 
 ## Standing constraints
 
