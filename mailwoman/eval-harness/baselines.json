@@ -47,6 +47,18 @@
 				"date_name.rate": "fragment-fr.date_name@v264",
 				"bare_locality.rate": "fragment-fr.bare_locality@v264"
 			}
+		},
+		"digit-board-no-v310": {
+			"description": "Board 3 — the NO digit-ownership board against SHIPPED v310, which has ZERO Norwegian training rows (the YAML Norway problem, #1145). A true zero-knowledge arm. `bare_pc` is the NEGATIVE class: every positive class rewards 'call the digit a house_number', so without it a model could ace this board by never emitting postcode again.",
+			"observe": {
+				"bare_pc": "no.digit.bare_pc@v310",
+				"bare_street_hn": "no.digit.bare_street_hn@v310",
+				"city_first_hn": "no.digit.city_first_hn@v310",
+				"pc_first_hn": "no.digit.pc_first_hn@v310",
+				"slash_hn": "no.digit.slash_hn@v310",
+				"street_led_hn": "no.digit.street_led_hn@v310",
+				"overall": "no.digit.overall@v310"
+			}
 		}
 	},
 	"baselines": [
@@ -453,7 +465,113 @@
 			"commit": "b549ef14",
 			"command": "mailwoman eval oa-resolver --resolve-db <admin + postcode + street shards>",
 			"note": "See the NL row. US reads 0.01, FR 0.03, ZZ/NZ/AU/NO/PT/PL/RO all 0.00 — those are too sparse to distinguish 'dark instrument' from 'sparse data', which is precisely how Phase 4a's first measurement passed unnoticed."
+		},
+		{
+			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
+			"commit": "dd14c671",
+			"config": "production: postcodeRepair + queryShape + word-consistency heal at WORD_CONSISTENCY_SHIP_DEFAULT; anchor/gazetteer/country lexicons via loadFromWeights (package-shaped, #718). int8.",
+			"fixture": "mailwoman/eval-harness/fixtures/no-digits.jsonl (n=2400, 400/class), Kartverket-derived NO boundary tuples; surfaces reserved in no-digits.surfaces.txt",
+			"harness": "js-digit-board",
+			"model": "v310 (v6.4.0, shipped; model.onnx md5 5fba0ef7) — ZERO Norwegian training rows (#1145)",
+			"registered_at": "2026-07-16",
+			"id": "no.digit.bare_pc@v310",
+			"metric": "postcode survives AND no house_number invented",
+			"value": 1.0,
+			"$ci95": [0.99, 1.0],
+			"$n": 400,
+			"note": "THE NEGATIVE CLASS. Every positive class rewards 'call the digit a house_number', so a model could ace this board by never emitting postcode again. At ceiling, so the positives have room to move and a trade cannot be claimed as forced. Board 2's bare-locality plays the same role and is why v310's win was legible as a learned distinction rather than a flipped default."
+		},
+		{
+			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
+			"commit": "dd14c671",
+			"config": "production: postcodeRepair + queryShape + word-consistency heal at WORD_CONSISTENCY_SHIP_DEFAULT; anchor/gazetteer/country lexicons via loadFromWeights (package-shaped, #718). int8.",
+			"fixture": "mailwoman/eval-harness/fixtures/no-digits.jsonl (n=2400, 400/class), Kartverket-derived NO boundary tuples; surfaces reserved in no-digits.surfaces.txt",
+			"harness": "js-digit-board",
+			"model": "v310 (v6.4.0, shipped; model.onnx md5 5fba0ef7) — ZERO Norwegian training rows (#1145)",
+			"registered_at": "2026-07-16",
+			"id": "no.digit.bare_street_hn@v310",
+			"metric": "house_number exact-match, no postcode in the row",
+			"value": 0.693,
+			"$ci95": [0.646, 0.736],
+			"$n": 400,
+			"note": "THE HEADROOM, and the diagnostic cell. NOTHING competes for the digit here — no postcode is present — and it still fails 31%. The digit does not merely go to the wrong tag: `Hallingrudveien 32` -> locality + postcode, while `Hallingrudveien 32, 3370 Vikersund` parses PERFECTLY. Same street, same digit; add the partners and it works. That is Track A's bare-street defect in Norwegian, not digit ownership. synth-no-street-led NEVER emits this form."
+		},
+		{
+			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
+			"commit": "dd14c671",
+			"config": "production: postcodeRepair + queryShape + word-consistency heal at WORD_CONSISTENCY_SHIP_DEFAULT; anchor/gazetteer/country lexicons via loadFromWeights (package-shaped, #718). int8.",
+			"fixture": "mailwoman/eval-harness/fixtures/no-digits.jsonl (n=2400, 400/class), Kartverket-derived NO boundary tuples; surfaces reserved in no-digits.surfaces.txt",
+			"harness": "js-digit-board",
+			"model": "v310 (v6.4.0, shipped; model.onnx md5 5fba0ef7) — ZERO Norwegian training rows (#1145)",
+			"registered_at": "2026-07-16",
+			"id": "no.digit.city_first_hn@v310",
+			"metric": "house_number exact-match",
+			"value": 0.953,
+			"$ci95": [0.927, 0.969],
+			"$n": 400,
+			"note": "shard form 2 (`{city}, {pc}, {street} {number}`) — already at ceiling with ZERO Norwegian training data."
+		},
+		{
+			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
+			"commit": "dd14c671",
+			"config": "production: postcodeRepair + queryShape + word-consistency heal at WORD_CONSISTENCY_SHIP_DEFAULT; anchor/gazetteer/country lexicons via loadFromWeights (package-shaped, #718). int8.",
+			"fixture": "mailwoman/eval-harness/fixtures/no-digits.jsonl (n=2400, 400/class), Kartverket-derived NO boundary tuples; surfaces reserved in no-digits.surfaces.txt",
+			"harness": "js-digit-board",
+			"model": "v310 (v6.4.0, shipped; model.onnx md5 5fba0ef7) — ZERO Norwegian training rows (#1145)",
+			"registered_at": "2026-07-16",
+			"id": "no.digit.pc_first_hn@v310",
+			"metric": "house_number exact-match",
+			"value": 0.94,
+			"$ci95": [0.912, 0.959],
+			"$n": 400,
+			"note": "shard form 3 (`{pc} {city}, {street} {number}`) — #901 called this the 7% floor; it reads 6.0% failure."
+		},
+		{
+			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
+			"commit": "dd14c671",
+			"config": "production: postcodeRepair + queryShape + word-consistency heal at WORD_CONSISTENCY_SHIP_DEFAULT; anchor/gazetteer/country lexicons via loadFromWeights (package-shaped, #718). int8.",
+			"fixture": "mailwoman/eval-harness/fixtures/no-digits.jsonl (n=2400, 400/class), Kartverket-derived NO boundary tuples; surfaces reserved in no-digits.surfaces.txt",
+			"harness": "js-digit-board",
+			"model": "v310 (v6.4.0, shipped; model.onnx md5 5fba0ef7) — ZERO Norwegian training rows (#1145)",
+			"registered_at": "2026-07-16",
+			"id": "no.digit.slash_hn@v310",
+			"metric": "house_number exact-match on cadastral gnr/bnr",
+			"value": 0.65,
+			"$ci95": [0.602, 0.695],
+			"$n": 400,
+			"note": "THE OTHER HEADROOM. NO `124/1` is ONE component (cadastral gnr/bnr); AU `12/345` is TWO (unit + house_number). Identical surface shape, opposite correct answers — this cell pins the Norwegian reading so a future AU intra-word-split shard (B5) cannot generalize over it unnoticed."
+		},
+		{
+			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
+			"commit": "dd14c671",
+			"config": "production: postcodeRepair + queryShape + word-consistency heal at WORD_CONSISTENCY_SHIP_DEFAULT; anchor/gazetteer/country lexicons via loadFromWeights (package-shaped, #718). int8.",
+			"fixture": "mailwoman/eval-harness/fixtures/no-digits.jsonl (n=2400, 400/class), Kartverket-derived NO boundary tuples; surfaces reserved in no-digits.surfaces.txt",
+			"harness": "js-digit-board",
+			"model": "v310 (v6.4.0, shipped; model.onnx md5 5fba0ef7) — ZERO Norwegian training rows (#1145)",
+			"registered_at": "2026-07-16",
+			"id": "no.digit.street_led_hn@v310",
+			"metric": "house_number exact-match",
+			"value": 0.968,
+			"$ci95": [0.945, 0.981],
+			"$n": 400,
+			"note": "shard form 1 (`{street} {number}, {pc} {city}`) — the class #901 measured a 30% residual on and built synth-no-street-led at weight 12.0 to fix. It reads 3.2% failure, BETTER than pc-first, which #901 called the floor. Different metric than #901's, so not a like-for-like refutation — but the shard aimed here, and here is at ceiling."
+		},
+		{
+			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
+			"commit": "dd14c671",
+			"config": "production: postcodeRepair + queryShape + word-consistency heal at WORD_CONSISTENCY_SHIP_DEFAULT; anchor/gazetteer/country lexicons via loadFromWeights (package-shaped, #718). int8.",
+			"fixture": "mailwoman/eval-harness/fixtures/no-digits.jsonl (n=2400, 400/class), Kartverket-derived NO boundary tuples; surfaces reserved in no-digits.surfaces.txt",
+			"harness": "js-digit-board",
+			"model": "v310 (v6.4.0, shipped; model.onnx md5 5fba0ef7) — ZERO Norwegian training rows (#1145)",
+			"registered_at": "2026-07-16",
+			"id": "no.digit.overall@v310",
+			"metric": "blended, all 6 classes",
+			"value": 0.867,
+			"$ci95": [0.853, 0.88],
+			"$n": 2400,
+			"note": "Reported for completeness and NOT a verdict: it blends two ceiling classes with two 0.65-0.69 classes. Read the cells."
 		}
 	],
-	"$fragment_board": "The fragment board (T1c) is the grading set for the BAN shard (T2). Its first read on the shipped model: with a house number 0.925, without one 0.215 — the house number LICENSES the street reading rather than merely helping it. Targets = bare-street/street-particle/admin-street-homonym/date-name. Guards = street-housenumber/alnum-housenumber (contextful) and bare-locality (hallucination). See 2026-07-16-t1c-fragment-board-verdict.md."
+	"$fragment_board": "The fragment board (T1c) is the grading set for the BAN shard (T2). Its first read on the shipped model: with a house number 0.925, without one 0.215 — the house number LICENSES the street reading rather than merely helping it. Targets = bare-street/street-particle/admin-street-homonym/date-name. Guards = street-housenumber/alnum-housenumber (contextful) and bare-locality (hallucination). See 2026-07-16-t1c-fragment-board-verdict.md.",
+	"$digit_board": "Board 3 — the NO digit-ownership board (digit-board.ts), registered against SHIPPED v310 BEFORE any Norway-inclusive candidate exists. A TRUE ZERO-KNOWLEDGE arm: the YAML Norway problem (#1145) meant v310 — and every model since v1.9.0 — trained on exactly zero Norwegian rows. WHAT IT ALREADY SHOWS, and why it is registered BEFORE a retrain: synth-no-street-led emits three forms, all carrying postcode+city, and v310 already reads those three classes at 0.940-0.968 with no Norwegian data at all. The 12,000-row shard the YAML bug has been dropping since v1.9.0 targets classes at ceiling; un-dropping it should move them ~0. The headroom is bare-street-hn (0.693 — a form the shard NEVER emits, no postcode present) and slash-hn (0.650, cadastral gnr/bnr). A retrain on the un-dropped shard is NOT the fix; a FRAGMENT shard is, mirroring fr-fragment. DO-NO-HARM vs v264 (one variable: the fr-fragment shard): OVERALL 0.859 -> 0.867, every cell's CI overlapping — the FR shard neither helped nor harmed Norwegian. That is NOT a cross-lingual transfer test: the FR board's bare-street class is street-ONLY (`Rue Montmartre`) while every positive class here carries a house number. Different classes."
 }
