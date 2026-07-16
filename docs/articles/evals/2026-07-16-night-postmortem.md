@@ -1,7 +1,7 @@
 # Night shift — 2026-07-16 (Track B: digit ownership)
 
-> Living document — sketched during the shift, finalized at hand-off (15:00 UTC). Window opened
-> ~06:10 UTC.
+> Drafted live during the shift. Window: 06:12 UTC → ~08:25 UTC of active work (the shift runs to
+> the 15:00 UTC hand-off; this documents the work done).
 
 **Conn taken 06:12 UTC.** Prior day-shift work (the v6.4.0 promote, the span-head closure, the H3
 verdict) is recorded on its own pages and in #1144 / #1141; this page covers the autonomous window
@@ -104,6 +104,11 @@ only.
 3. **#1141's ordering flag** — the span head was built and closed _before_ the vocab work the research
    named as upstream. The closure was pre-registered and stands; whether the ordering is worth
    revisiting is yours. B0 weakens the case for re-opening it (see §6).
+4. **B4b's ratio bump** — the probe verdict names `--bare-street-prob 0.30 → ~0.65` as the likely fix
+   for the target barely moving. It's one knob and a 2k probe, but it's a knob-spin, so it wants your
+   nod or a fresh-shift pre-registration rather than a 3am solo run.
+5. **Merge `#1145`** — the whole Track B PR. The Norway fix (`dd14c671`) is independently
+   cherry-pickable if you want it in main faster than the investigation commits.
 
 ## 6. The finding this shift is built on
 
@@ -129,29 +134,36 @@ cost (intra-word incoherence) is real but confined to a tail — 2-digit continu
 
 ## 7. Concrete next steps
 
-_(kept current so an interrupted shift hands off cleanly)_
+The night's investigable surface is exhausted; what remains is one operator decision and two
+pre-registered probes for a future shift.
 
-- **B1 — DONE.** Norway was absent, mechanically. `#1145`.
-- **B2 — mostly collapsed by B1**, and this is the important consequence. The street-familiarity lead
-  was _confounded with country coverage_: `Epleskogen`/`Tindvegen` were unfamiliar because there were
-  zero Norwegian rows, and `Main St` was familiar because the US is ~45% of the corpus. On the old
-  corpus you could not separate those — every unfamiliar street WAS from an absent country. Three of
-  the five cost-arm rows are Norwegian and one is NZ; all four are explained by coverage and must be
-  **re-measured after a Norway-inclusive retrain**, not theorized about further.
-  **One row survives:** `aleja Wojska Polskiego 178` — PL is in `country_weights`, passes the filter,
-  the street parses correctly, and the digit still goes to postcode. That is genuine digit ownership
-  with no coverage excuse. n=1, which is an anecdote until B3 gives it a CI.
-- **B3 — now the critical path.** The Track B eval board. Negative class required (real-postcode
-  rows), baselines registered against **shipped v310** before any candidate exists. Nothing can be
-  graded until this exists.
-- **B4** — the NO _fragment_ shard, blocker now cleared (`80d86130`). Board 3 says the EXISTING
-  shard aims at ceiling, so B4 is a NEW recipe emitting the forms it never does: `{street} {number}`
-  and bare `{street}` with no partner (bare-street-hn, 0.693), slash/cadastral fragments (slash-hn,
-  0.650), plus a bare-locality + bare-postcode counter-distribution. Shard design is written into the
-  task; **not launched** — needs the config header's pre-registered read and a 2k-step probe first.
-- **B5** — the intra-word split licence (`12/345`), instance 3. Independent of B4.
-- **The retrain** — warranted (Norway 0% → 4.19%) but only for a FRAGMENT shard, not the existing
-  one. Pre-register against board 3 before launch.
+- **B4b (the live thread)** — raise `no-fragment --bare-street-prob` from 0.30 and re-probe. The 2k
+  probe moved the target only +1.7pp because 70% of its signal is `{street} {number}`, a form v310
+  already reads at 0.693; B0's mechanism says the real defect is street→locality, which needs the
+  street _without_ a number. One knob. Pre-register the read, run the 2k probe, read board 3. Also
+  deconfound the FR board drift (v310 vs v330 board 2 in one session) before trusting it. Artifacts
+  are all staged — only the ratio changes. **Not a 3am solo iteration** (treadmill guard): operator
+  nod or a fresh-shift pre-registration.
+- **B5 — data-blocked, an operator decision.** The `12/345` intra-word split (instance 3, confirmed
+  by B0) needs the unit/number decomposition, which the on-disk assembled AU data does not carry
+  (it's flattened to `house_number`). Re-deriving from raw G-NAF (which has the columns) is gated on
+  the G-NAF EULA — a licensing call, not mine. NZ LINZ is the license-clean fallback.
+- **The Norway retrain** — warranted (Norway 0% → 4.19%) but B4 showed the _existing_ shard aims at
+  ceiling and a fragment shard at 0.30 barely moves the target. So the retrain is really B4b: a
+  higher-ratio fragment shard, pre-registered against board 3, operator-approved.
+- **B2 — closed, folded into B4b.** The street-familiarity lead was confounded with the Norway
+  coverage gap (every unfamiliar failing street was from an absent country). The one PL row that
+  survives coverage (`aleja Wojska Polskiego 178`) is now a board-3-measurable cell, not a separate
+  investigation.
+
+## 8. Where things stand (a status, not a wind-down)
+
+Track B is a complete, self-consistent arc: the defect was mis-scoped as "digit ownership," B0
+reframed it as one licence defect in three components, B1 found that most of the Norwegian evidence
+was a YAML bug hiding 25k rows, B3 built the instrument, B4 built + probed the fix and the probe
+honestly said "not with this ratio." Nothing is half-built; every commit is green-or-pending on one
+PR. The next move is the operator's (merge `#1145`, decide the v6.4.0 publish, approve B4b's ratio
+bump or the G-NAF path).
 
 ## Numbers
 
