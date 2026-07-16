@@ -100,6 +100,39 @@ class DataConfig:
     # not add a parallel knob (the review's no-reinvent conclusion).
     region_centroids_path: str | None = None
 
+    def __post_init__(self) -> None:
+        """Reject country codes YAML has silently retyped.
+
+        THE NORWAY PROBLEM. YAML 1.1 resolves the bare token ``NO`` to the BOOLEAN ``false``, so a
+        config writing the obvious
+
+            country_weights:
+              NO: 1.0
+
+        yields the dict ``{False: 1.0}``. The loader then does ``country_weights.get(row_country)``
+        — ``.get("NO")`` misses, returns None, and every Norwegian row is dropped on the spot. The
+        annotation above says ``dict[str, float]`` and Python enforces none of it, so this ran
+        silently in 44 configs from v1.9.0-multilocale through the shipped v264/v310: Norway has
+        never been in a training run. It surfaced as a "digit ownership defect" because the only
+        Norwegian rows anyone looked at were parse failures in the eval corpus.
+
+        ``NO`` is the sole ISO-3166-1 alpha-2 code that collides with a YAML 1.1 boolean, which is
+        why this hid for so long — one country, no pattern, nothing else to notice. The fix in the
+        configs is to quote the key; this guard is what stops it coming back, because the next
+        person to add a country will write it unquoted and be right to expect that to work.
+
+        Raise rather than coerce: a config that says ``false`` does not *mean* Norway, it means the
+        author typed something whose meaning YAML changed. Silently repairing it would hide the same
+        class of bug in the next field that grows a bare-token key.
+        """
+        for key in self.country_weights:
+            if not isinstance(key, str):
+                raise ValueError(
+                    f"country_weights has a non-string key {key!r} ({type(key).__name__}). "
+                    "This is almost certainly the YAML 1.1 Norway problem: an unquoted `NO:` parses "
+                    'as the boolean false. Quote it — `"NO": 1.0` — and re-check every other code.'
+                )
+
 
 @dataclass
 class ModelConfig:
