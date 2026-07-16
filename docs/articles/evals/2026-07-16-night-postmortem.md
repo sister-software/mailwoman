@@ -73,6 +73,13 @@ only.
   scope), KR (SCOPE: "no adopted open path"), HU/IE/GB (queued, #733 OSM share-alike gate). **NZ is
   the one exception** — 8,967 corpus rows + tier-A LINZ data, in no tier and no queue. The audit
   found no second Norway; that is the finding.
+- **Track B was traced to its root, not just its symptom.** The chain: parse failures → the Norway
+  coverage bug (#1145) → the one non-coverage case (PL) → the piece-level incoherence mechanism (B0,
+  cross-lingual) → its root (the tokenizer has 2 multi-digit pieces, so digit fertility ≡ digit
+  count, so the model's only length signal is the continuation count where the postcode mass lives).
+  The fix options are now concrete and scoped: a fragment shard (dents it — B4b), or a number-piece
+  vocab splice (removes the continuations — B4c, the root fix). Both the operator's call; neither a
+  validator.
 - **The one row coverage couldn't explain turned into the finding that unified the track.** After B1
   reduced most of Track B to the Norway coverage bug, a single PL row survived (`aleja Wojska
 Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature on a
