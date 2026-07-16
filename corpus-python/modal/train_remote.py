@@ -2535,3 +2535,35 @@ def country_census_raw(
         print(f"  ZZ (unknown-country placeholder): {counts.get('ZZ', 0):,} rows — correctly dropped, not a bug")
     except Exception as e:
         print(f"  [audit skipped: {e}]")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
+def mean_init_numsplice():
+    """B4c — expand the SHIPPED v310 step-008000 checkpoint's token_embeddings from v0.9.0-multisplice
+    (73,143) to v0.11.0-numsplice (83,131 = + word-start number pieces 10-9999). FVT mean-init: each
+    new number piece row = the mean of its OLD per-digit constituent embeddings (a clean init — every
+    constituent is a real digit piece). Encoder/heads untouched. Writes /data/models/numsplice-expanded,
+    the init_from base for the numsplice fine-tune. Expect 73143 -> 83131."""
+    import os
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/numsplice-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v310-fr-fragment-s42/checkpoints/step-008000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.11.0-numsplice/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
