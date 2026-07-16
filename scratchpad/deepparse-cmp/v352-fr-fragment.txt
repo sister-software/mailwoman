@@ -1,0 +1,42 @@
+########## v310 ##########
+95% Wilson intervals. bare-locality scores the ABSENCE of a street (the hallucination class).
+  class                     n     rate    95% CI
+  alnum-housenumber       400   0.960   [0.936, 0.975]
+  bare-street             400   0.715   [0.669, 0.757]
+  date-name               400   0.158   [0.125, 0.196]
+  street-housenumber      400   0.948   [0.921, 0.965]
+  street-particle         400   0.855   [0.817, 0.886]
+  OVERALL                2800   0.733   [0.717, 0.749]
+  --- alnum-housenumber: 16 misses (first 6) ---
+  --- bare-street: 114 misses (first 6) ---
+  --- date-name: 337 misses (first 6) ---
+  --- street-housenumber: 21 misses (first 6) ---
+  --- street-particle: 58 misses (first 6) ---
+########## v351-full8k ##########
+95% Wilson intervals. bare-locality scores the ABSENCE of a street (the hallucination class).
+  class                     n     rate    95% CI
+  alnum-housenumber       400   0.965   [0.942, 0.979]
+  bare-street             400   0.720   [0.674, 0.762]
+  date-name               400   0.682   [0.635, 0.726]
+  street-housenumber      400   0.950   [0.924, 0.967]
+  street-particle         400   0.838   [0.798, 0.870]
+  OVERALL                2800   0.809   [0.794, 0.823]
+  --- alnum-housenumber: 14 misses (first 6) ---
+  --- bare-street: 112 misses (first 6) ---
+  --- date-name: 127 misses (first 6) ---
+  --- street-housenumber: 20 misses (first 6) ---
+  --- street-particle: 65 misses (first 6) ---
+########## v352-3digit2k ##########
+95% Wilson intervals. bare-locality scores the ABSENCE of a street (the hallucination class).
+  class                     n     rate    95% CI
+  alnum-housenumber       400   0.963   [0.939, 0.977]
+  bare-street             400   0.743   [0.697, 0.783]
+  date-name               400   0.367   [0.322, 0.416]
+  street-housenumber      400   0.950   [0.924, 0.967]
+  street-particle         400   0.860   [0.823, 0.891]
+  OVERALL                2800   0.775   [0.760, 0.790]
+  --- alnum-housenumber: 15 misses (first 6) ---
+  --- bare-street: 103 misses (first 6) ---
+  --- date-name: 253 misses (first 6) ---
+  --- street-housenumber: 20 misses (first 6) ---
+  --- street-particle: 56 misses (first 6) ---

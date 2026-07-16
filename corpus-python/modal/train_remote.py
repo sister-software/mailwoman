@@ -2567,3 +2567,36 @@ def mean_init_numsplice():
     print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
     print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
     print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
+def mean_init_numsplice3():
+    """B4c RANGE REFINEMENT — 3-digit-only. Same FVT mean-init as mean_init_numsplice, but the
+    tokenizer only adds word-start pieces 100-999 (v0.11.1-numsplice3, +900 pieces). The hypothesis:
+    3-digit house numbers (the PL 178, most of the bare-street win) get one-piece while 4-5 digit
+    postcodes STAY multi-piece — so the postcode length signal survives, testing whether the -9.7pp
+    parity-postcode cost of the full 10-9999 range was carried by the 4-5 digit pieces. Writes
+    /data/models/numsplice3-expanded. Expect 73143 -> 74043."""
+    import os
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/numsplice3-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v310-fr-fragment-s42/checkpoints/step-008000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.11.1-numsplice3/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
