@@ -1,7 +1,8 @@
 # Night shift — 2026-07-16 (Track B: digit ownership)
 
-> Drafted live during the shift. Window: 06:12 UTC → ~08:25 UTC of active work (the shift runs to
-> the 15:00 UTC hand-off; this documents the work done).
+> Drafted live during the shift. Active work window 06:12 → ~13:40 UTC (the shift runs to the 15:00
+> UTC hand-off; this documents the work done). Track B was traced end-to-end: coverage bug → the one
+> non-coverage case → the piece-level mechanism → its root in the tokenizer.
 
 **Conn taken 06:12 UTC.** Prior day-shift work (the v6.4.0 promote, the span-head closure, the H3
 verdict) is recorded on its own pages and in #1144 / #1141; this page covers the autonomous window
