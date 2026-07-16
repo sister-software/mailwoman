@@ -1,0 +1,94 @@
+{
+	"label": "v6.0.0-shipped-baseline",
+	"graded_artifact": "weights-cache",
+	"verdict": "PASS",
+	"results": {
+		"us.postcode": {
+			"floor": 94.9,
+			"actual": 96.5,
+			"pass": true
+		},
+		"us.country_homograph_f1": {
+			"floor": 83.1,
+			"actual": 89.8,
+			"pass": true
+		},
+		"us.micro": {
+			"floor": 85.1,
+			"actual": 87.1,
+			"pass": true
+		},
+		"us.locality": {
+			"floor": 74.6,
+			"actual": 79,
+			"pass": true
+		},
+		"us.region": {
+			"floor": 87.7,
+			"actual": 89.8,
+			"pass": true
+		},
+		"us.street": {
+			"floor": 78.6,
+			"actual": 82.3,
+			"pass": true
+		},
+		"us.street_prefix": {
+			"floor": 96,
+			"actual": 98,
+			"pass": true
+		},
+		"us.street_suffix": {
+			"floor": 92.9,
+			"actual": 94.9,
+			"pass": true
+		},
+		"us.unit_real": {
+			"floor": 95,
+			"actual": 97,
+			"pass": true
+		},
+		"fr.postcode": {
+			"floor": 97.9,
+			"actual": 98.9,
+			"pass": true
+		},
+		"fr.house_number": {
+			"floor": 94,
+			"actual": 96.8,
+			"pass": true
+		},
+		"fr.region": {
+			"floor": 29.9,
+			"actual": 47,
+			"pass": true
+		},
+		"de.native_locality": {
+			"floor": 89.4,
+			"actual": 91.3,
+			"pass": true
+		},
+		"arena.perturb": {
+			"floor": 78,
+			"actual": 78,
+			"pass": true
+		},
+		"us.po_box_real": {
+			"floor": 86.7,
+			"actual": 88.3,
+			"pass": true
+		},
+		"fr.cedex_real": {
+			"floor": 85.8,
+			"actual": 89.1,
+			"pass": true
+		},
+		"us.intersection_real": {
+			"floor": 98,
+			"actual": 100,
+			"pass": true
+		}
+	},
+	"int8_vs_fp32_deltas": {},
+	"generated_at_dir": "/tmp/gate-v370"
+}
