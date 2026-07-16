@@ -39,7 +39,14 @@ is most often a postcode lookup, so ours is defensible; theirs is more autocompl
 capability gap. (And in context our length gradient _is_ there — board 3 measured it crossing at 4
 digits, deepparse's own boundary.)
 
-## §2 — two of the four contextful losses are the Norway coverage bug, not a defect
+## §2 — two of the four contextful losses — CORRECTED: the bare-street licence defect, NOT coverage
+
+> **Correction 2026-07-16 (afternoon):** the coverage hypothesis below was FALSIFIED by the retrain
+> (`NORWAY-RETRAIN-verdict.md`). v310 — zero Norwegian training — already parses _contextful_
+> Norwegian perfectly (`Epleskogen 39A, 4370 Egersund` → street + house_number). v341 (8k, Norway
+> un-dropped) is identical to v310 on every Norwegian row and on board 3. So these are NOT coverage;
+> they are the bare-street polarity licence defect in bare form (§3's mechanism, cross-lingual). The
+> original §2 text is kept below struck through for the record.
 
 `Epleskogen 39A` and `Tindvegen nedre 44B` fail with the street read as a **locality** — B0's
 signature of an _unseen_ street. And they are unseen: **v6.4.0 trained on exactly zero Norwegian rows**
@@ -84,10 +91,10 @@ wins a class they structurally can't reach.
 
 The visible gap decomposes into two fixes and two non-gaps:
 
-1. **Coverage — the Norway retrain.** The cheapest, highest-leverage, most falsifiable move: retrain
-   with Norway un-dropped (#1145 is on main) and re-measure the Norwegian rows + board 3. If it lands,
-   two of the four contextful losses flip, and it validates the whole B1 finding on a shipped-shaped
-   model. This is the one to run first.
+1. ~~**Coverage — the Norway retrain.**~~ RUN AND FALSIFIED (2026-07-16): v341 ≡ v310 on every
+   Norwegian row; v310 already generalizes to contextful Norwegian. Coverage is OFF the table — the
+   Norwegian rows are the bare-street licence defect (§2 corrected). Data acquisition is breadth, not
+   the house_number fix.
 2. **The digit defect — B4b or B4c.** The PL-class rows. Shard (dents) vs number-piece vocab splice
    (removes the root). Operator's call on depth.
 3. **Not chasing:** the Dutch validity rule and route-number disambiguation are shared gaps — soft
