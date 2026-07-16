@@ -2509,3 +2509,29 @@ def country_census_raw(
         print(f"    {c}: {n:,} raw rows   {verdict}")
         for src, k in (by_source.get(c) or Counter()).most_common(5):
             print(f"        via {src}: {k:,}")
+
+    # COMPLETENESS AUDIT — corpus countries vs the config's admitted set. The Norway bug was ONE
+    # silent drop; this asks what else. Two failure modes:
+    #   (a) present-but-dropped: rows in the corpus, absent from country_weights -> silently trained on nothing.
+    #   (b) admitted-but-absent: in country_weights, ~zero corpus rows -> the config promises a locale it can't deliver.
+    import yaml as _yaml
+
+    cfg_path = "/data/corpus-python/src/mailwoman_train/configs/v3.1.0-fr-fragment.yaml"
+    try:
+        cw = _yaml.safe_load(open(cfg_path))["data"]["country_weights"]
+        admitted = {k for k in cw if isinstance(k, str) and (cw[k] or 0) > 0}
+        present = {c for c, n in counts.items() if n > 0 and c not in ("ZZ", None)}
+        print(
+            "\n  === COMPLETENESS AUDIT (this scan is a SAMPLE — absence here is 'not seen', not 'not in corpus') ==="
+        )
+        print("  (a) present-but-dropped (corpus rows, NOT admitted by config):")
+        for c in sorted(present - admitted, key=lambda c: -counts[c]):
+            print(f"        {c}: {counts[c]:,} rows  -> SILENTLY DROPPED")
+        if not (present - admitted):
+            print("        (none in this sample)")
+        print("  (b) admitted-but-not-seen (in config, 0 rows in THIS sample — verify against full corpus):")
+        for c in sorted(admitted - present):
+            print(f"        {c}: 0 rows seen")
+        print(f"  ZZ (unknown-country placeholder): {counts.get('ZZ', 0):,} rows — correctly dropped, not a bug")
+    except Exception as e:
+        print(f"  [audit skipped: {e}]")

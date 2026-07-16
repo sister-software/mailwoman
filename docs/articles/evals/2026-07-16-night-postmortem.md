@@ -66,6 +66,13 @@ only.
   retrain" feel obvious and urgent. The board — built _first_, per the standing rule — showed the
   shard aims at classes already at 0.94–0.968. Building the instrument before the fix converted a
   plausible day of A100 into a two-line table.
+- **The completeness audit bounded the bug class.** After Norway, the obvious question is "what else
+  is silently dropped?" A raw-corpus country census (2M rows) vs the config filter, cross-referenced
+  against `SCOPE.mdx`, found the class is **bounded to Norway**: every other dropped country is
+  accounted for — JP (143k rows; tier 5, resolver-only, no parser claim), CN/TW (CJK, out of Latin
+  scope), KR (SCOPE: "no adopted open path"), HU/IE/GB (queued, #733 OSM share-alike gate). **NZ is
+  the one exception** — 8,967 corpus rows + tier-A LINZ data, in no tier and no queue. The audit
+  found no second Norway; that is the finding.
 - **The 2k probe did its job — it stopped an 8k run I would otherwise have wanted.** The instrument
   and shard were correct; the read was clean; the target missed its pre-registered bar and the French
   guard drifted, so the expensive run does not happen on a hunch. ~$1-2 of A100 to avoid ~$8. And I
@@ -111,6 +118,11 @@ only.
    nod or a fresh-shift pre-registration rather than a 3am solo run.
 5. **Merge `#1145`** — the whole Track B PR. The Norway fix (`dd14c671`) is independently
    cherry-pickable if you want it in main faster than the investigation commits.
+6. **NZ is undeclared.** The completeness audit found 8,967 New Zealand corpus rows, a tier-A LINZ
+   source (`.notes/data-sources.md`), and NZ in **no `SCOPE.mdx` tier and no blocked/queued list**.
+   It is neither trained nor explicitly scoped-out — the one country-filter gap the audit could not
+   account for. Decide: add it to a tier (it's Latin-script, English, tier-2 caliber with open data),
+   or list it as blocked/queued like GB/IE. Not a code change tonight — a scope declaration.
 
 ## 6. The finding this shift is built on
 
