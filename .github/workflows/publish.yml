@@ -114,6 +114,21 @@ jobs:
           set -euo pipefail
           MODEL_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('neural-weights-en-us/model-card.json','utf8')).version)")
           BASE="https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${MODEL_VERSION}"
+          # PREFLIGHT — fail fast + actionable. Without this, an unstaged version means the retry
+          # loop below spends 6×5s PER FILE and then dies on a cryptic `curl (22) 404`. On 2026-07-16
+          # a v6.4.0 publish failed here because the promote bumped the model card but the HF upload —
+          # a SEPARATE operator-host step (RELEASING.md §3) — was skipped. HEAD-check every file this
+          # step will fetch and, if any is missing, print the exact remediation and stop immediately.
+          echo "Preflight: verifying v${MODEL_VERSION} is staged on Hugging Face…"
+          MISSING=0
+          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin; do
+            if ! curl -fsI "${BASE}/${a}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${a}"; MISSING=1; else echo "  ✓ ${a}"; fi
+          done
+          if [ "$MISSING" = 1 ]; then
+            echo "::error::v${MODEL_VERSION} weights are NOT fully staged on Hugging Face — the promote bumped the model card but the HF upload was skipped. Stage them, then re-dispatch:"
+            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --set-default   (RELEASING.md §3)"
+            exit 1
+          fi
           echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
           # --retry-all-errors covers HF's transient 429 throttling of the public bucket on CI.
           CURL="curl -fSL --retry 6 --retry-delay 5 --retry-all-errors"
