@@ -141,6 +141,13 @@ export interface ShardRecipeOpts {
 	excludeSurfaces?: string
 	/** `no-fragment`: share of rows that are counter-distribution (bare locality OR bare postcode). */
 	counterProb?: number
+	/**
+	 * `no-fragment` knob 3: emit N copies of each street+number row whose number has >= longNumberMinDigits digits
+	 * (oversample the failing long-number class). Default 1 = no boost.
+	 */
+	longNumberBoost?: number
+	/** `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted. Default 3. */
+	longNumberMinDigits?: number
 }
 
 /** Tally a recipe returns. */

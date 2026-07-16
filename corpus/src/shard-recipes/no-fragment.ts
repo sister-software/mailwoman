@@ -72,6 +72,15 @@ export const noFragmentRecipe: ShardRecipe = {
 			flag: "--counter-prob <n>",
 			description: "Share of ALL rows that are counter-distribution (bare locality OR bare postcode) (default 0.30)",
 		},
+		{
+			flag: "--long-number-boost <n>",
+			description:
+				"knob 3: emit N copies of each street+number row whose number has >= --long-number-min-digits digits — oversample the failing long-number class the model calls a postcode (default 1 = no boost)",
+		},
+		{
+			flag: "--long-number-min-digits <n>",
+			description: "knob 3: minimum digit count for a number to be 'long' and boosted (default 3)",
+		},
 	],
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
@@ -96,6 +105,8 @@ export const noFragmentRecipe: ShardRecipe = {
 
 		const bareStreetProb = opts.bareProb ?? 0.3
 		const counterProb = opts.counterProb ?? 0.3
+		const longNumberBoost = Math.max(1, Math.floor(opts.longNumberBoost ?? 1))
+		const longNumberMinDigits = opts.longNumberMinDigits ?? 3
 
 		// Harvested from the tuples — every NO row carries its locality and postcode, so the two
 		// counter-classes need no second source.
@@ -106,9 +117,12 @@ export const noFragmentRecipe: ShardRecipe = {
 		let emitted = 0
 		let skipped = 0
 		let contaminated = 0
+		let emitSeq = 0
 
 		const emit = (raw: string, components: Record<string, string>, klass: string): void => {
-			const source_id = shardSourceID("synth-no-fragment", { ...components, k: klass, v: String(read) })
+			// emitSeq keeps every emit distinct — knob 3 emits N copies of one long-number row, and
+			// (components, read) alone would collide their source_id and let downstream dedup drop the boost.
+			const source_id = shardSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
 			const canonical = {
 				raw,
 				components,
@@ -167,8 +181,15 @@ export const noFragmentRecipe: ShardRecipe = {
 				emit(street, { street }, "bare-street")
 			} else {
 				const klass = number.includes("/") ? "slash-hn" : "street-hn"
+				// knob 3: the failing class is street + LONG number (Leppdalsvegen 1285 -> postcode). The
+				// digit count, not the slash, is what tips the length prior toward postcode. Oversample
+				// those rows to fight the prior with volume and teach the street/number boundary directly.
+				const digits = (number.match(/\d/g) ?? []).length
+				const copies = digits >= longNumberMinDigits ? longNumberBoost : 1
 
-				emit(`${street} ${number}`, { street, house_number: number }, klass)
+				for (let c = 0; c < copies; c++) {
+					emit(`${street} ${number}`, { street, house_number: number }, klass)
+				}
 			}
 		}
 
