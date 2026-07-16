@@ -73,6 +73,14 @@ only.
   scope), KR (SCOPE: "no adopted open path"), HU/IE/GB (queued, #733 OSM share-alike gate). **NZ is
   the one exception** — 8,967 corpus rows + tier-A LINZ data, in no tier and no queue. The audit
   found no second Norway; that is the finding.
+- **The one row coverage couldn't explain turned into the finding that unified the track.** After B1
+  reduced most of Track B to the Norway coverage bug, a single PL row survived (`aleja Wojska
+Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature on a
+  correctly-parsed, in-corpus Polish street — B-house_number on the first digit piece, I-postcode on
+  the continuations, length-conditioned (2-digit correct, 3-digit fails). H3 + B0 + this are one
+  mechanism: the model faithfully reproducing a corpus prior that says long digit-run continuations
+  are postcode. It also explains why B4 barely moved — a shard fights that prior uphill.
+  `docs/articles/evals/2026-07-16-digit-incoherence-is-cross-lingual.md`.
 - **The 2k probe did its job — it stopped an 8k run I would otherwise have wanted.** The instrument
   and shard were correct; the read was clean; the target missed its pre-registered bar and the French
   guard drifted, so the expensive run does not happen on a hunch. ~$1-2 of A100 to avoid ~$8. And I
