@@ -27,3 +27,5 @@ export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
 // The type contract + placetype helpers live in core (pure types, keep core a leaf). Re-export so
 // consumers get the whole surface from `@mailwoman/resolver`.
 export * from "@mailwoman/core/resolver"
+
+export * from "./rerank.ts"

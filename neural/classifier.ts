@@ -428,6 +428,7 @@ export class NeuralAddressClassifier {
 			logits,
 			// The axis rides with the values (self-describing — consumers must not hardcode the order).
 			...(trace.localeLogits ? { localeLogits: trace.localeLogits, localeCountries: [...LOCALE_COUNTRIES] } : {}),
+			...(trace.spanScores ? { spanScores: trace.spanScores } : {}),
 			detectedSystem: trace.detectedSystem,
 			systemSource: trace.systemSource,
 			priors: trace.priors,
@@ -459,6 +460,7 @@ export class NeuralAddressClassifier {
 			gazetteer?: SoftFeatureChannel
 			country?: SoftFeatureChannel
 			localeLogits?: number[]
+			spanScores?: number[][][]
 			detectedSystem: SystemCode | null
 			systemSource: "off" | "auto" | "pinned"
 			priors: TracePrior[]
@@ -479,7 +481,12 @@ export class NeuralAddressClassifier {
 			countryLexicon: this.cfg.countryLexicon,
 			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
 		})
-		const { logits, localeLogits } = await this.cfg.runner.infer(ids, soft.anchor, soft.gazetteer, soft.country)
+		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
+			ids,
+			soft.anchor,
+			soft.gazetteer,
+			soft.country
+		)
 
 		this.assertEmissionWidth(logits)
 
@@ -715,6 +722,7 @@ export class NeuralAddressClassifier {
 							...(soft.gazetteer ? { gazetteer: soft.gazetteer } : {}),
 							...(soft.country ? { country: soft.country } : {}),
 							...(localeLogits ? { localeLogits } : {}),
+							...(spanScores ? { spanScores } : {}),
 							detectedSystem,
 							systemSource,
 							priors: tracePriors!,

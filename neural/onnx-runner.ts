@@ -53,6 +53,19 @@ export interface InferResult {
 	 * #511 Tier A). Absent on older bundles — consumers must treat undefined as "no address-system detection available".
 	 */
 	localeLogits?: number[]
+	/**
+	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed
+	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`, of length `lengthIdx + 1`
+	 * tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`,
+	 * never hardcoded — the PLACETYPE_ORDER class).
+	 *
+	 * Absent on every pre-v3 bundle, so consumers MUST treat undefined as "no span decode available" and fall back to the
+	 * BIO path. Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays nothing (ORT prunes the
+	 * unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
+	 */
+	spanScores?: number[][][]
+	/** Max span length (the `L` axis of {@link spanScores}). Absent iff `spanScores` is. */
+	maxSpan?: number
 }
 
 export class ONNXRunner {
@@ -275,7 +288,41 @@ export class ONNXRunner {
 		const localeTensor = output.locale_logits
 		const localeLogits = localeTensor ? Array.from(localeTensor.data as Float32Array) : undefined
 
-		return { logits, numLabels, ...(localeLogits ? { localeLogits } : {}) }
+		// Span head (#727 stage-2): present on v3.x+ exports. Same optional contract as the locale head
+		// — a pre-v3 bundle simply has no `span_scores` output and the BIO path is unaffected.
+		const spanTensor = output.span_scores
+		let spanScores: number[][][] | undefined
+		let maxSpan: number | undefined
+
+		if (spanTensor) {
+			const spanData = spanTensor.data as Float32Array
+			const [, , spanLen, numTypes] = spanTensor.dims as readonly [number, number, number, number]
+			maxSpan = spanLen
+			spanScores = []
+
+			// Only the first `seqLen` token rows are real; the rest is the fixed-length pad tail.
+			for (let t = 0; t < seqLen; t++) {
+				const perLength: number[][] = new Array(spanLen)
+
+				for (let l = 0; l < spanLen; l++) {
+					const row: number[] = new Array(numTypes)
+					const base = (t * spanLen + l) * numTypes
+
+					for (let ty = 0; ty < numTypes; ty++) {
+						row[ty] = spanData[base + ty]!
+					}
+					perLength[l] = row
+				}
+				spanScores.push(perLength)
+			}
+		}
+
+		return {
+			logits,
+			numLabels,
+			...(localeLogits ? { localeLogits } : {}),
+			...(spanScores ? { spanScores, maxSpan } : {}),
+		}
 	}
 
 	/**
