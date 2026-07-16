@@ -2439,3 +2439,73 @@ def piece_prior(
             continue
         top = "  ".join(f"{k}pc:{v / t:.2f}" for k, v in f.most_common(3))
         print(f"    {dl:>6d}  {t:>9,}   {top}")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=1800,
+)
+def country_census_raw(
+    corpus_dir: str = "/data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment",
+    rows: int = 300000,
+):
+    """THE NORWAY PROBE: does the corpus CONTAIN Norwegian rows that the country filter drops?
+
+    `country_weights` in 44 configs carries an unquoted `NO: 1.0`. YAML 1.1 parses the bare token
+    `NO` as the BOOLEAN false, so the dict key is `False`, not `"NO"`. The loader then does
+
+        weight = country_weights.get(country)   # .get("NO") -> None
+        if weight is None or weight <= 0: continue
+
+    and every Norwegian row is silently dropped. That is mechanical and confirmed. What is NOT yet
+    established is whether it MATTERS: if the shards hold no Norwegian rows, quoting the key is a
+    no-op and the Norwegian parse failures are a genuine data-acquisition gap instead.
+
+    So this counts countries in the RAW parquet, BEFORE any filter — scanning the country column
+    directly rather than going through `iter_rows`, because `iter_rows` is the thing under
+    suspicion. If NO rows exist here, the bug is load-bearing and one character fixes it.
+    """
+    import sys
+    from collections import Counter
+    from pathlib import Path
+
+    import pyarrow.parquet as pq
+
+    vol.reload()
+    sys.path.insert(0, "/data/corpus-python/src")
+
+    from mailwoman_train.data_loader import _shard_paths
+
+    shards = _shard_paths(Path(corpus_dir), "train")
+    print(f"train shards: {len(shards)}")
+
+    counts = Counter()
+    by_source = {}
+    seen = 0
+    for sh in shards:
+        pf = pq.ParquetFile(sh)
+        for batch in pf.iter_batches(batch_size=8192, columns=["country", "source"]):
+            cc = batch.column("country").to_pylist()
+            ss = batch.column("source").to_pylist()
+            for c, s_ in zip(cc, ss, strict=True):
+                counts[c] += 1
+                if c in ("NO", "NZ", "PL"):
+                    by_source.setdefault(c, Counter())[s_] += 1
+            seen += len(cc)
+        if seen >= rows:
+            break
+
+    total = sum(counts.values())
+    print(f"\nRAW rows scanned (pre-filter): {total:,}\n")
+    print("  country   rows        share")
+    for c, n in counts.most_common(22):
+        print(f"    {str(c):<6s} {n:>9,}   {n / total:.4f}")
+
+    print("\n  THE PROBE — countries the filter is suspected of dropping:")
+    for c in ("NO", "NZ", "PL"):
+        n = counts.get(c, 0)
+        verdict = "PRESENT -> the filter is eating real data" if n else "ABSENT  -> genuine acquisition gap"
+        print(f"    {c}: {n:,} raw rows   {verdict}")
+        for src, k in (by_source.get(c) or Counter()).most_common(5):
+            print(f"        via {src}: {k:,}")
