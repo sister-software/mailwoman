@@ -13,12 +13,14 @@ import { countryBalancedRecipe } from "./country-balanced.ts"
 import { czPcFirstPrepositionRecipe } from "./cz-pcfirst-preposition.ts"
 import { frAdminSplitRecipe } from "./fr-admin-split.ts"
 import { frBareStreetRecipe } from "./fr-bare-street.ts"
+import { frFragmentRecipe } from "./fr-fragment.ts"
 import { frOrderRecipe } from "./fr-order.ts"
 import { germanRecipe } from "./german.ts"
 import { houseVenueRecipe } from "./house-venue.ts"
 import { intersectionRecipe } from "./intersection.ts"
 import { localeRecipe } from "./locale.ts"
 import { nlPostcodeRecipe } from "./nl-postcode.ts"
+import { noFragmentRecipe } from "./no-fragment.ts"
 import { noStreetLedRecipe } from "./no-street-led.ts"
 import { noStreetRecipe } from "./no-street.ts"
 import { poBoxCedexRecipe } from "./po-box-cedex.ts"
@@ -48,9 +50,11 @@ const RECIPES: readonly ShardRecipe[] = [
 	frOrderRecipe,
 	frAdminSplitRecipe,
 	frBareStreetRecipe,
+	frFragmentRecipe,
 	czPcFirstPrepositionRecipe,
 	nlPostcodeRecipe,
 	noStreetLedRecipe,
+	noFragmentRecipe,
 	siBareVillageRecipe,
 	countryBalancedRecipe,
 	boundaryStressRecipe,

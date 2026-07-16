@@ -102,9 +102,6 @@ const sidebars: SidebarsConfig = {
 				},
 			],
 		},
-		// A narrow, dated debugging gotcha that doesn't fit any of the categories above.
-		// Kept in-nav per "do not drop pages" — parked at the end as an appendix.
-		"understanding/onnxruntime-web-webgpu-gotcha",
 	],
 	reference: [
 		"plan/SCOPE",
@@ -119,9 +116,12 @@ const sidebars: SidebarsConfig = {
 		"plan/reference/STAGES",
 		"plan/reference/QUERY_SHAPE",
 		"plan/reference/closed-vocab-fields-model-first",
+		"plan/reference/registry-backed-structured-prediction",
+		"plan/reference/the-meaning-of-zero",
 		"plan/reference/FST_GAZETTEER_LM",
 		"plan/reference/TRAINING_RECIPE_LEVERS",
 		"plan/reference/runtime-flags",
+		"plan/reference/performance",
 		"plan/reference/address-data-sources",
 		"plan/reference/record-matcher-sources",
 		"plan/reference/sentencepiece-uds-whitespace",

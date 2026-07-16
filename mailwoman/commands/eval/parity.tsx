@@ -41,6 +41,13 @@ const OptionsSchema = zod.object({
 		.optional()
 		.default(false)
 		.describe("Probe 0: decode-time street-morphology emission bias (libpostal street_types, all locales)"),
+	wordConsistency: zod
+		.boolean()
+		.optional()
+		.default(true)
+		.describe(
+			"Ship-config word-consistency heal (default ON per the 2026-07-15 gate revision; --no-word-consistency for pre-heal baselines)"
+		),
 	failing: zod.coerce
 		.number()
 		.int()
@@ -65,6 +72,7 @@ const EvalParity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					fixturesPath: options.fixtures,
 					weightsCacheRoot: options.weightsCache,
 					streetMorphology: options.streetMorphology,
+					wordConsistency: options.wordConsistency,
 					failing: options.failing,
 				})
 			).exitCode,

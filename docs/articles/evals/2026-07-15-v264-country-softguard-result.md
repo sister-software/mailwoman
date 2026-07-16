@@ -1,4 +1,4 @@
-# 2026-07-15 — v264 country-softguard (#1104): softening the homograph guard is a clean win
+# 2026-07-15 — v264 country-softguard (#1104): softening the homograph guard recovers country on both distributions
 
 v264 (`v2.6.4-country-softguard`) is a single-variable fine-tune off v263: `model.country_ambiguous_scale`
 1.0 → 0.5. It **strictly dominates v263** on country with no offsetting trade — the first country
@@ -11,7 +11,7 @@ The `eval gate --weights-cache` ledger backfill surfaced that v263's country cha
 recovered WOF-admin country recall (84.8→89.3%) but dropped the country-homograph probe 89.8→82.6. The
 guard was too strong. v264 softens it.
 
-## The mechanism — `country_ambiguous_scale` (bakes into the ONNX, no lexicon/inference change)
+## Mechanism: `country_ambiguous_scale` (bakes into the ONNX, no lexicon/inference change)
 
 A model-config scalar scales the `country_ambiguous` feature dim (index 1) of `country_features` BEFORE
 `country_projection`, via a non-persistent registered buffer `[1.0, scale]`. Because the scale lives in the
@@ -34,14 +34,14 @@ the homograph probe until that was caught.)
 | **held-out FR coordinate** (300 BAN, ≤5km)  | 281           | 264 (z +0.25) | ✓ PASS                               |
 | **aggregate golden label-fails**            | 1101          | 1098          | ✓ −3 (net better)                    |
 
-The finding beneath the numbers: softening the guard recovered country recall on **both** distributions at
-once — the homograph test (its target) and the WOF-admin hierarchy (a bonus). The v263 hard guard was
+Softening the guard recovered country recall on **both** distributions at once: the homograph test (its
+target) and the WOF-admin hierarchy (a bonus). The v263 hard guard was
 over-suppressing country broadly, not only on true homographs; the `country_ambiguous` bit fires on any
 flagged surface and v263 trusted it too little everywhere. At scale 0.5 the model trusts it more, recovers
 recall, and precision holds (falsifier hallucination unchanged) because the softer bit is still an
 informative false-positive signal, just not a near-veto.
 
-## The 0.25 probe (v265) — the operator asked; here's the sweep
+## v265 (0.25): the sweep the operator asked for
 
 v265 (`country_ambiguous_scale: 0.25`, init_from v263, same A/B base) probed whether a stronger soften
 recovers more. It does — without over-softening (precision + hallucination held):

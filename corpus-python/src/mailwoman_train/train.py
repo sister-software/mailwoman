@@ -130,6 +130,56 @@ def _constant_with_warmup(optimizer: AdamW, warmup_steps: int) -> LambdaLR:
     return LambdaLR(optimizer, lr_lambda)
 
 
+def build_optimizer(
+    model,
+    *,
+    learning_rate: float,
+    weight_decay: float,
+    span_head_learning_rate: float | None = None,
+) -> AdamW:
+    """AdamW over the model's trainable params, optionally giving the #727 span head its own LR.
+
+    Why the override exists: a randomly-initialized head on a PRETRAINED encoder cannot train at the
+    encoder's fine-tuning LR. The v3.0.0 probe inherited `lr: 1e-5` from v2.6.4 (a recipe that
+    fine-tunes existing weights) and the fresh span head barely moved in 2k steps — loss 26.4 → 17.8,
+    still falling, raw span NLL ~35 where a converged semi-CRF sits at O(1). Two param groups let the
+    head run at ~1e-3 while the encoder keeps its gentle 1e-5.
+
+    `LambdaLR` scales each group's OWN `initial_lr` by the same multiplier, so the existing
+    warmup/cosine schedule composes with this for free — both groups keep their shape and their ratio.
+
+    Frozen params (`requires_grad=False`, the `freeze_*` idioms) are excluded from every group.
+    Omitting `span_head_learning_rate` yields exactly one group — byte-identical to every prior recipe.
+    """
+    trainable = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
+
+    if span_head_learning_rate is None:
+        return AdamW([p for _, p in trainable], lr=learning_rate, weight_decay=weight_decay)
+
+    head_prefixes = ("span_scorer.", "semi_crf.")
+    head = [p for n, p in trainable if n.startswith(head_prefixes)]
+    rest = [p for n, p in trainable if not n.startswith(head_prefixes)]
+
+    if not head:
+        raise RuntimeError(
+            "train.span_head_learning_rate is set but no span_scorer/semi_crf params exist — "
+            "set model.use_span_scorer: true, or drop the override"
+        )
+    print(
+        f"[span_head_lr] head={sum(p.numel() for p in head):,} params @ {span_head_learning_rate} | "
+        f"encoder={sum(p.numel() for p in rest):,} @ {learning_rate}"
+    )
+
+    return AdamW(
+        [
+            {"params": rest, "lr": learning_rate},
+            {"params": head, "lr": span_head_learning_rate},
+        ],
+        lr=learning_rate,
+        weight_decay=weight_decay,
+    )
+
+
 def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
     schedule = getattr(cfg_train, "lr_schedule", "cosine")
     if schedule == "constant":
@@ -409,10 +459,13 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             raise RuntimeError("freeze_token_embeddings=True but no token_embeddings params found")
         print(f"[freeze_token_embeddings] frozen={frozen:,} trainable={sum(p.numel() for p in trainable_params):,}")
 
-    optim = AdamW(
-        trainable_params if getattr(cfg.train, "freeze_encoder", False) else model.parameters(),
-        lr=cfg.train.learning_rate,
+    # build_optimizer filters on requires_grad, so the freeze_* idioms above are honored without the
+    # explicit trainable_params hand-off (a frozen param has requires_grad=False by then).
+    optim = build_optimizer(
+        model,
+        learning_rate=cfg.train.learning_rate,
         weight_decay=cfg.train.weight_decay,
+        span_head_learning_rate=getattr(cfg.train, "span_head_learning_rate", None),
     )
     scheduler = _build_scheduler(optim, cfg.train)
     print(f"lr_schedule={getattr(cfg.train, 'lr_schedule', 'cosine')}")

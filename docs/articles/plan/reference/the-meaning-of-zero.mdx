@@ -1,0 +1,129 @@
+# The meaning of zero
+
+> **A magnitude never carries its own absence.**
+
+When `0` means both "we don't know" and "we measured zero", no consumer can tell them apart — and
+both readings look like a number, so nothing errors, nothing logs, and the lever just quietly does
+nothing. This page is the invariant and the audit behind it.
+
+The operator named this after it bit twice in one day. That is what promotes a coincidence to a bug
+class.
+
+## The rule
+
+Split the **presence bit** from the **magnitude**.
+
+```ts
+// Wrong — one field, two claims.
+interface Evidence {
+	importance: number // 0 = "unknown place"? or "known, unimportant"?
+}
+
+// Right — the bit is separate, and `{exists: true, confidence: 0}` is a
+// DIFFERENT claim from `{exists: false}`.
+interface Evidence {
+	exists: boolean
+	confidence: number
+}
+```
+
+[`StreetNameEvidenceProvider`](./registry-backed-structured-prediction.mdx) is the shape done right:
+`exists` answers "is there evidence", `confidence` answers "how much". They are never the same
+question.
+
+**Re-encoding the domain does not fix it.** A proposal to move `importance` to `[-1, 1]` with `0` as
+the default and `-1` as "unknown" was considered and rejected against the data: it still collapses
+absence onto the value axis, and 82% of places would land on `-1`, so the axis would encode mostly
+one thing. The split is the fix; the range is a detail.
+
+## The audit
+
+Four confirmed sites, in descending order of how much they cost.
+
+### 1. The postcode-anchor channel — the bit exists and nothing reads it
+
+`neural/postcode-anchor.ts` documents it plainly:
+
+```ts
+/** `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer. */
+confidence: number
+```
+
+So `confidence: 0` means **either**:
+
+- `27` is not a postcode at all, **or**
+- `75008` absolutely is a postcode, and it exists in so many countries that the posterior is uniform.
+
+Those are opposite claims. The first says "ignore this token"; the second says "this IS a postcode,
+just don't trust the country."
+
+The type already carries the discriminator — `matchType: "exact" | "outward" | "fuzzy" | "none"`,
+where `"none"` is exactly "in no gazetteer". **No consumer reads it.** `soft-features.ts` builds the
+channel from `anchor.confidence` alone, so the model is fed one number and cannot recover the
+difference. The bit exists, travels as far as the type boundary, and is dropped on the floor.
+
+This is the most expensive instance, because the anchor channel is how the model learns about
+postcodes at all.
+
+### 2. Gazetteer importance — no bit at all (#1142)
+
+`neural/fst-prior.ts`:
+
+```ts
+const impBias = entry.importance * biasScale * maxBias
+const existing = seenTags.get(bioTag) ?? 0
+
+if (impBias > existing) {
+	seenTags.set(bioTag, impBias)
+}
+```
+
+`importance: 0` ⇒ `impBias: 0` ⇒ never greater than the initial `0` ⇒ **the tag is never biased**.
+An unknown place and a known-but-unimportant place are both perfectly inert, and 82% of places read
+`0`. The lever looks configured and does nothing. Tracked on #1142.
+
+Measured on the Paris fixtures: only 3 of 43 surfaces were inert this way — so on that corpus the
+inertia is not what's protecting us, but the ambiguity is still live everywhere else.
+
+### 3. `CoincidentLocality.population` — unknown ranks as unpopulated
+
+`core/resolver/types.ts`:
+
+```ts
+/** Locality population (0 when unknown) — the PRIMARY disambiguator when an admin has several. */
+population: number
+```
+
+A locality whose population we don't know sorts identically to one with no inhabitants, and both
+lose to anything populated — **in the primary disambiguator**. Related to #743, where a
+population-first ranking could not be moved by a soft prior for low-population FI/PL localities.
+
+### 4. Zero-valued baselines — the same shape, caught in the act
+
+`baseline-assert.ts` checks a reading against a registered value by relative deviation. At
+`value: 0` the relative band is undefined: every reading is either exactly right or infinitely wrong.
+The fix there was `tolerance_abs`, which is the same move in miniature — the row declares what "zero"
+means instead of letting the arithmetic guess.
+
+`span_scorer.py`'s `_NEG_INF = -1e4` is the sentinel-inside-the-value-domain version: a magic number
+living in the same space as real scores.
+
+## How to apply
+
+When you add a numeric channel, score, rate, bias, or weight, ask **one** question:
+
+> Can this field's zero mean "absent"?
+
+If yes, add the bit. If the bit already exists somewhere in the type, **check that the consumer reads
+it** — site 1 above is the reminder that a discriminator nobody uses is the same as no discriminator,
+and it is harder to spot because the type looks correct.
+
+The tell, every time: the docstring says "`0` when …". Grep for it.
+
+## Why this is worth a page
+
+Every instance costs a wrong verdict or a dead lever, and none of them announce themselves. Phase 4a's
+rerank was VOID because a resolver reading `0.000` street evidence looked exactly like a resolver with
+no street evidence to give — the instrument was dark, the number was well-formed, and the report read
+as a finding. That is the whole failure mode: **a magnitude carrying its own absence is a lie the type
+system will happily typecheck.**

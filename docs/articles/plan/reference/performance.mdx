@@ -1,0 +1,136 @@
+# Performance: what moves parse throughput
+
+> **In Node, one parse cannot overlap another in-process. Threads are the only lever.**
+
+Two levers suggest themselves for making a parser faster: batch the work, or run it concurrently.
+Neither one moves this system, and the reasons are invisible from the call site. This page is the
+measurements, so the next person who reaches for a batch path finds the receipts first.
+
+Measured 2026-07-16 against the shipped v6.3.0 model (`v264-country-softguard`, int8), 16-core box.
+
+## Where the time goes
+
+A parse is **93.2% ONNX forward pass**. Tokenizing, the anchor/gazetteer/country channel lookups,
+Viterbi, and building the tree add up to 0.25 ms, under 7% of the wall clock.
+
+If the forward pass were free, parse would be 14.6x faster. Every lever below is an attempt to
+collect that 14.6x, and every one of them fails for the same reason: the forward pass is not
+idle-waiting on anything. ONNX Runtime already spends **8.02 cores on a single batch=1 inference**,
+so there is no slack to reclaim.
+
+## Concurrency does nothing
+
+1.00x flat, from one worker to sixteen, on both parse and full geocode:
+
+| workers | parse addr/s | scaling |
+| ------: | -----------: | ------: |
+|       1 |        274.0 |   1.00x |
+|       2 |        276.1 |   1.01x |
+|       4 |        279.4 |   1.02x |
+|       8 |        274.6 |   1.00x |
+|      16 |        274.5 |   1.00x |
+
+Two things hold the thread, and either alone is enough:
+
+- **`onnxruntime-node`'s `session.run()` blocks the JavaScript thread.** It does not release to the
+  libuv pool. `Promise.all` over N inferences runs them one after another, no matter what N is.
+- **`node:sqlite` reads are synchronous** by design — the resolution ladder is a sync interface (see
+  [ARCHITECTURE](./ARCHITECTURE.mdx)). The resolve half of a geocode blocks too.
+
+The giveaway is that the numbers come out identical rather than merely close. Contention would show
+as a curve; a flat line means nothing overlapped at all.
+
+This is why `MAILWOMAN_BATCH_CONCURRENCY` was removed on 2026-07-16. It defaulted to 8, it was
+documented as a tuning knob, and it had never done anything. Setting it to 1 and to 16 produced the
+same throughput to three digits. `POST /v1/batch` is a sequential loop now, which is what it had been
+in practice all along.
+
+The same lever works in Python, where `intra_op=1` plus 16 threads buys 1.64x, because Python's ORT
+releases the GIL during a run. That conclusion doesn't port. The binding is what differs.
+
+## Batching does not pay
+
+The obvious counterexample is [deepparse](https://deepparse.org/), which parses at 3.1 ms/addr
+batched against 32.5 ms sequential, a 10x win. That 10x is amortized per-call Python and torch
+overhead. We don't carry that overhead, so there's nothing for batching to amortize. Our sequential
+path (~300 addr/s) already matches deepparse's batched throughput (320 addr/s), and beats its
+sequential latency 4.7x.
+
+Measured on the shipped int8 graph, re-exported so it could accept a batch at all:
+
+| batch | ms/addr | addr/s | scaling |
+| ----: | ------: | -----: | ------: |
+|     1 |    3.29 |  304.1 |   1.00x |
+|     4 |    2.93 |  341.7 |   1.12x |
+|     8 |    3.30 |  303.5 |   1.00x |
+|    32 |    4.64 |  215.6 |   0.71x |
+|    64 |    5.33 |  187.7 |   0.62x |
+
+It peaks at 1.12x and then goes backwards. fp32 behaves the same way (1.24x at B=4). Batching raises
+arithmetic intensity, which helps when cores sit idle waiting on memory, and ours don't. Past B=8 the
+working set stops fitting and you pay for the privilege.
+
+**On CPU, don't build a batching path.** On GPU or WebGPU the arithmetic-intensity story differs and
+batching plausibly pays, but nobody has measured it. Treat that as an open question.
+
+## A `batch` axis that isn't
+
+`export_onnx.py` asks for a dynamic batch dimension on all eight inputs, and until 2026-07-16 it
+silently didn't get one. The graph advertised `['batch', 'sequence']` on every input while its
+outputs were pinned to `[1, 'sequence', 33]`, and any batch above 1 died inside an attention reshape:
+
+```
+Input shape:{64,4,1152}, requested shape:{64,1,3,384}
+```
+
+That `1` is the batch dimension, traced in as a literal.
+
+The cause is **`torch.export`'s 0/1 specialization**: a dimension of size 0 or 1 is specialized to a
+constant unconditionally, even when `dynamic_shapes` marks it dynamic. The export traced with batch=1
+example inputs, so the request was discarded while the input still got labelled `'batch'`, which is
+why the metadata lied. Tracing with batch=2 fixes it:
+
+```
+dummy_batch=1  logits_out=[1, 'sequence', 33]        B=4:FAIL
+dummy_batch=2  logits_out=['batch', 'sequence', 33]  B=4:OK  B=32:OK
+```
+
+Hence `export_to_onnx(..., dummy_batch=2)`. It defaults to 1, so the shipped artifact is unchanged —
+the batch=2 re-export reproduces it byte-for-byte at 39.4 MB. The fix is in the tree because an
+artifact that advertises a capability it doesn't have is a trap for whoever trusts the metadata, not
+because batching is coming.
+
+Don't try to reproduce the specialization with a small model. A minimal reshape repro exports fine at
+batch=1 on torch 2.13 — it comes out of the transformers attention internals, so only the real
+checkpoint settles it.
+
+## What works
+
+Crossing a thread boundary is the only thing that moves this.
+
+[`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts)
+already does it: an async iterator over a `spliterator` worker pool, each worker rebuilding its own
+classifier and lookups, yielding in completion order.
+
+Expect a modest return. Geocoding is memory- and I/O-bound on a shared multi-gigabyte database, and a
+measured NPPES sweep peaked at **two workers (~1.4x)**, degrading from there (four workers ≈ baseline,
+six ≈ no gain). Each worker also pays for its own 38 MB session and its own open database. Sweep it
+for your data and your box rather than reaching for `availableParallelism()`.
+
+Parse-only threading has no database under it and no contention, so it should scale further than
+geocoding does. Nobody has measured it. Python's `intra_op=2` / 8 threads hit 1.57x, which is a hint
+about the shape and not a figure to quote.
+
+## Before you re-measure
+
+Two traps, both of which produced a wrong answer during the original sweep:
+
+- **Warm up, and repeat.** A single cold run showed concurrency at 1.19x on the geocode path and came
+  close to buying the knob a reprieve. Repeats showed no trend whatsoever, with `c=1` beating `c=8`
+  half the time. The spread across identical configs is ~13%, wider than most effects worth chasing.
+- **Reach the real runner.** The forward-pass split needs `classifier.cfg.runner`. Instrumenting the
+  wrong field reports a confident 0 ms and a clean 0%, a magnitude standing in for its own absence.
+  Same bug class as [the meaning of zero](./the-meaning-of-zero.mdx).
+
+The probes live in `scratchpad/` on the branch that produced this page: `batch-export-probe.py`,
+`ort-threads-probe.mjs`, `parse-profile.run.ts`, `parse-concurrency.run.ts`, `parse-cpu.run.ts`.

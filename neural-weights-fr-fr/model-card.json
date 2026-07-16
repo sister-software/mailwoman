@@ -1,8 +1,8 @@
 {
 	"name": "neural-weights-fr-fr",
-	"version": "6.3.0",
-	"model_lineage": "Ships the en-us v264 (v2.6.4-country-softguard, #1104) model — init_from v263 with country_ambiguous_scale 0.5 (softens the homograph guard, baked into the ONNX); tokenizer v0.9.0-multisplice (73,143). One model serves both locales; see the en-us card for the full lineage + the v264 grade (strictly dominates v263 on country, no trade).",
-	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v264 model, shipped as 6.3.0)",
+	"version": "6.4.0",
+	"model_lineage": "Ships the en-us v310 (v3.1.0-fr-fragment, #1143 T2) model — init_from v264 plus the synth-fr-fragment BAN shard @ 12.0; tokenizer v0.9.0-multisplice (73,143) UNCHANGED. One model serves both locales; see the en-us card for the full lineage + grade. NOTE for this locale specifically: the shard is BAN-derived (Base Adresse Nationale, Licence Ouverte 2.0) and the gains are measured on French — bare-street 0.215→0.715, street-particle 0.273→0.855, admin-street-homonym 0.087→0.517, with the bare-locality counter-guard holding exactly. This is the largest FR-facing model change since 5.9.0.",
+	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v310 model, shipped as 6.4.0)",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "fr-fr",
 	"training": {
@@ -10,7 +10,7 @@
 		"tokenizer_version": "0.9.0-multisplice",
 		"steps": 8000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"note": "Identical artifact to neural-weights-en-us 6.3.0 / v264 country-softguard (one multi-locale model serves both, copied at publish time). See that card's training/recipe for full provenance."
+		"note": "Identical artifact to neural-weights-en-us 6.4.0 / v310 fr-fragment (one multi-locale model serves both, copied at publish time). See that card's training/recipe for full provenance."
 	},
 	"requires": {
 		"$comment": "SHIP-CONFIG mirrored from neural-weights-en-us (#718/#721): this package ships en-us's model, so its required channels are identical — including `country` (the #1104 dedicated country soft-feed channel added in v263). createScorer / loadFromWeights read this and feed anchor + gazetteer + country + the conventions mask; running channel-OFF is the #566/#685 OOD crater.",

@@ -1,0 +1,251 @@
+# Registry-backed structured prediction
+
+How Mailwoman is allowed to use address registries — BAN, BAG, TIGER, WOF, OSM — and
+why they feed the model instead of deciding for it.
+
+The one-sentence version:
+
+> **Registries provide soft lexical priors and synthetic coverage. The model still owns
+> ambiguity.**
+
+This is the street-level generalization of
+[closed-vocab fields: model-first](./closed-vocab-fields-model-first.mdx). That doc
+settled `country` / `po_box` / `cedex`: the gazetteer enters as a soft feature, never a
+substitution. This one settles street names, where the pull toward substitution is much
+stronger — because a national register does know every street, and it is very tempting to
+let it say so.
+
+## What this is not
+
+Two architectures sit on either side of this design, and both have already failed here.
+Naming them is the point of the doc: every future convenience will look like a small step
+toward one of them.
+
+### Not a dictionary parser
+
+Pelias matches phrases against curated dictionaries. It works extraordinarily well on
+exact template matches and fails hard on messy input, because the hypothesis space is
+**closed** — a phrase the dictionary doesn't carry cannot be proposed at all. The
+receipts are in the dictionaries themselves: read
+`pelias/parser/resources/pelias/dictionaries` and every file is a story about a synonym
+or word fragment that broke something. The line between scar tissue and pragmatism is
+ambiguous in there, and that ambiguity is the cost of the architecture, not a lapse in
+its maintenance.
+
+A register used as a veto is a dictionary parser wearing a probability. It fails on the
+same input for the same reason: an unseen street is punished for being unseen.
+
+### Not resolver-as-arbiter
+
+Phase 4a tried to let the resolver adjudicate between k-best readings. It doesn't work,
+and the reason is structural rather than a tuning miss: **the resolver needs a house
+number or a locality to resolve, so it is blind exactly where bare fragments need it.**
+`Rue Montmartre` alone gives it nothing to resolve, so it cannot arbitrate the one class
+that motivated the arc. This was measured, not assumed — see the Phase 4a verdict.
+
+Both failures share a shape. Something downstream of the model was asked to supply
+certainty the model didn't have, and it supplied confidence instead.
+
+## The two channels
+
+A registry gets exactly two ways in. Everything else stays with the model.
+
+### 1. Soft lexical prior
+
+Positive-only bias, weighted by source tier and scope, with the constant tuned **per
+locale family** rather than once globally.
+
+### 2. Synthetic coverage
+
+Phenomenon shards at a capped ratio, split source-disjoint by normalized street surface.
+If the model has never seen a bare street, no amount of inference-time evidence fixes the
+prior — that's a training-distribution problem and it gets a training-distribution fix.
+
+## The provider
+
+One abstraction, so a tier can never quietly acquire a capability it wasn't granted:
+
+```ts
+interface StreetNameEvidenceProvider {
+	lookup(surface: string, locale: LocaleHint, scope?: EvidenceScope): StreetNameEvidence
+}
+
+interface StreetNameEvidence {
+	exists: boolean
+	confidence: number
+	source: string
+	sourceTier: EvidenceTier // A | B | C | D
+	scopeLevel: ScopeLevel // global | region | locality | postcode
+	frequency: number
+}
+```
+
+`sourceTier` is part of the return, not something a consumer derives by pattern-matching
+`source`. Confidence depends on tier and scope, so tier has to be legible at the point
+the bias is applied.
+
+### Rules
+
+1. **Positive evidence only.**
+2. **Confidence depends on source tier and scope.**
+3. **No global vetoes.**
+4. **Tune bias per locale family**, not one universal constant.
+5. **Split eval/train by street surface**, not record row.
+
+Rule 1 is the one that will be under pressure. Negative evidence from an incomplete
+register recreates the Pelias deletion in soft form: real, unseen streets punished
+globally, and the punishment is invisible because it looks like a probability instead of
+a missing dictionary entry. No tier — including the complete-in-principle ones — supplies
+global negative evidence.
+
+Rule 5 has already caught us once in spirit: a row-disjoint split leaks the surface
+across the boundary, and you measure memorization of `Rue de Rivoli` while believing you
+measured generalization to unseen streets.
+
+## Capability tiers
+
+| Tier  | Data                                                         | Allowed use                                  | Not allowed                                                         |
+| ----- | ------------------------------------------------------------ | -------------------------------------------- | ------------------------------------------------------------------- |
+| **A** | Authoritative street/address registers — FR BAN, NL BAG-like | Eval, augmentation, positive name-index bias | Negative evidence                                                   |
+| **B** | Road/address-range data — US TIGER                           | Positive bias **only with scope**            | Unscoped/global evidence; negative evidence                         |
+| **C** | Admin gazetteers — WOF                                       | Locality/region/country evidence             | **Street existence**; negative evidence                             |
+| **D** | OSM-like broad data                                          | Experiments, coverage-gap analysis           | Product use without licensing/attribution review; negative evidence |
+
+### Tier A — start here
+
+BAN is the first proving ground because it is clean, national, and street-name complete.
+It's the only tier where absence is even arguably informative, and the only place the
+augmentation can be graded against something that isn't a guess. Generalization to other
+locales happens **by tier, afterward** — never folded into the same step.
+
+### Tier B — scope is the whole rule
+
+`Main St` globally is weak evidence; it exists in nearly every US locality, so its
+existence discriminates nothing. `Main St` + `CA` / `Santa Clara` / a ZIP is useful.
+
+There's a trap here worth stating plainly, because it's the same one that killed Phase
+4a: **scoping re-introduces the locality dependency.** If the scope has to come from a
+resolve, Tier B is blind on exactly the bare fragments that need it. Tier B evidence is
+usable only when the scope is present in the input.
+
+### Tier C — the famous-street-as-place trap
+
+WOF carries admin polygons. It also carries famous streets **as places** — and `rue`,
+`boulevard`, and `place` are themselves gazetteer entries. Reading a WOF hit as street
+existence inverts it: `Rue Montmartre` looks like evidence for `locality`, which is the
+exact error the arc is trying to fix.
+
+This is measured, not asserted. Walking the shipped FST (`fst-global-priority.bin`) over
+the Paris fixtures returns 43 distinct surfaces, 37 of which would fire an emission bias:
+
+| surface        | placetype : importance                |
+| -------------- | ------------------------------------- |
+| `rue`          | localadmin 0.145, neighbourhood 0.149 |
+| `boulevard`    | neighbourhood 0.167                   |
+| `place`        | neighbourhood 0.169                   |
+| `la`           | locality **0.850**                    |
+| `du`           | region **0.650**                      |
+| `londres`      | region 0.937, locality 0.936          |
+| `saintgermain` | locality 0.386                        |
+| `12`, `2`, …   | localadmin 0.05–0.15                  |
+
+The French particles carry the strongest hits on the board — `la` at 0.850 locality,
+inside street phrases like `Rue de la Paix` — and bare house numbers match localadmin
+places. So the trap's _ingredients_ are unambiguously present.
+
+**What is not present is the effect.** Turning the prior on moves the Paris target class
+by nothing: 33/63 off, 33/63 on, two fixtures changing in opposite directions. So the
+feedback loop is not what fails these addresses today — the model's locality reading is
+its own, learned from a corpus where bare street fragments are rare and bare localities
+are not. That is a training-distribution problem, which is why the BAN shard outranks
+every inference-time lever.
+
+Keep the tier rule anyway. It does not rest on a measured harm — it rests on the
+encoding. A channel that answers "is this a locality" must never be read as answering "is
+this a street," and the table above is exactly what a future consumer would be reading if
+it did.
+
+Tier C answers locality/region/country. It does not answer "is this a street."
+
+### Tier D — licensing gates product use
+
+OSM's coverage is the best available for gap analysis and for experiments that need
+breadth. Source quality, licensing, and attribution gate anything that ships. Note
+`@mailwoman/osm` is itself unpublished pending ODbL counsel sign-off.
+
+## Training: phenomenon shards
+
+Per locale, sampled from the Tier A register:
+
+1. **bare street** — `Rue Montmartre`
+2. **street + particle** — `Rue de la Paix`, `Avenue des Champs-Élysées`
+3. **street + house number**
+4. **admin/street homonym** — the polarity class
+5. **date-name** — `Rue du 11-Novembre-1918`
+6. **alphanumeric house number**
+
+**Shard ratios stay capped** so full-address performance doesn't regress. The cap is the
+mechanism; the contextful regression guard is the check that the mechanism worked. A
+shard that fixes fragments by degrading normal addresses hasn't fixed anything — it moved
+the failure somewhere the fragment board can't see.
+
+Label policy for street shards: the **full street phrase** is `street`, including affix,
+particle, apostrophe, hyphenated compound, and date-name material.
+
+## Eval: two boards, three questions
+
+| Board                     | Question                    | Instrument                                                    |
+| ------------------------- | --------------------------- | ------------------------------------------------------------- |
+| **Global parity floor**   | Do no harm                  | `mailwoman eval parity` — broad, the standing floors          |
+| **Locale fragment board** | Did the targeted class move | `mailwoman eval fragment-board` — per-class, Wilson intervals |
+
+A change ships when board 1 holds **and** board 2 moves. Neither board alone is a verdict.
+
+Why two, concretely: the span-head arc scored +23.8pp on its target class and roughly +0
+net overall. A single blended number turns that into "inside noise, ship it" — and hides
+both the win and whatever the win was paid for. A 3/15 cell on a 63-row fixture has a 95%
+Wilson interval of 7–45%, which is not a measurement. The fragment board samples BAN at
+~400/class so the targeted classes get error bars instead of anecdotes.
+
+Its first read (v264, the shipped model) is why the board earns its keep — same streets,
+same model, the only difference a leading number:
+
+| class                             |   n |  rate | 95% CI         |
+| --------------------------------- | --: | ----: | -------------- |
+| street-housenumber                | 400 | 0.925 | [0.895, 0.947] |
+| alnum-housenumber                 | 400 | 0.925 | [0.895, 0.947] |
+| bare-street                       | 400 | 0.215 | [0.178, 0.258] |
+| street-particle                   | 400 | 0.273 | [0.231, 0.318] |
+| admin-street-homonym              | 400 | 0.087 | [0.064, 0.119] |
+| date-name                         | 400 | 0.055 | [0.037, 0.082] |
+| bare-locality _(emits no street)_ | 400 | 0.980 | [0.961, 0.990] |
+
+**The house number is the entire signal.** With one, 92.5%; without one, 21.5%. The
+intervals do not come close to touching, so this is not a reading anyone has to squint at.
+
+### The third question: what does the board _not_ score?
+
+Two boards were not enough, and the arc proved it. Every street metric in the repo filters
+to rows carrying a street gold, so a street **hallucinated on an input that has none** was
+invisible to all of them — `New York, NY` → `street="new york"` could never cost a point.
+The span decode's failure lived precisely in the rows the filter dropped, which means the
+instrument flattered that decode **specifically**.
+
+So the fragment board carries a **negative class**: `bare-locality` rows asserting the
+parser emits _no_ street. A board that cannot score the failure cannot grade the fix.
+
+Generalize the habit, because this was the third instrument failure in one arc (starved
+channels, a dark resolver, a filtered corpus): before trusting a board, ask what it drops.
+A registered baseline will not save you — a baseline over a filtered corpus is
+self-consistent forever. It pins reproducibility, not validity.
+
+## Why this holds
+
+The failure the arc is fixing is three interacting things: a training distribution that
+underrepresents bare streets, an objective that rewards token correctness over span
+utility, and resolver evidence that is blind where arbitration is needed. Registries
+address the first. They are not permitted to paper over the second or the third, because
+that's how a parser becomes a dictionary — one convenience at a time, each individually
+defensible, until the hypothesis space is closed again and the messy addresses fail.
+
+The model owns ambiguity. That's the whole line.

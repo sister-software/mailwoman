@@ -100,6 +100,39 @@ class DataConfig:
     # not add a parallel knob (the review's no-reinvent conclusion).
     region_centroids_path: str | None = None
 
+    def __post_init__(self) -> None:
+        """Reject country codes YAML has silently retyped.
+
+        THE NORWAY PROBLEM. YAML 1.1 resolves the bare token ``NO`` to the BOOLEAN ``false``, so a
+        config writing the obvious
+
+            country_weights:
+              NO: 1.0
+
+        yields the dict ``{False: 1.0}``. The loader then does ``country_weights.get(row_country)``
+        — ``.get("NO")`` misses, returns None, and every Norwegian row is dropped on the spot. The
+        annotation above says ``dict[str, float]`` and Python enforces none of it, so this ran
+        silently in 44 configs from v1.9.0-multilocale through the shipped v264/v310: Norway has
+        never been in a training run. It surfaced as a "digit ownership defect" because the only
+        Norwegian rows anyone looked at were parse failures in the eval corpus.
+
+        ``NO`` is the sole ISO-3166-1 alpha-2 code that collides with a YAML 1.1 boolean, which is
+        why this hid for so long — one country, no pattern, nothing else to notice. The fix in the
+        configs is to quote the key; this guard is what stops it coming back, because the next
+        person to add a country will write it unquoted and be right to expect that to work.
+
+        Raise rather than coerce: a config that says ``false`` does not *mean* Norway, it means the
+        author typed something whose meaning YAML changed. Silently repairing it would hide the same
+        class of bug in the next field that grows a bare-token key.
+        """
+        for key in self.country_weights:
+            if not isinstance(key, str):
+                raise ValueError(
+                    f"country_weights has a non-string key {key!r} ({type(key).__name__}). "
+                    "This is almost certainly the YAML 1.1 Norway problem: an unquoted `NO:` parses "
+                    'as the boolean false. Quote it — `"NO": 1.0` — and re-check every other code.'
+                )
+
 
 @dataclass
 class ModelConfig:
@@ -203,6 +236,15 @@ class ModelConfig:
     # invariant (never exported). span_boundary_loss_weight scales the aux BCE leg; 0 disables it.
     use_span_boundary_head: bool = False
     span_boundary_loss_weight: float = 0.0
+    # #727 stage-2 phase 1 — the semi-Markov span scorer (span_scorer.py). Unlike the stage-1 aux head
+    # above, this is a real scoring path: it scores every span up to `max_span` tokens per segment type
+    # and a segment-level transition table carries the address grammar, so a whole segmentation is
+    # scored jointly instead of emerging from per-token votes. Default-OFF ⇒ off the logits path;
+    # `span_loss_weight` scales the semi-CRF NLL leg (0 disables it). Phase 2 exports it.
+    use_span_scorer: bool = False
+    span_loss_weight: float = 0.0
+    span_dim: int = 128
+    max_span: int = 8
     # Must match the lexicon JSON's feature_dim (slot count).
     gazetteer_feature_dim: int = 5
     # Country-lexicon channel (#1104). When on (with data.country_lexicon_path set), the encoder takes
@@ -230,6 +272,10 @@ class TrainConfig:
     grad_accum_steps: int = 1
     learning_rate: float = 5e-4
     weight_decay: float = 0.01
+    # #727 stage-2: give the FRESH span head its own (higher) LR while the pretrained encoder keeps
+    # `learning_rate`. A randomly-initialized head cannot train at a fine-tuning LR — the v3.0.0 probe
+    # proved that the expensive way. None ⇒ one param group ⇒ byte-identical to every prior recipe.
+    span_head_learning_rate: float | None = None
     warmup_steps: int = 1000
     max_steps: int = 50000
     eval_every_steps: int = 2000

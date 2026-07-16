@@ -17,6 +17,7 @@ curl -s "http://localhost:8081/parse?query=1600 Pennsylvania Ave NW, Washington 
 
 | Endpoint        | libpostal contract                                             |
 | --------------- | -------------------------------------------------------------- |
+| `/`             | HTML landing page (endpoint index + example queries)           |
 | `/parse`        | `parse_address` — ordered `[{label, value}]` components        |
 | `/expand`       | `expand_address` — normalized forms (see the honest note)      |
 | `/openapi.json` | the emitted OpenAPI 3.1 document — the spec, not a copy of one |

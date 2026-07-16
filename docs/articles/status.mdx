@@ -11,34 +11,37 @@ project is going — locale tiers, workstreams, standing invariants — see
 [Current scope & roadmap](./plan/SCOPE.mdx); the Archive's plan directory is history, not the
 roadmap.
 
-:::info[Verified as of 2026-07-14 — release 6.2.1]
-The current npm release is **6.2.1** (`npm view mailwoman version`; `git tag` confirms `v6.2.1`), a
-patch that wires the browser country channel into `@mailwoman/neural-web`. The model shipped as
-**6.2.0** — **the v263 country-channel line**. The earlier 6.1.0 minor promoted the v261
-span-boundary line, and 6.0.0 was the breaking, code-only Hono API-surface cutover (all four HTTP
-surfaces — the native `mailwoman serve` plus the photon/nominatim/libpostal drop-ins — on one shared
-Hono stack, the express server deleted with no shim). See [Releases & capabilities](./releases.mdx)
-for the rows.
+:::info[Verified as of 2026-07-15 — release 6.3.0]
+The current npm release is **6.3.0** (`npm view mailwoman version`; `git tag` confirms `v6.3.0`), a
+minor that promotes the **v264 country-softguard** model. 6.2.1 was the patch that wired the browser
+country channel into `@mailwoman/neural-web`; the model first shipped as **6.2.0** — the v263
+country-channel line. The earlier 6.1.0 minor promoted the v261 span-boundary line, and 6.0.0 was the
+breaking, code-only Hono API-surface cutover (all four HTTP surfaces — the native `mailwoman serve`
+plus the photon/nominatim/libpostal drop-ins — on one shared Hono stack, the express server deleted
+with no shim). See [Releases & capabilities](./releases.mdx) for the rows.
 
-**The current model is v263** (`v2.6.3-country-channel`,
-[#1104](https://github.com/sister-software/mailwoman/issues/1104)) — an init_from fine-tune of v261
-that turns ON a **dedicated country soft-feed channel** (a 2-dim `[country_surface, country_ambiguous]`
-additive feature with its own projection + confidence, immune to the near-postcode gazetteer
-suppression). This is the atlas analogue of Pelias's `WhosOnFirstClassifier`, and it closes the
-country regression v261 had shipped as a documented cosmetic exception: golden
-country recall recovers **84.8% → 89.3%** (clears the 88.6% v241 bar), the real-postal country guard
-holds (recall + hallucination identical to v261, DeepSeek-signed falsifier), and the held-out
-coordinate z-test PASSES on both locales (US z −0.16 on 300 FDIC, FR z −0.17 on 300 BAN) with the
-gauntlet regression+metamorphic green. It carries one **coordinate-invisible per-tag trade**: golden
-region −24 fails, concentrated on redundant trailing-country tails (`VT 05161, US`) where the country
-channel out-competes the adjacent region abbreviation — flat at the assembled coordinate, operator-
-approved. It inherits v261's span-boundary win (region→street flips 5→2, parity street +13pp vs v241).
-The tokenizer is unchanged, `v0.9.0-multisplice` (73,143 pieces). See the
-[v263 country-channel grade](./evals/2026-07-14-v263-country-channel-result.md) for the full table.
+**The current model is v264** (`v2.6.4-country-softguard`,
+[#1104](https://github.com/sister-software/mailwoman/issues/1104)) — an init_from fine-tune of v263
+with **one variable**: `country_ambiguous_scale` 1.0 → 0.5. v263's dedicated country soft-feed channel
+(a 2-dim `[country_surface, country_ambiguous]` additive feature with its own projection + confidence,
+immune to the near-postcode gazetteer suppression — the atlas analogue of Pelias's
+`WhosOnFirstClassifier`) carried a **hard** homograph guard: the `country_ambiguous` bit fully
+suppressed country surfaces that are also US states / cities / common words (Georgia, Jordan, Turkey).
+That over-suppressed country broadly. v264 softens the guard — the ambiguous dim is scaled 0.5 before
+`country_projection` via a forward-pass buffer that **bakes into the exported ONNX** (no lexicon,
+inference, or browser change). The result **strictly dominates v263** with no offsetting trade:
+country-homograph F1 **82.6 → 85.1**, golden WOF-admin country recall **89.3% → 91.1%** (the softening
+helped BOTH distributions — the hard guard was over-firing), real-postal country recall + hallucination
+HELD, held-out coordinate z-test PASSES on both locales, aggregate golden label-fails **1101 → 1098**.
+It inherits v263's country-channel win over v261's cosmetic gate exception and v261's span-boundary win.
+The tokenizer is unchanged, `v0.9.0-multisplice` (73,143 pieces). The v265 (scale 0.25) probe recovered
+more of the narrow homograph slice (87.5) but slightly less WOF-admin; 0.5 was chosen for balance. See
+the [v264 country-softguard grade](./evals/2026-07-15-v264-country-softguard-result.md) for the full
+table.
 
 **The per-tag tables below are frozen at the 2026-07-02 full re-score of the earlier 5.0.0/v4.15.0
 line** (the #885 measurement re-anchor). Several model releases have shipped since without a fresh
-full re-score (5.1.0 → 5.4.0 → 5.9.0 → 6.1.0 → 6.2.0); their measured deltas are narrated
+full re-score (5.1.0 → 5.4.0 → 5.9.0 → 6.1.0 → 6.2.0 → 6.3.0); their measured deltas are narrated
 release-by-release — not folded into a new scorecard — on
 [Releases & capabilities](./releases.mdx), which is the current per-release source of truth. Treat
 the [parity scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md) below as a
@@ -47,7 +50,7 @@ historical baseline, not the shipped model's live per-tag truth.
 
 ## Packages
 
-All publishable workspaces release in lockstep; the current npm version is **6.2.1**.
+All publishable workspaces release in lockstep; the current npm version is **6.3.0**.
 
 | Package                                                                                       | Description                                                         |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -61,24 +64,24 @@ All publishable workspaces release in lockstep; the current npm version is **6.2
 | `@mailwoman/resolver-wof-sqlite` / `-wasm`                                                    | WOF gazetteer resolver (Node SQLite / browser WASM)                 |
 | `@mailwoman/neural-web`                                                                       | Browser-side neural classifier (onnxruntime-web)                    |
 
-## Model weights (the v263 line, shipped 6.2.0)
+## Model weights (the v264 line, shipped 6.3.0)
 
-| Property             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Lineage**          | `v2.6.3-country-channel` (v263) @ step 8k — an init_from FINE-TUNE of `v261` (the span-boundary line, itself off the stable `v257` fragment campaign) that turns ON a dedicated country soft-feed channel ([#1104](https://github.com/sister-software/mailwoman/issues/1104)). Recovers golden country recall 84.8→89.3% (closes v261's cosmetic gate exception) and inherits v261's span-boundary win; carries a coordinate-invisible golden region per-tag trade ([#727](https://github.com/sister-software/mailwoman/issues/727) stage-1 in the encoder) |
-| **Architecture**     | ~29M params — 6-layer encoder, 384 hidden, 6 heads, 73,143-piece SentencePiece embedding (`v0.9.0-multisplice`, unchanged from 5.1.0–6.1.0) + the country channel's `Linear(2, 384)` projection                                                                                                                                                                                                                                                                                                                                                             |
-| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`) — unchanged                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **Training corpus**  | v257 fragment-campaign corpus (shard-v5), unchanged from v261 — the country channel paints per-piece features on existing rows from the country-surface lexicon at encode time (no new shard) · tokenizer `v0.9.0-multisplice` (md5 `5c01cdcd…`)                                                                                                                                                                                                                                                                                                            |
-| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor + the dedicated **country soft-feed channel** (`country-surface-lexicon-v1.json`, requires.country) — all live at inference; server tier feeds all three, pocket tier is anchor-only                                                                                                                                                                                                                                                                                                                         |
-| **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`)                                                                                                                                                                                                                                                                                                                                                              |
-| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| **Size**             | 37.6 MB int8 ONNX (146.6 MB fp32) · opset 17 · max sequence 128                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Property             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lineage**          | `v2.6.4-country-softguard` (v264) @ step 8k — an init_from FINE-TUNE of `v263` (the country-channel line, off `v261` span-boundary, off the stable `v257` fragment campaign) with ONE variable: `country_ambiguous_scale` 1.0→0.5, which softens the country channel's homograph guard ([#1104](https://github.com/sister-software/mailwoman/issues/1104)). STRICTLY DOMINATES v263 with no trade: country-homograph F1 82.6→85.1, golden WOF-admin country recall 89.3→91.1%, aggregate golden label-fails −3. The softening is baked into the ONNX (a forward-pass buffer) — country lexicon unchanged |
+| **Architecture**     | ~29M params — 6-layer encoder, 384 hidden, 6 heads, 73,143-piece SentencePiece embedding (`v0.9.0-multisplice`, unchanged from 5.1.0–6.2.x) + the country channel's `Linear(2, 384)` projection (the `country_ambiguous` dim scaled 0.5 by a non-persistent buffer before the projection)                                                                                                                                                                                                                                                                                                                |
+| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`) — unchanged                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Training corpus**  | v257 fragment-campaign corpus (shard-v5), unchanged from v261/v263 — the country channel paints per-piece features on existing rows from the country-surface lexicon at encode time (no new shard) · tokenizer `v0.9.0-multisplice` (md5 `5c01cdcd…`)                                                                                                                                                                                                                                                                                                                                                    |
+| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor + the dedicated **country soft-feed channel** (`country-surface-lexicon-v1.json`, requires.country) — all live at inference; server tier feeds all three, pocket tier is anchor-only                                                                                                                                                                                                                                                                                                                                                                      |
+| **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`)                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Size**             | 37.6 MB int8 ONNX (146.6 MB fp32) · opset 17 · max sequence 128                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ### Per-tag health (summary)
 
 The full per-tag table — two lenses, golden-dev and real-OOD — lives in the
 [parity scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md). It is frozen at the
-2026-07-02 re-score of the 5.0.0/v4.15.0 line, seven model generations behind the shipped v263 line
+2026-07-02 re-score of the 5.0.0/v4.15.0 line, several model generations behind the shipped v264 line
 above — read it as a historical baseline, not this model's live numbers. The sortable summary:
 
 import { F1ScoreTable } from "@site/src/components/F1ScoreTable/F1ScoreTable"
@@ -146,8 +149,8 @@ weights bundle as `calibration.json`) so a score of 0.90 means right-about-90%-o
 ## Browser demo
 
 The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) runs the
-int8 model (37.6 MB, the v263 line — with the browser country channel wired in `@mailwoman/neural-web`
-6.2.1) plus a **byte-range global
+int8 model (37.6 MB, the v264 line — the softened country channel bakes into the same ONNX the browser
+country wiring in `@mailwoman/neural-web` 6.2.1 already feeds) plus a **byte-range global
 gazetteer** — the FTS-free "candidate" table (~530 MB, queried over `sql.js-httpvfs`; a resolve
 touches ~12 range fetches regardless of file size) with global admin coverage + **US + EU postcode
 resolution** and a debounced FST place-autocomplete in the search box. US **street-level
@@ -159,7 +162,7 @@ calls the classifier's argmax path directly; joint reconcile is not active in th
 
 ## Model line (July 2026)
 
-The shipped weights are the **v263 line** (`v2.6.3-country-channel`, promoted 6.2.0 —
+The shipped weights are the **v264 line** (`v2.6.4-country-softguard`, promoted 6.3.0 —
 [#1104](https://github.com/sister-software/mailwoman/issues/1104)). Model releases
 shipped between the 5.0.0/v4.15.0 line (documented in past versions of this page) and today, each
 held to the **shipped assembled coordinate or a targeted repro**, not raw label-F1: v5.1.0
@@ -175,11 +178,15 @@ regressing FR streets, cutting the accent mangle rate 23.5% → 17.7%; v6.1.0/v2
 span-boundary auxiliary head to shrink the region→street boundary-absorption class (US region→street
 flips 5→2 vs v257, parity street +13pp vs v241), shipping through a documented cosmetic gate
 exception on golden country recall ([#1104](https://github.com/sister-software/mailwoman/issues/1104) —
-real-postal country recall and precision are unaffected); and **v6.2.0/v263**
+real-postal country recall and precision are unaffected); **v6.2.0/v263**
 (`v2.6.3-country-channel`, fine-tune off v261) turned that exception into a fix — a dedicated country
 soft-feed channel recovered golden country recall 84.8→89.3% (clearing the 88.6% v241 bar) while the
-held-out coordinate held flat on both locales, carrying only a coordinate-invisible region per-tag
-trade; 6.2.1 then wired the channel into the browser runtime. Full per-release evidence lives on
+held-out coordinate held flat on both locales, carrying a coordinate-invisible region per-tag
+trade (6.2.1 then wired the channel into the browser runtime); and **v6.3.0/v264**
+(`v2.6.4-country-softguard`, fine-tune off v263) softened that channel's homograph guard
+(`country_ambiguous_scale` 1.0→0.5, baked into the ONNX) — strictly dominating v263 with no trade:
+country-homograph F1 82.6→85.1, golden WOF-admin country recall 89.3→91.1%, aggregate golden
+label-fails −3, coordinate PASS both locales. Full per-release evidence lives on
 [Releases & capabilities](./releases.mdx), which this page points to for anything shipped after
 the last full re-score. The ordered work queue to the full geocoder is
 [epic #488](https://github.com/sister-software/mailwoman/issues/488).

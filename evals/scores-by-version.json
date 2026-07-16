@@ -834,6 +834,47 @@
 				}
 			},
 			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v263 shipped on the gauntlet COORDINATE gate + operator-approved documented per-tag trades, NOT this v5.3.0-family parity gate. Two floor-fails, both coordinate-invisible (operator-excepted): us.country_homograph 82.6<83.3 (the country channel's ambiguity guard over-suppresses homograph countries Georgia/Jordan/Jamaica — trades homograph recall for precision) and fr.postcode 98.8<99.2. The channel LIFTS WOF-admin/golden country recall 84.8->89.3% (the #1104 target); held-out US/FR coordinate flat (z -0.16/-0.17). See 2026-07-14-v263-country-channel-result.md. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): us.country_homograph_f1, fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v263-620]"
+		},
+		{
+			"run_id": "v264-country-softguard-6-3-0",
+			"model_version": "6.3.0",
+			"model_path": "@mailwoman/neural-weights-en-us@6.3.0",
+			"corpus_version": "v257 fragment-campaign corpus (shard-v5) — UNCHANGED from v261; the country channel paints features on existing rows from the country-surface lexicon at encode time (no new shard).",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v5.3.0-family): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-15",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.7,
+					"country_homograph": 85.1,
+					"micro": 87.1,
+					"locality": 78.6,
+					"region": 90,
+					"street": 82,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.7,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99,
+					"house_number": 96.6,
+					"region": 43.8,
+					"cedex_real": 87.8
+				},
+				"de": {
+					"native_locality_anchor_on": 91.4
+				},
+				"arena": {
+					"perturb": 80
+				}
+			},
+			"notes": "v264 country-softguard (init_from v263 + country_ambiguous_scale 0.5). Strictly dominates v263: country-homograph 82.6->85.1, golden WOF-admin country 89.3->91.1%, aggregate golden label-fails 1101->1098. Coordinate gauntlet PASS both locales (the ship gate). fr.postcode 99.0 vs family-floor 99.2 = the standing saturated-metric exception (same as v261/v263), coordinate-invisible. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=scratchpad/gate-v264-630]"
 		}
 	]
 }

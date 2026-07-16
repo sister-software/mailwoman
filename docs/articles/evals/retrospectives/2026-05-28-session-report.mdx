@@ -32,7 +32,7 @@ One import path change: `onnxruntime-web` → `onnxruntime-web/webgpu`. WebGPU n
 
 Headless CI cannot catch GPU-specific bugs. The `verify` skill's Playwright tests were passing while every real user saw garbage. Added diagnostics (backend indicator, force-WASM toggle, build stamp) to make this class of issue visible.
 
-Reference: [Technical doc](/docs/understanding/onnxruntime-web-webgpu-gotcha). Research blog post: "Our model worked in CI but broke on every real device".
+Reference: [Technical doc](/docs/concepts/onnxruntime-web-webgpu-gotcha). Research blog post: "Our model worked in CI but broke on every real device".
 
 ## Infrastructure migration
 

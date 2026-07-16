@@ -30,6 +30,8 @@ train = [
 	"transformers==5.9.0",
 	"datasets>=5.0.0",
 	"onnx==1.22.0",
+	# dynamo exporter dependency — same pin as the Modal training image (train_remote.py).
+	"onnxscript==0.7.0",
 	"onnxruntime==1.26.0",
 	"tqdm>=4.68.4",
 	# Optional experiment tracking. Logging is best-effort and guarded at runtime

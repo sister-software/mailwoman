@@ -25,6 +25,7 @@ curl "http://localhost:2322/reverse?lat=38.8977&lon=-77.0365"
 
 | Endpoint        | Photon contract                                      |
 | --------------- | ---------------------------------------------------- |
+| `/`             | HTML landing page (endpoint index + example queries) |
 | `/api`          | forward / autocomplete → GeoJSON FeatureCollection   |
 | `/reverse`      | `lat`/`lon` → GeoJSON FeatureCollection              |
 | `/openapi.json` | emitted OpenAPI 3.1 document for `/api` + `/reverse` |

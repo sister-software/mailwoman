@@ -161,11 +161,110 @@ for (const [i, row] of results.entries()) {
 }
 ```
 
-## Two limits to size your chunks around
+## One limit to size your chunks around
 
-The server bounds two things so a single request can't run away with it:
+**Batch size** caps at 1 000 addresses (`MAILWOMAN_BATCH_MAX`); send more in one body and you get a `413`. Chunk your ten thousand into ten requests. It's an environment override, so you set it for your box rather than recompiling.
 
-- **Batch size** caps at 1 000 addresses (`MAILWOMAN_BATCH_MAX`); send more in one body and you get a `413`. Chunk your ten thousand into ten requests.
-- **Concurrency** inside a batch defaults to 8 workers (`MAILWOMAN_BATCH_CONCURRENCY`). The first address in a given US state warms that state's shard cache, so a batch sorted to keep same-state rows together resolves the tail of them almost for free. If your data is already grouped by region, you're getting that win without doing anything.
+Sorting helps, though: the first address in a given US state warms that state's shard cache, so a batch that keeps same-state rows together resolves the tail of them almost for free. If your data is already grouped by region, you're getting that win without doing anything.
 
-Both are environment overrides, so you tune them to your box rather than recompiling. Start with the defaults; raise concurrency only once you've confirmed the machine has the cores and the shard I/O to feed them.
+What won't help is asking the server to work on several rows at once. A batch is geocoded one row at a time, and we left that knob out on purpose. A second row can't make progress while the first is in the model, because ONNX Runtime's Node binding holds the JavaScript thread for the duration of an inference, and the gazetteer reads are synchronous too. We shipped a `MAILWOMAN_BATCH_CONCURRENCY` worker pool until we measured it: 1.00x, flat, from one worker to sixteen. It's gone as of 2026-07-16.
+
+To use more cores you have to cross a thread boundary, which is what the streaming recipes below do. Expect a modest return even there: geocoding is memory- and I/O-bound on a shared multi-gigabyte database, and a measured sweep peaked at two workers. The full receipts are in [the performance reference](../plan/reference/performance.mdx).
+
+## Skipping the endpoint entirely
+
+If the CSV is already on the machine that has the gazetteer, HTTP is a tax. Both recipes below use [spliterator](https://github.com/sister-software/spliterator) to stream the file, so a ten-million-row export costs the same memory as a ten-row one.
+
+### Parsing only, with no gazetteer
+
+When you want components rather than coordinates (deduping a mailing list, normalizing a column before a join), skip the resolver. There's no database, so this needs no data root and no shards:
+
+```ts
+import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
+import { createNewlineWriter, CSVSpliterator } from "spliterator"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const pipeline = createRuntimePipeline({ classifier })
+
+const rows = CSVSpliterator.fromAsync("addresses.csv", {
+	mode: "object",
+	normalizeKeys: true,
+	enableQuoteHandling: true,
+})
+
+await using out = createNewlineWriter("parsed.jsonl")
+
+for await (const row of rows) {
+	const { tree } = await pipeline(String(row.full_address))
+	const components = Object.fromEntries(decodeAsTuples(tree))
+	await out.write(JSON.stringify({ id: row.id, ...components }))
+}
+```
+
+```json
+{ "id": "1", "house_number": "350", "street": "5th", "street_suffix": "Ave", "locality": "New York", "region": "NY", "postcode": "10118" }
+{ "id": "2", "house_number": "1600", "street": "Pennsylvania Ave NW", "locality": "Washington", "region": "DC", "postcode": "20500" }
+```
+
+`enableQuoteHandling` is what keeps a quoted `"350 5th Ave, New York"` from splitting on its own comma, which is the failure that sends a street name into the city column. `normalizeKeys` lowercases the header so `Full Address` arrives as `full_address`.
+
+This loop is single-threaded, and on one core it's already at about 300 addresses/second. Worker threads would help here in principle (no database to contend over), but nobody has measured it — see the performance reference before you build that.
+
+### Full geocoding, across worker threads
+
+Coordinates need the gazetteer, and that's the ms-scale per-row work worth putting on threads. [`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts) wraps spliterator's `parallelMap`: it normalizes on the main thread and hands each row to a worker that rebuilds its own classifier, resolver, and shards.
+
+```ts
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { normalizeCSV } from "@mailwoman/registry"
+import { geocodeStream } from "mailwoman/geocode-stream"
+import { createNewlineWriter } from "spliterator"
+
+const mapping = { id: "id", address: "full_address" }
+
+const geocoded = geocodeStream(normalizeCSV("addresses.csv", { mapping }), {
+	mapping,
+	geocode: {
+		wofDBPath: dataRootPath("wof", "admin-global-priority.db").toString(),
+		dataRoot: mailwomanDataRoot().toString(),
+		locale: "en-US",
+		country: "US",
+	},
+	concurrency: 2,
+})
+
+await using out = createNewlineWriter("geocoded.jsonl")
+
+for await (const rec of geocoded) {
+	await out.write(JSON.stringify({ id: rec.id, address: rec.address }))
+}
+```
+
+Each record carries the same fields the endpoint returns, under `address.geocode`:
+
+```json
+{
+	"id": "1",
+	"address": {
+		"components": {
+			"house_number": "350",
+			"street": "5th",
+			"street_suffix": "Ave",
+			"locality": "New York",
+			"region": "NY",
+			"postcode": "10118"
+		},
+		"canonicalKey": "350|5th|ave|new york|ny|10118",
+		"formatted": "350 5th Ave, New York, NY 10118",
+		"geocode": {
+			"coordinate": { "latitude": 40.747773, "longitude": -73.985046 },
+			"tier": "interpolated",
+			"uncertaintyMeters": 42
+		}
+	}
+}
+```
+
+Two things to know before you tune it. Records arrive in **completion order**, not input order, so carry your own `id` through and rejoin downstream rather than trusting position. And `concurrency: 2` is not a placeholder we forgot to raise: the workers contend for one multi-gigabyte database, so throughput peaks there and degrades past it, with four workers landing back at baseline. Each worker also loads its own 38 MB model. Sweep it against your data instead of reaching for `availableParallelism()`.

@@ -25,19 +25,26 @@ def export_to_onnx(
     opset: int = 17,
     max_length: int = 128,
     pad_token_id: int = 0,
+    dummy_batch: int = 1,
 ) -> Path:
     """Export the token-classification model to ONNX. Returns the output path.
 
     Always exports from CPU. torch.onnx.export on a ROCm/HIP device on gfx1103 has been
     observed to hang during graph tracing (HW Exception, GPU node-1 hang) — exporting from
     CPU is fast (the model is small) and avoids the issue.
+
+    ``dummy_batch`` is the batch size of the example inputs the exporter traces. It stays 1 (the
+    shipped graph) unless a caller is probing batched inference: every input already REQUESTS a
+    dynamic dim-0 via ``dynamic_shapes``, but the shipped graph still refuses batch > 1 at runtime,
+    so the request is not being honored. Tracing with batch > 1 is the probe for whether the
+    example's batch size is what pins the graph.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     model.eval()
     model_cpu = model.to("cpu")
-    dummy_ids = torch.full((1, max_length), pad_token_id, dtype=torch.long)
-    dummy_ids[0, 0] = 1  # ensure at least one non-pad slot
-    dummy_mask = torch.ones((1, max_length), dtype=torch.long)
+    dummy_ids = torch.full((dummy_batch, max_length), pad_token_id, dtype=torch.long)
+    dummy_ids[:, 0] = 1  # ensure at least one non-pad slot
+    dummy_mask = torch.ones((dummy_batch, max_length), dtype=torch.long)
 
     # Postcode-anchor channel (#239/#240): when the model carries it, export the anchor inputs so the
     # inference runtime can FEED the anchor (without them the ONNX would be hard-wired anchor-free, the
@@ -66,16 +73,23 @@ def export_to_onnx(
             super().__init__()
             self.inner = inner
             self.with_locale = False
+            self.with_spans = False
 
         def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
             out = self.inner(input_ids=input_ids, attention_mask=attention_mask)
-            return (out.logits, out.locale_logits) if self.with_locale else out.logits
+            outs = [out.logits]
+            if self.with_locale:
+                outs.append(out.locale_logits)
+            if self.with_spans:
+                outs.append(out.span_scores)
+            return tuple(outs) if len(outs) > 1 else outs[0]
 
     class _LogitsOnlyAnchor(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
             self.with_locale = False
+            self.with_spans = False
 
         def forward(
             self,
@@ -90,13 +104,19 @@ def export_to_onnx(
                 anchor_features=anchor_features,
                 anchor_confidence=anchor_confidence,
             )
-            return (out.logits, out.locale_logits) if self.with_locale else out.logits
+            outs = [out.logits]
+            if self.with_locale:
+                outs.append(out.locale_logits)
+            if self.with_spans:
+                outs.append(out.span_scores)
+            return tuple(outs) if len(outs) > 1 else outs[0]
 
     class _LogitsOnlyAnchorGaz(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
             self.with_locale = False
+            self.with_spans = False
 
         def forward(
             self,
@@ -115,13 +135,19 @@ def export_to_onnx(
                 gazetteer_features=gazetteer_features,
                 gazetteer_confidence=gazetteer_confidence,
             )
-            return (out.logits, out.locale_logits) if self.with_locale else out.logits
+            outs = [out.logits]
+            if self.with_locale:
+                outs.append(out.locale_logits)
+            if self.with_spans:
+                outs.append(out.span_scores)
+            return tuple(outs) if len(outs) > 1 else outs[0]
 
     class _LogitsOnlyAnchorGazCountry(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
             self.with_locale = False
+            self.with_spans = False
 
         def forward(
             self,
@@ -144,13 +170,19 @@ def export_to_onnx(
                 country_features=country_features,
                 country_confidence=country_confidence,
             )
-            return (out.logits, out.locale_logits) if self.with_locale else out.logits
+            outs = [out.logits]
+            if self.with_locale:
+                outs.append(out.locale_logits)
+            if self.with_spans:
+                outs.append(out.span_scores)
+            return tuple(outs) if len(outs) > 1 else outs[0]
 
     class _LogitsOnlyGaz(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
             self.with_locale = False
+            self.with_spans = False
 
         def forward(
             self,
@@ -165,23 +197,28 @@ def export_to_onnx(
                 gazetteer_features=gazetteer_features,
                 gazetteer_confidence=gazetteer_confidence,
             )
-            return (out.logits, out.locale_logits) if self.with_locale else out.logits
+            outs = [out.logits]
+            if self.with_locale:
+                outs.append(out.locale_logits)
+            if self.with_spans:
+                outs.append(out.span_scores)
+            return tuple(outs) if len(outs) > 1 else outs[0]
 
     base_dynamic = {
         "input_ids": {0: "batch", 1: "sequence"},
         "attention_mask": {0: "batch", 1: "sequence"},
     }
     anchor_args = (
-        torch.zeros((1, max_length, anchor_dim), dtype=torch.float32),
-        torch.zeros((1, max_length), dtype=torch.float32),
+        torch.zeros((dummy_batch, max_length, anchor_dim), dtype=torch.float32),
+        torch.zeros((dummy_batch, max_length), dtype=torch.float32),
     )
     gaz_args = (
-        torch.zeros((1, max_length, gaz_dim), dtype=torch.float32),
-        torch.zeros((1, max_length), dtype=torch.float32),
+        torch.zeros((dummy_batch, max_length, gaz_dim), dtype=torch.float32),
+        torch.zeros((dummy_batch, max_length), dtype=torch.float32),
     )
     country_args = (
-        torch.zeros((1, max_length, country_dim), dtype=torch.float32),
-        torch.zeros((1, max_length), dtype=torch.float32),
+        torch.zeros((dummy_batch, max_length, country_dim), dtype=torch.float32),
+        torch.zeros((dummy_batch, max_length), dtype=torch.float32),
     )
     # The country channel ships on top of anchor+gaz (the production ship-config). Exporting it in any
     # other combination is unsupported — a country-trained model whose ONNX lacked the country inputs
@@ -257,6 +294,17 @@ def export_to_onnx(
         dynamic_shapes = dict(base_dynamic)
 
     export_model.with_locale = bool(has_locale)
+    # #727 stage-2: export the span scorer's (B, S, L, T) scores as a NAMED output. Consumers fetch
+    # outputs by name, so appending is backward-compatible — a runtime that never asks for
+    # `span_scores` pays nothing (ORT prunes the unfetched branch). The Phase-3 JS decoder + the
+    # semi-crf-transitions.json sidecar (package_weights.export_semi_crf_transitions) consume it.
+    has_spans = bool(getattr(model_cpu, "use_span_scorer", False))
+    export_model.with_spans = has_spans
+    output_names = ["logits"]
+    if has_locale:
+        output_names.append("locale_logits")
+    if has_spans:
+        output_names.append("span_scores")
 
     # Use the dynamo exporter (``dynamo=True``). The legacy TorchScript path hits
     # ``IndexError: tuple index out of range`` inside transformers ≥5's ``masking_utils``
@@ -267,7 +315,7 @@ def export_to_onnx(
         args,
         str(output_path),
         input_names=input_names,
-        output_names=["logits", "locale_logits"] if has_locale else ["logits"],
+        output_names=output_names,
         opset_version=opset,
         dynamic_shapes=dynamic_shapes,
         dynamo=True,
