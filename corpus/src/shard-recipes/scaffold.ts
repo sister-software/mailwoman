@@ -146,6 +146,12 @@ export interface ShardStats {
 	read?: number
 	emitted: number
 	skipped: number
+	/**
+	 * Rows dropped because their street SURFACE is reserved by an eval board (`--exclude-surfaces`). Separate from
+	 * `skipped` on purpose: a nonzero value is the audit trail that the train/eval split actually fired. Zero when a
+	 * recipe has no board split.
+	 */
+	contaminated?: number
 }
 
 /** A single declared recipe-specific option flag (for the command's --help). */
