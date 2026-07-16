@@ -29,6 +29,11 @@ only.
   dropping aims at classes _at ceiling_; un-dropping it and retraining would teach the model what it
   already knows. The headroom is elsewhere: `bare-street-hn` 0.693 and `slash-hn` 0.650 — forms the
   shard never emits. **A don't-launch verdict from a board, before any GPU.**
+- **`80d86130` — `no-street-led` now requires `--exclude-surfaces`.** The B4 blocker. Board 3
+  reserves 1,952 surfaces; this recipe trained on all 10,697 with no split, so a Norway retrain would
+  grade memorization. Ports fr-fragment's discipline — with its OWN diacritic-keeping normalizer,
+  because fr-fragment strips diacritics and would silently fold `Tømmerlien` → `tommerlien` and leak
+  the surface. 5 tests, both directions of the hazard. Changes no shipped artifact.
 - **`5ab73894` — the B0 verdict** (answers the operator's vindicate-or-villainize question). See §6.
 - Nothing to production. **v6.4.0 is on main (`f31a519f`) but NOT published** — the npm/HF publish is
   a CI dispatch and an operator act. Untouched by this shift, by standing instruction.
@@ -127,10 +132,14 @@ _(kept current so an interrupted shift hands off cleanly)_
 - **B3 — now the critical path.** The Track B eval board. Negative class required (real-postcode
   rows), baselines registered against **shipped v310** before any candidate exists. Nothing can be
   graded until this exists.
-- **B4 / B5** — shards, only if the board says there is anything left to fix. No GPU without a
-  falsifiable probe.
-- **The retrain** — warranted (Norway goes 0% → 4.19%), but it needs B3 first so the read is
-  pre-registered rather than reverse-engineered from whatever moves.
+- **B4** — the NO _fragment_ shard, blocker now cleared (`80d86130`). Board 3 says the EXISTING
+  shard aims at ceiling, so B4 is a NEW recipe emitting the forms it never does: `{street} {number}`
+  and bare `{street}` with no partner (bare-street-hn, 0.693), slash/cadastral fragments (slash-hn,
+  0.650), plus a bare-locality + bare-postcode counter-distribution. Shard design is written into the
+  task; **not launched** — needs the config header's pre-registered read and a 2k-step probe first.
+- **B5** — the intra-word split licence (`12/345`), instance 3. Independent of B4.
+- **The retrain** — warranted (Norway 0% → 4.19%) but only for a FRAGMENT shard, not the existing
+  one. Pre-register against board 3 before launch.
 
 ## Numbers
 
