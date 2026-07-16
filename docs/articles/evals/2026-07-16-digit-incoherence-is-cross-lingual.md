@@ -78,6 +78,37 @@ each other on the same pieces.
    `178` is one piece removes the continuation-postcode mass entirely. That is a bigger change than a
    shard, and it is the operator's call whether Track B justifies re-opening the vocab work.
 
+## The vocab lever, quantified
+
+The tokenizer (`v0.9.0-multisplice`, 73,143 pieces) carries **exactly two multi-digit numeric
+pieces** — `▁10` and `▁16` — and **none at 3+ digits**. So:
+
+```
+   16 -> ['▁16']            0 continuations   (one of the only two)
+   24 -> ['▁2','4']         1 continuation
+  178 -> ['▁1','7','8']     2 continuations
+90210 -> ['▁9','0','2','1','0']  4 continuations
+```
+
+Digit fertility ≡ digit count. **The model's only length signal is the continuation count**, and the
+continuation is where the postcode mass lives. That is not a tuning accident; it is the mechanism's
+root. `178` fails and `24` succeeds because `178` has two postcode-leaning continuations and `24` has
+one.
+
+This makes the #727 "lower-fertility vocab is upstream" claim concrete and scoped: a **number-piece
+splice** — add single pieces for common house-number and postcode ranges, exactly the shape of the
+FR multisplice that added 2,406 pieces — would make `178` one piece with zero continuations,
+removing the continuation-postcode mass for that class entirely. The model would then decide
+house_number-vs-postcode on one piece in full context (is there a street? a postcode slot?), not on a
+length-driven continuation prior. Postcodes becoming single pieces too is a feature, not a bug: a
+5-digit piece and a 3-digit piece are _different_ pieces, so the model is no longer forced to use
+continuation-count as its only length discriminator.
+
+**Cost, stated honestly:** a splice grows the vocab and the embedding table; the new rows need
+gradient (the init_from fine-tune path the multisplice used). It is a bigger, coordinated change than
+a shard — a tokenizer + model bump, not a corpus edit — so whether Track B justifies it is squarely
+the operator's call. But it attacks the root the shard only dents.
+
 ## What this does NOT change
 
 - **The fix is still a shard OR the vocab — not a validator.** The house rule holds: this is
