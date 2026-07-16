@@ -846,6 +846,56 @@ def sync_v091():
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_no_fragment_b4b():
+    """B4b — pull the REBUILT v0.11.0-no-fragment overlay (bare-street-prob 0.30 -> 0.70) + src from R2.
+    Only the one synth-no-fragment parquet + MANIFEST changed vs the v3.3.0 build; the 701 base refs
+    (v0.10.9-fr-fragment) persist on the volume from prior runs. Mirror of sync_v092."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.11.0-no-fragment overlay (B4b) + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nB4b v0.11.0-no-fragment overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.6.0-no-fragment-b4b.yaml"
+    print("  v3.6.0 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  synth-no-fragment shard present:", os.path.isfile(f"{cdir}/train/part-no-fragment.parquet"))
+    base = f"{VOL_MOUNT}/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment/MANIFEST.json"
+    print("  base v0.10.9-fr-fragment on volume (manifest-referenced):", os.path.isfile(base))
+    print(
+        "  tokenizer v0.9.0-multisplice on volume:",
+        os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_v092():
     """Pull the v0.9.2-multilocale-au OVERLAY (#208 — ADD AUSTRALIA to v1.9.1's proven 3-order recipe).
     The gnaf G-NAF AU 3-order shard layered on v0.9.1-multilocale (overture 3-order + v0.5.0 base, both
