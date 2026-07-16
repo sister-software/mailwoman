@@ -121,6 +121,7 @@ const sidebars: SidebarsConfig = {
 		"plan/reference/FST_GAZETTEER_LM",
 		"plan/reference/TRAINING_RECIPE_LEVERS",
 		"plan/reference/runtime-flags",
+		"plan/reference/performance",
 		"plan/reference/address-data-sources",
 		"plan/reference/record-matcher-sources",
 		"plan/reference/sentencepiece-uds-whitespace",
