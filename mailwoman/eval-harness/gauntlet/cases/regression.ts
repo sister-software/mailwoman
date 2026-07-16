@@ -595,4 +595,73 @@ export const REGRESSION_CASES: SeedCase[] = [
 		bugRef: "#1039",
 		note: "CONTROL: a bare lone toponym plausibly MEANS Tokyo; resolving it there is correct default behavior. This row pins that the venue-trap work must NOT overcorrect bare toponyms into no-results. (The Ivry-sur-Seine venue of the same name is only recoverable from conversational context no geocoder has.)",
 	},
+
+	// ---------------------------------------------------------------------------------------------
+	// FR street-name homonyms (operator's Paris list, 2026-07-15). The street's NAME is a major
+	// foreign city; the tolerance is what makes these mean something — Paris→Rome is ~1100 km, so a
+	// 50 km band FAILS LOUD if the toponym ever out-competes the street reading. These PASS today;
+	// they are here because two in-flight levers put them at risk: the #1103 morphology bias (a
+	// re-probe is pre-registered now that the #727 span head landed) and any recalibration of the
+	// gazetteer importance score (`impBias = importance * biasScale * maxBias`, neural/fst-prior.ts
+	// — measured 2026-07-15: `rue` 0.149 / `boulevard` 0.167 / `place` 0.169 are themselves
+	// gazetteer places, so raising importance would start biasing STREET-TYPE WORDS toward locality).
+	// The 30 currently-FAILING bare-fragment forms deliberately do NOT live here — this file is the
+	// executable bug log, not a wish list; they live in eval-harness/fixtures/paris-streets.jsonl.
+	// ---------------------------------------------------------------------------------------------
+	{
+		id: "fr-rue-de-rome-homonym",
+		input: "8 Rue de Rome, Paris",
+		source: "operator:paris-list-2026-07-15",
+		addressKind: "street_name_homonym",
+		country: "FR",
+		status: "pass",
+		expectComponents: { locality: "Paris" },
+		expectLat: 48.8566,
+		expectLon: 2.3428,
+		expectToleranceM: 50_000,
+		addedAt: "2026-07-15",
+		note: "The street name IS a major city. Must land in PARIS, not Rome (~1100 km). Guards the house-number anchor that currently wins this: measured 2026-07-15, contextful/homonym is 6/6 while the BARE form 'Rue de Rome' emits nothing at all.",
+	},
+	{
+		id: "fr-rue-de-constantinople-homonym",
+		input: "7 Rue de Constantinople, Paris",
+		source: "operator:paris-list-2026-07-15",
+		addressKind: "street_name_homonym",
+		country: "FR",
+		status: "pass",
+		expectComponents: { locality: "Paris" },
+		expectLat: 48.8566,
+		expectLon: 2.3428,
+		expectToleranceM: 50_000,
+		addedAt: "2026-07-15",
+		note: "Historical exonym for Istanbul — the toponym is not even a current place name, which is why it is a distinct trap from Rome/Londres.",
+	},
+	{
+		id: "fr-rue-d-ulm-elision-homonym",
+		input: "9 Rue d'Ulm, Paris",
+		source: "operator:paris-list-2026-07-15",
+		addressKind: "street_name_homonym",
+		country: "FR",
+		status: "pass",
+		expectComponents: { locality: "Paris" },
+		expectLat: 48.8566,
+		expectLon: 2.3428,
+		expectToleranceM: 50_000,
+		addedAt: "2026-07-15",
+		note: "Two traps at once: an apostrophe elision (d') AND a German city (Ulm, ~600 km). Pins that the elision handling does not strand the name into a foreign-toponym reading.",
+	},
+	{
+		id: "fr-chat-qui-peche-street-swallows-locality",
+		input: "12 Rue du Chat-qui-Pêche, Paris",
+		source: "operator:paris-list-2026-07-15",
+		addressKind: "street_name_esoteric",
+		country: "FR",
+		status: "known_fail",
+		expectComponents: { locality: "Paris" },
+		expectLat: 48.8531,
+		expectLon: 2.3467,
+		expectToleranceM: 50_000,
+		addedAt: "2026-07-15",
+		note: "KNOWN FAIL (measured 2026-07-15): the street span swallows the trailing locality — street parses as 'Rue du Chat-qui-Pêche, Paris' and the tree then resolves to NOTHING. The only miss in the operator's 10-row tricky list (9/10 pass), so the esoteric morphology is NOT the problem — the boundary is. This is the #727 span-head's class; expect it to flip when Phase 2+ lands.",
+	},
 ]

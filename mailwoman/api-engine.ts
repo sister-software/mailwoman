@@ -54,9 +54,6 @@ import { createAddressParser } from "./utils/parser.ts"
 /** Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`). */
 const DATA_ROOT = mailwomanDataRoot()
 
-/** Bounded concurrency for `batch()`. Override with `MAILWOMAN_BATCH_CONCURRENCY`. */
-const BATCH_CONCURRENCY = Math.max(1, $public.MAILWOMAN_BATCH_CONCURRENCY)
-
 /** The classifier/resolver/shard bundle `geocode`/`batch`/`resolveTree`/`reload` close over. */
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
@@ -277,30 +274,32 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const geocode: MailwomanAPIEngine["geocode"] = async (address) =>
 		(await oneGeocode(deps, address)) as unknown as GeocodeOutcome
 
-	// Bounded-concurrency worker pool over a shared cursor — results land in input order; a thrown row is isolated to
-	// its own `{ input, error }` slot. Rows are trimmed here (the route passes the raw validated array through). Ported
-	// from `GeocodeRouter`'s `batchHandler`.
+	// Sequential loop — results land in input order; a thrown row is isolated to its own
+	// `{ input, error }` slot. Rows are trimmed here (the route passes the raw validated array through).
+	//
+	// This was a bounded-concurrency worker pool (`MAILWOMAN_BATCH_CONCURRENCY`, default 8) until
+	// 2026-07-16. The pool was measured at 1.00x — a geocode cannot overlap another in-process, because
+	// `onnxruntime-node`'s `session.run()` blocks the JS thread rather than releasing to the libuv pool,
+	// and `node:sqlite` reads are synchronous. The pool bought nothing but the appearance of tuning, so
+	// it's a plain loop now. To actually parallelize, cross a thread boundary — see
+	// `mailwoman/geocode-stream.ts`. Receipts: `docs/articles/plan/reference/performance.mdx`.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses) => {
 		const inputs = addresses.map((a) => a.trim())
 		const results: BatchRow[] = new Array<BatchRow>(inputs.length)
 
-		let cursor = 0
-		const worker = async (): Promise<void> => {
-			for (let i = cursor++; i < inputs.length; i = cursor++) {
-				const input = inputs[i]!
-				const t0 = performance.now()
+		for (let i = 0; i < inputs.length; i++) {
+			const input = inputs[i]!
+			const t0 = performance.now()
 
-				try {
-					const result = await oneGeocode(deps, input)
-					recordTimed(performance.now() - t0, result.resolution_tier)
-					results[i] = result as unknown as GeocodeOutcome
-				} catch (err) {
-					recordTimed(performance.now() - t0, "error")
-					results[i] = { input, error: err instanceof Error ? err.message : String(err) }
-				}
+			try {
+				const result = await oneGeocode(deps, input)
+				recordTimed(performance.now() - t0, result.resolution_tier)
+				results[i] = result as unknown as GeocodeOutcome
+			} catch (err) {
+				recordTimed(performance.now() - t0, "error")
+				results[i] = { input, error: err instanceof Error ? err.message : String(err) }
 			}
 		}
-		await Promise.all(Array.from({ length: Math.min(BATCH_CONCURRENCY, inputs.length) }, worker))
 
 		return { results }
 	}

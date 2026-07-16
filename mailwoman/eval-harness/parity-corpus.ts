@@ -18,6 +18,7 @@ import { readFileSync } from "node:fs"
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { computeQueryShape } from "@mailwoman/query-shape"
 
 import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 
@@ -106,6 +107,14 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	}
 
 	const tallies = new Map(PARITY_FLOORS.map((f) => [f.label, { hit: 0, total: 0, failing: [] as string[] }]))
+	// PRECISION — the half the floors above CANNOT see. Every floor does `if (!goldValues?.length)
+	// continue`, so a tag emitted where the gold has NONE costs nothing, forever. That is the same
+	// blind spot T1a found on street (the board flattered the span decode because its failure lived
+	// in the rows the filter dropped) and the deepparse comparison found on postcode: we report
+	// postcode 98.6% and that is RECALL — on 249 rows with no gold postcode, v264 emits one on 25.
+	// 16 of those are a house_number read as a postcode ("Epleskogen 39A" -> postcode "39A"), and
+	// `39A` is not a postcode in any system. Informational, not a floor: a floor is the operator's.
+	const precision = new Map(PARITY_FLOORS.map((f) => [f.label, { spurious: 0, absent: 0, examples: [] as string[] }]))
 	const byCountry = new Map<string, { cases: number; fullAgree: number }>()
 
 	for (const fixture of live) {
@@ -113,9 +122,15 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// Ship-config parse (gate-revision 2026-07-15): production's safeClassify/parseForGeocode heal
 		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the gate must grade the same parse the swapped
 		// surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
+		// Production config parity (#1146): the query-shape emission prior is fed on EVERY path
+		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core` since #981
+		// (which fixed this same divergence for the drop-in servers). Without it this gate graded a
+		// starved parse. A no-op on inputs carrying no known format and no region abbrev, so the bare
+		// `street, city` class is byte-stable; it earns its keep on the digit-span / region-abbrev rows.
 		const tuples = decodeAsTuples(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,
+				queryShape: computeQueryShape(fixture.input),
 				fstStreetMorphology,
 				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})
@@ -127,6 +142,22 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		}
 
 		let caseAgrees = true
+
+		// The precision half: on a row whose gold does NOT carry this tag, did we emit it anyway?
+		for (const { label, tags } of PARITY_FLOORS) {
+			if (expect[label]?.length) continue
+			const bucket = precision.get(label)!
+			bucket.absent++
+			const emitted = tags.flatMap((tag) => byTag.get(tag) ?? []).join(" ")
+
+			if (emitted) {
+				bucket.spurious++
+
+				if (bucket.examples.length < 8) {
+					bucket.examples.push(`${JSON.stringify(fixture.input)} -> ${label}=${JSON.stringify(emitted)}`)
+				}
+			}
+		}
 
 		for (const { label, tags } of PARITY_FLOORS) {
 			const goldValues = expect[label]
@@ -186,6 +217,31 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		console.log(
 			`${label.padEnd(13)} ${`${hit}/${total}`.padStart(8)}  ${rate.toFixed(4).padStart(7)}  ${floor.toFixed(2).padStart(5)}  ${ok ? "PASS" : "FAIL"}`
 		)
+	}
+
+	// The precision half. INFORMATIONAL, never a verdict — a floor here is an operator act. Reported
+	// because "postcode 98.6%" is a recall number and reads like a capability, and the missing half is
+	// where the house_number deficit went.
+	console.log("")
+	console.log("precision (the half the floors above cannot see — rows whose gold has NO such tag)")
+	console.log("label          spurious   rate     of rows")
+
+	for (const { label } of PARITY_FLOORS) {
+		const { spurious, absent } = precision.get(label)!
+
+		if (!absent) continue
+		console.log(
+			`${label.padEnd(13)} ${`${spurious}/${absent}`.padStart(8)}  ${(spurious / absent).toFixed(4).padStart(7)}   emitted where gold has none`
+		)
+	}
+
+	for (const { label } of PARITY_FLOORS) {
+		const { examples } = precision.get(label)!
+
+		if (!examples.length) continue
+		console.log(`\n  --- ${label}: emitted where the gold has none (first ${examples.length}) ---`)
+
+		for (const example of examples) console.log(`    ${example}`)
 	}
 
 	console.log("")

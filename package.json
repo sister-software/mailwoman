@@ -104,7 +104,7 @@
 		"oxlint": "1.73.0",
 		"react": "^19.2.7",
 		"release-it": "^19.2.4",
-		"spliterator": "^3.2.0",
+		"spliterator": "^4.0.0",
 		"typescript": "^6.0.3",
 		"vitest": "4.1.10",
 		"zx": "^8.8.5"

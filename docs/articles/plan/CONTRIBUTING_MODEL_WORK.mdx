@@ -55,6 +55,33 @@ classes (#513).
 
 ## The standard gate set
 
+:::danger[Grade against `v6.0.0-shipped-baseline`, not `v5.3.0-family`]
+**The current spec is
+[`v6.0.0-shipped-baseline.json`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/eval-harness/gates/v6.0.0-shipped-baseline.json)**
+— `mailwoman eval gate --weights-cache <dir> --gate v6.0.0-shipped-baseline`.
+
+`v5.3.0-family` is **retired for v6.x candidates**. It was calibrated against the v2.2.0-era model
+and never re-cut when the lineage moved, so by 2026-07-16 it had drifted into uselessness in both
+directions: 16 of 17 floors were slack by +1.8 to +50pp (a candidate could lose 27.9pp of
+`us.street_suffix` and PASS), while its one tight floor — `fr.postcode 99.2` — **failed the shipped
+model**. Confirmed by running the full battery on v264 itself: verdict FAIL, on that floor, alone.
+
+The v6 spec is cut from the shipped model's own readings:
+`floor = v264's reading − max(1.0pp, 2 × the metric's 95% binomial half-width)`. It **tightens 15 of
+18 floors**. Both v264 and v310 PASS it. Rationale, the per-metric margin, and the two loosened
+floors (`fr.postcode` — a real, unexplained drift; `us.country_homograph_f1` — noise) are argued in
+the spec's own `$` keys.
+
+**When the lineage moves again, cut a new spec the same way** — and note what it costs you: a spec
+cut from current readings has **no memory** and can only ratchet down. Every floor that moves gets a
+`$revision` note saying why, or the re-cut is just silent drift with better manners.
+
+**Never re-cut a campaign TARGET from a current reading.** This spec re-cuts _regression bars_
+("don't get worse than shipped"). The v7 street 0.90 goal lives in the parity floors; cutting it
+from today's 0.6067 would delete the objective. `fr.bare_street_intact` (75.0, #949) is likewise
+kept verbatim — it already carries a designed margin.
+:::
+
 Run for _every_ candidate, regardless of what you changed (this is what
 [`promotion-gate.ts`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
 

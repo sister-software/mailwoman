@@ -124,6 +124,28 @@ def export_crf_transitions(model: torch.nn.Module, *, crf_loss_weight: float = 0
     }
 
 
+def export_semi_crf_transitions(model: torch.nn.Module) -> dict | None:
+    """#727 stage-2: the segment-transition table, as a JSON sidecar for the Phase-3 JS decoder.
+
+    Transitions are DECODE-TIME data, not graph — same contract as ``export_crf_transitions`` above.
+    The ``segment_types`` axis ships IN the file so the JS decoder reads it rather than hardcoding it
+    (the PLACETYPE_ORDER dual-maintenance class: a retrained head that reorders types would otherwise
+    silently mislabel every downstream decode). Returns None for a span-less model.
+    """
+    semi_crf = getattr(model, "semi_crf", None)
+    if semi_crf is None:
+        return None
+    from .span_scorer import SEGMENT_TYPES
+
+    return {
+        "segment_types": list(SEGMENT_TYPES),
+        "max_span": int(semi_crf.max_span),
+        "transitions": semi_crf.transitions.detach().cpu().float().numpy().tolist(),
+        "start_transitions": semi_crf.start_transitions.detach().cpu().float().numpy().tolist(),
+        "end_transitions": semi_crf.end_transitions.detach().cpu().float().numpy().tolist(),
+    }
+
+
 def write_package(
     package_dir: Path,
     *,

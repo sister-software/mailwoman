@@ -46,6 +46,10 @@ const OptionsSchema = zod.object({
 	bareProb: zod.string().optional().describe("street-bare: P(bare street)"),
 	hnProb: zod.string().optional().describe("street-bare: P(house number)"),
 	communes: zod.string().optional().describe("fr-admin-split: communes source"),
+	excludeSurfaces: zod
+		.string()
+		.optional()
+		.describe("fr-fragment: REQUIRED — reserved street-surface list to exclude (the fragment board's eval set)"),
 	multilocaleCount: zod.string().optional().describe("street-affix: multilocale row count"),
 })
 
@@ -96,6 +100,7 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 			bareProb: num(options.bareProb),
 			hnProb: num(options.hnProb),
 			communes: options.communes,
+			excludeSurfaces: options.excludeSurfaces,
 			multilocaleCount: num(options.multilocaleCount),
 		}
 

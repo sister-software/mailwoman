@@ -37,6 +37,7 @@ from .config import Config
 from .crf import LinearChainCRF, TopKPath
 from .labels import ACTIVE_BIO_LABELS, ID_TO_LABEL, IGNORE_INDEX, LABEL_TO_ID, NUM_LOCALES
 from .phrase_priors import PHRASE_FEATURE_DIM
+from .span_scorer import SemiMarkovCRF, SpanScorer, gold_segments
 
 
 def force_math_sdpa() -> None:
@@ -62,16 +63,19 @@ class _CoarseEncoderOutput:
     to the bert-style call signature the trainer and exporter expect.
     """
 
-    __slots__ = ("loss", "logits", "locale_logits")
+    __slots__ = ("loss", "logits", "locale_logits", "span_scores")
 
     def __init__(
         self,
         logits: torch.Tensor,
         loss: torch.Tensor | None,
         locale_logits: torch.Tensor | None = None,
+        span_scores: torch.Tensor | None = None,
     ) -> None:
         self.logits = logits
         self.loss = loss
+        # #727 stage-2: (B, S, L, T) per-span type scores, or None without ``use_span_scorer``.
+        self.span_scores = span_scores
         # PR3 self-conditioning: ``(batch, num_locales)`` locale posterior logits from the aux
         # head, or None when the encoder was built without ``use_locale_conditioning``.
         self.locale_logits = locale_logits
@@ -235,6 +239,11 @@ class MailwomanCoarseEncoder(nn.Module):
         use_conventions_loss_mask: bool = False,
         use_span_boundary_head: bool = False,
         span_boundary_loss_weight: float = 0.0,
+        # #727 stage-2 phase 1 — the semi-Markov span scorer (see span_scorer.py).
+        use_span_scorer: bool = False,
+        span_loss_weight: float = 0.0,
+        span_dim: int = 128,
+        max_span: int = 8,
         use_char_embed: bool = False,
         char_vocab_size: int = 0,
         char_embed_dim: int = 64,
@@ -480,6 +489,18 @@ class MailwomanCoarseEncoder(nn.Module):
             is_inside = torch.tensor([ID_TO_LABEL[i].startswith("I-") for i in range(num_labels)], dtype=torch.bool)
             self.register_buffer("bio_is_begin", is_begin, persistent=False)
             self.register_buffer("bio_is_inside", is_inside, persistent=False)
+
+        # #727 stage-2 phase 1: the semi-Markov span scorer. Unlike stage-1's aux head (which only
+        # shapes the encoder via BCE pressure and is never exported), this is a real scoring path —
+        # Phase 2 exports it, Phase 3 decodes it in JS. Default-OFF ⇒ byte-identical: the BIO logits
+        # path never reads it, which `test_span_scorer_off_is_byte_identical_to_baseline` enforces.
+        self.use_span_scorer = use_span_scorer
+        self.span_loss_weight = float(span_loss_weight)
+        self.span_scorer: SpanScorer | None = None
+        self.semi_crf: SemiMarkovCRF | None = None
+        if use_span_scorer:
+            self.span_scorer = SpanScorer(hidden_size=hidden_size, span_dim=span_dim, max_span=max_span)
+            self.semi_crf = SemiMarkovCRF(max_span=max_span)
 
         # CRF decoder (Stage 2 / v0.3.0 onwards). Adds ~num_labels² + 2·num_labels learned
         # scalars (483 for 21 labels) — negligible vs the encoder's ~30M parameters.
@@ -860,7 +881,37 @@ class MailwomanCoarseEncoder(nn.Module):
                 sb_term = self.span_boundary_loss_weight * sb_loss
                 loss = sb_term if loss is None else loss + sb_term.to(loss.dtype)
 
-        return _CoarseEncoderOutput(logits=logits, loss=loss, locale_logits=locale_logits)
+        # #727 stage-2 phase 1: the semi-Markov span loss. fp32 throughout (the DP owns its upcast).
+        # Rows whose gold segmentation exceeds `max_span` are SKIPPED, not truncated — a truncated
+        # gold teaches a wrong boundary, which is the exact defect this arc exists to fix.
+        span_scores_out: torch.Tensor | None = None
+
+        if self.use_span_scorer and self.span_scorer is not None:
+            span_scores_out = self.span_scorer(h)
+
+            if labels is not None and attention_mask is not None and self.span_loss_weight > 0:
+                assert self.semi_crf is not None
+                lengths = attention_mask.sum(dim=1).long()
+                rows: list[int] = []
+                segs: list[list[tuple[int, int, int]]] = []
+
+                for b_i in range(labels.shape[0]):
+                    n = int(lengths[b_i])
+                    row_segs, representable = gold_segments(labels[b_i, :n].tolist(), self.span_scorer.max_span)
+
+                    if representable and row_segs:
+                        rows.append(b_i)
+                        segs.append(row_segs)
+
+                if rows:
+                    idx = torch.tensor(rows, device=span_scores_out.device)
+                    span_nll = self.semi_crf.nll(
+                        span_scores_out.index_select(0, idx), segs, lengths.index_select(0, idx)
+                    ).mean()
+                    span_term = self.span_loss_weight * span_nll
+                    loss = span_term if loss is None else loss + span_term.to(loss.dtype)
+
+        return _CoarseEncoderOutput(logits=logits, loss=loss, locale_logits=locale_logits, span_scores=span_scores_out)
 
     @torch.no_grad()
     def predict(
@@ -1012,6 +1063,10 @@ class MailwomanCoarseEncoder(nn.Module):
             # ignores it (training-only, off the logits path).
             "use_span_boundary_head": bool(self.use_span_boundary_head),
             "span_boundary_loss_weight": float(self.span_boundary_loss_weight),
+            "use_span_scorer": bool(self.use_span_scorer),
+            "span_loss_weight": float(self.span_loss_weight),
+            "span_dim": int(self.span_scorer.start_proj.out_features) if self.span_scorer else 128,
+            "max_span": int(self.span_scorer.max_span) if self.span_scorer else 8,
             # CharCNN front-end (#825). False/0 on SentencePiece checkpoints; loaders branch on the flag
             # to materialize the char_cnn module at the persisted char-vocab width + kernel geometry.
             "use_char_embed": bool(self.use_char_embed),
@@ -1077,6 +1132,10 @@ class MailwomanCoarseEncoder(nn.Module):
             use_affix_head=cfg.get("use_affix_head", False),
             use_conventions_loss_mask=cfg.get("use_conventions_loss_mask", False),
             # Span-boundary aux head (#727). Default off for back-compat with pre-#727 checkpoints.
+            use_span_scorer=cfg.get("use_span_scorer", False),
+            span_loss_weight=cfg.get("span_loss_weight", 0.0),
+            span_dim=cfg.get("span_dim", 128),
+            max_span=cfg.get("max_span", 8),
             use_span_boundary_head=cfg.get("use_span_boundary_head", False),
             span_boundary_loss_weight=cfg.get("span_boundary_loss_weight", 0.0),
             gazetteer_feature_dim=cfg.get("gazetteer_feature_dim", 5),
@@ -1086,11 +1145,15 @@ class MailwomanCoarseEncoder(nn.Module):
             char_embed_dim=cfg.get("char_embed_dim", 64),
             char_kernel_sizes=tuple(cfg.get("char_kernel_sizes", (3, 4, 5))),
         )
+        # map_location="cpu": checkpoints are written on an A100, and torch pickles the storage's
+        # device. Without this, loading a GPU-trained checkpoint on a CPU-only box raises
+        # "Attempting to deserialize object on a CUDA device" — which is every local grading run
+        # (the #727 phase-1 gate hit exactly this). CPU is the safe landing spot; callers .to(device).
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
-            sd = torch.load(model_dir / "pytorch_model.bin", weights_only=True)
+            sd = torch.load(model_dir / "pytorch_model.bin", weights_only=True, map_location="cpu")
         except TypeError:  # pragma: no cover — older torch
-            sd = torch.load(model_dir / "pytorch_model.bin")
+            sd = torch.load(model_dir / "pytorch_model.bin", map_location="cpu")
         model.load_state_dict(sd)
         return model
 
@@ -1157,6 +1220,10 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         # Span-boundary aux head (#727, GLiNER-lite probe).
         use_span_boundary_head=getattr(cfg.model, "use_span_boundary_head", False),
         span_boundary_loss_weight=getattr(cfg.model, "span_boundary_loss_weight", 0.0),
+        use_span_scorer=getattr(cfg.model, "use_span_scorer", False),
+        span_loss_weight=getattr(cfg.model, "span_loss_weight", 0.0),
+        span_dim=getattr(cfg.model, "span_dim", 128),
+        max_span=getattr(cfg.model, "max_span", 8),
         # CharCNN front-end (#825). char_vocab_size threaded from the loader; the rest from cfg.model.
         use_char_embed=getattr(cfg.model, "use_char_embed", False),
         char_vocab_size=char_vocab_size,

@@ -116,6 +116,8 @@ const sidebars: SidebarsConfig = {
 		"plan/reference/STAGES",
 		"plan/reference/QUERY_SHAPE",
 		"plan/reference/closed-vocab-fields-model-first",
+		"plan/reference/registry-backed-structured-prediction",
+		"plan/reference/the-meaning-of-zero",
 		"plan/reference/FST_GAZETTEER_LM",
 		"plan/reference/TRAINING_RECIPE_LEVERS",
 		"plan/reference/runtime-flags",

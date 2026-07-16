@@ -372,6 +372,92 @@ def sync_src_727():
     secrets=[r2_secret],
     timeout=1200,
 )
+def sync_src_727_stage2():
+    """SOURCE-ONLY sync (#727 STAGE 2, phase 1): pull `corpus-python/src/` from R2 → volume, clear the stale
+    `__pycache__`, and verify the SEMI-MARKOV SPAN SCORER landed.
+
+    Deliberately separate from `sync_src_727` (stage 1): that one's verify block checks for the stage-1
+    span-BOUNDARY head and the v2.6.0 config, so it would happily pass while stage 2's files are stale and
+    the run would silently train the OLD architecture. Each arc's verify block must assert ITS OWN change —
+    that is the whole point of the block.
+
+    No corpus pull — the v257 corpus + tokenizer already persist on the volume (v3.0.0 is corpus-verbatim
+    vs v2.6.4, which is the one-variable discipline).
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing corpus-python/src/ from R2 (container-side, #727 stage 2)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+
+    # Verify STAGE 2's architecture + config landed. A stale sync must fail loud, never train the old model.
+    src_dir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    scorer_path = f"{src_dir}/span_scorer.py"
+    cfg_path = f"{src_dir}/configs/v3.0.0-span-head.yaml"
+    has_scorer_module = os.path.isfile(scorer_path)
+    scorer_src = open(scorer_path).read() if has_scorer_module else ""
+    has_semi_crf = "class SemiMarkovCRF" in scorer_src and "def log_partition" in scorer_src
+    model_src = open(f"{src_dir}/model.py").read()
+    has_wiring = "use_span_scorer" in model_src and "self.semi_crf" in model_src
+    config_src = open(f"{src_dir}/config.py").read()
+    has_cfg_field = "use_span_scorer" in config_src
+    # The v3.0.1 re-probe's ONE variable lives in train.py's optimizer — a stale train.py would
+    # silently re-run v3.0.0's single-group LR and waste the whole probe.
+    train_src = open(f"{src_dir}/train.py").read()
+    has_param_groups = "def build_optimizer" in train_src and "span_head_learning_rate" in train_src
+    # Phase 2: the export/package code must carry the span outputs, or a container-side export
+    # silently produces a graph WITHOUT span_scores and Phase 3 has nothing to decode.
+    export_src = open(f"{src_dir}/export_onnx.py").read()
+    has_span_export = "with_spans" in export_src and '"span_scores"' in export_src
+    pkg_src = open(f"{src_dir}/package_weights.py").read()
+    has_sidecar = "export_semi_crf_transitions" in pkg_src
+    has_lr_cfg_field = "span_head_learning_rate" in config_src
+    cfg_lr_path = f"{src_dir}/configs/v3.0.1-span-head-lr.yaml"
+
+    print("  span_scorer.py on volume         :", has_scorer_module)
+    print("  SemiMarkovCRF + log_partition    :", has_semi_crf)
+    print("  model.py wiring (use_span_scorer):", has_wiring)
+    print("  config.py ModelConfig field      :", has_cfg_field)
+    print("  v3.0.0-span-head.yaml present    :", os.path.isfile(cfg_path))
+    print("  train.py build_optimizer + groups:", has_param_groups)
+    print("  config.py span_head_learning_rate:", has_lr_cfg_field)
+    print("  v3.0.1-span-head-lr.yaml present :", os.path.isfile(cfg_lr_path))
+    print("  export_onnx.py span output       :", has_span_export)
+    print("  package_weights sidecar          :", has_sidecar)
+
+    if not (
+        has_semi_crf
+        and has_wiring
+        and has_cfg_field
+        and os.path.isfile(cfg_path)
+        and has_param_groups
+        and has_lr_cfg_field
+        and os.path.isfile(cfg_lr_path)
+        and has_span_export
+        and has_sidecar
+    ):
+        raise RuntimeError("sync verify FAILED — stage-2 span scorer or config missing on volume; do NOT launch")
+    print("\n#727 stage-2 source sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1200,
+)
 def sync_v6():
     """Pull the v0.10.7-fragment-v6 OVERLAY (#1104 country-counterweight fragment shard) + latest src from
     R2. The 699 base shards persist on the volume from prior runs (the overlay MANIFEST re-roots them to

@@ -49,12 +49,77 @@ messy input) points at structured span prediction.
    is counter-evidenced. The PT/RO diacritic splice (byte-fallback coverage gap, probe-confirmed)
    outranks it in the tokenizer-work queue.
 
+## STAGE 2 PHASE 1 — DONE, GATE PASS (2026-07-15). Read this before touching the arc.
+
+`seg@1 0.5693 > token@1 0.4906` on the parity corpus (+7.9pp); **+33pp on the Paris bare-fragment
+fixture** (`token@1 0.429 → seg@1 0.762`). The arc's premise holds. PR #1141; reports
+`docs/articles/evals/2026-07-15-v30{0,1}-span-head*.md`. Phase 2 (ONNX export) is unblocked.
+
+### The four things that cost time — don't re-pay them
+
+1. **A fresh head needs its own LR.** v3.0.0 inherited `lr: 1e-5` from v2.6.4 — a recipe that
+   FINE-TUNES EXISTING weights — and the randomly-initialized span head barely moved (loss 26.4 →
+   17.77, still falling, raw span NLL ~35 where converged is O(1); the decode emitted a random type
+   per token; seg@1 0.004). One variable (`train.span_head_learning_rate: 1e-3`, param groups via
+   `build_optimizer`) → converged 1.37 and seg@1 0.569. **Any new head gets its own param group.**
+2. **`from_pretrained()` silently lacked `map_location`** — a GPU-trained checkpoint could not load
+   on a CPU-only box AT ALL. Fixed; this affected every local grading run in the repo.
+3. **A python-side gate is CHANNEL-STARVED (#718).** `scripts/eval_seg_at_1.py` feeds no
+   anchor/gazetteer/country channels, so its token@1 reads ~0.49 where the JS harness reads 0.573 on
+   the SAME model. Its absolutes are NOT comparable across harnesses — only the internal
+   seg-vs-token comparison is valid (both heads read the same starved encoder). Say so in any report.
+4. **Never diff two runs through `eval parity --failing 50`** — the list is truncated, so fixtures
+   shift in and out of the window and manufacture phantom regressions. Diff the full per-fixture set.
+
+### What the span head fixes, and what it provably does NOT
+
+Fixed — the boundary class, including the arc's own archetype:
+
+```
+'Korunni 810, Praha'  →  Korunni:street  810:house_number  Praha:locality      (v264: street='Korunní 8' + hn='10')
+```
+
+NOT fixed — the **bare-fragment polarity class** (66% of street failures, night-3 partition).
+`Rue Montmartre` → `locality`. This is option C's target (kind-posterior soft channel +
+recall-weighted street loss) and was deliberately out of Phase 1's scope. Its survival is the plan's
+prediction holding, not a surprise.
+
+### Why "Rue" doesn't already clue the model (the 2026-07-15 operator question — MEASURED)
+
+The intuition "`Rue` at the front should mark what follows as a street" is right, and the model DOES
+use it — **but a strong toponym in the name outvotes it, and a house number is what breaks the tie**:
+
+```
+Rue Montmartre        → Rue Montmartre : locality        ✗   (Montmartre IS a Paris district)
+Rue de Rome           → Rue:street de:street Rome:locality ✗ (Rome IS a city)
+Avenue Victor Hugo    → Avenue:street  Victor Hugo:street ✓  (a person, not a place — no number needed!)
+12 Rue Montmartre     → 12:hn  Rue:street_prefix  Montmartre:street  ✓
+8 Rue de Rome, Paris  → 8:hn  Rue:street_prefix  de/Rome:street  Paris:locality  ✓
+```
+
+**The house number is the anchor, not the prefix.** Measured on `paris-streets.jsonl` (v264, ship
+config): contextful/homonym **6/6**, the operator's "particularly tricky" list **9/10** — the exotic
+morphology (`Chat-qui-Pêche`, `l'Hôtel-de-Ville`, `18-Juin-1940`) is NOT the problem — while
+bare-fragment/famous is **3/15** and `Avenue des Champs-Élysées` returns the **empty string**.
+
+Structurally: under flat BIO each token votes independently, so `Rue` has no mechanism to _govern_
+what follows — it can only vote for its own label. That is why the decode-time street-morphology
+bias ([#1103](https://github.com/sister-software/mailwoman/issues/1103)) measured net-negative: it
+competes with the BIO head at the same decode position. **#1103's own pre-registered revisit
+condition is "after the #727 span-head work changes boundary placement" — that condition has now
+landed.** Under a segment decode a prefix clue can govern a whole span's type via the segment
+transition grammar (`street_prefix → street`), which is the level where "Rue governs the next thing"
+is actually well-posed. Re-probe it locale-gated per #1103's criteria; do NOT re-probe it globally
+(the AU compact-form regression, 55 → 40, is what parked it).
+
 ## Standing constraints
 
 One variable per run. fp32 for any CRF/transition learning (bf16 NaN scar). Grade with
 `--weights-cache` package-shaped dirs only. Floors and the 2pp gate are immutable; the triaged
 gold's default-flip awaits operator ratification. Treadmill guard applies across THIS arc too:
-two opposite-direction failures = stop and fork, don't tune.
+two opposite-direction failures = stop and fork, don't tune. **A mis-specified probe is not a
+treadmill** — repairing an LR that was never chosen for the thing it trains is fixing the
+instrument, not oscillating a knob (v3.0.0 → v3.0.1 is the worked example).
 
 ## What unblocks when floors pass
 

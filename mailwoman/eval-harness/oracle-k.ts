@@ -12,11 +12,12 @@
  *   transition bigrams from the golden dev gold orderings), returning the top-k whole segmentations.
  *   `oracle@k` = the gold value appears in ANY of the top-k hypotheses' extractions.
  *
- *   Baseline registered night-3 (v264, triaged parity corpus): street token-decode 0.584 vs
- *   seg-decode@1 0.453 / oracle@5 0.663 / oracle@10 0.749 — the naive re-decode is WORSE at rank 1
- *   (a trained span scorer is necessary) while the correct reading exists in the top-10 ~75% of the
- *   time (+16.5pt of rerank headroom). Both halves of the DeepSeek-designed falsifier (session
- *   019f6471) — details in `docs/superpowers/plans/2026-07-15-727-stage2-kbest-plan.md`.
+ *   Baselines are REGISTERED, not restated here — see `baselines.json` (profiles `v264`, `v301`)
+ *   and pass `--assert-baseline <profile>` to make this harness refuse to print when its
+ *   instruments read wrong. The night-3 read: the naive re-decode is WORSE at rank 1 than the token
+ *   decode (a trained span scorer is necessary) while the correct reading exists in the top-10 ~75%
+ *   of the time. Both halves of the DeepSeek-designed falsifier (session 019f6471) — details in
+ *   `docs/superpowers/plans/2026-07-15-727-stage2-kbest-plan.md`.
  *
  *   This decoder is deliberately the same shape the stage-2 JS/WASM post-processing decode will
  *   take (span enumeration + pruning + k-way Viterbi outside the ONNX graph); when the trained span
@@ -28,8 +29,10 @@ import { readFileSync } from "node:fs"
 
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { computeQueryShape } from "@mailwoman/query-shape"
 
 import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
+import { assertProfile, BaselineDeviationError, formatVerdict } from "./baseline-assert.ts"
 import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "./parity-corpus.ts"
 
 /** Maximum typed-segment length in words. */
@@ -47,6 +50,12 @@ export interface OracleKOptions {
 	goldenDir?: string
 	/** Hypotheses kept per input (default 10). */
 	k?: number
+	/**
+	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`). When set, the harness
+	 * REFUSES to print a report if any reading deviates from its row — the Tier-0 instrument check. Omit for an
+	 * unregistered candidate.
+	 */
+	assertBaseline?: string
 }
 
 export interface OracleKOutcome {
@@ -133,8 +142,11 @@ export function segmentDecodeKBest(
 	const bIndex = new Map<string, number>()
 	const iIndex = new Map<string, number>()
 	trace.labels.forEach((label, index) => {
-		if (label.startsWith("B-")) bIndex.set(label.slice(2), index)
-		else if (label.startsWith("I-")) iIndex.set(label.slice(2), index)
+		if (label.startsWith("B-")) {
+			bIndex.set(label.slice(2), index)
+		} else if (label.startsWith("I-")) {
+			iIndex.set(label.slice(2), index)
+		}
 	})
 	const oIndex = trace.labels.indexOf("O")
 	const types = [...bIndex.keys()].filter((type) => iIndex.has(type))
@@ -150,7 +162,9 @@ export function segmentDecodeKBest(
 	const words: number[][] = []
 	let current: number[] = []
 	const flush = (): void => {
-		if (current.length) words.push(current)
+		if (current.length) {
+			words.push(current)
+		}
 		current = []
 	}
 	trace.tokens.forEach((token, index) => {
@@ -208,7 +222,9 @@ export function segmentDecodeKBest(
 		list.push(entry)
 		list.sort((a, b) => b.score - a.score)
 
-		if (list.length > k) list.length = k
+		if (list.length > k) {
+			list.length = k
+		}
 		column.set(key, list)
 	}
 
@@ -287,8 +303,13 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 	)
 
 	for (const fixture of fixtures) {
+		// Production config parity (#1146): every path production parses on feeds the query-shape
+		// emission prior — `safeClassify` in the runtime pipeline, and `geocode-core` since #981 (which
+		// fixed this same divergence for the drop-in servers). This harness was the last surface still
+		// grading a starved parse. A no-op on inputs carrying no known format and no region abbrev.
 		const tree = await classifier.parse(fixture.input, {
 			postcodeRepair: true,
+			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
 		const baseByTag = new Map<string, string[]>()
@@ -300,7 +321,14 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			stack.push(...node.children)
 		}
 
-		const trace = await classifier.traceParse(fixture.input)
+		// The trace MUST carry the same priors as the parse above: the segment decode scores spans out
+		// of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions while token@1
+		// saw primed ones — comparing two different models and calling it a decode delta.
+		const trace = await classifier.traceParse(fixture.input, {
+			postcodeRepair: true,
+			queryShape: computeQueryShape(fixture.input),
+			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+		})
 		const { hypotheses, words } = segmentDecodeKBest(trace, k, logTransition)
 
 		for (const { label, tags } of PARITY_FLOORS) {
@@ -313,17 +341,62 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			const tagSet = new Set<string>(tags)
 			const baseActual = tags.flatMap((tag) => baseByTag.get(tag) ?? []).join(" ")
 
-			if (fold(baseActual) === gold) tally.base++
+			if (fold(baseActual) === gold) {
+				tally.base++
+			}
 			const surfaces = hypotheses.map((hypothesis) =>
 				fold(extractSurface(hypothesis, words, trace, (type) => tagSet.has(type)))
 			)
 
-			if (surfaces[0] === gold) tally.top1++
+			if (surfaces[0] === gold) {
+				tally.top1++
+			}
 
-			if (surfaces.slice(0, 5).includes(gold)) tally.oracle5++
+			if (surfaces.slice(0, 5).includes(gold)) {
+				tally.oracle5++
+			}
 
-			if (surfaces.includes(gold)) tally.oracleK++
+			if (surfaces.includes(gold)) {
+				tally.oracleK++
+			}
 		}
+	}
+
+	// Tier-0 instrument check, BEFORE anything prints. A report from a harness reading this far
+	// off its registered baseline is worse than no report — Phase 1 and Phase 4a both shipped one.
+	if (options.assertBaseline) {
+		const readings: Record<string, number> = {}
+
+		for (const { label } of PARITY_FLOORS) {
+			const tally = tallies.get(label)
+
+			if (!tally?.total) continue
+			readings[`${label}.token_at_1`] = tally.base / tally.total
+			readings[`${label}.seg_at_1`] = tally.top1 / tally.total
+			readings[`${label}.oracle_at_5`] = tally.oracle5 / tally.total
+			readings[`${label}.oracle_at_${k}`] = tally.oracleK / tally.total
+		}
+
+		if (!Object.keys(readings).length) {
+			throw new Error(
+				`--assert-baseline ${options.assertBaseline} was requested but this run scored 0 fixtures. ` +
+					`The profile cannot vouch for metrics that weren't measured.`
+			)
+		}
+
+		const verdict = assertProfile(options.assertBaseline, readings)
+
+		if (!verdict.checked) {
+			throw new Error(
+				`--assert-baseline ${options.assertBaseline} matched none of this run's readings — ` +
+					`the profile vouches for nothing here (fixtures or k likely differ from what it was registered against). ` +
+					`A check that silently verifies nothing is the failure mode this flag exists to prevent.`
+			)
+		}
+
+		if (!verdict.ok) throw new BaselineDeviationError(verdict)
+		console.log(`✓ ${formatVerdict(verdict)} (profile: ${options.assertBaseline})`)
+		console.log("")
 	}
 
 	console.log(`oracle-recall@k — k=${k}, ${fixtures.length} live fixtures, segment decode over current emissions`)

@@ -29,6 +29,10 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe("Golden dev dir for the transition-bigram estimate (default data/eval/golden/v0.1.2/dev)"),
 	k: zod.coerce.number().int().min(1).max(50).optional().default(10).describe("Hypotheses kept per input"),
+	assertBaseline: zod
+		.string()
+		.optional()
+		.describe("Registered baseline profile (v264, v301) — refuse to report if the instruments read wrong"),
 })
 
 export { OptionsSchema as options }
@@ -43,6 +47,7 @@ const EvalOracleK: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					fixturesPath: options.fixtures,
 					goldenDir: options.goldenDir,
 					k: options.k,
+					assertBaseline: options.assertBaseline,
 				})
 			).exitCode,
 		(exitCode) => exitCode

@@ -47,7 +47,7 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -102,21 +102,40 @@ export interface PromotionGateOptions {
  * does not emit readFileSync'd JSON into `out/`, so `mailwoman/out/eval-harness/` reads the source-tree copy at
  * `mailwoman/eval-harness/gates/`; the lint-rules.json pattern). Old `scripts/eval/gates/<spec>.json` invocations
  * therefore keep working by basename.
+ *
+ * The `.json` suffix is optional, because the help has always advertised "a spec name" and a spec name is what people
+ * type. Before that was true, `--gate v5.3.0-family` fell through to `readFileSync("v5.3.0-family")` and died on a bare
+ * ENOENT naming a file nobody asked for — which is how it read on 2026-07-16.
  */
 export function resolveGateSpecPath(gate: string): string {
 	if (existsSync(gate)) return gate
 
 	const name = basename(gate)
-	const sibling = new URL(`./gates/${name}`, import.meta.url)
 
-	if (existsSync(sibling)) return fileURLToPath(sibling)
+	for (const candidate of name.endsWith(".json") ? [name] : [name, `${name}.json`]) {
+		const sibling = new URL(`./gates/${candidate}`, import.meta.url)
 
-	const sourceTree = new URL(`../../eval-harness/gates/${name}`, import.meta.url)
+		if (existsSync(sibling)) return fileURLToPath(sibling)
 
-	if (existsSync(sourceTree)) return fileURLToPath(sourceTree)
+		const sourceTree = new URL(`../../eval-harness/gates/${candidate}`, import.meta.url)
 
-	// Let the readFileSync at the call site throw with the operator's original path.
-	return gate
+		if (existsSync(sourceTree)) return fileURLToPath(sourceTree)
+	}
+
+	throw new Error(`Gate spec not found: "${gate}". Known specs: ${listGateSpecs().join(", ") || "(none)"}`)
+}
+
+/** Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling. */
+export function listGateSpecs(): string[] {
+	for (const dir of [new URL("./gates/", import.meta.url), new URL("../../eval-harness/gates/", import.meta.url)]) {
+		if (!existsSync(dir)) continue
+
+		return readdirSync(fileURLToPath(dir))
+			.filter((file) => file.endsWith(".json"))
+			.sort()
+	}
+
+	return []
 }
 
 /**
@@ -473,7 +492,12 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	let VERDICT_STATUS = 0
 
 	try {
-		const { failed } = assemblePromotionVerdict({ gate: GATE, outDir: OUT_DIR, withInt8: Boolean(INT8) })
+		const { failed } = assemblePromotionVerdict({
+			gate: GATE,
+			outDir: OUT_DIR,
+			withInt8: Boolean(INT8),
+			...(options.weightsCache ? { gradedArtifact: "weights-cache" as const } : {}),
+		})
 		VERDICT_STATUS = failed ? 1 : 0
 	} catch (error) {
 		console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
