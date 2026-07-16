@@ -1,0 +1,16 @@
+########## v310 ##########
+  class                     n     rate    95% CI
+  bare-street             400   0.715   [0.669, 0.757]
+  date-name               400   0.158   [0.125, 0.196]
+  street-particle         400   0.855   [0.817, 0.886]
+  OVERALL                2800   0.733   [0.717, 0.749]
+  --- date-name: 337 misses (first 6) ---
+  --- street-particle: 58 misses (first 6) ---
+########## v371-b4b3-full ##########
+  class                     n     rate    95% CI
+  bare-street             400   0.775   [0.732, 0.813]
+  date-name               400   0.172   [0.139, 0.213]
+  street-particle         400   0.873   [0.836, 0.902]
+  OVERALL                2800   0.758   [0.742, 0.774]
+  --- date-name: 331 misses (first 6) ---
+  --- street-particle: 51 misses (first 6) ---
