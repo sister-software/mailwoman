@@ -180,28 +180,33 @@ pre-registered probes for a future shift.
 - **The Norway retrain** — warranted (Norway 0% → 4.19%) but B4 showed the _existing_ shard aims at
   ceiling and a fragment shard at 0.30 barely moves the target. So the retrain is really B4b: a
   higher-ratio fragment shard, pre-registered against board 3, operator-approved.
-- **B2 — closed, folded into B4b.** The street-familiarity lead was confounded with the Norway
-  coverage gap (every unfamiliar failing street was from an absent country). The one PL row that
-  survives coverage (`aleja Wojska Polskiego 178`) is now a board-3-measurable cell, not a separate
-  investigation.
+- **B2 — CLOSED.** The street-familiarity lead was confounded with the Norway coverage gap. The one
+  PL row that survives coverage (`aleja Wojska Polskiego 178`) was traced to B0's exact piece-level
+  signature — cross-lingual, coverage-independent, length-conditioned — closing B2 into the unified
+  mechanism, not a separate lead.
+- **B4c — the root fix, an operator call.** The number-piece vocab splice (the tokenizer has 2
+  multi-digit pieces, so `178` is 3 pieces with 2 postcode-leaning continuations). Removes the
+  continuations the shard only dents. A tokenizer+model bump, bigger than a shard.
 
 ## 8. Where things stand (a status, not a wind-down)
 
 Track B is a complete, self-consistent arc: the defect was mis-scoped as "digit ownership," B0
 reframed it as one licence defect in three components, B1 found that most of the Norwegian evidence
 was a YAML bug hiding 25k rows, B3 built the instrument, B4 built + probed the fix and the probe
-honestly said "not with this ratio." Nothing is half-built; every commit is green-or-pending on one
-PR. The next move is the operator's (merge `#1145`, decide the v6.4.0 publish, approve B4b's ratio
+honestly said "not with this ratio." Nothing is half-built; #1145 is green and mergeable. The next move is the operator's (merge `#1145`, decide the v6.4.0 publish, approve B4b's ratio
 bump or the G-NAF path).
 
 ## Numbers
 
-|                     |                      |
-| ------------------- | -------------------- |
-| window              | 06:12 UTC → _(open)_ |
-| models trained      | 0                    |
-| Modal spend         | _(running)_          |
-| NaN incidents       | 0                    |
-| CI failures         | 0                    |
-| regressions shipped | 0                    |
-| GPU lost to error   | 0                    |
+|                          |                                                         |
+| ------------------------ | ------------------------------------------------------- |
+| active work window       | 06:12 → ~13:40 UTC (shift to 15:00)                     |
+| models trained           | 1 (the v3.3.0-no-fragment 2k probe, B4)                 |
+| Modal spend              | ~$1–2 (1× 2k A100 probe) + a handful of CPU census runs |
+| NaN incidents            | 0                                                       |
+| CI failures              | 0                                                       |
+| regressions shipped      | 0                                                       |
+| GPU lost to error        | 0                                                       |
+| PRs opened               | 1 (#1145 — the whole Track B arc)                       |
+| shipped-artifact changes | 0 (no promote, no publish, no 8k)                       |
+| eval docs written        | 6 (B0, H3, board 3, B4 verdict, cross-lingual, this)    |
