@@ -135,10 +135,12 @@ export interface ShardRecipeOpts {
 	communes?: string
 	multilocaleCount?: number
 	/**
-	 * `fr-fragment`: the fragment board's reserved street-surface list. REQUIRED for that recipe — a shard that trains on
-	 * its own eval set measures memorization. See its docstring.
+	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list. REQUIRED for those
+	 * recipes — a shard that trains on its own eval set measures memorization. See their docstrings.
 	 */
 	excludeSurfaces?: string
+	/** `no-fragment`: share of rows that are counter-distribution (bare locality OR bare postcode). */
+	counterProb?: number
 }
 
 /** Tally a recipe returns. */
