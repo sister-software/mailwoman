@@ -29,12 +29,14 @@ only.
   dropping aims at classes _at ceiling_; un-dropping it and retraining would teach the model what it
   already knows. The headroom is elsewhere: `bare-street-hn` 0.693 and `slash-hn` 0.650 — forms the
   shard never emits. **A don't-launch verdict from a board, before any GPU.**
-- **`d9e76e75` + LAUNCHED — the v3.3.0-no-fragment probe.** The 2k falsifier for B4. init_from
-  v310, ONE variable (synth-no-fragment @ 12.0), synth-no-street-led zeroed (contaminated part).
-  Overlay verified through the real loader: Norway rows now survive the filter. Training clean —
-  `init_from missing=0`, loss ~1.00, no NaN. Pre-registered read in the config header: bare-street-hn
-  (0.693) must move or the licence-transfer hypothesis is wrong; bare-pc must hold 1.000. **Result
-  pending — read against board 3 on completion. NOT a ship regardless of outcome.**
+- **`d9e76e75` + `11881e69` — the v3.3.0-no-fragment 2k probe (B4).** init_from v310, ONE variable
+  (synth-no-fragment @ 12.0), synth-no-street-led zeroed (contaminated part). Overlay verified through
+  the real loader: Norway rows now survive the filter. Trained clean — `init_from missing=0`, no NaN.
+  **RESULT: did NOT clear the pre-registered bar.** bare-street-hn 0.693 → 0.710 (+1.7pp, CIs overlap —
+  not clear motion); bare-pc held 1.000; ceiling classes flat; and the FR guard drifted (board 2
+  −1.7pp overall). Per my own pre-registration the 8k is not auto-warranted, and I did not relax the
+  bar to launch it. Verdict: `docs/articles/evals/2026-07-16-b4-no-fragment-probe-verdict.md`. The
+  named next move (B4b) is raising `--bare-street-prob` from 0.30.
 - **`863a64ae` — the `no-fragment` recipe.** The shard itself (see §6/§7).
 - **`80d86130` — `no-street-led` now requires `--exclude-surfaces`.** The B4 blocker. Board 3
   reserves 1,952 surfaces; this recipe trained on all 10,697 with no split, so a Norway retrain would
