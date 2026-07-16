@@ -64,6 +64,11 @@ only.
   retrain" feel obvious and urgent. The board — built _first_, per the standing rule — showed the
   shard aims at classes already at 0.94–0.968. Building the instrument before the fix converted a
   plausible day of A100 into a two-line table.
+- **The 2k probe did its job — it stopped an 8k run I would otherwise have wanted.** The instrument
+  and shard were correct; the read was clean; the target missed its pre-registered bar and the French
+  guard drifted, so the expensive run does not happen on a hunch. ~$1-2 of A100 to avoid ~$8. And I
+  held my own bar rather than relaxing it once the number disappointed — the discipline cuts both
+  ways or it is not discipline.
 - **`bare-street-hn` was designed as a diagnostic, not a score, and that is why it resolved the
   track.** It carries no postcode, so nothing competes for the digit. It still fails 31%, and
   `Hallingrudveien 32` → locality+postcode while `Hallingrudveien 32, 3370 Vikersund` parses
