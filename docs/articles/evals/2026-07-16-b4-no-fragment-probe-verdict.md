@@ -48,6 +48,16 @@ Every French class drifted down. The CIs overlap, so no single cell is a clean v
 _consistency_ of the drift is the concern — 2k of extra fine-tuning is mildly eroding the fr-fragment
 win the shard is required to protect. A full 8k run would have more room to amplify that.
 
+**Deconfounded (2026-07-16, same session):** re-reading board 2 on **shipped v310** in the same
+session, same harness, same int8 export gives `0.733` overall — **identical to the T2 verdict**, cell
+for cell (bare-street 0.715, admin-street-homonym 0.517). So the v310 baseline is stable
+session-to-session and the v330 drift is **real, not cross-session quantization noise.** That
+strengthens the do-not-escalate call. The specificity is the tell: it is the FR **fragment** classes
+— the ones fr-fragment fixed — that drift, not the board at random, which points at **weight
+dilution**: `synth-no-fragment` @ 12.0 crowds fr-fragment's relative share over 2k steps, and the
+model drifts back toward its pre-fr-fragment reading. So B4b is two knobs, not one — the bare-street
+ratio _and_ the no-fragment weight relative to fr-fragment — and they must be probed one at a time.
+
 ## Two reasons not to escalate, and one caveat
 
 1. The target did not clear its pre-registered bar.
