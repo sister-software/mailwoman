@@ -2574,6 +2574,38 @@ def mean_init_numsplice():
     image=training_image,
     timeout=600,
 )
+def mean_init_numsplice23():
+    """B4c 10-999 cut — 2+3-digit. Same FVT mean-init as the others, tokenizer v0.11.2-numsplice23
+    (word-start 10-999, +988 pieces). Adds 2-digit pieces on top of the 3-digit cut: `11`->`▁11`
+    (the FR date-name day win the 3-digit cut forgoes) while 4-5 digit numbers (postcodes, years)
+    STAY multi-piece (2-digit can't collide with a 4-5 digit postcode). Writes
+    /data/models/numsplice23-expanded. Expect 73143 -> 74131."""
+    import os
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/numsplice23-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v310-fr-fragment-s42/checkpoints/step-008000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.11.2-numsplice23/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
 def mean_init_numsplice3():
     """B4c RANGE REFINEMENT — 3-digit-only. Same FVT mean-init as mean_init_numsplice, but the
     tokenizer only adds word-start pieces 100-999 (v0.11.1-numsplice3, +900 pieces). The hypothesis:
