@@ -1,0 +1,36 @@
+########## v310 ##########
+  class                     n     rate    95% CI
+  alnum-housenumber       400   0.960   [0.936, 0.975]
+  bare-street             400   0.715   [0.669, 0.757]
+  date-name               400   0.158   [0.125, 0.196]
+  street-housenumber      400   0.948   [0.921, 0.965]
+  street-particle         400   0.855   [0.817, 0.886]
+  OVERALL                2800   0.733   [0.717, 0.749]
+  --- alnum-housenumber: 16 misses (first 6) ---
+  --- date-name: 337 misses (first 6) ---
+  --- street-housenumber: 21 misses (first 6) ---
+  --- street-particle: 58 misses (first 6) ---
+########## v352-3digit-2k ##########
+  class                     n     rate    95% CI
+  alnum-housenumber       400   0.963   [0.939, 0.977]
+  bare-street             400   0.743   [0.697, 0.783]
+  date-name               400   0.367   [0.322, 0.416]
+  street-housenumber      400   0.950   [0.924, 0.967]
+  street-particle         400   0.860   [0.823, 0.891]
+  OVERALL                2800   0.775   [0.760, 0.790]
+  --- alnum-housenumber: 15 misses (first 6) ---
+  --- date-name: 253 misses (first 6) ---
+  --- street-housenumber: 20 misses (first 6) ---
+  --- street-particle: 56 misses (first 6) ---
+########## v354-3digit-8k ##########
+  class                     n     rate    95% CI
+  alnum-housenumber       400   0.958   [0.933, 0.973]
+  bare-street             400   0.725   [0.679, 0.766]
+  date-name               400   0.378   [0.331, 0.426]
+  street-housenumber      400   0.950   [0.924, 0.967]
+  street-particle         400   0.855   [0.817, 0.886]
+  OVERALL                2800   0.767   [0.751, 0.783]
+  --- alnum-housenumber: 17 misses (first 6) ---
+  --- date-name: 249 misses (first 6) ---
+  --- street-housenumber: 20 misses (first 6) ---
+  --- street-particle: 58 misses (first 6) ---
