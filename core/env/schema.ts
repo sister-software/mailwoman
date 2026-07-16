@@ -20,8 +20,14 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_COARSE_PLACER_DIR: z.string().optional(),
 	WOF_DATA_DIR: z.string().optional(),
 
-	// Geocode server batch tuning (`GeocodeRouter`).
-	MAILWOMAN_BATCH_CONCURRENCY: z.coerce.number().int().positive().default(8),
+	// Geocode server batch row cap (`POST /v1/batch`).
+	//
+	// `MAILWOMAN_BATCH_CONCURRENCY` was REMOVED 2026-07-16 — it was inert. In-process concurrency
+	// cannot overlap a geocode: `onnxruntime-node`'s `session.run()` blocks the JS thread instead of
+	// releasing to the libuv pool, and `node:sqlite` reads are synchronous. Measured 1.00x flat from
+	// 1→16 workers on both parse and full geocode. Don't reintroduce it without re-measuring; worker
+	// threads (see `mailwoman/geocode-stream.ts`) are the only lever that moves this in Node.
+	// Receipts: `docs/articles/plan/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: z.coerce.number().int().positive().default(1000),
 
 	// The gazetteer/model data root (`core/utils/data-root.ts`, `scripts/copy-weights.ts`).

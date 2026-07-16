@@ -24,6 +24,8 @@ export interface PromotionVerdictOptions {
 	outDir: string
 	/** Also collect the int8 battery and enforce the fp32↔int8 delta cap. */
 	withInt8?: boolean
+	/** Overrides the derived label — pass `weights-cache` when the floors were read from a package-shaped cache. */
+	gradedArtifact?: "int8" | "fp32" | "weights-cache"
 }
 
 /** Pull `| <tag> | … | <F1> |`-style F1 from an affix/country scorer table (P, R, F1 columns). */
@@ -56,7 +58,14 @@ interface ScorerSidecar {
 /** The assembled verdict, as written to `verdict.json`. */
 export interface PromotionVerdict {
 	label: string
-	graded_artifact: "int8" | "fp32"
+	/**
+	 * WHICH ARTIFACT THE FLOORS WERE READ FROM — not which flag was passed. `weights-cache` is its own value because a
+	 * package-shaped cache's `model.onnx` is whatever the package ships (int8, in every shipped weights package), and
+	 * calling that "fp32" invites exactly the confound `baselines.json`'s $precision_comparability documents: someone
+	 * diffs two verdicts, sees fp32-vs-int8, and attributes a quantization delta to the model. It said "fp32" for a
+	 * verifiably int8 cache on 2026-07-16.
+	 */
+	graded_artifact: "int8" | "fp32" | "weights-cache"
 	verdict: "PASS" | "FAIL"
 	results: Record<string, { floor: number; actual: number | undefined; pass: boolean }>
 	int8_vs_fp32_deltas: Record<string, number>
@@ -203,7 +212,7 @@ export function assemblePromotionVerdict(
 
 	const verdict: PromotionVerdict = {
 		label: gate.label,
-		graded_artifact: int8 ? "int8" : "fp32",
+		graded_artifact: options.gradedArtifact ?? (int8 ? "int8" : "fp32"),
 		verdict: failed ? "FAIL" : "PASS",
 		results,
 		int8_vs_fp32_deltas: deltas,
