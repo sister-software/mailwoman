@@ -21,6 +21,14 @@ only.
   (4.19% of the corpus). Two-part fix — quote the key in 44 configs, plus a `__post_init__` guard
   that rejects any non-string country key, because a config-only fix rots the moment someone adds a
   country. 124 tests.
+- **`ed220724` — board 3: the NO digit-ownership board.** 2,400 Kartverket-derived fixtures, 6
+  classes, Wilson CIs, baselines registered against shipped v310 — a **true zero-knowledge arm**,
+  since v310 has never seen a Norwegian address. **Its first act was to veto the obvious next
+  move.** `synth-no-street-led` emits three forms, all with postcode+city, and v310 already reads all
+  three at **0.940–0.968** with zero Norwegian data. The 12,000-row shard the YAML bug has been
+  dropping aims at classes _at ceiling_; un-dropping it and retraining would teach the model what it
+  already knows. The headroom is elsewhere: `bare-street-hn` 0.693 and `slash-hn` 0.650 — forms the
+  shard never emits. **A don't-launch verdict from a board, before any GPU.**
 - **`5ab73894` — the B0 verdict** (answers the operator's vindicate-or-villainize question). See §6.
 - Nothing to production. **v6.4.0 is on main (`f31a519f`) but NOT published** — the npm/HF publish is
   a CI dispatch and an operator act. Untouched by this shift, by standing instruction.
@@ -40,6 +48,15 @@ only.
 - **Verifying by parsing rather than grepping.** The whole bug was that the config text looks
   correct. Every check — the fix sweep, the tests, the guard — goes through the YAML parser or the
   real loader. A grep-based fix would have "passed" against the broken file.
+- **Board 3 paid for itself before a single GPU-second.** Finding the Norway bug made "fix it and
+  retrain" feel obvious and urgent. The board — built _first_, per the standing rule — showed the
+  shard aims at classes already at 0.94–0.968. Building the instrument before the fix converted a
+  plausible day of A100 into a two-line table.
+- **`bare-street-hn` was designed as a diagnostic, not a score, and that is why it resolved the
+  track.** It carries no postcode, so nothing competes for the digit. It still fails 31%, and
+  `Hallingrudveien 32` → locality+postcode while `Hallingrudveien 32, 3370 Vikersund` parses
+  perfectly. Same street, same digit. That single pair moved Track B from "digit ownership" to "the
+  licence, in Norwegian" — a class we have already fixed once, in French, for +50pp.
 
 ## 3. What could've gone better
 
