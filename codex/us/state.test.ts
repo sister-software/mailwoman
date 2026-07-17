@@ -6,30 +6,30 @@
 
 import { expect, test } from "vitest"
 
-import { isUsStateAbbreviation, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION, US_STATE_NAMES } from "./state.ts"
+import { isUSStateAbbreviation, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION, US_STATE_NAMES } from "./state.ts"
 
-test("isUsStateAbbreviation: true for a sample of states, DC, and territories", () => {
+test("isUSStateAbbreviation: true for a sample of states, DC, and territories", () => {
 	for (const abbr of ["CA", "NY", "TX", "AK", "HI", "DC", "PR", "GU", "VI", "MP", "AS"]) {
-		expect(isUsStateAbbreviation(abbr)).toBe(true)
+		expect(isUSStateAbbreviation(abbr)).toBe(true)
 	}
 })
 
-test("isUsStateAbbreviation: case-insensitive (abbreviation arrives from raw address text)", () => {
-	expect(isUsStateAbbreviation("ca")).toBe(true)
-	expect(isUsStateAbbreviation("Ny")).toBe(true)
-	expect(isUsStateAbbreviation("tX")).toBe(true)
+test("isUSStateAbbreviation: case-insensitive (abbreviation arrives from raw address text)", () => {
+	expect(isUSStateAbbreviation("ca")).toBe(true)
+	expect(isUSStateAbbreviation("Ny")).toBe(true)
+	expect(isUSStateAbbreviation("tX")).toBe(true)
 })
 
-test("isUsStateAbbreviation: false for non-state / malformed / non-string input", () => {
-	expect(isUsStateAbbreviation("XX")).toBe(false)
-	expect(isUsStateAbbreviation("California")).toBe(false) // full name, not abbreviation
-	expect(isUsStateAbbreviation("CAL")).toBe(false)
-	expect(isUsStateAbbreviation("C")).toBe(false)
-	expect(isUsStateAbbreviation(" CA ")).toBe(false) // predicate does not trim
-	expect(isUsStateAbbreviation("")).toBe(false)
-	expect(isUsStateAbbreviation(42)).toBe(false)
-	expect(isUsStateAbbreviation(null)).toBe(false)
-	expect(isUsStateAbbreviation(undefined)).toBe(false)
+test("isUSStateAbbreviation: false for non-state / malformed / non-string input", () => {
+	expect(isUSStateAbbreviation("XX")).toBe(false)
+	expect(isUSStateAbbreviation("California")).toBe(false) // full name, not abbreviation
+	expect(isUSStateAbbreviation("CAL")).toBe(false)
+	expect(isUSStateAbbreviation("C")).toBe(false)
+	expect(isUSStateAbbreviation(" CA ")).toBe(false) // predicate does not trim
+	expect(isUSStateAbbreviation("")).toBe(false)
+	expect(isUSStateAbbreviation(42)).toBe(false)
+	expect(isUSStateAbbreviation(null)).toBe(false)
+	expect(isUSStateAbbreviation(undefined)).toBe(false)
 })
 
 test("US_STATE_BY_ABBREVIATION: abbreviation → full name, including homographs and territories", () => {

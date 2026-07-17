@@ -171,7 +171,7 @@ describe("WOFWasmPlaceLookup", () => {
 			const matches = await lookup.findPlace({ text: "VT", placetype: "region", limit: 5 })
 			// 'Vermontstate' holds the exact abbrev "VT" (place_abbr 110→VT, tiny pop); 'Vt Plains' only
 			// token-matches "vt" with a huge population. The exact-abbrev tier must win — the data-driven
-			// replacement for the demo's hardcoded expandUsRegion map.
+			// replacement for the demo's hardcoded expandUSRegion map.
 			expect(matches[0]?.id).toBe(110)
 			expect(matches[0]?.name).toBe("Vermontstate")
 			expect(matches[0]?.exactMatch).toBe(true)

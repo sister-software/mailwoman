@@ -23,7 +23,7 @@
 
 import { spawnSync } from "node:child_process"
 
-import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type UsUnitDesignator } from "@mailwoman/codex/us"
+import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 
 import { stableSourceID } from "../adapter.ts"
@@ -54,7 +54,7 @@ const EVAL_SOURCE: UnitSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", cs
 // USPS Pub-28 C2 designators that take a secondary identifier ("Apt 4B"). Weighted toward the common
 // ones the v0-parity arena failed on (Apt/Ste/Unit/Fl/Rm). Standalone designators (Basement, Lobby,
 // Penthouse) are emitted occasionally with no id.
-const ID_DESIGNATORS: readonly UsUnitDesignator[] = [
+const ID_DESIGNATORS: readonly USUnitDesignator[] = [
 	"APARTMENT",
 	"SUITE",
 	"UNIT",
@@ -65,7 +65,7 @@ const ID_DESIGNATORS: readonly UsUnitDesignator[] = [
 	"SPACE",
 	"LOT",
 ]
-const STANDALONE_DESIGNATORS: readonly UsUnitDesignator[] = [
+const STANDALONE_DESIGNATORS: readonly USUnitDesignator[] = [
 	"BASEMENT",
 	"LOBBY",
 	"PENTHOUSE",

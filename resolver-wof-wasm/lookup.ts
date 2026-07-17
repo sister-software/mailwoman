@@ -183,7 +183,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// query is an EXACT match — same tier as an exact name match — so "VT" → Vermont outranks a
 		// foreign region that merely token-matches "VT" via a multilingual name fragment. No-op on slim
 		// DBs built before place_abbr (the table is absent → empty set). This is the data-driven
-		// replacement for the demo's hardcoded `expandUsRegion` map; it also generalizes beyond US.
+		// replacement for the demo's hardcoded `expandUSRegion` map; it also generalizes beyond US.
 		const abbrIds = this.#abbrExactIds(text)
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
 		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.

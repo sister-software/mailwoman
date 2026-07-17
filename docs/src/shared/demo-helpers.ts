@@ -173,7 +173,7 @@ export const normName = (s: string): string => s.toLowerCase().trim().replace(/\
  * "Illinois", so its France bbox filters out the actual US city — expanding to the full name resolves the right region.
  * Full names pass through unchanged.
  */
-export function expandUsRegion(text: string): string {
+export function expandUSRegion(text: string): string {
 	return US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
 }
 

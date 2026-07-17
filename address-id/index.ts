@@ -97,7 +97,7 @@ function deriveState(address: string): string | null {
 	for (let i = candidates.length - 1; i >= 0; i--) {
 		const abbreviation = candidates[i]![1]!.toUpperCase()
 
-		if (us.isUsStateAbbreviation(abbreviation)) return abbreviation
+		if (us.isUSStateAbbreviation(abbreviation)) return abbreviation
 	}
 
 	return null

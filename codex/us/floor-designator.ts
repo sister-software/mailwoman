@@ -33,7 +33,7 @@
  * `requiresNumber` mirrors the Appendix C2 classification: FLOOR and BASEMENT must be followed by a secondary number;
  * PENTHOUSE and LOBBY may stand alone.
  */
-export interface UsFloorDesignator {
+export interface USFloorDesignator {
 	/** Full canonical designator (uppercase per the publication). */
 	name: string
 	/** Approved USPS abbreviation (what the post office prints on standardized mail). */
@@ -56,18 +56,18 @@ export const US_FLOOR_DESIGNATORS = [
 	{ name: "BASEMENT", abbreviation: "BSMT", variants: [], requiresNumber: true },
 	{ name: "PENTHOUSE", abbreviation: "PH", variants: [], requiresNumber: false },
 	{ name: "LOBBY", abbreviation: "LBBY", variants: [], requiresNumber: false },
-] as const satisfies readonly UsFloorDesignator[]
+] as const satisfies readonly USFloorDesignator[]
 
 /** A canonical USPS floor-class designator name. */
-export type UsFloorDesignatorName = (typeof US_FLOOR_DESIGNATORS)[number]["name"]
+export type USFloorDesignatorName = (typeof US_FLOOR_DESIGNATORS)[number]["name"]
 
 /**
  * Inverse lookup: every surface form (canonical name, approved abbreviation, or Appendix C2 variant) → its canonical
  * designator name. Lowercase-keyed for case-insensitive matching: `"fl"` → `"FLOOR"`, `"bsmt"` → `"BASEMENT"`, `"ph"` →
  * `"PENTHOUSE"`.
  */
-export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, UsFloorDesignatorName> = (() => {
-	const out = new Map<string, UsFloorDesignatorName>()
+export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorName> = (() => {
+	const out = new Map<string, USFloorDesignatorName>()
 
 	for (const row of US_FLOOR_DESIGNATORS) {
 		out.set(row.name.toLowerCase(), row.name)
@@ -90,16 +90,16 @@ export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, UsFloorDesignatorNa
 export const US_FLOOR_DESIGNATOR_TOKENS: ReadonlySet<string> = new Set(US_FLOOR_DESIGNATOR_LOOKUP.keys())
 
 /** Approved USPS abbreviation per canonical floor designator name. */
-export const US_FLOOR_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<UsFloorDesignatorName, string>> = Object.fromEntries(
+export const US_FLOOR_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USFloorDesignatorName, string>> = Object.fromEntries(
 	US_FLOOR_DESIGNATORS.map((r) => [r.name, r.abbreviation])
-) as Readonly<Record<UsFloorDesignatorName, string>>
+) as Readonly<Record<USFloorDesignatorName, string>>
 
 /**
  * Look up a USPS floor-class designator (by canonical name, abbreviation, or any Appendix C2 variant) and return the
  * canonical name + approved abbreviation. Returns null if the token isn't a recognized floor-class designator.
  */
 export function lookupFloorDesignator(input: string | null | undefined): {
-	designator: UsFloorDesignatorName
+	designator: USFloorDesignatorName
 	abbreviation: string
 } | null {
 	if (!input || typeof input !== "string") return null

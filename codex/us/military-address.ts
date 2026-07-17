@@ -46,7 +46,7 @@ export const US_MILITARY_POST_OFFICE_CODES = [
 	{ code: "DPO", name: "Diplomatic Post Office", armedForces: false },
 ] as const
 
-export type UsMilitaryPostOfficeCode = (typeof US_MILITARY_POST_OFFICE_CODES)[number]["code"]
+export type USMilitaryPostOfficeCode = (typeof US_MILITARY_POST_OFFICE_CODES)[number]["code"]
 
 /**
  * USPS Armed Forces "state" codes used in place of state names on military/diplomatic addresses. These appear where a
@@ -58,7 +58,7 @@ export const US_ARMED_FORCES_REGIONS = [
 	{ code: "AP", name: "Armed Forces Pacific", description: "Pacific" },
 ] as const
 
-export type UsArmedForcesRegionCode = (typeof US_ARMED_FORCES_REGIONS)[number]["code"]
+export type USArmedForcesRegionCode = (typeof US_ARMED_FORCES_REGIONS)[number]["code"]
 
 /**
  * USPS Pub 28 Appendix B unit-line designators for military/diplomatic overseas addresses. Each designator introduces
@@ -94,14 +94,14 @@ export const US_MILITARY_UNIT_DESIGNATORS = [
 	},
 ] as const
 
-export type UsMilitaryUnitDesignatorCode = (typeof US_MILITARY_UNIT_DESIGNATORS)[number]["code"]
+export type USMilitaryUnitDesignatorCode = (typeof US_MILITARY_UNIT_DESIGNATORS)[number]["code"]
 
 /** Result of a military address line parse (the unit line: PSC/CMR/UNIT). */
-export interface UsMilitaryUnitMatch {
+export interface USMilitaryUnitMatch {
 	/** The designator as it appeared ("PSC", "CMR", "Unit"). */
 	matched: string
 	/** The canonical designator code ("PSC", "CMR", "UNIT"). */
-	code: UsMilitaryUnitDesignatorCode
+	code: USMilitaryUnitDesignatorCode
 	/** The installation identifier ("1520", "453"). */
 	id: string
 	/** The box number when present ("4620", "1234A"). */
@@ -117,12 +117,12 @@ const UNIT_LINE_RE = /^\s*(psc|cmr|unit)\s+(\d+)(?:\s+box\s+([\dA-Za-z]+))?\s*$/
  * the canonical designator, installation id, and optional box. Null otherwise. Throws on a PSC or CMR line without a
  * BOX component (per Appendix B, BOX is required for PSC/CMR; a bare "PSC 1520" is malformed).
  */
-export function matchMilitaryUnitLine(input: unknown): UsMilitaryUnitMatch | null {
+export function matchMilitaryUnitLine(input: unknown): USMilitaryUnitMatch | null {
 	if (typeof input !== "string") return null
 	const m = UNIT_LINE_RE.exec(input)
 
 	if (!m) return null
-	const code = m[1]!.toUpperCase() as UsMilitaryUnitDesignatorCode
+	const code = m[1]!.toUpperCase() as USMilitaryUnitDesignatorCode
 	const id = m[2]!
 	const box = m[3]
 
@@ -147,13 +147,13 @@ export function isMilitaryUnitLine(input: unknown): boolean {
 }
 
 /** Result of a military city-line parse (APO/FPO/DPO + region code + ZIP). */
-export interface UsMilitaryCityMatch {
+export interface USMilitaryCityMatch {
 	/** The post-office code as it appeared ("APO", "FPO", "DPO"). */
 	matched: string
 	/** The canonical post-office code. */
-	code: UsMilitaryPostOfficeCode
+	code: USMilitaryPostOfficeCode
 	/** The Armed Forces region code ("AA", "AE", "AP"). */
-	region: UsArmedForcesRegionCode
+	region: USArmedForcesRegionCode
 	/**
 	 * The 5-digit or 9-digit ZIP code. Typical ranges per Pub 28: 09xxx (AE), 34xxx (AA), 96xxx (AP) — range validation
 	 * per region is caller responsibility.
@@ -179,7 +179,7 @@ const CITY_LINE_RE = /^\s*(apo|fpo|dpo)\s+(aa|ae|ap)\s+(\d{5}(?:-\d{4})?)\s*$/i
  * validation per region is left to the caller; the matcher accepts any 5. or 9-digit ZIP paired with a valid region
  * code.
  */
-export function matchMilitaryCityLine(input: unknown): UsMilitaryCityMatch | null {
+export function matchMilitaryCityLine(input: unknown): USMilitaryCityMatch | null {
 	if (typeof input !== "string") return null
 	const m = CITY_LINE_RE.exec(input)
 
@@ -187,8 +187,8 @@ export function matchMilitaryCityLine(input: unknown): UsMilitaryCityMatch | nul
 
 	return {
 		matched: m[1]!.toUpperCase(),
-		code: m[1]!.toUpperCase() as UsMilitaryPostOfficeCode,
-		region: m[2]!.toUpperCase() as UsArmedForcesRegionCode,
+		code: m[1]!.toUpperCase() as USMilitaryPostOfficeCode,
+		region: m[2]!.toUpperCase() as USArmedForcesRegionCode,
 		zip: m[3]!,
 	}
 }

@@ -28,7 +28,7 @@ export const US_PO_BOX_DESIGNATORS = [
 	"BOX",
 ] as const satisfies readonly string[]
 
-export type UsPoBoxDesignator = (typeof US_PO_BOX_DESIGNATORS)[number]
+export type USPoBoxDesignator = (typeof US_PO_BOX_DESIGNATORS)[number]
 
 // Matches a leading PO-box designator + its identifier. Allows "P.O. Box", "PO BOX", "Post Office
 // Box", "Box 12-A", etc. The id is alphanumeric with optional dashes (USPS caller/firm ids exist).

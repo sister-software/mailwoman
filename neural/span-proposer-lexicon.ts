@@ -83,7 +83,7 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 
 	if (sys.has("us")) {
 		for (const canonical of Object.keys(us.US_UNIT_DESIGNATOR_VARIANTS)) {
-			const variants = [canonical, ...us.US_UNIT_DESIGNATOR_VARIANTS[canonical as us.UsUnitDesignator]]
+			const variants = [canonical, ...us.US_UNIT_DESIGNATOR_VARIANTS[canonical as us.USUnitDesignator]]
 			const target = LEVEL_CANONICALS.has(canonical) ? levelDesignators : unitDesignators
 
 			for (const v of variants) {

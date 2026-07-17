@@ -229,16 +229,16 @@ export const US_STREET_SUFFIX_VARIANTS = {
 } as const satisfies Record<string, readonly string[]>
 
 /** Canonical USPS suffix (full word, uppercase per the publication). */
-export type UsStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
+export type USStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
 
 /**
  * Inverse lookup: every variant abbreviation OR full canonical word → its canonical key. Built once at module load,
  * lowercase-keyed for case-insensitive matching (`street` → `"STREET"`, `st` → `"STREET"`, `strt` → `"STREET"`, …).
  */
-export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, UsStreetSuffix> = (() => {
-	const out = new Map<string, UsStreetSuffix>()
+export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() => {
+	const out = new Map<string, USStreetSuffix>()
 
-	for (const canonical of Object.keys(US_STREET_SUFFIX_VARIANTS) as UsStreetSuffix[]) {
+	for (const canonical of Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]) {
 		out.set(canonical.toLowerCase(), canonical)
 
 		for (const variant of US_STREET_SUFFIX_VARIANTS[canonical]) {
@@ -255,9 +255,9 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, UsStreetSuffix> = (() 
 })()
 
 /** Preferred USPS abbreviation per canonical (`AVENUE → "AVE"`, `STREET → "ST"`). */
-export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<UsStreetSuffix, string>> = Object.fromEntries(
-	(Object.keys(US_STREET_SUFFIX_VARIANTS) as UsStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]])
-) as Readonly<Record<UsStreetSuffix, string>>
+export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, string>> = Object.fromEntries(
+	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]])
+) as Readonly<Record<USStreetSuffix, string>>
 
 /**
  * Apply `target`'s letters in the same case-pattern as `reference`. Three patterns covered:
@@ -280,7 +280,7 @@ export function matchCase(target: string, reference: string): string {
  * If the last whitespace-separated word of `street` is a known USPS suffix variant, return the canonical key and the
  * matched word. Returns null if the trailing word isn't a known suffix.
  */
-export function matchTrailingSuffix(street: string): { canonical: UsStreetSuffix; matched: string } | null {
+export function matchTrailingSuffix(street: string): { canonical: USStreetSuffix; matched: string } | null {
 	const trimmed = street.trim()
 
 	if (!trimmed) return null
@@ -300,9 +300,9 @@ export const StreetSuffixAbbreviationRecord = US_STREET_SUFFIX_VARIANTS
 export type StreetSuffixAbbreviationRecord = typeof US_STREET_SUFFIX_VARIANTS
 
 /**
- * A canonical USPS street suffix, i.e. "STREET", "AVENUE", "BOULEVARD". Aliases {@link UsStreetSuffix}.
+ * A canonical USPS street suffix, i.e. "STREET", "AVENUE", "BOULEVARD". Aliases {@link USStreetSuffix}.
  */
-export type StreetSuffix = UsStreetSuffix
+export type StreetSuffix = USStreetSuffix
 
 /** A standardized USPS street suffix abbreviation (the preferred form), i.e. "ST", "AVE", "BLVD". */
 export type USPSStandardSuffixAbbreviation = StreetSuffixAbbreviationRecord[StreetSuffix][0]

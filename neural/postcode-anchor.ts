@@ -32,7 +32,7 @@
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { isGermanStreetToken } from "@mailwoman/codex/de"
 import { isFrenchStreetWord } from "@mailwoman/codex/fr"
-import { isStreetSuffixToken, isUsStateAbbreviation } from "@mailwoman/codex/us"
+import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
 
 import { collectMatches } from "./postcode-repair.ts"
 
@@ -239,7 +239,7 @@ function looksLikeStreetWord(token: string, systems: ReadonlySet<string>): boole
 
 	if (t.length < 2) return false
 
-	if (systems.has("us") && isStreetSuffixToken(t) && !isUsStateAbbreviation(t)) return true
+	if (systems.has("us") && isStreetSuffixToken(t) && !isUSStateAbbreviation(t)) return true
 
 	if (systems.has("de") && isGermanStreetToken(t)) return true
 
