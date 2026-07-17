@@ -116,133 +116,80 @@ describe("buildEmissionPriors", () => {
 	})
 })
 
-describe("buildEmissionPriors — locality bias", () => {
-	const FULL_LABELS = [
-		"O",
-		"B-country",
-		"I-country",
-		"B-region",
-		"I-region",
-		"B-locality",
-		"I-locality",
-		"B-postcode",
-		"I-postcode",
-	]
+describe("buildEmissionPriors — SCOPED locality bias (2026-07-17 rebuild)", () => {
+	// The original backward-walk locality bias was retired after the M1 stack ablation attributed the
+	// prior's entire −7.8pp golden-us locality cost to it (venue/org absorption: "DANVILLE HEALTH
+	// CENTER, 26 Cedar Lane, Danville VT" → locality "danville health center"). The gauntlet regression
+	// layer then caught the over-correction: bare "New York, NY" (us-new-york-nyc) NEEDS the bias — the
+	// model alone drops the locality. This scoped rebuild fires ONLY on that bare admin doubleton:
+	// no digits, abbreviation last, ≤4 preceding tokens, name ≠ the region's own name.
+	const bLoc = LABELS.indexOf("B-locality")
+	const iLoc = LABELS.indexOf("I-locality")
 
-	it("biases preceding token toward B-locality when region abbreviation detected", () => {
-		// "Washington, DC" — token "Washington" at [0,10], comma at [10,11], space, "DC" at [12,14]
-		const shape: QueryShapeLike = {
-			knownFormats: [],
-			regionAbbreviations: [{ start: 12, span: "DC" }],
-		}
-		// Token for "Washington" ends at 10; abbreviation starts at 12 (gap = 2 for ", ")
-		const toks = tokens([0, 10], [12, 14])
-		const m = buildEmissionPriors(shape, toks, FULL_LABELS)
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		expect(m[0]?.[bLocCol]).toBe(2.0)
-		// The abbreviation token itself should NOT get locality bias
-		expect(m[1]?.[bLocCol]).toBe(0)
+	it("fires on the bare doubleton — New York, NY", () => {
+		const shape = { knownFormats: [], regionAbbreviations: [{ start: 10, span: "NY" }] } as QueryShapeLike
+		const m = buildEmissionPriors(shape, tokens([0, 3], [4, 8], [10, 12]), LABELS, { inputText: "New York, NY" })
+
+		expect(m[0]![bLoc]).toBeGreaterThan(0)
+		expect(m[1]![iLoc]).toBeGreaterThan(0)
+		expect(m[2]![bLoc]).toBe(0)
 	})
 
-	it("biases multi-word locality with B- and I- correctly", () => {
-		// "New York, NY" — "New" at [0,3], "York" at [4,8], "NY" at [10,12]
-		const shape: QueryShapeLike = {
-			knownFormats: [],
-			regionAbbreviations: [{ start: 10, span: "NY" }],
+	it("does NOT fire when the input carries digits (the M1 venue/street failure class)", () => {
+		const text = "Danville Health Center, 26 Cedar Lane, Danville VT"
+		const shape = { knownFormats: [], regionAbbreviations: [{ start: 48, span: "VT" }] } as QueryShapeLike
+		const toks = tokens([0, 8], [9, 15], [16, 22], [24, 26], [27, 32], [33, 37], [39, 47], [48, 50])
+		const m = buildEmissionPriors(shape, toks, LABELS, { inputText: text })
+
+		for (const row of m) {
+			expect(row[bLoc]).toBe(0)
+			expect(row[iLoc]).toBe(0)
 		}
-		const toks = tokens([0, 3], [4, 8], [10, 12])
-		const m = buildEmissionPriors(shape, toks, FULL_LABELS)
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		const iLocCol = FULL_LABELS.indexOf("I-locality")
-		// "New" should get B-locality, "York" should get I-locality
-		expect(m[0]?.[bLocCol]).toBe(2.0)
-		expect(m[1]?.[iLocCol]).toBe(2.0)
-		// Abbreviation token gets nothing
-		expect(m[2]?.[bLocCol]).toBe(0)
 	})
 
-	it("does not bias when no region abbreviations present", () => {
-		const shape: QueryShapeLike = {
-			knownFormats: [],
-			regionAbbreviations: [],
+	it("does NOT fire when more than 4 tokens precede the abbreviation", () => {
+		const text = "Community Health Service Inc Grafton ND"
+		const shape = { knownFormats: [], regionAbbreviations: [{ start: 37, span: "ND" }] } as QueryShapeLike
+		const toks = tokens([0, 9], [10, 16], [17, 24], [25, 28], [29, 36], [37, 39])
+		const m = buildEmissionPriors(shape, toks, LABELS, { inputText: text })
+
+		for (const row of m) {
+			expect(row[bLoc]).toBe(0)
 		}
-		const m = buildEmissionPriors(shape, tokens([0, 5], [6, 10]), FULL_LABELS)
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		expect(m[0]?.[bLocCol]).toBe(0)
-		expect(m[1]?.[bLocCol]).toBe(0)
 	})
 
-	it("does not bias tokens that are too far from the abbreviation", () => {
-		// Token at [0,5], abbreviation at [50,52] — gap of 45 chars
-		const shape: QueryShapeLike = {
-			knownFormats: [],
-			regionAbbreviations: [{ start: 50, span: "DC" }],
+	it("does NOT fire when a token follows the abbreviation (not the doubleton shape)", () => {
+		const text = "New York, NY tomorrow"
+		const shape = { knownFormats: [], regionAbbreviations: [{ start: 10, span: "NY" }] } as QueryShapeLike
+		const m = buildEmissionPriors(shape, tokens([0, 3], [4, 8], [10, 12], [13, 21]), LABELS, { inputText: text })
+
+		for (const row of m) {
+			expect(row[bLoc]).toBe(0)
 		}
-		const m = buildEmissionPriors(shape, tokens([0, 5], [50, 52]), FULL_LABELS)
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		expect(m[0]?.[bLocCol]).toBe(0)
 	})
 
-	it("respects custom localityBiasScale", () => {
-		const shape: QueryShapeLike = {
-			knownFormats: [],
-			regionAbbreviations: [{ start: 12, span: "DC" }],
+	it("fires for Washington, DC and — deliberately — for Washington, WA (the old name-IS-region guard was dead in production)", () => {
+		// The retired version compared the preceding text against the region's full name, but production
+		// passes PIECE spans that include the trailing comma, so the comparison never matched. The bias is
+		// soft (+2.0 log-odds): a confident region emission on a true state-restatement still wins.
+		for (const [text, span] of [
+			["Washington, DC", "DC"],
+			["Washington, WA", "WA"],
+		] as const) {
+			const shape = { knownFormats: [], regionAbbreviations: [{ start: 12, span }] } as QueryShapeLike
+			const m = buildEmissionPriors(shape, tokens([0, 10], [12, 14]), LABELS, { inputText: text })
+
+			expect(m[0]![bLoc]).toBeGreaterThan(0)
 		}
-		const toks = tokens([0, 10], [12, 14])
-		const m = buildEmissionPriors(shape, toks, FULL_LABELS, { localityBiasScale: 3.0 })
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		expect(m[0]?.[bLocCol]).toBe(3.0)
 	})
 
-	it("does not bias when preceding text matches the region name (Washington, WA)", () => {
-		// "Washington, WA" — "Washington" IS the region name for WA, should NOT get locality bias
-		const shape: QueryShapeLike = {
-			knownFormats: [],
-			regionAbbreviations: [{ start: 12, span: "WA" }],
-		}
-		const toks = tokens([0, 10], [12, 14])
-		const m = buildEmissionPriors(shape, toks, FULL_LABELS, { inputText: "Washington, WA" })
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		expect(m[0]?.[bLocCol]).toBe(0)
-	})
+	it("never fires without inputText (the digit guard cannot run)", () => {
+		const shape = { knownFormats: [], regionAbbreviations: [{ start: 10, span: "NY" }] } as QueryShapeLike
+		const m = buildEmissionPriors(shape, tokens([0, 3], [4, 8], [10, 12]), LABELS)
 
-	it("still biases when text does NOT match region name (Washington, DC)", () => {
-		// "Washington, DC" — DC's region name is "District of Columbia", NOT "Washington"
-		const shape: QueryShapeLike = {
-			knownFormats: [],
-			regionAbbreviations: [{ start: 12, span: "DC" }],
+		for (const row of m) {
+			expect(row[bLoc]).toBe(0)
 		}
-		const toks = tokens([0, 10], [12, 14])
-		const m = buildEmissionPriors(shape, toks, FULL_LABELS, { inputText: "Washington, DC" })
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		expect(m[0]?.[bLocCol]).toBe(2.0)
-	})
-
-	it("does not bias New York before NY (region name match)", () => {
-		// "New York, NY" — "New York" IS the region name for NY
-		const shape: QueryShapeLike = {
-			knownFormats: [],
-			regionAbbreviations: [{ start: 10, span: "NY" }],
-		}
-		const toks = tokens([0, 3], [4, 8], [10, 12])
-		const m = buildEmissionPriors(shape, toks, FULL_LABELS, { inputText: "New York, NY" })
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		const iLocCol = FULL_LABELS.indexOf("I-locality")
-		expect(m[0]?.[bLocCol]).toBe(0)
-		expect(m[1]?.[iLocCol]).toBe(0)
-	})
-
-	it("skips tokens overlapping a known postcode format", () => {
-		// "10118, NY" — "10118" overlaps a postcode hit, should NOT get locality bias
-		const shape: QueryShapeLike = {
-			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 }],
-			regionAbbreviations: [{ start: 7, span: "NY" }],
-		}
-		const toks = tokens([0, 5], [7, 9])
-		const m = buildEmissionPriors(shape, toks, FULL_LABELS)
-		const bLocCol = FULL_LABELS.indexOf("B-locality")
-		// Token 0 is a postcode — should NOT get locality bias
-		expect(m[0]?.[bLocCol]).toBe(0)
 	})
 })
 
