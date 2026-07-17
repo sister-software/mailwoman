@@ -101,6 +101,11 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   raw-case exact 48.0 vs v381 48.3 (-0.3pp) against the +5pp bar; augment_upper_case_prob 0.15 is
   INERT at 2k. Per no-relax-bars: P3 does NOT ride the 8k, the #690 shim stays (+12.4pp raw-case
   today). The span head DOES escalate — but seg@1 (leg-1 formal gate) runs first before the ~2h 8k spend.
+- 07:08 — **seg@1 GATE PASS on v3.10.0 step-002000** (local CPU, eval_seg_at_1.py, parity 267):
+  token@1 0.5581 / seg@1 0.6030 (+4.5pp) → the trained span scorer beats the token decode ON THE
+  SHIP-RECIPE CORPUS (v0.11.0-no-fragment). This is the NOVEL confirmation: v301 proved the head on
+  v257; v3.10.0 proves it survives the corpus swap. All THREE 2k legs green (guard byte-stable,
+  loss converged, seg@1 crosses). The ~2h 8k spend's falsifier PASSED → escalating.
 - GOTCHA: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
   saver zero-pads. First grade run FileNotFounded on step-2000; fixed to 002000.
 - TIMEKEEPING CORRECTION (self-caught TWICE: at the 05:03 checkpoint, and again at 05:48 when four
