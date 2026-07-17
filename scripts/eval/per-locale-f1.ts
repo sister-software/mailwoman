@@ -17,7 +17,7 @@
  *   earns its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
  *   the interference tripwire firing.
  *
- *   Scoring mirrors `harness-v0-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the
+ *   Scoring mirrors `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the
  *   Stage-3 street parts (`street_prefix`/`street`/`street_suffix` → `street`,
  *   `intersection_a`/`_b` → `street`) into the golden component vocab, then compare case-folded
  *   strings per tag.
@@ -179,7 +179,7 @@ function parseArgs(): Args {
 }
 
 // -------------------------------------------------------------------------------------------------
-// Golden row + fold (shared semantics with harness-v0-neural.ts)
+// Golden row + fold (shared semantics with harness-neural.ts)
 // -------------------------------------------------------------------------------------------------
 
 interface GoldenRow {

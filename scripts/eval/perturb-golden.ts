@@ -16,7 +16,7 @@
  *
  * Run: node scripts/eval/perturb-golden.ts\
  * --golden data/eval/golden/v0.1.2 --out /tmp/perturb-eval/perturbed.jsonl [--per-file 60] Then run
- * it through harness-v0-neural with --symmetric-match (see that flag).
+ * it through harness-neural (formerly harness-v0-neural with --symmetric-match).
  */
 
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
