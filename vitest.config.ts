@@ -24,15 +24,9 @@ const here = import.meta.dirname
 export default defineConfig({
 	resolve: {
 		alias: [
-			// @mailwoman/core — `solvers/*` / `filters/*` / `kysley/*` are glob subpaths that preserve
-			// the trailing filename, everything else resolves to a directory `index.ts`.
-			{ find: /^@mailwoman\/core\/solvers\/(.+)$/, replacement: resolve(here, "core/solvers/$1") },
-			{ find: /^@mailwoman\/core\/filters\/(.+)$/, replacement: resolve(here, "core/filters/$1") },
+			// @mailwoman/core — `kysley/*` is a glob subpath that preserves the trailing filename,
+			// everything else resolves to a directory `index.ts`.
 			{ find: /^@mailwoman\/core\/kysley\/(.+)$/, replacement: resolve(here, "core/kysley/$1.ts") },
-			{
-				find: "@mailwoman/core/parser/proposal-pipeline",
-				replacement: resolve(here, "core/parser/proposal-pipeline.ts"),
-			},
 			// coarse-placer (#244) is a single-file subpath (no index.ts), so the generic core/$1/index.ts
 			// rule below would mis-resolve it. Map it to the file directly.
 			{ find: "@mailwoman/core/coarse-placer", replacement: resolve(here, "core/coarse-placer/coarse-placer.ts") },

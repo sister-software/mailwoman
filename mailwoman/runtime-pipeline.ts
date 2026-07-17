@@ -14,14 +14,12 @@
  *   See `docs/articles/plan/reference/STAGES.md` for the full contract.
  */
 
-import { solutionToProposals, type AddressParser } from "@mailwoman/core/parser"
 import {
 	runPipeline,
 	type PipelineOpts,
 	type PipelineResult,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
-import type { ClassificationProposal } from "@mailwoman/core/types"
 import { classifyKind as defaultClassifyKind } from "@mailwoman/kind-classifier"
 import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import { normalize } from "@mailwoman/normalize"
@@ -29,7 +27,6 @@ import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
-import { createAddressParser } from "./utils/parser.ts"
 
 export interface CreateRuntimePipelineOpts {
 	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
@@ -73,15 +70,6 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
-	 * The "rule source" for per-component arbitration (#478 increment 3). Defaults to a lazily-built v0
-	 * `createAddressParser` whose solved output is projected to proposals via `solutionToProposals` — constructed on the
-	 * first `arbitrate: true` call and never if arbitration is never used. Override to inject a custom rule parser or a
-	 * fake in tests.
-	 *
-	 * @see RuntimePipelineStages.ruleProposer
-	 */
-	ruleProposer?: RuntimePipelineStages["ruleProposer"]
-	/**
 	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII input before the
 	 * model (helps on all-caps registry/compliance data; detection-gated, mixed-case untouched). The classifier is
 	 * **default-ON** since #895 (drift D2 settled), so leaving this unset runs it; set `false` here to pin the raw-case
@@ -118,18 +106,6 @@ export interface CreateRuntimePipelineOpts {
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
-	// Lazy v0 rule parser for arbitration (#478 inc 3). Built on first use (only when a caller passes
-	// `arbitrate: true`), so non-arbitrating pipelines pay nothing. The solved v0 output — not raw
-	// classifier firings — is the coherent "rule" source projected to proposals.
-	let v0Parser: AddressParser | undefined
-	const defaultRuleProposer = async (normalizedText: string, locale: string): Promise<ClassificationProposal[]> => {
-		v0Parser ??= createAddressParser()
-		const solutions = await v0Parser.parse(normalizedText, { locale })
-		const top = solutions[0]
-
-		return top ? solutionToProposals(top, "v0-rules") : []
-	}
-
 	const stages: RuntimePipelineStages = {
 		normalize,
 		computeQueryShape,
@@ -147,9 +123,6 @@ export function createRuntimePipeline(
 		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
 		// `false` disables it. A confident in-map guess feeds the resolver's anchorPosterior re-rank.
 		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
-		// Rule source for arbitration (#478 inc 3) — the lazy v0 parser above, override-able. Invoked
-		// only when a call passes `arbitrate: true`; otherwise never built.
-		ruleProposer: opts.ruleProposer ?? defaultRuleProposer,
 		// Default locale gate: rule-based from @mailwoman/locale-gate. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.

@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./arbitrate-tree.ts"
 export * from "./build-tree.ts"
 export * from "./calibration.ts"
 export * from "./containment.ts"

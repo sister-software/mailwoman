@@ -5,49 +5,7 @@
  */
 
 import { type Classification, type Classifier, type LibPostalLanguageCode } from "@mailwoman/core"
-import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { expect, test } from "vitest"
-/**
- * Global test parser instance.
- */
-export const parser = createAddressParser({
-	// languages: ["en"],
-})
-
-export function assert(input: string, ...expectedClassifications: ClassificationRecord[]) {
-	return test(input, async () => {
-		const solutions = await parser.parse(input)
-
-		if (expectedClassifications.length === 0) {
-			if (solutions.length !== 0) {
-				expect(solutions, "Expected no solutions").toEqual([])
-
-				return
-			}
-
-			expect(true, "No solutions and no expected records.").toBe(true)
-
-			return
-		}
-
-		for (let i = 0; i < expectedClassifications.length; i++) {
-			const expectedClassification = expectedClassifications[i]
-			const bestMatch = solutions[i]
-
-			if (!bestMatch) {
-				// throw new Error(`Cannot find a match for expected record ${i}: ${JSON.stringify(expectedClassification)}.`)
-				expect(null, `Match for expected record @ ${i}`).toEqual(expectedClassification)
-
-				return
-			}
-
-			expect(
-				bestMatch.classifications,
-				`Classification record ${i + 1} of ${expectedClassifications.length} matches.`
-			).toEqual(expectedClassification)
-		}
-	})
-}
 
 /**
  * Assert that two items are deeply equal after JSON serialization.

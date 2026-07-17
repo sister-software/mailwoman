@@ -6,7 +6,7 @@
 
 import { Span } from "@mailwoman/core/tokenization"
 
-import type { Classification } from "./Classification.ts"
+import type { Classification } from "../types/Classification.ts"
 import { type ClassifierSchemeConfig, phraseMatchesScheme } from "./scheme.ts"
 import { SectionClassifier } from "./SectionClassifier.ts"
 

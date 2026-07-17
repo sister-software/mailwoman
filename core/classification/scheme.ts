@@ -6,7 +6,7 @@
 
 import type { Span } from "@mailwoman/core/tokenization"
 
-import type { Classification } from "./Classification.ts"
+import type { Classification } from "../types/Classification.ts"
 
 /**
  * A configuration for a classifier scheme.

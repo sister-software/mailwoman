@@ -24,7 +24,7 @@
  */
 
 import addressFormatter from "@fragaria/address-formatter"
-import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/classification"
+import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/types"
 import type { ComponentTag } from "@mailwoman/core/types"
 
 /** A partial map of `ComponentTag` → string value — the canonical formatter input. */

@@ -15,7 +15,7 @@
 
 import type { AddressTree } from "../decoder/types.ts"
 import type { ResolveOpts, Resolver, ResolverBackend } from "../resolver/types.ts"
-import type { ClassificationProposal, Section } from "../types/classifier.ts"
+import type { Section } from "../types/classifier.ts"
 
 export type LocaleTag = string
 
@@ -45,14 +45,6 @@ export interface PipelineOpts {
 	forceJointReconcile?: boolean
 	/** Hard cap on lookups the resolver may issue; passed through. */
 	resolveOpts?: ResolveOpts
-	/**
-	 * Per-component rule-vs-neural arbitration (#478 increment 3). When `true` AND a `ruleProposer` stage is wired, the
-	 * coordinator unions the whole-text neural parse with the solved v0 rule parse (as proposals), filters them
-	 * per-component via the input-shape router prior, resolves span overlaps, and rebuilds the tree from the survivors.
-	 * Default (unset) ⇒ `false` ⇒ the neural argmax tree is used unchanged (byte-stable). Behind a flag pending the
-	 * assembled gate.
-	 */
-	arbitrate?: boolean
 	/**
 	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps registry/compliance
 	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-gated
@@ -273,13 +265,6 @@ export interface RuntimePipelineStages {
 	 * absent, reconcile runs classifier-only (today's behavior, byte-stable).
 	 */
 	resolverBackend?: ResolverBackend
-	/**
-	 * The "rule source" for arbitration (#478 increment 3): `(normalizedText, locale) → rule proposals`, derived from the
-	 * SOLVED v0 parser (its solver-coordinated output, not raw classifier firings). Invoked only when `opts.arbitrate` is
-	 * set. Typically wired by `createRuntimePipeline` from `createAddressParser` + `solutionToProposals`. Absent ⇒
-	 * arbitration is a no-op.
-	 */
-	ruleProposer?: (normalizedText: string, locale: string) => Promise<ClassificationProposal[]>
 }
 
 export interface PipelineTiming {

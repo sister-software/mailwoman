@@ -224,6 +224,7 @@ async function serve(): Promise<void> {
 				resolved.category = "place"
 				resolved.type = "house"
 			}
+
 			// The geocode result already carries the parse's street spans (#1041) — no second parse.
 			if (result.house_number) {
 				resolved.address.house_number = result.house_number

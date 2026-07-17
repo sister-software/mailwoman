@@ -49,11 +49,6 @@
 			"default": "./out/types/index.js",
 			"types": "./out/types/index.d.ts"
 		},
-		"./parser": {
-			"node": "./parser/index.ts",
-			"default": "./out/parser/index.js",
-			"types": "./out/parser/index.d.ts"
-		},
 		"./solver": {
 			"node": "./solver/index.ts",
 			"default": "./out/solver/index.js",
@@ -169,11 +164,6 @@
 			"default": "./out/kysley/dialect-config.js",
 			"types": "./out/kysley/dialect-config.d.ts"
 		},
-		"./solvers": {
-			"node": "./solvers/index.ts",
-			"default": "./out/solvers/index.js",
-			"types": "./out/solvers/index.d.ts"
-		},
 		"./errors": {
 			"node": "./errors/index.ts",
 			"default": "./out/errors/index.js",
@@ -188,11 +178,6 @@
 			"node": "./solvers/*.ts",
 			"default": "./out/solvers/*.js",
 			"types": "./out/solvers/*.d.ts"
-		},
-		"./filters": {
-			"node": "./filters/index.ts",
-			"default": "./out/filters/index.js",
-			"types": "./out/filters/index.d.ts"
 		},
 		"./filters/*": {
 			"node": "./filters/*.ts",
@@ -231,10 +216,6 @@
 			"./types": {
 				"types": "./out/types/index.d.ts",
 				"default": "./out/types/index.js"
-			},
-			"./parser": {
-				"types": "./out/parser/index.d.ts",
-				"default": "./out/parser/index.js"
 			},
 			"./solver": {
 				"types": "./out/solver/index.d.ts",
@@ -328,10 +309,6 @@
 				"types": "./out/kysley/dialect-config.d.ts",
 				"default": "./out/kysley/dialect-config.js"
 			},
-			"./solvers": {
-				"types": "./out/solvers/index.d.ts",
-				"default": "./out/solvers/index.js"
-			},
 			"./errors": {
 				"types": "./out/errors/index.d.ts",
 				"default": "./out/errors/index.js"
@@ -343,10 +320,6 @@
 			"./solvers/*": {
 				"types": "./out/solvers/*.d.ts",
 				"default": "./out/solvers/*.js"
-			},
-			"./filters": {
-				"types": "./out/filters/index.d.ts",
-				"default": "./out/filters/index.js"
 			},
 			"./filters/*": {
 				"types": "./out/filters/*.d.ts",

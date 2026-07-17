@@ -7,14 +7,13 @@
 import { Spinner } from "@inkjs/ui"
 import { type AddressTree, decodeAsJSON, decodeAsTuples, decodeAsXML, proposalsToTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
-import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
-import { InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
+import { collectProposals, filterByPolicy, InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
 import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
-import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
+import { createRuntimePipeline } from "mailwoman"
 import React from "react"
 import zod from "zod"
 
@@ -53,20 +52,11 @@ const ParseConfigSchema = zod.object({
 			"Joint admin-consistency re-pick during --resolve (#263/#822: 'Portland, ME' binds to Maine, not Messina). " +
 				"ON by default (#895); pass --no-admin-coherence to restore the greedy population-first ranking."
 		),
-	isolated: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"Skip the runtime pipeline; run the legacy rule-only parser. For debugging when the pipeline path looks suspect."
-		),
 	neural: zod
 		.boolean()
 		.optional()
 		.default(false)
-		.describe(
-			"[Legacy] Force the neural-classifier-only path (skips Stage 1 + 2 + 2.5 of the pipeline). Implied by the default unless --isolated is set."
-		),
+		.describe("[Legacy] Force the neural-classifier-only path (skips Stage 1 + 2 + 2.5 of the pipeline)."),
 	noNeural: zod
 		.boolean()
 		.optional()
@@ -88,11 +78,7 @@ const ParseConfigSchema = zod.object({
 			"Run the structural pipeline stages only (normalize, query-shape, kind, grouper) without the neural " +
 				"encoder, even when weights are installed. A stderr banner names what's degraded."
 		),
-	format: zod
-		.enum(["json", "tuple", "xml"])
-		.optional()
-		.default("json")
-		.describe("Output projection. Applies to all paths except --isolated (which always emits JSON)."),
+	format: zod.enum(["json", "tuple", "xml"]).optional().default("json").describe("Output projection."),
 	model: zod.string().optional().describe("Explicit model.onnx path (--neural only). Overrides --locale resolution."),
 	tokenizer: zod
 		.string()
@@ -138,7 +124,7 @@ const ParseConfigSchema = zod.object({
 		.optional()
 		.describe(
 			"Run the pipeline N times against the input and emit per-stage p50/p95/p99 + total wall + heap delta. " +
-				"5-iteration warmup is excluded from the stats. Default path only (incompatible with --isolated / --policy)."
+				"5-iteration warmup is excluded from the stats. Default path only (incompatible with --policy)."
 		),
 })
 
@@ -170,7 +156,6 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	// the legacy/benchmark/noNeural paths keep their existing loading semantics untouched (plan 3;
 	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
 	const guardEligible =
-		!options.isolated &&
 		options.benchmark === undefined &&
 		!(options.policy && options.policy.length > 0) &&
 		!options.neural &&
@@ -203,21 +188,16 @@ function ParseTask({
 		const input = args[0]!
 
 		if (options.benchmark !== undefined) {
-			if (options.isolated || (options.policy && options.policy.length > 0) || options.neural) {
+			if ((options.policy && options.policy.length > 0) || options.neural) {
 				throw commandError(
-					"--benchmark requires the default runtime-pipeline path (incompatible with --isolated / --policy / --neural)"
+					"--benchmark requires the default runtime-pipeline path (incompatible with --policy / --neural)"
 				)
 			}
 
 			return runBenchmark(input, options, options.benchmark)
 		}
 
-		// --isolated: legacy rule-only path (the pre-pipeline default).
-		if (options.isolated) {
-			return runIsolated(input, options)
-		}
-
-		// --policy implies the legacy proposal/policy path.
+		// --policy implies the neural proposal/policy path.
 		if (options.policy && options.policy.length > 0) {
 			const policyOverrides = parsePolicySpecs(options.policy)
 
@@ -418,35 +398,20 @@ async function runDegraded(input: string, options: zod.infer<typeof ParseConfigS
 		: serializeTree(result.tree, options.format, { includeAlternatives: false })
 }
 
-/** Legacy rule-only path. Used by --isolated and as a graceful fallback when neural is unavailable. */
-async function runIsolated(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
-	const parser = createAddressParser()
-	const parseOpts = options.locale ? { locale: options.locale } : {}
-
-	if (options.debug) {
-		return parser.parse(input, { verbose: true, ...parseOpts }).then(createDiagnosticReport)
-	}
-
-	return parser.parse(input, parseOpts).then((results) => JSON.stringify(results, null, 2))
-}
-
 /**
- * Default path: runtime pipeline. Lazy-loads neural classifier (graceful fallback to the legacy rule-only path if
- * weights aren't present) + optional resolver. Returns the parsed tree serialized in the requested format.
+ * Default path: runtime pipeline. Lazy-loads the neural classifier + optional resolver. Returns the parsed tree
+ * serialized in the requested format. When the encoder is unavailable, degrades to the structural-pipeline stages
+ * (normalize → query-shape → kind → grouper fast-paths) rather than any rules parser.
  */
 async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
 
-	// Graceful fallback: if neither neural nor resolver is in play, the pipeline emits an empty tree
-	// for structured addresses (no encoder + no resolver = nothing to classify token-by-token). Hand
-	// off to the legacy rule path so the CLI still produces useful output. Two exceptions stay on the
-	// pipeline:
-	//   - `--debug`: the operator explicitly asked for the PipelineResult JSON shape; routing to the
-	//     legacy diagnostic report would silently change the output schema. Fast-path inputs
-	//     (postcode_only, locality_only) still produce a populated tree from QueryShape alone.
-	//   - future fast-path inputs once we add more rule-based kinds.
+	// When the encoder isn't loaded and there's no resolver/debug work to do, the full pipeline can
+	// only emit QueryShape fast-path structure. Route to the degraded structural path (with its banner)
+	// so the CLI still produces useful output for the fast-path kinds (postcode_only, locality_only).
+	// `--debug` stays on the pipeline so the operator gets the requested PipelineResult JSON shape.
 	if (!classifier && !options.resolve && !options.debug) {
-		return runIsolated(input, options)
+		return runDegraded(input, options)
 	}
 
 	const wantAlternatives = options.candidates !== undefined

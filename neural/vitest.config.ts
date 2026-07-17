@@ -19,12 +19,6 @@ const here = import.meta.dirname
 export default defineConfig({
 	resolve: {
 		alias: [
-			// Sub-subpath alias for the pure proposal-pipeline module — avoids dragging in
-			// AddressParser → classification → tokenization → libpostal init cascade.
-			{
-				find: "@mailwoman/core/parser/proposal-pipeline",
-				replacement: resolve(here, "../core/parser/proposal-pipeline.ts"),
-			},
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "../core/$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "../core/index.ts") },
 			// @mailwoman/codex resolves to source too (per-address-system postal reference data).

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+export * from "../types/Classification.ts"
 export * from "./BaseClassifier.ts"
-export * from "./Classification.ts"
 export * from "./CompositeClassifier.ts"
 export * from "./PhraseClassifier.ts"
 export * from "./scheme.ts"

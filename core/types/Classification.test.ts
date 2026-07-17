@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Classifications, ClassificationsMatchMap, isVisibleClassification } from "@mailwoman/core/classification"
+import { Classifications, ClassificationsMatchMap, isVisibleClassification } from "@mailwoman/core/types"
 import { expect, test } from "vitest"
 
 // A classification that is valid but NOT in the visible set — derived through the public API so the
