@@ -62,7 +62,7 @@ beforeEach(() => {
 	resetMetricsForTest()
 })
 
-async function postJson(path: string, body: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
+async function postJSON(path: string, body: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
 	const res = await app.request(path, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
@@ -78,18 +78,18 @@ async function postJson(path: string, body: unknown): Promise<{ status: number; 
 
 describe("api-engine — error paths (run unconditionally)", () => {
 	test("POST /v1/geocode: 400 when `address` is missing", async () => {
-		const r = await postJson("/v1/geocode", {})
+		const r = await postJSON("/v1/geocode", {})
 		expect(r.status).toBe(400)
 		expect(r.body["error"]).toBe("address is required")
 	})
 
 	test("POST /v1/batch: 400 when `addresses` is not a string array", async () => {
-		const r = await postJson("/v1/batch", { addresses: [1, 2] })
+		const r = await postJSON("/v1/batch", { addresses: [1, 2] })
 		expect(r.status).toBe(400)
 	})
 
 	test("POST /v1/batch: 200 + empty results for an empty array", async () => {
-		const r = await postJson("/v1/batch", { addresses: [] })
+		const r = await postJSON("/v1/batch", { addresses: [] })
 		expect(r.status).toBe(200)
 		expect((r.body as { results: unknown[] }).results).toEqual([])
 	})
@@ -122,7 +122,7 @@ describeIfWeights(
 	"api-engine — /v1/parse (native neural output)",
 	() => {
 		test("POST /v1/parse: returns ordered components + the decoded tree, in engine reading order", async () => {
-			const r = await postJson("/v1/parse", { address: "3075 Hill Street, Round Rock, TX 78664" })
+			const r = await postJSON("/v1/parse", { address: "3075 Hill Street, Round Rock, TX 78664" })
 			expect(r.status).toBe(200)
 			const body = r.body as {
 				input: string
@@ -137,7 +137,7 @@ describeIfWeights(
 		})
 
 		test("POST /v1/parse: debug:true rides an XML diagnostic report back in the response", async () => {
-			const r = await postJson("/v1/parse", { address: "3075 Hill Street, Round Rock, TX 78664", debug: true })
+			const r = await postJSON("/v1/parse", { address: "3075 Hill Street, Round Rock, TX 78664", debug: true })
 			expect(r.status).toBe(200)
 			expect(typeof r.body["debug"]).toBe("string")
 			expect(r.body["debug"] as string).toContain("<")
@@ -152,7 +152,7 @@ describeIfWeights(
 
 describeIfStack("api-engine — success path against real WOF + TX shards", () => {
 	test("POST /v1/geocode: resolves a TX address to a street-level coordinate", async () => {
-		const r = await postJson("/v1/geocode", { address: "3075 Hill Street, Round Rock, TX 78664" })
+		const r = await postJSON("/v1/geocode", { address: "3075 Hill Street, Round Rock, TX 78664" })
 		expect(r.status).toBe(200)
 		const body = r.body as { lat: number; lon: number; resolution_tier: string; region: string }
 		expect(body.region).toBe("TX")
@@ -165,7 +165,7 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 		const before = (await (await app.request("/metrics")).json()) as { timings: { total: number } }
 		expect(before.timings.total).toBe(0)
 
-		await postJson("/v1/geocode", { address: "3075 Hill Street, Round Rock, TX 78664" })
+		await postJSON("/v1/geocode", { address: "3075 Hill Street, Round Rock, TX 78664" })
 
 		const after = (await (await app.request("/metrics")).json()) as {
 			timings: { total: number; tiers: Record<string, number> }
@@ -178,7 +178,7 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 
 	test("POST /v1/batch: returns results in input order, one slot per input, with per-row metrics recorded", async () => {
 		const addresses = ["3075 Hill Street, Round Rock, TX 78664", "3029 Hill Street, Round Rock, TX 78664"]
-		const r = await postJson("/v1/batch", { addresses })
+		const r = await postJSON("/v1/batch", { addresses })
 		expect(r.status).toBe(200)
 		const results = (r.body as { results: Array<{ input: string }> }).results
 		expect(results).toHaveLength(2)

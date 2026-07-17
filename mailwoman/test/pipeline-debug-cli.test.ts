@@ -23,7 +23,7 @@ const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 /** Strip ANSI escapes + ink spinner frames; isolate the JSON payload. */
-function extractJson(stdout: string): unknown {
+function extractJSON(stdout: string): unknown {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()
 	// Find the outermost JSON object (debug mode emits an object — non-debug emits an array).
@@ -45,7 +45,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
-		const result = extractJson(stdout) as Record<string, unknown>
+		const result = extractJSON(stdout) as Record<string, unknown>
 
 		// Shape: every PipelineResult key is present.
 		expect(result).toHaveProperty("input")
@@ -77,7 +77,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
-		const result = extractJson(stdout) as Record<string, unknown>
+		const result = extractJSON(stdout) as Record<string, unknown>
 		const kind = result["kind"] as Record<string, unknown>
 		expect(kind["kind"]).toBe("locality_only")
 	}, 20_000)
@@ -87,7 +87,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
-		const result = extractJson(stdout) as Record<string, unknown>
+		const result = extractJSON(stdout) as Record<string, unknown>
 		const shape = result["queryShape"] as Record<string, unknown>
 		const formats = shape["knownFormats"] as Array<Record<string, unknown>>
 		expect(formats.some((f) => f["format"] === "us_zip4")).toBe(true)
@@ -98,7 +98,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
-		const result = extractJson(stdout) as Record<string, unknown>
+		const result = extractJSON(stdout) as Record<string, unknown>
 		const normalized = result["normalized"] as Record<string, unknown>
 		expect(normalized["normalized"]).toBe("Paris")
 		expect(normalized["raw"]).toBe("  Paris  ")

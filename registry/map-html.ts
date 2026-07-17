@@ -79,7 +79,7 @@ const CROSS_COLOR = "#e8590c" // cross-dataset link (≥2 sources)
  * containing `</script>` would close the block early; escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a
  * breakout impossible.
  */
-function safeJsonForScript(value: unknown): string {
+function safeJSONForScript(value: unknown): string {
 	return JSON.stringify(value).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")
 }
 
@@ -258,8 +258,8 @@ ${features.length ? `<div class="mw-panel mw-legend">${legendRows}</div>` : `<di
 	crossorigin="anonymous"></script>
 <script>
 "use strict";
-var STYLE = ${safeJsonForScript(style)};
-var BBOX = ${safeJsonForScript(bbox)};
+var STYLE = ${safeJSONForScript(style)};
+var BBOX = ${safeJSONForScript(bbox)};
 
 function esc(v) {
 	if (v === null || v === undefined) return "";

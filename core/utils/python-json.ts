@@ -25,7 +25,7 @@
  *   integers vanishingly rarely; the builders that emit coordinates accept this edge.
  */
 
-export interface PyJsonOptions {
+export interface PyJSONOptions {
 	/** Escape non-ASCII as `\uXXXX` (Python `ensure_ascii`). Defaults to `true`, matching Python. */
 	ensureAscii?: boolean
 }
@@ -82,11 +82,11 @@ function serialize(value: unknown, ensureAscii: boolean): string {
 
 		return "{" + parts.join(", ") + "}"
 	}
-	throw new TypeError(`pyJsonDumps: unsupported value of type ${t}`)
+	throw new TypeError(`pyJSONDumps: unsupported value of type ${t}`)
 }
 
 /** `json.dumps(value)` — single line, `(", ", ": ")` separators, `ensure_ascii` per options. */
-export function pyJsonDumps(value: unknown, options: PyJsonOptions = {}): string {
+export function pyJSONDumps(value: unknown, options: PyJSONOptions = {}): string {
 	return serialize(value, options.ensureAscii ?? true)
 }
 

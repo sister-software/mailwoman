@@ -36,7 +36,7 @@ import { globSync, mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
-import { pyJsonDumps } from "@mailwoman/core/utils"
+import { pyJSONDumps } from "@mailwoman/core/utils"
 import { SeededRandom } from "@mailwoman/core/utils"
 
 import { csvRecordsFromFile, csvRecordsFromZip } from "./lib/zip-csv.ts"
@@ -227,7 +227,7 @@ async function main(): Promise<void> {
 	const trimmed = rows.slice(0, n)
 
 	mkdirSync(dirname(out), { recursive: true })
-	writeFileSync(out, trimmed.map((r) => pyJsonDumps(r, { ensureAscii: false }) + "\n").join(""))
+	writeFileSync(out, trimmed.map((r) => pyJSONDumps(r, { ensureAscii: false }) + "\n").join(""))
 	process.stderr.write(
 		`wrote ${trimmed.length} ${country.toUpperCase()} rows across ${buckets.size} buckets -> ${out}\n`
 	)
