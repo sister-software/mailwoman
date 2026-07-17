@@ -4,18 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { Displayable } from "../resources/debugging.ts"
+import type { Alpha3bLanguageCode } from "../resources/languages/index.ts"
+import type { LibPostalLanguageCode } from "../resources/libpostal.ts"
 // Imported via deep relative path (not @mailwoman/core/classification) to avoid a runtime cycle:
 // classification/index.ts re-exports SectionClassifier / WordClassifier which themselves import
 // Span from @mailwoman/core/tokenization, creating a TDZ that surfaces as "Class extends value
 // undefined" when the source-mode test runner loads tokenization first.
-import {
-	type Classification,
-	type ClassificationMatch,
-	ClassificationsMatchMap,
-} from "../classification/Classification.ts"
-import type { Displayable } from "../resources/debugging.ts"
-import type { Alpha3bLanguageCode } from "../resources/languages/index.ts"
-import type { LibPostalLanguageCode } from "../resources/libpostal.ts"
+import { type Classification, type ClassificationMatch, ClassificationsMatchMap } from "../types/Classification.ts"
 import { Graph } from "./Graph.ts"
 
 const MAX_SPAN_LENGTH = 140

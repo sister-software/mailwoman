@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { ClassificationMap } from "@mailwoman/core/classification"
+import type { ClassificationMap } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
 
 import {
