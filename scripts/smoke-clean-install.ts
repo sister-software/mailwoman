@@ -41,7 +41,6 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/resolver": "resolver",
 	"@mailwoman/ban": "ban",
 	"@mailwoman/codex": "codex",
-	"@mailwoman/classifiers": "classifiers",
 	"@mailwoman/kind-classifier": "kind-classifier",
 	"@mailwoman/locale-gate": "locale-gate",
 	"@mailwoman/normalize": "normalize",

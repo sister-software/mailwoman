@@ -4449,14 +4449,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/classifiers@workspace:*, @mailwoman/classifiers@workspace:classifiers":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/classifiers@workspace:classifiers"
-  dependencies:
-    "@mailwoman/core": "workspace:*"
-  languageName: unknown
-  linkType: soft
-
 "@mailwoman/codex@workspace:*, @mailwoman/codex@workspace:codex":
   version: 0.0.0-use.local
   resolution: "@mailwoman/codex@workspace:codex"
@@ -15618,7 +15610,6 @@ __metadata:
     "@mailwoman/api": "workspace:*"
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
-    "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"

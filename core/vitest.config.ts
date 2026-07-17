@@ -35,7 +35,6 @@ export default defineConfig({
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "index.ts") },
 			// Sibling workspaces.
-			{ find: /^@mailwoman\/classifiers$/, replacement: resolve(here, "../classifiers/index.ts") },
 			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolve(here, "../corpus/src/$1.ts") },
 			{ find: /^@mailwoman\/corpus$/, replacement: resolve(here, "../corpus/src/index.ts") },
 			// The root `mailwoman` package — test-kit imports it (transitively re-exports core +

@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/core",
 	"version": "6.5.0",
-	"description": "Mailwoman core: tokenization, classification primitives, solver, formatter, resources, filters, solvers, utils.",
+	"description": "Mailwoman core: tokenization, decoder, formatter, resources, filters, utils.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -24,11 +24,6 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
-		"./classification": {
-			"node": "./classification/index.ts",
-			"default": "./out/classification/index.js",
-			"types": "./out/classification/index.d.ts"
-		},
 		"./coarse-placer": {
 			"node": "./coarse-placer/coarse-placer.ts",
 			"default": "./out/coarse-placer/coarse-placer.js",
@@ -48,11 +43,6 @@
 			"node": "./types/index.ts",
 			"default": "./out/types/index.js",
 			"types": "./out/types/index.d.ts"
-		},
-		"./solver": {
-			"node": "./solver/index.ts",
-			"default": "./out/solver/index.js",
-			"types": "./out/solver/index.d.ts"
 		},
 		"./decoder": {
 			"node": "./decoder/index.ts",
@@ -174,11 +164,6 @@
 			"default": "./out/routing/index.js",
 			"types": "./out/routing/index.d.ts"
 		},
-		"./solvers/*": {
-			"node": "./solvers/*.ts",
-			"default": "./out/solvers/*.js",
-			"types": "./out/solvers/*.d.ts"
-		},
 		"./filters/*": {
 			"node": "./filters/*.ts",
 			"default": "./out/filters/*.js",
@@ -197,10 +182,6 @@
 				"types": "./out/index.d.ts",
 				"default": "./out/index.js"
 			},
-			"./classification": {
-				"types": "./out/classification/index.d.ts",
-				"default": "./out/classification/index.js"
-			},
 			"./coarse-placer": {
 				"types": "./out/coarse-placer/coarse-placer.d.ts",
 				"default": "./out/coarse-placer/coarse-placer.js"
@@ -216,10 +197,6 @@
 			"./types": {
 				"types": "./out/types/index.d.ts",
 				"default": "./out/types/index.js"
-			},
-			"./solver": {
-				"types": "./out/solver/index.d.ts",
-				"default": "./out/solver/index.js"
 			},
 			"./decoder": {
 				"types": "./out/decoder/index.d.ts",
@@ -316,10 +293,6 @@
 			"./routing": {
 				"types": "./out/routing/index.d.ts",
 				"default": "./out/routing/index.js"
-			},
-			"./solvers/*": {
-				"types": "./out/solvers/*.d.ts",
-				"default": "./out/solvers/*.js"
 			},
 			"./filters/*": {
 				"types": "./out/filters/*.d.ts",

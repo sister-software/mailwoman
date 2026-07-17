@@ -41,8 +41,6 @@ export default defineConfig({
 			{ find: /^@mailwoman\/address-id$/, replacement: resolve(here, "address-id/index.ts") },
 			{ find: /^@mailwoman\/api-kit$/, replacement: resolve(here, "api-kit/index.ts") },
 			{ find: /^@mailwoman\/api$/, replacement: resolve(here, "api/index.ts") },
-			{ find: /^@mailwoman\/classifiers\/(.+)$/, replacement: resolve(here, "classifiers/$1") },
-			{ find: /^@mailwoman\/classifiers$/, replacement: resolve(here, "classifiers/index.ts") },
 			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolve(here, "corpus/src/$1.ts") },
 			{ find: /^@mailwoman\/corpus$/, replacement: resolve(here, "corpus/src/index.ts") },
 			{ find: /^@mailwoman\/formatter\/(.+)$/, replacement: resolve(here, "formatter/$1.ts") },
