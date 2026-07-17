@@ -2004,6 +2004,21 @@ def export_onnx(
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
 
+    # #727 stage-2: a span-scorer model's ONNX carries a `span_scores` output, but the JS k-best
+    # decoder (neural/semi-markov-decode.ts, PR #1154) also needs the segment-transition table, which
+    # is DECODE-TIME data, not part of the graph. Write it as a sidecar next to model.onnx so the
+    # grade's oracle@k / seg@1 arc reads can consume it. Returns None (no file) for a span-less model,
+    # keeping the export byte-identical for every pre-#727 recipe.
+    import json as _json
+
+    from mailwoman_train.package_weights import export_semi_crf_transitions
+
+    transitions = export_semi_crf_transitions(model)
+    if transitions is not None:
+        sidecar = out_path.parent / "semi-crf-transitions.json"
+        sidecar.write_text(_json.dumps(transitions, indent=2) + "\n", encoding="utf-8")
+        print(f"span transitions sidecar: {sidecar}")
+
     vol.commit()
     print("Committed to volume.")
 
