@@ -5,7 +5,7 @@
  */
 
 import { ClassificationMatch } from "@mailwoman/core"
-import { assertClassification } from "mailwoman/sdk/test"
+import { assertClassification } from "mailwoman/test-kit"
 
 import { PersonalTitleClassifier } from "./PersonalTitleClassifier.ts"
 
