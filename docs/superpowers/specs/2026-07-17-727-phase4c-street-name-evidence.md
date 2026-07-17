@@ -90,15 +90,18 @@ re-measure the 3 residual breaks after that change, it likely cuts them further.
   the default state of the world). Only presence promotes.
 - No per-class weights, no score blending — the moment a second scalar appears beside G2's margin,
   stop and re-read the rerank.ts header.
-- No production wiring until a span-head model ships: spanScores exist only on the phase-1
-  artifact (v301). The rerank rides the span-arc retrain (plan #1134 step 4/5) behind a flag, with
-  the golden gate + gauntlet battery as the promotion bar.
+- No production wiring until a span-head model ships. The v3.10.1 8k model (step-4, 2026-07-17) is
+  the substrate: it exports spanScores + the semi-crf-transitions sidecar and is staged at
+  `scratchpad/v3101-cache`. The rerank rides that model behind a flag, with the golden gate +
+  gauntlet battery (run WITH the rerank active) as the promotion bar.
 
 ## Measured-read pre-registration for the implementation PR
 
-On the FR fragment board (same fixtures, same v301 artifact, k=5): street@1 ≥ 0.70 overall,
-bare-street ≥ 0.86, breaks ≤ 5 of recoverable, zero regression on street-housenumber beyond
-−1.5pp vs seg@1. On parity fixtures: no coordinate-acceptability regression (P1/P2/P3 gate).
+On the FR fragment board (same fixtures, the **v3.10.1 8k substrate**, k=5 — NOT the v301 proxy):
+street@1 ≥ 0.85 overall, date-name ≥ 0.55 (the primary-win class), breaks ≤ 5 of recoverable,
+zero regression on street-housenumber beyond −1.0pp vs seg@1. On parity fixtures: no
+coordinate-acceptability regression (P1/P2/P3 gate). Baseline to beat = seg@1 0.791 → the v2 policy
+board result 0.851 (96 fixes / 3 breaks) is the target the wired implementation must reproduce.
 
 ## Logged training signal (free byproduct)
 
