@@ -2,7 +2,7 @@
 
 This is not a dumping ground for all manner of one-off scripts. If you're considering adding a new script, ask yourself: is this a one-off, or is it a reusable tool?
 
-If you are adding a new diagnostic script, it should be written preferably in TypeScript, or Python if absolutely necessary.
+If you are adding a new diagnostic script, it should be written preferably in TypeScript, or Python if absolutely necessary. If you do need somewhere to put a one-off script, add it to @./scratchpad/ which is ignored by git automatically.
 
 ## Build Scripts
 
