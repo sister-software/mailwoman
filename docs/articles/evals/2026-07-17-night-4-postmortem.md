@@ -47,18 +47,18 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   on the archived feat/727-span-head branch, NOT main — my "phases 1-3 on main" was half-right: python
   scorer merged, JS decoder didn't). Liveness checks were fooled by the watcher's self-matching pgrep.
   Re-ran from a branch worktree.
-- 05:45 — PHASE-4A RESULT (the arc's central question): **rerank@1 = seg@1 = 0.5768, delta +0.
+- ~05:20 (receipt 7f46415a @ 05:27) — PHASE-4A RESULT (the arc's central question): **rerank@1 = seg@1 = 0.5768, delta +0.
   Full-geocode tier evidence collects NONE of the oracle@5 0.723 headroom** — because it is STARVED:
   evidence rate 3.4% (9/267 fixtures produced street-tier evidence on any hypothesis; tier census
   1308 admin / 25 address_point / 2 street). The failing class is context-free fragments, which
   cannot reach rooftop layers, so all hypotheses tie at admin. NOT a treadmill case — first
   measurement; the redesign is measurement-driven: the arbiter needs STREET-NAME existence evidence
   (P1's StreetLocalityEvidence — two independent negatives converged on the same design today).
-- 05:50 — name-evidence falsifier v0 (FR BAN street-centroids 2.2M + NO tuples, n=7 recoverable):
+- ~05:25 (same receipt) — name-evidence falsifier v0 (FR BAN street-centroids 2.2M + NO tuples, n=7 recoverable):
   2 clean discriminations incl. the refusal class, 4 neutral both-out (typos fail closed), 1 anti
   (index incompleteness + unscoped bare-name membership). Promising, unproven at n=7 — scaling to
   the FR fragment board (n=400, complete BAN coverage) next.
-- 06:00 — **PHASE-4B RESULT at board scale (n=1600, the FR fragment board's four street classes):
+- 05:29 (dd2e8aae) — **PHASE-4B RESULT at board scale (n=1600, the FR fragment board's four street classes):
   name-evidence rerank street@1 0.619 → 0.706 (+8.7pp); bare-street 0.675 → 0.860 (+18.5pp) — the
   66% recall class every corpus lever plateaued on, collected with ZERO training.** Of 202
   recoverable rows: 140 fixed / 14 broken / 48 neutral (10:1). Resolver-as-arbiter validated with
@@ -66,26 +66,26 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   `2026-07-17-phase4-name-evidence-rerank.md` (dd2e8aae). Caveats stated there: v301 span artifact
   (k-best only exists on the archived branch — this result is the consumer that justifies merging
   it), FR-only index, BAN-derived board = ideal coverage.
-- 06:20 — break audit + falsifier v2: the 14 breaks = truncation wins (10, bare `rue`/`chemin`
-  sub-spans are in-index) + moved-off-correct-rank-1 (4, fold mismatches). Two guards (G1 no
-  pure-type-vocabulary evidence, G2 margin cap 2.5), pre-registered breaks<=6 fixes>=135: **148
-  fixes / 3 breaks (49:1), street@1 0.711, bare-street 0.875 (+20.0pp over base)**. Both bars
-  cleared. Phase-4c spec committed with the interface + per-country index plan:
-  `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md` (aeaa15f7).
-- 06:45 — **PR #1154**: the archived span branch's runtime surface merged-to-branch for main
-  (semi-markov k-best decode + rerank veto scaffold + spanScores threading, 880 ins). Clean merge,
-  neural 305/305 + resolver 113/113 pass, presets byte-identical (shipped model exports no span
-  head -> threading inert). The phase-4b result is the consumer that justifies this.
-- 06:10 — v391 golden gate found CRASHED, and the cause is a MAIN-BRANCH BREAK the excision left:
+- 05:32 — v391 golden gate found CRASHED, and the cause is a MAIN-BRANCH BREAK the excision left:
   #1151 deleted `harness-v0-neural.ts` but `external-arenas.ts` (a promotion-gate leg) still
   invoked it — every post-excision gate battery dies at the arena leg. Fixed as **PR #1153**:
   `harness-neural.ts` = the seal-tag harness ported neural-only (neural semantics unchanged →
   pass rates comparable), summarize-arenas drops the v0 buckets. tsc + 10-row smoke clean. The
   v391 arena leg is moot for the verdict (v391 already held on the BR guard), but the next ship
-  needs the battery working.
-- TIMEKEEPING CORRECTION (self-caught at the 05:03 checkpoint): the log lines above originally
-  carried local-time-derived guesses labeled as UTC; fixed to actual UTC. Everything above happened
-  in the first ~27 minutes of the shift.
+  needs the battery working. PR #1153 opened 05:41.
+- 05:44 — **PR #1154**: the archived span branch's runtime surface merged-to-branch for main
+  (semi-markov k-best decode + rerank veto scaffold + spanScores threading, 880 ins). Clean merge,
+  neural 305/305 + resolver 113/113 pass, presets byte-identical (shipped model exports no span
+  head -> threading inert). The phase-4b result is the consumer that justifies this.
+- 05:47 (aeaa15f7) — break audit + falsifier v2: the 14 breaks = truncation wins (10, bare `rue`/`chemin`
+  sub-spans are in-index) + moved-off-correct-rank-1 (4, fold mismatches). Two guards (G1 no
+  pure-type-vocabulary evidence, G2 margin cap 2.5), pre-registered breaks<=6 fixes>=135: **148
+  fixes / 3 breaks (49:1), street@1 0.711, bare-street 0.875 (+20.0pp over base)**. Both bars
+  cleared. Phase-4c spec committed with the interface + per-country index plan:
+  `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md` (aeaa15f7).
+- TIMEKEEPING CORRECTION (self-caught TWICE: at the 05:03 checkpoint, and again at 05:48 when four
+  fresh entries carried local+2h stamps): all stamps above are now receipt-anchored to commit/PR
+  timestamps (the lab clock is UTC+2 — never stamp from the wall clock).
 
 ## What went well
 
