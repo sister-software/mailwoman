@@ -123,7 +123,20 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 
 ## Concrete next steps
 
--
+- **v3.10.0 2k probe grade** (blocked on step-2000): `scratchpad/grade-v3100.sh` runs
+  export→int8→v381-sibling cache→guard(golden us/fr vs v381 baseline 86.9/90.1 micro)→LEG-2
+  all-caps (raw-case, bar ≥53.3 exact vs v381 48.3). Cache template `scratchpad/v381-punct-full-cache`
+  (SAME tokenizer → F1 valid). seg@1 formal gate deferred to 8k (leg-1 mechanism already confirmed:
+  loss 18.6→1.55, vs v3.0.0's stuck 17 — the LR param group works).
+- **export_onnx sidecar gap (8k handoff)**: the Modal `export_onnx` fn writes `model.onnx` but NOT
+  `semi-crf-transitions.json` (that's `package_weights.export_semi_crf_transitions`, a separate
+  path). The phase-4c/PR-#1154 k-best decode needs the sidecar, so the 8k package build must route
+  through package_weights or export_onnx must be extended to emit it. Harmless for the 2k BIO-path grade.
+- **PRs awaiting operator merge** (both green, not self-merged — new runtime surface + eval tooling):
+  #1153 (arena-harness neural-only, unblocks the gate battery — merge FIRST, main's battery is broken
+  without it), #1154 (span-decode surface to main — the phase-4c consumer). Then #1152 (P1 design doc).
+- **Phase-4c** (`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`): build
+  `StreetLocalityEvidence` after #1154 lands + a span-head model ships. Measured v2 policy: 148 fixes / 3 breaks.
 
 | metric              | value           |
 | ------------------- | --------------- |
