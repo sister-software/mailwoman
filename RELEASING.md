@@ -4,19 +4,18 @@ Mailwoman publishes a coordinated set of npm packages: the `mailwoman` CLI plus 
 `@mailwoman/*` runtime closure. That closure is declared in `.release-it.json` and **must stay in sync with
 the dependency graph** — if `mailwoman` (or any published package) gains a new `@mailwoman/*` runtime
 dependency, it has to join that list, or the published `mailwoman` won't install (its dep 404s on npm). As
-of 4.0.0 the set is 13 workspaces: `mailwoman` + `@mailwoman/{core, normalize, query-shape, kind-classifier,
-locale-gate, phrase-grouper, codex, classifiers, corpus, neural, neural-weights-en-us, neural-weights-fr-fr}`,
+of v7.0.0 the set is 12 workspaces: `mailwoman` + `@mailwoman/{core, normalize, query-shape, kind-classifier,
+locale-gate, phrase-grouper, codex, corpus, neural, neural-weights-en-us, neural-weights-fr-fr}`,
 all published at one synced version (the model too — see Versioning policy). The core ones:
 
-| Package                           | Workspace dir           | Notes                                                                                                                  |
-| --------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                                                                       |
-| `@mailwoman/core`                 | `core/`                 | tokenization, classification primitives, solver, decoder; ships ~9 MB of libpostal+WOF dictionaries under `core/data/` |
-| `@mailwoman/classifiers`          | `classifiers/`          | rule-based classifiers                                                                                                 |
-| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                                                            |
-| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                                                                |
-| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                                                                           |
-| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                                                                           |
+| Package                           | Workspace dir           | Notes                                                                               |
+| --------------------------------- | ----------------------- | ----------------------------------------------------------------------------------- |
+| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                                    |
+| `@mailwoman/core`                 | `core/`                 | tokenization, decoder; ships ~9 MB of libpostal+WOF dictionaries under `core/data/` |
+| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                         |
+| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                             |
+| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                                        |
+| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                                        |
 
 [`release-it`](https://github.com/release-it/release-it) drives the cut + tag + publish + GitHub release. [`@release-it-plugins/workspaces`](https://github.com/release-it-plugins/workspaces) coordinates the multi-package version bump and per-package `npm publish`.
 

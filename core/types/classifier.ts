@@ -11,9 +11,9 @@
  *   declared here is pull-based and async: a classifier returns a list of `ClassificationProposal`
  *   objects keyed by the canonical `ComponentTag` union.
  *
- *   Both shapes co-exist during the Ship-of-Theseus rollout. Rule classifiers are wrapped via
- *   `wrapLegacyClassifier` (see `@mailwoman/classifiers`); the neural classifier (Phase 3)
- *   implements this interface natively. The solver consumes one normalized shape.
+ *   The neural classifier implements this interface natively. The rule classifiers that once
+ *   also implemented it (via a `wrapLegacyClassifier` adapter) were removed in v7.0.0 with the
+ *   `@mailwoman/classifiers` workspace; this contract now describes the neural path only.
  */
 
 import type { Span } from "../tokenization/index.ts"

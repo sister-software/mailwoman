@@ -70,7 +70,6 @@ import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "@mailwoman/cod
 ## Related
 
 - [`@mailwoman/core`](../core) — `ComponentTag` schema, pipeline infrastructure
-- [`@mailwoman/classifiers`](../classifiers) — rule-based classifiers that consume codex data
 - [`@mailwoman/address-id`](../address-id) — uses codex for stable address primary keys
 - [Address system conventions](https://mailwoman.sister.software/articles/plan/reference/SCHEMA/)
 

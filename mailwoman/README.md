@@ -194,7 +194,6 @@ package is the umbrella that wires them together as a single `npm install`.
 | `@mailwoman/locale-gate`          | Stage 2: locale detection                          |
 | `@mailwoman/kind-classifier`      | Stage 2.5: query kind classification               |
 | `@mailwoman/phrase-grouper`       | Stage 2.7: phrase boundary discovery               |
-| `@mailwoman/classifiers`          | Rule-based classifiers                             |
 | `@mailwoman/codex`                | Postal reference data                              |
 | `@mailwoman/corpus`               | Training corpus pipeline                           |
 | `@mailwoman/spatial`              | Spatial utilities                                  |
