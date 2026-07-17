@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type Classification, type Classifier, type LibPostalLanguageCode } from "@mailwoman/core"
-import { expect, test } from "vitest"
+import { expect } from "vitest"
 
 /**
  * Assert that two items are deeply equal after JSON serialization.
@@ -75,56 +74,5 @@ export function assertCongruent<Item>(
 		}
 
 		expect(true, `All items match in iterator ${iteratorsIndex}`).toBe(true)
-	}
-}
-
-export type ExpectedClassificationEntry = [
-	input: string,
-	Iterable<LibPostalLanguageCode>,
-	expectPositiveMatch?: boolean,
-]
-
-/**
- * Assert that a classifier correctly classifies a set of inputs.
- */
-export function assertClassification(
-	classifier: Classifier,
-	classificationTarget: Classification,
-	expectations: ExpectedClassificationEntry[]
-) {
-	if (typeof classifier.classify !== "function") {
-		throw new TypeError(`Classifier ${classifier.constructor.name} does not implement the classify method`)
-	}
-
-	for (const [input, expectedLanguages, expectPositiveMatch = true] of expectations) {
-		test(`classify: ${input}`, () => {
-			const actualMatch = classifier.classify(input).classifications.get(classificationTarget)
-
-			if (!actualMatch) {
-				if (expectPositiveMatch) {
-					throw new Error(`"${input}" is not classified as ${classificationTarget}`)
-				}
-
-				expect(true, `"${input}" is not classified as ${classificationTarget}`).toBe(true)
-
-				return
-			}
-
-			expect(actualMatch, `"${input}" is classified as ${classificationTarget}`).toBeTruthy()
-
-			const expectedLanguageSet = new Set(expectedLanguages)
-
-			if (expectedLanguageSet.size) {
-				const actualLanguageSet = new Set(actualMatch.languages)
-
-				if (!actualLanguageSet.isSupersetOf(expectedLanguageSet)) {
-					throw new Error(
-						`Expected "${input}" to be classified in ${JSON.stringify(Array.from(expectedLanguageSet))} but only found in ${JSON.stringify(Array.from(actualLanguageSet))}`
-					)
-				}
-
-				expect(true, `"${input}" is classified as a  in ${JSON.stringify(Array.from(expectedLanguageSet))}`).toBe(true)
-			}
-		})
 	}
 }

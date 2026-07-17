@@ -16,7 +16,7 @@
  *   schema natively distinguishes them.
  */
 
-import type { Classification } from "../classification/index.ts"
+import type { Classification } from "./Classification.ts"
 import type { ComponentTag } from "./component.ts"
 
 /**
