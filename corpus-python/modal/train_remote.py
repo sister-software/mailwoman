@@ -2624,6 +2624,37 @@ def mean_init_numsplice():
     image=training_image,
     timeout=600,
 )
+def mean_init_ptro():
+    """B1 step-3 (plan #1134) — expand the SHIPPED v381 step-008000 checkpoint's token_embeddings from
+    v0.9.0-multisplice (73,143) to v0.12.0-ptro-splice (75,453 = +2,310 PT/RO diacritic pieces trained on
+    35k WOF PT+RO surfaces; RO comma-below chars were byte-fallback before). Letter-family FVT mean-init —
+    the bsplice/nsplice/fr-nsplice precedent, NOT the closed numeric-manifold numsplice. English identity
+    verified at splice time. Writes /data/models/ptro-expanded. Expect 73143 -> 75453."""
+    import os
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/ptro-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v381-punct-fix-full-s42/checkpoints/step-008000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.12.0-ptro-splice/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
 def mean_init_numsplice23():
     """B4c 10-999 cut — 2+3-digit. Same FVT mean-init as the others, tokenizer v0.11.2-numsplice23
     (word-start 10-999, +988 pieces). Adds 2-digit pieces on top of the 3-digit cut: `11`->`▁11`
