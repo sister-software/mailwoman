@@ -73,6 +73,37 @@ describe("isImplausibleResolution", () => {
 		expect(isImplausibleResolution(t).implausible).toBe(false)
 	})
 
+	test("guard B: a coordinate outside the expected country's bbox is implausible (the cross-country jump)", () => {
+		// The V1 finding (PR #1147): "1210a IA 10 W IA" resolved ~10,000 km outside the US — locality-tier,
+		// so guard A (country-centroid) structurally cannot catch it. Guard B does, given the expected country.
+		const t = tree(
+			[node({ tag: "locality", value: "Ia", lat: -6.3, lon: 155.6, placeID: "wof:ia-png" })],
+			"1210a IA 10 W IA"
+		)
+		const verdict = isImplausibleResolution(t, { expectedCountry: "US" })
+
+		expect(verdict.implausible).toBe(true)
+		expect(verdict.reason).toBe("outside-expected-country")
+	})
+
+	test("guard B does NOT trip when the coordinate is inside the expected country", () => {
+		const t = tree([node({ tag: "locality", value: "Des Moines", lat: 41.59, lon: -93.62, placeID: "wof:dsm" })])
+
+		expect(isImplausibleResolution(t, { expectedCountry: "US" }).implausible).toBe(false)
+	})
+
+	test("guard B is fail-open for a country without a bbox", () => {
+		const t = tree([node({ tag: "locality", value: "Reykjavík", lat: 64.15, lon: -21.9 })])
+
+		expect(isImplausibleResolution(t, { expectedCountry: "IS" }).implausible).toBe(false)
+	})
+
+	test("guard B never runs without expectedCountry (backward-compatible default)", () => {
+		const t = tree([node({ tag: "locality", value: "Ia", lat: -6.3, lon: 155.6 })])
+
+		expect(isImplausibleResolution(t).implausible).toBe(false)
+	})
+
 	test("an unresolved tree is not implausible (nothing to serve, not garbage)", () => {
 		const verdict = isImplausibleResolution(tree([node({ tag: "street", value: "Epleskogen" })], "Epleskogen 39A"))
 

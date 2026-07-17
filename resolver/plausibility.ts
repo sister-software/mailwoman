@@ -86,25 +86,84 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
 	return best
 }
 
+/**
+ * Coarse per-country bounding boxes `[latMin, latMax, lonMin, lonMax]` for the cross-country guard (guard B). These are
+ * DELIBERATELY rough — a guard needs "obviously the wrong country", not cartography — and they mirror the boxes the
+ * 2026-07-15 coordinate-parity receipt harness measured with (`scratchpad/coord-parity.mjs`). The US box spans Alaska →
+ * the mainland east coast; continental FR only; etc. A country absent here simply never trips the guard (fail-open).
+ */
+const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {
+	US: [18, 72, -180, -66],
+	AU: [-44, -10, 112, 154],
+	BR: [-34, 6, -74, -34],
+	CZ: [48, 51.5, 12, 19],
+	DE: [47, 55.5, 5.5, 15.5],
+	ES: [35, 44, -10, 5],
+	FR: [41, 51.5, -5.5, 9.8],
+	GB: [49, 61, -8.7, 2],
+	HR: [42, 46.6, 13, 19.5],
+	IN: [6, 36, 68, 98],
+	NL: [50.7, 53.7, 3.3, 7.3],
+	NO: [57, 71.5, 4, 31],
+	PL: [49, 55, 14, 24.2],
+	PT: [36.5, 42.2, -9.6, -6.1],
+	RO: [43.5, 48.3, 20, 30],
+	SE: [55, 69.1, 10.9, 24.2],
+	SK: [47.7, 49.7, 16.8, 22.6],
+	SI: [45.4, 46.9, 13.3, 16.6],
+}
+
+/** True when the coordinate lies outside `countryCode`'s coarse bbox. Unknown country codes are fail-open (false). */
+export function outsideExpectedCountry(countryCode: string, lat: number, lon: number): boolean {
+	const b = COUNTRY_BBOX[countryCode.toUpperCase()]
+
+	if (!b) return false
+
+	return lat < b[0] || lat > b[1] || lon < b[2] || lon > b[3]
+}
+
 /** Result of {@link isImplausibleResolution} — the boolean plus the reason, for telemetry + fallback logs. */
 export interface PlausibilityVerdict {
 	implausible: boolean
-	/** Set when `implausible` is true. `country-centroid` = resolved no finer than a country. */
-	reason?: "country-centroid"
+	/**
+	 * Set when `implausible` is true. `country-centroid` = resolved no finer than a country (guard A);
+	 * `outside-expected-country` = the served coordinate lies outside the expected country's bbox (guard B).
+	 */
+	reason?: "country-centroid" | "outside-expected-country"
 	/** The coordinate the verdict was drawn from, when anything resolved. */
 	coordinate?: ResolvedCoordinate
 }
 
+export interface PlausibilityOpts {
+	/**
+	 * ISO-2 country the resolution is EXPECTED to land in, when the caller knows it (a locale hint, a parsed country, a
+	 * fixture's gold country). Enables guard B: a coordinate outside this country's coarse bbox is implausible — the
+	 * cross-country-jump class guard A structurally cannot catch (`1210a IA 10 W IA` → a coordinate ~10,000 km from the
+	 * US was country-centroid-free and sailed through until guard B landed here, 2026-07-17; previously the check lived
+	 * only in the receipt harness, so the shipped residual read 5/321 while the receipt said 3/321).
+	 */
+	expectedCountry?: string
+}
+
 /**
  * Decide whether a resolved tree's geocode is implausible for a structured address — the cheap guard the v7 hybrid gate
- * runs after routing an input to the neural parser (#38). Trips only when the finest resolved place is a bare `country`
- * centroid; an unresolved tree (nothing to serve) and any region-or-finer resolution are both plausible.
+ * runs after routing an input to the neural parser (#38). Trips when the finest resolved place is a bare `country`
+ * centroid (guard A), or — when the caller supplies `expectedCountry` — when the served coordinate falls outside that
+ * country's coarse bbox (guard B). An unresolved tree (nothing to serve) is plausible: there is no garbage to serve.
  */
-export function isImplausibleResolution(tree: AddressTree): PlausibilityVerdict {
+export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpts = {}): PlausibilityVerdict {
 	const coordinate = finestResolvedCoordinate(tree)
 
 	if (coordinate && coordinate.tag === "country") {
 		return { implausible: true, reason: "country-centroid", coordinate }
+	}
+
+	if (
+		coordinate &&
+		opts.expectedCountry &&
+		outsideExpectedCountry(opts.expectedCountry, coordinate.lat, coordinate.lon)
+	) {
+		return { implausible: true, reason: "outside-expected-country", coordinate }
 	}
 
 	return { implausible: false, coordinate: coordinate ?? undefined }
