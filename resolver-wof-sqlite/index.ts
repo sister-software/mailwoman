@@ -23,6 +23,7 @@ export { WOFSqlitePlaceLookup, type RankingWeights, type WOFSqlitePlaceLookupOpt
 
 export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "./candidate-fts.ts"
 export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "./candidate-lookup.ts"
+export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "./street-name-lookup.ts"
 
 export { GEONAMES_ID_BASE, ingestGeonamesAliases, type GeonamesIngestProgress } from "./geonames-aliases.ts"
 
