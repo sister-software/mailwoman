@@ -79,6 +79,12 @@ const IMPORT_CHECK = [
 	"@mailwoman/nominatim",
 ]
 
+// Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep
+// guard the closure phase can't provide. ONLY add a package whose runtime deps are all third-party (or
+// also packed by this script), else its `@mailwoman/*` dep resolves from the registry and skews the test.
+// `@mailwoman/core` qualifies: zero `@mailwoman/*` runtime deps.
+const STANDALONE_LEAVES = ["@mailwoman/core"]
+
 const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
 const tarDir = join(tmp, "tarballs")
 const proj = join(tmp, "proj")
@@ -121,6 +127,37 @@ try {
 
 	for (const pkg of IMPORT_CHECK) {
 		run("node", ["--input-type=module", "-e", `await import("${pkg}")`], proj)
+	}
+
+	// Standalone-leaf guard (#core-zx, 2026-07-18). The phase above installs the WHOLE `mailwoman`
+	// closure into ONE project, so a hoisted-but-undeclared dep is always present in node_modules — it
+	// cannot catch a leaf package whose OWN manifest is missing a runtime dep. Install each
+	// dependency-clean leaf ALONE (only its tarball; npm pulls that package's declared deps from the
+	// registry) and import it. `@mailwoman/core` has no `@mailwoman/*` runtime deps, so it installs
+	// standalone; an undeclared import (the v7.0.0 `zx` bug, which the closure phase hid because
+	// `mailwoman` declares `zx`) crashes here and nowhere else. Add a leaf only if its runtime deps are
+	// all third-party or also listed here — otherwise its `@mailwoman/*` dep 404s / pulls a stale
+	// registry version (the source-skew this file's header warns about).
+	for (const leaf of STANDALONE_LEAVES) {
+		const leafDir = WORKSPACES[leaf]!
+		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
+		const solo = join(tmp, `solo-${leafDir}`)
+		execFileSync("mkdir", ["-p", solo])
+		writeFileSync(
+			join(solo, "package.json"),
+			JSON.stringify(
+				{
+					name: `mw-solo-${leafDir}`,
+					private: true,
+					type: "module",
+					dependencies: { [leaf]: `file:${join(tarDir, `${leafDir}.tgz`)}` },
+				},
+				null,
+				2
+			)
+		)
+		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], solo)
+		run("node", ["--input-type=module", "-e", `await import("${leaf}")`], solo)
 	}
 
 	console.log("\n[smoke] ✅ clean install + CLI run succeeded")
