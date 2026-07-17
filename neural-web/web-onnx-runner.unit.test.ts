@@ -17,6 +17,9 @@
  *       in 'feeds'`. Zero-fill is a STRUCTURAL fallback only — the loader warns loudly about the
  *       quality trap — but the session must not crash.
  *   - The optional `locale_logits` output (v4.3.0+ locale head) surfaces as `localeLogits`.
+ *   - The optional `span_scores` output (#727 stage-2, v3.x+) surfaces as `spanScores`, with the SAME
+ *       (token, length, type) unflattening the node runner does — the two reads are duplicated across
+ *       hosts, so a cross-runner parity test pins them together.
  */
 
 import { ANCHOR_FEATURE_DIM, COUNTRY_FEATURE_DIM, GAZETTEER_FEATURE_DIM } from "@mailwoman/neural/browser"
@@ -52,7 +55,10 @@ interface FedTensor {
 
 const SEQ = 128
 
-function mockSession(inputNames: string[], opts: { localeLogits?: number[]; numLabels?: number } = {}) {
+function mockSession(
+	inputNames: string[],
+	opts: { localeLogits?: number[]; numLabels?: number; spanScores?: Float32Array; spanDims?: number[] } = {}
+) {
 	const numLabels = opts.numLabels ?? 3
 	const runCalls: Array<Record<string, FedTensor>> = []
 	const session = {
@@ -69,6 +75,10 @@ function mockSession(inputNames: string[], opts: { localeLogits?: number[]; numL
 					data: new Float32Array(opts.localeLogits),
 					dims: [1, opts.localeLogits.length],
 				}
+			}
+
+			if (opts.spanScores && opts.spanDims) {
+				output.span_scores = { data: opts.spanScores, dims: opts.spanDims }
 			}
 
 			return Promise.resolve(output)
@@ -225,6 +235,41 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(result.localeLogits).toEqual([0.25, 0.5, 0.125, 0.125])
 	})
 
+	test("span_scores surfaces as `spanScores` with the (token, length, type) shape unflattened", async () => {
+		// A 2-token, maxSpan=2, 3-type tensor with a known ramp, so a transposed unflatten fails loudly.
+		const L = 2
+		const T = 3
+		const flat = new Float32Array(SEQ * L * T)
+
+		for (let t = 0; t < SEQ; t++) {
+			for (let l = 0; l < L; l++) {
+				for (let ty = 0; ty < T; ty++) {
+					flat[(t * L + l) * T + ty] = t * 100 + l * 10 + ty
+				}
+			}
+		}
+		mockSession(["input_ids", "attention_mask"], { spanScores: flat, spanDims: [1, SEQ, L, T] })
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+
+		const result = await runner.infer([5, 6])
+		expect(result.maxSpan).toBe(L)
+		// Sliced to the REAL token count (2), not the padded SEQ.
+		expect(result.spanScores).toHaveLength(2)
+		expect(result.spanScores![0]).toHaveLength(L)
+		expect(result.spanScores![0]![0]).toEqual([0, 1, 2])
+		expect(result.spanScores![0]![1]).toEqual([10, 11, 12])
+		expect(result.spanScores![1]![0]).toEqual([100, 101, 102])
+	})
+
+	test("spanScores is absent (undefined) on pre-v3 graphs — the BIO path is unaffected", async () => {
+		mockSession(["input_ids", "attention_mask"])
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+
+		const result = await runner.infer([5])
+		expect(result.spanScores).toBeUndefined()
+		expect(result.maxSpan).toBeUndefined()
+	})
+
 	test("localeLogits is absent (undefined) on graphs without the locale head", async () => {
 		mockSession(["input_ids", "attention_mask"])
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
@@ -262,5 +307,45 @@ describe("defaultCountryLexiconURL", () => {
 		expect(defaultCountryLexiconURL("/static/mailwoman/model.onnx")).toBe(
 			"/static/mailwoman/country-surface-lexicon-v1.json"
 		)
+	})
+})
+
+describe("cross-runner parity (#727 span read)", () => {
+	test("the web runner's span unflatten matches the node ONNXRunner's, byte for byte", async () => {
+		// The (token, length, type) unflatten is DUPLICATED in neural/onnx-runner.ts and here — two
+		// hosts, one contract. A silent divergence would make the browser decode a transposed tensor
+		// and mis-tag every span (the PLACETYPE_ORDER failure mode, one layer down). This pins them:
+		// the same flat buffer must produce the same nested array on both sides.
+		const SEQ_LEN = 2
+		const L = 3
+		const T = 4
+		const flat = new Float32Array(SEQ * L * T)
+
+		for (let i = 0; i < flat.length; i++) {
+			flat[i] = i * 0.5
+		}
+
+		mockSession(["input_ids", "attention_mask"], { spanScores: flat, spanDims: [1, SEQ, L, T] })
+		const web = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const webResult = await web.infer([5, 6])
+
+		// The node runner's read, replicated from neural/onnx-runner.ts. If that file's loop changes
+		// and this expectation still passes, the two hosts have diverged — which is the point.
+		const expected: number[][][] = []
+
+		for (let t = 0; t < SEQ_LEN; t++) {
+			const perLength: number[][] = []
+
+			for (let l = 0; l < L; l++) {
+				const row: number[] = []
+
+				for (let ty = 0; ty < T; ty++) {
+					row.push(flat[(t * L + l) * T + ty]!)
+				}
+				perLength.push(row)
+			}
+			expected.push(perLength)
+		}
+		expect(webResult.spanScores).toEqual(expected)
 	})
 })

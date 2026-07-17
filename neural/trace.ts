@@ -83,6 +83,12 @@ export interface NeuralParseTrace {
 	/** Locale-head output, index-aligned with `localeCountries`. Absent on models without the head. */
 	localeLogits?: number[]
 	/**
+	 * #727 stage-2: per-span type scores from the semi-Markov head — `spanScores[token][length-1][type]`. Absent on
+	 * pre-v3 bundles (the model exports no `span_scores`); the type axis lives in the weights bundle's
+	 * `semi-crf-transitions.json`, never hardcoded here.
+	 */
+	spanScores?: number[][][]
+	/**
 	 * The locale-head axis: the country code each `localeLogits` index means, serialized from the producing model's own
 	 * `LOCALE_COUNTRIES` so consumers never hardcode the order (the PLACETYPE_ORDER dual-maintenance class — a retrained
 	 * head that adds or reorders classes would otherwise silently mislabel every downstream gauge). Present iff

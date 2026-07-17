@@ -278,6 +278,42 @@ export class WebONNXRunner implements NeuralRunner {
 		const localeTensor = output["locale_logits"]
 		const localeLogits = localeTensor ? Array.from(localeTensor.data as Float32Array) : undefined
 
-		return { logits, numLabels, ...(localeLogits ? { localeLogits } : {}) }
+		// Span head (#727 stage-2): present on v3.x+ exports. Same optional contract as the locale head
+		// — a pre-v3 bundle has no `span_scores` output and this stays undefined, so the browser's BIO
+		// path is byte-unaffected. Mirrors the node ONNXRunner's read exactly (one decoder, two hosts:
+		// `neural/semi-markov-decode.ts` is pure TS with no ORT dependency and serves both).
+		const spanTensor = output["span_scores"]
+		let spanScores: number[][][] | undefined
+		let maxSpan: number | undefined
+
+		if (spanTensor) {
+			const spanData = spanTensor.data as Float32Array
+			const [, , spanLen, numTypes] = spanTensor.dims as readonly [number, number, number, number]
+			maxSpan = spanLen
+			spanScores = []
+
+			// Only the first `seqLen` token rows are real; the rest is the fixed-length pad tail.
+			for (let t = 0; t < seqLen; t++) {
+				const perLength: number[][] = new Array(spanLen)
+
+				for (let l = 0; l < spanLen; l++) {
+					const row: number[] = new Array(numTypes)
+					const base = (t * spanLen + l) * numTypes
+
+					for (let ty = 0; ty < numTypes; ty++) {
+						row[ty] = spanData[base + ty]!
+					}
+					perLength[l] = row
+				}
+				spanScores.push(perLength)
+			}
+		}
+
+		return {
+			logits,
+			numLabels,
+			...(localeLogits ? { localeLogits } : {}),
+			...(spanScores ? { spanScores, maxSpan } : {}),
+		}
 	}
 }
