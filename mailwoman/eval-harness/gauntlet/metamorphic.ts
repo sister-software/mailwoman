@@ -265,6 +265,15 @@ const BAND: Perturbation[] = [
 // that augmentation lands; the anti-rot loop will flag it "newly passing" the moment a retrain fixes it.
 const KNOWN_INV_XFAIL = new Map<string, string>([
 	["comma-drop|181 Rue du Chevaleret, Paris", "#1101: comma-free FR address loses rooftop (address_point→admin)"],
+	// The US sibling of the same #1101 failure — comma-free "1600 Pennsylvania Ave NW Washington DC" absorbs
+	// the locality into the street, loses the rooftop (address_point→admin). It was never tracked here even
+	// though its FR twin above was, so the gauntlet has been red on the SHIPPED model too (v6.4.0 fails it
+	// identically). Tracked now so the anti-rot loop flags it "newly passing" the moment the punct-drop
+	// augmentation (#1101) lands.
+	[
+		"comma-drop|1600 Pennsylvania Ave NW, Washington DC",
+		"#1101: comma-free US address loses rooftop (address_point→admin)",
+	],
 ])
 
 /**
