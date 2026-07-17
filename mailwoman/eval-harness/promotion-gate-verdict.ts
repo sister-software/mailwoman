@@ -35,6 +35,37 @@ function scorerF1(md: string, tag: string): number | undefined {
 	return m ? Number(m[1]) : undefined
 }
 
+/**
+ * Read a named column for a named arena row from the arena summary pipe-table, by HEADER — never a fixed offset.
+ *
+ * The table shape is not stable across the arena's own history: before the #1151 rules-parser deletion the summary
+ * carried the v0 comparison columns (`| arena | n | v0 | neural | both | … |`); after it, `summarize-arenas.ts` emits
+ * the neural-only shape (`| arena | n | neural | fail | tree-valid |`). A fixed column offset silently reads the wrong
+ * cell across that boundary — the pre-#1151 offset for `neural` lands on `fail` in the new table, turning an 80% neural
+ * pass into a phantom 20% FAIL. Locating the column from the header row is robust to both shapes (and any future column
+ * addition).
+ */
+export function arenaColumn(md: string, arena: string, column: string): number | undefined {
+	const lines = md.split("\n")
+	const cells = (line: string): string[] =>
+		line
+			.split("|")
+			.slice(1, -1)
+			.map((c) => c.trim())
+	const header = lines.find((l) => /^\|\s*arena\s*\|/.test(l))
+	const row = lines.find((l) => new RegExp(`^\\|\\s*${arena}\\s*\\|`).test(l))
+
+	if (!header || !row) return undefined
+
+	const idx = cells(header).indexOf(column)
+
+	if (idx < 0) return undefined
+
+	const m = cells(row)[idx]?.match(/([\d.]+)%/)
+
+	return m ? Number(m[1]) : undefined
+}
+
 /** Pull the per-locale table's per-tag percentage for a locale column (US first, FR second). */
 function perLocale(md: string, tag: string, locale: "us" | "fr"): number | undefined {
 	const m = md.match(new RegExp(`\\|\\s*${tag}\\s*\\|\\s*([\\d.]+)%\\s*\\|\\s*([\\d.—-]+)%?`))
@@ -153,12 +184,12 @@ export function assemblePromotionVerdict(
 					? Math.min(scorerF1(intersection, "intersection_a") ?? 0, scorerF1(intersection, "intersection_b") ?? 0)
 					: undefined,
 			// Arena leg runs once on the ship artifact (int8); the fp32 pass reads undefined and the
-			// delta loop skips it. `| perturb | <n> | <v0>% | <neural>% |` from the three-bucket summary.
+			// delta loop skips it. The `neural` column of the `perturb` row, located by header — the
+			// column order changed when #1151 dropped the v0 comparison (see arenaColumn).
 			"arena.perturb": (() => {
 				const md = maybeRead("arenas.md")
-				const m = md?.match(/\|\s*perturb\s*\|\s*\d+\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
 
-				return m ? Number(m[1]) : undefined
+				return md ? arenaColumn(md, "perturb", "neural") : undefined
 			})(),
 			// Demo-cascade smoke pass rate (#524) — whole-stack parse→reconcile→resolve against the slim
 			// hot DB. Like the arena leg it runs ONCE on the ship artifact (no fp32/int8 split); sidecar
