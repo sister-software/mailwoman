@@ -14,16 +14,22 @@
  *   fragment street **+16.9pp** (argmax 0.673 → 0.841), 273 fixes / 3 breaks (bare-street +18pp,
  *   date-name +40.7pp). Receipt: `docs/articles/evals/2026-07-18-phase4c-wiring.md`.
  *
- *   THE TWO THINGS THAT MAKE IT GOLDEN-SAFE:
- *   1. STREET-SPLICE, not tree-replace. The span head is a street-boundary specialist — its full
+ *   THREE THINGS MAKE IT GOLDEN-SAFE:
+ *   1. ANCHOR GATE. The rerank fires ONLY on an anchorless fragment — the class it was measured on.
+ *      If the argmax parse already carries a `country` or `region`, the input is structured and the
+ *      model is reliable; a name-index collision then does damage (it steals a token the model
+ *      correctly labeled — "France, Creuse, …" → the FR street "France" overrides the country; "Best
+ *      Rd, VT" → a US street reranks against the FR index). Skipping anchored inputs is the primary
+ *      cross-locale + collateral fix (full-pipeline golden, scored: net 0 exact, |Δ| < 0.3pp/tag).
+ *   2. STREET-SPLICE, not tree-replace. The span head is a street-boundary specialist — its full
  *      segmentation decodes locality/region/postcode far worse than the BIO argmax head (replacing
  *      the whole tree cost golden fr −35pp). So the winning segmentation's street tokens are spliced
  *      into the ARGMAX tree; argmax owns every other tag.
- *   2. POSITIVE-EVIDENCE GATE. The splice fires only for a street the atlas CONFIRMS exists. On a
+ *   3. POSITIVE-EVIDENCE GATE. The splice fires only for a street the atlas CONFIRMS exists. On a
  *      clean address the argmax street is already right + confirmed → the splice is a no-op; on a
  *      fragment the argmax street is wrong/absent and the confirmed segmentation street replaces it.
  *      An unconfirmed street NEVER overrides the model — the model owns every call the atlas can't
- *      confirm wrong. This is why golden holds to noise while fragments move +16.9pp.
+ *      confirm wrong. This is why golden holds to noise while FR fragments move +17.3pp.
  *
  *   BYTE-STABLE fallback: a model with no span scores (every pre-v3 bundle) returns exactly
  *   `buildAddressTree(trace.text, trace.tokens)` — the same tree `classifier.parse(text)` produces.
@@ -60,6 +66,9 @@ const STREET_SEGMENT_TYPES: ReadonlySet<string> = new Set([
 ])
 
 const BIO_LABEL_SET: ReadonlySet<string> = new Set(BIO_LABELS)
+
+/** Admin anchors whose presence in the argmax parse means the input is STRUCTURED — the rerank stands down (see below). */
+const ANCHOR_TAGS: ReadonlySet<string> = new Set(["country", "region"])
 
 export interface StreetRerankOpts {
 	/** K-best decode depth. Default 5 (the measured board depth). */
@@ -188,6 +197,19 @@ export async function rerankByStreetEvidence(
 			rank: 0,
 			streetSurface: "",
 		}
+	}
+
+	// ANCHOR GATE (2026-07-18, the full-pipeline collateral fix): the rerank arbitrates a street ONLY on an ANCHORLESS
+	// fragment — the class it was measured on. When the argmax parse already carries a country or region anchor, the
+	// model is on structured input where it is reliable, and a name-index collision does damage: it STEALS a token the
+	// model correctly labeled country/region ("France, Creuse, …" → the FR street "France" overrides country; "Best Rd,
+	// VT" → the US street reranks against the FR index). Skipping anchored inputs fixes both by construction and keeps
+	// every fragment-board class (bare street ± house number carries no admin anchor). Scored against gold, this holds
+	// golden exact to noise (us 2180→2180, fr 1308→1308, |Δ| < 0.3pp/tag) while the FR fragment board moves +17.3pp.
+	// Postcode is NOT an anchor: adding it cut a little US collateral but mislabels 4-digit years as postcode, killing
+	// the date-name board (0.550→0.215) — too blunt for a real gain, so the anchor set stays country+region only.
+	if (trace.tokens.some((t) => ANCHOR_TAGS.has(t.label.replace(/^[BI]-/, "")))) {
+		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
 	}
 
 	const hyps = decodeSegmentationsKBest(trace.spanScores, trace.tokens.length, grammar, opts.k ?? 5)
