@@ -63,14 +63,7 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath, mailwomanDataRoot, percentile } from "@mailwoman/core/utils"
 import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import {
-	type ClassificationRecord,
-	createAddressParser,
-	createRuntimePipeline,
-	loadDefaultPlaceCountry,
-} from "mailwoman"
-
-import { v0RecordToTree } from "./v0-tree-adapter.ts"
+import { createRuntimePipeline, loadDefaultPlaceCountry } from "mailwoman"
 
 /**
  * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
@@ -442,10 +435,6 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		console.error("[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor=false, #887 declared ablation)")
 	}
 
-	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
-	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
-	const v0 = createAddressParser()
-
 	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range candidate-table lookup
 	// (the SAME backend + ranking the browser demo uses). This is the "CLI matches demo" gate: run the
 	// eval both ways and confirm US locality/coord don't regress before defaulting the CLI to it.
@@ -785,10 +774,10 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		}
 	}
 
-	// Two parsers, each with its own overall + per-state aggregates.
+	// Neural parser: overall + per-state aggregates. (The v0/Pelias head-to-head leg was removed with
+	// the v1 rules parser in the v7 excision — its history lives in the dated eval reports.)
 	const agg = {
 		neural: { overall: newAgg(), byState: new Map<string, Agg>() },
-		v0: { overall: newAgg(), byState: new Map<string, Agg>() },
 	}
 	// `neural+anchor`: neural's admin flags, but the coordinate replaced by the postcode-anchor centroid
 	// when available. Only the coord error column differs from `neural`.
@@ -830,10 +819,8 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		console.warn("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
 	}
 	const assembledAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
-	const assembledArbAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	let neuralPrecond = 0
 	let asmPrecond = 0
-	let arbPrecond = 0
 	const hasStreetHN = (tree: AddressTree | null): boolean => {
 		if (!tree) return false
 		let street = false
@@ -876,7 +863,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		: null
 
 	const record = (
-		who: "neural" | "v0",
+		who: "neural",
 		row: OaRow,
 		s: { locMatch: boolean; regMatch: boolean; resolved: boolean; err: number | null }
 	): void => {
@@ -1059,30 +1046,16 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			bump(neuralAnchorAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
 		}
 
-		// v0 (Pelias parser) via the flat→tree adapter
-		let vResolved: Resolved[] = []
-
-		try {
-			const sol = await v0.parse(row.input)
-			const rec = (sol[0]?.classifications ?? {}) as ClassificationRecord
-			const tree = v0RecordToTree(row.input, rec).tree as AddressTree
-			vResolved = collectResolved(await resolver.resolveTree(tree, resolveOpts))
-		} catch {
-			/* unresolved */
-		}
-		const vs = scoreTree(row, vResolved)
-		record("v0", row, vs)
-
 		if (collectRows) {
 			outRows.push({
 				input: row.input,
 				expected: row.expected,
 				neural: { loc: ns.locMatch, reg: ns.regMatch, resolved: ns.resolved, err: ns.err },
-				v0: { loc: vs.locMatch, reg: vs.regMatch, resolved: vs.resolved, err: vs.err },
 			})
 		}
 
-		// #478 inc 3 leg 2: assembled (no-arb) + assembled+arb, through the same resolver + nOpts.
+		// #478 inc 3 leg 2 residue: the assembled (neural pipeline) arm, through the same resolver + nOpts.
+		// The arbitration variant was removed with the v1 rules parser (the rule proposer is gone).
 		if (assembledPipeline) {
 			const st = row.state || "??"
 
@@ -1102,26 +1075,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			} catch {
 				/* unresolved */
 			}
-
-			try {
-				const { tree } = await assembledPipeline(row.input, { arbitrate: true, resolveOpts: nOpts })
-				const s = scoreTree(row, collectResolved(tree))
-
-				if (!assembledArbAgg.byState.has(st)) {
-					assembledArbAgg.byState.set(st, newAgg())
-				}
-				bump(assembledArbAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
-				bump(assembledArbAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
-
-				if (hasStreetHN(tree)) {
-					arbPrecond++
-				}
-			} catch {
-				/* unresolved */
-			}
 		}
 
-		if (collectErrors && (!ns.locMatch || !vs.locMatch)) {
+		if (collectErrors && !ns.locMatch) {
 			errorRows.push({
 				input: row.input,
 				state: row.state ?? "??",
@@ -1132,13 +1088,6 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 					resolvedLoc: ns.resolvedLoc,
 					resolvedReg: ns.resolvedReg,
 					errKm: ns.err,
-				},
-				v0: {
-					locMatch: vs.locMatch,
-					resolved: vs.resolved,
-					resolvedLoc: vs.resolvedLoc,
-					resolvedReg: vs.resolvedReg,
-					errKm: vs.err,
 				},
 			})
 		}
@@ -1167,18 +1116,16 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	lines.push("")
 	lines.push(`Model: ${options.model || "(shipped weights)"} | WOF shards: ${wofPaths.length}`)
 	lines.push("")
-	lines.push(`## Head-to-head — neural vs v0 (Pelias parser), both through the same resolver`)
+	lines.push(`## Resolver eval — neural parser through the WOF resolver`)
 	lines.push("")
 	lines.push(`| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |`)
 	lines.push(`|---|--:|--:|--:|--:|--:|--:|`)
 	const overallRow = (label: string, a: Agg): string =>
 		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
 	lines.push(overallRow("**neural**", agg.neural.overall))
-	lines.push(overallRow("v0 (Pelias)", agg.v0.overall))
 
 	if (runAssembled) {
-		lines.push(overallRow("assembled (no arb)", assembledAgg.overall))
-		lines.push(overallRow("**assembled + arb**", assembledArbAgg.overall))
+		lines.push(overallRow("assembled", assembledAgg.overall))
 	}
 
 	if (useAnchor) {
@@ -1256,36 +1203,27 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	if (runAssembled) {
 		const N = agg.neural.overall.n
 		lines.push("")
-		lines.push(`### Arbitration coordinate gate (#478 leg 2)`)
+		lines.push(`### Assembled-pipeline coordinate check`)
 		lines.push("")
 		lines.push(
-			"`assembled (no arb)` is the pipeline through the same neural+resolver (comparability check vs `neural`); `assembled + arb` adds per-component arbitration. The street+house_number **precondition** (parsed both, the thing #566 broke) per arm:"
+			"`assembled` is the pipeline through the same neural+resolver (comparability check vs `neural`). The street+house_number **precondition** (parsed both, the thing #566 broke) per arm:"
 		)
 		lines.push("")
-		lines.push(
-			`- neural: ${pct(neuralPrecond, N)} · assembled (no arb): ${pct(asmPrecond, N)} · **assembled + arb: ${pct(arbPrecond, N)}** (of ${N} rows)`
-		)
-		lines.push("")
-		lines.push(
-			"Gate: arbitration PASSES leg 2 iff the precondition does not regress and coord p50/p90 + locality/region Acc@1 hold vs `neural`."
-		)
+		lines.push(`- neural: ${pct(neuralPrecond, N)} · assembled: ${pct(asmPrecond, N)} (of ${N} rows)`)
 	}
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)
 	lines.push("")
-	lines.push(`| state | n | neural loc | v0 loc | neural reg | v0 reg |`)
-	lines.push(`|---|--:|--:|--:|--:|--:|`)
+	lines.push(`| state | n | neural loc | neural reg |`)
+	lines.push(`|---|--:|--:|--:|`)
 
 	for (const st of [...agg.neural.byState.keys()].sort()) {
 		const nn = agg.neural.byState.get(st)!
-		const vv = agg.v0.byState.get(st) ?? newAgg()
-		lines.push(
-			`| ${st} | ${nn.n} | ${pct(nn.localityMatch, nn.n)} | ${pct(vv.localityMatch, vv.n)} | ${pct(nn.regionMatch, nn.n)} | ${pct(vv.regionMatch, vv.n)} |`
-		)
+		lines.push(`| ${st} | ${nn.n} | ${pct(nn.localityMatch, nn.n)} | ${pct(nn.regionMatch, nn.n)} |`)
 	}
 	lines.push("")
 	lines.push(
-		`Coord error for **neural**/**v0** is the ADMIN-CENTROID tier (locality/region centroid → OA's real` +
+		`Coord error for **neural** is the ADMIN-CENTROID tier (locality/region centroid → OA's real` +
 			` address point); a city centroid is legitimately tens of km from edge addresses, so the admin-MATCH` +
 			` rate is the headline there, not the coord. **neural+anchor** swaps in the postcode anchor's own` +
 			` centroid for the coordinate (admin match unchanged) — the finer postcode tier between admin-centroid` +
@@ -1309,7 +1247,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			},
 			byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
 		})
-		writeFileSync(options.outJson || "", JSON.stringify({ neural: dump(agg.neural), v0: dump(agg.v0) }, null, 2))
+		writeFileSync(options.outJson || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
 		console.error(`wrote json → ${options.outJson || ""}`)
 	}
 

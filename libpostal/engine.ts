@@ -103,7 +103,7 @@ export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 
 /**
  * The parsing engine the router delegates to. `parse` is required; `expand` is optional (a missing one answers `501`).
- * The CLI wires `parse` to Mailwoman's `createAddressParser` and `expand` to `@mailwoman/normalize`.
+ * The CLI wires `parse` to Mailwoman's neural parser (`@mailwoman/neural`) and `expand` to `@mailwoman/normalize`.
  */
 export interface LibpostalEngine {
 	parse(query: string): Promise<ParseMatch[]>

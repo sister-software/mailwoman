@@ -63,11 +63,11 @@ describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
 		expect(stdout).toContain("heap delta")
 	}, 30000)
 
-	test("rejects --benchmark with --isolated", async () => {
+	test("rejects --benchmark with --neural", async () => {
 		let err: (Error & { stderr?: string; stdout?: string; code?: number }) | undefined
 
 		try {
-			await exec(process.execPath, [cliBin, "parse", "--benchmark", "5", "--isolated", "--no-neural", "hello world"])
+			await exec(process.execPath, [cliBin, "parse", "--benchmark", "5", "--neural", "hello world"])
 		} catch (e) {
 			err = e as Error & { stderr?: string; stdout?: string; code?: number }
 		}

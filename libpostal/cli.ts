@@ -7,7 +7,7 @@
  *   `mailwoman-libpostal` — boot a libpostal-compatible parse/expand endpoint via the `serve`
  *   command. Usage + examples live in the package README.
  *
- *   Wires the real engine: `/parse` over Mailwoman's `createAddressParser` (the neural BIO tagger),
+ *   Wires the real engine: `/parse` over Mailwoman's neural BIO tagger (`@mailwoman/neural`),
  *   `/expand` over `@mailwoman/normalize`. `/expand` is honest-minimal: it returns the original
  *   plus the deterministic normalized + abbreviation-expanded forms, not libpostal's probabilistic
  *   variants.
@@ -16,12 +16,12 @@
 import { parseArgs } from "node:util"
 
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
-import { createAddressParser } from "mailwoman"
 
-import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, type ParseMatch } from "./index.ts"
+import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, treeToParseMatches } from "./index.ts"
 
-function serve(): void {
+async function serve(): Promise<void> {
 	const { values } = parseArgs({
 		options: {
 			port: { type: "string", default: "8081" },
@@ -37,17 +37,17 @@ function serve(): void {
 	const port = Number(values.port) || 8081
 	const host = values.host ?? "0.0.0.0"
 
-	const parser = createAddressParser()
+	// The neural BIO tagger is the sole engine (v7 rules-parser excision). Loaded eagerly so a
+	// missing-weights boot fails fast at startup rather than on the first request.
+	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 	const engine: LibpostalEngine = {
 		async parse(query) {
-			const result = await parser.parse(query, { verbose: true })
-			const solution = result.solutions[0]
+			const tree = await classifier.parse(query, { postcodeRepair: true })
 
-			if (!solution) return []
-			const json = solution.toJSON() as { matches?: ParseMatch[] }
-
-			return (json.matches ?? []).map((m) => ({ classification: m.classification, value: m.value }))
+			// `treeToParseMatches` collapses the street-name family into one `road`-bound match and
+			// yields reading-order `{ classification, value }` pairs; the app maps them to libpostal labels.
+			return treeToParseMatches(tree)
 		},
 		async expand(address) {
 			const normalized = normalize(address).normalized
@@ -104,7 +104,7 @@ const command = parseArgs({ strict: false, allowPositionals: true }).positionals
 
 switch (command) {
 	case "serve":
-		serve()
+		void serve()
 		break
 	case "openapi":
 		openapi()
