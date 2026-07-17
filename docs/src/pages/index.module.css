@@ -224,6 +224,44 @@
 	margin-bottom: 0;
 }
 
+/* Comparison table */
+.compare {
+	padding: 3rem 0 2.5rem;
+}
+.compareScroll {
+	overflow-x: auto;
+}
+.compareTable {
+	display: table;
+	width: 100%;
+	margin-bottom: 1rem;
+	font-size: 0.9rem;
+}
+.compareTable th,
+.compareTable td {
+	border: 1px solid var(--ifm-color-emphasis-200);
+	padding: 0.5rem 0.75rem;
+	text-align: left;
+}
+.compareTable thead th {
+	white-space: nowrap;
+}
+.compareTable thead th:nth-child(2),
+.compareTable tbody td:first-of-type {
+	background: var(--ifm-color-emphasis-100);
+	font-weight: 600;
+}
+.compareTable tbody th[scope="row"] {
+	font-weight: 500;
+	color: var(--ifm-color-content-secondary);
+}
+.compareFootnote {
+	font-size: 0.9rem;
+	color: var(--ifm-color-content-secondary);
+	max-width: 760px;
+	margin-bottom: 0;
+}
+
 /* Featured worked example (the real map) */
 .featured {
 	padding: 3rem 0;
