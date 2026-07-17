@@ -83,7 +83,7 @@ const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
 }
 
 /** Options for {@linkcode jsonlToParquet}. */
-export interface JsonlToParquetOptions {
+export interface JSONLToParquetOptions {
 	/** The labeled-row JSONL to convert. */
 	input: string
 	/** The parquet shard to write. */
@@ -93,7 +93,7 @@ export interface JsonlToParquetOptions {
 }
 
 /** Summary returned by {@linkcode jsonlToParquet}. */
-export interface JsonlToParquetSummary {
+export interface JSONLToParquetSummary {
 	read: number
 	written: number
 	outPath: string
@@ -133,9 +133,9 @@ function sqlString(value: string): string {
 
 /** Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard. */
 export async function jsonlToParquet(
-	options: JsonlToParquetOptions,
+	options: JSONLToParquetOptions,
 	report?: (line: string) => void
-): Promise<JsonlToParquetSummary> {
+): Promise<JSONLToParquetSummary> {
 	const rowGroupSize = options.rowGroupSize ?? 50000
 
 	if (!Number.isInteger(rowGroupSize) || rowGroupSize <= 0) {

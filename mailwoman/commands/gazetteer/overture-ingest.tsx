@@ -166,7 +166,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 		 * (keyword included); the downstream affix-relabel splits `street_prefix`. `locality` flattens the `address_levels`
 		 * municipality (the deepest level) with a `postal_city` fallback.
 		 */
-		const emitCorpusJsonl = async (cc: string): Promise<void> => {
+		const emitCorpusJSONL = async (cc: string): Promise<void> => {
 			const src = countryParquet(cc)
 			const dest = path.join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
 			await db.run(`
@@ -245,7 +245,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 			}
 
 			if (options.corpusJsonl) {
-				await emitCorpusJsonl(cc)
+				await emitCorpusJSONL(cc)
 			}
 			const probe = await probeCountry(cc)
 

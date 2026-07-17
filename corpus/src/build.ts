@@ -221,7 +221,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	for (const adapterRun of adapterRuns) {
 		opts.onProgress?.("align", `aligning ${adapterRun.adapter_id}`)
 
-		for await (const row of streamJsonl<CanonicalRow>(adapterRun.jsonl_path)) {
+		for await (const row of streamJSONL<CanonicalRow>(adapterRun.jsonl_path)) {
 			licenseCounts.set(row.license, (licenseCounts.get(row.license) ?? 0) + 1)
 
 			// Deliberate license exclusion (#26): drop a row ONLY when the operator named its license
@@ -292,9 +292,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	opts.onProgress?.("shard", "writing parquet shards")
 	const shardManifest = await writeShards(
 		{
-			train: streamJsonl<LabeledRow>(labeledPaths.train),
-			val: streamJsonl<LabeledRow>(labeledPaths.val),
-			test: streamJsonl<LabeledRow>(labeledPaths.test),
+			train: streamJSONL<LabeledRow>(labeledPaths.train),
+			val: streamJSONL<LabeledRow>(labeledPaths.val),
+			test: streamJSONL<LabeledRow>(labeledPaths.test),
 		},
 		{
 			outputDir: opts.outputDir,
@@ -333,7 +333,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	return manifest
 }
 
-async function* streamJsonl<T>(path: string): AsyncIterable<T> {
+async function* streamJSONL<T>(path: string): AsyncIterable<T> {
 	// JSONSpliterator yields already-parsed rows (skipEmpty is on by default, so blank
 	// lines are dropped at the row level) and throws SyntaxError on a malformed row —
 	// same fail-loud behavior as the prior readline + bare `JSON.parse`.
