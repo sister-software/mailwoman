@@ -105,6 +105,14 @@ const ParseConfigSchema = zod.object({
 		.describe(
 			"Path to a WOF SQLite distribution for --resolve. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set."
 		),
+	streetEvidenceRerank: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#727 phase-4c: rerank the STREET on BAN name-existence evidence (FR street-centroids). Needs a v3+ span-head " +
+				"model + street-centroids-fr.db; byte-stable off. Splices only an atlas-confirmed street into the argmax tree."
+		),
 	candidates: zod.coerce
 		.number()
 		.int()
@@ -279,6 +287,40 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	return path
 }
 
+/**
+ * #727 phase-4c: construct the FR street-name evidence index for the k-best rerank when `--street-evidence-rerank` is
+ * set. Dynamic import keeps `@mailwoman/resolver-wof-sqlite` an optional peer dep. Returns `undefined` (with a warning)
+ * when the shard is absent — the pipeline then runs rerank-OFF (byte-stable), never crashing.
+ */
+async function tryLoadStreetEvidence(
+	options: zod.infer<typeof ParseConfigSchema>
+): Promise<import("@mailwoman/resolver").StreetLocalityEvidence | undefined> {
+	if (!options.streetEvidenceRerank) return undefined
+
+	try {
+		const { existsSync } = await import("node:fs")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const dbPath = dataRootPath("ban", "street-centroids-fr.db")
+
+		if (!existsSync(dbPath)) {
+			process.stderr.write(
+				`--street-evidence-rerank: street-centroids-fr.db not found at ${dbPath} — running rerank-OFF.\n`
+			)
+
+			return undefined
+		}
+		const { SQLiteStreetNameLookup } = await import("@mailwoman/resolver-wof-sqlite")
+
+		return new SQLiteStreetNameLookup(dbPath)
+	} catch (err) {
+		process.stderr.write(
+			`--street-evidence-rerank: failed to load the FR index (${(err as Error).message}) — rerank-OFF.\n`
+		)
+
+		return undefined
+	}
+}
+
 async function tryBuildFST(
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined> {
@@ -439,10 +481,12 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		pipelineOpts.resolveOpts = resolveOpts
 	}
 
+	const streetEvidence = await tryLoadStreetEvidence(options)
+
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
-			const pipeline = createRuntimePipeline({ classifier, resolver, fst })
+			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence })
 			const result = await pipeline(input, pipelineOpts)
 
 			return options.debug
@@ -452,7 +496,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	}
 
 	const fst = await tryBuildFST(options)
-	const pipeline = createRuntimePipeline({ classifier, fst })
+	const pipeline = createRuntimePipeline({ classifier, fst, streetEvidence })
 	const result = await pipeline(input, pipelineOpts)
 
 	return options.debug

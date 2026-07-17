@@ -22,11 +22,14 @@ import {
 } from "@mailwoman/core/pipeline"
 import { classifyKind as defaultClassifyKind } from "@mailwoman/kind-classifier"
 import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
+import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
+import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
 
 export interface CreateRuntimePipelineOpts {
 	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
@@ -90,6 +93,37 @@ export interface CreateRuntimePipelineOpts {
 	 * ungated hard-resolve-rates (the full in-map set) when growing the list.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
+	/**
+	 * #727 phase-4c: inject a street-name evidence index (FR = `SQLiteStreetNameLookup` over BAN street-centroids) to
+	 * enable the k-best name-evidence rerank. When set AND the classifier exposes a span grammar (a v3+ span-head
+	 * bundle), the Stage-3 classifier reranks the STREET on atlas-confirmed evidence — a positive-evidence-gated
+	 * street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured
+	 * 2026-07-18). Omit (default) → byte-stable, no rerank. A pre-v3 (span-less) classifier ignores it (no grammar).
+	 */
+	streetEvidence?: StreetLocalityEvidence
+}
+
+/**
+ * #727 phase-4c: wrap the Stage-3 classifier so its `parse` reranks the STREET on street-name evidence — but ONLY when
+ * an evidence index is injected AND the classifier ships a span grammar (a v3+ span-head bundle). Otherwise the
+ * original classifier passes through untouched (byte-stable). The wrapper preserves the `AddressClassifier` contract:
+ * it returns exactly the reranked tree, which is the argmax tree with the street spliced in on atlas-confirmed
+ * evidence, else the plain argmax tree — the pipeline's downstream stages (resolver, etc.) see a normal `AddressTree`.
+ */
+function wrapWithStreetEvidence(
+	classifier: RuntimePipelineStages["classifier"],
+	evidence: StreetLocalityEvidence | undefined
+): RuntimePipelineStages["classifier"] {
+	if (!classifier || !evidence) return classifier
+	const grammar = (classifier as Partial<NeuralAddressClassifier>).spanGrammar
+
+	if (!grammar) return classifier // pre-v3 (span-less) bundle → nothing to rerank
+	const inner = classifier as NeuralAddressClassifier
+
+	return {
+		parse: async (text, cOpts) =>
+			(await rerankByStreetEvidence(inner, text, evidence, grammar, { parseOpts: cOpts })).tree,
+	}
 }
 
 /**
@@ -116,7 +150,7 @@ export function createRuntimePipeline(
 		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
 		// stage. Override only with a compatible alternative (e.g. v0.5.1's learned span proposer).
 		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
-		classifier: opts.classifier,
+		classifier: wrapWithStreetEvidence(opts.classifier, opts.streetEvidence),
 		fst: opts.fst,
 		resolver: opts.resolver,
 		// Coarse country router (#244) — DEFAULT-ON (#244 M2). A function override is wired here; the
