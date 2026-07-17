@@ -113,6 +113,17 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   the B4b digit arc. The extra 6k refined train_loss (1.49→1.31) but not the decode gate. Grade
   (guard + P3 re-grade + oracle@5) running; export emitted the semi-crf-transitions sidecar (the
   new export_onnx path, c8c05fc7).
+- 09:00 — **v3.10.1 8k GRADE COMPLETE — #727 step-4 (span-head training arc) CLEAN SUCCESS.**
+  GUARD PASS (golden us 86.9/66.3 vs 86.9/66.2, fr 90.0/75.4 vs 90.1/75.4 — token path byte-stable,
+  the span head is a purely ADDITIONAL output). seg@1 0.588 > token@1 0.558 (PASS). **oracle@5
+  0.7865** (vs v301's 0.7228, +6.4pp) — 0.1985 street@1 headroom in ranks 2-5, exactly what the
+  phase-4c rerank collects (phase-4b measured +18.5pp bare-street). P3 all-caps FAIL at 8k too
+  (48.0 vs 48.3) → CLOSED inert, #690 shim permanent. Export emitted the sidecar (my export_onnx
+  fix). SHIPS NOWHERE — the span head is dormant until phase-4c wires the decode; the token path is
+  byte-stable so there's no promote decision. This is the phase-4c decode SUBSTRATE (v3101-cache +
+  volume checkpoint). Full write-up: 2026-07-17-v3101-span-head-8k-result.md. The measured chain is
+  now end-to-end: span head -> k-best -> oracle@5 0.786 -> name-evidence rerank, every link measured,
+  none promoted.
 - GOTCHA: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
   saver zero-pads. First grade run FileNotFounded on step-2000; fixed to 002000.
 - TIMEKEEPING CORRECTION (self-caught TWICE: at the 05:03 checkpoint, and again at 05:48 when four
