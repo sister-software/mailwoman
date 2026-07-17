@@ -29,6 +29,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
+import { loadDefaultStreetEvidence } from "./default-street-evidence.ts"
 import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
 
 export interface CreateRuntimePipelineOpts {
@@ -94,13 +95,18 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
-	 * #727 phase-4c: inject a street-name evidence index (FR = `SQLiteStreetNameLookup` over BAN street-centroids) to
-	 * enable the k-best name-evidence rerank. When set AND the classifier exposes a span grammar (a v3+ span-head
-	 * bundle), the Stage-3 classifier reranks the STREET on atlas-confirmed evidence — a positive-evidence-gated
+	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a positive-evidence-gated
 	 * street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured
-	 * 2026-07-18). Omit (default) → byte-stable, no rerank. A pre-v3 (span-less) classifier ignores it (no grammar).
+	 * 2026-07-18).
+	 *
+	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
+	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call
+	 *   and the Stage-3 classifier reranks the street. A pre-v3 (span-less) classifier, or a missing shard, → no-op
+	 *   (byte-stable): the rerank can only ADD an atlas-confirmed street, never remove a model call.
+	 * - A `StreetLocalityEvidence` → use it (a custom / multi-country index).
+	 * - `false` → disabled (no rerank).
 	 */
-	streetEvidence?: StreetLocalityEvidence
+	streetEvidence?: StreetLocalityEvidence | false
 }
 
 /**
@@ -150,7 +156,9 @@ export function createRuntimePipeline(
 		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
 		// stage. Override only with a compatible alternative (e.g. v0.5.1's learned span proposer).
 		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
-		classifier: wrapWithStreetEvidence(opts.classifier, opts.streetEvidence),
+		// The #727 phase-4c rerank wrap is applied lazily on the first call (below): an explicitly-passed
+		// evidence index wraps immediately in spirit, but the DEFAULT (auto-load the bundled FR index) is async.
+		classifier: opts.streetEvidence ? wrapWithStreetEvidence(opts.classifier, opts.streetEvidence) : opts.classifier,
 		fst: opts.fst,
 		resolver: opts.resolver,
 		// Coarse country router (#244) — DEFAULT-ON (#244 M2). A function override is wired here; the
@@ -169,6 +177,12 @@ export function createRuntimePipeline(
 	const autoPlaceCountry = opts.placeCountry === undefined
 	let placeCountryResolved = !autoPlaceCountry
 
+	// #727 phase-4c default-on: with no explicit `streetEvidence` (and not `false`), auto-load the bundled FR index once
+	// on the first call — but ONLY if the classifier ships a span grammar (else there is no k-best to rerank). Resolved
+	// lazily for the same reason placeCountry is: keep the factory synchronous. An explicitly-passed index already
+	// wrapped the classifier above.
+	let streetEvidenceResolved = opts.streetEvidence !== undefined
+
 	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
 		if (!placeCountryResolved) {
 			placeCountryResolved = true
@@ -176,6 +190,19 @@ export function createRuntimePipeline(
 
 			if (fn) {
 				stages.placeCountry = fn
+			}
+		}
+
+		if (!streetEvidenceResolved) {
+			streetEvidenceResolved = true
+			const grammar = (opts.classifier as Partial<NeuralAddressClassifier> | undefined)?.spanGrammar
+
+			if (grammar) {
+				const evidence = await loadDefaultStreetEvidence()
+
+				if (evidence) {
+					stages.classifier = wrapWithStreetEvidence(opts.classifier, evidence)
+				}
 			}
 		}
 		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry); a per-call
