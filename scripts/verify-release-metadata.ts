@@ -157,12 +157,13 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 
 		if (cells.length < 3) continue
 
-		const versionCell = cells[0].replaceAll("**", "")
+		const versionCell = cells[0]!.replaceAll("**", "")
+		const lineageCell = cells[2]!
 
 		// Skip header ("npm") and separator ("---") rows — they carry no version token.
 		if (!/\d/.test(versionCell)) continue
 
-		rows.push({ versionCell, lineageCell: cells[2] })
+		rows.push({ versionCell, lineageCell })
 	}
 
 	return rows
@@ -203,6 +204,8 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 		return { surface, ok: true, message: `releases.mdx matrix row ${version} carries the "(current)" marker` }
 	}
 
+	const { versionCell } = rows[currentIndex]!
+
 	// Rows are newest-first. current ABOVE V (smaller index) is fine ONLY if every row strictly newer
 	// than V is a code-only "model unchanged" bump — then V is still the live model and the marker
 	// rightly sits on the newest npm row.
@@ -222,7 +225,7 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 			surface,
 			ok: false,
 			message:
-				`docs/articles/releases.mdx marks "${rows[currentIndex].versionCell}" as (current), but a newer row above model ${version} introduces a NEW model:\n` +
+				`docs/articles/releases.mdx marks "${versionCell}" as (current), but a newer row above model ${version} introduces a NEW model:\n` +
 				`        ${nonCodeOnly.map((row) => row.versionCell).join(", ")}\n` +
 				`      Either the model card was not bumped for that model release, or that row is mislabeled. Reconcile the card version with the matrix.`,
 		}
@@ -233,7 +236,7 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 		surface,
 		ok: false,
 		message:
-			`docs/articles/releases.mdx marks "${rows[currentIndex].versionCell}" as (current), but the shipped model is ${version}.\n` +
+			`docs/articles/releases.mdx marks "${versionCell}" as (current), but the shipped model is ${version}.\n` +
 			`      Move the "(current)" marker to ${version}'s row (first column \`**${version}** (current)\`) and drop it from the stale row.`,
 	}
 }
