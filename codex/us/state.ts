@@ -76,7 +76,7 @@ export const US_STATE_ABBREVIATIONS = [
 ] as const satisfies readonly string[]
 
 /** A USPS two-letter state-or-territory abbreviation. */
-export type UsStateAbbreviation = (typeof US_STATE_ABBREVIATIONS)[number]
+export type USStateAbbreviation = (typeof US_STATE_ABBREVIATIONS)[number]
 
 const STATE_ABBREVIATION_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
 
@@ -84,7 +84,7 @@ const STATE_ABBREVIATION_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIO
  * Type-predicate for a USPS state-or-territory abbreviation. Case-insensitive (`"ca"` and `"CA"` both pass), since the
  * abbreviation arrives from raw address text.
  */
-export function isUsStateAbbreviation(input: unknown): input is UsStateAbbreviation {
+export function isUSStateAbbreviation(input: unknown): input is USStateAbbreviation {
 	return typeof input === "string" && STATE_ABBREVIATION_SET.has(input.toUpperCase())
 }
 
@@ -150,7 +150,7 @@ export const US_STATE_BY_ABBREVIATION = {
 	VI: "US Virgin Islands",
 	MP: "Northern Mariana Islands",
 	AS: "American Samoa",
-} as const satisfies Record<UsStateAbbreviation, string>
+} as const satisfies Record<USStateAbbreviation, string>
 
 /** The full state/territory names, derived from {@link US_STATE_BY_ABBREVIATION}. */
 export const US_STATE_NAMES: readonly string[] = Object.values(US_STATE_BY_ABBREVIATION)

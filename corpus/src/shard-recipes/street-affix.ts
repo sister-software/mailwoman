@@ -46,12 +46,12 @@ import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 // Same OA cache as the unit shard. Train = every NON-Vermont state; eval = Vermont (the holdout).
-interface UsSource {
+interface USSource {
 	zip: string
 	csv: string
 	region: string
 }
-const TRAIN_SOURCES: readonly UsSource[] = [
+const TRAIN_SOURCES: readonly USSource[] = [
 	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
 	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
 	{ zip: "/tmp/oa-cache/us__dc__statewide.zip", csv: "us/dc/statewide.csv", region: "DC" },
@@ -60,7 +60,7 @@ const TRAIN_SOURCES: readonly UsSource[] = [
 	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
 	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
 ]
-const EVAL_SOURCE: UsSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
+const EVAL_SOURCE: USSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
 
 // Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry NO affix split — they exist
 // only to keep the postcode-ORDER distribution multi-locale. Native-order rendering mirrors
@@ -87,7 +87,7 @@ const DIRECTIONAL_ABBRS = Object.values(DirectionalAbbreviation) // ["N","E","S"
 const INJECT_PREFIX_PROB = 0.3 // fraction of prefix-less streets that get a synthetic directional
 
 /** A real US skeleton tuple read from a cached OA zip. */
-interface UsTuple {
+interface USTuple {
 	house_number: string
 	street: string
 	locality: string
@@ -144,7 +144,7 @@ function splitCSV(line: string): string[] {
 }
 
 /** Stream real US tuples (number/street/city/postcode) out of a cached OA zip. */
-function readTuples(source: UsSource): UsTuple[] {
+function readTuples(source: USSource): USTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -162,7 +162,7 @@ function readTuples(source: UsSource): UsTuple[] {
 		iCity = idx("city"),
 		iPost = idx("postcode")
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
-	const tuples: UsTuple[] = []
+	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
 	for (let li = 1; li < lines.length; li++) {
@@ -272,7 +272,7 @@ const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${
  */
 function renderRow(
 	random: () => number,
-	base: UsTuple,
+	base: USTuple,
 	street: string,
 	streetComponents: Partial<Record<ComponentTag, string>>
 ): { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> } {
@@ -396,7 +396,7 @@ export const streetAffixRecipe: ShardRecipe = {
 		const multilocaleCount = opts.multilocaleCount ?? 0
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
 
-		const pool: UsTuple[] = []
+		const pool: USTuple[] = []
 
 		for (const s of sources) {
 			const t = readTuples(s)

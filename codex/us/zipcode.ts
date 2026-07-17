@@ -9,7 +9,7 @@
 
 import type { Tagged } from "type-fest"
 
-import { isUsStateAbbreviation, type UsStateAbbreviation } from "./state.ts"
+import { isUSStateAbbreviation, type USStateAbbreviation } from "./state.ts"
 
 /**
  * USPS-recognized ZIP code digits.
@@ -146,15 +146,15 @@ export const StateAbbreviationZipCodePrefixRecord = {
 	VI: 0,
 	MP: 9,
 	AS: 9,
-} as const satisfies Record<UsStateAbbreviation, ZipCodeDigit>
+} as const satisfies Record<USStateAbbreviation, ZipCodeDigit>
 
 /**
  * Map of ZIP code prefixes to their corresponding US state abbreviations.
  */
-const ZipCodePrefixAbbreviationMap = new Map<ZipCodeDigit, UsStateAbbreviation[]>()
+const ZipCodePrefixAbbreviationMap = new Map<ZipCodeDigit, USStateAbbreviation[]>()
 
 for (const [state, prefix] of Object.entries(StateAbbreviationZipCodePrefixRecord) as [
-	UsStateAbbreviation,
+	USStateAbbreviation,
 	ZipCodeDigit,
 ][]) {
 	const states = ZipCodePrefixAbbreviationMap.get(prefix) ?? []
@@ -186,7 +186,7 @@ export function isZipCode(input: unknown): input is ZipCode | ZipCodePlusFour {
 }
 
 export interface PluckedStateZIPCodeResult {
-	stateAbbreviation: UsStateAbbreviation | null
+	stateAbbreviation: USStateAbbreviation | null
 	zipCode: ZipCode | ZipCodePlusFour
 }
 
@@ -194,7 +194,7 @@ export interface PluckedStateZIPCodeResult {
  * Given an address string like `"NY"`, `"CA 94016"`, attempts to match the state abbreviation and postal code, if
  * applicable.
  *
- * @see {@linkcode isUsStateAbbreviation} to validate the state abbreviation.
+ * @see {@linkcode isUSStateAbbreviation} to validate the state abbreviation.
  */
 export function pluckStateZIPCode(input: unknown): PluckedStateZIPCodeResult | null {
 	if (!input || typeof input !== "string") return null
@@ -206,7 +206,7 @@ export function pluckStateZIPCode(input: unknown): PluckedStateZIPCodeResult | n
 	const normalizedState = stateAbbreviation?.toUpperCase()
 
 	return {
-		stateAbbreviation: isUsStateAbbreviation(normalizedState) ? normalizedState : null,
+		stateAbbreviation: isUSStateAbbreviation(normalizedState) ? normalizedState : null,
 		zipCode: zipCode as ZipCode | ZipCodePlusFour,
 	}
 }

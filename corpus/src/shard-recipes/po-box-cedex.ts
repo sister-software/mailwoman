@@ -120,7 +120,7 @@ const VENUES_EN = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "M
 const VENUES_FR = ["Société Dupont", "Cabinet Martin", "Hôpital Central", "Mairie Annexe", "Imprimerie Moderne"]
 
 // ── Tuple shapes ─────────────────────────────────────────────────────────────────────────────────
-interface UsTuple {
+interface USTuple {
 	house_number: string
 	street: string
 	locality: string
@@ -200,7 +200,7 @@ function splitCSV(line: string): string[] {
 const cleanLocality = (loc: string) => loc && loc.length <= 40 && !/\d|,/.test(loc) && !/cedex/i.test(loc)
 
 /** Stream real US tuples (number/street/city/postcode) out of a cached OA zip. */
-function readUsTuples(source: { zip: string; csv: string; region: string }): UsTuple[] {
+function readUsTuples(source: { zip: string; csv: string; region: string }): USTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -218,7 +218,7 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UsT
 		iCity = idx("city"),
 		iPost = idx("postcode")
 	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
-	const tuples: UsTuple[] = []
+	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
 	for (let li = 1; li < lines.length; li++) {
@@ -483,7 +483,7 @@ const pick = <T>(random: () => number, arr: ReadonlyArray<T>): T => arr[Math.flo
 
 // ── Per-class renderers — each returns { fmt, raw, components } ──────────────────────────────────
 
-function renderPoBoxUs(random: () => number, t: UsTuple): Rendered {
+function renderPoBoxUs(random: () => number, t: USTuple): Rendered {
 	const phrase = makePoBoxPhrase(random, US_LEADERS_COMMON, US_LEADERS_RARE)
 	const { locality: loc, region: reg, postcode: pc } = t
 	const base = { po_box: phrase, locality: loc, region: reg }
@@ -515,7 +515,7 @@ function renderPoBoxUs(random: () => number, t: UsTuple): Rendered {
 	}
 }
 
-function renderPmbUs(random: () => number, t: UsTuple): Rendered {
+function renderPmbUs(random: () => number, t: USTuple): Rendered {
 	const phrase = makePoBoxPhrase(random, US_PMB_LEADERS)
 	const { house_number: hn, street, locality: loc, region: reg, postcode: pc } = t
 	const road = `${hn} ${street}`
@@ -701,7 +701,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		const source = opts.sourceName ?? "synth-po-box-cedex"
 
 		// US pool: VT only for golden, non-VT for train (the established geographic holdout).
-		const usPool: UsTuple[] = []
+		const usPool: USTuple[] = []
 
 		for (const s of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {
 			const t = readUsTuples(s)

@@ -337,7 +337,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from the slim DB's `place_abbr` table
 	 * (carried by build-slim, #189). Empty on DBs built before the table. Lets the demo resolver tier an exact-abbrev
 	 * match ("VT" → Vermont) above a foreign region that merely token-matches — the data-driven replacement for the
-	 * hardcoded `expandUsRegion` map. Mirrors `WOFWasmPlaceLookup.#abbrExactIds` (keep the two in lockstep).
+	 * hardcoded `expandUSRegion` map. Mirrors `WOFWasmPlaceLookup.#abbrExactIds` (keep the two in lockstep).
 	 */
 	async #abbrExactIds(text: string): Promise<Set<number>> {
 		const t = text.trim()

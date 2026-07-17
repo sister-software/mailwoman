@@ -208,13 +208,13 @@ function correctNode(node: AddressNode): AddressNode {
  * full NAME is genuinely ambiguous — "Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state — so full names
  * are left to resolve on their own name-match evidence, never pinned.
  */
-function annotateUsRegions(node: AddressNode): void {
+function annotateUSRegions(node: AddressNode): void {
 	if (node.tag === "region" && /^[A-Za-z]{2}$/.test(node.value.trim()) && usStateSlug(node.value)) {
 		node.metadata = { ...node.metadata, country_hint: "US" }
 	}
 
 	for (const child of node.children) {
-		annotateUsRegions(child)
+		annotateUSRegions(child)
 	}
 }
 
@@ -227,7 +227,7 @@ export function recognizeUSRegions(tree: AddressTree): AddressTree {
 	tree.roots = correctSiblings(tree.roots).map(correctNode)
 
 	for (const root of tree.roots) {
-		annotateUsRegions(root)
+		annotateUSRegions(root)
 	}
 
 	return tree
