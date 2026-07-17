@@ -58,8 +58,18 @@
  *   line (it drives Track B), it just no longer gates the release.
  *
  *   This gate compares the neural resolution against the rules baseline it replaces — the final
- *   pre-excision safety check. Once Plan-4 (V2) deletes the rules tree, the rules-comparison half is
- *   retired; its job (proving the swap is coordinate-safe) is done by then.
+ *   pre-excision safety check.
+ *
+ *   ## Plan-4 conversion (2026-07-17) — the rules arm now reads FROZEN goldens
+ *
+ *   The v1 rules parser has been DELETED (`createAddressParser` and its module graph are gone). The
+ *   rules baseline this gate compares against is no longer produced live; it is read from the
+ *   phase-0 frozen capture `mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl` (the top
+ *   solution's `classifications` per input, captured byte-stable in PR #1092). That flat record is
+ *   rebuilt into an `AddressTree` via `v0RecordToTree` — the SAME synthetic-token builder the live
+ *   arm used on `solutions[0].classifications` — and resolved through the WOF resolver exactly as
+ *   before. The coordinate comparison is therefore identical to the live arm; only the source of the
+ *   rules parse changed (live parser → committed snapshot of that same parser).
  *
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
  */
@@ -75,10 +85,31 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
-import { createAddressParser } from "mailwoman"
 import { describe, expect, test } from "vitest"
 
 import { v0RecordToTree } from "../eval-harness/v0-tree-adapter.ts"
+
+/** The frozen rules-parser capture (phase 0, PR #1092): one row per parity input, top-3 solved solutions. */
+const PARITY_RAW_GOLDEN = "mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl"
+
+/** A captured rules solution's flat classification record (the shape `solutions[0].classifications` had). */
+type RulesRecord = Partial<Record<string, string[]>>
+
+/**
+ * Load the frozen rules baseline: `input → the top solution's classifications`. This replaces the deleted live
+ * `createAddressParser().parse(...)` call — the record is a byte-stable snapshot of that exact parser (PR #1092).
+ */
+function loadRulesGolden(): Map<string, RulesRecord> {
+	const byInput = new Map<string, RulesRecord>()
+
+	for (const line of readFileSync(PARITY_RAW_GOLDEN, "utf8").split("\n")) {
+		if (!line) continue
+		const row = JSON.parse(line) as { input: string; solutions?: Array<{ classifications?: RulesRecord }> }
+		byInput.set(row.input, row.solutions?.[0]?.classifications ?? {})
+	}
+
+	return byInput
+}
 
 /** A live parity fixture: input + the per-label rules-golden expectation. */
 interface ParityFixture {
@@ -158,7 +189,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 	"v7 swap gate — coordinate acceptability + plausibility",
 	() => {
 		test("neural resolution is coordinate-safe and the garbage tail is bounded by the plausibility guard", async () => {
-			const rules = createAddressParser()
+			const rulesGolden = loadRulesGolden()
 			const neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 			const backend = new WOFSqlitePlaceLookup({ databasePath: [ADMIN_DB, POSTCODE_DB] })
 			const resolver = createWOFResolver(backend)
@@ -203,12 +234,14 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 				}
 
 				try {
-					const solutions = await rules.parse(fx.input)
-					const record = solutions[0]?.classifications ?? {}
+					// The rules parse is read from the frozen phase-0 capture (PR #1092), not produced live —
+					// the v1 parser is deleted. `v0RecordToTree` rebuilds the flat record into a tree exactly as
+					// the live arm did, so the coordinate comparison is unchanged.
+					const record = rulesGolden.get(fx.input) ?? {}
 					const tree = v0RecordToTree(fx.input, record).tree
 					rulesCoord = finestResolvedCoordinate(await resolver.resolveTree(tree, opts))
 				} catch {
-					/* rules parse/resolve failed — leaves rulesCoord null */
+					/* rules rebuild/resolve failed — leaves rulesCoord null */
 				}
 
 				const both = !!neuralCoord && !!rulesCoord
