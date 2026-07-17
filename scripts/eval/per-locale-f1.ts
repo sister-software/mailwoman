@@ -55,6 +55,7 @@ import {
 } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { computeQueryShape } from "@mailwoman/query-shape"
 
 // Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict
 // `oa-resolver-eval` runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs
@@ -437,7 +438,16 @@ async function main(): Promise<void> {
 
 		for (const row of rows) {
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
-			const tree = await neural.parse(row.raw, wordConsistency ? { enforceWordConsistency: wordConsistency } : {})
+			// PRODUCTION-CONFIG parity (2026-07-17, the M1 gate-fidelity fix): production parses feed the
+			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
+			// this battery historically fed NEITHER — so the gate scored a config production doesn't run.
+			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production; the entire
+			// delta was the since-scoped locality bias, PR #1148). Score what ships.
+			const tree = await neural.parse(row.raw, {
+				postcodeRepair: true,
+				queryShape: computeQueryShape(row.raw),
+				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
+			})
 			const pred = foldToComponents(decodeAsJSON(tree))
 			preds.push(pred)
 
