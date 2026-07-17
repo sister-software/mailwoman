@@ -93,6 +93,16 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   (seed 42, upper_case_row eligibility). **v381 raw-case exact 48.3% / micro 79.8; shim-ON 60.7%**
   (the #690 shim is worth +12.4pp today). Probe bar: raw-case exact >= 53.3 (+5pp); shim-delete
   territory ~60+.
+- 07:00 — **v3.10.0 2k GRADE** (`scratchpad/grade-v3100.log`, ap-4fFe1R2Zf...): span head exports
+  clean (`span_scores` output present, int8 40.1 MB). **GUARD PASS** — golden us micro 86.9=86.9 /
+  exact 66.4 vs 66.2 (+0.2), fr micro 90.0 vs 90.1 / exact 75.4 flat: the span head is a purely
+  ADDITIONAL output, the BIO token path is byte-stable-ish. **LEG-1 span mechanism PASS** — loss
+  18.6->1.49 converged (v3.0.0 stuck at ~17), the LR param group works. **LEG-2 P3 all-caps FAIL** —
+  raw-case exact 48.0 vs v381 48.3 (-0.3pp) against the +5pp bar; augment_upper_case_prob 0.15 is
+  INERT at 2k. Per no-relax-bars: P3 does NOT ride the 8k, the #690 shim stays (+12.4pp raw-case
+  today). The span head DOES escalate — but seg@1 (leg-1 formal gate) runs first before the ~2h 8k spend.
+- GOTCHA: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
+  saver zero-pads. First grade run FileNotFounded on step-2000; fixed to 002000.
 - TIMEKEEPING CORRECTION (self-caught TWICE: at the 05:03 checkpoint, and again at 05:48 when four
   fresh entries carried local+2h stamps): all stamps above are now receipt-anchored to commit/PR
   timestamps (the lab clock is UTC+2 — never stamp from the wall clock).
