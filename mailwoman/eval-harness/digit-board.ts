@@ -138,8 +138,11 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 			? fold(hn) === "" && fold(pc) === fold((fixture.expect.postcode ?? []).join(" "))
 			: fold(hn) === fold((fixture.expect.house_number ?? []).join(" "))
 
-		if (ok) bucket.hit++
-		else bucket.misses.push({ ...fixture, got: fixture.expect_no_house_number ? `hn=${hn} pc=${pc}` : hn })
+		if (ok) {
+			bucket.hit++
+		} else {
+			bucket.misses.push({ ...fixture, got: fixture.expect_no_house_number ? `hn=${hn} pc=${pc}` : hn })
+		}
 		tally.set(fixture.klass, bucket)
 	}
 

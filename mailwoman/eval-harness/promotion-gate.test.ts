@@ -24,7 +24,9 @@ describe("listGateSpecs", () => {
 		expect(specs.length).toBeGreaterThan(0)
 		expect(specs).toContain("v5.3.0-family.json")
 
-		for (const spec of specs) expect(spec.endsWith(".json")).toBe(true)
+		for (const spec of specs) {
+			expect(spec.endsWith(".json")).toBe(true)
+		}
 	})
 })
 

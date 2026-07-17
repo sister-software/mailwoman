@@ -242,6 +242,7 @@ export function enforceWordConsistency(
 
 		if (!changed) continue // word already consistent → byte-identical, leave it
 		const meanConf = bestScore / w.length
+
 		// mean p(bestType) — length-invariant (DeepSeek t3)
 
 		// Confidence gate: a low-confidence vote is the noise-amplification signature the 2026-06-19

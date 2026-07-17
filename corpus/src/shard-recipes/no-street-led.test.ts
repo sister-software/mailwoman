@@ -82,6 +82,7 @@ describe("no-street-led board split", () => {
 		const { stats, rows } = await run(TUPLES, ["tømmerlien"])
 
 		expect(stats.contaminated).toBe(1)
+
 		for (const row of rows) {
 			expect((row as { raw: string }).raw.toLowerCase()).not.toContain("tømmerlien")
 		}

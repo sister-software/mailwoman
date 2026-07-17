@@ -241,7 +241,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		if (!examples.length) continue
 		console.log(`\n  --- ${label}: emitted where the gold has none (first ${examples.length}) ---`)
 
-		for (const example of examples) console.log(`    ${example}`)
+		for (const example of examples) {
+			console.log(`    ${example}`)
+		}
 	}
 
 	console.log("")

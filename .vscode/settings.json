@@ -12,7 +12,8 @@
 		"editor.defaultFormatter": "oxc.oxc-vscode"
 	},
 	"[markdown]": {
-		"editor.defaultFormatter": "oxc.oxc-vscode"
+		"editor.defaultFormatter": "oxc.oxc-vscode",
+		"editor.colorDecorators": false
 	},
 	"[shellscript]": {
 		"editor.defaultFormatter": "oxc.oxc-vscode"

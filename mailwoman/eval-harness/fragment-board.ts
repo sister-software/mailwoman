@@ -138,8 +138,11 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 			? fold(street) === ""
 			: fold(street) === fold((fixture.expect.street ?? []).join(" "))
 
-		if (ok) bucket.hit++
-		else bucket.misses.push({ ...fixture, got: street } as never)
+		if (ok) {
+			bucket.hit++
+		} else {
+			bucket.misses.push({ ...fixture, got: street } as never)
+		}
 		tally.set(fixture.klass, bucket)
 	}
 

@@ -84,6 +84,7 @@ describe("the FR fragment board fixture", () => {
 		const negative = fixtures.filter((f) => f.expect_no_street)
 
 		expect(negative.length).toBeGreaterThan(100)
+
 		// A negative row must NOT carry a street gold, or the positive scorer would pick it up.
 		for (const row of negative) {
 			expect(row.expect.street, `${row.id} is negative but carries a street gold`).toBeUndefined()
@@ -93,7 +94,9 @@ describe("the FR fragment board fixture", () => {
 	it("gives every cell enough n to say something", () => {
 		const counts = new Map<string, number>()
 
-		for (const f of fixtures) counts.set(f.klass, (counts.get(f.klass) ?? 0) + 1)
+		for (const f of fixtures) {
+			counts.set(f.klass, (counts.get(f.klass) ?? 0) + 1)
+		}
 
 		for (const [klass, n] of counts) {
 			// The bar: a 50% cell must resolve to better than ±5pp.

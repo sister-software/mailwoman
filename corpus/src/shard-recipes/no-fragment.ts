@@ -134,8 +134,11 @@ export const noFragmentRecipe: ShardRecipe = {
 				license: "Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket",
 			}
 
-			if (alignAndWrite(write, canonical, "no-fragment")) emitted++
-			else skipped++
+			if (alignAndWrite(write, canonical, "no-fragment")) {
+				emitted++
+			} else {
+				skipped++
+			}
 		}
 
 		for await (const tuple of readTuples(opts.input!)) {
@@ -145,8 +148,13 @@ export const noFragmentRecipe: ShardRecipe = {
 			const number = String(tuple.number ?? "").trim()
 			const postcode = String(tuple.postcode ?? "").trim()
 
-			if (locality) localities.add(locality)
-			if (postcode) postcodes.add(postcode)
+			if (locality) {
+				localities.add(locality)
+			}
+
+			if (postcode) {
+				postcodes.add(postcode)
+			}
 
 			if (!street) {
 				skipped++

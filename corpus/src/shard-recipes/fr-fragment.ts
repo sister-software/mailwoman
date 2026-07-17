@@ -193,7 +193,9 @@ export const frFragmentRecipe: ShardRecipe = {
 			const fullStreet = String(tuple.street ?? "").trim()
 			const locality = String(tuple.locality ?? "").trim()
 
-			if (locality) localities.add(locality)
+			if (locality) {
+				localities.add(locality)
+			}
 
 			if (!fullStreet) {
 				skipped++
