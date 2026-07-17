@@ -264,16 +264,11 @@ const BAND: Perturbation[] = [
 // punctuation-drop training augmentation (#1101) exists to close. Tracked here (visible, non-blocking) until
 // that augmentation lands; the anti-rot loop will flag it "newly passing" the moment a retrain fixes it.
 const KNOWN_INV_XFAIL = new Map<string, string>([
+	// The FR comma-free rooftop loss. Its US twin ("1600 Pennsylvania Ave NW Washington DC") had the SAME
+	// #1101 failure on the shipped model (v6.4.0), but the punct-drop augmentation (v3.8.x,
+	// augment_punct_drop_prob) FIXES it — it holds on merit — so it is deliberately NOT tracked. The FR base
+	// still loses its rooftop after the fix (a resolver dependency beyond the parse), so it stays here.
 	["comma-drop|181 Rue du Chevaleret, Paris", "#1101: comma-free FR address loses rooftop (address_point→admin)"],
-	// The US sibling of the same #1101 failure — comma-free "1600 Pennsylvania Ave NW Washington DC" absorbs
-	// the locality into the street, loses the rooftop (address_point→admin). It was never tracked here even
-	// though its FR twin above was, so the gauntlet has been red on the SHIPPED model too (v6.4.0 fails it
-	// identically). Tracked now so the anti-rot loop flags it "newly passing" the moment the punct-drop
-	// augmentation (#1101) lands.
-	[
-		"comma-drop|1600 Pennsylvania Ave NW, Washington DC",
-		"#1101: comma-free US address loses rooftop (address_point→admin)",
-	],
 ])
 
 /**
