@@ -43,10 +43,7 @@ const scopeRewrites: Array<[RegExp, string]> = [
 
 /** Imports that should become repo-relative paths (root-only modules). */
 const rootRelative: Record<string, string> = {
-	// sdk/cli + sdk/test are deprecated shims for cli-kit/test-kit (kept until the next major).
-	"mailwoman/sdk/cli": "sdk/cli.js",
 	"mailwoman/cli-kit": "cli-kit/index.js",
-	"mailwoman/sdk/test": "sdk/test/index.js",
 	"mailwoman/test-kit": "test-kit/index.js",
 }
 

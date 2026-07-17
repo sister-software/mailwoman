@@ -64,8 +64,8 @@ export default defineConfig({
 			{ find: /^@mailwoman\/variant-aliases$/, replacement: resolve(here, "variant-aliases/index.ts") },
 			{ find: /^@mailwoman\/phrase-grouper$/, replacement: resolve(here, "phrase-grouper/index.ts") },
 			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
-			{ find: "mailwoman/sdk/test", replacement: resolve(here, "mailwoman/sdk/test/index.ts") },
-			{ find: "mailwoman/sdk/cli", replacement: resolve(here, "mailwoman/sdk/cli.ts") },
+			{ find: "mailwoman/test-kit", replacement: resolve(here, "mailwoman/test-kit/index.ts") },
+			{ find: "mailwoman/cli-kit", replacement: resolve(here, "mailwoman/cli-kit/index.ts") },
 			{ find: /^mailwoman$/, replacement: resolve(here, "mailwoman/index.ts") },
 			// onnxruntime-web's `/webgpu` subpath ships browser-only bundles: under Node they fetch()
 			// their Emscripten loader as a file:// URL (undici rejects the scheme) and then import() a

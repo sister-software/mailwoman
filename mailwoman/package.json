@@ -63,16 +63,6 @@
 			"default": "./out/resolver-backend.js",
 			"types": "./out/resolver-backend.d.ts"
 		},
-		"./sdk/test": {
-			"node": "./sdk/test/index.ts",
-			"default": "./out/sdk/test/index.js",
-			"types": "./out/sdk/test/index.d.ts"
-		},
-		"./sdk/cli": {
-			"node": "./sdk/cli.ts",
-			"default": "./out/sdk/cli.js",
-			"types": "./out/sdk/cli.d.ts"
-		},
 		"./gazetteer-pipeline": {
 			"node": "./gazetteer-pipeline/index.ts",
 			"default": "./out/gazetteer-pipeline/index.js",
@@ -112,18 +102,6 @@
 			"./resolver-backend": {
 				"types": "./out/resolver-backend.d.ts",
 				"default": "./out/resolver-backend.js"
-			},
-			"./sdk/test": {
-				"types": "./out/sdk/test/index.d.ts",
-				"default": "./out/sdk/test/index.js"
-			},
-			"./sdk/scripting": {
-				"types": "./out/sdk/scripting.d.ts",
-				"default": "./out/sdk/scripting.js"
-			},
-			"./sdk/cli": {
-				"types": "./out/sdk/cli.d.ts",
-				"default": "./out/sdk/cli.js"
 			},
 			"./gazetteer-pipeline": {
 				"types": "./out/gazetteer-pipeline/index.d.ts",

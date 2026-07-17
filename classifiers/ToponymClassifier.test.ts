@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { assertClassification } from "mailwoman/sdk/test"
+import { assertClassification } from "mailwoman/test-kit"
 import { expect, test } from "vitest"
 
 import { ToponymClassifier } from "./ToponymClassifier.ts"
