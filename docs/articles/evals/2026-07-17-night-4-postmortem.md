@@ -38,6 +38,26 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   fr 42.5 = noise). 8k (v391) launched ~05:00, healthy at step 4400 by 05:03.
 - 05:02 — P3 staged (b3d741bd): augment_upper_case_prob mirroring lowercase_row (#829), 4 tests,
   default-off; enabling rides the span-arc retrain with a pre-registered ALL-CAPS read.
+- 05:12–05:35 — v391 (PT/RO 8k) graded: RO 1.000 + fr guard HELD, goldens noise, digit board clean
+  (bare-street-hn 0.743), gauntlet PASS — but the BR GUARD ROW BROKE (street->venue label flip on
+  "Rua Raul Leite Magalhães", n=1; segmentation still perfect) and FR fragment reads 0.747 vs v381's
+  0.758 (-1.1pp, CI-overlapping). Pre-registration named br a guard -> v391 does NOT auto-promote;
+  ship/hold is an operator handoff item. The 2k (v390) was strictly additive; the 8k traded.
+- 05:21 — phase-4a rerank v1 found CRASHED AT IMPORT 45min earlier (neural/semi-markov-decode.ts is
+  on the archived feat/727-span-head branch, NOT main — my "phases 1-3 on main" was half-right: python
+  scorer merged, JS decoder didn't). Liveness checks were fooled by the watcher's self-matching pgrep.
+  Re-ran from a branch worktree.
+- 05:45 — PHASE-4A RESULT (the arc's central question): **rerank@1 = seg@1 = 0.5768, delta +0.
+  Full-geocode tier evidence collects NONE of the oracle@5 0.723 headroom** — because it is STARVED:
+  evidence rate 3.4% (9/267 fixtures produced street-tier evidence on any hypothesis; tier census
+  1308 admin / 25 address_point / 2 street). The failing class is context-free fragments, which
+  cannot reach rooftop layers, so all hypotheses tie at admin. NOT a treadmill case — first
+  measurement; the redesign is measurement-driven: the arbiter needs STREET-NAME existence evidence
+  (P1's StreetLocalityEvidence — two independent negatives converged on the same design today).
+- 05:50 — name-evidence falsifier v0 (FR BAN street-centroids 2.2M + NO tuples, n=7 recoverable):
+  2 clean discriminations incl. the refusal class, 4 neutral both-out (typos fail closed), 1 anti
+  (index incompleteness + unscoped bare-name membership). Promising, unproven at n=7 — scaling to
+  the FR fragment board (n=400, complete BAN coverage) next.
 - TIMEKEEPING CORRECTION (self-caught at the 05:03 checkpoint): the log lines above originally
   carried local-time-derived guesses labeled as UTC; fixed to actual UTC. Everything above happened
   in the first ~27 minutes of the shift.
