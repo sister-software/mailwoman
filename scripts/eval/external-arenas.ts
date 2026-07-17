@@ -3,19 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   External-arenas.ts — run the three UNBIASED capability arenas through harness-v0-neural.
+ *   External-arenas.ts — run the three UNBIASED capability arenas through harness-neural.
  *
- *   Our own 376-assertion suite is a Pelias/addressit port (v0's lineage), so it can't reveal where
- *   neural earns its keep. These three arenas come from outside that lineage and together map the
- *   v0-vs-neural capability surface:
+ *   Our own 376-assertion suite is a Pelias/addressit port (the retired rules parser's lineage), so
+ *   it over-represents that lineage's cases. These three arenas come from outside it and together
+ *   map the capability surface (formerly v0-vs-neural; the v7 excision #1151 deleted the rules arm,
+ *   so the arenas now grade neural alone — pass rates stay comparable, the harness's neural
+ *   semantics are unchanged):
  *
  *   1. Libpostal — statistical parser's hand-curated adversarial cases (clean, canonical)
  *   2. Perturbation — golden v0.1.2 with rule-defeating transforms (noisy, degraded)
  *   3. Postal-standards — postal-authority example addresses, edge formats by class (military APO/FPO,
  *        PO-box variety, secondary-unit, intl)
  *
- *   All three are scored with --symmetric-match (v0 scored on the same loose subset matcher as neural
- *   — fair to remapped/dropped-tag cases) and --postcode-repair.
+ *   All three are scored with --postcode-repair.
  *
  *   Usage (default shipped weights): node scripts/eval/external-arenas.ts
  *   Against a specific model (e.g. a fresh v0.7.2 export): MODEL=/path/model.int8.onnx
@@ -115,7 +116,7 @@ async function main() {
 	const runArena = async (name: string, dir: string): Promise<void> => {
 		console.log(`== arena: ${name} ==`)
 		const r =
-			await $`node scripts/eval/harness-v0-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --symmetric-match --out-json ${join(outDir, `${name}.results.json`)}`
+			await $`node scripts/eval/harness-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --out-json ${join(outDir, `${name}.results.json`)}`
 		writeFileSync(join(outDir, `${name}.stderr`), r.stderr)
 		console.log(r.stdout.split("\n").slice(-40).join("\n"))
 	}
@@ -125,7 +126,7 @@ async function main() {
 	await runArena("postal", join(outDir, "postal"))
 
 	console.log("")
-	console.log("== three-bucket summary + postal edge-class breakdown ==")
+	console.log("== arena summary + postal edge-class breakdown ==")
 	const summary = await $`node scripts/eval/summarize-arenas.ts ${outDir} data/eval/external/postal-cases.jsonl`
 	console.log(summary.stdout.trimEnd())
 
