@@ -25,7 +25,7 @@ export { OptionsSchema as options }
 
 const report = (line: string): void => console.error(line)
 
-const DevJsonlToParquet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const DevJSONLToParquet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(() =>
 		jsonlToParquet({ input: options.input, output: options.output, rowGroupSize: options.rowGroupSize }, report)
 	)
@@ -43,4 +43,4 @@ const DevJsonlToParquet: CommandComponent<typeof OptionsSchema> = ({ options }) 
 	return null
 }
 
-export default DevJsonlToParquet
+export default DevJSONLToParquet
