@@ -72,3 +72,26 @@ rerank active) is the next arc, gated on #1154 merging and the operator ratifyin
 - Checkpoint: `output-v3100-span-ship-probe-s42/checkpoints/step-008000` (training volume).
 - int8 + sidecar: `output-v3100-span-ship-probe-s42/model-int8.onnx` + `semi-crf-transitions.json`.
 - Grade instruments: `scratchpad/grade-v3101.sh`, `oracle-read-v3101.mjs`, `eval_seg_at_1.py`.
+
+## Correction: the name-evidence rerank, re-measured on THIS model (not the v301 proxy)
+
+Phase-4b measured the name-evidence rerank on the v301 phase-1 head (the only span model then
+exported). Re-running the FR fragment board (n=1600) on the v3.10.1 8k substrate — the model
+phase-4c will actually decode — corrects the headline:
+
+| class              | v301-proxy seg@1 → rerank | **v3.10.1 8k seg@1 → rerank** |
+| ------------------ | ------------------------- | ----------------------------- |
+| bare-street        | 0.675 → 0.860 (+18.5)     | **0.905 → 0.950 (+4.5)**      |
+| date-name          | 0.100 → 0.182 (+8.2)      | **0.403 → 0.570 (+16.7)**     |
+| street-particle    | 0.802 → 0.860 (+5.8)      | **0.925 → 0.945 (+2.0)**      |
+| street-housenumber | 0.897 → 0.922 (+2.5)      | **0.932 → 0.940 (+0.8)**      |
+| **overall**        | 0.619 → 0.706 (+8.7)      | **0.791 → 0.851 (+6.0)**      |
+
+96 fixes / 3 breaks (32:1, cleaner than the proxy's 10:1). The ship-recipe span head (all channels
+
+- v0.11.0 corpus + 8k) is FAR stronger at rank-1 than the bare v257 phase-1 head — seg@1 0.791 vs
+  0.619 — so it leaves less recoverable headroom (146 vs 202 recoverable rows). The rerank still earns
+  its keep (+6.0pp, 32:1), but the value has MOVED: bare-street is nearly solved by the model itself
+  (0.905), and **date-name is now the primary beneficiary** (+16.7pp — the class the model still finds
+  hardest). The proxy's "+18.5pp bare-street" was a weak-model artifact; verify on the substrate you'll
+  ship. Phase-4c is still worth building, but its pitch is date-name + the long tail, not bare-street.
