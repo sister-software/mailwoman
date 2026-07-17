@@ -26,7 +26,7 @@
  *   real WOF + TX shards being present (`describeIfStack`), same as the express predecessor.
  */
 
-import { existsSync } from "node:fs"
+import { existsSync, realpathSync } from "node:fs"
 
 import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode, type ServerHandle } from "@mailwoman/api-kit"
@@ -40,6 +40,16 @@ const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-gl
 const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))
 const hasStack = existsSync(wofPath) && existsSync(txSitus)
 const describeIfStack = describe.skipIf(!hasStack)
+
+/** `/v1/parse` needs only the model weights (Task 2) — gate its own tests independently of the WOF/TX stack above. */
+function weightsPresent(): boolean {
+	try {
+		return existsSync(realpathSync("neural-weights-en-us/model.onnx"))
+	} catch {
+		return false
+	}
+}
+const describeIfWeights = describe.skipIf(!weightsPresent())
 
 let app: ReturnType<typeof createMailwomanAPI>
 
@@ -102,6 +112,39 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		expect(typeof body.data.interpolation_states).toBe("number")
 	})
 })
+
+// ---------------------------------------------------------------------------------------------
+// /v1/parse — native neural output (Task 2); needs only the model weights, not the gazetteer, so
+// it's gated on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
+// ---------------------------------------------------------------------------------------------
+
+describeIfWeights(
+	"api-engine — /v1/parse (native neural output)",
+	() => {
+		test("POST /v1/parse: returns ordered components + the decoded tree, in engine reading order", async () => {
+			const r = await postJson("/v1/parse", { address: "3075 Hill Street, Round Rock, TX 78664" })
+			expect(r.status).toBe(200)
+			const body = r.body as {
+				input: string
+				components: Array<{ tag: string; value: string }>
+				tree: { roots: unknown[] }
+			}
+			expect(body.input).toBe("3075 Hill Street, Round Rock, TX 78664")
+			expect(body.components.length).toBeGreaterThan(0)
+			expect(body.components.some((c) => c.tag === "house_number" && c.value === "3075")).toBe(true)
+			expect(Array.isArray(body.tree.roots)).toBe(true)
+			expect(body.tree.roots.length).toBeGreaterThan(0)
+		})
+
+		test("POST /v1/parse: debug:true rides an XML diagnostic report back in the response", async () => {
+			const r = await postJson("/v1/parse", { address: "3075 Hill Street, Round Rock, TX 78664", debug: true })
+			expect(r.status).toBe(200)
+			expect(typeof r.body["debug"]).toBe("string")
+			expect(r.body["debug"] as string).toContain("<")
+		})
+	},
+	60_000
+)
 
 // ---------------------------------------------------------------------------------------------
 // Success paths against real WOF + TX shards (ported from geocode-router.test.ts)

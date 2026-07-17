@@ -5,7 +5,6 @@
  */
 
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
-import type { SerializedSolution } from "@mailwoman/core/solver"
 import { beforeEach, expect, test } from "vitest"
 
 import { createMailwomanAPI, type MailwomanAPIEngine, type ParseOutcome } from "./index.ts"
@@ -14,16 +13,18 @@ beforeEach(() => {
 	resetMetricsForTest()
 })
 
-const fixtureSolution: SerializedSolution = { score: 1, penalty: 0, classifications: {}, matches: [] }
-
 /** The `detail` text every "engine method absent" 503 carries — see `routes.ts`'s `GEOCODER_UNAVAILABLE_DETAIL`. */
 const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
 function fixtureParseOutcome(address: string, debug: boolean): ParseOutcome {
 	return {
-		input: { body: address, start: 0, end: address.length },
-		solutions: [fixtureSolution],
+		input: address,
+		components: [
+			{ tag: "house_number", value: "1600" },
+			{ tag: "street", value: "Pennsylvania Ave NW" },
+		],
+		tree: { raw: address, roots: [] },
 		debug: debug ? "diagnostic report" : undefined,
 	}
 }
@@ -48,7 +49,7 @@ const fullEngine: MailwomanAPIEngine = {
 // /v1/parse
 // ---------------------------------------------------------------------------------------------
 
-test("POST /v1/parse: happy path returns the tokenized span + solutions", async () => {
+test("POST /v1/parse: happy path returns the components + decoded tree", async () => {
 	const app = createMailwomanAPI(fullEngine)
 	const res = await app.request("/v1/parse", {
 		method: "POST",
@@ -57,8 +58,9 @@ test("POST /v1/parse: happy path returns the tokenized span + solutions", async 
 	})
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as ParseOutcome
-	expect(body.input.body).toBe("1600 Pennsylvania Ave NW")
-	expect(body.solutions).toHaveLength(1)
+	expect(body.input).toBe("1600 Pennsylvania Ave NW")
+	expect(body.components).toHaveLength(2)
+	expect(body.tree.roots).toEqual([])
 	expect(body.debug).toBeUndefined()
 })
 
@@ -78,7 +80,7 @@ test("GET /v1/parse?address=&debug=: happy path, first-value query reads", async
 	const res = await app.request("/v1/parse?address=1600+Pennsylvania+Ave+NW&debug=true")
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as ParseOutcome
-	expect(body.input.body).toBe("1600 Pennsylvania Ave NW")
+	expect(body.input).toBe("1600 Pennsylvania Ave NW")
 	expect(body.debug).toBe("diagnostic report")
 })
 

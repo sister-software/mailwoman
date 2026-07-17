@@ -27,7 +27,6 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
-import { createAddressParser } from "mailwoman"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
 	createResolverBackend,
@@ -67,24 +66,6 @@ const MAX_QUERY_LEN = 512
 
 function joinNonEmpty(...parts: Array<string | undefined>): string {
 	return parts.filter(Boolean).join(", ")
-}
-
-/**
- * The resolver returns admin labels + a coordinate (often rooftop/interpolated via the situs shards) but drops the
- * street. Recover house_number + road from the parse so the result carries the full address — Nominatim populates both
- * `addressdetails` and `display_name` down to the house number.
- */
-async function streetParts(
-	parser: ReturnType<typeof createAddressParser>,
-	query: string
-): Promise<{ houseNumber?: string; road?: string }> {
-	const solution = (await parser.parse(query, { verbose: true })).solutions[0]
-	const matches = (solution?.toJSON() as { matches?: Array<{ classification: string; value: string }> })?.matches ?? []
-
-	return {
-		houseNumber: matches.find((m) => m.classification === "house_number")?.value,
-		road: matches.find((m) => m.classification === "street")?.value,
-	}
 }
 
 /** Map a forward geocode result (admin + coordinate) into the formatter's neutral shape. */
@@ -177,7 +158,6 @@ async function serve(): Promise<void> {
 	}
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const parser = createAddressParser()
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
@@ -244,15 +224,13 @@ async function serve(): Promise<void> {
 				resolved.category = "place"
 				resolved.type = "house"
 			}
-			// Recover the street the resolver drops, so addressdetails + display_name carry it.
-			const { houseNumber, road } = await streetParts(parser, query)
-
-			if (houseNumber) {
-				resolved.address.house_number = houseNumber
+			// The geocode result already carries the parse's street spans (#1041) — no second parse.
+			if (result.house_number) {
+				resolved.address.house_number = result.house_number
 			}
 
-			if (road) {
-				resolved.address.road = road
+			if (result.street) {
+				resolved.address.road = result.street
 			}
 			// The country tag isn't always in the hierarchy (US admin results omit it); backfill from the
 			// US-centric-data default so the address, display_name, and flag/currency/calling-code agree.
@@ -266,11 +244,11 @@ async function serve(): Promise<void> {
 				resolved.address.country_code = country.iso2.toLowerCase()
 			}
 
-			if (houseNumber || road) {
+			if (result.house_number || result.street) {
 				resolved.displayName =
 					joinNonEmpty(
-						houseNumber,
-						road,
+						result.house_number ?? undefined,
+						result.street ?? undefined,
 						resolved.address.city,
 						resolved.address.state,
 						resolved.address.postcode,
