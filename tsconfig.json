@@ -27,7 +27,6 @@
 		{ "path": "./ban" },
 		{ "path": "./cartographer" },
 		{ "path": "./codex" },
-		{ "path": "./classifiers" },
 		{ "path": "./corpus" },
 		{ "path": "./formatter" },
 		{ "path": "./record" },

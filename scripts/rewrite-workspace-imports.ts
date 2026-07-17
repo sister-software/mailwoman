@@ -38,7 +38,6 @@ const scopeRewrites: Array<[RegExp, string]> = [
 	[/^mailwoman\/utils$/, "@mailwoman/core/utils"],
 	[/^mailwoman\/filters$/, "@mailwoman/core/filters"],
 	[/^mailwoman\/solvers$/, "@mailwoman/core/solvers"],
-	[/^mailwoman\/classifiers$/, "@mailwoman/classifiers"],
 ]
 
 /** Imports that should become repo-relative paths (root-only modules). */
