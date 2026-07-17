@@ -231,7 +231,7 @@ function mapGeocodeEarth(props: Props | undefined): Rec {
 	return out
 }
 
-async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
+async function fetchJSON(url: string, headers: Record<string, string> = {}): Promise<unknown> {
 	try {
 		const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) })
 
@@ -263,8 +263,8 @@ async function main(): Promise<void> {
 			expected[k] = Array.isArray(v) ? v.join(" ") : String(v)
 		}
 
-		const photonRaw = (await fetchJson(`https://photon.komoot.io/api/?q=${q}&limit=1`)) as FeatureResp | null
-		const nomRaw = (await fetchJson(
+		const photonRaw = (await fetchJSON(`https://photon.komoot.io/api/?q=${q}&limit=1`)) as FeatureResp | null
+		const nomRaw = (await fetchJSON(
 			`https://nominatim.openstreetmap.org/search?q=${q}&format=jsonv2&addressdetails=1&limit=1`,
 			{
 				"User-Agent": UA,
@@ -275,7 +275,7 @@ async function main(): Promise<void> {
 		if (args.geocodeEarthKey) {
 			// The compare-tool demo key is origin-locked to pelias.github.io; send the same
 			// Referer/Origin a browser does (Node's fetch allows these; browsers forbid them).
-			geRaw = (await fetchJson(`https://api.geocode.earth/v1/search?text=${q}&size=1&api_key=${args.geocodeEarthKey}`, {
+			geRaw = (await fetchJSON(`https://api.geocode.earth/v1/search?text=${q}&size=1&api_key=${args.geocodeEarthKey}`, {
 				Referer: "https://pelias.github.io/compare/",
 				Origin: "https://pelias.github.io",
 			})) as FeatureResp | null

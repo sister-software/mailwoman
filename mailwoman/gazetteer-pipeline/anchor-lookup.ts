@@ -222,7 +222,7 @@ function loadZCTA(path: string): Map<string, [number, number]> {
 }
 
 /** Python `ensure_ascii=False` JSON string escape (quote, backslash, control chars). */
-function pyJsonStr(s: string): string {
+function pyJSONStr(s: string): string {
 	let out = '"'
 
 	for (const ch of s) {
@@ -249,25 +249,25 @@ function pyJsonStr(s: string): string {
 }
 
 /** Python `repr`/`json` of a float — shortest round-trip, but integer-valued renders with `.0`. */
-function pyJsonNum(x: number): string {
+function pyJSONNum(x: number): string {
 	if (Number.isInteger(x)) return Object.is(x, -0) ? "-0.0" : `${x}.0`
 
 	return String(x)
 }
 
 /** Serialize one lookup value `[posterior, lat, lon, source]` the way Python `json.dumps` would. */
-function pyJsonValue(v: unknown): string {
+function pyJSONValue(v: unknown): string {
 	if (v === null) return "null"
 
-	if (typeof v === "number") return pyJsonNum(v)
+	if (typeof v === "number") return pyJSONNum(v)
 
-	if (typeof v === "string") return pyJsonStr(v)
+	if (typeof v === "string") return pyJSONStr(v)
 
-	if (Array.isArray(v)) return "[" + v.map(pyJsonValue).join(", ") + "]"
+	if (Array.isArray(v)) return "[" + v.map(pyJSONValue).join(", ") + "]"
 	const parts: string[] = []
 
 	for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
-		parts.push(pyJsonStr(k) + ": " + pyJsonValue(val))
+		parts.push(pyJSONStr(k) + ": " + pyJSONValue(val))
 	}
 
 	return "{" + parts.join(", ") + "}"
@@ -337,7 +337,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 
 	// Serialize the top level from the SORTED key array, not `Object.entries(lookup)`: JS hoists
 	// integer-like string keys (e.g. "10000") ahead of insertion order, which would unsort the output.
-	const body = sortedCodes.map((pc) => pyJsonStr(pc) + ": " + pyJsonValue(lookup[pc]!)).join(", ")
+	const body = sortedCodes.map((pc) => pyJSONStr(pc) + ": " + pyJSONValue(lookup[pc]!)).join(", ")
 	writeFileSync(args.output, "{" + body + "}", "utf8")
 
 	const byCountry: Record<string, number> = {}
