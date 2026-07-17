@@ -42,6 +42,13 @@ Residual per-class notes from the board: street-housenumber dips 0.922 → 0.912
 blocks a few legitimate deep picks); date-name stays hard (0.100 → 0.180 — most failures are not
 in the top 5 at all, that class is a model problem, not an arbiter problem).
 
+> **SUBSTRATE CORRECTION (2026-07-17, v3.10.1 8k):** the numbers above were measured on the v301
+> phase-1 head. Re-measured on the 8k ship-recipe substrate (the model phase-4c actually decodes),
+> the rerank collects **+6.0pp overall (0.791 → 0.851), 96 fixes / 3 breaks (32:1)** — and the value
+> has MOVED. The ship-recipe model already nails bare-street (0.905, rerank +4.5pp); **date-name is
+> now the primary beneficiary (+16.7pp)**. Phase-4c's pitch is date-name + the long tail, not
+> bare-street. See `docs/articles/evals/2026-07-17-v3101-span-head-8k-result.md`.
+
 ## Interface
 
 ```ts
