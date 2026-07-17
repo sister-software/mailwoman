@@ -58,6 +58,21 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   2 clean discriminations incl. the refusal class, 4 neutral both-out (typos fail closed), 1 anti
   (index incompleteness + unscoped bare-name membership). Promising, unproven at n=7 — scaling to
   the FR fragment board (n=400, complete BAN coverage) next.
+- 06:00 — **PHASE-4B RESULT at board scale (n=1600, the FR fragment board's four street classes):
+  name-evidence rerank street@1 0.619 → 0.706 (+8.7pp); bare-street 0.675 → 0.860 (+18.5pp) — the
+  66% recall class every corpus lever plateaued on, collected with ZERO training.** Of 202
+  recoverable rows: 140 fixed / 14 broken / 48 neutral (10:1). Resolver-as-arbiter validated with
+  the corrected instrument; option C no longer the primary lever for bare fragments. Eval doc:
+  `2026-07-17-phase4-name-evidence-rerank.md` (dd2e8aae). Caveats stated there: v301 span artifact
+  (k-best only exists on the archived branch — this result is the consumer that justifies merging
+  it), FR-only index, BAN-derived board = ideal coverage.
+- 06:10 — v391 golden gate found CRASHED, and the cause is a MAIN-BRANCH BREAK the excision left:
+  #1151 deleted `harness-v0-neural.ts` but `external-arenas.ts` (a promotion-gate leg) still
+  invoked it — every post-excision gate battery dies at the arena leg. Fixed as **PR #1153**:
+  `harness-neural.ts` = the seal-tag harness ported neural-only (neural semantics unchanged →
+  pass rates comparable), summarize-arenas drops the v0 buckets. tsc + 10-row smoke clean. The
+  v391 arena leg is moot for the verdict (v391 already held on the BR guard), but the next ship
+  needs the battery working.
 - TIMEKEEPING CORRECTION (self-caught at the 05:03 checkpoint): the log lines above originally
   carried local-time-derived guesses labeled as UTC; fixed to actual UTC. Everything above happened
   in the first ~27 minutes of the shift.
