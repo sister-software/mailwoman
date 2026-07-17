@@ -13,9 +13,14 @@ machinery) is gone from the monorepo and deprecated on npm.
 
 - **If you parse addresses:** use `mailwoman` (CLI) or `createRuntimePipeline` (library). This is
   the supported path and is unchanged.
-- **If you depended on the rule classifiers directly:** pin `@mailwoman/classifiers@6.x`. That
-  release works standalone (verified) and is frozen. There is no v7 equivalent — the capability
-  moved into the neural model.
+- **If you used the full rule parser (`createAddressParser`):** pin `mailwoman@6`. Verified to
+  construct and parse cold outside the workspace (`createAddressParser().parse(…)` returns the
+  expected components). Frozen; there is no v7 equivalent — the capability moved into the neural model.
+- **If you imported classifier classes from `@mailwoman/classifiers` directly:** pin
+  `@mailwoman/classifiers@6` **and add `zx` to your dependencies**. The 6.x `@mailwoman/core` has an
+  undeclared `zx` import, so a bare `@mailwoman/classifiers@6` install crashes on load; `mailwoman@6`
+  bundles `zx`, a standalone classifiers install does not. (v7's `@mailwoman/core` drops the `zx`
+  usage entirely and installs standalone.)
 - `createAddressParser()` was already removed in v7's predecessor (the rules-parser deletion). The
   `mailwoman` umbrella no longer re-exports `@mailwoman/classifiers`.
 
@@ -76,7 +81,8 @@ codes (string contents, not identifiers).
 | You use…                                      | Action                                             |
 | --------------------------------------------- | -------------------------------------------------- |
 | `mailwoman` CLI / `createRuntimePipeline`     | none                                               |
-| `@mailwoman/classifiers` directly             | pin `@6.x` (frozen)                                |
+| the full rule parser (`createAddressParser`)  | pin `mailwoman@6` (frozen)                         |
+| `@mailwoman/classifiers` classes directly     | pin `@6.x` **and add `zx`** (or use `mailwoman@6`) |
 | `@mailwoman/core/solver` or `/classification` | none available — capability is in the neural model |
 | `mailwoman/sdk/{cli,test}`                    | switch to `mailwoman/{cli-kit,test-kit}`           |
 | the renamed public identifiers above          | apply the rename table                             |
