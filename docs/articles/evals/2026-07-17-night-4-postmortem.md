@@ -13,26 +13,34 @@ module; cascade probe closed shape-routing with receipts.
 ## What shipped
 
 - (running log)
-- 04:5x — stale-out/ hazard post-deletion FOUND + FIXED: tsc leaves orphaned emit; out/commands/debug.js
+- 04:45 — stale-out/ hazard post-deletion FOUND + FIXED: tsc leaves orphaned emit; out/commands/debug.js
   still imported the deleted createAddressParser and crashed the pre-commit hook (a commit silently
   failed). Wiped all out/ trees + recompiled. EVERY pre-deletion checkout will hit this — flag in handoff.
-- 05:xx — Dependabot critical #114 + medium #115 (websocket-driver 0.7.4, sockjs/webpack-dev-server
+- 04:47 — Dependabot critical #114 + medium #115 (websocket-driver 0.7.4, sockjs/webpack-dev-server
   chain, dev-only exposure) cleared via resolutions pin ^0.7.5 (7f56f603).
-- 06:4x — B1 step 3: PT/RO splice v0.12.0-ptro-splice built from 35k WOF PT+RO native surfaces
+- 04:43–04:52 — B1 step 3: PT/RO splice v0.12.0-ptro-splice built from 35k WOF PT+RO native surfaces
   (+2,310 pieces, +3.2%, EN-identity PASS; RO comma-below byte-fallback eliminated). Mean-init from
   v381 done; 2k probe launched (v3.9.0, ap-wyS4XeIeCE0mtzo8zDWdaT). SALVAGE CATCH: night-3 falsified
   the OA-sourced splice (uppercase PT / stripped RO) and mechanism-confirmed the WOF re-source as
   v267 with a multi-leg pre-registration demand (fr/it/pl overlap + the broken BR row) — the probe's
   read is AMENDED accordingly: grade parity subsets pt/ro/fr/it/pl/br, not just the target.
-- 07:0x — P1 CLOSED via the pre-registered measured-negative exit (PR #1152, docs-only, operator
+- 04:55 — P1 CLOSED via the pre-registered measured-negative exit (PR #1152, docs-only, operator
   merge): decode-time atlas prior structurally cannot separate `…Chevaleret Paris` from `Rue de
 Paris` (identical terminal token + membership; emission-gap distributions overlap; a bias that
   flips the targets breaks 3/10 real streets). Fix specified as StreetLocalityEvidence for the
   B1 phase-4 arbiter. Correction: gh issue #30 = NAD adapter; the tracker is the #1101 xfail.
-- 07:0x — B1 phase-4a: the REPAIRED rerank measurement (scratchpad/rerank-valid.mjs, full geocode
+- 04:56 — B1 phase-4a: the REPAIRED rerank measurement (scratchpad/rerank-valid.mjs, full geocode
   cascade after the dark-resolver 0/267 bug) found staged-but-unrun with the v301 span-head cache —
   RUNNING now. This is the arc's central question (how much of oracle@10 0.749 vs seg@1 does
   evidence-based rerank collect) and P1's design routes to exactly this component.
+- 04:58 — PT/RO 2k probe PASSED the amended multi-leg read (ro street 0.800->1.000 — the
+  byte-fallback target; fr guard +0.022; pl flat; the night-3 broken BR row HELD; goldens us 47.8 /
+  fr 42.5 = noise). 8k (v391) launched ~05:00, healthy at step 4400 by 05:03.
+- 05:02 — P3 staged (b3d741bd): augment_upper_case_prob mirroring lowercase_row (#829), 4 tests,
+  default-off; enabling rides the span-arc retrain with a pre-registered ALL-CAPS read.
+- TIMEKEEPING CORRECTION (self-caught at the 05:03 checkpoint): the log lines above originally
+  carried local-time-derived guesses labeled as UTC; fixed to actual UTC. Everything above happened
+  in the first ~27 minutes of the shift.
 
 ## What went well
 
