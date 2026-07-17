@@ -124,6 +124,17 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   volume checkpoint). Full write-up: 2026-07-17-v3101-span-head-8k-result.md. The measured chain is
   now end-to-end: span head -> k-best -> oracle@5 0.786 -> name-evidence rerank, every link measured,
   none promoted.
+- 10:15 — **PHASE-4C StreetLocalityEvidence BUILT (PR #1156, default-off, ready-for-review).**
+  resolver/street-evidence.ts (interface + foldStreetSurface contract + G1 isPureTypeVocabulary +
+  pickByStreetEvidence v2 policy, PURE, 14 tests) + resolver-wof-sqlite/street-name-lookup.ts (FR
+  BAN backend implementing it, 9 fixture-DB tests). 23/23 pass, tsc + oxlint clean. NOT wired — the
+  arbiter primitive; wiring into the k-best rerank needs #1154 on main. PRODUCTION FOLLOW-UP:
+  street-centroids-fr.db must be rebuilt with foldStreetSurface (contract fold) + a street_norm
+  index (BAN sdk).
+- STASH FLAG (operator): two STALE WIP stashes predate tonight — stash@{0} = a banned-prose sweep
+  (50 'honest'→calibrated etc., 25 mdx files) that now CONFLICTS with current main (docs diverged
+  since it was cut); stash@{1} = 'WIP on fix/965-gate-hard-country'. Neither is tonight's work; I
+  left both intact (did not drop). stash@{0} needs manual reconciliation or a drop — operator's call.
 - GOTCHA: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
   saver zero-pads. First grade run FileNotFounded on step-2000; fixed to 002000.
 - TIMEKEEPING CORRECTION (self-caught TWICE: at the 05:03 checkpoint, and again at 05:48 when four
