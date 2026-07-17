@@ -1,0 +1,15 @@
+95% Wilson intervals. bare-pc scores the ABSENCE of a house_number AND a surviving postcode.
+bare-street-hn carries NO postcode — nothing competes for the digit.
+  class                     n     rate    95% CI
+  bare-pc                 400   1.000   [0.990, 1.000]
+  bare-street-hn          400   0.790   [0.747, 0.827]
+  city-first-hn           400   0.912   [0.881, 0.936]
+  pc-first-hn             400   0.855   [0.817, 0.886]
+  slash-hn                400   0.645   [0.597, 0.690]
+  street-led-hn           400   0.938   [0.909, 0.957]
+  OVERALL                2400   0.857   [0.842, 0.870]
+  --- bare-street-hn: 84 misses (first 5) ---
+  --- city-first-hn: 35 misses (first 5) ---
+  --- pc-first-hn: 58 misses (first 5) ---
+  --- slash-hn: 142 misses (first 5) ---
+  --- street-led-hn: 25 misses (first 5) ---

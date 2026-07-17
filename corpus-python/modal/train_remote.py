@@ -846,6 +846,56 @@ def sync_v091():
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_no_fragment_b4b():
+    """B4b — pull the REBUILT v0.11.0-no-fragment overlay (bare-street-prob 0.30 -> 0.70) + src from R2.
+    Only the one synth-no-fragment parquet + MANIFEST changed vs the v3.3.0 build; the 701 base refs
+    (v0.10.9-fr-fragment) persist on the volume from prior runs. Mirror of sync_v092."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.11.0-no-fragment overlay (B4b) + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nB4b v0.11.0-no-fragment overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.6.0-no-fragment-b4b.yaml"
+    print("  v3.6.0 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  synth-no-fragment shard present:", os.path.isfile(f"{cdir}/train/part-no-fragment.parquet"))
+    base = f"{VOL_MOUNT}/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment/MANIFEST.json"
+    print("  base v0.10.9-fr-fragment on volume (manifest-referenced):", os.path.isfile(base))
+    print(
+        "  tokenizer v0.9.0-multisplice on volume:",
+        os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_v092():
     """Pull the v0.9.2-multilocale-au OVERLAY (#208 — ADD AUSTRALIA to v1.9.1's proven 3-order recipe).
     The gnaf G-NAF AU 3-order shard layered on v0.9.1-multilocale (overture 3-order + v0.5.0 base, both
@@ -2535,3 +2585,100 @@ def country_census_raw(
         print(f"  ZZ (unknown-country placeholder): {counts.get('ZZ', 0):,} rows — correctly dropped, not a bug")
     except Exception as e:
         print(f"  [audit skipped: {e}]")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
+def mean_init_numsplice():
+    """B4c — expand the SHIPPED v310 step-008000 checkpoint's token_embeddings from v0.9.0-multisplice
+    (73,143) to v0.11.0-numsplice (83,131 = + word-start number pieces 10-9999). FVT mean-init: each
+    new number piece row = the mean of its OLD per-digit constituent embeddings (a clean init — every
+    constituent is a real digit piece). Encoder/heads untouched. Writes /data/models/numsplice-expanded,
+    the init_from base for the numsplice fine-tune. Expect 73143 -> 83131."""
+    import os
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/numsplice-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v310-fr-fragment-s42/checkpoints/step-008000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.11.0-numsplice/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
+def mean_init_numsplice23():
+    """B4c 10-999 cut — 2+3-digit. Same FVT mean-init as the others, tokenizer v0.11.2-numsplice23
+    (word-start 10-999, +988 pieces). Adds 2-digit pieces on top of the 3-digit cut: `11`->`▁11`
+    (the FR date-name day win the 3-digit cut forgoes) while 4-5 digit numbers (postcodes, years)
+    STAY multi-piece (2-digit can't collide with a 4-5 digit postcode). Writes
+    /data/models/numsplice23-expanded. Expect 73143 -> 74131."""
+    import os
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/numsplice23-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v310-fr-fragment-s42/checkpoints/step-008000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.11.2-numsplice23/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
+def mean_init_numsplice3():
+    """B4c RANGE REFINEMENT — 3-digit-only. Same FVT mean-init as mean_init_numsplice, but the
+    tokenizer only adds word-start pieces 100-999 (v0.11.1-numsplice3, +900 pieces). The hypothesis:
+    3-digit house numbers (the PL 178, most of the bare-street win) get one-piece while 4-5 digit
+    postcodes STAY multi-piece — so the postcode length signal survives, testing whether the -9.7pp
+    parity-postcode cost of the full 10-9999 range was carried by the 4-5 digit pieces. Writes
+    /data/models/numsplice3-expanded. Expect 73143 -> 74043."""
+    import os
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/numsplice3-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v310-fr-fragment-s42/checkpoints/step-008000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.11.1-numsplice3/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
+    print("  config.json present:", os.path.isfile(out / "config.json"))
