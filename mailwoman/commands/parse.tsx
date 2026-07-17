@@ -108,10 +108,11 @@ const ParseConfigSchema = zod.object({
 	streetEvidenceRerank: zod
 		.boolean()
 		.optional()
-		.default(false)
+		.default(true)
 		.describe(
-			"#727 phase-4c: rerank the STREET on BAN name-existence evidence (FR street-centroids). Needs a v3+ span-head " +
-				"model + street-centroids-fr.db; byte-stable off. Splices only an atlas-confirmed street into the argmax tree."
+			"#727 phase-4c: rerank the STREET on BAN name-existence evidence (FR street-centroids). DEFAULT-ON: a no-op " +
+				"unless a v3+ span-head model + street-centroids-fr.db are both present (byte-stable otherwise). " +
+				"Splices only an atlas-confirmed street into the argmax tree. Pass --no-street-evidence-rerank to disable."
 		),
 	candidates: zod.coerce
 		.number()
@@ -287,40 +288,6 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	return path
 }
 
-/**
- * #727 phase-4c: construct the FR street-name evidence index for the k-best rerank when `--street-evidence-rerank` is
- * set. Dynamic import keeps `@mailwoman/resolver-wof-sqlite` an optional peer dep. Returns `undefined` (with a warning)
- * when the shard is absent — the pipeline then runs rerank-OFF (byte-stable), never crashing.
- */
-async function tryLoadStreetEvidence(
-	options: zod.infer<typeof ParseConfigSchema>
-): Promise<import("@mailwoman/resolver").StreetLocalityEvidence | undefined> {
-	if (!options.streetEvidenceRerank) return undefined
-
-	try {
-		const { existsSync } = await import("node:fs")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
-		const dbPath = dataRootPath("ban", "street-centroids-fr.db")
-
-		if (!existsSync(dbPath)) {
-			process.stderr.write(
-				`--street-evidence-rerank: street-centroids-fr.db not found at ${dbPath} — running rerank-OFF.\n`
-			)
-
-			return undefined
-		}
-		const { SQLiteStreetNameLookup } = await import("@mailwoman/resolver-wof-sqlite")
-
-		return new SQLiteStreetNameLookup(dbPath)
-	} catch (err) {
-		process.stderr.write(
-			`--street-evidence-rerank: failed to load the FR index (${(err as Error).message}) — rerank-OFF.\n`
-		)
-
-		return undefined
-	}
-}
-
 async function tryBuildFST(
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined> {
@@ -481,7 +448,9 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		pipelineOpts.resolveOpts = resolveOpts
 	}
 
-	const streetEvidence = await tryLoadStreetEvidence(options)
+	// #727 phase-4c: the rerank is DEFAULT-ON — `createRuntimePipeline` lazy-loads the bundled FR index when the model
+	// ships a span head (a no-op otherwise). `--no-street-evidence-rerank` passes `false` to disable it.
+	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
