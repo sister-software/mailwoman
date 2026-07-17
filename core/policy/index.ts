@@ -5,7 +5,6 @@
  */
 
 export * from "./defaults.ts"
-export * from "./from-config.ts"
-export * from "./input-shape-router.ts"
 export * from "./policy.ts"
+export * from "./proposal-collection.ts"
 export * from "./registry.ts"

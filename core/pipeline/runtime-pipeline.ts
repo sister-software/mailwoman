@@ -12,9 +12,7 @@
  *   Implementation contract per `docs/articles/plan/reference/STAGES.md`.
  */
 
-import { applyRuleArbitration } from "../decoder/arbitrate-tree.ts"
 import type { AddressNode, AddressTree } from "../decoder/types.ts"
-import { routeInputShape } from "../policy/input-shape-router.ts"
 import type { ComponentTag } from "../types/component.ts"
 import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
 import type { ClassifierCandidate } from "./reconcile.ts"
@@ -289,8 +287,6 @@ export async function runPipeline(
 	// caller-supplied posterior (a stronger postcode anchor — never overwrite it). Off (no stage) →
 	// `effectiveOpts === opts` → byte-stable. See the soft-signal wiring spec.
 	let effectiveOpts = opts
-	// Captured for the arbitration router signal (#478 inc 3) as well as the resolver anchor below.
-	let placedPrediction: { country: string | null; confidence: number; posterior?: Record<string, number> } | undefined
 	// #912 lever 1: true when the anchorPosterior in effectiveOpts came from the placer (not the
 	// caller) — the post-parse bare-locality abstention below only strips what the placer added.
 	let placerAnchorApplied = false
@@ -298,7 +294,6 @@ export async function runPipeline(
 	if (stages.placeCountry) {
 		const tPlace = performance.now()
 		const placed = stages.placeCountry(normalized.normalized)
-		placedPrediction = placed
 		timing["place-country"] = performance.now() - tPlace
 
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
@@ -480,36 +475,6 @@ export async function runPipeline(
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
-	// #478 increment 3 (fix-v1): per-component rule-vs-neural arbitration as EDITS on the nested neural
-	// argmax tree — never flattening, so the tree's containment survives (the flatten+rebuild v0 dropped
-	// `street` for its own `street_suffix` and lost region→locality structure; see the eval doc). The
-	// input-shape router sets the mode: only `rule_preferred` mutates the tree (relabel same-span tag
-	// disagreements toward the solved v0 parse + add rule-only missing tags); `neural_preferred` /
-	// abstain pass the neural tree through unchanged. Default-OFF (`opts.arbitrate`). Reconcile above
-	// stays the orthogonal opt-in; this operates on whatever `tree` it produced.
-	if (opts?.arbitrate && stages.ruleProposer) {
-		throwIfAborted(opts)
-		const tArb = performance.now()
-		const placerSignal =
-			placedPrediction !== undefined
-				? {
-						country: placedPrediction.country,
-						abstained: placedPrediction.country === null || placedPrediction.country === "OTHER",
-					}
-				: null
-		const route = routeInputShape(
-			{ kind: kind.kind, confidence: kind.confidence },
-			{ characterClass: queryShape.characterClass },
-			placerSignal
-		)
-
-		if (route.defaultMode === "rule_preferred") {
-			const ruleProposals = await stages.ruleProposer(normalized.normalized, locale.locale)
-			tree = applyRuleArbitration(tree, ruleProposals)
-		}
-		timing["arbitrate"] = performance.now() - tArb
-	}
-
 	if (phraseProposals.length > 0 && tree.roots.length >= 0) {
 		const tAudit = performance.now()
 		tree = grouperAudit(tree, phraseProposals, normalized.normalized, auditClassifierTopK)
@@ -524,7 +489,6 @@ export async function runPipeline(
 		// added (a caller-supplied posterior was never overwritten and passes through untouched).
 		if (placerAnchorApplied && isBareLocalityTree(tree)) {
 			effectiveOpts = opts
-			placedPrediction = undefined
 		}
 		tree = await safeResolve(stages.resolver, tree, effectiveOpts)
 		timing["resolve"] = performance.now() - tResolve
