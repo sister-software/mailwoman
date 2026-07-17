@@ -83,6 +83,16 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   fixes / 3 breaks (49:1), street@1 0.711, bare-street 0.875 (+20.0pp over base)**. Both bars
   cleared. Phase-4c spec committed with the interface + per-country index plan:
   `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md` (aeaa15f7).
+- 05:57 — **v3.10.0-span-ship-probe LAUNCHED** (ap-4fFe1R2Zf0pH4MaIKKMpTr, 2k): the #727 step-4
+  recipe assembly — span scorer on the SHIPPED v381 recipe (own param group 1e-3, the phase-1
+  lesson) + P3 augment_upper_case_prob 0.15 (b3d741bd). Pre-registered reads in the config header;
+  same corpus+tokenizer as v381 so F1 comparisons are VALID. sync_src_v3100 verify 6/6. Loss
+  18.6 -> 1.89 by step 450 (v3.0.0 without the LR group sat at ~17 at 2k — the group works).
+- 06:05 — LEG-2 instrument built + BASELINES REGISTERED: `--raw-case` added to per-locale-f1
+  (normalizeCase off — the shim would mask the augment); allcaps-us-300 derived from golden-us
+  (seed 42, upper_case_row eligibility). **v381 raw-case exact 48.3% / micro 79.8; shim-ON 60.7%**
+  (the #690 shim is worth +12.4pp today). Probe bar: raw-case exact >= 53.3 (+5pp); shim-delete
+  territory ~60+.
 - TIMEKEEPING CORRECTION (self-caught TWICE: at the 05:03 checkpoint, and again at 05:48 when four
   fresh entries carried local+2h stamps): all stamps above are now receipt-anchored to commit/PR
   timestamps (the lab clock is UTC+2 — never stamp from the wall clock).
