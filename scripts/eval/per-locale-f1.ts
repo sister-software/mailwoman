@@ -91,12 +91,15 @@ interface Args {
 	conventions?: string
 	bridgeGaps?: boolean
 	outJson?: string
+	/** P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the ALL-CAPS read. */
+	rawCase: boolean
 }
 
 function parseArgs(): Args {
 	const out: Partial<Args> = {
 		goldenDir: "data/eval/golden/v0.1.2/dev",
 		files: ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
+		rawCase: false,
 	}
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
@@ -112,6 +115,7 @@ function parseArgs(): Args {
 			"model-card": { type: "string" },
 			"no-anchor": { type: "boolean" },
 			"out-json": { type: "string" },
+			"raw-case": { type: "boolean" },
 			"suppress-gaz-near-postcode": { type: "boolean" },
 			tokenizer: { type: "string" },
 			"weights-cache": { type: "string" },
@@ -169,6 +173,10 @@ function parseArgs(): Args {
 
 	if (values["bridge-gaps"] != null) {
 		out.bridgeGaps = true
+	}
+
+	if (values["raw-case"] != null) {
+		out.rawCase = true
 	}
 
 	if (values["out-json"] != null) {
@@ -447,6 +455,9 @@ async function main(): Promise<void> {
 				postcodeRepair: true,
 				queryShape: computeQueryShape(row.raw),
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
+				// P3 (#829/#690): --raw-case disables the all-caps title-case shim so the read measures the
+				// MODEL's own case handling (the shim would mask any augment_upper_case_prob effect).
+				...(args.rawCase ? { normalizeCase: false } : {}),
 			})
 			const pred = foldToComponents(decodeAsJSON(tree))
 			preds.push(pred)
