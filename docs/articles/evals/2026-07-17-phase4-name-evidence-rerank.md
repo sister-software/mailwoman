@@ -62,6 +62,25 @@ collects it without a single training step.
 - The 14 breaks are real street names outranking gold; a locality-scoped lookup (street × locality)
   should cut them further. Unscoped membership was the v0 policy.
 
+## Addendum — falsifier v2: the break audit + two guards (same night, 06:20)
+
+The 14 breaks decompose into exactly two classes: **truncation wins** (10/14 — the picked street is
+a sub-span of gold that is itself in the index, usually the bare type word `rue`/`chemin`) and
+**moved off a correct rank-1** (4/14 — gold at rank 1 but missing from the index on a
+hyphen/apostrophe fold, with the in-index pick 2–5 score units down). Two guards, pre-registered
+(breaks ≤6, fixes ≥135): G1 = no evidence credit for pure street-type vocabulary; G2 = evidence may
+not promote a hypothesis more than 2.5 score units below rank 1. Result:
+
+| policy              | fixes   | breaks | street@1  | bare-street |
+| ------------------- | ------- | ------ | --------- | ----------- |
+| v1 (bare existence) | 140     | 14     | 0.706     | 0.860       |
+| **v2 (+G1 +G2)**    | **148** | **3**  | **0.711** | **0.875**   |
+
+Both bars cleared; G1 also lets evidence land on gold more often (fixes UP). One residual: G2 dips
+street-housenumber 0.922 → 0.912 (blocks a few legitimate deep picks). The implementation spec with
+the interface + productionization plan is
+`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`.
+
 ## What this decides
 
 - **Phase 4c is justified and specified:** merge the archived span-decode surface (it now has a
