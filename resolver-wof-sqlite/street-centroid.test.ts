@@ -43,8 +43,8 @@ async function seedShard(rows: Seed[]): Promise<string> {
 	await createStreetCentroidTable(kdb)
 	const ins = db.prepare(
 		`INSERT INTO street_centroid
-		 (street_norm, postcode, locality_base, lat, lon, min_lat, max_lat, min_lon, max_lon, point_count, street_raw, source, release)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ban:fr', '2026-05-18')`
+		 (street_norm, postcode, locality_base, lat, lon, min_lat, max_lat, min_lon, max_lon, point_count, street_raw, source, release, name_key)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ban:fr', '2026-05-18', ?)`
 	)
 
 	for (const r of rows) {
@@ -59,7 +59,8 @@ async function seedShard(rows: Seed[]): Promise<string> {
 			r.min_lon,
 			r.max_lon,
 			r.point_count,
-			r.street_norm
+			r.street_norm,
+			r.street_norm // name_key — the geocoding lookup doesn't probe it; any non-null fixture value serves
 		)
 	}
 	db.close()
