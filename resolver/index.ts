@@ -21,6 +21,14 @@ export type {
 export { createWOFResolver } from "./resolve.ts"
 export { finestResolvedCoordinate, isImplausibleResolution } from "./plausibility.ts"
 export type { PlausibilityVerdict, ResolvedCoordinate } from "./plausibility.ts"
+export { foldStreetSurface, isPureTypeVocabulary, pickByStreetEvidence } from "./street-evidence.ts"
+export type {
+	PickByStreetEvidenceOpts,
+	StreetCandidate,
+	StreetEvidencePick,
+	StreetEvidenceScope,
+	StreetLocalityEvidence,
+} from "./street-evidence.ts"
 export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
 export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
 
