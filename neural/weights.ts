@@ -87,6 +87,12 @@ export interface ResolvedWeights {
 	 */
 	crfTransitionsPath?: string
 	/**
+	 * Path to `semi-crf-transitions.json` alongside the resolved model — the #727 stage-2 segment-transition grammar the
+	 * span head's k-best decode consumes. `undefined` on a pre-v3 bundle (no span head). Read by `loadFromWeights` to
+	 * expose {@link NeuralAddressClassifier.spanGrammar} for the phase-4c name-evidence rerank.
+	 */
+	semiCrfTransitionsPath?: string
+	/**
 	 * Path to the postcode→anchor source shipped beside the resolved model (#718 D1) — the soft-feed `loadFromWeights`
 	 * reads to feed the anchor channel without a callsite change. Prefer the compact PCB1 binary (`postcode-<cc>.bin`,
 	 * decoded via `PostcodeBinaryResolver.toAnchorLookup()`), else a JSON anchor lookup (`anchor-lookup.json`, parsed via
@@ -201,6 +207,9 @@ function resolveFromPackageDir(
 	const crfCandidate = resolve(packageDir, "crf-transitions.json")
 	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined
 
+	const semiCrfCandidate = resolve(packageDir, "semi-crf-transitions.json")
+	const semiCrfTransitionsPath = existsSync(semiCrfCandidate) ? semiCrfCandidate : undefined
+
 	// Soft-feature sibling artifacts (#718 D1): the anchor + gazetteer sources the package ships so
 	// `loadFromWeights` can feed the channels the model was trained against — without a callsite
 	// change. Resolved package-dir-relative via the same `existsSync → undefined` pattern as the CRF
@@ -221,6 +230,7 @@ function resolveFromPackageDir(
 		tokenizerPath,
 		modelCardPath,
 		crfTransitionsPath,
+		...(semiCrfTransitionsPath ? { semiCrfTransitionsPath } : {}),
 		...(anchorLookupPath ? { anchorLookupPath } : {}),
 		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
 		...(countryLexiconPath ? { countryLexiconPath } : {}),
