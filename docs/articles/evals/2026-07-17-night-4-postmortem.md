@@ -143,11 +143,36 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 
 ## What went well
 
--
+- **The #727 stage-2 arc landed end-to-end in one shift**: span head on the ship recipe (2k probe →
+  8k resume, all pre-registered legs green), the full measured chain (span head → k-best → oracle@5
+  0.786 → name-evidence rerank +6.0pp), and the phase-4c arbiter primitive built as a reviewable PR.
+  Measurement → substrate → arbiter, none promoted, all as clean PRs for the morning.
+- **Pre-registration + resume-not-init_from paid off exactly as written.** The 2k probe's three
+  pre-registered reads decided the 8k spend cleanly (seg@1 the falsifier before the ~2h GPU); the
+  8k RESUME kept the converged span head + Adam moments (`resume-drift: none` confirmed the config
+  matched). No wasted training.
+- **Verify-on-the-real-substrate caught a proxy artifact.** The phase-4b headline (+18.5pp
+  bare-street) was measured on the weak v301 head; re-running on the actual 8k substrate corrected
+  it to +6.0pp with the value moved to date-name. Shipping the proxy number would have mis-set the
+  phase-4c pitch.
+- **Two latent main-branch hazards surfaced and got handled**: the excision's deleted arena harness
+  (broke every gate battery — fixed, PR #1153) and the export sidecar gap (would have blocked the
+  8k oracle read — fixed inline). Both found by actually running the pipeline, not by inspection.
 
 ## What could've gone better
 
--
+- **The `export_onnx --step` zero-pad gotcha cost a grade round-trip** (FileNotFound on `step-2000`
+  vs the saved `step-002000`). A tiny cost, but the export helper should accept either form — a
+  one-line `str(int(step)).zfill(6)` would remove the trap. Logged for the operator.
+- **Timekeeping drifted twice** (local+2h stamps labeled UTC) before I wrote the lab-clock memory
+  and switched to receipt-anchoring every stamp. The fix (a memory + `date -u` discipline) landed,
+  but it took two corrections in one shift to internalize.
+- **A stale banned-prose stash sat undiscovered until I tripped over it** mid-PR. It predates
+  tonight and now conflicts with main. Not my defect, but it means uncommitted rule-compliance work
+  has been stranded on the working tree for days — the operator should reconcile or drop it.
+- **The span-head plateau (2k ≈ 8k on the decode gate) means the 6k extra steps bought little.** Not
+  a mistake — the plateau was only knowable after running it — but the NEXT span retrain can stop at
+  ~2-3k on the decode metrics and save the compute (train_loss keeps falling, but seg@1/oracle don't).
 
 ## Decisions made autonomously
 
@@ -180,7 +205,20 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 
 ## Concrete next steps
 
-- **v3.10.0 2k probe grade** (blocked on step-2000): `scratchpad/grade-v3100.sh` runs
+- **MERGE ORDER (all mergeable/green):** #1153 (arena-harness fix — un-reds the gate battery, FIRST)
+  → #1154 (span-decode surface) → #1156 (phase-4c arbiter) → #1152 (P1 doc). #1154 must land before
+  phase-4c can be wired.
+- **Phase-4c wiring (the next arc, needs #1154 on main):** compose `pickByStreetEvidence` with the
+  k-best decode loop behind a flag; run the full promote battery WITH the rerank active on the
+  v3.10.1 8k substrate; target the board result 0.851 (96 fixes / 3 breaks). Then the US TIGER
+  street-name backend (spec build-order #2) + the `street-centroids-fr.db` rebuild (contract fold +
+  `street_norm` index).
+- **v3.10.1 8k** is the phase-4c substrate (`scratchpad/v3101-cache` + volume `step-008000`); it
+  ships nowhere on its own (dormant span head, byte-stable token path).
+- **#32 importance:** operator sequences (FST rebuild+measure → place_importance build → matched/
+  importance split on the next span retrain).
+- **Stashes:** reconcile-or-drop `stash@{0}` (banned-prose sweep, conflicts main) + `stash@{1}`.
+- (historical) **v3.10.0 2k probe grade**: `scratchpad/grade-v3100.sh` runs
   export→int8→v381-sibling cache→guard(golden us/fr vs v381 baseline 86.9/90.1 micro)→LEG-2
   all-caps (raw-case, bar ≥53.3 exact vs v381 48.3). Cache template `scratchpad/v381-punct-full-cache`
   (SAME tokenizer → F1 valid). seg@1 formal gate deferred to 8k (leg-1 mechanism already confirmed:
