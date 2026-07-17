@@ -1,8 +1,0 @@
-parity postcode (n=72)
-  v310:  misses=1 rate=0.986
-  v352 (3-digit):  misses=1 rate=0.986
-  v353 (10-999):   misses=2 rate=0.972
-
-=== v353 NEW postcode regressions vs v310 (guard) ===
-  Eight Mile Plains 4113  gold_pc=4113 got={"street":"Eight Mile","postcode":"Plains 4113"}
-v353 new regressions: 1  (v352 had 0, v351 had 7)
