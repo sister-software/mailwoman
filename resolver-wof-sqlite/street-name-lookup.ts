@@ -29,6 +29,15 @@ function hasTable(db: DatabaseSync, table: string): boolean {
 	return row !== undefined
 }
 
+function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
+	// `table` is a caller-controlled identifier (default `street_centroid`), not user input — safe to interpolate.
+	for (const row of db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>) {
+		if (row.name === column) return true
+	}
+
+	return false
+}
+
 export interface SQLiteStreetNameLookupOpts {
 	/** ISO-2 (upper-case) countries this index answers for. Default `["FR"]` (the BAN street-centroids instance). */
 	countries?: Iterable<string>
@@ -54,11 +63,15 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 
 		// Degrade gracefully on an empty/tableless shard — a no-op miss, never a crash (#568 discipline).
 		if (hasTable(this.#db, table)) {
-			this.#byName = this.#db.prepare(`SELECT 1 FROM ${table} WHERE street_norm = ? LIMIT 1`)
+			// Prefer the #727 phase-4c `name_key` column (foldStreetSurface, indexed by `idx_sc_name` for a direct seek);
+			// fall back to `street_norm` on a pre-rebuild shard (a skip-scan, but correct). The fold used to build
+			// `name_key` MUST match `foldStreetSurface` here (the fold-parity contract).
+			const keyCol = hasColumn(this.#db, table, "name_key") ? "name_key" : "street_norm"
+			this.#byName = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
 			this.#byNameLocality = this.#db.prepare(
-				`SELECT 1 FROM ${table} WHERE street_norm = ? AND locality_base = ? LIMIT 1`
+				`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND locality_base = ? LIMIT 1`
 			)
-			this.#byNamePostcode = this.#db.prepare(`SELECT 1 FROM ${table} WHERE street_norm = ? AND postcode = ? LIMIT 1`)
+			this.#byNamePostcode = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND postcode = ? LIMIT 1`)
 		}
 	}
 

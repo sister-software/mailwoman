@@ -51,6 +51,14 @@ export interface StreetCentroidTable {
 	source: string
 	/** The pinned data release the underlying points came from. */
 	release: string
+	/**
+	 * #727 phase-4c: `foldStreetSurface(street_raw)` — the contract-fold street-NAME existence key for
+	 * {@link StreetLocalityEvidence}. Distinct from `street_norm` (the `street-normalize` geocoding key): the
+	 * name-evidence rerank folds the model's street surface with the SAME `foldStreetSurface` used to build this column
+	 * (the fold-parity contract), so it must not drift from `street_norm`'s richer normalizer. Indexed (`idx_sc_name`)
+	 * for a direct seek.
+	 */
+	name_key: string
 }
 
 /** The street-centroid database schema for `new DatabaseClient<StreetCentroidDatabase>(...)`. */
@@ -76,6 +84,7 @@ export const STREET_CENTROID_COLUMNS = [
 	"street_raw",
 	"source",
 	"release",
+	"name_key",
 ] as const
 
 /** Create the `street_centroid` table — called before the streaming bulk load. */
@@ -95,10 +104,15 @@ export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabas
 		.addColumn("street_raw", "text", (c) => c.notNull())
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("release", "text", (c) => c.notNull())
+		.addColumn("name_key", "text", (c) => c.notNull())
 		.execute()
 }
 
-/** Create the two probe indexes the reader relies on (postcode-scope, locality-base-scope). */
+/**
+ * Create the probe indexes: the two geocoding-scope indexes (postcode, locality-base) the resolver reader relies on,
+ * plus `idx_sc_name` — the #727 phase-4c name-existence key for a direct `name_key = ?` seek (the unscoped fragment
+ * lookup; without it that query skip-scans `idx_sc_postcode` at ~5 ms/probe).
+ */
 export async function createStreetCentroidIndexes(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_sc_postcode").on("street_centroid").columns(["postcode", "street_norm"]).execute()
 	await db.schema
@@ -106,4 +120,5 @@ export async function createStreetCentroidIndexes(db: Kysely<StreetCentroidDatab
 		.on("street_centroid")
 		.columns(["locality_base", "street_norm"])
 		.execute()
+	await db.schema.createIndex("idx_sc_name").on("street_centroid").columns(["name_key"]).execute()
 }
