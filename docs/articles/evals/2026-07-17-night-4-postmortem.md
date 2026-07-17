@@ -135,6 +135,19 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 
 - Operator rulings still pending: M4 (NZ tier), M2 (postcode-precision floor value), CJK scope,
   deepparse-data counsel bundling.
+- **#32 / #1142 importance (scoped tonight, NOT started — needs an operator decision):** three
+  defects, different ship paths. (1) The stale FST (`fst-global-priority.bin` 2026-05-28 vs DB
+  2026-07-07: rome 0.378→0.860, madrid 0.138→0.909) is a pure artifact rebuild from the current DB
+  — BUT it changes a shipped INFERENCE artifact (feeds `neural/fst-prior.ts`), so it's measure-
+  before-ship (parity delta), not a blind rebuild; shippable alone. (2) `place_importance` never
+  built (82% of importance is population-fallback-zero) is a data build (Wikipedia importance +
+  log-pop fallback per `importance-vs-population.mdx`). (3) The matched/importance-0.0 overload (the
+  [[feedback-meaning-of-zero]] class: unknown≠unimportant) is a MODEL FEATURE-ENCODING change
+  (carry `matched` and `importance` as separate features) → needs a RETRAIN to consume it, so it
+  rides a span-arc retrain, not a standalone fix. Recommended sequencing: rebuild FST + measure
+  (cheap, this shift or morning) → build place_importance (data) → fold the matched/importance split
+  into the next span retrain (v3.10.x line). Piecemeal-shipping (1) alone is a half-measure the
+  issue explicitly frames as one of three; hold for the operator to sequence.
 
 ## Concrete next steps
 
