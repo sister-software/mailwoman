@@ -15,6 +15,17 @@
  *   authority on context-dependent calls (the "Buffalo Wild Wings, Buffalo, NY" disambiguation);
  *   the QueryShape prior helps on the easy cases (a 5-digit token is _probably_ a postcode).
  *
+ *   RETIRED 2026-07-17 — the LOCALITY bias (regionAbbreviations → boost B/I-locality on preceding
+ *   tokens). The M1 stack ablation (docs/articles/evals/2026-07-17-m1-stack-ablation.md) measured the
+ *   full prior at −2.3 micro / −7.8 locality on golden-us, and the three-arm sub-ablation attributed
+ *   100% of the damage to the locality half: stripping it recovered locality exact-match 0.7822 →
+ *   0.8546 (= the no-prior arm), while the known-format half was exactly neutral. The failure mode was
+ *   venue/org absorption on registry-style rows ("DANVILLE HEALTH CENTER, 26 Cedar Lane, Danville VT"
+ *   → locality "danville health center"): the backward walk from a detected region abbreviation
+ *   crossed comma gaps and dragged venue text into locality. The WOF bare-name over-emission it was
+ *   built to counter no longer reproduces — the model outgrew it (same lifecycle as the #956-era
+ *   near-postcode suppression, also measured negative in M1). The known-format boosts below remain.
+ *
  *   Uses structural typing for the QueryShape input so this module has zero dependencies on
  *   `@mailwoman/query-shape` — consumers compute the shape with that package, pass it in here.
  */
@@ -68,13 +79,10 @@ export interface BuildPriorsOpts {
 	 * Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
 	 */
 	biasScale?: number
-
 	/**
-	 * Bias magnitude for the locality soft prior (in log-odds units). Default 2.0 — adds ~e^2 ≈ 7.4× odds to B-locality /
-	 * I-locality for tokens preceding a detected region abbreviation.
+	 * Raw input text — enables the SCOPED locality bias (bare admin doubletons only; see `applyScopedLocalityBias`).
+	 * Without it the digit guard cannot run, so the locality bias never fires.
 	 */
-	localityBiasScale?: number
-	/** Raw input text for region-name matching in the locality bias guard. */
 	inputText?: string
 }
 
@@ -109,7 +117,7 @@ export function buildEmissionPriors(
 		labelToCol.set(labels[k]!, k)
 	}
 
-	if (shape.knownFormats.length === 0 && (!shape.regionAbbreviations || shape.regionAbbreviations.length === 0)) {
+	if (shape.knownFormats.length === 0 && !shape.regionAbbreviations?.length) {
 		return matrix
 	}
 
@@ -131,38 +139,37 @@ export function buildEmissionPriors(
 		}
 	}
 
-	// Locality soft prior: when a region abbreviation is detected (e.g., "DC", "NY"), bias
-	// preceding alphabetic tokens toward B-locality / I-locality. This counters the WOF
-	// bare-name frequency dominance that makes the model over-emit B-region on ambiguous
-	// place names like "Washington" or "New York".
-	applyLocalityBias(matrix, shape, tokens, labelToCol, opts.localityBiasScale ?? 2.0, opts.inputText)
+	applyScopedLocalityBias(matrix, shape, tokens, labelToCol, opts.inputText)
 
 	return matrix
 }
 
 /**
- * Apply locality bias to tokens preceding a detected region abbreviation.
+ * The SCOPED locality bias — the 2026-07-17 rebuild of the retired backward-walk version (see the header). It fires
+ * ONLY on the bare admin doubleton the original was built for ("New York, NY", "Washington, DC" — a region-ambiguous
+ * city name before its state abbreviation, the gauntlet `us-new-york-nyc` regression case) and structurally cannot
+ * reach the venue/street inputs the old walk broke on. Guards, in order:
  *
- * For "Washington, DC" — "DC" is the region abbreviation; "Washington" gets biased toward B-locality. For "New York,
- * NY" — "New" gets B-locality and "York" gets I-locality.
+ * 1. NO DIGITS anywhere in the input — any house number / postcode means this is not an admin-only query, and the M1
+ *    failure class ("… 26 Cedar Lane, Danville VT") always carries digits.
+ * 2. The abbreviation is the FINAL token — the doubleton shape, not a mid-sentence state mention.
+ * 3. At most 4 tokens precede it ("Salt Lake City, UT" fits; "Community Health Service Inc - Grafton ND" does not).
  *
- * Guard: if the preceding text matches the full name of the region that the abbreviation represents (e.g., "Washington"
- * before "WA"), the locality bias is NOT applied — the text IS the region, not a locality within it.
- *
- * Constraint: only bias tokens that appear BEFORE the abbreviation's character offset and are alphabetic (start with
- * uppercase). Tokens that are part of a known postcode format or are themselves region abbreviations are skipped.
+ * The retired version also carried a "name IS the region" guard ("Washington, WA" stays region). It was DEAD in
+ * production — the classifier passes tokenizer PIECES whose spans include the trailing comma, so the string comparison
+ * never matched (and "New York, NY", the gauntlet regression case, needs the bias despite naming its own state).
+ * Deliberately dropped; the bias is soft, so a confident region emission on a true state restatement still wins.
  */
-function applyLocalityBias(
+function applyScopedLocalityBias(
 	matrix: number[][],
 	shape: QueryShapeLike,
-	tokens: ReadonlyArray<TokenLike & { piece?: string }>,
+	tokens: ReadonlyArray<TokenLike>,
 	labelToCol: Map<string, number>,
-	localityBias: number,
 	inputText?: string
 ): void {
 	const abbrevs = shape.regionAbbreviations
 
-	if (!abbrevs || abbrevs.length === 0) return
+	if (!abbrevs?.length || !inputText || /\d/.test(inputText)) return
 
 	const bLocCol = labelToCol.get("B-locality")
 	const iLocCol = labelToCol.get("I-locality")
@@ -170,115 +177,25 @@ function applyLocalityBias(
 	if (bLocCol === undefined) return
 
 	for (const abbrev of abbrevs) {
-		const candidates: number[] = []
-		let prevStart = abbrev.start
+		// Guard 2: nothing may follow the abbreviation token.
+		if (tokens.some((tok) => tok.start > abbrev.start + abbrev.span.length)) continue
 
-		for (let t = tokens.length - 1; t >= 0; t--) {
-			const tok = tokens[t]!
+		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)
 
-			if (tok.end > abbrev.start) continue
-
-			const gap = prevStart - tok.end
-
-			if (candidates.length === 0 && gap > 4) break
-
-			if (candidates.length > 0 && gap > 2) break
-
-			let isPostcode = false
-
-			for (const fmt of shape.knownFormats) {
-				if (overlaps(tok, fmt.span)) {
-					isPostcode = true
-					break
-				}
-			}
-
-			if (isPostcode) break
-
-			candidates.push(t)
-			prevStart = tok.start
-		}
-
-		if (candidates.length === 0) continue
-		candidates.reverse()
-
-		if (inputText) {
-			const firstTok = tokens[candidates[0]!]!
-			const lastTok = tokens[candidates[candidates.length - 1]!]!
-			const candidateText = inputText.slice(firstTok.start, lastTok.end).toLowerCase()
-			const regionNames = ABBREV_TO_REGION.get(abbrev.span)
-
-			if (regionNames?.some((name) => candidateText === name)) continue
-		}
+		// Guard 3: the doubleton shape — a short leading name, not a sentence.
+		if (candidates.length === 0 || candidates.length > 4) continue
 
 		for (let i = 0; i < candidates.length; i++) {
-			const t = candidates[i]!
 			const col = i === 0 ? bLocCol : iLocCol
 
 			if (col === undefined) continue
-			matrix[t]![col] = Math.max(matrix[t]![col]!, localityBias)
+			matrix[candidates[i]!.t]![col] = Math.max(matrix[candidates[i]!.t]![col]!, SCOPED_LOCALITY_BIAS)
 		}
 	}
 }
 
-const ABBREV_TO_REGION: ReadonlyMap<string, string[]> = new Map([
-	["AL", ["alabama"]],
-	["AK", ["alaska"]],
-	["AZ", ["arizona"]],
-	["AR", ["arkansas"]],
-	["CA", ["california"]],
-	["CO", ["colorado"]],
-	["CT", ["connecticut"]],
-	["DE", ["delaware"]],
-	["DC", ["district of columbia"]],
-	["FL", ["florida"]],
-	["GA", ["georgia"]],
-	["HI", ["hawaii"]],
-	["ID", ["idaho"]],
-	["IL", ["illinois"]],
-	["IN", ["indiana"]],
-	["IA", ["iowa"]],
-	["KS", ["kansas"]],
-	["KY", ["kentucky"]],
-	["LA", ["louisiana"]],
-	["ME", ["maine"]],
-	["MD", ["maryland"]],
-	["MA", ["massachusetts"]],
-	["MI", ["michigan"]],
-	["MN", ["minnesota"]],
-	["MS", ["mississippi"]],
-	["MO", ["missouri"]],
-	["MT", ["montana"]],
-	["NE", ["nebraska"]],
-	["NV", ["nevada"]],
-	["NH", ["new hampshire"]],
-	["NJ", ["new jersey"]],
-	["NM", ["new mexico"]],
-	["NY", ["new york"]],
-	["NC", ["north carolina"]],
-	["ND", ["north dakota"]],
-	["OH", ["ohio"]],
-	["OK", ["oklahoma"]],
-	["OR", ["oregon"]],
-	["PA", ["pennsylvania"]],
-	["RI", ["rhode island"]],
-	["SC", ["south carolina"]],
-	["SD", ["south dakota"]],
-	["TN", ["tennessee"]],
-	["TX", ["texas"]],
-	["UT", ["utah"]],
-	["VT", ["vermont"]],
-	["VA", ["virginia"]],
-	["WA", ["washington"]],
-	["WV", ["west virginia"]],
-	["WI", ["wisconsin"]],
-	["WY", ["wyoming"]],
-	["AS", ["american samoa"]],
-	["GU", ["guam"]],
-	["MP", ["northern mariana islands"]],
-	["PR", ["puerto rico"]],
-	["VI", ["virgin islands"]],
-])
+/** Log-odds bias for the scoped doubleton case — the retired version's strength, now reachable only by the doubleton. */
+const SCOPED_LOCALITY_BIAS = 2.0
 
 function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
 	return a.start < b.end && b.start < a.end
