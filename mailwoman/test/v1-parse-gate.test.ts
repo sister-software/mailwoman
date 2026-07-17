@@ -183,7 +183,9 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 					const nTree = await neural.parse(fx.input, { postcodeRepair: true })
 					const resolved = await resolver.resolveTree(nTree, opts)
 					neuralCoord = finestResolvedCoordinate(resolved)
-					implausible = isImplausibleResolution(resolved).implausible
+					// Guard A (country-centroid) + guard B (cross-country bbox, folded into the shipped module
+					// 2026-07-17 from the receipt harness — the fixture's gold country is the expectedCountry).
+					implausible = isImplausibleResolution(resolved, { expectedCountry: fx.country || undefined }).implausible
 
 					for (const [label, tags] of [
 						["street", STREET_TAGS],
