@@ -112,8 +112,8 @@ try {
 		if (!help.includes(c)) throw new Error(`--help missing command "${c}"`)
 	}
 
-	console.log("[smoke] mailwoman parse --isolated (exercises bundled core/data dictionaries)…")
-	const out = run("node", [cli, "parse", "--isolated", "350 5th Ave, New York, NY 10118"], proj)
+	console.log("[smoke] mailwoman parse (exercises bundled core/data dictionaries)…")
+	const out = run("node", [cli, "parse", "350 5th Ave, New York, NY 10118"], proj)
 
 	if (!out.includes("New York") || !out.includes("10118"))
 		throw new Error(`parse output unexpected:\n${out.slice(0, 400)}`)
