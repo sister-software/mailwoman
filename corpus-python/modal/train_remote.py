@@ -372,6 +372,58 @@ def sync_src_727():
     secrets=[r2_secret],
     timeout=1200,
 )
+def sync_src_v3100():
+    """SOURCE-ONLY sync for v3.10.0-span-ship-probe (#727 stage-2 STEP 4, plan #1134): pull
+    `corpus-python/src/` from R2, clear pycache, and verify THIS launch's changes landed —
+    the P3 upper-case augment (b3d741bd) + the v3.10.0 config. The span-scorer files were verified
+    by sync_src_727_stage2 (phase 1) and persist, but re-assert the train.py param-group here too:
+    a stale train.py silently trains the head at 1e-5 and wastes the probe (the v3.0.0 lesson).
+    No corpus/tokenizer pull — v3.10.0 is corpus+tokenizer-VERBATIM v3.8.1 (v381), which persists."""
+    import shutil
+    import subprocess
+
+    print("Syncing corpus-python/src/ from R2 (container-side, v3.10.0)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+
+    src_dir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    augment_src = open(f"{src_dir}/augment.py").read()
+    has_upper = "def upper_case_row" in augment_src
+    loader_src = open(f"{src_dir}/data_loader.py").read()
+    has_loader_thread = "augment_upper_case_prob" in loader_src
+    config_src = open(f"{src_dir}/config.py").read()
+    has_cfg = "augment_upper_case_prob" in config_src
+    has_yaml = os.path.isfile(f"{src_dir}/configs/v3.10.0-span-ship-probe.yaml")
+    train_src = open(f"{src_dir}/train.py").read()
+    has_param_groups = "span_head_learning_rate" in train_src
+    has_scorer = os.path.isfile(f"{src_dir}/span_scorer.py")
+    print(f"augment.upper_case_row:        {has_upper}")
+    print(f"data_loader threads upper:     {has_loader_thread}")
+    print(f"config.augment_upper_case:     {has_cfg}")
+    print(f"configs/v3.10.0 yaml:          {has_yaml}")
+    print(f"train.py span param group:     {has_param_groups}")
+    print(f"span_scorer.py present:        {has_scorer}")
+    if not all([has_upper, has_loader_thread, has_cfg, has_yaml, has_param_groups, has_scorer]):
+        raise RuntimeError("v3.10.0 sync verify FAILED — do not launch")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1200,
+)
 def sync_src_727_stage2():
     """SOURCE-ONLY sync (#727 STAGE 2, phase 1): pull `corpus-python/src/` from R2 → volume, clear the stale
     `__pycache__`, and verify the SEMI-MARKOV SPAN SCORER landed.
