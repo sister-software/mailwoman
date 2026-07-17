@@ -66,6 +66,16 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   `2026-07-17-phase4-name-evidence-rerank.md` (dd2e8aae). Caveats stated there: v301 span artifact
   (k-best only exists on the archived branch — this result is the consumer that justifies merging
   it), FR-only index, BAN-derived board = ideal coverage.
+- 06:20 — break audit + falsifier v2: the 14 breaks = truncation wins (10, bare `rue`/`chemin`
+  sub-spans are in-index) + moved-off-correct-rank-1 (4, fold mismatches). Two guards (G1 no
+  pure-type-vocabulary evidence, G2 margin cap 2.5), pre-registered breaks<=6 fixes>=135: **148
+  fixes / 3 breaks (49:1), street@1 0.711, bare-street 0.875 (+20.0pp over base)**. Both bars
+  cleared. Phase-4c spec committed with the interface + per-country index plan:
+  `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md` (aeaa15f7).
+- 06:45 — **PR #1154**: the archived span branch's runtime surface merged-to-branch for main
+  (semi-markov k-best decode + rerank veto scaffold + spanScores threading, 880 ins). Clean merge,
+  neural 305/305 + resolver 113/113 pass, presets byte-identical (shipped model exports no span
+  head -> threading inert). The phase-4b result is the consumer that justifies this.
 - 06:10 — v391 golden gate found CRASHED, and the cause is a MAIN-BRANCH BREAK the excision left:
   #1151 deleted `harness-v0-neural.ts` but `external-arenas.ts` (a promotion-gate leg) still
   invoked it — every post-excision gate battery dies at the arena leg. Fixed as **PR #1153**:
