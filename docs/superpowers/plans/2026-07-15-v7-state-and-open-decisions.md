@@ -1,5 +1,24 @@
 # v7 rules-excision — state of play + open decisions (2026-07-15 night)
 
+> **⚠ SUPERSEDED (2026-07-17).** All three "open decisions" below have been answered and the
+> model-investment arc it deferred has shipped — do not act on this doc's open questions:
+>
+> - **#1 acceptance criterion →** re-gated to **coordinate acceptability** (#1147), retiring the
+>   0.90/0.97 parse-tag floor.
+> - **#2 demote vs delete →** **delete** won; the hybrid swap gate was rejected. The rules parser was
+>   deleted in plan 4 (#1151, −9650 LOC); seal tag `legacy-rules-final` @ fd48c21c.
+> - **#3 which model lever →** all three pursued: the **FSemi-CRF span head shipped** (v3.10.1, the
+>   #727 arc — phase-4c name-evidence rerank now default-on), the **PT/RO diacritic splice** landed
+>   (v391), and **digit-atomicity** was characterized and closed (v381 / v6.5.0).
+>
+> What remains for the v7.0.0 release is "plan 5": delete `@mailwoman/classifiers` + rehome/split the
+> shared `core/tokenization` substrate (Span-extends-Graph entanglement), the #875 casing batch, sdk
+> shim removal, STAGE4 schema + retrain, then ship. See
+> `docs/superpowers/specs/2026-07-17-plan5-classifiers-substrate-deletion.md`. This doc is retained as
+> a point-in-time record only.
+
+---
+
 Handoff for a fresh context. Written after a working session that produced one shipped release, a
 diagnosis of the v7 blocker, and a set of hypotheses — some of which were walked back under review.
 Confidence is marked per claim: **[measured]**, **[concluded]**, **[hypothesis]**, **[retracted]**.
