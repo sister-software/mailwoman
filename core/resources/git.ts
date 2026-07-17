@@ -4,11 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
+import { execFile } from "node:child_process"
 import * as fs from "node:fs/promises"
+import { promisify } from "node:util"
 
 import { tryStat } from "@mailwoman/core/fs"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
-import { $ } from "zx"
+
+const execFileAsync = promisify(execFile)
 
 /**
  * Metadata for a repository source.
@@ -42,18 +45,10 @@ export async function synchronizeRepo(source: RepositorySource, localRepoDirecto
 	const { ownerDirectory, repoDirectory, exists } = await prepareRepositoryDirectories(source, localRepoDirectory)
 
 	if (exists) {
-		const shell = $({
-			cwd: repoDirectory.toString(),
-		})
-
-		await shell`git pull`
+		await execFileAsync("git", ["pull"], { cwd: repoDirectory.toString() })
 
 		return
 	}
 
-	const shell = $({
-		cwd: ownerDirectory.toString(),
-	})
-
-	await shell`git clone --depth=1 ${source.url}`
+	await execFileAsync("git", ["clone", "--depth=1", source.url], { cwd: ownerDirectory.toString() })
 }

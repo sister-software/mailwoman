@@ -4,9 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { PathBuilderLike } from "path-ts"
-import { $ } from "zx"
-
 /**
  * Given an iterable collection, returns an async iterable, executing the callback on each batch.
  *
@@ -93,13 +90,4 @@ export async function* takeAsync<T>(collection: AsyncIterable<T>, batchSize: num
 	if (buffer.length !== 0) {
 		yield buffer
 	}
-}
-
-/**
- * Given a list of file patterns, returns the count of files that match the patterns.
- */
-export async function tallyPatternCount(patterns: string[], directory: PathBuilderLike): Promise<number> {
-	const result = await $`find ${directory} -name ${patterns.join(" -o -name ")} | wc -l`
-
-	return parseInt(result.stdout)
 }
