@@ -16,18 +16,29 @@
  *
  *   - 0 on any completed probe, including "no POI intent" and abstain outcomes.
  *   - 1 on a missing positional query or a fatal pipeline error.
+ *
+ *   Resolver wiring: an anchor remainder ("near Springfield IL") only gains a searchable center when the
+ *   pipeline's `resolver` stage decorates the anchor's parsed tree with lat/lon — `poi-executor.ts`'s
+ *   `resolveCenter` walks the tree for that, and `--db` queries abstain `anchor_required` without it. Mirrors
+ *   `geocode.tsx`/`parse.tsx --resolve`: the same `createResolverBackend` + `createWOFResolver(lookup)`
+ *   pairing, lazily built and closed after the run. A missing/unbuilt gazetteer degrades to today's behavior
+ *   (no resolver — anchors stay coordinate-less) with a stderr note, never a hard failure.
  */
+
+import { existsSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
 import type { POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
+import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 import { emitOverpassQL } from "../poi-overpass.ts"
+import { createResolverBackend, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.ts"
 
 const ArgumentsSchema = zod.array(zod.string().describe("A POI-shaped query, e.g. 'fire hydrant near Springfield'"))
 export { ArgumentsSchema as args, OptionsSchema as options }
@@ -61,6 +72,22 @@ const OptionsSchema = zod.object({
 		.optional()
 		.default(false)
 		.describe("Dump the raw POIIntentOutcome as JSON instead of the human-readable summary."),
+	resolveDb: zod
+		.string()
+		.optional()
+		.describe(
+			"Path to a WOF admin SQLite distribution for anchor resolution ('near Springfield IL' -> lat/lon). " +
+				"Defaults to $MAILWOMAN_WOF_DB, else the standard per-deployment shard set under $MAILWOMAN_DATA_ROOT " +
+				"(same default `mailwoman geocode` uses). Missing entirely -> anchors stay coordinate-less (a note is " +
+				"printed) and --db queries abstain anchor_required."
+		),
+	candidateDb: zod
+		.string()
+		.optional()
+		.describe(
+			"Path to a byte-range candidate.db (build-candidate.ts) for anchor resolution — the demo-parity, " +
+				"population-first backend. Defaults to $MAILWOMAN_CANDIDATE_DB; when present it wins over --resolve-db."
+		),
 })
 
 /** Try to load the neural classifier; undefined lets the rule-based kind/fast-path stages still run. */
@@ -68,6 +95,49 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
 	try {
 		return await NeuralAddressClassifier.loadFromWeights({ locale })
 	} catch {
+		return undefined
+	}
+}
+
+/**
+ * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an anchor remainder
+ * resolves to lat/lon and `--db` category/brand queries can compute a search center. Lazy + optional: an absent
+ * gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite` peer degrades to no resolver (today's pre-wiring behavior)
+ * rather than failing the probe — a stderr note explains what's missing. Caller owns closing the returned handle's
+ * backend lookup.
+ */
+async function tryLoadResolver(
+	options: zod.infer<typeof OptionsSchema>
+): Promise<{ resolver: Resolver; close: () => void } | undefined> {
+	const candidateDb = resolveCandidateDBPath(options.candidateDb)
+	const wofPaths = candidateDb
+		? []
+		: (options.resolveDb ? options.resolveDb.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
+				existsSync(p)
+			)
+
+	if (!candidateDb && wofPaths.length === 0) {
+		console.error(
+			"note: no WOF resolver configured — anchor localities ('near Springfield IL') will not resolve to " +
+				"coordinates, so --db category/brand queries will abstain anchor_required. Set $MAILWOMAN_WOF_DB " +
+				"(or $MAILWOMAN_CANDIDATE_DB) or pass --resolve-db/--candidate-db. Build one with " +
+				"`mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
+		)
+
+		return undefined
+	}
+
+	try {
+		const mod = await import("@mailwoman/resolver-wof-sqlite")
+		const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths })
+
+		return { resolver: createWOFResolver(lookup), close: () => lookup.close() }
+	} catch {
+		console.error(
+			"note: `@mailwoman/resolver-wof-sqlite` is not installed — anchor localities will not resolve to " +
+				"coordinates. Run `npm install @mailwoman/resolver-wof-sqlite` to enable anchor resolution."
+		)
+
 		return undefined
 	}
 }
@@ -156,22 +226,28 @@ function formatOutcome(outcome: POIIntentOutcome, options: zod.infer<typeof Opti
 
 async function runPOI(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	const classifier = await tryLoadNeural(options.locale)
-	const poiQueryKind = options.db ? { poiDatabasePath: options.db } : true
-	const pipeline = createRuntimePipeline({ classifier, poiQueryKind })
-	const result = await pipeline(input, { locale: options.locale })
+	const resolverHandle = await tryLoadResolver(options)
 
-	if (options.json) {
-		return JSON.stringify(result.poiIntent ?? null, null, 2)
+	try {
+		const poiQueryKind = options.db ? { poiDatabasePath: options.db } : true
+		const pipeline = createRuntimePipeline({ classifier, resolver: resolverHandle?.resolver, poiQueryKind })
+		const result = await pipeline(input, { locale: options.locale })
+
+		if (options.json) {
+			return JSON.stringify(result.poiIntent ?? null, null, 2)
+		}
+
+		if (result.path !== "poi" || !result.poiIntent) {
+			return (
+				`no POI intent — parsed as address ` +
+				`(kind: ${result.kind.kind}, confidence: ${result.kind.confidence.toFixed(2)})`
+			)
+		}
+
+		return formatOutcome(result.poiIntent, options)
+	} finally {
+		resolverHandle?.close()
 	}
-
-	if (result.path !== "poi" || !result.poiIntent) {
-		return (
-			`no POI intent — parsed as address ` +
-			`(kind: ${result.kind.kind}, confidence: ${result.kind.confidence.toFixed(2)})`
-		)
-	}
-
-	return formatOutcome(result.poiIntent, options)
 }
 
 const PoiCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
