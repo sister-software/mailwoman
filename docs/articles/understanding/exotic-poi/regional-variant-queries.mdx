@@ -90,9 +90,9 @@ This is the right approach for a global-scale geocoder with query log data. It d
 
 ## What Mailwoman does today
 
-Mailwoman's locale gate (Stage 2) can detect the query's language/script family. A query in Japanese (kanji/kana) can trigger Japanese-specific alias matching. A query in English with an Australian IP (if available) can trigger Australian variant matching. But the alias table and fuzzy-matching layer do not exist.
+Mailwoman's locale gate (Stage 2) can detect the query's language/script family, and the alias table half of this problem now has a real home: `@mailwoman/variant-aliases` is the curated locale-slang table ("servo," "PFK," "Macca's"), and it finally has a consumer — it resolves each slang term to a [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) category id, so "servo" reaches the same `gas_station` category and the same `poi.db` lookup an English "gas station" query would. Amenity-variant slang works today the way [amenity queries](./amenity-queries.mdx) do.
 
-Regional variants are in the same category as amenity and franchise queries: **the infrastructure to handle them is planned but not yet built.** The architecture supports them — the kind classifier can route variant queries to a variant-aware resolver — but the data and resolver work remain.
+Brand-variant slang doesn't yet, for the same reason [franchise queries](./franchise-queries.mdx) don't: there's no brand table for "servo" to resolve into. "マクド" (makudo) is recognized as Japanese text by the locale gate, but nothing maps it to McDonald's until the brand lexicon exists. Fuzzy matching for informal variants that never made it into the curated table is also still unbuilt.
 
 ## See also
 

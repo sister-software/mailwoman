@@ -68,6 +68,17 @@ have to spend; asking a database to understand "Friedrichstraße 43-45, 10117
 Berlin-Mitte" written four different ways asks it to do what rule systems have
 always failed at. Each side does the job the other is structurally bad at.
 
+The atlas is growing new floors. Spatial layers — `poi.db` is the first —
+extend the same discipline (sealed, provenance-tracked, license-tagged) from
+administrative places to points of interest, so a query like "coffee near
+Honolulu" resolves the same way "Honolulu" does: category or brand intent
+detected, split from any location constraint, resolved against a database
+instead of guessed by a model that was never going to memorize every coffee
+shop. The consumer here is often an agent rather than a person typing into a
+search box, so mailwoman ships the layers and the tools (`@mailwoman/mcp`) and
+leaves the planning and the narrative to whatever's driving. The model still
+owns the grammar; the atlas just has more rooms.
+
 ## The sieve and the posterior
 
 The systems Mailwoman replaces — elaborate regexes, cascading pattern

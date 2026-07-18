@@ -10,7 +10,7 @@ tags:
 
 # Try it: the POI intent tester
 
-This is the piece [the series introduction](./exotic-point-of-interest-queries.mdx) said wasn't built yet — it is now. Type a query below and watch Mailwoman's kind classifier decide whether it's a POI query or an address, then extract the subject (a category, in the current lexicon), split off the location anchor, and render an OverpassQL export you can paste straight into [Overpass Turbo](https://overpass-turbo.eu/).
+Type a query below and watch Mailwoman's kind classifier decide whether it's a POI query or an address, then extract the subject (a category, in the current lexicon), split off the location anchor, and render an OverpassQL export you can paste straight into [Overpass Turbo](https://overpass-turbo.eu/).
 
 This tester runs entirely in your browser: no model weights, no network request, no server. It's the same `matchPOISubject` + `createKindClassifier` + OverpassQL emitter Mailwoman ships as a library — see [`@mailwoman/kind-classifier`](https://www.npmjs.com/package/@mailwoman/kind-classifier) and [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy).
 
@@ -33,4 +33,4 @@ Try that preset. The lexicon matches `hospital` as a subject, but the remainder 
 ## What isn't here yet
 
 - **Brand and landmark subjects.** The current taxonomy lexicon only matches categories (`hospital`, `fire_hydrant`, `drinking_water`, …) — brand names ("Walmart") and bare landmark names ("Eiffel Tower") aren't in the phrase table yet. See [Franchise queries](./franchise-queries.mdx) and [Landmark queries](./landmark-queries.mdx) for the target shape.
-- **Live results.** This tester stops at the OverpassQL string — it doesn't execute a search or show candidate places. That needs the R2-published build-local OSM layer plus a `poi.db` executor, which is separate infrastructure from the pure intent-detection shown here.
+- **Live results, in this tester specifically.** This page runs entirely client-side, so it stops at the OverpassQL string — it doesn't execute a search or show candidate places. Outside the browser, the results are already live: `mailwoman poi "coffee near Honolulu" --db poi.db` and the `mailwoman_poi_search` MCP tool both resolve against a built `poi.db` and return distance-ranked results today. Wiring a poi.db into this browser tester needs an R2-published build-local layer sized for the demo, which hasn't happened yet.
