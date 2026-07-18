@@ -148,6 +148,7 @@
 		"d3-scale-chromatic": "^3.1.0",
 		"fast-glob": "^3.3.3",
 		"geojson": "^0.5.0",
+		"h3-js": "^4.5.0",
 		"ink": "^7.0.5",
 		"ioredis": "^5.11.1",
 		"pastel": "^4.0.1",

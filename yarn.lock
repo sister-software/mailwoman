@@ -15641,6 +15641,7 @@ __metadata:
     d3-scale-chromatic: "npm:^3.1.0"
     fast-glob: "npm:^3.3.3"
     geojson: "npm:^0.5.0"
+    h3-js: "npm:^4.5.0"
     ink: "npm:^7.0.5"
     ioredis: "npm:^5.11.1"
     pastel: "npm:^4.0.1"

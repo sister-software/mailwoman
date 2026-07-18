@@ -132,6 +132,16 @@
 			"node": "./street-segment-schema.ts",
 			"default": "./out/street-segment-schema.js",
 			"types": "./out/street-segment-schema.d.ts"
+		},
+		"./poi-schema": {
+			"node": "./poi-schema.ts",
+			"default": "./out/poi-schema.js",
+			"types": "./out/poi-schema.d.ts"
+		},
+		"./poi-lookup": {
+			"node": "./poi-lookup.ts",
+			"default": "./out/poi-lookup.js",
+			"types": "./out/poi-lookup.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -228,6 +238,14 @@
 			"./street-segment-schema": {
 				"types": "./out/street-segment-schema.d.ts",
 				"default": "./out/street-segment-schema.js"
+			},
+			"./poi-schema": {
+				"types": "./out/poi-schema.d.ts",
+				"default": "./out/poi-schema.js"
+			},
+			"./poi-lookup": {
+				"types": "./out/poi-lookup.d.ts",
+				"default": "./out/poi-lookup.js"
 			}
 		},
 		"access": "public"
