@@ -160,7 +160,10 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 		const insertStmt = db.prepare("INSERT INTO place_importance (id, importance) VALUES (?, ?)")
 		let importanceCount = 0
 
-		db.exec("BEGIN TRANSACTION")
+		// A single WOF id can concord to MULTIPLE wikidata ids (the current global DB's concordances carry
+		// such multiplicities; a naive per-wikidata insert double-inserts the wof id and violates the `id`
+		// primary key). Collapse to the MAX importance per wof id first, then insert once each.
+		const wofImportance = new Map<number, number>()
 
 		for (const [wikidataID, importance] of importanceMap) {
 			const wofIDs = concordances.get(wikidataID)
@@ -168,9 +171,17 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			if (!wofIDs) continue
 
 			for (const wofID of wofIDs) {
-				insertStmt.run(wofID, importance)
-				importanceCount++
+				const existing = wofImportance.get(wofID) ?? 0
+
+				if (importance > existing) wofImportance.set(wofID, importance)
 			}
+		}
+
+		db.exec("BEGIN TRANSACTION")
+
+		for (const [wofID, importance] of wofImportance) {
+			insertStmt.run(wofID, importance)
+			importanceCount++
 		}
 		db.exec("COMMIT")
 
