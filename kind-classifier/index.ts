@@ -13,7 +13,10 @@
  *   See `docs/articles/plan/reference/STAGES.md` § Stage 2.5 for the contract.
  */
 
-export { classifyKind, classifyKindSync } from "./classify.ts"
+export { classifyKind, classifyKindSync, createKindClassifier } from "./classify.ts"
+export type { KindClassifierOpts } from "./classify.ts"
+export { matchPOISubject } from "./poi.ts"
+export type { POIPhraseMatch, POIPhraseLookup, POISubjectMatch } from "./poi.ts"
 export {
 	scoreIntersection,
 	scoreLandmark,
