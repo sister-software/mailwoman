@@ -188,8 +188,28 @@ function resolveFromPackageDir(
 	source: string,
 	tried: string[]
 ): ResolvedWeights {
-	const modelPath = opts.modelPath ?? resolve(packageDir, "model.onnx")
-	const tokenizerPath = opts.tokenizerPath ?? resolve(packageDir, "tokenizer.model")
+	let modelPath = opts.modelPath ?? resolve(packageDir, "model.onnx")
+	let tokenizerPath = opts.tokenizerPath ?? resolve(packageDir, "tokenizer.model")
+
+	// #1177 base-overlay dedup: a data-only locale package may SHARE the base model instead of shipping its
+	// own ~35.8 MB copy. fr-fr already ships en-us's model at publish time (publish.yml copies it), so the
+	// copy is pure duplication. Declaring `mailwoman.baseWeights` lets the package drop model.onnx +
+	// tokenizer.model from its `files` and resolve them from the base package, while its OWN data siblings
+	// (model-card, postcode-<cc>.bin, lexicons) still resolve locally. Base takes precedence over any local
+	// model copy — that is also what closes #1117 (fr-fr's link-dev-weights pinned a stale model).
+	if (!opts.modelPath) {
+		const baseDir = resolveBaseWeightsDir(packageDir)
+		const baseModel = baseDir ? resolve(baseDir, "model.onnx") : undefined
+
+		if (baseDir && baseModel && existsSync(baseModel)) {
+			modelPath = baseModel
+
+			if (!opts.tokenizerPath) {
+				tokenizerPath = resolve(baseDir, "tokenizer.model")
+			}
+			source = `${source}+base`
+		}
+	}
 	tried.push(modelPath, tokenizerPath)
 
 	if (!existsSync(modelPath) || !existsSync(tokenizerPath)) {
@@ -258,6 +278,28 @@ function resolveAnchorLookupSibling(
 	if (existsSync(json)) return { path: json, binary: false }
 
 	return undefined
+}
+
+/**
+ * #1177 base-overlay dedup: resolve the base weights package a locale package overlays. A data-only weights package
+ * (fr-fr, and future CA/MX/NZ overlays) can declare `"mailwoman": { "baseWeights": "@mailwoman/neural-weights-en-us" }`
+ * in its package.json to SHARE the base `model.onnx` + `tokenizer.model` rather than ship a byte-identical copy.
+ * Returns the resolved base package dir, or `undefined` when the field is absent or the base package can't be resolved
+ * (in which case the caller keeps the local model paths — no behavior change for a self-contained package).
+ */
+function resolveBaseWeightsDir(packageDir: string): string | undefined {
+	try {
+		const pkg = JSON.parse(readFileSync(resolve(packageDir, "package.json"), "utf8")) as {
+			mailwoman?: { baseWeights?: string }
+		}
+		const base = pkg.mailwoman?.baseWeights
+
+		if (typeof base !== "string" || !base) return undefined
+
+		return dirname(req.resolve(`${base}/package.json`))
+	} catch {
+		return undefined
+	}
 }
 
 /**

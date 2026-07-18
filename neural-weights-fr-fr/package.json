@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/neural-weights-fr-fr",
 	"version": "7.0.0",
-	"description": "Mailwoman neural-classifier weights for locale 'fr-fr'. Data-only package — loaded by @mailwoman/neural at runtime.",
+	"description": "Mailwoman neural-classifier weights for locale 'fr-fr'. Data-only overlay — shares the base model.onnx + tokenizer.model from @mailwoman/neural-weights-en-us (they are byte-identical); ships only the fr-specific data siblings. Loaded by @mailwoman/neural at runtime.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -9,8 +9,6 @@
 		"directory": "neural-weights-fr-fr"
 	},
 	"files": [
-		"model.onnx",
-		"tokenizer.model",
 		"model-card.json",
 		"postcode-fr.bin",
 		"anchor-lexicon-v1.json",
@@ -19,5 +17,11 @@
 	],
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/neural-weights-en-us": "workspace:*"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-en-us"
 	}
 }
