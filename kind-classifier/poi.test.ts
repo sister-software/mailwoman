@@ -20,6 +20,8 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 		return [{ categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 1.0 }]
 	}
 
+	if (norm === "walk in clinic") return [{ categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1.0 }]
+
 	return []
 }
 
@@ -52,6 +54,13 @@ describe("matchPOISubject", () => {
 
 	it("returns null when nothing matches", () => {
 		expect(matchPOISubject("Empire State Building", "en-US", LOOKUP)).toBeNull()
+	})
+
+	it("scans past separator words inside the subject phrase", () => {
+		const m = matchPOISubject("walk in clinic near Boston MA", "en-US", LOOKUP)
+		expect(m?.match.categoryID).toBe("clinic")
+		expect(m?.subject).toBe("walk in clinic")
+		expect(m?.remainder).toBe("Boston MA")
 	})
 })
 

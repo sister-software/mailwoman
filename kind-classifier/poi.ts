@@ -29,16 +29,20 @@ export interface POISubjectMatch {
 	remainder: string
 }
 
-/** Anchor separator between subject and place: the FIRST comma, or near/in/at/around. */
-const ANCHOR_SEPARATOR = /\s*,\s*|\s+(?:near|in|at|around)\s+/i
+/**
+ * Anchor separator between subject and place: comma, or near/in/at/around — scanned left-to-right until a prefix hits
+ * the lexicon.
+ */
+const ANCHOR_SEPARATOR = /\s*,\s*|\s+(?:near|in|at|around)\s+/gi
 
 /** Longest subject we accept, in tokens. Lexicon phrases are short; 4 covers the table. */
 const MAX_SUBJECT_TOKENS = 4
 
 /**
- * Match a POI subject: the whole input, or the text before the FIRST anchor separator when that prefix (≤ 4 tokens)
- * hits the lexicon. Returns null when the lexicon never fires — including comma-ridden full addresses whose leading
- * segment isn't a lexicon phrase.
+ * Match a POI subject: the whole input, or the text before the FIRST anchor separator WHOSE PREFIX HITS THE LEXICON (≤
+ * 4 tokens). Scans separator occurrences left-to-right — a lexicon phrase may itself contain a bare separator word
+ * (e.g. "walk in clinic"), so the first separator isn't necessarily the right split point. Returns null when the
+ * lexicon never fires — including comma-ridden full addresses whose leading segment isn't a lexicon phrase.
  */
 export function matchPOISubject(
 	text: string,
@@ -55,21 +59,24 @@ export function matchPOISubject(
 		return { match: whole[0]!, subject: trimmed, remainder: "" }
 	}
 
-	const separator = ANCHOR_SEPARATOR.exec(trimmed)
+	for (const separator of trimmed.matchAll(ANCHOR_SEPARATOR)) {
+		if (separator.index === 0) continue
 
-	if (!separator || separator.index === 0) return null
+		const subject = trimmed.slice(0, separator.index).trim()
 
-	const subject = trimmed.slice(0, separator.index).trim()
+		// Subjects only grow as the scan moves right — once over budget, later splits are too.
+		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
 
-	if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) return null
+		const hits = lookup(subject, locale)
 
-	const hits = lookup(subject, locale)
+		if (hits.length === 0) continue
 
-	if (hits.length === 0) return null
+		const remainder = trimmed.slice(separator.index + separator[0].length).trim()
 
-	const remainder = trimmed.slice(separator.index + separator[0].length).trim()
+		return { match: hits[0]!, subject, remainder }
+	}
 
-	return { match: hits[0]!, subject, remainder }
+	return null
 }
 
 /**
