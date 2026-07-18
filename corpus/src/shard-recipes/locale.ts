@@ -47,6 +47,12 @@ export interface LocalePart {
 	csv?: string
 	path?: string
 	region?: string
+	/**
+	 * NZ — the OA DISTRICT column holds the city (`Auckland`) and CITY holds the suburb (`Birkenhead`). When set, map
+	 * DISTRICT→locality and CITY→dependent_locality (falling back to CITY→locality when DISTRICT is empty, ~18% of NZ
+	 * rows). Without this, the default CITY→locality mapping wrongly trains the suburb as the locality.
+	 */
+	districtAsLocality?: boolean
 }
 
 interface LocaleCountrySource {
@@ -95,6 +101,15 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		source: "synth-es",
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
+	},
+	NZ: {
+		// LINZ-derived OA countrywide extract (2.12M rows). `districtAsLocality` inverts the CITY/DISTRICT
+		// mapping: DISTRICT holds the city (Auckland), CITY the suburb (Birkenhead). NZ OA carries no postcode.
+		source: "synth-nz",
+		corpusVersion: "0.9.9",
+		// Eval holdout: a probe build excludes ~12% of NZ localities (a locality-bucket split) for a source-disjoint
+		// coord board; that split is a BUILD-TIME concern (scratchpad), so the committed recipe reads the full CSV.
+		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 }
 
@@ -154,6 +169,7 @@ interface ColumnIndex {
 	num: number
 	street: number
 	city: number
+	district: number
 	region: number
 	post: number
 }
@@ -201,7 +217,14 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			if (header === null) {
 				header = cells.map((h) => h.trim().toLowerCase())
 				const ix = (name: string): number => header!.indexOf(name)
-				cols = { num: ix("number"), street: ix("street"), city: ix("city"), region: ix("region"), post: ix("postcode") }
+				cols = {
+					num: ix("number"),
+					street: ix("street"),
+					city: ix("city"),
+					district: ix("district"),
+					region: ix("region"),
+					post: ix("postcode"),
+				}
 
 				continue
 			}
@@ -211,7 +234,26 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			const rawCity = get(cells, cols.city)
 
 			if (!street || !rawCity) continue
-			const locality = cleanCityNoise(rawCity)
+
+			// Default: CITY → locality. NZ (`districtAsLocality`) inverts it — the OA DISTRICT holds the city
+			// (`Auckland`) and CITY holds the suburb (`Birkenhead`), so DISTRICT → locality and CITY →
+			// dependent_locality. When DISTRICT is empty (~18% of NZ rows), fall back to CITY → locality with no
+			// sub-locality. See {@link LocalePart.districtAsLocality}.
+			let locality: string | null
+			let dependent_locality: string | undefined
+
+			if (part.districtAsLocality) {
+				const cleanedDistrict = cleanCityNoise(get(cells, cols.district))
+
+				if (cleanedDistrict) {
+					locality = cleanedDistrict
+					dependent_locality = cleanCityNoise(rawCity) ?? undefined
+				} else {
+					locality = cleanCityNoise(rawCity)
+				}
+			} else {
+				locality = cleanCityNoise(rawCity)
+			}
 
 			if (!locality) {
 				dropped++
@@ -224,6 +266,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				locality,
 				region: get(cells, cols.region) || part.region || "",
 				postcode: get(cells, cols.post),
+				...(dependent_locality ? { dependent_locality } : {}),
 			}
 			seen++
 
@@ -254,7 +297,7 @@ export const localeRecipe: ShardRecipe = {
 	description: "Per-locale coverage rows (DE/FR/NL/IT/ES) from real OA tuples, both orders → synthesizeLocaleRow",
 	mode: "generate",
 	options: [
-		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES). Default DE" },
+		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES|NZ). Default DE" },
 		{ flag: "--intl-fraction <f>", description: "Fraction rendered international order. Default 0.4" },
 	],
 	async run(opts, write) {
