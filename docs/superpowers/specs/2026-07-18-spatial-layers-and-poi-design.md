@@ -147,15 +147,21 @@ emitter (export-only, prints text). The record is also the `poi_search` MCP sche
 
 ### 3.3 The lexicon (`variant-aliases` grows up)
 
-- Category synonyms: our curation, bootstrapped from Foursquare OS Places labels (Apache-2.0)
-  - Wikidata aliases (CC0). Nominatim special phrases / OSM wiki are CC BY-SA — consult as
-    reference, never ship a derived table.
+The taxonomy is general-purpose — biking trails, restaurants, hospitals — not ISP-specific;
+ISP-adjacent categories are one slice of it. It therefore splits from `variant-aliases`:
+
+- **New data package `@mailwoman/poi-taxonomy`**: the Overture category snapshot (ids +
+  hierarchy + basic-label tier) plus the synonym table (phrase → category id), bootstrapped
+  from Foursquare OS Places labels (Apache-2.0) + Wikidata aliases (CC0), then curated.
+  Snapshot-versioned per Overture release — a different freshness cadence and size class than
+  variant-aliases. Pins the NEW Overture `taxonomy` property (~2,100 categories, 13 top-level,
+  ~280 basic labels); the old `categories` property dies in the Sept 2026 Overture release, and
+  the new taxonomy's canonical list is not yet a committed machine-readable file — snapshot it
+  per release into the package build. Nominatim special phrases / OSM wiki are CC BY-SA —
+  consult as reference, never ship a derived table.
+- **`variant-aliases` stays** the small curated locale-slang table (`Macca's`, `PFK`, `servo`),
+  now resolving to poi-taxonomy category ids / brand names — it finally gets a consumer.
 - Brand aliases: Wikidata QID-keyed (CC0), joined to Overture `brand.wikidata` (~3,000 chains).
-  Existing `Macca's`/`PFK` locale-gated entries finally get a consumer.
-- Categories pin the NEW Overture `taxonomy` property (~2,100 categories, 13 top-level, ~280
-  basic labels). The old `categories` property dies in the Sept 2026 Overture release. The new
-  taxonomy's canonical list is not yet a committed machine-readable file — snapshot it per
-  release into the lexicon build.
 
 ### 3.4 poi.db — layer #1
 
@@ -167,8 +173,9 @@ emitter (export-only, prints text). The record is also the `poi_search` MCP sche
   `resolver-wof-sqlite/candidate-*`), FTS5 name search (raw DDL, per rule), sealed 0444,
   layer manifest + coverage table per §2.1.
 - Build: `mailwoman gazetteer build poi` (Overture places ingest; the divisions ingest is
-  precedent). Pilot region: one US state (CA — covers the demo presets Pier 39 / Golden Gate
-  Park) before any global build. Demo (Tier A pocket) inclusion is a separate budget review.
+  precedent). Scope: **all currently supported locales' countries (US, CA, MX, FR)** —
+  operator decision. California rows cover the demo-preset acceptance probes (Pier 39 /
+  Golden Gate Park). Demo (Tier A pocket) inclusion is a separate budget review.
 - Venue resolve half (placetypeMap `venue` entry, resolve.ts venue pass) proceeds per the
   Fable spec Phase 1; poi.db serves both the venue lookup and category/brand search.
 
@@ -201,8 +208,11 @@ huts, power)? Score = `{claim, supporting evidence found, coverage_confidence}`;
 highest-confidence positive is co-presence; sparse OSM coverage degrades toward "insufficient
 survey data," which is itself output.
 
-**Nexus salvage map** (`/home/lab/Projects/isp-nexus/universe`, AGPL, operator is sole author —
-relicensing is operator's call; all storage re-homed to Kysely/node:sqlite per house rules):
+**Nexus salvage map** (`/home/lab/Projects/isp-nexus/universe`, AGPL, operator is sole author
+and has approved relicensing by copy). Salvage rule: copy code in, no provenance headers
+required, and **never duplicate functionality mailwoman already has** — Nexus TIGER work merges
+into the existing `tiger/` workspace, H3 utilities into `@mailwoman/spatial`, fetch/ingest into
+`sdk/`-style submodules; all storage re-homed to Kysely/node:sqlite per house rules:
 
 | Salvage                                                                                                                                                                           | From                                   | Into                                       |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------ |
@@ -245,12 +255,15 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
    unchanged, interleaved as operator schedules them.
 5. **Phase 2 BDC spec** — after (1)–(3) prove the contract on poi.db.
 
-## 7. Open decisions (operator)
+## 7. Decisions (resolved 2026-07-18, operator)
 
-- MCP server: v1 deliverable alongside Phase 1 (recommended — it's thin) or after poi.db lands?
-- poi.db pilot scope: CA-only vs. US; when the demo pocket gets a slim POI shard.
-- Nexus relicensing mechanics: copy files with fresh headers into mailwoman (clean-room not
-  required — same author), or keep Nexus as a git submodule reference? (Recommend: copy + note
-  provenance in file docstrings.)
-- Whether the lexicon lives entirely in `variant-aliases` (grown table) or splits
-  (categories → new `@mailwoman/poi-taxonomy` data package; aliases stay in variant-aliases).
+- MCP server ships in v1 alongside Phase 1.
+- poi.db scope: all currently supported locales' countries (US, CA, MX, FR).
+- Nexus salvage: copy files in (same-author relicense), no provenance headers, never duplicate
+  existing mailwoman functionality — merge into existing workspaces where one exists.
+- Lexicon home: split — general-purpose categories + synonyms in the new
+  `@mailwoman/poi-taxonomy` data package; locale slang stays in `variant-aliases` (§3.3).
+  Rationale: the taxonomy serves every category use case (trails, restaurants, ISP infra alike)
+  and refreshes on Overture's cadence, not curation cadence.
+
+Remaining open: when the demo pocket gets a slim POI shard (budget review at Phase-1 exit).
