@@ -36,7 +36,7 @@ The right behavior for a POI query is:
 
 1. **Recognize that it's a POI query, not an address.** The kind classifier (Stage 2.5) carries a `poi_query` kind alongside `postcode_only`, `structured_address`, `intersection`, and the rest, gated behind the `poiQueryKind` runtime flag (default off). Try it against a category query like `fire hydrant`.
 2. **Extract the POI type and location constraint.** `gas station near Springfield, IL` splits into category `gas_station` and anchor `Springfield, IL`. The anchor is an address or place name, and it runs through the normal parse pipeline once split off.
-3. **Resolve against a POI database.** With a built `poi.db`, the executor answers "nearest gas station" for real: distance-ranked results, nearest first. Without one, the pipeline still reports the matched category and anchor — it just can't rank results.
+3. **Resolve against a POI database.** With a built `poi.db`, the executor answers "nearest gas station" with distance-ranked results, nearest first. Without one, the pipeline still reports the matched category and anchor but cannot rank results.
 
 ## What ships today
 
@@ -45,14 +45,14 @@ The category branch — detect, extract, resolve — is built:
 - **Detection + extraction.** The kind classifier matches category phrases against the [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) lexicon (23 categories in the current seed, with locale-gated synonyms), then splits the anchor off and parses it through the normal address pipeline.
 - **`poi.db`.** A sealed, readonly spatial layer built from Overture Places (CDLA-Permissive-2.0) at confidence ≥ 0.85, covering the US, Canada, Mexico, and France — the locales Mailwoman already trains against. Build it yourself with `mailwoman gazetteer build poi`.
 - **The CLI.** `mailwoman poi "coffee near Honolulu" --db poi.db` returns distance-ranked results — a live run against a built database returned 20 results, nearest 1,265 m away.
-- **`@mailwoman/mcp`.** An MCP server (`mailwoman-mcp`) exposing five stdio tools to agents: `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mailwoman_overpass_export`, `mailwoman_layer_manifest`. This is the intended consumer for most POI queries — an agent with tools, not a search box.
+- **`@mailwoman/mcp`.** An MCP server (`mailwoman-mcp`) exposing five stdio tools to agents: `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mailwoman_overpass_export`, `mailwoman_layer_manifest`. This is the intended consumer for most POI queries: an agent calling tools, with the planning left to the agent.
 - **OverpassQL export.** `--overpass` on the CLI, the matching MCP tool, and [the tester](./try-it.mdx) all render a query you can paste into [Overpass Turbo](https://overpass-turbo.eu/). Overpass is an export target here, never a serving backend — Mailwoman prints the query and never runs it.
 
 ## What abstains by design
 
 Some categories — fire hydrants, post boxes, drinking water fountains, data centers — have no permissively licensed source. They live in OpenStreetMap and in Overture's _base_ theme, both ODbL share-alike. Mailwoman ships the **builder**, not the data: run `poi build --source osm` against your own OSM extract and the resulting layer sits on the same schema as the shipped one, on your disk, never distributed by us.
 
-Until you've built that layer, a query for one of these categories doesn't misfire or return an empty list pretending to be a real answer. It abstains with `requires_build_local_layer`, a distinct result that names what's missing instead of guessing.
+Until you've built that layer, a query for one of these categories abstains with `requires_build_local_layer` — a distinct result that names the missing layer, rather than an empty list that reads as "no such places exist."
 
 ## What's still ahead
 

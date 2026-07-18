@@ -10,7 +10,7 @@ tags:
 
 # Try it: the POI intent tester
 
-Type a query below and watch Mailwoman's kind classifier decide whether it's a POI query or an address, then extract the subject (a category, in the current lexicon), split off the location anchor, and render an OverpassQL export you can paste straight into [Overpass Turbo](https://overpass-turbo.eu/).
+Type a query below and watch Mailwoman's kind classifier decide whether it's a POI query or an address, then extract the subject (a category, in the current lexicon), split off the location anchor, and render an OverpassQL export you can paste into [Overpass Turbo](https://overpass-turbo.eu/).
 
 This tester runs entirely in your browser: no model weights, no network request, no server. It's the same `matchPOISubject` + `createKindClassifier` + OverpassQL emitter Mailwoman ships as a library — see [`@mailwoman/kind-classifier`](https://www.npmjs.com/package/@mailwoman/kind-classifier) and [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy).
 
