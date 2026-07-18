@@ -104,6 +104,42 @@ export function hasBrandColumn(describeRows: readonly DescribeColumn[]): boolean
 	return describeRows.some((r) => r.column_name === "brand")
 }
 
+/** The expression pair {@link chooseCountryExpression} resolves — one for the `WHERE`, one for the `SELECT`. */
+export interface CountryExpression {
+	/** Bare expression to compare against `'<cc>'` in the `WHERE` clause (a column or a struct/list access). */
+	filterExpr: string
+	/** The same expression, aliased to `country` for the `SELECT` list. */
+	selectExpr: string
+}
+
+/**
+ * PURE column-choice logic over a `DESCRIBE` result — no DuckDB/network in this function, so it's unit-testable on its
+ * own (mirrors {@link chooseCategoryColumn}'s pattern). The Overture places-theme has, as of the 2026-05-20.0 release,
+ * NO top-level `country` column (unlike the addresses theme this SQL was originally templated from) — country instead
+ * lives inside the `addresses` LIST<STRUCT<...>> column. Prefers a top-level `country` column when present (a future
+ * release may add one back), falling back to `addresses[1].country` (DuckDB lists are 1-based).
+ *
+ * Deviation to note at the call site: under the `addresses`-based expression, a row with a NULL/empty `addresses` list
+ * has `addresses[1]` evaluate to NULL, so `addresses[1].country = '<cc>'` is NULL (never true) and the row is dropped
+ * from every country slice — rows with no address struct are simply excluded from country-filtered ingests. Acceptable
+ * for v1; the excluded-row count is visible as the delta between a country slice's row count and an unfiltered
+ * `COUNT(*)` over the same Parquet, if this ever needs auditing.
+ */
+export function chooseCountryExpression(describeRows: readonly DescribeColumn[]): CountryExpression {
+	if (describeRows.some((r) => r.column_name === "country")) {
+		return { filterExpr: "country", selectExpr: "country" }
+	}
+
+	if (describeRows.some((r) => r.column_name === "addresses")) {
+		return { filterExpr: "addresses[1].country", selectExpr: "addresses[1].country AS country" }
+	}
+
+	throw new Error(
+		`ingestPlaces: Overture places schema has neither a top-level "country" column nor an "addresses" column to ` +
+			`derive one from. Columns found: ${describeRows.map((r) => r.column_name).join(", ")}`
+	)
+}
+
 export interface IngestPlacesOptions {
 	/** Pinned Overture release. Default {@link DEFAULT_RELEASE} (the same pin `overture-ingest.tsx` uses). */
 	release?: string
@@ -155,7 +191,11 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 	const describeRows = describeResult.getRowObjects() as unknown as DescribeColumn[]
 	const categoryColumn = chooseCategoryColumn(describeRows)
 	const hasBrand = hasBrandColumn(describeRows)
-	phase("probe", `category column: ${categoryColumn}; brand: ${hasBrand ? "present" : "absent"}`)
+	const countryExpression = chooseCountryExpression(describeRows)
+	phase(
+		"probe",
+		`category column: ${categoryColumn}; brand: ${hasBrand ? "present" : "absent"}; country: ${countryExpression.filterExpr}`
+	)
 
 	// brand.wikidata only: the QID is the join key; the row's own name carries the display form.
 	// brand.names.primary is deliberately NOT extracted (review 2026-07-18).
@@ -177,9 +217,9 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 					confidence,
 					ST_X(geometry) AS lon,
 					ST_Y(geometry) AS lat,
-					country
+					${countryExpression.selectExpr}
 				FROM read_parquet('${glob}', hive_partitioning = 1)
-				WHERE country = '${cc}' AND confidence >= ${MIN_CONFIDENCE}
+				WHERE ${countryExpression.filterExpr} = '${cc}' AND confidence >= ${MIN_CONFIDENCE}
 				${limitClause}
 			) TO '${dest}' (FORMAT PARQUET, COMPRESSION SNAPPY)
 		`)
