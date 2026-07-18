@@ -1,16 +1,19 @@
-# Pre-defined tags for Mailwoman documentation.
-# Each tag listed here can be used in frontmatter as `tags: [key]`.
-# Tags NOT listed here will trigger the onInlineTags behavior (warn by default).
+# Pre-defined tags for Mailwoman documentation — the single registry shared by
+# the docs plugin, the blog (research/), and the glossary plugin.
+# Each tag listed here can be used in frontmatter as `tags: [key]` and in
+# glossary entries as `"tags": ["key"]` (first tag = primary category).
+# Tags NOT listed here FAIL THE BUILD: docs + blog via `onInlineTags: "throw"`
+# (docusaurus.config.ts), glossary via plugins/glossary/plugin.ts.
 
 #region Category
 
 domain:
   label: Domain
-  description: Articles explaining the address-parsing problem space — why addresses are hard, how the postal system works, what users actually type.
+  description: The address-parsing problem space — why addresses are hard, how postal systems work, what users actually type.
 
 architecture:
   label: Architecture
-  description: Articles describing Mailwoman's staged pipeline design, the Knowledge Ladder, and how the stages compose.
+  description: Mailwoman's design — the staged pipeline, the Knowledge Ladder, schemas, and how the pieces compose.
 
 concepts:
   label: Concepts
@@ -22,35 +25,31 @@ reference:
 
 hubris:
   label: Geocoder hubris
-  description: Articles examining geocoder overconfidence — why 90% coverage isn't enough, why Google's API and geocode.earth have ceilings.
+  description: Geocoder overconfidence — why 90% coverage isn't enough, why Google's API and geocode.earth have ceilings.
 
 falsehoods:
   label: Address falsehoods
-  description: Articles cataloguing the falsehoods programmers believe about addresses, citing Michael Tandy's original catalogue.
+  description: The falsehoods programmers believe about addresses, citing Michael Tandy's original catalogue.
 
 retrospective:
   label: Retrospective
-  description: Post-mortems of incidents, bugs, and failures — what happened, why, and how it was fixed.
+  description: Post-mortems and failure reports — what happened, why, and how it was fixed.
 
 geocoding:
   label: Geocoding
-  description: Articles about geocoding — the process of turning parsed addresses into lat/lon coordinates.
+  description: Turning parsed addresses into coordinates — cascades, precision tiers, and the reference datasets behind them.
+
+evals:
+  label: Evaluation
+  description: Measuring the parser — metrics, golden sets, parity scorecards, calibration, and eval discipline.
 
 infrastructure:
   label: Infrastructure
-  description: Articles about the training-data pipeline, model training, tokenization, and other non-model components.
-
-beginner:
-  label: Beginner-friendly
-  description: Articles that assume no prior knowledge of AI, machine learning, or geocoding — ideal for newcomers.
-
-advanced:
-  label: Advanced
-  description: Articles that dive deep into technical details, diagnostics, and design decisions — ideal for experienced practitioners.
+  description: The machinery around the model — compute, storage formats, runtimes, and tooling.
 
 night-shift:
   label: Night shift
-  description: Articles about the night shift debugging sessions — Problems. Process. Outcomes.
+  description: The night shift debugging sessions — Problems. Process. Outcomes.
 
 #endregion
 
@@ -58,23 +57,27 @@ night-shift:
 
 rule-based:
   label: Rule-based classifiers
-  description: Articles about regex, dictionary, and heuristic classifiers inherited from Pelias and Mailwoman v1.
+  description: Regex, dictionary, and heuristic classifiers inherited from Pelias and Mailwoman v1.
 
 neural:
   label: Neural classifier
-  description: Articles about the encoder-only transformer model, BIO labeling, ONNX runtime, and training.
+  description: The encoder-only transformer model — architecture, BIO labeling, decoding, and inference.
 
 hybrid:
   label: Rule + neural hybrid
-  description: Articles about the coexistence of rule classifiers and the neural model through the policy registry.
+  description: Rule classifiers and the neural model coexisting — the policy registry, FST priors, and shallow fusion.
 
 staged-pipeline:
   label: Staged pipeline
-  description: Articles about the six-stage runtime pipeline and the Knowledge Ladder decomposition.
+  description: The six-stage runtime pipeline and the Knowledge Ladder decomposition.
 
 resolver:
   label: Resolver / WOF
-  description: Articles about the Who's On First gazetteer, concordance scoring, and resolver candidate ranking.
+  description: The Who's On First gazetteer, concordance scoring, and resolver candidate ranking.
+
+record-matching:
+  label: Record matching
+  description: The geocode-first record matcher — blocking, scoring, clustering, and entity resolution.
 
 #endregion
 
@@ -82,15 +85,15 @@ resolver:
 
 corpus:
   label: Corpus pipeline
-  description: Articles about the training-data pipeline — adapters, alignment, synthesis, Parquet shards.
+  description: The training-data pipeline — adapters, alignment, synthesis, Parquet shards.
 
 training:
   label: Model training
-  description: Articles about training runs, loss recipes, verdict smokes, and divergence diagnostics.
+  description: Training runs, loss recipes, verdict smokes, and divergence diagnostics.
 
 tokenizer:
   label: Tokenization
-  description: Articles about SentencePiece tokenization, byte-fallback, and multi-script handling.
+  description: SentencePiece tokenization, byte-fallback, and multi-script handling.
 
 #endregion
 
@@ -98,31 +101,31 @@ tokenizer:
 
 street:
   label: Street components
-  description: Articles focused on street names, building numbers, street suffixes, and intersection addresses.
+  description: Street names, building numbers, street suffixes, and intersection addresses.
 
 locality:
   label: Locality components
-  description: Articles focused on cities, towns, neighborhoods, boroughs, and administrative place names.
+  description: Cities, towns, neighborhoods, boroughs, and administrative place names.
 
 postcode:
   label: Postcode components
-  description: Articles focused on ZIP codes, postcodes, postal routing codes, and their formats.
+  description: ZIP codes, postcodes, postal routing codes, and their formats.
 
 region:
   label: Region components
-  description: Articles focused on states, provinces, départements, and first-level administrative divisions.
+  description: States, provinces, départements, and first-level administrative divisions.
 
 country:
   label: Country components
-  description: Articles focused on sovereign states, territories, and country-level addressing conventions.
+  description: Sovereign states, territories, and country-level addressing conventions.
 
 venue:
   label: Venue / POI
-  description: Articles about venue names, points of interest, organizations, and the venue-vs-address ambiguity problem.
+  description: Venue names, points of interest, organizations, and the venue-vs-address ambiguity problem.
 
 intersection:
   label: Intersection addresses
-  description: Articles about crossing-street addresses and street-pair location descriptions.
+  description: Crossing-street addresses and street-pair location descriptions.
 
 #endregion
 
@@ -130,19 +133,19 @@ intersection:
 
 en-us:
   label: United States (en-US)
-  description: Articles with US-specific content — ZIP codes, USPS delivery, NAD, TIGER, state abbreviations.
+  description: US-specific content — ZIP codes, USPS delivery, NAD, TIGER, state abbreviations.
 
 fr-fr:
   label: France (fr-FR)
-  description: Articles with France-specific content — BAN, CEDEX, arrondissements, French addressing conventions.
+  description: France-specific content — BAN, CEDEX, arrondissements, French addressing conventions.
 
 ja-jp:
   label: Japan (ja-JP)
-  description: Articles discussing Japanese addressing — block-based numbering, no streets, chōme/banchi/gō, Phase 6 planning.
+  description: Japanese addressing — block-based numbering, no streets, chōme/banchi/gō, Phase 6 planning.
 
 international:
   label: International
-  description: Articles about non-US addressing — comparative postcode systems, global gazetteers, locale-specific formats.
+  description: Non-US addressing — comparative postcode systems, global gazetteers, locale-specific formats.
 
 #endregion
 
@@ -150,11 +153,11 @@ international:
 
 multilingual:
   label: Multilingual
-  description: Articles about addresses in multiple languages, mixed-language input, and locale detection.
+  description: Addresses in multiple languages, mixed-language input, and locale detection.
 
 non-latin:
   label: Non-Latin scripts
-  description: Articles about CJK, Cyrillic, Arabic, Hangul, and other non-Latin address formats.
+  description: CJK, Cyrillic, Arabic, Hangul, and other non-Latin address formats.
 
 #endregion
 
@@ -162,6 +165,6 @@ non-latin:
 
 motivation:
   label: Project motivation
-  description: Articles making the case for Mailwoman — why neural, why TypeScript, why a staged pipeline.
+  description: The case for Mailwoman — why neural, why TypeScript, why a staged pipeline.
 
 #endregion

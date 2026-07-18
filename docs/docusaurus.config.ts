@@ -2,8 +2,11 @@ import { execSync } from "node:child_process"
 
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
-import { GlossaryPluginOptions, remarkPlugin as glossaryRemarkPlugin } from "docusaurus-plugin-glossary"
 import { themes as prismThemes } from "prism-react-renderer"
+
+import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
+// Upstream remark auto-linker wrapped with the proper-noun guard (see plugins/glossary/remark.ts).
+import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
 
 const gitHash = (() => {
 	try {
@@ -95,7 +98,9 @@ const config: Config = {
 	plugins: [
 		"./plugins/demo-assets/plugin.ts",
 		[
-			"docusaurus-plugin-glossary",
+			// Wraps docusaurus-plugin-glossary: same validation/tooltips/remark, custom page with
+			// tag filters + category TOC. See plugins/glossary/plugin.ts.
+			"./plugins/glossary/plugin.ts",
 			{
 				glossaryPath: "glossary/glossary.json",
 				routePath: "/glossary",
@@ -119,6 +124,10 @@ const config: Config = {
 					path: "articles",
 					routeBasePath: "docs",
 					sidebarPath: "./sidebars.ts",
+					// Single shared tag registry (also used by the blog and the glossary plugin).
+					// Docusaurus resolves this relative to the content dir, hence the "../".
+					tags: "../tags.yml",
+					onInlineTags: "throw",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
 					// Internal-only content — kept in the repo for the record but NOT rendered on the public
 					// site (globs are relative to `path: "articles"`). `reviews/` is AI-consult transcripts +
@@ -158,6 +167,8 @@ const config: Config = {
 				blog: {
 					path: "research",
 					routeBasePath: "research",
+					tags: "../tags.yml",
+					onInlineTags: "throw",
 					blogTitle: "Field notes",
 					blogDescription: "Iteration notes, ship retrospectives, design log entries.",
 					blogSidebarTitle: "All posts",

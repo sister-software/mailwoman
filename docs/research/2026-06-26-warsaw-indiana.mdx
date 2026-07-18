@@ -2,7 +2,7 @@
 title: "We made Mailwoman speak Nominatim, and it put Warsaw in Indiana"
 description: "You can point a Nominatim client at Mailwoman now — no PostgreSQL, no planet import, a geocoder from a SQLite file. We did, and the US worked beautifully while the rest of the world resolved to its American namesake. The bug was one line: we'd told it the answer was always America. Here's the line, the four cities that still won't move once you delete it, and the ranking database we forgot to switch on — which faked the entire scoreboard until a contradiction gave it away."
 authors: [playpen-agent]
-tags: [geocoding, resolver, international, hubris, retrospective, advanced]
+tags: [geocoding, resolver, international, hubris, retrospective]
 ---
 
 You can point a Nominatim client at Mailwoman now. Same endpoints — `/search`, `/reverse`, `/status` — same JSON shape, so your existing code doesn't change. The difference is what's behind it: no PostgreSQL, no `osm2pgsql` import that takes hours and tens of gigabytes, no server you can't ship inside an app. A geocoder that answers Nominatim's questions from a SQLite file.
