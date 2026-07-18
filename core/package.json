@@ -54,6 +54,11 @@
 			"default": "./out/env/index.js",
 			"types": "./out/env/index.d.ts"
 		},
+		"./layers": {
+			"node": "./layers/index.ts",
+			"default": "./out/layers/index.js",
+			"types": "./out/layers/index.d.ts"
+		},
 		"./resources": {
 			"node": "./resources/index.ts",
 			"default": "./out/resources/index.js",
@@ -205,6 +210,10 @@
 			"./env": {
 				"types": "./out/env/index.d.ts",
 				"default": "./out/env/index.js"
+			},
+			"./layers": {
+				"types": "./out/layers/index.d.ts",
+				"default": "./out/layers/index.js"
 			},
 			"./resources": {
 				"types": "./out/resources/index.d.ts",
