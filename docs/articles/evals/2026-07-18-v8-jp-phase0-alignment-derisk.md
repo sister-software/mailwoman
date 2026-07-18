@@ -22,6 +22,17 @@ Japanese address field values are mutually non-colliding: prefecture/municipalit
 - **Leg-1 JP char probe is UNBLOCKED** — the char-encoder scaffolding exists (`corpus-python/src/mailwoman_train/model.py:CharCNNEmbedding` + `char_tokenizer.py`, both gated off, #825), the JP schema tags are declared (`SCHEMA.mdx`: prefecture/municipality/sub_block, Phase-6 forward-compat), and JP Overture data is on disk (19.6M rows, CDLA-Permissive-2.0).
 - **Remaining work (the real gate, NOT alignment, and NOT purely mechanical) — a char-encoding DESIGN decision:** the existing char encoder `char_tokenizer.encode_row_charword` is **char-WORD** (chars grouped by whitespace `tokens`, one BIO label per word) — built for Latin (#825 Slavic diacritics). **JP has no whitespace and needs per-CHARACTER labels** (prefecture-chars and street-chars sit in the same unsegmented run and carry different tags). So the CharCNN scaffolding is half-built *for the Latin char-word case*; the JP char-path needs a **char-level** encoding (per-position ids + per-char BIO), plus the `data_loader.py` `char_ids` route. This is the true Leg-1 prerequisite and it's a design choice (char-level vs char-word grouping for a whitespace-less script), not a mechanical wire-up — it wants operator/Fable design sign-off before it's built, since it defines the v8 char model's input contract. **Recommend: this is a day-shift collaborative arc, not a pre-handoff rush.**
 
+## Corpus-build de-risk — also PASS (bonus, #555 does not bite kanji)
+
+Beyond the alignment concept, the actual corpus aligner `corpus/src/align.ts::alignRow` was tested on JP kanji canonical rows and produces **correct char-offset span labels**:
+
+- `沖縄県石垣市字崎枝556-16` → `region[0:3] locality[3:6] street[6:9] house_number[9:15]`
+- `東京都渋谷区神南1丁目3-16` (urban Tokyo, chōme) → `region[0:3] locality[3:6] street[6:11]`(=`神南1丁目`)` house_number[11:15]`(=`3-16`)
+
+**#555** (`locateSpan over-runs raw on non-Latin combining-mark strings`) does **not** apply to kanji — kanji are single code points with no combining marks, so the span offsets are exact. **The JP corpus is buildable now** as `(raw, char-offset span_tags)` rows — encoder-agnostic; the char-level-vs-char-word decision is a *training-time* read of these spans, not a corpus-build blocker. (Combining-diacritic scripts — some Indic, heavily-accented Latin — would still need the #555 fix; kanji/hangul/hanzi core CJK do not.)
+
+**Net v8 data-pipeline status: fully green.** Both the alignment concept and the corpus-build infra handle JP cleanly. The only remaining v8 work is training-side: the char-level encoder/loader/model rework (above) — a scoped day-shift arc, not a data problem.
+
 ## One schema decision to make (not a blocker)
 
 The JP `number` is frequently **multi-part** (`2-3-16` = 2丁目3番16号 = chōme-banchi-go). Decide: map the whole `2-3-16` to `house_number`, or split into the declared `sub_block` (banchi) + a go component. This is a schema/label choice for the JP model's vocab — decide it when building the JP shard, not before.
