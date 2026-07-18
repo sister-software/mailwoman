@@ -7,6 +7,7 @@
 		"ignoreDeprecations": "6.0",
 		"strict": true,
 		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
 		"target": "esnext",
 		"types": ["node"],
 		"lib": ["ESNext", "DOM", "DOM.Iterable"]

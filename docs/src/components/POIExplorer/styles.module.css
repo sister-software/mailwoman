@@ -1,0 +1,179 @@
+/* ---------------------------------------------------------------------------
+ * POIExplorer — embeddable POI-intent tester styles.
+ *
+ * Mirrors PipelineExplorer's control styling (same --ifm-* tokens, same chip/
+ * button vocabulary) so the two testers feel like one family in the docs.
+ * --------------------------------------------------------------------------- */
+
+.poiExplorer {
+	max-width: 720px;
+	font-size: 0.95rem;
+}
+
+/* Form */
+
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.form label {
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.form input {
+	padding: 0.5rem 0.75rem;
+	font: inherit;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color);
+	color: var(--ifm-font-color-base);
+}
+
+/* Example chips */
+
+.examples {
+	margin-top: 0.75rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: baseline;
+}
+
+.examplesLabel {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	margin-right: 0.25rem;
+}
+
+.exampleBtn {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.55rem;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-800);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	font-weight: 500;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.exampleBtn:hover {
+	background: var(--ifm-color-emphasis-200);
+	border-color: var(--ifm-color-primary);
+}
+
+/* Result panel */
+
+.resultPanel {
+	margin-top: 1.25rem;
+}
+
+.subjectRow {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.categoryChip {
+	display: inline-block;
+	padding: 0.2rem 0.6rem;
+	border-radius: 999px;
+	background: var(--ifm-color-primary-contrast-background, rgba(37, 99, 235, 0.12));
+	color: var(--ifm-color-primary);
+	font-weight: 600;
+	font-size: 0.85rem;
+}
+
+.buildLocalBadge {
+	display: inline-block;
+	padding: 0.2rem 0.5rem;
+	border-radius: 999px;
+	background: var(--ifm-color-warning-contrast-background, rgba(245, 158, 11, 0.15));
+	color: var(--ifm-color-warning-darkest, #92400e);
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.buildLocalNote {
+	margin: 0 0 0.75rem;
+	font-size: 0.85rem;
+	opacity: 0.8;
+}
+
+.subjectDetail {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.25rem 0.75rem;
+	margin: 0 0 0.75rem;
+	font-size: 0.9rem;
+}
+
+.subjectDetail dt {
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.subjectDetail dd {
+	margin: 0;
+}
+
+.noIntent {
+	font-style: italic;
+	color: var(--ifm-color-emphasis-600);
+}
+
+/* OverpassQL block */
+
+.overpassBlock {
+	margin-top: 0.75rem;
+}
+
+.overpassHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.4rem;
+}
+
+.overpassHeader h3 {
+	margin: 0;
+	font-size: 0.95rem;
+}
+
+.overpassCode {
+	margin: 0;
+	padding: 0.75rem;
+	border-radius: 6px;
+	background: var(--ifm-color-emphasis-100);
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.85rem;
+	white-space: pre-wrap;
+	overflow-x: auto;
+}
+
+.debugBtn {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.55rem;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-800);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.debugBtn:hover {
+	background: var(--ifm-color-emphasis-200);
+}
+
+.error {
+	color: var(--ifm-color-danger);
+	font-family: var(--ifm-font-family-monospace);
+	white-space: pre-wrap;
+}

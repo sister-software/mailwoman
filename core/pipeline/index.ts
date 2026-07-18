@@ -37,6 +37,7 @@ export type {
 	PipelineTiming,
 	POIIntent,
 	POIIntentOutcome,
+	POIResult,
 	QueryKind,
 	QueryKindResult,
 	QueryShapeLite,

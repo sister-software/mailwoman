@@ -35,6 +35,12 @@ export interface POIIntentStageDeps {
 	 * WITHOUT the poi stage (recursion guard) — `createRuntimePipeline` does.
 	 */
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>
+	/**
+	 * The executor (Task 4, `poi-executor.ts`'s `createPOIExecutor`) — when present, the stage runs the matched intent
+	 * through it and returns whatever it decides (results attached, or an abstain). Absent = today's Plan-2 behavior: the
+	 * bare `{ type: "intent", intent }`, unexecuted.
+	 */
+	execute?: (intent: POIIntent) => POIIntentOutcome
 }
 
 /** Build the `stages.poiIntent` implementation. */
@@ -59,6 +65,6 @@ export function createPOIIntentStage(
 			intent.anchor = { text: matched.remainder, tree: anchor.tree }
 		}
 
-		return { type: "intent", intent }
+		return deps.execute ? deps.execute(intent) : { type: "intent", intent }
 	}
 }

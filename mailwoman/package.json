@@ -82,6 +82,11 @@
 			"node": "./test-kit/index.ts",
 			"default": "./out/test-kit/index.js",
 			"types": "./out/test-kit/index.d.ts"
+		},
+		"./poi-overpass": {
+			"node": "./poi-overpass.ts",
+			"default": "./out/poi-overpass.js",
+			"types": "./out/poi-overpass.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -118,6 +123,10 @@
 			"./test-kit": {
 				"types": "./out/test-kit/index.d.ts",
 				"default": "./out/test-kit/index.js"
+			},
+			"./poi-overpass": {
+				"types": "./out/poi-overpass.d.ts",
+				"default": "./out/poi-overpass.js"
 			}
 		},
 		"access": "public"
@@ -148,6 +157,7 @@
 		"d3-scale-chromatic": "^3.1.0",
 		"fast-glob": "^3.3.3",
 		"geojson": "^0.5.0",
+		"h3-js": "^4.5.0",
 		"ink": "^7.0.5",
 		"ioredis": "^5.11.1",
 		"pastel": "^4.0.1",
