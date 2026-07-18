@@ -38,6 +38,7 @@ async function openContractDB(): Promise<DatabaseClient<LayerContractDatabase>> 
 	const db = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)
+
 	return db
 }
 

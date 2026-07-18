@@ -51,9 +51,11 @@ function assertManifestInvariants(manifest: Pick<LayerManifest, "tier" | "freshn
 	if (!TIERS.has(manifest.tier)) {
 		throw new Error(`layer manifest: unknown tier ${JSON.stringify(manifest.tier)}`)
 	}
+
 	if (!POLICIES.has(manifest.freshnessPolicy)) {
 		throw new Error(`layer manifest: unknown freshness_policy ${JSON.stringify(manifest.freshnessPolicy)}`)
 	}
+
 	if (!manifest.spineKeys.h3 && !manifest.spineKeys.wofID && !manifest.spineKeys.addressID) {
 		throw new Error("layer manifest: at least one spine key (h3, wofID, addressID) is required")
 	}

@@ -46,6 +46,7 @@ describe("taxonomy integrity", () => {
 		for (const category of getAllCategories()) {
 			expect(category.hierarchy.at(-1)).toBe(category.id)
 		}
+
 		// Walk the raw table through the public phrase surface: every phrase must resolve.
 		for (const category of getAllCategories()) {
 			expect(getPOICategory(category.id)).toBeDefined()
@@ -71,6 +72,7 @@ describe("taxonomy integrity — malformed table", () => {
 				],
 				synonyms: [{ phrase: "x", categoryID: "nope" }],
 			})
+
 			return {
 				...actual,
 				readFileSync: () => malformed,

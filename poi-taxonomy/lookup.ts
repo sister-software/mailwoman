@@ -61,8 +61,10 @@ const BY_PHRASE: ReadonlyMap<string, ReadonlyArray<PhraseEntry>> = (() => {
 		add(category.id.replaceAll("_", " "), { category, phrase: category.id.replaceAll("_", " ") })
 		add(category.label, { category, phrase: category.label.toLowerCase() })
 	}
+
 	for (const synonym of TABLE.synonyms as SynonymEntry[]) {
 		const category = BY_ID.get(synonym.categoryID)
+
 		if (!category) {
 			throw new Error(
 				`poi-taxonomy: synonym ${JSON.stringify(synonym.phrase)} points at unknown category ${synonym.categoryID}`
