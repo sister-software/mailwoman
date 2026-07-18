@@ -46,7 +46,6 @@ function* fixtureRows(): Iterable<POISourceRow> {
 					name: `${loc.country} ${category} #${n}`,
 					category,
 					brandWikidata: n === 0 ? "Q00000" : null,
-					brandName: n === 0 ? "Test Brand" : null,
 					latitude: loc.latitude + n * JITTER_DEG,
 					longitude: loc.longitude,
 					country: loc.country,
@@ -62,7 +61,6 @@ function* fixtureRows(): Iterable<POISourceRow> {
 		name: "Bad NaN",
 		category: "cafe",
 		brandWikidata: null,
-		brandName: null,
 		latitude: Number.NaN,
 		longitude: -89,
 		country: "US",
@@ -73,7 +71,6 @@ function* fixtureRows(): Iterable<POISourceRow> {
 		name: "Bad Infinity",
 		category: "cafe",
 		brandWikidata: null,
-		brandName: null,
 		latitude: 39,
 		longitude: Number.POSITIVE_INFINITY,
 		country: "US",
@@ -107,7 +104,9 @@ describe("buildPOIDatabase", () => {
 		expect(result.rows).toBe(30)
 		expect(result.skipped).toBe(2)
 		expect(result.categories).toBe(3)
-		expect([...result.countries].sort()).toEqual(["FR", "US"])
+		// Per-country counts: 15 rows kept for each of US/FR (3 categories × 5 rows) — the 2 skipped
+		// non-finite-coordinate rows (both nominally "US") are NOT counted, per the Map's contract.
+		expect(Object.fromEntries(result.countries)).toEqual({ US: 15, FR: 15 })
 
 		// --- sealed: no write bits ---
 		expect(statSync(out).mode & 0o222).toBe(0)
@@ -183,5 +182,20 @@ describe("buildPOIDatabase", () => {
 
 		const nameHits = lookup.search({ name: "restaurant" })
 		expect(nameHits.some((h) => h.name?.includes("restaurant"))).toBe(true)
+	})
+
+	it("bootstraps missing intermediate output directories", async () => {
+		const nestedOut = join(scratch, "nested", "deeper", "poi.db")
+
+		const result = await buildPOIDatabase({
+			rows: fixtureRows(),
+			out: nestedOut,
+			release: "2026-05-20.0",
+			buildSHA: "deadbeef",
+			createdAt: "2026-07-18T00:00:00Z",
+		})
+
+		expect(result.rows).toBe(30)
+		expect(statSync(nestedOut).isFile()).toBe(true)
 	})
 })

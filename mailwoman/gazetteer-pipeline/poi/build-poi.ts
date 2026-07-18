@@ -35,7 +35,7 @@
  */
 
 import { existsSync, mkdirSync, rmSync } from "node:fs"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -157,9 +157,9 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 	const hasBrand = hasBrandColumn(describeRows)
 	phase("probe", `category column: ${categoryColumn}; brand: ${hasBrand ? "present" : "absent"}`)
 
-	const brandExprs = hasBrand
-		? "brand.wikidata AS brand_wikidata, brand.names.primary AS brand_name"
-		: "CAST(NULL AS VARCHAR) AS brand_wikidata, CAST(NULL AS VARCHAR) AS brand_name"
+	// brand.wikidata only: the QID is the join key; the row's own name carries the display form.
+	// brand.names.primary is deliberately NOT extracted (review 2026-07-18).
+	const brandExprs = hasBrand ? "brand.wikidata AS brand_wikidata" : "CAST(NULL AS VARCHAR) AS brand_wikidata"
 
 	const countryParquet: Record<string, string> = {}
 
@@ -198,7 +198,6 @@ export interface POISourceRow {
 	name: string | null
 	category: string | null
 	brandWikidata: string | null
-	brandName: string | null
 	latitude: number
 	longitude: number
 	country: string
@@ -218,7 +217,7 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 	try {
 		for (const parquetPath of parquetPaths) {
 			const result = await db.runAndReadAll(
-				`SELECT name, category, brand_wikidata, brand_name, lat, lon, country, confidence, gers_id
+				`SELECT name, category, brand_wikidata, lat, lon, country, confidence, gers_id
 				 FROM read_parquet('${parquetPath}')`
 			)
 
@@ -226,7 +225,6 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 				name: string | null
 				category: string | null
 				brand_wikidata: string | null
-				brand_name: string | null
 				lat: number
 				lon: number
 				country: string
@@ -237,7 +235,6 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 					name: row.name,
 					category: row.category,
 					brandWikidata: row.brand_wikidata,
-					brandName: row.brand_name,
 					latitude: Number(row.lat),
 					longitude: Number(row.lon),
 					country: row.country,
@@ -283,8 +280,8 @@ export interface BuildPOIResult {
 	skipped: number
 	/** Distinct categories dictionary-encoded (excludes the reserved `0` uncategorized code). */
 	categories: number
-	/** Distinct ISO country codes observed. */
-	countries: Set<string>
+	/** ISO country code → rows kept for it (skipped rows are NOT counted). */
+	countries: Map<string, number>
 	/** Res-6 coverage cells written. */
 	coverageCells: number
 }
@@ -327,6 +324,8 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		rmSync(opts.out)
 	}
 
+	mkdirSync(dirname(opts.out), { recursive: true })
+
 	const rowSource: AsyncIterable<POISourceRow> | Iterable<POISourceRow> =
 		opts.rows ?? readParquetRows(opts.parquetPaths!)
 
@@ -354,7 +353,8 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		return id
 	}
 
-	const countries = new Set<string>()
+	/** ISO country code → rows kept for it (skipped rows are NOT counted). */
+	const countries = new Map<string, number>()
 	/** Res-6 short-cell int → observed row count, aggregated during the load (one pass, no second scan). */
 	const coverage = new Map<number, number>()
 
@@ -396,7 +396,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			row.gersID
 		)
 		inserted++
-		countries.add(row.country)
+		countries.set(row.country, (countries.get(row.country) ?? 0) + 1)
 
 		const parentCell = cellToParent(fullCell, COVERAGE_H3_RESOLUTION) as H3Cell
 		const coverageCell = shortCellToInt(parentCell)

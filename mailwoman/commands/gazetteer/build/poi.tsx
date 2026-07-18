@@ -70,11 +70,15 @@ const GazetteerBuildPOI: CommandComponent<typeof OptionsSchema> = ({ options }) 
 			onProgress: (phase, message) => console.error(`  [${phase}] ${message}`),
 		})
 
+		const countryLines = [...result.countries.entries()]
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([cc, count]) => `  ${cc} ${count.toLocaleString()}`)
+
 		return [
 			`poi.db: ${out} (${artifactSizeMB(out)} MB)`,
 			`${result.rows.toLocaleString()} rows · ${result.categories} categories · ${result.countries.size} countries` +
 				` · ${result.skipped.toLocaleString()} skipped (non-finite coords) · ${result.coverageCells.toLocaleString()} coverage cells`,
-			`countries: ${[...result.countries].sort().join(",")}`,
+			...countryLines,
 			`manifest: name=poi tier=shipped source=overture-places sourceVintage=${release} buildSHA=${buildSHA}`,
 		]
 	})
