@@ -1,0 +1,37 @@
+{
+	"name": "@mailwoman/poi-taxonomy",
+	"version": "7.0.0",
+	"description": "POI category taxonomy + phrase lexicon — Overture category snapshot, infrastructure extension namespace, and the synonym table mapping query phrases ('drinking fountain', 'fiber hut') to category ids.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "poi-taxonomy"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"data/**/*.json"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			}
+		},
+		"access": "public"
+	}
+}

@@ -40,6 +40,7 @@
 		{ "path": "./locale-gate" },
 		{ "path": "./variant-aliases" },
 		{ "path": "./phrase-grouper" },
+		{ "path": "./poi-taxonomy" },
 		{ "path": "./query-shape" },
 		{ "path": "./resolver-wof-sqlite" },
 		{ "path": "./resolver-wof-wasm" },

@@ -48,6 +48,7 @@
 		"locale-gate",
 		"variant-aliases",
 		"phrase-grouper",
+		"poi-taxonomy",
 		"query-shape",
 		"resolver-wof-sqlite",
 		"resolver-wof-wasm",

@@ -1,0 +1,198 @@
+{
+	"version": "0.1.0",
+	"overtureRelease": null,
+	"categories": [
+		{
+			"id": "hospital",
+			"label": "Hospital",
+			"hierarchy": ["health_and_medical", "hospital"],
+			"basicLabel": "Hospital",
+			"source": "overture"
+		},
+		{
+			"id": "pharmacy",
+			"label": "Pharmacy",
+			"hierarchy": ["health_and_medical", "pharmacy"],
+			"basicLabel": "Pharmacy",
+			"source": "overture"
+		},
+		{
+			"id": "restaurant",
+			"label": "Restaurant",
+			"hierarchy": ["eat_and_drink", "restaurant"],
+			"basicLabel": "Restaurant",
+			"source": "overture"
+		},
+		{
+			"id": "cafe",
+			"label": "Cafe",
+			"hierarchy": ["eat_and_drink", "cafe"],
+			"basicLabel": "Cafe",
+			"source": "overture"
+		},
+		{
+			"id": "fast_food_restaurant",
+			"label": "Fast food restaurant",
+			"hierarchy": ["eat_and_drink", "restaurant", "fast_food_restaurant"],
+			"basicLabel": "Restaurant",
+			"source": "overture"
+		},
+		{
+			"id": "supermarket",
+			"label": "Supermarket",
+			"hierarchy": ["retail", "food_and_beverage_retail", "supermarket"],
+			"basicLabel": "Supermarket",
+			"source": "overture"
+		},
+		{
+			"id": "gas_station",
+			"label": "Gas station",
+			"hierarchy": ["automotive", "gas_station"],
+			"basicLabel": "Gas station",
+			"source": "overture"
+		},
+		{
+			"id": "hotel",
+			"label": "Hotel",
+			"hierarchy": ["accommodation", "hotel"],
+			"basicLabel": "Hotel",
+			"source": "overture"
+		},
+		{
+			"id": "school",
+			"label": "School",
+			"hierarchy": ["education", "school"],
+			"basicLabel": "School",
+			"source": "overture"
+		},
+		{
+			"id": "library",
+			"label": "Library",
+			"hierarchy": ["public_service_and_government", "library"],
+			"basicLabel": "Library",
+			"source": "overture"
+		},
+		{ "id": "park", "label": "Park", "hierarchy": ["active_life", "park"], "basicLabel": "Park", "source": "overture" },
+		{
+			"id": "trail",
+			"label": "Trail",
+			"hierarchy": ["active_life", "trail"],
+			"basicLabel": "Trail",
+			"source": "overture"
+		},
+		{
+			"id": "atm",
+			"label": "ATM",
+			"hierarchy": ["financial_service", "atm"],
+			"basicLabel": "ATM",
+			"source": "overture"
+		},
+		{
+			"id": "bank",
+			"label": "Bank",
+			"hierarchy": ["financial_service", "bank"],
+			"basicLabel": "Bank",
+			"source": "overture"
+		},
+		{
+			"id": "post_office",
+			"label": "Post office",
+			"hierarchy": ["public_service_and_government", "post_office"],
+			"basicLabel": "Post office",
+			"source": "overture"
+		},
+		{
+			"id": "police_station",
+			"label": "Police station",
+			"hierarchy": ["public_service_and_government", "police_station"],
+			"basicLabel": "Police station",
+			"source": "overture"
+		},
+		{
+			"id": "fire_station",
+			"label": "Fire station",
+			"hierarchy": ["public_service_and_government", "fire_station"],
+			"basicLabel": "Fire station",
+			"source": "overture"
+		},
+		{
+			"id": "fire_hydrant",
+			"label": "Fire hydrant",
+			"hierarchy": ["infrastructure", "fire_hydrant"],
+			"basicLabel": null,
+			"source": "mailwoman-infra"
+		},
+		{
+			"id": "post_box",
+			"label": "Post box",
+			"hierarchy": ["infrastructure", "post_box"],
+			"basicLabel": null,
+			"source": "mailwoman-infra"
+		},
+		{
+			"id": "drinking_water",
+			"label": "Drinking water",
+			"hierarchy": ["infrastructure", "drinking_water"],
+			"basicLabel": null,
+			"source": "mailwoman-infra"
+		},
+		{
+			"id": "telecom_cabinet",
+			"label": "Telecom cabinet",
+			"hierarchy": ["infrastructure", "telecom_cabinet"],
+			"basicLabel": null,
+			"source": "mailwoman-infra"
+		},
+		{
+			"id": "data_center",
+			"label": "Data center",
+			"hierarchy": ["infrastructure", "data_center"],
+			"basicLabel": null,
+			"source": "mailwoman-infra"
+		},
+		{
+			"id": "power_substation",
+			"label": "Power substation",
+			"hierarchy": ["infrastructure", "power_substation"],
+			"basicLabel": null,
+			"source": "mailwoman-infra"
+		}
+	],
+	"synonyms": [
+		{ "phrase": "emergency room", "categoryID": "hospital" },
+		{ "phrase": "er", "categoryID": "hospital", "locales": ["en-US"] },
+		{ "phrase": "drugstore", "categoryID": "pharmacy", "locales": ["en-US"] },
+		{ "phrase": "chemist", "categoryID": "pharmacy", "locales": ["en-GB", "en-AU", "en-NZ"] },
+		{ "phrase": "coffee shop", "categoryID": "cafe" },
+		{ "phrase": "coffee", "categoryID": "cafe" },
+		{ "phrase": "café", "categoryID": "cafe" },
+		{ "phrase": "fast food", "categoryID": "fast_food_restaurant" },
+		{ "phrase": "grocery store", "categoryID": "supermarket", "locales": ["en-US"] },
+		{ "phrase": "grocery", "categoryID": "supermarket" },
+		{ "phrase": "petrol station", "categoryID": "gas_station", "locales": ["en-GB", "en-AU", "en-NZ", "en-ZA"] },
+		{ "phrase": "fuel", "categoryID": "gas_station" },
+		{ "phrase": "motel", "categoryID": "hotel" },
+		{ "phrase": "bike trail", "categoryID": "trail" },
+		{ "phrase": "biking trail", "categoryID": "trail" },
+		{ "phrase": "biking trails", "categoryID": "trail" },
+		{ "phrase": "cycling trail", "categoryID": "trail" },
+		{ "phrase": "hiking trail", "categoryID": "trail" },
+		{ "phrase": "cash machine", "categoryID": "atm", "locales": ["en-GB"] },
+		{ "phrase": "fire hydrant", "categoryID": "fire_hydrant" },
+		{ "phrase": "hydrant", "categoryID": "fire_hydrant" },
+		{ "phrase": "mailbox", "categoryID": "post_box", "locales": ["en-US", "en-CA"] },
+		{ "phrase": "post box", "categoryID": "post_box" },
+		{ "phrase": "postbox", "categoryID": "post_box" },
+		{ "phrase": "drinking fountain", "categoryID": "drinking_water" },
+		{ "phrase": "water fountain", "categoryID": "drinking_water" },
+		{ "phrase": "bubbler", "categoryID": "drinking_water", "locales": ["en-US", "en-AU"] },
+		{ "phrase": "fiber hut", "categoryID": "telecom_cabinet" },
+		{ "phrase": "fibre hut", "categoryID": "telecom_cabinet" },
+		{ "phrase": "street cabinet", "categoryID": "telecom_cabinet" },
+		{ "phrase": "datacenter", "categoryID": "data_center" },
+		{ "phrase": "data center", "categoryID": "data_center" },
+		{ "phrase": "data centre", "categoryID": "data_center" },
+		{ "phrase": "substation", "categoryID": "power_substation" },
+		{ "phrase": "electrical substation", "categoryID": "power_substation" }
+	]
+}

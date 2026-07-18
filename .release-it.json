@@ -12,6 +12,7 @@
 				"kind-classifier",
 				"locale-gate",
 				"phrase-grouper",
+				"poi-taxonomy",
 				"codex",
 				"resolver",
 				"resolver-wof-sqlite",
