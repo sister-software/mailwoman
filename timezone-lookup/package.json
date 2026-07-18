@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/timezone-lookup",
-	"version": "7.0.0",
+	"version": "7.1.0",
 	"description": "Coordinate → IANA timezone, server-side. Point-in-polygon over timezone-boundary-builder polygons in a node:sqlite DB; UTC offset via Intl (no tz-db dependency). An @mailwoman/annotations Annotator.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {

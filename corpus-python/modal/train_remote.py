@@ -898,6 +898,119 @@ def sync_v091():
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_nz():
+    """NZ locale add (task #58, Deepparse parity #1) — pull the v0.12.0-nz overlay (base v0.11.0-no-fragment
+    + the one new synth-nz LINZ shard) + latest code/config from R2 (container-side). The 702 base refs
+    persist on the volume from prior runs; only the synth-nz parquet + MANIFEST + the new config are new.
+    Mirror of sync_no_fragment_b4b."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.12.0-nz overlay (NZ locale) + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.12.0-nz/corpus-v0.12.0-nz/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.12.0-nz/corpus-v0.12.0-nz/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nNZ v0.12.0-nz overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.12.0-nz/corpus-v0.12.0-nz"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.8.2-nz-locale-probe.yaml"
+    print("  v3.8.2-nz config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  synth-nz shard present:", os.path.isfile(f"{cdir}/train/part-nz.parquet"))
+    base = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/MANIFEST.json"
+    print("  base v0.11.0-no-fragment on volume:", os.path.isfile(base))
+    base5 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0000.parquet"
+    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base5))
+    print(
+        "  init_from v381 step-008000 on volume:",
+        os.path.isdir(f"{VOL_MOUNT}/output-v381-punct-fix-full-s42/checkpoints/step-008000"),
+    )
+    print(
+        "  tokenizer v0.9.0-multisplice on volume:",
+        os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_latam():
+    """CA/MX locale add (Overture) — pull the v0.13.0-latam overlay (base v0.11.0-no-fragment + the one new
+    overture-latam shard) + latest code/config from R2 (container-side). Mirror of sync_nz. NZ is NOT here
+    (it stays forked on the dead-tag problem); this is the clean live-locality v7.1.0 path."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.13.0-latam overlay (CA/MX) + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.13.0-latam/corpus-v0.13.0-latam/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nCA/MX v0.13.0-latam overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.8.4-latam-probe.yaml"
+    print("  v3.8.4-latam config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  overture-latam shard present:", os.path.isfile(f"{cdir}/train/part-latam.parquet"))
+    base = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/MANIFEST.json"
+    print("  base v0.11.0-no-fragment on volume:", os.path.isfile(base))
+    base5 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0000.parquet"
+    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base5))
+    print(
+        "  init_from v381 step-008000 on volume:",
+        os.path.isdir(f"{VOL_MOUNT}/output-v381-punct-fix-full-s42/checkpoints/step-008000"),
+    )
+    print(
+        "  tokenizer v0.9.0-multisplice on volume:",
+        os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_no_fragment_b4b():
     """B4b — pull the REBUILT v0.11.0-no-fragment overlay (bare-street-prob 0.30 -> 0.70) + src from R2.
     Only the one synth-no-fragment parquet + MANIFEST changed vs the v3.3.0 build; the 701 base refs
