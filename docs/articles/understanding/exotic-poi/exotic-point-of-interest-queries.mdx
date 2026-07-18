@@ -16,6 +16,8 @@ These queries are structurally different from address queries. An address has or
 
 This series catalogues the categories of POI queries, how traditional geocoders handle them, and what Mailwoman's architecture does (and doesn't) do for each.
 
+[**Try it**](./try-it.mdx) — an in-browser tester for the shipped category branch: type a query, see the detected subject and anchor, and get either ranked results or an OverpassQL export.
+
 ## Categories
 
 | Query type                                          | Example                                                 | What the user wants                                                |
@@ -26,19 +28,39 @@ This series catalogues the categories of POI queries, how traditional geocoders 
 | [Landmarks](./landmark-queries.mdx)                 | Eiffel Tower, Golden Gate Bridge, Empire State Building | A specific named place, usually unique or nearly unique            |
 | [Transit](./transit-queries.mdx)                    | subway station, bus stop, airport, train station        | A transit facility, named or unnamed                               |
 
-[**Try it**](./try-it.mdx) — an in-browser tester for the category branch of this pipeline: type a query, see the detected subject and anchor, and get an OverpassQL export.
-
 ## Why POI queries break the parser
 
-Mailwoman's parser is designed for address strings. Its output is `{house_number: 123, street: Main St, locality: Springfield, region: IL}` — structured address components. A POI query like `gas station` has none of these components. The parser will try to classify `gas` and `station` as address components (street? locality? venue?) and produce a low-confidence parse.
+Mailwoman's parser is designed for address strings. Its output is `{house_number: 123, street: Main St, locality: Springfield, region: IL}` — structured address components. A POI query like `gas station` has none of these components. Handed to the address parser alone, `gas` and `station` would get forced into a street or locality guess and produce a low-confidence parse.
 
 The right behavior for a POI query is:
 
-1. **Recognize that it's a POI query, not an address.** The kind classifier (Stage 2.5) now carries a `poi_query` kind alongside `postcode_only`, `structured_address`, `intersection`, and the rest — [try it](./try-it.mdx) against a category query like `fire hydrant`.
-2. **Extract the POI type and location constraints.** `gas station near Springfield, IL` → category = `gas_station`, anchor = `Springfield, IL`. The anchor can be an address or place name, which Mailwoman parses normally once split off.
-3. **Resolve against a POI database.** The resolver needs a POI index (OSM amenities, WOF venues, a franchise location dataset) to answer "nearest gas station." Mailwoman's resolver currently indexes administrative places, not POIs — this is the piece still missing.
+1. **Recognize that it's a POI query, not an address.** The kind classifier (Stage 2.5) carries a `poi_query` kind alongside `postcode_only`, `structured_address`, `intersection`, and the rest, gated behind the `poiQueryKind` runtime flag (default off). Try it against a category query like `fire hydrant`.
+2. **Extract the POI type and location constraint.** `gas station near Springfield, IL` splits into category `gas_station` and anchor `Springfield, IL`. The anchor is an address or place name, and it runs through the normal parse pipeline once split off.
+3. **Resolve against a POI database.** With a built `poi.db`, the executor answers "nearest gas station" for real: distance-ranked results, nearest first. Without one, the pipeline still reports the matched category and anchor — it just can't rank results.
 
-The category branch — recognize, extract, export as OverpassQL — is built and is what [the tester](./try-it.mdx) on this page exercises. Brand and landmark subjects, and resolving against a live POI index instead of exporting a query, are still ahead; see [Franchise queries](./franchise-queries.mdx) and [Landmark queries](./landmark-queries.mdx) for that target shape.
+## What ships today
+
+The category branch — detect, extract, resolve — is built:
+
+- **Detection + extraction.** The kind classifier matches category phrases against the [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) lexicon (23 categories in the current seed, with locale-gated synonyms), then splits the anchor off and parses it through the normal address pipeline.
+- **`poi.db`.** A sealed, readonly spatial layer built from Overture Places (CDLA-Permissive-2.0) at confidence ≥ 0.85, covering the US, Canada, Mexico, and France — the locales Mailwoman already trains against. Build it yourself with `mailwoman gazetteer build poi`.
+- **The CLI.** `mailwoman poi "coffee near Honolulu" --db poi.db` returns distance-ranked results — a live run against a built database returned 20 results, nearest 1,265 m away.
+- **`@mailwoman/mcp`.** An MCP server (`mailwoman-mcp`) exposing five stdio tools to agents: `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mailwoman_overpass_export`, `mailwoman_layer_manifest`. This is the intended consumer for most POI queries — an agent with tools, not a search box.
+- **OverpassQL export.** `--overpass` on the CLI, the matching MCP tool, and [the tester](./try-it.mdx) all render a query you can paste into [Overpass Turbo](https://overpass-turbo.eu/). Overpass is an export target here, never a serving backend — Mailwoman prints the query and never runs it.
+
+## What abstains by design
+
+Some categories — fire hydrants, post boxes, drinking water fountains, data centers — have no permissively licensed source. They live in OpenStreetMap and in Overture's _base_ theme, both ODbL share-alike. Mailwoman ships the **builder**, not the data: run `poi build --source osm` against your own OSM extract and the resulting layer sits on the same schema as the shipped one, on your disk, never distributed by us.
+
+Until you've built that layer, a query for one of these categories doesn't misfire or return an empty list pretending to be a real answer. It abstains with `requires_build_local_layer`, a distinct result that names what's missing instead of guessing.
+
+## What's still ahead
+
+- **Brand and franchise detection.** The taxonomy lexicon matches categories, not chains — there's no brand lexicon yet, and no Wikidata QID table joining "Walmart" or "McDonalds" to Overture's `brand.wikidata` field. See [Franchise queries](./franchise-queries.mdx).
+- **Proximity-search products.** The CLI and MCP tool answer "nearest X" today; turning that into a packaged product (routing, open-now filtering, review scores) is out of scope for now.
+- **Read-time ancestry.** Results don't yet carry WOF ancestry or a `gers_id` for cross-referencing against other Overture-keyed data. Recorded as debt against the current spec.
+- **Landmarks and transit codes.** Named-landmark disambiguation and airport/station code resolution aren't part of the taxonomy lexicon. See [Landmark queries](./landmark-queries.mdx) and [Transit queries](./transit-queries.mdx).
+- **More locales.** `poi.db` covers the same four countries the parser trains against today; expanding either expands both.
 
 ## See also
 

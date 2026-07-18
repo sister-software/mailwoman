@@ -18,7 +18,7 @@ For what the system _is_ — the calibrated-sequence-labeler + gazetteer divisio
 [What Mailwoman is](../concepts/what-mailwoman-is.mdx). This page is about what it _covers_ and
 the rules that hold each claim to evidence.
 
-## Two workstreams, not one
+## Three workstreams, not one
 
 1. **The geocoder** — the [staged pipeline](./reference/STAGES.mdx) (normalize → parse → resolve → coordinate), the
    drop-in API surfaces (`@mailwoman/{nominatim,photon,libpostal}` + annotations), the browser
@@ -33,6 +33,14 @@ the rules that hold each claim to evidence.
    [#625](https://github.com/sister-software/mailwoman/issues/625),
    [#655](https://github.com/sister-software/mailwoman/issues/655). It grew inside the parser's
    roadmap; it is hereby a first-class workstream, not a footnote.
+3. **Spatial layers + POI queries** — sealed provenance-tracked layer databases (`poi.db` is
+   layer #1) plus the `poi_query` kind that detects category intent (brand detection is specced,
+   not yet wired — no brand lexicon exists) and resolves it against them, exposed to agents via
+   `@mailwoman/mcp`. Design + phasing in
+   [`docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md);
+   the gating flag (`poiQueryKind`, default off) is tracked in the
+   [runtime-flag register](./reference/runtime-flags.mdx). Human-readable status lives in the
+   [exotic-POI series](../understanding/exotic-poi/exotic-point-of-interest-queries.mdx).
 
 ## Locales, in tiers
 

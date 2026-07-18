@@ -239,7 +239,7 @@ function FeatureStrip(): ReactNode {
 		<section className={styles.features}>
 			<div className="container">
 				<div className={clsx("row", styles.featureRow)}>
-					<div className="col col--4">
+					<div className="col col--3">
 						<h3>Neural address parser</h3>
 						<p>
 							ONNX-runtime sequence classifier over a SentencePiece tokenizer. Emits BIO-labeled components (country /
@@ -247,7 +247,7 @@ function FeatureStrip(): ReactNode {
 							OpenAddresses + curated rows. Ships per-locale weight bundles as separate npm packages.
 						</p>
 					</div>
-					<div className="col col--4">
+					<div className="col col--3">
 						<h3>WOF-backed resolver</h3>
 						<p>
 							Parsed components are resolved to <a href="https://whosonfirst.org">Who&apos;s On First</a> place IDs +
@@ -256,12 +256,21 @@ function FeatureStrip(): ReactNode {
 							automatically.
 						</p>
 					</div>
-					<div className="col col--4">
+					<div className="col col--3">
 						<h3>Pure-TypeScript runtime</h3>
 						<p>
 							Mailwoman runs on Node 22+ and, as the <Link to="/demo">live demo</Link> shows, entirely in the browser —
 							the classifier on <code>onnxruntime-web</code>, the resolver on <code>sql.js-httpvfs</code> over a
 							byte-ranged gazetteer. The same pipeline client-side, no API server.
+						</p>
+					</div>
+					<div className="col col--3">
+						<h3>Spatial tools for agents</h3>
+						<p>
+							A <code>poi_query</code> kind and a sealed <code>poi.db</code> resolve category and brand searches
+							("coffee near Honolulu") the way address queries resolve. <code>@mailwoman/mcp</code> exposes the same
+							parse / geocode / POI-search toolset to any MCP-compatible agent over stdio. On <code>main</code> now,
+							landing on npm in the next release.
 						</p>
 					</div>
 				</div>

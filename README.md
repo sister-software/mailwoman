@@ -168,6 +168,23 @@ The [browser demo](https://mailwoman.sister.software/demo) carries the same cove
 receipts live in the [scope declaration](./docs/articles/plan/SCOPE.mdx) and the [eval
 reports](./docs/articles/evals/).
 
+## Points of interest, for agents
+
+Not every query is an address. "coffee near Honolulu" is a category search — Mailwoman now
+detects that as distinct from address parsing, splits the category from the location
+constraint, and resolves it against `poi.db`, a sealed spatial layer built from Overture
+Places (US, Canada, Mexico, France). Categories with no permissively licensed source — fire
+hydrants, post boxes — abstain by design rather than returning nothing dressed up as an
+answer; you build that layer yourself from your own OSM extract.
+
+`@mailwoman/mcp` puts the whole toolset behind an MCP server: parse, geocode, POI search, and
+an OverpassQL export, over stdio, for any MCP-compatible agent. Both of these are on `main`
+today and land on npm in the next release.
+
+```bash
+mailwoman poi "gas station near Springfield, IL" --db poi.db
+```
+
 ## Beyond parse + geocode
 
 `mailwoman` is the entry point to 33 published packages. The rest of the toolkit:
@@ -183,6 +200,8 @@ reports](./docs/articles/evals/).
 | [`@mailwoman/un-locode-lookup`](./un-locode-lookup) | Place → UN/LOCODE trade-location codes                                                            |
 | [`@mailwoman/nuts-lookup`](./nuts-lookup)           | EU coordinate → NUTS statistical regions                                                          |
 | [`@mailwoman/codex`](./codex)                       | Per-address-system postal reference data + branded types                                          |
+| [`@mailwoman/mcp`](./mcp)                           | MCP server exposing parse/geocode/POI-search/OverpassQL-export to agents over stdio               |
+| [`@mailwoman/poi-taxonomy`](./poi-taxonomy)         | Category lexicon behind POI-query detection — Overture taxonomy snapshot + synonym table          |
 
 ## License
 

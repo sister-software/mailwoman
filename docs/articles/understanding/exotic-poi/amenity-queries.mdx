@@ -50,17 +50,11 @@ The limitation: Nominatim only searches OSM. If a gas station is not in OSM, it 
 
 ## What Mailwoman does today
 
-Mailwoman's parser will see `gas station` and try to classify the tokens as address components. The kind classifier (Stage 2.5) may recognize the input as a non-address query (no numbers, no street suffixes, no state abbreviations) and flag it as `kind=unknown`, but there is no `kind=amenity` classification path.
+Category queries like `gas station` are now detected and answerable, behind the default-off `poiQueryKind` flag. The kind classifier (Stage 2.5) matches the phrase against the [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) lexicon, splits off any location constraint (`near Springfield, IL`), and runs the anchor through the normal address pipeline.
 
-The resolver (Stage 6) indexes WOF administrative places, not OSM amenities. A search for `gas station` in the current resolver returns nothing — WOF does not have gas stations.
+Resolution needs a `poi.db` — a sealed spatial layer built from Overture Places (CDLA-Permissive-2.0, confidence ≥ 0.85) covering the US, Canada, Mexico, and France. `mailwoman poi "gas station near Springfield, IL" --db poi.db` returns distance-ranked results; the same lookup is available to agents as the `mailwoman_poi_search` MCP tool. Categories with no permissive source — fire hydrants, post boxes, and the like — abstain with `requires_build_local_layer` rather than misfire; see [the series index](./exotic-point-of-interest-queries.mdx#what-abstains-by-design) for why that split exists.
 
-**Amenity queries are out of scope for Mailwoman's current architecture.** They require:
-
-- A **category alias table** mapping user-facing labels to OSM tags (or another taxonomy).
-- A **POI index** (OSM amenities, franchise locations, or a commercial dataset).
-- A **proximity resolver** that can answer "nearest X to location Y" queries.
-
-These are planned for a future phase but are not part of the current implementation.
+**Proximity-search products are still out of scope.** The CLI and MCP tool answer "nearest X" with distance and coordinates; open-now filtering, routing, and review scores aren't built. See [the series index](./exotic-point-of-interest-queries.mdx) for the current state across all POI categories, and [try it](./try-it.mdx) against a live amenity query.
 
 ## See also
 

@@ -76,9 +76,9 @@ This is the same pattern as "gas station near Springfield, IL" (amenity + locati
 
 ## What Mailwoman does today
 
-Mailwoman's parser will see `Walmart` and try to classify it as an address component. A lone brand name with no other tokens is a one-token address — the parser may classify it as `locality` (there are towns named Walmart) or `venue` (the venue classifier exists but is weak). The resolver will search WOF for "Walmart" and return nothing — WOF does not index franchise locations as venues.
+The category infrastructure that amenity queries use — the `poi_query` kind, the anchor split, `poi.db` resolution — exists now, but brand matching isn't wired into it. Mailwoman's parser will still see `Walmart` and try to classify it as an address component: a lone brand name with no other tokens is a one-token address, and the parser may read it as `locality` (there are towns named Walmart) or `venue` (the venue classifier exists but is weak, see [Landmark queries](./landmark-queries.mdx)).
 
-**Franchise queries are out of scope for Mailwoman's current architecture**, for the same reasons as amenity queries: they require a POI index and a brand alias table. The address parser can handle the location-constraint part (`near Springfield, IL`) but the franchise lookup requires different infrastructure.
+**Franchise queries are still deferred.** There's no brand lexicon yet — no table mapping "Walmart," "Macca's," or `マクド` to a chain identifier, and no join from Overture's `brand.wikidata` field to a name. The location-constraint half (`near Springfield, IL`) already works, through the same anchor-parsing path amenity queries use; the brand-lookup half doesn't exist. See [the series index](./exotic-point-of-interest-queries.mdx#whats-still-ahead) for what's built and what isn't across the whole POI arc.
 
 ## See also
 
