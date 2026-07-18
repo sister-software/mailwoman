@@ -4529,6 +4529,7 @@ __metadata:
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/neural-web": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
+    "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"

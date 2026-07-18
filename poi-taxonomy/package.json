@@ -27,7 +27,13 @@
 			"node": "./table.ts",
 			"default": "./out/table.js",
 			"types": "./out/table.d.ts"
-		}
+		},
+		"./overpass": {
+			"node": "./overpass.ts",
+			"default": "./out/overpass.js",
+			"types": "./out/overpass.d.ts"
+		},
+		"./data/*.json": "./data/*.json"
 	},
 	"publishConfig": {
 		"exports": {
@@ -39,7 +45,12 @@
 			"./table": {
 				"types": "./out/table.d.ts",
 				"default": "./out/table.js"
-			}
+			},
+			"./overpass": {
+				"types": "./out/overpass.d.ts",
+				"default": "./out/overpass.js"
+			},
+			"./data/*.json": "./data/*.json"
 		},
 		"access": "public"
 	}

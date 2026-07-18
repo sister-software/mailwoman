@@ -1,0 +1,36 @@
+---
+sidebar_position: 7
+title: "Try it: the POI intent tester"
+tags:
+  - domain
+  - venue
+  - international
+  - multilingual
+---
+
+# Try it: the POI intent tester
+
+This is the piece [the series introduction](./exotic-point-of-interest-queries.mdx) said wasn't built yet — it is now. Type a query below and watch Mailwoman's kind classifier decide whether it's a POI query or an address, then extract the subject (a category, in the current lexicon), split off the location anchor, and render an OverpassQL export you can paste straight into [Overpass Turbo](https://overpass-turbo.eu/).
+
+This tester runs entirely in your browser: no model weights, no network request, no server. It's the same `matchPOISubject` + `createKindClassifier` + OverpassQL emitter Mailwoman ships as a library — see [`@mailwoman/kind-classifier`](https://www.npmjs.com/package/@mailwoman/kind-classifier) and [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy).
+
+import { POIExplorer } from "@site/src/components/POIExplorer/POIExplorer"
+
+<POIExplorer />
+
+## Reading the result
+
+- **Kind badge** — the Stage 2.5 kind classifier's verdict (`poi_query`, `structured_address`, …) with its confidence. Expand it to see the runner-up kinds.
+- **Category chip** — which taxonomy category the subject phrase matched, when the kind is `poi_query`.
+- **build-local badge** — this category's data lives only in ODbL sources (OpenStreetMap). Mailwoman ships the builder for the local layer, not the data itself — see [Amenity queries](./amenity-queries.mdx) for why that split exists.
+- **anchor** — the text left over after the subject phrase is split off (`near Springfield`, `, New York`). This is what the runtime pipeline would hand to the address parser to resolve a location constraint.
+- **OverpassQL export** — a ready-to-run query against the category's OSM tag, scoped to the anchor when one resolved. Overpass is an export target, not a serving backend: Mailwoman prints the query, it never runs it for you.
+
+## Why "hospital, 350 5th Ave, New York" doesn't become a POI query
+
+Try that preset. The lexicon matches `hospital` as a subject, but the remainder — `350 5th Ave, New York` — leads with a house number. That's the signature of a venue-led full address ("the hospital located at this specific address"), not a category search, so the classifier's `structured_address` score wins and the query falls through to the "parses as an address" state instead of an Overpass export. This is the same guard [the parser uses in production](../our-approach/the-staged-pipeline.mdx) to keep full addresses from getting mis-routed into the POI branch just because they happen to start with a category word.
+
+## What isn't here yet
+
+- **Brand and landmark subjects.** The current taxonomy lexicon only matches categories (`hospital`, `fire_hydrant`, `drinking_water`, …) — brand names ("Walmart") and bare landmark names ("Eiffel Tower") aren't in the phrase table yet. See [Franchise queries](./franchise-queries.mdx) and [Landmark queries](./landmark-queries.mdx) for the target shape.
+- **Live results.** This tester stops at the OverpassQL string — it doesn't execute a search or show candidate places. That needs the R2-published build-local OSM layer plus a `poi.db` executor, which is separate infrastructure from the pure intent-detection shown here.
