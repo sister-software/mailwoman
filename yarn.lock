@@ -4617,6 +4617,8 @@ __metadata:
 "@mailwoman/neural-weights-fr-fr@workspace:neural-weights-fr-fr":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-fr-fr@workspace:neural-weights-fr-fr"
+  dependencies:
+    "@mailwoman/neural-weights-en-us": "workspace:*"
   languageName: unknown
   linkType: soft
 
