@@ -158,4 +158,24 @@ describe("buildFSTEmissionPriors", () => {
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.85 * 3.0, 2)
 		expect(matrix[1]!.every((v) => v === 0)).toBe(true)
 	})
+
+	it("length-scales street suppression for a single-token match (default `suppression` mode), positive bias intact (#1142)", () => {
+		// A lone place-name token ("Sweeney") is weak street-head evidence. The default `suppression` mode
+		// scales the street/house-number suppression by match length (1-token ×0.25) so the model's own
+		// "Ranch Road → street" reading can win, while the POSITIVE locality bias is left at full strength.
+		const fst = mockFST(new Map([["sweeney", [{ wofID: 9, placetype: "locality", importance: 0.5 }]]]))
+		const pieces = makePieces("Sweeney")
+		const supp = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS) // default: suppression
+		// positive locality bias unscaled (importance * maxBias)
+		expect(supp[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3.0, 2)
+		// street suppression scaled to 0.25 of the -1.5 default
+		expect(supp[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
+
+		// `off` gives the full flat suppression (-1.5); `both` also scales the positive bias.
+		const off = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { importanceLengthScaleMode: "off" })
+		expect(off[0]![labelCol("B-street")]).toBeCloseTo(-1.5, 2)
+		expect(off[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3.0, 2)
+		const both = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { importanceLengthScaleMode: "both" })
+		expect(both[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3.0 * 0.25, 2)
+	})
 })
