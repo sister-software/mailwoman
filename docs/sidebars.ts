@@ -129,6 +129,7 @@ const sidebars: SidebarsConfig = {
 				"understanding/exotic-poi/regional-variant-queries",
 				"understanding/exotic-poi/landmark-queries",
 				"understanding/exotic-poi/transit-queries",
+				"understanding/exotic-poi/try-it",
 			],
 		},
 		{

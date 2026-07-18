@@ -62,6 +62,7 @@ const ParseConfigSchema = zod.object({
 		.optional()
 		.default(false)
 		.describe("In pipeline mode, skip the neural classifier (run normalize + queryShape + kind + resolver only)."),
+	poi: zod.boolean().optional().default(false).describe("Enable poi_query detection (poiQueryKind flag)."),
 	downloadWeights: zod
 		.boolean()
 		.optional()
@@ -399,7 +400,7 @@ async function runDegraded(input: string, options: zod.infer<typeof ParseConfigS
 			`  Upgrade: npm install ${weightsPackageName(options.locale)}   or   mailwoman parse --download-weights <address>`
 	)
 
-	const pipeline = createRuntimePipeline({})
+	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
 	const result = await pipeline(input, { locale: options.locale })
 
 	return options.debug
@@ -455,7 +456,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
-			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence })
+			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence, poiQueryKind: options.poi })
 			const result = await pipeline(input, pipelineOpts)
 
 			return options.debug
@@ -465,7 +466,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	}
 
 	const fst = await tryBuildFST(options)
-	const pipeline = createRuntimePipeline({ classifier, fst, streetEvidence })
+	const pipeline = createRuntimePipeline({ classifier, fst, streetEvidence, poiQueryKind: options.poi })
 	const result = await pipeline(input, pipelineOpts)
 
 	return options.debug
@@ -568,8 +569,10 @@ async function runBenchmark(
 	}
 
 	const collected = options.resolve
-		? await withResolver(options, (resolver) => collect(createRuntimePipeline({ classifier, resolver })))
-		: await collect(createRuntimePipeline({ classifier }))
+		? await withResolver(options, (resolver) =>
+				collect(createRuntimePipeline({ classifier, resolver, poiQueryKind: options.poi }))
+			)
+		: await collect(createRuntimePipeline({ classifier, poiQueryKind: options.poi }))
 
 	const lines: string[] = []
 	lines.push(`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`)
@@ -646,6 +649,7 @@ function serializeResult(
 		queryShape: { ...result.queryShape, tokenClasses: undefined }, // tokenClasses is verbose
 		locale: result.locale,
 		kind: result.kind,
+		...(result.poiIntent ? { poiIntent: result.poiIntent } : {}),
 		path: result.path,
 		timing: result.timing,
 		tree: format === "xml" ? decodeAsXML(result.tree) : result.tree,

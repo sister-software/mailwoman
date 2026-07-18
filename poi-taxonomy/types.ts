@@ -38,6 +38,11 @@ export interface CategoryRecord {
 	hierarchy: POICategoryID[]
 	/** Overture "basic category" display tier, when the snapshot provides one. */
 	basicLabel: string | null
+	/**
+	 * The OSM tag this category maps to, `key=value` form (e.g. `amenity=hospital`) — consumed by the OverpassQL export
+	 * emitter. Curated alongside the category; NOT an Overture field.
+	 */
+	osmTag?: string
 	source: CategorySource
 }
 

@@ -49,6 +49,7 @@
 		"variant-aliases",
 		"phrase-grouper",
 		"poi-taxonomy",
+		"mcp",
 		"query-shape",
 		"resolver-wof-sqlite",
 		"resolver-wof-wasm",

@@ -71,9 +71,9 @@ Trails, parkways, pedestrian paths: the High Line, the Appalachian Trail, Route 
 
 Mailwoman's resolver indexes WOF administrative places plus a limited set of WOF venues. Well-known landmarks that exist in WOF as `venue` or `neighbourhood` records are resolvable. Lesser-known landmarks are not.
 
-The parser handles landmark queries as venue queries: a query with no address-format tokens (no numbers, no street suffixes, no state abbreviations) and a known venue name is classified as `kind=venue` and routed to the venue resolver. The venue classifier is weak (F1 ≈ 0.39 in v0.4.0) and improving it is part of the v0.5.0+ roadmap.
+The parser handles landmark queries as venue queries: a query with no address-format tokens (no numbers, no street suffixes, no state abbreviations) and a known venue name is classified as `kind=venue` and routed to the venue resolver. The F1 ≈ 0.39 figure once cited here was measured in v0.4.0, three model generations back, and no longer reflects the current classifier — a venue-fragment retrain is spec'd but not yet run. Treat the venue classifier's quality as unmeasured until that retrain lands rather than trusting either the old number or an assumed improvement.
 
-**Landmark queries are partially in scope.** The architecture supports them through the venue classifier and WOF venue records. The limitation is data coverage (WOF's venue catalogue is not comprehensive) and classifier quality (the venue classifier needs more training data). Both are being addressed in the current development cycle.
+**Landmark queries are partially in scope**, and partially overlap with the newer category-query path: a landmark that also matches a POI-taxonomy category (a hospital, a named park) can resolve through `poi.db` the way [amenity queries](./amenity-queries.mdx) do. Bare landmark names that aren't categories ("Eiffel Tower") still depend on the venue classifier and WOF venue records, where the limits are data coverage (WOF's venue catalogue is not comprehensive) and the unretrained classifier described above.
 
 ## See also
 
